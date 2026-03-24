@@ -1706,5 +1706,92 @@ public class APIRevisionsManagerTests
         _mockAPIRevisionsRepository.Verify(x => x.UpsertAPIRevisionAsync(It.Is<APIRevisionListItemModel>(r => r.DiagnosticsHash == "new-hash")), Times.Once);
     }
 
+    [Fact]
+    public async Task GetReviewQualityScoreAsync_OldStyleNoThreadId_ResolvedByIndividualComment()
+    {
+        // Old-style comments have no ThreadId. Each comment is grouped by ElementId,
+        // so each unique ElementId is a standalone "thread". Resolution is determined
+        // by the individual comment's IsResolved flag.
+        var revision = CreateRevisionForQualityTest();
+        var baseTime = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var comments = new List<CommentItemModel>
+        {
+            // Resolved old-style comment — should NOT be counted
+            CreateComment(CommentSeverity.MustFix, elementId: "old-elem-1", threadId: null, isResolved: true, createdOn: baseTime),
+            // Unresolved old-style comment — should be counted
+            CreateComment(CommentSeverity.ShouldFix, elementId: "old-elem-2", threadId: null, isResolved: false, createdOn: baseTime),
+            // Another resolved — should NOT be counted
+            CreateComment(CommentSeverity.MustFix, elementId: "old-elem-3", threadId: null, isResolved: true, createdOn: baseTime)
+        };
+        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
+            .ReturnsAsync(comments);
+
+        var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
+
+        // Only old-elem-2 (ShouldFix, unresolved) counts
+        Assert.Equal(90, result.Score); // 100 - 10
+        Assert.Equal(0, result.UnresolvedMustFixCount);
+        Assert.Equal(1, result.UnresolvedShouldFixCount);
+        Assert.Equal(1, result.TotalUnresolvedCount);
+    }
+
+    [Fact]
+    public async Task GetReviewQualityScoreAsync_NewStyleWithThreadId_MixedResolution_TreatedAsResolved()
+    {
+        // New-style comments share a ThreadId. ResolveConversation marks every comment
+        // in the thread as IsResolved=true. If a reply is later added (e.g., agent reply),
+        // that new comment defaults to IsResolved=false, creating a mixed state.
+        // The thread should still be treated as resolved because the thread was explicitly
+        // resolved — matching the conversations panel behavior (any resolved → thread resolved).
+        var revision = CreateRevisionForQualityTest();
+        var baseTime = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var comments = new List<CommentItemModel>
+        {
+            // Original comment — resolved when thread was resolved
+            CreateComment(CommentSeverity.MustFix, elementId: "elem-1", threadId: "thread-1", isResolved: true, createdOn: baseTime),
+            // Reply added after resolution — IsResolved defaults to false
+            CreateComment(severity: null, elementId: "elem-1", threadId: "thread-1", isResolved: false, createdOn: baseTime.AddMinutes(5)),
+            // A genuinely unresolved thread for comparison
+            CreateComment(CommentSeverity.ShouldFix, elementId: "elem-2", threadId: "thread-2", createdOn: baseTime)
+        };
+        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
+            .ReturnsAsync(comments);
+
+        var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
+
+        // thread-1 has a resolved comment → entire thread is resolved → not counted
+        // Only thread-2 (ShouldFix) counts
+        Assert.Equal(90, result.Score); // 100 - 10
+        Assert.Equal(0, result.UnresolvedMustFixCount);
+        Assert.Equal(1, result.UnresolvedShouldFixCount);
+        Assert.Equal(1, result.TotalUnresolvedCount);
+    }
+
+    [Fact]
+    public async Task GetReviewQualityScoreAsync_NewStyleWithThreadId_AllUnresolved_CountedAsActive()
+    {
+        // New-style thread where no comment has been resolved — the thread is active.
+        var revision = CreateRevisionForQualityTest();
+        var baseTime = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var comments = new List<CommentItemModel>
+        {
+            CreateComment(CommentSeverity.MustFix, elementId: "elem-1", threadId: "thread-1", isResolved: false, createdOn: baseTime),
+            CreateComment(severity: null, elementId: "elem-1", threadId: "thread-1", isResolved: false, createdOn: baseTime.AddMinutes(5)),
+            CreateComment(severity: null, elementId: "elem-1", threadId: "thread-1", isResolved: false, createdOn: baseTime.AddMinutes(10))
+        };
+        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
+            .ReturnsAsync(comments);
+
+        var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
+
+        // All unresolved in thread-1 → thread is active, severity from first comment (MustFix)
+        Assert.Equal(80, result.Score); // 100 - 20
+        Assert.Equal(1, result.UnresolvedMustFixCount);
+        Assert.Equal(1, result.TotalUnresolvedCount);
+    }
+
     #endregion
 }

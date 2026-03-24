@@ -1664,6 +1664,182 @@ public class CommentsManagerTests
         Assert.All(thread3, c => Assert.False(c.IsResolved));
     }
 
+    [Fact]
+    public async Task AddCommentAsync_ReplyToResolvedThread_InheritsResolvedState()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+
+        // Existing resolved thread
+        var existingComments = new List<CommentItemModel>
+        {
+            CreateComment("c1", elementId: "elem-1", threadId: "thread-1", isResolved: true),
+            CreateComment("c2", elementId: "elem-1", threadId: "thread-1", isResolved: true)
+        };
+        commentsRepoMock.Setup(r => r.GetCommentsAsync("review1", "elem-1"))
+            .ReturnsAsync(existingComments);
+
+        // New reply to the resolved thread
+        var newComment = new CommentItemModel
+        {
+            ReviewId = "review1",
+            ElementId = "elem-1",
+            ThreadId = "thread-1",
+            CommentText = "A reply",
+            IsResolved = false // default
+        };
+
+        await manager.AddCommentAsync(user, newComment);
+
+        // The reply should have inherited IsResolved = true from the thread
+        Assert.True(newComment.IsResolved);
+        commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.Is<CommentItemModel>(c => c.IsResolved == true)), Times.Once);
+    }
+
+    [Fact]
+    public async Task AddCommentAsync_ReplyToUnresolvedThread_StaysUnresolved()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+
+        // Existing unresolved thread
+        var existingComments = new List<CommentItemModel>
+        {
+            CreateComment("c1", elementId: "elem-1", threadId: "thread-1", isResolved: false)
+        };
+        commentsRepoMock.Setup(r => r.GetCommentsAsync("review1", "elem-1"))
+            .ReturnsAsync(existingComments);
+
+        var newComment = new CommentItemModel
+        {
+            ReviewId = "review1",
+            ElementId = "elem-1",
+            ThreadId = "thread-1",
+            CommentText = "A reply",
+            IsResolved = false
+        };
+
+        await manager.AddCommentAsync(user, newComment);
+
+        Assert.False(newComment.IsResolved);
+    }
+
+    [Fact]
+    public async Task AddCommentAsync_OldStyle_NoThreadId_NoExistingComments_StaysUnresolved()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+
+        // No existing comments on this element
+        commentsRepoMock.Setup(r => r.GetCommentsAsync("review1", "elem-1"))
+            .ReturnsAsync(new List<CommentItemModel>());
+
+        var newComment = new CommentItemModel
+        {
+            ReviewId = "review1",
+            ElementId = "elem-1",
+            ThreadId = null,
+            CommentText = "First comment on element",
+            IsResolved = false
+        };
+
+        await manager.AddCommentAsync(user, newComment);
+
+        Assert.False(newComment.IsResolved);
+    }
+
+    [Fact]
+    public async Task AddCommentAsync_OldStyle_NoThreadId_ReplyToResolvedThread_InheritsResolved()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+
+        // Existing resolved old-style comments (null ThreadId) on the same element
+        var existingComments = new List<CommentItemModel>
+        {
+            CreateComment("c1", elementId: "elem-1", threadId: null, isResolved: true),
+            CreateComment("c2", elementId: "elem-1", threadId: null, isResolved: true)
+        };
+        commentsRepoMock.Setup(r => r.GetCommentsAsync("review1", "elem-1"))
+            .ReturnsAsync(existingComments);
+
+        var newComment = new CommentItemModel
+        {
+            ReviewId = "review1",
+            ElementId = "elem-1",
+            ThreadId = null,
+            CommentText = "Reply to resolved old-style thread",
+            IsResolved = false
+        };
+
+        await manager.AddCommentAsync(user, newComment);
+
+        // Should inherit resolved state from the existing old-style thread
+        Assert.True(newComment.IsResolved);
+    }
+
+    [Fact]
+    public async Task AddCommentAsync_OldStyle_NoThreadId_ReplyToUnresolvedThread_StaysUnresolved()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+
+        // Existing unresolved old-style comments on the same element
+        var existingComments = new List<CommentItemModel>
+        {
+            CreateComment("c1", elementId: "elem-1", threadId: null, isResolved: false)
+        };
+        commentsRepoMock.Setup(r => r.GetCommentsAsync("review1", "elem-1"))
+            .ReturnsAsync(existingComments);
+
+        var newComment = new CommentItemModel
+        {
+            ReviewId = "review1",
+            ElementId = "elem-1",
+            ThreadId = null,
+            CommentText = "Reply to unresolved old-style thread",
+            IsResolved = false
+        };
+
+        await manager.AddCommentAsync(user, newComment);
+
+        Assert.False(newComment.IsResolved);
+    }
+
+    [Fact]
+    public async Task UnresolveConversation_ThenAddReply_ReplyIsUnresolved()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+
+        // Thread was resolved, then unresolve is called
+        var existingComments = new List<CommentItemModel>
+        {
+            CreateComment("c1", elementId: "elem-1", threadId: "thread-1", isResolved: true),
+            CreateComment("c2", elementId: "elem-1", threadId: "thread-1", isResolved: true)
+        };
+        commentsRepoMock.Setup(r => r.GetCommentsAsync("review1", "elem-1"))
+            .ReturnsAsync(existingComments);
+
+        // Unresolve the thread — all comments become IsResolved = false
+        await manager.UnresolveConversation(user, "review1", "elem-1", "thread-1");
+        Assert.All(existingComments, c => Assert.False(c.IsResolved));
+
+        // Now add a reply — it should be unresolved since the thread is unresolved
+        var newComment = new CommentItemModel
+        {
+            ReviewId = "review1",
+            ElementId = "elem-1",
+            ThreadId = "thread-1",
+            CommentText = "Reply after unresolve",
+            IsResolved = false
+        };
+
+        await manager.AddCommentAsync(user, newComment);
+
+        Assert.False(newComment.IsResolved);
+    }
+
     #endregion
 }
 

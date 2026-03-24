@@ -158,6 +158,12 @@ namespace APIViewWeb.Managers
             comment.CreatedBy = user.GetGitHubLogin();
             comment.CreatedOn = DateTime.Now;
 
+            // Inherit thread resolution state: if this comment is joining an existing
+            // resolved thread, mark it resolved so the thread stays consistently resolved.
+            // This applies to both new-style threads (shared ThreadId) and old-style
+            // threads (null ThreadId, grouped by ElementId).
+            comment.IsResolved = await IsThreadResolvedAsync(comment.ReviewId, comment.ElementId, comment.ThreadId);
+
             await _commentsRepository.UpsertCommentAsync(comment);
 
             if (!comment.IsResolved)
@@ -333,6 +339,11 @@ namespace APIViewWeb.Managers
 
         private async Task AddAgentComment(CommentItemModel comment, string response)
         {
+            // Inherit thread resolution state so agent replies don't un-resolve a thread.
+            // This applies to both new-style threads (shared ThreadId) and old-style
+            // threads (null ThreadId, grouped by ElementId).
+            bool threadResolved = await IsThreadResolvedAsync(comment.ReviewId, comment.ElementId, comment.ThreadId);
+
             var commentResult = new CommentItemModel
             {
                 ReviewId = comment.ReviewId,
@@ -345,7 +356,8 @@ namespace APIViewWeb.Managers
                 CreatedOn = DateTime.UtcNow,
                 CommentSource = CommentSource.AIGenerated,
                 ThreadId = comment.ThreadId,
-                CommentType = CommentType.APIRevision
+                CommentType = CommentType.APIRevision,
+                IsResolved = threadResolved
             };
 
             await _commentsRepository.UpsertCommentAsync(commentResult);
@@ -724,6 +736,44 @@ namespace APIViewWeb.Managers
         }
 
         public HashSet<GithubUser> GetTaggableUsers() => TaggableUsers;
+
+        /// <summary>
+        /// Returns the resolution state of an existing thread. All comments in a thread
+        /// must have the same IsResolved value. If an inconsistency is found (some resolved,
+        /// some not), the thread is treated as resolved and the inconsistent comments are
+        /// repaired in-place. Returns false when no existing comments are found
+        /// (i.e., this is the first comment in the thread).
+        /// </summary>
+        private async Task<bool> IsThreadResolvedAsync(string reviewId, string elementId, string threadId)
+        {
+            var existingComments = await _commentsRepository.GetCommentsAsync(reviewId, elementId);
+            var threadComments = existingComments.Where(c => c.ThreadId == threadId).ToList();
+
+            if (threadComments.Count == 0)
+            {
+                return false;
+            }
+
+            bool anyResolved = threadComments.Any(c => c.IsResolved);
+            bool anyUnresolved = threadComments.Any(c => !c.IsResolved);
+
+            if (anyResolved && anyUnresolved)
+            {
+                _logger.LogWarning(
+                    "Thread has inconsistent IsResolved state. ReviewId: {ReviewId}, ElementId: {ElementId}, ThreadId: {ThreadId}. " +
+                    "Repairing by marking all comments as resolved.",
+                    reviewId, elementId, threadId);
+
+                foreach (var comment in threadComments.Where(c => !c.IsResolved))
+                {
+                    comment.IsResolved = true;
+                    await _commentsRepository.UpsertCommentAsync(comment);
+                }
+            }
+
+            return anyResolved;
+        }
+
         private async Task AssertOwnerAsync(ClaimsPrincipal user, CommentItemModel commentModel)
         {
             var result = await _authorizationService.AuthorizeAsync(user, commentModel, new[] { CommentOwnerRequirement.Instance });

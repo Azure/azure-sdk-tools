@@ -40,6 +40,7 @@ from azure.identity import DefaultAzureCredential
 
 import config.app_config as app_config
 from config.app_config import get as cfg
+from utils.azure_credential import close_credential
 
 
 def _run(cmd: list[str], **kwargs) -> None:
@@ -171,6 +172,28 @@ def _wait_for_agent_running(
     return False
 
 
+def _start_agent(account_name: str, project_name: str, agent_name: str, agent_version: str) -> None:
+    print(f"Starting agent: {agent_name} version {agent_version}")
+    _run([
+        "az", "cognitiveservices", "agent", "start",
+        "--account-name", account_name,
+        "--project-name", project_name,
+        "--name", agent_name,
+        "--agent-version", agent_version,
+    ], shell=True)
+
+
+def _stop_agent(account_name: str, project_name: str, agent_name: str, agent_version: str) -> None:
+    print(f"Stopping agent: {agent_name} version {agent_version}")
+    _run([
+        "az", "cognitiveservices", "agent", "stop",
+        "--account-name", account_name,
+        "--project-name", project_name,
+        "--name", agent_name,
+        "--agent-version", agent_version,
+    ], shell=True)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build, push, and deploy a hosted agent.")
     parser.add_argument("agent_name", help="Agent directory name under agents/, e.g. chat_agent")
@@ -289,22 +312,25 @@ def main() -> None:
     finally:
         project.close()
 
-    # ── Start the new agent version ──
-    print(f"Starting agent: {agent.name} version {agent.version}")
-    _run([
-        "az", "cognitiveservices", "agent", "start",
-        "--account-name", account_name,
-        "--project-name", project_name,
-        "--name", agent.name,
-        "--agent-version", str(agent.version),
-    ], shell=True)
+    # ── Start once to let Foundry pull the container image ──
+    agent_version = str(agent.version)
+    _start_agent(account_name, project_name, agent.name, agent_version)
 
-    # ── Wait for running, then restore identities ──
+    # ── Wait for running, then restore identities and restart ──
     if saved_identities and project_resource_id:
         if _wait_for_agent_running(account_name, project_name, agent.name):
             print(f"Restoring {len(saved_identities)} user-assigned identities...")
             _restore_project_user_assigned_identities(project_resource_id, saved_identities)
             print("Identities restored successfully.")
+
+            print("Restarting agent so it runs with the restored user-assigned identities...")
+            _stop_agent(account_name, project_name, agent.name, agent_version)
+            _start_agent(account_name, project_name, agent.name, agent_version)
+
+            if _wait_for_agent_running(account_name, project_name, agent.name):
+                print(f"Done — agent {agent.name} v{agent.version} is running with restored identities.")
+            else:
+                print("WARNING: Agent restart did not reach Running state after identities were restored.")
         else:
             print("WARNING: Agent did not reach Running state. Identities NOT restored.")
             print("Restore them manually by re-adding these UMIs to the project:")
@@ -315,4 +341,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    finally:
+        asyncio.run(close_credential())

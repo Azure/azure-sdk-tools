@@ -4,8 +4,12 @@ WORKDIR /app
 
 ENV PYTHONUNBUFFERED=1
 
-# Install Node.js
-RUN tdnf install -y nodejs && tdnf clean all
+# Install Node.js tooling required by MCP stdio servers.
+RUN tdnf install -y nodejs npm \
+	&& node --version \
+	&& npm --version \
+	&& npx --version \
+	&& tdnf clean all
 
 # Install dependencies first (layer caching)
 COPY requirements.txt .

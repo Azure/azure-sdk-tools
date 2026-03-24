@@ -57,7 +57,10 @@ public class DotnetCiYamlProvisioningTests
         Directory.CreateDirectory(Path.Combine(packagePath, "src"));
         File.WriteAllText(Path.Combine(packagePath, "src", $"{packageName}.csproj"), "<Project/>");
 
-        _packageInfoHelper.Setup(p => p.ParsePackagePathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        // Match ParsePackagePathAsync for this specific package path
+        _packageInfoHelper.Setup(p => p.ParsePackagePathAsync(
+            It.Is<string>(s => s.Contains(packageName)),
+            It.IsAny<CancellationToken>()))
             .ReturnsAsync((_repoRoot, $"sdk/{serviceName}/{packageName}", packagePath));
 
         // Mock MSBuild GetPackageInfo output — the Identity field is a space-delimited
@@ -159,29 +162,14 @@ public class DotnetCiYamlProvisioningTests
     #region Package Discovery Tests
 
     [Test]
-    public void DiscoverPackageDirectories_FindsPackagesWithSrcCsproj()
+    public async Task DiscoverPackageDirectories_FindsPackagesWithSrcCsproj()
     {
-        var serviceDir = Path.Combine(_repoRoot, "sdk", "storage");
+        SetupPackageInfo("storage", "Azure.Storage.Blobs");
+        SetupPackageInfo("storage", "Azure.Storage.Queues");
 
-        // Create package with src/csproj — should be discovered
-        var pkg1 = Path.Combine(serviceDir, "Azure.Storage.Blobs", "src");
-        Directory.CreateDirectory(pkg1);
-        File.WriteAllText(Path.Combine(pkg1, "Azure.Storage.Blobs.csproj"), "<Project/>");
+        var packages = await _service.DiscoverPackagesAsync(_repoRoot, "storage");
 
-        // Create package with src/csproj — should be discovered
-        var pkg2 = Path.Combine(serviceDir, "Azure.Storage.Queues", "src");
-        Directory.CreateDirectory(pkg2);
-        File.WriteAllText(Path.Combine(pkg2, "Azure.Storage.Queues.csproj"), "<Project/>");
-
-        var packages = _service.DiscoverPackagesAsync(_repoRoot, "storage").Result;
-
-        // GetPackageInfo will fail (no msbuild mock), but the discovery finds 0 packages
-        // because exceptions are caught. Instead, verify discovery works by checking
-        // the protected method through a known pattern: if src/ csproj directories exist
-        // and tests/ don't get picked up, the filter works.
-        // Since we can't easily test DiscoverPackageDirectories directly (it's protected),
-        // we verify indirectly: create test-only csprojs and confirm they don't appear.
-        Assert.That(packages, Is.Not.Null);
+        Assert.That(packages, Has.Count.EqualTo(2), "Both src-based packages should be discovered");
     }
 
     [Test]

@@ -668,14 +668,14 @@ def handle_agent_chat(
                 if not user_input.strip():
                     continue
                 try:
-                    payload = {"user_input": user_input}
+                    payload = {"userInput": user_input}
                     if current_thread_id:
-                        payload["thread_id"] = current_thread_id
+                        payload["threadId"] = current_thread_id
                     resp = session.post(api_endpoint, json=payload, headers=_build_auth_header(), timeout=60)
                     if resp.status_code == 200:
                         data = resp.json()
                         response = data.get("response", "")
-                        thread_id_out = data.get("thread_id", current_thread_id)
+                        thread_id_out = data.get("threadId", current_thread_id)
                         print(f"{BOLD_BLUE}Agent:{RESET} {response}\n")
                         current_thread_id = thread_id_out
                     else:
@@ -739,25 +739,26 @@ def handle_agent_chat(
 
 def handle_agent_mention(
     comments_path: str = None,
-    comment_id: str = None,
+    fetch_comment_id: str = None,
     remote: bool = False,
     dry_run: bool = False,
+    source_comment_id: str = None,
 ):
     """
     Handles @mention requests from the agent.
 
     Can be invoked in two ways:
     1. With --comments-path: Load comments from a JSON file
-    2. With --comment-id: Fetch a comment from the database and manufacture a feedback conversation
+    2. With --fetch-comment-id: Fetch a comment from the database and manufacture a feedback conversation
 
-    At least one of --comments-path or --comment-id must be provided.
+    At least one of --comments-path or --fetch-comment-id must be provided.
     """
-    if not comments_path and not comment_id:
-        print("Error: Either --comments-path or --comment-id must be provided.")
+    if not comments_path and not fetch_comment_id:
+        print("Error: Either --comments-path or --fetch-comment-id must be provided.")
         return
 
-    if comments_path and comment_id:
-        print("Error: Only one of --comments-path or --comment-id can be provided, not both.")
+    if comments_path and fetch_comment_id:
+        print("Error: Only one of --comments-path or --fetch-comment-id can be provided, not both.")
         return
 
     comments = []
@@ -765,15 +766,16 @@ def handle_agent_mention(
     package_name = None
     code = None
 
-    if comment_id:
+    if fetch_comment_id:
+        source_comment_id = fetch_comment_id
         environment = os.getenv("ENVIRONMENT_NAME")
         if not environment:
             print("Error: ENVIRONMENT_NAME environment variable is not set. Please set it in your .env file.")
             return
         # Fetch the comment from the database and manufacture a conversation
-        result = get_comment_with_context(comment_id, environment=environment)
+        result = get_comment_with_context(fetch_comment_id, environment=environment)
         if not result:
-            print(f"Comment with ID '{comment_id}' not found in {environment} environment.")
+            print(f"Comment with ID '{fetch_comment_id}' not found in {environment} environment.")
             return
 
         language = result.get("language")
@@ -784,20 +786,41 @@ def handle_agent_mention(
         original_text = original_comment.get("CommentText", "")
 
         if not language:
-            print(f"Could not determine language for comment '{comment_id}'.")
+            print(f"Could not determine language for comment '{fetch_comment_id}'.")
             return
 
         if not feedback_text or feedback_text == "No feedback entries found.":
-            print(f"No feedback associated with comment '{comment_id}'. Nothing to process.")
+            print(f"No feedback associated with comment '{fetch_comment_id}'. Nothing to process.")
             return
 
-        # Manufacture a conversation: the original AI comment followed by the feedback
+        # Manufacture a conversation matching the ApiViewAgentComment dict shape
+        # that the production C# caller sends.
         comments = [
-            f"[APIView Copilot]: {original_text}",
-            f"[Reviewer feedback]: {feedback_text}",
+            {
+                "lineNo": 0,
+                "createdOn": original_comment.get("CreatedOn", ""),
+                "createdBy": original_comment.get("CreatedBy", "APIView Copilot"),
+                "commentText": original_text,
+                "upvotes": len(original_comment.get("Upvotes", [])) if isinstance(original_comment.get("Upvotes"), list) else original_comment.get("Upvotes", 0),
+                "downvotes": len(original_comment.get("Downvotes", [])) if isinstance(original_comment.get("Downvotes"), list) else original_comment.get("Downvotes", 0),
+                "isResolved": original_comment.get("IsResolved", False),
+                "severity": original_comment.get("Severity", ""),
+                "threadId": original_comment.get("ThreadId", ""),
+            },
+            {
+                "lineNo": 0,
+                "createdOn": "",
+                "createdBy": "Reviewer",
+                "commentText": feedback_text,
+                "upvotes": 0,
+                "downvotes": 0,
+                "isResolved": False,
+                "severity": "",
+                "threadId": original_comment.get("ThreadId", ""),
+            },
         ]
 
-        print(f"Processing feedback for comment '{comment_id}':")
+        print(f"Processing feedback for comment '{fetch_comment_id}':")
         print(f"  Language: {language}")
         print(f"  Package: {package_name}")
         print(f"  Original comment: {original_text[:100]}...")
@@ -816,6 +839,7 @@ def handle_agent_mention(
         language = data.get("language", None)
         package_name = data.get("package_name", None)
         code = data.get("code", None)
+        source_comment_id = data.get("source_comment_id", None) or source_comment_id
 
     # Resolve language to canonical and pretty forms
     try:
@@ -830,6 +854,7 @@ def handle_agent_mention(
             "language": pretty_language,
             "packageName": package_name,
             "code": code,
+            "sourceCommentId": source_comment_id,
         }
         print(f"{BOLD_BLUE}=== DRY RUN: Mention Agent Payload ==={RESET}")
         print(json.dumps(payload, indent=2))
@@ -842,7 +867,13 @@ def handle_agent_mention(
         try:
             resp = requests.post(
                 api_endpoint,
-                json={"comments": comments, "language": language, "packageName": package_name, "code": code},
+                json={
+                    "comments": comments,
+                    "language": language,
+                    "packageName": package_name,
+                    "code": code,
+                    "sourceCommentId": source_comment_id,
+                },
                 headers=_build_auth_header(),
                 timeout=60,
             )
@@ -859,6 +890,7 @@ def handle_agent_mention(
             language=pretty_language,
             package_name=package_name,
             code=code,
+            source_comment_id=source_comment_id,
         )
 
 
@@ -878,6 +910,7 @@ def handle_agent_thread_resolution(comments_path: str, remote: bool = False):
     language = data.get("language", None)
     package_name = data.get("package_name", None)
     code = data.get("code", None)
+    source_comment_id = data.get("source_comment_id", None)
     # Resolve language to canonical and pretty forms
     try:
         apiview_language, pretty_language = resolve_language(language)
@@ -892,7 +925,13 @@ def handle_agent_thread_resolution(comments_path: str, remote: bool = False):
         try:
             resp = requests.post(
                 api_endpoint,
-                json={"comments": comments, "language": language, "packageName": package_name, "code": code},
+                json={
+                    "comments": comments,
+                    "language": language,
+                    "packageName": package_name,
+                    "code": code,
+                    "sourceCommentId": source_comment_id,
+                },
                 headers=_build_auth_header(),
                 timeout=60,
             )
@@ -909,6 +948,7 @@ def handle_agent_thread_resolution(comments_path: str, remote: bool = False):
             language=pretty_language,
             package_name=package_name,
             code=code,
+            source_comment_id=source_comment_id,
         )
 
 
@@ -1792,13 +1832,7 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--comments-path", "-c"],
                 default=None,
             )
-            ac.argument(
-                "comment_id",
-                type=str,
-                help="ID of a comment to fetch from the APIView database to process feedback.",
-                options_list=["--comment-id", "-i"],
-                default=None,
-            )
+
             ac.argument(
                 "include_auth",
                 action="store_true",
@@ -2039,10 +2073,24 @@ class CliCommandsLoader(CLICommandsLoader):
             )
         with ArgumentsContext(self, "agent mention") as ac:
             ac.argument(
+                "fetch_comment_id",
+                type=str,
+                help="Fetch a comment from the APIView database to process feedback. Also used as --source-comment-id for audit traceability.",
+                options_list=["--fetch-comment-id"],
+                default=None,
+            )
+            ac.argument(
                 "dry_run",
                 help="Print the payload that would be sent to the mention agent without executing it.",
                 options_list=["--dry-run"],
                 action="store_true",
+            )
+            ac.argument(
+                "source_comment_id",
+                type=str,
+                help="The APIView comment ID that triggered this request, recorded on any memories created for audit traceability. Automatically set when --fetch-comment-id is used.",
+                options_list=["--source-comment-id"],
+                default=None,
             )
         with ArgumentsContext(self, "db") as ac:
             ac.argument(

@@ -496,7 +496,7 @@ public sealed partial class DotnetLanguageService: LanguageService
             .Replace("{serviceDirectory}", serviceDirectory)
             .Replace("{packageName}", packageName)
             .Replace("{safeName}", safeName)
-            + Environment.NewLine;
+            + "\n";
     }
 
     private static string? AddArtifactToCiYaml(string existingYaml, string packageName)
@@ -512,9 +512,9 @@ public sealed partial class DotnetLanguageService: LanguageService
         if (lastArtifactMatch.Success)
         {
             var indent = lastArtifactMatch.Groups["indent"].Value;
-            var artifactEntry = $"{indent}- name: {packageName}{Environment.NewLine}{indent}  safeName: {safeName}";
+            var artifactEntry = $"{indent}- name: {packageName}\n{indent}  safeName: {safeName}";
             var insertPosition = lastArtifactMatch.Index + lastArtifactMatch.Length;
-            return existingYaml.Insert(insertPosition, Environment.NewLine + artifactEntry);
+            return existingYaml.Insert(insertPosition, "\n" + artifactEntry);
         }
 
         // Fallback: look for just "Artifacts:" and append after it
@@ -522,9 +522,9 @@ public sealed partial class DotnetLanguageService: LanguageService
         if (artifactsHeaderMatch.Success)
         {
             var indent = artifactsHeaderMatch.Groups["indent"].Value;
-            var artifactEntry = $"{indent}- name: {packageName}{Environment.NewLine}{indent}  safeName: {safeName}";
+            var artifactEntry = $"{indent}- name: {packageName}\n{indent}  safeName: {safeName}";
             var insertPosition = artifactsHeaderMatch.Index + artifactsHeaderMatch.Length;
-            return existingYaml.Insert(insertPosition, artifactEntry + Environment.NewLine);
+            return existingYaml.Insert(insertPosition, artifactEntry + "\n");
         }
 
         return null;

@@ -123,7 +123,8 @@ async function createOrUpdateDataPlaneCiYaml(
     generatedPackageDirectory: string,
     npmPackageInfo: NpmPackageInfo
 ): Promise<string> {
-    throw new Error('Not implemented function');
+    logger.warn('createOrUpdateDataPlaneCiYaml is not implemented yet.');
+    return '';
 }
 
 export async function createOrUpdateCiYaml(

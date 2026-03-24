@@ -42,7 +42,11 @@ Before calling `search_knowledge_base`, determine these parameters:
 
 **Azure DevOps Pipeline** (pipelines domain, `azure-sdk` org):
 - Parse `project` and `buildId` from URL (`dev.azure.com/azure-sdk/{project}/_build/results?buildId={buildId}`).
-- Call `pipelines_get_build_log` for the log manifest, then `pipelines_get_build_log_by_id` for only the **last log ID**. Do NOT fetch every log entry.
+- Prefer `azsdk_analyze_pipeline` to diagnose failures from a build URL/build ID.
+- Use `analyzeWithAgent=false` by default for reliability. Only use `analyzeWithAgent=true` if the user explicitly asks for agentic analysis.
+- Use `azsdk_get_pipeline_status` when only current status is needed.
+- Use `azsdk_get_pipeline_llm_artifacts` when test-result artifacts are needed.
+- Do not fetch full raw build logs unless explicitly required by the user.
 
 ## Non-Technical Questions
 For greetings, casual chat, suggestions, ideas, or general non-technical inquiries:

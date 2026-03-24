@@ -1,13 +1,13 @@
 """Integration tests for Azure DevOps MCP tools.
 
-These tests verify that ``create_ado_mcp_tool`` correctly creates an
-MCP tool backed by the Azure DevOps MCP server via stdio.
+These tests verify that ``create_azsdk_mcp_tool`` correctly creates an
+MCP tool backed by the Azure SDK MCP server via stdio.
 
 Requirements:
   - ``AZURE_APPCONFIG_ENDPOINT`` env var set (for App Configuration)
   - Azure credentials available (``DefaultAzureCredential``)
-  - ``npx`` available on PATH
-  - Network access to Azure DevOps (dev.azure.com/azure-sdk)
+    - ``azsdk`` available on PATH
+  - Network access to Azure SDK MCP server
 """
 
 from __future__ import annotations
@@ -33,7 +33,7 @@ from azure.identity.aio import DefaultAzureCredential
 
 import config.app_config as app_config
 from config.app_config import get as cfg
-from tools.ado_mcp_tools import create_ado_mcp_tool
+from tools.azsdk_mcp_tools import create_azsdk_mcp_tool
 
 
 @pytest_asyncio.fixture(scope="module")
@@ -48,23 +48,23 @@ async def ai_client():
 
 
 @pytest_asyncio.fixture(scope="module")
-async def ado_mcp_tool():
-    """Create the ADO MCP tool (requires App Configuration to be loaded)."""
+async def azsdk_mcp_tool():
+    """Create the AZSDK MCP tool (requires App Configuration to be loaded)."""
     await app_config.init()
-    return await create_ado_mcp_tool()
+    return await create_azsdk_mcp_tool()
 
 
 @pytest.mark.asyncio
-async def test_ado_mcp_search(ai_client, ado_mcp_tool) -> None:
-    """Run an agent with the ADO MCP tool and search for doc in the azure-sdk org."""
+async def test_azsdk_mcp_search(ai_client, azsdk_mcp_tool) -> None:
+    """Run an agent with the AZSDK MCP tool and search for doc in the azure-sdk org."""
     async with Agent(
         client=ai_client,
-        name="AdoMcpTestAgent",
+        name="AzsdkMcpTestAgent",
         instructions=(
-            "You are a helpful assistant that can interact with Azure DevOps. "
-            "Use the Azure DevOps tools to answer questions."
+            "You are a helpful assistant that can interact with Azure SDK MCP tools. "
+            "Use the Azure SDK MCP tools to answer questions."
         ),
-        tools=ado_mcp_tool,
+        tools=azsdk_mcp_tool,
     ) as agent:
         result = await agent.run(
             "Search for doc containing 'Test Proxy' in the 'internal' "

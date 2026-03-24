@@ -26,7 +26,7 @@ from azure.ai.agentserver.agentframework import from_agent_framework
 import config.app_config as app_config
 from config.app_config import get as cfg
 from tools.knowledge_tools import KnowledgeTools
-from tools.ado_mcp_tools import create_ado_mcp_tool
+from tools.azsdk_mcp_tools import create_azsdk_mcp_tool
 from tools.github_mcp_tools import create_github_mcp_tool
 from tools.tenant_tools import TenantTools
 from utils.azure_ai_foundry import get_agent_client
@@ -48,20 +48,22 @@ async def main() -> None:
     agent_client = get_agent_client()
     instructions = _load_instructions(Path(__file__).parent / "instruction.md")
     knowledge_tools = KnowledgeTools()
-    ado_mcp_tool = await create_ado_mcp_tool()
+    azsdk_mcp_tool = await create_azsdk_mcp_tool()
     github_mcp_tool = await create_github_mcp_tool(agent_client)
     tenant_tools = TenantTools()
+
+    tools = [
+        knowledge_tools.search_knowledge_base,
+        azsdk_mcp_tool,
+        github_mcp_tool,
+        tenant_tools.route_tenant,
+    ]
 
     agent = Agent(
         agent_client,
         name="azure-sdk-qa-bot-agent",
         instructions=instructions,
-        tools=[
-            knowledge_tools.search_knowledge_base,
-            ado_mcp_tool,
-            github_mcp_tool,
-            tenant_tools.route_tenant,
-        ],
+        tools=tools,
     )
 
     model = cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL")
@@ -78,7 +80,7 @@ if __name__ == "__main__":
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
         stream=sys.stdout,
     )
-    
+
     logger.info("Agent container starting...")
 
     asyncio.run(main())

@@ -500,24 +500,27 @@ public sealed partial class DotnetLanguageService: LanguageService
     private static string? AddArtifactToCiYaml(string existingYaml, string packageName)
     {
         var safeName = GenerateSafeName(packageName);
-        var artifactEntry = $"    - name: {packageName}{Environment.NewLine}      safeName: {safeName}";
 
-        // Find the last artifact entry and insert after it.
+        // Find the last artifact entry and insert after it, matching its indentation.
         var lastArtifactMatch = Regex.Match(
             existingYaml,
-            @"-\s+name:\s+\S+[^\S\r\n]*(?:\r?\n[^\S\r\n]+(?!-\s+name:)\S[^\r\n]*)*",
+            @"^(?<indent>\s*)-\s+name:\s+\S+[^\S\r\n]*(?:\r?\n[^\S\r\n]+(?!-\s+name:)\S[^\r\n]*)*",
             RegexOptions.Multiline | RegexOptions.RightToLeft);
 
         if (lastArtifactMatch.Success)
         {
+            var indent = lastArtifactMatch.Groups["indent"].Value;
+            var artifactEntry = $"{indent}- name: {packageName}{Environment.NewLine}{indent}  safeName: {safeName}";
             var insertPosition = lastArtifactMatch.Index + lastArtifactMatch.Length;
             return existingYaml.Insert(insertPosition, Environment.NewLine + artifactEntry);
         }
 
         // Fallback: look for just "Artifacts:" and append after it
-        var artifactsHeaderMatch = Regex.Match(existingYaml, @"Artifacts:\s*\r?\n");
+        var artifactsHeaderMatch = Regex.Match(existingYaml, @"^(?<indent>\s*)Artifacts:\s*\r?\n", RegexOptions.Multiline);
         if (artifactsHeaderMatch.Success)
         {
+            var indent = artifactsHeaderMatch.Groups["indent"].Value;
+            var artifactEntry = $"{indent}- name: {packageName}{Environment.NewLine}{indent}  safeName: {safeName}";
             var insertPosition = artifactsHeaderMatch.Index + artifactsHeaderMatch.Length;
             return existingYaml.Insert(insertPosition, artifactEntry + Environment.NewLine);
         }

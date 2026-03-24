@@ -18,7 +18,7 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Interaction
 
         public async Task<string> AskQuestionAsync(string question)
         {
-            var client = new CopilotClient();
+            using var client = new CopilotClient();
             var sessionConfig = new SessionConfig
             {
                 Streaming = true,
@@ -70,8 +70,8 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Interaction
         private string BuildPrompt(string question)
         {
             var sb = new StringBuilder();
-            sb.AppendLine("You are a synthetic customer in a benchmark test. Please answer the question:");
-            sb.AppendLine(question);
+            sb.AppendLine("SYSTEM INSTRUCTION:");
+            sb.AppendLine("You are a synthetic customer in a benchmark test. Please answer the questions asked by the agent based on the context provided. If you cannot find out answer, please reply empty string.");
             sb.AppendLine("Here are some questions and answers for context:");
             foreach (var qa in QuestionsAndAnswers)
             {
@@ -79,7 +79,9 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Interaction
                 sb.AppendLine($"A: {qa.Answer}");
                 sb.AppendLine();
             }
-            sb.AppendLine("Please provide a detailed answer to the question based on the context provided. If you cannot find out answer, please reply empty string.");
+            sb.AppendLine("");
+            sb.AppendLine("Please answer the following question:");
+            sb.AppendLine(question);
             return sb.ToString();
         }
     }

@@ -30,15 +30,6 @@ class Reference(BaseModel):
     header3: str = ""
 
 
-class RouteTenantResult(BaseModel):
-    """Output of the route_tenant tool call."""
-
-    route_tenant: str | None = None
-    tenant_guideline: str = ""
-    knowledge_sources: list[dict[str, str]] = []
-    routed: bool = False
-
-
 class SearchKnowledgeBaseResult(BaseModel):
     """Output of the search_knowledge_base tool call."""
 

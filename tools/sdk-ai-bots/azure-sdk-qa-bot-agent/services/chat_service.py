@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import AsyncIterator
 
 from openai.types.responses import ResponseFunctionToolCall, ResponseOutputMessage
 
@@ -16,6 +17,7 @@ from config.tenant_config import (
 from models.chat import ChatRequest, ChatResponse
 from services.conversation_service import ConversationService
 from tools import TOOL_REGISTRY
+from tools.skills import get_skill_to_tenant_map
 from utils.azure_ai_foundry import get_project_client
 
 logger = logging.getLogger(__name__)
@@ -141,15 +143,15 @@ class ChatService:
     def _postprocess(self, response, conversation_id: str) -> ChatResponse:
         """Map hosted-agent response to `ChatResponse`."""
         tool_results = self._extract_tool_results(response.output)
-        route = tool_results.get("route_tenant")
         search = tool_results.get("search_knowledge_base")
         references = search.results if search else []
+        routed_tenant = self._extract_routed_tenant(response.output)
         return ChatResponse(
             answer=response.output_text,
             conversation_id=conversation_id,
             references=references,
-            routed_tenant=route.route_tenant if route else None,
-            routed=route.routed if route else False,
+            routed_tenant=routed_tenant,
+            routed=routed_tenant is not None,
         )
 
     @staticmethod
@@ -222,3 +224,28 @@ class ChatService:
                 )
 
         return results
+
+    @staticmethod
+    def _extract_routed_tenant(items) -> str | None:
+        """Detect the routed tenant from load_skill calls.
+
+        When the agent calls ``load_skill("<skill-name>")``, map the skill
+        name back to a tenant ID using the reverse skill→tenant map.
+        """
+        if not items:
+            return None
+
+        skill_to_tenant = get_skill_to_tenant_map()
+
+        for item in items:
+            if isinstance(item, ResponseFunctionToolCall) and item.name == "load_skill":
+                try:
+                    args = json.loads(item.arguments) if isinstance(item.arguments, str) else item.arguments
+                    skill_name = args.get("skill_name", "")
+                    tenant_id = skill_to_tenant.get(skill_name)
+                    if tenant_id:
+                        logger.info("Routed via skill %s → tenant %s", skill_name, tenant_id)
+                        return tenant_id
+                except (json.JSONDecodeError, AttributeError):
+                    pass
+        return None

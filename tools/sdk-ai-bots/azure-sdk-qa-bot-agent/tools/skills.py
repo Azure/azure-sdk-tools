@@ -123,3 +123,8 @@ def create_tenant_skills() -> list[Skill]:
         )
         logger.info("Created skill: %s (tenant=%s)", skill_name, tenant_id.value)
     return skills
+
+
+def get_skill_to_tenant_map() -> dict[str, str]:
+    """Return a mapping from skill name to tenant ID string."""
+    return {skill_name: tenant_id.value for tenant_id, skill_name in _TENANT_SKILL_MAP.items()}

@@ -12,8 +12,8 @@
             "description": "version-spread-property",
             "prompt": "I added `...Azure.ResourceManager.ManagedServiceIdentityProperty;` which update all my existing API versions and introduce a breaking change. I want is to introduce the properties of the spread model '...ManagedServiceIdentityProperty' in a new API version 2025-05-04-preview only.",
             "testfiles": [
-                "Versioning/001001-version-spread-property/employee.tsp",
-                "Versioning/001001-version-spread-property/main.tsp"
+                "001001-version-spread-property/employee.tsp",
+                "001001-version-spread-property/main.tsp"
             ],
             "verifyPlan": [
                 "1. The spread model ManagedServiceIdentityProperty should remain on the Employee model.",
@@ -25,8 +25,8 @@
             "description": "version-default-value",
             "prompt": "add a default value `21` for property age in model EmployeeProperties from a api version say 2025-11-01",
             "testfiles": [
-                "Versioning/001002-version-default-value/main.tsp",
-                "Versioning/001002-version-default-value/readme.md"
+                "001002-version-default-value/main.tsp",
+                "001002-version-default-value/readme.md"
             ],
             "verifyPlan": [
                 "1. The original age property should be marked as removed starting from the new version and renamed to a different name to avoid conflicts.",
@@ -38,8 +38,8 @@
             "description": "version-required-to-optional",
             "prompt": "change the property age of EmployeeProperties from required to optional for new api version 2025-05-04-preview",
             "testfiles": [
-                "Versioning/001003-version-required-to-optional/main.tsp",
-                "Versioning/001003-version-required-to-optional/readme.md"
+                "001003-version-required-to-optional/main.tsp",
+                "001003-version-required-to-optional/readme.md"
             ],
             "verifyPlan": [
                 "1. The age property should be annotated with a decorator indicating it was made optional starting from the new preview version."
@@ -50,8 +50,8 @@
             "description": "version-property-decorator",
             "prompt": "change the visibility of property 'provisioningState' from Lifecycle.Read to Lifecycle.Read and Lifecycle.Create in version 2025-05-04-preview only",
             "testfiles": [
-                "Versioning/001004-version-property-decorator/main.tsp",
-                "Versioning/001004-version-property-decorator/readme.md"
+                "001004-version-property-decorator/main.tsp",
+                "001004-version-property-decorator/readme.md"
             ],
             "verifyPlan": [
                 "1. The original provisioningState property should be marked as removed starting from the new preview version and renamed to avoid conflicts.",
@@ -63,10 +63,10 @@
             "description": "version-add-preview-after-preview",
             "prompt": "Add a new preview version `2025-05-04-preview` to my service widget resource manager. Exclude Feature: `age` property with default value 21** (replaced old `age` property, which was renamed to `oldAge` and removed), remove old preview",
             "testfiles": [
-                "Versioning/001005-version-add-preview-after-preview/employee.tsp",
-                "Versioning/001005-version-add-preview-after-preview/main.tsp",
-                "Versioning/001005-version-add-preview-after-preview/readme.md",
-                "Versioning/001005-version-add-preview-after-preview/examples"
+                "001005-version-add-preview-after-preview/employee.tsp",
+                "001005-version-add-preview-after-preview/main.tsp",
+                "001005-version-add-preview-after-preview/readme.md",
+                "001005-version-add-preview-after-preview/examples"
             ],
             "verifyPlan": [
                 "1. The new preview version should be added to the Versions enum with the @previewVersion decorator, replacing the old preview version.",
@@ -82,10 +82,10 @@
             "description": "version-add-preview-after-stable",
             "prompt": "Add a new preview version `2025-05-04-preview` to my service.",
             "testfiles": [
-                "Versioning/001006-version-add-preview-after-stable/employee.tsp",
-                "Versioning/001006-version-add-preview-after-stable/main.tsp",
-                "Versioning/001006-version-add-preview-after-stable/readme.md",
-                "Versioning/001006-version-add-preview-after-stable/examples"
+                "001006-version-add-preview-after-stable/employee.tsp",
+                "001006-version-add-preview-after-stable/main.tsp",
+                "001006-version-add-preview-after-stable/readme.md",
+                "001006-version-add-preview-after-stable/examples"
             ],
             "verifyPlan": [
                 "1. The new preview version should be added to the Versions enum with the @previewVersion decorator, keeping all existing stable versions.",
@@ -99,10 +99,10 @@
             "description": "version-add-stable-after-preview",
             "prompt": "I want to add a new stable version `2025-01-01`.",
             "testfiles": [
-                "Versioning/001007-version-add-stable-after-preview/employee.tsp",
-                "Versioning/001007-version-add-stable-after-preview/main.tsp",
-                "Versioning/001007-version-add-stable-after-preview/readme.md",
-                "Versioning/001007-version-add-stable-after-preview/examples"
+                "001007-version-add-stable-after-preview/employee.tsp",
+                "001007-version-add-stable-after-preview/main.tsp",
+                "001007-version-add-stable-after-preview/readme.md",
+                "001007-version-add-stable-after-preview/examples"
             ],
             "verifyPlan": [
                 "1. The new stable version should be added to the Versions enum, and the old preview version should be removed from the enum.",
@@ -118,10 +118,10 @@
             "description": "version-add-stable-after-stable",
             "prompt": "Add a new stable version `2025-01-01` to my service. In this new version, I want to add a new property `department` of type `string` to `EmployeeProperties`.",
             "testfiles": [
-                "Versioning/001008-version-add-stable-after-stable/employee.tsp",
-                "Versioning/001008-version-add-stable-after-stable/main.tsp",
-                "Versioning/001008-version-add-stable-after-stable/readme.md",
-                "Versioning/001008-version-add-stable-after-stable/examples"
+                "001008-version-add-stable-after-stable/employee.tsp",
+                "001008-version-add-stable-after-stable/main.tsp",
+                "001008-version-add-stable-after-stable/readme.md",
+                "001008-version-add-stable-after-stable/examples"
             ],
             "verifyPlan": [
                 "1. The new stable version should be added to the Versions enum, keeping all existing stable versions.",
@@ -135,7 +135,7 @@
             "description": "ARM-change-resource-type",
             "prompt": "change resource Employee as extension resource",
             "testfiles": [
-                "ARMTemplate/002001-ARM-change-resource-type/main.tsp"
+                "002001-ARM-change-resource-type/main.tsp"
             ],
             "verifyPlan": [
                 "1. The Employee model should use ExtensionResource as its base type instead of TrackedResource.",
@@ -149,7 +149,7 @@
             "description": "ARM-define-extension-resource",
             "prompt": "add a extension resource asset",
             "testfiles": [
-                "ARMTemplate/002002-ARM-define-extension-resource/main.tsp"
+                "002002-ARM-define-extension-resource/main.tsp"
             ],
             "verifyPlan": [
                 "1. A new file should be created for the Asset resource definition.",
@@ -164,8 +164,8 @@
             "description": "ARM-define-full-update-operation",
             "prompt": "Define a PATCH operation of Employees. It is to update properties of an employee. Ensure the definition meets TypeSpec Azure guidelines.",
             "testfiles": [
-                "ARMTemplate/002003-ARM-define-full-update-operation/employee.tsp",
-                "ARMTemplate/002003-ARM-define-full-update-operation/main.tsp"
+                "002003-ARM-define-full-update-operation/employee.tsp",
+                "002003-ARM-define-full-update-operation/main.tsp"
             ],
             "verifyPlan": [
                 "1. The update operation should use the custom patch template instead of the standard resource patch template to support full resource updates."
@@ -176,8 +176,8 @@
             "description": "ARM-define-extension-resource",
             "prompt": "Define a \"badge assignment\" extension resource. It should be an extension resource that can be attached to an employee. Ensure the definition meets TypeSpec Azure guidelines.",
             "testfiles": [
-                "ARMTemplate/002004-ARM-define-extension-resource/badgeAssignment.tsp",
-                "ARMTemplate/002004-ARM-define-extension-resource/main.tsp"
+                "002004-ARM-define-extension-resource/badgeAssignment.tsp",
+                "002004-ARM-define-extension-resource/main.tsp"
             ],
             "verifyPlan": [
                 "1. The BadgeAssignment model should be defined as an extension resource instead of a proxy resource.",
@@ -191,7 +191,7 @@
             "description": "ARM-define-the-resource",
             "prompt": "Define a Azure resource \"Employee\" under the namespace \"Microsoft.Widget\" using TypeSpec. Ensure the definition meets TypeSpec Azure design guidelines.",
             "testfiles": [
-                "ARMTemplate/002005-ARM-define-the-resource/main.tsp"
+                "002005-ARM-define-the-resource/main.tsp"
             ],
             "verifyPlan": [
                 "1. A new file should be created for the Employee resource definition.",
@@ -206,7 +206,7 @@
             "description": "ARM-define-child-resource",
             "prompt": "Create a new \"AddressResource\" child resource under the parent resource \"Employee\". Ensure the definition meets TypeSpec Azure design guidelines.",
             "testfiles": [
-                "ARMTemplate/002006-ARM-define-child-resource/main.tsp"
+                "002006-ARM-define-child-resource/main.tsp"
             ],
             "verifyPlan": [
                 "1. A new file should be created for the Address resource definition.",
@@ -220,7 +220,7 @@
             "description": "ARM-define-custom-action",
             "prompt": "Add an additional POST action called \"/notify\" to the standard operations of Employee. Ensure the definition meets TypeSpec Azure design guidelines.",
             "testfiles": [
-                "ARMTemplate/002007-ARM-define-custom-action/main.tsp"
+                "002007-ARM-define-custom-action/main.tsp"
             ],
             "verifyPlan": [
                 "1. A new extensible enum should be defined for notification priority levels.",
@@ -235,7 +235,7 @@
             "description": "ARM-add-parameters",
             "prompt": "add top and skip query parameters to the ListBySubscription operation in interface employees",
             "testfiles": [
-                "ARMTemplate/002008-ARM-add-parameters/main.tsp"
+                "002008-ARM-add-parameters/main.tsp"
             ],
             "verifyPlan": [
                 "1. The listBySubscription operation should include top and skip query parameters for pagination support.",
@@ -247,7 +247,7 @@
             "description": "dataplane-async-delete-op",
             "prompt": "Add an async delete operation for StacItems",
             "testfiles": [
-                "LongRunningOperation/003001-dataplane-async-delete-op/inma.tsp"
+                "003001-dataplane-async-delete-op/inma.tsp"
             ],
             "verifyPlan": [
                 "1. A new async delete operation should be added to the StacItems namespace.",
@@ -260,8 +260,8 @@
             "description": "arm-action-lro",
             "prompt": "Add a move async operation to move employee, operation's request is MoveRequest, response is MoveResponse",
             "testfiles": [
-                "LongRunningOperation/003002-arm-action-lro/employee.tsp",
-                "LongRunningOperation/003002-arm-action-lro/main.tsp"
+                "003002-arm-action-lro/employee.tsp",
+                "003002-arm-action-lro/main.tsp"
             ],
             "verifyPlan": [
                 "1. A new async move action should be added to the Employees interface using the ARM resource action async template.",
@@ -274,7 +274,7 @@
             "description": "arm-modify-response",
             "prompt": "Modify the LRO createOrUpdate PUT operation in interface employees so that it returns Azure-AsyncOperation header but NOT Retry-After header in the 201 response. The operation currently uses ArmResourceCreateOrReplaceAsync<Employee> template.",
             "testfiles": [
-                "LongRunningOperation/003003-arm-modify-response/main.tsp"
+                "003003-arm-modify-response/main.tsp"
             ],
             "verifyPlan": [
                 "1. A custom LRO headers alias should be defined that includes only the Azure-AsyncOperation header without the Retry-After header.",
@@ -287,8 +287,8 @@
             "description": "decorate-mgmt-resource-name-parameter",
             "prompt": "add minLength decorator to set the minLength 1 for resource name parameter of Employee resource",
             "testfiles": [
-                "Decorators/004001-decorate-mgmt-resource-name-parameter/employee.tsp",
-                "Decorators/004001-decorate-mgmt-resource-name-parameter/main.tsp"
+                "004001-decorate-mgmt-resource-name-parameter/employee.tsp",
+                "004001-decorate-mgmt-resource-name-parameter/main.tsp"
             ],
             "verifyPlan": [
                 "1. The resource name parameter should have a minLength constraint of 1 applied to it.",
@@ -300,8 +300,8 @@
             "description": "decorate-length-constrains-on-array-item",
             "prompt": "add @minLength(3) @maxLength(10) constrains for any item of assets array",
             "testfiles": [
-                "Decorators/004002-decorate-length-constrains-on-array-item/employee.tsp",
-                "Decorators/004002-decorate-length-constrains-on-array-item/main.tsp"
+                "004002-decorate-length-constrains-on-array-item/employee.tsp",
+                "004002-decorate-length-constrains-on-array-item/main.tsp"
             ],
             "verifyPlan": [
                 "1. A custom scalar type should be defined extending string with minLength and maxLength constraints applied.",
@@ -313,16 +313,16 @@
             "description": "delete-and-restore-operationId-decorator",
             "prompt": "1.Remove @operationId and #suppress \"@azure-tools/typespec-azure-core/no-openapi\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"",
             "testfiles": [
-                "Decorators/004003-delete-and-restore-operationId-decorator/BastionHost.tsp",
-                "Decorators/004003-delete-and-restore-operationId-decorator/BgpConnection.tsp",
-                "Decorators/004003-delete-and-restore-operationId-decorator/ExpressRouteGateway.tsp",
-                "Decorators/004003-delete-and-restore-operationId-decorator/ExpressRoutePort.tsp",
-                "Decorators/004003-delete-and-restore-operationId-decorator/ExpressRouteProviderPort.tsp",
-                "Decorators/004003-delete-and-restore-operationId-decorator/NetworkInterface.tsp",
-                "Decorators/004003-delete-and-restore-operationId-decorator/P2SVpnGateway.tsp",
-                "Decorators/004003-delete-and-restore-operationId-decorator/Route.tsp",
-                "Decorators/004003-delete-and-restore-operationId-decorator/VpnServerConfigurationPolicyGroup.tsp",
-                "Decorators/004003-delete-and-restore-operationId-decorator/VpnSiteLinkConnection.tsp"
+                "004003-delete-and-restore-operationId-decorator/BastionHost.tsp",
+                "004003-delete-and-restore-operationId-decorator/BgpConnection.tsp",
+                "004003-delete-and-restore-operationId-decorator/ExpressRouteGateway.tsp",
+                "004003-delete-and-restore-operationId-decorator/ExpressRoutePort.tsp",
+                "004003-delete-and-restore-operationId-decorator/ExpressRouteProviderPort.tsp",
+                "004003-delete-and-restore-operationId-decorator/NetworkInterface.tsp",
+                "004003-delete-and-restore-operationId-decorator/P2SVpnGateway.tsp",
+                "004003-delete-and-restore-operationId-decorator/Route.tsp",
+                "004003-delete-and-restore-operationId-decorator/VpnServerConfigurationPolicyGroup.tsp",
+                "004003-delete-and-restore-operationId-decorator/VpnSiteLinkConnection.tsp"
             ],
             "verifyPlan": [
                 "1. All @operationId decorators and their associated #suppress \"@azure-tools/typespec-azure-core/no-openapi\" comments should be removed from operations.",
@@ -334,7 +334,7 @@
             "description": "warning-suppress-warning",
             "prompt": "Add suppressions for the warnings produced by \"tsp compile .\", and set the justification to \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\".",
             "testfiles": [
-                "Warning/005001-warning-suppress-warning/models.tsp"
+                "005001-warning-suppress-warning/models.tsp"
             ],
             "verifyPlan": []
         }

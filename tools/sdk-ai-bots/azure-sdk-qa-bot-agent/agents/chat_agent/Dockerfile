@@ -7,7 +7,7 @@ ENV PYTHONUNBUFFERED=1
 ARG AZSDK_CLI_VERSION=0.6.3
 
 # Install Azure SDK CLI (azsdk) used by `azsdk mcp`.
-RUN tdnf install -y ca-certificates curl tar gzip \
+RUN tdnf install -y ca-certificates curl tar gzip icu git \
 	&& curl -fsSL -o /tmp/azsdk.tar.gz "https://github.com/Azure/azure-sdk-tools/releases/download/azsdk_${AZSDK_CLI_VERSION}/Azure.Sdk.Tools.Cli-standalone-linux-x64.tar.gz" \
 	&& mkdir -p /opt/azsdk \
 	&& tar -xzf /tmp/azsdk.tar.gz -C /opt/azsdk \

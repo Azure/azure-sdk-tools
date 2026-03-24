@@ -173,7 +173,7 @@ public class DotnetCiYamlProvisioningTests
     }
 
     [Test]
-    public void DiscoverPackageDirectories_SkipsTestProjects()
+    public async Task DiscoverPackageDirectories_SkipsTestProjects()
     {
         var serviceDir = Path.Combine(_repoRoot, "sdk", "storage");
 
@@ -191,7 +191,7 @@ public class DotnetCiYamlProvisioningTests
         File.WriteAllText(Path.Combine(samplesDir, "Azure.Storage.Blobs.Samples.csproj"), "<Project/>");
 
         // No src/ csproj exists, so no packages should be found
-        var packages = _service.DiscoverPackagesAsync(_repoRoot, "storage").Result;
+        var packages = await _service.DiscoverPackagesAsync(_repoRoot, "storage");
         Assert.That(packages, Has.Count.EqualTo(0), "Test/perf/samples csprojs should not be discovered");
     }
 

@@ -5,6 +5,7 @@ azure-appconfiguration>=1.7.0
 azure-identity>=1.17.0
 azure-keyvault-keys>=4.9.0
 python-dotenv>=1.0.0
+pyyaml>=6.0
 agent-framework>=1.0.0rc3
 debugpy
 # Agent development CLI tool (preview)

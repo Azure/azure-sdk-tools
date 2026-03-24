@@ -10,6 +10,7 @@ import logging
 import sys
 from pathlib import Path
 
+import yaml
 from dotenv import load_dotenv
 
 # sys.path — add the project root so top-level packages
@@ -49,7 +50,11 @@ async def main() -> None:
     agent_client = get_agent_client()
     # Limit tool-call loop iterations to prevent infinite loops.
     agent_client.function_invocation_configuration["max_iterations"] = 5
-    instructions = _load_instructions(Path(__file__).parent / "instruction.md")
+    agent_dir = Path(__file__).parent
+    instructions = _load_instructions(agent_dir / "instruction.md")
+    with open(agent_dir / "agent.yaml", encoding="utf-8") as f:
+        agent_config = yaml.safe_load(f)
+    agent_name = agent_config["name"]
     knowledge_tools = KnowledgeTools()
     azsdk_mcp_tool = await create_azsdk_mcp_tool()
     github_mcp_tool = await create_github_mcp_tool(agent_client)
@@ -66,7 +71,7 @@ async def main() -> None:
 
     agent = Agent(
         agent_client,
-        name="azure-sdk-qa-bot-agent",
+        name=agent_name,
         instructions=instructions,
         tools=tools,
         context_providers=[skills_provider],

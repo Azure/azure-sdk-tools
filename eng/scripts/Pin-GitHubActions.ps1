@@ -149,9 +149,14 @@ foreach ($group in ($unpinned | Group-Object File)) {
         $newLine = $oldLine -replace "(?<pre>uses:\s*$([regex]::Escape($r.Action)))@$([regex]::Escape($r.Ref))", "`${pre}@$sha"
         if ($newLine -ne $oldLine) {
             $lines[$idx] = $newLine
-            # Insert comment on the line above, matching indentation
+            $comment = "# SHA corresponds to $($r.Action)@$($r.Ref)"
             $indent = if ($oldLine -match '^(\s*)') { $Matches[1] } else { '' }
-            $lines.Insert($idx, "$indent# SHA corresponds to $($r.Action)@$($r.Ref)")
+            # Update existing comment above if present, otherwise insert
+            if ($idx -gt 0 -and $lines[$idx - 1] -match '^\s*# SHA corresponds to') {
+                $lines[$idx - 1] = "$indent$comment"
+            } else {
+                $lines.Insert($idx, "$indent$comment")
+            }
             $changed = $true
             $fixed++
         }

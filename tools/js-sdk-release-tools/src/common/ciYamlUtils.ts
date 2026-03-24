@@ -123,8 +123,7 @@ async function createOrUpdateDataPlaneCiYaml(
     generatedPackageDirectory: string,
     npmPackageInfo: NpmPackageInfo
 ): Promise<string> {
-    logger.warn('createOrUpdateDataPlaneCiYaml is not implemented yet.');
-    return '';
+    throw new Error('Not implemented function');
 }
 
 export async function createOrUpdateCiYaml(
@@ -133,19 +132,24 @@ export async function createOrUpdateCiYaml(
 ): Promise<string> {
     logger.info('Start to create or update CI files');
     const modularSDKType = getModularSDKType(relativeGeneratedPackageDirectoryToSdkRoot);
-    if (modularSDKType === ModularSDKType.ManagementPlane) {
-        const ciPath = await createOrUpdateManagePlaneCiYaml(
-            relativeGeneratedPackageDirectoryToSdkRoot,
-            npmPackageInfo
-        );
-        logger.info('Created or updated MPG CI files successfully.');
-        return ciPath;
-    } else {
-        const ciPath = await createOrUpdateDataPlaneCiYaml(
-            relativeGeneratedPackageDirectoryToSdkRoot,
-            npmPackageInfo
-        );
-        logger.info('Created or updated DPG CI files successfully.');
-        return ciPath;
+    try {
+        if (modularSDKType === ModularSDKType.ManagementPlane) {
+            const ciPath = await createOrUpdateManagePlaneCiYaml(
+                relativeGeneratedPackageDirectoryToSdkRoot,
+                npmPackageInfo
+            );
+            logger.info('Created or updated MPG CI files successfully.');
+            return ciPath;
+        } else {
+            const ciPath = await createOrUpdateDataPlaneCiYaml(
+                relativeGeneratedPackageDirectoryToSdkRoot,
+                npmPackageInfo
+            );
+            logger.info('Created or updated DPG CI files successfully.');
+            return ciPath;
+        }
+    } catch (e) {
+        logger.warn(`Failed to create or update CI files: ${e}`);
+        return '';
     }
 }

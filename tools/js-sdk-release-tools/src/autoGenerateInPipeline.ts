@@ -95,6 +95,8 @@ async function automationGenerateInPipeline(
                     skip,
                     repoUrl,
                     local,
+                    // support MPG for now
+                    versionPolicyName: 'management',
                     apiVersion: apiVersion,
                     sdkReleaseType: sdkReleaseType,
                     runMode: runMode as RunMode,

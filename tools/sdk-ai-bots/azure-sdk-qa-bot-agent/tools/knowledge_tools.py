@@ -51,13 +51,13 @@ class KnowledgeTools:
         sources: Annotated[
             list[str] | None,
             "List of knowledge source **names** to search. "
-            "Pick from the sources returned by ``route_tenant``. "
+            "Pick from the sources exposed by the active skill or tenant context. "
             "Example: ['typespec_docs', 'azure_api_guidelines']. "
             "If not provided, all sources configured for the tenant will be used.",
         ] = None,
         tenant_id: Annotated[
             str,
-            "The tenant ID returned by ``route_tenant``.",
+            "The active tenant ID for the current conversation.",
         ],
         service_type: Annotated[
             str | None,

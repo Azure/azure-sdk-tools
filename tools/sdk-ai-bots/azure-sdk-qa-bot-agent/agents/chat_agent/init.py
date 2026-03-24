@@ -21,6 +21,7 @@ if _project_root not in sys.path:
 load_dotenv(override=False)
 
 from agent_framework import Agent
+from agent_framework import SkillsProvider
 from azure.ai.agentserver.agentframework import from_agent_framework
 
 import config.app_config as app_config
@@ -28,7 +29,7 @@ from config.app_config import get as cfg
 from tools.knowledge_tools import KnowledgeTools
 from tools.azsdk_mcp_tools import create_azsdk_mcp_tool
 from tools.github_mcp_tools import create_github_mcp_tool
-from tools.tenant_tools import TenantTools
+from tools.skills import create_tenant_skills
 from utils.azure_ai_foundry import get_agent_client
 
 logger = logging.getLogger(__name__)
@@ -50,13 +51,15 @@ async def main() -> None:
     knowledge_tools = KnowledgeTools()
     azsdk_mcp_tool = await create_azsdk_mcp_tool()
     github_mcp_tool = await create_github_mcp_tool(agent_client)
-    tenant_tools = TenantTools()
+
+    # Build tenant skills for progressive domain expertise disclosure
+    skills = create_tenant_skills()
+    skills_provider = SkillsProvider(skills=skills)
 
     tools = [
         knowledge_tools.search_knowledge_base,
         azsdk_mcp_tool,
         github_mcp_tool,
-        tenant_tools.route_tenant,
     ]
 
     agent = Agent(
@@ -64,6 +67,7 @@ async def main() -> None:
         name="azure-sdk-qa-bot-agent",
         instructions=instructions,
         tools=tools,
+        context_providers=[skills_provider],
     )
 
     model = cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL")

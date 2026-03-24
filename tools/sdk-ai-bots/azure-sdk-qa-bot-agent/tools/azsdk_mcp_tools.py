@@ -22,6 +22,7 @@ async def create_azsdk_mcp_tool() -> MCPStdioTool:
     """Create an MCPStdioTool that launches the Azure SDK MCP server.
 
     The AZSDK org value is retained for prompt context and compatibility.
+    Only exposes pipeline analysis tools to the agent.
     """
     org = _DEFAULT_AZSDK_ORG
     env = {**os.environ}
@@ -37,12 +38,20 @@ async def create_azsdk_mcp_tool() -> MCPStdioTool:
 
     logger.info("Azure SDK MCP tool configured (org=%s)", org)
 
+    # Restrict to pipeline analysis tools only
+    allowed_tools = [
+        "azsdk_analyze_pipeline",
+        "azsdk_get_pipeline_status",
+        "azsdk_get_pipeline_llm_artifacts",
+    ]
+
     return MCPStdioTool(
         name="azsdk-mcp-tools",
         command="azsdk",
         args=["mcp"],
         env=env,
         load_prompts=False,
+        allowed_tools=allowed_tools,
         description=(
             "Azure SDK MCP server tools for Azure Pipelines analysis. "
             "Use this tool to analyze pipeline failures, get pipeline status, "

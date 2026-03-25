@@ -49,7 +49,6 @@ public class AutoReviewService : IAutoReviewService
         var review = await _reviewManager.GetReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: null);
         var apiRevision = default(APIRevisionListItemModel);
         var renderedCodeFile = new RenderedCodeFile(codeFile);
-        string incomingContentHash = await _codeFileManager.ComputeAPIContentHashAsync(codeFile);
         IEnumerable<APIRevisionListItemModel> apiRevisions = new List<APIRevisionListItemModel>();
 
         if (review != null)
@@ -74,6 +73,7 @@ public class AutoReviewService : IAutoReviewService
                     var automaticRevisionsQueue = new Queue<APIRevisionListItemModel>(automaticRevisions);
                     var comments = await _commentsManager.GetCommentsAsync(review.Id);
                     APIRevisionListItemModel latestAutomaticAPIRevision = null;
+                    string incomingContentHash = await _codeFileManager.ComputeAPIContentHashAsync(codeFile);
                     
                     while (automaticRevisionsQueue.Count > 0)
                     {

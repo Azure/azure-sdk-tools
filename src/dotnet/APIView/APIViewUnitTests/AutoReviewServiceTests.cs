@@ -21,6 +21,7 @@ namespace APIViewUnitTests
         private readonly Mock<IAPIRevisionsManager> _mockApiRevisionsManager;
         private readonly Mock<ICommentsManager> _mockCommentsManager;
         private readonly Mock<IProjectsManager> _mockProjectsManager;
+        private readonly Mock<ICodeFileManager> _mockCodeFileManager;
         private readonly AutoReviewService _service;
         private readonly ClaimsPrincipal _testUser;
 
@@ -30,13 +31,17 @@ namespace APIViewUnitTests
             _mockApiRevisionsManager = new Mock<IAPIRevisionsManager>();
             _mockCommentsManager = new Mock<ICommentsManager>();
             _mockProjectsManager = new Mock<IProjectsManager>();
+            _mockCodeFileManager = new Mock<ICodeFileManager>();
+            _mockCodeFileManager
+                .Setup(x => x.ComputeAPIContentHashAsync(It.IsAny<CodeFile>()))
+                .ReturnsAsync("test-hash");
 
             _service = new AutoReviewService(
                 _mockReviewManager.Object,
                 _mockApiRevisionsManager.Object,
                 _mockCommentsManager.Object,
                 _mockProjectsManager.Object,
-                new Mock<ICodeFileManager>().Object);
+                _mockCodeFileManager.Object);
 
             var claims = new List<Claim>
             {

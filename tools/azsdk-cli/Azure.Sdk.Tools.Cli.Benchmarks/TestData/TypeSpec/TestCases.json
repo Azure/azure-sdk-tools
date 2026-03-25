@@ -111,9 +111,9 @@
             "verifyPlan": [
                 "1. The new preview version should be added to the Versions enum with the @previewVersion decorator, replacing the old preview version.",
                 "2. The example folder should be renamed from the old preview version to the new one, and the api-version parameter in all example files should be updated accordingly.",
-                "3. The age property that was added in the previous preview should be deleted along with its @added decorator.",
-                "4. The oldAge property that was removed in the previous preview should be restored by removing the @removed decorator.",
-                "5. The oldAge renamedFrom decorator should be removed and the property should be reverted to its original name.",
+                "3. The age property's @added decorator and its default value of 21 should be removed",
+                "4. The oldAge property should be deleted entirely along with its @removed decorator",
+                "5. The oldAge property's @renamedFrom decorator should be removed along with the oldAge property itself",
                 "6. The workLocation property should have its versioning decorator updated to reference the new preview version."
             ]
         },
@@ -131,7 +131,7 @@
             "verifyPlan": [
                 "1. The new preview version should be added to the Versions enum with the @previewVersion decorator, keeping all existing stable versions.",
                 "2. A new example folder should be created for the new preview version and populated with example files.",
-                "3. Versioning decorators referencing the previous stable version should be cleaned up since those changes are now permanently part of the stable API."
+                "3. All versioning decorators in employee.tsp referencing `Versions.v2024_10_01` (including @removed/@renamedFrom on oldAge, @added on age/workLocation/AssetItem/WorkLocation, @typeChangedFrom on assets) should remain unchanged, as these describe stable version transitions unaffected by adding a new preview."
             ]
         },
         {
@@ -150,8 +150,9 @@
                 "2. The example folder should be renamed from the old preview version to the new stable version, and the api-version parameter in all example files should be updated.",
                 "3. Preview changes that are promoted to stable should have their versioning decorators updated to reference the new stable version.",
                 "4. The workLocation property and WorkLocation model that are excluded from stable should be deleted entirely.",
-                "5. The oldAge property's @removed and @renamedFrom decorators should be updated to reference the new stable version.",
-                "6. The age property's @added decorator should be updated to reference the new stable version."
+                "5. The oldAge property's @removed decorator should be updated from `@removed(Versions.v2024_10_01_preview)` to `@removed(Versions.v2025_01_01)`, and @renamedFrom should be updated from `@renamedFrom(Versions.v2024_10_01_preview, 'age')` to `@renamedFrom(Versions.v2025_01_01, 'age')`.",
+                "6. The age property's @added decorator should be updated from `@added(Versions.v2024_10_01_preview)` to `@added(Versions.v2025_01_01)`.",
+                "7. The AssetItem scalar's @added decorator should be updated from `@added(Versions.v2024_10_01_preview)` to `@added(Versions.v2025_01_01)`, and the assets property's @typeChangedFrom should be updated from `@typeChangedFrom(Versions.v2024_10_01_preview, string[])` to `@typeChangedFrom(Versions.v2025_01_01, string[])`."
             ]
         },
         {

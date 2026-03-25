@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text.Json;
 using System.Threading.Tasks;
 using ApiView;
@@ -217,9 +216,7 @@ namespace APIViewWeb.Managers
             }
             await _codeFileRepository.UpsertCodeFileAsync(apiRevisionId, reviewCodeFileModel.FileId, codeFile);
 
-            using var hashStream = new MemoryStream();
-            await codeFile.SerializeAsync(hashStream);
-            reviewCodeFileModel.ContentHash = Convert.ToHexString(SHA256.HashData(hashStream.ToArray())).ToLowerInvariant();
+            reviewCodeFileModel.ContentHash = await ManagerHelpers.ComputeContentHashAsync(codeFile);
 
             return reviewCodeFileModel;
         }

@@ -1707,4 +1707,125 @@ public class APIRevisionsManagerTests
     }
 
     #endregion
+
+    #region AreAPIRevisionsTheSame Tests
+
+    private static APIRevisionListItemModel CreateRevisionWithContentHash(string contentHash) =>
+        new()
+        {
+            Id = "revision-id",
+            ReviewId = "review-id",
+            Files = new List<APICodeFileModel>
+            {
+                new() { FileId = "file-id", FileName = "test_python.json", ContentHash = contentHash }
+            }
+        };
+
+    private static RenderedCodeFile CreateSimpleRenderedCodeFile() =>
+        new(new CodeFile
+        {
+            Name = "test_python.json",
+            Language = "Python",
+            PackageName = "test-package",
+            PackageVersion = "1.0.0"
+        });
+
+    [Fact]
+    public async Task AreAPIRevisionsTheSame_FastPath_ReturnsTrue_WhenHashesMatch()
+    {
+        RenderedCodeFile renderedCodeFile = CreateSimpleRenderedCodeFile();
+        string hash = await ManagerHelpers.ComputeContentHashAsync(renderedCodeFile.CodeFile);
+        APIRevisionListItemModel revision = CreateRevisionWithContentHash(hash);
+
+        bool result = await _manager.AreAPIRevisionsTheSame(revision, renderedCodeFile, incomingContentHash: hash);
+
+        Assert.True(result);
+        _mockCodeFileRepository.Verify(
+            x => x.GetCodeFileAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<bool>()),
+            Times.Never,
+            "Fast path should not download the blob");
+    }
+
+    [Fact]
+    public async Task AreAPIRevisionsTheSame_FastPath_ReturnsFalse_WhenHashesDiffer()
+    {
+        APIRevisionListItemModel revision = CreateRevisionWithContentHash("stored-hash-abc");
+        RenderedCodeFile renderedCodeFile = CreateSimpleRenderedCodeFile();
+
+        bool result = await _manager.AreAPIRevisionsTheSame(revision, renderedCodeFile, incomingContentHash: "different-hash-xyz");
+
+        Assert.False(result);
+        _mockCodeFileRepository.Verify(
+            x => x.GetCodeFileAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<bool>()),
+            Times.Never,
+            "Fast path should not download the blob");
+    }
+
+    [Fact]
+    public async Task AreAPIRevisionsTheSame_FastPath_AutoComputesHash_WhenNotProvided()
+    {
+        RenderedCodeFile renderedCodeFile = CreateSimpleRenderedCodeFile();
+        string expectedHash = await ManagerHelpers.ComputeContentHashAsync(renderedCodeFile.CodeFile);
+        APIRevisionListItemModel revision = CreateRevisionWithContentHash(expectedHash);
+
+        // No incomingContentHash supplied — manager should compute it from the renderedCodeFile
+        bool result = await _manager.AreAPIRevisionsTheSame(revision, renderedCodeFile);
+
+        Assert.True(result);
+        _mockCodeFileRepository.Verify(
+            x => x.GetCodeFileAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<bool>()),
+            Times.Never,
+            "Should not download blob when storedHash is set, regardless of whether caller provided hash");
+    }
+
+    [Fact]
+    public async Task AreAPIRevisionsTheSame_SlowPath_BackfillsHash_WhenStoredHashIsNull()
+    {
+        APIRevisionListItemModel revision = CreateRevisionWithContentHash(null);
+        RenderedCodeFile blobCodeFile = CreateSimpleRenderedCodeFile();
+        RenderedCodeFile incomingRenderedCodeFile = CreateSimpleRenderedCodeFile();
+
+        _mockCodeFileRepository
+            .Setup(x => x.GetCodeFileAsync(It.IsAny<APIRevisionListItemModel>(), false))
+            .ReturnsAsync(blobCodeFile);
+
+        _mockCodeFileManager
+            .Setup(x => x.AreAPICodeFilesTheSame(blobCodeFile, incomingRenderedCodeFile))
+            .Returns(true);
+
+        _mockAPIRevisionsRepository
+            .Setup(x => x.UpsertAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()))
+            .Returns(Task.CompletedTask);
+
+        bool result = await _manager.AreAPIRevisionsTheSame(revision, incomingRenderedCodeFile);
+
+        Assert.True(result);
+        string expectedHash = await ManagerHelpers.ComputeContentHashAsync(blobCodeFile.CodeFile);
+        Assert.Equal(expectedHash, revision.Files[0].ContentHash);
+        _mockAPIRevisionsRepository.Verify(
+            x => x.UpsertAPIRevisionAsync(It.Is<APIRevisionListItemModel>(r => r.Files[0].ContentHash == expectedHash)),
+            Times.Once,
+            "Lazy backfill should persist the hash so future calls use the fast path");
+    }
+
+    [Fact]
+    public async Task AreAPIRevisionsTheSame_SlowPath_ReturnsFalse_WhenBlobThrowsJsonException()
+    {
+        APIRevisionListItemModel revision = CreateRevisionWithContentHash(null);
+        RenderedCodeFile renderedCodeFile = CreateSimpleRenderedCodeFile();
+
+        _mockCodeFileRepository
+            .Setup(x => x.GetCodeFileAsync(It.IsAny<APIRevisionListItemModel>(), false))
+            .ThrowsAsync(new JsonException("corrupt blob"));
+
+        bool result = await _manager.AreAPIRevisionsTheSame(revision, renderedCodeFile);
+
+        Assert.False(result);
+        _mockAPIRevisionsRepository.Verify(
+            x => x.UpsertAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()),
+            Times.Never,
+            "Should not upsert when blob read fails");
+    }
+
+    #endregion
 }

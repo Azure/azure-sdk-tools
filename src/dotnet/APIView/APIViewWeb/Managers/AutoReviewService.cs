@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
 using ApiView;
+using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
@@ -50,12 +50,7 @@ public class AutoReviewService : IAutoReviewService
         var renderedCodeFile = new RenderedCodeFile(codeFile);
         IEnumerable<APIRevisionListItemModel> apiRevisions = new List<APIRevisionListItemModel>();
 
-        string incomingContentHash;
-        using (var hashStream = new MemoryStream())
-        {
-            await codeFile.SerializeAsync(hashStream);
-            incomingContentHash = Convert.ToHexString(SHA256.HashData(hashStream.ToArray())).ToLowerInvariant();
-        }
+        string incomingContentHash = await ManagerHelpers.ComputeContentHashAsync(codeFile);
 
         if (review != null)
         {

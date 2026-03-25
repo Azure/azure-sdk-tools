@@ -4,17 +4,16 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 from models.conversation import ConversationType
+from config.tenant_config import TenantID
 
 
 class ChatRequest(BaseModel):
     """Incoming chat request from the Teams App."""
 
-    tenant_id: str = "unknown"
+    tenant_id: TenantID
     conversation_id: str | None = None
     conversation_type: ConversationType | None = None
     message: str
-    history: list[dict] = []
-    sources: list[str] = []
 
 
 class Reference(BaseModel):
@@ -40,8 +39,6 @@ class ChatResponse(BaseModel):
     """Chat response returned to the caller."""
 
     answer: str
-    conversation_id: str | None = None
+    agent_conversation_id: str
     references: list[Reference] = []
-    intention: str | None = None
-    routed_tenant: str | None = None
-    routed: bool = False
+    routed_tenant: TenantID | None = None

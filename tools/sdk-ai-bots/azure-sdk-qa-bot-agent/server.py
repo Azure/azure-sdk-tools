@@ -6,12 +6,16 @@ and handles feedback through a local workflow.
 """
 
 import uvicorn
+import logging
+import sys
+from contextvars import ContextVar
 from contextlib import asynccontextmanager
+from uuid import uuid4
 from dotenv import load_dotenv
 
 load_dotenv(override=False)
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from models.chat import ChatRequest, ChatResponse
 from models.conversation import ConversationMessage
 from models.feedback import FeedbackRequest, FeedbackResponse
@@ -23,29 +27,81 @@ from utils.azure_credential import close_credential
 from pydantic import BaseModel
 import config.app_config as app_config
 
+_request_id_ctx_var: ContextVar[str] = ContextVar("request_id", default="system")
+
+
+class _RequestIdFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        record.request_id = _request_id_ctx_var.get() or "system"
+        return True
+
+
+def _configure_logging() -> None:
+    """Configure process-wide logging for backend debug and local runs."""
+    formatter = logging.Formatter(
+        "%(asctime)s %(levelname)s [RequestID: %(request_id)s] %(name)s: %(message)s"
+    )
+    request_id_filter = _RequestIdFilter()
+
+    root = logging.getLogger()
+    if not root.handlers:
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setFormatter(formatter)
+        handler.addFilter(request_id_filter)
+        root.addHandler(handler)
+        root.setLevel(logging.INFO)
+    else:
+        root.setLevel(logging.INFO)
+        for handler in root.handlers:
+            handler.setFormatter(formatter)
+            handler.addFilter(request_id_filter)
+
+    for logger_name in ("uvicorn", "uvicorn.error", "uvicorn.access"):
+        uvicorn_logger = logging.getLogger(logger_name)
+        for handler in uvicorn_logger.handlers:
+            handler.setFormatter(formatter)
+            handler.addFilter(request_id_filter)
+
+
+_configure_logging()
+logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(application: FastAPI):
     """Startup / shutdown lifecycle for the FastAPI app."""
+    logger.info("Backend server starting up")
     await app_config.init()
     yield
     # Cleanup SDK clients on shutdown
+    logger.info("Backend server shutting down")
     await close_clients()
     await close_credential()
 
 
 app = FastAPI(title="Azure SDK QA Bot Backend", lifespan=lifespan)
 
+
+@app.middleware("http")
+async def request_id_middleware(request: Request, call_next):
+    request_id = str(uuid4())
+    token = _request_id_ctx_var.set(request_id)
+    try:
+        response = await call_next(request)
+    finally:
+        _request_id_ctx_var.reset(token)
+    response.headers["x-request-id"] = request_id
+    return response
+
 _chat_service = ChatService()
 _conversation_service = ConversationService()
 _feedback_service = FeedbackService()
 
-
+@app.post("/completion", response_model=ChatResponse) # backwards compatibility for old endpoint
 @app.post("/agent/chat", response_model=ChatResponse)
 async def handle_chat(req: ChatRequest):
     """Process a chat request through the chat service."""
     return await _chat_service.chat(req)
-
 
 @app.post("/agent/feedback", response_model=FeedbackResponse)
 async def handle_feedback(req: FeedbackRequest):

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import logging
-from collections.abc import AsyncIterator
 
 from openai.types.responses import ResponseFunctionToolCall, ResponseOutputMessage
 
@@ -19,6 +18,12 @@ from services.conversation_service import ConversationService
 from tools import TOOL_REGISTRY
 from tools.skills import get_skill_to_tenant_map
 from utils.azure_ai_foundry import get_project_client
+from azure.ai.projects.aio import AIProjectClient
+from azure.ai.projects.models import AgentDetails
+from openai.types.responses import Response as OpenAIResponse
+from openai.types.responses import ResponseFunctionToolCall, ResponseOutputMessage, ResponseOutputItem
+from config.tenant_config import TenantID
+from openai import OpenAI
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +41,7 @@ class ChatService:
         agent = await self._get_agent(project_client)
         openai_client = project_client.get_openai_client()
 
-        conversation_id, is_new = await self._resolve_conversation(
+        agent_conversation_id, is_new = await self._resolve_conversation(
             openai_client, req
         )
 
@@ -45,7 +50,7 @@ class ChatService:
                 req.tenant_id
             )
             await openai_client.conversations.items.create(
-                conversation_id=conversation_id,
+                conversation_id=agent_conversation_id,
                 items=[
                     {
                         "type": "message",
@@ -56,7 +61,7 @@ class ChatService:
             )
 
         await openai_client.conversations.items.create(
-            conversation_id=conversation_id,
+            conversation_id=agent_conversation_id,
             items=[
                 {
                     "type": "message",
@@ -67,7 +72,7 @@ class ChatService:
         )
 
         response = await openai_client.responses.create(
-            conversation=conversation_id,
+            conversation=agent_conversation_id,
             extra_body={
                 "agent_reference": {
                     "name": agent.name,
@@ -76,9 +81,9 @@ class ChatService:
             },
         )
 
-        return self._postprocess(response, conversation_id)
+        return self._postprocess(req, response, agent_conversation_id)
 
-    async def _get_agent(self, project_client):
+    async def _get_agent(self, project_client: AIProjectClient) -> AgentDetails:
         """Load hosted-agent definition from Foundry."""
         agent_name = cfg("AI_FOUNDRY_AGENT_NAME", "azure-sdk-qa-bot-chat-agent")
         agent = await project_client.agents.get(agent_name)
@@ -90,7 +95,7 @@ class ChatService:
         logger.info("Using agent: name=%s", agent.name)
         return agent
 
-    async def _resolve_conversation(self, openai_client, req: ChatRequest) -> tuple[str, bool]:
+    async def _resolve_conversation(self, openai_client: OpenAI, req: ChatRequest) -> tuple[str, bool]:
         """Get an existing conversation id or create a new conversation."""
         stored_conversation_id = await self._conversation_service.get_agent_conversation_id(
             req.conversation_id,
@@ -119,7 +124,7 @@ class ChatService:
         logger.info("Created new AI Foundry conversation: %s", new_id)
         return new_id, True
 
-    def _build_tenant_system_message(self, tenant_id: str) -> str:
+    def _build_tenant_system_message(self, tenant_id: TenantID) -> str:
         """Inject tenant context so the agent knows the current domain."""
         parts: list[str] = [f"[tenant_context] original_tenant_id={tenant_id}"]
 
@@ -140,19 +145,20 @@ class ChatService:
 
         return "\n".join(parts)
 
-    def _postprocess(self, response, conversation_id: str) -> ChatResponse:
+    def _postprocess(self, req: ChatRequest, response: OpenAIResponse, agent_conversation_id: str) -> ChatResponse:
         """Map hosted-agent response to `ChatResponse`."""
         tool_results = self._extract_tool_results(response.output)
         search = tool_results.get("search_knowledge_base")
         references = search.results if search else []
-        routed_tenant = self._extract_routed_tenant(response.output)
-        return ChatResponse(
+        tenant = self._extract_routed_tenant(response.output)
+        resp = ChatResponse(
             answer=response.output_text,
-            conversation_id=conversation_id,
+            agent_conversation_id=agent_conversation_id,
             references=references,
-            routed_tenant=routed_tenant,
-            routed=routed_tenant is not None,
         )
+        if req.tenant_id != tenant:
+           resp.routed_tenant = tenant
+        return resp
 
     @staticmethod
     def _unwrap_json(raw_output) -> str | None:
@@ -181,7 +187,7 @@ class ChatService:
             return json.dumps(value)
         return None
 
-    def _extract_tool_results(self, items) -> dict[str, object]:
+    def _extract_tool_results(self, items: list[ResponseOutputItem]) -> dict[str, object]:
         """Decode tool outputs using TOOL_REGISTRY models.
 
         Returns a dict mapping tool name to its decoded Pydantic model instance.
@@ -190,8 +196,6 @@ class ChatService:
 
         if not items:
             return results
-
-        items = list(items)
 
         # Build mapping from call_id to tool name
         call_id_to_name: dict[str, str] = {}
@@ -226,7 +230,7 @@ class ChatService:
         return results
 
     @staticmethod
-    def _extract_routed_tenant(items) -> str | None:
+    def _extract_routed_tenant(items: list[ResponseOutputItem]) -> TenantID | None:
         """Detect the routed tenant from load_skill calls.
 
         When the agent calls ``load_skill("<skill-name>")``, map the skill

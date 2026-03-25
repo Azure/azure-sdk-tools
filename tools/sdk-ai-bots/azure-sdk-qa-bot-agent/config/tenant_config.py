@@ -546,7 +546,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
 _PROMPTS_DIR = Path(__file__).resolve().parent.parent / "prompts"
 
 
-def get_tenant_config(tenant_id: str) -> TenantConfig | None:
+def get_tenant_config(tenant_id: TenantID) -> TenantConfig | None:
     """Return the config for *tenant_id*, or ``None`` if unknown."""
     try:
         tid = TenantID(tenant_id)
@@ -560,7 +560,7 @@ def get_all_tenant_ids() -> list[str]:
     return [t.value for t in _TENANT_CONFIG_MAP]
 
 
-def get_tenant_sources_display(tenant_id: str) -> list[dict[str, str]]:
+def get_tenant_sources_display(tenant_id: TenantID) -> list[dict[str, str]]:
     """Return the knowledge sources for a tenant as a list of {name, description} dicts.
 
     This is the format sent to the LLM so it can decide which sources to query.
@@ -571,7 +571,7 @@ def get_tenant_sources_display(tenant_id: str) -> list[dict[str, str]]:
     return [src.to_display_dict() for src in config.sources]
 
 
-def load_tenant_qa_guideline(tenant_id: str) -> str:
+def load_tenant_qa_guideline(tenant_id: TenantID) -> str:
     """Load the tenant-specific QA guideline markdown from prompts/.
 
     Returns an empty string if the tenant or file is not found.
@@ -585,7 +585,7 @@ def load_tenant_qa_guideline(tenant_id: str) -> str:
     return guideline_path.read_text(encoding="utf-8").strip()
 
 
-def get_tenant_scope_description(tenant_id: str) -> str:
+def get_tenant_scope_description(tenant_id: TenantID) -> str:
     """Return a human-readable description of the tenant's scope and topics.
 
     Used to inject into the system message so the LLM knows the current

@@ -115,6 +115,7 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
             // set up test tsp files - copy them to the tspProjectPath, replacing if they exist
             if (TestTspFiles.Any())
             {
+                Console.WriteLine($"Setting up test TypeSpec files for scenario '{Name}'...");
                 // Look for TestData in the source directory, not the build output
                 var baseDir = AppContext.BaseDirectory;
                 var testDataPath = Path.Combine(baseDir, "TestData", "TypeSpec");
@@ -148,7 +149,9 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
                 }
 
                 // cache the setup changes
+                Console.WriteLine($"Caching setup changes for scenario '{Name}'...");
                 await workspace.RunCommandAsync("git", "add", ".");
+                Console.WriteLine($"Committing setup changes for scenario '{Name}'...");
                 await workspace.RunCommandAsync("git", "commit", "-m", $"Setup for scenario '{Name}'");
             }
             if (!string.IsNullOrWhiteSpace(AuthoringSkillPath))
@@ -166,9 +169,11 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
                 }
             }
             // Install npm dependencies required for TypeSpec compilation
+            Console.WriteLine($"Installing npm dependencies for scenario '{Name}'...");
             await workspace.RunCommandAsync("npm", "ci");
 
             // Download and install the Azure SDK MCP CLI tool using the common setup script
+            Console.WriteLine($"Installing Azure SDK MCP CLI tool for scenario '{Name}'...");
             await workspace.RunCommandAsync("pwsh", "./eng/common/mcp/azure-sdk-mcp.ps1", "-InstallDirectory", workspace.RootPath);
 
             // Configure the path to the installed MCP executable for this scenario

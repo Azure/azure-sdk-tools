@@ -7,14 +7,20 @@
             "testfiles": [
                 "version-add-preview-after-preview/employee.tsp",
                 "version-add-preview-after-preview/main.tsp",
-                "version-add-preview-after-preview/examples" 
+                "version-add-preview-after-preview/examples"
 
             ],
+            "qas": [
+                {
+                    "question": "The latest API version is `2024-10-01-preview`. Features added in this preview include:\n- `workLocation` property on Employee\n- `WorkLocation` model (country, company, seatNumber)\n- Modified `age` property with default value of 21\n\nDo you want to carry over all these features to the new `2025-05-04-preview` version?",
+                    "answer": "Yes, carry over all features."
+                }
+            ],
             "verifyPlan": [
-                "1.Add the new version `2025-05-04-preview` to the `Versions` enum and decoratored '@previewVersion'.",
-                "2. Example folders are correctly set up. rename the example folder from the old preview to the new one (e.g., `mv examples/2024-10-01-preview examples/2025-05-04-preview`), update the `api-version` parameter in all example files, and add or modify examples to reflect API changes.",
-                "3. For Any types or properties that were `@added` in the previous preview should be removed in the new preview, for each one, the agent should simply delete the type or property (along with its `@added` decorator).",
-                "4. For Any types or properties that were `@removed` in the previous preview should now appear in the new preview, For each one, the agent should remove the `@removed` decorator."
+                "1. 'v2024_10_01_preview' is replaced with `v2025-05-04-preview` in the `Versions` enum and decorate with '@previewVersion'.",
+                "2. Example folders are correctly set up. 2024-10-01-preview example folder is renamed to '2025-05-04-preview' (e.g., `mv examples/2024-10-01-preview examples/2025-05-04-preview`), update the `api-version` parameter in all example files, and add or modify examples to reflect API changes.",
+                "3. For Any types or properties that were `@added` in the previous preview 2024-10-01-preview should be decorated with `@added` in the new preview 2025-05-04-preview.",
+                "4. For Any types or properties that were `@removed` in the previous preview 2024-10-01-preview should now be decorated with '@removed' in the new preview 2025-05-04-preview."
             ]
         },
         {

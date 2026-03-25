@@ -3,9 +3,23 @@ trigger: none
 
 pr: none
 
+parameters:
+  - name: CodeownerTargetRepos
+    type: object
+    default:
+      - Name: azure-sdk-for-net
+        SetUp:
+          - task: UseDotNet@2
+            # .NET 10 is required by Azure SDK for .NET engsys tooling
+            inputs:
+              version: 10.0.x
+
+        # TODO: Remove when this is ready for production
+        DraftPr: true
+        CloseAfterOpeningForTesting: true
+
 stages:
 - stage: Run
-
   variables:
   - template: ./templates/variables/globals.yml
 
@@ -60,3 +74,76 @@ stages:
         artifact: pipelineOwners
         condition: succeededOrFailed()
 
+- stage: GenerateCodeowners
+  dependsOn: []
+  variables:
+    - template: /eng/pipelines/templates/variables/image.yml
+
+  jobs:
+    - job: UpdateCodeownersFiles
+      pool:
+        name: $(LINUXPOOL)
+        demands: ImageOverride -equals $(LINUXVMIMAGE)
+
+      variables:
+        PRBranchName: "automation/codeowners-update"
+
+      steps:
+        - checkout: self
+
+        - template: /eng/common/pipelines/templates/steps/install-azsdk-cli.yml
+
+        - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+
+        - ${{ each repo in parameters.CodeownerTargetRepos }}:
+
+          - ${{ each item in repo.SetUp }}:
+            - ${{ item }}
+
+          - pwsh: |
+              git clone --depth=1 "https://github.com/Azure/${{ repo.Name }}.git" ${{ repo.Name }}
+            displayName: Clone ${{ repo.Name }}
+            workingDirectory: $(Build.SourcesDirectory)
+
+          - pwsh: git checkout -b "$(PRBranchName)"
+            displayName: "Create $(PRBranchName) branch for ${{ repo.Name }}"
+            workingDirectory: "$(Build.SourcesDirectory)/${{ repo.Name }}"
+
+          - task: AzureCLI@2
+            displayName: "Update CODEOWNERS for ${{ repo.Name }}"
+            inputs:
+              azureSubscription: 'opensource-api-connection'
+              scriptType: pscore
+              scriptLocation: inlineScript
+              inlineScript: |
+                & "$(AZSDK)" config codeowners generate `
+                  --repo-root "$(Build.SourcesDirectory)/${{ repo.Name }}" `
+                  --package-types mgmt `
+                  --section "Management Libraries"
+
+                & "$(AZSDK)" config codeowners generate `
+                  --repo-root "$(Build.SourcesDirectory)/${{ repo.Name }}" `
+                  --package-types client `
+                  --package-types compat `
+                  --package-types data `
+                  --section "Client Libraries"
+            env:
+              # Explicit mapping required for secrets
+              GH_TOKEN: $(GH_TOKEN)
+
+          - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
+            parameters:
+              WorkingDirectory: "$(Build.SourcesDirectory)/${{ repo.Name }}"
+              BaseBranchName: main
+              PRBranchName: "$(PRBranchName)"
+              PROwner: Azure
+              RepoName: ${{ repo.Name }}
+              PushArgs: '-f'
+              CommitMsg: "[CODEOWNERS] Automated CODEOWNERS update for ${{ repo.Name }}"
+              OpenAsDraft: ${{ repo.DraftPr }}
+              CloseAfterOpenForTesting: ${{ repo.CloseAfterOpeningForTesting }}
+              PRTitle: '[CODEOWNERS] Automated CODEOWNERS Update'
+              PRBody: |
+                Updating CODEOWNERS
+
+                This was run in $(System.CollectionUri)$(System.TeamProject)/_build/results?buildId=$(Build.BuildId)

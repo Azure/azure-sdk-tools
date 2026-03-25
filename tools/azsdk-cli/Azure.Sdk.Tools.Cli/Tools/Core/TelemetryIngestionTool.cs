@@ -55,12 +55,12 @@ public class TelemetryIngestionTool : MCPTool
     {
         var cmd = new McpCommand(IngestCommandName, "Ingest telemetry events into Application Insights")
         {
-            Hidden = true
+            clientTypeOption,
+            eventTypeOption,
+            skillNameOption,
+            sessionIdOption
         };
-        cmd.Options.Add(clientTypeOption);
-        cmd.Options.Add(eventTypeOption);
-        cmd.Options.Add(skillNameOption);
-        cmd.Options.Add(sessionIdOption);
+        cmd.Hidden = true;
         return cmd;
     }
     

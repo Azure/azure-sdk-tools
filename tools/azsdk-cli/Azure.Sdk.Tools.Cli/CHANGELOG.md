@@ -4,6 +4,8 @@
 
 ### Features Added
 
+- Added a new CLI command to ingest telemetry event from copilot hooks
+
 ### Breaking Changes
 
 ### Bugs Fixed

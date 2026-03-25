@@ -1,6 +1,6 @@
 # Release History
 
-## 0.6.4 (Unreleased)
+## 0.6.5 (Unreleased)
 
 ### Features Added
 
@@ -11,6 +11,12 @@
 ### Bugs Fixed
 
 ### Other Changes
+
+## 0.6.4 (2026-03-25)
+
+### Features Added
+
+- Added a new CLI command to ingest telemetry events from Copilot hooks
 
 ## 0.6.3 (2026-03-12)
 

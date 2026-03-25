@@ -26,6 +26,8 @@ internal static class TelemetryConstants
         public const string CommandArgs = "CommandArgs";
         public const string CommandResponse = "CommandResponse";
         public const string DebugTag = "IsDebugEnvironment";
+        public const string SkillName = "SkillName";
+        public const string SessionId = "SessionId";
 
         // Custom Properties that get promoted to tags
         public const string Language = "language";

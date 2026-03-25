@@ -46,7 +46,7 @@ namespace APIViewWeb.Models
 
     public class AIReviewJobStartedResponseModel
     {
-        [JsonPropertyName("job_id")]
+        [JsonPropertyName("jobId")]
         public string JobId { get; set; }
     }
 

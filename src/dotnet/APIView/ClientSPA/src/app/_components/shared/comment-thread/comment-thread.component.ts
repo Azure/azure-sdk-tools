@@ -170,6 +170,14 @@ export class CommentThreadComponent {
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['codePanelRowData']) {
+      // Ensure comments within the thread are always in chronological order.
+      // The server normalizes timestamps, but this is a defense-in-depth
+      // measure against legacy data with mixed timezone kinds.
+      if (this.codePanelRowData?.comments && this.codePanelRowData.comments.length > 1) {
+        this.codePanelRowData.comments.sort((a, b) =>
+          new Date(a.createdOn).getTime() - new Date(b.createdOn).getTime()
+        );
+      }
       this.setCommentResolutionState();
       this.updateConversationCodeContext();
     }

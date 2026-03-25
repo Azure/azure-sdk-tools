@@ -1793,5 +1793,64 @@ public class APIRevisionsManagerTests
         Assert.Equal(1, result.TotalUnresolvedCount);
     }
 
+    [Fact]
+    public async Task GetReviewQualityScoreAsync_NormalizesTimestamps_BeforeSelectingRepresentative()
+    {
+        // Simulate the DateTime.Now vs DateTime.UtcNow bug:
+        // Architect posts MustFix at 10:00 UTC, user replies (no severity) 5 min later
+        // but stored with DateTime.Now (Kind=Local). Without normalization the local
+        // face value may sort before the architect's comment, picking the wrong
+        // thread representative. After normalization both are UTC and the MustFix
+        // comment is correctly selected as the first in the thread.
+        var revision = CreateRevisionForQualityTest();
+        var architectUtcTime = new DateTime(2026, 3, 25, 10, 0, 0, DateTimeKind.Utc);
+        // Construct the local-time equivalent of 10:05 UTC (what DateTime.Now returned)
+        var userReplyActualUtc = new DateTime(2026, 3, 25, 10, 5, 0, DateTimeKind.Utc);
+        var userLocalTime = userReplyActualUtc.ToLocalTime();
+
+        var comments = new List<CommentItemModel>
+        {
+            CreateComment(CommentSeverity.MustFix, elementId: "elem-1", threadId: "thread-1",
+                createdOn: architectUtcTime),
+            CreateComment(severity: null, elementId: "elem-1", threadId: "thread-1",
+                createdOn: userLocalTime)
+        };
+        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
+            .ReturnsAsync(comments);
+
+        var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
+
+        // After normalization, the MustFix (10:00 UTC) is the first comment in the thread,
+        // so the thread gets the MustFix severity penalty.
+        Assert.Equal(80, result.Score); // 100 - 20 (MustFix penalty)
+        Assert.Equal(1, result.UnresolvedMustFixCount);
+
+        // Verify the non-UTC comment was persisted back to fix it in the DB
+        _mockCommentsRepository.Verify(
+            r => r.UpsertCommentAsync(It.Is<CommentItemModel>(c => c.CreatedOn.Kind == DateTimeKind.Utc)),
+            Times.AtLeastOnce);
+    }
+
+    [Fact]
+    public async Task GetReviewQualityScoreAsync_AllUtcTimestamps_SkipsNormalization()
+    {
+        var revision = CreateRevisionForQualityTest();
+        var comments = new List<CommentItemModel>
+        {
+            CreateComment(CommentSeverity.ShouldFix, elementId: "elem-1",
+                createdOn: new DateTime(2026, 3, 25, 10, 0, 0, DateTimeKind.Utc))
+        };
+        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
+            .ReturnsAsync(comments);
+
+        await _manager.GetReviewQualityScoreAsync(revision.Id);
+
+        // All timestamps are UTC — no UpsertCommentAsync calls for normalization
+        _mockCommentsRepository.Verify(
+            r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()), Times.Never);
+    }
+
     #endregion
 }

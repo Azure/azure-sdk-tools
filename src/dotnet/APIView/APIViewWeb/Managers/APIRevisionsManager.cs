@@ -1516,6 +1516,22 @@ namespace APIViewWeb.Managers
             // Sync diagnostic comments if necessary so the DB is up-to-date before scoring.
             // This mirrors the sync that happens when the review page loads.
             var allComments = (await _commentsRepository.GetCommentsAsync(revision.ReviewId, isDeleted: false, commentType: CommentType.APIRevision)).ToList();
+
+            // Self-heal: normalize any non-UTC timestamps before scoring so that
+            // thread-representative selection (OrderBy CreatedOn) picks the correct
+            // comment. Only iterate and persist when at least one comment needs fixing.
+            if (allComments.Any(c => c.CreatedOn.Kind != DateTimeKind.Utc))
+            {
+                foreach (var comment in allComments)
+                {
+                    if (CommentsManager.NormalizeTimestampsToUtc(comment))
+                    {
+                        _telemetryClient.TrackTrace(
+                            $"Quality score: normalized non-UTC timestamps for comment {comment.Id} in review {comment.ReviewId}.");
+                        await _commentsRepository.UpsertCommentAsync(comment);
+                    }
+                }
+            }
             if (codeFile != null && codeFile.CodeFile.Diagnostics != null && codeFile.CodeFile.Diagnostics.Length > 0)
             {
                 var diagnosticResult = await _diagnosticCommentService.SyncDiagnosticCommentsAsync(

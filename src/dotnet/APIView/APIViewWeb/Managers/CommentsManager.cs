@@ -124,8 +124,27 @@ namespace APIViewWeb.Managers
             {
                 comments = comments.Where(c => c.CommentSource != CommentSource.Diagnostic);
             }
-            
-            return comments;
+
+            // Self-heal: normalize any non-UTC timestamps and persist corrections.
+            // Legacy data may contain DateTime.Now (local time) values mixed with
+            // DateTime.UtcNow values, causing incorrect sort order on the server.
+            // Guard: only iterate and persist when at least one comment needs fixing.
+            var commentsList = comments.ToList();
+            if (commentsList.Any(c => c.CreatedOn.Kind != DateTimeKind.Utc))
+            {
+                foreach (var comment in commentsList)
+                {
+                    if (NormalizeTimestampsToUtc(comment))
+                    {
+                        _logger.LogInformation(
+                            "Normalized non-UTC timestamps for comment {CommentId} in review {ReviewId}.",
+                            comment.Id, comment.ReviewId);
+                        await _commentsRepository.UpsertCommentAsync(comment);
+                    }
+                }
+            }
+
+            return commentsList;
         }
 
         public async Task<ReviewCommentsModel> GetReviewCommentsAsync(string reviewId)
@@ -153,10 +172,10 @@ namespace APIViewWeb.Managers
                 {
                     ChangeAction = CommentChangeAction.Created,
                     ChangedBy = user.GetGitHubLogin(),
-                    ChangedOn = DateTime.Now,
+                    ChangedOn = DateTime.UtcNow,
                 });
             comment.CreatedBy = user.GetGitHubLogin();
-            comment.CreatedOn = DateTime.Now;
+            comment.CreatedOn = DateTime.UtcNow;
 
             // Inherit thread resolution state: if this comment is joining an existing
             // resolved thread, mark it resolved so the thread stays consistently resolved.
@@ -195,9 +214,9 @@ namespace APIViewWeb.Managers
                {
                    ChangeAction = CommentChangeAction.Edited,
                    ChangedBy = user.GetGitHubLogin(),
-                   ChangedOn = DateTime.Now,
+                   ChangedOn = DateTime.UtcNow,
                });
-            comment.LastEditedOn = DateTime.Now;
+            comment.LastEditedOn = DateTime.UtcNow;
             comment.CommentText = commentText;
 
             foreach (var taggedUser in taggedUsers)
@@ -239,9 +258,9 @@ namespace APIViewWeb.Managers
                 {
                     ChangeAction = CommentChangeAction.Edited,
                     ChangedBy = user.GetGitHubLogin(),
-                    ChangedOn = DateTime.Now,
+                    ChangedOn = DateTime.UtcNow,
                 });
-            comment.LastEditedOn = DateTime.Now;
+            comment.LastEditedOn = DateTime.UtcNow;
             comment.Severity = severity;
 
             await _commentsRepository.UpsertCommentAsync(comment);
@@ -486,7 +505,7 @@ namespace APIViewWeb.Managers
                     {
                         ChangeAction = CommentChangeAction.Resolved,
                         ChangedBy = user.GetGitHubLogin(),
-                        ChangedOn = DateTime.Now,
+                        ChangedOn = DateTime.UtcNow,
                     });
                 comment.IsResolved = true;
                 await _commentsRepository.UpsertCommentAsync(comment);
@@ -519,7 +538,7 @@ namespace APIViewWeb.Managers
                     {
                         ChangeAction = CommentChangeAction.UnResolved,
                         ChangedBy = user.GetGitHubLogin(),
-                        ChangedOn = DateTime.Now,
+                        ChangedOn = DateTime.UtcNow,
                     });
                 comment.IsResolved = false;
                 await _commentsRepository.UpsertCommentAsync(comment);
@@ -772,6 +791,40 @@ namespace APIViewWeb.Managers
             }
 
             return anyResolved;
+        }
+
+        /// <summary>
+        /// Normalizes all DateTime fields on a comment to UTC. Returns true if any
+        /// field was changed (indicating the comment needs to be persisted).
+        /// Legacy data may contain DateTime.Now (local time) values that cause
+        /// incorrect ordering when compared with DateTime.UtcNow values.
+        /// </summary>
+        public static bool NormalizeTimestampsToUtc(CommentItemModel comment)
+        {
+            bool changed = false;
+
+            if (comment.CreatedOn.Kind != DateTimeKind.Utc)
+            {
+                comment.CreatedOn = comment.CreatedOn.ToUniversalTime();
+                changed = true;
+            }
+
+            if (comment.LastEditedOn.HasValue && comment.LastEditedOn.Value.Kind != DateTimeKind.Utc)
+            {
+                comment.LastEditedOn = comment.LastEditedOn.Value.ToUniversalTime();
+                changed = true;
+            }
+
+            foreach (var entry in comment.ChangeHistory)
+            {
+                if (entry.ChangedOn.HasValue && entry.ChangedOn.Value.Kind != DateTimeKind.Utc)
+                {
+                    entry.ChangedOn = entry.ChangedOn.Value.ToUniversalTime();
+                    changed = true;
+                }
+            }
+
+            return changed;
         }
 
         private async Task AssertOwnerAsync(ClaimsPrincipal user, CommentItemModel commentModel)

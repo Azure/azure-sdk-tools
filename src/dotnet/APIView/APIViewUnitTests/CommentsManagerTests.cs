@@ -1841,5 +1841,233 @@ public class CommentsManagerTests
     }
 
     #endregion
+
+    #region Timestamp Normalization and Thread Sort Tests
+
+    [Fact]
+    public void NormalizeTimestampsToUtc_LocalCreatedOn_ConvertedToUtc()
+    {
+        var localTime = new DateTime(2026, 3, 25, 2, 0, 0, DateTimeKind.Local);
+        var comment = new CommentItemModel
+        {
+            ReviewId = "review1",
+            CreatedOn = localTime,
+            ChangeHistory = new List<CommentChangeHistoryModel>()
+        };
+
+        bool changed = CommentsManager.NormalizeTimestampsToUtc(comment);
+
+        Assert.True(changed);
+        Assert.Equal(DateTimeKind.Utc, comment.CreatedOn.Kind);
+        Assert.Equal(localTime.ToUniversalTime(), comment.CreatedOn);
+    }
+
+    [Fact]
+    public void NormalizeTimestampsToUtc_UtcCreatedOn_NoChange()
+    {
+        var utcTime = new DateTime(2026, 3, 25, 10, 0, 0, DateTimeKind.Utc);
+        var comment = new CommentItemModel
+        {
+            ReviewId = "review1",
+            CreatedOn = utcTime,
+            ChangeHistory = new List<CommentChangeHistoryModel>()
+        };
+
+        bool changed = CommentsManager.NormalizeTimestampsToUtc(comment);
+
+        Assert.False(changed);
+        Assert.Equal(utcTime, comment.CreatedOn);
+    }
+
+    [Fact]
+    public void NormalizeTimestampsToUtc_UnspecifiedCreatedOn_ConvertedToUtc()
+    {
+        var unspecifiedTime = new DateTime(2026, 3, 25, 2, 0, 0, DateTimeKind.Unspecified);
+        var comment = new CommentItemModel
+        {
+            ReviewId = "review1",
+            CreatedOn = unspecifiedTime,
+            ChangeHistory = new List<CommentChangeHistoryModel>()
+        };
+
+        bool changed = CommentsManager.NormalizeTimestampsToUtc(comment);
+
+        Assert.True(changed);
+        Assert.Equal(DateTimeKind.Utc, comment.CreatedOn.Kind);
+    }
+
+    [Fact]
+    public void NormalizeTimestampsToUtc_LocalLastEditedOn_ConvertedToUtc()
+    {
+        var localTime = new DateTime(2026, 3, 25, 2, 0, 0, DateTimeKind.Local);
+        var comment = new CommentItemModel
+        {
+            ReviewId = "review1",
+            CreatedOn = DateTime.UtcNow,
+            LastEditedOn = localTime,
+            ChangeHistory = new List<CommentChangeHistoryModel>()
+        };
+
+        bool changed = CommentsManager.NormalizeTimestampsToUtc(comment);
+
+        Assert.True(changed);
+        Assert.Equal(DateTimeKind.Utc, comment.LastEditedOn!.Value.Kind);
+        Assert.Equal(localTime.ToUniversalTime(), comment.LastEditedOn.Value);
+    }
+
+    [Fact]
+    public void NormalizeTimestampsToUtc_LocalChangeHistoryEntry_ConvertedToUtc()
+    {
+        var localTime = new DateTime(2026, 3, 25, 2, 0, 0, DateTimeKind.Local);
+        var comment = new CommentItemModel
+        {
+            ReviewId = "review1",
+            CreatedOn = DateTime.UtcNow,
+            ChangeHistory = new List<CommentChangeHistoryModel>
+            {
+                new CommentChangeHistoryModel
+                {
+                    ChangeAction = CommentChangeAction.Created,
+                    ChangedBy = "user1",
+                    ChangedOn = localTime
+                }
+            }
+        };
+
+        bool changed = CommentsManager.NormalizeTimestampsToUtc(comment);
+
+        Assert.True(changed);
+        Assert.Equal(DateTimeKind.Utc, comment.ChangeHistory[0].ChangedOn!.Value.Kind);
+    }
+
+    [Fact]
+    public async Task GetCommentsAsync_NormalizesAndPersistsNonUtcTimestamps()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+
+        var localTime = new DateTime(2026, 3, 25, 2, 0, 0, DateTimeKind.Local);
+        var utcTime = new DateTime(2026, 3, 25, 10, 0, 0, DateTimeKind.Utc);
+        var comments = new List<CommentItemModel>
+        {
+            new CommentItemModel
+            {
+                Id = "c1", ReviewId = "review1", CreatedOn = localTime,
+                CommentType = CommentType.APIRevision,
+                ChangeHistory = new List<CommentChangeHistoryModel>()
+            },
+            new CommentItemModel
+            {
+                Id = "c2", ReviewId = "review1", CreatedOn = utcTime,
+                CommentType = CommentType.APIRevision,
+                ChangeHistory = new List<CommentChangeHistoryModel>()
+            }
+        };
+        commentsRepoMock.Setup(r => r.GetCommentsAsync("review1", false, CommentType.APIRevision))
+            .ReturnsAsync(comments);
+
+        var result = (await manager.GetCommentsAsync("review1", commentType: CommentType.APIRevision)).ToList();
+
+        // c1 had local time — should have been normalized and persisted
+        Assert.Equal(DateTimeKind.Utc, result[0].CreatedOn.Kind);
+        commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.Is<CommentItemModel>(c => c.Id == "c1")), Times.Once);
+        // c2 was already UTC — should NOT have been persisted
+        commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.Is<CommentItemModel>(c => c.Id == "c2")), Times.Never);
+    }
+
+    [Fact]
+    public void NormalizeTimestampsToUtc_MixedKindsInThread_SortCorrectlyAfterNormalization()
+    {
+        // Simulate the real-world bug: AI comment at 10:00 UTC, user reply 5 min later
+        // but stored with DateTime.Now (Kind=Local) instead of DateTime.UtcNow.
+        // The local face value depends on the machine timezone, so raw Ticks comparison
+        // may give wrong order in westward timezones. After normalization, both are UTC
+        // and the sort is always correct regardless of timezone.
+        var aiCommentTime = new DateTime(2026, 3, 25, 10, 0, 0, DateTimeKind.Utc);
+        var userReplyActualUtc = new DateTime(2026, 3, 25, 10, 5, 0, DateTimeKind.Utc);
+        // What DateTime.Now would have returned (same instant, local representation)
+        var userReplyLocalTime = userReplyActualUtc.ToLocalTime();
+
+        var aiComment = new CommentItemModel
+        {
+            Id = "ai-1", ReviewId = "r1", ElementId = "e1", ThreadId = "t1",
+            CreatedOn = aiCommentTime,
+            ChangeHistory = new List<CommentChangeHistoryModel>()
+        };
+        var userReply = new CommentItemModel
+        {
+            Id = "user-1", ReviewId = "r1", ElementId = "e1", ThreadId = "t1",
+            CreatedOn = userReplyLocalTime,
+            ChangeHistory = new List<CommentChangeHistoryModel>()
+        };
+
+        // After normalization: both are UTC, so the sort is always correct
+        CommentsManager.NormalizeTimestampsToUtc(aiComment);
+        CommentsManager.NormalizeTimestampsToUtc(userReply);
+
+        var sorted = new List<CommentItemModel> { aiComment, userReply }
+            .OrderBy(c => c.CreatedOn).ToList();
+        Assert.Equal("ai-1", sorted[0].Id);
+        Assert.Equal("user-1", sorted[1].Id);
+    }
+
+    [Fact]
+    public void NormalizeTimestampsToUtc_AllUtc_ThreadSortRemainsCorrect()
+    {
+        var time1 = new DateTime(2026, 3, 25, 10, 0, 0, DateTimeKind.Utc);
+        var time2 = new DateTime(2026, 3, 25, 10, 5, 0, DateTimeKind.Utc);
+        var time3 = new DateTime(2026, 3, 25, 10, 10, 0, DateTimeKind.Utc);
+
+        var comments = new List<CommentItemModel>
+        {
+            new CommentItemModel { Id = "c1", CreatedOn = time1, ChangeHistory = [] },
+            new CommentItemModel { Id = "c2", CreatedOn = time2, ChangeHistory = [] },
+            new CommentItemModel { Id = "c3", CreatedOn = time3, ChangeHistory = [] }
+        };
+
+        // No changes needed
+        foreach (var c in comments)
+        {
+            Assert.False(CommentsManager.NormalizeTimestampsToUtc(c));
+        }
+
+        // Sort is correct
+        var sorted = comments.OrderBy(c => c.CreatedOn).ToList();
+        Assert.Equal("c1", sorted[0].Id);
+        Assert.Equal("c2", sorted[1].Id);
+        Assert.Equal("c3", sorted[2].Id);
+    }
+
+    [Fact]
+    public async Task GetCommentsAsync_AllUtc_SkipsNormalizationEntirely()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+
+        var comments = new List<CommentItemModel>
+        {
+            new CommentItemModel
+            {
+                Id = "c1", ReviewId = "review1",
+                CreatedOn = new DateTime(2026, 3, 25, 10, 0, 0, DateTimeKind.Utc),
+                CommentType = CommentType.APIRevision,
+                ChangeHistory = new List<CommentChangeHistoryModel>()
+            },
+            new CommentItemModel
+            {
+                Id = "c2", ReviewId = "review1",
+                CreatedOn = new DateTime(2026, 3, 25, 11, 0, 0, DateTimeKind.Utc),
+                CommentType = CommentType.APIRevision,
+                ChangeHistory = new List<CommentChangeHistoryModel>()
+            }
+        };
+        commentsRepoMock.Setup(r => r.GetCommentsAsync("review1", false, CommentType.APIRevision))
+            .ReturnsAsync(comments);
+
+        await manager.GetCommentsAsync("review1", commentType: CommentType.APIRevision);
+
+        // When all timestamps are already UTC, UpsertCommentAsync should never be called (performance guard)
+        commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()), Times.Never);
+    }
+
+    #endregion
 }
 

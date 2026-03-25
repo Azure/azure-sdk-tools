@@ -20,10 +20,28 @@ public class TelemetryIngestionTool : MCPTool
     private readonly ITelemetryService telemetryService;
     private readonly ILogger<TelemetryIngestionTool> logger;
 
-    private readonly Option<string> clientTypeOption;
-    private readonly Option<string> eventTypeOption;
-    private readonly Option<string?> sessionIdOption;
-    private readonly Option<string?> skillNameOption;
+    private readonly Option<string> clientTypeOption = new Option<string>("--client-type")
+    {
+        Description = "Client that generated the telemetry event (vscode or copilot-cli)",
+        Required = true
+    };
+
+    private readonly Option<string> eventTypeOption = new Option<string>("--event-type")
+    {
+        Description = "Type of telemetry event (used as the activity name)",
+        Required = true
+    };
+
+    private readonly Option<string?> sessionIdOption = new Option<string?>("--session-id")
+    {
+        Description = "Optional session ID associated with the telemetry event"
+    };
+
+    private readonly Option<string?> skillNameOption = new Option<string?>("--skill-name")
+    {
+        Description = "skill name associated with the telemetry event",
+        Required = true
+    };
 
     public TelemetryIngestionTool(
         ITelemetryService telemetryService,
@@ -31,29 +49,6 @@ public class TelemetryIngestionTool : MCPTool
     {
         this.telemetryService = telemetryService;
         this.logger = logger;
-
-        clientTypeOption = new Option<string>("--client-type")
-        {
-            Description = "Client that generated the telemetry event (vscode or copilot-cli)",
-            Required = true
-        };
-
-        eventTypeOption = new Option<string>("--event-type")
-        {
-            Description = "Type of telemetry event (used as the activity name)",
-            Required = true
-        };
-
-        skillNameOption = new Option<string?>("--skill-name")
-        {
-            Description = "skill name associated with the telemetry event",
-            Required = true
-        };
-
-        sessionIdOption = new Option<string?>("--session-id")
-        {
-            Description = "Optional session ID associated with the telemetry event"
-        };        
     }
 
     protected override Command GetCommand()

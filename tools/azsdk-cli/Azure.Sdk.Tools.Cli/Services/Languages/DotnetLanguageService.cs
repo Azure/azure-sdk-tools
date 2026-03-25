@@ -528,7 +528,7 @@ public sealed partial class DotnetLanguageService: LanguageService
              Artifacts:
              - name: {packageName}
                safeName: {safeName}
-         """
+         """;
 
     private static string CreateMgmtCiYaml(string serviceDirectory, string packageName)
     {

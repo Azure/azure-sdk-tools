@@ -180,7 +180,8 @@ namespace APIViewWeb.Managers
             // resolved thread, mark it resolved so the thread stays consistently resolved.
             // This applies to both new-style threads (shared ThreadId) and old-style
             // threads (null ThreadId, grouped by ElementId).
-            comment.IsResolved = await IsThreadResolvedAsync(comment.ReviewId, comment.ElementId, comment.ThreadId);
+            // Preserve explicit IsResolved=true from callers (e.g. batch resolve).
+            comment.IsResolved = comment.IsResolved || await IsThreadResolvedAsync(comment.ReviewId, comment.ElementId, comment.ThreadId);
 
             await _commentsRepository.UpsertCommentAsync(comment);
 

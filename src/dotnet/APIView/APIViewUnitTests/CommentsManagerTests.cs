@@ -1878,6 +1878,36 @@ public class CommentsManagerTests
         commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.Is<CommentItemModel>(c => c.Id == "c2" && c.IsResolved)), Times.Once);
     }
 
+    [Fact]
+    public async Task AddCommentAsync_CallerSetsIsResolvedTrue_PreservedEvenIfThreadUnresolved()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+
+        // Existing unresolved thread
+        var existingComments = new List<CommentItemModel>
+        {
+            CreateComment("c1", elementId: "elem-1", threadId: "thread-1", isResolved: false)
+        };
+        commentsRepoMock.Setup(r => r.GetCommentsAsync("review1", "elem-1"))
+            .ReturnsAsync(existingComments);
+
+        // Caller explicitly sets IsResolved = true (e.g. batch resolve adds reply + resolves)
+        var newComment = new CommentItemModel
+        {
+            ReviewId = "review1",
+            ElementId = "elem-1",
+            ThreadId = "thread-1",
+            CommentText = "Resolve reply",
+            IsResolved = true
+        };
+
+        await manager.AddCommentAsync(user, newComment);
+
+        // Caller's explicit true should be preserved, not overwritten by thread state
+        Assert.True(newComment.IsResolved);
+    }
+
     #endregion
 
     #region Timestamp Normalization and Thread Sort Tests

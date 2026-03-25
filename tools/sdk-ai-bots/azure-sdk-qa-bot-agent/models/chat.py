@@ -21,6 +21,7 @@ class Role(str, Enum):
     User = "user"
     Assistant = "assistant"
     System = "system"
+    Developer = "developer"
 
 
 class AdditionalInfoType(str, Enum):

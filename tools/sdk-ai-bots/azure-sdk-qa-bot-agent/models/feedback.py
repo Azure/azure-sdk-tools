@@ -8,11 +8,13 @@ from pydantic import BaseModel
 class FeedbackRequest(BaseModel):
     """Incoming feedback payload from the Teams App."""
 
+    channel_id: str | None = None
     tenant_id: str = "unknown"
-    messages: list[dict] = []
     reaction: str = "unknown"  # "good" or "bad"
     comment: str | None = None
     reasons: list[str] = []
+    link: str | None = None
+    user_name: str | None = None
 
 
 class FeedbackResponse(BaseModel):

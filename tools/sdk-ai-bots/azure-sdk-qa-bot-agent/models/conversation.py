@@ -7,9 +7,11 @@ from enum import Enum
 
 from pydantic import BaseModel, Field
 
+
 class UserRole(str, Enum):
     system = "system"
     user = "user"
+
 
 class ConversationType(str, Enum):
     teams_channel = "teams_channel"
@@ -23,9 +25,11 @@ class ConversationDocumentType(str, Enum):
 class ConversationPartitionPrefix(str, Enum):
     channel = "channel"
 
+
 class ConversationMessage(BaseModel):
     id: str  # Message ID from Teams
     channel_id: str  # Channel ID
+    sender_role: UserRole  # "user" or "system"
     sender_id: str  # User ID
     sender_name: str  # Display name
     content: str  # Message content

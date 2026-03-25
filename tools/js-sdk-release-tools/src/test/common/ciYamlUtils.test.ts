@@ -21,7 +21,7 @@ describe("createOrUpdateCiYaml", () => {
         await remove(tempDir);
     });
 
-    describe("management plane (versionPolicyName = 'management')", () => {
+    describe("management plane (path contains 'arm-')", () => {
         // @azure/arm-myservice → name: "azure-arm-myservice", safeName: "azurearmmyservice"
         const npmPackageInfo = { name: "@azure/arm-myservice", version: "1.0.0" };
 
@@ -29,7 +29,7 @@ describe("createOrUpdateCiYaml", () => {
             const packageDir = "sdk/myservice/arm-myservice";
             await ensureDir(path.join(tempDir, "sdk/myservice"));
 
-            const ciPath = await createOrUpdateCiYaml(packageDir, "management", npmPackageInfo);
+            const ciPath = await createOrUpdateCiYaml(packageDir, npmPackageInfo);
 
             expect(ciPath).toBe("sdk/myservice/ci.mgmt.yml");
 
@@ -89,7 +89,7 @@ extends:
             await writeFile(path.join(tempDir, ciMgmtPath), existingContent, "utf-8");
 
             const newPackageDir = "sdk/myservice/arm-myservice";
-            const resultPath = await createOrUpdateCiYaml(newPackageDir, "management", npmPackageInfo);
+            const resultPath = await createOrUpdateCiYaml(newPackageDir, npmPackageInfo);
 
             expect(resultPath).toBe(ciMgmtPath);
             const content = await readFile(path.join(tempDir, ciMgmtPath), "utf-8");
@@ -139,7 +139,7 @@ extends:
 `;
             await writeFile(path.join(tempDir, ciMgmtPath), existingContent, "utf-8");
 
-            await createOrUpdateCiYaml(packageDir, "management", npmPackageInfo);
+            await createOrUpdateCiYaml(packageDir, npmPackageInfo);
 
             const content = await readFile(path.join(tempDir, ciMgmtPath), "utf-8");
             const parsed = parse(content);
@@ -155,7 +155,7 @@ extends:
         });
     });
 
-    describe("data plane (versionPolicyName = 'client')", () => {
+    describe("data plane (path does not contain 'arm-')", () => {
         // @azure/myservice → name: "azure-myservice", safeName: "azuremyservice"
         const npmPackageInfo = { name: "@azure/myservice", version: "1.0.0" };
 
@@ -163,7 +163,7 @@ extends:
             const packageDir = "sdk/myservice/myservice";
             await ensureDir(path.join(tempDir, "sdk/myservice"));
 
-            const ciPath = await createOrUpdateCiYaml(packageDir, "client", npmPackageInfo);
+            const ciPath = await createOrUpdateCiYaml(packageDir, npmPackageInfo);
 
             expect(ciPath).toBe("sdk/myservice/ci.yml");
 
@@ -223,7 +223,7 @@ extends:
             await writeFile(path.join(tempDir, ciPath), existingContent, "utf-8");
 
             const newPackageDir = "sdk/myservice/myservice";
-            const resultPath = await createOrUpdateCiYaml(newPackageDir, "client", npmPackageInfo);
+            const resultPath = await createOrUpdateCiYaml(newPackageDir, npmPackageInfo);
 
             expect(resultPath).toBe(ciPath);
             const content = await readFile(path.join(tempDir, ciPath), "utf-8");
@@ -273,7 +273,7 @@ extends:
 `;
             await writeFile(path.join(tempDir, ciPath), existingContent, "utf-8");
 
-            await createOrUpdateCiYaml(packageDir, "client", npmPackageInfo);
+            await createOrUpdateCiYaml(packageDir, npmPackageInfo);
 
             const content = await readFile(path.join(tempDir, ciPath), "utf-8");
             const parsed = parse(content);
@@ -289,13 +289,14 @@ extends:
         });
     });
 
-    test("throws for unsupported version policy name", async () => {
-        await expect(
-            createOrUpdateCiYaml("sdk/myservice/mypackage", "unsupported" as any, {
-                name: "@azure/mypackage",
-                version: "1.0.0",
-            })
-        ).rejects.toThrow("Unsupported version policy name: unsupported");
+    test("returns empty string when writing fails due to missing parent directory", async () => {
+        // Do NOT create the parent directory; writeFile inside the function will fail.
+        // The catch block should swallow the error and return ''.
+        const result = await createOrUpdateCiYaml("sdk/myservice/mypackage", {
+            name: "@azure/mypackage",
+            version: "1.0.0",
+        });
+        expect(result).toBe("");
     });
 
     describe("updateDataPlaneCiYaml — edge cases via existing ci.yml", () => {
@@ -332,7 +333,7 @@ extends:
 `;
             await writeFile(path.join(tempDir, ciPath), existingContent, "utf-8");
 
-            await createOrUpdateCiYaml(packageDir, "client", npmPackageInfo);
+            await createOrUpdateCiYaml(packageDir, npmPackageInfo);
 
             const content = await readFile(path.join(tempDir, ciPath), "utf-8");
             const parsed = parse(content);
@@ -366,7 +367,7 @@ extends:
 `;
             await writeFile(path.join(tempDir, ciPath), existingContent, "utf-8");
 
-            await createOrUpdateCiYaml(packageDir, "client", npmPackageInfo);
+            await createOrUpdateCiYaml(packageDir, npmPackageInfo);
 
             const content = await readFile(path.join(tempDir, ciPath), "utf-8");
             const parsed = parse(content);
@@ -407,7 +408,7 @@ extends:
 `;
             await writeFile(path.join(tempDir, ciPath), existingContent, "utf-8");
 
-            await createOrUpdateCiYaml(packageDir, "client", npmPackageInfo);
+            await createOrUpdateCiYaml(packageDir, npmPackageInfo);
 
             const content = await readFile(path.join(tempDir, ciPath), "utf-8");
             const parsed = parse(content);
@@ -448,7 +449,7 @@ extends:
 `;
             await writeFile(path.join(tempDir, ciPath), existingContent, "utf-8");
 
-            await createOrUpdateCiYaml(packageDir, "client", npmPackageInfo);
+            await createOrUpdateCiYaml(packageDir, npmPackageInfo);
 
             const content = await readFile(path.join(tempDir, ciPath), "utf-8");
             const parsed = parse(content);
@@ -489,7 +490,7 @@ extends:
 `;
             await writeFile(path.join(tempDir, ciPath), existingContent, "utf-8");
 
-            await createOrUpdateCiYaml(packageDir, "client", npmPackageInfo);
+            await createOrUpdateCiYaml(packageDir, npmPackageInfo);
 
             const content = await readFile(path.join(tempDir, ciPath), "utf-8");
             expect(content).toMatch(

@@ -2,8 +2,7 @@
 
 import commandLineArgs from "command-line-args";
 import { createOrUpdateCiYaml } from "./common/ciYamlUtils.js";
-import { getNpmPackageInfo, getNpmPackageName } from "./common/npmUtils.js";
-import { VersionPolicyName } from "./common/types.js";
+import { getNpmPackageInfo } from "./common/npmUtils.js";
 import { logger } from "./utils/logger.js";
 import path from "path";
 
@@ -52,13 +51,9 @@ const generateCiYamlCli = async (
     logger.info(`Package Path (relative): ${relativePackagePath}`);
 
     const npmPackageInfo = await getNpmPackageInfo(absolutePackagePath);
-    const packageName = getNpmPackageName(npmPackageInfo);
-    const versionPolicyName: VersionPolicyName = packageName.includes("arm-") ? "management" : "client";
-    logger.info(`Detected versionPolicyName: ${versionPolicyName} for package: ${packageName}`);
 
     const ciPath = await createOrUpdateCiYaml(
         relativePackagePath.replace(/\\/g, "/"),
-        versionPolicyName,
         npmPackageInfo
     );
 

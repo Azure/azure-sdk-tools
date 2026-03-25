@@ -112,6 +112,9 @@ async def handle_chat(req: ChatRequest):
     return await _chat_service.chat(req)
 
 
+@app.post(
+    "/feedback", response_model=FeedbackResponse
+)  # backwards compatibility for old endpoint
 @app.post("/agent/feedback", response_model=FeedbackResponse)
 async def handle_feedback(req: FeedbackRequest):
     """Process user feedback through the feedback workflow."""

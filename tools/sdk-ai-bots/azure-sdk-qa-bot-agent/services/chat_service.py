@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 
 from config.app_config import get as cfg
 from config.tenant_config import (
@@ -19,6 +20,7 @@ from models.chat import (
     ConversationItemType,
     Role,
 )
+from models.knowledge import Reference
 from services.conversation_service import ConversationService
 from tools import TOOL_REGISTRY
 from tools.skills import get_skill_to_tenant_map
@@ -156,17 +158,79 @@ class ChatService:
         """Map hosted-agent response to `ChatResponse`."""
         tool_results = self._extract_tool_results(response.output)
         search = tool_results.get("search_knowledge_base")
-        references = search.results if search else []
+        tool_references = search.results if search else []
         tenant = self._extract_routed_tenant(response.output)
-        answer = response.output_text or ""
+
+        output_text = response.output_text or ""
+
+        # Extract structured references from the agent's markdown output
+        # and strip the references section from the answer text.
+        answer, references = self._extract_references_from_text(
+            output_text, tool_references
+        )
+
+        # Build full_context from search tool results when requested
+        full_context = None
+        if req.with_full_context and tool_references:
+            full_context = json.dumps(
+                [r.model_dump(mode="json") for r in tool_references]
+            )
+
         resp = ChatResponse(
             id=response.id,
-            answer=answer,  # Result exists if answer is non-empty
+            answer=answer,
             references=references if references else None,
+            full_context=full_context,
         )
         if req.tenant_id != tenant:
             resp.route_tenant = tenant
         return resp
+
+    @staticmethod
+    def _extract_references_from_text(
+        text: str, tool_references: list[Reference] | None = None
+    ) -> tuple[str, list[Reference]]:
+        """Parse the **References** section from agent output text.
+
+        Returns ``(answer_without_references, extracted_references)``.
+        The extracted references are enriched with ``source`` and ``content``
+        from *tool_references* when a matching link or title is found,
+        preserving compatibility with the old backend response shape.
+        """
+        # Locate the **References** header
+        header_match = re.search(r"\n*\*\*References\*\*\s*\n", text)
+        if not header_match:
+            return text, []
+
+        answer = text[: header_match.start()].rstrip()
+        refs_block = text[header_match.end() :]
+
+        # Build a lookup from the tool results for enrichment
+        link_lookup: dict[str, Reference] = {}
+        title_lookup: dict[str, Reference] = {}
+        if tool_references:
+            for ref in tool_references:
+                if ref.link:
+                    link_lookup[ref.link] = ref
+                if ref.title:
+                    title_lookup[ref.title] = ref
+
+        # Extract markdown links: - [title](link)
+        extracted: list[Reference] = []
+        for m in re.finditer(r"-\s*\[([^\]]+)\]\(([^)]+)\)", refs_block):
+            title, link = m.group(1), m.group(2)
+            # Enrich from tool results
+            matched = link_lookup.get(link) or title_lookup.get(title)
+            extracted.append(
+                Reference(
+                    title=title,
+                    source=matched.source if matched else "",
+                    link=link,
+                    content=matched.content if matched else "",
+                )
+            )
+
+        return answer, extracted
 
     @staticmethod
     def _unwrap_json(raw_output) -> str | None:

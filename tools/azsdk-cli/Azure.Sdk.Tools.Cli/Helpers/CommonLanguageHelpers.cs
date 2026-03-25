@@ -43,13 +43,11 @@ public interface ICommonValidationHelpers
     /// <summary>
     /// Common spelling check implementation
     /// </summary>
-    /// <param name="spellingCheckPath">Path to check for spelling errors (provided by language-specific implementation)</param>
     /// <param name="packagePath">Absolute path to the package directory</param>
     /// <param name="fixCheckErrors">Whether to attempt to automatically fix spelling issues where supported by cspell</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
     Task<PackageCheckResponse> CheckSpelling(
-        string spellingCheckPath,
         string packagePath,
         bool fixCheckErrors = false,
         CancellationToken ct = default);
@@ -69,20 +67,17 @@ public interface ICommonValidationHelpers
 public class CommonValidationHelpers : ICommonValidationHelpers
 {
     private readonly IProcessHelper _processHelper;
-    private readonly INpxHelper _npxHelper;
     private readonly IGitHelper _gitHelper;
     private readonly ILogger<CommonValidationHelpers> _logger;
     private readonly ICopilotAgentRunner _copilotAgentRunner;
 
     public CommonValidationHelpers(
         IProcessHelper processHelper,
-        INpxHelper npxHelper,
         IGitHelper gitHelper,
         ILogger<CommonValidationHelpers> logger,
         ICopilotAgentRunner copilotAgentRunner)
     {
         _processHelper = processHelper ?? throw new ArgumentNullException(nameof(processHelper));
-        _npxHelper = npxHelper ?? throw new ArgumentNullException(nameof(npxHelper));
         _gitHelper = gitHelper ?? throw new ArgumentNullException(nameof(gitHelper));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _copilotAgentRunner = copilotAgentRunner ?? throw new ArgumentNullException(nameof(copilotAgentRunner));
@@ -193,7 +188,6 @@ public class CommonValidationHelpers : ICommonValidationHelpers
     }
 
     public async Task<PackageCheckResponse> CheckSpelling(
-        string spellingCheckPath,
         string packagePath, 
         bool fixCheckErrors = false, 
         CancellationToken ct = default)
@@ -206,6 +200,13 @@ public class CommonValidationHelpers : ICommonValidationHelpers
                 return errorResponse;
             }
 
+            var scriptPath = Path.Combine(packageRepoRoot, "eng", "common", "spelling", "Invoke-Cspell.ps1");
+
+            if (!File.Exists(scriptPath))
+            {
+                return new PackageCheckResponse(1, "", $"Invoke-Cspell.ps1 script not found at expected location: {scriptPath}");
+            }
+
             var cspellConfigPath = Path.Combine(packageRepoRoot, ".vscode", "cspell.json");
 
             if (!File.Exists(cspellConfigPath))
@@ -213,18 +214,17 @@ public class CommonValidationHelpers : ICommonValidationHelpers
                 return new PackageCheckResponse(1, "", $"Cspell config file not found at expected location: {cspellConfigPath}");
             }
 
-            var npxOptions = new NpxOptions(
-                null,
-                ["cspell", "lint", "--config", cspellConfigPath, "--root", packageRepoRoot, spellingCheckPath],
-                logOutputStream: true
-            );
-            var processResult = await _npxHelper.Run(npxOptions, ct: ct);
+            // Escape single quotes in paths for use in PowerShell script blocks
+            var escapedPackagePath = packagePath.Replace("'", "''");
+            var escapedScriptPath = scriptPath.Replace("'", "''");
+            var escapedConfigPath = cspellConfigPath.Replace("'", "''");
+            var escapedRepoRoot = packageRepoRoot.Replace("'", "''");
 
-            // If cspell checked 0 files, treat as success
-            if (processResult.Output != null && processResult.Output.Contains("Files checked: 0"))
-            {
-                return new PackageCheckResponse(0, processResult.Output);
-            }
+            // Enumerate files from the package path and pass them to Invoke-Cspell.ps1
+            var command = $"$files = Get-ChildItem -Path '{escapedPackagePath}' -Recurse -File | ForEach-Object {{$_.FullName}}; & '{escapedScriptPath}' -CSpellConfigPath '{escapedConfigPath}' -SpellCheckRoot '{escapedRepoRoot}' -FileList $files";
+
+            var timeout = TimeSpan.FromMinutes(10);
+            var processResult = await _processHelper.Run(new PowershellOptions([command], timeout: timeout, workingDirectory: packageRepoRoot), ct);
 
             // If fix is requested and there are spelling issues, use CopilotAgent to automatically apply fixes
             if (fixCheckErrors && processResult.ExitCode != 0 && !string.IsNullOrWhiteSpace(processResult.Output))

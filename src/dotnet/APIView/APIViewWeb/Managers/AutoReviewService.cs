@@ -50,7 +50,7 @@ public class AutoReviewService : IAutoReviewService
         var apiRevision = default(APIRevisionListItemModel);
         var renderedCodeFile = new RenderedCodeFile(codeFile);
         IEnumerable<APIRevisionListItemModel> apiRevisions = new List<APIRevisionListItemModel>();
-
+        string incomingContentHash = null;
         if (review != null)
         {
             // Update package type if provided from controller parameter and not already set
@@ -64,6 +64,7 @@ public class AutoReviewService : IAutoReviewService
             if (apiRevisions.Any())
             {
                 apiRevisions = apiRevisions.OrderByDescending(r => r.CreatedOn);
+                incomingContentHash = await _codeFileManager.ComputeAPIContentHashAsync(codeFile);
 
                 // Delete pending apiRevisions if it is not in approved state before adding new revision
                 // This is to keep only one pending revision since last approval or from initial review revision
@@ -73,7 +74,6 @@ public class AutoReviewService : IAutoReviewService
                     var automaticRevisionsQueue = new Queue<APIRevisionListItemModel>(automaticRevisions);
                     var comments = await _commentsManager.GetCommentsAsync(review.Id);
                     APIRevisionListItemModel latestAutomaticAPIRevision = null;
-                    string incomingContentHash = await _codeFileManager.ComputeAPIContentHashAsync(codeFile);
                     
                     while (automaticRevisionsQueue.Count > 0)
                     {

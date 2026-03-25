@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
+using Azure.Sdk.Tools.Cli.Benchmarks.Interaction;
 using Azure.Sdk.Tools.Cli.Benchmarks.Models;
 using Azure.Sdk.Tools.Cli.Benchmarks.Validation;
 using Azure.Sdk.Tools.Cli.Benchmarks.Validation.Validators;
@@ -39,6 +40,9 @@ public class RenameClientPropertyScenario : BenchmarkScenario
         It has a property called 'url' that's been renamed to "uri" in c#.
         Change that to imageUri for c#.
         """;
+
+    /// <inheritdoc />
+    public override IReadOnlyList<QuestionAndAnswer>? QuestionAndAnswers => null;
 
     /// <inheritdoc />
     public override TimeSpan Timeout => TimeSpan.FromMinutes(5);

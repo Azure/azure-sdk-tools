@@ -17,8 +17,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Core;
 public class TelemetryIngestionTool : MCPTool
 {
     private const string IngestCommandName = "ingest-telemetry";
-    private const string IngestToolName = "azsdk_ingest_telemetry";
-    private const string TimestampFormat = "yyyy-MM-ddTHH:mm:ssZ";
     private readonly ITelemetryService telemetryService;
     private readonly ILogger<TelemetryIngestionTool> logger;
 
@@ -60,14 +58,14 @@ public class TelemetryIngestionTool : MCPTool
 
     protected override Command GetCommand()
     {
-        var cmd = new McpCommand(IngestCommandName, "Ingest telemetry events into Application Insights", IngestToolName)
+        var cmd = new McpCommand(IngestCommandName, "Ingest telemetry events into Application Insights")
         {
-            clientTypeOption,
-            eventTypeOption,
-            skillNameOption,
-            sessionIdOption,
+            Hidden = true
         };
-        cmd.Hidden = true;
+        cmd.Options.Add(clientTypeOption);
+        cmd.Options.Add(eventTypeOption);
+        cmd.Options.Add(skillNameOption);
+        cmd.Options.Add(sessionIdOption);
         return cmd;
     }
     

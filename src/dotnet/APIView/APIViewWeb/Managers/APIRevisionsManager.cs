@@ -309,6 +309,12 @@ namespace APIViewWeb.Managers
             }
             
             await _signalRHubContext.Clients.All.SendAsync("ReceiveApproval", id, apiRevisionId, userId, apiRevision.IsApproved);
+
+            if (apiRevision.IsApproved && !updateReview)
+            {
+                await _notificationManager.NotifySubscribersOnApprovalAsync(review, apiRevision, user, isReviewApproval: false);
+            }
+
             return (updateReview, apiRevision);
         }
 

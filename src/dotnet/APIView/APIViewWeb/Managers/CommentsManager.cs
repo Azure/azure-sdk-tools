@@ -828,6 +828,8 @@ namespace APIViewWeb.Managers
         /// field was changed (indicating the comment needs to be persisted).
         /// Legacy data may contain DateTime.Now (local time) values that cause
         /// incorrect ordering when compared with DateTime.UtcNow values.
+        /// DateTimeKind.Unspecified values (common after Cosmos DB deserialization)
+        /// are assumed to already be UTC and are re-tagged without conversion.
         /// </summary>
         public static bool NormalizeTimestampsToUtc(CommentItemModel comment)
         {
@@ -835,13 +837,13 @@ namespace APIViewWeb.Managers
 
             if (comment.CreatedOn.Kind != DateTimeKind.Utc)
             {
-                comment.CreatedOn = comment.CreatedOn.ToUniversalTime();
+                comment.CreatedOn = ToUtc(comment.CreatedOn);
                 changed = true;
             }
 
             if (comment.LastEditedOn.HasValue && comment.LastEditedOn.Value.Kind != DateTimeKind.Utc)
             {
-                comment.LastEditedOn = comment.LastEditedOn.Value.ToUniversalTime();
+                comment.LastEditedOn = ToUtc(comment.LastEditedOn.Value);
                 changed = true;
             }
 
@@ -849,12 +851,19 @@ namespace APIViewWeb.Managers
             {
                 if (entry.ChangedOn.HasValue && entry.ChangedOn.Value.Kind != DateTimeKind.Utc)
                 {
-                    entry.ChangedOn = entry.ChangedOn.Value.ToUniversalTime();
+                    entry.ChangedOn = ToUtc(entry.ChangedOn.Value);
                     changed = true;
                 }
             }
 
             return changed;
+        }
+
+        private static DateTime ToUtc(DateTime value)
+        {
+            return value.Kind == DateTimeKind.Local
+                ? value.ToUniversalTime()
+                : DateTime.SpecifyKind(value, DateTimeKind.Utc);
         }
 
         private async Task AssertOwnerAsync(ClaimsPrincipal user, CommentItemModel commentModel)

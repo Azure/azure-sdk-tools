@@ -165,16 +165,6 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
         return acc;
       }, {});
 
-      // Sort comments within each thread chronologically (oldest first).
-      // Cosmos DB does not guarantee document order, so we must sort explicitly.
-      for (const threadId in threadGroups) {
-        if (threadGroups.hasOwnProperty(threadId)) {
-          threadGroups[threadId].sort((a, b) =>
-            new Date(a.createdOn).getTime() - new Date(b.createdOn).getTime()
-          );
-        }
-      }
-
       const apiRevisionInOrder = this.apiRevisions.sort((a, b) => (new Date(b.createdOn) as any) - (new Date(a.createdOn) as any));
 
       const apiRevisionPositionMap = new Map<string, number>();

@@ -515,30 +515,20 @@ public sealed partial class DotnetLanguageService: LanguageService
 
     private const string DotNetMgmtCiYamlTemplate =
         """
-        # NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
-
-        trigger: none
-
-        pr:
-          branches:
-            include:
-            - main
-            - feature/*
-            - hotfix/*
-            - release/*
-          paths:
-            include:
-            - sdk/{serviceDirectory}/
-
-        extends:
-          template: /eng/pipelines/templates/stages/archetype-sdk-client.yml
-          parameters:
-            ServiceDirectory: {serviceDirectory}
-            LimitForPullRequest: true
-            Artifacts:
-            - name: {packageName}
-              safeName: {safeName}
-        """;
+         # NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+ 
+         trigger: none
+         extends:
+           template: /eng/pipelines/templates/stages/archetype-sdk-client.yml
+           parameters:
+             SDKType: mgmt
+             ServiceDirectory: {serviceDirectory}
+             BuildSnippets: false
+             LimitForPullRequest: true
+             Artifacts:
+             - name: {packageName}
+               safeName: {safeName}
+         """
 
     private static string CreateMgmtCiYaml(string serviceDirectory, string packageName)
     {

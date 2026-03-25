@@ -1519,23 +1519,16 @@ namespace APIViewWeb.Managers
 
             // Self-heal: normalize any non-UTC timestamps before scoring so that
             // thread-representative selection (OrderBy CreatedOn) picks the correct
-            // comment.
-            if (allComments.Any(CommentsManager.NeedsTimestampNormalization))
+            // comment. NormalizeTimestampsToUtc mutates in place and returns true if changed.
+            var commentsToNormalize = allComments
+                .Where(CommentsManager.NormalizeTimestampsToUtc)
+                .ToList();
+
+            if (commentsToNormalize.Count > 0)
             {
-                var normalizedCount = 0;
-                foreach (var comment in allComments)
-                {
-                    if (CommentsManager.NormalizeTimestampsToUtc(comment))
-                    {
-                        normalizedCount++;
-                        await _commentsRepository.UpsertCommentAsync(comment);
-                    }
-                }
-                if (normalizedCount > 0)
-                {
-                    _telemetryClient.TrackTrace(
-                        $"Quality score: normalized non-UTC timestamps for {normalizedCount} comments in review {revision.ReviewId}.");
-                }
+                await Task.WhenAll(commentsToNormalize.Select(c => _commentsRepository.UpsertCommentAsync(c)));
+                _telemetryClient.TrackTrace(
+                    $"Quality score: normalized non-UTC timestamps for {commentsToNormalize.Count} comments in review {revision.ReviewId}.");
             }
             if (codeFile != null && codeFile.CodeFile.Diagnostics != null && codeFile.CodeFile.Diagnostics.Length > 0)
             {

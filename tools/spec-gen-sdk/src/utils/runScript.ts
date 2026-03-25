@@ -94,8 +94,8 @@ export const runSdkAutoCustomScript = async (
     });
 
     const prefix = `[${runOptions.logPrefix ?? options.fallbackName ?? path.basename(scriptPath)}]`;
-    listenOnStream(context, result, prefix, vsoLogErrorsArray, child.stdout, runOptions.stdout, 'cmdout');
-    listenOnStream(context, result, prefix, vsoLogErrorsArray, child.stderr, runOptions.stderr, 'cmderr');
+    listenOnStream(context, result, prefix, vsoLogErrorsArray, vsoLogWarningsArray, child.stdout, runOptions.stdout, 'cmdout');
+    listenOnStream(context, result, prefix, vsoLogErrorsArray, vsoLogWarningsArray, child.stderr, runOptions.stderr, 'cmderr');
 
     cmdRet = await new Promise((resolve) => {
       // tslint:disable-next-line: no-shadowed-variable
@@ -151,6 +151,7 @@ export const listenOnStream = (
   result: StatusContainer,
   prefix: string,
   vsoLogErrors: string[],
+  vsoLogWarnings: string[],
   stream: Readable,
   opts: RunLogOptions | undefined,
   logType: 'cmdout' | 'cmderr'
@@ -172,8 +173,12 @@ export const listenOnStream = (
       }
     }
     setSdkAutoStatus(result, lineResult);
-    if (context.config.runEnv === 'azureDevOps' && isLineMatch(line, opts?.scriptError)) {
-      vsoLogErrors.push(line);
+    if (context.config.runEnv === 'azureDevOps') {
+      if (isLineMatch(line, opts?.scriptError)) {
+        vsoLogErrors.push(line);
+      } else if (isLineMatch(line, opts?.scriptWarning)) {
+        vsoLogWarnings.push(line);
+      }
     }
     context.logger.log(logType, `${prefix} ${line}`, { showInComment: _showInComment, lineResult });
   };

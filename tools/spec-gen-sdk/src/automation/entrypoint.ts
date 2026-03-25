@@ -106,6 +106,9 @@ export const sdkAutoMain = async (options: SdkAutoOptions) => {
     generateHtmlFromFilteredLog(workflowContext);
     generateReport(workflowContext);
     saveVsoLog(workflowContext);
+    if (workflowContext.config.runEnv === 'azureDevOps' && workflowContext.status === 'warning') {
+      console.log('##vso[task.complete result=SucceededWithIssues;]');
+    }
   }
   await loggerWaitToFinish(sdkContext.logger);
   return workflowContext?.status;

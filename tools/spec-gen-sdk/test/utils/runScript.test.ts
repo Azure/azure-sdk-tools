@@ -47,6 +47,7 @@ describe('runScript utils', () => {
     let mockContext: WorkflowContext;
     let result: StatusContainer;
     let vsoLogErrors: string[];
+    let vsoLogWarnings: string[];
 
     beforeEach(() => {
       mockContext = ({
@@ -57,6 +58,7 @@ describe('runScript utils', () => {
       } as unknown) as WorkflowContext;
       result = { status: 'succeeded' };
       vsoLogErrors = [];
+      vsoLogWarnings = [];
     });
 
     it('should process stream data correctly', async () => {
@@ -65,7 +67,7 @@ describe('runScript utils', () => {
       stream.push('test line 2\n');
       stream.push(null);
 
-      listenOnStream(mockContext, result, '[test]', vsoLogErrors, stream, undefined, 'cmdout');
+      listenOnStream(mockContext, result, '[test]', vsoLogErrors, vsoLogWarnings, stream, undefined, 'cmdout');
 
       await new Promise<void>((resolve) => {
         stream.on('end', () => {
@@ -81,7 +83,7 @@ describe('runScript utils', () => {
       stream.push('error: something went wrong\n');
       stream.push(null);
 
-      listenOnStream(mockContext, result, '[test]', vsoLogErrors, stream, { scriptError: /error:/ }, 'cmderr');
+      listenOnStream(mockContext, result, '[test]', vsoLogErrors, vsoLogWarnings, stream, { scriptError: /error:/ }, 'cmderr');
 
       await new Promise<void>((resolve) => {
         stream.on('end', () => {
@@ -96,7 +98,7 @@ describe('runScript utils', () => {
       stream.push('warning: potential issue\n');
       stream.push(null);
 
-      listenOnStream(mockContext, result, '[test]', vsoLogErrors, stream, { scriptWarning: /warning:/ }, 'cmdout');
+      listenOnStream(mockContext, result, '[test]', vsoLogErrors, vsoLogWarnings, stream, { scriptWarning: /warning:/ }, 'cmdout');
 
       await new Promise<void>((resolve) => {
         stream.on('end', () => {
@@ -112,11 +114,29 @@ describe('runScript utils', () => {
       stream.push('error: critical failure\n');
       stream.push(null);
 
-      listenOnStream(mockContext, result, '[test]', vsoLogErrors, stream, { scriptError: /error:/ }, 'cmderr');
+      listenOnStream(mockContext, result, '[test]', vsoLogErrors, vsoLogWarnings, stream, { scriptError: /error:/ }, 'cmderr');
 
       await new Promise<void>((resolve) => {
         stream.on('end', () => {
           expect(vsoLogErrors).toContain('error: critical failure');
+          resolve();
+        });
+      });
+    });
+
+    it('should collect VSO warnings in Azure DevOps environment', async () => {
+      mockContext.config.runEnv = 'azureDevOps';
+      const stream = new Readable();
+      stream.push('[WARNING] build failed with warnings\n');
+      stream.push(null);
+
+      listenOnStream(mockContext, result, '[test]', vsoLogErrors, vsoLogWarnings, stream, { scriptWarning: /\[WARNING\]/ }, 'cmdout');
+
+      await new Promise<void>((resolve) => {
+        stream.on('end', () => {
+          expect(vsoLogWarnings).toContain('[WARNING] build failed with warnings');
+          expect(vsoLogErrors).toHaveLength(0);
+          expect(result.status).toBe('warning');
           resolve();
         });
       });

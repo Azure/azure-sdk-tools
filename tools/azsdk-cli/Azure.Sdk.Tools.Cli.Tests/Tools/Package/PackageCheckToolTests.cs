@@ -49,6 +49,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
                              .ReturnsAsync(defaultProcessResult);
             _mockNpxHelper.Setup(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
                          .ReturnsAsync(defaultProcessResult);
+            _mockCommonValidationHelpers.Setup(x => x.CheckSpelling(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                                        .ReturnsAsync(new PackageCheckResponse(1, "Invoke-Cspell.ps1 script not found at expected location.", "Invoke-Cspell.ps1 not found."));
+            _mockCommonValidationHelpers.Setup(x => x.ValidateChangelog(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                                        .ReturnsAsync(new PackageCheckResponse(1, "Changelog validation script not found.", "Changelog script not found."));
+            _mockCommonValidationHelpers.Setup(x => x.ValidateReadme(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                                        .ReturnsAsync(new PackageCheckResponse(1, "Readme validation script not found.", "Readme script not found."));
 
             // Create a temporary test directory
             _testProjectPath = TempDirectory.Create("PackageCheckToolTest");

@@ -86,6 +86,12 @@ async def lifespan(application: FastAPI):
 app = FastAPI(title="Azure SDK QA Bot Backend", lifespan=lifespan)
 
 
+@app.get("/ping")
+async def ping():
+    """Health check endpoint used by App Service and the deploy pipeline."""
+    return {"status": "ok"}
+
+
 @app.middleware("http")
 async def request_id_middleware(request: Request, call_next):
     request_id = str(uuid4())

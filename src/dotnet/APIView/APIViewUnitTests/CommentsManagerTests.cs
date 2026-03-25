@@ -1840,6 +1840,44 @@ public class CommentsManagerTests
         Assert.False(newComment.IsResolved);
     }
 
+    [Fact]
+    public async Task AddCommentAsync_MixedResolutionThread_RepairsAndInheritsResolved()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+
+        // Thread has inconsistent state: one resolved, one not (e.g. agent reply added after resolve)
+        var existingComments = new List<CommentItemModel>
+        {
+            CreateComment("c1", elementId: "elem-1", threadId: "thread-1", isResolved: true),
+            CreateComment("c2", elementId: "elem-1", threadId: "thread-1", isResolved: false)
+        };
+        commentsRepoMock.Setup(r => r.GetCommentsAsync("review1", "elem-1"))
+            .ReturnsAsync(existingComments);
+
+        var newComment = new CommentItemModel
+        {
+            ReviewId = "review1",
+            ElementId = "elem-1",
+            ThreadId = "thread-1",
+            CommentText = "Reply to mixed-state thread",
+            IsResolved = false
+        };
+
+        await manager.AddCommentAsync(user, newComment);
+
+        // The mixed thread should be repaired: c2 should now be resolved with a ChangeHistory entry
+        Assert.True(existingComments[1].IsResolved);
+        Assert.Contains(existingComments[1].ChangeHistory,
+            h => h.ChangeAction == CommentChangeAction.Resolved && h.ChangedBy == "System");
+
+        // The new reply should inherit the resolved state
+        Assert.True(newComment.IsResolved);
+
+        // c2 was repaired via upsert, plus the new comment was upserted
+        commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.Is<CommentItemModel>(c => c.Id == "c2" && c.IsResolved)), Times.Once);
+    }
+
     #endregion
 
     #region Timestamp Normalization and Thread Sort Tests

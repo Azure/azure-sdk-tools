@@ -128,9 +128,8 @@ namespace APIViewWeb.Managers
             // Self-heal: normalize any non-UTC timestamps and persist corrections.
             // Legacy data may contain DateTime.Now (local time) values mixed with
             // DateTime.UtcNow values, causing incorrect sort order on the server.
-            // Guard: only iterate and persist when at least one comment needs fixing.
             var commentsList = comments.ToList();
-            if (commentsList.Any(c => c.CreatedOn.Kind != DateTimeKind.Utc))
+            if (commentsList.Any(NeedsTimestampNormalization))
             {
                 foreach (var comment in commentsList)
                 {
@@ -765,8 +764,14 @@ namespace APIViewWeb.Managers
         /// </summary>
         private async Task<bool> IsThreadResolvedAsync(string reviewId, string elementId, string threadId)
         {
+            // Normalize: treat empty string the same as null for old-style threads.
+            if (string.IsNullOrEmpty(threadId))
+            {
+                threadId = null;
+            }
+
             var existingComments = await _commentsRepository.GetCommentsAsync(reviewId, elementId);
-            var threadComments = existingComments.Where(c => c.ThreadId == threadId).ToList();
+            var threadComments = existingComments.Where(c => (c.ThreadId ?? string.Empty) == (threadId ?? string.Empty)).ToList();
 
             if (threadComments.Count == 0)
             {
@@ -786,11 +791,35 @@ namespace APIViewWeb.Managers
                 foreach (var comment in threadComments.Where(c => !c.IsResolved))
                 {
                     comment.IsResolved = true;
+                    comment.ChangeHistory.Add(new CommentChangeHistoryModel
+                    {
+                        ChangeAction = CommentChangeAction.Resolved,
+                        ChangedBy = "System",
+                        ChangedOn = DateTime.UtcNow
+                    });
                     await _commentsRepository.UpsertCommentAsync(comment);
                 }
             }
 
             return anyResolved;
+        }
+
+        /// <summary>
+        /// Returns true if any DateTime field on the comment is not UTC,
+        /// indicating the comment needs normalization.
+        /// </summary>
+        public static bool NeedsTimestampNormalization(CommentItemModel comment)
+        {
+            if (comment.CreatedOn.Kind != DateTimeKind.Utc)
+                return true;
+            if (comment.LastEditedOn.HasValue && comment.LastEditedOn.Value.Kind != DateTimeKind.Utc)
+                return true;
+            foreach (var entry in comment.ChangeHistory)
+            {
+                if (entry.ChangedOn.HasValue && entry.ChangedOn.Value.Kind != DateTimeKind.Utc)
+                    return true;
+            }
+            return false;
         }
 
         /// <summary>

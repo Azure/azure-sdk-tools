@@ -69,6 +69,7 @@ public class BenchmarkRunner : IDisposable
             {
                 WorkingDirectory = workspace.RepoPath,
                 Prompt = scenario.Prompt,
+                QuestionAndAnswers = scenario.QuestionAndAnswers,
                 Timeout = scenario.Timeout,
                 AzsdkMcpPath = options.AzsdkMcpPath ?? scenario.AzsdkMcpPath,
                 Model = options.Model ?? BenchmarkDefaults.DefaultModel,
@@ -101,6 +102,7 @@ public class BenchmarkRunner : IDisposable
                     GitDiff = gitDiff,
                     ToolCalls = execResult.ToolCalls,
                     Messages = execResult.Messages,
+                    InputQuestionAndAnswers = execResult.InputQuestionAndAnswers,
                     ExecutionCompleted = execResult.Completed,
                     ExecutionError = execResult.Error,
                     ScenarioName = scenario.Name

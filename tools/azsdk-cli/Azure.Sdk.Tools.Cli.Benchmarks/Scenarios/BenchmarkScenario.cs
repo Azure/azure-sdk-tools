@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
+using Azure.Sdk.Tools.Cli.Benchmarks.Interaction;
 using Azure.Sdk.Tools.Cli.Benchmarks.Models;
 using Azure.Sdk.Tools.Cli.Benchmarks.Validation;
 
@@ -66,6 +67,12 @@ public abstract class BenchmarkScenario
     /// Gets the prompt to send to the agent.
     /// </summary>
     public abstract string Prompt { get; }
+
+    /// <summary>
+    /// Gets the list of predefined questions and answers for agent interaction during the scenario.
+    /// Returns null if the scenario does not require predefined Q&A interactions.
+    /// </summary>
+    public virtual IReadOnlyList<QuestionAndAnswer>? QuestionAndAnswers { get; } = null;
 
     /// <summary>
     /// Gets the maximum time allowed for the scenario to complete.

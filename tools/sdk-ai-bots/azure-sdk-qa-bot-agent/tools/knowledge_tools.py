@@ -13,7 +13,7 @@ from enum import Enum
 from typing import Annotated
 
 from config.tenant_config import get_tenant_config
-from models.chat import Reference, SearchKnowledgeBaseResult
+from models.knowledge import SearchKnowledgeBaseResult
 from tools import tool
 from utils.azure_ai_search import get_search_client
 

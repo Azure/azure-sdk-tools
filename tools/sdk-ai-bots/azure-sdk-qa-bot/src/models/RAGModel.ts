@@ -91,16 +91,6 @@ export class RAGModel implements PromptCompletionModel {
       name: fullPrompt.user,
     };
 
-    const history: Message[] = [];
-    fullPrompt.conversations.forEach((c) => {
-      if (c.question) {
-        history.push({ role: 'user', content: c.question, name: fullPrompt.user });
-      }
-      if (c.answer) {
-        history.push({ role: 'assistant', content: c.answer });
-      }
-    });
-
     const additional_infos: AdditionalInfo[] = [];
     fullPrompt.additionalInfo.links.forEach((link) => {
       additional_infos.push({ type: 'link', content: link.text, link: link.url.toString() });
@@ -112,8 +102,9 @@ export class RAGModel implements PromptCompletionModel {
     const payload: CompletionRequestPayload = {
       tenant_id: tenantId,
       message: message,
-      history: history,
       additional_infos,
+      conversation_id: fullPrompt.conversationID,
+      conversation_type: 'teams_channel',
     };
 
     return payload;

@@ -9,10 +9,7 @@ import { LoggingAnalyzer } from './LoggingAnalyzer.js';
 export interface MessageWithRemoteContent {
   user: string;
   currentQuestion: string;
-  conversations: {
-    question?: string;
-    answer?: string;
-  }[];
+  conversationID: string;
   additionalInfo: {
     links: RemoteContent[];
     images: RemoteContent[];
@@ -59,7 +56,7 @@ export class PromptGenerator {
       images: Array.from(imagesSet).map((image) => ({ text: '', id: '', url: new URL(image) })),
     };
     const user = prompt.userName || '';
-    return { currentQuestion, conversations, additionalInfo, user };
+    return { currentQuestion, additionalInfo, user, conversationID: prompt.conversationID };
   }
 
   public generateCurrentPrompt(context: TurnContext, meta: object): Prompt {
@@ -84,6 +81,7 @@ export class PromptGenerator {
       images: inlineImageUrls,
       userName: context.activity.from.name,
       timestamp: context.activity.timestamp ?? new Date(),
+      conversationID: context.activity.conversation.id,
     };
     logger.info(`Raw prompt generated: ${JSON.stringify(rawPrompt)}`, { meta });
     return rawPrompt;

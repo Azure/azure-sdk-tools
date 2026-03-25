@@ -1,44 +1,61 @@
-"""Data models for the chat (QA) scenario."""
+"""Data models for the chat (QA) scenario.
+
+Aligned with Azure SDK QA Bot backend TypeSpec definitions.
+See: tools/sdk-ai-bots/azure-sdk-qa-bot-backend/tsp/model.tsp
+"""
 
 from __future__ import annotations
 
+from enum import Enum
 from pydantic import BaseModel
-from models.conversation import ConversationType
 from config.tenant_config import TenantID
+from models.conversation import ConversationType
+from models.knowledge import Reference
 
+# ===== Enumerations =====
+
+class Role(str, Enum):
+    """Message roles in the conversation."""
+    User = "user"
+    Assistant = "assistant"
+    System = "system"
+
+
+class AdditionalInfoType(str, Enum):
+    """Types of additional information."""
+    Link = "link"
+    Image = "image"
+    Text = "text"
+
+# ===== Message Models =====
+
+class Message(BaseModel):
+    """A message in the conversation."""
+    role: Role
+    content: str
+    name: str | None = None
+
+class AdditionalInfo(BaseModel):
+    """Additional information to provide to the agent."""
+    type: AdditionalInfoType
+    content: str
+    link: str | None = None
+
+# ===== Request/Response Models =====
 
 class ChatRequest(BaseModel):
-    """Incoming chat request from the Teams App."""
-
+    """Request for chat completion."""
     tenant_id: TenantID
     conversation_id: str | None = None
     conversation_type: ConversationType | None = None
-    message: str
-
-
-class Reference(BaseModel):
-    """A knowledge reference cited in a chat response."""
-
-    title: str
-    source: str
-    link: str
-    content: str = ""
-    chunk_id: str = ""
-    header1: str = ""
-    header2: str = ""
-    header3: str = ""
-
-
-class SearchKnowledgeBaseResult(BaseModel):
-    """Output of the search_knowledge_base tool call."""
-
-    results: list[Reference] = []
-
+    message: Message
+    with_full_context: bool | None = False
+    additional_infos: list[AdditionalInfo] | None = None
 
 class ChatResponse(BaseModel):
-    """Chat response returned to the caller."""
-
+    """Response from chat completion."""
+    id: str
     answer: str
-    agent_conversation_id: str
-    references: list[Reference] = []
-    routed_tenant: TenantID | None = None
+    references: list[Reference] | None = None
+    full_context: str | None = None
+    route_tenant: TenantID | None = None

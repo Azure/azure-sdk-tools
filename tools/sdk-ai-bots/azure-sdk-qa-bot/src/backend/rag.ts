@@ -51,15 +51,11 @@ export interface AdditionalInfo {
 // Completion request interface
 export interface CompletionRequestPayload {
   tenant_id: string;
-  prompt_template?: string;
-  prompt_template_arguments?: string;
-  top_k?: number; // default is 10
-  sources?: Source[]; // default is all
   message: Message;
-  history?: Message[];
   with_full_context?: boolean; // default is false
-  with_preprocess?: boolean; // default is false
   additional_infos?: AdditionalInfo[];
+  conversation_id?: string;
+  conversation_type?: string;
 }
 
 export type QuestionCategory = 'unknown' | 'branded' | 'unbranded';
@@ -89,8 +85,7 @@ export function isCompletionResponsePayload(
   const completionResponse = response as CompletionResponsePayload;
   return (
     completionResponse.id !== undefined &&
-    completionResponse.answer !== undefined &&
-    completionResponse.has_result !== undefined
+    completionResponse.answer !== undefined
   );
 }
 
@@ -131,7 +126,6 @@ export interface RagApiError {
 export interface FeedbackRequestPayload {
   channel_id?: string;
   tenant_id: string;
-  messages: Message[];
   reaction: Reaction;
   comment?: string;
   reasons?: string[];

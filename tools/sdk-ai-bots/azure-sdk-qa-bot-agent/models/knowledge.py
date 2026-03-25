@@ -98,3 +98,14 @@ class KnowledgeResult(BaseModel):
     source: str
     link: str
     content: str
+
+class Reference(BaseModel):
+    """A reference to a document used to generate the answer."""
+    title: str
+    source: str
+    link: str
+    content: str = ""
+
+class SearchKnowledgeBaseResult(BaseModel):
+    """Output of the search_knowledge_base tool call."""
+    results: list[Reference] = []

@@ -9,6 +9,7 @@ export interface Prompt {
   images?: string[];
   userName: string;
   timestamp: Date;
+  conversationID: string;
 }
 
 export interface ContactCard {

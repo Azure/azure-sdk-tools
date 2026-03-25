@@ -65,8 +65,8 @@ class ChatService:
             items=[
                 {
                     "type": "message",
-                    "role": "user",
-                    "content": req.message,
+                    "role": req.message.role.value,
+                    "content": req.message.content,
                 }
             ],
         )
@@ -151,13 +151,14 @@ class ChatService:
         search = tool_results.get("search_knowledge_base")
         references = search.results if search else []
         tenant = self._extract_routed_tenant(response.output)
+        answer = response.output_text or ""
         resp = ChatResponse(
-            answer=response.output_text,
-            agent_conversation_id=agent_conversation_id,
-            references=references,
+            id=response.id,
+            answer=answer,  # Result exists if answer is non-empty
+            references=references if references else None,
         )
         if req.tenant_id != tenant:
-           resp.routed_tenant = tenant
+           resp.route_tenant = tenant
         return resp
 
     @staticmethod

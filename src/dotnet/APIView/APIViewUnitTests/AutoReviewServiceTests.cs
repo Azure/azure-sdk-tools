@@ -35,7 +35,8 @@ namespace APIViewUnitTests
                 _mockReviewManager.Object,
                 _mockApiRevisionsManager.Object,
                 _mockCommentsManager.Object,
-                _mockProjectsManager.Object);
+                _mockProjectsManager.Object,
+                new Mock<ICodeFileManager>().Object);
 
             var claims = new List<Claim>
             {

@@ -6,9 +6,6 @@ using System.Threading.Tasks;
 using APIViewWeb.LeanModels;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Security.Cryptography;
-using ApiView;
 using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb.Helpers
@@ -103,14 +100,6 @@ namespace APIViewWeb.Helpers
                 }
                 return reviewUrlTemplate;
             }
-        }
-
-        public static async Task<string> ComputeContentHashAsync(CodeFile codeFile)
-        {
-            using var hashStream = new MemoryStream();
-            await codeFile.SerializeAsync(hashStream);
-            hashStream.Position = 0;
-            return Convert.ToHexString(await SHA256.HashDataAsync(hashStream)).ToLowerInvariant();
         }
     }
 }

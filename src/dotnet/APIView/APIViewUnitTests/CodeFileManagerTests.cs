@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using ApiView;
+using APIView.Model.V2;
 using APIViewWeb;
 using APIViewWeb.Managers;
 using APIViewWeb.Models;
@@ -330,6 +331,70 @@ public class CodeFileManagerTests
             });
         byte[] bytes = Encoding.UTF8.GetBytes(json);
         entryStream.Write(bytes, 0, bytes.Length);
+    }
+
+    #endregion
+
+    #region ComputeAPIContentHashAsync Tests
+
+    [Fact]
+    public async Task ComputeAPIContentHashAsync_IgnoresSkipDiffTokens_ForTreeStyleParser()
+    {
+        static ReviewLine MakeApiLine(string lineId, bool withSkipDiff)
+        {
+            var line = new ReviewLine { LineId = lineId };
+            line.AddToken(ReviewToken.CreateKeywordToken("public"));
+            line.AddToken(ReviewToken.CreateTypeNameToken("MyClass"));
+            if (withSkipDiff)
+            {
+                line.AddToken(new ReviewToken { Value = "1.2.3", SkipDiff = true });
+            }
+            return line;
+        }
+
+        var fileWithoutSkipDiff = new CodeFile
+        {
+            VersionString = "1.0.0",
+            ReviewLines = new List<ReviewLine> { MakeApiLine("line-1", withSkipDiff: false) }
+        };
+
+        var fileWithSkipDiff = new CodeFile
+        {
+            VersionString = "1.0.0",
+            ReviewLines = new List<ReviewLine> { MakeApiLine("line-1", withSkipDiff: true) }
+        };
+
+        string hashWithout = await _codeFileManager.ComputeAPIContentHashAsync(fileWithoutSkipDiff);
+        string hashWith    = await _codeFileManager.ComputeAPIContentHashAsync(fileWithSkipDiff);
+
+        Assert.Equal(hashWithout, hashWith);
+    }
+
+    [Fact]
+    public async Task ComputeAPIContentHashAsync_ProducesDifferentHash_WhenApiSurfaceDiffers()
+    {
+        var fileA = new CodeFile
+        {
+            VersionString = "1.0.0",
+            ReviewLines = new List<ReviewLine>
+            {
+                new ReviewLine { LineId = "line-1", Tokens = new List<ReviewToken> { ReviewToken.CreateKeywordToken("public"), ReviewToken.CreateTypeNameToken("ClassA") } }
+            }
+        };
+
+        var fileB = new CodeFile
+        {
+            VersionString = "1.0.0",
+            ReviewLines = new List<ReviewLine>
+            {
+                new ReviewLine { LineId = "line-1", Tokens = new List<ReviewToken> { ReviewToken.CreateKeywordToken("public"), ReviewToken.CreateTypeNameToken("ClassB") } }
+            }
+        };
+
+        string hashA = await _codeFileManager.ComputeAPIContentHashAsync(fileA);
+        string hashB = await _codeFileManager.ComputeAPIContentHashAsync(fileB);
+
+        Assert.NotEqual(hashA, hashB);
     }
 
     #endregion

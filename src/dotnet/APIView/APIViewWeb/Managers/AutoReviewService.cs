@@ -5,7 +5,6 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using ApiView;
-using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
@@ -18,17 +17,20 @@ public class AutoReviewService : IAutoReviewService
     private readonly IAPIRevisionsManager _apiRevisionsManager;
     private readonly ICommentsManager _commentsManager;
     private readonly IProjectsManager _projectsManager;
+    private readonly ICodeFileManager _codeFileManager;
 
     public AutoReviewService(
         IReviewManager reviewManager,
         IAPIRevisionsManager apiRevisionsManager,
         ICommentsManager commentsManager,
-        IProjectsManager projectsManager)
+        IProjectsManager projectsManager,
+        ICodeFileManager codeFileManager)
     {
         _reviewManager = reviewManager;
         _apiRevisionsManager = apiRevisionsManager;
         _commentsManager = commentsManager;
         _projectsManager = projectsManager;
+        _codeFileManager = codeFileManager;
     }
 
     public async Task<(ReviewListItemModel review, APIRevisionListItemModel apiRevision)> CreateAutomaticRevisionAsync(
@@ -47,7 +49,7 @@ public class AutoReviewService : IAutoReviewService
         var review = await _reviewManager.GetReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: null);
         var apiRevision = default(APIRevisionListItemModel);
         var renderedCodeFile = new RenderedCodeFile(codeFile);
-        string incomingContentHash = await ManagerHelpers.ComputeContentHashAsync(codeFile);
+        string incomingContentHash = await _codeFileManager.ComputeAPIContentHashAsync(codeFile);
         IEnumerable<APIRevisionListItemModel> apiRevisions = new List<APIRevisionListItemModel>();
 
         if (review != null)

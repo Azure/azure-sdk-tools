@@ -1,6 +1,6 @@
 # Tools available in Azure SDK MCP server
 
-This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.6.3.
+This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.6.4.
 
 <style>
 table td:nth-child(2),
@@ -84,6 +84,8 @@ Returns an answer with supporting references and documentation links
 | azsdk_update_sdk_details_in_release_plan |  | Update the SDK details in the release plan work item. This tool is called to update SDK language and package name in the release plan work item. sdkDetails parameter is a JSON of list of SDKInfo and each SDKInfo contains Language and PackageName as properties. |
 | azsdk_upgrade | `azsdk upgrade` | Upgrade the MCP server to the latest version. IMPORTANT: After upgrade completes, the MCP server must be restarted to use the new version. |
 | azsdk_verify_setup | `azsdk verify setup check` | Verifies the developer environment for MCP release tool requirements. Accepts a list of supported languages to check requirements for, the packagePath of the repo to check, and an optional list of requirement names to try installing. To auto-install, call with `requirementsToInstall` containing the exact requirement names the user wants to install. |
+|  | `azsdk apiview create-pull-request-revision` | Create an API revision if API changes are detected in a pull request (PR pipeline usage) |
+|  | `azsdk apiview create-ci-revision` | Create an API revision from Azure DevOps pipeline artifacts (CI/release pipeline usage) |
 |  | `azsdk apiview get-content` | Get content by APIView URL |
 |  | `azsdk tsp generate-authoring-plan` | Generate a solution or execution plan for defining and updating a TypeSpec-based API specification for an Azure service. |
 |  | `azsdk release-plan update-release-status` |  |
@@ -93,22 +95,23 @@ Returns an answer with supporting references and documentation links
 |  | `azsdk pkg samples generate` | Generates sample files |
 |  | `azsdk pkg readme generate` | Generate README content for a package |
 |  | `azsdk eng package-info` | Generate PackageInfo JSON files for CI pipelines |
+|  | `azsdk ingest-telemetry` |  |
 |  | `azsdk config github-label sync-ado` | Synchronize service labels from the GitHub CSV to Azure DevOps Work Items |
 |  | `azsdk config github-label create` | Creates a PR for a new label given a proposed label and brand documentation |
-|  | `azsdk config github-label check` | Check if a service label exists in the common labels CSV |
-|  | `azsdk config codeowners view` | View CODEOWNERS associations for a user, label, package, or path |
+|  | `azsdk config codeowners add-package-label` | Add PR label(s) to a package |
+|  | `azsdk config codeowners export-section` | Export one or more named sections from a CODEOWNERS file |
 |  | `azsdk config codeowners remove-label-owner` | Remove owner(s) from a label and optional path |
 |  | `azsdk config codeowners remove-package-label` | Remove PR label(s) from a package |
 |  | `azsdk config codeowners remove-package-owner` | Remove source owner(s) from a package |
 |  | `azsdk config codeowners add-label-owner` | Add owner(s) to a label and optional path |
-|  | `azsdk config codeowners add-package-label` | Add PR label(s) to a package |
+|  | `azsdk verify setup install` | Install missing environment requirements. Exit codes: 0 = all requirements met, 1 = blocking (manual intervention needed).  |
 |  | `azsdk config codeowners add-package-owner` | Add source owner(s) to a package |
-|  | `azsdk verify setup install` | Install missing environment requirements |
+|  | `azsdk config codeowners view` | View CODEOWNERS associations for a user, label, package, or path |
 |  | `azsdk config codeowners generate` | Generate CODEOWNERS file from Azure DevOps work items |
 |  | `azsdk config codeowners validate` | Validate codeowners for an existing service entry |
 |  | `azsdk config codeowners update` | Update codeowners in a repository |
 |  | `azsdk start` | Starts the MCP server (stdio mode) |
 |  | `azsdk mcp` | Starts the MCP server (stdio mode) |
-|  | `azsdk config codeowners export-section` | Export one or more named sections from a CODEOWNERS file |
+|  | `azsdk config github-label check` | Check if a service label exists in the common labels CSV |
 |  | `azsdk list` |  |
 

@@ -1,0 +1,17 @@
+testcase: suggestion_vague_comment
+language: Python
+context: |
+  None
+content: |
+  {
+    "line_no": 78,
+    "bad_code": "def get_items(self) -> List[Item]:",
+    "suggestion": "",
+    "comment": "Maybe consider returning a Pager or iterator instead of a plain list, possibly for better performance.",
+    "guideline_ids": [],
+    "memory_ids": [],
+    "is_generic": true
+  }
+response:
+  action: SUGGESTION
+  rationale: The comment uses hedging language like 'maybe' and 'possibly'; no guideline or memory is cited; no fix is provided; a developer would need further clarification on what to change.

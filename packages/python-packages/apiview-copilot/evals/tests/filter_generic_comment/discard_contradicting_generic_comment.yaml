@@ -1,0 +1,32 @@
+testcase: discard_contradicting_generic_comment
+language: Python
+content: |
+  {
+    "line_no": 4,
+    "bad_code": "def foo(self, a: str, b: str, *, c: ..., d: ..., e: ...) -> Foo:",
+    "is_generic": true,
+    "suggestion": "def foo(self, a: str, b: str, *, options: FooOptions) -> Foo:",
+    "comment": "You have many optional keyword-only arguments. Consider organizing them into a configuration object."
+  }
+context: |
+  > **guideline_id:** python_design.html#python-client-constructor-policy-arguments<br>**score:** 69<br>
+  ## Accept and pass optional request options as keyword arguments
+
+  DO accept optional default request options as keyword arguments and pass them along to its pipeline policies.
+
+  ### GOOD Examples
+
+  ```python
+  client = ExampleClient('https://contoso.com/xmpl',
+                          DefaultAzureCredential(),
+                          max_retries=18,
+                          timeout=2)
+  ```
+
+  > **guideline_id:** python_implementation.html#python-codestyle-optional-args<br>**score:** 72<br>
+  ## Use keyword-only arguments for optional or less-used arguments in Python 3
+
+  DO use keyword-only arguments for optional or less-often-used arguments for modules that only need to support Python 3.
+response:
+  action: DISCARD
+  rationale: The comment suggests consolidating keyword-only arguments into a configuration object, but the guidelines explicitly state that optional request options should be accepted as keyword arguments. The comment contradicts the established Python SDK convention.

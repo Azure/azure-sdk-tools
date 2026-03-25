@@ -22,4 +22,11 @@
     <Folder Include="TestData\TypeSpec\version-add-preview-after-preview\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="Reporting\report-template.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+    
+
 </Project>

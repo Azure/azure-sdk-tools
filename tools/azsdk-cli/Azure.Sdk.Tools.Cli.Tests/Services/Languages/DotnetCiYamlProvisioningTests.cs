@@ -51,7 +51,7 @@ public class DotnetCiYamlProvisioningTests
     [TearDown]
     public void TearDown() => _tempDir.Dispose();
 
-    private void SetupPackageInfo(string serviceName, string packageName)
+    private void SetupPackageInfo(string serviceName, string packageName, string sdkType = "client")
     {
         var packagePath = Path.Combine(_repoRoot, "sdk", serviceName, packageName);
         Directory.CreateDirectory(Path.Combine(packagePath, "src"));
@@ -65,7 +65,7 @@ public class DotnetCiYamlProvisioningTests
 
         // Mock MSBuild GetPackageInfo output — the Identity field is a space-delimited
         // string with single-quoted values: 'pkgPath' 'serviceDir' 'pkgName' 'pkgVersion' 'sdkType' 'isNewSdk' 'dllFolder'
-        var identity = $"'{packagePath}' '{serviceName}' '{packageName}' '1.0.0' 'client' 'true' 'bin/'";
+        var identity = $"'{packagePath}' '{serviceName}' '{packageName}' '1.0.0' '{sdkType}' 'true' 'bin/'";
         var escapedIdentity = identity.Replace("\\", "\\\\");
         var json = "{\"TargetResults\":{\"GetPackageInfo\":{\"Result\":\"Success\",\"Items\":[{\"Identity\":\"" + escapedIdentity + "\"}]}}}";
 
@@ -157,6 +157,58 @@ public class DotnetCiYamlProvisioningTests
         Assert.That(content, Is.EqualTo(originalContent), "ci.yml should not be modified");
         Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
         Assert.That(result.Message, Does.Contain("already exists"));
+    }
+
+    [Test]
+    public async Task UpdateMetadataAsync_CreatesMgmtCiYaml_WhenNoneExists()
+    {
+        var serviceName = "dns";
+        var packageName = "Azure.ResourceManager.Dns";
+        SetupPackageInfo(serviceName, packageName, "mgmt");
+
+        var packagePath = Path.Combine(_repoRoot, "sdk", serviceName, packageName);
+
+        var result = await _service.UpdateMetadataAsync(packagePath, CancellationToken.None);
+
+        var ciPath = Path.Combine(_repoRoot, "sdk", serviceName, "ci.mgmt.yml");
+        Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
+        Assert.That(File.Exists(ciPath), Is.True, "ci.mgmt.yml should be created");
+
+        var content = File.ReadAllText(ciPath);
+        Assert.That(content, Does.Contain("ServiceDirectory: dns"));
+        Assert.That(content, Does.Contain("- name: Azure.ResourceManager.Dns"));
+        Assert.That(content, Does.Contain("safeName: AzureResourceManagerDns"));
+        Assert.That(content, Does.Contain("trigger: none"));
+        Assert.That(content, Does.Contain("LimitForPullRequest: true"));
+        Assert.That(content, Does.Contain("archetype-sdk-client.yml"));
+    }
+
+    [Test]
+    public async Task UpdateMetadataAsync_AppendsArtifactToMgmtCiYaml_WhenExists()
+    {
+        SetupPackageInfo("dns", "Azure.ResourceManager.Dns.V2", "mgmt");
+
+        var serviceDir = Path.Combine(_repoRoot, "sdk", "dns");
+        Directory.CreateDirectory(serviceDir);
+        File.WriteAllText(Path.Combine(serviceDir, "ci.mgmt.yml"), """
+            extends:
+              template: /eng/pipelines/templates/stages/archetype-sdk-client.yml
+              parameters:
+                ServiceDirectory: dns
+                LimitForPullRequest: true
+                Artifacts:
+                - name: Azure.ResourceManager.Dns
+                  safeName: AzureResourceManagerDns
+            """);
+
+        var packagePath = Path.Combine(_repoRoot, "sdk", "dns", "Azure.ResourceManager.Dns.V2");
+        var result = await _service.UpdateMetadataAsync(packagePath, CancellationToken.None);
+
+        var content = File.ReadAllText(Path.Combine(serviceDir, "ci.mgmt.yml"));
+        Assert.That(content, Does.Contain("- name: Azure.ResourceManager.Dns"));
+        Assert.That(content, Does.Contain("- name: Azure.ResourceManager.Dns.V2"));
+        Assert.That(content, Does.Contain("safeName: AzureResourceManagerDnsV2"));
+        Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
     }
 
     #region Package Discovery Tests

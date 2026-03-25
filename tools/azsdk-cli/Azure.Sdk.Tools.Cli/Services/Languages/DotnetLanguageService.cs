@@ -369,8 +369,8 @@ public sealed partial class DotnetLanguageService: LanguageService
 
     /// <summary>
     /// Updates package metadata including CI YAML provisioning.
-    /// Creates a new ci.yml if none exists for the service directory,
-    /// or appends the package as an artifact if ci.yml already exists.
+    /// Creates a new ci.yml (dataplane) or ci.mgmt.yml (management) if none exists
+    /// for the service directory, or appends the package as an artifact if the CI file already exists.
     /// </summary>
     public override async Task<PackageOperationResponse> UpdateMetadataAsync(string packagePath, CancellationToken ct)
     {
@@ -402,29 +402,33 @@ public sealed partial class DotnetLanguageService: LanguageService
                     packageInfo);
             }
 
-            // Only provision ci.yml for client/dataplane SDKs.
-            // Other SDK types (management, functions, unknown) use different pipelines.
-            if (packageInfo.SdkType != SdkType.Dataplane)
+            // Only provision CI YAML for client/dataplane and management SDKs.
+            // Other SDK types (functions, unknown) use different pipelines.
+            if (packageInfo.SdkType != SdkType.Dataplane && packageInfo.SdkType != SdkType.Management)
             {
                 logger.LogInformation(
-                    "Skipping CI YAML provisioning for non-dataplane SDK type {SdkType} at {PackagePath}",
+                    "Skipping CI YAML provisioning for SDK type {SdkType} at {PackagePath}",
                     packageInfo.SdkType,
                     packagePath);
                 return PackageOperationResponse.CreateSuccess(
-                    $"CI YAML provisioning is only supported for dataplane SDKs (type was '{packageInfo.SdkType}'). No changes were made.",
+                    $"CI YAML provisioning is only supported for dataplane and management SDKs (type was '{packageInfo.SdkType}'). No changes were made.",
                     packageInfo);
             }
 
-            var ciYamlPath = Path.Combine(repoRoot, "sdk", serviceDirectory, "ci.yml");
+            var isManagement = packageInfo.SdkType == SdkType.Management;
+            var ciFileName = isManagement ? "ci.mgmt.yml" : "ci.yml";
+            var ciYamlPath = Path.Combine(repoRoot, "sdk", serviceDirectory, ciFileName);
 
             if (!File.Exists(ciYamlPath))
             {
-                var ciContent = CreateClientCiYaml(serviceDirectory, packageName);
+                var ciContent = isManagement
+                    ? CreateMgmtCiYaml(serviceDirectory, packageName)
+                    : CreateClientCiYaml(serviceDirectory, packageName);
                 await File.WriteAllTextAsync(ciYamlPath, ciContent, ct);
 
-                logger.LogInformation("Created new ci.yml at {CiYamlPath}", ciYamlPath);
+                logger.LogInformation("Created new {CiFileName} at {CiYamlPath}", ciFileName, ciYamlPath);
                 return PackageOperationResponse.CreateSuccess(
-                    $"Created ci.yml for service '{serviceDirectory}' with artifact '{packageName}'. CI file path: {ciYamlPath}",
+                    $"Created {ciFileName} for service '{serviceDirectory}' with artifact '{packageName}'. CI file path: {ciYamlPath}",
                     packageInfo);
             }
             else
@@ -435,7 +439,7 @@ public sealed partial class DotnetLanguageService: LanguageService
                 {
                     logger.LogInformation("Artifact '{PackageName}' already exists in {CiYamlPath}", packageName, ciYamlPath);
                     return PackageOperationResponse.CreateSuccess(
-                        $"Artifact '{packageName}' already exists in ci.yml ({ciYamlPath}). No changes needed.",
+                        $"Artifact '{packageName}' already exists in {ciFileName} ({ciYamlPath}). No changes needed.",
                         packageInfo);
                 }
 
@@ -443,7 +447,7 @@ public sealed partial class DotnetLanguageService: LanguageService
                 if (updatedYaml == null)
                 {
                     return PackageOperationResponse.CreateFailure(
-                        "Could not find Artifacts section in existing ci.yml to append the new package.",
+                        $"Could not find Artifacts section in existing {ciFileName} to append the new package.",
                         packageInfo);
                 }
 
@@ -451,7 +455,7 @@ public sealed partial class DotnetLanguageService: LanguageService
 
                 logger.LogInformation("Added artifact '{PackageName}' to {CiYamlPath}", packageName, ciYamlPath);
                 return PackageOperationResponse.CreateSuccess(
-                    $"Added artifact '{packageName}' to existing ci.yml ({ciYamlPath}).",
+                    $"Added artifact '{packageName}' to existing {ciFileName} ({ciYamlPath}).",
                     packageInfo);
             }
         }
@@ -503,6 +507,43 @@ public sealed partial class DotnetLanguageService: LanguageService
     {
         var safeName = GenerateSafeName(packageName);
         return DotNetCiYamlTemplate
+            .Replace("{serviceDirectory}", serviceDirectory)
+            .Replace("{packageName}", packageName)
+            .Replace("{safeName}", safeName)
+            + "\n";
+    }
+
+    private const string DotNetMgmtCiYamlTemplate =
+        """
+        # NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+
+        trigger: none
+
+        pr:
+          branches:
+            include:
+            - main
+            - feature/*
+            - hotfix/*
+            - release/*
+          paths:
+            include:
+            - sdk/{serviceDirectory}/
+
+        extends:
+          template: /eng/pipelines/templates/stages/archetype-sdk-client.yml
+          parameters:
+            ServiceDirectory: {serviceDirectory}
+            LimitForPullRequest: true
+            Artifacts:
+            - name: {packageName}
+              safeName: {safeName}
+        """;
+
+    private static string CreateMgmtCiYaml(string serviceDirectory, string packageName)
+    {
+        var safeName = GenerateSafeName(packageName);
+        return DotNetMgmtCiYamlTemplate
             .Replace("{serviceDirectory}", serviceDirectory)
             .Replace("{packageName}", packageName)
             .Replace("{safeName}", safeName)

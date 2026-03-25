@@ -13,7 +13,7 @@ using OpenTelemetry.Trace;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Core;
 
-[McpServerToolType, Description("Ingest .azsdk-agent-activity.log entries into Application Insights")]
+[McpServerToolType, Description("Ingest telemetry from copilot hooks into Application Insights")]
 public class TelemetryIngestionTool : MCPTool
 {
     private const string IngestCommandName = "ingest-telemetry";

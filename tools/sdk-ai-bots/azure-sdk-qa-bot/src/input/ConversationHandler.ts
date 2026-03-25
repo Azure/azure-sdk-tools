@@ -8,6 +8,7 @@ export interface Prompt {
   links?: string[];
   images?: string[];
   userName: string;
+  userID: string;
   timestamp: Date;
   conversationID: string;
 }

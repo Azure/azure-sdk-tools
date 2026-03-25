@@ -13,10 +13,46 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from models.conversation import ConversationMessage, ConversationType
+from models.conversation import (
+    ConversationMappingItem,
+    ConversationMessage,
+    ConversationMessageItem,
+    ConversationPartitionPrefix,
+    ConversationType,
+)
+from utils.azure_cosmosdb import (
+    get_conversation_mapping_container,
+    get_conversation_message_container,
+)
 
 class ConversationService:
     """Persists and retrieves customer-to-agent conversation ID mappings."""
+
+    @staticmethod
+    def _to_conversation_type_value(
+        conversation_type: ConversationType | None,
+    ) -> str | None:
+        return conversation_type.value if conversation_type else None
+
+    def _build_mapping_key(
+        self,
+        customer_conversation_id: str,
+        conversation_type: ConversationType | None,
+    ) -> str:
+        conversation_type_value = self._to_conversation_type_value(conversation_type)
+        if conversation_type_value:
+            return f"{conversation_type_value}:{customer_conversation_id}"
+        return customer_conversation_id
+
+    def _build_message_partition_key(self, message: ConversationMessage) -> str:
+        conversation_type_value = self._to_conversation_type_value(
+            message.conversation_type
+        )
+        if message.conversation_id and conversation_type_value:
+            return f"{conversation_type_value}:{message.conversation_id}"
+        if message.conversation_id:
+            return message.conversation_id
+        return f"{ConversationPartitionPrefix.channel.value}:{message.channel_id}"
 
     async def get_agent_conversation_id(
         self,
@@ -37,12 +73,23 @@ class ConversationService:
         if not customer_conversation_id:
             return None
 
-        # TODO: query Cosmos DB for the mapping
-        #   container.read_item(
-        #       item=customer_conversation_id,
-        #       partition_key=f"{conversation_type}:{customer_conversation_id}",
-        #   )
-        return None
+        container = await get_conversation_mapping_container()
+        mapping_key = self._build_mapping_key(
+            customer_conversation_id,
+            conversation_type,
+        )
+
+        try:
+            raw = await container.read_item(
+                item=customer_conversation_id,
+                partition_key=mapping_key,
+            )
+        except Exception as exc:
+            if getattr(exc, "status_code", None) == 404:
+                return None
+            raise
+
+        return ConversationMappingItem.model_validate(raw).agent_conversation_id
 
     async def save_agent_conversation_mapping(
         self,
@@ -65,13 +112,25 @@ class ConversationService:
         if not customer_conversation_id:
             return None
 
-        # TODO: upsert into Cosmos DB
-        #   container.upsert_item({
-        #       "id": customer_conversation_id,
-        #       "conversation_type": conversation_type,
-        #       "mapping_key": f"{conversation_type}:{customer_conversation_id}",
-        #       "agent_conversation_id": agent_conversation_id,
-        #   })
+        container = await get_conversation_mapping_container()
+        conversation_type_value = self._to_conversation_type_value(conversation_type)
+        mapping_key = self._build_mapping_key(
+            customer_conversation_id,
+            conversation_type,
+        )
+
+        mapping_item = ConversationMappingItem(
+            id=customer_conversation_id,
+            customer_conversation_id=customer_conversation_id,
+            conversation_type=conversation_type_value,
+            mapping_key=mapping_key,
+            agent_conversation_id=agent_conversation_id,
+        )
+
+        await container.upsert_item(
+            mapping_item.model_dump(mode="json")
+        )
+
         logger.info(
             "Saved conversation mapping: %s -> %s",
             customer_conversation_id,
@@ -88,7 +147,11 @@ class ConversationService:
         Returns:
             The ID of the saved message.
         """
-        # TODO: upsert into Cosmos DB
-        #   container.upsert_item(message.model_dump(mode="json"))
+        container = await get_conversation_message_container()
+        message_item = ConversationMessageItem(
+            **message.model_dump(mode="json"),
+            conversation_partition=self._build_message_partition_key(message),
+        )
+        await container.upsert_item(message_item.model_dump(mode="json"))
         logger.info("Saved conversation message: %s", message.id)
         return message.id

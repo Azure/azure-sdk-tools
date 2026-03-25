@@ -27,7 +27,8 @@ export interface Message {
   role: Role;
   content: string;
   raw_content?: string;
-  name?: string;
+  user_name?: string;
+  user_id?: string;
 }
 
 // Reference interface

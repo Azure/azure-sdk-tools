@@ -23,6 +23,7 @@ from services.chat_service import ChatService
 from services.conversation_service import ConversationService
 from services.feedback_service import FeedbackService
 from utils.azure_ai_foundry import close_clients
+from utils.azure_cosmosdb import close_cosmos_client
 from utils.azure_credential import close_credential
 from pydantic import BaseModel
 import config.app_config as app_config
@@ -76,6 +77,7 @@ async def lifespan(application: FastAPI):
     # Cleanup SDK clients on shutdown
     logger.info("Backend server shutting down")
     await close_clients()
+    await close_cosmos_client()
     await close_credential()
 
 

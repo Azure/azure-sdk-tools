@@ -88,7 +88,8 @@ export class RAGModel implements PromptCompletionModel {
     const message: Message = {
       role: 'user',
       content: fullPrompt.currentQuestion,
-      name: fullPrompt.user,
+      user_name: fullPrompt.userName,
+      user_id: fullPrompt.userID,
     };
 
     const additional_infos: AdditionalInfo[] = [];

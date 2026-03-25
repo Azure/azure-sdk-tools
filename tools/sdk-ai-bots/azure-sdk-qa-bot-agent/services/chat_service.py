@@ -5,25 +5,35 @@ from __future__ import annotations
 import json
 import logging
 
-from openai.types.responses import ResponseFunctionToolCall, ResponseOutputMessage
-
 from config.app_config import get as cfg
 from config.tenant_config import (
     get_tenant_scope_description,
     get_tenant_sources_display,
     load_tenant_qa_guideline,
 )
-from models.chat import ChatRequest, ChatResponse
+from models.chat import (
+    AgentReferenceType,
+    ChatRequest,
+    ChatResponse,
+    ConversationItem,
+    ConversationItemType,
+    Role,
+)
 from services.conversation_service import ConversationService
 from tools import TOOL_REGISTRY
 from tools.skills import get_skill_to_tenant_map
-from utils.azure_ai_foundry import get_project_client
+from utils.azure_ai_foundry import get_openai_client, get_project_client
 from azure.ai.projects.aio import AIProjectClient
 from azure.ai.projects.models import AgentDetails
+from openai import AsyncOpenAI
 from openai.types.responses import Response as OpenAIResponse
-from openai.types.responses import ResponseFunctionToolCall, ResponseOutputMessage, ResponseOutputItem
+from openai.types.responses import (
+    ResponseFunctionToolCall,
+    ResponseOutputMessage,
+    ResponseOutputItem,
+)
+from openai.types.responses.response_input_item_param import ResponseInputItemParam
 from config.tenant_config import TenantID
-from openai import OpenAI
 
 logger = logging.getLogger(__name__)
 
@@ -39,44 +49,37 @@ class ChatService:
         project_client = get_project_client()
 
         agent = await self._get_agent(project_client)
-        openai_client = project_client.get_openai_client()
+        openai_client = get_openai_client()
 
         agent_conversation_id, is_new = await self._resolve_conversation(
             openai_client, req
         )
-
+        conversation_items: list[ResponseInputItemParam] = []
         if is_new:
-            tenant_system_msg = self._build_tenant_system_message(
-                req.tenant_id
-            )
-            await openai_client.conversations.items.create(
-                conversation_id=agent_conversation_id,
-                items=[
-                    {
-                        "type": "message",
-                        "role": "system",
-                        "content": tenant_system_msg,
-                    }
-                ],
+            tenant_system_msg = self._build_tenant_system_message(req.tenant_id)
+            conversation_items.append(
+                ConversationItem(
+                    role=Role.System,
+                    content=tenant_system_msg,
+                ).model_dump(mode="json", exclude_none=True)
             )
 
-        await openai_client.conversations.items.create(
-            conversation_id=agent_conversation_id,
-            items=[
-                {
-                    "type": "message",
-                    "role": req.message.role.value,
-                    "content": req.message.content,
-                }
-            ],
+        conversation_items.append(
+            ConversationItem(
+                role=req.message.role,
+                content=req.message.content,
+                user_id=req.message.user_id,
+                user_name=req.message.user_name,
+            ).model_dump(mode="json", exclude_none=True)
         )
 
         response = await openai_client.responses.create(
+            input=conversation_items,
             conversation=agent_conversation_id,
             extra_body={
                 "agent_reference": {
                     "name": agent.name,
-                    "type": "agent_reference",
+                    "type": AgentReferenceType.agent_reference.value,
                 }
             },
         )
@@ -95,11 +98,15 @@ class ChatService:
         logger.info("Using agent: name=%s", agent.name)
         return agent
 
-    async def _resolve_conversation(self, openai_client: OpenAI, req: ChatRequest) -> tuple[str, bool]:
+    async def _resolve_conversation(
+        self, openai_client: AsyncOpenAI, req: ChatRequest
+    ) -> tuple[str, bool]:
         """Get an existing conversation id or create a new conversation."""
-        stored_conversation_id = await self._conversation_service.get_agent_conversation_id(
-            req.conversation_id,
-            req.conversation_type,
+        stored_conversation_id = (
+            await self._conversation_service.get_agent_conversation_id(
+                req.conversation_id,
+                req.conversation_type,
+            )
         )
 
         if stored_conversation_id:
@@ -139,13 +146,13 @@ class ChatService:
         sources = get_tenant_sources_display(tenant_id)
         if sources:
             src_lines = [f"- {s['name']}: {s['description']}" for s in sources]
-            parts.append(
-                "\n[tenant_knowledge_sources]\n" + "\n".join(src_lines)
-            )
+            parts.append("\n[tenant_knowledge_sources]\n" + "\n".join(src_lines))
 
         return "\n".join(parts)
 
-    def _postprocess(self, req: ChatRequest, response: OpenAIResponse, agent_conversation_id: str) -> ChatResponse:
+    def _postprocess(
+        self, req: ChatRequest, response: OpenAIResponse, agent_conversation_id: str
+    ) -> ChatResponse:
         """Map hosted-agent response to `ChatResponse`."""
         tool_results = self._extract_tool_results(response.output)
         search = tool_results.get("search_knowledge_base")
@@ -158,7 +165,7 @@ class ChatService:
             references=references if references else None,
         )
         if req.tenant_id != tenant:
-           resp.route_tenant = tenant
+            resp.route_tenant = tenant
         return resp
 
     @staticmethod
@@ -188,7 +195,9 @@ class ChatService:
             return json.dumps(value)
         return None
 
-    def _extract_tool_results(self, items: list[ResponseOutputItem]) -> dict[str, object]:
+    def _extract_tool_results(
+        self, items: list[ResponseOutputItem]
+    ) -> dict[str, object]:
         """Decode tool outputs using TOOL_REGISTRY models.
 
         Returns a dict mapping tool name to its decoded Pydantic model instance.
@@ -224,9 +233,7 @@ class ChatService:
                 if json_str:
                     results[tool_name] = response_model.model_validate_json(json_str)
             except Exception as e:
-                logger.warning(
-                    "Failed to decode tool output for %s: %s", tool_name, e
-                )
+                logger.warning("Failed to decode tool output for %s: %s", tool_name, e)
 
         return results
 
@@ -245,11 +252,17 @@ class ChatService:
         for item in items:
             if isinstance(item, ResponseFunctionToolCall) and item.name == "load_skill":
                 try:
-                    args = json.loads(item.arguments) if isinstance(item.arguments, str) else item.arguments
+                    args = (
+                        json.loads(item.arguments)
+                        if isinstance(item.arguments, str)
+                        else item.arguments
+                    )
                     skill_name = args.get("skill_name", "")
                     tenant_id = skill_to_tenant.get(skill_name)
                     if tenant_id:
-                        logger.info("Routed via skill %s → tenant %s", skill_name, tenant_id)
+                        logger.info(
+                            "Routed via skill %s → tenant %s", skill_name, tenant_id
+                        )
                         return tenant_id
                 except (json.JSONDecodeError, AttributeError):
                     pass

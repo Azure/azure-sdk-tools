@@ -24,6 +24,7 @@ Ensure your Azure identity has the following roles:
 - App Configuration Data Reader
 - Storage Blob Data Contributor
 - Azure AI User (on the Foundry Project)
+- Cosmos DB Built-in Data Contributor
 
 ### Project Setup
 
@@ -57,7 +58,7 @@ Ensure your Azure identity has the following roles:
 
 4. Create a `.env` file in the project root:
 
-   ```
+   ```dotenv
    AZURE_APPCONFIG_ENDPOINT=https://azuresdkqabot-dev-config.azconfig.io
    ```
 

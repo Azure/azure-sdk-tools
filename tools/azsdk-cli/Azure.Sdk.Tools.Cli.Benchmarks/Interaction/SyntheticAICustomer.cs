@@ -31,18 +31,6 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Interaction
                         Kind = "approved"
                     });
                 },
-                Hooks = new SessionHooks
-                {
-                    OnPreToolUse = (input, invocation) =>
-                    {
-                        Console.WriteLine($"Model is calling tool: {input.ToolName}");
-                        return Task.FromResult<PreToolUseHookOutput?>(null);
-                    },
-                    OnPostToolUse = (input, invocation) =>
-                    {
-                        return Task.FromResult<PostToolUseHookOutput?>(null);
-                    }
-                },
                 // Auto-respond to ask_user with a simple response
                 OnUserInputRequest = (request, invocation) =>
                 {

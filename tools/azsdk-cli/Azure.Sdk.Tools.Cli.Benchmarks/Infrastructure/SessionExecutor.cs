@@ -25,6 +25,7 @@ public class SessionExecutor : IDisposable
     public async Task<ExecutionResult> ExecuteAsync(ExecutionConfig config)
     {
         var stopwatch = Stopwatch.StartNew();
+        bool mainTaskCompleted = false;
         var toolCalls = new List<ToolCallRecord>();
         var inputQAs = new List<QuestionAndAnswer>();
         if (config.QuestionAndAnswers != null)
@@ -95,15 +96,26 @@ public class SessionExecutor : IDisposable
                 OnUserInputRequest = async (request, invocation) =>
                 {
                     Console.WriteLine($"Model requested user input with prompt: {request.Question}");
+                    if (mainTaskCompleted)
+                    {
+                        Console.WriteLine("Main task already completed, This is follow-up task.");
+                        return new UserInputResponse
+                        {
+                            Answer = "No further actions are required. End the task.",
+                            WasFreeform = false
+                        };
+                    }
+
                     string answer = "Please proceed with your best judgment.";
                     if (_aiCustomer != null)
                     {
                         var result = await _aiCustomer.AskQuestionAsync(request.Question);
-                        if(!string.IsNullOrEmpty(result))
+                        if (!string.IsNullOrEmpty(result))
                         {
                             answer = result;
                         }
                     }
+
                     inputQAs.Add(new QuestionAndAnswer(request.Question, answer));
                     return new UserInputResponse
                     {
@@ -124,6 +136,12 @@ public class SessionExecutor : IDisposable
                     tokenUsage.OutputTokens += usageEvent.Data.OutputTokens ?? 0;
                     tokenUsage.CacheReadTokens += usageEvent.Data.CacheReadTokens ?? 0;
                     tokenUsage.CacheWriteTokens += usageEvent.Data.CacheWriteTokens ?? 0;
+                }
+                if (evt is SessionIdleEvent idleEvent)
+                {
+                    mainTaskCompleted = true;
+                    // Dispose session immediately when main task is completed to free up resources, since we won't receive any more events after this
+                    session.DisposeAsync();
                 }
             });
             if (config.Verbose)

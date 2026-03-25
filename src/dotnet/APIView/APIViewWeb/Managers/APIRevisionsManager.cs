@@ -893,18 +893,12 @@ namespace APIViewWeb.Managers
         /// <returns></returns>
         public async Task<bool> AreAPIRevisionsTheSame(APIRevisionListItemModel revision, RenderedCodeFile renderedCodeFile, bool considerPackageVersion = false, string incomingContentHash = null)
         {
-            var revisionFile = revision.Files.SingleOrDefault();
-            var storedHash = revisionFile?.ContentHash;
+            APICodeFileModel revisionFile = revision.Files.SingleOrDefault();
+            string storedHash = revisionFile?.ContentHash;
             if (storedHash != null)
-            {
-                // If the caller didn't pre-compute the hash, compute it now from the rendered code file
-                // so we can still use the fast path rather than downloading a blob.
-                if (incomingContentHash == null)
-                {
-                    incomingContentHash = await ManagerHelpers.ComputeContentHashAsync(renderedCodeFile.CodeFile);
-                }
+            { 
+                incomingContentHash ??= await ManagerHelpers.ComputeContentHashAsync(renderedCodeFile.CodeFile);
 
-                // Fast path: O(1) hash comparison, no blob download needed.
                 bool result = storedHash == incomingContentHash;
                 if (considerPackageVersion)
                 {
@@ -924,8 +918,8 @@ namespace APIViewWeb.Managers
                 _telemetryClient.TrackTrace($"Skipping comparison for revision {revision.Id}: legacy blob format ({ex.GetType().Name})");
                 return false;
             }
-            bool fileResult = _codeFileManager.AreAPICodeFilesTheSame(codeFileA: lastRevisionFile, codeFileB: renderedCodeFile);
 
+            bool fileResult = _codeFileManager.AreAPICodeFilesTheSame(codeFileA: lastRevisionFile, codeFileB: renderedCodeFile);
             if (storedHash == null && revisionFile != null)
             {
                 revisionFile.ContentHash = await ManagerHelpers.ComputeContentHashAsync(lastRevisionFile.CodeFile);

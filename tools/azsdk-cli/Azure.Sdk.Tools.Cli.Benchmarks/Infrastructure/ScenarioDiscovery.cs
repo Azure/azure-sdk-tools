@@ -3,7 +3,7 @@
 
 using System.Reflection;
 using Azure.Sdk.Tools.Cli.Benchmarks.Scenarios;
-using Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec;
+using Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.TypeSpec;
 
 namespace Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
 

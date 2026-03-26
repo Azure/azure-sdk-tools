@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using ApiView;
+using APIView.Model.V2;
 using APIViewWeb;
 using APIViewWeb.Managers;
 using APIViewWeb.Models;
@@ -32,12 +33,16 @@ public class CodeFileManagerTests
         _mockDevopsArtifactRepository = new Mock<IDevopsArtifactRepository>();
         var mockLogger = new Mock<ILogger<CodeFileManager>>();
 
+        var languageServices = new List<LanguageService>
+        {
+            new MockLanguageService("C#", true)
+        };
         // Setup empty language services list
         _mockLanguageServices.Setup(x => x.GetEnumerator())
             .Returns(new List<LanguageService>().GetEnumerator());
 
         _codeFileManager = new CodeFileManager(
-            _mockLanguageServices.Object,
+            languageServices,
             _mockCodeFileRepository.Object,
             _mockOriginalsRepository.Object,
             _mockDevopsArtifactRepository.Object,
@@ -330,6 +335,83 @@ public class CodeFileManagerTests
             });
         byte[] bytes = Encoding.UTF8.GetBytes(json);
         entryStream.Write(bytes, 0, bytes.Length);
+    }
+
+    #endregion
+
+    #region ComputeAPIContentHashAsync Tests
+
+    [Fact]
+    public async Task ComputeAPIContentHashAsync_AndAreAPICodeFilesTheSame_TreatFilesWithOnlySkipDiffDifferences_AsEqual()
+    {
+         ReviewLine MakeClassLine(bool withAddedInAnnotation)
+        {
+            var line = new ReviewLine { LineId = "MyClass" };
+            line.AddToken(ReviewToken.CreateKeywordToken("public"));
+            line.AddToken(ReviewToken.CreateTypeNameToken("MyClass"));
+            if (withAddedInAnnotation)
+            {
+                line.AddToken(new ReviewToken { Value = "// Added in 1.2.0", SkipDiff = true });
+            }
+            return line;
+        }
+
+        var fileA = new CodeFile
+        {
+            VersionString = "1.0.0",
+            Language = "C#",
+            ReviewLines = [MakeClassLine(withAddedInAnnotation: false)]
+        };
+
+        var fileB = new CodeFile
+        {
+            VersionString = "1.0.0",
+            Language = "C#",
+            ReviewLines = [MakeClassLine(withAddedInAnnotation: true)]
+        };
+
+        string hashA = await _codeFileManager.ComputeAPIContentHashAsync(fileA);
+        string hashB = await _codeFileManager.ComputeAPIContentHashAsync(fileB);
+        Assert.Equal(hashA, hashB);
+       Assert.True(_codeFileManager.AreAPICodeFilesTheSame(new RenderedCodeFile(fileA), new RenderedCodeFile(fileB)));
+    }
+
+    [Fact]
+    public async Task ComputeAPIContentHashAsync_ProducesDifferentHash_WhenApiSurfaceDiffers()
+    {
+        var fileA = new CodeFile
+        {
+            VersionString = "1.0.0",
+            Language = "C#",
+            ReviewLines =
+            [
+                new ReviewLine
+                {
+                    LineId = "line-1",
+                    Tokens = [ReviewToken.CreateKeywordToken("public"), ReviewToken.CreateTypeNameToken("ClassA")]
+                }
+            ]
+        };
+
+        var fileB = new CodeFile
+        {
+            VersionString = "1.0.0",
+            Language = "C#",
+            ReviewLines =
+            [
+                new ReviewLine
+                {
+                    LineId = "line-1",
+                    Tokens = [ReviewToken.CreateKeywordToken("public"), ReviewToken.CreateTypeNameToken("ClassB")]
+                }
+            ]
+        };
+
+        string hashA = await _codeFileManager.ComputeAPIContentHashAsync(fileA);
+        string hashB = await _codeFileManager.ComputeAPIContentHashAsync(fileB);
+
+        Assert.NotEqual(hashA, hashB);
+        Assert.False(_codeFileManager.AreAPICodeFilesTheSame(new RenderedCodeFile(fileA), new RenderedCodeFile(fileB)));
     }
 
     #endregion

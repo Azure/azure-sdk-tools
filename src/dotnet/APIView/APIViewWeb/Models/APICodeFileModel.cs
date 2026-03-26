@@ -41,5 +41,6 @@ namespace APIViewWeb
         public string PackageVersion { get; set; }
         public string CrossLanguagePackageId { get; set; }
         public bool IsConvertedTokenModel { get; set; } = false;
+        public string ContentHash { get; set; }
     }
 }

@@ -7,7 +7,7 @@ using Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
 using Azure.Sdk.Tools.Cli.Benchmarks.Models;
 using Azure.Sdk.Tools.Cli.Benchmarks.Reporting;
 using Azure.Sdk.Tools.Cli.Benchmarks.Scenarios;
-using Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec;
+using Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.TypeSpec;
 
 namespace Azure.Sdk.Tools.Cli.Benchmarks;
 

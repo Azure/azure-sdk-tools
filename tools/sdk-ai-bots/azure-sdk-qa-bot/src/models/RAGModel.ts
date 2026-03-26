@@ -71,7 +71,7 @@ export class RAGModel implements PromptCompletionModel {
         id: 'N/A',
         answer: '⚠️Unable to establish a connection to the AI service at this time. Please try again later.',
         has_result: false,
-        references: [],
+        references: undefined,
       };
     }
     // TODO: try merge cancelTimer and stop into one method

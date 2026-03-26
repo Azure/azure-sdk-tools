@@ -169,7 +169,7 @@ export class ThinkingHandler {
 
   private addReferencesToReply(ragReply: CompletionResponsePayload): string {
     let reply = ragReply.answer;
-    if (ragReply.references === null) return reply;
+    if (ragReply.references === null || ragReply.references === undefined || ragReply.references.length === 0) return reply;
 
     // remove duplicate references
     const referencesMap = new Map<string, Map<string, string>>();

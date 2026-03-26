@@ -300,7 +300,7 @@
         {
             "name": "002005-ARM-define-the-resource",
             "description": "ARM-define-the-resource",
-            "prompt": "Define a Azure resource \"Employee\" under the namespace \"Microsoft.Widget\" using TypeSpec. Ensure the definition meets TypeSpec Azure design guidelines.",
+            "prompt": "Define a Azure resource 'Employee' under the namespace 'Microsoft.Widget' using TypeSpec. Ensure the definition meets TypeSpec Azure design guidelines. Properties: age: integer, optional; city: string, optional; profile: bytes, optional; provisioningState: enum(ARM provisioning state), optional;",
             "testfiles": [
                 "002005-ARM-define-the-resource/main.tsp"
             ],
@@ -324,6 +324,12 @@
                 "2. The AddressResource model should be defined as a proxy resource with a parent-child relationship to the Employee resource.",
                 "3. The AddressProperties model should include street address fields, city, state, postal code, country, and a read-only provisioning state.",
                 "4. The Addresses interface should include standard CRUD operations and a list-by-parent operation."
+            ],
+            "qas": [
+            {
+                "question": "What properties should the AddressProperties model include?",
+                "answer": "street address fields, city, state, postal code, country, and a read-only provisioningState."
+            }
             ]
         },
         {
@@ -339,15 +345,23 @@
                 "3. A response model should be defined with notification identifier and status fields.",
                 "4. A synchronous notify action should be added to the Employees interface as a custom POST operation.",
                 "5. Example files should be created for all defined API versions."
+            ],
+            "qas": [
+            {
+                "question": "What fields should the request model contain?",
+                "answer": "message: string; priority: enum (Low, Medium, High)"
+            },
+            {
+                "question": "What fields should the response model contain?",
+                "answer": "notificationId: string; status: string"
+            }
             ]
         },
         {
             "name": "002008-ARM-add-parameters",
             "description": "ARM-add-parameters",
             "prompt": "add top and skip query parameters to the ListBySubscription operation in interface employees",
-            "testfiles": [
-                "002008-ARM-add-parameters/main.tsp"
-            ],
+            "testfiles": [],
             "verifyPlan": [
                 "1. The listBySubscription operation should include top and skip query parameters for pagination support.",
                 "2. All other existing operations in the Employees interface should remain unchanged."
@@ -447,7 +461,14 @@
             "testfiles": [
                 "005001-warning-suppress-warning/models.tsp"
             ],
-            "verifyPlan": []
+            "tspProject": "specification/cognitiveservices/CognitiveServices.Management",
+            "verifyPlan": [
+                "1. Each `#suppress` directive must be placed directly above the specific syntax node (model, property, operation, union, etc.) that produces the warning, not at the file header or in a centralized block, because TypeSpec directives are node-scoped and only apply to the immediately following syntax node.",
+                "2. The suppression rule name in `#suppress` must exactly match the warning diagnostic code reported by `tsp compile .` (e.g., `#suppress \"@azure-tools/typespec-azure-resource-manager/arm-resource-duplicate-property\"`).",
+                "3. Every `#suppress` directive must include the justification string `\"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"` as its second argument.",
+                "4. Only warnings actually reported by `tsp compile .` should be suppressed. No extra or preemptive suppressions should be added for warnings that do not appear in the compilation output.",
+                "5. After adding all suppressions, `tsp compile .` should produce zero warnings."
+            ]
         }
         
     ]

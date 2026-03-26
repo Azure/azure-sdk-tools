@@ -4,7 +4,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Azure.Sdk.Tools.Cli.Benchmarks.Interaction;
-using Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec;
+using Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.TypeSpec;
 
 namespace Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
 

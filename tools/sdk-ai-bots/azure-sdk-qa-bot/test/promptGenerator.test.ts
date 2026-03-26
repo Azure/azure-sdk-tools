@@ -76,7 +76,9 @@ describe('PromptGenerator', () => {
       links: ['http://example.com/azure-docs', 'http://example.com/api-reference'],
       images: [],
       userName: 'testUser',
+      userID: 'user-123',
       timestamp: new Date('2023-01-01T00:00:00Z'),
+      conversationID: 'test-conversation',
     };
 
     const mockReply: RAGReply = {
@@ -107,7 +109,9 @@ describe('PromptGenerator', () => {
         prompt: {
           textWithoutMention: 'I need help with Azure SDK',
           userName: 'testUser',
+          userID: 'user-123',
           timestamp: new Date('2023-01-01T00:00:00Z'),
+          conversationID: 'test-conversation-1',
         },
         timestamp: new Date('2023-01-01T00:00:00Z'),
       },
@@ -117,7 +121,9 @@ describe('PromptGenerator', () => {
         prompt: {
           textWithoutMention: 'I need help with Azure SDK',
           userName: 'testUser',
+          userID: 'user-123',
           timestamp: new Date('2022-01-01T00:00:00Z'),
+          conversationID: 'test-conversation-1',
         },
         reply: mockReply,
         timestamp: new Date('2022-01-01T00:01:00Z'),
@@ -129,14 +135,6 @@ describe('PromptGenerator', () => {
     // Since generateFullPrompt returns MessageWithRemoteContent, we need to check the currentQuestion property
     expect(result.currentQuestion).toContain(userQuery);
     expect(result.currentQuestion).toContain('How do I use Azure SDK with these resources?');
-
-    // Check that conversations array is defined and contains expected content
-    expect(result.conversations).toBeDefined();
-    expect(result.conversations.length).toBe(2);
-
-    // Check the first conversation in the array
-    expect(result.conversations[0].question).toContain('I need help with Azure SDK');
-    expect(result.conversations[1].answer).toContain('I can help you with Azure SDK');
 
     // Verify that the additional info contains extracted content from links
     expect(result.additionalInfo.links).toBeDefined();

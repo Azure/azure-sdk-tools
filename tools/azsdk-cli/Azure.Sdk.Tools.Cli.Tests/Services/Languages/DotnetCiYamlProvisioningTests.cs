@@ -211,6 +211,27 @@ public class DotnetCiYamlProvisioningTests
         Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
     }
 
+    [Test]
+    public async Task UpdateMetadataAsync_ReturnsFailure_ForUnsupportedSdkType()
+    {
+        var serviceName = "functions";
+        var packageName = "Microsoft.Azure.Functions.Worker";
+        SetupPackageInfo(serviceName, packageName, "functions");
+
+        var packagePath = Path.Combine(_repoRoot, "sdk", serviceName, packageName);
+
+        var result = await _service.UpdateMetadataAsync(packagePath, CancellationToken.None);
+
+        Assert.That(result.OperationStatus, Is.EqualTo(Status.Failed));
+        Assert.That(result.ResponseErrors, Does.Contain("CI YAML provisioning is only supported for dataplane and management SDKs (type was 'Functions'). No changes were made."));
+
+        // Verify no CI files were created
+        var ciYmlPath = Path.Combine(_repoRoot, "sdk", serviceName, "ci.yml");
+        var ciMgmtPath = Path.Combine(_repoRoot, "sdk", serviceName, "ci.mgmt.yml");
+        Assert.That(File.Exists(ciYmlPath), Is.False, "ci.yml should not be created");
+        Assert.That(File.Exists(ciMgmtPath), Is.False, "ci.mgmt.yml should not be created");
+    }
+
     #region Package Discovery Tests
 
     [Test]

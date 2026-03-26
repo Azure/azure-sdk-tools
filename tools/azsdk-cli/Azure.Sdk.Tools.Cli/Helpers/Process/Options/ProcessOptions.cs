@@ -12,6 +12,7 @@ public interface IProcessOptions
     TimeSpan Timeout { get; }
     bool LogOutputStream { get; }
     string ShortName { get; }
+    Dictionary<string, string> EnvironmentVariables { get; }
 }
 
 public class ProcessOptions : IProcessOptions
@@ -26,6 +27,7 @@ public class ProcessOptions : IProcessOptions
     public string WorkingDirectory { get; }
     public TimeSpan Timeout { get; }
     public bool LogOutputStream { get; }
+    public Dictionary<string, string> EnvironmentVariables { get; } = [];
 
     private string shortName;
     public virtual string ShortName

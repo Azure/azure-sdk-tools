@@ -214,11 +214,6 @@ public class CommonValidationHelpers : ICommonValidationHelpers
                 return new PackageCheckResponse(1, "", $"Cspell config file not found at expected location: {cspellConfigPath}");
             }
 
-            // Escape single quotes in paths for use in PowerShell script blocks
-            var escapedScriptPath = scriptPath.Replace("'", "''");
-            var escapedConfigPath = cspellConfigPath.Replace("'", "''");
-            var escapedRepoRoot = packageRepoRoot.Replace("'", "''");
-
             // Get only the files that have changed between the current branch and the default (main) branch.
             // This avoids scanning thousands of files in directories like .tox, node_modules, etc.
             var mergeBaseSha = await _gitHelper.GetMergeBaseCommitShaAsync(packageRepoRoot, "main", ct);
@@ -250,12 +245,18 @@ public class CommonValidationHelpers : ICommonValidationHelpers
                 return new PackageCheckResponse(0, "No resolvable changed files detected. Spelling check skipped.");
             }
 
-            // Build file list as a PowerShell array of quoted paths
+            // Build file list as a PowerShell array of quoted paths.
+            // scriptPath/cspellConfigPath/packageRepoRoot are passed via environment variables so they
+            // don't need to be embedded in single-quoted PowerShell string literals.
             var fileListLiteral = string.Join(", ", absoluteChangedFiles.Select(f => $"'{f.Replace("'", "''")}'"));
-            var command = $"$files = @({fileListLiteral}); & '{escapedScriptPath}' -CSpellConfigPath '{escapedConfigPath}' -SpellCheckRoot '{escapedRepoRoot}' -FileList $files";
+            var command = $"$files = @({fileListLiteral}); & $env:AZSDK_CSPELL_SCRIPT -CSpellConfigPath $env:AZSDK_CSPELL_CONFIG -SpellCheckRoot $env:AZSDK_CSPELL_ROOT -FileList $files";
 
             var timeout = TimeSpan.FromMinutes(10);
-            var processResult = await _processHelper.Run(new PowershellOptions([command], timeout: timeout, workingDirectory: packageRepoRoot), ct);
+            var opts = new PowershellOptions([command], timeout: timeout, workingDirectory: packageRepoRoot);
+            opts.EnvironmentVariables["AZSDK_CSPELL_SCRIPT"] = scriptPath;
+            opts.EnvironmentVariables["AZSDK_CSPELL_CONFIG"] = cspellConfigPath;
+            opts.EnvironmentVariables["AZSDK_CSPELL_ROOT"] = packageRepoRoot;
+            var processResult = await _processHelper.Run(opts, ct);
 
             // If fix is requested and there are spelling issues, use CopilotAgent to automatically apply fixes
             if (fixCheckErrors && processResult.ExitCode != 0 && !string.IsNullOrWhiteSpace(processResult.Output))

@@ -57,7 +57,9 @@ def _git_short_sha() -> str:
     try:
         r = subprocess.run(
             ["git", "rev-parse", "--short", "HEAD"],
-            capture_output=True, text=True, check=True,
+            capture_output=True,
+            text=True,
+            check=True,
         )
         return r.stdout.strip()
     except (subprocess.CalledProcessError, FileNotFoundError):
@@ -73,12 +75,20 @@ def _git_short_sha() -> str:
 def _list_project_user_assigned_identities(project_resource_id: str) -> list[str]:
     """Return resource IDs of user-assigned identities on the AI project."""
     print(f"Listing user-assigned identities on project...")
-    result = _run_quiet([
-        "az", "resource", "show",
-        "--ids", project_resource_id,
-        "--query", "identity.userAssignedIdentities",
-        "-o", "json",
-    ], shell=True)
+    result = _run_quiet(
+        [
+            "az",
+            "resource",
+            "show",
+            "--ids",
+            project_resource_id,
+            "--query",
+            "identity.userAssignedIdentities",
+            "-o",
+            "json",
+        ],
+        shell=True,
+    )
     if result.returncode != 0 or not result.stdout.strip():
         return []
     try:
@@ -100,69 +110,120 @@ def _set_project_identity_type(project_resource_id: str, identity_type: str) -> 
     """Set the project identity type (e.g. 'SystemAssigned' or 'SystemAssigned, UserAssigned')."""
     print(f"  Setting project identity type to: {identity_type}")
     if identity_type == "SystemAssigned":
-        identity_payload = json.dumps({
-            "type": "SystemAssigned",
-            "userAssignedIdentities": None,
-        })
-        _run([
-            "az", "resource", "update",
-            "--ids", project_resource_id,
-            "--set", f"identity={identity_payload}",
-        ], shell=True)
+        identity_payload = json.dumps(
+            {
+                "type": "SystemAssigned",
+                "userAssignedIdentities": None,
+            }
+        )
+        _run(
+            [
+                "az",
+                "resource",
+                "update",
+                "--ids",
+                project_resource_id,
+                "--set",
+                f"identity={identity_payload}",
+            ],
+            shell=True,
+        )
         return
 
-    _run([
-        "az", "resource", "update",
-        "--ids", project_resource_id,
-        "--set", f"identity.type={identity_type}",
-    ], shell=True)
+    _run(
+        [
+            "az",
+            "resource",
+            "update",
+            "--ids",
+            project_resource_id,
+            "--set",
+            f"identity.type={identity_type}",
+        ],
+        shell=True,
+    )
 
 
 def _restore_project_user_assigned_identities(
-    project_resource_id: str, identity_ids: list[str],
+    project_resource_id: str,
+    identity_ids: list[str],
 ) -> None:
     """Restore user-assigned identities on the AI project."""
     # Build the identity body: {"type": "SystemAssigned, UserAssigned", "userAssignedIdentities": {"<id>": {}, ...}}
     umi_dict = {uid: {} for uid in identity_ids}
-    identity_payload = json.dumps({
-        "type": "SystemAssigned, UserAssigned",
-        "userAssignedIdentities": umi_dict,
-    })
+    identity_payload = json.dumps(
+        {
+            "type": "SystemAssigned, UserAssigned",
+            "userAssignedIdentities": umi_dict,
+        }
+    )
     print(f"  Restoring {len(identity_ids)} user-assigned identities...")
-    _run([
-        "az", "resource", "update",
-        "--ids", project_resource_id,
-        "--set", f"identity={identity_payload}",
-    ], shell=True)
+    _run(
+        [
+            "az",
+            "resource",
+            "update",
+            "--ids",
+            project_resource_id,
+            "--set",
+            f"identity={identity_payload}",
+        ],
+        shell=True,
+    )
 
 
 def _wait_for_agent_running(
-    account_name: str, project_name: str, agent_name: str, agent_version: str,
-    timeout: int = 300, poll_interval: int = 10,
+    account_name: str,
+    project_name: str,
+    agent_name: str,
+    agent_version: str,
+    timeout: int = 300,
+    poll_interval: int = 10,
 ) -> bool:
     """Poll until the hosted agent reaches a running state."""
-    print(f"Waiting for agent {agent_name} version {agent_version} to be running (timeout {timeout}s)...")
+    print(
+        f"Waiting for agent {agent_name} version {agent_version} to be running (timeout {timeout}s)..."
+    )
     deadline = time.time() + timeout
     while time.time() < deadline:
-        result = _run_quiet([
-            "az", "cognitiveservices", "agent", "status",
-            "--account-name", account_name,
-            "--project-name", project_name,
-            "--name", agent_name,
-            "--agent-version", agent_version,
-            "-o", "json",
-        ], shell=True)
+        result = _run_quiet(
+            [
+                "az",
+                "cognitiveservices",
+                "agent",
+                "status",
+                "--account-name",
+                account_name,
+                "--project-name",
+                project_name,
+                "--name",
+                agent_name,
+                "--agent-version",
+                agent_version,
+                "-o",
+                "json",
+            ],
+            shell=True,
+        )
         if result.returncode != 0:
             # Command failed — likely project/account not found or not authenticated
-            error_msg = result.stderr.strip() if result.stderr else result.stdout.strip()
+            error_msg = (
+                result.stderr.strip() if result.stderr else result.stdout.strip()
+            )
             print(f"  WARNING: Failed to check agent status: {error_msg}")
-            print(f"  Ensure you are logged in to the correct subscription and account/project names are correct.")
-            print(f"  Account: {account_name}, Project: {project_name}, Agent: {agent_name}")
+            print(
+                f"  Ensure you are logged in to the correct subscription and account/project names are correct."
+            )
+            print(
+                f"  Account: {account_name}, Project: {project_name}, Agent: {agent_name}"
+            )
             return False
         try:
             payload = json.loads(result.stdout)
         except json.JSONDecodeError:
-            print(f"  WARNING: Could not parse agent status payload: {result.stdout.strip()}")
+            print(
+                f"  WARNING: Could not parse agent status payload: {result.stdout.strip()}"
+            )
             return False
 
         status = str(payload.get("status", "")).lower()
@@ -171,9 +232,14 @@ def _wait_for_agent_running(
         provisioning_state = str(container.get("provisioning_state", "")).lower()
 
         if status in ("running", "succeeded"):
-            print(f"  Agent status is {status} (container={container_state}, provisioning={provisioning_state}).")
+            print(
+                f"  Agent status is {status} (container={container_state}, provisioning={provisioning_state})."
+            )
             return True
-        if status in ("failed", "error", "stopped") or provisioning_state in ("failed", "error"):
+        if status in ("failed", "error", "stopped") or provisioning_state in (
+            "failed",
+            "error",
+        ):
             print(
                 "  Agent entered a terminal non-running state "
                 f"(status={status}, container={container_state}, provisioning={provisioning_state})."
@@ -190,24 +256,44 @@ def _wait_for_agent_running(
 
 
 def _wait_for_agent_not_stopping(
-    account_name: str, project_name: str, agent_name: str, agent_version: str,
-    timeout: int = 300, poll_interval: int = 10,
+    account_name: str,
+    project_name: str,
+    agent_name: str,
+    agent_version: str,
+    timeout: int = 300,
+    poll_interval: int = 10,
 ) -> bool:
     """Wait until the hosted agent status is no longer 'Stopping'."""
-    print(f"Waiting for agent {agent_name} version {agent_version} to leave Stopping state...")
+    print(
+        f"Waiting for agent {agent_name} version {agent_version} to leave Stopping state..."
+    )
     deadline = time.time() + timeout
     while time.time() < deadline:
-        result = _run_quiet([
-            "az", "cognitiveservices", "agent", "status",
-            "--account-name", account_name,
-            "--project-name", project_name,
-            "--name", agent_name,
-            "--agent-version", agent_version,
-            "--query", "status",
-            "-o", "tsv",
-        ], shell=True)
+        result = _run_quiet(
+            [
+                "az",
+                "cognitiveservices",
+                "agent",
+                "status",
+                "--account-name",
+                account_name,
+                "--project-name",
+                project_name,
+                "--name",
+                agent_name,
+                "--agent-version",
+                agent_version,
+                "--query",
+                "status",
+                "-o",
+                "tsv",
+            ],
+            shell=True,
+        )
         if result.returncode != 0:
-            error_msg = result.stderr.strip() if result.stderr else result.stdout.strip()
+            error_msg = (
+                result.stderr.strip() if result.stderr else result.stdout.strip()
+            )
             print(f"  WARNING: Failed to query agent status while waiting: {error_msg}")
             return False
 
@@ -223,19 +309,32 @@ def _wait_for_agent_not_stopping(
     return False
 
 
-def _start_agent(account_name: str, project_name: str, agent_name: str, agent_version: str) -> None:
+def _start_agent(
+    account_name: str, project_name: str, agent_name: str, agent_version: str
+) -> None:
     print(f"Starting agent: {agent_name} version {agent_version}")
 
     # Always ensure the deployment is not in Stopping before start.
-    if not _wait_for_agent_not_stopping(account_name, project_name, agent_name, agent_version):
-        raise RuntimeError("Failed to start agent: deployment remained in Stopping state.")
+    if not _wait_for_agent_not_stopping(
+        account_name, project_name, agent_name, agent_version
+    ):
+        raise RuntimeError(
+            "Failed to start agent: deployment remained in Stopping state."
+        )
 
     start_cmd = [
-        "az", "cognitiveservices", "agent", "start",
-        "--account-name", account_name,
-        "--project-name", project_name,
-        "--name", agent_name,
-        "--agent-version", agent_version,
+        "az",
+        "cognitiveservices",
+        "agent",
+        "start",
+        "--account-name",
+        account_name,
+        "--project-name",
+        project_name,
+        "--name",
+        agent_name,
+        "--agent-version",
+        agent_version,
     ]
 
     result = _run_quiet(start_cmd, shell=True)
@@ -246,34 +345,59 @@ def _start_agent(account_name: str, project_name: str, agent_name: str, agent_ve
     raise RuntimeError(f"Failed to start agent: {error_msg}")
 
 
-def _stop_agent(account_name: str, project_name: str, agent_name: str, agent_version: str) -> None:
+def _stop_agent(
+    account_name: str, project_name: str, agent_name: str, agent_version: str
+) -> None:
     print(f"Stopping agent: {agent_name} version {agent_version}")
-    _run([
-        "az", "cognitiveservices", "agent", "stop",
-        "--account-name", account_name,
-        "--project-name", project_name,
-        "--name", agent_name,
-        "--agent-version", agent_version,
-    ], shell=True)
+    _run(
+        [
+            "az",
+            "cognitiveservices",
+            "agent",
+            "stop",
+            "--account-name",
+            account_name,
+            "--project-name",
+            project_name,
+            "--name",
+            agent_name,
+            "--agent-version",
+            agent_version,
+        ],
+        shell=True,
+    )
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Build, push, and deploy a hosted agent.")
-    parser.add_argument("agent_name", help="Agent directory name under agents/, e.g. chat_agent")
-    parser.add_argument("--tag", default=None, help="Image tag (default: git short SHA)")
-    parser.add_argument("--appconfig-endpoint", default=os.environ.get("AZURE_APPCONFIG_ENDPOINT"),
-                        help="Override App Configuration endpoint")
+    parser = argparse.ArgumentParser(
+        description="Build, push, and deploy a hosted agent."
+    )
+    parser.add_argument(
+        "agent_name", help="Agent directory name under agents/, e.g. chat_agent"
+    )
+    parser.add_argument(
+        "--tag", default=None, help="Image tag (default: git short SHA)"
+    )
+    parser.add_argument(
+        "--appconfig-endpoint",
+        default=os.environ.get("AZURE_APPCONFIG_ENDPOINT"),
+        help="Override App Configuration endpoint",
+    )
     args = parser.parse_args()
 
     asyncio.run(app_config.init())
 
     # Show current subscription context
-    sub_result = _run_quiet(["az", "account", "show", "--query", "id", "-o", "tsv"], shell=True)
+    sub_result = _run_quiet(
+        ["az", "account", "show", "--query", "id", "-o", "tsv"], shell=True
+    )
     if sub_result.returncode == 0:
         sub_id = sub_result.stdout.strip()
         print(f"Current subscription: {sub_id}")
     else:
-        print("WARNING: Could not determine current subscription. Ensure you are logged in: az login")
+        print(
+            "WARNING: Could not determine current subscription. Ensure you are logged in: az login"
+        )
 
     registry = cfg("ACR_LOGIN_SERVER")
     project_endpoint = cfg("AI_FOUNDRY_PROJECT_ENDPOINT")
@@ -286,7 +410,9 @@ def main() -> None:
     if not project_endpoint:
         sys.exit("ERROR: AI_FOUNDRY_PROJECT_ENDPOINT not found in App Configuration")
     if not appconfig_endpoint:
-        sys.exit("ERROR: AZURE_APPCONFIG_ENDPOINT not set in .env or --appconfig-endpoint")
+        sys.exit(
+            "ERROR: AZURE_APPCONFIG_ENDPOINT not set in .env or --appconfig-endpoint"
+        )
     if not account_name or not project_name:
         sys.exit(
             "ERROR: AI_FOUNDRY_ACCOUNT_NAME and AI_FOUNDRY_PROJECT "
@@ -315,13 +441,22 @@ def main() -> None:
     dockerfile = _PROJECT_DIR / "agents" / args.agent_name / "Dockerfile"
 
     # ── Resolve project resource ID ──
-    result = _run_quiet([
-        "az", "resource", "list",
-        "--name", f"{account_name}/{project_name}",
-        "--resource-type", "Microsoft.CognitiveServices/accounts/projects",
-        "--query", "[0].id",
-        "-o", "tsv",
-    ], shell=True)
+    result = _run_quiet(
+        [
+            "az",
+            "resource",
+            "list",
+            "--name",
+            f"{account_name}/{project_name}",
+            "--resource-type",
+            "Microsoft.CognitiveServices/accounts/projects",
+            "--query",
+            "[0].id",
+            "-o",
+            "tsv",
+        ],
+        shell=True,
+    )
     project_resource_id = result.stdout.strip() if result.returncode == 0 else ""
     if not project_resource_id:
         sys.exit(
@@ -334,12 +469,26 @@ def main() -> None:
     print(f"Logging in to ACR: {acr_name}")
     _run(["az", "acr", "login", "--name", acr_name], shell=True)
     print(f"Building: {image}")
-    _run(["docker", "build", "--platform", "linux/amd64", "-t", image, "-f", str(dockerfile), str(_PROJECT_DIR)])
+    _run(
+        [
+            "docker",
+            "build",
+            "--platform",
+            "linux/amd64",
+            "-t",
+            image,
+            "-f",
+            str(dockerfile),
+            str(_PROJECT_DIR),
+        ]
+    )
 
     # ── Save and remove user-assigned identities after a successful build ──
     saved_identities = _list_project_user_assigned_identities(project_resource_id)
     if saved_identities:
-        print(f"Removing {len(saved_identities)} user-assigned identities before deployment...")
+        print(
+            f"Removing {len(saved_identities)} user-assigned identities before deployment..."
+        )
         _set_project_identity_type(project_resource_id, "SystemAssigned")
     else:
         print("No user-assigned identities found on the project.")
@@ -360,7 +509,9 @@ def main() -> None:
             agent_name=image_name,
             definition=HostedAgentDefinition(
                 container_protocol_versions=[
-                    ProtocolVersionRecord(protocol=AgentProtocol.RESPONSES, version="v1")
+                    ProtocolVersionRecord(
+                        protocol=AgentProtocol.RESPONSES, version="v1"
+                    )
                 ],
                 cpu="1",
                 memory="2Gi",
@@ -369,6 +520,7 @@ def main() -> None:
                     "AZURE_APPCONFIG_ENDPOINT": appconfig_endpoint,
                     "UMI_BACKEND_CLIENT_ID": os.environ.get("UMI_BACKEND_CLIENT_ID"),
                     "UMI_FRONTEND_CLIENT_ID": os.environ.get("UMI_FRONTEND_CLIENT_ID"),
+                    "ENABLE_INSTRUMENTATION": "true",
                 },
             ),
         )
@@ -382,21 +534,35 @@ def main() -> None:
 
     # ── Wait for running, then restore identities and restart ──
     if saved_identities and project_resource_id:
-        if _wait_for_agent_running(account_name, project_name, agent.name, agent_version):
+        if _wait_for_agent_running(
+            account_name, project_name, agent.name, agent_version
+        ):
             print(f"Restoring {len(saved_identities)} user-assigned identities...")
-            _restore_project_user_assigned_identities(project_resource_id, saved_identities)
+            _restore_project_user_assigned_identities(
+                project_resource_id, saved_identities
+            )
             print("Identities restored successfully.")
 
-            print("Restarting agent so it runs with the restored user-assigned identities...")
+            print(
+                "Restarting agent so it runs with the restored user-assigned identities..."
+            )
             _stop_agent(account_name, project_name, agent.name, agent_version)
             _start_agent(account_name, project_name, agent.name, agent_version)
 
-            if _wait_for_agent_running(account_name, project_name, agent.name, agent_version):
-                print(f"Done — agent {agent.name} v{agent.version} is running with restored identities.")
+            if _wait_for_agent_running(
+                account_name, project_name, agent.name, agent_version
+            ):
+                print(
+                    f"Done — agent {agent.name} v{agent.version} is running with restored identities."
+                )
             else:
-                print("WARNING: Agent restart did not reach Running state after identities were restored.")
+                print(
+                    "WARNING: Agent restart did not reach Running state after identities were restored."
+                )
         else:
-            print("WARNING: Agent did not reach Running state. Identities NOT restored.")
+            print(
+                "WARNING: Agent did not reach Running state. Identities NOT restored."
+            )
             print("Restore them manually by re-adding these UMIs to the project:")
             for umi in saved_identities:
                 print(f"  {umi}")

@@ -3,6 +3,7 @@ FROM mcr.microsoft.com/azurelinux/base/python:3.12
 WORKDIR /app
 
 ENV PYTHONUNBUFFERED=1
+ENV ENABLE_INSTRUMENTATION=true
 
 ARG AZSDK_CLI_VERSION=0.6.3
 

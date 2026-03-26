@@ -35,12 +35,11 @@ from utils.azure_ai_foundry import get_agent_client
 
 logger = logging.getLogger(__name__)
 
+
 def _load_instructions(file_path: Path) -> str:
     """Load agent instructions from the instructions markdown file."""
     if not file_path.exists():
-        raise FileNotFoundError(
-            f"Agent instructions file not found: {file_path}"
-        )
+        raise FileNotFoundError(f"Agent instructions file not found: {file_path}")
     return file_path.read_text(encoding="utf-8").strip()
 
 
@@ -72,6 +71,7 @@ async def main() -> None:
     agent = Agent(
         agent_client,
         name=agent_name,
+        id=agent_name,
         instructions=instructions,
         tools=tools,
         context_providers=[skills_provider],

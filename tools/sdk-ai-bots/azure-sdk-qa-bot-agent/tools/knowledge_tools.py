@@ -13,7 +13,7 @@ from enum import Enum
 from typing import Annotated
 
 from config.tenant_config import get_tenant_config
-from models.knowledge import SearchKnowledgeBaseResult
+from models.knowledge import Reference, SearchKnowledgeBaseResult
 from tools import tool
 from utils.azure_ai_search import get_search_client
 
@@ -97,14 +97,18 @@ class KnowledgeTools:
         # Build search tasks based on search_mode
         tasks: list = []
         if use_deep:
-            tasks.append(search_client.agentic_search(
+            tasks.append(
+                search_client.agentic_search(
+                    query=query,
+                    source_filters=source_filters,
+                )
+            )
+        tasks.append(
+            search_client.vector_search(
                 query=query,
                 source_filters=source_filters,
-            ))
-        tasks.append(search_client.vector_search(
-            query=query,
-            source_filters=source_filters,
-        ))
+            )
+        )
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -132,10 +136,6 @@ class KnowledgeTools:
                 source=k.source,
                 link=k.link,
                 content=k.content,
-                chunk_id=k.chunk_id,
-                header1=k.header1,
-                header2=k.header2,
-                header3=k.header3,
             )
             for k in unique_knowledges
         ]

@@ -107,6 +107,8 @@ Add a new `SLAStatusTool` to azsdk-cli that queries the GitHub Issues API, compu
 |--------|-----------|-------------------|
 | **FQR** | Issue creation → first team member comment | 3 business days |
 | **Bug Resolution** | Bug issue creation → close | 90 calendar days |
+
+> **Note on lookback window:** The default `--days` value (180) is intentionally 2× the longest SLA threshold (90d bug resolution). If the lookback equaled the SLA threshold, a bug would fall out of the query window the moment it breached — making breached issues invisible. The lookback must always exceed the longest SLA to capture both approaching and breached issues.
 | **Question Resolution** | Question issue creation → close or `issue-addressed` label | 14 calendar days |
 
 **Label-based filtering:**
@@ -285,14 +287,14 @@ azsdk sla status --service <label> [--repo <repo>] [--days <lookback>] [--approa
 
 - `--service <label>`: Service label to query (required)
 - `--repo <repo>`: Specific repo name, e.g. `azure-sdk-for-python` (optional, defaults to all SDK repos)
-- `--days <n>`: Look-back window in days (default: 90)
+- `--days <n>`: Look-back window in days (default: 180 — must exceed longest SLA threshold to capture breached issues)
 - `--approaching-window <n>`: Days before breach to flag as approaching (default: 7)
 - `--include-closed`: Include recently closed issues in metrics
 
 **Expected Output:**
 
 ```text
-SLA Status: KeyVault — azure-sdk-for-python (last 90 days)
+SLA Status: KeyVault — azure-sdk-for-python (last 180 days)
 
   FQR compliance (3d SLA):        83.3%  (10/12)
   Bug resolution (90d SLA):       80.0%  (4/5)

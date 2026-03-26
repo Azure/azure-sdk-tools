@@ -20,51 +20,47 @@ export async function createTempDirectory(outputDir: string): Promise<string> {
 }
 
 export async function readTspLocation(rootDir: string): Promise<TspLocation> {
-  try {
-    const yamlPath = resolvePath(rootDir, "tsp-location.yaml");
-    const fileStat = await stat(yamlPath);
-    if (fileStat.isFile()) {
-      const fileContents = await readFile(yamlPath, "utf8");
-      const tspLocation: TspLocation = parseYaml(fileContents);
+  const yamlPath = resolvePath(rootDir, "tsp-location.yaml");
+  const fileStat = await stat(yamlPath);
+  if (fileStat.isFile()) {
+    const fileContents = await readFile(yamlPath, "utf8");
+    const tspLocation: TspLocation = parseYaml(fileContents);
 
-      if (
-        !tspLocation.batch &&
-        (!tspLocation.directory || !tspLocation.commit || !tspLocation.repo)
-      ) {
-        // For non-batch configurations, require the standard fields
+    if (
+      !tspLocation.batch &&
+      (!tspLocation.directory || !tspLocation.commit || !tspLocation.repo)
+    ) {
+      // For non-batch configurations, require the standard fields
+      throw new Error(
+        "Invalid tsp-location.yaml, missing required fields: directory, commit, repo",
+      );
+    } else if (tspLocation.batch) {
+      if (!Array.isArray(tspLocation.batch)) {
+        throw new Error("Invalid tsp-location.yaml: batch must be an array of directory paths");
+      }
+      if (tspLocation.directory || tspLocation.commit || tspLocation.repo) {
         throw new Error(
-          "Invalid tsp-location.yaml, missing required fields: directory, commit, repo",
+          "Invalid tsp-location.yaml: batch configuration cannot have directory, commit, or repo fields",
         );
-      } else if (tspLocation.batch) {
-        if (!Array.isArray(tspLocation.batch)) {
-          throw new Error("Invalid tsp-location.yaml: batch must be an array of directory paths");
-        }
-        if (tspLocation.directory || tspLocation.commit || tspLocation.repo) {
-          throw new Error(
-            "Invalid tsp-location.yaml: batch configuration cannot have directory, commit, or repo fields",
-          );
-        }
       }
-      if (!tspLocation.additionalDirectories) {
-        tspLocation.additionalDirectories = [];
-      }
-
-      // Normalize the directory path and remove trailing slash
-      tspLocation.directory = normalizeDirectory(tspLocation.directory ?? "");
-      if (typeof tspLocation.additionalDirectories === "string") {
-        tspLocation.additionalDirectories = [normalizeDirectory(tspLocation.additionalDirectories)];
-      } else {
-        // List of additional directories
-        tspLocation.additionalDirectories =
-          tspLocation.additionalDirectories.map(normalizeDirectory);
-      }
-
-      return tspLocation;
     }
-    throw new Error("Could not find tsp-location.yaml");
-  } catch (e) {
-    throw new Error(`Could not read tsp-location.yaml: ${e}`);
+    if (!tspLocation.additionalDirectories) {
+      tspLocation.additionalDirectories = [];
+    }
+
+    // Normalize the directory path and remove trailing slash
+    tspLocation.directory = normalizeDirectory(tspLocation.directory ?? "");
+    if (typeof tspLocation.additionalDirectories === "string") {
+      tspLocation.additionalDirectories = [normalizeDirectory(tspLocation.additionalDirectories)];
+    } else {
+      // List of additional directories
+      tspLocation.additionalDirectories =
+        tspLocation.additionalDirectories.map(normalizeDirectory);
+    }
+
+    return tspLocation;
   }
+  throw new Error("Could not find tsp-location.yaml");
 }
 
 export async function getEmitterFromRepoConfig(emitterPath: string): Promise<string> {

@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, it } from "vitest";
+import { afterAll, beforeAll, describe, it, vi } from "vitest";
 import {
   formatAdditionalDirectories,
   getAdditionalDirectoryName,
@@ -11,9 +11,11 @@ import { getRepoRoot } from "../src/git.js";
 import { removeDirectory } from "../src/fs.js";
 import { parse as parseYaml } from "yaml";
 import { assert } from "chai";
-import { cp, readFile, rm, stat } from "node:fs/promises";
+import { cp, mkdir, readFile, rm, stat } from "node:fs/promises";
 import { joinPaths } from "@typespec/compiler";
 import { cwd } from "node:process";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 describe("get the right service dir from tspconfig.yaml", function () {
   it("Get custom emitter service-dir", async function () {
@@ -95,6 +97,30 @@ describe("Verify other utils functions", function () {
       additionalDirectories: [],
       entrypointFile: "foo.tsp",
     });
+  });
+
+  it("Check updateExistingTspLocation with missing tsp-location.yaml succeeds without error logging", async function () {
+    const tspLocationData = {
+      directory: "test-directory",
+      commit: "1234567890abcdef",
+      repo: "Azure/foo-repo",
+      additionalDirectories: [],
+    };
+
+    // Use a temp directory with no tsp-location.yaml to simulate a fresh output directory
+    const tempDir = join(tmpdir(), `tsp-client-test-${Date.now()}`);
+    await mkdir(tempDir, { recursive: true });
+    try {
+      const errorSpy = vi.spyOn(console, "error");
+      const result = await updateExistingTspLocation(tspLocationData, tempDir);
+      // Should return the original tspLocationData unchanged
+      assert.deepEqual(result, tspLocationData);
+      // Should not have logged any error
+      assert.ok(!errorSpy.mock.calls.length, "console.error should not have been called");
+      errorSpy.mockRestore();
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
   });
 
   it("Check updateExistingTspLocation with override parameter", async function () {

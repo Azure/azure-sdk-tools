@@ -505,6 +505,15 @@ def main() -> None:
         headers={"Foundry-Features": "HostedAgents=V1Preview"},
     )
     try:
+        # Predict the next version number so the container can include it
+        # in telemetry (gen_ai.agent.id = "name:version").
+        try:
+            existing = project.agents.get(image_name)
+            latest_version = int(existing.versions.latest.version)
+        except Exception:
+            latest_version = 0
+        next_version = str(latest_version + 1)
+
         agent = project.agents.create_version(
             agent_name=image_name,
             definition=HostedAgentDefinition(
@@ -521,10 +530,16 @@ def main() -> None:
                     "UMI_BACKEND_CLIENT_ID": os.environ.get("UMI_BACKEND_CLIENT_ID"),
                     "UMI_FRONTEND_CLIENT_ID": os.environ.get("UMI_FRONTEND_CLIENT_ID"),
                     "ENABLE_INSTRUMENTATION": "true",
+                    "AGENT_VERSION": next_version,
                 },
             ),
         )
         print(f"Created — agent: {agent.name}, version: {agent.version}")
+        if str(agent.version) != next_version:
+            print(
+                f"  WARNING: Predicted version {next_version} but got {agent.version}. "
+                "Traces will use the predicted version in gen_ai.agent.id."
+            )
     finally:
         project.close()
 

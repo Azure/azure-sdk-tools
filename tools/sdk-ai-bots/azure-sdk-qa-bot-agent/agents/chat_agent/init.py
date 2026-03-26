@@ -7,6 +7,7 @@ Deployed to Microsoft Foundry as a container agent.
 
 import asyncio
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -23,6 +24,7 @@ load_dotenv(override=False)
 
 from agent_framework import Agent
 from agent_framework import SkillsProvider
+from agent_framework.observability import configure_otel_providers
 from azure.ai.agentserver.agentframework import from_agent_framework
 
 import config.app_config as app_config
@@ -46,6 +48,15 @@ def _load_instructions(file_path: Path) -> str:
 async def main() -> None:
     """Start the hosted Chat Agent as an HTTP server."""
     await app_config.init()
+
+    # Observability — Foundry auto-configures Azure Monitor.
+    # For local dev, send traces to AI Toolkit.
+    if not os.environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING"):
+        configure_otel_providers(
+            vs_code_extension_port=4317,
+            enable_sensitive_data=True,
+        )
+
     agent_client = get_agent_client()
     # Limit tool-call loop iterations to prevent infinite loops.
     agent_client.function_invocation_configuration["max_iterations"] = 5
@@ -54,6 +65,10 @@ async def main() -> None:
     with open(agent_dir / "agent.yaml", encoding="utf-8") as f:
         agent_config = yaml.safe_load(f)
     agent_name = agent_config["name"]
+
+    # Append agent version so Foundry can filter traces per version.
+    agent_version = os.environ.get("AGENT_VERSION")
+    agent_id = f"{agent_name}:{agent_version}" if agent_version else agent_name
     knowledge_tools = KnowledgeTools()
     azsdk_mcp_tool = await create_azsdk_mcp_tool()
     github_mcp_tool = await create_github_mcp_tool(agent_client)
@@ -71,7 +86,7 @@ async def main() -> None:
     agent = Agent(
         agent_client,
         name=agent_name,
-        id=agent_name,
+        id=agent_id,
         instructions=instructions,
         tools=tools,
         context_providers=[skills_provider],

@@ -10,6 +10,7 @@ openpyxl>=3.1.0
 python-dotenv>=1.0.0
 pyyaml>=6.0
 agent-framework>=1.0.0rc3
+opentelemetry-exporter-otlp-proto-grpc
 debugpy
 # Agent development CLI tool (preview)
 agent-dev-cli

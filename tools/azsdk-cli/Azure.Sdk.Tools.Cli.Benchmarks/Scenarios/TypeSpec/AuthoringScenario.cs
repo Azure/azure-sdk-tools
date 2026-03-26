@@ -6,7 +6,7 @@ using Azure.Sdk.Tools.Cli.Benchmarks.Models;
 using Azure.Sdk.Tools.Cli.Benchmarks.Validation;
 using Azure.Sdk.Tools.Cli.Benchmarks.Validation.Validators;
 
-namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
+namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.TypeSpec
 {
     /// <summary>
     /// Represents a TypeSpec authoring scenario that can be loaded dynamically from JSON test case files.

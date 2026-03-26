@@ -1,5 +1,17 @@
 # Release History
 
+## 0.6.5 (Unreleased)
+
+### Features Added
+
+- Implemented version update for Go language service
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
 ## 0.6.4 (2026-03-25)
 
 ### Features Added

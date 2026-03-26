@@ -18,7 +18,7 @@ jobs:
     name: Skill Compliance Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install Azure Developer CLI
         uses: Azure/setup-azd@v2
@@ -52,7 +52,7 @@ jobs:
 
       - name: Upload compliance report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: skill-compliance
           path: compliance.md
@@ -63,7 +63,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: check-skills
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -116,7 +116,7 @@ jobs:
 
       - name: Upload eval results
         if: always() && steps.changes.outputs.SHOULD_RUN == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: eval-results-${{ github.run_id }}
           path: results/

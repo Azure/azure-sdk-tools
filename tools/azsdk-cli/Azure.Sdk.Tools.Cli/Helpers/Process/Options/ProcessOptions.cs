@@ -19,7 +19,7 @@ public class ProcessOptions : IProcessOptions
     public static readonly TimeSpan DEFAULT_PROCESS_TIMEOUT = TimeSpan.FromMinutes(2);
     private static readonly TimeSpan maxProcessTimeout = TimeSpan.FromHours(2);
 
-    private const string CMD = "cmd.exe";
+    public const string CMD = "cmd.exe";
 
     public string Command { get; }
     public List<string> Args { get; } = [];
@@ -83,7 +83,7 @@ public class ProcessOptions : IProcessOptions
         var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
         if (isWindows && windowsCommand != "pwsh" && windowsCommand != "powershell")
         {
-            args = ["/C", command, .. windowsArgs];
+            args = ["/C", windowsCommand, .. windowsArgs];
             command = CMD;
         }
 

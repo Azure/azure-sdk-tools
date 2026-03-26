@@ -4,8 +4,8 @@
 using System.CommandLine;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services.Languages;
@@ -29,16 +29,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
     [McpServerToolType, Description("Generates sample files for Azure SDK packages based on prompts.")]
     public class SampleGeneratorTool : LanguageMcpTool
     {
-        private readonly IMicroagentHostService _microagentHostService;
+        private readonly ICopilotAgentRunner _copilotAgentRunner;
 
         public SampleGeneratorTool(
-            IMicroagentHostService microagentHostService,
+            ICopilotAgentRunner copilotAgentRunner,
             ILogger<SampleGeneratorTool> logger,
             IGitHelper gitHelper,
             IEnumerable<LanguageService> languageServices
         ) : base(languageServices, gitHelper, logger)
         {
-            _microagentHostService = microagentHostService;
+            _copilotAgentRunner = copilotAgentRunner;
         }
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package, SharedCommandGroups.PackageSample];
 
@@ -143,16 +143,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
                 var result = await GenerateSamplesInternalAsync(
                     resolvedPrompt, packagePath, overwrite, model, extraContextPaths, ct);
 
-                if (result.SamplesCount == 0)
-                {
-                    return PackageOperationResponse.CreateSuccess(
+                var response = result.SamplesCount == 0
+                    ? PackageOperationResponse.CreateSuccess(
                         "Sample generation completed but no samples were generated.",
-                        nextSteps: ["Check the prompt for clarity", "Ensure the package has valid source files"]);
-                }
+                        packageInfo: result.PackageInfo,
+                        nextSteps: ["Check the prompt for clarity", "Ensure the package has valid source files"])
+                    : PackageOperationResponse.CreateSuccess(
+                        $"Successfully generated {result.SamplesCount} sample(s) for {result.Language} in {result.OutputDirectory}: {result.FileNames}",
+                        packageInfo: result.PackageInfo,
+                        nextSteps: ["Review the generated samples", "Test the samples to ensure they compile and run correctly"]);
 
-                return PackageOperationResponse.CreateSuccess(
-                    $"Successfully generated {result.SamplesCount} sample(s) for {result.Language} in {result.OutputDirectory}: {result.FileNames}",
-                    nextSteps: ["Review the generated samples", "Test the samples to ensure they compile and run correctly"]);
+                // Set samples_count for telemetry tracking (including 0 for failed generations)
+                response.Result = new { samples_count = result.SamplesCount };
+                return response;
             }
             catch (ArgumentException ex)
             {
@@ -171,7 +174,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
             }
         }
 
-        private async Task<(int SamplesCount, string OutputDirectory, string Language, string FileNames)> GenerateSamplesInternalAsync(
+        private async Task<(int SamplesCount, string OutputDirectory, string Language, string FileNames, PackageInfo PackageInfo)> GenerateSamplesInternalAsync(
             string prompt,
             string packagePath,
             bool overwrite,
@@ -238,20 +241,20 @@ Scenarios description:
 ";
             logger.LogDebug("Enhanced prompt prepared with {contextLength} characters of context", context.Length);
 
-            var microagent = string.IsNullOrEmpty(model)
-                ? new Microagent<List<GeneratedSample>>() { Instructions = enhancedPrompt }
-                : new Microagent<List<GeneratedSample>>() { Instructions = enhancedPrompt, Model = model };
+            var agent = string.IsNullOrEmpty(model)
+                ? new CopilotAgent<List<GeneratedSample>>() { Instructions = enhancedPrompt }
+                : new CopilotAgent<List<GeneratedSample>>() { Instructions = enhancedPrompt, Model = model };
 
-            logger.LogInformation("Calling microagent service...");
-            var samples = await _microagentHostService.RunAgentToCompletion(microagent, ct);
-            logger.LogInformation("Microagent service returned");
-            logger.LogDebug("Microagent completed, returned {sampleCount} samples", samples?.Count ?? 0);
+            logger.LogInformation("Calling copilot agent service...");
+            var samples = await _copilotAgentRunner.RunAsync(agent, ct);
+            logger.LogInformation("Copilot agent service returned");
+            logger.LogDebug("Copilot agent completed, returned {sampleCount} samples", samples?.Count ?? 0);
 
             var writtenSamples = new List<GeneratedSample>();
 
             if (samples == null || samples.Count == 0)
             {
-                logger.LogWarning("Microagent returned no samples");
+                logger.LogWarning("Copilot agent returned no samples");
             }
             else
             {
@@ -302,7 +305,7 @@ Scenarios description:
 
             logger.LogInformation("Sample generation completed");
             var fileNames = string.Join(", ", writtenSamples.Select(s => s.FileName));
-            return (writtenSamples.Count, resolvedOutputDirectory, language, fileNames);
+            return (writtenSamples.Count, resolvedOutputDirectory, language, fileNames, packageInfo);
         }
 
         private async Task<string> ResolvePromptAsync(string rawPrompt, CancellationToken ct)

@@ -13,12 +13,15 @@ namespace APIViewWeb.Managers;
 public class PermissionsManager : IPermissionsManager
 {
     private const string EffectivePermissionsCacheKeyPrefix = "EffectivePermissions_";
+    private const string ApproversForLanguageCacheKeyPrefix = "ApproversForLanguage_";
 
     private static readonly TimeSpan CacheExpiration = TimeSpan.FromMinutes(15);
     private readonly IMemoryCache _cache;
     private readonly ILogger<PermissionsManager> _logger;
     private readonly ICosmosPermissionsRepository _permissionsRepository;
     private readonly ICosmosUserProfileRepository _userProfileRepository;
+    private readonly HashSet<string> _cachedLanguageApproverKeys = new(StringComparer.OrdinalIgnoreCase);
+    private readonly object _languageCacheLock = new();
 
     public PermissionsManager(
         ICosmosPermissionsRepository permissionsRepository,
@@ -98,6 +101,7 @@ public class PermissionsManager : IPermissionsManager
         await _permissionsRepository.UpsertGroupAsync(existingGroup);
 
         InvalidateMembersCaches(existingGroup.Members);
+        InvalidateAllLanguageApproverCaches();
 
         _logger.LogInformation("Permission group '{GroupId}' updated by {User}", groupId, updatedBy);
 
@@ -110,6 +114,7 @@ public class PermissionsManager : IPermissionsManager
         if (group != null)
         {
             InvalidateMembersCaches(group.Members);
+            InvalidateAllLanguageApproverCaches();
         }
 
         await _permissionsRepository.DeleteGroupAsync(groupId);
@@ -139,6 +144,7 @@ public class PermissionsManager : IPermissionsManager
         {
             await _permissionsRepository.AddMembersToGroupAsync(groupId, result.AddedUsers);
             InvalidateMembersCaches(result.AddedUsers);
+            InvalidateAllLanguageApproverCaches();
         }
 
         return result;
@@ -148,6 +154,7 @@ public class PermissionsManager : IPermissionsManager
     {
         await _permissionsRepository.RemoveMemberFromGroupAsync(groupId, userId);
         InvalidateMembersCaches(new[] { userId });
+        InvalidateAllLanguageApproverCaches();
 
         _logger.LogInformation("Member '{UserId}' removed from group '{GroupId}' by {User}",
             userId, groupId, removedBy);
@@ -156,7 +163,7 @@ public class PermissionsManager : IPermissionsManager
     public async Task<bool> CanApproveAsync(string userId, string language)
     {
         EffectivePermissions permissions = await GetEffectivePermissionsAsync(userId);
-        return permissions.CanApprove(language);
+        return permissions.IsApproverFor(language);
     }
 
     public async Task<bool> IsAdminAsync(string userId)
@@ -165,15 +172,39 @@ public class PermissionsManager : IPermissionsManager
         return permissions.IsAdmin;
     }
 
-    public async Task<bool> HasElevatedAccessAsync(string userId)
-    {
-        EffectivePermissions permissions = await GetEffectivePermissionsAsync(userId);
-        return permissions.HasElevatedAccess;
-    }
 
     public async Task<IEnumerable<string>> GetAllUsernamesAsync()
     {
         return await _userProfileRepository.GetAllUsernamesAsync();
+    }
+
+    public async Task<HashSet<string>> GetApproversForLanguageAsync(string language)
+    {
+        if (string.IsNullOrWhiteSpace(language))
+        {
+            return new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        }
+
+        var cacheKey = $"{ApproversForLanguageCacheKeyPrefix}{language.ToLowerInvariant()}";
+        if (_cache.TryGetValue(cacheKey, out HashSet<string> cachedApprovers))
+        {
+            return new HashSet<string>(cachedApprovers, StringComparer.OrdinalIgnoreCase);
+        }
+
+        IEnumerable<GroupPermissionsModel> groups = await _permissionsRepository.GetAllGroupsAsync();
+        HashSet<string> approvers = groups
+            .Where(g => g.Roles.GrantsApprovalFor(language))
+            .SelectMany(g => g.Members)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        _cache.Set(cacheKey, approvers, CacheExpiration);
+
+        lock (_languageCacheLock)
+        {
+            _cachedLanguageApproverKeys.Add(cacheKey);
+        }
+
+        return new HashSet<string>(approvers, StringComparer.OrdinalIgnoreCase);
     }
 
     private EffectivePermissions MergePermissions(string userId, IEnumerable<GroupPermissionsModel> groups)
@@ -226,5 +257,39 @@ public class PermissionsManager : IPermissionsManager
             var cacheKey = $"{EffectivePermissionsCacheKeyPrefix}{userId.ToLowerInvariant()}";
             _cache.Remove(cacheKey);
         }
+    }
+
+    private void InvalidateAllLanguageApproverCaches()
+    {
+        lock (_languageCacheLock)
+        {
+            foreach (var cacheKey in _cachedLanguageApproverKeys)
+            {
+                _cache.Remove(cacheKey);
+            }
+            _cachedLanguageApproverKeys.Clear();
+        }
+    }
+
+    public async Task<IEnumerable<GroupPermissionsModel>> GetGroupsForUserAsync(string userId)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Enumerable.Empty<GroupPermissionsModel>();
+        }
+
+        return await _permissionsRepository.GetGroupsForUserAsync(userId);
+    }
+
+    public async Task<IEnumerable<string>> GetAdminUsernamesAsync()
+    {
+        IEnumerable<GroupPermissionsModel> groups = await _permissionsRepository.GetAllGroupsAsync();
+
+        return groups
+            .Where(g => g.Roles.HasGlobalRole(GlobalRole.Admin))
+            .SelectMany(g => g.Members)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(u => u, StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 }

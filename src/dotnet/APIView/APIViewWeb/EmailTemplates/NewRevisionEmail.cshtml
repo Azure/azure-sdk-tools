@@ -1,0 +1,16 @@
+@model APIViewWeb.Models.NewRevisionEmailModel
+@{
+	Layout = "/EmailTemplates/_EmailLayout.cshtml";
+	ViewData["EmailTitle"] = "New Revision Uploaded";
+}
+
+<p class="section">A new revision has been uploaded for this review.</p>
+
+<div class="panel">
+	<div><strong>Review:</strong> @Model.ReviewName</div>
+	<div><strong>Revision:</strong> <a href="@Model.RevisionUrl">@Model.RevisionName</a></div>
+	<div><strong>Author:</strong> @Model.CreatedBy</div>
+	<div><strong>Uploaded:</strong> @Model.CreatedOn.ToUniversalTime().ToString("yyyy-MM-dd HH:mm 'UTC'")</div>
+</div>
+
+<p class="meta-note">You are receiving this because you are subscribed to this review.</p>

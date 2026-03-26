@@ -479,6 +479,9 @@ tools/test-proxy/docker/docker_build
 # npm pack artifacts
 *.tgz
 
+# pnpm lockfiles (this repo does not use pnpm)
+pnpm-lock.yaml
+
 # Visual Studio launch settings (frequently user-specific)
 launchSettings.json
 
@@ -557,5 +560,9 @@ tools/sdk-ai-bots/azure-sdk-qa-bot-backend-shared/infra/azure.parameters.generat
 # Azure SDK CLI Tool logs
 *.logs
 
+# Benchmark generated reports
+*-report.md
+
 # sdk-sample-generator artifacts
 .artifacts/
+tools/tsp-client/test/examples/sdk/alternate-entrypoint/test-results.browser.xml

@@ -1,16 +1,93 @@
 # Release History
 
-## 0.5.16 (Unreleased)
+## 0.6.5 (Unreleased)
 
 ### Features Added
 
-- Added support for version number and release date update in the CHANGELOG.md for data plane package.
+- Implemented version update for Go language service
 
 ### Breaking Changes
 
 ### Bugs Fixed
 
 ### Other Changes
+
+## 0.6.4 (2026-03-25)
+
+### Features Added
+
+- Added a new CLI command to ingest telemetry events from Copilot hooks
+
+## 0.6.3 (2026-03-12)
+
+### Bugs Fixed
+
+- Fixed a bug that caused the update release status CLI command to fail when a release plan was not found for a package.
+
+## 0.6.2 (2026-03-11)
+
+### Features Added
+
+- Added MCP progress reporting to long running tools including SDK generation, build, and pack tools
+
+### Bugs Fixed
+
+- Fixed a bug in get release plan CLI when release plan is fetched using api spec pull request.
+
+## 0.6.1 (2026-03-05)
+
+### Features Added
+
+- Added `azsdk_package_pack` tool to create package artifacts
+- Improved `azsdk_typespec_delegate_apiview_feedback` tool description to better recognize intent expressed as "address", "fix", or "resolve" APIView feedback
+- Added a CLI command `azsdk release-plan update` and MCP tool `azsdk_update_release_plan` to update release plan.
+- Updated CLI command `azsdk release-plan get` to get release plan using API spec pull request or spec project path.
+
+### Bugs Fixed
+
+- Filter out downvoted `azure-sdk` bot comments from APIView feedback to reduce noise in delegated issues
+
+## 0.6.0 (2026-02-27)
+
+### Features Added
+
+- Added auto-install to `azsdk verify setup` MCP and CLI tool, enabling auto-installing of supported missing requirements
+- Changed the CLI interface for verifying setup to `azsdk verify setup check` for non-install mode, and `azsdk verify setup install`
+- Added `azsdk eng package-info` command for CI pipeline package manifest generation
+- Switch Go language service to use C# native package info generation
+- Customized code update tool now uses copilot sdk
+
+## 0.5.19 (2026-02-25)
+
+### Bugs Fixed
+
+- Override path extension variable to support running commands on Windows without extension.
+
+## 0.5.18 (2026-02-24)
+
+### Bugs Fixed
+
+- Fix process running issues on Windows when MCP server is used in copilot CLI
+
+## 0.5.17 (2026-02-18)
+
+### Features Added
+
+- Added `azsdk upgrade` command and `#azsdk_upgrade` mcp tool to perform a self-upgrade to the latest (or specified) version
+- The CLI and MCP server will proactively check for new updates and notify the user on a 1 and 3 day TTL, respectively
+- Add TypeSpec project path in package release status telemetry when release plan exists
+- Add WorkloadIdentityCredential in identity chain when running on GitHub action
+
+
+## 0.5.16 (2026-02-09)
+
+### Features Added
+
+- Added support for version number and release date update in the CHANGELOG.md for data plane package.
+- Add an MCP tool to abandon release plans.
+- Make agentic search configurable and disable agentic search for TypeSpec authoring.
+- Add release-plan find-product command to retrieve product details from a TypeSpec project path.
+- Add a CLI command to address APIView feedback via coding agent (creates issues from APIView feedback).
 
 ## 0.5.15 (2026-01-30)
 

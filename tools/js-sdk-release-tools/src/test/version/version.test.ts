@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { generateTestNpmView } from "../utils/utils.js";
-import { getLatestStableVersion, getNextBetaVersion, getUsedVersions } from "../../utils/version.js";
+import { getLatestStableVersion, getNextBetaVersion, getUsedVersions, shouldTreatAsFirstRelease } from "../../utils/version.js";
 import { tryGetNpmView } from "../../common/npmUtils.js";
 
 interface TestCase {
@@ -157,5 +157,63 @@ describe("Used Versions", async () => {
         };
         const versions = getUsedVersions(view!);
         expect(versions).toEqual(["3.0.0-alpha.20250619.1", "3.0.0"]);
+    });
+});
+
+describe("shouldTreatAsFirstRelease", () => {
+    // Scenario 1: Brand-new package, never published to npm
+    test("returns true when npmViewResult is undefined (never published)", () => {
+        expect(shouldTreatAsFirstRelease(undefined, undefined, false)).toBe(true);
+        expect(shouldTreatAsFirstRelease(undefined, undefined, true)).toBe(true);
+    });
+
+    // Scenario 2: Package exists on npm but has no stable/beta version yet
+    test("returns true when stableVersion is undefined (no stable version on npm)", () => {
+        const npmView = generateTestNpmView(undefined, undefined, undefined, undefined, "1.0.0-next.1");
+        expect(shouldTreatAsFirstRelease(npmView, undefined, false)).toBe(true);
+        expect(shouldTreatAsFirstRelease(npmView, undefined, true)).toBe(true);
+    });
+
+    // Scenario 3a: Published version is alpha → publishing beta (alpha → beta)
+    test("returns true when stable version is alpha and publishing beta", () => {
+        const npmView = generateTestNpmView("1.0.0-alpha.20250619.1");
+        expect(shouldTreatAsFirstRelease(npmView, "1.0.0-alpha.20250619.1", false)).toBe(true);
+    });
+
+    // Scenario 3b: Published version is alpha → publishing stable (alpha → stable)
+    test("returns true when stable version is alpha and publishing stable", () => {
+        const npmView = generateTestNpmView("1.0.0-alpha.20250619.1");
+        expect(shouldTreatAsFirstRelease(npmView, "1.0.0-alpha.20250619.1", true)).toBe(true);
+    });
+
+    // Scenario 3c: Published version is rc → treat as incomparable
+    test("returns true when stable version is rc (non-standard prerelease)", () => {
+        const npmView = generateTestNpmView("1.0.0-rc.1");
+        expect(shouldTreatAsFirstRelease(npmView, "1.0.0-rc.1", false)).toBe(true);
+        expect(shouldTreatAsFirstRelease(npmView, "1.0.0-rc.1", true)).toBe(true);
+    });
+
+    // Scenario 4: Latest published version is beta, current release targets stable (beta → GA)
+    test("returns true when latest published is beta and current release is stable", () => {
+        const npmView = generateTestNpmView("1.0.0-beta.1");
+        expect(shouldTreatAsFirstRelease(npmView, "1.0.0-beta.1", true)).toBe(true);
+    });
+
+    // NOT a first release: latest is beta, publishing another beta
+    test("returns false when latest published is beta and current release is also beta", () => {
+        const npmView = generateTestNpmView("1.0.0-beta.1");
+        expect(shouldTreatAsFirstRelease(npmView, "1.0.0-beta.1", false)).toBe(false);
+    });
+
+    // NOT a first release: latest is stable, publishing stable update
+    test("returns false when latest published is stable and publishing stable update", () => {
+        const npmView = generateTestNpmView("1.0.0");
+        expect(shouldTreatAsFirstRelease(npmView, "1.0.0", true)).toBe(false);
+    });
+
+    // NOT a first release: latest is stable, publishing beta update
+    test("returns false when latest published is stable and publishing beta", () => {
+        const npmView = generateTestNpmView("1.0.0");
+        expect(shouldTreatAsFirstRelease(npmView, "1.0.0", false)).toBe(false);
     });
 });

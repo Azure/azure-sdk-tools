@@ -7,15 +7,10 @@ version: 1.0.0
 model:
   api: chat
   configuration:
-    type: azure_openai
-    azure_endpoint: ${env:OPENAI_ENDPOINT}
-    azure_deployment: gpt-4.1
+    azure_deployment: gpt-5.4-mini
     api_version: 2025-03-01-preview
   parameters:
-    temperature: 0.0
-    top_p: 1.0
-    stop: []
-    max_tokens: 16384
+    max_completion_tokens: 16384
     response_format: ${file:filter_existing_comment_result_schema.json}
 sample:
   language: Python
@@ -43,7 +38,14 @@ system:
 
   # TASK
   Your task to see if the proposed comment says anything materially different from existing comments.
-  - If there's ANY existing comment by "azure-sdk" then you MUST NOT propose a new comment.
+
+  ## Rule 1 (Pre-check — apply FIRST)
+  If there is ANY existing comment by "azure-sdk", you MUST DISCARD the proposed comment immediately.
+  azure-sdk is not allowed to comment more than once on the same line. When this rule applies, your rationale
+  must state that azure-sdk has already commented and is not permitted to add another comment.
+  Do not perform content analysis — just apply this rule and stop.
+
+  ## Rule 2 (Content analysis — apply only if Rule 1 does not apply)
   - If the proposed comment is similar to existing comments but has some new information, then you should rephrase the proposed comment to focus only on the new information and keep it.
   - If the proposed comment is materially different from other existing comments, then you should propose it.
   - If the proposed comment is the same in meaning as an existing comment, then you SHOULD NOT propose it.

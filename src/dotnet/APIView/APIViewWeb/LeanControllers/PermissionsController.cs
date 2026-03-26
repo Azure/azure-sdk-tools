@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
@@ -241,5 +242,42 @@ public class PermissionsController : BaseApiController
         {
             return NotFound(ex.Message);
         }
+    }
+
+    /// <summary>
+    ///     Get the list of approvers for a specific language
+    /// </summary>
+    /// <param name="language">The programming language</param>
+    /// <returns>List of usernames who can approve reviews for the specified language, sorted alphabetically</returns>
+    [HttpGet("approvers/{language}")]
+    public async Task<ActionResult<IEnumerable<string>>> GetApproversForLanguage(string language)
+    {
+        HashSet<string> approvers = await _permissionsManager.GetApproversForLanguageAsync(language);
+        List<string> sortedApprovers = approvers.Where(a => !string.IsNullOrWhiteSpace(a))
+            .OrderBy(a => a, StringComparer.OrdinalIgnoreCase).ToList();
+        return new LeanJsonResult(sortedApprovers, StatusCodes.Status200OK);
+    }
+
+    /// <summary>
+    ///     Get the groups that the current user belongs to
+    /// </summary>
+    /// <returns>List of groups the user is a member of</returns>
+    [HttpGet("me/groups")]
+    public async Task<ActionResult<IEnumerable<GroupPermissionsModel>>> GetMyGroups()
+    {
+        var userName = User.GetGitHubLogin();
+        var groups = await _permissionsManager.GetGroupsForUserAsync(userName);
+        return new LeanJsonResult(groups, StatusCodes.Status200OK);
+    }
+
+    /// <summary>
+    ///     Get the list of admin usernames for contact information
+    /// </summary>
+    /// <returns>List of usernames who have admin permissions, sorted alphabetically</returns>
+    [HttpGet("admins")]
+    public async Task<ActionResult<IEnumerable<string>>> GetAdminUsernames()
+    {
+        var admins = await _permissionsManager.GetAdminUsernamesAsync();
+        return new LeanJsonResult(admins, StatusCodes.Status200OK);
     }
 }

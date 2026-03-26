@@ -102,57 +102,6 @@
         "overall_score": 8.866666666666667
     },
     {
-        "testcase": "Hi team, could someone please help grant me permission to view the workflow for my Azure REST API PR?",
-        "expected": {
-            "answer": "You need to get the necessary permissions, see here: https://aka.ms/azsdk/access",
-            "references": [
-                {
-                    "title": "Hi team, could someone please help grant me permission to view the workflow for my Azure REST API PR? | answer",
-                    "link": ""
-                },
-                {
-                    "title": "How to Re-evaluate `SDK Validation Status` Check",
-                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/SDK-Validation"
-                }
-            ]
-        },
-        "actual": {
-            "answer": "You are unable to view the workflow and validation check details for your Azure REST API PR because you do not have the necessary permissions. To resolve this, you need to:\n\n1. Ensure your GitHub account is a member of the Azure organization and that your membership is set to public (not private).\n2. Request access by following the instructions at https://aka.ms/azsdk/access. This will guide you through joining the appropriate Azure SDK groups and setting up your permissions.\n\nOnce you have the correct permissions and your membership is public, you will be able to view workflow logs and validation errors for your PRs, allowing you to debug and verify your changes before final review.",
-            "references": [
-                {
-                    "title": "Hi team, could someone please help grant me permission to view the workflow for my Azure REST API PR? | answer",
-                    "link": ""
-                },
-                {
-                    "title": "PR gateway pipelines not starting/waiting for long time | answer",
-                    "link": ""
-                },
-                {
-                    "title": "How to Re-evaluate `SDK Validation Status` Check",
-                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/SDK-Validation"
-                }
-            ]
-        },
-        "similarity": 5.0,
-        "gpt_similarity": 5.0,
-        "similarity_result": "pass",
-        "similarity_threshold": 4,
-        "groundedness": 5.0,
-        "gpt_groundedness": 5.0,
-        "groundedness_reason": "The response is fully supported by the context, covers all necessary steps, and does not add unsupported information or omit critical details.",
-        "groundedness_result": "pass",
-        "groundedness_threshold": 3.0,
-        "response_completeness": 5.0,
-        "response_completeness_result": "pass",
-        "response_completeness_threshold": 4,
-        "response_completeness_reason": "The response contains all the necessary information from the ground truth and expands on it with helpful, relevant details, but does not omit any required information.",
-        "reference_match": 1.0,
-        "reference_match_result": "pass",
-        "knowledge_match": 1.0,
-        "knowledge_match_result": "pass",
-        "overall_score": 9.0
-    },
-    {
         "testcase": "Service under conversation label",
         "expected": {
             "answer": "The label should not impact your previous PR, and , if this is a later api-version thatn the conversion PR, the conversion would normally be based on that version once checked in.",
@@ -496,36 +445,36 @@
     {
         "testcase": "In Resource provider, what is the type I should declare for an object or dictionary of string, string?",
         "expected": {
-            "answer": "For a property in a TypeSpec ARM resource provider model that represents a dictionary (object) mapping strings to strings, you should use the built-in `Record<string>` type.\nFor example:\n```\nmodel MyResourceProperties {\nmetadata?: Record<string>;\n}\n```\nThis models a property (`metadata`) that is an object/dictionary where all keys and values are strings, equivalent to `{ [key: string]: string }` in TypeScript or `Dictionary<string, string>` in .NET.\nYou should not use `{}` (empty model) or just `Record` (without specifying the value type) as these are either incomplete or invalid in TypeSpec. The correct, type-safe way is `Record<string>`, which will be emitted to OpenAPI/Swagger as an `object` with `additionalProperties: { type: \"string\" }`.\nIf your API spec review asks for a 'model', you can define a named type:\n```\nmodel MetadataModel is Record<string>;\nmodel MyResourceProperties {\nmetadata?: MetadataModel;\n}\n```\nBut `Record<string>` is the canonical, recommended approach for a string-to-string dictionary in TypeSpec ARM resource definitions.\nNote: While this is technically correct, ARM guidelines recommend against unbounded dictionary/object types unless absolutely necessary, as they can limit Azure Policy and ARG capabilities. Use with care, and document any supported/expected keys in your @doc comments if possible.",
+            "answer": "In an Azure Resource Provider (management-plane), you **should not use `Record<string>`** for arbitrary dictionaries. The `arm-no-record` rule requires ARM RPs to define types explicitly for better discoverability and SDK experience.\n\nSo this is **not allowed** in ARM specs:\n\n```typespec\nmetadata?: Record<string>; // \u274c Fails arm-no-record\n```\n\nAnd `{}` is invalid because TypeSpec requires a proper model type.\n\n\u2705 Correct approach for ARM\n\nYou must define an explicit model with concrete properties instead of a free-form dictionary:\n\n```typespec\nmodel Metadata {\n  key1?: string;\n  key2?: string;\n  // Define known properties explicitly\n}\n\nmodel MyResourceProperties {\n  metadata?: Metadata;\n}\n```\n\nARM requires explicit modeling of properties rather than open-ended dictionaries.\n\n---\n\nIf you truly need arbitrary key/value pairs\n\nFree-form dictionaries (`Record<string>`) are discouraged in ARM and will fail CI because of:\n\n`@azure-tools/typespec-azure-resource-manager/arm-no-record`\n\nIf there is a legitimate business need for arbitrary metadata:\n\n1. You must get architecture/review board approval.\n2. Then explicitly suppress the rule with justification.\n\nExample (only if approved):\n\n```typespec\n#suppress \"@azure-tools/typespec-azure-resource-manager/arm-no-record\" \"Approved free-form metadata bag\"\nmetadata?: Record<string>;\n```\n\nThis should be rare.\n\n---\n\nImportant: If this is actually resource \"tags\"\n\nDo NOT redefine them. Use the built-in ARM tags support instead:\n\n```typespec\nmodel MyResource is TrackedResource<MyProperties> {\n  ...ResourceNameParameter<MyResource>;\n  // tags already included in TrackedResource\n}\n```\n\nOr explicitly:\n\n```typespec\n...Foundations.ArmTagsProperty;\n```\n\n---\n\nSummary\n\nFor management-plane (ARM):\n\n- \u2705 Define an explicit model with named properties\n- \u2705 Use built-in `tags` if that\u2019s what you mean\n- \u26a0\ufe0f Only use `Record<string>` with approved suppression\n- \u274c Do not use open-ended dictionary types by default\n\nARM requires strongly modeled property bags for customer experience and SDK quality.",
             "references": [
+                {
+                    "title": "arm-no-record",
+                    "link": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/rules/arm-no-record"
+                },
                 {
                     "title": "bad-record-type",
                     "link": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/bad-record-type"
                 },
                 {
-                    "title": "Built-in types | Other core types",
-                    "link": "https://typespec.io/docs/language-basics/built-in-types"
-                },
-                {
-                    "title": "Generated Types | Models | Models with additional properties of any type",
-                    "link": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/08types"
+                    "title": "ARM Resource Types | Designing Resource-specific Properties",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type"
                 }
             ]
         },
         "actual": {
-            "answer": "In Azure Resource Provider TypeSpec, when you want to represent a property that is a dictionary (object) with string keys and string values (e.g., for metadata or tags), you should use `Record<string>`. This is the correct and recommended way to declare such a type in TypeSpec. \n\nFor example:\n\n```typespec\nmodel MyResourceProperties {\n  metadata?: Record<string>;\n}\n```\n\n- Do NOT use `{}` (empty object) as a type; TypeSpec expects a model or a valid type.\n- Do NOT use just `Record;` (without a type argument), as `Record` is a generic type and requires a value type argument.\n- `Record<string>` means an object with arbitrary string keys and string values, which matches the typical JSON object structure for metadata or tags in Azure APIs.\n\nThis pattern is widely used in Azure Resource Manager specs for properties like `tags` and `metadata`.\n\nIf you want to require the property, omit the `?` (optional marker):\n\n```typespec\nmodel MyResourceProperties {\n  metadata: Record<string>;\n}\n```\n\nThis will emit the correct OpenAPI schema for an object with string keys and string values.",
+            "answer": "In an Azure Resource Provider (management-plane), you **should not use `Record<string>`** for arbitrary dictionaries. The `arm-no-record` rule requires ARM RPs to define types explicitly for better discoverability and SDK experience.\n\nSo this is **not allowed** in ARM specs:\n\n```typespec\nmetadata?: Record<string>; // \u274c Fails arm-no-record\n```\n\nAnd `{}` is invalid because TypeSpec requires a proper model type.\n\n\u2705 Correct approach for ARM\n\nYou must define an explicit model with concrete properties instead of a free-form dictionary:\n\n```typespec\nmodel Metadata {\n  key1?: string;\n  key2?: string;\n  // Define known properties explicitly\n}\n\nmodel MyResourceProperties {\n  metadata?: Metadata;\n}\n```\n\nARM requires explicit modeling of properties rather than open-ended dictionaries.\n\n---\n\nIf you truly need arbitrary key/value pairs\n\nFree-form dictionaries (`Record<string>`) are discouraged in ARM and will fail CI because of:\n\n`@azure-tools/typespec-azure-resource-manager/arm-no-record`\n\nIf there is a legitimate business need for arbitrary metadata:\n\n1. You must get architecture/review board approval.\n2. Then explicitly suppress the rule with justification.\n\nExample (only if approved):\n\n```typespec\n#suppress \"@azure-tools/typespec-azure-resource-manager/arm-no-record\" \"Approved free-form metadata bag\"\nmetadata?: Record<string>;\n```\n\nThis should be rare.\n\n---\n\nImportant: If this is actually resource \"tags\"\n\nDo NOT redefine them. Use the built-in ARM tags support instead:\n\n```typespec\nmodel MyResource is TrackedResource<MyProperties> {\n  ...ResourceNameParameter<MyResource>;\n  // tags already included in TrackedResource\n}\n```\n\nOr explicitly:\n\n```typespec\n...Foundations.ArmTagsProperty;\n```\n\n---\n\nSummary\n\nFor management-plane (ARM):\n\n- \u2705 Define an explicit model with named properties\n- \u2705 Use built-in `tags` if that\u2019s what you mean\n- \u26a0\ufe0f Only use `Record<string>` with approved suppression\n- \u274c Do not use open-ended dictionary types by default\n\nARM requires strongly modeled property bags for customer experience and SDK quality.",
             "references": [
+                {
+                    "title": "arm-no-record",
+                    "link": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/rules/arm-no-record"
+                },
                 {
                     "title": "bad-record-type",
                     "link": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/bad-record-type"
                 },
                 {
-                    "title": "Built-in types | Other core types",
-                    "link": "https://typespec.io/docs/language-basics/built-in-types"
-                },
-                {
-                    "title": "Usages for Illustrates various of dictionaries. | Scenario: Template to have dictionary operations",
-                    "link": "https://github.com/microsoft/typespec/tree/main/packages/http-specs/specs/type/dictionary/main.tsp"
+                    "title": "ARM Resource Types | Designing Resource-specific Properties",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type"
                 }
             ]
         },
@@ -1232,57 +1181,6 @@
         "overall_score": 8.851851851851851
     },
     {
-        "testcase": "Swagger LintDiff validation for certain models",
-        "expected": {
-            "answer": "You should not suppress this LintDiff validation error. The error `RequiredPropertiesMissingInResourceModel` indicates that your `SharingDetail` model is being interpreted as a resource model, but it does not contain the required ARM resource properties: `name`, `id`, and `type` (all marked as readOnly). According to Azure API and TypeSpec guidelines, all resource models must include these properties to be compliant.\nSuppressing this error is not the correct approach\u2014instead, you must fix your TypeSpec definition. Ensure that resource models either extend the appropriate common-types resource base model (such as `Resource`, `ProxyResource`, or `ExtensionResource`) or, if `SharingDetail` is not a resource, ensure it is not referenced in a way that causes it to be treated as one.\nFor suppressing LintDiff errors in general, you can add scoped suppressions in your `readme.md` following the guidance here: https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-LintDiff#adding-scoped-suppressions. However, for this particular error, you are expected to fix your TypeSpec spec to meet the ARM requirements\u2014not suppress it.\nTo resolve this:\nIf `SharingDetail` is a resource, extend from the correct base model and add `id`, `name`, `type` (all readOnly).\nIf it is not a resource, check where it is referenced in your operations or model hierarchy to ensure it is not being treated as a resource by the code generator.",
-            "references": [
-                {
-                    "title": "Swagger LintDiff Suppression via TypeSpec | question",
-                    "link": ""
-                },
-                {
-                    "title": "TypeSpec",
-                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-LintDiff"
-                }
-            ]
-        },
-        "actual": {
-            "answer": "Yes, you can suppress the LintDiff validation error 'RequiredPropertiesMissingInResourceModel' for the 'SharingDetail' model, but only in the OpenAPI (Swagger) validation layer, not directly in TypeSpec. According to Azure API guidelines and current tooling, LintDiff errors must be suppressed in the `readme.md` file of your spec, not in the TypeSpec source or suppressions.yaml.\n\nTo suppress this error:\n1. Open your `readme.md` file in the relevant folder (e.g., `specification/limit/resource-manager/Microsoft.Limit/Limit/readme.md`).\n2. Add a suppression directive for the specific error and path. The suppression should target the exact location in the generated OpenAPI where the error occurs (see the error message for the path).\n\nExample suppression directive:\n\n```yaml\n  - where:\n    - $.definitions.SharingDetail\n    suppress:\n      - RequiredPropertiesMissingInResourceModel\n    reason: 'SharingDetail is not a resource model and does not require id, name, type.'\n```\n\nMake sure the path (`$.definitions.SharingDetail`) matches the location in your generated OpenAPI where the error is reported. If the error is in a different location (e.g., inside a PATCH body or another definition), adjust the path accordingly.\n\n**Important:**\n- This suppression only affects LintDiff (Swagger) validation. TypeSpec validation errors must be fixed in the TypeSpec source itself.\n- Suppressions for LintDiff cannot be placed in TypeSpec files or suppressions.yaml\u2014they must be in `readme.md`.\n- Always provide a clear reason for the suppression, as reviewers will check for justification.\n\nFor more details and examples, see the official guidance: https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-LintDiff#adding-scoped-suppressions",
-            "references": [
-                {
-                    "title": "Swagger LintDiff Suppression via TypeSpec | question",
-                    "link": ""
-                },
-                {
-                    "title": "Swagger LintDiff validation for certain models | question",
-                    "link": ""
-                },
-                {
-                    "title": "Swagger-LintDiff.md",
-                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-LintDiff"
-                }
-            ]
-        },
-        "similarity": 5.0,
-        "gpt_similarity": 5.0,
-        "similarity_result": "pass",
-        "similarity_threshold": 4,
-        "groundedness": 5.0,
-        "gpt_groundedness": 5.0,
-        "groundedness_reason": "The RESPONSE is fully supported by the CONTEXT, covers all essential points, and does not add unsupported details or omit critical information.",
-        "groundedness_result": "pass",
-        "groundedness_threshold": 3.0,
-        "response_completeness": 5.0,
-        "response_completeness_result": "pass",
-        "response_completeness_threshold": 4,
-        "response_completeness_reason": "The response contains all major and minor information from the ground truth, with only a very slight omission about the location for suppressions, but this does not affect the main completeness. It is fully complete.",
-        "reference_match": 0.5,
-        "reference_match_result": "fail",
-        "knowledge_match": 0.8518518518518519,
-        "knowledge_match_result": "pass",
-        "overall_score": 5.951851851851852
-    },
-    {
         "testcase": "How to make an interface internal ?",
         "expected": {
             "answer": "We do not support hiding an entire operation group directly. The recommended approach is to redefine your client in client.tsp and use @@access decorator to control which operations appear on the public client. When you do this properly, the default service clients and their Operations classes should not be emitted",
@@ -1695,11 +1593,176 @@
         "overall_score": NaN
     },
     {
+        "testcase": "change the visibility of property",
+        "expected": {
+            "answer": "You can\u2019t directly \u201cversion\u201d a decorator value in-place, so the ARM/TypeSpec pattern is to model the change by having two properties and using `@removed`, `@added`, and `@renamedFrom` to swap which one is active in that version.\nFor your case (keep `provisioningState` read-only in all versions except `2025-05-04-preview`, where it is `Read` + `Create`), do this:\n```\n/** The available API versions. */\nenum Versions {\n/** 2021-10-01-preview version */\n@armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)\nv2021_10_01_preview: \"2021-10-01-preview\",\n/** 2021-11-01 version */\n@armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)\nv2021_11_01: \"2021-11-01\",\n/** 2025-05-04-preview version */\n@armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)\n`2025-05-04-preview`,\n}\n/** Employee properties */\nmodel EmployeeProperties {\n/** Age of employee */\nage?: int32;\n/** City of employee */\ncity?: string;\n/** Profile of employee */\n@encode(\"base64url\")\nprofile?: bytes;\n// Old shape: read-only in all versions EXCEPT 2025-05-04-preview\n@removed(Versions.`2025-05-04-preview`)\n@visibility(Lifecycle.Read)\n@renamedFrom(Versions.`2025-05-04-preview`, \"provisioningState\")\nprovisioningStateReadOnly?: ProvisioningState;\n// New shape: only present in 2025-05-04-preview and later\n@added(Versions.`2025-05-04-preview`)\n@visibility(Lifecycle.Read, Lifecycle.Create)\nprovisioningState?: ProvisioningState;\n}\n```",
+            "references": [
+                {
+                    "title": "Versioning | Simple Scenarios | Adding Decoration to an Existing Type",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/arm/versioning"
+                },
+                {
+                    "title": "Creating stable API version with select properties omitted? | answer",
+                    "link": ""
+                }
+            ]
+        },
+        "actual": {
+            "answer": "Use the add/remove/rename pattern to have different visibility in the new version while keeping older versions unchanged. For 2025-05-04-preview only, model `provisioningState` as two properties:\n\n````typespec\n/** The available API versions. */\nenum Versions {\n  /** 2021-10-01-preview version */\n  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)\n  v2021_10_01_preview: \"2021-10-01-preview\",\n\n  /** 2021-11-01 version */\n  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)\n  v2021_11_01: \"2021-11-01\",\n\n  /** 2025-05-04-preview version */\n  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)\n  `2025-05-04-preview`,\n}\n\n/** Employee properties */\nmodel EmployeeProperties {\n  /** Age of employee */\n  age?: int32;\n\n  /** City of employee */\n  city?: string;\n\n  /** Profile of employee */\n  @encode(\"base64url\")\n  profile?: bytes;\n\n  // Old version: read\u2011only provisioningState\n  @removed(Versions.`2025-05-04-preview`)\n  @visibility(Lifecycle.Read)\n  @renamedFrom(Versions.`2025-05-04-preview`, \"provisioningState\")\n  provisioningStateOld?: ProvisioningState;\n\n  // New version (2025\u201105\u201104\u2011preview and later): create + read\n  @added(Versions.`2025-05-04-preview`)\n  @visibility(Lifecycle.Create, Lifecycle.Read)\n  provisioningState?: ProvisioningState;\n}\n````\n\nResult:\n- In 2021-10-01-preview and 2021-11-01, the wire property is `provisioningState` with `Lifecycle.Read` only.\n- Starting in 2025-05-04-preview, the wire property is still `provisioningState`, but with `Lifecycle.Create` and `Lifecycle.Read` visibility.\n\nNote: this is the same pattern recommended for changing decorators across versions.",
+            "references": [
+                {
+                    "title": "Versioning | Simple Scenarios | Adding Decoration to an Existing Type",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/arm/versioning"
+                },
+                {
+                    "title": "Creating stable API version with select properties omitted? | answer",
+                    "link": ""
+                }
+            ]
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "The response is fully grounded, directly addresses the question, and includes all relevant details and correct usage patterns as described in the context.",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3,
+        "response_completeness": 5.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 4,
+        "response_completeness_reason": "The response contains all necessary and relevant information from the ground truth, accurately representing the pattern and implementation details for versioning decorator values. Only minor naming differences exist, which do not affect completeness.",
+        "reference_match": 1.0,
+        "reference_match_result": "pass",
+        "knowledge_match": 0.625,
+        "knowledge_match_result": "fail",
+        "overall_score": 8.625
+    },
+    {
+        "testcase": "How to version a spread property",
+        "expected": {
+            "answer": "add @@added(Employee.MyExampleProperty, Versions.`2025-11-01`);\n```\nmodel Employee is TrackedResource<EmployeeProperties> {\n...ResourceNameParameter<Employee>;\n...MyExampleModel;\n}\n@@added(Employee.MyExampleProperty, Versions.`2025-11-01`);\n```",
+            "references": [
+                {
+                    "title": "Versioning | Simple Scenarios",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/arm/versioning"
+                },
+                {
+                    "title": "Converting Existing Specs to Single Active Preview | `@added(T, u)` decorator",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/versioning/arm/uncommon-scenarios/01-converting-specs"
+                },
+                {
+                    "title": "Handling multiple API versions using typespec | answer",
+                    "link": ""
+                }
+            ]
+        },
+        "actual": {
+            "answer": "You can\u2019t directly place a versioning decorator on a spread, but you can version the properties introduced by that spread using an extension decorator on the target model.\n\nPattern:\n1. Keep the spread as-is so the `identity` (or other) property exists on the model at the type level.\n2. Use an `@@added` extension decorator on the concrete property to say it only appears starting in `2025-11-01`.\n\nExample (adapted to your `MyExampleModel`):\n\n````typespec\n/** Employee resource */\nmodel Employee is TrackedResource {\n  ...ResourceNameParameter;\n  ...MyExampleModel;  // introduces, say, property `exampleProp`\n}\n\n// Versioning: only show `exampleProp` starting in 2025-11-01\n@@added(Employee.exampleProp, Versions.`2025-11-01`);\n````\n\nHow this works:\n- The spread `...MyExampleModel` defines `exampleProp` on `Employee` for all versions.\n- `@@added(Employee.exampleProp, Versions.`2025-11-01`)` tells the ARM/TypeSpec versioning system to include that property only from `2025-11-01` onward in the emitted OpenAPI.\n- Earlier API versions remain unchanged; the new properties won\u2019t appear there.\n\nIf `MyExampleModel` introduces multiple properties and you need them all only from `2025-11-01`, repeat the `@@added` line per property:\n\n````typespec\n@@added(Employee.propA, Versions.`2025-11-01`);\n@@added(Employee.propB, Versions.`2025-11-01`);\n@@added(Employee.propC, Versions.`2025-11-01`);\n````\n\nThis keeps your resource envelope correct (using the shared template via spread) while making the new fields visible only in the desired API version, which aligns with Azure ARM versioning guidance.",
+            "references": [
+                {
+                    "title": "How to version a spread property (ManagedServiceIdentityProperty)? | answer",
+                    "link": ""
+                },
+                {
+                    "title": "Versioning | FAQ | How do I version a pattern?",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/arm/versioning"
+                }
+            ]
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "The response is fully grounded, accurate, and complete with respect to the context, directly addressing the question and providing correct, detailed guidance and examples.",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3,
+        "response_completeness": 5.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 4,
+        "response_completeness_reason": "The response contains all the necessary and relevant information from the ground truth, including the use of @@added for versioning properties introduced by a spread, and provides a clear example and explanation. Minor differences in code details do not affect completeness.",
+        "reference_match": 0.0,
+        "reference_match_result": "fail",
+        "knowledge_match": 0.4827586206896552,
+        "knowledge_match_result": "fail",
+        "overall_score": 7.482758620689655
+    },
+    {
+        "testcase": "LRO header return 200",
+        "expected": {
+            "answer": "Based on ARM RPC guidelines and the TypeSpec ARM templates:\n1.You generally should NOT model \u201csubsequent PUT returns 202\u201d for a resource PUT.\nFor ARM resource PUT, the required pattern is: return `201` for create and `200` for update, and if the operation is long-running you still use `x-ms-long-running-operation: true` and include the appropriate LRO headers.\nReturning `202` for PUT is explicitly called out as an old model and is no longer supported for new resource types/patterns.\n2.If your service returns an async polling header on the `200` response, it\u2019s OK (and often desirable) to specify it \u2014 but only if the operation is actually long-running in that case.\nIn ARM, the LRO \u201cpolling\u201d header is typically `Azure-AsyncOperation` (required for greenfield starting Jan 2025 per RPC contract) and/or `Location` (required for 202 patterns; also commonly used).\nFor PUT LROs, the standard ARM templates already model the correct behavior: `200` and `201` responses with the resource body, and LRO headers on the create response (and depending on template/pattern, can be present when the operation is async).\n3.Recommended way to model this in TypeSpec (preferred over hand-authoring swagger)\nUse the ARM operation template for async PUT, and let the emitter generate the correct OpenAPI, including `x-ms-long-running-operation-options.final-state-via`.\nIf you need `Azure-AsyncOperation` to be the final-state mechanism, use the template that emits that (e.g. `ArmResourceCreateOrUpdateAsync` / `ArmResourceCreateOrReplaceAsync` depending on your chosen semantics).\nExample (management-plane, ARM):\n```\nimport \"@azure-tools/typespec-azure-resource-manager\";\nusing Azure.ResourceManager;\n@armResourceOperations\ninterface ManagedClusters {\n// Pick the template that matches your service\u2019s LRO header behavior.\n// This produces 200/201 + x-ms-long-running-operation and final-state-via azure-async-operation.\ncreateOrUpdate is ArmResourceCreateOrReplaceAsync<ManagedCluster>;\n}\n```\n4.If you truly must keep a 202-on-PUT behavior (brownfield), align it to ARM guidance rather than just documenting the current behavior.\nThe guidance is to fix the service to return `200/201` for PUT (even when async) and rely on LRO headers + provisioningState.\nIf you cannot change runtime behavior immediately, you should discuss with ARM/API review because it conflicts with the current ARM contract guidance for PUT.\n5.About \u201c200 response with async operation header\u201d specifically\nIn OpenAPI/Swagger, you can absolutely define headers on the `200` response. There\u2019s nothing structurally preventing it.\nHowever, the recommended ARM modeling is to use the standard templates so the LRO metadata is consistent (headers + `x-ms-long-running-operation` + `final-state-via`). Don\u2019t invent a one-off pattern unless you have to.\nIf you paste the relevant snippet of your current swagger responses for one of these PUTs (the `responses` block), I can tell you exactly what to change and which TypeSpec template/parameters best match your service behavior (including whether you should be using `ArmResourceCreateOrReplaceAsync` vs `ArmResourceCreateOrUpdateAsync`, and whether you need `Location` and/or `Azure-AsyncOperation`).",
+            "references": [
+                {
+                    "title": "Asynchronous API Reference",
+                    "link": "https://github.com/cloud-and-ai-microsoft/resource-provider-contract/blob/master/v1.0/async-api-reference.md"
+                },
+                {
+                    "title": "put-operation-response-codes",
+                    "link": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/rules/put-operation-response-codes"
+                },
+                {
+                    "title": "TypeSpec Definitions | ArmResourceCreateOrUpdateAsync",
+                    "link": ""
+                },
+                {
+                    "title": "LRO Header Data Type",
+                    "link": ""
+                }
+            ]
+        },
+        "actual": {
+            "answer": "I can\u2019t access the GitHub/ADO links you included, but based on the behavior you described and ARM LRO guidance:\n\nYes\u2014if your service returns `Azure-AsyncOperation` on the initial `200` response, you should model that header in the spec. Otherwise, generated clients/tools won\u2019t know they can (or should) poll, and you\u2019ll also be out of alignment with the ARM async contract that expects `Azure-AsyncOperation` to be the operation-resource URL.\n\nThat said, the bigger issue is the *status-code pattern*: for ARM resource PUT create/replace, the recommended LRO pattern is `201` (create) / `200` (update) with the resource body including `provisioningState` while in progress. Returning `202` for \u201csubsequent PUTs\u201d is the legacy pattern and is no longer recommended for new resource types. If you must keep it for backward compatibility, you can still model it, but consider aligning the service behavior over time.\n\nRecommended TypeSpec modeling pattern (ARM):\n\n1) Use the ARM operation template for async PUT (`ArmResourceCreateOrUpdateAsync` or `ArmResourceCreateOrReplaceAsync`) so the emitter/linter understands it\u2019s an LRO.\n2) Override the success `Response` union to include a `200` response variant that carries `Azure-AsyncOperation` (and `Retry-After` if you return it).\n3) Ensure the LRO metadata has a final result schema (so `x-ms-long-running-operation-options.final-state-schema` can be emitted when applicable).\n\nExample (pattern for \u201c200 with Azure-AsyncOperation header\u201d):\n\n```typespec\nimport \"@azure-tools/typespec-azure-core\";\nimport \"@azure-tools/typespec-azure-resource-manager\";\n\nusing Azure.Core;\nusing Azure.ResourceManager;\n\n// Reusable header set: Azure-AsyncOperation (+ optional Location) + Retry-After\nalias PutLroHeaders = {\n  ...ArmAsyncOperationHeader<FinalResult = ManagedCluster>;\n  ...Azure.Core.Foundations.RetryAfterHeader;\n};\n\n// If you also return Location sometimes, prefer combined headers:\n// alias PutLroHeaders = {\n//   ...ArmCombinedLroHeaders<FinalResult = ManagedCluster>;\n//   ...Azure.Core.Foundations.RetryAfterHeader;\n// };\n\n// A 200 response that includes the resource body AND the async header.\nalias ManagedClusterPut200 = ArmResponse<ManagedCluster> & {\n  @header(\"Azure-AsyncOperation\")\n  @Azure.Core.pollingLocation(Azure.Core.StatusMonitorPollingOptions<PollingModel = ArmOperationStatus>)\n  @Azure.Core.finalLocation(ManagedCluster)\n  azureAsyncOperation?: string;\n\n  // If you already defined PutLroHeaders above, you can instead do:\n  // ...PutLroHeaders;\n};\n\n@armResourceOperations\ninterface ManagedClusters {\n  @put\n  @Azure.Core.useFinalStateVia(\"azure-async-operation\")\n  createOrUpdate is ArmResourceCreateOrUpdateAsync<\n    ManagedCluster,\n    // Override the success responses to include your 200-with-header shape.\n    Response = ManagedClusterPut200 |\n      ArmResourceCreatedResponse<ManagedCluster, PutLroHeaders> |\n      ArmAcceptedLroResponse<LroHeaders = PutLroHeaders>\n  >;\n}\n```\n\nNotes:\n- If your initial create really returns `200` (not `201`) and you need to preserve that, the key is: define a `200` response type that includes the header(s) and the body, and include it in the operation\u2019s `Response` union.\n- If you return `202`, ARM linter rules also require a `Location` header on `202` responses. If you\u2019re returning `202` without `Location`, you should fix the service and/or model `ArmCombinedLroHeaders` so both headers are present.\n- Prefer using the provided ARM header models (`ArmAsyncOperationHeader`, `ArmLroLocationHeader`, `ArmCombinedLroHeaders`) rather than hand-rolling headers, because they carry the right `@pollingLocation`/`@finalLocation` metadata.\n\nIf you paste the current TypeSpec (or Swagger) response shapes for those PUTs (200/202/201), I can suggest the smallest change that both matches your wire behavior and satisfies the ARM linter rules.",
+            "references": [
+                {
+                    "title": "Asynchronous API Reference | Creating or Replacing using Put",
+                    "link": "https://github.com/cloud-and-ai-microsoft/resource-provider-contract/blob/master/v1.0/async-api-reference.md"
+                },
+                {
+                    "title": "Data types | Azure.ResourceManager | `ArmAsyncOperationHeader`",
+                    "link": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types"
+                },
+                {
+                    "title": "Data types | Azure.ResourceManager | `ArmCombinedLroHeaders`",
+                    "link": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types"
+                },
+                {
+                    "title": "missing final result for lro | answer",
+                    "link": "https://azure.github.io/typespec-azure/docs/migrate-swagger/faq/breakingchange"
+                },
+                {
+                    "title": "lro-location-header",
+                    "link": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/rules/lro-location-header"
+                }
+            ]
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3,
+        "response_completeness": 4.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 4,
+        "response_completeness_reason": "The response contains most of the necessary and relevant information from the ground truth, with only minor omissions or paraphrasing. It covers the ARM guidance, recommended modeling patterns, legacy 202-on-PUT, header modeling, and offers to review code for precise changes.",
+        "reference_match": 0.0,
+        "reference_match_result": "fail",
+        "knowledge_match": 0.5,
+        "knowledge_match_result": "fail",
+        "overall_score": 7.1
+    },
+    {
         "average_score": NaN,
-        "total_evals": 33,
-        "similarity_pass_rate": 32,
-        "groundedness_pass_rate": 22,
-        "response_completeness_pass_rate": 31,
+        "total_evals": 34,
+        "similarity_pass_rate": 34,
+        "groundedness_pass_rate": 23,
+        "response_completeness_pass_rate": 34,
         "reference_match_pass_rate": 17,
         "knowledge_match_pass_rate": 25,
         "similarity_fail_rate": 1,

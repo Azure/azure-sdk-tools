@@ -48,23 +48,5 @@ namespace APIViewWeb.Controllers
             });
             return Ok();
         }
-
-        /// <summary>
-        /// Update the user profile and preference properties
-        /// </summary>
-        /// <param name="email">This is the main email used for notifications</param>
-        /// <param name="languages">The languages that the user has selected to approve</param>
-        /// <param name="theme">The app theme</param>
-        /// <returns></returns>
-        [HttpPost]
-        public async Task<ActionResult> Update(string email, string[] languages, string theme="light-theme")
-        {
-            await _userProfileCache.UpdateUserProfileAsync(userName: User.GetGitHubLogin(), email: email, new UserPreferenceDto()
-            {
-                Theme = theme,
-                ApprovedLanguages = new HashSet<string>(languages)
-            });
-            return RedirectToPage("/Assemblies/Index");
-        }
     }
 }

@@ -38,6 +38,21 @@ describe.sequential("Verify commands", () => {
   });
 
   afterAll(async () => {
+    // Clean up tspclientconfig.yaml if it exists
+    const tspclientconfig = joinPaths(repoRoot, "eng", "tspclientconfig.yaml");
+    if (await doesFileExist(tspclientconfig)) {
+      await rm(tspclientconfig);
+    }
+
+    // Clean up alternate-emitter-package-json-path directory
+    const alternateTspLocation = joinPaths(
+      cwd(),
+      "test/examples/sdk/alternate-emitter-package-json-path/tsp-location.yaml",
+    );
+    if (await doesFileExist(alternateTspLocation)) {
+      await rm(alternateTspLocation);
+    }
+
     await rm(joinPaths(repoRoot, "eng", "emitter-package.json"), { force: true });
     await rm(joinPaths(repoRoot, "eng", "emitter-package-lock.json"), { force: true });
     await rm("./test/examples/sdk/local-spec-sdk/TempTypeSpecFiles/", {
@@ -63,26 +78,30 @@ describe.sequential("Verify commands", () => {
     }
   });
 
-  it("Generate lock file with altername package path", async () => {
+  it("Generate lock file with alternate package path", async () => {
+    const tmpDir = joinPaths(cwd(), ".tmp-test-lock-file-alt");
     try {
-      // delete the existing lock file if it exists
-      const lockFilePath = joinPaths(
-        repoRoot,
-        "tools/tsp-client/test/utils/alternate-emitter-package-lock.json",
+      // Create temporary directory and copy the package.json
+      await mkdir(tmpDir, { recursive: true });
+      const tmpPackageJsonPath = joinPaths(tmpDir, "alternate-emitter-package.json");
+      await cp(
+        joinPaths(repoRoot, "tools/tsp-client/test/utils/alternate-emitter-package.json"),
+        tmpPackageJsonPath,
       );
-      if (await doesFileExist(lockFilePath)) {
-        await rm(lockFilePath);
-      }
+
       await generateLockFileCommand({
-        "emitter-package-json-path": joinPaths(
-          repoRoot,
-          "tools/tsp-client/test/utils/alternate-emitter-package.json",
-        ),
+        "emitter-package-json-path": tmpPackageJsonPath,
       });
 
+      const lockFilePath = joinPaths(tmpDir, "alternate-emitter-package-lock.json");
       assert.isTrue((await stat(lockFilePath)).isFile());
     } catch (error) {
       assert.fail(`Failed to generate lock file. Error: ${error}`);
+    } finally {
+      // Clean up temporary directory
+      if (await doesFileExist(tmpDir)) {
+        await rm(tmpDir, { recursive: true });
+      }
     }
   });
 
@@ -594,15 +613,10 @@ describe.sequential("Verify commands", () => {
   }, 360000);
 
   it("Generate config files with alternate json path", async () => {
+    const tmpDir = joinPaths(cwd(), ".tmp-test-config-files-alt");
     try {
-      // delete the existing package JSON file if it exists
-      const packageJsonPath = joinPaths(
-        repoRoot,
-        "tools/tsp-client/test/utils/alternate-emitter-package.json",
-      );
-      if (await doesFileExist(packageJsonPath)) {
-        await rm(packageJsonPath);
-      }
+      await mkdir(tmpDir, { recursive: true });
+      const packageJsonPath = joinPaths(tmpDir, "alternate-emitter-package.json");
 
       const args = {
         "package-json": joinPaths(cwd(), "test", "examples", "package.json"),
@@ -614,22 +628,28 @@ describe.sequential("Verify commands", () => {
       assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.46.1");
       assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "1.6.0");
       assert.isUndefined(emitterJson["overrides"]);
-      assert.isTrue(
-        await doesFileExist(
-          joinPaths(repoRoot, "tools/tsp-client/test/utils/alternate-emitter-package-lock.json"),
-        ),
-      );
+      assert.isTrue(await doesFileExist(joinPaths(tmpDir, "alternate-emitter-package-lock.json")));
     } catch (error: any) {
       assert.fail("Failed to generate tsp-client config files. Error: " + error);
+    } finally {
+      // Clean up temporary directory
+      if (await doesFileExist(tmpDir)) {
+        await rm(tmpDir, { recursive: true });
+      }
     }
   }, 360000);
 
   it("Update config files with manual dependencies only package.json", async () => {
+    const tmpDir = joinPaths(cwd(), ".tmp-test-manual-deps-a");
     try {
-      const emitterPackageJsonPath = joinPaths(
-        repoRoot,
-        "tools/tsp-client/test/utils/emitter-package-extra-dep-a.json",
+      await mkdir(tmpDir, { recursive: true });
+      const emitterPackageJsonPath = joinPaths(tmpDir, "emitter-package-extra-dep-a.json");
+      // Copy the original file to temp directory
+      await cp(
+        joinPaths(repoRoot, "tools/tsp-client/test/utils/emitter-package-extra-dep-a.json"),
+        emitterPackageJsonPath,
       );
+
       const args = {
         "package-json": joinPaths(cwd(), "test", "examples", "package.json"),
         "emitter-package-json-path": emitterPackageJsonPath,
@@ -642,23 +662,29 @@ describe.sequential("Verify commands", () => {
       assert.equal(emitterJson["devDependencies"]["vitest"], "3.1.0");
       assert.isUndefined(emitterJson["overrides"]);
       assert.isTrue(
-        await doesFileExist(
-          joinPaths(repoRoot, "tools/tsp-client/test/utils/emitter-package-extra-dep-a-lock.json"),
-        ),
+        await doesFileExist(joinPaths(tmpDir, "emitter-package-extra-dep-a-lock.json")),
       );
-      // Clean up the generated files
-      await rm(joinPaths(dirname(emitterPackageJsonPath), "emitter-package-extra-dep-a-lock.json"));
     } catch (error: any) {
       assert.fail("Failed to generate tsp-client config files. Error: " + error);
+    } finally {
+      // Clean up temporary directory
+      if (await doesFileExist(tmpDir)) {
+        await rm(tmpDir, { recursive: true });
+      }
     }
   }, 360000);
 
   it("Update config files with manually added regular dependencies", async () => {
+    const tmpDir = joinPaths(cwd(), ".tmp-test-manual-deps-b");
     try {
-      const emitterPackageJsonPath = joinPaths(
-        repoRoot,
-        "tools/tsp-client/test/utils/emitter-package-manual-deps.json",
+      await mkdir(tmpDir, { recursive: true });
+      const emitterPackageJsonPath = joinPaths(tmpDir, "emitter-package-manual-deps.json");
+      // Copy the original file to temp directory
+      await cp(
+        joinPaths(repoRoot, "tools/tsp-client/test/utils/emitter-package-manual-deps.json"),
+        emitterPackageJsonPath,
       );
+
       const args = {
         "package-json": joinPaths(cwd(), "test", "examples", "package.json"),
         "emitter-package-json-path": emitterPackageJsonPath,
@@ -673,14 +699,15 @@ describe.sequential("Verify commands", () => {
       assert.equal(emitterJson["devDependencies"]["vitest"], "3.1.0");
       assert.isUndefined(emitterJson["overrides"]);
       assert.isTrue(
-        await doesFileExist(
-          joinPaths(repoRoot, "tools/tsp-client/test/utils/emitter-package-manual-deps-lock.json"),
-        ),
+        await doesFileExist(joinPaths(tmpDir, "emitter-package-manual-deps-lock.json")),
       );
-      // Clean up the generated files
-      await rm(joinPaths(dirname(emitterPackageJsonPath), "emitter-package-manual-deps-lock.json"));
     } catch (error: any) {
       assert.fail("Failed to generate tsp-client config files. Error: " + error);
+    } finally {
+      // Clean up temporary directory
+      if (await doesFileExist(tmpDir)) {
+        await rm(tmpDir, { recursive: true });
+      }
     }
   });
 

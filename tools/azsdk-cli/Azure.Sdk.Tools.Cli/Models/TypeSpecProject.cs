@@ -1,10 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+
 namespace Azure.Sdk.Tools.Cli.Models
 {
     public class TypeSpecProject
     {
-        static readonly string TSPCONFIG_FILENAME = "tspconfig.yaml";
+        public static readonly string TSPCONFIG_FILENAME = "tspconfig.yaml";
         private string TypeSpecConfigYaml { get; set; }
 
         public string Name { get; set; }
@@ -12,6 +13,8 @@ namespace Azure.Sdk.Tools.Cli.Models
 
         public bool IsDataPlane { get;}
         public string SdkServicePath { get; set; }
+
+        public List<PackageInfo> Packages { get; set; } = [];
 
         public SdkType SdkType {
             get

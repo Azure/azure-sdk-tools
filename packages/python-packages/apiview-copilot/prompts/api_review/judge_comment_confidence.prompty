@@ -7,15 +7,10 @@ version: 1.0.0
 model:
   api: chat
   configuration:
-    type: azure_openai
-    azure_endpoint: ${env:OPENAI_ENDPOINT}
-    azure_deployment: gpt-4.1
+    azure_deployment: gpt-5.4-mini
     api_version: 2025-03-01-preview
   parameters:
-    temperature: 0.0
-    top_p: 1.0
-    stop: []
-    max_tokens: 16384
+    max_completion_tokens: 16384
     response_format: ${file:judge_comment_schema.json}
 sample:
   language: Python
@@ -46,11 +41,13 @@ system:
 
   # OUTPUT REQUIREMENTS
   - Always answer all questions.
+  - Provide a `severity_rationale` that explains why you chose the severity level. Reference the specific language from the guideline or memory context (e.g., "DO NOT", "YOU SHOULD NOT", hedging words) that drove your classification.
   - Rate each comment for severity according to the following guidance:
-    - "SUGGESTION": A comment that is informative but leaves it up to the service team as to whether or not to implement.
-    - "SHOULD": A comment that should be fixed, unless there is a compelling reason why it should not.
-    - "MUST": A comment that identifies a critical issue that must be fixed.
-    - "QUESTION": A comment that asks for clarification or more information.
+    - "MUST": The comment addresses a violation of a guideline or memory that uses mandatory language such as "DO", "DO NOT", "MUST", or "MUST NOT". These represent non-negotiable requirements.
+    - "SHOULD": The comment addresses a violation of a guideline or memory that uses strong but non-mandatory language such as "YOU SHOULD", "YOU SHOULD NOT", or "AVOID". These should be fixed unless there is a compelling reason not to.
+    - "SUGGESTION": The comment is informative, uses hedging language like "consider" or "might", or is generic advice not tied to a specific mandatory guideline. It is left to the service team whether or not to implement.
+    - "QUESTION": The comment asks for clarification or more information rather than identifying a specific issue.
+  - When determining severity, look at the language used in the referenced guideline or memory context, not just the language of the comment itself.
 
 user:
   Given the following context:

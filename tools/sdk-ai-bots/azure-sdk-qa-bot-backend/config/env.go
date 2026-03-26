@@ -23,13 +23,13 @@ const (
 )
 
 type Config struct {
-	AOAI_CHAT_REASONING_MODEL             string
-	AOAI_CHAT_REASONING_MODEL_TEMPERATURE float32
-	AOAI_CHAT_COMPLETIONS_MODEL           string
-	AOAI_CHAT_COMPLETIONS_TEMPERATURE     float32
-	AOAI_CHAT_MAX_TOKENS                  int
-	AOAI_CHAT_CONTEXT_MAX_TOKENS          int
-	AOAI_CHAT_COMPLETIONS_ENDPOINT        string
+	AOAI_CHAT_REASONING_MODEL                  string
+	AOAI_CHAT_REASONING_MODEL_REASONING_EFFORT string
+	AOAI_CHAT_COMPLETIONS_MODEL                string
+	AOAI_CHAT_COMPLETIONS_REASONING_EFFORT     string
+	AOAI_CHAT_MAX_TOKENS                       int
+	AOAI_CHAT_CONTEXT_MAX_TOKENS               int
+	AOAI_CHAT_COMPLETIONS_ENDPOINT             string
 
 	AI_SEARCH_BASE_URL           string
 	AI_SEARCH_INDEX              string
@@ -45,6 +45,11 @@ type Config struct {
 	STORAGE_RECORDS_CONTAINER   string
 
 	KEYVAULT_ENDPOINT string
+
+	GITHUB_APP_ID                 string
+	GITHUB_APP_KEY_NAME           string
+	GITHUB_APP_KEYVAULT_URL       string
+	GITHUB_APP_INSTALLATION_OWNER string
 }
 
 var BotEnv *BotENV
@@ -147,6 +152,8 @@ func initCredential() error {
 }
 
 func InitConfiguration() {
+	// Try to load environment variables from .env file
+	LoadEnvFile()
 	// Initialize the global credential first
 	if err := initCredential(); err != nil {
 		log.Fatalf("Failed to create credential: %v", err)

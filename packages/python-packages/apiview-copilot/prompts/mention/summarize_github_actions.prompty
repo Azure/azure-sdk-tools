@@ -11,18 +11,14 @@ inputs:
 model:
   api: chat
   configuration:
-    type: azure_openai
-    azure_endpoint: ${env:OPENAI_ENDPOINT}
-    azure_deployment: gpt-4.1
+    azure_deployment: gpt-5.4-mini
     api_version: 2025-03-01-preview
   parameters:
-    temperature: 0.0
-    top_p: 1.0
-    stop: []
-    max_tokens: 16384
+    max_completion_tokens: 16384
 sample:
   results: | 
     {
+      "action": "create",
       "url": "https://api.github.com/repos/tjprescott/azure-sdk-tools/issues/6",
       "repository_url": "https://api.github.com/repos/tjprescott/azure-sdk-tools",
       "title": "[Python APIView] Literal values are not quoted in type annotations",
@@ -36,11 +32,13 @@ You are an AI that summarizes the results of an @mention request from APIView. T
 # INSTRUCTIONS
 
 ## NO FAILURES
+- The `action` field indicates what was done: `"create"` means a new issue was opened; `"no-op"` means an existing issue already covers the request.
 - Thank the user for their feedback and note the action you have taken (opened issue, etc).
-- If there is an issue URL, ALWAYS include it.
-- If the action was a no-op, mention that there is already an existing issue tracking the request and include the issue URL, NOT the issue number or title.
-- Be succinct in your response.
-- GOOD Example: "Thank you for your feedback! An issue has been opened to track this: [issue URL]"
+- If there is an issue URL, ALWAYS include it. If the URL contains `api.github.com/repos/`, convert it to the human-readable form (e.g., `https://api.github.com/repos/owner/repo/issues/123` becomes `https://github.com/owner/repo/issues/123`).
+- If the action was `"no-op"`, mention that there is already an existing issue tracking the request and include the issue URL, NOT the issue number or title.
+- Be succinct in your response. Do NOT summarize the issue content or include extra details beyond the action and URL.
+- You may include a brief contextual phrase about what area the issue addresses (e.g., "in the APIView parser" or "in the guidelines") but do not include the issue title, body, or other details.
+- GOOD Example: "Thank you for your feedback! An issue has been opened to address this in the parser: [issue URL]"
 - GOOD Example: "Thank you for your feedback! This issue is already being tracked here: [issue URL]"
 - BAD Example: "Thank you for your feedback on APIView! We opened an issue in APIView [issue URL] so that we don't do the thing that you told us not to do! Thank you!"
 - BAD Example: "Thank you for your feedback! An issue has been opened to track this: Issue #1234 - Literal values are not quoted in type annotations"

@@ -1,3 +1,9 @@
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
 import json
 import os
 import sys
@@ -17,9 +23,10 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from evals._config_loader import get_evaluator_class
 from evals._discovery import DiscoveryResult, EvaluationTarget
 from evals._util import (
-    save_recordings,
     load_recordings,
+    save_recordings,
 )
+from src._credential import warm_up_credential
 from src._settings import SettingsManager
 
 DEFAULT_NUM_RUNS: int = 1
@@ -35,7 +42,7 @@ class ExecutionContext:
             "resource_group_name": self.settings.get("EVALS_RG"),
             "project_name": self.settings.get("EVALS_PROJECT_NAME"),
         }
-        self._credential_kwargs = self._create_credential_kwargs()
+        self.credential_kwargs = self._create_credential_kwargs()
         self._temp_files: list[Path] = []
         self._temp_files_lock = threading.Lock()
 
@@ -59,7 +66,7 @@ class ExecutionContext:
     def in_ci(self) -> bool:
         return bool(os.getenv("TF_BUILD"))
 
-    def _load_test_file(self, test_file: Path) -> dict:
+    def load_test_file(self, test_file: Path) -> dict:
         """Load test file - supports both JSON and YAML formats."""
         try:
             with test_file.open("r", encoding="utf-8") as f:
@@ -139,6 +146,10 @@ class EvaluationRunner:
     def _ensure_context(self):
         if self._context is None:
             self._context = ExecutionContext()
+            # Pre-acquire a token so parallel workers find it cached
+            # instead of all racing to spawn az-cli subprocesses.
+            if not self._context.in_ci():
+                warm_up_credential()
 
     def run(self, discovery_result: DiscoveryResult) -> list[EvaluationResult]:
         """Execute all targets in the discovery result.
@@ -158,8 +169,10 @@ class EvaluationRunner:
     def _run(self, discovery_result: DiscoveryResult) -> list[EvaluationResult]:
         """Run tests in parallel with progress tracking."""
         workflow_count = len(discovery_result.targets)
-        cpu_count = os.cpu_count() or 4
-        max_workers = min(cpu_count * 2, workflow_count)
+        # Limit concurrency to avoid overwhelming credential token
+        # acquisition (AzureCliCredential subprocess calls fail under
+        # heavy parallelism).
+        max_workers = min(4, workflow_count)
         results = []
         total_targets = len(discovery_result.targets)
 
@@ -189,7 +202,7 @@ class EvaluationRunner:
 
                 except Exception as e:
 
-                    print('\033[91mE\033[0m', end='', flush=True)
+                    print("\033[91mE\033[0m", end="", flush=True)
                     results.append(EvaluationResult(target=target, raw_results=[], success=False, error=str(e)))
 
         # Spacing
@@ -213,7 +226,7 @@ class EvaluationRunner:
             test_file_paths = []
 
             for test_file in target.test_files:
-                test_case = self._context._load_test_file(test_file)
+                test_case = self._context.load_test_file(test_file)
                 test_file_to_case[test_file] = test_case
                 testcase_id = test_case.get("testcase")
                 if testcase_id:
@@ -294,7 +307,7 @@ class EvaluationRunner:
                 evaluator_config={"metrics": evaluator.evaluator_config},
                 target=evaluator.target_function,
                 fail_on_evaluator_errors=False,
-                **self._context._credential_kwargs,
+                **self._context.credential_kwargs,
             )
             results.append(result)
 
@@ -309,140 +322,156 @@ class EvaluationRunner:
 
     def show_results(self, results: list[EvaluationResult]):
         """Display detailed evaluation results with colored output showing failures, errors, and summary statistics."""
-        
+
         # color codes
-        RED = '\033[91m'
-        GREEN = '\033[92m'
-        YELLOW = '\033[93m'
-        RESET = '\033[0m'
-        BOLD = '\033[1m'
-        
+        RED = "\033[91m"
+        GREEN = "\033[92m"
+        YELLOW = "\033[93m"
+        RESET = "\033[0m"
+        BOLD = "\033[1m"
 
         workflow_stats = []
         for result in results:
             if result.error:
-                workflow_stats.append({
-                    'result': result,
-                    'status': 'errored',
-                    'failed_testcases': [],
-                    'passed_testcases': [],
-                    'partial_testcases': [],
-                    'total_testcases': 0
-                })
+                workflow_stats.append(
+                    {
+                        "result": result,
+                        "status": "errored",
+                        "failed_testcases": [],
+                        "passed_testcases": [],
+                        "partial_testcases": [],
+                        "total_testcases": 0,
+                    }
+                )
             elif result.raw_results:
                 failed_tests = []
                 passed_tests = []
                 partial_tests = []
                 raw = result.raw_results[0]
-                for filename, eval_result in raw.items():
+                for _, eval_result in raw.items():
                     for res in eval_result["rows"]:
-                        testcase = res["inputs.testcase"]
-                        score = res["outputs.metrics.score"]
-                        success = res["outputs.metrics.success"]
-                        
+                        testcase = res.get("inputs.testcase", "unknown")
+                        score = res.get("outputs.metrics.score")
+                        success = res.get("outputs.metrics.success", False)
+                        details = {
+                            "expected_action": res.get("outputs.metrics.expected_action", ""),
+                            "actual_action": res.get("outputs.metrics.actual_action", ""),
+                        }
+
+                        if score is None:
+                            failed_tests.append((testcase, 0, details))
+                            continue
+
                         if success:
                             if score < 100:
-                                partial_tests.append((testcase, score))
+                                partial_tests.append((testcase, score, details))
                             else:
-                                passed_tests.append((testcase, score))
+                                passed_tests.append((testcase, score, details))
                         else:
-                            failed_tests.append((testcase, score))
-                
-                workflow_stats.append({
-                    'result': result,
-                    'status': 'failed' if failed_tests else 'passed',
-                    'failed_testcases': failed_tests,
-                    'passed_testcases': passed_tests,
-                    'partial_testcases': partial_tests,
-                    'total_testcases': len(failed_tests) + len(passed_tests) + len(partial_tests)
-                })
-        
+                            failed_tests.append((testcase, score, details))
 
-        errored = [s for s in workflow_stats if s['status'] == 'errored']
-        failed = [s for s in workflow_stats if s['status'] == 'failed']
+                workflow_stats.append(
+                    {
+                        "result": result,
+                        "status": "failed" if failed_tests else "passed",
+                        "failed_testcases": failed_tests,
+                        "passed_testcases": passed_tests,
+                        "partial_testcases": partial_tests,
+                        "total_testcases": len(failed_tests) + len(passed_tests) + len(partial_tests),
+                    }
+                )
 
-        has_partial = any(len(s['partial_testcases']) > 0 for s in workflow_stats)
-        
+        errored = [s for s in workflow_stats if s["status"] == "errored"]
+        failed = [s for s in workflow_stats if s["status"] == "failed"]
+
+        has_partial = any(len(s["partial_testcases"]) > 0 for s in workflow_stats)
+
         # failures section
         if failed or errored:
             print(f"{RED}{BOLD}=" * 60)
             print("FAILURES")
             print("=" * 60 + RESET)
-            
+
             for stat in errored:
-                result = stat['result']
+                result = stat["result"]
                 print(f"{RED}_________________________ {result.workflow_name} _________________________{RESET}")
                 print(f"{RED}ERROR: {result.error}{RESET}")
                 print()
-            
+
             for stat in failed:
-                result = stat['result']
+                result = stat["result"]
                 print(f"{RED}_________________________ {result.workflow_name} _________________________{RESET}")
-                for testcase, score in stat['failed_testcases']:
+                for testcase, score, details in stat["failed_testcases"]:
                     print(f"{RED}FAILED{RESET} {result.workflow_name}::{testcase}")
                     print(f"  score: {score}")
+                    if details.get("expected_action") or details.get("actual_action"):
+                        print(f"  expected: {details['expected_action']}")
+                        print(f"  actual:   {details['actual_action']}")
                     print()
 
         if has_partial:
             print(f"{YELLOW}{BOLD}{'=' * 60}")
             print("PARTIAL PASSES")
             print("=" * 60 + RESET)
-            
+
             for stat in workflow_stats:
-                if stat['partial_testcases']:
-                    result = stat['result']
+                if stat["partial_testcases"]:
+                    result = stat["result"]
                     print(f"{YELLOW}_________________________ {result.workflow_name} _________________________{RESET}")
-                    for testcase, score in stat['partial_testcases']:
+                    for testcase, score, details in stat["partial_testcases"]:
                         print(f"{YELLOW}PARTIAL{RESET} {result.workflow_name}::{testcase}")
                         print(f"  score: {score}")
+                        if details.get("expected_action") or details.get("actual_action"):
+                            print(f"  expected: {details['expected_action']}")
+                            print(f"  actual:   {details['actual_action']}")
                         print()
 
-        if self._verbose and any(len(s['passed_testcases']) > 0 for s in workflow_stats):
+        if self._verbose and any(len(s["passed_testcases"]) > 0 for s in workflow_stats):
             print(f"{GREEN}{BOLD}{'=' * 60}")
             print("PASSED")
             print("=" * 60 + RESET)
-            
+
             for stat in workflow_stats:
-                if stat['passed_testcases']:
-                    result = stat['result']
+                if stat["passed_testcases"]:
+                    result = stat["result"]
                     print(f"{GREEN}_________________________ {result.workflow_name} _________________________{RESET}")
-                    for testcase, score in stat['passed_testcases']:
+                    for testcase, score, _details in stat["passed_testcases"]:
                         print(f"{GREEN}✓{RESET} {result.workflow_name}::{testcase}")
                         print(f"  score: {score}")
                         print()
-        
+
         # short test summary info
         if failed or errored or has_partial:
             print(f"{YELLOW}{'=' * 60}")
             print("test summary")
             print("=" * 60 + RESET)
-            
+
             for stat in errored:
-                result = stat['result']
+                result = stat["result"]
                 print(f"{RED}ERROR{RESET} {result.workflow_name} - {result.error}")
-            
+
             for stat in failed:
-                result = stat['result']
-                for testcase, _ in stat['failed_testcases']:
+                result = stat["result"]
+                for testcase, _, _details in stat["failed_testcases"]:
                     print(f"{RED}FAILED{RESET} {result.workflow_name}::{testcase}")
 
             for stat in workflow_stats:
-                if stat['partial_testcases']:
-                    result = stat['result']
-                    for testcase, score in stat['partial_testcases']:
+                if stat["partial_testcases"]:
+                    result = stat["result"]
+                    for testcase, score, _details in stat["partial_testcases"]:
                         print(f"{YELLOW}PARTIAL{RESET} {result.workflow_name}::{testcase} - score: {score}")
 
             print()
-        
+
         # final summary with precomputed totals
         print("=" * 60)
         parts = []
-        
-        total_failed_testcases = sum(len(s['failed_testcases']) for s in workflow_stats)
-        total_passed_testcases = sum(len(s['passed_testcases']) for s in workflow_stats)
-        total_partial_testcases = sum(len(s['partial_testcases']) for s in workflow_stats)
-        total_testcases = sum(s['total_testcases'] for s in workflow_stats)
-        
+
+        total_failed_testcases = sum(len(s["failed_testcases"]) for s in workflow_stats)
+        total_passed_testcases = sum(len(s["passed_testcases"]) for s in workflow_stats)
+        total_partial_testcases = sum(len(s["partial_testcases"]) for s in workflow_stats)
+        total_testcases = sum(s["total_testcases"] for s in workflow_stats)
+
         if errored:
             parts.append(f"{RED}{len(errored)} errored{RESET}")
         if total_failed_testcases > 0:
@@ -452,7 +481,7 @@ class EvaluationRunner:
         if total_partial_testcases > 0:
             parts.append(f"{YELLOW}{total_partial_testcases} partial{RESET}")
         parts.append(f"{total_testcases} total")
-        
+
         print(", ".join(parts))
         print("=" * 60)
 

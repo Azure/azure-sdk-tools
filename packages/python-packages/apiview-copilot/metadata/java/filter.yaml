@@ -1,6 +1,8 @@
 exceptions: |
   1. DO NOT make comments that don't actually identify a problem
   2. DO NOT comment on lack of documentation comments
-  3. DO NOT suggest enforcing consistency in naming conventions for enums
-  4. DO NOT comment on enum naming conventions
+  3. DO NOT suggest changes to the implementation or structure of code annotated with the @Generated annotation. You MAY still flag naming issues (e.g. casing, typos) or API design concerns (e.g. too many parameters) on @Generated methods, since those are fixed in the TypeSpec source.
+  4. DO NOT suggest enforcing consistency in naming conventions for enums
   5. DO NOT complain about hardcoding dependency versions in the POM.
+  6. DO NOT comment on methods or overrides lacking an implementation.
+  7. DO NOT recommend annotating parameters to express nullability expectations.

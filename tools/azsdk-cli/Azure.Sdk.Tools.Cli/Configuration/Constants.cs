@@ -16,6 +16,7 @@ public static class Constants
     public const string AZURE_SDK_TOOLS_PATH = "azure-sdk-tools";
     public const string AZURE_COMMON_LABELS_PATH = "tools/github/data/common-labels.csv";
     public const string AZURE_CODEOWNERS_PATH = ".github/CODEOWNERS";
+    public const string GITHUB_LABEL_CREATED_BY_COPILOT = "Created By Copilot";
 
     public const string TOOLS_ACTIVITY_SOURCE = "azsdk.tools";
 }

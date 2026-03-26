@@ -16,32 +16,24 @@
                             <div id="emaiInputlHelp" class="form-text">Enter your email to get notifications. Leave blank to stop emails.</div>
                         </div>
                     </li>
-                    <li *ngIf="allowedApprovers.includes(userName)" class="list-group-item" id="reviewLanguagesListItem">
+                    
+                    <!-- Permissions Section -->
+                    <li class="list-group-item" id="permissionsListItem">
                         <div class="mb-1">
-                            <label for="reviewLanguagesMultiSelect" class="form-label fw-semibold">Review languages</label>
-                            <div class="card flex justify-content-center">
-                                <p-multiSelect
-                                    id="reviewLanguagesMultiSelect"
-                                    (onChange)="onProfileChange($event)"
-                                    [options]="languages"
-                                    [filter]="false"
-                                    [ngModel]="selectedLanguages"
-                                    optionLabel="label"
-                                    placeholder="Select languages you want to be able to approve."
-                                    [showClear]="true"
-                                    (onClear)="onProfileChange($event)"
-                                    [maxSelectedLabels]="12"
-                                    selectedItemsLabel="{0} items selected"
-                                    [style]="{'width':'100%'}">
-                                    <ng-template let-option pTemplate="item">
-                                        <div class="inline-block vertical-align-middle">
-                                            <img [alt]="" src="{{assetsPath}}/images/{{ option.label | languageNames: userProfile?.preferences?.theme }}-original.svg" width="24" class="vertical-align-middle" />
-                                            <span class="mx-2 mt-1">{{ option.label }}</span>
-                                        </div>
-                                    </ng-template>
-                                </p-multiSelect>
+                            <label class="form-label fw-semibold">Your Groups</label>
+                            <div *ngIf="userGroups.length > 0; else noGroups" class="mt-2">
+                                <div *ngFor="let group of userGroups" class="d-flex align-items-center mb-1">
+                                    <i class="bi bi-people-fill text-muted me-2"></i>
+                                    <span>{{group.groupName}}</span>
+                                    <span class="badge role-badge ms-2">{{formatGroupRoles(group)}}</span>
+                                </div>
                             </div>
-                            <div id="reviewLanguagesHelp" class="form-text">You can approve reviews! Pick the languages you'd like to approve below.</div>
+                            <ng-template #noGroups>
+                                <div class="text-muted small mt-2">No permission groups</div>
+                            </ng-template>
+                            <div class="border-top pt-2 mt-3 text-muted small" *ngIf="adminUsernames.length > 0">
+                                <i class="bi bi-question-circle me-1"></i>For questions about permissions, contact: <span *ngFor="let admin of adminUsernames; let last = last"><a href="https://github.com/{{admin}}" target="_blank">@{{admin}}</a><span *ngIf="!last">, </span></span>
+                            </div>
                         </div>
                     </li>
                 </ul>

@@ -6,6 +6,8 @@ namespace Azure.Sdk.Tools.Cli.Helpers;
 public interface IRawOutputHelper
 {
     void OutputConsole(string output);
+    void OutputConsoleInfo(string output);
+    void OutputConsoleWarning(string output);
     void OutputConsoleError(string output);
 }
 
@@ -38,7 +40,7 @@ public class OutputHelper : IOutputHelper, IRawOutputHelper
         Hidden
     }
 
-    private readonly object outputLock = new();
+    private readonly SemaphoreSlim outputSemaphore = new(1, 1);
     public List<(StreamType Stream, string Output)> Outputs { get; } = [];
 
     private readonly JsonSerializerOptions serializerOptions = new()
@@ -101,9 +103,14 @@ public class OutputHelper : IOutputHelper, IRawOutputHelper
     {
         if (OutputMode == OutputModes.Hidden)
         {
-            lock (outputLock)
+            outputSemaphore.Wait();
+            try
             {
                 Outputs.Add((StreamType.Stdout, output));
+            }
+            finally
+            {
+                outputSemaphore.Release();
             }
         }
         else
@@ -121,14 +128,20 @@ public class OutputHelper : IOutputHelper, IRawOutputHelper
     {
         if (OutputMode == OutputModes.Hidden)
         {
-            lock (outputLock)
+            outputSemaphore.Wait();
+            try
             {
                 Outputs.Add((StreamType.Stderr, output));
+            }
+            finally
+            {
+                outputSemaphore.Release();
             }
         }
         else
         {
-            lock (outputLock)
+            outputSemaphore.Wait();
+            try
             {
                 var original = Console.ForegroundColor;
                 Console.ForegroundColor = ConsoleColor.Red;
@@ -136,6 +149,10 @@ public class OutputHelper : IOutputHelper, IRawOutputHelper
                 Console.Error.WriteLine(output);
 
                 Console.ForegroundColor = original;
+            }
+            finally
+            {
+                outputSemaphore.Release();
             }
         }
     }
@@ -144,7 +161,36 @@ public class OutputHelper : IOutputHelper, IRawOutputHelper
     {
         if (OutputMode != OutputModes.Mcp && OutputMode != OutputModes.Hidden)
         {
-            Console.WriteLine(output);
+            Console.Error.WriteLine(output);
+        }
+    }
+
+    public virtual void OutputConsoleInfo(string output)
+    {
+        if (OutputMode != OutputModes.Mcp && OutputMode != OutputModes.Hidden)
+        {
+            Console.Error.WriteLine(output);
+        }
+    }
+
+    public virtual void OutputConsoleWarning(string output)
+    {
+        if (OutputMode != OutputModes.Mcp && OutputMode != OutputModes.Hidden)
+        {
+            outputSemaphore.Wait();
+            try
+            {
+                var original = Console.ForegroundColor;
+                Console.ForegroundColor = ConsoleColor.Yellow;
+
+                Console.Error.WriteLine(output);
+
+                Console.ForegroundColor = original;
+            }
+            finally
+            {
+                outputSemaphore.Release();
+            }
         }
     }
 
@@ -152,7 +198,8 @@ public class OutputHelper : IOutputHelper, IRawOutputHelper
     {
         if (OutputMode != OutputModes.Mcp && OutputMode != OutputModes.Hidden)
         {
-            lock (outputLock)
+            outputSemaphore.Wait();
+            try
             {
                 var original = Console.ForegroundColor;
                 Console.ForegroundColor = ConsoleColor.Red;
@@ -160,6 +207,10 @@ public class OutputHelper : IOutputHelper, IRawOutputHelper
                 Console.Error.WriteLine(output);
 
                 Console.ForegroundColor = original;
+            }
+            finally
+            {
+                outputSemaphore.Release();
             }
         }
     }

@@ -5,7 +5,7 @@ using System;
 
 namespace APIViewWeb.Repositories
 {
-    internal class AuthorizationFailedException : Exception
+    public class AuthorizationFailedException : Exception
     {
     }
 }

@@ -15,7 +15,7 @@ public abstract class CommandResponse
 {
     private int? exitCode = null;
     [JsonIgnore]
-    public int ExitCode
+    public virtual int ExitCode
     {
         get
         {
@@ -67,8 +67,13 @@ public abstract class CommandResponse
     public override string ToString()
     {
         var value = Format();
-
         List<string> messages = [];
+
+        if (OperationStatus == Status.Succeeded && !string.IsNullOrWhiteSpace(value))
+        {
+            messages.Add(value);
+        }
+        
         if (!string.IsNullOrEmpty(ResponseError))
         {
             messages.Add("[ERROR] " + ResponseError);

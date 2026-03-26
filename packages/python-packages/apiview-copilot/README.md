@@ -11,8 +11,8 @@ The simplest way to get started:
 ```
 AZURE_APP_CONFIG_ENDPOINT="https://avc-appconfig-staging.azconfig.io"
 ENVIRONMENT_NAME="staging"
-OPENAI_ENDPOINT="https://azsdk-engsys-openai.openai.azure.com/"
 ```
+> **Note:** All other settings (Foundry endpoint, project, API keys, Cosmos DB, etc.) are resolved at runtime from Azure App Configuration.
 3. Create one or more test files in plain-text for the language of choice. Store them in `scratch/apiviews/<lang>/`.
 4. Generate a review using `avc review generate -l <LANG> -t <PATH_TO_TARGET_FILE> [-b <PATH_TO_BASE_FILE>] [--debug-log] [--remote]`.
 5. Examine the output under `scratch/output/<LANG>/<TEST_FILE>.json`.
@@ -68,6 +68,30 @@ If you would like to search the knowledge base and see the output the way the LL
 `avc search kb --text "query" -l <LANG> --markdown > context.md`
 
 This will dump the results to context.md which you can then view in VSCode with the preview editor.
+
+## Database Commands
+
+Commands for managing knowledge base items:
+
+### Linking Items
+
+```bash
+avc db link -g <GUIDELINE_ID> -m <MEMORY_ID> [--reindex]
+avc db link -g <GUIDELINE_ID> -e <EXAMPLE_ID> [--reindex]
+avc db link -m <MEMORY_ID> -e <EXAMPLE_ID> [--reindex]
+```
+
+Links two knowledge base items by adding each other's ID to their related collections. Provide exactly two of `--guideline (-g)`, `--memory (-m)`, or `--example (-e)`. If the second update fails, a best-effort rollback of the first is attempted to keep both items consistent. Use `--reindex` to trigger a full search reindex after linking.
+
+### Unlinking Items
+
+```bash
+avc db unlink -g <GUIDELINE_ID> -m <MEMORY_ID> [--reindex]
+avc db unlink -g <GUIDELINE_ID> -e <EXAMPLE_ID> [--reindex]
+avc db unlink -m <MEMORY_ID> -e <EXAMPLE_ID> [--reindex]
+```
+
+Removes the link between two knowledge base items. Same flags and best-effort rollback behavior as `db link`. Use `--reindex` to trigger a full search reindex after unlinking.
 
 ## Getting Comments from APIView
 

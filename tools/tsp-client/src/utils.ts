@@ -165,7 +165,10 @@ export async function updateExistingTspLocation(
     }
     return updatedTspLocation;
   } catch (error) {
-    Logger.debug(`Will create a new tsp-location.yaml. Error reading tsp-location.yaml: ${error}`);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    Logger.debug(
+      `Will create a new tsp-location.yaml file after the check for an existing tsp-location.yaml failed. For debugging purposes see the error: ${errorMessage}`,
+    );
     return tspLocationData;
   }
 }

@@ -137,11 +137,9 @@ public class SessionExecutor : IDisposable
                     tokenUsage.CacheReadTokens += usageEvent.Data.CacheReadTokens ?? 0;
                     tokenUsage.CacheWriteTokens += usageEvent.Data.CacheWriteTokens ?? 0;
                 }
-                if (evt is SessionIdleEvent idleEvent)
+                if (evt is SessionIdleEvent)
                 {
                     mainTaskCompleted = true;
-                    // Dispose session immediately when main task is completed to free up resources, since we won't receive any more events after this
-                    session.DisposeAsync();
                 }
             });
             if (config.Verbose)

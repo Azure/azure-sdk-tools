@@ -24,7 +24,7 @@ load_dotenv(override=False)
 
 from agent_framework import Agent
 from agent_framework import SkillsProvider
-from agent_framework.observability import configure_otel_providers
+from agent_framework.observability import enable_instrumentation
 from azure.ai.agentserver.agentframework import from_agent_framework
 
 import config.app_config as app_config
@@ -47,16 +47,8 @@ def _load_instructions(file_path: Path) -> str:
 
 async def main() -> None:
     """Start the hosted Chat Agent as an HTTP server."""
+    enable_instrumentation()
     await app_config.init()
-
-    # Observability — Foundry auto-configures Azure Monitor.
-    # For local dev, send traces to AI Toolkit.
-    if not os.environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING"):
-        configure_otel_providers(
-            vs_code_extension_port=4317,
-            enable_sensitive_data=True,
-        )
-
     agent_client = get_agent_client()
     # Limit tool-call loop iterations to prevent infinite loops.
     agent_client.function_invocation_configuration["max_iterations"] = 5

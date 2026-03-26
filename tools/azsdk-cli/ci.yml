@@ -87,6 +87,13 @@ extends:
             name: $(LINUXPOOL)
             image: $(LINUXVMIMAGE)
             os: linux
+          templateContext:
+            outputs:
+              - output: pipelineArtifact
+                displayName: 'Publish benchmark report'
+                condition: always()
+                artifactName: benchmark-report
+                targetPath: $(Build.ArtifactStagingDirectory)/benchmark-report.md
           steps:
           - checkout: none
           - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
@@ -146,12 +153,6 @@ extends:
               DOTNET_MULTILEVEL_LOOKUP: 0
               COPILOT_GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
               AUTHORING_SPEC_REPO: ${{ parameters.AuthoringSpecRepo }}
-          - task: PublishPipelineArtifact@1
-            displayName: 'Publish benchmark report'
-            condition: always()
-            inputs:
-              targetPath: '$(Build.ArtifactStagingDirectory)/benchmark-report.md'
-              artifactName: 'benchmark-report'
       CustomReleaseJobs:
       - template: /tools/azsdk-cli/auto-documentation.yml
         parameters:

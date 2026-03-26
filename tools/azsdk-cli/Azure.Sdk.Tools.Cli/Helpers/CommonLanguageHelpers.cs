@@ -215,13 +215,44 @@ public class CommonValidationHelpers : ICommonValidationHelpers
             }
 
             // Escape single quotes in paths for use in PowerShell script blocks
-            var escapedPackagePath = packagePath.Replace("'", "''");
             var escapedScriptPath = scriptPath.Replace("'", "''");
             var escapedConfigPath = cspellConfigPath.Replace("'", "''");
             var escapedRepoRoot = packageRepoRoot.Replace("'", "''");
 
-            // Enumerate files from the package path and pass them to Invoke-Cspell.ps1
-            var command = $"$files = Get-ChildItem -Path '{escapedPackagePath}' -Recurse -File | ForEach-Object {{$_.FullName}}; & '{escapedScriptPath}' -CSpellConfigPath '{escapedConfigPath}' -SpellCheckRoot '{escapedRepoRoot}' -FileList $files";
+            // Get only the files that have changed between the current branch and the default (main) branch.
+            // This avoids scanning thousands of files in directories like .tox, node_modules, etc.
+            var mergeBaseSha = await _gitHelper.GetMergeBaseCommitShaAsync(packageRepoRoot, "main", ct);
+            var changedFiles = await _gitHelper.GetChangedFilesAsync(
+                packageRepoRoot,
+                mergeBaseSha,
+                "HEAD",
+                packagePath,
+                "d", // exclude deleted files
+                ct);
+
+            if (changedFiles.Count == 0)
+            {
+                _logger.LogInformation("No changed files detected in {PackagePath}. Skipping spelling check.", packagePath);
+                return new PackageCheckResponse(0, "No changed files detected. Spelling check skipped.");
+            }
+
+            _logger.LogInformation("Git detected {Count} changed file(s) in {PackagePath}", changedFiles.Count, packagePath);
+
+            // Resolve changed file paths to absolute paths
+            var absoluteChangedFiles = changedFiles
+                .Select(f => Path.GetFullPath(Path.Combine(packageRepoRoot, f)))
+                .Where(File.Exists)
+                .ToList();
+
+            if (absoluteChangedFiles.Count == 0)
+            {
+                _logger.LogInformation("No resolvable changed files in {PackagePath}. Skipping spelling check.", packagePath);
+                return new PackageCheckResponse(0, "No resolvable changed files detected. Spelling check skipped.");
+            }
+
+            // Build file list as a PowerShell array of quoted paths
+            var fileListLiteral = string.Join(", ", absoluteChangedFiles.Select(f => $"'{f.Replace("'", "''")}'"));
+            var command = $"$files = @({fileListLiteral}); & '{escapedScriptPath}' -CSpellConfigPath '{escapedConfigPath}' -SpellCheckRoot '{escapedRepoRoot}' -FileList $files";
 
             var timeout = TimeSpan.FromMinutes(10);
             var processResult = await _processHelper.Run(new PowershellOptions([command], timeout: timeout, workingDirectory: packageRepoRoot), ct);

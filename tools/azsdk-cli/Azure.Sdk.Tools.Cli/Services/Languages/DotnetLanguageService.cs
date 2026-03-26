@@ -410,7 +410,7 @@ public sealed partial class DotnetLanguageService: LanguageService
                     "Skipping CI YAML provisioning for SDK type {SdkType} at {PackagePath}",
                     packageInfo.SdkType,
                     packagePath);
-                return PackageOperationResponse.CreateSuccess(
+                return PackageOperationResponse.CreateFailure(
                     $"CI YAML provisioning is only supported for dataplane and management SDKs (type was '{packageInfo.SdkType}'). No changes were made.",
                     packageInfo);
             }

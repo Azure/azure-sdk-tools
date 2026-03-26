@@ -18,7 +18,7 @@
             ],
             "verifyPlan": [
                 "1. 'v2024_10_01_preview' is replaced with `v2025-05-04-preview` in the `Versions` enum and decorate with '@previewVersion'.",
-                "2. Example folders are correctly set up. 2024-10-01-preview example folder is renamed to '2025-05-04-preview' (e.g., `mv examples/2024-10-01-preview examples/2025-05-04-preview`), update the `api-version` parameter in all example files, and add or modify examples to reflect API changes.",
+                "2. Example folders are correctly set up. The old `examples/2024-10-01-preview` folder is deleted and a new `examples/2025-05-04-preview` folder is created with updated `api-version` parameter in all example files.",
                 "3. For Any types or properties that were `@added` in the previous preview 2024-10-01-preview should be decorated with `@added` in the new preview 2025-05-04-preview.",
                 "4. For Any types or properties that were `@removed` in the previous preview 2024-10-01-preview should now be decorated with '@removed' in the new preview 2025-05-04-preview."
             ]
@@ -47,6 +47,13 @@
             ]
         },
         {
+            "name": "add-arm-resource",
+            "description": "Add a new ARM resource to the specification.",
+            "prompt": "In the specification/widget/resource-manager/Microsoft.Widget/Widget project, add an ARM resource named 'Asset' with CRUD operations",
+            "testfiles": [],
+            "verifyPlan": []
+        },
+        {
             "name": "001001-version-spread-property",
             "description": "version-spread-property",
             "prompt": "I added `...Azure.ResourceManager.ManagedServiceIdentityProperty;` which update all my existing API versions and introduce a breaking change. I want is to introduce the properties of the spread model '...ManagedServiceIdentityProperty' in a new API version 2025-05-04-preview only.",
@@ -56,7 +63,7 @@
             ],
             "verifyPlan": [
                 "1. The spread model ManagedServiceIdentityProperty should remain on the Employee model.",
-                "2. An augment decorator should be added to mark the identity property as only available starting from the new preview version."
+                "2. An augment decorator should be added to mark the identity property as only available starting from `2025-05-04-preview`."
             ]
         },
         {
@@ -68,8 +75,8 @@
                 "001002-version-default-value/readme.md"
             ],
             "verifyPlan": [
-                "1. The original age property should be marked as removed starting from the new version and renamed to a different name to avoid conflicts.",
-                "2. A new age property with a default value of 21 should be added starting from the new version."
+                "1. The original age property should be marked as removed starting from `2025-11-01` and renamed to a different name to avoid conflicts.",
+                "2. A new age property with a default value of 21 should be added starting from `2025-11-01`."
             ]
         },
         {
@@ -81,7 +88,7 @@
                 "001003-version-required-to-optional/readme.md"
             ],
             "verifyPlan": [
-                "1. The age property should be annotated with a decorator indicating it was made optional starting from the new preview version."
+                "1. The age property should be annotated with a decorator indicating it was made optional starting from `2025-05-04-preview`."
             ]
         },
         {
@@ -93,8 +100,8 @@
                 "001004-version-property-decorator/readme.md"
             ],
             "verifyPlan": [
-                "1. The original provisioningState property should be marked as removed starting from the new preview version and renamed to avoid conflicts.",
-                "2. A new provisioningState property should be added starting from the new preview version with visibility set to both Read and Create."
+                "1. The original provisioningState property should be marked as removed starting from `2025-05-04-preview` and renamed to avoid conflicts.",
+                "2. A new provisioningState property should be added starting from `2025-05-04-preview` with visibility set to both Read and Create."
             ]
         },
         {
@@ -109,12 +116,12 @@
             ],
             "toolsToCall": [ "azure-typespec-author" ],
             "verifyPlan": [
-                "1. The new preview version should be added to the Versions enum with the @previewVersion decorator, replacing the old preview version.",
-                "2. The example folder should be renamed from the old preview version to the new one, and the api-version parameter in all example files should be updated accordingly.",
+                "1. `2025-05-04-preview` should be added to the Versions enum with the @previewVersion decorator, replacing `2024-10-01-preview`.",
+                "2. The old `examples/2024-10-01-preview` folder should be deleted and a new `examples/2025-05-04-preview` folder should be created with updated `api-version` parameter in all example files.",
                 "3. The age property's @added decorator and its default value of 21 should be removed",
                 "4. The oldAge property should be deleted entirely along with its @removed decorator",
                 "5. The oldAge property's @renamedFrom decorator should be removed along with the oldAge property itself",
-                "6. The workLocation property should have its versioning decorator updated to reference the new preview version."
+                "6. The workLocation property should have its versioning decorator updated to reference `2025-05-04-preview`."
             ]
         },
         {
@@ -129,8 +136,8 @@
             ],
             "toolsToCall": [ "azure-typespec-author" ],
             "verifyPlan": [
-                "1. The new preview version should be added to the Versions enum with the @previewVersion decorator, keeping all existing stable versions.",
-                "2. A new example folder should be created for the new preview version and populated with example files.",
+                "1. `2025-05-04-preview` should be added to the Versions enum with the @previewVersion decorator, keeping all existing stable versions.",
+                "2. A new example folder should be created for `2025-05-04-preview` and populated with example files.",
                 "3. All versioning decorators in employee.tsp referencing `Versions.v2024_10_01` (including @removed/@renamedFrom on oldAge, @added on age/workLocation/AssetItem/WorkLocation, @typeChangedFrom on assets) should remain unchanged, as these describe stable version transitions unaffected by adding a new preview."
             ]
         },
@@ -146,9 +153,9 @@
                 "001007-version-add-stable-after-preview/examples"
             ],
             "verifyPlan": [
-                "1. The new stable version should be added to the Versions enum, and the old preview version should be removed from the enum.",
-                "2. The example folder should be renamed from the old preview version to the new stable version, and the api-version parameter in all example files should be updated.",
-                "3. Preview changes that are promoted to stable should have their versioning decorators updated to reference the new stable version.",
+                "1. `2025-01-01` should be added to the Versions enum, and `2024-10-01-preview` should be removed from the enum.",
+                "2. The old `examples/2024-10-01-preview` folder should be deleted and a new `examples/2025-01-01` folder should be created with updated `api-version` parameter in all example files.",
+                "3. Preview changes that are promoted to stable should have their versioning decorators updated to reference `2025-01-01`.",
                 "4. The workLocation property and WorkLocation model that are excluded from stable should be deleted entirely.",
                 "5. The oldAge property's @removed decorator should be updated from `@removed(Versions.v2024_10_01_preview)` to `@removed(Versions.v2025_01_01)`, and @renamedFrom should be updated from `@renamedFrom(Versions.v2024_10_01_preview, 'age')` to `@renamedFrom(Versions.v2025_01_01, 'age')`.",
                 "6. The age property's @added decorator should be updated from `@added(Versions.v2024_10_01_preview)` to `@added(Versions.v2025_01_01)`.",
@@ -167,9 +174,9 @@
                 "001008-version-add-stable-after-stable/examples"
             ],
             "verifyPlan": [
-                "1. The new stable version should be added to the Versions enum, keeping all existing stable versions.",
-                "2. A new example folder should be created for the new stable version and populated with example files.",
-                "3. All existing properties and their versioning decorators from previous stable versions should remain unchanged."
+                "1. `2025-01-01` should be added to the Versions enum, keeping all existing stable versions.",
+                "2. A new example folder should be created for `2025-01-01` and populated with example files.",
+                "3. All existing properties and their versioning decorators from `2021-10-01` and `2024-10-01` should remain unchanged."
             ]
         },
                 {
@@ -249,9 +256,9 @@
             ]
         },
         {
-            "name": "002002-ARM-define-extension-resource",
-            "description": "ARM-define-extension-resource",
-            "prompt": "add a extension resource asset",
+            "name": "002002-ARM-define-extension-resource-add",
+            "description": "ARM-define-extension-resource-add",
+            "prompt": "add a extension resource asset. Properties: description: string, optional; assetType: string, optional; value: string, optional; provisioningState: Enum, optional, composed of:all values from ResourceProvisioningState,three additional fixed states: 'Provisioning', 'Updating', 'Deleting', and a catch-all string value to permit unknown states returned by the service.",
             "testfiles": [
                 "002002-ARM-define-extension-resource/main.tsp"
             ],
@@ -276,8 +283,8 @@
             ]
         },
         {
-            "name": "002004-ARM-define-extension-resource",
-            "description": "ARM-define-extension-resource",
+            "name": "002004-ARM-define-extension-resource-fromProxyResource",
+            "description": "ARM define extension resource from Proxy Resource",
             "prompt": "Define a \"badge assignment\" extension resource. It should be an extension resource that can be attached to an employee. Ensure the definition meets TypeSpec Azure guidelines.",
             "testfiles": [
                 "002004-ARM-define-extension-resource/badgeAssignment.tsp",

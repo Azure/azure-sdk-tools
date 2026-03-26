@@ -42,7 +42,8 @@ internal static class TelemetryRegistration
             .ConfigureResource(ConfigureResource)
             .WithTracing(builder =>
             {
-                builder.AddSource(Constants.TOOLS_ACTIVITY_SOURCE)
+                builder.SetSampler(new AlwaysOnSampler())
+                    .AddSource(Constants.TOOLS_ACTIVITY_SOURCE)
                     .AddHttpClientInstrumentation()
                     .AddProcessor(new TelemetryProcessor());
 

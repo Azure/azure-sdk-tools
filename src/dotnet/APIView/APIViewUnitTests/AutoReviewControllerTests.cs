@@ -878,27 +878,5 @@ namespace APIViewUnitTests
                 HttpContext = httpContext
             };
         }
-
-        private class MockLanguageService : LanguageService
-        {
-            private readonly string _name;
-            private readonly bool _usesTreeStyleParser;
-
-            public MockLanguageService(string name, bool usesTreeStyleParser)
-            {
-                _name = name;
-                _usesTreeStyleParser = usesTreeStyleParser;
-            }
-
-            public override string Name => _name;
-            public override string[] Extensions => new[] { ".json" };
-            public override string VersionString => "1.0";
-            public override bool CanUpdate(string versionString) => false;
-            public override Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis, string crossLanguageMetadata = null) => Task.FromResult<CodeFile>(null);
-            public override bool UsesTreeStyleParser => _usesTreeStyleParser;
-            public override CodeFile GetReviewGenPendingCodeFile(string fileName) => null;
-            public override bool GeneratePipelineRunParams(APIRevisionGenerationPipelineParamModel param) => false;
-            public override bool CanConvert(string versionString) => false;
-        }
     }
 }

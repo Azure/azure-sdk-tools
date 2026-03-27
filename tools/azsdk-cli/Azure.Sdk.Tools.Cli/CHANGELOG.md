@@ -7,12 +7,6 @@
 - Implemented version update for Go language service
 - Added team support for CODEOWNERS add/remove tools
 
-### Breaking Changes
-
-### Bugs Fixed
-
-### Other Changes
-
 ## 0.6.4 (2026-03-25)
 
 ### Features Added

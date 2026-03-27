@@ -9,7 +9,7 @@ from typing import Any
 from _evals_runner import EvalsRunner, EvaluatorClass
 from dotenv import load_dotenv
 from azure.ai.evaluation import SimilarityEvaluator, GroundednessEvaluator, ResponseCompletenessEvaluator
-from azure.identity import DefaultAzureCredential, AzureCliCredential
+from azure.identity import AzurePipelinesCredential, DefaultAzureCredential, AzureCliCredential
 from _evals_result import EvalsResult, VerificationResult
 from eval import AzureBotEvaluator, AzureBotReferenceEvaluator
 
@@ -197,7 +197,20 @@ if __name__ == "__main__":
 
         kwargs: dict[str, Any] = {}
         if args.send_result:
-            if args.is_ci:
+            if os.getenv("TF_BUILD") is not None:
+                service_connection_id = os.environ["AZURESUBSCRIPTION_SERVICE_CONNECTION_ID"]
+                client_id = os.environ["AZURESUBSCRIPTION_CLIENT_ID"]
+                tenant_id = os.environ["AZURESUBSCRIPTION_TENANT_ID"]
+                system_access_token = os.environ["SYSTEM_ACCESSTOKEN"]
+                kwargs = {
+                    "credential": AzurePipelinesCredential(
+                        service_connection_id=service_connection_id,
+                        client_id=client_id,
+                        tenant_id=tenant_id,
+                        system_access_token=system_access_token,
+                    )
+                }
+            elif args.is_ci:
                 kwargs = {"credential": DefaultAzureCredential()}
             else:
                 kwargs = {

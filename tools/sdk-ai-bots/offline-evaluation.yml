@@ -74,9 +74,6 @@ extends:
                     lsof -ti:8088
                 env:
                   SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-                  AZURESUBSCRIPTION_SERVICE_CONNECTION_ID: $(AZURESUBSCRIPTION_SERVICE_CONNECTION_ID)
-                  AZURESUBSCRIPTION_CLIENT_ID: $(AZURESUBSCRIPTION_CLIENT_ID)
-                  AZURESUBSCRIPTION_TENANT_ID: $(AZURESUBSCRIPTION_TENANT_ID)
                   AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
               - script: |
                   pip install -r requirements.txt

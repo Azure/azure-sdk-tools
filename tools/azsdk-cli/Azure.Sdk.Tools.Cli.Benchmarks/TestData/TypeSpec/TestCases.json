@@ -26,7 +26,7 @@
         },
         {
             "name": "version-model-property-renamed",
-            "description": "Rename a property in a new preview version using @renamedFrom.",
+            "description": "Rename a property in a new version using @renamedFrom.",
             "prompt": "In the specification/widget/resource-manager/Microsoft.Widget/Widget project, rename the `age` property to `employeeAge` in EmployeeProperties only for version `2025-05-04-preview`.",
             "testfiles": [
                 "version-model-property-renamed/employee.tsp",

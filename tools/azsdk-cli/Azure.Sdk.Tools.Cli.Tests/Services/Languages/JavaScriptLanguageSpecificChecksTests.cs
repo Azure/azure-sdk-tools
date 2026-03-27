@@ -1,5 +1,6 @@
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
+using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
@@ -198,6 +199,206 @@ internal class JavaScriptLanguageSpecificChecksTests
         var result = _languageChecks.HasCustomizations(tempDir.DirectoryPath, CancellationToken.None);
 
         Assert.That(result, Is.Null);
+    }
+
+    #endregion
+
+    #region RunAllTests Tests
+
+    [Test]
+    [TestCase(TestMode.Playback, "playback")]
+    [TestCase(TestMode.Record, "record")]
+    [TestCase(TestMode.Live, "live")]
+    public async Task RunAllTests_SetsCorrectTestModeEnvironmentVariable(TestMode testMode, string expectedEnvValue)
+    {
+        var processResult = new ProcessResult { ExitCode = 0 };
+        processResult.AppendStdout("Tests passed!");
+
+        // For record mode, we need to handle the second call (asset push) too, but there's no assets.json
+        ProcessOptions? capturedOptions = null;
+        _processHelperMock
+            .Setup(p => p.Run(It.Is<ProcessOptions>(o => o.Args.Contains("test")), It.IsAny<CancellationToken>()))
+            .Callback<ProcessOptions, CancellationToken>((options, _) => capturedOptions = options)
+            .ReturnsAsync(processResult);
+
+        var result = await _languageChecks.RunAllTests(_packagePath, testMode, ct: CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(0));
+            Assert.That(capturedOptions, Is.Not.Null);
+            Assert.That(capturedOptions!.EnvironmentVariables, Is.Not.Null);
+            Assert.That(capturedOptions.EnvironmentVariables!["TEST_MODE"], Is.EqualTo(expectedEnvValue));
+        });
+    }
+
+    [Test]
+    public async Task RunAllTests_PassesThroughLiveTestEnvironmentVariables()
+    {
+        var processResult = new ProcessResult { ExitCode = 0 };
+        processResult.AppendStdout("Tests passed!");
+
+        ProcessOptions? capturedOptions = null;
+        _processHelperMock
+            .Setup(p => p.Run(It.Is<ProcessOptions>(o => o.Args.Contains("test")), It.IsAny<CancellationToken>()))
+            .Callback<ProcessOptions, CancellationToken>((options, _) => capturedOptions = options)
+            .ReturnsAsync(processResult);
+
+        var envVars = new Dictionary<string, string>
+        {
+            ["AZURE_SUBSCRIPTION_ID"] = "sub-123",
+            ["AZURE_RESOURCE_GROUP"] = "rg-test",
+        };
+
+        var result = await _languageChecks.RunAllTests(_packagePath, TestMode.Live, envVars, ct: CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(0));
+            Assert.That(capturedOptions, Is.Not.Null);
+            Assert.That(capturedOptions!.EnvironmentVariables!["AZURE_SUBSCRIPTION_ID"], Is.EqualTo("sub-123"));
+            Assert.That(capturedOptions.EnvironmentVariables["AZURE_RESOURCE_GROUP"], Is.EqualTo("rg-test"));
+            Assert.That(capturedOptions.EnvironmentVariables["TEST_MODE"], Is.EqualTo("live"));
+        });
+    }
+
+    [Test]
+    public async Task RunAllTests_UsesDefaultTimeoutForPlayback()
+    {
+        var processResult = new ProcessResult { ExitCode = 0 };
+
+        ProcessOptions? capturedOptions = null;
+        _processHelperMock
+            .Setup(p => p.Run(It.Is<ProcessOptions>(o => o.Args.Contains("test")), It.IsAny<CancellationToken>()))
+            .Callback<ProcessOptions, CancellationToken>((options, _) => capturedOptions = options)
+            .ReturnsAsync(processResult);
+
+        await _languageChecks.RunAllTests(_packagePath, TestMode.Playback, ct: CancellationToken.None);
+
+        Assert.That(capturedOptions!.Timeout, Is.EqualTo(ProcessOptions.DEFAULT_PROCESS_TIMEOUT));
+    }
+
+    [Test]
+    [TestCase(TestMode.Record)]
+    [TestCase(TestMode.Live)]
+    public async Task RunAllTests_UsesLongerTimeoutForLiveAndRecordModes(TestMode testMode)
+    {
+        var processResult = new ProcessResult { ExitCode = 0 };
+
+        ProcessOptions? capturedOptions = null;
+        _processHelperMock
+            .Setup(p => p.Run(It.Is<ProcessOptions>(o => o.Args.Contains("test")), It.IsAny<CancellationToken>()))
+            .Callback<ProcessOptions, CancellationToken>((options, _) => capturedOptions = options)
+            .ReturnsAsync(processResult);
+
+        await _languageChecks.RunAllTests(_packagePath, testMode, ct: CancellationToken.None);
+
+        Assert.That(capturedOptions!.Timeout, Is.GreaterThan(ProcessOptions.DEFAULT_PROCESS_TIMEOUT));
+    }
+
+    [Test]
+    public async Task RunAllTests_PushesAssetsAfterSuccessfulRecordMode()
+    {
+        using var tempDir = TempDirectory.Create("js-asset-push-test");
+        File.WriteAllText(Path.Combine(tempDir.DirectoryPath, "assets.json"), "{}");
+
+        var testResult = new ProcessResult { ExitCode = 0 };
+        testResult.AppendStdout("Tests passed!");
+
+        var pushResult = new ProcessResult { ExitCode = 0 };
+        pushResult.AppendStdout("Assets pushed!");
+
+        _processHelperMock
+            .Setup(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(testResult);
+
+        _npxHelperMock
+            .Setup(p => p.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(pushResult);
+
+        var result = await _languageChecks.RunAllTests(tempDir.DirectoryPath, TestMode.Record, ct: CancellationToken.None);
+
+        Assert.That(result.ExitCode, Is.EqualTo(0));
+        // Verify test run was called via processHelper
+        _processHelperMock.Verify(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+        // Verify asset push was called via npxHelper
+        _npxHelperMock.Verify(p => p.Run(
+            It.Is<NpxOptions>(o => o.Args.Contains("test-proxy") && o.Args.Contains("push")),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task RunAllTests_DoesNotPushAssetsInPlaybackMode()
+    {
+        using var tempDir = TempDirectory.Create("js-no-push-playback-test");
+        File.WriteAllText(Path.Combine(tempDir.DirectoryPath, "assets.json"), "{}");
+
+        var processResult = new ProcessResult { ExitCode = 0 };
+        processResult.AppendStdout("Tests passed!");
+
+        _processHelperMock
+            .Setup(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(processResult);
+
+        await _languageChecks.RunAllTests(tempDir.DirectoryPath, TestMode.Playback, ct: CancellationToken.None);
+
+        // Only the test run should be called, not asset push
+        _processHelperMock.Verify(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task RunAllTests_DoesNotPushAssetsWhenTestsFail()
+    {
+        using var tempDir = TempDirectory.Create("js-no-push-fail-test");
+        File.WriteAllText(Path.Combine(tempDir.DirectoryPath, "assets.json"), "{}");
+
+        var processResult = new ProcessResult { ExitCode = 1 };
+        processResult.AppendStderr("Tests failed!");
+
+        _processHelperMock
+            .Setup(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(processResult);
+
+        var result = await _languageChecks.RunAllTests(tempDir.DirectoryPath, TestMode.Record, ct: CancellationToken.None);
+
+        Assert.That(result.ExitCode, Is.EqualTo(1));
+        // Only the test run should be called, not asset push
+        _processHelperMock.Verify(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task RunAllTests_DoesNotPushAssetsWhenNoAssetsJson()
+    {
+        var processResult = new ProcessResult { ExitCode = 0 };
+        processResult.AppendStdout("Tests passed!");
+
+        _processHelperMock
+            .Setup(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(processResult);
+
+        // _packagePath doesn't have an assets.json file
+        var result = await _languageChecks.RunAllTests(_packagePath, TestMode.Record, ct: CancellationToken.None);
+
+        Assert.That(result.ExitCode, Is.EqualTo(0));
+        // Only the test run should be called
+        _processHelperMock.Verify(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task RunAllTests_DefaultMode_IsPlayback()
+    {
+        var processResult = new ProcessResult { ExitCode = 0 };
+
+        ProcessOptions? capturedOptions = null;
+        _processHelperMock
+            .Setup(p => p.Run(It.Is<ProcessOptions>(o => o.Args.Contains("test")), It.IsAny<CancellationToken>()))
+            .Callback<ProcessOptions, CancellationToken>((options, _) => capturedOptions = options)
+            .ReturnsAsync(processResult);
+
+        // Call without specifying testMode - should default to Playback
+        await _languageChecks.RunAllTests(_packagePath, ct: CancellationToken.None);
+
+        Assert.That(capturedOptions!.EnvironmentVariables!["TEST_MODE"], Is.EqualTo("playback"));
     }
 
     #endregion

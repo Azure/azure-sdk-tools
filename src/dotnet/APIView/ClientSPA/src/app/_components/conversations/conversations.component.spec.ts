@@ -387,13 +387,50 @@ describe('ConversationComponent', () => {
 
       expect(component.totalDiagnosticsInRevision).toBe(300);
       expect(component.diagnosticsTruncated).toBe(true);
+      expect(component.hiddenUnresolvedDiagnosticsCount).toBe(50);
+      expect(component.hiddenResolvedDiagnosticsCount).toBe(0);
 
-      // Badge should reflect ALL unresolved threads (1 user + 300 diagnostics = 301)
-      // The badge count is emitted first from allCommentsForCount before the display cap
-      // (verified via the numberOfActiveThreads after final recalculation with display-capped set)
       // Display threads are capped: 1 user + 250 diagnostics = 251 threads shown
       const allDisplayedThreads = Array.from(component.commentThreads.values()).flat();
       expect(allDisplayedThreads).toHaveLength(251);
+    });
+
+    it('should always show all MustFix unresolved diagnostics even when they exceed 250', () => {
+      const apiRevisions = [
+        { id: 'rev-1', createdOn: '2021-10-01T00:00:00Z' }
+      ] as APIRevision[];
+
+      // 300 MustFix unresolved + 50 lower-severity unresolved + 40 resolved
+      const mustFixDiagnostics = Array.from({ length: 300 }, (_, i) => ({
+        id: `mf-${i}`, elementId: `mf-elem-${i}`,
+        apiRevisionId: 'rev-1', commentSource: CommentSource.Diagnostic,
+        severity: CommentSeverity.MustFix, isResolved: false,
+      })) as CommentItemModel[];
+      const otherUnresolved = Array.from({ length: 50 }, (_, i) => ({
+        id: `oth-${i}`, elementId: `oth-elem-${i}`,
+        apiRevisionId: 'rev-1', commentSource: CommentSource.Diagnostic,
+        severity: CommentSeverity.Suggestion, isResolved: false,
+      })) as CommentItemModel[];
+      const resolved = Array.from({ length: 40 }, (_, i) => ({
+        id: `res-${i}`, elementId: `res-elem-${i}`,
+        apiRevisionId: 'rev-1', commentSource: CommentSource.Diagnostic,
+        severity: CommentSeverity.MustFix, isResolved: true,
+      })) as CommentItemModel[];
+
+      component.apiRevisions = apiRevisions;
+      component.comments = [...mustFixDiagnostics, ...otherUnresolved, ...resolved];
+      component.activeApiRevisionId = 'rev-1';
+      component.createCommentThreads();
+
+      // displayLimit = max(250, 300) = 300; so all 300 MustFix unresolved fit,
+      // but the 50 other unresolved and 40 resolved are all hidden
+      expect(component.totalDiagnosticsInRevision).toBe(390);
+      expect(component.diagnosticsTruncated).toBe(true);
+      expect(component.hiddenUnresolvedDiagnosticsCount).toBe(50);
+      expect(component.hiddenResolvedDiagnosticsCount).toBe(40);
+
+      const allDisplayedThreads = Array.from(component.commentThreads.values()).flat();
+      expect(allDisplayedThreads).toHaveLength(300);
     });
   });
 

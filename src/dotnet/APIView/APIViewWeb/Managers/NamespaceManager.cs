@@ -134,7 +134,11 @@ public class NamespaceManager : INamespaceManager
         return NamespaceOperationResult.Success(project);
     }
 
-    public ProjectNamespaceInfo BuildInitialNamespaceInfo(string userName, TypeSpecMetadata metadata, IReadOnlyList<ReviewListItemModel> reviews)
+    public ProjectNamespaceInfo BuildInitialNamespaceInfo(
+        string userName,
+        TypeSpecMetadata metadata,
+        Dictionary<string, PackageInfo> expectedPackages,
+        IReadOnlyDictionary<string, ReviewListItemModel> reviewsByLanguageKey)
     {
         ProjectNamespaceInfo result = new();
         if (!string.IsNullOrEmpty(metadata.TypeSpec?.Namespace))
@@ -150,39 +154,45 @@ public class NamespaceManager : INamespaceManager
             result.CurrentNamespaceStatus[entry.Language] = entry;
         }
 
-        if (metadata.Languages == null)
+        if (expectedPackages == null)
         {
             return result;
         }
 
-        foreach ((string rawLanguage, LanguageConfig config) in metadata.Languages.Where(kv => !string.IsNullOrEmpty(kv.Value.Namespace)))
+        foreach ((string languageKey, PackageInfo pkg) in expectedPackages)
         {
-            string language = LanguageServiceHelpers.MapLanguageAlias(rawLanguage);
+            if (string.IsNullOrEmpty(pkg?.Namespace))
+                continue;
+
+            var key = PackageKey.Parse(languageKey);
             var entry = new NamespaceDecisionEntry
             {
-                Language = language,
-                PackageName = config.PackageName,
-                Namespace = config.Namespace,
+                Language = key.Language,
+                Flavor = key.Flavor,
+                PackageName = pkg.PackageName,
+                Namespace = pkg.Namespace,
                 Status = NamespaceDecisionStatus.Proposed,
                 ProposedBy = userName,
                 ProposedOn = DateTime.UtcNow
             };
 
-            ReviewListItemModel languageReview = reviews.FirstOrDefault(r => string.Equals(r.Language, language, StringComparison.OrdinalIgnoreCase));
-            if (languageReview is { IsApproved: true })
+            if (reviewsByLanguageKey.TryGetValue(languageKey, out var linkedReview) && linkedReview.IsApproved)
             {
-                ReviewChangeHistoryModel approvedAction = languageReview.ChangeHistory.FirstOrDefault(ch => ch.ChangeAction == ReviewChangeAction.Approved);
+                ReviewChangeHistoryModel approvedAction = linkedReview.ChangeHistory
+                    .FirstOrDefault(ch => ch.ChangeAction == ReviewChangeAction.Approved);
                 entry.Status = NamespaceDecisionStatus.Approved;
                 entry.DecidedBy = approvedAction?.ChangedBy ?? ApiViewConstants.AzureSdkBotName;
-                entry.Notes = $"Auto-approved: review was already approved at project creation as it was approved in review {languageReview.Id}";
                 entry.DecidedOn = approvedAction?.ChangedOn ?? DateTime.UtcNow;
+                entry.Notes = $"Auto-approved: review was already approved at project creation as it was approved in review {linkedReview.Id}";
             }
 
-            result.CurrentNamespaceStatus[entry.Language] = entry;
+            result.CurrentNamespaceStatus[languageKey] = entry;
         }
 
         result.ApprovedNamespaces = result.CurrentNamespaceStatus
-            .Where(ns => ns.Value.Status == NamespaceDecisionStatus.Approved).Select(n => n.Value).ToList();
+            .Where(ns => ns.Value.Status == NamespaceDecisionStatus.Approved)
+            .Select(n => n.Value)
+            .ToList();
         return result;
     }
 

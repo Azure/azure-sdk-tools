@@ -56,11 +56,11 @@ namespace APIViewWeb.Repositories
             return null;
         }
 
-        public async Task<Project> GetProjectByExpectedPackageAsync(string language, string packageName)
+        public async Task<Project> GetProjectByExpectedPackageAsync(string languageKey, string packageName)
         {
             var queryDefinition = new QueryDefinition(
-                    "SELECT * FROM Projects p WHERE IS_DEFINED(p.ExpectedPackages[@language]) AND LOWER(p.ExpectedPackages[@language].PackageName) = LOWER(@packageName) AND p.IsDeleted = false")
-                .WithParameter("@language", language)
+                    "SELECT * FROM Projects p WHERE IS_DEFINED(p.ExpectedPackages[@languageKey]) AND LOWER(p.ExpectedPackages[@languageKey].PackageName) = LOWER(@packageName) AND p.IsDeleted = false")
+                .WithParameter("@languageKey", languageKey)
                 .WithParameter("@packageName", packageName);
 
             var itemQueryIterator = _projectsContainer.GetItemQueryIterator<Project>(queryDefinition);

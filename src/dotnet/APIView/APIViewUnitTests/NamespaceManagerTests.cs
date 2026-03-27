@@ -145,15 +145,15 @@ public class NamespaceManagerTests
         var metadata = new TypeSpecMetadata
         {
             TypeSpec = new TypeSpecInfo { Namespace = "Azure.Storage" },
-            Languages = new Dictionary<string, LanguageConfig>
-            {
-                ["Python"] = new() { PackageName = "azure-storage", Namespace = "azure.storage" },
-                ["JavaScript"] = new() { PackageName = "@azure/storage", Namespace = "@azure/storage" }
-            }
         };
-        var reviews = new List<ReviewListItemModel>();
+        var expectedPackages = new Dictionary<string, PackageInfo>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Python"] = new() { PackageName = "azure-storage",  Namespace = "azure.storage" },
+            ["JavaScript"] = new() { PackageName = "@azure/storage", Namespace = "@azure/storage" }
+        };
 
-        ProjectNamespaceInfo result = _namespaceManager.BuildInitialNamespaceInfo("user1", metadata, reviews);
+        ProjectNamespaceInfo result = _namespaceManager.BuildInitialNamespaceInfo(
+            "user1", metadata, expectedPackages, new Dictionary<string, ReviewListItemModel>());
 
         Assert.Equal(3, result.CurrentNamespaceStatus.Count);
         Assert.True(result.CurrentNamespaceStatus.ContainsKey("TypeSpec"));
@@ -179,31 +179,33 @@ public class NamespaceManagerTests
         var metadata = new TypeSpecMetadata
         {
             TypeSpec = new TypeSpecInfo { Namespace = "Azure.Core" },
-            Languages = new Dictionary<string, LanguageConfig>
-            {
-                ["Python"] = new() { PackageName = "azure-core", Namespace = "azure.core" }
-            }
         };
-        var reviews = new List<ReviewListItemModel>
+        var expectedPackages = new Dictionary<string, PackageInfo>(StringComparer.OrdinalIgnoreCase)
         {
-            new()
-            {
-                Id = "py-review-1",
-                Language = "Python",
-                IsApproved = true,
-                ChangeHistory =
-                [
-                    new ReviewChangeHistoryModel
-                    {
-                        ChangeAction = ReviewChangeAction.Approved,
-                        ChangedBy = "approver1",
-                        ChangedOn = new DateTime(2025, 6, 1)
-                    }
-                ]
-            }
+            ["Python"] = new() { PackageName = "azure-core", Namespace = "azure.core" }
+        };
+        var approvedReview = new ReviewListItemModel
+        {
+            Id = "py-review-1",
+            Language = "Python",
+            IsApproved = true,
+            ChangeHistory =
+            [
+                new ReviewChangeHistoryModel
+                {
+                    ChangeAction = ReviewChangeAction.Approved,
+                    ChangedBy = "approver1",
+                    ChangedOn = new DateTime(2025, 6, 1)
+                }
+            ]
+        };
+        var reviewsByKey = new Dictionary<string, ReviewListItemModel>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Python"] = approvedReview
         };
 
-        ProjectNamespaceInfo result = _namespaceManager.BuildInitialNamespaceInfo("user1", metadata, reviews);
+        ProjectNamespaceInfo result = _namespaceManager.BuildInitialNamespaceInfo(
+            "user1", metadata, expectedPackages, reviewsByKey);
 
         NamespaceDecisionEntry pyEntry = result.CurrentNamespaceStatus["Python"];
         Assert.Equal(NamespaceDecisionStatus.Approved, pyEntry.Status);
@@ -221,10 +223,10 @@ public class NamespaceManagerTests
         var metadata = new TypeSpecMetadata
         {
             TypeSpec = new TypeSpecInfo { Namespace = "Azure.Empty" },
-            Languages = null
         };
 
-        ProjectNamespaceInfo result = _namespaceManager.BuildInitialNamespaceInfo("user1", metadata, []);
+        ProjectNamespaceInfo result = _namespaceManager.BuildInitialNamespaceInfo(
+            "user1", metadata, null, new Dictionary<string, ReviewListItemModel>());
 
         Assert.Single(result.CurrentNamespaceStatus);
         Assert.True(result.CurrentNamespaceStatus.ContainsKey("TypeSpec"));
@@ -233,18 +235,16 @@ public class NamespaceManagerTests
     [Fact]
     public void BuildInitialNamespaceInfo_SkipsLanguagesWithEmptyNamespace()
     {
-        var metadata = new TypeSpecMetadata
+        var metadata = new TypeSpecMetadata { TypeSpec = new TypeSpecInfo { Namespace = "Azure.Test" } };
+        var expectedPackages = new Dictionary<string, PackageInfo>(StringComparer.OrdinalIgnoreCase)
         {
-            TypeSpec = new TypeSpecInfo { Namespace = "Azure.Test" },
-            Languages = new Dictionary<string, LanguageConfig>
-            {
-                ["Python"] = new() { PackageName = "azure-test", Namespace = "azure.test" },
-                ["Go"] = new() { PackageName = "aztest", Namespace = "" },
-                ["Java"] = new() { PackageName = "azure-test", Namespace = null }
-            }
+            ["Python"] = new() { PackageName = "azure-test", Namespace = "azure.test" },
+            ["Go"]     = new() { PackageName = "aztest",    Namespace = "" },
+            ["Java"]   = new() { PackageName = "azure-test", Namespace = null }
         };
 
-        ProjectNamespaceInfo result = _namespaceManager.BuildInitialNamespaceInfo("user1", metadata, []);
+        ProjectNamespaceInfo result = _namespaceManager.BuildInitialNamespaceInfo(
+            "user1", metadata, expectedPackages, new Dictionary<string, ReviewListItemModel>());
 
         Assert.Equal(2, result.CurrentNamespaceStatus.Count);
         Assert.True(result.CurrentNamespaceStatus.ContainsKey("TypeSpec"));
@@ -256,37 +256,88 @@ public class NamespaceManagerTests
     [Fact]
     public void BuildInitialNamespaceInfo_MixedApprovedAndProposed_SetsCorrectly()
     {
-        var metadata = new TypeSpecMetadata
+        var metadata = new TypeSpecMetadata { TypeSpec = new TypeSpecInfo { Namespace = "Azure.AI" } };
+        var expectedPackages = new Dictionary<string, PackageInfo>(StringComparer.OrdinalIgnoreCase)
         {
-            TypeSpec = new TypeSpecInfo { Namespace = "Azure.AI" },
-            Languages = new Dictionary<string, LanguageConfig>
-            {
-                ["Python"] = new() { PackageName = "azure-ai", Namespace = "azure.ai" },
-                ["JavaScript"] = new() { PackageName = "@azure/ai", Namespace = "@azure/ai" }
-            }
+            ["Python"]     = new() { PackageName = "azure-ai", Namespace = "azure.ai" },
+            ["JavaScript"] = new() { PackageName = "@azure/ai", Namespace = "@azure/ai" }
         };
-        var reviews = new List<ReviewListItemModel>
+        var reviewsByKey = new Dictionary<string, ReviewListItemModel>(StringComparer.OrdinalIgnoreCase)
         {
-            new()
+            ["Python"] = new()
             {
-                Id = "py-1",
-                Language = "Python",
-                IsApproved = true,
+                Id = "py-1", Language = "Python", IsApproved = true,
                 ChangeHistory = [new ReviewChangeHistoryModel { ChangeAction = ReviewChangeAction.Approved, ChangedBy = "approver" }]
             },
-            new()
+            ["JavaScript"] = new()
             {
-                Id = "js-1",
-                Language = "JavaScript",
-                IsApproved = false,
+                Id = "js-1", Language = "JavaScript", IsApproved = false,
                 ChangeHistory = []
             }
         };
 
-        ProjectNamespaceInfo result = _namespaceManager.BuildInitialNamespaceInfo("user1", metadata, reviews);
+        ProjectNamespaceInfo result = _namespaceManager.BuildInitialNamespaceInfo(
+            "user1", metadata, expectedPackages, reviewsByKey);
 
         Assert.Equal(NamespaceDecisionStatus.Approved, result.CurrentNamespaceStatus["Python"].Status);
         Assert.Equal(NamespaceDecisionStatus.Proposed, result.CurrentNamespaceStatus["JavaScript"].Status);
+        Assert.Single(result.ApprovedNamespaces);
+    }
+
+    [Fact]
+    public void BuildInitialNamespaceInfo_JavaV2LanguageKey_CreatesEntriesForBothKeys()
+    {
+        var metadata = new TypeSpecMetadata { TypeSpec = new TypeSpecInfo { Namespace = "Azure.Security.KeyVault.Keys" } };
+        // Java v2 expansion produces two keys: "Java:v2" and "Java"
+        var expectedPackages = new Dictionary<string, PackageInfo>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Java:v2"] = new() { PackageName = "com.azure.v2:azure-security-keyvault-keys", Namespace = "com.azure.v2.security.keyvault.keys" },
+            ["Java"]    = new() { PackageName = "com.azure:azure-security-keyvault-keys",    Namespace = "com.azure.security.keyvault.keys" },
+        };
+
+        ProjectNamespaceInfo result = _namespaceManager.BuildInitialNamespaceInfo(
+            "user1", metadata, expectedPackages, new Dictionary<string, ReviewListItemModel>());
+
+        // Three entries: TypeSpec + Java:v2 + Java
+        Assert.Equal(3, result.CurrentNamespaceStatus.Count);
+        Assert.True(result.CurrentNamespaceStatus.ContainsKey("Java:v2"));
+        Assert.True(result.CurrentNamespaceStatus.ContainsKey("Java"));
+
+        var v2Entry = result.CurrentNamespaceStatus["Java:v2"];
+        Assert.Equal("Java", v2Entry.Language);
+        Assert.Equal("v2",   v2Entry.Flavor);
+        Assert.Equal("com.azure.v2:azure-security-keyvault-keys", v2Entry.PackageName);
+
+        var baseEntry = result.CurrentNamespaceStatus["Java"];
+        Assert.Equal("Java", baseEntry.Language);
+        Assert.Equal("",     baseEntry.Flavor);
+        Assert.Equal("com.azure:azure-security-keyvault-keys", baseEntry.PackageName);
+    }
+
+    [Fact]
+    public void BuildInitialNamespaceInfo_JavaV2_AutoApprovesMatchingReviewByLanguageKey()
+    {
+        var metadata = new TypeSpecMetadata { TypeSpec = new TypeSpecInfo { Namespace = "Azure.Core" } };
+        var expectedPackages = new Dictionary<string, PackageInfo>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Java:v2"] = new() { PackageName = "com.azure.v2:azure-core", Namespace = "com.azure.v2.core" },
+            ["Java"]    = new() { PackageName = "com.azure:azure-core",    Namespace = "com.azure.core" },
+        };
+        // Only the Java:v2 review is approved
+        var reviewsByKey = new Dictionary<string, ReviewListItemModel>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Java:v2"] = new()
+            {
+                Id = "java-v2-review", Language = "Java", IsApproved = true,
+                ChangeHistory = [new ReviewChangeHistoryModel { ChangeAction = ReviewChangeAction.Approved, ChangedBy = "approver" }]
+            }
+        };
+
+        ProjectNamespaceInfo result = _namespaceManager.BuildInitialNamespaceInfo(
+            "user1", metadata, expectedPackages, reviewsByKey);
+
+        Assert.Equal(NamespaceDecisionStatus.Approved, result.CurrentNamespaceStatus["Java:v2"].Status);
+        Assert.Equal(NamespaceDecisionStatus.Proposed, result.CurrentNamespaceStatus["Java"].Status);
         Assert.Single(result.ApprovedNamespaces);
     }
 

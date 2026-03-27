@@ -781,4 +781,217 @@ public class ProjectsManagerTests
     }
 
     #endregion
+
+    #region Java Composite Key Tests
+
+    [Fact]
+    public async Task BuildExpectedPackages_JavaV2Metadata_ProducesTwoKeys()
+    {
+        ReviewListItemModel typeSpecReview = CreateTypeSpecReview("ts-1", "Azure.Security.KeyVault.Keys");
+        TypeSpecMetadata metadata = new()
+        {
+            TypeSpec = new TypeSpecInfo { Namespace = "Azure.Security.KeyVault.Keys", Documentation = "KeyVault" },
+            Languages = new Dictionary<string, LanguageConfig>
+            {
+                ["Java"] = new()
+                {
+                    PackageName = "com.azure.v2:azure-security-keyvault-keys",
+                    Namespace = "com.azure.v2.security.keyvault.keys",
+                    Flavor = "azurev2"
+                }
+            }
+        };
+
+        Project capturedProject = null;
+        _mockProjectsRepository
+            .Setup(r => r.UpsertProjectAsync(It.IsAny<Project>()))
+            .Callback<Project>(p => capturedProject = p)
+            .Returns(Task.CompletedTask);
+
+        await _projectsManager.UpsertProjectFromMetadataAsync("testUser", metadata, typeSpecReview);
+
+        Assert.NotNull(capturedProject);
+        Assert.Equal(2, capturedProject.ExpectedPackages.Count);
+
+        // v2 entry: package name and namespace as-is
+        Assert.True(capturedProject.ExpectedPackages.ContainsKey("Java:v2"));
+        Assert.Equal("com.azure.v2:azure-security-keyvault-keys", capturedProject.ExpectedPackages["Java:v2"].PackageName);
+        Assert.Equal("com.azure.v2.security.keyvault.keys", capturedProject.ExpectedPackages["Java:v2"].Namespace);
+
+        // base entry: v2 markers stripped
+        Assert.True(capturedProject.ExpectedPackages.ContainsKey("Java"));
+        Assert.Equal("com.azure:azure-security-keyvault-keys", capturedProject.ExpectedPackages["Java"].PackageName);
+        Assert.Equal("com.azure.security.keyvault.keys", capturedProject.ExpectedPackages["Java"].Namespace);
+    }
+
+    [Fact]
+    public async Task BuildExpectedPackages_JavaNonV2Metadata_ProducesOneJavaKey()
+    {
+        ReviewListItemModel typeSpecReview = CreateTypeSpecReview("ts-1", "Azure.Core");
+        TypeSpecMetadata metadata = new()
+        {
+            TypeSpec = new TypeSpecInfo { Namespace = "Azure.Core", Documentation = "Core" },
+            Languages = new Dictionary<string, LanguageConfig>
+            {
+                ["Java"] = new()
+                {
+                    PackageName = "com.azure:azure-core",
+                    Namespace = "com.azure.core",
+                    Flavor = "azure"   // default flavor, not v2
+                }
+            }
+        };
+
+        Project capturedProject = null;
+        _mockProjectsRepository
+            .Setup(r => r.UpsertProjectAsync(It.IsAny<Project>()))
+            .Callback<Project>(p => capturedProject = p)
+            .Returns(Task.CompletedTask);
+
+        await _projectsManager.UpsertProjectFromMetadataAsync("testUser", metadata, typeSpecReview);
+
+        Assert.NotNull(capturedProject);
+        Assert.Single(capturedProject.ExpectedPackages);
+        Assert.True(capturedProject.ExpectedPackages.ContainsKey("Java"));
+        Assert.False(capturedProject.ExpectedPackages.ContainsKey("Java:v2"));
+    }
+
+    [Fact]
+    public async Task TryLinkReviewToProjectAsync_JavaV2Review_LooksUpUnderV2languageKey()
+    {
+        // Package name contains ".v2:" — rule maps it to "Java:v2"
+        ReviewListItemModel review = CreateReview("java-v2-review", "Java", "com.azure.v2:azure-security-keyvault-keys");
+        Project project = CreateProject("project-1", expectedPackages: new Dictionary<string, PackageInfo>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Java:v2"] = new() { PackageName = "com.azure.v2:azure-security-keyvault-keys", Namespace = "com.azure.v2.security.keyvault.keys" }
+        });
+
+        _mockProjectsRepository
+            .Setup(r => r.GetProjectByExpectedPackageAsync("Java:v2", "com.azure.v2:azure-security-keyvault-keys"))
+            .ReturnsAsync(project);
+
+        Project result = await _projectsManager.TryLinkReviewToProjectAsync("testUser", review);
+
+        Assert.NotNull(result);
+        _mockProjectsRepository.Verify(
+            r => r.GetProjectByExpectedPackageAsync("Java:v2", "com.azure.v2:azure-security-keyvault-keys"),
+            Times.Once);
+        Assert.True(result.Reviews.ContainsKey("Java:v2"));
+        Assert.Equal("java-v2-review", result.Reviews["Java:v2"]);
+    }
+
+    [Fact]
+    public async Task TryLinkReviewToProjectAsync_JavaBaseReview_LooksUpUnderJavaKey()
+    {
+        // No ".v2:" in package name — rule maps it to plain "Java"
+        ReviewListItemModel review = CreateReview("java-review", "Java", "com.azure:azure-core");
+        Project project = CreateProject("project-1");
+
+        _mockProjectsRepository
+            .Setup(r => r.GetProjectByExpectedPackageAsync("Java", "com.azure:azure-core"))
+            .ReturnsAsync(project);
+
+        Project result = await _projectsManager.TryLinkReviewToProjectAsync("testUser", review);
+
+        Assert.NotNull(result);
+        _mockProjectsRepository.Verify(
+            r => r.GetProjectByExpectedPackageAsync("Java", "com.azure:azure-core"),
+            Times.Once);
+        Assert.True(result.Reviews.ContainsKey("Java"));
+    }
+
+    [Fact]
+    public async Task NewProject_JavaV2Metadata_DiscoversBothReviewsUnderCorrectKeys()
+    {
+        ReviewListItemModel typeSpecReview = CreateTypeSpecReview("ts-1", "Azure.Core");
+        ReviewListItemModel javaV2Review  = CreateReview("java-v2-1", "Java", "com.azure.v2:azure-core");
+        ReviewListItemModel javaBaseReview = CreateReview("java-1",   "Java", "com.azure:azure-core");
+        TypeSpecMetadata metadata = new()
+        {
+            TypeSpec = new TypeSpecInfo { Namespace = "Azure.Core", Documentation = "Core" },
+            Languages = new Dictionary<string, LanguageConfig>
+            {
+                ["Java"] = new()
+                {
+                    PackageName = "com.azure.v2:azure-core",
+                    Namespace = "com.azure.v2.core",
+                    Flavor = "azurev2"
+                }
+            }
+        };
+
+        // Discovery finds the v2 review under "Java:v2" key and base review under "Java" key
+        _mockReviewsRepository.Setup(r => r.GetReviewAsync("Java", "com.azure.v2:azure-core", false)).ReturnsAsync(javaV2Review);
+        _mockReviewsRepository.Setup(r => r.GetReviewAsync("Java", "com.azure:azure-core", false)).ReturnsAsync(javaBaseReview);
+
+        Project capturedProject = null;
+        _mockProjectsRepository
+            .Setup(r => r.UpsertProjectAsync(It.IsAny<Project>()))
+            .Callback<Project>(p => capturedProject = p)
+            .Returns(Task.CompletedTask);
+
+        await _projectsManager.UpsertProjectFromMetadataAsync("testUser", metadata, typeSpecReview);
+
+        Assert.NotNull(capturedProject);
+        // Reviews stored under composite keys
+        Assert.True(capturedProject.Reviews.ContainsKey("Java:v2"));
+        Assert.True(capturedProject.Reviews.ContainsKey("Java"));
+        Assert.Equal("java-v2-1", capturedProject.Reviews["Java:v2"]);
+        Assert.Equal("java-1",    capturedProject.Reviews["Java"]);
+    }
+
+    #endregion
+
+    #region Reconcile Change History Message Tests
+
+    [Fact]
+    public async Task Reconcile_KeyRemovedFromExpectedPackages_UnlinkHistoryMentionsKey()
+    {
+        ReviewListItemModel typeSpecReview = CreateTypeSpecReview("ts-1", "Azure.Storage", "project-1");
+        ReviewListItemModel pyReview = CreateReview("py-1", "Python", "azure-storage", projectId: "project-1");
+        Project project = CreateProject("project-1", "Azure.Storage",
+            "Azure.Storage", "Azure Storage",
+            Packages(("Python", "azure-storage")),
+            new Dictionary<string, string> { ["TypeSpec"] = "ts-1", ["Python"] = "py-1" });
+        // New metadata removes Python entirely
+        TypeSpecMetadata metadata = CreateMetadata("Azure.Storage", "Azure Storage");
+
+        SetupGetProject("project-1", project);
+        SetupGetReviews(new[] { pyReview });
+
+        Project result = await _projectsManager.UpsertProjectFromMetadataAsync("testUser", metadata, typeSpecReview);
+
+        var unlinkEntry = result.ChangeHistory.FirstOrDefault(h => h.ChangeAction == ProjectChangeAction.ReviewUnlinked);
+        Assert.NotNull(unlinkEntry);
+        Assert.Contains("Python", unlinkEntry.Notes);       // key name present
+        Assert.Contains("removed from ExpectedPackages", unlinkEntry.Notes);
+    }
+
+    [Fact]
+    public async Task Reconcile_PackageNameChanged_UnlinkHistoryMentionsOldAndNewName()
+    {
+        ReviewListItemModel typeSpecReview = CreateTypeSpecReview("ts-1", "Azure.Storage", "project-1");
+        ReviewListItemModel oldReview = CreateReview("py-old", "Python", "azure-storage-old", projectId: "project-1");
+        Project project = CreateProject("project-1", "Azure.Storage",
+            "Azure.Storage", "Azure Storage",
+            Packages(("Python", "azure-storage-old")),
+            new Dictionary<string, string> { ["TypeSpec"] = "ts-1", ["Python"] = "py-old" });
+        TypeSpecMetadata metadata = CreateMetadata("Azure.Storage", "Azure Storage", ("Python", "azure-storage-new"));
+
+        SetupGetProject("project-1", project);
+        SetupGetReviews(new[] { oldReview });
+        _mockReviewsRepository.Setup(r => r.GetReviewAsync("Python", "azure-storage-new", false))
+            .ReturnsAsync((ReviewListItemModel)null);
+
+        Project result = await _projectsManager.UpsertProjectFromMetadataAsync("testUser", metadata, typeSpecReview);
+
+        var unlinkEntry = result.ChangeHistory.FirstOrDefault(h => h.ChangeAction == ProjectChangeAction.ReviewUnlinked);
+        Assert.NotNull(unlinkEntry);
+        Assert.Contains("azure-storage-old", unlinkEntry.Notes);     // old name
+        Assert.Contains("azure-storage-new", unlinkEntry.Notes);     // new name
+        Assert.Contains("package name changed", unlinkEntry.Notes);
+    }
+
+    #endregion
 }
+

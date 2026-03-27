@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using Azure.Sdk.Tools.Cli.Configuration;
+using Azure.Sdk.Tools.Cli.Helpers;
 using Octokit;
-using System.Runtime.InteropServices;
-using System.Diagnostics;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -20,7 +20,14 @@ namespace Azure.Sdk.Tools.Cli.Services
 
     public class GitConnection
     {
+        private const int GitHubCliAuthTokenTimeoutMs = 120000;
+        private readonly IProcessHelper processHelper;
         private GitHubClient? _gitHubClient; // Backing field for the property
+
+        protected GitConnection(IProcessHelper processHelper)
+        {
+            this.processHelper = processHelper;
+        }
 
         public GitHubClient gitHubClient
         {
@@ -38,46 +45,55 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
-        private static string GetGitHubAuthToken()
+        private string GetGitHubAuthToken()
         {
             var token = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
             if (!string.IsNullOrEmpty(token))
             {
                 return token;
             }
+
             token = Environment.GetEnvironmentVariable("GITHUB_PERSONAL_ACCESS_TOKEN");
             if (!string.IsNullOrEmpty(token))
             {
+                Environment.SetEnvironmentVariable("GITHUB_TOKEN", token, EnvironmentVariableTarget.Process);
                 return token;
             }
-            // If the GITHUB_TOKEN environment variable is not set, try to get the token using the 'gh' CLI command
-            bool isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-            string command = isWindows ? "cmd.exe" : "gh";
-            string args = isWindows ? "/C gh auth token" : "auth token";
 
-            var processStartInfo = new ProcessStartInfo
+            ProcessResult result;
+            try
             {
-                FileName = command,
-                Arguments = args,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-
-            using (var process = new Process())
-            {
-                process.StartInfo = processStartInfo;
-                process.Start();
-                string output = process.StandardOutput.ReadToEnd();
-                string errorOutput = process.StandardError.ReadToEnd();
-                process.WaitForExit();
-                if (process.ExitCode != 0)
-                {
-                    throw new InvalidOperationException($"Failed to get GitHub auth token. Error:{Environment.NewLine}{errorOutput}{Environment.NewLine}{Environment.NewLine}Please make sure GitHub CLI is installed and make sure to login using `gh auth login` to connect to GitHub.");
-                }
-                return output.Trim();
+                var options = new ProcessOptions("gh", ["auth", "token"], timeout: TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs));
+                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs));
+                result = processHelper.Run(options, timeoutCts.Token).GetAwaiter().GetResult();
             }
+            catch (OperationCanceledException)
+            {
+                throw new InvalidOperationException(
+                    $"Timed out after {GitHubCliAuthTokenTimeoutMs / 1000} seconds while running 'gh auth token'. " +
+                    "Please ensure GitHub CLI is installed, not awaiting interactive prompts, and authenticated via `gh auth login`."
+                );
+            }
+
+            if (result.ExitCode != 0)
+            {
+                throw new InvalidOperationException(
+                    $"Failed to get GitHub auth token. Error:{Environment.NewLine}{result.Output}{Environment.NewLine}{Environment.NewLine}" +
+                    "Please make sure GitHub CLI is installed and login using `gh auth login`."
+                );
+            }
+
+            var ghToken = result.Stdout.Trim();
+            if (string.IsNullOrWhiteSpace(ghToken))
+            {
+                throw new InvalidOperationException(
+                    "GitHub CLI returned an empty authentication token. " +
+                    "Please run `gh auth status` to verify your login or re-authenticate with `gh auth login`."
+                );
+            }
+
+            Environment.SetEnvironmentVariable("GITHUB_TOKEN", ghToken, EnvironmentVariableTarget.Process);
+            return ghToken;
         }
     }
 
@@ -115,9 +131,7 @@ namespace Azure.Sdk.Tools.Cli.Services
     public class GitHubService : GitConnection, IGitHubService
     {
         private readonly ILogger<GitHubService> logger;
-        private const string CreatedByCopilotLabel = "Created by copilot";
-
-        public GitHubService(ILogger<GitHubService> _logger)
+        public GitHubService(ILogger<GitHubService> _logger, IProcessHelper processHelper) : base(processHelper)
         {
             logger = _logger;
         }
@@ -337,12 +351,12 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
-        private async Task<bool> IsDiffMergeableAsync(string targetRepoOwner, string repoName, string baseBranch, string headBranch, CancellationToken ct)
+        private async Task<CompareResult> CompareBranchesAsync(string targetRepoOwner, string repoName, string baseBranch, string headBranch, CancellationToken ct)
         {
             logger.LogInformation("Comparing the head branch against target branch");
             var comparison = await gitHubClient.Repository.Commit.Compare(targetRepoOwner, repoName, baseBranch, headBranch);
             logger.LogInformation("Comparison: {ComparisonStatus}", comparison?.Status);
-            return comparison?.MergeBaseCommit != null;
+            return comparison;
         }
 
         public async Task<PullRequestResult> CreatePullRequestAsync(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body, bool draft = true, CancellationToken ct = default)
@@ -371,11 +385,19 @@ namespace Azure.Sdk.Tools.Cli.Services
             try
             {
                 response.Messages.Add($"Checking if changes are mergeable to {baseBranch} branch in repository [{repoOwner}/{repoName}]...");
-                var isMergeable = await IsDiffMergeableAsync(repoOwner, repoName, baseBranch, headBranch, ct);
-                if (!isMergeable)
+                var comparison = await CompareBranchesAsync(repoOwner, repoName, baseBranch, headBranch, ct);
+                if (comparison?.MergeBaseCommit == null)
                 {
                     response.Messages.Add($"Changes from [{repoOwner}] are not mergeable to {baseBranch} branch in repository [{repoOwner}/{repoName}]. Please resolve the conflicts and try again.");
                     response.Messages.Add($"By default, target branch in main. If you are trying to create a pull request to a different branch, please specify the target branch and try again.");
+                    return response;
+                }
+
+                // GitHub rejects PR creation when there are no commits on head that are not already in base.
+                if (comparison.AheadBy <= 0 || comparison.TotalCommits <= 0)
+                {
+                    response.Messages.Add($"No commits between {baseBranch} and {headBranch}. The source branch appears identical to the target branch, so a pull request cannot be created.");
+                    response.Messages.Add($"Push new commits to {headBranch} or verify you selected the correct target branch.");
                     return response;
                 }
             }
@@ -422,11 +444,11 @@ namespace Azure.Sdk.Tools.Cli.Services
             try
             {
                 // Add label
-                await gitHubClient.Issue.Labels.AddToIssue(repoOwner, repoName, createdPullRequest.Number, [CreatedByCopilotLabel]);
+                await gitHubClient.Issue.Labels.AddToIssue(repoOwner, repoName, createdPullRequest.Number, [Constants.GITHUB_LABEL_CREATED_BY_COPILOT]);
             }
             catch (Exception ex)
             {
-                response.Messages.Add($"Failed to add label '{CreatedByCopilotLabel}' to the pull request. Error: {ex.Message}");
+                response.Messages.Add($"Failed to add label '{Constants.GITHUB_LABEL_CREATED_BY_COPILOT}' to the pull request. Error: {ex.Message}");
             }
             return response;
         }

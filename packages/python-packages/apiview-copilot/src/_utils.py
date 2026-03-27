@@ -94,6 +94,22 @@ def to_epoch_seconds(date_str: str, *, end_of_day: bool = False) -> int:
         raise ValueError(f"Unrecognized date format: {date_str}") from exc
 
 
+def guideline_id_to_db(gid: str) -> str:
+    """Convert a guideline ID from web format to database-safe format.
+
+    Example: ``python_design.html#naming`` -> ``python_design=html=naming``
+    """
+    return gid.replace(".html#", "=html=")
+
+
+def guideline_id_from_db(gid: str) -> str:
+    """Convert a guideline ID from database-safe format to web format.
+
+    Example: ``python_design=html=naming`` -> ``python_design.html#naming``
+    """
+    return gid.replace("=html=", ".html#")
+
+
 def to_iso8601(date_str: str, *, end_of_day: bool = False) -> str:
     """
     Convert a date string to ISO8601 format at midnight or end-of-day UTC.

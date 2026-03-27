@@ -197,28 +197,29 @@ if __name__ == "__main__":
 
         kwargs: dict[str, Any] = {}
         if args.send_result:
-            if os.getenv("TF_BUILD") is not None:
-                service_connection_id = os.getenv("AZURESUBSCRIPTION_SERVICE_CONNECTION_ID")
-                client_id = os.getenv("AZURESUBSCRIPTION_CLIENT_ID")
-                tenant_id = os.getenv("AZURESUBSCRIPTION_TENANT_ID")
-                system_access_token = os.getenv("SYSTEM_ACCESSTOKEN")
-                if all([service_connection_id, client_id, tenant_id, system_access_token]):
-                    kwargs = {
-                        "credential": AzurePipelinesCredential(
-                            service_connection_id=service_connection_id,
-                            client_id=client_id,
-                            tenant_id=tenant_id,
-                            system_access_token=system_access_token,
+            if args.is_ci:
+                if os.getenv("TF_BUILD") is not None:
+                    service_connection_id = os.getenv("AZURESUBSCRIPTION_SERVICE_CONNECTION_ID")
+                    client_id = os.getenv("AZURESUBSCRIPTION_CLIENT_ID")
+                    tenant_id = os.getenv("AZURESUBSCRIPTION_TENANT_ID")
+                    system_access_token = os.getenv("SYSTEM_ACCESSTOKEN")
+                    if all([service_connection_id, client_id, tenant_id, system_access_token]):
+                        kwargs = {
+                            "credential": AzurePipelinesCredential(
+                                service_connection_id=service_connection_id,
+                                client_id=client_id,
+                                tenant_id=tenant_id,
+                                system_access_token=system_access_token,
+                            )
+                        }
+                    else:
+                        logging.warning(
+                            "TF_BUILD is set but one or more AZURESUBSCRIPTION_* or SYSTEM_ACCESSTOKEN "
+                            "environment variables are missing. Falling back to default credentials."
                         )
-                    }
+                        kwargs = {"credential": DefaultAzureCredential()}
                 else:
-                    logging.warning(
-                        "TF_BUILD is set but one or more AZURESUBSCRIPTION_* or SYSTEM_ACCESSTOKEN "
-                        "environment variables are missing. Falling back to default credentials."
-                    )
                     kwargs = {"credential": DefaultAzureCredential()}
-            elif args.is_ci:
-                kwargs = {"credential": DefaultAzureCredential()}
             else:
                 kwargs = {
                     # run in local, use Azure Cli Credential, make sure you already run `az login`

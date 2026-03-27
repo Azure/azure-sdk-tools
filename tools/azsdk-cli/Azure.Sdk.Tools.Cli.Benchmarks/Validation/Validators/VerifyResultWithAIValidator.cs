@@ -1,15 +1,18 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 using Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
 using Azure.Sdk.Tools.Cli.Benchmarks.Models;
 using GitHub.Copilot.SDK;
 
 namespace Azure.Sdk.Tools.Cli.Benchmarks.Validation.Validators
 {
-    public class VerifyResultWithAIValidate : IValidator
+    public class VerifyResultWithAIValidator : IValidator
     {
         public string Name { get; }
 
         public string VerificationPrompt { get; } = string.Empty;
-        public VerifyResultWithAIValidate(string name, string verificationPlan)
+        public VerifyResultWithAIValidator(string name, string verificationPlan)
         {
             Name = name;
             this.VerificationPrompt = "please verify the following plan: " + verificationPlan + "\nprovide the verification result. If all the verification steps are correct, respond with 'Verification successful'. Otherwise, respond with 'Verification failed'";
@@ -55,11 +58,28 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Validation.Validators
                 }
             };
 
+            // Log the Interaction question and answers if available for late failure analysis
+            if (context.InputQuestionAndAnswers != null && context.InputQuestionAndAnswers.Count > 0)
+            {
+                Console.WriteLine("The Interaction question and answers:" + string.Join(", ", context.InputQuestionAndAnswers.Select(qa => $"{qa.Question}: {qa.Answer}")));
+            } else
+            {
+                Console.WriteLine("No Interaction question and answers during execution.");
+            }
+
             await using var session = await client.CreateSessionAsync(sessionConfig, cancellationToken);
 
             SessionConfigHelper.ConfigureAgentActivityLogging(session);
             // Send prompt and wait for completion
-            var messageOptions = new MessageOptions { Prompt = VerificationPrompt };
+            var gitDiff = await context.Workspace.GetGitDiffAsync();
+
+            var fullPrompt = VerificationPrompt;
+            if (!string.IsNullOrEmpty(gitDiff))
+            {
+                fullPrompt += "\n\n## Typespec Git Diff:\n" + gitDiff;
+            }
+
+            var messageOptions = new MessageOptions { Prompt = fullPrompt };
 
             var result = await session.SendAndWaitAsync(messageOptions, TimeSpan.FromMinutes(5), cancellationToken);
 

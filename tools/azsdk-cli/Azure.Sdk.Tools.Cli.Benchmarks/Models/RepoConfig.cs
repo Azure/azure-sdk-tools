@@ -45,4 +45,40 @@ public class RepoConfig
     /// The HTTPS clone URL for the repository.
     /// </summary>
     public string CloneUrl => $"https://github.com/{EffectiveOwner}/{Name}.git";
+
+    /// <summary>
+    /// Returns a new <see cref="RepoConfig"/> with the specified ref, preserving all other properties.
+    /// </summary>
+    public RepoConfig WithRef(string newRef) => new()
+    {
+        Owner = Owner,
+        Name = Name,
+        ForkOwner = ForkOwner,
+        Ref = newRef,
+        SparseCheckoutPaths = SparseCheckoutPaths
+    };
+
+    /// <summary>
+    /// Parses a repo string in the format "Owner/Name" or "Owner/Name:Ref".
+    /// </summary>
+    /// <returns>True if parsing succeeded; false otherwise.</returns>
+    public static bool TryParse(string input, out string owner, out string name, out string? gitRef)
+    {
+        owner = name = string.Empty;
+        gitRef = null;
+
+        var colonIndex = input.IndexOf(':');
+        var repoKey = colonIndex >= 0 ? input[..colonIndex] : input;
+        gitRef = colonIndex >= 0 ? input[(colonIndex + 1)..] : null;
+
+        var parts = repoKey.Split('/');
+        if (parts.Length != 2 || string.IsNullOrWhiteSpace(parts[0]) || string.IsNullOrWhiteSpace(parts[1]))
+        {
+            return false;
+        }
+
+        owner = parts[0];
+        name = parts[1];
+        return true;
+    }
 }

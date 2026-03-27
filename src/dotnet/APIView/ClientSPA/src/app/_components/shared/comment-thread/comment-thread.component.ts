@@ -170,6 +170,14 @@ export class CommentThreadComponent {
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['codePanelRowData']) {
+      // Ensure comments within the thread are always in chronological order.
+      // The server normalizes timestamps, but this is a defense-in-depth
+      // measure against legacy data with mixed timezone kinds.
+      if (this.codePanelRowData?.comments && this.codePanelRowData.comments.length > 1) {
+        this.codePanelRowData.comments.sort((a, b) =>
+          new Date(a.createdOn).getTime() - new Date(b.createdOn).getTime()
+        );
+      }
       this.setCommentResolutionState();
       this.updateConversationCodeContext();
     }
@@ -440,7 +448,7 @@ export class CommentThreadComponent {
 
     if (this.instanceLocation === "conversations") {
       revisionIdForConversationGroup = target.closest(".conversation-group-revision-id")?.getAttribute("data-conversation-group-revision-id");
-      elementId = (target.closest(".conversation-group-threads")?.getElementsByClassName("conversation-group-element-id")[0] as HTMLElement).innerText;
+      elementId = this.elementId || this.codePanelRowData?.comments?.[0]?.elementId;
     } else if (this.instanceLocation === "samples") {
       elementId = target.closest(".user-comment-thread")?.getAttribute("title");
     } else if (this.instanceLocation === "code-panel") {

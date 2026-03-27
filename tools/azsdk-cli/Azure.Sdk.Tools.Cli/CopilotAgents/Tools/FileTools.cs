@@ -356,5 +356,60 @@ public static class FileTools
         }
     }
 
+    /// <summary>
+    /// Creates a RenameFile tool that renames (moves) a file within a base directory.
+    /// </summary>
+    /// <param name="baseDir">The base directory for relative path resolution.</param>
+    /// <param name="description">Optional custom description for the tool.</param>
+    /// <param name="onFileRenamed">Optional callback invoked after a successful rename.</param>
+    /// <returns>An AIFunction that renames files.</returns>
+    public static AIFunction CreateRenameFileTool(
+        string baseDir,
+        string description = "Rename a file within the project directory",
+        Action<string, string>? onFileRenamed = null)
+    {
+        return AIFunctionFactory.Create(
+            ([Description("Current relative path of the file to rename")] string oldFilePath,
+             [Description("New relative path for the file (typically just a new filename in the same directory)")] string newFilePath) =>
+            {
+                if (string.IsNullOrEmpty(oldFilePath))
+                {
+                    throw new ArgumentException("Old file path cannot be null or empty.", nameof(oldFilePath));
+                }
+                if (string.IsNullOrEmpty(newFilePath))
+                {
+                    throw new ArgumentException("New file path cannot be null or empty.", nameof(newFilePath));
+                }
+                if (!ToolHelpers.TryGetSafeFullPath(baseDir, oldFilePath, out var safeOldPath))
+                {
+                    throw new ArgumentException("The old path is invalid or outside the allowed base directory.");
+                }
+                if (!ToolHelpers.TryGetSafeFullPath(baseDir, newFilePath, out var safeNewPath))
+                {
+                    throw new ArgumentException("The new path is invalid or outside the allowed base directory.");
+                }
+                if (!File.Exists(safeOldPath))
+                {
+                    throw new ArgumentException($"Source file does not exist: {oldFilePath}");
+                }
+                if (File.Exists(safeNewPath))
+                {
+                    throw new ArgumentException($"Destination file already exists: {newFilePath}");
+                }
+
+                var newDir = Path.GetDirectoryName(safeNewPath);
+                if (!string.IsNullOrEmpty(newDir) && !Directory.Exists(newDir))
+                {
+                    Directory.CreateDirectory(newDir);
+                }
+
+                File.Move(safeOldPath, safeNewPath);
+                onFileRenamed?.Invoke(oldFilePath, newFilePath);
+                return $"Successfully renamed {oldFilePath} to {newFilePath}";
+            },
+            "RenameFile",
+            description);
+    }
+
     private readonly record struct GrepMatch(int FileIndex, int LineNumber, string FilePath, string Content);
 }

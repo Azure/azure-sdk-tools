@@ -1,3 +1,11 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using System.Security.Claims;
+using System.Text.Json;
+using System.Threading.Tasks;
 using ApiView;
 using APIView.DIff;
 using APIView.Model;
@@ -13,14 +21,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.IO.Compression;
-using System.Linq;
-using System.Security.Claims;
-using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace APIViewWeb.Managers
 {
@@ -859,6 +859,7 @@ namespace APIViewWeb.Managers
                         file.PackageName = codeFile.PackageName;
                         file.PackageVersion = codeFile.PackageVersion;
                         file.ParserStyle = codeFile.ReviewLines.Count > 0 ? ParserStyle.Tree : ParserStyle.Flat;
+                        file.ContentHash = await _codeFileManager.ComputeAPIContentHashAsync(codeFile);
                         await _reviewsRepository.UpsertReviewAsync(review);
                         await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
 
@@ -888,17 +889,49 @@ namespace APIViewWeb.Managers
         /// <param name="revision"></param>
         /// <param name="renderedCodeFile"></param>
         /// <param name="considerPackageVersion"></param>
+        /// <param name="incomingContentHash"></param>
         /// <returns></returns>
-        public async Task<bool> AreAPIRevisionsTheSame(APIRevisionListItemModel revision, RenderedCodeFile renderedCodeFile, bool considerPackageVersion = false)
+        public async Task<bool> AreAPIRevisionsTheSame(APIRevisionListItemModel revision,
+            RenderedCodeFile renderedCodeFile, bool considerPackageVersion = false, string incomingContentHash = null)
         {
-            //This will compare and check if new code file content is same as revision in parameter
-            var lastRevisionFile = await _codeFileRepository.GetCodeFileAsync(revision, false);
-            var result = _codeFileManager.AreAPICodeFilesTheSame(codeFileA: lastRevisionFile, codeFileB: renderedCodeFile);
+            APICodeFileModel revisionFile = revision.Files.SingleOrDefault();
+            string storedHash = revisionFile?.ContentHash;
+            if (storedHash != null)
+            {
+                incomingContentHash ??= await _codeFileManager.ComputeAPIContentHashAsync(renderedCodeFile.CodeFile);
+                bool result = storedHash == incomingContentHash;
+                if (considerPackageVersion)
+                {
+                    return result && revisionFile.PackageVersion == renderedCodeFile.CodeFile.PackageVersion;
+                }
+                return result;
+            }
+
+            // Slow path: download blob for revisions without ContentHash (backward compat).
+            RenderedCodeFile lastRevisionFile;
+            try
+            {
+                lastRevisionFile = await _codeFileRepository.GetCodeFileAsync(revision, false);
+            }
+            catch (Exception ex) when (ex is JsonException or InvalidDataException)
+            {
+                _telemetryClient.TrackTrace(
+                    $"Skipping comparison for revision {revision.Id}: legacy blob format ({ex.GetType().Name})");
+                return false;
+            }
+
+            bool fileResult = _codeFileManager.AreAPICodeFilesTheSame(codeFileA: lastRevisionFile, codeFileB: renderedCodeFile);
+            if (revisionFile != null)
+            {
+                revisionFile.ContentHash = await _codeFileManager.ComputeAPIContentHashAsync(lastRevisionFile.CodeFile);
+                await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
+            }
+
             if (considerPackageVersion)
             {
-                return result && lastRevisionFile.CodeFile.PackageVersion == renderedCodeFile.CodeFile.PackageVersion;
+                return fileResult && lastRevisionFile.CodeFile.PackageVersion == renderedCodeFile.CodeFile.PackageVersion;
             }
-            return result;
+            return fileResult;
         }
 
         /// <summary>
@@ -944,6 +977,7 @@ namespace APIViewWeb.Managers
                         {
                             file.ParserStyle = ParserStyle.Tree;
                         }
+                        file.ContentHash = await _codeFileManager.ComputeAPIContentHashAsync(codeFile);
                         await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
                         _telemetryClient.TrackTrace($"Successfully Updated {revision.Language} revision with id {revision.Id}");
                     }
@@ -1463,6 +1497,7 @@ namespace APIViewWeb.Managers
                         codeFileDetails.VersionString = languageService.VersionString;
                         codeFileDetails.ParserStyle = ParserStyle.Tree;
                         codeFileDetails.IsConvertedTokenModel = true;
+                        codeFileDetails.ContentHash = await _codeFileManager.ComputeAPIContentHashAsync(codeFile);
                         await _apiRevisionsRepository.UpsertAPIRevisionAsync(revisionModel);
                     }                    
                 }
@@ -1516,6 +1551,20 @@ namespace APIViewWeb.Managers
             // Sync diagnostic comments if necessary so the DB is up-to-date before scoring.
             // This mirrors the sync that happens when the review page loads.
             var allComments = (await _commentsRepository.GetCommentsAsync(revision.ReviewId, isDeleted: false, commentType: CommentType.APIRevision)).ToList();
+
+            // Self-heal: normalize any non-UTC timestamps before scoring so that
+            // thread-representative selection (OrderBy CreatedOn) picks the correct
+            // comment. NormalizeTimestampsToUtc mutates in place and returns true if changed.
+            var commentsToNormalize = allComments
+                .Where(CommentsManager.NormalizeTimestampsToUtc)
+                .ToList();
+
+            if (commentsToNormalize.Count > 0)
+            {
+                await Task.WhenAll(commentsToNormalize.Select(c => _commentsRepository.UpsertCommentAsync(c)));
+                _telemetryClient.TrackTrace(
+                    $"Quality score: normalized non-UTC timestamps for {commentsToNormalize.Count} comments in review {revision.ReviewId}.");
+            }
             if (codeFile != null && codeFile.CodeFile.Diagnostics != null && codeFile.CodeFile.Diagnostics.Length > 0)
             {
                 var diagnosticResult = await _diagnosticCommentService.SyncDiagnosticCommentsAsync(
@@ -1541,22 +1590,23 @@ namespace APIViewWeb.Managers
             // Apply the shared visibility filter so that only comments relevant to this
             // revision are considered. Same rules as the Conversations panel and code panel.
             var visibleComments = CommentVisibilityHelper.GetVisibleComments(allComments, apiRevisionId);
-            
-            var unresolvedComments = visibleComments
-                .Where(c => !c.IsResolved)
-                .ToList();
 
-            // Group comments by conversation thread. Only the thread-starting comment's severity
-            // should be counted — replies within a thread do not carry their own severity and must
-            // not inflate the score. Use ThreadId when available, falling back to ElementId for
-            // legacy comments that predate thread support.
-            var threads = unresolvedComments
+            // Group ALL visible comments by conversation thread first, then determine
+            // resolution at the thread level. All comments in a thread must have the
+            // same IsResolved value (this invariant is enforced by ResolveConversation,
+            // UnresolveConversation, and AddCommentAsync). A thread is unresolved only
+            // when none of its comments are marked resolved.
+            var threads = visibleComments
                 .GroupBy(c => !string.IsNullOrEmpty(c.ThreadId) ? c.ThreadId : c.ElementId)
                 .ToList();
 
-            // For each thread, pick the first comment (by creation date) as the representative.
-            // Its severity determines the thread's severity for scoring purposes.
-            var threadRepresentatives = threads
+            var unresolvedThreads = threads
+                .Where(g => !g.Any(c => c.IsResolved))
+                .ToList();
+
+            // For each unresolved thread, pick the first comment (by creation date) as the
+            // representative. Its severity determines the thread's severity for scoring.
+            var threadRepresentatives = unresolvedThreads
                 .Select(g => g.OrderBy(c => c.CreatedOn).First())
                 .ToList();
 

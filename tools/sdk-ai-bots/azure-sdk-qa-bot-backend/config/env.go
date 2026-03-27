@@ -102,6 +102,27 @@ func GetBotTenantID() string {
 }
 
 func initCredential() error {
+	// Detect Azure DevOps pipeline environment via SYSTEM_ACCESSTOKEN.
+	// When running in a pipeline, use AzurePipelinesCredential directly.
+	systemAccessToken := os.Getenv("SYSTEM_ACCESSTOKEN")
+	if len(systemAccessToken) > 0 {
+		pipelinesClientID := os.Getenv("AZURESUBSCRIPTION_CLIENT_ID")
+		pipelinesTenantID := os.Getenv("AZURESUBSCRIPTION_TENANT_ID")
+		serviceConnectionID := os.Getenv("AZURESUBSCRIPTION_SERVICE_CONNECTION_ID")
+		if len(pipelinesClientID) > 0 && len(pipelinesTenantID) > 0 && len(serviceConnectionID) > 0 {
+			pipelinesCred, pipelinesErr := azidentity.NewAzurePipelinesCredential(pipelinesTenantID, pipelinesClientID, serviceConnectionID, systemAccessToken, nil)
+			if pipelinesErr == nil {
+				Credential = pipelinesCred
+				log.Printf("Running in Azure DevOps pipeline; using Azure Pipelines credential")
+				return nil
+			}
+			log.Printf("Azure Pipelines credential creation failed: %v", pipelinesErr)
+		} else {
+			log.Printf("SYSTEM_ACCESSTOKEN is set but AZURESUBSCRIPTION_* env vars are incomplete; falling back to credential chain")
+		}
+	}
+
+	// Not in a pipeline (or pipeline credential setup failed) — build a credential chain.
 	var creds []azcore.TokenCredential
 
 	// 1: Workload Identity
@@ -130,24 +151,7 @@ func initCredential() error {
 		log.Printf("AZURE_CLIENT_ID not set; skipping Managed Identity credential")
 	}
 
-	// 3: Azure Pipelines
-	pipelinesClientID := os.Getenv("AZURESUBSCRIPTION_CLIENT_ID")
-	pipelinesTenantID := os.Getenv("AZURESUBSCRIPTION_TENANT_ID")
-	serviceConnectionID := os.Getenv("AZURESUBSCRIPTION_SERVICE_CONNECTION_ID")
-	systemAccessToken := os.Getenv("SYSTEM_ACCESSTOKEN")
-	if len(pipelinesClientID) > 0 && len(pipelinesTenantID) > 0 && len(serviceConnectionID) > 0 && len(systemAccessToken) > 0 {
-		pipelinesCred, pipelinesErr := azidentity.NewAzurePipelinesCredential(pipelinesTenantID, pipelinesClientID, serviceConnectionID, systemAccessToken, nil)
-		if pipelinesErr == nil {
-			creds = append(creds, pipelinesCred)
-			log.Printf("Azure Pipelines credential added")
-		} else {
-			log.Printf("Azure Pipelines credential not available: %v", pipelinesErr)
-		}
-	} else {
-		log.Printf("Azure Pipelines credential env vars not fully set; skipping Azure Pipelines credential")
-	}
-
-	// 4: Azure CLI
+	// 3: Azure CLI
 	azCLI, err := azidentity.NewAzureCLICredential(nil)
 	if err == nil {
 		creds = append(creds, azCLI)

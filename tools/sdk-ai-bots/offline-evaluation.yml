@@ -69,7 +69,7 @@ extends:
                     export GOPROXY=https://proxy.golang.org,direct
                     go build -o qa-bot-service
                     chmod +x qa-bot-service
-                    ./qa-bot-service &
+                    nohup ./qa-bot-service </dev/null >/dev/null 2>&1 &
                     sleep 20
                     lsof -ti:8088
                 env:

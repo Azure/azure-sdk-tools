@@ -531,6 +531,7 @@ def main() -> None:
                     "UMI_FRONTEND_CLIENT_ID": os.environ.get("UMI_FRONTEND_CLIENT_ID"),
                     "ENABLE_INSTRUMENTATION": "true",
                     "AGENT_VERSION": next_version,
+                    "AI_FOUNDRY_PROJECT_RESOURCE_ID": project_resource_id,
                 },
             ),
         )

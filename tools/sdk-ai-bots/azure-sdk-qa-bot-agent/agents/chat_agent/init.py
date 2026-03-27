@@ -24,8 +24,9 @@ load_dotenv(override=False)
 
 from agent_framework import Agent
 from agent_framework import SkillsProvider
-from agent_framework.observability import enable_instrumentation
 from azure.ai.agentserver.agentframework import from_agent_framework
+from opentelemetry import trace as otel_trace
+from opentelemetry.sdk.trace import SpanProcessor
 
 import config.app_config as app_config
 from config.app_config import get as cfg
@@ -38,6 +39,31 @@ from utils.azure_ai_foundry import get_agent_client
 logger = logging.getLogger(__name__)
 
 
+class _FoundryProjectIdProcessor(SpanProcessor):
+    """Injects microsoft.foundry.project.id as a span attribute.
+
+    The Foundry Traces tab queries customDimensions for this attribute.
+    The platform's server-side trace already has it, but the Agent
+    Framework trace (inside the container) does not — this processor
+    fills that gap so both traces satisfy the Foundry query filters.
+    """
+
+    def __init__(self, project_id: str) -> None:
+        self._project_id = project_id
+
+    def on_start(self, span, parent_context=None) -> None:
+        span.set_attribute("microsoft.foundry.project.id", self._project_id)
+
+    def on_end(self, span) -> None:
+        pass
+
+    def shutdown(self) -> None:
+        pass
+
+    def force_flush(self, timeout_millis=None) -> bool:
+        return True
+
+
 def _load_instructions(file_path: Path) -> str:
     """Load agent instructions from the instructions markdown file."""
     if not file_path.exists():
@@ -47,7 +73,6 @@ def _load_instructions(file_path: Path) -> str:
 
 async def main() -> None:
     """Start the hosted Chat Agent as an HTTP server."""
-    enable_instrumentation()
     await app_config.init()
     agent_client = get_agent_client()
     # Limit tool-call loop iterations to prevent infinite loops.
@@ -88,6 +113,21 @@ async def main() -> None:
     logger.info(f"Azure SDK QA Bot Agent running — model: {model}")
 
     server = from_agent_framework(agent)
+
+    # Let the agent-server create the TracerProvider & App Insights exporter.
+    server.init_tracing()
+
+    # Inject microsoft.foundry.project.id as a span attribute so the
+    # Foundry Traces tab can find these spans.  Foundry injects
+    # AGENT_PROJECT_NAME into the container env; fall back to our own var.
+    foundry_project_id = os.environ.get("AI_FOUNDRY_PROJECT_RESOURCE_ID", "")
+    if foundry_project_id:
+        provider = otel_trace.get_tracer_provider()
+        if hasattr(provider, "add_span_processor"):
+            provider.add_span_processor(_FoundryProjectIdProcessor(foundry_project_id))
+
+    # run_async() calls init_tracing() again — it's a no-op because the
+    # provider is already configured (_executed_setup=True).
     await server.run_async()
 
 

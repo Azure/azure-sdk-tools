@@ -78,6 +78,7 @@ class ChatService:
         response = await openai_client.responses.create(
             input=conversation_items,
             conversation=agent_conversation_id,
+            store=True,
             extra_body={
                 "agent_reference": {
                     "name": agent.name,

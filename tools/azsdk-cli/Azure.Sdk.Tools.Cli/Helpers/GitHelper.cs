@@ -272,8 +272,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 "diff",
             };
 
-            // When sourceCommitish is provided, use three-dot syntax to compare commits.
-            // When null, compare targetCommitish directly against the working tree (picks up uncommitted changes).
             if (!string.IsNullOrEmpty(sourceCommitish))
             {
                 args.Add($"{targetCommitish}...{sourceCommitish}");

@@ -35,4 +35,7 @@ public interface ICodeownersManagementHelper
     Task<CodeownersModifyResponse> RemoveOwnersFromPackage(OwnerWorkItem[] owners, string packageName, string repo, CancellationToken ct);
     Task<CodeownersModifyResponse> RemoveLabelsFromPackage(LabelWorkItem[] labels, string packageName, string repo, CancellationToken ct);
     Task<CodeownersModifyResponse> RemoveOwnersFromLabelsAndPath(OwnerWorkItem[] owners, LabelWorkItem[] labels, string repo, string path, OwnerType ownerType, CancellationToken ct);
+
+    // Validation
+    Task ThrowIfInvalidTeamAlias(string alias, CancellationToken ct);
 }

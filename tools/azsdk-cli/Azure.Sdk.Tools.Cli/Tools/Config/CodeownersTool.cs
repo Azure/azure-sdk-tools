@@ -652,6 +652,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             var ownerWorkItems = new List<OwnerWorkItem>();
             foreach (var alias in ownerAliases)
             {
+                var isTeamAlias = IsTeamAlias(alias);
+                if (isTeamAlias)
+                {
+                    await codeownersManagementHelper.ThrowIfInvalidTeamAlias(alias, ct);
+                }
+
+                // Owner work items exist for both individual and teams
                 var existing = await codeownersManagementHelper.FindOwnerByGitHubAlias(alias, ct);
                 if (existing != null)
                 {
@@ -659,11 +666,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                     continue;
                 }
 
-                var validation = await codeownersValidatorHelper.ValidateCodeOwnerAsync(alias, verbose: false, ct: ct);
-                if (!validation.IsValidCodeOwner)
+                if (!isTeamAlias)
                 {
-                    throw new InvalidOperationException(
-                        $"GitHub user '{alias}' is not a valid Azure SDK code owner: {validation.Message}");
+                    var validation = await codeownersValidatorHelper.ValidateCodeOwnerAsync(alias, verbose: false, ct: ct);
+                    if (!validation.IsValidCodeOwner)
+                    {
+                        throw new InvalidOperationException(
+                            $"GitHub user '{alias}' is not a valid Azure SDK code owner: {validation.Message}");
+                    }
                 }
 
                 var ownerWi = new OwnerWorkItem { GitHubAlias = alias };
@@ -686,6 +696,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 labelWorkItems.Add(labelWorkItem);
             }
             return labelWorkItems.ToArray();
+        }
+
+        /// <summary>
+        /// Determines whether an alias is a team reference (contains a '/' separator, e.g. "azure/my-team").
+        /// </summary>
+        private static bool IsTeamAlias(string alias)
+        {
+            return alias.Contains('/');
         }
     }
 }

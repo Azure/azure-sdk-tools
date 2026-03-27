@@ -22,7 +22,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     public class TestTool(
         ILogger<TestTool> _logger,
         IGitHelper gitHelper,
-        IEnumerable<LanguageService> _languageServices
+        IEnumerable<LanguageService> _languageServices,
+        IEnvFileHelper _envFileHelper
     ) : LanguageMcpTool(_languageServices, gitHelper, _logger)
     {
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package, SharedCommandGroups.PackageTest];
@@ -30,24 +31,104 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private const string RunCommandName = "run";
         private const string RunPackageTestsToolName = "azsdk_package_run_tests";
 
+        private static readonly Option<TestMode> TestModeOption = new("--mode", "-m")
+        {
+            Description = "Test mode - playback, record, or live (default: playback)",
+            Required = false,
+            DefaultValueFactory = _ => TestMode.Playback,
+        };
+
+        private static readonly Option<string?> TestEnvironmentOption = new("--test-environment")
+        {
+            Description = "Path to a .env file containing deployment environment variables for live/record test runs",
+            Required = false,
+        };
+
+        private static readonly Option<int?> TimeoutOption = new("--timeout", "-t")
+        {
+            Description = "Maximum time in seconds to wait for the test run to complete",
+            Required = false,
+        };
+
         protected override Command GetCommand() => new McpCommand(RunCommandName, "Run tests for SDK packages", RunPackageTestsToolName)
         {
             SharedOptions.PackagePath,
+            TestModeOption,
+            TestEnvironmentOption,
+            TimeoutOption,
         };
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
             var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
+            var testMode = parseResult.GetValue(TestModeOption);
+            var testEnvironmentPath = parseResult.GetValue(TestEnvironmentOption);
+            var timeoutSeconds = parseResult.GetValue(TimeoutOption);
 
-            return await RunPackageTests(packagePath, ct);
+            return await RunPackageTests(packagePath, testMode, testEnvironmentPath, timeoutSeconds, ct);
         }
 
         [McpServerTool(Name = RunPackageTestsToolName), Description("Run tests for the specified SDK package. Provide package path.")]
-        public async Task<TestRunResponse> RunPackageTests(string packagePath, CancellationToken ct = default)
+        public async Task<TestRunResponse> RunPackageTests(
+            string packagePath,
+            TestMode testMode = TestMode.Playback,
+            string? testEnvironmentPath = null,
+            int? timeoutSeconds = null,
+            CancellationToken ct = default)
         {
             try
             {
-                logger.LogInformation("Starting tests for package at: {packagePath}", packagePath);
+                IDictionary<string, string>? liveTestEnvironment = null;
+                if (!string.IsNullOrEmpty(testEnvironmentPath))
+                {
+                    try
+                    {
+                        liveTestEnvironment = _envFileHelper.ParseEnvFile(testEnvironmentPath);
+                        logger.LogInformation("Loaded {count} environment variables from {path}", liveTestEnvironment.Count, testEnvironmentPath);
+                    }
+                    catch (FileNotFoundException)
+                    {
+                        return new TestRunResponse(
+                            exitCode: 1,
+                            testRunOutput: null,
+                            error: $"Test environment file not found: {testEnvironmentPath}")
+                        {
+                            NextSteps = ["Verify the path to the .env file is correct"],
+                        };
+                    }
+                    catch (UnauthorizedAccessException ex)
+                    {
+                        logger.LogError(ex, "Unauthorized access while reading test environment file: {path}", testEnvironmentPath);
+                        return new TestRunResponse(
+                            exitCode: 1,
+                            testRunOutput: null,
+                            error: $"Insufficient permissions to read test environment file: {testEnvironmentPath}")
+                        {
+                            NextSteps =
+                            [
+                                "Verify that you have read access to the .env file",
+                                "Check file system permissions or try running the command with appropriate privileges",
+                            ],
+                        };
+                    }
+                    catch (IOException ex)
+                    {
+                        logger.LogError(ex, "I/O error while reading test environment file: {path}", testEnvironmentPath);
+                        return new TestRunResponse(
+                            exitCode: 1,
+                            testRunOutput: null,
+                            error: $"Failed to read test environment file: {testEnvironmentPath}")
+                        {
+                            NextSteps =
+                            [
+                                "Verify that the .env file is accessible and not locked by another process",
+                                "Check that the file is not corrupted and is located on an available disk",
+                            ],
+                        };
+                    }
+                }
+
+                logger.LogInformation("Starting tests for package at: {packagePath} in {testMode} mode", packagePath, testMode);
                 var languageService = await GetLanguageServiceAsync(packagePath, ct);
                 if (languageService == null)
                 {
@@ -60,7 +141,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                         NextSteps = ["Verify the package path is correct and that the language is supported"],
                     };
                 }
-                var testResponse = await languageService.RunAllTests(packagePath, ct);
+                var timeout = timeoutSeconds.HasValue ? TimeSpan.FromSeconds(timeoutSeconds.Value) : (TimeSpan?)null;
+                var testResponse = await languageService.RunAllTests(packagePath, testMode, liveTestEnvironment, timeout, ct);
 
                 await AddPackageDetailsInResponse(testResponse, packagePath, ct);
                 return testResponse;

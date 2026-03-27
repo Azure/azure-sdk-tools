@@ -219,13 +219,13 @@ public class CommonValidationHelpers : ICommonValidationHelpers
             var escapedConfigPath = cspellConfigPath.Replace("'", "''");
             var escapedRepoRoot = packageRepoRoot.Replace("'", "''");
 
-            // Get only the files that have changed between the current branch and the default (main) branch.
+            // Get only the files with changes that have changed between the current branch and the default (main) branch.
             // This avoids scanning thousands of files in directories like .tox, node_modules, etc.
             var mergeBaseSha = await _gitHelper.GetMergeBaseCommitShaAsync(packageRepoRoot, "main", ct);
             var changedFiles = await _gitHelper.GetChangedFilesAsync(
                 packageRepoRoot,
                 mergeBaseSha,
-                "HEAD",
+                null, // compare against working tree to include uncommitted changes
                 packagePath,
                 "d", // exclude deleted files
                 ct);

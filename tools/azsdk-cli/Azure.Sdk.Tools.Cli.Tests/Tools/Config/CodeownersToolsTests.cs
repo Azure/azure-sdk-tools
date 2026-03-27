@@ -1,5 +1,4 @@
 using Moq;
-using Octokit;
 
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Helpers;
@@ -7,10 +6,9 @@ using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
-using Azure.Sdk.Tools.Cli.Tools.EngSys;
 using Azure.Sdk.Tools.Cli.Tools.Config;
 using Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
-using Azure.Sdk.Tools.Cli.Configuration;
+using Azure.Sdk.Tools.CodeownersUtils.Caches;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
 {
@@ -23,6 +21,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
         private Mock<ICodeownersGenerateHelper> _mockcodeownersGenerateHelper;
         private Mock<ICodeownersManagementHelper> _mockCodeownersManagement;
         private Mock<IDevOpsService> _mockDevOps;
+        private Mock<ITeamUserCache> _mockTeamUserCache;
 
         private CodeownersTool _tool;
 
@@ -35,6 +34,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
             _mockGitHelper = new Mock<IGitHelper>();
             _mockCodeownersManagement = new Mock<ICodeownersManagementHelper>();
             _mockDevOps = new Mock<IDevOpsService>();
+            _mockTeamUserCache = new Mock<ITeamUserCache>();
+            _mockTeamUserCache.Setup(c => c.GetUsersForTeam(It.IsAny<string>())).Returns(new List<string>());
 
             _tool = new CodeownersTool(
                 _mockGithub,
@@ -44,7 +45,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
                 _mockcodeownersGenerateHelper.Object,
                 _mockGitHelper.Object,
                 _mockCodeownersManagement.Object,
-                _mockDevOps.Object
+                _mockDevOps.Object,
+                _mockTeamUserCache.Object
             );
         }
 
@@ -138,5 +140,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
 
             Assert.That(result.ToString(), Does.Contain("Could not infer repository"));
         }
+
     }
 }

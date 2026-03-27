@@ -11,6 +11,7 @@ using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Codeowners;
 using Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.CodeownersUtils.Caches;
 using Azure.Sdk.Tools.CodeownersUtils.Editing;
 using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 using Azure.Sdk.Tools.CodeownersUtils.Utils;
@@ -117,6 +118,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         private readonly ICodeownersManagementHelper codeownersManagementHelper;
         private readonly IGitHelper gitHelper;
         private readonly IDevOpsService devOpsService;
+        private readonly ITeamUserCache teamUserCache;
 
         // URL constants
         private const string azureWriteTeamsBlobUrl = "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob";
@@ -176,7 +178,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             ICodeownersGenerateHelper codeownersGenerateHelper,
             IGitHelper gitHelper,
             ICodeownersManagementHelper codeownersManagementHelper,
-            IDevOpsService devOpsService
+            IDevOpsService devOpsService,
+            ITeamUserCache teamUserCache
         )
         {
             this.githubService = githubService;
@@ -186,6 +189,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             this.codeownersManagementHelper = codeownersManagementHelper;
             this.gitHelper = gitHelper;
             this.devOpsService = devOpsService;
+            this.teamUserCache = teamUserCache;
 
             CodeownersUtils.Utils.Log.Configure(loggerFactory);
         }
@@ -652,6 +656,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             var ownerWorkItems = new List<OwnerWorkItem>();
             foreach (var alias in ownerAliases)
             {
+                var isTeamAlias = IsTeamAlias(alias);
+                if (isTeamAlias)
+                {
+                    await codeownersManagementHelper.ThrowIfInvalidTeamAlias(alias, ct);
+                }
+
+                // Owner work items exist for both individual and teams
                 var existing = await codeownersManagementHelper.FindOwnerByGitHubAlias(alias, ct);
                 if (existing != null)
                 {
@@ -659,11 +670,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                     continue;
                 }
 
-                var validation = await codeownersValidatorHelper.ValidateCodeOwnerAsync(alias, verbose: false, ct: ct);
-                if (!validation.IsValidCodeOwner)
+                if (!isTeamAlias)
                 {
-                    throw new InvalidOperationException(
-                        $"GitHub user '{alias}' is not a valid Azure SDK code owner: {validation.Message}");
+                    var validation = await codeownersValidatorHelper.ValidateCodeOwnerAsync(alias, verbose: false, ct: ct);
+                    if (!validation.IsValidCodeOwner)
+                    {
+                        throw new InvalidOperationException(
+                            $"GitHub user '{alias}' is not a valid Azure SDK code owner: {validation.Message}");
+                    }
                 }
 
                 var ownerWi = new OwnerWorkItem { GitHubAlias = alias };
@@ -686,6 +700,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 labelWorkItems.Add(labelWorkItem);
             }
             return labelWorkItems.ToArray();
+        }
+
+        /// <summary>
+        /// Determines whether an alias is a team reference (contains a '/' separator, e.g. "azure/my-team").
+        /// </summary>
+        private static bool IsTeamAlias(string alias)
+        {
+            return alias.Contains('/');
         }
     }
 }

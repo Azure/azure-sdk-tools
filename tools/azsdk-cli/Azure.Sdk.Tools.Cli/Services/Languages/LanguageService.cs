@@ -461,9 +461,19 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
             // releaseDate is already validated and defaulted by VersionUpdateTool
             // Determine whether to update just the date or replace the entire latest entry title
             var changelogData = changelogHelper.ParseChangelog(changelogPath);
-            if (changelogData == null || changelogData.Entries.Count == 0)
+            if (changelogData == null)
             {
-                logger.LogWarning("No changelog entries found in: {ChangelogPath}", changelogPath);
+                return PackageOperationResponse.CreateFailure(
+                    $"Error parsing changelog {changelogPath}",
+                    packageInfo: packageInfo,
+                    nextSteps: [
+                        "Ensure CHANGELOG.md exists and is properly formatted",
+                        "Then run this tool again to set the version and release date"
+                    ]);
+            } 
+            else if (changelogData.Entries.Count == 0)
+            {
+              logger.LogWarning("No changelog entries found in: {ChangelogPath}", changelogPath);
                 return PackageOperationResponse.CreateFailure(
                     "No changelog entries found in CHANGELOG.md.",
                     packageInfo: packageInfo,
@@ -509,7 +519,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
             {
                 // Changelog was updated but version files failed - report partial success
                 return PackageOperationResponse.CreateSuccess(
-                    $"Changelog release date updated to {releaseDate}, but version file update requires additional steps.",
+                    $"Changelog updated to {targetVersion} with release date {releaseDate}, but version file update requires additional steps.",
                     nextSteps: versionUpdateResult.NextSteps?.ToArray() ?? ["Manually update the package version in project files"],
                     result: "partial",
                     packageInfo: packageInfo);

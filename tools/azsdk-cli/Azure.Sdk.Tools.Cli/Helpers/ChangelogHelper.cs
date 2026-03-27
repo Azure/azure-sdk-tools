@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
@@ -227,7 +228,7 @@ public partial class ChangelogHelper : IChangelogHelper
         }
 
         // Validate date format
-        if (!DateTime.TryParseExact(releaseDate, DateFormat, null, System.Globalization.DateTimeStyles.None, out var parsedDate))
+        if (!DateTime.TryParseExact(releaseDate, DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
         {
             return ChangelogUpdateResult.CreateFailure($"Invalid release date format: {releaseDate}. Expected format: {DateFormat}");
         }
@@ -286,7 +287,7 @@ public partial class ChangelogHelper : IChangelogHelper
         DateTime? parsedDate = null;
         if (!string.IsNullOrWhiteSpace(releaseDate))
         {
-            if (!DateTime.TryParseExact(releaseDate, DateFormat, null, System.Globalization.DateTimeStyles.None, out var dt))
+            if (!DateTime.TryParseExact(releaseDate, DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
             {
                 return ChangelogUpdateResult.CreateFailure($"Invalid release date format: {releaseDate}. Expected format: {DateFormat}");
             }

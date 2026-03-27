@@ -131,6 +131,24 @@ public class LanguageServiceVersionUpdateTests
     }
 
     [Test]
+    public async Task UpdateVersionAsync_WhenChangelogParseReturnsNull_ShouldReturnFailure()
+    {
+        // Arrange
+        var packagePath = _tempDirectory.DirectoryPath;
+        _languageService.SetPackageInfoResult(CreateTestPackageInfo(packageVersion: TestVersion));
+        _mockChangelogHelper.Setup(x => x.GetChangelogPath(packagePath)).Returns(TestChangelogPath);
+        _mockChangelogHelper.Setup(x => x.ParseChangelog(TestChangelogPath))
+            .Returns((ChangelogData?)null);
+
+        // Act
+        var result = await _languageService.UpdateVersionAsync(packagePath, null, TestVersion, TestReleaseDate, CancellationToken.None);
+
+        // Assert
+        Assert.That(result.OperationStatus, Is.EqualTo(Status.Failed));
+        Assert.That(result.ResponseErrors.FirstOrDefault(), Does.Contain("Error parsing changelog"));
+    }
+
+    [Test]
     public async Task UpdateVersionAsync_WhenNoChangelogEntries_ShouldReturnFailure()
     {
         // Arrange
@@ -161,7 +179,7 @@ public class LanguageServiceVersionUpdateTests
             .Returns(ChangelogUpdateResult.CreateSuccess("Updated"));
 
         // Act
-        var result = await _languageService.UpdateVersionAsync(packagePath, "beta", TestVersion, TestReleaseDate, CancellationToken.None);
+        await _languageService.UpdateVersionAsync(packagePath, "beta", TestVersion, TestReleaseDate, CancellationToken.None);
 
         // Assert
         _mockChangelogHelper.Verify(x => x.UpdateReleaseDate(TestChangelogPath, TestVersion, TestReleaseDate), Times.Once);
@@ -181,7 +199,7 @@ public class LanguageServiceVersionUpdateTests
             .Returns(ChangelogUpdateResult.CreateSuccess("Updated latest entry title"));
 
         // Act
-        var result = await _languageService.UpdateVersionAsync(packagePath, "stable", TestVersion, TestReleaseDate, CancellationToken.None);
+        await _languageService.UpdateVersionAsync(packagePath, "stable", TestVersion, TestReleaseDate, CancellationToken.None);
 
         // Assert
         _mockChangelogHelper.Verify(x => x.UpdateLatestEntryTitle(TestChangelogPath, TestVersion, TestReleaseDate), Times.Once);
@@ -281,7 +299,7 @@ public class LanguageServiceVersionUpdateTests
         // Assert
         Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded)); // Partial success since changelog was updated
         Assert.That(result.Result, Is.EqualTo("partial"));
-        Assert.That(result.Message, Does.Contain($"Changelog release date updated to {TestReleaseDate}"));
+        Assert.That(result.Message, Does.Contain($"Changelog updated to {TestVersion} with release date {TestReleaseDate}"));
         Assert.That(result.Message, Does.Contain("version file update requires additional steps"));
     }
 

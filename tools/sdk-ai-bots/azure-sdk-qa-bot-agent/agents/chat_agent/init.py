@@ -24,6 +24,7 @@ load_dotenv(override=False)
 
 from agent_framework import Agent
 from agent_framework import SkillsProvider
+from agent_framework.azure import AzureOpenAIResponsesClient
 from azure.ai.agentserver.agentframework import from_agent_framework
 from opentelemetry import trace as otel_trace
 from opentelemetry.sdk.trace import SpanProcessor
@@ -89,7 +90,9 @@ async def main() -> None:
     knowledge_tools = KnowledgeTools()
     azsdk_mcp_tool = await create_azsdk_mcp_tool()
     github_mcp_tool = await create_github_mcp_tool(agent_client)
-
+    web_search_tool = AzureOpenAIResponsesClient.get_web_search_tool(
+        search_context_size="medium",
+    )
     # Build tenant skills for progressive domain expertise disclosure
     skills = create_tenant_skills()
     skills_provider = SkillsProvider(skills=skills)
@@ -98,6 +101,7 @@ async def main() -> None:
         knowledge_tools.search_knowledge_base,
         azsdk_mcp_tool,
         github_mcp_tool,
+        web_search_tool,
     ]
 
     agent = Agent(

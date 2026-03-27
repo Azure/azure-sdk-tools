@@ -127,4 +127,6 @@ def create_tenant_skills() -> list[Skill]:
 
 def get_skill_to_tenant_map() -> dict[str, TenantID]:
     """Return a mapping from skill name to tenant ID string."""
-    return {skill_name: tenant_id for tenant_id, skill_name in _TENANT_SKILL_MAP.items()}
+    return {
+        skill_name: tenant_id for tenant_id, skill_name in _TENANT_SKILL_MAP.items()
+    }

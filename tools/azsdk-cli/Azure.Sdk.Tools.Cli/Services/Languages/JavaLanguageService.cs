@@ -240,9 +240,11 @@ public sealed partial class JavaLanguageService : LanguageService
     /// Runs all Maven tests for the specified Java package.
     /// </summary>
     /// <param name="packagePath">Path to the package directory.</param>
+    /// <param name="testMode">The test mode to use.</param>
+    /// <param name="liveTestEnvironment">Optional environment variables for live/record tests.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A <see cref="TestRunResponse"/> containing test execution details.</returns>
-    public override async Task<TestRunResponse> RunAllTests(string packagePath, CancellationToken ct = default)
+    public override async Task<TestRunResponse> RunAllTests(string packagePath, TestMode testMode = TestMode.Playback, IDictionary<string, string>? liveTestEnvironment = null, TimeSpan? timeout = null, CancellationToken ct = default)
     {
         logger.LogInformation("Starting test execution for Java project at: {PackagePath}", packagePath);
 
@@ -256,7 +258,7 @@ public sealed partial class JavaLanguageService : LanguageService
                 error: "pom.xml not found");
         }
 
-        var result = await mavenHelper.Run(new("test", ["--no-transfer-progress"], pomPath, workingDirectory: packagePath, timeout: testTimeout), ct);
+        var result = await mavenHelper.Run(new("test", ["--no-transfer-progress"], pomPath, workingDirectory: packagePath, timeout: timeout ?? testTimeout), ct);
 
         if (result.ExitCode != 0)
         {

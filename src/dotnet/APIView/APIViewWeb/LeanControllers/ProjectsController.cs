@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -94,7 +95,7 @@ namespace APIViewWeb.LeanControllers
             {
                 CurrentReviewId = reviewId,
                 ProjectId = review.ProjectId,
-                Reviews = []
+                Reviews = new Dictionary<string, ReviewListItemModel>()
             };
 
             if (string.IsNullOrEmpty(review.ProjectId))
@@ -113,12 +114,15 @@ namespace APIViewWeb.LeanControllers
 
             if (project.Reviews is { Count: > 0 })
             {
-                var reviews = await _reviewsRepository.GetReviewsAsync(project.Reviews.Values);
-                response.Reviews = reviews
+                Dictionary<string, ReviewListItemModel> fetched = (await _reviewsRepository.GetReviewsAsync(project.Reviews.Values))
                     .Where(r => r is { IsDeleted: false })
-                    .OrderBy(r => r.Language == "TypeSpec" ? 0 : 1)
-                    .ThenBy(r => r.Language)
-                    .ToList();
+                    .ToDictionary(r => r.Id, StringComparer.OrdinalIgnoreCase);
+
+                response.Reviews = project.Reviews
+                    .Where(kvp => fetched.ContainsKey(kvp.Value))
+                    .OrderBy(kvp => kvp.Key == ApiViewConstants.TypeSpecLanguage ? 0 : 1)
+                    .ThenBy(kvp => kvp.Key)
+                    .ToDictionary(kvp => kvp.Key, kvp => fetched[kvp.Value]);
             }
 
             return new LeanJsonResult(response, StatusCodes.Status200OK);
@@ -188,6 +192,6 @@ namespace APIViewWeb.LeanControllers
         public string ProjectId { get; set; }
         public string ProjectName { get; set; }
         public string CrossLanguagePackageId { get; set; }
-        public List<ReviewListItemModel> Reviews { get; set; }
+        public Dictionary<string, ReviewListItemModel> Reviews { get; set; }
     }
 }

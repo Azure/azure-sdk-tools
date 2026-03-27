@@ -178,9 +178,9 @@ extends:
             expect(parsed.trigger.paths.include).toContain(ciPath);
             expect(parsed.pr.paths.include).toContain(packageDir);
             expect(parsed.pr.paths.include).toContain(ciPath);
-            // feature/v4 is added to trigger.branches.exclude by the subsequent update step
-            expect(parsed.trigger.branches.exclude).toContain("feature/v4");
-            expect(parsed.pr.branches.exclude).toContain("feature/v4");
+            // data plane ci.yml does not add feature/v4 exclusion
+            expect(parsed.trigger.branches?.exclude).toBeFalsy();
+            expect(parsed.pr.branches?.exclude).toBeFalsy();
         });
 
         test("updates existing ci.yml by adding new artifact and paths", async () => {
@@ -304,7 +304,7 @@ extends:
         const packageDir = "sdk/myservice/myservice";
         const ciPath = "sdk/myservice/ci.yml";
 
-        test("creates branches.exclude and adds feature/v4 when section is missing", async () => {
+        test("does not modify branches.exclude even when the section is missing", async () => {
             await ensureDir(path.join(tempDir, "sdk/myservice"));
             // No branches.exclude at all
             const existingContent = `trigger:
@@ -338,8 +338,85 @@ extends:
             const content = await readFile(path.join(tempDir, ciPath), "utf-8");
             const parsed = parse(content);
 
-            expect(parsed.trigger.branches.exclude).toContain("feature/v4");
-            expect(parsed.pr.branches.exclude).toContain("feature/v4");
+            // data plane update should not touch branches.exclude
+            expect(parsed.trigger.branches.exclude).toBeUndefined();
+            expect(parsed.pr.branches.exclude).toBeUndefined();
+        });
+
+        test("does not add packageDir when service root (no trailing slash) already covers it", async () => {
+            await ensureDir(path.join(tempDir, "sdk/myservice"));
+            const existingContent = `trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - sdk/myservice
+      - sdk/myservice/ci.yml
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - sdk/myservice
+      - sdk/myservice/ci.yml
+extends:
+  template: /eng/pipelines/templates/stages/archetype-sdk-client.yml
+  parameters:
+    ServiceDirectory: myservice
+    Artifacts:
+      - name: azure-myservice
+        safeName: azuremyservice
+`;
+            await writeFile(path.join(tempDir, ciPath), existingContent, "utf-8");
+
+            await createOrUpdateCiYaml(packageDir, npmPackageInfo);
+
+            const content = await readFile(path.join(tempDir, ciPath), "utf-8");
+            const parsed = parse(content);
+
+            // packageDir is already covered by 'sdk/myservice', should not be duplicated
+            expect(parsed.trigger.paths.include).not.toContain(packageDir);
+            expect(parsed.pr.paths.include).not.toContain(packageDir);
+        });
+
+        test("does not add packageDir when service root (with trailing slash) already covers it", async () => {
+            await ensureDir(path.join(tempDir, "sdk/myservice"));
+            const existingContent = `trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - sdk/myservice/
+      - sdk/myservice/ci.yml
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - sdk/myservice/
+      - sdk/myservice/ci.yml
+extends:
+  template: /eng/pipelines/templates/stages/archetype-sdk-client.yml
+  parameters:
+    ServiceDirectory: myservice
+    Artifacts:
+      - name: azure-myservice
+        safeName: azuremyservice
+`;
+            await writeFile(path.join(tempDir, ciPath), existingContent, "utf-8");
+
+            await createOrUpdateCiYaml(packageDir, npmPackageInfo);
+
+            const content = await readFile(path.join(tempDir, ciPath), "utf-8");
+            const parsed = parse(content);
+
+            // packageDir is already covered by 'sdk/myservice/', should not be duplicated
+            expect(parsed.trigger.paths.include).not.toContain(packageDir);
+            expect(parsed.pr.paths.include).not.toContain(packageDir);
         });
 
         test("creates paths.include and adds packageDir and ciPath when section is missing", async () => {

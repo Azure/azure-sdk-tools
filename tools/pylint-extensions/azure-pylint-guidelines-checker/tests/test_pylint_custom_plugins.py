@@ -4579,7 +4579,6 @@ class TestNoCrossPackagePrivateImport(pylint.testutils.CheckerTestCase):
     def test_flags_cross_package_private_importfrom(self, setup):
         """from azure.storage.blob._generated.models import BlobProperties should be flagged."""
         importfrom_node = setup.body[0]
-        importfrom_node.root().name = "azure.storage.file.datalake._some_module"
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="no-cross-package-private-import",
@@ -4592,7 +4591,6 @@ class TestNoCrossPackagePrivateImport(pylint.testutils.CheckerTestCase):
     def test_flags_cross_package_private_importfrom_serialize(self, setup):
         """from azure.storage.blob._serialize import serialize_blob_headers should be flagged."""
         importfrom_node = setup.body[1]
-        importfrom_node.root().name = "azure.storage.file.datalake._some_module"
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="no-cross-package-private-import",
@@ -4605,7 +4603,6 @@ class TestNoCrossPackagePrivateImport(pylint.testutils.CheckerTestCase):
     def test_flags_cross_package_private_import(self, setup):
         """import azure.core._pipeline_client should be flagged."""
         import_node = setup.body[2]
-        import_node.root().name = "azure.storage.file.datalake._some_module"
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="no-cross-package-private-import",
@@ -4618,7 +4615,6 @@ class TestNoCrossPackagePrivateImport(pylint.testutils.CheckerTestCase):
     def test_flags_cross_package_private_importfrom_mgmt(self, setup):
         """from azure.mgmt.core._serialization import Serializer should be flagged."""
         importfrom_node = setup.body[3]
-        importfrom_node.root().name = "azure.storage.file.datalake._some_module"
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="no-cross-package-private-import",
@@ -4631,48 +4627,41 @@ class TestNoCrossPackagePrivateImport(pylint.testutils.CheckerTestCase):
     def test_allows_same_package_private_importfrom(self, setup):
         """from azure.storage.file.datalake._models import DataLakeFileClient should NOT be flagged."""
         importfrom_node = setup.body[4]
-        importfrom_node.root().name = "azure.storage.file.datalake._some_module"
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
 
     def test_allows_same_package_private_import(self, setup):
         """import azure.storage.file.datalake._internal should NOT be flagged."""
         import_node = setup.body[5]
-        import_node.root().name = "azure.storage.file.datalake._some_module"
         with self.assertNoMessages():
             self.checker.visit_import(import_node)
 
     def test_allows_public_importfrom(self, setup):
         """from azure.storage.blob import BlobServiceClient should NOT be flagged."""
         importfrom_node = setup.body[6]
-        importfrom_node.root().name = "azure.storage.file.datalake._some_module"
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
 
     def test_allows_public_importfrom_core(self, setup):
         """from azure.core import PipelineClient should NOT be flagged."""
         importfrom_node = setup.body[7]
-        importfrom_node.root().name = "azure.storage.file.datalake._some_module"
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
 
     def test_allows_public_import(self, setup):
         """import azure.identity should NOT be flagged."""
         import_node = setup.body[8]
-        import_node.root().name = "azure.storage.file.datalake._some_module"
         with self.assertNoMessages():
             self.checker.visit_import(import_node)
 
     def test_allows_non_azure_import(self, setup):
         """import os should NOT be flagged."""
         import_node = setup.body[9]
-        import_node.root().name = "azure.storage.file.datalake._some_module"
         with self.assertNoMessages():
             self.checker.visit_import(import_node)
 
     def test_allows_non_azure_importfrom(self, setup):
         """from collections import OrderedDict should NOT be flagged."""
         importfrom_node = setup.body[10]
-        importfrom_node.root().name = "azure.storage.file.datalake._some_module"
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)

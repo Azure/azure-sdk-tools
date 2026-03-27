@@ -16,13 +16,11 @@ pr:
       - feature/*
       - release/*
       - hotfix/*
-    exclude:
-      - feature/v4
   paths:
     include: null
 
 extends:
-  template: /eng/pipelines/templates/stages/archetype-sdk-client.yml
+  template: ../../eng/pipelines/templates/stages/archetype-sdk-client.yml
   parameters:
     ServiceDirectory: null
     Artifacts:

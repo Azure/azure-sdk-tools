@@ -127,21 +127,21 @@ async function updateDataPlaneCiYaml(
     const content = await readFile(ciPath, { encoding: 'utf-8' });
     let parsed = parse(content.toString());
 
-    makeSureArrayAvailableInCiYaml(parsed, ['trigger', 'branches', 'exclude']);
-    makeSureArrayAvailableInCiYaml(parsed, ['pr', 'branches', 'exclude']);
     makeSureArrayAvailableInCiYaml(parsed, ['trigger', 'paths', 'include']);
     makeSureArrayAvailableInCiYaml(parsed, ['pr', 'paths', 'include']);
     makeSureArrayAvailableInCiYaml(parsed, ['extends', 'parameters', 'Artifacts']);
 
     const artifact: ArtifactInfo = getArtifact(npmPackageInfo);
     const artifactInclude = (array: ArtifactInfo[], item: ArtifactInfo) => array.map((a) => a.name).includes(item.name);
+    const pathInclude = (array: string[], item: string) => array.some(existing => {
+        const normalized = existing.endsWith('/') ? existing.slice(0, -1) : existing;
+        return item === existing || item.startsWith(normalized + '/');
+    });
 
     let needUpdate = false;
-    needUpdate = tryAddItemInArray(parsed.trigger.branches.exclude, 'feature/v4') || needUpdate;
-    needUpdate = tryAddItemInArray(parsed.pr.branches.exclude, 'feature/v4') || needUpdate;
-    needUpdate = tryAddItemInArray(parsed.trigger.paths.include, generatedPackageDirectory) || needUpdate;
+    needUpdate = tryAddItemInArray(parsed.trigger.paths.include, generatedPackageDirectory, pathInclude) || needUpdate;
     needUpdate = tryAddItemInArray(parsed.trigger.paths.include, ciPath) || needUpdate;
-    needUpdate = tryAddItemInArray(parsed.pr.paths.include, generatedPackageDirectory) || needUpdate;
+    needUpdate = tryAddItemInArray(parsed.pr.paths.include, generatedPackageDirectory, pathInclude) || needUpdate;
     needUpdate = tryAddItemInArray(parsed.pr.paths.include, ciPath) || needUpdate;
     needUpdate = tryAddItemInArray(parsed.extends.parameters.Artifacts, artifact, artifactInclude) || needUpdate;
 

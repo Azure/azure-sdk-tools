@@ -69,13 +69,11 @@ public class NamespaceManager : INamespaceManager
         [NamespaceDecisionStatus.Rejected]  = [NamespaceDecisionStatus.Approved]
     };
 
-    public async Task<NamespaceOperationResult> UpdateNamespaceStatusAsync(
-        string projectId, string language, NamespaceDecisionStatus newStatus, string notes, ClaimsPrincipal user)
+    public async Task<NamespaceOperationResult> UpdateNamespaceStatusAsync(string projectId, string language, NamespaceDecisionStatus newStatus, string notes, ClaimsPrincipal user)
     {
-        language = LanguageServiceHelpers.MapLanguageAlias(language);
         PackageKey parsedLanguageKey = PackageKey.Parse(language);
         string userName = user.GetGitHubLogin();
-        if (!await _permissionsManager.CanApproveAsync(userName, parsedLanguageKey.Language))
+        if (!await _permissionsManager.CanApproveAsync(userName, LanguageServiceHelpers.MapLanguageAlias(parsedLanguageKey.Language)))
         {
             return NamespaceOperationResult.Failure(NamespaceOperationError.Unauthorized);
         }

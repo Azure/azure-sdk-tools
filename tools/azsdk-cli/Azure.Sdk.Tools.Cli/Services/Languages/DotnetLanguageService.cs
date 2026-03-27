@@ -252,7 +252,7 @@ public sealed partial class DotnetLanguageService: LanguageService
         }
     }
 
-    public override async Task<TestRunResponse> RunAllTests(string packagePath, CancellationToken ct = default)
+    public override async Task<TestRunResponse> RunAllTests(string packagePath, TestMode testMode = TestMode.Playback, IDictionary<string, string>? liveTestEnvironment = null, TimeSpan? timeout = null, CancellationToken ct = default)
     {
         var testsPath = Path.Combine(packagePath, "tests");
         var workingDirectory = Directory.Exists(testsPath) ? testsPath : packagePath;
@@ -260,7 +260,8 @@ public sealed partial class DotnetLanguageService: LanguageService
         var result = await processHelper.Run(new ProcessOptions(
                 command: "dotnet",
                 args: ["test"],
-                workingDirectory: workingDirectory
+                workingDirectory: workingDirectory,
+                timeout: timeout
             ),
             ct
         );

@@ -17,21 +17,14 @@ model Employee is TrackedResource<EmployeeProperties> {
 
 /** Employee properties */
 model EmployeeProperties {
-  /** Age of employee (before 2025-11-01) */
-  @removed(Versions.v2024_10_01_preview)
-  @renamedFrom(Versions.v2024_10_01_preview, "age")
-  oldAge?: int32;
-
-  /** Age of employee (from 2025-11-01 onward, default is 21) */
-  @added(Versions.v2024_10_01_preview)
+  /** Age of employee */
   age?: int32;
 
   /** City of employee */
   city?: string;
 
-  /** Work location of employee */
-  @added(Versions.v2024_10_01_preview)
-  workLocation?: WorkLocation;
+  /** Email of employee */
+  email?: string;
 
   /** Profile of employee */
   @encode("base64url")
@@ -40,19 +33,6 @@ model EmployeeProperties {
   /** The status of the last operation. */
   @visibility(Lifecycle.Read)
   provisioningState?: ProvisioningState;
-}
-
-/** Work location details */
-@added(Versions.v2024_10_01_preview)
-model WorkLocation {
-  /** Country */
-  country?: string;
-
-  /** Company */
-  company?: string;
-
-  /** Seat number */
-  seatNumber?: string;
 }
 
 /** The resource provisioning state. */

@@ -29,6 +29,20 @@ public interface IFeedbackClassifierService
         string? serviceName = null,
         int? batchSize = null,
         CancellationToken ct = default);
+
+    /// <summary>
+    /// Gathers feedback items from the provided sources (APIView URL or plain text), then
+    /// classifies them in chunked batch LLM calls. Mutates gathered items in place.
+    /// </summary>
+    Task<(List<FeedbackItem> items, FeedbackClassificationResponse response)> ClassifyFromInputAsync(
+        string? apiViewUrl,
+        string? plainTextFeedback,
+        string globalContext,
+        string tspProjectPath,
+        string? language = null,
+        string? serviceName = null,
+        int? batchSize = null,
+        CancellationToken ct = default);
 }
 
 /// <summary>
@@ -46,17 +60,20 @@ public class FeedbackClassifierService : IFeedbackClassifierService
     private readonly ICopilotAgentRunner _agentRunner;
     private readonly ILogger<FeedbackClassifierService> _logger;
     private readonly ITypeSpecHelper _typeSpecHelper;
+    private readonly IAPIViewFeedbackService _feedbackService;
 
     public const int DefaultBatchSize = 50;
 
     public FeedbackClassifierService(
         ICopilotAgentRunner agentRunner,
         ILoggerFactory loggerFactory,
-        ITypeSpecHelper typeSpecHelper)
+        ITypeSpecHelper typeSpecHelper,
+        IAPIViewFeedbackService feedbackService)
     {
         _agentRunner = agentRunner;
         _logger = loggerFactory.CreateLogger<FeedbackClassifierService>();
         _typeSpecHelper = typeSpecHelper;
+        _feedbackService = feedbackService;
     }
 
     /// <summary>
@@ -95,6 +112,46 @@ public class FeedbackClassifierService : IFeedbackClassifierService
             await BatchClassifyAsync(chunk.ToList(), globalContext, language, serviceName, referenceDocContent, specRepoBasePath, ct);
         }
         return BuildClassificationResponse(items);
+    }
+
+    /// <summary>
+    /// Gathers feedback items from the provided sources (APIView URL or plain text), then
+    /// classifies them in chunked batch LLM calls. Mutates gathered items in place.
+    /// </summary>
+    public async Task<(List<FeedbackItem> items, FeedbackClassificationResponse response)> ClassifyFromInputAsync(
+        string? apiViewUrl,
+        string? plainTextFeedback,
+        string globalContext,
+        string tspProjectPath,
+        string? language = null,
+        string? serviceName = null,
+        int? batchSize = null,
+        CancellationToken ct = default)
+    {
+        var items = await GatherFeedbackItemsAsync(apiViewUrl, plainTextFeedback, ct);
+        var response = await ClassifyItemsAsync(items, globalContext, tspProjectPath, language, serviceName, batchSize, ct);
+        return (items, response);
+    }
+
+    /// <summary>
+    /// Gathers feedback items from the provided sources: an APIView URL or a plain text string.
+    /// </summary>
+    private async Task<List<FeedbackItem>> GatherFeedbackItemsAsync(
+        string? apiViewUrl,
+        string? plainTextFeedback,
+        CancellationToken ct)
+    {
+        if (!string.IsNullOrWhiteSpace(apiViewUrl))
+        {
+            return await _feedbackService.GetFeedbackItemsAsync(apiViewUrl, ct);
+        }
+
+        if (!string.IsNullOrWhiteSpace(plainTextFeedback))
+        {
+            return [new FeedbackItem { Text = plainTextFeedback, Context = string.Empty }];
+        }
+
+        return [];
     }
 
     private static FeedbackClassificationResponse BuildClassificationResponse(List<FeedbackItem> items)
@@ -154,7 +211,7 @@ public class FeedbackClassifierService : IFeedbackClassifierService
     {
         var template = new FeedbackClassificationTemplate(
             serviceName: serviceName,
-            language: language,
+            language: language ?? string.Empty,
             referenceDocContent: referenceDocContent,
             items: items,
             globalContext: globalContext

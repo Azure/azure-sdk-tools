@@ -18,12 +18,6 @@ model Employee is TrackedResource<EmployeeProperties> {
 /** Employee properties */
 model EmployeeProperties {
   /** Age of employee (before 2025-11-01) */
-  @removed(Versions.v2024_10_01_preview)
-  @renamedFrom(Versions.v2024_10_01_preview, "age")
-  oldAge?: int32;
-
-  /** Age of employee (from 2025-11-01 onward, default is 21) */
-  @added(Versions.v2024_10_01_preview)
   age?: int32;
 
   /** City of employee */
@@ -79,7 +73,6 @@ union ProvisioningState {
 interface Employees {
   get is ArmResourceRead<Employee>;
   createOrUpdate is ArmResourceCreateOrReplaceAsync<Employee>;
-  update is ArmResourcePatchSync<Employee, EmployeeProperties>;
   delete is ArmResourceDeleteWithoutOkAsync<Employee>;
   listByResourceGroup is ArmResourceListByParent<Employee>;
   listBySubscription is ArmListBySubscription<Employee>;

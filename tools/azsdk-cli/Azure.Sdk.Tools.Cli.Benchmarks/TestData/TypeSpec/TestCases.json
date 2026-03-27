@@ -38,7 +38,7 @@
         },
         {
             "name": "version-operation-return-type-changed",
-            "description": "Change an operation's return type in a new preview version using @returnTypeChangedFrom.",
+            "description": "Change an operation's return type in a new version using @returnTypeChangedFrom.",
             "prompt": "In the specification/widget/resource-manager/Microsoft.Widget/Widget project, change the return type of the `exportData` operation from `ExportResult` to `DetailedExportResult` with additional properties `format` (string) and `exportedAt` (utcDateTime) only for version `2025-05-04-preview`.",
             "testfiles": [
                 "version-operation-return-type-changed/employee.tsp",

@@ -131,11 +131,12 @@ func initCredential() error {
 	}
 
 	// 3: Azure Pipelines
-	tenantID := os.Getenv("AZURE_TENANT_ID")
-	serviceConnectionID := os.Getenv("AZURE_SERVICE_CONNECTION_ID")
+	pipelinesClientID := os.Getenv("AZURESUBSCRIPTION_CLIENT_ID")
+	pipelinesTenantID := os.Getenv("AZURESUBSCRIPTION_TENANT_ID")
+	serviceConnectionID := os.Getenv("AZURESUBSCRIPTION_SERVICE_CONNECTION_ID")
 	systemAccessToken := os.Getenv("SYSTEM_ACCESSTOKEN")
-	if len(clientID) > 0 && len(tenantID) > 0 && len(serviceConnectionID) > 0 && len(systemAccessToken) > 0 {
-		pipelinesCred, pipelinesErr := azidentity.NewAzurePipelinesCredential(tenantID, clientID, serviceConnectionID, systemAccessToken, nil)
+	if len(pipelinesClientID) > 0 && len(pipelinesTenantID) > 0 && len(serviceConnectionID) > 0 && len(systemAccessToken) > 0 {
+		pipelinesCred, pipelinesErr := azidentity.NewAzurePipelinesCredential(pipelinesTenantID, pipelinesClientID, serviceConnectionID, systemAccessToken, nil)
 		if pipelinesErr == nil {
 			creds = append(creds, pipelinesCred)
 			log.Printf("Azure Pipelines credential added")

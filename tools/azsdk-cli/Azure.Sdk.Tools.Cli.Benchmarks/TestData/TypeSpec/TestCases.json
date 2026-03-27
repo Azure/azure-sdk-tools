@@ -2,7 +2,7 @@
     "testCases": [
         {
             "name": "version-model-property-required",
-            "description": "Make an optional property required in a new preview version using @madeRequired.",
+            "description": "Make an optional property required in a new version using @madeRequired.",
             "prompt": "In the specification/widget/resource-manager/Microsoft.Widget/Widget project, make the `email` property required in EmployeeProperties only for version `2025-05-04-preview`.",
             "testfiles": [
                 "version-model-property-required/employee.tsp",

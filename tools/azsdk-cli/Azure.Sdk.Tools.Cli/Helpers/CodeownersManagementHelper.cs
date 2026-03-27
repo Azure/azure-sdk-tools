@@ -415,22 +415,37 @@ public class CodeownersManagementHelper(
     /// </summary>
     public async Task ThrowIfInvalidTeamAlias(string alias, CancellationToken ct)
     {
-        if (alias.Count(c => c == '/') != 1)
+        var normalizedAlias = NormalizeGitHubAlias(alias);
+
+        if (normalizedAlias.Count(c => c == '/') != 1)
         {
             throw new InvalidOperationException(
                 $"Invalid team alias '{alias}'. Team aliases must be in the format '<org>/<team>' with exactly one '/'.");
         }
 
         // Extract the team name without the org prefix for cache lookup
-        var parts = alias.Split('/', StringSplitOptions.TrimEntries);
+        var parts = normalizedAlias.Split('/', StringSplitOptions.TrimEntries);
         var org = parts[0];
         var teamSlug = parts[1];
 
-        // Check if the team exists in the TeamUserCache (populated from azure-sdk-write blob)
-        var usersForTeam = teamUserCache.GetUsersForTeam(alias);
-        if (usersForTeam.Count > 0)
+        if (string.IsNullOrEmpty(org) || string.IsNullOrEmpty(teamSlug))
         {
-            logger.LogInformation("Team '{Alias}' found in TeamUserCache with {Count} members", alias, usersForTeam.Count);
+            throw new InvalidOperationException(
+                $"Invalid team alias '{alias}'. Both the organization and team name must be non-empty.");
+        }
+
+        if (!string.Equals(org, "Azure", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(
+                $"Invalid team alias '{alias}'. Only teams in the 'Azure' organization are supported.");
+        }
+
+        // Check if the team exists in the TeamUserDict (populated from azure-sdk-write blob).
+        // Use ContainsKey rather than GetUsersForTeam so that teams with zero members
+        // are still accepted — empty-team validation happens later during the release gate.
+        if (teamUserCache.TeamUserDict.ContainsKey(teamSlug))
+        {
+            logger.LogInformation("Team '{Alias}' found in TeamUserCache", alias);
             return;
         }
 

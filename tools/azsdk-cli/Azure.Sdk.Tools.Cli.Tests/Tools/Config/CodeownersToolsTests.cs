@@ -45,8 +45,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
                 _mockcodeownersGenerateHelper.Object,
                 _mockGitHelper.Object,
                 _mockCodeownersManagement.Object,
-                _mockDevOps.Object,
-                _mockTeamUserCache.Object
+                _mockDevOps.Object
             );
         }
 

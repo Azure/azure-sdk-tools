@@ -28,6 +28,7 @@ public class CodeownersManagementHelperTests
         _mockDevOps = new Mock<IDevOpsService>();
         _mockTeamUserCache = new Mock<ITeamUserCache>();
         _mockTeamUserCache.Setup(c => c.GetUsersForTeam(It.IsAny<string>())).Returns(new List<string>());
+        _mockTeamUserCache.Setup(c => c.TeamUserDict).Returns(new Dictionary<string, List<string>>(StringComparer.InvariantCultureIgnoreCase));
         _mockGitHub = new Mock<IGitHubService>();
         _helper = new CodeownersManagementHelper(
             new TestLogger<CodeownersManagementHelper>(),
@@ -1547,12 +1548,34 @@ public class CodeownersManagementHelperTests
     {
         var alias = "Azure/my-cached-team";
         _mockTeamUserCache
-            .Setup(c => c.GetUsersForTeam(alias))
-            .Returns(new List<string> { "user1", "user2" });
+            .Setup(c => c.TeamUserDict)
+            .Returns(new Dictionary<string, List<string>>(StringComparer.InvariantCultureIgnoreCase)
+            {
+                { "my-cached-team", new List<string> { "user1", "user2" } }
+            });
 
         Assert.DoesNotThrowAsync(() => _helper.ThrowIfInvalidTeamAlias(alias, CancellationToken.None));
 
         // Should not call GitHub API when found in cache
+        _mockGitHub.Verify(
+            g => g.GetTeamByNameAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Test]
+    public void ThrowIfInvalidTeamAlias_FoundInCache_EmptyTeam_DoesNotThrow()
+    {
+        var alias = "Azure/azure-sdk-partners";
+        _mockTeamUserCache
+            .Setup(c => c.TeamUserDict)
+            .Returns(new Dictionary<string, List<string>>(StringComparer.InvariantCultureIgnoreCase)
+            {
+                { "azure-sdk-partners", new List<string>() }
+            });
+
+        Assert.DoesNotThrowAsync(() => _helper.ThrowIfInvalidTeamAlias(alias, CancellationToken.None));
+
+        // Should not call GitHub API when the team key exists in the cache, even with zero members
         _mockGitHub.Verify(
             g => g.GetTeamByNameAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Never);
@@ -1675,5 +1698,82 @@ public class CodeownersManagementHelperTests
 
         Assert.ThrowsAsync<Octokit.NotFoundException>(
             () => _helper.ThrowIfInvalidTeamAlias(alias, CancellationToken.None));
+    }
+
+    [Test]
+    public void ThrowIfInvalidTeamAlias_AtPrefixed_FoundInCache_DoesNotThrow()
+    {
+        var alias = "@Azure/azure-sdk-eng";
+        _mockTeamUserCache
+            .Setup(c => c.TeamUserDict)
+            .Returns(new Dictionary<string, List<string>>(StringComparer.InvariantCultureIgnoreCase)
+            {
+                { "azure-sdk-eng", new List<string> { "engineer1", "engineer2" } }
+            });
+
+        Assert.DoesNotThrowAsync(() => _helper.ThrowIfInvalidTeamAlias(alias, CancellationToken.None));
+
+        // Should not call GitHub API when found in cache
+        _mockGitHub.Verify(
+            g => g.GetTeamByNameAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Test]
+    public void ThrowIfInvalidTeamAlias_AtPrefixed_NotInCache_ValidatesViaGitHub()
+    {
+        var alias = "@Azure/azure-sdk-release";
+        var parentTeam = CreateTeam("azure-sdk-write");
+        var childTeam = CreateTeam("azure-sdk-release", parent: parentTeam);
+
+        _mockGitHub
+            .Setup(g => g.GetTeamByNameAsync("Azure", "azure-sdk-release", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(childTeam);
+        _mockGitHub
+            .Setup(g => g.GetTeamByNameAsync("Azure", "azure-sdk-write", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(parentTeam);
+
+        Assert.DoesNotThrowAsync(() => _helper.ThrowIfInvalidTeamAlias(alias, CancellationToken.None));
+        _mockGitHub.Verify(g => g.GetTeamByNameAsync("Azure", "azure-sdk-release", It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public void ThrowIfInvalidTeamAlias_EmptyTeamName_Throws()
+    {
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(
+            () => _helper.ThrowIfInvalidTeamAlias("Azure/", CancellationToken.None));
+        Assert.That(ex!.Message, Does.Contain("Both the organization and team name must be non-empty"));
+    }
+
+    [Test]
+    public void ThrowIfInvalidTeamAlias_EmptyOrgName_Throws()
+    {
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(
+            () => _helper.ThrowIfInvalidTeamAlias("/azure-sdk-core", CancellationToken.None));
+        Assert.That(ex!.Message, Does.Contain("Both the organization and team name must be non-empty"));
+    }
+
+    [Test]
+    public void ThrowIfInvalidTeamAlias_AtPrefixedEmptyOrg_Throws()
+    {
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(
+            () => _helper.ThrowIfInvalidTeamAlias("@/azure-sdk-tooling", CancellationToken.None));
+        Assert.That(ex!.Message, Does.Contain("Both the organization and team name must be non-empty"));
+    }
+
+    [Test]
+    public void ThrowIfInvalidTeamAlias_NonAzureOrg_Throws()
+    {
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(
+            () => _helper.ThrowIfInvalidTeamAlias("contoso/azure-sdk-storage", CancellationToken.None));
+        Assert.That(ex!.Message, Does.Contain("Only teams in the 'Azure' organization are supported"));
+    }
+
+    [Test]
+    public void ThrowIfInvalidTeamAlias_AtPrefixedNonAzureOrg_Throws()
+    {
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(
+            () => _helper.ThrowIfInvalidTeamAlias("@microsoft/azure-sdk-infra", CancellationToken.None));
+        Assert.That(ex!.Message, Does.Contain("Only teams in the 'Azure' organization are supported"));
     }
 }

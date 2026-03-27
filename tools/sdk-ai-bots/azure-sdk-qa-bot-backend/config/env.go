@@ -130,7 +130,23 @@ func initCredential() error {
 		log.Printf("AZURE_CLIENT_ID not set; skipping Managed Identity credential")
 	}
 
-	// 3: Azure CLI
+	// 3: Azure Pipelines
+	tenantID := os.Getenv("AZURE_TENANT_ID")
+	serviceConnectionID := os.Getenv("AZURE_SERVICE_CONNECTION_ID")
+	systemAccessToken := os.Getenv("SYSTEM_ACCESSTOKEN")
+	if len(clientID) > 0 && len(tenantID) > 0 && len(serviceConnectionID) > 0 && len(systemAccessToken) > 0 {
+		pipelinesCred, pipelinesErr := azidentity.NewAzurePipelinesCredential(tenantID, clientID, serviceConnectionID, systemAccessToken, nil)
+		if pipelinesErr == nil {
+			creds = append(creds, pipelinesCred)
+			log.Printf("Azure Pipelines credential added")
+		} else {
+			log.Printf("Azure Pipelines credential not available: %v", pipelinesErr)
+		}
+	} else {
+		log.Printf("Azure Pipelines credential env vars not fully set; skipping Azure Pipelines credential")
+	}
+
+	// 4: Azure CLI
 	azCLI, err := azidentity.NewAzureCLICredential(nil)
 	if err == nil {
 		creds = append(creds, azCLI)

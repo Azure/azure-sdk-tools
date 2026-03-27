@@ -93,9 +93,6 @@ export class RAGModel implements PromptCompletionModel {
     };
 
     const additional_infos: AdditionalInfo[] = [];
-    fullPrompt.additionalInfo.links.forEach((link) => {
-      additional_infos.push({ type: 'link', content: link.text, link: link.url.toString() });
-    });
     fullPrompt.additionalInfo.images.forEach((image) => {
       additional_infos.push({ type: 'image', content: image.text, link: image.url.toString() });
     });

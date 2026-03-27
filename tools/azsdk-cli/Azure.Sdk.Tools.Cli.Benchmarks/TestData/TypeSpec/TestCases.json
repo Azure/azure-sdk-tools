@@ -14,7 +14,7 @@
         },
         {
             "name": "version-model-property-removed",
-            "description": "Remove a property in a new preview version using @removed.",
+            "description": "Remove a property in a new version using @removed.",
             "prompt": "In the specification/widget/resource-manager/Microsoft.Widget/Widget project, remove the `department` property from EmployeeProperties only for version `2025-05-04-preview`.",
             "testfiles": [
                 "version-model-property-removed/employee.tsp",

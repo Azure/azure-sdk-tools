@@ -88,6 +88,11 @@ namespace Azure.Sdk.Tools.Cli.Commands
             Options: []
         );
 
+        public static readonly CommandGroup SLA = new(
+            Verb: "sla",
+            Description: "SLA status and metrics commands"
+        );
+
 #if DEBUG
         public static readonly CommandGroup Example = new(
             Verb: "example",

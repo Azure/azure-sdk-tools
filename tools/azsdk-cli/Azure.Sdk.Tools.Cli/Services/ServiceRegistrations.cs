@@ -17,6 +17,7 @@ using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Services.SetupRequirements;
 using Azure.Sdk.Tools.Cli.Services.TypeSpec;
 using Azure.Sdk.Tools.Cli.Services.Upgrade;
+using Azure.Sdk.Tools.Cli.Services.SLA;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.CodeownersUtils.Caches;
 
@@ -36,6 +37,8 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IDevOpsConnection, DevOpsConnection>();
             services.AddSingleton<IDevOpsService, DevOpsService>();
             services.AddSingleton<IGitHubService, GitHubService>();
+            services.AddSingleton<ISLAConfigProvider, SLAConfigProvider>();
+            services.AddSingleton<ISLAMetricsService, SLAMetricsService>();
             services.AddSingleton<IAzureSdkKnowledgeBaseService, AzureSdkKnowledgeBaseService>();
             services.AddSingleton<IUpgradeService, UpgradeService>();
 

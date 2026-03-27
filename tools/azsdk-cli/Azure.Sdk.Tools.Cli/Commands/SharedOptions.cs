@@ -1,4 +1,5 @@
 using System.CommandLine;
+using Azure.Sdk.Tools.Cli.Tools.SLA;
 using Azure.Sdk.Tools.Cli.Tools.CliManagement;
 using Azure.Sdk.Tools.Cli.Tools.EngSys;
 using Azure.Sdk.Tools.Cli.Tools.GitHub;
@@ -56,6 +57,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(TestTool),
             typeof(ListCommandTool),
             typeof(UpgradeTool),
+            typeof(SLAStatusTool),
 #if DEBUG
             // only add these tools in debug mode
             typeof(CleanupTool),

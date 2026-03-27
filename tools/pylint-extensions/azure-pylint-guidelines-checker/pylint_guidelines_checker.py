@@ -3664,7 +3664,7 @@ class DoNotUseLoggingDirectly(BaseChecker):
 
 
 class NoCrossPackagePrivateImport(BaseChecker):
-    """Rule to check that we aren't importing private APIs from other Azure packages.
+    """Rule to check that we aren't importing private APIs from other packages.
     For example, azure-storage-file-datalake should not import from
     azure.storage.blob._generated.models.
     """

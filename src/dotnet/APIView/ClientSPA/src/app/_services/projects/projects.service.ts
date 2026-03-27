@@ -40,4 +40,11 @@ export class ProjectsService {
       { withCredentials: true }
     );
   }
+
+  getNamespaceStatus(reviewId: string): Observable<{ status: string | null }> {
+    return this.http.get<{ status: string | null }>(
+      `${this.baseUrl}/reviews/${reviewId}/namespaceStatus`,
+      { withCredentials: true }
+    );
+  }
 }

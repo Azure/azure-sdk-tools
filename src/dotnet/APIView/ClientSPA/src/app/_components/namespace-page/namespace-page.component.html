@@ -76,8 +76,7 @@
                         <td class="language-cell">{{ row.language }}</td>
                         <td class="namespace-cell">
                             <a *ngIf="row.review && row.latestRevisionId" 
-                               [routerLink]="['/review', row.review.id]"
-                               [queryParams]="{activeApiRevisionId: row.latestRevisionId}"
+                               [href]="'/review/' + row.review.id + '?activeApiRevisionId=' + row.latestRevisionId"
                                class="namespace-link">
                                 {{ row.namespace }}
                             </a>
@@ -100,7 +99,11 @@
                             <span *ngIf="isApproved(row) && row.decidedBy" class="notes-text approved-by">
                                 Approved by {{ row.decidedBy }}
                             </span>
-                            <span *ngIf="!(isApproved(row) && row.decidedBy)" class="notes-text">{{ row.notes }}</span>
+                            <span *ngIf="isRejected(row) && row.decidedBy" class="notes-text rejected-by">
+                                Rejected by {{ row.decidedBy }}
+                                <span *ngIf="row.notes" class="rejection-reason"> — {{ row.notes }}</span>
+                            </span>
+                            <span *ngIf="!(isApproved(row) && row.decidedBy) && !(isRejected(row) && row.decidedBy)" class="notes-text">{{ row.notes }}</span>
                         </td>
                         <td class="action-cell" *ngIf="canUserApproveAny()">
                             <div class="action-buttons">

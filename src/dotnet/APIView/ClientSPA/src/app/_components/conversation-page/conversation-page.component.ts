@@ -115,7 +115,8 @@ export class ConversationPageComponent {
     if (this.activeApiRevisionId) {
       queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
     }
-    this.router.navigate(['/namespace', this.reviewId], { queryParams: queryParams });
+    queryParams['view'] = 'namespace';
+    this.router.navigate(['/review', this.reviewId], { queryParams: queryParams });
   }
 
   handleNumberOfActiveThreadsEmitter(value: number) {

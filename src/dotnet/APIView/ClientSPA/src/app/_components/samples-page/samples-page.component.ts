@@ -198,7 +198,8 @@ export class SamplesPageComponent {
     if (revisionId) {
       queryParams['activeApiRevisionId'] = revisionId;
     }
-    this.router.navigate(['/namespace', this.reviewId], { queryParams: queryParams });
+    queryParams['view'] = 'namespace';
+    this.router.navigate(['/review', this.reviewId], { queryParams: queryParams });
   }
 
   selectSample(sample: SamplesRevision) {

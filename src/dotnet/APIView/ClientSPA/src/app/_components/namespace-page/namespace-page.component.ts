@@ -56,7 +56,7 @@ export class NamespacePageComponent implements OnInit, OnDestroy {
   
   projectId: string | null = null;
   projectName: string | null = null;
-  relatedReviews: RelatedReviewItem[] = [];
+  relatedReviewsByLanguage: { [language: string]: RelatedReviewItem } = {};
   namespaceInfo: ProjectNamespaceInfo | null = null;
   
   tableRows: NamespaceTableRow[] = [];
@@ -139,7 +139,7 @@ export class NamespacePageComponent implements OnInit, OnDestroy {
         next: (response: RelatedReviewsResponse) => {
           this.projectId = response.projectId;
           this.projectName = response.projectName;
-          this.relatedReviews = response.reviews;
+          this.relatedReviewsByLanguage = response.reviews;
           
           if (this.projectId) {
             this.loadNamespaceInfo();
@@ -200,7 +200,7 @@ export class NamespacePageComponent implements OnInit, OnDestroy {
     }
     
     for (const lang of Object.keys(this.namespaceInfo.currentNamespaceStatus)) {
-      const review = this.relatedReviews.find(r => r.language === lang) || null;
+      const review = this.relatedReviewsByLanguage[lang] ?? null;
       const namespaceEntry = this.namespaceInfo.currentNamespaceStatus[lang];
       
       const canApprove = this.canUserApprove(lang);
@@ -241,6 +241,7 @@ export class NamespacePageComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(results => {
         for (const result of results) {
+          console.log(`[Namespace] latestRevisionId for lang="${result.language}": ${result.revisionId}`);
           const row = this.tableRows.find(r => r.language === result.language);
           if (row) {
             row.latestRevisionId = result.revisionId;

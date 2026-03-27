@@ -61,5 +61,5 @@ export interface RelatedReviewsResponse {
   projectId: string;
   projectName: string;
   crossLanguagePackageId: string;
-  reviews: RelatedReviewItem[];
+  reviews: { [language: string]: RelatedReviewItem };
 }

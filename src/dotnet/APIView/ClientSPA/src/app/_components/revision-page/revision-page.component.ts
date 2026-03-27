@@ -74,7 +74,8 @@ export class RevisionPageComponent {
     if (this.activeApiRevisionId) {
       queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
     }
-    this.router.navigate(['/namespace', this.reviewId], { queryParams: queryParams });
+    queryParams['view'] = 'namespace';
+    this.router.navigate(['/review', this.reviewId], { queryParams: queryParams });
   }
 
   noop() { }

@@ -43,6 +43,14 @@
             [embeddedUserProfile]="userProfile">
         </app-samples-page>
     </div>
+    <div *ngIf="namespaceActivated" [hidden]="activeView !== 'namespace'" class="namespace-panel">
+        <app-namespace-page
+            [embedded]="true"
+            [embeddedReviewId]="reviewId"
+            [embeddedReview]="review"
+            [embeddedUserProfile]="userProfile">
+        </app-namespace-page>
+    </div>
     <p-splitter [hidden]="activeView !== 'reviews'"
         [panelSizes]="panelSizes"
         [minSizes]="minSizes"

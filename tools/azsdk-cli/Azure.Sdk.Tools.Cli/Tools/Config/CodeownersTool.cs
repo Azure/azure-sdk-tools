@@ -118,7 +118,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         private readonly ICodeownersManagementHelper codeownersManagementHelper;
         private readonly IGitHelper gitHelper;
         private readonly IDevOpsService devOpsService;
-        private readonly ITeamUserCache teamUserCache;
 
         // URL constants
         private const string azureWriteTeamsBlobUrl = "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob";
@@ -178,8 +177,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             ICodeownersGenerateHelper codeownersGenerateHelper,
             IGitHelper gitHelper,
             ICodeownersManagementHelper codeownersManagementHelper,
-            IDevOpsService devOpsService,
-            ITeamUserCache teamUserCache
+            IDevOpsService devOpsService
         )
         {
             this.githubService = githubService;
@@ -189,7 +187,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             this.codeownersManagementHelper = codeownersManagementHelper;
             this.gitHelper = gitHelper;
             this.devOpsService = devOpsService;
-            this.teamUserCache = teamUserCache;
 
             CodeownersUtils.Utils.Log.Configure(loggerFactory);
         }

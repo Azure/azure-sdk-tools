@@ -51,7 +51,7 @@
         },
         {
             "name": "version-model-property-type-changed",
-            "description": "Change a property's type in a new preview version using @typeChangedFrom.",
+            "description": "Change a property's type in a new version using @typeChangedFrom.",
             "prompt": "In the specification/widget/resource-manager/Microsoft.Widget/Widget project, change the type of the `statusCode` property from `string` to `int32` in EmployeeProperties only for version `2025-05-04-preview`.",
             "testfiles": [
                 "version-model-property-type-changed/employee.tsp",

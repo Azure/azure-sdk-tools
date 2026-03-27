@@ -1,10 +1,11 @@
 # Release History
 
-## 0.6.5 (Unreleased)
+## 0.6.5 (2026-03-27)
 
 ### Features Added
 
 - Implemented version update for Go language service
+- Added team support for CODEOWNERS add/remove tools
 
 ### Breaking Changes
 

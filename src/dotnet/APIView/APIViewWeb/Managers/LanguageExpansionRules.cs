@@ -21,11 +21,11 @@ public interface ILanguageExpansionRule
 }
 
 /// <summary>
-/// Handles all Java packages. When metadata carries Flavor="v2", a single record expands
+/// Handles all Java packages. When metadata carries Flavor="azurev2", a single record expands
 /// into two ExpectedPackages entries:
 ///   "Java:v2" → the v2 package as-is  (e.g. com.azure.v2:azure-core-test / com.azure.v2.security.keys)
 ///   "Java"    → base package with v2 markers stripped (e.g. com.azure:azure-core-test / com.azure.security.keys)
-/// For regular Java (no v2 flavor) a single "Java" entry is produced.
+/// For regular Java (no azurev2 flavor) a single "Java" entry is produced.
 /// For review linking: a Java review whose package name contains ".v2:" maps to "Java:v2";
 /// all other Java reviews map to "Java".
 /// </summary>

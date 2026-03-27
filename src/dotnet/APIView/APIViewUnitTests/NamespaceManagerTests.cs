@@ -733,6 +733,47 @@ public class NamespaceManagerTests
         Assert.Equal(NamespaceOperationError.LanguageNotFound, result.Error);
     }
 
+    [Fact]
+    public async Task UpdateNamespaceStatusAsync_JavaV2CompositeKey_OnlyUpdatesTargetedKey_NotSiblingKey()
+    {
+        // Both "Java" and "Java:v2" exist in the project.
+        // Approving "Java:v2" must leave "Java" untouched, and vice versa.
+        SetupPermissions(true);
+
+        var javaEntry = new NamespaceDecisionEntry
+        {
+            Language = "Java", Flavor = "",
+            PackageName = "com.azure:azure-core", Namespace = "com.azure.core",
+            Status = NamespaceDecisionStatus.Proposed, ProposedBy = "user1", ProposedOn = DateTime.UtcNow
+        };
+        var javaV2Entry = new NamespaceDecisionEntry
+        {
+            Language = "Java", Flavor = "v2",
+            PackageName = "com.azure.v2:azure-core", Namespace = "com.azure.v2.core",
+            Status = NamespaceDecisionStatus.Proposed, ProposedBy = "user1", ProposedOn = DateTime.UtcNow
+        };
+        var project = CreateProject("project-1",
+            currentStatus: new(StringComparer.OrdinalIgnoreCase)
+            {
+                ["Java"]    = javaEntry,
+                ["Java:v2"] = javaV2Entry
+            });
+        SetupProject("project-1", project);
+
+        // Approve only "Java:v2"
+        NamespaceOperationResult result = await _namespaceManager.UpdateNamespaceStatusAsync(
+            "project-1", "Java:v2", NamespaceDecisionStatus.Approved, "lgtm", CreateUser("java-approver"));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(NamespaceDecisionStatus.Approved, result.Project.NamespaceInfo.CurrentNamespaceStatus["Java:v2"].Status);
+        // "Java" entry must remain Proposed — NOT accidentally approved
+        Assert.Equal(NamespaceDecisionStatus.Proposed,  result.Project.NamespaceInfo.CurrentNamespaceStatus["Java"].Status);
+
+        // History written under "Java:v2", none under "Java"
+        Assert.True(result.Project.NamespaceInfo.NamespaceHistory.ContainsKey("Java:v2"));
+        Assert.False(result.Project.NamespaceInfo.NamespaceHistory.ContainsKey("Java"));
+    }
+
     #endregion
 
     #region GetNamespaceInfoAsync Tests

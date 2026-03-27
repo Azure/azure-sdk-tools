@@ -26,7 +26,7 @@ public class ProjectsManager : IProjectsManager
         };
 
     private static ILanguageExpansionRule GetExpansionRule(string language) =>
-        _expansionRules.TryGetValue(language, out var rule) ? rule : DefaultExpansionRule.Instance;
+        !string.IsNullOrEmpty(language) && _expansionRules.TryGetValue(language, out var rule) ? rule : DefaultExpansionRule.Instance;
 
     private sealed record ReviewLinkChanges(
         List<(string languageKey, ReviewListItemModel Review)> LinkedReviews,

@@ -73,8 +73,9 @@ public class NamespaceManager : INamespaceManager
         string projectId, string language, NamespaceDecisionStatus newStatus, string notes, ClaimsPrincipal user)
     {
         language = LanguageServiceHelpers.MapLanguageAlias(language);
+        PackageKey parsedLanguageKey = PackageKey.Parse(language);
         string userName = user.GetGitHubLogin();
-        if (!await _permissionsManager.CanApproveAsync(userName, language))
+        if (!await _permissionsManager.CanApproveAsync(userName, parsedLanguageKey.Language))
         {
             return NamespaceOperationResult.Failure(NamespaceOperationError.Unauthorized);
         }
@@ -98,6 +99,7 @@ public class NamespaceManager : INamespaceManager
         EnsureHistoryList(project.NamespaceInfo, language).Add(new NamespaceDecisionEntry
         {
             Language = entry.Language,
+            Flavor = entry.Flavor,
             PackageName = entry.PackageName,
             Namespace = entry.Namespace,
             Status = entry.Status,
@@ -211,7 +213,7 @@ public class NamespaceManager : INamespaceManager
             EnsureHistoryList(currentInfo, ApiViewConstants.TypeSpecLanguage).Add(oldEntry);
         }
 
-        NamespaceDecisionEntry proposed = CreateProposedEntry(userName, ApiViewConstants.TypeSpecLanguage, null, newNamespace);
+        NamespaceDecisionEntry proposed = CreateProposedEntry(userName, ApiViewConstants.TypeSpecLanguage, "", null, newNamespace);
         currentInfo.CurrentNamespaceStatus[ApiViewConstants.TypeSpecLanguage] = proposed;
         EnsureHistoryList(currentInfo, ApiViewConstants.TypeSpecLanguage).Add(proposed);
 
@@ -259,7 +261,8 @@ public class NamespaceManager : INamespaceManager
             PackageInfo languagePackageInfo = newPackages[lang];
             if (!string.IsNullOrEmpty(languagePackageInfo?.Namespace))
             {
-                NamespaceDecisionEntry proposed = CreateProposedEntry(userName, lang, languagePackageInfo.PackageName, languagePackageInfo.Namespace);
+                PackageKey addedKey = PackageKey.Parse(lang);
+                NamespaceDecisionEntry proposed = CreateProposedEntry(userName, addedKey.Language, addedKey.Flavor, languagePackageInfo.PackageName, languagePackageInfo.Namespace);
                 if (approvedReviewsByPackage.TryGetValue(proposed.PackageName, out var approvedReview))
                 {
                     ApplyAutoApproval(proposed, approvedReview);
@@ -289,7 +292,8 @@ public class NamespaceManager : INamespaceManager
                     EnsureHistoryList(currentInfo, lang).Add(entry);
                 }
 
-                NamespaceDecisionEntry proposed = CreateProposedEntry(userName, lang, newPkg.PackageName, newNamespace);
+                PackageKey changedKey = PackageKey.Parse(lang);
+                NamespaceDecisionEntry proposed = CreateProposedEntry(userName, changedKey.Language, changedKey.Flavor, newPkg.PackageName, newNamespace);
                 if (approvedReviewsByPackage.TryGetValue(proposed.PackageName, out var approvedReview))
                 {
                     ApplyAutoApproval(proposed, approvedReview);
@@ -318,9 +322,10 @@ public class NamespaceManager : INamespaceManager
         entry.Notes = $" {NamespaceManagerConstants.AutoApprovalNotes} (review {approvedReview.Id}) ";
     }
 
-    private static NamespaceDecisionEntry CreateProposedEntry(string userName, string language, string packageName, string namespaceName) => new()
+    private static NamespaceDecisionEntry CreateProposedEntry(string userName, string language, string flavor, string packageName, string namespaceName) => new()
     {
         Language = language,
+        Flavor = flavor ?? "",
         PackageName = packageName,
         Namespace = namespaceName,
         Status = NamespaceDecisionStatus.Proposed,

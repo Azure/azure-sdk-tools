@@ -1,13 +1,9 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
-using Azure.Core;
-using Azure.Identity;
-using Azure.Sdk.Tools.GitHubEventProcessor.Configuration;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
 using Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing;
 using Azure.Sdk.Tools.GitHubEventProcessor.GitHubPayload;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -33,7 +29,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                 })
                 .ConfigureServices((context, services) =>
                 {
-                    services.AddSingleton<McpConfiguration>(sp => CreateMcpConfiguration());
                     services.AddSingleton<McpIssueProcessing>();
                     services.AddSingleton<IssueProcessing>();
                     services.AddSingleton<IssueCommentProcessing>();
@@ -127,52 +122,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                     }
             }
             await gitHubEventClient.WriteRateLimits("RateLimit at end of execution:");
-        }
-
-        /// <summary>
-        /// Creates an McpConfiguration instance by connecting to Azure App Configuration.
-        /// </summary>
-        private static McpConfiguration CreateMcpConfiguration()
-        {
-            string configEndpoint = Environment.GetEnvironmentVariable("APP_CONFIG_ENDPOINT");
-            if (string.IsNullOrEmpty(configEndpoint))
-            {
-                Console.WriteLine("Warning: APP_CONFIG_ENDPOINT environment variable not set. Using empty config for MCP.");
-                return new McpConfiguration(new ConfigurationBuilder().Build());
-            }
-
-            bool isRunningInGitHubActions = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GITHUB_ACTIONS"));
-            TokenCredential credential = isRunningInGitHubActions
-                ? new ManagedIdentityCredential()
-                : new ChainedTokenCredential(
-                    new AzureCliCredential(),
-                    new VisualStudioCredential(),
-                    new VisualStudioCodeCredential()
-                );
-
-            IConfiguration mcpConfig;
-            try
-            {
-                var builder = new ConfigurationBuilder();
-                builder.AddAzureAppConfiguration(options =>
-                {
-                    options.Connect(new Uri(configEndpoint), credential);
-                });
-                mcpConfig = builder.Build();
-                Console.WriteLine($"Connected to Azure App Configuration: {configEndpoint}");
-            }
-            catch (AuthenticationFailedException ex)
-            {
-                Console.WriteLine($"Warning: Authentication failed for Azure App Configuration. Using empty config. Error: {ex.Message}");
-                mcpConfig = new ConfigurationBuilder().Build();
-            }
-            catch (RequestFailedException ex)
-            {
-                Console.WriteLine($"Warning: Failed to connect to Azure App Configuration. Using empty config. Error: {ex.Message}");
-                mcpConfig = new ConfigurationBuilder().Build();
-            }
-
-            return new McpConfiguration(mcpConfig);
         }
 
         /// <summary>

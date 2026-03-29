@@ -49,7 +49,7 @@ public class Program
         var csvOutput = args.FirstOrDefault(a => a.StartsWith("--output="))?.Split('=')[1] 
             ?? "mcp_evaluation_results.csv";
 
-        var credential = new DefaultAzureCredential();
+        var credential = new AzureCliCredential();
 
         if (extractReal)
         {
@@ -122,7 +122,7 @@ public class Program
         return issue;
     }
 
-    static ILabeler? CreateLabeler(IConfiguration configuration, ILoggerFactory loggerFactory, ILogger logger, DefaultAzureCredential credential)
+    static ILabeler? CreateLabeler(IConfiguration configuration, ILoggerFactory loggerFactory, ILogger logger, AzureCliCredential credential)
     {
         try
         {
@@ -176,7 +176,7 @@ public class Program
         }
     }
 
-    static async Task ExtractRealIssuesAsync(IConfiguration configuration, ILogger logger, DefaultAzureCredential credential)
+    static async Task ExtractRealIssuesAsync(IConfiguration configuration, ILogger logger, AzureCliCredential credential)
     {
         using var cts = new CancellationTokenSource();
         Console.CancelKeyPress += (_, e) =>

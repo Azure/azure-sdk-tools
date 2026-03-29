@@ -93,7 +93,7 @@ The vector dimensions are automatically calculated based on the embedding model 
 
 **For MCP repository:**
 - `repo`: Set to `mcp`
-- Uses Server/Tool labels (`server-*`, `tools-*`, `remote-mcp` prefixes)
+- Uses Server/Tool labels (`server-*`, `tools-*`, `remote-mcp`, `packages-*` prefixes)
 - Chunk size: 2200 characters, overlap: 250 characters
 - `RerankerThreshold`: `0.7` (more permissive for broader matches)
 
@@ -174,7 +174,7 @@ Select an option:
 - Fetches labels from configured repositories
 - Filters labels by type:
   - Azure SDK: Service labels (`e99695` color) and Category labels (`ffeb77` color)
-  - MCP: Server labels (`server-*`), Tool labels (`tools-*`, `remote-mcp`)
+  - MCP: Server labels (`server-*`), Tool labels (`tools-*`, `remote-mcp`, `packages-*`)
 - Uploads label definitions to Azure Blob Storage (`labels` container)
 
 **When to use:**

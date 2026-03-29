@@ -180,7 +180,9 @@ Select an option:
 - Fetches labels from configured repositories
 - Filters labels by type:
   - Azure SDK: Service labels (`e99695` color) and Category labels (`ffeb77` color)
-  - MCP: Server labels (`server-*`), Tool labels (`tools-*`, `remote-mcp`, `packages-*`)
+  - MCP:
+    - `PrimaryLabelPrefixes`: `["server-"]` (configured in `local.settings.json` or App config)
+    - `SecondaryLabelPrefixes`: `["tools-", "remote-mcp", "packages-"]` (configured in `local.settings.json` or App config)
 - Uploads label definitions to Azure Blob Storage (`labels` container)
 
 **When to use:**

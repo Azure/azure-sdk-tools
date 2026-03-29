@@ -108,10 +108,10 @@ namespace SearchIndexCreator
         {
             var primaryPrefixes = (_config["PrimaryLabelPrefixes"]
                 ?? throw new InvalidOperationException("Configuration key 'PrimaryLabelPrefixes' is required but was not found."))
-                .Split(';', StringSplitOptions.RemoveEmptyEntries);
+                .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             var secondaryPrefixes = (_config["SecondaryLabelPrefixes"]
                 ?? throw new InvalidOperationException("Configuration key 'SecondaryLabelPrefixes' is required but was not found."))
-                .Split(';', StringSplitOptions.RemoveEmptyEntries);
+                .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
             var allPrefixes = primaryPrefixes.Concat(secondaryPrefixes).ToArray();
 

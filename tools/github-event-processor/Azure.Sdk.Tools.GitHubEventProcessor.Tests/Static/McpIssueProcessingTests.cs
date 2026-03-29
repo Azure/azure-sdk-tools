@@ -43,7 +43,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   RuleState.On,
                   "server-azure.mcp",
                   "",
-                  "microsoft/azure-mcp",
+                  "McpOwner1",
                   true,
                   false,
                   false)]

@@ -49,6 +49,8 @@ Create a `local.settings.json` file in the SearchIndexCreator project directory:
     "RepositoryNamesForLabels": "azure-sdk-for-net;azure-sdk-for-js;azure-sdk-for-python",
     "ConfigurationEndpoint": "https://<app-config>.azconfig.io",
     "McpRepositoryForLabels": "mcp",
+    "PrimaryLabelPrefixes": "server-",
+    "SecondaryLabelPrefixes": "tools-;remote-mcp;packages-",
     "RerankerThreshold": "1.0"
   }
 }
@@ -74,6 +76,8 @@ Create a `local.settings.json` file in the SearchIndexCreator project directory:
 | `RepositoryNamesForLabels` | Semicolon-separated list of Azure SDK repos | `azure-sdk-for-net;azure-sdk-for-js` |
 | `ConfigurationEndpoint` | Azure App Configuration endpoint (optional) | `https://my-config.azconfig.io` |
 | `McpRepositoryForLabels` | MCP repository name | `mcp` |
+| `PrimaryLabelPrefixes` | Semicolon-separated prefixes for primary (Server) labels. **Required for MCP repos.** | `server-` |
+| `SecondaryLabelPrefixes` | Semicolon-separated prefixes for secondary (Tool) labels. **Required for MCP repos.** | `tools-;remote-mcp;packages-` |
 | `RerankerThreshold` | Semantic reranker score threshold (0.0-1.0) | `1.0` (default), `0.7` (for MCP) |
 
 ### Embedding Model Notes
@@ -93,6 +97,8 @@ The vector dimensions are automatically calculated based on the embedding model 
 
 **For MCP repository:**
 - `repo`: Set to `mcp`
+- `PrimaryLabelPrefixes` : `[:server-"]` (configured in `local.settings.json` or app config)
+- `SecondaryLabelPrefixes`: `["tools-", "remote-mcp", "packages-"]` (configured in `local.settings.json` or app config)  
 - Uses Server/Tool labels (`server-*`, `tools-*`, `remote-mcp`, `packages-*` prefixes)
 - Chunk size: 2200 characters, overlap: 250 characters
 - `RerankerThreshold`: `0.7` (more permissive for broader matches)

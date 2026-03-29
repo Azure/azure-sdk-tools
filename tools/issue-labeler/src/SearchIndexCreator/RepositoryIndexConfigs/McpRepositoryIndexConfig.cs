@@ -26,10 +26,10 @@ namespace SearchIndexCreator.RepositoryIndexConfigs
         {
             _primaryPrefixes = (config["PrimaryLabelPrefixes"]
                 ?? throw new InvalidOperationException("Configuration key 'PrimaryLabelPrefixes' is required but was not found."))
-                .Split(';', StringSplitOptions.RemoveEmptyEntries);
+                .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             _secondaryPrefixes = (config["SecondaryLabelPrefixes"]
                 ?? throw new InvalidOperationException("Configuration key 'SecondaryLabelPrefixes' is required but was not found."))
-                .Split(';', StringSplitOptions.RemoveEmptyEntries);
+                .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries );
         }
 
         public string DisplayName => "MCP";

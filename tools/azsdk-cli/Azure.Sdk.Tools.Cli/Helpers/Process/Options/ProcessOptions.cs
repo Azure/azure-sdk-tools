@@ -12,6 +12,7 @@ public interface IProcessOptions
     TimeSpan Timeout { get; }
     bool LogOutputStream { get; }
     string ShortName { get; }
+    IDictionary<string, string>? EnvironmentVariables { get; }
 }
 
 public class ProcessOptions : IProcessOptions
@@ -19,13 +20,14 @@ public class ProcessOptions : IProcessOptions
     public static readonly TimeSpan DEFAULT_PROCESS_TIMEOUT = TimeSpan.FromMinutes(2);
     private static readonly TimeSpan maxProcessTimeout = TimeSpan.FromHours(2);
 
-    private const string CMD = "cmd.exe";
+    public const string CMD = "cmd.exe";
 
     public string Command { get; }
     public List<string> Args { get; } = [];
     public string WorkingDirectory { get; }
     public TimeSpan Timeout { get; }
     public bool LogOutputStream { get; }
+    public IDictionary<string, string>? EnvironmentVariables { get; }
 
     private string shortName;
     public virtual string ShortName
@@ -45,8 +47,9 @@ public class ProcessOptions : IProcessOptions
         string[] args,
         bool logOutputStream = true,
         string? workingDirectory = null,
-        TimeSpan? timeout = null
-    ) : this(command, args, command, args, logOutputStream, workingDirectory, timeout) { }
+        TimeSpan? timeout = null,
+        IDictionary<string, string>? environmentVariables = null
+    ) : this(command, args, command, args, logOutputStream, workingDirectory, timeout, environmentVariables) { }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ProcessOptions"/> class that uses the same command-line arguments on both platforms.
@@ -59,8 +62,9 @@ public class ProcessOptions : IProcessOptions
         string[] args,
         bool logOutputStream = true,
         string? workingDirectory = null,
-        TimeSpan? timeout = null)
-        : this(unixCommand, args, windowsCommand, args, logOutputStream, workingDirectory, timeout)
+        TimeSpan? timeout = null,
+        IDictionary<string, string>? environmentVariables = null)
+        : this(unixCommand, args, windowsCommand, args, logOutputStream, workingDirectory, timeout, environmentVariables)
     { }
 
     public ProcessOptions(
@@ -70,7 +74,8 @@ public class ProcessOptions : IProcessOptions
         string[] windowsArgs,
         bool logOutputStream = true,
         string? workingDirectory = null,
-        TimeSpan? timeout = null
+        TimeSpan? timeout = null,
+        IDictionary<string, string>? environmentVariables = null
     )
     {
         if (string.IsNullOrWhiteSpace(workingDirectory))
@@ -83,7 +88,7 @@ public class ProcessOptions : IProcessOptions
         var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
         if (isWindows && windowsCommand != "pwsh" && windowsCommand != "powershell")
         {
-            args = ["/C", command, .. windowsArgs];
+            args = ["/C", windowsCommand, .. windowsArgs];
             command = CMD;
         }
 
@@ -98,6 +103,7 @@ public class ProcessOptions : IProcessOptions
 
         this.Timeout = timeout ?? DEFAULT_PROCESS_TIMEOUT;
         this.LogOutputStream = logOutputStream;
+        this.EnvironmentVariables = environmentVariables;
     }
 
     public void AddArgs(params string[] args)

@@ -1,3 +1,9 @@
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
 """Workflow configuration loader for evals.
 
 Minimal schema (intentionally lean):
@@ -18,8 +24,8 @@ from typing import Dict, Type
 
 import yaml
 from evals._custom import (
-    PromptyEvaluator,
-    PromptySummaryEvaluator,
+    PromptEvaluator,
+    PromptSummaryEvaluator,
 )
 
 # Global evaluator registry
@@ -144,8 +150,8 @@ def load_workflow_config(path: str | os.PathLike) -> WorkflowConfig:
 
 
 # Register evaluators at module load time to prevent circular imports
-register_evaluator("prompt", PromptyEvaluator)
-register_evaluator("summarize_prompt", PromptySummaryEvaluator)
+register_evaluator("prompt", PromptEvaluator)
+register_evaluator("summarize_prompt", PromptSummaryEvaluator)
 
 
 __all__ = [

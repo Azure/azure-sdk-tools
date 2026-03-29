@@ -1,6 +1,14 @@
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
 import json
-import yaml
 from pathlib import Path
+
+import yaml
+
 
 def ensure_json_obj(val):
     """Helper to ensure input is a dict (parsed JSON)."""
@@ -8,18 +16,19 @@ def ensure_json_obj(val):
         return json.loads(val)
     return val
 
+
 def load_recordings(testcase_ids: list[str], test_file_paths: list[Path]) -> dict[str, dict]:
     """Load recordings for multiple testcases and return testcase_id -> result_row dictionary.
 
     Args:
         testcase_ids: List of testcase identifiers to load
         test_file_paths: Corresponding list of test file paths
-        
+
     Returns:
         Dictionary mapping testcase_id to Azure AI result row
     """
     recordings_lookup = {}
-    
+
     for testcase_id, test_file_path in zip(testcase_ids, test_file_paths):
         recording_file = _get_recording_file_path(testcase_id, test_file_path)
 
@@ -35,9 +44,10 @@ def load_recordings(testcase_ids: list[str], test_file_paths: list[Path]) -> dic
 
     return recordings_lookup
 
+
 def save_recordings(test_file_paths: list[Path], azure_results: list[dict]) -> None:
     """Save fresh evaluation results to individual recording files.
-    
+
     Args:
         test_file_paths: List of test file paths corresponding to the results
         azure_results: List of Azure AI evaluation results to save
@@ -54,13 +64,13 @@ def save_recordings(test_file_paths: list[Path], azure_results: list[dict]) -> N
                     test_data = yaml.safe_load(f)
                 else:
                     continue
-                    
+
                 testcase_id = test_data.get("testcase")
                 if testcase_id:
                     testcase_to_file[testcase_id] = test_file_path
         except (json.JSONDecodeError, IOError, yaml.YAMLError):
             continue
-    
+
     # Save each result to its individual cache file
     for azure_result in azure_results:
         for row in azure_result.get("rows", []):
@@ -72,10 +82,10 @@ def save_recordings(test_file_paths: list[Path], azure_results: list[dict]) -> N
 
 def _extract_testcase_id(row: dict) -> str | None:
     """Extract testcase identifier from Azure AI evaluation result row.
-    
+
     Args:
         row: Azure AI evaluation result row
-        
+
     Returns:
         Testcase ID string, or None if not found
     """
@@ -89,15 +99,15 @@ def _extract_testcase_id(row: dict) -> str | None:
 
 
 def _get_recording_file_path(
-        testcase_id: str, test_file_path: Path | None = None, recording_base_dir: Path | None = None
-    ) -> Path:
+    testcase_id: str, test_file_path: Path | None = None, recording_base_dir: Path | None = None
+) -> Path:
     """Get recording file path for a specific testcase, mirroring test structure.
-    
+
     Args:
         testcase_id: The test case identifier
         test_file_path: Path to the original test file (to determine structure)
         recording_base_dir: Base directory for recording files (defaults to evals/recordings)
-        
+
     Returns:
         Path to the individual JSON recording file for this testcase
     """
@@ -123,22 +133,18 @@ def _get_recording_file_path(
 
 def _save_result_to_file(testcase_id: str, test_file_path: Path, azure_result_row: dict) -> None:
     """Save a single test result to its individual recording file.
-    
+
     Args:
         testcase_id: The test case identifier
         test_file_path: Path to the original test file
         azure_result_row: Single Azure AI evaluation result row to cache
     """
     recording_file = _get_recording_file_path(testcase_id, test_file_path)
-    recording_data = {
-        "testcase": testcase_id,
-        "row": azure_result_row
-    }
-    
+    recording_data = {"testcase": testcase_id, "row": azure_result_row}
+
     try:
         with recording_file.open("w", encoding="utf-8") as f:
             json.dump(recording_data, f, indent=2, ensure_ascii=False)
     except IOError:
         # Continue without caching if write fails
         pass
-    

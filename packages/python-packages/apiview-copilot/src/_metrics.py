@@ -1,3 +1,9 @@
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
 from dataclasses import asdict, dataclass, field
 from datetime import date
 from pathlib import Path
@@ -10,7 +16,7 @@ from src._apiview import (
 )
 from src._database_manager import get_database_manager
 from src._models import APIViewComment
-from src._utils import run_prompty
+from src._prompt_runner import run_prompt
 
 
 @dataclass
@@ -119,7 +125,7 @@ def get_metrics_report(
         _generate_charts(report, start_date, end_date)
     if markdown:
         inputs = {"data": report}
-        summary = run_prompty(folder="other", filename="summarize_metrics", inputs=inputs)
+        summary = run_prompt(folder="other", filename="summarize_metrics", inputs=inputs)
         print(summary)
     else:
         return report
@@ -395,20 +401,28 @@ def _generate_charts(report: dict, start_date: str, end_date: str) -> None:
     plt.close()
     print(f"Saved: {adoption_path}")
 
-    # Chart 2: Comment Quality - stacked percent bar chart
-    # Order from bottom to top: good, implicit_good, implicit_bad, bad, deleted (neutral omitted - ambiguous)
-    categories = ["good", "implicit_good", "implicit_bad", "bad", "deleted"]
+    # Chart 2: Comment Quality - stacked fraction bar chart (excluding neutral)
+    # Order from bottom to top: good, implicit_good, implicit_bad, bad, deleted
+    count_categories = ["good_count", "implicit_good_count", "implicit_bad_count", "bad_count", "deleted_count"]
     colors = ["darkgreen", "lightgreen", "lightcoral", "red", "darkred"]
     labels = ["Good (upvoted)", "Implicit Good", "Implicit Bad", "Bad (downvoted)", "Deleted"]
+
+    # Calculate totals excluding neutral for each language
+    totals_excl_neutral = []
+    for lang in languages_with_overall:
+        q = metrics_lookup[lang]["comment_quality"]
+        total = sum(q.get(cat, 0) for cat in count_categories)
+        totals_excl_neutral.append(total)
 
     plt.figure(figsize=(12, 6))
     x = range(len(languages_with_overall))
     bottom = [0.0] * len(languages_with_overall)
 
-    for cat, color, label in zip(categories, colors, labels):
-        values = [metrics_lookup[lang]["comment_quality"].get(cat, 0) for lang in languages_with_overall]
-        plt.bar(x, values, bottom=bottom, color=color, label=label)
-        bottom = [b + v for b, v in zip(bottom, values)]
+    for cat, color, label in zip(count_categories, colors, labels):
+        counts = [metrics_lookup[lang]["comment_quality"].get(cat, 0) for lang in languages_with_overall]
+        fractions = [c / t if t > 0 else 0.0 for c, t in zip(counts, totals_excl_neutral)]
+        plt.bar(x, fractions, bottom=bottom, color=color, label=label)
+        bottom = [b + f for b, f in zip(bottom, fractions)]
 
     plt.xlabel("Language")
     plt.ylabel("Fraction of AI Comments")
@@ -425,10 +439,14 @@ def _generate_charts(report: dict, start_date: str, end_date: str) -> None:
 
     # Chart 3: Human-Copilot Split - for languages WITH copilot reviews
     # Stacked bar: human comments + AI comments
-    langs_with_copilot = [lang for lang in languages_with_overall if metrics_lookup[lang]["adoption"]["copilot_review_count"] > 0]
+    langs_with_copilot = [
+        lang for lang in languages_with_overall if metrics_lookup[lang]["adoption"]["copilot_review_count"] > 0
+    ]
 
     if langs_with_copilot:
-        human_with_ai = [metrics_lookup[lang]["comment_makeup"]["human_comment_count_with_ai"] for lang in langs_with_copilot]
+        human_with_ai = [
+            metrics_lookup[lang]["comment_makeup"]["human_comment_count_with_ai"] for lang in langs_with_copilot
+        ]
         ai_counts = [metrics_lookup[lang]["comment_makeup"]["ai_comment_count"] for lang in langs_with_copilot]
 
         plt.figure(figsize=(12, 6))
@@ -453,8 +471,12 @@ def _generate_charts(report: dict, start_date: str, end_date: str) -> None:
         print("No languages with Copilot reviews for human-copilot split chart.")
 
     # Chart 4: Human Comments With vs Without Copilot - side-by-side bars
-    human_with = [metrics_lookup[lang]["comment_makeup"]["human_comment_count_with_ai"] for lang in languages_with_overall]
-    human_without = [metrics_lookup[lang]["comment_makeup"]["human_comment_count_without_copilot"] for lang in languages_with_overall]
+    human_with = [
+        metrics_lookup[lang]["comment_makeup"]["human_comment_count_with_ai"] for lang in languages_with_overall
+    ]
+    human_without = [
+        metrics_lookup[lang]["comment_makeup"]["human_comment_count_without_copilot"] for lang in languages_with_overall
+    ]
 
     plt.figure(figsize=(12, 6))
     x = range(len(languages_with_overall))

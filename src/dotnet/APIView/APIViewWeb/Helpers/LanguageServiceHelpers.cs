@@ -6,7 +6,7 @@ namespace APIViewWeb.Helpers
 {
     public class LanguageServiceHelpers
     {
-        public static string[] SupportedLanguages = new string[] { "C", "C#", "C++", "Go", "Java", "JavaScript", "Json", "Kotlin", "Python", "Rust", "Swagger", "Swift", "TypeSpec", "Xml" };
+        public static string[] SupportedLanguages = ["C", "C#", "C++", "Go", "Java", "JavaScript", "Json", "Kotlin", "Python", "Rust", "Swagger", "Swift", "TypeSpec", "Xml"];
 
         public static IEnumerable<string> MapLanguageAliases(IEnumerable<string> languages)
         {
@@ -30,6 +30,9 @@ namespace APIViewWeb.Helpers
             if (language.Equals("net", StringComparison.OrdinalIgnoreCase) || language.Equals(".NET", StringComparison.OrdinalIgnoreCase))
                 return "C#";
 
+            if (language.Equals("csharp", StringComparison.OrdinalIgnoreCase))
+                return "C#";
+
             if (language.Equals("cpp", StringComparison.OrdinalIgnoreCase))
                 return "C++";
 
@@ -39,21 +42,29 @@ namespace APIViewWeb.Helpers
             if (language.Equals("Cadl", StringComparison.OrdinalIgnoreCase))
                 return ApiViewConstants.TypeSpecLanguage;
 
-            return SupportedLanguages.Where(lang => lang.Equals(language, StringComparison.OrdinalIgnoreCase)).FirstOrDefault() ?? language;
+            return SupportedLanguages.FirstOrDefault(lang => lang.Equals(language, StringComparison.OrdinalIgnoreCase)) ?? language;
         }
 
         public static string GetLanguageAliasForCopilotService(string language, string languageVariant = null)
         {
-            return language switch
+            if (string.IsNullOrEmpty(language))
             {
-                "C" => "clang",
-                "C#" => "dotnet",
-                "C++" => "cpp",
-                "JavaScript" => "typescript",
-                "Swift" => "ios",
-                "Go" => "golang",
-                "Java" => languageVariant == "Android" ? "android" : "java",
-                _ => language?.ToLowerInvariant()
+                return null;
+            }
+
+            return language.ToLowerInvariant() switch
+            {
+                "c" => "clang",
+                "c#" or "cs" or "csharp" or "dotnet" or ".net" or "net" => "dotnet",
+                "c++" or "cpp" => "cpp",
+                "javascript" or "js" => "typescript",
+                "typescript" or "ts" => "typescript",
+                "swift" => "ios",
+                "go" or "golang" => "golang",
+                "java" => languageVariant == "Android" ? "android" : "java",
+                "py" or "python" => "python",
+                "rust" => "rust",
+                _ => language.ToLowerInvariant()
             };
         }
 

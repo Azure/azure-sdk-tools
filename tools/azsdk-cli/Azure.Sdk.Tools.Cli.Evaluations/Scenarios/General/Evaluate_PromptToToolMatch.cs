@@ -8,9 +8,9 @@ using NUnit.Framework;
 namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
 {
     /// <summary>
-    /// Data-driven tests that evaluate tool discoverability using embedding similarity.
+    /// Data-driven tests that evaluate tool discoverability using keyword matching.
     /// Loads test prompts from TestPrompts.json and validates that each prompt matches
-    /// its expected tool with sufficient confidence.
+    /// its expected tool via keyword overlap (modeled after GHCP4A's TriggerMatcher).
     /// </summary>
     public partial class Scenario
     {
@@ -27,8 +27,8 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
         }
 
         /// <summary>
-        /// Evaluates a single prompt against its expected tool using embedding similarity.
-        /// The test passes if the expected tool ranks in top 3 with ≥40% confidence.
+        /// Evaluates a single prompt against its expected tool using keyword matching.
+        /// The test passes if the expected tool ranks in top 3 with ≥2 keyword matches or ≥20% overlap.
         /// </summary>
         [Test]
         [TestCaseSource(nameof(GetPromptTestCases))]
@@ -84,9 +84,17 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
                 "azsdk_example_azure_service",
                 "azsdk_example_ai_service",
                 "azsdk_example_error_handling",
-                "azsdk_example_microagent_fibonacci",
+                "azsdk_example_agent_fibonacci",
                 "azsdk_example_github_service",
-                "azsdk_example_devops_service"
+                "azsdk_example_devops_service",
+                "azsdk_upgrade",
+                "azsdk_engsys_codeowner_view",
+                "azsdk_engsys_codeowner_add_label_owner",
+                "azsdk_engsys_codeowner_remove_label_owner",
+                "azsdk_engsys_codeowner_add_package_owner",
+                "azsdk_engsys_codeowner_remove_package_owner",
+                "azsdk_engsys_codeowner_add_package_label",
+                "azsdk_engsys_codeowner_remove_package_label"
             };
 
             var missingTools = toolsWithoutPrompts

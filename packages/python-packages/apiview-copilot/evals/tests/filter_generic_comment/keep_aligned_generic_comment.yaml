@@ -1,0 +1,31 @@
+testcase: keep_aligned_generic_comment
+language: Python
+content: |
+  {
+    "line_no": 12,
+    "bad_code": "def create_widget(self, name: str, size: int, color: str, weight: float, material: str, shape: str) -> Widget:",
+    "is_generic": true,
+    "suggestion": "def create_widget(self, name: str, size: int, *, color: str = ..., weight: float = ..., material: str = ..., shape: str = ...) -> Widget:",
+    "comment": "This method has too many positional parameters. Consider using keyword-only arguments for the optional ones."
+  }
+context: |
+  > **guideline_id:** python_implementation.html#python-codestyle-long-args<br>**score:** 85<br>
+  ## Avoid methods with more than five positional parameters
+
+  YOU SHOULD NOT have methods that require more than five positional parameters. Optional/flag parameters can be accepted using keyword-only arguments, or **kwargs.
+
+  > **guideline_id:** python_implementation.html#python-codestyle-optional-args<br>**score:** 72<br>
+  ## Use keyword-only arguments for optional or less-used arguments in Python 3
+
+  DO use keyword-only arguments for optional or less-often-used arguments for modules that only need to support Python 3.
+
+  ### GOOD Examples
+
+  ```python
+  def foo(a, b, *, c, d=None):
+      # Note that I can even have required keyword-only arguments...
+      ...
+  ```
+response:
+  action: KEEP
+  rationale: The comment is consistent with the guidelines. The guideline explicitly states methods should not have more than five positional parameters and recommends using keyword-only arguments for optional ones.

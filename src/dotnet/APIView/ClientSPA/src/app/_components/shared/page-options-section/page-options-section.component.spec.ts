@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { initializeTestBed } from '../../../../test-setup';
 
 import { PageOptionsSectionComponent } from './page-options-section.component';
 import { PanelModule } from 'primeng/panel';
@@ -8,6 +9,10 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 describe('PageOptionsSectionComponent', () => {
   let component: PageOptionsSectionComponent;
   let fixture: ComponentFixture<PageOptionsSectionComponent>;
+
+  beforeAll(() => {
+    initializeTestBed();
+  });
 
   beforeEach(() => {
     TestBed.configureTestingModule({

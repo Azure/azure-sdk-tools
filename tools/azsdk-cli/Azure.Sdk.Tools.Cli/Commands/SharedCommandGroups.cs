@@ -1,5 +1,3 @@
-using System.CommandLine;
-
 namespace Azure.Sdk.Tools.Cli.Commands
 {
     public static class SharedCommandGroups
@@ -77,6 +75,11 @@ namespace Azure.Sdk.Tools.Cli.Commands
             Verb: "verify",
             Description: "Tools for verifying project environments.",
             Options: []
+        );
+
+        public static readonly CommandGroup Setup = new(
+            Verb: "setup",
+            Description: "Environment setup verification and installation"
         );
 
         public static readonly CommandGroup APIView = new(

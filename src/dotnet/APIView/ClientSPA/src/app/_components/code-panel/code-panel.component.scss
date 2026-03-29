@@ -30,10 +30,12 @@
 
     .code-line {
         display: grid;
+        position: relative;
         --max-cell-width: 0px;
         grid-template-columns: minmax(auto, max-content) 1fr;
         width: 500% !important;
-        contain: layout style;
+        contain: style;
+        overflow: visible;
 
         &.diagnostics {
             padding-left: calc(var(--max-line-number-width) + 50px);
@@ -161,6 +163,7 @@
         position: relative;
         white-space: pre;
         color: var(--base-text-color);
+        padding-left: 12px;
     }
 
     .line-number {
@@ -177,7 +180,8 @@
         position: relative;
         display: inline-flex;
         align-items: center;
-        
+        margin-right: 4px;
+
         // Reserve space for the button even when it doesn't exist (e.g., on removed lines)
         &::after {
             content: '';
@@ -186,7 +190,7 @@
             height: 26px; // matches button height
             margin-left: 6px; // matches button margin-left
         }
-        
+
         // When the button exists, hide the spacer
         &.has-comment-btn::after {
             display: none;
@@ -198,7 +202,7 @@
                 display: none;
             }
         }
-        
+
         .add-comment-btn {
             opacity: 0;
             visibility: hidden;
@@ -247,13 +251,66 @@
         display: inline-block;
     }
 
+    .line-hover-actions {
+        position: absolute;
+        left: 32px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 6px;
+        background: var(--base-fg-color);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.15s ease, visibility 0.15s ease;
+        z-index: 1001;
+
+        .hover-action-btn {
+            padding: 3px;
+            margin: 0;
+            border: none;
+            background: transparent;
+            color: var(--base-text-color);
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            &:hover {
+                color: var(--primary-color);
+            }
+
+            i {
+                font-size: 14px;
+            }
+        }
+
+        .toggle-documentation-btn {
+            &.hide {
+                display: none;
+            }
+            &.can-show {
+                color: var(--base-text-color);
+            }
+        }
+    }
+
+    .code-line:hover .line-hover-actions {
+        opacity: 1;
+        visibility: visible;
+    }
+
     .line-actions {
         grid-column: 1;
         text-align: right;
         white-space: nowrap;
         padding-left: 5px;
-        padding-right: 0px;
-        border-right: none;
         cursor: pointer;
         position: sticky;
         left: 0;
@@ -269,7 +326,7 @@
     .toggle-documentation-btn {
         color: transparent;
         &.hide {
-            visibility: invisible;
+            visibility: hidden;
         }
     }
 
@@ -362,7 +419,7 @@
         }
 
         .annotationName {
-            color: var(--java-anotation-name-color);
+            color: var(--java-annotation-name-color);
         }
 
         .stringLiteral {

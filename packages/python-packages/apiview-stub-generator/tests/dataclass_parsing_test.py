@@ -37,9 +37,9 @@ class TestDataClassParsing:
         _check(
             ivars,
             [
-                "ivar name: str",
-                'ivar quantity_on_hand: int = field(compare = True, default = 0, hash = None, init = True, kw_only = False, metadata = {}, name = "quantity_on_hand", repr = True, type = int)',
-                "ivar unit_price: float",
+                "name: str",
+                'quantity_on_hand: int = field(compare = True, default = 0, hash = None, init = True, kw_only = False, metadata = {}, name = "quantity_on_hand", repr = True, type = int)',
+                "unit_price: float",
             ],
             obj,
         )
@@ -50,7 +50,7 @@ class TestDataClassParsing:
             "    name: str, ",
             "    unit_price: float, ",
             "    quantity_on_hand: int",
-            ")",
+            "): ...",
         ]
         # TODO: quantity_on_hand actually has a default value that should be displayed
         # assert init_string == "def __init__(name: str, unit_price: float, quantity_on_hand: int = 0)"
@@ -74,12 +74,12 @@ class TestDataClassParsing:
         _check(
             ivars,
             [
-                # "ivar myint_field: int = field(repr = False)",
-                "ivar myint_field: int",
-                'ivar myint_field_default: int = field(compare = True, default = 10, hash = None, init = True, kw_only = False, metadata = {}, name = "myint_field_default", repr = False, type = int)',
-                "ivar myint_plain: int",
+                # "myint_field: int = field(repr = False)",
+                "myint_field: int",
+                'myint_field_default: int = field(compare = True, default = 10, hash = None, init = True, kw_only = False, metadata = {}, name = "myint_field_default", repr = False, type = int)',
+                "myint_plain: int",
                 # "mylist: list[int] = field(default_factor = list)"
-                "ivar mylist: list[int]",
+                "mylist: list[int]",
             ],
             obj,
         )
@@ -93,7 +93,7 @@ class TestDataClassParsing:
             "    myint_field: int, ",
             "    myint_field_default: int, ",
             "    mylist: list[int]",
-            ")"
+            "): ..."
         ]
         _check(actual, expected, obj)
 
@@ -128,7 +128,7 @@ class TestDataClassParsing:
         lines = _render_lines(_tokenize(class_node))
         assert lines[0].startswith("@dataclass")
         ivars = lines[2:5]
-        _check(ivars, ["ivar x: float", "ivar y: float", "ivar z: float"], obj)
+        _check(ivars, ["x: float", "y: float", "z: float"], obj)
 
         actual = lines[8:13]
         expected = [
@@ -136,7 +136,7 @@ class TestDataClassParsing:
             "    x: float, ",
             "    y: float, ",
             "    z: float",
-            ")",
+            "): ...",
         ]
         # TODO: init should display keyword only marker '*'
         # assert init_string == "def __init__(x: float, *, y: float, z: float)"
@@ -159,13 +159,13 @@ class TestDataClassParsing:
         _check(
             ivars,
             [
-                "ivar a: float",
-                "ivar b: float",
-                # "ivar c: float = field(init = False)"
-                "ivar c: float",
+                "a: float",
+                "b: float",
+                # "c: float = field(init = False)"
+                "c: float",
             ],
             obj,
         )
 
         init_string = lines[8].lstrip()
-        assert init_string == "def __init__(a: float, b: float)"
+        assert init_string == "def __init__(a: float, b: float): ..."

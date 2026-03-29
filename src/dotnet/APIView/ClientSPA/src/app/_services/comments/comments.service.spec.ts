@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-
+import { initializeTestBed } from '../../../test-setup';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 import { CommentsService } from './comments.service';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { ConfigService } from '../config/config.service';
 
 describe('CommentsService', () => {
@@ -9,10 +10,15 @@ describe('CommentsService', () => {
   let httpMock: HttpTestingController;
   let configService: ConfigService;
 
+  beforeAll(() => {
+    initializeTestBed();
+  });
+
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
       providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
         CommentsService,
         {
           provide: ConfigService,
@@ -47,8 +53,8 @@ describe('CommentsService', () => {
     const req = httpMock.expectOne(`${configService.apiUrl}comments/${reviewId}/${commentId}/updateCommentText`);
     expect(req.request.method).toBe('PATCH');
     expect(req.request.body.get('commentText')).toBe(commentText);
-    expect(req.request.withCredentials).toBeTrue();
-    expect(req.request.headers.has('Content-Type')).toBeFalse();
+    expect(req.request.withCredentials).toBe(true);
+    expect(req.request.headers.has('Content-Type')).toBe(false);
     req.flush({}); // Mock response
   });
 });

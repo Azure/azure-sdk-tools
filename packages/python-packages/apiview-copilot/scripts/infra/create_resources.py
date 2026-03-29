@@ -1,3 +1,9 @@
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
 # pylint: disable=too-many-lines, redefined-outer-name, reimported
 import os
 import re
@@ -384,6 +390,8 @@ def create_azure_openai_deployments(v: Variables):
         ("o3-mini", "GlobalStandard", "2025-01-31", 100),
         ("gpt-5", "GlobalStandard", "2025-08-07", 100),
         ("gpt-5-mini", "GlobalStandard", "2025-08-07", 100),
+        ("gpt-5.4", "GlobalStandard", "2025-08-07", 100),
+        ("gpt-5.4-mini", "GlobalStandard", "2025-08-07", 100),
     ]
     for model, sku, version, capacity in models_to_deploy:
         try:
@@ -1234,6 +1242,8 @@ def create_azure_ai_foundry_deployments(v: Variables):
     models_to_deploy = [
         ("gpt-5", "GlobalStandard", "2025-08-07", 100),
         ("gpt-5-mini", "GlobalStandard", "2025-08-07", 100),
+        ("gpt-5.4", "GlobalStandard", "2025-08-07", 100),
+        ("gpt-5.4-mini", "GlobalStandard", "2025-08-07", 100),
     ]
     for model, sku, version, capacity in models_to_deploy:
         try:

@@ -131,9 +131,9 @@
           "description": "Whether paths are relative to the repository root",
           "default": false
         },
-        "isSpectorTest": {
+        "isGenerated": {
           "type": "boolean",
-          "description": "Whether this path is a Spector test",
+          "description": "Whether this source is a generated markdown.",
           "default": false
         },
         "metadata": {

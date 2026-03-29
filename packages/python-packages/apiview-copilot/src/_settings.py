@@ -1,3 +1,9 @@
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
 import json
 import os
 import threading
@@ -26,18 +32,21 @@ class SettingsManager:
         # pylint: disable=access-member-before-definition
         if hasattr(self, "_initialized") and self._initialized:
             return
-        self._initialized = True
-        self.credential = DefaultAzureCredential()
-        self.app_config_endpoint = os.getenv("AZURE_APP_CONFIG_ENDPOINT")
-        if not self.app_config_endpoint:
-            raise ValueError("AZURE_APP_CONFIG_ENDPOINT must be set in the environment.")
-        self.label = os.getenv("ENVIRONMENT_NAME")
-        if not self.label:
-            raise ValueError("ENVIRONMENT_NAME must be set in the environment.")
-        self.label = self.label.strip().lower()
-        self.app_config_client = AzureAppConfigurationClient(self.app_config_endpoint, self.credential)
-        self._keyvault_clients = {}
-        self._cache = {}
+        with self._lock:
+            if hasattr(self, "_initialized") and self._initialized:
+                return
+            self.credential = DefaultAzureCredential()
+            self.app_config_endpoint = os.getenv("AZURE_APP_CONFIG_ENDPOINT")
+            if not self.app_config_endpoint:
+                raise ValueError("AZURE_APP_CONFIG_ENDPOINT must be set in the environment.")
+            self.label = os.getenv("ENVIRONMENT_NAME")
+            if not self.label:
+                raise ValueError("ENVIRONMENT_NAME must be set in the environment.")
+            self.label = self.label.strip().lower()
+            self.app_config_client = AzureAppConfigurationClient(self.app_config_endpoint, self.credential)
+            self._keyvault_clients = {}
+            self._cache = {}
+            self._initialized = True
 
     def get(self, key) -> Union[str, None]:
         key = key.strip().lower()

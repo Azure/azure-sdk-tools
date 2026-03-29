@@ -250,7 +250,7 @@ describe("methodTokenGenerator", () => {
 
       const { tokens } = methodTokenGenerator.generate(mockMethod, false);
 
-      assertTokenOrder(tokens, "simpleMethod", "(", "):", "void");
+      assertTokenOrder(tokens, "simpleMethod", "(", ")", ":", "void");
     });
 
     it("generates tokens for a deprecated method", () => {
@@ -266,7 +266,7 @@ describe("methodTokenGenerator", () => {
 
       const { tokens } = methodTokenGenerator.generate(mockMethod, false);
 
-      assertTokenOrder(tokens, "static", "staticMethod", "(", "):", "void");
+      assertTokenOrder(tokens, "static", "staticMethod", "(", ")", ":", "void");
       expect(tokens[0]).toEqual({
         Kind: TokenKind.Keyword,
         Value: "static",
@@ -282,7 +282,7 @@ describe("methodTokenGenerator", () => {
 
       const { tokens } = methodTokenGenerator.generate(mockMethod, false);
 
-      assertTokenOrder(tokens, "protected", "protectedMethod", "(", "):", "void");
+      assertTokenOrder(tokens, "protected", "protectedMethod", "(", ")", ":", "void");
       expect(tokens.find((t) => t.Value === "protected")?.Kind).toBe(TokenKind.Keyword);
     });
 
@@ -291,7 +291,7 @@ describe("methodTokenGenerator", () => {
 
       const { tokens } = methodTokenGenerator.generate(mockMethod, false);
 
-      assertTokenOrder(tokens, "abstract", "abstractMethod", "(", "):", "void");
+      assertTokenOrder(tokens, "abstract", "abstractMethod", "(", ")", ":", "void");
       expect(tokens.find((t) => t.Value === "abstract")?.Kind).toBe(TokenKind.Keyword);
     });
 
@@ -311,7 +311,7 @@ describe("methodTokenGenerator", () => {
         "abstract",
         "complexMethod",
         "(",
-        "):",
+        ")", ":",
         "void",
       );
     });
@@ -321,7 +321,7 @@ describe("methodTokenGenerator", () => {
 
       const { tokens } = methodTokenGenerator.generate(mockMethod, false);
 
-      assertTokenOrder(tokens, "optionalMethod", "?", "(", "):", "void");
+      assertTokenOrder(tokens, "optionalMethod", "?", "(", ")", ":", "void");
     });
 
     it("generates tokens for a method with parameters", () => {
@@ -342,7 +342,7 @@ describe("methodTokenGenerator", () => {
         "arg2",
         ":",
         "number",
-        "):",
+        ")", ":",
         "void",
       );
     });
@@ -362,7 +362,7 @@ describe("methodTokenGenerator", () => {
         "?",
         ":",
         "string",
-        "):",
+        ")", ":",
         "void",
       );
     });
@@ -375,7 +375,7 @@ describe("methodTokenGenerator", () => {
 
       const { tokens } = methodTokenGenerator.generate(mockMethod, false);
 
-      assertTokenOrder(tokens, "genericMethod", "<", "T", ">", "(", "):", "T");
+      assertTokenOrder(tokens, "genericMethod", "<", "T", ">", "(", ")", ":", "T");
     });
 
     it("generates tokens for a method with constrained type parameters", () => {
@@ -394,7 +394,7 @@ describe("methodTokenGenerator", () => {
         "object",
         ">",
         "(",
-        "):",
+        ")", ":",
       );
     });
 
@@ -405,7 +405,7 @@ describe("methodTokenGenerator", () => {
 
       const { tokens } = methodTokenGenerator.generate(mockMethod, false);
 
-      assertTokenOrder(tokens, "defaultGenericMethod", "<", "T", "=", "string", ">", "(", "):");
+      assertTokenOrder(tokens, "defaultGenericMethod", "<", "T", "=", "string", ">", "(", ")", ":");
     });
 
     it("generates tokens for a method with complex return type", () => {
@@ -423,7 +423,7 @@ describe("methodTokenGenerator", () => {
 
       const { tokens } = methodTokenGenerator.generate(mockMethod, false);
 
-      assertTokenOrder(tokens, "asyncMethod", "(", "):", "Promise", "<void>");
+      assertTokenOrder(tokens, "asyncMethod", "(", ")", ":", "Promise", "<void>");
     });
 
     it("throws error for invalid item kind", () => {
@@ -444,7 +444,7 @@ describe("methodTokenGenerator", () => {
 
       const { tokens } = methodTokenGenerator.generate(mockMethodSig, false);
 
-      assertTokenOrder(tokens, "simpleMethodSig", "(", "):", "void");
+      assertTokenOrder(tokens, "simpleMethodSig", "(", ")", ":", "void");
       // Method signatures should NOT have static/protected/abstract modifiers
       expect(tokens.some((t) => t.Value === "static")).toBe(false);
       expect(tokens.some((t) => t.Value === "protected")).toBe(false);
@@ -464,7 +464,7 @@ describe("methodTokenGenerator", () => {
 
       const { tokens } = methodTokenGenerator.generate(mockMethodSig, false);
 
-      assertTokenOrder(tokens, "optionalMethodSig", "?", "(", "):", "void");
+      assertTokenOrder(tokens, "optionalMethodSig", "?", "(", ")", ":", "void");
     });
 
     it("generates tokens for a method signature with parameters", () => {
@@ -489,7 +489,7 @@ describe("methodTokenGenerator", () => {
         "?",
         ":",
         "number",
-        "):",
+        ")", ":",
         "void",
       );
     });
@@ -513,7 +513,7 @@ describe("methodTokenGenerator", () => {
         "unknown",
         ">",
         "(",
-        "):",
+        ")", ":",
         "T",
       );
     });
@@ -526,7 +526,7 @@ describe("methodTokenGenerator", () => {
 
       const { tokens } = methodTokenGenerator.generate(mockMethodSig, false);
 
-      assertTokenOrder(tokens, "multiGenericMethodSig", "<", "T", ",", "U", ">", "(", "):", "void");
+      assertTokenOrder(tokens, "multiGenericMethodSig", "<", "T", ",", "U", ">", "(", ")", ":", "void");
     });
   });
 

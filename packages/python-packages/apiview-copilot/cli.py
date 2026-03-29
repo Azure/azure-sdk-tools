@@ -21,21 +21,23 @@ from collections import OrderedDict
 from typing import List, Optional
 
 import colorama
-import prompty
-import prompty.azure
 import requests
+import yaml
 from azure.core.exceptions import ClientAuthenticationError
 from colorama import Fore, Style
 from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
 from knack.help_files import helps
+from knack.util import CLIError
 from src._apiview import (
     ApiViewClient,
 )
 from src._apiview import get_active_reviews as _get_active_reviews
+from src._apiview import get_ai_comment_feedback as _get_ai_comment_feedback
 from src._apiview import (
     get_apiview_cosmos_client,
     get_approvers,
+    get_comment_with_context,
     get_comments_in_date_range,
     resolve_package,
 )
@@ -45,10 +47,11 @@ from src._garbage_collector import GarbageCollector
 from src._mention import handle_mention_request
 from src._metrics import get_metrics_report
 from src._models import APIViewComment
+from src._prompt_runner import run_prompt
 from src._search_manager import SearchManager
 from src._settings import SettingsManager
 from src._thread_resolution import handle_thread_resolution_request
-from src._utils import get_language_pretty_name, run_prompty
+from src._utils import get_language_pretty_name
 from src.agent._agent import get_readonly_agent, get_readwrite_agent, invoke_agent
 
 colorama.init(autoreset=True)
@@ -126,7 +129,124 @@ helps[
     short-summary: Commands for managing permissions.
 """
 
+helps[
+    "prompt"
+] = """
+    type: group
+    short-summary: Commands for testing prompt template files.
+"""
+
 # COMMANDS
+
+
+def prompt_test(path: str):
+    """Run a single prompt file with its sample inputs and print the result."""
+    from src._prompt_runner import _execute_prompt_template
+
+    prompty_path = pathlib.Path(path)
+    if not prompty_path.exists():
+        print(f"Error: File '{path}' does not exist.")
+        sys.exit(1)
+    if prompty_path.suffix != ".prompty":
+        print(f"Error: File '{path}' is not a .prompty file.")
+        sys.exit(1)
+
+    print(f"Executing prompt: {path}")
+    print("-" * 60)
+    result = _execute_prompt_template(str(prompty_path))
+    print(result)
+
+
+def prompt_test_all(workers: int = 4):
+    """Smoke-test all prompt files to verify none throw exceptions.
+
+    NOTE: A passing result only means the prompt executed without errors.
+    It does NOT verify that the prompt produces correct or intended output.
+    Use 'avc prompt test -p <file>' to inspect individual outputs.
+    """
+    import glob
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    from src._prompt_runner import _execute_prompt_template
+    from src._retry import retry_with_backoff
+
+    prompts_dir = pathlib.Path(__file__).parent / "prompts"
+    prompty_files = sorted(glob.glob(str(prompts_dir / "**" / "*.prompty"), recursive=True))
+
+    if not prompty_files:
+        print("No .prompty files found.")
+        return
+
+    BOLD = "\033[1m"
+    RED = "\033[91m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    RESET = "\033[0m"
+
+    print(f"{'=' * 60}")
+    print("prompt smoke test")
+    print(f"{'=' * 60}")
+    print(f"{YELLOW}NOTE: A passing result means the prompt executed without errors.")
+    print(f"It does NOT verify that the prompt produces correct or intended output.")
+    print(f"Use 'avc prompt test -p <file>' to inspect individual outputs.{RESET}")
+    print()
+    print(f"{BOLD}collected {len(prompty_files)} prompt files{RESET}")
+    print()
+
+    # Pre-initialize SettingsManager singleton on the main thread to avoid
+    # a race during first-time initialization when running prompts in parallel.
+    SettingsManager()
+
+    results = []
+
+    def _run_one(filepath: str) -> tuple[str, bool, str]:
+        rel = pathlib.Path(filepath).relative_to(pathlib.Path(__file__).parent)
+        try:
+            # Use retry_with_backoff to avoid transient 429/5xx failures
+            # causing flaky smoke tests.
+            retry_with_backoff(lambda: _execute_prompt_template(filepath), description=str(rel))
+            return (str(rel), True, "")
+        except Exception as exc:
+            return (str(rel), False, str(exc))
+
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        future_to_file = {
+            executor.submit(_run_one, f): f for f in prompty_files
+        }
+        for future in as_completed(future_to_file):
+            rel_path, passed, error = future.result()
+            results.append((rel_path, passed, error))
+            status = f"{GREEN}PASS{RESET}" if passed else f"{RED}FAIL{RESET}"
+            print(f"  {status} {rel_path}")
+
+    # Sort results for consistent display in summary
+    results.sort(key=lambda r: r[0])
+    passed = [r for r in results if r[1]]
+    failed = [r for r in results if not r[1]]
+
+    # Summary
+    print()
+    if failed:
+        print(f"{RED}{BOLD}{'=' * 60}")
+        print("FAILURES")
+        print(f"{'=' * 60}{RESET}")
+        for rel_path, _, error in failed:
+            print(f"  {RED}{rel_path}{RESET}")
+            print(f"    {error}")
+            print()
+
+    print(f"{'=' * 60}")
+    print("smoke test summary")
+    print(f"{'=' * 60}")
+    summary_parts = []
+    if passed:
+        summary_parts.append(f"{GREEN}{len(passed)} passed{RESET}")
+    if failed:
+        summary_parts.append(f"{RED}{len(failed)} failed{RESET}")
+    print(f"{', '.join(summary_parts)}, {len(results)} total")
+
+    if failed:
+        sys.exit(1)
 
 
 def _local_review(
@@ -168,15 +288,18 @@ def _local_review(
         with pathlib.Path(existing_comments).open("r", encoding="utf-8") as f:
             comments_obj = json.load(f)
 
-    reviewer = ApiViewReview(
-        target=target_apiview,
-        base=base_apiview,
-        language=language,
-        outline=outline_text,
-        comments=comments_obj,
-        write_output=True,
-        write_debug_logs=debug_log,
-    )
+    try:
+        reviewer = ApiViewReview(
+            target=target_apiview,
+            base=base_apiview,
+            language=language,
+            outline=outline_text,
+            comments=comments_obj,
+            write_output=True,
+            write_debug_logs=debug_log,
+        )
+    except ValueError as e:
+        raise CLIError(str(e)) from e
     reviewer.run()
     reviewer.close()
 
@@ -272,7 +395,7 @@ def generate_review(
             print(job_info)
             return
         for _ in range(1800):  # up to 30 minutes
-            status_info = review_job_get(job_id)
+            status_info = review_job_get(job_id, remote=True)
             status = status_info.get("status") if status_info else None
             if not status_info:
                 print(f"Error: Could not get status for job {job_id}")
@@ -347,19 +470,27 @@ def review_job_start(
         print(f"Error: {resp.status_code} {resp.text}")
 
 
-def review_job_get(job_id: str):
+def review_job_get(job_id: str, remote: bool = False):
     """Get the status/result of an API review job."""
-    settings = SettingsManager()
-    base_url = settings.get("WEBAPP_ENDPOINT")
-    api_endpoint = f"{base_url}/api-review"
-    url = f"{api_endpoint.rstrip('/')}/{job_id}"
+    if remote:
+        settings = SettingsManager()
+        base_url = settings.get("WEBAPP_ENDPOINT")
+        api_endpoint = f"{base_url}/api-review"
+        url = f"{api_endpoint.rstrip('/')}/{job_id}"
 
-    headers = _build_auth_header()
-    resp = requests.get(url, headers=headers, timeout=10)
-    if resp.status_code == 200:
-        return resp.json()
+        headers = _build_auth_header()
+        resp = requests.get(url, headers=headers, timeout=10)
+        if resp.status_code == 200:
+            return resp.json()
+        else:
+            print(f"Error: {resp.status_code} {resp.text}")
     else:
-        print(f"Error: {resp.status_code} {resp.text}")
+        db = DatabaseManager.get_instance()
+        try:
+            job = db.review_jobs.get(job_id)
+            return job
+        except Exception as e:
+            print(f"Error: Job '{job_id}' not found: {e}")
 
 
 def get_all_guidelines(language: str, markdown: bool = False):
@@ -447,23 +578,41 @@ def reindex_search(containers: Optional[list[str]] = None):
     return SearchManager.run_indexers(container_names=containers)
 
 
-def review_summarize(language: str, target: str, base: str = None):
+def review_summarize(language: str, target: str, base: str = None, remote: bool = False):
     """
-    Summarize an API or a diff of two APIs using the deployed API review service.
+    Summarize an API or a diff of two APIs.
     """
-    payload = {"language": language, "target": target}
-    if base:
-        payload["base"] = base
-    settings = SettingsManager()
-    base_url = settings.get("WEBAPP_ENDPOINT")
-    api_endpoint = f"{base_url}/api-review/summarize"
+    if remote:
+        payload = {"language": language, "target": target}
+        if base:
+            payload["base"] = base
+        settings = SettingsManager()
+        base_url = settings.get("WEBAPP_ENDPOINT")
+        api_endpoint = f"{base_url}/api-review/summarize"
 
-    response = requests.post(api_endpoint, json=payload, headers=_build_auth_header(), timeout=60)
-    if response.status_code == 200:
-        summary = response.json().get("summary")
-        print(summary)
+        response = requests.post(api_endpoint, json=payload, headers=_build_auth_header(), timeout=60)
+        if response.status_code == 200:
+            summary = response.json().get("summary")
+            print(summary)
+        else:
+            print(f"Error: {response.status_code} - {response.text}")
     else:
-        print(f"Error: {response.status_code} - {response.text}")
+        from src._diff import create_diff_with_line_numbers
+
+        with open(target, "r", encoding="utf-8") as f:
+            target_content = f.read()
+
+        pretty_language = get_language_pretty_name(language)
+
+        if base:
+            with open(base, "r", encoding="utf-8") as f:
+                base_content = f.read()
+            content = create_diff_with_line_numbers(old=base_content, new=target_content)
+            summary = run_prompt(folder="summarize", filename="summarize_diff", inputs={"language": pretty_language, "content": content})
+        else:
+            summary = run_prompt(folder="summarize", filename="summarize_api", inputs={"language": pretty_language, "content": target_content})
+
+        print(summary)
 
 
 def handle_agent_chat(
@@ -519,14 +668,14 @@ def handle_agent_chat(
                 if not user_input.strip():
                     continue
                 try:
-                    payload = {"user_input": user_input}
+                    payload = {"userInput": user_input}
                     if current_thread_id:
-                        payload["thread_id"] = current_thread_id
+                        payload["threadId"] = current_thread_id
                     resp = session.post(api_endpoint, json=payload, headers=_build_auth_header(), timeout=60)
                     if resp.status_code == 200:
                         data = resp.json()
                         response = data.get("response", "")
-                        thread_id_out = data.get("thread_id", current_thread_id)
+                        thread_id_out = data.get("threadId", current_thread_id)
                         print(f"{BOLD_BLUE}Agent:{RESET} {response}\n")
                         current_thread_id = thread_id_out
                     else:
@@ -588,26 +737,128 @@ def handle_agent_chat(
     asyncio.run(chat())
 
 
-def handle_agent_mention(comments_path: str, remote: bool = False):
+def handle_agent_mention(
+    comments_path: str = None,
+    fetch_comment_id: str = None,
+    remote: bool = False,
+    dry_run: bool = False,
+    source_comment_id: str = None,
+):
     """
     Handles @mention requests from the agent.
+
+    Can be invoked in two ways:
+    1. With --comments-path: Load comments from a JSON file
+    2. With --fetch-comment-id: Fetch a comment from the database and manufacture a feedback conversation
+
+    At least one of --comments-path or --fetch-comment-id must be provided.
     """
-    # load comments from the comments_path
-    comments = []
-    if os.path.exists(comments_path):
-        with open(comments_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-    else:
-        print(f"Comments file {comments_path} does not exist.")
+    if not comments_path and not fetch_comment_id:
+        print("Error: Either --comments-path or --fetch-comment-id must be provided.")
         return
-    comments = data.get("comments", [])
-    language = data.get("language", None)
-    package_name = data.get("package_name", None)
-    code = data.get("code", None)
-    if language not in SUPPORTED_LANGUAGES:
+
+    if comments_path and fetch_comment_id:
+        print("Error: Only one of --comments-path or --fetch-comment-id can be provided, not both.")
+        return
+
+    comments = []
+    language = None
+    package_name = None
+    code = None
+
+    if fetch_comment_id:
+        source_comment_id = fetch_comment_id
+        environment = os.getenv("ENVIRONMENT_NAME")
+        if not environment:
+            print("Error: ENVIRONMENT_NAME environment variable is not set. Please set it in your .env file.")
+            return
+        # Fetch the comment from the database and manufacture a conversation
+        result = get_comment_with_context(fetch_comment_id, environment=environment)
+        if not result:
+            print(f"Comment with ID '{fetch_comment_id}' not found in {environment} environment.")
+            return
+
+        language = result.get("language")
+        package_name = result.get("package_name")
+        code = result.get("code")
+        feedback_text = result.get("feedback_text")
+        original_comment = result.get("comment", {})
+        original_text = original_comment.get("CommentText", "")
+
+        if not language:
+            print(f"Could not determine language for comment '{fetch_comment_id}'.")
+            return
+
+        if not feedback_text or feedback_text == "No feedback entries found.":
+            print(f"No feedback associated with comment '{fetch_comment_id}'. Nothing to process.")
+            return
+
+        # Manufacture a conversation matching the ApiViewAgentComment dict shape
+        # that the production C# caller sends.
+        comments = [
+            {
+                "lineNo": 0,
+                "createdOn": original_comment.get("CreatedOn", ""),
+                "createdBy": original_comment.get("CreatedBy", "APIView Copilot"),
+                "commentText": original_text,
+                "upvotes": len(original_comment.get("Upvotes", [])) if isinstance(original_comment.get("Upvotes"), list) else original_comment.get("Upvotes", 0),
+                "downvotes": len(original_comment.get("Downvotes", [])) if isinstance(original_comment.get("Downvotes"), list) else original_comment.get("Downvotes", 0),
+                "isResolved": original_comment.get("IsResolved", False),
+                "severity": original_comment.get("Severity", ""),
+                "threadId": original_comment.get("ThreadId", ""),
+            },
+            {
+                "lineNo": 0,
+                "createdOn": "",
+                "createdBy": "Reviewer",
+                "commentText": feedback_text,
+                "upvotes": 0,
+                "downvotes": 0,
+                "isResolved": False,
+                "severity": "",
+                "threadId": original_comment.get("ThreadId", ""),
+            },
+        ]
+
+        print(f"Processing feedback for comment '{fetch_comment_id}':")
+        print(f"  Language: {language}")
+        print(f"  Package: {package_name}")
+        print(f"  Original comment: {original_text[:100]}...")
+        print(f"  Feedback: {feedback_text}")
+        print()
+
+    else:
+        # Load comments from the comments_path
+        if os.path.exists(comments_path):
+            with open(comments_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        else:
+            print(f"Comments file {comments_path} does not exist.")
+            return
+        comments = data.get("comments", [])
+        language = data.get("language", None)
+        package_name = data.get("package_name", None)
+        code = data.get("code", None)
+        source_comment_id = data.get("source_comment_id", None) or source_comment_id
+
+    # Resolve language to canonical and pretty forms
+    try:
+        apiview_language, pretty_language = resolve_language(language)
+    except ValueError:
         print(f"Unsupported language `{language}`")
         return
-    pretty_language = get_language_pretty_name(language)
+
+    if dry_run:
+        payload = {
+            "comments": comments,
+            "language": pretty_language,
+            "packageName": package_name,
+            "code": code,
+            "sourceCommentId": source_comment_id,
+        }
+        print(f"{BOLD_BLUE}=== DRY RUN: Mention Agent Payload ==={RESET}")
+        print(json.dumps(payload, indent=2))
+        return
 
     if remote:
         settings = SettingsManager()
@@ -616,7 +867,13 @@ def handle_agent_mention(comments_path: str, remote: bool = False):
         try:
             resp = requests.post(
                 api_endpoint,
-                json={"comments": comments, "language": language, "packageName": package_name, "code": code},
+                json={
+                    "comments": comments,
+                    "language": language,
+                    "packageName": package_name,
+                    "code": code,
+                    "sourceCommentId": source_comment_id,
+                },
                 headers=_build_auth_header(),
                 timeout=60,
             )
@@ -633,6 +890,7 @@ def handle_agent_mention(comments_path: str, remote: bool = False):
             language=pretty_language,
             package_name=package_name,
             code=code,
+            source_comment_id=source_comment_id,
         )
 
 
@@ -652,10 +910,13 @@ def handle_agent_thread_resolution(comments_path: str, remote: bool = False):
     language = data.get("language", None)
     package_name = data.get("package_name", None)
     code = data.get("code", None)
-    if language not in SUPPORTED_LANGUAGES:
+    source_comment_id = data.get("source_comment_id", None)
+    # Resolve language to canonical and pretty forms
+    try:
+        apiview_language, pretty_language = resolve_language(language)
+    except ValueError:
         print(f"Unsupported language `{language}`")
         return
-    pretty_language = get_language_pretty_name(language)
 
     if remote:
         settings = SettingsManager()
@@ -664,7 +925,13 @@ def handle_agent_thread_resolution(comments_path: str, remote: bool = False):
         try:
             resp = requests.post(
                 api_endpoint,
-                json={"comments": comments, "language": language, "packageName": package_name, "code": code},
+                json={
+                    "comments": comments,
+                    "language": language,
+                    "packageName": package_name,
+                    "code": code,
+                    "sourceCommentId": source_comment_id,
+                },
                 headers=_build_auth_header(),
                 timeout=60,
             )
@@ -681,6 +948,7 @@ def handle_agent_thread_resolution(comments_path: str, remote: bool = False):
             language=pretty_language,
             package_name=package_name,
             code=code,
+            source_comment_id=source_comment_id,
         )
 
 
@@ -704,6 +972,200 @@ def db_delete(container_name: str, id: str):
         print(f"Item {id} soft-deleted from container {container_name}.")
     except Exception as e:
         print(f"Error deleting item: {e}")
+
+
+def _try_run_indexers(containers: list[tuple[str, object]]):
+    """Best-effort trigger of search indexers for the given (label, container) pairs."""
+    for label, container in containers:
+        try:
+            container.run_indexer()
+        except Exception as e:
+            print(f"Warning: Failed to trigger indexer for {label}: {e}. Run `avc search reindex` manually.")
+
+
+def db_link(guideline: str = None, memory: str = None, example: str = None, reindex: bool = False):
+    """Link two knowledge base items by adding each other's ID to their related collections."""
+    # Validate exactly two of the three are provided
+    provided = [(k, v) for k, v in [("guideline", guideline), ("memory", memory), ("example", example)] if v]
+    if len(provided) != 2:
+        print("Error: Provide exactly two of --guideline (-g), --memory (-m), --example (-e).")
+        return
+
+    db = DatabaseManager.get_instance()
+    type_a, id_a = provided[0]
+    type_b, id_b = provided[1]
+
+    containers = {
+        "guideline": db.guidelines,
+        "memory": db.memories,
+        "example": db.examples,
+    }
+    container_a = containers[type_a]
+    container_b = containers[type_b]
+
+    # Retrieve both items first (fail fast before any writes)
+    try:
+        item_a = container_a.get(id_a)
+    except Exception as e:
+        print(f"Error retrieving {type_a} '{id_a}': {e}")
+        return
+
+    try:
+        item_b = container_b.get(id_b)
+    except Exception as e:
+        print(f"Error retrieving {type_b} '{id_b}': {e}")
+        return
+
+    # Save deep copy of first item for rollback
+    original_a = json.loads(json.dumps(item_a))
+
+    # Determine relationship field names
+    relation_fields = {
+        ("guideline", "memory"): ("related_memories", "related_guidelines"),
+        ("guideline", "example"): ("related_examples", "guideline_ids"),
+        ("memory", "example"): ("related_examples", "memory_ids"),
+        ("memory", "guideline"): ("related_guidelines", "related_memories"),
+        ("example", "guideline"): ("guideline_ids", "related_examples"),
+        ("example", "memory"): ("memory_ids", "related_examples"),
+    }
+    field_a, field_b = relation_fields[(type_a, type_b)]
+
+    # Use actual Cosmos DB document IDs for cross-references
+    stored_id_a = item_a["id"]
+    stored_id_b = item_b["id"]
+
+    # Add IDs to each other's collections (idempotent)
+    a_changed = False
+    if stored_id_b not in item_a.get(field_a, []):
+        item_a.setdefault(field_a, []).append(stored_id_b)
+        a_changed = True
+
+    b_changed = False
+    if stored_id_a not in item_b.get(field_b, []):
+        item_b.setdefault(field_b, []).append(stored_id_a)
+        b_changed = True
+
+    if not a_changed and not b_changed:
+        print(f"{type_a} '{stored_id_a}' and {type_b} '{stored_id_b}' are already linked.")
+        return
+
+    # Upsert both with rollback on second failure for atomicity
+    try:
+        container_a.client.upsert_item(item_a)
+    except Exception as e:
+        print(f"Error updating {type_a} '{stored_id_a}': {e}")
+        return
+
+    try:
+        container_b.client.upsert_item(item_b)
+    except Exception as e:
+        print(f"Error updating {type_b} '{stored_id_b}': {e}. Rolling back {type_a} '{stored_id_a}'...")
+        try:
+            container_a.client.upsert_item(original_a)
+            print("Rollback successful.")
+        except Exception as rollback_err:
+            print(f"CRITICAL: Rollback failed for {type_a} '{stored_id_a}': {rollback_err}")
+        return
+
+    _try_run_indexers([(type_a, container_a), (type_b, container_b)])
+
+    print(f"Linked {type_a} '{stored_id_a}' <-> {type_b} '{stored_id_b}'.")
+    print(f"  {type_a}.{field_a} += '{stored_id_b}'")
+    print(f"  {type_b}.{field_b} += '{stored_id_a}'")
+
+    if reindex:
+        print("Reindexing...")
+        reindex_search()
+
+
+def db_unlink(guideline: str = None, memory: str = None, example: str = None, reindex: bool = False):
+    """Remove the link between two knowledge base items."""
+    provided = [(k, v) for k, v in [("guideline", guideline), ("memory", memory), ("example", example)] if v]
+    if len(provided) != 2:
+        print("Error: Provide exactly two of --guideline (-g), --memory (-m), --example (-e).")
+        return
+
+    db = DatabaseManager.get_instance()
+    type_a, id_a = provided[0]
+    type_b, id_b = provided[1]
+
+    containers = {
+        "guideline": db.guidelines,
+        "memory": db.memories,
+        "example": db.examples,
+    }
+    container_a = containers[type_a]
+    container_b = containers[type_b]
+
+    try:
+        item_a = container_a.get(id_a)
+    except Exception as e:
+        print(f"Error retrieving {type_a} '{id_a}': {e}")
+        return
+
+    try:
+        item_b = container_b.get(id_b)
+    except Exception as e:
+        print(f"Error retrieving {type_b} '{id_b}': {e}")
+        return
+
+    original_a = json.loads(json.dumps(item_a))
+
+    relation_fields = {
+        ("guideline", "memory"): ("related_memories", "related_guidelines"),
+        ("guideline", "example"): ("related_examples", "guideline_ids"),
+        ("memory", "example"): ("related_examples", "memory_ids"),
+        ("memory", "guideline"): ("related_guidelines", "related_memories"),
+        ("example", "guideline"): ("guideline_ids", "related_examples"),
+        ("example", "memory"): ("memory_ids", "related_examples"),
+    }
+    field_a, field_b = relation_fields[(type_a, type_b)]
+
+    stored_id_a = item_a["id"]
+    stored_id_b = item_b["id"]
+
+    a_changed = False
+    if stored_id_b in item_a.get(field_a, []):
+        item_a[field_a].remove(stored_id_b)
+        a_changed = True
+
+    b_changed = False
+    if stored_id_a in item_b.get(field_b, []):
+        item_b[field_b].remove(stored_id_a)
+        b_changed = True
+
+    if not a_changed and not b_changed:
+        print(f"{type_a} '{stored_id_a}' and {type_b} '{stored_id_b}' are not linked.")
+        return
+
+    try:
+        container_a.client.upsert_item(item_a)
+    except Exception as e:
+        print(f"Error updating {type_a} '{stored_id_a}': {e}")
+        return
+
+    try:
+        container_b.client.upsert_item(item_b)
+    except Exception as e:
+        print(f"Error updating {type_b} '{stored_id_b}': {e}. Rolling back {type_a} '{stored_id_a}'...")
+        try:
+            container_a.client.upsert_item(original_a)
+            print("Rollback successful.")
+        except Exception as rollback_err:
+            print(f"CRITICAL: Rollback failed for {type_a} '{stored_id_a}': {rollback_err}")
+        return
+
+    _try_run_indexers([(type_a, container_a), (type_b, container_b)])
+
+    print(f"Unlinked {type_a} '{stored_id_a}' <-> {type_b} '{stored_id_b}'.")
+    if a_changed:
+        print(f"  {type_a}.{field_a} -= '{stored_id_b}'")
+    if b_changed:
+        print(f"  {type_b}.{field_b} -= '{stored_id_a}'")
+
+    if reindex:
+        print("Reindexing...")
+        reindex_search()
 
 
 def db_purge(containers: Optional[list[str]] = None, run_indexer: bool = False):
@@ -750,15 +1212,36 @@ def get_apiview_comments(revision_id: str, environment: str = "production") -> d
 
 
 def get_active_reviews(
-    start_date: str, end_date: str, language: str, environment: str = "production", summary: bool = False
+    start_date: str,
+    end_date: str,
+    language: str,
+    environment: str = "production",
+    summary: bool = False,
+    approved_only: bool = False,
 ) -> list | None:
     """
     Retrieves active APIView reviews in the specified environment during the specified period.
+    Use --approved-only to show only approved revisions (matching the metrics chart definition).
     """
     reviews = _get_active_reviews(start_date, end_date, environment=environment)
-    pretty_language = get_language_pretty_name(language).lower()
+    _, pretty_language = resolve_language(language)
+    pretty_language = pretty_language.lower()
 
     filtered = [r for r in reviews if r.language.lower() == pretty_language]
+
+    if approved_only:
+        # Filter to only revisions that have been approved during the period.
+        # This matches the "active_review_count" definition used in the metrics charts.
+        approved_filtered = []
+        for r in filtered:
+            approved_revs = [rev for rev in r.revisions if rev.approval is not None]
+            if approved_revs:
+                from copy import copy
+
+                r_copy = copy(r)
+                r_copy.revisions = approved_revs
+                approved_filtered.append(r_copy)
+        filtered = approved_filtered
 
     if summary:
         # Output summary format as a table: {package-name} {package-version} {APPROVED|unapproved}
@@ -801,7 +1284,10 @@ def get_active_reviews(
                     f"{name:<{max_name_len}}\t{version:<{max_version_len}}\t{status:<{max_status_len}}\t{copilot_status:<{max_copilot_len}}\t{version_type:<{max_type_len}}\t{approval_date}"
                 )
 
-        print(f"\nFound {len(summary_data)} package versions in {pretty_language} between {start_date} and {end_date}.")
+        filter_label = " approved" if approved_only else ""
+        print(
+            f"\nFound {len(summary_data)}{filter_label} package versions in {pretty_language} between {start_date} and {end_date}."
+        )
         # Don't return anything in summary mode to avoid duplicate output
         return None
     else:
@@ -1070,55 +1556,91 @@ def check_health(include_auth: bool = False):
         print(f"❌ Service health check error: {e}")
 
 
-def normalize_language(lang: str) -> str:
-    """Normalize language input to expected format (pretty name)."""
-    if not lang:
-        return lang
-    # Mapping of lowercase to pretty names
-    lang_map = {
-        "c": "C",
-        "c#": "C#",
-        "csharp": "C#",
-        "c++": "C++",
-        "cpp": "C++",
-        "go": "Go",
-        "golang": "Go",
-        "java": "Java",
-        "javascript": "JavaScript",
-        "typescript": "JavaScript",
-        "json": "Json",
-        "kotlin": "Kotlin",
-        "python": "Python",
-        "rust": "Rust",
-        "swagger": "Swagger",
-        "swift": "Swift",
-        "ios": "Swift",
-        "typespec": "TypeSpec",
-        "xml": "Xml",
-        "android": "Android",
-        "dotnet": "C#",
-        "clang": "C",
+# ---------------------------------------------------------------------------
+# Unified language resolution
+# ---------------------------------------------------------------------------
+# Build a single case-insensitive lookup that maps every known alias, pretty
+# name, and canonical name to a (canonical, pretty) tuple.
+
+_LANGUAGE_ALIAS_TABLE: dict[str, tuple[str, str]] = {}
+
+
+def _build_language_alias_table():
+    """Populate ``_LANGUAGE_ALIAS_TABLE`` once."""
+    if _LANGUAGE_ALIAS_TABLE:
+        return
+    # Extra aliases beyond what SUPPORTED_LANGUAGES and get_language_pretty_name provide
+    extra_aliases: dict[str, str] = {
+        "csharp": "dotnet",
+        "c#": "dotnet",
+        "c++": "cpp",
+        "go": "golang",
+        "swift": "ios",
+        "c": "clang",
+        "javascript": "typescript",
     }
-    normalized = lang_map.get(lang.lower(), lang)
-    return normalized
+    for canonical in SUPPORTED_LANGUAGES:
+        pretty = get_language_pretty_name(canonical)
+        entry = (canonical, pretty)
+        _LANGUAGE_ALIAS_TABLE[canonical.lower()] = entry
+        _LANGUAGE_ALIAS_TABLE[pretty.lower()] = entry
+    for alias, canonical in extra_aliases.items():
+        pretty = get_language_pretty_name(canonical)
+        _LANGUAGE_ALIAS_TABLE[alias.lower()] = (canonical, pretty)
 
 
-ANALYZE_COMMENT_LANGUAGES = [
-    "C",
-    "C#",
-    "C++",
-    "Go",
-    "Java",
-    "JavaScript",
-    "Json",
-    "Kotlin",
-    "Python",
-    "Rust",
-    "Swagger",
-    "Swift",
-    "TypeSpec",
-    "Xml",
-]
+def resolve_language(lang: str) -> tuple[str, str]:
+    """Resolve any language string to ``(canonical, pretty)`` or raise ``ValueError``.
+
+    Accepts canonical names (``"golang"``), pretty names (``"Go"``), and common
+    aliases (``"csharp"``, ``"c#"``, ``"c++"``).  Case-insensitive.
+
+    Returns:
+        Tuple of ``(canonical, pretty)`` — e.g. ``("golang", "Go")``.
+
+    Raises:
+        ValueError: If the language string is not recognized.
+    """
+    _build_language_alias_table()
+    if not lang:
+        raise ValueError("Language must not be empty.")
+    entry = _LANGUAGE_ALIAS_TABLE.get(lang.lower())
+    if not entry:
+        raise ValueError(
+            f"Unsupported language `{lang}`. "
+            f"Accepted values: {', '.join(sorted({v[1] for v in _LANGUAGE_ALIAS_TABLE.values()}))}"
+        )
+    return entry
+
+
+def resolve_language_to_canonical(lang: str) -> str:
+    """Knack ``type=`` converter: returns the canonical language name."""
+    return resolve_language(lang)[0]
+
+
+def get_ai_comment_feedback(
+    language: str,
+    start_date: str,
+    end_date: str,
+    exclude: Optional[list[str]] = None,
+    environment: str = "production",
+    output_format: str = "json",
+):
+    """
+    Retrieves AI-generated comments that received feedback within the date range.
+    Filters by Feedback[].SubmittedOn and ChangeHistory[].ChangedOn timestamps.
+    """
+    results = _get_ai_comment_feedback(
+        language=language,
+        start_date=start_date,
+        end_date=end_date,
+        exclude=exclude,
+        environment=environment,
+    )
+    if output_format == "yaml":
+        print(yaml.dump(results, default_flow_style=False, allow_unicode=True, sort_keys=False))
+    else:
+        print(json.dumps(results, indent=2))
 
 
 def analyze_comments(language: str, start_date: str, end_date: str, environment: str = "production"):
@@ -1128,7 +1650,7 @@ def analyze_comments(language: str, start_date: str, end_date: str, environment:
     raw_comments = get_comments_in_date_range(start_date, end_date, environment=environment)
     filtered = [c for c in raw_comments if c.get("CommentSource") != "Diagnostic" and c.get("IsDeleted") != True]
 
-    allowed_commenters = get_approvers(language=language)
+    allowed_commenters = get_approvers(language=resolve_language(language)[1])
 
     reviews_container = get_apiview_cosmos_client(container_name="Reviews", environment=environment)
     review_ids = set(c.get("ReviewId") for c in filtered if c.get("ReviewId"))
@@ -1147,7 +1669,7 @@ def analyze_comments(language: str, start_date: str, end_date: str, environment:
     else:
         review_lang_map = {}
 
-    language = language.lower()
+    language = resolve_language(language)[1].lower()
     comments = [APIViewComment(**c) for c in filtered if review_lang_map.get(c.get("ReviewId", ""), "") == language]
 
     if allowed_commenters:
@@ -1155,7 +1677,7 @@ def analyze_comments(language: str, start_date: str, end_date: str, environment:
 
     comment_texts = [comment.comment_text for comment in comments if comment.comment_text]
 
-    theme_output = run_prompty(folder="other", filename="analyze_comment_themes", inputs={"comments": comment_texts})
+    theme_output = run_prompt(folder="other", filename="analyze_comment_themes", inputs={"comments": comment_texts})
     print(theme_output)
 
     print(f"Comment count: {len(comment_texts)}")
@@ -1229,6 +1751,7 @@ class CliCommandsLoader(CLICommandsLoader):
         with CommandGroup(self, "apiview", "__main__#{}") as g:
             g.command("get-comments", "get_apiview_comments")
             g.command("get-active-reviews", "get_active_reviews")
+            g.command("get-comment-feedback", "get_ai_comment_feedback")
             g.command("analyze-comments", "analyze_comments")
             g.command("resolve-package", "resolve_package_info")
         with CommandGroup(self, "review", "__main__#{}") as g:
@@ -1255,11 +1778,16 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("get", "db_get")
             g.command("delete", "db_delete")
             g.command("purge", "db_purge")
+            g.command("link", "db_link")
+            g.command("unlink", "db_unlink")
         with CommandGroup(self, "metrics", "__main__#{}") as g:
             g.command("report", "report_metrics")
         with CommandGroup(self, "permissions", "__main__#{}") as g:
             g.command("grant", "grant_permissions")
             g.command("revoke", "revoke_permissions")
+        with CommandGroup(self, "prompt", "__main__#{}") as g:
+            g.command("test", "prompt_test")
+            g.command("test-all", "prompt_test_all")
         return OrderedDict(self.command_table)
 
     # ARGUMENT REGISTRATION
@@ -1268,10 +1796,9 @@ class CliCommandsLoader(CLICommandsLoader):
         with ArgumentsContext(self, "") as ac:
             ac.argument(
                 "language",
-                type=str,
-                help="The language of the APIView file",
+                type=resolve_language_to_canonical,
+                help="The language (e.g., python, Go, C#, dotnet, typescript).",
                 options_list=("--language", "-l"),
-                choices=SUPPORTED_LANGUAGES,
             )
             ac.argument(
                 "remote",
@@ -1303,7 +1830,9 @@ class CliCommandsLoader(CLICommandsLoader):
                 type=str,
                 help="Path to a JSON file containing comments.",
                 options_list=["--comments-path", "-c"],
+                default=None,
             )
+
             ac.argument(
                 "include_auth",
                 action="store_true",
@@ -1357,10 +1886,9 @@ class CliCommandsLoader(CLICommandsLoader):
             )
             ac.argument(
                 "language",
-                type=str,
-                help="The language of the test case.",
+                type=resolve_language_to_canonical,
+                help="The language of the test case (e.g., python, Go, C#).",
                 options_list=("--language", "-l"),
-                choices=SUPPORTED_LANGUAGES,
             )
             ac.argument(
                 "test_file",
@@ -1461,10 +1989,9 @@ class CliCommandsLoader(CLICommandsLoader):
         with ArgumentsContext(self, "review start-job") as ac:
             ac.argument(
                 "language",
-                type=str,
-                help="The language of the APIView file",
+                type=resolve_language_to_canonical,
+                help="The language of the APIView file (e.g., python, Go, C#).",
                 options_list=("--language", "-l"),
-                choices=SUPPORTED_LANGUAGES,
             )
             ac.argument(
                 "target",
@@ -1499,13 +2026,17 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="The job ID to poll.",
                 options_list=["--job-id"],
             )
+            ac.argument(
+                "remote",
+                action="store_true",
+                help="Query the remote API service instead of the local database.",
+            )
         with ArgumentsContext(self, "review summarize") as ac:
             ac.argument(
                 "language",
-                type=str,
-                help="The language of the APIView file",
+                type=resolve_language_to_canonical,
+                help="The language of the APIView file (e.g., python, Go, C#).",
                 options_list=("--language", "-l"),
-                choices=SUPPORTED_LANGUAGES,
             )
             ac.argument(
                 "target", type=str, help="The path to the APIView file to summarize.", options_list=("--target", "-t")
@@ -1515,6 +2046,11 @@ class CliCommandsLoader(CLICommandsLoader):
                 type=str,
                 help="The path to the base APIView file for diff summarization.",
                 options_list=["--base", "-b"],
+            )
+            ac.argument(
+                "remote",
+                action="store_true",
+                help="Use the remote API service instead of local processing.",
             )
         with ArgumentsContext(self, "agent") as ac:
             ac.argument(
@@ -1535,10 +2071,31 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="Force readonly mode, even if you have write permissions.",
                 options_list=["--readonly", "-r"],
             )
+        with ArgumentsContext(self, "agent mention") as ac:
+            ac.argument(
+                "fetch_comment_id",
+                type=str,
+                help="Fetch a comment from the APIView database to process feedback. Also used as --source-comment-id for audit traceability.",
+                options_list=["--fetch-comment-id"],
+                default=None,
+            )
+            ac.argument(
+                "dry_run",
+                help="Print the payload that would be sent to the mention agent without executing it.",
+                options_list=["--dry-run"],
+                action="store_true",
+            )
+            ac.argument(
+                "source_comment_id",
+                type=str,
+                help="The APIView comment ID that triggered this request, recorded on any memories created for audit traceability. Automatically set when --fetch-comment-id is used.",
+                options_list=["--source-comment-id"],
+                default=None,
+            )
         with ArgumentsContext(self, "db") as ac:
             ac.argument(
                 "container_name",
-                type=str,
+                type=str.lower,
                 help="The name of the Cosmos DB container",
                 choices=ContainerNames.values(),
                 options_list=["--container-name", "-c"],
@@ -1548,6 +2105,62 @@ class CliCommandsLoader(CLICommandsLoader):
                 type=str,
                 help="The id of the item.",
                 options_list=["--id", "-i"],
+            )
+        with ArgumentsContext(self, "db link") as ac:
+            ac.argument(
+                "guideline",
+                type=str,
+                help="The ID of the guideline to link.",
+                options_list=["--guideline", "-g"],
+                default=None,
+            )
+            ac.argument(
+                "memory",
+                type=str,
+                help="The ID of the memory to link.",
+                options_list=["--memory", "-m"],
+                default=None,
+            )
+            ac.argument(
+                "example",
+                type=str,
+                help="The ID of the example to link.",
+                options_list=["--example", "-e"],
+                default=None,
+            )
+            ac.argument(
+                "reindex",
+                action="store_true",
+                help="Reindex the search indexes after linking.",
+                options_list=["--reindex"],
+            )
+        with ArgumentsContext(self, "db unlink") as ac:
+            ac.argument(
+                "guideline",
+                type=str,
+                help="The ID of the guideline to unlink.",
+                options_list=["--guideline", "-g"],
+                default=None,
+            )
+            ac.argument(
+                "memory",
+                type=str,
+                help="The ID of the memory to unlink.",
+                options_list=["--memory", "-m"],
+                default=None,
+            )
+            ac.argument(
+                "example",
+                type=str,
+                help="The ID of the example to unlink.",
+                options_list=["--example", "-e"],
+                default=None,
+            )
+            ac.argument(
+                "reindex",
+                action="store_true",
+                help="Reindex the search indexes after unlinking.",
+                options_list=["--reindex"],
             )
         with ArgumentsContext(self, "db purge") as ac:
             ac.argument(
@@ -1581,10 +2194,52 @@ class CliCommandsLoader(CLICommandsLoader):
             )
             ac.argument(
                 "language",
-                type=normalize_language,
-                help="Language to filter comments (case-insensitive, e.g., python, Python, PYTHON)",
-                choices=ANALYZE_COMMENT_LANGUAGES,
+                type=resolve_language_to_canonical,
+                help="Language to filter comments (case-insensitive, e.g., python, Go, C#).",
                 options_list=("--language", "-l"),
+            )
+        with ArgumentsContext(self, "apiview get-comment-feedback") as ac:
+            ac.argument(
+                "language",
+                type=resolve_language_to_canonical,
+                help="The language to filter by (e.g., python, Go, C#).",
+                options_list=["--language", "-l"],
+            )
+            ac.argument(
+                "start_date",
+                type=str,
+                help="The start date (YYYY-MM-DD).",
+                options_list=["--start-date", "-s"],
+            )
+            ac.argument(
+                "end_date",
+                type=str,
+                help="The end date (YYYY-MM-DD).",
+                options_list=["--end-date", "-e"],
+            )
+            ac.argument(
+                "exclude",
+                type=str,
+                nargs="*",
+                help="Feedback types to exclude. Can be 'good', 'bad', or 'delete'.",
+                options_list=["--exclude", "-x"],
+                choices=["good", "bad", "delete"],
+            )
+            ac.argument(
+                "environment",
+                type=str,
+                help="The APIView environment. Defaults to 'production'.",
+                options_list=["--environment"],
+                default="production",
+                choices=["production", "staging"],
+            )
+            ac.argument(
+                "output_format",
+                type=str,
+                help="Output format. Defaults to 'json'.",
+                options_list=["--format", "-f"],
+                default="json",
+                choices=["json", "yaml"],
             )
         with ArgumentsContext(self, "apiview resolve-package") as ac:
             ac.argument(
@@ -1595,10 +2250,9 @@ class CliCommandsLoader(CLICommandsLoader):
             )
             ac.argument(
                 "language",
-                type=str,
-                help="The language of the package.",
+                type=resolve_language_to_canonical,
+                help="The language of the package (e.g., python, Go, C#).",
                 options_list=["--language", "-l"],
-                choices=SUPPORTED_LANGUAGES,
             )
             ac.argument(
                 "version",
@@ -1619,6 +2273,22 @@ class CliCommandsLoader(CLICommandsLoader):
                 "remote",
                 action="store_true",
                 help="Use the remote API instead of local processing.",
+            )
+        with ArgumentsContext(self, "prompt test") as ac:
+            ac.argument(
+                "path",
+                type=str,
+                options_list=["--path", "-p"],
+                required=True,
+                help="Path to the .prompty file to test.",
+            )
+        with ArgumentsContext(self, "prompt test-all") as ac:
+            ac.argument(
+                "workers",
+                type=int,
+                options_list=["--workers", "-w"],
+                default=4,
+                help="Number of parallel workers for executing prompts (default: 4).",
             )
         with ArgumentsContext(self, "metrics report") as ac:
             ac.argument("start_date", help="The start date for the metrics report (YYYY-MM-DD).")

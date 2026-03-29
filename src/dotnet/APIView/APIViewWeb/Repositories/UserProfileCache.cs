@@ -40,7 +40,6 @@ namespace APIViewWeb.Repositories
                 if (userPreferenceDto != null)
                 {
                     existingUserProfile.Preferences.Language = (userPreferenceDto.Language != null) ? userPreferenceDto.Language : existingUserProfile.Preferences.Language;
-                    existingUserProfile.Preferences.ApprovedLanguages = (userPreferenceDto.ApprovedLanguages != null) ? userPreferenceDto.ApprovedLanguages : existingUserProfile.Preferences.ApprovedLanguages;
                     existingUserProfile.Preferences.APIRevisionType = (userPreferenceDto.APIRevisionType != null) ? userPreferenceDto.APIRevisionType : existingUserProfile.Preferences.APIRevisionType;
                     existingUserProfile.Preferences.State = (userPreferenceDto.State != null) ? userPreferenceDto.State : existingUserProfile.Preferences.State;
                     existingUserProfile.Preferences.Status = (userPreferenceDto.Status != null) ? userPreferenceDto.Status : existingUserProfile.Preferences.Status;

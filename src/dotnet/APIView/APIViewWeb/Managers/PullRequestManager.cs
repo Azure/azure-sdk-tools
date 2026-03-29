@@ -32,6 +32,7 @@ namespace APIViewWeb.Managers
         private readonly IConfiguration _configuration;
         private readonly IEnumerable<LanguageService> _languageServices;
         private readonly IGitHubClientFactory _gitHubClientFactory;
+        private readonly IProjectsManager _projectsManager;
         private readonly int _pullRequestCleanupDays;
 
         public PullRequestManager(ICosmosPullRequestsRepository pullRequestsRepository,
@@ -43,7 +44,8 @@ namespace APIViewWeb.Managers
             TelemetryClient telemetryClient, 
             ILogger<PullRequestManager> logger, 
             IEnumerable<LanguageService> languageServices,
-            IGitHubClientFactory gitHubClientFactory)
+            IGitHubClientFactory gitHubClientFactory,
+            IProjectsManager projectsManager)
         {
             _pullRequestsRepository = pullRequestsRepository;
             _apiRevisionsRepository = apiRevisionsRepository;
@@ -55,6 +57,7 @@ namespace APIViewWeb.Managers
             _languageServices = languageServices;
             _logger = logger;
             _gitHubClientFactory = gitHubClientFactory;
+            _projectsManager = projectsManager;
 
             string pullRequestReviewCloseAfter = _configuration["pull-request-review-close-after-days"] ?? "30";
             _pullRequestCleanupDays = int.Parse(pullRequestReviewCloseAfter);
@@ -142,21 +145,24 @@ namespace APIViewWeb.Managers
             string buildId, string artifactName, string originalFileName, string commitSha, string repoName,
             string packageName, int prNumber, string hostName, CreateAPIRevisionAPIResponse responseContent,
             string codeFileName = null, string baselineCodeFileName = null, string language = null,
-            string project = "internal", string packageType = null)
+            string project = "internal", string packageType = null, string metadataFileName = null)
         {
             language = LanguageServiceHelpers.MapLanguageAlias(language: language);
-            originalFileName = originalFileName ?? codeFileName;
+            originalFileName ??= codeFileName;
 
             // Get Code File to find the actual package name emitted by parser
             // We should deprecate package name param and use PackageName in CodeFile
             using var memoryStream = new MemoryStream();
             using var baselineStream = new MemoryStream();
-            var codeFile = await _codeFileManager.GetCodeFileAsync(
+            CodeFileResult codeFileResult = await _codeFileManager.GetCodeFileAsync(
                 repoName: repoName, buildId: buildId, artifactName: artifactName,
                 packageName: packageName, originalFileName: originalFileName,
                 codeFileName: codeFileName, originalFileStream: memoryStream,
                 baselineCodeFileName: baselineCodeFileName, baselineStream: baselineStream,
-                project: project, language: language);
+                project: project, language: language, metadataFileName: metadataFileName);
+
+            CodeFile codeFile = codeFileResult?.CodeFile;
+            TypeSpecMetadata typeSpecMetadata = codeFileResult?.Metadata;
 
             if (codeFile == null)
             {
@@ -193,20 +199,13 @@ namespace APIViewWeb.Managers
                     baselineStream.Position = 0;
                     baseLineCodeFile = await CodeFile.DeserializeAsync(stream: baselineStream);
                 }
-                if (codeFile != null)
+                
+                ReviewListItemModel review = await CreateAPIRevisionIfRequired(codeFile: codeFile, originalFileName: originalFileName, memoryStream: memoryStream, pullRequestModel: pullRequestModel,
+                    baselineCodeFile: baseLineCodeFile, baseLineStream: baselineStream, baselineFileName: baselineCodeFileName, responseContent: responseContent, packageType: packageType);
+                
+                if (typeSpecMetadata != null && review?.Language == ApiViewConstants.TypeSpecLanguage)
                 {
-                    await CreateAPIRevisionIfRequired(codeFile: codeFile, originalFileName: originalFileName, memoryStream: memoryStream, pullRequestModel: pullRequestModel,
-                        baselineCodeFile: baseLineCodeFile, baseLineStream: baselineStream, baselineFileName: baselineCodeFileName, responseContent: responseContent, packageType: packageType);
-                }
-                else
-                {
-                    var warningMessage = "Failed to download artifact. Please recheck build id and artifact path values in API change detection request.";
-                    _logger.LogWarning(warningMessage);
-                    _telemetryClient.TrackTrace(warningMessage, SeverityLevel.Warning, new Dictionary<string, string>
-                    {
-                        { "BuildId", buildId },
-                        { "artifactName", artifactName }
-                    });
+                    await _projectsManager.UpsertProjectFromMetadataAsync(ApiViewConstants.AzureSdkBotName, typeSpecMetadata, review);
                 }
 
                 //Add pull request info only if API revision is created
@@ -267,7 +266,7 @@ namespace APIViewWeb.Managers
             await _pullRequestsRepository.UpsertPullRequestAsync(pullRequestModel);
         }
 
-        private async Task CreateAPIRevisionIfRequired(CodeFile codeFile, string originalFileName, MemoryStream memoryStream,
+        private async Task<ReviewListItemModel> CreateAPIRevisionIfRequired(CodeFile codeFile, string originalFileName, MemoryStream memoryStream,
             PullRequestModel pullRequestModel, CodeFile baselineCodeFile, MemoryStream baseLineStream, string baselineFileName, CreateAPIRevisionAPIResponse responseContent, string packageType = null)
         {
             var validPackageType = !string.IsNullOrEmpty(packageType) && Enum.TryParse<Models.PackageType>(packageType, true, out var result) ? (Models.PackageType?)result : null;
@@ -276,7 +275,7 @@ namespace APIViewWeb.Managers
             var review = await _reviewManager.GetReviewAsync(language: codeFile.Language, packageName: codeFile.PackageName);
             if (review == null)
             {
-                review = await _reviewManager.CreateReviewAsync(language: codeFile.Language, packageName: codeFile.PackageName, isClosed: false, packageType: validPackageType);
+                review = await _reviewManager.CreateReviewAsync(language: codeFile.Language, packageName: codeFile.PackageName, isClosed: false, packageType: validPackageType, crossLanguagePackageId: codeFile.CrossLanguagePackageId);
                 responseContent.ActionsTaken.Add($"No existing review with packageName: '{codeFile.PackageName}' and language: '{codeFile.Language}'.");
                 responseContent.ActionsTaken.Add($"Created a new Review with Id: '{review.Id}'.");
                 responseContent.ActionsTaken.Add($"Review created with packageType: '{validPackageType}'.");
@@ -305,6 +304,8 @@ namespace APIViewWeb.Managers
                 await CreateUpdateRevisionWithBaseline(prModel: pullRequestModel, codeFile: codeFile, baselineCodeFile: baselineCodeFile, memoryStream: memoryStream,
                     baselineMemoryStream: baseLineStream, review: review, originalFileName: baselineFileName, responseContent: responseContent);
             }
+
+            return review;
         }
 
         private async Task CreateUpdateRevisionWithoutBaseline(PullRequestModel prModel, CodeFile codeFile, MemoryStream memoryStream,

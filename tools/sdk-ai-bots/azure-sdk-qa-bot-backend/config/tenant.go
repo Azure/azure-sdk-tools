@@ -39,12 +39,14 @@ var azureTypespecAuthoringSources = []model.Source{
 	model.Source_TypeSpecMigration,
 	model.Source_TypeSpecHttpSpecs,
 	model.Source_StaticAzureDocs,
+	model.Source_TypeSpecAzureResourceManagerLib,
 }
 
 var SourceTopK = map[model.Source]int{
 	model.Source_TypeSpecMigration:              3,
 	model.Source_TypeSpecQA:                     3,
 	model.Source_StaticTypeSpecToSwaggerMapping: 3,
+	model.Source_AzureOpenapiDiffDocs:           3,
 }
 
 var tenantConfigMap = map[model.TenantID]TenantConfig{
@@ -146,6 +148,7 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 		},
 		IntentionPromptTemplate: "typespec/intention.md",
 		AgenticSearchPrompt:     "typespec/agentic_search.md",
+		EnableRouting:           true,
 	},
 	model.TenantID_AzureSDKOnboarding: {
 		PromptTemplate:          "azure_sdk_onboarding/qa.md",
@@ -167,7 +170,7 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 	},
 	model.TenantID_APISpecReviewBot: {
 		PromptTemplate: "api_spec_review/qa.md",
-		Sources:        []model.Source{model.Source_StaticAzureDocs, model.Source_AzureRestAPISpec, model.Source_AzureRestAPISpecDocs, model.Source_AzureOpenapiDiffDocs, model.Source_AzureSDKDocsEng},
+		Sources:        []model.Source{model.Source_StaticAzureDocs, model.Source_APISpecViewQA, model.Source_AzureRestAPISpec, model.Source_AzureRestAPISpecDocs, model.Source_AzureOpenapiDiffDocs, model.Source_AzureSDKDocsEng},
 		SourceFilter: map[model.Source]string{
 			model.Source_AzureSDKDocsEng: "search.ismatch('design*', 'title')",
 		},

@@ -1,7 +1,13 @@
 # Release History
 
-## Version 0.3.26 (Unreleased)
+## Version 0.3.27 (2026-03-17)
+Removed `ivar`/`cvar` keywords from token file in favor of the `ClassVar` type annotation to distinguish then.
+Fixed a bug where classes without children were not being post-fixed with blank lines.
+Added a `:...` after function definitions to align closer to Python syntax.
+
+## Version 0.3.26 (2026-02-20)
 Fixed a bug where classes with no custom name attribute cause errors.
+Updated .pylintrc disabled rules to match Python repo main.
 
 ## Version 0.3.25 (2025-12-01)
 Fixed a bug where the overload implementations were being included in the APIView, causing issues with extra APIView Copilot comments being generated.

@@ -211,7 +211,7 @@ class TestApiView:
         apiview = stub_gen.generate_tokens()
         # ensure we have only the expected diagnostics when testing apistubgentest
         unclaimed = PylintParser.get_unclaimed()
-        assert len(apiview.diagnostics) == 99
+        assert len(apiview.diagnostics) == 93
         # The "needs copyright header" error corresponds to a file, which isn't directly
         # represented in APIView
         assert len(unclaimed) == 1
@@ -237,23 +237,18 @@ class TestApiView:
         constructor_level = [d for d in violations_diags if d['TargetId'] == 'apistubgentest.PylintCheckerViolationsClient.__init__']
         method_level = [d for d in violations_diags if 'with_too_many_args' in d['TargetId'] or 'list_secrets' in d['TargetId'] or 'set_secret' in d['TargetId'] or 'get_secret' in d['TargetId']]
 
-        # Total should be 22: 2 class-level + 2 constructor-level + 18 method-level
-        # Method-level includes overloads for list_secrets (6 diagnostics), set_secret (6 diagnostics),
-        # get_secret (3 diagnostics), and with_too_many_args (3 diagnostics)
-        assert len(violations_diags) == 22, f"Should have 22 total diagnostics, got {len(violations_diags)}"
+        assert len(violations_diags) == 16, f"Should have 16 total diagnostics, got {len(violations_diags)}"
         assert len(class_level) == 2, f"Should have 2 class-level diagnostics, got {len(class_level)}"
         assert len(constructor_level) == 2, f"Should have 2 constructor-level diagnostics, got {len(constructor_level)}"
-        assert len(method_level) == 18, f"Should have 18 method-level diagnostics (including overloads), got {len(method_level)}"
+        assert len(method_level) == 12, f"Should have 12 method-level diagnostics (including overloads), got {len(method_level)}"
 
         # Verify that overload methods with @distributed_trace have diagnostics without duplicates
         list_secrets_overload1_diags = [d for d in violations_diags if 'list_secrets_1' in d['TargetId']]
         set_secret_overload2_diags = [d for d in violations_diags if 'set_secret_2' in d['TargetId']]
-        get_secret_overload1_diags = [d for d in violations_diags if 'get_secret_1' in d['TargetId']]
 
         # Each overloaded method should have diagnostics for overloads + implementation
-        assert len(list_secrets_overload1_diags) == 3 , f"list_secrets overload 1 should have diagnostics for overloads and implementation, got {len(list_secrets_overload1_diags)}"
-        assert len(set_secret_overload2_diags) == 4, f"set_secret overload 2 should have diagnostics for overloads and implementation, got {len(set_secret_overload2_diags)}"
-        assert len(get_secret_overload1_diags) == 1, f"get_secret overload 1 should have diagnostics, got {len(get_secret_overload1_diags)}"
+        assert len(list_secrets_overload1_diags) == 2 , f"list_secrets overload 1 should have diagnostics for overloads and implementation, got {len(list_secrets_overload1_diags)}"
+        assert len(set_secret_overload2_diags) == 3, f"set_secret overload 2 should have diagnostics for overloads and implementation, got {len(set_secret_overload2_diags)}"
 
         # Verify enum value and property diagnostics exist
         enum_value_diags = [d for d in apiview.diagnostics if d['TargetId'] == 'apistubgentest.PylintViolationEnum.password' or d['TargetId'] == 'apistubgentest.PylintViolationEnum.CERTIFICATE']

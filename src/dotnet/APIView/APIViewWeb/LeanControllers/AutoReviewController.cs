@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
+using ApiView;
 using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers.Interfaces;
+using APIViewWeb.Models;
 using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -24,12 +27,14 @@ public class AutoReviewController : ControllerBase
     private readonly IEnumerable<LanguageService> _languageServices;
     private readonly IConfiguration _configuration;
     private readonly TelemetryClient _telemetryClient;
+    private readonly INamespaceManager _namespaceManager;
 
     public AutoReviewController(ICodeFileManager codeFileManager, 
         IAPIRevisionsManager apiRevisionsManager,
         IAutoReviewService autoReviewService,
         IEnumerable<LanguageService> languageServices,
         IConfiguration configuration,
+        INamespaceManager namespaceManager,
         TelemetryClient telemetryClient)
     {
         _codeFileManager = codeFileManager;
@@ -37,14 +42,23 @@ public class AutoReviewController : ControllerBase
         _autoReviewService = autoReviewService;
         _languageServices = languageServices;
         _configuration = configuration;
+        _namespaceManager = namespaceManager;
         _telemetryClient = telemetryClient;
     }
 
     // setReleaseTag param is set as true when request is originated from release pipeline to tag matching revision as released
     // regular CI pipeline will not send this flag in request
     [HttpPost("upload")]
-    public async Task<ActionResult> UploadAutoReview([FromForm] IFormFile file, string label, bool compareAllRevisions = false, string packageVersion = null, bool setReleaseTag = false, string packageType = null)
+    public async Task<ActionResult> UploadAutoReview([FromForm] IFormFile file, [FromForm] string label = null, [FromForm] bool compareAllRevisions = false, [FromForm] string packageVersion = null, [FromForm] bool setReleaseTag = false, [FromForm] string packageType = null)
     {
+        label ??= Request.Query["label"].FirstOrDefault();
+        packageVersion ??= Request.Query["packageVersion"].FirstOrDefault();
+        packageType ??= Request.Query["packageType"].FirstOrDefault();
+        if (!setReleaseTag && bool.TryParse(Request.Query["setReleaseTag"].FirstOrDefault(), out var qsReleaseTag))
+            setReleaseTag = qsReleaseTag;
+        if (!compareAllRevisions && bool.TryParse(Request.Query["compareAllRevisions"].FirstOrDefault(), out var qsCompareAll))
+            compareAllRevisions = qsCompareAll;
+
         try
         {
             if (file != null)
@@ -64,7 +78,7 @@ public class AutoReviewController : ControllerBase
                     {
                         return Ok(reviewUrl);
                     }
-                    if (review.IsApproved)
+                    if (review.IsApproved || await _namespaceManager.IsNamespaceApprovedAsync(review.ProjectId, review.Language))
                     {
                         return StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
                     }
@@ -122,9 +136,10 @@ public class AutoReviewController : ControllerBase
         try
         {
             using var memoryStream = new MemoryStream();
-            var codeFile = await _codeFileManager.GetCodeFileAsync(repoName: repoName, buildId: buildId, artifactName: artifactName,
+            CodeFileResult codeFileResult = await _codeFileManager.GetCodeFileAsync(repoName: repoName, buildId: buildId, artifactName: artifactName,
                 packageName: packageName, originalFileName: originalFilePath, codeFileName: reviewFilePath, originalFileStream: memoryStream,
                 project: project);
+            CodeFile codeFile = codeFileResult?.CodeFile;
 
             if (codeFile == null)
             {
@@ -144,7 +159,7 @@ public class AutoReviewController : ControllerBase
             {
                 return Ok(reviewUrl);
             }
-            if (review.IsApproved)
+            if (review.IsApproved || await _namespaceManager.IsNamespaceApprovedAsync(review.ProjectId, review.Language))
             {
                 return StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
             }

@@ -5,4 +5,4 @@
 
 const path = require("path");
 
-require(path.join(__dirname, "../", "dist", "export.js"));
+require(path.join(__dirname, "../", "dist", "src", "export.js"));

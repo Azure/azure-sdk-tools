@@ -951,11 +951,6 @@ export class CommentThreadComponent {
   isSystemGenerated(comment: CommentItemModel): boolean {
     return this.isAIGenerated(comment) || this.isDiagnostic(comment);
   }
-
-  canEditComment(comment: CommentItemModel): boolean {
-    return !this.isDiagnostic(comment);
-  }
-
   canDeleteComment(comment: CommentItemModel): boolean {
     return !this.isDiagnostic(comment);
   }

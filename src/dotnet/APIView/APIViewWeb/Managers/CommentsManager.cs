@@ -625,7 +625,10 @@ namespace APIViewWeb.Managers
                         }
                         break;
                     case ConversationDisposition.Resolve:
-                        await ResolveConversation(user, reviewId, comment.ElementId, comment.ThreadId);
+                        if (comment.CommentSource != CommentSource.Diagnostic)
+                        {
+                            await ResolveConversation(user, reviewId, comment.ElementId, comment.ThreadId);
+                        }
                         break;
                     case ConversationDisposition.KeepOpen:
                     default:

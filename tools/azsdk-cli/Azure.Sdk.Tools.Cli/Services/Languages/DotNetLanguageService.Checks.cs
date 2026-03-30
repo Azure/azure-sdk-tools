@@ -244,4 +244,9 @@ public partial class DotnetLanguageService : LanguageService
         var packageName = GetPackageNameFromPath(packagePath);
         return await commonValidationHelpers.ValidateChangelog(packageName, packagePath, fixCheckErrors, cancellationToken);
     }
+
+    public override async Task<PackageCheckResponse> CheckSpelling(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        return await commonValidationHelpers.CheckSpelling(packagePath, fixCheckErrors, cancellationToken);
+    }
 }

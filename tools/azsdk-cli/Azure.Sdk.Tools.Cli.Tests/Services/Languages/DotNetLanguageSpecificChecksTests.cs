@@ -1,4 +1,5 @@
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
@@ -654,6 +655,50 @@ public partial class TestClient
         _processHelperMock.Verify(x => x.Run(
             It.Is<ProcessOptions>(p => IsDotNetTestCommand(p, tempDir.DirectoryPath)),
             It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region CheckSpelling Tests
+
+    [Test]
+    public async Task CheckSpelling_DelegatesToCommonValidationHelpers()
+    {
+        var expectedSuccess = new PackageCheckResponse(0, "No spelling errors found");
+
+        string? capturedPackagePath = null;
+        _commonValidationHelperMock
+            .Setup(c => c.CheckSpelling(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .Callback<string, bool, CancellationToken>((pkgPath, _, _) =>
+            {
+                capturedPackagePath = pkgPath;
+            })
+            .ReturnsAsync(expectedSuccess);
+
+        var response = await _languageChecks.CheckSpelling(_packagePath, false, CancellationToken.None);
+
+        Assert.That(response.ExitCode, Is.EqualTo(0));
+        Assert.That(capturedPackagePath, Is.EqualTo(_packagePath));
+
+        _commonValidationHelperMock.Verify(
+            c => c.CheckSpelling(_packagePath, false, It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Test]
+    public async Task CheckSpelling_WithFixEnabled_DelegatesToCommonValidationHelpers()
+    {
+        _commonValidationHelperMock
+            .Setup(c => c.CheckSpelling(It.IsAny<string>(), true, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PackageCheckResponse(0, "Spelling issues fixed"));
+
+        var response = await _languageChecks.CheckSpelling(_packagePath, true, CancellationToken.None);
+
+        Assert.That(response.ExitCode, Is.EqualTo(0));
+
+        _commonValidationHelperMock.Verify(
+            c => c.CheckSpelling(_packagePath, true, It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     #endregion

@@ -106,15 +106,7 @@ public class CommonValidationHelpers : ICommonValidationHelpers
 
             if (!File.Exists(scriptPath))
             {
-                return new PackageCheckResponse(1, "", $"PowerShell script not found at expected location: {scriptPath}")
-                {
-                    NextSteps =
-                    [
-                        "Ensure you are running this command from within a clone of an Azure SDK repository.",
-                        "Verify that 'eng/common/scripts/Verify-ChangeLog.ps1' exists at the repository root.",
-                        "If the script is missing, run 'git restore eng/common/scripts/Verify-ChangeLog.ps1' or re-sync your branch."
-                    ]
-                };
+                return new PackageCheckResponse(1, "", $"PowerShell script not found at expected location: {scriptPath}");
             }
 
             var command = "pwsh";
@@ -127,15 +119,7 @@ public class CommonValidationHelpers : ICommonValidationHelpers
             {
                 _logger.LogWarning("Changelog validation failed. Exit Code: {ExitCode}, Output: {Output}",
                     processResult.ExitCode, processResult.Output);
-                return new PackageCheckResponse(processResult.ExitCode, processResult.Output, "Changelog validation failed.")
-                {
-                    NextSteps =
-                    [
-                        "Review the output above for specific changelog validation errors.",
-                        "Ensure the CHANGELOG.md file exists and follows the expected format.",
-                        "Verify that the changelog contains an entry for the current package version."
-                    ]
-                };
+                return new PackageCheckResponse(processResult.ExitCode, processResult.Output, "Changelog validation failed.");
             }
 
             return new PackageCheckResponse(processResult);
@@ -143,15 +127,7 @@ public class CommonValidationHelpers : ICommonValidationHelpers
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in ValidateChangelog");
-            return new PackageCheckResponse(1, "", $"Unhandled exception: {ex.Message}")
-            {
-                NextSteps =
-                [
-                    "An unexpected error occurred during changelog validation.",
-                    "Ensure 'pwsh' (PowerShell) is installed and available on your PATH.",
-                    "Check that you have read access to the repository and the package directory."
-                ]
-            };
+            return new PackageCheckResponse(1, "", $"Unhandled exception: {ex.Message}");
         }
     }
 
@@ -172,30 +148,14 @@ public class CommonValidationHelpers : ICommonValidationHelpers
 
             if (!File.Exists(scriptPath))
             {
-                return new PackageCheckResponse(1, "", $"PowerShell script not found at expected location: {scriptPath}")
-                {
-                    NextSteps =
-                    [
-                        "Ensure you are running this command from within a clone of an Azure SDK repository.",
-                        "Verify that 'eng/common/scripts/Verify-Readme.ps1' exists at the repository root.",
-                        "If the script is missing, run 'git restore eng/common/scripts/Verify-Readme.ps1' or re-sync your branch."
-                    ]
-                };
+                return new PackageCheckResponse(1, "", $"PowerShell script not found at expected location: {scriptPath}");
             }
 
             var settingsPath = Path.Combine(packageRepoRoot, "eng", ".docsettings.yml");
 
             if (!File.Exists(settingsPath))
             {
-                return new PackageCheckResponse(1, "", $"Doc settings file not found at expected location: {settingsPath}")
-                {
-                    NextSteps =
-                    [
-                        "Verify that 'eng/.docsettings.yml' exists at the repository root.",
-                        "If the file is missing, run 'git restore eng/.docsettings.yml' or re-sync your branch.",
-                        "This file is required for README validation and defines doc scanning configuration."
-                    ]
-                };
+                return new PackageCheckResponse(1, "", $"Doc settings file not found at expected location: {settingsPath}");
             }
 
             // TODO: investigate doc-warden code, this normalizes package path for Scan Paths
@@ -220,15 +180,7 @@ public class CommonValidationHelpers : ICommonValidationHelpers
             {
                 _logger.LogWarning("Readme validation failed. Exit Code: {ExitCode}, Output: {Output}",
                     processResult.ExitCode, processResult.Output);
-                return new PackageCheckResponse(processResult.ExitCode, processResult.Output, "Readme validation failed.")
-                {
-                    NextSteps =
-                    [
-                        "Review the output above for specific README validation errors.",
-                        "Ensure a README.md file exists in your package directory.",
-                        "Verify the README follows the expected format and contains required sections."
-                    ]
-                };
+                return new PackageCheckResponse(processResult.ExitCode, processResult.Output, "Readme validation failed.");
             }
 
             return new PackageCheckResponse(processResult);
@@ -236,15 +188,7 @@ public class CommonValidationHelpers : ICommonValidationHelpers
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in ValidateReadme");
-            return new PackageCheckResponse(1, "", $"Unhandled exception: {ex.Message}")
-            {
-                NextSteps =
-                [
-                    "An unexpected error occurred during README validation.",
-                    "Ensure 'pwsh' (PowerShell) is installed and available on your PATH.",
-                    "Check that you have read access to the repository and the package directory."
-                ]
-            };
+            return new PackageCheckResponse(1, "", $"Unhandled exception: {ex.Message}");
         }
     }
 
@@ -266,15 +210,7 @@ public class CommonValidationHelpers : ICommonValidationHelpers
 
             if (!File.Exists(cspellConfigPath))
             {
-                return new PackageCheckResponse(1, "", $"Cspell config file not found at expected location: {cspellConfigPath}")
-                {
-                    NextSteps =
-                    [
-                        "Ensure you are running this command from within a clone of an Azure SDK repository.",
-                        "Verify that '.vscode/cspell.json' exists at the repository root.",
-                        "If the config file is missing, run 'git restore .vscode/cspell.json' or re-sync your branch."
-                    ]
-                };
+                return new PackageCheckResponse(1, "", $"Cspell config file not found at expected location: {cspellConfigPath}");
             }
 
             var npxOptions = new NpxOptions(
@@ -301,15 +237,7 @@ public class CommonValidationHelpers : ICommonValidationHelpers
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error running spelling fix agent");
-                    return new PackageCheckResponse(processResult.ExitCode, processResult.Output, ex.Message)
-                    {
-                        NextSteps =
-                        [
-                            "The automatic spelling fix agent encountered an error.",
-                            "Review the cspell output above and fix the spelling issues manually.",
-                            "For legitimate technical terms, add them to the 'words' list in '.vscode/cspell.json'."
-                        ]
-                    };
+                    return new PackageCheckResponse(processResult.ExitCode, processResult.Output, ex.Message);
                 }
             }
 
@@ -317,16 +245,7 @@ public class CommonValidationHelpers : ICommonValidationHelpers
             {
                 _logger.LogWarning("Spelling check failed. Exit Code: {ExitCode}, Output: {Output}",
                     processResult.ExitCode, processResult.Output);
-                return new PackageCheckResponse(processResult.ExitCode, processResult.Output, "Spelling check failed.")
-                {
-                    NextSteps =
-                    [
-                        "Review the cspell output above for words flagged as misspelled.",
-                        "Fix any genuine typos in your source files.",
-                        "For legitimate technical terms, add them to the 'words' list in '.vscode/cspell.json'.",
-                        "Re-run the check with '--fix-check-errors' to attempt automatic spelling fixes."
-                    ]
-                };
+                return new PackageCheckResponse(processResult.ExitCode, processResult.Output, "Spelling check failed.");
             }
 
             return new PackageCheckResponse(processResult);
@@ -334,15 +253,7 @@ public class CommonValidationHelpers : ICommonValidationHelpers
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in CheckSpelling");
-            return new PackageCheckResponse(1, "", ex.Message)
-            {
-                NextSteps =
-                [
-                    "An unexpected error occurred during spelling validation.",
-                    "Ensure 'npx' and 'cspell' are installed and available on your PATH.",
-                    "Check that you have read access to the repository and the package directory."
-                ]
-            };
+            return new PackageCheckResponse(1, "", ex.Message);
         }
     }
 
@@ -350,28 +261,13 @@ public class CommonValidationHelpers : ICommonValidationHelpers
     {
         if (!Directory.Exists(packagePath))
         {
-            return (null, new PackageCheckResponse(1, "", $"Package path does not exist: {packagePath}")
-            {
-                NextSteps =
-                [
-                    "Verify the package path is correct and the directory exists on disk.",
-                    "Ensure you have restored/cloned the repository and the package directory is present."
-                ]
-            });
+            return (null, new PackageCheckResponse(1, "", $"Package path does not exist: {packagePath}"));
         }
 
         var packageRepoRoot = await _gitHelper.DiscoverRepoRootAsync(packagePath, ct);
         if (string.IsNullOrEmpty(packageRepoRoot))
         {
-            return (null, new PackageCheckResponse(1, "", $"Could not find repository root from package path: {packagePath}")
-            {
-                NextSteps =
-                [
-                    "Ensure you are running this command from within a Git repository.",
-                    "Verify the package path is inside a cloned Azure SDK repository.",
-                    "Check that the '.git' directory exists at the repository root."
-                ]
-            });
+            return (null, new PackageCheckResponse(1, "", $"Could not find repository root from package path: {packagePath}"));
         }
 
         return (packageRepoRoot, null);

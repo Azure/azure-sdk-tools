@@ -222,11 +222,18 @@ public class CommonValidationHelpers : ICommonValidationHelpers
             // Get only the files with changes that have changed between the current branch and the default (main) branch.
             // This avoids scanning thousands of files in directories like .tox, node_modules, etc.
             var mergeBaseSha = await _gitHelper.GetMergeBaseCommitShaAsync(packageRepoRoot, "main", ct);
+
+            // Normalize package path to be relative to the repo root and use forward slashes for git pathspecs
+            var relativePackagePath = Path.GetRelativePath(packageRepoRoot, packagePath);
+            var normalizedDiffPath = relativePackagePath
+                .Replace(Path.DirectorySeparatorChar, '/')
+                .Replace(Path.AltDirectorySeparatorChar, '/');
+
             var changedFiles = await _gitHelper.GetChangedFilesAsync(
                 packageRepoRoot,
                 mergeBaseSha,
                 null, // compare against working tree to include uncommitted changes
-                packagePath,
+                normalizedDiffPath,
                 "d", // exclude deleted files
                 ct);
 

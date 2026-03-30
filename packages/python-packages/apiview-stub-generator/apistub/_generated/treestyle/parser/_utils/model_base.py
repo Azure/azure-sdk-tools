@@ -25,11 +25,11 @@ import xml.etree.ElementTree as ET
 from collections.abc import MutableMapping
 from typing_extensions import Self
 import isodate
-from azure.core.exceptions import DeserializationError
-from azure.core import CaseInsensitiveEnumMeta
-from azure.core.pipeline import PipelineResponse
-from azure.core.serialization import _Null
-from azure.core.rest import HttpResponse
+from ....._vendor.core.exceptions import DeserializationError
+from ....._vendor.core import CaseInsensitiveEnumMeta
+from ....._vendor.core.pipeline import PipelineResponse
+from ....._vendor.core.serialization import _Null
+from ....._vendor.core.rest import HttpResponse
 
 _LOGGER = logging.getLogger(__name__)
 

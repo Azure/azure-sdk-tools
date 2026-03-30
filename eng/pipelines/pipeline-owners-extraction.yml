@@ -118,11 +118,6 @@ stages:
               inlineScript: |
                 & "$(AZSDK)" config codeowners generate `
                   --repo-root "$(Build.SourcesDirectory)/${{ repo.Name }}" `
-                  --package-types mgmt `
-                  --section "Management Libraries"
-
-                & "$(AZSDK)" config codeowners generate `
-                  --repo-root "$(Build.SourcesDirectory)/${{ repo.Name }}" `
                   --package-types client `
                   --package-types compat `
                   --package-types data `

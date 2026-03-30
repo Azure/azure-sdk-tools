@@ -282,23 +282,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
             var result = await languageChecks.ValidateChangelog(packagePath, fixCheckErrors, ct);
 
-            if (result.ExitCode != 0)
+            if (result.ExitCode != 0 && result.NextSteps is not { Count: > 0 })
             {
-                result.NextSteps = new List<string>
-                {
+                result.NextSteps =
+                [
                     "Review and update the CHANGELOG.md file to ensure it follows the proper format",
                     "Verify that unreleased changes are properly documented",
                     "Check that version numbers and release dates are correctly formatted",
                     "Refer to the Azure SDK changelog guidelines for proper formatting"
-                };
-                return new PackageCheckResponse(result.ExitCode, result.CheckStatusDetails, "Changelog validation failed") { NextSteps = result.NextSteps };
-            }
-            else if (result.CheckStatusDetails != "noop")
-            {
-                result.NextSteps = new List<string>
-                {
-                    "Changelog validation passed - no action needed"
-                };
+                ];
             }
 
             return result;
@@ -316,22 +308,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
             var result = await languageChecks.AnalyzeDependencies(packagePath, fixCheckErrors, ct);
 
-            if (result.ExitCode != 0)
+            if (result.ExitCode != 0 && result.CheckStatusDetails != "noop" && result.NextSteps is not { Count: > 0 })
             {
-                result.NextSteps = new List<string>
-                {
+                result.NextSteps =
+                [
                     "Review and update package dependencies to resolve conflicts",
                     "Ensure all dependencies meet Azure SDK guidelines",
                     "Check for outdated or vulnerable dependencies",
                     "Run language-specific dependency update commands (e.g., pip upgrade, npm update)"
-                };
-            }
-            else if (result.CheckStatusDetails != "noop")
-            {
-                result.NextSteps = new List<string>
-                {
-                    "Dependency check passed - all dependencies are properly configured"
-                };
+                ];
             }
 
             return result;
@@ -349,22 +334,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
             var result = await languageChecks.ValidateReadme(packagePath, fixCheckErrors, ct);
 
-            if (result.ExitCode != 0)
+            if (result.ExitCode != 0 && result.NextSteps is not { Count: > 0 })
             {
-                result.NextSteps = new List<string>
-                {
+                result.NextSteps =
+                [
                     "Create or update the README.md file to include required sections",
                     "Ensure the README follows Azure SDK documentation standards",
                     "Include proper installation instructions, usage examples, and API documentation links",
                     "Verify that all code samples in the README are working and up-to-date"
-                };
-            }
-            else if (result.CheckStatusDetails != "noop")
-            {
-                result.NextSteps = new List<string>
-                {
-                    "README validation passed - documentation is properly formatted"
-                };
+                ];
             }
 
             return result;

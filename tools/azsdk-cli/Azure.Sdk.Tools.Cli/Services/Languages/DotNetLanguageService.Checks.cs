@@ -62,6 +62,10 @@ public partial class DotnetLanguageService : LanguageService
                 {
                     nextSteps.Add("Review the output above for specific failures in CodeChecks.ps1.");
                 }
+                else
+                {
+                    nextSteps.Insert(0, "The CodeChecks.ps1 script output contains specific instructions for each error listed below:");
+                }
 
                 return new PackageCheckResponse(result.ExitCode, result.Output, "Generated code checks failed")
                 {

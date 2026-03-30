@@ -48,7 +48,7 @@
         <!-- Progress bar -->
         <div *ngIf="projectId" class="namespace-progress">
             <div class="progress-header">
-                <span class="progress-title">Namespace Approval Progress</span>
+                <span class="progress-title">Namespace approval progress</span>
                 <span class="progress-count">{{ getApprovedCount() }} of {{ getTotalCount() }} approved</span>
             </div>
             <div class="progress-bar-container">
@@ -128,9 +128,9 @@
     </div>
 </ng-template>
 
-<!-- Reject Namespace Dialog -->
+<!-- Reject namespace dialog -->
 <p-dialog 
-    header="Reject Namespace" 
+    header="Reject namespace" 
     [(visible)]="showFeedbackDialog" 
     [modal]="true" 
     [closable]="true"
@@ -145,7 +145,7 @@
         <p class="feedback-instruction">
             Please provide a reason for rejection. This feedback will be visible to the SDK team.
         </p>
-        <label for="feedbackNotes" class="feedback-label">Rejection Reason <span class="required">*</span></label>
+        <label for="feedbackNotes" class="feedback-label">Rejection reason <span class="required">*</span></label>
         <textarea 
             id="feedbackNotes"
             [(ngModel)]="feedbackNotes"
@@ -160,7 +160,7 @@
             </button>
             <button class="btn btn-danger" (click)="submitFeedback()" [disabled]="!feedbackNotes.trim()">
                 <i class="bi bi-x-circle"></i>
-                Reject Namespace
+                Reject namespace
             </button>
         </div>
     </ng-template>

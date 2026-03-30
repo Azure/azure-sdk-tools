@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
@@ -31,6 +32,7 @@ internal class DotnetLanguageServiceVersionUpdateTests
         _service = new DotnetLanguageService(
             _processHelperMock.Object,
             _powershellHelperMock.Object,
+            Mock.Of<ICopilotAgentRunner>(),
             _gitHelperMock.Object,
             new TestLogger<DotnetLanguageService>(),
             Mock.Of<ICommonValidationHelpers>(),
@@ -303,6 +305,7 @@ internal class DotnetLanguageServiceVersionUpdateTests
         var serviceWithRealChangelog = new DotnetLanguageService(
             _processHelperMock.Object,
             _powershellHelperMock.Object,
+            Mock.Of<ICopilotAgentRunner>(),
             _gitHelperMock.Object,
             new TestLogger<DotnetLanguageService>(),
             Mock.Of<ICommonValidationHelpers>(),

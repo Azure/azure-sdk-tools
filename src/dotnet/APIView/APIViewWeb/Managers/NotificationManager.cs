@@ -143,7 +143,7 @@ namespace APIViewWeb.Managers
             var htmlContent = await _emailTemplateService.RenderAsync(
                 EmailTemplateKey.ReviewOrRevisionApproval,
                 ReviewOrRevisionApprovalEmailModel.Create(_apiviewEndpoint, review, revision, user.GetGitHubLogin(), isReviewApproval));
-            await SendSubscriberEmailsAsync(review, user, htmlContent, null, isReviewApproval ? "Review Approved" : "Revision Approved");
+            await SendSubscriberEmailsAsync(review, user, htmlContent, null, isReviewApproval ? "First Release Approved" : "Revision Approved");
         }
         
         /// <summary>

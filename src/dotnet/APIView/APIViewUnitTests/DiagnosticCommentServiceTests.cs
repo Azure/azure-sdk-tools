@@ -405,7 +405,7 @@ public class DiagnosticCommentServiceTests
 
 
     [Fact]
-    public async Task SameDiagnosticTextAcrossRevisions_ProducesMatchingCorrelationIds()
+    public async Task SyncDiagnosticCommentsAsync_SameDiagnosticTextAcrossRevisions_ProducesMatchingCorrelationIds()
     {
         DiagnosticCommentService service = CreateService(out Mock<ICosmosCommentsRepository> commentsRepoMock);
 

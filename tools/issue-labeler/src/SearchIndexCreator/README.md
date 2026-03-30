@@ -49,8 +49,8 @@ Create a `local.settings.json` file in the SearchIndexCreator project directory:
     "RepositoryNamesForLabels": "azure-sdk-for-net;azure-sdk-for-js;azure-sdk-for-python",
     "ConfigurationEndpoint": "https://<app-config>.azconfig.io",
     "McpRepositoryForLabels": "mcp",
-    "PrimaryLabelPrefixes": "server-",
-    "SecondaryLabelPrefixes": "tools-;remote-mcp;packages-",
+    "McpPrimaryLabelPrefixes": "server-",
+    "McpSecondaryLabelPrefixes": "tools-;remote-mcp;packages-",
     "RerankerThreshold": "1.0"
   }
 }
@@ -76,8 +76,8 @@ Create a `local.settings.json` file in the SearchIndexCreator project directory:
 | `RepositoryNamesForLabels` | Semicolon-separated list of Azure SDK repos | `azure-sdk-for-net;azure-sdk-for-js` |
 | `ConfigurationEndpoint` | Azure App Configuration endpoint (optional) | `https://my-config.azconfig.io` |
 | `McpRepositoryForLabels` | MCP repository name | `mcp` |
-| `PrimaryLabelPrefixes` | Semicolon-separated prefixes for primary (Server) labels. **Required for MCP repos.** | `server-` |
-| `SecondaryLabelPrefixes` | Semicolon-separated prefixes for secondary (Tool) labels. **Required for MCP repos.** | `tools-;remote-mcp;packages-` |
+| `McpPrimaryLabelPrefixes` | Semicolon-separated prefixes for primary (Server) labels. **Required only for MCP repository** | `server-` |
+| `McpSecondaryLabelPrefixes` | Semicolon-separated prefixes for secondary (Tool) labels. **Required only for MCP repository** | `tools-;remote-mcp;packages-` |
 | `RerankerThreshold` | Semantic reranker score threshold (0.0-1.0) | `1.0` (default), `0.7` (for MCP) |
 
 ### Embedding Model Notes

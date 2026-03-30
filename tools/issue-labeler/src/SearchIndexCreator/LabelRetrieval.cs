@@ -106,11 +106,11 @@ namespace SearchIndexCreator
 
         private IEnumerable<object> McpLabelFilter(IReadOnlyList<Label> labels)
         {
-            var primaryPrefixes = (_config["PrimaryLabelPrefixes"]
-                ?? throw new InvalidOperationException("Configuration key 'PrimaryLabelPrefixes' is required but was not found."))
+            var primaryPrefixes = (_config["McpPrimaryLabelPrefixes"]
+                ?? throw new InvalidOperationException("Configuration key 'McpPrimaryLabelPrefixes' is required but was not found."))
                 .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            var secondaryPrefixes = (_config["SecondaryLabelPrefixes"]
-                ?? throw new InvalidOperationException("Configuration key 'SecondaryLabelPrefixes' is required but was not found."))
+            var secondaryPrefixes = (_config["McpSecondaryLabelPrefixes"]
+                ?? throw new InvalidOperationException("Configuration key 'McpSecondaryLabelPrefixes' is required but was not found."))
                 .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
             var allPrefixes = primaryPrefixes.Concat(secondaryPrefixes).ToArray();

@@ -24,11 +24,11 @@ namespace SearchIndexCreator.RepositoryIndexConfigs
 
         public McpRepositoryIndexConfig(IConfiguration config)
         {
-            _primaryPrefixes = (config["PrimaryLabelPrefixes"]
-                ?? throw new InvalidOperationException("Configuration key 'PrimaryLabelPrefixes' is required but was not found."))
+            _primaryPrefixes = (config["McpPrimaryLabelPrefixes"]
+                ?? throw new InvalidOperationException("Configuration key 'McpPrimaryLabelPrefixes' is required but was not found."))
                 .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            _secondaryPrefixes = (config["SecondaryLabelPrefixes"]
-                ?? throw new InvalidOperationException("Configuration key 'SecondaryLabelPrefixes' is required but was not found."))
+            _secondaryPrefixes = (config["McpSecondaryLabelPrefixes"]
+                ?? throw new InvalidOperationException("Configuration key 'McpSecondaryLabelPrefixes' is required but was not found."))
                 .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries );
         }
 

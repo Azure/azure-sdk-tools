@@ -143,7 +143,7 @@ public partial class DotnetLanguageService : LanguageService
                     NextSteps =
                     [
                         "Review the trimming and AOT warnings in the output above and carefully follow the guidance at https://github.com/Azure/azure-sdk-for-net/blob/main/doc/dev/AotCompatibility.md to address them.",
-                        "If the warnings involve complex scenarios (e.g., reflection-heavy code or third-party dependencies), reach out to the Azure SDK team for guidance before considering an opt-out."
+                        "If the warnings involve complex scenarios, reach out to the Azure SDK team for guidance before considering an opt-out."
                     ]
                 };
             }

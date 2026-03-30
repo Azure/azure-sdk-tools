@@ -35,7 +35,15 @@ public partial class DotnetLanguageService : LanguageService
             if (!File.Exists(scriptPath))
             {
                 logger.LogError("Code checks script not found at: {ScriptPath}", scriptPath);
-                return new PackageCheckResponse(1, "", $"Code checks script not found at: {scriptPath}");
+                return new PackageCheckResponse(1, "", $"Code checks script not found at: {scriptPath}")
+                {
+                    NextSteps =
+                    [
+                        "Ensure you are running this command from within a clone of the 'azure-sdk-for-net' repository.",
+                        "Verify that the repository is fully restored and that 'eng/scripts/CodeChecks.ps1' exists at the repository root.",
+                        "If the script is missing, restore it by running 'git restore eng/scripts/CodeChecks.ps1' or re-sync your branch to retrieve the file."
+                    ]
+                };
             }
 
             var args = new[] {"-ServiceDirectory", serviceDirectory, "-SpellCheckPublicApiSurface", "-SkipDiffValidation" };

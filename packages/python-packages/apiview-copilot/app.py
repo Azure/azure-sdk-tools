@@ -18,6 +18,7 @@ import time
 from enum import Enum
 from typing import Literal, Optional
 
+from azure.monitor.opentelemetry import configure_azure_monitor
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel, Field
@@ -29,13 +30,19 @@ from src._diff import create_diff_with_line_numbers
 from src._mention import handle_mention_request
 from src._settings import SettingsManager
 from src._thread_resolution import handle_thread_resolution_request
-from src._utils import get_language_pretty_name, run_prompty
+from src._prompt_runner import run_prompt
+from src._utils import get_language_pretty_name
 from src.agent._agent import get_readonly_agent, get_readwrite_agent, invoke_agent
 
 # How long to keep completed jobs (seconds)
 JOB_RETENTION_SECONDS = 1800  # 30 minutes
 db_manager = DatabaseManager.get_instance()
 settings = SettingsManager()
+
+# Application Insights telemetry — enabled when connection string is available
+_appinsights_conn_str = os.environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING")
+if _appinsights_conn_str:
+    configure_azure_monitor(connection_string=_appinsights_conn_str)
 
 app = FastAPI(openapi_url=None, docs_url=None, redoc_url=None)
 
@@ -63,7 +70,12 @@ class ApiReviewJobRequest(BaseModel):
     base: str = None
     outline: str = None
     comments: list = None
-    target_id: str = None
+    target_id: Optional[str] = Field(None, alias="targetId")
+
+    class Config:
+        """Configuration for Pydantic model."""
+
+        populate_by_name = True
 
 
 class ApiReviewJobStatusResponse(BaseModel):
@@ -74,7 +86,18 @@ class ApiReviewJobStatusResponse(BaseModel):
     details: str = None
 
 
-@app.post("/api-review/start", status_code=202)
+class ApiReviewJobStartResponse(BaseModel):
+    """Response model for starting an API review job."""
+
+    job_id: str = Field(..., alias="jobId")
+
+    class Config:
+        """Configuration for Pydantic model."""
+
+        populate_by_name = True
+
+
+@app.post("/api-review/start", status_code=202, response_model=ApiReviewJobStartResponse)
 async def submit_api_review_job(
     job_request: ApiReviewJobRequest,
     _claims=Depends(require_roles(AppRole.WRITER, AppRole.APP_WRITER)),
@@ -84,13 +107,16 @@ async def submit_api_review_job(
     if job_request.language not in SUPPORTED_LANGUAGES:
         raise HTTPException(status_code=400, detail=f"Unsupported language `{job_request.language}`")
 
-    reviewer = ApiViewReview(
-        language=job_request.language,
-        target=job_request.target,
-        base=job_request.base,
-        outline=job_request.outline,
-        comments=job_request.comments,
-    )
+    try:
+        reviewer = ApiViewReview(
+            language=job_request.language,
+            target=job_request.target,
+            base=job_request.base,
+            outline=job_request.outline,
+            comments=job_request.comments,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
     job_id = reviewer.job_id
     db_manager.review_jobs.create(job_id, data={"status": ApiReviewJobStatus.InProgress, "finished": None})
 
@@ -116,7 +142,7 @@ async def submit_api_review_job(
 
     # Schedule the job in the background
     asyncio.create_task(run_review_job())
-    return {"job_id": job_id}
+    return ApiReviewJobStartResponse(job_id=job_id)
 
 
 @app.get("/api-review/{job_id}", response_model=ApiReviewJobStatusResponse)
@@ -128,8 +154,8 @@ async def get_api_review_job_status(
     try:
         job = db_manager.review_jobs.get(job_id)
         return job
-    except CosmosResourceNotFoundError:
-        raise HTTPException(status_code=404, detail=f"Job with id {html.escape(str(job_id))} not found")
+    except CosmosResourceNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=f"Job with id {html.escape(str(job_id))} not found") from exc
 
 
 @app.get("/auth-test")
@@ -156,17 +182,27 @@ def cleanup_job_store():
 class AgentChatRequest(BaseModel):
     """Request model for agent chat interaction."""
 
-    user_input: str
-    thread_id: str = None
+    user_input: str = Field(..., alias="userInput")
+    thread_id: Optional[str] = Field(None, alias="threadId")
     messages: list = None  # Optional: for multi-turn
+
+    class Config:
+        """Configuration for Pydantic model."""
+
+        populate_by_name = True
 
 
 class AgentChatResponse(BaseModel):
     """Response model for agent chat interaction."""
 
     response: str
-    thread_id: str
+    thread_id: str = Field(..., alias="threadId")
     messages: list
+
+    class Config:
+        """Configuration for Pydantic model."""
+
+        populate_by_name = True
 
 
 @app.post("/agent/chat", response_model=AgentChatResponse)
@@ -234,7 +270,7 @@ async def summarize_api(
 
         pretty_language = get_language_pretty_name(request.language)
         inputs = {"language": pretty_language, "content": summary_content}
-        summary = await asyncio.to_thread(run_prompty, folder="summarize", filename=summary_prompt_file, inputs=inputs)
+        summary = await asyncio.to_thread(run_prompt, folder="summarize", filename=summary_prompt_file, inputs=inputs)
         return SummarizeResponse(summary=summary)
     except Exception as e:
         logger.error("Error in /api-review/summarize: %s", e, exc_info=True)
@@ -248,6 +284,7 @@ class MentionRequest(BaseModel):
     language: str
     package_name: str = Field(..., alias="packageName")
     code: str
+    source_comment_id: Optional[str] = Field(None, alias="sourceCommentId")
 
     class Config:
         """Configuration for Pydantic model."""
@@ -274,6 +311,7 @@ async def handle_mention(
             language=pretty_language,
             package_name=request.package_name,
             code=request.code,
+            source_comment_id=request.source_comment_id,
         )
         return AgentChatResponse(
             response=response, thread_id="", messages=[]  # No thread ID for this endpoint  # No messages to return
@@ -302,6 +340,7 @@ async def handle_thread_resolution(
             language=pretty_language,
             package_name=request.package_name,
             code=request.code,
+            source_comment_id=request.source_comment_id,
         )
         return AgentChatResponse(
             response=response, thread_id="", messages=[]  # No thread ID for this endpoint  # No messages to return

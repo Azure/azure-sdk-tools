@@ -1,10 +1,10 @@
+import { ChoiceSchema, CodeModel, codeModelSchema, ComplexSchema, isVirtualParameter, ObjectSchema, Operation, Parameter, Property } from '@autorest/codemodel';
+import { AutorestExtensionHost, Session } from '@autorest/extension-base';
+import { comment, serialize } from '@azure-tools/codegen';
 import * as child_process from 'child_process';
 import * as fs from 'fs';
-import * as path from 'path';
-import { AutorestExtensionHost, Session } from '@autorest/extension-base';
-import { ChoiceSchema, CodeModel, ComplexSchema, ObjectSchema, Operation, Parameter, Property, codeModelSchema, isVirtualParameter } from '@autorest/codemodel';
 import { JSONPath } from 'jsonpath-plus';
-import { comment, serialize } from '@azure-tools/codegen';
+import * as path from 'path';
 
 export class Helper {
     static dumpBuf: Record<string, any> = {};
@@ -16,7 +16,7 @@ export class Helper {
     ): Promise<void> {
         // write the final result first which is hardcoded in the Session class to use to build the model..
         // overwrite the modelerfour which should be fine considering our change is backward compatible
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const modelerfourOptions = await session.getValue('modelerfour', {});
         if (modelerfourOptions['emit-yaml-tags'] !== false) {
             if (exportExplicitTypes) {

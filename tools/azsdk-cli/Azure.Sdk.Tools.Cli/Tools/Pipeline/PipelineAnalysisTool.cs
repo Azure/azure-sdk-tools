@@ -167,7 +167,7 @@ public class PipelineAnalysisTool(
         throw new ArgumentException($"Could not extract buildId from pipeline identifier: {pipelineIdentifier}");
     }
 
-    private void Initialize(bool auth = true)
+    private void Initialize(bool auth = true, CancellationToken ct = default)
     {
         if (initialized)
         {
@@ -177,7 +177,7 @@ public class PipelineAnalysisTool(
         if (auth)
         {
             var tokenScope = new[] { Constants.AZURE_DEVOPS_TOKEN_SCOPE };
-            var token = azureService.GetCredential(Constants.MICROSOFT_CORP_TENANT).GetToken(new TokenRequestContext(tokenScope), CancellationToken.None);
+            var token = azureService.GetCredential(Constants.MICROSOFT_CORP_TENANT).GetToken(new TokenRequestContext(tokenScope), ct);
             var tokenCredential = new VssOAuthAccessTokenCredential(token.Token);
             var connection = new VssConnection(new Uri(Constants.AZURE_SDK_DEVOPS_BASE_URL), tokenCredential);
             buildClientValue = connection.GetClient<BuildHttpClient>();
@@ -193,17 +193,17 @@ public class PipelineAnalysisTool(
         initialized = true;
     }
 
-    private async Task<string> GetPipelineProject(int buildId, string? project = null)
+    private async Task<string> GetPipelineProject(int buildId, string? project = null, CancellationToken ct = default)
     {
         if (project == Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT || string.IsNullOrEmpty(project))
         {
             var pipelineUrl = $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT}/_apis/build/builds/{buildId}?api-version=7.1";
             logger.LogDebug("Getting pipeline details from {url} via http", pipelineUrl);
-            var response = await httpClient.GetAsync(pipelineUrl);
+            var response = await httpClient.GetAsync(pipelineUrl, ct);
             // If project is not specified, try both public and internal projects
             if (string.IsNullOrEmpty(project) && !response.IsSuccessStatusCode)
             {
-                return await GetPipelineProject(buildId, Constants.AZURE_SDK_DEVOPS_INTERNAL_PROJECT);
+                return await GetPipelineProject(buildId, Constants.AZURE_SDK_DEVOPS_INTERNAL_PROJECT, ct);
             }
             // Devops will return a sign-in html page if the user is not authorized
             if (response.StatusCode == System.Net.HttpStatusCode.NonAuthoritativeInformation)
@@ -211,7 +211,7 @@ public class PipelineAnalysisTool(
                 throw new Exception($"Not authorized to get pipeline details from {pipelineUrl}");
             }
             response.EnsureSuccessStatusCode();
-            var json = await response.Content.ReadAsStringAsync();
+            var json = await response.Content.ReadAsStringAsync(ct);
             using var doc = JsonDocument.Parse(json);
             var projectName = doc.RootElement.GetProperty("project").GetProperty("name").GetString();
             if (string.IsNullOrEmpty(projectName))
@@ -223,7 +223,7 @@ public class PipelineAnalysisTool(
 
         var _pipelineUrl = $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{project}/_apis/build/builds/{buildId}?api-version=7.1";
         logger.LogDebug("Getting pipeline details from {url} via sdk", _pipelineUrl);
-        var build = await buildClient.GetBuildAsync(project, buildId);
+        var build = await buildClient.GetBuildAsync(project, buildId, cancellationToken: ct);
         return build.Project.Name;
     }
 
@@ -405,7 +405,7 @@ public class PipelineAnalysisTool(
             LogAnalysisResponse response = new() { Errors = [] };
             foreach (var log in logs)
             {
-                var localLogResult = await logAnalysisHelper.AnalyzeLogContent(log, null, null, null);
+                var localLogResult = await logAnalysisHelper.AnalyzeLogContent(log, null, null, null, ct);
                 response.Errors.AddRange(localLogResult);
             }
             return response;
@@ -461,20 +461,20 @@ public class PipelineAnalysisTool(
         {
             if (string.IsNullOrEmpty(project))
             {
-                project = await GetPipelineProject(buildId, project);
+                project = await GetPipelineProject(buildId, project, ct);
             }
 
             var failureLogIds = await getPipelineFailureLogIds(project, buildId, ct);
             var analysis = await analyzePipelineFailureLogs(project, buildId, query, failureLogIds, analyzeWithAgent, ct);
 
             var failedTests = new FailedTestRunListResponse();
-            var failedTestArtifacts = await devopsService.GetPipelineLlmArtifacts(project, buildId);
+            var failedTestArtifacts = await devopsService.GetPipelineLlmArtifacts(project, buildId, ct);
 
             foreach (var testFiles in failedTestArtifacts)
             {
                 foreach (var file in testFiles.Value)
                 {
-                    var failed = await testHelper.GetFailedTestCases(file);
+                    var failed = await testHelper.GetFailedTestCases(file, ct: ct);
                     failedTests.Items.AddRange(failed.Items);
                 }
             }

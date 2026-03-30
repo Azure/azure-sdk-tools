@@ -90,7 +90,7 @@ public class MetadataUpdateTool : LanguageMcpTool
                 return PackageOperationResponse.CreateFailure("Tooling error: unable to determine language service for the specified package path.", nextSteps: ["Create an issue at the https://github.com/Azure/azure-sdk-tools/issues/new", "contact the Azure SDK team for assistance."]);
             }
 
-            var (configContentType, configValue) = await _specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.UpdateMetadata);
+            var (configContentType, configValue) = await _specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.UpdateMetadata, ct);
             if (configContentType != SpecGenSdkConfigContentType.Unknown && !string.IsNullOrEmpty(configValue))
             {
                 logger.LogInformation("Found valid configuration for updating package metadata. Executing configured script...");
@@ -107,7 +107,27 @@ public class MetadataUpdateTool : LanguageMcpTool
                 if (processOptions != null)
                 {
                     var packageInfo = await languageService.GetPackageInfo(packagePath, ct);
-                    return await _specGenSdkConfigHelper.ExecuteProcessAsync(processOptions, ct, packageInfo, "Package metadata content is updated.", ["Update the version when preparing for a release."]);
+                    var scriptResult = await _specGenSdkConfigHelper.ExecuteProcessAsync(processOptions, ct, packageInfo, "Package metadata content is updated.", ["Update the version when preparing for a release."]);
+
+                    if (scriptResult.OperationStatus == Models.Status.Failed)
+                    {
+                        return scriptResult;
+                    }
+
+                    // After running the configured script, also run language-specific
+                    // metadata updates (e.g., CI YAML provisioning) if available.
+                    var updateResult = await languageService.UpdateMetadataAsync(packagePath, ct);
+                    if (updateResult.OperationStatus == Models.Status.Failed)
+                    {
+                        return updateResult;
+                    }
+
+                    if (!string.IsNullOrEmpty(updateResult.Message))
+                    {
+                        scriptResult.Message = $"{scriptResult.Message} {updateResult.Message}";
+                    }
+
+                    return scriptResult;
                 }
             }
 

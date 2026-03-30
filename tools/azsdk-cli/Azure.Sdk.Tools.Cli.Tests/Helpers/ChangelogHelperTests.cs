@@ -555,6 +555,272 @@ public class ChangelogHelperTests
 
     #endregion
 
+    #region UpdateLatestEntryTitle Tests
+
+    [Test]
+    public void UpdateLatestEntryTitle_ReplacesVersionAndDate()
+    {
+        // Arrange - latest entry is 1.0.0-beta.1 (Unreleased), we want to change to 1.0.0 with a date
+        var changelogContent = """
+            # Release History
+
+            ## 1.0.0-beta.1 (Unreleased)
+
+            ### Features Added
+
+            - Added feature A
+            - Added feature B
+            """;
+        var changelogPath = CreateChangelog(changelogContent);
+
+        // Act
+        var result = _changelogHelper.UpdateLatestEntryTitle(changelogPath, "1.0.0", "2025-06-15");
+
+        // Assert
+        Assert.That(result.Success, Is.True);
+
+        var updatedContent = File.ReadAllText(changelogPath);
+        Assert.That(updatedContent, Does.Contain("## 1.0.0 (2025-06-15)"));
+        Assert.That(updatedContent, Does.Not.Contain("1.0.0-beta.1"));
+    }
+
+    [Test]
+    public void UpdateLatestEntryTitle_UpdatesVersionOnly_WhenNoReleaseDate()
+    {
+        // Arrange
+        var changelogContent = """
+            # Release History
+
+            ## 1.0.0-beta.1 (Unreleased)
+
+            ### Features Added
+
+            - Feature A
+            """;
+        var changelogPath = CreateChangelog(changelogContent);
+
+        // Act - no release date provided
+        var result = _changelogHelper.UpdateLatestEntryTitle(changelogPath, "1.0.0", null);
+
+        // Assert
+        Assert.That(result.Success, Is.True);
+
+        var updatedContent = File.ReadAllText(changelogPath);
+        Assert.That(updatedContent, Does.Contain("## 1.0.0 (Unreleased)"));
+        Assert.That(updatedContent, Does.Not.Contain("1.0.0-beta.1"));
+    }
+
+    [Test]
+    public void UpdateLatestEntryTitle_PreservesContent()
+    {
+        // Arrange
+        var changelogContent = """
+            # Release History
+
+            ## 1.0.0-beta.2 (Unreleased)
+
+            ### Features Added
+
+            - Added `NewClass` for handling X
+            - Added `NewMethod()` for processing Y
+
+            ### Breaking Changes
+
+            - Removed deprecated `OldMethod()`
+
+            ### Bugs Fixed
+
+            - Fixed issue #123: Memory leak
+            """;
+        var changelogPath = CreateChangelog(changelogContent);
+
+        // Act
+        var result = _changelogHelper.UpdateLatestEntryTitle(changelogPath, "1.0.0", "2025-06-15");
+
+        // Assert
+        Assert.That(result.Success, Is.True);
+
+        var updatedContent = File.ReadAllText(changelogPath);
+        Assert.That(updatedContent, Does.Contain("## 1.0.0 (2025-06-15)"));
+        Assert.That(updatedContent, Does.Contain("### Features Added"));
+        Assert.That(updatedContent, Does.Contain("Added `NewClass`"));
+        Assert.That(updatedContent, Does.Contain("### Breaking Changes"));
+        Assert.That(updatedContent, Does.Contain("Removed deprecated `OldMethod()`"));
+        Assert.That(updatedContent, Does.Contain("### Bugs Fixed"));
+        Assert.That(updatedContent, Does.Contain("Fixed issue #123"));
+    }
+
+    [Test]
+    public void UpdateLatestEntryTitle_PreservesOtherEntries()
+    {
+        // Arrange - multiple entries, only the latest should be modified
+        var changelogContent = """
+            # Release History
+
+            ## 2.0.0-beta.1 (Unreleased)
+
+            ### Features Added
+
+            - New major feature
+
+            ## 1.1.0 (2025-01-15)
+
+            ### Features Added
+
+            - Minor feature
+
+            ## 1.0.0 (2024-12-01)
+
+            ### Features Added
+
+            - Initial release
+            """;
+        var changelogPath = CreateChangelog(changelogContent);
+
+        // Act
+        var result = _changelogHelper.UpdateLatestEntryTitle(changelogPath, "2.0.0", "2025-06-15");
+
+        // Assert
+        Assert.That(result.Success, Is.True);
+
+        var updatedContent = File.ReadAllText(changelogPath);
+        Assert.That(updatedContent, Does.Contain("## 2.0.0 (2025-06-15)"));
+        Assert.That(updatedContent, Does.Not.Contain("2.0.0-beta.1"));
+        // Other entries preserved
+        Assert.That(updatedContent, Does.Contain("## 1.1.0 (2025-01-15)"));
+        Assert.That(updatedContent, Does.Contain("## 1.0.0 (2024-12-01)"));
+    }
+
+    [Test]
+    public void UpdateLatestEntryTitle_PreservesExistingDateWhenNoNewDate()
+    {
+        // Arrange - latest entry already has a date
+        var changelogContent = """
+            # Release History
+
+            ## 1.0.0-beta.1 (2025-01-15)
+
+            ### Features Added
+
+            - Feature A
+            """;
+        var changelogPath = CreateChangelog(changelogContent);
+
+        // Act - no release date provided, should preserve existing
+        var result = _changelogHelper.UpdateLatestEntryTitle(changelogPath, "1.0.0", null);
+
+        // Assert
+        Assert.That(result.Success, Is.True);
+
+        var updatedContent = File.ReadAllText(changelogPath);
+        Assert.That(updatedContent, Does.Contain("## 1.0.0 (2025-01-15)"));
+    }
+
+    [Test]
+    public void UpdateLatestEntryTitle_WhenNoEntries_ReturnsFailure()
+    {
+        // Arrange - changelog with no version entries
+        var changelogContent = """
+            # Release History
+
+            """;
+        var changelogPath = CreateChangelog(changelogContent);
+
+        // Act
+        var result = _changelogHelper.UpdateLatestEntryTitle(changelogPath, "1.0.0", "2025-06-15");
+
+        // Assert
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.Message, Does.Contain("No changelog entries found"));
+    }
+
+    [Test]
+    public void UpdateLatestEntryTitle_WhenSameVersionAndDate_ReturnsNoChange()
+    {
+        // Arrange
+        var changelogContent = """
+            # Release History
+
+            ## 1.0.0 (2025-01-30)
+
+            ### Features Added
+
+            - Feature A
+            """;
+        var changelogPath = CreateChangelog(changelogContent);
+
+        // Act
+        var result = _changelogHelper.UpdateLatestEntryTitle(changelogPath, "1.0.0", "2025-01-30");
+
+        // Assert
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.Message, Does.Contain("No change needed"));
+    }
+
+    [Test]
+    public void UpdateLatestEntryTitle_WithNonExistentFile_ReturnsFailure()
+    {
+        // Act
+        var result = _changelogHelper.UpdateLatestEntryTitle("/non/existent/CHANGELOG.md", "1.0.0", "2025-06-15");
+
+        // Assert
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.Message, Does.Contain("does not exist"));
+    }
+
+    [Test]
+    public void UpdateLatestEntryTitle_WithInvalidDateFormat_ReturnsFailure()
+    {
+        // Arrange
+        var changelogContent = """
+            # Release History
+
+            ## 1.0.0-beta.1 (Unreleased)
+
+            ### Features Added
+
+            - Feature A
+            """;
+        var changelogPath = CreateChangelog(changelogContent);
+
+        // Act
+        var result = _changelogHelper.UpdateLatestEntryTitle(changelogPath, "1.0.0", "01-30-2025");
+
+        // Assert
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.Message, Does.Contain("Invalid release date format"));
+    }
+
+    [Test]
+    public void UpdateLatestEntryTitle_PreservesHeaderBlock()
+    {
+        // Arrange
+        var changelogContent = """
+            # Release History
+
+            All notable changes to this library will be documented in this file.
+
+            ## 1.0.0-beta.1 (Unreleased)
+
+            ### Features Added
+
+            - Initial release
+            """;
+        var changelogPath = CreateChangelog(changelogContent);
+
+        // Act
+        var result = _changelogHelper.UpdateLatestEntryTitle(changelogPath, "1.0.0", "2025-06-15");
+
+        // Assert
+        Assert.That(result.Success, Is.True);
+
+        var updatedContent = File.ReadAllText(changelogPath);
+        Assert.That(updatedContent, Does.Contain("All notable changes"));
+        Assert.That(updatedContent, Does.Contain("## 1.0.0 (2025-06-15)"));
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private string CreateChangelog(string content)

@@ -22,20 +22,6 @@ public class CiPipelineParameters
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? BuildSnippets { get; set; }
 
-    /// <summary>
-    /// Whether to run AOT compatibility checks. (.NET only)
-    /// </summary>
-    [JsonPropertyName("CheckAOTCompat")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public bool? CheckAotCompat { get; set; }
-
-    /// <summary>
-    /// AOT test input configurations for the package. (.NET only)
-    /// </summary>
-    [JsonPropertyName("AOTTestInputs")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<Dictionary<string, object?>>? AotTestInputs { get; set; }
-
     // ============================================================
     // Go-specific parameters
     // ============================================================
@@ -83,9 +69,7 @@ public class CiPipelineParameters
     /// </summary>
     public static CiPipelineParameters DefaultDotNet => new()
     {
-        BuildSnippets = true,
-        CheckAotCompat = false,
-        AotTestInputs = []
+        BuildSnippets = true
     };
 
     /// <summary>

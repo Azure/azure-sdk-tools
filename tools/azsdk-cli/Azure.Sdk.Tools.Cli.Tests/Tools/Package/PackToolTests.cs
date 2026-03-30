@@ -25,6 +25,8 @@ public class PackToolTests
     /// Checks if a ProcessOptions instance matches the expected command name.
     /// On Windows, ProcessOptions wraps commands in cmd.exe /C, so the original
     /// command is at Args[1] instead of Command.
+    /// On Unix, PythonOptions may resolve executables to a full venv path when
+    /// AZSDKTOOLS_PYTHON_VENV_PATH is set, so also match by filename.
     /// </summary>
     private static bool CommandMatches(IProcessOptions p, string command)
     {
@@ -32,7 +34,7 @@ public class PackToolTests
         {
             return p.Command == ProcessOptions.CMD && p.Args.Count > 1 && p.Args[1] == command;
         }
-        return p.Command == command;
+        return p.Command == command || Path.GetFileName(p.Command) == command;
     }
 
     #endregion
@@ -73,11 +75,11 @@ public class PackToolTests
 
         _tempDirectory = TempDirectory.Create("PackToolTests");
         _languageServices = [
-            new PythonLanguageService(_mockProcessHelper.Object, _mockPythonHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, _mockPackageInfoHelper.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>()),
+            new PythonLanguageService(_mockProcessHelper.Object, _mockPythonHelper.Object, _mockNpxHelper.Object, Mock.Of<ICopilotAgentRunner>(), _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, _mockPackageInfoHelper.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>()),
             new JavaLanguageService(_mockProcessHelper.Object, _mockGitHelper.Object, _mockMavenHelper.Object, Mock.Of<IPythonHelper>(), mockCopilotAgentRunner.Object, languageLogger, _commonValidationHelpers.Object, _mockPackageInfoHelper.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>()),
             new JavaScriptLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, _mockPackageInfoHelper.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>()),
             new GoLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, _mockPackageInfoHelper.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>()),
-            new DotnetLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, _mockPackageInfoHelper.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>())
+            new DotnetLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, Mock.Of<ICopilotAgentRunner>(), _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, _mockPackageInfoHelper.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>())
         ];
 
         _tool = new PackTool(

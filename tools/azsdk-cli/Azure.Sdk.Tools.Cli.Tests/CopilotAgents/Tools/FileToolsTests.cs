@@ -403,4 +403,141 @@ internal class FileToolsTests
         Assert.That(entries, Is.Not.Null);
         Assert.That(entries, Does.Contain("rootfile.txt"));
     }
+
+    // ── RenameFile tests ──
+
+    [Test]
+    public async Task RenameFile_Success_RenamesFile()
+    {
+        var tool = FileTools.CreateRenameFileTool(baseDir);
+        var oldName = $"rename_src_{Guid.NewGuid()}.txt";
+        var newName = $"rename_dst_{Guid.NewGuid()}.txt";
+        File.WriteAllText(Path.Combine(baseDir, oldName), "content");
+
+        var result = await tool.InvokeAsync(new AIFunctionArguments
+        {
+            ["oldFilePath"] = oldName,
+            ["newFilePath"] = newName
+        });
+
+        Assert.That(result?.ToString(), Does.Contain("Successfully renamed"));
+        Assert.That(File.Exists(Path.Combine(baseDir, newName)), Is.True);
+        Assert.That(File.Exists(Path.Combine(baseDir, oldName)), Is.False);
+        Assert.That(File.ReadAllText(Path.Combine(baseDir, newName)), Is.EqualTo("content"));
+    }
+
+    [Test]
+    public void RenameFile_SourceDoesNotExist_ThrowsArgumentException()
+    {
+        var tool = FileTools.CreateRenameFileTool(baseDir);
+
+        var ex = Assert.ThrowsAsync<ArgumentException>(async () =>
+            await tool.InvokeAsync(new AIFunctionArguments
+            {
+                ["oldFilePath"] = "nonexistent.txt",
+                ["newFilePath"] = "new.txt"
+            }));
+        Assert.That(ex!.Message, Does.Contain("does not exist"));
+    }
+
+    [Test]
+    public void RenameFile_DestinationAlreadyExists_ThrowsArgumentException()
+    {
+        var tool = FileTools.CreateRenameFileTool(baseDir);
+        var oldName = $"rename_exists_src_{Guid.NewGuid()}.txt";
+        var newName = $"rename_exists_dst_{Guid.NewGuid()}.txt";
+        File.WriteAllText(Path.Combine(baseDir, oldName), "old");
+        File.WriteAllText(Path.Combine(baseDir, newName), "new");
+
+        var ex = Assert.ThrowsAsync<ArgumentException>(async () =>
+            await tool.InvokeAsync(new AIFunctionArguments
+            {
+                ["oldFilePath"] = oldName,
+                ["newFilePath"] = newName
+            }));
+        Assert.That(ex!.Message, Does.Contain("already exists"));
+    }
+
+    [Test]
+    public void RenameFile_EmptyOldPath_ThrowsArgumentException()
+    {
+        var tool = FileTools.CreateRenameFileTool(baseDir);
+
+        var ex = Assert.ThrowsAsync<ArgumentException>(async () =>
+            await tool.InvokeAsync(new AIFunctionArguments
+            {
+                ["oldFilePath"] = "",
+                ["newFilePath"] = "new.txt"
+            }));
+        Assert.That(ex!.Message, Does.Contain("cannot be null or empty"));
+    }
+
+    [Test]
+    public void RenameFile_EmptyNewPath_ThrowsArgumentException()
+    {
+        var tool = FileTools.CreateRenameFileTool(baseDir);
+
+        var ex = Assert.ThrowsAsync<ArgumentException>(async () =>
+            await tool.InvokeAsync(new AIFunctionArguments
+            {
+                ["oldFilePath"] = "rootfile.txt",
+                ["newFilePath"] = ""
+            }));
+        Assert.That(ex!.Message, Does.Contain("cannot be null or empty"));
+    }
+
+    [Test]
+    public void RenameFile_PathOutsideBaseDir_ThrowsArgumentException()
+    {
+        var tool = FileTools.CreateRenameFileTool(baseDir);
+
+        var ex = Assert.ThrowsAsync<ArgumentException>(async () =>
+            await tool.InvokeAsync(new AIFunctionArguments
+            {
+                ["oldFilePath"] = "rootfile.txt",
+                ["newFilePath"] = "../outside.txt"
+            }));
+        Assert.That(ex!.Message, Does.Contain("outside the allowed base directory"));
+    }
+
+    [Test]
+    public async Task RenameFile_CallbackInvoked_OnSuccess()
+    {
+        string? capturedOld = null;
+        string? capturedNew = null;
+        var tool = FileTools.CreateRenameFileTool(baseDir,
+            onFileRenamed: (o, n) => { capturedOld = o; capturedNew = n; });
+
+        var oldName = $"rename_cb_src_{Guid.NewGuid()}.txt";
+        var newName = $"rename_cb_dst_{Guid.NewGuid()}.txt";
+        File.WriteAllText(Path.Combine(baseDir, oldName), "content");
+
+        await tool.InvokeAsync(new AIFunctionArguments
+        {
+            ["oldFilePath"] = oldName,
+            ["newFilePath"] = newName
+        });
+
+        Assert.That(capturedOld, Is.EqualTo(oldName));
+        Assert.That(capturedNew, Is.EqualTo(newName));
+    }
+
+    [Test]
+    public async Task RenameFile_CreatesDestinationDirectoryIfNeeded()
+    {
+        var tool = FileTools.CreateRenameFileTool(baseDir);
+        var oldName = $"rename_mkdir_src_{Guid.NewGuid()}.txt";
+        var newDir = $"newdir_{Guid.NewGuid()}";
+        var newName = Path.Combine(newDir, "moved.txt");
+        File.WriteAllText(Path.Combine(baseDir, oldName), "content");
+
+        await tool.InvokeAsync(new AIFunctionArguments
+        {
+            ["oldFilePath"] = oldName,
+            ["newFilePath"] = newName
+        });
+
+        Assert.That(File.Exists(Path.Combine(baseDir, newName)), Is.True);
+        Assert.That(File.ReadAllText(Path.Combine(baseDir, newName)), Is.EqualTo("content"));
+    }
 }

@@ -65,6 +65,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ITeamUserCache, TeamUserCache>();
             services.AddSingleton<ICodeownersManagementHelper, CodeownersManagementHelper>(); 
             services.AddSingleton<IEnvironmentHelper, EnvironmentHelper>();
+            services.AddSingleton<IEnvFileHelper, EnvFileHelper>();
             services.AddSingleton<IMcpServerContextAccessor, McpServerContextAccessor>();
             if (outputMode == OutputHelper.OutputModes.Mcp)
             {

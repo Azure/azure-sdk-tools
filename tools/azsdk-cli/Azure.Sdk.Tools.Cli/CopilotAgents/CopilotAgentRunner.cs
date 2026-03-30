@@ -99,7 +99,7 @@ public class CopilotAgentRunner(
             OnPermissionRequest = (request, invocation) =>
             {
                 logger.LogDebug("Auto-approving permission request for tool execution");
-                return Task.FromResult(new PermissionRequestResult { Kind = "approved" });
+                return Task.FromResult(new PermissionRequestResult { Kind = PermissionRequestResultKind.Approved });
             }
         };
 
@@ -156,14 +156,14 @@ public class CopilotAgentRunner(
             sessionError = null; // Reset error state for each iteration
 
             logger.LogDebug("Sending message iteration {Iteration}", iterations);
-            
+
             // Create TCS before sending to ensure we don't miss the event
             sessionIdleTcs = new TaskCompletionSource();
-            
+
             // SendAsync returns the message ID but doesn't wait for processing
             // We need to wait for SessionIdleEvent to know when the agent is done
             await session.SendAsync(new MessageOptions { Prompt = prompt }, ct);
-            
+
             // Wait for the session to become idle (all tool calls completed)
             // Use cancellation-aware wait with timeout to prevent indefinite hangs
             logger.LogDebug("Waiting for session to become idle...");
@@ -197,13 +197,13 @@ public class CopilotAgentRunner(
                     throw new InvalidOperationException(
                         $"Agent failed to call Exit tool after {maxExitRetries} reminders");
                 }
-                logger.LogWarning("Agent completed without calling Exit tool (attempt {Attempt}/{Max}). Prompting to call Exit.", 
+                logger.LogWarning("Agent completed without calling Exit tool (attempt {Attempt}/{Max}). Prompting to call Exit.",
                     exitRetries, maxExitRetries);
                 prompt = "You did not call the Exit tool. You are running autonomously and must not ask for user input or confirmation. " +
                          "If the task is incomplete, continue working. If the task is complete, call the Exit tool with your result now.";
                 continue;
             }
-            
+
             // Reset exit retries on successful Exit call
             exitRetries = 0;
 

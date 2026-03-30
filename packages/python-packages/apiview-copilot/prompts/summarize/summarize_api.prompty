@@ -7,9 +7,7 @@ version: 1.0.0
 model:
   api: chat
   configuration:
-    type: azure_openai
-    azure_endpoint: ${env:OPENAI_ENDPOINT}
-    azure_deployment: gpt-5
+    azure_deployment: gpt-5.4
     api_version: 2025-03-01-preview
   parameters:
     frequency_penalty: 0

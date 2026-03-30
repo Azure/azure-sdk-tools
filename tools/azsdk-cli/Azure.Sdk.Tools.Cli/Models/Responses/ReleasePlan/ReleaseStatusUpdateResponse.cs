@@ -22,6 +22,10 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan
         [JsonPropertyName("package_name")]
         public string PackageName { get; set; } = string.Empty;
 
+        [JsonPropertyName("message")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? Message { get; set; }
+
         public void SetLanguage(string language)
         {
             Language = SdkLanguageHelpers.GetSdkLanguage(language);
@@ -44,6 +48,10 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan
             if (ReleasePlanId > 0)
             {
                 result.AppendLine($"Release Plan ID: {ReleasePlanId}");
+            }
+            if (!string.IsNullOrEmpty(Message))
+            {
+                result.AppendLine(Message);
             }
             return result.ToString();
         }

@@ -47,6 +47,12 @@ dotnet run -- run --all
 
 # Run with options
 dotnet run -- run rename-client-property --model gpt-4o --cleanup never
+
+# Run all scenarios and generate a report
+dotnet run -- run --all --report
+
+# Generate a report from existing log files
+dotnet run -- report /path/to/logs --output report.md
 ```
 
 ### CLI Options
@@ -56,11 +62,32 @@ dotnet run -- run rename-client-property --model gpt-4o --cleanup never
 | `list` | List all available scenarios with name, description, and tags |
 | `run <name>` | Run a specific scenario by name |
 | `run --all` | Run all discovered scenarios |
+| `report <path>` | Generate a markdown report from existing benchmark log files |
 
 | Option | Description | Default |
 |--------|-------------|---------|
 | `--model <model>` | Model to use for agent execution | `claude-opus-4.5` |
 | `--cleanup <policy>` | Cleanup policy: `always`, `never`, `on-success` | `on-success` |
+| `--repo <repo>` | Filter by repository (when used with `run`, requires `--all`; also supported with `list`). Append `:ref` to override the branch (see below) | — |
+| `--tag <tag>` | Filter scenarios by tag (repeatable; when used with `run`, requires `--all`; also supported with `list`) | — |
+| `--report` | Generate a markdown report after the run completes | `false` |
+| `--output <path>` | Output file path for the report (report command only) | `report.md` in log dir |
+| `--parallel <n>` | Max concurrent scenarios | `1` |
+| `--verbose` | Show agent activity during execution | `false` |
+
+### Branch Overrides for CI / PR Testing
+
+By default, every scenario clones its repository at `main`. When running benchmarks for a pull request, use `--repo Owner/Name:branch` to override the ref:
+
+```sh
+# Run all scenarios targeting azure-rest-api-specs, but use the PR branch instead of main
+dotnet run -- run --all --repo Azure/azure-rest-api-specs:feature/my-pr
+
+# Filter only — no branch override (existing behavior)
+dotnet run -- run --all --repo Azure/azure-rest-api-specs
+```
+
+The override applies to every matching `RepoConfig` in the selected scenarios (including `TargetRepos`).
 
 ### Environment Variables
 
@@ -79,11 +106,23 @@ Azure.Sdk.Tools.Cli.Benchmarks/
 │   ├── SessionExecutor.cs    # Runs Copilot agent sessions
 │   ├── WorkspaceManager.cs   # Manages repo cloning and worktrees
 │   └── ...
+├── Models/                   # Data models
+│   ├── BenchmarkResult.cs    # Result of a benchmark run
+│   └── ...
+├── Reporting/                # Report generation
+│   ├── ReportGenerator.cs    # LLM-based report generation using Copilot SDK
+│   └── report-template.md    # Markdown report template
 ├── Scenarios/                # Benchmark scenario definitions
 │   ├── BenchmarkScenario.cs  # Base class for all scenarios
 │   └── ...
 └── Program.cs                # Entry point
 ```
+
+## Running in a Container
+
+To prevent the agent from modifying your host environment (installing packages, changing runtime versions, etc.), you can run benchmarks inside a dev container using the target repo's dev container config. See [docs/running-in-containers.md](docs/running-in-containers.md) for details.
+
+> **Note:** This is a temporary workaround while benchmarks have no built in sandboxing. Once proper sandboxing is available, container-based isolation may no longer be necessary.
 
 ## Creating Scenarios
 

@@ -111,10 +111,10 @@ public static class McpConfigLoader
             .Select(arg => ExpandVariables(arg, workspaceRoot))
             .ToList() ?? [];
 
-        // Expand ${workspaceFolder} in cwd if present
+        // Expand ${workspaceFolder} in cwd if present; if cwd is null, default to workspace root.
         var expandedCwd = vsCodeServer.Cwd != null 
             ? ExpandVariables(vsCodeServer.Cwd, workspaceRoot) 
-            : null;
+            : workspaceRoot;
 
         // Expand ${workspaceFolder} in env values if present
         var expandedEnv = vsCodeServer.Env?

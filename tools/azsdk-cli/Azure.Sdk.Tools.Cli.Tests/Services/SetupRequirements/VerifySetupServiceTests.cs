@@ -18,10 +18,16 @@ internal class VerifySetupServiceTests
     private TestLogger<VerifySetupService> serviceLogger;
     private VerifySetupService verifySetupService;
     private Mock<IGitHelper> _mockGitHelper;
+    private string? _savedVenvPath;
 
     [SetUp]
     public void Setup()
     {
+        // Isolate tests from host environment: clear the venv env var so
+        // PythonRequirementBase.ResolveVenvExecutable doesn't resolve to
+        // real paths that confuse the mock's substring-based matching.
+        _savedVenvPath = Environment.GetEnvironmentVariable("AZSDKTOOLS_PYTHON_VENV_PATH");
+        Environment.SetEnvironmentVariable("AZSDKTOOLS_PYTHON_VENV_PATH", null);
         mockProcessHelper = new Mock<IProcessHelper>();
         serviceLogger = new TestLogger<VerifySetupService>();
 
@@ -56,6 +62,12 @@ internal class VerifySetupServiceTests
         );
     }
 
+    [TearDown]
+    public void TearDown()
+    {
+        Environment.SetEnvironmentVariable("AZSDKTOOLS_PYTHON_VENV_PATH", _savedVenvPath);
+    }
+
     private void SetupSuccessfulProcessMocks()
     {
         mockProcessHelper
@@ -77,7 +89,7 @@ internal class VerifySetupServiceTests
                     { "pip", "pip 24.0" },
                     { "java", "java 17.0.1" },
                     { "mvn", "Apache Maven 3.9.0" },
-                    { "dotnet", "8.0.100" },
+                    { "dotnet", "9.0.400" },
                     { "go", "go version go1.21.0" },
                     { "pnpm", "9.0.0" },
                     { "azpysdk", "azpysdk help" },
@@ -86,7 +98,8 @@ internal class VerifySetupServiceTests
                     { "pytest", "pytest 8.3.5" },
                     { "golangci-lint", "golangci-lint 1.55.0" },
                     { "goimports", "goimports" },
-                    { "generator", "generator 0.4.3" }
+                    { "generator", "generator 0.4.3" },
+                    { "core.longpaths", "true" }
                 };
                 foreach (var kvp in successfulCommands)
                 {
@@ -442,5 +455,120 @@ internal class VerifySetupServiceTests
         var tspClientResult = result.Results?.FirstOrDefault(r => r.Requirement.Contains("tsp-client"));
         Assert.That(tspClientResult, Is.Not.Null);
         Assert.That(tspClientResult!.AutoInstallAttempted, Is.False);
+    }
+    // Exit code model tests
+
+    [Test]
+    public async Task ExitCode_IsZero_WhenAllRequirementsMet()
+    {
+        var result = await verifySetupService.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Python }, "/test/path/python");
+
+        Assert.That(result.ExitCode, Is.EqualTo(VerifySetupResponse.ExitCodes.AllGood));
+    }
+
+    [Test]
+    public async Task ExitCode_IsBlocking_WhenNonAutoInstallableRequirementFails()
+    {
+        // Node.js is not auto-installable
+        SetupFailedProcessMock("node", 1, "node: command not found");
+        RecreateService();
+
+        var result = await verifySetupService.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Python }, "/test/path/python");
+
+        Assert.That(result.Results?.Any(r => r.Requirement.Contains("Node") && !r.IsAutoInstallable), Is.True);
+        Assert.That(result.ExitCode, Is.EqualTo(VerifySetupResponse.ExitCodes.Blocking));
+    }
+
+    [Test]
+    public async Task ExitCode_IsFixable_WhenOnlyAutoInstallableRequirementsFail()
+    {
+        // tsp is auto-installable
+        SetupFailedProcessMock("tsp", 1, "tsp: command not found");
+        RecreateService();
+
+        var result = await verifySetupService.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.DotNet }, "/test/path/dotnet");
+
+        Assert.That(result.Results?.Any(r => r.Requirement.Contains("tsp") && !r.Requirement.Contains("tsp-client") && r.IsAutoInstallable), Is.True);
+        Assert.That(result.ExitCode, Is.EqualTo(VerifySetupResponse.ExitCodes.Fixable));
+    }
+
+    [Test]
+    public async Task ExitCode_IsBlocking_WhenMixOfFixableAndBlockingRequirementsFail()
+    {
+        // Node.js is not auto-installable (blocking), tsp is auto-installable (fixable)
+        SetupFailedProcessMock("node", 1, "node: command not found");
+        SetupFailedProcessMock("tsp", 1, "tsp: command not found");
+        RecreateService();
+
+        var result = await verifySetupService.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.DotNet }, "/test/path/dotnet");
+
+        Assert.That(result.ExitCode, Is.EqualTo(VerifySetupResponse.ExitCodes.Blocking));
+    }
+
+    [Test]
+    public async Task ExitCode_IsZero_WhenAutoInstallSucceeds()
+    {
+        var tspCheckCount = 0;
+        mockProcessHelper
+            .Setup(x => x.Run(
+                It.Is<ProcessOptions>(opt => opt.Command.Contains("tsp") || opt.Args.Any(a => a == "tsp")),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() =>
+            {
+                tspCheckCount++;
+                if (tspCheckCount <= 1)
+                {
+                    return new ProcessResult
+                    {
+                        ExitCode = 1,
+                        OutputDetails = new List<(StdioLevel, string)> { (StdioLevel.StandardError, "tsp: command not found") }
+                    };
+                }
+                return new ProcessResult
+                {
+                    ExitCode = 0,
+                    OutputDetails = new List<(StdioLevel, string)> { (StdioLevel.StandardOutput, "1.0.1") }
+                };
+            });
+        RecreateService();
+
+        var result = await verifySetupService.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.DotNet }, "/test/path/dotnet", requirementsToInstall: new List<string> { "tsp" });
+
+        var tspResult = result.Results?.FirstOrDefault(r => r.Requirement.Contains("tsp") && !r.Requirement.Contains("tsp-client"));
+        Assert.That(tspResult?.AutoInstallSucceeded, Is.True);
+        Assert.That(result.ExitCode, Is.EqualTo(VerifySetupResponse.ExitCodes.AllGood));
+    }
+
+    [Test]
+    public async Task IsFixable_IsTrue_WhenOnlyAutoInstallableRequirementsFail()
+    {
+        SetupFailedProcessMock("tsp", 1, "tsp: command not found");
+        RecreateService();
+
+        var result = await verifySetupService.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.DotNet }, "/test/path/dotnet");
+
+        Assert.That(result.IsFixable, Is.True);
+        Assert.That(result.HasBlockingFailures, Is.False);
+    }
+
+    [Test]
+    public async Task HasBlockingFailures_IsTrue_WhenNonAutoInstallableRequirementFails()
+    {
+        SetupFailedProcessMock("node", 1, "node: command not found");
+        RecreateService();
+
+        var result = await verifySetupService.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Python }, "/test/path/python");
+
+        Assert.That(result.HasBlockingFailures, Is.True);
+        Assert.That(result.IsFixable, Is.False);
+    }
+
+    [Test]
+    public async Task IsFixable_And_HasBlockingFailures_BothFalse_WhenAllRequirementsMet()
+    {
+        var result = await verifySetupService.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Python }, "/test/path/python");
+
+        Assert.That(result.IsFixable, Is.False);
+        Assert.That(result.HasBlockingFailures, Is.False);
     }
 }

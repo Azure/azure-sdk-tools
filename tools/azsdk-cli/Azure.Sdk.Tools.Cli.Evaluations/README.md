@@ -61,9 +61,9 @@ COPILOT_INSTRUCTIONS_PATH_MCP_EVALS=local/path/to/.github/copilot-instructions.m
 ### Running Evaluations
 
 #### Using command line
+
 ```bash
-cd local/path/to/Azure.Sdk.Tools.Cli.Evaluations
-dotnet test
+dotnet test --filter 'Category==Evals'
 ```
 
 #### Using Test Explorer (Preferred)

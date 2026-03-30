@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 namespace Azure.Sdk.Tools.Cli.Services.Languages;
@@ -224,11 +225,11 @@ public partial class GoLanguageService : LanguageService
         return await commonValidationHelpers.ValidateChangelog(packageSubPath, packagePath, fixCheckErrors, cancellationToken);
     }
 
-    public override async Task<TestRunResponse> RunAllTests(string packagePath, CancellationToken ct = default)
+    public override async Task<TestRunResponse> RunAllTests(string packagePath, TestMode testMode = TestMode.Playback, IDictionary<string, string>? liveTestEnvironment = null, TimeSpan? timeout = null, CancellationToken ct = default)
     {
         try
         {
-            var result = await processHelper.Run(new ProcessOptions(goUnix, goWin, ["test", "-v", "-timeout", "1h", "./..."], workingDirectory: packagePath), ct);
+            var result = await processHelper.Run(new ProcessOptions(goUnix, goWin, ["test", "-v", "-timeout", "1h", "./..."], workingDirectory: packagePath, timeout: timeout), ct);
             return new TestRunResponse(result);
         }
         catch (Exception ex)

@@ -296,9 +296,12 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// Runs all tests in the specified package.
         /// </summary>
         /// <param name="packagePath">The path to the package containing the tests.</param>
+        /// <param name="testMode">The test mode to use (Playback, Record, or Live).</param>
+        /// <param name="liveTestEnvironment">Optional dictionary of environment variables for live/record test runs (e.g. from test resource deployment).</param>
+        /// <param name="timeout">Optional timeout for the test run. When null, each language service uses its own default.</param>
         /// <param name="ct">A cancellation token.</param>
         /// <returns>A <see cref="TestRunResponse"/> containing process output details.</returns>
-        public virtual Task<TestRunResponse> RunAllTests(string packagePath, CancellationToken ct = default)
+        public virtual Task<TestRunResponse> RunAllTests(string packagePath, TestMode testMode = TestMode.Playback, IDictionary<string, string>? liveTestEnvironment = null, TimeSpan? timeout = null, CancellationToken ct = default)
         {
             return Task.FromResult(new TestRunResponse(0, "This is not an applicable operation for this language."));
         }

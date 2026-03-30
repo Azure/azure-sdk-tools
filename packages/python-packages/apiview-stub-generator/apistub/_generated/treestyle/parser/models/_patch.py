@@ -97,6 +97,7 @@ class ApiView(CodeFile):
             cross_language_metadata = CrossLanguageMetadata(
                 cross_language_package_id=self.metadata_map.cross_language_package_id,
                 cross_language_definition_id=self.metadata_map.cross_language_map,
+                cross_language_version=self.metadata_map.cross_language_version,
             )
         self.review_lines: ReviewLines
         super().__init__(

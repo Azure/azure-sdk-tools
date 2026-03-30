@@ -24,7 +24,7 @@ model EmployeeProperties {
 
   /** Age of employee (from 2025-11-01 onward, default is 21) */
   @added(Versions.v2024_10_01_preview)
-  age?: int32 = 21;
+  age?: int32;
 
   /** City of employee */
   city?: string;

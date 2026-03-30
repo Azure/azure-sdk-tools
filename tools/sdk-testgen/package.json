@@ -54,7 +54,7 @@
         "source-map-support": "^0.5.19",
         "ts-jest": "^29.2.5",
         "ts-loader": "^9.4.2",
-        "typescript": "~5.9.2",
+        "typescript": "~6.0.2",
         "typescript-eslint": "^8.18.2"
     },
     "files": [

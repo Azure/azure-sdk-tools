@@ -372,8 +372,15 @@ namespace APIViewWeb.Managers
             ReviewListItemModel review = await _reviewsRepository.GetReviewAsync(id);
             var userId = user.GetGitHubLogin();
             var updatedReview = await ToggleReviewApproval(user, review, notes);
-            await _signalRHubContext.Clients.Group(userId).SendAsync("ReceiveApprovalSelf", id, revisionId, review.IsApproved);
-            await _signalRHubContext.Clients.All.SendAsync("ReceiveApproval", id, revisionId, userId, review.IsApproved);
+            await _signalRHubContext.Clients.Group(userId).SendAsync("ReceiveApprovalSelf", id, revisionId, updatedReview.IsApproved);
+            await _signalRHubContext.Clients.All.SendAsync("ReceiveApproval", id, revisionId, userId, updatedReview.IsApproved);
+
+            if (updatedReview.IsApproved)
+            {
+                var apiRevision = await _apiRevisionsRepository.GetAPIRevisionAsync(revisionId);
+                await _notificationManager.NotifySubscribersOnApprovalAsync(updatedReview, apiRevision, user, isReviewApproval: true);
+            }
+
             return updatedReview;
         }
 

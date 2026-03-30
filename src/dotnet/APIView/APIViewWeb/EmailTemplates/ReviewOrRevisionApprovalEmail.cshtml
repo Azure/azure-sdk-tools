@@ -1,0 +1,29 @@
+@model APIViewWeb.Models.ReviewOrRevisionApprovalEmailModel
+@{
+	Layout = "/EmailTemplates/_EmailLayout.cshtml";
+	ViewData["EmailTitle"] = Model.IsReviewApproval ? "First Release Approved" : "Revision Approved";
+	ViewData["EmailPreheader"] = Model.IsReviewApproval
+		? $"First release for '{Model.ReviewName}' was approved by {Model.ApprovedBy}."
+		: $"Revision '{Model.RevisionName}' in review '{Model.ReviewName}' was approved by {Model.ApprovedBy}.";
+}
+
+@if (Model.IsReviewApproval)
+{
+	<p class="section">The first release for this package was approved in APIView.</p>
+}
+else
+{
+	<p class="section">A revision for this review was approved in APIView.</p>
+}
+
+<div class="panel">
+	<div><strong>Review:</strong> <a href="@Model.ReviewUrl">@Model.ReviewName</a></div>
+	@if (Model.HasRevision)
+	{
+		<div><strong>@(Model.IsReviewApproval ? "Approved revision" : "Revision"):</strong> <a href="@Model.RevisionUrl">@Model.RevisionName</a></div>
+	}
+	<div><strong>Approved by:</strong> @Model.ApprovedBy</div>
+	<div><strong>Approved on:</strong> @Model.ApprovedOn.ToUniversalTime().ToString("yyyy-MM-dd HH:mm 'UTC'")</div>
+</div>
+
+<p class="meta-note">You are receiving this because you are subscribed to this review.</p>

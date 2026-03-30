@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using Azure.Sdk.Tools.Cli.Benchmarks.Interaction;
+
 namespace Azure.Sdk.Tools.Cli.Benchmarks.Models;
 
 /// <summary>
@@ -13,6 +15,12 @@ public class ExecutionConfig
 
     /// <summary>The prompt to send to the agent.</summary>
     public required string Prompt { get; init; }
+
+    /// <summary>
+    /// The list of predefined questions and answers for agent interaction during the scenario.
+    /// null if the scenario does not require predefined Q&A interactions.
+    /// </summary>
+    public IReadOnlyList<QuestionAndAnswer>? QuestionAndAnswers { get; init; }
 
     /// <summary>Maximum time to wait for the agent to complete.</summary>
     public TimeSpan Timeout { get; init; } = TimeSpan.FromMinutes(5);

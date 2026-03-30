@@ -1,14 +1,17 @@
 # Release History
 
-## 0.6.4 (Unreleased)
+## 0.6.5 (2026-03-27)
 
 ### Features Added
 
-### Breaking Changes
+- Implemented version update for Go language service
+- Added team support for CODEOWNERS add/remove tools
 
-### Bugs Fixed
+## 0.6.4 (2026-03-25)
 
-### Other Changes
+### Features Added
+
+- Added a new CLI command to ingest telemetry events from Copilot hooks
 
 ## 0.6.3 (2026-03-12)
 

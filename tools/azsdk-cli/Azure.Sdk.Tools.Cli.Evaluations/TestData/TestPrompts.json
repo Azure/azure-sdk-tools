@@ -10,10 +10,6 @@
     { "toolName": "azsdk_check_service_label", "prompt": "Does the service label for Contoso already exist?", "category": "all" },
     { "toolName": "azsdk_create_service_label", "prompt": "Create a new service label for my service", "category": "all" },
     { "toolName": "azsdk_create_service_label", "prompt": "Add a service label for Contoso Widget Manager", "category": "all" },
-    { "toolName": "azsdk_engsys_codeowner_update", "prompt": "Update the CODEOWNERS file for my service", "category": "all" },
-    { "toolName": "azsdk_engsys_codeowner_update", "prompt": "Add myself as a codeowner for the storage service", "category": "all" },
-    { "toolName": "azsdk_engsys_validate_codeowners_entry_for_service", "prompt": "Validate the codeowners entry for my service", "category": "all" },
-    { "toolName": "azsdk_engsys_validate_codeowners_entry_for_service", "prompt": "Validate the codeowners entry for my service in the repository", "category": "all" },
 
     { "toolName": "azsdk_analyze_log_file", "prompt": "Analyze this log file for errors", "category": "all" },
     { "toolName": "azsdk_analyze_log_file", "prompt": "What errors are in this build log?", "category": "all" },

@@ -4,6 +4,7 @@ using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages;
 
@@ -33,6 +34,7 @@ internal class DotNetLanguageSpecificChecksTests
         _languageChecks = new DotnetLanguageService(
             _processHelperMock.Object,
             _powerShellHelperMock.Object,
+            Mock.Of<ICopilotAgentRunner>(),
             _gitHelperMock.Object,
             NullLogger<DotnetLanguageService>.Instance,
             _commonValidationHelperMock.Object,
@@ -626,7 +628,7 @@ public partial class TestClient
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(processResult);
 
-        var result = await _languageChecks.RunAllTests(tempDir.DirectoryPath, CancellationToken.None);
+        var result = await _languageChecks.RunAllTests(tempDir.DirectoryPath, ct: CancellationToken.None);
 
         Assert.Multiple(() =>
         {
@@ -653,7 +655,7 @@ public partial class TestClient
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(processResult);
 
-        var result = await _languageChecks.RunAllTests(tempDir.DirectoryPath, CancellationToken.None);
+        var result = await _languageChecks.RunAllTests(tempDir.DirectoryPath, ct: CancellationToken.None);
 
         Assert.Multiple(() =>
         {

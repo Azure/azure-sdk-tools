@@ -7,7 +7,7 @@ version: 1.0.0
 model:
   api: chat
   configuration:
-    azure_deployment: gpt-5-mini
+    azure_deployment: gpt-5.4-mini
     api_version: 2025-03-01-preview
   parameters:
     max_completion_tokens: 16384
@@ -41,6 +41,7 @@ system:
 
   # OUTPUT REQUIREMENTS
   - Always answer all questions.
+  - Provide a `severity_rationale` that explains why you chose the severity level. Reference the specific language from the guideline or memory context (e.g., "DO NOT", "YOU SHOULD NOT", hedging words) that drove your classification.
   - Rate each comment for severity according to the following guidance:
     - "MUST": The comment addresses a violation of a guideline or memory that uses mandatory language such as "DO", "DO NOT", "MUST", or "MUST NOT". These represent non-negotiable requirements.
     - "SHOULD": The comment addresses a violation of a guideline or memory that uses strong but non-mandatory language such as "YOU SHOULD", "YOU SHOULD NOT", or "AVOID". These should be fixed unless there is a compelling reason not to.

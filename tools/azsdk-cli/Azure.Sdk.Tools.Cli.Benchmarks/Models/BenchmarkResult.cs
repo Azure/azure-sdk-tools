@@ -52,4 +52,9 @@ public class BenchmarkResult
     /// Gets the validation summary (null if no validators defined).
     /// </summary>
     public ValidationSummary? Validation { get; init; }
+
+    /// <summary>
+    /// Gets the token usage for this benchmark execution.
+    /// </summary>
+    public TokenUsage? TokenUsage { get; init; }
 }

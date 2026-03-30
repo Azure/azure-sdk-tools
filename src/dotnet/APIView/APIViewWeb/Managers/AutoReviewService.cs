@@ -17,17 +17,20 @@ public class AutoReviewService : IAutoReviewService
     private readonly IAPIRevisionsManager _apiRevisionsManager;
     private readonly ICommentsManager _commentsManager;
     private readonly IProjectsManager _projectsManager;
+    private readonly ICodeFileManager _codeFileManager;
 
     public AutoReviewService(
         IReviewManager reviewManager,
         IAPIRevisionsManager apiRevisionsManager,
         ICommentsManager commentsManager,
-        IProjectsManager projectsManager)
+        IProjectsManager projectsManager,
+        ICodeFileManager codeFileManager)
     {
         _reviewManager = reviewManager;
         _apiRevisionsManager = apiRevisionsManager;
         _commentsManager = commentsManager;
         _projectsManager = projectsManager;
+        _codeFileManager = codeFileManager;
     }
 
     public async Task<(ReviewListItemModel review, APIRevisionListItemModel apiRevision)> CreateAutomaticRevisionAsync(
@@ -42,13 +45,12 @@ public class AutoReviewService : IAutoReviewService
     {
         // Parse package type once at the beginning
         var parsedPackageType = !string.IsNullOrEmpty(packageType) && Enum.TryParse<PackageType>(packageType, true, out var result) ? (PackageType?)result : null;
-        
         var createNewRevision = true;
         var review = await _reviewManager.GetReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: null);
         var apiRevision = default(APIRevisionListItemModel);
         var renderedCodeFile = new RenderedCodeFile(codeFile);
         IEnumerable<APIRevisionListItemModel> apiRevisions = new List<APIRevisionListItemModel>();
-
+        string incomingContentHash = null;
         if (review != null)
         {
             // Update package type if provided from controller parameter and not already set
@@ -62,24 +64,25 @@ public class AutoReviewService : IAutoReviewService
             if (apiRevisions.Any())
             {
                 apiRevisions = apiRevisions.OrderByDescending(r => r.CreatedOn);
+                incomingContentHash = await _codeFileManager.ComputeAPIContentHashAsync(codeFile);
 
                 // Delete pending apiRevisions if it is not in approved state before adding new revision
                 // This is to keep only one pending revision since last approval or from initial review revision
-                var automaticRevisions = apiRevisions.Where(r => r.APIRevisionType == APIRevisionType.Automatic);
-                if (automaticRevisions.Any())
+                var automaticRevisions = apiRevisions.Where(r => r.APIRevisionType == APIRevisionType.Automatic).ToList();
+                if (automaticRevisions.Count > 0)
                 {
                     var automaticRevisionsQueue = new Queue<APIRevisionListItemModel>(automaticRevisions);
                     var comments = await _commentsManager.GetCommentsAsync(review.Id);
                     APIRevisionListItemModel latestAutomaticAPIRevision = null;
-
-                    while (automaticRevisionsQueue.Any())
+                    
+                    while (automaticRevisionsQueue.Count > 0)
                     {
                         latestAutomaticAPIRevision = automaticRevisionsQueue.Dequeue();
 
                         // Check if we should keep this revision
                         if (latestAutomaticAPIRevision.IsApproved ||
                             latestAutomaticAPIRevision.IsReleased ||
-                            await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile) ||
+                            await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile, incomingContentHash: incomingContentHash) ||
                             comments.Any(c => latestAutomaticAPIRevision.Id == c.APIRevisionId))
                         {
                             break;
@@ -94,13 +97,13 @@ public class AutoReviewService : IAutoReviewService
                     // But any manual pipeline run at release time should compare against all approved revisions to ensure hotfix release doesn't have API change
                     // If review surface doesn't match with any approved revisions then we will create new revision if it doesn't match pending latest revision
 
-                    bool considerPackageVersion = !String.IsNullOrWhiteSpace(codeFile.PackageVersion);
+                    bool considerPackageVersion = !string.IsNullOrWhiteSpace(codeFile.PackageVersion);
 
                     if (compareAllRevisions)
                     {
                         foreach (var approvedAPIRevision in automaticRevisions.Where(r => r.IsApproved))
                         {
-                            if (await _apiRevisionsManager.AreAPIRevisionsTheSame(approvedAPIRevision, renderedCodeFile, considerPackageVersion))
+                            if (await _apiRevisionsManager.AreAPIRevisionsTheSame(approvedAPIRevision, renderedCodeFile, considerPackageVersion, incomingContentHash))
                             {
                                 return (review, approvedAPIRevision);
                             }
@@ -109,7 +112,7 @@ public class AutoReviewService : IAutoReviewService
 
                     // Only reuse latestAutomaticAPIRevision if one was kept
                     if (latestAutomaticAPIRevision != null &&
-                        await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile, considerPackageVersion))
+                        await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile, considerPackageVersion, incomingContentHash))
                     {
                         apiRevision = latestAutomaticAPIRevision;
                         createNewRevision = false;
@@ -131,12 +134,15 @@ public class AutoReviewService : IAutoReviewService
 
         if (apiRevision != null && apiRevisions.Any())
         {
-            foreach (var apiRev in apiRevisions)
+            // Only revisions carrying approval or auto-generated comments are worth comparing
+            IEnumerable<APIRevisionListItemModel> candidates = apiRevisions.Where(r => r.Id != apiRevision.Id && (r.IsApproved || r.HasAutoGeneratedComments));
+            foreach (var apiRev in candidates)
             {
-                if (await _apiRevisionsManager.AreAPIRevisionsTheSame(apiRev, renderedCodeFile))
-                {
+                if (apiRevision.IsApproved && apiRevision.HasAutoGeneratedComments)
+                    break;
+
+                if (await _apiRevisionsManager.AreAPIRevisionsTheSame(apiRev, renderedCodeFile, incomingContentHash: incomingContentHash))
                     await _apiRevisionsManager.CarryForwardRevisionDataAsync(targetRevision: apiRevision, sourceRevision: apiRev);
-                }
             }
         }
         return (review, apiRevision);

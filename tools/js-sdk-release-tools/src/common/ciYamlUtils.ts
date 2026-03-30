@@ -1,4 +1,4 @@
-import { NpmPackageInfo, VersionPolicyName } from './types.js';
+import { NpmPackageInfo, ModularSDKType } from './types.js';
 import { dirname, posix } from 'path';
 import { getNpmPackageName, getNpmPackageSafeName } from './npmUtils.js';
 import { parse, stringify } from 'yaml';
@@ -7,6 +7,7 @@ import { readFile, writeFile } from 'fs/promises';
 import { existsAsync } from './utils.js';
 import { logger } from '../utils/logger.js';
 import { fileURLToPath } from 'url';
+import { getModularSDKType } from '../utils/generateInputUtils.js';
 
 interface ArtifactInfo {
     name: string;
@@ -127,20 +128,19 @@ async function createOrUpdateDataPlaneCiYaml(
 
 export async function createOrUpdateCiYaml(
     relativeGeneratedPackageDirectoryToSdkRoot: string,
-    versionPolicyName: VersionPolicyName,
     npmPackageInfo: NpmPackageInfo
 ): Promise<string> {
     logger.info('Start to create or update CI files');
-    switch (versionPolicyName) {
-        case 'management': {
+    const modularSDKType = getModularSDKType(relativeGeneratedPackageDirectoryToSdkRoot);
+    try {
+        if (modularSDKType === ModularSDKType.ManagementPlane) {
             const ciPath = await createOrUpdateManagePlaneCiYaml(
                 relativeGeneratedPackageDirectoryToSdkRoot,
                 npmPackageInfo
             );
             logger.info('Created or updated MPG CI files successfully.');
             return ciPath;
-        }
-        case 'client': {
+        } else {
             const ciPath = await createOrUpdateDataPlaneCiYaml(
                 relativeGeneratedPackageDirectoryToSdkRoot,
                 npmPackageInfo
@@ -148,7 +148,8 @@ export async function createOrUpdateCiYaml(
             logger.info('Created or updated DPG CI files successfully.');
             return ciPath;
         }
-        default:
-            throw new Error(`Unsupported version policy name: ${versionPolicyName}`);
+    } catch (e) {
+        logger.warn(`Failed to create or update CI files: ${e}`);
+        return '';
     }
 }

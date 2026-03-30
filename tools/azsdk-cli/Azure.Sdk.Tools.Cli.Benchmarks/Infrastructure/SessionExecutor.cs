@@ -1,9 +1,11 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using GitHub.Copilot.SDK;
 using Azure.Sdk.Tools.Cli.Benchmarks.Models;
+using Azure.Sdk.Tools.Cli.Benchmarks.Interaction;
 
 namespace Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
 
@@ -13,6 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
 public class SessionExecutor : IDisposable
 {
     private CopilotClient? _client;
+    private SyntheticAICustomer? _aiCustomer;
 
     /// <summary>
     /// Executes a benchmark scenario with the provided configuration.
@@ -22,8 +25,15 @@ public class SessionExecutor : IDisposable
     public async Task<ExecutionResult> ExecuteAsync(ExecutionConfig config)
     {
         var stopwatch = Stopwatch.StartNew();
+        bool mainTaskCompleted = false;
         var toolCalls = new List<ToolCallRecord>();
+        var inputQAs = new List<QuestionAndAnswer>();
+        if (config.QuestionAndAnswers != null)
+        {
+            _aiCustomer = new SyntheticAICustomer(config.QuestionAndAnswers);
+        }
         var pendingTimestamps = new Dictionary<string, double>();
+        var tokenUsage = new TokenUsage();
 
         try
         {
@@ -34,7 +44,7 @@ public class SessionExecutor : IDisposable
             _client = new CopilotClient();
 
             // Build MCP server config - try explicit path first, then load from workspace
-            var mcpServers = BuildMcpServers(config.AzsdkMcpPath) 
+            var mcpServers = BuildMcpServers(config.AzsdkMcpPath)
                 ?? await McpConfigLoader.LoadFromWorkspaceAsync(config.WorkingDirectory);
 
             var sessionConfig = new SessionConfig
@@ -77,33 +87,61 @@ public class SessionExecutor : IDisposable
                             ToolResult = input.ToolResult,
                             DurationMs = durationMs,
                             McpServerName = mcpServerName,
-                            Timestamp = startTs,
                         });
-                        if (input.ToolName == "skill")
-                        {
-                            toolCalls.Add($"{input.ToolName} {input.ToolArgs?.ToString()}");
-                        }
-                        else
-                        {
-                            toolCalls.Add(input.ToolName);
-                        }
+
                         return Task.FromResult<PostToolUseHookOutput?>(null);
                     }
                 },
                 // Auto-respond to ask_user with a simple response
-                OnUserInputRequest = (request, invocation) =>
+                OnUserInputRequest = async (request, invocation) =>
                 {
                     Console.WriteLine($"Model requested user input with prompt: {request.Question}");
-                    return Task.FromResult(new UserInputResponse
+                    if (mainTaskCompleted)
                     {
-                        Answer = "Please proceed with your best judgment.",
+                        Console.WriteLine("Main task already completed, This is follow-up task.");
+                        return new UserInputResponse
+                        {
+                            Answer = "No further actions are required. End the task.",
+                            WasFreeform = false
+                        };
+                    }
+
+                    string answer = "Please proceed with your best judgment.";
+                    if (_aiCustomer != null)
+                    {
+                        var result = await _aiCustomer.AskQuestionAsync(request.Question);
+                        if (!string.IsNullOrEmpty(result))
+                        {
+                            answer = result;
+                        }
+                    }
+
+                    inputQAs.Add(new QuestionAndAnswer(request.Question, answer));
+                    return new UserInputResponse
+                    {
+                        Answer = answer,
                         WasFreeform = true
-                    });
+                    };
                 }
             };
 
             await using var session = await _client.CreateSessionAsync(sessionConfig);
 
+            // Track token usage from AssistantUsageEvent
+            session.On(evt =>
+            {
+                if (evt is AssistantUsageEvent usageEvent)
+                {
+                    tokenUsage.InputTokens += usageEvent.Data.InputTokens ?? 0;
+                    tokenUsage.OutputTokens += usageEvent.Data.OutputTokens ?? 0;
+                    tokenUsage.CacheReadTokens += usageEvent.Data.CacheReadTokens ?? 0;
+                    tokenUsage.CacheWriteTokens += usageEvent.Data.CacheWriteTokens ?? 0;
+                }
+                if (evt is SessionIdleEvent)
+                {
+                    mainTaskCompleted = true;
+                }
+            });
             if (config.Verbose)
             {
                 SessionConfigHelper.ConfigureAgentActivityLogging(session);
@@ -124,7 +162,9 @@ public class SessionExecutor : IDisposable
                 Completed = true,
                 Duration = stopwatch.Elapsed,
                 Messages = messages.Cast<object>().ToList(),
-                ToolCalls = toolCalls
+                ToolCalls = toolCalls,
+                InputQuestionAndAnswers = inputQAs,
+                TokenUsage = tokenUsage
             };
         }
         catch (Exception ex)
@@ -135,7 +175,9 @@ public class SessionExecutor : IDisposable
                 Completed = false,
                 Error = ex.Message,
                 Duration = stopwatch.Elapsed,
-                ToolCalls = toolCalls
+                ToolCalls = toolCalls,
+                InputQuestionAndAnswers = inputQAs,
+                TokenUsage = tokenUsage
             };
         }
     }

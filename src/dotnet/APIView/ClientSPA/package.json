@@ -21,7 +21,7 @@
   },
   "private": true,
   "engines": {
-    "node": "^20.19.0 || >=22.11.0"
+    "node": "^20.19.0 || >=22.12.0"
   },
   "dependencies": {
     "@angular/animations": "^20.3.18",
@@ -86,11 +86,11 @@
   "overrides": {
     "glob@<10.5.0": "10.5.0",
     "serialize-javascript": "^7.0.3",
-    "workbox-cli": {
-      "update-notifier": "5.1.0"
-    },
     "@angular/build": {
       "vitest": "^4.0.18"
+    },
+    "external-editor": {
+      "tmp": "^0.2.5"
     }
   },
   "optionalDependencies": {

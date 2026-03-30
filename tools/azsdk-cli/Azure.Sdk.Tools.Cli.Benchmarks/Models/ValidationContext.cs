@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
+using Azure.Sdk.Tools.Cli.Benchmarks.Interaction;
 
 namespace Azure.Sdk.Tools.Cli.Benchmarks.Models;
 
@@ -49,6 +50,11 @@ public class ValidationContext
     /// Gets the tool calls made during execution.
     /// </summary>
     public IReadOnlyList<ToolCallRecord> ToolCalls { get; init; } = [];
+
+    /// <summary>
+    /// Gets the list of questions asked by the model and the corresponding answers provided during execution.
+    /// </summary>
+    public IReadOnlyList<QuestionAndAnswer> InputQuestionAndAnswers { get; init; } = [];
 
     /// <summary>
     /// Gets the conversation messages from the agent session.

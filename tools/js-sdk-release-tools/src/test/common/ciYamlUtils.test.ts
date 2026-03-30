@@ -171,9 +171,9 @@ extends:
             const parsed = parse(content);
 
             expect(parsed.extends.parameters.ServiceDirectory).toBe("myservice");
-            expect(parsed.extends.parameters.Artifacts).toHaveLength(1);
-            expect(parsed.extends.parameters.Artifacts[0].name).toBe("azure-myservice");
-            expect(parsed.extends.parameters.Artifacts[0].safeName).toBe("azuremyservice");
+            const artifact = parsed.extends.parameters.Artifacts?.find((a: any) => a.name === "azure-myservice");
+            expect(artifact).toBeDefined();
+            expect(artifact.safeName).toBe("azuremyservice");
             expect(parsed.trigger.paths.include).toContain(packageDir);
             expect(parsed.trigger.paths.include).toContain(ciPath);
             expect(parsed.pr.paths.include).toContain(packageDir);
@@ -421,7 +421,7 @@ extends:
 
         test("creates paths.include and adds packageDir and ciPath when section is missing", async () => {
             await ensureDir(path.join(tempDir, "sdk/myservice"));
-            // No paths.include at all
+            // No paths.include at all; artifact is different so update proceeds
             const existingContent = `trigger:
   branches:
     include:
@@ -439,8 +439,8 @@ extends:
   parameters:
     ServiceDirectory: myservice
     Artifacts:
-      - name: azure-myservice
-        safeName: azuremyservice
+      - name: azure-other
+        safeName: azureother
 `;
             await writeFile(path.join(tempDir, ciPath), existingContent, "utf-8");
 
@@ -497,7 +497,7 @@ extends:
 
         test("adds ci.yml path itself to trigger.paths.include and pr.paths.include", async () => {
             await ensureDir(path.join(tempDir, "sdk/myservice"));
-            // paths.include exists but ci.yml path is absent
+            // paths.include exists but ci.yml path is absent; artifact is different so update proceeds
             const existingContent = `trigger:
   branches:
     include:
@@ -521,8 +521,8 @@ extends:
   parameters:
     ServiceDirectory: myservice
     Artifacts:
-      - name: azure-myservice
-        safeName: azuremyservice
+      - name: azure-other
+        safeName: azureother
 `;
             await writeFile(path.join(tempDir, ciPath), existingContent, "utf-8");
 
@@ -535,8 +535,44 @@ extends:
             expect(parsed.pr.paths.include).toContain(ciPath);
         });
 
+        test("skips update and does not rewrite file when artifact already exists", async () => {
+            await ensureDir(path.join(tempDir, "sdk/myservice"));
+            const existingContent = `trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - sdk/myservice/myservice
+      - sdk/myservice/ci.yml
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - sdk/myservice/myservice
+      - sdk/myservice/ci.yml
+extends:
+  template: /eng/pipelines/templates/stages/archetype-sdk-client.yml
+  parameters:
+    ServiceDirectory: myservice
+    Artifacts:
+      - name: azure-myservice
+        safeName: azuremyservice
+`;
+            await writeFile(path.join(tempDir, ciPath), existingContent, "utf-8");
+
+            await createOrUpdateCiYaml(packageDir, npmPackageInfo);
+
+            // File should not be rewritten — content stays exactly as written (no comment header prepended)
+            const content = await readFile(path.join(tempDir, ciPath), "utf-8");
+            expect(content).toBe(existingContent);
+        });
+
         test("written file starts with the required comment header", async () => {
             await ensureDir(path.join(tempDir, "sdk/myservice"));
+            // artifact is different so update proceeds and file gets rewritten
             const existingContent = `trigger:
   branches:
     include:
@@ -562,8 +598,8 @@ extends:
   parameters:
     ServiceDirectory: myservice
     Artifacts:
-      - name: azure-myservice
-        safeName: azuremyservice
+      - name: azure-other
+        safeName: azureother
 `;
             await writeFile(path.join(tempDir, ciPath), existingContent, "utf-8");
 

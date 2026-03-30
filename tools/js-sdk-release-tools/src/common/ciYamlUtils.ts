@@ -127,12 +127,18 @@ async function updateDataPlaneCiYaml(
     const content = await readFile(ciPath, { encoding: 'utf-8' });
     let parsed = parse(content.toString());
 
+    const artifact: ArtifactInfo = getArtifact(npmPackageInfo);
+    const artifactInclude = (array: ArtifactInfo[], item: ArtifactInfo) => array.map((a) => a.name).includes(item.name);
+    const artifacts: ArtifactInfo[] = parsed?.extends?.parameters?.Artifacts ?? [];
+    if (artifactInclude(artifacts, artifact)) {
+        logger.warn(`CI file '${ciPath}' already contains artifact '${artifact.name}', skipping update.`);
+        return;
+    }
+
     makeSureArrayAvailableInCiYaml(parsed, ['trigger', 'paths', 'include']);
     makeSureArrayAvailableInCiYaml(parsed, ['pr', 'paths', 'include']);
     makeSureArrayAvailableInCiYaml(parsed, ['extends', 'parameters', 'Artifacts']);
 
-    const artifact: ArtifactInfo = getArtifact(npmPackageInfo);
-    const artifactInclude = (array: ArtifactInfo[], item: ArtifactInfo) => array.map((a) => a.name).includes(item.name);
     const pathInclude = (array: string[], item: string) => array.some(existing => {
         const normalized = existing.endsWith('/') ? existing.slice(0, -1) : existing;
         return item === existing || item.startsWith(normalized + '/');
@@ -178,7 +184,7 @@ async function createOrUpdateDataPlaneCiYaml(
     if (!(await existsAsync(ciPath))) {
         await createDataPlaneCiYaml(packageDirToSdkRoot, ciPath, serviceDirToSDKDir, npmPackageInfo);
     }
-    await updateDataPlaneCiYaml(packageDirToSdkRoot, ciPath,  npmPackageInfo);
+    await updateDataPlaneCiYaml(packageDirToSdkRoot, ciPath, npmPackageInfo);
     return ciPath;
 }
 

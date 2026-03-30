@@ -38,7 +38,7 @@ public partial class DotnetLanguageService : LanguageService
                 return new PackageCheckResponse(1, "", $"Code checks script not found at: {scriptPath}");
             }
 
-            var args = new[] {"-ServiceDirectory", serviceDirectory, "-SpellCheckPublicApiSurface" };
+            var args = new[] {"-ServiceDirectory", serviceDirectory, "-SpellCheckPublicApiSurface", "-SkipDiffValidation" };
             var options = new PowershellOptions(scriptPath, args, workingDirectory: repoRoot, timeout: CodeChecksTimeout);
             var result = await powershellHelper.Run(options, ct);
 
@@ -50,15 +50,22 @@ public partial class DotnetLanguageService : LanguageService
             else
             {
                 logger.LogWarning("Generated code checks for package at {PackagePath} failed with exit code {ExitCode}", packagePath, result.ExitCode);
+
+                var nextSteps = result.Output
+                    .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
+                    .Where(line => line.StartsWith("error : ", StringComparison.OrdinalIgnoreCase))
+                    .Select(line => line["error : ".Length..].Trim())
+                    .Where(msg => !string.IsNullOrWhiteSpace(msg))
+                    .ToList();
+
+                if (nextSteps.Count == 0)
+                {
+                    nextSteps.Add("Review the output above for specific failures in CodeChecks.ps1.");
+                }
+
                 return new PackageCheckResponse(result.ExitCode, result.Output, "Generated code checks failed")
                 {
-                    NextSteps =
-                    [
-                        "Auto-fix is not available for generated code checks.",
-                        "Review the output above for specific failures in CodeChecks.ps1.",
-                        "Regenerate the SDK client code using 'azsdk typespec client generate' and verify the generated API surface matches the expected public API.",
-                        "If API surface changes are expected, update the public API baseline files under the 'src/' directory."
-                    ]
+                    NextSteps = nextSteps
                 };
             }
         }

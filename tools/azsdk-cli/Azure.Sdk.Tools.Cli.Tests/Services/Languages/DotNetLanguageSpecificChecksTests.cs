@@ -193,6 +193,7 @@ internal class DotNetLanguageSpecificChecksTests
             {
                 var processResult = new ProcessResult { ExitCode = 1 };
                 processResult.AppendStdout(errorMessage);
+                processResult.AppendStdout($"error : {errorMessage}");
                 return processResult;
             });
 
@@ -203,7 +204,7 @@ internal class DotNetLanguageSpecificChecksTests
             Assert.That(result.ExitCode, Is.EqualTo(1));
             Assert.That(result.CheckStatusDetails, Does.Contain(expectedDetail));
             Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty, "NextSteps should be populated on failure");
-            Assert.That(result.NextSteps, Has.Some.Contain("Auto-fix is not available"));
+            Assert.That(result.NextSteps, Has.Some.Contain(errorMessage));
         });
     }
 

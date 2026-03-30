@@ -67,17 +67,20 @@ public interface ICommonValidationHelpers
 public class CommonValidationHelpers : ICommonValidationHelpers
 {
     private readonly IProcessHelper _processHelper;
+    private readonly IPowershellHelper _powershellHelper;
     private readonly IGitHelper _gitHelper;
     private readonly ILogger<CommonValidationHelpers> _logger;
     private readonly ICopilotAgentRunner _copilotAgentRunner;
 
     public CommonValidationHelpers(
         IProcessHelper processHelper,
+        IPowershellHelper powershellHelper,
         IGitHelper gitHelper,
         ILogger<CommonValidationHelpers> logger,
         ICopilotAgentRunner copilotAgentRunner)
     {
         _processHelper = processHelper ?? throw new ArgumentNullException(nameof(processHelper));
+        _powershellHelper = powershellHelper ?? throw new ArgumentNullException(nameof(powershellHelper));
         _gitHelper = gitHelper ?? throw new ArgumentNullException(nameof(gitHelper));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _copilotAgentRunner = copilotAgentRunner ?? throw new ArgumentNullException(nameof(copilotAgentRunner));
@@ -262,7 +265,7 @@ public class CommonValidationHelpers : ICommonValidationHelpers
             var command = $"$files = @({fileListLiteral}); & '{escapedScriptPath}' -CSpellConfigPath '{escapedConfigPath}' -SpellCheckRoot '{escapedRepoRoot}' -FileList $files";
 
             var timeout = TimeSpan.FromMinutes(10);
-            var processResult = await _processHelper.Run(new PowershellOptions([command], timeout: timeout, workingDirectory: packageRepoRoot), ct);
+            var processResult = await _powershellHelper.Run(new PowershellOptions([command], timeout: timeout, workingDirectory: packageRepoRoot), ct);
 
             // If fix is requested and there are spelling issues, use CopilotAgent to automatically apply fixes
             if (fixCheckErrors && processResult.ExitCode != 0 && !string.IsNullOrWhiteSpace(processResult.Output))

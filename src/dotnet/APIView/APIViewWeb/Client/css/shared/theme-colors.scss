@@ -87,18 +87,21 @@
     --dark-overlay: rgba(0, 0, 0, 0.1);
     --client-type-bg: rgba(13, 110, 253, 0.08);
     /*----Severity Badges----------------------------------------*/
-    --severity-question-bg: #F0F7FF;
-    --severity-question-text: #1E40AF;
-    --severity-question-border: #B3D4FF;
-    --severity-suggestion-bg: #F3EEFF;
-    --severity-suggestion-text: #5B21B6;
-    --severity-suggestion-border: #D8CCF1;
-    --severity-should-fix-bg: #FFF9F5;
-    --severity-should-fix-text: #8A3707;
-    --severity-should-fix-border: #FDCFB4;
+    --severity-question-bg: #F3EEFF;
+    --severity-question-text: #5B21B6;
+    --severity-question-border: #D8CCF1;
+    --severity-suggestion-bg: #cff4fc;
+    --severity-suggestion-text: #055160;
+    --severity-suggestion-border: #9eeaf9;
+    --severity-should-fix-bg: #FFF8DB;
+    --severity-should-fix-text: #8A6A00;
+    --severity-should-fix-border: #F2D675;
     --severity-must-fix-bg: #FDF3F4;
     --severity-must-fix-text: #B10E1C;
     --severity-must-fix-border: #EEACB2;
+    --severity-unknown-bg: #F5F5F5;
+    --severity-unknown-text: #5A5A5A;
+    --severity-unknown-border: #C8C8C8;
     /*----Revision Badges----------------------------------------*/
     --revision-approved-color: #198754;
     --revision-pending-color: #b58a00;
@@ -205,18 +208,21 @@
     --dark-overlay: rgba(0, 0, 0, 0.5);
     --client-type-bg: rgba(88, 166, 255, 0.15);
     /*----Severity Badges----------------------------------------*/
-    --severity-question-bg: #1f6feb;
-    --severity-question-text: #e6edf3;
-    --severity-question-border: #58a6ff;
-    --severity-suggestion-bg: #3B2F63;
-    --severity-suggestion-text: #E0D4FC;
-    --severity-suggestion-border: #8B5CF6;
-    --severity-should-fix-bg: #9e6a03;
-    --severity-should-fix-text: #e6edf3;
-    --severity-should-fix-border: #d29922;
+    --severity-question-bg: #3B2F63;
+    --severity-question-text: #E0D4FC;
+    --severity-question-border: #8B5CF6;
+    --severity-suggestion-bg: #1b3a5e;
+    --severity-suggestion-text: #c7e0ff;
+    --severity-suggestion-border: #58a6ff;
+    --severity-should-fix-bg: #6b5300;
+    --severity-should-fix-text: #fff3bf;
+    --severity-should-fix-border: #d4a72c;
     --severity-must-fix-bg: #da3633;
     --severity-must-fix-text: #e6edf3;
     --severity-must-fix-border: #f85149;
+    --severity-unknown-bg: #2d333b;
+    --severity-unknown-text: #8b949e;
+    --severity-unknown-border: #484f58;
     /*----Revision Badges----------------------------------------*/
     --revision-approved-color: #3fb950;
     --revision-pending-color: #d29922;
@@ -328,9 +334,9 @@
     --severity-question-bg: #1E3A8A;
     --severity-question-text: #BFDBFE;
     --severity-question-border: #3B82F6;
-    --severity-suggestion-bg: #3B2F5C;
-    --severity-suggestion-text: #DDD6FE;
-    --severity-suggestion-border: #7C3AED;
+    --severity-suggestion-bg: #032830;
+    --severity-suggestion-text: #6edff6;
+    --severity-suggestion-border: #087990;
     --severity-should-fix-bg: #92400E;
     --severity-should-fix-text: #FED7AA;
     --severity-should-fix-border: #F59E0B;

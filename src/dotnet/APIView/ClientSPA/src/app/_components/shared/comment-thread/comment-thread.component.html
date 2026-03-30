@@ -21,8 +21,7 @@
             <i class="bi bi-box-arrow-up-right"></i>
             <span>{{ elementId }}</span>
         </a>
-        <div *ngIf="codePanelRowData!.comments && codePanelRowData!.comments.length > 0 &&
-                    hasSeverity(codePanelRowData!.comments[0].severity)"
+        <div *ngIf="codePanelRowData!.comments && codePanelRowData!.comments.length > 0"
              class="severity-header-container ms-auto">
             <div *ngIf="canEditSeverity">
                 <div *ngIf="isEditingSeverity === codePanelRowData!.comments[0].id" class="severity-edit-container">
@@ -33,6 +32,7 @@
                         (onHide)="onSeverityDropdownHide()"
                         optionLabel="label"
                         optionValue="value"
+                        placeholder="Unknown"
                         styleClass="severity-dropdown"
                         overlayStyleClass="severity-dropdown-panel"
                         appendTo="body"

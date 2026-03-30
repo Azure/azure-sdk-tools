@@ -72,6 +72,7 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
     { key: 'suggestion', label: 'Suggestion', icon: 'bi-lightbulb' },
     { key: 'shouldfix', label: 'Should Fix', icon: 'bi-exclamation-triangle' },
     { key: 'mustfix', label: 'Must Fix', icon: 'bi-exclamation-octagon-fill' },
+    { key: 'unknown', label: 'Unknown', icon: 'bi-dash-circle' },
   ];
 
   // Filtered view
@@ -492,16 +493,15 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
 
     // Severity filter (empty set = show all)
     // severity arrives as camelCase string from API (JsonStringEnumConverter with CamelCase policy)
-    // Normalize to lowercase for reliable comparison
+    // Normalize to lowercase for reliable comparison; null severity = 'unknown' (legacy comments)
     if (this.filterSeverities.size > 0) {
       const rawSev = firstComment.severity;
-      if (rawSev == null) return false;
-      // Handle both numeric enum values and camelCase string values from the API
       let normalizedSev: string;
-      if (typeof rawSev === 'number') {
+      if (rawSev == null) {
+        normalizedSev = 'unknown';
+      } else if (typeof rawSev === 'number') {
         const enumName = CommentSeverity[rawSev];
-        if (!enumName) return false;
-        normalizedSev = enumName.toLowerCase();
+        normalizedSev = enumName ? enumName.toLowerCase() : 'unknown';
       } else {
         normalizedSev = String(rawSev).toLowerCase();
       }

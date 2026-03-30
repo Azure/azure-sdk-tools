@@ -282,15 +282,23 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
             var result = await languageChecks.ValidateChangelog(packagePath, fixCheckErrors, ct);
 
-            if (result.ExitCode != 0 && result.NextSteps is not { Count: > 0 })
+            if (result.ExitCode != 0)
             {
-                result.NextSteps =
-                [
+                result.NextSteps = new List<string>
+                {
                     "Review and update the CHANGELOG.md file to ensure it follows the proper format",
                     "Verify that unreleased changes are properly documented",
                     "Check that version numbers and release dates are correctly formatted",
                     "Refer to the Azure SDK changelog guidelines for proper formatting"
-                ];
+                };
+                return new PackageCheckResponse(result.ExitCode, result.CheckStatusDetails, "Changelog validation failed") { NextSteps = result.NextSteps };
+            }
+            else if (result.CheckStatusDetails != "noop")
+            {
+                result.NextSteps = new List<string>
+                {
+                    "Changelog validation passed - no action needed"
+                };
             }
 
             return result;
@@ -308,15 +316,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
             var result = await languageChecks.AnalyzeDependencies(packagePath, fixCheckErrors, ct);
 
-            if (result.ExitCode != 0 && result.CheckStatusDetails != "noop" && result.NextSteps is not { Count: > 0 })
+            if (result.ExitCode != 0)
             {
-                result.NextSteps =
-                [
+                result.NextSteps = new List<string>
+                {
                     "Review and update package dependencies to resolve conflicts",
                     "Ensure all dependencies meet Azure SDK guidelines",
                     "Check for outdated or vulnerable dependencies",
                     "Run language-specific dependency update commands (e.g., pip upgrade, npm update)"
-                ];
+                };
+            }
+            else if (result.CheckStatusDetails != "noop")
+            {
+                result.NextSteps = new List<string>
+                {
+                    "Dependency check passed - all dependencies are properly configured"
+                };
             }
 
             return result;
@@ -334,15 +349,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
             var result = await languageChecks.ValidateReadme(packagePath, fixCheckErrors, ct);
 
-            if (result.ExitCode != 0 && result.NextSteps is not { Count: > 0 })
+            if (result.ExitCode != 0)
             {
-                result.NextSteps =
-                [
+                result.NextSteps = new List<string>
+                {
                     "Create or update the README.md file to include required sections",
                     "Ensure the README follows Azure SDK documentation standards",
                     "Include proper installation instructions, usage examples, and API documentation links",
                     "Verify that all code samples in the README are working and up-to-date"
-                ];
+                };
+            }
+            else if (result.CheckStatusDetails != "noop")
+            {
+                result.NextSteps = new List<string>
+                {
+                    "README validation passed - documentation is properly formatted"
+                };
             }
 
             return result;
@@ -359,20 +381,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             var result = await languageChecks.CheckSpelling(packagePath, fixCheckErrors, ct);
-
-            if (result.ExitCode != 0 && result.NextSteps is not { Count: > 0 })
-            {
-                result.NextSteps = fixCheckErrors
-                    ? [
-                        "Auto-fix was attempted but could not resolve all spelling issues",
-                        "Review the output above and manually fix remaining spelling errors, or add valid words to '.vscode/cspell.json'"
-                    ]
-                    : [
-                        "Run with the --fix flag to attempt automatic spelling corrections",
-                        "Alternatively, fix spelling issues manually or add valid words to '.vscode/cspell.json' in the 'words' array"
-                    ];
-            }
-
             return result;
         }
 
@@ -387,17 +395,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             var result = await languageChecks.UpdateSnippets(packagePath, fixCheckErrors, ct);
-
-            if (result.ExitCode != 0 && result.CheckStatusDetails != "noop" && result.NextSteps is not { Count: > 0 })
-            {
-                result.NextSteps =
-                [
-                    "Ensure code snippets in documentation match the actual code implementation",
-                    "Verify that snippet markers in source files are properly formatted",
-                    "Re-run after updating code samples to reflect current API usage"
-                ];
-            }
-
             return result;
         }
 
@@ -412,20 +409,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             var result = await languageChecks.LintCode(packagePath, fixCheckErrors, ct);
-
-            if (result.ExitCode != 0 && result.CheckStatusDetails != "noop" && result.NextSteps is not { Count: > 0 })
-            {
-                result.NextSteps = fixCheckErrors
-                    ? [
-                        "Auto-fix was attempted but could not resolve all linting issues",
-                        "Review the linting errors above and fix them manually"
-                    ]
-                    : [
-                        "Run with the --fix flag to automatically fix some linting issues",
-                        "Review the linting errors above and fix any remaining issues manually"
-                    ];
-            }
-
             return result;
         }
 
@@ -440,20 +423,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             var result = await languageChecks.FormatCode(packagePath, fixCheckErrors, ct);
-
-            if (result.ExitCode != 0 && result.CheckStatusDetails != "noop" && result.NextSteps is not { Count: > 0 })
-            {
-                result.NextSteps = fixCheckErrors
-                    ? [
-                        "Auto-fix was attempted but could not resolve all formatting issues",
-                        "Review the formatting errors above and fix them manually"
-                    ]
-                    : [
-                        "Run with the --fix flag to automatically apply code formatting",
-                        "Review the formatting errors above and fix any remaining issues manually"
-                    ];
-            }
-
             return result;
         }
 
@@ -467,17 +436,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             var result = await languageChecks.CheckGeneratedCode(packagePath, fixCheckErrors, ct);
-
-            if (result.ExitCode != 0 && result.CheckStatusDetails != "noop" && result.NextSteps is not { Count: > 0 })
-            {
-                result.NextSteps =
-                [
-                    "Auto-fix is not available for generated code checks",
-                    "Regenerate the SDK client code and verify the generated API surface matches the expected public API",
-                    "If API surface changes are expected, update the public API baseline files"
-                ];
-            }
-
             return result;
         }
 
@@ -491,17 +449,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             var result = await languageChecks.CheckAotCompat(packagePath, fixCheckErrors, ct);
-
-            if (result.ExitCode != 0 && result.CheckStatusDetails != "noop" && result.NextSteps is not { Count: > 0 })
-            {
-                result.NextSteps =
-                [
-                    "Auto-fix is not available for AOT compatibility issues",
-                    "Review the output above for specific trimming or AOT warnings and add required annotations",
-                    "If AOT compatibility is not required, add '<AotCompatOptOut>true</AotCompatOptOut>' to the .csproj file"
-                ];
-            }
-
             return result;
         }
 
@@ -515,17 +462,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             var result = await languageChecks.ValidateSamples(packagePath, fixCheckErrors, ct);
-
-            if (result.ExitCode != 0 && result.CheckStatusDetails != "noop" && result.NextSteps is not { Count: > 0 })
-            {
-                result.NextSteps =
-                [
-                    "Auto-fix is not available for sample validation",
-                    "Ensure code samples exist and compile successfully",
-                    "Verify that sample projects reference the correct package version and all dependencies are resolved"
-                ];
-            }
-
             return result;
         }
 

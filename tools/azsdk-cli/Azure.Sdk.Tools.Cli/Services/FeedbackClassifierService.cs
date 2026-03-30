@@ -20,25 +20,16 @@ public interface IFeedbackClassifierService
 {
     /// <summary>
     /// Classifies feedback items in chunked batch LLM calls. Mutates items in place.
+    /// When <paramref name="items"/> is empty and <paramref name="apiViewUrl"/> or
+    /// <paramref name="plainTextFeedback"/> is supplied, feedback items are gathered
+    /// from those sources first and added to <paramref name="items"/> before classification.
     /// </summary>
     Task<FeedbackClassificationResponse> ClassifyItemsAsync(
         List<FeedbackItem> items,
         string globalContext,
         string tspProjectPath,
-        string? language = null,
-        string? serviceName = null,
-        int? batchSize = null,
-        CancellationToken ct = default);
-
-    /// <summary>
-    /// Gathers feedback items from the provided sources (APIView URL or plain text), then
-    /// classifies them in chunked batch LLM calls. Mutates gathered items in place.
-    /// </summary>
-    Task<(List<FeedbackItem> items, FeedbackClassificationResponse response)> ClassifyFromInputAsync(
-        string? apiViewUrl,
-        string? plainTextFeedback,
-        string globalContext,
-        string tspProjectPath,
+        string? apiViewUrl = null,
+        string? plainTextFeedback = null,
         string? language = null,
         string? serviceName = null,
         int? batchSize = null,
@@ -78,16 +69,28 @@ public class FeedbackClassifierService : IFeedbackClassifierService
 
     /// <summary>
     /// Classifies feedback items in chunked batch LLM calls. Mutates items in place.
+    /// When <paramref name="items"/> is empty and <paramref name="apiViewUrl"/> or
+    /// <paramref name="plainTextFeedback"/> is supplied, feedback items are gathered
+    /// from those sources first and added to <paramref name="items"/> before classification.
     /// </summary>
     public async Task<FeedbackClassificationResponse> ClassifyItemsAsync(
         List<FeedbackItem> items,
         string globalContext,
         string tspProjectPath,
+        string? apiViewUrl = null,
+        string? plainTextFeedback = null,
         string? language = null,
         string? serviceName = null,
         int? batchSize = null,
         CancellationToken ct = default)
     {
+        // If no items were provided, try gathering them from the input sources first.
+        if (items.Count == 0)
+        {
+            var gathered = await GatherFeedbackItemsAsync(apiViewUrl, plainTextFeedback, ct);
+            items.AddRange(gathered);
+        }
+
         if (items.Count == 0)
         {
             throw new ArgumentException("No feedback items to classify. Provide an APIView URL or plain text feedback.");
@@ -112,25 +115,6 @@ public class FeedbackClassifierService : IFeedbackClassifierService
             await BatchClassifyAsync(chunk.ToList(), globalContext, language, serviceName, referenceDocContent, specRepoBasePath, ct);
         }
         return BuildClassificationResponse(items);
-    }
-
-    /// <summary>
-    /// Gathers feedback items from the provided sources (APIView URL or plain text), then
-    /// classifies them in chunked batch LLM calls. Mutates gathered items in place.
-    /// </summary>
-    public async Task<(List<FeedbackItem> items, FeedbackClassificationResponse response)> ClassifyFromInputAsync(
-        string? apiViewUrl,
-        string? plainTextFeedback,
-        string globalContext,
-        string tspProjectPath,
-        string? language = null,
-        string? serviceName = null,
-        int? batchSize = null,
-        CancellationToken ct = default)
-    {
-        var items = await GatherFeedbackItemsAsync(apiViewUrl, plainTextFeedback, ct);
-        var response = await ClassifyItemsAsync(items, globalContext, tspProjectPath, language, serviceName, batchSize, ct);
-        return (items, response);
     }
 
     /// <summary>

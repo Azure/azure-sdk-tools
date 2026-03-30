@@ -181,6 +181,7 @@ public class FeedbackClassifierServiceTests
         var items = new List<FeedbackItem>();
 
         // Act & Assert
+        // Empty list with no input sources should throw
         Assert.ThrowsAsync<ArgumentException>(
             () => service.ClassifyItemsAsync(items, "global context", _testTspPath, language: "python", serviceName: "TestService"));
 

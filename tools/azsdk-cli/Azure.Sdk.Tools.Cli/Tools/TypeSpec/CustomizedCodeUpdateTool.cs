@@ -185,15 +185,16 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
         var languageService = await ResolveLanguageServiceAsync(packagePath, apiViewUrl, ct);
 
-        List<FeedbackItem> feedbackItems;
+        List<FeedbackItem> feedbackItems = [];
         FeedbackClassificationResponse response;
         try
         {
-            (feedbackItems, response) = await _classifierService.ClassifyFromInputAsync(
-                apiViewUrl: apiViewUrl,
-                plainTextFeedback: customizationRequest,
+            response = await _classifierService.ClassifyItemsAsync(
+                feedbackItems,
                 globalContext: string.Empty,
                 tspProjectPath: tspProjectPath,
+                apiViewUrl: apiViewUrl,
+                plainTextFeedback: customizationRequest,
                 language: languageService.Language.ToString(),
                 ct: ct);
         }
@@ -367,7 +368,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         // The classifier can now reclassify them as CODE_CUSTOMIZATION or REQUIRES_MANUAL_INTERVENTION.
         if (feedbackDictionary.Count > 0)
         {
-            var secondResponse = await _classifierService.ClassifyItemsAsync([.. feedbackDictionary.Values], globalContext: string.Join(";", changesMade), tspProjectPath, language: languageService.Language.ToString(), ct: ct);
+            var secondResponse = await _classifierService.ClassifyItemsAsync([.. feedbackDictionary.Values], globalContext: string.Join(";", changesMade), tspProjectPath: tspProjectPath, language: languageService.Language.ToString(), ct: ct);
 
             if (secondResponse.Classifications != null)
             {

@@ -24,29 +24,6 @@
             ]
         },
         {
-            "name": "version-add-preview-after-preview",
-            "description": "Add a new api version `2025-05-04-preview`.",
-            "prompt": "In the specification/widget/resource-manager/Microsoft.Widget/Widget project, Add a new preview version `2025-05-04-preview` to my service widget resource manager.",
-            "testfiles": [
-                "version-add-preview-after-preview/employee.tsp",
-                "version-add-preview-after-preview/main.tsp",
-                "version-add-preview-after-preview/examples"
-
-            ],
-            "qas": [
-                {
-                    "question": "The latest API version is `2024-10-01-preview`. Features added in this preview include:\n- `workLocation` property on Employee\n- `WorkLocation` model (country, company, seatNumber)\n- Modified `age` property with default value of 21\n\nDo you want to carry over all these features to the new `2025-05-04-preview` version?",
-                    "answer": "Yes, carry over all features."
-                }
-            ],
-            "verifyPlan": [
-                "1. 'v2024_10_01_preview' is replaced with `v2025-05-04-preview` in the `Versions` enum and decorate with '@previewVersion'.",
-                "2. Example folders are correctly set up. 2024-10-01-preview example folder is renamed to '2025-05-04-preview' (e.g., `mv examples/2024-10-01-preview examples/2025-05-04-preview`), update the `api-version` parameter in all example files, and add or modify examples to reflect API changes.",
-                "3. For Any types or properties that were `@added` in the previous preview 2024-10-01-preview should be decorated with `@added` in the new preview 2025-05-04-preview.",
-                "4. For Any types or properties that were `@removed` in the previous preview 2024-10-01-preview should now be decorated with '@removed' in the new preview 2025-05-04-preview."
-            ]
-        },
-        {
             "name": "add-arm-resource",
             "description": "Add a new ARM resource to the specification.",
             "prompt": "In the specification/widget/resource-manager/Microsoft.Widget/Widget project, add an ARM resource named 'Asset' with CRUD operations",
@@ -54,7 +31,7 @@
             "verifyPlan": []
         },
         {
-            "name": "001001-version-spread-property",
+            "name": "version-spread-property",
             "description": "version-spread-property",
             "prompt": "I added `...Azure.ResourceManager.ManagedServiceIdentityProperty;` which update all my existing API versions and introduce a breaking change. I want is to introduce the properties of the spread model '...ManagedServiceIdentityProperty' in a new API version 2025-05-04-preview only.",
             "testfiles": [
@@ -434,28 +411,7 @@
             ]
         },
         {
-            "name": "004003-delete-and-restore-operationId-decorator",
-            "description": "delete-and-restore-operationId-decorator",
-            "prompt": "1.Remove @operationId and #suppress \"@azure-tools/typespec-azure-core/no-openapi\" \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"",
-            "testfiles": [
-                "004003-delete-and-restore-operationId-decorator/BastionHost.tsp",
-                "004003-delete-and-restore-operationId-decorator/BgpConnection.tsp",
-                "004003-delete-and-restore-operationId-decorator/ExpressRouteGateway.tsp",
-                "004003-delete-and-restore-operationId-decorator/ExpressRoutePort.tsp",
-                "004003-delete-and-restore-operationId-decorator/ExpressRouteProviderPort.tsp",
-                "004003-delete-and-restore-operationId-decorator/NetworkInterface.tsp",
-                "004003-delete-and-restore-operationId-decorator/P2SVpnGateway.tsp",
-                "004003-delete-and-restore-operationId-decorator/Route.tsp",
-                "004003-delete-and-restore-operationId-decorator/VpnServerConfigurationPolicyGroup.tsp",
-                "004003-delete-and-restore-operationId-decorator/VpnSiteLinkConnection.tsp"
-            ],
-            "verifyPlan": [
-                "1. All @operationId decorators and their associated #suppress \"@azure-tools/typespec-azure-core/no-openapi\" comments should be removed from operations.",
-                "2. OperationIds that do not follow the standard naming convention (i.e., do not contain underscores or begin with a lowercase letter) should be restored with their @operationId decorator and #suppress comment, as they cannot be automatically inferred by the framework."
-            ]
-        },
-        {
-            "name": "005001-warning-suppress-warning",
+            "name": "warning-suppress-warning",
             "description": "warning-suppress-warning",
             "prompt": "Add suppressions for the warnings produced by \"tsp compile .\", and set the justification to \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\".",
             "testfiles": [

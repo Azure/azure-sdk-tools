@@ -138,10 +138,9 @@ public partial class DotnetLanguageService : LanguageService
                 {
                     NextSteps =
                     [
-                        "Auto-fix is not available for AOT compatibility issues.",
-                        "Review the output above for specific trimming or AOT warnings.",
-                        "Add missing [DynamicallyAccessedMembers] or [RequiresUnreferencedCode] annotations to resolve trim warnings.",
-                        "If AOT compatibility is not required for this package, add '<AotCompatOptOut>true</AotCompatOptOut>' to the .csproj file."
+                        "Review the trimming and AOT warnings in the output above and follow the guidance at https://github.com/Azure/azure-sdk-for-net/blob/main/doc/dev/AotCompatibility.md to resolve them.",
+                        "Add missing [DynamicallyAccessedMembers], [RequiresUnreferencedCode], or other suppression annotations as described in the AOT compatibility guide.",
+                        "Only opt out of AOT checks as an absolute last resort — add '<AotCompatOptOut>true</AotCompatOptOut>' to the .csproj file only after exhausting all other options to fix the warnings."
                     ]
                 };
             }

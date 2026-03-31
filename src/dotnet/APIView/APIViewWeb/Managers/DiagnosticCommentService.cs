@@ -119,7 +119,8 @@ public class DiagnosticCommentService : IDiagnosticCommentService
                 CreatedOn = DateTime.UtcNow,
                 IsResolved = false,
                 ResolutionLocked = false,
-                CommentType = CommentType.APIRevision
+                CommentType = CommentType.APIRevision,
+                CorrelationId = GenerateDiagnosticHash(string.Empty, diagnostic.Text)
             };
 
             await _commentsRepository.UpsertCommentAsync(comment);

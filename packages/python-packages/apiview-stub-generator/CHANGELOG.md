@@ -1,5 +1,8 @@
 # Release History
 
+## Version 0.3.28 (Unreleased)
+Added `crossLanguageVersion` to the `CrossLanguageMetadata` model.
+
 ## Version 0.3.27 (2026-03-17)
 Removed `ivar`/`cvar` keywords from token file in favor of the `ClassVar` type annotation to distinguish then.
 Fixed a bug where classes without children were not being post-fixed with blank lines.

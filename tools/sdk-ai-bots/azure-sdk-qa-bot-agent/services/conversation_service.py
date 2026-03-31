@@ -133,14 +133,14 @@ class ConversationService:
         )
         return agent_conversation_id
 
-    async def save_conversation(self, message: ConversationMessage) -> str:
+    async def save_conversation(self, message: ConversationMessage) -> None:
         """Save a conversation message to the backing store.
 
         Args:
             message: The conversation message to persist.
 
         Returns:
-            The ID of the saved message.
+            None
         """
         if not message.conversation_id or not message.conversation_type:
             raise ValueError("conversation_id and conversation_type are required")
@@ -149,6 +149,6 @@ class ConversationService:
             **message.model_dump(mode="json"),
             conversation_partition=self._build_message_partition_key(message),
         )
-        await container.upsert_item(message_item.model_dump(mode="json"))
-        logger.info("Saved conversation message: %s", message.id)
-        return message.id
+        result = await container.upsert_item(message_item.model_dump(mode="json"))
+        logger.info("Saved conversation message: %s", result["id"])
+        return

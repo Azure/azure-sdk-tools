@@ -130,7 +130,8 @@ async def handle_feedback(req: FeedbackRequest):
 @app.post("/conversation/save", response_model=BaseModel)
 async def save_conversation(req: ConversationMessage):
     """Save a conversation message."""
-    return await _conversation_service.save_conversation(req)
+    await _conversation_service.save_conversation(req)
+    return BaseModel()
 
 
 if __name__ == "__main__":

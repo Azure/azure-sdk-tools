@@ -105,6 +105,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           LABEL_SERVICE_API_KEY: ${{ env.LABEL_SERVICE_API_KEY }}
           APP_CONFIG_ENDPOINT: ${{ env.APP_CONFIG_ENDPOINT }}
+          
       - name: Archive github event data
         uses: actions/upload-artifact@v7
         if: always()

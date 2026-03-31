@@ -1,7 +1,6 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
 using Microsoft.Extensions.Configuration;
 

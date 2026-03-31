@@ -350,16 +350,18 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
         {
             var batchList = batch.ToList();
             logger.LogInformation("Translating batch of {count} samples to {targetLanguage}", batchList.Count, targetLanguage);
-            var originalsByName = batchList.ToDictionary(
-                sample => Path.GetFileName(sample.FilePath),
+            var fullSourceSamplesPath = Path.GetFullPath(sourceSamplesPath);
+            var originalsByRelativePath = batchList.ToDictionary(
+                sample => Path.GetRelativePath(fullSourceSamplesPath, sample.FilePath),
                 sample => sample,
-                StringComparer.Ordinal);
+                StringComparer.OrdinalIgnoreCase);
 
-            // Build samples context for the batch
+            // Build samples context for the batch, including relative paths so the AI preserves directory structure
             var samplesContext = new StringBuilder();
             foreach (var sample in batchList)
             {
-                samplesContext.AppendLine($"## Source Sample: {Path.GetFileName(sample.FilePath)} ({sample.SourceLanguage})");
+                var relativePath = Path.GetRelativePath(fullSourceSamplesPath, sample.FilePath);
+                samplesContext.AppendLine($"## Source Sample: {relativePath} ({sample.SourceLanguage})");
                 samplesContext.AppendLine("```");
                 samplesContext.AppendLine(sample.Content);
                 samplesContext.AppendLine("```");
@@ -389,11 +391,12 @@ SOURCE SAMPLES TO TRANSLATE:
 {samplesContext}
 
 For each source sample, provide a translation with:
-1. Original filename
+1. Original file path (the relative path exactly as shown in the '## Source Sample:' headers above, e.g. 'subfolder/sample_name.ext')
 2. Appropriate new filename for {targetLanguage} (following naming conventions)
 3. Translated code content
 
 Return a JSON array of objects with 'OriginalFileName', 'TranslatedFileName', and 'Content' properties.
+The 'OriginalFileName' must be the relative file path exactly as shown in the source sample headers (e.g. 'subfolder/sample_name.ext', not just 'sample_name.ext').
 ";
 
             logger.LogDebug("Enhanced prompt prepared with {contextLength} characters of context", targetPackageContext.Length);
@@ -428,17 +431,44 @@ Return a JSON array of objects with 'OriginalFileName', 'TranslatedFileName', an
                     continue;
                 }
 
-                // Find the original source file to get its directory structure
-                var lookupKey = Path.GetFileName(translatedSample.OriginalFileName);
-                if (!originalsByName.TryGetValue(lookupKey, out var originalSample))
+                // Find the original source file by matching the relative path returned by the AI
+                var lookupKey = translatedSample.OriginalFileName
+                    .Replace('\\', Path.DirectorySeparatorChar)
+                    .Replace('/', Path.DirectorySeparatorChar);
+
+                if (!originalsByRelativePath.TryGetValue(lookupKey, out var originalSample))
                 {
-                    logger.LogWarning("Could not find original sample file for: {original}",
-                        translatedSample.OriginalFileName);
-                    continue;
+                    // Fallback: try matching by filename only for backwards compatibility.
+                    // If multiple matches are found, treat as ambiguous and skip to avoid writing to the wrong path.
+                    var fileName = Path.GetFileName(lookupKey);
+                    var filenameMatches = originalsByRelativePath.Values
+                        .Where(s => string.Equals(Path.GetFileName(s.FilePath), fileName, StringComparison.OrdinalIgnoreCase))
+                        .ToList();
+
+                    if (filenameMatches.Count == 1)
+                    {
+                        originalSample = filenameMatches[0];
+                        logger.LogDebug("Matched translated sample '{original}' to source file by filename fallback", translatedSample.OriginalFileName);
+                    }
+                    else if (filenameMatches.Count == 0)
+                    {
+                        logger.LogWarning("Could not find original sample file for: {original}",
+                            translatedSample.OriginalFileName);
+                        continue;
+                    }
+                    else
+                    {
+                        logger.LogWarning(
+                            "Ambiguous filename-only match for translated sample: {original}. Found {count} source files named '{fileName}'. " +
+                            "Please disambiguate by providing a relative path.",
+                            translatedSample.OriginalFileName,
+                            filenameMatches.Count,
+                            fileName);
+                        continue;
+                    }
                 }
 
                 // Calculate the relative path from the source samples directory
-                var fullSourceSamplesPath = Path.GetFullPath(sourceSamplesPath);
                 var relativePath = Path.GetRelativePath(fullSourceSamplesPath, originalSample.FilePath);
                 var relativeDir = Path.GetDirectoryName(relativePath) ?? "";
 

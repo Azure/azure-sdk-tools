@@ -15,6 +15,7 @@ internal class DotNetLanguageSpecificChecksTests
     private Mock<IGitHelper> _gitHelperMock = null!;
     private Mock<IPowershellHelper> _powerShellHelperMock = null!;
     private Mock<ICommonValidationHelpers> _commonValidationHelperMock = null!;
+    private Mock<IPackageInfoHelper> _packageInfoHelperMock = null!;
     private DotnetLanguageService _languageChecks = null!;
     private string _packagePath = null!;
     private string _repoRoot = null!;
@@ -28,6 +29,7 @@ internal class DotNetLanguageSpecificChecksTests
         _gitHelperMock.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
         _powerShellHelperMock = new Mock<IPowershellHelper>();
         _commonValidationHelperMock = new Mock<ICommonValidationHelpers>();
+        _packageInfoHelperMock = new Mock<IPackageInfoHelper>();
 
         _languageChecks = new DotnetLanguageService(
             _processHelperMock.Object,
@@ -36,7 +38,7 @@ internal class DotNetLanguageSpecificChecksTests
             _gitHelperMock.Object,
             NullLogger<DotnetLanguageService>.Instance,
             _commonValidationHelperMock.Object,
-            Mock.Of<IPackageInfoHelper>(),
+            _packageInfoHelperMock.Object,
             Mock.Of<IFileHelper>(),
             Mock.Of<ISpecGenSdkConfigHelper>(),
             Mock.Of<IChangelogHelper>());
@@ -63,6 +65,16 @@ internal class DotNetLanguageSpecificChecksTests
         _gitHelperMock
             .Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_repoRoot);
+
+        // Dynamically compute relative path from sdk/ for any package path
+        _packageInfoHelperMock
+            .Setup(p => p.ParsePackagePathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns<string, CancellationToken>((path, _) =>
+            {
+                var sdkRoot = Path.Combine(_repoRoot, "sdk");
+                var relativePath = Path.GetRelativePath(sdkRoot, path);
+                return Task.FromResult((_repoRoot, relativePath, path));
+            });
     }
 
     [Test]
@@ -83,6 +95,8 @@ internal class DotNetLanguageSpecificChecksTests
         {
             Assert.That(result.ExitCode, Is.EqualTo(1));
             Assert.That(result.CheckStatusDetails, Does.Contain("dotnet --list-sdks failed"));
+            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty, "NextSteps should be populated on failure");
+            Assert.That(result.NextSteps, Has.Some.Contain("Install the .NET SDK"));
         });
     }
 
@@ -105,6 +119,8 @@ internal class DotNetLanguageSpecificChecksTests
         {
             Assert.That(result.ExitCode, Is.EqualTo(1));
             Assert.That(result.ResponseError, Does.Contain(".NET SDK version 8.0.404 is below minimum requirement of 9.0.102"));
+            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty, "NextSteps should be populated on version failure");
+            Assert.That(result.NextSteps, Has.Some.Contain("Update the .NET SDK"));
         });
     }
 
@@ -189,6 +205,7 @@ internal class DotNetLanguageSpecificChecksTests
             {
                 var processResult = new ProcessResult { ExitCode = 1 };
                 processResult.AppendStdout(errorMessage);
+                processResult.AppendStdout($"error : {errorMessage}");
                 return processResult;
             });
 
@@ -198,6 +215,8 @@ internal class DotNetLanguageSpecificChecksTests
         {
             Assert.That(result.ExitCode, Is.EqualTo(1));
             Assert.That(result.CheckStatusDetails, Does.Contain(expectedDetail));
+            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty, "NextSteps should be populated on failure");
+            Assert.That(result.NextSteps, Has.Some.Contain(errorMessage));
         });
     }
 
@@ -219,6 +238,8 @@ internal class DotNetLanguageSpecificChecksTests
         {
             Assert.That(result.ExitCode, Is.EqualTo(1));
             Assert.That(result.CheckStatusDetails, Does.Contain("dotnet --list-sdks failed"));
+            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty, "NextSteps should be populated on failure");
+            Assert.That(result.NextSteps, Has.Some.Contain("Install the .NET SDK"));
         });
     }
 
@@ -241,6 +262,8 @@ internal class DotNetLanguageSpecificChecksTests
         {
             Assert.That(result.ExitCode, Is.EqualTo(1));
             Assert.That(result.ResponseError, Does.Contain(".NET SDK version 8.0.404 is below minimum requirement of 9.0.102"));
+            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty, "NextSteps should be populated on version failure");
+            Assert.That(result.NextSteps, Has.Some.Contain("Update the .NET SDK"));
         });
     }
 
@@ -328,6 +351,8 @@ internal class DotNetLanguageSpecificChecksTests
                 Assert.That(result.ExitCode, Is.EqualTo(1));
                 Assert.That(result.CheckStatusDetails, Does.Contain("Trim analysis warning"));
                 Assert.That(result.CheckStatusDetails, Does.Contain("RequiresUnreferencedCodeAttribute"));
+                Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty, "NextSteps should be populated on AOT failure");
+                Assert.That(result.NextSteps, Has.Some.Contain("AOT"));
             });
         }
         finally

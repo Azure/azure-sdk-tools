@@ -8,6 +8,8 @@
 
 ### Bugs Fixed
 
+- Fixed sample translation to preserve source directory structure when writing translated files
+
 ### Other Changes
 
 ## 0.6.5 (2026-03-27)

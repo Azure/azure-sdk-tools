@@ -1,0 +1,167 @@
+<app-review-page-layout *ngIf="!embedded"
+    [review]="review"
+    [userProfile]="userProfile"
+    [showPageoptionsButton]="false"
+    [activePage]="'namespace'"
+    (navigateToReviewsEmitter)="navigateToReview()"
+    (navigateToRevisionsEmitter)="navigateToRevisions()"
+    (navigateToSamplesEmitter)="navigateToSamples()"
+    (navigateToConversationsEmitter)="navigateToConversations()"
+    (navigateToNamespaceEmitter)="true">
+    <ng-container *ngTemplateOutlet="namespaceTemplate"></ng-container>
+</app-review-page-layout>
+
+<ng-container *ngIf="embedded">
+    <ng-container *ngTemplateOutlet="namespaceTemplate"></ng-container>
+</ng-container>
+
+<ng-template #namespaceTemplate>
+    <!-- LOADING STATE -->
+    <div *ngIf="isLoading" class="namespace-panel d-flex justify-content-center align-items-center">
+        <div class="spinner-border m-3" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <!-- ERROR STATE -->
+    <div *ngIf="!isLoading && loadFailed" class="namespace-panel d-flex justify-content-center align-items-center">
+        <div class="text-center">
+            <i class="bi bi-exclamation-triangle error-icon"></i>
+            <h5>Failed to load namespace information</h5>
+            <p class="text-muted">Please try refreshing the page.</p>
+        </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div *ngIf="!isLoading && !loadFailed" class="namespace-container">
+        <div class="namespace-header">
+            <h4 *ngIf="projectName">{{ projectName }}</h4>
+        </div>
+
+        <!-- No project linked state -->
+        <div *ngIf="!projectId" class="namespace-empty-state">
+            <i class="bi bi-folder empty-icon"></i>
+            <h5 class="empty-title">No project linked</h5>
+            <p class="empty-subtitle">This review is not associated with a project yet. Namespace tracking requires a linked project.</p>
+        </div>
+
+        <!-- Progress bar -->
+        <div *ngIf="projectId" class="namespace-progress">
+            <div class="progress-header">
+                <span class="progress-title">Namespace approval progress</span>
+                <span class="progress-count">{{ getApprovedCount() }} of {{ getTotalCount() }} approved</span>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" [style.width.%]="getProgressPercentage()"></div>
+            </div>
+        </div>
+
+        <!-- Namespace table -->
+        <div *ngIf="projectId" class="namespace-table-container">
+            <table class="namespace-table">
+                <thead>
+                    <tr>
+                        <th>Language</th>
+                        <th>Namespace</th>
+                        <th>Status</th>
+                        <th>Notes</th>
+                        <th *ngIf="canUserApproveAny()">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let row of tableRows" 
+                        [class.row-approved]="isApproved(row)"
+                        [class.row-pending]="isProposed(row)"
+                        [class.row-rejected]="isRejected(row)">
+                        <td class="language-cell">{{ row.language }}</td>
+                        <td class="namespace-cell">
+                            <a *ngIf="row.review && row.latestRevisionId" 
+                               [href]="'/review/' + row.review.id + '?activeApiRevisionId=' + row.latestRevisionId"
+                               class="namespace-link">
+                                {{ row.namespace }}
+                            </a>
+                            <span *ngIf="row.review && !row.latestRevisionId" class="namespace-loading">
+                                {{ row.namespace }}
+                            </span>
+                            <span *ngIf="!row.review" class="empty-namespace">
+                                {{ row.namespace || '—' }}
+                            </span>
+                        </td>
+                        <td class="status-cell">
+                            <span class="status-badge" [ngClass]="getStatusClass(row.status)">
+                                <i *ngIf="isApproved(row)" class="bi bi-check-circle-fill"></i>
+                                <i *ngIf="isProposed(row)" class="bi bi-clock-fill"></i>
+                                <i *ngIf="isRejected(row)" class="bi bi-x-circle-fill"></i>
+                                {{ getStatusLabel(row.status) }}
+                            </span>
+                        </td>
+                        <td class="notes-cell">
+                            <span *ngIf="isApproved(row) && row.decidedBy" class="notes-text approved-by">
+                                Approved by {{ row.decidedBy }}
+                            </span>
+                            <span *ngIf="isRejected(row) && row.decidedBy" class="notes-text rejected-by">
+                                Rejected by {{ row.decidedBy }}
+                                <span *ngIf="row.notes" class="rejection-reason"> — {{ row.notes }}</span>
+                            </span>
+                            <span *ngIf="!(isApproved(row) && row.decidedBy) && !(isRejected(row) && row.decidedBy)" class="notes-text">{{ row.notes }}</span>
+                        </td>
+                        <td class="action-cell" *ngIf="canUserApproveAny()">
+                            <div class="action-buttons">
+                                <button *ngIf="showApproveButton(row)" 
+                                        class="btn btn-sm action-btn btn-approve"
+                                        (click)="approveNamespace(row)">
+                                    <i class="bi bi-check-lg"></i>
+                                    Approve
+                                </button>
+                                <button *ngIf="showFeedbackButton(row)"
+                                        class="btn btn-sm action-btn btn-reject"
+                                        (click)="sendFeedback(row)">
+                                    <i class="bi bi-x-circle"></i>
+                                    Reject
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</ng-template>
+
+<!-- Reject namespace dialog -->
+<p-dialog 
+    header="Reject namespace" 
+    [(visible)]="showFeedbackDialog" 
+    [modal]="true" 
+    [closable]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [style]="{width: '500px'}"
+    styleClass="feedback-dialog">
+    <div class="feedback-dialog-content">
+        <p class="feedback-target" *ngIf="feedbackTargetRow">
+            Rejecting namespace for <strong>{{ feedbackTargetRow.language }}</strong>
+        </p>
+        <p class="feedback-instruction">
+            Please provide a reason for rejection. This feedback will be visible to the SDK team.
+        </p>
+        <label for="feedbackNotes" class="feedback-label">Rejection reason <span class="required">*</span></label>
+        <textarea 
+            id="feedbackNotes"
+            [(ngModel)]="feedbackNotes"
+            rows="5"
+            class="feedback-textarea"
+            placeholder="Explain why this namespace is being rejected..."></textarea>
+    </div>
+    <ng-template pTemplate="footer">
+        <div class="feedback-dialog-footer">
+            <button class="btn btn-outline-secondary" (click)="closeFeedbackDialog()">
+                Cancel
+            </button>
+            <button class="btn btn-danger" (click)="submitFeedback()" [disabled]="!feedbackNotes.trim()">
+                <i class="bi bi-x-circle"></i>
+                Reject namespace
+            </button>
+        </div>
+    </ng-template>
+</p-dialog>

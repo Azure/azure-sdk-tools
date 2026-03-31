@@ -44,8 +44,6 @@ describe("createOrUpdateCiYaml", () => {
             expect(parsed.trigger.paths.include).toContain(ciPath);
             expect(parsed.pr.paths.include).toContain(packageDir);
             expect(parsed.pr.paths.include).toContain(ciPath);
-            expect(parsed.trigger.branches.exclude).toContain("feature/v4");
-            expect(parsed.pr.branches.exclude).toContain("feature/v4");
         });
 
         test("updates existing ci.mgmt.yml by adding new artifact and paths", async () => {
@@ -59,8 +57,6 @@ describe("createOrUpdateCiYaml", () => {
       - feature/*
       - release/*
       - hotfix/*
-    exclude:
-      - feature/v4
   paths:
     include:
       - sdk/myservice/arm-existing
@@ -72,8 +68,6 @@ pr:
       - feature/*
       - release/*
       - hotfix/*
-    exclude:
-      - feature/v4
   paths:
     include:
       - sdk/myservice/arm-existing
@@ -113,8 +107,6 @@ extends:
   branches:
     include:
       - main
-    exclude:
-      - feature/v4
   paths:
     include:
       - sdk/myservice/arm-myservice
@@ -123,8 +115,6 @@ pr:
   branches:
     include:
       - main
-    exclude:
-      - feature/v4
   paths:
     include:
       - sdk/myservice/arm-myservice
@@ -178,7 +168,6 @@ extends:
             expect(parsed.trigger.paths.include).toContain(ciPath);
             expect(parsed.pr.paths.include).toContain(packageDir);
             expect(parsed.pr.paths.include).toContain(ciPath);
-            // data plane ci.yml does not add feature/v4 exclusion
             expect(parsed.trigger.branches?.exclude).toBeFalsy();
             expect(parsed.pr.branches?.exclude).toBeFalsy();
         });
@@ -193,8 +182,6 @@ extends:
       - main
       - release/*
       - hotfix/*
-    exclude:
-      - feature/v4
   paths:
     include:
       - sdk/myservice/existing
@@ -206,8 +193,6 @@ pr:
       - feature/*
       - release/*
       - hotfix/*
-    exclude:
-      - feature/v4
   paths:
     include:
       - sdk/myservice/existing
@@ -247,8 +232,6 @@ extends:
   branches:
     include:
       - main
-    exclude:
-      - feature/v4
   paths:
     include:
       - sdk/myservice/myservice
@@ -257,8 +240,6 @@ pr:
   branches:
     include:
       - main
-    exclude:
-      - feature/v4
   paths:
     include:
       - sdk/myservice/myservice
@@ -426,14 +407,10 @@ extends:
   branches:
     include:
       - main
-    exclude:
-      - feature/v4
 pr:
   branches:
     include:
       - main
-    exclude:
-      - feature/v4
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-client.yml
   parameters:
@@ -462,8 +439,6 @@ extends:
   branches:
     include:
       - main
-    exclude:
-      - feature/v4
   paths:
     include:
       - sdk/myservice/myservice
@@ -472,8 +447,6 @@ pr:
   branches:
     include:
       - main
-    exclude:
-      - feature/v4
   paths:
     include:
       - sdk/myservice/myservice
@@ -502,8 +475,6 @@ extends:
   branches:
     include:
       - main
-    exclude:
-      - feature/v4
   paths:
     include:
       - sdk/myservice/myservice
@@ -511,8 +482,6 @@ pr:
   branches:
     include:
       - main
-    exclude:
-      - feature/v4
   paths:
     include:
       - sdk/myservice/myservice
@@ -577,8 +546,6 @@ extends:
   branches:
     include:
       - main
-    exclude:
-      - feature/v4
   paths:
     include:
       - sdk/myservice/myservice
@@ -587,8 +554,6 @@ pr:
   branches:
     include:
       - main
-    exclude:
-      - feature/v4
   paths:
     include:
       - sdk/myservice/myservice
@@ -651,6 +616,24 @@ extends:
             expect(parsed.trigger.paths.exclude).toContain("sdk/myservice/ci.mgmt.yml");
             expect(parsed.pr.paths.exclude).toContain("sdk/myservice/arm-helper");
             expect(parsed.pr.paths.exclude).toContain("sdk/myservice/arm-another");
+            expect(parsed.pr.paths.exclude).toContain("sdk/myservice/ci.mgmt.yml");
+        });
+
+        test("adds mgmt exclusions when creating ci.yml from scratch", async () => {
+            await ensureDir(path.join(tempDir, "sdk/myservice"));
+            // No ci.yml exists yet; create mgmt directories and ci.mgmt.yml on disk
+            await ensureDir(path.join(tempDir, "sdk/myservice/arm-compute"));
+            await writeFile(path.join(tempDir, "sdk/myservice/ci.mgmt.yml"), "# mgmt ci", "utf-8");
+
+            const ciPath = await createOrUpdateCiYaml(packageDir, npmPackageInfo);
+
+            expect(ciPath).toBe("sdk/myservice/ci.yml");
+            const content = await readFile(path.join(tempDir, ciPath), "utf-8");
+            const parsed = parse(content);
+
+            expect(parsed.trigger.paths.exclude).toContain("sdk/myservice/arm-compute");
+            expect(parsed.trigger.paths.exclude).toContain("sdk/myservice/ci.mgmt.yml");
+            expect(parsed.pr.paths.exclude).toContain("sdk/myservice/arm-compute");
             expect(parsed.pr.paths.exclude).toContain("sdk/myservice/ci.mgmt.yml");
         });
     });

@@ -13,6 +13,8 @@ from config.tenant_config import (
     load_tenant_qa_guideline,
 )
 from models.chat import (
+    AdditionalInfo,
+    AdditionalInfoType,
     AgentReferenceType,
     ChatRequest,
     ChatResponse,
@@ -25,6 +27,7 @@ from services.conversation_service import ConversationService
 from tools import TOOL_REGISTRY
 from tools.skills import get_skill_to_tenant_map
 from utils.azure_ai_foundry import get_openai_client, get_project_client
+from utils.teams_image import get_image_data_uri
 from azure.ai.projects.aio import AIProjectClient
 from azure.ai.projects.models import AgentDetails
 from openai import AsyncOpenAI
@@ -74,6 +77,10 @@ class ChatService:
                 user_name=req.message.user_name,
             ).model_dump(mode="json", exclude_none=True)
         )
+
+        # Process additional info (images, links, text) from the frontend.
+        image_items = await self._build_image_items(req.additional_infos or [])
+        conversation_items.extend(image_items)
 
         response = await openai_client.responses.create(
             input=conversation_items,
@@ -133,6 +140,37 @@ class ChatService:
 
         logger.info("Created new AI Foundry conversation: %s", new_id)
         return new_id, True
+
+    @staticmethod
+    async def _build_image_items(
+        infos: list[AdditionalInfo],
+    ) -> list[ResponseInputItemParam]:
+        """Convert image additional_infos into Responses API input items."""
+        items: list[ResponseInputItemParam] = []
+        for info in infos:
+            if info.type != AdditionalInfoType.Image or not info.link:
+                continue
+            try:
+                data_uri = await get_image_data_uri(info.link)
+            except Exception:
+                logger.warning(
+                    "Failed to fetch Teams image: %s", info.link, exc_info=True
+                )
+                continue
+            items.append(
+                {
+                    "type": "message",
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "input_image",
+                            "image_url": data_uri,
+                            "detail": "auto",
+                        },
+                    ],
+                }
+            )
+        return items
 
     def _build_tenant_system_message(self, tenant_id: TenantID) -> str:
         """Inject tenant context so the agent knows the current domain."""

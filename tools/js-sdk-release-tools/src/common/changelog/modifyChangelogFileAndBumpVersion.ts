@@ -5,6 +5,7 @@ import fs from 'fs';
 import * as path from 'path';
 import { getSDKType } from "../utils.js";
 import { SDKType } from "../types.js";
+import { isBetaVersion } from "../../utils/version.js";
 
 function escapeRegex(str: string): string {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -100,8 +101,25 @@ To learn more, please refer to our documentation [Quick Start](https://aka.ms/az
 
 function changePackageJSON(packageFolderPath: string, packageVersion: string) {
     const data: string = fs.readFileSync(path.join(packageFolderPath, 'package.json'), 'utf8');
-    const result = data.replace(/"version": "[0-9.a-z-]+"/g, '"version": "' + packageVersion + '"');
+    let result = data.replace(/"version": "[0-9.a-z-]+"/g, '"version": "' + packageVersion + '"');
+    result = updateApiRefLink(result, packageVersion);
     fs.writeFileSync(path.join(packageFolderPath, 'package.json'), result, 'utf8');
+}
+
+export function updateApiRefLink(packageJsonContent: string, packageVersion: string): string {
+    // Remove existing ?view=azure-node-preview from apiRefLink
+    let result = packageJsonContent.replace(
+        /(\"apiRefLink\"\s*:\s*\"[^"]*)\?view=azure-node-preview([^"]*\")/g,
+        '$1$2'
+    );
+    // For beta/preview versions, add ?view=azure-node-preview back to apiRefLink
+    if (isBetaVersion(packageVersion)) {
+        result = result.replace(
+            /(\"apiRefLink\"\s*:\s*\"https:\/\/[^"?]*)(\")/g,
+            '$1?view=azure-node-preview$2'
+        );
+    }
+    return result;
 }
 
 export async function makeChangesForReleasingTrack2(

@@ -2,6 +2,7 @@
 @{
     Layout = "/EmailTemplates/_EmailLayout.cshtml";
     ViewData["EmailTitle"] = "Namespace Review Request";
+    ViewData["EmailPreheader"] = $"A namespace review was requested for {Model.PackageName}.";
 }
 
 <p class="section">Hi Architects,</p>

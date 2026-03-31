@@ -445,7 +445,9 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                 }
             }
 
-            // Step 1: Update the changelog release date (common across all languages)
+            // Step 1: Update the changelog entry title (common across all languages)
+            // If the latest entry's version matches the target version, only update the release date.
+            // Otherwise, replace the latest entry title with the new version and date.
             var changelogPath = changelogHelper.GetChangelogPath(packagePath);
             if (changelogPath == null)
             {
@@ -460,9 +462,46 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
             }
 
             // releaseDate is already validated and defaulted by VersionUpdateTool
-            // Update the changelog with the release date
-            // This will also validate that an entry exists for the version
-            var changelogResult = changelogHelper.UpdateReleaseDate(changelogPath, targetVersion, releaseDate);
+            // Determine whether to update just the date or replace the entire latest entry title
+            var changelogData = changelogHelper.ParseChangelog(changelogPath);
+            if (changelogData == null)
+            {
+                return PackageOperationResponse.CreateFailure(
+                    $"Error parsing changelog {changelogPath}",
+                    packageInfo: packageInfo,
+                    nextSteps: [
+                        "Ensure CHANGELOG.md exists and is properly formatted",
+                        "Then run this tool again to set the version and release date"
+                    ]);
+            } 
+            else if (changelogData.Entries.Count == 0)
+            {
+              logger.LogWarning("No changelog entries found in: {ChangelogPath}", changelogPath);
+                return PackageOperationResponse.CreateFailure(
+                    "No changelog entries found in CHANGELOG.md.",
+                    packageInfo: packageInfo,
+                    nextSteps: [
+                        "Run another tool to update the changelog content first",
+                        "Then run this tool again to set the version and release date"
+                    ]);
+            }
+
+            var latestEntry = changelogData.Entries[0];
+            ChangelogUpdateResult changelogResult;
+
+            if (string.Equals(latestEntry.Version, targetVersion, StringComparison.OrdinalIgnoreCase))
+            {
+                // Version matches - only update the release date
+                logger.LogInformation("Latest changelog entry version matches target version {Version}. Updating release date only.", targetVersion);
+                changelogResult = changelogHelper.UpdateReleaseDate(changelogPath, targetVersion, releaseDate);
+            }
+            else
+            {
+                // Version doesn't match - replace the latest entry title with new version and date
+                logger.LogInformation("Latest changelog entry version {LatestVersion} differs from target version {TargetVersion}. Replacing latest entry title.", latestEntry.Version, targetVersion);
+                changelogResult = changelogHelper.UpdateLatestEntryTitle(changelogPath, targetVersion, releaseDate);
+            }
+
             if (!changelogResult.Success)
             {
                 logger.LogWarning("Failed to update changelog: {Message}", changelogResult.Message);
@@ -483,7 +522,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
             {
                 // Changelog was updated but version files failed - report partial success
                 return PackageOperationResponse.CreateSuccess(
-                    $"Changelog release date updated to {releaseDate}, but version file update requires additional steps.",
+                    $"Changelog updated to {targetVersion} with release date {releaseDate}, but version file update requires additional steps.",
                     nextSteps: versionUpdateResult.NextSteps?.ToArray() ?? ["Manually update the package version in project files"],
                     result: "partial",
                     packageInfo: packageInfo);

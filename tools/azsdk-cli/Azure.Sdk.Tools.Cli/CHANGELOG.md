@@ -1,5 +1,11 @@
 # Release History
 
+## 0.6.6 (Unreleased)
+
+### Bugs Fixed
+
+- Fixed sample translation to preserve source directory structure when writing translated files
+
 ## 0.6.5 (2026-03-27)
 
 ### Features Added

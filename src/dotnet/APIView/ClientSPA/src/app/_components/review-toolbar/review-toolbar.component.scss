@@ -104,6 +104,11 @@
     color: var(--base-text-color);
   }
 
+  .comment-nav-info {
+    font-size: 0.75rem;
+    color: var(--text-color-secondary);
+  }
+
   .search-nav-btn {
     display: inline-flex;
     align-items: center;

@@ -47,6 +47,7 @@ export class CodePanelComponent implements OnChanges {
 
   @Output() hasActiveConversationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() codeLineSearchInfoEmitter : EventEmitter<CodeLineSearchInfo> = new EventEmitter<CodeLineSearchInfo>();
+  @Output() commentNavigationStateEmitter: EventEmitter<{ currentIndex: number; totalCount: number }> = new EventEmitter<{ currentIndex: number; totalCount: number }>();
 
   @ViewChildren(Menu) menus!: QueryList<Menu>;
 
@@ -102,9 +103,12 @@ export class CodePanelComponent implements OnChanges {
       if (changes['codePanelRowData'].currentValue.length > 0) {
         this.loadCodePanelViewPort();
         this.updateHasActiveConversations();
+        this.emitCommentNavigationState();
       } else {
         this.isLoading = true;
         this.codePanelRowSource = undefined;
+        this.commentThreadNavigationPointer = undefined;
+        this.emitCommentNavigationState();
       }
     }
 
@@ -147,6 +151,34 @@ export class CodePanelComponent implements OnChanges {
       return this.codePanelData.nodeMetaData[item.nodeIdHashed].codeLines[item.associatedRowPositionInGroup] || undefined;
     }
     return undefined;
+  }
+
+  getActiveCommentThreadPosition(item: CodePanelRowData): number | null {
+    if (item.type !== CodePanelRowDatatype.CommentThread || item.isResolvedCommentThread) {
+      return null;
+    }
+
+    let position = 0;
+    for (const row of this.codePanelRowData) {
+      if (row.type === CodePanelRowDatatype.CommentThread && !row.isResolvedCommentThread) {
+        position++;
+        if (row === item) {
+          return position;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  getActiveCommentThreadCount(): number {
+    let count = 0;
+    for (const row of this.codePanelRowData) {
+      if (row.type === CodePanelRowDatatype.CommentThread && !row.isResolvedCommentThread) {
+        count++;
+      }
+    }
+    return count;
   }
 
   getRowClassObject(row: CodePanelRowData) {
@@ -931,10 +963,40 @@ export class CodePanelComponent implements OnChanges {
     if (foundIndex !== undefined) {
       this.commentThreadNavigationPointer = foundIndex;
       this.scrollToCommentThread(foundIndex);
+      this.emitCommentNavigationState();
     }
     else {
       this.messageService.add({ severity: 'info', icon: 'bi bi-info-circle', summary: 'Comment Navigation', detail: 'No active comment threads to navigate to.', key: 'bc', life: 3000 });
+      this.emitCommentNavigationState();
     }
+  }
+
+  private getCommentThreadDisplayPositionByRowIndex(index: number): number | undefined {
+    if (index < 0 || index >= this.codePanelRowData.length) {
+      return undefined;
+    }
+
+    let position = 0;
+    for (let i = 0; i < this.codePanelRowData.length; i++) {
+      const row = this.codePanelRowData[i];
+      if (row.type === CodePanelRowDatatype.CommentThread && !row.isResolvedCommentThread) {
+        position++;
+        if (i === index) {
+          return position;
+        }
+      }
+    }
+
+    return undefined;
+  }
+
+  private emitCommentNavigationState(): void {
+    const totalCount = this.getActiveCommentThreadCount();
+    const currentIndex = this.commentThreadNavigationPointer !== undefined
+      ? (this.getCommentThreadDisplayPositionByRowIndex(this.commentThreadNavigationPointer) ?? 0)
+      : 0;
+
+    this.commentNavigationStateEmitter.emit({ currentIndex, totalCount });
   }
 
   navigateToDiffNode(direction: CodeLineRowNavigationDirection) {

@@ -79,6 +79,8 @@ export class CommentThreadComponent {
   @Input() allComments: CommentItemModel[] = [];
   @Input() allCodePanelRowData: CodePanelRowData[] = [];
   @Input() elementId: string = '';
+  @Input() commentNumber: number | null = null;
+  @Input() totalCommentCount: number = 0;
 
   @Input() userProfile : UserProfile | undefined;
   @Output() cancelCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();

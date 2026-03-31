@@ -66,6 +66,8 @@
                     [diffStyleInput]="diffStyle!"
                     [userProfile]="userProfile"
                     [codeLineSearchInfo]="codeLineSearchInfo"
+                    [currentCommentNavigationIndex]="currentCommentNavigationIndex"
+                    [totalCommentNavigationCount]="totalCommentNavigationCount"
                     [hasHiddenAPIs]="hasHiddenAPIs"
                     (diffStyleEmitter)="handleDiffStyleEmitter($event)"
                     (diffNavigationEmitter)="handleDiffNavigationEmitter($event)"
@@ -98,7 +100,8 @@
                         [codeLineSearchText]="codeLineSearchText"
                         [codeLineSearchInfo]="codeLineSearchInfo"
                         (hasActiveConversationEmitter)="handleHasActiveConversationEmitter($event)"
-                        (codeLineSearchInfoEmitter)="handleCodeLineSearchInfoEmitter($event)">
+                        (codeLineSearchInfoEmitter)="handleCodeLineSearchInfoEmitter($event)"
+                        (commentNavigationStateEmitter)="handleCommentNavigationStateEmitter($event)">
                     </app-code-panel>
                 </div>
             </div>

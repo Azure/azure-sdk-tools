@@ -53,6 +53,8 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
   @Input() diffStyleInput: string | undefined;
   @Input() userProfile: UserProfile | undefined;
   @Input() codeLineSearchInfo: CodeLineSearchInfo | undefined = undefined;
+  @Input() currentCommentNavigationIndex: number = 0;
+  @Input() totalCommentNavigationCount: number = 0;
   @Input() hasHiddenAPIs: boolean = false;
 
   @Output() diffStyleEmitter: EventEmitter<string> = new EventEmitter<string>();

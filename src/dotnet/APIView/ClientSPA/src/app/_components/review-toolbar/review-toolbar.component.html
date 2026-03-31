@@ -116,6 +116,9 @@
                 <i class="bi bi-chevron-down"></i>
             </p-button>
         </p-buttongroup>
+        <small *ngIf="totalCommentNavigationCount > 0" class="comment-nav-info text-nowrap ms-2">
+            {{ currentCommentNavigationIndex > 0 ? currentCommentNavigationIndex : '-' }} of {{ totalCommentNavigationCount }}
+        </small>
     </div>
 
     <!-- Search Bar and Controls -->

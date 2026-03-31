@@ -68,6 +68,8 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
   hasFatalDiagnostics: boolean = false;
   hasActiveConversation: boolean = false;
   codeLineSearchInfo: CodeLineSearchInfo | undefined;
+  currentCommentNavigationIndex: number = 0;
+  totalCommentNavigationCount: number = 0;
   numberOfActiveConversation: number = 0;
   activeView: 'reviews' | 'revisions' | 'samples' | 'conversations' = 'reviews';
   hasHiddenAPIs: boolean = false;
@@ -187,6 +189,8 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
     this.codePanelData = null;
     this.comments = [];
     this.loadFailed = false;
+    this.currentCommentNavigationIndex = 0;
+    this.totalCommentNavigationCount = 0;
 
     // Clear the conversations badge immediately — the count will be inaccurate
     // until the code panel finishes loading and diagnostics are synced.
@@ -739,6 +743,11 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       this.codeLineSearchInfo = (value) ? new CodeLineSearchInfo(value.currentMatch, value.totalMatchCount) : undefined;
     }, 0);
+  }
+
+  handleCommentNavigationStateEmitter(value: { currentIndex: number; totalCount: number }) {
+    this.currentCommentNavigationIndex = value.currentIndex;
+    this.totalCommentNavigationCount = value.totalCount;
   }
 
   handleNumberOfActiveThreadsEmitter(value: number) {

@@ -13,7 +13,10 @@
                [class.bi-chevron-down]="!isThreadCollapsed"
                [class.bi-chevron-right]="isThreadCollapsed"
                style="font-size: 0.8rem; color: var(--text-muted-color); margin-right: 0.5rem;"></i>
-            <span class="text-muted" style="font-size: 0.9rem;">Comment on line {{ actualLineNumber }}</span>
+            <span class="text-muted" style="font-size: 0.9rem;">
+                <ng-container *ngIf="commentNumber !== null">Comment #{{ commentNumber }} &middot; Line {{ actualLineNumber }}</ng-container>
+                <ng-container *ngIf="commentNumber === null">Comment &middot; Line {{ actualLineNumber }}</ng-container>
+            </span>
         </div>
         <a *ngIf="instanceLocation === 'conversations' && elementId"
            class="go-to-code-link d-flex align-items-center"
@@ -193,6 +196,7 @@
 </div>
 <div *ngIf="instanceLocation === 'code-panel' && !isThreadCollapsed && (!codePanelRowData!.isResolvedCommentThread || threadResolvedAndExpanded)" class="btn-group-vertical comment-thread-navigation ms-2 {{ floatItemEnd }}" role="group" aria-label="Comment Navigation Button">
     <button type="button" class="btn btn-sm btn-outline-secondary" pTooltip="Previous Comment" tooltipPosition="top" (click)="handleCommentThreadNavigation($event, CodeLineRowNavigationDirection.prev)"><i class="bi bi-arrow-up"></i></button>
+    <div *ngIf="commentNumber !== null && totalCommentCount > 0" class="comment-navigation-pointer">{{ commentNumber }} of {{ totalCommentCount }}</div>
     <button type="button" class="btn btn-sm btn-outline-secondary" pTooltip="Next Comment" tooltipPosition="bottom" (click)="handleCommentThreadNavigation($event, CodeLineRowNavigationDirection.next)"><i class="bi bi-arrow-down"></i></button>
 </div>
 

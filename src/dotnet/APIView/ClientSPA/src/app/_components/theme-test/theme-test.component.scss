@@ -207,6 +207,12 @@ button {
     color: var(--severity-must-fix-text);
     border-color: var(--severity-must-fix-border);
   }
+
+  &.unknown {
+    background-color: var(--severity-unknown-bg);
+    color: var(--severity-unknown-text);
+    border-color: var(--severity-unknown-border);
+  }
 }
 
 /* Diff Colors */

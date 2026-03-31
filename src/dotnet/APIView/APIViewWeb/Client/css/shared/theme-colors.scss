@@ -349,6 +349,9 @@
     --severity-must-fix-bg: #991B1B;
     --severity-must-fix-text: #FECACA;
     --severity-must-fix-border: #EF4444;
+    --severity-unknown-bg: #2d333b;
+    --severity-unknown-text: #8b949e;
+    --severity-unknown-border: #484f58;
     /*----Revision Badges----------------------------------------*/
     --revision-approved-color: #{bootstrap.$success};
     --revision-pending-color: #{$warning-color};

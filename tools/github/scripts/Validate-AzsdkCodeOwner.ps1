@@ -13,7 +13,7 @@ $hasPermissions = $false
 
 # Verify that the user exists and has the correct public
 # organization memberships.
-$orgResponse = (gh api "https://api.github.com/users/$UserName/orgs")
+$orgResponse = (gh api "https://api.github.com/users/$UserName/orgs" --paginate)
 $orgs = $orgResponse | ConvertFrom-Json | Select-Object -Expand login -ErrorAction Ignore
 
 # Validate that the user has the required public organization memberships.

@@ -153,32 +153,40 @@ export class CodePanelComponent implements OnChanges {
     return undefined;
   }
 
+  private isActiveCommentThread(row: CodePanelRowData): boolean {
+    return row.type === CodePanelRowDatatype.CommentThread && !row.isResolvedCommentThread;
+  }
+
+  private getActiveCommentThreadPositionData(): { count: number; byRowIndex: Map<number, number> } {
+    const byRowIndex = new Map<number, number>();
+    let position = 0;
+
+    for (let i = 0; i < this.codePanelRowData.length; i++) {
+      const row = this.codePanelRowData[i];
+      if (this.isActiveCommentThread(row)) {
+        position++;
+        byRowIndex.set(i, position);
+      }
+    }
+
+    return { count: position, byRowIndex };
+  }
+
   getActiveCommentThreadPosition(item: CodePanelRowData): number | null {
-    if (item.type !== CodePanelRowDatatype.CommentThread || item.isResolvedCommentThread) {
+    if (!this.isActiveCommentThread(item)) {
       return null;
     }
 
-    let position = 0;
-    for (const row of this.codePanelRowData) {
-      if (row.type === CodePanelRowDatatype.CommentThread && !row.isResolvedCommentThread) {
-        position++;
-        if (row === item) {
-          return position;
-        }
-      }
+    const itemIndex = this.codePanelRowData.indexOf(item);
+    if (itemIndex < 0) {
+      return null;
     }
 
-    return null;
+    return this.getActiveCommentThreadPositionData().byRowIndex.get(itemIndex) ?? null;
   }
 
   getActiveCommentThreadCount(): number {
-    let count = 0;
-    for (const row of this.codePanelRowData) {
-      if (row.type === CodePanelRowDatatype.CommentThread && !row.isResolvedCommentThread) {
-        count++;
-      }
-    }
-    return count;
+    return this.getActiveCommentThreadPositionData().count;
   }
 
   getRowClassObject(row: CodePanelRowData) {
@@ -976,24 +984,14 @@ export class CodePanelComponent implements OnChanges {
       return undefined;
     }
 
-    let position = 0;
-    for (let i = 0; i < this.codePanelRowData.length; i++) {
-      const row = this.codePanelRowData[i];
-      if (row.type === CodePanelRowDatatype.CommentThread && !row.isResolvedCommentThread) {
-        position++;
-        if (i === index) {
-          return position;
-        }
-      }
-    }
-
-    return undefined;
+    return this.getActiveCommentThreadPositionData().byRowIndex.get(index);
   }
 
   private emitCommentNavigationState(): void {
-    const totalCount = this.getActiveCommentThreadCount();
+    const activeThreadData = this.getActiveCommentThreadPositionData();
+    const totalCount = activeThreadData.count;
     const currentIndex = this.commentThreadNavigationPointer !== undefined
-      ? (this.getCommentThreadDisplayPositionByRowIndex(this.commentThreadNavigationPointer) ?? 0)
+      ? (activeThreadData.byRowIndex.get(this.commentThreadNavigationPointer) ?? 0)
       : 0;
 
     this.commentNavigationStateEmitter.emit({ currentIndex, totalCount });

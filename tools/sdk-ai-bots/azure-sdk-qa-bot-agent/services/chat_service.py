@@ -28,6 +28,7 @@ from tools import TOOL_REGISTRY
 from tools.skills import get_skill_to_tenant_map
 from utils.azure_ai_foundry import get_openai_client, get_project_client
 from utils.teams_image import get_image_data_uri
+from utils.azure_memory_store import sanitize_scope
 from azure.ai.projects.aio import AIProjectClient
 from azure.ai.projects.models import AgentDetails
 from openai import AsyncOpenAI
@@ -66,6 +67,16 @@ class ChatService:
                 ConversationItem(
                     role=Role.System,
                     content=tenant_system_msg,
+                ).model_dump(mode="json", exclude_none=True)
+            )
+
+        memory_scope = self._resolve_memory_scope(req)
+        if memory_scope:
+            memory_scope_msg = self._build_memory_scope_message(memory_scope)
+            conversation_items.append(
+                ConversationItem(
+                    role=Role.System,
+                    content=memory_scope_msg,
                 ).model_dump(mode="json", exclude_none=True)
             )
 
@@ -190,6 +201,17 @@ class ChatService:
             parts.append("\n[tenant_knowledge_sources]\n" + "\n".join(src_lines))
 
         return "\n".join(parts)
+
+    def _resolve_memory_scope(self, req: ChatRequest) -> str | None:
+        """Derive user memory scope from user_id. Returns None if no user_id."""
+        user_id = getattr(req.message, "user_id", None)
+        if user_id and user_id.strip():
+            return sanitize_scope(f"user_{user_id.strip()}")
+        return None
+
+    @staticmethod
+    def _build_memory_scope_message(memory_scope: str) -> str:
+        return f"[memory_scope] value={memory_scope}"
 
     def _postprocess(
         self, req: ChatRequest, response: OpenAIResponse, agent_conversation_id: str

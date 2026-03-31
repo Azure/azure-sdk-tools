@@ -56,19 +56,21 @@ Ensure your Azure identity has the following roles:
    pip install -r requirements.txt
    ```
 
-4. Create a `.env` file in the project root:
+4. Create a `.env` file in the project root with the App Configuration endpoint:
 
    ```dotenv
    AZURE_APPCONFIG_ENDPOINT=https://azuresdkqabot-dev-config.azconfig.io
    ```
 
-   To test the GitHub MCP tool locally, add a [GitHub personal access token](https://github.com/settings/tokens) to your `.env` file:
+   To test the GitHub MCP tool locally, add a [GitHub personal access token](https://github.com/settings/tokens):
 
-   ```
+   ```dotenv
    GITHUB_TOKEN=ghp_your_token_here
    ```
 
    Without this, the agent uses GitHub App JWT authentication via Key Vault, which is only available in production.
+
+   Optionally, set `MEMORY_UPDATE_DELAY=0` to process memory updates immediately during local development (default is 300 seconds).
 
 5. Log in to Azure:
 

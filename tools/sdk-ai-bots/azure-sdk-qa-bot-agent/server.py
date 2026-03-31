@@ -5,6 +5,7 @@ Calls the hosted Chat Agent via the Azure AI Foundry SDK (azure-ai-projects)
 and handles feedback through a local workflow.
 """
 
+import asyncio
 import uvicorn
 import logging
 import sys
@@ -24,6 +25,7 @@ from services.chat_service import ChatService
 from services.conversation_service import ConversationService
 from services.feedback_service import FeedbackService
 from services.intention_service import IntentionService
+from services.thread_memory_service import ThreadMemoryService
 from utils.azure_ai_foundry import close_clients
 from utils.azure_cosmosdb import close_cosmos_client
 from utils.azure_credential import close_credential
@@ -110,6 +112,7 @@ _chat_service = ChatService()
 _conversation_service = ConversationService()
 _feedback_service = FeedbackService()
 _intention_service = IntentionService()
+_thread_memory_service = ThreadMemoryService()
 
 
 @app.post(
@@ -138,9 +141,24 @@ async def handle_intention(req: IntentionRequest):
 
 @app.post("/conversation/save", response_model=SaveConversationMessageResponse)
 async def save_conversation(req: ConversationMessage):
-    """Save a conversation message."""
+    """Save a conversation message and trigger background tenant memory update."""
     await _conversation_service.save_conversation(req)
+    # Fire-and-forget background task to feed the thread to tenant memory
+    asyncio.create_task(_update_thread_memory(req))
     return SaveConversationMessageResponse()
+
+
+async def _update_thread_memory(message: ConversationMessage) -> None:
+    """Background task: query full thread and update tenant memory store."""
+    try:
+        thread_messages = await _conversation_service.get_thread_messages(message)
+        await _thread_memory_service.process_thread_update(message, thread_messages)
+    except Exception:
+        logger.warning(
+            "Background thread memory update failed for message=%s",
+            message.id,
+            exc_info=True,
+        )
 
 
 if __name__ == "__main__":

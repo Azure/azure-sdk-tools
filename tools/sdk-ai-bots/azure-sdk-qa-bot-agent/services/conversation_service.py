@@ -14,6 +14,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from models.conversation import (
+    ConversationDocumentType,
     ConversationMappingItem,
     ConversationMessage,
     ConversationMessageItem,
@@ -188,3 +189,40 @@ class ConversationService:
             return True
 
         return False
+
+    async def get_thread_messages(
+        self, message: ConversationMessage
+    ) -> list[ConversationMessageItem]:
+        """Retrieve all messages in a thread, ordered by created_at.
+
+        Uses the same partition key logic as ``save_conversation`` to
+        locate messages belonging to the same thread/channel.
+        """
+        container = await get_conversation_message_container()
+        partition_key = self._build_message_partition_key(message)
+
+        query = (
+            "SELECT * FROM c "
+            "WHERE c.conversation_partition = @pk "
+            "AND c.document_type = @dtype "
+            "ORDER BY c.created_at ASC"
+        )
+        parameters = [
+            {"name": "@pk", "value": partition_key},
+            {"name": "@dtype", "value": ConversationDocumentType.message.value},
+        ]
+
+        items: list[ConversationMessageItem] = []
+        async for raw in container.query_items(
+            query=query,
+            parameters=parameters,
+            partition_key=partition_key,
+        ):
+            items.append(ConversationMessageItem.model_validate(raw))
+
+        logger.debug(
+            "Retrieved %d thread messages for partition=%s",
+            len(items),
+            partition_key,
+        )
+        return items

@@ -72,9 +72,9 @@ def _git_short_sha() -> str:
 # hosted agent platform cannot resolve UMIs for ACR image pull.
 
 
-def _list_project_user_assigned_identities(project_resource_id: str) -> list[str]:
-    """Return resource IDs of user-assigned identities on the AI project."""
-    print(f"Listing user-assigned identities on project...")
+def _has_project_user_assigned_identities(project_resource_id: str) -> bool:
+    """Check whether the AI project currently has any user-assigned identities."""
+    print("Checking for user-assigned identities on project...")
     result = _run_quiet(
         [
             "az",
@@ -90,20 +90,46 @@ def _list_project_user_assigned_identities(project_resource_id: str) -> list[str
         shell=True,
     )
     if result.returncode != 0 or not result.stdout.strip():
-        return []
+        return False
     try:
         data = json.loads(result.stdout)
-        if isinstance(data, dict):
-            ids = list(data.keys())
-        else:
-            ids = []
-        if ids:
-            print(f"  Found {len(ids)} user-assigned identities:")
-            for uid in ids:
-                print(f"    {uid}")
-        return ids
+        return isinstance(data, dict) and len(data) > 0
     except (json.JSONDecodeError, TypeError):
-        return []
+        return False
+
+
+def _resolve_umi_resource_ids() -> list[str]:
+    """Resolve UMI ARM resource IDs from client IDs in environment variables."""
+    client_ids = []
+    for var in ("UMI_BACKEND_CLIENT_ID", "UMI_FRONTEND_CLIENT_ID"):
+        cid = os.environ.get(var)
+        if cid:
+            client_ids.append((var, cid))
+        else:
+            print(f"  WARNING: {var} not set — skipping")
+
+    resource_ids = []
+    for var, cid in client_ids:
+        result = _run_quiet(
+            [
+                "az",
+                "identity",
+                "list",
+                "--query",
+                f"[?clientId=='{cid}'].id",
+                "-o",
+                "tsv",
+            ],
+            shell=True,
+        )
+        if result.returncode != 0 or not result.stdout.strip():
+            print(f"  WARNING: Could not resolve resource ID for {var} (clientId={cid})")
+            continue
+        rid = result.stdout.strip().splitlines()[0]
+        print(f"  Resolved {var} → {rid}")
+        resource_ids.append(rid)
+
+    return resource_ids
 
 
 def _set_project_identity_type(project_resource_id: str, identity_type: str) -> None:
@@ -483,12 +509,9 @@ def main() -> None:
         ]
     )
 
-    # ── Save and remove user-assigned identities after a successful build ──
-    saved_identities = _list_project_user_assigned_identities(project_resource_id)
-    if saved_identities:
-        print(
-            f"Removing {len(saved_identities)} user-assigned identities before deployment..."
-        )
+    # ── Remove user-assigned identities before deployment ──
+    if _has_project_user_assigned_identities(project_resource_id):
+        print("Removing user-assigned identities before deployment...")
         _set_project_identity_type(project_resource_id, "SystemAssigned")
     else:
         print("No user-assigned identities found on the project.")
@@ -548,40 +571,44 @@ def main() -> None:
     agent_version = str(agent.version)
     _start_agent(account_name, project_name, agent.name, agent_version)
 
-    # ── Wait for running, then restore identities and restart ──
-    if saved_identities and project_resource_id:
+    # ── Wait for running, then restore identities from env and restart ──
+    if project_resource_id:
         if _wait_for_agent_running(
             account_name, project_name, agent.name, agent_version
         ):
-            print(f"Restoring {len(saved_identities)} user-assigned identities...")
-            _restore_project_user_assigned_identities(
-                project_resource_id, saved_identities
-            )
-            print("Identities restored successfully.")
-
-            print(
-                "Restarting agent so it runs with the restored user-assigned identities..."
-            )
-            _stop_agent(account_name, project_name, agent.name, agent_version)
-            _start_agent(account_name, project_name, agent.name, agent_version)
-
-            if _wait_for_agent_running(
-                account_name, project_name, agent.name, agent_version
-            ):
-                print(
-                    f"Done — agent {agent.name} v{agent.version} is running with restored identities."
+            umi_resource_ids = _resolve_umi_resource_ids()
+            if umi_resource_ids:
+                print(f"Restoring {len(umi_resource_ids)} user-assigned identities from env...")
+                _restore_project_user_assigned_identities(
+                    project_resource_id, umi_resource_ids
                 )
+                print("Identities restored successfully.")
+
+                print(
+                    "Restarting agent so it runs with the restored user-assigned identities..."
+                )
+                _stop_agent(account_name, project_name, agent.name, agent_version)
+                _start_agent(account_name, project_name, agent.name, agent_version)
+
+                if _wait_for_agent_running(
+                    account_name, project_name, agent.name, agent_version
+                ):
+                    print(
+                        f"Done — agent {agent.name} v{agent.version} is running with restored identities."
+                    )
+                else:
+                    print(
+                        "WARNING: Agent restart did not reach Running state after identities were restored."
+                    )
             else:
                 print(
-                    "WARNING: Agent restart did not reach Running state after identities were restored."
+                    "WARNING: No UMI resource IDs resolved from env. "
+                    "Set UMI_BACKEND_CLIENT_ID and UMI_FRONTEND_CLIENT_ID in .env."
                 )
         else:
             print(
                 "WARNING: Agent did not reach Running state. Identities NOT restored."
             )
-            print("Restore them manually by re-adding these UMIs to the project:")
-            for umi in saved_identities:
-                print(f"  {umi}")
     else:
         print(f"Done — agent {agent.name} v{agent.version} is starting.")
 

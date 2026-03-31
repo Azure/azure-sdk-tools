@@ -518,11 +518,10 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
     if (this.filterStatus === 'resolved' && !thread.isResolvedCommentThread) return false;
 
     // Severity filter (empty set = show all)
-    // severity arrives as camelCase string from API (JsonStringEnumConverter with CamelCase policy)
-    // Normalize to lowercase for reliable comparison; null severity = 'unknown' (legacy comments)
+    // Map missing/null severity to 'unknown' so the Unknown chip can match legacy comments.
     if (this.filterSeverities.size > 0) {
-      const normalizedSev = CommentSeverityHelper.normalizeSeverity(firstComment.severity);
-      if (!normalizedSev || !this.filterSeverities.has(normalizedSev)) return false;
+      const normalizedSev = CommentSeverityHelper.normalizeSeverity(firstComment.severity) ?? 'unknown';
+      if (!this.filterSeverities.has(normalizedSev)) return false;
     }
 
     // Kind filter (empty set = show all)

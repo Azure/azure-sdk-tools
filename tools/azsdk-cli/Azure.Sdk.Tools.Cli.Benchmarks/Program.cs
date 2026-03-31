@@ -277,7 +277,8 @@ public class Program
             foreach (var (scenario, result) in resultsList)
             {
                 var status = result.Passed ? "✓" : "✗";
-                Console.WriteLine($"  [{status}] {scenario.Name} ({result.Duration.TotalSeconds:F1}s)");
+                var failedValidators = result.Validation?.FailedResults.Select(v => v.ValidatorName).ToList() ?? new List<string>();
+                Console.WriteLine($"  [{status}] {scenario.Name} ({result.Duration.TotalSeconds:F1}s) Failed validator: {string.Join(", ", failedValidators)}");
             }
         }
 

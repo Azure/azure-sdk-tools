@@ -18,7 +18,7 @@ The customization tool (`azure-sdk-mcp:azsdk_customized_code_update`) can be tri
 
 ## When to Use
 
-- Build fails after `azure-sdk-mcp:azsdk_package_generate_code` with compilation errors
+- Build fails after `azure-sdk-mcp:azsdk_package_build_code` with compilation errors
 - Type name conflicts with reserved keywords or existing types
 - Breaking changes from spec updates (renamed/removed properties, changed types)
 - API surface changes that require `client.tsp` customizations

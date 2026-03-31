@@ -28,7 +28,7 @@ class ConversationPartitionPrefix(str, Enum):
 
 class ConversationMessage(BaseModel):
     id: str  # Message ID from Teams
-    channel_id: str  # Channel ID
+    tenant_id: str | None = None  # Tenant ID
     sender_role: UserRole  # "user" or "system"
     sender_id: str  # User ID
     sender_name: str  # Display name
@@ -36,6 +36,14 @@ class ConversationMessage(BaseModel):
     created_at: datetime  # UTC datetime
     conversation_id: str | None = None  # Customer Conversation ID
     conversation_type: ConversationType | None = None  # Customer Conversation Type
+    extra_info: ConversationMessageExtraInfo | None = (
+        None  # Any additional info(channel_id, etc.)
+    )
+
+
+class ConversationMessageExtraInfo(BaseModel):
+    channel_id: str | None = None
+    message_link: str | None = None
 
 
 class ConversationMappingItem(BaseModel):

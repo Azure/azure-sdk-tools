@@ -15,15 +15,14 @@ if _PROJECT_ROOT not in sys.path:
 
 from tools.knowledge_tools import KnowledgeTools
 
+
 @pytest.mark.asyncio
 async def test_search_knowledge_tool() -> None:
     query = "how to solve tsv failure"
     sources = [SRC_AZURE_REST_API_SPECS_WIKI]
 
     result = await KnowledgeTools().search_knowledge_base(
-        query=query,
-        sources=sources,
-        tenant_id=TenantID.AZURE_SDK_QA_BOT
+        query=query, sources=sources, tenant_id=TenantID.TYPESPEC_CHANNEL_QA_BOT
     )
 
     assert len(result.results) > 0

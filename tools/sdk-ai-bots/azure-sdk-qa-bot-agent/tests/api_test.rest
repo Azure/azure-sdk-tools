@@ -5,7 +5,7 @@ POST http://localhost:8080/agent/chat HTTP/1.1
 Content-type: application/json; charset=utf-8
 
 {
-    "tenant_id": "azure_sdk_qa_bot",
+    "tenant_id": "typespec_channel_qa_bot",
     "message": {
             "role": "user",
             "content": "hi",
@@ -21,7 +21,7 @@ POST http://localhost:8080/agent/feedback HTTP/1.1
 Content-type: application/json; charset=utf-8
 
 {
-    "tenant_id": "azure_sdk_qa_bot",
+    "tenant_id": "typespec_channel_qa_bot",
     "conversation_id": "test_conversation_id",
     "reaction": "good",
     "comment": "Great response!",

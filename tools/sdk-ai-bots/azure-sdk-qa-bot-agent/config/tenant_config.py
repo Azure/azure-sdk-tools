@@ -21,8 +21,9 @@ from models.knowledge import KnowledgeSource, _trim_file_format
 # Tenant IDs
 # ---------------------------------------------------------------------------
 
+
 class TenantID(str, Enum):
-    AZURE_SDK_QA_BOT = "azure_sdk_qa_bot"
+    TYPESPEC_CHANNEL_QA_BOT = "typespec_channel_qa_bot"
     PYTHON_CHANNEL_QA_BOT = "python_channel_qa_bot"
     DOTNET_CHANNEL_QA_BOT = "dotnet_channel_qa_bot"
     GOLANG_CHANNEL_QA_BOT = "golang_channel_qa_bot"
@@ -138,7 +139,6 @@ _register(
         trim_format=True,
         suffix=".tsp",
     ),
-
     # -- Azure Guidelines & Standards --
     KnowledgeSource(
         name=SRC_AZURE_API_GUIDELINES,
@@ -166,7 +166,6 @@ _register(
         description="OpenAPI diff documentation for detecting and managing breaking changes in API specifications.",
         base_url="https://github.com/Azure/openapi-diff/blob/main/",
     ),
-
     # -- SDK language docs --
     KnowledgeSource(
         name=SRC_AZURE_SDK_FOR_PYTHON_DOCS,
@@ -216,7 +215,6 @@ _register(
         description="AutoRest Java code generator documentation for Azure SDK Java generation from OpenAPI specs.",
         base_url="https://github.com/Azure/autorest.java/blob/main/",
     ),
-
     # -- Cross-language SDK resources --
     KnowledgeSource(
         name=SRC_AZURE_SDK_GUIDELINES,
@@ -229,7 +227,8 @@ _register(
         link_fn=lambda title: (
             "https://eng.ms/docs/products/azure-developer-experience"
             if _trim_file_format(title.replace("#", "/")) == "index"
-            else "https://eng.ms/docs/products/azure-developer-experience/" + _trim_file_format(title.replace("#", "/"))
+            else "https://eng.ms/docs/products/azure-developer-experience/"
+            + _trim_file_format(title.replace("#", "/"))
         ),
     ),
     KnowledgeSource(
@@ -237,10 +236,10 @@ _register(
         description="Internal Azure SDK wiki with team-specific guidance and operational knowledge.",
         link_fn=lambda title: (
             "https://dev.azure.com/azure-sdk/internal/_wiki/wikis/internal.wiki"
-            "?wikiVersion=GBwikiMaster&pagePath=/" + _trim_file_format(title.replace("#", "/"))
+            "?wikiVersion=GBwikiMaster&pagePath=/"
+            + _trim_file_format(title.replace("#", "/"))
         ),
     ),
-
     # -- General Azure & review resources --
     KnowledgeSource(
         name=SRC_STATIC_AZURE_DOCS,
@@ -266,6 +265,7 @@ def get_knowledge_source(name: str) -> KnowledgeSource | None:
 # ---------------------------------------------------------------------------
 # Tenant config data class
 # ---------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class TenantConfig:
@@ -293,6 +293,7 @@ class TenantConfig:
 # ---------------------------------------------------------------------------
 # Helper to build source lists from registry names
 # ---------------------------------------------------------------------------
+
 
 def _sources(*names: str) -> list[KnowledgeSource]:
     """Resolve a list of source names to KnowledgeSource objects."""
@@ -457,7 +458,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         },
         qa_guideline_file="tenants/language_channel.md",
     ),
-    TenantID.AZURE_SDK_QA_BOT: TenantConfig(
+    TenantID.TYPESPEC_CHANNEL_QA_BOT: TenantConfig(
         display_name="TypeSpec",
         scope="TypeSpec authoring, TypeSpec validation, and Azure API design.",
         topics=[
@@ -512,8 +513,8 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         ],
         exclusions=[
             "Language-specific SDK generation/validation errors — route to that language's SDK tenant",
-            "TypeSpec validation errors — route to azure_sdk_qa_bot",
-            "API design or spec authoring questions — route to azure_sdk_qa_bot",
+            "TypeSpec validation errors — route to typespec_channel_qa_bot",
+            "API design or spec authoring questions — route to typespec_channel_qa_bot",
             "Permission or access issues for API spec repos — route to azure_sdk_onboarding",
         ],
         sources=_sources(

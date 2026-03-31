@@ -25,6 +25,7 @@ from utils.azure_cosmosdb import (
     get_conversation_message_container,
 )
 
+
 class ConversationService:
     """Persists and retrieves customer-to-agent conversation ID mappings."""
 
@@ -48,11 +49,7 @@ class ConversationService:
         conversation_type_value = self._to_conversation_type_value(
             message.conversation_type
         )
-        if message.conversation_id and conversation_type_value:
-            return f"{conversation_type_value}:{message.conversation_id}"
-        if message.conversation_id:
-            return message.conversation_id
-        return f"{ConversationPartitionPrefix.channel.value}:{message.channel_id}"
+        return f"{conversation_type_value}:{message.conversation_id}"
 
     async def get_agent_conversation_id(
         self,
@@ -127,9 +124,7 @@ class ConversationService:
             agent_conversation_id=agent_conversation_id,
         )
 
-        await container.upsert_item(
-            mapping_item.model_dump(mode="json")
-        )
+        await container.upsert_item(mapping_item.model_dump(mode="json"))
 
         logger.info(
             "Saved conversation mapping: %s -> %s",
@@ -147,6 +142,8 @@ class ConversationService:
         Returns:
             The ID of the saved message.
         """
+        if not message.conversation_id or not message.conversation_type:
+            raise ValueError("conversation_id and conversation_type are required")
         container = await get_conversation_message_container()
         message_item = ConversationMessageItem(
             **message.model_dump(mode="json"),

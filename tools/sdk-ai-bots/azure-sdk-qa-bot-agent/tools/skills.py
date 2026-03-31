@@ -26,7 +26,7 @@ _TENANT_SKILL_MAP: dict[TenantID, str] = {
     TenantID.API_SPEC_REVIEW_BOT: "api-spec-review",
     TenantID.AZURE_SDK_ONBOARDING: "sdk-onboarding",
     TenantID.AZURE_TYPESPEC_AUTHORING: "typespec-authoring",
-    TenantID.AZURE_SDK_QA_BOT: "typespec",
+    TenantID.TYPESPEC_CHANNEL_QA_BOT: "typespec",
     TenantID.PYTHON_CHANNEL_QA_BOT: "python-sdk",
     TenantID.DOTNET_CHANNEL_QA_BOT: "dotnet-sdk",
     TenantID.JAVA_CHANNEL_QA_BOT: "java-sdk",
@@ -49,7 +49,7 @@ _SKILL_DESCRIPTIONS: dict[TenantID, str] = {
         "Advanced TypeSpec authoring: ARM and data-plane API design, Azure Templates, "
         "decorators, code generation, RPC compliance."
     ),
-    TenantID.AZURE_SDK_QA_BOT: (
+    TenantID.TYPESPEC_CHANNEL_QA_BOT: (
         "TypeSpec language: syntax, decorators, patterns, Azure extensions, "
         "migration from OpenAPI, validation, tspconfig."
     ),

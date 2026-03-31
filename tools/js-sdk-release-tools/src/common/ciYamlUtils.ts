@@ -113,6 +113,28 @@ async function createManagementPlaneCiYaml(
     await writeCiYaml(ciMgmtPath, parsed);
 }
 
+async function addMgmtExclusions(parsed: any, serviceDir: string): Promise<void> {
+    makeSureArrayAvailableInCiYaml(parsed, ['trigger', 'paths', 'exclude']);
+    makeSureArrayAvailableInCiYaml(parsed, ['pr', 'paths', 'exclude']);
+    try {
+        const entries = await readdir(serviceDir, { withFileTypes: true });
+        for (const entry of entries) {
+            if (entry.isDirectory() && entry.name.startsWith('arm-')) {
+                const mgmtPath = posix.join(serviceDir, entry.name);
+                tryAddItemInArray(parsed.trigger.paths.exclude, mgmtPath);
+                tryAddItemInArray(parsed.pr.paths.exclude, mgmtPath);
+            }
+            if (entry.isFile() && entry.name === 'ci.mgmt.yml') {
+                const ciMgmtPath = posix.join(serviceDir, entry.name);
+                tryAddItemInArray(parsed.trigger.paths.exclude, ciMgmtPath);
+                tryAddItemInArray(parsed.pr.paths.exclude, ciMgmtPath);
+            }
+        }
+    } catch (e) {
+        logger.warn(`Failed to scan service directory '${serviceDir}' for mgmt exclusions: ${e}`);
+    }
+}
+
 async function writeCiYaml(ciPath: string, config: any) {
     const content = comment + stringify(config);
     await writeFile(ciPath, content, { encoding: 'utf-8', flush: true });
@@ -151,26 +173,7 @@ async function updateDataPlaneCiYaml(
     needUpdate = tryAddItemInArray(parsed.pr.paths.include, ciPath) || needUpdate;
 
     // Scan the service directory for mgmt package directories and ci.mgmt.yml, add them to paths.exclude
-    const serviceDir = posix.dirname(ciPath);
-    makeSureArrayAvailableInCiYaml(parsed, ['trigger', 'paths', 'exclude']);
-    makeSureArrayAvailableInCiYaml(parsed, ['pr', 'paths', 'exclude']);
-    try {
-        const entries = await readdir(serviceDir, { withFileTypes: true });
-        for (const entry of entries) {
-            if (entry.isDirectory() && entry.name.startsWith('arm-')) {
-                const mgmtPath = posix.join(serviceDir, entry.name);
-                needUpdate = tryAddItemInArray(parsed.trigger.paths.exclude, mgmtPath) || needUpdate;
-                needUpdate = tryAddItemInArray(parsed.pr.paths.exclude, mgmtPath) || needUpdate;
-            }
-        }
-        const ciMgmtPath = posix.join(serviceDir, 'ci.mgmt.yml');
-        if (await existsAsync(ciMgmtPath)) {
-            needUpdate = tryAddItemInArray(parsed.trigger.paths.exclude, ciMgmtPath) || needUpdate;
-            needUpdate = tryAddItemInArray(parsed.pr.paths.exclude, ciMgmtPath) || needUpdate;
-        }
-    } catch (e) {
-        logger.warn(`Failed to scan service directory '${serviceDir}' for mgmt exclusions: ${e}`);
-    }
+    await addMgmtExclusions(parsed, posix.dirname(ciPath));
 
     needUpdate = tryAddItemInArray(parsed.extends.parameters.Artifacts, artifact, artifactInclude) || needUpdate;
 
@@ -193,6 +196,9 @@ async function createDataPlaneCiYaml(
     parsed.pr.paths.include = [packageDirToSdkRoot, ciPath];
     parsed.extends.parameters.ServiceDirectory = serviceDirToSdkRoot.split('/')[1];
     parsed.extends.parameters.Artifacts = [artifact];
+
+    // Scan for mgmt package directories and ci.mgmt.yml, add them to paths.exclude
+    await addMgmtExclusions(parsed, serviceDirToSdkRoot);
 
     await writeCiYaml(ciPath, parsed);
 }

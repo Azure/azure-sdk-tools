@@ -60,7 +60,7 @@ public sealed partial class DotnetLanguageService : LanguageService
         {
             return PackageOperationResponse.CreateFailure(
                 $"Release type 'stable' does not match pre-release version '{targetVersion}'. Stable versions must not contain a pre-release suffix.",
-                nextSteps: [$"Use --release-type beta, or remove the pre-release suffix from the version (e.g., '{targetVersion.Split('-')[0]}')"]);
+                nextSteps: [$"Re-run this tool with --release-type beta, or remove the pre-release suffix from the version (e.g., '{targetVersion.Split('-')[0]}')"]);
         }
 
         // Base class handles changelog updates (date-only or entry title rename via

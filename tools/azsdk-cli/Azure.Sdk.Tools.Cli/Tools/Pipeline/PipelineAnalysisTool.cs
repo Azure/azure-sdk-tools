@@ -97,8 +97,8 @@ public class PipelineAnalysisTool(
                 a clear, actionable summary for a developer.
 
                 Respond in markdown format. Structure your response as:
-                1. **Summary** - A brief overview of what failed
-                2. **Root Cause Analysis** - What likely caused each failure
+                1. **Root Cause Analysis** - What likely caused each failure
+                2. **Summary** - A brief overview of what failed
                 3. **Recommended Actions** - Concrete steps the developer should take to fix the issues
 
                 If there are no failures, state that the pipeline appears healthy.

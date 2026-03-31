@@ -1357,8 +1357,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             // Verify test run was called via mavenHelper
             MockMavenHelper.Verify(p => p.Run(It.IsAny<MavenOptions>(), It.IsAny<CancellationToken>()), Times.Once);
             // Verify asset push was called via processHelper
+            // On Unix, Command="test-proxy" and Args=["push", ...]; on Windows, Command="cmd.exe" and Args=["/C", "test-proxy", "push", ...]
             MockProcessHelper.Verify(p => p.Run(
-                It.Is<ProcessOptions>(o => o.Args.Contains("test-proxy") && o.Args.Contains("push")),
+                It.Is<ProcessOptions>(o =>
+                    (o.Command == "test-proxy" && o.Args.Contains("push")) ||
+                    (o.Command == ProcessOptions.CMD && o.Args.Contains("test-proxy") && o.Args.Contains("push"))),
                 It.IsAny<CancellationToken>()), Times.Once);
         }
 

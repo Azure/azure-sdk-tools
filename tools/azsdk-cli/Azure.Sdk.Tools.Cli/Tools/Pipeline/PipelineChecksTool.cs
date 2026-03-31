@@ -22,7 +22,10 @@ public class PipelineChecksTool(
 
     private const string GetPrChecksToolName = "azsdk_get_pr_checks";
 
-    private readonly Argument<string> prLocatorArg = new("GitHub pull request link or number");
+    private readonly Argument<string> prLocatorArg = new("pullRequest")
+    {
+        Description = "GitHub pull request link or number",
+    };
 
     private readonly Option<bool> failedOpt = new("--failed", "-f")
     {
@@ -41,28 +44,28 @@ public class PipelineChecksTool(
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
-        var prLink = parseResult.GetValue(prLocatorArg);
+        var prLinkOrNumber = parseResult.GetValue(prLocatorArg);
         var failed = parseResult.GetValue(failedOpt);
         var blocking = parseResult.GetValue(blockingOpt);
 
-        return await GetPrChecks(prLink, failed, blocking, ct);
+        return await GetPrChecks(prLinkOrNumber, failed, blocking, ct);
     }
 
     [McpServerTool(Name = GetPrChecksToolName), Description("Get pipeline and CI check results from a GitHub Pull Request link or PR number")]
     public async Task<PrChecksResponse> GetPrChecks(
-        [Description("GitHub Pull Request link or PR number")] string prLink,
+        [Description("GitHub Pull Request link or PR number")] string prLinkOrNumber,
         [Description("Filter to FAILURE only")] bool failed = false,
         [Description("Filter to conclusion != SUCCESS (blocking merge)")] bool blocking = false,
         CancellationToken ct = default)
     {
         try
         {
-            var parsed = await pipelineHelper.TryResolveGitHubPrAsync(prLink, ct);
+            var parsed = await pipelineHelper.TryResolveGitHubPrAsync(prLinkOrNumber, ct);
             if (parsed == null)
             {
                 return new PrChecksResponse
                 {
-                    ResponseError = $"Invalid GitHub Pull Request identifier: {prLink}. Expected a PR link (https://github.com/owner/repo/pull/123) or a PR number when in a git repo."
+                    ResponseError = $"Invalid GitHub Pull Request identifier: {prLinkOrNumber}. Expected a PR link (https://github.com/owner/repo/pull/123) or a PR number when in a git repo."
                 };
             }
 
@@ -86,10 +89,10 @@ public class PipelineChecksTool(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to get PR checks for {prLink}", prLink);
+            logger.LogError(ex, "Failed to get PR checks for {prLinkOrNumber}", prLinkOrNumber);
             return new PrChecksResponse
             {
-                ResponseError = $"Failed to get PR checks for {prLink}: {ex.Message}"
+                ResponseError = $"Failed to get PR checks for {prLinkOrNumber}: {ex.Message}"
             };
         }
     }

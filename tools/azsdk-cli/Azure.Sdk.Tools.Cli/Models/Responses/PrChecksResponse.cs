@@ -1,6 +1,5 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using System.Text.Json;
 using System.Text.Json.Serialization;
 using Azure.Sdk.Tools.Cli.Helpers;
 
@@ -14,8 +13,6 @@ public class PrChecksResponse : CommandResponse
     [JsonPropertyName("pr_link")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? PrLink { get; set; }
-
-    private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
     protected override string Format()
     {

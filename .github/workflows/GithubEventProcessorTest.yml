@@ -1,4 +1,4 @@
-name: GitHub Event Processor
+name: GitHub Event Processor Test
 
 on:
   workflow_dispatch:

@@ -13,10 +13,7 @@
                [class.bi-chevron-down]="!isThreadCollapsed"
                [class.bi-chevron-right]="isThreadCollapsed"
                style="font-size: 0.8rem; color: var(--text-muted-color); margin-right: 0.5rem;"></i>
-            <span class="text-muted" style="font-size: 0.9rem;">
-                <ng-container *ngIf="commentNumber !== null">Comment #{{ commentNumber }} &middot; Line {{ actualLineNumber }}</ng-container>
-                <ng-container *ngIf="commentNumber === null">Comment &middot; Line {{ actualLineNumber }}</ng-container>
-            </span>
+            <span class="text-muted" style="font-size: 0.9rem;">Comment on line {{ actualLineNumber }}</span>
         </div>
         <a *ngIf="instanceLocation === 'conversations' && elementId"
            class="go-to-code-link d-flex align-items-center"

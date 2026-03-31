@@ -71,7 +71,7 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
   currentCommentNavigationIndex: number = 0;
   totalCommentNavigationCount: number = 0;
   numberOfActiveConversation: number = 0;
-  activeView: 'reviews' | 'revisions' | 'samples' | 'conversations' = 'reviews';
+  activeView: 'reviews' | 'revisions' | 'samples' | 'conversations' | 'namespace' = 'reviews';
   hasHiddenAPIs: boolean = false;
   hasHiddenAPIThatIsDiff: boolean = false;
   loadFailed: boolean = false;
@@ -83,6 +83,7 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
   // Lazy-once flags: components are created on first visit, then stay alive via [hidden]
   revisionsActivated = false;
   samplesActivated = false;
+  namespaceActivated = false;
 
   showLeftNavigation: boolean = true;
   showPageOptions: boolean = true;
@@ -174,6 +175,9 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
     } else if (viewParam === 'samples') {
       this.samplesActivated = true;
       this.activeView = 'samples';
+    } else if (viewParam === 'namespace') {
+      this.namespaceActivated = true;
+      this.activeView = 'namespace';
     } else {
       this.activeView = 'reviews';
     }
@@ -459,6 +463,16 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
     const currentParams = getQueryParams(this.route);
     this.router.navigate([], {
       queryParams: { ...currentParams, view: 'samples' },
+      state: { skipStateUpdate: true }
+    });
+  }
+
+  navigateToNamespace() {
+    this.namespaceActivated = true;
+    this.activeView = 'namespace';
+    const currentParams = getQueryParams(this.route);
+    this.router.navigate([], {
+      queryParams: { ...currentParams, view: 'namespace' },
       state: { skipStateUpdate: true }
     });
   }

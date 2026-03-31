@@ -13,6 +13,7 @@
     (navigateToRevisionsEmitter)="navigateToRevisions()"
     (navigateToReviewsEmitter)="showReviewView()"
     (navigateToConversationsEmitter)="showConversationsView()"
+    (navigateToNamespaceEmitter)="navigateToNamespace()"
     (pageOptionsEmitter)="handlePageOptionsEmitter($event)"
     (showLeftNavigationEmitter)="handleShowLeftNavigationEmitter($event)">
     <div [hidden]="activeView !== 'conversations'" class="conversation-panel overflow-auto border rounded py-3">
@@ -41,6 +42,14 @@
             [embeddedReview]="review"
             [embeddedUserProfile]="userProfile">
         </app-samples-page>
+    </div>
+    <div *ngIf="namespaceActivated" [hidden]="activeView !== 'namespace'" class="namespace-panel">
+        <app-namespace-page
+            [embedded]="true"
+            [embeddedReviewId]="reviewId"
+            [embeddedReview]="review"
+            [embeddedUserProfile]="userProfile">
+        </app-namespace-page>
     </div>
     <p-splitter [hidden]="activeView !== 'reviews'"
         [panelSizes]="panelSizes"

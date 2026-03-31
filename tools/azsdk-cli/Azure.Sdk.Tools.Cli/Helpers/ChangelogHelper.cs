@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
@@ -41,6 +42,17 @@ public interface IChangelogHelper
     /// <param name="releaseDate">The release date in yyyy-MM-dd format.</param>
     /// <returns>Result indicating success or failure with details.</returns>
     ChangelogUpdateResult UpdateReleaseDate(string changelogPath, string version, string releaseDate);
+
+    /// <summary>
+    /// Updates the latest (first) changelog entry title with a new version and optionally a new release date.
+    /// This replaces the latest entry's version and release status while preserving its content.
+    /// Based on the ReplaceLatestEntryTitle logic in eng/common/scripts/Update-ChangeLog.ps1.
+    /// </summary>
+    /// <param name="changelogPath">Path to the CHANGELOG.md file.</param>
+    /// <param name="version">The new version string to set in the latest entry title.</param>
+    /// <param name="releaseDate">Optional release date in yyyy-MM-dd format. If null/empty, the existing release status is preserved.</param>
+    /// <returns>Result indicating success or failure with details.</returns>
+    ChangelogUpdateResult UpdateLatestEntryTitle(string changelogPath, string version, string? releaseDate);
 }
 
 /// <summary>
@@ -216,7 +228,7 @@ public partial class ChangelogHelper : IChangelogHelper
         }
 
         // Validate date format
-        if (!DateTime.TryParseExact(releaseDate, DateFormat, null, System.Globalization.DateTimeStyles.None, out var parsedDate))
+        if (!DateTime.TryParseExact(releaseDate, DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
         {
             return ChangelogUpdateResult.CreateFailure($"Invalid release date format: {releaseDate}. Expected format: {DateFormat}");
         }
@@ -255,6 +267,88 @@ public partial class ChangelogHelper : IChangelogHelper
             WriteChangelog(changelogPath, data);
             _logger.LogInformation("Updated changelog entry for version {Version} with release date {ReleaseDate}", version, formattedDate);
             return ChangelogUpdateResult.CreateSuccess($"Updated release date for version {version} to {formattedDate}.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to write changelog file: {ChangelogPath}", changelogPath);
+            return ChangelogUpdateResult.CreateFailure($"Failed to write changelog file: {ex.Message}");
+        }
+    }
+
+    /// <inheritdoc/>
+    public ChangelogUpdateResult UpdateLatestEntryTitle(string changelogPath, string version, string? releaseDate)
+    {
+        if (!File.Exists(changelogPath))
+        {
+            return ChangelogUpdateResult.CreateFailure($"Changelog file does not exist: {changelogPath}");
+        }
+
+        // Validate date format if provided
+        DateTime? parsedDate = null;
+        if (!string.IsNullOrWhiteSpace(releaseDate))
+        {
+            if (!DateTime.TryParseExact(releaseDate, DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
+            {
+                return ChangelogUpdateResult.CreateFailure($"Invalid release date format: {releaseDate}. Expected format: {DateFormat}");
+            }
+            parsedDate = dt;
+        }
+
+        var data = ParseChangelog(changelogPath);
+        if (data == null)
+        {
+            return ChangelogUpdateResult.CreateFailure("Failed to parse changelog file.");
+        }
+
+        if (data.Entries.Count == 0)
+        {
+            return ChangelogUpdateResult.CreateFailure("No changelog entries found to update.");
+        }
+
+        var latestEntry = data.Entries[0];
+
+        // Determine the new release status
+        string newReleaseStatus;
+        if (parsedDate.HasValue)
+        {
+            var formattedDate = parsedDate.Value.ToString(DateFormat);
+            newReleaseStatus = $"({formattedDate})";
+        }
+        else
+        {
+            // Preserve existing release status, or default to (Unreleased)
+            newReleaseStatus = !string.IsNullOrEmpty(latestEntry.ReleaseStatus)
+                ? latestEntry.ReleaseStatus
+                : UnreleasedStatus;
+        }
+
+        // Check if no change is needed
+        if (string.Equals(latestEntry.Version, version, StringComparison.OrdinalIgnoreCase)
+            && latestEntry.ReleaseStatus == newReleaseStatus)
+        {
+            _logger.LogDebug("Latest entry already has version {Version} and status {Status}. No change made.", version, newReleaseStatus);
+            return ChangelogUpdateResult.CreateSuccess($"Latest entry already has version {version} with status {newReleaseStatus}. No change needed.");
+        }
+
+        // Build the new title
+        var releaseTitleAtxHeader = data.InitialAtxHeader + "#";
+
+        // Replace the latest entry with a new one containing the updated version and status
+        var newEntry = new ChangelogEntry
+        {
+            Version = version,
+            ReleaseStatus = newReleaseStatus,
+            ReleaseTitle = $"{releaseTitleAtxHeader} {version} {newReleaseStatus}",
+            ReleaseContent = latestEntry.ReleaseContent
+        };
+        data.Entries[0] = newEntry;
+
+        try
+        {
+            WriteChangelog(changelogPath, data);
+            var dateInfo = parsedDate.HasValue ? $" with release date {parsedDate.Value.ToString(DateFormat)}" : string.Empty;
+            _logger.LogInformation("Updated latest changelog entry title to version {Version}{DateInfo}", version, dateInfo);
+            return ChangelogUpdateResult.CreateSuccess($"Updated latest changelog entry title to version {version}{dateInfo}.");
         }
         catch (Exception ex)
         {

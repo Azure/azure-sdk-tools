@@ -100,6 +100,7 @@ model CodeDiagnostic {
 model CrossLanguageMetadata {
   CrossLanguagePackageId: string;
   CrossLanguageDefinitionId: LanguageIdMap;
+  CrossLanguageVersion?: string;
 }
 
 enum TokenKind {

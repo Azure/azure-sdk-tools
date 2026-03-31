@@ -10,6 +10,7 @@ import { CommentItemModel, CommentType, CommentSource, CommentSeverity } from 's
 import { APIRevision } from 'src/app/_models/revision';
 import { getTypeClass } from 'src/app/_helpers/common-helpers';
 import { getVisibleComments } from 'src/app/_helpers/comment-visibility.helper';
+import { CommentSeverityHelper } from 'src/app/_helpers/comment-severity.helper';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { Subject, take, takeUntil } from 'rxjs';
 import { Review } from 'src/app/_models/review';
@@ -51,6 +52,8 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
   // Flag to indicate if diagnostics were truncated due to limit
   diagnosticsTruncated: boolean = false;
   totalDiagnosticsInRevision: number = 0;
+  hiddenUnresolvedDiagnosticsCount: number = 0;
+  hiddenResolvedDiagnosticsCount: number = 0;
 
   apiRevisionsWithComments: APIRevision[] = [];
 
@@ -119,15 +122,38 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
       this.commentThreads = new Map<string, CodePanelRowData[]>();
       this.numberOfActiveThreads = 0;
       this.diagnosticsTruncated = false;
+      this.hiddenUnresolvedDiagnosticsCount = 0;
+      this.hiddenResolvedDiagnosticsCount = 0;
+      this.totalDiagnosticsInRevision = 0;
 
       // Use shared visibility logic — single source of truth for which comments are relevant
       const { allVisibleComments, diagnosticCommentsForRevision } = getVisibleComments(this.comments, this.activeApiRevisionId);
 
       this.totalDiagnosticsInRevision = diagnosticCommentsForRevision.length;
-      this.diagnosticsTruncated = diagnosticCommentsForRevision.length > this.MAX_DIAGNOSTICS_DISPLAY;
 
-      // For display, cap diagnostics at MAX_DIAGNOSTICS_DISPLAY; for badge counts, use the full set
-      const limitedDiagnostics = diagnosticCommentsForRevision.slice(0, this.MAX_DIAGNOSTICS_DISPLAY);
+      // Sort priority: 1) MustFix unresolved, 2) other unresolved, 3) resolved (secondary: severity desc)
+      const getTier = (c: CommentItemModel) => {
+        if ((CommentSeverityHelper.getSeverityEnumValue(c.severity) ?? -1) >= CommentSeverity.MustFix && !c.isResolved) return 0;
+        if (!c.isResolved) return 1;
+        return 2;
+      };
+      const sortedDiagnostics = [...diagnosticCommentsForRevision].sort((a, b) => {
+        const tierDiff = getTier(a) - getTier(b);
+        if (tierDiff !== 0) return tierDiff;
+        return (CommentSeverityHelper.getSeverityEnumValue(b.severity) ?? -1) - (CommentSeverityHelper.getSeverityEnumValue(a.severity) ?? -1);
+      });
+
+      // Always show all MustFix unresolved; fill remaining slots up to MAX_DIAGNOSTICS_DISPLAY
+      const mustFixUnresolvedCount = diagnosticCommentsForRevision.filter(
+        c => (CommentSeverityHelper.getSeverityEnumValue(c.severity) ?? -1) >= CommentSeverity.MustFix && !c.isResolved
+      ).length;
+      const displayLimit = Math.max(this.MAX_DIAGNOSTICS_DISPLAY, mustFixUnresolvedCount);
+
+      const limitedDiagnostics = sortedDiagnostics.slice(0, displayLimit);
+      const hiddenDiagnostics = sortedDiagnostics.slice(displayLimit);
+      this.hiddenUnresolvedDiagnosticsCount = hiddenDiagnostics.filter(c => !c.isResolved).length;
+      this.hiddenResolvedDiagnosticsCount = hiddenDiagnostics.filter(c => c.isResolved).length;
+      this.diagnosticsTruncated = hiddenDiagnostics.length > 0;
       const filteredComments = [
         ...allVisibleComments.filter(c => c.commentSource !== CommentSource.Diagnostic),
         ...limitedDiagnostics
@@ -491,23 +517,9 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
     if (this.filterStatus === 'resolved' && !thread.isResolvedCommentThread) return false;
 
     // Severity filter (empty set = show all)
-    // severity arrives as camelCase string from API (JsonStringEnumConverter with CamelCase policy)
-    // Normalize to lowercase for reliable comparison
     if (this.filterSeverities.size > 0) {
-      const rawSev = firstComment.severity;
-      if (rawSev == null) return false;
-      // Handle both numeric enum values and camelCase string values from the API
-      let normalizedSev: string;
-      if (typeof rawSev === 'number') {
-        const enumName = CommentSeverity[rawSev];
-        if (!enumName) return false;
-        normalizedSev = enumName.toLowerCase();
-      } else {
-        normalizedSev = String(rawSev).toLowerCase();
-      }
-      if (!this.filterSeverities.has(normalizedSev)) {
-        return false;
-      }
+      const normalizedSev = CommentSeverityHelper.normalizeSeverity(firstComment.severity);
+      if (!normalizedSev || !this.filterSeverities.has(normalizedSev)) return false;
     }
 
     // Kind filter (empty set = show all)
@@ -563,14 +575,8 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
     return this.filterStatus !== 'active' || this.filterSeverities.size > 0 || this.filterKinds.size > 0;
   }
 
-  getSeverityLabel(severity: CommentSeverity): string {
-    switch (severity) {
-      case CommentSeverity.Question: return 'Question';
-      case CommentSeverity.Suggestion: return 'Suggestion';
-      case CommentSeverity.ShouldFix: return 'Should Fix';
-      case CommentSeverity.MustFix: return 'Must Fix';
-      default: return '';
-    }
+  getSeverityLabel(severity: CommentSeverity | string | null | undefined): string {
+    return CommentSeverityHelper.getSeverityLabel(severity);
   }
 
   ngOnDestroy() {

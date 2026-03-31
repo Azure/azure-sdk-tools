@@ -14,12 +14,14 @@ class CodeDiagnosticLevel(int, Enum, metaclass=CaseInsensitiveEnumMeta):
     """Type of CodeDiagnosticLevel."""
 
     INFO = 1
+    """INFO."""
     WARNING = 2
+    """WARNING."""
     ERROR = 3
+    """ERROR."""
     FATAL = 4
     """Fatal level diagnostic will block API review approval and it will show an error message to the
-    user. Approver will have to
-    override fatal level system comments before approving a review."""
+    user. Approver will have to override fatal level system comments before approving a review."""
 
 
 class TokenKind(int, Enum, metaclass=CaseInsensitiveEnumMeta):
@@ -27,23 +29,23 @@ class TokenKind(int, Enum, metaclass=CaseInsensitiveEnumMeta):
 
     TEXT = 0
     """Text: Token kind should be set as Text for any plan text token. for e.g documentation,
-    namespace value, or attribute or decorator tokens *"""
+    namespace value, or attribute or decorator tokens *."""
     PUNCTUATION = 1
-    """Punctuation *"""
+    """Punctuation *."""
     KEYWORD = 2
-    """Keyword *"""
+    """Keyword *."""
     TYPE_NAME = 3
     """TypeName: Kind should be set as TypeName for class definitions, base class token, parameter
-    types etc *"""
+    types etc *."""
     MEMBER_NAME = 4
-    """MemberName: Kind should be set as MemberName for method name tokens, member variable tokens *"""
+    """MemberName: Kind should be set as MemberName for method name tokens, member variable tokens *."""
     STRING_LITERAL = 5
-    """StringLiteral: Token kind for any metadata or string literals to show in API view *"""
+    """StringLiteral: Token kind for any metadata or string literals to show in API view *."""
     LITERAL = 6
     """Literal: Token kind for any literals, for e.g. enum value or numerical constant literal or
-    default value *"""
+    default value *."""
     COMMENT = 7
-    """Comment: Comment text within the code that's really a documentation.
-    Few languages wants to show comments within API review that's not tagged as documentation *"""
+    """Comment: Comment text within the code that's really a documentation. Few languages wants to
+    show comments within API review that's not tagged as documentation *."""
     EXTERNAL_URL = 8
-    """External Url"""
+    """External Url."""

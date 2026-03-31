@@ -1,6 +1,7 @@
 @{
     var emailTitle = ViewData["EmailTitle"]?.ToString() ?? "APIView Notification";
     var emailSubtitle = ViewData["EmailSubtitle"]?.ToString();
+    var emailPreheader = ViewData["EmailPreheader"]?.ToString();
     var emailLogoUrl = ViewData["EmailLogoUrl"]?.ToString() ?? "https://raw.githubusercontent.com/Azure/azure-sdk-tools/main/src/dotnet/APIView/APIViewWeb/wwwroot/icons/apiview.png";
 }
 <!DOCTYPE html>
@@ -22,6 +23,19 @@
         .email-shell {
             max-width: 760px;
             margin: 0 auto;
+        }
+
+        .email-preheader {
+            display: none !important;
+            visibility: hidden;
+            opacity: 0;
+            color: transparent;
+            height: 0;
+            width: 0;
+            overflow: hidden;
+            mso-hide: all;
+            max-height: 0;
+            max-width: 0;
         }
 
         .email-header {
@@ -142,6 +156,7 @@
     </style>
 </head>
 <body>
+    <div class="email-preheader">@(!string.IsNullOrWhiteSpace(emailPreheader) ? emailPreheader : emailTitle)</div>
     <div class="email-shell">
         <div class="email-header">
             <div class="header-top">

@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
 using ApiView;
 using APIView;
+using APIView.Identity;
 using APIView.Model;
 using APIViewWeb;
 using APIViewWeb.Helpers;
@@ -128,6 +130,92 @@ public class APIRevisionsManagerTests
             _mockProjectsManager.Object,
             _mockConfiguration.Object
         );
+    }
+
+    [Fact]
+    public async Task ToggleAPIRevisionApprovalAsync_SendsSubscriberEmail_WhenRevisionApprovedAndReviewAlreadyApproved()
+    {
+        var user = CreateTestUser("approver1");
+        const string reviewId = "review-1";
+        const string revisionId = "revision-1";
+
+        var review = new ReviewListItemModel
+        {
+            Id = reviewId,
+            IsApproved = true,
+            ChangeHistory = new List<ReviewChangeHistoryModel>()
+        };
+
+        var revision = new APIRevisionListItemModel
+        {
+            Id = revisionId,
+            ReviewId = reviewId,
+            IsApproved = false,
+            Approvers = new HashSet<string>(),
+            ChangeHistory = new List<APIRevisionChangeHistoryModel>()
+        };
+
+        SetupSignalRMocks();
+        _mockAuthorizationService
+            .Setup(a => a.AuthorizeAsync(
+                It.IsAny<ClaimsPrincipal>(),
+                It.IsAny<object>(),
+                It.IsAny<IEnumerable<IAuthorizationRequirement>>()))
+            .ReturnsAsync(AuthorizationResult.Success());
+        _mockAPIRevisionsRepository.Setup(r => r.GetAPIRevisionAsync(revisionId)).ReturnsAsync(revision);
+        _mockReviewsRepository.Setup(r => r.GetReviewAsync(reviewId)).ReturnsAsync(review);
+        _mockAPIRevisionsRepository.Setup(r => r.UpsertAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>())).Returns(Task.CompletedTask);
+
+        var result = await _manager.ToggleAPIRevisionApprovalAsync(user, reviewId, revisionId);
+
+        Assert.False(result.updateReview);
+        Assert.True(result.apiRevision.IsApproved);
+        _mockNotificationManager.Verify(
+            n => n.NotifySubscribersOnApprovalAsync(review, revision, user, false),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task ToggleAPIRevisionApprovalAsync_DoesNotSendRevisionEmail_WhenReviewWillBeAutoApproved()
+    {
+        var user = CreateTestUser("approver1");
+        const string reviewId = "review-1";
+        const string revisionId = "revision-1";
+
+        var review = new ReviewListItemModel
+        {
+            Id = reviewId,
+            IsApproved = false,
+            ChangeHistory = new List<ReviewChangeHistoryModel>()
+        };
+
+        var revision = new APIRevisionListItemModel
+        {
+            Id = revisionId,
+            ReviewId = reviewId,
+            IsApproved = false,
+            Approvers = new HashSet<string>(),
+            ChangeHistory = new List<APIRevisionChangeHistoryModel>()
+        };
+
+        SetupSignalRMocks();
+        _mockAuthorizationService
+            .Setup(a => a.AuthorizeAsync(
+                It.IsAny<ClaimsPrincipal>(),
+                It.IsAny<object>(),
+                It.IsAny<IEnumerable<IAuthorizationRequirement>>()))
+            .ReturnsAsync(AuthorizationResult.Success());
+        _mockAPIRevisionsRepository.Setup(r => r.GetAPIRevisionAsync(revisionId)).ReturnsAsync(revision);
+        _mockReviewsRepository.Setup(r => r.GetReviewAsync(reviewId)).ReturnsAsync(review);
+        _mockAPIRevisionsRepository.Setup(r => r.UpsertAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>())).Returns(Task.CompletedTask);
+
+        var result = await _manager.ToggleAPIRevisionApprovalAsync(user, reviewId, revisionId);
+
+        Assert.True(result.updateReview);
+        Assert.True(result.apiRevision.IsApproved);
+        _mockNotificationManager.Verify(
+            n => n.NotifySubscribersOnApprovalAsync(It.IsAny<ReviewListItemModel>(), It.IsAny<APIRevisionListItemModel>(), It.IsAny<ClaimsPrincipal>(), false),
+            Times.Never);
     }
 
     [Fact]
@@ -268,6 +356,31 @@ public class APIRevisionsManagerTests
             VersionString = "2.0.0",
             CrossLanguageMetadata = crossLanguageMetadata
         };
+    }
+
+    private static ClaimsPrincipal CreateTestUser(string login)
+    {
+        var identity = new ClaimsIdentity(new[]
+        {
+            new Claim(ClaimConstants.Login, login),
+            new Claim(ClaimConstants.Name, login),
+            new Claim(ClaimConstants.Email, $"{login}@contoso.com")
+        });
+        return new ClaimsPrincipal(identity);
+    }
+
+    private void SetupSignalRMocks()
+    {
+        var clients = new Mock<IHubClients>();
+        var proxy = new Mock<IClientProxy>();
+
+        proxy
+            .Setup(p => p.SendCoreAsync(It.IsAny<string>(), It.IsAny<object[]>(), It.IsAny<System.Threading.CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        clients.Setup(c => c.Group(It.IsAny<string>())).Returns(proxy.Object);
+        clients.Setup(c => c.All).Returns(proxy.Object);
+        _mockHubContext.Setup(h => h.Clients).Returns(clients.Object);
     }
 
     #region UpdateAPIRevisionCodeFileAsync Tests

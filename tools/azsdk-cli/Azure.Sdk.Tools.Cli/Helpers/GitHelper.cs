@@ -16,7 +16,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         public Task<string> GetMergeBaseCommitShaAsync(string pathInRepo, string targetBranch, CancellationToken ct);
         public Task<string> DiscoverRepoRootAsync(string pathInRepo, CancellationToken ct);
         public Task<string> GetRepoNameAsync(string pathInRepo, CancellationToken ct);
-        public Task<List<string>> GetChangedFilesAsync(string repoRoot, string targetCommitish, string sourceCommitish, string? diffPath, string diffFilterType, CancellationToken ct);
+        public Task<List<string>> GetChangedFilesAsync(string repoRoot, string targetCommitish, string? sourceCommitish, string? diffPath, string diffFilterType, CancellationToken ct);
     }
 
     public class GitHelper(IGitHubService gitHubService, IGitCommandHelper gitCommandHelper, ILogger<GitHelper> logger) : IGitHelper
@@ -252,7 +252,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// </summary>
         /// <param name="repoRoot">The root directory of the git repository</param>
         /// <param name="targetCommitish">The target commit/branch to diff against</param>
-        /// <param name="sourceCommitish">The source commit/branch</param>
+        /// <param name="sourceCommitish">The source commit/branch. When null, compares targetCommitish against the working tree (includes uncommitted changes).</param>
         /// <param name="diffPath">Optional path to limit the diff scope</param>
         /// <param name="diffFilterType">Git diff filter type (e.g., "d" for non-deleted, "D" for deleted only)</param>
         /// <param name="ct">Cancellation token</param>
@@ -260,7 +260,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         public async Task<List<string>> GetChangedFilesAsync(
             string repoRoot,
             string targetCommitish,
-            string sourceCommitish,
+            string? sourceCommitish,
             string? diffPath,
             string diffFilterType,
             CancellationToken ct)
@@ -270,10 +270,21 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 "-c", "core.quotepath=off",
                 "-c", "i18n.logoutputencoding=utf-8",
                 "diff",
-                $"{targetCommitish}...{sourceCommitish}",
+            };
+
+            if (!string.IsNullOrEmpty(sourceCommitish))
+            {
+                args.Add($"{targetCommitish}...{sourceCommitish}");
+            }
+            else
+            {
+                args.Add(targetCommitish);
+            }
+
+            args.AddRange(new[] {
                 "--name-only",
                 $"--diff-filter={diffFilterType}"
-            };
+            });
 
             if (!string.IsNullOrEmpty(diffPath))
             {

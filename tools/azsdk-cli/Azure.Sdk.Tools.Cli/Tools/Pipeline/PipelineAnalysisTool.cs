@@ -84,7 +84,9 @@ public class PipelineAnalysisTool(
     {
         try
         {
-            var pipelineData = pipelineResult.ToString();
+            // Serialize as JSON to ensure Copilot gets the full context (FailedTasks, FailedTests)
+            // even when ResponseErrors is set, since ToString() suppresses Format() output on errors.
+            var pipelineData = JsonSerializer.Serialize(pipelineResult, new JsonSerializerOptions { WriteIndented = true });
 
             var tempPath = Path.Combine(Path.GetTempPath(), $"pipeline-analysis-{Guid.NewGuid():N}.md");
             await File.WriteAllTextAsync(tempPath, pipelineData, ct);
@@ -341,7 +343,7 @@ public class PipelineAnalysisTool(
                     logText = string.Join("\n", logContent);
                 }
 
-                var tempPath = Path.GetTempFileName() + ".txt";
+                var tempPath = Path.Combine(Path.GetTempPath(), $"log-analysis-{Guid.NewGuid():N}.txt");
                 logger.LogDebug("Writing log id {logId} to temporary file {tempPath}", logId, tempPath);
                 await File.WriteAllTextAsync(tempPath, logText, ct);
                 logFilePaths.Add(tempPath);
@@ -478,6 +480,16 @@ public class PipelineAnalysisTool(
                 FailedTests = failedTestsByUri
             };
         }
+        catch (Exception ex) when (IsAuthException(ex) && project != Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT)
+        {
+            logger.LogError(ex, "Authorization failure analyzing pipeline {buildId} in project {project}", buildId, project);
+            return new AnalyzePipelineResponse()
+            {
+                ResponseError = $"Not authorized to access build {buildId} in project '{project}'. " +
+                    "This is an internal build requiring authentication. " +
+                    "Ensure you are signed in with `az login` using an account with access to the Azure SDK DevOps organization.",
+            };
+        }
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to analyze pipeline {buildId}", buildId);
@@ -495,5 +507,15 @@ public class PipelineAnalysisTool(
             return false;
         }
         return stepName.Contains("test", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsAuthException(Exception ex)
+    {
+        var message = ex.ToString();
+        return message.Contains("401")
+            || message.Contains("403")
+            || message.Contains("NonAuthoritativeInformation")
+            || message.Contains("Not authorized")
+            || message.Contains("unauthorized", StringComparison.OrdinalIgnoreCase);
     }
 }

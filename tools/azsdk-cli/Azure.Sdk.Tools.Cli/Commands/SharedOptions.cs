@@ -88,7 +88,10 @@ namespace Azure.Sdk.Tools.Cli.Commands
             DefaultValueFactory = _ => Environment.CurrentDirectory,
         };
 
-        public static readonly Argument<string> PipelineLocator = new("Azure Pipelines link or Build ID, or GitHub pull request link or number");
+        public static readonly Argument<string> PipelineLocator = new("pipelineIdentifier")
+        {
+            Description = "Azure Pipelines link or Build ID, or GitHub pull request link or number",
+        };
 
         public static (string outputFormat, bool debug) GetGlobalOptionValues(string[] args)
         {

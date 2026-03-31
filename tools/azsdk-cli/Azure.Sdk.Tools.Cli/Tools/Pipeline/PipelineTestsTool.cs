@@ -79,6 +79,16 @@ public class PipelineTestsTool(
 
             return new ObjectCommandResponse { Result = allArtifacts };
         }
+        catch (Exception ex) when (ex.ToString().Contains("401") || ex.ToString().Contains("403") || ex.ToString().Contains("NonAuthoritativeInformation") || ex.ToString().Contains("Not authorized") || ex.ToString().Contains("unauthorized", StringComparison.OrdinalIgnoreCase))
+        {
+            logger.LogError(ex, "Authorization failure accessing pipeline artifacts for {pipelineIdentifier}", pipelineIdentifier);
+            return new ObjectCommandResponse
+            {
+                ResponseError = $"Not authorized to access pipeline artifacts for {pipelineIdentifier}. " +
+                    "This may be an internal build requiring authentication. " +
+                    "Ensure you are signed in with `az login` in the corp tenant (not TME).",
+            };
+        }
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to get pipeline artifacts for {pipelineIdentifier}", pipelineIdentifier);

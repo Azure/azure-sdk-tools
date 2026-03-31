@@ -2,7 +2,7 @@ import { NpmPackageInfo, ModularSDKType } from './types.js';
 import { dirname, posix } from 'path';
 import { getNpmPackageName, getNpmPackageSafeName } from './npmUtils.js';
 import { parse, stringify } from 'yaml';
-import { readFile, writeFile } from 'fs/promises';
+import { readFile, writeFile, readdir } from 'fs/promises';
 
 import { existsAsync } from './utils.js';
 import { logger } from '../utils/logger.js';
@@ -149,6 +149,29 @@ async function updateDataPlaneCiYaml(
     needUpdate = tryAddItemInArray(parsed.trigger.paths.include, ciPath) || needUpdate;
     needUpdate = tryAddItemInArray(parsed.pr.paths.include, generatedPackageDirectory, pathInclude) || needUpdate;
     needUpdate = tryAddItemInArray(parsed.pr.paths.include, ciPath) || needUpdate;
+
+    // Scan the service directory for mgmt package directories and ci.mgmt.yml, add them to paths.exclude
+    const serviceDir = posix.dirname(ciPath);
+    makeSureArrayAvailableInCiYaml(parsed, ['trigger', 'paths', 'exclude']);
+    makeSureArrayAvailableInCiYaml(parsed, ['pr', 'paths', 'exclude']);
+    try {
+        const entries = await readdir(serviceDir, { withFileTypes: true });
+        for (const entry of entries) {
+            if (entry.isDirectory() && entry.name.startsWith('arm-')) {
+                const mgmtPath = posix.join(serviceDir, entry.name);
+                needUpdate = tryAddItemInArray(parsed.trigger.paths.exclude, mgmtPath) || needUpdate;
+                needUpdate = tryAddItemInArray(parsed.pr.paths.exclude, mgmtPath) || needUpdate;
+            }
+        }
+        const ciMgmtPath = posix.join(serviceDir, 'ci.mgmt.yml');
+        if (await existsAsync(ciMgmtPath)) {
+            needUpdate = tryAddItemInArray(parsed.trigger.paths.exclude, ciMgmtPath) || needUpdate;
+            needUpdate = tryAddItemInArray(parsed.pr.paths.exclude, ciMgmtPath) || needUpdate;
+        }
+    } catch (e) {
+        logger.warn(`Failed to scan service directory '${serviceDir}' for mgmt exclusions: ${e}`);
+    }
+
     needUpdate = tryAddItemInArray(parsed.extends.parameters.Artifacts, artifact, artifactInclude) || needUpdate;
 
     await writeCiYaml(ciPath, parsed);

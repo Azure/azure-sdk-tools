@@ -610,5 +610,48 @@ extends:
                 /^# NOTE: Please refer to https:\/\/aka\.ms\/azsdk\/engsys\/ci-yaml before editing this file\./
             );
         });
+
+        test("adds mgmt package directories and ci.mgmt.yml to paths.exclude", async () => {
+            await ensureDir(path.join(tempDir, "sdk/myservice"));
+            // Create actual mgmt directories and ci.mgmt.yml on disk
+            await ensureDir(path.join(tempDir, "sdk/myservice/arm-helper"));
+            await ensureDir(path.join(tempDir, "sdk/myservice/arm-another"));
+            await writeFile(path.join(tempDir, "sdk/myservice/ci.mgmt.yml"), "# mgmt ci", "utf-8");
+            const existingContent = `trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - sdk/myservice/
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - sdk/myservice/
+extends:
+  template: /eng/pipelines/templates/stages/archetype-sdk-client.yml
+  parameters:
+    ServiceDirectory: myservice
+    Artifacts:
+      - name: azure-other
+        safeName: azureother
+`;
+            await writeFile(path.join(tempDir, ciPath), existingContent, "utf-8");
+
+            await createOrUpdateCiYaml(packageDir, npmPackageInfo);
+
+            const content = await readFile(path.join(tempDir, ciPath), "utf-8");
+            const parsed = parse(content);
+
+            expect(parsed.trigger.paths.exclude).toContain("sdk/myservice/arm-helper");
+            expect(parsed.trigger.paths.exclude).toContain("sdk/myservice/arm-another");
+            expect(parsed.trigger.paths.exclude).toContain("sdk/myservice/ci.mgmt.yml");
+            expect(parsed.pr.paths.exclude).toContain("sdk/myservice/arm-helper");
+            expect(parsed.pr.paths.exclude).toContain("sdk/myservice/arm-another");
+            expect(parsed.pr.paths.exclude).toContain("sdk/myservice/ci.mgmt.yml");
+        });
     });
 });

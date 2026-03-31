@@ -52,7 +52,7 @@ public sealed partial class DotnetLanguageService : LanguageService
             {
                 return PackageOperationResponse.CreateFailure(
                     $"Version '{targetVersion}' is a stable (GA) release. Stable releases require explicit confirmation.",
-                    nextSteps: [$"Pass --release-type stable to confirm this is a GA release"]);
+                    nextSteps: [$"Re-run this tool with --release-type stable to confirm this is a GA release"]);
             }
         }
         else if (!string.IsNullOrWhiteSpace(releaseType) &&

@@ -17,7 +17,7 @@ load_dotenv(override=False)
 
 from fastapi import FastAPI, Request
 from models.chat import ChatRequest, ChatResponse
-from models.conversation import ConversationMessage
+from models.conversation import ConversationMessage, SaveConversationMessageResponse
 from models.feedback import FeedbackRequest, FeedbackResponse
 from services.chat_service import ChatService
 from services.conversation_service import ConversationService
@@ -127,11 +127,11 @@ async def handle_feedback(req: FeedbackRequest):
     return await _feedback_service.process(req)
 
 
-@app.post("/conversation/save", response_model=BaseModel)
+@app.post("/conversation/save", response_model=SaveConversationMessageResponse)
 async def save_conversation(req: ConversationMessage):
     """Save a conversation message."""
     await _conversation_service.save_conversation(req)
-    return BaseModel()
+    return SaveConversationMessageResponse()
 
 
 if __name__ == "__main__":

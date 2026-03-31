@@ -62,3 +62,7 @@ class ConversationMessageItem(ConversationMessage):
     document_type: ConversationDocumentType = Field(
         default=ConversationDocumentType.message
     )
+
+
+class SaveConversationMessageResponse(BaseModel):
+    pass

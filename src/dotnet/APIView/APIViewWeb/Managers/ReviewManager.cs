@@ -224,12 +224,13 @@ namespace APIViewWeb.Managers
         /// <param name="language"></param>
         /// <param name="runAnalysis"></param>
         /// <returns></returns>
-        public async Task<ReviewListItemModel> GetOrCreateReview(IFormFile file, string filePath, string language, bool runAnalysis = false)
+        public async Task<(ReviewListItemModel Review, CodeFile CodeFile, MemoryStream MemoryStream)> GetOrCreateReview(IFormFile file, string filePath, string language, bool runAnalysis = false)
         {
             CodeFile codeFile = null;
             ReviewListItemModel review = null;
 
-            using var memoryStream = new MemoryStream();
+            // MemoryStream lifecycle is owned by the caller so pre-parsed data can be reused
+            var memoryStream = new MemoryStream();
             if (file != null)
             {
                 using (var openReadStream = file.OpenReadStream())
@@ -252,7 +253,7 @@ namespace APIViewWeb.Managers
                     review = await CreateReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: false, crossLanguagePackageId: codeFile.CrossLanguagePackageId);
                 }
             }
-            return review;
+            return (review, codeFile, memoryStream);
         }
 
         /// <summary>

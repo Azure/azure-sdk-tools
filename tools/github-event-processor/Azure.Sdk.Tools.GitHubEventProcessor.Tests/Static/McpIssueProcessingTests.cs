@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Threading.Tasks;
+using Azure.Sdk.Tools.GitHubEventProcessor.Configuration;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
 using Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing;
 using Azure.Sdk.Tools.GitHubEventProcessor.GitHubPayload;
 using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 
@@ -108,6 +111,18 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   true,
                   true)]
 
+        // Scenario: AI predicts server-azure.mcp + packages-some-package (packages- prefix classified as tool label)
+        // Expected: server-azure.mcp added, packages-some-package added, owner assigned, needs-team-attention added
+        [TestCase(RulesConstants.InitialIssueTriage,
+                  "Tests.JsonEventPayloads/McpIssueTriage_issue_opened_no_labels.json",
+                  RuleState.On,
+                  "server-azure.mcp, packages-abc",
+                  "",
+                  "McpOwner1",
+                  true,
+                  false,
+                  false)]
+
         // Scenario: Rule is disabled
         // Expected: No processing, no updates
         [TestCase(RulesConstants.InitialIssueTriage,
@@ -165,7 +180,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                 mockGitHubEventClient.OwnersWithAssignPermission = ownersWithPermission;
             }
 
-            var mcpProcessor = new McpIssueProcessing(logger);
+            var mcpConfig = CreateTestMcpConfiguration();
+            var mcpProcessor = new McpIssueProcessing(logger, mcpConfig);
 
             await mcpProcessor.ProcessIssueEvent(mockGitHubEventClient, issueEventPayload);
 
@@ -198,12 +214,14 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                     : userProvidedLabels.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
 
                 var labelsToAdd = mockGitHubEventClient.GetLabelsToAdd();
-                var serverPredicted = expectedPredictedLabels.FirstOrDefault(l => l.StartsWith("server-", StringComparison.OrdinalIgnoreCase));
-                var toolPredicted = expectedPredictedLabels.FirstOrDefault(l => l.StartsWith("tools-", StringComparison.OrdinalIgnoreCase));
+                var serverPredicted = expectedPredictedLabels.FirstOrDefault(
+                    l => mcpConfig.GetPrimaryLabelPrefixes().Any(prefix => l.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)));
+                var toolPredicted = expectedPredictedLabels.FirstOrDefault(
+                    l => mcpConfig.GetSecondaryLabelPrefixes().Any(prefix => l.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)));
 
                 if (serverPredicted != null)
                 {
-                    var userHasServerLabel = userLabels.Any(l => l.StartsWith("server-", StringComparison.OrdinalIgnoreCase));
+                    var userHasServerLabel = userLabels.Any(l => mcpConfig.GetPrimaryLabelPrefixes().Any(prefix => l.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)));
                     if (!userHasServerLabel)
                     {
                         Assert.That(labelsToAdd, Does.Contain(serverPredicted),
@@ -213,7 +231,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
 
                 if (toolPredicted != null)
                 {
-                    var userHasToolLabel = userLabels.Any(l => l.StartsWith("tools-", StringComparison.OrdinalIgnoreCase));
+                    var userHasToolLabel = userLabels.Any(l => mcpConfig.GetSecondaryLabelPrefixes().Any(prefix => l.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)));
                     if (!userHasToolLabel)
                     {
                         Assert.That(labelsToAdd, Does.Contain(toolPredicted),
@@ -265,6 +283,24 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Creates a test McpConfiguration with mock server team mappings.
+        /// </summary>
+        private static McpConfiguration CreateTestMcpConfiguration()
+        {
+            var configData = new Dictionary<string, string?>
+            {
+                { $"{McpConstants.McpConfigPrefix}:{McpConstants.McpServerLabelPrefix}", "server-" },
+                { $"{McpConstants.McpConfigPrefix}:{McpConstants.McpToolLabelPrefix}", "tools-;remote-mcp;packages-" },
+            };
+
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(configData)
+                .Build();
+
+            return new McpConfiguration(configuration);
         }
 
     }

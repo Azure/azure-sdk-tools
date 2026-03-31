@@ -13,11 +13,15 @@ namespace SearchIndexCreator.RepositoryIndexConfigs
         /// <param name="repoName">The repository name from configuration.</param>
         /// <param name="config">The application configuration.</param>
         /// <returns>The corresponding IRepositoryIndexConfig implementation.</returns>
-        public static IRepositoryIndexConfig Create(string? repoName, IConfiguration config)
+        public static IRepositoryIndexConfig Create(string? repoName, IConfiguration? config = null)
         {
+
             if (string.Equals(repoName, "mcp", StringComparison.OrdinalIgnoreCase))
             {
-                return new McpRepositoryIndexConfig(config);
+                if (config == null) {
+                    throw new ArgumentNullException(nameof(config), "IConfiguration is required for MCP repository.");
+                }
+                    return new McpRepositoryIndexConfig(config);
             }
 
             // Default to Azure SDK config

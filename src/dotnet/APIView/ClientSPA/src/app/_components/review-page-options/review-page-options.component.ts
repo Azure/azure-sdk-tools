@@ -34,6 +34,20 @@ const AI_REVIEW_BUTTON_TEXT = {
   FAILED: 'Failed to generate Copilot review'
 } as const;
 
+export enum ApprovalDisabledReason {
+  None = 'none',
+  MissingPackageVersion = 'missingPackageVersion',
+  CopilotReviewRequired = 'copilotReviewRequired',
+  UnresolvedMustFix = 'unresolvedMustFix',
+}
+
+const APPROVAL_DISABLED_MESSAGES: Record<ApprovalDisabledReason, string> = {
+  [ApprovalDisabledReason.None]: '',
+  [ApprovalDisabledReason.MissingPackageVersion]: 'This API revision cannot be approved because it is missing a package version. Please ensure the package version is set.',
+  [ApprovalDisabledReason.CopilotReviewRequired]: 'To approve the current API revision, it must first be reviewed by Copilot',
+  [ApprovalDisabledReason.UnresolvedMustFix]: 'Cannot approve while unresolved Must Fix comments remain.',
+};
+
 @Component({
     selector: 'app-review-page-options',
     templateUrl: './review-page-options.component.html',
@@ -415,7 +429,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
     this.activeAPIRevisionIsApprovedByCurrentUser = this.activeAPIRevision?.approvers.includes(this.userProfile?.userName!)!;
     this.canToggleApproveAPIRevision = (!this.diffAPIRevision || this.diffAPIRevision.approvers.length > 0);
 
-    this.isAPIRevisionApprovalDisabled = this.shouldDisableApproval(isReviewByCopilotRequired, isVersionReviewedByCopilot);
+    const disabledReason = this.getApprovalDisabledReason(isReviewByCopilotRequired, isVersionReviewedByCopilot);
+    this.isAPIRevisionApprovalDisabled = disabledReason !== ApprovalDisabledReason.None;
 
     if (this.canToggleApproveAPIRevision) {
       if (this.isAPIRevisionApprovalDisabled) {
@@ -425,7 +440,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
       }
       this.apiRevisionApprovalBtnLabel = (this.activeAPIRevisionIsApprovedByCurrentUser) ? "Revert API Approval" : "Approve";
       this.apiRevisionApprovalMessage = this.activeAPIRevisionIsApprovedByCurrentUser ? "" :
-        this.isAPIRevisionApprovalDisabled ? this.getApprovalDisabledMessage(isReviewByCopilotRequired, isVersionReviewedByCopilot) :
+        this.isAPIRevisionApprovalDisabled ? APPROVAL_DISABLED_MESSAGES[disabledReason] :
         "Approves the Current API Revision";
     } else {
       this.apiRevisionApprovalBtnClass = "btn btn-outline-secondary";
@@ -433,18 +448,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
     }
   }
 
-  private getApprovalDisabledMessage(isReviewByCopilotRequired: boolean, isVersionReviewedByCopilot: boolean): string {
-    if (this.isMissingPackageVersion) {
-      return "This API revision cannot be approved because it is missing a package version. Please ensure the package version is set.";
-    }
-    if (this.hasUnresolvedMustFix()) {
-      return "Cannot approve while unresolved Must Fix comments remain.";
-    }
-    if (isReviewByCopilotRequired && !isVersionReviewedByCopilot) {
-      return "To approve the current API revision, it must first be reviewed by Copilot";
-    }
-    return "";
-  }
   setReviewApprovalStatus() {
     this.reviewIsApproved = !!this.review?.isApproved;
     if (this.reviewIsApproved) {
@@ -788,14 +791,13 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
     }
   }
 
-  private shouldDisableApproval(isReviewByCopilotRequired: boolean, isVersionReviewedByCopilot: boolean): boolean {
-    if (this.isMissingPackageVersion) return true;
-    if(this.activeAPIRevision?.isApproved) return false;
-    if (this.hasUnresolvedMustFix()) return true;
-    if (!this.isCopilotReviewSupported) return false;
-    if (this.isPreviewVersion()) return false;
+  private getApprovalDisabledReason(isReviewByCopilotRequired: boolean, isVersionReviewedByCopilot: boolean): ApprovalDisabledReason {
+    if (this.isMissingPackageVersion) return ApprovalDisabledReason.MissingPackageVersion;
+    if (this.activeAPIRevision?.isApproved) return ApprovalDisabledReason.None;
+    if (this.isCopilotReviewSupported && !this.isPreviewVersion() && isReviewByCopilotRequired && !isVersionReviewedByCopilot) return ApprovalDisabledReason.CopilotReviewRequired;
+    if (this.hasUnresolvedMustFix()) return ApprovalDisabledReason.UnresolvedMustFix;
 
-    return isReviewByCopilotRequired && !isVersionReviewedByCopilot;
+    return ApprovalDisabledReason.None;
   }
 
   private hasUnresolvedMustFix(): boolean {

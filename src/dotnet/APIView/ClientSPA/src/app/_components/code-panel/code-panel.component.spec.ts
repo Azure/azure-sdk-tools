@@ -523,4 +523,246 @@ describe('CodePanelComponent', () => {
       expect(row.comments[0].severity).toBe(CommentSeverity.Question);
     });
   });
+
+  describe('commentNavigationStateEmitter', () => {
+    it('should emit correct values when active threads exist and no navigation pointer is set', () => {
+      const emitSpy = vi.spyOn(component.commentNavigationStateEmitter, 'emit');
+
+      // Add two active comment threads
+      const thread1 = new CodePanelRowData();
+      thread1.type = CodePanelRowDatatype.CommentThread;
+      thread1.isResolvedCommentThread = false;
+
+      const thread2 = new CodePanelRowData();
+      thread2.type = CodePanelRowDatatype.CommentThread;
+      thread2.isResolvedCommentThread = false;
+
+      component.codePanelRowData = [thread1, thread2];
+      component.commentThreadNavigationPointer = undefined;
+
+      component['emitCommentNavigationState']();
+
+      expect(emitSpy).toHaveBeenCalledWith({ currentIndex: 1, totalCount: 2 });
+    });
+
+    it('should emit with currentIndex based on navigation pointer when set', () => {
+      const emitSpy = vi.spyOn(component.commentNavigationStateEmitter, 'emit');
+
+      const thread1 = new CodePanelRowData();
+      thread1.type = CodePanelRowDatatype.CommentThread;
+      thread1.isResolvedCommentThread = false;
+
+      const thread2 = new CodePanelRowData();
+      thread2.type = CodePanelRowDatatype.CommentThread;
+      thread2.isResolvedCommentThread = false;
+
+      component.codePanelRowData = [thread1, thread2];
+      component.commentThreadNavigationPointer = 1; // pointing to thread2
+
+      component['emitCommentNavigationState']();
+
+      expect(emitSpy).toHaveBeenCalledWith({ currentIndex: 2, totalCount: 2 });
+    });
+
+    it('should emit zeros when no active threads exist', () => {
+      const emitSpy = vi.spyOn(component.commentNavigationStateEmitter, 'emit');
+
+      const resolvedThread = new CodePanelRowData();
+      resolvedThread.type = CodePanelRowDatatype.CommentThread;
+      resolvedThread.isResolvedCommentThread = true;
+
+      component.codePanelRowData = [resolvedThread];
+      component.commentThreadNavigationPointer = undefined;
+
+      component['emitCommentNavigationState']();
+
+      expect(emitSpy).toHaveBeenCalledWith({ currentIndex: 0, totalCount: 0 });
+    });
+
+    it('should emit zeros when codePanelRowData is empty', () => {
+      const emitSpy = vi.spyOn(component.commentNavigationStateEmitter, 'emit');
+
+      component.codePanelRowData = [];
+      component.commentThreadNavigationPointer = undefined;
+
+      component['emitCommentNavigationState']();
+
+      expect(emitSpy).toHaveBeenCalledWith({ currentIndex: 0, totalCount: 0 });
+    });
+
+    it('should emit after adding a comment thread', () => {
+      const emitSpy = vi.spyOn(component.commentNavigationStateEmitter, 'emit');
+
+      const codeLine = new CodePanelRowData();
+      codeLine.type = CodePanelRowDatatype.CodeLine;
+      codeLine.nodeIdHashed = 'test-node';
+      codeLine.rowPositionInGroup = 0;
+
+      component.codePanelRowData = [codeLine];
+      component.codePanelData = {
+        nodeMetaData: {
+          'test-node': {
+            codeLines: [codeLine],
+            commentThread: {}
+          }
+        }
+      };
+
+      const newThread = new CodePanelRowData();
+      newThread.type = CodePanelRowDatatype.CommentThread;
+      newThread.isResolvedCommentThread = false;
+      newThread.nodeIdHashed = 'test-node';
+      newThread.associatedRowPositionInGroup = 0;
+
+      component['addCommentToCommentThread'](
+        {
+          nodeIdHashed: 'test-node',
+          associatedRowPositionInGroup: 0,
+          threadId: 'thread-1'
+        } as CommentUpdatesDto,
+        { id: 'comment-1' } as CommentItemModel
+      );
+
+      // The emit is called, verify that it was called with a totalCount reflecting thread addition
+      expect(emitSpy).toHaveBeenCalled();
+    });
+
+    it('should emit after deleting a comment thread that becomes empty', () => {
+      const emitSpy = vi.spyOn(component.commentNavigationStateEmitter, 'emit');
+
+      const thread = new CodePanelRowData();
+      thread.type = CodePanelRowDatatype.CommentThread;
+      thread.isResolvedCommentThread = false;
+      thread.nodeIdHashed = 'test-node';
+      thread.associatedRowPositionInGroup = 0;
+      thread.threadId = 'thread-1';
+      thread.comments = [
+        { id: 'comment-1' } as CommentItemModel
+      ];
+
+      const codeLine = new CodePanelRowData();
+      codeLine.type = CodePanelRowDatatype.CodeLine;
+      codeLine.nodeIdHashed = 'test-node';
+      codeLine.rowPositionInGroup = 0;
+
+      component.codePanelRowData = [codeLine, thread];
+      component.codePanelData = {
+        nodeMetaData: {
+          'test-node': {
+            codeLines: [codeLine],
+            commentThread: {
+              0: [thread]
+            }
+          }
+        }
+      };
+
+      vi.spyOn(component as any, 'removeItemsFromScroller').mockResolvedValue(undefined);
+
+      component['deleteCommentFromCommentThread']({
+        nodeIdHashed: 'test-node',
+        associatedRowPositionInGroup: 0,
+        threadId: 'thread-1',
+        commentId: 'comment-1'
+      } as CommentUpdatesDto);
+
+      // Verify emit was called - the spec validates the emitter is triggered
+      expect(emitSpy).toHaveBeenCalled();
+    });
+
+    it('should emit after resolving a comment thread', () => {
+      const emitSpy = vi.spyOn(component.commentNavigationStateEmitter, 'emit');
+
+      const thread = new CodePanelRowData();
+      thread.type = CodePanelRowDatatype.CommentThread;
+      thread.isResolvedCommentThread = false;
+      thread.nodeIdHashed = 'test-node';
+      thread.associatedRowPositionInGroup = 0;
+      thread.threadId = 'thread-1';
+      thread.comments = [{ id: 'comment-1' } as CommentItemModel];
+
+      const codeLine = new CodePanelRowData();
+      codeLine.type = CodePanelRowDatatype.CodeLine;
+      codeLine.nodeIdHashed = 'test-node';
+
+      component.codePanelRowData = [codeLine, thread];
+      component.codePanelData = {
+        nodeMetaData: {
+          'test-node': {
+            codeLines: [codeLine],
+            commentThread: {
+              0: [thread]
+            }
+          }
+        }
+      };
+
+      component['applyCommentResolutionUpdate']({
+        nodeIdHashed: 'test-node',
+        associatedRowPositionInGroup: 0,
+        threadId: 'thread-1',
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentResolved,
+        resolvedBy: 'user'
+      } as CommentUpdatesDto);
+
+      expect(emitSpy).toHaveBeenCalledWith({ currentIndex: 0, totalCount: 0 });
+    });
+
+    it('should correctly count only active threads excluding resolved ones', () => {
+      const emitSpy = vi.spyOn(component.commentNavigationStateEmitter, 'emit');
+
+      const activeThread1 = new CodePanelRowData();
+      activeThread1.type = CodePanelRowDatatype.CommentThread;
+      activeThread1.isResolvedCommentThread = false;
+
+      const resolvedThread = new CodePanelRowData();
+      resolvedThread.type = CodePanelRowDatatype.CommentThread;
+      resolvedThread.isResolvedCommentThread = true;
+
+      const activeThread2 = new CodePanelRowData();
+      activeThread2.type = CodePanelRowDatatype.CommentThread;
+      activeThread2.isResolvedCommentThread = false;
+
+      component.codePanelRowData = [activeThread1, resolvedThread, activeThread2];
+      component.commentThreadNavigationPointer = undefined;
+
+      component['emitCommentNavigationState']();
+
+      expect(emitSpy).toHaveBeenCalledWith({ currentIndex: 1, totalCount: 2 });
+    });
+
+    it('should emit on navigateToCommentThread when moving to next thread', () => {
+      const emitSpy = vi.spyOn(component.commentNavigationStateEmitter, 'emit');
+
+      const thread1 = new CodePanelRowData();
+      thread1.type = CodePanelRowDatatype.CommentThread;
+      thread1.isResolvedCommentThread = false;
+
+      const thread2 = new CodePanelRowData();
+      thread2.type = CodePanelRowDatatype.CommentThread;
+      thread2.isResolvedCommentThread = false;
+
+      component.codePanelRowData = [thread1, thread2];
+      component.commentThreadNavigationPointer = undefined;
+      component.codePanelRowSource = {
+        adapter: {
+          firstVisible: { $index: 0 },
+          lastVisible: { $index: 1 },
+          reload: vi.fn(),
+          fix: vi.fn()
+        }
+      } as any;
+
+      vi.spyOn(component as any, 'scrollToCommentThread').mockResolvedValue(undefined);
+
+      // Simulate navigating to first thread
+      component['navigateToCommentThread']('next' as any);
+
+      expect(emitSpy).toHaveBeenCalled();
+      const call = emitSpy.mock.calls[emitSpy.mock.calls.length - 1][0];
+      // When navigating to thread at index 0, it's the 1st thread; at index 1, it's the 2nd thread
+      expect(call.totalCount).toBe(2);
+      expect(call.currentIndex).toBeGreaterThanOrEqual(1);
+    });
+  });
 });

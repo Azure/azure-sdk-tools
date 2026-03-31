@@ -44,7 +44,7 @@
         [codePanelRowData]="item"
         [allComments]="allComments"
         [allCodePanelRowData]="codePanelRowData"
-        [commentNumber]="getActiveCommentThreadPosition(item)"
+        [commentNumber]="getActiveCommentThreadPosition(index, item)"
         [totalCommentCount]="getActiveCommentThreadCount()"
         [associatedCodeLine]="getAssociatedCodeLine(item)"
         [actualLineNumber]="getAssociatedCodeLine(item)?.lineNumber || 0"

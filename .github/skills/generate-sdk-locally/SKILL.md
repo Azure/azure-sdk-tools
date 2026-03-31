@@ -32,7 +32,8 @@ compatibility:
 5. **Validate** — Run `azure-sdk-mcp:azsdk_package_run_check` and `azure-sdk-mcp:azsdk_package_run_tests`.
 6. **Metadata** — Update metadata, changelog, and version. _(Note: For .NET data plane, skip this step — metadata, changelog, and version updates are per-commit tasks, not part of the generate/build/test workflow.)_
 
-[SDK repos](references/sdk-repos.md) · [Customization workflow](references/customization-workflow.md)
+[SDK repos](references/sdk-repos.md)
+[Customization workflow](references/customization-workflow.md)
 
 ## Examples
 

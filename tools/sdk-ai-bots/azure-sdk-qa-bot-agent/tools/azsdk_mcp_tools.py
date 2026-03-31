@@ -27,11 +27,9 @@ async def create_azsdk_mcp_tool() -> MCPStdioTool:
     org = _DEFAULT_AZSDK_ORG
     env = {**os.environ}
 
-    az_client_id = (
-        os.environ.get("UMI_BACKEND_CLIENT_ID").strip()
-    )
+    az_client_id = os.environ.get("UMI_BACKEND_CLIENT_ID")
     if az_client_id:
-        env["AZURE_CLIENT_ID"] = az_client_id
+        env["AZURE_CLIENT_ID"] = az_client_id.strip()
         logger.info("Azure SDK MCP tool configured with AZURE_CLIENT_ID")
     else:
         logger.warning("UMI_BACKEND_CLIENT_ID is not set")

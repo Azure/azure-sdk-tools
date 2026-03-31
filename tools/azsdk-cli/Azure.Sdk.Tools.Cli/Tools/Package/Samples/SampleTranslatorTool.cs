@@ -438,18 +438,32 @@ The 'OriginalFileName' must be the relative file path exactly as shown in the so
 
                 if (!originalsByRelativePath.TryGetValue(lookupKey, out var originalSample))
                 {
-                    // Fallback: try matching by filename only for backwards compatibility
+                    // Fallback: try matching by filename only for backwards compatibility.
+                    // If multiple matches are found, treat as ambiguous and skip to avoid writing to the wrong path.
                     var fileName = Path.GetFileName(lookupKey);
-                    originalSample = originalsByRelativePath.Values.FirstOrDefault(
-                        s => string.Equals(Path.GetFileName(s.FilePath), fileName, StringComparison.OrdinalIgnoreCase));
-                    if (originalSample != null)
+                    var filenameMatches = originalsByRelativePath.Values
+                        .Where(s => string.Equals(Path.GetFileName(s.FilePath), fileName, StringComparison.OrdinalIgnoreCase))
+                        .ToList();
+
+                    if (filenameMatches.Count == 1)
                     {
+                        originalSample = filenameMatches[0];
                         logger.LogDebug("Matched translated sample '{original}' to source file by filename fallback", translatedSample.OriginalFileName);
                     }
-                    else
+                    else if (filenameMatches.Count == 0)
                     {
                         logger.LogWarning("Could not find original sample file for: {original}",
                             translatedSample.OriginalFileName);
+                        continue;
+                    }
+                    else
+                    {
+                        logger.LogWarning(
+                            "Ambiguous filename-only match for translated sample: {original}. Found {count} source files named '{fileName}'. " +
+                            "Please disambiguate by providing a relative path.",
+                            translatedSample.OriginalFileName,
+                            filenameMatches.Count,
+                            fileName);
                         continue;
                     }
                 }

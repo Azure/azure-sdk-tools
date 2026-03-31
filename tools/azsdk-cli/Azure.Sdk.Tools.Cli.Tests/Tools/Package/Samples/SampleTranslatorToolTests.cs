@@ -12,7 +12,6 @@ using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 using Azure.Sdk.Tools.Cli.Tools.Package.Samples;
-using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package.Samples;
@@ -167,6 +166,17 @@ public class SampleTranslatorDirectoryStructureTests
     private Mock<LanguageService> _mockTargetLanguageService;
     private SampleTranslatorTool _tool;
     private List<LanguageService> _languageServices;
+    private readonly List<TempDirectory> _tempDirs = [];
+
+    [TearDown]
+    public void TearDown()
+    {
+        foreach (var temp in _tempDirs)
+        {
+            temp.Dispose();
+        }
+        _tempDirs.Clear();
+    }
 
     [SetUp]
     public void Setup()
@@ -324,6 +334,36 @@ public class SampleTranslatorDirectoryStructureTests
     }
 
     [Test]
+    public async Task TranslateSamples_AmbiguousFilenameFallback_SkipsSample()
+    {
+        var (sourcePackagePath, targetPackagePath, targetSamplesDir) = await CreateFakePackagesAsync(
+            sourceSamples: new Dictionary<string, string>
+            {
+                ["v1/client.go"] = "package v1\nfunc New() {}",
+                ["v2/client.go"] = "package v2\nfunc New() {}",
+            });
+
+        // AI returns just the filename (ambiguous — matches both v1/client.go and v2/client.go)
+        _copilotAgentRunnerMock
+            .Setup(m => m.RunAsync(It.IsAny<CopilotAgent<List<TranslatedSample>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<TranslatedSample>
+            {
+                new("client.go", "client.py", "class Client: pass"),
+            });
+
+        var result = await _tool.TranslateSamplesAsync(sourcePackagePath, targetPackagePath, overwrite: true);
+
+        Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
+        // The ambiguous sample should be skipped — no file written
+        Assert.That(File.Exists(Path.Combine(targetSamplesDir, "v1", "client.py")), Is.False,
+            "Ambiguous filename-only match should not write to v1/");
+        Assert.That(File.Exists(Path.Combine(targetSamplesDir, "v2", "client.py")), Is.False,
+            "Ambiguous filename-only match should not write to v2/");
+        Assert.That(File.Exists(Path.Combine(targetSamplesDir, "client.py")), Is.False,
+            "Ambiguous filename-only match should not write to root either");
+    }
+
+    [Test]
     public async Task TranslateSamples_PromptContainsRelativePaths()
     {
         var (sourcePackagePath, targetPackagePath, _) = await CreateFakePackagesAsync(
@@ -388,6 +428,7 @@ public class SampleTranslatorDirectoryStructureTests
     {
         // Source repo (Go)
         var sourceTemp = TempDirectory.Create("azure-sdk-for-go-source");
+        _tempDirs.Add(sourceTemp);
         var sourceRepoRoot = sourceTemp.DirectoryPath;
         await GitTestHelper.GitInitAsync(sourceRepoRoot);
         var sourceRelativePath = Path.Combine("sdk", "storage", "azblob");
@@ -426,6 +467,7 @@ public class SampleTranslatorDirectoryStructureTests
 
         // Target repo (Python)
         var targetTemp = TempDirectory.Create("azure-sdk-for-python-target");
+        _tempDirs.Add(targetTemp);
         var targetRepoRoot = targetTemp.DirectoryPath;
         await GitTestHelper.GitInitAsync(targetRepoRoot);
         var targetRelativePath = Path.Combine("sdk", "storage", "azure-storage-blob");

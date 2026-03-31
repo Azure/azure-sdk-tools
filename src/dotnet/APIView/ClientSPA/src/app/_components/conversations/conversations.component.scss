@@ -250,10 +250,10 @@
     }
 
     &.src-diag.src-on {
-        background: color-mix(in srgb, #0e7490 16%, transparent);
-        color: #0e7490;
-        border-color: color-mix(in srgb, #0e7490 54%, var(--border-color));
-        box-shadow: inset 0 0 0 1px color-mix(in srgb, #0e7490 54%, var(--border-color));
+        background: color-mix(in srgb, var(--diagnostic-accent-color) 16%, transparent);
+        color: var(--diagnostic-accent-color);
+        border-color: color-mix(in srgb, var(--diagnostic-accent-color) 54%, var(--border-color));
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--diagnostic-accent-color) 54%, var(--border-color));
     }
 }
 

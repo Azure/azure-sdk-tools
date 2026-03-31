@@ -22,9 +22,9 @@
     }
 
     .diagnostic-badge-custom {
-        background-color: color-mix(in srgb, #0e7490 16%, transparent);
-        border-color: color-mix(in srgb, #0e7490 54%, var(--border-color));
-        color: #0e7490;
+        background-color: color-mix(in srgb, var(--diagnostic-accent-color) 16%, transparent);
+        border-color: color-mix(in srgb, var(--diagnostic-accent-color) 54%, var(--border-color));
+        color: var(--diagnostic-accent-color);
         .bi { font-size: .7rem; }
     }
 

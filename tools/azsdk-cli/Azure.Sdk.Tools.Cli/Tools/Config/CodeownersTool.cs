@@ -210,7 +210,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             },
             new(addLabelOwnerCommandName, "Add owner(s) to a label and optional path")
             {
-                multipleGithubUserOption, labelsOption, pathOption, ownerTypeOption, optionalRepoOption,
+                multipleGithubUserOption, labelsOption, pathOption, ownerTypeOption, optionalRepoOption, sectionOption,
             },
             new(removeCodeownersToPackageCommandName, "Remove source owner(s) from a package")
             {
@@ -222,7 +222,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             },
             new(removeLabelOwnerCommandName, "Remove owner(s) from a label and optional path")
             {
-                multipleGithubUserOption, labelsOption, pathOption, ownerTypeOption, optionalRepoOption,
+                multipleGithubUserOption, labelsOption, pathOption, ownerTypeOption, optionalRepoOption, sectionOption,
             },
             new(exportSectionCommandName, "Export one or more named sections from a CODEOWNERS file")
             {
@@ -278,7 +278,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 var ownerType = parseResult.GetValue(ownerTypeOption);
                 var path = parseResult.GetValue(pathOption);
                 var repo = parseResult.GetValue(optionalRepoOption);
-                return await AddLabelOwner(users!, labels!, ownerType!, path, repo, ct);
+                var section = parseResult.GetValue(sectionOption);
+                return await AddLabelOwner(users!, labels!, ownerType!, path, repo, section, ct);
             }
 
             if (command == removeCodeownersToPackageCommandName)
@@ -304,7 +305,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 var ownerType = parseResult.GetValue(ownerTypeOption);
                 var path = parseResult.GetValue(pathOption);
                 var repo = parseResult.GetValue(optionalRepoOption);
-                return await RemoveLabelOwner(users!, labels!, ownerType!, path, repo, ct);
+                var section = parseResult.GetValue(sectionOption);
+                return await RemoveLabelOwner(users!, labels!, ownerType!, path, repo, section, ct);
             }
 
             if (command == exportSectionCommandName)
@@ -515,6 +517,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             OwnerType ownerType,
             string? path = null,
             string? repo = null,
+            string section = null,
             CancellationToken ct = default
         )
         {
@@ -527,6 +530,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                     repo,
                     path,
                     ownerType,
+                    section,
                     ct
                 );
             }
@@ -594,11 +598,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             OwnerType ownerType,
             string? path = null,
             string? repo = null,
+            string section = null,
             CancellationToken ct = default
         )
         {
             try
             {
+                // System.Diagnostics.Debugger.Launch();
                 repo = await ResolveRepo(repo, ct);
                 return await codeownersManagementHelper.RemoveOwnersFromLabelsAndPath(
                     await GetOwnerWorkItems(githubUsers, ct),
@@ -606,6 +612,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                     repo,
                     path,
                     ownerType,
+                    section,
                     ct
                 );
             }

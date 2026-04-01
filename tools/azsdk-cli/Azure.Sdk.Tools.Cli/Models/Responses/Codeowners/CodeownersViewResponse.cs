@@ -91,6 +91,7 @@ public class LabelOwnerResponse
         Repo = labelOwnerWorkItem.Repository;
         Path = labelOwnerWorkItem.RepoPath;
         Type = labelOwnerWorkItem.LabelType;
+        Section = string.IsNullOrEmpty(labelOwnerWorkItem.Section) ? null : labelOwnerWorkItem.Section;
         Owners = owners.Count > 0 ? owners : null;
         Labels = labels.Count > 0 ? labels : null;
     }
@@ -109,6 +110,10 @@ public class LabelOwnerResponse
     [JsonPropertyName("type")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Type { get; set; }
+
+    [JsonPropertyName("section")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Section { get; set; }
 
     [JsonPropertyName("owners")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -156,6 +161,7 @@ public class CodeownersViewResponse : CommandResponse
         {
             PathBasedLabelOwners = pathBased.Select(labelOwner => new LabelOwnerResponse(labelOwner))
                 .OrderBy(lo => lo.Repo, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(lo => lo.Section, StringComparer.OrdinalIgnoreCase)
                 .ThenBy(lo => lo.Path, StringComparer.OrdinalIgnoreCase)
                 .ToList();
         }
@@ -164,6 +170,7 @@ public class CodeownersViewResponse : CommandResponse
         {
             PathlessLabelOwners = pathless.Select(labelOwner => new LabelOwnerResponse(labelOwner))
                 .OrderBy(lo => lo.Repo, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(lo => lo.Section, StringComparer.OrdinalIgnoreCase)
                 .ThenBy(lo => string.Join("|", lo.Labels ?? []), StringComparer.OrdinalIgnoreCase)
                 .ToList();
         }
@@ -198,21 +205,30 @@ public class CodeownersViewResponse : CommandResponse
                 .OrderBy(rg => rg.Key, StringComparer.OrdinalIgnoreCase))
             {
                 sb.AppendLine($"  Repo: {repoGroup.Key}");
-                foreach (var pathGroup in repoGroup
-                    .GroupBy(lo => lo.Path, StringComparer.OrdinalIgnoreCase)
-                    .OrderBy(pg => pg.Key, StringComparer.OrdinalIgnoreCase))
+                foreach (var sectionGroup in repoGroup
+                    .GroupBy(lo => lo.Section ?? "", StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(sg => sg.Key, StringComparer.OrdinalIgnoreCase))
                 {
-                    sb.AppendLine($"    Path: {pathGroup.Key}");
-                    foreach (var lo in pathGroup)
+                    if (!string.IsNullOrEmpty(sectionGroup.Key))
                     {
-                        sb.AppendLine($"      Type: {lo.Type} [{lo.WorkItemId}]");
-                        if (lo.Owners?.Count > 0)
+                        sb.AppendLine($"    Section: {sectionGroup.Key}");
+                    }
+                    foreach (var pathGroup in sectionGroup
+                        .GroupBy(lo => lo.Path, StringComparer.OrdinalIgnoreCase)
+                        .OrderBy(pg => pg.Key, StringComparer.OrdinalIgnoreCase))
+                    {
+                        sb.AppendLine($"      Path: {pathGroup.Key}");
+                        foreach (var lo in pathGroup)
                         {
-                            sb.AppendLine($"        Owners: {FormatOwnersList(lo.Owners)}");
-                        }
-                        if (lo.Labels?.Count > 0)
-                        {
-                            sb.AppendLine($"        Labels: {string.Join(", ", lo.Labels)}");
+                            sb.AppendLine($"        Type: {lo.Type} [{lo.WorkItemId}]");
+                            if (lo.Owners?.Count > 0)
+                            {
+                                sb.AppendLine($"          Owners: {FormatOwnersList(lo.Owners)}");
+                            }
+                            if (lo.Labels?.Count > 0)
+                            {
+                                sb.AppendLine($"          Labels: {string.Join(", ", lo.Labels)}");
+                            }
                         }
                     }
                 }
@@ -227,13 +243,22 @@ public class CodeownersViewResponse : CommandResponse
                 .OrderBy(rg => rg.Key, StringComparer.OrdinalIgnoreCase))
             {
                 sb.AppendLine($"  Repo: {repoGroup.Key}");
-                foreach (var lo in repoGroup)
+                foreach (var sectionGroup in repoGroup
+                    .GroupBy(lo => lo.Section ?? "", StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(sg => sg.Key, StringComparer.OrdinalIgnoreCase))
                 {
-                    sb.AppendLine($"    Labels: {string.Join(", ", lo.Labels ?? [])} [{lo.WorkItemId}]");
-                    sb.AppendLine($"      Type: {lo.Type}");
-                    if (lo.Owners?.Count > 0)
+                    if (!string.IsNullOrEmpty(sectionGroup.Key))
                     {
-                        sb.AppendLine($"      Owners: {FormatOwnersList(lo.Owners)}");
+                        sb.AppendLine($"    Section: {sectionGroup.Key}");
+                    }
+                    foreach (var lo in sectionGroup)
+                    {
+                        sb.AppendLine($"      Labels: {string.Join(", ", lo.Labels ?? [])} [{lo.WorkItemId}]");
+                        sb.AppendLine($"        Type: {lo.Type}");
+                        if (lo.Owners?.Count > 0)
+                        {
+                            sb.AppendLine($"          Owners: {FormatOwnersList(lo.Owners)}");
+                        }
                     }
                 }
             }

@@ -6,8 +6,6 @@
 
 - Added support for CODEOWNERS "Section" in Label Owners (defaults to "Client Libraries")
 
-### Breaking Changes
-
 ### Bugs Fixed
 
 - Fixed sample translation to preserve source directory structure when writing translated files

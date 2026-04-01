@@ -62,6 +62,7 @@ public static class WorkItemMappers
             LabelType = wi.GetFieldValue("Custom.LabelType"),
             Repository = wi.GetFieldValue("Custom.Repository"),
             RepoPath = wi.GetFieldValue("Custom.RepoPath"),
+            Section = wi.GetFieldValue("Custom.Section"),
             RelatedIds = ExtractRelatedIds(wi)
         };
     }

@@ -238,7 +238,7 @@ public class CodeownersGenerateHelper(
         var serviceLevelPathEntries = new Dictionary<string, CodeownersEntry>(StringComparer.OrdinalIgnoreCase);
         foreach (var lo in unlinkedLabelOwners.Where(lo => !string.IsNullOrEmpty(lo.RepoPath)))
         {
-            string pathExpression = "/" + lo.RepoPath.TrimStart('/').TrimEnd('/') + "/";
+            string pathExpression = "/" + lo.RepoPath.TrimStart('/');
 
             var sourceOwners = lo.Owners
                 .Select(o => o.GitHubAlias)

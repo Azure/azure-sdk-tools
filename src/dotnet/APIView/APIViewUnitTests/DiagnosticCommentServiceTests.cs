@@ -403,6 +403,32 @@ public class DiagnosticCommentServiceTests
         Assert.Equal(firstSyncCommentId, secondResult.Comments[0].Id);
     }
 
+
+    [Fact]
+    public async Task SyncDiagnosticCommentsAsync_SameDiagnosticTextAcrossRevisions_ProducesMatchingCorrelationIds()
+    {
+        DiagnosticCommentService service = CreateService(out Mock<ICosmosCommentsRepository> commentsRepoMock);
+
+        // Same rule text, but appearing on different targets across two revisions
+        CodeDiagnostic[] diagnosticsRev1 = [new("DIAG001", "target1", "Missing return type annotation", null)];
+        CodeDiagnostic[] diagnosticsRev2 = [new("DIAG001", "target2", "Missing return type annotation", null)];
+
+        List<CommentItemModel> upsertedComments = [];
+        commentsRepoMock.Setup(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()))
+            .Callback<CommentItemModel>(c => upsertedComments.Add(c))
+            .Returns(Task.CompletedTask);
+
+        await service.SyncDiagnosticCommentsAsync(
+            "review1", "rev1", null, diagnosticsRev1, new List<CommentItemModel>());
+
+        await service.SyncDiagnosticCommentsAsync(
+            "review1", "rev2", null, diagnosticsRev2, new List<CommentItemModel>());
+
+        Assert.Equal(2, upsertedComments.Count);
+        Assert.NotEqual(upsertedComments[0].Id, upsertedComments[1].Id); // different comments (different targets)
+        Assert.Equal(upsertedComments[0].CorrelationId, upsertedComments[1].CorrelationId); // but same correlation
+    }
+
     [Fact]
     public async Task SyncDiagnosticCommentsAsync_IncludesHelpLinkInCommentText()
     {

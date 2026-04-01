@@ -114,21 +114,14 @@ internal class JavaScriptLanguageSpecificChecksTests
     [Test]
     public async Task CheckSpelling_DelegatesToCommonValidationHelpers_WithCorrectPath()
     {
-        var repoRoot = "/tmp/repo-root";
         _packagePath = "/tmp/repo-root/sdk/package";
         var expectedSuccess = new PackageCheckResponse(0, "No spelling errors found");
 
-        _gitHelperMock
-            .Setup(g => g.DiscoverRepoRootAsync(_packagePath, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(repoRoot);
-
-        string? capturedSpellingCheckPath = null;
         string? capturedPackagePath = null;
         _commonValidationHelpersMock
-            .Setup(c => c.CheckSpelling(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-            .Callback<string, string, bool, CancellationToken>((spellingPath, pkgPath, _, _) =>
+            .Setup(c => c.CheckSpelling(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .Callback<string, bool, CancellationToken>((pkgPath, _, _) =>
             {
-                capturedSpellingCheckPath = spellingPath;
                 capturedPackagePath = pkgPath;
             })
             .ReturnsAsync(expectedSuccess);
@@ -137,28 +130,20 @@ internal class JavaScriptLanguageSpecificChecksTests
 
         Assert.That(response.ExitCode, Is.EqualTo(0));
         Assert.That(capturedPackagePath, Is.EqualTo(_packagePath));
-        Assert.That(capturedSpellingCheckPath, Does.Contain("sdk"));
-        Assert.That(capturedSpellingCheckPath, Does.Contain("package"));
-        Assert.That(capturedSpellingCheckPath, Does.EndWith("**"));
 
         _commonValidationHelpersMock.Verify(
-            c => c.CheckSpelling(It.IsAny<string>(), _packagePath, false, It.IsAny<CancellationToken>()),
+            c => c.CheckSpelling(_packagePath, false, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
     [Test]
     public async Task CheckSpelling_WithFixEnabled_DelegatesToCommonValidationHelpers()
     {
-        var repoRoot = "/tmp/repo-root";
         _packagePath = "/tmp/repo-root/sdk/package";
         var expectedSuccess = new PackageCheckResponse(0, "Spelling issues fixed");
 
-        _gitHelperMock
-            .Setup(g => g.DiscoverRepoRootAsync(_packagePath, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(repoRoot);
-
         _commonValidationHelpersMock
-            .Setup(c => c.CheckSpelling(It.IsAny<string>(), It.IsAny<string>(), true, It.IsAny<CancellationToken>()))
+            .Setup(c => c.CheckSpelling(It.IsAny<string>(), true, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedSuccess);
 
         var response = await _languageChecks.CheckSpelling(_packagePath, true, CancellationToken.None);
@@ -166,7 +151,7 @@ internal class JavaScriptLanguageSpecificChecksTests
         Assert.That(response.ExitCode, Is.EqualTo(0));
 
         _commonValidationHelpersMock.Verify(
-            c => c.CheckSpelling(It.IsAny<string>(), _packagePath, true, It.IsAny<CancellationToken>()),
+            c => c.CheckSpelling(_packagePath, true, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 

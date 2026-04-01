@@ -2,6 +2,7 @@
 @{
 	Layout = "/EmailTemplates/_EmailLayout.cshtml";
 	ViewData["EmailTitle"] = "New Revision Uploaded";
+	ViewData["EmailPreheader"] = $"A new revision ({Model.RevisionName}) was uploaded for {Model.ReviewName}.";
 }
 
 <p class="section">A new revision has been uploaded for this review.</p>

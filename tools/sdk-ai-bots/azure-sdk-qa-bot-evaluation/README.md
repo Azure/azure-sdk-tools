@@ -12,9 +12,9 @@ This directory contains evaluation testing for the Azure SDK AI bot.
 
 ### In DevOps pipeline
 
-Offline evaluation runs can be triggered by the [tools - azure-sdk-ai-bot-evaluate-ci](https://dev.azure.com/azure-sdk/internal/_build?definitionId=7918) pipeline. Results of the run can be found on the Evaluation tab in the Azure AI Foundry portal. The pipeline will automatically trigger on pull requests in the azure/azure-sdk-tools repository.
+Offline evaluation runs can be triggered by the [tools - azure-sdk-ai-bot-evaluate-ci](https://dev.azure.com/azure-sdk/internal/_build?definitionId=7918) pipeline. Results of the run can be found on the Evaluation tab in the Azure AI Foundry portal. The pipeline will automatically trigger on pull requests in the azure/azure-sdk-tools repository. The evaluation result will be published as artifact 'evaluation-results'
 
-Online evaluation runs can be triggered by the [tools - sdk-ai-bot-online-evaluation](https://dev.azure.com/azure-sdk/internal/_build?definitionId=7913) pipeline. Results of the run can be found on the Evaluation tab in the Azure AI Foundry portal. The pipeline is scheduled to trigger automatically to verify the performance of the SDK QA bot in the production environment. The evaluation result will be published as artifact 'evaluation-results'
+Online evaluation runs can be triggered by the [tools - sdk-ai-bot-online-evaluation](https://dev.azure.com/azure-sdk/internal/_build?definitionId=7913) pipeline. Results of the run can be found on the Evaluation tab in the Azure AI Foundry portal. The pipeline is scheduled to trigger automatically to verify the performance of the SDK QA bot in the production environment.
 
 #### How to resolve evaluation CI pipeline failures
 
@@ -25,7 +25,7 @@ fails in a PR, the PR is blocked and cannot be approved until the failure is pro
 **PR owner responsibilities**
 When the evaluation CI fails, the PR owner must:
 1. Download the 'evaluation-results' artifact from the pipeline run.
-2. Review each failed case recorded in <category>-failed-cases-YYYY-MM-DD-SS.json.
+2. Review each failed case recorded in <category>-failed-cases-YYYY-MM-DD-HH-SS.json.
 3. Determine whether each failed case is caused by changes introduced in the PR:
    1. If caused by the PR, fix the issue and update the PR.
    2. If not caused by the PR, provide a clear explanation and supporting context.

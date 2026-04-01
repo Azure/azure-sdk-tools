@@ -9,6 +9,7 @@ import uuid
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from src._database_manager import DatabaseManager
 from src._models import Example, Guideline, Memory
+from src._prompt_runner import run_prompt
 from src._search_manager import SearchManager
 
 from ._base import MentionWorkflow
@@ -23,6 +24,8 @@ class UpdateKnowledgeBaseWorkflow(MentionWorkflow):
         guideline_ids = plan.get("guideline_ids", [])
         raw_memory = plan.get("memory", {})
         raw_memory["source"] = "mention_agent"
+        if self.source_comment_id:
+            raw_memory["source_comment_id"] = self.source_comment_id
         raw_memory["service"] = None
         raw_examples = raw_memory.pop("related_examples", [])
 
@@ -75,3 +78,13 @@ class UpdateKnowledgeBaseWorkflow(MentionWorkflow):
             failures[memory.id] = str(e)
         SearchManager.run_indexers()
         return {"success": success, "failures": failures}
+
+    def summarize(self, results: dict):
+        """Pass full results to the summarize prompt (not GitHub-filtered)."""
+        inputs = {"results": results}
+        try:
+            summary = run_prompt(folder="mention", filename=self.summarize_prompt_file, inputs=inputs)
+            return summary
+        except Exception as e:
+            print(f"Error summarizing results: {e}")
+            return "Error summarizing results."

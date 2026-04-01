@@ -331,7 +331,7 @@ public final class MongoClustersListConnectionStringsSamples {
                 java_examples[0].target_dir,
             )
 
-    def test_process_java_example_original_file_typespec_resourcemanager(self):
+    def test_process_java_example_original_file_typespec_keyvault(self):
         java_code = """
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
@@ -349,30 +349,23 @@ public final class SecretsListSamples {
     /**
      * Sample code: List secrets in the vault.
      * 
-     * @param azure The entry point for accessing resource management APIs in Azure.
+     * @param manager Entry point to KeyVaultManager.
      */
-    public static void listSecretsInTheVault(com.azure.resourcemanager.AzureResourceManager azure) {
-        azure.vaults()
-            .manager()
-            .serviceClient()
-            .getSecrets()
+    public static void listSecretsInTheVault(
+        com.azure.resourcemanager.keyvault.KeyVaultManager manager) {
+        manager.secrets()
             .list("sample-group", "sample-vault", null, com.azure.core.util.Context.NONE);
     }
 }
 """
 
-        with create_mock_test_folder_resourcemanager() as tmp_dir_name:
+        with create_mock_test_folder_keyvault() as tmp_dir_name:
             _set_paths(
                 path.join(tmp_dir_name, "azure-rest-api-specs"),
-                path.join(tmp_dir_name, "azure-sdk-for-java/sdk/resourcemanager/azure-resourcemanager"),
+                path.join(tmp_dir_name, "azure-sdk-for-java/sdk/keyvault/azure-resourcemanager-keyvault"),
             )
             java_examples = process_java_example_content(
-                java_code.splitlines(keepends=True),
-                "SecretsListSamples",
-                path.join(
-                    tmp_dir_name,
-                    "azure-sdk-for-java/sdk/resourcemanager/azure-resourcemanager/src/samples/java/com/azure/resourcemanager/keyvault/generated/SecretsListSamples.java",
-                ),
+                java_code.splitlines(keepends=True), "SecretsListSamples"
             )
 
             self.assertEqual(1, len(java_examples))
@@ -383,7 +376,7 @@ public final class SecretsListSamples {
             )
 
 
-def create_mock_test_folder_resourcemanager() -> tempfile.TemporaryDirectory:
+def create_mock_test_folder_keyvault() -> tempfile.TemporaryDirectory:
     tmp_path = path.abspath(".")
     tmp_dir = tempfile.TemporaryDirectory(dir=tmp_path)
     try:
@@ -448,7 +441,6 @@ additionalDirectories:
 }
 """
 
-        # api-version 2025-05-01
         specs_path = path.join(
             tmp_dir.name,
             "azure-rest-api-specs/specification/keyvault/KeyVault.Management/examples/2025-05-01",

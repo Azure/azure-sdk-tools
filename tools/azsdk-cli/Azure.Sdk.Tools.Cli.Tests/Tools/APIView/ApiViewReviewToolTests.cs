@@ -28,10 +28,10 @@ public class ApiViewReviewToolTests
         string apiViewUrl = $"https://apiview.dev/review/123?activeApiRevisionId={revisionId}";
         string expectedComments = "[{\"lineNo\":10,\"commentText\":\"Staging comment\",\"isResolved\":true}]";
         _mockApiViewService
-            .Setup(x => x.GetCommentsByRevisionAsync(revisionId))
+            .Setup(x => x.GetCommentsByRevisionAsync(revisionId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedComments);
 
-        APIViewResponse response = await apiViewReviewTool.GetComments(apiViewUrl);
+        APIViewResponse response = await apiViewReviewTool.GetComments(apiViewUrl, CancellationToken.None);
 
         Assert.That(response.Result, Is.EqualTo(expectedComments));
         Assert.That(response.ResponseError, Is.Null);
@@ -43,10 +43,10 @@ public class ApiViewReviewToolTests
         string apiViewUrl = "https://apiview.dev/review/123?activeApiRevisionId=test-revision-456";
         string expectedComments = "[{\"lineNo\":5,\"commentText\":\"URL comment\",\"isResolved\":false}]";
         _mockApiViewService
-            .Setup(x => x.GetCommentsByRevisionAsync("test-revision-456"))
+            .Setup(x => x.GetCommentsByRevisionAsync("test-revision-456", It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedComments);
 
-        APIViewResponse response = await apiViewReviewTool.GetComments(apiViewUrl);
+        APIViewResponse response = await apiViewReviewTool.GetComments(apiViewUrl, CancellationToken.None);
 
         Assert.That(response.Result, Is.EqualTo(expectedComments));
         Assert.That(response.ResponseError, Is.Null);
@@ -57,7 +57,7 @@ public class ApiViewReviewToolTests
     {
         string invalidUrl = "https://apiview.dev/review/123"; // Missing activeApiRevisionId
 
-        APIViewResponse result = await apiViewReviewTool.GetComments(invalidUrl);
+        APIViewResponse result = await apiViewReviewTool.GetComments(invalidUrl, CancellationToken.None);
 
         Assert.That(result.ResponseError, Does.Contain("activeApiRevisionId"));
     }
@@ -67,13 +67,13 @@ public class ApiViewReviewToolTests
     {
         string malformedUrl = "not-a-valid-url";
 
-        APIViewResponse result = await apiViewReviewTool.GetComments(malformedUrl);
+        APIViewResponse result = await apiViewReviewTool.GetComments(malformedUrl, CancellationToken.None);
 
         _mockApiViewService
-            .Setup(x => x.GetCommentsByRevisionAsync(malformedUrl))
+            .Setup(x => x.GetCommentsByRevisionAsync(malformedUrl, It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        result = await apiViewReviewTool.GetComments(malformedUrl);
+        result = await apiViewReviewTool.GetComments(malformedUrl, CancellationToken.None);
         Assert.That(result.ResponseError, Does.Contain("Failed to get comments: Input needs to be a valid APIView URL"));
     }
 
@@ -83,10 +83,10 @@ public class ApiViewReviewToolTests
         string revisionId = "test-revision-123";
         string apiViewUrl = $"https://apiview.dev/review/123?activeApiRevisionId={revisionId}";
         _mockApiViewService
-            .Setup(x => x.GetCommentsByRevisionAsync(revisionId))
+            .Setup(x => x.GetCommentsByRevisionAsync(revisionId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        APIViewResponse result = await apiViewReviewTool.GetComments(apiViewUrl);
+        APIViewResponse result = await apiViewReviewTool.GetComments(apiViewUrl, CancellationToken.None);
 
         Assert.That(result.ResponseError, Does.Contain("Failed to retrieve comments"));
     }
@@ -97,10 +97,10 @@ public class ApiViewReviewToolTests
         string revisionId = "test-revision-123";
         string apiViewUrl = $"https://apiview.dev/review/123?activeApiRevisionId={revisionId}";
         _mockApiViewService
-            .Setup(x => x.GetCommentsByRevisionAsync(revisionId))
+            .Setup(x => x.GetCommentsByRevisionAsync(revisionId, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Service error"));
 
-        APIViewResponse result = await apiViewReviewTool.GetComments(apiViewUrl);
+        APIViewResponse result = await apiViewReviewTool.GetComments(apiViewUrl, CancellationToken.None);
 
         Assert.That(result.ResponseError, Does.Contain("Failed to get comments: Service error"));
     }
@@ -109,7 +109,7 @@ public class ApiViewReviewToolTests
     public async Task GetRevisionComments_WithEmptyRevisionId_ReturnsError()
     {
         string emptyRevisionId = "";
-        APIViewResponse result = await apiViewReviewTool.GetComments(emptyRevisionId);
+        APIViewResponse result = await apiViewReviewTool.GetComments(emptyRevisionId, CancellationToken.None);
 
         Assert.That(result.ResponseError, Does.Contain("cannot be null or empty"));
     }
@@ -123,10 +123,300 @@ public class ApiViewReviewToolTests
         string expectedComments = "Test comments";
 
         _mockApiViewService
-            .Setup(x => x.GetCommentsByRevisionAsync(expectedRevisionId))
+            .Setup(x => x.GetCommentsByRevisionAsync(expectedRevisionId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedComments);
 
-        await apiViewReviewTool.GetComments(apiViewUrl);
-        _mockApiViewService.Verify(x => x.GetCommentsByRevisionAsync(expectedRevisionId), Times.Once);
+        await apiViewReviewTool.GetComments(apiViewUrl, CancellationToken.None);
+        _mockApiViewService.Verify(x => x.GetCommentsByRevisionAsync(expectedRevisionId, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    // create-ci-revision CLI command tests
+
+    [Test]
+    public async Task CreateCIRevision_WithRequiredPipelineParams_ReturnsSuccess()
+    {
+        string expectedContent = "review created";
+        _mockApiViewService
+            .Setup(x => x.CreateCIReviewAsync(
+                "12345", "packages", "azure-core-1.0.0.whl", "azure-core_python.json",
+                "Azure/azure-sdk-for-python", "azure-core", "internal",
+                "CI Build", false, null, false, null, null, default))
+            .ReturnsAsync((expectedContent, 200));
+
+        var command = apiViewReviewTool.GetCommandInstances().First(c => c.Name == "create-ci-revision");
+        var parseResult = command.Parse(
+            "create-ci-revision --build-id 12345 --artifact-name packages " +
+            "--source-file-path azure-core-1.0.0.whl --code-token-file-path azure-core_python.json " +
+            "--label \"CI Build\" --repo-name Azure/azure-sdk-for-python --package-name azure-core --project internal");
+        var response = (APIViewResponse)await apiViewReviewTool.HandleCommand(parseResult, CancellationToken.None);
+
+        Assert.That(response.Result, Is.EqualTo(expectedContent));
+        Assert.That(response.ResponseError, Is.Null);
+        Assert.That(response.Message, Does.Contain("approved"));
+    }
+
+    [Test]
+    public async Task CreateCIRevision_WithDefaultsAndAutoLabel_UsesSourceBranchForLabel()
+    {
+        string expectedContent = "review created";
+        _mockApiViewService
+            .Setup(x => x.CreateCIReviewAsync(
+                "12345", "packages", "azure-core-1.0.0.whl", "azure-core_python.json",
+                "Azure/azure-sdk-for-python", "azure-core", "internal",
+                "Source Branch:main", false, null, false, null, "main", default))
+            .ReturnsAsync((expectedContent, 200));
+
+        var command = apiViewReviewTool.GetCommandInstances().First(c => c.Name == "create-ci-revision");
+        var parseResult = command.Parse(
+            "create-ci-revision --build-id 12345 --artifact-name packages --project internal " +
+            "--source-file-path azure-core-1.0.0.whl --code-token-file-path azure-core_python.json " +
+            "--repo-name Azure/azure-sdk-for-python --package-name azure-core --source-branch main");
+        var response = (APIViewResponse)await apiViewReviewTool.HandleCommand(parseResult, CancellationToken.None);
+
+        Assert.That(response.Result, Is.EqualTo(expectedContent));
+        Assert.That(response.ResponseError, Is.Null);
+    }
+
+    [Test]
+    public async Task CreateCIRevision_WithAllPipelineParams_ReturnsSuccess()
+    {
+        string expectedContent = "review created";
+        _mockApiViewService
+            .Setup(x => x.CreateCIReviewAsync(
+                "12345", "packages", "azure-core-1.0.0.whl", "azure-core_python.json",
+                "Azure/azure-sdk-for-python", "azure-core", "internal",
+                "CI Build", true, "1.0.0", true, "client", "refs/heads/main", default))
+            .ReturnsAsync((expectedContent, 202));
+
+        var command = apiViewReviewTool.GetCommandInstances().First(c => c.Name == "create-ci-revision");
+        var parseResult = command.Parse(
+            "create-ci-revision --build-id 12345 --artifact-name packages " +
+            "--source-file-path azure-core-1.0.0.whl --code-token-file-path azure-core_python.json " +
+            "--label \"CI Build\" --repo-name Azure/azure-sdk-for-python --package-name azure-core --project internal " +
+            "--compare-all-revisions --package-version 1.0.0 --set-release-tag --package-type client --source-branch refs/heads/main");
+        var response = (APIViewResponse)await apiViewReviewTool.HandleCommand(parseResult, CancellationToken.None);
+
+        Assert.That(response.Result, Is.EqualTo(expectedContent));
+        Assert.That(response.ResponseError, Is.Null);
+    }
+
+    [Test]
+    public async Task CreateCIRevision_WhenServiceReturnsError_ReturnsError()
+    {
+        _mockApiViewService
+            .Setup(x => x.CreateCIReviewAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<string?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((string?)null, 500));
+
+        var command = apiViewReviewTool.GetCommandInstances().First(c => c.Name == "create-ci-revision");
+        var parseResult = command.Parse(
+            "create-ci-revision --build-id 12345 --artifact-name packages " +
+            "--source-file-path file.whl --code-token-file-path file.json " +
+            "--label test --repo-name Azure/repo --package-name pkg --project internal");
+        var response = (APIViewResponse)await apiViewReviewTool.HandleCommand(parseResult, CancellationToken.None);
+
+        Assert.That(response.ResponseError, Does.Contain("Invalid status code"));
+        Assert.That(response.ResponseError, Does.Contain("engineering systems"));
+    }
+
+    [Test]
+    public async Task CreateCIRevision_WhenServiceThrowsException_ReturnsError()
+    {
+        _mockApiViewService
+            .Setup(x => x.CreateCIReviewAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<string?>(),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("Connection refused"));
+
+        var command = apiViewReviewTool.GetCommandInstances().First(c => c.Name == "create-ci-revision");
+        var parseResult = command.Parse(
+            "create-ci-revision --build-id 12345 --artifact-name packages " +
+            "--source-file-path file.whl --code-token-file-path file.json " +
+            "--label test --repo-name Azure/repo --package-name pkg --project internal");
+        var response = (APIViewResponse)await apiViewReviewTool.HandleCommand(parseResult, CancellationToken.None);
+
+        Assert.That(response.ResponseError, Does.Contain("Failed to create API revision"));
+        Assert.That(response.ResponseError, Does.Contain("Connection refused"));
+    }
+
+    [Test]
+    public async Task CreateCIRevision_WhenPackageNotFoundInArtifacts_ReturnsError()
+    {
+        _mockApiViewService
+            .Setup(x => x.CreateCIReviewAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<string?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((string?)null, 204));
+
+        var command = apiViewReviewTool.GetCommandInstances().First(c => c.Name == "create-ci-revision");
+        var parseResult = command.Parse(
+            "create-ci-revision --build-id 12345 --artifact-name packages " +
+            "--source-file-path file.whl --code-token-file-path file.json " +
+            "--label test --repo-name Azure/repo --package-name pkg --project internal");
+        var response = (APIViewResponse)await apiViewReviewTool.HandleCommand(parseResult, CancellationToken.None);
+
+        Assert.That(response.ResponseError, Does.Contain("Invalid status code"));
+    }
+
+    [Test]
+    public async Task CreateCIRevision_WithInvalidRepoNameFormat_ReturnsError()
+    {
+        var command = apiViewReviewTool.GetCommandInstances().First(c => c.Name == "create-ci-revision");
+        var parseResult = command.Parse(
+            "create-ci-revision --build-id 12345 --artifact-name packages " +
+            "--source-file-path file.whl --code-token-file-path file.json " +
+            "--label test --repo-name azure-sdk-for-python --package-name pkg --project internal");
+        var response = (APIViewResponse)await apiViewReviewTool.HandleCommand(parseResult, CancellationToken.None);
+
+        Assert.That(response.ResponseError, Does.Contain("owner/repo"));
+    }
+
+    // create-pull-request-revision tests
+
+    [Test]
+    public async Task CreatePullRequestRevision_WithApiChanges_Returns201Success()
+    {
+        string expectedContent = "{\"message\":\"revision created\"}";
+        _mockApiViewService
+            .Setup(x => x.CreatePullRequestRevisionAsync(
+                "99999", "packages", "azure-core/azure-core-1.0.0.whl", "abc123def",
+                "Azure/azure-sdk-for-python", "azure-core",
+                42, "azure-core_python.json", null, "python", "internal", null, null, default))
+            .ReturnsAsync((expectedContent, 201));
+
+        var commands = apiViewReviewTool.GetCommandInstances();
+        var command = commands.First(c => c.Name == "create-pull-request-revision");
+        var parseResult = command.Parse(
+            "create-pull-request-revision --build-id 99999 --artifact-name packages " +
+            "--source-file-path azure-core/azure-core-1.0.0.whl --commit-sha abc123def " +
+            "--repo-name Azure/azure-sdk-for-python --package-name azure-core " +
+            "--pull-request-number 42 --code-token-file-path azure-core_python.json --language python --project internal");
+        var response = (APIViewResponse)await apiViewReviewTool.HandleCommand(parseResult, CancellationToken.None);
+
+        Assert.That(response.ResponseError, Is.Null);
+        Assert.That(response.Result, Is.EqualTo(expectedContent));
+        Assert.That(response.Message, Does.Contain("API changes detected"));
+    }
+
+    [Test]
+    public async Task CreatePullRequestRevision_WithNoApiChanges_Returns208Success()
+    {
+        string expectedContent = "{\"message\":\"no changes\"}";
+        _mockApiViewService
+            .Setup(x => x.CreatePullRequestRevisionAsync(
+                "99999", "packages", "azure-core/azure-core-1.0.0.whl", "abc123def",
+                "Azure/azure-sdk-for-python", "azure-core",
+                42, "azure-core_python.json", null, null, "internal", null, null, default))
+            .ReturnsAsync((expectedContent, 208));
+
+        var commands = apiViewReviewTool.GetCommandInstances();
+        var command = commands.First(c => c.Name == "create-pull-request-revision");
+        var parseResult = command.Parse(
+            "create-pull-request-revision --build-id 99999 --artifact-name packages " +
+            "--source-file-path azure-core/azure-core-1.0.0.whl --commit-sha abc123def " +
+            "--repo-name Azure/azure-sdk-for-python --package-name azure-core " +
+            "--pull-request-number 42 --code-token-file-path azure-core_python.json --project internal");
+        var response = (APIViewResponse)await apiViewReviewTool.HandleCommand(parseResult, CancellationToken.None);
+
+        Assert.That(response.ResponseError, Is.Null);
+        Assert.That(response.Result, Is.EqualTo(expectedContent));
+        Assert.That(response.Message, Does.Contain("No API changes detected"));
+    }
+
+    [Test]
+    public async Task CreatePullRequestRevision_WithAllParams_ReturnsSuccess()
+    {
+        string expectedContent = "{\"message\":\"revision created\"}";
+        _mockApiViewService
+            .Setup(x => x.CreatePullRequestRevisionAsync(
+                "99999", "packages", "azure-core-1.0.0.whl", "abc123def",
+                "Azure/azure-sdk-for-python", "azure-core",
+                42, "azure-core_python.json", "azure-core_python_baseline.json",
+                "python", "internal", "client", "typespec-metadata.json", default))
+            .ReturnsAsync((expectedContent, 201));
+
+        var commands = apiViewReviewTool.GetCommandInstances();
+        var command = commands.First(c => c.Name == "create-pull-request-revision");
+        var parseResult = command.Parse(
+            "create-pull-request-revision --build-id 99999 --artifact-name packages " +
+            "--source-file-path azure-core-1.0.0.whl --commit-sha abc123def " +
+            "--repo-name Azure/azure-sdk-for-python --package-name azure-core " +
+            "--pull-request-number 42 --code-token-file-path azure-core_python.json " +
+            "--baseline-code-file azure-core_python_baseline.json " +
+            "--language python --project internal --package-type client --metadata-file typespec-metadata.json");
+        var response = (APIViewResponse)await apiViewReviewTool.HandleCommand(parseResult, CancellationToken.None);
+
+        Assert.That(response.ResponseError, Is.Null);
+        Assert.That(response.Result, Is.EqualTo(expectedContent));
+        Assert.That(response.Message, Does.Contain("API changes detected"));
+    }
+
+    [Test]
+    public async Task CreatePullRequestRevision_WhenServiceReturnsError_ReturnsError()
+    {
+        _mockApiViewService
+            .Setup(x => x.CreatePullRequestRevisionAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<string?>(),
+                It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((string?)null, 500));
+
+        var commands = apiViewReviewTool.GetCommandInstances();
+        var command = commands.First(c => c.Name == "create-pull-request-revision");
+        var parseResult = command.Parse(
+            "create-pull-request-revision --build-id 99999 --artifact-name packages " +
+            "--source-file-path file.whl --code-token-file-path file.json --commit-sha abc123 " +
+            "--repo-name Azure/repo --package-name pkg --pull-request-number 1 --project internal");
+        var response = (APIViewResponse)await apiViewReviewTool.HandleCommand(parseResult, CancellationToken.None);
+
+        Assert.That(response.ResponseError, Does.Contain("Invalid status code"));
+        Assert.That(response.ResponseError, Does.Contain("engineering systems"));
+    }
+
+    [Test]
+    public async Task CreatePullRequestRevision_WhenServiceThrowsException_ReturnsError()
+    {
+        _mockApiViewService
+            .Setup(x => x.CreatePullRequestRevisionAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<string?>(),
+                It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>(),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("Connection refused"));
+
+        var commands = apiViewReviewTool.GetCommandInstances();
+        var command = commands.First(c => c.Name == "create-pull-request-revision");
+        var parseResult = command.Parse(
+            "create-pull-request-revision --build-id 99999 --artifact-name packages " +
+            "--source-file-path file.whl --code-token-file-path file.json --commit-sha abc123 " +
+            "--repo-name Azure/repo --package-name pkg --pull-request-number 1 --project internal");
+        var response = (APIViewResponse)await apiViewReviewTool.HandleCommand(parseResult, CancellationToken.None);
+
+        Assert.That(response.ResponseError, Does.Contain("Failed to create API revision"));
+        Assert.That(response.ResponseError, Does.Contain("Connection refused"));
+    }
+
+    [Test]
+    public async Task CreatePullRequestRevision_WithInvalidRepoNameFormat_ReturnsError()
+    {
+        var commands = apiViewReviewTool.GetCommandInstances();
+        var command = commands.First(c => c.Name == "create-pull-request-revision");
+        var parseResult = command.Parse(
+            "create-pull-request-revision --build-id 99999 --artifact-name packages " +
+            "--source-file-path file.whl --code-token-file-path file.json --commit-sha abc123 " +
+            "--repo-name azure-sdk-for-python --package-name pkg --pull-request-number 1 --project internal");
+        var response = (APIViewResponse)await apiViewReviewTool.HandleCommand(parseResult, CancellationToken.None);
+
+        Assert.That(response.ResponseError, Does.Contain("owner/repo"));
     }
 }

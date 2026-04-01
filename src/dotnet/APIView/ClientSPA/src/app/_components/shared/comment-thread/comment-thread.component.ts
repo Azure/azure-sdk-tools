@@ -20,7 +20,8 @@ import { LanguageNamesPipe } from 'src/app/_pipes/language-names.pipe';
 import { CodePanelRowData } from 'src/app/_models/codePanelModels';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
-import { CodeLineRowNavigationDirection } from 'src/app/_helpers/common-helpers';
+import { CodeLineRowNavigationDirection, getStructuredTokenClass } from 'src/app/_helpers/common-helpers';
+import { StructuredToken } from 'src/app/_models/structuredToken';
 import { CommentSeverityHelper } from 'src/app/_helpers/comment-severity.helper';
 import { CommentSeverity, CommentSource } from 'src/app/_models/commentItemModel';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
@@ -77,6 +78,7 @@ export class CommentThreadComponent {
   @Input() reviewId: string = '';
   @Input() allComments: CommentItemModel[] = [];
   @Input() allCodePanelRowData: CodePanelRowData[] = [];
+  @Input() elementId: string = '';
 
   @Input() userProfile : UserProfile | undefined;
   @Output() cancelCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
@@ -87,6 +89,7 @@ export class CommentThreadComponent {
   @Output() commentDownvoteActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() commentThreadNavigationEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() batchResolutionActionEmitter : EventEmitter<CommentUpdatesDto> = new EventEmitter<CommentUpdatesDto>();
+  @Output() navigateToElementEmitter : EventEmitter<string> = new EventEmitter<string>();
 
   @ViewChildren(Menu) menus!: QueryList<Menu>;
   @ViewChildren(EditorComponent) editor!: QueryList<EditorComponent>;
@@ -121,6 +124,7 @@ export class CommentThreadComponent {
   showAIDeleteDialog: boolean = false;
   pendingDownvoteAction: CommentUpdatesDto | null = null;
   pendingDeleteAction: CommentUpdatesDto | null = null;
+  conversationCodeRow: CodePanelRowData | null = null;
 
   get pendingDownvoteCommentId(): string {
     return this.pendingDownvoteAction?.commentId || '';
@@ -138,6 +142,9 @@ export class CommentThreadComponent {
     }
 
     const firstComment = this.codePanelRowData.comments[0];
+    if (this.isDiagnostic(firstComment)) {
+      return false;
+    }
     return firstComment.createdBy === this.userProfile?.userName ||
            this.permissionsService.isAdmin(this.userProfile?.permissions) ||
            (firstComment.createdBy === 'azure-sdk' && this.permissionsService.isApproverFor(this.userProfile?.permissions, this.reviewContextService.getLanguage()));
@@ -166,7 +173,16 @@ export class CommentThreadComponent {
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['codePanelRowData']) {
+      // Ensure comments within the thread are always in chronological order.
+      // The server normalizes timestamps, but this is a defense-in-depth
+      // measure against legacy data with mixed timezone kinds.
+      if (this.codePanelRowData?.comments && this.codePanelRowData.comments.length > 1) {
+        this.codePanelRowData.comments.sort((a, b) =>
+          new Date(a.createdOn).getTime() - new Date(b.createdOn).getTime()
+        );
+      }
       this.setCommentResolutionState();
+      this.updateConversationCodeContext();
     }
 
     if (changes['allComments'] || changes['allCodePanelRowData']) {
@@ -174,7 +190,24 @@ export class CommentThreadComponent {
         CommentRelationHelper.calculateRelatedComments(this.allComments);
       }
       this.visibleRelatedCommentsCache.clear();
+      this.updateConversationCodeContext();
     }
+  }
+
+  private updateConversationCodeContext() {
+    if (this.instanceLocation !== 'conversations') {
+      return;
+    }
+    const elementId = this.codePanelRowData?.comments?.[0]?.elementId;
+    if (!elementId || !this.allCodePanelRowData || this.allCodePanelRowData.length === 0) {
+      this.conversationCodeRow = null;
+      return;
+    }
+    this.conversationCodeRow = this.allCodePanelRowData.find(row => row.nodeId === elementId) || null;
+  }
+
+  getTokenClass(token: StructuredToken) {
+    return getStructuredTokenClass(token);
   }
 
   setCommentResolutionState() {
@@ -221,13 +254,13 @@ export class CommentThreadComponent {
         { label: 'Edit', icon: 'pi pi-pencil', command: (event) => this.showEditEditor(event) },
         { label: 'Delete', icon: 'pi pi-trash', command: (event) => this.deleteComment(event) }
       ]});
-    } else if (comment && this.permissionsService.isAdmin(this.userProfile?.permissions)) {
+    } else if (comment && this.permissionsService.isAdmin(this.userProfile?.permissions) && this.canDeleteComment(comment)) {
       // Admins can delete any comment but not edit others' comments
       menu.push({ separator: true });
       menu.push({ items: [
         { label: 'Delete', icon: 'pi pi-trash', command: (event) => this.deleteComment(event) }
       ]});
-    } else if (comment && comment.createdBy == "azure-sdk" && this.permissionsService.isApproverFor(this.userProfile?.permissions, this.reviewContextService.getLanguage())) {
+    } else if (comment && comment.createdBy == "azure-sdk" && this.permissionsService.isApproverFor(this.userProfile?.permissions, this.reviewContextService.getLanguage()) && this.canDeleteComment(comment)) {
       menu.push({ separator: true });
       menu.push({ items: [
         { label: 'Delete', icon: 'pi pi-trash', command: (event) => this.deleteComment(event) }
@@ -418,7 +451,7 @@ export class CommentThreadComponent {
 
     if (this.instanceLocation === "conversations") {
       revisionIdForConversationGroup = target.closest(".conversation-group-revision-id")?.getAttribute("data-conversation-group-revision-id");
-      elementId = (target.closest(".conversation-group-threads")?.getElementsByClassName("conversation-group-element-id")[0] as HTMLElement).innerText;
+      elementId = this.elementId || this.codePanelRowData?.comments?.[0]?.elementId;
     } else if (this.instanceLocation === "samples") {
       elementId = target.closest(".user-comment-thread")?.getAttribute("title");
     } else if (this.instanceLocation === "code-panel") {
@@ -917,6 +950,13 @@ export class CommentThreadComponent {
 
   isSystemGenerated(comment: CommentItemModel): boolean {
     return this.isAIGenerated(comment) || this.isDiagnostic(comment);
+  }
+  canDeleteComment(comment: CommentItemModel): boolean {
+    return !this.isDiagnostic(comment);
+  }
+
+  get canResolveThread(): boolean {
+    return !(this.codePanelRowData?.comments || []).some(c => this.isDiagnostic(c));
   }
 
   hasAIInfo(comment: CommentItemModel): boolean {

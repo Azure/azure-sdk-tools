@@ -1,58 +1,142 @@
 :host ::ng-deep {
 
-    .side-menu {
-        width: 3.5rem !important;
-        min-width: unset !important;
-        background-color: var(--base-fg-color) !important;
+    .page-tabs {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background: var(--base-fg-color);
+        padding: 0 0.5rem;
+    }
 
-        .p-menuitem, .p-menuitem-content {
-            background: transparent !important;
-            transition: none !important;
-            border: none !important;
+    .panel-toggles {
+        display: flex;
+        align-items: center;
+        margin-left: auto;
+        padding-bottom: 0.1rem;
+    }
 
-            &:hover {
-                background: transparent !important;
+    .sidebar-toggle-btn {
+        padding: 0rem 0.35rem;
+        border: none !important;
+        background: transparent !important;
+        color: var(--text-muted-color) !important;
+        font-size: 1.1rem;
+        position: relative;
+
+        &:hover {
+            color: var(--base-text-color) !important;
+        }
+
+        &::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 20%;
+            width: 0;
+            height: 2px;
+            background: var(--primary-color);
+            transition: width 0.15s;
+        }
+    }
+
+    .btn-check:checked + .sidebar-toggle-btn {
+        color: var(--base-text-color) !important;
+
+        &::after {
+            width: 60%;
+        }
+    }
+
+    .page-tab {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.25rem 0.75rem;
+        border: none;
+        background: transparent;
+        color: var(--text-muted-color);
+        font-size: 0.75rem;
+        font-weight: 500;
+        cursor: pointer;
+        position: relative;
+        transition: color 0.15s;
+        white-space: nowrap;
+
+        &::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0.5rem;
+            right: 0.5rem;
+            height: 2px;
+            background: transparent;
+            border-radius: 2px 2px 0 0;
+            transition: background 0.15s;
+        }
+
+        &:hover:not(.active) {
+            color: var(--base-text-color);
+        }
+
+        &.active {
+            color: var(--primary-color);
+
+            &::after {
+                background: var(--primary-color);
             }
         }
 
-        .p-menuitem-link {
-            padding: 0.8rem 0.5rem !important;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: var(--base-fg-color) !important;
-            transition: none !important;
-
-            &:hover {
-                background-color: var(--base-bg-color) !important;
-            }
+        i {
+            font-size: 0.85rem;
         }
+    }
 
-        .icon-wrapper {
-            display: inline-flex;
-            position: relative;
-        }
+    .tab-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.65rem;
+        font-weight: 700;
+        min-width: 1.15rem;
+        height: 1.15rem;
+        line-height: 1;
+        text-align: center;
+        border-radius: 50%;
+        background: var(--red-500, #ef4444);
+        color: #fff;
+        margin-left: 0.1rem;
+    }
 
-        .menu-icon {
-            font-size: 1.5rem;
-        }
+    .namespace-alert-dot {
+        position: absolute;
+        top: 3px;
+        right: 1px;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--danger-color);
+        border: 1.5px solid var(--base-fg-color);
+        flex-shrink: 0;
+    }
 
-        .menu-badge {
-            position: absolute !important;
-            top: -0.6rem !important;
-            right: -0.3rem !important;
-            left: auto !important;
+    .tab-icon-wrapper {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
 
-            width: 1.5rem !important;
-            height: 1.5rem !important;
-            padding: 0 !important;
-            border-radius: 50%;
+    .layout-body {
+        display: flex;
+        align-items: flex-start;
+        gap: 0;
+        margin-top: 4px;
+    }
 
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-
-            font-size: 0.75rem !important;
-        }
+    .layout-content {
+        flex: 1;
+        min-width: 0;
     }
 }

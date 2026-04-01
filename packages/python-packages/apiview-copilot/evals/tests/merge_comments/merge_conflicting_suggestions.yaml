@@ -1,0 +1,41 @@
+testcase: merge_conflicting_suggestions
+comments: |
+  [{
+    "guideline_ids": [
+      "python_design.html#python-client-namespace"
+    ],
+    "line_no": 3,
+    "bad_code": "class azure.storage.blob.BlobServiceClient:",
+    "suggestion": "class azure.storage.blob.BlobClient:",
+    "comment": "The name 'BlobServiceClient' is too verbose. Consider shortening to 'BlobClient' per namespace guidelines.",
+    "is_generic": false
+  },
+  {
+    "guideline_ids": [],
+    "line_no": 3,
+    "bad_code": "class azure.storage.blob.BlobServiceClient:",
+    "suggestion": "class azure.storage.blob.StorageClient:",
+    "comment": "Use a more general name that describes the service rather than the specific resource.",
+    "is_generic": true
+  }]
+context: |
+  > **guideline_id:** python_design.html#python-client-namespace<br>**score:** 80<br>
+  ## Use a clear, concise name for the service client
+
+  DO name service clients with a clear, concise name that identifies the service and the type of client. The name should be descriptive and not overly verbose.
+
+  ### BAD Examples
+
+  ```python
+  class MyServiceManagerClient:
+      ...
+  ```
+
+  ### GOOD Examples
+
+  ```python
+  class BlobClient:
+      ...
+  ```
+response: |
+  [{"guideline_ids": ["python_design.html#python-client-namespace"], "line_no": 3, "bad_code": "class azure.storage.blob.BlobServiceClient:", "suggestion": "class azure.storage.blob.BlobClient:", "comment": "The name 'BlobServiceClient' is too verbose. Per namespace guidelines, use a clear and concise name like 'BlobClient' that identifies the service without redundancy.", "is_generic": true}]

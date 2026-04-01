@@ -92,7 +92,15 @@ public class CopilotAgentRunner(
             },
             // Disables copilot built-in tools
             // copilot built-in tools may be enabled in the future as needed
-            AvailableTools = [.. tools.Select(t => t.Name)]
+            AvailableTools = [.. tools.Select(t => t.Name)],
+            // Auto-approve all permission requests since agents run autonomously with no user interaction.
+            // The CLI's permission system sends permission.request RPC calls for tool execution.
+            // Without this handler, the SDK cannot get user consent and returns "Permission denied".
+            OnPermissionRequest = (request, invocation) =>
+            {
+                logger.LogDebug("Auto-approving permission request for tool execution");
+                return Task.FromResult(new PermissionRequestResult { Kind = PermissionRequestResultKind.Approved });
+            }
         };
 
         await using var session = await client.CreateSessionAsync(sessionConfig, ct);
@@ -119,7 +127,7 @@ public class CopilotAgentRunner(
                     logger.LogDebug("Assistant message: {Content}", msg.Data.Content?[..Math.Min(100, msg.Data.Content?.Length ?? 0)]);
                     break;
                 case ToolExecutionStartEvent toolStart:
-                    logger.LogDebug("Tool execution started: {ToolName}", toolStart.Data.ToolName);
+                    logger.LogDebug("Tool execution started: {ToolName} with arguments: {Arguments}", toolStart.Data.ToolName, toolStart.Data.Arguments);
                     break;
                 case ToolExecutionCompleteEvent toolComplete:
                     logger.LogDebug("Tool execution completed: {ToolCallId} success={Success}", toolComplete.Data.ToolCallId, toolComplete.Data.Success);
@@ -148,14 +156,14 @@ public class CopilotAgentRunner(
             sessionError = null; // Reset error state for each iteration
 
             logger.LogDebug("Sending message iteration {Iteration}", iterations);
-            
+
             // Create TCS before sending to ensure we don't miss the event
             sessionIdleTcs = new TaskCompletionSource();
-            
+
             // SendAsync returns the message ID but doesn't wait for processing
             // We need to wait for SessionIdleEvent to know when the agent is done
             await session.SendAsync(new MessageOptions { Prompt = prompt }, ct);
-            
+
             // Wait for the session to become idle (all tool calls completed)
             // Use cancellation-aware wait with timeout to prevent indefinite hangs
             logger.LogDebug("Waiting for session to become idle...");
@@ -189,13 +197,13 @@ public class CopilotAgentRunner(
                     throw new InvalidOperationException(
                         $"Agent failed to call Exit tool after {maxExitRetries} reminders");
                 }
-                logger.LogWarning("Agent completed without calling Exit tool (attempt {Attempt}/{Max}). Prompting to call Exit.", 
+                logger.LogWarning("Agent completed without calling Exit tool (attempt {Attempt}/{Max}). Prompting to call Exit.",
                     exitRetries, maxExitRetries);
                 prompt = "You did not call the Exit tool. You are running autonomously and must not ask for user input or confirmation. " +
                          "If the task is incomplete, continue working. If the task is complete, call the Exit tool with your result now.";
                 continue;
             }
-            
+
             // Reset exit retries on successful Exit call
             exitRetries = 0;
 

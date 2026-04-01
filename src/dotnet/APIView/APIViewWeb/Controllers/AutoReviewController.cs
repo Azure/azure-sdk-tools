@@ -14,11 +14,13 @@ public class AutoReviewController : Controller
 {
     private readonly IAPIRevisionsManager _apiRevisionsManager;
     private readonly IReviewManager _reviewManager;
+    private readonly INamespaceManager _namespaceManager;
 
-    public AutoReviewController(IReviewManager reviewManager, IAPIRevisionsManager apiRevisionManager)
+    public AutoReviewController(IReviewManager reviewManager, IAPIRevisionsManager apiRevisionManager, INamespaceManager namespaceManager)
     {
         _apiRevisionsManager = apiRevisionManager;
         _reviewManager = reviewManager;
+        _namespaceManager = namespaceManager;
     }
 
     public async Task<ActionResult> GetReviewStatus(string language, string packageName, string reviewId = null,
@@ -69,7 +71,7 @@ public class AutoReviewController : Controller
                 return Ok();
             }
 
-            if (review.IsApproved)
+            if (review.IsApproved || await _namespaceManager.IsNamespaceApprovedAsync(review.ProjectId, review.Language))
             {
                 return StatusCode(StatusCodes.Status201Created);
             }

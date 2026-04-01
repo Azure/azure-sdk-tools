@@ -1,0 +1,68 @@
+testcase: merge_naming_comments
+comments: |
+  [{
+    "guideline_ids": [
+      "python_design.html#python-models-no-class-suffix"
+    ],
+    "line_no": 517,
+    "bad_code": "class BlobObjectClass:",
+    "suggestion": "class BlobObject:",
+    "comment": "Class names should not end with a 'Class' suffix.",
+    "is_generic": false
+  },
+  {
+    "guideline_ids": [],
+    "line_no": 517,
+    "bad_code": "class BlobObjectClass:",
+    "suggestion": "class Blob:",
+    "comment": "Use a simple, concise name for the class.",
+    "is_generic": true
+  },
+  {
+    "memory_ids": [
+      "memory-abc123"
+    ],
+    "line_no": 517,
+    "bad_code": "class BlobObjectClass:",
+    "suggestion": "class Blob:",
+    "comment": "Architects vetoed other names that used 'ObjectClass' suffix.",
+    "is_generic": false
+  }]
+context: |
+  > **memory_id:** memory-abc123<br>**score:** 78<br>
+  ## Don't use 'ObjectClass' suffix in class names
+
+  It was suggested to avoid using the term "ObjectClass" in class names, as it is redundant.
+
+  ### BAD Examples
+
+  ```python
+  class KeyObjectClass:
+  ```
+
+  ### GOOD Examples
+
+  ```python
+  class Key:
+  ```
+
+  > **guideline_id:** python_design.html#python-models-no-class-suffix<br>**score:** 51<br>
+  ## Don't use 'Class' suffix in class names
+
+  It is redundant and adds nothing.
+
+  ### BAD Examples
+
+  ```python
+  class FooClass:
+      ...
+  ```
+
+  ### GOOD Examples
+
+  ```python
+  class Foo:
+      ...
+  ```
+response: |
+  [{"guideline_ids": ["python_design.html#python-models-no-class-suffix"], "memory_ids": ["memory-abc123"], "line_no": 517, "bad_code": "class BlobObjectClass:", "suggestion": "class Blob:", "comment": "The class name 'BlobObjectClass' violates naming conventions. Both the 'Class' suffix and the 'ObjectClass' pattern are redundant and should be avoided per guidelines and architectural decisions. Rename to 'Blob'.", "is_generic": true}]

@@ -57,7 +57,8 @@ public class SdkGenerationToolTests
         _tool = new SdkGenerationTool(
             _mockGitHelper.Object,
             _logger,
-            _mockTspClientHelper.Object
+            _mockTspClientHelper.Object,
+            Mock.Of<IRawOutputHelper>()
         );
     }
 
@@ -74,7 +75,7 @@ public class SdkGenerationToolTests
     public async Task GenerateSdkAsync_BothPathsEmpty_ReturnsFailure()
     {
         // Act
-        var result = await _tool.GenerateSdkAsync("/some/path", null, null, null);
+        var result = await _tool.GenerateSdkAsync(null, "/some/path", null, null, null);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain(BothPathsEmptyError));
@@ -93,11 +94,11 @@ public class SdkGenerationToolTests
             TypeSpecProject = Path.GetDirectoryName(tspLocationPath)!
         };
         _mockTspClientHelper
-            .Setup(x => x.UpdateGenerationAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.UpdateGenerationAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResult);
 
         // Act
-        var result = await _tool.GenerateSdkAsync("/some/path", null, tspLocationPath, null);
+        var result = await _tool.GenerateSdkAsync(null, "/some/path", null, tspLocationPath, null);
 
         // Assert
         Assert.That(result.Result, Is.EqualTo("succeeded"));
@@ -105,7 +106,7 @@ public class SdkGenerationToolTests
         Assert.That(result.NextSteps, Is.Not.Null);
         Assert.That(result.NextSteps, Has.Count.GreaterThan(0));
         Assert.That(result.NextSteps?.First(), Does.Contain("build the code"));
-        _mockTspClientHelper.Verify(x => x.UpdateGenerationAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockTspClientHelper.Verify(x => x.UpdateGenerationAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -115,7 +116,7 @@ public class SdkGenerationToolTests
         var tspLocationPath = Path.Combine(_tempDirectory.DirectoryPath, "nonexistent-" + TspLocationFileName);
 
         // Act
-        var result = await _tool.GenerateSdkAsync("/some/path", null, tspLocationPath, null);
+        var result = await _tool.GenerateSdkAsync(null, "/some/path", null, tspLocationPath, null);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain("does not exist"));
@@ -139,7 +140,7 @@ public class SdkGenerationToolTests
             .ReturnsAsync(expectedResult);
 
         // Act
-        var result = await _tool.GenerateSdkAsync(_tempDirectory.DirectoryPath, RemoteTspConfigUrl, null, null);
+        var result = await _tool.GenerateSdkAsync(null, _tempDirectory.DirectoryPath, RemoteTspConfigUrl, null, null);
 
         // Assert
         Assert.That(result.Result, Is.EqualTo("succeeded"));
@@ -172,7 +173,7 @@ public class SdkGenerationToolTests
             .ReturnsAsync(expectedResult);
 
         // Act
-        var result = await _tool.GenerateSdkAsync(_tempDirectory.DirectoryPath, tspConfigPath, null, null);
+        var result = await _tool.GenerateSdkAsync(null, _tempDirectory.DirectoryPath, tspConfigPath, null, null);
 
         // Assert
         Assert.That(result.Result, Is.EqualTo("succeeded"));
@@ -192,7 +193,7 @@ public class SdkGenerationToolTests
         _mockGitHelper.Setup(x => x.GetRepoNameAsync(_tempDirectory.DirectoryPath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
 
         // Act - Use a non-existent file path
-        var result = await _tool.GenerateSdkAsync(_tempDirectory.DirectoryPath, "/nonexistent/" + TspConfigFileName, null, null);
+        var result = await _tool.GenerateSdkAsync(null, _tempDirectory.DirectoryPath, "/nonexistent/" + TspConfigFileName, null, null);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain(FileNotExistError));
@@ -217,7 +218,7 @@ public class SdkGenerationToolTests
             .ReturnsAsync(failedResult);
 
         // Act
-        var result = await _tool.GenerateSdkAsync(_tempDirectory.DirectoryPath, RemoteTspConfigUrl, null, null);
+        var result = await _tool.GenerateSdkAsync(null, _tempDirectory.DirectoryPath, RemoteTspConfigUrl, null, null);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain("Failed to initialize TypeSpec generation"));
@@ -232,7 +233,7 @@ public class SdkGenerationToolTests
         _mockGitHelper.Setup(x => x.GetRepoNameAsync(_tempDirectory.DirectoryPath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
 
         // Act - Use invalid remote URL that doesn't match GitHub blob pattern
-        var result = await _tool.GenerateSdkAsync(_tempDirectory.DirectoryPath, InvalidRemoteTspConfigUrl, null, null);
+        var result = await _tool.GenerateSdkAsync(null, _tempDirectory.DirectoryPath, InvalidRemoteTspConfigUrl, null, null);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain("Invalid remote GitHub URL with commit"));
@@ -251,7 +252,7 @@ public class SdkGenerationToolTests
             .ThrowsAsync(new InvalidOperationException("Test exception"));
 
         // Act - Now remote URLs work properly
-        var result = await _tool.GenerateSdkAsync(_tempDirectory.DirectoryPath, RemoteTspConfigUrl, null, null);
+        var result = await _tool.GenerateSdkAsync(null, _tempDirectory.DirectoryPath, RemoteTspConfigUrl, null, null);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain("Test exception"));
@@ -261,7 +262,7 @@ public class SdkGenerationToolTests
     public async Task GenerateSdkAsync_WithInvalidSdkRepoPath_ReturnsError()
     {
         // Act - Use a non-existent directory path
-        var result = await _tool.GenerateSdkAsync("/this/path/does/not/exist", RemoteTspConfigUrl, null, null);
+        var result = await _tool.GenerateSdkAsync(null, "/this/path/does/not/exist", RemoteTspConfigUrl, null, null);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain(DirectoryNotExistError));
@@ -290,7 +291,7 @@ public class SdkGenerationToolTests
             .ReturnsAsync(expectedResult);
 
         // Act
-        var result = await _tool.GenerateSdkAsync(_tempDirectory.DirectoryPath, tspConfigPath, null, emitterOptions);
+        var result = await _tool.GenerateSdkAsync(null, _tempDirectory.DirectoryPath, tspConfigPath, null, emitterOptions);
 
         // Assert
         Assert.That(result.Result, Is.EqualTo("succeeded"));
@@ -326,7 +327,7 @@ public class SdkGenerationToolTests
             .ReturnsAsync(expectedResult);
 
         // Act
-        var result = await _tool.GenerateSdkAsync(_tempDirectory.DirectoryPath, RemoteTspConfigUrl, null, emitterOptions);
+        var result = await _tool.GenerateSdkAsync(null, _tempDirectory.DirectoryPath, RemoteTspConfigUrl, null, emitterOptions);
 
         // Assert
         Assert.That(result.Result, Is.EqualTo("succeeded"));
@@ -362,7 +363,7 @@ public class SdkGenerationToolTests
             .ReturnsAsync(expectedResult);
 
         // Act
-        var result = await _tool.GenerateSdkAsync(_tempDirectory.DirectoryPath, tspConfigPath, null, null);
+        var result = await _tool.GenerateSdkAsync(null, _tempDirectory.DirectoryPath, tspConfigPath, null, null);
 
         // Assert
         Assert.That(result.Result, Is.EqualTo("succeeded"));

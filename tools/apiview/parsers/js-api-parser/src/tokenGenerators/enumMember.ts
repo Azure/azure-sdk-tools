@@ -1,14 +1,14 @@
 import { ApiEnumMember, ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
-import { ReviewToken, TokenKind } from "../models";
+import { TokenKind } from "../models";
 import { TokenGenerator, GeneratorResult } from "./index";
-import { createToken, processExcerptTokens } from "./helpers";
+import { createToken, processExcerptTokens, TokenCollector } from "./helpers";
 
 function isValid(item: ApiItem): item is ApiEnumMember {
   return item.kind === ApiItemKind.EnumMember;
 }
 
 function generate(item: ApiEnumMember, deprecated?: boolean): GeneratorResult {
-  const tokens: ReviewToken[] = [];
+  const collector = new TokenCollector();
 
   if (item.kind !== ApiItemKind.EnumMember) {
     throw new Error(
@@ -16,20 +16,20 @@ function generate(item: ApiEnumMember, deprecated?: boolean): GeneratorResult {
     );
   }
 
-  tokens.push(createToken(TokenKind.MemberName, item.displayName, { deprecated }));
+  collector.push(createToken(TokenKind.MemberName, item.displayName, { deprecated }));
 
   if (item.initializerExcerpt?.spannedTokens?.length) {
-    tokens.push(
+    collector.push(
       createToken(TokenKind.Text, "=", {
         hasPrefixSpace: true,
         hasSuffixSpace: true,
         deprecated,
       }),
     );
-    processExcerptTokens(item.initializerExcerpt.spannedTokens, tokens, deprecated);
+    processExcerptTokens(item.initializerExcerpt.spannedTokens, collector, deprecated);
   }
 
-  return { tokens };
+  return collector.toResult();
 }
 
 export const enumMemberTokenGenerator: TokenGenerator<ApiEnumMember> = {

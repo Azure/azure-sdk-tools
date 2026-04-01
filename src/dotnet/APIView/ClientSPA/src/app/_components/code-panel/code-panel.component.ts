@@ -775,8 +775,12 @@ export class CodePanelComponent implements OnChanges {
 
   handleCommentResolutionActionEmitter(commentUpdates: CommentUpdatesDto) {
     commentUpdates.reviewId = this.reviewId!;
+    const hasRealThreadId = commentUpdates.threadId != null &&
+      this.allComments.some(c => c.threadId === commentUpdates.threadId);
+    const threadIdForApi = hasRealThreadId ? commentUpdates.threadId : undefined;
+
     if (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentResolved) {
-      this.commentsService.resolveComments(this.reviewId!, commentUpdates.elementId!, commentUpdates.threadId).pipe(take(1)).subscribe({
+      this.commentsService.resolveComments(this.reviewId!, commentUpdates.elementId!, threadIdForApi).pipe(take(1)).subscribe({
         next: () => {
           this.applyCommentResolutionUpdate(commentUpdates);
           this.commentsService.notifyQualityScoreRefresh();
@@ -784,7 +788,7 @@ export class CodePanelComponent implements OnChanges {
       });
     }
     if (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentUnResolved) {
-      this.commentsService.unresolveComments(this.reviewId!, commentUpdates.elementId!, commentUpdates.threadId).pipe(take(1)).subscribe({
+      this.commentsService.unresolveComments(this.reviewId!, commentUpdates.elementId!, threadIdForApi).pipe(take(1)).subscribe({
         next: () => {
           this.applyCommentResolutionUpdate(commentUpdates);
           this.commentsService.notifyQualityScoreRefresh();

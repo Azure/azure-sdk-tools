@@ -42,7 +42,7 @@ func AnalyzePipeline(pipelineURL string, query string, useAgent bool) (string, e
 	if buildID == "" {
 		return "", fmt.Errorf("invalid pipeline URL: %s", pipelineURL)
 	}
-	log.Printf("Extracted build ID %s from URL: %s", buildID, pipelineURL)
+	log.Printf("Extracted build ID %s from URL: %s", SanitizeForLog(buildID), SanitizeForLog(pipelineURL))
 
 	// Build the command arguments
 	args := []string{"azp", "analyze", buildID}
@@ -55,7 +55,7 @@ func AnalyzePipeline(pipelineURL string, query string, useAgent bool) (string, e
 		args = append(args, "--agent")
 	}
 
-	log.Printf("Calling azsdk CLI: azsdk %v", args)
+	log.Printf("Calling azsdk CLI: azsdk %s", SanitizeForLog(fmt.Sprintf("%v", args)))
 
 	// Execute the CLI command
 	cmd := exec.Command("azsdk", args...)

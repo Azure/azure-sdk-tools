@@ -1,6 +1,47 @@
 # Release History
 
-## 0.6.1 (Unreleased)
+## 0.6.6 (Unreleased)
+
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+- Fixed sample translation to preserve source directory structure when writing translated files
+
+### Other Changes
+
+## 0.6.5 (2026-03-27)
+
+### Features Added
+
+- Implemented version update for Go language service
+- Added team support for CODEOWNERS add/remove tools
+
+## 0.6.4 (2026-03-25)
+
+### Features Added
+
+- Added a new CLI command to ingest telemetry events from Copilot hooks
+
+## 0.6.3 (2026-03-12)
+
+### Bugs Fixed
+
+- Fixed a bug that caused the update release status CLI command to fail when a release plan was not found for a package.
+
+## 0.6.2 (2026-03-11)
+
+### Features Added
+
+- Added MCP progress reporting to long running tools including SDK generation, build, and pack tools
+
+### Bugs Fixed
+
+- Fixed a bug in get release plan CLI when release plan is fetched using api spec pull request.
+
+## 0.6.1 (2026-03-05)
 
 ### Features Added
 
@@ -9,13 +50,9 @@
 - Added a CLI command `azsdk release-plan update` and MCP tool `azsdk_update_release_plan` to update release plan.
 - Updated CLI command `azsdk release-plan get` to get release plan using API spec pull request or spec project path.
 
-### Breaking Changes
-
 ### Bugs Fixed
 
 - Filter out downvoted `azure-sdk` bot comments from APIView feedback to reduce noise in delegated issues
-
-### Other Changes
 
 ## 0.6.0 (2026-02-27)
 

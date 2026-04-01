@@ -85,7 +85,7 @@
   },
   "overrides": {
     "glob@<10.5.0": "10.5.0",
-    "serialize-javascript": "^7.0.3",
+    "serialize-javascript": "^7.0.5",
     "@angular/build": {
       "vitest": "^4.0.18"
     },

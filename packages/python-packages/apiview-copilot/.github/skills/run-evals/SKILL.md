@@ -52,6 +52,10 @@ python run.py --test-paths tests/mention_action
 | `filter_existing_comment` | `prompt` | `_filter_existing_comment` | `filter_existing_comment.prompty` |
 | `deduplicate_parser_issue` | `prompt` | `_deduplicate_parser_issue` | `deduplicate_parser_issue.prompty` |
 | `deduplicate_guidelines_issue` | `prompt` | `_deduplicate_guidelines_issue` | `deduplicate_guidelines_issue.prompty` |
+| `filter_generic_comment` | `prompt` | `_filter_generic_comment` | `filter_generic_comment.prompty` |
+| `judge_comment_confidence` | `prompt` | `_judge_comment_confidence` | `judge_comment_confidence.prompty` |
+| `merge_comments` | `summarize_prompt` | `_merge_comments` | `merge_comments.prompty` |
+| `generate_correlation_ids` | `prompt` | `_generate_correlation_ids` | `generate_correlation_ids.prompty` |
 
 ### Evaluator kinds
 - **`prompt`** — Action-based. Compares expected vs actual action, then similarity-scores the rationale. Wrong action = 0%.

@@ -49,6 +49,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
                              .ReturnsAsync(defaultProcessResult);
             _mockNpxHelper.Setup(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
                          .ReturnsAsync(defaultProcessResult);
+            _mockCommonValidationHelpers.Setup(x => x.CheckSpelling(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                                        .ReturnsAsync(new PackageCheckResponse(1, "Invoke-Cspell.ps1 script not found at expected location.", "Invoke-Cspell.ps1 not found."));
+            _mockCommonValidationHelpers.Setup(x => x.ValidateChangelog(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                                        .ReturnsAsync(new PackageCheckResponse(1, "Changelog validation script not found.", "Changelog script not found."));
+            _mockCommonValidationHelpers.Setup(x => x.ValidateReadme(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                                        .ReturnsAsync(new PackageCheckResponse(1, "Readme validation script not found.", "Readme script not found."));
 
             // Create a temporary test directory
             _testProjectPath = TempDirectory.Create("PackageCheckToolTest");
@@ -211,18 +217,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
             var testFile = Path.Combine(_testProjectPath.DirectoryPath, "test_fix.md");
             await File.WriteAllTextAsync(testFile, "This file contians obvioius speling erors.");
 
-            // Create a mock repository root and cspell config
-            var mockRepoRoot = Path.GetTempPath();
-            var cspellConfigDir = Path.Combine(mockRepoRoot, ".vscode");
-            var cspellConfigPath = Path.Combine(cspellConfigDir, "cspell.json");
-
-            Directory.CreateDirectory(cspellConfigDir);
-            await File.WriteAllTextAsync(cspellConfigPath, "{}"); // Create minimal cspell config
-
-            // Setup mocks
-            _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                         .ReturnsAsync(mockRepoRoot);
-
             // Setup mock to return spelling errors for cspell check (exit code 1 indicates errors found)
             var cspellErrorResult = new ProcessResult { ExitCode = 1 };
             cspellErrorResult.AppendStdout("test_fix.md:1:11 - Unknown word (contians)");
@@ -230,57 +224,37 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
             cspellErrorResult.AppendStdout("test_fix.md:1:27 - Unknown word (speling)");
             cspellErrorResult.AppendStdout("test_fix.md:1:34 - Unknown word (erors)");
 
-            // Reset and setup mock for this specific test
-            _mockNpxHelper.Reset();
-            _mockNpxHelper.Setup(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
-                         .ReturnsAsync(cspellErrorResult);
-
             // Setup mock agent service to return a successful spelling fix result
             var mockSpellingFixResult = new CommonValidationHelpers.SpellingFixResult(
                 "Successfully fixed 4 spelling errors and added 0 words to cspell.json. Fixed 'contians' to 'contains', 'obvioius' to 'obvious', 'speling' to 'spelling', 'erors' to 'errors' in test_fix.md"
             );
             // Setup CommonValidationHelpers mock to return appropriate results
             // For fixCheckErrors = false, return the error result
-            _mockCommonValidationHelpers.Setup(x => x.CheckSpelling(It.IsAny<string>(), It.IsAny<string>(), false, It.IsAny<CancellationToken>()))
+            _mockCommonValidationHelpers.Setup(x => x.CheckSpelling(It.IsAny<string>(), false, It.IsAny<CancellationToken>()))
                                        .ReturnsAsync(new PackageCheckResponse(cspellErrorResult));
 
             // For fixCheckErrors = true, return success result
-            _mockCommonValidationHelpers.Setup(x => x.CheckSpelling(It.IsAny<string>(), It.IsAny<string>(), true, It.IsAny<CancellationToken>()))
+            _mockCommonValidationHelpers.Setup(x => x.CheckSpelling(It.IsAny<string>(), true, It.IsAny<CancellationToken>()))
                                        .ReturnsAsync(new PackageCheckResponse(0, mockSpellingFixResult.Summary));
 
-            try
-            {
-                // Act - Test both regular cspell check and with fix enabled
-                var normalResult = await _packageCheckTool.RunPackageCheck(_testProjectPath.DirectoryPath, PackageCheckType.Cspell, false);
-                var fixResult = await _packageCheckTool.RunPackageCheck(_testProjectPath.DirectoryPath, PackageCheckType.Cspell, true);
+            // Act - Test both regular cspell check and with fix enabled
+            var normalResult = await _packageCheckTool.RunPackageCheck(_testProjectPath.DirectoryPath, PackageCheckType.Cspell, false);
+            var fixResult = await _packageCheckTool.RunPackageCheck(_testProjectPath.DirectoryPath, PackageCheckType.Cspell, true);
 
-                // Assert
-                Assert.IsNotNull(normalResult);
-                Assert.IsNotNull(fixResult);
-                Assert.IsNotNull(normalResult.CheckStatusDetails);
-                Assert.IsNotNull(fixResult.CheckStatusDetails);
+            // Assert
+            Assert.IsNotNull(normalResult);
+            Assert.IsNotNull(fixResult);
+            Assert.IsNotNull(normalResult.CheckStatusDetails);
+            Assert.IsNotNull(fixResult.CheckStatusDetails);
 
-                // Normal result should fail since there are spelling errors
-                Assert.That(normalResult.ExitCode, Is.EqualTo(1));
+            // Normal result should fail since there are spelling errors
+            Assert.That(normalResult.ExitCode, Is.EqualTo(1));
 
-                // Fix result should succeed since the agent fixed the issues
-                Assert.That(fixResult.ExitCode, Is.EqualTo(0));
+            // Fix result should succeed since the agent fixed the issues
+            Assert.That(fixResult.ExitCode, Is.EqualTo(0));
 
-                // The fix result should contain details about what was fixed
-                Assert.That(fixResult.CheckStatusDetails, Does.Contain("Successfully fixed"));
-            }
-            finally
-            {
-                // Cleanup
-                if (File.Exists(cspellConfigPath))
-                {
-                    File.Delete(cspellConfigPath);
-                }
-                if (Directory.Exists(cspellConfigDir))
-                {
-                    Directory.Delete(cspellConfigDir);
-                }
-            }
+            // The fix result should contain details about what was fixed
+            Assert.That(fixResult.CheckStatusDetails, Does.Contain("Successfully fixed"));
         }
     }
 }

@@ -94,10 +94,9 @@ class CodeFile(_Model):
     :ivar diagnostics: Add any system generated comments. Each comment is linked to review line ID.
     :vartype diagnostics: list[~treestyle.parser.models.CodeDiagnostic]
     :ivar navigation: Navigation items are used to create a tree view in the navigation panel. Each
-     navigation item is linked to a review line ID. This is optional.
-     If navigation items are not provided then navigation panel will be automatically generated
-     using the review lines. Navigation items should be provided only if you want to customize the
-     navigation panel.
+     navigation item is linked to a review line ID. This is optional. If navigation items are not
+     provided then navigation panel will be automatically generated using the review lines.
+     Navigation items should be provided only if you want to customize the navigation panel.
     :vartype navigation: list[~treestyle.parser.models.NavigationItem]
     """
 
@@ -134,10 +133,9 @@ class CodeFile(_Model):
         name="Navigation", visibility=["read", "create", "update", "delete", "query"]
     )
     """Navigation items are used to create a tree view in the navigation panel. Each navigation item
-     is linked to a review line ID. This is optional.
-     If navigation items are not provided then navigation panel will be automatically generated
-     using the review lines. Navigation items should be provided only if you want to customize the
-     navigation panel."""
+     is linked to a review line ID. This is optional. If navigation items are not provided then
+     navigation panel will be automatically generated using the review lines. Navigation items
+     should be provided only if you want to customize the navigation panel."""
 
     @overload
     def __init__(
@@ -174,6 +172,8 @@ class CrossLanguageMetadata(_Model):
     :vartype cross_language_package_id: str
     :ivar cross_language_definition_id: Required.
     :vartype cross_language_definition_id: ~treestyle.parser.models.LanguageIdMap
+    :ivar cross_language_version:
+    :vartype cross_language_version: str
     """
 
     cross_language_package_id: str = rest_field(
@@ -184,6 +184,9 @@ class CrossLanguageMetadata(_Model):
         name="CrossLanguageDefinitionId", visibility=["read", "create", "update", "delete", "query"]
     )
     """Required."""
+    cross_language_version: Optional[str] = rest_field(
+        name="CrossLanguageVersion", visibility=["read", "create", "update", "delete", "query"]
+    )
 
     @overload
     def __init__(
@@ -191,6 +194,7 @@ class CrossLanguageMetadata(_Model):
         *,
         cross_language_package_id: str,
         cross_language_definition_id: "_models.LanguageIdMap",
+        cross_language_version: Optional[str] = None,
     ) -> None: ...
 
     @overload
@@ -205,9 +209,8 @@ class CrossLanguageMetadata(_Model):
 
 
 class LanguageIdMap(_Model):
-    """Maps a language-specific ID (key) to a TypeSpec ID (value).
-    Key: Language-specific ID (e.g., 'en-US', 'fr-FR')
-    Value: Cross-language TypeSpec ID.
+    """Maps a language-specific ID (key) to a TypeSpec ID (value). Key: Language-specific ID (e.g.,
+    'en-US', 'fr-FR') Value: Cross-language TypeSpec ID.
 
     """
 
@@ -262,12 +265,10 @@ class ReviewLine(_Model):
     required then add a code line object without any token.
 
     :ivar line_id: lineId is only required if we need to support commenting on a line that contains
-     this token.
-     Usually code line for documentation or just punctuation is not required to have lineId. lineId
-     should be a unique value within
-     the review token file to use it assign to review comments as well as navigation Id within the
-     review page.
-     for e.g Azure.Core.HttpHeader.Common, azure.template.template_main.
+     this token. Usually code line for documentation or just punctuation is not required to have
+     lineId. lineId should be a unique value within the review token file to use it assign to review
+     comments as well as navigation Id within the review page. for e.g Azure.Core.HttpHeader.Common,
+     azure.template.template_main.
     :vartype line_id: str
     :ivar cross_language_id: Id to identify related lines across languages based on typespec
      specification.
@@ -275,8 +276,8 @@ class ReviewLine(_Model):
     :ivar tokens: list of tokens that constructs a line in API review. Required.
     :vartype tokens: list[~treestyle.parser.models.ReviewToken]
     :ivar children: Add any child lines as children. For e.g. all classes and namespace level
-     methods are added as a children of namespace(module) level code line.
-     Similarly all method level code lines are added as children of it's class code line.
+     methods are added as a children of namespace(module) level code line. Similarly all method
+     level code lines are added as children of it's class code line.
     :vartype children: list[~treestyle.parser.models.ReviewLine]
     :ivar is_hidden: Set current line as hidden code line by default. .NET has hidden APIs and
      architects don't want to see them by default.
@@ -285,20 +286,18 @@ class ReviewLine(_Model):
      empty line after the class or function/method to mark end of context.
     :vartype is_context_end_line: bool
     :ivar related_to_line: Set ID of related line to ensure current line is not visible when a
-     related line is hidden.
-     One e.g. is a code line for class attribute that should set class line's Line ID as related
-     line ID.
-     OR a method line decorator that should set method's line ID as related line ID.
+     related line is hidden. One e.g. is a code line for class attribute that should set class
+     line's Line ID as related line ID. OR a method line decorator that should set method's line ID
+     as related line ID.
     :vartype related_to_line: str
     """
 
     line_id: Optional[str] = rest_field(name="LineId", visibility=["read", "create", "update", "delete", "query"])
     """lineId is only required if we need to support commenting on a line that contains this token.
      Usually code line for documentation or just punctuation is not required to have lineId. lineId
-     should be a unique value within
-     the review token file to use it assign to review comments as well as navigation Id within the
-     review page.
-     for e.g Azure.Core.HttpHeader.Common, azure.template.template_main."""
+     should be a unique value within the review token file to use it assign to review comments as
+     well as navigation Id within the review page. for e.g Azure.Core.HttpHeader.Common,
+     azure.template.template_main."""
     cross_language_id: Optional[str] = rest_field(
         name="CrossLanguageId", visibility=["read", "create", "update", "delete", "query"]
     )
@@ -311,8 +310,8 @@ class ReviewLine(_Model):
         name="Children", visibility=["read", "create", "update", "delete", "query"]
     )
     """Add any child lines as children. For e.g. all classes and namespace level methods are added as
-     a children of namespace(module) level code line.
-     Similarly all method level code lines are added as children of it's class code line."""
+     a children of namespace(module) level code line. Similarly all method level code lines are
+     added as children of it's class code line."""
     is_hidden: Optional[bool] = rest_field(name="IsHidden", visibility=["read", "create", "update", "delete", "query"])
     """Set current line as hidden code line by default. .NET has hidden APIs and architects don't want
      to see them by default."""
@@ -324,10 +323,9 @@ class ReviewLine(_Model):
     related_to_line: Optional[str] = rest_field(
         name="RelatedToLine", visibility=["read", "create", "update", "delete", "query"]
     )
-    """Set ID of related line to ensure current line is not visible when a related line is hidden.
-     One e.g. is a code line for class attribute that should set class line's Line ID as related
-     line ID.
-     OR a method line decorator that should set method's line ID as related line ID."""
+    """Set ID of related line to ensure current line is not visible when a related line is hidden. One
+     e.g. is a code line for class attribute that should set class line's Line ID as related line
+     ID. OR a method line decorator that should set method's line ID as related line ID."""
 
     @overload
     def __init__(
@@ -366,12 +364,12 @@ class ReviewToken(_Model):
      name.
     :vartype navigation_display_name: str
     :ivar navigate_to_id: navigateToId should be set if the underlying token is required to be
-     displayed as HREF to another type within the review.
-     For e.g. a param type which is class name in the same package.
+     displayed as HREF to another type within the review. For e.g. a param type which is class name
+     in the same package.
     :vartype navigate_to_id: str
     :ivar skip_diff: Set skipDiff to true if underlying token needs to be ignored from diff
-     calculation. For e.g. package metadata or dependency versions
-     are usually excluded when comparing two revisions to avoid reporting them as API changes.
+     calculation. For e.g. package metadata or dependency versions are usually excluded when
+     comparing two revisions to avoid reporting them as API changes.
     :vartype skip_diff: bool
     :ivar is_deprecated: This is set if API is marked as deprecated.
     :vartype is_deprecated: bool
@@ -384,9 +382,8 @@ class ReviewToken(_Model):
     :ivar is_documentation: Set isDocumentation to true if current token is part of documentation.
     :vartype is_documentation: bool
     :ivar render_classes: Language specific style css class names. To render navigation icons, one
-     of the following must be specified:
-     "namespace", "class", "method", "enum". If NavigationDisplayName is specified, then this field
-     should be set.
+     of the following must be specified: "namespace", "class", "method", "enum". If
+     NavigationDisplayName is specified, then this field should be set.
     :vartype render_classes: list[str]
     """
 
@@ -405,12 +402,11 @@ class ReviewToken(_Model):
         name="NavigateToId", visibility=["read", "create", "update", "delete", "query"]
     )
     """navigateToId should be set if the underlying token is required to be displayed as HREF to
-     another type within the review.
-     For e.g. a param type which is class name in the same package."""
+     another type within the review. For e.g. a param type which is class name in the same package."""
     skip_diff: Optional[bool] = rest_field(name="SkipDiff", visibility=["read", "create", "update", "delete", "query"])
     """Set skipDiff to true if underlying token needs to be ignored from diff calculation. For e.g.
-     package metadata or dependency versions
-     are usually excluded when comparing two revisions to avoid reporting them as API changes."""
+     package metadata or dependency versions are usually excluded when comparing two revisions to
+     avoid reporting them as API changes."""
     is_deprecated: Optional[bool] = rest_field(
         name="IsDeprecated", visibility=["read", "create", "update", "delete", "query"]
     )
@@ -433,9 +429,8 @@ class ReviewToken(_Model):
         name="RenderClasses", visibility=["read", "create", "update", "delete", "query"]
     )
     """Language specific style css class names. To render navigation icons, one of the following must
-     be specified:
-     \"namespace\", \"class\", \"method\", \"enum\". If NavigationDisplayName is specified, then
-     this field should be set."""
+     be specified: \"namespace\", \"class\", \"method\", \"enum\". If NavigationDisplayName is
+     specified, then this field should be set."""
 
     @overload
     def __init__(

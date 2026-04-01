@@ -24,6 +24,7 @@ class MetadataMap:
             if pkg_path.endswith((".whl", ".zip", ".tar.gz")):
                 self.cross_language_map = {}
                 self.cross_language_package_id = ""
+                self.cross_language_version = None
                 return
             mapping_path = os.path.join(pkg_path, MAPPING_FILE_NAME)
         try:
@@ -31,6 +32,7 @@ class MetadataMap:
                 mapping = json.load(json_file)
                 self.cross_language_map = mapping.get("CrossLanguageDefinitionId", {})
                 self.cross_language_package_id = mapping.get("CrossLanguagePackageId", "")
+                self.cross_language_version = mapping.get("CrossLanguageVersion", None)
         except OSError:
             old_mapping_path = os.path.join(pkg_path, OLD_MAPPING_FILE_NAME)
             try:
@@ -38,7 +40,9 @@ class MetadataMap:
                     mapping = json.load(json_file)
                     self.cross_language_map = mapping.get("CrossLanguageDefinitionId", {})
                     self.cross_language_package_id = mapping.get("CrossLanguagePackageId", "")
+                    self.cross_language_version = mapping.get("CrossLanguageVersion", None)
             except OSError:
                 self.cross_language_map = {}
                 self.cross_language_package_id = ""
+                self.cross_language_version = None
                 return

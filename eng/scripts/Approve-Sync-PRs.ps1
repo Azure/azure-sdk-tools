@@ -50,6 +50,12 @@ $syncPipelineDefinitionIds = @(
 
 $checks = gh pr checks $ToolsPRNumber -R $ToolsRepo --json "name,link" | ConvertFrom-Json
 $syncChecks = $checks | Where-Object { $_.name -match "tools - sync-[^(]*$" }
+if (!$syncChecks) {
+  Write-Error "No sync pipeline runs were linked to the PR! Ensure the pipelines were triggered and linked to the PR."
+  Write-Host "eng/common sync - https://dev.azure.com/azure-sdk/internal/_build?definitionId=1372"
+  Write-Host ".github/* sync - https://dev.azure.com/azure-sdk/internal/_build?definitionId=6130"
+  exit 1
+}
 $prList = @()
 
 foreach ($check in $syncChecks) {

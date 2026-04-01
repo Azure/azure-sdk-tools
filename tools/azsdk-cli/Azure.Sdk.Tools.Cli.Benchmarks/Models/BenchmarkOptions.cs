@@ -27,4 +27,10 @@ public class BenchmarkOptions
     /// Show agent activity during execution.
     /// </summary>
     public bool Verbose { get; init; }
+
+    /// <summary>
+    /// Ref overrides keyed by "Owner/Name". When a scenario's repo matches,
+    /// the ref is replaced before workspace preparation. Null values mean no override.
+    /// </summary>
+    public Dictionary<string, string?>? RefOverrides { get; init; }
 }

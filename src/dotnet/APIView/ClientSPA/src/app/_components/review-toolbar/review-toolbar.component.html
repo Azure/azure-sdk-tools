@@ -123,7 +123,7 @@
         <p-iconField iconPosition="left">
             <p-inputIcon styleClass="pi pi-search" />
             <input type="text" [formControl]="codeLineSearchText" pInputText placeholder="Search" class="review-search-input" data-clarity-region="toolbar-review-search-input" style="width: 200px;"
-            (keydown)="onSearchKeydown($event)"/>
+            (keydown.enter)="onSearchKeydown($event)"/>
         </p-iconField>
         <div [class.d-none]="!showSearchControls" [class.d-flex]="showSearchControls" class="align-items-center gap-1">
             <small class="review-search-info text-nowrap">{{ currentMatchIndexValue }} of {{ totalMatchCountValue }}</small>

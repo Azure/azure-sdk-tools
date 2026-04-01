@@ -19,5 +19,5 @@
 
 If build fails:
 
-- Check for TypeSpec customization needs → use `typespec-customization` skill
-- Regenerate SDK after fixing issues
+- Run `azure-sdk-mcp:azsdk_customized_code_update` — it handles classification, TypeSpec fixes, regeneration, and build internally
+- See [customization workflow](customization-workflow.md) for full details

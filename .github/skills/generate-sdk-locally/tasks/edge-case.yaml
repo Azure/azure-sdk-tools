@@ -2,7 +2,7 @@ id: sdk-local-edge-001
 name: Build Failure Recovery
 description: |
   Test that the skill handles SDK build failures gracefully
-  and suggests TypeSpec customization if needed.
+  and uses TypeSpec customization to resolve errors.
 tags:
   - edge-case
   - error-handling
@@ -14,6 +14,9 @@ expected:
     - "client.tsp"
   output_excludes:
     - "cannot help"
+  outcomes:
+    - type: tool_called
+      tool_name: azsdk_customized_code_update
   behavior:
-    max_tool_calls: 5
-    max_response_time_ms: 30000
+    max_tool_calls: 8
+    max_response_time_ms: 60000

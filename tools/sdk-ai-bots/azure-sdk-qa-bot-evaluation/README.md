@@ -88,9 +88,9 @@ An evaluation test file should be written in JSONL format, and a file can contai
 
 `ground_truth` contains the expected answer.
 
-`expected_knowledges` provides the expected knowledage list. each knowledage is {"title": string, "link": string} object
+`expected_knowledges` provides the expected knowledge list. Each knowledge is {"title": string, "link": string} object.
 
-`expected_references` provides the expected reference list. each reference is {"title": string, "link": string} object
+`expected_references` provides the expected reference list. Each reference is {"title": string, "link": string} object.
 
 ## Results and Baselines
 

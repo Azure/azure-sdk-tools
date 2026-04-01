@@ -1,8 +1,10 @@
 # Release History
 
-## 0.6.6 (Unreleased)
+## 0.6.6 (2026-04-01)
 
 ### Features Added
+
+- Added support for CODEOWNERS "Section" in Label Owners (defaults to "Client Libraries")
 
 ### Breaking Changes
 
@@ -11,6 +13,8 @@
 - Fixed sample translation to preserve source directory structure when writing translated files
 
 ### Other Changes
+
+- CODEOWNERS generator supports file paths and doesn't assume all paths are directories
 
 ## 0.6.5 (2026-03-27)
 

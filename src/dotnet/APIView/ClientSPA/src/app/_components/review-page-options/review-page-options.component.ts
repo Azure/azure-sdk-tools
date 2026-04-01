@@ -84,6 +84,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
   @Output() codeLineSearchInfoEmitter : EventEmitter<CodeLineSearchInfo> = new EventEmitter<CodeLineSearchInfo>();
 
   private destroy$ = new Subject<void>();
+  private qualityScoreRequestId: number = 0;
 
   webAppUrl : string = this.configService.webAppUrl
   assetsPath : string = environment.assetsPath;
@@ -134,6 +135,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
 
   qualityScore: ReviewQualityScore | undefined = undefined;
   qualityScoreLoading: boolean = false;
+  unresolvedMustFixCount: number = 0;
 
   associatedPullRequests  : PullRequestModel[] = [];
   pullRequestsOfAssociatedAPIRevisions : PullRequestModel[] = [];
@@ -210,6 +212,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
     if (changes['activeAPIRevision'] && changes['activeAPIRevision'].currentValue != undefined) {
       this.selectedApprovers = this.activeAPIRevision!.assignedReviewers.map(reviewer => reviewer.assingedTo);
       this.isCopilotReviewSupported = this.isCopilotReviewSupportedForPackage();
+      this.unresolvedMustFixCount = 0;
       this.setAPIRevisionApprovalStates();
       this.setPullRequestsInfo();
       this.setNamespaceReviewStates();
@@ -475,17 +478,22 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
 
   fetchQualityScore() {
     if (!this.activeAPIRevision?.id) return;
+    const requestId = ++this.qualityScoreRequestId;
     this.qualityScoreLoading = true;
     this.apiRevisionsService.getQualityScore(this.activeAPIRevision.id).pipe(take(1)).subscribe({
       next: (score: ReviewQualityScore) => {
+        if (requestId !== this.qualityScoreRequestId) return;
         this.qualityScore = score;
+        this.unresolvedMustFixCount = score.unresolvedMustFixCount;
         this.qualityScoreLoading = false;
-        // Re-evaluate approval states since must-fix count may have changed
         this.setAPIRevisionApprovalStates();
       },
       error: () => {
+        if (requestId !== this.qualityScoreRequestId) return;
         this.qualityScore = undefined;
+        this.unresolvedMustFixCount = 0;
         this.qualityScoreLoading = false;
+        this.setAPIRevisionApprovalStates();
       }
     });
   }
@@ -795,13 +803,9 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
     if (this.isMissingPackageVersion) return ApprovalDisabledReason.MissingPackageVersion;
     if (this.activeAPIRevision?.isApproved) return ApprovalDisabledReason.None;
     if (this.isCopilotReviewSupported && !this.isPreviewVersion() && isReviewByCopilotRequired && !isVersionReviewedByCopilot) return ApprovalDisabledReason.CopilotReviewRequired;
-    if (this.hasUnresolvedMustFix()) return ApprovalDisabledReason.UnresolvedMustFix;
+    if (this.unresolvedMustFixCount > 0) return ApprovalDisabledReason.UnresolvedMustFix;
 
     return ApprovalDisabledReason.None;
-  }
-
-  private hasUnresolvedMustFix(): boolean {
-    return (this.qualityScore?.unresolvedMustFixCount ?? 0) > 0;
   }
 
   private isCopilotReviewSupportedForPackage(): boolean {

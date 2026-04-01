@@ -347,18 +347,21 @@ describe('ReviewPageOptionsComponent', () => {
 
       it('should return UnresolvedMustFix when there are unresolved must fix comments', () => {
         component.qualityScore = { score: 50, unresolvedMustFixCount: 2, unresolvedShouldFixCount: 0, unresolvedSuggestionCount: 0, unresolvedQuestionCount: 0, unresolvedUnknownCount: 0, totalUnresolvedCount: 2 };
+        component.unresolvedMustFixCount = 2;
         const result = component['getApprovalDisabledReason'](false, false);
         expect(result).toBe(ApprovalDisabledReason.UnresolvedMustFix);
       });
 
       it('should return CopilotReviewRequired over UnresolvedMustFix when both apply', () => {
         component.qualityScore = { score: 50, unresolvedMustFixCount: 3, unresolvedShouldFixCount: 0, unresolvedSuggestionCount: 0, unresolvedQuestionCount: 0, unresolvedUnknownCount: 0, totalUnresolvedCount: 3 };
+        component.unresolvedMustFixCount = 3;
         const result = component['getApprovalDisabledReason'](true, false);
         expect(result).toBe(ApprovalDisabledReason.CopilotReviewRequired);
       });
 
       it('should return UnresolvedMustFix when copilot review is completed but must fix remain', () => {
         component.qualityScore = { score: 50, unresolvedMustFixCount: 1, unresolvedShouldFixCount: 0, unresolvedSuggestionCount: 0, unresolvedQuestionCount: 0, unresolvedUnknownCount: 0, totalUnresolvedCount: 1 };
+        component.unresolvedMustFixCount = 1;
         const result = component['getApprovalDisabledReason'](true, true);
         expect(result).toBe(ApprovalDisabledReason.UnresolvedMustFix);
       });
@@ -366,6 +369,7 @@ describe('ReviewPageOptionsComponent', () => {
       it('should return UnresolvedMustFix when copilot is not supported but must fix remain', () => {
         component.isCopilotReviewSupported = false;
         component.qualityScore = { score: 50, unresolvedMustFixCount: 1, unresolvedShouldFixCount: 0, unresolvedSuggestionCount: 0, unresolvedQuestionCount: 0, unresolvedUnknownCount: 0, totalUnresolvedCount: 1 };
+        component.unresolvedMustFixCount = 1;
         const result = component['getApprovalDisabledReason'](true, false);
         expect(result).toBe(ApprovalDisabledReason.UnresolvedMustFix);
       });
@@ -532,6 +536,7 @@ describe('ReviewPageOptionsComponent', () => {
         component.activeAPIRevision!.approvers = [];
         component.isMissingPackageVersion = false;
         component.qualityScore = { score: 50, unresolvedMustFixCount: 2, unresolvedShouldFixCount: 0, unresolvedSuggestionCount: 0, unresolvedQuestionCount: 0, unresolvedUnknownCount: 0, totalUnresolvedCount: 2 };
+        component.unresolvedMustFixCount = 2;
 
         component['updateApprovalStates'](true, false);
 
@@ -543,6 +548,7 @@ describe('ReviewPageOptionsComponent', () => {
         component.activeAPIRevision!.approvers = [];
         component.isMissingPackageVersion = false;
         component.qualityScore = { score: 50, unresolvedMustFixCount: 1, unresolvedShouldFixCount: 0, unresolvedSuggestionCount: 0, unresolvedQuestionCount: 0, unresolvedUnknownCount: 0, totalUnresolvedCount: 1 };
+        component.unresolvedMustFixCount = 1;
 
         component['updateApprovalStates'](true, true);
 
@@ -555,6 +561,7 @@ describe('ReviewPageOptionsComponent', () => {
         component.isMissingPackageVersion = false;
         component.isCopilotReviewSupported = false;
         component.qualityScore = { score: 50, unresolvedMustFixCount: 1, unresolvedShouldFixCount: 0, unresolvedSuggestionCount: 0, unresolvedQuestionCount: 0, unresolvedUnknownCount: 0, totalUnresolvedCount: 1 };
+        component.unresolvedMustFixCount = 1;
 
         component['updateApprovalStates'](true, false);
 

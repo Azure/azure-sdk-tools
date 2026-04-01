@@ -6,9 +6,11 @@ on:
       - main
     paths:
       - .github/**
+      - eng/common/actions/**
   pull_request:
     paths:
       - .github/**
+      - eng/common/actions/**
   workflow_dispatch:
 
 permissions:

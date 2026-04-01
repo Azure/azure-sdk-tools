@@ -517,7 +517,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             OwnerType ownerType,
             string? path = null,
             string? repo = null,
-            string section = null,
+            string section = "Client Libraries",
             CancellationToken ct = default
         )
         {
@@ -598,7 +598,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             OwnerType ownerType,
             string? path = null,
             string? repo = null,
-            string section = null,
+            string section = "Client Libraries",
             CancellationToken ct = default
         )
         {

@@ -13,8 +13,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { initializeTestBed } from '../../../test-setup';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ReviewPageOptionsComponent } from './review-page-options.component';
-import { ApprovalDisabledReason } from './review-page-options.component';
+import { ReviewPageOptionsComponent, ApprovalDisabledReason } from './review-page-options.component';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { HttpErrorInterceptorService } from 'src/app/_services/http-error-interceptor/http-error-interceptor.service';
@@ -253,7 +252,7 @@ describe('ReviewPageOptionsComponent', () => {
       });
     });
 
-    describe('getApprovalDisabledReason', () => {
+    describe('getApprovalDisabledReasons', () => {
       beforeEach(() => {
         component.activeAPIRevision!.packageVersion = '1.0.0';
         component.activeAPIRevision!.language = 'JavaScript';
@@ -263,115 +262,116 @@ describe('ReviewPageOptionsComponent', () => {
         component.isMissingPackageVersion = false;
       });
 
-      // Test cases that should return None (approval NOT disabled)
-      it('should return None when copilot review is not supported for package', () => {
+      // Test cases that should return empty array (approval NOT disabled)
+      it('should return empty array when copilot review is not supported for package', () => {
         component.isCopilotReviewSupported = false;
-        const result = component['getApprovalDisabledReason'](true, false);
-        expect(result).toBe(ApprovalDisabledReason.None);
+        const result = component['getApprovalDisabledReasons'](true, false);
+        expect(result).toEqual([]);
       });
 
-      it('should return None for preview versions even when copilot review required', () => {
+      it('should return empty array for preview versions even when copilot review required', () => {
         component.activeAPIRevision!.packageVersion = '1.0.0-beta.1';
-        const result = component['getApprovalDisabledReason'](true, false);
-        expect(result).toBe(ApprovalDisabledReason.None);
+        const result = component['getApprovalDisabledReasons'](true, false);
+        expect(result).toEqual([]);
       });
 
-      it('should return None when revision is already approved', () => {
+      it('should return empty array when revision is already approved', () => {
         component.activeAPIRevision!.approvers = ['test-user'];
         component.activeAPIRevision!.isApproved = true;
-        const result = component['getApprovalDisabledReason'](true, false);
-        expect(result).toBe(ApprovalDisabledReason.None);
+        const result = component['getApprovalDisabledReasons'](true, false);
+        expect(result).toEqual([]);
       });
 
-      it('should return None when copilot review required and completed', () => {
-        const result = component['getApprovalDisabledReason'](true, true);
-        expect(result).toBe(ApprovalDisabledReason.None);
+      it('should return empty array when copilot review required and completed', () => {
+        const result = component['getApprovalDisabledReasons'](true, true);
+        expect(result).toEqual([]);
       });
 
-      it('should return None when copilot review not required', () => {
-        const result = component['getApprovalDisabledReason'](false, false);
-        expect(result).toBe(ApprovalDisabledReason.None);
+      it('should return empty array when copilot review not required', () => {
+        const result = component['getApprovalDisabledReasons'](false, false);
+        expect(result).toEqual([]);
       });
 
-      // Test cases that should return a specific reason (approval DISABLED)
-      it('should return CopilotReviewRequired when copilot review required but not completed', () => {
-        const result = component['getApprovalDisabledReason'](true, false);
-        expect(result).toBe(ApprovalDisabledReason.CopilotReviewRequired);
+      // Test cases that should return specific reasons (approval DISABLED)
+      it('should return [CopilotReviewRequired] when copilot review required but not completed', () => {
+        const result = component['getApprovalDisabledReasons'](true, false);
+        expect(result).toEqual([ApprovalDisabledReason.CopilotReviewRequired]);
       });
 
-      it('should return CopilotReviewRequired when copilot review supported and user has not approved yet', () => {
+      it('should return [CopilotReviewRequired] when copilot review supported and user has not approved yet', () => {
         component.isCopilotReviewSupported = true;
         component.activeAPIRevisionIsApprovedByCurrentUser = false;
-        const result = component['getApprovalDisabledReason'](true, false);
-        expect(result).toBe(ApprovalDisabledReason.CopilotReviewRequired);
+        const result = component['getApprovalDisabledReasons'](true, false);
+        expect(result).toEqual([ApprovalDisabledReason.CopilotReviewRequired]);
       });
 
-      it('should return CopilotReviewRequired for complex version numbers when copilot review required but not completed', () => {
+      it('should return [CopilotReviewRequired] for complex version numbers when copilot review required but not completed', () => {
         component.activeAPIRevision!.packageVersion = '12.5.3';
-        const result = component['getApprovalDisabledReason'](true, false);
-        expect(result).toBe(ApprovalDisabledReason.CopilotReviewRequired);
+        const result = component['getApprovalDisabledReasons'](true, false);
+        expect(result).toEqual([ApprovalDisabledReason.CopilotReviewRequired]);
       });
 
       // Edge cases
-      it('should return CopilotReviewRequired for invalid package version when copilot required', () => {
+      it('should return [CopilotReviewRequired] for invalid package version when copilot required', () => {
         component.activeAPIRevision!.packageVersion = 'invalid-version';
-        const result = component['getApprovalDisabledReason'](true, false);
-        expect(result).toBe(ApprovalDisabledReason.CopilotReviewRequired);
+        const result = component['getApprovalDisabledReasons'](true, false);
+        expect(result).toEqual([ApprovalDisabledReason.CopilotReviewRequired]);
       });
 
-      it('should return MissingPackageVersion when package version is missing and copilot required', () => {
+      it('should include MissingPackageVersion and CopilotReviewRequired when both apply', () => {
         component.activeAPIRevision!.packageVersion = '';
         component.isMissingPackageVersion = true;
-        const result = component['getApprovalDisabledReason'](true, false);
-        expect(result).toBe(ApprovalDisabledReason.MissingPackageVersion);
+        const result = component['getApprovalDisabledReasons'](true, false);
+        expect(result).toContain(ApprovalDisabledReason.MissingPackageVersion);
+        expect(result).toContain(ApprovalDisabledReason.CopilotReviewRequired);
       });
 
-      it('should return MissingPackageVersion when package version is missing (empty string)', () => {
+      it('should return [MissingPackageVersion] when package version is missing (empty string)', () => {
         component.isMissingPackageVersion = true;
-        const result = component['getApprovalDisabledReason'](false, false);
-        expect(result).toBe(ApprovalDisabledReason.MissingPackageVersion);
+        const result = component['getApprovalDisabledReasons'](false, false);
+        expect(result).toEqual([ApprovalDisabledReason.MissingPackageVersion]);
       });
 
-      it('should return MissingPackageVersion when package version is missing even when copilot review is completed', () => {
+      it('should return [MissingPackageVersion] when package version is missing even when copilot review is completed', () => {
         component.isMissingPackageVersion = true;
-        const result = component['getApprovalDisabledReason'](true, true);
-        expect(result).toBe(ApprovalDisabledReason.MissingPackageVersion);
+        const result = component['getApprovalDisabledReasons'](true, true);
+        expect(result).toEqual([ApprovalDisabledReason.MissingPackageVersion]);
       });
 
-      it('should return MissingPackageVersion when package version is missing even if user already approved', () => {
+      it('should return [MissingPackageVersion] when package version is missing even if user already approved', () => {
         component.isMissingPackageVersion = true;
         component.activeAPIRevisionIsApprovedByCurrentUser = true;
-        const result = component['getApprovalDisabledReason'](false, false);
-        expect(result).toBe(ApprovalDisabledReason.MissingPackageVersion);
+        const result = component['getApprovalDisabledReasons'](false, false);
+        expect(result).toEqual([ApprovalDisabledReason.MissingPackageVersion]);
       });
 
-      it('should return UnresolvedMustFix when there are unresolved must fix comments', () => {
+      it('should return [UnresolvedMustFix] when there are unresolved must fix comments', () => {
         component.qualityScore = { score: 50, unresolvedMustFixCount: 2, unresolvedShouldFixCount: 0, unresolvedSuggestionCount: 0, unresolvedQuestionCount: 0, unresolvedUnknownCount: 0, totalUnresolvedCount: 2 };
         component.unresolvedMustFixCount = 2;
-        const result = component['getApprovalDisabledReason'](false, false);
-        expect(result).toBe(ApprovalDisabledReason.UnresolvedMustFix);
+        const result = component['getApprovalDisabledReasons'](false, false);
+        expect(result).toEqual([ApprovalDisabledReason.UnresolvedMustFix]);
       });
 
-      it('should return CopilotReviewRequired over UnresolvedMustFix when both apply', () => {
+      it('should return [CopilotReviewRequired, UnresolvedMustFix] when both apply', () => {
         component.qualityScore = { score: 50, unresolvedMustFixCount: 3, unresolvedShouldFixCount: 0, unresolvedSuggestionCount: 0, unresolvedQuestionCount: 0, unresolvedUnknownCount: 0, totalUnresolvedCount: 3 };
         component.unresolvedMustFixCount = 3;
-        const result = component['getApprovalDisabledReason'](true, false);
-        expect(result).toBe(ApprovalDisabledReason.CopilotReviewRequired);
+        const result = component['getApprovalDisabledReasons'](true, false);
+        expect(result).toEqual([ApprovalDisabledReason.CopilotReviewRequired, ApprovalDisabledReason.UnresolvedMustFix]);
       });
 
-      it('should return UnresolvedMustFix when copilot review is completed but must fix remain', () => {
+      it('should return [UnresolvedMustFix] when copilot review is completed but must fix remain', () => {
         component.qualityScore = { score: 50, unresolvedMustFixCount: 1, unresolvedShouldFixCount: 0, unresolvedSuggestionCount: 0, unresolvedQuestionCount: 0, unresolvedUnknownCount: 0, totalUnresolvedCount: 1 };
         component.unresolvedMustFixCount = 1;
-        const result = component['getApprovalDisabledReason'](true, true);
-        expect(result).toBe(ApprovalDisabledReason.UnresolvedMustFix);
+        const result = component['getApprovalDisabledReasons'](true, true);
+        expect(result).toEqual([ApprovalDisabledReason.UnresolvedMustFix]);
       });
 
-      it('should return UnresolvedMustFix when copilot is not supported but must fix remain', () => {
+      it('should return [UnresolvedMustFix] when copilot is not supported but must fix remain', () => {
         component.isCopilotReviewSupported = false;
         component.qualityScore = { score: 50, unresolvedMustFixCount: 1, unresolvedShouldFixCount: 0, unresolvedSuggestionCount: 0, unresolvedQuestionCount: 0, unresolvedUnknownCount: 0, totalUnresolvedCount: 1 };
         component.unresolvedMustFixCount = 1;
-        const result = component['getApprovalDisabledReason'](true, false);
-        expect(result).toBe(ApprovalDisabledReason.UnresolvedMustFix);
+        const result = component['getApprovalDisabledReasons'](true, false);
+        expect(result).toEqual([ApprovalDisabledReason.UnresolvedMustFix]);
       });
     });
 
@@ -383,10 +383,10 @@ describe('ReviewPageOptionsComponent', () => {
         component.activeAPIRevision!.approvers = [];
 
         component.isCopilotReviewSupported = component['isCopilotReviewSupportedForPackage']();
-        const reason = component['getApprovalDisabledReason'](true, false);
+        const reason = component['getApprovalDisabledReasons'](true, false);
 
         expect(component.isCopilotReviewSupported).toBe(false);
-        expect(reason).toBe(ApprovalDisabledReason.None);
+        expect(reason).toEqual([]);
       });
 
       it('should set correct approval states for supported copilot packages', () => {
@@ -396,10 +396,10 @@ describe('ReviewPageOptionsComponent', () => {
         component.activeAPIRevision!.approvers = [];
 
         component.isCopilotReviewSupported = component['isCopilotReviewSupportedForPackage']();
-        const reason = component['getApprovalDisabledReason'](true, false);
+        const reason = component['getApprovalDisabledReasons'](true, false);
 
         expect(component.isCopilotReviewSupported).toBe(true);
-        expect(reason).toBe(ApprovalDisabledReason.CopilotReviewRequired);
+        expect(reason).toEqual([ApprovalDisabledReason.CopilotReviewRequired]);
       });
     });
 
@@ -498,7 +498,7 @@ describe('ReviewPageOptionsComponent', () => {
 
         expect(component.isAPIRevisionApprovalDisabled).toBe(true);
         expect(component.apiRevisionApprovalBtnClass).toBe("btn btn-outline-secondary disabled");
-        expect(component.apiRevisionApprovalMessage).toBe("To approve the current API revision, it must first be reviewed by Copilot");
+        expect(component.apiRevisionApprovalMessages).toEqual(["Copilot review must be completed before approving."]);
       });
 
       it('should show missing version message when package version is missing', () => {
@@ -509,17 +509,20 @@ describe('ReviewPageOptionsComponent', () => {
 
         expect(component.isAPIRevisionApprovalDisabled).toBe(true);
         expect(component.apiRevisionApprovalBtnClass).toBe("btn btn-outline-secondary disabled");
-        expect(component.apiRevisionApprovalMessage).toBe("This API revision cannot be approved because it is missing a package version. Please ensure the package version is set.");
+        expect(component.apiRevisionApprovalMessages).toEqual(["A package version must be set before approving."]);
       });
 
-      it('should prioritize missing version message over copilot message', () => {
+      it('should show combined message when version is missing and copilot review required', () => {
         component.activeAPIRevision!.approvers = [];
         component.isMissingPackageVersion = true;
 
         component['updateApprovalStates'](true, false);
 
         expect(component.isAPIRevisionApprovalDisabled).toBe(true);
-        expect(component.apiRevisionApprovalMessage).toBe("This API revision cannot be approved because it is missing a package version. Please ensure the package version is set.");
+        expect(component.apiRevisionApprovalMessages).toEqual([
+          "A package version must be set before approving.",
+          "Copilot review must be completed before approving."
+        ]);
       });
 
       it('should show copilot message when version exists but copilot review needed', () => {
@@ -529,10 +532,10 @@ describe('ReviewPageOptionsComponent', () => {
         component['updateApprovalStates'](true, false);
 
         expect(component.isAPIRevisionApprovalDisabled).toBe(true);
-        expect(component.apiRevisionApprovalMessage).toBe("To approve the current API revision, it must first be reviewed by Copilot");
+        expect(component.apiRevisionApprovalMessages).toEqual(["Copilot review must be completed before approving."]);
       });
 
-      it('should prioritize copilot message over must fix message when both apply', () => {
+      it('should show combined message when copilot review required and must fix remain', () => {
         component.activeAPIRevision!.approvers = [];
         component.isMissingPackageVersion = false;
         component.qualityScore = { score: 50, unresolvedMustFixCount: 2, unresolvedShouldFixCount: 0, unresolvedSuggestionCount: 0, unresolvedQuestionCount: 0, unresolvedUnknownCount: 0, totalUnresolvedCount: 2 };
@@ -541,7 +544,10 @@ describe('ReviewPageOptionsComponent', () => {
         component['updateApprovalStates'](true, false);
 
         expect(component.isAPIRevisionApprovalDisabled).toBe(true);
-        expect(component.apiRevisionApprovalMessage).toBe("To approve the current API revision, it must first be reviewed by Copilot");
+        expect(component.apiRevisionApprovalMessages).toEqual([
+          "Copilot review must be completed before approving.",
+          "All Must Fix comments must be resolved before approving."
+        ]);
       });
 
       it('should show must fix message when copilot review is completed but must fix remain', () => {
@@ -553,7 +559,7 @@ describe('ReviewPageOptionsComponent', () => {
         component['updateApprovalStates'](true, true);
 
         expect(component.isAPIRevisionApprovalDisabled).toBe(true);
-        expect(component.apiRevisionApprovalMessage).toBe("Cannot approve while unresolved Must Fix comments remain.");
+        expect(component.apiRevisionApprovalMessages).toEqual(["All Must Fix comments must be resolved before approving."]);
       });
 
       it('should show must fix message when copilot is not supported but must fix remain', () => {
@@ -566,7 +572,7 @@ describe('ReviewPageOptionsComponent', () => {
         component['updateApprovalStates'](true, false);
 
         expect(component.isAPIRevisionApprovalDisabled).toBe(true);
-        expect(component.apiRevisionApprovalMessage).toBe("Cannot approve while unresolved Must Fix comments remain.");
+        expect(component.apiRevisionApprovalMessages).toEqual(["All Must Fix comments must be resolved before approving."]);
       });
     });
   });

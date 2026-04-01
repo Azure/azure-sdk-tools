@@ -22,6 +22,7 @@ export class Review {
   subscribers: string[]
   namespaceReviewStatus: string
   packageType?: PackageType | null  // Optional - undefined or null if not yet classified
+  projectId?: string | null
 
   constructor() {
     this.id = ''

@@ -21,6 +21,14 @@ interface Agent {
   feedback(@body body: FeedbackRequest): FeedbackResponse;
 }
 
+@route("/message")
+interface Message {
+  /** Classify whether the bot should auto-reply to a message. */
+  @route("/intention")
+  @post
+  intention(@body body: IntentionRequest): IntentionResponse;
+}
+
 @route("/conversation")
 interface Conversation {
   /** Save a conversation message. */

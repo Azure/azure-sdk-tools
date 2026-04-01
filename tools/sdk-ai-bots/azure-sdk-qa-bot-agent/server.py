@@ -19,9 +19,11 @@ from fastapi import FastAPI, Request
 from models.chat import ChatRequest, ChatResponse
 from models.conversation import ConversationMessage, SaveConversationMessageResponse
 from models.feedback import FeedbackRequest, FeedbackResponse
+from models.intention import IntentionRequest, IntentionResponse
 from services.chat_service import ChatService
 from services.conversation_service import ConversationService
 from services.feedback_service import FeedbackService
+from services.intention_service import IntentionService
 from utils.azure_ai_foundry import close_clients
 from utils.azure_cosmosdb import close_cosmos_client
 from utils.azure_credential import close_credential
@@ -107,6 +109,7 @@ async def request_id_middleware(request: Request, call_next):
 _chat_service = ChatService()
 _conversation_service = ConversationService()
 _feedback_service = FeedbackService()
+_intention_service = IntentionService()
 
 
 @app.post(
@@ -125,6 +128,12 @@ async def handle_chat(req: ChatRequest):
 async def handle_feedback(req: FeedbackRequest):
     """Process user feedback through the feedback workflow."""
     return await _feedback_service.process(req)
+
+
+@app.post("/message/intention", response_model=IntentionResponse)
+async def handle_intention(req: IntentionRequest):
+    """Classify whether the bot should auto-reply to a message."""
+    return await _intention_service.classify(req)
 
 
 @app.post("/conversation/save", response_model=SaveConversationMessageResponse)

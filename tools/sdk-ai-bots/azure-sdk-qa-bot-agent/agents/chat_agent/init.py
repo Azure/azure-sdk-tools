@@ -105,7 +105,7 @@ async def main() -> None:
         web_search_tool,
     ]
 
-    reasoning_effort = cfg("AI_FOUNDRY_AGENT_REASONING_EFFORT", "low")
+    reasoning_effort = cfg("AI_FOUNDRY_AGENT_REASONING_EFFORT")
     agent = Agent(
         agent_client,
         name=agent_name,

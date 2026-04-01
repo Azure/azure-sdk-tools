@@ -220,6 +220,29 @@ model SaveConversationMessageResponse {
   // Empty response model
 }
 
+// ── Intention Models ─────────────────────────────────────────
+
+@doc("Request for intention classification")
+model IntentionRequest {
+  @doc("The message to classify")
+  message: Message;
+
+  @doc("Existing conversation identifier")
+  conversation_id?: string;
+
+  @doc("The conversation type")
+  conversation_type?: ConversationType;
+}
+
+@doc("Response from intention classification")
+model IntentionResponse {
+  @doc("Whether the bot should auto-reply to the message")
+  should_respond: boolean;
+
+  @doc("The reason for the classification decision")
+  reason: string;
+}
+
 // ── Health Check ─────────────────────────────────────────────
 
 @doc("Health check response")

@@ -27,3 +27,18 @@ Content-type: application/json; charset=utf-8
     "comment": "Great response!",
     "reasons": ["Accurate", "Helpful"]
 }
+
+### Local test - intention
+POST http://localhost:8080/message/intention HTTP/1.1
+Content-type: application/json; charset=utf-8
+
+{
+    "message": {
+            "role": "user",
+            "content": "test message",
+            "user_id": "test_user_id",
+            "user_name": "test_user_name"
+    },
+    "conversation_id": "test_conversation_id",
+    "conversation_type": "teams_channel"
+}

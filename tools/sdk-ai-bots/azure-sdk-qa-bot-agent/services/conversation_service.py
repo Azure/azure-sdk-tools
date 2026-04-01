@@ -152,3 +152,39 @@ class ConversationService:
         result = await container.upsert_item(message_item.model_dump(mode="json"))
         logger.info("Saved conversation message: %s", result["id"])
         return
+
+    async def has_expert_reply(
+        self,
+        conversation_id: str,
+        conversation_type: ConversationType,
+        user_id: str,
+    ) -> bool:
+        """Check whether a non-author user has replied in a conversation thread.
+
+        Queries saved messages for the given conversation and returns ``True``
+        if any message was sent by a user other than the original post author
+        and the bot itself (assistant role).
+        """
+        container = await get_conversation_message_container()
+        partition_key = f"{conversation_type.value}:{conversation_id}"
+
+        query = (
+            "SELECT c.sender_id, c.sender_role FROM c "
+            "WHERE c.conversation_partition = @partition "
+            "AND c.sender_role = 'user' "
+            "AND c.sender_id != @user_id"
+        )
+        parameters = [
+            {"name": "@partition", "value": partition_key},
+            {"name": "@user_id", "value": user_id},
+        ]
+
+        async for _ in container.query_items(
+            query=query,
+            parameters=parameters,
+            partition_key=partition_key,
+            max_item_count=1,
+        ):
+            return True
+
+        return False

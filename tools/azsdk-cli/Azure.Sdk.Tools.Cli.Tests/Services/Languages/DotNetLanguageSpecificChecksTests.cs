@@ -1,5 +1,6 @@
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
@@ -16,6 +17,7 @@ internal class DotNetLanguageSpecificChecksTests
     private Mock<IGitHelper> _gitHelperMock = null!;
     private Mock<IPowershellHelper> _powerShellHelperMock = null!;
     private Mock<ICommonValidationHelpers> _commonValidationHelperMock = null!;
+    private Mock<IPackageInfoHelper> _packageInfoHelperMock = null!;
     private DotnetLanguageService _languageChecks = null!;
     private string _packagePath = null!;
     private string _repoRoot = null!;
@@ -29,6 +31,7 @@ internal class DotNetLanguageSpecificChecksTests
         _gitHelperMock.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
         _powerShellHelperMock = new Mock<IPowershellHelper>();
         _commonValidationHelperMock = new Mock<ICommonValidationHelpers>();
+        _packageInfoHelperMock = new Mock<IPackageInfoHelper>();
 
         _languageChecks = new DotnetLanguageService(
             _processHelperMock.Object,
@@ -37,7 +40,7 @@ internal class DotNetLanguageSpecificChecksTests
             _gitHelperMock.Object,
             NullLogger<DotnetLanguageService>.Instance,
             _commonValidationHelperMock.Object,
-            Mock.Of<IPackageInfoHelper>(),
+            _packageInfoHelperMock.Object,
             Mock.Of<IFileHelper>(),
             Mock.Of<ISpecGenSdkConfigHelper>(),
             Mock.Of<IChangelogHelper>());
@@ -64,6 +67,16 @@ internal class DotNetLanguageSpecificChecksTests
         _gitHelperMock
             .Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_repoRoot);
+
+        // Dynamically compute relative path from sdk/ for any package path
+        _packageInfoHelperMock
+            .Setup(p => p.ParsePackagePathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns<string, CancellationToken>((path, _) =>
+            {
+                var sdkRoot = Path.Combine(_repoRoot, "sdk");
+                var relativePath = Path.GetRelativePath(sdkRoot, path);
+                return Task.FromResult((_repoRoot, relativePath, path));
+            });
     }
 
     [Test]
@@ -84,6 +97,8 @@ internal class DotNetLanguageSpecificChecksTests
         {
             Assert.That(result.ExitCode, Is.EqualTo(1));
             Assert.That(result.CheckStatusDetails, Does.Contain("dotnet --list-sdks failed"));
+            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty, "NextSteps should be populated on failure");
+            Assert.That(result.NextSteps, Has.Some.Contain("Install the .NET SDK"));
         });
     }
 
@@ -106,6 +121,8 @@ internal class DotNetLanguageSpecificChecksTests
         {
             Assert.That(result.ExitCode, Is.EqualTo(1));
             Assert.That(result.ResponseError, Does.Contain(".NET SDK version 8.0.404 is below minimum requirement of 9.0.102"));
+            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty, "NextSteps should be populated on version failure");
+            Assert.That(result.NextSteps, Has.Some.Contain("Update the .NET SDK"));
         });
     }
 
@@ -190,6 +207,7 @@ internal class DotNetLanguageSpecificChecksTests
             {
                 var processResult = new ProcessResult { ExitCode = 1 };
                 processResult.AppendStdout(errorMessage);
+                processResult.AppendStdout($"error : {errorMessage}");
                 return processResult;
             });
 
@@ -199,6 +217,8 @@ internal class DotNetLanguageSpecificChecksTests
         {
             Assert.That(result.ExitCode, Is.EqualTo(1));
             Assert.That(result.CheckStatusDetails, Does.Contain(expectedDetail));
+            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty, "NextSteps should be populated on failure");
+            Assert.That(result.NextSteps, Has.Some.Contain(errorMessage));
         });
     }
 
@@ -220,6 +240,8 @@ internal class DotNetLanguageSpecificChecksTests
         {
             Assert.That(result.ExitCode, Is.EqualTo(1));
             Assert.That(result.CheckStatusDetails, Does.Contain("dotnet --list-sdks failed"));
+            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty, "NextSteps should be populated on failure");
+            Assert.That(result.NextSteps, Has.Some.Contain("Install the .NET SDK"));
         });
     }
 
@@ -242,6 +264,8 @@ internal class DotNetLanguageSpecificChecksTests
         {
             Assert.That(result.ExitCode, Is.EqualTo(1));
             Assert.That(result.ResponseError, Does.Contain(".NET SDK version 8.0.404 is below minimum requirement of 9.0.102"));
+            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty, "NextSteps should be populated on version failure");
+            Assert.That(result.NextSteps, Has.Some.Contain("Update the .NET SDK"));
         });
     }
 
@@ -329,6 +353,8 @@ internal class DotNetLanguageSpecificChecksTests
                 Assert.That(result.ExitCode, Is.EqualTo(1));
                 Assert.That(result.CheckStatusDetails, Does.Contain("Trim analysis warning"));
                 Assert.That(result.CheckStatusDetails, Does.Contain("RequiresUnreferencedCodeAttribute"));
+                Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty, "NextSteps should be populated on AOT failure");
+                Assert.That(result.NextSteps, Has.Some.Contain("AOT"));
             });
         }
         finally
@@ -858,6 +884,50 @@ public partial class TestClient
             Assert.That(capturedOptions!.EnvironmentVariables!["AZURE_TEST_MODE"], Is.EqualTo("playback"));
             Assert.That(capturedOptions.EnvironmentVariables["CLIENTMODEL_TEST_MODE"], Is.EqualTo("playback"));
         });
+    }
+
+    #endregion
+
+    #region CheckSpelling Tests
+
+    [Test]
+    public async Task CheckSpelling_DelegatesToCommonValidationHelpers()
+    {
+        var expectedSuccess = new PackageCheckResponse(0, "No spelling errors found");
+
+        string? capturedPackagePath = null;
+        _commonValidationHelperMock
+            .Setup(c => c.CheckSpelling(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .Callback<string, bool, CancellationToken>((pkgPath, _, _) =>
+            {
+                capturedPackagePath = pkgPath;
+            })
+            .ReturnsAsync(expectedSuccess);
+
+        var response = await _languageChecks.CheckSpelling(_packagePath, false, CancellationToken.None);
+
+        Assert.That(response.ExitCode, Is.EqualTo(0));
+        Assert.That(capturedPackagePath, Is.EqualTo(_packagePath));
+
+        _commonValidationHelperMock.Verify(
+            c => c.CheckSpelling(_packagePath, false, It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Test]
+    public async Task CheckSpelling_WithFixEnabled_DelegatesToCommonValidationHelpers()
+    {
+        _commonValidationHelperMock
+            .Setup(c => c.CheckSpelling(It.IsAny<string>(), true, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PackageCheckResponse(0, "Spelling issues fixed"));
+
+        var response = await _languageChecks.CheckSpelling(_packagePath, true, CancellationToken.None);
+
+        Assert.That(response.ExitCode, Is.EqualTo(0));
+
+        _commonValidationHelperMock.Verify(
+            c => c.CheckSpelling(_packagePath, true, It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     #endregion

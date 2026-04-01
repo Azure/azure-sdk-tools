@@ -1,6 +1,6 @@
 # Tools available in Azure SDK MCP server
 
-This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.6.4.
+This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.6.5.
 
 <style>
 table td:nth-child(2),
@@ -95,21 +95,19 @@ Returns an answer with supporting references and documentation links
 |  | `azsdk eng package-info` | Generate PackageInfo JSON files for CI pipelines |
 |  | `azsdk ingest-telemetry` |  |
 |  | `azsdk config github-label sync-ado` | Synchronize service labels from the GitHub CSV to Azure DevOps Work Items |
-|  | `azsdk config github-label create` | Creates a PR for a new label given a proposed label and brand documentation |
-|  | `azsdk config codeowners add-package-label` | Add PR label(s) to a package |
+|  | `azsdk config codeowners add-label-owner` | Add owner(s) to a label and optional path |
+|  | `azsdk config github-label check` | Check if a service label exists in the common labels CSV |
 |  | `azsdk config codeowners export-section` | Export one or more named sections from a CODEOWNERS file |
 |  | `azsdk config codeowners remove-label-owner` | Remove owner(s) from a label and optional path |
 |  | `azsdk config codeowners remove-package-label` | Remove PR label(s) from a package |
 |  | `azsdk config codeowners remove-package-owner` | Remove source owner(s) from a package |
-|  | `azsdk config codeowners add-label-owner` | Add owner(s) to a label and optional path |
 |  | `azsdk verify setup install` | Install missing environment requirements. Exit codes: 0 = all requirements met, 1 = blocking (manual intervention needed).  |
+|  | `azsdk config codeowners add-package-label` | Add PR label(s) to a package |
 |  | `azsdk config codeowners add-package-owner` | Add source owner(s) to a package |
 |  | `azsdk config codeowners view` | View CODEOWNERS associations for a user, label, package, or path |
 |  | `azsdk config codeowners generate` | Generate CODEOWNERS file from Azure DevOps work items |
-|  | `azsdk config codeowners validate` | Validate codeowners for an existing service entry |
-|  | `azsdk config codeowners update` | Update codeowners in a repository |
 |  | `azsdk start` | Starts the MCP server (stdio mode) |
 |  | `azsdk mcp` | Starts the MCP server (stdio mode) |
-|  | `azsdk config github-label check` | Check if a service label exists in the common labels CSV |
+|  | `azsdk config github-label create` | Creates a PR for a new label given a proposed label and brand documentation |
 |  | `azsdk list` |  |
 

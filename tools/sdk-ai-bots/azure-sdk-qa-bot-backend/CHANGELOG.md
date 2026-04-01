@@ -1,5 +1,11 @@
 # Release History
 
+## 0.9.3 (2026-03-27)
+
+### Features Added
+
+* Add `AzurePipelinesCredential` to the credential chain for Azure DevOps pipeline authentication
+
 ## 0.9.2 (2026-03-06)
 
 ### Features Added

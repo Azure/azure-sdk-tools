@@ -109,6 +109,25 @@
         margin-left: 0.1rem;
     }
 
+    .namespace-alert-dot {
+        position: absolute;
+        top: 3px;
+        right: 1px;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--danger-color);
+        border: 1.5px solid var(--base-fg-color);
+        flex-shrink: 0;
+    }
+
+    .tab-icon-wrapper {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
     .layout-body {
         display: flex;
         align-items: flex-start;

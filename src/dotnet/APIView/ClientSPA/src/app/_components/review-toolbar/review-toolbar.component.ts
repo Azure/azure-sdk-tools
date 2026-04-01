@@ -305,11 +305,9 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
   }
 
   onSearchKeydown(event: KeyboardEvent) {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      const direction = event.shiftKey ? -1 : 1;
-      this.navigateSearch(direction);
-    }
+    event.preventDefault();
+    const direction = event.shiftKey ? -1 : 1;
+    this.navigateSearch(direction);
   }
 
   navigateSearch(direction: number) {

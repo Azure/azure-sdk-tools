@@ -135,4 +135,4 @@ jobs:
             awk '/Test Files/{flag=1} flag{print} /Duration/{flag=0}' test-output.txt | sed 's/\x1b\[[0-9;]*m//g'
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-          exit ${TEST_EXIT:-0}
+          exit "${TEST_EXIT:-0}"

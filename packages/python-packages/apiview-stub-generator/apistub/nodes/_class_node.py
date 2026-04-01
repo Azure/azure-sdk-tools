@@ -223,37 +223,44 @@ class ClassNode(NodeEntityBase):
         except AttributeError:
             pass
         overloads = parse_overloads(self, functions, is_module_level=False)
+
+        # PEP 649 (Python 3.14+): annotations are now lazy; __annotations__ is no longer
+        # eagerly populated in cls.__dict__. inspect.get_annotations() (Python 3.10+)
+        # handles this correctly. Fall back to __dict__ on Python 3.9 to avoid inheriting
+        # parent annotations.
+        # TODO: drop the fallback branch when Python 3.9 support is removed.
+        if hasattr(inspect, 'get_annotations'):
+            own_annotations = inspect.get_annotations(self.obj)
+        else:
+            own_annotations = self.obj.__dict__.get("__annotations__", {})
+        for item_name, item_type in own_annotations.items():
+            if item_name.startswith("_"):
+                continue
+            if is_typeddict and (
+                inspect.isclass(item_type)
+                or getattr(item_type, "__module__", None) == "typing"
+            ):
+                self.child_nodes.append(
+                    KeyNode(self.namespace, self, item_name, item_type)
+                )
+            else:
+                type_string = get_qualified_name(item_type, self.namespace)
+                self._handle_variable({}, item_name, type_string=type_string)
+
         for name, child_obj in members:
             if inspect.isbuiltin(child_obj):
                 continue
             elif self._should_include_function(child_obj):
-                # Include dunder and public methods
-                if not name.startswith("_") or name.startswith("__"):
+                # Include dunder and public methods.
+                # PEP 649 (Python 3.14+): skip __annotate_func__, an internal callable
+                # exposed by inspect.getmembers(). Its __name__ is "__annotate__", so
+                # check the callable's own name rather than the member-dict key.
+                func_name = getattr(child_obj, '__name__', name)
+                if (not name.startswith("_") or name.startswith("__")) and func_name != "__annotate__":
                     func_node = FunctionNode(
                         self.namespace, self, obj=child_obj, apiview=self.apiview
                     )
                     add_overload_nodes(self, func_node, overloads)
-            elif name == "__annotations__":
-                # Use __dict__ directly to avoid inheriting parent class annotations.
-                # On Python 3.9, getattr(cls, '__annotations__') falls back to MRO,
-                # returning the parent's annotations. Python 3.10+ returns {} for classes
-                # with no own annotations. Using __dict__ is consistent across versions.
-                own_annotations = self.obj.__dict__.get("__annotations__", {})
-                for item_name, item_type in own_annotations.items():
-                    if item_name.startswith("_"):
-                        continue
-                    if is_typeddict and (
-                        inspect.isclass(item_type)
-                        or getattr(item_type, "__module__", None) == "typing"
-                    ):
-                        self.child_nodes.append(
-                            KeyNode(self.namespace, self, item_name, item_type)
-                        )
-                    else:
-                        type_string = get_qualified_name(item_type, self.namespace)
-                        self._handle_variable(
-                            child_obj, item_name, type_string=type_string
-                        )
 
             # now that we've looked at the specific dunder properties we are
             # willing to include, anything with a leading underscore should be ignored.

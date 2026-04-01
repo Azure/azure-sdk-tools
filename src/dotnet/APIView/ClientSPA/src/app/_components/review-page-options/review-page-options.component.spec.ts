@@ -572,7 +572,7 @@ describe('ReviewPageOptionsComponent', () => {
         component['updateApprovalStates'](true, false);
 
         expect(component.isAPIRevisionApprovalDisabled).toBe(true);
-        expect(component.apiRevisionApprovalMessages).toEqual(["All Must Fix comments must be resolved before approving."]);
+        expect(component.apiRevisionApprovalMessages).toEqual(["Cannot approve due to outstanding \"Must Fix\" comments."]);
       });
     });
   });

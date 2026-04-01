@@ -546,7 +546,7 @@ describe('ReviewPageOptionsComponent', () => {
         expect(component.isAPIRevisionApprovalDisabled).toBe(true);
         expect(component.apiRevisionApprovalMessages).toEqual([
           "Copilot review must be completed before approving.",
-          "All Must Fix comments must be resolved before approving."
+          "Cannot approve due to outstanding \"Must Fix\" comments."
         ]);
       });
 
@@ -559,7 +559,7 @@ describe('ReviewPageOptionsComponent', () => {
         component['updateApprovalStates'](true, true);
 
         expect(component.isAPIRevisionApprovalDisabled).toBe(true);
-        expect(component.apiRevisionApprovalMessages).toEqual(["All Must Fix comments must be resolved before approving."]);
+        expect(component.apiRevisionApprovalMessages).toEqual(["Cannot approve due to outstanding \"Must Fix\" comments."]);
       });
 
       it('should show must fix message when copilot is not supported but must fix remain', () => {

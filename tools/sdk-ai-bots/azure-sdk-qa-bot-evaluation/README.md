@@ -18,9 +18,7 @@ Online evaluation runs can be triggered by the [tools - sdk-ai-bot-online-evalua
 
 #### How to resolve evaluation CI pipeline failures
 
-When the offline evaluation pipeline [tools - sdk-ai-bot-online-evaluation](
-https://dev.azure.com/azure-sdk/internal/_build?definitionId=7918)
-fails in a PR, the PR is blocked and cannot be approved until the failure is properly triaged.
+When the offline evaluation pipeline [tools - azure-sdk-ai-bot-evaluate-ci](https://dev.azure.com/azure-sdk/internal/_build?definitionId=7918) fails in a PR, the PR is blocked and cannot be approved until the failure is properly triaged.
 
 **PR owner responsibilities**
 When the evaluation CI fails, the PR owner must:

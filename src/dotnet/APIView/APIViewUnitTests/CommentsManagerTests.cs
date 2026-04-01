@@ -318,6 +318,49 @@ public class CommentsManagerTests
         commentsRepoMock.Verify(r => r.UpsertCommentAsync(comment), Times.Once);
     }
 
+    [Fact]
+    public async Task ToggleDownvoteAsync_AIGeneratedComment_NonArchitectUser_ThrowsAuthorizationFailedException()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+        CommentItemModel comment = new()
+        {
+            ReviewId = "review1",
+            Id = "comment1",
+            CommentSource = CommentSource.AIGenerated,
+            Upvotes = new List<string>(),
+            Downvotes = new List<string>()
+        };
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment);
+
+        await Assert.ThrowsAsync<AuthorizationFailedException>(() =>
+            manager.ToggleDownvoteAsync(user, "review1", "comment1"));
+
+        commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ToggleDownvoteAsync_AIGeneratedComment_ArchitectUser_Succeeds()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("architect1");
+        CommentItemModel comment = new()
+        {
+            ReviewId = "review1",
+            Id = "comment1",
+            CommentSource = CommentSource.AIGenerated,
+            Upvotes = new List<string>(),
+            Downvotes = new List<string>()
+        };
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment);
+
+        await manager.ToggleDownvoteAsync(user, "review1", "comment1");
+
+        Assert.Single(comment.Downvotes);
+        Assert.Contains("architect1", comment.Downvotes);
+        commentsRepoMock.Verify(r => r.UpsertCommentAsync(comment), Times.Once);
+    }
+
     #endregion
 
     #region CommentsBatchOperationAsync Tests

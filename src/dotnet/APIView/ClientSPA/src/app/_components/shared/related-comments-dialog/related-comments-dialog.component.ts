@@ -85,6 +85,10 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
     { label: 'Delete', value: 'delete' as ConversationDisposition, icon: 'pi pi-trash' }
   ];
 
+  get canManageAIComment(): boolean {
+    return this.permissionsService.isApproverFor(this.userProfile?.permissions, this.reviewContextService.getLanguage());
+  }
+
   // Permission check: User can edit severity if they can edit ALL selected comments
   get canEditSeverity(): boolean {
     if (!this.userProfile || this.relatedComments.length === 0) {

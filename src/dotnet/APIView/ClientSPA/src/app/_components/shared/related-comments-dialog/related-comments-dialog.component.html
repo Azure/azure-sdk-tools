@@ -141,6 +141,7 @@
             <span [ngClass]="hasBatchUpvote() ? 'bi bi-hand-thumbs-up-fill emoji-active fs-5' : 'bi bi-hand-thumbs-up text-muted fs-5'"></span>
           </button>
           <button
+            *ngIf="!hasAIGeneratedComments || canManageAIComment"
             type="button"
             class="btn btn-link p-2 vote-btn"
             title="Downvote selected issues"

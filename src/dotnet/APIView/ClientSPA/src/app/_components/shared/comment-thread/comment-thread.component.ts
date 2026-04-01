@@ -147,6 +147,10 @@ export class CommentThreadComponent {
            (firstComment.createdBy === 'azure-sdk' && this.permissionsService.isApproverFor(this.userProfile?.permissions, this.reviewContextService.getLanguage()));
   }
 
+  get canManageAIComment(): boolean {
+    return this.permissionsService.isApproverFor(this.userProfile?.permissions, this.reviewContextService.getLanguage());
+  }
+
   CodeLineRowNavigationDirection = CodeLineRowNavigationDirection;
 
   constructor(private changeDetectorRef: ChangeDetectorRef, private messageService: MessageService, private commentsService: CommentsService, private permissionsService: PermissionsService, private reviewContextService: ReviewContextService) { }

@@ -2,6 +2,7 @@ using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
+using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -241,10 +242,17 @@ namespace APIViewWeb.LeanControllers
         /// <param name="commentId"></param>
         /// <returns></returns>
         [HttpPatch("{reviewId}/{commentId}/toggleCommentDownVote", Name = "ToggleCommentDownVote")]
-        public async Task<ActionResult> ToggleDownUpVoteAsync(string reviewId, string commentId)
+        public async Task<ActionResult> ToggleDownVoteAsync(string reviewId, string commentId)
         {
-            await _commentsManager.ToggleDownvoteAsync(User, reviewId, commentId);
-            return Ok();
+            try
+            {
+                await _commentsManager.ToggleDownvoteAsync(User, reviewId, commentId);
+                return Ok();
+            }
+            catch (AuthorizationFailedException)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, "Only architects and admins can downvote AI-generated comments.");
+            }
         }
 
         /// <summary>

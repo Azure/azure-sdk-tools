@@ -628,6 +628,16 @@ namespace APIViewWeb.Managers
         public async Task ToggleDownvoteAsync(ClaimsPrincipal user, string reviewId, string commentId)
         {
             CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+            if (comment.CommentSource == CommentSource.AIGenerated)
+            {
+                ReviewListItemModel review = await _reviewRepository.GetReviewAsync(reviewId);
+                string userId = user.GetGitHubLogin();
+                EffectivePermissions permissions = await _permissionsManager.GetEffectivePermissionsAsync(userId);
+                if (permissions == null || (!permissions.IsAdmin && !permissions.IsApproverFor(review.Language)))
+                {
+                    throw new AuthorizationFailedException();
+                }
+            }
             await ToggleVoteAsync(user, comment, FeedbackVote.Down);
         }
 

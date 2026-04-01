@@ -43,7 +43,7 @@ export enum ApprovalDisabledReason {
 const APPROVAL_DISABLED_MESSAGES: Record<ApprovalDisabledReason, string> = {
   [ApprovalDisabledReason.MissingPackageVersion]: 'A package version must be set before approving.',
   [ApprovalDisabledReason.CopilotReviewRequired]: 'Copilot review must be completed before approving.',
-  [ApprovalDisabledReason.UnresolvedMustFix]: 'All Must Fix comments must be resolved before approving.',
+  [ApprovalDisabledReason.UnresolvedMustFix]: 'Cannot approve due to outstanding "Must Fix" comments.',
 };
 
 @Component({

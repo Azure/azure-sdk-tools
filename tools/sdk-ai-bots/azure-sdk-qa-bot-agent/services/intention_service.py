@@ -61,6 +61,7 @@ class IntentionService:
         openai_client = project_client.get_openai_client()
 
         model = cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL", "gpt-4o-mini")
+        reasoning_effort = cfg("AI_FOUNDRY_INTENTION_REASONING_EFFORT", "low")
 
         try:
             system_msg = Message(role=Role.System, content=self._classify_prompt)
@@ -71,6 +72,7 @@ class IntentionService:
                     system_msg.model_dump(exclude_none=True),
                     user_msg.model_dump(exclude_none=True),
                 ],
+                reasoning_effort=reasoning_effort,
                 response_format={"type": "json_object"},
             )
             raw = (response.choices[0].message.content or "").strip()

@@ -172,6 +172,8 @@ There is no explicit "version" entity. The concept of "v12.2.0" exists implicitl
 
 ### 3.3 Opaque Approval Copying
 
+**Current approval distribution:** Today, API approvals are overwhelmingly given on **automatic** revisions — these are the revisions created by CI pipelines, and they are exclusively the revision type that approval is *copied to*. Of all approval-copy events, 95%+ originate *from* other automatic revisions as well. PR revisions account for a low single-digit percentage of approval sources, and manual revisions are even rarer. In other words, the approval-copying system is almost entirely an automatic-to-automatic pipeline: CI uploads a new revision, the system finds a byte-identical approved automatic revision, and copies the approval forward — with no human in the loop at any point in the chain. This makes the opacity of the mechanism particularly consequential: the dominant path through the approval system is fully automated, yet the audit trail and UI present it as indistinguishable from human review.
+
 **Symptom:** A new revision for v12.3.0 silently appears as "approved" even though no human reviewed it. The UI presents it identically to a human-approved revision.
 
 **Root Cause — The Approval Copy Flow** (in `AutoReviewService.CreateAutomaticRevisionAsync`):
@@ -296,10 +298,12 @@ public class APIVersionModel : BaseListitemModel
     public string SourceBranch { get; set; }            // e.g. "feature/add-widget"
     public PullRequestStatus? PRStatus { get; set; }    // Open, Merged, Closed (null for non-PR)
 
-    // Approval (explicit, auditable)
+    // Approval (materialized from ReviewSubmissions for query efficiency)
+    // Kept in sync: set by submit-review (Decision=Approve) and by system approval inheritance.
+    // Source of truth for "is this version approved now"; ReviewSubmissionModel is the audit trail.
     public bool IsApproved { get; set; }
     public HashSet<string> Approvers { get; set; } = new();
-    public string ApprovalInheritedFromVersionId { get; set; } // null = human-approved
+    public string ApprovalInheritedFromVersionId { get; set; } // null = human-approved (via ReviewSubmission)
     public DateTime? ApprovalDate { get; set; }
 
     // Release Tracking
@@ -315,6 +319,9 @@ public class APIVersionModel : BaseListitemModel
     public DateTime CreatedOn { get; set; }
     public DateTime LastUpdated { get; set; }                   // Updated on any revision add, approval change, or metadata edit
     public List<APIVersionChangeHistoryModel> ChangeHistory { get; set; } = new();
+
+    // Retention
+    public DateTime? RetainUntil { get; set; }                  // null = retain indefinitely; set when retention clock starts (e.g. stable ships, PR closes)
 }
 
 public enum VersionKind
@@ -494,7 +501,59 @@ Approval lives on `APIVersion`, not `APIRevision`.
 
 #### 4.6.1 Per-Language Approval Inheritance Policy
 
-Different version transitions carry different semantic weight. Since different language ecosystems have different release conventions, the policy is **configurable per language** (in `appsettings.json`). Languages not listed fall back to `Default`.
+Different version transitions carry different semantic weight. Since different language ecosystems have different release conventions, the policy is **configurable per language** via JSON blobs stored in **Azure App Configuration**. Each language has its own key; languages without a key fall back to `ApprovalPolicy:Default`.
+
+**App Configuration keys:**
+
+| Key | Value |
+|---|---|
+| `ApprovalInheritancePolicy:Default` | JSON blob (see schema below) |
+| `ApprovalInheritancePolicy:Python` | JSON blob (overrides for Python) |
+| `ApprovalInheritancePolicy:Java` | JSON blob (overrides for Java) |
+| `ApprovalInheritancePolicy:{Language}` | ... |
+
+The `{Language}` segment matches `LanguageService.Name` (e.g., `C#`, `Python`, `Java`, `JavaScript`, `Go`). Each key's value is a JSON object that deserializes to `ApprovalInheritancePolicyOptions`:
+
+```csharp
+public class ApprovalInheritancePolicyOptions
+{
+    public InheritanceRule PrereleaseToPrerelease { get; set; } = InheritanceRule.Automatic;
+    public InheritanceRule PrereleaseToStable { get; set; } = InheritanceRule.Explicit;
+    public InheritanceRule StableToPrerelease { get; set; } = InheritanceRule.Explicit;
+    public InheritanceRule StablePatch { get; set; } = InheritanceRule.Automatic;
+    public InheritanceRule StableMinor { get; set; } = InheritanceRule.Explicit;
+    public InheritanceRule StableMajor { get; set; } = InheritanceRule.Explicit;
+}
+
+public enum InheritanceRule
+{
+    Automatic,  // Auto-inherit approval when API surface matches
+    Explicit    // Always require explicit human approval
+}
+```
+
+**Example JSON blob** for the default policy (`ApprovalInheritancePolicy:Default`):
+
+```json
+{
+  "PrereleaseToPrerelease": "Automatic",
+  "PrereleaseToStable": "Explicit",
+  "StableToPrerelease": "Explicit",
+  "StablePatch": "Automatic",
+  "StableMinor": "Explicit",
+  "StableMajor": "Explicit"
+}
+```
+
+A language override only needs to specify the fields it differs on — missing fields fall back to the `Default` policy. For example, if Python wants to auto-inherit on stable minor bumps:
+
+```json
+{
+  "StableMinor": "Automatic"
+}
+```
+
+At startup, all `ApprovalInheritancePolicy:*` keys are loaded, deserialized, and **cached in memory** as a `Dictionary<string, ApprovalInheritancePolicyOptions>`. The policy for a language is resolved by overlaying the language-specific blob (if any) onto the `Default` blob. The cache is **only invalidated when the App Configuration sentinel is triggered** — individual requests never read from App Configuration directly. This is consistent with how the existing sentinel-based refresh works: the background refresh checks the sentinel key every 5 minutes, and only when it detects a change does it reload all configuration values and rebuild the cached policy dictionary.
 
 | Transition | Example | Default | Configurable? | Rationale |
 |---|---|---|---|---|
@@ -537,7 +596,7 @@ When a new version is created, the system:
 - **Clear audit trail** — `ApprovalInheritedFromVersionId` makes the provenance visible
 - **Revocable inheritance** — Un-approving the source version can cascade to inherited versions if desired
 - **UI distinction** — The frontend can show "inherited" approvals differently from human approvals
-- **Per-language policy** — Each language ecosystem can tune which transitions auto-inherit approval and which require explicit review, configured in `appsettings.json` without code changes
+- **Per-language policy** — Each language ecosystem can tune which transitions auto-inherit approval and which require explicit review, stored as JSON blobs in Azure App Configuration — runtime-tunable without code changes
 - **Major version gate ([#9595](https://github.com/Azure/azure-sdk-tools/issues/9595))** — Auto-inheritance is blocked by default across major version boundaries, ensuring architect review of every major bump regardless of API surface changes
 - **Stable gate** — Both prerelease-to-stable and stable-to-prerelease transitions always require explicit approval. Prerelease versions do not require approval, so inheriting stable approval into a prerelease is meaningless; approval is only meaningful when a version eventually promotes to stable.
 - **Free-flowing prerelease approvals** — Prerelease-to-prerelease transitions (including sub-1.0.0 versions) auto-inherit approval by default, avoiding unnecessary friction for alpha/beta/rc iterations while the stable boundary remains the meaningful checkpoint.
@@ -586,7 +645,7 @@ The version-centric model enables retention rules at **two levels**: version-lev
 |---|---|---|---|
 | **Stable** | Approved or released | **Indefinite** | Stable versions are the canonical API record. In practice, virtually all stable versions are approved or released. |
 | **Preview** | Approved or released | **Indefinite** | Approved or released preview milestones are retained for audit and comparison, same as stable. |
-| **Preview** | Not approved, not released, superseded by a newer stable version | **3 months** after stable release | Once a stable version ships, earlier unapproved/unreleased previews have diminishing value. Retained briefly for historical diff access. |
+| **Preview** | Not approved, not released, superseded by a newer stable version | **90 days** after stable release | Once a stable version ships, earlier unapproved/unreleased previews have diminishing value. Retained briefly for historical diff access. |
 | **RollingPrerelease** | Active channel (no stable release yet) | **Indefinite** (but revision-level cleanup manages storage) | The channel itself persists; individual revisions within it are cleaned up aggressively. |
 | **RollingPrerelease** | Channel whose major.minor.patch has shipped stable | **30 days** after stable release | Once the stable version ships, the alpha/dev channel is no longer useful. Short grace period for any late references. |
 | **PullRequest** | `PRStatus = Open` | **Indefinite** (while PR is open) | Active PRs must retain their version for ongoing review. |
@@ -607,25 +666,56 @@ The version-centric model enables retention rules at **two levels**: version-lev
 | **Released revision** (the revision that was current when `IsReleased` was set) | **Always retained** | The exact artifact that shipped. |
 | **Superseded revision** (not latest, not approved, not released) | **Soft-delete immediately** on new revision upload; **hard-delete + blob cleanup after 30 days** | Superseded revisions with no anchoring reason are the primary source of storage waste. Aggressive cleanup here is the main storage win. |
 
-**Cascade deletion:** When a version is deleted (retention period expires), all its revisions, comments, and blobs are cascade-deleted in a single operation. This is structurally clean because comments are version-scoped — no orphans.
+**`RetainUntil` — how retention is enforced:**
+
+Both `APIVersionModel` and `APIRevisionListItemModel` carry a nullable `DateTime? RetainUntil` field. `null` means "retain indefinitely" — the entity is not eligible for deletion. A non-null value means "eligible for hard-delete after this timestamp."
+
+`RetainUntil` is **set at the moment the retention clock starts** — not computed on-the-fly during purge. This makes the purge job trivial:
+
+```
+SELECT * FROM c WHERE c.RetainUntil != null AND c.RetainUntil < @now
+```
+
+No complex eligibility logic runs during purge — it was already evaluated when `RetainUntil` was written.
+
+**When `RetainUntil` is set on versions:**
+
+| Event | Action |
+|---|---|
+| Stable version ships for a major.minor.patch | Set `RetainUntil = now + 90d` on superseded `Preview` versions for that track; set `RetainUntil = now + 30d` on the `RollingPrerelease` channel for that major.minor.patch |
+| PR merged (not promoted) | Set `RetainUntil = now + 60d` on the PR version |
+| PR closed without merge | Set `RetainUntil = now + 30d` on the PR version |
+| Version becomes approved or released | Clear `RetainUntil` → `null` (retain indefinitely) |
+| Version is the last stable or last preview per track | Clear `RetainUntil` → `null` (invariant override) |
+
+**When `RetainUntil` is set on revisions:**
+
+| Event | Action |
+|---|---|
+| New revision uploaded within a version | Set `RetainUntil = now + 30d` on superseded revisions (not latest, not approved, not released); soft-delete immediately |
+| Revision becomes the approved or released snapshot | Clear `RetainUntil` → `null` |
+
+**Recalculation:** If conditions change (e.g., a version that had `RetainUntil` set is subsequently approved), the write path clears `RetainUntil` back to `null`. Conversely, if the retention period config is shortened, a background sweep can update existing `RetainUntil` values — but this is rare and non-urgent since the purge job simply skips items whose `RetainUntil` is still in the future.
+
+**Cascade deletion:** When a version is deleted (its `RetainUntil` has passed), all its revisions, comments, and blobs are cascade-deleted in a single operation. This is structurally clean because comments are version-scoped — no orphans.
 
 **Blob cleanup timing:** Unlike the current system where blob cleanup only happens during hard-delete (purge), the proposed model ties blob cleanup to revision hard-delete. When a superseded revision is hard-deleted after its 30-day grace period, its blobs in both `codefiles` and `originals` containers are deleted immediately.
 
 **Configuration:**
 
-All retention periods are configurable in `appsettings.json`:
+All retention periods are stored as keys in **Azure App Configuration** (the existing config store used by APIView — see `Program.cs`). This keeps them runtime-tunable without code changes or redeployment, and consistent with how all other operational settings are managed. Keys use the `RetentionPolicy:` prefix:
 
-```jsonc
-{
-  "RetentionPolicy": {
-    "SupersededPreviewMonthsAfterStable": 3,
-    "GraduatedRollingPrereleaseDays": 30,
-    "MergedPullRequestDays": 60,
-    "ClosedPullRequestDays": 30,
-    "SupersededRevisionHardDeleteDays": 30
-  }
-}
-```
+| Key | Default |
+|---|---|
+| `RetentionPolicy:SupersededPreviewDaysAfterStable` | `90` |
+| `RetentionPolicy:GraduatedRollingPrereleaseDays` | `30` |
+| `RetentionPolicy:MergedPullRequestDays` | `60` |
+| `RetentionPolicy:ClosedPullRequestDays` | `30` |
+| `RetentionPolicy:SupersededRevisionHardDeleteDays` | `30` |
+
+All values are in **days**.
+
+Defaults are hardcoded in a `RetentionPolicyOptions` class and bound via `IOptions<RetentionPolicyOptions>`. If a key is absent from App Configuration, the hardcoded default applies. The existing 5-minute sentinel-based refresh ensures changes propagate without restart.
 
 **How this replaces aliasing/dedup for storage management:**
 
@@ -690,7 +780,7 @@ The original proposal included revision aliasing and blob deduplication as the p
 
 1. Move `IsApproved` / `Approvers` from `APIRevisionListItemModel` to `APIVersionModel`
 2. Set `ApprovalInheritedFromVersionId` for versions that had bot-copied approvals (detectable from `ChangeHistory` notes containing "Approval copied from")
-3. Add `ApprovalInheritancePolicy` configuration to `appsettings.json` with default policy and any language-specific overrides
+3. Add `ApprovalInheritancePolicy:Default` and any language-specific `ApprovalInheritancePolicy:{Language}` keys to Azure App Configuration with JSON blobs conforming to `ApprovalInheritancePolicyOptions`
 4. Implement `ClassifyTransition()` and wire it into the auto-approval flow, replacing the existing `CarryForwardRevisionDataAsync` / `ApplyApprovalFrom` logic
 5. Update `ToggleAPIRevisionApprovalAsync` to operate on `APIVersionModel`
 6. Update UI to show inherited vs. human approval, including the transition kind that triggered inheritance (e.g., "inherited from v12.1.0 — patch bump")

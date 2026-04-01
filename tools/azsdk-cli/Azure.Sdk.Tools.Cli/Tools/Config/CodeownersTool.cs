@@ -604,7 +604,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         {
             try
             {
-                // System.Diagnostics.Debugger.Launch();
                 repo = await ResolveRepo(repo, ct);
                 return await codeownersManagementHelper.RemoveOwnersFromLabelsAndPath(
                     await GetOwnerWorkItems(githubUsers, ct),

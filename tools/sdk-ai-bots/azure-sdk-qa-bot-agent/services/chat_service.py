@@ -257,7 +257,9 @@ class ChatService:
         # Extract markdown links: - [title](link)
         extracted: list[Reference] = []
         for m in re.finditer(r"-\s*\[([^\]]+)\]\(([^)]+)\)", refs_block):
-            title, link = m.group(1), m.group(2)
+            # Strip trailing "|" the LLM sometimes appends to pipe-separated titles
+            title = m.group(1).strip().rstrip("|").strip()
+            link = m.group(2)
             # Enrich from tool results
             matched = link_lookup.get(link) or title_lookup.get(title)
             extracted.append(

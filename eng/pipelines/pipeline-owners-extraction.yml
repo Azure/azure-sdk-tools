@@ -14,10 +14,6 @@ parameters:
             inputs:
               version: 10.0.x
 
-        # TODO: Remove when this is ready for production
-        DraftPr: true
-        CloseAfterOpeningForTesting: true
-
 stages:
 - stage: Run
   variables:

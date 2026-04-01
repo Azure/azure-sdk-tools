@@ -9,19 +9,10 @@ from __future__ import annotations
 from enum import Enum
 from pydantic import BaseModel
 from config.tenant_config import TenantID
-from models.conversation import ConversationType
+from models.conversation import ConversationType, Role
 from models.knowledge import Reference
 
 # ===== Enumerations =====
-
-
-class Role(str, Enum):
-    """Message roles in the conversation."""
-
-    User = "user"
-    Assistant = "assistant"
-    System = "system"
-    Developer = "developer"
 
 
 class AdditionalInfoType(str, Enum):

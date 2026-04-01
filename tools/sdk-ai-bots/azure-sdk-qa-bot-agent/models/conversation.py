@@ -8,9 +8,13 @@ from enum import Enum
 from pydantic import BaseModel, Field
 
 
-class UserRole(str, Enum):
-    system = "system"
-    user = "user"
+class Role(str, Enum):
+    """Message roles in the conversation."""
+
+    User = "user"
+    Assistant = "assistant"
+    System = "system"
+    Developer = "developer"
 
 
 class ConversationType(str, Enum):
@@ -29,7 +33,7 @@ class ConversationPartitionPrefix(str, Enum):
 class ConversationMessage(BaseModel):
     id: str  # Message ID from Teams
     tenant_id: str | None = None  # Tenant ID
-    sender_role: UserRole  # "user" or "system"
+    sender_role: Role  # Message sender role
     sender_id: str  # User ID
     sender_name: str  # Display name
     content: str  # Message content

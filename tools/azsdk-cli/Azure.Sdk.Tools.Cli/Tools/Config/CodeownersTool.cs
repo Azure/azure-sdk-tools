@@ -523,6 +523,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         {
             try
             {
+                if (string.IsNullOrEmpty(section))
+                {
+                    throw new ArgumentException("Section name must be provided", nameof(section));
+                }
                 repo = await ResolveRepo(repo, ct);
                 return await codeownersManagementHelper.AddOwnersAndLabelsToPath(
                     await FindOrCreateOwnerWorkItems(githubUsers, ct),
@@ -604,6 +608,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         {
             try
             {
+                if (string.IsNullOrEmpty(section))
+                {
+                    throw new ArgumentException("Section name must be provided", nameof(section));
+                }
                 repo = await ResolveRepo(repo, ct);
                 return await codeownersManagementHelper.RemoveOwnersFromLabelsAndPath(
                     await GetOwnerWorkItems(githubUsers, ct),

@@ -90,7 +90,8 @@ public class CodeownersManagementHelperTests
         {
             { "Custom.LabelType", labelType },
             { "Custom.Repository", repository },
-            { "Custom.RepoPath", repoPath }
+            { "Custom.RepoPath", repoPath },
+            { "Custom.Section", "" }
         }, relatedIds);
 
     // ========================
@@ -110,7 +111,7 @@ public class CodeownersManagementHelperTests
         }
     }
 
-    private static void AssertLabelOwner(LabelOwnerResponse lo, string expectedRepo, string expectedPath, string[]? expectedOwners = null, string[]? expectedLabels = null)
+    private static void AssertLabelOwner(LabelOwnerResponse lo, string expectedRepo, string expectedPath, string[]? expectedOwners = null, string[]? expectedLabels = null, string? expectedSection = null)
     {
         Assert.That(lo.Repo, Is.EqualTo(expectedRepo));
         Assert.That(lo.Path, Is.EqualTo(expectedPath));
@@ -121,6 +122,10 @@ public class CodeownersManagementHelperTests
         if (expectedLabels != null)
         {
             Assert.That(lo.Labels, Is.EquivalentTo(expectedLabels));
+        }
+        if (expectedSection != null)
+        {
+            Assert.That(lo.Section, Is.EqualTo(expectedSection));
         }
     }
 
@@ -456,6 +461,46 @@ public class CodeownersManagementHelperTests
         Assert.That(result.Packages, Is.Null); // GetViewByPath returns no packages
         Assert.That(result.PathBasedLabelOwners, Has.Count.EqualTo(1));
         AssertLabelOwner(result.PathBasedLabelOwners![0], "Azure/azure-sdk-for-net", "/sdk/storage", ["owner2"], ["Storage"]);
+    }
+
+    [Test]
+    public async Task GetViewByPath_ReturnsSectionInResponse()
+    {
+        var loId = 1;
+        var ownerId = 10;
+        var labelId = 11;
+
+        var loWi = MakeWorkItem(loId, "Label Owner", new Dictionary<string, object>
+        {
+            { "Custom.LabelType", "Service Owner" },
+            { "Custom.Repository", "Azure/azure-sdk-for-net" },
+            { "Custom.RepoPath", "/sdk/storage" },
+            { "Custom.Section", "Test Section" }
+        }, ownerId, labelId);
+
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("/sdk/storage")),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<WorkItem> { loWi });
+
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(ownerId) && ids.Contains(labelId)),
+                It.IsAny<int>(),
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<WorkItem>
+            {
+                MakeOwnerWorkItem(ownerId, "owner2"),
+                MakeLabelWorkItem(labelId, "Storage")
+            });
+
+        var result = await _helper.GetViewByPath("/sdk/storage", null, CancellationToken.None);
+
+        Assert.That(result.ResponseError, Is.Null);
+        Assert.That(result.PathBasedLabelOwners, Has.Count.EqualTo(1));
+        AssertLabelOwner(result.PathBasedLabelOwners![0], "Azure/azure-sdk-for-net", "/sdk/storage",
+            expectedOwners: ["owner2"], expectedLabels: ["Storage"], expectedSection: "Test Section");
     }
 
     [Test]
@@ -796,7 +841,7 @@ public class CodeownersManagementHelperTests
         var labelWi = new LabelWorkItem { WorkItemId = labelId, LabelName = "Storage" };
 
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
-                It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("Azure/azure-sdk-for-net") && q.Contains("Service Owner")),
+                It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("Azure/azure-sdk-for-net") && q.Contains("Service Owner") && q.Contains("Custom.Section") && q.Contains("Client Libraries")),
                 It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { loWi });
 
@@ -821,7 +866,7 @@ public class CodeownersManagementHelperTests
         var expectedLabelWi = new LabelWorkItem { WorkItemId = expectedLabelId, LabelName = "Storage" };
 
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
-                It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("Azure/azure-sdk-for-net") && q.Contains("Service Owner")),
+                It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("Azure/azure-sdk-for-net") && q.Contains("Service Owner") && q.Contains("Custom.Section") && q.Contains("Client Libraries")),
                 It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { loWi });
 
@@ -847,7 +892,7 @@ public class CodeownersManagementHelperTests
         var labelWi = new LabelWorkItem { WorkItemId = 100, LabelName = "Storage" };
 
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
-                It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("Azure/azure-sdk-for-net")),
+                It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("Azure/azure-sdk-for-net") && q.Contains("Custom.Section") && q.Contains("Client Libraries")),
                 It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
 
@@ -868,7 +913,7 @@ public class CodeownersManagementHelperTests
         var labelWi = new LabelWorkItem { WorkItemId = 100, LabelName = "Storage" };
 
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
-                It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("sdk/service/")),
+                It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("sdk/service/") && q.Contains("Custom.Section") && q.Contains("Client Libraries")),
                 It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
 
@@ -1138,6 +1183,10 @@ public class CodeownersManagementHelperTests
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.View, Is.Not.Null);
         _mockDevOps.Verify(d => d.CreateWorkItemRelationAsync(labelOwnerWiId, "related", ownerId, It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+        // Verify FindOrCreateLabelOwnerAsync included section in WIQL query
+        _mockDevOps.Verify(d => d.FetchWorkItemsPagedAsync(
+            It.Is<string>(q => q.Contains("Custom.Section") && q.Contains("Client Libraries")),
+            It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
     }
 
     [Test]
@@ -1329,7 +1378,7 @@ public class CodeownersManagementHelperTests
     public async Task RemoveOwnersFromLabelsAndPath_NoLabelOwnerFound_ReturnsError()
     {
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
-                It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("/sdk/nopath")),
+                It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("/sdk/nopath") && q.Contains("Custom.Section") && q.Contains("Client Libraries")),
                 It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
 
@@ -1381,6 +1430,10 @@ public class CodeownersManagementHelperTests
 
         Assert.That(result.ResponseError, Is.Null);
         _mockDevOps.Verify(d => d.RemoveWorkItemRelationAsync(labelOwnerWiId, "related", ownerId, It.IsAny<CancellationToken>()), Times.Once);
+        // Verify QueryLabelOwnersByPath included section in WIQL query
+        _mockDevOps.Verify(d => d.FetchWorkItemsPagedAsync(
+            It.Is<string>(q => q.Contains("Custom.Section") && q.Contains("Client Libraries")),
+            It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
     }
 
     [Test]
@@ -1418,6 +1471,10 @@ public class CodeownersManagementHelperTests
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.View, Is.Not.Null);
         _mockDevOps.Verify(d => d.RemoveWorkItemRelationAsync(It.IsAny<int>(), "related", It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+        // Verify QueryLabelOwnersByPath included section in WIQL query
+        _mockDevOps.Verify(d => d.FetchWorkItemsPagedAsync(
+            It.Is<string>(q => q.Contains("Custom.Section") && q.Contains("Client Libraries")),
+            It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
     }
 
     [Test]
@@ -1467,6 +1524,10 @@ public class CodeownersManagementHelperTests
         Assert.That(result.View, Is.Not.Null);
         _mockDevOps.Verify(d => d.RemoveWorkItemRelationAsync(labelOwnerWiId, "related", owner1Id, It.IsAny<CancellationToken>()), Times.Once);
         _mockDevOps.Verify(d => d.RemoveWorkItemRelationAsync(labelOwnerWiId, "related", owner2Id, It.IsAny<CancellationToken>()), Times.Never);
+        // Verify QueryLabelOwnersByPath included section in WIQL query
+        _mockDevOps.Verify(d => d.FetchWorkItemsPagedAsync(
+            It.Is<string>(q => q.Contains("Custom.Section") && q.Contains("Client Libraries")),
+            It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
     }
 
     [Test]
@@ -1516,6 +1577,10 @@ public class CodeownersManagementHelperTests
         // Should remove from labelOwner1 (which has label1), not labelOwner2
         _mockDevOps.Verify(d => d.RemoveWorkItemRelationAsync(labelOwner1Id, "related", ownerId, It.IsAny<CancellationToken>()), Times.Once);
         _mockDevOps.Verify(d => d.RemoveWorkItemRelationAsync(labelOwner2Id, "related", It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+        // Verify QueryLabelOwnersByPath included section in WIQL query
+        _mockDevOps.Verify(d => d.FetchWorkItemsPagedAsync(
+            It.Is<string>(q => q.Contains("Custom.Section") && q.Contains("Client Libraries")),
+            It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
     }
 
     // ========================

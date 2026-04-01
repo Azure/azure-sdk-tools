@@ -25,6 +25,7 @@ load_dotenv(override=False)
 from agent_framework import Agent
 from agent_framework import SkillsProvider
 from agent_framework.azure import AzureOpenAIResponsesClient
+from agent_framework.openai._responses_client import ReasoningOptions
 from azure.ai.agentserver.agentframework import from_agent_framework
 from opentelemetry import trace as otel_trace
 from opentelemetry.sdk.trace import SpanProcessor
@@ -104,6 +105,7 @@ async def main() -> None:
         web_search_tool,
     ]
 
+    reasoning_effort = cfg("AI_FOUNDRY_AGENT_REASONING_EFFORT", "low")
     agent = Agent(
         agent_client,
         name=agent_name,
@@ -111,10 +113,10 @@ async def main() -> None:
         instructions=instructions,
         tools=tools,
         context_providers=[skills_provider],
+        default_options={
+            "reasoning": ReasoningOptions(effort=reasoning_effort),
+        },
     )
-
-    model = cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL")
-    logger.info(f"Azure SDK QA Bot Agent running — model: {model}")
 
     server = from_agent_framework(agent)
 

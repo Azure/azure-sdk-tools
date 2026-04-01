@@ -44,9 +44,16 @@ class KnowledgeTools:
     async def search_knowledge_base(
         self,
         *,
-        query: Annotated[
-            str,
-            "The user's question or search query about Azure SDKs.",
+        queries: Annotated[
+            list[str],
+            "One or more search queries to run against the knowledge base. "
+            "Use multiple queries to approach the problem from different angles — "
+            "e.g. the user's original question, a rephrased version, "
+            "and a query targeting a potential solution or workaround. "
+            "Example: ['how to emit unused models in typespec', "
+            "'typespec emitter omit-unreachable-types option', "
+            "'force include model in openapi output']. "
+            "At least 1, at most 3 queries.",
         ],
         sources: Annotated[
             list[str] | None,
@@ -75,12 +82,12 @@ class KnowledgeTools:
             "Default: 'quick'.",
         ] = "quick",
     ) -> SearchKnowledgeBaseResult:
-        """Search the knowledge base and return results with full section context.
+        """Search the knowledge base with one or more queries and return results with full section context.
 
-        Runs agentic search and vector search in parallel, then merges and
-        deduplicates the results.  Each result is automatically expanded by
-        its header hierarchy so the content includes all sibling chunks under
-        the same document section.
+        Each query runs agentic and/or vector search in parallel, then all
+        results are merged and deduplicated. Use multiple queries to cover
+        different facets of the user's problem — the original question,
+        related concepts, and potential solutions.
         """
         # Fall back to tenant-configured sources when none are specified
         if not sources:
@@ -94,21 +101,25 @@ class KnowledgeTools:
 
         use_deep = search_mode == SearchMode.deep.value
 
-        # Build search tasks based on search_mode
+        # Cap queries to avoid excessive parallel searches
+        capped_queries = queries[:3]
+
+        # Build search tasks for all queries
         tasks: list = []
-        if use_deep:
+        for q in capped_queries:
+            if use_deep:
+                tasks.append(
+                    search_client.agentic_search(
+                        query=q,
+                        source_filters=source_filters,
+                    )
+                )
             tasks.append(
-                search_client.agentic_search(
-                    query=query,
+                search_client.vector_search(
+                    query=q,
                     source_filters=source_filters,
                 )
             )
-        tasks.append(
-            search_client.vector_search(
-                query=query,
-                source_filters=source_filters,
-            )
-        )
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -132,7 +143,7 @@ class KnowledgeTools:
 
         refs = [
             Reference(
-                title=k.header1 or k.title,
+                title=_build_reference_title(k.title, k.header1, k.header2, k.header3),
                 source=k.source,
                 link=k.link,
                 content=k.content,
@@ -172,3 +183,14 @@ def _resolve_source_filters(
             filter_clauses.append(service_type_filter)
         source_filters[source_name] = " and ".join(filter_clauses)
     return source_filters
+
+
+def _build_reference_title(
+    document_title: str,
+    header1: str | None,
+    header2: str | None,
+    header3: str | None,
+) -> str:
+    """Build a reference title from the deepest available header path."""
+    parts = [part for part in (header1, header2, header3) if part]
+    return " | ".join(parts) if parts else document_title

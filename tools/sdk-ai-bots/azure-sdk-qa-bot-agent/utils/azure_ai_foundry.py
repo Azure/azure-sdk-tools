@@ -21,7 +21,7 @@ def get_agent_client() -> AzureOpenAIResponsesClient:
     if _agent_client is None:
         _agent_client = AzureOpenAIResponsesClient(
             project_endpoint=cfg("AI_FOUNDRY_PROJECT_ENDPOINT"),
-            deployment_name=cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL", "gpt-5.1"),
+            deployment_name=cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL", "gpt-5.4"),
             credential=get_credential(),
         )
     return _agent_client

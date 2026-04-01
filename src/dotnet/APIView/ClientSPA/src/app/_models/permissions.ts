@@ -121,3 +121,33 @@ export const LANGUAGE_SCOPED_ROLE_OPTIONS = [
 export function formatRoleName(role: string): string {
     return ROLE_DISPLAY_NAMES[role] || role;
 }
+
+export function isAdmin(permissions: EffectivePermissions | null | undefined): boolean {
+    if (!permissions?.roles) return false;
+    return permissions.roles.some(r => r.kind === 'global' && r.role === GlobalRole.Admin);
+}
+
+export function canApproveForLanguage(permissions: EffectivePermissions | null | undefined, language: string): boolean {
+    if (!permissions?.roles) return false;
+    
+    // Check if admin - admins can approve for any language
+    if (isAdmin(permissions)) return true;
+    
+    const normalizedLanguage = language.toLowerCase();
+    return permissions.roles.some(r => 
+        r.kind === 'scoped' && 
+        (r.role === LanguageScopedRole.Architect || r.role === LanguageScopedRole.DeputyArchitect) &&
+        r.language.toLowerCase() === normalizedLanguage
+    );
+}
+
+export function canApproveForAnyLanguage(permissions: EffectivePermissions | null | undefined): boolean {
+    if (!permissions?.roles) return false;
+    
+    if (isAdmin(permissions)) return true;
+    
+    return permissions.roles.some(r => 
+        r.kind === 'scoped' && 
+        (r.role === LanguageScopedRole.Architect || r.role === LanguageScopedRole.DeputyArchitect)
+    );
+}

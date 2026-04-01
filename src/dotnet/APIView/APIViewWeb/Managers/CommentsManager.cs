@@ -252,6 +252,11 @@ namespace APIViewWeb.Managers
         {
             CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
 
+            if (comment.CommentSource == CommentSource.Diagnostic)
+            {
+                throw new InvalidOperationException("Diagnostic comments cannot have their severity changed.");
+            }
+
             await AssertOwnerAsync(user, comment);
             
             comment.ChangeHistory.Add(
@@ -476,6 +481,10 @@ namespace APIViewWeb.Managers
         /// <returns></returns>
         public async Task SoftDeleteCommentAsync(ClaimsPrincipal user, CommentItemModel comment)
         {
+            if (comment.CommentSource == CommentSource.Diagnostic)
+            {
+                throw new InvalidOperationException("Diagnostic comments cannot be deleted.");
+            }
             await AssertOwnerAsync(user, comment);
             var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(comment.ChangeHistory, CommentChangeAction.Deleted, user.GetGitHubLogin());
             comment.ChangeHistory = changeUpdate.ChangeHistory;
@@ -498,7 +507,12 @@ namespace APIViewWeb.Managers
         {
             IEnumerable<CommentItemModel> comments = await _commentsRepository.GetCommentsAsync(reviewId, lineId);
             comments = comments.Where(c => c.ThreadId == threadId);
-            
+
+            if (comments.Any(c => c.CommentSource == CommentSource.Diagnostic))
+            {
+                throw new InvalidOperationException("Diagnostic comments cannot be resolved.");
+            }
+
             foreach (var comment in comments)
             {
                 comment.ChangeHistory.Add(
@@ -605,10 +619,16 @@ namespace APIViewWeb.Managers
                 switch (request.Disposition)
                 {
                     case ConversationDisposition.Delete:
-                        await SoftDeleteCommentAsync(user, reviewId, commentId);
+                        if (comment.CommentSource != CommentSource.Diagnostic)
+                        {
+                            await SoftDeleteCommentAsync(user, reviewId, commentId);
+                        }
                         break;
                     case ConversationDisposition.Resolve:
-                        await ResolveConversation(user, reviewId, comment.ElementId, comment.ThreadId);
+                        if (comment.CommentSource != CommentSource.Diagnostic)
+                        {
+                            await ResolveConversation(user, reviewId, comment.ElementId, comment.ThreadId);
+                        }
                         break;
                     case ConversationDisposition.KeepOpen:
                     default:
@@ -622,12 +642,20 @@ namespace APIViewWeb.Managers
         public async Task ToggleUpvoteAsync(ClaimsPrincipal user, string reviewId, string commentId)
         {
             CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+            if (comment.CommentSource == CommentSource.Diagnostic)
+            {
+                throw new InvalidOperationException("Diagnostic comments cannot be voted on.");
+            }
             await ToggleVoteAsync(user, comment, FeedbackVote.Up);
         }
 
         public async Task ToggleDownvoteAsync(ClaimsPrincipal user, string reviewId, string commentId)
         {
             CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+            if (comment.CommentSource == CommentSource.Diagnostic)
+            {
+                throw new InvalidOperationException("Diagnostic comments cannot be voted on.");
+            }
             await ToggleVoteAsync(user, comment, FeedbackVote.Down);
         }
 
@@ -903,6 +931,11 @@ namespace APIViewWeb.Managers
         private async Task SetVoteAsync(ClaimsPrincipal user, string reviewId, string commentId, FeedbackVote voteType)
         {
             CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+
+            if (comment.CommentSource == CommentSource.Diagnostic)
+            {
+                return;
+            }
 
             string userName = user.GetGitHubLogin();
             bool voteChanged = false;

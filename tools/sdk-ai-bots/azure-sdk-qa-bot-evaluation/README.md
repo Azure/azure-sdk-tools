@@ -67,8 +67,18 @@ An evaluation test file should be written in JSONL format, and a file can contai
     "testcase": "unique_test_name",
     "query": "question_to_query",
     "ground_truth": "expected_answer",
-    "expected_knowledges": "expected_knowledge_array",
-    "expected_references": "expected_reference_array"
+    "expected_knowledges": [
+        {
+            "title": "sample_knowledge_title",
+            "link": "https://example.com/knowledge"
+        }
+    ],
+    "expected_references": [
+        {
+            "title": "sample_reference_title",
+            "link": "https://example.com/reference"
+        }
+    ]
 }
 ```
 

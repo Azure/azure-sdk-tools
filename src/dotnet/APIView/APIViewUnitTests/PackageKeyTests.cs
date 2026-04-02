@@ -15,7 +15,7 @@ public class PackageKeyTests
     [Theory]
     [InlineData("Java:azurev2", "Java", "azurev2")]
     [InlineData("Java:azure", "Java", "azure")]
-    [InlineData("Python:azure", "Python", "")]
+    [InlineData("Python:azure", "Python", "azure")]
     public void PackageKey_Parse(string input, string expectedLanguage, string expectedFlavor)
     {
         var key = PackageKey.Parse(input);

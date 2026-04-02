@@ -168,15 +168,17 @@ public class Workspace : IDisposable
     /// <param name="duration">The duration of the execution.</param>
     /// <param name="passed">Whether the benchmark passed validation.</param>
     /// <param name="validation">The validation summary (null if no validators were run).</param>
+    /// <param name="tokenUsage">Token usage accumulated during execution (null if not available).</param>
     /// <param name="error">Optional error message if the benchmark failed.</param>
     public async Task WriteExecutionLogAsync(
         string scenarioName,
         IReadOnlyList<object> messages,
-        IReadOnlyList<string> toolCalls,
+        IReadOnlyList<ToolCallRecord> toolCalls,
         string? gitDiff,
         TimeSpan duration,
         bool passed,
         ValidationSummary? validation = null,
+        TokenUsage? tokenUsage = null,
         string? error = null)
     {
         var log = new
@@ -187,6 +189,7 @@ public class Workspace : IDisposable
             Passed = passed,
             Error = error,
             Validation = validation,
+            TokenUsage = tokenUsage,
             ToolCalls = toolCalls,
             Messages = messages,
             GitDiff = gitDiff
@@ -201,6 +204,82 @@ public class Workspace : IDisposable
         var json = JsonSerializer.Serialize(log, options);
         var logPath = Path.Combine(RootPath, "benchmark-log.json");
         await File.WriteAllTextAsync(logPath, json);
+    }
+
+    /// <summary>
+    /// Copies a file or directory from source to the workspace.
+    /// If the source is a directory, copies the entire directory recursively.
+    /// </summary>
+    /// <param name="sourcePath">The source file or directory path (absolute or relative to current directory).</param>
+    /// <param name="targetRelativePath">The target path relative to the repository root.</param>
+    public async Task CopyToWorkspaceAsync(string sourcePath, string targetRelativePath)
+    {
+        var targetPath = Path.Combine(RepoPath, targetRelativePath);
+        
+        if (Directory.Exists(sourcePath))
+        {
+            // Copy entire directory
+            CopyDirectory(sourcePath, targetPath);
+        }
+        else if (File.Exists(sourcePath))
+        {
+            // Copy single file
+            Directory.CreateDirectory(Path.GetDirectoryName(targetPath)!);
+            await Task.Run(() => File.Copy(sourcePath, targetPath, overwrite: true));
+        }
+        else
+        {
+            throw new FileNotFoundException($"Source path not found: {sourcePath}");
+        }
+    }
+
+    /// <summary>
+    /// Removes a file or directory from the workspace.
+    /// If the path is a directory, removes the entire directory recursively.
+    /// </summary>
+    /// <param name="relativePath">The path relative to the repository root to remove.</param>
+    public async Task RemoveFromWorkspace(string relativePath)
+    {
+        var targetPath = Path.Combine(RepoPath, relativePath);
+        
+        if (Directory.Exists(targetPath))
+        {
+            // Remove entire directory recursively
+            await Task.Run(() => Directory.Delete(targetPath, recursive: true));
+        }
+        else if (File.Exists(targetPath))
+        {
+            // Remove single file
+            await Task.Run(() => File.Delete(targetPath));
+        }
+        // If path doesn't exist, no-op (already removed)
+    }
+
+    /// <summary>
+    /// Recursively copies a directory and all its contents.
+    /// </summary>
+    /// <param name="sourceDir">The source directory path.</param>
+    /// <param name="targetDir">The target directory path.</param>
+    private static void CopyDirectory(string sourceDir, string targetDir)
+    {
+        // Create target directory
+        Directory.CreateDirectory(targetDir);
+        
+        // Copy all files
+        foreach (var file in Directory.GetFiles(sourceDir))
+        {
+            var fileName = Path.GetFileName(file);
+            var targetFile = Path.Combine(targetDir, fileName);
+            File.Copy(file, targetFile, overwrite: true);
+        }
+        
+        // Copy all subdirectories recursively
+        foreach (var subDir in Directory.GetDirectories(sourceDir))
+        {
+            var dirName = Path.GetFileName(subDir);
+            var targetSubDir = Path.Combine(targetDir, dirName);
+            CopyDirectory(subDir, targetSubDir);
+        }
     }
 
     /// <summary>

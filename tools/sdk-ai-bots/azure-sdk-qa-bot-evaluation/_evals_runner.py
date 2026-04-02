@@ -174,6 +174,7 @@ class EvalsRunner:
         evaluators: dict[str, EvaluatorClass] | None = None,
         evals_result: EvalsResult | None = None,
         num_to_run: int = 1,
+        credential: Any | None = None,
     ):
         self._evaluators = evaluators or {}
         self._evals_result: EvalsResult = evals_result or EvalsResult(None, {}, None)
@@ -183,7 +184,7 @@ class EvalsRunner:
             with EvalsRunner._tenant_ids_lock:
                 if EvalsRunner.channel_to_tenant_id_dict is None:
                     EvalsRunner.channel_to_tenant_id_dict = (
-                        EvalsRunner._retrieve_tenant_ids()
+                        EvalsRunner._retrieve_tenant_ids(credential)
                     )
 
     @property
@@ -200,8 +201,9 @@ class EvalsRunner:
         self._evaluators[name] = evaluator
 
     @classmethod
-    def _retrieve_tenant_ids(cls) -> dict[str, str]:
-        credential = DefaultAzureCredential()
+    def _retrieve_tenant_ids(cls, credential=None) -> dict[str, str]:
+        if credential is None:
+            credential = DefaultAzureCredential()
         storage_blob_account = os.environ["STORAGE_BLOB_ACCOUNT"]
         blob_service_client = BlobServiceClient(
             account_url=f"https://{storage_blob_account}.blob.core.windows.net",

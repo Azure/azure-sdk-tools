@@ -61,7 +61,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     var packageName = commandParser.GetValue(packageNameOpt);
                     var language = commandParser.GetValue(languageOpt);
                     var releaseStatus = commandParser.GetValue(releaseStatusOpt);
-                    return await UpdatePackageReleaseStatus(packageName, language, releaseStatus);
+                    return await UpdatePackageReleaseStatus(packageName, language, releaseStatus, ct);
 
                 default:
                     logger.LogError("Unknown command: {command}", command);
@@ -69,7 +69,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        public async Task<ReleaseStatusUpdateResponse> UpdatePackageReleaseStatus(string packageName, string language, string releaseStatus)
+        public async Task<ReleaseStatusUpdateResponse> UpdatePackageReleaseStatus(string packageName, string language, string releaseStatus, CancellationToken ct)
         {
             try
             {
@@ -99,7 +99,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 logger.LogInformation("Searching for in-progress release plans with package {packageName} for {language}", packageName, language);
                 bool isAgentTesting = bool.TryParse(Environment.GetEnvironmentVariable("AZSDKTOOLS_AGENT_TESTING"), out var result) && result;
                 // Find all release plans in "In Progress" status with the given package name
-                var releasePlans = await devOpsService.GetReleasePlansForPackageAsync(packageName, language, isAgentTesting);
+                var releasePlans = await devOpsService.GetReleasePlansForPackageAsync(packageName, language, isAgentTesting, ct);
                 if (releasePlans.Count == 0)
                 {
                     response.Message = $"No in-progress release plans found for package '{packageName}' in language '{language}'.";
@@ -137,7 +137,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     { $"Custom.ReleaseStatusFor{DevOpsService.MapLanguageToId(language)}", releaseStatus }
                 };
 
-                await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, fieldsToUpdate);
+                await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, fieldsToUpdate, ct);
                 logger.LogInformation("Successfully updated release status for package {packageName} in release plan {workItemId}", packageName, releasePlan.WorkItemId);
                 response.ReleaseStatus = releaseStatus;
                 return response;

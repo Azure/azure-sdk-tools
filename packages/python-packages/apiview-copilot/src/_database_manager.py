@@ -19,6 +19,7 @@ from azure.search.documents.indexes import SearchIndexerClient
 from pydantic import BaseModel
 from src._credential import get_credential
 from src._settings import SettingsManager
+from src._utils import guideline_id_to_db
 
 
 class ContainerNames(Enum):
@@ -123,6 +124,8 @@ class BasicContainer:
 
     def _to_dict(self, data):
         if BaseModel and isinstance(data, BaseModel):
+            if hasattr(data, "model_dump_db"):
+                return data.model_dump_db()
             return data.model_dump()
         return dict(data) if not isinstance(data, dict) else data
 
@@ -136,8 +139,11 @@ class BasicContainer:
         data_dict = self._to_dict(data)
         # Remove None values
         data_dict = {k: v for k, v in data_dict.items() if v is not None}
-        # Ensure 'id' is set
-        if not data_dict.get("id"):
+        # Ensure 'id' is set and preprocessed
+        if data_dict.get("id") and self.preprocess_id:
+            # pylint: disable=not-callable
+            data_dict["id"] = self.preprocess_id(data_dict["id"])
+        elif not data_dict.get("id"):
             data_dict["id"] = item_id
         # Check if item exists
         try:
@@ -160,6 +166,10 @@ class BasicContainer:
             # pylint: disable=not-callable
             item_id = self.preprocess_id(item_id)
         data_dict = self._to_dict(data)
+        # Ensure the id in the payload is also preprocessed
+        if "id" in data_dict and self.preprocess_id:
+            # pylint: disable=not-callable
+            data_dict["id"] = self.preprocess_id(data_dict["id"])
         value = self.client.upsert_item({"id": item_id, **data_dict})
         if run_indexer:
             self.run_indexer()
@@ -208,7 +218,7 @@ class GuidelinesContainer(BasicContainer):
 
     def __init__(self, manager: DatabaseManager, container_name: str):
         super().__init__(manager, container_name)
-        self.preprocess_id = lambda x: x.replace(".html#", "=html=")
+        self.preprocess_id = guideline_id_to_db
 
 
 class ReviewJobsContainer(BasicContainer):

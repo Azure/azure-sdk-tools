@@ -161,7 +161,7 @@ public class CodeownersGenerateHelperTests
         var data = new WorkItemDataBuilder()
             .AddOwner("aidev", out var ownerId)
             .AddLabel("AI", out var labelId)
-            .AddPRLabelOwner(out _, repoPath: "sdk/ai", relatedTo: [ownerId, labelId])
+            .AddPRLabelOwner(out _, repoPath: "sdk/ai/", relatedTo: [ownerId, labelId])
             .Build();
 
         var packageLookup = new Dictionary<string, RepoPackage>(StringComparer.OrdinalIgnoreCase);
@@ -174,6 +174,31 @@ public class CodeownersGenerateHelperTests
         Assert.Multiple(() =>
         {
             Assert.That(entries[0].PathExpression, Is.EqualTo("/sdk/ai/"));
+            Assert.That(entries[0].SourceOwners, Does.Contain("aidev"));
+            Assert.That(entries[0].PRLabels, Does.Contain("AI"));
+        });
+    }
+
+    [Test]
+    public void BuildCodeownersEntries_CreatesPathEntryForFile()
+    {
+        // Arrange: Label Owner with RepoPath but not linked to any package
+        var data = new WorkItemDataBuilder()
+            .AddOwner("aidev", out var ownerId)
+            .AddLabel("AI", out var labelId)
+            .AddPRLabelOwner(out _, repoPath: "sdk/ai/file.txt", relatedTo: [ownerId, labelId])
+            .Build();
+
+        var packageLookup = new Dictionary<string, RepoPackage>(StringComparer.OrdinalIgnoreCase);
+
+        // Act
+        var entries = InvokeBuildCodeownersEntries(data, packageLookup);
+
+        // Assert
+        Assert.That(entries, Has.Count.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(entries[0].PathExpression, Is.EqualTo("/sdk/ai/file.txt"));
             Assert.That(entries[0].SourceOwners, Does.Contain("aidev"));
             Assert.That(entries[0].PRLabels, Does.Contain("AI"));
         });

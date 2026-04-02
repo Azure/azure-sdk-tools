@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using ApiView;
+using APIView.Model.V2;
 using APIViewWeb.Helpers;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
@@ -215,7 +218,49 @@ namespace APIViewWeb.Managers
                 await _originalsRepository.UploadOriginalAsync(reviewCodeFileModel.FileId, memoryStream);
             }
             await _codeFileRepository.UpsertCodeFileAsync(apiRevisionId, reviewCodeFileModel.FileId, codeFile);
+            reviewCodeFileModel.ContentHash = await ComputeAPIContentHashAsync(codeFile);
             return reviewCodeFileModel;
+        }
+
+        /// <summary>
+        /// Computes a SHA-256 hash of the API surface content, using the same filtering logic
+        /// as <see cref="AreAPICodeFilesTheSame"/> so that hashes are invariant to skip-diff
+        /// regions and documentation lines. PackageVersion is excluded intentionally so that
+        /// a version-only change does not produce a different hash.
+        /// </summary>
+        public async Task<string> ComputeAPIContentHashAsync(CodeFile codeFile)
+        {
+            var languageService = LanguageServiceHelpers.GetLanguageService(codeFile.Language, _languageServices);
+            bool isTreeStyle = languageService?.UsesTreeStyleParser ?? codeFile.ReviewLines.Count > 0;
+
+            var sb = new StringBuilder();
+            sb.Append('\n');
+
+            if (isTreeStyle)
+            {
+                AppendComparableLines(sb, codeFile.ReviewLines);
+            }
+            else
+            {
+                foreach (var line in new RenderedCodeFile(codeFile).RenderText(false, skipDiff: true))
+                {
+                    sb.Append(line.DisplayString).Append(':').Append(line.ElementId).Append(':').Append(line.IsHiddenApi).Append('\n');
+                }
+            }
+
+            byte[] bytes = Encoding.UTF8.GetBytes(sb.ToString());
+            using var ms = new MemoryStream(bytes);
+            return Convert.ToHexString(await SHA256.HashDataAsync(ms)).ToLowerInvariant();
+        }
+
+        private static void AppendComparableLines(StringBuilder sb, List<ReviewLine> lines, int depth = 0)
+        {
+            string indent = new(' ', depth * 2);
+            foreach (var line in lines.Where(l => l.Tokens.Count > 0 && !l.IsDocumentation && !l.IsSkippedFromDiff()))
+            {
+                sb.Append(indent).Append(line).Append('\n');
+                AppendComparableLines(sb, line.Children, depth + 1);
+            }
         }
 
         /// <summary>

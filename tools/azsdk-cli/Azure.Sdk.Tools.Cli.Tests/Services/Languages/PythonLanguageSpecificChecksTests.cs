@@ -1,3 +1,4 @@
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
@@ -31,6 +32,7 @@ internal class PythonLanguageSpecificChecksTests
             _processHelperMock.Object,
             _pythonHelperMock.Object,
             _npxHelperMock.Object,
+            Mock.Of<ICopilotAgentRunner>(),
             _gitHelperMock.Object,
             NullLogger<PythonLanguageService>.Instance,
             _commonValidationHelpersMock.Object,
@@ -237,6 +239,7 @@ internal class PythonLanguageSpecificChecksTests
         // Arrange
         using var tempDir = TempDirectory.Create("python-lint-success-test");
         var packagePath = tempDir.DirectoryPath;
+        File.WriteAllText(Path.Combine(packagePath, "pyproject.toml"), "");
 
         var successResult = new ProcessResult
         {
@@ -264,6 +267,7 @@ internal class PythonLanguageSpecificChecksTests
         // Arrange
         using var tempDir = TempDirectory.Create("python-lint-pylint-fail-test");
         var packagePath = tempDir.DirectoryPath;
+        File.WriteAllText(Path.Combine(packagePath, "pyproject.toml"), "");
 
         _pythonHelperMock
             .Setup(p => p.Run(It.Is<PythonOptions>(o => o.Args.Contains("pylint")), It.IsAny<CancellationToken>()))
@@ -291,6 +295,7 @@ internal class PythonLanguageSpecificChecksTests
         // Arrange
         using var tempDir = TempDirectory.Create("python-lint-mypy-fail-test");
         var packagePath = tempDir.DirectoryPath;
+        File.WriteAllText(Path.Combine(packagePath, "pyproject.toml"), "");
 
         _pythonHelperMock
             .Setup(p => p.Run(It.Is<PythonOptions>(o => o.Args.Contains("pylint")), It.IsAny<CancellationToken>()))
@@ -318,6 +323,7 @@ internal class PythonLanguageSpecificChecksTests
         // Arrange
         using var tempDir = TempDirectory.Create("python-lint-exception-test");
         var packagePath = tempDir.DirectoryPath;
+        File.WriteAllText(Path.Combine(packagePath, "pyproject.toml"), "");
 
         _pythonHelperMock.Setup(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("azpysdk not found"));

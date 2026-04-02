@@ -41,7 +41,10 @@ from tools.azsdk_mcp_tools import create_azsdk_mcp_tool
 from tools.github_mcp_tools import create_github_mcp_tool
 from tools.skills import create_tenant_skills
 from utils.azure_ai_foundry import get_agent_client, get_project_client
-from utils.azure_memory_store import ensure_user_memory_store, ensure_tenant_memory_store
+from utils.azure_memory_store import (
+    ensure_user_memory_store,
+    ensure_tenant_memory_store,
+)
 from utils.memory_context_provider import MemoryContextProvider
 
 logger = logging.getLogger(__name__)
@@ -167,6 +170,7 @@ if __name__ == "__main__":
         "azure.core.pipeline.policies.http_logging_policy",  # HTTP request/response headers
         "azure.monitor.opentelemetry.exporter",  # telemetry transmission
         "uvicorn.access",  # health-probe GET /readiness /liveness
+        "uvicorn",  # uvicorn root logger (also emits access logs)
     ]:
         logging.getLogger(noisy_logger).setLevel(logging.WARNING)
 

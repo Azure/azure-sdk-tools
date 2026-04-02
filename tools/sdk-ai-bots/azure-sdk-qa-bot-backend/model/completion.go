@@ -3,7 +3,7 @@ package model
 type TenantID string
 
 const (
-	TenantID_AzureSDKQaBot          TenantID = "azure_sdk_qa_bot" // default as TypeSpec QA bot
+	TenantID_AzureSDKQaBot          TenantID = "typespec_channel_qa_bot" // default as TypeSpec QA bot
 	TenantID_PythonChannelQaBot     TenantID = "python_channel_qa_bot"
 	TenantID_DotnetChannelQaBot     TenantID = "dotnet_channel_qa_bot"
 	TenantID_AzureSDKOnboarding     TenantID = "azure_sdk_onboarding"

@@ -106,6 +106,12 @@ class Reference(BaseModel):
     link: str
     content: str = ""
 
+    @field_validator("title", mode="after")
+    @classmethod
+    def _strip_trailing_pipes(cls, v: str) -> str:
+        """Strip trailing pipe characters the LLM copies from search index titles."""
+        return v.strip().rstrip("| ").strip()
+
 class SearchKnowledgeBaseResult(BaseModel):
     """Output of the search_knowledge_base tool call."""
     results: list[Reference] = []

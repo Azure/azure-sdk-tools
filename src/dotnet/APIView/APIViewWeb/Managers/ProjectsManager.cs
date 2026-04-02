@@ -87,23 +87,27 @@ public class ProjectsManager : IProjectsManager
                 string.Equals(PackageKey.Parse(ep.Key).Language, language, StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(ep.Value?.PackageName, review.PackageName, StringComparison.OrdinalIgnoreCase))
             .Key ?? language;
-        
-        project.ChangeHistory ??= [];
 
-        if (string.IsNullOrEmpty(languageKey) || !project.Reviews.TryAdd(languageKey, review.Id))
+        if (string.IsNullOrEmpty(languageKey))
         {
             return null;
         }
 
-        project.ChangeHistory.Add(new ProjectChangeHistory
-        {
-            ChangedOn = DateTime.UtcNow,
-            ChangedBy = userName,
-            ChangeAction = ProjectChangeAction.ReviewLinked,
-            Notes = $"Review {review.Id} ({review.Language}/{review.PackageName}) linked to project"
-        });
+        project.ChangeHistory ??= [];
 
-        await _projectsRepository.UpsertProjectAsync(project);
+        if (project.Reviews.TryAdd(languageKey, review.Id))
+        {
+            project.ChangeHistory.Add(new ProjectChangeHistory
+            {
+                ChangedOn = DateTime.UtcNow,
+                ChangedBy = userName,
+                ChangeAction = ProjectChangeAction.ReviewLinked,
+                Notes = $"Review {review.Id} ({review.Language}/{review.PackageName}) linked to project"
+            });
+
+            await _projectsRepository.UpsertProjectAsync(project);
+        }
+
         review.ProjectId = project.Id;
         await _reviewsRepository.UpsertReviewAsync(review);
         return project;

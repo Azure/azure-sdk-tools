@@ -18,7 +18,6 @@ public class ProjectsManager : IProjectsManager
     private readonly ICosmosReviewRepository _reviewsRepository;
     private readonly INamespaceManager _namespaceManager;
 
-
     private sealed record ReviewLinkChanges(
         List<(string languageKey, ReviewListItemModel Review)> LinkedReviews,
         List<ProjectChangeHistory> ChangeHistoryEntries);
@@ -66,12 +65,13 @@ public class ProjectsManager : IProjectsManager
             project = await _projectsRepository.GetProjectByCrossLanguagePackageIdAsync(review.CrossLanguagePackageId);
         }
 
-        string languageKey = !string.IsNullOrWhiteSpace(review.Language)
+        string language = !string.IsNullOrWhiteSpace(review.Language)
             ? LanguageServiceHelpers.MapLanguageAlias(review.Language)
             : null;
-        if (project == null && !string.IsNullOrEmpty(languageKey) && !string.IsNullOrEmpty(review.PackageName))
+            
+        if (project == null && !string.IsNullOrEmpty(language) && !string.IsNullOrEmpty(review.PackageName))
         {
-            project = await _projectsRepository.GetProjectByExpectedPackageAsync(languageKey, review.PackageName);
+            project = await _projectsRepository.GetProjectByExpectedPackageAsync(language, review.PackageName);
         }
 
         if (project == null)
@@ -82,23 +82,28 @@ public class ProjectsManager : IProjectsManager
             return null;
         }
 
+        string languageKey = project.ExpectedPackages?
+            .FirstOrDefault(ep =>
+                string.Equals(PackageKey.Parse(ep.Key).Language, language, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(ep.Value?.PackageName, review.PackageName, StringComparison.OrdinalIgnoreCase))
+            .Key ?? language;
+        
         project.ChangeHistory ??= [];
 
-        if (!string.IsNullOrEmpty(languageKey) && project.Reviews.TryAdd(languageKey, review.Id))
+        if (string.IsNullOrEmpty(languageKey) || !project.Reviews.TryAdd(languageKey, review.Id))
         {
-            project.ChangeHistory.Add(new ProjectChangeHistory
-            {
-                ChangedOn = DateTime.UtcNow,
-                ChangedBy = userName,
-                ChangeAction = ProjectChangeAction.ReviewLinked,
-                Notes = $"Review {review.Id} ({review.Language}/{review.PackageName}) linked to project"
-            });
-
-            await _projectsRepository.UpsertProjectAsync(project);
-            _logger.LogInformation("Linked review {ReviewId} to project {ProjectId} under key '{Key}' by {User}",
-                review.Id, project.Id, languageKey, userName);
+            return null;
         }
-        
+
+        project.ChangeHistory.Add(new ProjectChangeHistory
+        {
+            ChangedOn = DateTime.UtcNow,
+            ChangedBy = userName,
+            ChangeAction = ProjectChangeAction.ReviewLinked,
+            Notes = $"Review {review.Id} ({review.Language}/{review.PackageName}) linked to project"
+        });
+
+        await _projectsRepository.UpsertProjectAsync(project);
         review.ProjectId = project.Id;
         await _reviewsRepository.UpsertReviewAsync(review);
         return project;

@@ -8,5 +8,5 @@ public interface ICosmosProjectRepository
     Task UpsertProjectAsync(Project project);
     Task<Project> GetProjectAsync(string projectId);
     Task<Project> GetProjectByCrossLanguagePackageIdAsync(string crossLanguagePackageId);
-    Task<Project> GetProjectByExpectedPackageAsync(string languageKey, string packageName);
+    Task<Project> GetProjectByExpectedPackageAsync(string language, string packageName);
 }

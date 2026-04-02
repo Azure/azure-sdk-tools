@@ -56,11 +56,20 @@ namespace APIViewWeb.Repositories
             return null;
         }
 
-        public async Task<Project> GetProjectByExpectedPackageAsync(string languageKey, string packageName)
+        public async Task<Project> GetProjectByExpectedPackageAsync(string language, string packageName)
         {
+            string keyAzure   = $"{language}:azure";
+            string keyAzurev2 = $"{language}:azurev2";
             var queryDefinition = new QueryDefinition(
-                    "SELECT * FROM Projects p WHERE IS_DEFINED(p.ExpectedPackages[@languageKey]) AND LOWER(p.ExpectedPackages[@languageKey].PackageName) = LOWER(@packageName) AND p.IsDeleted = false")
-                .WithParameter("@languageKey", languageKey)
+                    "SELECT * FROM Projects p WHERE" +
+                    " (" +
+                    "  (IS_DEFINED(p.ExpectedPackages[@key])         AND LOWER(p.ExpectedPackages[@key].PackageName)         = LOWER(@packageName))" +
+                    "  OR (IS_DEFINED(p.ExpectedPackages[@keyAzure])   AND LOWER(p.ExpectedPackages[@keyAzure].PackageName)   = LOWER(@packageName))" +
+                    "  OR (IS_DEFINED(p.ExpectedPackages[@keyAzurev2]) AND LOWER(p.ExpectedPackages[@keyAzurev2].PackageName) = LOWER(@packageName))" +
+                    " ) AND p.IsDeleted = false")
+                .WithParameter("@key",        language)
+                .WithParameter("@keyAzure",   keyAzure)
+                .WithParameter("@keyAzurev2", keyAzurev2)
                 .WithParameter("@packageName", packageName);
 
             var itemQueryIterator = _projectsContainer.GetItemQueryIterator<Project>(queryDefinition);

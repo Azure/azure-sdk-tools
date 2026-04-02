@@ -69,9 +69,9 @@ public class NamespaceManager : INamespaceManager
         [NamespaceDecisionStatus.Rejected]  = [NamespaceDecisionStatus.Approved]
     };
 
-    public async Task<NamespaceOperationResult> UpdateNamespaceStatusAsync(string projectId, string language, NamespaceDecisionStatus newStatus, string notes, ClaimsPrincipal user)
+    public async Task<NamespaceOperationResult> UpdateNamespaceStatusAsync(string projectId, string languageKey, NamespaceDecisionStatus newStatus, string notes, ClaimsPrincipal user)
     {
-        PackageKey parsedLanguageKey = PackageKey.Parse(language);
+        PackageKey parsedLanguageKey = PackageKey.Parse(languageKey);
         string userName = user.GetGitHubLogin();
         if (!await _permissionsManager.CanApproveAsync(userName, LanguageServiceHelpers.MapLanguageAlias(parsedLanguageKey.Language)))
         {
@@ -84,7 +84,7 @@ public class NamespaceManager : INamespaceManager
             return NamespaceOperationResult.Failure(NamespaceOperationError.ProjectNotFound);
         }
 
-        if (!project.NamespaceInfo.CurrentNamespaceStatus.TryGetValue(language, out var entry))
+        if (!project.NamespaceInfo.CurrentNamespaceStatus.TryGetValue(languageKey, out var entry))
         {
             return NamespaceOperationResult.Failure(NamespaceOperationError.LanguageNotFound);
         }
@@ -94,7 +94,7 @@ public class NamespaceManager : INamespaceManager
             return NamespaceOperationResult.Failure(NamespaceOperationError.InvalidStateTransition);
         }
 
-        EnsureHistoryList(project.NamespaceInfo, language).Add(new NamespaceDecisionEntry
+        EnsureHistoryList(project.NamespaceInfo, languageKey).Add(new NamespaceDecisionEntry
         {
             Language = entry.Language,
             Flavor = entry.Flavor,
@@ -126,7 +126,7 @@ public class NamespaceManager : INamespaceManager
             ChangedOn = DateTime.UtcNow,
             ChangedBy = userName,
             ChangeAction = ProjectChangeAction.NamespaceStatusChanged,
-            Notes = $"Namespace '{entry.Namespace}' for {language} changed to {newStatus}"
+            Notes = $"Namespace '{entry.Namespace}' for {languageKey} changed to {newStatus}"
         });
         project.LastUpdatedOn = DateTime.UtcNow;
         await _projectsRepository.UpsertProjectAsync(project);

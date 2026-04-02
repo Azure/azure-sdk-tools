@@ -148,30 +148,30 @@ namespace APIViewWeb.LeanControllers
         /// Update the namespace decision status for a language
         /// </summary>
         /// <param name="projectId">The project ID</param>
-        /// <param name="language">The language to update</param>
+        /// <param name="languageKey">The language to update</param>
         /// <param name="request">The new status and optional notes</param>
         /// <returns>The updated project</returns>
-        [HttpPatch("{projectId}/namespaces/{language}", Name = "UpdateNamespaceStatus")]
-        public async Task<ActionResult<Project>> UpdateNamespaceStatusAsync(string projectId, string language, [FromBody] UpdateNamespaceStatusRequest request)
+        [HttpPatch("{projectId}/namespaces/{languageKey}", Name = "UpdateNamespaceStatus")]
+        public async Task<ActionResult<Project>> UpdateNamespaceStatusAsync(string projectId, string languageKey, [FromBody] UpdateNamespaceStatusRequest request)
         {
             if (request == null)
             {
                 return BadRequest(new { message = "Request body is required." });
             }
 
-            var result = await _namespaceManager.UpdateNamespaceStatusAsync(projectId, language, request.Status, request.Notes, User);
+            var result = await _namespaceManager.UpdateNamespaceStatusAsync(projectId, languageKey, request.Status, request.Notes, User);
             if (!result.IsSuccess)
             {
                 return result.Error!.Value switch
                 {
                     NamespaceOperationError.Unauthorized => StatusCode(StatusCodes.Status403Forbidden,
-                        new { message = $"Insufficient permissions to update the namespace for language '{language}'. Please contact an approver for this language." }),
+                        new { message = $"Insufficient permissions to update the namespace for language '{languageKey}'. Please contact an approver for this language." }),
                     NamespaceOperationError.ProjectNotFound => NotFound(
                         new { message = "The specified project was not found or does not have namespace information configured." }),
                     NamespaceOperationError.LanguageNotFound => NotFound(
-                        new { message = $"No namespace entry exists for language '{language}' in this project." }),
+                        new { message = $"No namespace entry exists for language '{languageKey}' in this project." }),
                     NamespaceOperationError.InvalidStateTransition => Conflict(
-                        new { message = $"Cannot transition the namespace for '{language}' to '{request.Status}' from its current state." }),
+                        new { message = $"Cannot transition the namespace for '{languageKey}' to '{request.Status}' from its current state." }),
                     _ => StatusCode(StatusCodes.Status500InternalServerError,
                         new { message = "An unexpected error occurred while processing the namespace operation." })
                 };

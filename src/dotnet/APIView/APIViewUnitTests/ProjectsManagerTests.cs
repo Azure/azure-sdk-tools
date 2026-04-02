@@ -878,6 +878,52 @@ public class ProjectsManagerTests
     }
 
     [Fact]
+    public async Task TryLinkReviewToProjectAsync_ProjectStoredUnderFlavorKey_LinksUnderFlavorKey()
+    {
+        ReviewListItemModel review = CreateReview("java-v2-review", "Java", "com.azure.v2:azure-core");
+        Project project = CreateProject("project-1", expectedPackages: new Dictionary<string, PackageInfo>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Java:azurev2"] = new() { PackageName = "com.azure.v2:azure-core", Namespace = "com.azure.v2.core" }
+        });
+
+        _mockProjectsRepository
+            .Setup(r => r.GetProjectByExpectedPackageAsync("Java", "com.azure.v2:azure-core"))
+            .ReturnsAsync(project);
+
+        Project result = await _projectsManager.TryLinkReviewToProjectAsync("testUser", review);
+
+        Assert.NotNull(result);
+        _mockProjectsRepository.Verify(
+            r => r.GetProjectByExpectedPackageAsync("Java", "com.azure.v2:azure-core"),
+            Times.Once);
+        Assert.True(result.Reviews.ContainsKey("Java:azurev2"));
+        Assert.Equal("java-v2-review", result.Reviews["Java:azurev2"]);
+    }
+
+    [Fact]
+    public async Task TryLinkReviewToProjectAsync_ProjectStoredUnderAzureFlavorKey_LinksUnderFlavorKey()
+    {
+        ReviewListItemModel review = CreateReview("java-azure-review", "Java", "azure-core");
+        Project project = CreateProject("project-1", expectedPackages: new Dictionary<string, PackageInfo>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Java:azure"] = new() { PackageName = "azure-core", Namespace = "com.azure.core" }
+        });
+
+        _mockProjectsRepository
+            .Setup(r => r.GetProjectByExpectedPackageAsync("Java", "azure-core"))
+            .ReturnsAsync(project);
+
+        Project result = await _projectsManager.TryLinkReviewToProjectAsync("testUser", review);
+
+        Assert.NotNull(result);
+        _mockProjectsRepository.Verify(
+            r => r.GetProjectByExpectedPackageAsync("Java", "azure-core"),
+            Times.Once);
+        Assert.True(result.Reviews.ContainsKey("Java:azure"));
+        Assert.Equal("java-azure-review", result.Reviews["Java:azure"]);
+    }
+
+    [Fact]
     public async Task NewProject_JavaV2Metadata_DiscoversReviewUnderFlavorCompositeKey()
     {
         ReviewListItemModel typeSpecReview = CreateTypeSpecReview("ts-1", "Azure.Core");

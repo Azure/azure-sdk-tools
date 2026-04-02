@@ -117,6 +117,8 @@ stages:
                   --package-types client `
                   --package-types compat `
                   --package-types data `
+                  --package-types functions `
+                  --package-types datamovement `
                   --section "Client Libraries"
             env:
               # Explicit mapping required for secrets

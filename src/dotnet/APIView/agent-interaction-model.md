@@ -15,12 +15,14 @@ Before any operation, the agent must authenticate on behalf of the user.
 - **Agent action:** Authenticate via token-based auth (Bearer token from GitHub OAuth or Managed Identity). The agent cannot use cookie-based auth — all interactions must go through token-authenticated endpoints.
 - **Returned to user:** Confirmation of identity (username, roles, permissions).
 - **Impact:** HIGH
+- **Implemented:** 🟡 `APIViewAuthenticationService` in azsdk CLI handles token auth (Azure Managed Identity + GitHub tokens). No standalone "whoami" endpoint exists under token auth; `GET /api/auth` and `GET /api/permissions/me` are cookie-auth only.
 
 ### 1b. Check Permissions
 - **User says:** "What can I do?" / "Am I an approver for Python?"
 - **Agent action:** Retrieve the user's effective permissions and group memberships. Retrieve the list of approvers for a given language.
 - **Information needed:** User profile, permission groups, language-specific approver lists.
 - **Impact:** MEDIUM
+- **Implemented:** ❌ `GET /api/permissions/me`, `GET /api/permissions/groups` are cookie-auth only. No token-auth endpoint exists. Not in CLI/MCP.
 
 ---
 
@@ -31,18 +33,21 @@ Before any operation, the agent must authenticate on behalf of the user.
 - **Agent action:** Query the reviews list with filters (language, package name, approval status, assigned reviewer, etc.) and pagination.
 - **Returned to user:** A list of reviews with: package name, language, approval status, creator, last updated date, revision count.
 - **Impact:** HIGH
+- **Implemented:** ❌ `GET /api/reviews` is cookie-auth only. Not in CLI/MCP.
 
 ### 2b. Get Review Details
 - **User says:** "Open the review for azure-core" / "Tell me about review {reviewId}"
 - **Agent action:** Fetch review metadata by ID or resolve from package name + language.
 - **Returned to user:** Review ID, package name, language, creation date, approval status, number of revisions, link to the web UI (for optional follow-up).
 - **Impact:** HIGH
+- **Implemented:** 🟡 `GET /api/reviews/resolve` (token-auth) can resolve a review from package name + language + version or URL. `GET /api/reviews/{reviewId}` is cookie-auth only. Not in CLI/MCP as a standalone command.
 
 ### 2c. List Package Names
 - **User says:** "What Python packages are tracked in APIView?"
 - **Agent action:** Retrieve distinct package names for a given language.
 - **Returned to user:** List of package names.
 - **Impact:** LOW
+- **Implemented:** ❌ `GET /api/reviews/languages/{language}/packagenames` is cookie-auth only. Not in CLI/MCP.
 
 ---
 
@@ -53,12 +58,14 @@ Before any operation, the agent must authenticate on behalf of the user.
 - **Agent action:** Fetch revisions for a review with optional filtering (by type: Manual, Automatic, PullRequest) and sorting.
 - **Returned to user:** List of revisions with: revision ID, version, type (manual/automatic/PR), approval status, approvers, release status, creation date, change history summary.
 - **Impact:** HIGH
+- **Implemented:** ❌ `POST /api/apirevisions` (list revisions) is cookie-auth only. Not in CLI/MCP.
 
 ### 3b. Get Latest Revision
 - **User says:** "What's the latest automatic revision for this review?"
 - **Agent action:** Fetch the latest revision by type (All, Manual, Automatic, PullRequest).
 - **Returned to user:** Revision details (version, status, approvers, etc.).
 - **Impact:** HIGH
+- **Implemented:** ❌ `GET /api/apirevisions/{reviewId}/latest` is cookie-auth only. Not in CLI/MCP.
 
 ### 3c. View API Surface (Read the Code)
 - **User says:** "Show me the API surface for Azure.Storage.Blobs v12.14.0" / "What does the public API look like?"
@@ -66,30 +73,35 @@ Before any operation, the agent must authenticate on behalf of the user.
 - **Returned to user:** The public API surface rendered as text with syntax structure preserved (namespaces, types, methods, parameters). The agent should present this hierarchically, potentially allowing the user to drill into specific sections.
 - **Key challenge:** The UI renders a rich, navigable code panel. The agent must present this as structured text — possibly as code blocks with language-appropriate syntax highlighting, or as a hierarchical outline the user can expand.
 - **Impact:** HIGH
+- **Implemented:** ✅ `GET /api/apirevisions/getRevisionContent` (token-auth) returns text or CodeFile content. CLI: `azsdk apiview get-content --url <url> --content-return-type text|codefile`.
 
 ### 3d. View API Surface as Outline / Summary
 - **User says:** "Give me the outline of this API revision" / "Summarize the API surface"
 - **Agent action:** Fetch the revision outline/summary text, which provides a condensed view of the API without the full token stream.
 - **Returned to user:** A structured summary of the API surface (namespace → types → members).
 - **Impact:** MEDIUM
+- **Implemented:** ✅ `GET /api/apirevisions/{apiRevisionId}/outline` (token-auth). Not yet exposed as a CLI command.
 
 ### 3e. Get Revision Content as Raw Data
 - **User says:** "Give me the raw CodeFile JSON for this revision"
 - **Agent action:** Fetch the revision content in CodeFile JSON format (for advanced users or for piping into other tools).
 - **Returned to user:** Raw JSON or a download link.
 - **Impact:** LOW
+- **Implemented:** ✅ `GET /api/apirevisions/getRevisionContent` with `contentReturnType=codefile` (token-auth). CLI: `azsdk apiview get-content --content-return-type codefile`.
 
 ### 3f. Upload a Manual Revision
 - **User says:** "Upload this DLL for review" / "Create a new revision from my build artifact"
 - **Agent action:** Upload a file (SDK artifact: .dll, .jar, .whl, .api.json, etc.) to create a new review or add a revision to an existing review. May also specify a label, language, and file path.
 - **Returned to user:** Confirmation with the new review ID, revision ID, and a link. If the parser runs asynchronously (sandboxed), inform the user that generation is in progress.
 - **Impact:** MEDIUM
+- **Implemented:** 🟡 `POST /autoreview/upload` (token-auth) supports CI/automated uploads. `POST /api/reviews` (manual create) is cookie-auth only. Not exposed as a manual-upload CLI command.
 
 ### 3g. Delete / Restore Revisions
 - **User says:** "Delete revision {id}" / "Restore the deleted revisions"
 - **Agent action:** Soft-delete or restore one or more revisions.
 - **Returned to user:** Confirmation of deletion/restoration.
 - **Impact:** LOW
+- **Implemented:** ❌ `PUT /api/apirevisions/delete` and `PUT /api/apirevisions/restore` are cookie-auth only. Not in CLI/MCP.
 
 ---
 
@@ -101,12 +113,14 @@ Before any operation, the agent must authenticate on behalf of the user.
 - **Returned to user:** A diff view presented as structured text — added lines prefixed with `+`, removed lines prefixed with `-`, with context lines. The agent should summarize the changes at a high level ("3 new methods added to BlobClient, 1 method removed from BlobContainerClient") and optionally show the detailed diff.
 - **Key challenge:** The UI shows side-by-side or inline diff with syntax highlighting. The agent must present this as a readable text diff or a structured summary.
 - **Impact:** HIGH
+- **Implemented:** ❌ `GET /api/reviews/{reviewId}/content` (with diff params) is cookie-auth only. The token-auth `getRevisionContent` endpoint does not support diff mode. Not in CLI/MCP.
 
 ### 4b. Summarize Changes
 - **User says:** "Summarize what changed in this revision"
 - **Agent action:** Fetch the diff between the current revision and the previous one, then summarize added/removed/changed API elements.
 - **Returned to user:** Natural-language summary of changes (e.g., "Added `BlobClient.DownloadStreamingAsync()`, removed deprecated `BlobClient.Download()`, modified return type of `ListBlobs()`").
 - **Impact:** MEDIUM
+- **Implemented:** ❌ Same dependency on diff endpoint (cookie-auth only). Not in CLI/MCP.
 
 ---
 
@@ -117,12 +131,14 @@ Before any operation, the agent must authenticate on behalf of the user.
 - **Agent action:** Fetch all comments for a review, optionally filtered by comment type (human, AI, diagnostic) and resolved/unresolved status.
 - **Returned to user:** List of comment threads with: commenter, text, severity, resolved status, element they're anchored to, up/down votes, and replies.
 - **Impact:** HIGH
+- **Implemented:** ✅ `GET /api/comments/getRevisionComments` (token-auth). CLI: `azsdk apiview get-comments --url <url>`. MCP: `azsdk_apiview_get_comments`.
 
 ### 5b. View Conversation Summary
 - **User says:** "How many active threads are there on the latest revision?"
 - **Agent action:** Fetch conversation info (active thread counts) for a specific revision.
 - **Returned to user:** Count of active/resolved threads.
 - **Impact:** MEDIUM
+- **Implemented:** ❌ `GET /api/comments/{reviewId}/{apiRevisionId}` (conversation info) is cookie-auth only. Not in CLI/MCP.
 
 ### 5c. Add a Comment
 - **User says:** "Comment on `BlobClient.Upload`: 'Should this accept a Stream parameter?'" / "Add a must-fix comment on the Dispose method"
@@ -130,36 +146,42 @@ Before any operation, the agent must authenticate on behalf of the user.
 - **Returned to user:** Confirmation that the comment was posted, with the new comment ID.
 - **Key challenge:** The user needs a way to reference specific API elements. The agent should help by listing elements from the API surface and letting the user pick, or by fuzzy-matching element names to their IDs.
 - **Impact:** HIGH
+- **Implemented:** ❌ `POST /api/comments` is cookie-auth only. Not in CLI/MCP.
 
 ### 5d. Reply to a Comment Thread
 - **User says:** "Reply to that thread: 'Good point, I'll add a Stream overload'"
 - **Agent action:** Create a new comment with the threadId of the parent comment.
 - **Returned to user:** Confirmation.
 - **Impact:** HIGH
+- **Implemented:** ❌ `POST /api/comments` (with threadId) is cookie-auth only. Not in CLI/MCP.
 
 ### 5e. Update a Comment
 - **User says:** "Edit my last comment to say '...'"
 - **Agent action:** Update the text of an existing comment by comment ID.
 - **Returned to user:** Confirmation.
 - **Impact:** MEDIUM
+- **Implemented:** ❌ `PATCH /api/comments/{reviewId}/{commentId}/updateCommentText` is cookie-auth only. Not in CLI/MCP.
 
 ### 5f. Resolve / Unresolve a Thread
 - **User says:** "Resolve that thread" / "Reopen the thread on BlobClient.Upload"
 - **Agent action:** Resolve or unresolve a comment thread by element ID and optional thread ID.
 - **Returned to user:** Confirmation.
 - **Impact:** HIGH
+- **Implemented:** ❌ `PATCH /api/comments/{reviewId}/resolveComments` and `unResolveComments` are cookie-auth only. Not in CLI/MCP.
 
 ### 5g. Batch Operations on Threads
 - **User says:** "Resolve all threads on this revision" / "Resolve all AI-generated comments"
 - **Agent action:** Batch resolve/unresolve with voting and optional replies.
 - **Returned to user:** Confirmation with count of affected threads.
 - **Impact:** MEDIUM
+- **Implemented:** ❌ `PATCH /api/comments/{reviewId}/commentsBatchOperation` is cookie-auth only. Not in CLI/MCP.
 
 ### 5h. Upvote / Downvote a Comment
 - **User says:** "Upvote that comment" / "Disagree with that suggestion"
 - **Agent action:** Toggle upvote or downvote on a specific comment.
 - **Returned to user:** Confirmation.
 - **Impact:** LOW
+- **Implemented:** ❌ `PATCH /api/comments/{reviewId}/{commentId}/toggleCommentUpVote|DownVote` are cookie-auth only. Not in CLI/MCP.
 
 ---
 
@@ -170,6 +192,7 @@ Before any operation, the agent must authenticate on behalf of the user.
 - **Agent action:** Fetch the revision's approval status, list of approvers, and change history.
 - **Returned to user:** Approved (yes/no), list of approvers, and recent approval history entries.
 - **Impact:** HIGH
+- **Implemented:** ❌ Approval status is embedded in revision data from cookie-auth endpoints (`GET /api/apirevisions/{reviewId}/latest`). No dedicated token-auth endpoint. Not in CLI/MCP.
 
 ### 6b. Check Approval Prerequisites
 Before the user attempts to approve, the agent should proactively verify:
@@ -182,18 +205,21 @@ Before the user attempts to approve, the agent should proactively verify:
 - **Agent action:** Check all four guards and report any blockers.
 - **Returned to user:** "Ready to approve" or a list of blocking conditions (e.g., "2 unresolved must-fix comments remain", "Copilot review has not been run yet").
 - **Impact:** HIGH
+- **Implemented:** 🟡 Individual checks exist across auth boundaries: `isReviewByCopilotRequired` (cookie), `isReviewVersionReviewedByCopilot` (cookie), comments (token-auth via `getRevisionComments`). No single composite endpoint. Not in CLI/MCP.
 
 ### 6c. Approve / Revert Approval
 - **User says:** "Approve this revision" / "Revert my approval"
 - **Agent action:** Toggle approval on the revision. The backend handles the binary toggle (approve if not approved, revert if already approved by this user).
 - **Returned to user:** Confirmation with updated approval status and approver list.
 - **Impact:** HIGH
+- **Implemented:** ❌ `POST /api/apirevisions/{reviewId}/{apiRevisionId}` (toggle approval) is cookie-auth only. Not in CLI/MCP.
 
 ### 6d. Approve a Package Name / First Release
 - **User says:** "Approve the package name for this review"
 - **Agent action:** Toggle review-level (first-release) approval.
 - **Returned to user:** Confirmation.
 - **Impact:** MEDIUM
+- **Implemented:** ❌ `POST /api/reviews/{reviewId}/{apiRevisionId}` (toggle review-level approval) is cookie-auth only. Not in CLI/MCP.
 
 ---
 
@@ -204,24 +230,28 @@ Before the user attempts to approve, the agent should proactively verify:
 - **Agent action:** Trigger Copilot AI review generation for the active revision (optionally with a diff baseline).
 - **Returned to user:** Confirmation that the job was submitted. The agent should poll for completion or inform the user when results are available.
 - **Impact:** MEDIUM
+- **Implemented:** ❌ `POST /api/apirevisions/{reviewId}/generateReview` is cookie-auth only. Not in CLI/MCP.
 
 ### 7b. Check AI Review Status
 - **User says:** "Is the AI review done yet?"
 - **Agent action:** Poll the Copilot review job status by job ID.
 - **Returned to user:** Job status (pending, in-progress, completed, failed). When completed, present the AI-generated comments.
 - **Impact:** MEDIUM
+- **Implemented:** ❌ AI review polling is handled internally by `CopilotPollingBackgroundHostedService`. No user-facing status endpoint exists. Not in CLI/MCP.
 
 ### 7c. Check if Copilot Review Is Required
 - **User says:** "Does this language require Copilot review before approval?"
 - **Agent action:** Query whether the configuration requires Copilot review for the given language.
 - **Returned to user:** Yes/no, and whether this specific version has already been reviewed.
 - **Impact:** MEDIUM
+- **Implemented:** ❌ `GET /api/reviews/isReviewByCopilotRequired` and `GET /api/reviews/{reviewId}/isReviewVersionReviewedByCopilot` are cookie-auth only. Not in CLI/MCP.
 
 ### 7d. Get Quality Score
 - **User says:** "What's the quality score for this revision?"
 - **Agent action:** Fetch review quality score metrics for the revision.
 - **Returned to user:** Quality score breakdown.
 - **Impact:** LOW
+- **Implemented:** ❌ `GET /api/apirevisions/{apiRevisionId}/qualityScore` is cookie-auth only. Not in CLI/MCP.
 
 ---
 
@@ -232,12 +262,14 @@ Before the user attempts to approve, the agent should proactively verify:
 - **Agent action:** Fetch cross-language content for the same API concept using CrossLanguageDefinitionId mappings.
 - **Returned to user:** Side-by-side (or sequential) view of the same API element rendered in each language SDK.
 - **Impact:** MEDIUM
+- **Implemented:** ❌ `GET /api/reviews/crossLanguageContent` and `GET /api/apirevisions/{crossLanguageId}/crosslanguage` are cookie-auth only. Not in CLI/MCP.
 
 ### 8b. Find Related Reviews in a Project
 - **User says:** "What other language reviews are in the same project?"
 - **Agent action:** Fetch related reviews from the same project (TypeSpec project grouping).
 - **Returned to user:** List of related reviews with language, package name, and approval status.
 - **Impact:** MEDIUM
+- **Implemented:** ❌ `GET /api/projects/reviews/{reviewId}/related` is cookie-auth only. Not in CLI/MCP.
 
 ---
 
@@ -248,24 +280,28 @@ Before the user attempts to approve, the agent should proactively verify:
 - **Agent action:** Fetch project information by project ID.
 - **Returned to user:** Project details, associated reviews.
 - **Impact:** LOW
+- **Implemented:** ❌ `GET /api/projects/{projectId}` is cookie-auth only. Not in CLI/MCP.
 
 ### 9b. View Namespace Approval Status
 - **User says:** "Is the namespace approved for all languages?"
 - **Agent action:** Fetch namespace approval info and history for a project.
 - **Returned to user:** Per-language namespace approval status and history.
 - **Impact:** MEDIUM
+- **Implemented:** ❌ `GET /api/projects/{projectId}/namespaces` is cookie-auth only. Not in CLI/MCP.
 
 ### 9c. Update Namespace Approval Status
 - **User says:** "Approve the namespace for Python" / "Request changes on the Java namespace"
 - **Agent action:** Update namespace approval status for a specific language within a project, with notes.
 - **Returned to user:** Confirmation with updated status.
 - **Impact:** MEDIUM
+- **Implemented:** ❌ `PATCH /api/projects/{projectId}/namespaces/{language}` is cookie-auth only. Not in CLI/MCP.
 
 ### 9d. Request Namespace Review
 - **User says:** "Request namespace review for this TypeSpec review"
 - **Agent action:** Request namespace approval for a TypeSpec-based review.
 - **Returned to user:** Confirmation that the request was submitted.
 - **Impact:** MEDIUM
+- **Implemented:** ❌ `POST /api/reviews/{reviewId}/requestNamespaceReview/{activeApiRevisionId}` is cookie-auth only. Not in CLI/MCP.
 
 ---
 
@@ -276,18 +312,21 @@ Before the user attempts to approve, the agent should proactively verify:
 - **Agent action:** Fetch PRs associated with a specific API revision.
 - **Returned to user:** List of PRs with: PR number, repo, link, commit SHA.
 - **Impact:** MEDIUM
+- **Implemented:** ❌ `GET /api/pullrequests/{reviewId}/{apiRevisionId}` is cookie-auth only. Not in CLI/MCP.
 
 ### 10b. Look Up Review from a PR
 - **User says:** "What APIView review is associated with PR #1234 in azure-sdk-for-python?"
 - **Agent action:** Query reviews by PR number, repo name, and/or commit SHA.
 - **Returned to user:** Review and revision details, with a link to the APIView UI.
 - **Impact:** HIGH
+- **Implemented:** ✅ `GET /api/pullrequests?pullRequestNumber=...&repoName=...&commitSHA=...` is anonymous (no auth required). Not in CLI/MCP as a standalone command but `azsdk_get_pull_request` MCP tool returns APIView links.
 
 ### 10c. Create Revision from PR Build (CI Integration)
 - **User says:** (Typically automated, but an agent could trigger this) "Create an API revision from build {buildId}"
 - **Agent action:** Call the CI pipeline integration endpoint to create a revision from a DevOps build, checking if the API surface changed compared to the baseline.
 - **Returned to user:** New revision details, or confirmation that the API surface is unchanged.
 - **Impact:** LOW
+- **Implemented:** ✅ CLI: `azsdk apiview create-pull-request-revision` and `azsdk apiview create-ci-revision` (both use token-auth via `POST /autoreview/upload`).
 
 ---
 
@@ -302,18 +341,21 @@ Before the user attempts to approve, the agent should proactively verify:
   - **Pending (202):** "Release blocked — approval is still pending."
   - **Not found (404):** "No review exists for this package."
 - **Impact:** HIGH
+- **Implemented:** ✅ `GET /review?language=...&packageName=...&packageVersion=...` (no auth restriction on this MVC endpoint). Also derivable from `azsdk apiview create-ci-revision` status codes (200/201/202).
 
 ### 11b. Mark a Revision as Released
 - **User says:** "Mark this revision as shipped" / (Typically automated via release pipeline)
 - **Agent action:** Upload or create with `setReleaseTag=true` and `compareAllRevisions=true` to find the matching approved revision and stamp it as released.
 - **Returned to user:** Confirmation that the revision is now marked as "Shipped" with the release timestamp.
 - **Impact:** LOW
+- **Implemented:** ✅ `POST /autoreview/upload` (token-auth) with `setReleaseTag=true` and `compareAllRevisions=true`. CLI: `azsdk apiview create-ci-revision` with corresponding flags.
 
 ### 11c. Resolve Review from Package/URL
 - **User says:** "Find the review for azure-core Python 1.30.0" / "Look up this APIView URL"
 - **Agent action:** Resolve a review/revision from a package name + language + version, or from an APIView URL.
 - **Returned to user:** Review and revision metadata.
 - **Impact:** HIGH
+- **Implemented:** ✅ `GET /api/reviews/resolve?packageQuery=...&language=...&version=...&link=...` (token-auth). Not yet exposed as a standalone CLI command.
 
 ---
 
@@ -324,18 +366,21 @@ Before the user attempts to approve, the agent should proactively verify:
 - **Agent action:** Fetch sample revisions for the review, then fetch content for the active sample.
 - **Returned to user:** Sample code presented in a code block.
 - **Impact:** LOW
+- **Implemented:** ❌ `GET /api/samplesrevisions/{reviewId}/content` and `POST /api/samplesrevisions` are cookie-auth only. Not in CLI/MCP.
 
 ### 12b. Upload / Update a Sample
 - **User says:** "Add this code as a usage sample" / "Update the sample with this new code"
 - **Agent action:** Create or update a sample revision with provided content (text) or a file upload, plus a title.
 - **Returned to user:** Confirmation with the sample revision ID.
 - **Impact:** LOW
+- **Implemented:** ❌ `POST /api/samplesrevisions/{reviewId}/create` and `PATCH /api/samplesrevisions/{reviewId}/update` are cookie-auth only. Not in CLI/MCP.
 
 ### 12c. Delete Samples
 - **User says:** "Delete that sample"
 - **Agent action:** Soft-delete the sample revision(s).
 - **Returned to user:** Confirmation.
 - **Impact:** LOW
+- **Implemented:** ❌ `PUT /api/samplesrevisions/delete` is cookie-auth only. Not in CLI/MCP.
 
 ---
 
@@ -345,13 +390,15 @@ Before the user attempts to approve, the agent should proactively verify:
 - **User says:** "Notify me about changes to this review" / "Stop notifications for this review"
 - **Agent action:** Toggle the subscription state for the review.
 - **Returned to user:** Confirmation.
-- **Impact:** LOW 
+- **Impact:** LOW
+- **Implemented:** ❌ `POST /api/reviews/{reviewId}/toggleSubscribe` is cookie-auth only. Not in CLI/MCP.
 
 ### 13b. Add Reviewers
 - **User says:** "Add @jsmith and @jdoe as reviewers on this revision"
 - **Agent action:** Add specified users as reviewers on an API revision.
 - **Returned to user:** Confirmation with updated reviewer list.
 - **Impact:** MEDIUM
+- **Implemented:** ❌ `POST /api/apirevisions/{reviewId}/{apiRevisionId}/reviewers` is cookie-auth only. Not in CLI/MCP.
 
 ---
 
@@ -362,12 +409,14 @@ Before the user attempts to approve, the agent should proactively verify:
 - **Agent action:** Fetch user profile and preferences.
 - **Returned to user:** Username, email, permissions, current preferences (theme, layout options).
 - **Impact:** LOW
+- **Implemented:** ❌ `GET /api/userprofile` is cookie-auth only. Not in CLI/MCP.
 
 ### 14b. Update Preferences
 - **User says:** "Show hidden APIs by default" / "Switch to dark theme"
 - **Agent action:** Update user preferences (show hidden APIs, hide line numbers, show/hide comments, theme selection, etc.).
 - **Returned to user:** Confirmation.
 - **Impact:** LOW
+- **Implemented:** ❌ `PUT /api/userprofile/preference` is cookie-auth only. Not in CLI/MCP.
 
 ---
 
@@ -378,24 +427,28 @@ Before the user attempts to approve, the agent should proactively verify:
 - **Agent action:** Create, update, or delete permission groups; add or remove members.
 - **Returned to user:** Confirmation with updated group details.
 - **Impact:** LOW
+- **Implemented:** ❌ `POST /api/permissions/groups` and related endpoints are cookie-auth only (admin). Not in CLI/MCP.
 
 ### 15b. View Approvers for a Language
 - **User says:** "Who are the approvers for Java?"
 - **Agent action:** Fetch the approver list for the specified language.
 - **Returned to user:** List of approved reviewers.
 - **Impact:** MEDIUM
+- **Implemented:** ❌ Approver lists are embedded in permission groups (`GET /api/permissions/groups`), cookie-auth only. Not in CLI/MCP.
 
 ### 15c. Delete a Review (Admin)
 - **User says:** "Delete the entire review for {package}"
 - **Agent action:** Soft-delete the review (admin-only).
 - **Returned to user:** Confirmation.
 - **Impact:** LOW
+- **Implemented:** ❌ `DELETE /api/reviews/{reviewId}` is cookie-auth only (admin). Not in CLI/MCP.
 
 ### 15d. Get Admin Contact Info
 - **User says:** "Who are the APIView admins?"
 - **Agent action:** Fetch admin usernames.
 - **Returned to user:** List of admin users.
 - **Impact:** LOW
+- **Implemented:** ❌ `GET /api/permissions/users` is cookie-auth only (admin). Not in CLI/MCP.
 
 ---
 
@@ -414,6 +467,7 @@ These are workflows where the agent adds value by orchestrating multiple API cal
   6. Query the release gate endpoint.
 - **Returned to user:** A complete readiness report: "azure-core Python v1.30.0 — Approved by @archboard, @reviewer2. No unresolved must-fix comments. Copilot review completed. Release gate: APPROVED (HTTP 200)."
 - **Impact:** HIGH
+- **Implemented:** 🟡 Steps 1 and 6 have token-auth endpoints (`/api/reviews/resolve`, `/review?...`). Steps 2-5 require cookie-auth endpoints. Cannot be fully assembled via token-auth today.
 
 ### 16b. New API Review Walkthrough
 - **User says:** "I have a new Python package to review — walk me through it."
@@ -426,6 +480,7 @@ These are workflows where the agent adds value by orchestrating multiple API cal
   6. Present AI comments alongside the API surface.
   7. Guide the user through resolving comments or approving.
 - **Impact:** MEDIUM
+- **Implemented:** 🟡 Steps 3-4 use token-auth (`/api/apirevisions/{id}/outline`, `getRevisionContent`). Steps 1 (upload), 5 (AI review), 6-7 (comments, approval) lack token-auth endpoints.
 
 ### 16c. Cross-Language Consistency Check
 - **User says:** "Compare the BlobClient API across all language SDKs."
@@ -434,6 +489,7 @@ These are workflows where the agent adds value by orchestrating multiple API cal
   2. Fetch the cross-language content for each.
   3. Present a comparison highlighting discrepancies (missing methods in one language, different parameter names, etc.).
 - **Impact:** MEDIUM
+- **Implemented:** ❌ Depends on cross-language and related-reviews endpoints, all cookie-auth only.
 
 ### 16d. Approval Audit Trail
 - **User says:** "Show me the approval history for this review."
@@ -442,6 +498,7 @@ These are workflows where the agent adds value by orchestrating multiple API cal
   2. For each, extract the change history entries.
   3. Present a chronological audit trail: who approved, when, was it carried forward, was it reverted.
 - **Impact:** MEDIUM
+- **Implemented:** ❌ Depends on listing revisions and their change history, all cookie-auth only.
 
 ### 16e. Monitor CI Pipeline Integration
 - **User says:** "What happened with the latest CI build for azure-storage-blobs?"
@@ -451,6 +508,7 @@ These are workflows where the agent adds value by orchestrating multiple API cal
   3. Check if there are linked PRs.
   4. Report the release gate status.
 - **Impact:** MEDIUM
+- **Implemented:** 🟡 Step 4 (release gate) is available. Steps 1-3 depend on cookie-auth endpoints for revision listing and PR association.
 
 ---
 

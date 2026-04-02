@@ -29,10 +29,14 @@ from agent_framework.openai._responses_client import ReasoningOptions
 from azure.ai.agentserver.agentframework import from_agent_framework
 from opentelemetry import trace as otel_trace
 from opentelemetry.sdk.trace import SpanProcessor
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request as StarletteRequest
+from starlette.responses import JSONResponse as StarletteJSONResponse
 
 import config.app_config as app_config
 from config.app_config import get as cfg
 from tools.knowledge_tools import KnowledgeTools
+from tools.ado_mcp_tools import create_ado_mcp_tool
 from tools.azsdk_mcp_tools import create_azsdk_mcp_tool
 from tools.github_mcp_tools import create_github_mcp_tool
 from tools.skills import create_tenant_skills
@@ -78,7 +82,7 @@ async def main() -> None:
     await app_config.init()
     agent_client = get_agent_client()
     # Limit tool-call loop iterations to prevent infinite loops.
-    agent_client.function_invocation_configuration["max_iterations"] = 5
+    agent_client.function_invocation_configuration["max_iterations"] = 3
     agent_dir = Path(__file__).parent
     instructions = _load_instructions(agent_dir / "instruction.md")
     with open(agent_dir / "agent.yaml", encoding="utf-8") as f:
@@ -89,6 +93,7 @@ async def main() -> None:
     agent_version = os.environ.get("AGENT_VERSION")
     agent_id = f"{agent_name}:{agent_version}" if agent_version else agent_name
     knowledge_tools = KnowledgeTools()
+    ado_mcp_tool = await create_ado_mcp_tool()
     azsdk_mcp_tool = await create_azsdk_mcp_tool()
     github_mcp_tool = await create_github_mcp_tool(agent_client)
     web_search_tool = AzureOpenAIResponsesClient.get_web_search_tool(
@@ -100,6 +105,7 @@ async def main() -> None:
 
     tools = [
         knowledge_tools.search_knowledge_base,
+        ado_mcp_tool,
         azsdk_mcp_tool,
         github_mcp_tool,
         web_search_tool,
@@ -115,6 +121,7 @@ async def main() -> None:
         context_providers=[skills_provider],
         default_options={
             "reasoning": ReasoningOptions(effort=reasoning_effort),
+            "truncation": "auto",
         },
     )
 

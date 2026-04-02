@@ -86,6 +86,7 @@ class ChatService:
             input=conversation_items,
             conversation=agent_conversation_id,
             store=True,
+            truncation="auto",
             extra_body={
                 "agent_reference": {
                     "name": agent.name,

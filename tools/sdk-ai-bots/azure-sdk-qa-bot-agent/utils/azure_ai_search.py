@@ -66,29 +66,33 @@ class SearchClient:
         query: str,
         source_filters: dict[str, str],
     ) -> list[KnowledgeChunk]:
-        """Retrieve references and expand each by header hierarchy.
+        """Retrieve raw chunks via agentic (intent-aware) search.
 
-        For every chunk returned by the knowledge-base retrieval, a sibling
-        query fetches all chunks under the same header section so the agent
-        receives full contextual content in a single call.
+        Returns un-expanded chunks.  The caller is responsible for
+        deduplication and hierarchy expansion so that work is done once
+        after all search strategies complete.
+
+        The per-source filters are combined into a single OData expression
+        so the KB retrieval client executes one sub-search instead of N.
         """
-        kb_params: list[SearchIndexKnowledgeSourceParams] = []
-        for source_name, filter_add_on in source_filters.items():
-            kb_params.append(
-                SearchIndexKnowledgeSourceParams(
-                    knowledge_source_name=self._knowledge_source_name,
-                    include_references=True,
-                    include_reference_source_data=True,
-                    filter_add_on=filter_add_on,
-                )
+        # Combine per-source filters into a single filter_add_on with OR
+        # so the KB client performs one retrieval pass instead of N.
+        combined_filter = " or ".join(f"({f})" for f in source_filters.values() if f)
+
+        kb_params = [
+            SearchIndexKnowledgeSourceParams(
+                knowledge_source_name=self._knowledge_source_name,
+                include_references=True,
+                include_reference_source_data=True,
+                filter_add_on=combined_filter or None,
             )
+        ]
 
         request = KnowledgeBaseRetrievalRequest(
             intents=[KnowledgeRetrievalSemanticIntent(search=query)],
             include_activity=True,
             output_mode="extractiveData",
-            retrieval_reasoning_effort=KnowledgeRetrievalMediumReasoningEffort(),
-            knowledge_source_params=kb_params if kb_params else None,
+            knowledge_source_params=kb_params,
             max_output_size=20000,
         )
 
@@ -102,12 +106,7 @@ class SearchClient:
             source_data = getattr(ref, "source_data", None) or {}
             raw_refs.append(KnowledgeChunk.model_validate(source_data))
 
-        # Deduplicate, then expand by hierarchy
-        unique_refs = self._deduplicate_chunks(
-            raw_refs[: max(self._top_k, 1)]
-        )
-        tasks = [self._expand_by_hierarchy(raw) for raw in unique_refs]
-        return await asyncio.gather(*tasks)
+        return raw_refs[: max(self._top_k, 1)]
 
     async def vector_search(
         self,
@@ -125,20 +124,25 @@ class SearchClient:
 
         vector_query = VectorizableTextQuery(
             text=query,
-            k_nearest_neighbors=k,
+            k=k,
             fields="text_vector",
         )
 
         select_fields = [
-            "chunk_id", "title", "chunk", "context_id",
-            "header_1", "header_2", "header_3",
-            "ordinal_position", "scope", "service_type",
+            "chunk_id",
+            "title",
+            "chunk",
+            "context_id",
+            "header_1",
+            "header_2",
+            "header_3",
+            "ordinal_position",
+            "scope",
+            "service_type",
         ]
 
         # Combine per-source filters into a single OData expression with OR
-        combined_filter = " or ".join(
-            f"({f})" for f in source_filters.values() if f
-        )
+        combined_filter = " or ".join(f"({f})" for f in source_filters.values() if f)
 
         results = await self._search_client.search(
             search_text=query,
@@ -159,15 +163,10 @@ class SearchClient:
 
         # Sort by rerank score descending and limit to top-k
         scored_chunks.sort(key=lambda x: x[0], reverse=True)
-        top_chunks = [chunk for _, chunk in scored_chunks[:k]]
-
-        # Deduplicate and expand by hierarchy (reuse agentic search logic)
-        unique_refs = self._deduplicate_chunks(top_chunks)
-        expand_tasks = [self._expand_by_hierarchy(raw) for raw in unique_refs]
-        return await asyncio.gather(*expand_tasks)
+        return [chunk for _, chunk in scored_chunks[:k]]
 
     @staticmethod
-    def _deduplicate_chunks(chunks: list[KnowledgeChunk]) -> list[KnowledgeChunk]:
+    def deduplicate_chunks(chunks: list[KnowledgeChunk]) -> list[KnowledgeChunk]:
         """Remove chunks whose header section is already covered by a broader expansion."""
         unique: list[KnowledgeChunk] = []
         seen_chunk_ids: set[str] = set()
@@ -200,13 +199,22 @@ class SearchClient:
             if hierarchy == "header1" and chunk.header1:
                 expanded_h1.add(f"{chunk.source}|{chunk.title}|{chunk.header1}")
             elif hierarchy == "header2" and chunk.header1 and chunk.header2:
-                expanded_h2.add(f"{chunk.source}|{chunk.title}|{chunk.header1}|{chunk.header2}")
-            elif hierarchy == "header3" and chunk.header1 and chunk.header2 and chunk.header3:
-                expanded_h3.add(f"{chunk.source}|{chunk.title}|{chunk.header1}|{chunk.header2}|{chunk.header3}")
+                expanded_h2.add(
+                    f"{chunk.source}|{chunk.title}|{chunk.header1}|{chunk.header2}"
+                )
+            elif (
+                hierarchy == "header3"
+                and chunk.header1
+                and chunk.header2
+                and chunk.header3
+            ):
+                expanded_h3.add(
+                    f"{chunk.source}|{chunk.title}|{chunk.header1}|{chunk.header2}|{chunk.header3}"
+                )
 
         return unique
 
-    async def _expand_by_hierarchy(self, chunk: KnowledgeChunk) -> KnowledgeChunk:
+    async def expand_by_hierarchy(self, chunk: KnowledgeChunk) -> KnowledgeChunk:
         """Fetch sibling chunks for a single ref and assemble content."""
         hierarchy_filter = _build_hierarchy_filter(
             title=chunk.title,

@@ -68,9 +68,15 @@ class KnowledgeTools:
         ],
         service_type: Annotated[
             str | None,
-            "The service type of the user's question. "
-            "Must be one of: 'management-plane', 'data-plane', or None if unknown. "
-            "Used to filter search results to the relevant service plane.",
+            "Filter results by Azure service plane. ALMOST ALWAYS use None. "
+            "Only set when the question has an EXPLICIT, UNAMBIGUOUS signal: "
+            "• 'management-plane' — PR has management-plane label, file path contains "
+            "'resource-manager', or user literally says ARM/management-plane/RPaaS/RPSaaS. "
+            "• 'data-plane' — PR has data-plane label, file path contains "
+            "'data-plane', or user literally says data-plane. "
+            "• None — everything else (SDK release, onboarding, pipelines, reviews, "
+            "general questions, etc.). "
+            "When in doubt, use None.",
         ] = None,
         search_mode: Annotated[
             str,
@@ -123,23 +129,20 @@ class KnowledgeTools:
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        # Collect results, tolerating individual search failures
-        knowledges: list = []
+        # Collect raw chunks, tolerating individual search failures
+        raw_chunks: list = []
         for result in results:
             if isinstance(result, BaseException):
                 logger.warning("Search failed: %s", result)
             else:
-                knowledges.extend(result)
+                raw_chunks.extend(result)
 
-        # Deduplicate by expanded section identity
-        seen_sections: set[tuple[str, str, str, str, str]] = set()
-        unique_knowledges = []
-        for k in knowledges:
-            section_key = (k.source, k.title, k.header1, k.header2, k.header3)
-            if section_key in seen_sections:
-                continue
-            seen_sections.add(section_key)
-            unique_knowledges.append(k)
+        # Deduplicate across all search results, then expand once
+        unique_chunks = search_client.deduplicate_chunks(raw_chunks)
+        expand_tasks = [
+            search_client.expand_by_hierarchy(chunk) for chunk in unique_chunks
+        ]
+        expanded = await asyncio.gather(*expand_tasks)
 
         refs = [
             Reference(
@@ -148,7 +151,7 @@ class KnowledgeTools:
                 link=k.link,
                 content=k.content,
             )
-            for k in unique_knowledges
+            for k in expanded
         ]
 
         return SearchKnowledgeBaseResult(results=refs)
@@ -171,7 +174,7 @@ def _resolve_source_filters(
     service_type_filter = (
         f"(service_type eq '{service_type}' or service_type eq null)"
         if service_type and service_type in valid_service_types
-        else ""
+        else None
     )
 
     source_filters: dict[str, str] = {}

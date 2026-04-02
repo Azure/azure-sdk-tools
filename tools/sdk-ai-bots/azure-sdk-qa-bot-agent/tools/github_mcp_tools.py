@@ -32,7 +32,7 @@ _GITHUB_API = "https://api.github.com"
 _GITHUB_MCP_URL = "https://api.githubcopilot.com/mcp/"
 _DEFAULT_INSTALLATION_OWNER = "Azure"
 _GITHUB_TOKEN_ENV = "GITHUB_TOKEN"
-# Refresh the token 5 minutes before it expires (matches Go backend).
+# Refresh the token 5 minutes before it expires.
 _TOKEN_REFRESH_BUFFER_SECS = 5 * 60
 # GitHub MCP server headers for toolset configuration.
 # See https://github.com/github/github-mcp-server?tab=readme-ov-file#tool-configuration
@@ -71,6 +71,7 @@ async def _validate_mcp_token(token: str) -> bool:
 
 # -- helpers ---------------------------------------------------------------
 
+
 def _b64url(data: bytes) -> str:
     return base64.urlsafe_b64encode(data).rstrip(b"=").decode("ascii")
 
@@ -95,7 +96,9 @@ async def _create_app_jwt(vault_url: str, key_name: str, app_id: str) -> str:
     """Create a GitHub App JWT signed via Azure Key Vault (RS256)."""
     header = _b64url(json.dumps({"alg": "RS256", "typ": "JWT"}).encode())
     now = int(_time.time())
-    payload = _b64url(json.dumps({"iat": now - 10, "exp": now + 600, "iss": app_id}).encode())
+    payload = _b64url(
+        json.dumps({"iat": now - 10, "exp": now + 600, "iss": app_id}).encode()
+    )
     unsigned = f"{header}.{payload}"
     digest = hashlib.sha256(unsigned.encode()).digest()
     sig = await _sign_with_keyvault(vault_url, key_name, digest)
@@ -137,7 +140,9 @@ async def _get_installation_token(jwt: str, owner: str) -> tuple[str, datetime]:
             expires_at = datetime.fromisoformat(body["expires_at"])
         except (KeyError, ValueError):
             # Fallback: assume 1 hour (default GitHub installation token lifetime).
-            expires_at = datetime.now(timezone.utc).replace(microsecond=0) + timedelta(hours=1)
+            expires_at = datetime.now(timezone.utc).replace(microsecond=0) + timedelta(
+                hours=1
+            )
         return token, expires_at
 
 
@@ -202,7 +207,9 @@ def _start_background_token_refresh(
             token, new_expires_at = await _get_github_app_token()
             mcp_tool["headers"]["Authorization"] = f"Bearer {token}"
             expires_at = new_expires_at
-            logger.info("GitHub token refreshed, expires at %s", new_expires_at.isoformat())
+            logger.info(
+                "GitHub token refreshed, expires at %s", new_expires_at.isoformat()
+            )
 
     async def _loop() -> None:
         while True:
@@ -218,6 +225,7 @@ def _start_background_token_refresh(
 
 
 # -- public ----------------------------------------------------------------
+
 
 async def create_github_mcp_tool(client: BaseChatClient):
     """Create a server-side MCP tool for GitHub with auto-refreshing auth.
@@ -260,8 +268,7 @@ async def create_github_mcp_tool(client: BaseChatClient):
         return mcp_tool
 
     logger.info(
-        "GitHub MCP tool configured via GitHub App token "
-        "(owner=%s, expires=%s)",
+        "GitHub MCP tool configured via GitHub App token " "(owner=%s, expires=%s)",
         cfg("GITHUB_APP_INSTALLATION_OWNER", _DEFAULT_INSTALLATION_OWNER),
         expires_at.isoformat() if expires_at else "unknown",
     )

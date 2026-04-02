@@ -151,6 +151,15 @@ if __name__ == "__main__":
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
         stream=sys.stdout,
     )
+    # Silence noisy loggers that flood container logs.
+    for noisy_logger in [
+        "azure.core.pipeline.policies.http_logging_policy",  # HTTP request/response headers
+        "azure.monitor.opentelemetry.exporter",  # telemetry transmission
+        "httpx",  # outgoing HTTP to OpenAI
+        "uvicorn.access",  # health-probe GET /readiness /liveness
+        "agent_framework",  # full prompt + message dumps
+    ]:
+        logging.getLogger(noisy_logger).setLevel(logging.WARNING)
 
     logger.info("Agent container starting...")
 

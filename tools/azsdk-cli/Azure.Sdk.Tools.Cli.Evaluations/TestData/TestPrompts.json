@@ -30,6 +30,10 @@
     { "toolName": "azsdk_get_pull_request_link_for_current_branch", "prompt": "Get the PR link for my current branch", "category": "all" },
     { "toolName": "azsdk_get_pull_request_link_for_current_branch", "prompt": "What's the pull request URL for this branch?", "category": "all" },
 
+    { "toolName": "azsdk_get_pr_checks", "prompt": "Get the pipeline checks for my pull request", "category": "all" },
+    { "toolName": "azsdk_get_pr_checks", "prompt": "Show me the failed CI checks for PR #1234", "category": "all" },
+    { "toolName": "azsdk_get_pr_checks", "prompt": "What checks are blocking the merge for this PR?", "category": "all" },
+
     { "toolName": "azsdk_package_build_code", "prompt": "Build my SDK package", "category": "all" },
     { "toolName": "azsdk_package_build_code", "prompt": "Compile the code for my package", "category": "all" },
     { "toolName": "azsdk_package_generate_code", "prompt": "Generate SDK code from my TypeSpec", "category": "all" },

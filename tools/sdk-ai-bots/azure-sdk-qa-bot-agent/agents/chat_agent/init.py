@@ -155,9 +155,7 @@ if __name__ == "__main__":
     for noisy_logger in [
         "azure.core.pipeline.policies.http_logging_policy",  # HTTP request/response headers
         "azure.monitor.opentelemetry.exporter",  # telemetry transmission
-        "httpx",  # outgoing HTTP to OpenAI
         "uvicorn.access",  # health-probe GET /readiness /liveness
-        "agent_framework",  # full prompt + message dumps
     ]:
         logging.getLogger(noisy_logger).setLevel(logging.WARNING)
 

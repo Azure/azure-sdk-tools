@@ -1,14 +1,14 @@
-azure-ai-agentserver-agentframework==1.0.0b16
+azure-ai-agentserver-agentframework==1.0.0b17
 azure-ai-projects>=2.0.0b4
 azure-search-documents>=11.7.0b2
-azure-appconfiguration>=1.7.0
-azure-cosmos>=4.9.1
-azure-identity>=1.17.0
-azure-keyvault-keys>=4.9.0
-azure-storage-blob>=12.20.0
-openpyxl>=3.1.0
-python-dotenv>=1.0.0
-pyyaml>=6.0
+azure-appconfiguration>=1.8.0
+azure-cosmos>=4.16.0b1
+azure-identity>=1.26.0b2
+azure-keyvault-keys>=4.11.0
+azure-storage-blob>=12.30.0b1
+openpyxl>=3.1.5
+python-dotenv>=1.2.2
+pyyaml>=6.0.3
 agent-framework>=1.0.0rc3
 debugpy
 # Agent development CLI tool (preview)

@@ -6,7 +6,7 @@ ENV PYTHONUNBUFFERED=1
 
 # Install dependencies first (layer caching)
 COPY tools/sdk-ai-bots/azure-sdk-qa-bot-agent/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --pre -r requirements.txt
 
 # Copy application code
 COPY tools/sdk-ai-bots/azure-sdk-qa-bot-agent/config/ ./config/

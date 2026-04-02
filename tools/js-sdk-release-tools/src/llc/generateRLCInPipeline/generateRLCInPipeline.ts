@@ -1,6 +1,5 @@
 import { execSync } from "child_process";
 import fs from "fs";
-import * as yaml from "js-yaml";
 import * as path from "path";
 import { addApiViewInfo } from "../../utils/addApiViewInfo.js";
 import { modifyOrGenerateCiYml } from "../../utils/changeCiYaml.js";
@@ -11,10 +10,7 @@ import { getChangedCiYmlFilesInSpecificFolder } from "../../utils/git.js";
 import { logger } from "../../utils/logger.js";
 import { RunningEnvironment } from "../../utils/runningEnvironment.js";
 import { prepareCommandToInstallDependenciesForTypeSpecProject } from '../utils/prepareCommandToInstallDependenciesForTypeSpecProject.js';
-import {
-    generateAutorestConfigurationFileForMultiClientByPrComment,
-    generateAutorestConfigurationFileForSingleClientByPrComment, replaceRequireInAutorestConfigurationFile
-} from '../utils/generateSampleReadmeMd.js';
+import { replaceRequireInAutorestConfigurationFile } from '../utils/generateSampleReadmeMd.js';
 import { updateTypeSpecProjectYamlFile } from '../utils/updateTypeSpecProjectYamlFile.js';
 import { getRelativePackagePath } from "../utils/utils.js";
 import { defaultChildProcessTimeout, getGeneratedPackageDirectory, generateRepoDataInTspLocation, specifyApiVersionToGenerateSDKByTypeSpec, cleanUpPackageDirectory } from "../../common/utils.js";
@@ -26,12 +22,61 @@ import { formatSdk, updateSnippets, lintFix, customizeCodes } from "../../common
 import { RunMode } from "../../common/types.js";
 import { exists } from 'fs-extra';
 
+/**
+ * Autorest flag names permitted in additionalArgs.
+ * Add new entries here when a legitimate new flag is needed.
+ */
+const ALLOWED_AUTOREST_FLAG_NAMES = new Set([
+    'typescript',
+    'tag',
+    'use',
+    'version',
+    'title',
+    'package-name',
+    'license-header',
+    'output-folder',
+    'head-as-boolean',
+    'generate-test',
+    'azure-arm',
+    'add-credentials',
+    'modelerfour.lenient-model-deduplication',
+    'multi-client',
+    'typescript-sdks-folder',
+]);
+
+/** Allows alphanumeric plus a narrow set of safe punctuation for flag values. */
+const SAFE_ARG_VALUE = /^[a-zA-Z0-9@._\-/:~]+$/;
+
+/**
+ * Validates additional autorest CLI flags against an allowlist.
+ * Each token must be `--allowedFlag` or `--allowedFlag=safeValue`.
+ * Throws if any token uses an unlisted flag name or an unsafe value.
+ */
+export function sanitizeAdditionalArgs(additionalArgs: string): string {
+    const tokens = additionalArgs.trim().split(/\s+/).filter(Boolean);
+    for (const token of tokens) {
+        const eqIndex = token.indexOf('=');
+        const flagName = eqIndex === -1 ? token.replace(/^-+/, '') : token.slice(0, eqIndex).replace(/^-+/, '');
+        const value = eqIndex === -1 ? undefined : token.slice(eqIndex + 1);
+        if (!ALLOWED_AUTOREST_FLAG_NAMES.has(flagName)) {
+            throw new Error(
+                `Security: autorest flag '${flagName}' is not in the allowed list.`
+            );
+        }
+        if (value !== undefined && !SAFE_ARG_VALUE.test(value)) {
+            throw new Error(
+                `Security: value '${value}' for '${flagName}' contains disallowed characters.`
+            );
+        }
+    }
+    return tokens.join(' ');
+}
+
 export async function generateRLCInPipeline(options: {
     sdkRepo: string;
     swaggerRepo: string;
     readmeMd: string | undefined;
     typespecProject: string | undefined;
-    autorestConfig: string | undefined;
     sdkGenerationType: "script" | "command";
     swaggerRepoUrl: string;
     gitCommitId: string;
@@ -99,50 +144,8 @@ export async function generateRLCInPipeline(options: {
         if (!options.skipGeneration) {
             let autorestConfigFilePath: string | undefined;
             let isMultiClient: boolean = false;
-            if (!!options.autorestConfig) {
-                logger.info(`Start to find autorest configuration in PR comment: '${options.autorestConfig}'.`);
-                logger.info(`Start to parse the autorest configuration in PR comment.`);
-                const yamlBlocks: {
-                    condition: string;
-                    yamlContent: any;
-                }[] = [];
-                try {
-                    const regexToExtractAutorestConfig = new RegExp(
-                        '(?<=``` *(?<condition>yaml.*)\\r\\n)(?<yaml>[^(```)]*)(?=\\r\\n```)', 'g');
-                    let match = regexToExtractAutorestConfig.exec(options.autorestConfig);
-                    while (!!match) {
-                        if (!!match.groups) {
-                            // try to load the yaml to check whether it's valid
-                            yamlBlocks.push({
-                                condition: match.groups.condition,
-                                yamlContent: yaml.load(match.groups.yaml)
-                            });
-                        }
-                        match = regexToExtractAutorestConfig.exec(options.autorestConfig);
-                    }
-                } catch (e: any) {
-                    logger.error(`Failed to parse autorestConfig from PR comment: \nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
-                    logger.error(`Please check out https://github.com/Azure/autorest/blob/main/docs/troubleshooting.md to troubleshoot the issue.`);
-                    throw e;
-                }
-
-                yamlBlocks.forEach(e => {
-                    if (e.condition.includes(`multi-client`)) {
-                        isMultiClient = true;
-                    }
-                });
-
-                if (isMultiClient) {
-                    autorestConfigFilePath = await generateAutorestConfigurationFileForMultiClientByPrComment(yamlBlocks, options.swaggerRepo, options.sdkRepo);
-                } else {
-                    if (yamlBlocks.length !== 1) {
-                        throw new Error(`The yaml config in comment should be 1, but find autorestConfig length: ${yamlBlocks.length}`);
-                    }
-                    const yamlContent = yamlBlocks[0].yamlContent;
-                    autorestConfigFilePath = await generateAutorestConfigurationFileForSingleClientByPrComment(yamlContent, options.swaggerRepo, options.sdkRepo);
-                }
-            } else {
-                logger.info(`Autorest configuration is not found in spec PR comment, and start to find it in sdk repository.`);
+            {
+                logger.info(`Start to find autorest configuration in sdk repository.`);
                 const sdkFolderPath = path.join(options.sdkRepo, 'sdk');
                 for (const rp of fs.readdirSync(sdkFolderPath)) {
                     logger.info(`Start to find autorest configuration in '${rp}'.`);
@@ -183,6 +186,7 @@ export async function generateRLCInPipeline(options: {
                 }
             }
 
+
             if (!autorestConfigFilePath) {
                 logger.warn(`Failed to find autorest configuration in spec PR comment or sdk repository, skip generating codes.`);
                 logger.warn(`The autorest config file path should be 'sdk/<RP_NAME>-rest/swagger/README.md' in sdk repository, and the autorest config should contain one of the patterns:`);
@@ -200,7 +204,7 @@ export async function generateRLCInPipeline(options: {
                 cmd += ` --use=${options.use}`;
             }
             if (options.additionalArgs) {
-                cmd += ` ${options.additionalArgs}`;
+                cmd += ` ${sanitizeAdditionalArgs(options.additionalArgs)}`;
             }
             if (isMultiClient) {
                 cmd += ` --multi-client=true`;

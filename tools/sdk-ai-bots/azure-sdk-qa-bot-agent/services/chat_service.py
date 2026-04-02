@@ -28,6 +28,7 @@ from tools import TOOL_REGISTRY
 from tools.skills import get_skill_to_tenant_map
 from utils.azure_ai_foundry import get_openai_client, get_project_client
 from utils.teams_image import get_image_data_uri
+from utils.text_preprocess import preprocess_message
 from azure.ai.projects.aio import AIProjectClient
 from azure.ai.projects.models import AgentDetails
 from openai import AsyncOpenAI
@@ -72,7 +73,7 @@ class ChatService:
         conversation_items.append(
             ConversationItem(
                 role=req.message.role,
-                content=req.message.content,
+                content=preprocess_message(req.message.content),
                 user_id=req.message.user_id,
                 user_name=req.message.user_name,
             ).model_dump(mode="json", exclude_none=True)
@@ -86,7 +87,6 @@ class ChatService:
             input=conversation_items,
             conversation=agent_conversation_id,
             store=True,
-            truncation="auto",
             extra_body={
                 "agent_reference": {
                     "name": agent.name,

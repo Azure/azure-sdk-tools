@@ -28,6 +28,8 @@ class SettingsManager:
 
     def __new__(cls, environment=None):
         env_key = (environment or os.getenv("ENVIRONMENT_NAME") or "").strip().lower()
+        if not env_key:
+            raise ValueError("ENVIRONMENT_NAME must be set in the environment or a non-empty 'environment' must be provided.")
         if env_key not in cls._instances:
             with cls._lock:
                 if env_key not in cls._instances:
@@ -42,13 +44,7 @@ class SettingsManager:
             if hasattr(self, "_initialized") and self._initialized:
                 return
             self.credential = DefaultAzureCredential()
-            if environment:
-                self.label = environment.strip().lower()
-            else:
-                self.label = os.getenv("ENVIRONMENT_NAME")
-                if not self.label:
-                    raise ValueError("ENVIRONMENT_NAME must be set in the environment.")
-                self.label = self.label.strip().lower()
+            self.label = (environment or os.getenv("ENVIRONMENT_NAME")).strip().lower()
             self.app_config_endpoint = self.APP_CONFIG_ENDPOINTS.get(self.label)
             if not self.app_config_endpoint:
                 raise ValueError(

@@ -488,11 +488,12 @@ def get_all_guidelines(language: str, markdown: bool = False):
 
 def run_pytest(args: str = None):
     """Run unit tests with pytest."""
+    import shlex
     import subprocess
 
     cmd = [sys.executable, "-m", "pytest", "tests"]
     if args:
-        cmd.extend(args.split())
+        cmd.extend(shlex.split(args))
     result = subprocess.run(cmd, cwd=pathlib.Path(__file__).parent)
     sys.exit(result.returncode)
 

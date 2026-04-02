@@ -10,7 +10,7 @@ Module for managing the database connections and operations for APIView Copilot.
 
 import time
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 from azure.cosmos import CosmosClient
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
@@ -48,7 +48,7 @@ class DatabaseManager:
     _instances: dict = {}
 
     @classmethod
-    def get_instance(cls, force_new: bool = False, environment: str = None) -> "DatabaseManager":
+    def get_instance(cls, force_new: bool = False, environment: Optional[str] = None) -> "DatabaseManager":
         """
         Returns a singleton instance of DatabaseManager, keyed by environment.
         At most two instances exist: one for 'production' and one for 'staging'.
@@ -59,8 +59,9 @@ class DatabaseManager:
             cls._instances[key] = cls(environment=environment)
         return cls._instances[key]
 
-    def __init__(self, environment: str = None):
+    def __init__(self, environment: Optional[str] = None):
         settings = SettingsManager(environment=environment)
+        self.environment = settings.label
         db_name = settings.get("COSMOS_DB_NAME")
         endpoint = settings.get("COSMOS_ENDPOINT")
         credential = get_credential()
@@ -123,6 +124,7 @@ class BasicContainer:
         self.client = manager.database.get_container_client(container_name)
         self.preprocess_id: callable = None
         self.container_name = container_name
+        self._environment = manager.environment
 
     def _to_dict(self, data):
         if BaseModel and isinstance(data, BaseModel):
@@ -205,7 +207,7 @@ class BasicContainer:
         """
         Trigger the Azure Search indexer for this container (examples, guidelines, or memories).
         """
-        settings = SettingsManager()
+        settings = SettingsManager(environment=self._environment)
         indexer_name = f"{self.container_name}-indexer"
         search_endpoint = settings.get("SEARCH_ENDPOINT")
         client = SearchIndexerClient(endpoint=search_endpoint, credential=get_credential())

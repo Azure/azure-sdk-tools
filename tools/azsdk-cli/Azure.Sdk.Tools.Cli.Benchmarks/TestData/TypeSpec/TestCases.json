@@ -52,87 +52,72 @@
             ]
         },
         {
-            "name": "001005-version-add-preview-after-preview",
-            "description": "version-add-preview-after-preview",
-            "prompt": "Add a new preview version `2025-05-04-preview` to my service widget resource manager. Exclude Feature: `age` property with default value 21** (replaced old `age` property, which was renamed to `oldAge` and removed)",
+            "name": "001009-version-model-property-required",
+            "description": "Make an optional property required in a new version using @madeRequired.",
+            "prompt": "In the specification/widget/resource-manager/Microsoft.Widget/Widget project, make the `email` property required in EmployeeProperties only for version `2025-05-04-preview`.",
             "testfiles": [
-                "001005-version-add-preview-after-preview/employee.tsp",
-                "001005-version-add-preview-after-preview/main.tsp",
-                "001005-version-add-preview-after-preview/readme.md",
-                "001005-version-add-preview-after-preview/examples"
+                "version-model-property-required/employee.tsp",
+                "version-model-property-required/main.tsp"
             ],
-            "toolsToCall": [ "azure-typespec-author" ],
             "verifyPlan": [
-                "1. `2025-05-04-preview` should be added to the Versions enum with the @previewVersion decorator, replacing `2024-10-01-preview`.",
-                "2. The old `examples/2024-10-01-preview` folder should be deleted and a new `examples/2025-05-04-preview` folder should be created with updated `api-version` parameter in all example files.",
-                "3. The age property's @added decorator and its default value of 21 should be removed",
-                "4. The oldAge property should be deleted entirely along with its @removed decorator",
-                "5. The oldAge property's @renamedFrom decorator should be removed along with the oldAge property itself",
-                "6. The workLocation property should have its versioning decorator updated to reference `2025-05-04-preview`."
+                "1. The `email` property in EmployeeProperties should have `@madeRequired(Versions.v2025_05_04_preview)` decorator added."
             ]
         },
         {
-            "name": "001006-version-add-preview-after-stable",
-            "description": "version-add-preview-after-stable",
-            "prompt": "Add a new preview version `2025-05-04-preview` to my service. Carry over changes.",
+            "name": "001010-version-model-property-removed",
+            "description": "Remove a property in a new version using @removed.",
+            "prompt": "In the specification/widget/resource-manager/Microsoft.Widget/Widget project, remove the `department` property from EmployeeProperties only for version `2025-05-04-preview`.",
             "testfiles": [
-                "001006-version-add-preview-after-stable/employee.tsp",
-                "001006-version-add-preview-after-stable/main.tsp",
-                "001006-version-add-preview-after-stable/readme.md",
-                "001006-version-add-preview-after-stable/examples"
+                "version-model-property-removed/employee.tsp",
+                "version-model-property-removed/main.tsp"
             ],
-            "toolsToCall": [ "azure-typespec-author" ],
             "verifyPlan": [
-                "1. `2025-05-04-preview` should be added to the Versions enum with the @previewVersion decorator, keeping all existing stable versions.",
-                "2. A new example folder should be created for `2025-05-04-preview` and populated with example files.",
-                "3. All versioning decorators in employee.tsp referencing `Versions.v2024_10_01` (including @removed/@renamedFrom on oldAge, @added on age/workLocation/AssetItem/WorkLocation, @typeChangedFrom on assets) should remain unchanged, as these describe stable version transitions unaffected by adding a new preview."
+                "1. The `department` property in EmployeeProperties should have `@removed(Versions.v2025_05_04_preview)` decorator added to indicate it is removed starting from this version. The property itself should NOT be deleted from the model."
             ]
         },
         {
-            "name": "001007-version-add-stable-after-preview",
-            "description": "version-add-stable-after-preview",
-            "prompt": "I want to add a new stable version `2025-01-01`. Exclude `workLocation` property and `WorkLocation` model.",
-            "toolsToCall": [ "azure-typespec-author" ],
+            "name": "001011-version-model-property-renamed",
+            "description": "Rename a property in a new version using @renamedFrom.",
+            "prompt": "In the specification/widget/resource-manager/Microsoft.Widget/Widget project, rename the `age` property to `employeeAge` in EmployeeProperties only for version `2025-05-04-preview`.",
             "testfiles": [
-                "001007-version-add-stable-after-preview/employee.tsp",
-                "001007-version-add-stable-after-preview/main.tsp",
-                "001007-version-add-stable-after-preview/readme.md",
-                "001007-version-add-stable-after-preview/examples"
+                "version-model-property-renamed/employee.tsp",
+                "version-model-property-renamed/main.tsp"
             ],
             "verifyPlan": [
-                "1. `2025-01-01` should be added to the Versions enum, and `2024-10-01-preview` should be removed from the enum.",
-                "2. The old `examples/2024-10-01-preview` folder should be deleted and a new `examples/2025-01-01` folder should be created with updated `api-version` parameter in all example files.",
-                "3. Preview changes that are promoted to stable should have their versioning decorators updated to reference `2025-01-01`.",
-                "4. The workLocation property and WorkLocation model that are excluded from stable should be deleted entirely.",
-                "5. The oldAge property's @removed decorator should be updated from `@removed(Versions.v2024_10_01_preview)` to `@removed(Versions.v2025_01_01)`, and @renamedFrom should be updated from `@renamedFrom(Versions.v2024_10_01_preview, 'age')` to `@renamedFrom(Versions.v2025_01_01, 'age')`.",
-                "6. The age property's @added decorator should be updated from `@added(Versions.v2024_10_01_preview)` to `@added(Versions.v2025_01_01)`.",
-                "7. The AssetItem scalar's @added decorator should be updated from `@added(Versions.v2024_10_01_preview)` to `@added(Versions.v2025_01_01)`, and the assets property's @typeChangedFrom should be updated from `@typeChangedFrom(Versions.v2024_10_01_preview, string[])` to `@typeChangedFrom(Versions.v2025_01_01, string[])`."
+                "1. The `age` property should be renamed to `employeeAge` and decorated with `@renamedFrom(Versions.v2025_05_04_preview, \"age\")` on the new `employeeAge` property. The `@renamedFrom` decorator alone is sufficient for a simple rename without `@removed`/`@added` pattern."
             ]
         },
         {
-            "name": "001008-version-add-stable-after-stable",
-            "description": "version-add-stable-after-stable",
-            "prompt": "Add a new stable version `2025-01-01` to my service. Carry over changes.",
-            "toolsToCall": [ "azure-typespec-author" ],
+            "name": "001012-version-operation-return-type-changed",
+            "description": "Change an operation's return type in a new version using @returnTypeChangedFrom.",
+            "prompt": "In the specification/widget/resource-manager/Microsoft.Widget/Widget project, change the return type of the `exportData` operation from `ExportResult` to `DetailedExportResult` with additional properties `format` (string) and `exportedAt` (utcDateTime) only for version `2025-05-04-preview`.",
             "testfiles": [
-                "001008-version-add-stable-after-stable/employee.tsp",
-                "001008-version-add-stable-after-stable/main.tsp",
-                "001008-version-add-stable-after-stable/readme.md",
-                "001008-version-add-stable-after-stable/examples"
+                "version-operation-return-type-changed/employee.tsp",
+                "version-operation-return-type-changed/main.tsp"
             ],
             "verifyPlan": [
-                "1. `2025-01-01` should be added to the Versions enum, keeping all existing stable versions.",
-                "2. A new example folder should be created for `2025-01-01` and populated with example files.",
-                "3. All existing properties and their versioning decorators from `2021-10-01` and `2024-10-01` should remain unchanged."
+                "1. A new `DetailedExportResult` model should be created containing `data`, `format`, and `exportedAt` properties.",
+                "2. The `exportData` operation should have `@returnTypeChangedFrom(Versions.v2025_05_04_preview, ExportResult)` decorator added and its return type changed to `DetailedExportResult`."
+            ]
+        },
+        {
+            "name": "001013-version-model-property-type-changed",
+            "description": "Change a property's type in a new version using @typeChangedFrom.",
+            "prompt": "In the specification/widget/resource-manager/Microsoft.Widget/Widget project, change the type of the `statusCode` property from `string` to `int32` in EmployeeProperties only for version `2025-05-04-preview`.",
+            "testfiles": [
+                "version-model-property-type-changed/employee.tsp",
+                "version-model-property-type-changed/main.tsp"
+            ],
+            "verifyPlan": [
+                "1. The `statusCode` property in EmployeeProperties should have `@typeChangedFrom(Versions.v2025_05_04_preview, string)` decorator added and its type changed from `string` to `int32`.",
+                "2. A new version `v2025_05_04_preview` should be added to the `Versions` enum and decorated with `@previewVersion`."
             ]
         },
         {
             "name": "002001-ARM-change-resource-type",
             "description": "ARM-change-resource-type",
             "prompt": "change resource Employee as extension resource",
-            "testfiles": [
-                "002001-ARM-change-resource-type/main.tsp"
-            ],
+            "testfiles": [],
             "verifyPlan": [
                 "1. The Employee model should use ExtensionResource as its base type instead of TrackedResource.",
                 "2. All CRUD operations should use the Extension resource operation templates instead of the tracked resource templates.",
@@ -144,9 +129,7 @@
             "name": "002002-ARM-define-extension-resource-add",
             "description": "ARM-define-extension-resource-add",
             "prompt": "add a extension resource asset. Properties: description: string, optional; assetType: string, optional; value: string, optional; provisioningState: Enum, optional, composed of:all values from ResourceProvisioningState,three additional fixed states: 'Provisioning', 'Updating', 'Deleting', and a catch-all string value to permit unknown states returned by the service.",
-            "testfiles": [
-                "002002-ARM-define-extension-resource/main.tsp"
-            ],
+            "testfiles": [],
             "verifyPlan": [
                 "1. A new file should be created for the Asset resource definition.",
                 "2. The Asset model should be defined as an extension resource with its associated properties model.",
@@ -160,8 +143,7 @@
             "description": "ARM-define-full-update-operation",
             "prompt": "Define a PATCH operation of Employees. It is to update properties of an employee. Ensure the definition meets TypeSpec Azure guidelines.",
             "testfiles": [
-                "002003-ARM-define-full-update-operation/employee.tsp",
-                "002003-ARM-define-full-update-operation/main.tsp"
+                "002003-ARM-define-full-update-operation/employee.tsp"
             ],
             "verifyPlan": [
                 "1. The update operation should use the custom patch template instead of the standard resource patch template to support full resource updates."
@@ -172,8 +154,7 @@
             "description": "ARM define extension resource from Proxy Resource",
             "prompt": "Define a \"badge assignment\" extension resource. It should be an extension resource that can be attached to an employee. Ensure the definition meets TypeSpec Azure guidelines.",
             "testfiles": [
-                "002004-ARM-define-extension-resource/badgeAssignment.tsp",
-                "002004-ARM-define-extension-resource/main.tsp"
+                "002004-ARM-define-extension-resource/badgeAssignment.tsp"
             ],
             "verifyPlan": [
                 "1. The BadgeAssignment model should be defined as an extension resource instead of a proxy resource.",
@@ -187,7 +168,7 @@
             "description": "ARM-define-the-resource",
             "prompt": "Define a Azure resource 'Employee' under the namespace 'Microsoft.Widget' using TypeSpec. Ensure the definition meets TypeSpec Azure design guidelines. Properties: age: integer, optional; city: string, optional; profile: bytes, optional; provisioningState: enum(ARM provisioning state), optional;",
             "testfiles": [
-                "002005-ARM-define-the-resource/main.tsp"
+                "002005-ARM-define-the-resource/employee.tsp"
             ],
             "verifyPlan": [
                 "1. A new file should be created for the Employee resource definition.",
@@ -201,9 +182,7 @@
             "name": "002006-ARM-define-child-resource",
             "description": "ARM-define-child-resource",
             "prompt": "Create a new \"AddressResource\" child resource under the parent resource \"Employee\". Ensure the definition meets TypeSpec Azure design guidelines.",
-            "testfiles": [
-                "002006-ARM-define-child-resource/main.tsp"
-            ],
+            "testfiles": [],
             "verifyPlan": [
                 "1. A new file should be created for the Address resource definition.",
                 "2. The AddressResource model should be defined as a proxy resource with a parent-child relationship to the Employee resource.",
@@ -218,6 +197,19 @@
             ]
         },
         {
+            "name": "002007-ARM-define-custom-action",
+            "description": "ARM-define-custom-action",
+            "prompt": "Add an additional POST action called \"/notify\" to the standard operations of Employee. Ensure the definition meets TypeSpec Azure design guidelines. Request body: message content (string) and priority (enum with values Low, Medium, High). Response body: notification identifier (string) and status (string).",
+            "testfiles": [],
+            "verifyPlan": [
+                "1. A new extensible enum should be defined for notification priority levels.",
+                "2. A request model should be defined with message content and priority fields.",
+                "3. A response model should be defined with notification identifier and status fields.",
+                "4. A synchronous notify action should be added to the Employees interface as a custom POST operation.",
+                "5. Example files should be created for all defined API versions."
+            ]
+        },
+        {
             "name": "002008-ARM-add-parameters",
             "description": "ARM-add-parameters",
             "prompt": "add top and skip query parameters to the ListBySubscription operation in interface employees",
@@ -225,6 +217,30 @@
             "verifyPlan": [
                 "1. The listBySubscription operation should include top and skip query parameters for pagination support.",
                 "2. All other existing operations in the Employees interface should remain unchanged."
+            ]
+        },
+        {
+            "name": "002009-arm-add-patch-operation-to-resource",
+            "description": "Add a patch operation to an existing ARM resource",
+            "prompt": "In the specification/widget/resource-manager/Microsoft.Widget/Widget project, add a patch operation to an existing ARM resource named 'Employee'",
+            "testfiles": [
+                "arm-add-patch-operation-to-resource/employee.tsp",
+                "arm-add-patch-operation-to-resource/main.tsp"
+            ],
+            "verifyPlan": [
+                "1. ArmCustomPatch template is used"
+            ]
+        },
+        {
+            "name": "002010-arm-action-sync-operation",
+            "description": "Add a synchronous action operation to an existing ARM resource",
+            "prompt": "In the specification/widget/resource-manager/Microsoft.Widget/Widget project, add a sync operation exportEmployeeData for employee resource.",
+            "testfiles": [
+                "arm-action-sync-operation/employee.tsp",
+                "arm-action-sync-operation/main.tsp"
+            ],
+            "verifyPlan": [
+                "1. ArmResourceActionSync template is used"
             ]
         },
         {
@@ -245,8 +261,7 @@
             "description": "arm-action-lro",
             "prompt": "Add a move async operation to move employee, operation's request is MoveRequest, response is MoveResponse",
             "testfiles": [
-                "003002-arm-action-lro/employee.tsp",
-                "003002-arm-action-lro/main.tsp"
+                "003002-arm-action-lro/employee.tsp"
             ],
             "verifyPlan": [
                 "1. A new async move action should be added to the Employees interface using the ARM resource action async template.",
@@ -258,9 +273,7 @@
             "name": "003003-arm-modify-response",
             "description": "arm-modify-response",
             "prompt": "Modify the LRO createOrUpdate PUT operation in interface employees so that it returns Azure-AsyncOperation header but NOT Retry-After header in the 201 response. The operation currently uses ArmResourceCreateOrReplaceAsync<Employee> template.",
-            "testfiles": [
-                "003003-arm-modify-response/main.tsp"
-            ],
+            "testfiles": [],
             "verifyPlan": [
                 "1. A custom LRO headers alias should be defined that includes only the Azure-AsyncOperation header without the Retry-After header.",
                 "2. The createOrUpdate operation should be updated to use the custom LRO headers alias via the LroHeaders parameter.",
@@ -272,8 +285,7 @@
             "description": "decorate-mgmt-resource-name-parameter",
             "prompt": "add minLength decorator to set the minLength 1 for resource name parameter of Employee resource",
             "testfiles": [
-                "004001-decorate-mgmt-resource-name-parameter/employee.tsp",
-                "004001-decorate-mgmt-resource-name-parameter/main.tsp"
+                "004001-decorate-mgmt-resource-name-parameter/employee.tsp"
             ],
             "verifyPlan": [
                 "1. The resource name parameter should have a minLength constraint of 1 applied to it.",
@@ -285,116 +297,12 @@
             "description": "decorate-length-constrains-on-array-item",
             "prompt": "add @minLength(3) @maxLength(10) constrains for any item of assets array",
             "testfiles": [
-                "004002-decorate-length-constrains-on-array-item/employee.tsp",
-                "004002-decorate-length-constrains-on-array-item/main.tsp"
+                "004002-decorate-length-constrains-on-array-item/employee.tsp"
             ],
             "verifyPlan": [
                 "1. A custom scalar type should be defined extending string with minLength and maxLength constraints applied.",
                 "2. The assets array property should use the custom scalar type as its element type instead of plain string."
             ]
-        },
-        {
-            "name": "005001-warning-suppress-warning",
-            "description": "warning-suppress-warning",
-            "prompt": "Add suppressions for the warnings produced by \"tsp compile .\", and set the justification to \"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\".",
-            "testfiles": [
-                "005001-warning-suppress-warning/models.tsp"
-            ],
-            "tspProject": "specification/cognitiveservices/CognitiveServices.Management",
-            "verifyPlan": [
-                "1. Each `#suppress` directive must be placed directly above the specific syntax node (model, property, operation, union, etc.) that produces the warning, not at the file header or in a centralized block, because TypeSpec directives are node-scoped and only apply to the immediately following syntax node.",
-                "2. The suppression rule name in `#suppress` must exactly match the warning diagnostic code reported by `tsp compile .` (e.g., `#suppress \"@azure-tools/typespec-azure-resource-manager/arm-resource-duplicate-property\"`).",
-                "3. Every `#suppress` directive must include the justification string `\"FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details\"` as its second argument.",
-                "4. Only warnings actually reported by `tsp compile .` should be suppressed. No extra or preemptive suppressions should be added for warnings that do not appear in the compilation output.",
-                "5. After adding all suppressions, `tsp compile .` should produce zero warnings."
-            ]
-        },
-        {
-            "name": "version-model-property-required",
-            "description": "Make an optional property required in a new version using @madeRequired.",
-            "prompt": "In the specification/widget/resource-manager/Microsoft.Widget/Widget project, make the `email` property required in EmployeeProperties only for version `2025-05-04-preview`.",
-            "testfiles": [
-                "version-model-property-required/employee.tsp",
-                "version-model-property-required/main.tsp"
-            ],
-            "verifyPlan": [
-                "1. The `email` property in EmployeeProperties should have `@madeRequired(Versions.v2025_05_04_preview)` decorator added."
-            ]
-        },
-        {
-            "name": "version-model-property-removed",
-            "description": "Remove a property in a new version using @removed.",
-            "prompt": "In the specification/widget/resource-manager/Microsoft.Widget/Widget project, remove the `department` property from EmployeeProperties only for version `2025-05-04-preview`.",
-            "testfiles": [
-                "version-model-property-removed/employee.tsp",
-                "version-model-property-removed/main.tsp"
-            ],
-            "verifyPlan": [
-                "1. The `department` property in EmployeeProperties should have `@removed(Versions.v2025_05_04_preview)` decorator added to indicate it is removed starting from this version. The property itself should NOT be deleted from the model."
-            ]
-        },
-        {
-            "name": "version-model-property-renamed",
-            "description": "Rename a property in a new version using @renamedFrom.",
-            "prompt": "In the specification/widget/resource-manager/Microsoft.Widget/Widget project, rename the `age` property to `employeeAge` in EmployeeProperties only for version `2025-05-04-preview`.",
-            "testfiles": [
-                "version-model-property-renamed/employee.tsp",
-                "version-model-property-renamed/main.tsp"
-            ],
-            "verifyPlan": [
-                "1. The `age` property should be renamed to `employeeAge` and decorated with `@renamedFrom(Versions.v2025_05_04_preview, \"age\")` on the new `employeeAge` property. The `@renamedFrom` decorator alone is sufficient for a simple rename without `@removed`/`@added` pattern."
-            ]
-        },
-        {
-            "name": "version-operation-return-type-changed",
-            "description": "Change an operation's return type in a new version using @returnTypeChangedFrom.",
-            "prompt": "In the specification/widget/resource-manager/Microsoft.Widget/Widget project, change the return type of the `exportData` operation from `ExportResult` to `DetailedExportResult` with additional properties `format` (string) and `exportedAt` (utcDateTime) only for version `2025-05-04-preview`.",
-            "testfiles": [
-                "version-operation-return-type-changed/employee.tsp",
-                "version-operation-return-type-changed/main.tsp"
-            ],
-            "verifyPlan": [
-                "1. A new `DetailedExportResult` model should be created containing `data`, `format`, and `exportedAt` properties.",
-                "2. The `exportData` operation should have `@returnTypeChangedFrom(Versions.v2025_05_04_preview, ExportResult)` decorator added and its return type changed to `DetailedExportResult`."
-            ]
-        },
-        {
-            "name": "version-model-property-type-changed",
-            "description": "Change a property's type in a new version using @typeChangedFrom.",
-            "prompt": "In the specification/widget/resource-manager/Microsoft.Widget/Widget project, change the type of the `statusCode` property from `string` to `int32` in EmployeeProperties only for version `2025-05-04-preview`.",
-            "testfiles": [
-                "version-model-property-type-changed/employee.tsp",
-                "version-model-property-type-changed/main.tsp"
-            ],
-            "verifyPlan": [
-                "1. The `statusCode` property in EmployeeProperties should have `@typeChangedFrom(Versions.v2025_05_04_preview, string)` decorator added and its type changed from `string` to `int32`.",
-                "2. A new version `v2025_05_04_preview` should be added to the `Versions` enum and decorated with `@previewVersion`."
-            ]
-        },
-        {
-            "name": "arm-add-patch-operation-to-resource",
-            "description": "Add a patch operation to an existing ARM resource",
-            "prompt": "In the specification/widget/resource-manager/Microsoft.Widget/Widget project, add a patch operation to an existing ARM resource named 'Employee'",
-            "testfiles": [
-                "arm-add-patch-operation-to-resource/employee.tsp",
-                "arm-add-patch-operation-to-resource/main.tsp"
-            ],
-            "verifyPlan": [
-                "1. ArmCustomPatch template is used"
-            ]
-        },
-        {
-            "name": "arm-action-sync-operation",
-            "description": "Add a synchronous action operation to an existing ARM resource",
-            "prompt": "In the specification/widget/resource-manager/Microsoft.Widget/Widget project, add a sync operation exportEmployeeData for employee resource.",
-            "testfiles": [
-                "arm-action-sync-operation/employee.tsp",
-                "arm-action-sync-operation/main.tsp"
-            ],
-            "verifyPlan": [
-                "1. ArmResourceActionSync template is used"
-            ]
         }
-        
     ]
 }

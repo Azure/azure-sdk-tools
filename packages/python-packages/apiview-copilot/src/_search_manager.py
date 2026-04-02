@@ -285,7 +285,13 @@ class ContextItem:
 class SearchManager:
     """Manages search operations using Azure Search."""
 
-    def __init__(self, *, language: Optional[str] = None, include_general_guidelines: bool = False, environment: Optional[str] = None):
+    def __init__(
+        self,
+        *,
+        language: Optional[str] = None,
+        include_general_guidelines: bool = False,
+        environment: Optional[str] = None,
+    ):
         self.language = language
         self.filter_expression = None
         if language:

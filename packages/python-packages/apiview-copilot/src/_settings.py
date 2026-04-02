@@ -29,7 +29,9 @@ class SettingsManager:
     def __new__(cls, environment=None):
         env_key = (environment or os.getenv("ENVIRONMENT_NAME") or "").strip().lower()
         if not env_key:
-            raise ValueError("ENVIRONMENT_NAME must be set in the environment or a non-empty 'environment' must be provided.")
+            raise ValueError(
+                "ENVIRONMENT_NAME must be set in the environment or a non-empty 'environment' must be provided."
+            )
         if env_key not in cls._instances:
             with cls._lock:
                 if env_key not in cls._instances:

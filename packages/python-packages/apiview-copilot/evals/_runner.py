@@ -137,7 +137,14 @@ class EvaluationResult:
 class EvaluationRunner:
     """Executes evaluations targets with shared context"""
 
-    def __init__(self, *, num_runs: int = DEFAULT_NUM_RUNS, use_recording: bool = False, verbose: bool = False, environment: str = None):
+    def __init__(
+        self,
+        *,
+        num_runs: int = DEFAULT_NUM_RUNS,
+        use_recording: bool = False,
+        verbose: bool = False,
+        environment: str = None,
+    ):
         self.num_runs = num_runs
         self._context: ExecutionContext | None = None
         self._use_recording = use_recording

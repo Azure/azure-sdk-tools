@@ -21,9 +21,7 @@ from src._utils import get_language_pretty_name, to_iso8601
 FEEDBACK_REASON_MESSAGES = {
     "FactuallyIncorrect": "This comment is factually incorrect.",
     "RenderingBug": "This is a rendering bug in the associated language parser. Please open an issue to correct.",
-    "AcceptedRenderingChoice": (
-        "This is how things are deliberately rendered in APIView. It is not a valid comment."
-    ),
+    "AcceptedRenderingChoice": ("This is how things are deliberately rendered in APIView. It is not a valid comment."),
     "AcceptedSDKPattern": "This is a pattern we accept and encourage in our SDKs. DO NOT suggest otherwise.",
     "OutdatedGuideline": (
         "This is a valid comment for the guideline listed, but this guideline itself is out-of-date."

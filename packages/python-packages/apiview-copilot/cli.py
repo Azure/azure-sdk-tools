@@ -188,9 +188,7 @@ def prompt_test(path: str = None, workers: int = 4):
             return (str(rel), False, str(exc))
 
     with ThreadPoolExecutor(max_workers=workers) as executor:
-        future_to_file = {
-            executor.submit(_run_one, f): f for f in prompty_files
-        }
+        future_to_file = {executor.submit(_run_one, f): f for f in prompty_files}
         for future in as_completed(future_to_file):
             rel_path, passed, error = future.result()
             results.append((rel_path, passed, error))
@@ -299,7 +297,9 @@ def run_evals(
     from evals._runner import EvaluationRunner
 
     targets = discover_targets(test_paths)
-    runner = EvaluationRunner(num_runs=num_runs, use_recording=use_recording, verbose=(style == "verbose"), environment=environment)
+    runner = EvaluationRunner(
+        num_runs=num_runs, use_recording=use_recording, verbose=(style == "verbose"), environment=environment
+    )
     try:
         results = runner.run(targets)
         if save:
@@ -599,9 +599,15 @@ def review_summarize(language: str, target: str, base: str = None, remote: bool 
             with open(base, "r", encoding="utf-8") as f:
                 base_content = f.read()
             content = create_diff_with_line_numbers(old=base_content, new=target_content)
-            summary = run_prompt(folder="summarize", filename="summarize_diff", inputs={"language": pretty_language, "content": content})
+            summary = run_prompt(
+                folder="summarize", filename="summarize_diff", inputs={"language": pretty_language, "content": content}
+            )
         else:
-            summary = run_prompt(folder="summarize", filename="summarize_api", inputs={"language": pretty_language, "content": target_content})
+            summary = run_prompt(
+                folder="summarize",
+                filename="summarize_api",
+                inputs={"language": pretty_language, "content": target_content},
+            )
 
         print(summary)
 
@@ -792,8 +798,16 @@ def handle_agent_mention(
                 "createdOn": original_comment.get("CreatedOn", ""),
                 "createdBy": original_comment.get("CreatedBy", "APIView Copilot"),
                 "commentText": original_text,
-                "upvotes": len(original_comment.get("Upvotes", [])) if isinstance(original_comment.get("Upvotes"), list) else original_comment.get("Upvotes", 0),
-                "downvotes": len(original_comment.get("Downvotes", [])) if isinstance(original_comment.get("Downvotes"), list) else original_comment.get("Downvotes", 0),
+                "upvotes": (
+                    len(original_comment.get("Upvotes", []))
+                    if isinstance(original_comment.get("Upvotes"), list)
+                    else original_comment.get("Upvotes", 0)
+                ),
+                "downvotes": (
+                    len(original_comment.get("Downvotes", []))
+                    if isinstance(original_comment.get("Downvotes"), list)
+                    else original_comment.get("Downvotes", 0)
+                ),
                 "isResolved": original_comment.get("IsResolved", False),
                 "severity": original_comment.get("Severity", ""),
                 "threadId": original_comment.get("ThreadId", ""),
@@ -1749,9 +1763,7 @@ def audit_memory(
 
     start_ts = int(datetime.strptime(start_date, "%Y-%m-%d").replace(tzinfo=timezone.utc).timestamp())
     end_ts = int(
-        datetime.strptime(end_date, "%Y-%m-%d")
-        .replace(hour=23, minute=59, second=59, tzinfo=timezone.utc)
-        .timestamp()
+        datetime.strptime(end_date, "%Y-%m-%d").replace(hour=23, minute=59, second=59, tzinfo=timezone.utc).timestamp()
     )
 
     db_manager = DatabaseManager.get_instance(environment=environment)

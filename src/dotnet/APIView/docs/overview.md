@@ -183,7 +183,7 @@ A separate set of controllers use **token authentication** (`RequireTokenAuthent
 
 The Angular SPA is the **primary UI**. It is built separately (`npm run build`) and output to `APIViewWeb/wwwroot/spa/`. The ASP.NET backend serves it as static files and acts purely as an API host.
 
-> **Note:** There is a legacy Razor Pages frontend (`Pages/Assemblies/`) that predates the SPA. It is being phased out and is not covered here.
+> **Note:** There is a legacy Razor Pages frontend (`Pages/Assemblies/`) that predates the SPA. It is being phased out; see [legacy.md](legacy.md) for details.
 
 ### Routes
 
@@ -306,24 +306,29 @@ When a release pipeline calls `/autoreview/upload` or `/autoreview/create` with 
 
 ## Language Parsers
 
-Many parsers run as **external processes** (via `System.Diagnostics.Process.Start()` with a 90-second timeout), but some parsing and deserialization happens **in-process** depending on the language service.
+Many parsers run as **external processes** (via `System.Diagnostics.Process.Start()` with a 90-second timeout), but some parsing and deserialization happens **in-process** depending on the language service. Parsers live in various locations across the `azure-sdk-tools` repo.
 
-| Language | Parser | Input |
-|---|---|---|
-| C# | External .NET executable (`CSHARPPARSEREXECUTABLEPATH`) | `.dll`, `.nupkg` |
-| Java | `java -jar apiview-java-processor.jar` | `.jar` |
-| Python | Sandboxed via DevOps pipeline (can fall back to in-process; see [sandboxing.md](sandboxing.md)) | `.whl` |
-| JavaScript/TypeScript | `@azure-tools/ts-genapi` (node) | `.api.json` |
-| Go | `apiviewgo` | `.gosource` (zip) |
-| Rust | `@azure-tools/rust-genapi` (node) | `.rust.json` |
-| Protocol Buffers | External tool | `.proto` |
-| XML | `java` | `.xml` |
-| C | In-process | Compressed archive |
-| C++ | In-process | Compressed archive with XML AST |
-| Swift | Placeholder | `.json` |
-| TypeSpec | In-process (deserialization) | `.tsp` |
-| Swagger/OpenAPI | In-process (JSON deserialization) | `.json` |
-| Json | In-process (deserialization) | `.json` |
+The **Runs On** column indicates who executes the parser:
+- **Server** — APIView server invokes the parser (as an external process or in-process).
+- **Pipeline** — An Azure DevOps pipeline runs the parser and calls back to APIView (see [sandboxing.md](sandboxing.md)).
+- **Manual** — A person or team runs the parser locally and uploads the resulting JSON token file.
+
+| Language | Runs On | Repo Path | Input |
+|---|---|---|---|
+| C# | Server (external process) | `tools/apiview/parsers/csharp-api-parser` | `.dll`, `.nupkg` |
+| Java | Server (external process) | `src/java/apiview-java-processor` | `.jar` |
+| Python | Pipeline | `packages/python-packages/apiview-stub-generator` | `.whl` |
+| JavaScript/TypeScript | Server (external process) | `tools/apiview/parsers/js-api-parser` | `.api.json` |
+| Go | Server (external process) | `src/go` | `.gosource` (zip) |
+| Rust | Server (external process) | `tools/apiview/parsers/rust-api-parser` | `.rust.json` |
+| Swift | Manual (pre-parsed JSON uploaded) | `src/swift/SwiftAPIView` | `.json` |
+| TypeSpec | Pipeline | `tools/apiview/emitters/typespec-apiview` | `.json` |
+| Swagger/OpenAPI | Pipeline | `tools/apiview/parsers/swagger-api-parser` | `.json` |
+| Protocol Buffers | Server (external process) | `packages/python-packages/protocol-stub-generator` | `.proto` |
+| C++ | Server (in-process) | `tools/apiview/parsers/cpp-api-parser` | Compressed archive with XML AST |
+| XML | Server (external process) | `src/java/apiview-java-processor` | `.xml` |
+| C | Server (in-process) | *(no external parser)* | Compressed archive |
+| Json | Server (in-process) | *(no external parser)* | `.json` |
 
 ---
 

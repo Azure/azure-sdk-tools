@@ -12,7 +12,7 @@ For the current architecture, see [overview.md](overview.md).
 
 APIView originally shipped as a traditional ASP.NET Core Razor Pages application. All HTML was rendered server-side, with jQuery + Bootstrap for interactivity. Over time the frontend was rebuilt as an Angular SPA (`ClientSPA/`), but the Razor infrastructure remains in the codebase for two reasons:
 
-1. **Some language parsers still emit the legacy flat-token format** (`CodeFileToken[]` / `ParserStyle.Flat`) and the Angular SPA only renders the modern tree-token format (`ReviewLine[]` / `ParserStyle.Tree`).
+1. **Some language parsers still emit the legacy flat-token format** (`CodeFileToken[]` / `ParserStyle.Flat`) — specifically C, C++, JSON, Swagger/OpenAPI, Protocol Buffers, and XML — and the Angular SPA only renders the modern tree-token format (`ReviewLine[]` / `ParserStyle.Tree`).
 2. **Several non-review pages** (login, error, unauthorized) are still Razor-rendered.
 
 ---
@@ -62,8 +62,8 @@ These languages set `UsesTreeStyleParser = true` (or inherit the default) and pr
 | JavaScript / TypeScript | `JavaScriptLanguageService` | External Node.js processor |
 | Go | `GoLanguageService` | External Go binary (`apiviewgo`) |
 | Rust | `RustLanguageService` | External Node.js processor |
-| Swift | `SwiftLanguageService` | JSON deserialization; POC without real parser |
-| TypeSpec | `TypeSpecLanguageService` | Defaults to tree via base class |
+| Swift | `SwiftLanguageService` | Deserializes pre-parsed JSON from external SwiftAPIView parser |
+| TypeSpec | `TypeSpecLanguageService` | Sandboxed via DevOps pipeline; parsed by external `typespec-apiview` emitter |
 
 ### Legacy (Flat) — Falls to LegacyReview.cshtml
 

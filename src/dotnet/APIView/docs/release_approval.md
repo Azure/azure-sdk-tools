@@ -54,7 +54,7 @@ On the backend, the controller additionally verifies that the requesting user ha
 
 When a reviewer clicks **Approve** (or **Revert API Approval**):
 
-1. **UI** sends `POST /api/revisions/{id}/toggle-approval` to `APIRevisionsController`.
+1. **UI** sends `POST /api/APIRevisions/{reviewId}/{apiRevisionId}` with body `{ "approve": true/false }` to `APIRevisionsController`.
 2. **Backend** checks authorization, then calls `ToggleAPIRevisionApprovalAsync`.
 3. **`ChangeHistoryHelpers.UpdateBinaryChangeAction()`** computes the toggle:
    - If the user has more "Approved" entries than "ApprovalReverted" entries → emit `ApprovalReverted`, set `IsApproved = false`, remove from `Approvers`.
@@ -85,7 +85,7 @@ APIView does **not** enforce release gates directly. Instead, it reports approva
 ### Endpoint
 
 ```
-GET /api/auto-reviews/GetReviewStatus?language={lang}&packageName={pkg}
+GET /AutoReview/GetReviewStatus?language={lang}&packageName={pkg}
     [&packageVersion={ver}][&firstReleaseStatusOnly={bool}]
 ```
 
@@ -145,7 +145,7 @@ The revision then displays as **"Shipped"** in the UI.
 
 ```
 CI Build Pipeline
-  │  POST /api/auto-reviews/upload (artifact)
+  │  POST /autoreview/upload (artifact)
   ▼
 APIView creates/matches APIRevision
   │  Carry-forward approval if surface unchanged
@@ -154,10 +154,10 @@ Reviewers approve in Angular SPA
   │  Guards: version present, no must-fix, Copilot reviewed
   ▼
 Release Pipeline
-  │  GET /api/auto-reviews/GetReviewStatus → 200 OK
+  │  GET /AutoReview/GetReviewStatus → 200 OK
   ▼
 Package published
-  │  POST /api/auto-reviews/upload (setReleaseTag=true)
+  │  POST /autoreview/upload (setReleaseTag=true)
   ▼
 Revision marked "Shipped" (IsReleased, ReleasedOn)
 ```

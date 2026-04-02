@@ -16,8 +16,8 @@ SDK CI/CD Pipeline                        APIView
 Build artifact (.dll, .jar, .whl, …)
         │
         ▼
-POST /api/auto-reviews/upload ──────────► Language parser (external process)
-  or /api/auto-reviews/create                   │
+POST /autoreview/upload ────────────────► Language parser (external process)
+  or /autoreview/create                         │
                                                 ▼
                                           JSON token file (CodeFile)
                                                 │
@@ -107,23 +107,33 @@ A **CodeFile** is the serialized parser output (tokens + navigation + diagnostic
 HTTP Layer                  Business Logic              Data Access
 ──────────                  ──────────────              ───────────
 LeanControllers/ (14)  ───► Managers/ (14+)  ──────►  Cosmos Repositories (8)
-  REST + Token Auth           Core workflows              Blob Repositories (3)
+  REST (Cookie + Token Auth)    Core workflows              Blob Repositories (3)
                               Approvals, Diff             DevOps Artifact Repo
 Controllers/ (6)              Comments, Notifications
   Legacy MVC (Razor)          PR integration
                               AI/Copilot jobs
 ```
 
-### Key Controllers (LeanControllers — token-auth REST API)
+### Key Controllers (LeanControllers)
 
-| Controller | Responsibility |
-|---|---|
-| `APIRevisionsController` | Revision CRUD, approval toggle, diff requests |
-| `ReviewsController` | Review listing, search, filtering |
-| `AutoReviewController` | CI pipeline entry points (`/upload`, `/create`) |
-| `CommentsController` | Comment CRUD with thread support |
-| `PullRequestsController` | PR ↔ review linking |
-| `ProjectsController` | Package/project grouping |
+Most LeanControllers inherit from `BaseApiController`, which applies **cookie authentication** (`RequireCookieAuthentication`) and routes under `api/[controller]`. These serve the Angular SPA.
+
+| Controller | Route | Responsibility |
+|---|---|---|
+| `APIRevisionsController` | `api/Revisions` | Revision CRUD, approval toggle, diff requests |
+| `ReviewsController` | `api/Reviews` | Review listing, search, filtering |
+| `CommentsController` | `api/Comments` | Comment CRUD with thread support |
+| `PullRequestsController` | `api/PullRequests` | PR ↔ review linking |
+| `ProjectsController` | `api/Projects` | Package/project grouping |
+
+A separate set of controllers use **token authentication** (`RequireTokenAuthentication`) for CI pipelines and service-to-service calls:
+
+| Controller | Route | Responsibility |
+|---|---|---|
+| `AutoReviewController` | `autoreview/` | CI pipeline entry points (`/upload`, `/create`) |
+| `APIRevisionsTokenAuthController` | `api/apirevisions` | Revision queries for CI pipelines |
+| `ReviewsTokenAuthController` | `api/reviews` | Review queries for CI pipelines |
+| `CommentsTokenAuthController` | `api/comments` | Comment operations for CI pipelines |
 
 ### Key Managers (business logic)
 
@@ -290,28 +300,30 @@ A reviewer clicks **Approve** in the UI → `ToggleAPIRevisionApprovalAsync` tog
 When a new revision is created and its **content hash matches** an already-approved revision, approval is copied automatically. The change history records `"Approval copied from revision {id}"`.
 
 ### Release Tagging
-When a release pipeline calls `/api/auto-reviews/upload` or `/create` with `setReleaseTag=true`, the matching revision gets `IsReleased = true` and `ReleasedOn = DateTime.UtcNow`. The UI shows it as **"Shipped"**.
+When a release pipeline calls `/autoreview/upload` or `/autoreview/create` with `setReleaseTag=true`, the matching revision gets `IsReleased = true` and `ReleasedOn = DateTime.UtcNow`. The UI shows it as **"Shipped"**.
 
 ---
 
 ## Language Parsers
 
-All parsers run as **external processes** (via `System.Diagnostics.Process.Start()` with a 90-second timeout). None run in-process.
+Many parsers run as **external processes** (via `System.Diagnostics.Process.Start()` with a 90-second timeout), but some parsing and deserialization happens **in-process** depending on the language service.
 
 | Language | Parser | Input |
 |---|---|---|
 | C# | External .NET executable (`CSHARPPARSEREXECUTABLEPATH`) | `.dll`, `.nupkg` |
 | Java | `java -jar apiview-java-processor.jar` | `.jar` |
-| Python | External Python script | `.whl` |
-| JavaScript/TypeScript | `@azure-tools/ts-genapi` | `.api.json` |
-| Go | Go parser | `.gosource` (zip) |
-| Rust | `@azure-tools/rust-genapi` | `.rust.json` |
-| C | External tool | Compressed archive |
-| C++ | External tool | Compressed archive with XML AST |
+| Python | Sandboxed via DevOps pipeline (can fall back to in-process; see [sandboxing.md](sandboxing.md)) | `.whl` |
+| JavaScript/TypeScript | `@azure-tools/ts-genapi` (node) | `.api.json` |
+| Go | `apiviewgo` | `.gosource` (zip) |
+| Rust | `@azure-tools/rust-genapi` (node) | `.rust.json` |
+| Protocol Buffers | External tool | `.proto` |
+| XML | `java` | `.xml` |
+| C | In-process | Compressed archive |
+| C++ | In-process | Compressed archive with XML AST |
 | Swift | Placeholder | `.json` |
-| TypeSpec | Pipeline-based | `.tsp` |
-| Swagger/OpenAPI | In-process JSON parsing | `.json` |
-| Protocol Buffers | In-process | `.proto` |
+| TypeSpec | In-process (deserialization) | `.tsp` |
+| Swagger/OpenAPI | In-process (JSON deserialization) | `.json` |
+| Json | In-process (deserialization) | `.json` |
 
 ---
 

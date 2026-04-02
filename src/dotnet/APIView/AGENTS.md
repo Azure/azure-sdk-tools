@@ -37,7 +37,7 @@ npm start            # dev server with SSL
 
 - **New features target Angular SPA and tree-token model only.** Do not add features to legacy Razor Pages or flat-token parser.
 - Data is stored in **Cosmos DB** (metadata) + **Azure Blob Storage** (token files).
-- Language parsers are **external processes**, not in-process.
+- Language parsers use a **mixed model**: most run as **external processes** on the server host, while some (e.g., C, C++, JSON, Swagger) are parsed/deserialized **in-process**.
 - The common data format is the **CodeFile** JSON token model.
 - Follow existing Controller → Manager → Repository layering in `APIViewWeb/`.
 - **After making changes, evaluate whether any files in `docs/` need updates** to stay consistent with the code.

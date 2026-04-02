@@ -12,7 +12,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and [README.md](README.md) for setup deta
 - **Controllers/** — HTTP endpoints. Thin; delegate to managers.
 - **Managers/** — Business logic (ReviewManager, CodeFileManager, CommentsManager, etc.).
 - **Repositories/** — Data access. Cosmos DB repos for metadata, Blob repos for token files.
-- **Languages/** — Pluggable language services (C#, Java, Python, Go, Rust, etc.). Parsers are external processes.
+- **Languages/** — Pluggable language services (C#, Java, Python, Go, Rust, etc.). Many parsers run as external processes; some language services deserialize in-process or are pipeline-generated (e.g., TypeSpec/Swagger).
 - **Services/** — Cross-cutting concerns (Copilot auth, email, GitHub client).
 - **HostedServices/** — Background workers (Copilot polling, queue processing).
 

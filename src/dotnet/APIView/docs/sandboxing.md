@@ -4,9 +4,9 @@
 
 ## What Is Sandboxing?
 
-APIView converts language-specific SDK artifacts (e.g., `.whl`, `.tsp`, `.swagger`) into a JSON token file (`CodeFile`) using per-language parsers. By default, parsers run **in-process** on the APIView server.
+APIView converts language-specific SDK artifacts (e.g., `.whl`, `.tsp`, `.swagger`) into a JSON token file (`CodeFile`) using per-language parsers. By default, parsers run **on the APIView server host** — most as external processes launched via `LanguageProcessor` (`System.Diagnostics.Process.Start()`), and a few (C, C++, Json) via in-process deserialization.
 
-"Sandboxing" means running the parser in an **Azure DevOps pipeline** instead of on the server. The motivation was security: some parsers pull in third-party dependencies that could introduce vulnerabilities when executed server-side.
+"Sandboxing" means running the parser in an **Azure DevOps pipeline** instead of on the APIView server host. The motivation was security: some parsers pull in third-party dependencies that could introduce vulnerabilities when executed server-side.
 
 ## Languages That Use Sandboxing
 
@@ -15,7 +15,7 @@ APIView converts language-specific SDK artifacts (e.g., `.whl`, `.tsp`, `.swagge
 | Python | Yes (configurable) | `ReviewGenByPipelineDisabledForPython` app setting. When `true`, Python falls back to in-process parsing. |
 | TypeSpec | Yes (always) | Hard-coded `IsReviewGenByPipeline = true` in constructor. |
 | Swagger | Yes (always) | Hard-coded `IsReviewGenByPipeline = true` in constructor. |
-| C#, Java, Go, Rust, JS/TS, C, C++ | No | Parsers run in-process on the APIView server. |
+| C#, Java, Go, Rust, JS/TS, C, C++ | No | Parsers run on the APIView server host (most as external processes, some in-process). |
 
 ## How It Works
 

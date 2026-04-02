@@ -32,7 +32,6 @@ export async function generateRLCInPipeline(options: {
     typespecEmitter: string;
     use?: string;
     outputJson?: any;
-    additionalArgs?: string;
     skipGeneration?: boolean, 
     runningEnvironment?: RunningEnvironment;
     apiVersion: string | undefined;
@@ -150,9 +149,6 @@ export async function generateRLCInPipeline(options: {
             let cmd = `autorest --version=3.9.7 ${path.basename(autorestConfigFilePath)} --output-folder=${packagePath}`;
             if (options.use) {
                 cmd += ` --use=${options.use}`;
-            }
-            if (options.additionalArgs) {
-                cmd += ` ${options.additionalArgs}`;
             }
             if (isMultiClient) {
                 cmd += ` --multi-client=true`;

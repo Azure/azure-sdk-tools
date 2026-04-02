@@ -165,9 +165,16 @@ export async function updateExistingTspLocation(
     }
     return updatedTspLocation;
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorDetails =
+      error instanceof Error
+        ? (() => {
+            const causeDetails =
+              error.cause !== undefined ? ` Cause: ${String(error.cause)}` : "";
+            return (error.stack ?? `${error.name}: ${error.message}`) + causeDetails;
+          })()
+        : String(error);
     Logger.debug(
-      `Will create a new tsp-location.yaml file after the check for an existing tsp-location.yaml failed. For debugging purposes see the error: ${errorMessage}`,
+      `Will create a new tsp-location.yaml file after the check for an existing tsp-location.yaml failed. For debugging purposes see the error: ${errorDetails}`,
     );
     return tspLocationData;
   }

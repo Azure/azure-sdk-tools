@@ -25,7 +25,7 @@ parameters:
     - azure-sdk/azure-sdk-for-js
     - azure-sdk/azure-sdk-for-net
     - azure-sdk/azure-sdk-for-python
-    - Azure/azure-sdk-for-rust
+    - azure-sdk/azure-sdk-for-rust
 
 - name: SDKPrivate
   type: object

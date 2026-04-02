@@ -5,11 +5,15 @@ on:
     branches:
       - main
     paths:
-      - .github/**
+      - .github/actionlint*
+      - .github/matchers/**
+      - .github/workflows/**
       - eng/common/actions/**
   pull_request:
     paths:
-      - .github/**
+      - .github/actionlint*
+      - .github/matchers/**
+      - .github/workflows/**
       - eng/common/actions/**
   workflow_dispatch:
 

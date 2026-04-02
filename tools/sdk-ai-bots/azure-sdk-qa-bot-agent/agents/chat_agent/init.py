@@ -40,7 +40,9 @@ from tools.ado_mcp_tools import create_ado_mcp_tool
 from tools.azsdk_mcp_tools import create_azsdk_mcp_tool
 from tools.github_mcp_tools import create_github_mcp_tool
 from tools.skills import create_tenant_skills
-from utils.azure_ai_foundry import get_agent_client
+from utils.azure_ai_foundry import get_agent_client, get_project_client
+from utils.azure_memory_store import ensure_user_memory_store, ensure_tenant_memory_store
+from utils.memory_context_provider import MemoryContextProvider
 
 logger = logging.getLogger(__name__)
 
@@ -92,6 +94,14 @@ async def main() -> None:
     # Append agent version so Foundry can filter traces per version.
     agent_version = os.environ.get("AGENT_VERSION")
     agent_id = f"{agent_name}:{agent_version}" if agent_version else agent_name
+    project_client = get_project_client()
+
+    # Memory stores — ensure stores exist and create context provider
+    await ensure_user_memory_store(project_client)
+    await ensure_tenant_memory_store(project_client)
+    memory_provider = MemoryContextProvider(project_client)
+
+    # Tools
     knowledge_tools = KnowledgeTools()
     ado_mcp_tool = await create_ado_mcp_tool()
     azsdk_mcp_tool = await create_azsdk_mcp_tool()
@@ -99,9 +109,6 @@ async def main() -> None:
     web_search_tool = AzureOpenAIResponsesClient.get_web_search_tool(
         search_context_size="medium",
     )
-    # Build tenant skills for progressive domain expertise disclosure
-    skills = create_tenant_skills()
-    skills_provider = SkillsProvider(skills=skills)
 
     tools = [
         knowledge_tools.search_knowledge_base,
@@ -111,6 +118,10 @@ async def main() -> None:
         web_search_tool,
     ]
 
+    # Tenant skills for progressive domain expertise disclosure
+    skills = create_tenant_skills()
+    skills_provider = SkillsProvider(skills=skills)
+
     reasoning_effort = cfg("AI_FOUNDRY_AGENT_REASONING_EFFORT")
     agent = Agent(
         agent_client,
@@ -118,7 +129,7 @@ async def main() -> None:
         id=agent_id,
         instructions=instructions,
         tools=tools,
-        context_providers=[skills_provider],
+        context_providers=[skills_provider, memory_provider],
         default_options={
             "reasoning": ReasoningOptions(effort=reasoning_effort),
             "truncation": "auto",

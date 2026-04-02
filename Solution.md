@@ -76,8 +76,6 @@ Represents a review window opened for a specific reviewer on a specific version.
 
 ## Database / Cosmos Changes
 
-Current container already exists: `Comments` (partition key `/ReviewId`).
-
 ### Proposed Approach
 
 Add containers:

@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import logging
 
-from models.conversation import ConversationMessage, ConversationMessageItem, UserRole
+from models.conversation import ConversationMessage, ConversationMessageItem, Role
 from utils.azure_ai_foundry import get_project_client
 from utils.azure_memory_store import (
     get_memory_update_delay,
@@ -57,7 +57,11 @@ class ThreadMemoryService:
         """
         tenant_store = get_tenant_store_name()
         tenant_id = (message.tenant_id or "").strip()
-        if not tenant_store or not tenant_id or len(thread_messages) < _MIN_THREAD_LENGTH:
+        if (
+            not tenant_store
+            or not tenant_id
+            or len(thread_messages) < _MIN_THREAD_LENGTH
+        ):
             return
 
         scope = sanitize_scope(tenant_id)
@@ -117,7 +121,7 @@ class ThreadMemoryService:
         """
         items: list[dict] = []
         for msg in thread_messages:
-            if msg.sender_role == UserRole.system:
+            if msg.sender_role == Role.System:
                 continue
             content = (msg.content or "").strip()
             if not content:

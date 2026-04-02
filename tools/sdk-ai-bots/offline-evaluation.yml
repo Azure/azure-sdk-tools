@@ -42,33 +42,23 @@ extends:
                   python --version
                 displayName: 'check python'
               - task: AzureCLI@2
-                displayName: 'start backend AI agent service'
+                displayName: 'start agent server'
                 inputs:
                   azureSubscription: 'azuresdkqabot-dev'
+                  addSpnToEnvironment: true
                   scriptType: bash
                   scriptLocation: inlineScript
-                  workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
+                  workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-agent
                   inlineScript: |
-                    echo "##vso[task.setvariable variable=AZURE_CLIENT_ID]$servicePrincipalId"
-                    echo "##vso[task.setvariable variable=AZURE_TENANT_ID]$tenantId"
-                    echo "##vso[task.setvariable variable=AZURE_SUBSCRIPTION_ID]$(az account show --query id -o tsv)"
-                    echo "$idToken" > "$(Agent.BuildDirectory)/id_token"
-                    echo "##vso[task.setvariable variable=AZURE_FEDERATED_TOKEN_FILE]$(Agent.BuildDirectory)/id_token"
-              - script: |
-                  pip install --pre -r requirements.txt
-                displayName: 'install agent server requirements'
-                workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-agent
-              - script: |
-                  python server.py &
-                  sleep 20
-                  lsof -ti:8080
-                displayName: 'start agent server'
-                workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-agent
+                    pip install --pre -r requirements.txt
+                    export AZURE_CLIENT_ID=$servicePrincipalId
+                    export AZURE_TENANT_ID=$tenantId
+                    nohup python server.py </dev/null >/dev/null 2>&1 &
+                    sleep 20
+                    lsof -ti:8080
                 env:
                   SYSTEM_ACCESSTOKEN: $(System.AccessToken)
                   AZURESUBSCRIPTION_SERVICE_CONNECTION_ID: $(AZURESUBSCRIPTION_SERVICE_CONNECTION_ID)
-                  AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
-                  AZURE_TENANT_ID: $(AZURE_TENANT_ID)
                   AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
               - script: |
                   pip install -r requirements.txt

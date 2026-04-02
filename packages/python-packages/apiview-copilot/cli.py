@@ -2260,6 +2260,12 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="Language to filter comments (case-insensitive, e.g., python, Go, C#).",
                 options_list=("--language", "-l"),
             )
+        with ArgumentsContext(self, "apiview get-active-reviews") as ac:
+            ac.argument(
+                "approved_only",
+                action="store_true",
+                help="Show only approved revisions (matching the metrics chart definition).",
+            )
         with ArgumentsContext(self, "apiview resolve-package") as ac:
             ac.argument(
                 "package_query",
@@ -2337,6 +2343,16 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="Languages to exclude from the report (e.g., --exclude Java Go).",
                 options_list=["--exclude"],
                 default=None,
+            )
+            ac.argument(
+                "markdown",
+                action="store_true",
+                help="Render output as markdown instead of JSON.",
+            )
+            ac.argument(
+                "save",
+                action="store_true",
+                help="Save the metrics report to CosmosDB.",
             )
         with ArgumentsContext(self, "ops") as ac:
             ac.argument(

@@ -785,7 +785,7 @@ public class ProjectsManagerTests
     #region Java Composite Key Tests
 
     [Fact]
-    public async Task BuildExpectedPackages_JavaV2Metadata_ProducesTwoKeys()
+    public async Task BuildExpectedPackages_JavaV2Metadata_ProducesOneKeyWithFlavor()
     {
         ReviewListItemModel typeSpecReview = CreateTypeSpecReview("ts-1", "Azure.Security.KeyVault.Keys");
         TypeSpecMetadata metadata = new()
@@ -811,21 +811,16 @@ public class ProjectsManagerTests
         await _projectsManager.UpsertProjectFromMetadataAsync("testUser", metadata, typeSpecReview);
 
         Assert.NotNull(capturedProject);
-        Assert.Equal(2, capturedProject.ExpectedPackages.Count);
+        Assert.Single(capturedProject.ExpectedPackages);
 
-        // v2 entry: package name and namespace as-is
-        Assert.True(capturedProject.ExpectedPackages.ContainsKey("Java:v2"));
-        Assert.Equal("com.azure.v2:azure-security-keyvault-keys", capturedProject.ExpectedPackages["Java:v2"].PackageName);
-        Assert.Equal("com.azure.v2.security.keyvault.keys", capturedProject.ExpectedPackages["Java:v2"].Namespace);
-
-        // base entry: v2 markers stripped
-        Assert.True(capturedProject.ExpectedPackages.ContainsKey("Java"));
-        Assert.Equal("com.azure:azure-security-keyvault-keys", capturedProject.ExpectedPackages["Java"].PackageName);
-        Assert.Equal("com.azure.security.keyvault.keys", capturedProject.ExpectedPackages["Java"].Namespace);
+        // key is language:flavor
+        Assert.True(capturedProject.ExpectedPackages.ContainsKey("Java:azurev2"));
+        Assert.Equal("com.azure.v2:azure-security-keyvault-keys", capturedProject.ExpectedPackages["Java:azurev2"].PackageName);
+        Assert.Equal("com.azure.v2.security.keyvault.keys", capturedProject.ExpectedPackages["Java:azurev2"].Namespace);
     }
 
     [Fact]
-    public async Task BuildExpectedPackages_JavaNonV2Metadata_ProducesOneJavaKey()
+    public async Task BuildExpectedPackages_JavaAzureFlavored_ProducesKeyWithFlavor()
     {
         ReviewListItemModel typeSpecReview = CreateTypeSpecReview("ts-1", "Azure.Core");
         TypeSpecMetadata metadata = new()
@@ -837,7 +832,7 @@ public class ProjectsManagerTests
                 {
                     PackageName = "com.azure:azure-core",
                     Namespace = "com.azure.core",
-                    Flavor = "azure"   // default flavor, not v2
+                    Flavor = "azure"
                 }
             }
         };
@@ -852,60 +847,41 @@ public class ProjectsManagerTests
 
         Assert.NotNull(capturedProject);
         Assert.Single(capturedProject.ExpectedPackages);
-        Assert.True(capturedProject.ExpectedPackages.ContainsKey("Java"));
+        // key includes flavor
+        Assert.True(capturedProject.ExpectedPackages.ContainsKey("Java:azure"));
         Assert.False(capturedProject.ExpectedPackages.ContainsKey("Java:v2"));
+        Assert.False(capturedProject.ExpectedPackages.ContainsKey("Java:azurev2"));
     }
 
     [Fact]
-    public async Task TryLinkReviewToProjectAsync_JavaV2Review_LooksUpUnderV2languageKey()
+    public async Task TryLinkReviewToProjectAsync_JavaReview_LooksUpByPlainLanguageKey()
     {
-        // Package name contains ".v2:" — rule maps it to "Java:v2"
+        // Without flavor on the review, lookup uses plain language key.
         ReviewListItemModel review = CreateReview("java-v2-review", "Java", "com.azure.v2:azure-security-keyvault-keys");
         Project project = CreateProject("project-1", expectedPackages: new Dictionary<string, PackageInfo>(StringComparer.OrdinalIgnoreCase)
         {
-            ["Java:v2"] = new() { PackageName = "com.azure.v2:azure-security-keyvault-keys", Namespace = "com.azure.v2.security.keyvault.keys" }
+            ["Java"] = new() { PackageName = "com.azure.v2:azure-security-keyvault-keys", Namespace = "com.azure.v2.security.keyvault.keys" }
         });
 
         _mockProjectsRepository
-            .Setup(r => r.GetProjectByExpectedPackageAsync("Java:v2", "com.azure.v2:azure-security-keyvault-keys"))
+            .Setup(r => r.GetProjectByExpectedPackageAsync("Java", "com.azure.v2:azure-security-keyvault-keys"))
             .ReturnsAsync(project);
 
         Project result = await _projectsManager.TryLinkReviewToProjectAsync("testUser", review);
 
         Assert.NotNull(result);
         _mockProjectsRepository.Verify(
-            r => r.GetProjectByExpectedPackageAsync("Java:v2", "com.azure.v2:azure-security-keyvault-keys"),
-            Times.Once);
-        Assert.True(result.Reviews.ContainsKey("Java:v2"));
-        Assert.Equal("java-v2-review", result.Reviews["Java:v2"]);
-    }
-
-    [Fact]
-    public async Task TryLinkReviewToProjectAsync_JavaBaseReview_LooksUpUnderJavaKey()
-    {
-        // No ".v2:" in package name — rule maps it to plain "Java"
-        ReviewListItemModel review = CreateReview("java-review", "Java", "com.azure:azure-core");
-        Project project = CreateProject("project-1");
-
-        _mockProjectsRepository
-            .Setup(r => r.GetProjectByExpectedPackageAsync("Java", "com.azure:azure-core"))
-            .ReturnsAsync(project);
-
-        Project result = await _projectsManager.TryLinkReviewToProjectAsync("testUser", review);
-
-        Assert.NotNull(result);
-        _mockProjectsRepository.Verify(
-            r => r.GetProjectByExpectedPackageAsync("Java", "com.azure:azure-core"),
+            r => r.GetProjectByExpectedPackageAsync("Java", "com.azure.v2:azure-security-keyvault-keys"),
             Times.Once);
         Assert.True(result.Reviews.ContainsKey("Java"));
+        Assert.Equal("java-v2-review", result.Reviews["Java"]);
     }
 
     [Fact]
-    public async Task NewProject_JavaV2Metadata_DiscoversBothReviewsUnderCorrectKeys()
+    public async Task NewProject_JavaV2Metadata_DiscoversReviewUnderFlavorCompositeKey()
     {
         ReviewListItemModel typeSpecReview = CreateTypeSpecReview("ts-1", "Azure.Core");
-        ReviewListItemModel javaV2Review  = CreateReview("java-v2-1", "Java", "com.azure.v2:azure-core");
-        ReviewListItemModel javaBaseReview = CreateReview("java-1",   "Java", "com.azure:azure-core");
+        ReviewListItemModel javaV2Review = CreateReview("java-v2-1", "Java", "com.azure.v2:azure-core");
         TypeSpecMetadata metadata = new()
         {
             TypeSpec = new TypeSpecInfo { Namespace = "Azure.Core", Documentation = "Core" },
@@ -920,9 +896,8 @@ public class ProjectsManagerTests
             }
         };
 
-        // Discovery finds the v2 review under "Java:v2" key and base review under "Java" key
+        // Discovery uses plain language to query, then stores under composite key Java:azurev2
         _mockReviewsRepository.Setup(r => r.GetReviewAsync("Java", "com.azure.v2:azure-core", false)).ReturnsAsync(javaV2Review);
-        _mockReviewsRepository.Setup(r => r.GetReviewAsync("Java", "com.azure:azure-core", false)).ReturnsAsync(javaBaseReview);
 
         Project capturedProject = null;
         _mockProjectsRepository
@@ -933,11 +908,9 @@ public class ProjectsManagerTests
         await _projectsManager.UpsertProjectFromMetadataAsync("testUser", metadata, typeSpecReview);
 
         Assert.NotNull(capturedProject);
-        // Reviews stored under composite keys
-        Assert.True(capturedProject.Reviews.ContainsKey("Java:v2"));
-        Assert.True(capturedProject.Reviews.ContainsKey("Java"));
-        Assert.Equal("java-v2-1", capturedProject.Reviews["Java:v2"]);
-        Assert.Equal("java-1",    capturedProject.Reviews["Java"]);
+        // Review stored under the composite key Java:azurev2
+        Assert.True(capturedProject.Reviews.ContainsKey("Java:azurev2"));
+        Assert.Equal("java-v2-1", capturedProject.Reviews["Java:azurev2"]);
     }
 
     #endregion

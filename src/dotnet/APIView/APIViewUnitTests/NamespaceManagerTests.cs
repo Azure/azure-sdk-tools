@@ -285,48 +285,38 @@ public class NamespaceManagerTests
     }
 
     [Fact]
-    public void BuildInitialNamespaceInfo_JavaV2LanguageKey_CreatesEntriesForBothKeys()
+    public void BuildInitialNamespaceInfo_JavaFlavorKey_CreatesEntryWithLanguageAndFlavor()
     {
         var metadata = new TypeSpecMetadata { TypeSpec = new TypeSpecInfo { Namespace = "Azure.Security.KeyVault.Keys" } };
-        // Java v2 expansion produces two keys: "Java:v2" and "Java"
         var expectedPackages = new Dictionary<string, PackageInfo>(StringComparer.OrdinalIgnoreCase)
         {
-            ["Java:v2"] = new() { PackageName = "com.azure.v2:azure-security-keyvault-keys", Namespace = "com.azure.v2.security.keyvault.keys" },
-            ["Java"]    = new() { PackageName = "com.azure:azure-security-keyvault-keys",    Namespace = "com.azure.security.keyvault.keys" },
+            ["Java:azurev2"] = new() { PackageName = "com.azure.v2:azure-security-keyvault-keys", Namespace = "com.azure.v2.security.keyvault.keys" },
         };
 
         ProjectNamespaceInfo result = _namespaceManager.BuildInitialNamespaceInfo(
             "user1", metadata, expectedPackages, new Dictionary<string, ReviewListItemModel>());
 
-        // Three entries: TypeSpec + Java:v2 + Java
-        Assert.Equal(3, result.CurrentNamespaceStatus.Count);
-        Assert.True(result.CurrentNamespaceStatus.ContainsKey("Java:v2"));
-        Assert.True(result.CurrentNamespaceStatus.ContainsKey("Java"));
+        // Two entries: TypeSpec + Java:azurev2
+        Assert.Equal(2, result.CurrentNamespaceStatus.Count);
+        Assert.True(result.CurrentNamespaceStatus.ContainsKey("Java:azurev2"));
 
-        var v2Entry = result.CurrentNamespaceStatus["Java:v2"];
-        Assert.Equal("Java", v2Entry.Language);
-        Assert.Equal("v2",   v2Entry.Flavor);
+        var v2Entry = result.CurrentNamespaceStatus["Java:azurev2"];
+        Assert.Equal("Java",     v2Entry.Language);
+        Assert.Equal("azurev2", v2Entry.Flavor);
         Assert.Equal("com.azure.v2:azure-security-keyvault-keys", v2Entry.PackageName);
-
-        var baseEntry = result.CurrentNamespaceStatus["Java"];
-        Assert.Equal("Java", baseEntry.Language);
-        Assert.Equal("",     baseEntry.Flavor);
-        Assert.Equal("com.azure:azure-security-keyvault-keys", baseEntry.PackageName);
     }
 
     [Fact]
-    public void BuildInitialNamespaceInfo_JavaV2_AutoApprovesMatchingReviewByLanguageKey()
+    public void BuildInitialNamespaceInfo_JavaFlavor_AutoApprovesMatchingReviewByLanguageKey()
     {
         var metadata = new TypeSpecMetadata { TypeSpec = new TypeSpecInfo { Namespace = "Azure.Core" } };
         var expectedPackages = new Dictionary<string, PackageInfo>(StringComparer.OrdinalIgnoreCase)
         {
-            ["Java:v2"] = new() { PackageName = "com.azure.v2:azure-core", Namespace = "com.azure.v2.core" },
-            ["Java"]    = new() { PackageName = "com.azure:azure-core",    Namespace = "com.azure.core" },
+            ["Java:azurev2"] = new() { PackageName = "com.azure.v2:azure-core", Namespace = "com.azure.v2.core" },
         };
-        // Only the Java:v2 review is approved
         var reviewsByKey = new Dictionary<string, ReviewListItemModel>(StringComparer.OrdinalIgnoreCase)
         {
-            ["Java:v2"] = new()
+            ["Java:azurev2"] = new()
             {
                 Id = "java-v2-review", Language = "Java", IsApproved = true,
                 ChangeHistory = [new ReviewChangeHistoryModel { ChangeAction = ReviewChangeAction.Approved, ChangedBy = "approver" }]
@@ -336,8 +326,7 @@ public class NamespaceManagerTests
         ProjectNamespaceInfo result = _namespaceManager.BuildInitialNamespaceInfo(
             "user1", metadata, expectedPackages, reviewsByKey);
 
-        Assert.Equal(NamespaceDecisionStatus.Approved, result.CurrentNamespaceStatus["Java:v2"].Status);
-        Assert.Equal(NamespaceDecisionStatus.Proposed, result.CurrentNamespaceStatus["Java"].Status);
+        Assert.Equal(NamespaceDecisionStatus.Approved, result.CurrentNamespaceStatus["Java:azurev2"].Status);
         Assert.Single(result.ApprovedNamespaces);
     }
 
@@ -734,44 +723,44 @@ public class NamespaceManagerTests
     }
 
     [Fact]
-    public async Task UpdateNamespaceStatusAsync_JavaV2CompositeKey_OnlyUpdatesTargetedKey_NotSiblingKey()
+    public async Task UpdateNamespaceStatusAsync_TwoJavaFlavors_OnlyUpdatesTargetedKey()
     {
-        // Both "Java" and "Java:v2" exist in the project.
-        // Approving "Java:v2" must leave "Java" untouched, and vice versa.
+        // Both "Java:azure" and "Java:azurev2" exist in the project.
+        // Approving "Java:azurev2" must leave "Java:azure" untouched.
         SetupPermissions(true);
 
         var javaEntry = new NamespaceDecisionEntry
         {
-            Language = "Java", Flavor = "",
+            Language = "Java", Flavor = "azure",
             PackageName = "com.azure:azure-core", Namespace = "com.azure.core",
             Status = NamespaceDecisionStatus.Proposed, ProposedBy = "user1", ProposedOn = DateTime.UtcNow
         };
         var javaV2Entry = new NamespaceDecisionEntry
         {
-            Language = "Java", Flavor = "v2",
+            Language = "Java", Flavor = "azurev2",
             PackageName = "com.azure.v2:azure-core", Namespace = "com.azure.v2.core",
             Status = NamespaceDecisionStatus.Proposed, ProposedBy = "user1", ProposedOn = DateTime.UtcNow
         };
         var project = CreateProject("project-1",
             currentStatus: new(StringComparer.OrdinalIgnoreCase)
             {
-                ["Java"]    = javaEntry,
-                ["Java:v2"] = javaV2Entry
+                ["Java:azure"]   = javaEntry,
+                ["Java:azurev2"] = javaV2Entry
             });
         SetupProject("project-1", project);
 
-        // Approve only "Java:v2"
+        // Approve only "Java:azurev2"
         NamespaceOperationResult result = await _namespaceManager.UpdateNamespaceStatusAsync(
-            "project-1", "Java:v2", NamespaceDecisionStatus.Approved, "lgtm", CreateUser("java-approver"));
+            "project-1", "Java:azurev2", NamespaceDecisionStatus.Approved, "lgtm", CreateUser("java-approver"));
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(NamespaceDecisionStatus.Approved, result.Project.NamespaceInfo.CurrentNamespaceStatus["Java:v2"].Status);
-        // "Java" entry must remain Proposed — NOT accidentally approved
-        Assert.Equal(NamespaceDecisionStatus.Proposed,  result.Project.NamespaceInfo.CurrentNamespaceStatus["Java"].Status);
+        Assert.Equal(NamespaceDecisionStatus.Approved, result.Project.NamespaceInfo.CurrentNamespaceStatus["Java:azurev2"].Status);
+        // "Java:azure" entry must remain Proposed
+        Assert.Equal(NamespaceDecisionStatus.Proposed, result.Project.NamespaceInfo.CurrentNamespaceStatus["Java:azure"].Status);
 
-        // History written under "Java:v2", none under "Java"
-        Assert.True(result.Project.NamespaceInfo.NamespaceHistory.ContainsKey("Java:v2"));
-        Assert.False(result.Project.NamespaceInfo.NamespaceHistory.ContainsKey("Java"));
+        // History written under "Java:azurev2", none under "Java:azure"
+        Assert.True(result.Project.NamespaceInfo.NamespaceHistory.ContainsKey("Java:azurev2"));
+        Assert.False(result.Project.NamespaceInfo.NamespaceHistory.ContainsKey("Java:azure"));
     }
 
     #endregion

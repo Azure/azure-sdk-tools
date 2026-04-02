@@ -19,15 +19,6 @@ public class ProjectsManager : IProjectsManager
     private readonly INamespaceManager _namespaceManager;
 
 
-    private static readonly Dictionary<string, ILanguageExpansionRule> _expansionRules =
-        new(StringComparer.OrdinalIgnoreCase)
-        {
-            ["Java"] = JavaExpansionRule.Instance,
-        };
-
-    private static ILanguageExpansionRule GetExpansionRule(string language) =>
-        !string.IsNullOrEmpty(language) && _expansionRules.TryGetValue(language, out var rule) ? rule : DefaultExpansionRule.Instance;
-
     private sealed record ReviewLinkChanges(
         List<(string languageKey, ReviewListItemModel Review)> LinkedReviews,
         List<ProjectChangeHistory> ChangeHistoryEntries);
@@ -75,11 +66,9 @@ public class ProjectsManager : IProjectsManager
             project = await _projectsRepository.GetProjectByCrossLanguagePackageIdAsync(review.CrossLanguagePackageId);
         }
 
-        string normalizedLanguage = !string.IsNullOrWhiteSpace(review.Language)
+        string languageKey = !string.IsNullOrWhiteSpace(review.Language)
             ? LanguageServiceHelpers.MapLanguageAlias(review.Language)
             : null;
-        ILanguageExpansionRule rule = GetExpansionRule(normalizedLanguage);
-        string languageKey = rule.GetLanguageKey(normalizedLanguage, review.PackageName);
         if (project == null && !string.IsNullOrEmpty(languageKey) && !string.IsNullOrEmpty(review.PackageName))
         {
             project = await _projectsRepository.GetProjectByExpectedPackageAsync(languageKey, review.PackageName);
@@ -402,11 +391,8 @@ public class ProjectsManager : IProjectsManager
                 continue;
 
             string language = LanguageServiceHelpers.MapLanguageAlias(rawLanguage);
-            ILanguageExpansionRule rule = GetExpansionRule(language);
-            foreach (var (languageKey, packageInfo) in rule.Expand(language, config))
-            {
-                result[languageKey] = packageInfo;
-            }
+            string languageKey = new PackageKey(language, config.Flavor ?? "").ToString();
+            result[languageKey] = new PackageInfo { PackageName = config.PackageName, Namespace = config.Namespace };
         }
         return result;
     }

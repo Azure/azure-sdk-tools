@@ -25,8 +25,7 @@ public readonly record struct PackageKey
             : new PackageKey(value[..colon], value[(colon + 1)..]);
     }
 
-    public bool HasFlavor => !string.IsNullOrEmpty(Flavor);
-    public override string ToString() => HasFlavor ? $"{Language}:{Flavor}" : Language;
+    public override string ToString() => string.IsNullOrEmpty(Flavor) ? Language : $"{Language}:{Flavor}";
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter))]

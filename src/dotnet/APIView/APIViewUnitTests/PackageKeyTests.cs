@@ -1,0 +1,34 @@
+using APIViewWeb.Models;
+using Xunit;
+
+namespace APIViewUnitTests;
+
+public class PackageKeyTests
+{
+    [Theory]
+    [InlineData("Python",       "",        "Python")]
+    [InlineData("Java",         "azurev2", "Java:azurev2")]
+    [InlineData("Java",         "azure",   "Java:azure")]
+    [InlineData("JavaScript",   "",        "JavaScript")]
+    public void PackageKey_ToString(string language, string flavor, string expected)
+        => Assert.Equal(expected, new PackageKey(language, flavor).ToString());
+
+    [Theory]
+    [InlineData("Java",         "Java",    "")]
+    [InlineData("Java:azurev2", "Java",    "azurev2")]
+    [InlineData("Java:azure",   "Java",    "azure")]
+    [InlineData("Python",       "Python",  "")]
+    public void PackageKey_Parse(string input, string expectedLanguage, string expectedFlavor)
+    {
+        var key = PackageKey.Parse(input);
+        Assert.Equal(expectedLanguage, key.Language);
+        Assert.Equal(expectedFlavor,   key.Flavor);
+    }
+
+    [Theory]
+    [InlineData("Java:azurev2")]
+    [InlineData("Python")]
+    [InlineData("JavaScript:someflav")]
+    public void PackageKey_Parse_RoundTrips(string input)
+        => Assert.Equal(input, PackageKey.Parse(input).ToString());
+}

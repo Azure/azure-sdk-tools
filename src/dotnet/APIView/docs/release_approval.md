@@ -4,11 +4,11 @@ This document describes how API reviews are approved in APIView and how that app
 
 ---
 
-## Approval Levels
+## 1. Approval Levels
 
 APIView tracks approval at three levels. Each serves a different purpose in the release lifecycle.
 
-### 1. API Revision Approval
+### a. API Revision Approval
 
 The primary approval mechanism. Each `APIRevisionListItemModel` carries:
 
@@ -20,13 +20,13 @@ A revision is considered approved when `Approvers` is non-empty. Multiple review
 
 **Source:** [`APIViewWeb/LeanModels/ReviewListModels.cs`](../APIViewWeb/LeanModels/ReviewListModels.cs) (fields on `APIRevisionListItemModel`), [`APIViewWeb/Managers/APIRevisionsManager.cs`](../APIViewWeb/Managers/APIRevisionsManager.cs) (`ToggleAPIRevisionApprovalAsync`).
 
-### 2. Review-Level (First-Release) Approval
+### b. Review-Level (First-Release) Approval
 
 A separate, review-scoped flag on `ReviewListItemModel.IsApproved`. This covers first-release approval of a package name/namespace and is largely a legacy concept being phased out in favour of namespace approval (below).
 
 **Source:** [`APIViewWeb/Managers/ReviewManager.cs`](../APIViewWeb/Managers/ReviewManager.cs) (`ToggleReviewApprovalAsync`).
 
-### 3. Namespace Approval
+### c. Namespace Approval
 
 For TypeSpec-based packages, APIView tracks whether the namespace has been approved across all SDK languages in a review group. When every SDK language's revision for a TypeSpec project is approved, the namespace is auto-approved. This approval is tracked per-language in a `ProjectNamespaceInfo` record.
 
@@ -34,14 +34,50 @@ For TypeSpec-based packages, APIView tracks whether the namespace has been appro
 
 ---
 
-## Approval Prerequisites
+## 2. GA vs Preview Version Classification
+
+APIView classifies every revision as either **GA (stable)** or **preview (prerelease)** based on its package version string. The classification is performed by `AzureEngSemanticVersion`, which has matching implementations in both C# and TypeScript.
+
+### Rules
+
+A version is **preview** if either condition is true:
+
+1. **The version has a prerelease label** — any suffix after a `-` separator (e.g., `-beta.1`, `-alpha.20210901.1`, `-rc.1`).
+2. **The major version is `0`** — `0.x.y` versions are always treated as prerelease, even without a label.
+
+Otherwise the version is **GA**.
+
+### Sort Order
+
+Versions sort with GA above preview at the same major.minor.patch. For example (descending):
+
+```
+2.0.0             ← GA
+2.0.0-beta.10     ← preview
+2.0.0-beta.2      ← preview
+1.0.0             ← GA
+1.0.0-beta.1      ← preview
+```
+
+### Where the Distinction Matters
+
+| Area | GA behaviour | Preview behaviour |
+|------|-------------|-------------------|
+| **Copilot review gate** | Must have Copilot review before human approval (for supported languages). | Exempt — approval is allowed without Copilot review. |
+| **Auto-archive** | The last approved GA revision is always preserved. | The most recent preview revision is always preserved (regardless of approval status). |
+
+**Source:** [`APIViewWeb/Helpers/AzureEngSemanticVersion.cs`](../APIViewWeb/Helpers/AzureEngSemanticVersion.cs), [`ClientSPA/src/app/_models/azureEngSemanticVersion.ts`](../ClientSPA/src/app/_models/azureEngSemanticVersion.ts), [`APIViewWeb/Managers/APIRevisionsManager.cs`](../APIViewWeb/Managers/APIRevisionsManager.cs) (`IsPrerelease`, `AutoArchiveAPIRevisions`).
+
+---
+
+## 3. Approval Prerequisites
 
 Before a user can approve a revision in the Angular SPA, the UI enforces several guards (evaluated in priority order):
 
 | # | Guard | Effect |
 |---|-------|--------|
 | 1 | **Missing package version** | Blocks approval — a version must be present on the code file. |
-| 2 | **Unresolved "Must Fix" comments** | Blocks approval — all must-fix diagnostic comments must be resolved first. |
+| 2 | **Unresolved "Must Fix" comments** | Blocks approval — all must-fix comments (human, AI, or diagnostic) must be resolved first. |
 | 3 | **Copilot review required** | For supported languages, the revision must have been reviewed by Copilot before human approval (preview versions are exempt). |
 
 On the backend, the controller additionally verifies that the requesting user has the **approver** role via `ManagerHelpers.AssertApprover()`.
@@ -50,7 +86,7 @@ On the backend, the controller additionally verifies that the requesting user ha
 
 ---
 
-## Approval Toggle Flow
+## 4. Approval Toggle Flow
 
 When a reviewer clicks **Approve** (or **Revert API Approval**):
 
@@ -65,7 +101,7 @@ When a reviewer clicks **Approve** (or **Revert API Approval**):
 
 ---
 
-## Automatic Approval Carry-Forward
+## 5. Automatic Approval Carry-Forward
 
 When a new automatic revision is created (e.g., from a CI build), its API surface is compared against existing approved revisions using `AreAPIRevisionsTheSame()`.
 
@@ -78,7 +114,7 @@ If the surfaces match and the source revision is approved, `CarryForwardRevision
 
 ---
 
-## Release Gating (CI/CD Integration)
+## 6. Release Gating (CI/CD Integration)
 
 APIView does **not** enforce release gates directly. Instead, it reports approval status via HTTP status codes that CI/CD pipelines query before proceeding with a release.
 
@@ -118,7 +154,7 @@ The actual block/allow decision lives in the pipeline. APIView only reports stat
 
 ---
 
-## Marking a Revision as Released
+## 7. Marking a Revision as Released
 
 When a release pipeline publishes a package, it calls back to APIView to stamp the revision:
 
@@ -141,7 +177,7 @@ The revision then displays as **"Shipped"** in the UI.
 
 ---
 
-## End-to-End Lifecycle
+## 8. End-to-End Lifecycle
 
 ```
 CI Build Pipeline

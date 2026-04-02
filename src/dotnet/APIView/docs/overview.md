@@ -1,6 +1,6 @@
 # APIView — Architecture Overview
 
-## What Is APIView?
+## 1. What Is APIView?
 
 APIView is the Azure SDK team's **API review platform**. It ingests pre-built SDK artifacts (DLLs, JARs, Python wheels, etc.), extracts a structured token representation of the public API surface, and presents that surface in a web UI where architects and reviewers can comment, diff across versions, approve, and track the lifecycle of an API from first draft through release.
 
@@ -8,7 +8,7 @@ It supports **16+ languages** (C#, Java, Python, JavaScript/TypeScript, Go, Rust
 
 > **Development policy:** New features should target the Angular SPA and tree-token model only. The legacy Razor Pages frontend and flat-token parser are not receiving new investment. See [legacy.md](legacy.md) for details on what remains and the migration path.
 
-### Core Workflow
+### a. Core Workflow
 
 ```
 SDK CI/CD Pipeline                        APIView
@@ -35,7 +35,7 @@ POST /autoreview/upload ────────────────► Lang
 4. Reviewers open the review in the **Angular SPA**, where they can diff versions, leave comments, and approve.
 5. The CI pipeline queries back for approval status (HTTP 200 = approved, 201 = namespace-approved, 202 = pending).
 
-### What APIView Does
+### b. What APIView Does
 
 - **Parses** pre-built SDK artifacts into a language-agnostic token model.
 - **Renders** public API surfaces with syntax highlighting and hierarchical navigation.
@@ -49,7 +49,7 @@ POST /autoreview/upload ────────────────► Lang
 - **Sends notifications** via email and real-time SignalR push.
 - **Marks revisions as released** when a release pipeline calls with `setReleaseTag=true`.
 
-### What APIView Does NOT Do
+### c. What APIView Does NOT Do
 
 - **Does not compile code.** Parsers consume already-built binaries, not source files.
 - **Does not run tests.** It is a review tool, not a CI runner.
@@ -60,7 +60,7 @@ POST /autoreview/upload ────────────────► Lang
 
 ---
 
-## Solution Structure
+## 2. Solution Structure
 
 ```
 APIView.sln
@@ -74,7 +74,7 @@ APIView.sln
 
 ---
 
-## Data Model Hierarchy
+## 3. Data Model Hierarchy
 
 ```
 Review (ReviewListItemModel)
@@ -97,11 +97,11 @@ A **CodeFile** is the serialized parser output (tokens + navigation + diagnostic
 
 ---
 
-## Backend Architecture (APIViewWeb)
+## 4. Backend Architecture (APIViewWeb)
 
 **Stack:** ASP.NET Core · Cosmos DB · Azure Blob Storage · SignalR · Application Insights
 
-### Layers
+### a. Layers
 
 ```
 HTTP Layer                  Business Logic              Data Access
@@ -114,7 +114,7 @@ Controllers/ (6)              Comments, Notifications
                               AI/Copilot jobs
 ```
 
-### Key Controllers (LeanControllers)
+### b. Key Controllers (LeanControllers)
 
 Most LeanControllers inherit from `BaseApiController`, which applies **cookie authentication** (`RequireCookieAuthentication`) and routes under `api/[controller]`. These serve the Angular SPA.
 
@@ -135,7 +135,7 @@ A separate set of controllers use **token authentication** (`RequireTokenAuthent
 | `ReviewsTokenAuthController` | `api/reviews` | Review queries for CI pipelines |
 | `CommentsTokenAuthController` | `api/comments` | Comment operations for CI pipelines |
 
-### Key Managers (business logic)
+### c. Key Managers (business logic)
 
 | Manager | Responsibility |
 |---|---|
@@ -148,7 +148,7 @@ A separate set of controllers use **token authentication** (`RequireTokenAuthent
 | `NotificationManager` | Email and SignalR notifications |
 | `PermissionsManager` | RBAC for users and approvers |
 
-### Data Stores
+### d. Data Stores
 
 | Store | Used For |
 |---|---|
@@ -156,16 +156,17 @@ A separate set of controllers use **token authentication** (`RequireTokenAuthent
 | **Azure Blob Storage** | CodeFile JSON blobs, original uploaded artifacts, usage samples |
 | **Azure DevOps Artifacts** | Fetching build artifacts when `/create` endpoint is used |
 
-### Background Services (HostedServices/)
+### e. Background Services (HostedServices/)
 
 | Service | Purpose |
 |---|---|
 | `CopilotPollingBackgroundHostedService` | Polls for and processes AI review jobs |
+| `ReviewBackgroundHostedService` | Re-parses reviews when parser versions are updated; auto-archives inactive revisions; purges soft-deleted revisions |
 | `PullRequestBackgroundHostedService` | Asynchronous PR comment posting |
 | `LinesWithDiffBackgroundHostedService` | Pre-computes diff section headings |
 | `QueuedHostedService` | Generic background task executor |
 
-### External Integrations
+### f. External Integrations
 
 | System | Integration |
 |---|---|
@@ -177,7 +178,7 @@ A separate set of controllers use **token authentication** (`RequireTokenAuthent
 
 ---
 
-## Frontend Architecture (ClientSPA — Angular)
+## 5. Frontend Architecture (ClientSPA — Angular)
 
 **Stack:** Angular 20 · PrimeNG 20 · Bootstrap 5.3 · SignalR · Monaco Editor · RxJS · Vite
 
@@ -185,7 +186,7 @@ The Angular SPA is the **primary UI**. It is built separately (`npm run build`) 
 
 > **Note:** There is a legacy Razor Pages frontend (`Pages/Assemblies/`) that predates the SPA. It is being phased out; see [legacy.md](legacy.md) for details.
 
-### Routes
+### a. Routes
 
 | Route | Component | Purpose |
 |---|---|---|
@@ -199,7 +200,7 @@ The Angular SPA is the **primary UI**. It is built separately (`npm run build`) 
 
 All routes require authentication via `AuthGuard`.
 
-### Key Components
+### b. Key Components
 
 | Component | Responsibility |
 |---|---|
@@ -212,7 +213,7 @@ All routes require authentication via `AuthGuard`.
 | `revisions-list/` | Revision history with approval badges and release status |
 | `reviews-list/` | Searchable, filterable table of all reviews |
 
-### Services & State Management
+### c. Services & State Management
 
 There is **no NgRx store**. State is managed through **RxJS BehaviorSubjects** in Angular services:
 
@@ -230,7 +231,7 @@ There is **no NgRx store**. State is managed through **RxJS BehaviorSubjects** i
 | `PermissionsService` | RBAC checks |
 | `UserProfileService` | User preferences (theme, layout) |
 
-### Backend Communication
+### d. Backend Communication
 
 - **Base URL:** Configurable via `/assets/config.json`; defaults to `api/` (relative).
 - **Auth:** Cookie-based with `{ withCredentials: true }`.
@@ -239,18 +240,18 @@ There is **no NgRx store**. State is managed through **RxJS BehaviorSubjects** i
 
 ---
 
-## Token File Format (CodeFile)
+## 6. Token File Format (CodeFile)
 
 APIView's core abstraction is a **language-agnostic token model**. Every language parser emits the same JSON structure, which the frontend renders uniformly.
 
-### Two Formats (both supported)
+### a. Two Formats (both supported)
 
 | Format | Model | Status |
 |---|---|---|
 | **Flat (legacy)** | `CodeFileToken[]` — linear stream with `Newline` tokens as line separators | Deprecated; auto-converted on read |
 | **Tree (modern)** | `ReviewLine[]` — hierarchical lines with `ReviewToken[]` per line and `Children[]` for nesting | Active; all modern parsers emit this |
 
-### Key Fields on CodeFile
+### b. Key Fields on CodeFile
 
 ```
 CodeFile
@@ -264,23 +265,23 @@ CodeFile
 └── CrossLanguageMetadata   Maps language-specific IDs to cross-language IDs
 ```
 
-### Token Kinds
+### c. Token Kinds
 
 Modern (`ReviewToken.Kind`): `Text`, `Punctuation`, `Keyword`, `TypeName`, `MemberName`, `StringLiteral`, `Literal`, `Comment`
 
-### ID System
+### d. ID System
 
 - **`LineId`** (on `ReviewLine`): Uniquely identifies an API element. Comments anchor to this ID.
 - **`NavigateToId`** (on `ReviewToken`): Click-to-navigate target (e.g., a type reference jumps to its definition).
 - **`CrossLanguageDefinitionId`**: Bridges the same concept across SDKs (e.g., a `BlobClient` in C# and `BlobClient` in Python share an ID).
 
-### Content Hashing
+### e. Content Hashing
 
 Each CodeFile gets a **SHA-256 hash** of its API surface (excluding package version, documentation, and `SkipDiff` regions). This enables O(1) comparison between revisions — if the hash matches, the API surface is identical, and approval can be carried forward without downloading the blob.
 
 ---
 
-## Diff Pipeline
+## 7. Diff Pipeline
 
 1. Two `CodeFile` blobs are loaded (active revision vs. selected diff revision).
 2. `ReviewLine` trees are flattened to comparable line sequences.
@@ -291,20 +292,20 @@ Each CodeFile gets a **SHA-256 hash** of its API surface (excluding package vers
 
 ---
 
-## Approval & Release Flow
+## 8. Approval & Release Flow
 
-### Manual Approval
+### a. Manual Approval
 A reviewer clicks **Approve** in the UI → `ToggleAPIRevisionApprovalAsync` toggles the approval state, updates the `Approvers` HashSet, records in `ChangeHistory`, and broadcasts via SignalR.
 
-### Automatic Carry-Forward
+### b. Automatic Carry-Forward
 When a new revision is created and its **content hash matches** an already-approved revision, approval is copied automatically. The change history records `"Approval copied from revision {id}"`.
 
-### Release Tagging
+### c. Release Tagging
 When a release pipeline calls `/autoreview/upload` or `/autoreview/create` with `setReleaseTag=true`, the matching revision gets `IsReleased = true` and `ReleasedOn = DateTime.UtcNow`. The UI shows it as **"Shipped"**.
 
 ---
 
-## Language Parsers
+## 9. Language Parsers
 
 Many parsers run as **external processes** (via `System.Diagnostics.Process.Start()` with a 90-second timeout), but some parsing and deserialization happens **in-process** depending on the language service. Parsers live in various locations across the `azure-sdk-tools` repo.
 
@@ -332,7 +333,7 @@ The **Runs On** column indicates who executes the parser:
 
 ---
 
-## APIViewJsonUtility (CLI Tool)
+## 10. APIViewJsonUtility (CLI Tool)
 
 A standalone CLI for inspecting and converting token files outside the web app:
 
@@ -345,7 +346,7 @@ Useful for debugging parser output without running the full web application.
 
 ---
 
-## Key File Paths (for agents)
+## 11. Key File Paths (for agents)
 
 | Area | Path |
 |---|---|

@@ -8,7 +8,7 @@ For the current architecture, see [overview.md](overview.md).
 
 ---
 
-## Background
+## 1. Background
 
 APIView originally shipped as a traditional ASP.NET Core Razor Pages application. All HTML was rendered server-side, with jQuery + Bootstrap for interactivity. Over time the frontend was rebuilt as an Angular SPA (`ClientSPA/`), but the Razor infrastructure remains in the codebase for two reasons:
 
@@ -17,7 +17,7 @@ APIView originally shipped as a traditional ASP.NET Core Razor Pages application
 
 ---
 
-## Token Format: Flat vs. Tree
+## 2. Token Format: Flat vs. Tree
 
 The routing decision between Razor and SPA is driven by the **`ParserStyle`** enum stored on every `APICodeFileModel`:
 
@@ -46,11 +46,11 @@ if (activeRevision.Files[0].ParserStyle == ParserStyle.Tree)
 
 ---
 
-## Which Languages Use Which Format
+## 3. Which Languages Use Which Format
 
 The `UsesTreeStyleParser` property on each language service controls which format the parser emits. The default is `true` (tree/modern). Only a few languages explicitly override it to `false`.
 
-### Modern (Tree) — Rendered in Angular SPA
+### a. Modern (Tree) — Rendered in Angular SPA
 
 These languages set `UsesTreeStyleParser = true` (or inherit the default) and produce `ReviewLine[]` output:
 
@@ -65,7 +65,7 @@ These languages set `UsesTreeStyleParser = true` (or inherit the default) and pr
 | Swift | `SwiftLanguageService` | Deserializes pre-parsed JSON from external SwiftAPIView parser |
 | TypeSpec | `TypeSpecLanguageService` | Sandboxed via DevOps pipeline; parsed by external `typespec-apiview` emitter |
 
-### Legacy (Flat) — Falls to LegacyReview.cshtml
+### b. Legacy (Flat) — Falls to LegacyReview.cshtml
 
 These languages explicitly set `UsesTreeStyleParser = false` and produce `CodeFileToken[]` output:
 
@@ -82,11 +82,11 @@ These languages explicitly set `UsesTreeStyleParser = false` and produce `CodeFi
 
 ---
 
-## Razor Pages Inventory
+## 4. Razor Pages Inventory
 
 All Razor Pages live under [APIViewWeb/Pages/](../APIViewWeb/Pages/).
 
-### Review-Related Pages (Assemblies/)
+### a. Review-Related Pages (Assemblies/)
 
 | Page | Class | Current Role |
 |---|---|---|
@@ -100,7 +100,7 @@ All Razor Pages live under [APIViewWeb/Pages/](../APIViewWeb/Pages/).
 | `Profile.cshtml` | `ProfilePageModel` | User profile / preferences |
 | `RequestedReviews.cshtml` | `RequestedReviewsPageModel` | Reviews assigned to the current user |
 
-### Infrastructure Pages
+### b. Infrastructure Pages
 
 | Page | Purpose |
 |---|---|
@@ -108,7 +108,7 @@ All Razor Pages live under [APIViewWeb/Pages/](../APIViewWeb/Pages/).
 | `Unauthorized.cshtml` | 403 error page |
 | `Error.cshtml` | Generic error page |
 
-### Shared Partials (Pages/Shared/)
+### c. Shared Partials (Pages/Shared/)
 
 These partials provide the layout and reusable fragments for the Razor pages:
 
@@ -138,7 +138,7 @@ These partials provide the layout and reusable fragments for the Razor pages:
 
 ---
 
-## Legacy MVC Controllers
+## 5. Legacy MVC Controllers
 
 In addition to Razor Pages, the legacy system uses traditional MVC controllers at [APIViewWeb/Controllers/](../APIViewWeb/Controllers/):
 
@@ -155,7 +155,7 @@ In addition to Razor Pages, the legacy system uses traditional MVC controllers a
 
 ---
 
-## Legacy HTML Rendering Pipeline
+## 6. Legacy HTML Rendering Pipeline
 
 When a flat-token (`ParserStyle.Flat`) review is rendered, the pipeline is:
 
@@ -181,7 +181,7 @@ _CodeLine.cshtml partial
   comment anchors (DefinitionId), and diff styling
 ```
 
-### Legacy Diff Rendering
+### a. Legacy Diff Rendering
 
 1. Both revisions' `CodeFile` blobs are loaded from Blob Storage.
 2. Each is rendered to parallel arrays: HTML lines (via `CodeFileHtmlRenderer`) and plain-text lines (via `CodeFileRenderer`).
@@ -191,7 +191,7 @@ _CodeLine.cshtml partial
 
 ---
 
-## Legacy Static Assets
+## 7. Legacy Static Assets
 
 The Razor pages use dedicated static assets at [APIViewWeb/wwwroot/](../APIViewWeb/wwwroot/):
 
@@ -212,7 +212,7 @@ The Angular SPA's build output lives separately under `wwwroot/spa/` and does no
 
 ---
 
-## Coexistence Model
+## 8. Coexistence Model
 
 The Razor and SPA frontends coexist through a routing handoff:
 
@@ -234,7 +234,7 @@ The Angular SPA handles its own routing at `/review/...`, `/conversation/...`, `
 
 ---
 
-## Migration Path
+## 9. Migration Path
 
 To fully retire the Razor frontend, the remaining flat-token languages need to be migrated to tree-style parsers:
 

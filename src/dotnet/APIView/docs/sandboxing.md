@@ -2,13 +2,13 @@
 
 > **Status: Deprecated.** Sandboxing is a legacy pattern that the team does not plan to extend. This document records where it exists and its implications. New language parsers should **not** adopt this pattern.
 
-## What Is Sandboxing?
+## 1. What Is Sandboxing?
 
 APIView converts language-specific SDK artifacts (e.g., `.whl`, `.tsp`, `.swagger`) into a JSON token file (`CodeFile`) using per-language parsers. By default, parsers run **on the APIView server host** — most as external processes launched via `LanguageProcessor` (`System.Diagnostics.Process.Start()`), and a few (C, C++, Json) via in-process deserialization.
 
 "Sandboxing" means running the parser in an **Azure DevOps pipeline** instead of on the APIView server host. The motivation was security: some parsers pull in third-party dependencies that could introduce vulnerabilities when executed server-side.
 
-## Languages That Use Sandboxing
+## 2. Languages That Use Sandboxing
 
 | Language | Sandboxed? | Toggle |
 |----------|-----------|--------|
@@ -17,9 +17,9 @@ APIView converts language-specific SDK artifacts (e.g., `.whl`, `.tsp`, `.swagge
 | Swagger | Yes (always) | Hard-coded `IsReviewGenByPipeline = true` in constructor. |
 | C#, Java, Go, Rust, JS/TS, C, C++ | No | Parsers run on the APIView server host (most as external processes, some in-process). |
 
-## How It Works
+## 3. How It Works
 
-### Overview
+### a. Overview
 
 1. User uploads an artifact or a review needs regeneration.
 2. APIView stores the original file in Blob Storage and creates a **placeholder** `CodeFile` with `ContentGenerationInProgress = true` and a user-facing message: _"API review is being generated for this revision and it will be available in few minutes."_
@@ -28,7 +28,7 @@ APIView converts language-specific SDK artifacts (e.g., `.whl`, `.tsp`, `.swagge
 5. The pipeline calls back to APIView via the `ReviewController.UpdateApiReview` endpoint.
 6. APIView downloads the artifact ZIP from DevOps, deserializes each `CodeFile`, and updates Cosmos DB + Blob Storage.
 
-### Sequence
+### b. Sequence
 
 ```
 User ──upload──▶ APIView Server
@@ -56,13 +56,13 @@ User ──upload──▶ APIView Server
                            └─ Update revision metadata in Cosmos DB
 ```
 
-### Batch Regeneration
+### c. Batch Regeneration
 
 Background updates for sandboxed languages are batched in `ReviewManager.UpdateReviewsUsingPipeline()` to avoid overwhelming DevOps with parallel pipeline runs. Revisions are collected into a list and sent in configurable batches with a **10-minute delay** between batches.
 
-## Key Code Locations
+## 4. Key Code Locations
 
-### Configuration & Flags
+### a. Configuration & Flags
 
 | File | What |
 |------|------|
@@ -71,7 +71,7 @@ Background updates for sandboxed languages are batched in `ReviewManager.UpdateR
 | [APIViewWeb/Languages/TypeSpecLanguageService.cs](../APIViewWeb/Languages/TypeSpecLanguageService.cs) | `IsReviewGenByPipeline = true`; overrides `GeneratePipelineRunParams()` to validate GitHub URL |
 | [APIViewWeb/Languages/SwaggerLanguageService.cs](../APIViewWeb/Languages/SwaggerLanguageService.cs) | `IsReviewGenByPipeline = true` |
 
-### Pipeline Trigger & Callback
+### b. Pipeline Trigger & Callback
 
 | File | What |
 |------|------|
@@ -79,7 +79,7 @@ Background updates for sandboxed languages are batched in `ReviewManager.UpdateR
 | [APIViewWeb/Repositories/DevopsArtifactRepository.cs](../APIViewWeb/Repositories/DevopsArtifactRepository.cs) | `RunPipeline()` — queues a build in Azure DevOps with the review parameters. |
 | [APIViewWeb/Controllers/ReviewController.cs](../APIViewWeb/Controllers/ReviewController.cs) | `UpdateApiReview` GET endpoint — the callback target that DevOps pipelines hit after generating the token file. |
 
-### Placeholder & UI
+### c. Placeholder & UI
 
 | File | What |
 |------|------|
@@ -87,19 +87,19 @@ Background updates for sandboxed languages are batched in `ReviewManager.UpdateR
 | [APIViewWeb/Managers/CodeFileManager.cs](../APIViewWeb/Managers/CodeFileManager.cs) | `CreateCodeFileAsync()` — returns placeholder when `IsReviewGenByPipeline` is true |
 | [ClientSPA/src/app/_components/review-page/review-page.component.ts](../ClientSPA/src/app/_components/review-page/review-page.component.ts) | Displays "API-Revision content is being generated" message when the API returns HTTP 202 |
 
-### Batch Background Updates
+### d. Batch Background Updates
 
 | File | What |
 |------|------|
 | [APIViewWeb/Managers/ReviewManager.cs](../APIViewWeb/Managers/ReviewManager.cs) | `UpdateReviewsInBackground()` — routes sandboxed languages to `UpdateReviewsUsingPipeline()`. `UpdateReviewsUsingPipeline()` — collects eligible revisions and sends them in batches. |
 
-### Models
+### e. Models
 
 | File | What |
 |------|------|
 | [APIViewWeb/Models/APIRevisionGenerationPipelineParamModel.cs](../APIViewWeb/Models/APIRevisionGenerationPipelineParamModel.cs) | Pipeline parameter payload: `ReviewID`, `RevisionID`, `FileID`, `FileName`, `SourceRepoName`, `SourceBranchName` |
 
-## App Configuration Keys
+## 5. App Configuration Keys
 
 These settings are read from the app configuration (e.g., `appsettings.json`, App Configuration, or environment variables) at runtime. They are **not** committed in source:
 
@@ -112,7 +112,7 @@ These settings are read from the app configuration (e.g., `appsettings.json`, Ap
 | `Azure-Devops-internal-project` | Azure DevOps project name (defaults to `"internal"`). |
 | `apiview-deployment-environment` | Environment suffix appended to pipeline name (e.g., `tools - generate-Python-apireview-staging`). |
 
-## Known Limitations & Issues
+## 6. Known Limitations & Issues
 
 1. **No failure reporting back to the UI.** If the DevOps pipeline fails, the review stays in the "being generated" state indefinitely. Users must manually check the pipeline.
 2. **Latency.** Review generation depends on DevOps pipeline queue time, which can be slow under high load.
@@ -120,7 +120,7 @@ These settings are read from the app configuration (e.g., `appsettings.json`, Ap
 4. **Callback endpoint is unauthenticated GET.** `ReviewController.UpdateApiReview` accepts a GET request with query parameters and no visible authentication, relying on network-level controls.
 5. **Verify-upgradability mode is not supported.** The `UpdateReviewsInBackground` method explicitly skips sandboxed languages when running in `verifyUpgradabilityOnly` mode.
 
-## Implications for Future Work
+## 7. Implications for Future Work
 
 - **Do not add new languages to sandboxing.** The pattern adds operational complexity (pipeline maintenance, failure handling, latency) without sufficient benefit now that parsers are being externalized in other ways.
 - **Existing sandboxed languages will continue to work** but should be migrated away from this pattern when feasible.

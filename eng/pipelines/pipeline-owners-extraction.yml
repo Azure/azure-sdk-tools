@@ -14,10 +14,6 @@ parameters:
             inputs:
               version: 10.0.x
 
-        # TODO: Remove when this is ready for production
-        DraftPr: true
-        CloseAfterOpeningForTesting: true
-
 stages:
 - stage: Run
   variables:
@@ -135,8 +131,6 @@ stages:
               RepoName: ${{ repo.Name }}
               PushArgs: '-f'
               CommitMsg: "[CODEOWNERS] Automated CODEOWNERS update for ${{ repo.Name }}"
-              OpenAsDraft: ${{ repo.DraftPr }}
-              CloseAfterOpenForTesting: ${{ repo.CloseAfterOpeningForTesting }}
               PRTitle: '[CODEOWNERS] Automated CODEOWNERS Update'
               PRBody: |
                 Updating CODEOWNERS

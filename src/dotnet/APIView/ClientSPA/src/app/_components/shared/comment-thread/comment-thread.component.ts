@@ -142,6 +142,9 @@ export class CommentThreadComponent {
     }
 
     const firstComment = this.codePanelRowData.comments[0];
+    if (this.isDiagnostic(firstComment)) {
+      return false;
+    }
     return firstComment.createdBy === this.userProfile?.userName ||
            this.permissionsService.isAdmin(this.userProfile?.permissions) ||
            (firstComment.createdBy === 'azure-sdk' && this.permissionsService.isApproverFor(this.userProfile?.permissions, this.reviewContextService.getLanguage()));
@@ -251,13 +254,13 @@ export class CommentThreadComponent {
         { label: 'Edit', icon: 'pi pi-pencil', command: (event) => this.showEditEditor(event) },
         { label: 'Delete', icon: 'pi pi-trash', command: (event) => this.deleteComment(event) }
       ]});
-    } else if (comment && this.permissionsService.isAdmin(this.userProfile?.permissions)) {
+    } else if (comment && this.permissionsService.isAdmin(this.userProfile?.permissions) && this.canDeleteComment(comment)) {
       // Admins can delete any comment but not edit others' comments
       menu.push({ separator: true });
       menu.push({ items: [
         { label: 'Delete', icon: 'pi pi-trash', command: (event) => this.deleteComment(event) }
       ]});
-    } else if (comment && comment.createdBy == "azure-sdk" && this.permissionsService.isApproverFor(this.userProfile?.permissions, this.reviewContextService.getLanguage())) {
+    } else if (comment && comment.createdBy == "azure-sdk" && this.permissionsService.isApproverFor(this.userProfile?.permissions, this.reviewContextService.getLanguage()) && this.canDeleteComment(comment)) {
       menu.push({ separator: true });
       menu.push({ items: [
         { label: 'Delete', icon: 'pi pi-trash', command: (event) => this.deleteComment(event) }
@@ -947,6 +950,13 @@ export class CommentThreadComponent {
 
   isSystemGenerated(comment: CommentItemModel): boolean {
     return this.isAIGenerated(comment) || this.isDiagnostic(comment);
+  }
+  canDeleteComment(comment: CommentItemModel): boolean {
+    return !this.isDiagnostic(comment);
+  }
+
+  get canResolveThread(): boolean {
+    return !(this.codePanelRowData?.comments || []).some(c => this.isDiagnostic(c));
   }
 
   hasAIInfo(comment: CommentItemModel): boolean {

@@ -318,6 +318,67 @@ public class CommentsManagerTests
         commentsRepoMock.Verify(r => r.UpsertCommentAsync(comment), Times.Once);
     }
 
+    [Fact]
+    public async Task ToggleUpvoteAsync_DiagnosticComment_ThrowsInvalidOperationException()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+        CommentItemModel comment = CreateComment();
+        comment.CommentSource = CommentSource.Diagnostic;
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => manager.ToggleUpvoteAsync(user, "review1", "comment1"));
+
+        commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ToggleDownvoteAsync_DiagnosticComment_ThrowsInvalidOperationException()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+        CommentItemModel comment = CreateComment();
+        comment.CommentSource = CommentSource.Diagnostic;
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => manager.ToggleDownvoteAsync(user, "review1", "comment1"));
+
+        commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ResolveConversation_DiagnosticComment_ThrowsInvalidOperationException()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+        CommentItemModel comment = CreateComment();
+        comment.CommentSource = CommentSource.Diagnostic;
+        commentsRepoMock.Setup(r => r.GetCommentsAsync("review1", "element1"))
+            .ReturnsAsync(new List<CommentItemModel> { comment });
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => manager.ResolveConversation(user, "review1", "element1", comment.ThreadId));
+
+        commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateCommentSeverityAsync_DiagnosticComment_ThrowsInvalidOperationException()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+        CommentItemModel comment = CreateComment();
+        comment.CommentSource = CommentSource.Diagnostic;
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => manager.UpdateCommentSeverityAsync(user, "review1", "comment1", comment.Severity));
+
+        commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()), Times.Never);
+    }
+
     #endregion
 
     #region CommentsBatchOperationAsync Tests
@@ -589,6 +650,68 @@ public class CommentsManagerTests
 
         commentsRepoMock.Verify(r => r.GetCommentAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SoftDeleteCommentAsync_DiagnosticComment_ThrowsInvalidOperationException()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+        CommentItemModel comment = CreateComment();
+        comment.CommentSource = CommentSource.Diagnostic;
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => manager.SoftDeleteCommentAsync(user, "review1", "comment1"));
+
+        commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CommentsBatchOperationAsync_DiagnosticComment_SkipsDeleteAndResolve()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+
+        // Diagnostic comment should be skipped on delete
+        CommentItemModel diagnosticComment = CreateComment(id: "comment1", elementId: "element1");
+        diagnosticComment.CommentSource = CommentSource.Diagnostic;
+
+        // Regular comment should still be deleted
+        CommentItemModel regularComment = CreateComment(id: "comment2", elementId: "element2");
+
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(diagnosticComment);
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment2")).ReturnsAsync(regularComment);
+
+        BatchConversationRequest deleteRequest = new()
+        {
+            CommentIds = new List<string> { "comment1", "comment2" },
+            Disposition = ConversationDisposition.Delete
+        };
+
+        await manager.CommentsBatchOperationAsync(user, "review1", deleteRequest);
+
+        Assert.False(diagnosticComment.IsDeleted); // Diagnostic skipped
+        Assert.True(regularComment.IsDeleted);     // Regular comment deleted
+
+        // Verify resolve is also skipped for diagnostic comments
+        CommentItemModel diagnosticToResolve = CreateComment(id: "comment3", elementId: "element3");
+        diagnosticToResolve.CommentSource = CommentSource.Diagnostic;
+
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment3")).ReturnsAsync(diagnosticToResolve);
+        commentsRepoMock.Setup(r => r.GetCommentsAsync("review1", "element3"))
+            .ReturnsAsync(new List<CommentItemModel> { diagnosticToResolve });
+
+        BatchConversationRequest resolveRequest = new()
+        {
+            CommentIds = new List<string> { "comment3" },
+            Disposition = ConversationDisposition.Resolve
+        };
+
+        await manager.CommentsBatchOperationAsync(user, "review1", resolveRequest);
+
+        Assert.False(diagnosticToResolve.IsResolved); // Resolve skipped for diagnostics
+        commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.Is<CommentItemModel>(c => c.Id == "comment3")), Times.Never);
     }
 
     [Fact]

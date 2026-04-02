@@ -288,6 +288,7 @@ def run_evals(
     save: bool = False,
     use_recording: bool = False,
     style: str = "compact",
+    environment: str = "production",
 ):
     """
     Runs the specified test case(s).
@@ -298,13 +299,13 @@ def run_evals(
     from evals._runner import EvaluationRunner
 
     targets = discover_targets(test_paths)
-    runner = EvaluationRunner(num_runs=num_runs, use_recording=use_recording, verbose=(style == "verbose"))
+    runner = EvaluationRunner(num_runs=num_runs, use_recording=use_recording, verbose=(style == "verbose"), environment=environment)
     try:
         results = runner.run(targets)
         if save:
             report = runner.generate_report(results)
             for doc in report:
-                db = DatabaseManager.get_instance()
+                db = DatabaseManager.get_instance(environment=environment)
                 try:
                     db.evals.upsert(doc["id"], data=doc)
                 except Exception as exc:
@@ -2004,6 +2005,14 @@ class CliCommandsLoader(CLICommandsLoader):
                 default="compact",
                 help="Choose whether to show only failing and partial test cases (compact) or to also show passing ones (verbose)",
             )
+            ac.argument(
+                "environment",
+                type=str,
+                help="The APIView environment. Defaults to 'production'.",
+                options_list=["--environment"],
+                default="production",
+                choices=["production", "staging"],
+            )
 
         with ArgumentsContext(self, "kb") as ac:
             ac.argument(
@@ -2427,6 +2436,18 @@ class CliCommandsLoader(CLICommandsLoader):
 
 def run_cli():
     """Run the CLI application."""
+    # Pre-set ENVIRONMENT_NAME from --environment so that all downstream code
+    # (SettingsManager, DatabaseManager, SearchManager, etc.) can resolve the
+    # environment without every function explicitly threading the parameter.
+    # The --environment flag is registered globally with a default of "production".
+    if not os.environ.get("ENVIRONMENT_NAME"):
+        env = "production"
+        args = sys.argv[1:]
+        if "--environment" in args:
+            idx = args.index("--environment")
+            if idx + 1 < len(args):
+                env = args[idx + 1]
+        os.environ["ENVIRONMENT_NAME"] = env
     cli = CLI(cli_name="avc", commands_loader_cls=CliCommandsLoader)
     exit_code = cli.invoke(sys.argv[1:])
     sys.exit(exit_code)

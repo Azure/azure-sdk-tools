@@ -14,7 +14,7 @@ from src._apiview import (
     get_active_reviews,
     get_comments_in_date_range,
 )
-from src._database_manager import get_database_manager
+from src._database_manager import DatabaseManager
 from src._models import APIViewComment
 from src._prompt_runner import run_prompt
 
@@ -110,7 +110,7 @@ def get_metrics_report(
     if not data:
         raise ValueError("No data found for metrics report")
     if save:
-        db_manager = get_database_manager()
+        db_manager = DatabaseManager.get_instance(environment=environment)
         cosmos_client = db_manager.get_container_client("metrics")
         for doc in data.values():
             # do not save language-agnostic overall metrics to CosmosDB. PowerBI will calculate these.

@@ -10,7 +10,6 @@ Module for managing the database connections and operations for APIView Copilot.
 
 import time
 from enum import Enum
-from functools import lru_cache
 from typing import Any
 
 from azure.cosmos import CosmosClient
@@ -257,9 +256,3 @@ class EvalsContainer(BasicContainer):
     def run_indexer(self):
         # evaluations container does not have an indexer
         pass
-
-
-@lru_cache()
-def get_database_manager():
-    """Get a singleton instance of the DatabaseManager."""
-    return DatabaseManager.get_instance()

@@ -42,7 +42,7 @@ variables:
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
   parameters:
-    Use1ESOfficial: true
+    Use1ESOfficial: false
     stages:
       - stage: DeployPipeline
         displayName: 'Deploy Server (${{ parameters.environment }} / ${{ parameters.slot }})'
@@ -76,24 +76,7 @@ extends:
                 failOnStderr: true
                 continueOnError: false
 
-              # 3. Install Python dependencies
-              - task: AzureCLI@2
-                condition: ne('${{ parameters.environment }}','prod')
-                displayName: 'Install Python Dependencies'
-                continueOnError: false
-                inputs:
-                  azureSubscription: 'azuresdkqabot-dev'
-                  scriptType: bash
-                  scriptLocation: inlineScript
-                  inlineScript: |
-                    set -euo pipefail
-                    pip install --pre \
-                      --target "$(workingDirectory)/site-packages" \
-                      -r "$(workingDirectory)/requirements.txt"
-                    echo "Installed packages to $(workingDirectory)/site-packages"
-                    ls -la "$(workingDirectory)/site-packages" | head -20
-
-              # 4. Build & push (prod reuses existing image)
+              # 3. Build & push (prod reuses existing image)
               - task: AzureCLI@2
                 condition: ne('${{ parameters.environment }}','prod')
                 displayName: 'Build & Push Image'

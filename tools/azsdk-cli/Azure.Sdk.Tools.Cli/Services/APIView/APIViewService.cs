@@ -1,6 +1,8 @@
 
 namespace Azure.Sdk.Tools.Cli.Services.APIView;
 
+using System.Net;
+
 public interface IAPIViewService
 {
     Task<string?> GetRevisionContent(string apiRevisionId, string reviewId, string contentReturnType, CancellationToken ct);
@@ -243,16 +245,22 @@ public class APIViewService : IAPIViewService
         }
 
         string endpoint = $"/review?{string.Join("&", queryParams)}";
-        (string? result, _) = await _httpService.GetAsync(endpoint, ct);
 
-        if (string.IsNullOrWhiteSpace(result))
+        try
         {
-            _logger.LogWarning("No review URL found for package {PackageName} ({Language}){VersionInfo}", 
-                packageName, language, string.IsNullOrEmpty(version) ? "" : $" version {version}");
+            (string? result, _) = await _httpService.GetAsync(endpoint, ct);
+
+            if (string.IsNullOrWhiteSpace(result))
+            {
+                return null;
+            }
+
+            var json = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(result);
+            return json.GetProperty("url").GetString();
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
             return null;
         }
-
-        var json = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(result);
-        return json.GetProperty("url").GetString();
     }
 }

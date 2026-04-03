@@ -498,6 +498,7 @@ public class ApiViewReviewToolTests
         APIViewResponse response = await apiViewReviewTool.GetReviewUrlByPackage("Azure.Storage.Blobs", "C#", null, CancellationToken.None);
 
         Assert.That(response.ResponseError, Does.Contain("Failed to get review URL"));
+        Assert.That(response.ResponseError, Does.Contain("Azure.Storage.Blobs"));
         Assert.That(response.ResponseError, Does.Contain("Connection refused"));
     }
 

@@ -260,7 +260,9 @@ public class APIViewReviewTool : MCPMultiCommandTool
         }
         catch (Exception ex)
         {
-            return new APIViewResponse { ResponseError = $"Failed to get review URL: {ex.Message}" };
+            string context = $"package '{package}' ({language})" +
+                             (!string.IsNullOrEmpty(version) ? $" version '{version}'" : "");
+            return new APIViewResponse { ResponseError = $"Failed to get review URL for {context}: {ex.Message}" };
         }
     }
 

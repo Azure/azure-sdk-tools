@@ -77,12 +77,25 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
         {
             sb.AppendLine($"ErrorCode: {ErrorCode}");
         }
+        if (!string.IsNullOrWhiteSpace(BuildResult))
+        {
+            sb.AppendLine("Build Output:");
+            sb.AppendLine(BuildResult);
+        }
         if (TypeSpecChangesSummary is { Count: > 0 })
         {
             sb.AppendLine("TypeSpec Changes:");
             foreach (var change in TypeSpecChangesSummary)
             {
                 sb.AppendLine($"  - {change}");
+            }
+        }
+        if (AppliedPatches is { Count: > 0 })
+        {
+            sb.AppendLine("Code customization patches:");
+            foreach (var patch in AppliedPatches)
+            {
+                sb.AppendLine($"  - {patch.FilePath}: {patch.Description} ({patch.ReplacementCount} replacement(s))");
             }
         }
         return sb.ToString();

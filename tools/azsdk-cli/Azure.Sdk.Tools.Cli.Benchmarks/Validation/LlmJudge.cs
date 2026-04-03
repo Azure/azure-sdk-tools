@@ -54,13 +54,13 @@ public class LlmJudge
                 InfiniteSessions = new InfiniteSessionConfig { Enabled = false }
             };
 
-            await using var session = await client.CreateSessionAsync(sessionConfig);
+            await using var session = await client.CreateSessionAsync(sessionConfig, cancellationToken);
 
             var messageOptions = new MessageOptions { Prompt = userPrompt };
-            await session.SendAndWaitAsync(messageOptions, TimeSpan.FromMinutes(2));
+            await session.SendAndWaitAsync(messageOptions, TimeSpan.FromMinutes(2), cancellationToken);
 
             // Get the last assistant message content
-            var messages = await session.GetMessagesAsync();
+            var messages = await session.GetMessagesAsync(cancellationToken);
             var lastAssistantMessage = messages
                 .OfType<AssistantMessageEvent>()
                 .LastOrDefault();

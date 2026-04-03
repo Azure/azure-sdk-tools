@@ -22,12 +22,12 @@
 ###########
 # Files used to manage spelling version and installation
 ###########
-/eng/common/spelling @danieljurek @mikeharder
+/eng/common/spelling/ @danieljurek @mikeharder
 
 ###########
 # Files used to manage tsp-client version and installation
 ###########
-/eng/common/tsp-client @catalinaperalta @mikeharder
+/eng/**/tsp-client/ @catalinaperalta @mikeharder
 
 ###########
 # Eng Sys Tools
@@ -40,7 +40,7 @@
 /tools/github-event-processor/          @benbp @jsquire @ronniegeraghty
 /tools/github-team-user-store/          @weshaggard
 /tools/issue-labeler/                   @jsquire @jeo02 @radhgupta
-/tools/js-sdk-release-tools/            @qiaozha @MaryGao @JialinHuang803
+/tools/js-sdk-release-tools/            @qiaozha @MaryGao @JialinHuang803 @jeremymeng
 /tools/keyvault-mock-attestation/       @maorleger
 /tools/perf-automation/                 @mikeharder @benbp
 /tools/perf-automation/**/*Rust*.cs     @heaths @LarryOsterman @RickWinter

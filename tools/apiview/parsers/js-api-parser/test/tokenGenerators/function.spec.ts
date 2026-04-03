@@ -525,13 +525,24 @@ describe("functionTokenGenerator", () => {
       expect(restParamToken?.Kind).toBe(TokenKind.Text);
     });
 
-    it("handles destructured parameters", () => {
+    it("handles destructured parameters by filtering out raw destructuring pattern", () => {
+      // API Extractor reports destructured parameters as two entries:
+      // 1. Raw destructuring pattern (name starts with "{") - should be filtered out
+      // 2. Synthetic normalized parameter with the actual type info - should be kept
       const mockFunction = createMockFunction(
         "destructure",
         [],
         [
           {
             name: "{ a, b }",
+            isOptional: false,
+            parameterTypeExcerpt: {
+              text: "",
+              spannedTokens: [],
+            },
+          } as unknown as Parameter,
+          {
+            name: "input",
             isOptional: false,
             parameterTypeExcerpt: {
               text: "{ a: number; b: number }",
@@ -550,7 +561,10 @@ describe("functionTokenGenerator", () => {
       const { tokens } = functionTokenGenerator.generate(mockFunction, false);
 
       const tokenValues = tokens.map((t) => t.Value);
-      expect(tokenValues).toContain("{ a, b }");
+      // The raw destructuring pattern should be filtered out
+      expect(tokenValues).not.toContain("{ a, b }");
+      // The synthetic normalized parameter should be kept
+      expect(tokenValues).toContain("input");
       expect(tokenValues).toContain("{ a: number; b: number }");
     });
 

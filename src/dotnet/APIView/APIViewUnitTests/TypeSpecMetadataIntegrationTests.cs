@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -10,6 +11,7 @@ using ApiView;
 using APIViewWeb;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
+using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.Extensions.Logging;
@@ -27,6 +29,7 @@ public class TypeSpecMetadataIntegrationTests
     private readonly Mock<ILogger<ProjectsManager>> _mockProjectsLogger;
     private readonly Mock<ICosmosProjectRepository> _mockProjectsRepository;
     private readonly Mock<ICosmosReviewRepository> _mockReviewsRepository;
+    private readonly Mock<INamespaceManager> _mockNamespaceManager;
     private readonly ProjectsManager _projectsManager;
 
     public TypeSpecMetadataIntegrationTests()
@@ -37,6 +40,7 @@ public class TypeSpecMetadataIntegrationTests
         _mockCodeFileRepository = new Mock<IBlobCodeFileRepository>();
         _mockOriginalsRepository = new Mock<IBlobOriginalsRepository>();
         _mockProjectsLogger = new Mock<ILogger<ProjectsManager>>();
+        _mockNamespaceManager = new Mock<INamespaceManager>();
 
         List<LanguageService> languageServices = new();
 
@@ -51,6 +55,7 @@ public class TypeSpecMetadataIntegrationTests
         _projectsManager = new ProjectsManager(
             _mockProjectsRepository.Object,
             _mockReviewsRepository.Object,
+            _mockNamespaceManager.Object,
             _mockProjectsLogger.Object);
     }
 
@@ -161,7 +166,10 @@ public class TypeSpecMetadataIntegrationTests
         Assert.Equal("Azure.Analytics.Purview", capturedProject.ExpectedPackages["DotNet"].PackageName);
 
         Assert.Equal(capturedProject.Id, typeSpecReview.ProjectId);
-        _mockReviewsRepository.Verify(r => r.UpsertReviewAsync(typeSpecReview), Times.Once);
+        _mockProjectsRepository.Verify(r => r.UpsertProjectAsync(capturedProject), Times.Once);
+        _mockReviewsRepository.Verify(r => r.UpsertReviewsAsync(
+            It.Is<IEnumerable<ReviewListItemModel>>(revs => revs.Count() == 1 && revs.First().Id == typeSpecReview.Id)),
+            Times.Once);
     }
 
     [Fact]
@@ -178,7 +186,7 @@ public class TypeSpecMetadataIntegrationTests
                 ["JavaScript"] =
                     new() { PackageName = "@azure/core-rest-pipeline", Namespace = "@azure/core-rest-pipeline" }
             },
-            ReviewIds = new HashSet<string>(),
+            Reviews = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase),
             ChangeHistory = new List<ProjectChangeHistory>()
         };
 
@@ -203,7 +211,7 @@ public class TypeSpecMetadataIntegrationTests
         Assert.NotNull(linkedProject);
         Assert.Equal("project-azure-core", linkedProject.Id);
         Assert.Equal("project-azure-core", pythonReview.ProjectId);
-        Assert.Contains("python-review-azure-core", linkedProject.ReviewIds);
+        Assert.True(linkedProject.Reviews.ContainsValue("python-review-azure-core"));
 
         _mockProjectsRepository.Verify(r => r.GetProjectByExpectedPackageAsync("Python", "azure-core"), Times.Once);
         _mockReviewsRepository.Verify(r => r.UpsertReviewAsync(pythonReview), Times.Once);
@@ -223,7 +231,7 @@ public class TypeSpecMetadataIntegrationTests
                 ["Python"] = new() { PackageName = "azure-storage-old", Namespace = "azure.storage" }
             },
             ChangeHistory = new List<ProjectChangeHistory>(),
-            ReviewIds = new HashSet<string>()
+            Reviews = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         };
 
         ReviewListItemModel typeSpecReview = new()

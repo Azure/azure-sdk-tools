@@ -68,6 +68,17 @@ class FunctionNode(NodeEntityBase):
         self.hidden = False
         try:
             self.node = node or astroid.extract_node(inspect.getsource(obj))
+            # astroid.extract_node() finds the first top-level AST node in the source
+            # without `# @` markers, so it can return non-FunctionDef nodes (e.g. a
+            # ClassDef) when getsource() returns the enclosing class. Fall back to
+            # reflection-based parsing in that case.
+            if not isinstance(self.node, (astroid.FunctionDef, astroid.AsyncFunctionDef)):
+                logging.debug(
+                    "astroid.extract_node returned unexpected node type %s for %s; falling back to reflection",
+                    type(self.node).__name__,
+                    self.name,
+                )
+                self.node = None
         except OSError:
             self.node = None
         self._inspect()
@@ -377,6 +388,9 @@ class FunctionNode(NodeEntityBase):
             review_line.add_type(
                 self.return_type, apiview=self.apiview, has_suffix_space=False
             )
+
+        # Add punctuation for closer alignment with syntactically correct Python file
+        review_line.add_punctuation(": ...", has_suffix_space=False)
 
         review_line = self._reviewline_if_needed(
             param_lines, review_line, use_multi_line

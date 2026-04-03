@@ -1,16 +1,47 @@
 # Release History
 
-## 0.6.2 (Unreleased)
+## 0.6.6 (2026-04-01)
+
+### Features Added
+
+- Added support for CODEOWNERS "Section" in Label Owners (defaults to "Client Libraries")
+
+### Bugs Fixed
+
+- Fixed sample translation to preserve source directory structure when writing translated files
+
+### Other Changes
+
+- CODEOWNERS generator supports file paths and doesn't assume all paths are directories
+
+## 0.6.5 (2026-03-27)
+
+### Features Added
+
+- Implemented version update for Go language service
+- Added team support for CODEOWNERS add/remove tools
+
+## 0.6.4 (2026-03-25)
+
+### Features Added
+
+- Added a new CLI command to ingest telemetry events from Copilot hooks
+
+## 0.6.3 (2026-03-12)
+
+### Bugs Fixed
+
+- Fixed a bug that caused the update release status CLI command to fail when a release plan was not found for a package.
+
+## 0.6.2 (2026-03-11)
 
 ### Features Added
 
 - Added MCP progress reporting to long running tools including SDK generation, build, and pack tools
 
-### Breaking Changes
-
 ### Bugs Fixed
 
-### Other Changes
+- Fixed a bug in get release plan CLI when release plan is fetched using api spec pull request.
 
 ## 0.6.1 (2026-03-05)
 

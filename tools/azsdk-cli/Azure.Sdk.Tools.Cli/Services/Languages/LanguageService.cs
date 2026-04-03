@@ -296,9 +296,12 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// Runs all tests in the specified package.
         /// </summary>
         /// <param name="packagePath">The path to the package containing the tests.</param>
+        /// <param name="testMode">The test mode to use (Playback, Record, or Live).</param>
+        /// <param name="liveTestEnvironment">Optional dictionary of environment variables for live/record test runs (e.g. from test resource deployment).</param>
+        /// <param name="timeout">Optional timeout for the test run. When null, each language service uses its own default.</param>
         /// <param name="ct">A cancellation token.</param>
         /// <returns>A <see cref="TestRunResponse"/> containing process output details.</returns>
-        public virtual Task<TestRunResponse> RunAllTests(string packagePath, CancellationToken ct = default)
+        public virtual Task<TestRunResponse> RunAllTests(string packagePath, TestMode testMode = TestMode.Playback, IDictionary<string, string>? liveTestEnvironment = null, TimeSpan? timeout = null, CancellationToken ct = default)
         {
             return Task.FromResult(new TestRunResponse(0, "This is not an applicable operation for this language."));
         }
@@ -311,7 +314,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <param name="oldGenerationPath">Previous generation</param>
         /// <param name="newGenerationPath">New/current generation root.</param>
         /// <returns>List of detected API changes (empty if no differences).</returns>
-        public virtual Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath)
+        public virtual Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath, CancellationToken ct)
         {
             List<ApiChange> result = [];
             return Task.FromResult(result);
@@ -329,19 +332,19 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         }
 
         /// <summary>
-        /// Applies patches to customization files based on build errors.
+        /// Applies patches to customization files based on build context.
         /// This is a mechanical worker - it applies safe patches and returns results.
-        /// The Classifier (Phase A) does the thinking and routing.
+        /// The Classifier does the thinking and routing.
         /// </summary>
         /// <param name="customizationRoot">Path to the customization root directory</param>
         /// <param name="packagePath">Path to the package directory containing generated code</param>
-        /// <param name="buildError">The build error that triggered repair</param>
+        /// <param name="buildContext">Combined build errors and classifier analysis that triggered repair</param>
         /// <param name="ct">Cancellation token</param>
         /// <returns>List of applied patches</returns>
         public virtual Task<List<AppliedPatch>> ApplyPatchesAsync(
             string customizationRoot,
             string packagePath,
-            string buildError,
+            string buildContext,
             CancellationToken ct)
         {
             return Task.FromResult(new List<AppliedPatch>());
@@ -442,7 +445,9 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                 }
             }
 
-            // Step 1: Update the changelog release date (common across all languages)
+            // Step 1: Update the changelog entry title (common across all languages)
+            // If the latest entry's version matches the target version, only update the release date.
+            // Otherwise, replace the latest entry title with the new version and date.
             var changelogPath = changelogHelper.GetChangelogPath(packagePath);
             if (changelogPath == null)
             {
@@ -457,9 +462,46 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
             }
 
             // releaseDate is already validated and defaulted by VersionUpdateTool
-            // Update the changelog with the release date
-            // This will also validate that an entry exists for the version
-            var changelogResult = changelogHelper.UpdateReleaseDate(changelogPath, targetVersion, releaseDate);
+            // Determine whether to update just the date or replace the entire latest entry title
+            var changelogData = changelogHelper.ParseChangelog(changelogPath);
+            if (changelogData == null)
+            {
+                return PackageOperationResponse.CreateFailure(
+                    $"Error parsing changelog {changelogPath}",
+                    packageInfo: packageInfo,
+                    nextSteps: [
+                        "Ensure CHANGELOG.md exists and is properly formatted",
+                        "Then run this tool again to set the version and release date"
+                    ]);
+            } 
+            else if (changelogData.Entries.Count == 0)
+            {
+              logger.LogWarning("No changelog entries found in: {ChangelogPath}", changelogPath);
+                return PackageOperationResponse.CreateFailure(
+                    "No changelog entries found in CHANGELOG.md.",
+                    packageInfo: packageInfo,
+                    nextSteps: [
+                        "Run another tool to update the changelog content first",
+                        "Then run this tool again to set the version and release date"
+                    ]);
+            }
+
+            var latestEntry = changelogData.Entries[0];
+            ChangelogUpdateResult changelogResult;
+
+            if (string.Equals(latestEntry.Version, targetVersion, StringComparison.OrdinalIgnoreCase))
+            {
+                // Version matches - only update the release date
+                logger.LogInformation("Latest changelog entry version matches target version {Version}. Updating release date only.", targetVersion);
+                changelogResult = changelogHelper.UpdateReleaseDate(changelogPath, targetVersion, releaseDate);
+            }
+            else
+            {
+                // Version doesn't match - replace the latest entry title with new version and date
+                logger.LogInformation("Latest changelog entry version {LatestVersion} differs from target version {TargetVersion}. Replacing latest entry title.", latestEntry.Version, targetVersion);
+                changelogResult = changelogHelper.UpdateLatestEntryTitle(changelogPath, targetVersion, releaseDate);
+            }
+
             if (!changelogResult.Success)
             {
                 logger.LogWarning("Failed to update changelog: {Message}", changelogResult.Message);
@@ -480,7 +522,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
             {
                 // Changelog was updated but version files failed - report partial success
                 return PackageOperationResponse.CreateSuccess(
-                    $"Changelog release date updated to {releaseDate}, but version file update requires additional steps.",
+                    $"Changelog updated to {targetVersion} with release date {releaseDate}, but version file update requires additional steps.",
                     nextSteps: versionUpdateResult.NextSteps?.ToArray() ?? ["Manually update the package version in project files"],
                     result: "partial",
                     packageInfo: packageInfo);
@@ -586,7 +628,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
 
                 PackageInfo? packageInfo = await GetPackageInfo(packagePath, ct);
 
-                var (configContentType, configValue) = await specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.Build);
+                var (configContentType, configValue) = await specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.Build, ct);
                 if (configContentType == SpecGenSdkConfigContentType.Unknown || string.IsNullOrEmpty(configValue))
                 {
                     return (false, "No build configuration found or failed to prepare the build command.", packageInfo);

@@ -7,7 +7,7 @@
 import json
 from abc import ABC, abstractmethod
 
-from src._utils import run_prompty
+from src._prompt_runner import run_prompt
 
 
 class MentionWorkflow(ABC):
@@ -26,8 +26,9 @@ class MentionWorkflow(ABC):
         code: str,
         package_name: str,
         trigger_comment: dict,
-        other_comments: dict,
+        other_comments: list[dict],
         reasoning: str,
+        source_comment_id: str = None,
     ):
         self.language = language
         self.code = code
@@ -35,6 +36,7 @@ class MentionWorkflow(ABC):
         self.trigger_comment = trigger_comment
         self.other_comments = other_comments
         self.reasoning = reasoning
+        self.source_comment_id = source_comment_id
         self.plan = None
         self.results = None
 
@@ -54,7 +56,7 @@ class MentionWorkflow(ABC):
             "other_comments": self.other_comments,
             "reasoning": self.reasoning,
         }
-        raw_results = run_prompty(folder="mention", filename=self.prompty_filename, inputs=inputs)
+        raw_results = run_prompt(folder="mention", filename=self.prompty_filename, inputs=inputs)
         try:
             results = json.loads(raw_results)
             return results
@@ -76,7 +78,7 @@ class MentionWorkflow(ABC):
         )
         inputs = {"results": filtered_results}
         try:
-            summary = run_prompty(folder="mention", filename=self.summarize_prompt_file, inputs=inputs)
+            summary = run_prompt(folder="mention", filename=self.summarize_prompt_file, inputs=inputs)
             return summary
         except Exception as e:
             print(f"Error summarizing results: {e}")

@@ -27,6 +27,7 @@ namespace APIViewUnitTests
         private readonly Mock<IAPIRevisionsManager> _mockApiRevisionsManager;
         private readonly Mock<IAutoReviewService> _mockAutoReviewService;
         private readonly Mock<IConfiguration> _mockConfiguration;
+        private readonly Mock<INamespaceManager> _mockNamespaceManager;
         private readonly List<LanguageService> _languageServices;
         private readonly TelemetryClient _telemetryClient;
         private readonly AutoReviewController _controller;
@@ -38,6 +39,7 @@ namespace APIViewUnitTests
             _mockApiRevisionsManager = new Mock<IAPIRevisionsManager>();
             _mockAutoReviewService = new Mock<IAutoReviewService>();
             _mockConfiguration = new Mock<IConfiguration>();
+            _mockNamespaceManager = new Mock<INamespaceManager>();
             _languageServices = new List<LanguageService>
             {
                 new MockLanguageService("C#", false)
@@ -50,6 +52,7 @@ namespace APIViewUnitTests
                 _mockAutoReviewService.Object,
                 _languageServices,
                 _mockConfiguration.Object,
+                _mockNamespaceManager.Object,
                 _telemetryClient);
 
             // Set up the HTTP context with a mock user principal
@@ -874,28 +877,6 @@ namespace APIViewUnitTests
             {
                 HttpContext = httpContext
             };
-        }
-
-        private class MockLanguageService : LanguageService
-        {
-            private readonly string _name;
-            private readonly bool _usesTreeStyleParser;
-
-            public MockLanguageService(string name, bool usesTreeStyleParser)
-            {
-                _name = name;
-                _usesTreeStyleParser = usesTreeStyleParser;
-            }
-
-            public override string Name => _name;
-            public override string[] Extensions => new[] { ".json" };
-            public override string VersionString => "1.0";
-            public override bool CanUpdate(string versionString) => false;
-            public override Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis, string crossLanguageMetadata = null) => Task.FromResult<CodeFile>(null);
-            public override bool UsesTreeStyleParser => _usesTreeStyleParser;
-            public override CodeFile GetReviewGenPendingCodeFile(string fileName) => null;
-            public override bool GeneratePipelineRunParams(APIRevisionGenerationPipelineParamModel param) => false;
-            public override bool CanConvert(string versionString) => false;
         }
     }
 }

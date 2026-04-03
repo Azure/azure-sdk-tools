@@ -53,18 +53,11 @@ public class MetadataUpdateToolTests
         _logger = new TestLogger<MetadataUpdateTool>();
 
         _mockLanguageService = new Mock<LanguageService>();
-        _logger = new TestLogger<MetadataUpdateTool>();
-
-        // Setup language service to return test package info
-        _mockLanguageService.Setup(x => x.GetPackageInfo(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(_testPackageInfo);
-        _mockLanguageService.Setup(x => x.Language).Returns(SdkLanguage.DotNet);
-        _languageServices = new List<LanguageService> { _mockLanguageService.Object };
 
         // Create temp directory for tests
         _tempDirectory = TempDirectory.Create("MetadataUpdateToolTests");
 
-        // Setup test data
+        // Setup test data — must be initialized before mock setups that reference it
         _testPackageInfo = new PackageInfo
         {
             PackagePath = TestPackagePath,
@@ -77,6 +70,14 @@ public class MetadataUpdateToolTests
             Language = SdkLanguage.DotNet,
             SdkType = SdkType.Dataplane
         };
+
+        // Setup language service to return test package info
+        _mockLanguageService.Setup(x => x.GetPackageInfo(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(_testPackageInfo);
+        _mockLanguageService.Setup(x => x.UpdateMetadataAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(PackageOperationResponse.CreateSuccess("No package metadata updates need to be performed."));
+        _mockLanguageService.Setup(x => x.Language).Returns(SdkLanguage.DotNet);
+        _languageServices = new List<LanguageService> { _mockLanguageService.Object };
 
         _successResponse = new PackageOperationResponse
         {
@@ -184,7 +185,7 @@ public class MetadataUpdateToolTests
         var testPath = _tempDirectory.DirectoryPath;
         _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync(TestRepoRoot);
         _mockGitHelper.Setup(x => x.GetRepoNameAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
-        _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateMetadata))
+        _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateMetadata, It.IsAny<CancellationToken>()))
             .ReturnsAsync((SpecGenSdkConfigContentType.Command, TestConfigValue));
 
         var mockProcessOptions = new ProcessOptions("echo", ["test"]);
@@ -232,7 +233,7 @@ public class MetadataUpdateToolTests
         var testPath = _tempDirectory.DirectoryPath;
         _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync(TestRepoRoot);
         _mockGitHelper.Setup(x => x.GetRepoNameAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
-        _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateMetadata))
+        _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateMetadata, It.IsAny<CancellationToken>()))
             .ReturnsAsync((SpecGenSdkConfigContentType.Command, TestConfigValue));
 
         _mockSpecGenSdkConfigHelper.Setup(x => x.CreateProcessOptions(
@@ -262,7 +263,7 @@ public class MetadataUpdateToolTests
         var testPath = _tempDirectory.DirectoryPath;
         _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync(TestRepoRoot);
         _mockGitHelper.Setup(x => x.GetRepoNameAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
-        _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateMetadata))
+        _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateMetadata, It.IsAny<CancellationToken>()))
             .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
 
         _mockLanguageService.Setup(x => x.UpdateMetadataAsync(testPath, It.IsAny<CancellationToken>()))
@@ -303,7 +304,7 @@ public class MetadataUpdateToolTests
         
         _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync(TestRepoRoot);
         _mockGitHelper.Setup(x => x.GetRepoNameAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
-        _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateMetadata))
+        _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateMetadata, It.IsAny<CancellationToken>()))
             .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
 
         _mockLanguageService.Setup(x => x.UpdateMetadataAsync(testPath, cancellationToken))
@@ -330,7 +331,7 @@ public class MetadataUpdateToolTests
         
         _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync(TestRepoRoot);
         _mockGitHelper.Setup(x => x.GetRepoNameAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
-        _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateMetadata))
+        _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateMetadata, It.IsAny<CancellationToken>()))
             .ReturnsAsync((SpecGenSdkConfigContentType.Command, scriptContent));
 
         var processOptions = new ProcessOptions("echo", ["test"]);
@@ -360,7 +361,7 @@ public class MetadataUpdateToolTests
         Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
         
         // Verify the complete flow
-        _mockSpecGenSdkConfigHelper.Verify(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateMetadata), Times.Once);
+        _mockSpecGenSdkConfigHelper.Verify(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateMetadata, It.IsAny<CancellationToken>()), Times.Once);
         _mockSpecGenSdkConfigHelper.Verify(x => x.CreateProcessOptions(
             SpecGenSdkConfigContentType.Command,
             scriptContent,

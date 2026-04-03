@@ -2,6 +2,7 @@
 @{
 	Layout = "/EmailTemplates/_EmailLayout.cshtml";
 	ViewData["EmailTitle"] = "New Comment on Review";
+	ViewData["EmailPreheader"] = $"{Model.CommentedBy} commented on this review.";
 }
 
 <p class="section"><a href="@Model.CommenterProfileUrl"><strong>@Model.CommentedBy</strong></a> commented on this review.</p>

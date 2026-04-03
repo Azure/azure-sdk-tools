@@ -1,4 +1,14 @@
 # NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+parameters:
+  - name: RunBenchmarks
+    displayName: Run Benchmarks
+    type: boolean
+    default: false
+  - name: AuthoringSpecRepo
+    displayName: Authoring spec repo
+    type: string
+    default: Azure/azure-rest-api-specs:main
+
 trigger:
   branches:
     include:
@@ -22,7 +32,7 @@ variables:
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
-    ${{ if eq(variables['Build.SourceBranchName'], 'main') }}:
+    ${{ if and(eq(variables['Build.SourceBranchName'], 'main'), ne(variables['Build.Reason'], 'Schedule')) }}:
       SkipReleaseStage: false
     PublishEnvironment: 'package-publish'
     ReleaseBinaries: true
@@ -31,6 +41,17 @@ extends:
     VerifyChangelog: true
     # GitHub.Copilot.SDK dependency is not strong name signed. Skip validation in order to sign azsdk cli.
     RequireStrongNames: false
+    # Install copilot-cli separately from the copilot agent sdk.
+    # We skip the auto-bundling due to network/compliance restrictions
+    TestPreSteps:
+      - task: NodeTool@0
+        inputs:
+          versionSpec: '24.x'
+        displayName: Install Node.js
+      - script: |
+          npm install --global @github/copilot@1.0.5  --registry https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-tools/npm/registry/
+          copilot --version
+        displayName: Install Copilot CLI
     StandaloneExeMatrix:
       - rid: linux-x64
         framework: net8.0
@@ -56,8 +77,83 @@ extends:
           TargetRepoName: azure-rest-api-specs
           TargetRepoOwner: Azure
           TargetRepoCommit: main
+      - ${{ if or(eq(parameters.RunBenchmarks, true), eq(variables['Build.Reason'], 'Schedule')) }}:
+        - job: Run_Benchmark
+          displayName: 'Run Benchmark'
+          condition: always()
+          variables:
+            - group: 'AzSDK_Eval_Variable_group'
+          pool:
+            name: $(LINUXPOOL)
+            image: $(LINUXVMIMAGE)
+            os: linux
+          templateContext:
+            outputs:
+              - output: pipelineArtifact
+                displayName: 'Publish benchmark report'
+                condition: always()
+                artifactName: benchmark-report
+                targetPath: $(Build.ArtifactStagingDirectory)/benchmark-report.md
+          steps:
+          - checkout: none
+          - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+            parameters:
+              SkipCheckoutNone: true
+              Repositories:
+                - Name: $(Build.Repository.Name)
+                  Commitish: $(Build.SourceVersion)
+                  WorkingDirectory: $(System.DefaultWorkingDirectory)/$(Build.Repository.Name)
+              Paths:
+                - 'tools/azsdk-cli/Azure.Sdk.Tools.Cli.Benchmarks/**'
+                - 'eng/common/**'
+                - 'tools/sdk-ai-bots/azure-sdk-qa-bot-backend/**'
+          - template: /eng/pipelines/templates/steps/install-dotnet.yml
+          - task: GoTool@0
+            inputs:
+              version: "1.24.1"
+            displayName: "Install Go"
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: 'azuresdkqabot-dev'
+              addSpnToEnvironment: true
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                echo "##vso[task.setvariable variable=AZURE_CLIENT_ID]$servicePrincipalId"
+                echo "##vso[task.setvariable variable=AZURE_TENANT_ID]$tenantId"
+                echo "##vso[task.setvariable variable=AZURE_SUBSCRIPTION_ID]$(az account show --query id -o tsv)"
+                echo "$idToken" > "$(Agent.BuildDirectory)/id_token"
+                echo "##vso[task.setvariable variable=AZURE_FEDERATED_TOKEN_FILE]$(Agent.BuildDirectory)/id_token"
+          
+          - script: |
+              export GOPROXY=https://proxy.golang.org,direct
+              go build -o qa-bot-service
+              chmod +x qa-bot-service
+              ./qa-bot-service &
+              sleep 20
+              lsof -ti:8088
+            displayName: 'start backend AI agent service'
+            workingDirectory: $(System.DefaultWorkingDirectory)/$(Build.Repository.Name)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
+            env:
+              AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
+              AZURE_TENANT_ID: $(AZURE_TENANT_ID)
+              AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
+              AZURE_FEDERATED_TOKEN_FILE: $(AZURE_FEDERATED_TOKEN_FILE)
+              AZURE_APPCONFIG_ENDPOINT: https://azuresdkqabot-dev-config.azconfig.io
+          - task: PowerShell@2
+            displayName: 'Run benchmarks'
+            inputs:
+              targetType: 'inline'
+              workingDirectory: '$(System.DefaultWorkingDirectory)/$(Build.Repository.Name)/tools/azsdk-cli/Azure.Sdk.Tools.Cli.Benchmarks'
+              pwsh: true
+              script: dotnet run -- run --all --parallel 5 --cleanup "always" --repo "$env:AUTHORING_SPEC_REPO" --report --output "$(Build.ArtifactStagingDirectory)/benchmark-report.md"
+            env:
+              DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+              DOTNET_CLI_TELEMETRY_OPTOUT: 1
+              DOTNET_MULTILEVEL_LOOKUP: 0
+              COPILOT_GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+              AUTHORING_SPEC_REPO: ${{ parameters.AuthoringSpecRepo }}
       CustomReleaseJobs:
       - template: /tools/azsdk-cli/auto-documentation.yml
         parameters:
           ToolDirectory: $(ToolDir)
-

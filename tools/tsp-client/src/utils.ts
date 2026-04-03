@@ -168,8 +168,7 @@ export async function updateExistingTspLocation(
     const errorDetails =
       error instanceof Error
         ? (() => {
-            const causeDetails =
-              error.cause !== undefined ? ` Cause: ${String(error.cause)}` : "";
+            const causeDetails = error.cause !== undefined ? ` Cause: ${String(error.cause)}` : "";
             return (error.stack ?? `${error.name}: ${error.message}`) + causeDetails;
           })()
         : String(error);

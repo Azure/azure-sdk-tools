@@ -7,6 +7,7 @@ using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.CopilotAgents.Tools;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Prompts.Templates;
 using Microsoft.Extensions.AI;
@@ -46,17 +47,20 @@ public class FeedbackClassifierService : IFeedbackClassifierService
     private readonly ICopilotAgentRunner _agentRunner;
     private readonly ILogger<FeedbackClassifierService> _logger;
     private readonly ITypeSpecHelper _typeSpecHelper;
+    private readonly IAzureSdkKnowledgeBaseService? _knowledgeBaseService;
 
     public const int DefaultBatchSize = 50;
 
     public FeedbackClassifierService(
         ICopilotAgentRunner agentRunner,
         ILoggerFactory loggerFactory,
-        ITypeSpecHelper typeSpecHelper)
+        ITypeSpecHelper typeSpecHelper,
+        IAzureSdkKnowledgeBaseService? knowledgeBaseService = null)
     {
         _agentRunner = agentRunner;
         _logger = loggerFactory.CreateLogger<FeedbackClassifierService>();
         _typeSpecHelper = typeSpecHelper;
+        _knowledgeBaseService = knowledgeBaseService;
     }
 
     /// <summary>
@@ -89,6 +93,16 @@ public class FeedbackClassifierService : IFeedbackClassifierService
             items.Count, effectiveBatchSize);
 
         var referenceDocContent = await LoadTspCustomizationGuideAsync(specRepoBasePath, ct);
+
+        // Enrich with RAG context if the knowledge base service is available.
+        // This combines the local KB file (complete decorator reference) with
+        // broader TypeSpec knowledge from the RAG-indexed documentation.
+        var ragContext = await QueryRagContextAsync(items, ct);
+        if (!string.IsNullOrEmpty(ragContext))
+        {
+            referenceDocContent += "\n\n## Additional TypeSpec Authoring Context (RAG)\n\n" + ragContext;
+            _logger.LogInformation("Enriched classifier context with RAG knowledge base content");
+        }
 
         foreach (var chunk in items.Chunk(effectiveBatchSize))
         {
@@ -249,6 +263,54 @@ public class FeedbackClassifierService : IFeedbackClassifierService
         }
         
         _logger.LogInformation("Item {Id} classified as {Status}: {Reason}", item.Id, status, reason);
+    }
+
+    /// <summary>
+    /// Queries the RAG knowledge base for additional TypeSpec context relevant to the feedback items.
+    /// Returns null if the knowledge base service is unavailable or the query fails.
+    /// </summary>
+    private async Task<string?> QueryRagContextAsync(List<FeedbackItem> items, CancellationToken ct)
+    {
+        if (_knowledgeBaseService == null)
+        {
+            _logger.LogDebug("RAG knowledge base service not available, skipping RAG enrichment");
+            return null;
+        }
+
+        try
+        {
+            // Build a focused query from the feedback items
+            var feedbackSummary = string.Join("; ",
+                items.Take(5).Select(i => i.Text.Length > 100 ? i.Text[..100] : i.Text));
+
+            var request = new CompletionRequest
+            {
+                AzureSdkKnowledgeServiceTenant = AzureSdkKnowledgeServiceTenant.AzureTypespecAuthoring,
+                Message = new Message
+                {
+                    Role = Role.User,
+                    Content = $"What TypeSpec decorators, patterns, or customizations are relevant for these SDK feedback items? " +
+                              $"Focus on client.tsp customization options and known limitations. Feedback: {feedbackSummary}"
+                },
+                WithAgenticSearch = true
+            };
+
+            var response = await _knowledgeBaseService.SendCompletionRequestAsync(request, ct);
+
+            if (!response.HasResult || string.IsNullOrEmpty(response.Answer))
+            {
+                _logger.LogDebug("RAG query returned no results");
+                return null;
+            }
+
+            _logger.LogDebug("RAG query returned {RefCount} references", response.References?.Count ?? 0);
+            return response.FullContext ?? response.Answer;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "RAG knowledge base query failed, continuing with local KB only");
+            return null;
+        }
     }
 
     /// <summary>

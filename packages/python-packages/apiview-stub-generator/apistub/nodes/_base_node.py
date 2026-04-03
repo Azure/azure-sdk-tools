@@ -220,7 +220,10 @@ def get_qualified_name(obj, namespace: str) -> str:
     # omit any brackets for Python 3.9/3.10 compatibility
     value = name_regex.search(name).group(0)
     if module_name and module_name.startswith(namespace):
-        value = f"{module_name}.{name}"
+        # Guard against re-adding the module prefix when str(obj) already returns
+        # a fully-qualified name (e.g. typing._GenericAlias on Python 3.9+).
+        if not value.startswith(module_name):
+            value = f"{module_name}.{value}"
     elif module_name and module_name != value and value.startswith(module_name):
         # strip the module name if it isn't the namespace (example: typing)
         value = value[len(module_name) + 1 :]

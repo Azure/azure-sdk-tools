@@ -298,8 +298,6 @@ class TestApiViewAzure:
 
     @mark.parametrize("pkg_name,version,directory,pkg_namespace,pkg_type", SDK_PARAMS, ids=SDK_IDS)
     def test_sdks(self, pkg_name, version, directory, pkg_namespace, pkg_type):
-        print("Pip freeze before test")
-        check_call(["pip", "freeze"])
         pkg_path, mapping_file = self._download_packages(directory, pkg_name, version, pkg_type)
         temp_path = tempfile.gettempdir()
         # Explicitly pass through mapping file path

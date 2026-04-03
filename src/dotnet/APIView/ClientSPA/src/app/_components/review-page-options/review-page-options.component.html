@@ -4,7 +4,14 @@
         <div class="text-center py-2">
             <ng-container *ngIf="canApproveForReviewLanguage">
                 <ng-container *ngIf="canToggleApproveAPIRevision; else cantToggleApproveAPIRevision">
-                    <span *ngIf="apiRevisionApprovalMessage" class="small text-muted">{{apiRevisionApprovalMessage}}</span>
+                    <div *ngIf="isAPIRevisionApprovalDisabled && apiRevisionApprovalMessages.length > 0" class="mb-2">
+                        <div *ngFor="let msg of apiRevisionApprovalMessages" class="small mb-1">
+                            <i class="bi bi-lock-fill me-1"></i>{{msg}}
+                        </div>
+                    </div>
+                    <ng-container *ngIf="!isAPIRevisionApprovalDisabled && apiRevisionApprovalMessages.length > 0">
+                        <span class="small text-muted d-block">{{apiRevisionApprovalMessages[0]}}</span>
+                    </ng-container>
                     <div class="d-grid gap-2">
                         <button class="{{apiRevisionApprovalBtnClass}}" type="button"
                             (click)="handleAPIRevisionApprovalAction()"

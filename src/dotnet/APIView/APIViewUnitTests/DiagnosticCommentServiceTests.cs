@@ -405,7 +405,7 @@ public class DiagnosticCommentServiceTests
 
 
     [Fact]
-    public async Task SyncDiagnosticCommentsAsync_SameDiagnosticTextAcrossRevisions_ProducesMatchingCorrelationIds()
+    public async Task SyncDiagnosticCommentsAsync_SameDiagnosticTextAcrossRevisions_ProducesDifferentCorrelationIds()
     {
         DiagnosticCommentService service = CreateService(out Mock<ICosmosCommentsRepository> commentsRepoMock);
 
@@ -426,7 +426,7 @@ public class DiagnosticCommentServiceTests
 
         Assert.Equal(2, upsertedComments.Count);
         Assert.NotEqual(upsertedComments[0].Id, upsertedComments[1].Id); // different comments (different targets)
-        Assert.Equal(upsertedComments[0].CorrelationId, upsertedComments[1].CorrelationId); // but same correlation
+        Assert.NotEqual(upsertedComments[0].CorrelationId, upsertedComments[1].CorrelationId); // different revisions → different correlation
     }
 
     [Fact]

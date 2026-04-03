@@ -381,22 +381,32 @@ namespace APIViewWeb.Managers
         /// <param name="filePath"></param>
         /// <param name="language"></param>
         /// <param name="label"></param>
+        /// <param name="preParsedCodeFile"></param>
+        /// <param name="preParsedMemoryStream"></param>
         /// <returns></returns>
-        public async Task<APIRevisionListItemModel> CreateAPIRevisionAsync(ClaimsPrincipal user, ReviewListItemModel review, IFormFile file, string filePath, string language, string label)
+        public async Task<APIRevisionListItemModel> CreateAPIRevisionAsync(ClaimsPrincipal user, ReviewListItemModel review, IFormFile file, string filePath, string language, string label, CodeFile preParsedCodeFile = null, MemoryStream preParsedMemoryStream = null)
         {
             APIRevisionListItemModel apiRevision = null;
+            string name = file?.FileName ?? filePath;
 
-            if (file != null)
+            if (preParsedCodeFile != null && preParsedMemoryStream != null)
+            {
+                // Use pre-parsed data to avoid duplicate parsing
+                apiRevision = await AddAPIRevisionCoreAsync(user: user, review: review, apiRevisionType: APIRevisionType.Manual,
+                    name: name, label: label, fileStream: null, language: language,
+                    preParsedCodeFile: preParsedCodeFile, preParsedMemoryStream: preParsedMemoryStream);
+            }
+            else if (file != null)
             {
                 using (var openReadStream = file.OpenReadStream())
                 {
-                    apiRevision = await AddAPIRevisionAsync(user: user, review: review, apiRevisionType: APIRevisionType.Manual,
+                    apiRevision = await AddAPIRevisionCoreAsync(user: user, review: review, apiRevisionType: APIRevisionType.Manual,
                         name: file.FileName, label: label, fileStream: openReadStream, language: language);
                 }
             }
             else if (!string.IsNullOrEmpty(filePath))
             {
-                apiRevision = await AddAPIRevisionAsync(user: user, review: review, apiRevisionType: APIRevisionType.Manual,
+                apiRevision = await AddAPIRevisionCoreAsync(user: user, review: review, apiRevisionType: APIRevisionType.Manual,
                            name: filePath, label: label, fileStream: null, language: language);
             }
             return apiRevision;
@@ -608,6 +618,21 @@ namespace APIViewWeb.Managers
             string language,
             bool awaitComputeDiff = false)
         {
+            return await AddAPIRevisionCoreAsync(user, review, apiRevisionType, name, label, fileStream, language, awaitComputeDiff);
+        }
+
+        private async Task<APIRevisionListItemModel> AddAPIRevisionCoreAsync(
+            ClaimsPrincipal user,
+            ReviewListItemModel review,
+            APIRevisionType apiRevisionType,
+            string name,
+            string label,
+            Stream fileStream,
+            string language,
+            bool awaitComputeDiff = false,
+            CodeFile preParsedCodeFile = null,
+            MemoryStream preParsedMemoryStream = null)
+        {
             var apiRevision = GetNewAPIRevisionAsync(
                 reviewId: review.Id,
                 apiRevisionType: apiRevisionType,
@@ -616,12 +641,22 @@ namespace APIViewWeb.Managers
                 createdBy: user.GetGitHubLogin(),
                 label: label);
 
-            APICodeFileModel codeFileModel = await _codeFileManager.CreateCodeFileAsync(
-                apiRevision.Id,
-                name,
-                true,
-                fileStream,
-                language);
+            APICodeFileModel codeFileModel;
+            if (preParsedCodeFile != null && preParsedMemoryStream != null)
+            {
+                // Reuse pre-parsed code file to avoid duplicate parsing
+                codeFileModel = await _codeFileManager.CreateReviewCodeFileModel(apiRevision.Id, preParsedMemoryStream, preParsedCodeFile);
+                codeFileModel.FileName = name;
+            }
+            else
+            {
+                codeFileModel = await _codeFileManager.CreateCodeFileAsync(
+                    apiRevision.Id,
+                    name,
+                    true,
+                    fileStream,
+                    language);
+            }
 
             apiRevision.Files.Add(codeFileModel);
 

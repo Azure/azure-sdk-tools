@@ -52,13 +52,13 @@ class ThreadMemoryService:
         tenant_id = (message.tenant_id or "").strip()
 
         if not tenant_store:
-            logger.debug("Thread memory update skipped: no tenant store configured")
+            logger.info("Thread memory update skipped: no tenant store configured")
             return
         if not tenant_id:
-            logger.debug("Thread memory update skipped: no tenant_id on message=%s", message.id)
+            logger.info("Thread memory update skipped: no tenant_id on message=%s", message.id)
             return
         if len(thread_messages) < _MIN_THREAD_LENGTH:
-            logger.debug(
+            logger.info(
                 "Thread memory update skipped: thread too short (%d < %d) for conversation=%s",
                 len(thread_messages), _MIN_THREAD_LENGTH, message.conversation_id,
             )
@@ -66,12 +66,12 @@ class ThreadMemoryService:
 
         scope = sanitize_scope(tenant_id)
         if not scope:
-            logger.debug("Thread memory update skipped: scope is empty after sanitize for tenant_id=%s", tenant_id)
+            logger.info("Thread memory update skipped: scope is empty after sanitize for tenant_id=%s", tenant_id)
             return
 
         items = self._build_memory_items(thread_messages)
         if not items:
-            logger.debug("Thread memory update skipped: no valid items from %d thread messages", len(thread_messages))
+            logger.info("Thread memory update skipped: no valid items from %d thread messages", len(thread_messages))
             return
 
         # Determine conversation key for incremental tracking

@@ -138,7 +138,7 @@ class ConversationService:
         """Save a conversation message to the backing store."""
         if not message.conversation_id or not message.conversation_type:
             raise ValueError("conversation_id and conversation_type are required")
-        logger.debug(
+        logger.info(
             "Saving conversation message: id=%s, conversation_id=%s, type=%s, sender_role=%s",
             message.id,
             message.conversation_id,
@@ -220,7 +220,7 @@ class ConversationService:
         ):
             items.append(ConversationMessageItem.model_validate(raw))
 
-        logger.debug(
+        logger.info(
             "Retrieved %d thread messages for partition=%s",
             len(items),
             partition_key,

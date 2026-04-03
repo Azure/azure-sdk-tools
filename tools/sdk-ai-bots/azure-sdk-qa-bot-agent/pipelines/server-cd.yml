@@ -76,10 +76,26 @@ extends:
                 failOnStderr: true
                 continueOnError: false
 
-              # 3. Build & push (prod reuses existing image)
-              #    Docker runs pip install inside the build container. Since the
-              #    container inherits the build agent network and credentials,
-              #    it can access non-public feeds like agent-cd does.
+              # 3. Install Python dependencies on the ADO agent using AzureCLI@2
+              #    (which provides proper Azure credentials for internal feeds),
+              #    then stage them for the Docker image.
+              - task: AzureCLI@2
+                condition: ne('${{ parameters.environment }}','prod')
+                displayName: 'Install Python Dependencies'
+                continueOnError: false
+                inputs:
+                  azureSubscription: $(SERVICE_CONNECTION)
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  inlineScript: |
+                    set -euo pipefail
+                    pip install --pre \
+                      --target "$(workingDirectory)/site-packages" \
+                      -r "$(workingDirectory)/requirements.txt"
+                    echo "Installed packages to $(workingDirectory)/site-packages"
+                    ls -la "$(workingDirectory)/site-packages" | head -20
+
+              # 4. Build & push (prod reuses existing image)
               - task: AzureCLI@2
                 condition: ne('${{ parameters.environment }}','prod')
                 displayName: 'Build & Push Image'

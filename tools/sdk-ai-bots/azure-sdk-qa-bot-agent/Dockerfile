@@ -3,13 +3,11 @@ FROM mcr.microsoft.com/azurelinux/base/python:3.12
 WORKDIR /app
 
 ENV PYTHONUNBUFFERED=1
-ENV PIP_DISABLE_PIP_VERSION_CHECK=1
-ENV PIP_DEFAULT_TIMEOUT=100
-ENV PIP_RETRIES=5
 
-# Install dependencies (layer caching)
-COPY tools/sdk-ai-bots/azure-sdk-qa-bot-agent/requirements.txt .
-RUN pip install --no-cache-dir --pre -r requirements.txt
+# Copy pre-installed Python packages downloaded on the ADO agent
+# (where we have access to internal Azure feeds and proper credentials).
+COPY tools/sdk-ai-bots/azure-sdk-qa-bot-agent/site-packages/ /app/site-packages/
+ENV PYTHONPATH=/app/site-packages:$PYTHONPATH
 
 # Copy application code
 COPY tools/sdk-ai-bots/azure-sdk-qa-bot-agent/config/ ./config/

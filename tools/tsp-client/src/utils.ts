@@ -177,11 +177,13 @@ export async function updateExistingTspLocation(
             }
 
             // Provide additional details about the cause of the error if available
-            const causeDetails = error.cause !== undefined ? ` Cause: ${String(error.cause)}` : "";
+            const causeDetails = error.cause !== undefined ? `\nCause: ${String(error.cause)}` : "";
             return (
               `For debugging purposes see the error details: ` +
+              "\n----\n" +
               (error.stack ?? `${error.name}: ${error.message}`) +
-              causeDetails
+              causeDetails +
+              "\n----\n"
             );
           })()
         : String(error);

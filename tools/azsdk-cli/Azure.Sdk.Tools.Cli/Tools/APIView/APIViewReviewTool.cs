@@ -131,7 +131,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
 
     private readonly Option<string> languageQueryOption = new("--language")
     {
-        Description = "The programming language (e.g., 'C#', 'Python', 'Java', 'JavaScript')",
+        Description = "The language (e.g., 'C#', 'Python', 'Java', 'JavaScript')",
         Required = true
     };
 

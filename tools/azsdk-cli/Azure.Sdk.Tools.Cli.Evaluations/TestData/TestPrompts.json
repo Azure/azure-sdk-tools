@@ -6,6 +6,10 @@
     { "toolName": "azsdk_apiview_get_comments", "prompt": "Show me the API review feedback for this package", "category": "all" },
     { "toolName": "azsdk_apiview_get_comments", "prompt": "What comments did the API reviewers leave?", "category": "all" },
 
+    { "toolName": "azsdk_apiview_get_review_url", "prompt": "Get the APIView review link for the Azure.Storage.Blobs C# package", "category": "all" },
+    { "toolName": "azsdk_apiview_get_review_url", "prompt": "What is the APIView URL for the azure-core Python package?", "category": "all" },
+    { "toolName": "azsdk_apiview_get_review_url", "prompt": "Give me the link to the API review page for this package", "category": "all" },
+
     { "toolName": "azsdk_check_service_label", "prompt": "Check if a service label exists for my service", "category": "all" },
     { "toolName": "azsdk_check_service_label", "prompt": "Does the service label for Contoso already exist?", "category": "all" },
     { "toolName": "azsdk_create_service_label", "prompt": "Create a new service label for my service", "category": "all" },

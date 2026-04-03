@@ -55,7 +55,6 @@ __all__ = (
     "DataClassSimple",
     "DataClassWithFields",
     "DataClassDynamic",
-    "DataClassWithKeywordOnly",
     "DataClassWithPostInit",
     "DocstringClass",
     "FakeError",
@@ -80,3 +79,5 @@ __all__ = (
     "SomethingWithLiterals",
     "SomeEnum"
 )
+if sys.version_info >= (3, 10):
+    __all__ += ("DataClassWithKeywordOnly",)

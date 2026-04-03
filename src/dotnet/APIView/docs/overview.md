@@ -2,40 +2,13 @@
 
 ## 1. What Is APIView?
 
-APIView is the Azure SDK team's **API review platform**. It ingests pre-built SDK artifacts (DLLs, JARs, Python wheels, etc.), extracts a structured token representation of the public API surface, and presents that surface in a web UI where architects and reviewers can comment, diff across versions, approve, and track the lifecycle of an API from first draft through release.
+APIView is the Azure SDK team's **API review platform**. It ingests SDK artifacts (DLLs, JARs, Python wheels, etc.) or pre-parsed JSON token files representing the public API surface and presents them in a web UI where architects and reviewers can comment, diff across versions, approve, and track the lifecycle of an API from first draft through release. Reviews are created automatically by CI pipelines (on both PR and merge builds) or manually by uploading an artifact through the web UI.
 
 It supports **16+ languages** (C#, Java, Python, JavaScript/TypeScript, Go, Rust, C, C++, Swift, Protocol Buffers, Swagger/OpenAPI, TypeSpec, and more) through a common token model that normalizes every language into the same reviewable format.
 
 > **Development policy:** New features should target the Angular SPA and tree-token model only. The legacy Razor Pages frontend and flat-token parser are not receiving new investment. See [legacy.md](legacy.md) for details on what remains and the migration path.
 
-### a. Core Workflow
-
-```
-SDK CI/CD Pipeline                        APIView
-─────────────────                         ───────
-Build artifact (.dll, .jar, .whl, …)
-        │
-        ▼
-POST /autoreview/upload ────────────────► Language parser (external process)
-  or /autoreview/create                         │
-                                                ▼
-                                          JSON token file (CodeFile)
-                                                │
-                                                ▼
-                                          Store in Cosmos DB + Blob Storage
-                                                │
-                                                ▼
-                                          Render in Angular SPA
-                                          (diff, comment, approve)
-```
-
-1. An Azure SDK CI/CD pipeline builds a package and POSTs the binary artifact to APIView.
-2. APIView invokes a **language-specific parser** (external process, not in-process) that converts the artifact into a JSON token file (`CodeFile`).
-3. The token file is stored in **Azure Blob Storage**; metadata goes to **Azure Cosmos DB**.
-4. Reviewers open the review in the **Angular SPA**, where they can diff versions, leave comments, and approve.
-5. The CI pipeline queries back for approval status (HTTP 200 = approved, 201 = namespace-approved, 202 = pending).
-
-### b. What APIView Does
+### a. What APIView Does
 
 - **Parses** pre-built SDK artifacts into a language-agnostic token model.
 - **Renders** public API surfaces with syntax highlighting and hierarchical navigation.
@@ -49,7 +22,7 @@ POST /autoreview/upload ────────────────► Lang
 - **Sends notifications** via email and real-time SignalR push.
 - **Marks revisions as released** when a release pipeline calls with `setReleaseTag=true`.
 
-### c. What APIView Does NOT Do
+### b. What APIView Does NOT Do
 
 - **Does not compile code.** Parsers consume already-built binaries, not source files.
 - **Does not run tests.** It is a review tool, not a CI runner.
@@ -307,46 +280,197 @@ When a release pipeline calls `/autoreview/upload` or `/autoreview/create` with 
 
 ## 9. Language Parsers
 
-Many parsers run as **external processes** (via `System.Diagnostics.Process.Start()` with a 90-second timeout), but some parsing and deserialization happens **in-process** depending on the language service. Parsers live in various locations across the `azure-sdk-tools` repo.
+Parsers live in various locations across the `azure-sdk-tools` repo.
 
-The **Runs On** column indicates who executes the parser:
-- **Server** — APIView server invokes the parser (as an external process or in-process).
-- **Pipeline** — An Azure DevOps pipeline runs the parser and calls back to APIView (see [sandboxing.md](sandboxing.md)).
-- **Manual** — A person or team runs the parser locally and uploads the resulting JSON token file.
+| Language | Repo Path | Input | Token Format | Server Can Parse? |
+|---|---|---|---|---|
+| C# | `tools/apiview/parsers/csharp-api-parser` | `.dll`, `.nupkg` | Tree | Yes |
+| Java | `src/java/apiview-java-processor` | `.jar` | Tree | Yes |
+| Python | `packages/python-packages/apiview-stub-generator` | `.whl` | Tree | Yes |
+| JavaScript/TypeScript | `tools/apiview/parsers/js-api-parser` | `.api.json` | Tree | Yes |
+| Go | `src/go` | `.gosource` (zip) | Tree | Yes |
+| TypeSpec | `tools/apiview/emitters/typespec-apiview` | `.tsp`, `.cadl` | Tree | No  |
+| Rust | `tools/apiview/parsers/rust-api-parser` | `.rust.json` | Tree | Yes |
+| Swift | `src/swift/SwiftAPIView` | `.json` | Tree | No |
+| Swagger/OpenAPI | `tools/apiview/parsers/swagger-api-parser` | `.swagger` | Flat (legacy) | No  |
+| C++ | `tools/apiview/parsers/cpp-api-parser` | `.cppast` | Flat (legacy) | Yes |
+| XML | `src/java/apiview-java-processor` | `.xml` | Flat (legacy) | Yes |
+| C | *(no external parser)* | `.zip` | Flat (legacy) | Yes |
+| Protocol Buffers | `packages/python-packages/protocol-stub-generator` | `.yaml` | Flat (legacy) | Yes |
 
-| Language | Runs On | Repo Path | Input |
+---
+
+## 10. Core Workflows
+
+There are three ways API revisions reach APIView: **CI Automatic** (the persistent review created on merges to `main`), **CI Pull Request** (the ephemeral revision created for PR review), and **Manual** (a user uploads a file through the web UI). The first two are automated; they share the same build step that produces the artifact but diverge in how that artifact reaches the server.
+
+### How parsing works: server-side vs. CI-side
+
+A key variable across all workflows is **where the language parser runs**. This is determined by whether the CI build produces a pre-parsed token file (`{packageName}_{languageShort}.json`) alongside the build artifact. The shared scripts (`Create-APIReview.ps1`, `Detect-Api-Changes.ps1`) check for this file and branch accordingly:
+
+- **No token file present** (C#, Java, Go, Rust): The build artifact (`.nupkg`, `sources.jar`, `.gosource`, `.rust.json`) is sent to APIView. APIView invokes the language parser as an external process on the server.
+- **Token file present** (Python, JavaScript): The CI pipeline runs the parser to produce a `_python.json` or `_js.json` token file. Both the token file and the original artifact are sent to APIView, which stores them directly without running a parser. See [sandboxing.md](sandboxing.md) for rationale.
+
+> **Note:** Go and Rust do CI-side *preprocessing* (zipping source into `.gosource` archives, generating `.rust.json` intermediate files), but the APIView server still runs the actual parser on those intermediate artifacts. Python and JavaScript are the only languages where the full APIView parser runs in CI.
+
+### Workflow A — CI Automatic (non-PR internal builds)
+
+**Trigger:** Non-PR builds on `internal` project (merges to `main`, manual runs).  
+**Template:** `eng/common/pipelines/templates/steps/create-apireview.yml` → `Create-APIReview.ps1`  
+**Condition:** `System.TeamProject == 'internal' && Build.Reason != 'PullRequest'`  
+**Purpose:** Creates or updates the persistent review for a package — the long-lived record that tracks API evolution across versions.
+
+```
+SDK CI/CD Pipeline                                     APIView
+─────────────────                                      ───────
+
+Build artifact + (optionally) run parser
+        │
+        ├── Token file exists?
+        │       │
+        │       ├── YES (Python, JS)
+        │       │   POST /autoreview/create ─────────► Download token file + original
+        │       │   (build coordinates only)           artifact from DevOps
+        │       │                                      Store both in Blob Storage
+        │       │
+        │       └── NO (C#, Java, Go, Rust)
+        │           POST /autoreview/upload ─────────► Save original artifact to
+        │           (multipart, binary artifact)       Blob Storage
+        │                                              Invoke language parser on server
+        │                                              ─────────────────────────────────
+        │                                              Store token file in Blob Storage;
+        │                                              metadata in Cosmos DB
+        ▼
+(validate-all-packages.yml)
+Query approval status
+  200 = approved
+  201 = namespace-approved
+  202 = pending
+```
+
+1. The CI pipeline builds the package artifact. For some languages, a separate step also runs the parser to produce a token file (see table below).
+2. `Create-APIReview.ps1` checks for `{packageName}_{languageShort}.json` in the artifact directory.
+   - **If found:** Calls `POST /autoreview/create` with DevOps build coordinates (`buildId`, `artifactName`, file paths). APIView downloads the token file and original artifact from **Azure DevOps Artifacts**, saves the original to Blob Storage, and stores the token file in Blob Storage with metadata in Cosmos DB.
+   - **If not found:** Calls `POST /autoreview/upload` with the binary artifact as a multipart form upload. APIView saves the artifact to Blob Storage, invokes the **language-specific parser** on the server, and stores the resulting token file in Blob Storage and metadata in Cosmos DB.
+3. A separate step (`validate-all-packages.yml`) queries APIView for approval status. The response code determines whether the package passes the release gate.
+
+| Language | Artifact | Token file in CI? | Endpoint hit |
 |---|---|---|---|
-| C# | Server (external process) | `tools/apiview/parsers/csharp-api-parser` | `.dll`, `.nupkg` |
-| Java | Server (external process) | `src/java/apiview-java-processor` | `.jar` |
-| Python | Pipeline | `packages/python-packages/apiview-stub-generator` | `.whl` |
-| JavaScript/TypeScript | Server (external process) | `tools/apiview/parsers/js-api-parser` | `.api.json` |
-| Go | Server (external process) | `src/go` | `.gosource` (zip) |
-| Rust | Server (external process) | `tools/apiview/parsers/rust-api-parser` | `.rust.json` |
-| Swift | Manual (pre-parsed JSON uploaded) | `src/swift/SwiftAPIView` | `.json` |
-| TypeSpec | Pipeline | `tools/apiview/emitters/typespec-apiview` | `.json` |
-| Swagger/OpenAPI | Pipeline | `tools/apiview/parsers/swagger-api-parser` | `.json` |
-| Protocol Buffers | Server (external process) | `packages/python-packages/protocol-stub-generator` | `.proto` |
-| C++ | Server (in-process) | `tools/apiview/parsers/cpp-api-parser` | Compressed archive with XML AST |
-| XML | Server (external process) | `src/java/apiview-java-processor` | `.xml` |
-| C | Server (in-process) | *(no external parser)* | Compressed archive |
-| Json | Server (in-process) | *(no external parser)* | `.json` |
+| C# | `.nupkg` | No | `/autoreview/upload` |
+| Java | `*-sources.jar` | No | `/autoreview/upload` |
+| Python | `.whl` + `_python.json` | **Yes** (mandatory) | `/autoreview/create` |
+| JavaScript | `.api.json` + `_js.json` | **Yes** | `/autoreview/create` |
+| Go | `.gosource` | No | `/autoreview/upload` |
+| Rust | `.rust.json` | No | `/autoreview/upload` |
+
+### Workflow B — CI Pull Request
+
+**Trigger:** PR builds only (`Build.Reason == 'PullRequest'`).  
+**Template:** `eng/common/pipelines/templates/steps/detect-api-changes.yml` → `Detect-Api-Changes.ps1`  
+**Purpose:** Creates a PR-scoped APIView revision so reviewers can see what API changes the PR introduces. APIView posts a comment back to the GitHub PR with a link to the review.
+
+```
+SDK CI/CD Pipeline                                     APIView
+─────────────────                                      ───────
+
+Build artifact + (optionally) run parser
+Publish as pipeline artifacts
+        │
+        ▼
+GET /api/PullRequests/                    ───────────► Download artifact(s) from DevOps
+  CreateAPIRevisionIfAPIHasChanges                     using buildId + artifactName
+  ?buildId=...&artifactName=...                               │
+  &pullRequestNumber=...&commitSha=...                        ▼
+  &packageName=...&language=...                         ┌─ codeFile param present?
+  [&codeFile=..._lang.json]                             │
+                                                        ├── YES: store token file directly
+                                                        └── NO:  invoke language parser
+                                                                 on server
+                                                              │
+                                                              ▼
+                                                        Store token file in Blob Storage;
+                                                        metadata in Cosmos DB
+                                                        (APIRevisionType = PullRequest)
+                                                              │
+                                                              ▼
+                                                        Post comment on GitHub PR
+                                                        with link to review
+```
+
+1. The CI pipeline builds the artifact and publishes it (and optionally a token file) as a pipeline artifact — the same steps as Workflow A.
+2. `Detect-Api-Changes.ps1` iterates packages that have changes in the PR. For each, it calls `GET /api/PullRequests/CreateAPIRevisionIfAPIHasChanges` with DevOps build coordinates (`buildId`, `artifactName`, `filePath`), PR metadata (`pullRequestNumber`, `commitSha`, `repoName`), and package info (`packageName`, `language`).
+   - **If a token file exists** (Python, JS): The `codeFile` query param is added. APIView downloads the parent directory as a zip, extracting both the token file and original artifact.
+   - **If no token file** (C#, Java, Go, Rust): APIView downloads only the artifact file and runs the language parser on the server.
+3. APIView creates a **PullRequest-type** API revision linked to the PR. It asynchronously posts a comment on the GitHub PR with a link to the review.
+
+> **Key difference from Workflow A:** The PR flow always uses DevOps build coordinates for artifact retrieval — even for languages like C# where Workflow A does a direct multipart upload. There is no direct file upload in the PR flow.
+
+### Workflow C — Manual upload (web UI) *(legacy — prefer CI workflows)*
+
+**Trigger:** User action in the Angular SPA.  
+**Endpoint:** `POST /api/Reviews` (multipart form, cookie authentication via GitHub OAuth).  
+**Purpose:** Allows developers and architects to create reviews outside of CI — for early design review, ad-hoc inspection, or languages without CI integration (e.g., Swift).
+
+> **Note:** Manual upload is a legacy workflow. For languages with CI integration, prefer Workflow A/B — they provide traceability to specific builds and PRs, automatic approval carry-forward, and release tagging. Manual upload should only be used for languages without CI support or one-off exploratory reviews.
+
+```
+User (Angular SPA)                                    APIView
+──────────────────                                    ───────
+
+Select language + upload artifact
+        │
+        ▼
+POST /api/Reviews ───────────────────────────────────► Save artifact to Blob Storage
+  (multipart: file, language, label)                          │
+                                                              ▼
+                                                       Invoke language parser on server
+                                                              │
+                                                              ▼
+                                                       Store token file in Blob Storage;
+                                                       metadata in Cosmos DB
+                                                       (APIRevisionType = Manual)
+                                                              │
+                                                              ▼
+                                                       Redirect user to review page
+```
+
+1. The user selects a language, uploads a file, and optionally adds a label.
+2. If the uploaded file is a build artifact (`.nupkg`, `.whl`, `.jar`, etc.), APIView saves it to Blob Storage and invokes the language parser on the server. If the uploaded file is a pre-parsed JSON token file (`.json`), parsing is skipped — the token file is stored directly.
+3. A new Review (or new revision on an existing Review for the same package) is created.
+4. The user is redirected to the review page in the SPA.
 
 ---
 
-## 10. APIViewJsonUtility (CLI Tool)
+## 11. SDK CI Pipelines (APIView Integration)
 
-A standalone CLI for inspecting and converting token files outside the web app:
+Each Azure SDK language repo has a per-service `ci.yml` pipeline (e.g. `sdk/storage/ci.yml`) that triggers on PRs and merges. These pipelines call shared archetype templates which eventually invoke two shared APIView step templates from `eng/common/` (synced from this repo):
 
-```
-APIViewJsonUtility --dumpApiText <input.json>       # Print human-readable API text
-APIViewJsonUtility --convertToTree <input.json>      # Convert flat tokens → tree model
-```
+| Template (eng/common/) | Trigger | Purpose |
+|---|---|---|
+| `pipelines/templates/steps/detect-api-changes.yml` | PR only | Calls `Detect-Api-Changes.ps1` → `POST /api/PullRequests/CreateAPIRevisionIfAPIHasChanges` to create a PR-scoped APIView revision |
+| `pipelines/templates/steps/create-apireview.yml` | Non-PR CI (internal) | Calls `Create-APIReview.ps1` → `POST /autoreview/upload` or `/autoreview/create` to create a persistent review |
+| `pipelines/templates/steps/validate-all-packages.yml` | Non-PR CI (internal) | Checks APIView approval status and validates packages |
 
-Useful for debugging parser output without running the full web application.
+### Per-Language Pipeline Chain
+
+Each language repo follows a similar pattern: `ci.yml` → archetype stage → job → step template where APIView is invoked. The table below shows the language-specific template in each repo that calls the shared APIView templates.
+
+| Language | SDK Repo | Template That Invokes APIView | Notes |
+|---|---|---|---|
+| C# | `Azure/azure-sdk-for-net` | [`eng/pipelines/templates/steps/build.yml`](https://github.com/Azure/azure-sdk-for-net/blob/main/eng/pipelines/templates/steps/build.yml) | Calls `create-apireview.yml` + `detect-api-changes.yml` after `dotnet pack` |
+| Java | `Azure/azure-sdk-for-java` | [`eng/pipelines/templates/jobs/ci.yml`](https://github.com/Azure/azure-sdk-for-java/blob/main/eng/pipelines/templates/jobs/ci.yml) | Build job calls `create-apireview.yml` + `detect-api-changes.yml` after Maven deploy |
+| Python | `Azure/azure-sdk-for-python` | [`eng/pipelines/templates/steps/analyze.yml`](https://github.com/Azure/azure-sdk-for-python/blob/main/eng/pipelines/templates/steps/analyze.yml) | Calls `create-apireview.yml` + `detect-api-changes.yml` after whl verification |
+| JavaScript/TypeScript | `Azure/azure-sdk-for-js` | [`eng/pipelines/templates/steps/build.yml`](https://github.com/Azure/azure-sdk-for-js/blob/main/eng/pipelines/templates/steps/build.yml) | Runs `Generate-APIView-CodeFile.ps1` to create token file, then calls `create-apireview.yml` + `detect-api-changes.yml` |
+| Go | `Azure/azure-sdk-for-go` | [`eng/pipelines/templates/steps/analyze.yml`](https://github.com/Azure/azure-sdk-for-go/blob/main/eng/pipelines/templates/steps/analyze.yml) | Custom: calls `New-APIViewArtifacts` (from `eng/scripts/apiview-helpers.ps1`) to create `.gosource` zips, then calls `detect-api-changes.yml` |
+| C++ | `Azure/azure-sdk-for-cpp` | [`eng/pipelines/templates/jobs/archetype-sdk-client.yml`](https://github.com/Azure/azure-sdk-for-cpp/blob/main/eng/pipelines/templates/jobs/archetype-sdk-client.yml) | `GenerateReleaseArtifacts` job downloads `ParseAzureSdkCpp.exe`, runs `Generate-APIReview-Token-Files.ps1`, then calls `create-apireview.yml` + `detect-api-changes.yml` |
+| Rust | `Azure/azure-sdk-for-rust` | [`eng/pipelines/templates/jobs/pack.yml`](https://github.com/Azure/azure-sdk-for-rust/blob/main/eng/pipelines/templates/jobs/pack.yml) | Pack job calls `create-apireview.yml` + `detect-api-changes.yml` after crate packing |
+| Swift | `Azure/azure-sdk-for-ios` | *(none — manual upload)* | No automated CI → APIView integration; JSON token files are uploaded manually |
+| TypeSpec | *(this repo)* | [`eng/pipelines/apiview-review-gen-typespec.yml`](../../eng/pipelines/apiview-review-gen-typespec.yml) | Manual-trigger pipeline; not per-service CI |
+| Swagger/OpenAPI | *(this repo)* | [`eng/pipelines/apiview-review-gen-swagger.yml`](../../eng/pipelines/apiview-review-gen-swagger.yml) | Manual-trigger pipeline; not per-service CI |
 
 ---
 
-## 11. Key File Paths (for agents)
+## 12. Key File Paths (for agents)
 
 | Area | Path |
 |---|---|

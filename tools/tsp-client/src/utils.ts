@@ -168,12 +168,25 @@ export async function updateExistingTspLocation(
     const errorDetails =
       error instanceof Error
         ? (() => {
+            // Don't append details if the cause is an ENOENT error (file not found)
+            const isEnoentCause =
+              (error.cause instanceof Error && (error.cause as any)?.code === "ENOENT") ||
+              (error.cause && String(error.cause).toLowerCase().includes("enoent"));
+            if (isEnoentCause) {
+              return "";
+            }
+
+            // Provide additional details about the cause of the error if available
             const causeDetails = error.cause !== undefined ? ` Cause: ${String(error.cause)}` : "";
-            return (error.stack ?? `${error.name}: ${error.message}`) + causeDetails;
+            return (
+              `For debugging purposes see the error details: ` +
+              (error.stack ?? `${error.name}: ${error.message}`) +
+              causeDetails
+            );
           })()
         : String(error);
     Logger.debug(
-      `Will create a new tsp-location.yaml file after the check for an existing tsp-location.yaml failed. For debugging purposes see the error: ${errorDetails}`,
+      `Will create a new tsp-location.yaml file after the check for an existing tsp-location.yaml failed. ${errorDetails}`,
     );
     return tspLocationData;
   }

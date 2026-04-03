@@ -118,7 +118,7 @@ def preprocess_html_content(text: str) -> str:
     if not any(marker in text for marker in html_markers):
         return text
 
-    logger.debug("Detected HTML content, preprocessing...")
+    logger.info("Detected HTML content, preprocessing...")
     decoded = decode_html_content(text)
     cleaned = clean_html_tags(decoded)
     return cleaned

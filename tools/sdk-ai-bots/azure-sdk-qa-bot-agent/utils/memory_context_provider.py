@@ -77,21 +77,21 @@ class MemoryContextProvider(BaseContextProvider):
 
     async def before_run(self, *, agent, session, context, state: dict[str, Any]) -> None:
         if not self._user_store_name and not self._tenant_store_name:
-            logger.debug("before_run skipped: no stores configured")
+            logger.info("before_run skipped: no stores configured")
             return
 
         user_scope = self._resolve_user_scope(context)
         tenant_scope = self._resolve_tenant_scope(context)
         state["user_scope"] = user_scope
         state["tenant_scope"] = tenant_scope
-        logger.debug(
+        logger.info(
             "before_run: session=%s, user_scope=%s, tenant_scope=%s, input_messages=%d",
             session.session_id, user_scope, tenant_scope,
             len(list(context.input_messages or [])),
         )
 
         if not user_scope and not tenant_scope:
-            logger.debug("before_run skipped: no scope resolved from input messages")
+            logger.info("before_run skipped: no scope resolved from input messages")
             return
 
         # Fetch static (user profile) memories once per session
@@ -101,7 +101,7 @@ class MemoryContextProvider(BaseContextProvider):
 
         # Build search items from all non-empty input messages (excluding markers)
         items = self._build_search_items(context.input_messages)
-        logger.debug("before_run: %d search items built from input messages", len(items))
+        logger.info("before_run: %d search items built from input messages", len(items))
 
         if not items:
             memory_text = self._format_all_memories(
@@ -162,7 +162,7 @@ class MemoryContextProvider(BaseContextProvider):
         if prev_search_id:
             search_kwargs["previous_search_id"] = prev_search_id
 
-        logger.debug(
+        logger.info(
             "Contextual search: store=%s, scope=%s, items=%d, prev_search_id=%s",
             store_name, scope, len(items), prev_search_id,
         )
@@ -172,7 +172,7 @@ class MemoryContextProvider(BaseContextProvider):
             if hasattr(result, "search_id") and result.search_id:
                 state[prev_id_key] = result.search_id
             mems = list(result.memories or [])
-            logger.debug(
+            logger.info(
                 "Contextual search result: store=%s, scope=%s, %d memories returned",
                 store_name, scope, len(mems),
             )
@@ -190,20 +190,20 @@ class MemoryContextProvider(BaseContextProvider):
 
     async def after_run(self, *, agent, session, context, state: dict[str, Any]) -> None:
         if not self._user_store_name:
-            logger.debug("after_run skipped: no user store configured")
+            logger.info("after_run skipped: no user store configured")
             return
 
         user_scope = state.get("user_scope")
         if not user_scope:
-            logger.debug("after_run skipped: no user_scope in state for session=%s", session.session_id)
+            logger.info("after_run skipped: no user_scope in state for session=%s", session.session_id)
             return
 
         items = self._build_update_items(context)
         if not items:
-            logger.debug("after_run skipped: no user/assistant messages to update for session=%s", session.session_id)
+            logger.info("after_run skipped: no user/assistant messages to update for session=%s", session.session_id)
             return
 
-        logger.debug(
+        logger.info(
             "after_run: session=%s, user_scope=%s, %d items to update",
             session.session_id, user_scope, len(items),
         )
@@ -316,9 +316,9 @@ class MemoryContextProvider(BaseContextProvider):
                 candidate = match.group(1).strip()
                 if candidate:
                     scope = sanitize_scope(candidate)
-                    logger.debug("User scope resolved from marker: %s", scope)
+                    logger.info("User scope resolved from marker: %s", scope)
                     return scope
-        logger.debug("User scope not found in %d input messages", len(list(context.input_messages or [])))
+        logger.info("User scope not found in %d input messages", len(list(context.input_messages or [])))
         return None
 
     def _resolve_tenant_scope(self, context) -> str | None:
@@ -335,9 +335,9 @@ class MemoryContextProvider(BaseContextProvider):
                 raw_tenant = match.group(1).strip()
                 if raw_tenant:
                     scope = sanitize_scope(raw_tenant)
-                    logger.debug("Tenant scope resolved from marker: %s", scope)
+                    logger.info("Tenant scope resolved from marker: %s", scope)
                     return scope
-        logger.debug("Tenant scope not found in input messages")
+        logger.info("Tenant scope not found in input messages")
         return None
 
     # ------------------------------------------------------------------

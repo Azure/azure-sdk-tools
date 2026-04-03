@@ -25,8 +25,10 @@ public class APIViewReviewTool : MCPMultiCommandTool
     private const string GetContentCmd = "get-content";
     private const string CreateCIRevisionCmd = "create-ci-revision";
     private const string CreatePullRequestRevisionCmd = "create-pull-request-revision";
+    private const string GetReviewUrlCmd = "get-review-url";
 
     private const string ApiViewGetCommentsToolName = "azsdk_apiview_get_comments";
+    private const string ApiViewGetReviewUrlToolName = "azsdk_apiview_get_review_url";
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.APIView];
 
@@ -120,6 +122,19 @@ public class APIViewReviewTool : MCPMultiCommandTool
         Description = "The source branch for the build"
     };
 
+    // get-review-url specific options
+    private readonly Option<string> packageOption = new("--package")
+    {
+        Description = "The package name (e.g., 'Azure.Storage.Blobs', 'azure-storage-blob')",
+        Required = true
+    };
+
+    private readonly Option<string> languageQueryOption = new("--language")
+    {
+        Description = "The programming language (e.g., 'C#', 'Python', 'Java', 'JavaScript')",
+        Required = true
+    };
+
     // create-pull-request-revision specific options
     private readonly Option<string> commitShaOption = new("--commit-sha")
     {
@@ -172,6 +187,10 @@ public class APIViewReviewTool : MCPMultiCommandTool
             buildIdOption, artifactNameOption, sourceFileOption, commitShaOption,
             repoNameOption, packageNameOption, pullRequestNumberOption,
             projectOption, packageTypeOption, codeFileOption, languageOption, baselineCodeFileOption, metadataFileOption
+        },
+        new McpCommand(GetReviewUrlCmd, "Get the APIView review URL for a package and language", ApiViewGetReviewUrlToolName)
+        {
+            packageOption, languageQueryOption, packageVersionOption
         }
     ];
 
@@ -184,6 +203,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
             GetContentCmd => await GetContent(parseResult, ct),
             CreateCIRevisionCmd => await CreateCIRevision(parseResult, ct),
             CreatePullRequestRevisionCmd => await CreatePullRequestRevision(parseResult, ct),
+            GetReviewUrlCmd => await GetReviewUrl(parseResult, ct),
             _ => new APIViewResponse { ResponseError = $"Unknown command: {commandName}" }
         };
 
@@ -218,6 +238,44 @@ public class APIViewReviewTool : MCPMultiCommandTool
     {
         string? apiViewUrl = parseResult.GetValue(apiViewUrlOption);
         return await GetComments(apiViewUrl!, ct);
+    }
+
+    [McpServerTool(Name = ApiViewGetReviewUrlToolName), Description("Get the APIView review URL for a package by name and language. Returns the direct link to the API review page for the specified package.")]
+    public async Task<APIViewResponse> GetReviewUrlByPackage(string package, string language, string? version = null, CancellationToken ct = default)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(package) || string.IsNullOrEmpty(language))
+            {
+                return new APIViewResponse { ResponseError = "Both 'package' and 'language' parameters are required." };
+            }
+
+            string? url = await _apiViewService.GetReviewUrlByPackageAsync(package, language, version, ct);
+
+            if (url == null)
+            {
+                return new APIViewResponse
+                {
+                    ResponseError = $"Could not find an APIView review for package '{package}' in language '{language}'" +
+                                   (version != null ? $" with version '{version}'" : "") + "." +
+                                   " Please verify the package name and language are correct."
+                };
+            }
+
+            return new APIViewResponse { Result = url };
+        }
+        catch (Exception ex)
+        {
+            return new APIViewResponse { ResponseError = $"Failed to get review URL: {ex.Message}" };
+        }
+    }
+
+    private async Task<APIViewResponse> GetReviewUrl(ParseResult parseResult, CancellationToken ct)
+    {
+        string? package = parseResult.GetValue(packageOption);
+        string? language = parseResult.GetValue(languageQueryOption);
+        string? version = parseResult.GetValue(packageVersionOption);
+        return await GetReviewUrlByPackage(package!, language!, version, ct);
     }
 
     private async Task<APIViewResponse> GetContent(ParseResult parseResult, CancellationToken ct)

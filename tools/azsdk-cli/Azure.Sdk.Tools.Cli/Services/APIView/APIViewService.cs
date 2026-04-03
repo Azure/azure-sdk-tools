@@ -20,6 +20,11 @@ public interface IAPIViewService
         CancellationToken ct = default);
 
     /// <summary>
+    /// Retrieves the canonical APIView review URL for a given package and language.
+    /// </summary>
+    Task<string?> GetReviewUrlByPackageAsync(string packageName, string language, string? version, CancellationToken ct);
+
+    /// <summary>
     /// Creates an API revision for a pull request if API surface changes are detected.
     /// Use this during PR validation to compare the PR's API against the baseline.
     /// </summary>
@@ -220,5 +225,41 @@ public class APIViewService : IAPIViewService
         string endpoint = $"/api/PullRequests/CreateAPIRevisionIfAPIHasChanges?{string.Join("&", queryParams)}";
 
         return await _httpService.GetAsync(endpoint, ct);
+    }
+
+    /// <inheritdoc />
+    public async Task<string?> GetReviewUrlByPackageAsync(string packageName, string language, string? version, CancellationToken ct)
+    {
+        var queryParams = new List<string>
+        {
+            $"package={Uri.EscapeDataString(packageName)}",
+            $"language={Uri.EscapeDataString(language)}",
+            "redirect=false"
+        };
+
+        if (!string.IsNullOrEmpty(version))
+        {
+            queryParams.Add($"version={Uri.EscapeDataString(version)}");
+        }
+
+        string endpoint = $"/review?{string.Join("&", queryParams)}";
+        (string? result, _) = await _httpService.GetAsync(endpoint, ct);
+
+        if (string.IsNullOrWhiteSpace(result))
+        {
+            _logger.LogWarning("No review URL found for package {PackageName} ({Language})", packageName, language);
+            return null;
+        }
+
+        try
+        {
+            var json = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(result);
+            return json.GetProperty("url").GetString();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to parse review URL response for package {PackageName} ({Language})", packageName, language);
+            return null;
+        }
     }
 }

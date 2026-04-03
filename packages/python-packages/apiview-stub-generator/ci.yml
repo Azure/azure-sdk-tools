@@ -1,4 +1,16 @@
 # NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+
+parameters:
+  - name: PythonVersions
+    type: object
+    default:
+      - '3.9'
+      - '3.10'
+      - '3.11'
+      - '3.12'
+      - '3.13'
+      - '3.14'
+
 trigger:
   branches:
     include:
@@ -34,7 +46,7 @@ extends:
         python $(Build.SourcesDirectory)/eng/scripts/python_version_check.py
       displayName: 'Verify Python APIView version consistency'
 
-    - ${{ each version in ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14'] }}:
+    - ${{ each version in parameters.PythonVersions }}:
       - task: UsePythonVersion@0
         displayName: 'Use Python ${{ version }}'
         inputs:

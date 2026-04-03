@@ -135,16 +135,13 @@ class ConversationService:
         return agent_conversation_id
 
     async def save_conversation(self, message: ConversationMessage) -> None:
-        """Save a conversation message to the backing store.
-
-        Args:
-            message: The conversation message to persist.
-
-        Returns:
-            None
-        """
+        """Save a conversation message to the backing store."""
         if not message.conversation_id or not message.conversation_type:
             raise ValueError("conversation_id and conversation_type are required")
+        logger.debug(
+            "Saving conversation message: id=%s, conversation_id=%s, type=%s, sender_role=%s",
+            message.id, message.conversation_id, message.conversation_type, message.sender_role,
+        )
         container = await get_conversation_message_container()
         message_item = ConversationMessageItem(
             **message.model_dump(mode="json"),

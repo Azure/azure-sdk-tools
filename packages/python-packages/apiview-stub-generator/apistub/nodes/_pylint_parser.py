@@ -69,7 +69,11 @@ class PylintParser:
         the azure-sdk guidelines checker to silently produce no diagnostics.
         Overwriting those files with empty ones matches the behaviour of the WHL
         variant (which never carries a non-trivial ``azure/__init__.py``).
+
+        Returns a dict mapping each overwritten path to its original content so
+        callers can restore the files when done.
         """
+        overwritten = {}  # init_path -> original content
         for root, dirs, files in os.walk(path):
             basename = os.path.basename(root)
             if basename == "azure" and "__init__.py" in files:
@@ -78,12 +82,14 @@ class PylintParser:
                     with open(init_path, "r") as f:
                         content = f.read()
                     if "extend_path" in content or "pkgutil" in content:
+                        overwritten[init_path] = content
                         with open(init_path, "w") as f:
                             pass  # overwrite with empty file
                 except Exception:
                     pass
                 # No need to recurse deeper once we've found azure/
                 dirs.clear()
+        return overwritten
 
     @classmethod
     def parse(cls, path):
@@ -91,7 +97,9 @@ class PylintParser:
 
         # Replace namespace azure/__init__.py files so pylint resolves
         # decorators correctly regardless of distribution format (src/sdist/whl).
-        cls._normalize_namespace_inits(path)
+        # The originals are restored after pylint finishes (even on failure) to
+        # avoid permanently mutating source checkouts.
+        overwritten = cls._normalize_namespace_inits(path)
 
         pkg_name = os.path.split(path)[-1]
         rcfile_path = os.path.join(ApiView.get_root_path(), ".pylintrc")
@@ -101,12 +109,23 @@ class PylintParser:
         # Python/astroid state and is not affected by packages already imported
         # in the current process (e.g. during a full test-suite run).
         cmd = [sys.executable, "-m", "pylint", path, "-f", "json", "--recursive=y", "--rcfile", rcfile_path]
-        result = subprocess.run(cmd, capture_output=True, text=True)
         try:
-            raw_messages = json.loads(result.stdout or "[]")
-        except json.JSONDecodeError:
-            logging.warning("pylint produced non-JSON output; treating as no messages")
-            raw_messages = []
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            try:
+                raw_messages = json.loads(result.stdout or "[]")
+            except json.JSONDecodeError:
+                logging.warning(
+                    "pylint produced non-JSON output for %s (exit code %s). stderr: %r stdout: %r",
+                    path, result.returncode, result.stderr[:500], result.stdout[:200],
+                )
+                raw_messages = []
+        finally:
+            for init_path, content in overwritten.items():
+                try:
+                    with open(init_path, "w") as f:
+                        f.write(content)
+                except Exception:
+                    logging.warning("Failed to restore %s after pylint run", init_path)
 
         # Wrap each JSON dict in a SimpleNamespace so PylintError can consume it
         # using the same attribute interface as a pylint Message object.

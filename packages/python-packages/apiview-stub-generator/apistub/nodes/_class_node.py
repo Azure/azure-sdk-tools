@@ -132,9 +132,7 @@ class ClassNode(NodeEntityBase):
             # only include functions that themselves have a real source file. This filters out
             # generated methods like __init__ that were synthesized by the dataclass machinery,
             # while keeping user-defined methods (e.g. lambdas passed via namespace=).
-            try:
-                inspect.getsource(self.obj)
-            except (OSError, TypeError):
+            if not self._class_has_source:
                 sourcefile = inspect.getsourcefile(func_obj)
                 if not sourcefile or sourcefile == "<string>":
                     return False
@@ -177,7 +175,7 @@ class ClassNode(NodeEntityBase):
             class_node = astroid.parse(inspect.getsource(class_obj)).body[0]
             class_decorators = class_node.decorators.nodes
             self.decorators = [
-                f"@{x.as_string()}" for x in class_decorators
+                f"@{x.as_string(preserve_quotes=True)}" for x in class_decorators
             ]
         except:
             self.decorators = []
@@ -205,6 +203,14 @@ class ClassNode(NodeEntityBase):
         )
 
         self._parse_decorators_from_class(self.obj)
+
+        # Cache whether this class has a Python source file. Used by _should_include_function()
+        # to avoid repeated filesystem reads for every member of the class.
+        try:
+            inspect.getsource(self.obj)
+            self._class_has_source = True
+        except (OSError, TypeError):
+            self._class_has_source = False
 
         # find members in node
         # enums with duplicate values are screened out by "getmembers" so
@@ -482,14 +488,19 @@ class ClassNode(NodeEntityBase):
                     arg, value = keyword.split("=", 1)
                     line.add_text(arg, has_suffix_space=False)
                     line.add_punctuation("=", has_suffix_space=False)
-                    line.add_type(value, apiview=self.apiview, has_suffix_space=False)
+                    # Use add_literal for Python literal values (True/False/None/numbers/strings)
+                    # so they render with the correct token kind rather than as type names.
+                    try:
+                        ast.literal_eval(value)
+                        line.add_literal(value, has_suffix_space=False)
+                    except (ValueError, SyntaxError):
+                        line.add_type(value, apiview=self.apiview, has_suffix_space=False)
                     # Add comma between multiple keywords
                     if idx < len(self.class_keywords) - 1:
                         line.add_punctuation(",")
 
             line.add_punctuation(")", has_suffix_space=False)
         line.add_punctuation(":", has_suffix_space=False)
-
         # Add any ABC implementation list
         if self.implements:
             line.add_text(" ", has_suffix_space=False)

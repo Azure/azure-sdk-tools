@@ -122,6 +122,13 @@ public class APIViewReviewTool : MCPMultiCommandTool
         Description = "The source branch for the build"
     };
 
+    // get-review-url specific options
+    private readonly Option<string> languageQueryOption = new("--language")
+    {
+        Description = "The language (e.g., 'C#', 'Python', 'Java', 'JavaScript')",
+        Required = true
+    };
+
     // create-pull-request-revision specific options
     private readonly Option<string> commitShaOption = new("--commit-sha")
     {
@@ -177,7 +184,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
         },
         new McpCommand(GetReviewUrlCmd, "Get the APIView review URL for a package and language", ApiViewGetReviewUrlToolName)
         {
-            packageNameOption, languageOption, packageVersionOption
+            packageNameOption, languageQueryOption, packageVersionOption
         }
     ];
 
@@ -262,7 +269,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
     private async Task<APIViewResponse> GetReviewUrl(ParseResult parseResult, CancellationToken ct)
     {
         string? package = parseResult.GetValue(packageNameOption);
-        string? language = parseResult.GetValue(languageOption);
+        string? language = parseResult.GetValue(languageQueryOption);
         string? version = parseResult.GetValue(packageVersionOption);
         return await GetReviewUrlByPackage(package!, language!, version, ct);
     }

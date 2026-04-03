@@ -37,6 +37,12 @@ SDK_PARAMS = [
     ("azure-eventhub-checkpointstoreblob-aio", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblobaio", "src"),
     ("azure-eventhub-checkpointstoreblob-aio", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblobaio", "sdist"),
     ("azure-eventhub-checkpointstoreblob-aio", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblobaio", "whl"),
+    ("azure-identity", "1.25.3", "identity", "azure.identity", "whl"),
+    ("azure-identity", "1.25.3", "identity", "azure.identity", "src"),
+    ("azure-identity", "1.25.3", "identity", "azure.identity", "sdist"),
+    ("azure-storage-blob", "12.28.0", "storage", "azure.storage.blob", "whl"),
+    ("azure-storage-blob", "12.28.0", "storage", "azure.storage.blob", "src"),
+    ("azure-storage-blob", "12.28.0", "storage", "azure.storage.blob", "sdist"),
     #("azure-synapse-artifacts", "0.20.0", "synapse", "azure.synapse.artifacts")
 ]
 SDK_IDS = [f"{pkg_name}_{version}[{pkg_type}]" for pkg_name, version, _, _, pkg_type in SDK_PARAMS]

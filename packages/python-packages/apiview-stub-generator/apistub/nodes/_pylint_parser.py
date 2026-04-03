@@ -2,10 +2,11 @@ import inspect
 import json
 import logging
 import os
-from sys import stderr
 import re
+import subprocess
+import sys
+from types import SimpleNamespace
 from typing import List, Union, TYPE_CHECKING
-from pylint.lint import Run
 
 if TYPE_CHECKING:
     from ._base_node import NodeEntityBase
@@ -58,14 +59,75 @@ class PylintParser:
     items: List[PylintError] = []
 
     @classmethod
+    def _normalize_namespace_inits(cls, path):
+        """Replace namespace azure/__init__.py files with empty files.
+
+        Packages distributed as sdist or source include a namespace-package
+        ``azure/__init__.py`` that extends ``__path__`` via ``pkgutil``.  When
+        pylint / astroid sees that file it merges all installed azure sub-packages
+        into a single namespace, which breaks decorator name resolution and causes
+        the azure-sdk guidelines checker to silently produce no diagnostics.
+        Overwriting those files with empty ones matches the behaviour of the WHL
+        variant (which never carries a non-trivial ``azure/__init__.py``).
+        """
+        for root, dirs, files in os.walk(path):
+            basename = os.path.basename(root)
+            if basename == "azure" and "__init__.py" in files:
+                init_path = os.path.join(root, "__init__.py")
+                try:
+                    with open(init_path, "r") as f:
+                        content = f.read()
+                    if "extend_path" in content or "pkgutil" in content:
+                        with open(init_path, "w") as f:
+                            pass  # overwrite with empty file
+                except Exception:
+                    pass
+                # No need to recurse deeper once we've found azure/
+                dirs.clear()
+
+    @classmethod
     def parse(cls, path):
         from apistub import ApiView
+
+        # Replace namespace azure/__init__.py files so pylint resolves
+        # decorators correctly regardless of distribution format (src/sdist/whl).
+        cls._normalize_namespace_inits(path)
 
         pkg_name = os.path.split(path)[-1]
         rcfile_path = os.path.join(ApiView.get_root_path(), ".pylintrc")
         logging.debug(f"APIView root path: {ApiView.get_root_path()}")
-        params = f"{path} -f json --recursive=y --rcfile {rcfile_path}".split(" ")
-        messages = Run(params, exit=False).linter.reporter.messages
+
+        # Run pylint in a subprocess so that each analysis starts with a clean
+        # Python/astroid state and is not affected by packages already imported
+        # in the current process (e.g. during a full test-suite run).
+        cmd = [sys.executable, "-m", "pylint", path, "-f", "json", "--recursive=y", "--rcfile", rcfile_path]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        try:
+            raw_messages = json.loads(result.stdout or "[]")
+        except json.JSONDecodeError:
+            logging.warning("pylint produced non-JSON output; treating as no messages")
+            raw_messages = []
+
+        # Wrap each JSON dict in a SimpleNamespace so PylintError can consume it
+        # using the same attribute interface as a pylint Message object.
+        messages = [
+            SimpleNamespace(
+                C=m.get("message-id", "?")[0],
+                category=m.get("type", ""),
+                module=m.get("module", ""),
+                obj=m.get("obj", ""),
+                line=m.get("line", 0),
+                column=m.get("column", 0),
+                end_line=m.get("endLine", None),
+                end_column=m.get("endColumn", None),
+                path=m.get("path", ""),
+                symbol=m.get("symbol", ""),
+                msg=m.get("message", ""),
+                msg_id=m.get("message-id", ""),
+            )
+            for m in raw_messages
+        ]
+
         plugin_failed = any([x.symbol == "bad-plugin-value" for x in messages])
         if plugin_failed:
             logging.error(

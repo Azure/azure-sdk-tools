@@ -1,13 +1,13 @@
 from datetime import datetime
 from azure.core.paging import ItemPaged
-from typing import Optional, Union, List, Any, overload
+from typing import Optional, Union, List, Any, overload, Callable, Awaitable, AsyncIterator, Tuple, Mapping, MutableMapping
+from typing import Final, Annotated
 from enum import Enum
 
 from .models import FakeObject, FakeError, PetEnumPy3Metaclass
 
 from azure.core import PipelineClient
 from azure.core.tracing.decorator import distributed_trace
-from typing import Optional, Union, overload
 
 
 
@@ -396,3 +396,42 @@ class PylintViolationEnum(str, Enum):
     """Enumeration that will trigger enum-must-inherit-case-insensitive-enum-meta."""
     password = "password"  # Should trigger enum-must-be-uppercase
     CERTIFICATE = "certificate"
+
+
+# pylint:disable=docstring-missing-return,docstring-missing-rtype
+class AdvancedTypeHintClient:
+    """Client to test advanced type annotation constructs."""
+
+    MAX_RETRIES: Final[int] = 3
+
+    def with_callable_typehint(self, callback: Callable[[int, str], bool]) -> None:
+        pass
+
+    def with_callable_no_args(self, callback: Callable[[], None]) -> None:
+        pass
+
+    async def with_awaitable_return(self) -> Awaitable[str]:
+        pass
+
+    async def with_async_iterator_return(self) -> AsyncIterator[str]:
+        pass
+
+    def with_tuple_typehint(self, coords: Tuple[int, int]) -> Tuple[str, bool]:
+        pass
+
+    def with_variadic_tuple(self, items: Tuple[int, ...]) -> None:
+        pass
+
+    def with_mapping_typehint(self, config: Mapping[str, Any]) -> MutableMapping[str, int]:
+        pass
+
+    def with_annotated_typehint(self, value: Annotated[int, "positive"]) -> Annotated[str, "result"]:
+        pass
+
+    @classmethod
+    def from_connection_string(cls, connection_string: str) -> "AdvancedTypeHintClient":
+        pass
+
+    @staticmethod
+    def validate_endpoint(endpoint: str) -> bool:
+        pass

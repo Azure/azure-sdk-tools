@@ -213,7 +213,8 @@ class TestApiView:
         unclaimed = PylintParser.get_unclaimed()
         # DataClassWithKeywordOnly (KW_ONLY) is a Python 3.10+ feature so it's absent on 3.9,
         # resulting in 2 fewer diagnostics (its __init__ pylint warnings).
-        expected_diagnostic_count = 91 if sys.version_info < (3, 10) else 93
+        # AdvancedTypeHintClient.validate_endpoint adds 1 diagnostic (client-method-should-not-use-static-method).
+        expected_diagnostic_count = 92 if sys.version_info < (3, 10) else 94
         assert len(apiview.diagnostics) == expected_diagnostic_count
         # The "needs copyright header" error corresponds to a file, which isn't directly
         # represented in APIView

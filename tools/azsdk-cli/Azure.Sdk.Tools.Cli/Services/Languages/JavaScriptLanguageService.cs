@@ -1,8 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.Text.Json;
-using System.Text.Json.Nodes;
-using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
@@ -360,10 +358,9 @@ public sealed partial class JavaScriptLanguageService : LanguageService
     }
 
     /// <summary>
-    /// Updates the JavaScript package version in language-specific files.
+    /// Updates the JavaScript package version by calling the existing versioning script.
     /// Follows SetPackageVersion from azure-sdk-for-js/eng/scripts/Language-Settings.ps1,
     /// excluding changelog updates because changelog changes are handled by the base language workflow.
-    /// Updates package.json version and any constant files listed in //metadata.constantPaths.
     /// </summary>
     protected override async Task<PackageOperationResponse> UpdatePackageVersionInFilesAsync(
         string packagePath,
@@ -373,143 +370,120 @@ public sealed partial class JavaScriptLanguageService : LanguageService
     {
         logger.LogInformation("Updating JavaScript package version to {Version} in {PackagePath}", version, packagePath);
 
+        // Read the package name from package.json to compute the artifact name, same as:
+        // $artifactName = $PackageName.Replace("@", "").Replace("/", "-")
+        var (packageName, _, _) = await TryGetPackageInfoAsync(packagePath, ct);
+        if (string.IsNullOrWhiteSpace(packageName))
+        {
+            return PackageOperationResponse.CreateFailure(
+                "Could not read package name from package.json.",
+                nextSteps: ["Ensure package.json exists with a valid name field"]);
+        }
+
+        var artifactName = packageName.Replace("@", "").Replace("/", "-");
+
+        // Discover repo root (equivalent to $RepoRoot in the PowerShell script)
+        string repoRoot;
         try
         {
-            var packageJsonPath = Path.Combine(packagePath, "package.json");
-            if (!File.Exists(packageJsonPath))
-            {
-                return PackageOperationResponse.CreateFailure(
-                    $"No package.json found at {packageJsonPath}",
-                    nextSteps: ["Ensure the package path contains a valid npm package with package.json"]);
-            }
-
-            var packageJsonContent = await File.ReadAllTextAsync(packageJsonPath, ct);
-
-            JsonNode? packageJsonNode;
-            try
-            {
-                packageJsonNode = JsonNode.Parse(packageJsonContent, nodeOptions: null, documentOptions: new JsonDocumentOptions
-                {
-                    AllowTrailingCommas = true,
-                    CommentHandling = JsonCommentHandling.Skip
-                });
-            }
-            catch (JsonException ex)
-            {
-                logger.LogError(ex, "Failed to parse package.json at {PackageJsonPath}", packageJsonPath);
-                return PackageOperationResponse.CreateFailure(
-                    $"Failed to parse package.json: {ex.Message}",
-                    nextSteps: ["Ensure package.json is valid JSON"]);
-            }
-
-            if (packageJsonNode is null)
-            {
-                return PackageOperationResponse.CreateFailure(
-                    "package.json is empty or null",
-                    nextSteps: ["Ensure package.json contains valid content"]);
-            }
-
-            // Update the version field in package.json
-            packageJsonNode["version"] = version;
-
-            // Write back with 2-space indentation + trailing newline, matching JS JSON.stringify behavior
-            var updatedContent = packageJsonNode.ToJsonString(new JsonSerializerOptions { WriteIndented = true }) + "\n";
-            await File.WriteAllTextAsync(packageJsonPath, updatedContent, ct);
-            logger.LogInformation("Updated version in package.json to {Version}", version);
-
-            // Update constant files referenced in //metadata.constantPaths (equivalent to updatePackageConstants in VersionUtils.js)
-            int updatedConstantFiles = await UpdatePackageConstantsAsync(packagePath, packageJsonNode, version, ct);
-
-            var message = updatedConstantFiles > 0
-                ? $"Version updated to {version} in package.json and {updatedConstantFiles} constant file(s)."
-                : $"Version updated to {version} in package.json.";
-
-            return PackageOperationResponse.CreateSuccess(message);
+            repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to update JavaScript package version");
+            logger.LogDebug(ex, "Failed to discover repo root for {PackagePath}", packagePath);
             return PackageOperationResponse.CreateFailure(
-                $"Failed to update version: {ex.Message}",
-                nextSteps: ["Check the package.json file format", "Ensure the file is not locked by another process"]);
+                "Failed to discover repository root.",
+                nextSteps: ["Ensure you are running inside a valid git repository"]);
         }
+
+        var scriptResult = await TryUpdateVersionUsingScriptAsync(repoRoot, artifactName, version, ct);
+        if (!scriptResult.ScriptsAvailable || !scriptResult.Success)
+        {
+            return PackageOperationResponse.CreateFailure(
+                scriptResult.Message ?? "Failed to run JavaScript versioning script.",
+                nextSteps:
+                [
+                    "Run 'azsdk verify setup' to verify Node.js is available",
+                    "Ensure eng/tools/versioning/set-version.js exists",
+                    "Run the script manually and verify version propagation"
+                ]);
+        }
+
+        return PackageOperationResponse.CreateSuccess(
+            $"Version updated to {version} via set-version.js.");
     }
 
     /// <summary>
-    /// Updates version strings in constant files listed in the //metadata.constantPaths section of package.json.
-    /// Equivalent to updatePackageConstants from azure-sdk-for-js/eng/tools/versioning/VersionUtils.js.
+    /// Attempts to run the JavaScript set-version.js script to update the package version.
+    /// Follows SetPackageVersion from azure-sdk-for-js/eng/scripts/Language-Settings.ps1.
     /// </summary>
-    /// <returns>The number of constant files that were updated.</returns>
-    private async Task<int> UpdatePackageConstantsAsync(string packagePath, JsonNode packageJsonNode, string newVersion, CancellationToken ct)
+    /// <param name="repoRoot">Root of the azure-sdk-for-js repository.</param>
+    /// <param name="artifactName">The npm artifact name (e.g. azure-keyvault-secrets).</param>
+    /// <param name="version">Target version string.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>A <see cref="ScriptUpdateResult"/> describing script availability, outcome, and details.</returns>
+    private async Task<ScriptUpdateResult> TryUpdateVersionUsingScriptAsync(
+        string repoRoot,
+        string artifactName,
+        string version,
+        CancellationToken ct)
     {
-        var metadataNode = packageJsonNode["//metadata"];
-        if (metadataNode is null)
+        var engPackageUtilsDir = Path.Combine(repoRoot, "eng", "tools", "eng-package-utils");
+        var versioningDir = Path.Combine(repoRoot, "eng", "tools", "versioning");
+        var setVersionScript = Path.Combine(versioningDir, "set-version.js");
+
+        if (!File.Exists(setVersionScript))
         {
-            return 0;
+            logger.LogDebug("JavaScript versioning script not found at {SetVersionScript}; script propagation skipped", setVersionScript);
+            return ScriptUpdateResult.NotAvailable("JavaScript versioning script was not found under eng/tools/versioning.");
         }
 
-        var constantPathsNode = metadataNode["constantPaths"];
-        if (constantPathsNode is not JsonArray constantPathsArray)
+        // npm install in $EngDir/tools/eng-package-utils
+        if (Directory.Exists(engPackageUtilsDir))
         {
-            return 0;
+            logger.LogDebug("Running npm install in {Dir}", engPackageUtilsDir);
+            var installResult = await processHelper.Run(
+                new ProcessOptions("npm", ["install"], workingDirectory: engPackageUtilsDir),
+                ct);
+            if (installResult.ExitCode != 0)
+            {
+                return ScriptUpdateResult.Failed($"npm install failed in eng/tools/eng-package-utils: {installResult.Output}");
+            }
         }
 
-        int updatedCount = 0;
-        foreach (var entry in constantPathsArray)
+        // npm install in $EngDir/tools/versioning
+        logger.LogDebug("Running npm install in {Dir}", versioningDir);
+        var versioningInstallResult = await processHelper.Run(
+            new ProcessOptions("npm", ["install"], workingDirectory: versioningDir),
+            ct);
+        if (versioningInstallResult.ExitCode != 0)
         {
-            if (entry is null)
-            {
-                continue;
-            }
-
-            var filePath = entry["path"]?.GetValue<string>();
-            var prefix = entry["prefix"]?.GetValue<string>();
-
-            if (string.IsNullOrEmpty(filePath) || string.IsNullOrEmpty(prefix))
-            {
-                logger.LogWarning("Skipping invalid constantPaths entry: path={FilePath}, prefix={Prefix}", filePath, prefix);
-                continue;
-            }
-
-            var targetPath = Path.Combine(packagePath, filePath.Replace('/', Path.DirectorySeparatorChar));
-            if (!File.Exists(targetPath))
-            {
-                logger.LogWarning("Constant file not found, skipping: {TargetPath}", targetPath);
-                continue;
-            }
-
-            var fileContent = await File.ReadAllTextAsync(targetPath, ct);
-            var updatedContent = ReplaceVersionInContent(fileContent, prefix, newVersion);
-
-            if (updatedContent == fileContent)
-            {
-                logger.LogDebug("No version replacement needed in {TargetPath}", targetPath);
-                continue;
-            }
-
-            await File.WriteAllTextAsync(targetPath, updatedContent, ct);
-            logger.LogInformation("Updated version to {NewVersion} in {TargetPath}", newVersion, targetPath);
-            updatedCount++;
+            return ScriptUpdateResult.Failed($"npm install failed in eng/tools/versioning: {versioningInstallResult.Output}");
         }
 
-        return updatedCount;
+        // node ./set-version.js --artifact-name $artifactName --new-version $version --repo-root $RepoRoot
+        // --replace-latest-entry-title false: changelog title replacement is managed by UpdateChangelogContentAsync in the base class
+        logger.LogInformation("Running set-version.js for artifact {ArtifactName}", artifactName);
+        var scriptResult = await processHelper.Run(
+            new ProcessOptions(
+                "node",
+                ["./set-version.js", "--artifact-name", artifactName, "--new-version", version, "--repo-root", repoRoot, "--replace-latest-entry-title", "false"],
+                workingDirectory: versioningDir),
+            ct);
+
+        if (scriptResult.ExitCode != 0)
+        {
+            logger.LogError("set-version.js failed for {ArtifactName} with exit code {ExitCode}", artifactName, scriptResult.ExitCode);
+            return ScriptUpdateResult.Failed($"set-version.js failed: {scriptResult.Output}");
+        }
+
+        return ScriptUpdateResult.Succeeded($"Version updated to {version} via set-version.js.");
     }
 
-    /// <summary>
-    /// Replaces a semver version string in the given content using a prefix-anchored pattern.
-    /// Equivalent to the regex-based replacement in updatePackageConstants from VersionUtils.js.
-    /// </summary>
-    internal static string ReplaceVersionInContent(string content, string prefix, string newVersion)
+    private sealed record ScriptUpdateResult(bool ScriptsAvailable, bool Success, string? Message)
     {
-        // Semver pattern from https://semver.org/#is-there-a-suggested-regular-expression-regex-to-check-a-semver-string
-        // adapted to match within a line (no ^ or $ anchors), same as the JS VersionUtils.js
-        const string semverPattern =
-            @"(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)" +
-            @"(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))" +
-            @"?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?";
-
-        // Pattern: (prefix.*?)(semver) — matches prefix followed by non-greedy chars then a semver version
-        var pattern = $"({prefix}.*?)({semverPattern})";
-        return Regex.Replace(content, pattern, $"${{1}}{newVersion}");
+        public static ScriptUpdateResult NotAvailable(string message) => new(false, false, message);
+        public static ScriptUpdateResult Failed(string message) => new(true, false, message);
+        public static ScriptUpdateResult Succeeded(string message) => new(true, true, message);
     }
 }

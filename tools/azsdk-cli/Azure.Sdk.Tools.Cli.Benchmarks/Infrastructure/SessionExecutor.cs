@@ -5,6 +5,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using GitHub.Copilot.SDK;
 using Azure.Sdk.Tools.Cli.Benchmarks.Models;
+using Azure.Sdk.Tools.Cli.Benchmarks.Interaction;
 
 namespace Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
 
@@ -14,6 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
 public class SessionExecutor : IDisposable
 {
     private CopilotClient? _client;
+    private SyntheticAICustomer? _aiCustomer;
 
     /// <summary>
     /// Executes a benchmark scenario with the provided configuration.
@@ -23,7 +25,13 @@ public class SessionExecutor : IDisposable
     public async Task<ExecutionResult> ExecuteAsync(ExecutionConfig config)
     {
         var stopwatch = Stopwatch.StartNew();
+        bool mainTaskCompleted = false;
         var toolCalls = new List<ToolCallRecord>();
+        var inputQAs = new List<QuestionAndAnswer>();
+        if (config.QuestionAndAnswers != null)
+        {
+            _aiCustomer = new SyntheticAICustomer(config.QuestionAndAnswers);
+        }
         var pendingTimestamps = new Dictionary<string, double>();
         var tokenUsage = new TokenUsage();
 
@@ -85,14 +93,35 @@ public class SessionExecutor : IDisposable
                     }
                 },
                 // Auto-respond to ask_user with a simple response
-                OnUserInputRequest = (request, invocation) =>
+                OnUserInputRequest = async (request, invocation) =>
                 {
                     Console.WriteLine($"Model requested user input with prompt: {request.Question}");
-                    return Task.FromResult(new UserInputResponse
+                    if (mainTaskCompleted)
                     {
-                        Answer = "Please proceed with your best judgment.",
+                        Console.WriteLine("Main task already completed, This is follow-up task.");
+                        return new UserInputResponse
+                        {
+                            Answer = "No further actions are required. End the task.",
+                            WasFreeform = false
+                        };
+                    }
+
+                    string answer = "Please proceed with your best judgment.";
+                    if (_aiCustomer != null)
+                    {
+                        var result = await _aiCustomer.AskQuestionAsync(request.Question);
+                        if (!string.IsNullOrEmpty(result))
+                        {
+                            answer = result;
+                        }
+                    }
+
+                    inputQAs.Add(new QuestionAndAnswer(request.Question, answer));
+                    return new UserInputResponse
+                    {
+                        Answer = answer,
                         WasFreeform = true
-                    });
+                    };
                 }
             };
 
@@ -107,6 +136,10 @@ public class SessionExecutor : IDisposable
                     tokenUsage.OutputTokens += usageEvent.Data.OutputTokens ?? 0;
                     tokenUsage.CacheReadTokens += usageEvent.Data.CacheReadTokens ?? 0;
                     tokenUsage.CacheWriteTokens += usageEvent.Data.CacheWriteTokens ?? 0;
+                }
+                if (evt is SessionIdleEvent)
+                {
+                    mainTaskCompleted = true;
                 }
             });
             if (config.Verbose)
@@ -130,6 +163,7 @@ public class SessionExecutor : IDisposable
                 Duration = stopwatch.Elapsed,
                 Messages = messages.Cast<object>().ToList(),
                 ToolCalls = toolCalls,
+                InputQuestionAndAnswers = inputQAs,
                 TokenUsage = tokenUsage
             };
         }
@@ -142,6 +176,7 @@ public class SessionExecutor : IDisposable
                 Error = ex.Message,
                 Duration = stopwatch.Elapsed,
                 ToolCalls = toolCalls,
+                InputQuestionAndAnswers = inputQAs,
                 TokenUsage = tokenUsage
             };
         }

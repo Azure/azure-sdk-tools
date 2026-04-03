@@ -163,12 +163,13 @@ public sealed partial class PythonLanguageService : LanguageService
         }
     }
 
-    public override async Task<TestRunResponse> RunAllTests(string packagePath, CancellationToken ct = default)
+    public override async Task<TestRunResponse> RunAllTests(string packagePath, TestMode testMode = TestMode.Playback, IDictionary<string, string>? liveTestEnvironment = null, TimeSpan? timeout = null, CancellationToken ct = default)
     {
         var result = await pythonHelper.Run(new PythonOptions(
                 "pytest",
                 ["tests"],
-                workingDirectory: packagePath
+                workingDirectory: packagePath,
+                timeout: timeout
             ),
             ct
         );

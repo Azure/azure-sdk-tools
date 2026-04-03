@@ -1,11 +1,12 @@
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
+using Azure.Sdk.Tools.Cli.Benchmarks.Interaction;
 using Azure.Sdk.Tools.Cli.Benchmarks.Models;
 using Azure.Sdk.Tools.Cli.Benchmarks.Validation;
 using Azure.Sdk.Tools.Cli.Benchmarks.Validation.Validators;
 
-namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
+namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.TypeSpec
 {
     /// <summary>
     /// Represents a TypeSpec authoring scenario that can be loaded dynamically from JSON test case files.
@@ -27,11 +28,17 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
         public override string Prompt { get; }
 
         /// <inheritdoc />
-        public override RepoConfig Repo { get;}
+        public override RepoConfig Repo { get; }
+
+        /// <inheritdoc />
+        public override IReadOnlyList<QuestionAndAnswer>? QuestionAndAnswers { get; }
+
+        /// <inheritdoc />
+        public override IEnumerable<IValidator> Validators { get; }
 
         public string TspProjectPath { get; }
 
-        public IReadOnlyList<string> ToolsToCall { get; set; } = new List<string>(){ "azure-typespec-author", "azsdk-azsdk_typespec_generate_authoring_plan"};
+        public IReadOnlyList<string> ToolsToCall { get; set; } = new List<string>() { "azure-typespec-author", "azsdk-azsdk_typespec_generate_authoring_plan" };
 
         /// <summary>
         /// Gets or sets the verification plan for validating the scenario results.
@@ -46,7 +53,7 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
         public List<string> TestTspFiles { get; set; } = new List<string>();
 
         public string? AuthoringSpecRepo { get; private set; }
-        public string? AuthoringSkillPath { get; private set; }
+        public string? AuthoringSkillPath { get; set; }
 
         /// <inheritdoc />
         public override string[] Tags => ["typespec", "authoring"];
@@ -57,12 +64,14 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
         /// <param name="name">The unique name of the scenario.</param>
         /// <param name="description">The description of what the scenario tests.</param>
         /// <param name="prompt">The prompt to send to the agent.</param>
+        /// <param name="tspProjectPath">Optional TypeSpec project path. If null or empty, uses the default path.</param>
         /// <param name="testTspFiles">Optional list of TypeSpec files relevant to this scenario.</param>
+        /// <param name="toolsToCall">Optional list of tools to call during the scenario.</param>
         /// <param name="verifyPlan">Optional verification plan for validating scenario results.</param>
+        /// <param name="questionAndAnswers">Optional list of questions and answers for agent interaction.</param>
         /// <param name="authoringSpecRepo">Optional repository for authoring specs.</param>
         /// <param name="authoringSkillPath">Optional path for authoring skills.</param>
-        /// <param name="toolsToCall">Optional list of tools to call during the scenario.</param>
-        public AuthoringScenario(string name, string description, string prompt, string? tspProjectPath, List<string>? testTspFiles = null, List<string>? toolsToCall = null, List<string>? verifyPlan = null, string? authoringSpecRepo = null, string? authoringSkillPath = null)
+        public AuthoringScenario(string name, string description, string prompt, string? tspProjectPath, List<string>? testTspFiles = null, List<string>? toolsToCall = null, List<string>? verifyPlan = null, List<QuestionAndAnswer>? questionAndAnswers = null)
         {
             Name = name;
             Description = description ?? string.Empty;
@@ -74,51 +83,23 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
             }
             VerifyPlan = verifyPlan ?? new List<string> { "compile the project." };
             TestTspFiles = testTspFiles ?? new List<string>();
-            if (!string.IsNullOrWhiteSpace(authoringSpecRepo))
+            QuestionAndAnswers = questionAndAnswers;
+            Repo = new RepoConfig()
             {
-                AuthoringSpecRepo = authoringSpecRepo;
-
-                var _repoStringRegex = new Regex(@"^(?:(?<owner>[^/:\s]+)/)?(?<name>[^/:\s]+)(?::(?<ref>[^:\s]+))?$", RegexOptions.Compiled);
-                var match = _repoStringRegex.Match(authoringSpecRepo.Trim());
-                if (!match.Success)
-                {
-                    throw new ArgumentException(
-                        $"Invalid repository format: '{authoringSpecRepo}'. " +
-                        "Expected formats: 'owner/name', 'owner/name:ref', 'name', or 'name:ref'",
-                        nameof(authoringSpecRepo));
-                }
-
-                var owner = match.Groups["owner"].Success
-                    ? match.Groups["owner"].Value
-                    : "Azure";
-
-                var repoName = match.Groups["owner"].Success ? match.Groups["name"].Value : "azure-rest-api-specs";
-
-                var gitRef = match.Groups["ref"].Success
-                    ? match.Groups["ref"].Value
-                    : "main";
-
-
-                Repo = new RepoConfig()
-                {
-                    Owner = owner,
-                    Name = repoName,
-                    Ref = gitRef,
-                    SparseCheckoutPaths = [TspProjectPath, ".vscode", "eng/common"]
-                };
-            }
-            else
+                Owner = "Azure",
+                Name = "azure-rest-api-specs",
+                Ref = "main",
+                SparseCheckoutPaths = [TspProjectPath, ".vscode", "eng/common"]
+            };
+            Validators =
+            [
+                new ToolAndSkillTriggerValidator("Expected tools and skills were triggered", ToolsToCall),
+                new VerifyResultWithAIValidator("Verify results with AI", string.Join("\n", VerifyPlan.ToArray()))
+            ];
+            if (QuestionAndAnswers != null && QuestionAndAnswers.Any())
             {
-                // If no specific authoring spec repo is provided, default to checking out default azure-rest-api-specs repo.
-                Repo = new RepoConfig()
-                {
-                    Owner = "Azure",
-                    Name = "azure-rest-api-specs",
-                    Ref = "main",
-                    SparseCheckoutPaths = [TspProjectPath]
-                };
+                Validators = Validators.Concat([new InteractionValidator("Verify interaction")]).ToArray();
             }
-            AuthoringSkillPath = authoringSkillPath;
         }
 
         /// <inheritdoc />
@@ -134,6 +115,7 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
             // set up test tsp files - copy them to the tspProjectPath, replacing if they exist
             if (TestTspFiles.Any())
             {
+                Console.WriteLine($"Setting up test TypeSpec files for scenario '{Name}'...");
                 // Look for TestData in the source directory, not the build output
                 var baseDir = AppContext.BaseDirectory;
                 var testDataPath = Path.Combine(baseDir, "TestData", "TypeSpec");
@@ -165,6 +147,12 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
                         await workspace.CopyToWorkspaceAsync(sourcePath, Path.Combine(TspProjectPath, relativePath));
                     }
                 }
+
+                // cache the setup changes
+                Console.WriteLine($"Caching setup changes for scenario '{Name}'...");
+                await workspace.RunCommandAsync("git", "add", ".");
+                Console.WriteLine($"Committing setup changes for scenario '{Name}'...");
+                await workspace.RunCommandAsync("git", "commit", "-m", $"Setup for scenario '{Name}'");
             }
             if (!string.IsNullOrWhiteSpace(AuthoringSkillPath))
             {
@@ -181,9 +169,11 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
                 }
             }
             // Install npm dependencies required for TypeSpec compilation
+            Console.WriteLine($"Installing npm dependencies for scenario '{Name}'...");
             await workspace.RunCommandAsync("npm", "ci");
 
             // Download and install the Azure SDK MCP CLI tool using the common setup script
+            Console.WriteLine($"Installing Azure SDK MCP CLI tool for scenario '{Name}'...");
             await workspace.RunCommandAsync("pwsh", "./eng/common/mcp/azure-sdk-mcp.ps1", "-InstallDirectory", workspace.RootPath);
 
             // Configure the path to the installed MCP executable for this scenario
@@ -195,12 +185,5 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
             // TODO: Download and Start Azure Knowledge Base locally. Currently we need to manually start the Azure Knowledge Base server locally.
             //await workspace.RunCommandAsync("")
         }
-
-        /// <inheritdoc />
-        public override IEnumerable<IValidator> Validators =>
-        [
-            new ToolAndSkillTriggerValidator("Expected tools and skills were triggered", ToolsToCall),
-            new VerifyResultWithAIValidate("Verify results with AI", string.Join("\n", VerifyPlan.ToArray()))
-        ];
     }
 }

@@ -14,6 +14,7 @@ export const REVIEW_PAGE_NAME = "Review";
 export const CONVERSATION_PAGE_NAME = "Conversation";
 export const REVISION_PAGE_NAME = "Revision";
 export const SAMPLES_PAGE_NAME = "Samples";
+export const NAMESPACE_PAGE_NAME = "Namespace";
 export const PROFILE_PAGE_NAME = "Your Profile";
 export const ADMIN_PERMISSIONS_PAGE_NAME = "Admin Permissions";
 

@@ -7,6 +7,7 @@ using Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
 using Azure.Sdk.Tools.Cli.Benchmarks.Models;
 using Azure.Sdk.Tools.Cli.Benchmarks.Reporting;
 using Azure.Sdk.Tools.Cli.Benchmarks.Scenarios;
+using Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.TypeSpec;
 
 namespace Azure.Sdk.Tools.Cli.Benchmarks;
 
@@ -48,6 +49,7 @@ public class Program
         var outputOption = new Option<string?>("--output") { Description = "Output file path for the report (used with --report)" };
         var tagOption = new Option<string[]>("--tag") { Description = "Filter scenarios by tag (can be specified multiple times)", AllowMultipleArgumentsPerToken = true };
         var repoOption = new Option<string[]>("--repo") { Description = "Filter scenarios by repository (can be specified multiple times). Append :ref to override the branch (e.g., Azure/azure-rest-api-specs:my-branch)", AllowMultipleArgumentsPerToken = true };
+        var authoringSkillPathOption = new Option<string?>("--authoring-skill-path") { Description = "The filesystem path of the authoring skill directory to be used." };
 
         runCommand.Arguments.Add(nameArgument);
         runCommand.Options.Add(allOption);
@@ -59,6 +61,7 @@ public class Program
         runCommand.Options.Add(outputOption);
         runCommand.Options.Add(tagOption);
         runCommand.Options.Add(repoOption);
+        runCommand.Options.Add(authoringSkillPathOption);
 
         runCommand.SetAction(async (parseResult, _) =>
         {
@@ -72,7 +75,8 @@ public class Program
             var output = parseResult.GetValue(outputOption);
             var tags = parseResult.GetValue(tagOption);
             var repos = parseResult.GetValue(repoOption);
-            return await HandleRunCommand(name, all, tags, repos, model, cleanup, verbose, parallel, report, output);
+            var authoringSkillPath = parseResult.GetValue(authoringSkillPathOption);
+            return await HandleRunCommand(name, all, tags, repos, model, cleanup, verbose, parallel, authoringSkillPath, report, output);
         });
         rootCommand.Subcommands.Add(runCommand);
 
@@ -126,7 +130,7 @@ public class Program
         Console.WriteLine($"\nTotal: {scenarios.Count} scenario(s)");
     }
 
-    private static async Task<int> HandleRunCommand(string? name, bool all, string[]? tags, string[]? repos, string? model, CleanupPolicy cleanup, bool verbose, int parallel, bool report, string? output)
+    private static async Task<int> HandleRunCommand(string? name, bool all, string[]? tags, string[]? repos, string? model, CleanupPolicy cleanup, bool verbose, int parallel, string? authoringSkillPath, bool report, string? output)
     {
         if (string.IsNullOrEmpty(name) && !all)
         {
@@ -142,9 +146,9 @@ public class Program
             return 1;
         }
 
-        if ((tags is { Length: > 0 } || repos is { Length: > 0 }) && !all)
+        if (tags is { Length: > 0 } && !all)
         {
-            Console.WriteLine("Error: --tag and --repo can only be used with --all");
+            Console.WriteLine("Error: --tag can only be used with --all");
             return 1;
         }
 
@@ -247,7 +251,11 @@ public class Program
                 Console.WriteLine($"Target repo: {scenario.Repo.CloneUrl}");
                 Console.WriteLine();
             }
-
+            // override authoring skill path if specified for authoring scenarios
+            if (!string.IsNullOrEmpty(authoringSkillPath) && scenario is AuthoringScenario authoringScenario)
+            {
+                authoringScenario.AuthoringSkillPath = authoringSkillPath;
+            }
             var result = await runner.RunAsync(scenario, options);
             results.Add((scenario, result));
 

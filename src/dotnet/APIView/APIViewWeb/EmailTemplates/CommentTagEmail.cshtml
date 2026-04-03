@@ -2,6 +2,7 @@
 @{
 	Layout = "/EmailTemplates/_EmailLayout.cshtml";
 	ViewData["EmailTitle"] = "You Were Mentioned";
+	ViewData["EmailPreheader"] = $"{Model.PosterUserName} mentioned you in {Model.ReviewName}.";
 }
 
 <p class="section">

@@ -4,19 +4,14 @@ import { generateApiView } from "./generate";
 import { CrossLanguageMetadata } from "./models";
 import { version as parserVersion } from "../package.json";
 
-function getPackageVersion(fileName: string) {
-  const match = fileName.match(/.*_(?<version>.*)\.api\.json/);
-  return match?.length > 0 ? match.groups["version"] : undefined;
-}
-
 async function loadApiJson(fileName: string) {
   const apiModel = new ApiModel();
-  const packageVersionString = getPackageVersion(fileName);
 
   apiModel.loadPackage(fileName);
 
   const apiJson = JSON.parse(await readFile(fileName, { encoding: "utf-8" }));
   const dependencies = apiJson.metadata.dependencies;
+  const packageVersionString = apiJson.metadata.version;
 
   return {
     Name: apiModel.packages[0].name + (packageVersionString ? `(${packageVersionString})` : ""),

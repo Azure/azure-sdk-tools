@@ -18,7 +18,7 @@ public interface ITelemetryService : IDisposable
 
     ValueTask<Activity?> StartActivity(string activityName, Implementation? clientInfo, CancellationToken ct);
 
-    bool? Flush();
+    bool? Flush(int timeoutMilliseconds = 2000);
 }
 
 internal class TelemetryService : ITelemetryService
@@ -95,17 +95,31 @@ internal class TelemetryService : ITelemetryService
         return activity;
     }
 
-    public bool? Flush()
+    public bool? Flush(int timeoutMilliseconds = 2000)
     {
-        // Do not block too long before exiting the CLI at the end of command execution,
-        // even if the telemetry upload is not complete.
-        // 2 seconds seems like a reasonable balance but most of the time the
-        // upload delay should be very quick and not noticeable to users.
-        return _tracerProvider?.ForceFlush(2000);
+        var sw = Stopwatch.StartNew();
+        var result = _tracerProvider?.ForceFlush(timeoutMilliseconds);
+        sw.Stop();
+
+        if (result == false)
+        {
+            _logger.LogDebug(
+                "Telemetry ForceFlush returned false after {ElapsedMs}ms (timeout: {TimeoutMs}ms). " +
+                "Telemetry data may have been dropped because the HTTP export did not complete in time.",
+                sw.ElapsedMilliseconds, timeoutMilliseconds);
+        }
+        else
+        {
+            _logger.LogDebug("Telemetry ForceFlush completed: result={Result}, elapsed={ElapsedMs}ms",
+                result, sw.ElapsedMilliseconds);
+        }
+
+        return result;
     }
 
     public void Dispose()
     {
+        _tracerProvider.Dispose();
         _cts.Cancel();
         _cts.Dispose();
     }
@@ -127,7 +141,17 @@ internal class TelemetryService : ITelemetryService
         }
         catch (Exception ex)
         {
-            _isInitialized.SetException(ex);
+            _logger.LogDebug(ex, "Failed to collect machine information for telemetry tags. " +
+                "Telemetry will continue with fallback values.");
+
+#if DEBUG
+            _tagsList.Add(new(TagName.DebugTag, "true"));
+#endif
+
+            // Use fallback values rather than blocking all telemetry
+            _tagsList.Add(new(TagName.MacAddressHash, "unknown"));
+            _tagsList.Add(new(TagName.DevDeviceId, "unknown"));
+            _isInitialized.SetResult();
         }
     }
 }

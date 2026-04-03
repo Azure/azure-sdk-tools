@@ -47,29 +47,31 @@ class ThreadMemoryService:
         message: ConversationMessage,
         thread_messages: list[ConversationMessageItem],
     ) -> None:
-        """Submit a thread to the tenant memory store.
-
-        Args:
-            message: The message that triggered this update (used for
-                tenant_id resolution and partition key).
-            thread_messages: Full thread from Cosmos DB, ordered by
-                ``created_at`` ascending.
-        """
+        """Submit a thread to the tenant memory store."""
         tenant_store = get_tenant_store_name()
         tenant_id = (message.tenant_id or "").strip()
-        if (
-            not tenant_store
-            or not tenant_id
-            or len(thread_messages) < _MIN_THREAD_LENGTH
-        ):
+
+        if not tenant_store:
+            logger.debug("Thread memory update skipped: no tenant store configured")
+            return
+        if not tenant_id:
+            logger.debug("Thread memory update skipped: no tenant_id on message=%s", message.id)
+            return
+        if len(thread_messages) < _MIN_THREAD_LENGTH:
+            logger.debug(
+                "Thread memory update skipped: thread too short (%d < %d) for conversation=%s",
+                len(thread_messages), _MIN_THREAD_LENGTH, message.conversation_id,
+            )
             return
 
         scope = sanitize_scope(tenant_id)
         if not scope:
+            logger.debug("Thread memory update skipped: scope is empty after sanitize for tenant_id=%s", tenant_id)
             return
 
         items = self._build_memory_items(thread_messages)
         if not items:
+            logger.debug("Thread memory update skipped: no valid items from %d thread messages", len(thread_messages))
             return
 
         # Determine conversation key for incremental tracking

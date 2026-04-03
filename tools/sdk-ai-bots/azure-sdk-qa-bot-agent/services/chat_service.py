@@ -80,6 +80,15 @@ class ChatService:
                     content=memory_scope_msg,
                 ).model_dump(mode="json", exclude_none=True)
             )
+            logger.debug(
+                "Memory scope injected into conversation: scope=%s, conversation=%s",
+                memory_scope, agent_conversation_id,
+            )
+        else:
+            logger.debug(
+                "No memory scope injected: user_id missing, conversation=%s",
+                agent_conversation_id,
+            )
 
         conversation_items.append(
             ConversationItem(
@@ -207,7 +216,10 @@ class ChatService:
         """Derive user memory scope from user_id. Returns None if no user_id."""
         user_id = getattr(req.message, "user_id", None)
         if user_id and user_id.strip():
-            return sanitize_scope(f"user_{user_id.strip()}")
+            scope = sanitize_scope(f"user_{user_id.strip()}")
+            logger.debug("Memory scope resolved: user_id=%s -> scope=%s", user_id, scope)
+            return scope
+        logger.debug("Memory scope not resolved: no user_id in request message")
         return None
 
     @staticmethod

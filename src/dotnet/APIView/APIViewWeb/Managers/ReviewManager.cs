@@ -224,35 +224,45 @@ namespace APIViewWeb.Managers
         /// <param name="language"></param>
         /// <param name="runAnalysis"></param>
         /// <returns></returns>
-        public async Task<ReviewListItemModel> GetOrCreateReview(IFormFile file, string filePath, string language, bool runAnalysis = false)
+        public async Task<(ReviewListItemModel Review, CodeFile CodeFile, MemoryStream MemoryStream)> GetOrCreateReview(IFormFile file, string filePath, string language, bool runAnalysis = false)
         {
             CodeFile codeFile = null;
             ReviewListItemModel review = null;
 
-            using var memoryStream = new MemoryStream();
-            if (file != null)
+            // MemoryStream lifecycle is owned by the caller so pre-parsed data can be reused.
+            // Dispose on failure to avoid leaking the stream when the caller never receives it.
+            var memoryStream = new MemoryStream();
+            try
             {
-                using (var openReadStream = file.OpenReadStream())
+                if (file != null)
+                {
+                    using (var openReadStream = file.OpenReadStream())
+                    {
+                        codeFile = await _codeFileManager.CreateCodeFileAsync(
+                            originalName: file?.FileName, fileStream: openReadStream, runAnalysis: runAnalysis, memoryStream: memoryStream, language: language);
+                    }
+                }
+                else if (!string.IsNullOrEmpty(filePath))
                 {
                     codeFile = await _codeFileManager.CreateCodeFileAsync(
-                        originalName: file?.FileName, fileStream: openReadStream, runAnalysis: runAnalysis, memoryStream: memoryStream, language: language);
+                        originalName: filePath, runAnalysis: runAnalysis, memoryStream: memoryStream, language: language);
                 }
-            }
-            else if (!string.IsNullOrEmpty(filePath))
-            {
-                codeFile = await _codeFileManager.CreateCodeFileAsync(
-                    originalName: filePath, runAnalysis: runAnalysis, memoryStream: memoryStream, language: language);
-            }
 
-            if (codeFile != null)
-            {
-                review = await GetReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language);
-                if (review == null)
+                if (codeFile != null)
                 {
-                    review = await CreateReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: false, crossLanguagePackageId: codeFile.CrossLanguagePackageId);
+                    review = await GetReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language);
+                    if (review == null)
+                    {
+                        review = await CreateReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: false, crossLanguagePackageId: codeFile.CrossLanguagePackageId);
+                    }
                 }
+                return (review, codeFile, memoryStream);
             }
-            return review;
+            catch
+            {
+                memoryStream.Dispose();
+                throw;
+            }
         }
 
         /// <summary>

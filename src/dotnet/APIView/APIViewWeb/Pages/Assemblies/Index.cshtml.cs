@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using System.Threading.Tasks;
+using ApiView;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Mvc;
@@ -100,6 +101,8 @@ namespace APIViewWeb.Pages.Assemblies
 
             var file = Upload.Files?.SingleOrDefault();
             ReviewListItemModel review = null;
+            CodeFile codeFile = null;
+            System.IO.MemoryStream memoryStream = null;
 
             if (!string.IsNullOrEmpty(Upload.PackageName))
             {
@@ -108,13 +111,23 @@ namespace APIViewWeb.Pages.Assemblies
 
             if (review == null)
             {
-                review = await _reviewManager.GetOrCreateReview(file: file, filePath: Upload.FilePath, language: Upload.Language);
+                (review, codeFile, memoryStream) = await _reviewManager.GetOrCreateReview(file: file, filePath: Upload.FilePath, language: Upload.Language);
             }
 
-            if (review != null)
+            try
             {
-                APIRevisionListItemModel apiRevision = await _apiRevisionsManager.CreateAPIRevisionAsync(user: User, review: review, file: file, filePath: Upload.FilePath, language: Upload.Language, label: Label);
-                return RedirectToPage("Review", new { id = review.Id, revisionId = apiRevision.Id });
+                if (review != null)
+                {
+                    APIRevisionListItemModel apiRevision = await _apiRevisionsManager.CreateAPIRevisionAsync(
+                        user: User, review: review, file: file, filePath: Upload.FilePath,
+                        language: Upload.Language, label: Label,
+                        preParsedCodeFile: codeFile, preParsedMemoryStream: memoryStream);
+                    return RedirectToPage("Review", new { id = review.Id, revisionId = apiRevision.Id });
+                }
+            }
+            finally
+            {
+                memoryStream?.Dispose();
             }
             return RedirectToPage();
         }

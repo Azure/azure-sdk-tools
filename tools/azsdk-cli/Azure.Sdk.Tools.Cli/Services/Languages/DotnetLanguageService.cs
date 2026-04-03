@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.CopilotAgents.Tools;
 using Azure.Sdk.Tools.Cli.Helpers;
@@ -254,14 +255,28 @@ public sealed partial class DotnetLanguageService: LanguageService
 
     public override async Task<TestRunResponse> RunAllTests(string packagePath, TestMode testMode = TestMode.Playback, IDictionary<string, string>? liveTestEnvironment = null, TimeSpan? timeout = null, CancellationToken ct = default)
     {
-        var envVars = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        var testModeValue = testMode.ToString().ToLowerInvariant();
+        var testFramework = DetectTestFramework(packagePath);
+
+        var envVars = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        switch (testFramework)
         {
-            // Set both env vars to cover both test frameworks:
-            // Azure.Core.TestFramework reads AZURE_TEST_MODE
-            // Microsoft.ClientModel.TestFramework reads CLIENTMODEL_TEST_MODE
-            ["AZURE_TEST_MODE"] = testMode.ToString().ToLowerInvariant(),
-            ["CLIENTMODEL_TEST_MODE"] = testMode.ToString().ToLowerInvariant()
-        };
+            case DotnetTestFramework.AzureCoreTestFramework:
+                logger.LogInformation("Detected Azure.Core.TestFramework, setting AZURE_TEST_MODE={testMode}", testModeValue);
+                envVars["AZURE_TEST_MODE"] = testModeValue;
+                break;
+            case DotnetTestFramework.ClientModelTestFramework:
+                logger.LogInformation("Detected Microsoft.ClientModel.TestFramework, setting CLIENTMODEL_TEST_MODE={testMode}", testModeValue);
+                envVars["CLIENTMODEL_TEST_MODE"] = testModeValue;
+                break;
+            default:
+                // Could not determine — set both to be safe
+                logger.LogInformation("Could not detect test framework, setting both AZURE_TEST_MODE and CLIENTMODEL_TEST_MODE={testMode}", testModeValue);
+                envVars["AZURE_TEST_MODE"] = testModeValue;
+                envVars["CLIENTMODEL_TEST_MODE"] = testModeValue;
+                break;
+        }
 
         if (liveTestEnvironment != null)
         {
@@ -338,6 +353,83 @@ public sealed partial class DotnetLanguageService: LanguageService
             response.NextSteps ??= [];
             response.NextSteps.Add("Could not push test assets automatically. Ensure test-proxy is installed and try running 'test-proxy push -a assets.json' manually");
         }
+    }
+
+    /// <summary>
+    /// Detects which test framework a .NET test project uses by examining .csproj references.
+    /// </summary>
+    /// <remarks>
+    /// Azure.Core.TestFramework is not a released NuGet package — it's referenced via ProjectReference
+    /// in azure-sdk-for-net. The reference may be a direct path (e.g. ..\..\Azure.Core.TestFramework.csproj)
+    /// or an MSBuild variable (e.g. $(AzureCoreTestFramework)).
+    ///
+    /// Microsoft.ClientModel.TestFramework is a released NuGet package referenced via PackageReference.
+    /// </remarks>
+    internal DotnetTestFramework DetectTestFramework(string packagePath)
+    {
+        try
+        {
+            var testsPath = Path.Combine(packagePath, "tests");
+            var searchDir = Directory.Exists(testsPath) ? testsPath : packagePath;
+
+            var csprojFiles = Directory.GetFiles(searchDir, "*.csproj", SearchOption.TopDirectoryOnly);
+            if (csprojFiles.Length == 0)
+            {
+                logger.LogDebug("No .csproj files found in {searchDir}, cannot detect test framework", searchDir);
+                return DotnetTestFramework.Unknown;
+            }
+
+            foreach (var csprojFile in csprojFiles)
+            {
+                var doc = XDocument.Load(csprojFile);
+
+                // Check ProjectReferences for Azure.Core.TestFramework
+                // Handles both direct paths and MSBuild variables:
+                //   <ProjectReference Include="..\..\Azure.Core.TestFramework\Azure.Core.TestFramework.csproj" />
+                //   <ProjectReference Include="$(AzureCoreTestFramework)" />
+                var projectRefs = doc.Descendants("ProjectReference")
+                    .Select(e => e.Attribute("Include")?.Value ?? "");
+
+                foreach (var refValue in projectRefs)
+                {
+                    if (refValue.Contains("Azure.Core.TestFramework", StringComparison.OrdinalIgnoreCase) ||
+                        refValue.Contains("AzureCoreTestFramework", StringComparison.OrdinalIgnoreCase))
+                    {
+                        logger.LogDebug("Found Azure.Core.TestFramework reference in {csproj}: {ref}", csprojFile, refValue);
+                        return DotnetTestFramework.AzureCoreTestFramework;
+                    }
+                }
+
+                // Check PackageReferences for Microsoft.ClientModel.TestFramework
+                //   <PackageReference Include="Microsoft.ClientModel.TestFramework" />
+                var packageRefs = doc.Descendants("PackageReference")
+                    .Select(e => e.Attribute("Include")?.Value ?? "");
+
+                foreach (var refValue in packageRefs)
+                {
+                    if (refValue.Equals("Microsoft.ClientModel.TestFramework", StringComparison.OrdinalIgnoreCase))
+                    {
+                        logger.LogDebug("Found Microsoft.ClientModel.TestFramework reference in {csproj}: {ref}", csprojFile, refValue);
+                        return DotnetTestFramework.ClientModelTestFramework;
+                    }
+                }
+            }
+
+            logger.LogDebug("No known test framework reference found in {searchDir}", searchDir);
+            return DotnetTestFramework.Unknown;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to detect test framework from .csproj files in {packagePath}", packagePath);
+            return DotnetTestFramework.Unknown;
+        }
+    }
+
+    internal enum DotnetTestFramework
+    {
+        Unknown,
+        AzureCoreTestFramework,
+        ClientModelTestFramework
     }
 
 

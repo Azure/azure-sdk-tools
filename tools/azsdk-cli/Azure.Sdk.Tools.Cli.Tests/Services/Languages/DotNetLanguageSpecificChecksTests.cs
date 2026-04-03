@@ -931,4 +931,92 @@ public partial class TestClient
     }
 
     #endregion
+
+    #region RunAllTests with Framework Detection Tests
+
+    [Test]
+    public async Task RunAllTests_SetsOnlyAzureTestMode_WhenAzureCoreTestFrameworkDetected()
+    {
+        using var tempDir = TempDirectory.Create("dotnet-runall-azcore");
+        var testsDir = Path.Combine(tempDir.DirectoryPath, "tests");
+        Directory.CreateDirectory(testsDir);
+
+        File.WriteAllText(Path.Combine(testsDir, "MyPackage.Tests.csproj"), @"
+<Project Sdk=""Microsoft.NET.Sdk"">
+  <ItemGroup>
+    <ProjectReference Include=""$(AzureCoreTestFramework)"" />
+  </ItemGroup>
+</Project>");
+
+        var processResult = new ProcessResult { ExitCode = 0 };
+        ProcessOptions? capturedOptions = null;
+        _processHelperMock
+            .Setup(p => p.Run(It.Is<ProcessOptions>(o => o.Args.Contains("test")), It.IsAny<CancellationToken>()))
+            .Callback<ProcessOptions, CancellationToken>((options, _) => capturedOptions = options)
+            .ReturnsAsync(processResult);
+
+        await _languageChecks.RunAllTests(tempDir.DirectoryPath, TestMode.Record, ct: CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(capturedOptions!.EnvironmentVariables, Does.ContainKey("AZURE_TEST_MODE"));
+            Assert.That(capturedOptions.EnvironmentVariables!["AZURE_TEST_MODE"], Is.EqualTo("record"));
+            Assert.That(capturedOptions.EnvironmentVariables.ContainsKey("CLIENTMODEL_TEST_MODE"), Is.False);
+        });
+    }
+
+    [Test]
+    public async Task RunAllTests_SetsOnlyClientModelTestMode_WhenClientModelTestFrameworkDetected()
+    {
+        using var tempDir = TempDirectory.Create("dotnet-runall-clientmodel");
+        var testsDir = Path.Combine(tempDir.DirectoryPath, "tests");
+        Directory.CreateDirectory(testsDir);
+
+        File.WriteAllText(Path.Combine(testsDir, "MyPackage.Tests.csproj"), @"
+<Project Sdk=""Microsoft.NET.Sdk"">
+  <ItemGroup>
+    <PackageReference Include=""Microsoft.ClientModel.TestFramework"" Version=""1.0.0"" />
+  </ItemGroup>
+</Project>");
+
+        var processResult = new ProcessResult { ExitCode = 0 };
+        ProcessOptions? capturedOptions = null;
+        _processHelperMock
+            .Setup(p => p.Run(It.Is<ProcessOptions>(o => o.Args.Contains("test")), It.IsAny<CancellationToken>()))
+            .Callback<ProcessOptions, CancellationToken>((options, _) => capturedOptions = options)
+            .ReturnsAsync(processResult);
+
+        await _languageChecks.RunAllTests(tempDir.DirectoryPath, TestMode.Live, ct: CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(capturedOptions!.EnvironmentVariables, Does.ContainKey("CLIENTMODEL_TEST_MODE"));
+            Assert.That(capturedOptions.EnvironmentVariables!["CLIENTMODEL_TEST_MODE"], Is.EqualTo("live"));
+            Assert.That(capturedOptions.EnvironmentVariables.ContainsKey("AZURE_TEST_MODE"), Is.False);
+        });
+    }
+
+    [Test]
+    public async Task RunAllTests_SetsBothEnvVars_WhenFrameworkUnknown()
+    {
+        // _packagePath doesn't have a real .csproj, so framework is Unknown
+        var processResult = new ProcessResult { ExitCode = 0 };
+        ProcessOptions? capturedOptions = null;
+        _processHelperMock
+            .Setup(p => p.Run(It.Is<ProcessOptions>(o => o.Args.Contains("test")), It.IsAny<CancellationToken>()))
+            .Callback<ProcessOptions, CancellationToken>((options, _) => capturedOptions = options)
+            .ReturnsAsync(processResult);
+
+        await _languageChecks.RunAllTests(_packagePath, TestMode.Playback, ct: CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(capturedOptions!.EnvironmentVariables, Does.ContainKey("AZURE_TEST_MODE"));
+            Assert.That(capturedOptions.EnvironmentVariables, Does.ContainKey("CLIENTMODEL_TEST_MODE"));
+            Assert.That(capturedOptions.EnvironmentVariables!["AZURE_TEST_MODE"], Is.EqualTo("playback"));
+            Assert.That(capturedOptions.EnvironmentVariables["CLIENTMODEL_TEST_MODE"], Is.EqualTo("playback"));
+        });
+    }
+
+    #endregion
 }

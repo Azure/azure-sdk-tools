@@ -76,15 +76,13 @@ extends:
                 failOnStderr: true
                 continueOnError: false
 
-              # 3. Install Python dependencies on the ADO agent using AzureCLI@2
-              #    (which provides proper Azure credentials for internal feeds),
-              #    then stage them for the Docker image.
+              # 3. Install Python dependencies
               - task: AzureCLI@2
                 condition: ne('${{ parameters.environment }}','prod')
                 displayName: 'Install Python Dependencies'
                 continueOnError: false
                 inputs:
-                  azureSubscription: $(SERVICE_CONNECTION)
+                  azureSubscription: 'azuresdkqabot-dev'
                   scriptType: bash
                   scriptLocation: inlineScript
                   inlineScript: |

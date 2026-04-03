@@ -76,7 +76,19 @@ extends:
                 failOnStderr: true
                 continueOnError: false
 
-              # 3. Build & push (prod reuses existing image)
+              # 3. Download wheels onto the ADO agent (where PyPI is reachable),
+              #    so docker build can install offline without touching pypi.org.
+              - bash: |
+                  set -euo pipefail
+                  pip download --pre \
+                    -r "$(workingDirectory)/requirements.txt" \
+                    -d "$(workingDirectory)/wheels"
+                  echo "Downloaded $(ls $(workingDirectory)/wheels | wc -l) wheel(s)"
+                displayName: 'Download Python Wheels'
+                condition: ne('${{ parameters.environment }}','prod')
+                continueOnError: false
+
+              # 4. Build & push (prod reuses existing image)
               - task: AzureCLI@2
                 condition: ne('${{ parameters.environment }}','prod')
                 displayName: 'Build & Push Image'

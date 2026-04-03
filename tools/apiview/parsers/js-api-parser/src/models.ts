@@ -29,7 +29,6 @@ export interface CodeFile {
     | "TypeSpec";
   /** Language variant is applicable only for java variants */
   LanguageVariant?: "None" | "Spring" | "Android";
-  CrossLanguagePackageId?: string;
   CrossLanguageMetadata?: CodeFileCrossLanguageMetadata;
   ReviewLines: Array<ReviewLine>;
   /** Add any system generated comments. Each comment is linked to review line ID */

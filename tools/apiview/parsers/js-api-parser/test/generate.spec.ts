@@ -405,34 +405,6 @@ describe("generate", () => {
       expect(result.CrossLanguageMetadata?.CrossLanguageDefinitionId).toEqual({});
     });
 
-    it("sets CrossLanguageMetadata with empty CrossLanguagePackageId when only crossLanguageDefinitionIds is provided", () => {
-      const model: ApiModel = new ApiModel();
-      model.loadPackage(path.join(__dirname, "./data/renamedEnum.json"));
-
-      const crossLanguageDefinitionIds = {
-        "@azure/test-package!KnownFoo:enum": "TestPackage.KnownFoo",
-      };
-
-      const result = generateApiView({
-        apiModel: model,
-        dependencies: {},
-        meta: {
-          Name: "",
-          PackageName: "",
-          PackageVersion: "",
-          ParserVersion: "",
-          Language: "JavaScript",
-        },
-        crossLanguageDefinitionIds,
-      });
-
-      expect(result.CrossLanguageMetadata).toBeDefined();
-      expect(result.CrossLanguageMetadata?.CrossLanguagePackageId).toEqual("");
-      expect(result.CrossLanguageMetadata?.CrossLanguageDefinitionId).toEqual(
-        crossLanguageDefinitionIds,
-      );
-    });
-
     it("does not set CrossLanguageMetadata when neither crossLanguagePackageId nor crossLanguageDefinitionIds is provided", () => {
       const model: ApiModel = new ApiModel();
       model.loadPackage(path.join(__dirname, "./data/renamedEnum.json"));

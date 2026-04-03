@@ -9,8 +9,7 @@ ENV PIP_RETRIES=10
 
 # Install dependencies first (layer caching)
 COPY tools/sdk-ai-bots/azure-sdk-qa-bot-agent/requirements.txt .
-RUN python3 -m pip install --no-cache-dir --upgrade pip \
-	&& python3 -m pip install --no-cache-dir --pre --timeout ${PIP_DEFAULT_TIMEOUT} --retries ${PIP_RETRIES} -r requirements.txt
+RUN python3 -m pip install --no-cache-dir --pre --timeout ${PIP_DEFAULT_TIMEOUT} --retries ${PIP_RETRIES} -r requirements.txt
 
 # Copy application code
 COPY tools/sdk-ai-bots/azure-sdk-qa-bot-agent/config/ ./config/

@@ -123,12 +123,6 @@ public class APIViewReviewTool : MCPMultiCommandTool
     };
 
     // get-review-url specific options
-    private readonly Option<string> packageOption = new("--package")
-    {
-        Description = "The package name (e.g., 'Azure.Storage.Blobs', 'azure-storage-blob')",
-        Required = true
-    };
-
     private readonly Option<string> languageQueryOption = new("--language")
     {
         Description = "The language (e.g., 'C#', 'Python', 'Java', 'JavaScript')",
@@ -190,7 +184,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
         },
         new McpCommand(GetReviewUrlCmd, "Get the APIView review URL for a package and language", ApiViewGetReviewUrlToolName)
         {
-            packageOption, languageQueryOption, packageVersionOption
+            packageNameOption, languageQueryOption, packageVersionOption
         }
     ];
 
@@ -257,7 +251,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
                 return new APIViewResponse
                 {
                     ResponseError = $"Could not find an APIView review for package '{package}' in language '{language}'" +
-                                   (version != null ? $" with version '{version}'" : "") + "." +
+                                   (!string.IsNullOrEmpty(version) ? $" with version '{version}'" : "") + "." +
                                    " Please verify the package name and language are correct."
                 };
             }
@@ -272,7 +266,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
 
     private async Task<APIViewResponse> GetReviewUrl(ParseResult parseResult, CancellationToken ct)
     {
-        string? package = parseResult.GetValue(packageOption);
+        string? package = parseResult.GetValue(packageNameOption);
         string? language = parseResult.GetValue(languageQueryOption);
         string? version = parseResult.GetValue(packageVersionOption);
         return await GetReviewUrlByPackage(package!, language!, version, ct);

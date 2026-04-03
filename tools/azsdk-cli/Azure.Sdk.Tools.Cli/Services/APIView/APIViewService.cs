@@ -247,19 +247,12 @@ public class APIViewService : IAPIViewService
 
         if (string.IsNullOrWhiteSpace(result))
         {
-            _logger.LogWarning("No review URL found for package {PackageName} ({Language})", packageName, language);
+            _logger.LogWarning("No review URL found for package {PackageName} ({Language}){VersionInfo}", 
+                packageName, language, string.IsNullOrEmpty(version) ? "" : $" version {version}");
             return null;
         }
 
-        try
-        {
-            var json = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(result);
-            return json.GetProperty("url").GetString();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to parse review URL response for package {PackageName} ({Language})", packageName, language);
-            return null;
-        }
+        var json = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(result);
+        return json.GetProperty("url").GetString();
     }
 }

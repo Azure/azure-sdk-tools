@@ -8,7 +8,7 @@
 
     { "toolName": "azsdk_apiview_get_review_url", "prompt": "Get the APIView review link for the Azure.Storage.Blobs C# package", "category": "all" },
     { "toolName": "azsdk_apiview_get_review_url", "prompt": "What is the APIView URL for the azure-core Python package?", "category": "all" },
-    { "toolName": "azsdk_apiview_get_review_url", "prompt": "Give me the link to the API review page for this package", "category": "all" },
+    { "toolName": "azsdk_apiview_get_review_url", "prompt": "Give me the link to the API review page for the Java storage blob package version 12.32.0", "category": "all" },
 
     { "toolName": "azsdk_check_service_label", "prompt": "Check if a service label exists for my service", "category": "all" },
     { "toolName": "azsdk_check_service_label", "prompt": "Does the service label for Contoso already exist?", "category": "all" },

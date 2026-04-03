@@ -510,7 +510,7 @@ public class ApiViewReviewToolTests
             .ReturnsAsync(expectedUrl);
 
         var command = apiViewReviewTool.GetCommandInstances().First(c => c.Name == "get-review-url");
-        var parseResult = command.Parse("get-review-url --package Azure.Core --language C#");
+        var parseResult = command.Parse("get-review-url --package-name Azure.Core --language C#");
         var response = (APIViewResponse)await apiViewReviewTool.HandleCommand(parseResult, CancellationToken.None);
 
         Assert.That(response.Result, Is.EqualTo(expectedUrl));

@@ -65,7 +65,7 @@ export async function readTspLocation(rootDir: string): Promise<TspLocation> {
     throw new Error("Could not find tsp-location.yaml");
   } catch (e) {
     if (e && typeof e === "object" && "code" in e && e.code === "ENOENT") {
-      throw new Error("Could not find tsp-location.yaml", { cause: e });
+      throw new Error("Could not find tsp-location.yaml");
     }
     throw e;
   }

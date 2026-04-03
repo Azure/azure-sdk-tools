@@ -76,10 +76,10 @@ extends:
                 failOnStderr: true
                 continueOnError: false
 
-              # 3. Download wheels & build & push.
-              #    pip download runs inside AzureCLI@2 which has outbound internet via the service
-              #    connection — the same reason agent-cd's pip install works.
-              #    Plain bash tasks are blocked by 1ES network isolation.
+              # 3. Build & push (prod reuses existing image)
+              #    Docker runs pip install inside the build container. Since the
+              #    container inherits the build agent network and credentials,
+              #    it can access non-public feeds like agent-cd does.
               - task: AzureCLI@2
                 condition: ne('${{ parameters.environment }}','prod')
                 displayName: 'Build & Push Image'
@@ -90,15 +90,10 @@ extends:
                   scriptLocation: inlineScript
                   inlineScript: |
                     set -euo pipefail
-                    # Download all wheels (has outbound PyPI access here)
-                    pip download --pre \
-                      -r "$(workingDirectory)/requirements.txt" \
-                      -d "$(workingDirectory)/wheels"
-                    echo "Downloaded $(ls $(workingDirectory)/wheels | wc -l) wheel(s)"
                     ACR_LOGIN_SERVER=$(az acr show --name "$(ACR_NAME)" --resource-group "$(ACR_RESOURCE_GROUP)" --query loginServer -o tsv)
                     echo "ACR: $ACR_LOGIN_SERVER"
                     az acr login --name "$(ACR_NAME)"
-                    docker build -t "$(imageName):$(imageTag)" -f "$(workingDirectory)/Dockerfile" "$(System.DefaultWorkingDirectory)"
+                    docker build --network=host -t "$(imageName):$(imageTag)" -f "$(workingDirectory)/Dockerfile" "$(System.DefaultWorkingDirectory)"
                     docker tag "$(imageName):$(imageTag)" "$ACR_LOGIN_SERVER/$(imageName):$(imageTag)"
                     docker push "$ACR_LOGIN_SERVER/$(imageName):$(imageTag)"
                     echo "Image pushed: $ACR_LOGIN_SERVER/$(imageName):$(imageTag)"

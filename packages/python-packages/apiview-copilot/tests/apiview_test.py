@@ -556,7 +556,7 @@ class TestGetActiveReviewsCopilotFlag:
 
             mock_client.side_effect = get_container
 
-            results = get_active_reviews("2026-01-01", "2026-01-31", environment="production")
+            results, _ = get_active_reviews("2026-01-01", "2026-01-31", environment="production")
 
             assert len(results) == 1
             assert len(results[0].revisions) == 1

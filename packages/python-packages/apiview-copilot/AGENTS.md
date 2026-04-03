@@ -85,12 +85,13 @@ Invoked via `avc` (or `python cli.py`):
 - `avc db get` / `avc db delete` / `avc db purge` — Database operations.
 - `avc db link` / `avc db unlink` — Link/unlink knowledge base items.
 - `avc report metrics` — Generate metrics reports.
+- `avc report active-reviews` — Query active reviews for a language and date range.
 - `avc report feedback` / `avc report memory` — Audit feedback and memories.
 - `avc report analyze-comments` — Analyze AI comment quality.
 - `avc ops deploy` — Deploy to Azure App Service.
 - `avc ops check` — Health check the deployed service.
 - `avc ops grant` / `avc ops revoke` — Manage Azure RBAC permissions.
-- `avc apiview get-comments` / `avc apiview get-active-reviews` — Query APIView data.
+- `avc apiview get-comments` — Query APIView comment data.
 - `avc apiview resolve-package` — Resolve package information.
 
 ## Environment Setup

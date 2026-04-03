@@ -145,22 +145,16 @@ avc report metrics -s <YYYY-MM-DD> -e <YYYY-MM-DD> [--markdown] [--environment "
 Options:
 - `-s/--start-date`: Start date for the metrics report (YYYY-MM-DD)
 - `-e/--end-date`: End date for the metrics report (YYYY-MM-DD)
-- `--markdown`: Pass the results through an LLM to summarize the results in markdown
 - `--environment`: Specify whether to report metrics from the production or staging environment (default: production)
-- `--charts`: Generate PNG charts from the metrics and save to `scratch/charts/`
+- `--charts`: Generate PNG charts from the metrics and save to `output/charts/`
 - `-x/--exclude`: Languages to exclude from the report (e.g., `--exclude Java Go`)
-
-To dump the markdown results to file:
-```bash
-avc report metrics -s <YYYY-MM-DD> -e <YYYY-MM-DD> --markdown > metrics.md
-```
 
 To generate charts:
 ```bash
 avc report metrics -s 2026-01-01 -e 2026-01-31 --charts
 ```
 
-This generates four PNG charts in `scratch/charts/`:
+This generates four PNG charts in `output/charts/`:
 - **adoption.png**: Stacked bar chart showing Copilot vs non-Copilot reviews per language
 - **comment_quality.png**: Stacked percent bar chart showing AI comment quality categories per language
 - **human_copilot_split.png**: Human vs AI comments for reviews with Copilot

@@ -231,7 +231,8 @@ def get_active_reviews(
     *,
     environment: str = "production",
     omit_languages: Optional[list[str]] = None,
-) -> list[ActiveReviewMetadata]:
+    select_fields: Optional[list[str]] = None,
+) -> tuple[list[ActiveReviewMetadata], list[dict]]:
     """
     Lists distinct active APIView review IDs in the specified environment during the specified period.
     The definition of "active" is any review that has non-Diagnostic comments created during the time period.
@@ -239,14 +240,15 @@ def get_active_reviews(
     along with their package versions.
 
     Returns:
-        list[ActiveReviewMetadata] - list of metadata objects considered "active" during the query window,
-                                     including active revisions with package versions.
+        tuple of:
+            list[ActiveReviewMetadata] - metadata objects considered "active" during the query window.
+            list[dict] - raw comments (dicts) fetched from the Comments container.
     """
     metadata: list[ActiveReviewMetadata] = []
 
     # Get comments in the date range, excluding Diagnostic comments
-    comments = get_comments_in_date_range(start_date, end_date, environment=environment)
-    comments = [c for c in comments if c.get("CommentSource") != "Diagnostic"]
+    raw_comments = get_comments_in_date_range(start_date, end_date, environment=environment, select_fields=select_fields)
+    comments = [c for c in raw_comments if c.get("CommentSource") != "Diagnostic"]
 
     # Extract unique review IDs and revision IDs from comments
     review_ids = set()
@@ -386,7 +388,7 @@ def get_active_reviews(
         omit_lower = {l.lower() for l in omit_languages}
         metadata = [r for r in metadata if r.language.lower() not in omit_lower]
 
-    return metadata
+    return metadata, raw_comments
 
 
 def get_active_review_ids(start_date: str, end_date: str, environment: str = "production") -> list:
@@ -412,17 +414,27 @@ def get_active_review_ids(start_date: str, end_date: str, environment: str = "pr
     return list(review_ids)
 
 
-def get_comments_in_date_range(start_date: str, end_date: str, environment: str = "production") -> list:
+def get_comments_in_date_range(
+    start_date: str, end_date: str, environment: str = "production", select_fields: Optional[list[str]] = None
+) -> list:
     """
     Retrieves all comments created within the specified date range in the given environment.
     Applies ISO8601 midnight/end-of-day formatting to start_date and end_date.
+
+    Args:
+        select_fields: Optional list of field names to select. If None, uses the default full field list.
     """
     start_iso = to_iso8601(start_date)
     end_iso = to_iso8601(end_date, end_of_day=True)
 
+    if select_fields:
+        select_clause = ", ".join(f"c.{f}" for f in select_fields)
+    else:
+        select_clause = ", ".join(APIVIEW_COMMENT_SELECT_FIELDS)
+
     comments_client = get_apiview_cosmos_client(container_name="Comments", environment=environment)
     result = comments_client.query_items(
-        query=f"SELECT {', '.join(APIVIEW_COMMENT_SELECT_FIELDS)} FROM c WHERE c.CreatedOn >= @start_date AND c.CreatedOn <= @end_date",
+        query=f"SELECT {select_clause} FROM c WHERE c.CreatedOn >= @start_date AND c.CreatedOn <= @end_date",
         parameters=[
             {"name": "@start_date", "value": start_iso},
             {"name": "@end_date", "value": end_iso},

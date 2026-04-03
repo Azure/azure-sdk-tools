@@ -1219,20 +1219,25 @@ def get_apiview_comments(revision_id: str, environment: str = "production") -> d
 def get_active_reviews(
     start_date: str,
     end_date: str,
-    language: str,
+    language: Optional[str] = None,
     environment: str = "production",
     summary: bool = False,
     approved_only: bool = False,
 ) -> list | None:
     """
     Retrieves active APIView reviews in the specified environment during the specified period.
+    If --language is omitted, returns results for all languages.
     Use --approved-only to show only approved revisions (matching the metrics chart definition).
     """
-    reviews = _get_active_reviews(start_date, end_date, environment=environment)
-    _, pretty_language = resolve_language(language)
-    pretty_language = pretty_language.lower()
+    reviews, _ = _get_active_reviews(start_date, end_date, environment=environment)
 
-    filtered = [r for r in reviews if r.language.lower() == pretty_language]
+    if language:
+        _, pretty_language = resolve_language(language)
+        pretty_language = pretty_language.lower()
+        filtered = [r for r in reviews if r.language.lower() == pretty_language]
+    else:
+        pretty_language = None
+        filtered = reviews
 
     if approved_only:
         # Filter to only revisions that have been approved during the period.
@@ -1258,40 +1263,54 @@ def get_active_reviews(
                 # Extract just the date from approval timestamp (YYYY-MM-DD)
                 approval_date = rev.approval[:10] if rev.approval else "n/a"
                 version_type = rev.version_type
-                summary_data.append(
-                    (
-                        r.name or "unknown",
-                        rev.package_version or "unknown",
-                        status,
-                        copilot_status,
-                        approval_date,
-                        version_type,
-                    )
-                )
+                row = {
+                    "name": r.name or "unknown",
+                    "version": rev.package_version or "unknown",
+                    "status": status,
+                    "copilot": copilot_status,
+                    "approval_date": approval_date,
+                    "version_type": version_type,
+                }
+                if not pretty_language:
+                    row["language"] = r.language
+                summary_data.append(row)
 
         # Calculate column widths for proper alignment
         if summary_data:
-            max_name_len = max(len(item[0]) for item in summary_data)
-            max_version_len = max(len(item[1]) for item in summary_data)
-            max_status_len = max(len(item[2]) for item in summary_data)
-            max_copilot_len = max(len(item[3]) for item in summary_data)
-            max_type_len = max(len(item[5]) for item in summary_data)
+            max_name_len = max(len(item["name"]) for item in summary_data)
+            max_version_len = max(len(item["version"]) for item in summary_data)
+            max_status_len = max(len(item["status"]) for item in summary_data)
+            max_copilot_len = max(len(item["copilot"]) for item in summary_data)
+            max_type_len = max(len(item["version_type"]) for item in summary_data)
 
-            # Print header
-            print(
-                f"{'PACKAGE':<{max_name_len}}\t{'VERSION':<{max_version_len}}\t{'STATUS':<{max_status_len}}\t{'COPILOT':<{max_copilot_len}}\t{'TYPE':<{max_type_len}}\tAPPROVED"
-            )
-            print("-" * (max_name_len + max_version_len + max_status_len + max_copilot_len + max_type_len + 50))
-
-            # Print each row
-            for name, version, status, copilot_status, approval_date, version_type in summary_data:
+            if not pretty_language:
+                max_lang_len = max(len(item["language"]) for item in summary_data)
+                # Print header with LANGUAGE column
                 print(
-                    f"{name:<{max_name_len}}\t{version:<{max_version_len}}\t{status:<{max_status_len}}\t{copilot_status:<{max_copilot_len}}\t{version_type:<{max_type_len}}\t{approval_date}"
+                    f"{'LANGUAGE':<{max_lang_len}}\t{'PACKAGE':<{max_name_len}}\t{'VERSION':<{max_version_len}}\t{'STATUS':<{max_status_len}}\t{'COPILOT':<{max_copilot_len}}\t{'TYPE':<{max_type_len}}\tAPPROVED"
                 )
+                print("-" * (max_lang_len + max_name_len + max_version_len + max_status_len + max_copilot_len + max_type_len + 60))
+
+                for item in summary_data:
+                    print(
+                        f"{item['language']:<{max_lang_len}}\t{item['name']:<{max_name_len}}\t{item['version']:<{max_version_len}}\t{item['status']:<{max_status_len}}\t{item['copilot']:<{max_copilot_len}}\t{item['version_type']:<{max_type_len}}\t{item['approval_date']}"
+                    )
+            else:
+                # Print header without LANGUAGE column
+                print(
+                    f"{'PACKAGE':<{max_name_len}}\t{'VERSION':<{max_version_len}}\t{'STATUS':<{max_status_len}}\t{'COPILOT':<{max_copilot_len}}\t{'TYPE':<{max_type_len}}\tAPPROVED"
+                )
+                print("-" * (max_name_len + max_version_len + max_status_len + max_copilot_len + max_type_len + 50))
+
+                for item in summary_data:
+                    print(
+                        f"{item['name']:<{max_name_len}}\t{item['version']:<{max_version_len}}\t{item['status']:<{max_status_len}}\t{item['copilot']:<{max_copilot_len}}\t{item['version_type']:<{max_type_len}}\t{item['approval_date']}"
+                    )
 
         filter_label = " approved" if approved_only else ""
+        language_label = f" in {pretty_language}" if pretty_language else ""
         print(
-            f"\nFound {len(summary_data)}{filter_label} package versions in {pretty_language} between {start_date} and {end_date}."
+            f"\nFound {len(summary_data)}{filter_label} package versions{language_label} between {start_date} and {end_date}."
         )
         # Don't return anything in summary mode to avoid duplicate output
         return None
@@ -1299,7 +1318,6 @@ def get_active_reviews(
         # Output detailed JSON format
         filtered_dicts = []
         for r in filtered:
-            # since we are filtering by language, we can remove it from the output
             d = {
                 "review_id": r.review_id,
                 "name": r.name,
@@ -1314,8 +1332,11 @@ def get_active_reviews(
                     for rev in r.revisions
                 ],
             }
+            if not pretty_language:
+                d["language"] = r.language
             filtered_dicts.append(d)
-        print(f"Found {len(filtered_dicts)} reviews in {pretty_language} between {start_date} and {end_date}.")
+        language_label = f" in {pretty_language}" if pretty_language else ""
+        print(f"Found {len(filtered_dicts)} reviews{language_label} between {start_date} and {end_date}.")
         return filtered_dicts
 
 
@@ -1363,13 +1384,14 @@ def report_metrics(
     start_date: str,
     end_date: str,
     environment: str = "production",
-    markdown: bool = False,
     save: bool = False,
     charts: bool = False,
     exclude: list = None,
-) -> dict:
+) -> None:
     """Generate a report of APIView metrics between two dates."""
-    return get_metrics_report(start_date, end_date, environment, markdown, save, charts, exclude)
+    report = get_metrics_report(start_date, end_date, environment, save, charts, exclude)
+    sys.stdout.buffer.write(json.dumps(report, indent=2, ensure_ascii=False, default=str).encode("utf-8"))
+    sys.stdout.buffer.write(b"\n")
 
 
 def grant_permissions(assignee_id: str = None):
@@ -1827,7 +1849,6 @@ class CliCommandsLoader(CLICommandsLoader):
     def load_command_table(self, args):
         with CommandGroup(self, "apiview", "__main__#{}") as g:
             g.command("get-comments", "get_apiview_comments")
-            g.command("get-active-reviews", "get_active_reviews")
             g.command("resolve-package", "resolve_package_info")
         with CommandGroup(self, "review", "__main__#{}") as g:
             g.command("generate", "generate_review")
@@ -1861,6 +1882,7 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("unlink", "db_unlink")
         with CommandGroup(self, "report", "__main__#{}") as g:
             g.command("metrics", "report_metrics")
+            g.command("active-reviews", "get_active_reviews")
             g.command("feedback", "audit_feedback")
             g.command("memory", "audit_memory")
             g.command("analyze-comments", "analyze_comments")
@@ -2282,7 +2304,7 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="Language to filter comments (case-insensitive, e.g., python, Go, C#).",
                 options_list=("--language", "-l"),
             )
-        with ArgumentsContext(self, "apiview get-active-reviews") as ac:
+        with ArgumentsContext(self, "report active-reviews") as ac:
             ac.argument(
                 "approved_only",
                 action="store_true",
@@ -2356,7 +2378,7 @@ class CliCommandsLoader(CLICommandsLoader):
             ac.argument(
                 "charts",
                 action="store_true",
-                help="Generate PNG charts from the metrics and save to scratch/charts/.",
+                help="Generate PNG charts from the metrics and save to output/charts/.",
             )
             ac.argument(
                 "exclude",
@@ -2365,11 +2387,6 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="Languages to exclude from the report (e.g., --exclude Java Go).",
                 options_list=["--exclude"],
                 default=None,
-            )
-            ac.argument(
-                "markdown",
-                action="store_true",
-                help="Render output as markdown instead of JSON.",
             )
             ac.argument(
                 "save",

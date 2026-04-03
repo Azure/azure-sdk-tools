@@ -56,7 +56,11 @@ class IntentionService:
         return await self._classify_with_llm(req)
 
     async def _classify_with_llm(self, req: IntentionRequest) -> IntentionResponse:
-        """Use a lightweight model to classify message intent."""
+        """Use a lightweight model to classify message intent.
+
+        When conversation context is available, includes the full thread
+        so the model can make a better decision.
+        """
         project_client = get_project_client()
         openai_client = project_client.get_openai_client()
 
@@ -64,14 +68,40 @@ class IntentionService:
         reasoning_effort = cfg("AI_FOUNDRY_INTENTION_REASONING_EFFORT", "low")
 
         try:
-            system_msg = Message(role=Role.System, content=self._classify_prompt)
-            user_msg = Message(role=Role.User, content=req.message.content)
+            messages: list[dict] = [
+                Message(role=Role.System, content=self._classify_prompt).model_dump(
+                    exclude_none=True
+                ),
+            ]
+
+            # Include conversation history when available
+            if req.conversation_id and req.conversation_type:
+                history = await self._conversation_service.get_messages_by_conversation(
+                    req.conversation_id,
+                    req.conversation_type,
+                )
+                for item in history:
+                    role = (
+                        Role.Assistant
+                        if item.sender_role == Role.Assistant
+                        else Role.User
+                    )
+                    messages.append(
+                        Message(role=role, content=item.content).model_dump(
+                            exclude_none=True
+                        )
+                    )
+
+            # Append current message (may not be saved yet)
+            messages.append(
+                Message(role=Role.User, content=req.message.content).model_dump(
+                    exclude_none=True
+                )
+            )
+
             response = await openai_client.chat.completions.create(
                 model=model,
-                messages=[
-                    system_msg.model_dump(exclude_none=True),
-                    user_msg.model_dump(exclude_none=True),
-                ],
+                messages=messages,
                 reasoning_effort=reasoning_effort,
                 response_format={"type": "json_object"},
             )

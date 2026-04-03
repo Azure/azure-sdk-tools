@@ -140,7 +140,10 @@ class ConversationService:
             raise ValueError("conversation_id and conversation_type are required")
         logger.debug(
             "Saving conversation message: id=%s, conversation_id=%s, type=%s, sender_role=%s",
-            message.id, message.conversation_id, message.conversation_type, message.sender_role,
+            message.id,
+            message.conversation_id,
+            message.conversation_type,
+            message.sender_role,
         )
         container = await get_conversation_message_container()
         message_item = ConversationMessageItem(
@@ -222,4 +225,34 @@ class ConversationService:
             len(items),
             partition_key,
         )
+        return items
+
+    async def get_messages_by_conversation(
+        self,
+        conversation_id: str,
+        conversation_type: ConversationType,
+    ) -> list[ConversationMessageItem]:
+        """Retrieve all messages for a conversation, ordered by created_at."""
+        container = await get_conversation_message_container()
+        partition_key = f"{conversation_type.value}:{conversation_id}"
+
+        query = (
+            "SELECT * FROM c "
+            "WHERE c.conversation_partition = @pk "
+            "AND c.document_type = @dtype "
+            "ORDER BY c.created_at ASC"
+        )
+        parameters = [
+            {"name": "@pk", "value": partition_key},
+            {"name": "@dtype", "value": ConversationDocumentType.message.value},
+        ]
+
+        items: list[ConversationMessageItem] = []
+        async for raw in container.query_items(
+            query=query,
+            parameters=parameters,
+            partition_key=partition_key,
+        ):
+            items.append(ConversationMessageItem.model_validate(raw))
+
         return items

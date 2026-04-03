@@ -45,7 +45,6 @@ export async function parseInputJson(inputJson: any) {
     const typespecProjectFolder: string[] | string | undefined = inputJson['relatedTypeSpecProjectFolder'];
     const gitCommitId: string = inputJson['headSha'];
     const repoHttpsUrl: string = inputJson['repoHttpsUrl'];
-    const autorestConfig: string | undefined = inputJson['autorestConfig'];    
     const runMode: string = inputJson['runMode'];
     let apiVersion: string | undefined;
     let sdkReleaseType: string |undefined;
@@ -90,7 +89,6 @@ export async function parseInputJson(inputJson: any) {
         specFolder,
         gitCommitId,
         repoHttpsUrl,
-        autorestConfig,
         downloadUrlPrefix,
         readmeMd,
         outputJson,

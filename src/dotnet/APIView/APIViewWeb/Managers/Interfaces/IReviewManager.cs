@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using ApiView;
 using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Models;
@@ -20,7 +22,7 @@ namespace APIViewWeb.Managers
         public Task<ReviewListItemModel> GetReviewAsync(ClaimsPrincipal user, string id);
         public Task<IEnumerable<ReviewListItemModel>> GetReviewsAsync(IEnumerable<string> reviewIds, bool? isClosed = null);
         public Task<LegacyReviewModel> GetLegacyReviewAsync(ClaimsPrincipal user, string id);
-        public Task<ReviewListItemModel> GetOrCreateReview(IFormFile file, string filePath, string language, bool runAnalysis = false);
+        public Task<(ReviewListItemModel Review, CodeFile CodeFile, MemoryStream MemoryStream)> GetOrCreateReview(IFormFile file, string filePath, string language, bool runAnalysis = false);
         public Task<ReviewListItemModel> CreateReviewAsync(string packageName, string language, bool isClosed = true, PackageType? packageType = null, string crossLanguagePackageId = null);
         public Task<ReviewListItemModel> UpdateReviewAsync(ReviewListItemModel review);
         public Task SoftDeleteReviewAsync(ClaimsPrincipal user, string id, bool skipOwnerCheck = false);

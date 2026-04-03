@@ -1,4 +1,4 @@
-azure-ai-agentserver-agentframework==1.0.0b17
+azure-ai-agentserver-agentframework==1.0.0b16
 azure-ai-projects>=2.0.0b4
 azure-search-documents>=11.7.0b2
 azure-appconfiguration>=1.8.0

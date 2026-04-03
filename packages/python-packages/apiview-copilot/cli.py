@@ -2473,10 +2473,14 @@ def run_cli():
     if not os.environ.get("ENVIRONMENT_NAME"):
         env = "production"
         args = sys.argv[1:]
-        if "--environment" in args:
-            idx = args.index("--environment")
-            if idx + 1 < len(args):
-                env = args[idx + 1]
+        for idx, arg in enumerate(args):
+            if arg == "--environment":
+                if idx + 1 < len(args):
+                    env = args[idx + 1]
+                break
+            if arg.startswith("--environment="):
+                env = arg.split("=", 1)[1]
+                break
         os.environ["ENVIRONMENT_NAME"] = env
     cli = CLI(cli_name="avc", commands_loader_cls=CliCommandsLoader)
     exit_code = cli.invoke(sys.argv[1:])

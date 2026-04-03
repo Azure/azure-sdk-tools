@@ -368,7 +368,7 @@ def _generate_charts(report: dict, start_date: str, end_date: str) -> None:
     try:
         import matplotlib.pyplot as plt
     except ImportError:
-        print("matplotlib is required for chart generation. Install it with: pip install matplotlib")
+        print("matplotlib is required for chart generation. Install it with: pip install matplotlib", file=sys.stderr)
         return
 
     metrics = report.get("metrics", {})
@@ -384,7 +384,7 @@ def _generate_charts(report: dict, start_date: str, end_date: str) -> None:
         metrics_lookup = metrics
 
     if not languages:
-        print("No language-specific metrics to chart.")
+        print("No language-specific metrics to chart.", file=sys.stderr)
         return
 
     output_dir = Path("output/charts")
@@ -481,7 +481,7 @@ def _generate_charts(report: dict, start_date: str, end_date: str) -> None:
         plt.close()
         print(f"Saved: {split_path}", file=sys.stderr)
     else:
-        print("No languages with Copilot reviews for human-copilot split chart.")
+        print("No languages with Copilot reviews for human-copilot split chart.", file=sys.stderr)
 
     # Chart 4: Human Comments With vs Without Copilot - side-by-side bars
     human_with = [

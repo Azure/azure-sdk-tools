@@ -139,7 +139,7 @@ Report is now available at [PowerBI](https://msit.powerbi.com/groups/3e17dcb0-42
 
 Underneath, we use a script to generate the metrics. You can use the following command:
 ```bash
-avc report metrics -s <YYYY-MM-DD> -e <YYYY-MM-DD> [--markdown] [--environment "production"|"staging"] [--charts] [--exclude <LANG1> <LANG2> ...]
+avc report metrics -s <YYYY-MM-DD> -e <YYYY-MM-DD> [--environment "production"|"staging"] [--charts] [--exclude <LANG1> <LANG2> ...]
 ```
 
 Options:
@@ -147,7 +147,7 @@ Options:
 - `-e/--end-date`: End date for the metrics report (YYYY-MM-DD)
 - `--environment`: Specify whether to report metrics from the production or staging environment (default: production)
 - `--charts`: Generate PNG charts from the metrics and save to `output/charts/`
-- `-x/--exclude`: Languages to exclude from the report (e.g., `--exclude Java Go`)
+- `--exclude`: Languages to exclude from the report (e.g., `--exclude Java Go`)
 
 To generate charts:
 ```bash

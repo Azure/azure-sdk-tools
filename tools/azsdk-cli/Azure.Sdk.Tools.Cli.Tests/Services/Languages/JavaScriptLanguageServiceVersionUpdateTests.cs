@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -200,6 +201,9 @@ public class JavaScriptLanguageServiceVersionUpdateTests
 
     private static void CreateVersioningScript(string repoRoot)
     {
+        // Create eng-package-utils so that the npm install for it is also invoked,
+        // matching the SetPackageVersion PowerShell logic which always runs it.
+        Directory.CreateDirectory(Path.Combine(repoRoot, "eng", "tools", "eng-package-utils"));
         var versioningDir = Path.Combine(repoRoot, "eng", "tools", "versioning");
         Directory.CreateDirectory(versioningDir);
         File.WriteAllText(Path.Combine(versioningDir, "set-version.js"), "console.log('set-version')");

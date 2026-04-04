@@ -8,9 +8,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Constants
 {
     public class McpConstants
     {
-        public const string McpServerLabelPrefix = "server-"; 
-        public const string McpToolLabelPrefix = "tools-";
-        public static readonly List<string> McpOtherLabels = new List<string> { "remote-mcp" };
+        public const string McpServerLabelPrefix = "McpPrimaryLabelPrefixes"; 
+        public const string McpToolLabelPrefix = "McpSecondaryLabelPrefixes";
         public const string McpConfigPrefix = "microsoft/mcp";
     }
 }

@@ -7,6 +7,7 @@
 import os
 import tempfile
 import shutil
+import difflib
 import requests
 from subprocess import check_call
 from pytest import fail, mark
@@ -265,16 +266,23 @@ class TestApiViewAzure:
             old_tokens["ReviewLines"][0]["Tokens"][0]["Value"] = "Package is parsed using apiview-stub-generator(version:x.x.x), Python version: x.x.x"
             new_tokens["ReviewLines"][0]["Tokens"][0]["Value"] = "Package is parsed using apiview-stub-generator(version:x.x.x), Python version: x.x.x"
 
-            # Pretty-print both JSON objects for easier diff comparison on failure
-            old_json_str = json.dumps(old_tokens, indent=2, sort_keys=True)
-            new_json_str = json.dumps(new_tokens, indent=2, sort_keys=True)
-            
-            assert old_json_str == new_json_str, (
-                f"Generated token file does not match the provided token file.\n"
-                f"Expected file: {old_file}\n"
-                f"Generated file: {new_file}\n"
-                f"Differences will be shown in the assertion diff below."
-            )
+            # Compare dicts directly — avoids building huge serialized strings just for equality.
+            # Only serialize on failure, and limit output to avoid hanging on large packages.
+            if old_tokens != new_tokens:
+                old_lines = json.dumps(old_tokens, indent=2, sort_keys=True).splitlines(keepends=True)
+                new_lines = json.dumps(new_tokens, indent=2, sort_keys=True).splitlines(keepends=True)
+                diff = list(difflib.unified_diff(old_lines, new_lines, fromfile=old_file, tofile=new_file, n=3))
+                # Cap diff output to avoid pytest hanging on enormous diffs
+                MAX_DIFF_LINES = 200
+                diff_snippet = "".join(diff[:MAX_DIFF_LINES])
+                if len(diff) > MAX_DIFF_LINES:
+                    diff_snippet += f"\n... ({len(diff) - MAX_DIFF_LINES} more diff lines truncated)"
+                fail(
+                    f"Generated token file does not match the provided token file.\n"
+                    f"Expected file: {old_file}\n"
+                    f"Generated file: {new_file}\n\n"
+                    f"{diff_snippet}"
+                )
 
     def _write_tokens(self, stub_gen):
         apiview = stub_gen.generate_tokens()

@@ -576,14 +576,19 @@ namespace APIViewWeb.Managers
         public async Task<List<CommentItemModel>> CommentsBatchOperationAsync(ClaimsPrincipal user, string reviewId, BatchConversationRequest request)
         {
             var response = new List<CommentItemModel>();
-            
+            var processedCorrelationIds = new HashSet<string>();
+
             foreach (string commentId in request.CommentIds)
             {
                 CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
                 
                 if (request.Feedback != null)
                 {
-                    await AddCommentFeedbackAsync(user, reviewId, commentId, request.Feedback);
+                    // Deduplicate copilot notifications: only queue one mention per unique correlation ID.
+                    // Comments without a correlation ID (or with an empty one) are always treated as unique.
+                    bool queueCopilotNotification = string.IsNullOrEmpty(comment?.CorrelationId) ||
+                                                    processedCorrelationIds.Add(comment.CorrelationId);
+                    await AddCommentFeedbackAsync(user, reviewId, commentId, request.Feedback, queueCopilotNotification);
                 }
                 
                 if (request.Vote != FeedbackVote.None)
@@ -659,7 +664,7 @@ namespace APIViewWeb.Managers
             await ToggleVoteAsync(user, comment, FeedbackVote.Down);
         }
 
-        public async Task AddCommentFeedbackAsync(ClaimsPrincipal user, string reviewId, string commentId, CommentFeedbackRequest feedback)
+        public async Task AddCommentFeedbackAsync(ClaimsPrincipal user, string reviewId, string commentId, CommentFeedbackRequest feedback, bool queueCopilotNotification = true)
         {
             CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
 
@@ -682,7 +687,7 @@ namespace APIViewWeb.Managers
             await _commentsRepository.UpsertCommentAsync(comment);
 
             // Send feedback to Copilot if this is an AI-generated comment
-            if (comment.CommentSource == CommentSource.AIGenerated && (feedback.Reasons?.Count > 0 || feedback.IsDelete))
+            if (queueCopilotNotification && comment.CommentSource == CommentSource.AIGenerated && (feedback.Reasons?.Count > 0 || feedback.IsDelete))
             {
                 _backgroundTaskQueue.QueueBackgroundWorkItem(async cancellationToken =>
                 {

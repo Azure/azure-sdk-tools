@@ -1,15 +1,21 @@
 ---
 name: report-feedback
-description: "Retrieve AI comment feedback from APIView. Use for: feedback report, comment feedback, show feedback, feedback for March, what feedback, upvotes, downvotes, deleted comments, bad comments, good comments."
+description: "Retrieve negative feedback on AI-generated APIView comments. Use for: feedback report, comment feedback, show feedback, feedback for March, what feedback, downvotes, deleted comments, bad comments."
 argument-hint: "Month name (e.g. 'March') or language + month (e.g. 'Python for March')"
 ---
 
 # Report Feedback
 
 ## When to Use
-- Reviewing feedback (upvotes, downvotes, deletions) on AI-generated comments
+- Reviewing negative feedback (downvotes, deletions) on AI-generated comments
 - Investigating comment quality issues for a specific language
-- Auditing which AI comments were marked good or bad during a period
+- Understanding why AI comments were marked bad or deleted during a period
+
+## Understanding Feedback
+
+Feedback describes **why a bad AI comment is bad**. Each feedback entry includes a reason (e.g., `FactuallyIncorrect`, `AcceptedSDKPattern`, `RenderingBug`) and an optional free-text comment. There are no upvotes in the feedback data — upvotes on comments exist in APIView but are not surfaced through this report. All feedback returned by this command is negative.
+
+**Do NOT** state that feedback is "100% bad" or highlight that all feedback is negative in your summary. This is always the case by design — the report only surfaces negative feedback. Treat it as a given and focus the summary on the count, reasons, themes, and actionable insights.
 
 ## Defaults
 
@@ -42,7 +48,7 @@ Show the resolved command and run it immediately in a **foreground terminal** wi
 New-Item -ItemType Directory -Path output -Force | Out-Null; if (Test-Path output/feedback_output.json) { Remove-Item output/feedback_output.json }; python cli.py report feedback -s <start_date> -e <end_date> | Out-File -Encoding UTF8 output/feedback_output.json
 ```
 
-After the command completes, **read the output file** with `read_file` to get the JSON results. Summarize the findings for the user (total count, breakdown by feedback type, etc.).
+After the command completes, **read the output file** with `read_file` to get the JSON results. Summarize the findings for the user (total count, breakdown by feedback reason, common themes, etc.).
 
 ### Step 2: Answer Follow-up Questions
 
@@ -81,7 +87,7 @@ python cli.py report feedback -s 2025-03-01 -e 2025-03-31 --environment staging
 ## Gotchas
 
 - **Output can be large**: Redirect to file and use `read_file` rather than relying on terminal output.
-- **Date range filters by feedback submission time**: Not by when the comment was created. A comment created in January but upvoted in March will appear in March's feedback report.
+- **Date range filters by feedback submission time**: Not by when the comment was created. A comment created in January but downvoted in March will appear in March's feedback report.
 - **Use `python cli.py` not `.\avc`**: The `avc.bat` script may resolve to system Python.
 - **Do NOT use `2>&1`**: Merges stderr into stdout, corrupting JSON. Only redirect stdout.
 - **Do NOT use `>`**: Produces UTF-16 in PowerShell 5.1. Use `| Out-File -Encoding UTF8`.

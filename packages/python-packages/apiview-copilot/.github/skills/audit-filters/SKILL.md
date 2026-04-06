@@ -106,7 +106,7 @@ Based on the analysis, propose specific new lines to add to `metadata/{lang}/fil
 
 1. Follow the existing format: `  N. DO NOT <description>`
 2. Be numbered sequentially after the last existing rule
-3. Be distinct from every existing rule (do not duplicate)
+3. **Not duplicate an existing rule** — Before proposing a rule, compare it against every existing rule in the current `filter.yaml`. If an existing rule already covers the same behavior (even with different wording), do NOT propose it again. Explain in the analysis that the theme was already covered and cite the existing rule number.
 4. Be supported by at least 2 feedback items or 1 memory with `is_exception: true`
 5. Be phrased as a clear, actionable instruction the LLM can follow
 
@@ -125,12 +125,14 @@ Example recommendation format:
 
 ## Phase 4: Confirm
 
-Ask the user:
+Use the `vscode_askQuestions` tool to present the user with a selection:
 
-> Here are the proposed filter additions for `{lang}`. Should I create a PR with these changes?
-> - Yes, all of them
-> - Yes, but only specific ones (let me pick)
-> - No, skip the PR
+- **header**: `"Confirm filter PR"`
+- **question**: `"Here are the proposed filter additions for {lang}. Should I create a PR with these changes?"`
+- **options**:
+  - `"Yes, all of them"` (recommended)
+  - `"Yes, but only specific ones (let me pick)"`
+  - `"No, skip the PR"`
 
 If the user selects specific ones, note which rule numbers to include.
 
@@ -148,9 +150,9 @@ gh api user --jq .login
 
 Store this as `{current_user}`.
 
-### Step 5b: Determine the PR assignee
+### Step 5b: Determine the PR reviewer
 
-The assignee should be the feedback submitter (`Feedback[].SubmittedBy`) who appears most frequently in the bad/deleted comments that led to the filter additions. If there is a tie, pick the one whose feedback is most relevant to the proposed rules.
+The reviewer should be the feedback submitter (`Feedback[].SubmittedBy`) who appears most frequently in the bad/deleted comments that led to the filter additions. If there is a tie, pick the one whose feedback is most relevant to the proposed rules.
 
 Store this as `{top_submitter}`.
 
@@ -158,8 +160,16 @@ Store this as `{top_submitter}`.
 
 Generate a branch name: `avc/update-{lang}-filter-{YYYYMMDD}` (using today's date).
 
+The branch MUST be based on `origin/main` so the PR contains **only** the filter.yaml change. Do NOT branch from the current working branch — it may contain unrelated changes.
+
 ```powershell
-git checkout main; git pull origin main; git checkout -b avc/update-{lang}-filter-{YYYYMMDD}
+git fetch origin main; git checkout -b avc/update-{lang}-filter-{YYYYMMDD} origin/main
+```
+
+If `origin/main` fails (e.g. `main` is in another worktree), use `FETCH_HEAD`:
+
+```powershell
+git fetch origin main; git checkout -b avc/update-{lang}-filter-{YYYYMMDD} FETCH_HEAD
 ```
 
 ### Step 5d: Apply filter changes
@@ -168,21 +178,35 @@ Edit `metadata/{lang}/filter.yaml` to append the confirmed rules. Use sequential
 
 ### Step 5e: Commit and push
 
+Stage **only** the filter file — never use `git add .` or `git add -A`:
+
 ```powershell
-git add metadata/{lang}/filter.yaml; git commit -m "[AVC] Update {lang} filter based on {month} {year} feedback"; git push origin avc/update-{lang}-filter-{YYYYMMDD}
+git add metadata/{lang}/filter.yaml; git commit -m "[AVC] Update {lang} filter based on {month} {year} feedback"
+```
+
+Before pushing, **verify** the commit contains exactly 1 file:
+
+```powershell
+git diff --stat origin/main..HEAD
+```
+
+If more than 1 file appears, STOP and fix the branch before pushing. Only after confirming 1 file changed:
+
+```powershell
+git push origin avc/update-{lang}-filter-{YYYYMMDD}
 ```
 
 ### Step 5f: Open the PR
 
 ```powershell
-gh pr create --repo Azure/azure-sdk-tools --title "[AVC] Update {lang} filter" --body "Filter additions based on a review of feedback collected during {timespan}." --label "APIView Copilot" --assignee {current_user},{top_submitter} --base main
+gh pr create --repo Azure/azure-sdk-tools --title "[AVC] Update {lang} filter" --body "Filter additions based on a review of feedback collected during {timespan}." --label "APIView Copilot" --assignee {current_user} --reviewer {top_submitter} --base main
 ```
 
 Where:
 - `{lang}` — The language name (e.g. `java`, `dotnet`, `python`)
 - `{timespan}` — The human-readable date range (e.g. "March 2026", "January 1 – January 15, 2025")
-- `{current_user}` — The GitHub handle of the person running the skill
-- `{top_submitter}` — The GitHub handle of the most significant feedback contributor
+- `{current_user}` — The GitHub handle of the person running the skill (PR **assignee**)
+- `{top_submitter}` — The GitHub handle of the most significant feedback contributor (PR **reviewer**)
 
 After the PR is created, report the PR URL to the user.
 
@@ -197,5 +221,6 @@ After the PR is created, report the PR URL to the user.
 - **Output can be large**: Redirect to file and use `read_file` rather than relying on terminal output.
 - **Existing rules**: Always read the current `filter.yaml` before proposing additions to avoid duplicates.
 - **Branch conflicts**: If the branch already exists, append a short suffix (e.g. `-2`).
+- **Branch base**: ALWAYS branch from `origin/main`, never from the current working branch. The working branch may contain dozens of unrelated changes that will pollute the PR. Verify with `git diff --stat origin/main..HEAD` before pushing.
 - **Label must exist**: The `APIView Copilot` label must already exist in the repo. If `gh pr create` fails on the label, omit `--label` and add the label manually after creation.
 - **Assignee validation**: GitHub usernames from APIView feedback may not exactly match GitHub handles. If `gh pr create` fails on an assignee, omit that assignee and note it in the PR body instead.

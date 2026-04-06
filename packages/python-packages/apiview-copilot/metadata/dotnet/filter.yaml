@@ -3,3 +3,7 @@ exceptions: |
   2. DO NOT comment on lack of XML documentation comments
   3. DO NOT comment on the following method on any types 'JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options)'
   4. DO NOT comment about Output-only model properties missing an internal setter to allow for proper deserialization.
+  5. DO NOT flag implicit or explicit conversion operators as a design concern. Implicit conversions (string to model/enum types, options to RequestContent) and explicit conversions (Response to model types) are accepted SDK patterns.
+  6. DO NOT comment on RequestContent overloads alongside strongly-typed overloads. Providing both is an accepted and encouraged SDK pattern.
+  7. DO NOT suggest renaming or refactoring serialization methods such as JsonModelCreateCore, or suggest consolidating serialization logic across models. These are accepted generated patterns.
+  8. DO NOT flag the use of RequestContext in one overload and CancellationToken in another as an inconsistency. Both overload patterns are accepted.

@@ -269,7 +269,7 @@ def get_active_reviews(
                 review_to_revisions[review_id].add(revision_id)
 
     if not review_ids:
-        return metadata
+        return metadata, raw_comments
 
     # Query Reviews container for review metadata
     reviews_container = get_apiview_cosmos_client(container_name="Reviews", environment=environment)

@@ -2034,7 +2034,7 @@ class CliCommandsLoader(CLICommandsLoader):
             )
             ac.argument(
                 "style",
-                options_list=["--style", "-s"],
+                options_list=["--style"],
                 type=str,
                 choices=["compact", "verbose"],
                 default="compact",

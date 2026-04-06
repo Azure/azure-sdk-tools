@@ -42,7 +42,6 @@ Map the user's language name to the metadata directory name:
 | Android | `android` | `android` |
 | C / C++ / Clang | `clang` | `clang` |
 | Rust | `rust` | `rust` |
-| Objective-C / ObjC | `cpp` | `cpp` |
 
 ## Date Resolution
 

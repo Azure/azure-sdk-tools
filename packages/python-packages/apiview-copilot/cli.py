@@ -1931,18 +1931,8 @@ class CliCommandsLoader(CLICommandsLoader):
                 default=None,
             )
 
-            ac.argument(
-                "include_auth",
-                action="store_true",
-                help="Include authentication in the health check.",
-            )
-            ac.argument(
-                "summary",
-                action="store_true",
-                help="Output summary format (package-name package-version APPROVED/UNAPPROVED) instead of detailed JSON.",
-            )
+
         with ArgumentsContext(self, "review") as ac:
-            ac.argument("path", type=str, help="The path to the APIView file")
             ac.argument(
                 "target",
                 type=str,
@@ -1969,42 +1959,13 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="Path to a JSON file containing existing comments.",
                 default=None,
             )
+        with ArgumentsContext(self, "review generate") as ac:
             ac.argument(
                 "debug_log",
                 options_list=["--debug-log"],
                 action="store_true",
                 help="Enable debug logging for the review process. Outputs to `scratch/logs/<LANG>` directory.",
             )
-        with ArgumentsContext(self, "test") as ac:
-            ac.argument(
-                "test_case",
-                type=str,
-                help="The name of the test case.",
-                options_list=["--test-case", "-c"],
-            )
-            ac.argument(
-                "language",
-                type=resolve_language_to_canonical,
-                help="The language of the test case (e.g., python, Go, C#).",
-                options_list=("--language", "-l"),
-            )
-            ac.argument(
-                "test_file",
-                type=str,
-                options_list=["--test-file", "-f"],
-                help="The full path to the JSONL test file.",
-            )
-            ac.argument(
-                "apiview_path",
-                options_list=["--apiview-path", "-p"],
-                type=str,
-                help="The full path to the txt file containing the APIView text",
-            )
-            ac.argument(
-                "save",
-                help="Save the results to CosmosDB metrics.",
-            )
-
         with ArgumentsContext(self, "test extract-section") as ac:
             ac.argument("size", type=int, help="The size of the section to extract.")
             ac.argument(
@@ -2041,12 +2002,9 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="Choose whether to show only failing and partial test cases (compact) or to also show passing ones (verbose)",
             )
             ac.argument(
-                "environment",
-                type=str,
-                help="The APIView environment. Defaults to 'production'.",
-                options_list=["--environment"],
-                default="production",
-                choices=["production", "staging"],
+                "save",
+                action="store_true",
+                help="Save the results to CosmosDB metrics.",
             )
 
         with ArgumentsContext(self, "kb") as ac:
@@ -2062,19 +2020,8 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="The text query to search.",
             )
             ac.argument(
-                "index",
-                type=str,
-                nargs="+",
-                help="The indexes to search. Can be one or more of: examples, guidelines.",
-                options_list=["--index"],
-            )
-            ac.argument(
                 "markdown",
                 help="Render output as markdown instead of JSON.",
-            )
-            ac.argument(
-                "save",
-                help="Save the results to CosmosDB metrics.",
             )
             ac.argument(
                 "ids",
@@ -2092,39 +2039,6 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--containers", "-c"],
                 choices=ContainerNames.data_containers(),
             )
-        with ArgumentsContext(self, "review start-job") as ac:
-            ac.argument(
-                "language",
-                type=resolve_language_to_canonical,
-                help="The language of the APIView file (e.g., python, Go, C#).",
-                options_list=("--language", "-l"),
-            )
-            ac.argument(
-                "target",
-                type=str,
-                help="The path to the APIView file to review.",
-                options_list=("--target", "-t"),
-            )
-            ac.argument(
-                "base",
-                type=str,
-                help="The path to the base APIView file to compare against.",
-                options_list=("--base", "-b"),
-                default=None,
-            )
-            ac.argument(
-                "outline",
-                type=str,
-                help="Path to a plain text file containing the outline text.",
-                options_list=["--outline"],
-                default=None,
-            )
-            ac.argument(
-                "existing_comments",
-                type=str,
-                help="Path to a JSON file containing existing comments.",
-                default=None,
-            )
         with ArgumentsContext(self, "review get-job") as ac:
             ac.argument(
                 "job_id",
@@ -2139,12 +2053,6 @@ class CliCommandsLoader(CLICommandsLoader):
             )
         with ArgumentsContext(self, "review summarize") as ac:
             ac.argument(
-                "language",
-                type=resolve_language_to_canonical,
-                help="The language of the APIView file (e.g., python, Go, C#).",
-                options_list=("--language", "-l"),
-            )
-            ac.argument(
                 "target", type=str, help="The path to the APIView file to summarize.", options_list=("--target", "-t")
             )
             ac.argument(
@@ -2153,12 +2061,7 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="The path to the base APIView file for diff summarization.",
                 options_list=["--base", "-b"],
             )
-            ac.argument(
-                "remote",
-                action="store_true",
-                help="Use the remote API service instead of local processing.",
-            )
-        with ArgumentsContext(self, "agent") as ac:
+        with ArgumentsContext(self, "agent chat") as ac:
             ac.argument(
                 "thread_id",
                 type=str,
@@ -2291,20 +2194,17 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--revision-id", "-r"],
             )
             ac.argument(
-                "environment",
-                type=str,
-                help="The APIView environment from which to retrieve comments. Defaults to 'production'.",
-                options_list=["--environment"],
-                default="production",
-                choices=["production", "staging"],
-            )
-            ac.argument(
                 "language",
                 type=resolve_language_to_canonical,
                 help="Language to filter comments (case-insensitive, e.g., python, Go, C#).",
                 options_list=("--language", "-l"),
             )
         with ArgumentsContext(self, "report active-reviews") as ac:
+            ac.argument(
+                "summary",
+                action="store_true",
+                help="Output summary format (package-name package-version APPROVED/UNAPPROVED) instead of detailed JSON.",
+            )
             ac.argument(
                 "approved_only",
                 action="store_true",
@@ -2330,19 +2230,6 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--version", "-v"],
                 default=None,
             )
-            ac.argument(
-                "environment",
-                type=str,
-                help="The APIView environment. Defaults to 'production'.",
-                options_list=["--environment"],
-                default="production",
-                choices=["production", "staging"],
-            )
-            ac.argument(
-                "remote",
-                action="store_true",
-                help="Use the remote API instead of local processing.",
-            )
         with ArgumentsContext(self, "test prompt") as ac:
             ac.argument(
                 "path",
@@ -2365,8 +2252,6 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="Additional arguments to pass to pytest (e.g. '-k test_name -v').",
             )
         with ArgumentsContext(self, "report metrics") as ac:
-            ac.argument("start_date", help="The start date for the metrics report (YYYY-MM-DD).")
-            ac.argument("end_date", help="The end date for the metrics report (YYYY-MM-DD).")
             ac.argument(
                 "environment",
                 type=str,
@@ -2393,6 +2278,12 @@ class CliCommandsLoader(CLICommandsLoader):
                 action="store_true",
                 help="Save the metrics report to CosmosDB.",
             )
+        with ArgumentsContext(self, "ops check") as ac:
+            ac.argument(
+                "include_auth",
+                action="store_true",
+                help="Include authentication in the health check.",
+            )
         with ArgumentsContext(self, "ops") as ac:
             ac.argument(
                 "assignee_id",
@@ -2408,26 +2299,6 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="Filter by language (e.g., python, Go, C#). If omitted, returns results for all languages.",
                 options_list=("--language", "-l"),
                 default=None,
-            )
-            ac.argument(
-                "start_date",
-                type=str,
-                help="The start date (YYYY-MM-DD).",
-                options_list=["--start-date", "-s"],
-            )
-            ac.argument(
-                "end_date",
-                type=str,
-                help="The end date (YYYY-MM-DD).",
-                options_list=["--end-date", "-e"],
-            )
-            ac.argument(
-                "environment",
-                type=str,
-                help="The APIView environment. Defaults to 'production'.",
-                options_list=["--environment"],
-                default="production",
-                choices=["production", "staging"],
             )
         with ArgumentsContext(self, "report feedback") as ac:
             ac.argument(
@@ -2470,18 +2341,21 @@ def run_cli():
     # (SettingsManager, DatabaseManager, SearchManager, etc.) can resolve the
     # environment without every function explicitly threading the parameter.
     # The --environment flag is registered globally with a default of "production".
-    if not os.environ.get("ENVIRONMENT_NAME"):
-        env = "production"
-        args = sys.argv[1:]
-        for idx, arg in enumerate(args):
-            if arg == "--environment":
-                if idx + 1 < len(args):
-                    env = args[idx + 1]
-                break
-            if arg.startswith("--environment="):
-                env = arg.split("=", 1)[1]
-                break
+    # If --environment is supplied, it always wins over the env var.
+    env = None
+    args = sys.argv[1:]
+    for idx, arg in enumerate(args):
+        if arg == "--environment":
+            if idx + 1 < len(args):
+                env = args[idx + 1]
+            break
+        if arg.startswith("--environment="):
+            env = arg.split("=", 1)[1]
+            break
+    if env:
         os.environ["ENVIRONMENT_NAME"] = env
+    elif not os.environ.get("ENVIRONMENT_NAME"):
+        os.environ["ENVIRONMENT_NAME"] = "production"
     cli = CLI(cli_name="avc", commands_loader_cls=CliCommandsLoader)
     exit_code = cli.invoke(sys.argv[1:])
     sys.exit(exit_code)

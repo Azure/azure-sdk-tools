@@ -155,16 +155,17 @@ def _build_metrics_segment(
       - ``active_review_count``: number of approved package versions.
       - ``active_copilot_review_count``: approved package versions that had a Copilot review.
 
-    **comment_makeup** — Describes the composition of comments on approved package versions
-    (excluding Diagnostic comments). Human comments are split by whether the package
-    version had Copilot enabled (``human_comment_count_with_ai`` vs
-    ``human_comment_count_without_ai``). The AI comment count for makeup is derived
-    from the comment_quality buckets: ``upvoted + downvoted + implicit_good +
-    implicit_bad``. This includes every AI comment that either received a quality
-    signal (upvote, downvote, resolution, deletion is excluded) or sits in an approved
-    package version with no signal (implicit_bad). Comments that are deleted or neutral
-    (unapproved + no signal) are excluded. The ``ai_comment_rate`` is the ratio of
-    that AI count to (AI count + human comments from Copilot-enabled package versions).
+    **comment_makeup** — Describes the composition of comments (excluding Diagnostic
+    comments). Human comments are counted from *approved* package versions only and
+    split by whether the package version had Copilot enabled
+    (``human_comment_count_with_ai`` vs ``human_comment_count_without_ai``). The AI
+    comment count for makeup is derived from the comment_quality buckets:
+    ``upvoted + downvoted + implicit_good + implicit_bad``. Because the quality
+    buckets span *all* active revisions (approved and unapproved), the AI portion
+    of makeup includes signaled comments from any revision, plus unsignaled comments
+    from approved revisions (implicit_bad). Only deleted and neutral comments are
+    excluded. The ``ai_comment_rate`` is the ratio of that AI count to (AI count +
+    human comments from Copilot-enabled package versions).
 
     **comment_quality** — Evaluates AI comment quality across *all* active package versions
     (approved **and** unapproved). Every AI comment is placed into exactly one
@@ -215,7 +216,6 @@ def _build_metrics_segment(
     ]
 
     # Categorize comments based on whether the revision has Copilot (for comment_makeup)
-    ai_comments_with_copilot_count = 0
     human_comments_with_copilot_count = 0
     human_comments_without_copilot_count = 0
 
@@ -225,9 +225,7 @@ def _build_metrics_segment(
         source = comment.get("CommentSource")
 
         if has_copilot:
-            if source == "AIGenerated":
-                ai_comments_with_copilot_count += 1
-            else:
+            if source != "AIGenerated":
                 human_comments_with_copilot_count += 1
         else:
             # For revisions without Copilot, all comments should be human

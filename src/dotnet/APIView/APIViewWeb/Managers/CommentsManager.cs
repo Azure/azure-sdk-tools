@@ -586,8 +586,9 @@ namespace APIViewWeb.Managers
                 {
                     // Deduplicate copilot notifications: only queue one mention per unique correlation ID.
                     // Comments without a correlation ID (or with an empty one) are always treated as unique.
-                    bool queueCopilotNotification = string.IsNullOrEmpty(comment?.CorrelationId) ||
-                                                    processedCorrelationIds.Add(comment.CorrelationId);
+                    string correlationId = comment?.CorrelationId;
+                    bool queueCopilotNotification = string.IsNullOrEmpty(correlationId) ||
+                                                    processedCorrelationIds.Add(correlationId);
                     await AddCommentFeedbackAsync(user, reviewId, commentId, request.Feedback, queueCopilotNotification);
                 }
                 

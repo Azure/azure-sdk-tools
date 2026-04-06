@@ -1796,7 +1796,6 @@ public class CommentsManagerTests
     [Fact]
     public async Task CommentsBatchOperationAsync_NoCorrelationId_QueuesCopilotNotificationForEach()
     {
-        // AI-generated comments with no correlation ID should each get their own copilot notification
         var commentsRepoMock = new Mock<ICosmosCommentsRepository>();
         var hubContextMock = new Mock<IHubContext<SignalRHub>>();
         var apiRevisionsManagerMock = new Mock<IAPIRevisionsManager>();
@@ -1932,7 +1931,7 @@ public class CommentsManagerTests
 
         await manager.CommentsBatchOperationAsync(user, "review1", request);
 
-        // Both comments should have feedback stored and each should queue its own notification (null = no dedup)
+        // Both comments should have feedback stored and each should queue its own notification
         Assert.Single(comment1.Feedback);
         Assert.Single(comment2.Feedback);
         Assert.Equal(2, notificationCount);

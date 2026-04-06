@@ -266,7 +266,12 @@ public class APIViewService : IAPIViewService
 
         if (!string.IsNullOrEmpty(existingCommentsJson))
         {
-            payload["existingComments"] = existingCommentsJson;
+            using var existingCommentsDoc = JsonDocument.Parse(existingCommentsJson);
+            if (existingCommentsDoc.RootElement.ValueKind != JsonValueKind.Array)
+            {
+                throw new ArgumentException("existingCommentsJson must be a JSON array.", nameof(existingCommentsJson));
+            }
+            payload["existingComments"] = existingCommentsDoc.RootElement.Clone();
         }
 
         string jsonBody = JsonSerializer.Serialize(payload);

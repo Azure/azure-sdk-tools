@@ -147,6 +147,37 @@ def _build_metrics_segment(
     comments: list[dict],
     language: Optional[str] = None,
 ) -> MetricsSegment:
+    """Build a MetricsSegment from reviews and raw comment dicts.
+
+    Produces three metric groups:
+
+    **adoption** — Based on *approved* package versions only.
+      - ``active_review_count``: number of approved package versions.
+      - ``active_copilot_review_count``: approved package versions that had a Copilot review.
+
+    **comment_makeup** — Describes the composition of comments on approved package versions
+    (excluding Diagnostic comments). Human comments are split by whether the package
+    version had Copilot enabled (``human_comment_count_with_ai`` vs
+    ``human_comment_count_without_ai``). The AI comment count for makeup is derived
+    from the comment_quality buckets: ``upvoted + downvoted + implicit_good +
+    implicit_bad``. This includes every AI comment that either received a quality
+    signal (upvote, downvote, resolution, deletion is excluded) or sits in an approved
+    package version with no signal (implicit_bad). Comments that are deleted or neutral
+    (unapproved + no signal) are excluded. The ``ai_comment_rate`` is the ratio of
+    that AI count to (AI count + human comments from Copilot-enabled package versions).
+
+    **comment_quality** — Evaluates AI comment quality across *all* active package versions
+    (approved **and** unapproved). Every AI comment is placed into exactly one
+    mutually-exclusive bucket, checked in this priority order:
+      1. **deleted** — ``IsDeleted`` is truthy.
+      2. **downvoted** — Has at least one downvote (trumps any upvotes).
+      3. **upvoted** — Has at least one upvote and no downvotes.
+      4. **implicit_good** — ``IsResolved`` is truthy (no votes).
+      5. **implicit_bad** — In an *approved* package version, not resolved, no votes.
+      6. **neutral** — In an *unapproved* package version, not resolved, no votes.
+
+    The sum of all six buckets equals ``total_ai_comment_count``.
+    """
     metrics = MetricsSegment(start_date=start_date, end_date=end_date)
     metrics.type = "metrics_segment"
 

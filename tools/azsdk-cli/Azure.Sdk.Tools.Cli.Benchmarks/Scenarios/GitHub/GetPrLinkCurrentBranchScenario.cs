@@ -36,7 +36,6 @@ public class GetPrLinkCurrentBranchScenario : BenchmarkScenario
     /// <inheritdoc />
     public override string Prompt => """
         What's the status of the spec PR in my current branch? Only check the status once.
-        My setup has already been verified, do not run azsdk_verify_setup.
         The repository root is the relative path ./azure-rest-api-specs.
         """;
 
@@ -49,6 +48,6 @@ public class GetPrLinkCurrentBranchScenario : BenchmarkScenario
             [
                 new ExpectedToolCall("azsdk_get_pull_request_link_for_current_branch")
             ],
-            forbiddenToolNames: ["azsdk_verify_setup"])
+            optionalToolNames: ["azsdk_verify_setup"])
     ];
 }

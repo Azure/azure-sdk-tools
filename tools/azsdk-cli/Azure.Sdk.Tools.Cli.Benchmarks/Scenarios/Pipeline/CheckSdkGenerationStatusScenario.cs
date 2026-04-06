@@ -38,7 +38,6 @@ public class CheckSdkGenerationStatusScenario : BenchmarkScenario
     /// <inheritdoc />
     public override string Prompt => """
         Check the SDK generation pipeline status for build ID 5513110.
-        My setup has already been verified, do not run azsdk_verify_setup.
         """;
 
     /// <inheritdoc />
@@ -54,6 +53,6 @@ public class CheckSdkGenerationStatusScenario : BenchmarkScenario
                         ["buildId"] = 5513110
                     })
             ],
-            forbiddenToolNames: ["azsdk_verify_setup"])
+            optionalToolNames: ["azsdk_verify_setup"])
     ];
 }

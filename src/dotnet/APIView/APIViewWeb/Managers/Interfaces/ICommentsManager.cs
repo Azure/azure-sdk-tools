@@ -26,7 +26,7 @@ namespace APIViewWeb.Managers
         public Task UnresolveConversation(ClaimsPrincipal user, string reviewId, string lineId, string threadId = null);
         public Task ToggleUpvoteAsync(ClaimsPrincipal user, string reviewId, string commentId);
         public Task ToggleDownvoteAsync(ClaimsPrincipal user, string reviewId, string commentId);
-        public Task AddCommentFeedbackAsync(ClaimsPrincipal user, string reviewId, string commentId, CommentFeedbackRequest feedback, bool queueCopilotNotification = true);
+        public Task AddCommentFeedbackAsync(ClaimsPrincipal user, string reviewId, string commentId, CommentFeedbackRequest feedback);
         public Task RequestAgentReply(ClaimsPrincipal user, CommentItemModel comment, string activeRevisionId);
         public Task<List<CommentItemModel>> SyncDiagnosticCommentsAsync(APIRevisionListItemModel apiRevision, CodeDiagnostic[] diagnostics, IEnumerable<CommentItemModel> existingComments);
         public HashSet<GithubUser> GetTaggableUsers();

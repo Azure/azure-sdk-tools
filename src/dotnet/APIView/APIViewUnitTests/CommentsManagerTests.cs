@@ -1502,7 +1502,7 @@ public class CommentsManagerTests
     }
 
     [Fact]
-    public async Task CommentsBatchOperationAsync_SameCorrelationId_QueuesCopilotNotificationOnce()
+    public async Task CommentsBatchOperationAsync_SameCorrelationId_StoresFeedbackAndNotifiesOnce()
     {
         var commentsRepoMock = new Mock<ICosmosCommentsRepository>();
         var hubContextMock = new Mock<IHubContext<SignalRHub>>();
@@ -1640,16 +1640,75 @@ public class CommentsManagerTests
 
         await manager.CommentsBatchOperationAsync(user, "review1", request);
 
-        // Both comments should have feedback stored individually
+        // Only the first comment with this correlation ID should have feedback stored
         Assert.Single(comment1.Feedback);
-        Assert.Single(comment2.Feedback);
-        // But only one copilot notification should be queued for the shared correlation ID
+        Assert.Empty(comment2.Feedback);
+        // And only one copilot notification should be queued
         Assert.Equal(1, notificationCount);
         backgroundTaskQueueMock.Verify(q => q.QueueBackgroundWorkItem(It.IsAny<Func<CancellationToken, Task>>()), Times.Once);
     }
 
     [Fact]
-    public async Task CommentsBatchOperationAsync_DifferentCorrelationIds_QueuesCopilotNotificationForEach()
+    public async Task CommentsBatchOperationAsync_SameCorrelationId_StillDeletesAllComments()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("architect1");
+
+        const string sharedCorrelationId = "corr-shared";
+
+        CommentItemModel comment1 = new()
+        {
+            ReviewId = "review1",
+            Id = "comment1",
+            ElementId = "element1",
+            CommentSource = CommentSource.AIGenerated,
+            CorrelationId = sharedCorrelationId,
+            Feedback = new List<CommentFeedback>(),
+            Upvotes = new List<string>(),
+            Downvotes = new List<string>(),
+            CreatedBy = "copilot"
+        };
+
+        CommentItemModel comment2 = new()
+        {
+            ReviewId = "review1",
+            Id = "comment2",
+            ElementId = "element2",
+            CommentSource = CommentSource.AIGenerated,
+            CorrelationId = sharedCorrelationId,
+            Feedback = new List<CommentFeedback>(),
+            Upvotes = new List<string>(),
+            Downvotes = new List<string>(),
+            CreatedBy = "copilot"
+        };
+
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment1);
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment2")).ReturnsAsync(comment2);
+
+        BatchConversationRequest request = new()
+        {
+            CommentIds = new List<string> { "comment1", "comment2" },
+            Feedback = new CommentFeedbackRequest
+            {
+                Reasons = new List<AICommentFeedbackReason> { AICommentFeedbackReason.FactuallyIncorrect },
+                IsDelete = true
+            },
+            Disposition = ConversationDisposition.Delete
+        };
+
+        await manager.CommentsBatchOperationAsync(user, "review1", request);
+
+        // Feedback stored only once (first comment)
+        Assert.Single(comment1.Feedback);
+        Assert.Empty(comment2.Feedback);
+
+        // But both comments should be soft-deleted
+        Assert.True(comment1.IsDeleted);
+        Assert.True(comment2.IsDeleted);
+    }
+
+    [Fact]
+    public async Task CommentsBatchOperationAsync_DifferentCorrelationIds_StoresFeedbackAndNotifiesForEach()
     {
         var commentsRepoMock = new Mock<ICosmosCommentsRepository>();
         var hubContextMock = new Mock<IHubContext<SignalRHub>>();
@@ -1794,7 +1853,7 @@ public class CommentsManagerTests
     }
 
     [Fact]
-    public async Task CommentsBatchOperationAsync_NoCorrelationId_QueuesCopilotNotificationForEach()
+    public async Task CommentsBatchOperationAsync_NoCorrelationId_StoresFeedbackAndNotifiesForEach()
     {
         var commentsRepoMock = new Mock<ICosmosCommentsRepository>();
         var hubContextMock = new Mock<IHubContext<SignalRHub>>();

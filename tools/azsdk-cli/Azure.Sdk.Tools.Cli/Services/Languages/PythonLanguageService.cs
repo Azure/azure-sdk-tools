@@ -226,10 +226,16 @@ public sealed partial class PythonLanguageService : LanguageService
 
         try
         {
-            var pushResult = await processHelper.Run(new ProcessOptions(
-                    command: "test-proxy",
-                    args: ["push", "-a", "assets.json"],
-                    workingDirectory: packagePath
+            // Python SDK uses scripts/manage_recordings.py to push test assets
+            // See: https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/tests.md#update-test-recordings
+            var repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
+            var relativeAssetsPath = Path.GetRelativePath(repoRoot, assetsJsonPath);
+            var scriptPath = Path.Combine("scripts", "manage_recordings.py");
+
+            var pushResult = await pythonHelper.Run(new PythonOptions(
+                    "python",
+                    [scriptPath, "push", "-p", relativeAssetsPath],
+                    workingDirectory: repoRoot
                 ),
                 ct
             );
@@ -242,14 +248,14 @@ public sealed partial class PythonLanguageService : LanguageService
             {
                 logger.LogWarning("Asset push failed with exit code {exitCode}: {output}", pushResult.ExitCode, pushResult.Output);
                 response.NextSteps ??= [];
-                response.NextSteps.Add($"Asset push failed (exit code {pushResult.ExitCode}). You may need to push assets manually using 'test-proxy push -a assets.json'");
+                response.NextSteps.Add($"Asset push failed (exit code {pushResult.ExitCode}). You may need to push assets manually using 'python scripts/manage_recordings.py push -p {relativeAssetsPath}'");
             }
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Failed to push test assets. Is test-proxy installed?");
+            logger.LogWarning(ex, "Failed to push test assets");
             response.NextSteps ??= [];
-            response.NextSteps.Add("Could not push test assets automatically. Ensure test-proxy is available and try running 'test-proxy push -a assets.json' manually");
+            response.NextSteps.Add("Could not push test assets automatically. Try running 'python scripts/manage_recordings.py push -p <path-to-assets.json>' manually from the repo root");
         }
     }
 

@@ -605,22 +605,25 @@ internal class PythonLanguageSpecificChecksTests
         var pushResult = new ProcessResult { ExitCode = 0 };
         pushResult.AppendStdout("Assets pushed!");
 
+        // Setup gitHelper to return tempDir as the repo root
+        _gitHelperMock
+            .Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(tempDir.DirectoryPath);
+
+        // First call is test run, second call is asset push via manage_recordings.py
+        var callCount = 0;
         _pythonHelperMock
             .Setup(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(testResult);
-
-        _processHelperMock
-            .Setup(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(pushResult);
+            .ReturnsAsync(() => ++callCount == 1 ? testResult : pushResult);
 
         var result = await _languageService.RunAllTests(tempDir.DirectoryPath, TestMode.Record, ct: CancellationToken.None);
 
         Assert.That(result.ExitCode, Is.EqualTo(0));
-        // Verify test run was called via pythonHelper
-        _pythonHelperMock.Verify(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()), Times.Once);
-        // Verify asset push was called via processHelper
-        _processHelperMock.Verify(p => p.Run(
-            It.Is<ProcessOptions>(o => o.Args.Contains("push") && o.Args.Contains("-a")),
+        // Verify both test run and asset push were called via pythonHelper
+        _pythonHelperMock.Verify(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+        // Verify asset push used manage_recordings.py with push verb
+        _pythonHelperMock.Verify(p => p.Run(
+            It.Is<PythonOptions>(o => o.Args.Contains("push") && o.Args.Any(a => a.Contains("manage_recordings.py"))),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -639,9 +642,8 @@ internal class PythonLanguageSpecificChecksTests
 
         await _languageService.RunAllTests(tempDir.DirectoryPath, TestMode.Playback, ct: CancellationToken.None);
 
-        // Only the test run should be called, not asset push
+        // Only the test run should be called via pythonHelper, not asset push
         _pythonHelperMock.Verify(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()), Times.Once);
-        _processHelperMock.Verify(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test]
@@ -660,9 +662,8 @@ internal class PythonLanguageSpecificChecksTests
         var result = await _languageService.RunAllTests(tempDir.DirectoryPath, TestMode.Record, ct: CancellationToken.None);
 
         Assert.That(result.ExitCode, Is.EqualTo(1));
-        // Only the test run should be called, not asset push
+        // Only the test run should be called via pythonHelper, not asset push
         _pythonHelperMock.Verify(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()), Times.Once);
-        _processHelperMock.Verify(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test]
@@ -679,9 +680,8 @@ internal class PythonLanguageSpecificChecksTests
         var result = await _languageService.RunAllTests(_packagePath, TestMode.Record, ct: CancellationToken.None);
 
         Assert.That(result.ExitCode, Is.EqualTo(0));
-        // Only the test run should be called
+        // Only the test run should be called via pythonHelper
         _pythonHelperMock.Verify(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()), Times.Once);
-        _processHelperMock.Verify(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test]

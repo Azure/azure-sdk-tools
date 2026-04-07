@@ -40,6 +40,8 @@ SDK_PARAMS = [
     ("azure-eventhub-checkpointstoreblob-aio", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblobaio", "whl"),
     # Large package (700+ model classes) — validates perf fix for large packages.
     ("azure-mgmt-compute", "37.2.0", "mgmt", "azure.mgmt.compute", "whl"),
+    ("azure-mgmt-compute", "37.2.0", "mgmt", "azure.mgmt.compute", "sdist"),
+    ("azure-mgmt-compute", "37.2.0", "mgmt", "azure.mgmt.compute", "src"),
 ]
 SDK_IDS = [f"{pkg_name}_{version}[{pkg_type}]" for pkg_name, version, _, _, pkg_type in SDK_PARAMS]
 

@@ -1,10 +1,11 @@
-"""Tests for MemoryContextProvider — dual-store memory search and update."""
+"""Tests for MemoryContextProvider — memory search and update."""
 
 from __future__ import annotations
 
 import sys
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 
 import pytest
 from agent_framework import Message
@@ -47,34 +48,6 @@ class _FakeMemoryStores:
         return SimpleNamespace(update_id="update-001")
 
 
-class _DualFakeMemoryStores:
-    """Records search/update calls, keyed by store name, for dual-store tests."""
-
-    def __init__(
-        self,
-        user_static=None, user_contextual=None,
-        tenant_static=None, tenant_contextual=None,
-    ) -> None:
-        self._data = {
-            "user-store": {"static": user_static or [], "contextual": user_contextual or []},
-            "tenant-store": {"static": tenant_static or [], "contextual": tenant_contextual or []},
-        }
-        self.search_calls: list[dict] = []
-        self.update_calls: list[dict] = []
-
-    async def search_memories(self, **kwargs):
-        self.search_calls.append(kwargs)
-        store = kwargs.get("name", "user-store")
-        data = self._data.get(store, {"static": [], "contextual": []})
-        if "items" not in kwargs:
-            return SimpleNamespace(memories=data["static"], search_id=f"static-{store}")
-        return SimpleNamespace(memories=data["contextual"], search_id=f"ctx-{store}")
-
-    async def begin_update_memories(self, **kwargs):
-        self.update_calls.append(kwargs)
-        return SimpleNamespace(update_id=f"update-{kwargs.get('name', 'unknown')}")
-
-
 class _FakeContext:
     def __init__(self, input_messages, response_messages=None) -> None:
         self.input_messages = input_messages
@@ -87,10 +60,10 @@ class _FakeContext:
         self.extended_messages.append((source, messages))
 
 
-def _patch_stores(monkeypatch, *, user_store="test-memory-store", tenant_store=None, delay=123):
+def _patch_stores(monkeypatch, *, user_store="test-memory-store", delay=123):
     monkeypatch.setattr(memory_context_provider_module, "get_user_store_name", lambda: user_store)
-    monkeypatch.setattr(memory_context_provider_module, "get_tenant_store_name", lambda: tenant_store)
     monkeypatch.setattr(memory_context_provider_module, "get_memory_update_delay", lambda: delay)
+    monkeypatch.setattr(memory_context_provider_module, "cfg", lambda key, default="": default)
 
 
 # ---------------------------------------------------------------------------
@@ -144,7 +117,6 @@ async def test_before_run_skips_static_fetch_on_subsequent_calls(monkeypatch) ->
     state: dict = {
         "initialized": True,
         "user_static_memories": [_make_memory("s1", "cached static")],
-        "tenant_static_memories": [],
         "user_scope": "scope-a",
     }
     session = SimpleNamespace(session_id="session-1")
@@ -223,22 +195,44 @@ async def test_before_run_deduplicates_memories(monkeypatch) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Dual-store
+# User memories + Episodes
 # ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio
-async def test_dual_store_before_run_injects_separate_sections(monkeypatch) -> None:
-    """With both stores configured, memories are injected as separate sections."""
-    _patch_stores(monkeypatch, user_store="user-store", tenant_store="tenant-store")
-    memory_stores = _DualFakeMemoryStores(
-        user_static=[_make_memory("u1", "User prefers Python")],
-        user_contextual=[_make_memory("uc1", "User asked about ARM")],
-        tenant_static=[_make_memory("t1", "TypeSpec requires @versioning")],
-        tenant_contextual=[_make_memory("tc1", "Use @added decorator for new fields")],
+async def test_before_run_injects_user_memories_and_episodes(monkeypatch) -> None:
+    """User memories and episodes are both injected when tenant context is present."""
+    _patch_stores(monkeypatch)
+    static_mems = [_make_memory("u1", "User prefers Python")]
+    ctx_mems = [_make_memory("uc1", "User asked about ARM")]
+    memory_stores = _FakeMemoryStores(
+        static_memories=static_mems, contextual_memories=ctx_mems
     )
     project_client = SimpleNamespace(beta=SimpleNamespace(memory_stores=memory_stores))
-    provider = MemoryContextProvider(project_client)
 
+    fake_embedding = [0.1] * 1536
+    fake_embedding_response = SimpleNamespace(data=[SimpleNamespace(embedding=fake_embedding)])
+    mock_embedding_client = AsyncMock()
+    mock_embedding_client.embeddings.create = AsyncMock(return_value=fake_embedding_response)
+
+    fake_episode = {
+        "trigger": "tsp-client fails",
+        "symptoms": ["error: emitter not found"],
+        "reasoning_chain": ["check config", "add emitter"],
+        "resolution": "Add emitter to config",
+        "key_insight": "Config issues cause generation failures",
+        "similarity_score": 0.9,
+    }
+
+    monkeypatch.setattr(
+        memory_context_provider_module, "get_embedding_client",
+        lambda: mock_embedding_client,
+    )
+    monkeypatch.setattr(
+        memory_context_provider_module, "search_episodes_by_vector",
+        AsyncMock(return_value=[fake_episode]),
+    )
+
+    provider = MemoryContextProvider(project_client)
     context = _FakeContext(
         input_messages=[
             Message("system", ["[tenant_context] original_tenant_id=azure_sdk_onboarding"]),
@@ -253,19 +247,14 @@ async def test_dual_store_before_run_injects_separate_sections(monkeypatch) -> N
 
     injected_text = context.extended_messages[0][1][0].text
     assert "## User memories" in injected_text
-    assert "## Tenant memories" in injected_text
     assert "User prefers Python" in injected_text
-    assert "TypeSpec requires @versioning" in injected_text
-    store_names = [c["name"] for c in memory_stores.search_calls]
-    assert "user-store" in store_names
-    assert "tenant-store" in store_names
 
 
 @pytest.mark.asyncio
-async def test_dual_store_after_run_updates_only_user_store(monkeypatch) -> None:
-    """after_run should only update the user store; tenant is handled by ThreadMemoryService."""
-    _patch_stores(monkeypatch, user_store="user-store", tenant_store="tenant-store")
-    memory_stores = _DualFakeMemoryStores()
+async def test_after_run_updates_only_user_store(monkeypatch) -> None:
+    """after_run should only update the user store."""
+    _patch_stores(monkeypatch)
+    memory_stores = _FakeMemoryStores()
     project_client = SimpleNamespace(beta=SimpleNamespace(memory_stores=memory_stores))
     provider = MemoryContextProvider(project_client)
 
@@ -273,11 +262,11 @@ async def test_dual_store_after_run_updates_only_user_store(monkeypatch) -> None
         input_messages=[Message("user", ["How do I use TypeSpec?"])],
         response_messages=[Message("assistant", ["TypeSpec is a language for defining APIs."])],
     )
-    state = {"user_scope": "user_alice", "tenant_scope": "azure_sdk_onboarding"}
+    state = {"user_scope": "user_alice"}
     session = SimpleNamespace(session_id="session-1")
 
     await provider.after_run(agent=None, session=session, context=context, state=state)
 
     assert len(memory_stores.update_calls) == 1
-    assert memory_stores.update_calls[0]["name"] == "user-store"
+    assert memory_stores.update_calls[0]["name"] == "test-memory-store"
     assert memory_stores.update_calls[0]["scope"] == "user_alice"

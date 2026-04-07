@@ -135,29 +135,33 @@ class FoundryAgentSpanEnricher(SpanProcessor):
     @staticmethod
     def _is_agent_operation_span(span) -> bool:
         attrs = getattr(span, "attributes", None) or {}
-        return attrs.get("gen_ai.operation.name") in {"invoke_agent", "chat"}
+        return attrs.get("gen_ai.operation.name") == "chat"
 
     @staticmethod
-    def _normalize_operation_name(span) -> None:
-        attrs = getattr(span, "attributes", None) or {}
-        op_name = attrs.get("gen_ai.operation.name")
-        if op_name == "chat":
-            span.set_attribute("gen_ai.original.operation.name", "chat")
-            span.set_attribute("gen_ai.operation.name", "invoke_agent")
+    def _normalize_operation_name(attrs: dict) -> None:
+        if attrs.get("gen_ai.operation.name") == "chat":
+            attrs["gen_ai.operation.name"] = "invoke_agent"
 
     def on_start(self, span, parent_context=None) -> None:
+        pass
+
+    def on_end(self, span) -> None:
+        """Enrich the span after all attributes have been set by the runtime."""
         if not self._is_agent_operation_span(span):
             return
         conversation_id = self._get_conversation_id(span)
         if not conversation_id:
             return
-        self._normalize_operation_name(span)
-        span.set_attribute("microsoft.foundry.project.id", self._project_id)
-        span.set_attribute("gen_ai.agent.name", self._agent_name)
-        span.set_attribute("gen_ai.agent.id", self._agent_id)
-
-    def on_end(self, span) -> None:
-        pass
+        # ReadableSpan.attributes is an immutable MappingProxyType;
+        # mutate the underlying dict so the exporter sees the changes.
+        attrs = span._attributes  # type: ignore[attr-defined]
+        if not isinstance(attrs, dict):
+            return
+        self._normalize_operation_name(attrs)
+        attrs["gen_ai.conversation.id"] = conversation_id
+        attrs["microsoft.foundry.project.id"] = self._project_id
+        attrs["gen_ai.agent.name"] = self._agent_name
+        attrs["gen_ai.agent.id"] = self._agent_id
 
     def shutdown(self) -> None:
         pass

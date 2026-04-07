@@ -38,7 +38,7 @@ from tools.knowledge_tools import KnowledgeTools
 from tools.ado_mcp_tools import create_ado_mcp_tool
 from tools.azsdk_mcp_tools import create_azsdk_mcp_tool
 from tools.github_mcp_tools import create_github_mcp_tool
-from tools.skills import create_tenant_skills
+from skills.tenant_skills import create_tenant_skills
 from utils.azure_ai_foundry import (
     FoundryAgentSpanEnricher,
     get_agent_client,

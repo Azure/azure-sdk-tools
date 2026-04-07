@@ -146,6 +146,7 @@ if __name__ == "__main__":
     # Silence noisy loggers that flood container logs.
     for noisy_logger in [
         "azure.core.pipeline.policies.http_logging_policy",  # HTTP request/response headers
+        "azure.cosmos._cosmos_http_logging_policy",  # Cosmos DB request/response logging
         "azure.monitor.opentelemetry.exporter",  # telemetry transmission
         "uvicorn.access",  # health-probe GET /readiness /liveness
         "uvicorn",  # uvicorn root logger (also emits access logs)

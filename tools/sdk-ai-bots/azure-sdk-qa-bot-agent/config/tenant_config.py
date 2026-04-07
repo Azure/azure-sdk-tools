@@ -597,7 +597,7 @@ def get_tenant_scope_description(tenant_id: TenantID) -> str:
         return ""
     parts: list[str] = []
     name = config.display_name or tenant_id
-    parts.append(f"**Tenant**: {name} (`{tenant_id}`)")
+    parts.append(f"**Tenant**: {name} (`{tenant_id.value}`)")
     if config.scope:
         parts.append(f"**Scope**: {config.scope}")
     if config.topics:

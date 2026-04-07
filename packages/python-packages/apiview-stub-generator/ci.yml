@@ -1,16 +1,5 @@
 # NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
 
-parameters:
-  - name: PythonVersions
-    type: object
-    default:
-      - '3.9.x'
-      - '3.10.x'
-      - '3.11.x'
-      - '3.12.x'
-      - '3.13.x'
-      - '3.14.x'
-
 trigger:
   branches:
     include:
@@ -46,13 +35,32 @@ extends:
         python $(Build.SourcesDirectory)/eng/scripts/python_version_check.py
       displayName: 'Verify Python APIView version consistency'
 
-    - ${{ each version in parameters.PythonVersions }}:
-      - task: UsePythonVersion@0
-        displayName: 'Use Python ${{ version }}'
-        inputs:
-          versionSpec: '${{ version }}'
-      - script: |
-          cd $(Build.SourcesDirectory)/packages/python-packages/apiview-stub-generator
-          python -m pip install tox
-          tox -e pytest,stubgen
-        displayName: 'Run APIView tests (Python ${{ version }})'
+    - task: UsePythonVersion@0
+      displayName: 'Install Python 3.9'
+      inputs:
+        versionSpec: '3.9.x'
+    - task: UsePythonVersion@0
+      displayName: 'Install Python 3.10'
+      inputs:
+        versionSpec: '3.10.x'
+    - task: UsePythonVersion@0
+      displayName: 'Install Python 3.11'
+      inputs:
+        versionSpec: '3.11.x'
+    - task: UsePythonVersion@0
+      displayName: 'Install Python 3.12'
+      inputs:
+        versionSpec: '3.12.x'
+    - task: UsePythonVersion@0
+      displayName: 'Install Python 3.13'
+      inputs:
+        versionSpec: '3.13.x'
+    - task: UsePythonVersion@0
+      displayName: 'Install Python 3.14'
+      inputs:
+        versionSpec: '3.14.x'
+    - script: |
+        cd $(Build.SourcesDirectory)/packages/python-packages/apiview-stub-generator
+        python -m pip install tox
+        tox -p auto -e py39-pytest,py310-pytest,py311-pytest,py312-pytest,py313-pytest,py314-pytest,stubgen
+      displayName: 'Run APIView tests (all Python versions in parallel)'

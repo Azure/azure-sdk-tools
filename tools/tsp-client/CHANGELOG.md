@@ -1,5 +1,9 @@
 # Release
 
+## 2026-04-06 - 0.32.1
+
+- Added support for passing flags to underlying npm commands after `--` separator in `generate-config-files` and `generate-lock-file`.
+
 ## 2026-04-03 - 0.32.0
 
 - Remove `autorest`, `autorest/core`, and `autorest/openapi-to-typespec` from tsp-client dependencies.

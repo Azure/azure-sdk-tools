@@ -196,7 +196,7 @@ class ChatService:
 
     def _build_tenant_system_message(self, tenant_id: TenantID) -> str:
         """Inject tenant context so the agent knows the current domain."""
-        parts: list[str] = [f"[tenant_context] original_tenant_id={tenant_id}"]
+        parts: list[str] = [f"[tenant_context] original_tenant_id={tenant_id.value}"]
 
         scope_desc = get_tenant_scope_description(tenant_id)
         if scope_desc:

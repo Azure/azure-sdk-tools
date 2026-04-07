@@ -12,7 +12,7 @@ import { CommentItemModel, CommentSeverity, CommentSource, CommentType } from 's
 import { UserProfile } from 'src/app/_models/userProfile';
 import { MenuItem, MenuItemCommandEvent, MessageService, ToastMessageOptions } from 'primeng/api';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
-import { fromEvent, Observable, Subject } from 'rxjs';
+import { fromEvent, Observable, Subject, Subscription } from 'rxjs';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
 import { Menu } from 'primeng/menu';
 import { CodeLineSearchInfo, CodeLineSearchMatch } from 'src/app/_models/codeLineSearchInfo';
@@ -64,6 +64,7 @@ export class CodePanelComponent implements OnChanges {
   codeLineSearchMatchInfo: DoublyLinkedList<CodeLineSearchMatch> | undefined = undefined;
 
   destroy$ = new Subject<void>();
+  private viewportScrollSub?: Subscription;
 
   commentThreadNavigationPointer: number | undefined = undefined;
   diffNodeNavigationPointer: number | undefined = undefined;
@@ -602,7 +603,10 @@ export class CodePanelComponent implements OnChanges {
             this.highlightCommentFromFragment();
             const viewport = this.elementRef.nativeElement.ownerDocument.getElementById('viewport');
             if (viewport) {
-              viewport.addEventListener('scroll', () => {
+              this.viewportScrollSub?.unsubscribe();
+              this.viewportScrollSub = fromEvent(viewport, 'scroll').pipe(
+                takeUntil(this.destroy$)
+              ).subscribe(() => {
                 if (this.codeLineSearchInfo?.currentMatch) {
                   this.highlightSearchMatches();
                   this.highlightActiveSearchMatch(false);

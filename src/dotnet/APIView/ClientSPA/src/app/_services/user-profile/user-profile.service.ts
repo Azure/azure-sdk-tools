@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, shareReplay } from 'rxjs';
+import { Observable, shareReplay, tap } from 'rxjs';
 import { ConfigService } from '../config/config.service';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { UserProfile } from 'src/app/_models/userProfile';
@@ -22,7 +22,10 @@ export class UserProfileService {
     }
     if (!this.currentUserProfile$) {
       this.currentUserProfile$ = this.http.get<UserProfile>(this.baseUrl,
-        { withCredentials: true }).pipe(shareReplay(1));
+        { withCredentials: true }).pipe(
+          tap({ error: () => { this.currentUserProfile$ = null; } }),
+          shareReplay(1)
+        );
     }
     return this.currentUserProfile$;
   }
@@ -32,10 +35,12 @@ export class UserProfileService {
   }
 
   updateUserPrefernece(userPreferenceModel : UserPreferenceModel) : Observable<any> {
-    return this.http.put(this.baseUrl + "/preference", userPreferenceModel, { withCredentials: true });
+    return this.http.put(this.baseUrl + "/preference", userPreferenceModel, { withCredentials: true })
+      .pipe(tap(() => this.invalidateCache()));
   }
 
   updateUserProfile(userProfile : UserProfile) : Observable<any> {
-    return this.http.put(this.baseUrl, userProfile, { withCredentials: true });
+    return this.http.put(this.baseUrl, userProfile, { withCredentials: true })
+      .pipe(tap(() => this.invalidateCache()));
   }
 }

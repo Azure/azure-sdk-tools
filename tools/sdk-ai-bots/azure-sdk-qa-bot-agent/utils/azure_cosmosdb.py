@@ -8,7 +8,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from typing import Any
 
+from azure.cosmos import PartitionKey, exceptions as cosmos_exceptions
 from azure.cosmos.aio import ContainerProxy, CosmosClient
 
 from config.app_config import get as cfg
@@ -19,10 +21,15 @@ logger = logging.getLogger(__name__)
 _DEFAULT_DATABASE_NAME = "azure-sdk-qa-bot"
 _DEFAULT_MAPPING_CONTAINER_NAME = "conversation-mappings"
 _DEFAULT_MESSAGE_CONTAINER_NAME = "conversation-messages"
+_DEFAULT_EPISODE_CONTAINER_NAME = "experience-episodes"
+
+# Embedding dimensions for text-embedding-3-small
+_EMBEDDING_DIMENSIONS = 1536
 
 _client: CosmosClient | None = None
 _mapping_container: ContainerProxy | None = None
 _message_container: ContainerProxy | None = None
+_episode_container: ContainerProxy | None = None
 _client_lock = asyncio.Lock()
 _container_lock = asyncio.Lock()
 
@@ -129,9 +136,128 @@ async def get_conversation_message_container() -> ContainerProxy:
 
 async def close_cosmos_client() -> None:
     """Close the shared Cosmos client and reset cached proxies."""
-    global _client, _mapping_container, _message_container
+    global _client, _mapping_container, _message_container, _episode_container
     _mapping_container = None
     _message_container = None
+    _episode_container = None
     if _client is not None:
         await _client.close()
         _client = None
+
+
+# ---------------------------------------------------------------------------
+# Episode container (experience-episodes)
+# ---------------------------------------------------------------------------
+
+async def ensure_episode_container() -> ContainerProxy:
+    """Return the ``experience-episodes`` container, creating it if needed.
+
+    The container is configured with:
+    - Partition key ``/tenant_id``
+    - A vector embedding policy on the ``embedding`` field for
+      cosine-similarity search.
+    - A vector index of type ``quantizedFlat`` for efficient ANN queries.
+    """
+    global _episode_container
+    if _episode_container is not None:
+        return _episode_container
+
+    async with _container_lock:
+        if _episode_container is not None:
+            return _episode_container
+
+        container_name = _DEFAULT_EPISODE_CONTAINER_NAME
+
+        try:
+            _episode_container = await _get_container(
+                container_name=container_name,
+            )
+            logger.info("Using Cosmos DB episode container: %s", container_name)
+        except RuntimeError:
+            # Container doesn't exist — create it with vector indexing
+            client = await _get_client()
+            database = client.get_database_client(_DEFAULT_DATABASE_NAME)
+
+            vector_embedding_policy: dict[str, Any] = {
+                "vectorEmbeddings": [
+                    {
+                        "path": "/embedding",
+                        "dataType": "float32",
+                        "distanceFunction": "cosine",
+                        "dimensions": _EMBEDDING_DIMENSIONS,
+                    },
+                ],
+            }
+
+            indexing_policy: dict[str, Any] = {
+                "indexingMode": "consistent",
+                "automatic": True,
+                "includedPaths": [{"path": "/*"}],
+                "excludedPaths": [{"path": "/embedding/*"}],
+                "vectorIndexes": [
+                    {"path": "/embedding", "type": "quantizedFlat"},
+                ],
+            }
+
+            _episode_container = await database.create_container(
+                id=container_name,
+                partition_key=PartitionKey(path="/tenant_id"),
+                indexing_policy=indexing_policy,
+                vector_embedding_policy=vector_embedding_policy,
+            )
+            logger.info("Created episode container: %s", container_name)
+
+    return _episode_container
+
+
+async def get_episode_container() -> ContainerProxy:
+    """Return the episode container, creating it if needed."""
+    if _episode_container is not None:
+        return _episode_container
+    return await ensure_episode_container()
+
+
+async def save_episode(document: dict[str, Any]) -> dict[str, Any]:
+    """Upsert an episode document into the episode container."""
+    container = await get_episode_container()
+    result = await container.upsert_item(document)
+    return result
+
+
+async def search_episodes_by_vector(
+    tenant_id: str,
+    query_embedding: list[float],
+    *,
+    top_k: int = 5,
+) -> list[dict[str, Any]]:
+    """Search episodes by vector similarity within a tenant partition.
+
+    Uses Cosmos DB's ``VectorDistance`` function for cosine similarity.
+    Returns the top-k most similar episodes ordered by relevance.
+    """
+    container = await get_episode_container()
+    query = (
+        "SELECT TOP @top_k c.id, c.tenant_id, c.trigger, "
+        "c.symptoms, c.reasoning_chain, c.resolution, c.key_insight, "
+        "c.confidence, c.source_thread_id, c.created_at, "
+        "VectorDistance(c.embedding, @embedding) AS similarity_score "
+        "FROM c "
+        "WHERE c.tenant_id = @tenant_id "
+        "ORDER BY VectorDistance(c.embedding, @embedding)"
+    )
+    parameters = [
+        {"name": "@top_k", "value": top_k},
+        {"name": "@tenant_id", "value": tenant_id},
+        {"name": "@embedding", "value": query_embedding},
+    ]
+    items: list[dict[str, Any]] = []
+    async for item in container.query_items(
+        query=query,
+        parameters=parameters,
+        partition_key=tenant_id,
+    ):
+        items.append(item)
+    logger.info(
+        "Vector search returned %d episodes for tenant=%s", len(items), tenant_id,
+    )
+    return items

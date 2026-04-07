@@ -43,7 +43,6 @@ from tools.skills import create_tenant_skills
 from utils.azure_ai_foundry import get_agent_client, get_project_client
 from utils.azure_memory_store import (
     ensure_user_memory_store,
-    ensure_tenant_memory_store,
 )
 from utils.memory_context_provider import MemoryContextProvider
 
@@ -99,9 +98,8 @@ async def main() -> None:
     agent_id = f"{agent_name}:{agent_version}" if agent_version else agent_name
     project_client = get_project_client()
 
-    # Memory stores — ensure stores exist and create context provider
+    # Memory stores — ensure user store exists and create context provider
     await ensure_user_memory_store(project_client)
-    await ensure_tenant_memory_store(project_client)
     memory_provider = MemoryContextProvider(project_client)
 
     # Tools

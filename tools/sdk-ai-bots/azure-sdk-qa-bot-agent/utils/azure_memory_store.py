@@ -33,11 +33,6 @@ def get_user_store_name() -> str | None:
     return cfg("MEMORY_USER_STORE_NAME") or None
 
 
-def get_tenant_store_name() -> str | None:
-    """Return the tenant memory store name from App Config, or ``None``."""
-    return cfg("MEMORY_TENANT_STORE_NAME") or None
-
-
 def get_memory_update_delay() -> int:
     """Return memory update delay in seconds.
 
@@ -58,18 +53,6 @@ def sanitize_scope(raw: str) -> str:
 _USER_PROFILE_DETAILS = (
     "Extract personal preferences, the SDK and programming language the user "
     "works with, their specific project context, and individual working patterns."
-)
-
-_TENANT_PROFILE_DETAILS = (
-    "Extract ONLY knowledge that applies universally to all users in this tenant. "
-    "Focus on resolved threads and expert responses. For each valuable insight, capture: "
-    "the intent (what the user was trying to do), root cause (why it failed or what was misunderstood), "
-    "resolution steps (how the expert resolved it), and any constraints or caveats. "
-    "Also capture known active issues (e.g. bugs, outages) with their current status. "
-    "Include temporal context when relevant (e.g. 'as of March 2026', 'since version X'). "
-    "Do NOT store: user-specific information (individual projects, personal preferences, "
-    "service-specific details), clarification questions without resolution, "
-    "or social exchanges (greetings, thanks)."
 )
 
 
@@ -126,22 +109,4 @@ async def ensure_user_memory_store(project_client: AIProjectClient) -> str | Non
         chat_summary_enabled=True,
         user_profile_details=_USER_PROFILE_DETAILS,
         description="User-scoped memory store for the Azure SDK QA bot agent.",
-    )
-
-
-async def ensure_tenant_memory_store(project_client: AIProjectClient) -> str | None:
-    """Create the **tenant** memory store if it doesn't exist yet.
-
-    Returns the store name, or ``None`` when ``MEMORY_TENANT_STORE_NAME`` is unset.
-    Call once at startup.
-    """
-    name = get_tenant_store_name()
-    if not name:
-        return None
-    return await _ensure_memory_store(
-        project_client,
-        name,
-        chat_summary_enabled=False,
-        user_profile_details=_TENANT_PROFILE_DETAILS,
-        description="Tenant-scoped memory store for universally applicable knowledge.",
     )

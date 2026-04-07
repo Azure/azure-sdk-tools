@@ -3,23 +3,25 @@
 Uses direct Azure AI Foundry Memory Store APIs to retrieve relevant memories
 before model invocation and submit memory updates after the response.
 
-Supports **dual stores**:
+Supports:
 - **User store**: personal preferences, SDK/language, individual context.
   Scope derived from ``[memory_scope] value=…`` marker.
-- **Tenant store** (optional): universally applicable knowledge shared
-  across all users in a tenant.  Scope derived from
-  ``[tenant_context] original_tenant_id=…`` marker.
+- **Episode store** (Cosmos DB): expert experience episodes retrieved via
+  vector similarity search and injected as an ``## Expert experience`` section.
+  Tenant scope derived from ``[tenant_context] original_tenant_id=…`` marker.
 
 Key behaviors aligned with FoundryMemoryProvider best practices:
 - Static (user profile) memories fetched once per session on first before_run
 - Contextual memories searched every before_run using all input messages
 - Incremental search/update tracking via previous_search_id / previous_update_id
 - Dynamic scope resolution per request via marker messages
+- Expert episodes from Cosmos DB vector search (per turn)
 """
 
 from __future__ import annotations
 
 import logging
+import os
 import re
 from typing import Any
 
@@ -28,9 +30,11 @@ from agent_framework._sessions import BaseContextProvider
 from azure.ai.projects.aio import AIProjectClient
 from azure.ai.projects.models import MemorySearchOptions
 
+from config.app_config import get as cfg
+from utils.azure_cosmosdb import search_episodes_by_vector
+from utils.azure_ai_foundry import get_embedding_client
 from utils.azure_memory_store import (
     get_memory_update_delay,
-    get_tenant_store_name,
     get_user_store_name,
     sanitize_scope,
 )
@@ -58,17 +62,24 @@ class MemoryContextProvider(BaseContextProvider):
         if not self._user_store_name:
             logger.warning("MEMORY_USER_STORE_NAME not set — user memory search/update disabled")
 
-        # Tenant store (None if not configured)
-        self._tenant_store_name = get_tenant_store_name()
-        if not self._tenant_store_name:
-            logger.warning("MEMORY_TENANT_STORE_NAME not set — tenant memory search/update disabled")
-
         self._update_delay = get_memory_update_delay()
+
+        # Episode search config
+        self._episode_top_k = int(cfg("MEMORY_EPISODE_SEARCH_TOP_K", "3"))
+        self._episode_similarity_threshold = float(
+            cfg("MEMORY_EPISODE_SIMILARITY_THRESHOLD", "0.5")
+        )
+        self._episode_embedding_model = cfg(
+            "MEMORY_STORE_EMBEDDING_MODEL", "text-embedding-3-small"
+        )
+
         logger.info(
-            "MemoryContextProvider initialized: user_store=%s, tenant_store=%s, update_delay=%d",
+            "MemoryContextProvider initialized: user_store=%s, "
+            "update_delay=%d, episode_top_k=%d, similarity_threshold=%.2f",
             self._user_store_name,
-            self._tenant_store_name,
             self._update_delay,
+            self._episode_top_k,
+            self._episode_similarity_threshold,
         )
 
     # ------------------------------------------------------------------
@@ -76,7 +87,7 @@ class MemoryContextProvider(BaseContextProvider):
     # ------------------------------------------------------------------
 
     async def before_run(self, *, agent, session, context, state: dict[str, Any]) -> None:
-        if not self._user_store_name and not self._tenant_store_name:
+        if not self._user_store_name:
             logger.info("before_run skipped: no stores configured")
             return
 
@@ -96,7 +107,7 @@ class MemoryContextProvider(BaseContextProvider):
 
         # Fetch static (user profile) memories once per session
         if not state.get("initialized"):
-            await self._fetch_static_memories(session, user_scope, tenant_scope, state)
+            await self._fetch_static_memories(session, user_scope, state)
             state["initialized"] = True
 
         # Build search items from all non-empty input messages (excluding markers)
@@ -106,7 +117,6 @@ class MemoryContextProvider(BaseContextProvider):
         if not items:
             memory_text = self._format_all_memories(
                 state.get("user_static_memories", []),
-                state.get("tenant_static_memories", []),
             )
             if memory_text:
                 context.extend_messages(self, [Message("system", [memory_text])])
@@ -119,17 +129,15 @@ class MemoryContextProvider(BaseContextProvider):
                 self._user_store_name, user_scope, items, state, "user_previous_search_id"
             )
 
-        # --- Tenant contextual search ---
-        tenant_ctx_mems: list = []
-        if self._tenant_store_name and tenant_scope:
-            tenant_ctx_mems = await self._search_contextual(
-                self._tenant_store_name, tenant_scope, items, state, "tenant_previous_search_id"
-            )
-
-        # Combine and inject
+        # Combine user memories
         all_user = list(state.get("user_static_memories", [])) + user_ctx_mems
-        all_tenant = list(state.get("tenant_static_memories", [])) + tenant_ctx_mems
-        memory_text = self._format_all_memories(all_user, all_tenant)
+
+        # --- Episode search (Cosmos DB vector similarity) ---
+        episodes: list[dict] = []
+        if tenant_scope:
+            episodes = await self._search_episodes(context, tenant_scope)
+
+        memory_text = self._format_all_memories(all_user, episodes)
 
         if memory_text:
             context.extend_messages(self, [Message("system", [memory_text])])
@@ -185,6 +193,67 @@ class MemoryContextProvider(BaseContextProvider):
             return []
 
     # ------------------------------------------------------------------
+    # Episode search (Cosmos DB vector similarity)
+    # ------------------------------------------------------------------
+
+    async def _search_episodes(self, context, tenant_id: str) -> list[dict]:
+        """Search Cosmos DB for expert episodes similar to the user's question."""
+        # Extract the latest user message for embedding
+        user_text = self._get_latest_user_text(context.input_messages)
+        logger.info(
+            "Episode search: tenant_id=%s, latest_user_text=%s", tenant_id, user_text
+        )
+        if not user_text:
+            return []
+
+        try:
+            embedding = await self._generate_query_embedding(user_text)
+        except Exception:
+            logger.warning("Episode search skipped: embedding generation failed", exc_info=True)
+            return []
+
+        try:
+            results = await search_episodes_by_vector(
+                tenant_id, embedding, top_k=self._episode_top_k,
+            )
+        except Exception:
+            logger.warning(
+                "Episode search failed for tenant=%s", tenant_id, exc_info=True,
+            )
+            return []
+
+        # Filter by similarity threshold
+        filtered = [
+            ep for ep in results
+            if ep.get("similarity_score", 0) >= self._episode_similarity_threshold
+        ]
+        for ep in filtered:
+            logger.info(
+                "Episode matched: id=%s similarity=%.3f",
+                ep.get("id", "?"), ep.get("similarity_score", 0),
+            )
+        return filtered
+
+    async def _generate_query_embedding(self, text: str) -> list[float]:
+        """Generate a vector embedding for the user's query."""
+        client = get_embedding_client()
+        response = await client.embeddings.create(
+            model=self._episode_embedding_model, input=text,
+        )
+        return response.data[0].embedding
+
+    @staticmethod
+    def _get_latest_user_text(messages) -> str | None:
+        """Extract the latest user message text from input messages."""
+        for msg in reversed(list(messages or [])):
+            if getattr(msg, "role", None) != "user":
+                continue
+            text = (getattr(msg, "text", "") or "").strip()
+            if text:
+                return text
+        return None
+
+    # ------------------------------------------------------------------
     # after_run — update user store
     # ------------------------------------------------------------------
 
@@ -208,8 +277,7 @@ class MemoryContextProvider(BaseContextProvider):
             session.session_id, user_scope, len(items),
         )
 
-        # Update user store only — tenant store is updated separately
-        # via ThreadMemoryService on /conversation/save
+        # Update user store only
         await self._update_store(
             self._user_store_name, user_scope, items, state,
             "user_previous_update_id", session,
@@ -259,24 +327,15 @@ class MemoryContextProvider(BaseContextProvider):
     # ------------------------------------------------------------------
 
     async def _fetch_static_memories(
-        self, session, user_scope: str | None, tenant_scope: str | None, state: dict[str, Any]
+        self, session, user_scope: str | None, state: dict[str, Any]
     ) -> None:
-        """Fetch user-profile memories (no items/query) from both stores."""
-        # User store
+        """Fetch user-profile memories (no items/query) from the user store."""
         if self._user_store_name and user_scope:
             state["user_static_memories"] = await self._fetch_static_from_store(
                 self._user_store_name, user_scope, session,
             )
         else:
             state["user_static_memories"] = []
-
-        # Tenant store
-        if self._tenant_store_name and tenant_scope:
-            state["tenant_static_memories"] = await self._fetch_static_from_store(
-                self._tenant_store_name, tenant_scope, session,
-            )
-        else:
-            state["tenant_static_memories"] = []
 
     async def _fetch_static_from_store(
         self, store_name: str, scope: str, session,
@@ -380,20 +439,18 @@ class MemoryContextProvider(BaseContextProvider):
         return items
 
     @staticmethod
-    def _format_all_memories(user_memories, tenant_memories) -> str | None:
-        """Format user + tenant memories into separate labeled sections."""
+    def _format_all_memories(
+        user_memories, episodes: list[dict] | None = None,
+    ) -> str | None:
+        """Format user memories + expert episodes into labeled sections."""
         user_text = MemoryContextProvider._format_section(
             user_memories,
             "## User memories",
             "Use these personal memories when they are relevant to the current question.",
         )
-        tenant_text = MemoryContextProvider._format_section(
-            tenant_memories,
-            "## Tenant memories",
-            "Use this shared tenant knowledge when it is relevant to the current question.",
-        )
+        episode_text = MemoryContextProvider._format_episodes(episodes or [])
 
-        parts = [p for p in (user_text, tenant_text) if p]
+        parts = [p for p in (user_text, episode_text) if p]
         return "\n\n".join(parts) if parts else None
 
     @staticmethod
@@ -414,3 +471,36 @@ class MemoryContextProvider(BaseContextProvider):
             f"{header}\n{description}\n"
             + "\n".join(f"- {content}" for content in unique)
         )
+
+    @staticmethod
+    def _format_episodes(episodes: list[dict]) -> str | None:
+        """Format expert episodes into an injectable context section."""
+        if not episodes:
+            return None
+
+        lines = [
+            "## Expert experience",
+            "The following are relevant expert-resolved episodes from past conversations. "
+            "Use the reasoning chain and resolution to guide your answer when applicable.",
+        ]
+
+        for i, ep in enumerate(episodes, 1):
+            lines.append(f"\n### Episode {i}")
+            lines.append(f"**Trigger:** {ep.get('trigger', 'N/A')}")
+
+            symptoms = ep.get("symptoms", [])
+            if symptoms:
+                lines.append("**Symptoms:**")
+                for s in symptoms:
+                    lines.append(f"  - {s}")
+
+            chain = ep.get("reasoning_chain", [])
+            if chain:
+                lines.append("**Reasoning chain:**")
+                for step_idx, step in enumerate(chain, 1):
+                    lines.append(f"  {step_idx}. {step}")
+
+            lines.append(f"**Resolution:** {ep.get('resolution', 'N/A')}")
+            lines.append(f"**Key insight:** {ep.get('key_insight', 'N/A')}")
+
+        return "\n".join(lines)

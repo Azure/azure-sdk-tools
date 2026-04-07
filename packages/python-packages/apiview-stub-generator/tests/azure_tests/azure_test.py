@@ -177,14 +177,23 @@ def _add_init_for_whl(pkg_path):
                 azure_dir = root
                 break
 
-        # Add __init__.py recursively up the directory tree inside azure if needed
+        # Add __init__.py recursively up the directory tree inside azure if needed.
+        # Use the single-line pkgutil namespace-package pattern so that:
+        #  1. astroid can still resolve sub-packages (e.g. azure.core) from the installed
+        #     site-packages, preventing spurious enum-must-inherit-case-insensitive-enum-meta
+        #     diagnostics caused by an opaque azure/ package.
+        #  2. The stub generator's _set_root_namespace() recognises this as a namespace
+        #     extension file (INIT_EXTENSION_SUBSTRING match) and skips it, allowing the
+        #     real package root (azure.mgmt.compute) to be detected correctly.
+        NAMESPACE_INIT = "__path__ = __import__('pkgutil').extend_path(__path__, __name__)\n"
+
         def add_init_recursively(folder):
             # Stop if __init__.py exists in this folder
             if os.path.exists(os.path.join(folder, '__init__.py')):
                 return
-            # Add __init__.py to this folder
+            # Add namespace-package __init__.py to this folder
             with open(os.path.join(folder, '__init__.py'), 'w') as f:
-                pass
+                f.write(NAMESPACE_INIT)
             # Check if this folder contains exactly one subfolder (and no files except __init__.py)
             entries = [e for e in os.listdir(folder) if e != '__init__.py']
             subfolders = [e for e in entries if os.path.isdir(os.path.join(folder, e))]
@@ -272,20 +281,33 @@ class TestApiViewAzure:
             # Compare dicts directly — avoids building huge serialized strings just for equality.
             # Only serialize on failure, and limit output to avoid hanging on large packages.
             if old_tokens != new_tokens:
-                old_lines = json.dumps(old_tokens, indent=2, sort_keys=True).splitlines(keepends=True)
-                new_lines = json.dumps(new_tokens, indent=2, sort_keys=True).splitlines(keepends=True)
+                # Find which top-level keys differ to produce a compact diff.
+                # Serializing the full 19 MB dict to a string is O(n) and then
+                # running difflib over millions of lines is O(n²) — avoid it.
                 MAX_DIFF_LINES = 200
-                diff_iter = difflib.unified_diff(old_lines, new_lines, fromfile=old_file, tofile=new_file, n=3)
-                diff_head = list(itertools.islice(diff_iter, MAX_DIFF_LINES + 1))
-                truncated = len(diff_head) > MAX_DIFF_LINES
-                diff_snippet = "".join(diff_head[:MAX_DIFF_LINES])
-                if truncated:
-                    diff_snippet += "\n... (more diff lines truncated)"
+                diff_lines = []
+                all_keys = sorted(set(old_tokens) | set(new_tokens))
+                for key in all_keys:
+                    if key not in old_tokens:
+                        diff_lines.append(f"+++ key {key!r} missing in expected file\n")
+                    elif key not in new_tokens:
+                        diff_lines.append(f"--- key {key!r} missing in generated file\n")
+                    elif old_tokens[key] != new_tokens[key]:
+                        old_section = json.dumps({key: old_tokens[key]}, indent=2, sort_keys=True).splitlines(keepends=True)
+                        new_section = json.dumps({key: new_tokens[key]}, indent=2, sort_keys=True).splitlines(keepends=True)
+                        section_diff = list(itertools.islice(
+                            difflib.unified_diff(old_section, new_section, fromfile=f"expected/{key}", tofile=f"generated/{key}", n=3),
+                            MAX_DIFF_LINES - len(diff_lines) + 1
+                        ))
+                        diff_lines.extend(section_diff)
+                    if len(diff_lines) >= MAX_DIFF_LINES:
+                        diff_lines.append("\n... (more diff lines truncated)")
+                        break
                 fail(
                     f"Generated token file does not match the provided token file.\n"
                     f"Expected file: {old_file}\n"
                     f"Generated file: {new_file}\n\n"
-                    f"{diff_snippet}"
+                    f"{''.join(diff_lines)}"
                 )
 
     def _write_tokens(self, stub_gen):

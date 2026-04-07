@@ -65,7 +65,7 @@ class PylintParser:
         pkg_name = os.path.split(path)[-1]
         rcfile_path = os.path.join(ApiView.get_root_path(), ".pylintrc")
         logging.debug(f"APIView root path: {ApiView.get_root_path()}")
-        params = f"{path} -f json --recursive=y --rcfile {rcfile_path}".split(" ")
+        params = [path, "-f", "json", "--recursive=y", f"--rcfile={rcfile_path}", "--ignore=tests,build,samples,examples,doc"]
         messages = Run(params, exit=False).linter.reporter.messages
         plugin_failed = any([x.symbol == "bad-plugin-value" for x in messages])
         if plugin_failed:

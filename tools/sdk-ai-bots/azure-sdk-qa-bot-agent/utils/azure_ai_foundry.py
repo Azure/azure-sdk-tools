@@ -149,16 +149,12 @@ class FoundryAgentSpanEnricher(SpanProcessor):
         """Enrich the span after all attributes have been set by the runtime."""
         if not self._is_agent_operation_span(span):
             return
-        conversation_id = self._get_conversation_id(span)
-        if not conversation_id:
-            return
         # ReadableSpan.attributes is an immutable MappingProxyType;
         # mutate the underlying dict so the exporter sees the changes.
         attrs = span._attributes  # type: ignore[attr-defined]
         if not isinstance(attrs, dict):
             return
         self._normalize_operation_name(attrs)
-        attrs["gen_ai.conversation.id"] = conversation_id
         attrs["microsoft.foundry.project.id"] = self._project_id
         attrs["gen_ai.agent.name"] = self._agent_name
         attrs["gen_ai.agent.id"] = self._agent_id

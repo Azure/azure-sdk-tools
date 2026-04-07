@@ -39,7 +39,7 @@ async def create_ado_mcp_tool() -> MCPStdioTool:
     return MCPStdioTool(
         name="ado-mcp-tools",
         command="npx",
-        args=["-y", "@azure-devops/mcp", org, "-d", "core", "pipelines"],
+        args=["-y", "@azure-devops/mcp", org, "-d", "core", "pipelines", "-a", "env"],
         env=env,
         load_prompts=False,
         description=(

@@ -43,6 +43,10 @@ extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
   parameters:
     Use1ESOfficial: true
+    featureFlags:
+      golang:
+        internalModuleProxy:
+          enabled: true
     stages:
       - stage: DeployPipeline
         displayName: 'Deploy Pipeline'

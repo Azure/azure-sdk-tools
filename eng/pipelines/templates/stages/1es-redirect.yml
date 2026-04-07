@@ -19,6 +19,9 @@ parameters:
 - name: GenerateBaselines
   type: boolean
   default: false
+- name: featureFlags
+  type: object
+  default: {}
 
 extends:
   ${{ if and(parameters.Use1ESOfficial, eq(variables['System.TeamProject'], 'internal')) }}:
@@ -59,4 +62,5 @@ extends:
         break: true
       policy: M365
 
+    featureFlags: ${{ parameters.featureFlags }}
     stages: ${{ parameters.stages }}

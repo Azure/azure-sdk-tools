@@ -28,7 +28,6 @@ from agent_framework.azure import AzureOpenAIResponsesClient
 from agent_framework.openai._responses_client import ReasoningOptions
 from azure.ai.agentserver.agentframework import from_agent_framework
 from opentelemetry import trace as otel_trace
-from opentelemetry.sdk.trace import SpanProcessor
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request as StarletteRequest
 from starlette.responses import JSONResponse as StarletteJSONResponse
@@ -40,48 +39,17 @@ from tools.ado_mcp_tools import create_ado_mcp_tool
 from tools.azsdk_mcp_tools import create_azsdk_mcp_tool
 from tools.github_mcp_tools import create_github_mcp_tool
 from tools.skills import create_tenant_skills
-from utils.azure_ai_foundry import get_agent_client, get_project_client
+from utils.azure_ai_foundry import (
+    FoundryAgentSpanEnricher,
+    get_agent_client,
+    get_project_client,
+)
 from utils.azure_memory_store import (
     ensure_user_memory_store,
 )
 from utils.memory_context_provider import MemoryContextProvider
 
 logger = logging.getLogger(__name__)
-
-
-class _FoundryProjectIdProcessor(SpanProcessor):
-    """Enriches container spans with Foundry-specific GenAI attributes.
-
-    The Foundry Traces tab queries customDimensions for
-    ``microsoft.foundry.project.id``; the platform's server-side trace
-    already has it, but the Agent Framework trace (inside the container)
-    does not — this processor fills that gap so both traces satisfy the
-    Foundry query filters.
-
-    It also injects the GenAI semantic-convention agent attributes
-    (``gen_ai.agent.name`` and ``gen_ai.agent.id``) so the Foundry Traces
-    UI can resolve the agent display name instead of showing ``None`` /
-    ``unknown`` in the invoke_agent span.
-    """
-
-    def __init__(self, project_id: str, agent_name: str, agent_id: str) -> None:
-        self._project_id = project_id
-        self._agent_name = agent_name
-        self._agent_id = agent_id
-
-    def on_start(self, span, parent_context=None) -> None:
-        span.set_attribute("microsoft.foundry.project.id", self._project_id)
-        span.set_attribute("gen_ai.agent.name", self._agent_name)
-        span.set_attribute("gen_ai.agent.id", self._agent_id)
-
-    def on_end(self, span) -> None:
-        pass
-
-    def shutdown(self) -> None:
-        pass
-
-    def force_flush(self, timeout_millis=None) -> bool:
-        return True
 
 
 def _load_instructions(file_path: Path) -> str:
@@ -160,7 +128,7 @@ async def main() -> None:
         provider = otel_trace.get_tracer_provider()
         if hasattr(provider, "add_span_processor"):
             provider.add_span_processor(
-                _FoundryProjectIdProcessor(foundry_project_id, agent_name, agent_id)
+                FoundryAgentSpanEnricher(foundry_project_id, agent_name, agent_id)
             )
 
     # run_async() calls init_tracing() again — it's a no-op because the

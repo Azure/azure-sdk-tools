@@ -4,11 +4,14 @@ Each client is created once on first access and reused for the lifetime of
 the process.
 """
 
+import asyncio
+import logging
+import re
+
 from agent_framework.azure import AzureOpenAIResponsesClient
 from azure.ai.projects.aio import AIProjectClient
 from openai import AsyncAzureOpenAI
-
-import logging
+from opentelemetry.sdk.trace import SpanProcessor
 
 from config.app_config import get as cfg
 from utils.azure_credential import get_credential
@@ -67,7 +70,6 @@ def get_embedding_client() -> AsyncAzureOpenAI:
         endpoint = cfg("AI_FOUNDRY_PROJECT_ENDPOINT", "")
         # Extract resource name from AI Foundry endpoint
         # e.g. https://<resource>.services.ai.azure.com/... → <resource>
-        import re
         m = re.search(r"https://([^.]+)\.", endpoint)
         resource_name = m.group(1) if m else ""
         azure_openai_endpoint = f"https://{resource_name}.openai.azure.com"
@@ -85,15 +87,83 @@ def get_embedding_client() -> AsyncAzureOpenAI:
 
 def _get_token_provider():
     """Return a callable that provides Azure AD tokens for Azure OpenAI."""
-    import asyncio
-
     credential = get_credential()
 
     async def _provider():
-        token = await credential.get_token("https://cognitiveservices.azure.com/.default")
+        token = await credential.get_token(
+            "https://cognitiveservices.azure.com/.default"
+        )
         return token.token
 
     return _provider
+
+
+class FoundryAgentSpanEnricher(SpanProcessor):
+    """Enriches container spans with Foundry-specific GenAI attributes.
+
+    The Foundry Traces tab queries customDimensions for
+    ``microsoft.foundry.project.id``; the platform's server-side trace
+    already has it, but the Agent Framework trace (inside the container)
+    does not. This processor fills that gap.
+
+    It injects agent attributes only on supported top-level GenAI operation
+    spans emitted by the runtime (``invoke_agent`` or ``chat``), and only when
+    a conversation id is present. When the runtime emits ``chat`` for the
+    top-level agent span, it is normalized to ``invoke_agent`` so the
+    Application Insights Agents view default filters can match it.
+    """
+
+    def __init__(self, project_id: str, agent_name: str, agent_id: str) -> None:
+        self._project_id = project_id
+        self._agent_name = agent_name
+        self._agent_id = agent_id
+
+    @staticmethod
+    def _get_conversation_id(span) -> str | None:
+        attrs = getattr(span, "attributes", None) or {}
+        for key in (
+            "gen_ai.conversation.id",
+            "gen_ai.request.conversation.id",
+            "conversation.id",
+            "azure.ai.agentserver.conversation_id",
+        ):
+            value = attrs.get(key)
+            if isinstance(value, str) and value.strip():
+                return value
+        return None
+
+    @staticmethod
+    def _is_agent_operation_span(span) -> bool:
+        attrs = getattr(span, "attributes", None) or {}
+        return attrs.get("gen_ai.operation.name") in {"invoke_agent", "chat"}
+
+    @staticmethod
+    def _normalize_operation_name(span) -> None:
+        attrs = getattr(span, "attributes", None) or {}
+        op_name = attrs.get("gen_ai.operation.name")
+        if op_name == "chat":
+            span.set_attribute("gen_ai.original.operation.name", "chat")
+            span.set_attribute("gen_ai.operation.name", "invoke_agent")
+
+    def on_start(self, span, parent_context=None) -> None:
+        if not self._is_agent_operation_span(span):
+            return
+        conversation_id = self._get_conversation_id(span)
+        if not conversation_id:
+            return
+        self._normalize_operation_name(span)
+        span.set_attribute("microsoft.foundry.project.id", self._project_id)
+        span.set_attribute("gen_ai.agent.name", self._agent_name)
+        span.set_attribute("gen_ai.agent.id", self._agent_id)
+
+    def on_end(self, span) -> None:
+        pass
+
+    def shutdown(self) -> None:
+        pass
+
+    def force_flush(self, timeout_millis=None) -> bool:
+        return True
 
 
 async def close_clients() -> None:

@@ -167,11 +167,6 @@ public sealed partial class PythonLanguageService : LanguageService
     {
         var envVars = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        // Python SDK uses AZURE_TEST_RUN_LIVE for record/live modes
-        // and AZURE_SKIP_LIVE_RECORDING for playback/live modes (false only for record)
-        envVars["AZURE_TEST_RUN_LIVE"] = (testMode == TestMode.Record || testMode == TestMode.Live) ? "true" : "false";
-        envVars["AZURE_SKIP_LIVE_RECORDING"] = (testMode != TestMode.Record) ? "true" : "false";
-
         if (liveTestEnvironment != null)
         {
             foreach (var (key, value) in liveTestEnvironment)
@@ -179,6 +174,11 @@ public sealed partial class PythonLanguageService : LanguageService
                 envVars[key] = value;
             }
         }
+
+        // Set mode env vars after merging liveTestEnvironment so user .env files
+        // cannot accidentally override the requested test mode
+        envVars["AZURE_TEST_RUN_LIVE"] = (testMode == TestMode.Record || testMode == TestMode.Live) ? "true" : "false";
+        envVars["AZURE_SKIP_LIVE_RECORDING"] = (testMode != TestMode.Record) ? "true" : "false";
 
         // Use caller-provided timeout if specified, otherwise use mode-based defaults
         timeout ??= testMode == TestMode.Playback

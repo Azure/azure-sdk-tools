@@ -670,6 +670,35 @@ internal class PythonLanguageSpecificChecksTests
     }
 
     [Test]
+    public async Task RunAllTests_ModeEnvVarsCannotBeOverriddenByLiveTestEnvironment()
+    {
+        var processResult = new ProcessResult { ExitCode = 0 };
+        processResult.AppendStdout("Tests passed!");
+
+        PythonOptions? capturedOptions = null;
+        _pythonHelperMock
+            .Setup(p => p.Run(It.Is<PythonOptions>(o => o.Args.Contains("tests")), It.IsAny<CancellationToken>()))
+            .Callback<PythonOptions, CancellationToken>((options, _) => capturedOptions = options)
+            .ReturnsAsync(processResult);
+
+        // Attempt to override mode-critical env vars via liveTestEnvironment
+        var envVars = new Dictionary<string, string>
+        {
+            ["AZURE_TEST_RUN_LIVE"] = "false",
+            ["AZURE_SKIP_LIVE_RECORDING"] = "true",
+        };
+
+        await _languageService.RunAllTests(_packagePath, TestMode.Record, envVars, ct: CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            // Mode env vars should reflect Record mode, not the user-provided overrides
+            Assert.That(capturedOptions!.EnvironmentVariables!["AZURE_TEST_RUN_LIVE"], Is.EqualTo("true"));
+            Assert.That(capturedOptions.EnvironmentVariables["AZURE_SKIP_LIVE_RECORDING"], Is.EqualTo("false"));
+        });
+    }
+
+    [Test]
     public async Task RunAllTests_DefaultMode_IsPlayback()
     {
         var processResult = new ProcessResult { ExitCode = 0 };

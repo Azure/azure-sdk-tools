@@ -120,7 +120,7 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 		},
 		PromptTemplate:          "language_java/qa.md",
 		IntentionPromptTemplate: "language_java/intention.md",
-		AgenticSearchPrompt:     "language_java/agentic_search.md",
+		AgenticSearchPrompt:     "language_channel/agentic_search.md",
 	},
 	model.TenantID_JavaScriptChannelQaBot: {
 		Sources: []model.Source{

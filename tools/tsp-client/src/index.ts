@@ -60,6 +60,7 @@ export function resolveOutputDir(argv: any): string {
 }
 
 const parser = yargs(hideBin(process.argv))
+  .parserConfiguration({ "populate--": true })
   .version(packageJson.version)
   .alias("v", "version")
   .scriptName("")
@@ -273,7 +274,10 @@ const parser = yargs(hideBin(process.argv))
         .option("emitter-package-json-path", {
           type: "string",
           description: "Alternate path for emitter-package.json file",
-        });
+        })
+        .epilog(
+          "Any arguments after -- will be passed directly to the underlying npm install command.\nExample: tsp-client generate-config-files --package-json ./package.json -- --registry=https://my-registry",
+        );
     },
     async (argv: any) => {
       argv["output-dir"] = resolveOutputDir(argv);
@@ -284,10 +288,14 @@ const parser = yargs(hideBin(process.argv))
     "generate-lock-file",
     "Generate a lock file under the eng/ directory from an existing emitter-package.json",
     (yargs: any) => {
-      return yargs.option("emitter-package-json-path", {
-        type: "string",
-        description: "Alternate path for emitter-package.json file",
-      });
+      return yargs
+        .option("emitter-package-json-path", {
+          type: "string",
+          description: "Alternate path for emitter-package.json file",
+        })
+        .epilog(
+          "Any arguments after -- will be passed directly to the underlying npm install command.\nExample: tsp-client generate-lock-file -- --registry=https://my-registry",
+        );
     },
     async (argv: any) => {
       argv["output-dir"] = resolveOutputDir(argv);

@@ -5,6 +5,7 @@ import {
   syncCommand,
   updateCommand,
   generateLockFileCommand,
+  generateLockFileCommandCore,
   generateConfigFilesCommand,
 } from "../src/commands.js";
 import { afterAll, afterEach, beforeAll, describe, it, expect } from "vitest";
@@ -849,6 +850,76 @@ describe.sequential("Verify commands", () => {
       );
     } finally {
       await removeDirectory(joinPaths(repoRoot, "sdk/keyvault"));
+    }
+  });
+
+  it("Generate lock file with npm args passed through", async () => {
+    try {
+      // --prefer-offline is a valid npm flag that shouldn't break install
+      await generateLockFileCommand({ "--": ["--prefer-offline"] });
+
+      assert.isTrue((await stat(joinPaths(repoRoot, "eng", "emitter-package-lock.json"))).isFile());
+    } catch (error) {
+      assert.fail(`Failed to generate lock file with npm args. Error: ${error}`);
+    } finally {
+      rm(joinPaths(repoRoot, "eng", "emitter-package-lock.json"), { force: true });
+    }
+  });
+
+  it("Generate lock file core with additional npm args", async () => {
+    const tmpDir = joinPaths(cwd(), ".tmp-test-lock-file-npm-args");
+    try {
+      await mkdir(tmpDir, { recursive: true });
+      const tmpPackageJsonPath = joinPaths(tmpDir, "alternate-emitter-package.json");
+      await cp(
+        joinPaths(repoRoot, "tools/tsp-client/test/utils/alternate-emitter-package.json"),
+        tmpPackageJsonPath,
+      );
+
+      // --prefer-offline is a valid npm flag that shouldn't break install
+      await generateLockFileCommandCore(cwd(), tmpPackageJsonPath, ["--prefer-offline"]);
+
+      const lockFilePath = joinPaths(tmpDir, "alternate-emitter-package-lock.json");
+      assert.isTrue((await stat(lockFilePath)).isFile());
+    } catch (error) {
+      assert.fail(`Failed to generate lock file with npm args. Error: ${error}`);
+    } finally {
+      if (await doesFileExist(tmpDir)) {
+        await rm(tmpDir, { recursive: true });
+      }
+    }
+  });
+
+  it("Generate lock file core with empty npm args works normally", async () => {
+    try {
+      await generateLockFileCommandCore(
+        cwd(),
+        joinPaths(repoRoot, "eng", "emitter-package.json"),
+        [],
+      );
+
+      assert.isTrue((await stat(joinPaths(repoRoot, "eng", "emitter-package-lock.json"))).isFile());
+    } catch (error) {
+      assert.fail(`Failed to generate lock file with empty npm args. Error: ${error}`);
+    } finally {
+      rm(joinPaths(repoRoot, "eng", "emitter-package-lock.json"), { force: true });
+    }
+  });
+
+  it("Generate config files with npm args passed through", async () => {
+    try {
+      const args = {
+        "package-json": joinPaths(cwd(), "test", "examples", "package.json"),
+        "--": ["--prefer-offline"],
+      };
+      await generateConfigFilesCommand(args);
+      assert.isTrue(await doesFileExist(joinPaths(repoRoot, "eng", "emitter-package.json")));
+      assert.isTrue(await doesFileExist(joinPaths(repoRoot, "eng", "emitter-package-lock.json")));
+    } catch (error: any) {
+      assert.fail("Failed to generate config files with npm args. Error: " + error);
+    } finally {
+      rm(joinPaths(repoRoot, "eng", "emitter-package.json"), { force: true });
+      rm(joinPaths(repoRoot, "eng", "emitter-package-lock.json"), { force: true });
     }
   });
 });

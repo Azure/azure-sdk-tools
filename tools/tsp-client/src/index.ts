@@ -277,7 +277,7 @@ const parser = yargs(hideBin(process.argv))
         .option("npm-args", {
           type: "string",
           description:
-            'Pass space separated string of flags to the underlying npm install command. Use = to assign the value, e.g. --npm-args="--force --legacy-peer-deps"',
+            'Pass space separated string of flags to the underlying npm install command, e.g. --npm-args="--force --legacy-peer-deps"',
         });
     },
     async (argv: any) => {
@@ -297,7 +297,7 @@ const parser = yargs(hideBin(process.argv))
         .option("npm-args", {
           type: "string",
           description:
-            'Pass space separated string of flags to the underlying npm install command. Use = to assign the value, e.g. --npm-args="--force --legacy-peer-deps"',
+            'Pass space separated string of flags to the underlying npm install command, e.g. --npm-args="--force --legacy-peer-deps"',
         });
     },
     async (argv: any) => {

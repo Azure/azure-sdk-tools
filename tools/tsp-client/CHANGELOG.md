@@ -2,7 +2,7 @@
 
 ## 2026-04-06 - 0.32.1
 
-- Added support for passing flags to underlying npm commands after `--` separator in `generate-config-files` and `generate-lock-file`.
+- Added support for passing flags to underlying npm commands using the `--npm-args` flag with the `generate-config-files` and `generate-lock-file` commands.
 
 ## 2026-04-03 - 0.32.0
 

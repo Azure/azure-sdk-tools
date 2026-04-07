@@ -114,15 +114,13 @@ This command generates the default configuration files used by tsp-client. Run t
 
 **Required: Use the `--package-json` flag to specify the path to the package.json file of the emitter you will use to generate client libraries.**
 
-Any additional npm flags can be forwarded to the underlying npm install command using the `--npm-args` option. This allows you to pass any npm flags such as `--registry`, `--legacy-peer-deps`, `--force`, etc. in a space separated string. Use `=` to assign the value:
-
 Example:
 
 ```bash
 tsp-client generate-config-files --package-json < path-to-emitter-repo-clone > /package.json
 ```
 
-Example with additional npm flags:
+Any additional npm flags can be forwarded to the underlying npm install command using the `--npm-args` option. This allows you to pass any npm flags such as `--registry`, `--legacy-peer-deps`, `--force`, etc. in a space separated string:
 
 ```bash
 tsp-client generate-config-files --package-json < path-to-emitter-repo-clone > /package.json --npm-args="--registry=https://my-registry --legacy-peer-deps"
@@ -213,15 +211,13 @@ Example `emitter-package.json` generated using overrides:
 
 Generate an emitter-package-lock.json under the eng/ directory based on existing `<repo-root>/eng/emitter-package.json`.
 
-Any additional npm flags can be forwarded to the underlying `npm install` command using the `--npm-args` option. This allows you to pass any npm flags such as `--registry`, `--legacy-peer-deps`, `--force`, etc. in a space separated string. Use `=` to assign the value:
-
 Example:
 
 ```bash
 tsp-client generate-lock-file
 ```
 
-Example with additional npm flags:
+Any additional npm flags can be forwarded to the underlying `npm install` command using the `--npm-args` option. This allows you to pass any npm flags such as `--registry`, `--legacy-peer-deps`, `--force`, etc. in a space separated string:
 
 ```bash
 tsp-client generate-lock-file --npm-args="--registry=https://my-registry --legacy-peer-deps"

@@ -167,7 +167,8 @@ public sealed partial class PythonLanguageService : LanguageService
     {
         var envVars = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        // Set Python-specific test mode environment variables
+        // Python SDK uses AZURE_TEST_RUN_LIVE for record/live modes
+        // and AZURE_SKIP_LIVE_RECORDING for live-only mode
         if (testMode == TestMode.Record || testMode == TestMode.Live)
         {
             envVars["AZURE_TEST_RUN_LIVE"] = "true";
@@ -178,7 +179,6 @@ public sealed partial class PythonLanguageService : LanguageService
             envVars["AZURE_SKIP_LIVE_RECORDING"] = "true";
         }
 
-        // Pass through any live test environment variables (e.g. from test resource deployment)
         if (liveTestEnvironment != null)
         {
             foreach (var (key, value) in liveTestEnvironment)
@@ -192,9 +192,9 @@ public sealed partial class PythonLanguageService : LanguageService
             ? ProcessOptions.DEFAULT_PROCESS_TIMEOUT
             : TimeSpan.FromMinutes(10);
 
-        var result = await pythonHelper.Run(new PythonOptions(
-                "pytest",
-                ["tests"],
+        var result = await processHelper.Run(new ProcessOptions(
+                command: "pytest",
+                args: ["tests"],
                 workingDirectory: packagePath,
                 timeout: timeout,
                 environmentVariables: envVars

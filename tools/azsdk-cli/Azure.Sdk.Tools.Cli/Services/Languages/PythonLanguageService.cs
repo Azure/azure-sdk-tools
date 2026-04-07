@@ -192,9 +192,9 @@ public sealed partial class PythonLanguageService : LanguageService
             ? ProcessOptions.DEFAULT_PROCESS_TIMEOUT
             : TimeSpan.FromMinutes(10);
 
-        var result = await processHelper.Run(new ProcessOptions(
-                command: "pytest",
-                args: ["tests"],
+        var result = await pythonHelper.Run(new PythonOptions(
+                "pytest",
+                ["tests"],
                 workingDirectory: packagePath,
                 timeout: timeout,
                 environmentVariables: envVars

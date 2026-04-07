@@ -495,10 +495,10 @@ internal class PythonLanguageSpecificChecksTests
         var processResult = new ProcessResult { ExitCode = 0 };
         processResult.AppendStdout("Tests passed!");
 
-        ProcessOptions? capturedOptions = null;
-        _processHelperMock
-            .Setup(p => p.Run(It.Is<ProcessOptions>(o => o.Args.Contains("tests")), It.IsAny<CancellationToken>()))
-            .Callback<ProcessOptions, CancellationToken>((options, _) => capturedOptions = options)
+        PythonOptions? capturedOptions = null;
+        _pythonHelperMock
+            .Setup(p => p.Run(It.Is<PythonOptions>(o => o.Args.Contains("tests")), It.IsAny<CancellationToken>()))
+            .Callback<PythonOptions, CancellationToken>((options, _) => capturedOptions = options)
             .ReturnsAsync(processResult);
 
         var result = await _languageService.RunAllTests(_packagePath, testMode, ct: CancellationToken.None);
@@ -535,10 +535,10 @@ internal class PythonLanguageSpecificChecksTests
         var processResult = new ProcessResult { ExitCode = 0 };
         processResult.AppendStdout("Tests passed!");
 
-        ProcessOptions? capturedOptions = null;
-        _processHelperMock
-            .Setup(p => p.Run(It.Is<ProcessOptions>(o => o.Args.Contains("tests")), It.IsAny<CancellationToken>()))
-            .Callback<ProcessOptions, CancellationToken>((options, _) => capturedOptions = options)
+        PythonOptions? capturedOptions = null;
+        _pythonHelperMock
+            .Setup(p => p.Run(It.Is<PythonOptions>(o => o.Args.Contains("tests")), It.IsAny<CancellationToken>()))
+            .Callback<PythonOptions, CancellationToken>((options, _) => capturedOptions = options)
             .ReturnsAsync(processResult);
 
         var envVars = new Dictionary<string, string>
@@ -564,10 +564,10 @@ internal class PythonLanguageSpecificChecksTests
     {
         var processResult = new ProcessResult { ExitCode = 0 };
 
-        ProcessOptions? capturedOptions = null;
-        _processHelperMock
-            .Setup(p => p.Run(It.Is<ProcessOptions>(o => o.Args.Contains("tests")), It.IsAny<CancellationToken>()))
-            .Callback<ProcessOptions, CancellationToken>((options, _) => capturedOptions = options)
+        PythonOptions? capturedOptions = null;
+        _pythonHelperMock
+            .Setup(p => p.Run(It.Is<PythonOptions>(o => o.Args.Contains("tests")), It.IsAny<CancellationToken>()))
+            .Callback<PythonOptions, CancellationToken>((options, _) => capturedOptions = options)
             .ReturnsAsync(processResult);
 
         await _languageService.RunAllTests(_packagePath, TestMode.Playback, ct: CancellationToken.None);
@@ -582,10 +582,10 @@ internal class PythonLanguageSpecificChecksTests
     {
         var processResult = new ProcessResult { ExitCode = 0 };
 
-        ProcessOptions? capturedOptions = null;
-        _processHelperMock
-            .Setup(p => p.Run(It.Is<ProcessOptions>(o => o.Args.Contains("tests")), It.IsAny<CancellationToken>()))
-            .Callback<ProcessOptions, CancellationToken>((options, _) => capturedOptions = options)
+        PythonOptions? capturedOptions = null;
+        _pythonHelperMock
+            .Setup(p => p.Run(It.Is<PythonOptions>(o => o.Args.Contains("tests")), It.IsAny<CancellationToken>()))
+            .Callback<PythonOptions, CancellationToken>((options, _) => capturedOptions = options)
             .ReturnsAsync(processResult);
 
         await _languageService.RunAllTests(_packagePath, testMode, ct: CancellationToken.None);
@@ -610,20 +610,18 @@ internal class PythonLanguageSpecificChecksTests
             .Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(tempDir.DirectoryPath);
 
-        _processHelperMock
-            .Setup(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(testResult);
-
+        // First call is test run (pytest tests), second call is asset push (manage_recordings.py)
+        var callCount = 0;
         _pythonHelperMock
             .Setup(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(pushResult);
+            .ReturnsAsync(() => ++callCount == 1 ? testResult : pushResult);
 
         var result = await _languageService.RunAllTests(tempDir.DirectoryPath, TestMode.Record, ct: CancellationToken.None);
 
         Assert.That(result.ExitCode, Is.EqualTo(0));
-        // Verify test run was called via processHelper
-        _processHelperMock.Verify(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()), Times.Once);
-        // Verify asset push was called via pythonHelper with manage_recordings.py
+        // Verify both test run and asset push were called via pythonHelper
+        _pythonHelperMock.Verify(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+        // Verify asset push used manage_recordings.py with push verb
         _pythonHelperMock.Verify(p => p.Run(
             It.Is<PythonOptions>(o => o.Args.Contains("push") && o.Args.Any(a => a.Contains("manage_recordings.py"))),
             It.IsAny<CancellationToken>()), Times.Once);
@@ -638,14 +636,14 @@ internal class PythonLanguageSpecificChecksTests
         var processResult = new ProcessResult { ExitCode = 0 };
         processResult.AppendStdout("Tests passed!");
 
-        _processHelperMock
-            .Setup(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
+        _pythonHelperMock
+            .Setup(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(processResult);
 
         await _languageService.RunAllTests(tempDir.DirectoryPath, TestMode.Playback, ct: CancellationToken.None);
 
         // Only the test run should be called, not asset push
-        _processHelperMock.Verify(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+        _pythonHelperMock.Verify(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -657,15 +655,15 @@ internal class PythonLanguageSpecificChecksTests
         var processResult = new ProcessResult { ExitCode = 1 };
         processResult.AppendStderr("Tests failed!");
 
-        _processHelperMock
-            .Setup(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
+        _pythonHelperMock
+            .Setup(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(processResult);
 
         var result = await _languageService.RunAllTests(tempDir.DirectoryPath, TestMode.Record, ct: CancellationToken.None);
 
         Assert.That(result.ExitCode, Is.EqualTo(1));
         // Only the test run should be called, not asset push
-        _processHelperMock.Verify(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+        _pythonHelperMock.Verify(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -674,8 +672,8 @@ internal class PythonLanguageSpecificChecksTests
         var processResult = new ProcessResult { ExitCode = 0 };
         processResult.AppendStdout("Tests passed!");
 
-        _processHelperMock
-            .Setup(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
+        _pythonHelperMock
+            .Setup(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(processResult);
 
         // _packagePath doesn't have an assets.json file
@@ -683,7 +681,7 @@ internal class PythonLanguageSpecificChecksTests
 
         Assert.That(result.ExitCode, Is.EqualTo(0));
         // Only the test run should be called
-        _processHelperMock.Verify(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+        _pythonHelperMock.Verify(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -691,10 +689,10 @@ internal class PythonLanguageSpecificChecksTests
     {
         var processResult = new ProcessResult { ExitCode = 0 };
 
-        ProcessOptions? capturedOptions = null;
-        _processHelperMock
-            .Setup(p => p.Run(It.Is<ProcessOptions>(o => o.Args.Contains("tests")), It.IsAny<CancellationToken>()))
-            .Callback<ProcessOptions, CancellationToken>((options, _) => capturedOptions = options)
+        PythonOptions? capturedOptions = null;
+        _pythonHelperMock
+            .Setup(p => p.Run(It.Is<PythonOptions>(o => o.Args.Contains("tests")), It.IsAny<CancellationToken>()))
+            .Callback<PythonOptions, CancellationToken>((options, _) => capturedOptions = options)
             .ReturnsAsync(processResult);
 
         // Call without specifying testMode - should default to Playback

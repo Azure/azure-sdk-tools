@@ -82,7 +82,8 @@ class ChatService:
             )
             logger.info(
                 "Memory scope injected into conversation: scope=%s, conversation=%s",
-                memory_scope, agent_conversation_id,
+                memory_scope,
+                agent_conversation_id,
             )
         else:
             logger.info(
@@ -126,7 +127,7 @@ class ChatService:
                 f"Agent '{agent_name}' not found in AI Foundry. "
                 "Make sure the agent has been deployed."
             )
-        logger.info("Using agent: name=%s", agent.name)
+        logger.info("Using agent: name=%s, versions=%s", agent.name, agent.versions)
         return agent
 
     async def _resolve_conversation(

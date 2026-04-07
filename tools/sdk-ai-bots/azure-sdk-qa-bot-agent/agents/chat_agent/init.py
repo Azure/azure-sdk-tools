@@ -50,19 +50,29 @@ logger = logging.getLogger(__name__)
 
 
 class _FoundryProjectIdProcessor(SpanProcessor):
-    """Injects microsoft.foundry.project.id as a span attribute.
+    """Enriches container spans with Foundry-specific GenAI attributes.
 
-    The Foundry Traces tab queries customDimensions for this attribute.
-    The platform's server-side trace already has it, but the Agent
-    Framework trace (inside the container) does not — this processor
-    fills that gap so both traces satisfy the Foundry query filters.
+    The Foundry Traces tab queries customDimensions for
+    ``microsoft.foundry.project.id``; the platform's server-side trace
+    already has it, but the Agent Framework trace (inside the container)
+    does not — this processor fills that gap so both traces satisfy the
+    Foundry query filters.
+
+    It also injects the GenAI semantic-convention agent attributes
+    (``gen_ai.agent.name`` and ``gen_ai.agent.id``) so the Foundry Traces
+    UI can resolve the agent display name instead of showing ``None`` /
+    ``unknown`` in the invoke_agent span.
     """
 
-    def __init__(self, project_id: str) -> None:
+    def __init__(self, project_id: str, agent_name: str, agent_id: str) -> None:
         self._project_id = project_id
+        self._agent_name = agent_name
+        self._agent_id = agent_id
 
     def on_start(self, span, parent_context=None) -> None:
         span.set_attribute("microsoft.foundry.project.id", self._project_id)
+        span.set_attribute("gen_ai.agent.name", self._agent_name)
+        span.set_attribute("gen_ai.agent.id", self._agent_id)
 
     def on_end(self, span) -> None:
         pass
@@ -149,7 +159,9 @@ async def main() -> None:
     if foundry_project_id:
         provider = otel_trace.get_tracer_provider()
         if hasattr(provider, "add_span_processor"):
-            provider.add_span_processor(_FoundryProjectIdProcessor(foundry_project_id))
+            provider.add_span_processor(
+                _FoundryProjectIdProcessor(foundry_project_id, agent_name, agent_id)
+            )
 
     # run_async() calls init_tracing() again — it's a no-op because the
     # provider is already configured (_executed_setup=True).

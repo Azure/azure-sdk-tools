@@ -685,6 +685,125 @@ namespace APIViewUnitTests
         }
 
         [Theory]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task UploadAutoReview_WhenPackageVersionIsEmptyOrWhitespace_FallsBackToCodeFileVersion(string emptyVersion)
+        {
+            var mockFile = CreateMockFormFile("test.json", "dummy content");
+            var mockCodeFile = new CodeFile()
+            {
+                Name = "test",
+                Language = "TypeScript",
+                PackageName = "azure-core",
+                PackageVersion = "2.4.0"
+            };
+
+            var mockReview = new ReviewListItemModel() { Id = "r1", PackageName = "azure-core", Language = "TypeScript" };
+            var mockApiRevision = new APIRevisionListItemModel() { Id = "rev1", ReviewId = "r1", Language = "TypeScript" };
+
+            _mockCodeFileManager.Setup(m => m.CreateCodeFileAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<MemoryStream>(), It.IsAny<Stream>(), It.IsAny<string>()))
+                .ReturnsAsync(mockCodeFile);
+
+            _mockAutoReviewService.Setup(m => m.CreateAutomaticRevisionAsync(
+                    It.IsAny<ClaimsPrincipal>(), It.IsAny<CodeFile>(), It.IsAny<string>(), It.IsAny<string>(),
+                    It.IsAny<MemoryStream>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>()))
+                .ReturnsAsync((mockReview, mockApiRevision));
+
+            _mockApiRevisionsManager.Setup(m => m.UpdateRevisionMetadataAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
+                .ReturnsAsync(mockApiRevision);
+
+            _mockConfiguration.Setup(c => c["ReviewUrl"]).Returns("https://test.com");
+
+            await _controller.UploadAutoReview(mockFile.Object, "test-label", packageVersion: emptyVersion);
+
+            // codeFile.PackageVersion must NOT be overwritten with an empty/whitespace value
+            _mockAutoReviewService.Verify(m => m.CreateAutomaticRevisionAsync(
+                It.IsAny<ClaimsPrincipal>(),
+                It.Is<CodeFile>(cf => cf.PackageVersion == "2.4.0"),
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<MemoryStream>(),
+                It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>()),
+                Times.Once);
+        }
+        
+        [Fact]
+        public async Task CreateApiReview_WhenCodeFileHasAlphaVersion_NormalizesToCallerSuppliedGaVersion()
+        {
+            string packageName = "azure-core-http-compat";
+            const string language = "TypeScript";
+
+            CodeFile newCodeFile = new()
+            {
+                Name = packageName,
+                Language = language,
+                PackageName = packageName,
+                PackageVersion = "2.4.0-alpha.20260407.4" // Alpha version embedded in the artifact token file
+            };
+
+            _mockCodeFileManager.Setup(m => m.GetCodeFileAsync(
+                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                    It.IsAny<MemoryStream>(), It.IsAny<string>(), null, It.IsAny<string>(), null, null))
+                .ReturnsAsync(new CodeFileResult() { CodeFile = newCodeFile });
+
+            var mockReview = new ReviewListItemModel()
+            {
+                Id = "test-review-id",
+                PackageName = packageName,
+                Language = language,
+                IsApproved = true
+            };
+
+            var mockApiRevision = new APIRevisionListItemModel()
+            {
+                Id = "test-revision-id",
+                ReviewId = "test-review-id",
+                Language = language,
+                IsApproved = true
+            };
+
+            _mockAutoReviewService.Setup(m => m.CreateAutomaticRevisionAsync(
+                    It.IsAny<ClaimsPrincipal>(),
+                    It.IsAny<CodeFile>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<MemoryStream>(),
+                    It.IsAny<string>(),
+                    It.IsAny<bool>(),
+                    It.IsAny<string>()))
+                .ReturnsAsync((mockReview, mockApiRevision));
+
+            _mockApiRevisionsManager.Setup(m => m.UpdateRevisionMetadataAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
+                .ReturnsAsync(mockApiRevision);
+
+            _mockConfiguration.Setup(c => c["ReviewUrl"]).Returns("https://test.com");
+
+            // Act - CI pipeline passes the GA release version "2.4.0" via the packageVersion parameter
+            await _controller.CreateApiReview(
+                buildId: "12345",
+                artifactName: "packages",
+                originalFilePath: $"{packageName}.whl",
+                reviewFilePath: $"{packageName}_typescript.json",
+                label: "CI Build",
+                repoName: "Azure/azure-sdk-for-js",
+                packageName: packageName,
+                compareAllRevisions: true,
+                project: "internal",
+                packageVersion: "2.4.0");
+
+            // Assert - service must receive CodeFile with GA version, not alpha.
+            _mockAutoReviewService.Verify(m => m.CreateAutomaticRevisionAsync(
+                It.IsAny<ClaimsPrincipal>(),
+                It.Is<CodeFile>(cf => cf.PackageVersion == "2.4.0"),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<MemoryStream>(),
+                It.IsAny<string>(),
+                It.IsAny<bool>(),
+                It.IsAny<string>()),
+                Times.Once);
+        }
+
+        [Theory]
         [InlineData("12.27.0", "12.28.0b1", true, false, "revision-stable-12-27")] // Different versions → Create new
         [InlineData("12.27.0", "12.28", true, false, "revision-stable-12-28")] // Different versions → Create new
         [InlineData("12.28.0b1", "12.28.0b1", false, true, "revision-prerelease-12-28-b1")] // Same version → Reuse

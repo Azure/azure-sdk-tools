@@ -201,13 +201,14 @@ class ClassNode(NodeEntityBase):
         else:
             members = inspect.getmembers(self.obj)
 
-        functions = self._parse_functions_from_class(self.obj)
         try:
-            for base_class in inspect.getmro(self.obj)[1:-1]:
-                functions += self._parse_functions_from_class(base_class)
+            mro = inspect.getmro(self.obj)
         except AttributeError:
-            pass
-        overloads = parse_overloads(self, functions, is_module_level=False)
+            mro = (self.obj,)
+        overloads_by_class = {
+            cls: parse_overloads(self, self._parse_functions_from_class(cls), is_module_level=False)
+            for cls in mro[:-1]
+        }
         for name, child_obj in members:
             if inspect.isbuiltin(child_obj):
                 continue
@@ -217,7 +218,10 @@ class ClassNode(NodeEntityBase):
                     func_node = FunctionNode(
                         self.namespace, self, obj=child_obj, apiview=self.apiview
                     )
-                    add_overload_nodes(self, func_node, overloads)
+                    # Resolve overloads from the class that defines this method to
+                    # avoid duplicates when a derived class redefines an overloaded base method.
+                    defining_class = next((c for c in mro if name in c.__dict__), self.obj)
+                    add_overload_nodes(self, func_node, overloads_by_class.get(defining_class, []))
             elif name == "__annotations__":
                 for item_name, item_type in child_obj.items():
                     if item_name.startswith("_"):

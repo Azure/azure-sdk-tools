@@ -32,9 +32,7 @@ def main():
         "FROM c WHERE ARRAY_LENGTH(c.related_memories) > 0 "
         "AND (NOT IS_DEFINED(c.isDeleted) OR c.isDeleted = false)"
     )
-    guidelines = list(
-        db.guidelines.client.query_items(query=query, enable_cross_partition_query=True)
-    )
+    guidelines = list(db.guidelines.client.query_items(query=query, enable_cross_partition_query=True))
 
     # Sort by number of related memories, descending
     guidelines.sort(key=lambda g: len(g.get("related_memories", [])), reverse=True)

@@ -3,3 +3,9 @@ exceptions: |
   2. DO NOT comment on lack of XML documentation comments
   3. DO NOT comment on the following method on any types 'JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options)'
   4. DO NOT comment about Output-only model properties missing an internal setter to allow for proper deserialization.
+  5. DO NOT suggest renaming IJsonModel<T> or IPersistableModel<T> interface method implementations (Create, Write, GetFormatFromOptions). These are fixed interface contracts defined by System.ClientModel.
+  6. DO NOT question explicit IJsonModel<T> or IPersistableModel<T> implementations when the generic type parameter matches the implementing type.
+  7. DO NOT comment on implicit conversion operators to RequestContent or implicit nullable string conversions. These are accepted SDK patterns. Also do not flag explicit conversion operators from Response to model types, or suggest replacing them with named factory methods.
+  8. DO NOT question RequestContent/RequestContext overloads on protocol methods.
+  9. DO NOT suggest adding a 'Create' prefix to model factory methods or replacing them with a builder pattern.
+  10. DO NOT suggest renaming or refactoring serialization methods such as JsonModelCreateCore, or suggest consolidating serialization logic across models. These are accepted generated patterns.

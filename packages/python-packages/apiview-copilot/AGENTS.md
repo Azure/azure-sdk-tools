@@ -57,7 +57,7 @@ The review pipeline in `ApiViewReview.run()` follows these stages:
 
 ## Azure Resource Dependencies
 
-- **Azure App Configuration** — Central config store (`AZURE_APP_CONFIG_ENDPOINT` env var, `ENVIRONMENT_NAME` label).
+- **Azure App Configuration** — Central config store (endpoint resolved from `ENVIRONMENT_NAME`).
 - **Azure Key Vault** — Secret storage, referenced from App Configuration.
 - **Azure Cosmos DB** — Guidelines, examples, memories, review jobs, metrics, evals.
 - **Azure AI Search** — Semantic search index for RAG.
@@ -71,16 +71,28 @@ Invoked via `avc` (or `python cli.py`):
 
 - `avc review generate` — Generate a review locally or remotely.
 - `avc review start-job` / `avc review get-job` — Async review job management.
+- `avc review group-comments` — Group similar comments in a JSON file.
 - `avc agent chat` — Interactive agent chat session.
 - `avc agent mention` — Process @mention feedback.
-- `avc eval run` — Run evaluation tests.
-- `avc search kb` — Search the knowledge base.
-- `avc search reindex` — Trigger search index refresh.
+- `avc agent resolve-thread` — Update KB when a conversation is resolved.
+- `avc test eval` — Run evaluation tests.
+- `avc test prompt` — Test a single prompt file, or smoke-test all prompts when no path is given.
+- `avc test pytest` — Run unit tests with pytest.
+- `avc test extract-section` — Extract a document section for testing.
+- `avc kb search` — Search the knowledge base.
+- `avc kb reindex` — Trigger search index refresh.
+- `avc kb all-guidelines` — Retrieve all guidelines for a language.
 - `avc db get` / `avc db delete` / `avc db purge` — Database operations.
-- `avc metrics report` — Generate metrics reports.
-- `avc permissions grant` / `avc permissions revoke` — Manage Azure RBAC permissions.
-- `avc app deploy` — Deploy to Azure App Service.
-- `avc app check` — Health check the deployed service.
+- `avc db link` / `avc db unlink` — Link/unlink knowledge base items.
+- `avc report metrics` — Generate metrics reports.
+- `avc report active-reviews` — Query active reviews for a language and date range.
+- `avc report feedback` / `avc report memory` — Audit feedback and memories.
+- `avc report analyze-comments` — Analyze AI comment quality.
+- `avc ops deploy` — Deploy to Azure App Service.
+- `avc ops check` — Health check the deployed service.
+- `avc ops grant` / `avc ops revoke` — Manage Azure RBAC permissions.
+- `avc apiview get-comments` — Query APIView comment data.
+- `avc apiview resolve-package` — Resolve package information.
 
 ## Environment Setup
 
@@ -98,8 +110,7 @@ pip install -r dev_requirements.txt
 ```
 
 Required environment variables (typically in `.env`):
-- `AZURE_APP_CONFIG_ENDPOINT` — Azure App Configuration endpoint URL.
-- `ENVIRONMENT_NAME` — Configuration label (e.g., `production`, `staging`).
+- `ENVIRONMENT_NAME` — Configuration label (e.g., `production`, `staging`). The App Configuration endpoint is resolved automatically from this value.
 
 ## Supported Languages
 
@@ -136,7 +147,7 @@ applyTo: "tests/**"
 - Tests use **pytest**. Run: `pytest tests`
 - Test files named `*_test.py` (e.g., `apiview_test.py`, `metrics_test.py`). Some use `test_*.py` convention.
 - Fixtures in `conftest.py`.
-- Evaluation tests (prompt quality) live in `evals/` and run separately via `avc eval run` or `python evals/run.py`.
+- Evaluation tests (prompt quality) live in `evals/` and run separately via `avc test eval` or `python evals/run.py`.
 
 ---
 applyTo: "evals/**"
@@ -157,7 +168,7 @@ applyTo: "prompts/**"
 # Prompt Files
 
 - Prompts are `.prompty` template files parsed and executed via `src/_prompt_runner.py`.
-- When modifying `.prompty` files, always run the relevant eval tests: `avc eval run --test-paths evals/tests/<workflow>`.
+- When modifying `.prompty` files, always run the relevant eval tests: `avc test eval --test-paths evals/tests/<workflow>`.
 
 ---
 applyTo: "src/**"
@@ -166,8 +177,8 @@ applyTo: "src/**"
 # Source Code Change Guidelines
 
 - **Models**: When modifying Pydantic models, ensure JSON serialization aliases remain consistent with API contracts and Cosmos DB schemas.
-- **Search/RAG**: Changes to `SearchManager` or knowledge base schema may require reindexing (`avc search reindex`).
+- **Search/RAG**: Changes to `SearchManager` or knowledge base schema may require reindexing (`avc kb reindex`).
 - **Settings**: New configuration keys must be added to Azure App Configuration for both `production` and `staging` labels.
-- **Endpoints**: The FastAPI app uses role-based auth. Test changes with `avc app check --include-auth`.
+- **Endpoints**: The FastAPI app uses role-based auth. Test changes with `avc ops check --include-auth`.
 - **CI**: The CI pipeline (`ci.yml`) runs packaging, unit tests (`pytest tests`), linting (`pylint src scripts tests`), and copyright header checks (`python scripts/check_copyright_headers.py`).
 - **Dependencies**: Runtime deps go in `requirements.txt`; dev/test deps go in `dev_requirements.txt`.

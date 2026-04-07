@@ -83,6 +83,30 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
   filteredApiRevisionsWithComments: APIRevision[] = [];
   filteredThreadCount: number = 0;
   totalThreadCount: number = 0;
+  showUnknownSeverityFilter: boolean = false;
+
+  // Keep filter behavior aligned with the displayed severity badge/label in CommentThread,
+  // which is derived from codePanelRowData.comments[0].severity.
+  private getDisplayedThreadSeverityKey(thread: CodePanelRowData): string {
+    const firstComment = thread.comments?.[0];
+    if (!firstComment) return 'unknown';
+    return CommentSeverityHelper.normalizeSeverity(firstComment.severity) ?? 'unknown';
+  }
+
+  private threadMatchesStatusAndKindFilters(thread: CodePanelRowData): boolean {
+    const firstComment = thread.comments?.[0];
+    if (!firstComment) return false;
+
+    if (this.filterStatus === 'active' && thread.isResolvedCommentThread) return false;
+    if (this.filterStatus === 'resolved' && !thread.isResolvedCommentThread) return false;
+
+    if (this.filterKinds.size > 0) {
+      const kind = this.getThreadKind(firstComment);
+      if (!this.filterKinds.has(kind)) return false;
+    }
+
+    return true;
+  }
 
   constructor(private commentsService: CommentsService, private signalRService: SignalRService, private changeDetectorRef: ChangeDetectorRef) { }
 
@@ -491,6 +515,25 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
   // --- Filter methods ---
 
   applyFilters() {
+    // Compute Unknown chip visibility from the current status/kind context
+    // before applying severity filtering.
+    this.showUnknownSeverityFilter = false;
+    for (const threads of this.commentThreads.values()) {
+      for (const thread of threads) {
+        if (this.threadMatchesStatusAndKindFilters(thread) && this.getDisplayedThreadSeverityKey(thread) === 'unknown') {
+          this.showUnknownSeverityFilter = true;
+          break;
+        }
+      }
+      if (this.showUnknownSeverityFilter) {
+        break;
+      }
+    }
+
+    if (!this.showUnknownSeverityFilter && this.filterSeverities.has('unknown')) {
+      this.filterSeverities.delete('unknown');
+    }
+
     this.filteredCommentThreads = new Map();
     this.totalThreadCount = 0;
     this.filteredThreadCount = 0;
@@ -510,24 +553,13 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
   }
 
   private threadMatchesFilters(thread: CodePanelRowData): boolean {
-    const firstComment = thread.comments?.[0];
-    if (!firstComment) return false;
+    // First check status and kind
+    if (!this.threadMatchesStatusAndKindFilters(thread)) return false;
 
-    // Status filter
-    if (this.filterStatus === 'active' && thread.isResolvedCommentThread) return false;
-    if (this.filterStatus === 'resolved' && !thread.isResolvedCommentThread) return false;
-
-    // Severity filter (empty set = show all)
-    // Map missing/null severity to 'unknown' so the Unknown chip can match legacy comments.
+    // Then check severity (empty set = show all)
     if (this.filterSeverities.size > 0) {
-      const normalizedSev = CommentSeverityHelper.normalizeSeverity(firstComment.severity) ?? 'unknown';
+      const normalizedSev = this.getDisplayedThreadSeverityKey(thread);
       if (!this.filterSeverities.has(normalizedSev)) return false;
-    }
-
-    // Kind filter (empty set = show all)
-    if (this.filterKinds.size > 0) {
-      const kind = this.getThreadKind(firstComment);
-      if (!this.filterKinds.has(kind)) return false;
     }
 
     return true;

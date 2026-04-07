@@ -101,9 +101,9 @@
     --severity-must-fix-bg: #FDF3F4;
     --severity-must-fix-text: #B10E1C;
     --severity-must-fix-border: #EEACB2;
-    --severity-unknown-bg: #F5F5F5;
-    --severity-unknown-text: #5A5A5A;
-    --severity-unknown-border: #C8C8C8;
+    --severity-unknown-bg: #E6E6E6;
+    --severity-unknown-text: #404040;
+    --severity-unknown-border: #A8A8A8;
     /*----Revision Badges----------------------------------------*/
     --revision-approved-color: #198754;
     --revision-pending-color: #b58a00;
@@ -224,9 +224,9 @@
     --severity-must-fix-bg: #da3633;
     --severity-must-fix-text: #e6edf3;
     --severity-must-fix-border: #f85149;
-    --severity-unknown-bg: #2d333b;
-    --severity-unknown-text: #8b949e;
-    --severity-unknown-border: #484f58;
+    --severity-unknown-bg: #3a414b;
+    --severity-unknown-text: #c0c7d0;
+    --severity-unknown-border: #6d7681;
     /*----Revision Badges----------------------------------------*/
     --revision-approved-color: #3fb950;
     --revision-pending-color: #d29922;
@@ -337,9 +337,9 @@
     --dark-overlay: rgba(0, 0, 0, 0.3);
     --client-type-bg: rgba(255, 189, 0, 0.15);
     /*----Severity Badges----------------------------------------*/
-    --severity-question-bg: #1E3A8A;
-    --severity-question-text: #BFDBFE;
-    --severity-question-border: #3B82F6;
+    --severity-question-bg: #3A2A66;
+    --severity-question-text: #DCCBFF;
+    --severity-question-border: #8B5CF6;
     --severity-suggestion-bg: #032830;
     --severity-suggestion-text: #6edff6;
     --severity-suggestion-border: #087990;
@@ -349,9 +349,9 @@
     --severity-must-fix-bg: #991B1B;
     --severity-must-fix-text: #FECACA;
     --severity-must-fix-border: #EF4444;
-    --severity-unknown-bg: #2d333b;
-    --severity-unknown-text: #8b949e;
-    --severity-unknown-border: #484f58;
+    --severity-unknown-bg: #404750;
+    --severity-unknown-text: #c7ced8;
+    --severity-unknown-border: #7a8490;
     /*----Revision Badges----------------------------------------*/
     --revision-approved-color: #{bootstrap.$success};
     --revision-pending-color: #{$warning-color};

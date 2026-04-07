@@ -1,6 +1,6 @@
 # Release
 
-## 2025-04-07 - 0.9.7
+## 2026-04-07 - 0.9.7
 
 - Made 'sdk-release-type' parameter optional, same as 'api-version'
 

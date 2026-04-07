@@ -2,7 +2,6 @@ import ast
 import astroid
 import logging
 import inspect
-import sys
 from enum import Enum
 import operator
 from typing import Dict, List, Optional, Tuple
@@ -71,6 +70,7 @@ def _build_file_index(file_path: str) -> None:
             source = fh.read()
     except OSError:
         _FILE_CLASS_SOURCE[file_path] = {}
+        _FILE_CLASS_LINES[file_path] = {}
         return
     # Split lines ONCE so we can slice cheaply for each class.
     lines = source.splitlines(keepends=True)

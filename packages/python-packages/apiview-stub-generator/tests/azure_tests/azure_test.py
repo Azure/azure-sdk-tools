@@ -4,6 +4,7 @@
 # license information.
 # --------------------------------------------------------------------------
 
+import itertools
 import os
 import tempfile
 import shutil
@@ -273,12 +274,13 @@ class TestApiViewAzure:
             if old_tokens != new_tokens:
                 old_lines = json.dumps(old_tokens, indent=2, sort_keys=True).splitlines(keepends=True)
                 new_lines = json.dumps(new_tokens, indent=2, sort_keys=True).splitlines(keepends=True)
-                diff = list(difflib.unified_diff(old_lines, new_lines, fromfile=old_file, tofile=new_file, n=3))
-                # Cap diff output to avoid pytest hanging on enormous diffs
                 MAX_DIFF_LINES = 200
-                diff_snippet = "".join(diff[:MAX_DIFF_LINES])
-                if len(diff) > MAX_DIFF_LINES:
-                    diff_snippet += f"\n... ({len(diff) - MAX_DIFF_LINES} more diff lines truncated)"
+                diff_iter = difflib.unified_diff(old_lines, new_lines, fromfile=old_file, tofile=new_file, n=3)
+                diff_head = list(itertools.islice(diff_iter, MAX_DIFF_LINES + 1))
+                truncated = len(diff_head) > MAX_DIFF_LINES
+                diff_snippet = "".join(diff_head[:MAX_DIFF_LINES])
+                if truncated:
+                    diff_snippet += "\n... (more diff lines truncated)"
                 fail(
                     f"Generated token file does not match the provided token file.\n"
                     f"Expected file: {old_file}\n"

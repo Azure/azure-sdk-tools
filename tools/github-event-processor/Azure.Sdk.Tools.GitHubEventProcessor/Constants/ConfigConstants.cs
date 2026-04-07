@@ -9,6 +9,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Constants
     public class ConfigConstants
     {
         public const string RawGitHubUserContentUrl = "https://raw.githubusercontent.com";
-        public const string DefaultBranch = "main";
+        public const string DefaultBranch = "testOwner";
     }
 }

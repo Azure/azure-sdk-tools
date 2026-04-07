@@ -37,7 +37,9 @@ def handle_thread_resolution_request(
             comments=comments,
             reasoning=action_results.get("reasoning", ""),
         )
-        results = _execute_plan(plan=plan, is_exception=False, package_name=package_name, source_comment_id=source_comment_id)
+        results = _execute_plan(
+            plan=plan, is_exception=False, package_name=package_name, source_comment_id=source_comment_id
+        )
         return _summarize_results(results)
     elif action == "record_exception":
         plan = _parse_plan(
@@ -47,7 +49,9 @@ def handle_thread_resolution_request(
             comments=comments,
             reasoning=action_results.get("reasoning", ""),
         )
-        results = _execute_plan(plan=plan, is_exception=True, package_name=package_name, source_comment_id=source_comment_id)
+        results = _execute_plan(
+            plan=plan, is_exception=True, package_name=package_name, source_comment_id=source_comment_id
+        )
         return _summarize_results(results)
     elif action == "no_action":
         return f"No action required: {action_results.get('reasoning')}"

@@ -19,6 +19,10 @@ parameters:
     values:
       - default
       - authoring
+  - name: createRelease
+    displayName: 'Create GitHub Release with Binaries'
+    type: boolean
+    default: false
 
 variables:
   - template: /eng/pipelines/templates/variables/globals.yml
@@ -29,6 +33,8 @@ variables:
     - group: 'Azure SDK QA Bot Preview Variables'
   - ${{ if eq(parameters.environment, 'prod') }}:
     - group: 'Azure SDK QA Bot Prod Variables'
+  - ${{ if eq(parameters.createRelease, true) }}:
+    - group: 'Release Secrets for GitHub'
   - name: imageName
     value: 'azure-sdk-qa-bot-backend'
   - name: workingDirectory
@@ -200,3 +206,80 @@ extends:
                   ACR_NAME: $(ACR_NAME)
                   ACR_RESOURCE_GROUP: $(ACR_RESOURCE_GROUP)
                   IMAGE_NAME: $(imageName)
+
+      - ${{ if eq(parameters.createRelease, true) }}:
+        - stage: ReleaseBinaries
+          displayName: 'Release Binaries'
+          dependsOn: DeployPipeline
+          variables:
+            - name: backendDirectory
+              value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend'
+          jobs:
+            - job: BuildAndRelease
+              displayName: 'Build Binaries and Create GitHub Release'
+              pool:
+                name: $(LINUXPOOL)
+                image: $(LINUXVMIMAGE)
+                os: linux
+              steps:
+                - checkout: self
+                  displayName: 'Checkout repository'
+                  persistCredentials: true
+
+                - task: GoTool@0
+                  displayName: 'Install Go'
+                  inputs:
+                    version: '1.24'
+
+                - bash: |
+                    set -euo pipefail
+                    VERSION_FILE="$(backendDirectory)/version.go"
+                    [ -f "$VERSION_FILE" ] || { echo "version.go missing" >&2; exit 1; }
+                    MODULE_VERSION=$(grep -m1 moduleVersion "$VERSION_FILE" | sed -n 's/.*moduleVersion.*"\(.*\)".*/\1/p')
+                    [ -n "$MODULE_VERSION" ] || { echo "Failed to determine module version" >&2; exit 1; }
+                    RELEASE_TAG="tools/sdk-ai-bots/azure-sdk-qa-bot-backend/${MODULE_VERSION}"
+                    echo "Module version: $MODULE_VERSION"
+                    echo "Release tag: $RELEASE_TAG"
+                    echo "##vso[task.setvariable variable=moduleVersion]$MODULE_VERSION"
+                    echo "##vso[task.setvariable variable=releaseTag]$RELEASE_TAG"
+                  displayName: 'Resolve Version and Tag'
+
+                - task: PowerShell@2
+                  displayName: 'Build Cross-Platform Binaries'
+                  inputs:
+                    targetType: filePath
+                    filePath: '$(backendDirectory)/scripts/build-binaries.ps1'
+                    arguments: '-OutputDirectory $(Build.ArtifactStagingDirectory)/binaries -Version $(moduleVersion)'
+                    pwsh: true
+
+                - bash: |
+                    set -euo pipefail
+                    CHANGELOG="$(backendDirectory)/CHANGELOG.md"
+                    VERSION_NO_V=$(echo "$(moduleVersion)" | sed 's/^v//')
+                    # Extract the changelog section for the current version
+                    NOTES=$(awk -v ver="$VERSION_NO_V" '
+                      /^## / { if (found) exit; if (index($0, ver)) found=1; next }
+                      found { print }
+                    ' "$CHANGELOG")
+                    if [ -z "$NOTES" ]; then
+                      NOTES="Release $(moduleVersion)"
+                    fi
+                    echo "$NOTES" > $(Build.ArtifactStagingDirectory)/release-notes.md
+                    echo "=== Release Notes ==="
+                    cat $(Build.ArtifactStagingDirectory)/release-notes.md
+                  displayName: 'Extract Release Notes'
+
+                - bash: |
+                    set -euo pipefail
+                    echo "Creating GitHub release for tag: $(releaseTag)"
+                    gh release create "$(releaseTag)" \
+                      --repo "$(Build.Repository.Uri)" \
+                      --title "$(releaseTag)" \
+                      --notes-file "$(Build.ArtifactStagingDirectory)/release-notes.md" \
+                      --prerelease \
+                      $(Build.ArtifactStagingDirectory)/binaries/*.tar.gz \
+                      $(Build.ArtifactStagingDirectory)/binaries/*.zip
+                    echo "GitHub release created successfully"
+                  displayName: 'Create GitHub Release'
+                  env:
+                    GH_TOKEN: $(azuresdk-github-pat)

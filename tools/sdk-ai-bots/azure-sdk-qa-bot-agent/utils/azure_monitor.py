@@ -8,6 +8,10 @@ Portal under Application Insights > Metrics.
 import logging
 import os
 
+from azure.monitor.opentelemetry import configure_azure_monitor
+from opentelemetry import metrics as otel_metrics
+from opentelemetry.sdk.metrics.view import View
+
 logger = logging.getLogger(__name__)
 
 _meter = None
@@ -35,14 +39,20 @@ def configure_metrics() -> None:
         )
         return
 
-    from azure.monitor.opentelemetry import configure_azure_monitor
-
     configure_azure_monitor(
         connection_string=conn_str,
         enable_live_metrics=True,
+        views=[
+            View(
+                instrument_name="chat_requests",
+                attribute_keys={"tenant"},
+            ),
+            View(
+                instrument_name="chat_duration",
+                attribute_keys={"tenant", "success"},
+            ),
+        ],
     )
-
-    from opentelemetry import metrics as otel_metrics
 
     _meter = otel_metrics.get_meter("azure-sdk-qa-bot-server")
     _chat_request_counter = _meter.create_counter(

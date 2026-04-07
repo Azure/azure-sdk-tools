@@ -25,7 +25,7 @@ from models.chat import (
 from models.knowledge import Reference
 from services.conversation_service import ConversationService
 from tools import TOOL_REGISTRY
-from tools.skills import get_skill_to_tenant_map
+from skills.tenant_skills import get_skill_to_tenant_map
 from utils.azure_ai_foundry import get_openai_client, get_project_client
 from utils.teams_image import get_image_data_uri
 from utils.text_preprocess import preprocess_message

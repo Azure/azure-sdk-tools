@@ -78,6 +78,7 @@ def _configure_logging() -> None:
     for noisy in (
         "azure.core.pipeline.policies.http_logging_policy",
         "azure.cosmos",
+        "azure.monitor.opentelemetry.exporter",
     ):
         logging.getLogger(noisy).setLevel(logging.WARNING)
 

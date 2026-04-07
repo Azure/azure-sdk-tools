@@ -725,30 +725,29 @@ export async function generateConfigFilesCommand(argv: any) {
   await writeFile(emitterPath, JSON.stringify(emitterPackageJson, null, 2));
   Logger.info(`${basename(emitterPath)} file generated in '${dirname(emitterPath)}' directory`);
 
-  const npmArgs: string[] = argv["--"] ?? [];
-  await generateLockFileCommandCore(outputDir, emitterPath, npmArgs);
+  await generateLockFileCommandCore(outputDir, emitterPath, argv);
 }
 
 export async function generateLockFileCommand(argv: any) {
-  const npmArgs: string[] = argv["--"] ?? [];
   await generateLockFileCommandCore(
     argv["output-dir"],
     resolveEmitterPathFromArgs(argv) ??
       joinPaths(await getRepoRoot(argv["output-dir"]), defaultRelativeEmitterPackageJsonPath),
-    npmArgs,
+    argv,
   );
 }
 
 export async function generateLockFileCommandCore(
   outputDir: string,
   emitterPackageJsonPath: string,
-  npmArgs: string[] = [],
+  argv: any = {},
 ) {
   Logger.info("Generating lock file...");
   const args: string[] = ["install"];
   if (process.env["TSPCLIENT_FORCE_INSTALL"]?.toLowerCase() === "true") {
     args.push("--force");
   }
+  const npmArgs: string[] = argv["--"] ?? [];
   args.push(...npmArgs);
   if (npmArgs.length > 0) {
     Logger.info(`Passing additional npm args: ${npmArgs.join(" ")}`);

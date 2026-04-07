@@ -3,6 +3,12 @@
 
 // derived from https://github.com/Azure/azure-sdk-tools/blob/b727d85df43666da37bc8681031f68f077f0fbae/tools/apiview/parsers/apiview-treestyle-parser-schema/main.tsp
 
+/** Cross-language metadata for the CodeFile */
+export interface CodeFileCrossLanguageMetadata {
+  CrossLanguagePackageId: string;
+  CrossLanguageDefinitionId: Record<string, string>;
+}
+
 /** ReviewFile represents entire API review object. This will be processed to render review lines. */
 export interface CodeFile {
   PackageName: string;
@@ -23,7 +29,7 @@ export interface CodeFile {
     | "TypeSpec";
   /** Language variant is applicable only for java variants */
   LanguageVariant?: "None" | "Spring" | "Android";
-  CrossLanguagePackageId?: string;
+  CrossLanguageMetadata?: CodeFileCrossLanguageMetadata;
   ReviewLines: Array<ReviewLine>;
   /** Add any system generated comments. Each comment is linked to review line ID */
   Diagnostics?: Array<CodeDiagnostic>;

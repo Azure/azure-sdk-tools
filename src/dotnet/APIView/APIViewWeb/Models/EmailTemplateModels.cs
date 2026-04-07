@@ -1,12 +1,17 @@
 using System.Collections.Generic;
 using System;
 using System.Linq;
-using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
 using Microsoft.AspNetCore.Html;
 
 namespace APIViewWeb.Models
 {
+    internal static class EmailTemplateModelHelpers
+    {
+        internal static string GetRevisionDisplayName(APIRevisionListItemModel revision) =>
+            revision?.Files?.FirstOrDefault()?.PackageVersion ?? revision?.PackageVersion ?? string.Empty;
+    }
+
     public class NamespaceReviewRequestEmailModel
     {
         public string PackageName { get; set; } = string.Empty;
@@ -157,20 +162,45 @@ namespace APIViewWeb.Models
             ReviewListItemModel review,
             APIRevisionListItemModel revision)
         {
-            var resolvedRevisionLabel = PageModelHelpers.ResolveRevisionLabel(revision);
-            var resolvedRevisionName = PageModelHelpers.ResolveRevisionLabel(
-                revision,
-                addAPIRevisionType: false,
-                addCreatedBy: false,
-                addCreatedOn: false);
-
             return new NewRevisionEmailModel
             {
                 ReviewName = review.PackageName,
                 RevisionUrl = $"{apiviewEndpoint}/Assemblies/Review/{review.Id}",
-                RevisionName = string.IsNullOrWhiteSpace(resolvedRevisionName) ? resolvedRevisionLabel : resolvedRevisionName,
+                RevisionName = EmailTemplateModelHelpers.GetRevisionDisplayName(revision),
                 CreatedBy = revision.CreatedBy,
                 CreatedOn = revision.CreatedOn,
+            };
+        }
+    }
+
+    public class ReviewOrRevisionApprovalEmailModel
+    {
+        public string ReviewName { get; set; } = string.Empty;
+        public string ReviewUrl { get; set; } = string.Empty;
+        public string RevisionUrl { get; set; } = string.Empty;
+        public string RevisionName { get; set; } = string.Empty;
+        public bool HasRevision { get; set; }
+        public string ApprovedBy { get; set; } = string.Empty;
+        public DateTime ApprovedOn { get; set; }
+        public bool IsReviewApproval { get; set; }
+
+        public static ReviewOrRevisionApprovalEmailModel Create(
+            string apiviewEndpoint,
+            ReviewListItemModel review,
+            APIRevisionListItemModel revision,
+            string approvedBy,
+            bool isReviewApproval)
+        {
+            return new ReviewOrRevisionApprovalEmailModel
+            {
+                ReviewName = review.PackageName,
+                ReviewUrl = $"{apiviewEndpoint}/Assemblies/Review/{review.Id}",
+                RevisionUrl = revision == null ? string.Empty : $"{apiviewEndpoint}/Assemblies/Review/{review.Id}?revisionId={revision.Id}",
+                RevisionName = EmailTemplateModelHelpers.GetRevisionDisplayName(revision),
+                HasRevision = revision != null,
+                ApprovedBy = approvedBy,
+                ApprovedOn = DateTime.UtcNow,
+                IsReviewApproval = isReviewApproval,
             };
         }
     }

@@ -22,7 +22,7 @@ namespace Azure.Sdk.Tools.SnippetGenerator
         private readonly string _directory;
         private readonly Lazy<Task<List<Snippet>>> _snippets;
         private static readonly Regex _markdownOnlyRegex = new Regex(
-            @"(?<indent>\s*)//@@\s*(?<line>.*)",
+            @"(?<indent>\s*)//@@ ?(?<line>.*)",
             RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.CultureInvariant);
         private const string _codeOnlyPattern = "/*@@*/";
         private static readonly Regex _regionRegex = new Regex(

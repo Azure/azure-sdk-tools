@@ -1,6 +1,7 @@
 using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.ComponentModel;
+using System.Globalization;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
@@ -121,7 +122,7 @@ public class VersionUpdateTool : LanguageMcpTool
             else
             {
                 // Validate date format (YYYY-MM-DD)
-                if (!DateTime.TryParseExact(releaseDate, "yyyy-MM-dd", null, System.Globalization.DateTimeStyles.None, out _))
+                if (!DateTime.TryParseExact(releaseDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
                 {
                     return PackageOperationResponse.CreateFailure(
                         $"Invalid release date format: {releaseDate}. Expected format: YYYY-MM-DD (e.g., 2025-11-12)",
@@ -158,7 +159,7 @@ public class VersionUpdateTool : LanguageMcpTool
             if (packageInfo?.SdkType == SdkType.Management)
             {
                 // For management-plane packages, execute configured version update script
-                var (configContentType, configValue) = await _specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.UpdateVersion);
+                var (configContentType, configValue) = await _specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.UpdateVersion, ct);
                 if (configContentType != SpecGenSdkConfigContentType.Unknown && !string.IsNullOrEmpty(configValue))
                 {
                     logger.LogInformation("Found valid configuration for updating version. Executing configured script...");

@@ -47,9 +47,8 @@
             </div>
         </div>
 
-        <!-- Count + reset -->
+        <!-- Reset filters -->
         <div class="filter-meta">
-            <span class="filter-count">{{ filteredThreadCount }}<span class="filter-count-sep">/</span>{{ totalThreadCount }}</span>
             <button *ngIf="hasActiveFilters" class="reset-btn" title="Reset filters" (click)="clearAllFilters()">
                 <i class="bi bi-arrow-counterclockwise"></i>
             </button>
@@ -61,10 +60,16 @@
 <p *ngIf="!isLoading && apiRevisionsWithComments.length > 0 && filteredApiRevisionsWithComments.length === 0" class="empty-state">
     <i class="bi bi-funnel"></i> No threads match the current filters.
 </p>
-<div *ngIf="!isLoading && diagnosticsTruncated" class="mx-4 mb-3">
+<div *ngIf="!isLoading && hiddenUnresolvedDiagnosticsCount > 0 && filterStatus !== 'resolved'" class="mx-4 mb-3">
     <div class="alert alert-warning py-2 mb-0" role="alert">
         <i class="bi bi-exclamation-triangle me-2"></i>
-        <small>Only the first 250 of {{ totalDiagnosticsInRevision }} diagnostic comments are shown in this panel. View all diagnostics in the code panel.</small>
+        <small>Diagnostic display is limited to 250. Some unresolved diagnostics are not shown here — view them all in the code panel.</small>
+    </div>
+</div>
+<div *ngIf="!isLoading && hiddenResolvedDiagnosticsCount > 0 && filterStatus !== 'active'" class="mx-4 mb-3">
+    <div class="alert alert-secondary py-2 mb-0" role="alert">
+        <i class="bi bi-info-circle me-2"></i>
+        <small>Diagnostic display is limited to 250. Some resolved diagnostics are not shown here — view them all in the code panel.</small>
     </div>
 </div>
 <p-timeline *ngIf="!isLoading && filteredApiRevisionsWithComments.length > 0" [value]="filteredApiRevisionsWithComments">

@@ -26,6 +26,7 @@ from evals._util import (
     load_recordings,
     save_recordings,
 )
+from src._credential import warm_up_credential
 from src._settings import SettingsManager
 
 DEFAULT_NUM_RUNS: int = 1
@@ -34,14 +35,14 @@ DEFAULT_NUM_RUNS: int = 1
 class ExecutionContext:
     """Shared context for evaluation execution."""
 
-    def __init__(self):
-        self.settings = SettingsManager()
+    def __init__(self, environment: str = None):
+        self.settings = SettingsManager(environment=environment)
         self._azure_ai_project = {
             "subscription_id": self.settings.get("EVALS_SUBSCRIPTION"),
             "resource_group_name": self.settings.get("EVALS_RG"),
             "project_name": self.settings.get("EVALS_PROJECT_NAME"),
         }
-        self._credential_kwargs = self._create_credential_kwargs()
+        self.credential_kwargs = self._create_credential_kwargs()
         self._temp_files: list[Path] = []
         self._temp_files_lock = threading.Lock()
 
@@ -65,7 +66,7 @@ class ExecutionContext:
     def in_ci(self) -> bool:
         return bool(os.getenv("TF_BUILD"))
 
-    def _load_test_file(self, test_file: Path) -> dict:
+    def load_test_file(self, test_file: Path) -> dict:
         """Load test file - supports both JSON and YAML formats."""
         try:
             with test_file.open("r", encoding="utf-8") as f:
@@ -136,15 +137,27 @@ class EvaluationResult:
 class EvaluationRunner:
     """Executes evaluations targets with shared context"""
 
-    def __init__(self, *, num_runs: int = DEFAULT_NUM_RUNS, use_recording: bool = False, verbose: bool = False):
+    def __init__(
+        self,
+        *,
+        num_runs: int = DEFAULT_NUM_RUNS,
+        use_recording: bool = False,
+        verbose: bool = False,
+        environment: str = None,
+    ):
         self.num_runs = num_runs
         self._context: ExecutionContext | None = None
         self._use_recording = use_recording
         self._verbose = verbose
+        self._environment = environment
 
     def _ensure_context(self):
         if self._context is None:
-            self._context = ExecutionContext()
+            self._context = ExecutionContext(environment=self._environment)
+            # Pre-acquire a token so parallel workers find it cached
+            # instead of all racing to spawn az-cli subprocesses.
+            if not self._context.in_ci():
+                warm_up_credential()
 
     def run(self, discovery_result: DiscoveryResult) -> list[EvaluationResult]:
         """Execute all targets in the discovery result.
@@ -164,8 +177,10 @@ class EvaluationRunner:
     def _run(self, discovery_result: DiscoveryResult) -> list[EvaluationResult]:
         """Run tests in parallel with progress tracking."""
         workflow_count = len(discovery_result.targets)
-        cpu_count = os.cpu_count() or 4
-        max_workers = min(cpu_count * 2, workflow_count)
+        # Limit concurrency to avoid overwhelming credential token
+        # acquisition (AzureCliCredential subprocess calls fail under
+        # heavy parallelism).
+        max_workers = min(4, workflow_count)
         results = []
         total_targets = len(discovery_result.targets)
 
@@ -219,7 +234,7 @@ class EvaluationRunner:
             test_file_paths = []
 
             for test_file in target.test_files:
-                test_case = self._context._load_test_file(test_file)
+                test_case = self._context.load_test_file(test_file)
                 test_file_to_case[test_file] = test_case
                 testcase_id = test_case.get("testcase")
                 if testcase_id:
@@ -300,7 +315,7 @@ class EvaluationRunner:
                 evaluator_config={"metrics": evaluator.evaluator_config},
                 target=evaluator.target_function,
                 fail_on_evaluator_errors=False,
-                **self._context._credential_kwargs,
+                **self._context.credential_kwargs,
             )
             results.append(result)
 
@@ -341,19 +356,27 @@ class EvaluationRunner:
                 passed_tests = []
                 partial_tests = []
                 raw = result.raw_results[0]
-                for filename, eval_result in raw.items():
+                for _, eval_result in raw.items():
                     for res in eval_result["rows"]:
-                        testcase = res["inputs.testcase"]
-                        score = res["outputs.metrics.score"]
-                        success = res["outputs.metrics.success"]
+                        testcase = res.get("inputs.testcase", "unknown")
+                        score = res.get("outputs.metrics.score")
+                        success = res.get("outputs.metrics.success", False)
+                        details = {
+                            "expected_action": res.get("outputs.metrics.expected_action", ""),
+                            "actual_action": res.get("outputs.metrics.actual_action", ""),
+                        }
+
+                        if score is None:
+                            failed_tests.append((testcase, 0, details))
+                            continue
 
                         if success:
                             if score < 100:
-                                partial_tests.append((testcase, score))
+                                partial_tests.append((testcase, score, details))
                             else:
-                                passed_tests.append((testcase, score))
+                                passed_tests.append((testcase, score, details))
                         else:
-                            failed_tests.append((testcase, score))
+                            failed_tests.append((testcase, score, details))
 
                 workflow_stats.append(
                     {
@@ -386,9 +409,12 @@ class EvaluationRunner:
             for stat in failed:
                 result = stat["result"]
                 print(f"{RED}_________________________ {result.workflow_name} _________________________{RESET}")
-                for testcase, score in stat["failed_testcases"]:
+                for testcase, score, details in stat["failed_testcases"]:
                     print(f"{RED}FAILED{RESET} {result.workflow_name}::{testcase}")
                     print(f"  score: {score}")
+                    if details.get("expected_action") or details.get("actual_action"):
+                        print(f"  expected: {details['expected_action']}")
+                        print(f"  actual:   {details['actual_action']}")
                     print()
 
         if has_partial:
@@ -400,9 +426,12 @@ class EvaluationRunner:
                 if stat["partial_testcases"]:
                     result = stat["result"]
                     print(f"{YELLOW}_________________________ {result.workflow_name} _________________________{RESET}")
-                    for testcase, score in stat["partial_testcases"]:
+                    for testcase, score, details in stat["partial_testcases"]:
                         print(f"{YELLOW}PARTIAL{RESET} {result.workflow_name}::{testcase}")
                         print(f"  score: {score}")
+                        if details.get("expected_action") or details.get("actual_action"):
+                            print(f"  expected: {details['expected_action']}")
+                            print(f"  actual:   {details['actual_action']}")
                         print()
 
         if self._verbose and any(len(s["passed_testcases"]) > 0 for s in workflow_stats):
@@ -414,7 +443,7 @@ class EvaluationRunner:
                 if stat["passed_testcases"]:
                     result = stat["result"]
                     print(f"{GREEN}_________________________ {result.workflow_name} _________________________{RESET}")
-                    for testcase, score in stat["passed_testcases"]:
+                    for testcase, score, _details in stat["passed_testcases"]:
                         print(f"{GREEN}✓{RESET} {result.workflow_name}::{testcase}")
                         print(f"  score: {score}")
                         print()
@@ -431,13 +460,13 @@ class EvaluationRunner:
 
             for stat in failed:
                 result = stat["result"]
-                for testcase, _ in stat["failed_testcases"]:
+                for testcase, _, _details in stat["failed_testcases"]:
                     print(f"{RED}FAILED{RESET} {result.workflow_name}::{testcase}")
 
             for stat in workflow_stats:
                 if stat["partial_testcases"]:
                     result = stat["result"]
-                    for testcase, score in stat["partial_testcases"]:
+                    for testcase, score, _details in stat["partial_testcases"]:
                         print(f"{YELLOW}PARTIAL{RESET} {result.workflow_name}::{testcase} - score: {score}")
 
             print()

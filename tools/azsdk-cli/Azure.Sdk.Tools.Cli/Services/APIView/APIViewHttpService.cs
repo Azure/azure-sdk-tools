@@ -4,8 +4,8 @@ namespace Azure.Sdk.Tools.Cli.Services.APIView;
 
 public interface IAPIViewHttpService
 {
-    Task<(string? content, int statusCode)> GetAsync(string endpoint);
-    Task<(string? content, int statusCode)> PostAsync(string endpoint);
+    Task<(string? content, int statusCode)> GetAsync(string endpoint, CancellationToken ct);
+    Task<(string? content, int statusCode)> PostAsync(string endpoint, CancellationToken ct);
 }
 
 public class APIViewHttpService : IAPIViewHttpService
@@ -15,11 +15,11 @@ public class APIViewHttpService : IAPIViewHttpService
     private readonly ILogger<APIViewHttpService> _logger;
     private readonly string _environment;
     private readonly string _baseUrl;
-    
+
     private HttpClient? _cachedClient;
     private DateTime _cacheExpiry = DateTime.MinValue;
     private readonly SemaphoreSlim _cacheLock = new(1, 1);
-    private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(50); 
+    private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(50);
 
     public APIViewHttpService(
         IHttpClientFactory httpClientFactory,
@@ -33,14 +33,14 @@ public class APIViewHttpService : IAPIViewHttpService
         _baseUrl = APIViewConfiguration.BaseUrlEndpoints[_environment];
     }
 
-    public async Task<(string? content, int statusCode)> GetAsync(string endpoint)
+    public async Task<(string? content, int statusCode)> GetAsync(string endpoint, CancellationToken ct)
     {
-        HttpClient httpClient = await GetOrCreateAuthenticatedClientAsync();
+        HttpClient httpClient = await GetOrCreateAuthenticatedClientAsync(ct);
 
         string requestUrl = $"{_baseUrl}{endpoint}";
-        using HttpResponseMessage response = await httpClient.GetAsync(requestUrl);
+        using HttpResponseMessage response = await httpClient.GetAsync(requestUrl, ct);
 
-        string content = await response.Content.ReadAsStringAsync();
+        string content = await response.Content.ReadAsStringAsync(ct);
 
         if (response.IsSuccessStatusCode)
         {
@@ -56,14 +56,14 @@ public class APIViewHttpService : IAPIViewHttpService
 
     }
 
-    public async Task<(string? content, int statusCode)> PostAsync(string endpoint)
+    public async Task<(string? content, int statusCode)> PostAsync(string endpoint, CancellationToken ct)
     {
-        HttpClient httpClient = await GetOrCreateAuthenticatedClientAsync();
+        HttpClient httpClient = await GetOrCreateAuthenticatedClientAsync(ct);
 
         string requestUrl = $"{_baseUrl}{endpoint}";
-        using HttpResponseMessage response = await httpClient.PostAsync(requestUrl, new StringContent(string.Empty));
+        using HttpResponseMessage response = await httpClient.PostAsync(requestUrl, new StringContent(string.Empty), ct);
 
-        string content = await response.Content.ReadAsStringAsync();
+        string content = await response.Content.ReadAsStringAsync(ct);
 
         if (response.IsSuccessStatusCode)
         {
@@ -79,29 +79,29 @@ public class APIViewHttpService : IAPIViewHttpService
 
     }
 
-    private async Task<HttpClient> GetOrCreateAuthenticatedClientAsync()
+    private async Task<HttpClient> GetOrCreateAuthenticatedClientAsync(CancellationToken ct)
     {
-        if (_cachedClient != null && 
+        if (_cachedClient != null &&
             DateTime.UtcNow < _cacheExpiry)
         {
             return _cachedClient;
         }
 
-        await _cacheLock.WaitAsync();
+        await _cacheLock.WaitAsync(ct);
         try
         {
-            if (_cachedClient != null && 
+            if (_cachedClient != null &&
                 DateTime.UtcNow < _cacheExpiry)
             {
                 return _cachedClient;
             }
-            
+
             HttpClient newClient = _httpClientFactory.CreateClient();
-            await _authService.ConfigureAuthenticationAsync(newClient, _environment);
-            
+            await _authService.ConfigureAuthenticationAsync(newClient, _environment, ct);
+
             _cachedClient = newClient;
             _cacheExpiry = DateTime.UtcNow.Add(CacheDuration);
-                        
+
             return _cachedClient;
         }
         finally

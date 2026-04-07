@@ -4,19 +4,14 @@ import { generateApiView } from "./generate";
 import { CrossLanguageMetadata } from "./models";
 import { version as parserVersion } from "../package.json";
 
-function getPackageVersion(fileName: string) {
-  const match = fileName.match(/.*_(?<version>.*)\.api\.json/);
-  return match?.length > 0 ? match.groups["version"] : undefined;
-}
-
 async function loadApiJson(fileName: string) {
   const apiModel = new ApiModel();
-  const packageVersionString = getPackageVersion(fileName);
 
   apiModel.loadPackage(fileName);
 
   const apiJson = JSON.parse(await readFile(fileName, { encoding: "utf-8" }));
   const dependencies = apiJson.metadata.dependencies;
+  const packageVersionString = apiJson.metadata.version;
 
   return {
     Name: apiModel.packages[0].name + (packageVersionString ? `(${packageVersionString})` : ""),
@@ -27,11 +22,10 @@ async function loadApiJson(fileName: string) {
   };
 }
 
-async function loadMetadata(fileName: string): Promise<Record<string, string> | undefined> {
+async function loadMetadata(fileName: string): Promise<CrossLanguageMetadata | undefined> {
   try {
     const metadataContent = await readFile(fileName, { encoding: "utf-8" });
-    const metadata: CrossLanguageMetadata = JSON.parse(metadataContent);
-    return metadata.crossLanguageDefinitions?.CrossLanguageDefinitionId;
+    return JSON.parse(metadataContent) as CrossLanguageMetadata;
   } catch (error) {
     console.warn(`Warning: Could not load metadata file ${fileName}:`, String(error));
     return undefined;
@@ -51,9 +45,7 @@ async function main() {
   );
 
   // Load cross-language metadata if provided
-  const crossLanguageDefinitionIds = process.argv[4]
-    ? await loadMetadata(process.argv[4])
-    : undefined;
+  const loadedMetadata = process.argv[4] ? await loadMetadata(process.argv[4]) : undefined;
 
   const result = JSON.stringify(
     generateApiView({
@@ -66,7 +58,8 @@ async function main() {
       },
       dependencies,
       apiModel,
-      crossLanguageDefinitionIds,
+      crossLanguagePackageId: loadedMetadata?.crossLanguageDefinitions?.CrossLanguagePackageId,
+      crossLanguageDefinitionIds: loadedMetadata?.crossLanguageDefinitions?.CrossLanguageDefinitionId,
     }),
   );
 

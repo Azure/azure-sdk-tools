@@ -192,6 +192,16 @@ export class SamplesPageComponent {
     this.router.navigate(['/review', this.reviewId], { queryParams: queryParams });
   }
 
+  navigateToNamespace() {
+    const queryParams: any = {};
+    const revisionId = this.activeApiRevisionId ?? this.latestApiRevision?.id;
+    if (revisionId) {
+      queryParams['activeApiRevisionId'] = revisionId;
+    }
+    queryParams['view'] = 'namespace';
+    this.router.navigate(['/review', this.reviewId], { queryParams: queryParams });
+  }
+
   selectSample(sample: SamplesRevision) {
     const queryParams: any = { activeSamplesRevisionId: sample.id };
     if (this.activeApiRevisionId) queryParams['activeApiRevisionId'] = this.activeApiRevisionId;

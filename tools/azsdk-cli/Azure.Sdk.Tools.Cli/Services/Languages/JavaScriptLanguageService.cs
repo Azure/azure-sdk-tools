@@ -151,17 +151,85 @@ public sealed partial class JavaScriptLanguageService : LanguageService
         }
     }
 
-    public override async Task<TestRunResponse> RunAllTests(string packagePath, CancellationToken ct = default)
+    public override async Task<TestRunResponse> RunAllTests(string packagePath, TestMode testMode = TestMode.Playback, IDictionary<string, string>? liveTestEnvironment = null, TimeSpan? timeout = null, CancellationToken ct = default)
     {
+        var envVars = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["TEST_MODE"] = testMode.ToString().ToLowerInvariant()
+        };
+
+        if (liveTestEnvironment != null)
+        {
+            foreach (var (key, value) in liveTestEnvironment)
+            {
+                envVars[key] = value;
+            }
+        }
+
+        // Use caller-provided timeout if specified, otherwise use mode-based defaults
+        timeout ??= testMode == TestMode.Playback
+            ? ProcessOptions.DEFAULT_PROCESS_TIMEOUT
+            : TimeSpan.FromMinutes(10);
+
         var result = await processHelper.Run(new ProcessOptions(
                 command: "npm",
                 args: ["run", "test"],
-                workingDirectory: packagePath
+                workingDirectory: packagePath,
+                timeout: timeout,
+                environmentVariables: envVars
             ),
             ct
         );
 
-        return new TestRunResponse(result);
+        var response = new TestRunResponse(result);
+
+        // After successful record mode, push test assets to the assets repo
+        if (testMode == TestMode.Record && result.ExitCode == 0)
+        {
+            await PushTestAssets(packagePath, response, ct);
+        }
+
+        return response;
+    }
+
+    private async Task PushTestAssets(string packagePath, TestRunResponse response, CancellationToken ct)
+    {
+        var assetsJsonPath = Path.Combine(packagePath, "assets.json");
+        if (!File.Exists(assetsJsonPath))
+        {
+            logger.LogInformation("No assets.json found in {packagePath}, skipping asset push", packagePath);
+            return;
+        }
+
+        logger.LogInformation("Pushing recorded test assets for {packagePath}", packagePath);
+
+        try
+        {
+            var pushResult = await npxHelper.Run(new NpxOptions(
+                    package: null,
+                    args: ["dev-tool", "test-proxy", "push", "-a", "assets.json"],
+                    workingDirectory: packagePath
+                ),
+                ct
+            );
+
+            if (pushResult.ExitCode == 0)
+            {
+                logger.LogInformation("Successfully pushed test assets");
+            }
+            else
+            {
+                logger.LogWarning("Asset push failed with exit code {exitCode}: {output}", pushResult.ExitCode, pushResult.Output);
+                response.NextSteps ??= [];
+                response.NextSteps.Add($"Asset push failed (exit code {pushResult.ExitCode}). You may need to push assets manually using 'npx dev-tool test-proxy push -a assets.json'");
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to push test assets. Is test-proxy installed?");
+            response.NextSteps ??= [];
+            response.NextSteps.Add("Could not push test assets automatically. Ensure @azure-tools/dev-tool is available and try running 'npx dev-tool test-proxy push -a assets.json' manually");
+        }
     }
 
     public override async Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo, string? ArtifactPath)> PackAsync(

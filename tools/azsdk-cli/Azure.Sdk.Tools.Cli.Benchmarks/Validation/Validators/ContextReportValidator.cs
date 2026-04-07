@@ -60,7 +60,7 @@ public class ContextReportValidator : IValidator
                 InfiniteSessions = new InfiniteSessionConfig { Enabled = false }
             };
 
-            await using var session = await client.CreateSessionAsync(sessionConfig);
+            await using var session = await client.CreateSessionAsync(sessionConfig, cancellationToken);
 
             var prompt = """
                 Please provide a complete report of your current context:
@@ -75,10 +75,10 @@ public class ContextReportValidator : IValidator
                 """;
 
             var messageOptions = new MessageOptions { Prompt = prompt };
-            await session.SendAndWaitAsync(messageOptions, TimeSpan.FromMinutes(2));
+            await session.SendAndWaitAsync(messageOptions, TimeSpan.FromMinutes(2), cancellationToken);
 
             // Get the response
-            var messages = await session.GetMessagesAsync();
+            var messages = await session.GetMessagesAsync(cancellationToken);
             var lastAssistantMessage = messages
                 .OfType<AssistantMessageEvent>()
                 .LastOrDefault();

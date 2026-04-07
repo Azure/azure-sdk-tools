@@ -8,11 +8,12 @@ import { MultiSelectModule } from 'primeng/multiselect';
 import { TimeagoModule } from 'ngx-timeago';
 import { CommentSeverityComponent } from 'src/app/_components/shared/comment-severity/comment-severity.component';
 import { MarkdownToHtmlPipe } from 'src/app/_pipes/markdown-to-html.pipe';
-import { CommentItemModel, CommentSeverity } from 'src/app/_models/commentItemModel';
+import { CommentItemModel, CommentSeverity, CommentSource } from 'src/app/_models/commentItemModel';
 import { CodePanelRowData } from 'src/app/_models/codePanelModels';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { PermissionsService } from 'src/app/_services/permissions/permissions.service';
 import { ReviewContextService } from 'src/app/_services/review-context/review-context.service';
+import { TooltipModule } from 'primeng/tooltip';
 import { environment } from 'src/environments/environment';
 import { CommentSeverityHelper } from 'src/app/_helpers/comment-severity.helper';
 import { AI_COMMENT_FEEDBACK_REASONS } from 'src/app/_models/comment-feedback-reasons';
@@ -44,7 +45,8 @@ export interface CommentResolutionData {
         MultiSelectModule,
         TimeagoModule,
         CommentSeverityComponent,
-        MarkdownToHtmlPipe
+        MarkdownToHtmlPipe,
+        TooltipModule
     ]
 })
 export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
@@ -95,6 +97,10 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
     const commentsToCheck = this.selectedCommentIds.size > 0
       ? this.relatedComments.filter(c => this.selectedCommentIds.has(c.id))
       : this.relatedComments;
+
+    if (commentsToCheck.some(c => c.commentSource === CommentSource.Diagnostic)) {
+      return false;
+    }
 
     // User can edit if they are the owner of ALL comments, or if they are an approver for this language and ALL comments are from azure-sdk bot
     const isApprover = this.permissionsService.isApproverFor(this.userProfile?.permissions, this.reviewContextService.getLanguage());
@@ -187,6 +193,7 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
       this.selectedCommentIds.add(commentId);
     }
     this.updateSelectAllState();
+    this.ensureDispositionIsValid();
   }
 
   onSelectAllChange(event: { checked?: boolean }) {
@@ -199,6 +206,7 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
     } else {
       this.selectedCommentIds.clear();
     }
+    this.ensureDispositionIsValid();
   }
 
   updateSelectAllState() {
@@ -272,6 +280,38 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
       : this.relatedComments;
 
     return commentsToCheck.some(c => c.createdBy === 'azure-sdk');
+  }
+
+  get hasDiagnosticComments(): boolean {
+    const commentsToCheck = this.selectedCommentIds.size > 0
+      ? this.relatedComments.filter(c => this.selectedCommentIds.has(c.id))
+      : this.relatedComments;
+
+    return commentsToCheck.some(c => c.commentSource === CommentSource.Diagnostic);
+  }
+
+  get allSelectedAreDiagnostic(): boolean {
+    const commentsToCheck = this.selectedCommentIds.size > 0
+      ? this.relatedComments.filter(c => this.selectedCommentIds.has(c.id))
+      : this.relatedComments;
+
+    return commentsToCheck.length > 0 && commentsToCheck.every(c => c.commentSource === CommentSource.Diagnostic);
+  }
+
+  readonly diagnosticTooltip = 'Diagnostic comments are generated from the source code and can only be resolved or have their severity changed by fixing or suppressing the diagnostic in the source code.';
+
+  get filteredDispositionOptions() {
+    if (this.hasDiagnosticComments) {
+      return this.dispositionOptions.filter(o => o.value !== 'delete' && o.value !== 'resolve');
+    }
+    return this.dispositionOptions;
+  }
+
+  private ensureDispositionIsValid() {
+    const valid = this.filteredDispositionOptions.some(o => o.value === this.selectedDisposition);
+    if (!valid) {
+      this.selectedDisposition = 'keepOpen';
+    }
   }
 
   isFeedbackReasonSelected(reason: string): boolean {

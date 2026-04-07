@@ -311,7 +311,7 @@ namespace APIViewWeb.Pages.Assemblies
             (var updateReview, var apiRevision) = await _apiRevisionsManager.ToggleAPIRevisionApprovalAsync(User, id, revisionId);
             if (updateReview)
             {
-                await OnPostToggleReviewApprovalAsync(id, revisionId);
+                await _reviewManager.ToggleReviewApprovalAsync(User, id, apiRevision.Id);
             }
             return RedirectToPage(new { id = id, revisionId = revisionId });
         }

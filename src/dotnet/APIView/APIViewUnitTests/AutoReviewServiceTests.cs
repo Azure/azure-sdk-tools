@@ -21,6 +21,7 @@ namespace APIViewUnitTests
         private readonly Mock<IAPIRevisionsManager> _mockApiRevisionsManager;
         private readonly Mock<ICommentsManager> _mockCommentsManager;
         private readonly Mock<IProjectsManager> _mockProjectsManager;
+        private readonly Mock<ICodeFileManager> _mockCodeFileManager;
         private readonly AutoReviewService _service;
         private readonly ClaimsPrincipal _testUser;
 
@@ -30,12 +31,17 @@ namespace APIViewUnitTests
             _mockApiRevisionsManager = new Mock<IAPIRevisionsManager>();
             _mockCommentsManager = new Mock<ICommentsManager>();
             _mockProjectsManager = new Mock<IProjectsManager>();
+            _mockCodeFileManager = new Mock<ICodeFileManager>();
+            _mockCodeFileManager
+                .Setup(x => x.ComputeAPIContentHashAsync(It.IsAny<CodeFile>()))
+                .ReturnsAsync("test-hash");
 
             _service = new AutoReviewService(
                 _mockReviewManager.Object,
                 _mockApiRevisionsManager.Object,
                 _mockCommentsManager.Object,
-                _mockProjectsManager.Object);
+                _mockProjectsManager.Object,
+                _mockCodeFileManager.Object);
 
             var claims = new List<Claim>
             {
@@ -248,7 +254,7 @@ namespace APIViewUnitTests
                 .ReturnsAsync(new List<APIRevisionListItemModel> { existingRevision });
 
             _mockApiRevisionsManager.Setup(m => m.AreAPIRevisionsTheSame(
-                    It.IsAny<APIRevisionListItemModel>(), It.IsAny<RenderedCodeFile>(), It.IsAny<bool>()))
+                    It.IsAny<APIRevisionListItemModel>(), It.IsAny<RenderedCodeFile>(), It.IsAny<bool>(), It.IsAny<string>()))
                 .ReturnsAsync(true); // Same content
 
             _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType?>(), It.IsAny<bool>()))
@@ -305,7 +311,7 @@ namespace APIViewUnitTests
                 .ReturnsAsync(new List<APIRevisionListItemModel> { existingRevision });
 
             _mockApiRevisionsManager.Setup(m => m.AreAPIRevisionsTheSame(
-                    It.IsAny<APIRevisionListItemModel>(), It.IsAny<RenderedCodeFile>(), It.IsAny<bool>()))
+                    It.IsAny<APIRevisionListItemModel>(), It.IsAny<RenderedCodeFile>(), It.IsAny<bool>(), It.IsAny<string>()))
                 .ReturnsAsync(false); // Different content
 
             _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType?>(), It.IsAny<bool>()))
@@ -377,12 +383,12 @@ namespace APIViewUnitTests
 
             _mockApiRevisionsManager.Setup(m => m.AreAPIRevisionsTheSame(
                     It.Is<APIRevisionListItemModel>(r => r.Id == "approved-revision-id"),
-                    It.IsAny<RenderedCodeFile>(), It.IsAny<bool>()))
+                    It.IsAny<RenderedCodeFile>(), It.IsAny<bool>(), It.IsAny<string>()))
                 .ReturnsAsync(true);
 
             _mockApiRevisionsManager.Setup(m => m.AreAPIRevisionsTheSame(
                     It.Is<APIRevisionListItemModel>(r => r.Id == "latest-revision-id"),
-                    It.IsAny<RenderedCodeFile>(), It.IsAny<bool>()))
+                    It.IsAny<RenderedCodeFile>(), It.IsAny<bool>(), It.IsAny<string>()))
                 .ReturnsAsync(false);
 
             _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType?>(), It.IsAny<bool>()))
@@ -448,13 +454,13 @@ namespace APIViewUnitTests
             // New content doesn't match existing revision for version comparison (so we create a new one)
             _mockApiRevisionsManager.Setup(m => m.AreAPIRevisionsTheSame(
                     It.Is<APIRevisionListItemModel>(r => r.Id == "approved-revision-id"),
-                    It.IsAny<RenderedCodeFile>(), true))
+                    It.IsAny<RenderedCodeFile>(), true, It.IsAny<string>()))
                 .ReturnsAsync(false);
 
             // But for approval copying (no version consideration), the content DOES match
             _mockApiRevisionsManager.Setup(m => m.AreAPIRevisionsTheSame(
                     It.Is<APIRevisionListItemModel>(r => r.Id == "approved-revision-id"),
-                    It.IsAny<RenderedCodeFile>(), false))
+                    It.IsAny<RenderedCodeFile>(), false, It.IsAny<string>()))
                 .ReturnsAsync(true);
 
             _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType?>(), It.IsAny<bool>()))
@@ -519,7 +525,7 @@ namespace APIViewUnitTests
 
             // Content doesn't match at all
             _mockApiRevisionsManager.Setup(m => m.AreAPIRevisionsTheSame(
-                    It.IsAny<APIRevisionListItemModel>(), It.IsAny<RenderedCodeFile>(), It.IsAny<bool>()))
+                    It.IsAny<APIRevisionListItemModel>(), It.IsAny<RenderedCodeFile>(), It.IsAny<bool>(), It.IsAny<string>()))
                 .ReturnsAsync(false);
 
             _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType?>(), It.IsAny<bool>()))
@@ -695,7 +701,7 @@ namespace APIViewUnitTests
 
             // All revisions don't match the new content (so they get deleted)
             _mockApiRevisionsManager.Setup(m => m.AreAPIRevisionsTheSame(
-                    It.IsAny<APIRevisionListItemModel>(), It.IsAny<RenderedCodeFile>(), It.IsAny<bool>()))
+                    It.IsAny<APIRevisionListItemModel>(), It.IsAny<RenderedCodeFile>(), It.IsAny<bool>(), It.IsAny<string>()))
                 .ReturnsAsync(false);
 
             _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType?>(), It.IsAny<bool>()))
@@ -777,11 +783,11 @@ namespace APIViewUnitTests
 
             // Setup comparison: without version = false (different), with version = true (same)
             _mockApiRevisionsManager.Setup(m => m.AreAPIRevisionsTheSame(
-                    It.IsAny<APIRevisionListItemModel>(), It.IsAny<RenderedCodeFile>(), false))
+                    It.IsAny<APIRevisionListItemModel>(), It.IsAny<RenderedCodeFile>(), false, It.IsAny<string>()))
                 .ReturnsAsync(false); // Different without version, so it gets deleted
 
             _mockApiRevisionsManager.Setup(m => m.AreAPIRevisionsTheSame(
-                    It.IsAny<APIRevisionListItemModel>(), It.IsAny<RenderedCodeFile>(), true))
+                    It.IsAny<APIRevisionListItemModel>(), It.IsAny<RenderedCodeFile>(), true, It.IsAny<string>()))
                 .ReturnsAsync(true); // Same with version, would match if not deleted
 
             _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType?>(), It.IsAny<bool>()))
@@ -856,7 +862,7 @@ namespace APIViewUnitTests
                 .ReturnsAsync(new List<APIRevisionListItemModel> { revisionWithComments });
 
             _mockApiRevisionsManager.Setup(m => m.AreAPIRevisionsTheSame(
-                    It.IsAny<APIRevisionListItemModel>(), It.IsAny<RenderedCodeFile>(), It.IsAny<bool>()))
+                    It.IsAny<APIRevisionListItemModel>(), It.IsAny<RenderedCodeFile>(), It.IsAny<bool>(), It.IsAny<string>()))
                 .ReturnsAsync(true); // Same content
 
             _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType?>(), It.IsAny<bool>()))

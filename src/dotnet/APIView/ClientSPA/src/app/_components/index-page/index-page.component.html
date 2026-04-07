@@ -1,5 +1,38 @@
-<div class="container-fluid py-2 px-4 main-container d-flex justify-content-center align-items-center" style="height: 100vh;">
-    <div class="text-center">
-        <p>Redirecting to APIView...</p>
-    </div>
+<app-nav-bar></app-nav-bar>
+<div class="container-fluid py-2 px-4 main-container">
+    <app-reviews-list [userProfile]="userProfile" (reviewEmitter)="onReviewSelected($event)"></app-reviews-list>
+
+    <button id="create-review-button" type="button" class="btn btn-primary" (click)="openCreateReviewDialog()">
+        CREATE<br>REVIEW
+    </button>
 </div>
+
+<p-dialog header="Create Review" [(visible)]="showCreateReviewDialog" [modal]="true" [style]="{width: '500px'}" [closable]="true">
+    <div class="mb-3">
+        <label for="language" class="form-label">Language <span class="text-danger">*</span></label>
+        <p-select id="language" [options]="languages" [(ngModel)]="selectedLanguage" optionLabel="label" placeholder="Select a language" (onChange)="onLanguageChange()" [style]="{width: '100%'}"></p-select>
+    </div>
+    <div class="mb-3">
+        <label for="packageName" class="form-label">Package Name</label>
+        <p-autoComplete id="packageName" [(ngModel)]="selectedPackageName" [suggestions]="filteredPackageNames" (completeMethod)="filterPackageNames($event)" [dropdown]="true" [style]="{width: '100%'}" placeholder="Type or select package name"></p-autoComplete>
+    </div>
+    <div class="mb-3">
+        <label for="reviewFile" class="form-label">File <span class="text-danger">*</span></label>
+        <p-fileUpload mode="basic" id="reviewFile" name="file" [auto]="false" chooseLabel="Choose File" (onSelect)="onFileSelect($event)" (onClear)="onFileClear()" [maxFileSize]="50000000"></p-fileUpload>
+    </div>
+    <div class="mb-3">
+        <label for="filePath" class="form-label">File Path (optional)</label>
+        <input type="text" pInputText id="filePath" [(ngModel)]="filePath" class="w-100" placeholder="e.g. path/to/api.json" />
+    </div>
+    <div class="mb-3">
+        <label for="reviewLabel" class="form-label">Label (optional)</label>
+        <input type="text" pInputText id="reviewLabel" [(ngModel)]="reviewLabel" class="w-100" placeholder="e.g. Beta 1" />
+    </div>
+    <ng-template pTemplate="footer">
+        <button type="button" class="btn btn-outline-secondary me-2" (click)="showCreateReviewDialog = false">Cancel</button>
+        <button type="button" class="btn btn-primary" [disabled]="!selectedLanguage || !selectedFile || isCreating" (click)="createReview()">
+            <i *ngIf="isCreating" class="pi pi-spinner pi-spin me-1"></i>
+            Create
+        </button>
+    </ng-template>
+</p-dialog>

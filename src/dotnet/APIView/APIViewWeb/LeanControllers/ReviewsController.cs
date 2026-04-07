@@ -209,6 +209,11 @@ namespace APIViewWeb.LeanControllers
             var activeAPIRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, activeApiRevisionId);
             APIRevisionListItemModel diffAPIRevision = null;
 
+            if (activeAPIRevision == null)
+            {
+                return new LeanJsonResult(null, StatusCodes.Status404NotFound);
+            }
+
             if (activeAPIRevision.IsDeleted)
             {
                 return new LeanJsonResult(null, StatusCodes.Status204NoContent);

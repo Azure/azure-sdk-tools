@@ -86,6 +86,18 @@ export function getSupportedLanguages(): any {
   ];
 }
 
+/**
+ * Languages that use the legacy flat-token parser and must be rendered
+ * via the Razor page (port 5000) instead of the Angular SPA.
+ */
+const FLAT_PARSER_LANGUAGES = new Set([
+  'C', 'C++', 'Json', 'Swagger', 'Xml', 'Protocol Buffers'
+]);
+
+export function usesTreeStyleParser(language: string): boolean {
+  return !FLAT_PARSER_LANGUAGES.has(language);
+}
+
 export function getAIReviewNotificationInfo(jobInfo : AIReviewJobCompletedDto, origin: string): [SiteNotification, any] | undefined {
   if (jobInfo.status == 'Success' && jobInfo.noOfGeneratedComments > 0) {
     const messageData : ToastMessageData = {

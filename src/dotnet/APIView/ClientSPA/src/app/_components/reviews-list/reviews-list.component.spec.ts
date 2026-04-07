@@ -2,6 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { initializeTestBed } from '../../../test-setup';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 import { NotificationsService } from 'src/app/_services/notifications/notifications.service';
@@ -29,6 +31,9 @@ describe('ReviewsListComponent', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideRouter([]),
+        ConfirmationService,
+        MessageService,
         { provide: SignalRService, useValue: mockSignalRService },
         { provide: NotificationsService, useValue: mockNotificationsService },
         { provide: WorkerService, useValue: mockWorkerService }

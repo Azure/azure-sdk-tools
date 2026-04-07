@@ -3,3 +3,17 @@
         width: 20dvw;
     }
 }
+
+.search-input::placeholder {
+    font-style: italic;
+}
+
+.review-link {
+    color: var(--bs-link-color, #0d6efd);
+    text-decoration: none;
+    cursor: pointer;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}

@@ -10,6 +10,7 @@
     "APIViewWeb": {
       "commandName": "Project",
       "launchBrowser": true,
+      "launchUrl": "https://localhost:4200",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },

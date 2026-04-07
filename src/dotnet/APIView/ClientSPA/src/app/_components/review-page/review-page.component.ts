@@ -180,8 +180,10 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
       this.activeView = 'reviews';
     }
 
-    this.activeApiRevisionId = params[ACTIVE_API_REVISION_ID_QUERY_PARAM];
-    this.activeAPIRevision = this.apiRevisions.filter(x => x.id === this.activeApiRevisionId)[0];
+    this.activeApiRevisionId = params[ACTIVE_API_REVISION_ID_QUERY_PARAM] || null;
+    this.activeAPIRevision = this.activeApiRevisionId
+      ? this.apiRevisions.filter(x => x.id === this.activeApiRevisionId)[0]
+      : this.apiRevisions[0];
     this.diffApiRevisionId = params[DIFF_API_REVISION_ID_QUERY_PARAM];
     this.diffAPIRevision = (this.diffApiRevisionId) ? this.apiRevisions.filter(x => x.id === this.diffApiRevisionId)[0] : undefined;
     this.diffStyle = params[DIFF_STYLE_QUERY_PARAM];
@@ -210,6 +212,12 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
       : undefined;
 
     this.changeDetectorRef.detectChanges();
+    // If we have no activeApiRevisionId and revisions aren't loaded yet,
+    // defer content loading to loadAPIRevisions which will call loadReviewContent
+    // once it resolves the active revision.
+    if (!this.activeApiRevisionId && this.apiRevisions.length === 0) {
+      return;
+    }
     this.workerService.startWorker().then(() => {
       this.registerWorkerEventHandler();
       this.loadReviewContent(this.reviewId!, this.activeApiRevisionId, this.diffApiRevisionId);
@@ -334,7 +342,12 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
             this.language = this.apiRevisions[0].language;
             this.languageSafeName = getLanguageCssSafeName(this.language);
             this.reviewContextService.setLanguage(this.language);
-            this.activeAPIRevision = this.apiRevisions.filter(x => x.id === this.activeApiRevisionId)[0];
+            this.activeAPIRevision = this.activeApiRevisionId
+              ? this.apiRevisions.filter(x => x.id === this.activeApiRevisionId)[0]
+              : this.apiRevisions[0];
+            if (this.activeAPIRevision && !this.activeApiRevisionId) {
+              this.activeApiRevisionId = this.activeAPIRevision.id;
+            }
             if (this.diffApiRevisionId) {
               this.diffAPIRevision = this.apiRevisions.filter(x => x.id === this.diffApiRevisionId)[0];
             }
@@ -374,6 +387,16 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
       ).subscribe({
         next: (response: any) => {
 
+        },
+        complete: () => {
+          // If content loading was deferred (no activeApiRevisionId in query params),
+          // trigger it now that revisions are resolved.
+          if (this.activeAPIRevision && this.codePanelData === null && !this.loadFailed) {
+            this.workerService.startWorker().then(() => {
+              this.registerWorkerEventHandler();
+              this.loadReviewContent(this.reviewId!, this.activeApiRevisionId, this.diffApiRevisionId);
+            });
+          }
         }
       });
   }

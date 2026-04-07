@@ -1,14 +1,17 @@
-import { Component, ElementRef, EventEmitter, OnInit, AfterViewInit, Output, ViewChild, ChangeDetectorRef, Input } from '@angular/core';
+import { Component, ElementRef, EventEmitter, OnInit, AfterViewInit, OnDestroy, Output, ViewChild, ChangeDetectorRef, Input } from '@angular/core';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
+import { Router } from '@angular/router';
 
 import { FirstReleaseApproval, Review, SelectItemModel } from 'src/app/_models/review';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { Pagination } from 'src/app/_models/pagination';
 import { Table, TableFilterEvent, TableLazyLoadEvent, TableRowSelectEvent } from 'primeng/table';
-import { MenuItem, SortEvent } from 'primeng/api';
+import { MenuItem, SortEvent, ConfirmationService, MessageService } from 'primeng/api';
 import { environment } from 'src/environments/environment';
 import { CookieService } from 'ngx-cookie-service';
 import { UserProfile } from 'src/app/_models/userProfile';
-import { getSupportedLanguages } from 'src/app/_helpers/common-helpers';
+import { getSupportedLanguages, usesTreeStyleParser } from 'src/app/_helpers/common-helpers';
 
 @Component({
     selector: 'app-reviews-list',
@@ -16,7 +19,9 @@ import { getSupportedLanguages } from 'src/app/_helpers/common-helpers';
     styleUrls: ['./reviews-list.component.scss'],
     standalone: false
 })
-export class ReviewsListComponent implements OnInit, AfterViewInit {
+export class ReviewsListComponent implements OnInit, AfterViewInit, OnDestroy {
+  private searchSubject = new Subject<string>();
+  private destroy$ = new Subject<void>();
   @Input() userProfile: UserProfile | undefined;
   @Output() reviewEmitter : EventEmitter<Review> = new EventEmitter<Review>();
   @ViewChild("reviewsTable") reviewsTable!: Table;
@@ -36,11 +41,19 @@ export class ReviewsListComponent implements OnInit, AfterViewInit {
   filters: any = null;
 
   filterSideBarVisible : boolean = false;
+  searchQuery: string = '';
 
   // Filter Options
   languages: SelectItemModel[] = [];
   selectedLanguages: SelectItemModel[] = [];
   firstReleaseApproval : FirstReleaseApproval = FirstReleaseApproval.All;
+  selectedState: string = 'Open';
+
+  stateOptions: any[] = [
+    { label: 'Open', value: 'Open' },
+    { label: 'Closed', value: 'Closed' },
+    { label: 'All', value: 'All' }
+  ];
 
   // Context Menu
   contextMenuItems! : MenuItem[];
@@ -59,7 +72,7 @@ export class ReviewsListComponent implements OnInit, AfterViewInit {
     { label: 'Approved', value: FirstReleaseApproval.Approved }
   ];
 
-  constructor(private reviewsService: ReviewsService, private cookieService: CookieService, private cd: ChangeDetectorRef) { }
+  constructor(private reviewsService: ReviewsService, private cookieService: CookieService, private cd: ChangeDetectorRef, private router: Router, private confirmationService: ConfirmationService, private messageService: MessageService) { }
 
   ngOnInit(): void {
     if (this.cookieService.check("reviewFilters")) {
@@ -69,6 +82,23 @@ export class ReviewsListComponent implements OnInit, AfterViewInit {
     this.loadReviews(0, this.pageSize * 2, true, this.filters); // Initial load of 2 pages
     this.languages = getSupportedLanguages();
     this.createContextMenuItems();
+
+    this.searchSubject.pipe(
+      debounceTime(400),
+      distinctUntilChanged(),
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      this.onSearch();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  onSearchInput() {
+    this.searchSubject.next(this.searchQuery);
   }
 
   ngAfterViewInit() {
@@ -83,20 +113,11 @@ export class ReviewsListComponent implements OnInit, AfterViewInit {
    *  * @param append wheather to add to or replace existing list
    */
   loadReviews(noOfItemsRead : number, pageSize: number, resetReviews = false, filters: any = null, sortField: string ="lastUpdatedOn",  sortOrder: number = 1) {
-    // Reset Filter if necessary
-    if (this.filters && this.filters.languages.value == null) {
-      this.selectedLanguages = [];
-    }
-
-    let packageName : string = "";
-    let languages : string [] = [];
-    if (filters) {
-      packageName = filters.packageName.value ?? packageName;
-      languages = (filters.languages.value != null)? filters.languages.value.map((item: any) => item.data) : languages;
-    }
+    let searchName : string = this.searchQuery || "";
+    let languages : string [] = this.selectedLanguages.map((item: any) => item.data);
 
     this.reviewsService.getReviews(
-      noOfItemsRead, pageSize, packageName, languages, 
+      noOfItemsRead, pageSize, searchName, languages, 
       FirstReleaseApproval[this.firstReleaseApproval], sortField, sortOrder).subscribe({
       next: (response : any) => {
         if (response.result && response.pagination) {
@@ -130,7 +151,56 @@ export class ReviewsListComponent implements OnInit, AfterViewInit {
   }
 
   viewReview(review: Review) {
-    this.reviewsService.openReviewPage(review.id);
+    if (usesTreeStyleParser(review.language)) {
+      this.router.navigate(['/review', review.id]);
+    } else {
+      this.reviewsService.openReviewPage(review.id, review.language);
+    }
+  }
+
+  deleteReview(event: Event, review: Review) {
+    event.stopPropagation();
+    this.confirmationService.confirm({
+      target: event.target as EventTarget,
+      message: `Are you sure you want to delete review "${review.packageName}"?`,
+      header: 'Delete Review',
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        this.reviewsService.deleteReview(review.id).subscribe({
+          next: () => {
+            this.messageService.add({ severity: 'success', summary: 'Deleted', detail: 'Review deleted successfully.' });
+            this.loadReviews(0, this.pageSize * 2, true, this.filters, this.sortField, this.sortOrder);
+          },
+          error: () => {
+            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete review.' });
+          }
+        });
+      }
+    });
+  }
+
+  onSearch() {
+    this.loadReviews(0, this.pageSize * 2, true, this.filters, this.sortField, this.sortOrder);
+  }
+
+  onLanguageFilterChange() {
+    this.loadReviews(0, this.pageSize * 2, true, this.filters, this.sortField, this.sortOrder);
+  }
+
+  onStateFilterChange() {
+    this.loadReviews(0, this.pageSize * 2, true, this.filters, this.sortField, this.sortOrder);
+  }
+
+  resetFilters() {
+    this.selectedLanguages = [];
+    this.selectedState = 'Open';
+    this.firstReleaseApproval = FirstReleaseApproval.All;
+    this.searchQuery = '';
+    this.loadReviews(0, this.pageSize * 2, true, null, this.sortField, this.sortOrder);
+  }
+
+  isTreeStyleLanguage(language: string): boolean {
+    return usesTreeStyleParser(language);
   }                   
 
   /**
@@ -138,7 +208,8 @@ export class ReviewsListComponent implements OnInit, AfterViewInit {
    */
   tableHasFilters() : boolean {
     return (this.sortField != "lastUpdatedOn" || this.sortOrder != 1 || 
-    (this.filters && (this.filters.packageName.value != null || this.filters.languages.value != null)) ||
+    this.selectedLanguages.length > 0 || this.searchQuery !== '' ||
+    this.selectedState !== 'Open' ||
     this.firstReleaseApproval != FirstReleaseApproval.All);
   }
 

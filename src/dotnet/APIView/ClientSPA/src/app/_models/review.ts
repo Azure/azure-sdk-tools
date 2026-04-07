@@ -15,6 +15,7 @@ export class Review {
   id: string
   packageName: string
   language: string
+  createdBy: string
   lastUpdatedOn: string
   isDeleted: boolean
   isApproved: boolean
@@ -28,6 +29,7 @@ export class Review {
     this.id = ''
     this.packageName = ''
     this.language = ''
+    this.createdBy = ''
     this.lastUpdatedOn = ''
     this.isDeleted = false
     this.isApproved = false

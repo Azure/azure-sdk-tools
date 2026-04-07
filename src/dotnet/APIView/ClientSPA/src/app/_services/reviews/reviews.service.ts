@@ -1,5 +1,6 @@
 import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Router } from '@angular/router';
 
 import { Observable, map } from 'rxjs';
 import { PaginatedResult } from 'src/app/_models/pagination';
@@ -7,6 +8,7 @@ import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { ConfigService } from '../config/config.service';
 import { CrossLanguageContentDto } from 'src/app/_models/codePanelModels';
+import { usesTreeStyleParser } from 'src/app/_helpers/common-helpers';
 
 @Injectable({
   providedIn: 'root'
@@ -15,7 +17,7 @@ export class ReviewsService {
   baseUrl : string = this.configService.apiUrl + "reviews";
   paginatedResult: PaginatedResult<Review[]> = new PaginatedResult<Review[]>();
 
-  constructor(private http: HttpClient, private configService: ConfigService) { }
+  constructor(private http: HttpClient, private configService: ConfigService, private router: Router) { }
 
   getReviews(noOfItemsRead: number, pageSize: number,
     name: string, languages: string [], approval: string,
@@ -73,8 +75,16 @@ export class ReviewsService {
     return this.http.get<boolean>(this.baseUrl + `/enableNamespaceReview`, { withCredentials: true });
   }
 
-  openReviewPage(reviewId: string) {
-    window.open(this.configService.webAppUrl + `Assemblies/Review/${reviewId}`, '_blank');
+  openReviewPage(reviewId: string, language?: string) {
+    if (language && !usesTreeStyleParser(language)) {
+      window.open(this.configService.webAppUrl + `Assemblies/Review/${reviewId}`, '_blank');
+    } else {
+      this.router.navigate(['/review', reviewId]);
+    }
+  }
+
+  getPackageNames(language: string): Observable<string[]> {
+    return this.http.get<string[]>(this.baseUrl + `/languages/${encodeURIComponent(language)}/packagenames`, { withCredentials: true });
   }
 
   createReview(formData: any) : Observable<APIRevision> {

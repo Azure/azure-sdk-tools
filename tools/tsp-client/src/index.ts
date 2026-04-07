@@ -60,7 +60,6 @@ export function resolveOutputDir(argv: any): string {
 }
 
 const parser = yargs(hideBin(process.argv))
-  .parserConfiguration({ "populate--": true })
   .version(packageJson.version)
   .alias("v", "version")
   .scriptName("")
@@ -275,9 +274,11 @@ const parser = yargs(hideBin(process.argv))
           type: "string",
           description: "Alternate path for emitter-package.json file",
         })
-        .epilog(
-          "Any arguments after -- will be passed directly to the underlying npm install command.\nExample: tsp-client generate-config-files --package-json ./package.json -- --registry=https://my-registry",
-        );
+        .option("npm-args", {
+          type: "string",
+          description:
+            'Pass space separated string of flags to the underlying npm install command. Use = to assign the value, e.g. --npm-args="--force --legacy-peer-deps"',
+        });
     },
     async (argv: any) => {
       argv["output-dir"] = resolveOutputDir(argv);
@@ -293,9 +294,11 @@ const parser = yargs(hideBin(process.argv))
           type: "string",
           description: "Alternate path for emitter-package.json file",
         })
-        .epilog(
-          "Any arguments after -- will be passed directly to the underlying npm install command.\nExample: tsp-client generate-lock-file -- --registry=https://my-registry",
-        );
+        .option("npm-args", {
+          type: "string",
+          description:
+            'Pass space separated string of flags to the underlying npm install command. Use = to assign the value, e.g. --npm-args="--force --legacy-peer-deps"',
+        });
     },
     async (argv: any) => {
       argv["output-dir"] = resolveOutputDir(argv);

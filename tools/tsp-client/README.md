@@ -114,7 +114,7 @@ This command generates the default configuration files used by tsp-client. Run t
 
 **Required: Use the `--package-json` flag to specify the path to the package.json file of the emitter you will use to generate client libraries.**
 
-Any arguments passed after `--` will be forwarded directly to the underlying npm install command used during lock file generation. This allows you to pass any npm flags such as `--registry`, `--legacy-peer-deps`, `--force`, etc.
+Any additional npm flags can be forwarded to the underlying npm install command using the `--npm-args` option. This allows you to pass any npm flags such as `--registry`, `--legacy-peer-deps`, `--force`, etc. in a space separated string. Use `=` to assign the value:
 
 Example:
 
@@ -125,7 +125,7 @@ tsp-client generate-config-files --package-json < path-to-emitter-repo-clone > /
 Example with additional npm flags:
 
 ```bash
-tsp-client generate-config-files --package-json < path-to-emitter-repo-clone > /package.json -- --registry=https://my-registry
+tsp-client generate-config-files --package-json < path-to-emitter-repo-clone > /package.json --npm-args="--registry=https://my-registry --legacy-peer-deps"
 ```
 
 Example using the `azure-sdk-for-js` and the `@azure-tools/typespec-ts` emitter:
@@ -213,7 +213,7 @@ Example `emitter-package.json` generated using overrides:
 
 Generate an emitter-package-lock.json under the eng/ directory based on existing `<repo-root>/eng/emitter-package.json`.
 
-Any arguments passed after `--` will be forwarded directly to the underlying npm install command. This allows you to pass any npm flags such as `--registry`, `--legacy-peer-deps`, `--force`, etc.
+Any additional npm flags can be forwarded to the underlying `npm install` command using the `--npm-args` option. This allows you to pass any npm flags such as `--registry`, `--legacy-peer-deps`, `--force`, etc. in a space separated string. Use `=` to assign the value:
 
 Example:
 
@@ -224,7 +224,7 @@ tsp-client generate-lock-file
 Example with additional npm flags:
 
 ```bash
-tsp-client generate-lock-file -- --registry=https://my-registry --legacy-peer-deps
+tsp-client generate-lock-file --npm-args="--registry=https://my-registry --legacy-peer-deps"
 ```
 
 ### install-dependencies

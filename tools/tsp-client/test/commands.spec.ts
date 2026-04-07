@@ -7,6 +7,7 @@ import {
   generateLockFileCommand,
   generateLockFileCommandCore,
   generateConfigFilesCommand,
+  parseNpmArgs,
 } from "../src/commands.js";
 import { afterAll, afterEach, beforeAll, describe, it, expect } from "vitest";
 import { assert } from "chai";
@@ -856,7 +857,7 @@ describe.sequential("Verify commands", () => {
   it("Generate lock file with npm args passed through", async () => {
     try {
       // --prefer-offline is a valid npm flag that shouldn't break install
-      await generateLockFileCommand({ "--": ["--prefer-offline"] });
+      await generateLockFileCommand({ "npm-args": "--prefer-offline" });
 
       assert.isTrue((await stat(joinPaths(repoRoot, "eng", "emitter-package-lock.json"))).isFile());
     } catch (error) {
@@ -910,7 +911,7 @@ describe.sequential("Verify commands", () => {
     try {
       const args = {
         "package-json": joinPaths(cwd(), "test", "examples", "package.json"),
-        "--": ["--prefer-offline"],
+        "npm-args": "--prefer-offline",
       };
       await generateConfigFilesCommand(args);
       assert.isTrue(await doesFileExist(joinPaths(repoRoot, "eng", "emitter-package.json")));
@@ -921,5 +922,15 @@ describe.sequential("Verify commands", () => {
       rm(joinPaths(repoRoot, "eng", "emitter-package.json"), { force: true });
       rm(joinPaths(repoRoot, "eng", "emitter-package-lock.json"), { force: true });
     }
+  });
+
+  it("parseNpmArgs splits a space-separated string into an array", () => {
+    assert.deepEqual(parseNpmArgs("--force --legacy-peer-deps"), ["--force", "--legacy-peer-deps"]);
+    assert.deepEqual(parseNpmArgs("--registry=https://my-registry"), [
+      "--registry=https://my-registry",
+    ]);
+    assert.deepEqual(parseNpmArgs(undefined), []);
+    assert.deepEqual(parseNpmArgs(""), []);
+    assert.deepEqual(parseNpmArgs("  --force  "), ["--force"]);
   });
 });

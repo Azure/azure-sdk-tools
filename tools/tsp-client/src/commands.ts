@@ -725,7 +725,7 @@ export async function generateConfigFilesCommand(argv: any) {
   await writeFile(emitterPath, JSON.stringify(emitterPackageJson, null, 2));
   Logger.info(`${basename(emitterPath)} file generated in '${dirname(emitterPath)}' directory`);
 
-  await generateLockFileCommandCore(outputDir, emitterPath, argv);
+  await generateLockFileCommandCore(outputDir, emitterPath, parseNpmArgs(argv["npm-args"]));
 }
 
 export async function generateLockFileCommand(argv: any) {
@@ -733,21 +733,20 @@ export async function generateLockFileCommand(argv: any) {
     argv["output-dir"],
     resolveEmitterPathFromArgs(argv) ??
       joinPaths(await getRepoRoot(argv["output-dir"]), defaultRelativeEmitterPackageJsonPath),
-    argv,
+    parseNpmArgs(argv["npm-args"]),
   );
 }
 
 export async function generateLockFileCommandCore(
   outputDir: string,
   emitterPackageJsonPath: string,
-  argv: any = {},
+  npmArgs: string[] = [],
 ) {
   Logger.info("Generating lock file...");
   const args: string[] = ["install"];
   if (process.env["TSPCLIENT_FORCE_INSTALL"]?.toLowerCase() === "true") {
     args.push("--force");
   }
-  const npmArgs: string[] = argv["--"] ?? [];
   args.push(...npmArgs);
   if (npmArgs.length > 0) {
     Logger.info(`Passing additional npm args: ${npmArgs.join(" ")}`);
@@ -835,4 +834,15 @@ function resolveEmitterPathFromArgs(argv: any): string | undefined {
   }
 
   return undefined;
+}
+
+/**
+ * Parses a space-separated string of npm arguments into an array.
+ * Returns an empty array if the input is undefined or empty.
+ */
+export function parseNpmArgs(npmArgsString: string | undefined): string[] {
+  if (!npmArgsString) {
+    return [];
+  }
+  return npmArgsString.split(/\s+/).filter((arg) => arg.length > 0);
 }

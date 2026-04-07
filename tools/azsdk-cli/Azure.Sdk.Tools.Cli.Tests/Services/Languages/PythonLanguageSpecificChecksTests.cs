@@ -509,23 +509,8 @@ internal class PythonLanguageSpecificChecksTests
             Assert.That(capturedOptions, Is.Not.Null);
             Assert.That(capturedOptions!.EnvironmentVariables, Is.Not.Null);
 
-            if (expectLive)
-            {
-                Assert.That(capturedOptions.EnvironmentVariables!["AZURE_TEST_RUN_LIVE"], Is.EqualTo("true"));
-            }
-            else
-            {
-                Assert.That(capturedOptions.EnvironmentVariables!.ContainsKey("AZURE_TEST_RUN_LIVE"), Is.False);
-            }
-
-            if (expectSkipRecording)
-            {
-                Assert.That(capturedOptions.EnvironmentVariables!["AZURE_SKIP_LIVE_RECORDING"], Is.EqualTo("true"));
-            }
-            else
-            {
-                Assert.That(capturedOptions.EnvironmentVariables!.ContainsKey("AZURE_SKIP_LIVE_RECORDING"), Is.False);
-            }
+            Assert.That(capturedOptions.EnvironmentVariables!["AZURE_TEST_RUN_LIVE"], Is.EqualTo(expectLive ? "true" : "false"));
+            Assert.That(capturedOptions.EnvironmentVariables!["AZURE_SKIP_LIVE_RECORDING"], Is.EqualTo(expectSkipRecording ? "true" : "false"));
         });
     }
 
@@ -698,7 +683,7 @@ internal class PythonLanguageSpecificChecksTests
         // Call without specifying testMode - should default to Playback
         await _languageService.RunAllTests(_packagePath, ct: CancellationToken.None);
 
-        Assert.That(capturedOptions!.EnvironmentVariables!.ContainsKey("AZURE_TEST_RUN_LIVE"), Is.False);
+        Assert.That(capturedOptions!.EnvironmentVariables!["AZURE_TEST_RUN_LIVE"], Is.EqualTo("false"));
         Assert.That(capturedOptions.EnvironmentVariables["AZURE_SKIP_LIVE_RECORDING"], Is.EqualTo("true"));
     }
 

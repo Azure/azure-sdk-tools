@@ -169,15 +169,8 @@ public sealed partial class PythonLanguageService : LanguageService
 
         // Python SDK uses AZURE_TEST_RUN_LIVE for record/live modes
         // and AZURE_SKIP_LIVE_RECORDING for playback/live modes (false only for record)
-        if (testMode == TestMode.Record || testMode == TestMode.Live)
-        {
-            envVars["AZURE_TEST_RUN_LIVE"] = "true";
-        }
-
-        if (testMode != TestMode.Record)
-        {
-            envVars["AZURE_SKIP_LIVE_RECORDING"] = "true";
-        }
+        envVars["AZURE_TEST_RUN_LIVE"] = (testMode == TestMode.Record || testMode == TestMode.Live) ? "true" : "false";
+        envVars["AZURE_SKIP_LIVE_RECORDING"] = (testMode != TestMode.Record) ? "true" : "false";
 
         if (liveTestEnvironment != null)
         {

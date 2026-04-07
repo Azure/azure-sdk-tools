@@ -77,8 +77,9 @@ extends:
                 os: linux
 
               steps:
-                - template: /eng/pipelines/templates/steps/use-python-version.yml
-                  parameters:
+                - task: UsePythonVersion@0
+                  displayName: 'Use Python $(PythonTestVersion)'
+                  inputs:
                     versionSpec: '$(PythonTestVersion)'
 
                 - ${{ parameters.TestSteps }}
@@ -92,8 +93,9 @@ extends:
                 os: linux
 
               steps:
-                - template: /eng/pipelines/templates/steps/use-python-version.yml
-                  parameters:
+                - task: UsePythonVersion@0
+                  displayName: 'Use Python ${{ parameters.PythonVersion }}'
+                  inputs:
                     versionSpec: '${{ parameters.PythonVersion }}'
 
                 - ${{ parameters.TestSteps }}

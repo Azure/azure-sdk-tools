@@ -113,7 +113,7 @@ describe('ReviewPageOptionsComponent', () => {
   describe('First Release Approval Button', () => {
     it('should disable first release approval button when review is approved', () => {
       component.reviewIsApproved = true;
-      component.loadingStatus = "completed";
+      fixture.componentRef.setInput('loadingStatus', 'completed');
       fixture.detectChanges();
       const button = fixture.nativeElement.querySelector('#first-release-approval-button');
       expect(button).not.toBeTruthy();
@@ -123,11 +123,14 @@ describe('ReviewPageOptionsComponent', () => {
     it('should disable first release approval button when review is not approved and user is not an approver', () => {
       mockPermissionsService.isApproverFor.mockReturnValue(false);
       component.reviewIsApproved = false;
-      component.review = { language: 'Python' } as Review;
-      component.userProfile = new UserProfile();
-      component.userProfile.userName = "test-user-1";
-      component.userProfile.permissions = { userId: 'test-user-1', roles: [] };
-      component.loadingStatus = "completed";
+      const userProfile1 = new UserProfile();
+      userProfile1.userName = "test-user-1";
+      userProfile1.permissions = { userId: 'test-user-1', roles: [] };
+      const review1 = new Review();
+      review1.language = 'Python';
+      fixture.componentRef.setInput('review', review1);
+      fixture.componentRef.setInput('userProfile', userProfile1);
+      fixture.componentRef.setInput('loadingStatus', 'completed');
       fixture.detectChanges();
       const button = fixture.nativeElement.querySelector('#first-release-approval-button');
       expect(button).not.toBeTruthy();
@@ -137,11 +140,14 @@ describe('ReviewPageOptionsComponent', () => {
     it('should enable first release approval button when review is not approved and user is an approver', () => {
       mockPermissionsService.isApproverFor.mockReturnValue(true);
       component.reviewIsApproved = false;
-      component.review = { language: 'Python' } as Review;
-      component.userProfile = new UserProfile();
-      component.userProfile.userName = "test-user";
-      component.userProfile.permissions = mockApproverPermissions;
-      component.loadingStatus = "completed";
+      const userProfile = new UserProfile();
+      userProfile.userName = "test-user";
+      userProfile.permissions = mockApproverPermissions;
+      const review = new Review();
+      review.language = 'Python';
+      fixture.componentRef.setInput('review', review);
+      fixture.componentRef.setInput('userProfile', userProfile);
+      fixture.componentRef.setInput('loadingStatus', 'completed');
       fixture.detectChanges();
       const button = fixture.nativeElement.querySelector('#first-release-approval-button');
       expect(button).toBeTruthy();
@@ -151,11 +157,14 @@ describe('ReviewPageOptionsComponent', () => {
     it('should emit reviewApprovalEmitter when first release approval button is clicked', () => {
       mockPermissionsService.isApproverFor.mockReturnValue(true);
       component.reviewIsApproved = false;
-      component.review = { language: 'Python' } as Review;
-      component.userProfile = new UserProfile();
-      component.userProfile.userName = "test-user";
-      component.userProfile.permissions = mockApproverPermissions;
-      component.loadingStatus = "completed";
+      const userProfile = new UserProfile();
+      userProfile.userName = "test-user";
+      userProfile.permissions = mockApproverPermissions;
+      const review = new Review();
+      review.language = 'Python';
+      fixture.componentRef.setInput('review', review);
+      fixture.componentRef.setInput('userProfile', userProfile);
+      fixture.componentRef.setInput('loadingStatus', 'completed');
       fixture.detectChanges();
       const emitSpy = vi.spyOn(component.reviewApprovalEmitter, 'emit');
       const button: HTMLButtonElement = fixture.nativeElement.querySelector('#first-release-approval-button');
@@ -180,7 +189,7 @@ describe('ReviewPageOptionsComponent', () => {
   describe('Toggle APIRevision Approval', () => {
     it('should close APIRevision Approval Modal', () => {
       component.showAPIRevisionApprovalModal = true;
-      component.loadingStatus = "completed";
+      fixture.componentRef.setInput('loadingStatus', 'completed');
       fixture.detectChanges();
       component.toggleAPIRevisionApproval();
       expect(component.showAPIRevisionApprovalModal).not.toBeTruthy();

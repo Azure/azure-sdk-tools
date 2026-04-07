@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, OnDestroy, Output, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, inject, Input, OnChanges, OnInit, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToggleSwitchChangeEvent } from 'primeng/toggleswitch';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
@@ -83,6 +83,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
 
   private destroy$ = new Subject<void>();
   private qualityScoreRequestId: number = 0;
+  private cdr = inject(ChangeDetectorRef);
 
   webAppUrl : string = this.configService.webAppUrl
   assetsPath : string = environment.assetsPath;
@@ -417,9 +418,11 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
       combineLatest([isRequired$, isVersionReviewed$]).pipe(take(1)).subscribe({
         next: ([isRequired, isVersionReviewed]: [boolean, boolean]) => {
           this.updateApprovalStates(isRequired, isVersionReviewed);
+          this.cdr.markForCheck();
         },
         error: (error) => {
           this.updateApprovalStates(false, false);
+          this.cdr.markForCheck();
         }
       });
     } else {
@@ -490,6 +493,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
         this.unresolvedMustFixCount = score.unresolvedMustFixCount;
         this.qualityScoreLoading = false;
         this.setAPIRevisionApprovalStates();
+        this.cdr.markForCheck();
       },
       error: () => {
         if (requestId !== this.qualityScoreRequestId) return;
@@ -497,6 +501,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
         this.unresolvedMustFixCount = 0;
         this.qualityScoreLoading = false;
         this.setAPIRevisionApprovalStates();
+        this.cdr.markForCheck();
       }
     });
   }
@@ -513,6 +518,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
       this.pullRequestService.getAssociatedPullRequests(this.activeAPIRevision.reviewId, this.activeAPIRevision.id).pipe(take(1)).subscribe({
         next: (response: PullRequestModel[]) => {
           this.associatedPullRequests = response;
+          this.cdr.markForCheck();
         }
       });
 
@@ -527,6 +533,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
           }
           // Re-evaluate namespace review states after associated reviews are loaded
           this.setNamespaceReviewStates();
+          this.cdr.markForCheck();
         }
       });
     }

@@ -315,6 +315,11 @@ export class SamplesPageComponent {
           this.samplesRevisionTotalCount = paginatedResult.pagination?.totalCount ?? this.samplesRevisions.length;
           this.activeSamplesRevision = this.samplesRevisions.filter(x => x.id === this.activeSamplesRevisionId)[0];
           this.loadActiveSampleRevisionData();
+        },
+        error: () => {
+          this.isLoading = false;
+          this.loadFailed = true;
+          this.changeDetectorRef.detectChanges();
         }
     });
   }
@@ -322,6 +327,7 @@ export class SamplesPageComponent {
   loadActiveSampleRevisionData() {
     if (this.activeView === 'list') {
       this.isLoading = false;
+      this.changeDetectorRef.detectChanges();
       return;
     }
 
@@ -336,6 +342,7 @@ export class SamplesPageComponent {
     // Sample not found or no ID - fall back to list
     this.activeView = 'list';
     this.isLoading = false;
+    this.changeDetectorRef.detectChanges();
   }
 
   loadSamplesContent(reviewId: string, activeSamplesRevisionId: string | null = null) {

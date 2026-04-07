@@ -16,3 +16,4 @@ agent-dev-cli
 # Backend server
 fastapi
 uvicorn[standard]
+azure-monitor-opentelemetry

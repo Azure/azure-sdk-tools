@@ -6,9 +6,9 @@ and handles feedback through a local workflow.
 """
 
 import asyncio
-import uvicorn
 import logging
 import sys
+import time
 from contextvars import ContextVar
 from contextlib import asynccontextmanager
 from uuid import uuid4
@@ -30,8 +30,14 @@ from utils.azure_ai_foundry import close_clients
 from utils.azure_cosmosdb import close_cosmos_client
 from utils.azure_credential import close_credential
 from utils.azure_storage import close_storage_client
+from utils.azure_monitor import (
+    configure_metrics,
+    record_chat_request,
+    record_chat_duration,
+)
 from pydantic import BaseModel
 import config.app_config as app_config
+import uvicorn
 
 _request_id_ctx_var: ContextVar[str] = ContextVar("request_id", default="system")
 
@@ -68,9 +74,17 @@ def _configure_logging() -> None:
             handler.setFormatter(formatter)
             handler.addFilter(request_id_filter)
 
+    # Suppress noisy Azure SDK HTTP / credential loggers
+    for noisy in (
+        "azure.core.pipeline.policies.http_logging_policy",
+        "azure.cosmos",
+    ):
+        logging.getLogger(noisy).setLevel(logging.WARNING)
+
 
 _configure_logging()
 logger = logging.getLogger(__name__)
+configure_metrics()
 
 
 @asynccontextmanager
@@ -121,7 +135,39 @@ _thread_memory_service = ThreadMemoryService()
 @app.post("/agent/chat", response_model=ChatResponse)
 async def handle_chat(req: ChatRequest):
     """Process a chat request through the chat service."""
-    return await _chat_service.chat(req)
+    tenant = req.tenant_id.value
+    logger.info(
+        "Chat request: tenant=%s, conversation=%s, user=%s, message=%s",
+        tenant,
+        req.conversation_id,
+        req.message.user_name or req.message.user_id,
+        req.message.content[:200],
+    )
+    record_chat_request(tenant)
+    start = time.perf_counter()
+    try:
+        resp = await _chat_service.chat(req)
+        elapsed = time.perf_counter() - start
+        record_chat_duration(tenant, elapsed, success=True)
+        logger.info(
+            "Chat response: tenant=%s, conversation=%s, response_id=%s, elapsed=%.2fs",
+            tenant,
+            req.conversation_id,
+            resp.id,
+            elapsed,
+        )
+        return resp
+    except Exception:
+        elapsed = time.perf_counter() - start
+        record_chat_duration(tenant, elapsed, success=False)
+        logger.error(
+            "Chat failed: tenant=%s, conversation=%s, elapsed=%.2fs",
+            tenant,
+            req.conversation_id,
+            elapsed,
+            exc_info=True,
+        )
+        raise
 
 
 @app.post(
@@ -130,18 +176,35 @@ async def handle_chat(req: ChatRequest):
 @app.post("/agent/feedback", response_model=FeedbackResponse)
 async def handle_feedback(req: FeedbackRequest):
     """Process user feedback through the feedback workflow."""
+    logger.info(
+        "Feedback request: tenant=%s, link=%s, reaction=%s",
+        req.tenant_id,
+        req.link,
+        req.reaction,
+    )
     return await _feedback_service.process(req)
 
 
 @app.post("/message/intention", response_model=IntentionResponse)
 async def handle_intention(req: IntentionRequest):
     """Classify whether the bot should auto-reply to a message."""
+    logger.info(
+        "Intention request: conversation=%s, message=%s",
+        req.conversation_id,
+        req.message.content[:200],
+    )
     return await _intention_service.classify(req)
 
 
 @app.post("/conversation/save", response_model=SaveConversationMessageResponse)
 async def save_conversation(req: ConversationMessage):
     """Save a conversation message and trigger background tenant memory update."""
+    logger.info(
+        "Save conversation request: tenant=%s, conversation=%s, message=%s",
+        req.tenant_id,
+        req.conversation_id,
+        req.content[:200],
+    )
     await _conversation_service.save_conversation(req)
     # Fire-and-forget background task to feed the thread to tenant memory
     asyncio.create_task(_update_thread_memory(req))

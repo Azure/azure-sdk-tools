@@ -23,44 +23,114 @@ pr:
       - packages/python-packages/apiview-stub-generator
 
 extends:
-  template: /eng/pipelines/templates/stages/archetype-sdk-tool-python.yml
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
   parameters:
-    PythonVersion: '3.10'
-    PackagePath: 'packages/python-packages/apiview-stub-generator'
-    FeedName: 'public/azure-sdk-for-python'
-    ArtifactName: 'apiviewparserpython'
-    PackageName: 'Python API View Parser'
-    TestSteps:
-    - script: |
-        python $(Build.SourcesDirectory)/eng/scripts/python_version_check.py
-      displayName: 'Verify Python APIView version consistency'
+    stages:
+      - stage: 'Build'
+        variables:
+          - template: /eng/pipelines/templates/variables/globals.yml
+          - template: /eng/pipelines/templates/variables/image.yml
+        jobs:
+          - job: 'Build'
+            pool:
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
+            steps:
+              - template: /eng/pipelines/templates/steps/use-python-version.yml
+                parameters:
+                  versionSpec: '3.10'
 
-    - task: UsePythonVersion@0
-      displayName: 'Install Python 3.9'
-      inputs:
-        versionSpec: '3.9.x'
-    - task: UsePythonVersion@0
-      displayName: 'Install Python 3.10'
-      inputs:
-        versionSpec: '3.10.x'
-    - task: UsePythonVersion@0
-      displayName: 'Install Python 3.11'
-      inputs:
-        versionSpec: '3.11.x'
-    - task: UsePythonVersion@0
-      displayName: 'Install Python 3.12'
-      inputs:
-        versionSpec: '3.12.x'
-    - task: UsePythonVersion@0
-      displayName: 'Install Python 3.13'
-      inputs:
-        versionSpec: '3.13.x'
-    - task: UsePythonVersion@0
-      displayName: 'Install Python 3.14'
-      inputs:
-        versionSpec: '3.14.x'
-    - script: |
-        cd $(Build.SourcesDirectory)/packages/python-packages/apiview-stub-generator
-        python -m pip install tox
-        tox -p auto -e py39-pytest,py310-pytest,py311-pytest,py312-pytest,py313-pytest,py314-pytest,stubgen
-      displayName: 'Run APIView tests (all Python versions in parallel)'
+              - script: |
+                  python --version
+                  python -m pip install virtualenv aiohttp chardet trio setuptools wheel packaging
+                displayName: 'Setup Python Environment'
+
+              - pwsh: |
+                  Write-Host "Bundling stable version of python apiview-stub-generator"
+                  python setup.py bdist_wheel --universal --dist-dir $(Build.ArtifactStagingDirectory)
+                displayName: 'Build Python API View Parser'
+                workingDirectory: $(Build.SourcesDirectory)/packages/python-packages/apiview-stub-generator
+
+              - task: 1ES.PublishPipelineArtifact@1
+                inputs:
+                  targetPath: '$(Build.ArtifactStagingDirectory)'
+                  artifactName: 'apiviewparserpython'
+
+          - job: 'Test'
+            dependsOn: 'Build'
+            pool:
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
+            strategy:
+              matrix:
+                Python39:
+                  PythonVersion: '3.9.x'
+                Python310:
+                  PythonVersion: '3.10.x'
+                Python311:
+                  PythonVersion: '3.11.x'
+                Python312:
+                  PythonVersion: '3.12.x'
+                Python313:
+                  PythonVersion: '3.13.x'
+                Python314:
+                  PythonVersion: '3.14.x'
+            steps:
+              - template: /eng/pipelines/templates/steps/use-python-version.yml
+                parameters:
+                  versionSpec: '$(PythonVersion)'
+
+              - script: |
+                  python $(Build.SourcesDirectory)/eng/scripts/python_version_check.py
+                displayName: 'Verify Python APIView version consistency'
+
+              - script: |
+                  cd $(Build.SourcesDirectory)/packages/python-packages/apiview-stub-generator
+                  python -m pip install tox
+                  tox -e pytest,stubgen
+                displayName: 'Run APIView tests (Python $(PythonVersion))'
+
+      - ${{ if and(eq(variables['Build.Reason'], 'Manual'), eq(variables['System.TeamProject'], 'internal')) }}:
+        - stage: 'ReleaseToFeed'
+          displayName: "Release to public/azure-sdk-for-python"
+          dependsOn: Build
+          condition: succeeded()
+          variables:
+            - template: /eng/pipelines/templates/variables/globals.yml
+            - template: /eng/pipelines/templates/variables/image.yml
+          jobs:
+            - job: PublishPackage
+              displayName: 'Publish Python API View Parser package to devops feed'
+              pool:
+                name: $(LINUXPOOL)
+                image: $(LINUXVMIMAGE)
+                os: linux
+              steps:
+              - checkout: none
+              - download: current
+              - task: UsePythonVersion@0
+                inputs:
+                  versionSpec: '3.10'
+
+              - script: |
+                  set -e
+                  python -m pip install twine
+                displayName: Install Twine
+
+              - task: TwineAuthenticate@0
+                displayName: 'Twine Authenticate to feed'
+                inputs:
+                  artifactFeeds: 'public/azure-sdk-for-python'
+
+              - task: PipAuthenticate@1
+                displayName: 'Pip Authenticate to feed'
+                inputs:
+                  artifactFeeds: 'public/azure-sdk-for-python'
+                  onlyAddExtraIndex: false
+
+              - pwsh: |
+                  twine upload --repository public/azure-sdk-for-python --config-file $(PYPIRC_PATH) $(Pipeline.Workspace)/apiviewparserpython/*.whl
+                  echo "Uploaded whl to devops feed public/azure-sdk-for-python"
+                displayName: 'Publish Python API View Parser to DevOps feed'

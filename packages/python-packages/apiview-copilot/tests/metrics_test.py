@@ -111,12 +111,9 @@ class TestMetrics:
         ]
 
     @patch("src._metrics.get_active_reviews")
-    @patch("src._metrics.get_comments_in_date_range")
-    def test_metrics_report_basic(self, mock_get_comments, mock_get_reviews):
+    def test_metrics_report_basic(self, mock_get_reviews):
         """Test metrics report generation and formatting."""
-        mock_get_reviews.return_value = self._make_active_reviews()
-        # Return raw dicts, as get_comments_in_date_range does
-        mock_get_comments.return_value = self._make_comments()
+        mock_get_reviews.return_value = (self._make_active_reviews(), self._make_comments())
 
         report = metrics.get_metrics_report("2025-08-15", "2025-09-12", environment="test")
         assert "metrics" in report
@@ -159,32 +156,27 @@ class TestMetrics:
         }
 
     @patch("src._metrics.get_active_reviews")
-    @patch("src._metrics.get_comments_in_date_range")
-    def test_metrics_report_empty(self, mock_get_comments, mock_get_reviews):
+    def test_metrics_report_empty(self, mock_get_reviews):
         """Test metrics report with no reviews or comments."""
-        mock_get_reviews.return_value = []
-        mock_get_comments.return_value = []
+        mock_get_reviews.return_value = ([], [])
         report = metrics.get_metrics_report("2025-08-15", "2025-09-12", environment="test")
         overall = report["metrics"]["overall"]
         assert overall["adoption"]["active_review_count"] == 0
         assert overall["adoption"]["adoption_rate"] == 0.0
 
     @patch("src._metrics.get_active_reviews")
-    @patch("src._metrics.get_comments_in_date_range")
-    def test_metrics_report_missing_element_id(self, mock_get_comments, mock_get_reviews):
+    def test_metrics_report_missing_element_id(self, mock_get_reviews):
         """Metrics report should not fail when comment dicts omit ElementId."""
-        mock_get_reviews.return_value = self._make_active_reviews()
         comments = self._make_comments()
         # Simulate Cosmos query results where the property doesn't exist and is omitted.
         comments[0].pop("ElementId", None)
-        mock_get_comments.return_value = comments
+        mock_get_reviews.return_value = (self._make_active_reviews(), comments)
 
         report = metrics.get_metrics_report("2025-08-15", "2025-09-12", environment="test")
         assert report["metrics"]["overall"]["comment_quality"]["ai_comment_count"] == 2
 
     @patch("src._metrics.get_active_reviews")
-    @patch("src._metrics.get_comments_in_date_range")
-    def test_metrics_report_language_split(self, mock_get_comments, mock_get_reviews):
+    def test_metrics_report_language_split(self, mock_get_reviews):
         """Test metrics report with multiple languages."""
         reviews = [
             ActiveReviewMetadata(
@@ -246,8 +238,7 @@ class TestMetrics:
                 "Downvotes": ["1"],
             },
         ]
-        mock_get_reviews.return_value = reviews
-        mock_get_comments.return_value = comments
+        mock_get_reviews.return_value = (reviews, comments)
         report = metrics.get_metrics_report("2025-08-15", "2025-09-12", environment="test")
         # language keys may preserve case from ActiveReviewMetadata; check case-insensitively
         keys = {k.lower(): k for k in report["metrics"].keys()}
@@ -318,8 +309,7 @@ class TestMetrics:
         }
 
     @patch("src._metrics.get_active_reviews")
-    @patch("src._metrics.get_comments_in_date_range")
-    def test_language_adoption_basic(self, mock_get_comments, mock_get_reviews):
+    def test_language_adoption_basic(self, mock_get_reviews):
         reviews = [
             ActiveReviewMetadata(
                 review_id="review1",
@@ -407,8 +397,7 @@ class TestMetrics:
                 "Downvotes": [],
             },
         ]
-        mock_get_reviews.return_value = reviews
-        mock_get_comments.return_value = comments
+        mock_get_reviews.return_value = (reviews, comments)
 
         report = metrics.get_metrics_report("2024-01-01", "2024-01-31", environment="test")
         keys = {k.lower(): k for k in report["metrics"].keys()}
@@ -449,8 +438,7 @@ class TestMetrics:
         }
 
     @patch("src._metrics.get_active_reviews")
-    @patch("src._metrics.get_comments_in_date_range")
-    def test_language_adoption_no_ai_comments(self, mock_get_comments, mock_get_reviews):
+    def test_language_adoption_no_ai_comments(self, mock_get_reviews):
         reviews = [
             ActiveReviewMetadata(
                 review_id="review1",
@@ -481,8 +469,7 @@ class TestMetrics:
                 ],
             ),
         ]
-        mock_get_reviews.return_value = reviews
-        mock_get_comments.return_value = []
+        mock_get_reviews.return_value = (reviews, [])
 
         report = metrics.get_metrics_report("2024-01-01", "2024-01-31", environment="test")
         keys = {k.lower(): k for k in report["metrics"].keys()}
@@ -495,8 +482,7 @@ class TestMetrics:
         }
 
     @patch("src._metrics.get_active_reviews")
-    @patch("src._metrics.get_comments_in_date_range")
-    def test_multiple_revisions_same_package_version_counts_as_one(self, mock_get_comments, mock_get_reviews):
+    def test_multiple_revisions_same_package_version_counts_as_one(self, mock_get_reviews):
         """Test that multiple revision IDs for the same package version count as ONE active package."""
         # Create a review with one package version that has multiple revision IDs
         review1 = ActiveReviewMetadata(
@@ -514,8 +500,7 @@ class TestMetrics:
             ],
         )
 
-        mock_get_reviews.return_value = [review1]
-        mock_get_comments.return_value = []
+        mock_get_reviews.return_value = ([review1], [])
 
         report = metrics.get_metrics_report("2026-01-01", "2026-01-31", environment="test")
         py_adoption = report["metrics"]["Python"]["adoption"]
@@ -526,8 +511,7 @@ class TestMetrics:
         assert py_adoption["adoption_rate"] == 1.0
 
     @patch("src._metrics.get_active_reviews")
-    @patch("src._metrics.get_comments_in_date_range")
-    def test_comments_summed_across_multiple_revisions_same_package(self, mock_get_comments, mock_get_reviews):
+    def test_comments_summed_across_multiple_revisions_same_package(self, mock_get_reviews):
         """Test that comments from all revision IDs of the same package version are summed together."""
         # Create a review with one package version that has two revision IDs
         review1 = ActiveReviewMetadata(
@@ -583,8 +567,7 @@ class TestMetrics:
             },
         ]
 
-        mock_get_reviews.return_value = [review1]
-        mock_get_comments.return_value = comments
+        mock_get_reviews.return_value = ([review1], comments)
 
         report = metrics.get_metrics_report("2026-01-01", "2026-01-31", environment="test")
         py_metrics = report["metrics"]["Python"]
@@ -595,8 +578,7 @@ class TestMetrics:
         assert py_metrics["comment_makeup"]["ai_comment_count"] == 2
 
     @patch("src._metrics.get_active_reviews")
-    @patch("src._metrics.get_comments_in_date_range")
-    def test_copilot_status_shared_across_revision_ids(self, mock_get_comments, mock_get_reviews):
+    def test_copilot_status_shared_across_revision_ids(self, mock_get_reviews):
         """Test that all revision IDs from the same package version share the same copilot status."""
         # Package with copilot
         review1 = ActiveReviewMetadata(
@@ -680,8 +662,7 @@ class TestMetrics:
             },
         ]
 
-        mock_get_reviews.return_value = [review1, review2]
-        mock_get_comments.return_value = comments
+        mock_get_reviews.return_value = ([review1, review2], comments)
 
         report = metrics.get_metrics_report("2026-01-01", "2026-01-31", environment="test")
         py_metrics = report["metrics"]["Python"]
@@ -698,8 +679,7 @@ class TestMetrics:
         assert py_metrics["comment_makeup"]["human_comment_count_without_copilot"] == 2  # c3, c4
 
     @patch("src._metrics.get_active_reviews")
-    @patch("src._metrics.get_comments_in_date_range")
-    def test_diagnostic_comments_excluded(self, mock_get_comments, mock_get_reviews):
+    def test_diagnostic_comments_excluded(self, mock_get_reviews):
         """Test that comments with CommentSource='Diagnostic' are excluded from all counts."""
         review1 = ActiveReviewMetadata(
             review_id="review1",
@@ -753,8 +733,7 @@ class TestMetrics:
             },
         ]
 
-        mock_get_reviews.return_value = [review1]
-        mock_get_comments.return_value = comments
+        mock_get_reviews.return_value = ([review1], comments)
 
         report = metrics.get_metrics_report("2026-01-01", "2026-01-31", environment="test")
         py_metrics = report["metrics"]["Python"]
@@ -765,8 +744,7 @@ class TestMetrics:
         assert py_metrics["comment_makeup"]["ai_comment_count"] == 1  # Only c1
 
     @patch("src._metrics.get_active_reviews")
-    @patch("src._metrics.get_comments_in_date_range")
-    def test_comment_quality_deleted_comments(self, mock_get_comments, mock_get_reviews):
+    def test_comment_quality_deleted_comments(self, mock_get_reviews):
         """Test that deleted AI comments only count in deleted_count, not other categories."""
         review1 = ActiveReviewMetadata(
             review_id="review1",
@@ -823,8 +801,7 @@ class TestMetrics:
             },
         ]
 
-        mock_get_reviews.return_value = [review1]
-        mock_get_comments.return_value = comments
+        mock_get_reviews.return_value = ([review1], comments)
 
         report = metrics.get_metrics_report("2026-01-01", "2026-01-31", environment="test")
         cq = report["metrics"]["Python"]["comment_quality"]
@@ -839,8 +816,7 @@ class TestMetrics:
         assert cq["neutral_count"] == 0
 
     @patch("src._metrics.get_active_reviews")
-    @patch("src._metrics.get_comments_in_date_range")
-    def test_comment_quality_implicit_good(self, mock_get_comments, mock_get_reviews):
+    def test_comment_quality_implicit_good(self, mock_get_reviews):
         """Test that resolved AI comments with no votes count as implicit_good."""
         review1 = ActiveReviewMetadata(
             review_id="review1",
@@ -885,8 +861,7 @@ class TestMetrics:
             },
         ]
 
-        mock_get_reviews.return_value = [review1]
-        mock_get_comments.return_value = comments
+        mock_get_reviews.return_value = ([review1], comments)
 
         report = metrics.get_metrics_report("2026-01-01", "2026-01-31", environment="test")
         cq = report["metrics"]["Python"]["comment_quality"]
@@ -898,8 +873,7 @@ class TestMetrics:
         assert cq["implicit_bad"] == 0.5
 
     @patch("src._metrics.get_active_reviews")
-    @patch("src._metrics.get_comments_in_date_range")
-    def test_comment_quality_implicit_bad(self, mock_get_comments, mock_get_reviews):
+    def test_comment_quality_implicit_bad(self, mock_get_reviews):
         """Test that AI comments in approved revisions with no action count as implicit_bad."""
         review1 = ActiveReviewMetadata(
             review_id="review1",
@@ -932,8 +906,7 @@ class TestMetrics:
             },
         ]
 
-        mock_get_reviews.return_value = [review1]
-        mock_get_comments.return_value = comments
+        mock_get_reviews.return_value = ([review1], comments)
 
         report = metrics.get_metrics_report("2026-01-01", "2026-01-31", environment="test")
         cq = report["metrics"]["Python"]["comment_quality"]
@@ -946,8 +919,7 @@ class TestMetrics:
         assert cq["neutral_count"] == 0
 
     @patch("src._metrics.get_active_reviews")
-    @patch("src._metrics.get_comments_in_date_range")
-    def test_comment_quality_neutral_unapproved(self, mock_get_comments, mock_get_reviews):
+    def test_comment_quality_neutral_unapproved(self, mock_get_reviews):
         """Test that AI comments in unapproved revisions with no action count as neutral."""
         review1 = ActiveReviewMetadata(
             review_id="review1",
@@ -980,8 +952,7 @@ class TestMetrics:
             },
         ]
 
-        mock_get_reviews.return_value = [review1]
-        mock_get_comments.return_value = comments
+        mock_get_reviews.return_value = ([review1], comments)
 
         report = metrics.get_metrics_report("2026-01-01", "2026-01-31", environment="test")
         cq = report["metrics"]["Python"]["comment_quality"]
@@ -994,8 +965,7 @@ class TestMetrics:
         assert cq["bad_count"] == 0
 
     @patch("src._metrics.get_active_reviews")
-    @patch("src._metrics.get_comments_in_date_range")
-    def test_comment_quality_downvotes_trump_upvotes(self, mock_get_comments, mock_get_reviews):
+    def test_comment_quality_downvotes_trump_upvotes(self, mock_get_reviews):
         """Test that any downvote trumps upvotes - comment counts as bad, not good."""
         review1 = ActiveReviewMetadata(
             review_id="review1",
@@ -1038,8 +1008,7 @@ class TestMetrics:
             },
         ]
 
-        mock_get_reviews.return_value = [review1]
-        mock_get_comments.return_value = comments
+        mock_get_reviews.return_value = ([review1], comments)
 
         report = metrics.get_metrics_report("2026-01-01", "2026-01-31", environment="test")
         cq = report["metrics"]["Python"]["comment_quality"]
@@ -1052,8 +1021,7 @@ class TestMetrics:
         assert cq["implicit_bad_count"] == 0
 
     @patch("src._metrics.get_active_reviews")
-    @patch("src._metrics.get_comments_in_date_range")
-    def test_comment_quality_ai_count_includes_unapproved(self, mock_get_comments, mock_get_reviews):
+    def test_comment_quality_ai_count_includes_unapproved(self, mock_get_reviews):
         """Test that ai_comment_count includes comments from BOTH approved and unapproved revisions."""
         reviews = [
             ActiveReviewMetadata(
@@ -1112,8 +1080,7 @@ class TestMetrics:
             },
         ]
 
-        mock_get_reviews.return_value = reviews
-        mock_get_comments.return_value = comments
+        mock_get_reviews.return_value = (reviews, comments)
 
         report = metrics.get_metrics_report("2026-01-01", "2026-01-31", environment="test")
         cq = report["metrics"]["Python"]["comment_quality"]
@@ -1128,8 +1095,7 @@ class TestMetrics:
         assert cm["ai_comment_count"] == 1  # Only c1
 
     @patch("src._metrics.get_active_reviews")
-    @patch("src._metrics.get_comments_in_date_range")
-    def test_comment_quality_categories_sum_to_total(self, mock_get_comments, mock_get_reviews):
+    def test_comment_quality_categories_sum_to_total(self, mock_get_reviews):
         """Test that all category counts sum exactly to ai_comment_count."""
         review1 = ActiveReviewMetadata(
             review_id="review1",
@@ -1221,8 +1187,7 @@ class TestMetrics:
             },
         ]
 
-        mock_get_reviews.return_value = [review1]
-        mock_get_comments.return_value = comments
+        mock_get_reviews.return_value = ([review1], comments)
 
         report = metrics.get_metrics_report("2026-01-01", "2026-01-31", environment="test")
         cq = report["metrics"]["Python"]["comment_quality"]

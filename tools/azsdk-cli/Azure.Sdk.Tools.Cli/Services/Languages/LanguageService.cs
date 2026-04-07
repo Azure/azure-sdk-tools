@@ -307,6 +307,54 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         }
 
         /// <summary>
+        /// Pushes recorded test assets to the assets repository using test-proxy.
+        /// Called after a successful record-mode test run when assets.json exists.
+        /// Language services that use a different push mechanism should override this method.
+        /// </summary>
+        /// <param name="packagePath">Path to the package directory containing assets.json.</param>
+        /// <param name="response">The test run response to append next steps to on failure.</param>
+        /// <param name="ct">Cancellation token.</param>
+        protected virtual async Task PushTestAssets(string packagePath, TestRunResponse response, CancellationToken ct)
+        {
+            var assetsJsonPath = Path.Combine(packagePath, "assets.json");
+            if (!File.Exists(assetsJsonPath))
+            {
+                logger.LogInformation("No assets.json found in {packagePath}, skipping asset push", packagePath);
+                return;
+            }
+
+            logger.LogInformation("Pushing recorded test assets for {packagePath}", packagePath);
+
+            try
+            {
+                var pushResult = await processHelper.Run(new ProcessOptions(
+                        command: "test-proxy",
+                        args: ["push", "-a", "assets.json"],
+                        workingDirectory: packagePath
+                    ),
+                    ct
+                );
+
+                if (pushResult.ExitCode == 0)
+                {
+                    logger.LogInformation("Successfully pushed test assets");
+                }
+                else
+                {
+                    logger.LogWarning("Asset push failed with exit code {exitCode}: {output}", pushResult.ExitCode, pushResult.Output);
+                    response.NextSteps ??= [];
+                    response.NextSteps.Add($"Asset push failed (exit code {pushResult.ExitCode}). You may need to push assets manually using 'test-proxy push -a assets.json'");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to push test assets. Is test-proxy installed?");
+                response.NextSteps ??= [];
+                response.NextSteps.Add("Could not push test assets automatically. Ensure the test-proxy tool is installed and try running 'test-proxy push -a assets.json' manually");
+            }
+        }
+
+        /// <summary>
         /// Produces an API change list by diffing file contents between two generated source trees.
         /// Implementations may perform a structural or textual diff; when <paramref name="oldGenerationPath"/> is null
         /// they should treat the operation as an initial generation (returning an empty change list).

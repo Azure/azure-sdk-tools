@@ -12,3 +12,5 @@ exceptions: |
   11. DO NOT suggest using namespaces or modules
   12. DO NOT suggest grouping related interfaces into separate modules
   13. DO NOT suggest a type alias over an empty interface extension
+  14. DO NOT comment on the "Dependencies" section or suggest moving dependency declarations to package.json; these are APIView rendering artifacts.
+  15. DO NOT suggest prefixing long-running operation methods with "begin". The JavaScript/TypeScript SDK no longer uses the begin* prefix for LROs.

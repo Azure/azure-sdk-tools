@@ -48,7 +48,9 @@
                 </div>
             </div>
             <div *ngIf="!canEditSeverity">
-                <span [ngClass]="getSeverityBadgeClass(codePanelRowData!.comments[0].severity)" class="severity-badge px-2 py-1 rounded text-xs">
+                <span [ngClass]="getSeverityBadgeClass(codePanelRowData!.comments[0].severity)" class="severity-badge px-2 py-1 rounded text-xs"
+                      [pTooltip]="isDiagnostic(codePanelRowData!.comments[0]) ? 'Diagnostic comments are generated from the source code. Their severity can only be changed by modifying the diagnostics in the source code.' : ''"
+                      tooltipPosition="top">
                     {{ getSeverityLabel(codePanelRowData!.comments[0].severity) }}
                 </span>
             </div>
@@ -85,10 +87,11 @@
                             AI-generated
                         </span>
                         <!-- Diagnostic Badge -->
-                        <span *ngIf="isDiagnostic(comment)"
-                              class="diagnostic-badge-custom ms-2"
-                              title="System diagnostic">
+                        <span *ngIf="isDiagnostic(comment)" class="diagnostic-badge-custom ms-2">
                             <i class="bi bi-exclamation-triangle-fill me-1"></i>Diagnostic
+                            <i class="pi pi-info-circle ms-1"
+                               title="Diagnostic comments are generated from the source code. They can only be resolved or have their severity changed by fixing or suppressing the diagnostic in the source code."
+                               style="cursor: pointer;"></i>
                         </span>
                     </div>
                 </ng-template>
@@ -121,13 +124,13 @@
                             </a>
                         </ng-template>
                     </p-menu>
-                    <button [attr.data-btn-id]="comment.id" (click)="toggleUpVoteAction($event)" class="p-panel-header-icon p-link">
+                    <button *ngIf="!isDiagnostic(comment)" [attr.data-btn-id]="comment.id" (click)="toggleUpVoteAction($event)" class="p-panel-header-icon p-link">
                         <span *ngIf="comment.upvotes.length > 0; else noUpVotes" class="bi bi-hand-thumbs-up-fill emoji-active" pTooltip="{{comment.upvotes.join(', ')}}" tooltipPosition="bottom">{{comment.upvotes.length}}</span>
                         <ng-template #noUpVotes>
                             <span class="bi bi-hand-thumbs-up"></span>
                         </ng-template>
                     </button>
-                    <button *ngIf="comment.createdBy == 'azure-sdk'" [attr.data-btn-id]="comment.id" (click)="toggleDownVoteAction($event)" class="p-panel-header-icon p-link">
+                    <button *ngIf="comment.createdBy == 'azure-sdk' && !isDiagnostic(comment)" [attr.data-btn-id]="comment.id" (click)="toggleDownVoteAction($event)" class="p-panel-header-icon p-link">
                         <span *ngIf="comment.downvotes.length > 0; else noDownVotes" class="bi bi-hand-thumbs-down-fill emoji-active" pTooltip="{{comment.downvotes.join(', ')}}" tooltipPosition="bottom">{{comment.downvotes.length}}</span>
                         <ng-template #noDownVotes>
                             <span class="bi bi-hand-thumbs-down"></span>
@@ -188,7 +191,7 @@
             <img [alt]="userProfile?.userName" src="https://github.com/{{ userProfile?.userName }}.png?size=40" width="40" height="40" class="user-avartar mx-4"/>
             <button type="button" style="flex-grow: 1;" class="btn btn-sm border text-muted text-start me-4 reply-button" (click)="showReplyEditor($event)">Reply...</button>
         </div>
-        <button *ngIf="codePanelRowData!.comments?.length! > 0" type="button" (click)="handleThreadResolutionButtonClick(codePanelRowData!.isResolvedCommentThread ? 'Unresolve' : 'Resolve')" class="btn btn-outline-secondary comment-action-btn btn-sm" style="width: 90%; margin: 0 auto; display: block;">{{codePanelRowData!.isResolvedCommentThread ? 'Unresolve' : 'Resolve'}} Conversation</button>
+        <button *ngIf="codePanelRowData!.comments?.length! > 0 && canResolveThread" type="button" (click)="handleThreadResolutionButtonClick(codePanelRowData!.isResolvedCommentThread ? 'Unresolve' : 'Resolve')" class="btn btn-outline-secondary comment-action-btn btn-sm" style="width: 90%; margin: 0 auto; display: block;">{{codePanelRowData!.isResolvedCommentThread ? 'Unresolve' : 'Resolve'}} Conversation</button>
     </div>
 </div>
 <div *ngIf="instanceLocation === 'code-panel' && !isThreadCollapsed && (!codePanelRowData!.isResolvedCommentThread || threadResolvedAndExpanded)" class="btn-group-vertical comment-thread-navigation ms-2 {{ floatItemEnd }}" role="group" aria-label="Comment Navigation Button">

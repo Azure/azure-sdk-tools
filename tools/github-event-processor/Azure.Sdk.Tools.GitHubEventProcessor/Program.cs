@@ -129,7 +129,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
             await gitHubEventClient.WriteRateLimits("RateLimit at end of execution:");
         }
 
-        /// <summary>
+         /// <summary>
         /// Creates an McpConfiguration instance by connecting to Azure App Configuration.
         /// </summary>
         private static McpConfiguration CreateMcpConfiguration()
@@ -143,7 +143,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
 
             bool isRunningInGitHubActions = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GITHUB_ACTIONS"));
             TokenCredential credential = isRunningInGitHubActions
-                ? new ManagedIdentityCredential()
+                ? new AzureCliCredential()
                 : new ChainedTokenCredential(
                     new AzureCliCredential(),
                     new VisualStudioCredential(),

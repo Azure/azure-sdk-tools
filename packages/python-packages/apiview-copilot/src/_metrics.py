@@ -4,6 +4,7 @@
 # license information.
 # --------------------------------------------------------------------------
 
+import sys
 from dataclasses import asdict, dataclass, field
 from datetime import date
 from pathlib import Path
@@ -12,11 +13,20 @@ from typing import Dict, List, Optional
 from src._apiview import (
     ActiveReviewMetadata,
     get_active_reviews,
-    get_comments_in_date_range,
 )
-from src._database_manager import get_database_manager
-from src._models import APIViewComment
-from src._prompt_runner import run_prompt
+from src._database_manager import DatabaseManager
+
+# Minimal fields needed from the Comments container for metrics computation.
+# Omits large payload fields like CommentText, CreatedBy, CreatedOn, ElementId, etc.
+METRICS_COMMENT_FIELDS = [
+    "ReviewId",
+    "APIRevisionId",
+    "CommentSource",
+    "IsDeleted",
+    "IsResolved",
+    "Upvotes",
+    "Downvotes",
+]
 
 
 @dataclass
@@ -101,16 +111,16 @@ def get_metrics_report(
     start_date: str,
     end_date: str,
     environment: str,
-    markdown: bool = False,
     save: bool = False,
     charts: bool = False,
     exclude: Optional[List[str]] = None,
-) -> Optional[dict]:
+) -> dict:
     data = _build_metrics_data(start_date=start_date, end_date=end_date, environment=environment, exclude=exclude)
+
     if not data:
         raise ValueError("No data found for metrics report")
     if save:
-        db_manager = get_database_manager()
+        db_manager = DatabaseManager.get_instance(environment=environment)
         cosmos_client = db_manager.get_container_client("metrics")
         for doc in data.values():
             # do not save language-agnostic overall metrics to CosmosDB. PowerBI will calculate these.
@@ -119,16 +129,14 @@ def get_metrics_report(
             try:
                 cosmos_client.upsert(doc.id, data=doc.to_dict())
             except Exception as e:
-                print(f"Error upserting document {doc.id}: {e}")
+                print(f"Error upserting document {doc.id}: {e}", file=sys.stderr)
+
     report = _build_metrics_report(data)
+
     if charts:
         _generate_charts(report, start_date, end_date)
-    if markdown:
-        inputs = {"data": report}
-        summary = run_prompt(folder="other", filename="summarize_metrics", inputs=inputs)
-        print(summary)
-    else:
-        return report
+
+    return report
 
 
 def _build_metrics_segment(
@@ -136,9 +144,41 @@ def _build_metrics_segment(
     start_date: str,
     end_date: str,
     reviews: list[ActiveReviewMetadata],
-    comments: list[APIViewComment],
+    comments: list[dict],
     language: Optional[str] = None,
 ) -> MetricsSegment:
+    """Build a MetricsSegment from reviews and raw comment dicts.
+
+    Produces three metric groups:
+
+    **adoption** — Based on *approved* package versions only.
+      - ``active_review_count``: number of approved package versions.
+      - ``active_copilot_review_count``: approved package versions that had a Copilot review.
+
+    **comment_makeup** — Describes the composition of comments (excluding Diagnostic
+    comments). Human comments are counted from *approved* package versions only and
+    split by whether the package version had Copilot enabled
+    (``human_comment_count_with_ai`` vs ``human_comment_count_without_ai``). The AI
+    comment count for makeup is derived from the comment_quality buckets:
+    ``upvoted + downvoted + implicit_good + implicit_bad``. Because the quality
+    buckets span *all* active revisions (approved and unapproved), the AI portion
+    of makeup includes signaled comments from any revision, plus unsignaled comments
+    from approved revisions (implicit_bad). Only deleted and neutral comments are
+    excluded. The ``ai_comment_rate`` is the ratio of that AI count to (AI count +
+    human comments from Copilot-enabled package versions).
+
+    **comment_quality** — Evaluates AI comment quality across *all* active package versions
+    (approved **and** unapproved). Every AI comment is placed into exactly one
+    mutually-exclusive bucket, checked in this priority order:
+      1. **deleted** — ``IsDeleted`` is truthy.
+      2. **downvoted** — Has at least one downvote (trumps any upvotes).
+      3. **upvoted** — Has at least one upvote and no downvotes.
+      4. **implicit_good** — ``IsResolved`` is truthy (no votes).
+      5. **implicit_bad** — In an *approved* package version, not resolved, no votes.
+      6. **neutral** — In an *unapproved* package version, not resolved, no votes.
+
+    The sum of all six buckets equals ``total_ai_comment_count``.
+    """
     metrics = MetricsSegment(start_date=start_date, end_date=end_date)
     metrics.type = "metrics_segment"
 
@@ -171,67 +211,68 @@ def _build_metrics_segment(
     # Filter comments to only those belonging to approved revisions, excluding Diagnostic
     # (for human comment counts - comment_makeup metrics)
     approved_revision_comments = [
-        c for c in comments if c.api_revision_id in approved_revision_ids and c.comment_source != "Diagnostic"
+        c for c in comments
+        if c.get("APIRevisionId") in approved_revision_ids and c.get("CommentSource") != "Diagnostic"
     ]
 
     # Categorize comments based on whether the revision has Copilot (for comment_makeup)
-    ai_comments_with_copilot = []
-    human_comments_with_copilot = []
-    human_comments_without_copilot = []
+    human_comments_with_copilot_count = 0
+    human_comments_without_copilot_count = 0
 
     for comment in approved_revision_comments:
-        has_copilot = revision_has_copilot.get(comment.api_revision_id, False)
+        rev_id = comment.get("APIRevisionId")
+        has_copilot = revision_has_copilot.get(rev_id, False)
+        source = comment.get("CommentSource")
 
         if has_copilot:
-            if comment.comment_source == "AIGenerated":
-                ai_comments_with_copilot.append(comment)
-            else:
-                human_comments_with_copilot.append(comment)
+            if source != "AIGenerated":
+                human_comments_with_copilot_count += 1
         else:
             # For revisions without Copilot, all comments should be human
-            if comment.comment_source != "AIGenerated":
-                human_comments_without_copilot.append(comment)
+            if source != "AIGenerated":
+                human_comments_without_copilot_count += 1
 
-    metrics.human_comment_count_with_ai = len(human_comments_with_copilot)
-    metrics.human_comment_count_without_ai = len(human_comments_without_copilot)
+    metrics.human_comment_count_with_ai = human_comments_with_copilot_count
+    metrics.human_comment_count_without_ai = human_comments_without_copilot_count
 
     # For comment_quality: count ALL AI comments across ALL active revisions (approved + unapproved)
     all_ai_comments = [
-        c for c in comments if c.api_revision_id in all_revision_ids and c.comment_source == "AIGenerated"
+        c for c in comments
+        if c.get("APIRevisionId") in all_revision_ids and c.get("CommentSource") == "AIGenerated"
     ]
 
     # Categorize AI comments (mutually exclusive, in priority order)
-    deleted_ai_comments = []
-    downvoted_ai_comments = []
-    upvoted_ai_comments = []
-    implicit_good_ai_comments = []
-    implicit_bad_ai_comments = []
-    neutral_ai_comments = []
+    deleted_count = 0
+    downvoted_count = 0
+    upvoted_count = 0
+    implicit_good_count = 0
+    implicit_bad_count = 0
+    neutral_count = 0
 
     for c in all_ai_comments:
-        if c.is_deleted:
-            deleted_ai_comments.append(c)
-        elif c.downvotes:
+        if c.get("IsDeleted"):
+            deleted_count += 1
+        elif c.get("Downvotes"):
             # Any downvote trumps upvotes
-            downvoted_ai_comments.append(c)
-        elif c.upvotes:
-            upvoted_ai_comments.append(c)
-        elif c.is_resolved:
-            implicit_good_ai_comments.append(c)
-        elif c.api_revision_id in approved_revision_ids:
+            downvoted_count += 1
+        elif c.get("Upvotes"):
+            upvoted_count += 1
+        elif c.get("IsResolved"):
+            implicit_good_count += 1
+        elif c.get("APIRevisionId") in approved_revision_ids:
             # In approved revision, not resolved, no votes = implicit bad
-            implicit_bad_ai_comments.append(c)
+            implicit_bad_count += 1
         else:
             # In unapproved revision, not resolved, no votes = neutral
-            neutral_ai_comments.append(c)
+            neutral_count += 1
 
     metrics.total_ai_comment_count = len(all_ai_comments)
-    metrics.deleted_ai_comment_count = len(deleted_ai_comments)
-    metrics.downvoted_ai_comment_count = len(downvoted_ai_comments)
-    metrics.upvoted_ai_comment_count = len(upvoted_ai_comments)
-    metrics.implicit_good_ai_comment_count = len(implicit_good_ai_comments)
-    metrics.implicit_bad_ai_comment_count = len(implicit_bad_ai_comments)
-    metrics.neutral_ai_comment_count = len(neutral_ai_comments)
+    metrics.deleted_ai_comment_count = deleted_count
+    metrics.downvoted_ai_comment_count = downvoted_count
+    metrics.upvoted_ai_comment_count = upvoted_count
+    metrics.implicit_good_ai_comment_count = implicit_good_count
+    metrics.implicit_bad_ai_comment_count = implicit_bad_count
+    metrics.neutral_ai_comment_count = neutral_count
 
     return metrics
 
@@ -330,21 +371,22 @@ def _build_metrics_data(
     # Add user-specified exclusions (case-insensitive)
     if exclude:
         pretty_languages_to_omit.extend([lang.lower() for lang in exclude])
-    active_reviews = get_active_reviews(
-        start_date, end_date, environment=environment, omit_languages=pretty_languages_to_omit
+
+    active_reviews, raw_comments = get_active_reviews(
+        start_date, end_date, environment=environment, omit_languages=pretty_languages_to_omit,
+        select_fields=METRICS_COMMENT_FIELDS,
     )
-    raw_comments = get_comments_in_date_range(start_date, end_date, environment=environment)
-    all_comments = [APIViewComment(**d) for d in raw_comments]
+
     results = {}
     results["overall"] = _build_metrics_segment(
-        start_date=start_date, end_date=end_date, reviews=active_reviews, comments=all_comments
+        start_date=start_date, end_date=end_date, reviews=active_reviews, comments=raw_comments
     )
 
     languages_to_package = {r.language for r in active_reviews}
     for language in languages_to_package:
         filtered_reviews = [r for r in active_reviews if r.language == language]
         results[language] = _build_metrics_segment(
-            start_date=start_date, end_date=end_date, reviews=filtered_reviews, comments=all_comments, language=language
+            start_date=start_date, end_date=end_date, reviews=filtered_reviews, comments=raw_comments, language=language
         )
 
     return results
@@ -355,7 +397,7 @@ def _generate_charts(report: dict, start_date: str, end_date: str) -> None:
     try:
         import matplotlib.pyplot as plt
     except ImportError:
-        print("matplotlib is required for chart generation. Install it with: pip install matplotlib")
+        print("matplotlib is required for chart generation. Install it with: pip install matplotlib", file=sys.stderr)
         return
 
     metrics = report.get("metrics", {})
@@ -371,10 +413,10 @@ def _generate_charts(report: dict, start_date: str, end_date: str) -> None:
         metrics_lookup = metrics
 
     if not languages:
-        print("No language-specific metrics to chart.")
+        print("No language-specific metrics to chart.", file=sys.stderr)
         return
 
-    output_dir = Path("scratch/charts")
+    output_dir = Path("output/charts")
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Chart 1: Adoption - stacked bar with copilot (green) and non-copilot (yellow)
@@ -399,7 +441,7 @@ def _generate_charts(report: dict, start_date: str, end_date: str) -> None:
     adoption_path = output_dir / "adoption.png"
     plt.savefig(adoption_path, dpi=150)
     plt.close()
-    print(f"Saved: {adoption_path}")
+    print(f"Saved: {adoption_path}", file=sys.stderr)
 
     # Chart 2: Comment Quality - stacked fraction bar chart (excluding neutral)
     # Order from bottom to top: good, implicit_good, implicit_bad, bad, deleted
@@ -435,7 +477,7 @@ def _generate_charts(report: dict, start_date: str, end_date: str) -> None:
     quality_path = output_dir / "comment_quality.png"
     plt.savefig(quality_path, dpi=150)
     plt.close()
-    print(f"Saved: {quality_path}")
+    print(f"Saved: {quality_path}", file=sys.stderr)
 
     # Chart 3: Human-Copilot Split - for languages WITH copilot reviews
     # Stacked bar: human comments + AI comments
@@ -466,9 +508,9 @@ def _generate_charts(report: dict, start_date: str, end_date: str) -> None:
         split_path = output_dir / "human_copilot_split.png"
         plt.savefig(split_path, dpi=150)
         plt.close()
-        print(f"Saved: {split_path}")
+        print(f"Saved: {split_path}", file=sys.stderr)
     else:
-        print("No languages with Copilot reviews for human-copilot split chart.")
+        print("No languages with Copilot reviews for human-copilot split chart.", file=sys.stderr)
 
     # Chart 4: Human Comments With vs Without Copilot - side-by-side bars
     human_with = [
@@ -492,4 +534,4 @@ def _generate_charts(report: dict, start_date: str, end_date: str) -> None:
     compare_path = output_dir / "human_comments_comparison.png"
     plt.savefig(compare_path, dpi=150)
     plt.close()
-    print(f"Saved: {compare_path}")
+    print(f"Saved: {compare_path}", file=sys.stderr)

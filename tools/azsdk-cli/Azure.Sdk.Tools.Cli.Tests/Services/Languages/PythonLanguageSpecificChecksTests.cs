@@ -489,7 +489,7 @@ internal class PythonLanguageSpecificChecksTests
     [Test]
     [TestCase(TestMode.Record, true, false)]
     [TestCase(TestMode.Live, true, true)]
-    [TestCase(TestMode.Playback, false, false)]
+    [TestCase(TestMode.Playback, false, true)]
     public async Task RunAllTests_SetsCorrectTestModeEnvironmentVariables(TestMode testMode, bool expectLive, bool expectSkipRecording)
     {
         var processResult = new ProcessResult { ExitCode = 0 };
@@ -699,7 +699,7 @@ internal class PythonLanguageSpecificChecksTests
         await _languageService.RunAllTests(_packagePath, ct: CancellationToken.None);
 
         Assert.That(capturedOptions!.EnvironmentVariables!.ContainsKey("AZURE_TEST_RUN_LIVE"), Is.False);
-        Assert.That(capturedOptions.EnvironmentVariables.ContainsKey("AZURE_SKIP_LIVE_RECORDING"), Is.False);
+        Assert.That(capturedOptions.EnvironmentVariables["AZURE_SKIP_LIVE_RECORDING"], Is.EqualTo("true"));
     }
 
     #endregion

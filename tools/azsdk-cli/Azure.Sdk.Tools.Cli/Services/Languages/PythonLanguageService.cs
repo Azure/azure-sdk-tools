@@ -168,13 +168,13 @@ public sealed partial class PythonLanguageService : LanguageService
         var envVars = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         // Python SDK uses AZURE_TEST_RUN_LIVE for record/live modes
-        // and AZURE_SKIP_LIVE_RECORDING for live-only mode
+        // and AZURE_SKIP_LIVE_RECORDING for playback/live modes (false only for record)
         if (testMode == TestMode.Record || testMode == TestMode.Live)
         {
             envVars["AZURE_TEST_RUN_LIVE"] = "true";
         }
 
-        if (testMode == TestMode.Live)
+        if (testMode != TestMode.Record)
         {
             envVars["AZURE_SKIP_LIVE_RECORDING"] = "true";
         }

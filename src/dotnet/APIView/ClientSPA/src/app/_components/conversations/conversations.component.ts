@@ -18,6 +18,8 @@ import { UserProfile } from 'src/app/_models/userProfile';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 
+const UNKNOWN_SEVERITY_KEY = 'unknown';
+
 @Component({
     selector: 'app-conversations',
     templateUrl: './conversations.component.html',
@@ -75,7 +77,7 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
     { key: 'suggestion', label: 'Suggestion', icon: 'bi-lightbulb' },
     { key: 'shouldfix', label: 'Should Fix', icon: 'bi-exclamation-triangle' },
     { key: 'mustfix', label: 'Must Fix', icon: 'bi-exclamation-octagon-fill' },
-    { key: 'unknown', label: 'Unknown', icon: 'bi-dash-circle' },
+    { key: UNKNOWN_SEVERITY_KEY, label: 'Unknown', icon: 'bi-dash-circle' },
   ];
 
   // Filtered view
@@ -84,13 +86,14 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
   filteredThreadCount: number = 0;
   totalThreadCount: number = 0;
   showUnknownSeverityFilter: boolean = false;
+  hasAnyUnknownThreads: boolean = false;
 
   // Keep filter behavior aligned with the displayed severity badge/label in CommentThread,
   // which is derived from codePanelRowData.comments[0].severity.
   private getDisplayedThreadSeverityKey(thread: CodePanelRowData): string {
     const firstComment = thread.comments?.[0];
-    if (!firstComment) return 'unknown';
-    return CommentSeverityHelper.normalizeSeverity(firstComment.severity) ?? 'unknown';
+    if (!firstComment) return UNKNOWN_SEVERITY_KEY;
+    return CommentSeverityHelper.normalizeSeverity(firstComment.severity) ?? UNKNOWN_SEVERITY_KEY;
   }
 
   private threadMatchesStatusAndKindFilters(thread: CodePanelRowData): boolean {
@@ -147,6 +150,8 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
       this.commentThreads = new Map<string, CodePanelRowData[]>();
       this.numberOfActiveThreads = 0;
       this.diagnosticsTruncated = false;
+      this.hasAnyUnknownThreads = false;
+      this.showUnknownSeverityFilter = false;
       this.hiddenUnresolvedDiagnosticsCount = 0;
       this.hiddenResolvedDiagnosticsCount = 0;
       this.totalDiagnosticsInRevision = 0;
@@ -254,6 +259,10 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
             codePanelRowData.threadId = threadId;
             codePanelRowData.isResolvedCommentThread = comments.some(c => c.isResolved);
 
+            if (!this.hasAnyUnknownThreads && this.getDisplayedThreadSeverityKey(codePanelRowData) === UNKNOWN_SEVERITY_KEY) {
+              this.hasAnyUnknownThreads = true;
+            }
+
             if (this.commentThreads.has(apiRevisionIdForThread)) {
               this.commentThreads.get(apiRevisionIdForThread)?.push(codePanelRowData);
             }
@@ -267,6 +276,7 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
       this.numberOfActiveThreadsEmitter.emit(this.numberOfActiveThreads);
       this.apiRevisionsWithComments = this.apiRevisions.filter(apiRevision => this.commentThreads.has(apiRevision.id));
 
+      this.updateUnknownSeverityFilterVisibility();
       this.applyFilters();
       this.isLoading = false;
       this.changeDetectorRef.markForCheck();
@@ -277,6 +287,9 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
       this.filteredCommentThreads = new Map();
       this.filteredThreadCount = 0;
       this.totalThreadCount = 0;
+      this.hasAnyUnknownThreads = false;
+      this.showUnknownSeverityFilter = false;
+      this.filterSeverities.delete(UNKNOWN_SEVERITY_KEY);
       this.numberOfActiveThreads = 0;
       this.numberOfActiveThreadsEmitter.emit(this.numberOfActiveThreads);
       setTimeout(() => {
@@ -514,13 +527,19 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
 
   // --- Filter methods ---
 
-  applyFilters() {
-    // Compute Unknown chip visibility from the current status/kind context
-    // before applying severity filtering.
+  private updateUnknownSeverityFilterVisibility(): void {
+    if (!this.hasAnyUnknownThreads) {
+      this.showUnknownSeverityFilter = false;
+      this.filterSeverities.delete(UNKNOWN_SEVERITY_KEY);
+      return;
+    }
+
+    // Compute Unknown chip visibility from the current status/kind context.
+    // This does not depend on currently selected severity chips.
     this.showUnknownSeverityFilter = false;
     for (const threads of this.commentThreads.values()) {
       for (const thread of threads) {
-        if (this.threadMatchesStatusAndKindFilters(thread) && this.getDisplayedThreadSeverityKey(thread) === 'unknown') {
+        if (this.threadMatchesStatusAndKindFilters(thread) && this.getDisplayedThreadSeverityKey(thread) === UNKNOWN_SEVERITY_KEY) {
           this.showUnknownSeverityFilter = true;
           break;
         }
@@ -530,10 +549,12 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
       }
     }
 
-    if (!this.showUnknownSeverityFilter && this.filterSeverities.has('unknown')) {
-      this.filterSeverities.delete('unknown');
+    if (!this.showUnknownSeverityFilter) {
+      this.filterSeverities.delete(UNKNOWN_SEVERITY_KEY);
     }
+  }
 
+  applyFilters() {
     this.filteredCommentThreads = new Map();
     this.totalThreadCount = 0;
     this.filteredThreadCount = 0;
@@ -573,6 +594,7 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
 
   setStatusFilter(status: 'all' | 'active' | 'resolved') {
     this.filterStatus = status;
+    this.updateUnknownSeverityFilterVisibility();
     this.applyFilters();
     this.changeDetectorRef.markForCheck();
   }
@@ -593,6 +615,7 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
     } else {
       this.filterKinds.add(kind);
     }
+    this.updateUnknownSeverityFilterVisibility();
     this.applyFilters();
     this.changeDetectorRef.markForCheck();
   }
@@ -601,6 +624,7 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
     this.filterStatus = 'active';
     this.filterSeverities.clear();
     this.filterKinds.clear();
+    this.updateUnknownSeverityFilterVisibility();
     this.applyFilters();
     this.changeDetectorRef.markForCheck();
   }

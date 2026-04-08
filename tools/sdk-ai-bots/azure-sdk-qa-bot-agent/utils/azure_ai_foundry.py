@@ -135,29 +135,37 @@ class FoundryAgentSpanEnricher(SpanProcessor):
     @staticmethod
     def _is_agent_operation_span(span) -> bool:
         attrs = getattr(span, "attributes", None) or {}
-        return attrs.get("gen_ai.operation.name") == "chat"
+        return attrs.get("gen_ai.operation.name") in {"chat", "invoke_agent"}
 
     @staticmethod
-    def _normalize_operation_name(attrs: dict) -> None:
+    def _normalize_operation_name(span) -> None:
+        attrs = getattr(span, "attributes", None) or {}
         if attrs.get("gen_ai.operation.name") == "chat":
-            attrs["gen_ai.operation.name"] = "invoke_agent"
+            span.set_attribute("gen_ai.operation.name", "invoke_agent")
 
     def on_start(self, span, parent_context=None) -> None:
-        pass
-
-    def on_end(self, span) -> None:
-        """Enrich the span after all attributes have been set by the runtime."""
+        """Enrich the span while it is still writable."""
         if not self._is_agent_operation_span(span):
             return
-        # ReadableSpan.attributes is an immutable MappingProxyType;
-        # mutate the underlying dict so the exporter sees the changes.
-        attrs = span._attributes  # type: ignore[attr-defined]
-        if not isinstance(attrs, dict):
-            return
-        self._normalize_operation_name(attrs)
-        attrs["microsoft.foundry.project.id"] = self._project_id
-        attrs["gen_ai.agent.name"] = self._agent_name
-        attrs["gen_ai.agent.id"] = self._agent_id
+        self._normalize_operation_name(span)
+        span.set_attribute("microsoft.foundry.project.id", self._project_id)
+        span.set_attribute("gen_ai.agent.name", self._agent_name)
+        span.set_attribute("gen_ai.agent.id", self._agent_id)
+
+    def on_end(self, span) -> None:
+        attrs = getattr(span, "attributes", None) or {}
+        op = attrs.get("gen_ai.operation.name")
+        conv = attrs.get("gen_ai.conversation.id")
+        agent = attrs.get("gen_ai.agent.name")
+        project = attrs.get("microsoft.foundry.project.id")
+        logger.debug(
+            "Span ended: name=%s op=%s conv=%s agent=%s project=%s",
+            span.name,
+            op,
+            conv,
+            agent,
+            project,
+        )
 
     def shutdown(self) -> None:
         pass

@@ -20,6 +20,7 @@ public class AzureEngSemanticVersion : IComparable<AzureEngSemanticVersion>
     public string BuildNumber { get; private set; } = string.Empty;
     public int PrereleaseNumber { get; private set; }
     public bool IsPrerelease { get; private set; }
+    public bool IsDailyDevBuild { get; private set; }
     public string VersionType { get; private set; } = string.Empty;
     public string RawVersion { get; private set; }
     public bool IsSemVerFormat { get; private set; }
@@ -58,6 +59,8 @@ public class AzureEngSemanticVersion : IComparable<AzureEngSemanticVersion>
                 VersionType = "Beta";
                 BuildNumberSeparator = match.Groups["buildnumsep"].Value;
                 BuildNumber = match.Groups["buildnumber"].Success ? match.Groups["buildnumber"].Value : string.Empty;
+                // CI daily builds encode a YYYYMMDD date as the prerelease number;
+                IsDailyDevBuild = PrereleaseNumber >= 20000101;
             }
             else
             {
@@ -162,17 +165,5 @@ public class AzureEngSemanticVersion : IComparable<AzureEngSemanticVersion>
             .ToList();
         versions.Sort();
         return versions.Select(v => v.RawVersion).ToList();
-    }
-
-    /// <summary>
-    ///     Returns true when <paramref name="version" /> is a CI daily-build version
-    ///     (e.g. <c>1.2.0-alpha.20240305.1</c>) — identified by having a prerelease build-number
-    ///     segment. Regular beta/rc versions (e.g. <c>1.2.0-beta.1</c>) return false.
-    /// </summary>
-    public static bool IsDailyDevBuild(string version)
-    {
-        if (string.IsNullOrEmpty(version)) return false;
-        var semVer = new AzureEngSemanticVersion(version);
-        return semVer.IsSemVerFormat && semVer.IsPrerelease && !string.IsNullOrEmpty(semVer.BuildNumber);
     }
 }

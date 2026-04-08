@@ -103,7 +103,7 @@ namespace Azure.ClientSdk.Analyzers
                 case IArgumentOperation argument when _asyncUtilities.IsAsyncParameter(argument.Parameter):
                     return;
                 default:
-                    ReportDiagnosticOnOperation(reference.Parent, Descriptors.AZC0109);
+                    // AZC0109 migrated to Azure.SdkAnalyzers
                     return;
             }
         }
@@ -165,7 +165,7 @@ namespace Azure.ClientSdk.Analyzers
             var method = invocation.TargetMethod;
             if (_asyncUtilities.IsConfigureAwait(method))
             {
-                AnalyzeConfigureAwait(invocation);
+                // AZC0101 migrated to Azure.SdkAnalyzers
             } 
             else if (IsGetAwaiterGetResult(invocation))
             {
@@ -173,8 +173,7 @@ namespace Azure.ClientSdk.Analyzers
             } 
             else if (IsEnsureCompleted(invocation, out var firstArgument))
             {
-                var operation = GetAwaitableOperation(firstArgument);
-                ReportDiagnosticOnOperation(operation, Descriptors.AZC0111);
+                // AZC0111 migrated to Azure.SdkAnalyzers
             }
         }
 
@@ -185,7 +184,7 @@ namespace Azure.ClientSdk.Analyzers
             // Verify that the last argument is a bool and if it is 'true'
             if (_asyncUtilities.IsConfigureAwait(method))
             {
-                AnalyzeConfigureAwait(invocation);
+                // AZC0101 migrated to Azure.SdkAnalyzers
             }
             else if (IsGetAwaiterGetResult(invocation))
             {
@@ -199,8 +198,7 @@ namespace Azure.ClientSdk.Analyzers
             }
             else if (method.IsAsync && !IsPublicMethod(method) && TryGetAsyncArgument(invocation, out var asyncArgument)) 
             {
-                // Pass 'async: true' to the async method
-                AnalyzeAsyncParameterValue(invocation, context.AsyncParameter, asyncArgument, true);
+                // AZC0108 migrated to Azure.SdkAnalyzers
             }
         }
 
@@ -223,10 +221,7 @@ namespace Azure.ClientSdk.Analyzers
 
         private void AnalyzeConfigureAwait(IInvocationOperation invocation) 
         {
-            if (IsEqualsToBoolValue(invocation.Arguments.Last().Value, true)) 
-            {
-                ReportDiagnosticOnMember(invocation, Descriptors.AZC0101);
-            }
+            // AZC0101 migrated to Azure.SdkAnalyzers
         }
 
         private void AnalyzeEnsureCompleted(in IOperation firstArgument, in MethodAnalysisContext context) 
@@ -290,16 +285,7 @@ namespace Azure.ClientSdk.Analyzers
 
         private void AnalyzeAsyncParameterValue(IInvocationOperation invocation, IParameterSymbol asyncParameter, IArgumentOperation asyncArgument, bool asyncValue) 
         {
-            if (IsEqualsToParameter(asyncArgument.Value, asyncParameter) || IsEqualsToBoolValue(asyncArgument.Value, asyncValue)) 
-            {
-                return;
-            }
-
-            var messageArgs = asyncValue
-                ? new object[] {"asynchronous", invocation.TargetMethod.Name, "be 'true'"}
-                : new object[] {"synchronous", invocation.TargetMethod.Name, "be 'false'"};
-
-            ReportDiagnosticOnOperation(asyncArgument, Descriptors.AZC0108, messageArgs);
+            // AZC0108 migrated to Azure.SdkAnalyzers
         }
 
         private static bool IsEqualsToBoolValue(IOperation operation, bool value) 

@@ -26,11 +26,27 @@
    - 4.6 [Explicit Approval Inheritance](#46-explicit-approval-inheritance)
    - 4.7 [O(1) Sameness Checks via Content Hash](#47-o1-sameness-checks-via-content-hash)
    - 4.8 [Retention Policy](#48-retention-policy)
-5. [Migration Plan](#5-migration-plan)
-   - 5.1 [Phase 1: Add APIVersion Entity (Non-Breaking)](#51-phase-1-add-apiversion-entity-non-breaking)
-   - 5.2 [Phase 2: Comment Scoping & Orphan Cleanup](#52-phase-2-comment-scoping--orphan-cleanup)
-   - 5.3 [Phase 3: PR Version Migration](#53-phase-3-pr-version-migration)
-   - 5.4 [Phase 4: Approval Migration](#54-phase-4-approval-migration)
+5. [Implementation Plan](#5-implementation-plan)
+   - 5.1 [Work Item Index](#51-work-item-index)
+   - 5.2 [WI-1: APIVersion Entity & Repository Layer](#52-wi-1-apiversion-entity--repository-layer)
+   - 5.3 [WI-2: Wire Upload Paths](#53-wi-2-wire-upload-paths)
+   - 5.4 [WI-3: Backfill Revisions & Samples](#54-wi-3-backfill-revisions--samples)
+   - 5.5 [WI-4: Retention Configuration & RetainUntil Field](#55-wi-4-retention-configuration--retainuntil-field)
+   - 5.6 [WI-5: Retention Event Handlers & Background Purge](#56-wi-5-retention-event-handlers--background-purge)
+   - 5.7 [WI-6: Retention Backfill](#57-wi-6-retention-backfill)
+   - 5.8 [WI-7: Comment FK & Backfill](#58-wi-7-comment-fk--backfill)
+   - 5.9 [WI-8: Comment Query Switch & Frontend Update](#59-wi-8-comment-query-switch--frontend-update)
+   - 5.10 [WI-9: Cross-Version Comment Toggle](#510-wi-9-cross-version-comment-toggle)
+   - 5.11 [WI-10: PR Version Backfill & Status Tracking](#511-wi-10-pr-version-backfill--status-tracking)
+   - 5.12 [WI-11: Version-Aware PullRequestManager](#512-wi-11-version-aware-pullrequestmanager)
+   - 5.13 [WI-12: PR Promotion-on-Merge](#513-wi-12-pr-promotion-on-merge)
+   - 5.14 [WI-13: PR Cleanup via Retention](#514-wi-13-pr-cleanup-via-retention)
+   - 5.15 [WI-14: Approval Inheritance Policy & ClassifyTransition](#515-wi-14-approval-inheritance-policy--classifytransition)
+   - 5.16 [WI-15: Version-Level Approval Backend](#516-wi-15-version-level-approval-backend)
+   - 5.17 [WI-16: GetReviewStatus & Copilot Trigger](#517-wi-16-getreviewstatus--copilot-trigger)
+   - 5.18 [WI-17: Approval SPA Update](#518-wi-17-approval-spa-update)
+   - 5.19 [Dependency Map & Stable States](#519-dependency-map--stable-states)
+   - 5.20 [Rollback Strategy](#520-rollback-strategy)
 6. [Summary of Benefits](#6-summary-of-benefits)
 7. [Additional Considerations](#7-additional-considerations)
    - 7.1 [Carrying Comments Forward Across Versions](#71-carrying-comments-forward-across-versions)
@@ -728,62 +744,765 @@ The original proposal included revision aliasing and blob deduplication as the p
 
 ---
 
-## 5. Migration Plan
+## 5. Implementation Plan
 
-### 5.1 Phase 1: Add APIVersion Entity (Non-Breaking)
+The plan is structured as **17 independent work items** grouped into 6 logical areas. Each work item is individually deployable behind a feature flag and leaves the system in a stable state when completed. Where two or more work items must land together to form a meaningful behavior change, this is called out explicitly as a **stable-state gate**.
 
-1. Create `APIVersions` Cosmos DB container
-2. Add nullable `APIVersionId` field to `APIRevisionListItemModel` and `SamplesRevisionModel` (backward-compatible — all read paths tolerate `null`). `CommentItemModel` is deferred to Phase 2, where the comment backfill is defined in full.
-3. Implement `NormalizeVersion()` on top of the existing `AzureEngSemanticVersion` parser — the parser already extracts `PrereleaseLabel`, `PrereleaseNumber` (8-digit date stamps), and `BuildNumber`, which supplies all the inputs needed for rolling-prerelease detection. `NormalizeVersion` maps a raw `PackageVersion` string to a `(VersionIdentifier, VersionKind)` pair, collapsing daily CI alpha/dev builds to their channel prefix (see [§4.3 Version Normalization for Rolling Prereleases](#43-version-normalization-for-rolling-prereleases)).
-4. **Backfill migration — revisions:** For each review, group existing **non-PR** revisions (`APIRevisionType != PullRequest`) by **normalized** `VersionIdentifier` (not raw `PackageVersion`) → create one `APIVersionModel` per unique normalized version per review, and set `APIVersionId` on each revision. Daily alpha builds (e.g., `1.2.0-alpha.20260323.1`, `1.2.0-alpha.20260324.1`) collapse into a single `APIVersion` with `VersionIdentifier = "1.2.0-alpha"` and `Kind = RollingPrerelease`. PR-type revisions are **excluded** from this backfill — they are handled in Phase 3, which groups them by `PullRequestNo` into `Kind = PullRequest` versions. Including PR revisions here would create conflicting version assignments that Phase 3 would need to undo. Revisions with missing or empty `PackageVersion` (common in JavaScript) are handled via content-hash grouping — see [§7.3 Versionless Revisions (JavaScript)](#73-versionless-revisions-javascript).
-5. **Backfill migration — samples revisions:** `SamplesRevisionModel` has no existing link to a revision or version — it is purely review-scoped today (`ReviewId` only). For each samples revision, match it to an `APIVersion` by finding the revision within the same review whose `CreatedOn` is closest to (and not after) the samples revision's `CreatedOn`, then adopt that revision's `APIVersionId`. If no plausible match exists (e.g., orphaned samples with no nearby revision), assign to the review's latest stable `APIVersion` as a conservative default.
-6. **Wire new-upload path:** Update `AutoReviewService.CreateAutomaticRevisionAsync` (and the manual-upload path) to call `NormalizeVersion()`, find-or-create the `APIVersion`, and set `APIVersionId` on every newly created revision going forward. This ensures all *new* data is version-tagged from this point on, while the backfill (steps 4–5) covers historical data.
+> **Prerequisite — ContentHash:** `ContentHash` on `APICodeFileModel` is already implemented and deployed ([PR #14704](https://github.com/Azure/azure-sdk-tools/pull/14704)). `AreAPIRevisionsTheSame` uses it as an O(1) fast path with lazy backfill for legacy revisions that lack a hash. No additional work is needed — every work item that references `ContentHash` (versionless-revision grouping, approval inheritance) depends on this but does not need to implement it.
 
-> **Note — ContentHash:** `ContentHash` on `APICodeFileModel` is already implemented and deployed ([PR #14704](https://github.com/Azure/azure-sdk-tools/pull/14704)). `AreAPIRevisionsTheSame` uses it as an O(1) fast path with lazy backfill for legacy revisions that lack a hash. No additional work is needed here — Phase 1 depends on `ContentHash` (for versionless-revision grouping and future approval inheritance) but does not need to implement it.
+> **Feature flag convention:** Each work item (or group of related items) is gated by an Azure App Configuration key under the `FeatureManagement:` prefix (e.g., `FeatureManagement:APIVersionEntity`). The existing 5-minute sentinel-based refresh propagates flag changes without restart. Guards are placed at the write path entry points so that the flag can be flipped on once the work is verified.
 
-### 5.2 Phase 2: Comment Scoping & Orphan Cleanup
+> **Separability principle:** Every work item below can be deployed with an arbitrary delay before the next one. New data continues to be tagged with new fields as they're added; old code paths continue to run until their replacement is explicitly switched on via feature flag. There is no accumulating tech debt or data drift during gaps — new FK fields are always populated going forward, and old query paths work fine reading documents that happen to have extra fields.
 
-**Prerequisite:** Phase 1 must be complete — all revisions have `APIVersionId`, and the new-upload path sets it on every incoming revision.
+---
 
-1. **Add `APIVersionId` to `CommentItemModel`** (nullable, for backward compat).
+### 5.1 Work Item Index
 
-2. **Backfill `APIVersionId` on existing comments:** For every comment that has an `APIRevisionId`, look up the revision's `APIVersionId` (populated in Phase 1) and set it on the comment. For comments whose `APIRevisionId` references a deleted/soft-deleted revision, attempt to resolve via the revision's `PackageVersion` → matching `APIVersion`. For comments with a null or unresolvable `APIRevisionId`, assign to the review's latest stable `APIVersion` (same conservative fallback as samples). Delete diagnostic comments whose parent revision no longer exists — diagnostics are machine-generated and revision-specific; orphaned diagnostics have no value.
+| WI | Name | Goal | Area | Layer | Depends On | Stable Alone? |
+|----|------|------|------|-------|------------|---------------|
+| 1 | APIVersion Entity & Repository Layer | New `APIVersionModel`, Cosmos container, repo, manager, and `NormalizeVersion()` — no existing code touched | Foundation | Backend | — | ✅ Yes |
+| 2 | Wire Upload Paths | Every new revision/sample gets an `APIVersionId` FK from this point forward | Foundation | Backend | WI-1 | ✅ Yes |
+| 3 | Backfill Revisions & Samples | Backfill `APIVersionId` on all historical revisions and samples so the FK is universal | Foundation | Backend | WI-1, WI-2 | ✅ Yes |
+| 4 | Retention Configuration & RetainUntil Field | Add config keys and `RetainUntil` field — groundwork for unified retention | Retention | Backend | — † | ✅ Yes |
+| 5 | Retention Event Handlers & Background Purge | Replace ad-hoc archive/purge with policy-driven `RetainUntil` lifecycle + unified purge loop | Retention | Backend | WI-3, WI-4 | ✅ Yes |
+| 6 | Retention Backfill | Apply retention policy to historical data so old superseded versions get cleaned up | Retention | Backend | WI-5 | ✅ Yes |
+| 7 | Comment FK & Backfill | Add `APIVersionId` FK to comments and backfill all historical comments | Comments | Backend | WI-3 | ✅ Yes |
+| 8 | Comment Query Switch & Frontend Update | Switch code panel from review-wide to version-scoped comments, eliminating comment bleed | Comments | Backend + Frontend | WI-7 | ⚠️ See note |
+| 9 | Cross-Version Comment Toggle | Opt-in UI toggle to see comments from other versions in the code panel | Comments | Frontend | WI-8 | ✅ Yes |
+| 10 | PR Version Backfill & Status Tracking | Backfill `APIVersionId` on historical PR revisions and populate `PRStatus` | PR Lifecycle | Backend | WI-3 | ✅ Yes |
+| 11 | Version-Aware PullRequestManager | Refactor PR creation to be version-aware; fix baseline comparison bug | PR Lifecycle | Backend | WI-10 | ✅ Yes |
+| 12 | PR Promotion-on-Merge | Promote merged PR version to Stable/Preview in-place, preserving comments and blobs | PR Lifecycle | Backend | WI-8, WI-11 | ✅ Yes |
+| 13 | PR Cleanup via Retention | Replace ad-hoc `CleanupPullRequestData` with `RetainUntil`-based lifecycle | PR Lifecycle | Backend | WI-5, WI-10 | ✅ Yes |
+| 14 | Approval Inheritance Policy & ClassifyTransition | Define per-language policy matrix and version-transition classifier | Approvals | Backend | — † | ✅ Yes |
+| 15 | Version-Level Approval Backend | Move approval from per-revision to per-version; replace opaque carry-forward with policy-driven inheritance | Approvals | Backend | WI-3, WI-14 | ⚠️ Gate with WI-17 |
+| 16 | GetReviewStatus & Copilot Trigger | Make release-gating check and Copilot automation version-aware | Approvals | Backend (CI-facing) | WI-3 | ✅ Yes |
+| 17 | Approval SPA Update | Update Angular SPA to operate on version-level approvals and show inheritance provenance | Approvals | Frontend | WI-15 | ⚠️ Gate with WI-15 |
 
-   > **Why backfill runs first:** Steps 3–6 change the query and filter logic to use `APIVersionId`. If the backfill hasn't run, all existing comments have `APIVersionId = null` and would be invisible. The backfill must complete (or at minimum run as a background job with the query paths tolerating `null` during the transition) before the filter logic switches over.
+> **† Parallel with WI-1:** WI-4 and WI-14 are pure config/schema/pure-function work with no runtime dependency on the `APIVersions` container, repository, or manager. They can be developed and merged in parallel with WI-1. The only touch point is adding `RetainUntil` to the `APIVersionModel` type (WI-4) and using `VersionKind` in `ClassifyTransition` (WI-14) — both trivial once the model file lands, which is the first artifact in WI-1.
 
-3. **Update comment creation path:** Update `CommentsController.CreateCommentAsync` and `CommentsManager.AddCommentAsync` to resolve and set `APIVersionId` on every new comment. The frontend already sends `apiRevisionId`; the backend looks up the revision's `APIVersionId` and writes both fields. This ensures all new comments are version-tagged from this point on. `APIRevisionId` continues to be written for backward compatibility and diagnostic traceability.
+**Stable-state gates** (must ship together when the feature flag is flipped):
+- **WI-8 (Comment Query Switch):** The backfill in WI-7 must be verified complete before flipping the flag. WI-7 and WI-8 can be *developed and deployed* independently, but the WI-8 flag flip requires WI-7's backfill to have finished. If you flip WI-8 before WI-7 completes, comments without `APIVersionId` would be invisible. In practice: deploy both, run backfill, verify, flip.
+- **WI-15 + WI-17 (Approval Backend + SPA):** The backend (WI-15) starts expecting version-level approval calls when its flag is on, and the SPA (WI-17) must be sending them. Deploy both behind the same flag; flip once. You can *develop and merge* them independently — the flag gates runtime behavior, not deployment.
 
-4. **Add version-scoped query to `CosmosCommentsRepository`:** Add a new `GetCommentsForVersionAsync(reviewId, apiVersionId)` method. The existing `GetCommentsAsync(reviewId)` (review-wide) is **retained** — it is needed for the conversations panel, review-level comment counts, cross-version search, the "show other versions" toggle, and any admin/moderation views. The version-scoped query is the new *default for code-panel rendering*; the review-wide query remains the default for everything else.
+---
 
-5. **Update `ReviewsController.GetReviewContentAsync`:** Replace the current flow (`GetCommentsAsync(reviewId)` → `CommentVisibilityHelper.GetVisibleComments()` → post-filter) with: `GetCommentsForVersionAsync(reviewId, activeApiVersionId)` → pass directly to code panel. The comment-bleed problem ([§3.1](#31-comment-bleed-across-revisions)) is solved by the query itself — no post-filter heuristic needed. The existing `CommentVisibilityHelper.GetVisibleComments()` method on the backend is retired for this path.
+### 5.2 WI-1: APIVersion Entity & Repository Layer
 
-6. **Update frontend comment visibility:** Replace the logic in `comment-visibility.helper.ts` (`getVisibleComments`). Today it intentionally shows **all** user and AI comments regardless of revision (only diagnostics are revision-filtered). This is the designed behavior that causes comment bleed — it is not a workaround. Replace it with: show all comments matching the active `apiVersionId`. Diagnostic comments continue to be filtered by `apiRevisionId` within the version (since diagnostics are generated per-upload and reconciled per-revision via `SyncDiagnosticCommentsAsync`). The conversations panel (`conversations.component.ts`) continues to use the review-wide feed for its counts and thread list.
+**Area:** Foundation · **Depends on:** Nothing · **Stable alone:** ✅ Yes — creates new infrastructure, touches nothing existing
 
-7. **Add "Show comments from other versions" opt-in toggle:** When enabled, the code panel re-fetches using the review-wide `GetCommentsAsync(reviewId)` and renders a visual indicator (e.g., version badge) on comments from non-active versions. This is additive UX on the existing review-wide query path.
+**Goal:** Introduce the `APIVersionModel` entity, its Cosmos DB container, repository, and manager — without modifying any existing entity or read/write path.
 
-8. **Update diagnostic sync:** `SyncDiagnosticCommentsAsync` currently receives the active `APIRevision` and matches diagnostics by `apiRevisionId`. Update it to *also* set `APIVersionId` on newly created diagnostic comments. The reconciliation logic (compare incoming diagnostics against existing, auto-resolve removed, create new) continues to operate per-revision using `DiagnosticsHash` as the short-circuit — but all diagnostic comments are now version-tagged, so the version-scoped query in step 4 picks them up correctly.
+#### New model
 
-9. **Cascade deletion rules:** When an `APIVersion` is deleted, cascade-delete all associated comments (query by `APIVersionId`). When an individual `APIRevision` is replaced within a version, no comment migration is needed — user/AI comments are scoped to the version, and diagnostic comments for the old revision are auto-resolved by the reconciliation in step 8 when the new revision's diagnostics are synced.
+Create `APIViewWeb/LeanModels/APIVersionModel.cs` containing the `APIVersionModel` class, `VersionKind` enum, and `PullRequestStatus` enum as defined in [§4.1](#41-new-entity-apiversion). The model inherits from `BaseListitemModel` (which provides `Id`, `PackageName`, `Language`). Add `APIVersionChangeHistoryModel` extending `ChangeHistoryModel` with a new `APIVersionChangeAction` enum (`Created`, `Approved`, `ApprovalReverted`, `Deleted`, `UnDeleted`, `Promoted`, `RetentionSet`), following the same pattern as `APIRevisionChangeHistoryModel` in `LeanModels/ChangeHistory.cs`.
 
-10. **Retain `APIRevisionId` on `CommentItemModel`** (do not deprecate yet). It continues to serve three purposes: (a) diagnostic comment reconciliation (`SyncDiagnosticCommentsAsync` matches by revision), (b) traceability for when a comment was created (which specific upload/revision a user was viewing), and (c) backward compatibility with any external consumers reading the Comments container. Deprecation can be revisited once diagnostic sync is fully version-scoped and all read paths have migrated to `APIVersionId`.
+#### New Cosmos container
 
-### 5.3 Phase 3: PR Version Migration
+Create the `APIVersions` container with partition key `/ReviewId`. This mirrors the `APIRevisions` container's partitioning strategy — all versions for a review are co-located, enabling efficient cross-version queries within a review.
 
-1. **Backfill:** Group existing PR-type revisions by `PullRequestNo` (or `SourceBranch` where PR number is absent) → create one `APIVersion` per unique PR per review with `Kind = PullRequest`
-2. Set `APIVersionId` on each existing PR revision and its associated comments
-3. Update `PullRequestManager` to create/find `APIVersion` by PR number on incoming CI pipeline callbacks (via `PullRequestsController.CreateAPIRevisionIfAPIHasChanges`) instead of creating bare `APIRevision` entries
-4. **Implement promotion-on-merge:** When the post-merge CI build arrives, compare its `ContentHash` against the merged PR version's latest revision. If they match, promote the PR `APIVersion` in-place (`Kind` → `Stable`/`Preview`, update `VersionIdentifier`, set `PRStatus = Merged`). If they differ, create a new `Stable`/`Preview` version through the normal automatic flow and set `PRStatus = Merged` on the PR version. See [§4.4 PR Versions](#44-pr-versions) for the full promotion semantics.
-5. Set `PRStatus = Merged` or `Closed` on non-promoted PR versions based on current GitHub PR state
-6. Apply differentiated archive TTLs — shorter for `Closed` (rejected), longer for `Merged` (non-promoted only) — then cascade-delete after retention period
+Register the container in `Startup.cs` alongside the existing 8 container registrations (`ICosmosReviewRepository`, `ICosmosAPIRevisionsRepository`, etc.) as `ICosmosVersionsRepository` → `CosmosVersionsRepository`, following the identical `AddSingleton` pattern.
 
-### 5.4 Phase 4: Approval Migration
+#### New repository
 
-1. Move `IsApproved` / `Approvers` from `APIRevisionListItemModel` to `APIVersionModel`
-2. Set `ApprovalInheritedFromVersionId` for versions that had bot-copied approvals (detectable from `ChangeHistory` notes containing "Approval copied from")
-3. Add `ApprovalInheritancePolicy:Default` and any language-specific `ApprovalInheritancePolicy:{Language}` keys to Azure App Configuration with JSON blobs conforming to `ApprovalInheritancePolicyOptions`
-4. Implement `ClassifyTransition()` and wire it into the auto-approval flow, replacing the existing `CarryForwardRevisionDataAsync` / `ApplyApprovalFrom` logic
-5. Update `ToggleAPIRevisionApprovalAsync` to operate on `APIVersionModel`
-6. Update UI to show inherited vs. human approval, including the transition kind that triggered inheritance (e.g., "inherited from v12.1.0 — patch bump")
+Create `APIViewWeb/Repositories/Interfaces/ICosmosVersionsRepository.cs` and `APIViewWeb/Repositories/CosmosVersionsRepository.cs`. Core query methods:
+
+| Method | Purpose |
+|---|---|
+| `GetVersionAsync(reviewId, versionId)` | Single version by ID |
+| `GetVersionsAsync(reviewId)` | All non-deleted versions for a review |
+| `GetVersionAsync(reviewId, versionIdentifier)` | Lookup by normalized version string |
+| `GetVersionByPullRequestAsync(reviewId, pullRequestNumber)` | PR version lookup |
+| `GetVersionsAsync(reviewId, versionKind)` | Filter by kind (Stable, Preview, etc.) |
+| `GetVersionsEligibleForRetentionAsync(now)` | Cross-partition query: `WHERE RetainUntil != null AND RetainUntil < @now` |
+| `UpsertVersionAsync(version)` | Create or update |
+| `DeleteVersionAsync(versionId, reviewId)` | Hard delete |
+
+#### New manager
+
+Create `APIViewWeb/Managers/APIVersionsManager.cs` with `IAPIVersionsManager` interface. Initial methods:
+
+| Method | Purpose |
+|---|---|
+| `GetOrCreateVersionAsync(reviewId, packageVersion, apiRevisionType, pullRequestNo?)` | Core find-or-create: calls `NormalizeVersion()`, looks up existing by `(ReviewId, VersionIdentifier)`, creates if absent. Sets `Kind`, `VersionIdentifier`, `PullRequestNumber`, `SourceBranch` as appropriate. |
+| `GetVersionsForReviewAsync(reviewId)` | Passthrough to repository with caching for the active request |
+| `GetVersionByIdAsync(reviewId, versionId)` | Single version lookup |
+| `SoftDeleteVersionAsync(versionId, reviewId)` | Soft delete with change history |
+
+#### Implement `NormalizeVersion()`
+
+Add a static method `NormalizeVersion(string packageVersion)` to a new helper class `APIViewWeb/Helpers/VersionNormalizationHelper.cs`. The method returns a `(string VersionIdentifier, VersionKind Kind)` tuple.
+
+**Implementation** builds on top of `AzureEngSemanticVersion` which already parses `Major`, `Minor`, `Patch`, `PrereleaseLabel`, `PrereleaseNumber`, and `BuildNumber`:
+
+1. If `AzureEngSemanticVersion.TryCreate()` fails → return `(rawVersion, VersionKind.Preview)` as fallback.
+2. If no prerelease suffix:
+   - Major ≥ 1 → `(major.minor.patch, Stable)`
+   - Major == 0 → `(major.minor.patch, Preview)`
+3. If prerelease suffix present:
+   - Split prerelease identifiers by `.`. If the second identifier matches `^\d{8}$` (8-digit YYYYMMDD date stamp) → `(major.minor.patch-label, RollingPrerelease)` where `label` is the first identifier only (e.g., `alpha`, `dev`).
+   - Otherwise → `(major.minor.patch-fullPrerelease, Preview)`. Examples: `1.2.0-beta.1` → `Preview`, `1.2.0-rc.1` → `Preview`.
+   - Sub-1.0.0 with prerelease (e.g., `0.5.0-beta.1`) → treat as `Preview` (not `RollingPrerelease` unless the date-stamp rule fires).
+
+> **Python PEP 440 note:** Python versions like `1.2.0a20260323001` do not use dot-separated prerelease identifiers. `AzureEngSemanticVersion` has a Python-specific branch (`IsSemVerFormat == false`) that extracts `PrereleaseLabel = "a"` and `PrereleaseNumber` as the numeric portion. `NormalizeVersion` detects this pattern (numeric PrereleaseNumber with 8+ digits) and normalizes to `major.minor.patch-a` as a `RollingPrerelease`.
+
+#### Tests
+
+| Test file | Coverage |
+|---|---|
+| `VersionNormalizationTests.cs` | All normalization rules from [§4.3](#43-version-normalization-for-rolling-prereleases): stable, sub-1.0.0, explicit prerelease milestones, daily alpha/dev builds for C#/Java/Python/JS, unparseable fallback |
+| `CosmosVersionsRepositoryTests.cs` | CRUD operations, query-by-kind, query-by-PR-number, retention-eligible query |
+| `APIVersionsManagerTests.cs` | `GetOrCreateVersionAsync` — find existing, create new, rolling prerelease collapsing, PR version creation |
+
+#### Documentation
+
+Update [docs/overview.md](docs/overview.md) §3 (Data Model Hierarchy) to include the `APIVersion` layer between Review and APIRevision. The current hierarchy is `Review → APIRevision → CodeFile`; it becomes `Review → APIVersion → APIRevision → CodeFile`.
+
+---
+
+### 5.3 WI-2: Wire Upload Paths
+
+**Area:** Foundation · **Depends on:** WI-1 · **Stable alone:** ✅ Yes — new uploads get tagged, nothing reads the tag yet, old paths unchanged
+
+**Goal:** Make every new revision and sample carry an `APIVersionId` from this point forward. Historical data is not yet backfilled (that's WI-3).
+
+#### Add `APIVersionId` FK to existing models
+
+Add a nullable `string? APIVersionId` property to:
+- `APIRevisionListItemModel` in `LeanModels/ReviewListModels.cs`
+- `SamplesRevisionModel` in `LeanModels/ReviewListModels.cs`
+
+Both are backward-compatible — Cosmos DB documents without this field deserialize with `null`. All existing read paths tolerate `null` without changes.
+
+#### Wire the automatic-upload path
+
+Update `AutoReviewService.CreateAutomaticRevisionAsync` (the primary entry point for CI-uploaded revisions):
+
+1. After the `CodeFile` is parsed and `PackageVersion` is known, call `_apiVersionsManager.GetOrCreateVersionAsync(reviewId, packageVersion, APIRevisionType.Automatic)`.
+2. Set `APIVersionId` on the new `APIRevisionListItemModel` before `UpsertAPIRevisionAsync`.
+3. The existing pending-revision cleanup logic (soft-deleting prior non-approved, non-commented automatic revisions) continues to operate unchanged — it now operates within the scope of the version's revisions.
+
+**Critical change to supersession logic:** Today, `CreateAutomaticRevisionAsync` iterates all revisions for the review and soft-deletes pending ones. With the version-centric model, this logic must be scoped to the **same `APIVersionId`** — a new revision for v12.2.0 must not delete a pending revision for v12.3.0. Filter the candidate list to `revision.APIVersionId == newVersion.Id` before applying the delete heuristic. This directly resolves [#5186](https://github.com/Azure/azure-sdk-tools/issues/5186) and [#10105](https://github.com/Azure/azure-sdk-tools/issues/10105).
+
+#### Wire the manual-upload path
+
+The manual upload flows through `APIRevisionsController` → `APIRevisionsManager.CreateAPIRevisionAsync`. Add the same `GetOrCreateVersionAsync` call and `APIVersionId` assignment. If the uploaded file has no `PackageVersion`, fall through to the versionless handling in [§7.3](#73-versionless-revisions-javascript).
+
+#### Wire the PR-upload path (forward-only tagging)
+
+PR revisions are fully handled in WI-11, but to avoid accumulating untagged data in the interim, add a lightweight forward-only tagging step to `PullRequestManager.CreateAPIRevisionIfAPIHasChanges`:
+
+1. Call `GetOrCreateVersionAsync(reviewId, packageVersion, APIRevisionType.PullRequest, pullRequestNo)` using `VersionKind.PullRequest` and `VersionIdentifier = "PR#{pullRequestNo}"`.
+2. Set `APIVersionId` on the PR revision.
+
+This is the minimal change — the full PR lifecycle (promotion, status tracking, retention) is deferred to WI-10 through WI-13.
+
+#### Wire the samples-upload path
+
+Update `SamplesRevisionsManager.UpsertSamplesRevisionsAsync` to accept an `apiVersionId` parameter. The frontend must pass the active version ID when uploading samples. For backward compatibility, if `apiVersionId` is null, fall back to the review's latest stable version.
+
+#### Tests
+
+| Test file | Coverage |
+|---|---|
+| `AutoReviewServiceTests.cs` | New revision gets `APIVersionId`; rolling prerelease builds collapse into same version; supersession scoped to same version (v12.2.0 doesn't delete v12.3.0's pending revision) |
+| `APIRevisionsManagerTests.cs` | Manual upload gets `APIVersionId`; versionless revision fallback |
+| `PullRequestManagerTests.cs` | PR revision gets forward-tagged `APIVersionId` |
+
+---
+
+### 5.4 WI-3: Backfill Revisions & Samples
+
+**Area:** Foundation · **Depends on:** WI-1, WI-2 · **Stable alone:** ✅ Yes — backfills FK on historical data; nothing reads it yet
+
+**Goal:** Every `APIRevisionListItemModel` and `SamplesRevisionModel` in the database has a non-null `APIVersionId`.
+
+#### Backfill revisions
+
+Run a one-time migration (implemented as a console command or a background job triggered by an admin endpoint). For each review in the `Reviews` container:
+
+1. Fetch all non-deleted revisions where `APIVersionId == null` and `APIRevisionType != PullRequest`.
+2. For each revision, compute `NormalizeVersion(revision.Files[0].PackageVersion)` → `(versionIdentifier, kind)`.
+3. Group revisions by `(reviewId, versionIdentifier)`.
+4. For each group:
+   a. Call `GetOrCreateVersionAsync` to find or create the `APIVersionModel`.
+   b. Set `APIVersionId` on each revision in the group.
+   c. Copy approval state from the group's revisions to the version: if any revision in the group is approved, set `IsApproved = true` on the version and populate `Approvers` from the approved revision's `Approvers`. If multiple revisions are approved, use the most recently approved one as the source.
+   d. Copy release state: if any revision is released (`IsReleased = true`), set `IsReleased = true` and `ReleasedOn` on the version.
+   e. Batch-upsert the revisions (Cosmos DB supports transactional batch within a partition key, and all revisions for a review share the `ReviewId` partition).
+5. **Versionless revisions** (empty or null `PackageVersion`, common in JavaScript): Apply the strategy from [§7.3](#73-versionless-revisions-javascript) — attempt label extraction, then content-hash grouping, then synthetic version assignment. PR revisions with no `PackageVersion` are skipped (handled in WI-10).
+
+**Idempotency:** The migration skips revisions where `APIVersionId` is already set. It can be re-run safely.
+
+**Progress tracking:** Log progress by review ID. The migration can be paused and resumed by filtering to reviews not yet processed (e.g., reviews whose revisions still have `APIVersionId == null`).
+
+#### Backfill samples revisions
+
+For each `SamplesRevisionModel` where `APIVersionId == null`:
+
+1. Find the revision within the same review whose `CreatedOn` is closest to (and not after) the samples revision's `CreatedOn`.
+2. Adopt that revision's `APIVersionId`.
+3. If no plausible match (orphaned sample), assign to the review's latest stable `APIVersion`.
+
+#### Validation gate
+
+Before subsequent work items that read `APIVersionId` are flag-flipped (WI-5, WI-7, WI-8, etc.), verify:
+- Query: `SELECT COUNT(1) FROM c WHERE c.APIVersionId = null AND c.IsDeleted != true` returns 0 for both `APIRevisions` and `SamplesRevisions` containers (excluding PR revisions, handled in WI-10).
+- Every `APIVersion` in the `APIVersions` container has at least one linked revision.
+
+#### Tests
+
+| Test file | Coverage |
+|---|---|
+| `BackfillMigrationTests.cs` (new) | Revisions grouped by normalized version; approval/release state copied to version; versionless revision gets synthetic version; idempotent re-run |
+| `SamplesRevisionsManagerTests.cs` | Backfill assigns correct version; orphaned sample falls back to latest stable |
+
+#### Documentation
+
+Update [docs/overview.md](docs/overview.md) §4c (Key Managers) to add `APIVersionsManager` with its responsibility description. Update [docs/release_approval.md](docs/release_approval.md) §5 (Automatic Approval Carry-Forward) to note that carry-forward is being migrated to version-level in WI-15.
+
+---
+
+### 5.5 WI-4: Retention Configuration & RetainUntil Field
+
+**Area:** Retention · **Depends on:** Nothing (parallel with WI-1 †) · **Stable alone:** ✅ Yes — adds config keys and a nullable field; nothing reads them yet
+
+**Goal:** Lay the config and schema groundwork for the retention system.
+
+#### Configuration
+
+Add the following keys to Azure App Configuration under the `RetentionPolicy:` prefix, with hardcoded defaults in a new `RetentionPolicyOptions` class bound via `IOptions<RetentionPolicyOptions>`:
+
+| Key | Default | Purpose |
+|---|---|---|
+| `RetentionPolicy:SupersededPreviewDaysAfterStable` | `90` | Unapproved/unreleased preview cleanup after stable ships |
+| `RetentionPolicy:GraduatedRollingPrereleaseDays` | `30` | Rolling prerelease channel cleanup after stable ships |
+| `RetentionPolicy:MergedPullRequestDays` | `60` | Non-promoted merged PR version cleanup |
+| `RetentionPolicy:ClosedPullRequestDays` | `30` | Closed-without-merge PR version cleanup |
+| `RetentionPolicy:SupersededRevisionHardDeleteDays` | `30` | Hard-delete for superseded revisions within a version |
+
+Register `RetentionPolicyOptions` in `Startup.cs` with `services.Configure<RetentionPolicyOptions>(configuration.GetSection("RetentionPolicy"))`. The existing sentinel-based refresh ensures changes propagate without restart.
+
+#### `RetainUntil` field
+
+Add `DateTime? RetainUntil` to both `APIVersionModel` and `APIRevisionListItemModel`. Default is `null` (retain indefinitely). The field is set at the moment the retention clock starts, not computed during purge.
+
+#### Tests
+
+| Test file | Coverage |
+|---|---|
+| `RetentionPolicyOptionsTests.cs` (new) | Defaults are correct; App Config overrides work; missing keys fall back to defaults |
+
+---
+
+### 5.6 WI-5: Retention Event Handlers & Background Purge
+
+**Area:** Retention · **Depends on:** WI-3 (all revisions have `APIVersionId`), WI-4 (config + field exist) · **Stable alone:** ✅ Yes — replaces old archive/purge with new unified system
+
+**Goal:** Replace the ad-hoc deletion heuristics (`AutoArchiveAPIRevisions`, `AutoPurgeAPIRevisions`, `CleanupPullRequestData`) with the unified retention policy from [§4.8](#48-retention-policy).
+
+#### Event handlers
+
+Add methods to `APIVersionsManager`:
+
+| Method | Trigger | Action |
+|---|---|---|
+| `OnStableVersionReleased(reviewId, versionId)` | A `Stable` version's `IsReleased` is set to `true` | Set `RetainUntil` on superseded `Preview` versions (90d) and graduated `RollingPrerelease` channels (30d) for that major.minor.patch. Enforce always-retain invariants (last stable, last preview per track, any released version). |
+| `OnRevisionSuperseded(revision)` | A new revision is created within a version, replacing a prior one | Set `RetainUntil = now + 30d` on the superseded revision if it is not the latest, approved, or released snapshot. Soft-delete immediately (existing behavior). |
+| `OnPRClosed(reviewId, versionId, merged)` | PR status transitions to `Merged` or `Closed` | Set `RetainUntil` based on merged (60d) vs. closed (30d). For promoted PRs, clear `RetainUntil` (they become `Stable`/`Preview` and follow those rules). |
+| `OnVersionApprovedOrReleased(versionId)` | Version becomes approved or released | Clear `RetainUntil → null` (retain indefinitely). |
+
+#### Background purge job
+
+Replace the retention-related logic in `ReviewBackgroundHostedService` (which currently calls `AutoArchiveAPIRevisions` and `AutoPurgeAPIRevisions` every 6 hours) with a new unified purge loop:
+
+1. **Version-level purge:** Query `CosmosVersionsRepository.GetVersionsEligibleForRetentionAsync(DateTime.UtcNow)` — returns versions where `RetainUntil < now`. For each, cascade-delete: all revisions, all comments (by `APIVersionId`), all blobs (`codefiles` and `originals` containers), then the version itself.
+2. **Revision-level purge:** Query revisions where `RetainUntil < now` (hard-delete candidates). For each, delete the revision's blobs, then hard-delete the Cosmos document.
+3. **Rate limiting:** Retain the existing 500ms inter-deletion delay from `AutoPurgeAPIRevisions` to avoid overwhelming Cosmos throughput.
+
+The existing `AutoArchiveAPIRevisions` and `AutoPurgeAPIRevisions` are **retired** once this WI is fully deployed. During the transition, both old and new paths can coexist behind the feature flag — the old paths continue to run for revisions without `RetainUntil`, and the new path handles revisions with it.
+
+#### Tests
+
+| Test file | Coverage |
+|---|---|
+| `RetentionPolicyTests.cs` (new) | `OnStableVersionReleased` sets correct `RetainUntil` on previews and rolling prereleases; invariants (last stable, last preview, released) are never given a `RetainUntil`; `OnVersionApprovedOrReleased` clears `RetainUntil`; cascade deletion removes version + revisions + comments; `OnRevisionSuperseded` sets `RetainUntil` on non-latest, non-approved revision |
+| `ReviewBackgroundHostedServiceTests.cs` | New purge loop runs on schedule; respects rate limiting; handles empty result sets |
+
+#### Documentation
+
+Update [docs/overview.md](docs/overview.md) §4e (Background Services) to describe the new unified retention purge replacing the old archive/purge split.
+
+---
+
+### 5.7 WI-6: Retention Backfill
+
+**Area:** Retention · **Depends on:** WI-5 · **Stable alone:** ✅ Yes — sets `RetainUntil` on historical data; purge loop picks it up on next cycle
+
+**Goal:** Apply retention policy to existing data so that historical superseded versions and revisions are cleaned up.
+
+#### Migration
+
+Run a one-time migration:
+
+1. For each `RollingPrerelease` version whose major.minor.patch has a shipped `Stable` version → set `RetainUntil = stableReleasedOn + 30d` (may already be in the past — purge will clean up on next cycle).
+2. For each `Preview` version that is not approved, not released, and has a newer shipped `Stable` version → set `RetainUntil = stableReleasedOn + 90d`.
+3. For each superseded revision (not latest, not approved, not released) within a version → set `RetainUntil = now + 30d` and soft-delete.
+
+---
+
+### 5.8 WI-7: Comment FK & Backfill
+
+**Area:** Comments · **Depends on:** WI-3 (all revisions have `APIVersionId`) · **Stable alone:** ✅ Yes — adds a nullable field and populates it; nothing reads it yet
+
+**Goal:** Every comment in the database has an `APIVersionId`, preparing for the query switch in WI-8.
+
+#### Add `APIVersionId` FK to comments
+
+Add a nullable `string? APIVersionId` property to `CommentItemModel` in `LeanModels/CommentItemModel.cs`. Backward-compatible — existing documents deserialize with `null`.
+
+#### Backfill
+
+Run a one-time migration:
+
+1. For every comment where `APIVersionId == null` and `APIRevisionId != null`:
+   a. Look up the revision (including soft-deleted revisions — query with `IsDeleted` filter disabled).
+   b. If found and the revision has `APIVersionId` → set it on the comment.
+   c. If the revision is not found (deleted/purged), attempt to resolve by parsing the comment's context: look up the review's versions and find the `APIVersion` whose `CreatedOn` range brackets the comment's `CreatedOn`.
+   d. If still unresolvable → assign to the review's latest stable `APIVersion` (conservative fallback).
+2. For comments where `APIRevisionId == null` (older comments before revision-scoping was added) → apply the same timestamp-bracketing logic.
+3. **Orphaned diagnostic comments** (whose parent revision no longer exists): hard-delete. Diagnostics are machine-generated and revision-specific; they have no value once their revision is gone.
+
+#### Update comment creation paths (forward-write)
+
+Ensure every *new* comment gets `APIVersionId` from this point on, even before the query switch:
+
+1. **`CommentsManager.AddCommentAsync`:** Look up the revision's `APIVersionId` and write both fields.
+2. **`CommentsManager.SyncDiagnosticCommentsAsync`:** Set `APIVersionId` from the revision's `APIVersionId` on new diagnostic comments.
+3. **`CommentsManager.CommentsBatchOperationAsync`:** New reply comments inherit `APIVersionId` from the thread's root comment.
+
+#### Tests
+
+| Test file | Coverage |
+|---|---|
+| `CommentsManagerTests.cs` | New comment gets `APIVersionId`; diagnostic sync sets `APIVersionId`; batch replies inherit `APIVersionId` from thread root |
+| `CommentBackfillTests.cs` (new) | Revision lookup populates `APIVersionId`; deleted revision falls back to timestamp bracketing; orphaned diagnostics are deleted |
+
+---
+
+### 5.9 WI-8: Comment Query Switch & Frontend Update
+
+**Area:** Comments · **Depends on:** WI-7 · **Stable alone:** ⚠️ The backfill in WI-7 must be *verified complete* before this WI's feature flag is flipped. You can develop, merge, and deploy WI-8 at any time — but the flag that activates it requires WI-7's data to be in place. If flipped prematurely, comments without `APIVersionId` would be invisible in the code panel.
+
+**Goal:** Switch the code panel from review-wide comment loading to version-scoped loading, eliminating cross-version comment bleed ([§3.1](#31-comment-bleed-across-revisions)).
+
+#### Add version-scoped query
+
+Add `GetCommentsForVersionAsync(string reviewId, string apiVersionId)` to `ICosmosCommentsRepository` / `CosmosCommentsRepository`. The query:
+
+```sql
+SELECT * FROM c WHERE c.ReviewId = @reviewId AND c.APIVersionId = @apiVersionId AND c.IsDeleted != true
+```
+
+The existing `GetCommentsAsync(reviewId)` (review-wide) is **retained** — it serves: the conversations panel, review-level comment counts, cross-version search, the "show other versions" toggle, and admin/moderation views.
+
+#### Update backend rendering path
+
+Update `ReviewsController.GetReviewContentAsync` (`LeanControllers/ReviewsController.cs`):
+
+1. Resolve the active revision's `APIVersionId` (already available on the revision after WI-2/WI-3).
+2. Replace the current flow:
+   - **Before:** `GetCommentsAsync(reviewId)` → `CommentVisibilityHelper.GetVisibleComments(allComments, activeApiRevisionId)` → pass to code panel.
+   - **After:** `GetCommentsForVersionAsync(reviewId, apiVersionId)` → pass to code panel. The comment-bleed problem is solved by the query itself — no heuristic post-filter needed.
+3. The backend `CommentVisibilityHelper.GetVisibleComments()` static method is retired for this path. It remains available for any legacy callers until fully removed.
+
+#### Update frontend comment visibility
+
+Replace the logic in `ClientSPA/src/app/_helpers/comment-visibility.helper.ts` (`getVisibleComments`):
+
+- **Before:** Shows all user and AI comments regardless of revision; only diagnostics are filtered by `apiRevisionId`.
+- **After:** The backend already returns only version-scoped comments. The frontend helper simplifies to: show all comments from the response; filter diagnostics to `apiRevisionId` within the version. The `VisibleCommentsResult` structure is unchanged — `userComments`, `aiGeneratedComments`, `diagnosticCommentsForRevision` — but the input is now pre-scoped.
+
+The conversations panel (`conversations.component.ts`) continues to use the review-wide feed for its counts and thread list.
+
+#### Cascade deletion rules
+
+When an `APIVersion` is deleted (via retention purge or manual deletion):
+- Cascade-delete all comments where `APIVersionId` matches — a single partition-scoped query + batch delete.
+- No orphans possible because comments are keyed to `APIVersionId`, not `APIRevisionId`.
+
+When an individual `APIRevision` is replaced within a version:
+- User and AI comments are unaffected (version-scoped).
+- Diagnostic comments for the old revision are auto-resolved by `SyncDiagnosticCommentsAsync` when the new revision's diagnostics are synced.
+
+#### Retain `APIRevisionId` on `CommentItemModel`
+
+Do not deprecate. It continues to serve: (a) diagnostic reconciliation, (b) traceability, (c) backward compatibility with external consumers.
+
+#### Tests
+
+| Test file | Coverage |
+|---|---|
+| `CosmosCommentsRepositoryTests.cs` | `GetCommentsForVersionAsync` returns only version-scoped comments; review-wide query still returns all |
+| `ReviewsControllerTests.cs` | `GetReviewContentAsync` uses version-scoped query; response contains no cross-version comments |
+| `CommentVisibilityHelperTests.cs` (frontend) | Helper passes through pre-scoped backend response; diagnostics still filtered by revision |
+
+#### Documentation
+
+Update [docs/overview.md](docs/overview.md) §5b (Key Components) to note that the code panel now receives version-scoped comments. Update [docs/overview.md](docs/overview.md) §4c to describe the updated `CommentsManager` query behavior.
+
+---
+
+### 5.10 WI-9: Cross-Version Comment Toggle
+
+**Area:** Comments · **Depends on:** WI-8 · **Stable alone:** ✅ Yes — additive UX feature, can ship or revert independently
+
+**Goal:** Let users opt in to seeing comments from other versions in the code panel.
+
+Add an opt-in toggle to the code panel (`review-page-options` component). When enabled:
+
+1. The code panel re-fetches using the review-wide `GetCommentsAsync(reviewId)`.
+2. Comments from non-active versions are rendered with a visual badge indicating their source version (e.g., "v12.1.0").
+3. These cross-version comments are read-only — replies and resolution actions are scoped to the active version only.
+
+#### Tests
+
+Frontend unit test: toggle on shows cross-version comments with badge; toggle off reverts to version-scoped.
+
+---
+
+### 5.11 WI-10: PR Version Backfill & Status Tracking
+
+**Area:** PR Lifecycle · **Depends on:** WI-3 (backfill infrastructure exists) · **Stable alone:** ✅ Yes — backfills FK on historical PR revisions; nothing reads it via new paths yet
+
+**Goal:** Every PR revision in the database has an `APIVersionId`, and PR versions have `PRStatus`.
+
+#### Backfill existing PR versions
+
+WI-2 already forward-tagged new PR revisions. This backfill covers pre-WI-2 PR revisions:
+
+1. Query PR revisions where `APIVersionId == null`.
+2. Group by `PullRequestNo` (or `SourceBranch` where PR number is absent) per review.
+3. For each group, create an `APIVersionModel` with `Kind = PullRequest`, `VersionIdentifier = "PR#{pullRequestNo}"`.
+4. Set `APIVersionId` on each revision and its associated comments (using the same revision-to-comment linkage as WI-7 backfill).
+
+#### Populate `PRStatus`
+
+- Query the GitHub API (via the existing Octokit integration in `PullRequestManager`) for the current state of each PR.
+- Set `PRStatus = Open`, `Merged`, or `Closed` accordingly.
+
+For new PRs going forward, `PullRequestManager.CreateAPIRevisionIfAPIHasChanges` sets `PRStatus = Open` on version creation.
+
+#### Tests
+
+| Test file | Coverage |
+|---|---|
+| `PRBackfillTests.cs` (new) | PR revisions grouped by PR number; PRStatus populated from GitHub state; comments linked to PR version |
+
+---
+
+### 5.12 WI-11: Version-Aware PullRequestManager
+
+**Area:** PR Lifecycle · **Depends on:** WI-10 · **Stable alone:** ✅ Yes — changes how new PR revisions are created; old PR cleanup paths still work
+
+**Goal:** Refactor `PullRequestManager.CreateAPIRevisionIfAPIHasChanges` to be version-aware, fixing the baseline comparison issue ([#10105](https://github.com/Azure/azure-sdk-tools/issues/10105)).
+
+#### Changes to `CreateAPIRevisionIfAPIHasChanges`
+
+1. **Find or create PR version:** Call `_apiVersionsManager.GetOrCreateVersionAsync(reviewId, packageVersion, APIRevisionType.PullRequest, pullRequestNo)` (replaces the current bare-revision creation).
+2. **Commit dedup:** Check if the commit SHA is already recorded on any revision under this version (same logic as today, but scoped to the version's revisions).
+3. **API change detection:** Compare the incoming `ContentHash` against the version's latest revision's `ContentHash` (replaces the current `prHasAPIChanges` which compares against all automatic revisions). If the API surface is unchanged from the previous push to this PR, skip revision creation.
+4. **Baseline selection:** For PR comparison (determining whether the PR introduces API changes vs. the release baseline), compare against the matching `Stable` or `Preview` version's latest revision — found by normalizing the PR's `PackageVersion` and looking up the corresponding non-PR version. This replaces the current approach of comparing against every automatic revision.
+5. **Create revision:** Create a new `APIRevision` under the PR version with the incoming `ContentHash` and full `PackageVersion`.
+
+#### Tests
+
+| Test file | Coverage |
+|---|---|
+| `PullRequestManagerTests.cs` | PR creates version with `Kind = PullRequest`; subsequent pushes create revisions under same version; baseline comparison scoped to correct version; commit dedup works |
+
+---
+
+### 5.13 WI-12: PR Promotion-on-Merge
+
+**Area:** PR Lifecycle · **Depends on:** WI-8 (comments are version-scoped — required so promoted PR comments don't bleed), WI-11 (PR creation is version-aware) · **Stable alone:** ✅ Yes — adds a new code path in `AutoReviewService`; the non-promotion fallback (create new version) still works
+
+**Goal:** When a PR is merged and the post-merge API surface matches the PR's latest revision, promote the PR version to `Stable`/`Preview` in-place, preserving comments and avoiding blob duplication ([#8634](https://github.com/Azure/azure-sdk-tools/issues/8634)).
+
+#### Implement `PromotePRVersionAsync`
+
+Add `PromotePRVersionAsync(reviewId, prVersionId, targetVersionIdentifier, targetKind)` to `APIVersionsManager`:
+
+1. **Trigger:** When `AutoReviewService.CreateAutomaticRevisionAsync` processes a post-merge CI build, before creating a new `Stable`/`Preview` version, check for a recently merged PR version in the same review whose latest revision's `ContentHash` matches the incoming hash.
+2. **Match found (API unchanged):** Promote the PR version in-place:
+   - Set `Kind` → `targetKind` (`Stable` or `Preview` per `NormalizeVersion`).
+   - Update `VersionIdentifier` from `"PR#1234"` → the normalized version string (e.g., `"1.1.0"`).
+   - Set `PRStatus = Merged`.
+   - Retain `PullRequestNumber` and `SourceBranch` for provenance.
+   - **Do not change the `Id`** — `APIVersionId` on comments and revisions remains valid. All PR review comments survive into the release version.
+   - **Do not upload new blobs** — the promoted version reuses the PR's existing artifacts.
+   - Record the promotion in `ChangeHistory` with action `Promoted`.
+   - Skip the normal `CreateAutomaticRevisionAsync` flow (no new revision or version needed).
+3. **No match (API changed post-merge):** Create a new `Stable`/`Preview` version through the normal automatic flow. Set `PRStatus = Merged` on the PR version. The PR version follows its merged-PR retention schedule.
+
+#### Tests
+
+| Test file | Coverage |
+|---|---|
+| `APIVersionsManagerTests.cs` | `PromotePRVersionAsync` — promotes matching PR, preserves `Id`/comments/blobs, updates `Kind`/`VersionIdentifier`; non-matching PR creates new version |
+| `AutoReviewServiceTests.cs` | Post-merge build triggers promotion check; promotion skips revision creation; non-matching hash falls through to normal flow |
+
+#### Documentation
+
+Update [docs/overview.md](docs/overview.md) §4c (PullRequestManager) to describe the promotion-on-merge flow. Update [docs/release_approval.md](docs/release_approval.md) §7 (Marking a Revision as Released) to note that promoted PR versions carry their release state forward.
+
+---
+
+### 5.14 WI-13: PR Cleanup via Retention
+
+**Area:** PR Lifecycle · **Depends on:** WI-5 (retention system exists), WI-10 (PR versions have `PRStatus`) · **Stable alone:** ✅ Yes — replaces old `CleanupPullRequestData` with `RetainUntil`-based cleanup
+
+**Goal:** Use the unified retention system for PR version lifecycle instead of the ad-hoc `CleanupPullRequestData` logic.
+
+#### Changes
+
+Replace `PullRequestManager.CleanupPullRequestData` (which today soft-deletes PR revisions 30 days after PR close, only if unapproved) with version-level retention:
+
+1. When a PR transitions to `Merged` (non-promoted): set `RetainUntil = now + MergedPullRequestDays`.
+2. When a PR transitions to `Closed`: set `RetainUntil = now + ClosedPullRequestDays`.
+3. The WI-5 purge loop handles the actual deletion.
+
+The existing `PullRequestBackgroundHostedService` (which posts PR comments asynchronously) is unchanged.
+
+#### Tests
+
+| Test file | Coverage |
+|---|---|
+| `PullRequestCleanupTests.cs` (new) | Merged non-promoted gets 60d retention; closed gets 30d; promoted PR has `RetainUntil` cleared |
+
+---
+
+### 5.15 WI-14: Approval Inheritance Policy & ClassifyTransition
+
+**Area:** Approvals · **Depends on:** Nothing (parallel with WI-1 †) · **Stable alone:** ✅ Yes — pure infrastructure, no behavior change
+
+**Goal:** Define the per-language approval inheritance policy and the transition classifier.
+
+#### Configuration
+
+Add the following keys to Azure App Configuration:
+
+| Key | Value |
+|---|---|
+| `ApprovalInheritancePolicy:Default` | JSON blob per `ApprovalInheritancePolicyOptions` schema in [§4.6.1](#461-per-language-approval-inheritance-policy) |
+| `ApprovalInheritancePolicy:{Language}` | Language-specific overrides (optional) |
+
+Create `APIViewWeb/Models/ApprovalInheritancePolicyOptions.cs` with the `InheritanceRule` enum and the six transition fields. Register as `IOptionsSnapshot<Dictionary<string, ApprovalInheritancePolicyOptions>>` bound to the `ApprovalInheritancePolicy` section. Cache in memory; refresh on sentinel change.
+
+#### Implement `ClassifyTransition()`
+
+Add a static method `ClassifyTransition(APIVersionModel source, APIVersionModel target)` to `VersionNormalizationHelper.cs`. Returns the applicable `InheritanceRule` from the policy matrix:
+
+1. Parse both versions' `VersionIdentifier` via `AzureEngSemanticVersion`.
+2. Determine the transition kind: `PrereleaseToPrerelease`, `PrereleaseToStable`, `StableToPrerelease`, `StablePatch`, `StableMinor`, `StableMajor`.
+3. Look up the rule in the per-language policy (falling back to `Default`).
+
+#### Tests
+
+| Test file | Coverage |
+|---|---|
+| `VersionNormalizationTests.cs` | `ClassifyTransition` for all 6 transition kinds; language-specific policy overrides; fallback to default |
+
+---
+
+### 5.16 WI-15: Version-Level Approval Backend
+
+**Area:** Approvals · **Depends on:** WI-3 (versions have approval state), WI-14 (policy exists) · **Stable alone:** ⚠️ Must ship with WI-17 (SPA update) — the feature flag must be flipped together. Both can be developed and deployed independently, but runtime activation requires both to be in place.
+
+**Goal:** Move approval from per-revision to per-version, and replace the opaque carry-forward with policy-driven inheritance.
+
+#### Replace `CarryForwardRevisionDataAsync` with version-level inheritance
+
+Update `AutoReviewService.CreateAutomaticRevisionAsync`:
+
+1. After creating/finding the `APIVersion` for the incoming revision, if the version is not already approved:
+2. **PR-merge promotion (preferred):** Check if this is a promotion from a PR version (WI-12). If so, approval status carries over as-is — no inheritance needed.
+3. Compare the new version's latest revision's `ContentHash` against all approved versions in the same review (queried from `CosmosVersionsRepository`).
+4. For each matching approved version, call `ClassifyTransition(source, target)` to get the applicable `InheritanceRule`.
+5. If the rule is `Automatic`: set `IsApproved = true`, `Approvers = source.Approvers`, `ApprovalInheritedFromVersionId = source.Id`, `ApprovalDate = now` on the target version. Record in `ChangeHistory` with action `Approved` and notes `"Approval inherited from {source.VersionIdentifier} ({transitionKind})"`.
+6. If the rule is `Explicit`: leave the version as pending.
+7. **Break early** after the first matching approved version (ordered by `CreatedOn DESC`).
+
+The existing `CarryForwardRevisionDataAsync` and `ApplyApprovalFrom` are **retired** once this WI's feature flag is active. During transition, the flag gates which path runs.
+
+#### Implement `ToggleVersionApprovalAsync`
+
+Add to `APIVersionsManager`:
+
+1. Operates on `APIVersionModel` instead of `APIRevisionListItemModel`.
+2. Same binary toggle logic via `ChangeHistoryHelpers.UpdateBinaryChangeAction()` with `APIVersionChangeAction.Approved`.
+3. Clears `ApprovalInheritedFromVersionId` when a human explicitly approves.
+4. On approval, clears `RetainUntil → null`.
+5. Broadcasts `ReceiveApproval` via SignalR (same channel, updated payload to include `apiVersionId`).
+6. **Cascade consideration:** When the source of an inheritance chain is un-approved, optionally cascade un-approval. Configurable (default: no cascade).
+
+The legacy `ToggleAPIRevisionApprovalAsync` on `APIRevisionsManager` is retained behind the feature flag during transition.
+
+#### Deprecate revision-level approval fields
+
+Once the feature flag is on and stable:
+
+1. `IsApproved` and `Approvers` on `APIRevisionListItemModel`: stop writing. Existing values remain as vestigial data.
+2. `HasAutoGeneratedComments` copy in `CarryForwardRevisionDataAsync`: retired (Copilot tracking moved to version-level `IsReviewedByCopilot`).
+3. `ApplyApprovalFrom` and `CarryForwardRevisionDataAsync`: deleted.
+
+Do **not** strip fields from existing Cosmos documents — harmless, useful for auditing.
+
+#### Tests
+
+| Test file | Coverage |
+|---|---|
+| `APIVersionsManagerTests.cs` | Version-level approval toggle; inheritance from matching approved version; `Explicit` rule blocks inheritance; PR promotion preserves approval; cascade un-approval (if enabled) |
+| `AutoReviewServiceTests.cs` | New version inherits approval from patch-bump source; major-bump blocks inheritance; prerelease-to-stable blocks; ContentHash mismatch → no inheritance |
+
+---
+
+### 5.17 WI-16: GetReviewStatus & Copilot Trigger
+
+**Area:** Approvals · **Depends on:** WI-3 (versions exist with approval state) · **Stable alone:** ✅ Yes — additive improvements, backward-compatible
+
+**Goal:** Make `GetReviewStatus` version-aware and implement version-level Copilot automation triggers.
+
+#### Update `GetReviewStatus` (release gating)
+
+Update `AutoReviewController.GetReviewStatus` in `APIViewWeb/Controllers/AutoReviewController.cs`:
+
+- **Before:** Iterates revisions to find one with matching `PackageVersion` and checks `IsApproved`.
+- **After:** Call `NormalizeVersion(packageVersion)` → look up `APIVersion` by `(reviewId, versionIdentifier)` → return status from `version.IsApproved`.
+- Retain backward compatibility: if no matching `APIVersion` exists (pre-backfill edge case), fall through to the existing revision-level check.
+
+#### Update Copilot automation trigger
+
+Implement the rules from [§7.2](#72-copilot-automation-strategy):
+
+1. On version creation or new revision upload, check `APIVersionModel.IsReviewedByCopilot`.
+2. If `false` and the version is `Kind = Stable` (or a PR version whose `PackageVersion` resolves to stable): enqueue Copilot review, set `IsReviewedByCopilot = true`.
+3. `Kind = Preview` and `Kind = RollingPrerelease`: skip automatic trigger.
+4. Manual Copilot requests are tracked via `ReviewRequestIds` and do not set `IsReviewedByCopilot`.
+
+#### Tests
+
+| Test file | Coverage |
+|---|---|
+| `ReviewsControllerTests.cs` | `GetReviewStatus` returns approval from version; backward-compatible fallback |
+| `CopilotTriggerTests.cs` (new) | Stable version triggers Copilot; preview does not; rolling prerelease does not; PR-with-stable-version triggers; `IsReviewedByCopilot` prevents duplicate |
+
+#### Documentation
+
+Update [docs/release_approval.md](docs/release_approval.md) §6: `GetReviewStatus` resolves by version.
+
+---
+
+### 5.18 WI-17: Approval SPA Update
+
+**Area:** Approvals · **Depends on:** WI-15 · **Stable alone:** ⚠️ Must activate together with WI-15 — when the approval feature flag is flipped, the backend expects version-level calls and the SPA must be sending them. Deploy independently; flip flag together.
+
+**Goal:** Update the Angular SPA to operate on version-level approvals and display inheritance provenance.
+
+#### Frontend changes
+
+| Component/Service | Change |
+|---|---|
+| `review-page-options.component.ts` | Approval button operates on `apiVersionId` instead of `apiRevisionId`. Display "Approved (inherited from v12.1.0)" when `ApprovalInheritedFromVersionId` is set. |
+| `revisions-list.component.ts` | Version list shows version-level approval status with badge distinguishing inherited vs. human-approved. |
+| `ReviewContextService` | Add `activeApiVersionId$` BehaviorSubject alongside existing `reviewId$` and `language$`. |
+| `APIRevisionsController` API model | Add `apiVersionId` field to the revision response DTO so the frontend can derive the active version. |
+| Approval prerequisites (`shouldDisableApproval`) | Evaluate guards against the version: missing version check, unresolved must-fix comments (version-scoped), Copilot review status (`IsReviewedByCopilot` on version). |
+
+#### Tests
+
+Frontend unit tests: approval button sends `apiVersionId`; inherited approval shows provenance badge; `shouldDisableApproval` evaluates version-level guards.
+
+#### Documentation
+
+Update [docs/release_approval.md](docs/release_approval.md):
+- §1a: Approval is now per-version, not per-revision.
+- §4: Toggle flow operates on `APIVersionModel`.
+- §5: Carry-forward replaced by version-level inheritance with per-language policy.
+
+Update [docs/overview.md](docs/overview.md) §4c: `APIRevisionsManager` no longer owns approval; `APIVersionsManager` does.
+
+---
+
+### 5.19 Dependency Map & Stable States
+
+```
+WI-1  APIVersion entity, repository, NormalizeVersion()
+ │
+ ├── WI-2  Wire upload paths (forward-tag new data)
+ │    │
+ │    └── WI-3  Backfill revisions & samples
+ │         │
+ │         ├── WI-5  Retention event handlers + purge (needs WI-3 + WI-4)
+ │         │    │
+ │         │    └── WI-6  Retention backfill
+ │         │
+ │         ├── WI-7  Comment FK & backfill
+ │         │    │
+ │         │    └── WI-8  Comment query switch ⚠️ (flip after WI-7 verified)
+ │         │         │
+ │         │         ├── WI-9   Cross-version comment toggle
+ │         │         │
+ │         │         └── WI-12  PR promotion-on-merge (needs WI-8 + WI-11)
+ │         │
+ │         ├── WI-10  PR version backfill & status
+ │         │    │
+ │         │    ├── WI-11  Version-aware PullRequestManager
+ │         │    │
+ │         │    └── WI-13  PR cleanup via retention (needs WI-5 + WI-10)
+ │         │
+ │         ├── WI-15  Approval backend (needs WI-3 + WI-14)
+ │         │    │
+ │         │    └── WI-15 + WI-17  Approval backend + SPA ⚠️ (flip together)
+ │         │
+ │         └── WI-16  GetReviewStatus & Copilot trigger
+ │
+WI-4  Retention config & RetainUntil field  ←── parallel with WI-1 †
+WI-14 Approval policy & ClassifyTransition  ←── parallel with WI-1 †
+```
+
+#### Key stable-state gates
+
+| Gate | Work Items | Why |
+|------|-----------|-----|
+| **Comment query activation** | WI-7 backfill verified → then flip WI-8 | Comments without `APIVersionId` would be invisible if WI-8 activates before WI-7 completes |
+| **Approval activation** | WI-15 + WI-17 flag flip together | Backend expects version-level approval calls; SPA must be sending them |
+
+Everything else is independently deployable and stable at rest. You can park at any point — between any two work items, for any duration — without system instability.
+
+### 5.20 Rollback Strategy
+
+Each work item (or gate group) is independently reversible by flipping its feature flag off:
+
+| WI | Rollback |
+|---|---|
+| **1** | Drop the `APIVersions` container. No other entity references it yet. |
+| **2** | Flip flag off. Uploads revert to not setting `APIVersionId`. The field remains on documents as a no-op. |
+| **3** | No flag — data migration. To rollback: leave `APIVersionId` on documents (harmless). To fully undo: null out `APIVersionId` via background sweep (non-urgent). |
+| **4** | No flag — config + field. Remove App Config keys; `RetainUntil` field ignored. |
+| **5** | Flip retention flag off. Re-enable old `AutoArchiveAPIRevisions` / `AutoPurgeAPIRevisions`. `RetainUntil` fields ignored. |
+| **6** | No flag — data migration. `RetainUntil` values sit inert until WI-5 flag is active. |
+| **7** | No flag — data migration + forward-write. To rollback forward-write: flip WI-7 flag off; new comments stop getting `APIVersionId`. Backfilled values sit inert. |
+| **8** | Flip comment-scoping flag off. `GetReviewContentAsync` reverts to `GetCommentsAsync(reviewId)` + `CommentVisibilityHelper`. |
+| **9** | Remove toggle from UI. Falls back to version-scoped-only view. |
+| **10** | No flag — data migration. Backfilled PR versions sit inert. |
+| **11** | Flip PR-lifecycle flag off. `PullRequestManager` reverts to old path. |
+| **12** | Flip promotion flag off. Post-merge builds always create new versions (old behavior). |
+| **13** | Flip PR-retention flag off. Re-enable old `CleanupPullRequestData`. |
+| **14** | No flag — config + code. Remove App Config keys; `ClassifyTransition` unused. |
+| **15 + 17** | Flip approval flag off. `ToggleAPIRevisionApprovalAsync` re-enabled. `CarryForwardRevisionDataAsync` resumes. SPA reverts to revision-level approval. |
+| **16** | Flip flag off. `GetReviewStatus` reverts to revision-level lookup. Copilot trigger reverts to revision-level. |
+
+In all cases, rollback does not require data deletion — new fields and container become inert. A full rollback to pre-WI-1 state requires dropping the `APIVersions` container and clearing FK fields (a background sweep, not urgent).
 
 ---
 

@@ -1,9 +1,10 @@
+import ast
 import astroid
 import logging
 import inspect
 from enum import Enum
 import operator
-from typing import List
+from typing import Dict, List, Optional, Tuple
 
 from ._base_node import NodeEntityBase, get_qualified_name
 from ._function_node import FunctionNode
@@ -14,6 +15,155 @@ from ._docstring_parser import DocstringParser
 from ._variable_node import VariableNode
 from .._generated.treestyle.parser.models import ReviewLines
 from .._parsing_helpers import parse_overloads, add_overload_nodes
+
+# ---------------------------------------------------------------------------
+# Per-file class source index and astroid node cache.
+#
+# inspect.getsource(cls) for a *class* does a full O(N_lines) linear scan of
+# the source file on every call (CPython inspect.findsource).  For packages
+# like azure-synapse-artifacts that put 900+ model classes in a single 3.6 MB
+# file this balloons to 45+ minutes.  The helpers below replace that with:
+#
+#   _build_file_index  – reads + ast.parses a file ONCE, indexes all ClassDef
+#                        nodes by qualified name and line range.
+#   _get_class_source  – O(1) line-slice lookup after the first call per file.
+#   _get_class_astroid_node – caches astroid.parse() result by (file, qualname)
+#                             so the two independent calls in _parse_decorators
+#                             and _parse_functions share one parse result, and
+#                             MRO ancestors shared across many classes are only
+#                             parsed once.
+#   clear_caches       – resets all dicts; called at the start of each
+#                        StubGenerator._generate_tokens() run so the test suite
+#                        and multi-package runs stay correct.
+# ---------------------------------------------------------------------------
+
+# file_path -> {qualname: extracted_source_text}  (precomputed in _build_file_index)
+_FILE_CLASS_SOURCE: Dict[str, Dict[str, str]] = {}
+# file_path -> {qualname: (start_1based, end_1based)}  (1-based inclusive line range)
+_FILE_CLASS_LINES: Dict[str, Dict[str, Tuple[int, int]]] = {}
+# (file_path, qualname) -> Optional[astroid.ClassDef]
+_CLASS_ASTROID_CACHE: Dict[Tuple[Optional[str], Optional[str]], Optional[object]] = {}
+
+
+def _collect_class_defs(node, parent_qualname: str = ""):
+    """Recursively yield (qualname, start_0based, end_exclusive) for every
+    ClassDef in an ast tree, including nested classes."""
+    for child in ast.iter_child_nodes(node):
+        if isinstance(child, ast.ClassDef):
+            qualname = f"{parent_qualname}.{child.name}" if parent_qualname else child.name
+            # Include any decorators that precede the 'class' keyword.
+            start_1based = (
+                child.decorator_list[0].lineno
+                if child.decorator_list
+                else child.lineno
+            )
+            # end_lineno is 1-based inclusive; convert to 0-based exclusive.
+            yield qualname, start_1based - 1, child.end_lineno
+            yield from _collect_class_defs(child, qualname)
+
+
+def _build_file_index(file_path: str) -> None:
+    """Read *file_path* once, build a {qualname: source_text} map for all
+    ClassDef nodes, and store the result in _FILE_CLASS_SOURCE."""
+    try:
+        with open(file_path, "r", encoding="utf-8", errors="replace") as fh:
+            source = fh.read()
+    except OSError:
+        _FILE_CLASS_SOURCE[file_path] = {}
+        _FILE_CLASS_LINES[file_path] = {}
+        return
+    # Split lines ONCE so we can slice cheaply for each class.
+    lines = source.splitlines(keepends=True)
+    src_index: Dict[str, str] = {}
+    line_index: Dict[str, Tuple[int, int]] = {}
+    try:
+        tree = ast.parse(source)
+        for qualname, start, end in _collect_class_defs(tree):
+            # Precompute and store the source slice — O(1) lookup later.
+            src_index[qualname] = "".join(lines[start:end])
+            # Store 1-based inclusive line range for pylint error matching.
+            line_index[qualname] = (start + 1, end)
+    except SyntaxError:
+        pass
+    _FILE_CLASS_SOURCE[file_path] = src_index
+    _FILE_CLASS_LINES[file_path] = line_index
+
+
+def _get_class_source(cls) -> Optional[str]:
+    """Return the source text for *cls* without inspect.getsource's O(N_lines)
+    scan.  Falls back to inspect.getsource for dynamic / C-extension classes."""
+    file_path = inspect.getsourcefile(cls)
+    if not file_path:
+        try:
+            return inspect.getsource(cls)
+        except Exception:
+            return None
+    if file_path not in _FILE_CLASS_SOURCE:
+        _build_file_index(file_path)
+    qualname = getattr(cls, "__qualname__", None) or getattr(cls, "__name__", None)
+    if qualname:
+        result = _FILE_CLASS_SOURCE[file_path].get(qualname)
+        if result is not None:
+            return result
+    # Not found in index (dynamic class, or qualname mismatch) – slow fallback.
+    try:
+        return inspect.getsource(cls)
+    except Exception:
+        return None
+
+
+def _get_class_line_range(cls) -> Tuple[Optional[int], Optional[int]]:
+    """Return (start_1based, end_1based) for *cls* using the pre-built file index.
+
+    Used by PylintParser.match_items to avoid the O(N_lines) inspect.getsourcelines
+    scan for class objects.  Returns (None, None) when the class cannot be located.
+    """
+    file_path = inspect.getsourcefile(cls)
+    if not file_path:
+        return None, None
+    if file_path not in _FILE_CLASS_LINES:
+        _build_file_index(file_path)
+    qualname = getattr(cls, "__qualname__", None) or getattr(cls, "__name__", None)
+    if qualname:
+        result = _FILE_CLASS_LINES[file_path].get(qualname)
+        if result is not None:
+            return result
+    return None, None
+
+
+def _get_class_astroid_node(cls) -> Optional["astroid.ClassDef"]:
+    """Return the cached astroid ClassDef node for *cls*, parsing it at most
+    once per (file_path, qualname) pair across the whole generator run."""
+    file_path = inspect.getsourcefile(cls)
+    qualname = getattr(cls, "__qualname__", None) or getattr(cls, "__name__", None)
+    cache_key = (file_path, qualname)
+    if cache_key in _CLASS_ASTROID_CACHE:
+        return _CLASS_ASTROID_CACHE[cache_key]  # type: ignore[return-value]
+    source = _get_class_source(cls)
+    result = None
+    if source:
+        try:
+            parsed = astroid.parse(source)
+            if parsed.body and isinstance(parsed.body[0], astroid.ClassDef):
+                result = parsed.body[0]
+        except Exception:
+            pass
+    # Only cache when we have a stable key (i.e. not a dynamic class with no file).
+    if file_path is not None:
+        _CLASS_ASTROID_CACHE[cache_key] = result
+    return result
+
+
+def clear_caches() -> None:
+    """Reset all module-level source and AST caches.
+
+    Called at the start of each StubGenerator._generate_tokens() run so that
+    back-to-back runs (e.g. in the test suite) do not share stale entries.
+    """
+    _FILE_CLASS_SOURCE.clear()
+    _FILE_CLASS_LINES.clear()
+    _CLASS_ASTROID_CACHE.clear()
+
 
 find_keys = lambda x: isinstance(x, KeyNode)
 find_props = lambda x: isinstance(x, PropertyNode)
@@ -158,18 +308,22 @@ class ClassNode(NodeEntityBase):
 
     def _parse_decorators_from_class(self, class_obj):
         try:
-            class_node = astroid.parse(inspect.getsource(class_obj)).body[0]
-            class_decorators = class_node.decorators.nodes
-            self.decorators = [
-                f"@{x.as_string(preserve_quotes=True)}" for x in class_decorators
-            ]
+            class_node = _get_class_astroid_node(class_obj)
+            if class_node and class_node.decorators:
+                self.decorators = [
+                    f"@{x.as_string(preserve_quotes=True)}" for x in class_node.decorators.nodes
+                ]
+            else:
+                self.decorators = []
         except:
             self.decorators = []
 
     def _parse_functions_from_class(self, class_obj) -> List[astroid.FunctionDef]:
         try:
-            class_node = astroid.parse(inspect.getsource(class_obj)).body[0]
-            return [x for x in class_node.body if isinstance(x, astroid.FunctionDef)]
+            class_node = _get_class_astroid_node(class_obj)
+            if class_node:
+                return [x for x in class_node.body if isinstance(x, astroid.FunctionDef)]
+            return []
         except:
             return []
 

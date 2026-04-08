@@ -576,14 +576,21 @@ namespace APIViewWeb.Managers
         public async Task<List<CommentItemModel>> CommentsBatchOperationAsync(ClaimsPrincipal user, string reviewId, BatchConversationRequest request)
         {
             var response = new List<CommentItemModel>();
-            
+            var processedCorrelationIds = new HashSet<string>();
+
             foreach (string commentId in request.CommentIds)
             {
                 CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
                 
                 if (request.Feedback != null)
                 {
-                    await AddCommentFeedbackAsync(user, reviewId, commentId, request.Feedback);
+                    // Store feedback and trigger copilot mention only once per unique correlation ID.
+                    bool isNew = string.IsNullOrEmpty(comment?.CorrelationId) ||
+                                 processedCorrelationIds.Add(comment.CorrelationId);
+                    if (isNew)
+                    {
+                        await AddCommentFeedbackAsync(user, reviewId, commentId, request.Feedback);
+                    }
                 }
                 
                 if (request.Vote != FeedbackVote.None)

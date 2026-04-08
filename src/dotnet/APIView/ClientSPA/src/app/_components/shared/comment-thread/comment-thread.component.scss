@@ -22,9 +22,9 @@
     }
 
     .diagnostic-badge-custom {
-        background-color: var(--severity-should-fix-bg);
-        border-color: var(--severity-should-fix-border);
-        color: var(--severity-should-fix-text);
+        background-color: color-mix(in srgb, var(--diagnostic-accent-color) 16%, transparent);
+        border-color: color-mix(in srgb, var(--diagnostic-accent-color) 54%, var(--border-color));
+        color: var(--diagnostic-accent-color);
         .bi { font-size: .7rem; }
         .pi { font-size: .8rem; margin: .2rem 0 0 .25rem; }
     }
@@ -216,6 +216,7 @@
     .severity-suggestion { background-color: var(--severity-suggestion-bg); color: var(--severity-suggestion-text); border-color: var(--severity-suggestion-border); }
     .severity-should-fix { background-color: var(--severity-should-fix-bg); color: var(--severity-should-fix-text); border-color: var(--severity-should-fix-border); }
     .severity-must-fix { background-color: var(--severity-must-fix-bg); color: var(--severity-must-fix-text); border-color: var(--severity-must-fix-border); }
+    .severity-unknown { background-color: var(--severity-unknown-bg); color: var(--severity-unknown-text); border-color: var(--severity-unknown-border); }
 
     .severity-edit-container { display: inline-block; position: relative; }
 

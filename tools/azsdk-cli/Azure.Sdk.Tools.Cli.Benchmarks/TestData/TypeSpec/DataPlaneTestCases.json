@@ -79,6 +79,30 @@
             ]
         },
         {
+            "name": "dp-version-add-preview",
+            "description": "Add a new preview API version to an existing data-plane service.",
+            "prompt": "In the specification/widget/data-plane/WidgetAnalytics project, add a new preview version `2023-06-01-preview` to the Versions enum.",
+            "tspProject": "specification/widget/data-plane/WidgetAnalytics",
+            "testfiles": [
+                "dp-version-add-preview/main.tsp"
+            ],
+            "verifyPlan": [
+                "1. A new version entry `v2023_06_01_Preview` with value `\"2023-06-01-preview\"` should be added to the Versions enum."
+            ]
+        },
+        {
+            "name": "dp-version-add-stable",
+            "description": "Add a new stable API version to an existing data-plane service.",
+            "prompt": "In the specification/widget/data-plane/WidgetAnalytics project, add a new stable version `2023-06-01` to the Versions enum.",
+            "tspProject": "specification/widget/data-plane/WidgetAnalytics",
+            "testfiles": [
+                "dp-version-add-stable/main.tsp"
+            ],
+            "verifyPlan": [
+                "1. A new version entry `v2023_06_01` with value `\"2023-06-01\"` should be added to the Versions enum."
+            ]
+        },
+        {
             "name": "dp-create-resource-with-crud",
             "description": "Create a new data-plane resource with full CRUD and list operations from scratch.",
             "prompt": "In the specification/widget/data-plane/WidgetAnalytics project, add a Widgets interface with full CRUD and list operations for the WidgetSuite resource. The interface should include operations to create or update, get, list, and delete widgets. Use the appropriate Azure.Core resource operation templates.",

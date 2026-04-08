@@ -4,10 +4,13 @@ import shell from "shelljs";
 import { logger } from "../../utils/logger.js";
 import { getPackageNameFromTspConfig } from "../utils.js";
 import { tryGetNpmView } from "../npmUtils.js";
+import { RunMode, ModularSDKType } from "../types.js";
+import { getModularSDKType } from "../../utils/generateInputUtils.js";
 
 export const codeOwnersAndIgnoreLinkGenerator = async (
     packageDirectory: string,
     typeSpecDirectory: string,
+    runMode?: RunMode,
 ): Promise<void> => {
     // Only proceed for management + Modular clients
     logger.info(`Generating CODEOWNERS and ignore link for packages`);
@@ -23,16 +26,24 @@ export const codeOwnersAndIgnoreLinkGenerator = async (
     await tryGenerateCodeOwnersAndIgnoreLinkForPackage(
         packageDirectory,
         packageName,
+        runMode,
     );
 };
 
 export async function tryGenerateCodeOwnersAndIgnoreLinkForPackage(
     packageFolderPath: string,
     packageName: string,
+    runMode?: RunMode,
 ) {
     logger.info(
         `Start to generate CODEOWNERS and ignore link for ${packageFolderPath}`,
     );
+
+    const modularSDKType = getModularSDKType(packageFolderPath);
+    const isMgmtRelease =
+        runMode === RunMode.Release &&
+        modularSDKType === ModularSDKType.ManagementPlane;
+    logger.info(`runMode=${runMode}, modularSDKType=${modularSDKType}, isMgmtRelease=${isMgmtRelease}`);
 
     const npmViewResult = await tryGetNpmView(packageName);
     const isFirstPackageToNpm = npmViewResult === undefined;
@@ -41,19 +52,22 @@ export async function tryGenerateCodeOwnersAndIgnoreLinkForPackage(
         logger.info(
             `Package ${packageName} is first beta release, start to generate CODEOWNERS and ignore link for first beta release.`,
         );
-        updateCODEOWNERS(packageFolderPath);
+        updateCODEOWNERS(packageFolderPath, isMgmtRelease);
         updateIgnoreLink(packageName);
         logger.info(
             `Generated updates for CODEOWNERS and ignore link successfully`,
         );
     } else {
+        if (isMgmtRelease) {
+            ensureMgmtReviewLabelInCODEOWNERS(packageFolderPath);
+        }
         logger.info(
             `Package ${packageName} is not first beta release, skipping CODEOWNERS and ignore link generation.`,
         );
     }
 }
 
-function updateCODEOWNERS(packagePath: string) {
+function updateCODEOWNERS(packagePath: string, addMgmtReviewLabel: boolean) {
     const jsSdkRepoPath = String(shell.pwd());
     const codeownersPath = path.join(jsSdkRepoPath, ".github", "CODEOWNERS");
     let content = fs.readFileSync(codeownersPath, "utf8");
@@ -63,7 +77,8 @@ function updateCODEOWNERS(packagePath: string) {
         "###########\n# Config\n###########",
     );
     if (configSectionIndex !== -1) {
-        const newContentBeforeConfig = `# PRLabel: %Mgmt\n${packagePath}/ @qiaozha @MaryGao @JialinHuang803\n`;
+        const prLabels = addMgmtReviewLabel ? "%Mgmt %mgmt-review-needed" : "%Mgmt";
+        const newContentBeforeConfig = `# PRLabel: ${prLabels}\n${packagePath}/ @qiaozha @MaryGao @JialinHuang803\n`;
         if (!content.includes(newContentBeforeConfig)) {
             content =
                 content.slice(0, configSectionIndex) +
@@ -74,6 +89,26 @@ function updateCODEOWNERS(packagePath: string) {
     }
     fs.writeFileSync(codeownersPath, content);
     logger.info(`Updated CODEOWNERS for package: ${packagePath}`);
+}
+
+function ensureMgmtReviewLabelInCODEOWNERS(packagePath: string) {
+    const jsSdkRepoPath = String(shell.pwd());
+    const codeownersPath = path.join(jsSdkRepoPath, ".github", "CODEOWNERS");
+    let content = fs.readFileSync(codeownersPath, "utf8");
+
+    // CODEOWNERS paths have a leading slash; packagePath may or may not
+    const normalizedPath = packagePath.startsWith("/") ? packagePath : `/${packagePath}`;
+    const existingEntry = `# PRLabel: %Mgmt\n${normalizedPath}/`;
+    const updatedEntry = `# PRLabel: %Mgmt %mgmt-review-needed\n${normalizedPath}/`;
+
+    logger.info(`ensureMgmtReviewLabelInCODEOWNERS: looking for entry "${existingEntry.replace(/\n/g, "\\n")}"`);
+    logger.info(`ensureMgmtReviewLabelInCODEOWNERS: entry found=${content.includes(existingEntry)}, already updated=${content.includes(updatedEntry)}`);
+
+    if (content.includes(existingEntry) && !content.includes(updatedEntry)) {
+        content = content.replace(existingEntry, updatedEntry);
+        fs.writeFileSync(codeownersPath, content);
+        logger.info(`Updated CODEOWNERS to add mgmt-review-needed label for: ${packagePath}`);
+    }
 }
 
 function updateIgnoreLink(packageName: string) {

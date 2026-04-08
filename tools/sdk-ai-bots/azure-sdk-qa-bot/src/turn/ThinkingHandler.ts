@@ -12,6 +12,12 @@ import { sendActivityWithRetry, updateActivityWithRetry } from '../activityUtils
 export class ThinkingHandler {
   private readonly thinkEmojis = ['⏳', '🤔', '💭', '🧠', '🤩', '🧐', '🚨', '🤭'];
   private readonly defaultThinkingMessage = '⏳Thinking';
+  private readonly aiGeneratedEntity = {
+    type: 'https://schema.org/Message',
+    '@type': 'Message',
+    '@context': 'https://schema.org',
+    additionalType: ['AIGeneratedContent'],
+  };
   private readonly maxRetryTimesForFinish = 5;
   private readonly maxRetryTimesForThinking = 1800;
   private readonly maxCancelTimeout = 1000; // unit in milliseconds
@@ -63,11 +69,23 @@ export class ThinkingHandler {
   public async stop(replyStartTime: Date, reply: CompletionResponsePayload | RagApiError, currentPrompt: Prompt) {
     const { answer, isError } = this.generateAnswer(reply);
     const routeTenant = isCompletionResponsePayload(reply) ? reply.route_tenant : undefined;
+    const responseId = isCompletionResponsePayload(reply) ? reply.id : undefined;
     const formattedAnswer = await this.formatAnswer(answer, isError, routeTenant);
+    const entity: Record<string, unknown> = {
+      ...this.aiGeneratedEntity,
+    };
+    if (responseId) {
+      entity.usageInfo = {
+        '@type': 'CreativeWork',
+        name: 'Confidential - Internal Use Only',
+        description: `Response ID: ${responseId}`,
+      };
+    }
     const updated: Partial<TurnContext> = {
       type: 'message',
       id: this.resourceId,
       text: formattedAnswer,
+      entities: [entity],
       conversation: this.context.activity.conversation,
     } as any;
 

@@ -147,25 +147,13 @@ Click the **Trace ID** link to open the trace detail view. This shows the full s
 
 ### 4. Investigate Detailed Logs in Application Insights
 
-To see the complete Python-level logs, copy the **Trace ID** from step 2 and query the Application Insights **Logs** blade:
+To see the complete Python-level logs, copy the **Trace ID** from step 2 and query the Application Insights **Investigate/** blade:
 
-```kql
-traces
-| where operation_Id contains "<trace_id>"
-| order by timestamp
-```
+![Application Insights search results](images/tracing_step4_app_insights_logs.png)
 
-For example:
+Click the trace, it returns all log records for that request — credential acquisition, agent session loading, conversation retrieval, tool calls, and any custom log messages — in chronological order.
 
-```kql
-traces
-| where operation_Id contains "4f9f2b5ee998384adc57455df6208411"
-| order by timestamp
-```
-
-This returns all log records for that request — credential acquisition, agent session loading, conversation retrieval, tool calls, and any custom log messages — in chronological order.
-
-![Application Insights KQL query results](images/tracing_step4_app_insights_logs.png)
+![Application Insights span](images/tracing_step5_app_insights_span.png)
 
 ## Project Structure
 

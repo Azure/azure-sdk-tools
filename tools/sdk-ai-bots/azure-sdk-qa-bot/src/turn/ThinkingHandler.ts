@@ -77,7 +77,7 @@ export class ThinkingHandler {
     if (responseId) {
       entity.usageInfo = {
         '@type': 'CreativeWork',
-        name: 'Confidential - Internal Use Only',
+        name: 'Internal Tracking',
         description: `Response ID: ${responseId}`,
       };
     }

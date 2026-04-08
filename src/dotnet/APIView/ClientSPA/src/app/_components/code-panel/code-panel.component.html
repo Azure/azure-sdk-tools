@@ -46,6 +46,8 @@
         [allCodePanelRowData]="codePanelRowData"
         [associatedCodeLine]="getAssociatedCodeLine(item)"
         [actualLineNumber]="getAssociatedCodeLine(item)?.lineNumber || 0"
+        [crossLanguageRowData]="crossLanguageRowData"
+        [currentLanguage]="language"
         [userProfile]="userProfile"
         [reviewId]="reviewId || ''"
         (cancelCommentActionEmitter)="handleCancelCommentActionEmitter($event)"
@@ -55,7 +57,8 @@
         (commentUpvoteActionEmitter)="handleCommentUpvoteActionEmitter($event)"
         (commentDownvoteActionEmitter)="handleCommentDownvoteActionEmitter($event)"
         (commentThreadNavigationEmitter)="handleCommentThreadNavigationEmitter($event)"
-        (batchResolutionActionEmitter)="handleBatchResolutionActionEmitter($event)">
+        (batchResolutionActionEmitter)="handleBatchResolutionActionEmitter($event)"
+        (navigateToDiscussionEmitter)="navigateToDiscussionEmitter.emit($event)">
       </app-comment-thread>
     </ng-container>
     <ng-container *ngIf="item.type === CodePanelRowDatatype.CrossLanguage">

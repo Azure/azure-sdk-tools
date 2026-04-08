@@ -1,0 +1,1189 @@
+{
+  "PackageName": "@azure/samples-crosslanguage",
+  "PackageVersion": "1.0.0",
+  "ParserVersion": "stub-1.0.0",
+  "Language": "JavaScript",
+  "CrossLanguagePackageId": "Azure.Samples.CrossLanguage",
+  "CrossLanguageMetadata": {
+    "CrossLanguagePackageId": "Azure.Samples.CrossLanguage",
+    "CrossLanguageDefinitionId": {
+      "JavaScript.Azure.Samples.CrossLanguage": "Azure.Samples.CrossLanguage",
+      "JavaScript.Azure.Samples.CrossLanguage.Widgets": "Azure.Samples.CrossLanguage.Widgets",
+      "JavaScript.Azure.Samples.CrossLanguage.Widgets.getWidget": "Azure.Samples.CrossLanguage.Widgets.getWidget",
+      "JavaScript.Azure.Samples.CrossLanguage.Widgets.createOrReplaceWidget": "Azure.Samples.CrossLanguage.Widgets.createOrReplaceWidget",
+      "JavaScript.Azure.Samples.CrossLanguage.Widgets.updateWidget": "Azure.Samples.CrossLanguage.Widgets.updateWidget",
+      "JavaScript.Azure.Samples.CrossLanguage.Widgets.deleteWidget": "Azure.Samples.CrossLanguage.Widgets.deleteWidget",
+      "JavaScript.Azure.Samples.CrossLanguage.Widgets.listWidgets": "Azure.Samples.CrossLanguage.Widgets.listWidgets",
+      "JavaScript.Azure.Samples.CrossLanguage.Widgets.analyzeWidget": "Azure.Samples.CrossLanguage.Widgets.analyzeWidget",
+      "JavaScript.Azure.Samples.CrossLanguage.Widget": "Azure.Samples.CrossLanguage.Widget",
+      "JavaScript.Azure.Samples.CrossLanguage.Versions": "Azure.Samples.CrossLanguage.Versions",
+      "JavaScript.Azure.Samples.CrossLanguage.Versions.v2024_01_01": "Azure.Samples.CrossLanguage.Versions.v2024_01_01",
+      "JavaScript.Azure.Samples.CrossLanguage.WidgetAnalysisResult": "Azure.Samples.CrossLanguage.WidgetAnalysisResult",
+      "JavaScript.Azure.Samples.CrossLanguage.WidgetColor": "Azure.Samples.CrossLanguage.WidgetColor",
+      "JavaScript.Azure.Samples.CrossLanguage.WidgetColor.string": "Azure.Samples.CrossLanguage.WidgetColor.string",
+      "JavaScript.Azure.Samples.CrossLanguage.WidgetColor.Red": "Azure.Samples.CrossLanguage.WidgetColor.Red",
+      "JavaScript.Azure.Samples.CrossLanguage.WidgetColor.Green": "Azure.Samples.CrossLanguage.WidgetColor.Green",
+      "JavaScript.Azure.Samples.CrossLanguage.WidgetColor.Blue": "Azure.Samples.CrossLanguage.WidgetColor.Blue",
+      "JavaScript.Azure.Samples.CrossLanguage.WidgetListParams": "Azure.Samples.CrossLanguage.WidgetListParams"
+    }
+  },
+  "ReviewLines": [
+    {
+      "LineId": "JavaScript.Azure.Samples.CrossLanguage",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "package",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 0,
+          "Value": "@azure/samples-crosslanguage",
+          "HasPrefixSpace": true
+        }
+      ],
+      "Children": []
+    },
+    {
+      "LineId": "",
+      "CrossLanguageId": "",
+      "Tokens": [],
+      "Children": []
+    },
+    {
+      "LineId": "JavaScript.Azure.Samples.CrossLanguage.Widgets",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage.Widgets",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "export",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 2,
+          "Value": "class",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 3,
+          "Value": "WidgetsClient",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": " {",
+          "HasPrefixSpace": true
+        }
+      ],
+      "Children": [
+        {
+          "LineId": "JavaScript.Azure.Samples.CrossLanguage.Widgets.getWidget",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.Widgets.getWidget",
+          "Tokens": [
+            {
+              "Kind": 4,
+              "Value": "getWidget",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": "(",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "widgetId",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "string",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ",",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "options",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": "?:",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "GetWidgetOptions",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ")",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "Promise",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": "<",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "Widget",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ">",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ";",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "JavaScript.Azure.Samples.CrossLanguage.Widgets.createOrReplaceWidget",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.Widgets.createOrReplaceWidget",
+          "Tokens": [
+            {
+              "Kind": 4,
+              "Value": "createOrReplaceWidget",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": "(",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "widgetId",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "string",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ",",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "widget",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "Widget",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ")",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "Promise",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": "<",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "Widget",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ">",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ";",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "JavaScript.Azure.Samples.CrossLanguage.Widgets.updateWidget",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.Widgets.updateWidget",
+          "Tokens": [
+            {
+              "Kind": 4,
+              "Value": "updateWidget",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": "(",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "widgetId",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "string",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ",",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "widget",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "Widget",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ")",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "Promise",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": "<",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "Widget",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ">",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ";",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "JavaScript.Azure.Samples.CrossLanguage.Widgets.deleteWidget",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.Widgets.deleteWidget",
+          "Tokens": [
+            {
+              "Kind": 4,
+              "Value": "deleteWidget",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": "(",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "widgetId",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "string",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ")",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "Promise",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": "<",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 2,
+              "Value": "void",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ">",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ";",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "JavaScript.Azure.Samples.CrossLanguage.Widgets.listWidgets",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.Widgets.listWidgets",
+          "Tokens": [
+            {
+              "Kind": 4,
+              "Value": "listWidgets",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": "(",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "options",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": "?:",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "ListWidgetsOptions",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ")",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "PagedAsyncIterableIterator",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": "<",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "Widget",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ">",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ";",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "JavaScript.Azure.Samples.CrossLanguage.Widgets.analyzeWidget",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.Widgets.analyzeWidget",
+          "Tokens": [
+            {
+              "Kind": 4,
+              "Value": "analyzeWidget",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": "(",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "widgetId",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "string",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ")",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "Promise",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": "<",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "WidgetAnalysisResult",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ">",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ";",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 1,
+              "Value": "}",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": [],
+          "IsContextEndLine": true,
+          "RelatedToLine": "JavaScript.Azure.Samples.CrossLanguage.Widgets"
+        }
+      ]
+    },
+    {
+      "LineId": "",
+      "CrossLanguageId": "",
+      "Tokens": [],
+      "Children": []
+    },
+    {
+      "LineId": "JavaScript.Azure.Samples.CrossLanguage.Widget",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage.Widget",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "export",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 2,
+          "Value": "interface",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 3,
+          "Value": "Widget",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": " {",
+          "HasPrefixSpace": true
+        }
+      ],
+      "Children": [
+        {
+          "LineId": "JavaScript.Azure.Samples.CrossLanguage.Widget.id",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "readonly",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "id",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "string",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ";",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "JavaScript.Azure.Samples.CrossLanguage.Widget.name",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 0,
+              "Value": "name",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "string",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ";",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "JavaScript.Azure.Samples.CrossLanguage.Widget.color",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 0,
+              "Value": "color",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "KnownWidgetColor",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ";",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "JavaScript.Azure.Samples.CrossLanguage.Widget.description",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 0,
+              "Value": "description",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": "?:",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "string",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ";",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "JavaScript.Azure.Samples.CrossLanguage.Widget.manufacturedOn",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 0,
+              "Value": "manufacturedOn",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": "?:",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "Date",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ";",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 1,
+              "Value": "}",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": [],
+          "IsContextEndLine": true,
+          "RelatedToLine": "JavaScript.Azure.Samples.CrossLanguage.Widget"
+        }
+      ]
+    },
+    {
+      "LineId": "",
+      "CrossLanguageId": "",
+      "Tokens": [],
+      "Children": []
+    },
+    {
+      "LineId": "JavaScript.Azure.Samples.CrossLanguage.Versions",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage.Versions",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "export",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 2,
+          "Value": "enum",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 3,
+          "Value": "ApiVersion",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": " {",
+          "HasPrefixSpace": true
+        }
+      ],
+      "Children": [
+        {
+          "LineId": "JavaScript.Azure.Samples.CrossLanguage.Versions.v2024_01_01",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.Versions.v2024_01_01",
+          "Tokens": [
+            {
+              "Kind": 0,
+              "Value": "V20240101",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": " =",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 5,
+              "Value": "\"2024-01-01\"",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ",",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 1,
+              "Value": "}",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": [],
+          "IsContextEndLine": true,
+          "RelatedToLine": "JavaScript.Azure.Samples.CrossLanguage.Versions"
+        }
+      ]
+    },
+    {
+      "LineId": "",
+      "CrossLanguageId": "",
+      "Tokens": [],
+      "Children": []
+    },
+    {
+      "LineId": "JavaScript.Azure.Samples.CrossLanguage.WidgetAnalysisResult",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage.WidgetAnalysisResult",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "export",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 2,
+          "Value": "interface",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 3,
+          "Value": "WidgetAnalysisResult",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": " {",
+          "HasPrefixSpace": true
+        }
+      ],
+      "Children": [
+        {
+          "LineId": "JavaScript.Azure.Samples.CrossLanguage.WidgetAnalysisResult.widgetId",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 0,
+              "Value": "widgetId",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "string",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ";",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "JavaScript.Azure.Samples.CrossLanguage.WidgetAnalysisResult.qualityScore",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 0,
+              "Value": "qualityScore",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "number",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ";",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "JavaScript.Azure.Samples.CrossLanguage.WidgetAnalysisResult.summary",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 0,
+              "Value": "summary",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "string",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ";",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 1,
+              "Value": "}",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": [],
+          "IsContextEndLine": true,
+          "RelatedToLine": "JavaScript.Azure.Samples.CrossLanguage.WidgetAnalysisResult"
+        }
+      ]
+    },
+    {
+      "LineId": "",
+      "CrossLanguageId": "",
+      "Tokens": [],
+      "Children": []
+    },
+    {
+      "LineId": "JavaScript.Azure.Samples.CrossLanguage.WidgetColor",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage.WidgetColor",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "export",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 2,
+          "Value": "const",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 3,
+          "Value": "KnownWidgetColor",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": " = {",
+          "HasPrefixSpace": true
+        }
+      ],
+      "Children": [
+        {
+          "LineId": "JavaScript.Azure.Samples.CrossLanguage.WidgetColor.string",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.WidgetColor.string",
+          "Tokens": [
+            {
+              "Kind": 3,
+              "Value": "string",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "JavaScript.Azure.Samples.CrossLanguage.WidgetColor.Red",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.WidgetColor.Red",
+          "Tokens": [
+            {
+              "Kind": 0,
+              "Value": "Red",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 5,
+              "Value": "\"Red\"",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ",",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "JavaScript.Azure.Samples.CrossLanguage.WidgetColor.Green",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.WidgetColor.Green",
+          "Tokens": [
+            {
+              "Kind": 0,
+              "Value": "Green",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 5,
+              "Value": "\"Green\"",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ",",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "JavaScript.Azure.Samples.CrossLanguage.WidgetColor.Blue",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.WidgetColor.Blue",
+          "Tokens": [
+            {
+              "Kind": 0,
+              "Value": "Blue",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 5,
+              "Value": "\"Blue\"",
+              "HasPrefixSpace": true
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 1,
+              "Value": "}",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": [],
+          "IsContextEndLine": true,
+          "RelatedToLine": "JavaScript.Azure.Samples.CrossLanguage.WidgetColor"
+        }
+      ]
+    },
+    {
+      "LineId": "",
+      "CrossLanguageId": "",
+      "Tokens": [],
+      "Children": []
+    },
+    {
+      "LineId": "JavaScript.Azure.Samples.CrossLanguage.WidgetListParams",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage.WidgetListParams",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "export",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 2,
+          "Value": "interface",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 3,
+          "Value": "WidgetQueryParamProperties",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": " {",
+          "HasPrefixSpace": true
+        }
+      ],
+      "Children": [
+        {
+          "LineId": "JavaScript.Azure.Samples.CrossLanguage.WidgetListParams.color",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 0,
+              "Value": "color",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": "?:",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "KnownWidgetColor",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ";",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "JavaScript.Azure.Samples.CrossLanguage.WidgetListParams.maxResults",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 0,
+              "Value": "maxResults",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": "?:",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "number",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ";",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 1,
+              "Value": "}",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": [],
+          "IsContextEndLine": true,
+          "RelatedToLine": "JavaScript.Azure.Samples.CrossLanguage.WidgetListParams"
+        }
+      ]
+    }
+  ]
+}

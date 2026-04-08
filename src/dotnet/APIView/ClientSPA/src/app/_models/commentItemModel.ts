@@ -27,6 +27,7 @@ export class CommentItemModel {
     sectionClass: string = '';
     commentText: string = '';
     crossLanguageId: string = '';
+    crossLanguagePackageId: string = '';
     correlationId: string = '';
     changeHistory: ChangeHistory[] = [];
     isResolved: boolean = false;
@@ -47,6 +48,9 @@ export class CommentItemModel {
     guidelineIds: string[] = [];
     memoryIds: string[] = [];
     confidenceScore: number = 0.0;
+    isTodo: boolean = false;
+    todoBy: string = '';
+    roleOfCreator: string = '';
 
     constructor() {
         this.id = '';
@@ -57,6 +61,7 @@ export class CommentItemModel {
         this.sectionClass = '';
         this.commentText = '';
         this.crossLanguageId = '';
+        this.crossLanguagePackageId = '';
         this.correlationId = '';
         this.changeHistory = [];
         this.isResolved = false;
@@ -75,7 +80,10 @@ export class CommentItemModel {
         this.relatedCommentsCount = 0;
         this.commentSource = null;
         this.confidenceScore = 0.0;
+        this.isTodo = false;
+        this.todoBy = '';
         this.guidelineIds = [];
         this.memoryIds = [];
     }
 }
+

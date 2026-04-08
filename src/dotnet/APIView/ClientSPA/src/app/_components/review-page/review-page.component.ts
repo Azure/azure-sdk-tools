@@ -53,6 +53,9 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
   apiRevisions: APIRevision[] = [];
   crossLanguageAPIRevisions: APIRevisionGroupedByLanguage[] = [];
   comments: CommentItemModel[] = [];
+  get nonCrossLangComments(): CommentItemModel[] {
+    return this.comments.filter(c => !c.crossLanguageId);
+  }
   activeAPIRevision: APIRevision | undefined = undefined;
   diffAPIRevision: APIRevision | undefined = undefined;
   latestSampleRevision: SamplesRevision | undefined = undefined;
@@ -69,7 +72,9 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
   hasActiveConversation: boolean = false;
   codeLineSearchInfo: CodeLineSearchInfo | undefined;
   numberOfActiveConversation: number = 0;
-  activeView: 'reviews' | 'revisions' | 'samples' | 'conversations' = 'reviews';
+  numberOfActiveDiscussions: number = 0;
+  activeView: 'reviews' | 'revisions' | 'samples' | 'conversations' | 'discussions' = 'reviews';
+  jumpToDiscussionId: string | null = null;
   hasHiddenAPIs: boolean = false;
   hasHiddenAPIThatIsDiff: boolean = false;
   loadFailed: boolean = false;
@@ -172,6 +177,8 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
     } else if (viewParam === 'samples') {
       this.samplesActivated = true;
       this.activeView = 'samples';
+    } else if (viewParam === 'discussions') {
+      this.activeView = 'discussions';
     } else {
       this.activeView = 'reviews';
     }
@@ -337,16 +344,21 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
           }
 
           if (this.activeAPIRevision && this.activeAPIRevision.files[0].crossLanguagePackageId) {
+            console.log('[CrossLanguage] Found crossLanguagePackageId:', this.activeAPIRevision.files[0].crossLanguagePackageId);
             return this.apiRevisionsService.getCrossLanguageAPIRevisions(this.activeAPIRevision.files[0].crossLanguagePackageId);
           }
+          console.log('[CrossLanguage] No crossLanguagePackageId on active revision file. Skipping cross-language lookup.');
           return EMPTY
         }),
         concatMap((response: any) => {
-          this.crossLanguageAPIRevisions = response.filter((c: APIRevisionGroupedByLanguage) => c.label !== this.language);
+          const allLanguageRevisions: APIRevisionGroupedByLanguage[] = response;
+          this.crossLanguageAPIRevisions = allLanguageRevisions.filter((c: APIRevisionGroupedByLanguage) => c.label !== this.language);
+          console.log('[CrossLanguage] API revisions found for other languages:', this.crossLanguageAPIRevisions.map(r => r.label));
           this.createSideMenu();
-          if (this.crossLanguageAPIRevisions.length > 0) {
-            const itemsToProcess = this.crossLanguageAPIRevisions
-              .filter(revision => revision.items.length > 0 && revision.items[0].files.length > 0)
+          const revisionsToProcess = allLanguageRevisions
+            .filter(revision => revision.items.length > 0 && revision.items[0].files.length > 0);
+          if (revisionsToProcess.length > 0) {
+            const itemsToProcess = revisionsToProcess
               .map(revision => ({
                 reviewId: revision.items[0].reviewId,
                 apiRevisionId: revision.items[0].id,
@@ -360,7 +372,8 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
                   response.reviewId = item.reviewId;
                   response.packageVersion = item.packageVersion;
                   response.packageName = item.packageName;
-                  this.crossLanguageRowData.push(response);
+                  console.log('[CrossLanguage] Loaded content for', response.language, '- crossLanguageIds:', Object.keys(response.content));
+                  this.crossLanguageRowData = [...this.crossLanguageRowData, response];
                 })
               ))
             );
@@ -483,6 +496,32 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
       queryParams: currentParams,
       state: { skipStateUpdate: true }
     });
+  }
+
+  showDiscussionsView() {
+    this.activeView = 'discussions';
+    const currentParams = getQueryParams(this.route);
+    this.router.navigate([], {
+      queryParams: { ...currentParams, view: 'discussions' },
+      state: { skipStateUpdate: true }
+    });
+  }
+
+  handleNavigateToDiscussion(crossLanguageId: string) {
+    this.jumpToDiscussionId = crossLanguageId;
+    this.showDiscussionsView();
+  }
+
+  handleNumberOfActiveDiscussionsEmitter(count: number) {
+    this.numberOfActiveDiscussions = count;
+  }
+
+  handleCommentCreated(comment: CommentItemModel) {
+    // Push newly created comments into the shared comments array
+    // so that Conversations and Discussions tabs see them immediately
+    if (!this.comments.some(c => c.id === comment.id)) {
+      this.comments = [...this.comments, comment];
+    }
   }
 
   handleConversationScrollToNode(elementId: string) {

@@ -1,0 +1,16 @@
+{
+  "name": "azure-samples-crosslanguage-typespec",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cross-language TypeSpec sample for APIView testing",
+  "dependencies": {
+    "@azure-tools/typespec-apiview": "0.7.2",
+    "@azure-tools/typespec-azure-core": "0.66.1",
+    "@azure-tools/typespec-azure-rulesets": "0.66.0",
+    "@azure-tools/typespec-client-generator-core": "0.66.4",
+    "@typespec/compiler": "^1.10.0",
+    "@typespec/http": "^1.10.0",
+    "@typespec/rest": "0.80.0",
+    "@typespec/versioning": "0.80.0"
+  }
+}

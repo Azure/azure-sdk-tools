@@ -15,6 +15,7 @@ import { ReviewToolbarComponent } from 'src/app/_components/review-toolbar/revie
 import { ConversationsComponent } from 'src/app/_components/conversations/conversations.component';
 import { RevisionsListComponent } from 'src/app/_components/revisions-list/revisions-list.component';
 import { SamplesPageComponent } from 'src/app/_components/samples-page/samples-page.component';
+import { CrossLanguageDiscussionsComponent } from 'src/app/_components/cross-language-discussions/cross-language-discussions.component';
 
 const routes: Routes = [
   { path: '', component: ReviewPageComponent }
@@ -39,6 +40,7 @@ const routes: Routes = [
     ConversationsComponent,
     RevisionsListComponent,
     SamplesPageComponent,
+    CrossLanguageDiscussionsComponent,
     RouterModule.forChild(routes),
   ]
 })

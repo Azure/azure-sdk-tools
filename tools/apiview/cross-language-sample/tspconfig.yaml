@@ -1,0 +1,47 @@
+parameters:
+  "service-dir":
+    default: "sdk/samples"
+
+linter:
+  extends:
+    - "@azure-tools/typespec-azure-rulesets/data-plane"
+
+emit:
+  - "@azure-tools/typespec-apiview"
+
+options:
+  # APIView token file — this is what gets uploaded to the APIView service as the TypeSpec review.
+  # Output path and filename are controlled via generate.ps1 command-line options.
+  "@azure-tools/typespec-apiview": {}
+
+  # Language emitter options — these populate typespec-metadata.json so APIView can
+  # link per-language SDK reviews back to this TypeSpec review via CrossLanguagePackageId.
+  # You do NOT need the emitters installed locally just to produce the metadata file.
+  "@azure-tools/typespec-python":
+    emitter-output-dir: "{output-dir}/{service-dir}/azure-samples-crosslanguage"
+    namespace: "azure.samples.crosslanguage.test"
+    package-name: "azure-samples-crosslanguage-test"
+    flavor: azure
+
+  "@azure-tools/typespec-ts":
+    emitter-output-dir: "{output-dir}/{service-dir}/azure-samples-crosslanguage"
+    is-modular-library: true
+    package-details:
+      name: "@azure/samples-crosslanguage-test"
+    flavor: azure
+
+  "@azure-tools/typespec-java":
+    emitter-output-dir: "{output-dir}/{service-dir}/azure-samples-crosslanguage"
+    namespace: "com.azure.samples.crosslanguage.test"
+    flavor: azure
+
+  "@azure-tools/typespec-csharp":
+    emitter-output-dir: "{output-dir}/{service-dir}/Azure.Samples.CrossLanguage"
+    namespace: "Azure.Samples.CrossLanguage.Test"
+    flavor: azure
+
+  "@azure-tools/typespec-go":
+    service-dir: "sdk/samples/crosslanguage"
+    emitter-output-dir: "{output-dir}/{service-dir}/azcrosslanguage"
+    module: "github.com/Azure/azure-sdk-for-go/{service-dir}/azcrosslanguage"
+    flavor: azure

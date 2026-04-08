@@ -14,6 +14,9 @@ namespace APIViewWeb.Managers
         public Task<ReviewCommentsModel> GetReviewCommentsAsync(string reviewId);
         public Task<IEnumerable<CommentItemModel>> GetAPIRevisionCommentsAsync(string apiRevisionId, string createdBy=null);
         public Task<ReviewCommentsModel> GetUsageSampleCommentsAsync(string reviewId);
+        public Task<IEnumerable<CommentItemModel>> GetCrossLanguageCommentsAsync(string crossLanguageId);
+        public Task<IEnumerable<CommentItemModel>> GetCrossLanguageCommentsBulkAsync(IEnumerable<string> crossLanguageIds);
+        public Task<IEnumerable<CommentItemModel>> GetCrossLanguageCommentsByPackageIdAsync(string crossLanguagePackageId);
         public Task AddCommentAsync(ClaimsPrincipal user, CommentItemModel comment);
         public Task<CommentItemModel> UpdateCommentAsync(ClaimsPrincipal user, string reviewId, string commentId, string commentText, string[] taggedUsers);
         public Task<CommentItemModel> UpdateCommentSeverityAsync(ClaimsPrincipal user, string reviewId, string commentId, CommentSeverity? severity);
@@ -26,6 +29,7 @@ namespace APIViewWeb.Managers
         public Task UnresolveConversation(ClaimsPrincipal user, string reviewId, string lineId, string threadId = null);
         public Task ToggleUpvoteAsync(ClaimsPrincipal user, string reviewId, string commentId);
         public Task ToggleDownvoteAsync(ClaimsPrincipal user, string reviewId, string commentId);
+        public Task<CommentItemModel> ToggleTodoAsync(ClaimsPrincipal user, string reviewId, string commentId);
         public Task AddCommentFeedbackAsync(ClaimsPrincipal user, string reviewId, string commentId, CommentFeedbackRequest feedback);
         public Task RequestAgentReply(ClaimsPrincipal user, CommentItemModel comment, string activeRevisionId);
         public Task<List<CommentItemModel>> SyncDiagnosticCommentsAsync(APIRevisionListItemModel apiRevision, CodeDiagnostic[] diagnostics, IEnumerable<CommentItemModel> existingComments);

@@ -1,0 +1,1170 @@
+{
+  "PackageName": "azure-samples-crosslanguage",
+  "PackageVersion": "1.0.0",
+  "ParserVersion": "stub-1.0.0",
+  "Language": "Python",
+  "CrossLanguagePackageId": "Azure.Samples.CrossLanguage",
+  "CrossLanguageMetadata": {
+    "CrossLanguagePackageId": "Azure.Samples.CrossLanguage",
+    "CrossLanguageDefinitionId": {
+      "Python.Azure.Samples.CrossLanguage": "Azure.Samples.CrossLanguage",
+      "Python.Azure.Samples.CrossLanguage.Widgets": "Azure.Samples.CrossLanguage.Widgets",
+      "Python.Azure.Samples.CrossLanguage.Widgets.getWidget": "Azure.Samples.CrossLanguage.Widgets.getWidget",
+      "Python.Azure.Samples.CrossLanguage.Widgets.createOrReplaceWidget": "Azure.Samples.CrossLanguage.Widgets.createOrReplaceWidget",
+      "Python.Azure.Samples.CrossLanguage.Widgets.updateWidget": "Azure.Samples.CrossLanguage.Widgets.updateWidget",
+      "Python.Azure.Samples.CrossLanguage.Widgets.deleteWidget": "Azure.Samples.CrossLanguage.Widgets.deleteWidget",
+      "Python.Azure.Samples.CrossLanguage.Widgets.listWidgets": "Azure.Samples.CrossLanguage.Widgets.listWidgets",
+      "Python.Azure.Samples.CrossLanguage.Widgets.analyzeWidget": "Azure.Samples.CrossLanguage.Widgets.analyzeWidget",
+      "Python.Azure.Samples.CrossLanguage.Widget": "Azure.Samples.CrossLanguage.Widget",
+      "Python.Azure.Samples.CrossLanguage.Versions": "Azure.Samples.CrossLanguage.Versions",
+      "Python.Azure.Samples.CrossLanguage.Versions.v2024_01_01": "Azure.Samples.CrossLanguage.Versions.v2024_01_01",
+      "Python.Azure.Samples.CrossLanguage.WidgetAnalysisResult": "Azure.Samples.CrossLanguage.WidgetAnalysisResult",
+      "Python.Azure.Samples.CrossLanguage.WidgetColor": "Azure.Samples.CrossLanguage.WidgetColor",
+      "Python.Azure.Samples.CrossLanguage.WidgetColor.string": "Azure.Samples.CrossLanguage.WidgetColor.string",
+      "Python.Azure.Samples.CrossLanguage.WidgetColor.Red": "Azure.Samples.CrossLanguage.WidgetColor.Red",
+      "Python.Azure.Samples.CrossLanguage.WidgetColor.Green": "Azure.Samples.CrossLanguage.WidgetColor.Green",
+      "Python.Azure.Samples.CrossLanguage.WidgetColor.Blue": "Azure.Samples.CrossLanguage.WidgetColor.Blue",
+      "Python.Azure.Samples.CrossLanguage.WidgetListParams": "Azure.Samples.CrossLanguage.WidgetListParams"
+    }
+  },
+  "ReviewLines": [
+    {
+      "LineId": "Python.Azure.Samples.CrossLanguage",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "namespace",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 0,
+          "Value": "azure.samples.crosslanguage",
+          "HasPrefixSpace": true
+        }
+      ],
+      "Children": []
+    },
+    {
+      "LineId": "",
+      "CrossLanguageId": "",
+      "Tokens": [],
+      "Children": []
+    },
+    {
+      "LineId": "Python.Azure.Samples.CrossLanguage.Widgets",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage.Widgets",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "class",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "WidgetClient",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": ":",
+          "HasPrefixSpace": false
+        }
+      ],
+      "Children": [
+        {
+          "LineId": "Python.Azure.Samples.CrossLanguage.Widgets.getWidget",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.Widgets.getWidget",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "def",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 4,
+              "Value": "get_widget",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": "(",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "self",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ",",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "widget_id",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "str",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ",",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "**kwargs",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ")",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": " ->",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "Widget",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "...",
+              "HasPrefixSpace": true
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Python.Azure.Samples.CrossLanguage.Widgets.createOrReplaceWidget",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.Widgets.createOrReplaceWidget",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "def",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 4,
+              "Value": "create_or_replace_widget",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": "(",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "self",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ",",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "widget_id",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "str",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ",",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "widget",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "Widget",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ",",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "**kwargs",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ")",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": " ->",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "Widget",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "...",
+              "HasPrefixSpace": true
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Python.Azure.Samples.CrossLanguage.Widgets.updateWidget",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.Widgets.updateWidget",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "def",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 4,
+              "Value": "update_widget",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": "(",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "self",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ",",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "widget_id",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "str",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ",",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "widget",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "Widget",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ",",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "**kwargs",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ")",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": " ->",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "Widget",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "...",
+              "HasPrefixSpace": true
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Python.Azure.Samples.CrossLanguage.Widgets.deleteWidget",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.Widgets.deleteWidget",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "def",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 4,
+              "Value": "delete_widget",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": "(",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "self",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ",",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "widget_id",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "str",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ",",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "**kwargs",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ")",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": " ->",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 2,
+              "Value": "None",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "...",
+              "HasPrefixSpace": true
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Python.Azure.Samples.CrossLanguage.Widgets.listWidgets",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.Widgets.listWidgets",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "def",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 4,
+              "Value": "list_widgets",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": "(",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "self",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ",",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "**kwargs",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ")",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": " ->",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "ItemPaged",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": "[",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "Widget",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": "]",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "...",
+              "HasPrefixSpace": true
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Python.Azure.Samples.CrossLanguage.Widgets.analyzeWidget",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.Widgets.analyzeWidget",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "def",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 4,
+              "Value": "analyze_widget",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": "(",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "self",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ",",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "widget_id",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "str",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ",",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "**kwargs",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ")",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": " ->",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "WidgetAnalysisResult",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "...",
+              "HasPrefixSpace": true
+            }
+          ],
+          "Children": []
+        }
+      ]
+    },
+    {
+      "LineId": "",
+      "CrossLanguageId": "",
+      "Tokens": [],
+      "Children": []
+    },
+    {
+      "LineId": "Python.Azure.Samples.CrossLanguage.Widget",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage.Widget",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "class",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "Widget",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": ":",
+          "HasPrefixSpace": false
+        }
+      ],
+      "Children": [
+        {
+          "LineId": "Python.Azure.Samples.CrossLanguage.Widget.id",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 0,
+              "Value": "id",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "str",
+              "HasPrefixSpace": true
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Python.Azure.Samples.CrossLanguage.Widget.name",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 0,
+              "Value": "name",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "str",
+              "HasPrefixSpace": true
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Python.Azure.Samples.CrossLanguage.Widget.color",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 0,
+              "Value": "color",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "WidgetColor",
+              "HasPrefixSpace": true
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Python.Azure.Samples.CrossLanguage.Widget.description",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 0,
+              "Value": "description",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "Optional",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": "[",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "str",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": "]",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Python.Azure.Samples.CrossLanguage.Widget.manufacturedOn",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 0,
+              "Value": "manufactured_on",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "Optional",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": "[",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "datetime",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": "]",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        }
+      ]
+    },
+    {
+      "LineId": "",
+      "CrossLanguageId": "",
+      "Tokens": [],
+      "Children": []
+    },
+    {
+      "LineId": "Python.Azure.Samples.CrossLanguage.Versions",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage.Versions",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "class",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "ApiVersion",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": "(",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "str",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": ",",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "Enum",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": "):",
+          "HasPrefixSpace": false
+        }
+      ],
+      "Children": [
+        {
+          "LineId": "Python.Azure.Samples.CrossLanguage.Versions.v2024_01_01",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.Versions.v2024_01_01",
+          "Tokens": [
+            {
+              "Kind": 0,
+              "Value": "V2024_01_01",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": " =",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 5,
+              "Value": "\"2024-01-01\"",
+              "HasPrefixSpace": true
+            }
+          ],
+          "Children": []
+        }
+      ]
+    },
+    {
+      "LineId": "",
+      "CrossLanguageId": "",
+      "Tokens": [],
+      "Children": []
+    },
+    {
+      "LineId": "Python.Azure.Samples.CrossLanguage.WidgetAnalysisResult",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage.WidgetAnalysisResult",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "class",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "WidgetAnalysisResult",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": ":",
+          "HasPrefixSpace": false
+        }
+      ],
+      "Children": [
+        {
+          "LineId": "Python.Azure.Samples.CrossLanguage.WidgetAnalysisResult.widgetId",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 0,
+              "Value": "widget_id",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "str",
+              "HasPrefixSpace": true
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Python.Azure.Samples.CrossLanguage.WidgetAnalysisResult.qualityScore",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 0,
+              "Value": "quality_score",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "float",
+              "HasPrefixSpace": true
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Python.Azure.Samples.CrossLanguage.WidgetAnalysisResult.summary",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 0,
+              "Value": "summary",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "str",
+              "HasPrefixSpace": true
+            }
+          ],
+          "Children": []
+        }
+      ]
+    },
+    {
+      "LineId": "",
+      "CrossLanguageId": "",
+      "Tokens": [],
+      "Children": []
+    },
+    {
+      "LineId": "Python.Azure.Samples.CrossLanguage.WidgetColor",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage.WidgetColor",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "class",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "WidgetColor",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": "(",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "str",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": ",",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "Enum",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": "):",
+          "HasPrefixSpace": false
+        }
+      ],
+      "Children": [
+        {
+          "LineId": "Python.Azure.Samples.CrossLanguage.WidgetColor.string",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.WidgetColor.string",
+          "Tokens": [
+            {
+              "Kind": 3,
+              "Value": "str",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Python.Azure.Samples.CrossLanguage.WidgetColor.Red",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.WidgetColor.Red",
+          "Tokens": [
+            {
+              "Kind": 0,
+              "Value": "RED",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": " =",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 5,
+              "Value": "\"Red\"",
+              "HasPrefixSpace": true
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Python.Azure.Samples.CrossLanguage.WidgetColor.Green",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.WidgetColor.Green",
+          "Tokens": [
+            {
+              "Kind": 0,
+              "Value": "GREEN",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": " =",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 5,
+              "Value": "\"Green\"",
+              "HasPrefixSpace": true
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Python.Azure.Samples.CrossLanguage.WidgetColor.Blue",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.WidgetColor.Blue",
+          "Tokens": [
+            {
+              "Kind": 0,
+              "Value": "BLUE",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": " =",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 5,
+              "Value": "\"Blue\"",
+              "HasPrefixSpace": true
+            }
+          ],
+          "Children": []
+        }
+      ]
+    },
+    {
+      "LineId": "",
+      "CrossLanguageId": "",
+      "Tokens": [],
+      "Children": []
+    },
+    {
+      "LineId": "Python.Azure.Samples.CrossLanguage.WidgetListParams",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage.WidgetListParams",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "class",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "WidgetListParams",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": ":",
+          "HasPrefixSpace": false
+        }
+      ],
+      "Children": [
+        {
+          "LineId": "Python.Azure.Samples.CrossLanguage.WidgetListParams.color",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 0,
+              "Value": "color",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "Optional",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": "[",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "WidgetColor",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": "]",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Python.Azure.Samples.CrossLanguage.WidgetListParams.maxResults",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 0,
+              "Value": "max_results",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ":",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "Optional",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": "[",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "int",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": "]",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        }
+      ]
+    }
+  ]
+}

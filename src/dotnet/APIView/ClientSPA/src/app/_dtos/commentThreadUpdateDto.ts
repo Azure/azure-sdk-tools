@@ -34,4 +34,8 @@ export interface CommentUpdatesDto {
     feedback?: AICommentFeedback;
     threadId?: string;
     isReply?: boolean;
+    crossLanguageId?: string;
+    crossLanguagePackageId?: string;
+    isTodo?: boolean;
+    alsoCreateProposal?: boolean;
 }

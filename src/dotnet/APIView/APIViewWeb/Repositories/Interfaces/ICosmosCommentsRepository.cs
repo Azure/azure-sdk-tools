@@ -11,5 +11,8 @@ namespace APIViewWeb.Repositories
         public Task UpsertCommentAsync(CommentItemModel commentModel);
         public Task<CommentItemModel> GetCommentAsync(string reviewId, string commentId);
         public Task<IEnumerable<CommentItemModel>> GetCommentsAsync(string reviewId, string lineId);
+        public Task<IEnumerable<CommentItemModel>> GetCommentsByCrossLanguageIdAsync(string crossLanguageId);
+        public Task<IEnumerable<CommentItemModel>> GetCommentsByCrossLanguageIdsAsync(IEnumerable<string> crossLanguageIds);
+        public Task<IEnumerable<CommentItemModel>> GetCommentsByCrossLanguagePackageIdAsync(string crossLanguagePackageId);
     }
 }

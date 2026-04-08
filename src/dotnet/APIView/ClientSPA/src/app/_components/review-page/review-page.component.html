@@ -9,16 +9,18 @@
     [activePage]="activeView"
     [samplesRevisionCount]="samplesRevisionCount"
     [conversationCount]="numberOfActiveConversation"
+    [discussionCount]="numberOfActiveDiscussions"
     (navigateToSamplesEmitter)="navigateToSamples()"
     (navigateToRevisionsEmitter)="navigateToRevisions()"
     (navigateToReviewsEmitter)="showReviewView()"
     (navigateToConversationsEmitter)="showConversationsView()"
+    (navigateToDiscussionsEmitter)="showDiscussionsView()"
     (pageOptionsEmitter)="handlePageOptionsEmitter($event)"
     (showLeftNavigationEmitter)="handleShowLeftNavigationEmitter($event)">
     <div [hidden]="activeView !== 'conversations'" class="conversation-panel overflow-auto border rounded py-3">
         <app-conversations
             [apiRevisions]="apiRevisions"
-            [comments]="comments"
+            [comments]="nonCrossLangComments"
             [review]="review"
             [userProfile]="userProfile"
             [activeApiRevisionId]="activeApiRevisionId"
@@ -27,6 +29,21 @@
             (scrollToNodeEmitter)="handleConversationScrollToNode($event)"
             (dismissSidebarAndNavigateEmitter)="handleDismissSidebarAndNavigate($event)">
         </app-conversations>
+    </div>
+    <div [hidden]="activeView !== 'discussions'" class="discussion-panel overflow-auto border rounded py-3">
+        <app-cross-language-discussions
+            [comments]="comments"
+            [review]="review"
+            [userProfile]="userProfile"
+            [activeApiRevisionId]="activeApiRevisionId"
+            [codePanelData]="codePanelData"
+            [crossLanguageRowData]="crossLanguageRowData"
+            [language]="language"
+            [crossLanguagePackageId]="activeAPIRevision?.files?.[0]?.crossLanguagePackageId"
+            [jumpToDiscussionId]="jumpToDiscussionId"
+            (numberOfActiveDiscussionsEmitter)="handleNumberOfActiveDiscussionsEmitter($event)"
+            (commentCreatedEmitter)="handleCommentCreated($event)">
+        </app-cross-language-discussions>
     </div>
     <div *ngIf="revisionsActivated" [hidden]="activeView !== 'revisions'" class="revisions-panel">
         <app-revisions-list
@@ -83,11 +100,12 @@
                 <div class="review-panel" style="width: 100%; flex: 1; min-height: 0; overflow: hidden;">
                     <app-code-panel [codePanelRowData]="codePanelRowData" [codePanelData]="codePanelData"
                         [crossLanguageRowData]="crossLanguageRowData"
+                        [crossLanguagePackageId]="activeAPIRevision?.files?.[0]?.crossLanguagePackageId"
                         [language]="language" [languageSafeName]="languageSafeName"
                         [isDiffView]="!!diffApiRevisionId"
                         [reviewId]="reviewId!" [activeApiRevisionId]="activeApiRevisionId!"
                         [userProfile]="userProfile"
-                        [allComments]="comments"
+                        [allComments]="nonCrossLangComments"
                         [loadFailed]="loadFailed"
                         [loadFailedMessage]="loadFailedMessage"
                         [loadingMessage]="loadingMessage"
@@ -98,7 +116,9 @@
                         [codeLineSearchText]="codeLineSearchText"
                         [codeLineSearchInfo]="codeLineSearchInfo"
                         (hasActiveConversationEmitter)="handleHasActiveConversationEmitter($event)"
-                        (codeLineSearchInfoEmitter)="handleCodeLineSearchInfoEmitter($event)">
+                        (codeLineSearchInfoEmitter)="handleCodeLineSearchInfoEmitter($event)"
+                        (commentCreatedEmitter)="handleCommentCreated($event)"
+                        (navigateToDiscussionEmitter)="handleNavigateToDiscussion($event)">
                     </app-code-panel>
                 </div>
             </div>

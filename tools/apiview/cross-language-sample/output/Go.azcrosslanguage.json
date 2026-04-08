@@ -1,0 +1,1282 @@
+{
+  "PackageName": "azcrosslanguage",
+  "PackageVersion": "v1.0.0",
+  "ParserVersion": "stub-1.0.0",
+  "Language": "Go",
+  "CrossLanguagePackageId": "Azure.Samples.CrossLanguage",
+  "CrossLanguageMetadata": {
+    "CrossLanguagePackageId": "Azure.Samples.CrossLanguage",
+    "CrossLanguageDefinitionId": {
+      "Go.Azure.Samples.CrossLanguage": "Azure.Samples.CrossLanguage",
+      "Go.Azure.Samples.CrossLanguage.Widgets": "Azure.Samples.CrossLanguage.Widgets",
+      "Go.Azure.Samples.CrossLanguage.Widgets.getWidget": "Azure.Samples.CrossLanguage.Widgets.getWidget",
+      "Go.Azure.Samples.CrossLanguage.Widgets.createOrReplaceWidget": "Azure.Samples.CrossLanguage.Widgets.createOrReplaceWidget",
+      "Go.Azure.Samples.CrossLanguage.Widgets.updateWidget": "Azure.Samples.CrossLanguage.Widgets.updateWidget",
+      "Go.Azure.Samples.CrossLanguage.Widgets.deleteWidget": "Azure.Samples.CrossLanguage.Widgets.deleteWidget",
+      "Go.Azure.Samples.CrossLanguage.Widgets.listWidgets": "Azure.Samples.CrossLanguage.Widgets.listWidgets",
+      "Go.Azure.Samples.CrossLanguage.Widgets.analyzeWidget": "Azure.Samples.CrossLanguage.Widgets.analyzeWidget",
+      "Go.Azure.Samples.CrossLanguage.Widget": "Azure.Samples.CrossLanguage.Widget",
+      "Go.Azure.Samples.CrossLanguage.Versions": "Azure.Samples.CrossLanguage.Versions",
+      "Go.Azure.Samples.CrossLanguage.Versions.v2024_01_01": "Azure.Samples.CrossLanguage.Versions.v2024_01_01",
+      "Go.Azure.Samples.CrossLanguage.WidgetAnalysisResult": "Azure.Samples.CrossLanguage.WidgetAnalysisResult",
+      "Go.Azure.Samples.CrossLanguage.WidgetColor": "Azure.Samples.CrossLanguage.WidgetColor",
+      "Go.Azure.Samples.CrossLanguage.WidgetColor.string": "Azure.Samples.CrossLanguage.WidgetColor.string",
+      "Go.Azure.Samples.CrossLanguage.WidgetColor.Red": "Azure.Samples.CrossLanguage.WidgetColor.Red",
+      "Go.Azure.Samples.CrossLanguage.WidgetColor.Green": "Azure.Samples.CrossLanguage.WidgetColor.Green",
+      "Go.Azure.Samples.CrossLanguage.WidgetColor.Blue": "Azure.Samples.CrossLanguage.WidgetColor.Blue",
+      "Go.Azure.Samples.CrossLanguage.WidgetListParams": "Azure.Samples.CrossLanguage.WidgetListParams"
+    }
+  },
+  "ReviewLines": [
+    {
+      "LineId": "Go.Azure.Samples.CrossLanguage",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "package",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 0,
+          "Value": "azcrosslanguage",
+          "HasPrefixSpace": true
+        }
+      ],
+      "Children": []
+    },
+    {
+      "LineId": "",
+      "CrossLanguageId": "",
+      "Tokens": [],
+      "Children": []
+    },
+    {
+      "LineId": "Go.Azure.Samples.CrossLanguage.Widgets",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage.Widgets",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "type",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "WidgetsClient",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 2,
+          "Value": "struct",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": " {}",
+          "HasPrefixSpace": false
+        }
+      ],
+      "Children": []
+    },
+    {
+      "LineId": "",
+      "CrossLanguageId": "",
+      "Tokens": [],
+      "Children": []
+    },
+    {
+      "LineId": "Go.Azure.Samples.CrossLanguage.Widgets.getWidget",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage.Widgets.getWidget",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "func",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": "(",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 0,
+          "Value": "c",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": " *",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "WidgetsClient",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": ")",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 4,
+          "Value": "GetWidget",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": "(",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 0,
+          "Value": "ctx",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "context.Context",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": ",",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 0,
+          "Value": "widgetID",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 3,
+          "Value": "string",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": ",",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 0,
+          "Value": "options",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": " *",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "GetWidgetOptions",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": ")",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": " (",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "WidgetsClientGetWidgetResponse",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": ",",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "error",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": ")",
+          "HasPrefixSpace": false
+        }
+      ],
+      "Children": []
+    },
+    {
+      "LineId": "Go.Azure.Samples.CrossLanguage.Widgets.createOrReplaceWidget",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage.Widgets.createOrReplaceWidget",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "func",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": "(",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 0,
+          "Value": "c",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": " *",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "WidgetsClient",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": ")",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 4,
+          "Value": "CreateOrReplaceWidget",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": "(",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 0,
+          "Value": "ctx",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "context.Context",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": ",",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 0,
+          "Value": "widgetID",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 3,
+          "Value": "string",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": ",",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 0,
+          "Value": "widget",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 3,
+          "Value": "Widget",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": ")",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": " (",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "WidgetsClientCreateOrReplaceWidgetResponse",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": ",",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "error",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": ")",
+          "HasPrefixSpace": false
+        }
+      ],
+      "Children": []
+    },
+    {
+      "LineId": "Go.Azure.Samples.CrossLanguage.Widgets.updateWidget",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage.Widgets.updateWidget",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "func",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": "(",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 0,
+          "Value": "c",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": " *",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "WidgetsClient",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": ")",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 4,
+          "Value": "UpdateWidget",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": "(",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 0,
+          "Value": "ctx",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "context.Context",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": ",",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 0,
+          "Value": "widgetID",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 3,
+          "Value": "string",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": ",",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 0,
+          "Value": "widget",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 3,
+          "Value": "Widget",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": ")",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": " (",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "WidgetsClientUpdateWidgetResponse",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": ",",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "error",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": ")",
+          "HasPrefixSpace": false
+        }
+      ],
+      "Children": []
+    },
+    {
+      "LineId": "Go.Azure.Samples.CrossLanguage.Widgets.deleteWidget",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage.Widgets.deleteWidget",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "func",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": "(",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 0,
+          "Value": "c",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": " *",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "WidgetsClient",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": ")",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 4,
+          "Value": "DeleteWidget",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": "(",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 0,
+          "Value": "ctx",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "context.Context",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": ",",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 0,
+          "Value": "widgetID",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 3,
+          "Value": "string",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": ")",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": " (",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "WidgetsClientDeleteWidgetResponse",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": ",",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "error",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": ")",
+          "HasPrefixSpace": false
+        }
+      ],
+      "Children": []
+    },
+    {
+      "LineId": "Go.Azure.Samples.CrossLanguage.Widgets.listWidgets",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage.Widgets.listWidgets",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "func",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": "(",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 0,
+          "Value": "c",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": " *",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "WidgetsClient",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": ")",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 4,
+          "Value": "ListWidgets",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": "(",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 0,
+          "Value": "options",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": " *",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "ListWidgetsOptions",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": ")",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": " *",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "runtime.Pager",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": "[",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "WidgetsClientListWidgetsResponse",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": "]",
+          "HasPrefixSpace": false
+        }
+      ],
+      "Children": []
+    },
+    {
+      "LineId": "Go.Azure.Samples.CrossLanguage.Widgets.analyzeWidget",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage.Widgets.analyzeWidget",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "func",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": "(",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 0,
+          "Value": "c",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": " *",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "WidgetsClient",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": ")",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 4,
+          "Value": "AnalyzeWidget",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": "(",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 0,
+          "Value": "ctx",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "context.Context",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": ",",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 0,
+          "Value": "widgetID",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 3,
+          "Value": "string",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": ")",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": " (",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "WidgetsClientAnalyzeWidgetResponse",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 1,
+          "Value": ",",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "error",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": ")",
+          "HasPrefixSpace": false
+        }
+      ],
+      "Children": []
+    },
+    {
+      "LineId": "",
+      "CrossLanguageId": "",
+      "Tokens": [],
+      "Children": []
+    },
+    {
+      "LineId": "Go.Azure.Samples.CrossLanguage.Widget",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage.Widget",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "type",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "Widget",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 2,
+          "Value": "struct",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": " {",
+          "HasPrefixSpace": true
+        }
+      ],
+      "Children": [
+        {
+          "LineId": "Go.Azure.Samples.CrossLanguage.Widget.id",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 4,
+              "Value": "ID",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "string",
+              "HasPrefixSpace": true
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Go.Azure.Samples.CrossLanguage.Widget.name",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 4,
+              "Value": "Name",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "string",
+              "HasPrefixSpace": true
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Go.Azure.Samples.CrossLanguage.Widget.color",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 4,
+              "Value": "Color",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "WidgetColor",
+              "HasPrefixSpace": true
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Go.Azure.Samples.CrossLanguage.Widget.description",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 4,
+              "Value": "Description",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": " *",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "string",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Go.Azure.Samples.CrossLanguage.Widget.manufacturedOn",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 4,
+              "Value": "ManufacturedOn",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": " *",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "time.Time",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 1,
+              "Value": "}",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": [],
+          "IsContextEndLine": true,
+          "RelatedToLine": "Go.Azure.Samples.CrossLanguage.Widget"
+        }
+      ]
+    },
+    {
+      "LineId": "",
+      "CrossLanguageId": "",
+      "Tokens": [],
+      "Children": []
+    },
+    {
+      "LineId": "Go.Azure.Samples.CrossLanguage.Versions",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage.Versions",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "type",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "ServiceVersion",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 3,
+          "Value": "string",
+          "HasPrefixSpace": true
+        }
+      ],
+      "Children": []
+    },
+    {
+      "LineId": "Go.Azure.Samples.CrossLanguage.Versions.v2024_01_01",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage.Versions.v2024_01_01",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "const",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 4,
+          "Value": "ServiceVersionV20240101",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 3,
+          "Value": "ServiceVersion",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": " =",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 5,
+          "Value": "\"2024-01-01\"",
+          "HasPrefixSpace": true
+        }
+      ],
+      "Children": []
+    },
+    {
+      "LineId": "",
+      "CrossLanguageId": "",
+      "Tokens": [],
+      "Children": []
+    },
+    {
+      "LineId": "Go.Azure.Samples.CrossLanguage.WidgetAnalysisResult",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage.WidgetAnalysisResult",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "type",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "WidgetAnalysisResult",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 2,
+          "Value": "struct",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": " {",
+          "HasPrefixSpace": true
+        }
+      ],
+      "Children": [
+        {
+          "LineId": "Go.Azure.Samples.CrossLanguage.WidgetAnalysisResult.widgetId",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 4,
+              "Value": "WidgetID",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "string",
+              "HasPrefixSpace": true
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Go.Azure.Samples.CrossLanguage.WidgetAnalysisResult.qualityScore",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 4,
+              "Value": "QualityScore",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "float32",
+              "HasPrefixSpace": true
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Go.Azure.Samples.CrossLanguage.WidgetAnalysisResult.summary",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 4,
+              "Value": "Summary",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "string",
+              "HasPrefixSpace": true
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 1,
+              "Value": "}",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": [],
+          "IsContextEndLine": true,
+          "RelatedToLine": "Go.Azure.Samples.CrossLanguage.WidgetAnalysisResult"
+        }
+      ]
+    },
+    {
+      "LineId": "",
+      "CrossLanguageId": "",
+      "Tokens": [],
+      "Children": []
+    },
+    {
+      "LineId": "Go.Azure.Samples.CrossLanguage.WidgetColor",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage.WidgetColor",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "type",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "WidgetColor",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 3,
+          "Value": "string",
+          "HasPrefixSpace": true
+        }
+      ],
+      "Children": []
+    },
+    {
+      "LineId": "Go.Azure.Samples.CrossLanguage.WidgetColor.string",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage.WidgetColor.string",
+      "Tokens": [
+        {
+          "Kind": 3,
+          "Value": "string",
+          "HasPrefixSpace": false
+        }
+      ],
+      "Children": []
+    },
+    {
+      "LineId": "Go.Azure.Samples.CrossLanguage.WidgetColor.consts",
+      "CrossLanguageId": "",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "const",
+          "HasPrefixSpace": false
+        }
+      ],
+      "Children": [
+        {
+          "LineId": "Go.Azure.Samples.CrossLanguage.WidgetColor.Red",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.WidgetColor.Red",
+          "Tokens": [
+            {
+              "Kind": 4,
+              "Value": "WidgetColorRed",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "WidgetColor",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": " =",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 5,
+              "Value": "\"Red\"",
+              "HasPrefixSpace": true
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Go.Azure.Samples.CrossLanguage.WidgetColor.Green",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.WidgetColor.Green",
+          "Tokens": [
+            {
+              "Kind": 4,
+              "Value": "WidgetColorGreen",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "WidgetColor",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": " =",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 5,
+              "Value": "\"Green\"",
+              "HasPrefixSpace": true
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Go.Azure.Samples.CrossLanguage.WidgetColor.Blue",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.WidgetColor.Blue",
+          "Tokens": [
+            {
+              "Kind": 4,
+              "Value": "WidgetColorBlue",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "WidgetColor",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": " =",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 5,
+              "Value": "\"Blue\"",
+              "HasPrefixSpace": true
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 1,
+              "Value": "}",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": [],
+          "IsContextEndLine": true,
+          "RelatedToLine": "Go.Azure.Samples.CrossLanguage.WidgetColor"
+        }
+      ]
+    },
+    {
+      "LineId": "",
+      "CrossLanguageId": "",
+      "Tokens": [],
+      "Children": []
+    },
+    {
+      "LineId": "Go.Azure.Samples.CrossLanguage.WidgetListParams",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage.WidgetListParams",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "type",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "WidgetsClientListWidgetsOptions",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 2,
+          "Value": "struct",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": " {",
+          "HasPrefixSpace": true
+        }
+      ],
+      "Children": [
+        {
+          "LineId": "Go.Azure.Samples.CrossLanguage.WidgetListParams.color",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 4,
+              "Value": "Color",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": " *",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "WidgetColor",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Go.Azure.Samples.CrossLanguage.WidgetListParams.maxResults",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 4,
+              "Value": "MaxResults",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": " *",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "int32",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 1,
+              "Value": "}",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": [],
+          "IsContextEndLine": true,
+          "RelatedToLine": "Go.Azure.Samples.CrossLanguage.WidgetListParams"
+        }
+      ]
+    }
+  ]
+}

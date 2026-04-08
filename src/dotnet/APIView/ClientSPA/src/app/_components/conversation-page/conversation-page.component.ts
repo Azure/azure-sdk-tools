@@ -110,6 +110,15 @@ export class ConversationPageComponent {
     this.router.navigate(['/review', this.reviewId], { queryParams: queryParams });
   }
 
+  navigateToDiscussions() {
+    const queryParams: any = {};
+    if (this.activeApiRevisionId) {
+      queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
+    }
+    queryParams['view'] = 'discussions';
+    this.router.navigate(['/review', this.reviewId], { queryParams: queryParams });
+  }
+
   handleNumberOfActiveThreadsEmitter(value: number) {
     this.numberOfActiveConversation = value;
   }

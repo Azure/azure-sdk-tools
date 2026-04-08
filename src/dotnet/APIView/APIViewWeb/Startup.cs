@@ -126,6 +126,7 @@ namespace APIViewWeb
             services.AddSingleton<ICosmosReviewRepository,CosmosReviewRepository>();
             services.AddSingleton<ICosmosAPIRevisionsRepository, CosmosAPIRevisionsRepository>();
             services.AddSingleton<ICosmosCommentsRepository, CosmosCommentsRepository>();
+            services.AddSingleton<ICosmosProposalsRepository, CosmosProposalsRepository>();
             services.AddSingleton<ICosmosPullRequestsRepository, CosmosPullRequestsRepository>();
             services.AddSingleton<ICosmosSamplesRevisionsRepository, CosmosSamplesRevisionsRepository>();
             services.AddSingleton<ICosmosUserProfileRepository, CosmosUserProfileRepository>();

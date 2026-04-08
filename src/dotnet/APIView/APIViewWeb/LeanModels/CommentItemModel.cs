@@ -49,6 +49,7 @@ namespace APIViewWeb.LeanModels
         public string SectionClass { get; set; }
         public string CommentText { get; set; }
         public string CrossLanguageId { get; set; }
+        public string CrossLanguagePackageId { get; set; }
         public string CorrelationId { get; set; }
         public List<CommentChangeHistoryModel> ChangeHistory { get; set; } = new List<CommentChangeHistoryModel>();        
         public bool IsResolved { get; set; }
@@ -68,6 +69,9 @@ namespace APIViewWeb.LeanModels
         public List<string> MemoryIds { get; set; } = [];
         public float ConfidenceScore { get; set; }
 
+        public bool IsTodo { get; set; }
+        public string TodoBy { get; set; }
+        public string RoleOfCreator { get; set; }
         public List<CommentFeedback> Feedback { get; set; } = [];
         public static CommentSeverity ParseSeverity(string value)
         {
@@ -80,5 +84,22 @@ namespace APIViewWeb.LeanModels
                 _ => CommentSeverity.ShouldFix
             };
         }
+    }
+
+    public enum ProposalDecision
+    {
+        Accept,
+        AcceptWithModification,
+        Reject
+    }
+
+    public class ProposalVote
+    {
+        public string Language { get; set; }
+        public ProposalDecision Decision { get; set; }
+        public string ModificationText { get; set; }
+        public string VotedBy { get; set; }
+        public string VoterRole { get; set; }
+        public DateTime VotedOn { get; set; }
     }
 }

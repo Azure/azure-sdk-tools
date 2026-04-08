@@ -43,7 +43,7 @@ export class CommentsService {
     [CommentSeverity.MustFix]: 'MustFix',
   };
 
-  createComment(reviewId: string, revisionId: string, elementId: string, commentText: string, commentType: CommentType, resolutionLocked : boolean = false, severity: CommentSeverity | null = null, threadId?: string) : Observable<CommentItemModel> {
+  createComment(reviewId: string, revisionId: string, elementId: string, commentText: string, commentType: CommentType, resolutionLocked : boolean = false, severity: CommentSeverity | null = null, threadId?: string, crossLanguageId?: string, crossLanguagePackageId?: string, isTodo: boolean = false) : Observable<CommentItemModel> {
     const formData = new FormData();
     formData.append('reviewId', reviewId);
     if (commentType == CommentType.APIRevision) {
@@ -62,8 +62,15 @@ export class CommentsService {
     if (threadId) {
       formData.append('threadId', threadId);
     }
-
-    return this.http.post<CommentItemModel>(this.baseUrl, formData, { withCredentials: true });
+    if (crossLanguageId) {
+      formData.append('crossLanguageId', crossLanguageId);
+    }
+    if (crossLanguagePackageId) {
+      formData.append('crossLanguagePackageId', crossLanguagePackageId);
+    }
+    if (isTodo) {
+      formData.append('isTodo', 'true');
+    }
 
     return this.http.post<CommentItemModel>(this.baseUrl, formData, { withCredentials: true });
   }
@@ -169,6 +176,17 @@ export class CommentsService {
     });
   }
 
+  toggleTodo(reviewId: string, commentId: string) {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+    });
+
+    return this.http.patch<CommentItemModel>(this.baseUrl + `/${reviewId}/${commentId}/toggleTodo`, {}, {
+      headers: headers,
+      withCredentials: true
+    });
+  }
+
   submitAICommentFeedback(reviewId: string, commentId: string, reasons: string[], comment: string, isDelete: boolean = false) {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
@@ -206,5 +224,17 @@ export class CommentsService {
       headers: headers,
       observe: 'response',
       withCredentials: true });
+  }
+
+  getCrossLanguageComments(crossLanguageId: string) : Observable<CommentItemModel[]> {
+    return this.http.get<CommentItemModel[]>(`${this.baseUrl}/crossLanguage/${encodeURIComponent(crossLanguageId)}`, { withCredentials: true });
+  }
+
+  getCrossLanguageCommentsBulk(crossLanguageIds: string[]) : Observable<CommentItemModel[]> {
+    return this.http.post<CommentItemModel[]>(`${this.baseUrl}/crossLanguage/bulk`, crossLanguageIds, { withCredentials: true });
+  }
+
+  getCrossLanguageCommentsByPackageId(crossLanguagePackageId: string) : Observable<CommentItemModel[]> {
+    return this.http.get<CommentItemModel[]>(`${this.baseUrl}/crossLanguage/byPackage/${encodeURIComponent(crossLanguagePackageId)}`, { withCredentials: true });
   }
 }

@@ -1,0 +1,204 @@
+<!-- Loading -->
+<div *ngIf="isLoading" class="spinner-border m-3" role="status">
+  <span class="visually-hidden">Loading...</span>
+</div>
+
+<!-- Empty state -->
+<div *ngIf="!isLoading && discussions.length === 0" class="empty-state">
+  <i class="bi bi-translate"></i>
+  <p>No cross-language discussions yet.</p>
+  <p class="text-muted small">Comments on lines with cross-language definitions will appear here.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SPLIT PANE: Left list + Right detail
+     ═══════════════════════════════════════════════════════════════════ -->
+<div *ngIf="!isLoading && discussions.length > 0" class="split-container">
+
+  <!-- ── LEFT PANE: Discussion list ─────────────────────────────────── -->
+  <div class="list-pane">
+
+    <!-- Requiring Your Attention -->
+    <div *ngIf="attentionDiscussions.length > 0" class="list-section">
+      <div class="section-header">
+        <i class="bi bi-bell-fill section-icon-warn me-1"></i>
+        <span>Attention</span>
+        <span class="badge badge-warn ms-auto">{{ attentionDiscussions.length }}</span>
+      </div>
+      <div *ngFor="let d of attentionDiscussions"
+           class="list-item attention-item"
+           [class.selected]="selectedDiscussion?.threadId === d.threadId"
+           (click)="selectDiscussion(d)">
+        <div class="d-flex align-items-start gap-2">
+          <img src="https://github.com/{{ d.allComments[0]?.createdBy }}.png?size=28"
+               class="item-avatar" [alt]="d.allComments[0]?.createdBy" width="28" height="28">
+          <div class="flex-grow-1 min-w-0">
+            <div class="item-author-row">
+              <span class="item-author text-truncate">{{ d.allComments[0]?.createdBy }}</span>
+              <time timeago [date]="d.lastActivity" [live]="true" class="item-time"></time>
+            </div>
+            <div class="item-preview text-truncate" *ngIf="d.commentPreview">{{ d.commentPreview }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- All Discussions -->
+    <div class="list-section all-section">
+      <div class="section-header">
+        <i class="bi bi-list-ul me-1"></i>
+        <span>All</span>
+        <span class="badge badge-muted ms-auto">{{ numberOfActiveDiscussions }}</span>
+      </div>
+
+      <!-- Filters -->
+      <div class="list-filters">
+        <input type="text" placeholder="Search..." [(ngModel)]="searchText" (ngModelChange)="applyFilters()" class="filter-input">
+        <div class="segmented-control">
+          <button class="seg-btn" [class.seg-active]="filterStatus === 'active'" (click)="setStatusFilter('active')">Active</button>
+          <button class="seg-btn" [class.seg-active]="filterStatus === 'resolved'" (click)="setStatusFilter('resolved')">Resolved</button>
+          <button class="seg-btn" [class.seg-active]="filterStatus === 'all'" (click)="setStatusFilter('all')">All</button>
+        </div>
+      </div>
+
+      <div *ngIf="filteredDiscussions.length === 0" class="text-center text-muted small py-3">
+        No discussions match filters.
+      </div>
+
+      <div class="all-list">
+        <div *ngFor="let d of filteredDiscussions; trackBy: trackByDiscussionId"
+             class="list-item"
+             [class.selected]="selectedDiscussion?.threadId === d.threadId"
+             [class.resolved]="d.isResolved"
+             (click)="selectDiscussion(d)">
+          <div class="d-flex align-items-start gap-2">
+            <img src="https://github.com/{{ d.allComments[0]?.createdBy }}.png?size=28"
+                 class="item-avatar" [alt]="d.allComments[0]?.createdBy" width="28" height="28">
+            <div class="flex-grow-1 min-w-0">
+              <div class="item-author-row">
+                <span class="item-author text-truncate">{{ d.allComments[0]?.createdBy }}</span>
+                <time timeago [date]="d.lastActivity" [live]="true" class="item-time"></time>
+              </div>
+              <div class="item-preview text-truncate" *ngIf="d.commentPreview">{{ d.commentPreview }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RIGHT PANE: Detail ─────────────────────────────────────────── -->
+  <div class="detail-pane">
+    <!-- Empty selection -->
+    <div *ngIf="!selectedDiscussion" class="detail-empty">
+      <i class="bi bi-arrow-left-circle"></i>
+      <p>Select a discussion to view details</p>
+    </div>
+
+    <!-- Selected discussion detail -->
+    <div *ngIf="selectedDiscussion" class="detail-content">
+
+      <!-- Code tabs -->
+      <div *ngIf="selectedDiscussion.codeEntries.length > 0" class="detail-code-tabs">
+        <div class="code-tabs-header">
+          <button *ngFor="let entry of selectedDiscussion.codeEntries; let i = index"
+                  class="code-tab-btn" [class.active]="i === activeTabIndex"
+                  (click)="activeTabIndex = i">
+            <img src="{{assetsPath}}/images/{{ entry.language | languageNames: userProfile?.preferences?.theme }}-original.svg"
+                 width="16" height="16" class="me-1">
+            <span>{{ entry.language }}</span>
+            <span *ngIf="entry.isCurrent" class="current-label">(current)</span>
+          </button>
+        </div>
+        <div class="code-tabs-content">
+          <div *ngFor="let entry of selectedDiscussion.codeEntries; let i = index"
+               [hidden]="i !== activeTabIndex">
+            <div *ngIf="!entry.isCurrent && entry.packageName" class="package-info">
+              {{ entry.packageName }} : {{ entry.packageVersion }}
+            </div>
+            <div *ngFor="let row of entry.codeLines" class="code-line">
+              <ng-container *ngIf="row.type === CodePanelRowDatatype.CodeLine || row.type === ''">
+                <div class="code-line-content" [style.padding-left.px]="(row.indent ?? 0) * 20">
+                  <span *ngFor="let token of row.rowOfTokens" [ngClass]="getTokenClass(token)">{{token.value}}</span>
+                </div>
+              </ng-container>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Flat conversation -->
+      <div class="detail-conversation" #conversationContainer>
+        <div *ngFor="let comment of selectedDiscussion.allComments; trackBy: trackByCommentId"
+             class="discussion-comment">
+          <img src="https://github.com/{{ comment.createdBy }}.png?size=32"
+               class="comment-avatar" [alt]="comment.createdBy" width="32" height="32">
+          <div class="comment-body">
+            <div class="comment-header">
+              <span class="comment-author">{{ comment.createdBy }}</span>
+              <span *ngIf="comment.roleOfCreator" class="comment-role" [title]="comment.roleOfCreator">{{ getRoleLabel(comment.roleOfCreator) }}</span>
+              <time timeago [date]="comment.createdOn" [live]="true" class="comment-time"></time>
+              <button *ngIf="comment.createdBy === userProfile?.userName"
+                      class="btn-delete-comment ms-auto"
+                      title="Delete comment"
+                      (click)="deleteComment(comment)">
+                <i class="bi bi-trash3"></i>
+              </button>
+            </div>
+            <div class="comment-text" [innerHTML]="comment.commentText"></div>
+            <!-- Upvote row -->
+            <div class="comment-upvote-row">
+              <button class="btn-upvote"
+                      [class.upvoted]="isUpvotedByMe(comment)"
+                      [title]="isUpvotedByMe(comment) ? 'Remove agreement' : 'I agree with this change'"
+                      (click)="toggleUpvote(comment)">
+                <i class="bi bi-hand-thumbs-up"></i>
+                <span *ngIf="comment.upvotes?.length">{{ comment.upvotes.length }}</span>
+              </button>
+              <span *ngFor="let voter of comment.upvotes" class="upvote-voter" [title]="voter">{{ getVoterRole(voter) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reply box -->
+        <div class="discussion-reply-box">
+          <img src="https://github.com/{{ userProfile?.userName }}.png?size=32"
+               class="comment-avatar" alt="you" width="32" height="32">
+          <div class="reply-input-area">
+            <textarea [(ngModel)]="replyText" placeholder="Reply…" rows="2"
+                      class="reply-textarea"></textarea>
+            <div class="reply-actions">
+              <button class="btn btn-sm btn-themed-primary"
+                      [disabled]="!replyText.trim()"
+                      (click)="submitReply()">
+                Reply
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resolve footer -->
+        <div class="resolve-footer">
+          <div *ngIf="selectedDiscussion.silentLanguages.length > 0 && !selectedDiscussion.isResolved"
+               class="silent-languages-notice">
+            <i class="bi bi-hourglass-split me-2"></i>
+            <span class="notice-label">No response yet from:</span>
+            <span *ngFor="let lang of selectedDiscussion.silentLanguages; let last = last" class="silent-lang-badge">
+              <img src="{{assetsPath}}/images/{{ lang | languageNames: userProfile?.preferences?.theme }}-original.svg"
+                   width="13" height="13" class="me-1">{{ lang }}<span *ngIf="!last">, </span>
+            </span>
+          </div>
+          <button class="btn btn-sm btn-resolve-inline"
+                  [ngClass]="selectedDiscussion.isResolved ? 'btn-resolve-unresolve' : 'btn-resolve-resolve'"
+                  [disabled]="!selectedDiscussion.isResolved && selectedDiscussion.silentLanguages.length > 0"
+                  [pTooltip]="!selectedDiscussion.isResolved && selectedDiscussion.silentLanguages.length > 0 ? 'All language teams must respond before this discussion can be resolved' : ''"
+                  tooltipPosition="top"
+                  (click)="toggleResolveDiscussion()">
+            <i class="bi me-1" [ngClass]="selectedDiscussion.isResolved ? 'bi-arrow-counterclockwise' : 'bi-check-circle-fill'"></i>
+            {{ selectedDiscussion.isResolved ? 'Unresolve' : 'Resolve Discussion' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

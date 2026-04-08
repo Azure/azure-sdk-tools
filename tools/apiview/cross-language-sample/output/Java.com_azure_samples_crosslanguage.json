@@ -1,0 +1,1034 @@
+{
+  "PackageName": "com.azure.samples.crosslanguage",
+  "PackageVersion": "1.0.0",
+  "ParserVersion": "stub-1.0.0",
+  "Language": "Java",
+  "CrossLanguagePackageId": "Azure.Samples.CrossLanguage",
+  "CrossLanguageMetadata": {
+    "CrossLanguagePackageId": "Azure.Samples.CrossLanguage",
+    "CrossLanguageDefinitionId": {
+      "Java.Azure.Samples.CrossLanguage": "Azure.Samples.CrossLanguage",
+      "Java.Azure.Samples.CrossLanguage.Widgets": "Azure.Samples.CrossLanguage.Widgets",
+      "Java.Azure.Samples.CrossLanguage.Widgets.getWidget": "Azure.Samples.CrossLanguage.Widgets.getWidget",
+      "Java.Azure.Samples.CrossLanguage.Widgets.createOrReplaceWidget": "Azure.Samples.CrossLanguage.Widgets.createOrReplaceWidget",
+      "Java.Azure.Samples.CrossLanguage.Widgets.updateWidget": "Azure.Samples.CrossLanguage.Widgets.updateWidget",
+      "Java.Azure.Samples.CrossLanguage.Widgets.deleteWidget": "Azure.Samples.CrossLanguage.Widgets.deleteWidget",
+      "Java.Azure.Samples.CrossLanguage.Widgets.listWidgets": "Azure.Samples.CrossLanguage.Widgets.listWidgets",
+      "Java.Azure.Samples.CrossLanguage.Widgets.analyzeWidget": "Azure.Samples.CrossLanguage.Widgets.analyzeWidget",
+      "Java.Azure.Samples.CrossLanguage.Widget": "Azure.Samples.CrossLanguage.Widget",
+      "Java.Azure.Samples.CrossLanguage.Versions": "Azure.Samples.CrossLanguage.Versions",
+      "Java.Azure.Samples.CrossLanguage.Versions.v2024_01_01": "Azure.Samples.CrossLanguage.Versions.v2024_01_01",
+      "Java.Azure.Samples.CrossLanguage.WidgetAnalysisResult": "Azure.Samples.CrossLanguage.WidgetAnalysisResult",
+      "Java.Azure.Samples.CrossLanguage.WidgetColor": "Azure.Samples.CrossLanguage.WidgetColor",
+      "Java.Azure.Samples.CrossLanguage.WidgetColor.string": "Azure.Samples.CrossLanguage.WidgetColor.string",
+      "Java.Azure.Samples.CrossLanguage.WidgetColor.Red": "Azure.Samples.CrossLanguage.WidgetColor.Red",
+      "Java.Azure.Samples.CrossLanguage.WidgetColor.Green": "Azure.Samples.CrossLanguage.WidgetColor.Green",
+      "Java.Azure.Samples.CrossLanguage.WidgetColor.Blue": "Azure.Samples.CrossLanguage.WidgetColor.Blue",
+      "Java.Azure.Samples.CrossLanguage.WidgetListParams": "Azure.Samples.CrossLanguage.WidgetListParams"
+    }
+  },
+  "ReviewLines": [
+    {
+      "LineId": "Java.Azure.Samples.CrossLanguage",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "package",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 3,
+          "Value": "com.azure.samples.crosslanguage",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": ";",
+          "HasPrefixSpace": false
+        }
+      ],
+      "Children": []
+    },
+    {
+      "LineId": "",
+      "CrossLanguageId": "",
+      "Tokens": [],
+      "Children": []
+    },
+    {
+      "LineId": "Java.Azure.Samples.CrossLanguage.Widgets",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage.Widgets",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "public",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 2,
+          "Value": "interface",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 3,
+          "Value": "WidgetsClient",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": " {",
+          "HasPrefixSpace": true
+        }
+      ],
+      "Children": [
+        {
+          "LineId": "Java.Azure.Samples.CrossLanguage.Widgets.getWidget",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.Widgets.getWidget",
+          "Tokens": [
+            {
+              "Kind": 3,
+              "Value": "Widget",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 4,
+              "Value": "getWidget",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": "(",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "String",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "widgetId",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ")",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ";",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Java.Azure.Samples.CrossLanguage.Widgets.createOrReplaceWidget",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.Widgets.createOrReplaceWidget",
+          "Tokens": [
+            {
+              "Kind": 3,
+              "Value": "Widget",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 4,
+              "Value": "createOrReplaceWidget",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": "(",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "String",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "widgetId",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ",",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "Widget",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 0,
+              "Value": "widget",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ")",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ";",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Java.Azure.Samples.CrossLanguage.Widgets.updateWidget",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.Widgets.updateWidget",
+          "Tokens": [
+            {
+              "Kind": 3,
+              "Value": "Widget",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 4,
+              "Value": "updateWidget",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": "(",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "String",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "widgetId",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ",",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "Widget",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 0,
+              "Value": "widget",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ")",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ";",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Java.Azure.Samples.CrossLanguage.Widgets.deleteWidget",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.Widgets.deleteWidget",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "void",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 4,
+              "Value": "deleteWidget",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": "(",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "String",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "widgetId",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ")",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ";",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Java.Azure.Samples.CrossLanguage.Widgets.listWidgets",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.Widgets.listWidgets",
+          "Tokens": [
+            {
+              "Kind": 3,
+              "Value": "PagedIterable",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": "<",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "Widget",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ">",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 4,
+              "Value": "listWidgets",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": "(",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "WidgetListOptions",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "options",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ")",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ";",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Java.Azure.Samples.CrossLanguage.Widgets.analyzeWidget",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.Widgets.analyzeWidget",
+          "Tokens": [
+            {
+              "Kind": 3,
+              "Value": "WidgetAnalysisResult",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 4,
+              "Value": "analyzeWidget",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": "(",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "String",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": "widgetId",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ")",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ";",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 1,
+              "Value": "}",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": [],
+          "IsContextEndLine": true,
+          "RelatedToLine": "Java.Azure.Samples.CrossLanguage.Widgets"
+        }
+      ]
+    },
+    {
+      "LineId": "",
+      "CrossLanguageId": "",
+      "Tokens": [],
+      "Children": []
+    },
+    {
+      "LineId": "Java.Azure.Samples.CrossLanguage.Widget",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage.Widget",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "public",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 2,
+          "Value": "class",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 3,
+          "Value": "Widget",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": " {",
+          "HasPrefixSpace": true
+        }
+      ],
+      "Children": [
+        {
+          "LineId": "Java.Azure.Samples.CrossLanguage.Widget.id",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "public",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 2,
+              "Value": "final",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 3,
+              "Value": "String",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 0,
+              "Value": "id",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ";",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Java.Azure.Samples.CrossLanguage.Widget.name",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "public",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 2,
+              "Value": "final",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 3,
+              "Value": "String",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 0,
+              "Value": "name",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ";",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Java.Azure.Samples.CrossLanguage.Widget.color",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "public",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 2,
+              "Value": "final",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 3,
+              "Value": "WidgetColor",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 0,
+              "Value": "color",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ";",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Java.Azure.Samples.CrossLanguage.Widget.description",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "public",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 2,
+              "Value": "final",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 3,
+              "Value": "String",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 0,
+              "Value": "description",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ";",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Java.Azure.Samples.CrossLanguage.Widget.manufacturedOn",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "public",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 2,
+              "Value": "final",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 3,
+              "Value": "OffsetDateTime",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 0,
+              "Value": "manufacturedOn",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ";",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 1,
+              "Value": "}",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": [],
+          "IsContextEndLine": true,
+          "RelatedToLine": "Java.Azure.Samples.CrossLanguage.Widget"
+        }
+      ]
+    },
+    {
+      "LineId": "",
+      "CrossLanguageId": "",
+      "Tokens": [],
+      "Children": []
+    },
+    {
+      "LineId": "Java.Azure.Samples.CrossLanguage.Versions",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage.Versions",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "public",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 2,
+          "Value": "enum",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 3,
+          "Value": "ServiceVersion",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": " {",
+          "HasPrefixSpace": true
+        }
+      ],
+      "Children": [
+        {
+          "LineId": "Java.Azure.Samples.CrossLanguage.Versions.v2024_01_01",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.Versions.v2024_01_01",
+          "Tokens": [
+            {
+              "Kind": 0,
+              "Value": "V2024_01_01",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": "(",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 5,
+              "Value": "\"2024-01-01\"",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ")",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 1,
+              "Value": "}",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": [],
+          "IsContextEndLine": true,
+          "RelatedToLine": "Java.Azure.Samples.CrossLanguage.Versions"
+        }
+      ]
+    },
+    {
+      "LineId": "",
+      "CrossLanguageId": "",
+      "Tokens": [],
+      "Children": []
+    },
+    {
+      "LineId": "Java.Azure.Samples.CrossLanguage.WidgetAnalysisResult",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage.WidgetAnalysisResult",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "public",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 2,
+          "Value": "class",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 3,
+          "Value": "WidgetAnalysisResult",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": " {",
+          "HasPrefixSpace": true
+        }
+      ],
+      "Children": [
+        {
+          "LineId": "Java.Azure.Samples.CrossLanguage.WidgetAnalysisResult.widgetId",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "public",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 2,
+              "Value": "final",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 3,
+              "Value": "String",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 0,
+              "Value": "widgetId",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ";",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Java.Azure.Samples.CrossLanguage.WidgetAnalysisResult.qualityScore",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "public",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 2,
+              "Value": "final",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 3,
+              "Value": "float",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 0,
+              "Value": "qualityScore",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ";",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Java.Azure.Samples.CrossLanguage.WidgetAnalysisResult.summary",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "public",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 2,
+              "Value": "final",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 3,
+              "Value": "String",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 0,
+              "Value": "summary",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ";",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 1,
+              "Value": "}",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": [],
+          "IsContextEndLine": true,
+          "RelatedToLine": "Java.Azure.Samples.CrossLanguage.WidgetAnalysisResult"
+        }
+      ]
+    },
+    {
+      "LineId": "",
+      "CrossLanguageId": "",
+      "Tokens": [],
+      "Children": []
+    },
+    {
+      "LineId": "Java.Azure.Samples.CrossLanguage.WidgetColor",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage.WidgetColor",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "public",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 2,
+          "Value": "enum",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 3,
+          "Value": "WidgetColor",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": " {",
+          "HasPrefixSpace": true
+        }
+      ],
+      "Children": [
+        {
+          "LineId": "Java.Azure.Samples.CrossLanguage.WidgetColor.string",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.WidgetColor.string",
+          "Tokens": [
+            {
+              "Kind": 3,
+              "Value": "String",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Java.Azure.Samples.CrossLanguage.WidgetColor.Red",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.WidgetColor.Red",
+          "Tokens": [
+            {
+              "Kind": 0,
+              "Value": "RED",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ",",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Java.Azure.Samples.CrossLanguage.WidgetColor.Green",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.WidgetColor.Green",
+          "Tokens": [
+            {
+              "Kind": 0,
+              "Value": "GREEN",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ",",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Java.Azure.Samples.CrossLanguage.WidgetColor.Blue",
+          "CrossLanguageId": "Azure.Samples.CrossLanguage.WidgetColor.Blue",
+          "Tokens": [
+            {
+              "Kind": 0,
+              "Value": "BLUE",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 1,
+              "Value": "}",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": [],
+          "IsContextEndLine": true,
+          "RelatedToLine": "Java.Azure.Samples.CrossLanguage.WidgetColor"
+        }
+      ]
+    },
+    {
+      "LineId": "",
+      "CrossLanguageId": "",
+      "Tokens": [],
+      "Children": []
+    },
+    {
+      "LineId": "Java.Azure.Samples.CrossLanguage.WidgetListParams",
+      "CrossLanguageId": "Azure.Samples.CrossLanguage.WidgetListParams",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "public",
+          "HasPrefixSpace": false
+        },
+        {
+          "Kind": 2,
+          "Value": "class",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 3,
+          "Value": "WidgetListOptions",
+          "HasPrefixSpace": true
+        },
+        {
+          "Kind": 1,
+          "Value": " {",
+          "HasPrefixSpace": true
+        }
+      ],
+      "Children": [
+        {
+          "LineId": "Java.Azure.Samples.CrossLanguage.WidgetListParams.color",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "public",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "WidgetColor",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 0,
+              "Value": "color",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ";",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "Java.Azure.Samples.CrossLanguage.WidgetListParams.maxResults",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "public",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "Integer",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 0,
+              "Value": "maxResults",
+              "HasPrefixSpace": true
+            },
+            {
+              "Kind": 1,
+              "Value": ";",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": []
+        },
+        {
+          "LineId": "",
+          "CrossLanguageId": "",
+          "Tokens": [
+            {
+              "Kind": 1,
+              "Value": "}",
+              "HasPrefixSpace": false
+            }
+          ],
+          "Children": [],
+          "IsContextEndLine": true,
+          "RelatedToLine": "Java.Azure.Samples.CrossLanguage.WidgetListParams"
+        }
+      ]
+    }
+  ]
+}

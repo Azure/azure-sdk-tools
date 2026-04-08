@@ -72,6 +72,10 @@
                     <div class="d-flex align-items-center">
                         <span class="fw-bold">{{ comment.createdBy }}</span>
                         <span class="small ms-2">{{ comment.createdOn | timeago }}</span>
+                        <!-- Role badge (discussions tab only) -->
+                        <span *ngIf="comment.roleOfCreator && instanceLocation === 'conversations'" class="lang-badge-custom ms-2">
+                            <span>{{ comment.roleOfCreator }}</span>
+                        </span>
                         <!-- AI-generated Badge - Simple custom design -->
                         <span *ngIf="isAIGenerated(comment) && hasAIInfo(comment)"
                               class="ai-badge-custom ms-2"
@@ -84,6 +88,7 @@
                               class="ai-badge-custom ms-2">
                             AI-generated
                         </span>
+
                         <!-- Diagnostic Badge -->
                         <span *ngIf="isDiagnostic(comment)"
                               class="diagnostic-badge-custom ms-2"
@@ -109,6 +114,7 @@
                     </div>
                 </div>
                 <ng-template pTemplate="icons">
+                    <ng-container *ngIf="!isCrossLanguageThread">
                     <p-menu appendTo="body" [attr.data-menu-id]="comment.id" [model]="getCommentActionMenuContent(comment.id)" [popup]="true" >
                         <ng-template pTemplate="submenuheader" let-item>
                             <span *ngIf="item?.label" class="ms-2">{{ item.label }}</span>
@@ -136,12 +142,13 @@
                     <button *ngIf="(getCommentActionMenuContent(comment.id)).length > 0" class="p-panel-header-icon p-link" (click)="toggleActionMenu($event, comment.id)">
                         <span class="bi bi-three-dots-vertical"></span>
                     </button>
+                    </ng-container>
                 </ng-template>
             </p-panel>
         </ng-template>
     </p-timeline>
     </div>
-    <div *ngIf="!isThreadCollapsed && (codePanelRowData!.showReplyTextBox)" class="px-2 pb-2 reply-editor-container">
+    <div *ngIf="!isThreadCollapsed && (codePanelRowData!.showReplyTextBox) && !isCrossLanguageThread" class="px-2 pb-2 reply-editor-container">
         <div *ngIf="!codePanelRowData!.comments || codePanelRowData!.comments.length === 0"
              class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom">
             <div class="d-flex align-items-center" style="margin-left: 18px;">
@@ -161,6 +168,39 @@
                     appendTo="body"
                     [showClear]="false">
                 </p-select>
+            </div>
+        </div>
+        <!-- Cross-language tabs when commenting on a cross-language line -->
+        <div *ngIf="(!codePanelRowData!.comments || codePanelRowData!.comments.length === 0) && hasCrossLanguageData()"
+             class="cross-lang-tabs-container mb-2 border rounded">
+            <div class="cross-lang-tabs-header d-flex align-items-center px-2 py-1 border-bottom">
+                <i class="bi bi-translate me-2 text-primary"></i>
+                <span class="small fw-semibold text-muted">This comment applies across languages</span>
+            </div>
+            <div class="d-flex flex-column">
+                <div class="cross-lang-tab-nav d-flex flex-row flex-wrap">
+                    <button *ngFor="let entry of getCrossLanguageEntries(); let i = index"
+                        class="cross-lang-tab-btn px-3 py-1 text-start border-0"
+                        [class.active]="i === crossLangActiveTabIndex"
+                        (click)="setCrossLangActiveTab(i)">
+                        <img src="{{assetsPath}}/images/{{ entry.language | languageNames: userProfile?.preferences?.theme }}-original.svg" width="16" height="16" class="me-1">
+                        <span class="small">{{ entry.language }}</span>
+                        <span *ngIf="entry.isCurrent" class="small text-muted ms-1">(current)</span>
+                    </button>
+                </div>
+                <div class="cross-lang-tab-content flex-grow-1 p-2 overflow-auto" style="max-height: 200px;">
+                    <div *ngFor="let entry of getCrossLanguageEntries(); let i = index"
+                         [hidden]="i !== crossLangActiveTabIndex">
+                        <div *ngIf="!entry.isCurrent && entry.packageName" class="small text-muted mb-1">{{ entry.packageName }} : {{ entry.packageVersion }}</div>
+                        <div *ngFor="let row of entry.codeLines" class="code-line" [ngClass]="getTokenClass">
+                            <ng-container *ngIf="row.type === CodePanelRowDatatype.CodeLine">
+                                <div class="code-line-content" [style.padding-left.px]="(row.indent * 20)">
+                                    <span *ngFor="let token of row.rowOfTokens" [ngClass]="getTokenClass(token)">{{token.value}}</span>
+                                </div>
+                            </ng-container>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <app-editor editorId="replyEditor" [(content)]="codePanelRowData!.draftCommentText" [style]="{ width: '100%'}"></app-editor>
@@ -184,11 +224,12 @@
         </div>
     </div>
     <div *ngIf="!isThreadCollapsed" class="mt-2 d-grid gap-2">
-        <div *ngIf="!(codePanelRowData!.showReplyTextBox)" class="border-top border-bottom reply-button-container p-2" style="display: flex; align-items: center;">
+        <div *ngIf="!(codePanelRowData!.showReplyTextBox) && !isCrossLanguageThread" class="border-top border-bottom reply-button-container p-2" style="display: flex; align-items: center;">
             <img [alt]="userProfile?.userName" src="https://github.com/{{ userProfile?.userName }}.png?size=40" width="40" height="40" class="user-avartar mx-4"/>
             <button type="button" style="flex-grow: 1;" class="btn btn-sm border text-muted text-start me-4 reply-button" (click)="showReplyEditor($event)">Reply...</button>
         </div>
-        <button *ngIf="codePanelRowData!.comments?.length! > 0" type="button" (click)="handleThreadResolutionButtonClick(codePanelRowData!.isResolvedCommentThread ? 'Unresolve' : 'Resolve')" class="btn btn-outline-secondary comment-action-btn btn-sm" style="width: 90%; margin: 0 auto; display: block;">{{codePanelRowData!.isResolvedCommentThread ? 'Unresolve' : 'Resolve'}} Conversation</button>
+        <button *ngIf="codePanelRowData!.comments?.length! > 0 && !isCrossLanguageThread" type="button" (click)="handleThreadResolutionButtonClick(codePanelRowData!.isResolvedCommentThread ? 'Unresolve' : 'Resolve')" class="btn btn-outline-secondary comment-action-btn btn-sm" style="width: 90%; margin: 0 auto; display: block;">{{codePanelRowData!.isResolvedCommentThread ? 'Unresolve' : 'Resolve'}} Conversation</button>
+        <button *ngIf="codePanelRowData!.comments?.length! > 0 && isCrossLanguageThread" type="button" (click)="navigateToDiscussionEmitter.emit(crossLanguageThreadId)" class="btn btn-outline-primary comment-action-btn btn-sm" style="width: 90%; margin: 0 auto; display: block;"><i class="bi bi-arrow-up-right-square me-1"></i>View in cross-language discussions</button>
     </div>
 </div>
 <div *ngIf="instanceLocation === 'code-panel' && !isThreadCollapsed && (!codePanelRowData!.isResolvedCommentThread || threadResolvedAndExpanded)" class="btn-group-vertical comment-thread-navigation ms-2 {{ floatItemEnd }}" role="group" aria-label="Comment Navigation Button">

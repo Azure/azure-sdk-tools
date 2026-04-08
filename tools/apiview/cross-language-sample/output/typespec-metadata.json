@@ -1,0 +1,36 @@
+{
+  "emitterVersion": "0.7.2",
+  "generatedAt": "2026-03-30T15:52:26.8394746-07:00",
+  "typeSpec": {
+    "namespace": "Azure.Samples.CrossLanguage",
+    "documentation": "Azure Sample Widget Service cross-language TypeSpec",
+    "type": "client"
+  },
+  "languages": {
+    "Python": {
+      "emitterName": "@azure-tools/typespec-python",
+      "packageName": "azure-samples-crosslanguage",
+      "namespace": "azure.samples.crosslanguage"
+    },
+    "JavaScript": {
+      "emitterName": "@azure-tools/typespec-ts",
+      "packageName": "@azure/samples-crosslanguage",
+      "namespace": "@azure/samples-crosslanguage"
+    },
+    "Java": {
+      "emitterName": "@azure-tools/typespec-java",
+      "packageName": "com.azure.samples.crosslanguage",
+      "namespace": "com.azure.samples.crosslanguage"
+    },
+    "DotNet": {
+      "emitterName": "@azure-tools/typespec-csharp",
+      "packageName": "Azure.Samples.CrossLanguage",
+      "namespace": "Azure.Samples.CrossLanguage"
+    },
+    "Go": {
+      "emitterName": "@azure-tools/typespec-go",
+      "packageName": "azcrosslanguage",
+      "namespace": "github.com/Azure/azure-sdk-for-go/sdk/samples/crosslanguage/azcrosslanguage"
+    }
+  }
+}

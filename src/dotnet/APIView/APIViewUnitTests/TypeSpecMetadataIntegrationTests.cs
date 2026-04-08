@@ -276,6 +276,109 @@ public class TypeSpecMetadataIntegrationTests
         _mockProjectsRepository.Verify(r => r.UpsertProjectAsync(existingProject), Times.Once);
     }
 
+    [Fact]
+    public async Task EndToEnd_CrossLanguageReviews_AllLinkedToSameProject()
+    {
+        // Arrange: a project created from a TypeSpec review with expected packages for all 4 languages
+        Project project = new()
+        {
+            Id = "project-azure-analytics-purview",
+            CrossLanguagePackageId = "Azure.Analytics.Purview",
+            Namespace = "Azure.Analytics.Purview",
+            Description = "Azure Purview Analytics client library",
+            ExpectedPackages = new Dictionary<string, PackageInfo>
+            {
+                ["Python"] = new() { PackageName = "azure-purview-analytics", Namespace = "azure.purview.analytics" },
+                ["JavaScript"] = new() { PackageName = "@azure/purview-analytics", Namespace = "@azure/purview-analytics" },
+                ["Java"] = new() { PackageName = "com.azure.analytics.purview", Namespace = "com.azure.analytics.purview" },
+                ["C#"] = new() { PackageName = "Azure.Analytics.Purview", Namespace = "Azure.Analytics.Purview" }
+            },
+            Reviews = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["TypeSpec"] = "typespec-review-1"
+            },
+            ChangeHistory = new List<ProjectChangeHistory>()
+        };
+
+        _mockProjectsRepository
+            .Setup(r => r.GetProjectByCrossLanguagePackageIdAsync("Azure.Analytics.Purview"))
+            .ReturnsAsync(project);
+
+        // Arrange: one review per language, all sharing the same CrossLanguagePackageId
+        ReviewListItemModel pythonReview = new()
+        {
+            Id = "python-review-1",
+            Language = "Python",
+            PackageName = "azure-purview-analytics",
+            CrossLanguagePackageId = "Azure.Analytics.Purview"
+        };
+        ReviewListItemModel javascriptReview = new()
+        {
+            Id = "javascript-review-1",
+            Language = "JavaScript",
+            PackageName = "@azure/purview-analytics",
+            CrossLanguagePackageId = "Azure.Analytics.Purview"
+        };
+        ReviewListItemModel javaReview = new()
+        {
+            Id = "java-review-1",
+            Language = "Java",
+            PackageName = "com.azure.analytics.purview",
+            CrossLanguagePackageId = "Azure.Analytics.Purview"
+        };
+        ReviewListItemModel csharpReview = new()
+        {
+            Id = "csharp-review-1",
+            Language = "C#",
+            PackageName = "Azure.Analytics.Purview",
+            CrossLanguagePackageId = "Azure.Analytics.Purview"
+        };
+
+        // Act: link each language review to the project
+        Project pythonResult = await _projectsManager.TryLinkReviewToProjectAsync("user", pythonReview);
+        Project javascriptResult = await _projectsManager.TryLinkReviewToProjectAsync("user", javascriptReview);
+        Project javaResult = await _projectsManager.TryLinkReviewToProjectAsync("user", javaReview);
+        Project csharpResult = await _projectsManager.TryLinkReviewToProjectAsync("user", csharpReview);
+
+        // Assert: all results point to the same project
+        Assert.NotNull(pythonResult);
+        Assert.NotNull(javascriptResult);
+        Assert.NotNull(javaResult);
+        Assert.NotNull(csharpResult);
+        Assert.Equal("project-azure-analytics-purview", pythonResult.Id);
+        Assert.Same(project, pythonResult);
+        Assert.Same(project, javascriptResult);
+        Assert.Same(project, javaResult);
+        Assert.Same(project, csharpResult);
+
+        // Assert: all reviews were associated to the project
+        Assert.Equal("project-azure-analytics-purview", pythonReview.ProjectId);
+        Assert.Equal("project-azure-analytics-purview", javascriptReview.ProjectId);
+        Assert.Equal("project-azure-analytics-purview", javaReview.ProjectId);
+        Assert.Equal("project-azure-analytics-purview", csharpReview.ProjectId);
+
+        // Assert: project.Reviews now contains all 4 languages (plus the original TypeSpec entry)
+        Assert.Equal(5, project.Reviews.Count);
+        Assert.True(project.Reviews.ContainsValue("typespec-review-1"));
+        Assert.True(project.Reviews.ContainsValue("python-review-1"));
+        Assert.True(project.Reviews.ContainsValue("javascript-review-1"));
+        Assert.True(project.Reviews.ContainsValue("java-review-1"));
+        Assert.True(project.Reviews.ContainsValue("csharp-review-1"));
+
+        // Assert: one ReviewLinked change history entry per language
+        Assert.Equal(4, project.ChangeHistory.Count);
+        Assert.All(project.ChangeHistory, h => Assert.Equal(ProjectChangeAction.ReviewLinked, h.ChangeAction));
+
+        // Assert: repository upserted the project once per language link
+        _mockProjectsRepository.Verify(r => r.UpsertProjectAsync(project), Times.Exactly(4));
+
+        // Assert: each individual review was upserted
+        _mockReviewsRepository.Verify(r => r.UpsertReviewAsync(pythonReview), Times.Once);
+        _mockReviewsRepository.Verify(r => r.UpsertReviewAsync(javascriptReview), Times.Once);
+        _mockReviewsRepository.Verify(r => r.UpsertReviewAsync(javaReview), Times.Once);
+        _mockReviewsRepository.Verify(r => r.UpsertReviewAsync(csharpReview), Times.Once);
+    }
+
     #region Helper Methods
 
     private static MemoryStream CreateTypeSpecArtifactZip(

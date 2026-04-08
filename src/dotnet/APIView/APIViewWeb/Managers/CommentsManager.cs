@@ -146,6 +146,21 @@ namespace APIViewWeb.Managers
             return new ReviewCommentsModel(reviewId, comments.Where(c => c.CommentType == LeanModels.CommentType.SampleRevision));
         }
 
+        public async Task<IEnumerable<CommentItemModel>> GetCrossLanguageCommentsAsync(string crossLanguageId)
+        {
+            return await _commentsRepository.GetCommentsByCrossLanguageIdAsync(crossLanguageId);
+        }
+
+        public async Task<IEnumerable<CommentItemModel>> GetCrossLanguageCommentsBulkAsync(IEnumerable<string> crossLanguageIds)
+        {
+            return await _commentsRepository.GetCommentsByCrossLanguageIdsAsync(crossLanguageIds);
+        }
+
+        public async Task<IEnumerable<CommentItemModel>> GetCrossLanguageCommentsByPackageIdAsync(string crossLanguagePackageId)
+        {
+            return await _commentsRepository.GetCommentsByCrossLanguagePackageIdAsync(crossLanguagePackageId);
+        }
+
         public async Task AddCommentAsync(ClaimsPrincipal user, CommentItemModel comment)
         {
             comment.ChangeHistory.Add(
@@ -157,6 +172,18 @@ namespace APIViewWeb.Managers
                 });
             comment.CreatedBy = user.GetGitHubLogin();
             comment.CreatedOn = DateTime.Now;
+
+            // Resolve and stamp the creator's role
+            try
+            {
+                var userId = user.GetGitHubLogin();
+                var permissions = await _permissionsManager.GetEffectivePermissionsAsync(userId);
+                comment.RoleOfCreator = ResolveRoleLabel(permissions);
+            }
+            catch
+            {
+                // Don't fail comment creation if role resolution fails
+            }
 
             await _commentsRepository.UpsertCommentAsync(comment);
 
@@ -380,6 +407,7 @@ namespace APIViewWeb.Managers
         /// <returns></returns>
         public async Task SoftDeleteCommentsAsync(ClaimsPrincipal user, string reviewId)
         {
+
             var comments = await _commentsRepository.GetCommentsAsync(reviewId);
             var userName = user.GetGitHubLogin();
 
@@ -596,6 +624,26 @@ namespace APIViewWeb.Managers
         {
             CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
             await ToggleVoteAsync(user, comment, FeedbackVote.Down);
+        }
+
+        public async Task<CommentItemModel> ToggleTodoAsync(ClaimsPrincipal user, string reviewId, string commentId)
+        {
+            CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+            if (comment == null) return null;
+
+            string userName = user.GetGitHubLogin();
+            if (comment.IsTodo && comment.TodoBy == userName)
+            {
+                comment.IsTodo = false;
+                comment.TodoBy = null;
+            }
+            else
+            {
+                comment.IsTodo = true;
+                comment.TodoBy = userName;
+            }
+            await _commentsRepository.UpsertCommentAsync(comment);
+            return comment;
         }
 
         public async Task AddCommentFeedbackAsync(ClaimsPrincipal user, string reviewId, string commentId, CommentFeedbackRequest feedback)
@@ -850,6 +898,34 @@ namespace APIViewWeb.Managers
             }
 
             return result.Comments;
+        }
+
+        private static string ResolveRoleLabel(EffectivePermissions permissions)
+        {
+            if (permissions?.Roles == null) return null;
+
+            // Prefer language-scoped roles (e.g., "C# Architect")
+            var langRole = permissions.Roles.OfType<LanguageScopedRoleAssignment>().FirstOrDefault();
+            if (langRole != null)
+            {
+                var roleName = langRole.Role == LanguageScopedRole.Architect ? "Architect" : "Deputy Architect";
+                return $"{langRole.Language} {roleName}";
+            }
+
+            // Fall back to global roles
+            var globalRole = permissions.Roles.OfType<GlobalRoleAssignment>().FirstOrDefault();
+            if (globalRole != null)
+            {
+                return globalRole.Role switch
+                {
+                    GlobalRole.Admin => "Admin",
+                    GlobalRole.SdkTeam => "SDK Team",
+                    GlobalRole.ServiceTeam => "Service Team",
+                    _ => null
+                };
+            }
+
+            return null;
         }
     }
 }

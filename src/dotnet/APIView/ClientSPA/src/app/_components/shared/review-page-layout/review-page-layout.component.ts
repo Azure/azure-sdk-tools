@@ -27,9 +27,10 @@ export class ReviewPageLayoutComponent {
   @Input() diffApiRevisionId: string | null = '';
   @Input() showPageoptionsButton: boolean = false;
   @Input() showLeftNavigation: boolean = true;
-  @Input() activePage: 'reviews' | 'revisions' | 'samples' | 'conversations' = 'reviews';
+  @Input() activePage: 'reviews' | 'revisions' | 'samples' | 'conversations' | 'discussions' = 'reviews';
   @Input() samplesRevisionCount: number = 0;
   @Input() conversationCount: number = 0;
+  @Input() discussionCount: number = 0;
 
   @Output() pageOptionsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showLeftNavigationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
@@ -37,6 +38,7 @@ export class ReviewPageLayoutComponent {
   @Output() navigateToReviewsEmitter : EventEmitter<void> = new EventEmitter<void>();
   @Output() navigateToRevisionsEmitter : EventEmitter<void> = new EventEmitter<void>();
   @Output() navigateToConversationsEmitter : EventEmitter<void> = new EventEmitter<void>();
+  @Output() navigateToDiscussionsEmitter : EventEmitter<void> = new EventEmitter<void>();
 
   showPageOptions: boolean = true;
 

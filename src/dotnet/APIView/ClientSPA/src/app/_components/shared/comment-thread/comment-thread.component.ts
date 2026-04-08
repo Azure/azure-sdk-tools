@@ -17,7 +17,7 @@ import { AICommentFeedbackDialogComponent } from '../ai-comment-feedback-dialog/
 import { AICommentDeleteDialogComponent } from '../ai-comment-delete-dialog/ai-comment-delete-dialog.component';
 import { MarkdownToHtmlPipe } from 'src/app/_pipes/markdown-to-html.pipe';
 import { LanguageNamesPipe } from 'src/app/_pipes/language-names.pipe';
-import { CodePanelRowData } from 'src/app/_models/codePanelModels';
+import { CodePanelRowData, CodePanelRowDatatype, CrossLanguageContentDto, CrossLanguageRowDto } from 'src/app/_models/codePanelModels';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
 import { CodeLineRowNavigationDirection, getStructuredTokenClass } from 'src/app/_helpers/common-helpers';
@@ -79,6 +79,8 @@ export class CommentThreadComponent {
   @Input() allComments: CommentItemModel[] = [];
   @Input() allCodePanelRowData: CodePanelRowData[] = [];
   @Input() elementId: string = '';
+  @Input() crossLanguageRowData: CrossLanguageContentDto[] = [];
+  @Input() currentLanguage: string | undefined;
 
   @Input() userProfile : UserProfile | undefined;
   @Output() cancelCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
@@ -90,6 +92,10 @@ export class CommentThreadComponent {
   @Output() commentThreadNavigationEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() batchResolutionActionEmitter : EventEmitter<CommentUpdatesDto> = new EventEmitter<CommentUpdatesDto>();
   @Output() navigateToElementEmitter : EventEmitter<string> = new EventEmitter<string>();
+  @Output() todoToggleEmitter : EventEmitter<string> = new EventEmitter<string>();
+  @Output() navigateToDiscussionEmitter : EventEmitter<string> = new EventEmitter<string>();
+
+  markAsProposal: boolean = false;
 
   @ViewChildren(Menu) menus!: QueryList<Menu>;
   @ViewChildren(EditorComponent) editor!: QueryList<EditorComponent>;
@@ -111,6 +117,14 @@ export class CommentThreadComponent {
 
   floatItemStart : string = ""
   floatItemEnd : string = ""
+
+  get isCrossLanguageThread(): boolean {
+    return !!this.codePanelRowData?.comments?.some(c => c.crossLanguageId);
+  }
+
+  get crossLanguageThreadId(): string {
+    return this.codePanelRowData?.comments?.find(c => c.crossLanguageId)?.crossLanguageId ?? '';
+  }
 
   selectedSeverity: CommentSeverity | null = CommentSeverity.ShouldFix; // Default to "Should fix"
   isEditingSeverity: string | null = null; // Track which comment severity is being edited
@@ -199,6 +213,55 @@ export class CommentThreadComponent {
     return getStructuredTokenClass(token);
   }
 
+  // Cross-language tab support
+  crossLangActiveTabIndex: number = 0;
+  CodePanelRowDatatype = CodePanelRowDatatype;
+
+  hasCrossLanguageData(): boolean {
+    if (!this.associatedCodeLine?.crossLanguageId || !this.crossLanguageRowData?.length) return false;
+    const clId = this.associatedCodeLine.crossLanguageId.toLowerCase();
+    return this.crossLanguageRowData.some(entry => clId in entry.content);
+  }
+
+  getCrossLanguageEntries(): { language: string; codeLines: CodePanelRowData[]; packageName: string; packageVersion: string; isCurrent: boolean }[] {
+    if (!this.associatedCodeLine?.crossLanguageId || !this.crossLanguageRowData?.length) return [];
+    const clId = this.associatedCodeLine.crossLanguageId.toLowerCase();
+    const entries: { language: string; codeLines: CodePanelRowData[]; packageName: string; packageVersion: string; isCurrent: boolean }[] = [];
+
+    for (const entry of this.crossLanguageRowData) {
+      if (clId in entry.content) {
+        const isCurrent = entry.language === this.currentLanguage;
+        entries.push({
+          language: entry.language,
+          codeLines: entry.content[clId] || [],
+          packageName: entry.packageName,
+          packageVersion: entry.packageVersion,
+          isCurrent
+        });
+      }
+    }
+
+    // If the current language wasn't found in crossLanguageRowData, fall back to the single associated line
+    if (this.currentLanguage && !entries.some(e => e.isCurrent)) {
+      entries.unshift({
+        language: this.currentLanguage,
+        codeLines: [this.associatedCodeLine],
+        packageName: '',
+        packageVersion: '',
+        isCurrent: true
+      });
+    }
+
+    // Ensure current language appears first
+    entries.sort((a, b) => (a.isCurrent ? -1 : 0) - (b.isCurrent ? -1 : 0));
+
+    return entries;
+  }
+
+  setCrossLangActiveTab(index: number) {
+    this.crossLangActiveTabIndex = index;
+  }
+
   setCommentResolutionState() {
     if (this.codePanelRowData?.isResolvedCommentThread) {
       this.threadResolvedBy = this.codePanelRowData?.commentThreadIsResolvedBy;
@@ -253,6 +316,14 @@ export class CommentThreadComponent {
       menu.push({ separator: true });
       menu.push({ items: [
         { label: 'Delete', icon: 'pi pi-trash', command: (event) => this.deleteComment(event) }
+      ]});
+    }
+
+    // Add TODO toggle
+    if (comment) {
+      menu.push({ separator: true });
+      menu.push({ items: [
+        { label: comment.isTodo ? 'Remove TODO' : 'Mark as TODO', icon: comment.isTodo ? 'bi bi-check2-square' : 'bi bi-square', command: () => this.todoToggleEmitter.emit(comment.id) }
       ]});
     }
 
@@ -440,7 +511,10 @@ export class CommentThreadComponent {
 
     if (this.instanceLocation === "conversations") {
       revisionIdForConversationGroup = target.closest(".conversation-group-revision-id")?.getAttribute("data-conversation-group-revision-id");
-      elementId = (target.closest(".conversation-group-threads")?.getElementsByClassName("conversation-group-element-id")[0] as HTMLElement).innerText;
+      elementId = (target.closest(".conversation-group-threads")?.getElementsByClassName("conversation-group-element-id")[0] as HTMLElement)?.innerText
+        || this.elementId
+        || this.codePanelRowData?.comments?.[0]?.elementId
+        || null;
     } else if (this.instanceLocation === "samples") {
       elementId = target.closest(".user-comment-thread")?.getAttribute("title");
     } else if (this.instanceLocation === "code-panel") {
@@ -478,10 +552,13 @@ export class CommentThreadComponent {
             elementId: elementIdValue,
             revisionId: revisionIdForConversationGroup,
             severity: isReply ? null : this.selectedSeverity,
-            isReply: isReply
+            isReply: isReply,
+            isTodo: false,
+            alsoCreateProposal: this.markAsProposal
           } as CommentUpdatesDto
         );
         this.selectedSeverity = null;
+        this.markAsProposal = false;
         this.codePanelRowData!.showReplyTextBox = false;
         this.codePanelRowData!.draftCommentText = '';
       }

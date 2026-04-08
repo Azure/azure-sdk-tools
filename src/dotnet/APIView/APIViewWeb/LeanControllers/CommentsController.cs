@@ -108,7 +108,10 @@ namespace APIViewWeb.LeanControllers
             [FromForm] string sampleRevisionId = null,
             [FromForm] CommentSeverity? severity = null,
             [FromForm] bool resolutionLocked = false,
-            [FromForm] string threadId = null)
+            [FromForm] string threadId = null,
+            [FromForm] string crossLanguageId = null,
+            [FromForm] string crossLanguagePackageId = null,
+            [FromForm] bool isTodo = false)
         {
             if (string.IsNullOrEmpty(commentText) || (string.IsNullOrEmpty(apiRevisionId) && string.IsNullOrEmpty(sampleRevisionId)))
             {
@@ -131,7 +134,11 @@ namespace APIViewWeb.LeanControllers
                 CreatedOn = DateTime.UtcNow,
                 CommentType = commentType,
                 Severity = severity,
-                ThreadId = threadId 
+                ThreadId = threadId,
+                CrossLanguageId = crossLanguageId,
+                CrossLanguagePackageId = crossLanguagePackageId,
+                IsTodo = isTodo,
+                TodoBy = isTodo ? User.GetGitHubLogin() : null
             };
 
             bool isApiViewAgentTagged = AgentHelpers.IsApiViewAgentTagged(comment, out string commentTextWithIdentifiedTags);
@@ -248,6 +255,22 @@ namespace APIViewWeb.LeanControllers
         }
 
         /// <summary>
+        /// Toggle TODO status on a comment
+        /// </summary>
+        /// <param name="reviewId"></param>
+        /// <param name="commentId"></param>
+        /// <returns></returns>
+        [HttpPatch("{reviewId}/{commentId}/toggleTodo", Name = "ToggleTodo")]
+        public async Task<ActionResult> ToggleTodoAsync(string reviewId, string commentId)
+        {
+            var comment = await _commentsManager.ToggleTodoAsync(User, reviewId, commentId);
+            if (comment == null) return NotFound();
+            return new LeanJsonResult(comment, StatusCodes.Status200OK);
+        }
+
+
+
+        /// <summary>
         /// Submit feedback for comment
         /// </summary>
         /// <param name="reviewId"></param>
@@ -261,6 +284,50 @@ namespace APIViewWeb.LeanControllers
             return Ok();
         }
 
+
+        /// <summary>
+        /// Retrieve cross-language comments by CrossLanguageDefinitionId
+        /// </summary>
+        /// <param name="crossLanguageId"></param>
+        /// <returns></returns>
+        [HttpGet("crossLanguage/{crossLanguageId}", Name = "GetCrossLanguageComments")]
+        public async Task<ActionResult<IEnumerable<CommentItemModel>>> GetCrossLanguageCommentsAsync(string crossLanguageId)
+        {
+            if (string.IsNullOrEmpty(crossLanguageId))
+            {
+                return new BadRequestResult();
+            }
+            var comments = await _commentsManager.GetCrossLanguageCommentsAsync(crossLanguageId);
+            return new LeanJsonResult(comments, StatusCodes.Status200OK);
+        }
+
+        /// <summary>
+        /// Retrieve cross-language comments for multiple CrossLanguageDefinitionIds in bulk.
+        /// </summary>
+        [HttpPost("crossLanguage/bulk")]
+        public async Task<ActionResult<IEnumerable<CommentItemModel>>> GetCrossLanguageCommentsBulkAsync([FromBody] string[] crossLanguageIds)
+        {
+            if (crossLanguageIds == null || crossLanguageIds.Length == 0)
+            {
+                return new BadRequestResult();
+            }
+            var comments = await _commentsManager.GetCrossLanguageCommentsBulkAsync(crossLanguageIds);
+            return new LeanJsonResult(comments, StatusCodes.Status200OK);
+        }
+
+        /// <summary>
+        /// Retrieve all cross-language comments for a given package (across all reviews/languages).
+        /// </summary>
+        [HttpGet("crossLanguage/byPackage/{crossLanguagePackageId}")]
+        public async Task<ActionResult<IEnumerable<CommentItemModel>>> GetCrossLanguageCommentsByPackageIdAsync(string crossLanguagePackageId)
+        {
+            if (string.IsNullOrEmpty(crossLanguagePackageId))
+            {
+                return new BadRequestResult();
+            }
+            var comments = await _commentsManager.GetCrossLanguageCommentsByPackageIdAsync(crossLanguagePackageId);
+            return new LeanJsonResult(comments, StatusCodes.Status200OK);
+        }
 
         /// <summary>
         /// Soft Delete a Comment

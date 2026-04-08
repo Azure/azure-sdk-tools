@@ -2,6 +2,7 @@ import { ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChange
 import { filter, take, takeUntil } from 'rxjs/operators';
 import { Datasource, IDatasource, SizeStrategy } from 'ngx-ui-scroll';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
+import { ProposalsService } from 'src/app/_services/proposals/proposals.service';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CodeLineRowNavigationDirection, convertRowOfTokensToString, isDiffRow, DIFF_ADDED, DIFF_REMOVED, getCodePanelRowDataClass, getStructuredTokenClass } from 'src/app/_helpers/common-helpers';
@@ -44,9 +45,12 @@ export class CodePanelComponent implements OnChanges {
   @Input() codeLineSearchText: string | undefined;
   @Input() codeLineSearchInfo: CodeLineSearchInfo | undefined = undefined;
   @Input() allComments: CommentItemModel[] = [];
+  @Input() crossLanguagePackageId: string | undefined;
 
   @Output() hasActiveConversationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() codeLineSearchInfoEmitter : EventEmitter<CodeLineSearchInfo> = new EventEmitter<CodeLineSearchInfo>();
+  @Output() commentCreatedEmitter : EventEmitter<CommentItemModel> = new EventEmitter<CommentItemModel>();
+  @Output() navigateToDiscussionEmitter : EventEmitter<string> = new EventEmitter<string>();
 
   @ViewChildren(Menu) menus!: QueryList<Menu>;
 
@@ -70,6 +74,7 @@ export class CodePanelComponent implements OnChanges {
   menuItemsLineActions: MenuItem[] = [];
 
   constructor(private changeDetectorRef: ChangeDetectorRef, private commentsService: CommentsService,
+    private proposalsService: ProposalsService,
     private signalRService: SignalRService, private route: ActivatedRoute, private router: Router,
     private messageService: MessageService, private elementRef: ElementRef<HTMLElement>) { }
 
@@ -153,11 +158,22 @@ export class CodePanelComponent implements OnChanges {
     return getCodePanelRowDataClass(row);
   }
 
+  private crossLanguageLoggedIds = new Set<string>();
+
   getLineNumberClassObject(row: CodePanelRowData) {
     let classObject: { [key: string]: boolean } = {};
     classObject['line-number'] = true;
-    if (row.crossLanguageId && this.crossLanguageRowData.some(item => row.crossLanguageId.toLowerCase() in item.content)) {
-      classObject['has-cross-language'] = true;
+    if (row.crossLanguageId) {
+      const matched = this.crossLanguageRowData.some(item => row.crossLanguageId.toLowerCase() in item.content);
+      if (!this.crossLanguageLoggedIds.has(row.crossLanguageId)) {
+        this.crossLanguageLoggedIds.add(row.crossLanguageId);
+        console.log('[CrossLanguage] Row has crossLanguageId:', row.crossLanguageId,
+          '| crossLanguageRowData entries:', this.crossLanguageRowData.length,
+          '| matched:', matched);
+      }
+      if (matched) {
+        classObject['has-cross-language'] = true;
+      }
     }
     return classObject;
   }
@@ -300,13 +316,19 @@ export class CodePanelComponent implements OnChanges {
             updatedCodeLinesData.push(this.codePanelRowData[i]);
             if (nodeData?.commentThread && nodeData?.commentThread.hasOwnProperty(this.codePanelRowData[i].rowPositionInGroup)) {
               const threadData = nodeData.commentThread[this.codePanelRowData[i].rowPositionInGroup] as any;
+              const filterCrossLang = (thread: CodePanelRowData) => {
+                if (!thread?.comments?.length) return thread;
+                const filtered = thread.comments.filter((c: any) => !c.crossLanguageId);
+                return filtered.length > 0 ? { ...thread, comments: filtered } : null;
+              };
               if (Array.isArray(threadData)) {
-                updatedCodeLinesData.push(...threadData);
+                threadData.map(filterCrossLang).filter(Boolean).forEach((t: any) => updatedCodeLinesData.push(t));
               } else if (threadData && typeof threadData === 'object') {
                 if (threadData.type || threadData.comments) {
-                  updatedCodeLinesData.push(threadData);
+                  const t = filterCrossLang(threadData);
+                  if (t) updatedCodeLinesData.push(t);
                 } else {
-                  updatedCodeLinesData.push(...Object.values(threadData) as CodePanelRowData[]);
+                  (Object.values(threadData) as CodePanelRowData[]).map(filterCrossLang).filter(Boolean).forEach((t: any) => updatedCodeLinesData.push(t));
                 }
               }
             }
@@ -745,17 +767,39 @@ export class CodePanelComponent implements OnChanges {
     else {
       const isNewThread = commentUpdates.isReply === false;
       const resolutionLocked = commentUpdates.allowAnyOneToResolve !== undefined ? !commentUpdates.allowAnyOneToResolve : false;
-      this.commentsService.createComment(this.reviewId!, this.activeApiRevisionId!, commentUpdates.nodeId!, commentUpdates.commentText!, CommentType.APIRevision, resolutionLocked, commentUpdates.severity, commentUpdates.threadId)
+
+      // Resolve crossLanguageId from the associated code line
+      let crossLangId: string | undefined;
+      let crossLangPkgId: string | undefined;
+      if (commentUpdates.nodeIdHashed && commentUpdates.associatedRowPositionInGroup !== undefined) {
+        const codeLine = this.codePanelData?.nodeMetaData[commentUpdates.nodeIdHashed]?.codeLines[commentUpdates.associatedRowPositionInGroup];
+        if (codeLine?.crossLanguageId) {
+          crossLangId = codeLine.crossLanguageId;
+          crossLangPkgId = this.crossLanguagePackageId;
+        }
+      }
+      console.log('[CrossLanguage] Saving comment with:', { crossLangId, crossLangPkgId, nodeId: commentUpdates.nodeId, nodeIdHashed: commentUpdates.nodeIdHashed, associatedRowPositionInGroup: commentUpdates.associatedRowPositionInGroup });
+
+      this.commentsService.createComment(this.reviewId!, this.activeApiRevisionId!, commentUpdates.nodeId!, commentUpdates.commentText!, CommentType.APIRevision, resolutionLocked, commentUpdates.severity, commentUpdates.threadId, crossLangId, crossLangPkgId, commentUpdates.isTodo ?? false)
         .pipe(take(1)).subscribe({
             next: (response: CommentItemModel) => {
+              console.log('[CrossLanguage] Server response:', { crossLanguageId: response.crossLanguageId, crossLanguagePackageId: response.crossLanguagePackageId, id: response.id });
               if (!commentUpdates.threadId && response.threadId) {
                 commentUpdates.threadId = response.threadId;
               }
               this.addCommentToCommentThread(commentUpdates, response);
+              this.commentCreatedEmitter.emit(response);
               commentUpdates.comment = response;
               // Only refresh quality score for new threads, not replies
               if (isNewThread) {
                 this.commentsService.notifyQualityScoreRefresh();
+              }
+              // Auto-create proposal if toggled
+              if (commentUpdates.alsoCreateProposal && crossLangId && this.reviewId) {
+                const plainText = (commentUpdates.commentText || '').replace(/<[^>]*>/g, '').trim();
+                this.proposalsService.createProposal(
+                  this.reviewId, response.elementId, crossLangId, plainText
+                ).pipe(take(1)).subscribe();
               }
             }
           }
@@ -1413,6 +1457,9 @@ export class CodePanelComponent implements OnChanges {
   }
 
   private addCommentToCommentThread(commentUpdates: CommentUpdatesDto, newComment: CommentItemModel) {
+    // Cross-language comments belong in the Discussions tab only
+    if (newComment.crossLanguageId) return;
+
     const { nodeIdHashed, associatedRowPositionInGroup: position, threadId } = commentUpdates;
     if (this.codePanelRowData.some(row => row.type === CodePanelRowDatatype.CommentThread && row.comments?.some(c => c.id === newComment.id))) {
       return;

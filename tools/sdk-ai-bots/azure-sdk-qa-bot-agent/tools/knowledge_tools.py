@@ -47,12 +47,19 @@ class KnowledgeTools:
         queries: Annotated[
             list[str],
             "One or more search queries to run against the knowledge base. "
-            "Use multiple queries to approach the problem from different angles — "
-            "e.g. the user's original question, a rephrased version, "
-            "and a query targeting a potential solution or workaround. "
-            "Example: ['how to emit unused models in typespec', "
-            "'typespec emitter omit-unreachable-types option', "
-            "'force include model in openapi output']. "
+            "Queries should target the **documentation topic or solution** that "
+            "would answer the user's question — NOT just restate the symptom. "
+            "Think: 'what document or guide would solve this?' "
+            "Good query strategy: "
+            "1) A query targeting the **root cause or process** behind the issue. "
+            "2) A query using **official terms, doc titles, or guide names** the "
+            "knowledge base likely indexes. "
+            "3) Optionally, a broader topic query for context. "
+            "Example — user asks 'teammate cannot approve my PR in azure-rest-api-specs': "
+            "  BAD: ['PR approval button not visible cannot approve pull request'] "
+            "  GOOD: ['request access to Azure API and SDK repositories write access', "
+            "          'azure-rest-api-specs CODEOWNERS approval branch protection rules', "
+            "          'azure SDK partners GitHub team permissions onboarding'] "
             "At least 1, at most 3 queries.",
         ],
         sources: Annotated[

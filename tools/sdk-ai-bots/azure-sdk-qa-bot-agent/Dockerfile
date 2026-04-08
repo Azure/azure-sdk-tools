@@ -24,6 +24,7 @@ COPY tools/sdk-ai-bots/azure-sdk-qa-bot-agent/prompts/ ./prompts/
 COPY tools/sdk-ai-bots/azure-sdk-qa-bot-agent/services/ ./services/
 COPY tools/sdk-ai-bots/azure-sdk-qa-bot-agent/tools/ ./tools/
 COPY tools/sdk-ai-bots/azure-sdk-qa-bot-agent/utils/ ./utils/
+COPY tools/sdk-ai-bots/azure-sdk-qa-bot-agent/skills/ ./skills/
 COPY tools/sdk-ai-bots/azure-sdk-qa-bot-agent/server.py .
 
 EXPOSE 8080

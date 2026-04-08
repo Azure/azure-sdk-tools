@@ -6,12 +6,8 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
-import sys
-from dataclasses import dataclass, make_dataclass, field
+from dataclasses import dataclass, make_dataclass, field, KW_ONLY
 from typing import Any
-
-if sys.version_info >= (3, 10):
-    from dataclasses import KW_ONLY
 
 
 @dataclass
@@ -44,14 +40,13 @@ DataClassDynamic = make_dataclass('DataClassDynamic', [
 )
 
 
-if sys.version_info >= (3, 10):
-    @dataclass
-    class DataClassWithKeywordOnly:
-        """ Class for testing @dataclass with KW_ONLY. """
-        x: float
-        _: KW_ONLY
-        y: float
-        z: float
+@dataclass
+class DataClassWithKeywordOnly:
+    """ Class for testing @dataclass with KW_ONLY. """
+    x: float
+    _: KW_ONLY
+    y: float
+    z: float
 
 
 @dataclass

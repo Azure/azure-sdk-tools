@@ -13,7 +13,6 @@ therefore do NOT catch regressions in get_qualified_name when called with
 actual Python type objects (which happens during class-variable introspection).
 """
 
-import sys
 import typing
 
 import pytest
@@ -60,20 +59,17 @@ class TestGetQualifiedNameOptionalUnion:
             f"Expected 'Union[int, str]' but got {result!r}."
         )
 
-    @pytest.mark.skipif(sys.version_info < (3, 10), reason="PEP 604 (X | Y) requires Python 3.10+")
     def test_pep604_int_or_none_renders_as_optional(self):
         """int | None (PEP 604 syntax) must render as Optional[int]."""
-        # Evaluate via eval to avoid a SyntaxError on Python < 3.10.
-        obj = eval("int | None")  # noqa: S307 – controlled input
+        obj = int | None
         result = get_qualified_name(obj, "test")
         assert result == "Optional[int]", (
             f"Expected 'Optional[int]' for 'int | None' but got {result!r}."
         )
 
-    @pytest.mark.skipif(sys.version_info < (3, 10), reason="PEP 604 (X | Y) requires Python 3.10+")
     def test_pep604_multi_type_or_none_renders_as_optional_union(self):
         """int | str | None (PEP 604) must render as Optional[Union[int, str]]."""
-        obj = eval("int | str | None")  # noqa: S307 – controlled input
+        obj = int | str | None
         result = get_qualified_name(obj, "test")
         assert result == "Optional[Union[int, str]]", (
             f"Expected 'Optional[Union[int, str]]' for 'int | str | None' but got {result!r}."

@@ -36,15 +36,13 @@ from ._models import (
     SomethingWithLiterals,
     SomeEnum
 )
-import sys
 from ._dataclasses import (
     DataClassSimple,
     DataClassWithFields,
     DataClassDynamic,
-    DataClassWithPostInit
+    DataClassWithPostInit,
+    DataClassWithKeywordOnly,
 )
-if sys.version_info >= (3, 10):
-    from ._dataclasses import DataClassWithKeywordOnly
 
 __all__ = (
     "AliasNewType",
@@ -77,7 +75,6 @@ __all__ = (
     "SomethingWithProperties",
     "SomeProtocolDecorator",
     "SomethingWithLiterals",
-    "SomeEnum"
+    "SomeEnum",
+    "DataClassWithKeywordOnly",
 )
-if sys.version_info >= (3, 10):
-    __all__ += ("DataClassWithKeywordOnly",)

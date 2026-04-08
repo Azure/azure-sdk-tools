@@ -2,7 +2,6 @@ import astroid
 import inspect
 from inspect import Parameter
 import re
-import sys
 import types as _builtin_types
 
 from ._pylint_parser import PylintParser
@@ -46,9 +45,7 @@ def process_literal_args(obj, args, namespace=""):
         # Call get_qualified_name for any parameterised generic (has __origin__) or
         # PEP 604 union (types.UnionType, Python 3.10+). On Python 3.14, str() on
         # these types emits X | Y notation; get_qualified_name normalises to Union[X, Y].
-        # TODO: When Python 3.9 support is dropped, emit X | Y (PEP 604)
-        # style instead of Union[X, Y] to align with the 3.10+ preferred syntax.
-        if hasattr(arg, '__origin__') or (sys.version_info >= (3, 10) and isinstance(arg, _builtin_types.UnionType)):
+        if hasattr(arg, '__origin__') or isinstance(arg, _builtin_types.UnionType):
             arg_string = get_qualified_name(arg, namespace)
         else:
             arg_string = str(arg)
@@ -170,8 +167,7 @@ def get_qualified_name(obj, namespace: str) -> str:
     elif module_name == "types":
         # PEP 604 (Python 3.10+): X | Y produces a types.UnionType. Normalise to
         # Union[X, Y] / Optional[X] for consistent rendering across all supported versions.
-        # TODO: when Python 3.9 support is dropped, emit X | Y (PEP 604) style instead.
-        if sys.version_info >= (3, 10) and isinstance(obj, _builtin_types.UnionType) and hasattr(obj, '__args__'):
+        if isinstance(obj, _builtin_types.UnionType) and hasattr(obj, '__args__'):
             union_args = [get_qualified_name(a, namespace) for a in obj.__args__]
             non_none = [a for a in union_args if a not in ("NoneType", "None")]
             if len(non_none) < len(union_args):

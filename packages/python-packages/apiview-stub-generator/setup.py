@@ -35,7 +35,7 @@ setup(
         "typing-extensions>=4.6.0",
         "pkginfo"
     ],
-    python_requires=">=3.9.0",
+    python_requires=">=3.10.0",
     entry_points={
         "console_scripts": [
             "apistubgen=apistub:console_entry_point",
@@ -44,7 +44,6 @@ setup(
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",

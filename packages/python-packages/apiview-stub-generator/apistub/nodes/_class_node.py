@@ -232,25 +232,12 @@ class ClassNode(NodeEntityBase):
         overloads = parse_overloads(self, functions, is_module_level=False)
 
         # PEP 649 (Python 3.14+): annotations are now lazy; __annotations__ is no longer
-        # eagerly populated in cls.__dict__. inspect.get_annotations() (Python 3.10+)
-        # handles this correctly. Fall back to __dict__ on Python 3.9 to avoid inheriting
-        # parent annotations.
-        # eval_str=True resolves string annotations from PEP 563 (from __future__ import annotations).
-        # TODO: drop the fallback branch when Python 3.9 support is removed.
-        if hasattr(inspect, 'get_annotations'):
-            try:
-                own_annotations = inspect.get_annotations(self.obj, eval_str=True)
-            except Exception:
-                own_annotations = inspect.get_annotations(self.obj)
-        else:
-            # Python 3.9: resolve string annotations (PEP 563) via typing.get_type_hints,
-            # filtered to only own (non-inherited) keys.
-            raw = self.obj.__dict__.get("__annotations__", {})
-            try:
-                all_hints = typing.get_type_hints(self.obj)
-                own_annotations = {k: all_hints.get(k, v) for k, v in raw.items()}
-            except Exception:
-                own_annotations = raw
+        # eagerly populated in cls.__dict__. inspect.get_annotations() resolves string
+        # annotations from PEP 563 (from __future__ import annotations) via eval_str=True.
+        try:
+            own_annotations = inspect.get_annotations(self.obj, eval_str=True)
+        except Exception:
+            own_annotations = inspect.get_annotations(self.obj)
         for item_name, item_type in own_annotations.items():
             if item_name.startswith("_"):
                 continue

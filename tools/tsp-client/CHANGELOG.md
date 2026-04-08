@@ -1,6 +1,6 @@
 # Release
 
-## 2026-04-06 - 0.32.1
+## Unreleased - 0.32.1
 
 - Added support for passing flags to underlying npm commands using the `--npm-args` flag with the `generate-config-files` and `generate-lock-file` commands.
 

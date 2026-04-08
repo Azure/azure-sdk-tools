@@ -1,0 +1,98 @@
+{
+    "testCases": [
+        {
+            "name": "dp-add-create-operation",
+            "description": "Add a create/update operation to an existing data-plane service that only has get and list operations.",
+            "prompt": "In the specification/widget/data-plane/WidgetAnalytics project, add a create or update operation for the WidgetSuite resource to the Widgets interface. The operation should allow creating or updating a Widget asynchronously.",
+            "tspProject": "specification/widget/data-plane/WidgetAnalytics",
+            "testfiles": [
+                "dp-add-create-operation/main.tsp"
+            ],
+            "verifyPlan": [
+                "1. The Widgets interface should include a create or update operation for WidgetSuite using one of the Azure.Core resource operation templates such as `LongRunningResourceCreateOrUpdate<WidgetSuite>`, `ResourceCreateOrReplace<WidgetSuite>`, or `ResourceCreateOrUpdate<WidgetSuite>`.",
+                "2. The operation should have a descriptive @doc decorator."
+            ]
+        },
+        {
+            "name": "dp-add-list-operation",
+            "description": "Add a list operation to an existing data-plane service that only has get and create operations.",
+            "prompt": "In the specification/widget/data-plane/WidgetAnalytics project, add a list operation for the WidgetSuite resource to the Widgets interface. The operation should allow listing Widget resources with standard list query parameters.",
+            "tspProject": "specification/widget/data-plane/WidgetAnalytics",
+            "testfiles": [
+                "dp-add-list-operation/main.tsp"
+            ],
+            "verifyPlan": [
+                "1. The Widgets interface should include a list operation for WidgetSuite using the `ResourceList<WidgetSuite>` Azure.Core operation template.",
+                "2. The operation should have a descriptive @doc decorator."
+            ]
+        },
+        {
+            "name": "dp-add-get-operation",
+            "description": "Add a get (read) operation to an existing data-plane service that only has create and delete operations.",
+            "prompt": "In the specification/widget/data-plane/WidgetAnalytics project, add a get operation for the WidgetSuite resource to the Widgets interface. The operation should allow fetching a Widget by name.",
+            "tspProject": "specification/widget/data-plane/WidgetAnalytics",
+            "testfiles": [
+                "dp-add-get-operation/main.tsp"
+            ],
+            "verifyPlan": [
+                "1. The Widgets interface should include a get/read operation for WidgetSuite using the `ResourceRead<WidgetSuite>` Azure.Core operation template.",
+                "2. The operation should have a descriptive @doc decorator."
+            ]
+        },
+        {
+            "name": "dp-version-property-added",
+            "description": "Add a new property to a data-plane resource in a new version using @added.",
+            "prompt": "In the specification/widget/data-plane/WidgetAnalytics project, add a new optional `description` property of type `string` to the WidgetSuite model only for version `2023-06-01-preview`. Also add this new version to the Versions enum.",
+            "tspProject": "specification/widget/data-plane/WidgetAnalytics",
+            "testfiles": [
+                "dp-version-property-added/main.tsp"
+            ],
+            "verifyPlan": [
+                "1. A new version `v2023_06_01_Preview` should be added to the Versions enum.",
+                "2. The `description` property should be added to WidgetSuite with `@added(Versions.v2023_06_01_Preview)` decorator."
+            ]
+        },
+        {
+            "name": "dp-version-property-removed",
+            "description": "Remove a property from a data-plane resource in a new version using @removed.",
+            "prompt": "In the specification/widget/data-plane/WidgetAnalytics project, remove the `color` property from the WidgetSuite model only for version `2023-06-01-preview`. Also add this new version to the Versions enum.",
+            "tspProject": "specification/widget/data-plane/WidgetAnalytics",
+            "testfiles": [
+                "dp-version-property-removed/main.tsp"
+            ],
+            "verifyPlan": [
+                "1. A new version `v2023_06_01_Preview` should be added to the Versions enum.",
+                "2. The `color` property in WidgetSuite should have `@removed(Versions.v2023_06_01_Preview)` decorator added. The property itself should NOT be deleted from the model."
+            ]
+        },
+        {
+            "name": "dp-version-property-renamed",
+            "description": "Rename a property in a data-plane resource in a new version using @renamedFrom.",
+            "prompt": "In the specification/widget/data-plane/WidgetAnalytics project, rename the `color` property to `widgetColor` in the WidgetSuite model only for version `2023-06-01-preview`. Also add this new version to the Versions enum.",
+            "tspProject": "specification/widget/data-plane/WidgetAnalytics",
+            "testfiles": [
+                "dp-version-property-renamed/main.tsp"
+            ],
+            "verifyPlan": [
+                "1. A new version `v2023_06_01_Preview` should be added to the Versions enum.",
+                "2. The `color` property should be renamed to `widgetColor` and decorated with `@renamedFrom(Versions.v2023_06_01_Preview, \"color\")`."
+            ]
+        },
+        {
+            "name": "dp-create-resource-with-crud",
+            "description": "Create a new data-plane resource with full CRUD and list operations from scratch.",
+            "prompt": "In the specification/widget/data-plane/WidgetAnalytics project, add a Widgets interface with full CRUD and list operations for the WidgetSuite resource. The interface should include operations to create or update, get, list, and delete widgets. Use the appropriate Azure.Core resource operation templates.",
+            "tspProject": "specification/widget/data-plane/WidgetAnalytics",
+            "testfiles": [
+                "dp-create-resource-with-crud/main.tsp"
+            ],
+            "verifyPlan": [
+                "1. A Widgets interface should be defined with operations for the WidgetSuite resource.",
+                "2. The interface should include a get/read operation using `ResourceRead<WidgetSuite>`.",
+                "3. The interface should include a create or update operation using an Azure.Core create template such as `LongRunningResourceCreateOrUpdate<WidgetSuite>`, `ResourceCreateOrReplace<WidgetSuite>`, or `ResourceCreateOrUpdate<WidgetSuite>`.",
+                "4. The interface should include a list operation using `ResourceList<WidgetSuite>`.",
+                "5. The interface should include a delete operation using `ResourceDelete<WidgetSuite>` or `LongRunningResourceDelete<WidgetSuite>`."
+            ]
+        }
+    ]
+}

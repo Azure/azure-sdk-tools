@@ -315,46 +315,6 @@ public sealed partial class DotnetLanguageService: LanguageService
         return response;
     }
 
-    private async Task PushTestAssets(string packagePath, TestRunResponse response, CancellationToken ct)
-    {
-        var assetsJsonPath = Path.Combine(packagePath, "assets.json");
-        if (!File.Exists(assetsJsonPath))
-        {
-            logger.LogInformation("No assets.json found in {packagePath}, skipping asset push", packagePath);
-            return;
-        }
-
-        logger.LogInformation("Pushing recorded test assets for {packagePath}", packagePath);
-
-        try
-        {
-            var pushResult = await processHelper.Run(new ProcessOptions(
-                    command: "test-proxy",
-                    args: ["push", "-a", "assets.json"],
-                    workingDirectory: packagePath
-                ),
-                ct
-            );
-
-            if (pushResult.ExitCode == 0)
-            {
-                logger.LogInformation("Successfully pushed test assets");
-            }
-            else
-            {
-                logger.LogWarning("Asset push failed with exit code {exitCode}: {output}", pushResult.ExitCode, pushResult.Output);
-                response.NextSteps ??= [];
-                response.NextSteps.Add($"Asset push failed (exit code {pushResult.ExitCode}). You may need to push assets manually using 'test-proxy push -a assets.json'");
-            }
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "Failed to push test assets. Is test-proxy installed?");
-            response.NextSteps ??= [];
-            response.NextSteps.Add("Could not push test assets automatically. Ensure test-proxy is installed and try running 'test-proxy push -a assets.json' manually");
-        }
-    }
-
     /// <summary>
     /// Detects which test framework a .NET test project uses by examining .csproj references.
     /// </summary>

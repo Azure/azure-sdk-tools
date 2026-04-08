@@ -2,6 +2,7 @@
 
 ## Version 0.3.28 (Unreleased)
 Added `crossLanguageVersion` to the `CrossLanguageMetadata` model.
+Updated the source code parsing/inspecting so that source files are cached for perf.
 
 ## Version 0.3.27 (2026-03-17)
 Removed `ivar`/`cvar` keywords from token file in favor of the `ClassVar` type annotation to distinguish then.

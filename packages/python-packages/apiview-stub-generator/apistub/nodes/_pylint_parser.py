@@ -4,7 +4,7 @@ import logging
 import os
 from sys import stderr
 import re
-from typing import List, Union, TYPE_CHECKING
+from typing import Dict, List, Union, TYPE_CHECKING
 from pylint.lint import Run
 
 if TYPE_CHECKING:
@@ -56,6 +56,7 @@ class PylintParser:
     AZURE_CHECKER_CODE = "47"
 
     items: List[PylintError] = []
+    _path_to_items: Dict[str, List[PylintError]] = {}
 
     @classmethod
     def parse(cls, path):
@@ -64,7 +65,7 @@ class PylintParser:
         pkg_name = os.path.split(path)[-1]
         rcfile_path = os.path.join(ApiView.get_root_path(), ".pylintrc")
         logging.debug(f"APIView root path: {ApiView.get_root_path()}")
-        params = f"{path} -f json --recursive=y --rcfile {rcfile_path}".split(" ")
+        params = [path, "-f", "json", "--recursive=y", f"--rcfile={rcfile_path}", "--ignore=tests,build,samples,examples,doc"]
         messages = Run(params, exit=False).linter.reporter.messages
         plugin_failed = any([x.symbol == "bad-plugin-value" for x in messages])
         if plugin_failed:
@@ -76,22 +77,57 @@ class PylintParser:
             for x in messages
             if x.msg_id[1:3] == PylintParser.AZURE_CHECKER_CODE
         ]
+        # Build a path-keyed index so match_items can skip items in other files
+        # without iterating over the full list for every node.
+        cls._path_to_items = {}
+        for item in cls.items:
+            if item.path:
+                cls._path_to_items.setdefault(item.path, []).append(item)
 
     @classmethod
     def match_items(cls, obj) -> None:
+        if not cls.items:
+            return
         try:
             source_file = inspect.getsourcefile(obj)
-            (source_lines, start_line) = inspect.getsourcelines(obj)
-            end_line = start_line + len(source_lines) - 1
+            if not source_file:
+                return
         except Exception:
             return
-        for item in cls.items:
-            item_path = item.path
-            if item_path and source_file.endswith(item_path):
-                # nested items will overwrite the ownership of their
-                # containing parent.
-                if item.line >= start_line and item.line <= end_line:
-                    item.owner = str(obj)
+
+        # Find the subset of pylint errors that belong to this source file.
+        # Iterating over unique path keys (typically O(tens)) is much cheaper
+        # than scanning all items for every node.
+        candidates = None
+        for path_key, path_items in cls._path_to_items.items():
+            if source_file.endswith(path_key):
+                candidates = path_items
+                break
+        if not candidates:
+            return
+
+        try:
+            if inspect.isclass(obj):
+                # Avoid inspect.getsourcelines for classes — it triggers an
+                # O(N_lines) ast.parse + AST walk (Python's _ClassFinder).
+                # Use our pre-built file index instead.  The lazy import is
+                # safe: _class_node is always fully loaded before any node
+                # __init__ runs, so there is no circular-import issue at
+                # runtime even though the static import chain would be circular.
+                from apistub.nodes._class_node import _get_class_line_range  # noqa: PLC0415
+                start_line, end_line = _get_class_line_range(obj)
+                if start_line is None:
+                    return
+            else:
+                (source_lines, start_line) = inspect.getsourcelines(obj)
+                end_line = start_line + len(source_lines) - 1
+        except Exception:
+            return
+
+        for item in candidates:
+            # nested items will overwrite ownership of their containing parent.
+            if item.line >= start_line and item.line <= end_line:
+                item.owner = str(obj)
 
     @classmethod
     def get_items(cls, node: Union["NodeEntityBase", str]) -> List[PylintError]:

@@ -137,13 +137,29 @@ class KnowledgeTools:
             else:
                 raw_chunks.extend(result)
 
+        logger.info(
+            "Search completed: mode=%s, queries=%s, raw_chunks=%d",
+            search_mode,
+            capped_queries,
+            len(raw_chunks),
+        )
+
         # Deduplicate across all search results, then expand once
         unique_chunks = search_client.deduplicate_chunks(raw_chunks)
+
+        logger.info(
+            "After deduplication: %d unique chunks (from %d raw)",
+            len(unique_chunks),
+            len(raw_chunks),
+        )
+
         expand_tasks = [
             search_client.expand_by_hierarchy(chunk) for chunk in unique_chunks
         ]
         expanded = await asyncio.gather(*expand_tasks)
 
+        # Log final search results (mirrors Go backend's "Final Search Result" log)
+        logger.info("=========Final Search Result=========")
         refs = [
             Reference(
                 title=_build_reference_title(k.title, k.header1, k.header2, k.header3),
@@ -153,6 +169,19 @@ class KnowledgeTools:
             )
             for k in expanded
         ]
+        for i, ref in enumerate(refs):
+            logger.info(
+                "Result [%d] source=%s, title=%s, link=%s, content_len=%d",
+                i + 1,
+                ref.source,
+                ref.title,
+                ref.link,
+                len(ref.content or ""),
+            )
+        logger.info(
+            "===================================== total=%d results",
+            len(refs),
+        )
 
         return SearchKnowledgeBaseResult(results=refs)
 

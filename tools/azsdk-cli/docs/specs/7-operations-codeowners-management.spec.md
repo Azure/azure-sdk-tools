@@ -94,7 +94,7 @@ Ensure accurate information goes into CODEOWNERS and triage automation has relia
 
 Two command groups are documented:
 
-- `config codeowners`: view, generate, export-section, add/remove package owners, add/remove package labels, add/remove label owners on optional path scope.
+- `config codeowners`: view, generate, export-section, add/remove package owners, add/remove package labels, add/remove label owners on optional path scope, and check-package-owners validation for CI gating.
 - `config github-label`: check/create service labels in GitHub CSV and sync service labels to Azure DevOps `Label` work items.
 
 ### Command and Tool Surface
@@ -110,6 +110,7 @@ Two command groups are documented:
 - `remove-package-label`
 - `remove-label-owner`
 - `export-section` (no MCP)
+- `check-package-owners`
 
 `CodeownersTool` MCP tools:
 
@@ -120,6 +121,7 @@ Two command groups are documented:
 - `azsdk_engsys_codeowner_remove_package_owner`
 - `azsdk_engsys_codeowner_remove_package_label`
 - `azsdk_engsys_codeowner_remove_label_owner`
+- `azsdk_engsys_codeowner_check_package_owners`
 
 `GitHubLabelsTool` commands:
 
@@ -286,6 +288,75 @@ GitHubLabelsTool
 | Python | Same ownership data model and command surface. | Ownership rendering should stay consistent across languages. |
 | Go | Same ownership data model and command surface. | Ownership rendering should stay consistent across languages. |
 
+### Feature Area: Check Package Owners
+
+The `check-package-owners` command validates that a package has sufficient ownership data for CI gating (blocking PRs and releases). It returns a structured pass/fail result with exit code 0 (pass) or 1 (fail).
+
+#### Validation Rules
+
+Two paths to validity — **Package-level** (primary) and **Path-based fallback**:
+
+##### Primary Path: Package-Level Ownership
+
+If the Package work item has one or more direct owners, use this path. All three checks must pass:
+
+1. **Package Owners ≥ 2 unique individuals**: The Package work item must have at least 2 unique individual GitHub users as owners. Teams are expanded via `ITeamUserCache`. If the package has 1 or more owners but fewer than 2 unique individuals, the check **fails** (no fallback to the path-based path).
+2. **Has PR Label**: The Package work item must have at least 1 linked Label.
+3. **Service Owners ≥ 2 unique individuals**: There must exist a `Label Owner` work item of type `Service Owner` in the same repo whose linked labels are a **superset** of all the package's PR labels, and whose owners (after team expansion) include at least 2 unique individuals.
+
+Service Owner coverage must come from a **single** `Label Owner` record with a label superset. If coverage is split across multiple records such that no single record covers the full required label set, the check fails. Cleanup of fragmented Label Owner data is out of scope for this command (see Open Questions).
+
+##### Fallback Path: Path-Based Label Owner Ownership
+
+If the package has **zero direct owners**, fall back to checking `Label Owner` records whose `RepoPath` glob expression matches the package's `directoryPath`. Glob matching uses `DirectoryUtils.PathExpressionMatchesTargetPath` from `Azure.Sdk.Tools.CodeownersUtils`.
+
+Before path comparison, normalize both `Label Owner`.`RepoPath` and `directoryPath` to a single leading-slash form (e.g., `sdk/contoso` → `/sdk/contoso`).
+
+The fallback check proceeds in two steps:
+
+1. **PR Label owners ≥ 2 unique individuals**: Find `Label Owner` work items of type `PR Label` whose `RepoPath` glob matches `directoryPath`. If multiple match, sort by normalized `RepoPath` and choose the **last** matching `Label Owner`. That selected Label Owner must have ≥ 2 unique individuals (after team expansion). Only the selected Label Owner's linked labels become the required PR label set.
+2. **Service Owners ≥ 2 unique individuals with matching labels**: Find a `Label Owner` work item of type `Service Owner` whose linked labels are a **superset** of the required PR label set from the selected PR Label Label Owner (no path restriction — can be pathless or have any path). That Service Owner must have ≥ 2 unique individuals (after team expansion).
+
+The PR Label and Service Owner individual sets **can overlap**. A successful fallback path also satisfies the "has PR label" requirement.
+
+##### Decision Tree
+
+```text
+Package has any direct owners?
+  YES (≥ 1) → Check ≥ 2 unique individuals (fail if < 2, no fallback)
+               → Check PR label(s) exist on Package
+               → Check a single Service Owner Label Owner exists in repo
+                 whose labels ⊇ all PR labels AND has ≥ 2 unique individuals
+  NO (0)   → Find PR Label type Label Owners where RepoPath glob matches directoryPath
+              → Sort matching PR Label Label Owners by normalized path, choose last
+              → Use selected PR Label Label Owner's labels as the required PR label set
+              → Check selected PR Label owners have ≥ 2 unique individuals
+              → Check a single Service Owner Label Owner exists
+                whose labels ⊇ the selected PR Label Label Owner's labels
+                AND has ≥ 2 unique individuals
+                (Service Owners do NOT need to match the path)
+```
+
+#### Package Lookup
+
+Package lookup is by `Custom.Package` name + repo. When multiple Package work items match, select the latest version using `Custom.PackageVersionMajorMinor` via `WorkItemMappers.GetLatestPackageVersions`.
+
+#### Response Model
+
+`CheckPackageOwnersResponse` inherits from `CommandResponse` and includes:
+
+- `PackageName` (string)
+- `DirectoryPath` (string)
+- `Repo` (string)
+- `ValidationPath` (string) — `"Package"` or `"PathFallback"` indicating which path was used
+- `OwnerCheck` — `{ passed, required, actual, owners[] }`
+- `PrLabelCheck` — `{ passed, labels[] }` (Package path only)
+- `ServiceOwnerCheck` — `{ passed, required, actual, owners[], requiredLabels[], matchedLabels[] }`
+- `PathFallbackCheck` — `{ prLabelOwnerCheck, serviceOwnerCheck }` (fallback path only)
+- `AllPassed` (bool)
+
+Formatted text output shows each check with PASS/FAIL and details.
+
 ---
 
 ## Open Questions
@@ -329,6 +400,10 @@ GitHubLabelsTool
 /sdk/apicenter/Azure.ResourceManager.ApiCenter/    @ArcturusZhang @ArthurMa1978
 ...
 ```
+
+- [ ] **Label Owner canonicalization / cleanup**: How should tooling detect and clean up fragmented or overlapping `Label Owner` records when rendered ownership can appear valid in aggregate, but future enforcement may intentionally require a single canonical `Label Owner` record (for example, one `Service Owner` record whose labels cover the full required set)?
+  - Context: Current rendering logic can flatten or group `Label Owner` data in ways that make multiple records look equivalent to one canonical record. A future validator/check feature may intentionally reject that non-canonical shape rather than aggregating across records.
+  - Proposed direction: Treat cleanup and normalization of non-canonical `Label Owner` data as future validator work rather than part of the current CRUD/rendering flows.
 
 ---
 
@@ -402,6 +477,20 @@ Check whether the service label azure-openai exists.
 2. Check for existing service label by color code.
 3. Check open PRs for in-review state.
 4. Return status (`Exists`, `DoesNotExist`, `NotAServiceLabel`, or `InReview`).
+
+### Check package owners
+
+**Prompt:**
+
+```text
+Check whether package azure-ai-vision-imageanalysis in Azure/azure-sdk-for-net at path sdk/ai/Azure.AI.Vision.ImageAnalysis has valid ownership for release.
+```
+
+**Expected Agent Activity:**
+
+1. Call `azsdk_engsys_codeowner_check_package_owners` with `package`, `directoryPath`, and optional `repo`.
+2. Evaluate validation path (package-level or path-based fallback).
+3. Return structured pass/fail result with details on each ownership check.
 
 ---
 
@@ -528,6 +617,61 @@ azsdk config github-label sync-ado --dry-run
 azsdk config github-label sync-ado
 ```
 
+### Check package owners
+
+**Command:**
+
+```bash
+azsdk config codeowners check-package-owners --package azure-ai-foo --directory-path sdk/ai/Azure.AI.Foo --repo Azure/azure-sdk-for-net
+```
+
+**Options:**
+
+- `--package <package-name>` (required): Package name (maps to `Custom.Package` work item field).
+- `--directory-path <relative-path>` (required): Relative path from repo root to the package directory (e.g., `sdk/contoso/Azure.Contoso.WidgetManager`).
+- `--repo <owner/repo>` (optional): Repository in `owner/repo` format. Auto-resolved from git if omitted.
+
+**Expected Output (pass):**
+
+```text
+Validation Path: Package
+
+  Owner Check:       PASS (2 of 2 required) — owner1, owner2
+  PR Label Check:    PASS — Contoso
+  Service Owner Check: PASS (2 of 2 required) — owner2, owner3
+
+All checks passed.
+```
+
+**Expected Output (fail — insufficient owners):**
+
+```text
+Validation Path: Package
+
+  Owner Check:       FAIL (1 of 2 required) — owner1
+
+Not all checks passed.
+```
+
+**Expected Output (fallback path pass):**
+
+```text
+Validation Path: PathFallback
+
+  PR Label Owner Check:    PASS (2 of 2 required) — owner1, owner2 (labels: Contoso)
+  Service Owner Check:     PASS (2 of 2 required) — owner2, owner3 (matched labels: Contoso)
+
+All checks passed.
+```
+
+**Error Cases:**
+
+```text
+Error: Package 'azure-ai-nonexistent' not found in repo 'Azure/azure-sdk-for-net'.
+```
+
+Exit code: 0 if all checks pass, 1 if any check fails.
+
 ---
 
 ## Implementation Plan
@@ -567,7 +711,7 @@ The following dependency map defines the required dependencies across `Codeowner
 | `ModelContextProtocol.Server` | External library | `CodeownersTool`, `GitHubLabelsTool` | MCP tool registration via `[McpServerToolType]` and `[McpServerTool]`. |
 | `Octokit` | External library | `GitHubService`, `CodeownersValidatorHelper` | GitHub API operations (users, org membership, teams, PR search/create, repo content). |
 | Azure DevOps client SDK (`Microsoft.TeamFoundation.*`, `Microsoft.VisualStudio.Services.*`) | External library | `DevOpsService`, `CodeownersManagementHelper`, `CodeownersGenerateHelper`, `GitHubLabelsTool` | WIQL queries, work item create/update, and relation management in Azure DevOps. |
-| `Azure.Sdk.Tools.CodeownersUtils` (`Parsing`, `Utils`, `Caches`) | Internal project dependency | `CodeownersTool`, `CodeownersGenerateHelper`, `CodeownersManagementHelper` | CODEOWNERS section parsing, entry sorting/formatting, and team membership cache support. |
+| `Azure.Sdk.Tools.CodeownersUtils` (`Parsing`, `Utils`, `Caches`) | Internal project dependency | `CodeownersTool`, `CodeownersGenerateHelper`, `CodeownersManagementHelper` | CODEOWNERS section parsing, entry sorting/formatting, team membership cache support, and path glob matching via `DirectoryUtils.PathExpressionMatchesTargetPath` for `check-package-owners` fallback validation. |
 | `IGitHubService` / `GitHubService` | Internal service | Both tool groups + validators/helpers | Wrapper over GitHub auth/API calls. |
 | `IDevOpsService` / `DevOpsService` | Internal service | Both tool groups + management/generation helpers | Wrapper over Azure DevOps work item and relation operations. |
 | `ICodeownersManagementHelper` | Internal helper | `CodeownersTool` | View/add/remove behavior for package owners, package labels, and label-owner path records. |
@@ -593,6 +737,11 @@ The following dependency map defines the required dependencies across `Codeowner
   - label-owner find/create uniqueness rules
   - add/remove relation behavior
   - service label sync duplicate/orphan detection
+- `check-package-owners` validation coverage should include:
+  - Primary path: all checks pass, insufficient owners (< 2 unique individuals with ≥ 1 direct owner — no fallback), missing PR labels, insufficient or missing service owners, fragmented service owner label coverage across multiple Label Owner records
+  - Fallback path: both PR Label and Service Owner checks pass, insufficient PR Label owners, insufficient Service Owners, no matching paths, glob path matching, multiple matching PR Label Label Owners (sorted by normalized path, last selected), fragmented service owner label coverage, pathless Service Owner matches
+  - Team expansion: team owners expanded to count unique individuals, deduplication of overlapping team and individual owners
+  - Package resolution: latest version selected by `Custom.PackageVersionMajorMinor` when multiple Package work items match
 
 Constraints and risks:
 

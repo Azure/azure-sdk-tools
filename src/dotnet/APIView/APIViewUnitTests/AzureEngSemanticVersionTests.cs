@@ -134,7 +134,7 @@ namespace APIViewUnitTests
         [InlineData("",                      false)] // empty string
         public void IsDailyDevBuild_ShouldDetectCorrectly(string version, bool expected)
         {
-            Assert.Equal(expected, AzureEngSemanticVersion.IsDailyDevBuild(version));
+            Assert.Equal(expected, new AzureEngSemanticVersion(version).IsDailyDevBuild);
         }
     }
 }

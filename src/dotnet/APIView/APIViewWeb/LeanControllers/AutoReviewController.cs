@@ -154,7 +154,7 @@ public class AutoReviewController : ControllerBase
             }
 
             // Override the CI daily-build version embedded in the token file with the caller-supplied version.
-            bool shouldOverrideCodeFileVersion = string.IsNullOrWhiteSpace(codeFile.PackageVersion) || AzureEngSemanticVersion.IsDailyDevBuild(codeFile.PackageVersion);
+            bool shouldOverrideCodeFileVersion = string.IsNullOrWhiteSpace(codeFile.PackageVersion) || new AzureEngSemanticVersion(codeFile.PackageVersion).IsDailyDevBuild;
             packageVersion = !string.IsNullOrWhiteSpace(packageVersion) && shouldOverrideCodeFileVersion
                 ? packageVersion
                 : codeFile.PackageVersion;

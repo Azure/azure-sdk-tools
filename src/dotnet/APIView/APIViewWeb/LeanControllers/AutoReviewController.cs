@@ -68,9 +68,13 @@ public class AutoReviewController : ControllerBase
                 var codeFile = await _codeFileManager.CreateCodeFileAsync(originalName: file.FileName, fileStream: openReadStream,
                     runAnalysis: false, memoryStream: memoryStream);
 
-                packageVersion = string.IsNullOrWhiteSpace(packageVersion) ? codeFile.PackageVersion : packageVersion;
-                codeFile.PackageVersion = packageVersion;
+                // Override the CI daily-build version embedded in the token file with the caller-supplied version.
+                bool shouldOverrideCodeFileVersion = string.IsNullOrWhiteSpace(codeFile.PackageVersion) || IsCIBuildVersion(codeFile.PackageVersion);
+                packageVersion = !string.IsNullOrWhiteSpace(packageVersion) && shouldOverrideCodeFileVersion
+                    ? packageVersion
+                    : codeFile.PackageVersion;
 
+                codeFile.PackageVersion = packageVersion;
                 (ReviewListItemModel review, APIRevisionListItemModel apiRevision) = await _autoReviewService.CreateAutomaticRevisionAsync(user: User, codeFile: codeFile, label: label, originalName: file.FileName, memoryStream: memoryStream, packageType: packageType, compareAllRevisions: compareAllRevisions);
                 if (apiRevision != null)
                 {
@@ -149,7 +153,11 @@ public class AutoReviewController : ControllerBase
                 return StatusCode(statusCode: StatusCodes.Status204NoContent, $"API review code file for package {packageName} is not found in DevOps pipeline artifacts.");
             }
 
-            packageVersion = string.IsNullOrWhiteSpace(packageVersion) ? codeFile.PackageVersion : packageVersion;
+            // Override the CI daily-build version embedded in the token file with the caller-supplied version.
+            bool shouldOverrideCodeFileVersion = string.IsNullOrWhiteSpace(codeFile.PackageVersion) || IsCIBuildVersion(codeFile.PackageVersion);
+            packageVersion = !string.IsNullOrWhiteSpace(packageVersion) && shouldOverrideCodeFileVersion
+                ? packageVersion
+                : codeFile.PackageVersion;
             codeFile.PackageVersion = packageVersion;
 
             (ReviewListItemModel review, APIRevisionListItemModel apiRevision) = await _autoReviewService.CreateAutomaticRevisionAsync(user: User, codeFile: codeFile, label: label, originalName: originalFilePath, memoryStream: memoryStream, packageType: packageType, compareAllRevisions: compareAllRevisions, sourceBranch: sourceBranch);
@@ -205,4 +213,19 @@ public class AutoReviewController : ControllerBase
         }
     }
 
+    /// <summary>
+    ///     Returns true when <paramref name="version" /> is a CI daily-build version
+    ///     (e.g. <c>1.2.0-alpha.20240305.1</c>) — identified by having a prerelease build-number
+    ///     segment. Regular beta/rc versions (e.g. <c>1.2.0-beta.1</c>) return false.
+    /// </summary>
+    private static bool IsCIBuildVersion(string version)
+    {
+        if (string.IsNullOrEmpty(version))
+        {
+            return false;
+        }
+
+        var semVer = new AzureEngSemanticVersion(version);
+        return semVer.IsSemVerFormat && semVer.IsPrerelease && !string.IsNullOrEmpty(semVer.BuildNumber);
+    }
 }

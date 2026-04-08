@@ -238,9 +238,9 @@ namespace APIViewUnitTests
         public async Task UploadAutoReview_WhenFormParamsAreProvided_IgnoresQueryString()
         {
             _controller.ControllerContext.HttpContext.Request.QueryString = new QueryString(
-                "?label=qs-label&packageVersion=1.0.0&setReleaseTag=false");
+                "?label=qs-label&packageVersion=1.0.0-alpha.20260101.1&setReleaseTag=false");
             var mockFile = CreateMockFormFile("test.json", "dummy content");
-            SetupStandardMocks();
+            SetupStandardMocks(codeFilePackageVersion: "1.0.0-alpha.20260101.1");
 
             await _controller.UploadAutoReview(mockFile.Object, label: "form-label", packageVersion: "2.0.0", setReleaseTag: true);
 
@@ -570,7 +570,7 @@ namespace APIViewUnitTests
         }
 
         [Fact]
-        public async Task UploadAutoReview_UpdatesRevisionMetadataWithProvidedVersion()
+        public async Task UploadAutoReview_UpdatesRevisionMetadataWithProvidedAlphaVersion()
         {
             // Arrange
             var mockFile = CreateMockFormFile("test.json", "dummy content");
@@ -579,7 +579,7 @@ namespace APIViewUnitTests
                 Name = "test",
                 Language = "C#",
                 PackageName = "TestPackage",
-                PackageVersion = "1.0.0"
+                PackageVersion = "1.2.0-alpha.20240305.1"
             };
 
             var mockReview = new ReviewListItemModel()
@@ -628,12 +628,13 @@ namespace APIViewUnitTests
         }
 
         [Theory]
-        [InlineData("2.4.0-alpha.20260407.4", "2.4.0",     "2.4.0")] // #14970: alpha prerelease suffix overridden by caller-supplied GA version
-        [InlineData("2.4.0",                  null,         "2.4.0")] // null caller version: code file version preserved unchanged
-        [InlineData("2.4.0",                  "",           "2.4.0")] // empty string (e.g. packageVersion=): code file version preserved
-        [InlineData("2.4.0",                  "   ",        "2.4.0")] // whitespace-only: code file version preserved
+        [InlineData("2.4.0-alpha.20260407.4", "2.4.0",  "2.4.0",            "2.4.0")] // CI daily-build version → overridden by caller-supplied version
+        [InlineData("2.4.0-beta.1",           "2.4.0",  "2.4.0-beta.1", "2.4.0-beta.1")] // intentional beta prerelease → code file preserved
+        [InlineData("2.4.0",                  null,     "2.4.0",            "2.4.0")] // null caller: code file version used unchanged
+        [InlineData("2.4.0",                  "",       "2.4.0",            "2.4.0")] // empty caller: code file version used
+        [InlineData("2.4.0",                  "   ",    "2.4.0",            "2.4.0")] // whitespace-only caller: code file version used
         public async Task UploadAutoReview_NormalizesPackageVersionOnCodeFileBeforeCallingService(
-            string codeFileVersion, string callerSuppliedVersion, string expectedVersion)
+            string codeFileVersion, string callerSuppliedVersion, string expectedCodeFileVersion, string expectedMetadataVersion)
         {
             var mockFile = CreateMockFormFile("azure-core-http-compat.json", "dummy content");
             var mockCodeFile = new CodeFile()
@@ -679,24 +680,25 @@ namespace APIViewUnitTests
 
             _mockAutoReviewService.Verify(m => m.CreateAutomaticRevisionAsync(
                 It.IsAny<ClaimsPrincipal>(),
-                It.Is<CodeFile>(cf => cf.PackageVersion == expectedVersion),
+                It.Is<CodeFile>(cf => cf.PackageVersion == expectedCodeFileVersion),
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<MemoryStream>(),
                 It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>()),
                 Times.Once,
-                $"Expected CodeFile.PackageVersion == \"{expectedVersion}\" but the service received a different value");
+                $"Expected CodeFile.PackageVersion == \"{expectedCodeFileVersion}\" but the service received a different value");
 
             _mockApiRevisionsManager.Verify(m => m.UpdateRevisionMetadataAsync(
-                mockApiRevision, expectedVersion, "test-label", false),
+                mockApiRevision, expectedMetadataVersion, "test-label", false),
                 Times.Once);
         }
 
         [Theory]
-        [InlineData("2.4.0-alpha.20260407.4", "2.4.0",     "2.4.0")] // #14970: alpha prerelease suffix overridden by caller-supplied GA version
-        [InlineData("2.4.0",                  null,         "2.4.0")] // null caller version: code file version preserved unchanged
-        [InlineData("2.4.0",                  "",           "2.4.0")] // empty string (e.g. packageVersion=): code file version preserved
-        [InlineData("2.4.0",                  "   ",        "2.4.0")] // whitespace-only: code file version preserved
+        [InlineData("2.4.0-alpha.20260407.4", "2.4.0",  "2.4.0",            "2.4.0")] // CI daily-build version → overridden by caller-supplied version
+        [InlineData("2.4.0-beta.1",           "2.4.0",  "2.4.0-beta.1", "2.4.0-beta.1")] // intentional beta prerelease → code file preserved
+        [InlineData("2.4.0",                  null,     "2.4.0",            "2.4.0")] // null caller: code file version used unchanged
+        [InlineData("2.4.0",                  "",       "2.4.0",            "2.4.0")] // empty caller: code file version used
+        [InlineData("2.4.0",                  "   ",    "2.4.0",            "2.4.0")] // whitespace-only caller: code file version used
         public async Task CreateApiReview_NormalizesPackageVersionOnCodeFileBeforeCallingService(
-            string codeFileVersion, string callerSuppliedVersion, string expectedVersion)
+            string codeFileVersion, string callerSuppliedVersion, string expectedCodeFileVersion, string expectedMetadataVersion)
         {
             const string packageName = "azure-core-http-compat";
             const string language = "TypeScript";
@@ -756,14 +758,14 @@ namespace APIViewUnitTests
 
             _mockAutoReviewService.Verify(m => m.CreateAutomaticRevisionAsync(
                 It.IsAny<ClaimsPrincipal>(),
-                It.Is<CodeFile>(cf => cf.PackageVersion == expectedVersion),
+                It.Is<CodeFile>(cf => cf.PackageVersion == expectedCodeFileVersion),
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<MemoryStream>(),
                 It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>()),
                 Times.Once,
-                $"Expected CodeFile.PackageVersion == \"{expectedVersion}\" but the service received a different value");
+                $"Expected CodeFile.PackageVersion == \"{expectedCodeFileVersion}\" but the service received a different value");
 
             _mockApiRevisionsManager.Verify(m => m.UpdateRevisionMetadataAsync(
-                mockApiRevision, expectedVersion, "CI Build", false),
+                mockApiRevision, expectedMetadataVersion, "CI Build", false),
                 Times.Once);
         }
 

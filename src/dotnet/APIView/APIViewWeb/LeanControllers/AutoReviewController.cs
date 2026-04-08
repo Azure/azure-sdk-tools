@@ -69,7 +69,7 @@ public class AutoReviewController : ControllerBase
                     runAnalysis: false, memoryStream: memoryStream);
 
                 // Override the CI daily-build version embedded in the token file with the caller-supplied version.
-                bool shouldOverrideCodeFileVersion = string.IsNullOrWhiteSpace(codeFile.PackageVersion) || IsCIBuildVersion(codeFile.PackageVersion);
+                bool shouldOverrideCodeFileVersion = string.IsNullOrWhiteSpace(codeFile.PackageVersion) || AzureEngSemanticVersion.IsDailyDevBuild(codeFile.PackageVersion);
                 packageVersion = !string.IsNullOrWhiteSpace(packageVersion) && shouldOverrideCodeFileVersion
                     ? packageVersion
                     : codeFile.PackageVersion;
@@ -154,7 +154,7 @@ public class AutoReviewController : ControllerBase
             }
 
             // Override the CI daily-build version embedded in the token file with the caller-supplied version.
-            bool shouldOverrideCodeFileVersion = string.IsNullOrWhiteSpace(codeFile.PackageVersion) || IsCIBuildVersion(codeFile.PackageVersion);
+            bool shouldOverrideCodeFileVersion = string.IsNullOrWhiteSpace(codeFile.PackageVersion) || AzureEngSemanticVersion.IsDailyDevBuild(codeFile.PackageVersion);
             packageVersion = !string.IsNullOrWhiteSpace(packageVersion) && shouldOverrideCodeFileVersion
                 ? packageVersion
                 : codeFile.PackageVersion;
@@ -213,19 +213,5 @@ public class AutoReviewController : ControllerBase
         }
     }
 
-    /// <summary>
-    ///     Returns true when <paramref name="version" /> is a CI daily-build version
-    ///     (e.g. <c>1.2.0-alpha.20240305.1</c>) — identified by having a prerelease build-number
-    ///     segment. Regular beta/rc versions (e.g. <c>1.2.0-beta.1</c>) return false.
-    /// </summary>
-    private static bool IsCIBuildVersion(string version)
-    {
-        if (string.IsNullOrEmpty(version))
-        {
-            return false;
-        }
 
-        var semVer = new AzureEngSemanticVersion(version);
-        return semVer.IsSemVerFormat && semVer.IsPrerelease && !string.IsNullOrEmpty(semVer.BuildNumber);
-    }
 }

@@ -36,7 +36,9 @@ COMMON_KEYWORD_REPLACE_MAP: dict[str, str] = {
 
 # Precompiled regex patterns
 _UNICODE_ESCAPE_RE = re.compile(r"\\u([0-9a-fA-F]{4})")
-_LINK_RE = re.compile(r'<a\s+(?:[^>]*?\s+)?href=["\']([^"\']+)["\'][^>]*>([^<]+)</a>')
+_LINK_RE = re.compile(
+    r'<a\s+(?:[^>]*?\s+)?href=["\']([^"\']+)["\'][^>]*>(.*?)</a>', re.DOTALL
+)
 _HTML_TAG_RE = re.compile(r"<[^>]*>")
 _WHITESPACE_RE = re.compile(r"\s+")
 
@@ -88,24 +90,19 @@ def decode_html_content(text: str) -> str:
 
 
 def clean_html_tags(text: str) -> str:
-    """Remove HTML tags while preserving anchor link text and URLs."""
-    # Step 1: Extract <a> tags, replace with placeholders
-    links: list[str] = []
+    """Remove HTML tags while preserving anchor links as markdown."""
 
-    def _replace_link(m: re.Match) -> str:
-        href, label = m.group(1), m.group(2)
-        link_html = f'<a href="{href}">{label}</a>'
-        links.append(link_html)
-        return f"___LINK_PLACEHOLDER_{len(links) - 1}___"
+    # Step 1: Convert <a href="URL">text</a> to markdown [text](URL)
+    def _link_to_markdown(m: re.Match) -> str:
+        href = m.group(1)
+        # Strip any nested HTML tags (e.g. <span>) from link text
+        label = _HTML_TAG_RE.sub("", m.group(2)).strip()
+        return f"[{label}]({href})"
 
-    cleaned = _LINK_RE.sub(_replace_link, text)
+    cleaned = _LINK_RE.sub(_link_to_markdown, text)
 
     # Step 2: Strip all remaining HTML tags
     cleaned = _HTML_TAG_RE.sub("", cleaned)
-
-    # Step 3: Restore anchor tags from placeholders
-    for i, link in enumerate(links):
-        cleaned = cleaned.replace(f"___LINK_PLACEHOLDER_{i}___", link)
 
     # Collapse whitespace
     cleaned = _WHITESPACE_RE.sub(" ", cleaned).strip()
@@ -156,4 +153,5 @@ def preprocess_message(text: str) -> str:
     """
     result = preprocess_html_content(text)
     result = replace_keywords(result)
+    logger.info("Preprocessed message: %s", result)
     return result

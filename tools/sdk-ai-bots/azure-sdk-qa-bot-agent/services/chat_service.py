@@ -28,7 +28,7 @@ from tools import TOOL_REGISTRY
 from skills.tenant_skills import get_skill_to_tenant_map
 from utils.azure_ai_foundry import get_openai_client, get_project_client
 from utils.teams_image import get_image_data_uri
-from utils.text_preprocess import preprocess_message
+from utils.text_util import preprocess_message
 from utils.azure_memory_store import sanitize_scope
 from azure.ai.projects.aio import AIProjectClient
 from azure.ai.projects.models import AgentDetails

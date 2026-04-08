@@ -74,11 +74,14 @@ def _configure_logging() -> None:
             handler.setFormatter(formatter)
             handler.addFilter(request_id_filter)
 
-    # Suppress noisy Azure SDK HTTP / credential loggers
+    # Suppress noisy Azure SDK HTTP / credential / telemetry loggers
     for noisy in (
         "azure.core.pipeline.policies.http_logging_policy",
         "azure.cosmos",
+        "azure.monitor.opentelemetry",
         "azure.monitor.opentelemetry.exporter",
+        "azure.monitor.opentelemetry.exporter.export",
+        "azure.monitor.opentelemetry.exporter.export._base",
     ):
         logging.getLogger(noisy).setLevel(logging.WARNING)
 

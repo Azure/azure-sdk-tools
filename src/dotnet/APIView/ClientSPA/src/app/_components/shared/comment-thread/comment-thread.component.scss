@@ -125,6 +125,11 @@
     }
 
     .comment-thread-navigation { display: none; position: absolute; top: 50%; left: 100%; transform: translate(0, -50%); }
+    .comment-nav-position {
+        font-size: 0.8rem;
+        color: var(--text-color-secondary);
+        font-weight: normal;
+    }
     .comment-navigation-pointer {
         min-width: 3.5rem;
         text-align: center;

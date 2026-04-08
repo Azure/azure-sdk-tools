@@ -31,9 +31,8 @@ import { CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePane
 import { CodeDiagnostic } from 'src/app/_models/codeDiagnostic';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 import { Subject, of } from 'rxjs';
-import { CommentItemModel } from 'src/app/_models/commentItemModel';
+import { CommentItemModel, CommentSeverity, CommentSource } from 'src/app/_models/commentItemModel';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
-import { CommentSeverity } from 'src/app/_models/commentItemModel';
 
 describe('CodePanelComponent', () => {
   let component: CodePanelComponent;
@@ -588,6 +587,81 @@ describe('CodePanelComponent', () => {
       component['emitCommentNavigationState']();
 
       expect(emitSpy).toHaveBeenCalledWith({ currentIndex: 0, totalCount: 0 });
+    });
+
+    it('should emit updated totals after removing diagnostic comment threads', async () => {
+      const emitSpy = vi.spyOn(component.commentNavigationStateEmitter, 'emit');
+
+      const codeLine = new CodePanelRowData();
+      codeLine.type = CodePanelRowDatatype.CodeLine;
+      codeLine.nodeIdHashed = 'node-1';
+
+      const diagnosticThread = new CodePanelRowData();
+      diagnosticThread.type = CodePanelRowDatatype.CommentThread;
+      diagnosticThread.nodeIdHashed = 'node-1';
+      diagnosticThread.isResolvedCommentThread = false;
+      diagnosticThread.comments = [{ commentSource: CommentSource.Diagnostic } as CommentItemModel];
+
+      const userThread = new CodePanelRowData();
+      userThread.type = CodePanelRowDatatype.CommentThread;
+      userThread.nodeIdHashed = 'node-1';
+      userThread.isResolvedCommentThread = false;
+      userThread.comments = [{ commentSource: CommentSource.UserGenerated } as CommentItemModel];
+
+      component.codePanelRowData = [codeLine, diagnosticThread, userThread];
+      component.codePanelRowSource = {
+        adapter: {
+          relax: vi.fn().mockResolvedValue(undefined),
+          remove: vi.fn().mockResolvedValue(undefined)
+        }
+      } as any;
+
+      await component.removeDiagnosticCommentThreads();
+
+      expect(emitSpy).toHaveBeenCalledWith({ currentIndex: 1, totalCount: 1 });
+    });
+
+    it('should emit updated totals after inserting diagnostic comment threads', async () => {
+      const emitSpy = vi.spyOn(component.commentNavigationStateEmitter, 'emit');
+
+      const codeLine = new CodePanelRowData();
+      codeLine.type = CodePanelRowDatatype.CodeLine;
+      codeLine.nodeIdHashed = 'node-1';
+      codeLine.rowPositionInGroup = 0;
+
+      const existingUserThread = new CodePanelRowData();
+      existingUserThread.type = CodePanelRowDatatype.CommentThread;
+      existingUserThread.nodeIdHashed = 'node-1';
+      existingUserThread.isResolvedCommentThread = false;
+      existingUserThread.comments = [{ commentSource: CommentSource.UserGenerated } as CommentItemModel];
+
+      const diagnosticThread = new CodePanelRowData();
+      diagnosticThread.type = CodePanelRowDatatype.CommentThread;
+      diagnosticThread.nodeIdHashed = 'node-1';
+      diagnosticThread.associatedRowPositionInGroup = 0;
+      diagnosticThread.isResolvedCommentThread = false;
+      diagnosticThread.comments = [{ commentSource: CommentSource.Diagnostic } as CommentItemModel];
+
+      component.codePanelRowData = [codeLine, existingUserThread];
+      component.codePanelData = {
+        nodeMetaData: {
+          'node-1': {
+            commentThread: {
+              0: [diagnosticThread]
+            }
+          }
+        }
+      };
+      component.codePanelRowSource = {
+        adapter: {
+          relax: vi.fn().mockResolvedValue(undefined),
+          reload: vi.fn().mockResolvedValue(undefined)
+        }
+      } as any;
+
+      await component.insertDiagnosticCommentThreads();
+
+      expect(emitSpy).toHaveBeenCalledWith({ currentIndex: 1, totalCount: 2 });
     });
 
     it('should emit after adding a comment thread', () => {

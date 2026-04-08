@@ -67,6 +67,8 @@ export class CodePanelComponent implements OnChanges {
 
   commentThreadNavigationPointer: number | undefined = undefined;
   diffNodeNavigationPointer: number | undefined = undefined;
+  private _threadPositionCache: { count: number; byRowIndex: Map<number, number>; hasActiveConversation: boolean } = { count: 0, byRowIndex: new Map(), hasActiveConversation: false };
+  private _lastHighlightedRowIndex: number | undefined = undefined;
 
   menuItemsLineActions: MenuItem[] = [];
 
@@ -102,7 +104,6 @@ export class CodePanelComponent implements OnChanges {
     if (changes['codePanelRowData']) {
       if (changes['codePanelRowData'].currentValue.length > 0) {
         this.loadCodePanelViewPort();
-        this.updateHasActiveConversations();
         this.emitCommentNavigationState();
       } else {
         this.isLoading = true;
@@ -157,19 +158,23 @@ export class CodePanelComponent implements OnChanges {
     return row.type === CodePanelRowDatatype.CommentThread && !row.isResolvedCommentThread;
   }
 
-  private getActiveCommentThreadPositionData(): { count: number; byRowIndex: Map<number, number> } {
+  private getActiveCommentThreadPositionData(): { count: number; byRowIndex: Map<number, number>; hasActiveConversation: boolean } {
     const byRowIndex = new Map<number, number>();
     let position = 0;
+    let hasActiveConversation = false;
 
     for (let i = 0; i < this.codePanelRowData.length; i++) {
       const row = this.codePanelRowData[i];
       if (this.isActiveCommentThread(row)) {
         position++;
         byRowIndex.set(i, position);
+        if (!hasActiveConversation && row.comments && row.comments.length > 0) {
+          hasActiveConversation = true;
+        }
       }
     }
 
-    return { count: position, byRowIndex };
+    return { count: position, byRowIndex, hasActiveConversation };
   }
 
   getActiveCommentThreadPosition(index: number, item: CodePanelRowData): number | null {
@@ -181,11 +186,11 @@ export class CodePanelComponent implements OnChanges {
       return null;
     }
 
-    return this.getActiveCommentThreadPositionData().byRowIndex.get(index) ?? null;
+    return this._threadPositionCache.byRowIndex.get(index) ?? null;
   }
 
   getActiveCommentThreadCount(): number {
-    return this.getActiveCommentThreadPositionData().count;
+    return this._threadPositionCache.count;
   }
 
   getRowClassObject(row: CodePanelRowData) {
@@ -473,6 +478,9 @@ export class CodePanelComponent implements OnChanges {
 
     this.codePanelRowData = filteredData;
     await this.codePanelRowSource?.adapter?.remove({ indexes: indexesToRemove });
+
+    // Keep header/comment-nav totals in sync when diagnostics are toggled off.
+    this.emitCommentNavigationState();
   }
 
   /**
@@ -481,6 +489,8 @@ export class CodePanelComponent implements OnChanges {
   async insertDiagnosticCommentThreads() {
     if (!this.codePanelData?.nodeMetaData) return;
     await this.codePanelRowSource?.adapter?.relax();
+
+    const nextRowData = [...this.codePanelRowData];
 
     for (const [nodeIdHashed, nodeMetaData] of Object.entries(this.codePanelData.nodeMetaData)) {
       if (!nodeMetaData.commentThread) continue;
@@ -492,15 +502,20 @@ export class CodePanelComponent implements OnChanges {
           if (!this.isDiagnosticCommentThread(thread)) continue;
 
           thread.rowClasses = new Set<string>(thread.rowClasses as any);
-          const insertIndex = this.findInsertIndexForThread(nodeIdHashed, parseInt(rowPosition));
+          const insertIndex = this.findInsertIndexForThread(nodeIdHashed, parseInt(rowPosition), nextRowData);
 
           if (insertIndex >= 0) {
-            this.codePanelRowData.splice(insertIndex, 0, thread);
-            await this.codePanelRowSource?.adapter?.insert({ beforeIndex: insertIndex, items: [thread] });
+            nextRowData.splice(insertIndex, 0, thread);
           }
         }
       }
     }
+
+    this.codePanelRowData = nextRowData;
+    await this.codePanelRowSource?.adapter?.reload();
+
+    // Keep header/comment-nav totals in sync when diagnostics are toggled on.
+    this.emitCommentNavigationState();
   }
 
   private isDiagnosticCommentThread(row: CodePanelRowData): boolean {
@@ -508,15 +523,15 @@ export class CodePanelComponent implements OnChanges {
       row.comments?.some(c => c.commentSource === CommentSource.Diagnostic) === true;
   }
 
-  private findInsertIndexForThread(nodeIdHashed: string, rowPosition: number): number {
-    for (let i = 0; i < this.codePanelRowData.length; i++) {
-      const row = this.codePanelRowData[i];
+  private findInsertIndexForThread(nodeIdHashed: string, rowPosition: number, rows: CodePanelRowData[] = this.codePanelRowData): number {
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
       if (row.nodeIdHashed === nodeIdHashed && row.rowPositionInGroup === rowPosition) {
         let insertIndex = i + 1;
         // Skip existing comment threads at this position
-        while (insertIndex < this.codePanelRowData.length &&
-               this.codePanelRowData[insertIndex].type === CodePanelRowDatatype.CommentThread &&
-               this.codePanelRowData[insertIndex].nodeIdHashed === nodeIdHashed) {
+        while (insertIndex < rows.length &&
+               rows[insertIndex].type === CodePanelRowDatatype.CommentThread &&
+               rows[insertIndex].nodeIdHashed === nodeIdHashed) {
           insertIndex++;
         }
         return insertIndex;
@@ -980,22 +995,26 @@ export class CodePanelComponent implements OnChanges {
     if (foundIndex !== undefined) {
       this.commentThreadNavigationPointer = foundIndex;
       this.scrollToCommentThread(foundIndex);
-      this.emitCommentNavigationState();
+      this.emitCommentNavigationState(false);
     }
     else {
       this.messageService.add({ severity: 'info', icon: 'bi bi-info-circle', summary: 'Comment Navigation', detail: 'No active comment threads to navigate to.', key: 'bc', life: 3000 });
-      this.emitCommentNavigationState();
+      this.emitCommentNavigationState(false);
     }
   }
 
-  private emitCommentNavigationState(): void {
-    const activeThreadData = this.getActiveCommentThreadPositionData();
-    const totalCount = activeThreadData.count;
+  private emitCommentNavigationState(rebuildCache = true): void {
+    if (rebuildCache || this._threadPositionCache.count === 0) {
+      this._threadPositionCache = this.getActiveCommentThreadPositionData();
+      this.hasActiveConversationEmitter.emit(this._threadPositionCache.hasActiveConversation);
+    }
+
+    const totalCount = this._threadPositionCache.count;
     let currentIndex = 0;
 
     if (totalCount > 0) {
       if (this.commentThreadNavigationPointer !== undefined) {
-        currentIndex = activeThreadData.byRowIndex.get(this.commentThreadNavigationPointer) ?? 1;
+        currentIndex = this._threadPositionCache.byRowIndex.get(this.commentThreadNavigationPointer) ?? 1;
       } else {
         // Show first available thread as current until explicit nav occurs.
         currentIndex = 1;
@@ -1336,6 +1355,7 @@ export class CodePanelComponent implements OnChanges {
 
     const rowClasses = this.ensureRowClassesSet(row);
     rowClasses.add('active');
+    this._lastHighlightedRowIndex = targetIndex;
 
     const scrollIndex = Math.max(targetIndex - 2, 0);
 
@@ -1368,13 +1388,12 @@ export class CodePanelComponent implements OnChanges {
   }
 
   private clearNavigationHighlight(): void {
-    for (const row of this.codePanelRowData) {
-      if (row.rowClasses) {
-        const rowClasses = this.ensureRowClassesSet(row);
-        if (rowClasses.has('active')) {
-          rowClasses.delete('active');
-        }
+    if (this._lastHighlightedRowIndex !== undefined) {
+      const row = this.codePanelRowData[this._lastHighlightedRowIndex];
+      if (row && row.rowClasses) {
+        row.rowClasses.delete('active');
       }
+      this._lastHighlightedRowIndex = undefined;
     }
   }
 
@@ -1406,19 +1425,6 @@ export class CodePanelComponent implements OnChanges {
       index--;
     }
     return undefined;
-  }
-
-  private updateHasActiveConversations() {
-    let hasActiveConversation = false;
-    for (let row of this.codePanelRowData) {
-      if (row.type === CodePanelRowDatatype.CommentThread) {
-        if (row.comments && row.comments.length > 0 && row.isResolvedCommentThread === false) {
-          hasActiveConversation = true;
-          break;
-        }
-      }
-    }
-    this.hasActiveConversationEmitter.emit(hasActiveConversation);
   }
 
   private loadCodePanelViewPort() {
@@ -1464,7 +1470,6 @@ export class CodePanelComponent implements OnChanges {
         this.updateItemInScroller(commentThread);
       }
     }
-    this.updateHasActiveConversations();
   }
 
   private updateCommentSeverity(commentId: string, newSeverity: CommentSeverity) {
@@ -1502,7 +1507,6 @@ export class CodePanelComponent implements OnChanges {
       const newRow = insertNewThread();
       nodeMetaData.commentThread[position!] = [newRow];
       this.insertItemsIntoScroller([newRow], nodeIdHashed!, CodePanelRowDatatype.CodeLine, position!, "toggleCommentsClasses", "can-show", "show");
-      this.updateHasActiveConversations();
       this.emitCommentNavigationState();
       return;
     }
@@ -1526,13 +1530,11 @@ export class CodePanelComponent implements OnChanges {
         if (idx !== -1) threads[idx] = updatedThread;
 
         this.updateItemInScroller(updatedThread);
-        this.updateHasActiveConversations();
         this.emitCommentNavigationState();
       } else {
         const newRow = insertNewThread();
         threads.push(newRow);
         this.insertItemsIntoScroller([newRow], nodeIdHashed!, CodePanelRowDatatype.CodeLine, position!, "toggleCommentsClasses", "can-show", "show");
-        this.updateHasActiveConversations();
         this.emitCommentNavigationState();
       }
     } else {
@@ -1540,7 +1542,6 @@ export class CodePanelComponent implements OnChanges {
       const newRow = insertNewThread();
       threadsByPosition[position!].push(newRow);
       this.insertItemsIntoScroller([newRow], nodeIdHashed!, CodePanelRowDatatype.CodeLine, position!, "toggleCommentsClasses", "can-show", "show");
-      this.updateHasActiveConversations();
       this.emitCommentNavigationState();
     }
   }
@@ -1550,14 +1551,12 @@ export class CodePanelComponent implements OnChanges {
 
     const nodeMetaData = this.codePanelData?.nodeMetaData?.[nodeIdHashed!];
     if (!nodeMetaData?.commentThread?.[position!]) {
-      this.updateHasActiveConversations();
       return;
     }
     const threads = nodeMetaData.commentThread[position!];
     const thread = this.findCommentThread(threads, threadId);
 
     if (!thread) {
-      this.updateHasActiveConversations();
       return;
     }
 
@@ -1576,7 +1575,6 @@ export class CodePanelComponent implements OnChanges {
 
       this.updateItemInScroller(updated);
     }
-    this.updateHasActiveConversations();
     this.emitCommentNavigationState();
   }
 
@@ -1645,14 +1643,12 @@ export class CodePanelComponent implements OnChanges {
       }
     }
 
-    this.updateHasActiveConversations();
     this.emitCommentNavigationState();
   }
 
   private applyCommentResolutionUpdate(commentUpdates: CommentUpdatesDto) {
     const nodeMetaData = this.codePanelData?.nodeMetaData?.[commentUpdates.nodeIdHashed!];
     if (!nodeMetaData?.commentThread?.[commentUpdates.associatedRowPositionInGroup!]) {
-      this.updateHasActiveConversations();
       return;
     }
     const commentThreads = nodeMetaData.commentThread[commentUpdates.associatedRowPositionInGroup!];
@@ -1671,7 +1667,6 @@ export class CodePanelComponent implements OnChanges {
 
       this.updateItemInScroller({ ...commentThread });
     }
-    this.updateHasActiveConversations();
     this.emitCommentNavigationState();
   }
 

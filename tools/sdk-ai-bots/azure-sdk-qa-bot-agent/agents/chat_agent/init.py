@@ -40,6 +40,7 @@ from tools.github_mcp_tools import create_github_mcp_tool
 from skills.tenant_skills import create_tenant_skills
 from utils.azure_ai_foundry import (
     FoundryAgentSpanEnricher,
+    SpanAttributeTruncator,
     get_agent_client,
     get_project_client,
 )
@@ -119,9 +120,12 @@ async def main() -> None:
     # Init TracerProvider
     server.init_tracing()
     foundry_project_id = os.environ.get("AI_FOUNDRY_PROJECT_RESOURCE_ID", "")
-    if foundry_project_id:
-        provider = otel_trace.get_tracer_provider()
-        if hasattr(provider, "add_span_processor"):
+    provider = otel_trace.get_tracer_provider()
+    if hasattr(provider, "add_span_processor"):
+        # Truncate oversized span attributes so App Insights doesn't
+        # silently drop spans that exceed the 65 KB item limit.
+        provider.add_span_processor(SpanAttributeTruncator())
+        if foundry_project_id:
             provider.add_span_processor(
                 FoundryAgentSpanEnricher(foundry_project_id, agent_name, agent_id)
             )

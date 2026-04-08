@@ -98,6 +98,43 @@ def _get_token_provider():
     return _provider
 
 
+# App Insights rejects telemetry items > 65 536 bytes.  The agent
+# framework records full tool arguments/results as span attributes
+# (``gen_ai.content.prompt`` / ``tool.call.results`` etc.) which can
+# easily exceed this limit for knowledge-heavy tools.  This processor
+# truncates oversized string attributes in ``on_end`` *before* the
+# Azure Monitor exporter serialises them, so the span still gets
+# exported with a truncation marker instead of being silently dropped.
+_MAX_ATTR_VALUE_LEN = 8192  # 8 KB per attribute — well under the 65 KB item limit
+
+
+class SpanAttributeTruncator(SpanProcessor):
+    """Truncate large span attribute values so App Insights does not drop them."""
+
+    def __init__(self, max_len: int = _MAX_ATTR_VALUE_LEN) -> None:
+        self._max_len = max_len
+
+    def on_start(self, span, parent_context=None) -> None:  # noqa: D401
+        pass
+
+    def on_end(self, span) -> None:
+        raw_attrs = getattr(span, "_attributes", None)
+        if raw_attrs is None:
+            return
+        for key in list(raw_attrs.keys()):
+            val = raw_attrs.get(key)
+            if isinstance(val, str) and len(val) > self._max_len:
+                raw_attrs[key] = (
+                    val[: self._max_len] + f"... [truncated from {len(val)} chars]"
+                )
+
+    def shutdown(self) -> None:
+        pass
+
+    def force_flush(self, timeout_millis=None) -> bool:
+        return True
+
+
 class FoundryAgentSpanEnricher(SpanProcessor):
     """Enriches the top-level ``HostedAgents-*`` span emitted by the platform.
 

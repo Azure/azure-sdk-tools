@@ -257,6 +257,7 @@ class ChatService:
             answer=answer,
             references=references if references else None,
             full_context=full_context,
+            agent_conversation_id=agent_conversation_id,
         )
         if req.tenant_id != tenant:
             resp.route_tenant = tenant

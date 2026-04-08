@@ -154,11 +154,8 @@ async def handle_chat(req: ChatRequest):
         elapsed = time.perf_counter() - start
         record_chat_duration(tenant, elapsed, success=True)
         logger.info(
-            "Chat response: tenant=%s, conversation=%s, response_id=%s, elapsed=%.2fs",
-            tenant,
-            req.conversation_id,
-            resp.id,
-            elapsed,
+            "Chat response: %s",
+            resp.model_dump_json(exclude={"full_context"}),
         )
         return resp
     except Exception:

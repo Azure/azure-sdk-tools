@@ -28,9 +28,8 @@ from agent_framework.azure import AzureOpenAIResponsesClient
 from agent_framework.openai._responses_client import ReasoningOptions
 from azure.ai.agentserver.agentframework import from_agent_framework
 from opentelemetry import trace as otel_trace
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request as StarletteRequest
-from starlette.responses import JSONResponse as StarletteJSONResponse
+from opentelemetry._logs import get_logger_provider
+from opentelemetry.sdk._logs import LoggingHandler
 
 import config.app_config as app_config
 from config.app_config import get as cfg
@@ -80,7 +79,7 @@ async def main() -> None:
     await ensure_user_memory_store(project_client)
     memory_provider = MemoryContextProvider(project_client)
 
-    # Tools
+    # Init Tools
     knowledge_tools = KnowledgeTools()
     ado_mcp_tool = await create_ado_mcp_tool()
     azsdk_mcp_tool = await create_azsdk_mcp_tool()
@@ -97,7 +96,7 @@ async def main() -> None:
         web_search_tool,
     ]
 
-    # Tenant skills for progressive domain expertise disclosure
+    # Init Skills
     skills = create_tenant_skills()
     skills_provider = SkillsProvider(skills=skills)
 
@@ -117,12 +116,8 @@ async def main() -> None:
 
     server = from_agent_framework(agent)
 
-    # Let the agent-server create the TracerProvider & App Insights exporter.
+    # Init TracerProvider
     server.init_tracing()
-
-    # Inject microsoft.foundry.project.id as a span attribute so the
-    # Foundry Traces tab can find these spans.  Foundry injects
-    # AGENT_PROJECT_NAME into the container env; fall back to our own var.
     foundry_project_id = os.environ.get("AI_FOUNDRY_PROJECT_RESOURCE_ID", "")
     if foundry_project_id:
         provider = otel_trace.get_tracer_provider()
@@ -131,8 +126,19 @@ async def main() -> None:
                 FoundryAgentSpanEnricher(foundry_project_id, agent_name, agent_id)
             )
 
-    # run_async() calls init_tracing() again — it's a no-op because the
-    # provider is already configured (_executed_setup=True).
+    # Init LoggerProvider
+    try:
+        otel_log_handler = LoggingHandler(
+            level=logging.INFO,
+            logger_provider=get_logger_provider(),
+        )
+        logging.getLogger().addHandler(otel_log_handler)
+        logger.info(
+            "OTel logging bridge attached — Python logs will export to Application Insights"
+        )
+    except Exception as exc:
+        logger.warning("Failed to attach OTel logging bridge: %s", exc)
+
     await server.run_async()
 
 

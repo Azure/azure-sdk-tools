@@ -132,22 +132,8 @@ class FoundryAgentSpanEnricher(SpanProcessor):
                 return value
         return None
 
-    @staticmethod
-    def _is_agent_operation_span(span) -> bool:
-        attrs = getattr(span, "attributes", None) or {}
-        return attrs.get("gen_ai.operation.name") in {"chat", "invoke_agent"}
-
-    @staticmethod
-    def _normalize_operation_name(span) -> None:
-        attrs = getattr(span, "attributes", None) or {}
-        if attrs.get("gen_ai.operation.name") == "chat":
-            span.set_attribute("gen_ai.operation.name", "invoke_agent")
-
     def on_start(self, span, parent_context=None) -> None:
         """Enrich the span while it is still writable."""
-        if not self._is_agent_operation_span(span):
-            return
-        self._normalize_operation_name(span)
         span.set_attribute("microsoft.foundry.project.id", self._project_id)
         span.set_attribute("gen_ai.agent.name", self._agent_name)
         span.set_attribute("gen_ai.agent.id", self._agent_id)
@@ -158,7 +144,7 @@ class FoundryAgentSpanEnricher(SpanProcessor):
         conv = attrs.get("gen_ai.conversation.id")
         agent = attrs.get("gen_ai.agent.name")
         project = attrs.get("microsoft.foundry.project.id")
-        logger.debug(
+        logger.info(
             "Span ended: name=%s op=%s conv=%s agent=%s project=%s",
             span.name,
             op,

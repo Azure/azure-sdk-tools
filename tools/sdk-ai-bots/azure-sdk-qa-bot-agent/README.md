@@ -117,6 +117,56 @@ This launches the agent via `agentdev run` on `http://localhost:8088/` with `deb
 3. Install REST Client extension
 4. Run tests under `tests/api_test.rest` to verify the server is working.
 
+## Tracing & Debugging a Response
+
+When the bot replies in Teams, you can trace the full request lifecycle from response ID down to detailed logs according to the environment.
+
+**Deployed Environments**
+
+| Environment | Agent Playground | Application Insights |
+|-------------|-----------------|---------------------|
+| **Dev** | [Foundry Agent Playground](https://ai.azure.com/nextgen/r/oYiXpn5ERX2SYPKFTArKQg,azure-sdk-qa-bot-dev,,azuresdkqabot-dev-ai-resource,azuresdkqabot-ai/build/agents) | [azuresdkqabot-dev-agent](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Insights/components/azuresdkqabot-dev-agent/overview) |
+
+### 1. Find the Response ID
+
+Hover over the **sensitivity label** ("Confidential - Internal Use Only") on the bot's reply in Teams. The tooltip shows the **Response ID** (e.g. `caresp_005283a1231d4f8400Gkdhcn4jKwqSgwUzexr5wtwGJ3enyyLx`).
+
+![Find the Response ID from the sensitivity label tooltip](images/tracing_step1_response_id.png)
+
+### 2. Filter by Response ID in Foundry Traces
+
+Open the agent's **Traces** tab in Foundry portal. Paste the Response ID into the search box. This shows the matching conversation with Trace ID, duration, token usage, and status.
+
+![Filter by Response ID in the Foundry Traces tab](images/tracing_step2_foundry_traces.png)
+
+### 3. View Agent Processing Steps
+
+Click the **Trace ID** link to open the trace detail view. This shows the full span tree for the request — the top-level `HostedAgents-*` span and its children (Chat, Execute Tool, etc.) with timing and token counts.
+
+![Trace detail view showing the span tree](images/tracing_step3_span_tree.png)
+
+### 4. Investigate Detailed Logs in Application Insights
+
+To see the complete Python-level logs, copy the **Trace ID** from step 2 and query the Application Insights **Logs** blade:
+
+```kql
+traces
+| where operation_Id contains "<trace_id>"
+| order by timestamp
+```
+
+For example:
+
+```kql
+traces
+| where operation_Id contains "4f9f2b5ee998384adc57455df6208411"
+| order by timestamp
+```
+
+This returns all log records for that request — credential acquisition, agent session loading, conversation retrieval, tool calls, and any custom log messages — in chronological order.
+
+![Application Insights KQL query results](images/tracing_step4_app_insights_logs.png)
+
 ## Project Structure
 
 - `agents/` - Agent definition, instructions, and tool implementations

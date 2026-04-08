@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+from urllib.parse import urlparse
 
 from config.app_config import get as cfg
 from config.tenant_config import (
@@ -280,29 +281,53 @@ class ChatService:
         answer = text[: header_match.start()].rstrip()
         refs_block = text[header_match.end() :]
 
-        # Build a lookup from the tool results for enrichment
+        # Build lookups from the tool results for enrichment
         link_lookup: dict[str, Reference] = {}
+        path_lookup: dict[str, Reference] = {}
         title_lookup: dict[str, Reference] = {}
         if tool_references:
             for ref in tool_references:
                 if ref.link:
                     link_lookup[ref.link] = ref
+                    path = urlparse(ref.link).path.rstrip("/")
+                    if path:
+                        path_lookup[path] = ref
                 if ref.title:
                     title_lookup[ref.title] = ref
+
+        def _match_reference(link: str, title: str) -> Reference | None:
+            """Try exact link, URL path, then title matching."""
+            matched = link_lookup.get(link)
+            if matched:
+                return matched
+            matched = title_lookup.get(title)
+            if matched:
+                return matched
+            path = urlparse(link).path.rstrip("/")
+            if path:
+                matched = path_lookup.get(path)
+                if matched:
+                    return matched
+            return None
 
         # Extract markdown links: - [title](link)
         extracted: list[Reference] = []
         for m in re.finditer(r"-\s*\[([^\]]+)\]\(([^)]+)\)", refs_block):
             title = m.group(1).strip()
             link = m.group(2)
-            # Enrich from tool results
-            matched = link_lookup.get(link) or title_lookup.get(title)
+            matched = _match_reference(link, title)
+            source = matched.source if matched else ""
+            content = matched.content if matched else ""
+            # When the title from the knowledge base includes source info
+            # (e.g. "topic | source"), prefer that over the agent's title.
+            if matched and matched.title and matched.source:
+                title = matched.title
             extracted.append(
                 Reference(
                     title=title,
-                    source=matched.source if matched else "",
+                    source=source,
                     link=link,
-                    content=matched.content if matched else "",
+                    content=content,
                 )
             )
 

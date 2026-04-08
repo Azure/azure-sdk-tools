@@ -99,18 +99,19 @@ def _get_token_provider():
 
 
 class FoundryAgentSpanEnricher(SpanProcessor):
-    """Enriches container spans with Foundry-specific GenAI attributes.
+    """Enriches the top-level ``HostedAgents-*`` span emitted by the platform.
 
-    The Foundry Traces tab queries customDimensions for
-    ``microsoft.foundry.project.id``; the platform's server-side trace
-    already has it, but the Agent Framework trace (inside the container)
-    does not. This processor fills that gap.
+    The platform emits a root span named ``HostedAgents-<response_id>`` with
+    ``gen_ai.provider.name = "AzureAI Hosted Agents"`` and sets
+    ``azure.ai.agentserver.conversation_id`` — but **not**
+    ``gen_ai.conversation.id``.  Without the standard key the Foundry Traces
+    "Conversations" tab shows ``--``.
 
-    It injects agent attributes only on supported top-level GenAI operation
-    spans emitted by the runtime (``invoke_agent`` or ``chat``), and only when
-    a conversation id is present. When the runtime emits ``chat`` for the
-    top-level agent span, it is normalized to ``invoke_agent`` so the
-    Application Insights Agents view default filters can match it.
+    This processor copies the conversation id to the standard attribute in
+    ``on_end`` (after the platform has set it).  It does **not** touch child
+    ``chat`` or ``execute_tool`` spans — enriching those would create
+    duplicate rows in the Traces view because each carries a distinct
+    ``response_id``.
     """
 
     def __init__(self, project_id: str, agent_name: str, agent_id: str) -> None:
@@ -119,29 +120,29 @@ class FoundryAgentSpanEnricher(SpanProcessor):
         self._agent_id = agent_id
 
     @staticmethod
-    def _get_conversation_id(span) -> str | None:
+    def _is_hosted_agent_span(span) -> bool:
+        """Return True for the platform's top-level span."""
         attrs = getattr(span, "attributes", None) or {}
-        for key in (
-            "gen_ai.conversation.id",
-            "gen_ai.request.conversation.id",
-            "conversation.id",
-            "azure.ai.agentserver.conversation_id",
-        ):
-            value = attrs.get(key)
-            if isinstance(value, str) and value.strip():
-                return value
-        return None
+        return (
+            attrs.get("gen_ai.provider.name") == "AzureAI Hosted Agents"
+            or attrs.get("gen_ai.operation.name") == "invoke_agent"
+        )
 
     def on_start(self, span, parent_context=None) -> None:
-        """Enrich the span while it is still writable."""
+        """Inject Foundry attributes on the top-level span."""
+        if not self._is_hosted_agent_span(span):
+            return
         span.set_attribute("microsoft.foundry.project.id", self._project_id)
         span.set_attribute("gen_ai.agent.name", self._agent_name)
         span.set_attribute("gen_ai.agent.id", self._agent_id)
 
     def on_end(self, span) -> None:
+        # Diagnostic logging for all spans
         attrs = getattr(span, "attributes", None) or {}
         op = attrs.get("gen_ai.operation.name")
-        conv = attrs.get("gen_ai.conversation.id")
+        conv = attrs.get("gen_ai.conversation.id") or attrs.get(
+            "azure.ai.agentserver.conversation_id"
+        )
         agent = attrs.get("gen_ai.agent.name")
         project = attrs.get("microsoft.foundry.project.id")
         logger.info(

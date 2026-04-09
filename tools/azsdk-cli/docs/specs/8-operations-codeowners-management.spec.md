@@ -248,7 +248,7 @@ In this example, `Storage` exists as a label entity but is not attached to the p
   - Primary label (labels are sorted alphabetically)
   - Path
 
-Sorting has the effect of grouping similar service-level entries together with package entires sorting later than service-level entries. (e.g. `/sdk/contoso` comes before `/sdk/contoso/widget-manager`)
+Sorting has the effect of grouping similar service-level entries together with package entries sorting later than service-level entries. (e.g. `/sdk/contoso` comes before `/sdk/contoso/widget-manager`)
 
 Sorting is implemented in `CodeownersEntrySorter.cs`.
 

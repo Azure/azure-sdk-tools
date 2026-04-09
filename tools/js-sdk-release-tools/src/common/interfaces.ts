@@ -5,5 +5,5 @@ export interface IApiVersionTypeExtractor {
 }
 
 export interface IModelOnlyChecker {
-    (packageRoot: string): Promise<boolean>;
+    (packageRoot: string, isBetaRelease?: boolean): Promise<boolean>;
 }

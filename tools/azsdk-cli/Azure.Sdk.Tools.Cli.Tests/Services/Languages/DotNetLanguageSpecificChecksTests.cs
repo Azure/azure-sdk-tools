@@ -695,8 +695,10 @@ public partial class TestClient
     [TestCase(TestMode.Playback, "playback")]
     [TestCase(TestMode.Record, "record")]
     [TestCase(TestMode.Live, "live")]
-    public async Task RunAllTests_SetsCorrectTestModeEnvironmentVariables(TestMode testMode, string expectedEnvValue)
+    public async Task RunAllTests_WhenFrameworkUnknown_SetsBothTestModeEnvironmentVariables(TestMode testMode, string expectedEnvValue)
     {
+        // No .csproj files in the temp directory, so framework detection returns Unknown
+        // and both AZURE_TEST_MODE and CLIENTMODEL_TEST_MODE should be set.
         var processResult = new ProcessResult { ExitCode = 0 };
         processResult.AppendStdout("Tests passed!");
 

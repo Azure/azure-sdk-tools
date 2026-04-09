@@ -360,7 +360,12 @@ class ClassNode(NodeEntityBase):
         # to avoid repeated filesystem reads for every member of the class.
         # Use getsourcefile (O(1)) rather than getsource (O(N_lines) for classes) to avoid
         # re-introducing the slow linear scan that _get_class_source was designed to replace.
-        self._class_has_source = inspect.getsourcefile(self.obj) is not None
+        # In Python 3.14+, NewType objects are not classes/functions and raise TypeError in
+        # inspect.getfile(), so we guard here.
+        try:
+            self._class_has_source = inspect.getsourcefile(self.obj) is not None
+        except TypeError:
+            self._class_has_source = False
 
         # find members in node
         # enums with duplicate values are screened out by "getmembers" so

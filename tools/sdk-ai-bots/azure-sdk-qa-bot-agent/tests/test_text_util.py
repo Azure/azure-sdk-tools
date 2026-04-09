@@ -88,9 +88,9 @@ def test_clean_html_tags_strips_non_link_html() -> None:
 
 
 def test_preprocess_message_preserves_pr_url() -> None:
-    """Full pipeline should keep the PR URL in markdown format."""
+    """Full pipeline should keep the PR URL in markdown format with original casing."""
     result = preprocess_message(TEAMS_HTML_WITH_PR_LINK)
-    assert "https://github.com/azure/azure-rest-api-specs/pull/41376" in result
+    assert "https://github.com/Azure/azure-rest-api-specs/pull/41376" in result
 
 
 def test_preprocess_message_applies_keyword_replacement() -> None:

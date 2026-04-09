@@ -131,13 +131,13 @@ def replace_keywords(text: str) -> str:
 
     Keywords are matched as whole words surrounded by spaces, matching
     the Go backend behaviour (`` " keyword " `` -> `` " replacement " ``).
+    Case-insensitive matching but preserves original casing of non-keyword text.
     """
-    lowered = text.lower()
-
     for keyword, replacement in COMMON_KEYWORD_REPLACE_MAP.items():
-        lowered = lowered.replace(f" {keyword} ", f" {replacement} ")
+        pattern = re.compile(re.escape(f" {keyword} "), re.IGNORECASE)
+        text = pattern.sub(f" {replacement} ", text)
 
-    return lowered
+    return text
 
 
 # ---------------------------------------------------------------------------

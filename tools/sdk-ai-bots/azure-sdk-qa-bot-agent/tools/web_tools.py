@@ -19,8 +19,8 @@ from models.web import FetchWebpageResult
 from tools import tool
 
 _DEFAULT_TIMEOUT_SECONDS = 15
-_DEFAULT_MAX_CHARS = 12000
-_MAX_ALLOWED_CHARS = 40000
+_DEFAULT_MAX_CHARS = 6000
+_MAX_ALLOWED_CHARS = 20000
 
 
 class _HtmlOutlineParser(HTMLParser):

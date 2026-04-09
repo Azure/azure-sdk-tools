@@ -25,13 +25,25 @@ This document describes how the JS SDK release automation pipeline works, coveri
 
 The package exposes the following CLI commands (defined in `package.json` `bin`):
 
+#### AutoPR / Release Pipeline
+
 | Command | Source File | Parameters | Description |
 |---|---|---|---|
 | `code-gen-pipeline` | [`src/autoGenerateInPipeline.ts`](../src/autoGenerateInPipeline.ts) | `--inputJsonPath`, `--outputJsonPath`, `--use`, `--typespecEmitter`, `--sdkGenerationType`, `--local` | Main automation entry point; used by the AutoPR release pipeline to generate and package SDK code end-to-end |
 | `hlc-code-gen-for-pipeline` | [`src/autoGenerateInPipeline.ts`](../src/autoGenerateInPipeline.ts) | *(same as above)* | Alias for `code-gen-pipeline` (legacy HLC-specific name) |
+
+#### Local Development Tools
+
+| Command | Source File | Parameters | Description |
+|---|---|---|---|
 | `hlc-code-gen` | [`src/hlcCodeGenCli.ts`](../src/hlcCodeGenCli.ts) | see [hlc.md](./hlc.md) | Local HLC (management-plane) code generation from swagger/README |
 | `rlc-code-gen` | [`src/rlcCodegenCli.ts`](../src/rlcCodegenCli.ts) | see [llc.md](./llc.md) | Local RLC (data-plane) code generation |
 | `changelog-tool` | [`src/changelogToolCli.ts`](../src/changelogToolCli.ts) | see [changelog-tool.md](./changelog-tool.md) | Generate changelog by comparing api.md against published npm package |
+
+#### Dev Loop Experience
+
+| Command | Source File | Parameters | Description |
+|---|---|---|---|
 | `update-changelog` | [`src/generateChangelogCli.ts`](../src/generateChangelogCli.ts) | `--sdkRepoPath`, `--packagePath` | Regenerates `CHANGELOG.md` only (does not bump version) |
 | `update-version` | [`src/updateBumpVersionCli.ts`](../src/updateBumpVersionCli.ts) | `--sdkRepoPath`, `--packagePath`, `--releaseType`, `--version`, `--releaseDate` | Updates `package.json` version only (does not rewrite changelog) |
 | `generate-ci-yaml` | [`src/generateCiYamlCli.ts`](../src/generateCiYamlCli.ts) | `--sdkRepoPath`, `--packagePath` | Creates or updates the `ci.yml` / `ci.mgmt.yml` file for a package |

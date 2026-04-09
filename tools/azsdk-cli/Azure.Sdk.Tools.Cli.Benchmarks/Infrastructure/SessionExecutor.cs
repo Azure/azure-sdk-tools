@@ -156,7 +156,6 @@ public class SessionExecutor : IDisposable
             {
                 Completed = true,
                 Duration = stopwatch.Elapsed,
-                Messages = messages.Cast<object>().ToList(),
                 ToolCalls = toolCalls,
                 InputQuestionAndAnswers = inputQAs,
                 TokenUsage = tokenUsage

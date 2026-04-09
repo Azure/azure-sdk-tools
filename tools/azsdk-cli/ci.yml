@@ -81,6 +81,7 @@ extends:
         - job: Run_Benchmark
           displayName: 'Run Benchmark'
           condition: always()
+          timeoutInMinutes: 150
           variables:
             - group: 'AzSDK_Eval_Variable_group'
           pool:
@@ -146,7 +147,7 @@ extends:
               targetType: 'inline'
               workingDirectory: '$(System.DefaultWorkingDirectory)/$(Build.Repository.Name)/tools/azsdk-cli/Azure.Sdk.Tools.Cli.Benchmarks'
               pwsh: true
-              script: dotnet run -- run --all --parallel 5 --cleanup "always" --repo "$env:AUTHORING_SPEC_REPO" --report --output "$(Build.ArtifactStagingDirectory)/benchmark-report.md"
+              script: dotnet run -- run --all --parallel 1 --cleanup "always" --repo "$env:AUTHORING_SPEC_REPO" --report --output "$(Build.ArtifactStagingDirectory)/benchmark-report.md"
             env:
               DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
               DOTNET_CLI_TELEMETRY_OPTOUT: 1

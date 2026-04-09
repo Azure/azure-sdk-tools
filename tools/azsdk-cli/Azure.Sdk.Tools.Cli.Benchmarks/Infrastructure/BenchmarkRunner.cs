@@ -147,7 +147,6 @@ public class BenchmarkRunner : IDisposable
                 Passed = passed,
                 Error = execResult.Error,
                 Duration = stopwatch.Elapsed,
-                GitDiff = gitDiff,
                 ToolCalls = execResult.ToolCalls,
                 WorkspacePath = workspace.RootPath,
                 WorkspaceCleanedUp = willCleanup,

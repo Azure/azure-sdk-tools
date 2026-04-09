@@ -61,6 +61,11 @@ class SearchClient:
             credential=self._credential,
         )
 
+    @property
+    def top_k(self) -> int:
+        """The configured top-k result limit."""
+        return self._top_k
+
     async def agentic_search(
         self,
         query: str,

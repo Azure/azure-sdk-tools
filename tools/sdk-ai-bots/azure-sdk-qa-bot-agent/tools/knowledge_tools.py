@@ -151,11 +151,20 @@ class KnowledgeTools:
             len(raw_chunks),
         )
 
-        # Deduplicate across all search results, then expand once
+        # Deduplicate across all search results
         unique_chunks = search_client.deduplicate_chunks(raw_chunks)
 
+        # Reorder by rerank_score descending and cap at top_k
+        unique_chunks.sort(key=lambda c: c.rerank_score, reverse=True)
+        top_k = search_client.top_k
+        if len(unique_chunks) > top_k:
+            logger.info(
+                "Capping results from %d to %d (top_k)", len(unique_chunks), top_k
+            )
+            unique_chunks = unique_chunks[:top_k]
+
         logger.info(
-            "After deduplication: %d unique chunks (from %d raw)",
+            "After deduplication + rerank: %d chunks (from %d raw)",
             len(unique_chunks),
             len(raw_chunks),
         )
@@ -169,17 +178,24 @@ class KnowledgeTools:
         logger.info("=========Final Search Result=========")
         refs = [
             Reference(
-                title=_build_reference_title(k.title, k.header1, k.header2, k.header3),
-                source=k.source,
-                link=k.link,
-                content=k.content,
+                title=_build_reference_title(
+                    expanded[i].title,
+                    expanded[i].header1,
+                    expanded[i].header2,
+                    expanded[i].header3,
+                ),
+                source=expanded[i].source,
+                link=expanded[i].link,
+                content=expanded[i].content,
+                score=unique_chunks[i].rerank_score,
             )
-            for k in expanded
+            for i in range(len(expanded))
         ]
         for i, ref in enumerate(refs):
             logger.info(
-                "Result [%d] source=%s, title=%s, link=%s, content_len=%d",
+                "Result [%d] score=%.2f, source=%s, title=%s, link=%s, content_len=%d",
                 i + 1,
+                ref.score,
                 ref.source,
                 ref.title,
                 ref.link,

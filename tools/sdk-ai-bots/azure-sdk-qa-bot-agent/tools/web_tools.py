@@ -187,6 +187,12 @@ class WebTools:
         normalized_url = (url or "").strip()
         if not _is_public_url(normalized_url):
             raise ValueError("Only public http/https URLs are allowed.")
+        _host = urlparse(normalized_url).hostname or ""
+        if _host in ("github.com", "api.github.com", "raw.githubusercontent.com"):
+            raise ValueError(
+                "GitHub URLs are not allowed via web_fetch. "
+                "Use the GitHub MCP tools instead."
+            )
 
         bounded_max_chars = max(1000, min(int(max_chars), _MAX_ALLOWED_CHARS))
         return await asyncio.to_thread(_fetch_sync, normalized_url, bounded_max_chars)

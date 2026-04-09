@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field, field_validator
 # Knowledge source definition
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class KnowledgeSource:
     """A searchable knowledge source in Azure AI Search.
@@ -66,6 +67,7 @@ def _trim_file_format(path: str) -> str:
 # Search result models
 # ---------------------------------------------------------------------------
 
+
 class KnowledgeChunk(BaseModel):
     """A single chunk returned from Azure AI Search.
 
@@ -99,12 +101,15 @@ class KnowledgeResult(BaseModel):
     link: str
     content: str
 
+
 class Reference(BaseModel):
     """A reference to a document used to generate the answer."""
+
     title: str
     source: str
     link: str
     content: str = ""
+    score: float = 0.0
 
     @field_validator("title", mode="after")
     @classmethod
@@ -112,6 +117,8 @@ class Reference(BaseModel):
         """Strip trailing pipe characters the LLM copies from search index titles."""
         return v.strip().rstrip("| ").strip()
 
+
 class SearchKnowledgeBaseResult(BaseModel):
     """Output of the search_knowledge_base tool call."""
+
     results: list[Reference] = []

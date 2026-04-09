@@ -5,12 +5,28 @@ using Octokit;
 
 namespace Azure.Sdk.Tools.Cli.Services.SLA;
 
+/// <summary>
+/// Core SLA metrics computation service. Fetches GitHub issues by service label,
+/// categorizes them by type (customer-reported, bug, question), and computes
+/// compliance against configured SLA thresholds.
+///
+/// Data flow:
+///   1. Query issues from GitHub API by service label + lookback window
+///   2. Categorize each issue by its labels (customer-reported → FQR, bug, question)
+///   3. For customer-reported issues, fetch comments to find first team response
+///   4. Compute per-metric compliance (within SLA, approaching, breached)
+///   5. Return structured response with actionable issue lists
+/// </summary>
 public class SLAMetricsService(
     IGitHubService gitHubService,
     ISLAConfigProvider config,
     ILogger<SLAMetricsService> logger
 ) : ISLAMetricsService
 {
+    /// <summary>
+    /// GitHub author_association values that indicate a comment is from a team member.
+    /// MEMBER = org member, COLLABORATOR = outside collaborator with access, OWNER = repo owner.
+    /// </summary>
     private static readonly HashSet<string> TeamAssociationValues = new(StringComparer.OrdinalIgnoreCase)
     {
         "MEMBER",
@@ -30,6 +46,8 @@ public class SLAMetricsService(
         var since = DateTimeOffset.UtcNow.AddDays(-lookbackDays);
         var now = DateTimeOffset.UtcNow;
 
+        // Step 1: Fetch issues from each repo matching the service label within the lookback window.
+        // Errors on individual repos are logged and skipped (partial results are better than none).
         var allIssues = new List<(Issue Issue, string RepoName)>();
 
         foreach (var repoName in repos)
@@ -51,6 +69,8 @@ public class SLAMetricsService(
             }
         }
 
+        // Step 2: Categorize issues by label into the three SLA metric buckets.
+        // An issue can appear in multiple buckets (e.g., customer-reported + bug).
         var fqrIssues = new List<(Issue Issue, string Repo, IssueComment? FirstTeamComment)>();
         var bugIssues = new List<(Issue Issue, string Repo)>();
         var questionIssues = new List<(Issue Issue, string Repo)>();
@@ -100,6 +120,8 @@ public class SLAMetricsService(
             }
         }
 
+        // Step 3: Compute SLA metrics for each bucket.
+        // The approaching/breached lists are populated as side effects by each metric computation.
         var approaching = new List<SLAIssueDetail>();
         var breached = new List<SLAIssueDetail>();
 
@@ -128,6 +150,19 @@ public class SLAMetricsService(
         };
     }
 
+    /// <summary>
+    /// Computes the First Question Response (FQR) metric.
+    /// FQR measures how quickly a team member responds to a customer-reported issue.
+    /// Uses business days (Mon-Fri) for threshold comparison.
+    ///
+    /// Classification logic per issue:
+    ///   - Has team comment within threshold → within SLA
+    ///   - Has team comment beyond threshold → breached
+    ///   - Open, no team comment, within threshold → within SLA
+    ///   - Open, no team comment, approaching threshold → approaching
+    ///   - Open, no team comment, past threshold → breached
+    ///   - Closed without any team comment → breached
+    /// </summary>
     private SLAMetricSummary ComputeFQRMetric(
         List<(Issue Issue, string Repo, IssueComment? FirstTeamComment)> issues,
         DateTimeOffset now,
@@ -202,6 +237,16 @@ public class SLAMetricsService(
         };
     }
 
+    /// <summary>
+    /// Computes a resolution-time SLA metric (used for both Bug Resolution and Question Resolution).
+    /// Uses calendar days for threshold comparison.
+    ///
+    /// Classification logic per issue:
+    ///   - Closed within threshold days → within SLA
+    ///   - Closed beyond threshold days → breached
+    ///   - Open, age within threshold → within SLA (or approaching if near threshold)
+    ///   - Open, age beyond threshold → breached
+    /// </summary>
     private SLAMetricSummary ComputeResolutionMetric(
         string metricName,
         int thresholdDays,
@@ -271,6 +316,10 @@ public class SLAMetricsService(
         };
     }
 
+    /// <summary>
+    /// Creates an SLAIssueDetail for the approaching/breached lists.
+    /// daysRemaining is positive for approaching issues, negative for breached.
+    /// </summary>
     private static SLAIssueDetail CreateIssueDetail(Issue issue, string repo, string status, string metricType, double daysRemaining)
     {
         return new SLAIssueDetail
@@ -287,6 +336,11 @@ public class SLAMetricsService(
         };
     }
 
+    /// <summary>
+    /// Determines if a comment was posted by a team member (not a bot).
+    /// Checks the GitHub author_association field against known team values,
+    /// and excludes bot accounts (usernames ending in "[bot]").
+    /// </summary>
     private static bool IsTeamMember(IssueComment comment)
     {
         if (comment.User?.Login?.EndsWith("[bot]", StringComparison.OrdinalIgnoreCase) == true)

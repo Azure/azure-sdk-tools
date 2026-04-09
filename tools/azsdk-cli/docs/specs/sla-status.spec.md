@@ -11,7 +11,6 @@
 - [Success Criteria](#success-criteria)
 - [Agent Prompts](#agent-prompts)
 - [CLI Commands](#cli-commands)
-- [Implementation Plan](#implementation-plan)
 - [Testing Strategy](#testing-strategy)
 - [Metrics/Telemetry](#metricstelemetry)
 
@@ -314,26 +313,6 @@ SLA Status: KeyVault — azure-sdk-for-python (last 180 days)
 Error: Service label "FooBar" not found in azure-sdk-for-python.
 Available labels: KeyVault, Storage, EventHubs, ...
 ```
-
----
-
-## Implementation Plan
-
-### Phase 1: Core SLA Status Tool
-
-- Define `ISLAConfigProvider` with default thresholds and repo mappings
-- Extend `IGitHubService` with issue search and comment listing
-- Implement `ISLAMetricsService` with FQR, bug, and question resolution computation
-- Implement `SLAStatusTool` with CLI + MCP dual interface
-- Register services and add to tool list
-- Unit tests with mocked GitHub responses
-
-### Phase 2: Automation & Notifications (future — [#14116](https://github.com/Azure/azure-sdk-tools/issues/14116))
-
-- Kusto integration behind `ISLADataProvider` interface
-- `azsdk sla approaching` filtered view
-- GitHub issue comment notifications for approaching SLA
-- Historical trend reporting
 
 ---
 

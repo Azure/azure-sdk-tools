@@ -60,6 +60,22 @@ describe("Change log for first release package", () => {
         expect(content).toBe("Initial release of the @azure/arm-test package");
     });
 
+    test("ModularClient ManagementPlane -> firstGA", async () => {
+        const root = path.join(__dirname, "testCases/arm-modular-first-release/");
+        const content = getFirstReleaseContent(root, true);
+        expect(content).toBe(
+            "This is the first stable release of the @azure/arm-test package. It introduces a new SDK generation with layered APIs, smaller bundles, and improved ergonomics. For more details, see the https://aka.ms/azsdk/js/sdk/quickstart.",
+        );
+    });
+
+    test("ModularClient ManagementPlane -> firstBeta", async () => {
+        const root = path.join(__dirname, "testCases/arm-modular-first-release/");
+        const content = getFirstReleaseContent(root, false);
+        expect(content).toBe(
+            "This is the first preview release of the @azure/arm-test package. It introduces a new SDK generation with layered APIs, smaller bundles, and improved ergonomics. For more details, see the https://aka.ms/azsdk/js/sdk/quickstart.",
+        );
+    });
+
     test("HLC -> firstGA", async () => {
         const root = path.join(__dirname, "testCases/hlc-first-release/");
         const content = getFirstReleaseContent(root, true);

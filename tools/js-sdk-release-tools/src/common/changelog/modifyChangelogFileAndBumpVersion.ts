@@ -4,8 +4,9 @@ import { UpdateMode } from "./automaticGenerateChangeLogAndBumpVersion.js";
 import fs from 'fs';
 import * as path from 'path';
 import { getSDKType } from "../utils.js";
-import { SDKType } from "../types.js";
+import { ModularSDKType, SDKType } from "../types.js";
 import { isBetaVersion } from "../../utils/version.js";
+import { getModularSDKType } from "../../utils/generateInputUtils.js";
 
 function escapeRegex(str: string): string {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -19,6 +20,11 @@ export function getFirstReleaseContent(packageFolderPath: string, isStableReleas
     const hlcClientContent = `The package of ${packageJsonData.name} is using our next generation design principles. To learn more, please refer to our documentation [Quick Start](https://aka.ms/azsdk/js/mgmt/quickstart).`
     switch (sdkType) {
         case SDKType.ModularClient:
+            if (getModularSDKType(packageFolderPath) === ModularSDKType.ManagementPlane) {
+                return isStableRelease
+                    ? `This is the first stable release of the ${packageJsonData.name} package. It introduces a new SDK generation with layered APIs, smaller bundles, and improved ergonomics. For more details, see the https://aka.ms/azsdk/js/sdk/quickstart.`
+                    : `This is the first preview release of the ${packageJsonData.name} package. It introduces a new SDK generation with layered APIs, smaller bundles, and improved ergonomics. For more details, see the https://aka.ms/azsdk/js/sdk/quickstart.`;
+            }
             return isStableRelease ? firstStableContent : firstBetaContent;
         case SDKType.HighLevelClient:
             return hlcClientContent;
@@ -69,12 +75,15 @@ export async function makeChangesForMigrateTrack1ToTrack2(
     updateMode: UpdateMode
 ) {
     const packageJsonData: any = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), 'utf8'));
-    const content = `# Release History
-    
-## ${nextPackageVersion} (${sdkReleaseDate})
-### Features Added
+    const sdkType = getSDKType(packageFolderPath);
+    let migrationContent: string;
+    if (sdkType === SDKType.ModularClient) {
+        migrationContent = `The ${packageJsonData.name} package has been upgraded to a new SDK generation that provides layered APIs, smaller bundles, and improved ergonomics. Starting from version ${nextPackageVersion}, this release includes breaking changes.
 
-The package of ${packageJsonData.name} is using our next generation design principles since version ${nextPackageVersion}, which contains breaking changes.
+To migrate existing applications, see the https://aka.ms/azsdk/js/sdk/migration. For more information, refer to the https://aka.ms/azsdk/js/sdk/quickstart.
+`;
+    } else {
+        migrationContent = `The package of ${packageJsonData.name} is using our next generation design principles since version ${nextPackageVersion}, which contains breaking changes.
 
 To understand the detail of the change, please refer to [Changelog](https://aka.ms/js-track2-changelog).
 
@@ -82,6 +91,13 @@ To migrate the existing applications to the latest version, please refer to [Mig
 
 To learn more, please refer to our documentation [Quick Start](https://aka.ms/azsdk/js/mgmt/quickstart).
 `;
+    }
+    const content = `# Release History
+    
+## ${nextPackageVersion} (${sdkReleaseDate})
+### Features Added
+
+${migrationContent}`;
     
     // Decide how to handle changelog based on update mode
     if (updateMode === UpdateMode.ChangelogOnly || updateMode === UpdateMode.Both) {

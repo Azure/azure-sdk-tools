@@ -7,15 +7,13 @@ This document describes how the JS SDK release automation pipeline works, coveri
 ## Table of Contents
 
 1. [Overall Architecture](#1-overall-architecture)
-2. [Common Pre-processing Flow](#2-common-pre-processing-flow)
-3. [Folder Cleanup Logic](#3-folder-cleanup-logic)
-4. [HighLevelClient (HLC) — Management Plane SDK](#4-highLevelclient-hlc--management-plane-sdk)
-5. [RestLevelClient (RLC) — REST Level Client](#5-restlevelclient-rlc--rest-level-client)
-6. [ModularClient (MLC) — Modular Client](#6-modularclient-mlc--modular-client)
-7. [Changelog & Version Bump (Common)](#7-changelog--version-bump-common)
-8. [Utility Operations Summary](#8-utility-operations-summary)
-9. [Output JSON Structure](#9-output-json-structure)
-10. [Overall Flow Diagram](#10-overall-flow-diagram)
+2. [Folder Cleanup Logic](#2-folder-cleanup-logic)
+3. [HighLevelClient (HLC) — Management Plane SDK](#3-highLevelclient-hlc--management-plane-sdk)
+4. [RestLevelClient (RLC) — REST Level Client](#4-restlevelclient-rlc--rest-level-client)
+5. [ModularClient (MLC) — Modular Client](#5-modularclient-mlc--modular-client)
+6. [Changelog & Version Bump (Common)](#6-changelog--version-bump-common)
+7. [Utility Operations Summary](#7-utility-operations-summary)
+8. [Output JSON Structure](#8-output-json-structure)
 
 ---
 
@@ -32,14 +30,6 @@ The package exposes the following CLI commands (defined in `package.json` `bin`)
 | `code-gen-pipeline` | [`src/autoGenerateInPipeline.ts`](../src/autoGenerateInPipeline.ts) | `--inputJsonPath`, `--outputJsonPath`, `--use`, `--typespecEmitter`, `--sdkGenerationType`, `--local` | Main automation entry point; used by the AutoPR release pipeline to generate and package SDK code end-to-end |
 | `hlc-code-gen-for-pipeline` | [`src/autoGenerateInPipeline.ts`](../src/autoGenerateInPipeline.ts) | *(same as above)* | Alias for `code-gen-pipeline` (legacy HLC-specific name) |
 
-#### Local Development Tools
-
-| Command | Source File | Parameters | Description |
-|---|---|---|---|
-| `hlc-code-gen` | [`src/hlcCodeGenCli.ts`](../src/hlcCodeGenCli.ts) | see [hlc.md](./hlc.md) | Local HLC (management-plane) code generation from swagger/README |
-| `rlc-code-gen` | [`src/rlcCodegenCli.ts`](../src/rlcCodegenCli.ts) | see [llc.md](./llc.md) | Local RLC (data-plane) code generation |
-| `changelog-tool` | [`src/changelogToolCli.ts`](../src/changelogToolCli.ts) | see [changelog-tool.md](./changelog-tool.md) | Generate changelog by comparing api.md against published npm package |
-
 #### Dev Loop Experience
 
 | Command | Source File | Parameters | Description |
@@ -47,6 +37,14 @@ The package exposes the following CLI commands (defined in `package.json` `bin`)
 | `update-changelog` | [`src/generateChangelogCli.ts`](../src/generateChangelogCli.ts) | `--sdkRepoPath`, `--packagePath` | Regenerates `CHANGELOG.md` only (does not bump version) |
 | `update-version` | [`src/updateBumpVersionCli.ts`](../src/updateBumpVersionCli.ts) | `--sdkRepoPath`, `--packagePath`, `--releaseType`, `--version`, `--releaseDate` | Updates `package.json` version only (does not rewrite changelog) |
 | `generate-ci-yaml` | [`src/generateCiYamlCli.ts`](../src/generateCiYamlCli.ts) | `--sdkRepoPath`, `--packagePath` | Creates or updates the `ci.yml` / `ci.mgmt.yml` file for a package |
+
+#### Local Code Generation
+
+| Command | Source File | Parameters | Description |
+|---|---|---|---|
+| `hlc-code-gen` | [`src/hlcCodeGenCli.ts`](../src/hlcCodeGenCli.ts) | see [hlc.md](./hlc.md) | Local HLC (management-plane) code generation from swagger/README |
+| `rlc-code-gen` | [`src/rlcCodegenCli.ts`](../src/rlcCodegenCli.ts) | see [llc.md](./llc.md) | Local RLC (data-plane) code generation |
+| `changelog-tool` | [`src/changelogToolCli.ts`](../src/changelogToolCli.ts) | see [changelog-tool.md](./changelog-tool.md) | Generate changelog by comparing api.md against published npm package |
 
 ### SDK Type Enum (`SDKType`)
 
@@ -71,31 +69,57 @@ Defined in [`src/common/types.ts`](../src/common/types.ts):
 
 ---
 
-## 2. Common Pre-processing Flow
-
-1. Read `inputJson` from `--inputJsonPath`.
-2. [`parseInputJson()`](../src/utils/generateInputUtils.ts) — Parse input and determine SDK type.
-3. Determine `SDKType` (via readme path containing `resource-manager` and `is-modular-library` field in `tspconfig.yaml`).
-4. **Non-local mode**: [`backupNodeModules()`](../src/utils/backupNodeModules.ts) — Recursively rename `node_modules` → `node_modules_backup`.
-5. Dispatch to corresponding handler based on `SDKType`.
-6. **Finally**: [`restoreNodeModules()`](../src/utils/backupNodeModules.ts) + write `outputJson`.
-
-### `parseInputJson()` — SDK Type Determination Logic
-
-Defined in [`src/utils/generateInputUtils.ts`](../src/utils/generateInputUtils.ts):
+### Overall Flow Diagram
 
 ```
-if typespecProject exists:
-    if tspconfig.yaml has is-modular-library !== false → ModularClient
-    else → RestLevelClient
-else (swagger/readme):
-    if readmeMd contains 'resource-manager' → HighLevelClient
-    else → RestLevelClient
+CLI Entry (autoGenerateInPipeline.ts)
+  │
+  ├── Parse inputJson → parseInputJson()
+  ├── Determine SDKType
+  ├── backupNodeModules()  (non-local mode only)
+  │
+  ├── switch(SDKType)
+  │   │
+  │   ├── HighLevelClient ──→ generateMgmt()
+  │   │   ├── autorest code generation
+  │   │   ├── Find changed packages (git diff)
+  │   │   ├── Update rush.json / ci.yml / _meta.json
+  │   │   ├── rush update → rush build → changelog → rush pack
+  │   │   └── Update snippets / README
+  │   │
+  │   ├── RestLevelClient ──→ generateRLCInPipeline()
+  │   │   ├── TypeSpec → tsp-client init or tsp compile
+  │   │   │   OR
+  │   │   ├── Swagger → autorest code generation
+  │   │   ├── Update rush.json / ci.yml
+  │   │   ├── install → customize → lint → build → pack
+  │   │   ├── format → snippets → changelog
+  │   │   └── Output artifacts & apiView
+  │   │
+  │   └── ModularClient ──→ generateAzureSDKPackage()
+  │       ├── CODEOWNERS & ignore-links
+  │       ├── tsp-client init code generation
+  │       ├── buildPackage:
+  │       │   ├── rush/pnpm update
+  │       │   ├── lint fix (Release/Local)
+  │       │   ├── customize (Data Plane)
+  │       │   ├── turbo build
+  │       │   ├── extract ApiView info
+  │       │   ├── test package
+  │       │   ├── format
+  │       │   └── update snippets
+  │       ├── changelog & bump version (Management Plane only)
+  │       ├── tryBuildSamples
+  │       ├── createArtifact (pack → .tgz)
+  │       └── createOrUpdateCiYaml
+  │
+  ├── restoreNodeModules()  (non-local mode only)
+  └── Write outputJson
 ```
 
 ---
 
-## 3. Folder Cleanup Logic
+## 2. Folder Cleanup Logic
 
 The cleanup behavior is determined by **SDK type** and **run mode**. The core function is [`cleanUpPackageDirectory()`](../src/common/utils.ts) in `src/common/utils.ts`.
 

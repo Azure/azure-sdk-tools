@@ -85,7 +85,7 @@ public class CodeownersManagementHelper(
 
     public async Task<CodeownersViewResponse> GetViewByPath(string path, string? repo, CancellationToken ct)
     {
-        var labelOwners = await QueryLabelOwnersByPath(path, repo, ct);
+        var labelOwners = await QueryLabelOwnersByPath(path, repo, null, ct);
         await HydrateLabelOwners(labelOwners, ct);
 
         return new CodeownersViewResponse([], labelOwners);
@@ -233,7 +233,7 @@ public class CodeownersManagementHelper(
         return labelOwners;
     }
 
-    private async Task<List<LabelOwnerWorkItem>> QueryLabelOwnersByPath(string path, string? repo, CancellationToken ct)
+    private async Task<List<LabelOwnerWorkItem>> QueryLabelOwnersByPath(string path, string? repo, string? section, CancellationToken ct)
     {
         var escapedPath = string.IsNullOrEmpty(path) ? string.Empty : path.Replace("'", "''");
         var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [System.WorkItemType] = 'Label Owner' AND [Custom.RepoPath] = '{escapedPath}'";
@@ -241,6 +241,11 @@ public class CodeownersManagementHelper(
         {
             var escapedRepo = repo.Replace("'", "''");
             query += $" AND [Custom.Repository] = '{escapedRepo}'";
+        }
+        if (!string.IsNullOrEmpty(section))
+        {
+            var escapedSection = section.Replace("'", "''");
+            query += $" AND [Custom.Section] = '{escapedSection}'";
         }
         var rawWorkItems = await devOpsService.FetchWorkItemsPagedAsync(query, expand: WorkItemExpand.Relations, ct: ct);
         return rawWorkItems.Select(WorkItemMappers.MapToLabelOwnerWorkItem).ToList();
@@ -359,6 +364,7 @@ public class CodeownersManagementHelper(
         OwnerType ownerType,
         string? repoPath,
         LabelWorkItem[] labelWorkItems,
+        string section,
         CancellationToken ct
     ) {
         var labelTypeString = ownerType.ToWorkItemString();
@@ -367,12 +373,14 @@ public class CodeownersManagementHelper(
         var escapedRepo = repo.Replace("'", "''");
         var escapedLabelType = labelTypeString.Replace("'", "''");
         var escapedPath = normalizedPath.Replace("'", "''");
+        var escapedSection = section.Replace("'", "''");
 
         var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'" +
                     $" AND [System.WorkItemType] = 'Label Owner'" +
                     $" AND [Custom.Repository] = '{escapedRepo}'" +
                     $" AND [Custom.LabelType] = '{escapedLabelType}'" +
-                    $" AND [Custom.RepoPath] = '{escapedPath}'";
+                    $" AND [Custom.RepoPath] = '{escapedPath}'" +
+                    $" AND [Custom.Section] = '{escapedSection}'";
 
         var workItems = await devOpsService.FetchWorkItemsPagedAsync(query, expand: WorkItemExpand.Relations, ct: ct);
         if (workItems.Count > 0)
@@ -403,7 +411,8 @@ public class CodeownersManagementHelper(
         {
             LabelType = labelTypeString,
             Repository = repo,
-            RepoPath = normalizedPath
+            RepoPath = normalizedPath,
+            Section = section
         };
         var created = await devOpsService.CreateWorkItemAsync(labelOwnerWi, "Label Owner", title, ct: ct);
         return WorkItemMappers.MapToLabelOwnerWorkItem(created);
@@ -548,9 +557,10 @@ public class CodeownersManagementHelper(
         string repo,
         string path,
         OwnerType ownerType,
+        string section,
         CancellationToken ct
     ) {
-        var labelOwnerWi = await FindOrCreateLabelOwnerAsync(repo, ownerType, path, labels, ct);
+        var labelOwnerWi = await FindOrCreateLabelOwnerAsync(repo, ownerType, path, labels, section, ct);
 
         foreach (var labelWi in labels)
         {
@@ -651,9 +661,10 @@ public class CodeownersManagementHelper(
         string repo,
         string path,
         OwnerType ownerType,
+        string section,
         CancellationToken ct
     ) {
-        var labelOwners = await QueryLabelOwnersByPath(path, repo, ct);
+        var labelOwners = await QueryLabelOwnersByPath(path, repo, section, ct);
         if (labelOwners.Count == 0)
         {
             return new CodeownersModifyResponse { ResponseError = $"No Label Owner work item found for path '{path}'." };

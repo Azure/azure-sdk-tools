@@ -2167,4 +2167,119 @@ public class APIRevisionsManagerTests
     }
 
     #endregion
+
+    #region CreateAPIRevisionAsync_PreParsed Tests
+
+    [Fact]
+    public async Task CreateAPIRevisionAsync_WithPreParsedCodeFile_DoesNotParseAgain()
+    {
+        // Arrange
+        var user = CreateTestUser("testuser");
+        var review = new ReviewListItemModel
+        {
+            Id = "review-1",
+            PackageName = "test-package",
+            Language = "Python",
+            ChangeHistory = new List<ReviewChangeHistoryModel>()
+        };
+
+        var preParsedCodeFile = new CodeFile
+        {
+            Name = "test.whl",
+            Language = "Python",
+            PackageName = "test-package",
+            PackageVersion = "1.0.0"
+        };
+
+        var preParsedMemoryStream = new MemoryStream();
+        var codeFileModel = new APICodeFileModel { FileId = "file-1", Language = "Python" };
+
+        SetupSignalRMocks();
+
+        // Setup: CreateReviewCodeFileModel should be called with the pre-parsed data
+        _mockCodeFileManager
+            .Setup(m => m.CreateReviewCodeFileModel(It.IsAny<string>(), preParsedMemoryStream, preParsedCodeFile))
+            .ReturnsAsync(codeFileModel);
+
+        _mockDiagnosticCommentService
+            .Setup(d => d.SyncDiagnosticCommentsAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<CodeDiagnostic[]>(), It.IsAny<List<CommentItemModel>>()))
+            .ReturnsAsync(new DiagnosticSyncResult());
+
+        _mockAPIRevisionsRepository
+            .Setup(x => x.UpsertAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _manager.CreateAPIRevisionAsync(
+            user: user, review: review, file: null, filePath: "test.whl",
+            language: "Python", label: "test",
+            preParsedCodeFile: preParsedCodeFile, preParsedMemoryStream: preParsedMemoryStream);
+
+        // Assert: CreateReviewCodeFileModel was called (reusing pre-parsed data)
+        _mockCodeFileManager.Verify(
+            m => m.CreateReviewCodeFileModel(It.IsAny<string>(), preParsedMemoryStream, preParsedCodeFile),
+            Times.Once);
+
+        // Assert: CreateCodeFileAsync was NOT called (no re-parsing)
+        _mockCodeFileManager.Verify(
+            m => m.CreateCodeFileAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<Stream>(), It.IsAny<string>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateAPIRevisionAsync_WithoutPreParsedCodeFile_ParsesFile()
+    {
+        // Arrange
+        var user = CreateTestUser("testuser");
+        var review = new ReviewListItemModel
+        {
+            Id = "review-1",
+            PackageName = "test-package",
+            Language = "Python",
+            ChangeHistory = new List<ReviewChangeHistoryModel>()
+        };
+
+        var codeFileModel = new APICodeFileModel { FileId = "file-1", Language = "Python" };
+        var codeFile = new CodeFile { Name = "test.whl", Language = "Python", PackageName = "test-package" };
+
+        SetupSignalRMocks();
+
+        // Setup: CreateCodeFileAsync should be called (normal parsing path)
+        _mockCodeFileManager
+            .Setup(m => m.CreateCodeFileAsync(It.IsAny<string>(), "test.whl", true, null, "Python"))
+            .ReturnsAsync(codeFileModel);
+
+        _mockCodeFileRepository
+            .Setup(m => m.GetCodeFileFromStorageAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(codeFile);
+
+        _mockDiagnosticCommentService
+            .Setup(d => d.SyncDiagnosticCommentsAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<CodeDiagnostic[]>(), It.IsAny<List<CommentItemModel>>()))
+            .ReturnsAsync(new DiagnosticSyncResult());
+
+        _mockAPIRevisionsRepository
+            .Setup(x => x.UpsertAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _manager.CreateAPIRevisionAsync(
+            user: user, review: review, file: null, filePath: "test.whl",
+            language: "Python", label: "test");
+
+        // Assert: CreateCodeFileAsync WAS called (normal path)
+        _mockCodeFileManager.Verify(
+            m => m.CreateCodeFileAsync(It.IsAny<string>(), "test.whl", true, null, "Python"),
+            Times.Once);
+
+        // Assert: CreateReviewCodeFileModel was NOT called directly
+        _mockCodeFileManager.Verify(
+            m => m.CreateReviewCodeFileModel(It.IsAny<string>(), It.IsAny<MemoryStream>(), It.IsAny<CodeFile>()),
+            Times.Never);
+    }
+
+    #endregion
 }

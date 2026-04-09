@@ -10,8 +10,7 @@ Module for managing the database connections and operations for APIView Copilot.
 
 import time
 from enum import Enum
-from functools import lru_cache
-from typing import Any
+from typing import Any, Optional
 
 from azure.cosmos import CosmosClient
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
@@ -46,19 +45,23 @@ class ContainerNames(Enum):
 class DatabaseManager:
     """Manager for Azure Cosmos DB operations."""
 
-    _instance: "DatabaseManager" = None
+    _instances: dict = {}
 
     @classmethod
-    def get_instance(cls, force_new: bool = False) -> "DatabaseManager":
+    def get_instance(cls, force_new: bool = False, environment: Optional[str] = None) -> "DatabaseManager":
         """
-        Returns a singleton instance of DatabaseManager.
+        Returns a singleton instance of DatabaseManager, keyed by environment.
+        At most two instances exist: one for 'production' and one for 'staging'.
         """
-        if cls._instance is None or force_new:
-            cls._instance = cls()
-        return cls._instance
+        settings = SettingsManager(environment=environment)
+        key = settings.label
+        if key not in cls._instances or force_new:
+            cls._instances[key] = cls(environment=environment)
+        return cls._instances[key]
 
-    def __init__(self):
-        settings = SettingsManager()
+    def __init__(self, environment: Optional[str] = None):
+        settings = SettingsManager(environment=environment)
+        self.environment = settings.label
         db_name = settings.get("COSMOS_DB_NAME")
         endpoint = settings.get("COSMOS_ENDPOINT")
         credential = get_credential()
@@ -121,6 +124,7 @@ class BasicContainer:
         self.client = manager.database.get_container_client(container_name)
         self.preprocess_id: callable = None
         self.container_name = container_name
+        self._environment = manager.environment
 
     def _to_dict(self, data):
         if BaseModel and isinstance(data, BaseModel):
@@ -203,7 +207,7 @@ class BasicContainer:
         """
         Trigger the Azure Search indexer for this container (examples, guidelines, or memories).
         """
-        settings = SettingsManager()
+        settings = SettingsManager(environment=self._environment)
         indexer_name = f"{self.container_name}-indexer"
         search_endpoint = settings.get("SEARCH_ENDPOINT")
         client = SearchIndexerClient(endpoint=search_endpoint, credential=get_credential())
@@ -254,9 +258,3 @@ class EvalsContainer(BasicContainer):
     def run_indexer(self):
         # evaluations container does not have an indexer
         pass
-
-
-@lru_cache()
-def get_database_manager():
-    """Get a singleton instance of the DatabaseManager."""
-    return DatabaseManager.get_instance()

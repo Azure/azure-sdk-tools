@@ -6,7 +6,7 @@ import re
 import subprocess
 import sys
 from types import SimpleNamespace
-from typing import List, Union, TYPE_CHECKING
+from typing import Dict, List, Union, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ._base_node import NodeEntityBase
@@ -57,6 +57,7 @@ class PylintParser:
     AZURE_CHECKER_CODE = "47"
 
     items: List[PylintError] = []
+    _path_to_items: Dict[str, List[PylintError]] = {}
 
     @classmethod
     def _normalize_namespace_inits(cls, path):
@@ -70,25 +71,62 @@ class PylintParser:
         Overwriting those files with empty ones matches the behaviour of the WHL
         variant (which never carries a non-trivial ``azure/__init__.py``).
 
+        We normalize both the extracted package directory *and* any site-packages
+        directories so that azure packages installed by previous test runs do not
+        pollute the namespace seen by the pylint subprocess.
+
         Returns a dict mapping each overwritten path to its original content so
         callers can restore the files when done.
         """
+        import site
+
         overwritten = {}  # init_path -> original content
-        for root, dirs, files in os.walk(path):
-            basename = os.path.basename(root)
-            if basename == "azure" and "__init__.py" in files:
-                init_path = os.path.join(root, "__init__.py")
+
+        def _normalize_dir(root_dir):
+            for root, dirs, files in os.walk(root_dir):
+                basename = os.path.basename(root)
+                if basename == "azure" and "__init__.py" in files:
+                    init_path = os.path.join(root, "__init__.py")
+                    try:
+                        with open(init_path, "r") as f:
+                            content = f.read()
+                        if ("extend_path" in content or "pkgutil" in content) and "__apiview_whl_namespace_stub__" not in content:
+                            overwritten[init_path] = content
+                            with open(init_path, "w") as f:
+                                pass  # overwrite with empty file
+                    except Exception:
+                        pass
+                    # No need to recurse deeper once we've found azure/
+                    dirs.clear()
+
+        # Normalize the package being analysed (covers sdist/src variants).
+        # Files containing __apiview_whl_namespace_stub__ were added by _add_init_for_whl
+        # (in the test suite) to allow astroid to resolve azure.core; those are skipped.
+        #
+        # NOTE: We intentionally do NOT normalize the extraction directory here.
+        # Creating an empty azure/__init__.py turns `azure` from an implicit namespace
+        # package into a blocking regular package, which prevents astroid from finding
+        # `azure.core` (and hence CaseInsensitiveEnumMeta) in site-packages. All package
+        # formats (whl/sdist/src) work correctly without this normalization because
+        # Python's namespace package mechanism already merges azure/* from sys.path,
+        # giving pylint access to azure.core whether or not azure/__init__.py is present.
+
+        # Also normalize any azure/__init__.py installed in site-packages so that
+        # packages installed by previous test-suite runs do not bleed into the
+        # pylint subprocess's azure namespace view.
+        for site_dir in site.getsitepackages():
+            azure_init = os.path.join(site_dir, "azure", "__init__.py")
+            if azure_init not in overwritten and os.path.exists(azure_init):
                 try:
-                    with open(init_path, "r") as f:
+                    with open(azure_init, "r") as f:
                         content = f.read()
                     if "extend_path" in content or "pkgutil" in content:
-                        overwritten[init_path] = content
-                        with open(init_path, "w") as f:
+                        overwritten[azure_init] = content
+                        with open(azure_init, "w") as f:
                             pass  # overwrite with empty file
                 except Exception:
                     pass
-                # No need to recurse deeper once we've found azure/
-                dirs.clear()
+
         return overwritten
 
     @classmethod
@@ -157,22 +195,57 @@ class PylintParser:
             for x in messages
             if x.msg_id[1:3] == PylintParser.AZURE_CHECKER_CODE
         ]
+        # Build a path-keyed index so match_items can skip items in other files
+        # without iterating over the full list for every node.
+        cls._path_to_items = {}
+        for item in cls.items:
+            if item.path:
+                cls._path_to_items.setdefault(item.path, []).append(item)
 
     @classmethod
     def match_items(cls, obj) -> None:
+        if not cls.items:
+            return
         try:
             source_file = inspect.getsourcefile(obj)
-            (source_lines, start_line) = inspect.getsourcelines(obj)
-            end_line = start_line + len(source_lines) - 1
+            if not source_file:
+                return
         except Exception:
             return
-        for item in cls.items:
-            item_path = item.path
-            if item_path and source_file.endswith(item_path):
-                # nested items will overwrite the ownership of their
-                # containing parent.
-                if item.line >= start_line and item.line <= end_line:
-                    item.owner = str(obj)
+
+        # Find the subset of pylint errors that belong to this source file.
+        # Iterating over unique path keys (typically O(tens)) is much cheaper
+        # than scanning all items for every node.
+        candidates = None
+        for path_key, path_items in cls._path_to_items.items():
+            if source_file.endswith(path_key):
+                candidates = path_items
+                break
+        if not candidates:
+            return
+
+        try:
+            if inspect.isclass(obj):
+                # Avoid inspect.getsourcelines for classes — it triggers an
+                # O(N_lines) ast.parse + AST walk (Python's _ClassFinder).
+                # Use our pre-built file index instead.  The lazy import is
+                # safe: _class_node is always fully loaded before any node
+                # __init__ runs, so there is no circular-import issue at
+                # runtime even though the static import chain would be circular.
+                from apistub.nodes._class_node import _get_class_line_range  # noqa: PLC0415
+                start_line, end_line = _get_class_line_range(obj)
+                if start_line is None:
+                    return
+            else:
+                (source_lines, start_line) = inspect.getsourcelines(obj)
+                end_line = start_line + len(source_lines) - 1
+        except Exception:
+            return
+
+        for item in candidates:
+            # nested items will overwrite ownership of their containing parent.
+            if item.line >= start_line and item.line <= end_line:
+                item.owner = str(obj)
 
     @classmethod
     def get_items(cls, node: Union["NodeEntityBase", str]) -> List[PylintError]:

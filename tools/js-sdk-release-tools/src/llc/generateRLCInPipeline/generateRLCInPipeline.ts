@@ -1,6 +1,5 @@
 import { execSync } from "child_process";
 import fs from "fs";
-import * as yaml from "js-yaml";
 import * as path from "path";
 import { addApiViewInfo } from "../../utils/addApiViewInfo.js";
 import { modifyOrGenerateCiYml } from "../../utils/changeCiYaml.js";
@@ -11,14 +10,10 @@ import { getChangedCiYmlFilesInSpecificFolder } from "../../utils/git.js";
 import { logger } from "../../utils/logger.js";
 import { RunningEnvironment } from "../../utils/runningEnvironment.js";
 import { prepareCommandToInstallDependenciesForTypeSpecProject } from '../utils/prepareCommandToInstallDependenciesForTypeSpecProject.js';
-import {
-    generateAutorestConfigurationFileForMultiClientByPrComment,
-    generateAutorestConfigurationFileForSingleClientByPrComment, replaceRequireInAutorestConfigurationFile
-} from '../utils/generateSampleReadmeMd.js';
+import { replaceRequireInAutorestConfigurationFile } from '../utils/generateSampleReadmeMd.js';
 import { updateTypeSpecProjectYamlFile } from '../utils/updateTypeSpecProjectYamlFile.js';
 import { getRelativePackagePath } from "../utils/utils.js";
 import { defaultChildProcessTimeout, getGeneratedPackageDirectory, generateRepoDataInTspLocation, specifyApiVersionToGenerateSDKByTypeSpec, cleanUpPackageDirectory } from "../../common/utils.js";
-import { remove, emptyDir } from 'fs-extra';
 import { generateChangelogAndBumpVersion } from "../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js";
 import { updateChangelogResult } from "../../common/packageResultUtils.js";
 import { isRushRepo } from "../../common/rushUtils.js";
@@ -31,14 +26,12 @@ export async function generateRLCInPipeline(options: {
     swaggerRepo: string;
     readmeMd: string | undefined;
     typespecProject: string | undefined;
-    autorestConfig: string | undefined;
     sdkGenerationType: "script" | "command";
     swaggerRepoUrl: string;
     gitCommitId: string;
     typespecEmitter: string;
     use?: string;
     outputJson?: any;
-    additionalArgs?: string;
     skipGeneration?: boolean, 
     runningEnvironment?: RunningEnvironment;
     apiVersion: string | undefined;
@@ -99,50 +92,8 @@ export async function generateRLCInPipeline(options: {
         if (!options.skipGeneration) {
             let autorestConfigFilePath: string | undefined;
             let isMultiClient: boolean = false;
-            if (!!options.autorestConfig) {
-                logger.info(`Start to find autorest configuration in PR comment: '${options.autorestConfig}'.`);
-                logger.info(`Start to parse the autorest configuration in PR comment.`);
-                const yamlBlocks: {
-                    condition: string;
-                    yamlContent: any;
-                }[] = [];
-                try {
-                    const regexToExtractAutorestConfig = new RegExp(
-                        '(?<=``` *(?<condition>yaml.*)\\r\\n)(?<yaml>[^(```)]*)(?=\\r\\n```)', 'g');
-                    let match = regexToExtractAutorestConfig.exec(options.autorestConfig);
-                    while (!!match) {
-                        if (!!match.groups) {
-                            // try to load the yaml to check whether it's valid
-                            yamlBlocks.push({
-                                condition: match.groups.condition,
-                                yamlContent: yaml.load(match.groups.yaml)
-                            });
-                        }
-                        match = regexToExtractAutorestConfig.exec(options.autorestConfig);
-                    }
-                } catch (e: any) {
-                    logger.error(`Failed to parse autorestConfig from PR comment: \nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
-                    logger.error(`Please check out https://github.com/Azure/autorest/blob/main/docs/troubleshooting.md to troubleshoot the issue.`);
-                    throw e;
-                }
-
-                yamlBlocks.forEach(e => {
-                    if (e.condition.includes(`multi-client`)) {
-                        isMultiClient = true;
-                    }
-                });
-
-                if (isMultiClient) {
-                    autorestConfigFilePath = await generateAutorestConfigurationFileForMultiClientByPrComment(yamlBlocks, options.swaggerRepo, options.sdkRepo);
-                } else {
-                    if (yamlBlocks.length !== 1) {
-                        throw new Error(`The yaml config in comment should be 1, but find autorestConfig length: ${yamlBlocks.length}`);
-                    }
-                    const yamlContent = yamlBlocks[0].yamlContent;
-                    autorestConfigFilePath = await generateAutorestConfigurationFileForSingleClientByPrComment(yamlContent, options.swaggerRepo, options.sdkRepo);
-                }
-            } else {
-                logger.info(`Autorest configuration is not found in spec PR comment, and start to find it in sdk repository.`);
+            {
+                logger.info(`Start to find autorest configuration in sdk repository.`);
                 const sdkFolderPath = path.join(options.sdkRepo, 'sdk');
                 for (const rp of fs.readdirSync(sdkFolderPath)) {
                     logger.info(`Start to find autorest configuration in '${rp}'.`);
@@ -198,9 +149,6 @@ export async function generateRLCInPipeline(options: {
             let cmd = `autorest --version=3.9.7 ${path.basename(autorestConfigFilePath)} --output-folder=${packagePath}`;
             if (options.use) {
                 cmd += ` --use=${options.use}`;
-            }
-            if (options.additionalArgs) {
-                cmd += ` ${options.additionalArgs}`;
             }
             if (isMultiClient) {
                 cmd += ` --multi-client=true`;

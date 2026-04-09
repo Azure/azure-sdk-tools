@@ -36,7 +36,6 @@ public class CheckPublicRepoScenario : BenchmarkScenario
     /// <inheritdoc />
     public override string Prompt => """
         Check if my TypeSpec project is in the public repo.
-        My setup has already been verified, do not run azsdk_verify_setup.
         Project root: specification/contosowidgetmanager/Contoso.WidgetManager.
         """;
 
@@ -53,6 +52,6 @@ public class CheckPublicRepoScenario : BenchmarkScenario
                         ["typeSpecProjectPath"] = "specification/contosowidgetmanager/Contoso.WidgetManager"
                     })
             ],
-            forbiddenToolNames: ["azsdk_verify_setup"])
+            optionalToolNames: ["azsdk_verify_setup"])
     ];
 }

@@ -181,7 +181,7 @@ public class Workspace : IDisposable
         TokenUsage? tokenUsage = null,
         string? error = null)
     {
-        var log = new
+        var log = new BenchmarkLog
         {
             Scenario = scenarioName,
             Timestamp = DateTime.UtcNow.ToString("o"),
@@ -190,8 +190,8 @@ public class Workspace : IDisposable
             Error = error,
             Validation = validation,
             TokenUsage = tokenUsage,
-            ToolCalls = toolCalls,
-            Messages = messages,
+            ToolCalls = toolCalls.ToList(),
+            Messages = messages.ToList(),
             GitDiff = gitDiff
         };
 

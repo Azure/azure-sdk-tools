@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -122,6 +123,45 @@ namespace APIViewWeb.LeanControllers
             }
 
             return new LeanJsonResult(response, StatusCodes.Status200OK);
+        }
+
+        /// <summary>
+        /// Check whether the namespace is approved for a specific review.
+        /// </summary>
+        /// <param name="reviewId">The review ID</param>
+        /// <returns>The namespace status string for the review's language, or null if not in a project</returns>
+        [HttpGet("reviews/{reviewId}/namespaceStatus", Name = "GetNamespaceStatusForReview")]
+        public async Task<ActionResult> GetNamespaceStatusForReviewAsync(string reviewId)
+        {
+            ReviewListItemModel review = await _reviewsRepository.GetReviewAsync(reviewId);
+            if (review == null)
+            {
+                return NotFound(new { message = $"Review '{reviewId}' was not found." });
+            }
+
+            if (string.IsNullOrEmpty(review.ProjectId))
+            {
+                return new LeanJsonResult(new { status = (string)null }, StatusCodes.Status200OK);
+            }
+
+            Project project = await _projectsRepository.GetProjectAsync(review.ProjectId);
+            if (project == null)
+            {
+                return new LeanJsonResult(new { status = (string)null }, StatusCodes.Status200OK);
+            }
+
+            string languageKey = project.Reviews
+                .FirstOrDefault(kvp => string.Equals(kvp.Value, reviewId, StringComparison.OrdinalIgnoreCase))
+                .Key;
+
+            if (languageKey == null ||
+                project.NamespaceInfo?.CurrentNamespaceStatus == null ||
+                !project.NamespaceInfo.CurrentNamespaceStatus.TryGetValue(languageKey, out NamespaceDecisionEntry entry))
+            {
+                return new LeanJsonResult(new { status = (string)null }, StatusCodes.Status200OK);
+            }
+
+            return new LeanJsonResult(new { status = entry.Status.ToString() }, StatusCodes.Status200OK);
         }
 
         /// <summary>

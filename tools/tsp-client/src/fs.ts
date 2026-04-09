@@ -61,10 +61,10 @@ export async function readTspLocation(rootDir: string): Promise<TspLocation> {
 
       return tspLocation;
     }
+    // We should never reach this point because stat should throw if the file doesn't exist
     throw new Error("Could not find tsp-location.yaml");
   } catch (e) {
-    Logger.error(`Error reading tsp-location.yaml: ${e}`);
-    throw e;
+    throw new Error("Could not read tsp-location.yaml", { cause: e });
   }
 }
 

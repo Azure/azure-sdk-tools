@@ -192,7 +192,7 @@ public sealed partial class JavaScriptLanguageService : LanguageService
         return response;
     }
 
-    private async Task PushTestAssets(string packagePath, TestRunResponse response, CancellationToken ct)
+    protected override async Task PushTestAssets(string packagePath, TestRunResponse response, CancellationToken ct)
     {
         var assetsJsonPath = Path.Combine(packagePath, "assets.json");
         if (!File.Exists(assetsJsonPath))

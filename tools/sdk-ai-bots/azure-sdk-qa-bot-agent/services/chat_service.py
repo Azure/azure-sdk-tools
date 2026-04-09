@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+from datetime import datetime, timezone
 import json
 import logging
 import re
@@ -23,6 +25,7 @@ from models.chat import (
     ConversationItemType,
     Role,
 )
+from models.conversation import ConversationMessage
 from models.knowledge import Reference
 from services.conversation_service import ConversationService
 from tools import TOOL_REGISTRY
@@ -117,7 +120,48 @@ class ChatService:
             },
         )
 
-        return self._postprocess(req, response, agent_conversation_id)
+        chat_response = self._postprocess(req, response, agent_conversation_id)
+        asyncio.create_task(
+            self._save_bot_answer_to_conversation(
+                req, response.id, chat_response.answer
+            )
+        )
+        return chat_response
+
+    async def _save_bot_answer_to_conversation(
+        self,
+        req: ChatRequest,
+        response_id: str,
+        answer: str,
+    ) -> None:
+        """Persist the final bot answer so intention uses the real reply, not placeholders."""
+        if not req.conversation_id or not req.conversation_type:
+            return
+
+        content = answer.strip()
+        if not content:
+            return
+
+        bot_message = ConversationMessage(
+            id=f"bot-{response_id}",
+            tenant_id=req.tenant_id.value,
+            sender_role=Role.System,
+            sender_id="azure-sdk-qa-bot",
+            sender_name="Azure SDK Q&A Bot",
+            content=content,
+            created_at=datetime.now(timezone.utc),
+            conversation_id=req.conversation_id,
+            conversation_type=req.conversation_type,
+        )
+
+        try:
+            await self._conversation_service.save_conversation(bot_message)
+        except Exception:
+            logger.warning(
+                "Failed to persist bot answer for conversation=%s",
+                req.conversation_id,
+                exc_info=True,
+            )
 
     async def _get_agent(self, project_client: AIProjectClient) -> AgentDetails:
         """Load hosted-agent definition from Foundry."""

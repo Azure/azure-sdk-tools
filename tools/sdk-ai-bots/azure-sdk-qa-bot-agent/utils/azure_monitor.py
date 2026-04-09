@@ -20,6 +20,12 @@ _chat_duration_histogram = None
 _initialized = False
 
 
+def _normalize_tenant_id(tenant: str | None) -> str:
+    """Return a stable tenant id value suitable for metric dimensions."""
+    value = (tenant or "").strip()
+    return value or "unknown"
+
+
 def configure_metrics() -> None:
     """Set up OpenTelemetry metrics exported to Azure Monitor.
 
@@ -45,11 +51,11 @@ def configure_metrics() -> None:
         views=[
             View(
                 instrument_name="chat_requests",
-                attribute_keys={"tenant"},
+                attribute_keys={"tenant_id"},
             ),
             View(
                 instrument_name="chat_duration",
-                attribute_keys={"tenant", "success"},
+                attribute_keys={"tenant_id", "success"},
             ),
         ],
     )
@@ -70,10 +76,13 @@ def configure_metrics() -> None:
 def record_chat_request(tenant: str) -> None:
     """Increment the chat-request counter for *tenant*."""
     if _chat_request_counter:
-        _chat_request_counter.add(1, {"tenant": tenant})
+        _chat_request_counter.add(1, {"tenant_id": _normalize_tenant_id(tenant)})
 
 
 def record_chat_duration(tenant: str, elapsed: float, *, success: bool) -> None:
     """Record chat-request latency for *tenant*."""
     if _chat_duration_histogram:
-        _chat_duration_histogram.record(elapsed, {"tenant": tenant, "success": success})
+        _chat_duration_histogram.record(
+            elapsed,
+            {"tenant_id": _normalize_tenant_id(tenant), "success": success},
+        )

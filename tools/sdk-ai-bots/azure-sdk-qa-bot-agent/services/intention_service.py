@@ -9,10 +9,11 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import Sequence
 
 from config.app_config import get as cfg
 from models.chat import Message
-from models.conversation import Role
+from models.conversation import ConversationMessageItem, Role
 from models.intention import IntentionRequest, IntentionResponse
 from services.conversation_service import ConversationService
 from utils.azure_ai_foundry import get_project_client
@@ -39,23 +40,34 @@ class IntentionService:
         Applies rule-based pre-filters first, then falls back to LLM
         classification for ambiguous cases.
         """
-        # Rule: Check saved messages — if a non-author user has replied, skip
-        if req.conversation_id and req.conversation_type and req.message.user_id:
-            has_expert = await self._conversation_service.has_expert_reply(
-                conversation_id=req.conversation_id,
-                conversation_type=req.conversation_type,
-                user_id=req.message.user_id,
+        history: list[ConversationMessageItem] = []
+        if req.conversation_id and req.conversation_type:
+            history = await self._conversation_service.get_messages_by_conversation(
+                req.conversation_id,
+                req.conversation_type,
             )
-            if has_expert:
-                return IntentionResponse(
-                    should_respond=False,
-                    reason="expert_already_replied",
-                )
+
+        if req.message.user_id and self._has_expert_reply(history, req.message.user_id):
+            return IntentionResponse(
+                should_respond=False,
+                reason="expert_already_replied",
+            )
 
         # Ambiguous case: post author message, no expert reply yet → ask LLM
-        return await self._classify_with_llm(req)
+        return await self._classify_with_llm(req, history)
 
-    async def _classify_with_llm(self, req: IntentionRequest) -> IntentionResponse:
+    def _has_expert_reply(
+        self, history: Sequence[ConversationMessageItem], user_id: str
+    ) -> bool:
+        return any(
+            item.sender_role == Role.User and item.sender_id != user_id for item in history
+        )
+
+    async def _classify_with_llm(
+        self,
+        req: IntentionRequest,
+        history: Sequence[ConversationMessageItem] | None = None,
+    ) -> IntentionResponse:
         """Use a lightweight model to classify message intent.
 
         When conversation context is available, includes the full thread
@@ -75,15 +87,11 @@ class IntentionService:
             ]
 
             # Include conversation history when available
-            if req.conversation_id and req.conversation_type:
-                history = await self._conversation_service.get_messages_by_conversation(
-                    req.conversation_id,
-                    req.conversation_type,
-                )
+            if history:
                 for item in history:
                     role = (
                         Role.Assistant
-                        if item.sender_role == Role.Assistant
+                        if item.sender_role in (Role.Assistant, Role.System)
                         else Role.User
                     )
                     messages.append(

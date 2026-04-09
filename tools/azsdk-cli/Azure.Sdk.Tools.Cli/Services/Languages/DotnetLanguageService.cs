@@ -260,6 +260,16 @@ public sealed partial class DotnetLanguageService: LanguageService
 
         var envVars = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
+        // Merge caller-provided environment first so that mode variables set below
+        // always take precedence and cannot be silently overridden by a .env file.
+        if (liveTestEnvironment != null)
+        {
+            foreach (var (key, value) in liveTestEnvironment)
+            {
+                envVars[key] = value;
+            }
+        }
+
         switch (testFramework)
         {
             case DotnetTestFramework.AzureCoreTestFramework:
@@ -276,14 +286,6 @@ public sealed partial class DotnetLanguageService: LanguageService
                 envVars["AZURE_TEST_MODE"] = testModeValue;
                 envVars["CLIENTMODEL_TEST_MODE"] = testModeValue;
                 break;
-        }
-
-        if (liveTestEnvironment != null)
-        {
-            foreach (var (key, value) in liveTestEnvironment)
-            {
-                envVars[key] = value;
-            }
         }
 
         // Use caller-provided timeout if specified, otherwise use mode-based defaults

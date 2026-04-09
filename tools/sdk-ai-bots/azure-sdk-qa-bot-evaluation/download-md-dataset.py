@@ -29,7 +29,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Download MD dataset from Azure Blob Storage.")
     parser.add_argument("--test_folder", type=str, help="the path to the test folder")
     parser.add_argument("--days_before", type=int, help="only filter the files which are created the days before")
-    parser.add_argument("--is_ci", type=str, default="True", help="Run in CI/CD pipeline (True/False)")
+    parser.add_argument("--is_ci", type=str, default="False", help="Run in CI/CD pipeline (True/False)")
     args = parser.parse_args()
 
     args.is_ci = args.is_ci.lower() in ("true", "1", "yes", "on")
@@ -93,8 +93,5 @@ if __name__ == "__main__":
                         download_stream = blob_client.download_blob()
                         download_file.write(download_stream.readall())
     except Exception as e:
-        logging.error(f"❌ Error occurred: {str(e)}")
-        import traceback
-
-        traceback.print_exc()
+        logging.exception(f"❌ Error occurred: {str(e)}")
         sys.exit(1)

@@ -192,7 +192,8 @@ export class ThinkingHandler {
     // remove duplicate references
     const referencesMap = new Map<string, Map<string, string>>();
     ragReply.references?.forEach((ref) => {
-      const map = referencesMap.get(ref.source) ?? new Map<string, string>();
+      const normalizedSource = (ref.source || '').trim();
+      const map = referencesMap.get(normalizedSource) ?? new Map<string, string>();
       let url = undefined;
       try {
         url = new URL(ref.link);
@@ -201,7 +202,7 @@ export class ThinkingHandler {
         return;
       }
       map.set(url.href, ref.title);
-      referencesMap.set(ref.source, map);
+      referencesMap.set(normalizedSource, map);
     });
 
     const prettierSource = (source: string) => {
@@ -212,9 +213,10 @@ export class ThinkingHandler {
     };
     reply += '\n\n**References**\n';
     referencesMap.forEach((links, source) => {
-      const sourceName = prettierSource(source);
+      const sourceName = source ? prettierSource(source) : '';
       links.forEach((title, link) => {
-        reply += `- [${title} | ${sourceName}](${link})\n`;
+        const referenceLabel = sourceName ? `${title} | ${sourceName}` : title;
+        reply += `- [${referenceLabel}](${link})\n`;
       });
     });
     return reply;

@@ -175,8 +175,7 @@ class WebTools:
         *,
         url: Annotated[
             str,
-            "Public URL to fetch directly. Use this when user provides a specific link "
-            "(especially llms.txt or index.html.md URLs).",
+            "Public URL to fetch directly.",
         ],
         max_chars: Annotated[
             int,
@@ -187,6 +186,20 @@ class WebTools:
         normalized_url = (url or "").strip()
         if not _is_public_url(normalized_url):
             raise ValueError("Only public http/https URLs are allowed.")
+
+        # Block GitHub URLs — they throttle/403 automated requests.
+        # Redirect the agent to use GitHub MCP tools instead.
+        _github_hosts = {"github.com", "api.github.com"}
+        parsed_host = urlparse(normalized_url).hostname or ""
+        if parsed_host.lower() in _github_hosts:
+            return FetchWebpageResult(
+                success=False,
+                url=normalized_url,
+                error=(
+                    "GitHub URLs are blocked in web_fetch due to rate limiting. "
+                    "Use GitHub MCP tools instead to access this content."
+                ),
+            )
 
         bounded_max_chars = max(1000, min(int(max_chars), _MAX_ALLOWED_CHARS))
         return await asyncio.to_thread(_fetch_sync, normalized_url, bounded_max_chars)

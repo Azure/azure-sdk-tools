@@ -123,7 +123,9 @@ def _resolve_umi_resource_ids() -> list[str]:
             shell=True,
         )
         if result.returncode != 0 or not result.stdout.strip():
-            print(f"  WARNING: Could not resolve resource ID for {var} (clientId={cid})")
+            print(
+                f"  WARNING: Could not resolve resource ID for {var} (clientId={cid})"
+            )
             continue
         rid = result.stdout.strip().splitlines()[0]
         print(f"  Resolved {var} → {rid}")
@@ -545,8 +547,8 @@ def main() -> None:
                         protocol=AgentProtocol.RESPONSES, version="v1"
                     )
                 ],
-                cpu="1",
-                memory="2Gi",
+                cpu="4",
+                memory="8Gi",
                 image=image,
                 environment_variables={
                     "AZURE_APPCONFIG_ENDPOINT": appconfig_endpoint,
@@ -578,7 +580,9 @@ def main() -> None:
         ):
             umi_resource_ids = _resolve_umi_resource_ids()
             if umi_resource_ids:
-                print(f"Restoring {len(umi_resource_ids)} user-assigned identities from env...")
+                print(
+                    f"Restoring {len(umi_resource_ids)} user-assigned identities from env..."
+                )
                 _restore_project_user_assigned_identities(
                     project_resource_id, umi_resource_ids
                 )

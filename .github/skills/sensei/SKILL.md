@@ -50,7 +50,7 @@ No MCP servers required — uses waza CLI directly.
 
 ## Examples
 
-- "Run sensei on pipeline-troubleshooting"
+- "Run sensei on azsdk-common-pipeline-troubleshooting"
 - "Run sensei on all skills"
 
 ## Troubleshooting

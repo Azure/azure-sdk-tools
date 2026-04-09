@@ -1,5 +1,5 @@
 ---
-name: generate-sdk-locally
+name: azsdk-common-generate-sdk-locally
 license: MIT
 metadata:
   version: "1.1.0"

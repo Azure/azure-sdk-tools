@@ -225,7 +225,7 @@ avc kb reindex
 avc kb reindex -c guidelines examples
 ```
 
-Available containers: `guidelines`, `examples`, `memories`
+When no `-c` flag is provided, the CLI runs indexers for all KB containers: `guidelines`, `examples`, and `memories`.
 
 ---
 
@@ -255,7 +255,7 @@ Available containers: `guidelines`, `examples`, `memories`, `review-jobs`, `metr
 
 ### `avc db delete`
 
-Soft-delete an item (sets `isDeleted: true`). The item remains in the database but is excluded from search.
+Permanently delete an item from the database. This is a **hard delete** — the item is removed from Cosmos DB entirely.
 
 ```bash
 avc db delete -c <CONTAINER> -i <ITEM_ID>

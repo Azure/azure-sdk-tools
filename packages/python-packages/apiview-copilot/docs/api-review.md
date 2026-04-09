@@ -122,7 +122,7 @@ This stage runs in parallel across all comments with conflicts.
 
 ### Stage 7 — Judge Scoring
 
-**Purpose:** Assign a **confidence score** (0.0–1.0) and **severity level** to each surviving comment. Low-confidence comments still surface but are ranked lower; high-confidence comments receive higher priority in the final output.
+**Purpose:** Assign a **confidence score** (0.0–1.0) and **severity level** to each surviving comment. Both values are stored on the comment and included in the output, but the current implementation does not filter or rank by confidence.
 
 **Implementation:** Each comment is submitted to `judge_comment_confidence.prompty` with the comment and relevant KB context (from `guideline_ids` and `memory_ids`). The prompt performs a multi-question review and returns:
 - `results`: a list of `YES`/`NO`/`UNKNOWN` answers from several internal reviewers
@@ -185,16 +185,6 @@ All prompts live under `prompts/api_review/`:
 | `metadata/<lang>/filter.yaml` | `exceptions` key | Patterns that should never be flagged for this language |
 | API outline (`--outline`) | CLI / request body | Package structure text to help filter out-of-scope comments |
 | Existing comments (`--existing-comments`) | CLI / request body | Pre-existing human comments used in pre-existing comment filtering |
-
-## Telemetry
-
-The pipeline records OpenTelemetry metrics for each review:
-
-- `apiview.review.duration` — total wall-clock time
-- `apiview.review.normalized_duration` — total time / number of sections
-- `apiview.review.requests` — request counter
-
-Attributes: `review.language`, `review.mode` (`full`/`diff`), `review.status` (`success`/`error`).
 
 ## Debugging a Review Locally
 

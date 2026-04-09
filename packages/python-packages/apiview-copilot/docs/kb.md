@@ -12,7 +12,7 @@ A **Guideline** represents a single named rule or best practice from the Azure S
 
 | Field | Description |
 |-------|-------------|
-| `id` | Unique identifier, typically matching the guideline anchor in the published docs (e.g., `python_design.general-namespaces`) |
+| `id` | Unique identifier, matching the guideline anchor in the published docs (e.g., `python_design.html#general-namespaces`) |
 | `title` | Short descriptive title |
 | `content` | Full text of the guideline |
 | `language` | Language the guideline applies to (e.g., `python`), or empty for cross-language guidelines |
@@ -21,7 +21,7 @@ A **Guideline** represents a single named rule or best practice from the Azure S
 | `related_examples` | IDs of related examples |
 | `related_memories` | IDs of related memories |
 
-> **Note on `id` format:** Guideline IDs containing `.` are stored in Cosmos DB with `|` as a separator (e.g., `python_design|general-namespaces`) because `.` is reserved in Cosmos DB partition paths. The application transparently converts between formats.
+> **Note on `id` format:** Guideline IDs are stored in Cosmos DB with `=html=` replacing `.html#` (e.g., `python_design=html=general-namespaces`) because `.` and `#` are reserved in Cosmos DB partition paths. The application transparently converts between formats via `guideline_id_to_db()` and `guideline_id_from_db()` in `src/_utils.py`.
 
 ### Examples (`examples` container)
 
@@ -90,22 +90,21 @@ For each API section, a semantic similarity search is performed against the unif
 section text → SearchManager.search_all(query) → Context → context_review.prompty
 ```
 
+### Graph Expansion (`build_context`)
+
+Both query paths above produce an initial set of search results. Before passing them to a prompt, `SearchManager.build_context()` performs a **breadth-first traversal** of the knowledge graph to ensure all linked items are included.
+
+Starting from the initial search results, it:
+1. Partitions items into guidelines, examples, and memories
+2. For each item, queues its `related_examples`, `related_memories`, `guideline_ids`, and `related_guidelines` for retrieval
+3. Fetches linked items from Cosmos DB in batches (up to 50 per query)
+4. Continues until no new linked items are discovered (cycle-safe via seen-ID tracking)
+
+This means a single guideline hit in the search index can pull in its linked examples (good/bad code snippets) and related memories (past review decisions), giving the LLM richer context than the search results alone.
+
 ## Linking KB Items
 
-KB items can be explicitly linked together to help the AI retrieve related items together. Linking is bidirectional: when you link a guideline to a memory, the memory's ID is added to the guideline's `related_memories` list, and vice versa.
-
-```bash
-avc db link -g <GUIDELINE_ID> -m <MEMORY_ID>
-avc db link -g <GUIDELINE_ID> -e <EXAMPLE_ID>
-avc db link -m <MEMORY_ID> -e <EXAMPLE_ID>
-```
-
-Use `--reindex` to trigger a full search index refresh after linking.
-
-To remove a link:
-```bash
-avc db unlink -g <GUIDELINE_ID> -m <MEMORY_ID>
-```
+KB items are typically linked at creation time. In rare cases where links need to be added or removed after the fact, use `avc db link` / `avc db unlink` (see `docs/cli.md` for usage).
 
 ## Soft Deletion
 
@@ -126,7 +125,7 @@ avc kb search --text "naming conventions" -l dotnet --markdown > context.md
 avc kb all-guidelines -l python
 
 # Search by known item ID(s)
-avc kb search --ids python_design.general-namespaces python_design.general-client
+avc kb search --ids python_design.html#general-namespaces python_design.html#general-client
 ```
 
 ## Reindexing

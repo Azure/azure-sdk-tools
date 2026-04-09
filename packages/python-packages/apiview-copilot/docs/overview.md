@@ -5,28 +5,27 @@ APIView Copilot (AVC) is an AI-powered automated reviewer for Azure SDK API surf
 ## High-Level Architecture
 
 ```
-     ┌─────────────────────────────────────────────────────────┐
-     │  APIView (Web App)                                        │
-     │  • Triggers review jobs via POST /api-review/start        │
-     │  • Polls for results via GET /api-review/{job_id}         │
-     └───────────────────────────┬─────────────────────────────┘
-                                 │  HTTPS
-                                 ▼
-     ┌─────────────────────────────────────────────────────────┐
-     │  AVC — FastAPI App (Azure App Service)                    │
-     │  app.py — endpoints, job dispatch, auth, agent chat       │
-     │                                                           │
-     │  ┌───────────────────────────────────────────────────┐   │
-     │  │  ApiViewReview  (src/_apiview_reviewer.py)         │   │
-     │  │  Multi-stage LLM review pipeline                   │   │
-     │  └───────────────────────────────────────────────────┘   │
-     │                                                           │
-     │  ┌──────────────┐  ┌────────────────┐  ┌─────────────┐  │
-     │  │ SearchManager│  │DatabaseManager │  │SettingsManager│ │
-     │  │ (RAG / AI    │  │(CosmosDB)      │  │(App Config)  │  │
-     │  │  Search)     │  │                │  │              │  │
-     │  └──────────────┘  └────────────────┘  └─────────────┘  │
-     └─────────────────────────────────────────────────────────┘
+  ┌──────────────────────────────────────────────────────────────┐
+  │  APIView (Web App)                                           │
+  │  • Triggers review jobs via POST /api-review/start           │
+  │  • Polls for results via GET /api-review/{job_id}            │
+  └─────────────────────────────┬────────────────────────────────┘
+                                │  HTTPS
+                                ▼
+  ┌──────────────────────────────────────────────────────────────┐
+  │  AVC — FastAPI App (Azure App Service)                       │
+  │  app.py — endpoints, job dispatch, auth, agent chat          │
+  │                                                              │
+  │  ┌────────────────────────────────────────────────────────┐  │
+  │  │  ApiViewReview  (src/_apiview_reviewer.py)             │  │
+  │  │  Multi-stage LLM review pipeline                       │  │
+  │  └────────────────────────────────────────────────────────┘  │
+  │                                                              │
+  │  ┌────────────────┐  ┌────────────────┐  ┌───────────────┐   │
+  │  │ SearchManager  │  │DatabaseManager │  │SettingsManager│   │
+  │  │ (RAG/AI Search)│  │(Cosmos DB)     │  │(App Config)   │   │
+  │  └────────────────┘  └────────────────┘  └───────────────┘   │
+  └──────────────────────────────────────────────────────────────┘
 ```
 
 ## Core Components

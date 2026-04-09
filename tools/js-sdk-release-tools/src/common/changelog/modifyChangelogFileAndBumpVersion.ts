@@ -17,7 +17,7 @@ export function getFirstReleaseContent(packageFolderPath: string, isStableReleas
     const sdkType = getSDKType(packageFolderPath);
     const firstBetaContent = `Initial release of the ${packageJsonData.name} package`;
     const firstStableContent = `This is the first stable version with the package of ${packageJsonData.name}`;
-    const hlcClientContent = `The package of ${packageJsonData.name} is using our next generation design principles. To learn more, please refer to our documentation [Quick Start](https://aka.ms/azsdk/js/mgmt/quickstart).`
+    const hlcClientContent = `The package of ${packageJsonData.name} is using our next generation design principles. To learn more, please refer to our documentation <a href="https://aka.ms/azsdk/js/mgmt/quickstart">Quick Start</a>.`
     switch (sdkType) {
         case SDKType.ModularClient:
             if (getModularSDKType(packageFolderPath) === ModularSDKType.ManagementPlane) {

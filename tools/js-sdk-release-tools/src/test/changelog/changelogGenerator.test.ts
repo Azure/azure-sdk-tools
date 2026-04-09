@@ -83,7 +83,7 @@ describe("Change log for first release package", () => {
         const root = path.join(__dirname, "testCases/hlc-first-release/");
         const content = getFirstReleaseContent(root, true);
         expect(content).toBe(
-            "The package of @azure/arm-test is using our next generation design principles. To learn more, please refer to our documentation [Quick Start](https://aka.ms/azsdk/js/mgmt/quickstart).",
+            `The package of @azure/arm-test is using our next generation design principles. To learn more, please refer to our documentation <a href="https://aka.ms/azsdk/js/mgmt/quickstart">Quick Start</a>.`,
         );
     });
 
@@ -91,7 +91,7 @@ describe("Change log for first release package", () => {
         const root = path.join(__dirname, "testCases/hlc-first-release/");
         const content = getFirstReleaseContent(root, false);
         expect(content).toBe(
-            "The package of @azure/arm-test is using our next generation design principles. To learn more, please refer to our documentation [Quick Start](https://aka.ms/azsdk/js/mgmt/quickstart).",
+            `The package of @azure/arm-test is using our next generation design principles. To learn more, please refer to our documentation <a href="https://aka.ms/azsdk/js/mgmt/quickstart">Quick Start</a>.`,
         );
     });
 

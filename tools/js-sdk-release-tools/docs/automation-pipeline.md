@@ -2,19 +2,6 @@
 
 This document describes how the JS SDK release automation pipeline works, covering the entry point, SDK type and run mode determination, folder cleanup logic per mode, and detailed generation steps for each SDK type.
 
-## Relevant Links
-
-| Resource | Link |
-|---|---|
-| Release Pipeline | [azure-sdk/internal #3276](https://dev.azure.com/azure-sdk/internal/_build?definitionId=3276) |
-| Update Version PR | [azure-sdk-for-js #37458](https://github.com/Azure/azure-sdk-for-js/pull/37458) |
-| InnerLoop Config | [`eng/swagger_to_sdk_config.json`](https://github.com/Azure/azure-sdk-for-js/pull/37749/changes#diff-317766c39b2f66ac2343b9830dd5d2041792cdd520eceb1df4772175e058aa84) |
-| Dev Inner Loop Project | [Azure/projects #865](https://github.com/orgs/Azure/projects/865) |
-| Make sample check required | [azure-sdk-tools #14610](https://github.com/Azure/azure-sdk-tools/issues/14610) |
-| Post-generation discussion | [Teams chat](https://teams.microsoft.com/l/chat/19:ad1bb8f8b1684c07a6d0a22b9297ef41@thread.v2/conversations?context=%7B%22contextType%22%3A%22chat%22%7D) |
-| Security ICM fix | [azure-sdk-tools #14743](https://github.com/Azure/azure-sdk-tools/pull/14743) |
-
----
 
 ## Table of Contents
 

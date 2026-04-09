@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { NO_ERRORS_SCHEMA, SimpleChange } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
@@ -71,6 +71,7 @@ vi.mock('ngx-ui-scroll', () => {
 });
 
 import { CommentThreadComponent } from './comment-thread.component';
+import { CommentRelationHelper } from 'src/app/_helpers/comment-relation.helper';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
@@ -340,6 +341,26 @@ describe('CommentThreadComponent', () => {
           resolvedBy: 'test-user'
         })
       );
+    });
+  });
+
+  describe('large review optimizations', () => {
+    it('should not recalculate related comments for every thread instance change', () => {
+      const calculateRelatedCommentsSpy = vi.spyOn(CommentRelationHelper, 'calculateRelatedComments');
+
+      component.allComments = [
+        { id: 'comment1', correlationId: 'corr1', elementId: 'element1', isDeleted: false, isResolved: false } as CommentItemModel
+      ];
+      component.allCodePanelRowData = [
+        { nodeId: 'element1', comments: component.allComments } as CodePanelRowData
+      ];
+
+      component.ngOnChanges({
+        allComments: new SimpleChange([], component.allComments, true),
+        allCodePanelRowData: new SimpleChange([], component.allCodePanelRowData, true)
+      });
+
+      expect(calculateRelatedCommentsSpy).not.toHaveBeenCalled();
     });
   });
 

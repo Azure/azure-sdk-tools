@@ -137,6 +137,9 @@ export class CommentThreadComponent {
   }
 
   private visibleRelatedCommentsCache = new Map<string, CommentItemModel[]>();
+  private codeRowsByNodeId = new Map<string, CodePanelRowData>();
+  private codeRowsByThreadId = new Map<string, CodePanelRowData>();
+  private codeRowsByCommentId = new Map<string, CodePanelRowData>();
 
   get canEditSeverity(): boolean {
     if (!this.codePanelRowData?.comments || this.codePanelRowData.comments.length === 0) {
@@ -188,12 +191,71 @@ export class CommentThreadComponent {
     }
 
     if (changes['allComments'] || changes['allCodePanelRowData']) {
-      if (this.allComments && this.allComments.length > 0) {
-        CommentRelationHelper.calculateRelatedComments(this.allComments);
+      if (changes['allCodePanelRowData']) {
+        this.rebuildCodeRowLookups();
       }
       this.visibleRelatedCommentsCache.clear();
       this.updateConversationCodeContext();
     }
+  }
+
+  private rebuildCodeRowLookups() {
+    this.codeRowsByNodeId.clear();
+    this.codeRowsByThreadId.clear();
+    this.codeRowsByCommentId.clear();
+
+    for (const row of this.allCodePanelRowData ?? []) {
+      if (row.nodeId && !this.codeRowsByNodeId.has(row.nodeId)) {
+        this.codeRowsByNodeId.set(row.nodeId, row);
+      }
+
+      if (row.threadId && !this.codeRowsByThreadId.has(row.threadId)) {
+        this.codeRowsByThreadId.set(row.threadId, row);
+      }
+
+      for (const comment of row.comments ?? []) {
+        if (comment.id && !this.codeRowsByCommentId.has(comment.id)) {
+          this.codeRowsByCommentId.set(comment.id, row);
+        }
+      }
+    }
+  }
+
+  private getVisibleRelatedComments(comment: CommentItemModel): CommentItemModel[] {
+    if (!comment.correlationId || !this.allComments) {
+      return [];
+    }
+
+    const cacheKey = comment.correlationId;
+    const cachedRelatedComments = this.visibleRelatedCommentsCache.get(cacheKey);
+    if (cachedRelatedComments) {
+      return cachedRelatedComments;
+    }
+
+    const relatedComments = this.allCodePanelRowData && this.allCodePanelRowData.length > 0
+      ? CommentRelationHelper.getVisibleRelatedComments(comment, this.allComments, this.allCodePanelRowData)
+      : CommentRelationHelper.getRelatedComments(comment, this.allComments);
+
+    this.visibleRelatedCommentsCache.set(cacheKey, relatedComments);
+    return relatedComments;
+  }
+
+  private getCodeRowForComment(comment: CommentItemModel): CodePanelRowData | undefined {
+    if (comment.id) {
+      const rowByCommentId = this.codeRowsByCommentId.get(comment.id);
+      if (rowByCommentId) {
+        return rowByCommentId;
+      }
+    }
+
+    if (comment.threadId) {
+      const rowByThreadId = this.codeRowsByThreadId.get(comment.threadId);
+      if (rowByThreadId) {
+        return rowByThreadId;
+      }
+    }
+
+    return comment.elementId ? this.codeRowsByNodeId.get(comment.elementId) : undefined;
   }
 
   private updateConversationCodeContext() {
@@ -205,7 +267,7 @@ export class CommentThreadComponent {
       this.conversationCodeRow = null;
       return;
     }
-    this.conversationCodeRow = this.allCodePanelRowData.find(row => row.nodeId === elementId) || null;
+    this.conversationCodeRow = this.codeRowsByNodeId.get(elementId) || null;
   }
 
   getTokenClass(token: StructuredToken) {
@@ -775,11 +837,11 @@ export class CommentThreadComponent {
   }
 
   getRelatedCommentsCount(comment: CommentItemModel): number {
-    return CommentRelationHelper.getRelatedCommentsCount(comment, this.allComments, this.allCodePanelRowData);
+    return Math.max(0, this.getVisibleRelatedComments(comment).length - 1);
   }
 
   hasRelatedComments(comment: CommentItemModel): boolean {
-    return CommentRelationHelper.hasRelatedComments(comment, this.allComments, this.allCodePanelRowData);
+    return this.getRelatedCommentsCount(comment) > 0;
   }
 
   showRelatedComments(comment: CommentItemModel) {
@@ -788,17 +850,7 @@ export class CommentThreadComponent {
     }
 
     this.selectedCommentId = comment.id;
-    const cacheKey = comment.correlationId;
-    if (this.visibleRelatedCommentsCache.has(cacheKey)) {
-      this.relatedComments = this.visibleRelatedCommentsCache.get(cacheKey)!;
-    } else {
-      if (this.allCodePanelRowData && this.allCodePanelRowData.length > 0) {
-        this.relatedComments = CommentRelationHelper.getVisibleRelatedComments(comment, this.allComments, this.allCodePanelRowData);
-      } else {
-        this.relatedComments = CommentRelationHelper.getRelatedComments(comment, this.allComments);
-      }
-      this.visibleRelatedCommentsCache.set(cacheKey, this.relatedComments);
-    }
+    this.relatedComments = this.getVisibleRelatedComments(comment);
 
     this.showRelatedCommentsDialog = true;
   }
@@ -862,17 +914,16 @@ export class CommentThreadComponent {
 
   private applyBatchSeverity(commentIds: string[], severity: CommentSeverity): void {
     commentIds.forEach(commentId => {
-      const commentCodeRow = this.allCodePanelRowData?.find(row =>
-        row.comments?.some(c => c.id === commentId)
-      );
+      const comment = this.relatedComments?.find(c => c.id === commentId);
+      const commentCodeRow = comment ? this.getCodeRowForComment(comment) : this.codeRowsByCommentId.get(commentId);
 
       if (!commentCodeRow) {
         return;
       }
 
-      const comment = commentCodeRow.comments?.find(c => c.id === commentId);
-      if (comment) {
-        comment.severity = severity;
+      const codeRowComment = commentCodeRow.comments?.find(c => c.id === commentId);
+      if (codeRowComment) {
+        codeRowComment.severity = severity;
       }
 
       const relatedComment = this.relatedComments?.find(c => c.id === commentId);
@@ -883,7 +934,7 @@ export class CommentThreadComponent {
       this.batchResolutionActionEmitter.emit({
         commentThreadUpdateAction: CommentThreadUpdateAction.CommentTextUpdate,
         commentId: commentId,
-        threadId: comment?.threadId || commentCodeRow.threadId || this.codePanelRowData?.threadId,
+        threadId: codeRowComment?.threadId || relatedComment?.threadId || commentCodeRow.threadId || this.codePanelRowData?.threadId,
         nodeIdHashed: commentCodeRow.nodeIdHashed,
         severity: severity,
         associatedRowPositionInGroup: commentCodeRow.associatedRowPositionInGroup || 0
@@ -895,9 +946,7 @@ export class CommentThreadComponent {
     commentIds.forEach(commentId => {
       const comment = this.relatedComments.find(c => c.id === commentId);
       if (comment) {
-        const commentCodeRow = this.allCodePanelRowData?.find(row =>
-          row.threadId === comment.threadId || row.comments?.some(c => c.id === commentId)
-        );
+        const commentCodeRow = this.getCodeRowForComment(comment);
 
         this.batchResolutionActionEmitter.emit({
           commentThreadUpdateAction: CommentThreadUpdateAction.CommentResolved,
@@ -918,16 +967,11 @@ export class CommentThreadComponent {
 
       let commentCodeRow: CodePanelRowData | undefined;
       if (originalComment) {
-        commentCodeRow = this.allCodePanelRowData?.find(row =>
-          row.comments?.some(c => c.id === originalComment.id)
-        );
+        commentCodeRow = this.getCodeRowForComment(originalComment);
       }
 
       if (!commentCodeRow) {
-        commentCodeRow = this.allCodePanelRowData?.find(row =>
-          (createdComment.threadId && row.threadId === createdComment.threadId) ||
-          row.nodeId === createdComment.elementId
-        );
+        commentCodeRow = this.getCodeRowForComment(createdComment);
       }
 
       this.batchResolutionActionEmitter.emit({

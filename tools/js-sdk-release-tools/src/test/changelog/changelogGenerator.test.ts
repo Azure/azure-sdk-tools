@@ -5,7 +5,10 @@ import { SDKType } from "../../common/types.js";
 import { describe } from "node:test";
 import { tryReadNpmPackageChangelog } from "../../common/utils.js";
 import { removeSync, outputFileSync } from "fs-extra";
-import { getFirstReleaseContent } from "../../common/changelog/modifyChangelogFileAndBumpVersion.js";
+import fs from "fs";
+import os from "os";
+import { getFirstReleaseContent, makeChangesForMigrateTrack1ToTrack2 } from "../../common/changelog/modifyChangelogFileAndBumpVersion.js";
+import { UpdateMode } from "../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js";
 import {
     DifferenceDetector,
     ApiViewOptions,
@@ -104,6 +107,29 @@ describe("Change log for first release package", () => {
         const root = path.join(__dirname, "testCases/rlc-first-release/");
         const content = getFirstReleaseContent(root, false);
         expect(content).toBe("Initial release of the @azure-rest/test package");
+    });
+});
+
+describe("Migration changelog for Modular ManagementPlane", () => {
+    test("ModularClient ManagementPlane -> migration from Track1", async () => {
+        const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "arm-modular-migration-test-"));
+        try {
+            // Create package.json (path contains "arm-" so getModularSDKType returns ManagementPlane)
+            fs.writeFileSync(path.join(tmpDir, "package.json"), JSON.stringify({ name: "@azure/arm-test", version: "17.0.0" }));
+            // Create src/api directory (no src/models/parameters.ts, so getSDKType returns ModularClient)
+            fs.mkdirSync(path.join(tmpDir, "src", "api"), { recursive: true });
+            fs.writeFileSync(path.join(tmpDir, "src", "api", "index.ts"), "export {};");
+
+            await makeChangesForMigrateTrack1ToTrack2(tmpDir, "17.0.0", "2025-01-01", UpdateMode.ChangelogOnly);
+
+            const changelog = fs.readFileSync(path.join(tmpDir, "CHANGELOG.md"), "utf8");
+            expect(changelog).toContain("The @azure/arm-test package has been upgraded to a new SDK generation");
+            expect(changelog).toContain("Starting from version 17.0.0, this release includes breaking changes.");
+            expect(changelog).toContain("https://aka.ms/azsdk/js/sdk/migration");
+            expect(changelog).toContain("https://aka.ms/azsdk/js/sdk/quickstart");
+        } finally {
+            removeSync(tmpDir);
+        }
     });
 });
 

@@ -77,7 +77,7 @@ export async function makeChangesForMigrateTrack1ToTrack2(
     const packageJsonData: any = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), 'utf8'));
     const sdkType = getSDKType(packageFolderPath);
     let migrationContent: string;
-    if (sdkType === SDKType.ModularClient) {
+    if (sdkType === SDKType.ModularClient && getModularSDKType(packageFolderPath) === ModularSDKType.ManagementPlane) {
         migrationContent = `The ${packageJsonData.name} package has been upgraded to a new SDK generation that provides layered APIs, smaller bundles, and improved ergonomics. Starting from version ${nextPackageVersion}, this release includes breaking changes.
 
 To migrate existing applications, see the https://aka.ms/azsdk/js/sdk/migration. For more information, refer to the https://aka.ms/azsdk/js/sdk/quickstart.

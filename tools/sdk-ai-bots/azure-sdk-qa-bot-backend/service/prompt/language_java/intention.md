@@ -32,10 +32,14 @@ The question must be classified into one of these categories:
     - Service-specific SDK usage patterns and best practices
     - SDK client configuration for sovereign clouds
 
-- **just-post**: Questions including:
-    - Ask for review about PR of azure-sdk-for-java repo 
-    - Ask for review about PR of azure-rest-api-specs repo 
-    - Announcement for upcoming changes of SDK repo or eng tools or monthly kickoff
+- **review-request**: Questions asking for PR review or approval, including:
+  - Ask for review about PR of azure-sdk-for-java repo 
+  - Ask for review about PR of azure-rest-api-specs repo 
+  - Ask to involve key reviewers or tag codeowners for a review request
+
+- **announcement**: Informational posts and broadcasts, including:
+  - Announcement for upcoming changes of SDK repo or eng tools or monthly kickoff
+  - Release schedules, reminders, or other informational updates that do not ask for help
 
 - **unknown**: Questions that:
     - Lack sufficient context to determine the specific development or usage context
@@ -52,7 +56,7 @@ The question must be classified into one of these categories:
 Respond with a JSON object using this structure (no markdown formatting needed):
 {
   "question": string,     // The rewritten standalone question
-  "category": string,     // Must be one of the categories: sdk-generation, sdk-development, sdk-release, sdk-usage or unknown, ???
+  "category": string,     // Must be one of the categories: sdk-generation, sdk-development, sdk-release, sdk-usage, review-request, announcement, or unknown
   "service_type": string, // Must be one of the intent service types or unknown
   "needs_rag_processing": boolean    // Whether to invoke RAG workflow, default is true
 }
@@ -84,4 +88,22 @@ Response:
   "category": "sdk-release",
   "service_type": "unknown",
   "needs_rag_processing": true
+}
+
+Original: "Could someone please review this PR and tag the right code owners?"
+Response:
+{
+  "question": "Could someone review this PR and involve the appropriate code owners?",
+  "category": "review-request",
+  "service_type": "unknown",
+  "needs_rag_processing": true
+}
+
+Original: "Monthly kickoff reminder: Java SDK release planning starts next week."
+Response:
+{
+  "question": "This is an announcement about the upcoming Java SDK monthly kickoff and release planning schedule.",
+  "category": "announcement",
+  "service_type": "unknown",
+  "needs_rag_processing": false
 }

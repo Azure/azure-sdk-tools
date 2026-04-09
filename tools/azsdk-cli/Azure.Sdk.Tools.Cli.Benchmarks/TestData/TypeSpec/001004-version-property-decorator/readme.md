@@ -30,6 +30,18 @@ suppressions:
   - code: PathResourceProviderMatchNamespace
 ```
 
+### Tag: package-preview-2024-10-01
+
+These settings apply only when `--tag=package-preview-2024-10-01` is specified on the command line.
+
+```yaml $(tag) == 'package-preview-2024-10-01'
+input-file:
+  - preview/2024-10-01-preview/widget.json
+suppressions:
+  - code: PathContainsResourceType
+  - code: PathResourceProviderMatchNamespace
+```
+
 ### Tag: package-2021-11-01
 
 These settings apply only when `--tag=package-2021-11-01` is specified on the command line.

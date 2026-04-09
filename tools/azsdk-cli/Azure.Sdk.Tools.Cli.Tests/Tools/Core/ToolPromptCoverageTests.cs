@@ -35,8 +35,7 @@ internal class ToolPromptCoverageTests
         "azsdk_engsys_codeowner_add_package_owner",
         "azsdk_engsys_codeowner_remove_package_owner",
         "azsdk_engsys_codeowner_add_package_label",
-        "azsdk_engsys_codeowner_remove_package_label",
-        "azsdk_engsys_codeowner_check_package_owners"
+        "azsdk_engsys_codeowner_remove_package_label"
     };
 
     [Test]

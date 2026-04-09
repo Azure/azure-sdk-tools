@@ -37,17 +37,7 @@ The package exposes the following CLI commands (defined in `package.json` `bin`)
 | `update-version` | [`src/updateBumpVersionCli.ts`](../src/updateBumpVersionCli.ts) | `--sdkRepoPath`, `--packagePath`, `--releaseType`, `--version`, `--releaseDate` | Updates `package.json` version only (does not rewrite changelog) |
 | `generate-ci-yaml` | [`src/generateCiYamlCli.ts`](../src/generateCiYamlCli.ts) | `--sdkRepoPath`, `--packagePath` | Creates or updates the `ci.yml` / `ci.mgmt.yml` file for a package |
 
-#### Local Code Generation
-
-| Command | Source File | Parameters | Description |
-|---|---|---|---|
-| `hlc-code-gen` | [`src/hlcCodeGenCli.ts`](../src/hlcCodeGenCli.ts) | see [hlc.md](./hlc.md) | Local HLC (management-plane) code generation from swagger/README |
-| `rlc-code-gen` | [`src/rlcCodegenCli.ts`](../src/rlcCodegenCli.ts) | see [llc.md](./llc.md) | Local RLC (data-plane) code generation |
-| `changelog-tool` | [`src/changelogToolCli.ts`](../src/changelogToolCli.ts) | see [changelog-tool.md](./changelog-tool.md) | Generate changelog by comparing api.md against published npm package |
-
-### `swagger_to_sdk_config.json` — InnerLoop Integration
-
-The file [`eng/swagger_to_sdk_config.json`](https://github.com/Azure/azure-sdk-for-js/pull/37749/changes#diff-317766c39b2f66ac2343b9830dd5d2041792cdd520eceb1df4772175e058aa84) in `azure-sdk-for-js` registers shell scripts that the SDK automation system calls during the **Dev Inner Loop** ([project board](https://github.com/orgs/Azure/projects/865)). Each script wraps one of the CLI commands above so that the spec-to-SDK tooling can invoke them without knowing the specific package manager or tool path.
+These commands are also invoked by the SDK automation system via [`eng/swagger_to_sdk_config.json`](https://github.com/Azure/azure-sdk-for-js/pull/37749/changes#diff-317766c39b2f66ac2343b9830dd5d2041792cdd520eceb1df4772175e058aa84) in `azure-sdk-for-js` ([Dev Inner Loop project board](https://github.com/orgs/Azure/projects/865)), which maps them to shell scripts so that the spec-to-SDK tooling can invoke them without knowing the specific package manager or tool path:
 
 | Config key | Script path (in azure-sdk-for-js) | Underlying CLI command | Purpose |
 |---|---|---|---|
@@ -61,6 +51,14 @@ generate-ci-yaml --sdkRepoPath <SdkRepoPath> --packagePath <PackagePath>
 ```
 
 This allows SDK authors to regenerate the CI YAML for their package locally as part of the inner loop without running the full automation pipeline. See [azure-sdk-for-js #37458](https://github.com/Azure/azure-sdk-for-js/pull/37458) for the corresponding version bump that ships these changes.
+
+#### Local Code Generation
+
+| Command | Source File | Parameters | Description |
+|---|---|---|---|
+| `hlc-code-gen` | [`src/hlcCodeGenCli.ts`](../src/hlcCodeGenCli.ts) | see [hlc.md](./hlc.md) | Local HLC (management-plane) code generation from swagger/README |
+| `rlc-code-gen` | [`src/rlcCodegenCli.ts`](../src/rlcCodegenCli.ts) | see [llc.md](./llc.md) | Local RLC (data-plane) code generation |
+| `changelog-tool` | [`src/changelogToolCli.ts`](../src/changelogToolCli.ts) | see [changelog-tool.md](./changelog-tool.md) | Generate changelog by comparing api.md against published npm package |
 
 ### SDK Type Enum (`SDKType`)
 

@@ -326,6 +326,13 @@ class StubGenerator:
         # Importing it globally can cause circular dependency since it needs NodeIndex that is defined in this file
         from apistub.nodes._module_node import ModuleNode
         from apistub.nodes import PylintParser
+        from apistub.nodes._class_node import clear_caches
+        from apistub.nodes._function_node import clear_func_caches
+
+        # Reset per-file source and astroid caches so multiple packages processed
+        # in the same Python process (e.g. the test suite) start with a clean slate.
+        clear_caches()
+        clear_func_caches()
 
         self.module_dict = {}
         mapping = MetadataMap(pkg_root_path, mapping_path=self.mapping_path)

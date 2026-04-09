@@ -29,10 +29,7 @@ from ...._vendor.core import CaseInsensitiveEnumMeta
 from ...._vendor.core.pipeline import PipelineResponse
 from ...._vendor.core.serialization import _Null
 
-if sys.version_info >= (3, 9):
-    from collections.abc import MutableMapping
-else:
-    from typing import MutableMapping
+from collections.abc import MutableMapping
 
 _LOGGER = logging.getLogger(__name__)
 

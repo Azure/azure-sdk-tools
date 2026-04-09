@@ -143,6 +143,11 @@ class TestMetrics:
             "implicit_bad_count": 0,
             "implicit_bad": 0.0,
             "neutral_count": 0,
+            "avg_confidence_good": None,
+            "avg_confidence_bad": None,
+            "avg_confidence_deleted": None,
+            "avg_confidence_implicit_good": None,
+            "avg_confidence_implicit_bad": None,
         }
 
         cm = overall["comment_makeup"]
@@ -279,6 +284,11 @@ class TestMetrics:
             "implicit_bad_count": 0,
             "implicit_bad": 0.0,
             "neutral_count": 0,
+            "avg_confidence_good": None,
+            "avg_confidence_bad": None,
+            "avg_confidence_deleted": None,
+            "avg_confidence_implicit_good": None,
+            "avg_confidence_implicit_bad": None,
         }
         assert java_cq == {
             "ai_comment_count": 1,
@@ -294,6 +304,11 @@ class TestMetrics:
             "implicit_bad_count": 0,
             "implicit_bad": 0.0,
             "neutral_count": 0,
+            "avg_confidence_good": None,
+            "avg_confidence_bad": None,
+            "avg_confidence_deleted": None,
+            "avg_confidence_implicit_good": None,
+            "avg_confidence_implicit_bad": None,
         }
         assert py_cm == {
             "human_comment_count_without_copilot": 0,
@@ -429,6 +444,11 @@ class TestMetrics:
             "implicit_bad_count": 1,
             "implicit_bad": 1.0,
             "neutral_count": 0,
+            "avg_confidence_good": None,
+            "avg_confidence_bad": None,
+            "avg_confidence_deleted": None,
+            "avg_confidence_implicit_good": None,
+            "avg_confidence_implicit_bad": None,
         }
         assert py_cm == {
             "human_comment_count_without_copilot": 0,
@@ -1211,3 +1231,181 @@ class TestMetrics:
             + cq["neutral_count"]
         )
         assert total_from_categories == cq["ai_comment_count"]
+
+    @patch("src._metrics.get_active_reviews")
+    def test_avg_confidence_score_per_category(self, mock_get_reviews):
+        """Test that average confidence scores are computed correctly per category."""
+        review1 = ActiveReviewMetadata(
+            review_id="review1",
+            name="azure-storage-blob",
+            language="Python",
+            revisions=[
+                ActiveRevisionMetadata(
+                    revision_ids=["rev1"],
+                    package_version="1.0.0",
+                    approval="2026-01-06T00:00:00Z",
+                    has_copilot_review=True,
+                    version_type="GA",
+                ),
+                ActiveRevisionMetadata(
+                    revision_ids=["rev2"],
+                    package_version="2.0.0",
+                    approval=None,  # Unapproved
+                    has_copilot_review=True,
+                    version_type="GA",
+                ),
+            ],
+        )
+
+        comments = [
+            # Good (upvoted) with confidence scores
+            {
+                "id": "c1",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "CommentSource": "AIGenerated",
+                "Upvotes": ["user1"],
+                "Downvotes": [],
+                "ConfidenceScore": 0.8,
+            },
+            {
+                "id": "c2",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "CommentSource": "AIGenerated",
+                "Upvotes": ["user2"],
+                "Downvotes": [],
+                "ConfidenceScore": 0.6,
+            },
+            # Bad (downvoted) with confidence score
+            {
+                "id": "c3",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "CommentSource": "AIGenerated",
+                "Upvotes": [],
+                "Downvotes": ["user1"],
+                "ConfidenceScore": 0.3,
+            },
+            # Deleted with confidence score
+            {
+                "id": "c4",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "CommentSource": "AIGenerated",
+                "IsDeleted": True,
+                "ConfidenceScore": 0.5,
+            },
+            # Implicit good (resolved, no votes)
+            {
+                "id": "c5",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "CommentSource": "AIGenerated",
+                "IsResolved": True,
+                "ConfidenceScore": 0.7,
+            },
+            # Implicit bad (approved, unresolved, no votes)
+            {
+                "id": "c6",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "CommentSource": "AIGenerated",
+                "ConfidenceScore": 0.4,
+            },
+            # Neutral (unapproved) - should not have avg reported
+            {
+                "id": "c7",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev2",
+                "CommentSource": "AIGenerated",
+                "ConfidenceScore": 0.9,
+            },
+        ]
+
+        mock_get_reviews.return_value = ([review1], comments)
+
+        report = metrics.get_metrics_report("2026-01-01", "2026-01-31", environment="test")
+        cq = report["metrics"]["Python"]["comment_quality"]
+
+        assert cq["good_count"] == 2
+        assert cq["bad_count"] == 1
+        assert cq["deleted_count"] == 1
+        assert cq["implicit_good_count"] == 1
+        assert cq["implicit_bad_count"] == 1
+        assert cq["neutral_count"] == 1
+
+        # Average confidence: (0.8 + 0.6) / 2 = 0.7
+        assert cq["avg_confidence_good"] == 0.7
+        # Average confidence: 0.3 / 1 = 0.3
+        assert cq["avg_confidence_bad"] == 0.3
+        # Average confidence: 0.5 / 1 = 0.5
+        assert cq["avg_confidence_deleted"] == 0.5
+        # Average confidence: 0.7 / 1 = 0.7
+        assert cq["avg_confidence_implicit_good"] == 0.7
+        # Average confidence: 0.4 / 1 = 0.4
+        assert cq["avg_confidence_implicit_bad"] == 0.4
+
+    @patch("src._metrics.get_active_reviews")
+    def test_avg_confidence_score_missing_scores_omitted(self, mock_get_reviews):
+        """Test that comments without ConfidenceScore are omitted from average, not treated as 0."""
+        review1 = ActiveReviewMetadata(
+            review_id="review1",
+            name="azure-storage-blob",
+            language="Python",
+            revisions=[
+                ActiveRevisionMetadata(
+                    revision_ids=["rev1"],
+                    package_version="1.0.0",
+                    approval="2026-01-06T00:00:00Z",
+                    has_copilot_review=True,
+                    version_type="GA",
+                )
+            ],
+        )
+
+        comments = [
+            # Good with score
+            {
+                "id": "c1",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "CommentSource": "AIGenerated",
+                "Upvotes": ["user1"],
+                "Downvotes": [],
+                "ConfidenceScore": 0.8,
+            },
+            # Good WITHOUT score - should be omitted from avg, not treated as 0
+            {
+                "id": "c2",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "CommentSource": "AIGenerated",
+                "Upvotes": ["user2"],
+                "Downvotes": [],
+                # No ConfidenceScore field
+            },
+            # Bad with no score at all
+            {
+                "id": "c3",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "CommentSource": "AIGenerated",
+                "Upvotes": [],
+                "Downvotes": ["user1"],
+                # No ConfidenceScore
+            },
+        ]
+
+        mock_get_reviews.return_value = ([review1], comments)
+
+        report = metrics.get_metrics_report("2026-01-01", "2026-01-31", environment="test")
+        cq = report["metrics"]["Python"]["comment_quality"]
+
+        assert cq["good_count"] == 2
+        assert cq["bad_count"] == 1
+
+        # Avg good should be 0.8 (only c1 has a score), NOT (0.8 + 0) / 2 = 0.4
+        assert cq["avg_confidence_good"] == 0.8
+        # Avg bad should be None (no scores available)
+        assert cq["avg_confidence_bad"] is None

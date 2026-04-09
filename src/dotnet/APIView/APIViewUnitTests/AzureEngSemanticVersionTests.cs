@@ -120,5 +120,21 @@ namespace APIViewUnitTests
             var semanticVersion = new AzureEngSemanticVersion(version, language);
             Assert.Equal(expectedIsPrerelease, semanticVersion.IsPrerelease);
         }
+
+        [Theory]
+        [InlineData("1.2.0-alpha.20240305.1", true)]  // standard CI build with sequence suffix
+        [InlineData("1.2.0-alpha.20240305",   true)]  // standard CI build without sequence suffix
+        [InlineData("1.2.3a20200828009",      true)]  // Python CI build with 3-digit sequence
+        [InlineData("1.1.0a20260101",         true)]  // Python CI build without sequence suffix
+        [InlineData("1.2.0-beta.1",           false)] // intentional beta prerelease
+        [InlineData("1.2.0-rc.2",             false)] // intentional RC prerelease
+        [InlineData("1.0.0b1",               false)] // Python intentional beta
+        [InlineData("1.0.0a1",               false)] // Python intentional alpha (small number)
+        [InlineData("1.2.0",                 false)] // stable release
+        [InlineData("",                      false)] // empty string
+        public void IsDailyDevBuild_ShouldDetectCorrectly(string version, bool expected)
+        {
+            Assert.Equal(expected, new AzureEngSemanticVersion(version).IsDailyDevBuild);
+        }
     }
 }

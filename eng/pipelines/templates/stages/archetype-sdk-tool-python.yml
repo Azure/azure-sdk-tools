@@ -2,6 +2,9 @@ parameters:
 - name: PythonVersion
   type: string
   default: '3.10'
+- name: PythonVersions
+  type: object
+  default: []
 - name: PackagePath
   type: string
   default: ''
@@ -59,11 +62,14 @@ extends:
                   targetPath: '$(Build.ArtifactStagingDirectory)'
                   artifactName: ${{ parameters.ArtifactName }}
 
-          - ${{ if not(eq(length(parameters.TestSteps), 0)) }}:
+          - ${{ if and(not(eq(length(parameters.TestSteps), 0)), ne(length(parameters.PythonVersions), 0)) }}:
             - job: 'Test'
 
-              dependsOn:
-                - 'Build'
+              strategy:
+                matrix:
+                  ${{ each version in parameters.PythonVersions }}:
+                    Python${{ replace(version, '.', '') }}:
+                      PythonTestVersion: '${{ version }}'
 
               pool:
                 name: $(LINUXPOOL)
@@ -71,8 +77,25 @@ extends:
                 os: linux
 
               steps:
-                - template: /eng/pipelines/templates/steps/use-python-version.yml
-                  parameters:
+                - task: UsePythonVersion@0
+                  displayName: 'Use Python $(PythonTestVersion)'
+                  inputs:
+                    versionSpec: '$(PythonTestVersion)'
+
+                - ${{ parameters.TestSteps }}
+
+          - ${{ if and(not(eq(length(parameters.TestSteps), 0)), eq(length(parameters.PythonVersions), 0)) }}:
+            - job: 'Test'
+
+              pool:
+                name: $(LINUXPOOL)
+                image: $(LINUXVMIMAGE)
+                os: linux
+
+              steps:
+                - task: UsePythonVersion@0
+                  displayName: 'Use Python ${{ parameters.PythonVersion }}'
+                  inputs:
                     versionSpec: '${{ parameters.PythonVersion }}'
 
                 - ${{ parameters.TestSteps }}

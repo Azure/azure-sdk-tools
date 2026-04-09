@@ -37,10 +37,6 @@ The question must be classified into one of these categories:
   - Ask for review about PR of azure-rest-api-specs repo 
   - Ask to involve key reviewers or tag codeowners for a review request
 
-- **announcement**: Informational posts and broadcasts, including:
-  - Announcement for upcoming changes of SDK repo or eng tools or monthly kickoff
-  - Release schedules, reminders, or other informational updates that do not ask for help
-
 - **unknown**: Questions that:
     - Lack sufficient context to determine the specific development or usage context
     - Are unclear or ambiguous about the Java SDK context

@@ -334,6 +334,12 @@ public sealed partial class DotnetLanguageService: LanguageService
             var testsPath = Path.Combine(packagePath, "tests");
             var searchDir = Directory.Exists(testsPath) ? testsPath : packagePath;
 
+            if (!Directory.Exists(searchDir))
+            {
+                logger.LogDebug("Directory {searchDir} does not exist, cannot detect test framework", searchDir);
+                return DotnetTestFramework.Unknown;
+            }
+
             var csprojFiles = Directory.GetFiles(searchDir, "*.csproj", SearchOption.AllDirectories);
             if (csprojFiles.Length == 0)
             {

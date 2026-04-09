@@ -347,7 +347,8 @@ public sealed partial class DotnetLanguageService: LanguageService
                 // Handles both direct paths and MSBuild variables:
                 //   <ProjectReference Include="..\..\Azure.Core.TestFramework\Azure.Core.TestFramework.csproj" />
                 //   <ProjectReference Include="$(AzureCoreTestFramework)" />
-                var projectRefs = doc.Descendants("ProjectReference")
+                var projectRefs = doc.Descendants()
+                    .Where(e => e.Name.LocalName == "ProjectReference")
                     .Select(e => e.Attribute("Include")?.Value ?? "");
 
                 foreach (var refValue in projectRefs)
@@ -362,7 +363,8 @@ public sealed partial class DotnetLanguageService: LanguageService
 
                 // Check PackageReferences for Microsoft.ClientModel.TestFramework
                 //   <PackageReference Include="Microsoft.ClientModel.TestFramework" />
-                var packageRefs = doc.Descendants("PackageReference")
+                var packageRefs = doc.Descendants()
+                    .Where(e => e.Name.LocalName == "PackageReference")
                     .Select(e => e.Attribute("Include")?.Value ?? "");
 
                 foreach (var refValue in packageRefs)

@@ -19,6 +19,11 @@ export enum CodeLineRowNavigationDirection {
   next
 }
 
+export interface CommentThreadNavigationEvent {
+  commentThreadNavigationPointer: number | string | null | undefined;
+  direction: CodeLineRowNavigationDirection;
+}
+
 export function getLanguageCssSafeName(language: string): string {
   switch (language.toLowerCase()) {
     case "c#":

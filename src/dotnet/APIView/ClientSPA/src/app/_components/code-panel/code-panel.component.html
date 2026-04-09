@@ -42,6 +42,7 @@
     <ng-container *ngIf="item.type === CodePanelRowDatatype.CommentThread">
       <app-comment-thread
         [codePanelRowData]="item"
+        [rowIndex]="index"
         [allComments]="allComments"
         [allCodePanelRowData]="codePanelRowData"
         [commentNumber]="getActiveCommentThreadPosition(index, item)"

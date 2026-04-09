@@ -195,8 +195,8 @@
     </div>
 </div>
 <div *ngIf="instanceLocation === 'code-panel' && !isThreadCollapsed && (!codePanelRowData!.isResolvedCommentThread || threadResolvedAndExpanded)" class="btn-group-vertical comment-thread-navigation ms-2 {{ floatItemEnd }}" role="group" aria-label="Comment Navigation Button">
-    <button type="button" class="btn btn-sm btn-outline-secondary" pTooltip="Previous Comment" tooltipPosition="top" (click)="handleCommentThreadNavigation($event, CodeLineRowNavigationDirection.prev)"><i class="bi bi-arrow-up"></i></button>
-    <button type="button" class="btn btn-sm btn-outline-secondary" pTooltip="Next Comment" tooltipPosition="bottom" (click)="handleCommentThreadNavigation($event, CodeLineRowNavigationDirection.next)"><i class="bi bi-arrow-down"></i></button>
+    <button type="button" class="btn btn-sm btn-outline-secondary" pTooltip="Previous Comment" tooltipPosition="top" (click)="handleCommentThreadNavigation(CodeLineRowNavigationDirection.prev)"><i class="bi bi-arrow-up"></i></button>
+    <button type="button" class="btn btn-sm btn-outline-secondary" pTooltip="Next Comment" tooltipPosition="bottom" (click)="handleCommentThreadNavigation(CodeLineRowNavigationDirection.next)"><i class="bi bi-arrow-down"></i></button>
 </div>
 
 <app-related-comments-dialog *ngIf="showRelatedCommentsDialog"

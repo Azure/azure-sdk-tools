@@ -20,7 +20,7 @@ import { LanguageNamesPipe } from 'src/app/_pipes/language-names.pipe';
 import { CodePanelRowData } from 'src/app/_models/codePanelModels';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
-import { CodeLineRowNavigationDirection, getStructuredTokenClass } from 'src/app/_helpers/common-helpers';
+import { CodeLineRowNavigationDirection, CommentThreadNavigationEvent, getStructuredTokenClass } from 'src/app/_helpers/common-helpers';
 import { StructuredToken } from 'src/app/_models/structuredToken';
 import { CommentSeverityHelper } from 'src/app/_helpers/comment-severity.helper';
 import { CommentSeverity, CommentSource } from 'src/app/_models/commentItemModel';
@@ -81,6 +81,7 @@ export class CommentThreadComponent {
   @Input() elementId: string = '';
   @Input() commentNumber: number | null = null;
   @Input() totalCommentCount: number = 0;
+  @Input() rowIndex: number | null = null;
 
   @Input() userProfile : UserProfile | undefined;
   @Output() cancelCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
@@ -89,7 +90,7 @@ export class CommentThreadComponent {
   @Output() commentResolutionActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() commentUpvoteActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() commentDownvoteActionEmitter : EventEmitter<any> = new EventEmitter<any>();
-  @Output() commentThreadNavigationEmitter : EventEmitter<any> = new EventEmitter<any>();
+  @Output() commentThreadNavigationEmitter : EventEmitter<CommentThreadNavigationEvent> = new EventEmitter<CommentThreadNavigationEvent>();
   @Output() batchResolutionActionEmitter : EventEmitter<CommentUpdatesDto> = new EventEmitter<CommentUpdatesDto>();
   @Output() navigateToElementEmitter : EventEmitter<string> = new EventEmitter<string>();
 
@@ -732,9 +733,12 @@ export class CommentThreadComponent {
     );
   }
 
-  handleCommentThreadNavigation(event: Event, direction: CodeLineRowNavigationDirection) {
-    const target = (event.target as Element).closest(".user-comment-thread")?.parentNode as Element;
-    const targetIndex = target.getAttribute("data-sid");
+  handleCommentThreadNavigation(direction: CodeLineRowNavigationDirection) {
+    const targetIndex = this.rowIndex;
+    if (targetIndex === null || targetIndex === undefined) {
+      return;
+    }
+
     this.commentThreadNavigationEmitter.emit({
       commentThreadNavigationPointer: targetIndex,
       direction: direction

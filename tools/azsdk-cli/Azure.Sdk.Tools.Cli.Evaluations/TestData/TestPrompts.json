@@ -138,6 +138,10 @@
     { "toolName": "azsdk_update_release_plan", "prompt": "Update TypeSpec project in release plan", "category": "all" },
     { "toolName": "azsdk_typespec_delegate_apiview_feedback", "prompt": "Help me fix these comments: https://spa.apiview.dev/review/c375391d5ab9419f83e3bdsfas9asdfadf2e?activeApiRevisionId=fc2a4adfasdfasdagae3w3hhtd", "category": "all" },
     { "toolName": "azsdk_typespec_delegate_apiview_feedback", "prompt": "Fix this feedback: https://spa.apiview.dev/review/c375391d5ab9419f83e3bdsfas9asdfadf2e?activeApiRevisionId=fc2a4adfasdfasdagae3w3hhtd", "category": "all" },
-    { "toolName": "azsdk_typespec_delegate_apiview_feedback", "prompt": "Create an issue and assign to copilot to fix this: https://spa.apiview.dev/review/adfaset5391d5ab9419f83e3bds9asdfadf2e?activeApiRevisionId=adf34adfasadastasdagae3w3hhtd", "category": "all" }
+    { "toolName": "azsdk_typespec_delegate_apiview_feedback", "prompt": "Create an issue and assign to copilot to fix this: https://spa.apiview.dev/review/adfaset5391d5ab9419f83e3bds9asdfadf2e?activeApiRevisionId=adf34adfasadastasdagae3w3hhtd", "category": "all" },
+
+    { "toolName": "azsdk_engsys_codeowner_check_package_owners", "prompt": "Check if my package has sufficient code owners", "category": "all" },
+    { "toolName": "azsdk_engsys_codeowner_check_package_owners", "prompt": "Validate the code owner configuration for my package", "category": "all" },
+    { "toolName": "azsdk_engsys_codeowner_check_package_owners", "prompt": "Does my package meet the code owner requirements to release?", "category": "all" }
   ]
 }

@@ -7,6 +7,7 @@ using Azure.Sdk.Tools.Cli.Models.Codeowners;
 using Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.CodeownersUtils.Caches;
+using Azure.Sdk.Tools.CodeownersUtils.Utils;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Octokit;
@@ -693,6 +694,281 @@ public class CodeownersManagementHelper(
                 ? await GetViewByLabel(labels.Select(l => l.LabelName).ToArray(), repo, ct)
                 : await GetViewByPath(path, repo, ct)
         };
+    }
+
+    // ========================
+    // Validation: CheckPackageOwners
+    // ========================
+
+    public async Task<CheckPackageOwnersResponse> CheckPackageOwners(
+        string packageName, string directoryPath, string repo, CancellationToken ct)
+    {
+        const int requiredOwners = 2;
+
+        var response = new CheckPackageOwnersResponse
+        {
+            PackageName = packageName,
+            DirectoryPath = directoryPath,
+            Repo = repo
+        };
+
+        // Look up the package
+        var packageWi = await FindPackageByName(packageName, repo, ct);
+        if (packageWi == null)
+        {
+            response.ResponseError = $"No Package work item found for '{packageName}'.";
+            return response;
+        }
+
+        // Hydrate the package (owners + labels)
+        await HydratePackages([packageWi], ct);
+
+        // Count unique individuals from package owners
+        var uniqueIndividuals = GetUniqueIndividuals(packageWi.Owners);
+
+        if (packageWi.Owners.Count > 0)
+        {
+            // Primary path: package has at least 1 owner
+            return await CheckPrimaryPath(response, packageWi, uniqueIndividuals, requiredOwners, repo, ct);
+        }
+
+        // Fallback path: package has 0 owners
+        return await CheckFallbackPath(response, packageWi, directoryPath, requiredOwners, repo, ct);
+    }
+
+    private async Task<CheckPackageOwnersResponse> CheckPrimaryPath(
+        CheckPackageOwnersResponse response,
+        PackageWorkItem packageWi,
+        List<string> uniqueIndividuals,
+        int requiredOwners,
+        string repo,
+        CancellationToken ct)
+    {
+        response.ValidationPath = "Package";
+
+        // Owner check
+        var ownersPassed = uniqueIndividuals.Count >= requiredOwners;
+        response.OwnerCheck = new OwnershipCheck
+        {
+            Passed = ownersPassed,
+            Required = requiredOwners,
+            Actual = uniqueIndividuals.Count,
+            Owners = uniqueIndividuals.Count > 0 ? uniqueIndividuals : null
+        };
+
+        // PR Label check
+        var packageLabels = packageWi.Labels.Select(l => l.LabelName).OrderBy(l => l, StringComparer.OrdinalIgnoreCase).ToList();
+        var prLabelPassed = packageLabels.Count >= 1;
+        response.PrLabelCheck = new PrLabelCheck
+        {
+            Passed = prLabelPassed,
+            Labels = packageLabels.Count > 0 ? packageLabels : null
+        };
+
+        // Service Owner check
+        var serviceOwnerResult = await CheckServiceOwnerCoverage(packageLabels, repo, ct);
+        response.ServiceOwnerCheck = serviceOwnerResult;
+
+        response.AllPassed = ownersPassed && prLabelPassed && serviceOwnerResult.Passed;
+        return response;
+    }
+
+    private async Task<CheckPackageOwnersResponse> CheckFallbackPath(
+        CheckPackageOwnersResponse response,
+        PackageWorkItem packageWi,
+        string directoryPath,
+        int requiredOwners,
+        string repo,
+        CancellationToken ct)
+    {
+        response.ValidationPath = "PathFallback";
+        response.OwnerCheck = new OwnershipCheck
+        {
+            Passed = false,
+            Required = requiredOwners,
+            Actual = 0,
+            Owners = null
+        };
+
+        var fallback = new PathFallbackCheckResult();
+        response.PathFallbackCheck = fallback;
+
+        // Find PR Label type Label Owners whose RepoPath glob matches directoryPath
+        var prLabelLabelOwners = await QueryLabelOwnersByTypeAndRepo("PR Label", repo, ct);
+
+        var normalizedDirectoryPath = NormalizePath(directoryPath);
+
+        var matchingPrLabelOwners = prLabelLabelOwners
+            .Where(lo =>
+            {
+                var normalizedRepoPath = NormalizePath(lo.RepoPath);
+                return !string.IsNullOrEmpty(normalizedRepoPath)
+                    && DirectoryUtils.PathExpressionMatchesTargetPath(normalizedRepoPath, normalizedDirectoryPath);
+            })
+            .ToList();
+
+        if (matchingPrLabelOwners.Count == 0)
+        {
+            fallback.PrLabelOwnerCheck = new PrLabelOwnerCheck
+            {
+                Passed = false,
+                Required = requiredOwners,
+                Actual = 0
+            };
+            response.AllPassed = false;
+            return response;
+        }
+
+        // Sort by normalized path and choose the last one
+        var selectedPrLabelOwner = matchingPrLabelOwners
+            .OrderBy(lo => NormalizePath(lo.RepoPath), StringComparer.Ordinal)
+            .Last();
+
+        // Hydrate the selected PR Label Label Owner
+        await HydrateLabelOwners([selectedPrLabelOwner], ct);
+
+        var prLabelIndividuals = GetUniqueIndividuals(selectedPrLabelOwner.Owners);
+        var prLabelLabels = selectedPrLabelOwner.Labels.Select(l => l.LabelName)
+            .OrderBy(l => l, StringComparer.OrdinalIgnoreCase).ToList();
+        var prLabelOwnersPassed = prLabelIndividuals.Count >= requiredOwners;
+
+        fallback.PrLabelOwnerCheck = new PrLabelOwnerCheck
+        {
+            Passed = prLabelOwnersPassed,
+            Required = requiredOwners,
+            Actual = prLabelIndividuals.Count,
+            Owners = prLabelIndividuals.Count > 0 ? prLabelIndividuals : null,
+            Labels = prLabelLabels.Count > 0 ? prLabelLabels : null,
+            MatchedPath = selectedPrLabelOwner.RepoPath
+        };
+
+        // Service Owner check against the selected PR Label Label Owner's labels
+        var serviceOwnerResult = await CheckServiceOwnerCoverage(prLabelLabels, repo, ct);
+        fallback.ServiceOwnerCheck = serviceOwnerResult;
+
+        response.AllPassed = prLabelOwnersPassed && serviceOwnerResult.Passed;
+        return response;
+    }
+
+    /// <summary>
+    /// Checks that a single Service Owner Label Owner in the repo has labels that are a superset
+    /// of the required labels, and has ≥ 2 unique individuals.
+    /// </summary>
+    private async Task<ServiceOwnerCheck> CheckServiceOwnerCoverage(
+        List<string> requiredLabels, string repo, CancellationToken ct)
+    {
+        const int requiredOwners = 2;
+
+        if (requiredLabels.Count == 0)
+        {
+            return new ServiceOwnerCheck
+            {
+                Passed = false,
+                Required = requiredOwners,
+                Actual = 0,
+                RequiredLabels = null
+            };
+        }
+
+        var serviceOwnerLabelOwners = await QueryLabelOwnersByTypeAndRepo("Service Owner", repo, ct);
+        await HydrateLabelOwners(serviceOwnerLabelOwners, ct);
+
+        var requiredLabelSet = new HashSet<string>(requiredLabels, StringComparer.OrdinalIgnoreCase);
+
+        foreach (var so in serviceOwnerLabelOwners)
+        {
+            var soLabels = so.Labels.Select(l => l.LabelName).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            if (!requiredLabelSet.IsSubsetOf(soLabels))
+            {
+                continue;
+            }
+
+            var soIndividuals = GetUniqueIndividuals(so.Owners);
+            if (soIndividuals.Count >= requiredOwners)
+            {
+                return new ServiceOwnerCheck
+                {
+                    Passed = true,
+                    Required = requiredOwners,
+                    Actual = soIndividuals.Count,
+                    Owners = soIndividuals,
+                    RequiredLabels = requiredLabels,
+                    MatchedLabels = soLabels.OrderBy(l => l, StringComparer.OrdinalIgnoreCase).ToList()
+                };
+            }
+
+            // Found a matching Service Owner but insufficient individuals
+            return new ServiceOwnerCheck
+            {
+                Passed = false,
+                Required = requiredOwners,
+                Actual = soIndividuals.Count,
+                Owners = soIndividuals.Count > 0 ? soIndividuals : null,
+                RequiredLabels = requiredLabels,
+                MatchedLabels = soLabels.OrderBy(l => l, StringComparer.OrdinalIgnoreCase).ToList()
+            };
+        }
+
+        // No matching Service Owner found
+        return new ServiceOwnerCheck
+        {
+            Passed = false,
+            Required = requiredOwners,
+            Actual = 0,
+            RequiredLabels = requiredLabels
+        };
+    }
+
+    /// <summary>
+    /// Gets unique individual GitHub aliases from a list of owners, expanding teams.
+    /// </summary>
+    private static List<string> GetUniqueIndividuals(List<OwnerWorkItem> owners)
+    {
+        var individuals = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var owner in owners)
+        {
+            if (owner.IsGitHubTeam)
+            {
+                foreach (var member in owner.ExpandedMembers)
+                {
+                    individuals.Add(member);
+                }
+            }
+            else
+            {
+                individuals.Add(owner.GitHubAlias);
+            }
+        }
+        return individuals.OrderBy(a => a, StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
+    private async Task<List<LabelOwnerWorkItem>> QueryLabelOwnersByTypeAndRepo(string labelType, string repo, CancellationToken ct)
+    {
+        var escapedRepo = repo.Replace("'", "''");
+        var escapedLabelType = labelType.Replace("'", "''");
+        var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'" +
+                    $" AND [System.WorkItemType] = 'Label Owner'" +
+                    $" AND [Custom.LabelType] = '{escapedLabelType}'" +
+                    $" AND [Custom.Repository] = '{escapedRepo}'";
+        var rawWorkItems = await devOpsService.FetchWorkItemsPagedAsync(query, expand: WorkItemExpand.Relations, ct: ct);
+        return rawWorkItems.Select(WorkItemMappers.MapToLabelOwnerWorkItem).ToList();
+    }
+
+    /// <summary>
+    /// Normalizes a path to a consistent leading-slash form for glob matching.
+    /// </summary>
+    public static string NormalizePath(string path)
+    {
+        if (string.IsNullOrEmpty(path))
+        {
+            return path;
+        }
+        path = path.Replace('\\', '/');
+        if (!path.StartsWith('/'))
+        {
+            path = "/" + path;
+        }
+        return path;
     }
 
 }

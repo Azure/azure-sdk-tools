@@ -1841,4 +1841,912 @@ public class CodeownersManagementHelperTests
             () => _helper.ThrowIfInvalidTeamAlias("@microsoft/azure-sdk-infra", CancellationToken.None));
         Assert.That(ex!.Message, Does.Contain("Only teams in the 'Azure' organization are supported"));
     }
+
+    // ========================
+    // CheckPackageOwners tests
+    // ========================
+
+    /// <summary>
+    /// Sets up FetchWorkItemsPagedAsync to return label owners by type and repo.
+    /// </summary>
+    private void SetupLabelOwnerQuery(string labelType, string repo, List<WorkItem> results)
+    {
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains($"'{labelType}'") && q.Contains(repo)),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(results);
+    }
+
+    private void SetupPackageQuery(string packageName, List<WorkItem> results)
+    {
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Package'") && q.Contains(packageName)),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(results);
+    }
+
+    private void SetupHydration(List<int> expectedIds, List<WorkItem> results)
+    {
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => expectedIds.All(id => ids.Contains(id))),
+                It.IsAny<int>(),
+                It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(results);
+    }
+
+    // Test 1: Primary path — all checks pass
+    [Test]
+    public async Task CheckPackageOwners_AllChecksPass()
+    {
+        const int pkgId = 100, owner1Id = 201, owner2Id = 202, labelId = 301, soId = 400;
+        const string repo = "Azure/azure-sdk-for-net";
+
+        // Package with 2 owners + 1 label
+        SetupPackageQuery("Azure.Test.Pkg", [MakePackageWorkItem(pkgId, "Azure.Test.Pkg", relatedIds: [owner1Id, owner2Id, labelId])]);
+        // Hydrate package -> owners + label
+        SetupHydration([owner1Id, owner2Id, labelId], [
+            MakeOwnerWorkItem(owner1Id, "user1"),
+            MakeOwnerWorkItem(owner2Id, "user2"),
+            MakeLabelWorkItem(labelId, "TestLabel")
+        ]);
+        // Service Owner Label Owner with superset labels and 2 owners
+        var soWi = MakeLabelOwnerWorkItem(soId, "Service Owner", repo, "", owner1Id, owner2Id, labelId);
+        SetupLabelOwnerQuery("Service Owner", repo, [soWi]);
+        // Hydrate SO -> owners + labels
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(owner1Id) && ids.Contains(owner2Id) && ids.Contains(labelId)),
+                It.IsAny<int>(),
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                MakeOwnerWorkItem(owner1Id, "user1"),
+                MakeOwnerWorkItem(owner2Id, "user2"),
+                MakeLabelWorkItem(labelId, "TestLabel")
+            ]);
+
+        var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test/Azure.Test.Pkg", repo, CancellationToken.None);
+
+        Assert.That(result.AllPassed, Is.True);
+        Assert.That(result.ValidationPath, Is.EqualTo("Package"));
+        Assert.That(result.OwnerCheck!.Passed, Is.True);
+        Assert.That(result.PrLabelCheck!.Passed, Is.True);
+        Assert.That(result.ServiceOwnerCheck!.Passed, Is.True);
+        Assert.That(result.ExitCode, Is.EqualTo(0));
+    }
+
+    // Test 2: Package not found
+    [Test]
+    public async Task CheckPackageOwners_PackageNotFound_ReturnsError()
+    {
+        SetupPackageQuery("NonExistent.Pkg", []);
+
+        var result = await _helper.CheckPackageOwners("NonExistent.Pkg", "sdk/test", "Azure/azure-sdk-for-net", CancellationToken.None);
+
+        Assert.That(result.ResponseError, Does.Contain("No Package work item found"));
+        Assert.That(result.AllPassed, Is.False);
+        Assert.That(result.ExitCode, Is.EqualTo(1));
+    }
+
+    // Test 3: Insufficient owners (1 owner < 2 required) — no fallback
+    [Test]
+    public async Task CheckPackageOwners_InsufficientOwners_Fails()
+    {
+        const int pkgId = 100, ownerId = 201, labelId = 301, soId = 400;
+        const string repo = "Azure/azure-sdk-for-net";
+
+        SetupPackageQuery("Azure.Test.Pkg", [MakePackageWorkItem(pkgId, "Azure.Test.Pkg", relatedIds: [ownerId, labelId])]);
+        SetupHydration([ownerId, labelId], [
+            MakeOwnerWorkItem(ownerId, "user1"),
+            MakeLabelWorkItem(labelId, "TestLabel")
+        ]);
+        // Service Owner
+        var soWi = MakeLabelOwnerWorkItem(soId, "Service Owner", repo, "", ownerId, labelId);
+        SetupLabelOwnerQuery("Service Owner", repo, [soWi]);
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(ownerId) && ids.Contains(labelId)),
+                It.IsAny<int>(),
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                MakeOwnerWorkItem(ownerId, "user1"),
+                MakeLabelWorkItem(labelId, "TestLabel")
+            ]);
+
+        var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test", repo, CancellationToken.None);
+
+        Assert.That(result.ValidationPath, Is.EqualTo("Package"));
+        Assert.That(result.OwnerCheck!.Passed, Is.False);
+        Assert.That(result.OwnerCheck.Actual, Is.EqualTo(1));
+        Assert.That(result.AllPassed, Is.False);
+    }
+
+    // Test 4: No owners → triggers path fallback
+    [Test]
+    public async Task CheckPackageOwners_NoOwners_TriggersPathFallback()
+    {
+        const int pkgId = 100, labelId = 301;
+        const int prLabelLoId = 500, prOwner1Id = 601, prOwner2Id = 602, prLabelLabelId = 701;
+        const int soId = 800, soOwner1Id = 901, soOwner2Id = 902;
+        const string repo = "Azure/azure-sdk-for-net";
+
+        // Package with no owners
+        SetupPackageQuery("Azure.Test.Pkg", [MakePackageWorkItem(pkgId, "Azure.Test.Pkg", relatedIds: [labelId])]);
+        SetupHydration([labelId], [MakeLabelWorkItem(labelId, "TestLabel")]);
+
+        // PR Label Label Owner matching path
+        var prLabelLo = MakeLabelOwnerWorkItem(prLabelLoId, "PR Label", repo, "/sdk/test/", prOwner1Id, prOwner2Id, prLabelLabelId);
+        SetupLabelOwnerQuery("PR Label", repo, [prLabelLo]);
+
+        // Hydrate PR Label Label Owner
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(prOwner1Id) && ids.Contains(prOwner2Id) && ids.Contains(prLabelLabelId)),
+                It.IsAny<int>(),
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                MakeOwnerWorkItem(prOwner1Id, "prUser1"),
+                MakeOwnerWorkItem(prOwner2Id, "prUser2"),
+                MakeLabelWorkItem(prLabelLabelId, "PrLabel1")
+            ]);
+
+        // Service Owner matching labels
+        var soWi = MakeLabelOwnerWorkItem(soId, "Service Owner", repo, "", soOwner1Id, soOwner2Id, prLabelLabelId);
+        SetupLabelOwnerQuery("Service Owner", repo, [soWi]);
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(soOwner1Id) && ids.Contains(soOwner2Id) && ids.Contains(prLabelLabelId)),
+                It.IsAny<int>(),
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                MakeOwnerWorkItem(soOwner1Id, "soUser1"),
+                MakeOwnerWorkItem(soOwner2Id, "soUser2"),
+                MakeLabelWorkItem(prLabelLabelId, "PrLabel1")
+            ]);
+
+        var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test/Azure.Test.Pkg", repo, CancellationToken.None);
+
+        Assert.That(result.ValidationPath, Is.EqualTo("PathFallback"));
+        Assert.That(result.PathFallbackCheck, Is.Not.Null);
+        Assert.That(result.PathFallbackCheck!.PrLabelOwnerCheck!.Passed, Is.True);
+        Assert.That(result.PathFallbackCheck!.ServiceOwnerCheck!.Passed, Is.True);
+        Assert.That(result.AllPassed, Is.True);
+    }
+
+    // Test 5: Package has owners but no PR labels
+    [Test]
+    public async Task CheckPackageOwners_NoPrLabel_Fails()
+    {
+        const int pkgId = 100, owner1Id = 201, owner2Id = 202;
+        const string repo = "Azure/azure-sdk-for-net";
+
+        SetupPackageQuery("Azure.Test.Pkg", [MakePackageWorkItem(pkgId, "Azure.Test.Pkg", relatedIds: [owner1Id, owner2Id])]);
+        SetupHydration([owner1Id, owner2Id], [
+            MakeOwnerWorkItem(owner1Id, "user1"),
+            MakeOwnerWorkItem(owner2Id, "user2"),
+        ]);
+        SetupLabelOwnerQuery("Service Owner", repo, []);
+
+        var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test", repo, CancellationToken.None);
+
+        Assert.That(result.ValidationPath, Is.EqualTo("Package"));
+        Assert.That(result.OwnerCheck!.Passed, Is.True);
+        Assert.That(result.PrLabelCheck!.Passed, Is.False);
+        Assert.That(result.AllPassed, Is.False);
+    }
+
+    // Test 6: Insufficient service owners (only 1 individual)
+    [Test]
+    public async Task CheckPackageOwners_InsufficientServiceOwners_Fails()
+    {
+        const int pkgId = 100, owner1Id = 201, owner2Id = 202, labelId = 301, soId = 400, soOwnerId = 501;
+        const string repo = "Azure/azure-sdk-for-net";
+
+        SetupPackageQuery("Azure.Test.Pkg", [MakePackageWorkItem(pkgId, "Azure.Test.Pkg", relatedIds: [owner1Id, owner2Id, labelId])]);
+        SetupHydration([owner1Id, owner2Id, labelId], [
+            MakeOwnerWorkItem(owner1Id, "user1"),
+            MakeOwnerWorkItem(owner2Id, "user2"),
+            MakeLabelWorkItem(labelId, "TestLabel")
+        ]);
+
+        var soWi = MakeLabelOwnerWorkItem(soId, "Service Owner", repo, "", soOwnerId, labelId);
+        SetupLabelOwnerQuery("Service Owner", repo, [soWi]);
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(soOwnerId) && ids.Contains(labelId)),
+                It.IsAny<int>(),
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                MakeOwnerWorkItem(soOwnerId, "soUser1"),
+                MakeLabelWorkItem(labelId, "TestLabel")
+            ]);
+
+        var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test", repo, CancellationToken.None);
+
+        Assert.That(result.ServiceOwnerCheck!.Passed, Is.False);
+        Assert.That(result.ServiceOwnerCheck.Actual, Is.EqualTo(1));
+        Assert.That(result.AllPassed, Is.False);
+    }
+
+    // Test 7: No service owner has labels that are a superset of package labels
+    [Test]
+    public async Task CheckPackageOwners_NoServiceOwners_Fails()
+    {
+        const int pkgId = 100, owner1Id = 201, owner2Id = 202, labelId = 301;
+        const string repo = "Azure/azure-sdk-for-net";
+
+        SetupPackageQuery("Azure.Test.Pkg", [MakePackageWorkItem(pkgId, "Azure.Test.Pkg", relatedIds: [owner1Id, owner2Id, labelId])]);
+        SetupHydration([owner1Id, owner2Id, labelId], [
+            MakeOwnerWorkItem(owner1Id, "user1"),
+            MakeOwnerWorkItem(owner2Id, "user2"),
+            MakeLabelWorkItem(labelId, "TestLabel")
+        ]);
+
+        SetupLabelOwnerQuery("Service Owner", repo, []);
+
+        var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test", repo, CancellationToken.None);
+
+        Assert.That(result.ServiceOwnerCheck!.Passed, Is.False);
+        Assert.That(result.AllPassed, Is.False);
+    }
+
+    // Test 8: Team expansion counts individuals — 1 team with 3 members satisfies 2-owner requirement
+    [Test]
+    public async Task CheckPackageOwners_TeamExpansion_CountsIndividuals()
+    {
+        const int pkgId = 100, teamOwnerId = 201, labelId = 301, soId = 400, so1Id = 501, so2Id = 502;
+        const string repo = "Azure/azure-sdk-for-net";
+
+        SetupPackageQuery("Azure.Test.Pkg", [MakePackageWorkItem(pkgId, "Azure.Test.Pkg", relatedIds: [teamOwnerId, labelId])]);
+
+        // Team owner with 3 expanded members
+        _mockTeamUserCache.Setup(c => c.GetUsersForTeam("azure/test-team")).Returns(["member1", "member2", "member3"]);
+
+        SetupHydration([teamOwnerId, labelId], [
+            MakeOwnerWorkItem(teamOwnerId, "azure/test-team"),
+            MakeLabelWorkItem(labelId, "TestLabel")
+        ]);
+
+        var soWi = MakeLabelOwnerWorkItem(soId, "Service Owner", repo, "", so1Id, so2Id, labelId);
+        SetupLabelOwnerQuery("Service Owner", repo, [soWi]);
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(so1Id) && ids.Contains(so2Id) && ids.Contains(labelId)),
+                It.IsAny<int>(),
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                MakeOwnerWorkItem(so1Id, "soUser1"),
+                MakeOwnerWorkItem(so2Id, "soUser2"),
+                MakeLabelWorkItem(labelId, "TestLabel")
+            ]);
+
+        var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test", repo, CancellationToken.None);
+
+        Assert.That(result.OwnerCheck!.Passed, Is.True);
+        Assert.That(result.OwnerCheck.Actual, Is.EqualTo(3));
+        Assert.That(result.AllPassed, Is.True);
+    }
+
+    // Test 9: Team expansion for service owners
+    [Test]
+    public async Task CheckPackageOwners_TeamExpansion_ServiceOwners()
+    {
+        const int pkgId = 100, owner1Id = 201, owner2Id = 202, labelId = 301, soId = 400, soTeamId = 501;
+        const string repo = "Azure/azure-sdk-for-net";
+
+        SetupPackageQuery("Azure.Test.Pkg", [MakePackageWorkItem(pkgId, "Azure.Test.Pkg", relatedIds: [owner1Id, owner2Id, labelId])]);
+        SetupHydration([owner1Id, owner2Id, labelId], [
+            MakeOwnerWorkItem(owner1Id, "user1"),
+            MakeOwnerWorkItem(owner2Id, "user2"),
+            MakeLabelWorkItem(labelId, "TestLabel")
+        ]);
+
+        _mockTeamUserCache.Setup(c => c.GetUsersForTeam("azure/so-team")).Returns(["soMember1", "soMember2", "soMember3"]);
+
+        var soWi = MakeLabelOwnerWorkItem(soId, "Service Owner", repo, "", soTeamId, labelId);
+        SetupLabelOwnerQuery("Service Owner", repo, [soWi]);
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(soTeamId) && ids.Contains(labelId)),
+                It.IsAny<int>(),
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                MakeOwnerWorkItem(soTeamId, "azure/so-team"),
+                MakeLabelWorkItem(labelId, "TestLabel")
+            ]);
+
+        var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test", repo, CancellationToken.None);
+
+        Assert.That(result.ServiceOwnerCheck!.Passed, Is.True);
+        Assert.That(result.ServiceOwnerCheck.Actual, Is.EqualTo(3));
+        Assert.That(result.AllPassed, Is.True);
+    }
+
+    // Test 10: Multiple labels — Service Owner must have all labels (superset)
+    [Test]
+    public async Task CheckPackageOwners_MultipleLabels_ServiceOwnerSupersetRequired()
+    {
+        const int pkgId = 100, owner1Id = 201, owner2Id = 202, label1Id = 301, label2Id = 302;
+        const int soId = 400, soOwner1Id = 501, soOwner2Id = 502;
+        const string repo = "Azure/azure-sdk-for-net";
+
+        SetupPackageQuery("Azure.Test.Pkg", [MakePackageWorkItem(pkgId, "Azure.Test.Pkg", relatedIds: [owner1Id, owner2Id, label1Id, label2Id])]);
+        SetupHydration([owner1Id, owner2Id, label1Id, label2Id], [
+            MakeOwnerWorkItem(owner1Id, "user1"),
+            MakeOwnerWorkItem(owner2Id, "user2"),
+            MakeLabelWorkItem(label1Id, "LabelA"),
+            MakeLabelWorkItem(label2Id, "LabelB")
+        ]);
+
+        // Service Owner has both labels
+        var soWi = MakeLabelOwnerWorkItem(soId, "Service Owner", repo, "", soOwner1Id, soOwner2Id, label1Id, label2Id);
+        SetupLabelOwnerQuery("Service Owner", repo, [soWi]);
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(soOwner1Id) && ids.Contains(soOwner2Id) && ids.Contains(label1Id) && ids.Contains(label2Id)),
+                It.IsAny<int>(),
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                MakeOwnerWorkItem(soOwner1Id, "soUser1"),
+                MakeOwnerWorkItem(soOwner2Id, "soUser2"),
+                MakeLabelWorkItem(label1Id, "LabelA"),
+                MakeLabelWorkItem(label2Id, "LabelB")
+            ]);
+
+        var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test", repo, CancellationToken.None);
+
+        Assert.That(result.ServiceOwnerCheck!.Passed, Is.True);
+        Assert.That(result.AllPassed, Is.True);
+    }
+
+    // Test 11: Fragmented service owners — multiple SO records collectively cover labels but no single one does
+    [Test]
+    public async Task CheckPackageOwners_FragmentedServiceOwners_Fails()
+    {
+        const int pkgId = 100, owner1Id = 201, owner2Id = 202, label1Id = 301, label2Id = 302;
+        const int so1Id = 400, so2Id = 401, soOwner1Id = 501, soOwner2Id = 502;
+        const string repo = "Azure/azure-sdk-for-net";
+
+        SetupPackageQuery("Azure.Test.Pkg", [MakePackageWorkItem(pkgId, "Azure.Test.Pkg", relatedIds: [owner1Id, owner2Id, label1Id, label2Id])]);
+        SetupHydration([owner1Id, owner2Id, label1Id, label2Id], [
+            MakeOwnerWorkItem(owner1Id, "user1"),
+            MakeOwnerWorkItem(owner2Id, "user2"),
+            MakeLabelWorkItem(label1Id, "LabelA"),
+            MakeLabelWorkItem(label2Id, "LabelB")
+        ]);
+
+        // SO 1 has LabelA only, SO 2 has LabelB only
+        var so1Wi = MakeLabelOwnerWorkItem(so1Id, "Service Owner", repo, "", soOwner1Id, soOwner2Id, label1Id);
+        var so2Wi = MakeLabelOwnerWorkItem(so2Id, "Service Owner", repo, "", soOwner1Id, soOwner2Id, label2Id);
+        SetupLabelOwnerQuery("Service Owner", repo, [so1Wi, so2Wi]);
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(soOwner1Id) && ids.Contains(soOwner2Id)),
+                It.IsAny<int>(),
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                MakeOwnerWorkItem(soOwner1Id, "soUser1"),
+                MakeOwnerWorkItem(soOwner2Id, "soUser2"),
+                MakeLabelWorkItem(label1Id, "LabelA"),
+                MakeLabelWorkItem(label2Id, "LabelB")
+            ]);
+
+        var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test", repo, CancellationToken.None);
+
+        Assert.That(result.ServiceOwnerCheck!.Passed, Is.False);
+        Assert.That(result.AllPassed, Is.False);
+    }
+
+    // Test 12: Multiple package versions — uses latest
+    [Test]
+    public async Task CheckPackageOwners_MultiplePackageVersions_UsesLatestByName()
+    {
+        const int pkg1Id = 100, pkg2Id = 101, owner1Id = 201, owner2Id = 202, labelId = 301;
+        const int soId = 400, soOwner1Id = 501, soOwner2Id = 502;
+        const string repo = "Azure/azure-sdk-for-net";
+
+        // Two versions of same package: 1.0 and 2.0
+        SetupPackageQuery("Azure.Test.Pkg", [
+            MakePackageWorkItem(pkg1Id, "Azure.Test.Pkg", version: "1.0", relatedIds: []),
+            MakePackageWorkItem(pkg2Id, "Azure.Test.Pkg", version: "2.0", relatedIds: [owner1Id, owner2Id, labelId])
+        ]);
+        SetupHydration([owner1Id, owner2Id, labelId], [
+            MakeOwnerWorkItem(owner1Id, "user1"),
+            MakeOwnerWorkItem(owner2Id, "user2"),
+            MakeLabelWorkItem(labelId, "TestLabel")
+        ]);
+
+        var soWi = MakeLabelOwnerWorkItem(soId, "Service Owner", repo, "", soOwner1Id, soOwner2Id, labelId);
+        SetupLabelOwnerQuery("Service Owner", repo, [soWi]);
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(soOwner1Id) && ids.Contains(soOwner2Id) && ids.Contains(labelId)),
+                It.IsAny<int>(),
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                MakeOwnerWorkItem(soOwner1Id, "soUser1"),
+                MakeOwnerWorkItem(soOwner2Id, "soUser2"),
+                MakeLabelWorkItem(labelId, "TestLabel")
+            ]);
+
+        var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test", repo, CancellationToken.None);
+
+        Assert.That(result.AllPassed, Is.True);
+        Assert.That(result.OwnerCheck!.Actual, Is.EqualTo(2));
+    }
+
+    // Test 13: Overlapping owners — same user in team + individual doesn't double-count
+    [Test]
+    public async Task CheckPackageOwners_OverlappingOwners_Deduplication()
+    {
+        const int pkgId = 100, indivOwnerId = 201, teamOwnerId = 202, labelId = 301;
+        const string repo = "Azure/azure-sdk-for-net";
+
+        SetupPackageQuery("Azure.Test.Pkg", [MakePackageWorkItem(pkgId, "Azure.Test.Pkg", relatedIds: [indivOwnerId, teamOwnerId, labelId])]);
+
+        // Team contains same user as individual owner
+        _mockTeamUserCache.Setup(c => c.GetUsersForTeam("azure/test-team")).Returns(["user1"]);
+
+        SetupHydration([indivOwnerId, teamOwnerId, labelId], [
+            MakeOwnerWorkItem(indivOwnerId, "user1"),
+            MakeOwnerWorkItem(teamOwnerId, "azure/test-team"),
+            MakeLabelWorkItem(labelId, "TestLabel")
+        ]);
+        SetupLabelOwnerQuery("Service Owner", repo, []);
+
+        var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test", repo, CancellationToken.None);
+
+        // user1 appears both individually and in team — should count as 1
+        Assert.That(result.OwnerCheck!.Actual, Is.EqualTo(1));
+        Assert.That(result.OwnerCheck.Passed, Is.False);
+    }
+
+    // Test 14: Fallback — both PR Label and Service Owner pass
+    [Test]
+    public async Task CheckPackageOwners_Fallback_BothPrLabelAndServiceOwnerPass()
+    {
+        const int pkgId = 100;
+        const int prLabelLoId = 500, prOwner1Id = 601, prOwner2Id = 602, prLabelId = 701;
+        const int soId = 800, soOwner1Id = 901, soOwner2Id = 902;
+        const string repo = "Azure/azure-sdk-for-net";
+
+        // Package with no owners
+        SetupPackageQuery("Azure.Test.Pkg", [MakePackageWorkItem(pkgId, "Azure.Test.Pkg", relatedIds: [])]);
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => !ids.Any()),
+                It.IsAny<int>(),
+                It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        var prLabelLo = MakeLabelOwnerWorkItem(prLabelLoId, "PR Label", repo, "/sdk/test/", prOwner1Id, prOwner2Id, prLabelId);
+        SetupLabelOwnerQuery("PR Label", repo, [prLabelLo]);
+
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(prOwner1Id) && ids.Contains(prOwner2Id) && ids.Contains(prLabelId)),
+                It.IsAny<int>(),
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                MakeOwnerWorkItem(prOwner1Id, "prUser1"),
+                MakeOwnerWorkItem(prOwner2Id, "prUser2"),
+                MakeLabelWorkItem(prLabelId, "FallbackLabel")
+            ]);
+
+        var soWi = MakeLabelOwnerWorkItem(soId, "Service Owner", repo, "", soOwner1Id, soOwner2Id, prLabelId);
+        SetupLabelOwnerQuery("Service Owner", repo, [soWi]);
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(soOwner1Id) && ids.Contains(soOwner2Id) && ids.Contains(prLabelId)),
+                It.IsAny<int>(),
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                MakeOwnerWorkItem(soOwner1Id, "soUser1"),
+                MakeOwnerWorkItem(soOwner2Id, "soUser2"),
+                MakeLabelWorkItem(prLabelId, "FallbackLabel")
+            ]);
+
+        var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test/Azure.Test.Pkg", repo, CancellationToken.None);
+
+        Assert.That(result.ValidationPath, Is.EqualTo("PathFallback"));
+        Assert.That(result.AllPassed, Is.True);
+        Assert.That(result.PathFallbackCheck!.PrLabelOwnerCheck!.Passed, Is.True);
+        Assert.That(result.PathFallbackCheck.ServiceOwnerCheck!.Passed, Is.True);
+    }
+
+    // Test 15: Fallback — PR Label owners insufficient
+    [Test]
+    public async Task CheckPackageOwners_Fallback_PrLabelOwnersInsufficient()
+    {
+        const int pkgId = 100;
+        const int prLabelLoId = 500, prOwnerId = 601, prLabelId = 701;
+        const string repo = "Azure/azure-sdk-for-net";
+
+        SetupPackageQuery("Azure.Test.Pkg", [MakePackageWorkItem(pkgId, "Azure.Test.Pkg", relatedIds: [])]);
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => !ids.Any()),
+                It.IsAny<int>(),
+                It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        var prLabelLo = MakeLabelOwnerWorkItem(prLabelLoId, "PR Label", repo, "/sdk/test/", prOwnerId, prLabelId);
+        SetupLabelOwnerQuery("PR Label", repo, [prLabelLo]);
+
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(prOwnerId) && ids.Contains(prLabelId)),
+                It.IsAny<int>(),
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                MakeOwnerWorkItem(prOwnerId, "prUser1"),
+                MakeLabelWorkItem(prLabelId, "FallbackLabel")
+            ]);
+
+        // Still need SO query for complete check
+        SetupLabelOwnerQuery("Service Owner", repo, []);
+
+        var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test/Azure.Test.Pkg", repo, CancellationToken.None);
+
+        Assert.That(result.PathFallbackCheck!.PrLabelOwnerCheck!.Passed, Is.False);
+        Assert.That(result.PathFallbackCheck.PrLabelOwnerCheck.Actual, Is.EqualTo(1));
+        Assert.That(result.AllPassed, Is.False);
+    }
+
+    // Test 16: Fallback — Service Owners insufficient
+    [Test]
+    public async Task CheckPackageOwners_Fallback_ServiceOwnersInsufficient()
+    {
+        const int pkgId = 100;
+        const int prLabelLoId = 500, prOwner1Id = 601, prOwner2Id = 602, prLabelId = 701;
+        const int soId = 800, soOwnerId = 901;
+        const string repo = "Azure/azure-sdk-for-net";
+
+        SetupPackageQuery("Azure.Test.Pkg", [MakePackageWorkItem(pkgId, "Azure.Test.Pkg", relatedIds: [])]);
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => !ids.Any()),
+                It.IsAny<int>(),
+                It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        var prLabelLo = MakeLabelOwnerWorkItem(prLabelLoId, "PR Label", repo, "/sdk/test/", prOwner1Id, prOwner2Id, prLabelId);
+        SetupLabelOwnerQuery("PR Label", repo, [prLabelLo]);
+
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(prOwner1Id) && ids.Contains(prOwner2Id) && ids.Contains(prLabelId)),
+                It.IsAny<int>(),
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                MakeOwnerWorkItem(prOwner1Id, "prUser1"),
+                MakeOwnerWorkItem(prOwner2Id, "prUser2"),
+                MakeLabelWorkItem(prLabelId, "FallbackLabel")
+            ]);
+
+        var soWi = MakeLabelOwnerWorkItem(soId, "Service Owner", repo, "", soOwnerId, prLabelId);
+        SetupLabelOwnerQuery("Service Owner", repo, [soWi]);
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(soOwnerId) && ids.Contains(prLabelId)),
+                It.IsAny<int>(),
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                MakeOwnerWorkItem(soOwnerId, "soUser1"),
+                MakeLabelWorkItem(prLabelId, "FallbackLabel")
+            ]);
+
+        var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test/Azure.Test.Pkg", repo, CancellationToken.None);
+
+        Assert.That(result.PathFallbackCheck!.PrLabelOwnerCheck!.Passed, Is.True);
+        Assert.That(result.PathFallbackCheck.ServiceOwnerCheck!.Passed, Is.False);
+        Assert.That(result.PathFallbackCheck.ServiceOwnerCheck.Actual, Is.EqualTo(1));
+        Assert.That(result.AllPassed, Is.False);
+    }
+
+    // Test 17: Fallback — no matching paths
+    [Test]
+    public async Task CheckPackageOwners_Fallback_NoMatchingPaths()
+    {
+        const int pkgId = 100;
+        const string repo = "Azure/azure-sdk-for-net";
+
+        SetupPackageQuery("Azure.Test.Pkg", [MakePackageWorkItem(pkgId, "Azure.Test.Pkg", relatedIds: [])]);
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => !ids.Any()),
+                It.IsAny<int>(),
+                It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        // PR Label Label Owner with non-matching path
+        var prLabelLo = MakeLabelOwnerWorkItem(500, "PR Label", repo, "/sdk/other/");
+        SetupLabelOwnerQuery("PR Label", repo, [prLabelLo]);
+
+        var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test/Azure.Test.Pkg", repo, CancellationToken.None);
+
+        Assert.That(result.ValidationPath, Is.EqualTo("PathFallback"));
+        Assert.That(result.PathFallbackCheck!.PrLabelOwnerCheck!.Passed, Is.False);
+        Assert.That(result.AllPassed, Is.False);
+    }
+
+    // Test 18: Fallback — glob match
+    [Test]
+    public async Task CheckPackageOwners_Fallback_GlobMatch()
+    {
+        const int pkgId = 100;
+        const int prLabelLoId = 500, prOwner1Id = 601, prOwner2Id = 602, prLabelId = 701;
+        const int soId = 800, soOwner1Id = 901, soOwner2Id = 902;
+        const string repo = "Azure/azure-sdk-for-net";
+
+        SetupPackageQuery("Azure.Test.Pkg", [MakePackageWorkItem(pkgId, "Azure.Test.Pkg", relatedIds: [])]);
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => !ids.Any()),
+                It.IsAny<int>(),
+                It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        // PR Label Label Owner with glob path /sdk/contoso/
+        var prLabelLo = MakeLabelOwnerWorkItem(prLabelLoId, "PR Label", repo, "/sdk/contoso/", prOwner1Id, prOwner2Id, prLabelId);
+        SetupLabelOwnerQuery("PR Label", repo, [prLabelLo]);
+
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(prOwner1Id) && ids.Contains(prOwner2Id) && ids.Contains(prLabelId)),
+                It.IsAny<int>(),
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                MakeOwnerWorkItem(prOwner1Id, "prUser1"),
+                MakeOwnerWorkItem(prOwner2Id, "prUser2"),
+                MakeLabelWorkItem(prLabelId, "ContosoLabel")
+            ]);
+
+        var soWi = MakeLabelOwnerWorkItem(soId, "Service Owner", repo, "", soOwner1Id, soOwner2Id, prLabelId);
+        SetupLabelOwnerQuery("Service Owner", repo, [soWi]);
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(soOwner1Id) && ids.Contains(soOwner2Id) && ids.Contains(prLabelId)),
+                It.IsAny<int>(),
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                MakeOwnerWorkItem(soOwner1Id, "soUser1"),
+                MakeOwnerWorkItem(soOwner2Id, "soUser2"),
+                MakeLabelWorkItem(prLabelId, "ContosoLabel")
+            ]);
+
+        var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/contoso/Azure.Contoso.WidgetManager", repo, CancellationToken.None);
+
+        Assert.That(result.AllPassed, Is.True);
+        Assert.That(result.PathFallbackCheck!.PrLabelOwnerCheck!.MatchedPath, Is.EqualTo("/sdk/contoso/"));
+    }
+
+    // Test 19: Fallback — multiple matching PR Label owners, uses last by path
+    [Test]
+    public async Task CheckPackageOwners_Fallback_MultipleMatchingPrLabelOwners_UsesLastByPath()
+    {
+        const int pkgId = 100;
+        const int prLo1Id = 500, prLo2Id = 501;
+        const int prOwner1Id = 601, prOwner2Id = 602, prLabel1Id = 701, prLabel2Id = 702;
+        const int soId = 800, soOwner1Id = 901, soOwner2Id = 902;
+        const string repo = "Azure/azure-sdk-for-net";
+
+        SetupPackageQuery("Azure.Test.Pkg", [MakePackageWorkItem(pkgId, "Azure.Test.Pkg", relatedIds: [])]);
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => !ids.Any()),
+                It.IsAny<int>(),
+                It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        // Two PR Label Label Owners, both matching. /sdk/test/ (broader) and /sdk/test/sub/ (more specific)
+        var prLo1 = MakeLabelOwnerWorkItem(prLo1Id, "PR Label", repo, "/sdk/test/", prOwner1Id, prLabel1Id);
+        var prLo2 = MakeLabelOwnerWorkItem(prLo2Id, "PR Label", repo, "/sdk/test/sub/", prOwner1Id, prOwner2Id, prLabel2Id);
+        SetupLabelOwnerQuery("PR Label", repo, [prLo1, prLo2]);
+
+        // Hydrate the selected (last by path = /sdk/test/sub/) PR Label Label Owner
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(prOwner1Id) && ids.Contains(prOwner2Id) && ids.Contains(prLabel2Id)),
+                It.IsAny<int>(),
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                MakeOwnerWorkItem(prOwner1Id, "prUser1"),
+                MakeOwnerWorkItem(prOwner2Id, "prUser2"),
+                MakeLabelWorkItem(prLabel2Id, "SpecificLabel")
+            ]);
+
+        var soWi = MakeLabelOwnerWorkItem(soId, "Service Owner", repo, "", soOwner1Id, soOwner2Id, prLabel2Id);
+        SetupLabelOwnerQuery("Service Owner", repo, [soWi]);
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(soOwner1Id) && ids.Contains(soOwner2Id) && ids.Contains(prLabel2Id)),
+                It.IsAny<int>(),
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                MakeOwnerWorkItem(soOwner1Id, "soUser1"),
+                MakeOwnerWorkItem(soOwner2Id, "soUser2"),
+                MakeLabelWorkItem(prLabel2Id, "SpecificLabel")
+            ]);
+
+        var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test/sub/Azure.Test.Pkg", repo, CancellationToken.None);
+
+        Assert.That(result.AllPassed, Is.True);
+        Assert.That(result.PathFallbackCheck!.PrLabelOwnerCheck!.MatchedPath, Is.EqualTo("/sdk/test/sub/"));
+        Assert.That(result.PathFallbackCheck.PrLabelOwnerCheck.Labels, Does.Contain("SpecificLabel"));
+    }
+
+    // Test 20: Fallback — multiple labels, Service Owner must be superset
+    [Test]
+    public async Task CheckPackageOwners_Fallback_MultipleLabels_ServiceOwnerSupersetRequired()
+    {
+        const int pkgId = 100;
+        const int prLabelLoId = 500, prOwner1Id = 601, prOwner2Id = 602, prLabel1Id = 701, prLabel2Id = 702;
+        const int soId = 800, soOwner1Id = 901, soOwner2Id = 902;
+        const string repo = "Azure/azure-sdk-for-net";
+
+        SetupPackageQuery("Azure.Test.Pkg", [MakePackageWorkItem(pkgId, "Azure.Test.Pkg", relatedIds: [])]);
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => !ids.Any()),
+                It.IsAny<int>(),
+                It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        var prLabelLo = MakeLabelOwnerWorkItem(prLabelLoId, "PR Label", repo, "/sdk/test/", prOwner1Id, prOwner2Id, prLabel1Id, prLabel2Id);
+        SetupLabelOwnerQuery("PR Label", repo, [prLabelLo]);
+
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(prOwner1Id) && ids.Contains(prOwner2Id) && ids.Contains(prLabel1Id) && ids.Contains(prLabel2Id)),
+                It.IsAny<int>(),
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                MakeOwnerWorkItem(prOwner1Id, "prUser1"),
+                MakeOwnerWorkItem(prOwner2Id, "prUser2"),
+                MakeLabelWorkItem(prLabel1Id, "LabelA"),
+                MakeLabelWorkItem(prLabel2Id, "LabelB")
+            ]);
+
+        // Service Owner has both labels
+        var soWi = MakeLabelOwnerWorkItem(soId, "Service Owner", repo, "", soOwner1Id, soOwner2Id, prLabel1Id, prLabel2Id);
+        SetupLabelOwnerQuery("Service Owner", repo, [soWi]);
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(soOwner1Id) && ids.Contains(soOwner2Id) && ids.Contains(prLabel1Id) && ids.Contains(prLabel2Id)),
+                It.IsAny<int>(),
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                MakeOwnerWorkItem(soOwner1Id, "soUser1"),
+                MakeOwnerWorkItem(soOwner2Id, "soUser2"),
+                MakeLabelWorkItem(prLabel1Id, "LabelA"),
+                MakeLabelWorkItem(prLabel2Id, "LabelB")
+            ]);
+
+        var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test/Azure.Test.Pkg", repo, CancellationToken.None);
+
+        Assert.That(result.AllPassed, Is.True);
+    }
+
+    // Test 21: Fallback — fragmented service owners fail
+    [Test]
+    public async Task CheckPackageOwners_Fallback_FragmentedServiceOwners_Fails()
+    {
+        const int pkgId = 100;
+        const int prLabelLoId = 500, prOwner1Id = 601, prOwner2Id = 602, prLabel1Id = 701, prLabel2Id = 702;
+        const int so1Id = 800, so2Id = 801, soOwner1Id = 901, soOwner2Id = 902;
+        const string repo = "Azure/azure-sdk-for-net";
+
+        SetupPackageQuery("Azure.Test.Pkg", [MakePackageWorkItem(pkgId, "Azure.Test.Pkg", relatedIds: [])]);
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => !ids.Any()),
+                It.IsAny<int>(),
+                It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        var prLabelLo = MakeLabelOwnerWorkItem(prLabelLoId, "PR Label", repo, "/sdk/test/", prOwner1Id, prOwner2Id, prLabel1Id, prLabel2Id);
+        SetupLabelOwnerQuery("PR Label", repo, [prLabelLo]);
+
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(prOwner1Id) && ids.Contains(prOwner2Id) && ids.Contains(prLabel1Id) && ids.Contains(prLabel2Id)),
+                It.IsAny<int>(),
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                MakeOwnerWorkItem(prOwner1Id, "prUser1"),
+                MakeOwnerWorkItem(prOwner2Id, "prUser2"),
+                MakeLabelWorkItem(prLabel1Id, "LabelA"),
+                MakeLabelWorkItem(prLabel2Id, "LabelB")
+            ]);
+
+        // Fragmented: SO 1 has LabelA only, SO 2 has LabelB only
+        var so1Wi = MakeLabelOwnerWorkItem(so1Id, "Service Owner", repo, "", soOwner1Id, soOwner2Id, prLabel1Id);
+        var so2Wi = MakeLabelOwnerWorkItem(so2Id, "Service Owner", repo, "", soOwner1Id, soOwner2Id, prLabel2Id);
+        SetupLabelOwnerQuery("Service Owner", repo, [so1Wi, so2Wi]);
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(soOwner1Id) && ids.Contains(soOwner2Id)),
+                It.IsAny<int>(),
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                MakeOwnerWorkItem(soOwner1Id, "soUser1"),
+                MakeOwnerWorkItem(soOwner2Id, "soUser2"),
+                MakeLabelWorkItem(prLabel1Id, "LabelA"),
+                MakeLabelWorkItem(prLabel2Id, "LabelB")
+            ]);
+
+        var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test/Azure.Test.Pkg", repo, CancellationToken.None);
+
+        Assert.That(result.PathFallbackCheck!.ServiceOwnerCheck!.Passed, Is.False);
+        Assert.That(result.AllPassed, Is.False);
+    }
+
+    // Test 22: Fallback — same people as PR Label and Service Owners
+    [Test]
+    public async Task CheckPackageOwners_Fallback_SameOwnersForBothTypes()
+    {
+        const int pkgId = 100;
+        const int prLabelLoId = 500, owner1Id = 601, owner2Id = 602, prLabelId = 701;
+        const int soId = 800;
+        const string repo = "Azure/azure-sdk-for-net";
+
+        SetupPackageQuery("Azure.Test.Pkg", [MakePackageWorkItem(pkgId, "Azure.Test.Pkg", relatedIds: [])]);
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => !ids.Any()),
+                It.IsAny<int>(),
+                It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        var prLabelLo = MakeLabelOwnerWorkItem(prLabelLoId, "PR Label", repo, "/sdk/test/", owner1Id, owner2Id, prLabelId);
+        SetupLabelOwnerQuery("PR Label", repo, [prLabelLo]);
+
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(owner1Id) && ids.Contains(owner2Id) && ids.Contains(prLabelId)),
+                It.IsAny<int>(),
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                MakeOwnerWorkItem(owner1Id, "sharedUser1"),
+                MakeOwnerWorkItem(owner2Id, "sharedUser2"),
+                MakeLabelWorkItem(prLabelId, "SharedLabel")
+            ]);
+
+        // Service Owner has the same owners
+        var soWi = MakeLabelOwnerWorkItem(soId, "Service Owner", repo, "", owner1Id, owner2Id, prLabelId);
+        SetupLabelOwnerQuery("Service Owner", repo, [soWi]);
+
+        var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test/Azure.Test.Pkg", repo, CancellationToken.None);
+
+        Assert.That(result.AllPassed, Is.True);
+    }
+
+    // Test 23: Fallback — Service Owner is pathless but still valid
+    [Test]
+    public async Task CheckPackageOwners_Fallback_ServiceOwnerPathless()
+    {
+        const int pkgId = 100;
+        const int prLabelLoId = 500, prOwner1Id = 601, prOwner2Id = 602, prLabelId = 701;
+        const int soId = 800, soOwner1Id = 901, soOwner2Id = 902;
+        const string repo = "Azure/azure-sdk-for-net";
+
+        SetupPackageQuery("Azure.Test.Pkg", [MakePackageWorkItem(pkgId, "Azure.Test.Pkg", relatedIds: [])]);
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => !ids.Any()),
+                It.IsAny<int>(),
+                It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        var prLabelLo = MakeLabelOwnerWorkItem(prLabelLoId, "PR Label", repo, "/sdk/test/", prOwner1Id, prOwner2Id, prLabelId);
+        SetupLabelOwnerQuery("PR Label", repo, [prLabelLo]);
+
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(prOwner1Id) && ids.Contains(prOwner2Id) && ids.Contains(prLabelId)),
+                It.IsAny<int>(),
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                MakeOwnerWorkItem(prOwner1Id, "prUser1"),
+                MakeOwnerWorkItem(prOwner2Id, "prUser2"),
+                MakeLabelWorkItem(prLabelId, "TestLabel")
+            ]);
+
+        // Service Owner with no path (pathless) — still matches on labels
+        var soWi = MakeLabelOwnerWorkItem(soId, "Service Owner", repo, "", soOwner1Id, soOwner2Id, prLabelId);
+        SetupLabelOwnerQuery("Service Owner", repo, [soWi]);
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(soOwner1Id) && ids.Contains(soOwner2Id) && ids.Contains(prLabelId)),
+                It.IsAny<int>(),
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([
+                MakeOwnerWorkItem(soOwner1Id, "soUser1"),
+                MakeOwnerWorkItem(soOwner2Id, "soUser2"),
+                MakeLabelWorkItem(prLabelId, "TestLabel")
+            ]);
+
+        var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test/Azure.Test.Pkg", repo, CancellationToken.None);
+
+        Assert.That(result.AllPassed, Is.True);
+        Assert.That(result.PathFallbackCheck!.ServiceOwnerCheck!.Passed, Is.True);
+    }
+
+    // NormalizePath static helper tests
+    [TestCase("sdk/test", "/sdk/test")]
+    [TestCase("/sdk/test", "/sdk/test")]
+    [TestCase("sdk\\test", "/sdk/test")]
+    [TestCase("", "")]
+    public void NormalizePath_ReturnsExpected(string input, string expected)
+    {
+        Assert.That(CodeownersManagementHelper.NormalizePath(input), Is.EqualTo(expected));
+    }
 }

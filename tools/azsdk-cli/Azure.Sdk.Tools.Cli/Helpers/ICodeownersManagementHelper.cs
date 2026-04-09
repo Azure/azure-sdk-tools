@@ -39,4 +39,5 @@ public interface ICodeownersManagementHelper
 
     // Validation
     Task ThrowIfInvalidTeamAlias(string alias, CancellationToken ct);
+    Task<CheckPackageOwnersResponse> CheckPackageOwners(string packageName, string directoryPath, string repo, CancellationToken ct);
 }

@@ -147,6 +147,18 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             Required = false,
         };
 
+        private readonly Option<string> checkPackageOption = new("--package")
+        {
+            Description = "Package name",
+            Required = true,
+        };
+
+        private readonly Option<string> directoryPathOption = new("--directory-path")
+        {
+            Description = "Relative path to the package directory from the repo root",
+            Required = true,
+        };
+
         // Command names
         private const string generateCodeownersCommandName = "generate";
         private const string viewCodeownersCommandName = "view";
@@ -157,6 +169,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         private const string removeCodeownersToPackageCommandName = "remove-package-owner";
         private const string removeLabelToPackageCommandName = "remove-package-label";
         private const string removeLabelOwnerCommandName = "remove-label-owner";
+        private const string checkPackageOwnersCommandName = "check-package-owners";
 
 
         // MCP Tool Names
@@ -167,6 +180,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         private const string CodeownerRemovePackageOwnerToolName = "azsdk_engsys_codeowner_remove_package_owner";
         private const string CodeownerRemoveLabelToolName = "azsdk_engsys_codeowner_remove_package_label";
         private const string CodeownerRemoveLabelOwnerToolName = "azsdk_engsys_codeowner_remove_label_owner";
+        private const string CodeownerCheckPackageOwnersToolName = "azsdk_engsys_codeowner_check_package_owners";
 
         public CodeownersTool(
             IGitHubService githubService,
@@ -227,6 +241,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             new(exportSectionCommandName, "Export one or more named sections from a CODEOWNERS file")
             {
                 codeownersPathOption, sectionsOption, outputFilePathOption,
+            },
+            new(checkPackageOwnersCommandName, "Check if a package has sufficient owner information")
+            {
+                checkPackageOption, directoryPathOption, optionalRepoOption,
             }
         ];
 
@@ -315,6 +333,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 var sections = parseResult.GetValue(sectionsOption);
                 var output = parseResult.GetValue(outputFilePathOption);
                 return await ExportSection(codeownersPath!, sections!, output!, ct);
+            }
+
+            if (command == checkPackageOwnersCommandName)
+            {
+                var package = parseResult.GetValue(checkPackageOption);
+                var directoryPath = parseResult.GetValue(directoryPathOption);
+                var repo = parseResult.GetValue(optionalRepoOption);
+                return await CheckPackageOwners(package!, directoryPath!, repo, ct);
             }
 
             return new DefaultCommandResponse { ResponseError = $"Unknown command: '{command}'" };
@@ -626,6 +652,26 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error removing label owner(s)");
+                return new DefaultCommandResponse { ResponseError = ex.Message };
+            }
+        }
+
+        [McpServerTool(Name = CodeownerCheckPackageOwnersToolName), Description("Check if a package has sufficient owner information for PR/release gating. Returns pass/fail for package owners, PR labels, and service owner checks.")]
+        public async Task<CommandResponse> CheckPackageOwners(
+            string package,
+            string directoryPath,
+            string? repo = null,
+            CancellationToken ct = default
+        )
+        {
+            try
+            {
+                repo = await ResolveRepo(repo, ct);
+                return await codeownersManagementHelper.CheckPackageOwners(package, directoryPath, repo, ct);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error checking package owners");
                 return new DefaultCommandResponse { ResponseError = ex.Message };
             }
         }

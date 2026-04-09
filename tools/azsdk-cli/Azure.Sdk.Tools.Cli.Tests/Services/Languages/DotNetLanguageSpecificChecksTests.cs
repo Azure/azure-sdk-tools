@@ -868,8 +868,10 @@ public partial class TestClient
     }
 
     [Test]
-    public async Task RunAllTests_DefaultMode_IsPlayback()
+    public async Task RunAllTests_WhenFrameworkUnknown_DefaultModeIsPlayback()
     {
+        // No .csproj files in the temp directory, so framework detection returns Unknown
+        // and both AZURE_TEST_MODE and CLIENTMODEL_TEST_MODE should be set to playback.
         var processResult = new ProcessResult { ExitCode = 0 };
 
         ProcessOptions? capturedOptions = null;

@@ -34,6 +34,7 @@ from opentelemetry.sdk._logs import LoggingHandler
 import config.app_config as app_config
 from config.app_config import get as cfg
 from tools.knowledge_tools import KnowledgeTools
+from tools.web_tools import WebTools
 from tools.ado_mcp_tools import create_ado_mcp_tool
 from tools.azsdk_mcp_tools import create_azsdk_mcp_tool
 from tools.github_mcp_tools import create_github_mcp_tool
@@ -82,15 +83,17 @@ async def main() -> None:
 
     # Init Tools
     knowledge_tools = KnowledgeTools()
+    web_tools = WebTools()
     ado_mcp_tool = await create_ado_mcp_tool()
     azsdk_mcp_tool = await create_azsdk_mcp_tool()
     github_mcp_tool = await create_github_mcp_tool(agent_client)
-    web_search_tool = AzureOpenAIResponsesClient.get_web_search_tool(
+    web_search_tool = agent_client.get_web_search_tool(
         search_context_size="medium",
     )
 
     tools = [
         knowledge_tools.search_knowledge_base,
+        web_tools.web_fetch,
         ado_mcp_tool,
         azsdk_mcp_tool,
         github_mcp_tool,
@@ -112,6 +115,7 @@ async def main() -> None:
         default_options={
             "reasoning": ReasoningOptions(effort=reasoning_effort),
             "truncation": "auto",
+            "include": ["web_search_call.action.sources"],
         },
     )
 

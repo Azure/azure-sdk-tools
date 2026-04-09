@@ -43,7 +43,7 @@ async def create_ado_mcp_tool() -> MCPStdioTool:
         env=env,
         load_prompts=False,
         description=(
-            "Azure DevOps MCP server tools for pipeline lookup. "
+            "Azure DevOps stdio MCP server tools for pipeline lookup. "
             "Use this tool to find release and CI pipeline definitions "
             "by name (e.g. 'go - armtestbase', 'python - azure-mgmt-testbase') "
             "and get pipeline links for users."

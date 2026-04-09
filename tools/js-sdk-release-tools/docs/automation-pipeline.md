@@ -21,9 +21,35 @@ This document describes how the JS SDK release automation pipeline works, coveri
 
 ## 1. Overall Architecture
 
-### Entry File
+### CLI Entry Points
 
-[`src/autoGenerateInPipeline.ts`](../src/autoGenerateInPipeline.ts) — CLI entry point that accepts the following parameters:
+The package exposes the following CLI commands (defined in `package.json` `bin`):
+
+#### AutoPR / Release Pipeline
+
+These commands are invoked by the automated spec PR and release pipelines.
+
+| Command | Source File | Description |
+|---|---|---|
+| `code-gen-pipeline` | [`src/autoGenerateInPipeline.ts`](../src/autoGenerateInPipeline.ts) | Main automation entry point; used by the AutoPR release pipeline to generate and package SDK code end-to-end |
+| `hlc-code-gen-for-pipeline` | [`src/autoGenerateInPipeline.ts`](../src/autoGenerateInPipeline.ts) | Alias for `code-gen-pipeline` (legacy HLC-specific name) |
+| `hlc-code-gen` | [`src/hlcCodeGenCli.ts`](../src/hlcCodeGenCli.ts) | Local HLC code generation from swagger/README |
+| `rlc-code-gen` | [`src/rlcCodegenCli.ts`](../src/rlcCodegenCli.ts) | Local RLC code generation |
+| `changelog-tool` | [`src/changelogToolCli.ts`](../src/changelogToolCli.ts) | Generate changelog by comparing api.md against published npm package |
+
+#### Dev Loop Experience
+
+These commands are used as individual steps during local development and the dev inner loop workflow.
+
+| Command | Source File | Parameters | Description |
+|---|---|---|---|
+| `update-changelog` | [`src/generateChangelogCli.ts`](../src/generateChangelogCli.ts) | `--sdkRepoPath`, `--packagePath` | Regenerates `CHANGELOG.md` only (does not bump version). Calls `generateChangelogAndBumpVersion` in `ChangelogOnly` mode. |
+| `update-version` | [`src/updateBumpVersionCli.ts`](../src/updateBumpVersionCli.ts) | `--sdkRepoPath`, `--packagePath`, `--releaseType`, `--version`, `--releaseDate` | Updates `package.json` version only (does not rewrite changelog). Calls `generateChangelogAndBumpVersion` in `VersionOnly` mode. |
+| `generate-ci-yaml` | [`src/generateCiYamlCli.ts`](../src/generateCiYamlCli.ts) | `--sdkRepoPath`, `--packagePath` | Creates or updates the `ci.yml` / `ci.mgmt.yml` file for a package. |
+
+### `code-gen-pipeline` / `hlc-code-gen-for-pipeline` Parameters
+
+[`src/autoGenerateInPipeline.ts`](../src/autoGenerateInPipeline.ts) accepts the following parameters:
 
 | Parameter | Type | Description |
 |---|---|---|

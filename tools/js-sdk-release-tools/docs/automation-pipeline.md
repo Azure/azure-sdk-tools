@@ -25,47 +25,16 @@ This document describes how the JS SDK release automation pipeline works, coveri
 
 The package exposes the following CLI commands (defined in `package.json` `bin`):
 
-#### AutoPR / Release Pipeline
-
-These commands are invoked by the automated spec PR and release pipelines.
-
-| Command | Source File | Docs | Description |
-|---|---|---|---|
-| `code-gen-pipeline` | [`src/autoGenerateInPipeline.ts`](../src/autoGenerateInPipeline.ts) | (this document) | Main automation entry point; used by the AutoPR release pipeline to generate and package SDK code end-to-end |
-| `hlc-code-gen-for-pipeline` | [`src/autoGenerateInPipeline.ts`](../src/autoGenerateInPipeline.ts) | (this document) | Alias for `code-gen-pipeline` (legacy HLC-specific name) |
-
-#### Local Development Tools
-
-These commands are run locally by developers to generate SDK code, update changelogs, and manage package metadata.
-
-| Command | Source File | Docs | Description |
-|---|---|---|---|
-| `hlc-code-gen` | [`src/hlcCodeGenCli.ts`](../src/hlcCodeGenCli.ts) | [hlc.md](./hlc.md) | Local HLC (management-plane) code generation from swagger/README |
-| `rlc-code-gen` | [`src/rlcCodegenCli.ts`](../src/rlcCodegenCli.ts) | [llc.md](./llc.md) | Local RLC (data-plane) code generation |
-| `changelog-tool` | [`src/changelogToolCli.ts`](../src/changelogToolCli.ts) | [changelog-tool.md](./changelog-tool.md) | Generate changelog by comparing api.md against published npm package |
-
-#### Dev Loop Experience
-
-These commands are used as individual steps during local development and the dev inner loop workflow.
-
 | Command | Source File | Parameters | Description |
 |---|---|---|---|
-| `update-changelog` | [`src/generateChangelogCli.ts`](../src/generateChangelogCli.ts) | `--sdkRepoPath`, `--packagePath` | Regenerates `CHANGELOG.md` only (does not bump version). Calls `generateChangelogAndBumpVersion` in `ChangelogOnly` mode. |
-| `update-version` | [`src/updateBumpVersionCli.ts`](../src/updateBumpVersionCli.ts) | `--sdkRepoPath`, `--packagePath`, `--releaseType`, `--version`, `--releaseDate` | Updates `package.json` version only (does not rewrite changelog). Calls `generateChangelogAndBumpVersion` in `VersionOnly` mode. |
-| `generate-ci-yaml` | [`src/generateCiYamlCli.ts`](../src/generateCiYamlCli.ts) | `--sdkRepoPath`, `--packagePath` | Creates or updates the `ci.yml` / `ci.mgmt.yml` file for a package. |
-
-### `code-gen-pipeline` / `hlc-code-gen-for-pipeline` Parameters
-
-[`src/autoGenerateInPipeline.ts`](../src/autoGenerateInPipeline.ts) accepts the following parameters:
-
-| Parameter | Type | Description |
-|---|---|---|
-| `--inputJsonPath` | `string` | Input JSON configuration path |
-| `--outputJsonPath` | `string` | Output result JSON path |
-| `--use` | `string` | Custom autorest plugin |
-| `--typespecEmitter` | `string` | TypeSpec emitter name (default `@azure-tools/typespec-ts`) |
-| `--sdkGenerationType` | `string` | Code generation method (`command` / `script`) |
-| `--local` | `boolean` | Local mode flag (skips node_modules backup, etc.) |
+| `code-gen-pipeline` | [`src/autoGenerateInPipeline.ts`](../src/autoGenerateInPipeline.ts) | `--inputJsonPath`, `--outputJsonPath`, `--use`, `--typespecEmitter`, `--sdkGenerationType`, `--local` | Main automation entry point; used by the AutoPR release pipeline to generate and package SDK code end-to-end |
+| `hlc-code-gen-for-pipeline` | [`src/autoGenerateInPipeline.ts`](../src/autoGenerateInPipeline.ts) | *(same as above)* | Alias for `code-gen-pipeline` (legacy HLC-specific name) |
+| `hlc-code-gen` | [`src/hlcCodeGenCli.ts`](../src/hlcCodeGenCli.ts) | see [hlc.md](./hlc.md) | Local HLC (management-plane) code generation from swagger/README |
+| `rlc-code-gen` | [`src/rlcCodegenCli.ts`](../src/rlcCodegenCli.ts) | see [llc.md](./llc.md) | Local RLC (data-plane) code generation |
+| `changelog-tool` | [`src/changelogToolCli.ts`](../src/changelogToolCli.ts) | see [changelog-tool.md](./changelog-tool.md) | Generate changelog by comparing api.md against published npm package |
+| `update-changelog` | [`src/generateChangelogCli.ts`](../src/generateChangelogCli.ts) | `--sdkRepoPath`, `--packagePath` | Regenerates `CHANGELOG.md` only (does not bump version) |
+| `update-version` | [`src/updateBumpVersionCli.ts`](../src/updateBumpVersionCli.ts) | `--sdkRepoPath`, `--packagePath`, `--releaseType`, `--version`, `--releaseDate` | Updates `package.json` version only (does not rewrite changelog) |
+| `generate-ci-yaml` | [`src/generateCiYamlCli.ts`](../src/generateCiYamlCli.ts) | `--sdkRepoPath`, `--packagePath` | Creates or updates the `ci.yml` / `ci.mgmt.yml` file for a package |
 
 ### SDK Type Enum (`SDKType`)
 

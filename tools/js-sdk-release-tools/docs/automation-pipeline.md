@@ -33,6 +33,13 @@ These commands are invoked by the automated spec PR and release pipelines.
 |---|---|---|---|
 | `code-gen-pipeline` | [`src/autoGenerateInPipeline.ts`](../src/autoGenerateInPipeline.ts) | (this document) | Main automation entry point; used by the AutoPR release pipeline to generate and package SDK code end-to-end |
 | `hlc-code-gen-for-pipeline` | [`src/autoGenerateInPipeline.ts`](../src/autoGenerateInPipeline.ts) | (this document) | Alias for `code-gen-pipeline` (legacy HLC-specific name) |
+
+#### Local Development Tools
+
+These commands are run locally by developers to generate SDK code, update changelogs, and manage package metadata.
+
+| Command | Source File | Docs | Description |
+|---|---|---|---|
 | `hlc-code-gen` | [`src/hlcCodeGenCli.ts`](../src/hlcCodeGenCli.ts) | [hlc.md](./hlc.md) | Local HLC (management-plane) code generation from swagger/README |
 | `rlc-code-gen` | [`src/rlcCodegenCli.ts`](../src/rlcCodegenCli.ts) | [llc.md](./llc.md) | Local RLC (data-plane) code generation |
 | `changelog-tool` | [`src/changelogToolCli.ts`](../src/changelogToolCli.ts) | [changelog-tool.md](./changelog-tool.md) | Generate changelog by comparing api.md against published npm package |

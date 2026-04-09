@@ -58,6 +58,23 @@ The package exposes the following CLI commands (defined in `package.json` `bin`)
 | `rlc-code-gen` | [`src/rlcCodegenCli.ts`](../src/rlcCodegenCli.ts) | see [llc.md](./llc.md) | Local RLC (data-plane) code generation |
 | `changelog-tool` | [`src/changelogToolCli.ts`](../src/changelogToolCli.ts) | see [changelog-tool.md](./changelog-tool.md) | Generate changelog by comparing api.md against published npm package |
 
+### `swagger_to_sdk_config.json` — InnerLoop Integration
+
+The file [`eng/swagger_to_sdk_config.json`](https://github.com/Azure/azure-sdk-for-js/pull/37749/changes#diff-317766c39b2f66ac2343b9830dd5d2041792cdd520eceb1df4772175e058aa84) in `azure-sdk-for-js` registers shell scripts that the SDK automation system calls during the **Dev Inner Loop** ([project board](https://github.com/orgs/Azure/projects/865)). Each script wraps one of the CLI commands above so that the spec-to-SDK tooling can invoke them without knowing the specific package manager or tool path.
+
+| Config key | Script path (in azure-sdk-for-js) | Underlying CLI command | Purpose |
+|---|---|---|---|
+| `updateVersionScript` | `eng/scripts/update-version.ps1` | `update-version` | Bumps `package.json` version and writes changelog for a package |
+| `updateMetadataScript` | `eng/scripts/update-metadata.ps1` | `generate-ci-yaml` | Creates or updates `ci.yml` / `ci.mgmt.yml` for a package |
+
+The `update-metadata.ps1` script (added in [azure-sdk-for-js #37749](https://github.com/Azure/azure-sdk-for-js/pull/37749)) installs `js-sdk-release-tools` from the local `eng/tools/js-sdk-release-tools` path, then runs:
+
+```
+generate-ci-yaml --sdkRepoPath <SdkRepoPath> --packagePath <PackagePath>
+```
+
+This allows SDK authors to regenerate the CI YAML for their package locally as part of the inner loop without running the full automation pipeline. See [azure-sdk-for-js #37458](https://github.com/Azure/azure-sdk-for-js/pull/37458) for the corresponding version bump that ships these changes.
+
 ### SDK Type Enum (`SDKType`)
 
 Defined in [`src/common/types.ts`](../src/common/types.ts):
@@ -250,7 +267,7 @@ There are two generation paths based on the source: **TypeSpec project** or **Sw
 
 | Step | Required | Operation | Command / Details | Code Link |
 |---|---|---|---|---|
-| **1. Find Autorest Config** | ✅ Required | Parse from PR comment or search SDK repo | Search `sdk/{RP}/{package}-rest/swagger/README.md` for matching `require`/`input-file` | [`generateRLCInPipeline.ts`](../src/llc/generateRLCInPipeline/generateRLCInPipeline.ts) |
+| **1. Find Autorest Config** | ✅ Required | Search SDK repo for existing autorest config | Scans `sdk/{RP}/{package}-rest/swagger/README.md` files looking for a matching `require` URL or `input-file` path that references the incoming spec. The PR-comment-based config generation path was removed as a security fix ([#14743](https://github.com/Azure/azure-sdk-tools/pull/14743)). | [`generateRLCInPipeline.ts`](../src/llc/generateRLCInPipeline/generateRLCInPipeline.ts) |
 | **2. Code Generation** | ✅ Required | Run autorest | `autorest --version=3.9.7 {README.md} --output-folder={packagePath}` + optional `--use` `--multi-client=true` `--tag=package-{apiVersion}` | [`generateRLCInPipeline.ts`](../src/llc/generateRLCInPipeline/generateRLCInPipeline.ts) |
 
 ### Common Post-generation Steps (both paths)
@@ -289,7 +306,7 @@ Entry function: [`generateAzureSDKPackage()`](../src/mlc/clientGenerator/modular
 | **7. Restore Version** | ✅ Required | `updatePackageVersion()` | Restore `package.json` version to the pre-generation original to avoid version drift | [`typeSpecUtils.ts`](../src/mlc/clientGenerator/utils/typeSpecUtils.ts) |
 | **8. Build Package** | ✅ Required | `buildPackage()` — contains multiple sub-steps | See [sub-steps below](#buildpackage-sub-steps) | [`rushUtils.ts`](../src/common/rushUtils.ts) |
 | **9. Generate Changelog & Bump Version** | ✅ Required | `generateChangelogAndBumpVersion()` | Same as HLC; skipped for Data Plane packages | [`automaticGenerateChangeLogAndBumpVersion.ts`](../src/common/changelog/automaticGenerateChangeLogAndBumpVersion.ts) |
-| **10. Try Build Samples** | ⚠️ Optional | `tryBuildSamples()` | `dev-tool run build:samples` (failure does not block in non-`Release` mode or Data Plane) | [`rushUtils.ts`](../src/common/rushUtils.ts) |
+| **10. Try Build Samples** | ⚠️ Conditional | `tryBuildSamples()` | `dev-tool run build:samples`. Blocking rules: **Management plane** — failure is a hard error in `Release` mode only; treated as a warning in all other modes (`SpecPullRequest`, `Batch`, `Local`). **Data plane** — always treated as a warning (never blocks). Known gap ([#14610](https://github.com/Azure/azure-sdk-tools/issues/14610)): sample failures are not caught during spec PR validation (`SpecPullRequest` mode), so a package that passes spec PR checks can still fail at release time. | [`rushUtils.ts`](../src/common/rushUtils.ts) |
 | **11. Update Package Result** | ✅ Required | `updateNpmPackageResult()` | Read `package.json` name/version into `PackageResult` | [`packageResultUtils.ts`](../src/common/packageResultUtils.ts) |
 | **12. Create Release Artifact** | ✅ Required | `createArtifact()` | `node rushx pack` (rush) or `pnpm run --filter {packageName}... pack` (pnpm), generates `.tgz` | [`rushUtils.ts`](../src/common/rushUtils.ts) |
 | **13. Create/Update CI YAML** | ✅ Required | `createOrUpdateCiYaml()` | Create or update `ci.mgmt.yml` | [`ciYamlUtils.ts`](../src/common/ciYamlUtils.ts) |

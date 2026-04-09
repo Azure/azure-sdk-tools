@@ -29,13 +29,13 @@ The package exposes the following CLI commands (defined in `package.json` `bin`)
 
 These commands are invoked by the automated spec PR and release pipelines.
 
-| Command | Source File | Description |
-|---|---|---|
-| `code-gen-pipeline` | [`src/autoGenerateInPipeline.ts`](../src/autoGenerateInPipeline.ts) | Main automation entry point; used by the AutoPR release pipeline to generate and package SDK code end-to-end |
-| `hlc-code-gen-for-pipeline` | [`src/autoGenerateInPipeline.ts`](../src/autoGenerateInPipeline.ts) | Alias for `code-gen-pipeline` (legacy HLC-specific name) |
-| `hlc-code-gen` | [`src/hlcCodeGenCli.ts`](../src/hlcCodeGenCli.ts) | Local HLC code generation from swagger/README |
-| `rlc-code-gen` | [`src/rlcCodegenCli.ts`](../src/rlcCodegenCli.ts) | Local RLC code generation |
-| `changelog-tool` | [`src/changelogToolCli.ts`](../src/changelogToolCli.ts) | Generate changelog by comparing api.md against published npm package |
+| Command | Source File | Docs | Description |
+|---|---|---|---|
+| `code-gen-pipeline` | [`src/autoGenerateInPipeline.ts`](../src/autoGenerateInPipeline.ts) | (this document) | Main automation entry point; used by the AutoPR release pipeline to generate and package SDK code end-to-end |
+| `hlc-code-gen-for-pipeline` | [`src/autoGenerateInPipeline.ts`](../src/autoGenerateInPipeline.ts) | (this document) | Alias for `code-gen-pipeline` (legacy HLC-specific name) |
+| `hlc-code-gen` | [`src/hlcCodeGenCli.ts`](../src/hlcCodeGenCli.ts) | [hlc.md](./hlc.md) | Local HLC (management-plane) code generation from swagger/README |
+| `rlc-code-gen` | [`src/rlcCodegenCli.ts`](../src/rlcCodegenCli.ts) | [llc.md](./llc.md) | Local RLC (data-plane) code generation |
+| `changelog-tool` | [`src/changelogToolCli.ts`](../src/changelogToolCli.ts) | [changelog-tool.md](./changelog-tool.md) | Generate changelog by comparing api.md against published npm package |
 
 #### Dev Loop Experience
 

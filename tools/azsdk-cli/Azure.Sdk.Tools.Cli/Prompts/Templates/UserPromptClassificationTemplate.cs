@@ -79,7 +79,8 @@ public class UserPromptClassificationTemplate : BasePromptTemplate
         **Allowed Categories (pick exactly one):**
         - `typespec_authoring_or_update` — User wants to create, author, or update a TypeSpec specification
         - `typespec_customization` — User wants to customize TypeSpec-generated SDK output (client.tsp, decorators, overrides)
-        - `sdk_generation` — User wants to generate SDK code from a TypeSpec or Swagger specification
+        - `typespec_validation` -  user wants to validate or compile TypeSpec
+        - `sdk_generation` — User wants to generate SDK code from a TypeSpec specification
         - `sdk_build_and_test` — User wants to build, compile, or run tests for an SDK package
         - `release_planning` — User wants to create or manage a release plan for an SDK package
         - `sdk_release` — User wants to release or publish an SDK package
@@ -87,6 +88,7 @@ public class UserPromptClassificationTemplate : BasePromptTemplate
         - `fix_build_failure` — User is troubleshooting or fixing a build failure or compilation error
         - `analyze_pipeline_error` — User wants to analyze or debug a CI/CD pipeline failure
         - `sdk_validations` — User wants to run or fix SDK validation checks (APIView, breaking changes, linting)
+        - `apiview_request` - USer wants to check APIview approval status, get apireview link or get api review comments.
 
         **Classification Rules:**
         - If the prompt is ambiguous, choose the category that best matches the primary intent

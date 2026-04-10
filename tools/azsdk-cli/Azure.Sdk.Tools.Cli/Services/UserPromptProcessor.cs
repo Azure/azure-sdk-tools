@@ -60,6 +60,7 @@ public class UserPromptProcessor : IUserPromptProcessor
     {
         "typespec_authoring_or_update",
         "typespec_customization",
+        "typespec_validation",
         "sdk_generation",
         "sdk_build_and_test",
         "release_planning",
@@ -67,7 +68,8 @@ public class UserPromptProcessor : IUserPromptProcessor
         "changelog_and_metadata_update",
         "fix_build_failure",
         "analyze_pipeline_error",
-        "sdk_validations"
+        "sdk_validations",
+        "apiview_request"
     };
 
     private readonly ICopilotAgentRunner _agentRunner;

@@ -475,7 +475,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
 
     // Supported APIView languages and their common aliases
     private static readonly string[] SupportedLanguages =
-        ["C", "C#", "C++", "Go", "Java", "JavaScript", "Json", "Kotlin", "Python", "Rust", "Swagger", "Swift", "TypeSpec", "Xml"];
+        ["C", "C#", "C++", "Go", "Java", "JavaScript", "Json", "Kotlin", "Python", "Rust", "Swift", "TypeSpec", "Xml"];
 
     private static readonly Dictionary<string, string> LanguageAliases = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -488,7 +488,6 @@ public class APIViewReviewTool : MCPMultiCommandTool
         ["js"] = "JavaScript",
         ["typescript"] = "JavaScript",
         ["ts"] = "JavaScript",
-        ["cadl"] = "TypeSpec",
         ["golang"] = "Go",
         ["py"] = "Python",
     };

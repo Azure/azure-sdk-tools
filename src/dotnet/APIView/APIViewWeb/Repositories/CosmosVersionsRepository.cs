@@ -76,11 +76,11 @@ public class CosmosVersionsRepository : ICosmosVersionsRepository
             new QueryRequestOptions { PartitionKey = new PartitionKey(reviewId) });
     }
 
-    public async Task<IEnumerable<APIVersionModel>> GetVersionsEligibleForRetentionAsync()
+    public async Task<IEnumerable<APIVersionModel>> GetVersionsEligibleForRetentionAsync(DateTime now)
     {
         var queryDef = new QueryDefinition(
                 "SELECT * FROM APIVersions v WHERE IS_DEFINED(v.RetainUntil) AND v.RetainUntil != null AND v.RetainUntil <= @now AND v.IsDeleted = false")
-            .WithParameter("@now", DateTime.UtcNow);
+            .WithParameter("@now", now);
 
         return await ExecuteQueryAsync(queryDef, requestOptions: null);
     }

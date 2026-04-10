@@ -47,9 +47,12 @@ public static class VersionNormalizationHelper
 
         // Milestone prerelease (e.g. 1.2.0-beta.1, 1.2.0b2, 0.5.0-beta.1).
         string label = semVer.PrereleaseLabel.ToLowerInvariant();
-        string identifier = $"{semVer.Major}.{semVer.Minor}.{semVer.Patch}" +
-                            $"{semVer.PrereleaseLabelSeparator}{label}" +
-                            $"{semVer.PrereleaseNumberSeparator}{semVer.PrereleaseNumber}";
+        string identifier = $"{semVer.Major}.{semVer.Minor}.{semVer.Patch}{semVer.PrereleaseLabelSeparator}{label}";
+        // For label-only inputs (e.g. 1.2.0-alpha) there is no numeric suffix to append.
+        if (semVer.HasPrereleaseNumber)
+        {
+            identifier += $"{semVer.PrereleaseNumberSeparator}{semVer.PrereleaseNumber}";
+        }
         return (identifier, VersionKind.Preview);
     }
 }

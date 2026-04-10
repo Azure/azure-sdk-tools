@@ -30,7 +30,7 @@ public class APIVersionsManagerTests
             .Setup(x => x.GetVersionByIdentifierAsync("review-1", "1.0.0"))
             .ReturnsAsync(existing);
 
-        APIVersionModel result = await _manager.GetOrCreateVersionAsync("review-1", "1.0.0", APIRevisionType.Automatic);
+        APIVersionModel result = await _manager.GetOrCreateVersionAsync("review-1", "1.0.0");
 
         Assert.Same(existing, result);
         _mockRepo.Verify(x => x.UpsertVersionAsync(It.IsAny<APIVersionModel>()), Times.Never);
@@ -46,7 +46,7 @@ public class APIVersionsManagerTests
             .Setup(x => x.UpsertVersionAsync(It.IsAny<APIVersionModel>()))
             .Returns(Task.CompletedTask);
 
-        APIVersionModel result = await _manager.GetOrCreateVersionAsync("review-1", "2.0.0-beta.1", APIRevisionType.Manual);
+        APIVersionModel result = await _manager.GetOrCreateVersionAsync("review-1", "2.0.0-beta.1");
 
         Assert.NotNull(result);
         Assert.Equal("review-1", result.ReviewId);
@@ -68,7 +68,7 @@ public class APIVersionsManagerTests
             .Returns(Task.CompletedTask);
 
         var result = await _manager.GetOrCreateVersionAsync("review-1", "1.0.0-alpha.20260101.1",
-            APIRevisionType.PullRequest, pullRequestNo: 42, sourceBranch: "feature/foo");
+            pullRequestNo: 42, sourceBranch: "feature/foo");
 
         Assert.Equal("PR#42", result.VersionIdentifier);
         Assert.Equal(VersionKind.PullRequest, result.Kind);
@@ -85,7 +85,7 @@ public class APIVersionsManagerTests
             .ReturnsAsync((APIVersionModel)null);
         _mockRepo.Setup(x => x.UpsertVersionAsync(It.IsAny<APIVersionModel>())).Returns(Task.CompletedTask);
 
-        var result = await _manager.GetOrCreateVersionAsync("review-1", "3.2.1", APIRevisionType.Automatic);
+        var result = await _manager.GetOrCreateVersionAsync("review-1", "3.2.1");
 
         Assert.Equal(VersionKind.Stable, result.Kind);
     }
@@ -99,7 +99,7 @@ public class APIVersionsManagerTests
         _mockRepo.Setup(x => x.UpsertVersionAsync(It.IsAny<APIVersionModel>())).Returns(Task.CompletedTask);
 
         var result =
-            await _manager.GetOrCreateVersionAsync("review-1", "2.0.0-alpha.20231015.3", APIRevisionType.Automatic);
+            await _manager.GetOrCreateVersionAsync("review-1", "2.0.0-alpha.20231015.3");
 
         Assert.Equal(VersionKind.RollingPrerelease, result.Kind);
     }

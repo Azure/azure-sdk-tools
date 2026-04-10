@@ -58,6 +58,18 @@ public class VersionNormalizationTests
         Assert.Equal(expectedKind, kind);
     }
 
+    // Label-only prereleases (no numeric milestone suffix): the number must NOT be appended.
+    [Theory]
+    [InlineData("1.2.0-alpha", "1.2.0-alpha", VersionKind.Preview)]
+    [InlineData("1.0.0-beta",  "1.0.0-beta",  VersionKind.Preview)]
+    [InlineData("2.0.0-rc",    "2.0.0-rc",    VersionKind.Preview)]
+    public void NormalizeVersion_LabelOnlyPrerelease_NoNumericSuffix(string input, string expectedId, VersionKind expectedKind)
+    {
+        var (id, kind) = VersionNormalizationHelper.NormalizeVersion(input);
+        Assert.Equal(expectedId, id);
+        Assert.Equal(expectedKind, kind);
+    }
+
     // Python PEP 440 milestone: prelabel="b"/"a", PrereleaseNumber is a small sequential integer.
     [Theory]
     [InlineData("1.0.0b1", "1.0.0b1", VersionKind.Preview)]

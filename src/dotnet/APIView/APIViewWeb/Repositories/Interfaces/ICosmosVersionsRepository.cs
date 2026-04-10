@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using APIViewWeb.LeanModels;
@@ -11,7 +12,7 @@ public interface ICosmosVersionsRepository
     Task<APIVersionModel> GetVersionByIdentifierAsync(string reviewId, string versionIdentifier);
     Task<APIVersionModel> GetVersionByPullRequestAsync(string reviewId, int pullRequestNumber);
     Task<IEnumerable<APIVersionModel>> GetVersionsAsync(string reviewId, VersionKind versionKind);
-    Task<IEnumerable<APIVersionModel>> GetVersionsEligibleForRetentionAsync();
+    Task<IEnumerable<APIVersionModel>> GetVersionsEligibleForRetentionAsync(DateTime now);
     Task UpsertVersionAsync(APIVersionModel version);
     Task DeleteVersionAsync(string versionId, string reviewId);
 }

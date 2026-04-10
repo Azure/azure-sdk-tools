@@ -57,9 +57,9 @@ Review (ReviewListItemModel)
 └──► APIVersion (APIVersionModel)   [1 → many per Review]
     │   One per distinct package version string (e.g. "1.0.0-beta.1").
     │   Normalizes the raw version into a canonical VersionIdentifier and classifies
-    │   it as Stable, Preview, or Rolling. Tracks PR association and retention date.
-    │   Fields: ReviewId, VersionIdentifier, Kind, APIRevisionType, PullRequestNumber,
-    │           PRStatus, RetentionDate, IsDeleted, ChangeHistory[]
+    │   it as Stable, Preview, or Rolling. Tracks PR association and retention state.
+    │   Fields: ReviewId, VersionIdentifier, Kind, PullRequestNumber, PrStatus,
+    │           RetainUntil, IsDeleted, ChangeHistory[]
     │
     └──► APIRevision (APIRevisionListItemModel)   [1 → many per APIVersion / Review]
         │   One per upload / version snapshot. Type is Manual, Automatic, or PullRequest.

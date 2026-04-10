@@ -17,7 +17,7 @@ public class APIVersionsManager : IAPIVersionsManager
         _versionsRepository = versionsRepository;
     }
 
-    public async Task<APIVersionModel> GetOrCreateVersionAsync(string reviewId, string packageVersion, APIRevisionType apiRevisionType, int? pullRequestNo = null, string sourceBranch = null)
+    public async Task<APIVersionModel> GetOrCreateVersionAsync(string reviewId, string packageVersion, int? pullRequestNo = null, string sourceBranch = null)
     {
         string versionIdentifier;
         VersionKind kind;

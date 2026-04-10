@@ -21,12 +21,14 @@
         <div class="filter-section filter-section-labeled">
             <span class="filter-group-label">Severity</span>
             <div class="filter-section-buttons">
-                <button *ngFor="let sev of severityOptions"
-                    class="sev-btn" [ngClass]="'sev-' + sev.key.toLowerCase()"
-                    [class.sev-on]="filterSeverities.has(sev.key)"
-                    (click)="toggleSeverityFilter(sev.key)">
-                    <i class="bi" [ngClass]="sev.icon"></i> {{ sev.label }}
-                </button>
+                <ng-container *ngFor="let sev of severityOptions">
+                    <button *ngIf="sev.key !== 'unknown' || showUnknownSeverityFilter"
+                        class="sev-btn" [ngClass]="'sev-' + sev.key.toLowerCase()"
+                        [class.sev-on]="filterSeverities.has(sev.key)"
+                        (click)="toggleSeverityFilter(sev.key)">
+                        <i class="bi" [ngClass]="sev.icon"></i> {{ sev.label }}
+                    </button>
+                </ng-container>
             </div>
         </div>
 

@@ -4,13 +4,14 @@
 # license information.
 # --------------------------------------------------------------------------
 
+import pytest
 from apistub.nodes import DataClassNode
 from apistubgentest.models import (
     DataClassSimple,
     DataClassWithFields,
     DataClassDynamic,
-    DataClassWithKeywordOnly,
     DataClassWithPostInit,
+    DataClassWithKeywordOnly,
 )
 
 from ._test_util import _check, _tokenize, _merge_lines, _render_lines, MockApiView
@@ -34,11 +35,14 @@ class TestDataClassParsing:
         assert lines[0].startswith("@dataclass")
 
         ivars = lines[2:5]
+        quantity_on_hand_expected = (
+            'quantity_on_hand: int = field(compare = True, default = 0, hash = None, init = True, kw_only = False, metadata = {}, name = "quantity_on_hand", repr = True, type = int)'
+        )
         _check(
             ivars,
             [
                 "name: str",
-                'quantity_on_hand: int = field(compare = True, default = 0, hash = None, init = True, kw_only = False, metadata = {}, name = "quantity_on_hand", repr = True, type = int)',
+                quantity_on_hand_expected,
                 "unit_price: float",
             ],
             obj,
@@ -71,12 +75,15 @@ class TestDataClassParsing:
 
         ivars = lines[2:6]
         # TODO: Display missing field assignments
+        myint_field_default_expected = (
+            'myint_field_default: int = field(compare = True, default = 10, hash = None, init = True, kw_only = False, metadata = {}, name = "myint_field_default", repr = False, type = int)'
+        )
         _check(
             ivars,
             [
                 # "myint_field: int = field(repr = False)",
                 "myint_field: int",
-                'myint_field_default: int = field(compare = True, default = 10, hash = None, init = True, kw_only = False, metadata = {}, name = "myint_field_default", repr = False, type = int)',
+                myint_field_default_expected,
                 "myint_plain: int",
                 # "mylist: list[int] = field(default_factor = list)"
                 "mylist: list[int]",

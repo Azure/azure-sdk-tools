@@ -704,8 +704,8 @@ public class CodeownersManagementHelper(
         string packageName,
         string directoryPath,
         string repo,
-        CancellationToken ct)
-    {
+        CancellationToken ct
+    ) {
         const int requiredOwners = 2;
 
         var response = new CheckPackageOwnersResponse
@@ -741,8 +741,8 @@ public class CodeownersManagementHelper(
         PackageWorkItem packageWi,
         int requiredOwners,
         string repo,
-        CancellationToken ct)
-    {
+        CancellationToken ct
+    ) {
         logger.LogInformation("Validation path: Package (direct owners)");
 
         var uniqueIndividuals = GetUniqueIndividuals(packageWi.Owners);
@@ -800,8 +800,8 @@ public class CodeownersManagementHelper(
         string directoryPath,
         int requiredOwners,
         string repo,
-        CancellationToken ct)
-    {
+        CancellationToken ct
+    ) {
         logger.LogInformation("Validation path: PathFallback (no direct owners on package)");
 
         // Find PR Label type Label Owners whose RepoPath glob matches directoryPath
@@ -889,8 +889,8 @@ public class CodeownersManagementHelper(
         List<string> requiredLabels,
         int requiredOwners,
         string repo,
-        CancellationToken ct)
-    {
+        CancellationToken ct
+    ) {
         if (requiredLabels.Count == 0)
         {
             return null;
@@ -939,8 +939,8 @@ public class CodeownersManagementHelper(
     private async Task<List<LabelOwnerWorkItem>> QueryLabelOwnersByTypeAndRepo(
         string labelType,
         string repo,
-        CancellationToken ct)
-    {
+        CancellationToken ct
+    ) {
         var escapedRepo = repo.Replace("'", "''");
         var escapedLabelType = labelType.Replace("'", "''");
         var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'" +

@@ -39,6 +39,12 @@ SDK_PARAMS = [
     ("azure-eventhub-checkpointstoreblob-aio", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblobaio", "src"),
     ("azure-eventhub-checkpointstoreblob-aio", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblobaio", "sdist"),
     ("azure-eventhub-checkpointstoreblob-aio", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblobaio", "whl"),
+    ("azure-identity", "1.25.3", "identity", "azure.identity", "whl"),
+    ("azure-identity", "1.25.3", "identity", "azure.identity", "src"),
+    ("azure-identity", "1.25.3", "identity", "azure.identity", "sdist"),
+    ("azure-storage-blob", "12.28.0", "storage", "azure.storage.blob", "whl"),
+    ("azure-storage-blob", "12.28.0", "storage", "azure.storage.blob", "src"),
+    ("azure-storage-blob", "12.28.0", "storage", "azure.storage.blob", "sdist"),
     # Large package (700+ model classes) — validates perf fix for large packages.
     ("azure-mgmt-compute", "37.2.0", "compute", "azure.mgmt.compute", "whl"),
     ("azure-mgmt-compute", "37.2.0", "compute", "azure.mgmt.compute", "sdist"),
@@ -185,7 +191,10 @@ def _add_init_for_whl(pkg_path):
         #  2. The stub generator's _set_root_namespace() recognises this as a namespace
         #     extension file (INIT_EXTENSION_SUBSTRING match) and skips it, allowing the
         #     real package root (azure.mgmt.compute) to be detected correctly.
-        NAMESPACE_INIT = "__path__ = __import__('pkgutil').extend_path(__path__, __name__)\n"
+        # NOTE: _normalize_namespace_inits in _pylint_parser.py checks for this marker to
+        # distinguish synthetically-added WHL stubs (which should be preserved) from
+        # organic sdist/src namespace __init__.py files (which should be emptied).
+        NAMESPACE_INIT = "# __apiview_whl_namespace_stub__\n__path__ = __import__('pkgutil').extend_path(__path__, __name__)\n"
 
         def add_init_recursively(folder):
             # Stop if __init__.py exists in this folder
@@ -327,8 +336,6 @@ class TestApiViewAzure:
 
     @mark.parametrize("pkg_name,version,directory,pkg_namespace,pkg_type", SDK_PARAMS, ids=SDK_IDS)
     def test_sdks(self, pkg_name, version, directory, pkg_namespace, pkg_type):
-        print("Pip freeze before test")
-        check_call(["pip", "freeze"])
         pkg_path, mapping_file = self._download_packages(directory, pkg_name, version, pkg_type)
         temp_path = tempfile.gettempdir()
         # Explicitly pass through mapping file path

@@ -144,16 +144,22 @@ public class APIViewFeedbackIssueTemplate : BasePromptTemplate
             - If a Commit SHA is provided, use it as the base for your changes
             - Include the APIView URL in PR description
             
-            - CRITICAL: You MUST update the PR description with a summary table. The PR description MUST include a markdown table in EXACTLY this format (do not change column names):
-              | LineNo | Addressed? | Summary |
-              |--------|------------|---------|
-              | <lineNo> | ✅ | Brief description of changes (or "No action needed" if feedback says keep as-is) |
-              | <lineNo> | ⚠️ | Reason not addressed (unclear info, TypeSpec limitation, needs SDK code customization) |
-              
-              Include one row for EVERY LineNo from the feedback table above. This table is required even if the PR is long.
+            - CRITICAL: You MUST update the PR description with two summary tables. Both tables are required even if the PR is long.
+
+              **Table 1 – Addressed (Yes)**: Include one row for every LineNo where feedback was addressed or required no action.
+              | LineNo | Element | What Changed |
+              |--------|---------|--------------|
+              | <lineNo> | <element> | Brief description of the TypeSpec change made (or "No action needed" if feedback says keep as-is) |
+
+              **Table 2 – Not Addressed (No)**: Include one row for every LineNo where feedback could NOT be addressed.
+              | LineNo | Element | Reason Not Addressed |
+              |--------|---------|----------------------|
+              | <lineNo> | <element> | Reason (e.g. unclear info, TypeSpec limitation, needs SDK code customization) |
+
+              Every LineNo from the feedback table above MUST appear in exactly one of these two tables.
 
             - Note: If a review comment CANNOT be addressed, explanation comments MUST NOT be added to the `client.tsp` file.
-              ONLY explain in the "Summary" column why it could not be addressed.
+              ONLY explain in the "Reason Not Addressed" column why it could not be addressed.
             - Include SDK code customization guidance: {GetCodeCustomizationDocUrl(_language)}
 
             ---

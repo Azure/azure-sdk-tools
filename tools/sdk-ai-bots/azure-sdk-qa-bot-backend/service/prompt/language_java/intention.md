@@ -62,7 +62,7 @@ Respond with a JSON object using this structure (no markdown formatting needed):
 Original: "How to generate java mgmt sdk from typespec?"
 Response:
 {
-  "question": "What steps should I follow to generate an java mgmt SDK from a TypeSpec definition?",
+  "question": "What steps should I follow to generate a Java management SDK from a TypeSpec definition?",
   "category": "sdk-generation",
   "service_type": "management-plane",
   "needs_rag_processing": true
@@ -93,13 +93,4 @@ Response:
   "category": "review-request",
   "service_type": "unknown",
   "needs_rag_processing": true
-}
-
-Original: "Monthly kickoff reminder: Java SDK release planning starts next week."
-Response:
-{
-  "question": "This is an announcement about the upcoming Java SDK monthly kickoff and release planning schedule.",
-  "category": "announcement",
-  "service_type": "unknown",
-  "needs_rag_processing": false
 }

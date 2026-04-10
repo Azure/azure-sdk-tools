@@ -29,7 +29,9 @@ class UpdateKnowledgeBaseWorkflow(MentionWorkflow):
     def check_for_duplicates(self, plan: dict):
         """Check for duplicate memories and merge if found."""
         raw_memory, guideline_ids, raw_examples = self._prepare_memory_args(plan)
-        merge_result = check_for_duplicate_memory(raw_memory=raw_memory, language=self.language)
+        merge_result = check_for_duplicate_memory(
+            raw_memory=raw_memory, guideline_ids=guideline_ids
+        )
         if merge_result is not None:
             return merge_and_save_memory(
                 merge_result=merge_result,

@@ -18,80 +18,106 @@ from src._search_manager import SearchManager
 
 logger = logging.getLogger(__name__)
 
-# Minimum semantic reranker score to consider two memories as duplicates.
-# Azure AI Search reranker scores range from 0 to 4.
-# TJP: Seems arbitrary...
-SIMILARITY_THRESHOLD = 3.0
+# Sentinel ID used in the consolidation prompt to represent the candidate
+# memory that has not been created yet.
+_NEW_MEMORY_SENTINEL = "__new_memory__"
 
 
 def check_for_duplicate_memory(
     *,
     raw_memory: dict,
-    language: str,
+    guideline_ids: List[str] = None,
 ) -> Optional[dict]:
-    """Check whether a semantically similar memory already exists.
+    """Check whether a new memory is redundant with existing memories on the same guidelines.
 
-    Searches the knowledge base for existing memories that match the new
-    memory's title and content. If a match above the similarity threshold
-    is found, runs a merge prompt and returns the merge result.
+    Fetches all memories already linked to the target guidelines and runs the
+    ``consolidate_memories`` prompt to determine if the new memory should be
+    merged with an existing one rather than created separately.
 
     Args:
         raw_memory: Dict of Memory fields (must include ``title`` and ``content``).
-        language: Language to scope the search.
+        guideline_ids: Guideline IDs (web-format or full URL) the new memory
+            will be linked to. If empty or ``None``, dedup is skipped.
 
     Returns:
         A dict with ``existing_memory_id``, ``merged_title``, and ``merged_content``
         if a duplicate was found, or ``None`` to indicate no duplicate.
     """
+    if not guideline_ids:
+        return None
+
     title = raw_memory.get("title", "")
     content = raw_memory.get("content", "")
-    query = f"{title} {content}".strip()
-    if not query:
+    if not title and not content:
         return None
 
-    try:
-        search_manager = SearchManager(language=language)
-        # TJP: Just 5? What if there are more?
-        # TJP: Also, wouldn't it make as much or more sense to simply look at any memories already associated with whatever THIS memory will be linked to (e.g. the same guideline)? Why search the entire KB?
-        search_results = search_manager.search_memories(query, top=5)
-    except Exception as e:
-        logger.warning("Memory dedup search failed, proceeding with creation: %s", e)
+    db = DatabaseManager.get_instance()
+
+    # Collect all existing memories linked to the target guidelines.
+    existing_memories: dict = {}  # memory_id -> {id, title, content}
+    parent_title = None
+    prefix = "https://azure.github.io/azure-sdk/"
+
+    for gid in guideline_ids:
+        try:
+            if gid.startswith(prefix):
+                gid = gid[len(prefix):]
+            raw_g = db.guidelines.get(gid)
+            if parent_title is None:
+                parent_title = raw_g.get("title", gid)
+            for mid in raw_g.get("related_memories", []):
+                if mid not in existing_memories:
+                    try:
+                        raw_m = db.memories.get(mid)
+                        existing_memories[mid] = {
+                            "id": mid,
+                            "title": raw_m.get("title", ""),
+                            "content": raw_m.get("content", ""),
+                        }
+                    except Exception:
+                        pass
+        except Exception as e:
+            logger.warning("Failed to fetch guideline %s for dedup: %s", gid, e)
+            continue
+
+    if not existing_memories:
         return None
 
-    # Find the best match above the similarity threshold
-    # TJP: Wow this logic is very wrong! There could be many matches!
-    best_match = None
-    for result in search_results:
-        score = result.reranker_score
-        if score is not None and score >= SIMILARITY_THRESHOLD:
-            if best_match is None or score > best_match.reranker_score:
-                best_match = result
-
-    if best_match is None:
-        return None
-
-    # Run merge prompt
-    existing_memory_json = json.dumps({"title": best_match.title, "content": best_match.content})
-    new_memory_json = json.dumps({"title": title, "content": content})
+    # Build the cluster: existing memories + the new candidate.
+    memories_for_prompt = list(existing_memories.values())
+    memories_for_prompt.append({
+        "id": _NEW_MEMORY_SENTINEL,
+        "title": title,
+        "content": content,
+    })
 
     try:
         raw_result = run_prompt(
-            folder="mention",
-            filename="merge_memories",
+            folder="other",
+            filename="consolidate_memories",
             inputs={
-                "existing_memory": existing_memory_json,
-                "new_memory": new_memory_json,
+                "parent_type": "guideline",
+                "parent_title": parent_title or "Unknown",
+                "memories": json.dumps(memories_for_prompt, indent=2),
             },
         )
-        merged = json.loads(raw_result)
-        return {
-            "existing_memory_id": best_match.id,
-            "merged_title": merged["title"],
-            "merged_content": merged["content"],
-        }
+        result = json.loads(raw_result)
     except Exception as e:
-        logger.warning("Memory merge prompt failed, proceeding with creation: %s", e)
+        logger.warning("Consolidation dedup prompt failed, proceeding with creation: %s", e)
         return None
+
+    # Check if any merge group contains the new memory sentinel.
+    for group in result.get("groups", []):
+        if _NEW_MEMORY_SENTINEL in group.get("memory_ids", []):
+            other_ids = [mid for mid in group["memory_ids"] if mid != _NEW_MEMORY_SENTINEL]
+            if other_ids:
+                return {
+                    "existing_memory_id": other_ids[0],
+                    "merged_title": group["merged_title"],
+                    "merged_content": group["merged_content"],
+                }
+
+    return None
 
 
 def merge_and_save_memory(

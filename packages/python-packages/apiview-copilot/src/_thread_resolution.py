@@ -118,7 +118,9 @@ def _execute_plan(*, plan: dict, is_exception: bool, package_name: str, language
     example_service = package_name if is_exception else None
 
     # Check for duplicate memories before creating
-    merge_result = check_for_duplicate_memory(raw_memory=raw_memory, language=language)
+    merge_result = check_for_duplicate_memory(
+        raw_memory=raw_memory, guideline_ids=guideline_ids
+    )
     if merge_result is not None:
         return merge_and_save_memory(
             merge_result=merge_result,

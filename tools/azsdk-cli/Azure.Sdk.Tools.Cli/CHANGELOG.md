@@ -4,6 +4,8 @@
 
 ### Features Added
 
+- Added support to collect telemetry for sanitized user prompt
+
 ### Breaking Changes
 
 ### Bugs Fixed

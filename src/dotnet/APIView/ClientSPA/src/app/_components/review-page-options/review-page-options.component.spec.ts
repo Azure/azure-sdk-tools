@@ -421,7 +421,7 @@ describe('ReviewPageOptionsComponent', () => {
           unresolvedUnknownCount: 0,
           totalUnresolvedCount: 1
         };
-        component.unresolvedMustFixCount = component.qualityScore.unresolvedMustFixExcludingDiagnosticsCount;
+        component.unresolvedMustFixCount = component.qualityScore.unresolvedMustFixExcludingDiagnosticsCount ?? 0;
         const result = component['getApprovalDisabledReasons'](false, false);
         expect(result).toEqual([]);
       });

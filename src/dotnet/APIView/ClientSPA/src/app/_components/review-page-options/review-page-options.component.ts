@@ -487,7 +487,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
       next: (score: ReviewQualityScore) => {
         if (requestId !== this.qualityScoreRequestId) return;
         this.qualityScore = score;
-        this.unresolvedMustFixCount = score.unresolvedMustFixExcludingDiagnosticsCount;
+        this.unresolvedMustFixCount = score.unresolvedMustFixExcludingDiagnosticsCount ?? score.unresolvedMustFixCount ?? 0;
         this.qualityScoreLoading = false;
         this.setAPIRevisionApprovalStates();
       },
@@ -626,7 +626,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
       return false;
     }
 
-    const unresolvedMustFixExcludingDiagnosticsCount = this.qualityScore.unresolvedMustFixExcludingDiagnosticsCount ?? 0;
+    const unresolvedMustFixExcludingDiagnosticsCount =
+      this.qualityScore.unresolvedMustFixExcludingDiagnosticsCount ?? this.qualityScore.unresolvedMustFixCount;
     return this.qualityScore.unresolvedMustFixCount > unresolvedMustFixExcludingDiagnosticsCount;
   }
 

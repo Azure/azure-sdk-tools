@@ -311,11 +311,11 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
             }
             catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Conflict)
             {
-                this.logger.LogInformation("Ignoring existing blob exception for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, runName, runId, attempt);
+                this.logger.LogInformation("Ignoring existing blob exception for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, workflowName, runId, attempt);
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, "Error processing repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, runName, runId, attempt);
+                this.logger.LogError(ex, "Error processing repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, workflowName, runId, attempt);
                 throw;
             }
         }
@@ -342,12 +342,12 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
                     var properties = await blobClient.GetPropertiesAsync();
                     if (properties.Value.ContentLength > 0)
                     {
-                        this.logger.LogInformation("Skipping existing log for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, runName, runId, attempt);
+                        this.logger.LogInformation("Skipping existing log for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, workflowName, runId, attempt);
                         return;
                     }
                 }
 
-                this.logger.LogInformation("Processing log for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, runName, runId, attempt);
+                this.logger.LogInformation("Processing log for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, workflowName, runId, attempt);
 
                 using ZipArchive archive = await GetLogsAsync(client, run);
 

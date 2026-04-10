@@ -157,7 +157,7 @@ public class APIViewFeedbackIssueTemplate : BasePromptTemplate
               |--------|---------|----------------------|
               | <lineNo> | <element> | Reason (e.g. unclear info, TypeSpec limitation, needs SDK code customization) |
 
-              Every feedback item from the feedback table above MUST appear in exactly one of these two tables.
+              Every feedback item MUST appear in at least one table. Items typically appear in only one table, but may appear in both if a single feedback item contains multiple points (e.g. rename + type change) where some were addressed and others were not.
 
             - Note: If a review comment CANNOT be addressed, explanation comments MUST NOT be added to the `client.tsp` file.
               ONLY explain in the "Reason Not Addressed" column why it could not be addressed.

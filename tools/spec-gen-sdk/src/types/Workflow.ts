@@ -18,7 +18,7 @@ export interface SdkAutoOptions {
   pullNumber?: string;
   apiVersion?: string;
   runMode: string;
-  sdkReleaseType: string;
+  sdkReleaseType?: string;
   specCommitSha: string;
   specRepoHttpsUrl: string;
   workingFolder: string;

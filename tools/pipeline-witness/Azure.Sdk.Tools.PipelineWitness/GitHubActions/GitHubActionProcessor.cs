@@ -391,11 +391,12 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
                     IList<LogLine> stepLines = job.Steps
                         .Where(x => x.Conclusion != WorkflowJobConclusion.Skipped)
                         .OrderBy(x => x.Number)
-                        .SelectMany(step => ReadLogLines(logEntries[$"{job.Name}/{step.Number}"], step.Number, step.StartedAt ?? job.StartedAt))
+                        .SelectMany(step => logEntries.TryGetValue($"{job.Name}/{step.Number}", out var logEntry)
+                            ? ReadLogLines(logEntry, step.Number, step.StartedAt ?? job.StartedAt)
+                            : [])
                         .ToArray();
 
                     UpdateStepLines(logLines, stepLines);
-
 
                     foreach (LogLine logLine in logLines)
                     {

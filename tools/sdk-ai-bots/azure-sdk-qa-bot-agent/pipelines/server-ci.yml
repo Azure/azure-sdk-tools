@@ -32,7 +32,7 @@ variables:
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
   parameters:
-    Use1ESOfficial: true
+    Use1ESOfficial: false
     stages:
       - stage: CI
         displayName: 'Lint & Test'

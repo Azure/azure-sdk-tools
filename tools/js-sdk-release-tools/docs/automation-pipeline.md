@@ -35,23 +35,8 @@ The package exposes the following CLI commands (defined in `package.json` `bin`)
 | Command | Parameters | Description |
 |---|---|---|
 | `update-changelog` | `--sdkRepoPath`, `--packagePath` | Regenerates `CHANGELOG.md` only (does not bump version) |
-| `update-version` | `--sdkRepoPath`, `--packagePath`, `--releaseType`, `--version`, `--releaseDate` | Updates `package.json` version only (does not rewrite changelog) |
+| `update-version` | `--sdkRepoPath`, `--packagePath`, `--releaseType`, `--version`, `--releaseDate` | Updates `package.json` `changelog.md` version only (does not rewrite changelog) and Update version in src  |
 | `generate-ci-yaml` | `--sdkRepoPath`, `--packagePath` | Creates or updates the `ci.yml` / `ci.mgmt.yml` file for a package |
-
-These commands are also invoked by the SDK automation system via [`eng/swagger_to_sdk_config.json`](https://github.com/Azure/azure-sdk-for-js/pull/37749/changes#diff-317766c39b2f66ac2343b9830dd5d2041792cdd520eceb1df4772175e058aa84) in `azure-sdk-for-js` ([Dev Inner Loop project board](https://github.com/orgs/Azure/projects/865)), which maps them to shell scripts so that the spec-to-SDK tooling can invoke them without knowing the specific package manager or tool path:
-
-| Config key | Script path (in azure-sdk-for-js) | Underlying CLI command | Purpose |
-|---|---|---|---|
-| `updateVersionScript` | `eng/scripts/update-version.ps1` | `update-version` | Bumps `package.json` version and writes changelog for a package |
-| `updateMetadataScript` | `eng/scripts/update-metadata.ps1` | `generate-ci-yaml` | Creates or updates `ci.yml` / `ci.mgmt.yml` for a package |
-
-The `update-metadata.ps1` script (added in [azure-sdk-for-js #37749](https://github.com/Azure/azure-sdk-for-js/pull/37749)) installs `js-sdk-release-tools` from the local `eng/tools/js-sdk-release-tools` path, then runs:
-
-```
-generate-ci-yaml --sdkRepoPath <SdkRepoPath> --packagePath <PackagePath>
-```
-
-This allows SDK authors to regenerate the CI YAML for their package locally as part of the inner loop without running the full automation pipeline. See [azure-sdk-for-js #37458](https://github.com/Azure/azure-sdk-for-js/pull/37458) for the corresponding version bump that ships these changes.
 
 #### Local Code Generation
 

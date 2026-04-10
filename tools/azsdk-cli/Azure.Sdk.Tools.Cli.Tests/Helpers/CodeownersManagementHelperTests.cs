@@ -1955,11 +1955,10 @@ public class CodeownersManagementHelperTests
                 MakeLabelWorkItem(labelId, "TestLabel")
             ]);
 
-        var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test", repo, CancellationToken.None);
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(
+            async () => await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test", repo, CancellationToken.None));
 
-        Assert.That(result.PackageWorkItem!.Owners!.Count, Is.LessThan(2));
-        Assert.That(result.PackageWorkItem!.Owners!.Count, Is.EqualTo(1));
-        Assert.That(result.Pass, Is.False);
+        Assert.That(ex!.Message, Does.Contain("has 1 unique individual owner(s) but requires at least 2"));
     }
 
     // Test 4:No owners → triggers path fallback
@@ -2025,11 +2024,10 @@ public class CodeownersManagementHelperTests
         ]);
         SetupLabelOwnerQuery("Service Owner", repo, []);
 
-        var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test", repo, CancellationToken.None);
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(
+            async () => await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test", repo, CancellationToken.None));
 
-        Assert.That(result.PackageWorkItem!.Owners!.Count, Is.GreaterThanOrEqualTo(2));
-        Assert.That(result.PrLabels, Is.Null);
-        Assert.That(result.Pass, Is.False);
+        Assert.That(ex!.Message, Does.Contain("has no PR labels assigned"));
     }
 
     // Test 6: Insufficient service owners (only 1 individual)
@@ -2057,11 +2055,10 @@ public class CodeownersManagementHelperTests
                 MakeLabelWorkItem(labelId, "TestLabel")
             ]);
 
-        var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test", repo, CancellationToken.None);
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(
+            async () => await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test", repo, CancellationToken.None));
 
-        Assert.That(result.ServiceOwners!.Owners!.Count, Is.LessThan(2));
-        Assert.That(result.ServiceOwners!.Owners!.Count, Is.EqualTo(1));
-        Assert.That(result.Pass, Is.False);
+        Assert.That(ex!.Message, Does.Contain("has 1 unique individual(s) but requires at least 2"));
     }
 
     // Test 7:No service owner has labels that are a superset of package labels
@@ -2080,10 +2077,10 @@ public class CodeownersManagementHelperTests
 
         SetupLabelOwnerQuery("Service Owner", repo, []);
 
-        var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test", repo, CancellationToken.None);
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(
+            async () => await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test", repo, CancellationToken.None));
 
-        Assert.That(result.ServiceOwners, Is.Null);
-        Assert.That(result.Pass, Is.False);
+        Assert.That(ex!.Message, Does.Contain("No Service Owner Label Owner found"));
     }
 
     // Test 8:Team expansion counts individuals — 1 team with 3 members satisfies 2-owner requirement
@@ -2224,10 +2221,10 @@ public class CodeownersManagementHelperTests
                 MakeLabelWorkItem(label2Id, "LabelB")
             ]);
 
-        var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test", repo, CancellationToken.None);
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(
+            async () => await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test", repo, CancellationToken.None));
 
-        Assert.That(result.ServiceOwners, Is.Null);
-        Assert.That(result.Pass, Is.False);
+        Assert.That(ex!.Message, Does.Contain("No Service Owner Label Owner found whose labels are a superset of [LabelA, LabelB]"));
     }
 
     // Test 12:Multiple package versions — uses latest
@@ -2286,10 +2283,11 @@ public class CodeownersManagementHelperTests
         ]);
         SetupLabelOwnerQuery("Service Owner", repo, []);
 
-        var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test", repo, CancellationToken.None);
+        // user1 appears both individually and in team — dedup should count as 1, which is < 2 required
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(
+            async () => await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test", repo, CancellationToken.None));
 
-        // user1 appears both individually and in team — should count as 1
-        Assert.That(result.PackageWorkItem!.Owners!.SelectMany(o => o.Members ?? [o.GitHubAlias]).Distinct(StringComparer.OrdinalIgnoreCase).Count(), Is.EqualTo(1));
+        Assert.That(ex!.Message, Does.Contain("has 1 unique individual owner(s) but requires at least 2"));
     }
 
     // Test 14: Fallback — both PR Label and Service Owner pass
@@ -2372,11 +2370,10 @@ public class CodeownersManagementHelperTests
         // Still need SO query for complete check
         SetupLabelOwnerQuery("Service Owner", repo, []);
 
-        var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test/Azure.Test.Pkg", repo, CancellationToken.None);
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(
+            async () => await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test/Azure.Test.Pkg", repo, CancellationToken.None));
 
-        Assert.That(result.PathOwners!.Owners!.Count, Is.LessThan(2));
-        Assert.That(result.PathOwners!.Owners!.Count, Is.EqualTo(1));
-        Assert.That(result.Pass, Is.False);
+        Assert.That(ex!.Message, Does.Contain("has 1 unique individual(s) but requires at least 2"));
     }
 
     // Test 16: Fallback — Service Owners insufficient
@@ -2419,12 +2416,10 @@ public class CodeownersManagementHelperTests
                 MakeLabelWorkItem(prLabelId, "FallbackLabel")
             ]);
 
-        var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test/Azure.Test.Pkg", repo, CancellationToken.None);
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(
+            async () => await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test/Azure.Test.Pkg", repo, CancellationToken.None));
 
-        Assert.That(result.PathOwners!.Owners!.Count, Is.GreaterThanOrEqualTo(2));
-        Assert.That(result.ServiceOwners!.Owners!.Count, Is.LessThan(2));
-        Assert.That(result.ServiceOwners!.Owners!.Count, Is.EqualTo(1));
-        Assert.That(result.Pass, Is.False);
+        Assert.That(ex!.Message, Does.Contain("has 1 unique individual(s) but requires at least 2"));
     }
 
     // Test 17: Fallback — no matching paths
@@ -2445,10 +2440,10 @@ public class CodeownersManagementHelperTests
         var prLabelLo = MakeLabelOwnerWorkItem(500, "PR Label", repo, "/sdk/other/");
         SetupLabelOwnerQuery("PR Label", repo, [prLabelLo]);
 
-        var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test/Azure.Test.Pkg", repo, CancellationToken.None);
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(
+            async () => await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test/Azure.Test.Pkg", repo, CancellationToken.None));
 
-        Assert.That(result.PathOwners, Is.Null);
-        Assert.That(result.Pass, Is.False);
+        Assert.That(ex!.Message, Does.Contain("no PR Label Label Owner has a path matching"));
     }
 
     // Test 18: Fallback — glob match
@@ -2644,10 +2639,10 @@ public class CodeownersManagementHelperTests
                 MakeLabelWorkItem(prLabel2Id, "LabelB")
             ]);
 
-        var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test/Azure.Test.Pkg", repo, CancellationToken.None);
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(
+            async () => await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test/Azure.Test.Pkg", repo, CancellationToken.None));
 
-        Assert.That(result.ServiceOwners, Is.Null);
-        Assert.That(result.Pass, Is.False);
+        Assert.That(ex!.Message, Does.Contain("No Service Owner Label Owner found whose labels are a superset of [LabelA, LabelB]"));
     }
 
     // Test 22:Fallback — same people as PR Label and Service Owners

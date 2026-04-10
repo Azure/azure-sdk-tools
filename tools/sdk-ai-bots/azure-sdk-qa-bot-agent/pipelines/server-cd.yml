@@ -186,8 +186,14 @@ extends:
                     fi
                     APP_URL=$(az webapp show --name "$(APP_NAME)" --resource-group "$(RESOURCE_GROUP)" $SLOT_ARG --query defaultHostName -o tsv)
                     echo "App URL: https://$APP_URL"
+
+                    # Acquire Entra ID token for EasyAuth
+                    ACCESS_TOKEN=$(az account get-access-token --resource api://azure-sdk-qa-bot-dev --query accessToken -o tsv)
+
                     echo "Waiting for health..."; sleep 25
-                    HTTP_STATUS=$(curl -s -o /dev/null -w '%{http_code}' https://$APP_URL/ping || echo 000)
+                    HTTP_STATUS=$(curl -s -o /dev/null -w '%{http_code}' \
+                      -H "Authorization: Bearer $ACCESS_TOKEN" \
+                      https://$APP_URL/ping || echo 000)
                     if [ "$HTTP_STATUS" = "200" ]; then
                       echo "Health check OK"
                     else

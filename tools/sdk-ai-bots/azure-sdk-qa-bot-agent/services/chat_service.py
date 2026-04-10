@@ -12,8 +12,6 @@ from urllib.parse import urlparse
 from config.app_config import get as cfg
 from config.tenant_config import (
     get_tenant_scope_description,
-    get_tenant_sources_display,
-    load_tenant_qa_guideline,
 )
 from models.chat import (
     AdditionalInfo,
@@ -246,15 +244,6 @@ class ChatService:
         scope_desc = get_tenant_scope_description(tenant_id)
         if scope_desc:
             parts.append(f"\n[tenant_scope]\n{scope_desc}")
-
-        guideline = load_tenant_qa_guideline(tenant_id)
-        if guideline:
-            parts.append(f"\n[tenant_guideline]\n{guideline}")
-
-        sources = get_tenant_sources_display(tenant_id)
-        if sources:
-            src_lines = [f"- {s['name']}: {s['description']}" for s in sources]
-            parts.append("\n[tenant_knowledge_sources]\n" + "\n".join(src_lines))
 
         return "\n".join(parts)
 

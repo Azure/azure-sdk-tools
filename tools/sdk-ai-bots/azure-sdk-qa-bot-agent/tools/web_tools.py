@@ -57,6 +57,36 @@ class _HtmlOutlineParser(HTMLParser):
         self._buffer = []
 
 
+class _HtmlTextExtractor(HTMLParser):
+    """Extract visible text from HTML, skipping script/style/nav/footer noise."""
+
+    _SKIP_TAGS = frozenset(
+        {"script", "style", "noscript", "nav", "footer", "header", "svg", "head"}
+    )
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.parts: list[str] = []
+        self._skip_depth = 0
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag in self._SKIP_TAGS:
+            self._skip_depth += 1
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag in self._SKIP_TAGS and self._skip_depth > 0:
+            self._skip_depth -= 1
+
+    def handle_data(self, data: str) -> None:
+        if self._skip_depth == 0:
+            stripped = data.strip()
+            if stripped:
+                self.parts.append(stripped)
+
+    def get_text(self) -> str:
+        return " ".join(self.parts)
+
+
 def _is_public_url(url: str) -> bool:
     parsed = urlparse(url)
     if parsed.scheme not in {"http", "https"}:
@@ -140,16 +170,21 @@ async def _fetch_async(url: str, max_chars: int) -> FetchWebpageResult:
         )
 
     text = raw.decode(charset, errors="replace")
-    excerpt = _trim_excerpt(text, max_chars)
 
     if "html" in content_type.lower():
         parser = _HtmlOutlineParser()
         parser.feed(text)
         title = parser.title
         headings = parser.headings[:50]
+
+        # Extract visible text only, stripping tags and noise
+        extractor = _HtmlTextExtractor()
+        extractor.feed(text)
+        excerpt = _trim_excerpt(extractor.get_text(), max_chars)
     else:
         title = ""
         headings = []
+        excerpt = _trim_excerpt(text, max_chars)
 
     used_llms_txt_hint = urlparse(final_url).path.endswith("/llms.txt")
 

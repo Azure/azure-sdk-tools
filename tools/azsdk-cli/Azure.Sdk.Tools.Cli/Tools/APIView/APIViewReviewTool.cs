@@ -125,7 +125,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
     // get-review-url specific options
     private readonly Option<string> languageQueryOption = new("--language")
     {
-        Description = "The language (e.g., 'C#', 'Python', 'Java', 'JavaScript')",
+        Description = $"The language of the package. Supported values: {string.Join(", ", SupportedLanguages)}.",
         Required = true
     };
 
@@ -244,13 +244,23 @@ public class APIViewReviewTool : MCPMultiCommandTool
                 return new APIViewResponse { ResponseError = "Both 'package' and 'language' parameters are required." };
             }
 
-            string? url = await _apiViewService.GetReviewUrlByPackageAsync(package, language, version, ct);
+            string? resolvedLanguage = ResolveLanguage(language);
+            if (resolvedLanguage == null)
+            {
+                var supported = string.Join(", ", SupportedLanguages);
+                return new APIViewResponse
+                {
+                    ResponseError = $"Unsupported language '{language}'. Supported languages are: {supported}."
+                };
+            }
+
+            string? url = await _apiViewService.GetReviewUrlByPackageAsync(package, resolvedLanguage, version, ct);
 
             if (url == null)
             {
                 return new APIViewResponse
                 {
-                    ResponseError = $"Could not find an APIView review for package '{package}' in language '{language}'" +
+                    ResponseError = $"Could not find an APIView review for package '{package}' in language '{resolvedLanguage}'" +
                                    (!string.IsNullOrEmpty(version) ? $" with version '{version}'" : "") + "." +
                                    " Please verify the package name and language are correct."
                 };
@@ -462,4 +472,32 @@ public class APIViewReviewTool : MCPMultiCommandTool
             throw new ArgumentException($"Error parsing URL: {ex.Message}", nameof(url), ex);
         }
     }
+
+    // Supported APIView languages and their common aliases
+    private static readonly string[] SupportedLanguages =
+        ["C", "C#", "C++", "Go", "Java", "JavaScript", "Json", "Kotlin", "Python", "Rust", "Swagger", "Swift", "TypeSpec", "Xml"];
+
+    private static readonly Dictionary<string, string> LanguageAliases = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["net"] = "C#",
+        [".net"] = "C#",
+        ["dotnet"] = "C#",
+        ["csharp"] = "C#",
+        ["cs"] = "C#",
+        ["cpp"] = "C++",
+        ["js"] = "JavaScript",
+        ["typescript"] = "JavaScript",
+        ["ts"] = "JavaScript",
+        ["cadl"] = "TypeSpec",
+        ["golang"] = "Go",
+        ["py"] = "Python",
+    };
+
+    /// <summary>Resolves a language input to a canonical APIView language name, or null if unsupported.</summary>
+    internal static string? ResolveLanguage(string language)
+    {
+        string? canonical = SupportedLanguages.FirstOrDefault(l => l.Equals(language, StringComparison.OrdinalIgnoreCase));
+        return canonical ?? (LanguageAliases.GetValueOrDefault(language));
+    }
+
 }

@@ -489,6 +489,69 @@ public class ApiViewReviewToolTests
     }
 
     [Test]
+    public async Task GetReviewUrlByPackage_WithUnsupportedLanguage_ReturnsValidationError()
+    {
+        APIViewResponse response = await apiViewReviewTool.GetReviewUrlByPackage("Azure.Storage.Blobs", "COBOL", null, CancellationToken.None);
+
+        Assert.That(response.ResponseError, Does.Contain("Unsupported language 'COBOL'"));
+        Assert.That(response.ResponseError, Does.Contain("Supported languages are:"));
+        Assert.That(response.ResponseError, Does.Contain("C#"));
+        Assert.That(response.ResponseError, Does.Contain("Python"));
+        _mockApiViewService.Verify(x => x.GetReviewUrlByPackageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [TestCase("csharp", "C#")]
+    [TestCase("dotnet", "C#")]
+    [TestCase("net", "C#")]
+    [TestCase(".net", "C#")]
+    [TestCase("js", "JavaScript")]
+    [TestCase("typescript", "JavaScript")]
+    [TestCase("cpp", "C++")]
+    [TestCase("golang", "Go")]
+    [TestCase("py", "Python")]
+    [TestCase("cadl", "TypeSpec")]
+    [TestCase("PYTHON", "Python")]
+    [TestCase("java", "Java")]
+    public async Task GetReviewUrlByPackage_WithLanguageAlias_ResolvesAndCallsService(string alias, string expectedCanonical)
+    {
+        string expectedUrl = "https://apiview.dev/review/abc123?activeApiRevisionId=rev456";
+        _mockApiViewService
+            .Setup(x => x.GetReviewUrlByPackageAsync("Azure.Core", expectedCanonical, null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedUrl);
+
+        APIViewResponse response = await apiViewReviewTool.GetReviewUrlByPackage("Azure.Core", alias, null, CancellationToken.None);
+
+        Assert.That(response.Result, Is.EqualTo(expectedUrl));
+        Assert.That(response.ResponseError, Is.Null);
+        _mockApiViewService.Verify(x => x.GetReviewUrlByPackageAsync("Azure.Core", expectedCanonical, null, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [TestCase("csharp", "C#")]
+    [TestCase("dotnet", "C#")]
+    [TestCase("net", "C#")]
+    [TestCase(".net", "C#")]
+    [TestCase("js", "JavaScript")]
+    [TestCase("typescript", "JavaScript")]
+    [TestCase("cpp", "C++")]
+    [TestCase("golang", "Go")]
+    [TestCase("py", "Python")]
+    [TestCase("cadl", "TypeSpec")]
+    public void ResolveLanguage_WithAlias_ReturnsCanonicalName(string alias, string expectedCanonical)
+    {
+        string? result = APIViewReviewTool.ResolveLanguage(alias);
+        Assert.That(result, Is.EqualTo(expectedCanonical));
+    }
+
+    [TestCase("COBOL")]
+    [TestCase("Ruby")]
+    [TestCase("unknown")]
+    public void ResolveLanguage_WithUnknownLanguage_ReturnsNull(string language)
+    {
+        string? result = APIViewReviewTool.ResolveLanguage(language);
+        Assert.That(result, Is.Null);
+    }
+
+    [Test]
     public async Task GetReviewUrlByPackage_WhenServiceThrowsException_ReturnsError()
     {
         _mockApiViewService

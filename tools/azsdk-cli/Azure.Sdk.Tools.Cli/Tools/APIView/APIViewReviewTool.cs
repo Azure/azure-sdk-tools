@@ -494,7 +494,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
     };
 
     /// <summary>Resolves a language input to a canonical APIView language name, or null if unsupported.</summary>
-    internal static string? ResolveLanguage(string language)
+    public static string? ResolveLanguage(string language)
     {
         string? canonical = SupportedLanguages.FirstOrDefault(l => l.Equals(language, StringComparison.OrdinalIgnoreCase));
         return canonical ?? (LanguageAliases.GetValueOrDefault(language));

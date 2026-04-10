@@ -11,7 +11,7 @@
 5. [Proposed Architecture (Agentic)](#5-proposed-architecture-agentic)
 6. [Migration Mapping: Pipeline Stages → Agentic Equivalents](#6-migration-mapping-pipeline-stages--agentic-equivalents)
 7. [Chunking Strategy for Large APIs](#7-chunking-strategy-for-large-apis)
-8. [Implementation Plan](#8-implementation-plan)
+8. [MVP Plan](#8-mvp-plan)
 9. [Key Design Decisions](#9-key-design-decisions)
 10. [Risk Assessment](#10-risk-assessment)
 11. [File Structure (New/Modified)](#11-file-structure-newmodified)
@@ -22,7 +22,7 @@
 
 ## 1. Executive Summary
 
-Replace AVC's deterministic 9-stage review pipeline with an agentic process powered by the GitHub Copilot Python SDK (`github-copilot-sdk`). The agent receives the API surface as input and uses **skills** — sourced directly from the Azure SDK design guideline markdown files — to inject language-specific, service-specific, and cross-cutting review knowledge. **Tools** provide dynamic access to past decisions (memories) and the API being reviewed. The Copilot runtime handles planning, tool orchestration, and multi-turn reasoning — eliminating the hand-coded pipeline stages.
+Replace AVC's deterministic 9-stage review pipeline with an agentic process powered by the GitHub Copilot Python SDK (`github-copilot-sdk`). The agent receives the API surface as input and uses **skills** — sourced directly from the Azure SDK design guideline markdown files and accumulated review memories — to inject language-specific, service-specific, and cross-cutting review knowledge. **Tools** provide dynamic access to the specific review being conducted (existing comments, API outline). The Copilot runtime handles planning, tool orchestration, and multi-turn reasoning — eliminating the hand-coded pipeline stages.
 
 Critically, the skills are plain `SKILL.md` / `.instructions.md` files compatible with both the Copilot SDK (server-side) and VS Code Agent Mode / GitHub Copilot CLI (developer-side). This means the same review knowledge surfaces whether a review runs through the AVC endpoint or a developer invokes it locally.
 
@@ -41,13 +41,15 @@ Critically, the skills are plain `SKILL.md` / `.instructions.md` files compatibl
    
    This means skills must be self-contained markdown files with no dependency on AVC-specific tooling.
 
-4. **Simplify the Azure resource footprint.** Removing Cosmos DB (guidelines + examples containers), Azure AI Search (3 indexers), and the manual curation workflow significantly reduces operational complexity.
+4. **Simplify the Azure resource footprint.** Removing Cosmos DB (guidelines + examples + memories containers), Azure AI Search (all 3 indexers), and the manual curation workflow significantly reduces operational complexity.
 
-5. **Maintain or improve review quality** compared to the current deterministic pipeline.
+5. **Eliminate Cosmos DB memories.** Memories (learned review decisions from thread resolutions and @mention feedback) overlap heavily with service-specific skills. Rather than maintaining a separate dynamic knowledge base, memories should be stored as text — either individual markdown files or distilled into service-specific `SKILL.md` files — aligned with the skill-based architecture. This eliminates the `memories` Cosmos DB container, the memories AI Search indexer, and the `SearchManager` dependency for review-time knowledge retrieval.
+
+6. **Maintain or improve review quality** compared to the current deterministic pipeline.
 
 ## 3. Non-Goals
 
-1. **Eliminating Cosmos DB entirely.** The `memories`, `review-jobs`, `metrics`, and `evals` containers serve operational purposes (learned decisions, job tracking, telemetry) and are not candidates for removal in this work.
+1. **Eliminating Cosmos DB entirely.** The `review-jobs`, `metrics`, and `evals` containers serve operational purposes (job tracking, telemetry, evaluation storage) and are not candidates for removal in this work. Memories *are* in scope — see Goal 5.
 
 2. **Replacing the existing deterministic pipeline immediately.** The agentic mode will be an experimental parallel mode. The existing pipeline remains the default until the agentic mode is validated.
 
@@ -178,6 +180,54 @@ The **service-specific** skills are a different story — no human is writing th
 |---------|--------|
 | `azure-sdk/docs/python/design.md` → manual curation → Cosmos DB → AI Search → RAG | `azure-sdk/docs/python/design.md` → curated extract → `eng/common/skills/python/SKILL.md` → loaded into agent context |
 | (nothing — no service-specific knowledge) | AVC memories → periodic distillation → `eng/common/skills/python/services/keyvault/SKILL.md` |
+| Memories in Cosmos DB → AI Search → RAG tool call at review time | Memories → text files in skill hierarchy → loaded into agent context |
+
+##### Memories as Skills
+
+Today, memories live in Cosmos DB and are retrieved at review time via Azure AI Search (RAG). In the agentic architecture, memories become **text artifacts in the skill hierarchy**, eliminating the Cosmos DB `memories` container and the memories AI Search indexer entirely.
+
+**How it works:**
+
+1. **Existing memories are distilled into service-specific skills.** A one-time migration process (`scripts/distill_memories.py`) reads all memories from Cosmos DB, groups them by language and service, and generates `SKILL.md` files under the appropriate `{language}/services/{service}/` directory. High-confidence memories become documented patterns and exceptions in the skill content.
+
+2. **New feedback flows produce text files, not database records.** When the thread resolution or mention workflows would previously create a `Memory` object in Cosmos DB, they instead produce a structured markdown file committed to the skill hierarchy:
+
+   ```
+   eng/common/skills/python/services/keyvault/memories/
+   ├── 2026-03-15-vault-url-parameter-convention.md
+   ├── 2026-04-01-key-rotation-async-pattern.md
+   └── ...
+   ```
+
+   Each memory file follows a standard template:
+   ```markdown
+   ---
+   title: vault_url parameter convention
+   language: python
+   service: keyvault
+   is_exception: true
+   source: thread_resolution
+   related_guidelines: [python_design.html#client-constructor]
+   created: 2026-03-15
+   ---
+   Key Vault Python clients use `vault_url` instead of `endpoint` as the
+   primary constructor parameter. This is an approved exception to the
+   general naming guideline.
+   ```
+
+3. **Periodic distillation rolls individual memory files into the parent `SKILL.md`.** As individual memory files accumulate for a service, a periodic process (manual or automated) consolidates them into the service's `SKILL.md` — combining related memories, resolving contradictions, and producing a coherent narrative. The individual files can then be archived or removed.
+
+4. **The commit-based workflow provides versioning and review.** Unlike Cosmos DB records (which are created silently), text files committed to `eng/common/skills/` go through the standard PR process — architects can review, edit, and approve new memories before they affect future reviews. This adds a quality gate that the current write-to-Cosmos flow lacks.
+
+**Creation flow options for new feedback:**
+
+| Option | Mechanism | Pros | Cons |
+|--------|-----------|------|------|
+| **A. Direct PR** | Thread resolution / mention workflows create a branch and open a PR with the new memory file | Full review gate; works with eng/common sync | Latency — memory isn't active until PR merges and syncs |
+| **B. Local file store + periodic sync** | AVC writes memory files to a local/blob staging area; a scheduled job opens batched PRs | Lower latency for creation; batched review | Staging area adds operational complexity |
+| **C. Git-backed store** | AVC has write access to a dedicated memories branch; auto-merges non-exception memories, PRs for exceptions | Fast for non-controversial memories; review gate for exceptions | Requires branch management; auto-merge trust model |
+
+**Recommendation:** Start with **Option A** (direct PR) for simplicity, accepting the latency tradeoff. The current memory creation rate (a few per week) is low enough that PR latency is acceptable. Revisit if volume increases.
 
 The conversion for language skills could be:
 - **Direct copy**: Guideline markdown used as-is in `SKILL.md` (if small enough for context)
@@ -204,14 +254,15 @@ The key design principle: language and service skills contain **only domain know
 
 #### 2. Tools (On-Demand Knowledge Access)
 
-With guidelines and examples moved into skills (loaded into context), tools serve a narrower role: accessing **dynamic** data that can't be baked into static markdown files. The agent is given the following tools:
+With guidelines, examples, and memories moved into skills (loaded into context), tools serve a narrow role: accessing **live data** about the specific review at hand. The agent is given the following tools:
 
 | Tool | Purpose |
 |------|---------|
-| **search_memories** | Search past review decisions (memories) in Cosmos DB for precedents about similar APIs — exceptions granted, patterns approved, feedback on past comments |
 | **get_existing_comments** | Check if humans have already commented on a specific line, to avoid duplicating existing feedback |
 | **get_api_outline** | Retrieve the high-level outline/structure of the API being reviewed |
-| **submit_comment** | Submit a review comment with line number, bad code, suggestion, explanation, guideline/memory citations, and severity. This is the primary output mechanism — each comment is captured as a tool call, avoiding the need to parse free-form JSON |
+| **submit_comment** | Submit a review comment with line number, bad code, suggestion, explanation, guideline citations, and severity. This is the primary output mechanism — each comment is captured as a tool call, avoiding the need to parse free-form JSON |
+
+Note: With memories stored as text in the skill hierarchy (see Goal 5 and Skill Hierarchy below), there is no `search_memories` tool. Past decisions — exceptions, approved patterns, feedback-derived learnings — are loaded directly into the agent's context via service-specific and language-specific skills, the same way guidelines are. This eliminates a tool-call round trip and ensures the agent always has the full precedent context without needing to decide what to search for.
 
 #### 3. Focused Review Passes (Multi-Agent Pattern)
 
@@ -221,11 +272,11 @@ The current pipeline runs three parallel prompts per section: **guideline review
 
 | Surface | How Focused Passes Work |
 |---------|------------------------|
-| **AVC endpoint (Copilot SDK)** | True sub-agents. The SDK supports custom sub-agents with scoped tools and prompts. An orchestrator agent spawns a **guideline reviewer** (loaded with language/service skills, focused on design guideline compliance), a **precedent reviewer** (given `search_memories` tool, focused on past decisions), and a **design reviewer** (focused on API usability and consistency). The orchestrator merges their `submit_comment` outputs, deduplicates, and returns the combined result. This is fully automatic — no human in the loop. |
+| **AVC endpoint (Copilot SDK)** | True sub-agents. The SDK supports custom sub-agents with scoped tools and prompts. An orchestrator agent spawns a **guideline reviewer** (loaded with language/service skills, focused on design guideline compliance), a **precedent reviewer** (loaded with service-specific memory skills, focused on past decisions and known exceptions), and a **design reviewer** (focused on API usability and consistency). The orchestrator merges their `submit_comment` outputs, deduplicates, and returns the combined result. This is fully automatic — no human in the loop. |
 | **VS Code Agent Mode** | Separate `.agent.md` files. Each focused reviewer becomes an agent definition (e.g., `guideline-reviewer.agent.md`, `precedent-reviewer.agent.md`) that a developer can invoke independently. A composite `api-reviewer.agent.md` could also exist that loads all skills for a single-pass review. The developer chooses: run one focused agent or the composite. There is **no automatic orchestration** — the developer drives which agents to invoke. |
 | **GitHub Copilot CLI** | Single-pass with all skills. The CLI doesn't support spawning sub-agents. A developer runs one invocation with all relevant skill directories loaded and gets a unified review. Multiple focused passes would require running the CLI multiple times with different `--skill-directories` sets — possible but manual. |
 
-The implication for skill design: each focused reviewer's knowledge must live in **separate, composable skills** so that different surfaces can combine them differently. The `api-review/SKILL.md` (core methodology) is always loaded. The guideline reviewer loads `{language}/SKILL.md` + `services/`. The precedent reviewer uses the `search_memories` tool. The design reviewer loads `general/SKILL.md` for cross-cutting principles.
+The implication for skill design: each focused reviewer's knowledge must live in **separate, composable skills** so that different surfaces can combine them differently. The `api-review/SKILL.md` (core methodology) is always loaded. The guideline reviewer loads `{language}/SKILL.md` + `services/`. The precedent reviewer loads `{language}/services/{service}/memories/` (the text-based memory files). The design reviewer loads `general/SKILL.md` for cross-cutting principles.
 
 **Recommendation:** Design skills as composable units from the start. The AVC endpoint implements true sub-agent orchestration in Phase 2. VS Code and CLI surfaces get the focused-pass benefit through skill composition, even without automatic orchestration. Evaluate whether the sub-agent split meaningfully improves quality vs. a single agent with all skills — the current pipeline uses the 3-pass pattern because a single prompt couldn't hold all context, but skills-in-context may make a single-pass agent sufficient.
 
@@ -255,46 +306,66 @@ One agent session runs per section, with post-processing to deduplicate across s
 
 ---
 
-## 8. Implementation Plan
+## 8. MVP Plan
 
-### Phase 1: Skills Authoring (1-2 weeks)
-1. **Write `scripts/sync_skills.py`** — extracts review-relevant sections from azure-sdk guideline markdown files and assembles `SKILL.md` files per language under `eng/common/skills/`
-2. **Create `eng/common/skills/api-review/SKILL.md`** — codify the review methodology from existing prompty system prompts
-3. **Create `eng/common/skills/general/SKILL.md`** — cross-language guidelines from `azure-sdk/docs/general/`
-4. **Create `eng/common/skills/{language}/SKILL.md`** for each supported language — curated extracts from `azure-sdk/docs/{language}/design.md` + filter exceptions from `metadata/{language}/filter.yaml`
-5. **Create initial service-specific skills** — distill AVC memories for 2-3 services (e.g., Key Vault, Storage, Event Hubs) into `eng/common/skills/{language}/services/{service}/SKILL.md`
-6. **Validate skills in VS Code Agent Mode** — load skills from `eng/common/skills/` in a language repo, run interactive reviews, confirm they provide useful guidance without AVC-specific tooling
+The goal of the MVP is to validate the core hypothesis: **a single agent session with skills-in-context produces review quality comparable to the 9-stage pipeline.** We want to answer this question as fast as possible — before investing in SDK integration, pipeline wiring, or infrastructure changes. The MVP is static skill files + a manual test harness, nothing more.
 
-### Phase 2: Agentic Reviewer (1-2 weeks)
-7. **Add `github-copilot-sdk` to `requirements.txt`**
-8. **Create `src/_agentic_reviewer.py`** — new module parallel to `_apiview_reviewer.py`
-9. **Create `src/_agentic_tools.py`** — `@define_tool` functions for memories search, existing comments, outline, submit_comment
-10. **Create `src/_skill_loader.py`** — resolves skill directories from language + service
-11. **Add `AgenticApiViewReview` class** with same interface as `ApiViewReview` (`.run()` → `ReviewResult`)
-12. **BYOK configuration** — configure Copilot SDK to use existing Azure AI Foundry endpoint
+### Scope
 
-### Phase 3: Integration (1 week)
-13. **Add review mode flag** — `agentic` mode alongside `full` and `diff` in session/CLI
-14. **Wire into FastAPI** — new endpoint or mode parameter on existing `/review` endpoint
-15. **Wire into CLI** — `avc review generate --mode agentic`
+**One language. One API view. Side-by-side comparison.**
 
-### Phase 4: Evaluation (1-2 weeks)
-16. **Design agentic evaluation approach** — the existing eval suite (`avc test eval`) is tightly coupled to individual `.prompty` files and cannot be reused directly for the agentic mode, which replaces per-stage prompts with a single agent session. Consult with the AI evaluation team (Juan) to determine the right framework — options include end-to-end golden-set comparison (same API input → compare comment output), human grading rubrics, or a new eval harness that wraps `AgenticApiViewReview.run()`.
-17. **A/B comparison** — run both modes on the same API views, compare:
-    - Comment count and quality (manual grading)
-    - Guideline citation rate
-    - False positive rate
-    - Wall-clock time
-    - Token usage / cost
-18. **Iterate on skills content** based on eval results
-19. **Validate service-specific skills improve review quality** for targeted services
+Pick Python (most mature guidelines, most review data). Pick a recent API review where the pipeline produced known-good output as the comparison baseline.
 
-### Phase 5: Multi-Agent & Cleanup (1-2 weeks)
-20. **Sub-agent implementation** — implement orchestrator + guideline/precedent/design sub-agents for the AVC endpoint (SDK-only). Compare quality and latency vs. single-agent baseline from Phase 2.
-21. **VS Code agent definitions** — create `.agent.md` files for each focused reviewer so developers can invoke them independently in Agent Mode
-22. **Streaming progress** — use session events for real-time progress reporting
-23. **Telemetry** — wire up OpenTelemetry for agentic mode
-24. **Deprecate Cosmos guidelines/examples** — once agentic mode is validated, mark `guidelines` and `examples` containers and their AI Search indexers for removal
+### Steps
+
+1. **Author the minimum skill set** — hand-written markdown files, not wired to any pipeline or deployment:
+   - `skills/api-review/SKILL.md` — review methodology, output format, severity taxonomy (extracted from the existing prompty system prompts: `guidelines_review.prompty`, `context_review.prompty`, `judge_comment_confidence.prompty`)
+   - `skills/general/SKILL.md` — cross-language design principles (extracted from `azure-sdk/docs/general/`)
+   - `skills/python/SKILL.md` — Python design guidelines + filter exceptions (extracted from `azure-sdk/docs/python/design.md` + `metadata/python/filter.yaml`)
+   - `skills/python/services/keyvault/SKILL.md` — one service-specific skill with distilled memories (manually exported from Cosmos DB for Key Vault Python memories)
+
+2. **Test in Copilot Agent Mode** — no code, no SDK, no new modules:
+   - Open a workspace with the skill files and a saved API view text file
+   - Point VS Code Agent Mode at the `skills/` directory (via workspace `AGENTS.md` or settings)
+   - In Copilot chat, paste or reference the API view text and ask for a review
+   - The agent has the skills loaded as context — it *is* the agentic reviewer, just running interactively instead of programmatically
+   - Capture the output (comments, citations, reasoning)
+
+3. **Compare output:**
+   - Run the existing pipeline on the same API view via `avc review generate`
+   - Manual side-by-side comparison of both outputs: comment relevance, false positive rate, missed issues, guideline citation accuracy
+   - Note where the agent's reasoning differs — does it catch things the pipeline misses? Does it hallucinate? Does it handle filter exceptions that the pipeline needs 5 post-processing stages for?
+
+4. **Iterate on skills:**
+   - If the agent misses issues → refine skill content (add more guideline sections, sharpen instructions)
+   - If the agent hallucinates → add constraints to `api-review/SKILL.md`
+   - If context is too large → trim skill files, measure what fits
+   - Repeat steps 2-3 until quality is comparable
+
+### What this proves
+
+- Whether skills-in-context can replace RAG (guidelines + examples + memories all loaded statically)
+- Whether a single agent pass can replace the 9-stage generate-then-filter pipeline
+- What skill content quality is needed to match the pipeline
+- Whether the context window can hold skills + a code section simultaneously
+
+### What this doesn't require
+
+| Not needed for MVP | Why |
+|--------------------|-----|
+| `github-copilot-sdk` | VS Code Agent Mode *is* the Copilot SDK — same runtime, no code to write |
+| New Python modules (`_agentic_reviewer.py`, etc.) | No programmatic integration yet |
+| CLI or FastAPI changes | Not wiring into `avc` or the web service |
+| `SectionedDocument` chunking | Test with one section or a small API; chunking is a known-solved problem |
+| Tools (`submit_comment`, `get_existing_comments`) | Agent outputs comments as text; structured tool output is a later concern |
+| Cosmos DB / AI Search changes | Existing pipeline untouched |
+| `scripts/sync_skills.py` or `distill_memories.py` | Hand-author everything |
+| Multi-agent orchestration | Single agent first |
+| Telemetry, streaming, deployment | Zero infrastructure |
+
+### Success gate
+
+The MVP succeeds if the agent-with-skills produces **comparable or better** comments on the test API view — assessed by manual review. If it does, invest in the programmatic integration (Copilot SDK, `AgenticApiViewReview` class, CLI/FastAPI wiring). If not, iterate on skill content before writing any code.
 
 ---
 
@@ -304,10 +375,10 @@ One agent session runs per section, with post-processing to deduplicate across s
 **Recommendation: BYOK.** AVC already has an Azure AI Foundry endpoint. The Copilot SDK supports custom providers ("Bring Your Own Key") with Azure OpenAI endpoints. Using BYOK avoids coupling to GitHub Copilot billing and lets us use the same models/quotas.
 
 ### 2. Tool Granularity
-**Recommendation: Fine-grained search tools + `submit_comment` accumulator.** Let the agent decide what to search and when. Don't pre-fetch everything.
+**Recommendation: Fine-grained tools + `submit_comment` accumulator.** Let the agent decide when to check existing comments and when to stop.
 
-### 3. Guidelines as Skills, Not a Database
-**Recommendation: Guideline and example content is loaded via skills (static context), not searched via tools.** This eliminates the Cosmos DB `guidelines` and `examples` containers and the Azure AI Search indexers. Only `memories` (dynamic, learned from feedback) remain in Cosmos DB and are accessed via a search tool. The agent always has the full guideline context; it searches memories only when checking for precedents.
+### 3. All Knowledge as Skills, Not a Database
+**Recommendation: Guideline, example, *and memory* content is loaded via skills (static context), not searched via tools.** This eliminates the Cosmos DB `guidelines`, `examples`, and `memories` containers and all three AI Search indexers. The agent always has the full guideline + precedent context via skills. No tool-call round trips for knowledge retrieval. Dynamic, review-specific data (existing human comments, API outline) is still accessed via tools.
 
 ### 4. Service-Specific Scoping
 **Recommendation: Hierarchical skill directories.** Skills are organized as `{language}/`, `services/{service}/`, and `{language}/services/{service}/`. The session loader computes which skill directories to include based on the language and (when known) the service being reviewed.
@@ -329,10 +400,12 @@ One agent session runs per section, with post-processing to deduplicate across s
 |------|-----------|
 | Agent hallucinates guidelines | Guidelines are in context via skills — agent can quote directly rather than guess IDs. `submit_comment` can validate citations. |
 | Agent misses issues the pipeline would catch | Eval suite comparison; can run both modes and union results |
-| Context window too small for large APIs | Existing `SectionedDocument` chunking; monitor section size limits |
+| Context window too small for large APIs | Existing `SectionedDocument` chunking; monitor section size limits. Memory files increase context — monitor total token budget. |
 | Copilot SDK is in public preview | Keep deterministic pipeline as fallback; abstract behind interface |
 | Latency higher than parallel pipeline | Agent loop may need fewer total LLM calls; measure empirically |
 | Cost per review changes | Track token usage in telemetry; compare with existing pipeline |
+| New memories have latency before becoming active | PR-based flow means memories aren't active until merged and synced. Acceptable at current creation rate (few per week). Revisit if volume increases. |
+| Memory quality without real-time search | Memories in context (not searched on-demand) means every memory for a service is loaded, including potentially stale or low-relevance ones. Periodic distillation and curation mitigates this. |
 
 ---
 
@@ -353,8 +426,11 @@ eng/common/skills/
 │   │                            #       azure-sdk/docs/python/design.md)
 │   └── services/
 │       └── keyvault/
-│           └── SKILL.md         # NEW: Key Vault + Python patterns
-│                                #       (distilled from AVC memories)
+│           ├── SKILL.md         # NEW: Key Vault + Python patterns
+│           │                    #       (distilled from AVC memories)
+│           └── memories/        # NEW: Individual memory files (accumulated
+│               ├── 2026-03-15-vault-url-convention.md  #  from feedback)
+│               └── ...          # Periodically rolled into SKILL.md
 ├── java/
 │   ├── SKILL.md                 # NEW: Java guidelines
 │   └── services/
@@ -362,7 +438,8 @@ eng/common/skills/
 ├── (one per language...)
 ├── services/
 │   ├── keyvault/
-│   │   └── SKILL.md             # NEW: Cross-language Key Vault patterns
+│   │   ├── SKILL.md             # NEW: Cross-language Key Vault patterns
+│   │   └── memories/            # NEW: Cross-language Key Vault memories
 │   └── .../
 ```
 
@@ -371,17 +448,20 @@ In `azure-sdk-tools/.../apiview-copilot`:
 ```
 src/
 ├── _agentic_reviewer.py        # NEW: AgenticApiViewReview class
-├── _agentic_tools.py            # NEW: @define_tool functions (memories, existing
-│                                #       comments, outline, submit_comment)
+├── _agentic_tools.py            # NEW: @define_tool functions (existing comments,
+│                                #       outline, submit_comment)
 ├── _skill_loader.py             # NEW: Resolves skill directories for a given
-│                                #       language + service combination
+│                                #       language + service, incl. memory files
 ├── _apiview_reviewer.py         # UNCHANGED (existing pipeline)
 ├── _models.py                   # UNCHANGED (shared ReviewResult, Comment)
-├── _search_manager.py           # MODIFIED: memories-only search (guidelines/
-│                                #           examples search methods deprecated)
+├── _search_manager.py           # DEPRECATED: all search methods removed once
+│                                #             agentic mode is validated
+├── _github_manager.py           # MODIFIED: new method to create memory file PRs
 scripts/
 ├── sync_skills.py               # NEW: Curates SKILL.md files from azure-sdk
-│                                #       guideline markdown + AVC memories
+│                                #       guideline markdown
+├── distill_memories.py          # NEW: One-time migration of Cosmos DB memories
+│                                #       to text files in the skill hierarchy
 ```
 
 ---
@@ -390,15 +470,16 @@ scripts/
 
 1. **Comment quality metrics improved relative to current pipeline** — measured via production `comment_quality` buckets (`upvoted`, `downvoted`, `deleted`, `implicit_good`, `implicit_bad`). Upvoted and implicit-good rates should increase; downvoted, deleted, and implicit-bad rates should decrease. These metrics already capture both overall quality and false-positive rate. Baseline captured from the deterministic pipeline before agentic mode goes live.
 2. **Wall-clock time lower than current pipeline** — the current pipeline makes 9+ sequential LLM calls per section. A single-session agent should need fewer round trips by combining generation, filtering, and scoring in one pass.
-3. **Cosmos DB `guidelines` and `examples` containers eliminated** — guidelines served entirely via skills
-4. **Azure AI Search indexers for guidelines/examples eliminated** (memories indexer retained)
-5. **Skills usable outside AVC** — a developer working in any Azure SDK language repo can load `eng/common/skills/python/` in VS Code Agent Mode and get useful review guidance without the AVC endpoint
+3. **Cosmos DB `guidelines`, `examples`, and `memories` containers eliminated** — all review knowledge served entirely via skills
+4. **All three Azure AI Search indexers eliminated** — no RAG dependency for review-time knowledge retrieval
+5. **Feedback flows produce text files** — thread resolution and mention workflows create memory markdown files via PRs, not database records
+6. **Skills usable outside AVC** — a developer working in any Azure SDK language repo can load `eng/common/skills/python/` in VS Code Agent Mode and get useful review guidance without the AVC endpoint
 
 ---
 
 ## 13. Open Questions
 
-1. **Context window limits** — Skills (language guidelines, filter exceptions) are loaded into context alongside each section's API text. Need to measure combined token usage (skills + section) to ensure it fits within BYOK model limits. Large guideline skills may need to be trimmed or split.
+1. **Context window limits** — Skills (language guidelines, filter exceptions, memory files) are loaded into context alongside each section's API text. Need to measure combined token usage (skills + memories + section) to ensure it fits within BYOK model limits. Large guideline skills may need to be trimmed or split. Memory files add to context size — services with many accumulated memories may exceed budget.
 2. **Copilot CLI bundling** — The SDK bundles the Copilot CLI; is this acceptable for server deployment on Azure App Service?
 3. **Rate limiting** — How does BYOK mode interact with Azure AI Foundry throttling? The tool-call loop makes multiple model calls per session.
 4. **Streaming to APIView** — Can we stream comments to the APIView UI as the agent finds them (via `submit_comment` tool events)?
@@ -406,5 +487,7 @@ scripts/
 6. **Guideline markdown size** — Some language design docs (e.g., `python_design.md`) are ~4000 lines. Do we extract subsections, or can modern context windows handle the full text? Measure token counts per language.
 7. **Service detection** — How do we determine which service an API belongs to for service-specific skill loading? Parse the package name? Accept as input parameter? Both?
 8. **Skill sync mechanism** — Skills live in `eng/common/skills/` in `azure-sdk-tools` and get synced automatically to language repos. But AVC deployment on App Service may need skills packaged differently (the deployed app won't have the full `azure-sdk-tools` repo). How do we get skills into the deploy artifact? Copy step in CI? Relative path from the apiview-copilot package root to `eng/common/`?
-9. **Service-specific skill generation** — What's the right cadence and threshold for distilling AVC memories into service-specific `SKILL.md` files? How many memories constitute enough signal to create a service skill? Who reviews the generated content before it ships via `eng/common/` sync?
-10. **Evaluation framework** — The existing eval suite (`evals/`) tests individual `.prompty` files with recorded inputs/outputs. The agentic mode replaces per-stage prompts with a single agent session, making these evals inapplicable. Need to work with the AI eval team (Juan) to define an appropriate evaluation methodology — likely end-to-end golden-set comparisons (same API input → compare review output) rather than per-prompt unit tests.
+9. **Memory file creation permissions** — The feedback flows (thread resolution, mention) need to create PRs against `azure-sdk-tools`. Does the AVC service identity have write access to create branches and PRs? Or does this flow through a separate GitHub App / bot account?
+10. **Memory distillation cadence** — When individual memory files accumulate under a service's `memories/` directory, they need periodic consolidation into the parent `SKILL.md`. What triggers this — a threshold count, a scheduled job, a manual review? Who reviews the consolidated output?
+11. **Memory migration completeness** — The one-time migration from Cosmos DB to text files needs to handle: memories with no service scope (apply broadly), memories that contradict each other, memories linked to specific guideline IDs that may change format. How do we validate migration quality?
+12. **Evaluation framework** — The existing eval suite (`evals/`) tests individual `.prompty` files with recorded inputs/outputs. The agentic mode replaces per-stage prompts with a single agent session, making these evals inapplicable. Need to work with the AI eval team (Juan) to define an appropriate evaluation methodology — likely end-to-end golden-set comparisons (same API input → compare review output) rather than per-prompt unit tests.

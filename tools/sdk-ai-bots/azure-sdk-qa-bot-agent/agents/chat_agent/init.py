@@ -115,6 +115,7 @@ async def main() -> None:
         default_options={
             "reasoning": ReasoningOptions(effort=reasoning_effort),
             "truncation": "auto",
+            "max_tool_calls": 10,
             "context_management": [{"type": "compaction", "compact_threshold": 100000}],
             "include": ["web_search_call.action.sources"],
         },

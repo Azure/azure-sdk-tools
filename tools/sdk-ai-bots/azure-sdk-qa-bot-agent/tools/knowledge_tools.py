@@ -46,7 +46,7 @@ class KnowledgeTools:
         *,
         queries: Annotated[
             list[str],
-            "One or more search queries to run against the knowledge base. "
+            "Multiple search queries to run against the knowledge base. "
             "Queries should target the **documentation topic or solution** that "
             "would answer the user's question — NOT just restate the symptom. "
             "Think: 'what document or guide would solve this?' "

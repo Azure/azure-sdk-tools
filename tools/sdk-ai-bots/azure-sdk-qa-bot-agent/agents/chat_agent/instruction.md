@@ -72,11 +72,10 @@ Route every message to exactly one of these paths:
 
 ## Constraints
 
-1. **Only make required tool calls per turn.** Minimize unnecessary calls to reduce user wait time.
+1. **Tool call budget: at most 5 tool calls per turn total (across all tools).** This is a hard limit — plan your calls carefully. Prefer one well-crafted `search_knowledge_base` call with 2–3 queries over multiple separate calls.
 2. Never call the same tool with identical arguments twice in the same turn.
 3. Never pass an empty `tenant_id` to `search_knowledge_base`.
 4. **`load_skill` must run first.** After loading the skill, call all other tools (`search_knowledge_base`, shell, `web_fetch`, `web_search`) **in parallel** in the same turn to minimize latency.
 5. **Never call `read_skill_resource`.** Skills have no registered resources — all content is in the skill itself.
 6. **Limit `web_fetch` to at most 3 calls per turn.** Fetch only the most relevant URLs. If the user provides multiple links, prioritize the ones most likely to answer the question and summarize the rest.
-7. **Batch all tool calls in a single turn whenever possible.** Do NOT use one turn just for `load_skill` and then a separate turn for other tools — call `load_skill` together with `search_knowledge_base`, `web_fetch`, etc. in the same turn.
-8. **Stdio MCP tools (e.g. ADO MCP) cannot run multiple calls in parallel with themselves** — but they CAN run in parallel with other tools (`github_cli`, `search_knowledge_base`, etc.).
+7. **Stdio MCP tools (e.g. ADO MCP) cannot run multiple calls in parallel with themselves** — but they CAN run in parallel with other tools (`github_cli`, `search_knowledge_base`, etc.).

@@ -701,7 +701,10 @@ public class CodeownersManagementHelper(
     // ========================
 
     public async Task<CheckPackageOwnersResponse> CheckPackageOwners(
-        string packageName, string directoryPath, string repo, CancellationToken ct)
+        string packageName,
+        string directoryPath,
+        string repo,
+        CancellationToken ct)
     {
         const int requiredOwners = 2;
 
@@ -883,7 +886,10 @@ public class CodeownersManagementHelper(
     /// Returns the first matching Service Owner (hydrated), or null if none found.
     /// </summary>
     private async Task<LabelOwnerWorkItem?> FindMatchingServiceOwner(
-        List<string> requiredLabels, int requiredOwners, string repo, CancellationToken ct)
+        List<string> requiredLabels,
+        int requiredOwners,
+        string repo,
+        CancellationToken ct)
     {
         if (requiredLabels.Count == 0)
         {
@@ -930,7 +936,10 @@ public class CodeownersManagementHelper(
         return individuals.OrderBy(a => a, StringComparer.OrdinalIgnoreCase).ToList();
     }
 
-    private async Task<List<LabelOwnerWorkItem>> QueryLabelOwnersByTypeAndRepo(string labelType, string repo, CancellationToken ct)
+    private async Task<List<LabelOwnerWorkItem>> QueryLabelOwnersByTypeAndRepo(
+        string labelType,
+        string repo,
+        CancellationToken ct)
     {
         var escapedRepo = repo.Replace("'", "''");
         var escapedLabelType = labelType.Replace("'", "''");

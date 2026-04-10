@@ -339,8 +339,12 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
 
                 if (await blobClient.ExistsAsync())
                 {
-                    this.logger.LogInformation("Skipping existing log for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, runName, runId, attempt);
-                    return;
+                    var properties = await blobClient.GetPropertiesAsync();
+                    if (properties.Value.ContentLength > 0)
+                    {
+                        this.logger.LogInformation("Skipping existing log for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, runName, runId, attempt);
+                        return;
+                    }
                 }
 
                 this.logger.LogInformation("Processing log for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, runName, runId, attempt);

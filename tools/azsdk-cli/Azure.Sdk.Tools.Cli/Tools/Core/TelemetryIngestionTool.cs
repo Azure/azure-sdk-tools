@@ -33,7 +33,7 @@ public class TelemetryIngestionTool : MCPTool
 
     private readonly Option<string> eventTypeOption = new Option<string>("--event-type")
     {
-        Description = "Type of telemetry event: 'skill_invocation' or 'user_prompt'",
+        Description = "Type of telemetry event. Common values are 'skill_invocation' and 'user_prompt'; custom event types are also supported",
         Required = true
     };
 

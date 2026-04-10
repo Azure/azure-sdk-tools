@@ -152,7 +152,13 @@ public class UserPromptProcessor : IUserPromptProcessor
             }
 
             // Validate category
-            if (!ValidCategories.Contains(result.Category))
+            if (string.IsNullOrWhiteSpace(result.Category))
+            {
+                _logger.LogWarning("Missing or empty category returned by LLM, defaulting to 'unknown'");
+                result.Category = "unknown";
+                result.IsSuccessful = false;
+            }
+            else if (!ValidCategories.Contains(result.Category))
             {
                 _logger.LogWarning("Unknown category '{Category}' returned by LLM, defaulting to 'unknown'", result.Category);
                 result.Category = "unknown";

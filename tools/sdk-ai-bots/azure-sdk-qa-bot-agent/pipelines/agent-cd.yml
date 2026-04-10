@@ -68,3 +68,6 @@ extends:
                       ${{ parameters.agentName }} \
                       --tag "$(Build.BuildId)" \
                       --appconfig-endpoint "$(APPCONFIG_ENDPOINT)"
+                env:
+                  UMI_BACKEND_CLIENT_ID: $(UMI_BACKEND_CLIENT_ID)
+                  UMI_FRONTEND_CLIENT_ID: $(UMI_FRONTEND_CLIENT_ID)

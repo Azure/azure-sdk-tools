@@ -21,6 +21,7 @@ public class AzureEngSemanticVersion : IComparable<AzureEngSemanticVersion>
     public int PrereleaseNumber { get; private set; }
     public bool IsPrerelease { get; private set; }
     public bool IsDailyDevBuild { get; private set; }
+    public bool HasPrereleaseLabel { get; private set; }
     public string VersionType { get; private set; } = string.Empty;
     public string RawVersion { get; private set; }
     public bool IsSemVerFormat { get; private set; }
@@ -56,6 +57,7 @@ public class AzureEngSemanticVersion : IComparable<AzureEngSemanticVersion>
                 PrereleaseNumber = match.Groups["prenumber"].Success ? int.Parse(match.Groups["prenumber"].Value) : 0;
                 PrereleaseNumberSeparator = match.Groups["prenumsep"].Value;
                 IsPrerelease = true;
+                HasPrereleaseLabel = true;
                 VersionType = "Beta";
                 BuildNumberSeparator = match.Groups["buildnumsep"].Value;
                 BuildNumber = match.Groups["buildnumber"].Success ? match.Groups["buildnumber"].Value : string.Empty;

@@ -487,7 +487,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
       next: (score: ReviewQualityScore) => {
         if (requestId !== this.qualityScoreRequestId) return;
         this.qualityScore = score;
-        this.unresolvedMustFixCount = score.unresolvedMustFixCount;
+        this.unresolvedMustFixCount = score.unresolvedMustFixExcludingDiagnosticsCount;
         this.qualityScoreLoading = false;
         this.setAPIRevisionApprovalStates();
       },
@@ -614,11 +614,20 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
       return;
     }
 
-    if (!this.activeAPIRevisionIsApprovedByCurrentUser && (this.hasActiveConversation || this.hasFatalDiagnostics)) {
+    if (!this.activeAPIRevisionIsApprovedByCurrentUser && (this.hasActiveConversation || this.hasFatalDiagnostics || this.hasDiagnosticMustFixApprovalWarning())) {
       this.showAPIRevisionApprovalModal = true;
     } else {
       this.toggleAPIRevisionApproval();
     }
+  }
+
+  hasDiagnosticMustFixApprovalWarning(): boolean {
+    if (!this.qualityScore) {
+      return false;
+    }
+
+    const unresolvedMustFixExcludingDiagnosticsCount = this.qualityScore.unresolvedMustFixExcludingDiagnosticsCount ?? 0;
+    return this.qualityScore.unresolvedMustFixCount > unresolvedMustFixExcludingDiagnosticsCount;
   }
 
   handleReviewApprovalAction() {

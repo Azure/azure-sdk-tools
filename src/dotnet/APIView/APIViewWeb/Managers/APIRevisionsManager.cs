@@ -1703,6 +1703,10 @@ namespace APIViewWeb.Managers
                 {
                     case CommentSeverity.MustFix:
                         score.UnresolvedMustFixCount++;
+                        if (comment.CommentSource != CommentSource.Diagnostic)
+                        {
+                            score.UnresolvedMustFixExcludingDiagnosticsCount++;
+                        }
                         break;
                     case CommentSeverity.ShouldFix:
                         score.UnresolvedShouldFixCount++;

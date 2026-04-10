@@ -180,20 +180,6 @@ public sealed partial class RustLanguageService : LanguageService
         {
             logger.LogInformation("Building Rust SDK for project path: {PackagePath}", packagePath);
 
-            if (string.IsNullOrWhiteSpace(packagePath))
-            {
-                return (false, "Package path is required and cannot be empty.", null);
-            }
-
-            string fullPath = Path.GetFullPath(packagePath);
-
-            if (!Directory.Exists(fullPath))
-            {
-                return (false, $"Package full path does not exist: {fullPath}, input package path: {packagePath}.", null);
-            }
-
-            packagePath = fullPath;
-
             string sdkRepoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
             if (string.IsNullOrEmpty(sdkRepoRoot))
             {

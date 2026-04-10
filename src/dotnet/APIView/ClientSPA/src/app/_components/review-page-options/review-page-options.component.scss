@@ -80,4 +80,12 @@
     .cursor-pointer {
         cursor: pointer;
     }
+
+    .quality-question-icon {
+        color: var(--severity-question-text);
+    }
+
+    .quality-unknown-icon {
+        color: var(--severity-unknown-text);
+    }
 }

@@ -20,6 +20,7 @@ public class AzureEngSemanticVersion : IComparable<AzureEngSemanticVersion>
     public string BuildNumber { get; private set; } = string.Empty;
     public int PrereleaseNumber { get; private set; }
     public bool IsPrerelease { get; private set; }
+    public bool IsDailyDevBuild { get; private set; }
     public string VersionType { get; private set; } = string.Empty;
     public string RawVersion { get; private set; }
     public bool IsSemVerFormat { get; private set; }
@@ -58,6 +59,8 @@ public class AzureEngSemanticVersion : IComparable<AzureEngSemanticVersion>
                 VersionType = "Beta";
                 BuildNumberSeparator = match.Groups["buildnumsep"].Value;
                 BuildNumber = match.Groups["buildnumber"].Success ? match.Groups["buildnumber"].Value : string.Empty;
+                // CI daily builds encode a YYYYMMDD date as the prerelease number;
+                IsDailyDevBuild = PrereleaseNumber >= 20000101;
             }
             else
             {

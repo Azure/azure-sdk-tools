@@ -9,10 +9,9 @@ The simplest way to get started:
 1. Install this package with `pip install -r requirements.txt` or `pip install -r dev_requirements.txt` if you also need to run evaluations.
 2. Create a `.env` file with the following contents to access the staging environment:
 ```
-AZURE_APP_CONFIG_ENDPOINT="https://avc-appconfig-staging.azconfig.io"
 ENVIRONMENT_NAME="staging"
 ```
-> **Note:** All other settings (Foundry endpoint, project, API keys, Cosmos DB, etc.) are resolved at runtime from Azure App Configuration.
+> **Note:** The App Configuration endpoint is resolved automatically from `ENVIRONMENT_NAME`. All other settings (Foundry endpoint, project, API keys, Cosmos DB, etc.) are resolved at runtime from Azure App Configuration.
 3. Create one or more test files in plain-text for the language of choice. Store them in `scratch/apiviews/<lang>/`.
 4. Generate a review using `avc review generate -l <LANG> -t <PATH_TO_TARGET_FILE> [-b <PATH_TO_BASE_FILE>] [--debug-log] [--remote]`.
 5. Examine the output under `scratch/output/<LANG>/<TEST_FILE>.json`.
@@ -49,7 +48,7 @@ avc review get-job --job-id <JOB_ID>
 
 Commands available for working with the Flask app:
 
-- `avc app deploy`: Deploy the Flask app to Azure App Service based on what App Configuration is set in your .env file.
+- `avc ops deploy`: Deploy the Flask app to Azure App Service based on what App Configuration is set in your .env file.
 
 ## Running Evaluations
 
@@ -59,13 +58,11 @@ To run evaluations, see: [evals/README.md](./evals/README.md)
 
 Commands available for querying the search indexes:
 
-- `avc search guidelines`: Search the guidelines for a query.
-- `avc search examples`: Search the examples index for a query.
-- `avc search kb`: This searches the examples and guidelines index for a query. It will resolve references and return a `Context` object that is filled into the prompt.
+- `avc kb search`: This searches the examples and guidelines index for a query. It will resolve references and return a `Context` object that is filled into the prompt.
 
 If you would like to search the knowledge base and see the output the way the LLM will see it, you can do the following:
 
-`avc search kb --text "query" -l <LANG> --markdown > context.md`
+`avc kb search --text "query" -l <LANG> --markdown > context.md`
 
 This will dump the results to context.md which you can then view in VSCode with the preview editor.
 
@@ -132,6 +129,8 @@ avc apiview resolve-package --package "cosmos database" --language python
 If you need RBAC permissions to access CosmosDB, you can run the following script:
 `python scripts\apiview_permissions.py`
 
+Alternatively, use `avc ops grant` / `avc ops revoke` for local development permissions.
+
 You must be logged in to the "Azure SDK Engineering System" subscription (`az login`) and have the necessary permissions for this script to succeed.
 
 ## Reporting Metrics
@@ -140,28 +139,22 @@ Report is now available at [PowerBI](https://msit.powerbi.com/groups/3e17dcb0-42
 
 Underneath, we use a script to generate the metrics. You can use the following command:
 ```bash
-avc metrics report -s <YYYY-MM-DD> -e <YYYY-MM-DD> [--markdown] [--environment "production"|"staging"] [--charts] [--exclude <LANG1> <LANG2> ...]
+avc report metrics -s <YYYY-MM-DD> -e <YYYY-MM-DD> [--environment "production"|"staging"] [--charts] [--exclude <LANG1> <LANG2> ...]
 ```
 
 Options:
 - `-s/--start-date`: Start date for the metrics report (YYYY-MM-DD)
 - `-e/--end-date`: End date for the metrics report (YYYY-MM-DD)
-- `--markdown`: Pass the results through an LLM to summarize the results in markdown
 - `--environment`: Specify whether to report metrics from the production or staging environment (default: production)
-- `--charts`: Generate PNG charts from the metrics and save to `scratch/charts/`
-- `-x/--exclude`: Languages to exclude from the report (e.g., `--exclude Java Go`)
-
-To dump the markdown results to file:
-```bash
-avc metrics report -s <YYYY-MM-DD> -e <YYYY-MM-DD> --markdown > metrics.md
-```
+- `--charts`: Generate PNG charts from the metrics and save to `output/charts/`
+- `--exclude`: Languages to exclude from the report (e.g., `--exclude Java Go`)
 
 To generate charts:
 ```bash
-avc metrics report -s 2026-01-01 -e 2026-01-31 --charts
+avc report metrics -s 2026-01-01 -e 2026-01-31 --charts
 ```
 
-This generates four PNG charts in `scratch/charts/`:
+This generates four PNG charts in `output/charts/`:
 - **adoption.png**: Stacked bar chart showing Copilot vs non-Copilot reviews per language
 - **comment_quality.png**: Stacked percent bar chart showing AI comment quality categories per language
 - **human_copilot_split.png**: Human vs AI comments for reviews with Copilot

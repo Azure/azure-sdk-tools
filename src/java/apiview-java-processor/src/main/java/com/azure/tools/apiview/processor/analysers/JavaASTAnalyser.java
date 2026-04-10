@@ -555,13 +555,19 @@ public class JavaASTAnalyser implements Analyser {
             configurationLine.addContextEndTokens();
         }
 
+        String sanitizedName = sanitizeMavenText(mavenPom.getName());
+        String sanitizedDescription = sanitizeMavenText(mavenPom.getDescription());
+
+        // Skip diff as the change in Maven name and description is not significant
+        // and will not require a reviewer to approve the change
+
         // Maven name
-        MiscUtils.tokeniseMavenKeyValue(mavenLine, "name", mavenPom.getName())
-                .addProperty(PROPERTY_MAVEN_NAME, mavenPom.getName());
+        MiscUtils.tokeniseMavenKeyValue(mavenLine, "name", sanitizedName, true)
+                .addProperty(PROPERTY_MAVEN_NAME, sanitizedName);
 
         // Maven description
-        MiscUtils.tokeniseMavenKeyValue(mavenLine, "description", mavenPom.getDescription())
-                .addProperty(PROPERTY_MAVEN_DESCRIPTION, mavenPom.getDescription());
+        MiscUtils.tokeniseMavenKeyValue(mavenLine, "description", sanitizedDescription, true)
+                .addProperty(PROPERTY_MAVEN_DESCRIPTION, sanitizedDescription);
 
         // dependencies
         ReviewLine dependenciesLine = mavenLine.addChildLine()
@@ -595,7 +601,24 @@ public class JavaASTAnalyser implements Analyser {
         mavenLine.addContextEndTokens();
     }
 
+    /**
+     * Sanitizes the input Maven text by replacing carriage return and newline characters
+     * with their corresponding encoded representations. Only new lines are encoded, as
+     * APIView does not support multi-line tokens.
+     *
+     * @param mavenText the input text to be sanitized; can be null
+     * @return the sanitized text with carriage return replaced by %0D and newline replaced by %0A,
+     * or null if the input mavenText is null
+     */
+    private static String sanitizeMavenText(String mavenText) {
+        if (mavenText == null) {
+            return null;
+        }
 
+        return mavenText
+            .replace("\r", "%0D")
+            .replace("\n", "%0A");
+    }
 
     /************************************************************************************************
      *

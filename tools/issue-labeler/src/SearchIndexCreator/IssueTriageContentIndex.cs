@@ -22,7 +22,7 @@ namespace SearchIndexCreator
             _vectorDimensions = _embeddingModelName?.Equals("text-embedding-3-large", StringComparison.OrdinalIgnoreCase) == true
                 ? 3072
                 : 1536;
-            _repoConfig = RepositoryIndexConfigFactory.Create(_config["repo"]);
+            _repoConfig = RepositoryIndexConfigFactory.Create(_config["repo"], _config);
         }
 
         /// <summary>

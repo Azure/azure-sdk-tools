@@ -11,8 +11,7 @@ This document describes how the JS SDK release automation pipeline works, coveri
 4. [RestLevelClient (RLC) — REST Level Client](#4-restlevelclient-rlc--rest-level-client)
 5. [ModularClient (MLC) — Modular Client](#5-modularclient-mlc--modular-client)
 6. [Changelog & Version Bump (Common)](#6-changelog--version-bump-common)
-7. [Utility Operations Summary](#7-utility-operations-summary)
-8. [Output JSON Structure](#8-output-json-structure)
+7. [Output JSON Structure](#7-output-json-structure)
 
 ---
 
@@ -111,6 +110,19 @@ CLI Entry (autoGenerateInPipeline.ts)
   ├── restoreNodeModules()  (non-local mode only)
   └── Write outputJson
 ```
+
+### Utility Operations Summary
+
+| Operation | Function | Required / Optional | Description |
+|---|---|---|---|
+| Backup node_modules | `backupNodeModules()` | ✅ Required (non-local) | Recursively rename `node_modules` → `node_modules_backup` |
+| Restore node_modules | `restoreNodeModules()` | ✅ Required (non-local) | Recursively rename back to `node_modules` |
+| Format code | `formatSdk()` | ✅ Required | `dev-tool run vendored prettier --write ...` |
+| Update snippets | `updateSnippets()` | ✅ Required | `dev-tool run update-snippets` |
+| Lint fix | `lintFix()` | ⚠️ Optional (`Release`/`Local` only) | Builds eslint plugin then `dev-tool run vendored eslint ... --fix` |
+| Apply custom code | `customizeCodes()` | ⚠️ Optional (Data Plane, pnpm) | `dev-tool customization apply-v2 -s ./generated -c ./src` |
+| Clean up package dir | `cleanUpPackageDirectory()` | ✅ Required | Cleanup strategy based on SDK type + `RunMode` |
+| Specify API version | `specifyApiVersionToGenerateSDKByTypeSpec()` | ⚠️ Optional | Modify `api-version` field in `tspconfig.yaml` |
 
 ---
 
@@ -354,22 +366,7 @@ There are two generation paths based on the source: **TypeSpec project** or **Sw
 
 ---
 
-## 7. Utility Operations Summary
-
-| Operation | Function | Required / Optional | Description |
-|---|---|---|---|
-| Backup node_modules | `backupNodeModules()` | ✅ Required (non-local) | Recursively rename `node_modules` → `node_modules_backup` |
-| Restore node_modules | `restoreNodeModules()` | ✅ Required (non-local) | Recursively rename back to `node_modules` |
-| Format code | `formatSdk()` | ✅ Required | `dev-tool run vendored prettier --write ...` |
-| Update snippets | `updateSnippets()` | ✅ Required | `dev-tool run update-snippets` |
-| Lint fix | `lintFix()` | ⚠️ Optional (`Release`/`Local` only) | Builds eslint plugin then `dev-tool run vendored eslint ... --fix` |
-| Apply custom code | `customizeCodes()` | ⚠️ Optional (Data Plane, pnpm) | `dev-tool customization apply-v2 -s ./generated -c ./src` |
-| Clean up package dir | `cleanUpPackageDirectory()` | ✅ Required | Cleanup strategy based on SDK type + `RunMode` |
-| Specify API version | `specifyApiVersionToGenerateSDKByTypeSpec()` | ⚠️ Optional | Modify `api-version` field in `tspconfig.yaml` |
-
----
-
-## 8. Output JSON Structure
+## 7. Output JSON Structure
 
 Final structure written to `--outputJsonPath`:
 

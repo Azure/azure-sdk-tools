@@ -1279,83 +1279,22 @@ def db_link(guideline: str = None, memory: str = None, example: str = None, rein
     type_a, id_a = provided[0]
     type_b, id_b = provided[1]
 
-    containers = {
-        "guideline": db.guidelines,
-        "memory": db.memories,
-        "example": db.examples,
-    }
-    container_a = containers[type_a]
-    container_b = containers[type_b]
-
-    # Retrieve both items first (fail fast before any writes)
     try:
-        item_a = container_a.get(id_a)
+        result = db.link_and_save(type_a, id_a, type_b, id_b, run_indexer=False)
     except Exception as e:
-        print(f"Error retrieving {type_a} '{id_a}': {e}")
+        print(f"Error: {e}")
         return
 
-    try:
-        item_b = container_b.get(id_b)
-    except Exception as e:
-        print(f"Error retrieving {type_b} '{id_b}': {e}")
+    if not result["changed"]:
+        print(f"{type_a} '{result['stored_id_a']}' and {type_b} '{result['stored_id_b']}' are already linked.")
         return
 
-    # Save deep copy of first item for rollback
-    original_a = json.loads(json.dumps(item_a))
+    containers = {"guideline": db.guidelines, "memory": db.memories, "example": db.examples}
+    _try_run_indexers([(type_a, containers[type_a]), (type_b, containers[type_b])])
 
-    # Determine relationship field names
-    relation_fields = {
-        ("guideline", "memory"): ("related_memories", "related_guidelines"),
-        ("guideline", "example"): ("related_examples", "guideline_ids"),
-        ("memory", "example"): ("related_examples", "memory_ids"),
-        ("memory", "guideline"): ("related_guidelines", "related_memories"),
-        ("example", "guideline"): ("guideline_ids", "related_examples"),
-        ("example", "memory"): ("memory_ids", "related_examples"),
-    }
-    field_a, field_b = relation_fields[(type_a, type_b)]
-
-    # Use actual Cosmos DB document IDs for cross-references
-    stored_id_a = item_a["id"]
-    stored_id_b = item_b["id"]
-
-    # Add IDs to each other's collections (idempotent)
-    a_changed = False
-    if stored_id_b not in item_a.get(field_a, []):
-        item_a.setdefault(field_a, []).append(stored_id_b)
-        a_changed = True
-
-    b_changed = False
-    if stored_id_a not in item_b.get(field_b, []):
-        item_b.setdefault(field_b, []).append(stored_id_a)
-        b_changed = True
-
-    if not a_changed and not b_changed:
-        print(f"{type_a} '{stored_id_a}' and {type_b} '{stored_id_b}' are already linked.")
-        return
-
-    # Upsert both with rollback on second failure for atomicity
-    try:
-        container_a.client.upsert_item(item_a)
-    except Exception as e:
-        print(f"Error updating {type_a} '{stored_id_a}': {e}")
-        return
-
-    try:
-        container_b.client.upsert_item(item_b)
-    except Exception as e:
-        print(f"Error updating {type_b} '{stored_id_b}': {e}. Rolling back {type_a} '{stored_id_a}'...")
-        try:
-            container_a.client.upsert_item(original_a)
-            print("Rollback successful.")
-        except Exception as rollback_err:
-            print(f"CRITICAL: Rollback failed for {type_a} '{stored_id_a}': {rollback_err}")
-        return
-
-    _try_run_indexers([(type_a, container_a), (type_b, container_b)])
-
-    print(f"Linked {type_a} '{stored_id_a}' <-> {type_b} '{stored_id_b}'.")
-    print(f"  {type_a}.{field_a} += '{stored_id_b}'")
-    print(f"  {type_b}.{field_b} += '{stored_id_a}'")
+    print(f"Linked {type_a} '{result['stored_id_a']}' <-> {type_b} '{result['stored_id_b']}'.")
+    print(f"  {type_a}.{result['field_a']} += '{result['stored_id_b']}'")
+    print(f"  {type_b}.{result['field_b']} += '{result['stored_id_a']}'")
 
     if reindex:
         print("Reindexing...")

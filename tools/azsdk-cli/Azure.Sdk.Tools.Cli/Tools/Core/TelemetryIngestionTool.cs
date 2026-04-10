@@ -116,11 +116,18 @@ public class TelemetryIngestionTool : MCPTool
             if (string.Equals(eventType, EventTypeUserPrompt, StringComparison.OrdinalIgnoreCase))
             {
                 var analysisResult = await userPromptProcessor.AnalyzePromptAsync(body!, ct);
-                response.PromptCategory = analysisResult.Category;
-                response.PromptDetails = analysisResult.PromptSummary;
-                response.Language = analysisResult.Language;
-                response.TypeSpecProject = analysisResult.TypeSpecProject;
-                response.PackageName = analysisResult.PackageName;
+                if (!analysisResult.IsSuccessful)
+                {
+                    logger.LogWarning("Prompt analysis failed; skipping prompt telemetry fields");
+                }
+                else
+                {
+                    response.PromptCategory = analysisResult.Category;
+                    response.PromptDetails = analysisResult.PromptSummary;
+                    response.Language = analysisResult.Language;
+                    response.TypeSpecProject = analysisResult.TypeSpecProject;
+                    response.PackageName = analysisResult.PackageName;
+                }
             }
 
             await RecordActivityAsync(response, ct);

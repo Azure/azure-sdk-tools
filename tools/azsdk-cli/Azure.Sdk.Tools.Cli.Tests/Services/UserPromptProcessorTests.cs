@@ -47,6 +47,7 @@ internal class UserPromptProcessorTests
         Assert.That(result.Language, Is.EqualTo("Python"));
         Assert.That(result.PackageName, Is.EqualTo("azure-storage-blob"));
         Assert.That(result.TypeSpecProject, Is.EqualTo("specification/storage"));
+        Assert.That(result.IsSuccessful, Is.True);
     }
 
     [Test]
@@ -104,6 +105,7 @@ internal class UserPromptProcessorTests
 
         Assert.That(result.Category, Is.EqualTo("unknown"));
         Assert.That(result.PromptSummary, Is.EqualTo("Empty prompt"));
+        Assert.That(result.IsSuccessful, Is.False);
 
         agentRunner.Verify(
             r => r.RunAsync(It.IsAny<CopilotAgent<string>>(), It.IsAny<CancellationToken>()),
@@ -116,6 +118,7 @@ internal class UserPromptProcessorTests
         var result = await processor.AnalyzePromptAsync("   ");
 
         Assert.That(result.Category, Is.EqualTo("unknown"));
+        Assert.That(result.IsSuccessful, Is.False);
         agentRunner.Verify(
             r => r.RunAsync(It.IsAny<CopilotAgent<string>>(), It.IsAny<CancellationToken>()),
             Times.Never);
@@ -132,6 +135,7 @@ internal class UserPromptProcessorTests
 
         Assert.That(result.Category, Is.EqualTo("unknown"));
         Assert.That(result.PromptSummary, Is.EqualTo("Prompt analysis failed"));
+        Assert.That(result.IsSuccessful, Is.False);
     }
 
     [Test]
@@ -145,6 +149,7 @@ internal class UserPromptProcessorTests
 
         Assert.That(result.Category, Is.EqualTo("unknown"));
         Assert.That(result.PromptSummary, Is.EqualTo("Failed to parse analysis result"));
+        Assert.That(result.IsSuccessful, Is.False);
     }
 
     [Test]

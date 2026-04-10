@@ -198,6 +198,39 @@ internal class TelemetryIngestionToolTests
     }
 
     [Test]
+    public async Task UserPrompt_WhenAnalysisFails_SkipsPromptFields()
+    {
+        promptProcessor
+            .Setup(p => p.AnalyzePromptAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new UserPromptAnalysisResult
+            {
+                Category = "unknown",
+                PromptSummary = "Prompt analysis failed",
+                IsSuccessful = false
+            });
+
+        var result = await tool.IngestActivityLog(
+            clientType: "vscode",
+            eventType: "user_prompt",
+            sessionId: "session-789",
+            body: "Generate SDK for storage");
+
+        Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
+        Assert.That(result.ResponseError, Is.Null);
+
+        var response = (TelemetryIngestionResponse)result;
+        Assert.That(response.PromptCategory, Is.Null);
+        Assert.That(response.PromptDetails, Is.Null);
+        Assert.That(response.Language, Is.Null);
+        Assert.That(response.PackageName, Is.Null);
+        Assert.That(response.TypeSpecProject, Is.Null);
+        // Base fields should still be recorded
+        Assert.That(response.EventType, Is.EqualTo("user_prompt"));
+        Assert.That(response.ClientType, Is.EqualTo("vscode"));
+        Assert.That(response.SessionId, Is.EqualTo("session-789"));
+    }
+
+    [Test]
     public async Task UnknownEventType_Succeeds_WithNoValidationError()
     {
         // Unknown event types pass validation (no specific requirements)

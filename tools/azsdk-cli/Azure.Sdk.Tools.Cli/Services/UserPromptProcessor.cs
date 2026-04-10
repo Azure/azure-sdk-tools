@@ -27,6 +27,13 @@ public class UserPromptAnalysisResult
 
     [JsonPropertyName("typespec_project")]
     public string? TypeSpecProject { get; set; }
+
+    /// <summary>
+    /// Indicates whether the prompt analysis completed successfully.
+    /// When false, the result should be ignored and not recorded in telemetry.
+    /// </summary>
+    [JsonIgnore]
+    public bool IsSuccessful { get; set; } = true;
 }
 
 /// <summary>
@@ -81,7 +88,8 @@ public class UserPromptProcessor : IUserPromptProcessor
             return new UserPromptAnalysisResult
             {
                 Category = "unknown",
-                PromptSummary = "Empty prompt"
+                PromptSummary = "Empty prompt",
+                IsSuccessful = false
             };
         }
 
@@ -105,7 +113,8 @@ public class UserPromptProcessor : IUserPromptProcessor
             return new UserPromptAnalysisResult
             {
                 Category = "unknown",
-                PromptSummary = "Prompt analysis failed"
+                PromptSummary = "Prompt analysis failed",
+                IsSuccessful = false
             };
         }
     }
@@ -137,7 +146,8 @@ public class UserPromptProcessor : IUserPromptProcessor
                 return new UserPromptAnalysisResult
                 {
                     Category = "unknown",
-                    PromptSummary = "Failed to parse analysis result"
+                    PromptSummary = "Failed to parse analysis result",
+                    IsSuccessful = false
                 };
             }
 
@@ -162,7 +172,8 @@ public class UserPromptProcessor : IUserPromptProcessor
             return new UserPromptAnalysisResult
             {
                 Category = "unknown",
-                PromptSummary = "Failed to parse analysis result"
+                PromptSummary = "Failed to parse analysis result",
+                IsSuccessful = false
             };
         }
     }

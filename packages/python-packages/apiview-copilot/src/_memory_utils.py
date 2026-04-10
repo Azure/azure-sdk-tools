@@ -195,8 +195,10 @@ def merge_and_save_memory(
             continue
 
     # ── Save with rollback ───────────────────────────────────────────
+    memory_snapshot = json.loads(json.dumps(raw_existing))
     saved_new_items = []
     saved_guideline_ids = []
+    memory_saved = False
 
     def _rollback(error_msg: str):
         for container, item_id in saved_new_items:
@@ -204,14 +206,20 @@ def merge_and_save_memory(
                 container.delete(item_id, run_indexer=False)
             except Exception as rb_err:
                 logger.warning("Rollback warning: failed to delete %s: %s", item_id, rb_err)
+        if memory_saved:
+            try:
+                db_manager.memories.client.upsert_item(memory_snapshot)
+            except Exception as rb_err:
+                logger.warning("Rollback warning: failed to restore memory %s: %s", existing_memory.id, rb_err)
         for g_db_id in saved_guideline_ids:
             try:
                 db_manager.guidelines.client.upsert_item(guideline_snapshots[g_db_id])
             except Exception as rb_err:
                 logger.warning("Rollback warning: failed to restore guideline %s: %s", g_db_id, rb_err)
         logger.warning(
-            "Rolled back %d new item(s) and %d guideline update(s) after error: %s",
+            "Rolled back %d new item(s), %s memory update, and %d guideline update(s) after error: %s",
             len(saved_new_items),
+            "1" if memory_saved else "0",
             len(saved_guideline_ids),
             error_msg,
         )
@@ -228,6 +236,7 @@ def merge_and_save_memory(
     # 2. Update existing memory
     try:
         db_manager.memories.upsert(existing_memory.id, data=existing_memory, run_indexer=False)
+        memory_saved = True
     except Exception as e:
         _rollback(str(e))
         return {"success": [], "failures": {existing_memory.id: str(e)}}
@@ -469,15 +478,15 @@ def apply_consolidation(actions: List[dict]) -> dict:
                 # Transfer guideline links
                 for gid in redundant.related_guidelines:
                     if gid not in survivor.related_guidelines:
-                        survivor.related_guidelines.append(gid)
+                        survivor.related_guidelines.append(gid)  # pylint: disable=no-member
                     # Update the guideline to reference the survivor instead
                     try:
                         raw_g = db.guidelines.get(gid)
                         guideline = Guideline(**raw_g)
                         if rid in guideline.related_memories:
-                            guideline.related_memories.remove(rid)
+                            guideline.related_memories.remove(rid)  # pylint: disable=no-member
                         if survivor_id not in guideline.related_memories:
-                            guideline.related_memories.append(survivor_id)
+                            guideline.related_memories.append(survivor_id)  # pylint: disable=no-member
                         db.guidelines.upsert(guideline.id, data=guideline, run_indexer=False)
                     except Exception as e:
                         display_id = guideline_id_from_db(gid)
@@ -486,15 +495,15 @@ def apply_consolidation(actions: List[dict]) -> dict:
                 # Transfer example links
                 for eid in redundant.related_examples:
                     if eid not in survivor.related_examples:
-                        survivor.related_examples.append(eid)
+                        survivor.related_examples.append(eid)  # pylint: disable=no-member
                     # Update the example to reference the survivor instead
                     try:
                         raw_e = db.examples.get(eid)
                         example = Example(**raw_e)
                         if rid in example.memory_ids:
-                            example.memory_ids.remove(rid)
+                            example.memory_ids.remove(rid)  # pylint: disable=no-member
                         if survivor_id not in example.memory_ids:
-                            example.memory_ids.append(survivor_id)
+                            example.memory_ids.append(survivor_id)  # pylint: disable=no-member
                         db.examples.upsert(example.id, data=example, run_indexer=False)
                     except Exception as e:
                         errors.append(f"Failed to update example {eid} for memory {rid}: {e}")

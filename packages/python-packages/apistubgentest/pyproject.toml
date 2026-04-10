@@ -30,6 +30,7 @@ dependencies = [
 dynamic = ["version", "readme"]
 
 [project.optional-dependencies]
+py_lt_37 = ['qsharp<0.16.0; python_version < "3.7"']
 testing = [
     "httpx>=0.15.4,<1.0",
     "pandas>1.0.0,<3.0",

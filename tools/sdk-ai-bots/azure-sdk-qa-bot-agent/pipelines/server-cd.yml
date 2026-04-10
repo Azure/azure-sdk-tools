@@ -22,7 +22,6 @@ parameters:
     default: default
     values:
       - default
-      - authoring
       - agent
 
 variables:
@@ -63,12 +62,20 @@ extends:
               # 2. Resolve image tag
               - bash: |
                   set -euo pipefail
+                  VERSION_FILE="$(workingDirectory)/_version.py"
+                  if [ -f "$VERSION_FILE" ]; then
+                    APP_VERSION=$(python3 -c "exec(open('$VERSION_FILE').read()); print(VERSION)")
+                  else
+                    APP_VERSION="0.0.0"
+                    echo "##[warning]_version.py not found, defaulting to $APP_VERSION"
+                  fi
+                  echo "##vso[task.setvariable variable=appVersion]$APP_VERSION"
+                  echo "App version: $APP_VERSION"
+
                   if [ "${{ parameters.environment }}" = "dev" ]; then
                     IMAGE_TAG=$(git rev-parse --short HEAD)
                   else
-                    COMMIT_ID=$(git rev-parse --short HEAD)
-                    [ -n "$COMMIT_ID" ] || { echo "Failed to determine commit id" >&2; exit 1; }
-                    IMAGE_TAG="$(Build.BuildId)_${COMMIT_ID}"
+                    IMAGE_TAG="$APP_VERSION"
                   fi
                   echo "##vso[task.setvariable variable=imageTag]$IMAGE_TAG"
                   echo "Resolved image tag: $IMAGE_TAG"
@@ -190,6 +197,7 @@ extends:
                     echo "=== Deployment Summary ==="
                     echo "Environment: ${{ parameters.environment }}"
                     echo "Slot: ${{ parameters.slot }}"
+                    echo "Version: $(appVersion)"
                     echo "Image Tag: $(imageTag)"
                     echo "Resource Group: $(RESOURCE_GROUP)"
                     echo "App Service: $TARGET"

@@ -1,0 +1,98 @@
+# CI pipeline for the Azure SDK QA Bot Agent Server.
+# Runs linting and unit tests on PRs that touch the bot agent code.
+
+name: CI - Azure SDK QA Bot Agent Server
+
+trigger:
+  branches:
+    include:
+      - main
+      - feature/chatbot_agent
+  paths:
+    include:
+      - tools/sdk-ai-bots/azure-sdk-qa-bot-agent
+
+pr:
+  branches:
+    include:
+      - main
+      - feature/chatbot_agent
+  paths:
+    include:
+      - tools/sdk-ai-bots/azure-sdk-qa-bot-agent
+
+variables:
+  - template: /eng/pipelines/templates/variables/globals.yml
+  - template: /eng/pipelines/templates/variables/image.yml
+  - name: workingDirectory
+    value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-agent'
+  - name: pythonVersion
+    value: '3.12'
+
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    Use1ESOfficial: true
+    stages:
+      - stage: CI
+        displayName: 'Lint & Test'
+        jobs:
+          - job: LintAndTest
+            displayName: 'Lint & Unit Tests'
+            pool:
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
+            steps:
+              - checkout: self
+                displayName: 'Checkout repository'
+
+              - task: UsePythonVersion@0
+                displayName: 'Use Python $(pythonVersion)'
+                inputs:
+                  versionSpec: $(pythonVersion)
+
+              - bash: |
+                  set -euo pipefail
+                  python -m pip install --upgrade pip
+                  pip install --pre -r requirements.txt
+                  pip install pytest pytest-asyncio pyright
+                displayName: 'Install dependencies'
+                workingDirectory: $(workingDirectory)
+
+              - bash: |
+                  set -euo pipefail
+                  echo "Running pyright type check..."
+                  pyright --pythonversion $(pythonVersion) \
+                    server.py \
+                    config/ \
+                    models/ \
+                    services/ \
+                    tools/ \
+                    utils/ \
+                    skills/
+                displayName: 'Type Check (pyright)'
+                workingDirectory: $(workingDirectory)
+                continueOnError: true
+
+              - bash: |
+                  set -euo pipefail
+                  echo "Running unit tests..."
+                  python -m pytest tests/ \
+                    --ignore=tests/azsdk_mcp_tools_test.py \
+                    --ignore=tests/github_tools_test.py \
+                    --ignore=tests/knowledge_tools_test.py \
+                    -v \
+                    --tb=short \
+                    --junitxml=$(workingDirectory)/test-results.xml
+                displayName: 'Run Unit Tests'
+                workingDirectory: $(workingDirectory)
+
+              - task: PublishTestResults@2
+                displayName: 'Publish Test Results'
+                condition: always()
+                inputs:
+                  testResultsFormat: 'JUnit'
+                  testResultsFiles: '$(workingDirectory)/test-results.xml'
+                  testRunTitle: 'QA Bot Agent Unit Tests'
+                  failTaskOnFailedTests: true

@@ -28,6 +28,7 @@ from services.intention_service import IntentionService
 from services.thread_memory_service import ThreadMemoryService
 from utils.azure_ai_foundry import close_clients
 from utils.azure_cosmosdb import close_cosmos_client
+from _version import VERSION
 from utils.azure_credential import close_credential
 from utils.azure_storage import close_storage_client
 from utils.azure_monitor import (
@@ -105,13 +106,13 @@ async def lifespan(application: FastAPI):
     await close_credential()
 
 
-app = FastAPI(title="Azure SDK QA Bot Backend", lifespan=lifespan)
+app = FastAPI(title="Azure SDK QA Bot Backend", version=VERSION, lifespan=lifespan)
 
 
 @app.get("/ping")
 async def ping():
     """Health check endpoint used by App Service and the deploy pipeline."""
-    return {"status": "ok"}
+    return {"status": "ok", "version": VERSION}
 
 
 @app.middleware("http")

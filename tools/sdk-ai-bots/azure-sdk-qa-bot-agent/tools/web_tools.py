@@ -6,19 +6,21 @@ and expects exact content retrieval (for example, llms.txt endpoints).
 
 from __future__ import annotations
 
-import asyncio
 import ipaddress
+import logging
 import re
 from html.parser import HTMLParser
 from typing import Annotated
-from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
-from urllib.request import Request, urlopen
+
+import httpx
 
 from models.web import FetchWebpageResult
 from tools import tool
 
-_DEFAULT_TIMEOUT_SECONDS = 15
+logger = logging.getLogger(__name__)
+
+_DEFAULT_TIMEOUT_SECONDS = 8
 _DEFAULT_MAX_CHARS = 6000
 _MAX_ALLOWED_CHARS = 20000
 
@@ -83,60 +85,58 @@ def _trim_excerpt(text: str, max_chars: int) -> str:
     return cleaned[:max_chars]
 
 
-def _fetch_sync(url: str, max_chars: int) -> FetchWebpageResult:
-    headers_browser_like = {
+async def _fetch_async(url: str, max_chars: int) -> FetchWebpageResult:
+    headers = {
         "User-Agent": (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
             "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/123.0.0.0 Safari/537.36"
+            "Chrome/131.0.0.0 Safari/537.36"
         ),
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.9",
+        "Accept-Encoding": "gzip, deflate, br",
         "Cache-Control": "no-cache",
         "Pragma": "no-cache",
     }
 
-    raw = b""
-    final_url = url
-    content_type = ""
-    charset = "utf-8"
-    status_code: int | None = None
-
     try:
-        req = Request(url, headers=headers_browser_like)
-        with urlopen(req, timeout=_DEFAULT_TIMEOUT_SECONDS) as response:
-            final_url = response.geturl()
-            content_type = response.headers.get("Content-Type", "")
-            charset = response.headers.get_content_charset() or "utf-8"
-            raw = response.read()
-            status_code = getattr(response, "status", None)
-    except HTTPError as e:
-        status_code = e.code
-    except URLError as e:
-        return FetchWebpageResult(
-            success=False,
-            url=url,
-            resolved_url=final_url,
-            status_code=status_code,
-            content_type=content_type,
-            content_excerpt="",
-            error=f"Network error: {e.reason}",
-        )
+        async with httpx.AsyncClient(
+            headers=headers,
+            follow_redirects=True,
+            timeout=httpx.Timeout(_DEFAULT_TIMEOUT_SECONDS),
+            http2=True,
+        ) as client:
+            response = await client.get(url)
+            final_url = str(response.url)
+            status_code = response.status_code
+            content_type = response.headers.get("content-type", "")
 
-    if not raw:
+            if status_code >= 400:
+                return FetchWebpageResult(
+                    success=False,
+                    url=url,
+                    resolved_url=final_url,
+                    status_code=status_code,
+                    content_type=content_type,
+                    content_excerpt="",
+                    error=(
+                        f"HTTP fetch blocked with status {status_code}. "
+                        "The site may block automated requests."
+                    ),
+                )
+
+            raw = response.content
+            charset = response.charset_encoding or "utf-8"
+    except httpx.HTTPError as e:
+        logger.warning("web_fetch failed for %s: %s", url, e)
         return FetchWebpageResult(
             success=False,
             url=url,
-            resolved_url=final_url,
-            status_code=status_code,
-            content_type=content_type,
+            resolved_url=url,
+            status_code=None,
+            content_type="",
             content_excerpt="",
-            error=(
-                f"HTTP fetch blocked with status {status_code}. "
-                "The site may block automated requests."
-                if status_code
-                else "HTTP fetch failed."
-            ),
+            error=f"Network error: {e}",
         )
 
     text = raw.decode(charset, errors="replace")
@@ -187,19 +187,5 @@ class WebTools:
         if not _is_public_url(normalized_url):
             raise ValueError("Only public http/https URLs are allowed.")
 
-        # Block GitHub URLs — they throttle/403 automated requests.
-        # Redirect the agent to use GitHub MCP tools instead.
-        _github_hosts = {"github.com", "api.github.com"}
-        parsed_host = urlparse(normalized_url).hostname or ""
-        if parsed_host.lower() in _github_hosts:
-            return FetchWebpageResult(
-                success=False,
-                url=normalized_url,
-                error=(
-                    "GitHub URLs are blocked in web_fetch due to rate limiting. "
-                    "Use GitHub MCP tools instead to access this content."
-                ),
-            )
-
         bounded_max_chars = max(1000, min(int(max_chars), _MAX_ALLOWED_CHARS))
-        return await asyncio.to_thread(_fetch_sync, normalized_url, bounded_max_chars)
+        return await _fetch_async(normalized_url, bounded_max_chars)

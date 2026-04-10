@@ -65,7 +65,7 @@ async def main() -> None:
     await app_config.init()
     agent_client = get_agent_client()
     # Limit tool-call loop iterations to prevent infinite loops.
-    agent_client.function_invocation_configuration["max_iterations"] = 3
+    agent_client.function_invocation_configuration["max_iterations"] = 5
     agent_dir = Path(__file__).parent
     instructions = _load_instructions(agent_dir / "instruction.md")
     with open(agent_dir / "agent.yaml", encoding="utf-8") as f:

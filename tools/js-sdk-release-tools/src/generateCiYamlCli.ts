@@ -5,9 +5,8 @@ import { createOrUpdateCiYaml } from "./common/ciYamlUtils.js";
 import { getNpmPackageInfo } from "./common/npmUtils.js";
 import { logger } from "./utils/logger.js";
 import path from "path";
-import { fileURLToPath } from "url";
 
-export const generateCiYamlCli = async (
+const generateCiYamlCli = async (
     sdkRepoPath: string | undefined,
     packageFolderPath: string | undefined
 ) => {
@@ -51,9 +50,6 @@ export const generateCiYamlCli = async (
     logger.info(`Package Path (absolute): ${absolutePackagePath}`);
     logger.info(`Package Path (relative): ${relativePackagePath}`);
 
-    // ciYamlUtils operates on paths relative to CWD, so we must set CWD to the SDK repo root.
-    process.chdir(normalizedSdkRepoPath);
-
     const npmPackageInfo = await getNpmPackageInfo(absolutePackagePath);
 
     const ciPath = await createOrUpdateCiYaml(
@@ -69,8 +65,6 @@ const optionDefinitions = [
     { name: "packagePath", type: String },
 ];
 
-// Only invoke the CLI when this file is run directly, not when imported as a module.
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-    const options = commandLineArgs(optionDefinitions);
-    generateCiYamlCli(options["sdkRepoPath"], options["packagePath"]);
-}
+const options = commandLineArgs(optionDefinitions);
+
+generateCiYamlCli(options["sdkRepoPath"], options["packagePath"]);

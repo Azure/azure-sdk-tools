@@ -154,6 +154,15 @@ class ChatService:
                 response.usage,
                 agent_conversation_id,
             )
+        else:
+            logger.info(
+                "Agent response completed: id=%s, output_items=%d, output_text_len=%d, "
+                "conversation=%s",
+                response.id,
+                len(response.output) if response.output else 0,
+                len(response.output_text) if response.output_text else 0,
+                agent_conversation_id,
+            )
 
         chat_response = self._postprocess(req, response, agent_conversation_id)
         asyncio.create_task(

@@ -799,7 +799,21 @@ describe('ConversationComponent', () => {
       expect(component.filteredThreadCount).toBe(3);
     });
 
-    it('should exclude threads with null severity when severity filter is active', () => {
+    it('should include threads with null severity when the "unknown" severity chip is selected', () => {
+      const noSeverity = makeThread({ severity: null });
+      const explicitUnknown = makeThread({ severity: 'unknown' });
+      const mustFix = makeThread({ severity: 'mustFix' });
+      setThreads(component, [noSeverity, explicitUnknown, mustFix]);
+
+      component.filterStatus = 'all';
+      component.filterSeverities = new Set(['unknown']);
+      component.filterKinds.clear();
+      component.applyFilters();
+
+      expect(component.filteredThreadCount).toBe(2);
+    });
+
+    it('should exclude threads with null severity when severity filter is active without "unknown" selected', () => {
       const noSeverity = makeThread({ severity: null });
       const mustFix = makeThread({ severity: 'mustFix' });
       setThreads(component, [noSeverity, mustFix]);

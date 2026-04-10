@@ -185,9 +185,7 @@ def _execute_prompt_template(
     foundry_endpoint = settings.get("FOUNDRY_ENDPOINT")
 
     if not foundry_endpoint:
-        raise ValueError(
-            "FOUNDRY_ENDPOINT must be configured in AppConfiguration to execute prompty files."
-        )
+        raise ValueError("FOUNDRY_ENDPOINT must be configured in AppConfiguration to execute prompty files.")
 
     # Construct the inference endpoint (similar to how agents does it)
     # Format: {FOUNDRY_ENDPOINT}/models

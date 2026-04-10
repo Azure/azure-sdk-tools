@@ -6,6 +6,7 @@ using System.Text;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
@@ -184,10 +185,18 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
         var languageService = await ResolveLanguageServiceAsync(packagePath, apiViewUrl, ct);
 
-        List<FeedbackItem> feedbackItems;
+        List<FeedbackItem> feedbackItems = [];
+        FeedbackClassificationResponse response;
         try
         {
-            feedbackItems = await GetFeedbackItems(apiViewUrl: apiViewUrl, plainTextFeedback: customizationRequest, ct: ct);
+            response = await _classifierService.ClassifyItemsAsync(
+                feedbackItems,
+                globalContext: string.Empty,
+                tspProjectPath: tspProjectPath,
+                apiViewUrl: apiViewUrl,
+                plainTextFeedback: customizationRequest,
+                language: languageService.Language.ToString(),
+                ct: ct);
         }
         catch (Exception ex)
         {
@@ -209,10 +218,6 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         StringBuilder tspFixFailedReasons = new();
         bool buildSucceeded = false;
         string? buildError = null;
-
-        // Step 1: Classify feedback and apply TSP fixes
-        // TODO - need to update this to avoid casting to/from list
-        var response = await _classifierService.ClassifyItemsAsync([.. feedbackDictionary.Values], globalContext: string.Join(";", changesMade), tspProjectPath, ct: ct);
 
         if (response.Classifications == null || response.Classifications.Count == 0)
         {
@@ -363,7 +368,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         // The classifier can now reclassify them as CODE_CUSTOMIZATION or REQUIRES_MANUAL_INTERVENTION.
         if (feedbackDictionary.Count > 0)
         {
-            var secondResponse = await _classifierService.ClassifyItemsAsync([.. feedbackDictionary.Values], globalContext: string.Join(";", changesMade), tspProjectPath, ct: ct);
+            var secondResponse = await _classifierService.ClassifyItemsAsync([.. feedbackDictionary.Values], globalContext: string.Join(";", changesMade), tspProjectPath: tspProjectPath, language: languageService.Language.ToString(), ct: ct);
 
             if (secondResponse.Classifications != null)
             {
@@ -607,50 +612,4 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             || host.EndsWith(".apiviewstagingtest.com", StringComparison.OrdinalIgnoreCase);
     }
 
-    /// <summary>
-    /// Gathers feedback items from the provided sources: APIView URL, plain text feedback, or a file containing plain text feedback.
-    /// </summary>
-    /// <param name="apiViewUrl">Optional APIView URL to extract feedback from.</param>
-    /// <param name="plainTextFeedback">Optional plain text feedback string.</param>
-    /// <param name="plainTextFeedbackFile">Optional path to a file containing plain text feedback.</param>
-    /// <param name="ct">Cancellation token.</param>
-    /// <returns>A list of <see cref="FeedbackItem"/> instances extracted from the provided sources.</returns>
-    private async Task<List<FeedbackItem>> GetFeedbackItems(
-        string? apiViewUrl = default,
-        string? plainTextFeedback = default,
-        string? plainTextFeedbackFile = default,
-        CancellationToken ct = default)
-    {
-        try
-        {
-            // Read feedback from file if provided
-            if (!string.IsNullOrWhiteSpace(plainTextFeedbackFile))
-            {
-                if (!File.Exists(plainTextFeedbackFile))
-                {
-                    throw new FileNotFoundException($"Plain text feedback file does not exist: {plainTextFeedbackFile}");
-                }
-
-                plainTextFeedback = await File.ReadAllTextAsync(plainTextFeedbackFile, ct);
-                logger.LogInformation("Read {length} characters from feedback file: {file}", plainTextFeedback.Length, plainTextFeedbackFile);
-            }
-
-            List<FeedbackItem> feedbackItems = [];
-            if (!string.IsNullOrWhiteSpace(apiViewUrl))
-            {
-                feedbackItems = await feedbackService.GetFeedbackItemsAsync(apiViewUrl, ct);
-            }
-            else if (!string.IsNullOrWhiteSpace(plainTextFeedback))
-            {
-                feedbackItems = [new FeedbackItem { Text = plainTextFeedback, Context = string.Empty }];
-            }
-
-            return feedbackItems;
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Failed to gather feedback items");
-            throw;
-        }
-    }
 }

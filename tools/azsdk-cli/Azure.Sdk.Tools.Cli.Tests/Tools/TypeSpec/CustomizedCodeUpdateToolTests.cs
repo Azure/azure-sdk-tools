@@ -44,18 +44,43 @@ public class CustomizedCodeUpdateToolAutoTests
         var feedbackService = new Mock<IAPIViewFeedbackService>();
         var classifierService = new Mock<IFeedbackClassifierService>();
 
-        // Default classifier: return a single TSP_APPLICABLE item with non-null text
+        // Default ClassifyItemsAsync: handles both passes via a single mock.
+        // - First pass (items is empty): populates the list and returns TSP_APPLICABLE.
+        // - Second pass (items already populated): returns TSP_APPLICABLE for existing items.
         classifierService.Setup(c => c.ClassifyItemsAsync(
                 It.IsAny<List<FeedbackItem>>(),
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<string?>(),
                 It.IsAny<string?>(),
+                It.IsAny<string?>(),
+                It.IsAny<string?>(),
                 It.IsAny<int?>(),
                 It.IsAny<CancellationToken>()))
-            .Returns<List<FeedbackItem>, string, string, string?, string?, int?, CancellationToken>(
-                (items, _, _, _, _, _, _) =>
+            .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
+                (items, _, _, _, plainText, _, _, _, _) =>
                 {
+                    if (items.Count == 0)
+                    {
+                        // First pass: gather items from plainText input
+                        var item = new FeedbackItem { Text = plainText ?? "Rename FooClient to BarClient" };
+                        items.Add(item);
+                        return Task.FromResult(new FeedbackClassificationResponse
+                        {
+                            Classifications =
+                            [
+                                new FeedbackClassificationResponse.ItemClassificationDetails
+                                {
+                                    ItemId = item.Id,
+                                    Classification = "TSP_APPLICABLE",
+                                    Reason = "Can be fixed via TypeSpec",
+                                    Text = item.Text
+                                }
+                            ]
+                        });
+                    }
+
+                    // Second pass: classify already-gathered items
                     var actualId = items.FirstOrDefault()?.Id ?? "1";
                     return Task.FromResult(new FeedbackClassificationResponse
                     {
@@ -71,6 +96,7 @@ public class CustomizedCodeUpdateToolAutoTests
                         ]
                     });
                 });
+
         configureClassifier?.Invoke(classifierService);
 
         var typeSpecCustomization = new Mock<ITypeSpecCustomizationService>();
@@ -207,6 +233,8 @@ public class CustomizedCodeUpdateToolAutoTests
                     It.IsAny<string>(),
                     It.IsAny<string?>(),
                     It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
                     It.IsAny<int?>(),
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new FeedbackClassificationResponse { Classifications = [] }));
@@ -229,6 +257,8 @@ public class CustomizedCodeUpdateToolAutoTests
                     It.IsAny<List<FeedbackItem>>(),
                     It.IsAny<string>(),
                     It.IsAny<string>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
                     It.IsAny<string?>(),
                     It.IsAny<string?>(),
                     It.IsAny<int?>(),
@@ -256,24 +286,29 @@ public class CustomizedCodeUpdateToolAutoTests
                     It.IsAny<string>(),
                     It.IsAny<string?>(),
                     It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
                     It.IsAny<int?>(),
                     It.IsAny<CancellationToken>()))
-                .Returns<List<FeedbackItem>, string, string, string?, string?, int?, CancellationToken>(
-                    (items, _, _, _, _, _, _) =>
+                .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
+                    (items, _, _, _, _, _, _, _, _) =>
                     {
-                        var actualId = items.FirstOrDefault()?.Id ?? "1";
+                        var item1 = new FeedbackItem { Text = "Restructure hierarchy" };
+                        var item2 = new FeedbackItem { Text = "Looks good" };
+                        items.Add(item1);
+                        items.Add(item2);
                         return Task.FromResult(new FeedbackClassificationResponse
                         {
                             Classifications =
                             [
                                 new FeedbackClassificationResponse.ItemClassificationDetails
                                 {
-                                    ItemId = actualId, Classification = "REQUIRES_MANUAL_INTERVENTION",
+                                    ItemId = item1.Id, Classification = "REQUIRES_MANUAL_INTERVENTION",
                                     Reason = "Complex change", Text = "Restructure hierarchy"
                                 },
                                 new FeedbackClassificationResponse.ItemClassificationDetails
                                 {
-                                    ItemId = "next-id", Classification = "SUCCESS",
+                                    ItemId = item2.Id, Classification = "SUCCESS",
                                     Reason = "Already addressed", Text = "Looks good"
                                 }
                             ]
@@ -310,27 +345,32 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string>(),
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
                         It.IsAny<int?>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _) =>
                         {
                             classifyCalls++;
-                            var actualId = items.FirstOrDefault()?.Id ?? "1";
-                            if (classifyCalls == 1)
+                            if (items.Count == 0)
                             {
+                                // First pass: populate items with TSP_APPLICABLE
+                                var item = new FeedbackItem { Text = "rename X" };
+                                items.Add(item);
                                 return Task.FromResult(new FeedbackClassificationResponse
                                 {
                                     Classifications =
                                     [
                                         new FeedbackClassificationResponse.ItemClassificationDetails
                                         {
-                                            ItemId = actualId, Classification = "TSP_APPLICABLE",
+                                            ItemId = item.Id, Classification = "TSP_APPLICABLE",
                                             Reason = "fixable", Text = "rename X"
                                         }
                                     ]
                                 });
                             }
+                            // Second pass: return empty
                             return Task.FromResult(new FeedbackClassificationResponse { Classifications = [] });
                         }));
 
@@ -373,28 +413,33 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string>(),
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
                         It.IsAny<int?>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _) =>
                         {
                             classifyCalls++;
-                            var actualId = items.FirstOrDefault()?.Id ?? "1";
-                            if (classifyCalls == 1)
+                            if (items.Count == 0)
                             {
+                                // First pass: populate items with TSP_APPLICABLE
+                                var item = new FeedbackItem { Text = "rename X" };
+                                items.Add(item);
                                 return Task.FromResult(new FeedbackClassificationResponse
                                 {
                                     Classifications =
                                     [
                                         new FeedbackClassificationResponse.ItemClassificationDetails
                                         {
-                                            ItemId = actualId, Classification = "TSP_APPLICABLE",
+                                            ItemId = item.Id, Classification = "TSP_APPLICABLE",
                                             Reason = "fixable", Text = "rename X"
                                         }
                                     ]
                                 });
                             }
                             // Second pass: classifier sees failure context and flags manual intervention
+                            var actualId = items.FirstOrDefault()?.Id ?? "1";
                             return Task.FromResult(new FeedbackClassificationResponse
                             {
                                 Classifications =
@@ -431,11 +476,29 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string>(),
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
                         It.IsAny<int?>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _) =>
                         {
+                            if (items.Count == 0)
+                            {
+                                var item = new FeedbackItem { Text = "rename X to Y" };
+                                items.Add(item);
+                                return Task.FromResult(new FeedbackClassificationResponse
+                                {
+                                    Classifications =
+                                    [
+                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        {
+                                            ItemId = item.Id, Classification = "TSP_APPLICABLE",
+                                            Reason = "fixable", Text = "rename X to Y"
+                                        }
+                                    ]
+                                });
+                            }
                             var actualId = items.FirstOrDefault()?.Id ?? "1";
                             return Task.FromResult(new FeedbackClassificationResponse
                             {
@@ -488,28 +551,33 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string>(),
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
                         It.IsAny<int?>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _) =>
                         {
                             classifyCalls++;
-                            var actualId = items.FirstOrDefault()?.Id ?? "1";
-                            if (classifyCalls == 1)
+                            if (items.Count == 0)
                             {
+                                // First pass: populate items with TSP_APPLICABLE
+                                var item = new FeedbackItem { Text = "rename X" };
+                                items.Add(item);
                                 return Task.FromResult(new FeedbackClassificationResponse
                                 {
                                     Classifications =
                                     [
                                         new FeedbackClassificationResponse.ItemClassificationDetails
                                         {
-                                            ItemId = actualId, Classification = "TSP_APPLICABLE",
+                                            ItemId = item.Id, Classification = "TSP_APPLICABLE",
                                             Reason = "fixable", Text = "rename X"
                                         }
                                     ]
                                 });
                             }
                             // Second pass: reclassify as manual intervention (emitter issue)
+                            var actualId = items.FirstOrDefault()?.Id ?? "1";
                             return Task.FromResult(new FeedbackClassificationResponse
                             {
                                 Classifications =
@@ -560,30 +628,34 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string>(),
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
                         It.IsAny<int?>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _) =>
                         {
                             classifyCalls++;
-                            var actualId = items.FirstOrDefault()?.Id ?? "1";
-                            if (classifyCalls == 1)
+                            if (items.Count == 0)
                             {
+                                // First pass: populate items with TSP_APPLICABLE
+                                var item = new FeedbackItem { Text = "rename FooClient to BarClient" };
+                                items.Add(item);
                                 return Task.FromResult(new FeedbackClassificationResponse
                                 {
                                     Classifications =
                                     [
                                         new FeedbackClassificationResponse.ItemClassificationDetails
                                         {
-                                            ItemId = actualId, Classification = "TSP_APPLICABLE",
+                                            ItemId = item.Id, Classification = "TSP_APPLICABLE",
                                             Reason = "rename operation", Text = "rename FooClient to BarClient"
                                         }
                                     ]
                                 });
                             }
-
                             // Second pass: classifier sees regen failure and determines manual intervention
                             secondPassContext = items.FirstOrDefault()?.Context;
+                            var actualId = items.FirstOrDefault()?.Id ?? "1";
                             return Task.FromResult(new FeedbackClassificationResponse
                             {
                                 Classifications =
@@ -765,22 +837,26 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string>(),
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
                         It.IsAny<int?>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _) =>
                         {
                             classifyCalls++;
-                            var actualId = items.FirstOrDefault()?.Id ?? "1";
-                            if (classifyCalls == 1)
+                            if (items.Count == 0)
                             {
+                                // First pass: CODE_CUSTOMIZATION classification
+                                var item = new FeedbackItem { Text = "Rename maxSpeakers to maxSpeakerCount in customization code" };
+                                items.Add(item);
                                 return Task.FromResult(new FeedbackClassificationResponse
                                 {
                                     Classifications =
                                     [
                                         new FeedbackClassificationResponse.ItemClassificationDetails
                                         {
-                                            ItemId = actualId,
+                                            ItemId = item.Id,
                                             Classification = "CODE_CUSTOMIZATION",
                                             Reason = "Build error references generated code; fix is in the customization file",
                                             Text = "Rename maxSpeakers to maxSpeakerCount in customization code"
@@ -848,21 +924,24 @@ public class CustomizedCodeUpdateToolAutoTests
                     It.IsAny<string>(),
                     It.IsAny<string?>(),
                     It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
                     It.IsAny<int?>(),
                     It.IsAny<CancellationToken>()))
-                .Returns<List<FeedbackItem>, string, string, string?, string?, int?, CancellationToken>(
-                    (items, _, _, _, _, _, _) =>
+                .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
+                    (items, _, _, _, plainText, _, _, _, _) =>
                     {
-                        capturedFeedbackText = items.FirstOrDefault()?.Text;
-                        var actualId = items.FirstOrDefault()?.Id ?? "1";
+                        capturedFeedbackText = plainText;
+                        var item = new FeedbackItem { Text = plainText ?? "" };
+                        items.Add(item);
                         return Task.FromResult(new FeedbackClassificationResponse
                         {
                             Classifications =
                             [
                                 new FeedbackClassificationResponse.ItemClassificationDetails
                                 {
-                                    ItemId = actualId, Classification = "TSP_APPLICABLE",
-                                    Reason = "test", Text = "Rename client"
+                                    ItemId = item.Id, Classification = "TSP_APPLICABLE",
+                                    Reason = "test", Text = item.Text
                                 }
                             ]
                         });
@@ -895,12 +974,32 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string>(),
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
                         It.IsAny<int?>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _) =>
                         {
                             classifyCalls++;
+                            if (items.Count == 0)
+                            {
+                                // First pass: populate items with TSP_APPLICABLE
+                                var item = new FeedbackItem { Text = "rename FooClient" };
+                                items.Add(item);
+                                return Task.FromResult(new FeedbackClassificationResponse
+                                {
+                                    Classifications =
+                                    [
+                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        {
+                                            ItemId = item.Id, Classification = "TSP_APPLICABLE",
+                                            Reason = "fixable", Text = "rename FooClient"
+                                        }
+                                    ]
+                                });
+                            }
+                            // Second pass: capture context + return TSP_APPLICABLE to stay in loop
                             if (classifyCalls == 2)
                                 secondCallContext = items.FirstOrDefault()?.Context;
 
@@ -953,12 +1052,32 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string>(),
                         It.IsAny<string?>(),
                         It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
                         It.IsAny<int?>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns<List<FeedbackItem>, string, string, string?, string?, int?, CancellationToken>(
-                        (items, _, _, _, _, _, _) =>
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, string?, string?, int?, CancellationToken>(
+                        (items, _, _, _, _, _, _, _, _) =>
                         {
                             classifyCalls++;
+                            if (items.Count == 0)
+                            {
+                                // First pass: populate items with TSP_APPLICABLE
+                                var item = new FeedbackItem { Text = "rename X" };
+                                items.Add(item);
+                                return Task.FromResult(new FeedbackClassificationResponse
+                                {
+                                    Classifications =
+                                    [
+                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        {
+                                            ItemId = item.Id, Classification = "TSP_APPLICABLE",
+                                            Reason = "fixable", Text = "rename X"
+                                        }
+                                    ]
+                                });
+                            }
+                            // Second pass
                             var actualId = items.FirstOrDefault()?.Id ?? "1";
                             return Task.FromResult(new FeedbackClassificationResponse
                             {

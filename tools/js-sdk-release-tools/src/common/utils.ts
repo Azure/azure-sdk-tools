@@ -198,6 +198,51 @@ export function tryReadNpmPackageChangelog(changelogPathFromNpm: string, NpmView
     }
 }
 
+const ALLOWED_AUTOREST_FLAG_NAMES = new Set([
+    'typescript',
+    'tag',
+    'use',
+    'version',
+    'title',
+    'package-name',
+    'package-version',
+    'license-header',
+    'output-folder',
+    'head-as-boolean',
+    'generate-test',
+    'generate-sample',
+    'azure-arm',
+    'add-credentials',
+    'security',
+    'security-header-name',
+    'security-scopes',
+    'modelerfour.lenient-model-deduplication',
+    'typescript-sdks-folder',
+    'use-legacy-lro',
+    'azure-sdk-for-js',
+    'skip-enum-validation',
+    'ignore-nullable-on-optional',
+    'use-core-v2',
+]);
+
+const SAFE_ARG_VALUE = /^[a-zA-Z0-9@._\-/:~]+$/;
+
+export function sanitizeAdditionalArgs(additionalArgs: string): string {
+    const tokens = additionalArgs.trim().split(/\s+/).filter(Boolean);
+    for (const token of tokens) {
+        const eqIndex = token.indexOf('=');
+        const flagName = eqIndex === -1 ? token.replace(/^-+/, '') : token.slice(0, eqIndex).replace(/^-+/, '');
+        const value = eqIndex === -1 ? undefined : token.slice(eqIndex + 1);
+        if (!ALLOWED_AUTOREST_FLAG_NAMES.has(flagName)) {
+            throw new Error(`Security: autorest flag '${flagName}' is not in the allowed list.`);
+        }
+        if (value !== undefined && !SAFE_ARG_VALUE.test(value)) {
+            throw new Error(`Security: value '${value}' for '${flagName}' contains disallowed characters.`);
+        }
+    }
+    return tokens.join(' ');
+}
+
 export async function isMgmtPackage(typeSpecDirectory: string): Promise<Boolean> {
     const mainTspPath = join(typeSpecDirectory, 'main.tsp');
     const content = await readFile(mainTspPath, { encoding: 'utf-8' });

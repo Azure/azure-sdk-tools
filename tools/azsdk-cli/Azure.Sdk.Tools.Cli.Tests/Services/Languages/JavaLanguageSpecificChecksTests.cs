@@ -1236,5 +1236,214 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         }
 
         #endregion
+
+        #region RunAllTests Tests
+
+        [Test]
+        [TestCase(TestMode.Playback, "PLAYBACK")]
+        [TestCase(TestMode.Record, "RECORD")]
+        [TestCase(TestMode.Live, "LIVE")]
+        public async Task RunAllTests_SetsCorrectTestModeEnvironmentVariable(TestMode testMode, string expectedEnvValue)
+        {
+            var processResult = new ProcessResult { ExitCode = 0 };
+            processResult.AppendStdout("Tests passed!");
+
+            MavenOptions? capturedOptions = null;
+            MockMavenHelper
+                .Setup(p => p.Run(It.Is<MavenOptions>(o => o.Args.Contains("test")), It.IsAny<CancellationToken>()))
+                .Callback<MavenOptions, CancellationToken>((options, _) => capturedOptions = options)
+                .ReturnsAsync(processResult);
+
+            var result = await LangService.RunAllTests(JavaPackageDir, testMode, ct: CancellationToken.None);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ExitCode, Is.EqualTo(0));
+                Assert.That(capturedOptions, Is.Not.Null);
+                Assert.That(capturedOptions!.EnvironmentVariables, Is.Not.Null);
+                Assert.That(capturedOptions.EnvironmentVariables!["AZURE_TEST_MODE"], Is.EqualTo(expectedEnvValue));
+            });
+        }
+
+        [Test]
+        public async Task RunAllTests_PassesThroughLiveTestEnvironmentVariables()
+        {
+            var processResult = new ProcessResult { ExitCode = 0 };
+            processResult.AppendStdout("Tests passed!");
+
+            MavenOptions? capturedOptions = null;
+            MockMavenHelper
+                .Setup(p => p.Run(It.Is<MavenOptions>(o => o.Args.Contains("test")), It.IsAny<CancellationToken>()))
+                .Callback<MavenOptions, CancellationToken>((options, _) => capturedOptions = options)
+                .ReturnsAsync(processResult);
+
+            var envVars = new Dictionary<string, string>
+            {
+                ["SPEECH_ENDPOINT"] = "https://test.cognitiveservices.azure.com",
+                ["SPEECH_API_KEY"] = "test-key",
+            };
+
+            var result = await LangService.RunAllTests(JavaPackageDir, TestMode.Live, envVars, ct: CancellationToken.None);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ExitCode, Is.EqualTo(0));
+                Assert.That(capturedOptions, Is.Not.Null);
+                Assert.That(capturedOptions!.EnvironmentVariables!["SPEECH_ENDPOINT"], Is.EqualTo("https://test.cognitiveservices.azure.com"));
+                Assert.That(capturedOptions.EnvironmentVariables["SPEECH_API_KEY"], Is.EqualTo("test-key"));
+                Assert.That(capturedOptions.EnvironmentVariables["AZURE_TEST_MODE"], Is.EqualTo("LIVE"));
+            });
+        }
+
+        [Test]
+        public async Task RunAllTests_UsesDefaultTimeoutForPlayback()
+        {
+            var processResult = new ProcessResult { ExitCode = 0 };
+
+            MavenOptions? capturedOptions = null;
+            MockMavenHelper
+                .Setup(p => p.Run(It.Is<MavenOptions>(o => o.Args.Contains("test")), It.IsAny<CancellationToken>()))
+                .Callback<MavenOptions, CancellationToken>((options, _) => capturedOptions = options)
+                .ReturnsAsync(processResult);
+
+            await LangService.RunAllTests(JavaPackageDir, TestMode.Playback, ct: CancellationToken.None);
+
+            // Java default playback timeout is 5 minutes
+            Assert.That(capturedOptions!.Timeout, Is.EqualTo(TimeSpan.FromMinutes(5)));
+        }
+
+        [Test]
+        [TestCase(TestMode.Record)]
+        [TestCase(TestMode.Live)]
+        public async Task RunAllTests_UsesLongerTimeoutForLiveAndRecordModes(TestMode testMode)
+        {
+            var processResult = new ProcessResult { ExitCode = 0 };
+
+            MavenOptions? capturedOptions = null;
+            MockMavenHelper
+                .Setup(p => p.Run(It.Is<MavenOptions>(o => o.Args.Contains("test")), It.IsAny<CancellationToken>()))
+                .Callback<MavenOptions, CancellationToken>((options, _) => capturedOptions = options)
+                .ReturnsAsync(processResult);
+
+            await LangService.RunAllTests(JavaPackageDir, testMode, ct: CancellationToken.None);
+
+            Assert.That(capturedOptions!.Timeout, Is.GreaterThan(TimeSpan.FromMinutes(5)));
+        }
+
+        [Test]
+        public async Task RunAllTests_PushesAssetsAfterSuccessfulRecordMode()
+        {
+            using var tempDir = TempDirectory.Create("java-asset-push-test");
+            File.WriteAllText(Path.Combine(tempDir.DirectoryPath, "pom.xml"), "<project><modelVersion>4.0.0</modelVersion><groupId>com.azure</groupId><artifactId>test</artifactId><version>1.0</version></project>");
+            File.WriteAllText(Path.Combine(tempDir.DirectoryPath, "assets.json"), "{}");
+
+            var testResult = new ProcessResult { ExitCode = 0 };
+            testResult.AppendStdout("Tests passed!");
+
+            var pushResult = new ProcessResult { ExitCode = 0 };
+            pushResult.AppendStdout("Assets pushed!");
+
+            MockMavenHelper
+                .Setup(p => p.Run(It.IsAny<MavenOptions>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(testResult);
+
+            MockProcessHelper
+                .Setup(p => p.Run(It.Is<ProcessOptions>(o => o.Args.Contains("push")), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(pushResult);
+
+            var result = await LangService.RunAllTests(tempDir.DirectoryPath, TestMode.Record, ct: CancellationToken.None);
+
+            Assert.That(result.ExitCode, Is.EqualTo(0));
+            // Verify test run was called via mavenHelper
+            MockMavenHelper.Verify(p => p.Run(It.IsAny<MavenOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+            // Verify asset push was called via processHelper
+            // On Unix, Command="test-proxy" and Args=["push", ...]; on Windows, Command="cmd.exe" and Args=["/C", "test-proxy", "push", ...]
+            MockProcessHelper.Verify(p => p.Run(
+                It.Is<ProcessOptions>(o =>
+                    (o.Command == "test-proxy" && o.Args.Contains("push")) ||
+                    (o.Command == ProcessOptions.CMD && o.Args.Contains("test-proxy") && o.Args.Contains("push"))),
+                It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Test]
+        public async Task RunAllTests_DoesNotPushAssetsInPlaybackMode()
+        {
+            using var tempDir = TempDirectory.Create("java-no-push-playback-test");
+            File.WriteAllText(Path.Combine(tempDir.DirectoryPath, "pom.xml"), "<project><modelVersion>4.0.0</modelVersion><groupId>com.azure</groupId><artifactId>test</artifactId><version>1.0</version></project>");
+            File.WriteAllText(Path.Combine(tempDir.DirectoryPath, "assets.json"), "{}");
+
+            var processResult = new ProcessResult { ExitCode = 0 };
+            processResult.AppendStdout("Tests passed!");
+
+            MockMavenHelper
+                .Setup(p => p.Run(It.IsAny<MavenOptions>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(processResult);
+
+            await LangService.RunAllTests(tempDir.DirectoryPath, TestMode.Playback, ct: CancellationToken.None);
+
+            // Only the test run should be called via mavenHelper, not asset push via processHelper
+            MockMavenHelper.Verify(p => p.Run(It.IsAny<MavenOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+            MockProcessHelper.Verify(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Test]
+        public async Task RunAllTests_DoesNotPushAssetsWhenTestsFail()
+        {
+            using var tempDir = TempDirectory.Create("java-no-push-fail-test");
+            File.WriteAllText(Path.Combine(tempDir.DirectoryPath, "pom.xml"), "<project><modelVersion>4.0.0</modelVersion><groupId>com.azure</groupId><artifactId>test</artifactId><version>1.0</version></project>");
+            File.WriteAllText(Path.Combine(tempDir.DirectoryPath, "assets.json"), "{}");
+
+            var processResult = new ProcessResult { ExitCode = 1 };
+            processResult.AppendStderr("Tests failed!");
+
+            MockMavenHelper
+                .Setup(p => p.Run(It.IsAny<MavenOptions>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(processResult);
+
+            var result = await LangService.RunAllTests(tempDir.DirectoryPath, TestMode.Record, ct: CancellationToken.None);
+
+            Assert.That(result.ExitCode, Is.EqualTo(1));
+            // Only the test run should be called, not asset push
+            MockMavenHelper.Verify(p => p.Run(It.IsAny<MavenOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+            MockProcessHelper.Verify(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Test]
+        public async Task RunAllTests_DoesNotPushAssetsWhenNoAssetsJson()
+        {
+            var processResult = new ProcessResult { ExitCode = 0 };
+            processResult.AppendStdout("Tests passed!");
+
+            MockMavenHelper
+                .Setup(p => p.Run(It.IsAny<MavenOptions>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(processResult);
+
+            // JavaPackageDir doesn't have an assets.json file
+            var result = await LangService.RunAllTests(JavaPackageDir, TestMode.Record, ct: CancellationToken.None);
+
+            Assert.That(result.ExitCode, Is.EqualTo(0));
+            // Only the test run should be called
+            MockMavenHelper.Verify(p => p.Run(It.IsAny<MavenOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+            MockProcessHelper.Verify(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Test]
+        public async Task RunAllTests_DefaultMode_IsPlayback()
+        {
+            var processResult = new ProcessResult { ExitCode = 0 };
+
+            MavenOptions? capturedOptions = null;
+            MockMavenHelper
+                .Setup(p => p.Run(It.Is<MavenOptions>(o => o.Args.Contains("test")), It.IsAny<CancellationToken>()))
+                .Callback<MavenOptions, CancellationToken>((options, _) => capturedOptions = options)
+                .ReturnsAsync(processResult);
+
+            // Call without specifying testMode - should default to Playback
+            await LangService.RunAllTests(JavaPackageDir, ct: CancellationToken.None);
+
+            Assert.That(capturedOptions!.EnvironmentVariables!["AZURE_TEST_MODE"], Is.EqualTo("PLAYBACK"));
+        }
+
+        #endregion
     }
 }

@@ -19,3 +19,6 @@ exceptions: |
   18. DO NOT suggest removing the full package prefix from class names.
   19. DO NOT comment on the overuse of **kwargs
   20. DO NOT comment that the *syntax* of including a module path in the *definition* is wrong (e.g. flagging `class azure.foo.FooClient:` itself as illegal)
+  21. DO NOT suggest renaming parameters or attributes named `type`, `id`, or `object` to avoid shadowing Python built-ins. These are established Azure SDK patterns.
+  22. DO NOT suggest uppercasing or quoting `Literal` type annotation values. The enum-name-uppercase guideline applies only to `Enum` class member names, not to `Literal` string values which must match the service wire format.
+  23. DO NOT suggest adding an explicit `timeout` parameter to methods that already accept `**kwargs`. Timeout is passed through `**kwargs` in the Azure SDK for Python.

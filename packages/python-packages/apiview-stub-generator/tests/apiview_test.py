@@ -9,6 +9,7 @@ import sys
 import tempfile
 import shutil
 from subprocess import check_call, run, PIPE
+import pytest
 from pytest import fail, mark
 
 from apistub import ApiView, TokenKind, StubGenerator, ReviewLines
@@ -49,8 +50,14 @@ def _build_dist(src_dir, build_type, extension):
     return os.path.join(dist_dir, files[0])
 
 
+# Kept alive for the module lifetime so the directory is cleaned up at process exit.
+_SETUP_TEMP_DIR = None
+
+
 def _add_setup_package_to_temp(src_dir):
-    temp_dir = tempfile.mkdtemp()
+    global _SETUP_TEMP_DIR
+    _SETUP_TEMP_DIR = tempfile.TemporaryDirectory()
+    temp_dir = _SETUP_TEMP_DIR.name
     dest_dir = os.path.join(temp_dir, os.path.basename(src_dir) + "-copied")
     shutil.copytree(src_dir, dest_dir)
 
@@ -183,31 +190,30 @@ class TestApiView:
 
     def test_python_runtime_error(self):
         """StubGenerator should raise a clear RuntimeError when the package requires a newer Python."""
-        import pytest
-        tmp = tempfile.mkdtemp()
-        pkg_dir = os.path.join(tmp, "fake-future-pkg")
-        os.makedirs(os.path.join(pkg_dir, "fake_future_pkg"))
-        # Minimal __init__.py
-        with open(os.path.join(pkg_dir, "fake_future_pkg", "__init__.py"), "w") as f:
-            f.write("")
-        # pyproject.toml with python_requires >=4.30
-        with open(os.path.join(pkg_dir, "pyproject.toml"), "w") as f:
-            f.write(
-                "[build-system]\n"
-                'requires = ["setuptools>=42", "wheel"]\n'
-                'build-backend = "setuptools.build_meta"\n\n'
-                "[project]\n"
-                'name = "fake-future-pkg"\n'
-                'version = "0.0.1"\n'
-                'requires-python = ">=4.30"\n'
-            )
-        sdist_path = _build_dist(pkg_dir, "sdist", ".tar.gz")
-        whl_path = _build_dist(pkg_dir, "wheel", ".whl")
+        with tempfile.TemporaryDirectory() as tmp:
+            pkg_dir = os.path.join(tmp, "fake-future-pkg")
+            os.makedirs(os.path.join(pkg_dir, "fake_future_pkg"))
+            # Minimal __init__.py
+            with open(os.path.join(pkg_dir, "fake_future_pkg", "__init__.py"), "w") as f:
+                f.write("")
+            # pyproject.toml with python_requires >=4.30
+            with open(os.path.join(pkg_dir, "pyproject.toml"), "w") as f:
+                f.write(
+                    "[build-system]\n"
+                    'requires = ["setuptools>=42", "wheel"]\n'
+                    'build-backend = "setuptools.build_meta"\n\n'
+                    "[project]\n"
+                    'name = "fake-future-pkg"\n'
+                    'version = "0.0.1"\n'
+                    'requires-python = ">=4.30"\n'
+                )
+            sdist_path = _build_dist(pkg_dir, "sdist", ".tar.gz")
+            whl_path = _build_dist(pkg_dir, "wheel", ".whl")
 
-        for pkg_path in [pkg_dir, sdist_path, whl_path]:
-            stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=tempfile.gettempdir(), skip_pylint=True)
-            with pytest.raises(RuntimeError, match=r"requires Python >=4\.30"):
-                stub_gen.generate_tokens()
+            for pkg_path in [pkg_dir, sdist_path, whl_path]:
+                stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=tempfile.gettempdir(), skip_pylint=True)
+                with pytest.raises(RuntimeError, match=r"requires Python >=4\.30"):
+                    stub_gen.generate_tokens()
 
     def test_multiple_newline_only_add_one(self):
         apiview = ApiView()

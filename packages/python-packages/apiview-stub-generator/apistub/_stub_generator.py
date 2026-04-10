@@ -452,6 +452,8 @@ class StubGenerator:
     def _install_package(self):
         commands = [sys.executable, "-m", "pip", "install", self.pkg_path, "-q"]
         result = run(commands, timeout=120, stderr=PIPE, text=True)
+        if result.stderr:
+            logging.debug("pip stderr: %s", result.stderr.strip())
         if result.returncode != 0:
             stderr = result.stderr or ""
             # pip error format for Python version mismatch:

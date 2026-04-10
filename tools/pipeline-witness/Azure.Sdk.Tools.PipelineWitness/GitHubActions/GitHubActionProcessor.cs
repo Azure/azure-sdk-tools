@@ -441,7 +441,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
                 finally
                 {
                     // Only commit (dispose) the blob if processing completed successfully
-                    // If there was an exception, abandonthe upload - staged blocks will expire
+                    // If there was an exception, abandon the upload - staged blocks will expire
                     if (commitBlob && blobWriter != null)
                     {
                         await blobWriter.DisposeAsync();
@@ -462,45 +462,64 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
 
         private static bool UpdateStepLines(IList<LogLine> jobLines, IList<LogLine> stepLines)
         {
-            // For each line in the step, remove the corresponding line from the job
             if (stepLines.Count == 0)
             {
                 return true;
             }
 
-            // seek to the first line in the job that is after the first line in the step
-            for (int jobIndex = 0; jobIndex < jobLines.Count - stepLines.Count + 1; jobIndex++)
+            // Group step lines by step number and process each group independently.
+            // This allows for gaps in stepLines when some steps have no log entry in the archive.
+            var stepGroups = stepLines
+                .GroupBy(x => x.Step)
+                .OrderBy(g => g.Key)
+                .Select(g => g.ToList())
+                .ToList();
+
+            int searchStart = 0;
+            bool allFound = true;
+
+            foreach (var group in stepGroups)
             {
-                var isMatch = true;
+                bool found = false;
 
-                for (var stepIndex = 0; isMatch && stepIndex < stepLines.Count; stepIndex++)
+                for (int jobIndex = searchStart; jobIndex <= jobLines.Count - group.Count; jobIndex++)
                 {
-                    var stepLine = stepLines[stepIndex];
-                    var jobLine = jobLines[jobIndex + stepIndex];
+                    bool isMatch = true;
 
-                    if (jobLine.Message != stepLine.Message)
+                    for (int stepIndex = 0; isMatch && stepIndex < group.Count; stepIndex++)
                     {
-                        isMatch = false;
+                        if (jobLines[jobIndex + stepIndex].Message != group[stepIndex].Message)
+                        {
+                            isMatch = false;
+                        }
+                    }
+
+                    if (isMatch)
+                    {
+                        // Replace the step number and timestamp with the values from the step log
+                        for (int stepIndex = 0; stepIndex < group.Count; stepIndex++)
+                        {
+                            var stepLine = group[stepIndex];
+                            var jobLine = jobLines[jobIndex + stepIndex];
+
+                            jobLine.Step = stepLine.Step;
+                            jobLine.Number = stepLine.Number;
+                            jobLine.Timestamp = stepLine.Timestamp;
+                        }
+
+                        searchStart = jobIndex + group.Count;
+                        found = true;
+                        break;
                     }
                 }
 
-                if (isMatch)
+                if (!found)
                 {
-                    // Replace the step number and timestamp with the values from the step log
-                    for (var stepIndex = 0; stepIndex < stepLines.Count; stepIndex++)
-                    {
-                        var stepLine = stepLines[stepIndex];
-                        var jobLine = jobLines[jobIndex + stepIndex];
-
-                        jobLine.Step = stepLine.Step;
-                        jobLine.Number = stepLine.Number;
-                        jobLine.Timestamp = stepLine.Timestamp;
-                    }
-                    return true;
+                    allFound = false;
                 }
             }
 
-            return false;
+            return allFound;
         }
 
         private static List<LogLine> ReadLogLines(ZipArchiveEntry entry, int step, DateTimeOffset logStartTime)

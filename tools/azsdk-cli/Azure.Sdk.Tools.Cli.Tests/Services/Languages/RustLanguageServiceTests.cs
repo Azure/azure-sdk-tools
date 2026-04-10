@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Diagnostics;
+using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
@@ -50,6 +51,17 @@ public class RustLanguageServiceTests
     public void TearDown()
     {
         _tempDirectory.Dispose();
+    }
+
+    /// <summary>
+    /// Sets up the mock process helper to return a successful cargo read-manifest response.
+    /// </summary>
+    private void SetupCargoReadManifest(string name, string version)
+    {
+        var json = JsonSerializer.Serialize(new { name, version });
+        _mockProcessHelper
+            .Setup(x => x.Run(It.Is<ProcessOptions>(o => o.Args.Contains("read-manifest")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, json)] });
     }
 
     #region Language Identity
@@ -200,20 +212,13 @@ public class RustLanguageServiceTests
         // Arrange - create sdk/core/azure_core/Cargo.toml
         var packageDir = Path.Combine(_tempDirectory.DirectoryPath, "sdk", "core", "azure_core");
         Directory.CreateDirectory(packageDir);
-        File.WriteAllText(Path.Combine(packageDir, "Cargo.toml"), """
-            [package]
-            name = "azure_core"
-            version = "0.34.0"
-            description = "Azure Core crate"
-            edition = "2021"
-
-            [dependencies]
-            serde = "1.0"
-            """);
+        File.WriteAllText(Path.Combine(packageDir, "Cargo.toml"), "[package]\nname = \"azure_core\"\n");
 
         _mockGitHelper
             .Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_tempDirectory.DirectoryPath);
+
+        SetupCargoReadManifest("azure_core", "0.34.0");
 
         // Act
         var info = await _service.GetPackageInfo(packageDir);
@@ -234,15 +239,13 @@ public class RustLanguageServiceTests
     {
         var packageDir = Path.Combine(_tempDirectory.DirectoryPath, "sdk", "resourcemanager", "azure_mgmt_compute");
         Directory.CreateDirectory(packageDir);
-        File.WriteAllText(Path.Combine(packageDir, "Cargo.toml"), """
-            [package]
-            name = "azure_mgmt_compute"
-            version = "0.1.0"
-            """);
+        File.WriteAllText(Path.Combine(packageDir, "Cargo.toml"), "[package]\nname = \"azure_mgmt_compute\"\n");
 
         _mockGitHelper
             .Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_tempDirectory.DirectoryPath);
+
+        SetupCargoReadManifest("azure_mgmt_compute", "0.1.0");
 
         var info = await _service.GetPackageInfo(packageDir);
 
@@ -265,6 +268,10 @@ public class RustLanguageServiceTests
         Assert.That(info.PackageName, Is.Null);
         Assert.That(info.PackageVersion, Is.Null);
         Assert.That(info.Language, Is.EqualTo(SdkLanguage.Rust));
+        // cargo read-manifest should NOT be called when Cargo.toml is missing
+        _mockProcessHelper.Verify(
+            x => x.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Test]
@@ -272,17 +279,15 @@ public class RustLanguageServiceTests
     {
         var packageDir = Path.Combine(_tempDirectory.DirectoryPath, "sdk", "storage", "azure_storage_blobs");
         Directory.CreateDirectory(packageDir);
-        File.WriteAllText(Path.Combine(packageDir, "Cargo.toml"), """
-            [package]
-            name = "azure_storage_blobs"
-            version = "0.2.0"
-            """);
+        File.WriteAllText(Path.Combine(packageDir, "Cargo.toml"), "[package]\nname = \"azure_storage_blobs\"\n");
         File.WriteAllText(Path.Combine(packageDir, "README.md"), "# Azure Storage Blobs");
         File.WriteAllText(Path.Combine(packageDir, "CHANGELOG.md"), "## 0.2.0\n- Initial release");
 
         _mockGitHelper
             .Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_tempDirectory.DirectoryPath);
+
+        SetupCargoReadManifest("azure_storage_blobs", "0.2.0");
 
         var info = await _service.GetPackageInfo(packageDir);
 
@@ -291,45 +296,43 @@ public class RustLanguageServiceTests
     }
 
     [Test]
-    public async Task GetPackageInfo_WorkspaceInheritedVersion_ReturnsNullVersion()
+    public async Task GetPackageInfo_CargoReadManifestFails_ReturnsEmptyPackageInfo()
     {
         var packageDir = Path.Combine(_tempDirectory.DirectoryPath, "sdk", "core", "azure_core_macros");
         Directory.CreateDirectory(packageDir);
-        File.WriteAllText(Path.Combine(packageDir, "Cargo.toml"), """
-            [package]
-            name = "azure_core_macros"
-            version.workspace = true
-            edition.workspace = true
-            """);
+        File.WriteAllText(Path.Combine(packageDir, "Cargo.toml"), "[package]\nname = \"azure_core_macros\"\nversion.workspace = true\n");
 
         _mockGitHelper
             .Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_tempDirectory.DirectoryPath);
 
+        // Simulate cargo failing (e.g., workspace root not found)
+        _mockProcessHelper
+            .Setup(x => x.Run(It.Is<ProcessOptions>(o => o.Args.Contains("read-manifest")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult { ExitCode = 101, OutputDetails = [(StdioLevel.StandardError, "error: failed to read manifest")] });
+
         var info = await _service.GetPackageInfo(packageDir);
 
-        Assert.That(info.PackageName, Is.EqualTo("azure_core_macros"));
+        Assert.That(info.PackageName, Is.Null);
         Assert.That(info.PackageVersion, Is.Null);
     }
 
     #endregion
 
-    #region ExtractCargoField (tested via GetPackageInfo)
+    #region GetPackageInfo - cargo read-manifest edge cases
 
     [Test]
     public async Task GetPackageInfo_PreReleaseVersion_ExtractsCorrectly()
     {
         var packageDir = Path.Combine(_tempDirectory.DirectoryPath, "sdk", "core", "azure_core");
         Directory.CreateDirectory(packageDir);
-        File.WriteAllText(Path.Combine(packageDir, "Cargo.toml"), """
-            [package]
-            name = "azure_core"
-            version = "1.2.3-beta.1"
-            """);
+        File.WriteAllText(Path.Combine(packageDir, "Cargo.toml"), "[package]\nname = \"azure_core\"\n");
 
         _mockGitHelper
             .Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_tempDirectory.DirectoryPath);
+
+        SetupCargoReadManifest("azure_core", "1.2.3-beta.1");
 
         var info = await _service.GetPackageInfo(packageDir);
 
@@ -337,27 +340,36 @@ public class RustLanguageServiceTests
     }
 
     [Test]
-    public async Task GetPackageInfo_NoDependenciesSection_DoesNotConfuse()
+    public async Task GetPackageInfo_CargoOutputWithExtraFields_ParsesCorrectly()
     {
-        // Ensure field extraction only looks in [package], not [dependencies]
+        // cargo read-manifest returns many fields; ensure we extract just name and version
         var packageDir = Path.Combine(_tempDirectory.DirectoryPath, "sdk", "test", "my_crate");
         Directory.CreateDirectory(packageDir);
-        File.WriteAllText(Path.Combine(packageDir, "Cargo.toml"), """
-            [package]
-            name = "my_crate"
-            version = "0.1.0"
-
-            [dependencies]
-            name = "should_not_match"
-            """);
+        File.WriteAllText(Path.Combine(packageDir, "Cargo.toml"), "[package]\nname = \"my_crate\"\n");
 
         _mockGitHelper
             .Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_tempDirectory.DirectoryPath);
 
+        var fullJson = JsonSerializer.Serialize(new
+        {
+            name = "my_crate",
+            version = "0.1.0",
+            id = "my_crate 0.1.0 (path+file:///tmp/sdk/test/my_crate)",
+            license = "MIT",
+            description = "A test crate",
+            edition = "2021",
+            dependencies = new[] { new { name = "serde", version = "1.0" } }
+        });
+
+        _mockProcessHelper
+            .Setup(x => x.Run(It.Is<ProcessOptions>(o => o.Args.Contains("read-manifest")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, fullJson)] });
+
         var info = await _service.GetPackageInfo(packageDir);
 
         Assert.That(info.PackageName, Is.EqualTo("my_crate"));
+        Assert.That(info.PackageVersion, Is.EqualTo("0.1.0"));
     }
 
     #endregion

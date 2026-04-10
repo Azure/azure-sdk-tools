@@ -1,6 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using System.Text.RegularExpressions;
+using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
@@ -11,7 +11,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages;
 /// Language-specific service for Rust packages. Since the Rust SDK repo does not have a
 /// swagger_to_sdk_config.json, the build script path is hardcoded to eng/scripts/build-sdk.ps1.
 /// </summary>
-public sealed partial class RustLanguageService : LanguageService
+public sealed class RustLanguageService : LanguageService
 {
     private const string BuildScriptRelativePath = "eng/scripts/build-sdk.ps1";
 
@@ -40,9 +40,9 @@ public sealed partial class RustLanguageService : LanguageService
     protected override string[] PackageManifestPatterns => ["Cargo.toml"];
 
     /// <summary>
-    /// Resolves package information for a Rust crate by parsing its Cargo.toml manifest.
-    /// Extracts name, version, service directory, and SDK type following the same conventions
-    /// as the PowerShell Language-Settings.ps1 script.
+    /// Resolves package information for a Rust crate using <c>cargo read-manifest</c>,
+    /// matching the approach used by Language-Settings.ps1 in the azure-sdk-for-rust repo.
+    /// Extracts name, version, service directory, and SDK type.
     /// </summary>
     public override async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)
     {
@@ -63,13 +63,42 @@ public sealed partial class RustLanguageService : LanguageService
                 return CreateEmptyPackageInfo(fullPath, repoRoot, relativePath);
             }
 
-            var cargoContent = await File.ReadAllTextAsync(cargoTomlPath, ct);
-            var packageName = ExtractCargoField(cargoContent, "name");
-            var packageVersion = ExtractCargoField(cargoContent, "version");
+            // Use 'cargo read-manifest' to extract package metadata, matching the
+            // Language-Settings.ps1 approach: $package = cargo read-manifest ... | ConvertFrom-Json
+            var cargoResult = await processHelper.Run(new ProcessOptions(
+                command: "cargo",
+                args: ["read-manifest", "--manifest-path", cargoTomlPath],
+                logOutputStream: false,
+                workingDirectory: fullPath,
+                timeout: TimeSpan.FromSeconds(30)
+            ), ct);
+
+            if (cargoResult.ExitCode != 0)
+            {
+                logger.LogDebug("cargo read-manifest failed with exit code {ExitCode} for {Path}: {Output}",
+                    cargoResult.ExitCode, cargoTomlPath, cargoResult.Output);
+                return CreateEmptyPackageInfo(fullPath, repoRoot, relativePath);
+            }
+
+            string? packageName = null;
+            string? packageVersion = null;
+
+            using (var jsonDoc = JsonDocument.Parse(cargoResult.Stdout))
+            {
+                var root = jsonDoc.RootElement;
+                if (root.TryGetProperty("name", out var nameElement))
+                {
+                    packageName = nameElement.GetString();
+                }
+                if (root.TryGetProperty("version", out var versionElement))
+                {
+                    packageVersion = versionElement.GetString();
+                }
+            }
 
             if (string.IsNullOrEmpty(packageName))
             {
-                logger.LogDebug("Unable to extract package name from Cargo.toml at {Path}", cargoTomlPath);
+                logger.LogDebug("Unable to extract package name from cargo read-manifest at {Path}", cargoTomlPath);
                 return CreateEmptyPackageInfo(fullPath, repoRoot, relativePath);
             }
 
@@ -117,25 +146,6 @@ public sealed partial class RustLanguageService : LanguageService
             logger.LogDebug(ex, "Exception thrown when trying to get package properties for {Path}", packagePath);
             return CreateEmptyPackageInfo(fullPath, repoRoot, relativePath);
         }
-    }
-
-    /// <summary>
-    /// Extracts a field value from the [package] section of a Cargo.toml file.
-    /// Handles workspace-inherited values (e.g., "version.workspace = true") by returning null.
-    /// </summary>
-    internal static string? ExtractCargoField(string cargoContent, string fieldName)
-    {
-        // Match: fieldName = "value" (in [package] section, before next section)
-        var packageSectionMatch = CargoPackageSectionRegex().Match(cargoContent);
-        if (!packageSectionMatch.Success)
-        {
-            return null;
-        }
-
-        var packageSection = packageSectionMatch.Groups["content"].Value;
-        var fieldPattern = new Regex($@"^{Regex.Escape(fieldName)}\s*=\s*""(?<value>[^""]+)""", RegexOptions.Multiline);
-        var fieldMatch = fieldPattern.Match(packageSection);
-        return fieldMatch.Success ? fieldMatch.Groups["value"].Value : null;
     }
 
     /// <summary>
@@ -223,8 +233,4 @@ public sealed partial class RustLanguageService : LanguageService
             return (false, $"An error occurred: {ex.Message}", null);
         }
     }
-
-    // Matches the [package] section content up to the next section header or end of file
-    [GeneratedRegex(@"\[package\]\s*\n(?<content>(?:(?!\n\[).)*)", RegexOptions.Singleline | RegexOptions.CultureInvariant)]
-    private static partial Regex CargoPackageSectionRegex();
 }

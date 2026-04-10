@@ -191,7 +191,11 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
   }
 
   if (buildNode && node.navigationTreeNode && !isNavigationTreeCreated) {
-    navigationTree.push(node.navigationTreeNode);
+    // Skip nav entries for removed nodes (diff revision side of a modification, or purely deleted items).
+    const isRemovedNode = node.codeLines?.length > 0 && node.codeLines.every(l => l.diffKind === DIFF_REMOVED);
+    if (!isRemovedNode) {
+      navigationTree.push(node.navigationTreeNode);
+    }
   }  
 
   if (node.bottomTokenNodeIdHash) {

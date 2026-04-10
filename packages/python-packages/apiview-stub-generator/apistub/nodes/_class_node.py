@@ -1,9 +1,10 @@
 import ast
 import astroid
-import logging
 import inspect
-from enum import Enum
+import logging
 import operator
+import sys
+from enum import Enum
 from typing import Dict, List, Optional, Tuple
 
 from ._base_node import NodeEntityBase, get_qualified_name
@@ -219,6 +220,7 @@ class ClassNode(NodeEntityBase):
     ):
         super().__init__(namespace, parent_node, obj)
         self.base_class_names = []
+        self.class_keywords = []  # Store keyword arguments like metaclass=, total=
         # This is the name obtained by NodeEntityBase from __name__.
         # We must preserve it to detect the mismatch and issue a warning.
         self.children = ReviewLines()
@@ -268,11 +270,21 @@ class ClassNode(NodeEntityBase):
         if hasattr(func_obj, "__module__"):
             function_module = getattr(func_obj, "__module__")
             # TODO: Remove the "_model_base" workaround when this stuff is moved into azure-core.
-            return (
+            if not (
                 function_module
                 and function_module.startswith(self.pkg_root_namespace)
                 and not (function_module.endswith("_model_base") or function_module.endswith("model_base"))
-            )
+            ):
+                return False
+            # For dynamically-created classes (e.g. make_dataclass) that have no source file,
+            # only include functions that themselves have a real source file. This filters out
+            # generated methods like __init__ that were synthesized by the dataclass machinery,
+            # while keeping user-defined methods (e.g. lambdas passed via namespace=).
+            if not self._class_has_source:
+                sourcefile = inspect.getsourcefile(func_obj)
+                if not sourcefile or sourcefile == "<string>":
+                    return False
+            return True
         return False
 
     def _handle_variable(self, child_obj, name, *, type_string=None, value=None):
@@ -344,6 +356,17 @@ class ClassNode(NodeEntityBase):
 
         self._parse_decorators_from_class(self.obj)
 
+        # Cache whether this class has a Python source file. Used by _should_include_function()
+        # to avoid repeated filesystem reads for every member of the class.
+        # Use getsourcefile (O(1)) rather than getsource (O(N_lines) for classes) to avoid
+        # re-introducing the slow linear scan that _get_class_source was designed to replace.
+        # In Python 3.14+, NewType objects are not classes/functions and raise TypeError in
+        # inspect.getfile(), so we guard here.
+        try:
+            self._class_has_source = inspect.getsourcefile(self.obj) is not None
+        except TypeError:
+            self._class_has_source = False
+
         # find members in node
         # enums with duplicate values are screened out by "getmembers" so
         # we must rely on __members__ instead.
@@ -362,32 +385,42 @@ class ClassNode(NodeEntityBase):
         except AttributeError:
             pass
         overloads = parse_overloads(self, functions, is_module_level=False)
+
+        # PEP 649 (Python 3.14+): annotations are now lazy; __annotations__ is no longer
+        # eagerly populated in cls.__dict__. inspect.get_annotations() resolves string
+        # annotations from PEP 563 (from __future__ import annotations) via eval_str=True.
+        try:
+            own_annotations = inspect.get_annotations(self.obj, eval_str=True)
+        except Exception:
+            own_annotations = inspect.get_annotations(self.obj)
+        for item_name, item_type in own_annotations.items():
+            if item_name.startswith("_"):
+                continue
+            if is_typeddict and (
+                inspect.isclass(item_type)
+                or getattr(item_type, "__module__", None) == "typing"
+            ):
+                self.child_nodes.append(
+                    KeyNode(self.namespace, self, item_name, item_type)
+                )
+            else:
+                type_string = get_qualified_name(item_type, self.namespace)
+                self._handle_variable({}, item_name, type_string=type_string)
+
         for name, child_obj in members:
             if inspect.isbuiltin(child_obj):
                 continue
             elif self._should_include_function(child_obj):
-                # Include dunder and public methods
-                if not name.startswith("_") or name.startswith("__"):
+                # Include dunder and public methods.
+                # PEP 649 (Python 3.14+): skip __annotate_func__, an internal callable
+                # exposed by inspect.getmembers(). Its __name__ is "__annotate__", so
+                # check the callable's own name rather than the member-dict key.
+                func_name = getattr(child_obj, '__name__', name)
+                if (not name.startswith("_") or name.startswith("__")) and func_name != "__annotate__":
                     func_node = FunctionNode(
                         self.namespace, self, obj=child_obj, apiview=self.apiview
                     )
                     add_overload_nodes(self, func_node, overloads)
-            elif name == "__annotations__":
-                for item_name, item_type in child_obj.items():
-                    if item_name.startswith("_"):
-                        continue
-                    if is_typeddict and (
-                        inspect.isclass(item_type)
-                        or getattr(item_type, "__module__", None) == "typing"
-                    ):
-                        self.child_nodes.append(
-                            KeyNode(self.namespace, self, item_name, item_type)
-                        )
-                    else:
-                        type_string = get_qualified_name(item_type, self.namespace)
-                        self._handle_variable(
-                            child_obj, item_name, type_string=type_string
-                        )
 
             # now that we've looked at the specific dunder properties we are
             # willing to include, anything with a leading underscore should be ignored.
@@ -455,9 +488,80 @@ class ClassNode(NodeEntityBase):
         sorted_children.extend(filter(find_instancefunc, self.child_nodes))
         self.child_nodes = sorted_children
 
+    @staticmethod
+    def _unparse_without_quotes(node):
+        """Unparse an AST node, replacing string constants (forward references) with their value."""
+        class _ForwardRefToName(ast.NodeTransformer):
+            def visit_Constant(self, node):
+                if isinstance(node.value, str):
+                    return ast.Name(id=node.value, ctx=ast.Load())
+                return node
+
+        return ast.unparse(_ForwardRefToName().visit(node))
+
+    def _extract_bases_and_keywords_from_ast(self, class_node):
+        """Extract base class names and keyword arguments from an ast.ClassDef node."""
+        base_classes = [
+            self._unparse_without_quotes(base)
+            for base in class_node.bases
+            if ast.unparse(base) != "object"
+        ]
+        keywords = [
+            f"{kw.arg}={ast.unparse(kw.value)}"
+            for kw in class_node.keywords
+            if not ast.unparse(kw.value).lstrip(".").startswith("_")
+        ]
+        return base_classes, keywords
+
     def _get_base_classes(self):
-        # Find base classes
+        # Try to resolve from source (AST) to preserve exact names as written in source.
+        # Falls back to runtime introspection if source is unavailable.
+        #
+        # Use _get_class_source() (O(1) via pre-built file index) instead of
+        # inspect.getsource() which does an O(N_lines) scan for every class.
+
+        # Attempt 1: parse source for just this class directly (O(1) via cache)
+        try:
+            source = _get_class_source(self.obj)
+            if source:
+                class_node = ast.parse(source).body[0]
+                if isinstance(class_node, ast.ClassDef):
+                    base_classes, self.class_keywords = self._extract_bases_and_keywords_from_ast(class_node)
+                    if base_classes or self.class_keywords:
+                        return base_classes
+        except Exception as e:
+            logging.debug(f"Direct AST parsing failed for {self.name}: {e}")
+
+        # Attempt 2: look up the class in the already-built file index without re-reading the
+        # module. This covers enum classes where inspect.getsource may resolve to the instance.
+        try:
+            module_name = self.obj.__module__
+            if module_name and module_name in sys.modules:
+                module = sys.modules[module_name]
+                file_path = inspect.getsourcefile(module)
+                if file_path:
+                    if file_path not in _FILE_CLASS_SOURCE:
+                        _build_file_index(file_path)
+                    file_index = _FILE_CLASS_SOURCE.get(file_path, {})
+                    qualname = getattr(self.obj, "__qualname__", None) or self.name
+                    source = file_index.get(qualname) or file_index.get(self.name)
+                    if source:
+                        class_node = ast.parse(source).body[0]
+                        if isinstance(class_node, ast.ClassDef):
+                            base_classes, self.class_keywords = self._extract_bases_and_keywords_from_ast(class_node)
+                            if base_classes or self.class_keywords:
+                                return base_classes
+        except Exception as e:
+            logging.debug(f"Module-level AST parsing failed for {self.name}: {e}")
+
+        # Fall back to runtime introspection if source parsing fails or yields no bases
         base_classes = []
+        # Functional TypedDicts (e.g. Foo = TypedDict("Foo", {..})) have __required_keys__
+        # but in Python < 3.12 their __orig_bases__ / __bases__ resolve to dict, not TypedDict.
+        # Normalize to TypedDict so output is consistent across Python versions.
+        is_typeddict = hasattr(self.obj, "__required_keys__")
+        if is_typeddict:
+            return ["TypedDict"]
         bases = getattr(self.obj, "__orig_bases__", [])
         if not bases:
             bases = getattr(self.obj, "__bases__", [])
@@ -516,15 +620,40 @@ class ClassNode(NodeEntityBase):
         for err in self.pylint_errors:
             err.generate_tokens(self.apiview, target_id=self.namespace_id)
 
-        # Add inherited base classes
-        if self.base_class_names:
+        # Add inherited base classes and keywords
+        if self.base_class_names or self.class_keywords:
             line.add_punctuation("(", has_suffix_space=False)
-            self._generate_tokens_for_collection(
-                self.base_class_names, line, has_suffix_space=False
-            )
+
+            # Add base classes
+            if self.base_class_names:
+                self._generate_tokens_for_collection(
+                    self.base_class_names, line, has_suffix_space=False
+                )
+
+            # Add comma before keywords if we have both bases and keywords
+            if self.base_class_names and self.class_keywords:
+                line.add_punctuation(",")
+
+            # Add keyword arguments (e.g., metaclass=..., total=...)
+            for idx, keyword in enumerate(self.class_keywords):
+                # Parse keyword as "arg=value"
+                if "=" in keyword:
+                    arg, value = keyword.split("=", 1)
+                    line.add_text(arg, has_suffix_space=False)
+                    line.add_punctuation("=", has_suffix_space=False)
+                    # Use add_literal for Python literal values (True/False/None/numbers/strings)
+                    # so they render with the correct token kind rather than as type names.
+                    try:
+                        ast.literal_eval(value)
+                        line.add_literal(value, has_suffix_space=False)
+                    except (ValueError, SyntaxError):
+                        line.add_type(value, apiview=self.apiview, has_suffix_space=False)
+                    # Add comma between multiple keywords
+                    if idx < len(self.class_keywords) - 1:
+                        line.add_punctuation(",")
+
             line.add_punctuation(")", has_suffix_space=False)
         line.add_punctuation(":", has_suffix_space=False)
-
         # Add any ABC implementation list
         if self.implements:
             line.add_text(" ", has_suffix_space=False)

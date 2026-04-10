@@ -848,6 +848,61 @@ def check_links_kb(language: Optional[str] = None, fix: Optional[str] = None):
     print(f"\n  Fixed: {fixed}, Errors: {errors}")
 
 
+def consolidate_memories_kb(
+    kind: str,
+    ids: List[str],
+    apply: bool = False,
+):
+    """Find and merge duplicate memories linked to the specified items.
+
+    Requires --kind (guideline, example, or memory) and --ids (one or more IDs).
+    By default, runs in dry-run mode. Pass --apply to execute.
+    """
+    from src._memory_utils import apply_consolidation, find_consolidation_candidates
+    from src._utils import guideline_id_from_db
+
+    print(f"Scanning memory clusters for {len(ids)} {kind}(s)...")
+    actions = find_consolidation_candidates(kind=kind, ids=ids)
+
+    if not actions:
+        print(f"\n{GREEN}No duplicate memories found.{RESET}")
+        return
+
+    # Report findings
+    total_groups = sum(len(a["groups"]) for a in actions)
+    total_redundant = sum(len(g["memory_ids"]) - 1 for a in actions for g in a["groups"])
+    print(f"\nFound {total_groups} merge group(s) across {len(actions)} parent(s), "
+          f"affecting {total_redundant} redundant memory(ies):\n")
+
+    for action in actions:
+        parent_id = action["parent_id"]
+        if action["parent_type"] == "guideline":
+            parent_id = guideline_id_from_db(parent_id)
+        print(f"  {BOLD}{action['parent_type']}: {action['parent_title']}{RESET}")
+        print(f"    ID: {parent_id}")
+        for i, group in enumerate(action["groups"], 1):
+            print(f"\n    Group {i}: merge {len(group['memory_ids'])} memories")
+            print(f"      Reason: {group['reason']}")
+            print(f"      Merged title: {group['merged_title']}")
+            for mid in group["memory_ids"]:
+                print(f"        - {mid}")
+        print()
+
+    if not apply:
+        print(f"Run with {BOLD}--apply{RESET} to execute the consolidation.")
+        return
+
+    print(f"{BOLD}Applying consolidation...{RESET}")
+    result = apply_consolidation(actions)
+    print(f"\n{GREEN}Consolidation complete.{RESET}")
+    print(f"  Merged: {result['merged']} survivor(s) updated")
+    print(f"  Deleted: {result['deleted']} redundant memory(ies)")
+    if result["errors"]:
+        print(f"  {Fore.RED}Errors ({len(result['errors'])}):{RESET}")
+        for err in result["errors"]:
+            print(f"    - {err}")
+
+
 def review_summarize(language: str, target: str, base: str = None, remote: bool = False):
     """
     Summarize an API or a diff of two APIs.
@@ -2093,6 +2148,7 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("reindex", "reindex_search")
             g.command("all-guidelines", "get_all_guidelines")
             g.command("check-links", "check_links_kb")
+            g.command("consolidate-memories", "consolidate_memories_kb")
         with CommandGroup(self, "db", "__main__#{}") as g:
             g.command("get", "db_get")
             g.command("delete", "db_delete")
@@ -2266,6 +2322,26 @@ class CliCommandsLoader(CLICommandsLoader):
                 default=None,
                 help="Repair issues: 'all' fixes everything, 'broken' removes dangling refs, 'oneway' adds missing back-refs.",
                 options_list=["--fix"],
+            )
+        with ArgumentsContext(self, "kb consolidate-memories") as ac:
+            ac.argument(
+                "kind",
+                type=str,
+                choices=["guideline", "example", "memory"],
+                help="The type of item whose related memories should be consolidated.",
+                options_list=["--kind", "-k"],
+            )
+            ac.argument(
+                "ids",
+                type=str,
+                nargs="+",
+                help="One or more IDs of the specified kind to consolidate.",
+                options_list=["--ids"],
+            )
+            ac.argument(
+                "apply",
+                action="store_true",
+                help="Apply the consolidation. Without this flag, runs in dry-run mode and only reports what would be merged.",
             )
         with ArgumentsContext(self, "review get-job") as ac:
             ac.argument(

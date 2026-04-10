@@ -10,7 +10,7 @@ Shared memory deduplication utilities for mention and thread-resolution workflow
 
 import json
 import logging
-from typing import Optional
+from typing import List, Optional
 
 from src._database_manager import DatabaseManager
 from src._prompt_runner import run_prompt
@@ -218,3 +218,300 @@ def merge_and_save_memory(
 
     SearchManager.run_indexers()
     return {"success": [memory_id], "failures": {}}
+
+
+def _build_clusters_for_guideline(guideline_id: str, db, memory_index: dict) -> List[tuple]:
+    """Build a cluster from a single guideline's related memories."""
+    try:
+        raw_g = db.guidelines.get(guideline_id)
+    except Exception as e:
+        logger.warning("Failed to fetch guideline '%s': %s", guideline_id, e)
+        return []
+
+    mem_ids = raw_g.get("related_memories", [])
+    for mid in mem_ids:
+        if mid not in memory_index:
+            try:
+                memory_index[mid] = db.memories.get(mid)
+            except Exception:
+                pass
+    mem_ids = [mid for mid in mem_ids if mid in memory_index]
+    if len(mem_ids) >= 2:
+        return [("guideline", raw_g["id"], raw_g.get("title", raw_g["id"]), mem_ids)]
+    return []
+
+
+def _build_clusters_for_example(example_id: str, db, memory_index: dict) -> List[tuple]:
+    """Build a cluster from a single example's related memories."""
+    try:
+        raw_e = db.examples.get(example_id)
+    except Exception as e:
+        logger.warning("Failed to fetch example '%s': %s", example_id, e)
+        return []
+
+    mem_ids = raw_e.get("memory_ids", [])
+    for mid in mem_ids:
+        if mid not in memory_index:
+            try:
+                memory_index[mid] = db.memories.get(mid)
+            except Exception:
+                pass
+    mem_ids = [mid for mid in mem_ids if mid in memory_index]
+    if len(mem_ids) >= 2:
+        return [("example", raw_e["id"], raw_e.get("title", raw_e["id"]), mem_ids)]
+    return []
+
+
+def _build_clusters_for_memory(memory_id: str, db, memory_index: dict) -> List[tuple]:
+    """Build clusters from the parents of a single memory.
+
+    Finds all guidelines and examples that reference the given memory,
+    then returns clusters for those parents (if they have 2+ memories).
+    """
+    try:
+        raw_mem = db.memories.get(memory_id)
+    except Exception:
+        logger.warning("Memory '%s' not found.", memory_id)
+        return []
+
+    if memory_id not in memory_index:
+        memory_index[memory_id] = raw_mem
+
+    from src._models import Memory
+
+    mem = Memory(**raw_mem)
+    clusters: List[tuple] = []
+
+    for gid in mem.related_guidelines:
+        clusters.extend(_build_clusters_for_guideline(gid, db, memory_index))
+
+    for eid in mem.related_examples:
+        clusters.extend(_build_clusters_for_example(eid, db, memory_index))
+
+    return clusters
+
+
+def find_consolidation_candidates(
+    *,
+    kind: str,
+    ids: List[str],
+) -> List[dict]:
+    """Find clusters of memories linked to the given items that may contain duplicates.
+
+    For each provided ID, looks up the item's related memories and calls an
+    LLM to identify merge groups within each cluster.
+
+    Args:
+        kind: The type of item: ``"guideline"``, ``"example"``, or ``"memory"``.
+        ids: One or more IDs of items of the given ``kind``.
+
+    Returns:
+        A list of consolidation actions, each containing:
+        - ``parent_type``: "guideline" or "example"
+        - ``parent_id``: The parent item's ID
+        - ``parent_title``: The parent item's title
+        - ``groups``: List of merge groups from the LLM, each with
+          ``memory_ids``, ``merged_title``, ``merged_content``, ``reason``
+    """
+    db = DatabaseManager.get_instance()
+    memory_index: dict = {}
+    clusters: List[tuple] = []
+
+    builder = {
+        "guideline": _build_clusters_for_guideline,
+        "example": _build_clusters_for_example,
+        "memory": _build_clusters_for_memory,
+    }
+    build_fn = builder[kind]
+    for item_id in ids:
+        clusters.extend(build_fn(item_id, db, memory_index))
+
+    if not clusters:
+        return []
+
+    # Deduplicate clusters that share the exact same set of memory IDs
+    # (multiple parents may link the same memory set)
+    seen_memory_sets = set()
+    unique_clusters = []
+    for parent_type, parent_id, parent_title, mem_ids in clusters:
+        key = frozenset(mem_ids)
+        if key not in seen_memory_sets:
+            seen_memory_sets.add(key)
+            unique_clusters.append((parent_type, parent_id, parent_title, mem_ids))
+
+    actions = []
+    for parent_type, parent_id, parent_title, mem_ids in unique_clusters:
+        memories_for_prompt = []
+        for mid in mem_ids:
+            m = memory_index[mid]
+            memories_for_prompt.append({"id": m["id"], "title": m.get("title", ""), "content": m.get("content", "")})
+
+        try:
+            raw_result = run_prompt(
+                folder="other",
+                filename="consolidate_memories",
+                inputs={
+                    "parent_type": parent_type,
+                    "parent_title": parent_title,
+                    "memories": json.dumps(memories_for_prompt, indent=2),
+                },
+            )
+            result = json.loads(raw_result)
+        except Exception as e:
+            logger.warning(
+                "Consolidation prompt failed for %s '%s': %s",
+                parent_type,
+                parent_id,
+                e,
+            )
+            continue
+
+        groups = result.get("groups", [])
+        if groups:
+            actions.append(
+                {
+                    "parent_type": parent_type,
+                    "parent_id": parent_id,
+                    "parent_title": parent_title,
+                    "groups": groups,
+                }
+            )
+
+    return actions
+
+
+def apply_consolidation(actions: List[dict]) -> dict:
+    """Apply consolidation actions: merge duplicate memories and transfer links.
+
+    For each merge group:
+    1. The first memory in the group is the **survivor**. Its title and content
+       are updated to the merged values.
+    2. All links (guidelines, examples, other memories) from redundant memories
+       are transferred to the survivor.
+    3. Redundant memories are soft-deleted.
+
+    Args:
+        actions: List of consolidation actions from ``find_consolidation_candidates()``.
+
+    Returns:
+        ``{"merged": int, "deleted": int, "errors": [str]}``
+    """
+    from src._models import Example, Guideline, Memory
+    from src._utils import guideline_id_from_db
+
+    db = DatabaseManager.get_instance()
+    merged_count = 0
+    deleted_count = 0
+    errors = []
+
+    # Track which memory IDs have already been deleted in a prior group
+    # to avoid double-processing when multiple parents share memory clusters.
+    already_deleted = set()
+
+    for action in actions:
+        for group in action["groups"]:
+            memory_ids = group["memory_ids"]
+            # Skip memory IDs that were already deleted
+            memory_ids = [mid for mid in memory_ids if mid not in already_deleted]
+            if len(memory_ids) < 2:
+                continue
+
+            survivor_id = memory_ids[0]
+            redundant_ids = memory_ids[1:]
+
+            # Fetch the survivor memory
+            try:
+                raw_survivor = db.memories.get(survivor_id)
+                survivor = Memory(**raw_survivor)
+            except Exception as e:
+                errors.append(f"Failed to fetch survivor memory {survivor_id}: {e}")
+                continue
+
+            # Update survivor with merged content
+            survivor.title = group["merged_title"]
+            survivor.content = group["merged_content"]
+
+            # Transfer links from each redundant memory to the survivor
+            for rid in redundant_ids:
+                try:
+                    raw_redundant = db.memories.get(rid)
+                    redundant = Memory(**raw_redundant)
+                except Exception as e:
+                    errors.append(f"Failed to fetch redundant memory {rid}: {e}")
+                    continue
+
+                # Transfer guideline links
+                for gid in redundant.related_guidelines:
+                    if gid not in survivor.related_guidelines:
+                        survivor.related_guidelines.append(gid)
+                    # Update the guideline to reference the survivor instead
+                    try:
+                        raw_g = db.guidelines.get(gid)
+                        guideline = Guideline(**raw_g)
+                        if rid in guideline.related_memories:
+                            guideline.related_memories.remove(rid)
+                        if survivor_id not in guideline.related_memories:
+                            guideline.related_memories.append(survivor_id)
+                        db.guidelines.upsert(guideline.id, data=guideline, run_indexer=False)
+                    except Exception as e:
+                        display_id = guideline_id_from_db(gid)
+                        errors.append(f"Failed to update guideline {display_id} for memory {rid}: {e}")
+
+                # Transfer example links
+                for eid in redundant.related_examples:
+                    if eid not in survivor.related_examples:
+                        survivor.related_examples.append(eid)
+                    # Update the example to reference the survivor instead
+                    try:
+                        raw_e = db.examples.get(eid)
+                        example = Example(**raw_e)
+                        if rid in example.memory_ids:
+                            example.memory_ids.remove(rid)
+                        if survivor_id not in example.memory_ids:
+                            example.memory_ids.append(survivor_id)
+                        db.examples.upsert(example.id, data=example, run_indexer=False)
+                    except Exception as e:
+                        errors.append(f"Failed to update example {eid} for memory {rid}: {e}")
+
+                # Transfer memory-to-memory links
+                for mid in redundant.related_memories:
+                    if mid == survivor_id or mid in redundant_ids:
+                        continue
+                    if mid not in survivor.related_memories:
+                        survivor.related_memories.append(mid)
+                    # Update the linked memory to reference the survivor instead
+                    try:
+                        raw_m = db.memories.get(mid)
+                        linked = Memory(**raw_m)
+                        if rid in linked.related_memories:
+                            linked.related_memories.remove(rid)
+                        if survivor_id not in linked.related_memories:
+                            linked.related_memories.append(survivor_id)
+                        db.memories.upsert(linked.id, data=linked, run_indexer=False)
+                    except Exception as e:
+                        errors.append(f"Failed to update linked memory {mid} for memory {rid}: {e}")
+
+                # Soft-delete the redundant memory
+                try:
+                    db.memories.delete(rid, run_indexer=False)
+                    already_deleted.add(rid)
+                    deleted_count += 1
+                except Exception as e:
+                    errors.append(f"Failed to delete redundant memory {rid}: {e}")
+
+            # Remove references to deleted memories from the survivor
+            survivor.related_memories = [
+                mid for mid in survivor.related_memories if mid not in already_deleted
+            ]
+
+            # Save the survivor
+            try:
+                db.memories.upsert(survivor.id, data=survivor, run_indexer=False)
+                merged_count += 1
+            except Exception as e:
+                errors.append(f"Failed to save survivor memory {survivor_id}: {e}")
+
+    # Trigger indexers once at the end
+    SearchManager.run_indexers()
+
+    return {"merged": merged_count, "deleted": deleted_count, "errors": errors}

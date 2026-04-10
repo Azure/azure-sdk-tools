@@ -4,13 +4,12 @@
 # license information.
 # --------------------------------------------------------------------------
 
-# pylint: disable=missing-class-docstring,missing-function-docstring,redefined-outer-name,unused-argument
+# pylint: disable=missing-class-docstring,missing-function-docstring,redefined-outer-name,unused-argument,protected-access,no-member,attribute-defined-outside-init,no-value-for-parameter
 
 """
 Tests for DatabaseManager.link_items() and DatabaseManager.link_and_save().
 """
 
-import json
 import sys
 from unittest.mock import MagicMock, patch
 

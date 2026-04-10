@@ -1,0 +1,25 @@
+{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "merge_memories_result",
+    "strict": true,
+    "schema": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "The merged title for the consolidated memory."
+        },
+        "content": {
+          "type": "string",
+          "description": "The merged content for the consolidated memory."
+        }
+      },
+      "required": [
+        "title",
+        "content"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

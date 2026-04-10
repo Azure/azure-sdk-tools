@@ -4,7 +4,7 @@
 # license information.
 # --------------------------------------------------------------------------
 
-# pylint: disable=missing-class-docstring,missing-function-docstring,redefined-outer-name,unused-argument
+# pylint: disable=missing-class-docstring,missing-function-docstring,redefined-outer-name,unused-argument,protected-access,broad-exception-raised
 
 """
 Tests for `check_links_kb` CLI command.
@@ -12,8 +12,6 @@ Tests for `check_links_kb` CLI command.
 
 import sys
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 # Mock azure.cosmos and related modules before importing cli
 sys.modules["azure.cosmos"] = MagicMock()

@@ -87,7 +87,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
                 string blobPrefix = $"{repository}/{day:yyyy/MM/dd}/".ToLower();
 
                 AsyncPageable<BlobItem> blobs = this.runsContainerClient.GetBlobsAsync(prefix: blobPrefix, cancellationToken: cancellationToken);
-                
+
                 await foreach (BlobItem blob in blobs)
                 {
                     blobNames.Add(blob.Name);
@@ -367,73 +367,95 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
                     })
                     .ToDictionary(x => string.IsNullOrEmpty(x.ParentName) ? x.RecordName : $"{x.ParentName}/{x.Index}", x => x.Entry);
 
-                await using Stream blobStream = await blobClient.OpenWriteAsync(overwrite: true, new BlobOpenWriteOptions());
-                await using StreamWriter blobWriter = new(blobStream);
+                // Use explicit disposal control to avoid committing empty blobs on exceptions
+                // OpenWriteAsync stages blocks and commits them when the stream is disposed
+                // We only want to commit if processing completes successfully
+                Stream? blobStream = null;
+                StreamWriter? blobWriter = null;
+                bool commitBlob = false;
 
                 long characterCount = 0;
                 int lineCount = 0;
 
-                foreach (var job in jobs)
+                try
                 {
-                    // Retries may not run all jobs and skipped jobs will not have logs
-                    // The jobs still appear in the API response, but their runnerName is empty
-                    bool isRetrySkipped = string.IsNullOrEmpty(job.RunnerName) && attempt > 1;
+                    blobStream = await blobClient.OpenWriteAsync(overwrite: true, new BlobOpenWriteOptions());
+                    blobWriter = new StreamWriter(blobStream, leaveOpen: false);
 
-                    if (!logEntries.TryGetValue(job.Name, out ZipArchiveEntry jobEntry))
+                    foreach (var job in jobs)
                     {
-                        if (!isRetrySkipped)
+                        // Retries may not run all jobs and skipped jobs will not have logs
+                        // The jobs still appear in the API response, but their runnerName is empty
+                        bool isRetrySkipped = string.IsNullOrEmpty(job.RunnerName) && attempt > 1;
+
+                        if (!logEntries.TryGetValue(job.Name, out ZipArchiveEntry jobEntry))
                         {
-                            // All jobs in the first attempt or with runner names should have logs
-                            this.logger.LogWarning("Missing log entry for job {JobName}", job.Name);
+                            if (!isRetrySkipped)
+                            {
+                                // All jobs in the first attempt or with runner names should have logs
+                                this.logger.LogWarning("Missing log entry for job {JobName}", job.Name);
+                            }
+
+                            continue;
                         }
 
-                        continue;
-                    }
+                        IList<LogLine> logLines = ReadLogLines(jobEntry, step: 0, job.StartedAt);
 
-                    IList<LogLine> logLines = ReadLogLines(jobEntry, step: 0, job.StartedAt);
+                        IList<LogLine> stepLines = job.Steps
+                            .Where(x => x.Conclusion != WorkflowJobConclusion.Skipped)
+                            .OrderBy(x => x.Number)
+                            .SelectMany(step => logEntries.TryGetValue($"{job.Name}/{step.Number}", out var logEntry)
+                                ? ReadLogLines(logEntry, step.Number, step.StartedAt ?? job.StartedAt)
+                                : [])
+                            .ToArray();
 
-                    IList<LogLine> stepLines = job.Steps
-                        .Where(x => x.Conclusion != WorkflowJobConclusion.Skipped)
-                        .OrderBy(x => x.Number)
-                        .SelectMany(step => logEntries.TryGetValue($"{job.Name}/{step.Number}", out var logEntry)
-                            ? ReadLogLines(logEntry, step.Number, step.StartedAt ?? job.StartedAt)
-                            : [])
-                        .ToArray();
+                        UpdateStepLines(logLines, stepLines);
 
-                    UpdateStepLines(logLines, stepLines);
-
-                    foreach (LogLine logLine in logLines)
-                    {
-                        characterCount += logLine.Message.Length;
-                        lineCount += 1;
-
-                        await blobWriter.WriteLineAsync(JsonConvert.SerializeObject(new
+                        foreach (LogLine logLine in logLines)
                         {
-                            Repository = repository,
-                            WorkflowId = workflowId,
-                            WorkflowName = workflowName,
-                            RunId = runId,
-                            RunAttempt = attempt,
-                            JobId = job.Id,
-                            StepNumber = logLine.Step,
-                            LineNumber = logLine.Number,
-                            logLine.Message.Length,
-                            Timestamp = logLine.Timestamp.ToString(TimeFormat),
-                            logLine.Message,
-                            EtlIngestDate = DateTime.UtcNow.ToString(TimeFormat),
-                        }, jsonSettings));
-                    }
-                }
+                            characterCount += logLine.Message.Length;
+                            lineCount += 1;
 
-                this.logger.LogInformation("Processed {CharacterCount} characters and {LineCount} lines for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", characterCount, lineCount, repository, runName, runId, attempt);
+                            await blobWriter.WriteLineAsync(JsonConvert.SerializeObject(new
+                            {
+                                Repository = repository,
+                                WorkflowId = workflowId,
+                                WorkflowName = workflowName,
+                                RunId = runId,
+                                RunAttempt = attempt,
+                                JobId = job.Id,
+                                StepNumber = logLine.Step,
+                                LineNumber = logLine.Number,
+                                logLine.Message.Length,
+                                Timestamp = logLine.Timestamp.ToString(TimeFormat),
+                                logLine.Message,
+                                EtlIngestDate = DateTime.UtcNow.ToString(TimeFormat),
+                            }, jsonSettings));
+                        }
+                    }
+
+                    // If we get here, processing succeeded - mark blob for commit
+                    commitBlob = true;
+                    this.logger.LogInformation("Processed {CharacterCount} characters and {LineCount} lines for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", characterCount, lineCount, repository, workflowName, runId, attempt);
+                }
+                finally
+                {
+                    // Only commit (dispose) the blob if processing completed successfully
+                    // If there was an exception, abandonthe upload - staged blocks will expire
+                    if (commitBlob && blobWriter != null)
+                    {
+                        await blobWriter.DisposeAsync();
+                    }
+                    // On exception, don't dispose - the staged blocks remain uncommitted and will expire after 7 days
+                }
             }
             catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Conflict)
             {
-                this.logger.LogInformation("Ignoring existing blob exception for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, runName, runId, attempt);
+                this.logger.LogInformation("Ignoring existing blob exception for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, workflowName, runId, attempt);
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, "Error processing repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, runName, runId, attempt);
+                this.logger.LogError(ex, "Error processing repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, workflowName, runId, attempt);
                 throw;
             }
         }

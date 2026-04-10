@@ -24,6 +24,7 @@ pr:
 variables:
   - template: /eng/pipelines/templates/variables/globals.yml
   - template: /eng/pipelines/templates/variables/image.yml
+  - group: 'Azure SDK QA Bot Dev Variables'
   - name: workingDirectory
     value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-agent'
   - name: pythonVersion
@@ -52,13 +53,18 @@ extends:
                 inputs:
                   versionSpec: $(pythonVersion)
 
-              - bash: |
-                  set -euo pipefail
-                  python -m pip install --upgrade pip
-                  pip install --pre -r requirements.txt
-                  pip install pytest pytest-asyncio pyright
+              - task: AzureCLI@2
                 displayName: 'Install dependencies'
-                workingDirectory: $(workingDirectory)
+                inputs:
+                  azureSubscription: $(SERVICE_CONNECTION)
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  workingDirectory: $(workingDirectory)
+                  inlineScript: |
+                    set -euo pipefail
+                    python -m pip install --upgrade pip
+                    pip install --pre -r requirements.txt
+                    pip install pytest pytest-asyncio pyright
 
               - bash: |
                   set -euo pipefail

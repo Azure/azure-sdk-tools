@@ -20,7 +20,6 @@ import re
 from subprocess import check_call, CalledProcessError, run, PIPE
 import zipfile
 import tarfile
-import re
 try:
     import tomllib
 except ModuleNotFoundError:

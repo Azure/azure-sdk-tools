@@ -118,6 +118,22 @@ class ChatService:
             },
         )
 
+        if response.status != "completed":
+            logger.warning(
+                "Agent response not completed: id=%s, status=%s, error=%s, "
+                "incomplete_details=%s, usage=%s, conversation=%s",
+                response.id,
+                response.status,
+                response.error,
+                response.incomplete_details,
+                response.usage,
+                agent_conversation_id,
+            )
+            # The Foundry hosted-agent may mark the response as failed/incomplete
+            # even though the agent actually produced an answer (visible in traces).
+            # Retry by retrieving the stored response after a brief delay.
+            response = await self._retry_retrieve(openai_client, response.id, response)
+
         chat_response = self._postprocess(req, response, agent_conversation_id)
         asyncio.create_task(
             self._save_bot_answer_to_conversation(

@@ -49,6 +49,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddScoped<LanguageService, JavaScriptLanguageService>();
             services.AddScoped<LanguageService, PythonLanguageService>();
             services.AddScoped<LanguageService, GoLanguageService>();
+            services.AddScoped<LanguageService, RustLanguageService>();
 
             // Helper classes
             services.AddSingleton<IFileHelper, FileHelper>();

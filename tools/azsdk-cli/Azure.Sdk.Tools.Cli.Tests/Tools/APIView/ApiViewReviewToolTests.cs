@@ -31,7 +31,7 @@ public class ApiViewReviewToolTests
             .Setup(x => x.GetCommentsByRevisionAsync(revisionId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedComments);
 
-        APIViewResponse response = await apiViewReviewTool.GetComments(apiViewUrl, CancellationToken.None);
+        APIViewResponse response = await apiViewReviewTool.GetComments(apiViewUrl, null, ct: CancellationToken.None);
 
         Assert.That(response.Result, Is.EqualTo(expectedComments));
         Assert.That(response.ResponseError, Is.Null);
@@ -46,7 +46,7 @@ public class ApiViewReviewToolTests
             .Setup(x => x.GetCommentsByRevisionAsync("test-revision-456", It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedComments);
 
-        APIViewResponse response = await apiViewReviewTool.GetComments(apiViewUrl, CancellationToken.None);
+        APIViewResponse response = await apiViewReviewTool.GetComments(apiViewUrl, null, ct: CancellationToken.None);
 
         Assert.That(response.Result, Is.EqualTo(expectedComments));
         Assert.That(response.ResponseError, Is.Null);
@@ -57,7 +57,7 @@ public class ApiViewReviewToolTests
     {
         string invalidUrl = "https://apiview.dev/review/123"; // Missing activeApiRevisionId
 
-        APIViewResponse result = await apiViewReviewTool.GetComments(invalidUrl, CancellationToken.None);
+        APIViewResponse result = await apiViewReviewTool.GetComments(invalidUrl, null, ct: CancellationToken.None);
 
         Assert.That(result.ResponseError, Does.Contain("activeApiRevisionId"));
     }
@@ -67,13 +67,13 @@ public class ApiViewReviewToolTests
     {
         string malformedUrl = "not-a-valid-url";
 
-        APIViewResponse result = await apiViewReviewTool.GetComments(malformedUrl, CancellationToken.None);
+        APIViewResponse result = await apiViewReviewTool.GetComments(malformedUrl, null, ct: CancellationToken.None);
 
         _mockApiViewService
             .Setup(x => x.GetCommentsByRevisionAsync(malformedUrl, It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        result = await apiViewReviewTool.GetComments(malformedUrl, CancellationToken.None);
+        result = await apiViewReviewTool.GetComments(malformedUrl, null, ct: CancellationToken.None);
         Assert.That(result.ResponseError, Does.Contain("Failed to get comments: Input needs to be a valid APIView URL"));
     }
 
@@ -86,7 +86,7 @@ public class ApiViewReviewToolTests
             .Setup(x => x.GetCommentsByRevisionAsync(revisionId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        APIViewResponse result = await apiViewReviewTool.GetComments(apiViewUrl, CancellationToken.None);
+        APIViewResponse result = await apiViewReviewTool.GetComments(apiViewUrl, null, ct: CancellationToken.None);
 
         Assert.That(result.ResponseError, Does.Contain("Failed to retrieve comments"));
     }
@@ -100,7 +100,7 @@ public class ApiViewReviewToolTests
             .Setup(x => x.GetCommentsByRevisionAsync(revisionId, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Service error"));
 
-        APIViewResponse result = await apiViewReviewTool.GetComments(apiViewUrl, CancellationToken.None);
+        APIViewResponse result = await apiViewReviewTool.GetComments(apiViewUrl, null, ct: CancellationToken.None);
 
         Assert.That(result.ResponseError, Does.Contain("Failed to get comments: Service error"));
     }
@@ -109,7 +109,7 @@ public class ApiViewReviewToolTests
     public async Task GetRevisionComments_WithEmptyRevisionId_ReturnsError()
     {
         string emptyRevisionId = "";
-        APIViewResponse result = await apiViewReviewTool.GetComments(emptyRevisionId, CancellationToken.None);
+        APIViewResponse result = await apiViewReviewTool.GetComments(emptyRevisionId, null, ct: CancellationToken.None);
 
         Assert.That(result.ResponseError, Does.Contain("cannot be null or empty"));
     }
@@ -126,7 +126,7 @@ public class ApiViewReviewToolTests
             .Setup(x => x.GetCommentsByRevisionAsync(expectedRevisionId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedComments);
 
-        await apiViewReviewTool.GetComments(apiViewUrl, CancellationToken.None);
+        await apiViewReviewTool.GetComments(apiViewUrl, null, ct: CancellationToken.None);
         _mockApiViewService.Verify(x => x.GetCommentsByRevisionAsync(expectedRevisionId, It.IsAny<CancellationToken>()), Times.Once);
     }
 

@@ -3,6 +3,11 @@ namespace Azure.Sdk.Tools.Cli.Services.APIView;
 
 public interface IAPIViewService
 {
+    /// <summary>
+    /// Configures the HTTP service to target the environment inferred from the given APIView URL.
+    /// Call this once before making any requests for a given URL.
+    /// </summary>
+    void ConfigureForUrl(string apiViewUrl, string? explicitEnvironment = null);
     Task<string?> GetRevisionContent(string apiRevisionId, string reviewId, string contentReturnType, CancellationToken ct);
     Task<string?> GetCommentsByRevisionAsync(string revisionId, CancellationToken ct);
     Task<string?> GetMetadata(string revisionId, CancellationToken ct);
@@ -42,6 +47,29 @@ public class APIViewService : IAPIViewService
     {
         _httpService = httpService;
         _logger = logger;
+    }
+
+    public void ConfigureForUrl(string apiViewUrl, string? explicitEnvironment = null)
+    {
+        string environment = ResolveEnvironment(apiViewUrl, explicitEnvironment);
+        _httpService.ConfigureEnvironment(environment);
+    }
+
+    private static string ResolveEnvironment(string url, string? explicitEnvironment)
+    {
+        if (!string.IsNullOrEmpty(explicitEnvironment))
+        {
+            return explicitEnvironment;
+        }
+        if (url.Contains("apiviewstagingtest.com", StringComparison.OrdinalIgnoreCase))
+        {
+            return "staging";
+        }
+        if (url.Contains("localhost", StringComparison.OrdinalIgnoreCase))
+        {
+            return "local";
+        }
+        return "production";
     }
 
     public async Task<string?> GetCommentsByRevisionAsync(string revisionId, CancellationToken ct)

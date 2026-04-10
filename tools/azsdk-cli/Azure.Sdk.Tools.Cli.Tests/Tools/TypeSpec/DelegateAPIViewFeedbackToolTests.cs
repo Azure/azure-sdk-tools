@@ -3,6 +3,7 @@
 
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 using Moq;
@@ -16,6 +17,7 @@ public class DelegateAPIViewFeedbackToolTests
     private DelegateAPIViewFeedbackTool _tool = null!;
     private Mock<IAPIViewFeedbackService> _mockService = null!;
     private Mock<IGitHubService> _mockGitHubService = null!;
+    private Mock<IAPIViewService> _mockApiViewService = null!;
     private TestLogger<DelegateAPIViewFeedbackTool> _logger = null!;
 
     [SetUp]
@@ -24,7 +26,8 @@ public class DelegateAPIViewFeedbackToolTests
         _logger = new TestLogger<DelegateAPIViewFeedbackTool>();
         _mockService = new Mock<IAPIViewFeedbackService>();
         _mockGitHubService = new Mock<IGitHubService>();
-        _tool = new DelegateAPIViewFeedbackTool(_mockService.Object, _mockGitHubService.Object, _logger);
+        _mockApiViewService = new Mock<IAPIViewService>();
+        _tool = new DelegateAPIViewFeedbackTool(_mockService.Object, _mockGitHubService.Object, _mockApiViewService.Object, _logger);
     }
 
     #region No Comments Tests

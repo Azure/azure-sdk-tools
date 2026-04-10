@@ -46,6 +46,11 @@ public class APIViewReviewTool : MCPMultiCommandTool
         Required = true
     };
 
+    private readonly Option<string> environmentOption = new("--environment")
+    {
+        Description = "The APIView environment to connect to: production, staging, or local. Auto-detected from the URL if not specified."
+    };
+
     private readonly Option<string> buildIdOption = new("--build-id")
     {
         Description = "The Azure DevOps build ID",
@@ -156,10 +161,10 @@ public class APIViewReviewTool : MCPMultiCommandTool
 
     protected override List<Command> GetCommands() =>
     [
-        new McpCommand(GetCommentsCmd, "Get comments for a specific APIView URL", ApiViewGetCommentsToolName) { apiViewUrlOption },
+        new McpCommand(GetCommentsCmd, "Get comments for a specific APIView URL", ApiViewGetCommentsToolName) { apiViewUrlOption, environmentOption },
         new(GetContentCmd, "Get content by APIView URL")
         {
-            apiViewUrlOption, outputFileOption, contentReturnTypeOption
+            apiViewUrlOption, outputFileOption, contentReturnTypeOption, environmentOption
         },
         new(CreateCIRevisionCmd, "Create an API revision from Azure DevOps pipeline artifacts (CI/release pipeline usage)")
         {
@@ -191,11 +196,12 @@ public class APIViewReviewTool : MCPMultiCommandTool
     }
 
     [McpServerTool(Name = ApiViewGetCommentsToolName), Description("Get API review comments and feedback from APIView for a package. Retrieves all reviewer comments left on the API review.")]
-    public async Task<APIViewResponse> GetComments(string apiViewUrl, CancellationToken ct = default)
+    public async Task<APIViewResponse> GetComments(string apiViewUrl, string? environment = null, CancellationToken ct = default)
     {
         try
         {
             (string revisionId, _) = ExtractIdsFromUrl(apiViewUrl);
+            _apiViewService.ConfigureForUrl(apiViewUrl, environment);
 
             string? result = await _apiViewService.GetCommentsByRevisionAsync(revisionId, ct);
             if (result == null)
@@ -217,7 +223,8 @@ public class APIViewReviewTool : MCPMultiCommandTool
     private async Task<APIViewResponse> GetComments(ParseResult parseResult, CancellationToken ct)
     {
         string? apiViewUrl = parseResult.GetValue(apiViewUrlOption);
-        return await GetComments(apiViewUrl!, ct);
+        string? environment = parseResult.GetValue(environmentOption);
+        return await GetComments(apiViewUrl!, environment, ct);
     }
 
     private async Task<APIViewResponse> GetContent(ParseResult parseResult, CancellationToken ct)
@@ -225,6 +232,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
         string? apiViewUrl = parseResult.GetValue(apiViewUrlOption);
         string? outputFile = parseResult.GetValue(outputFileOption);
         string? contentType = parseResult.GetValue(contentReturnTypeOption);
+        string? environment = parseResult.GetValue(environmentOption);
 
         if (!Enum.TryParse<ContentType>(contentType, ignoreCase: true, out _))
         {
@@ -232,6 +240,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
             return new APIViewResponse { ResponseError = $"Invalid content type '{contentType}'. Must be one of: {validValues}." };
         }
 
+        _apiViewService.ConfigureForUrl(apiViewUrl!, environment);
         (string revisionId, string reviewId) = ExtractIdsFromUrl(apiViewUrl!);
         try
         {
@@ -375,6 +384,10 @@ public class APIViewReviewTool : MCPMultiCommandTool
             return new APIViewResponse { ResponseError = $"Failed to create API revision: {ex.Message}" };
         }
     }
+
+    internal static string ResolveEnvironment(string url, string? explicitEnvironment) =>
+        url.Contains("apiviewstagingtest.com", StringComparison.OrdinalIgnoreCase) ? "staging" :
+        url.Contains("localhost", StringComparison.OrdinalIgnoreCase) ? "local" : "production";
 
     public static (string revisionId, string reviewId) ExtractIdsFromUrl(string url)
     {

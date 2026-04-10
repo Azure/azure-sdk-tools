@@ -2,7 +2,17 @@
 
 from __future__ import annotations
 
+from enum import Enum
+
 from pydantic import BaseModel
+
+
+class Reaction(str, Enum):
+    """User feedback reaction types."""
+
+    good = "good"
+    bad = "bad"
+    unknown = "unknown"
 
 
 class FeedbackRequest(BaseModel):
@@ -10,7 +20,7 @@ class FeedbackRequest(BaseModel):
 
     channel_id: str | None = None
     tenant_id: str = "unknown"
-    reaction: str = "unknown"  # "good" or "bad"
+    reaction: Reaction = Reaction.unknown
     comment: str | None = None
     reasons: list[str] = []
     link: str | None = None

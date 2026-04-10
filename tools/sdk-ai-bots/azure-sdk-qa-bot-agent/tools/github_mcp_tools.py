@@ -116,7 +116,7 @@ async def _get_installation_token(jwt: str, owner: str) -> tuple[str, datetime]:
         "Accept": "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
     }
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=10.0) as client:
         resp = await client.get(f"{_GITHUB_API}/app/installations", headers=headers)
         resp.raise_for_status()
         installations = resp.json()

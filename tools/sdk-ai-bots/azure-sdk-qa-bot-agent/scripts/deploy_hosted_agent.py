@@ -547,8 +547,8 @@ def main() -> None:
                         protocol=AgentProtocol.RESPONSES, version="v1"
                     )
                 ],
-                cpu="4",
-                memory="8Gi",
+                cpu="2",
+                memory="4Gi",
                 image=image,
                 environment_variables={
                     "AZURE_APPCONFIG_ENDPOINT": appconfig_endpoint,

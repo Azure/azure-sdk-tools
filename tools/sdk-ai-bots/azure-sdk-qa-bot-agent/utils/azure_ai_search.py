@@ -15,12 +15,12 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from enum import Enum
 
 from azure.search.documents.aio import SearchClient as AzureSearchClient
 from azure.search.documents.knowledgebases.aio import KnowledgeBaseRetrievalClient
 from azure.search.documents.knowledgebases.models import (
     KnowledgeBaseRetrievalRequest,
-    KnowledgeRetrievalMediumReasoningEffort,
     KnowledgeRetrievalSemanticIntent,
     SearchIndexKnowledgeSourceParams,
 )
@@ -188,11 +188,14 @@ class SearchClient:
 
             if chunk.header1:
                 h1_key = f"{chunk.source}|{chunk.title}|{chunk.header1}"
-                if h1_key in expanded_h1 and hierarchy in ("header2", "header3"):
+                if h1_key in expanded_h1 and hierarchy in (
+                    HierarchyLevel.header2,
+                    HierarchyLevel.header3,
+                ):
                     continue
             if chunk.header1 and chunk.header2:
                 h2_key = f"{chunk.source}|{chunk.title}|{chunk.header1}|{chunk.header2}"
-                if h2_key in expanded_h2 and hierarchy == "header3":
+                if h2_key in expanded_h2 and hierarchy == HierarchyLevel.header3:
                     continue
             if chunk.header1 and chunk.header2 and chunk.header3:
                 h3_key = f"{chunk.source}|{chunk.title}|{chunk.header1}|{chunk.header2}|{chunk.header3}"
@@ -201,14 +204,16 @@ class SearchClient:
 
             unique.append(chunk)
 
-            if hierarchy == "header1" and chunk.header1:
+            if hierarchy == HierarchyLevel.header1 and chunk.header1:
                 expanded_h1.add(f"{chunk.source}|{chunk.title}|{chunk.header1}")
-            elif hierarchy == "header2" and chunk.header1 and chunk.header2:
+            elif (
+                hierarchy == HierarchyLevel.header2 and chunk.header1 and chunk.header2
+            ):
                 expanded_h2.add(
                     f"{chunk.source}|{chunk.title}|{chunk.header1}|{chunk.header2}"
                 )
             elif (
-                hierarchy == "header3"
+                hierarchy == HierarchyLevel.header3
                 and chunk.header1
                 and chunk.header2
                 and chunk.header3
@@ -295,15 +300,24 @@ def _escape_odata(value: str) -> str:
     return value.replace("'", "''")
 
 
-def _detect_hierarchy(header1: str, header2: str, header3: str) -> str:
+class HierarchyLevel(str, Enum):
+    """Hierarchy level of a knowledge chunk."""
+
+    header1 = "header1"
+    header2 = "header2"
+    header3 = "header3"
+    unknown = "unknown"
+
+
+def _detect_hierarchy(header1: str, header2: str, header3: str) -> HierarchyLevel:
     """Determine the hierarchy level of a chunk (mirrors Go DetectChunkHierarchy)."""
     if header3:
-        return "header3"
+        return HierarchyLevel.header3
     if header2 and header1:
-        return "header2"
+        return HierarchyLevel.header2
     if header1:
-        return "header1"
-    return "unknown"
+        return HierarchyLevel.header1
+    return HierarchyLevel.unknown
 
 
 def _build_hierarchy_filter(

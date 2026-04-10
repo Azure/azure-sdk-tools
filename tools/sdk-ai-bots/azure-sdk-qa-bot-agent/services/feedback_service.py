@@ -16,7 +16,7 @@ from typing import Optional
 from openpyxl import Workbook, load_workbook
 
 from config.app_config import get as cfg
-from models.feedback import FeedbackRequest, FeedbackResponse
+from models.feedback import FeedbackRequest, FeedbackResponse, Reaction
 from utils.azure_storage import download_blob, upload_blob
 
 logger = logging.getLogger(__name__)
@@ -50,7 +50,7 @@ class FeedbackService:
         await self._save_feedback(req)
         result.saved = True
 
-        if req.reaction == "bad":
+        if req.reaction == Reaction.bad:
             result.issue_url = await self._create_github_issue(req)
 
         return result

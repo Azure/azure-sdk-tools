@@ -25,7 +25,9 @@ from config.app_config import get as cfg
 
 logger = logging.getLogger(__name__)
 
-_EPISODE_PROMPT_PATH = Path(__file__).resolve().parent.parent / "prompts" / "episode_extraction.md"
+_EPISODE_PROMPT_PATH = (
+    Path(__file__).resolve().parent.parent / "prompts" / "episode_extraction.md"
+)
 
 
 class ThreadMemoryService:
@@ -76,7 +78,8 @@ class ThreadMemoryService:
             logger.info(
                 "Episode extraction skipped: thread does not qualify "
                 "(conversation=%s, messages=%d)",
-                message.conversation_id, len(thread_messages),
+                message.conversation_id,
+                len(thread_messages),
             )
             return
 
@@ -93,7 +96,8 @@ class ThreadMemoryService:
             logger.info(
                 "Episode extraction returned null for thread=%s "
                 "(low-value or not yet resolved, messages=%d)",
-                source_thread_id, current_length,
+                source_thread_id,
+                current_length,
             )
             return
 
@@ -114,13 +118,18 @@ class ThreadMemoryService:
             logger.info(
                 "Episode saved: id=%s tenant=%s thread=%s "
                 "messages=%d confidence=%.2f",
-                doc.id, tenant_id, source_thread_id,
-                current_length, doc.confidence,
+                doc.id,
+                tenant_id,
+                source_thread_id,
+                current_length,
+                doc.confidence,
             )
         except Exception:
             logger.warning(
                 "Episode save failed: thread=%s tenant=%s",
-                source_thread_id, tenant_id, exc_info=True,
+                source_thread_id,
+                tenant_id,
+                exc_info=True,
             )
 
     async def _call_llm(self, formatted_thread: str) -> Episode | None:
@@ -175,7 +184,7 @@ class ThreadMemoryService:
         other than the original poster or the bot.
         """
         first_human = next(
-            (m for m in thread_messages if m.get("sender_role") == "user"),
+            (m for m in thread_messages if m.get("sender_role") == Role.User.value),
             None,
         )
         if first_human is None:
@@ -191,7 +200,9 @@ class ThreadMemoryService:
                 "Episode extraction skipped: latest message is from %s "
                 "(poster=%s, sender=%s, role=%s)",
                 "bot" if is_bot else "original poster",
-                author_id, message.sender_id, latest_role,
+                author_id,
+                message.sender_id,
+                latest_role,
             )
             return False
 
@@ -205,7 +216,11 @@ class ThreadMemoryService:
     def _item_to_dict(item: ConversationMessageItem) -> dict:
         """Convert a ConversationMessageItem to the dict format used by quality gate and formatting."""
         return {
-            "sender_role": item.sender_role.value if isinstance(item.sender_role, Role) else item.sender_role,
+            "sender_role": (
+                item.sender_role.value
+                if isinstance(item.sender_role, Role)
+                else item.sender_role
+            ),
             "sender_id": item.sender_id,
             "sender_name": item.sender_name,
             "content": item.content,
@@ -223,7 +238,7 @@ class ThreadMemoryService:
             content = (msg.get("content") or "").strip()
             if not content:
                 continue
-            label = f"[Bot: {name}]" if role == "system" else f"[{name}]"
+            label = f"[Bot: {name}]" if role == Role.System.value else f"[{name}]"
             lines.append(f"{label}\n{content}")
         return "\n\n".join(lines)
 

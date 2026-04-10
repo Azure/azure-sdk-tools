@@ -569,6 +569,285 @@ def reindex_search(containers: Optional[list[str]] = None):
     return SearchManager.run_indexers(container_names=containers)
 
 
+def check_links_kb(language: Optional[str] = None, fix: Optional[str] = None):
+    """Audit bidirectional links between memories, guidelines, and examples. Report broken or one-way links.
+
+    With --fix all|broken|oneway, repairs the selected category of issues.
+    """
+    from src._utils import guideline_id_from_db, guideline_id_to_db
+
+    db = DatabaseManager.get_instance()
+
+    # ── 1. Load all items from the three KB containers ──────────────────
+    def _query_all(container, language_filter=None):
+        if language_filter:
+            query = "SELECT * FROM c WHERE (NOT IS_DEFINED(c.isDeleted) OR c.isDeleted = false) AND c.language = @lang"
+            params = [{"name": "@lang", "value": language_filter}]
+        else:
+            query = "SELECT * FROM c WHERE NOT IS_DEFINED(c.isDeleted) OR c.isDeleted = false"
+            params = None
+        return list(
+            container.client.query_items(query=query, parameters=params, enable_cross_partition_query=True)
+        )
+
+    print("Loading knowledge base items...")
+    guidelines = _query_all(db.guidelines, language)
+    examples = _query_all(db.examples, language)
+    memories = _query_all(db.memories, language)
+    print(f"  guidelines: {len(guidelines)}, examples: {len(examples)}, memories: {len(memories)}")
+
+    # Build lookup indices  (id → raw dict)
+    # For guidelines, IDs are stored in DB format (= delimiters)
+    guideline_index = {item["id"]: item for item in guidelines}
+    example_index = {item["id"]: item for item in examples}
+    memory_index = {item["id"]: item for item in memories}
+
+    # Also build a set of all known IDs for quick existence checks
+    all_guideline_ids = set(guideline_index.keys())
+    all_example_ids = set(example_index.keys())
+    all_memory_ids = set(memory_index.keys())
+
+    # ── 2. Define relationship pairs to check ───────────────────────────
+    # Each tuple: (container_name, items_dict, field_name, target_container_name, target_ids_set,
+    #              reverse_field_name, target_items_dict, is_guideline_link)
+    #
+    # Bidirectional pairs:
+    #   guideline.related_memories  ↔  memory.related_guidelines
+    #   guideline.related_examples  ↔  example.guideline_ids
+    #   guideline.related_guidelines ↔ guideline.related_guidelines  (symmetric)
+    #   memory.related_examples     ↔  example.memory_ids
+    #   memory.related_memories     ↔  memory.related_memories        (symmetric)
+
+    issues_dangling = []  # references to non-existent items
+    issues_one_way = []  # A→B but B does not reference A back
+
+    def _check_links(source_type, source_items, field, target_type, target_ids_set, target_items,
+                     reverse_field, source_id_is_guideline=False):
+        """Check one direction of a relationship pair."""
+        for item in source_items.values():
+            source_id = item["id"]
+            refs = item.get(field, [])
+            for ref_id in refs:
+                # Dangling reference?
+                if ref_id not in target_ids_set:
+                    issues_dangling.append({
+                        "source_type": source_type,
+                        "source_id": guideline_id_from_db(source_id) if source_type == "guideline" else source_id,
+                        "field": field,
+                        "target_type": target_type,
+                        "missing_id": guideline_id_from_db(ref_id) if target_type == "guideline" else ref_id,
+                        # Store raw IDs for fix operations
+                        "_raw_source_id": source_id,
+                        "_raw_ref_id": ref_id,
+                        "_source_container": source_type,
+                    })
+                    continue
+
+                # One-way link? Check reverse direction
+                target_item = target_items[ref_id]
+                reverse_refs = target_item.get(reverse_field, [])
+                # For the reverse link, the source_id must appear in the target's reverse field
+                # Guideline IDs are already in DB format in the dict
+                if source_id not in reverse_refs:
+                    issues_one_way.append({
+                        "source_type": source_type,
+                        "source_id": guideline_id_from_db(source_id) if source_type == "guideline" else source_id,
+                        "field": field,
+                        "target_type": target_type,
+                        "target_id": guideline_id_from_db(ref_id) if target_type == "guideline" else ref_id,
+                        "reverse_field": reverse_field,
+                        # Store raw DB IDs for fix operations
+                        "_raw_source_id": source_id,
+                        "_raw_target_id": ref_id,
+                        "_target_container": target_type,
+                    })
+
+    # Check all relationship directions
+    _check_links("guideline", guideline_index, "related_memories", "memory",
+                 all_memory_ids, memory_index, "related_guidelines")
+    _check_links("guideline", guideline_index, "related_examples", "example",
+                 all_example_ids, example_index, "guideline_ids")
+    _check_links("guideline", guideline_index, "related_guidelines", "guideline",
+                 all_guideline_ids, guideline_index, "related_guidelines")
+    _check_links("memory", memory_index, "related_guidelines", "guideline",
+                 all_guideline_ids, guideline_index, "related_memories")
+    _check_links("memory", memory_index, "related_examples", "example",
+                 all_example_ids, example_index, "memory_ids")
+    _check_links("memory", memory_index, "related_memories", "memory",
+                 all_memory_ids, memory_index, "related_memories")
+    _check_links("example", example_index, "guideline_ids", "guideline",
+                 all_guideline_ids, guideline_index, "related_examples")
+    _check_links("example", example_index, "memory_ids", "memory",
+                 all_memory_ids, memory_index, "related_examples")
+
+    # ── 3. Deduplicate symmetric one-way issues ─────────────────────────
+    # For symmetric relationships (guideline↔guideline, memory↔memory) we may
+    # report A→B missing and B→A missing as separate issues.  Keep both — the
+    # fix logic is idempotent and each represents a distinct missing back-ref.
+
+    # ── 4. Report ────────────────────────────────────────────────────────
+    total_issues = len(issues_dangling) + len(issues_one_way)
+    if total_issues == 0:
+        print(f"\n{GREEN}All links are healthy. No issues found.{RESET}")
+        return
+
+    print(f"\n{BOLD}Link audit results:{RESET}")
+    if issues_dangling:
+        print(f"\n  {Fore.RED}Dangling references ({len(issues_dangling)}):{RESET}")
+        for issue in issues_dangling:
+            print(f"    {issue['source_type']} '{issue['source_id']}' .{issue['field']}"
+                  f" -> {issue['target_type']} '{issue['missing_id']}' (NOT FOUND)")
+
+    if issues_one_way:
+        print(f"\n  {Fore.YELLOW}One-way links ({len(issues_one_way)}):{RESET}")
+        for issue in issues_one_way:
+            print(f"    {issue['source_type']} '{issue['source_id']}' .{issue['field']}"
+                  f" -> {issue['target_type']} '{issue['target_id']}'"
+                  f" (missing reverse in .{issue['reverse_field']})")
+
+    print(f"\n  Total: {len(issues_dangling)} dangling, {len(issues_one_way)} one-way")
+
+    # ── 5. Fix (if requested) ───────────────────────────────────────────
+    if not fix:
+        if issues_one_way or issues_dangling:
+            print(f"\n  Run with {BOLD}--fix all|broken|oneway{RESET} to repair.")
+        return
+
+    fix_broken = fix in ("all", "broken")
+    fix_oneway = fix in ("all", "oneway")
+
+    containers_map = {
+        "guideline": db.guidelines,
+        "memory": db.memories,
+        "example": db.examples,
+    }
+    fixed = 0
+    errors = 0
+    modified_containers = set()
+
+    # ── 5a. Remove dangling references ──────────────────────────────────
+    #   For guideline ID fields, first check if the ref is in web format
+    #   (.html#) and converting to DB format (=html=) yields a valid,
+    #   non-duplicate ID.  If so, heal the format instead of deleting.
+    if fix_broken and issues_dangling:
+        print(f"\n{BOLD}Fixing {len(issues_dangling)} dangling reference(s)...{RESET}")
+        guideline_fields = {"related_guidelines", "guideline_ids"}
+        # Group operations by (source_container, source_id) to batch per item
+        # Each op is ("remove", field, ref_id) or ("replace", field, old_id, new_id)
+        ops = {}  # (source_type, raw_source_id) -> [op, ...]
+        for issue in issues_dangling:
+            key = (issue["_source_container"], issue["_raw_source_id"])
+            field = issue["field"]
+            ref_id = issue["_raw_ref_id"]
+            if field in guideline_fields and ".html#" in ref_id:
+                converted = guideline_id_to_db(ref_id)
+                if converted in all_guideline_ids:
+                    # Check whether the converted ID is already in the source item's array
+                    source_item = {
+                        "guideline": guideline_index,
+                        "memory": memory_index,
+                        "example": example_index,
+                    }[issue["_source_container"]].get(issue["_raw_source_id"], {})
+                    existing_refs = source_item.get(field, [])
+                    if converted not in existing_refs:
+                        ops.setdefault(key, []).append(("replace", field, ref_id, converted))
+                        continue
+            ops.setdefault(key, []).append(("remove", field, ref_id))
+
+        for (source_type, source_id), item_ops in ops.items():
+            container = containers_map[source_type]
+            try:
+                item = container.get(source_id)
+            except Exception as e:
+                print(f"  {Fore.RED}Error retrieving {source_type} '{source_id}': {e}{RESET}")
+                errors += 1
+                continue
+
+            changed = False
+            for op in item_ops:
+                arr = item.get(op[1], [])
+                if op[0] == "replace":
+                    _, field, old_id, new_id = op
+                    if old_id in arr:
+                        idx = arr.index(old_id)
+                        arr[idx] = new_id
+                        changed = True
+                        display_src = guideline_id_from_db(source_id) if source_type == "guideline" else source_id
+                        print(f"  {GREEN}Healed {source_type} '{display_src}' .{field}: "
+                              f"'{guideline_id_from_db(old_id)}' -> '{guideline_id_from_db(new_id)}'{RESET}")
+                else:  # remove
+                    _, field, ref_id = op
+                    if ref_id in arr:
+                        arr.remove(ref_id)
+                        changed = True
+
+            if changed:
+                try:
+                    container.client.upsert_item(item)
+                    display_id = guideline_id_from_db(source_id) if source_type == "guideline" else source_id
+                    removals_count = sum(1 for o in item_ops if o[0] == "remove")
+                    heals_count = sum(1 for o in item_ops if o[0] == "replace")
+                    parts = []
+                    if heals_count:
+                        parts.append(f"{heals_count} healed")
+                    if removals_count:
+                        parts.append(f"{removals_count} removed")
+                    print(f"  {GREEN}Updated {source_type} '{display_id}' ({', '.join(parts)}){RESET}")
+                    fixed += 1
+                    modified_containers.add(source_type)
+                except Exception as e:
+                    display_id = guideline_id_from_db(source_id) if source_type == "guideline" else source_id
+                    print(f"  {Fore.RED}Error updating {source_type} '{display_id}': {e}{RESET}")
+                    errors += 1
+
+    # ── 5b. Add missing back-references for one-way links ───────────────
+    if fix_oneway and issues_one_way:
+        print(f"\n{BOLD}Fixing {len(issues_one_way)} one-way link(s)...{RESET}")
+        # Collect all needed updates: target_container -> target_id -> (reverse_field, id_to_add)
+        updates = {}
+        for issue in issues_one_way:
+            target_type = issue["_target_container"]
+            target_id = issue["_raw_target_id"]
+            reverse_field = issue["reverse_field"]
+            source_id = issue["_raw_source_id"]
+            key = (target_type, target_id)
+            updates.setdefault(key, []).append((reverse_field, source_id))
+
+        for (target_type, target_id), adds in updates.items():
+            container = containers_map[target_type]
+            try:
+                item = container.get(target_id)
+            except Exception as e:
+                print(f"  {Fore.RED}Error retrieving {target_type} '{target_id}': {e}{RESET}")
+                errors += 1
+                continue
+
+            changed = False
+            for reverse_field, source_id in adds:
+                refs = item.setdefault(reverse_field, [])
+                if source_id not in refs:
+                    refs.append(source_id)
+                    changed = True
+
+            if changed:
+                try:
+                    container.client.upsert_item(item)
+                    display_id = guideline_id_from_db(target_id) if target_type == "guideline" else target_id
+                    print(f"  {GREEN}Fixed {target_type} '{display_id}'{RESET}")
+                    fixed += 1
+                    modified_containers.add(target_type)
+                except Exception as e:
+                    display_id = guideline_id_from_db(target_id) if target_type == "guideline" else target_id
+                    print(f"  {Fore.RED}Error updating {target_type} '{display_id}': {e}{RESET}")
+                    errors += 1
+
+    # Trigger indexers for modified containers
+    if modified_containers:
+        _try_run_indexers([(t, containers_map[t]) for t in modified_containers])
+
+    print(f"\n  Fixed: {fixed}, Errors: {errors}")
+
+
 def review_summarize(language: str, target: str, base: str = None, remote: bool = False):
     """
     Summarize an API or a diff of two APIs.
@@ -1874,6 +2153,7 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("search", "search_knowledge_base")
             g.command("reindex", "reindex_search")
             g.command("all-guidelines", "get_all_guidelines")
+            g.command("check-links", "check_links_kb")
         with CommandGroup(self, "db", "__main__#{}") as g:
             g.command("get", "db_get")
             g.command("delete", "db_delete")
@@ -2038,6 +2318,15 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="The names of the containers to reindex. If not provided, all containers will be reindexed.",
                 options_list=["--containers", "-c"],
                 choices=ContainerNames.data_containers(),
+            )
+        with ArgumentsContext(self, "kb check-links") as ac:
+            ac.argument(
+                "fix",
+                type=str,
+                choices=["all", "broken", "oneway"],
+                default=None,
+                help="Repair issues: 'all' fixes everything, 'broken' removes dangling refs, 'oneway' adds missing back-refs.",
+                options_list=["--fix"],
             )
         with ArgumentsContext(self, "review get-job") as ac:
             ac.argument(

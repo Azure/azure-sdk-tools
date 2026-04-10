@@ -20,7 +20,6 @@ from models.chat import (
     ChatRequest,
     ChatResponse,
     ConversationItem,
-    ConversationItemType,
     Role,
 )
 from models.conversation import ConversationMessage
@@ -37,7 +36,10 @@ from azure.ai.projects.models import AgentDetails
 from openai import AsyncOpenAI
 from openai.types.responses import Response as OpenAIResponse
 from openai.types.responses import (
+    ResponseCompletedEvent,
+    ResponseFailedEvent,
     ResponseFunctionToolCall,
+    ResponseIncompleteEvent,
     ResponseOutputMessage,
     ResponseOutputItem,
 )
@@ -45,6 +47,9 @@ from openai.types.responses.response_input_item_param import ResponseInputItemPa
 from config.tenant_config import TenantID
 
 logger = logging.getLogger(__name__)
+
+COMPACT_THRESHOLD = 100000
+"""Token count at which conversation history is compacted."""
 
 
 class ChatService:
@@ -106,10 +111,15 @@ class ChatService:
         image_items = await self._build_image_items(req.additional_infos or [])
         conversation_items.extend(image_items)
 
-        response = await openai_client.responses.create(
+        # Use streaming to avoid the Foundry platform's 100-second
+        # HttpClient.Timeout on synchronous requests.  Streaming keeps the
+        # connection alive with incremental events while the agent processes
+        # tool calls and generates the response.
+        stream = await openai_client.responses.create(
             input=conversation_items,
             conversation=agent_conversation_id,
             store=True,
+            stream=True,
             extra_body={
                 "agent_reference": {
                     "name": agent.name,
@@ -117,6 +127,21 @@ class ChatService:
                 }
             },
         )
+        # Consume the stream and extract the final response.
+        # The terminal event may be completed, failed, or incomplete —
+        # all three carry the response object.
+        response: OpenAIResponse | None = None
+        async for event in stream:
+            if isinstance(
+                event,
+                (ResponseCompletedEvent, ResponseFailedEvent, ResponseIncompleteEvent),
+            ):
+                response = event.response
+        if response is None:
+            raise RuntimeError(
+                f"Stream ended without a terminal response event for conversation "
+                f"{agent_conversation_id}"
+            )
 
         if response.status != "completed":
             logger.warning(
@@ -129,10 +154,6 @@ class ChatService:
                 response.usage,
                 agent_conversation_id,
             )
-            # The Foundry hosted-agent may mark the response as failed/incomplete
-            # even though the agent actually produced an answer (visible in traces).
-            # Retry by retrieving the stored response after a brief delay.
-            response = await self._retry_retrieve(openai_client, response.id, response)
 
         chat_response = self._postprocess(req, response, agent_conversation_id)
         asyncio.create_task(

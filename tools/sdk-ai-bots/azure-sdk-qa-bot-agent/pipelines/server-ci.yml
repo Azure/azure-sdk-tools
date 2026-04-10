@@ -24,7 +24,6 @@ pr:
 variables:
   - template: /eng/pipelines/templates/variables/globals.yml
   - template: /eng/pipelines/templates/variables/image.yml
-  - group: 'Azure SDK QA Bot Dev Variables'
   - name: workingDirectory
     value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-agent'
   - name: pythonVersion
@@ -53,18 +52,16 @@ extends:
                 inputs:
                   versionSpec: $(pythonVersion)
 
-              - task: AzureCLI@2
+              # Install before 1ES network isolation blocks PyPI access.
+              # The AzureCLI@2 wrapper does not bypass the firewall either,
+              # so this must remain a plain bash step that runs early.
+              - bash: |
+                  set -euo pipefail
+                  python -m pip install --upgrade pip
+                  pip install --pre -r requirements.txt
+                  pip install pytest pytest-asyncio pyright
                 displayName: 'Install dependencies'
-                inputs:
-                  azureSubscription: $(SERVICE_CONNECTION)
-                  scriptType: bash
-                  scriptLocation: inlineScript
-                  workingDirectory: $(workingDirectory)
-                  inlineScript: |
-                    set -euo pipefail
-                    python -m pip install --upgrade pip
-                    pip install --pre -r requirements.txt
-                    pip install pytest pytest-asyncio pyright
+                workingDirectory: $(workingDirectory)
 
               - bash: |
                   set -euo pipefail

@@ -217,6 +217,9 @@ namespace APIViewWeb.Managers
                 memoryStream.Position = 0;
                 await _originalsRepository.UploadOriginalAsync(reviewCodeFileModel.FileId, memoryStream);
             }
+            
+            SanitizeTokenValues(codeFile);
+
             await _codeFileRepository.UpsertCodeFileAsync(apiRevisionId, reviewCodeFileModel.FileId, codeFile);
             reviewCodeFileModel.ContentHash = await ComputeAPIContentHashAsync(codeFile);
             return reviewCodeFileModel;
@@ -316,5 +319,72 @@ namespace APIViewWeb.Managers
             file.CrossLanguagePackageId = codeFile.CrossLanguageMetadata != null ? codeFile.CrossLanguageMetadata.CrossLanguagePackageId : codeFile.CrossLanguagePackageId;
             file.ParserStyle = (codeFile.ReviewLines.Count > 0) ? ParserStyle.Tree : ParserStyle.Flat;
         }
+
+           /// <summary>
+           /// Sanitizes all token values in the CodeFile by removing embedded newlines.
+           /// Processes both tree-style (ReviewLines) and flat-style (Tokens) token structures.
+           /// </summary>
+           private static void SanitizeTokenValues(CodeFile codeFile)
+           {
+               // Tree-style (ReviewToken is a class, so mutate in place)
+               if (codeFile.ReviewLines != null && codeFile.ReviewLines.Count > 0)
+               {
+                   SanitizeReviewLines(codeFile.ReviewLines);
+               }
+
+               // Flat/legacy style (CodeFileToken is a struct, so mutate via index)
+               if (codeFile.Tokens != null && codeFile.Tokens.Length > 0)
+               {
+                   for (int i = 0; i < codeFile.Tokens.Length; i++)
+                   {
+                       if (codeFile.Tokens[i].Value != null)
+                           codeFile.Tokens[i].Value = NormalizeTokenValue(codeFile.Tokens[i].Value);
+                   }
+               }
+           }
+
+           /// <summary>
+           /// Recursively sanitizes token values in ReviewLines and their children.
+           /// ReviewToken is a reference type, so mutations are applied in place.
+           /// </summary>
+           private static void SanitizeReviewLines(List<ReviewLine> lines)
+           {
+               foreach (var line in lines)
+               {
+                   foreach (var token in line.Tokens)
+                   {
+                       if (token.Value != null)
+                           token.Value = NormalizeTokenValue(token.Value);
+                   }
+                   if (line.Children != null && line.Children.Count > 0)
+                   {
+                       SanitizeReviewLines(line.Children);
+                   }
+               }
+           }
+
+           /// <summary>
+           /// Normalizes a token value by replacing all newline characters (both \r\n and \n\r)
+           /// with single spaces, then trimming leading/trailing whitespace.
+           /// </summary>
+           private static string NormalizeTokenValue(string value)
+           {
+               if (string.IsNullOrEmpty(value))
+                   return value;
+
+               var normalized = value
+                   .Replace("\r\n", " ")
+                   .Replace('\r', ' ')
+                   .Replace('\n', ' ')
+                   .Trim();
+
+               // Collapse repeated spaces introduced by indentation in multiline strings.
+               while (normalized.Contains("  "))
+               {
+                   normalized = normalized.Replace("  ", " ");
+               }
+
+               return normalized;
+           }
     }
 }

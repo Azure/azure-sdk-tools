@@ -707,9 +707,8 @@ public class CodeownersManagementHelper(
 
         var response = new CheckPackageOwnersResponse
         {
-            PackageName = packageName,
-            DirectoryPath = directoryPath,
-            Repo = repo
+            Package = packageName,
+            Path = directoryPath
         };
 
         // Look up the package
@@ -722,58 +721,77 @@ public class CodeownersManagementHelper(
 
         // Hydrate the package (owners + labels)
         await HydratePackages([packageWi], ct);
-
-        // Count unique individuals from package owners
-        var uniqueIndividuals = GetUniqueIndividuals(packageWi.Owners);
+        response.PackageWorkItem = new PackageResponse(packageWi);
 
         if (packageWi.Owners.Count > 0)
         {
             // Primary path: package has at least 1 owner
-            return await CheckPrimaryPath(response, packageWi, uniqueIndividuals, requiredOwners, repo, ct);
+            return await CheckPackageDirectOwners(response, packageWi, requiredOwners, repo, ct);
         }
 
         // Fallback path: package has 0 owners
-        return await CheckFallbackPath(response, packageWi, directoryPath, requiredOwners, repo, ct);
+        return await CheckPackagePathOwners(response, packageWi, directoryPath, requiredOwners, repo, ct);
     }
 
-    private async Task<CheckPackageOwnersResponse> CheckPrimaryPath(
+    private async Task<CheckPackageOwnersResponse> CheckPackageDirectOwners(
         CheckPackageOwnersResponse response,
         PackageWorkItem packageWi,
-        List<string> uniqueIndividuals,
         int requiredOwners,
         string repo,
         CancellationToken ct)
     {
-        response.ValidationPath = "Package";
+        logger.LogInformation("Validation path: Package (direct owners)");
 
-        // Owner check
+        var uniqueIndividuals = GetUniqueIndividuals(packageWi.Owners);
         var ownersPassed = uniqueIndividuals.Count >= requiredOwners;
-        response.OwnerCheck = new OwnershipCheck
-        {
-            Passed = ownersPassed,
-            Required = requiredOwners,
-            Actual = uniqueIndividuals.Count,
-            Owners = uniqueIndividuals.Count > 0 ? uniqueIndividuals : null
-        };
 
-        // PR Label check
-        var packageLabels = packageWi.Labels.Select(l => l.LabelName).OrderBy(l => l, StringComparer.OrdinalIgnoreCase).ToList();
+        var packageLabels = packageWi.Labels.Select(l => l.LabelName)
+            .OrderBy(l => l, StringComparer.OrdinalIgnoreCase).ToList();
         var prLabelPassed = packageLabels.Count >= 1;
-        response.PrLabelCheck = new PrLabelCheck
+        response.PrLabels = packageLabels.Count > 0 ? packageLabels : null;
+
+        // Find matching Service Owner
+        var matchedServiceOwner = await FindMatchingServiceOwner(packageLabels, requiredOwners, repo, ct);
+        if (matchedServiceOwner != null)
         {
-            Passed = prLabelPassed,
-            Labels = packageLabels.Count > 0 ? packageLabels : null
-        };
+            response.ServiceOwners = new LabelOwnerResponse(matchedServiceOwner);
+        }
 
-        // Service Owner check
-        var serviceOwnerResult = await CheckServiceOwnerCoverage(packageLabels, repo, ct);
-        response.ServiceOwnerCheck = serviceOwnerResult;
+        var serviceOwnerPassed = matchedServiceOwner != null
+            && GetUniqueIndividuals(matchedServiceOwner.Owners).Count >= requiredOwners;
 
-        response.AllPassed = ownersPassed && prLabelPassed && serviceOwnerResult.Passed;
+        response.Pass = ownersPassed && prLabelPassed && serviceOwnerPassed;
+
+        if (!response.Pass)
+        {
+            var reasons = new List<string>();
+            if (!ownersPassed)
+            {
+                reasons.Add($"Package '{packageWi.PackageName}' has {uniqueIndividuals.Count} unique individual owner(s) but requires at least {requiredOwners}.");
+            }
+            if (!prLabelPassed)
+            {
+                reasons.Add($"Package '{packageWi.PackageName}' has no PR labels assigned.");
+            }
+            if (!serviceOwnerPassed)
+            {
+                if (matchedServiceOwner == null)
+                {
+                    reasons.Add($"No Service Owner Label Owner found whose labels are a superset of [{string.Join(", ", packageLabels)}].");
+                }
+                else
+                {
+                    var soIndividuals = GetUniqueIndividuals(matchedServiceOwner.Owners);
+                    reasons.Add($"Service Owner (work item {matchedServiceOwner.WorkItemId}) for labels [{string.Join(", ", packageLabels)}] has {soIndividuals.Count} unique individual(s) but requires at least {requiredOwners}.");
+                }
+            }
+            throw new InvalidOperationException(string.Join(" ", reasons));
+        }
+
         return response;
     }
 
-    private async Task<CheckPackageOwnersResponse> CheckFallbackPath(
+    private async Task<CheckPackageOwnersResponse> CheckPackagePathOwners(
         CheckPackageOwnersResponse response,
         PackageWorkItem packageWi,
         string directoryPath,
@@ -781,17 +799,7 @@ public class CodeownersManagementHelper(
         string repo,
         CancellationToken ct)
     {
-        response.ValidationPath = "PathFallback";
-        response.OwnerCheck = new OwnershipCheck
-        {
-            Passed = false,
-            Required = requiredOwners,
-            Actual = 0,
-            Owners = null
-        };
-
-        var fallback = new PathFallbackCheckResult();
-        response.PathFallbackCheck = fallback;
+        logger.LogInformation("Validation path: PathFallback (no direct owners on package)");
 
         // Find PR Label type Label Owners whose RepoPath glob matches directoryPath
         var prLabelLabelOwners = await QueryLabelOwnersByTypeAndRepo("PR Label", repo, ct);
@@ -809,65 +817,77 @@ public class CodeownersManagementHelper(
 
         if (matchingPrLabelOwners.Count == 0)
         {
-            fallback.PrLabelOwnerCheck = new PrLabelOwnerCheck
-            {
-                Passed = false,
-                Required = requiredOwners,
-                Actual = 0
-            };
-            response.AllPassed = false;
-            return response;
+            logger.LogInformation("No PR Label Label Owner matched the directory path.");
+            response.Pass = false;
+            throw new InvalidOperationException(
+                $"Package '{packageWi.PackageName}' has 0 direct owners and no PR Label Label Owner has a path matching '{directoryPath}'. No fallback path available.");
         }
 
-        // Sort by normalized path and choose the last one
+        // Sort by normalized path and choose the last (most specific) match
         var selectedPrLabelOwner = matchingPrLabelOwners
             .OrderBy(lo => NormalizePath(lo.RepoPath), StringComparer.Ordinal)
             .Last();
 
+        logger.LogInformation("Matched PR Label Label Owner path: {RepoPath}", selectedPrLabelOwner.RepoPath);
+
         // Hydrate the selected PR Label Label Owner
         await HydrateLabelOwners([selectedPrLabelOwner], ct);
+        response.PathOwners = new LabelOwnerResponse(selectedPrLabelOwner);
 
         var prLabelIndividuals = GetUniqueIndividuals(selectedPrLabelOwner.Owners);
+        var ownersPassed = prLabelIndividuals.Count >= requiredOwners;
+
         var prLabelLabels = selectedPrLabelOwner.Labels.Select(l => l.LabelName)
             .OrderBy(l => l, StringComparer.OrdinalIgnoreCase).ToList();
-        var prLabelOwnersPassed = prLabelIndividuals.Count >= requiredOwners;
+        response.PrLabels = prLabelLabels.Count > 0 ? prLabelLabels : null;
 
-        fallback.PrLabelOwnerCheck = new PrLabelOwnerCheck
+        // Find matching Service Owner
+        var matchedServiceOwner = await FindMatchingServiceOwner(prLabelLabels, requiredOwners, repo, ct);
+        if (matchedServiceOwner != null)
         {
-            Passed = prLabelOwnersPassed,
-            Required = requiredOwners,
-            Actual = prLabelIndividuals.Count,
-            Owners = prLabelIndividuals.Count > 0 ? prLabelIndividuals : null,
-            Labels = prLabelLabels.Count > 0 ? prLabelLabels : null,
-            MatchedPath = selectedPrLabelOwner.RepoPath
-        };
+            response.ServiceOwners = new LabelOwnerResponse(matchedServiceOwner);
+        }
 
-        // Service Owner check against the selected PR Label Label Owner's labels
-        var serviceOwnerResult = await CheckServiceOwnerCoverage(prLabelLabels, repo, ct);
-        fallback.ServiceOwnerCheck = serviceOwnerResult;
+        var serviceOwnerPassed = matchedServiceOwner != null
+            && GetUniqueIndividuals(matchedServiceOwner.Owners).Count >= requiredOwners;
 
-        response.AllPassed = prLabelOwnersPassed && serviceOwnerResult.Passed;
+        response.Pass = ownersPassed && serviceOwnerPassed;
+
+        if (!response.Pass)
+        {
+            var reasons = new List<string>();
+            if (!ownersPassed)
+            {
+                reasons.Add($"PR Label Label Owner at path '{selectedPrLabelOwner.RepoPath}' has {prLabelIndividuals.Count} unique individual(s) but requires at least {requiredOwners}.");
+            }
+            if (!serviceOwnerPassed)
+            {
+                if (matchedServiceOwner == null)
+                {
+                    reasons.Add($"No Service Owner Label Owner found whose labels are a superset of [{string.Join(", ", prLabelLabels)}].");
+                }
+                else
+                {
+                    var soIndividuals = GetUniqueIndividuals(matchedServiceOwner.Owners);
+                    reasons.Add($"Service Owner (work item {matchedServiceOwner.WorkItemId}) for labels [{string.Join(", ", prLabelLabels)}] has {soIndividuals.Count} unique individual(s) but requires at least {requiredOwners}.");
+                }
+            }
+            throw new InvalidOperationException(string.Join(" ", reasons));
+        }
+
         return response;
     }
 
     /// <summary>
-    /// Checks that a single Service Owner Label Owner in the repo has labels that are a superset
-    /// of the required labels, and has ≥ 2 unique individuals.
+    /// Finds a single Service Owner Label Owner whose labels are a superset of the required labels.
+    /// Returns the first matching Service Owner (hydrated), or null if none found.
     /// </summary>
-    private async Task<ServiceOwnerCheck> CheckServiceOwnerCoverage(
-        List<string> requiredLabels, string repo, CancellationToken ct)
+    private async Task<LabelOwnerWorkItem?> FindMatchingServiceOwner(
+        List<string> requiredLabels, int requiredOwners, string repo, CancellationToken ct)
     {
-        const int requiredOwners = 2;
-
         if (requiredLabels.Count == 0)
         {
-            return new ServiceOwnerCheck
-            {
-                Passed = false,
-                Required = requiredOwners,
-                Actual = 0,
-                RequiredLabels = null
-            };
+            return null;
         }
 
         var serviceOwnerLabelOwners = await QueryLabelOwnersByTypeAndRepo("Service Owner", repo, ct);
@@ -878,45 +898,13 @@ public class CodeownersManagementHelper(
         foreach (var so in serviceOwnerLabelOwners)
         {
             var soLabels = so.Labels.Select(l => l.LabelName).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            if (!requiredLabelSet.IsSubsetOf(soLabels))
+            if (requiredLabelSet.IsSubsetOf(soLabels))
             {
-                continue;
+                return so;
             }
-
-            var soIndividuals = GetUniqueIndividuals(so.Owners);
-            if (soIndividuals.Count >= requiredOwners)
-            {
-                return new ServiceOwnerCheck
-                {
-                    Passed = true,
-                    Required = requiredOwners,
-                    Actual = soIndividuals.Count,
-                    Owners = soIndividuals,
-                    RequiredLabels = requiredLabels,
-                    MatchedLabels = soLabels.OrderBy(l => l, StringComparer.OrdinalIgnoreCase).ToList()
-                };
-            }
-
-            // Found a matching Service Owner but insufficient individuals
-            return new ServiceOwnerCheck
-            {
-                Passed = false,
-                Required = requiredOwners,
-                Actual = soIndividuals.Count,
-                Owners = soIndividuals.Count > 0 ? soIndividuals : null,
-                RequiredLabels = requiredLabels,
-                MatchedLabels = soLabels.OrderBy(l => l, StringComparer.OrdinalIgnoreCase).ToList()
-            };
         }
 
-        // No matching Service Owner found
-        return new ServiceOwnerCheck
-        {
-            Passed = false,
-            Required = requiredOwners,
-            Actual = 0,
-            RequiredLabels = requiredLabels
-        };
+        return null;
     }
 
     /// <summary>

@@ -1909,11 +1909,12 @@ public class CodeownersManagementHelperTests
 
         var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test/Azure.Test.Pkg", repo, CancellationToken.None);
 
-        Assert.That(result.AllPassed, Is.True);
-        Assert.That(result.ValidationPath, Is.EqualTo("Package"));
-        Assert.That(result.OwnerCheck!.Passed, Is.True);
-        Assert.That(result.PrLabelCheck!.Passed, Is.True);
-        Assert.That(result.ServiceOwnerCheck!.Passed, Is.True);
+        Assert.That(result.Pass, Is.True);
+        Assert.That(result.PackageWorkItem!.Owners!.Count, Is.GreaterThanOrEqualTo(2));
+        Assert.That(result.PrLabels, Is.Not.Null);
+        Assert.That(result.PrLabels!, Is.Not.Empty);
+        Assert.That(result.ServiceOwners, Is.Not.Null);
+        Assert.That(result.ServiceOwners!.Owners!.Count, Is.GreaterThanOrEqualTo(2));
         Assert.That(result.ExitCode, Is.EqualTo(0));
     }
 
@@ -1926,7 +1927,7 @@ public class CodeownersManagementHelperTests
         var result = await _helper.CheckPackageOwners("NonExistent.Pkg", "sdk/test", "Azure/azure-sdk-for-net", CancellationToken.None);
 
         Assert.That(result.ResponseError, Does.Contain("No Package work item found"));
-        Assert.That(result.AllPassed, Is.False);
+        Assert.That(result.Pass, Is.False);
         Assert.That(result.ExitCode, Is.EqualTo(1));
     }
 
@@ -1956,13 +1957,12 @@ public class CodeownersManagementHelperTests
 
         var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test", repo, CancellationToken.None);
 
-        Assert.That(result.ValidationPath, Is.EqualTo("Package"));
-        Assert.That(result.OwnerCheck!.Passed, Is.False);
-        Assert.That(result.OwnerCheck.Actual, Is.EqualTo(1));
-        Assert.That(result.AllPassed, Is.False);
+        Assert.That(result.PackageWorkItem!.Owners!.Count, Is.LessThan(2));
+        Assert.That(result.PackageWorkItem!.Owners!.Count, Is.EqualTo(1));
+        Assert.That(result.Pass, Is.False);
     }
 
-    // Test 4: No owners → triggers path fallback
+    // Test 4:No owners → triggers path fallback
     [Test]
     public async Task CheckPackageOwners_NoOwners_TriggersPathFallback()
     {
@@ -2005,14 +2005,13 @@ public class CodeownersManagementHelperTests
 
         var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test/Azure.Test.Pkg", repo, CancellationToken.None);
 
-        Assert.That(result.ValidationPath, Is.EqualTo("PathFallback"));
-        Assert.That(result.PathFallbackCheck, Is.Not.Null);
-        Assert.That(result.PathFallbackCheck!.PrLabelOwnerCheck!.Passed, Is.True);
-        Assert.That(result.PathFallbackCheck!.ServiceOwnerCheck!.Passed, Is.True);
-        Assert.That(result.AllPassed, Is.True);
+        Assert.That(result.PathOwners!.Owners!.Count, Is.GreaterThanOrEqualTo(2));
+        Assert.That(result.ServiceOwners, Is.Not.Null);
+        Assert.That(result.ServiceOwners!.Owners!.Count, Is.GreaterThanOrEqualTo(2));
+        Assert.That(result.Pass, Is.True);
     }
 
-    // Test 5: Package has owners but no PR labels
+    // Test 5:Package has owners but no PR labels
     [Test]
     public async Task CheckPackageOwners_NoPrLabel_Fails()
     {
@@ -2028,10 +2027,9 @@ public class CodeownersManagementHelperTests
 
         var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test", repo, CancellationToken.None);
 
-        Assert.That(result.ValidationPath, Is.EqualTo("Package"));
-        Assert.That(result.OwnerCheck!.Passed, Is.True);
-        Assert.That(result.PrLabelCheck!.Passed, Is.False);
-        Assert.That(result.AllPassed, Is.False);
+        Assert.That(result.PackageWorkItem!.Owners!.Count, Is.GreaterThanOrEqualTo(2));
+        Assert.That(result.PrLabels, Is.Null);
+        Assert.That(result.Pass, Is.False);
     }
 
     // Test 6: Insufficient service owners (only 1 individual)
@@ -2061,12 +2059,12 @@ public class CodeownersManagementHelperTests
 
         var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test", repo, CancellationToken.None);
 
-        Assert.That(result.ServiceOwnerCheck!.Passed, Is.False);
-        Assert.That(result.ServiceOwnerCheck.Actual, Is.EqualTo(1));
-        Assert.That(result.AllPassed, Is.False);
+        Assert.That(result.ServiceOwners!.Owners!.Count, Is.LessThan(2));
+        Assert.That(result.ServiceOwners!.Owners!.Count, Is.EqualTo(1));
+        Assert.That(result.Pass, Is.False);
     }
 
-    // Test 7: No service owner has labels that are a superset of package labels
+    // Test 7:No service owner has labels that are a superset of package labels
     [Test]
     public async Task CheckPackageOwners_NoServiceOwners_Fails()
     {
@@ -2084,11 +2082,11 @@ public class CodeownersManagementHelperTests
 
         var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test", repo, CancellationToken.None);
 
-        Assert.That(result.ServiceOwnerCheck!.Passed, Is.False);
-        Assert.That(result.AllPassed, Is.False);
+        Assert.That(result.ServiceOwners, Is.Null);
+        Assert.That(result.Pass, Is.False);
     }
 
-    // Test 8: Team expansion counts individuals — 1 team with 3 members satisfies 2-owner requirement
+    // Test 8:Team expansion counts individuals — 1 team with 3 members satisfies 2-owner requirement
     [Test]
     public async Task CheckPackageOwners_TeamExpansion_CountsIndividuals()
     {
@@ -2119,9 +2117,9 @@ public class CodeownersManagementHelperTests
 
         var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test", repo, CancellationToken.None);
 
-        Assert.That(result.OwnerCheck!.Passed, Is.True);
-        Assert.That(result.OwnerCheck.Actual, Is.EqualTo(3));
-        Assert.That(result.AllPassed, Is.True);
+        Assert.That(result.PackageWorkItem!.Owners, Is.Not.Null);
+        Assert.That(result.PackageWorkItem!.Owners!.SelectMany(o => o.Members ?? [o.GitHubAlias]).Distinct(StringComparer.OrdinalIgnoreCase).Count(), Is.EqualTo(3));
+        Assert.That(result.Pass, Is.True);
     }
 
     // Test 9: Team expansion for service owners
@@ -2153,9 +2151,9 @@ public class CodeownersManagementHelperTests
 
         var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test", repo, CancellationToken.None);
 
-        Assert.That(result.ServiceOwnerCheck!.Passed, Is.True);
-        Assert.That(result.ServiceOwnerCheck.Actual, Is.EqualTo(3));
-        Assert.That(result.AllPassed, Is.True);
+        Assert.That(result.ServiceOwners, Is.Not.Null);
+        Assert.That(result.ServiceOwners!.Owners!.SelectMany(o => o.Members ?? [o.GitHubAlias]).Distinct(StringComparer.OrdinalIgnoreCase).Count(), Is.EqualTo(3));
+        Assert.That(result.Pass, Is.True);
     }
 
     // Test 10: Multiple labels — Service Owner must have all labels (superset)
@@ -2190,11 +2188,12 @@ public class CodeownersManagementHelperTests
 
         var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test", repo, CancellationToken.None);
 
-        Assert.That(result.ServiceOwnerCheck!.Passed, Is.True);
-        Assert.That(result.AllPassed, Is.True);
+        Assert.That(result.ServiceOwners, Is.Not.Null);
+        Assert.That(result.ServiceOwners!.Owners!.Count, Is.GreaterThanOrEqualTo(2));
+        Assert.That(result.Pass, Is.True);
     }
 
-    // Test 11: Fragmented service owners — multiple SO records collectively cover labels but no single one does
+    // Test 11:Fragmented service owners — multiple SO records collectively cover labels but no single one does
     [Test]
     public async Task CheckPackageOwners_FragmentedServiceOwners_Fails()
     {
@@ -2227,11 +2226,11 @@ public class CodeownersManagementHelperTests
 
         var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test", repo, CancellationToken.None);
 
-        Assert.That(result.ServiceOwnerCheck!.Passed, Is.False);
-        Assert.That(result.AllPassed, Is.False);
+        Assert.That(result.ServiceOwners, Is.Null);
+        Assert.That(result.Pass, Is.False);
     }
 
-    // Test 12: Multiple package versions — uses latest
+    // Test 12:Multiple package versions — uses latest
     [Test]
     public async Task CheckPackageOwners_MultiplePackageVersions_UsesLatestByName()
     {
@@ -2264,8 +2263,8 @@ public class CodeownersManagementHelperTests
 
         var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test", repo, CancellationToken.None);
 
-        Assert.That(result.AllPassed, Is.True);
-        Assert.That(result.OwnerCheck!.Actual, Is.EqualTo(2));
+        Assert.That(result.Pass, Is.True);
+        Assert.That(result.PackageWorkItem!.Owners!.Count, Is.EqualTo(2));
     }
 
     // Test 13: Overlapping owners — same user in team + individual doesn't double-count
@@ -2290,8 +2289,7 @@ public class CodeownersManagementHelperTests
         var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test", repo, CancellationToken.None);
 
         // user1 appears both individually and in team — should count as 1
-        Assert.That(result.OwnerCheck!.Actual, Is.EqualTo(1));
-        Assert.That(result.OwnerCheck.Passed, Is.False);
+        Assert.That(result.PackageWorkItem!.Owners!.SelectMany(o => o.Members ?? [o.GitHubAlias]).Distinct(StringComparer.OrdinalIgnoreCase).Count(), Is.EqualTo(1));
     }
 
     // Test 14: Fallback — both PR Label and Service Owner pass
@@ -2338,10 +2336,10 @@ public class CodeownersManagementHelperTests
 
         var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test/Azure.Test.Pkg", repo, CancellationToken.None);
 
-        Assert.That(result.ValidationPath, Is.EqualTo("PathFallback"));
-        Assert.That(result.AllPassed, Is.True);
-        Assert.That(result.PathFallbackCheck!.PrLabelOwnerCheck!.Passed, Is.True);
-        Assert.That(result.PathFallbackCheck.ServiceOwnerCheck!.Passed, Is.True);
+        Assert.That(result.Pass, Is.True);
+        Assert.That(result.PathOwners!.Owners!.Count, Is.GreaterThanOrEqualTo(2));
+        Assert.That(result.ServiceOwners, Is.Not.Null);
+        Assert.That(result.ServiceOwners!.Owners!.Count, Is.GreaterThanOrEqualTo(2));
     }
 
     // Test 15: Fallback — PR Label owners insufficient
@@ -2376,9 +2374,9 @@ public class CodeownersManagementHelperTests
 
         var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test/Azure.Test.Pkg", repo, CancellationToken.None);
 
-        Assert.That(result.PathFallbackCheck!.PrLabelOwnerCheck!.Passed, Is.False);
-        Assert.That(result.PathFallbackCheck.PrLabelOwnerCheck.Actual, Is.EqualTo(1));
-        Assert.That(result.AllPassed, Is.False);
+        Assert.That(result.PathOwners!.Owners!.Count, Is.LessThan(2));
+        Assert.That(result.PathOwners!.Owners!.Count, Is.EqualTo(1));
+        Assert.That(result.Pass, Is.False);
     }
 
     // Test 16: Fallback — Service Owners insufficient
@@ -2423,10 +2421,10 @@ public class CodeownersManagementHelperTests
 
         var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test/Azure.Test.Pkg", repo, CancellationToken.None);
 
-        Assert.That(result.PathFallbackCheck!.PrLabelOwnerCheck!.Passed, Is.True);
-        Assert.That(result.PathFallbackCheck.ServiceOwnerCheck!.Passed, Is.False);
-        Assert.That(result.PathFallbackCheck.ServiceOwnerCheck.Actual, Is.EqualTo(1));
-        Assert.That(result.AllPassed, Is.False);
+        Assert.That(result.PathOwners!.Owners!.Count, Is.GreaterThanOrEqualTo(2));
+        Assert.That(result.ServiceOwners!.Owners!.Count, Is.LessThan(2));
+        Assert.That(result.ServiceOwners!.Owners!.Count, Is.EqualTo(1));
+        Assert.That(result.Pass, Is.False);
     }
 
     // Test 17: Fallback — no matching paths
@@ -2449,9 +2447,8 @@ public class CodeownersManagementHelperTests
 
         var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test/Azure.Test.Pkg", repo, CancellationToken.None);
 
-        Assert.That(result.ValidationPath, Is.EqualTo("PathFallback"));
-        Assert.That(result.PathFallbackCheck!.PrLabelOwnerCheck!.Passed, Is.False);
-        Assert.That(result.AllPassed, Is.False);
+        Assert.That(result.PathOwners, Is.Null);
+        Assert.That(result.Pass, Is.False);
     }
 
     // Test 18: Fallback — glob match
@@ -2498,8 +2495,8 @@ public class CodeownersManagementHelperTests
 
         var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/contoso/Azure.Contoso.WidgetManager", repo, CancellationToken.None);
 
-        Assert.That(result.AllPassed, Is.True);
-        Assert.That(result.PathFallbackCheck!.PrLabelOwnerCheck!.MatchedPath, Is.EqualTo("/sdk/contoso/"));
+        Assert.That(result.Pass, Is.True);
+        Assert.That(result.PathOwners!.Owners!.Count, Is.GreaterThanOrEqualTo(2));
     }
 
     // Test 19: Fallback — multiple matching PR Label owners, uses last by path
@@ -2549,9 +2546,8 @@ public class CodeownersManagementHelperTests
 
         var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test/sub/Azure.Test.Pkg", repo, CancellationToken.None);
 
-        Assert.That(result.AllPassed, Is.True);
-        Assert.That(result.PathFallbackCheck!.PrLabelOwnerCheck!.MatchedPath, Is.EqualTo("/sdk/test/sub/"));
-        Assert.That(result.PathFallbackCheck.PrLabelOwnerCheck.Labels, Does.Contain("SpecificLabel"));
+        Assert.That(result.Pass, Is.True);
+        Assert.That(result.PrLabels, Does.Contain("SpecificLabel"));
     }
 
     // Test 20: Fallback — multiple labels, Service Owner must be superset
@@ -2600,7 +2596,7 @@ public class CodeownersManagementHelperTests
 
         var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test/Azure.Test.Pkg", repo, CancellationToken.None);
 
-        Assert.That(result.AllPassed, Is.True);
+        Assert.That(result.Pass, Is.True);
     }
 
     // Test 21: Fallback — fragmented service owners fail
@@ -2650,11 +2646,11 @@ public class CodeownersManagementHelperTests
 
         var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test/Azure.Test.Pkg", repo, CancellationToken.None);
 
-        Assert.That(result.PathFallbackCheck!.ServiceOwnerCheck!.Passed, Is.False);
-        Assert.That(result.AllPassed, Is.False);
+        Assert.That(result.ServiceOwners, Is.Null);
+        Assert.That(result.Pass, Is.False);
     }
 
-    // Test 22: Fallback — same people as PR Label and Service Owners
+    // Test 22:Fallback — same people as PR Label and Service Owners
     [Test]
     public async Task CheckPackageOwners_Fallback_SameOwnersForBothTypes()
     {
@@ -2689,7 +2685,7 @@ public class CodeownersManagementHelperTests
 
         var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test/Azure.Test.Pkg", repo, CancellationToken.None);
 
-        Assert.That(result.AllPassed, Is.True);
+        Assert.That(result.Pass, Is.True);
     }
 
     // Test 23: Fallback — Service Owner is pathless but still valid
@@ -2736,8 +2732,9 @@ public class CodeownersManagementHelperTests
 
         var result = await _helper.CheckPackageOwners("Azure.Test.Pkg", "sdk/test/Azure.Test.Pkg", repo, CancellationToken.None);
 
-        Assert.That(result.AllPassed, Is.True);
-        Assert.That(result.PathFallbackCheck!.ServiceOwnerCheck!.Passed, Is.True);
+        Assert.That(result.Pass, Is.True);
+        Assert.That(result.ServiceOwners, Is.Not.Null);
+        Assert.That(result.ServiceOwners!.Owners!.Count, Is.GreaterThanOrEqualTo(2));
     }
 
     // NormalizePath static helper tests

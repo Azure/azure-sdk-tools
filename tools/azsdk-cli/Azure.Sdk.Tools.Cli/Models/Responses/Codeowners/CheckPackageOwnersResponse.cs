@@ -7,255 +7,125 @@ using System.Text.Json.Serialization;
 namespace Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
 
 /// <summary>
-/// Result of an individual ownership or label check.
-/// </summary>
-public class OwnershipCheck
-{
-    [JsonPropertyName("passed")]
-    public bool Passed { get; set; }
-
-    [JsonPropertyName("required")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public int Required { get; set; }
-
-    [JsonPropertyName("actual")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public int Actual { get; set; }
-
-    [JsonPropertyName("owners")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<string>? Owners { get; set; }
-}
-
-/// <summary>
-/// Result of a PR label existence check.
-/// </summary>
-public class PrLabelCheck
-{
-    [JsonPropertyName("passed")]
-    public bool Passed { get; set; }
-
-    [JsonPropertyName("labels")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<string>? Labels { get; set; }
-}
-
-/// <summary>
-/// Result of a service owner check including label superset matching.
-/// </summary>
-public class ServiceOwnerCheck
-{
-    [JsonPropertyName("passed")]
-    public bool Passed { get; set; }
-
-    [JsonPropertyName("required")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public int Required { get; set; }
-
-    [JsonPropertyName("actual")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public int Actual { get; set; }
-
-    [JsonPropertyName("owners")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<string>? Owners { get; set; }
-
-    [JsonPropertyName("required_labels")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<string>? RequiredLabels { get; set; }
-
-    [JsonPropertyName("matched_labels")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<string>? MatchedLabels { get; set; }
-}
-
-/// <summary>
-/// Result of the path-based fallback PR Label owner check.
-/// </summary>
-public class PrLabelOwnerCheck
-{
-    [JsonPropertyName("passed")]
-    public bool Passed { get; set; }
-
-    [JsonPropertyName("required")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public int Required { get; set; }
-
-    [JsonPropertyName("actual")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public int Actual { get; set; }
-
-    [JsonPropertyName("owners")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<string>? Owners { get; set; }
-
-    [JsonPropertyName("labels")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<string>? Labels { get; set; }
-
-    [JsonPropertyName("matched_path")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? MatchedPath { get; set; }
-}
-
-/// <summary>
-/// Combined result of the path-based fallback checks.
-/// </summary>
-public class PathFallbackCheckResult
-{
-    [JsonPropertyName("pr_label_owner_check")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public PrLabelOwnerCheck? PrLabelOwnerCheck { get; set; }
-
-    [JsonPropertyName("service_owner_check")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public ServiceOwnerCheck? ServiceOwnerCheck { get; set; }
-}
-
-/// <summary>
 /// Structured response for the check-package-owners command.
+/// Reuses PackageResponse and LabelOwnerResponse from the view command.
 /// </summary>
 public class CheckPackageOwnersResponse : CommandResponse
 {
-    [JsonPropertyName("package_name")]
-    public string PackageName { get; set; } = string.Empty;
+    [JsonPropertyName("package")]
+    public string Package { get; set; } = string.Empty;
 
-    [JsonPropertyName("directory_path")]
-    public string DirectoryPath { get; set; } = string.Empty;
+    [JsonPropertyName("path")]
+    public string Path { get; set; } = string.Empty;
 
-    [JsonPropertyName("repo")]
-    public string Repo { get; set; } = string.Empty;
+    [JsonPropertyName("pass")]
+    public bool Pass { get; set; }
 
-    [JsonPropertyName("validation_path")]
+    [JsonPropertyName("package_work_item")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? ValidationPath { get; set; }
+    public PackageResponse? PackageWorkItem { get; set; }
 
-    [JsonPropertyName("owner_check")]
+    [JsonPropertyName("path_owners")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public OwnershipCheck? OwnerCheck { get; set; }
+    public LabelOwnerResponse? PathOwners { get; set; }
 
-    [JsonPropertyName("pr_label_check")]
+    [JsonPropertyName("pr_labels")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public PrLabelCheck? PrLabelCheck { get; set; }
+    public List<string>? PrLabels { get; set; }
 
-    [JsonPropertyName("service_owner_check")]
+    [JsonPropertyName("service_owners")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public ServiceOwnerCheck? ServiceOwnerCheck { get; set; }
-
-    [JsonPropertyName("path_fallback_check")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public PathFallbackCheckResult? PathFallbackCheck { get; set; }
-
-    [JsonPropertyName("all_passed")]
-    public bool AllPassed { get; set; }
+    public LabelOwnerResponse? ServiceOwners { get; set; }
 
     public override int ExitCode
     {
-        get => AllPassed ? 0 : 1;
+        get => Pass ? 0 : 1;
         set { }
     }
 
     protected override string Format()
     {
         var sb = new StringBuilder();
-        sb.AppendLine($"=== Check Package Owners: {PackageName} ===");
-        sb.AppendLine($"  Repo: {Repo}");
-        sb.AppendLine($"  Directory Path: {DirectoryPath}");
+        sb.AppendLine($"=== Check Package Owners: {Package} ===");
+        sb.AppendLine($"  Path: {Path}");
+        sb.AppendLine();
 
-        if (ValidationPath != null)
+        if (PackageWorkItem != null)
         {
-            sb.AppendLine($"  Validation Path: {ValidationPath}");
+            sb.AppendLine($"  Package: {PackageWorkItem.PackageName} [{PackageWorkItem.WorkItemId}]");
+            if (PackageWorkItem.Owners?.Count > 0)
+            {
+                sb.AppendLine($"    Owners: {FormatOwnersList(PackageWorkItem.Owners)}");
+            }
+            else
+            {
+                sb.AppendLine("    Owners: (none)");
+            }
+            if (PackageWorkItem.Labels?.Count > 0)
+            {
+                sb.AppendLine($"    Labels: {string.Join(", ", PackageWorkItem.Labels)}");
+            }
         }
 
-        if (ValidationPath == "Package")
+        if (PathOwners != null)
         {
-            FormatPrimaryPath(sb);
+            sb.AppendLine();
+            sb.AppendLine($"  Path Owners: [{PathOwners.WorkItemId}]");
+            if (PathOwners.Path != null)
+            {
+                sb.AppendLine($"    Matched Path: {PathOwners.Path}");
+            }
+            if (PathOwners.Owners?.Count > 0)
+            {
+                sb.AppendLine($"    Owners: {FormatOwnersList(PathOwners.Owners)}");
+            }
+            if (PathOwners.Labels?.Count > 0)
+            {
+                sb.AppendLine($"    Labels: {string.Join(", ", PathOwners.Labels)}");
+            }
         }
-        else if (ValidationPath == "PathFallback")
+
+        if (PrLabels?.Count > 0)
         {
-            FormatFallbackPath(sb);
+            sb.AppendLine();
+            sb.AppendLine($"  PR Labels: {string.Join(", ", PrLabels)}");
+        }
+
+        if (ServiceOwners != null)
+        {
+            sb.AppendLine();
+            sb.AppendLine($"  Service Owners: [{ServiceOwners.WorkItemId}]");
+            if (ServiceOwners.Owners?.Count > 0)
+            {
+                sb.AppendLine($"    Owners: {FormatOwnersList(ServiceOwners.Owners)}");
+            }
+            else
+            {
+                sb.AppendLine("    Owners: (none)");
+            }
+            if (ServiceOwners.Labels?.Count > 0)
+            {
+                sb.AppendLine($"    Labels: {string.Join(", ", ServiceOwners.Labels)}");
+            }
         }
 
         sb.AppendLine();
-        sb.AppendLine(AllPassed ? "  Result: PASS" : "  Result: FAIL");
+        sb.AppendLine(Pass ? "  Result: PASS" : "  Result: FAIL");
         return sb.ToString();
     }
 
-    private void FormatPrimaryPath(StringBuilder sb)
+    private static string FormatOwnersList(List<OwnerResponse> owners)
     {
-        if (OwnerCheck != null)
-        {
-            var status = OwnerCheck.Passed ? "PASS" : "FAIL";
-            sb.AppendLine($"  Package Owners: [{status}] {OwnerCheck.Actual}/{OwnerCheck.Required} unique individuals");
-            if (OwnerCheck.Owners?.Count > 0)
-            {
-                sb.AppendLine($"    Owners: {string.Join(", ", OwnerCheck.Owners)}");
-            }
-        }
-
-        if (PrLabelCheck != null)
-        {
-            var status = PrLabelCheck.Passed ? "PASS" : "FAIL";
-            sb.AppendLine($"  PR Labels: [{status}]");
-            if (PrLabelCheck.Labels?.Count > 0)
-            {
-                sb.AppendLine($"    Labels: {string.Join(", ", PrLabelCheck.Labels)}");
-            }
-        }
-
-        if (ServiceOwnerCheck != null)
-        {
-            FormatServiceOwnerCheck(sb, ServiceOwnerCheck, "  ");
-        }
+        return string.Join(", ", owners.Select(FormatOwnerDisplay).OrderBy(s => s, StringComparer.OrdinalIgnoreCase));
     }
 
-    private void FormatFallbackPath(StringBuilder sb)
+    private static string FormatOwnerDisplay(OwnerResponse owner)
     {
-        if (PathFallbackCheck == null)
+        if (owner.Members?.Count > 0)
         {
-            return;
+            return $"{owner.GitHubAlias} ({string.Join(", ", owner.Members)})";
         }
 
-        if (PathFallbackCheck.PrLabelOwnerCheck != null)
-        {
-            var check = PathFallbackCheck.PrLabelOwnerCheck;
-            var status = check.Passed ? "PASS" : "FAIL";
-            sb.AppendLine($"  PR Label Owners (path-based): [{status}] {check.Actual}/{check.Required} unique individuals");
-            if (check.MatchedPath != null)
-            {
-                sb.AppendLine($"    Matched Path: {check.MatchedPath}");
-            }
-            if (check.Owners?.Count > 0)
-            {
-                sb.AppendLine($"    Owners: {string.Join(", ", check.Owners)}");
-            }
-            if (check.Labels?.Count > 0)
-            {
-                sb.AppendLine($"    Labels: {string.Join(", ", check.Labels)}");
-            }
-        }
-
-        if (PathFallbackCheck.ServiceOwnerCheck != null)
-        {
-            FormatServiceOwnerCheck(sb, PathFallbackCheck.ServiceOwnerCheck, "  ");
-        }
-    }
-
-    private static void FormatServiceOwnerCheck(StringBuilder sb, ServiceOwnerCheck check, string indent)
-    {
-        var status = check.Passed ? "PASS" : "FAIL";
-        sb.AppendLine($"{indent}Service Owners: [{status}] {check.Actual}/{check.Required} unique individuals");
-        if (check.RequiredLabels?.Count > 0)
-        {
-            sb.AppendLine($"{indent}  Required Labels: {string.Join(", ", check.RequiredLabels)}");
-        }
-        if (check.MatchedLabels?.Count > 0)
-        {
-            sb.AppendLine($"{indent}  Matched Labels: {string.Join(", ", check.MatchedLabels)}");
-        }
-        if (check.Owners?.Count > 0)
-        {
-            sb.AppendLine($"{indent}  Owners: {string.Join(", ", check.Owners)}");
-        }
+        return owner.GitHubAlias;
     }
 }

@@ -1,25 +1,6 @@
 import { NavigationTreeNode, NavigationTreeNodeData } from '../_models/navigationTreeModels';
 import { DIFF_ADDED, DIFF_REMOVED } from '../_helpers/common-helpers';
-
-// Replicates the nav-node deduplication logic from buildCodePanelRows so it can be tested
-// independently of the Web Worker environment.
-function applyNavNodeToTree(
-  navTree: NavigationTreeNode[],
-  node: NavigationTreeNode,
-  codeLineDiffKinds: string[]
-): void {
-  const isAllRemovedNode = codeLineDiffKinds.length > 0 && codeLineDiffKinds.every(k => k === DIFF_REMOVED);
-  if (isAllRemovedNode) {
-    navTree.push(node);
-  } else {
-    const existingRemovedIndex = navTree.findIndex(n => n.label === node.label);
-    if (existingRemovedIndex >= 0) {
-      navTree[existingRemovedIndex] = node;
-    } else {
-      navTree.push(node);
-    }
-  }
-}
+import { applyNavNodeToTree } from './nav-node-helpers';
 
 function makeNavNode(label: string, nodeIdHashed: string): NavigationTreeNode {
   const node = new NavigationTreeNode();

@@ -191,12 +191,23 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
   }
 
   if (buildNode && node.navigationTreeNode && !isNavigationTreeCreated) {
-    // Skip nav entries for removed nodes (diff revision side of a modification, or purely deleted items).
-    const isRemovedNode = node.codeLines?.length > 0 && node.codeLines.every(l => l.diffKind === DIFF_REMOVED);
-    if (!isRemovedNode) {
+    const isAllRemovedNode = node.codeLines?.length > 0 && node.codeLines.every(l => l.diffKind === DIFF_REMOVED);
+    if (isAllRemovedNode) {
+      // Removed-side node: add tentatively. A non-removed counterpart with the same label (modification)
+      // will replace this entry, ensuring the nav points to the active-revision line.
+      // Purely-deleted elements have no such counterpart and are kept as-is.
       navigationTree.push(node.navigationTreeNode);
+    } else {
+      // Non-removed node: replace any removed-side sibling entry with the same label
+      // (deduplicates modifications), otherwise push as a new entry.
+      const existingRemovedIndex = navigationTree.findIndex(n => n.label === node.navigationTreeNode!.label);
+      if (existingRemovedIndex >= 0) {
+        navigationTree[existingRemovedIndex] = node.navigationTreeNode;
+      } else {
+        navigationTree.push(node.navigationTreeNode);
+      }
     }
-  }  
+  }
 
   if (node.bottomTokenNodeIdHash) {
     codePanelRowData.push(...diffBuffer);

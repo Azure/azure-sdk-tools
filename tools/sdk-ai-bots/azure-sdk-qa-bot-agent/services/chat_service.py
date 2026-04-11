@@ -36,12 +36,9 @@ from azure.ai.projects.models import AgentDetails
 from openai import AsyncOpenAI
 from openai.types.responses import Response as OpenAIResponse
 from openai.types.responses import (
-    ResponseCompletedEvent,
-    ResponseFailedEvent,
     ResponseFunctionToolCall,
-    ResponseIncompleteEvent,
-    ResponseOutputMessage,
     ResponseOutputItem,
+    ResponseOutputMessage,
 )
 from openai.types.responses.response_input_item_param import ResponseInputItemParam
 from config.tenant_config import TenantID
@@ -111,15 +108,14 @@ class ChatService:
         image_items = await self._build_image_items(req.additional_infos or [])
         conversation_items.extend(image_items)
 
-        # Use streaming to avoid the Foundry platform's 100-second
-        # HttpClient.Timeout on synchronous requests.  Streaming keeps the
-        # connection alive with incremental events while the agent processes
-        # tool calls and generates the response.
-        stream = await openai_client.responses.create(
+        # Streaming is broken for hosted agents — text is lost entirely.
+        # See https://github.com/Azure/azure-sdk-for-python/issues/45282
+        # and https://github.com/Azure/azure-sdk-for-python/issues/46015
+        response: OpenAIResponse = await openai_client.responses.create(
             input=conversation_items,
             conversation=agent_conversation_id,
             store=True,
-            stream=True,
+            stream=False,
             extra_body={
                 "agent_reference": {
                     "name": agent.name,
@@ -127,21 +123,10 @@ class ChatService:
                 }
             },
         )
-        # Consume the stream and extract the final response.
-        # The terminal event may be completed, failed, or incomplete —
-        # all three carry the response object.
-        response: OpenAIResponse | None = None
-        async for event in stream:
-            if isinstance(
-                event,
-                (ResponseCompletedEvent, ResponseFailedEvent, ResponseIncompleteEvent),
-            ):
-                response = event.response
-        if response is None:
-            raise RuntimeError(
-                f"Stream ended without a terminal response event for conversation "
-                f"{agent_conversation_id}"
-            )
+
+        # Poll if response completed with empty text (Foundry persistence delay).
+        if response.status == "completed" and not response.output_text:
+            response = await self._poll_response_text(openai_client, response)
 
         if response.status != "completed":
             logger.warning(
@@ -171,6 +156,49 @@ class ChatService:
             )
         )
         return chat_response
+
+    @staticmethod
+    async def _poll_response_text(
+        openai_client: AsyncOpenAI,
+        response: OpenAIResponse,
+        max_retries: int = 5,
+        retry_delay: float = 3.0,
+    ) -> OpenAIResponse:
+        """Poll ``responses.retrieve()`` until output_text appears."""
+        for attempt in range(1, max_retries + 1):
+            await asyncio.sleep(retry_delay)
+            try:
+                refreshed = await openai_client.responses.retrieve(response.id)
+                if refreshed.output_text:
+                    logger.info(
+                        "Poll retrieved text on attempt %d/%d: response=%s, "
+                        "text_len=%d",
+                        attempt,
+                        max_retries,
+                        response.id,
+                        len(refreshed.output_text),
+                    )
+                    return refreshed
+                logger.info(
+                    "Poll attempt %d/%d: still no text, response=%s",
+                    attempt,
+                    max_retries,
+                    response.id,
+                )
+            except Exception:
+                logger.warning(
+                    "Poll attempt %d/%d failed: response=%s",
+                    attempt,
+                    max_retries,
+                    response.id,
+                    exc_info=True,
+                )
+        logger.warning(
+            "Poll exhausted %d retries without text: response=%s",
+            max_retries,
+            response.id,
+        )
+        return response
 
     async def _save_bot_answer_to_conversation(
         self,
@@ -317,6 +345,16 @@ class ChatService:
         tenant = self._extract_routed_tenant(response.output)
 
         output_text = response.output_text or ""
+        if not output_text:
+            output_text = (
+                "Sorry, something went wrong and I couldn't generate a response. "
+                "Please send your message again to retry."
+            )
+            logger.error(
+                "Empty output_text for response %s (status=%s), returning error message",
+                response.id,
+                response.status,
+            )
 
         # Extract structured references from the agent's markdown output
         # and strip the references section from the answer text.

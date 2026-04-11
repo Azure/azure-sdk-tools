@@ -22,7 +22,7 @@ export type SpecGenSdkCliConfig = {
   apiVersion?: string;
   prNumber?: string;
   runMode: string;
-  sdkReleaseType: string;
+  sdkReleaseType?: string;
   specCommitSha: string;
   specRepoHttpsUrl: string;
   headRepoHttpsUrl?: string;
@@ -180,7 +180,6 @@ yargs(hideBin(process.argv))
           alias: "srt",
           type: "string",
           description: "The release type of SDK, either 'beta' or 'stable'",
-          default: "beta",
           choices: ['beta', 'stable']
         },
         'run-mode': {

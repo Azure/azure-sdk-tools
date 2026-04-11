@@ -1,5 +1,12 @@
 # Release History
 
+## 0.9.4 (2026-04-10)
+
+### Other Changes
+
+* Use dedicated Java channel prompts to improve response quality for Java-related queries
+* Add `review-request` category to Java intention prompt to prevent the bot from responding to PR review requests
+
 ## 0.9.3 (2026-03-27)
 
 ### Features Added

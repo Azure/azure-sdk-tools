@@ -651,6 +651,22 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
 
                 logger.LogInformation("Building SDK for project path: {PackagePath}", packagePath);
 
+                // Validate package path
+                if (string.IsNullOrWhiteSpace(packagePath))
+                {
+                    return (false, "Package path is required and cannot be empty.", null);
+                }
+
+                // Resolves relative paths to absolute
+                string fullPath = Path.GetFullPath(packagePath);
+
+                if (!Directory.Exists(fullPath))
+                {
+                    return (false, $"Package full path does not exist: {fullPath}, input package path: {packagePath}.", null);
+                }
+
+                packagePath = fullPath;
+
                 // Get repository root path from project path
                 string sdkRepoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
                 if (string.IsNullOrEmpty(sdkRepoRoot))

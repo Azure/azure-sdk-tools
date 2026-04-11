@@ -3,7 +3,6 @@
 using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 namespace Azure.Sdk.Tools.Cli.Services.Languages;
 
@@ -46,14 +45,19 @@ public sealed class RustLanguageService : LanguageService
     /// </summary>
     public override async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)
     {
-        var fullPath = RealPath.GetRealPath(packagePath);
-        var repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
-        var sdkRoot = Path.Combine(repoRoot, "sdk");
-        var relativePath = Path.GetRelativePath(sdkRoot, fullPath).TrimStart(Path.DirectorySeparatorChar);
-        var directoryPath = $"sdk/{relativePath}";
+        var fullPath = string.Empty;
+        var repoRoot = string.Empty;
+        var relativePath = string.Empty;
+        var directoryPath = string.Empty;
 
         try
         {
+            fullPath = RealPath.GetRealPath(packagePath);
+            repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
+            var sdkRoot = Path.Combine(repoRoot, "sdk");
+            relativePath = Path.GetRelativePath(sdkRoot, fullPath).TrimStart(Path.DirectorySeparatorChar);
+            directoryPath = $"sdk/{relativePath}";
+
             logger.LogDebug("Resolving Rust package info for path: {packagePath}", packagePath);
 
             var cargoTomlPath = Path.Combine(fullPath, "Cargo.toml");
@@ -181,7 +185,6 @@ public sealed class RustLanguageService : LanguageService
 
     /// <summary>
     /// Builds Rust SDK code by executing the hardcoded build script at eng/scripts/build-sdk.ps1.
-    /// Unlike other languages, Rust does not use swagger_to_sdk_config.json for build configuration.
     /// </summary>
     public override async Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(
         string packagePath, int timeoutMinutes = 30, CancellationToken ct = default)
@@ -189,7 +192,18 @@ public sealed class RustLanguageService : LanguageService
         try
         {
             logger.LogInformation("Building Rust SDK for project path: {PackagePath}", packagePath);
+            if (string.IsNullOrWhiteSpace(packagePath))
+            {
+                return (false, "Package path is required and cannot be empty.", null);
+            }
 
+            string fullPath = Path.GetFullPath(packagePath);
+            if (!Directory.Exists(fullPath))
+            {
+                return (false, $"Package full path does not exist: {fullPath}, input package path: {packagePath}.", null);
+            }
+
+            packagePath = fullPath;
             string sdkRepoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
             if (string.IsNullOrEmpty(sdkRepoRoot))
             {
@@ -197,7 +211,6 @@ public sealed class RustLanguageService : LanguageService
             }
 
             PackageInfo? packageInfo = await GetPackageInfo(packagePath, ct);
-
             var scriptPath = Path.Combine(sdkRepoRoot, BuildScriptRelativePath);
             if (!File.Exists(scriptPath))
             {

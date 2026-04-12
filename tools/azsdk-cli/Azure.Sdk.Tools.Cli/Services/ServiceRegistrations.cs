@@ -118,6 +118,8 @@ namespace Azure.Sdk.Tools.Cli.Services
             // TypeSpec Customization Service (uses Copilot SDK)
             services.AddScoped<ITypeSpecCustomizationService, TypeSpecCustomizationService>();
 
+            // TypeSpec Breaking change detection service (uses Copilot SDK)
+            services.AddScoped<ITypeSpecSDKbreakingchangeDetectionService, TypeSpecSDKbreakingchangeDetectionService>();
 
             services.AddHttpClient();
             services.AddAzureClients(clientBuilder =>

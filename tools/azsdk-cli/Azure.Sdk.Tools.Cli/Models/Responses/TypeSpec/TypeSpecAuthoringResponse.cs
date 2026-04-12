@@ -25,6 +25,10 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public QueryIntention? QueryIntention { get; set; }
 
+        [JsonPropertyName("sdk_breaking_changes")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public List<string>? SdkBreakingChanges { get; set; }
+
         protected override string Format()
         {
             if (OperationStatus == Status.Failed)
@@ -69,7 +73,14 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec
                     result.AppendLine($"- Service Type: {QueryIntention.ServiceType}");
                 }
             }
-
+            if (SdkBreakingChanges != null && SdkBreakingChanges.Any())
+            {
+                result.AppendLine($"\n**SDK Breaking Changes:**");
+                foreach (var change in SdkBreakingChanges)
+                {
+                    result.AppendLine($"- {change}");
+                }
+            }
             return result.ToString();
         }
     }

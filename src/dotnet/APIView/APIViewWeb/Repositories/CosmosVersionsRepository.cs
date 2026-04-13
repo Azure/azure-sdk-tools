@@ -41,12 +41,21 @@ public class CosmosVersionsRepository : ICosmosVersionsRepository
             new QueryRequestOptions { PartitionKey = new PartitionKey(reviewId) });
     }
 
-    public async Task<APIVersionModel> GetVersionByIdentifierAsync(string reviewId, string versionIdentifier)
+    public async Task<APIVersionModel> GetVersionByIdentifierAsync(string reviewId, string versionIdentifier, VersionKind? kind = null)
     {
-        var queryDef = new QueryDefinition(
-                "SELECT TOP 1 * FROM APIVersions v WHERE v.ReviewId = @reviewId AND v.VersionIdentifier = @versionIdentifier AND v.IsDeleted = false")
+        var sql = "SELECT TOP 1 * FROM APIVersions v WHERE v.ReviewId = @reviewId AND v.VersionIdentifier = @versionIdentifier AND v.IsDeleted = false";
+        if (kind.HasValue)
+        {
+            sql += " AND v.Kind = @kind";
+        }
+
+        var queryDef = new QueryDefinition(sql)
             .WithParameter("@reviewId", reviewId)
             .WithParameter("@versionIdentifier", versionIdentifier);
+        if (kind.HasValue)
+        {
+            queryDef = queryDef.WithParameter("@kind", kind.Value.ToString());
+        }
 
         List<APIVersionModel> results = await ExecuteQueryAsync(queryDef,
             new QueryRequestOptions { PartitionKey = new PartitionKey(reviewId) });
@@ -76,10 +85,19 @@ public class CosmosVersionsRepository : ICosmosVersionsRepository
             new QueryRequestOptions { PartitionKey = new PartitionKey(reviewId) });
     }
 
-    public async Task<IEnumerable<APIVersionModel>> GetVersionsEligibleForRetentionAsync(DateTime now)
+    public async Task<IEnumerable<APIVersionModel>> GetVersionsEligibleForSoftDeleteAsync(DateTime now)
     {
         var queryDef = new QueryDefinition(
                 "SELECT * FROM APIVersions v WHERE IS_DEFINED(v.RetainUntil) AND v.RetainUntil != null AND v.RetainUntil <= @now AND v.IsDeleted = false")
+            .WithParameter("@now", now);
+
+        return await ExecuteQueryAsync(queryDef, requestOptions: null);
+    }
+
+    public async Task<IEnumerable<APIVersionModel>> GetVersionsEligibleForHardDeleteAsync(DateTime now)
+    {
+        var queryDef = new QueryDefinition(
+                "SELECT * FROM APIVersions v WHERE IS_DEFINED(v.RetainUntil) AND v.RetainUntil != null AND v.RetainUntil <= @now AND v.IsDeleted = true")
             .WithParameter("@now", now);
 
         return await ExecuteQueryAsync(queryDef, requestOptions: null);

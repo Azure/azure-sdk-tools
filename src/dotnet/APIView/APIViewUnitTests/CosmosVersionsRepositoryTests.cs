@@ -214,10 +214,10 @@ public class CosmosVersionsRepositoryTests
 
     #endregion
 
-    #region GetVersionsEligibleForRetentionAsync
+    #region GetVersionsEligibleForSoftDeleteAsync
 
     [Fact]
-    public async Task GetVersionsEligibleForRetentionAsync_UsesCrossPartitionQuery()
+    public async Task GetVersionsEligibleForSoftDeleteAsync_UsesCrossPartitionQuery()
     {
         // requestOptions == null means cross-partition (no PartitionKey set)
         _mockContainer
@@ -228,13 +228,13 @@ public class CosmosVersionsRepositoryTests
             .Returns(EmptyFeedIterator<APIVersionModel>());
 
         var now = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-        var result = await _repository.GetVersionsEligibleForRetentionAsync(now);
+        var result = await _repository.GetVersionsEligibleForSoftDeleteAsync(now);
 
         Assert.Empty(result);
     }
 
     [Fact]
-    public async Task GetVersionsEligibleForRetentionAsync_ReturnsExpiredVersions()
+    public async Task GetVersionsEligibleForSoftDeleteAsync_ReturnsExpiredVersions()
     {
         var expiredVersion = new APIVersionModel
         {
@@ -248,7 +248,48 @@ public class CosmosVersionsRepositoryTests
             .Returns(MockFeedIterator(new[] { expiredVersion }));
 
         var now = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-        var result = await _repository.GetVersionsEligibleForRetentionAsync(now);
+        var result = await _repository.GetVersionsEligibleForSoftDeleteAsync(now);
+
+        Assert.Single(result);
+    }
+
+    #endregion
+
+    #region GetVersionsEligibleForHardDeleteAsync
+
+    [Fact]
+    public async Task GetVersionsEligibleForHardDeleteAsync_UsesCrossPartitionQuery()
+    {
+        _mockContainer
+            .Setup(x => x.GetItemQueryIterator<APIVersionModel>(
+                It.IsAny<QueryDefinition>(),
+                It.IsAny<string>(),
+                It.Is<QueryRequestOptions>(o => o == null)))
+            .Returns(EmptyFeedIterator<APIVersionModel>());
+
+        var now = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var result = await _repository.GetVersionsEligibleForHardDeleteAsync(now);
+
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task GetVersionsEligibleForHardDeleteAsync_ReturnsSoftDeletedExpiredVersions()
+    {
+        var softDeletedVersion = new APIVersionModel
+        {
+            Id = "v1", ReviewId = "r1", IsDeleted = true,
+            RetainUntil = new DateTime(2025, 12, 31, 0, 0, 0, DateTimeKind.Utc)
+        };
+        _mockContainer
+            .Setup(x => x.GetItemQueryIterator<APIVersionModel>(
+                It.IsAny<QueryDefinition>(),
+                It.IsAny<string>(),
+                It.Is<QueryRequestOptions>(o => o == null)))
+            .Returns(MockFeedIterator(new[] { softDeletedVersion }));
+
+        var now = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var result = await _repository.GetVersionsEligibleForHardDeleteAsync(now);
 
         Assert.Single(result);
     }

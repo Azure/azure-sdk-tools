@@ -124,7 +124,7 @@ public class VersionNormalizationTests
     public void NormalizeVersion_PythonDailyBuild_NormalizesToChannel()
     {
         var (id, kind) = VersionNormalizationHelper.NormalizeVersion("1.2.0a20260323001", language: "Python");
-        Assert.Equal("1.2.0-a", id);
+        Assert.Equal("1.2.0a", id);
         Assert.Equal(VersionKind.RollingPrerelease, kind);
     }
 
@@ -132,7 +132,7 @@ public class VersionNormalizationTests
     public void NormalizeVersion_NonPythonDateStampWithoutDotSeparator_IsRolling()
     {
         var (id, kind) = VersionNormalizationHelper.NormalizeVersion("1.0.0b20230101001");
-        Assert.Equal("1.0.0-b", id);
+        Assert.Equal("1.0.0b", id);
         Assert.Equal(VersionKind.RollingPrerelease, kind);
     }
 
@@ -140,11 +140,11 @@ public class VersionNormalizationTests
 
     #region Non-SemVer / unparseable fallback (Preview)
 
-    // Strings that do not match the SemVer regex fall back to Preview (§4.3, §5.2).
-    // Examples: PEP 440 .dev/.post qualifiers, four-part dotted versions, plain text.
+    // Non-semver strings that are not bare positive integers fall back to Preview.
+    // PEP 440 .dev/.post qualifiers, four-part dotted versions, plain text all land here.
     [Theory]
-    [InlineData("1.0.0.dev0",    "1.0.0.dev0")]    // PEP 440 dev release
-    [InlineData("1.0.0.post1",   "1.0.0.post1")]   // PEP 440 post release
+    [InlineData("1.0.0.dev0",    "1.0.0.dev0")]    // PEP 440 dev release (Python-specific)
+    [InlineData("1.0.0.post1",   "1.0.0.post1")]   // PEP 440 post release (Python-specific)
     [InlineData("1.0.0.0",       "1.0.0.0")]       // four-part version
     [InlineData("some-snapshot", "some-snapshot")]  // arbitrary string
     public void NormalizeVersion_NonSemVer_FallsBackToPreview(string input, string expectedId)
@@ -152,6 +152,23 @@ public class VersionNormalizationTests
         var (id, kind) = VersionNormalizationHelper.NormalizeVersion(input);
         Assert.Equal(expectedId, id);
         Assert.Equal(VersionKind.Preview, kind);
+    }
+
+    #endregion
+
+    #region Bare-integer versions (Stable — e.g. Azure Key Vault "6", "7")
+
+    // Some services version their API surface with a plain integer (e.g. Key Vault secrets: 6, 7).
+    // These are GA stable releases and must NOT be classified as Preview.
+    [Theory]
+    [InlineData("6",  "6")]
+    [InlineData("7",  "7")]
+    [InlineData("10", "10")]
+    public void NormalizeVersion_BarePositiveInteger_IsStable(string input, string expectedId)
+    {
+        var (id, kind) = VersionNormalizationHelper.NormalizeVersion(input);
+        Assert.Equal(expectedId, id);
+        Assert.Equal(VersionKind.Stable, kind);
     }
 
     #endregion

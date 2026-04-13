@@ -128,6 +128,7 @@ A separate set of controllers use **token authentication** (`RequireTokenAuthent
 | `AutoReviewService` | Automatic revision creation, matching against approved revisions |
 | `NotificationManager` | Email and SignalR notifications |
 | `PermissionsManager` | RBAC for users and approvers |
+| `APIVersionsManager` | Version entity lifecycle |
 
 ### d. Data Stores
 

@@ -21,11 +21,21 @@ public static class VersionNormalizationHelper
         string versionIdentifier = packageVersion.TrimStart('v', 'V').Trim();
         var semVer = new AzureEngSemanticVersion(versionIdentifier, language);
 
-        // Unparseable strings (e.g. PEP 440 `.dev`/`.post` qualifiers) fall back to Preview.
+        // Non-semver version strings are handled by language/shape:
+        //   • Python: PEP 440 qualifiers (.dev, .post) are unparseable by the semver regex → Preview.
+        //   • Any language: bare positive integers (e.g. Azure Key Vault "6", "7") → Stable.
+        //   • Everything else falls back to Preview.
         if (!semVer.IsSemVerFormat)
         {
-            return (versionIdentifier.ToLowerInvariant(), VersionKind.Preview);
-
+            if (language == "Python")
+            {
+                return (versionIdentifier, VersionKind.Preview);
+            }
+            if (int.TryParse(versionIdentifier, out int bareInt) && bareInt >= 1)
+            {
+                return (versionIdentifier, VersionKind.Stable);
+            }
+            return (versionIdentifier, VersionKind.Preview);
         }
 
         // No explicit prerelease label — covers stable releases (1.2.0) and sub-1.0.0 (0.5.0).
@@ -41,7 +51,7 @@ public static class VersionNormalizationHelper
         // Normalize to a stable channel identifier by stripping the date stamp.
         if (semVer.IsDailyDevBuild)
         {
-            string channelId = $"{semVer.Major}.{semVer.Minor}.{semVer.Patch}-{semVer.PrereleaseLabel.ToLowerInvariant()}";
+            string channelId = $"{semVer.Major}.{semVer.Minor}.{semVer.Patch}{semVer.PrereleaseLabelSeparator}{semVer.PrereleaseLabel.ToLowerInvariant()}";
             return (channelId, VersionKind.RollingPrerelease);
         }
 

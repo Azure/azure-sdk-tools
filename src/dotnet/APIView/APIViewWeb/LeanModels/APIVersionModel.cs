@@ -30,7 +30,8 @@ public enum APIVersionChangeAction
     Deleted,
     UnDeleted,
     Promoted,
-    RetentionSet
+    RetentionSet,
+    RetentionUnset
 }
 
 public class APIVersionChangeHistoryModel : ChangeHistoryModel

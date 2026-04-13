@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using APIViewWeb.LeanModels;
@@ -27,7 +28,7 @@ public class APIVersionsManagerTests
             Id = "existing-id", ReviewId = "review-1", VersionIdentifier = "1.0.0", Kind = VersionKind.Stable
         };
         _mockRepo
-            .Setup(x => x.GetVersionByIdentifierAsync("review-1", "1.0.0"))
+            .Setup(x => x.GetVersionByIdentifierAsync("review-1", "1.0.0", It.IsAny<VersionKind?>()))
             .ReturnsAsync(existing);
 
         APIVersionModel result = await _manager.GetOrCreateVersionAsync("review-1", "1.0.0");
@@ -40,7 +41,7 @@ public class APIVersionsManagerTests
     public async Task GetOrCreateVersionAsync_NewVersion_UpsertsAndReturnsNewModel()
     {
         _mockRepo
-            .Setup(x => x.GetVersionByIdentifierAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .Setup(x => x.GetVersionByIdentifierAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<VersionKind?>()))
             .ReturnsAsync((APIVersionModel)null);
         _mockRepo
             .Setup(x => x.UpsertVersionAsync(It.IsAny<APIVersionModel>()))
@@ -61,7 +62,7 @@ public class APIVersionsManagerTests
     public async Task GetOrCreateVersionAsync_PullRequestRevision_SetsPRIdentifierAndKind()
     {
         _mockRepo
-            .Setup(x => x.GetVersionByIdentifierAsync("review-1", "PR#42"))
+            .Setup(x => x.GetVersionByIdentifierAsync("review-1", "PR#42", It.IsAny<VersionKind?>()))
             .ReturnsAsync((APIVersionModel)null);
         _mockRepo
             .Setup(x => x.UpsertVersionAsync(It.IsAny<APIVersionModel>()))
@@ -78,10 +79,33 @@ public class APIVersionsManagerTests
     }
 
     [Fact]
+    public async Task GetOrCreateVersionAsync_PR_SubsequentPushWithDifferentPackageVersion_ReturnsSameEntity()
+    {
+        // First push created PR#42 with packageVersion "1.0.0-beta.1".
+        var existing = new APIVersionModel
+        {
+            Id = "pr-version-id", ReviewId = "review-1",
+            VersionIdentifier = "PR#42", Kind = VersionKind.PullRequest, PullRequestNumber = 42
+        };
+        _mockRepo
+            .Setup(x => x.GetVersionByIdentifierAsync("review-1", "PR#42", It.IsAny<VersionKind?>()))
+            .ReturnsAsync(existing);
+
+        // Second push: version bumped to "1.0.0" (e.g. beta.1 → stable candidate).
+        var result = await _manager.GetOrCreateVersionAsync("review-1", "1.0.0",
+            pullRequestNo: 42, sourceBranch: "feature/foo");
+
+        // Must return the same entity — identity is PR#42, not the version string.
+        Assert.Same(existing, result);
+        Assert.Equal("PR#42", result.VersionIdentifier);
+        _mockRepo.Verify(x => x.UpsertVersionAsync(It.IsAny<APIVersionModel>()), Times.Never);
+    }
+
+    [Fact]
     public async Task GetOrCreateVersionAsync_StableVersion_KindIsStable()
     {
         _mockRepo
-            .Setup(x => x.GetVersionByIdentifierAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .Setup(x => x.GetVersionByIdentifierAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<VersionKind?>()))
             .ReturnsAsync((APIVersionModel)null);
         _mockRepo.Setup(x => x.UpsertVersionAsync(It.IsAny<APIVersionModel>())).Returns(Task.CompletedTask);
 
@@ -94,7 +118,7 @@ public class APIVersionsManagerTests
     public async Task GetOrCreateVersionAsync_RollingVersion_KindIsRolling()
     {
         _mockRepo
-            .Setup(x => x.GetVersionByIdentifierAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .Setup(x => x.GetVersionByIdentifierAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<VersionKind?>()))
             .ReturnsAsync((APIVersionModel)null);
         _mockRepo.Setup(x => x.UpsertVersionAsync(It.IsAny<APIVersionModel>())).Returns(Task.CompletedTask);
 
@@ -103,47 +127,84 @@ public class APIVersionsManagerTests
 
         Assert.Equal(VersionKind.RollingPrerelease, result.Kind);
     }
+    #region AutoSoftDeleteExpiredVersionsAsync
 
     [Fact]
-    public async Task SoftDeleteVersionAsync_MarksDeletedAndAddsChangeHistory()
+    public async Task AutoSoftDeleteExpiredVersionsAsync_MarksEligibleVersionsAsDeleted()
     {
-        var version = new APIVersionModel
+        var now = DateTime.UtcNow;
+        var v1 = new APIVersionModel
         {
-            Id = "v-id",
-            ReviewId = "review-1",
-            IsDeleted = false,
+            Id = "v1", ReviewId = "review-1", IsDeleted = false,
             ChangeHistory = new List<APIVersionChangeHistoryModel>()
         };
-        _mockRepo.Setup(x => x.GetVersionAsync("review-1", "v-id")).ReturnsAsync(version);
-        _mockRepo.Setup(x => x.UpsertVersionAsync(version)).Returns(Task.CompletedTask);
+        var v2 = new APIVersionModel
+        {
+            Id = "v2", ReviewId = "review-2", IsDeleted = false,
+            ChangeHistory = new List<APIVersionChangeHistoryModel>()
+        };
+        _mockRepo
+            .Setup(x => x.GetVersionsEligibleForSoftDeleteAsync(now))
+            .ReturnsAsync(new[] { v1, v2 });
+        _mockRepo.Setup(x => x.UpsertVersionAsync(It.IsAny<APIVersionModel>())).Returns(Task.CompletedTask);
 
-        await _manager.SoftDeleteVersionAsync("v-id", "review-1", "testuser");
+        await _manager.AutoSoftDeleteExpiredVersionsAsync(now);
 
-        Assert.True(version.IsDeleted);
-        Assert.Single(version.ChangeHistory);
-        Assert.Equal(APIVersionChangeAction.Deleted, version.ChangeHistory[0].ChangeAction);
-        Assert.Equal("testuser", version.ChangeHistory[0].ChangedBy);
-        _mockRepo.Verify(x => x.UpsertVersionAsync(version), Times.Once);
+        Assert.True(v1.IsDeleted);
+        Assert.True(v2.IsDeleted);
+        Assert.Equal(APIVersionChangeAction.Deleted, v1.ChangeHistory[0].ChangeAction);
+        Assert.Equal(APIVersionChangeAction.Deleted, v2.ChangeHistory[0].ChangeAction);
+        _mockRepo.Verify(x => x.UpsertVersionAsync(v1), Times.Once);
+        _mockRepo.Verify(x => x.UpsertVersionAsync(v2), Times.Once);
     }
 
     [Fact]
-    public async Task SoftDeleteVersionAsync_AlreadyDeleted_DoesNothing()
+    public async Task AutoSoftDeleteExpiredVersionsAsync_NoEligible_DoesNothing()
     {
-        var version = new APIVersionModel { Id = "v-id", ReviewId = "review-1", IsDeleted = true };
-        _mockRepo.Setup(x => x.GetVersionAsync("review-1", "v-id")).ReturnsAsync(version);
+        var now = DateTime.UtcNow;
+        _mockRepo
+            .Setup(x => x.GetVersionsEligibleForSoftDeleteAsync(now))
+            .ReturnsAsync(Array.Empty<APIVersionModel>());
 
-        await _manager.SoftDeleteVersionAsync("v-id", "review-1", "testuser");
+        await _manager.AutoSoftDeleteExpiredVersionsAsync(now);
 
         _mockRepo.Verify(x => x.UpsertVersionAsync(It.IsAny<APIVersionModel>()), Times.Never);
     }
 
+    #endregion
+
+    #region AutoHardDeleteExpiredVersionsAsync
+
     [Fact]
-    public async Task SoftDeleteVersionAsync_NotFound_DoesNothing()
+    public async Task AutoHardDeleteExpiredVersionsAsync_DeletesEligibleVersionsFromDb()
     {
-        _mockRepo.Setup(x => x.GetVersionAsync("review-1", "missing")).ReturnsAsync((APIVersionModel)null);
+        var now = DateTime.UtcNow;
+        var v1 = new APIVersionModel { Id = "v1", ReviewId = "review-1", IsDeleted = true };
+        var v2 = new APIVersionModel { Id = "v2", ReviewId = "review-2", IsDeleted = true };
+        _mockRepo
+            .Setup(x => x.GetVersionsEligibleForHardDeleteAsync(now))
+            .ReturnsAsync(new[] { v1, v2 });
+        _mockRepo.Setup(x => x.DeleteVersionAsync(It.IsAny<string>(), It.IsAny<string>())).Returns(Task.CompletedTask);
 
-        await _manager.SoftDeleteVersionAsync("missing", "review-1", "testuser");
+        await _manager.AutoHardDeleteExpiredVersionsAsync(now);
 
+        _mockRepo.Verify(x => x.DeleteVersionAsync("v1", "review-1"), Times.Once);
+        _mockRepo.Verify(x => x.DeleteVersionAsync("v2", "review-2"), Times.Once);
         _mockRepo.Verify(x => x.UpsertVersionAsync(It.IsAny<APIVersionModel>()), Times.Never);
     }
+
+    [Fact]
+    public async Task AutoHardDeleteExpiredVersionsAsync_NoEligible_DoesNothing()
+    {
+        var now = DateTime.UtcNow;
+        _mockRepo
+            .Setup(x => x.GetVersionsEligibleForHardDeleteAsync(now))
+            .ReturnsAsync(Array.Empty<APIVersionModel>());
+
+        await _manager.AutoHardDeleteExpiredVersionsAsync(now);
+
+        _mockRepo.Verify(x => x.DeleteVersionAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
+    #endregion
 }

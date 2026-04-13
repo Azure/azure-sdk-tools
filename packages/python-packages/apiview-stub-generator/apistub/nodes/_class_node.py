@@ -378,13 +378,14 @@ class ClassNode(NodeEntityBase):
         else:
             members = inspect.getmembers(self.obj)
 
-        functions = self._parse_functions_from_class(self.obj)
         try:
-            for base_class in inspect.getmro(self.obj)[1:-1]:
-                functions += self._parse_functions_from_class(base_class)
+            mro = inspect.getmro(self.obj)
         except AttributeError:
-            pass
-        overloads = parse_overloads(self, functions, is_module_level=False)
+            mro = (self.obj,)
+        overloads_by_class = {
+            cls: parse_overloads(self, self._parse_functions_from_class(cls), is_module_level=False)
+            for cls in mro[:-1]
+        }
 
         # PEP 649 (Python 3.14+): annotations are now lazy; __annotations__ is no longer
         # eagerly populated in cls.__dict__. inspect.get_annotations() resolves string
@@ -420,7 +421,10 @@ class ClassNode(NodeEntityBase):
                     func_node = FunctionNode(
                         self.namespace, self, obj=child_obj, apiview=self.apiview
                     )
-                    add_overload_nodes(self, func_node, overloads)
+                    # Resolve overloads from the class that defines this method to
+                    # avoid duplicates when a derived class redefines an overloaded base method.
+                    defining_class = next((c for c in mro if name in c.__dict__), self.obj)
+                    add_overload_nodes(self, func_node, overloads_by_class.get(defining_class, []))
 
             # now that we've looked at the specific dunder properties we are
             # willing to include, anything with a leading underscore should be ignored.

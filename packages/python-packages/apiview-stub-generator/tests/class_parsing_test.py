@@ -25,6 +25,7 @@ from apistubgentest.models import (
     SomethingWithDecorators,
     SomethingWithInheritedOverloads,
     SomethingWithOverloads,
+    SomethingWithRedefinedOverloads,
     SomethingWithProperties,
     SomeProtocolDecorator,
     SomethingWithLiterals,
@@ -408,6 +409,32 @@ class TestClassParsing:
         # 5 empty lines, 3 overloads
         assert metadata["RelatedToLine"] == 8
         assert metadata["IsContextEndLine"] == 1, tokens
+
+    def test_redefined_overloads_no_duplicates(self):
+        """Derived class redefines an overloaded method: only the derived overloads must appear."""
+        obj = SomethingWithRedefinedOverloads
+        class_node = ClassNode(
+            name=obj.__name__,
+            namespace=obj.__name__,
+            parent_node=None,
+            obj=obj,
+            pkg_root_namespace=self.pkg_namespace,
+            apiview=MockApiView,
+        )
+        tokens = _tokenize(class_node)
+        lines = _render_lines(tokens)
+
+        overload_lines = [l for l in lines if l.lstrip() == "@overload"]
+        assert len(overload_lines) == 3, (
+            f"Expected exactly 3 overloads for the derived class, got {len(overload_lines)}. "
+            "The base class overloads must not duplicate when the derived class redefines the method."
+        )
+
+        # Verify the three derived overloads are present.
+        process_defs = [l.strip() for l in lines if "def process(" in l]
+        assert "def process(self, val: str) -> str: ..." in process_defs
+        assert "def process(self, val: int) -> int: ..." in process_defs
+        assert "def process(self, val: float) -> float: ..." in process_defs
 
     def test_overload_line_ids(self):
         obj = SomethingWithOverloads

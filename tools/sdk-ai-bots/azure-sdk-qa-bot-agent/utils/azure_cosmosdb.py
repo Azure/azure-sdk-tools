@@ -261,3 +261,47 @@ async def search_episodes_by_vector(
         "Vector search returned %d episodes for tenant=%s", len(items), tenant_id,
     )
     return items
+
+
+async def query_episodes(
+    *,
+    tenant_id: str | None = None,
+    source_thread_id: str | None = None,
+) -> list[dict[str, Any]]:
+    """Query episodes by tenant and/or source thread ID.
+
+    Returns episodes without the embedding field for efficiency.
+    """
+    container = await get_episode_container()
+
+    fields = (
+        "c.id, c.tenant_id, c.trigger, c.symptoms, c.reasoning_chain, "
+        "c.resolution, c.key_insight, c.confidence, c.source_thread_id, "
+        "c.message_count, c.created_at, c.updated_at"
+    )
+    conditions: list[str] = []
+    parameters: list[dict] = []
+    partition_key: str | None = None
+
+    if tenant_id:
+        conditions.append("c.tenant_id = @tenant_id")
+        parameters.append({"name": "@tenant_id", "value": tenant_id})
+        partition_key = tenant_id
+
+    if source_thread_id:
+        conditions.append("CONTAINS(c.source_thread_id, @thread_id)")
+        parameters.append({"name": "@thread_id", "value": source_thread_id})
+
+    where = f" WHERE {' AND '.join(conditions)}" if conditions else ""
+    query = f"SELECT {fields} FROM c{where} ORDER BY c.created_at DESC"
+
+    kwargs: dict[str, Any] = {"query": query, "parameters": parameters}
+    if partition_key:
+        kwargs["partition_key"] = partition_key
+    else:
+        kwargs["enable_cross_partition_query"] = True
+
+    items: list[dict[str, Any]] = []
+    async for item in container.query_items(**kwargs):
+        items.append(item)
+    return items

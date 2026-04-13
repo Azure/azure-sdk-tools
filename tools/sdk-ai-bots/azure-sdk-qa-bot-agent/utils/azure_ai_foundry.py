@@ -30,8 +30,7 @@ def get_agent_client() -> AzureOpenAIResponsesClient:
     if _agent_client is None:
         _agent_client = AzureOpenAIResponsesClient(
             project_endpoint=cfg("AI_FOUNDRY_PROJECT_ENDPOINT"),
-            # deployment_name=cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL", "gpt-5.4"),
-            deployment_name="gpt-5.4",
+            deployment_name=cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL"),
             credential=get_credential(),
         )
     return _agent_client
@@ -175,21 +174,20 @@ class FoundryAgentSpanEnricher(SpanProcessor):
         span.set_attribute("gen_ai.agent.id", self._agent_id)
 
     def on_end(self, span) -> None:
-        # Diagnostic logging for all spans
-        attrs = getattr(span, "attributes", None) or {}
-        op = attrs.get("gen_ai.operation.name")
-        conv = attrs.get("gen_ai.conversation.id") or attrs.get(
-            "azure.ai.agentserver.conversation_id"
-        )
-        agent = attrs.get("gen_ai.agent.name")
-        project = attrs.get("microsoft.foundry.project.id")
-        logger.info(
-            "Span ended: name=%s op=%s conv=%s agent=%s project=%s",
+        if not self._is_hosted_agent_span(span):
+            return
+        # Copy conversation id to the standard attribute if missing
+        raw_attrs = getattr(span, "_attributes", None)
+        if raw_attrs is None:
+            return
+        conv_id = raw_attrs.get("azure.ai.agentserver.conversation_id")
+        if conv_id and not raw_attrs.get("gen_ai.conversation.id"):
+            raw_attrs["gen_ai.conversation.id"] = conv_id
+        logger.debug(
+            "Span ended: name=%s conv=%s agent=%s",
             span.name,
-            op,
-            conv,
-            agent,
-            project,
+            conv_id,
+            raw_attrs.get("gen_ai.agent.name"),
         )
 
     def shutdown(self) -> None:

@@ -4,7 +4,7 @@ import "@typespec/versioning";
 using TypeSpec.Http;
 using TypeSpec.Versioning;
 
-namespace AzureSDK.QAAgent;
+namespace AzureSdkQaBot;
 
 // ── Unions ────────────────────────────────────────────────────
 
@@ -249,4 +249,7 @@ model IntentionResponse {
 model PingResponse {
   @doc("Service status")
   status: "ok";
+
+  @doc("Service version")
+  version: string;
 }

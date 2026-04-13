@@ -22,7 +22,7 @@ async def test_search_knowledge_tool() -> None:
     sources = [SRC_AZURE_REST_API_SPECS_WIKI]
 
     result = await KnowledgeTools().search_knowledge_base(
-        query=query, sources=sources, tenant_id=TenantID.TYPESPEC_CHANNEL_QA_BOT
+        queries=[query], sources=sources, tenant_id=TenantID.TYPESPEC_CHANNEL_QA_BOT
     )
 
     assert len(result.results) > 0

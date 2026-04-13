@@ -266,22 +266,23 @@
     [modal]="true" [(visible)]="showAPIRevisionApprovalModal"
     [style]="{ width: '40dvw' }">
     <ul class="list-group">
+        <li class="list-group-item" *ngIf="hasDiagnosticMustFixApprovalWarning">
+            <p class="mb-0 text-danger fw-bold">
+                This API has unresolved diagnostic "Must Fix" comments. Approval is currently allowed but will be blocked in a future update. Please address these issues in the code or parser.
+            </p>
+        </li>
         <li class="list-group-item" *ngIf="hasActiveConversation">
-            <div class="float-start">
-                <p class="mb-0">There are still active conversations. Would you like to review these first?</p>
-            </div>
-            <div class="float-end">
+            <p class="mb-0">There are still active conversations. Would you like to review these first?</p>
+            <div class="d-flex align-items-center mt-2">
                 <p-toggleswitch [(ngModel)]="overrideActiveConversationforApproval"/>
-                <label class="ms-2">Override</label>
+                <label class="ms-2 mb-0">Override</label>
             </div>
         </li>
         <li class="list-group-item" *ngIf="hasFatalDiagnostics">
-            <div class="float-start">
-                <p class="mb-0">This API has fatal diagnostics.</p>
-            </div>
-            <div class="float-end">
+            <p class="mb-0">This API has fatal diagnostics.</p>
+            <div class="d-flex align-items-center mt-2">
                 <p-toggleswitch [(ngModel)]="overrideFatalDiagnosticsforApproval"/>
-                <label class="ms-2">Override</label>
+                <label class="ms-2 mb-0">Override</label>
             </div>
         </li>
       </ul>

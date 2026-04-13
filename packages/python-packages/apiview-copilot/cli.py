@@ -969,12 +969,12 @@ def db_get(container_name: str, id: str):
 
 
 def db_delete(container_name: str, id: str):
-    """Soft-delete an item from the database."""
+    """Permanently delete an item from the database (hard delete)."""
     db = DatabaseManager.get_instance()
     container = db.get_container_client(container_name)
     try:
         container.delete_item(item=id, partition_key=id)
-        print(f"Item {id} soft-deleted from container {container_name}.")
+        print(f"Item {id} deleted from container {container_name}.")
     except Exception as e:
         print(f"Error deleting item: {e}")
 

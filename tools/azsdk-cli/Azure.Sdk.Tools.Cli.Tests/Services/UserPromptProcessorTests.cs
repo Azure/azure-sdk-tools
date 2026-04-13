@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-#if DEBUG
 using Moq;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Services;
@@ -239,5 +238,3 @@ internal class UserPromptProcessorTests
         }
     }
 }
-
-#endif

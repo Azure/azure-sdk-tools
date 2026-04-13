@@ -97,8 +97,9 @@ function executeCommand(
 
 /**
  * Check if a Git tag exists in the repository.
- * `git tag -l` always exits with code 0; a matching tag prints the tag name to stdout,
- * a missing tag prints nothing. We therefore check both exit code and non-empty output.
+ * In the normal case, `git tag -l` prints matching tag names to stdout and prints nothing
+ * when there is no match. If the command itself fails, Git may return a non-zero exit code,
+ * so we check both for a successful exit code and non-empty output.
  * @param tag The Git tag to check
  * @returns boolean indicating if the tag exists
  */

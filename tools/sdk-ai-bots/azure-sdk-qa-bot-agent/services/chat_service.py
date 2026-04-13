@@ -48,6 +48,8 @@ logger = logging.getLogger(__name__)
 COMPACT_THRESHOLD = 100000
 """Token count at which conversation history is compacted."""
 
+_CITATION_RE = re.compile(r"[^\w\s]*cite[^\w\s]*turn\d+\S*")
+
 
 class ChatService:
     """Coordinates conversation state, hosted-agent invocation, and response mapping."""
@@ -355,6 +357,9 @@ class ChatService:
                 response.id,
                 response.status,
             )
+
+        # Strip model citation artifacts (e.g. "citeturn0search0").
+        output_text = _CITATION_RE.sub("", output_text)
 
         # Extract structured references from the agent's markdown output
         # and strip the references section from the answer text.

@@ -1405,7 +1405,7 @@ public class APIRevisionsManagerTests
 
         Assert.Equal(80, result.Score); // 100 - 20
         Assert.Equal(1, result.UnresolvedMustFixCount);
-        Assert.Equal(1, result.UnresolvedMustFixExcludingDiagnosticsCount);
+        Assert.Equal(0, result.UnresolvedMustFixDiagnostics);
     }
 
     [Fact]
@@ -1424,7 +1424,7 @@ public class APIRevisionsManagerTests
 
         Assert.Equal(80, result.Score);
         Assert.Equal(1, result.UnresolvedMustFixCount);
-        Assert.Equal(0, result.UnresolvedMustFixExcludingDiagnosticsCount);
+        Assert.Equal(1, result.UnresolvedMustFixDiagnostics);
     }
 
     [Fact]

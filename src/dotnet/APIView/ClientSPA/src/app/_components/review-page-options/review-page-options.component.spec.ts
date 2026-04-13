@@ -194,13 +194,14 @@ describe('ReviewPageOptionsComponent', () => {
       component.qualityScore = {
         score: 80,
         unresolvedMustFixCount: 1,
-        unresolvedMustFixExcludingDiagnosticsCount: 0,
+        unresolvedMustFixDiagnostics: 1,
         unresolvedShouldFixCount: 0,
         unresolvedSuggestionCount: 0,
         unresolvedQuestionCount: 0,
         unresolvedUnknownCount: 0,
         totalUnresolvedCount: 1
       };
+      component.hasDiagnosticMustFixApprovalWarning = true;
 
       component.handleAPIRevisionApprovalAction();
 
@@ -215,7 +216,7 @@ describe('ReviewPageOptionsComponent', () => {
       component.qualityScore = {
         score: 100,
         unresolvedMustFixCount: 0,
-        unresolvedMustFixExcludingDiagnosticsCount: 0,
+        unresolvedMustFixDiagnostics: 0,
         unresolvedShouldFixCount: 0,
         unresolvedSuggestionCount: 0,
         unresolvedQuestionCount: 0,
@@ -414,14 +415,14 @@ describe('ReviewPageOptionsComponent', () => {
         component.qualityScore = {
           score: 80,
           unresolvedMustFixCount: 1,
-          unresolvedMustFixExcludingDiagnosticsCount: 0,
+          unresolvedMustFixDiagnostics: 1,
           unresolvedShouldFixCount: 0,
           unresolvedSuggestionCount: 0,
           unresolvedQuestionCount: 0,
           unresolvedUnknownCount: 0,
           totalUnresolvedCount: 1
         };
-        component.unresolvedMustFixCount = component.qualityScore.unresolvedMustFixExcludingDiagnosticsCount ?? 0;
+        component.unresolvedMustFixCount = component.qualityScore.unresolvedMustFixCount - (component.qualityScore.unresolvedMustFixDiagnostics ?? 0);
         const result = component['getApprovalDisabledReasons'](false, false);
         expect(result).toEqual([]);
       });

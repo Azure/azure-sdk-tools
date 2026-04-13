@@ -2,7 +2,7 @@ using Azure.Sdk.Tools.Cli.Models.Responses;
 
 namespace Azure.Sdk.Tools.Cli.Services.TypeSpec
 {
-    public interface ITypeSpecSDKbreakingchangeDetectionService
+    public interface ITypeSpecSdkBreakingChangeDetectionService
     {
         /// <summary>
         /// Detects breaking changes in a TypeSpec SDK project compared to a specified baseline (e.g., previous version, main branch, etc.)

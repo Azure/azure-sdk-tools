@@ -1,14 +1,13 @@
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Models.Responses;
-using Microsoft.TeamFoundation.TestManagement.WebApi;
 
 namespace Azure.Sdk.Tools.Cli.Services.TypeSpec
 {
-    public class TypeSpecSDKbreakingchangeDetectionService : ITypeSpecSDKbreakingchangeDetectionService
+    public class TypeSpecSdkBreakingChangeDetectionService : ITypeSpecSdkBreakingChangeDetectionService
     {
-        private readonly ILogger<TypeSpecSDKbreakingchangeDetectionService> logger;
+        private readonly ILogger<TypeSpecSdkBreakingChangeDetectionService> logger;
         private readonly ICopilotAgentRunner copilotAgentRunner;
-        public TypeSpecSDKbreakingchangeDetectionService(ILogger<TypeSpecSDKbreakingchangeDetectionService> logger, ICopilotAgentRunner copilotAgentRunner)
+        public TypeSpecSdkBreakingChangeDetectionService(ILogger<TypeSpecSdkBreakingChangeDetectionService> logger, ICopilotAgentRunner copilotAgentRunner)
         {
             this.logger = logger;
             this.copilotAgentRunner = copilotAgentRunner;

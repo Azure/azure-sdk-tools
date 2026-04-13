@@ -22,7 +22,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec];
 
         private readonly IAzureSdkKnowledgeBaseService _azureSdkKnowledgeBaseService;
-        private readonly ITypeSpecSDKbreakingchangeDetectionService _detectionService;
+        private readonly ITypeSpecSdkBreakingChangeDetectionService _detectionService;
         private readonly ILogger<TypeSpecAuthoringTool> _logger;
         private readonly ITypeSpecHelper _typeSpecHelper;
         private readonly IGitHelper _gitHelper;
@@ -50,7 +50,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
         public TypeSpecAuthoringTool(
             IAzureSdkKnowledgeBaseService azureSdkKnowledgeBaseService,
-            ITypeSpecSDKbreakingchangeDetectionService detectionService,
+            ITypeSpecSdkBreakingChangeDetectionService detectionService,
             ILogger<TypeSpecAuthoringTool> logger,
             ITypeSpecHelper typeSpecHelper,
             IGitHelper gitHelper)

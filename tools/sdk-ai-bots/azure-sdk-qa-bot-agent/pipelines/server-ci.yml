@@ -55,8 +55,8 @@ extends:
               - bash: |
                   set -euo pipefail
                   python -m pip install --upgrade pip --index-url $(PythonIndexUrl)
-                  pip install --pre -r requirements.txt --index-url $(PythonIndexUrl) --extra-index-url https://pypi.org/simple/
-                  pip install pytest pytest-asyncio pyright --index-url $(PythonIndexUrl) --extra-index-url https://pypi.org/simple/
+                  pip install --pre -r requirements.txt --index-url $(PythonIndexUrl)
+                  pip install pytest pytest-asyncio pyright --index-url $(PythonIndexUrl)
                 displayName: 'Install dependencies'
                 workingDirectory: $(workingDirectory)
 

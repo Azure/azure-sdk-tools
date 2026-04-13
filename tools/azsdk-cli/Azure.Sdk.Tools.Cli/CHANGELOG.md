@@ -1,17 +1,16 @@
 # Release History
 
-## 0.6.7 (Unreleased)
+## 0.6.7 (2026-04-13)
 
 ### Features Added
 
 - Added support to collect telemetry for sanitized user prompts
 - Added `azsdk_apiview_get_review_url` MCP tool and `azsdk apiview get-review-url` CLI command to retrieve the APIView review URL for a package by name and language
-
-### Breaking Changes
-
-### Bugs Fixed
+- Added recorded and live test support for Python, JavaScript, Java and .NET.
 
 ### Other Changes
+
+- Updated `azsdk_typespec_delegate_apiview_feedback` to split the feedback summary table into addressed/not-addressed sections for easier review
 
 ## 0.6.6 (2026-04-01)
 

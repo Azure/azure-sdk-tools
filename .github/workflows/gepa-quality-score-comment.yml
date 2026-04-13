@@ -78,9 +78,9 @@ jobs:
             body += '\n<details><summary>How to improve</summary>\n\n';
             body += '```bash\n';
             body += '# Score a specific skill\n';
-            body += 'python .github/skills/sensei/scripts/gepa/auto_evaluator.py score --skill <name> --skills-dir plugin/skills --tests-dir tests\n\n';
+            body += 'python .github/skills/sensei/scripts/gepa/auto_evaluator.py score --skill <name> --skills-dir .github/skills --tests-dir tests\n\n';
             body += '# Optimize a skill with GEPA\n';
-            body += 'python .github/skills/sensei/scripts/gepa/auto_evaluator.py optimize --skill <name> --skills-dir plugin/skills --tests-dir tests\n';
+            body += 'python .github/skills/sensei/scripts/gepa/auto_evaluator.py optimize --skill <name> --skills-dir .github/skills --tests-dir tests\n';
             body += '```\n</details>';
 
             const { data: comments } = await github.rest.issues.listComments({

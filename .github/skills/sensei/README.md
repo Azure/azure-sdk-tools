@@ -123,7 +123,7 @@ npm test -- --testPathPatterns=azure-validation
 └─────────────────────┬───────────────────────────────────┘
                       ▼
 ┌─────────────────────────────────────────────────────────┐
-│  1. READ: Load plugin/skills/{skill-name}/SKILL.md      │
+│  1. READ: Load .github/skills/{skill-name}/SKILL.md      │
 │           Load tests/{skill-name}/ (if exists)          │
 │           Count tokens (baseline for comparison)        │
 └─────────────────────┬───────────────────────────────────┘
@@ -178,7 +178,7 @@ npm test -- --testPathPatterns=azure-validation
                       ▼
 ┌─────────────────────────────────────────────────────────┐
 │  8. CHECK TOKENS:                                       │
-│     npm run tokens -- check plugin/skills/{skill-name}  │
+│     npm run tokens -- check .github/skills/{skill-name}  │
 │     npm run tokens -- suggest (gather optimizations)    │
 └─────────────────────┬───────────────────────────────────┘
                       ▼
@@ -286,7 +286,7 @@ To reach Medium-High, a skill must have:
 From [skill-authoring](/.github/skills/skill-authoring):
 - **SKILL.md:** < 500 tokens (soft), < 5000 (hard)
 - **references/*.md:** < 1000 tokens each
-- Check with: `cd scripts && npm run tokens -- check plugin/skills/{skill}/SKILL.md`
+- Check with: `cd scripts && npm run tokens -- check .github/skills/{skill}/SKILL.md`
 
 ---
 
@@ -398,7 +398,7 @@ git reset --hard {commit-before-sensei}
 git log --oneline --grep="sensei:"
 
 # See changes to a specific skill
-git log --oneline -p plugin/skills/{skill-name}/SKILL.md
+git log --oneline -p .github/skills/{skill-name}/SKILL.md
 ```
 
 ---

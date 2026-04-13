@@ -18,13 +18,13 @@ Sensei uses the token CLI from `scripts/`:
 
 ```bash
 # Count tokens in a file
-cd scripts && npm run tokens -- count plugin/skills/{skill-name}/SKILL.md
+cd scripts && npm run tokens -- count .github/skills/{skill-name}/SKILL.md
 
 # Check against limits
-cd scripts && npm run tokens -- check plugin/skills/{skill-name}/SKILL.md
+cd scripts && npm run tokens -- check .github/skills/{skill-name}/SKILL.md
 
 # Get optimization suggestions
-cd scripts && npm run tokens -- suggest plugin/skills/{skill-name}/SKILL.md
+cd scripts && npm run tokens -- suggest .github/skills/{skill-name}/SKILL.md
 ```
 
 ## Integration Points
@@ -33,7 +33,7 @@ cd scripts && npm run tokens -- suggest plugin/skills/{skill-name}/SKILL.md
 
 At loop start, capture initial token count:
 ```bash
-cd scripts && npm run tokens -- count plugin/skills/{skill-name}/SKILL.md --json
+cd scripts && npm run tokens -- count .github/skills/{skill-name}/SKILL.md --json
 ```
 
 Store: `beforeTokens = result.tokens`
@@ -43,10 +43,10 @@ Store: `beforeTokens = result.tokens`
 After frontmatter improvements pass tests:
 ```bash
 # Get current count
-cd scripts && npm run tokens -- count plugin/skills/{skill-name}/SKILL.md --json
+cd scripts && npm run tokens -- count .github/skills/{skill-name}/SKILL.md --json
 
 # Get suggestions
-cd scripts && npm run tokens -- suggest plugin/skills/{skill-name}/SKILL.md --json
+cd scripts && npm run tokens -- suggest .github/skills/{skill-name}/SKILL.md --json
 ```
 
 Store:

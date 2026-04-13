@@ -16,13 +16,13 @@ results into the score.
 
 Usage:
     # Score a skill (no optimization, no LLM calls)
-    python auto_evaluator.py score --skill azure-deploy --skills-dir plugin/skills --tests-dir tests
+    python auto_evaluator.py score --skill azure-deploy --skills-dir .github/skills --tests-dir tests
 
     # Optimize a skill (requires LLM API)
-    python auto_evaluator.py optimize --skill azure-deploy --skills-dir plugin/skills --tests-dir tests
+    python auto_evaluator.py optimize --skill azure-deploy --skills-dir .github/skills --tests-dir tests
 
     # Score all skills
-    python auto_evaluator.py score-all --skills-dir plugin/skills --tests-dir tests
+    python auto_evaluator.py score-all --skills-dir .github/skills --tests-dir tests
 
     # JSON output
     python auto_evaluator.py score --skill azure-deploy --json
@@ -477,13 +477,13 @@ def main():
     # score command
     score_p = subparsers.add_parser("score", help="Score a skill's quality")
     score_p.add_argument("--skill", required=True)
-    score_p.add_argument("--skills-dir", default="plugin/skills")
+    score_p.add_argument("--skills-dir", default=".github/skills")
     score_p.add_argument("--tests-dir", default="tests")
     score_p.add_argument("--json", action="store_true")
 
     # score-all command
     all_p = subparsers.add_parser("score-all", help="Score all skills")
-    all_p.add_argument("--skills-dir", default="plugin/skills")
+    all_p.add_argument("--skills-dir", default=".github/skills")
     all_p.add_argument("--tests-dir", default="tests")
     all_p.add_argument("--json", action="store_true")
     all_p.add_argument("--sort", choices=["score", "name"], default="score")
@@ -491,7 +491,7 @@ def main():
     # optimize command
     opt_p = subparsers.add_parser("optimize", help="Optimize a skill with GEPA")
     opt_p.add_argument("--skill", required=True)
-    opt_p.add_argument("--skills-dir", default="plugin/skills")
+    opt_p.add_argument("--skills-dir", default=".github/skills")
     opt_p.add_argument("--tests-dir", default="tests")
     opt_p.add_argument("--iterations", type=int, default=80)
     opt_p.add_argument("--model", default="openai/gpt-4o")

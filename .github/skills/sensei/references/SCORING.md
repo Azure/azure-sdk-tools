@@ -18,7 +18,7 @@ From [skill-authoring](/.github/skills/skill-authoring):
 | references/*.md | 1000 | - | Each reference file |
 | Description | - | 1024 chars | Frontmatter description field |
 
-**Check with:** `cd scripts && npm run tokens -- check plugin/skills/{skill}/SKILL.md`
+**Check with:** `cd scripts && npm run tokens -- check .github/skills/{skill}/SKILL.md`
 
 > **Units note:** Sensei measures in **tokens** (cl100k_base tokenizer), not words. Anthropic's [Complete Guide](https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf) recommends "under 5,000 words" for SKILL.md, while the [Agent Skills spec](https://agentskills.io/specification) recommends "< 5000 tokens" and "under 500 lines." Sensei uses the spec's token-based limits. As a rough conversion: 5000 tokens ≈ 3,750 words.
 

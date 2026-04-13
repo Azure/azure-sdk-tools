@@ -111,7 +111,7 @@ Run sensei score all skills
 
 For each skill, execute this loop until score >= Medium-High AND tests pass:
 
-1. **READ** - Load `plugin/skills/{skill-name}/SKILL.md`, tests, and token count
+1. **READ** - Load `.github/skills/{skill-name}/SKILL.md`, tests, and token count
 2. **SCORE** - Run spec-based compliance check (see [SCORING.md](references/SCORING.md)):
    - Validate `name` per [agentskills.io spec](https://agentskills.io/specification) (no `--`, no start/end `-`, lowercase alphanumeric)
    - Check description length and word count (≤60 words)
@@ -124,7 +124,7 @@ For each skill, execute this loop until score >= Medium-High AND tests pass:
 5b. **IMPROVE WITH GEPA** (when `--gepa` flag is set) — Replaces step 5 (IMPROVE FRONTMATTER) with automated optimization; step 6 (IMPROVE TESTS) still runs normally:
    - Auto-discovers `tests/{skill-name}/triggers.test.ts` and extracts prompt arrays
    - Builds a GEPA evaluator scoring content quality + trigger accuracy based on those trigger prompt arrays (not Jest test pass/fail results)
-   - Runs `python .github/skills/sensei/scripts/gepa/auto_evaluator.py optimize --skill {skill-name} --skills-dir plugin/skills --tests-dir tests`
+   - Runs `python .github/skills/sensei/scripts/gepa/auto_evaluator.py optimize --skill {skill-name} --skills-dir .github/skills --tests-dir tests`
    - Shows diff of optimized SKILL.md for user approval
    - GEPA uses existing test trigger definitions as configuration — it does not execute, replace, or modify Jest tests
 6. **IMPROVE TESTS** - Update `shouldTriggerPrompts` and `shouldNotTriggerPrompts` to match the finalized frontmatter (including any GEPA changes)
@@ -200,7 +200,7 @@ sensei: improve {skill-name} frontmatter
 
 ## Constraints
 
-- Only modify `plugin/skills/` - these are the Azure skills used by Copilot
+- Only modify `.github/skills/` - these are the Azure skills used by Copilot
 - `.github/skills/` contains meta-skills like sensei for developer tooling
 - Max 5 iterations per skill before moving on
 - Description must stay under 1024 characters

@@ -107,7 +107,7 @@ The Ralph loop is an iterative improvement cycle inspired by the ["Ralph Wiggum"
 
 **Files to read:**
 ```
-plugin/skills/{skill-name}/SKILL.md    # Required
+.github/skills/{skill-name}/SKILL.md    # Required
 tests/{skill-name}/unit.test.ts        # If exists
 tests/{skill-name}/triggers.test.ts    # If exists
 tests/{skill-name}/integration.test.ts # If exists
@@ -267,13 +267,13 @@ cd scripts && npm run references {skill-name}
 
 **Commands:**
 ```bash
-cd scripts && npm run tokens -- check plugin/skills/{skill-name}/SKILL.md
-cd scripts && npm run tokens -- suggest plugin/skills/{skill-name}/SKILL.md
+cd scripts && npm run tokens -- check .github/skills/{skill-name}/SKILL.md
+cd scripts && npm run tokens -- suggest .github/skills/{skill-name}/SKILL.md
 ```
 
 **Line count check (per spec):**
 ```bash
-wc -l plugin/skills/{skill-name}/SKILL.md
+wc -l .github/skills/{skill-name}/SKILL.md
 ```
 Report a warning if SKILL.md exceeds 500 lines (spec recommendation).
 
@@ -339,7 +339,7 @@ Choose an action:
 
 **Commit flow:**
 ```bash
-git add plugin/skills/{skill-name}/SKILL.md
+git add .github/skills/{skill-name}/SKILL.md
 git add tests/{skill-name}/
 git commit -m "sensei: improve {skill-name} frontmatter
 
@@ -417,7 +417,7 @@ Skills: [skill-a, skill-b, skill-c]
 
 ### Skill Not Found
 
-1. Verify skill exists: `ls plugin/skills/{skill-name}`
+1. Verify skill exists: `ls .github/skills/{skill-name}`
 2. Check spelling (case-sensitive)
 3. Report error and skip to next skill
 
@@ -432,7 +432,7 @@ Sensei tracks progress via git commits. To review:
 git log --oneline --grep="sensei:"
 
 # See specific skill history
-git log --oneline -- plugin/skills/{skill-name}/SKILL.md
+git log --oneline -- .github/skills/{skill-name}/SKILL.md
 
 # See diff for a commit
 git show {commit-hash}

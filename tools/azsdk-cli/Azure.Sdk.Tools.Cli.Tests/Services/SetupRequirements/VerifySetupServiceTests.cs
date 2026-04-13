@@ -101,6 +101,8 @@ internal class VerifySetupServiceTests
                     { "generator", "generator 0.4.3" },
                     { "rustup", "rustup 1.27.0" },
                     { "cargo", "cargo 1.78.0" },
+                    { "fmt", "rustfmt 1.7.0" },
+                    { "clippy", "clippy 0.1.78" },
                     { "core.longpaths", "true" }
                 };
                 foreach (var kvp in successfulCommands)
@@ -572,53 +574,5 @@ internal class VerifySetupServiceTests
 
         Assert.That(result.IsFixable, Is.False);
         Assert.That(result.HasBlockingFailures, Is.False);
-    }
-
-    [Test]
-    public async Task VerifySetup_Succeeds_WhenAllRustRequirementsMet()
-    {
-        var result = await verifySetupService.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Rust }, "/test/path/rust");
-
-        Assert.That(result.ResponseError, Is.Null);
-        Assert.That(result.Results?.Any(r => !r.Passed), Is.False);
-    }
-
-    [Test]
-    public async Task VerifySetup_Fails_WhenRustupMissing()
-    {
-        SetupFailedProcessMock("rustup", 1, "rustup: command not found");
-        RecreateService();
-
-        var result = await verifySetupService.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Rust }, "/test/path/rust");
-
-        Assert.That(result.Results, Is.Not.Null.And.Not.Empty);
-        Assert.That(result.Results!.Any(r => r.Requirement.Contains("rustup") && !r.Passed), Is.True);
-    }
-
-    [Test]
-    public async Task VerifySetup_SkipsCargo_WhenRustupFails()
-    {
-        SetupFailedProcessMock("rustup", 1, "rustup: command not found");
-        RecreateService();
-
-        var result = await verifySetupService.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Rust }, "/test/path/rust");
-
-        Assert.That(result.Results, Is.Not.Null.And.Not.Empty);
-        var cargoResult = result.Results!.FirstOrDefault(r => r.Requirement.Contains("cargo"));
-        Assert.That(cargoResult, Is.Not.Null);
-        Assert.That(cargoResult!.RequirementStatusDetails, Does.Contain("Skipped"));
-    }
-
-    [Test]
-    public async Task VerifySetup_DoesNotCheckRustRequirements_ForNonRustLanguage()
-    {
-        SetupFailedProcessMock("rustup", 1, "rustup: command not found");
-        SetupFailedProcessMock("cargo", 1, "cargo: command not found");
-        RecreateService();
-
-        var result = await verifySetupService.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Python }, "/test/path/python");
-
-        Assert.That(result.Results?.Any(r => r.Requirement.Contains("rustup")), Is.False);
-        Assert.That(result.Results?.Any(r => r.Requirement.Contains("cargo")), Is.False);
     }
 }

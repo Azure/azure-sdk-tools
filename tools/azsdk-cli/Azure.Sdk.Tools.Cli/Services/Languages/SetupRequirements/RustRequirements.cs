@@ -12,7 +12,9 @@ public static class RustRequirements
 {
     public static IReadOnlyList<Requirement> All => [
         new RustupRequirement(),
-        new CargoRequirement()
+        new CargoRequirement(),
+        new CargoFmtRequirement(),
+        new CargoClippyRequirement()
     ];
 
     public class RustupRequirement : Requirement
@@ -43,6 +45,38 @@ public static class RustRequirements
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {
             return ["Download and install rustup from https://rust-lang.org/tools/install/"];
+        }
+    }
+
+    public class CargoFmtRequirement : Requirement
+    {
+        public override string Name => "cargo-fmt";
+        public override string[] CheckCommand => ["cargo", "fmt", "--version"];
+        public override IReadOnlyList<string> DependsOn => ["cargo"];
+        public override string? NotAutoInstallableReason => NotInstallableReasons.BundledWithLanguage;
+
+        public override bool ShouldCheck(RequirementContext ctx)
+            => ctx.Languages.Contains(SdkLanguage.Rust);
+
+        public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
+        {
+            return ["Install rustfmt via: rustup component add rustfmt"];
+        }
+    }
+
+    public class CargoClippyRequirement : Requirement
+    {
+        public override string Name => "cargo-clippy";
+        public override string[] CheckCommand => ["cargo", "clippy", "--version"];
+        public override IReadOnlyList<string> DependsOn => ["cargo"];
+        public override string? NotAutoInstallableReason => NotInstallableReasons.BundledWithLanguage;
+
+        public override bool ShouldCheck(RequirementContext ctx)
+            => ctx.Languages.Contains(SdkLanguage.Rust);
+
+        public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
+        {
+            return ["Install clippy via: rustup component add clippy"];
         }
     }
 }

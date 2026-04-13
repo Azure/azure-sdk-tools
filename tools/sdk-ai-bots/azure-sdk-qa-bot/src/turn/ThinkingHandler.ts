@@ -129,7 +129,7 @@ export class ThinkingHandler {
     // Show TypeSpec skill promo when the effective tenant is the TypeSpec channel (or the default channel for backward compatibility)
     const effectiveTenant = routeTenant ?? currentChannelTenant;
     if (effectiveTenant === KnownTenants.TypeSpec || effectiveTenant === KnownTenants.Default) {
-      const typeSpecSkillPromo = `🚀 **Try the Azure TypeSpec Author skill (Beta)!** Check out the Quick Start and samples [here](https://azure.github.io/typespec-azure/docs/getstarted/typespec-authoring-skill/).`;
+      const typeSpecSkillPromo = `🚀 **Try the Azure TypeSpec Author skill** to write API specifications in TypeSpec! Check out the Quick Start and samples [here](https://azure.github.io/typespec-azure/docs/getstarted/typespec-authoring-skill/).`;
       footer = `${footer}\n\n${typeSpecSkillPromo}`;
     }
 

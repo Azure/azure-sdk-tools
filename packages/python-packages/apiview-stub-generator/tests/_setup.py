@@ -1,27 +1,22 @@
 #!/usr/bin/env python
 
-#-------------------------------------------------------------------------
+# -------------------------------------------------------------------------
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for
 # license information.
-#--------------------------------------------------------------------------
+# --------------------------------------------------------------------------
 
 import re
 import os.path
 from io import open
 from setuptools import find_packages, setup
 
-# Change the PACKAGE_NAME only to change folder and different name
 PACKAGE_NAME = "apistubgentest"
 PACKAGE_PPRINT_NAME = "ApiView"
 
-# a-b-c => a/b/c
 package_folder_path = PACKAGE_NAME.replace('-', '/')
-# a-b-c => a.b.c
 namespace_name = PACKAGE_NAME.replace('-', '.')
 
-
-# Version extraction inspired from 'requests'
 with open(os.path.join(package_folder_path, '_version.py')) as fd:
     version = re.search(r'^VERSION\s*=\s*[\'"]([^\'"]*)[\'"]',
                         fd.read(), re.MULTILINE).group(1)
@@ -54,11 +49,11 @@ setup(
         'Programming Language :: Python',
         'Programming Language :: Python :: 3 :: Only',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8',
-        'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.13',
+        'Programming Language :: Python :: 3.14',
         'License :: OSI Approved :: MIT License',
     ],
     zip_safe=False,
@@ -70,5 +65,5 @@ setup(
             "pandas>1.0.0,<3.0",
         ]
     },
-    python_requires=">=3.8"
+    python_requires=">=3.10"
 )

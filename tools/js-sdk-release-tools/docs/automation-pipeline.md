@@ -35,7 +35,7 @@ The package exposes the following CLI commands (defined in `package.json` `bin`)
 | Command | Parameters | Description |
 |---|---|---|
 | `update-changelog` | `--sdkRepoPath`, `--packagePath` | Regenerates `CHANGELOG.md` only (does not bump version) |
-| `update-version` | `--sdkRepoPath`, `--packagePath`, `--releaseType`, `--version`, `--releaseDate` | Updates `package.json` `changelog.md` version only (does not rewrite changelog) and Update version in src  |
+| `update-version` | `--sdkRepoPath`, `--packagePath`, `--releaseType`, `--version`, `--releaseDate` | Updates the version in `package.json`, updates version information in `CHANGELOG.md` without regenerating changelog content, and updates user-agent/version metadata in source |
 | `generate-ci-yaml` | `--sdkRepoPath`, `--packagePath` | Creates or updates the `ci.yml` / `ci.mgmt.yml` file for a package |
 
 #### Local Code Generation

@@ -21,27 +21,30 @@ pr:
     include:
       - tools/sdk-ai-bots/azure-sdk-qa-bot-agent
 
+variables:
+  - template: /eng/pipelines/templates/variables/globals.yml
+  - template: /eng/pipelines/templates/variables/image.yml
+  - name: workingDirectory
+    value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-agent'
+  - name: pythonVersion
+    value: '3.12'
+  - name: PythonIndexUrl
+    value: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/'
+
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
   parameters:
-    Use1ESOfficial: false
+    Use1ESOfficial: true
     stages:
       - stage: CI
         displayName: 'Lint & Test'
-        variables:
-          - template: /eng/pipelines/templates/variables/globals.yml
-          - template: /eng/pipelines/templates/variables/image.yml
-          - name: workingDirectory
-            value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-agent'
-          - name: pythonVersion
-            value: '3.12'
-        pool:
-          name: $(LINUXPOOL)
-          image: $(LINUXVMIMAGE)
-          os: linux
         jobs:
           - job: LintAndTest
             displayName: 'Lint & Unit Tests'
+            pool:
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
             steps:
               - checkout: self
                 displayName: 'Checkout repository'
@@ -53,9 +56,9 @@ extends:
 
               - bash: |
                   set -euo pipefail
-                  python -m pip install --upgrade pip
-                  pip install --pre -r requirements.txt
-                  pip install pytest pytest-asyncio pyright
+                  python -m pip install --upgrade pip --index-url $(PythonIndexUrl)
+                  pip install --pre -r requirements.txt --index-url $(PythonIndexUrl)
+                  pip install pytest pytest-asyncio pyright --index-url $(PythonIndexUrl)
                 displayName: 'Install dependencies'
                 workingDirectory: $(workingDirectory)
 

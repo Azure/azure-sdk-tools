@@ -12,6 +12,8 @@
 
 ### Other Changes
 
+- Updated `azsdk_typespec_delegate_apiview_feedback` to split the feedback summary table into addressed/not-addressed sections for easier review
+
 ## 0.6.6 (2026-04-01)
 
 ### Features Added

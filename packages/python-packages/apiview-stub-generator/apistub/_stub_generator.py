@@ -32,11 +32,7 @@ from apistub._generated.treestyle.parser._model_base import (
     SdkJSONEncoder as APIViewEncoder,
 )
 
-try:
-    import yaml as _yaml
-    _YAML_AVAILABLE = True
-except ImportError:
-    _YAML_AVAILABLE = False
+import yaml as _yaml
 
 INIT_PY_FILE = "__init__.py"
 INIT_EXTENSION_SUBSTRING = ".extend_path(__path__, __name__)"
@@ -275,11 +271,6 @@ class StubGenerator:
     def _generate_tokens_from_code_model(self):
         """Generate tokens directly from a preprocessed code-model.yaml file, skipping package install/inspection."""
         from apistub.nodes._code_model_parser import CodeModelParser
-
-        if not _YAML_AVAILABLE:
-            raise RuntimeError(
-                "PyYAML is required to use --code-model-path. Install it with: pip install pyyaml"
-            )
 
         logging.info("Generating tokens from code model: {}".format(self.code_model_path))
         with open(self.code_model_path, "r", encoding="utf-8") as f:

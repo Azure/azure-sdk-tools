@@ -100,9 +100,9 @@ internal class VerifySetupServiceTests
                     { "goimports", "goimports" },
                     { "generator", "generator 0.4.3" },
                     { "rustup", "rustup 1.27.0" },
-                    { "cargo", "cargo 1.78.0" },
                     { "fmt", "rustfmt 1.7.0" },
                     { "clippy", "clippy 0.1.78" },
+                    { "cargo", "cargo 1.78.0" },
                     { "core.longpaths", "true" }
                 };
                 foreach (var kvp in successfulCommands)
@@ -380,6 +380,32 @@ internal class VerifySetupServiceTests
         Assert.That(tspResult, Is.Not.Null);
         Assert.That(tspResult!.RequirementStatusDetails, Does.Contain("Skipped"));
         Assert.That(tspResult.RequirementStatusDetails, Does.Contain("Node.js"));
+    }
+
+    [Test]
+    public async Task VerifySetup_SkipsRustDependents_WhenRustupFails()
+    {
+        SetupFailedProcessMock("rustup", 1, "rustup: command not found");
+        RecreateService();
+
+        var result = await verifySetupService.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Rust }, "/test/path/rust");
+
+        Assert.That(result.ResponseError, Is.Null);
+        var rustupResult = result.Results?.FirstOrDefault(r => r.Requirement.Contains("rustup"));
+        Assert.That(rustupResult, Is.Not.Null);
+
+        var cargoResult = result.Results?.FirstOrDefault(r => r.Requirement.Contains("cargo"));
+        Assert.That(cargoResult, Is.Not.Null);
+        Assert.That(cargoResult!.RequirementStatusDetails, Does.Contain("Skipped"));
+        Assert.That(cargoResult.RequirementStatusDetails, Does.Contain("rustup"));
+
+        var fmtResult = result.Results?.FirstOrDefault(r => r.Requirement.Contains("rustfmt"));
+        Assert.That(fmtResult, Is.Not.Null);
+        Assert.That(fmtResult!.RequirementStatusDetails, Does.Contain("Skipped"));
+
+        var clippyResult = result.Results?.FirstOrDefault(r => r.Requirement.Contains("clippy"));
+        Assert.That(clippyResult, Is.Not.Null);
+        Assert.That(clippyResult!.RequirementStatusDetails, Does.Contain("Skipped"));
     }
 
     [Test]

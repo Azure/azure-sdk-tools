@@ -50,7 +50,7 @@ public static class RustRequirements
 
     public class CargoFmtRequirement : Requirement
     {
-        public override string Name => "cargo-fmt";
+        public override string Name => "rustfmt";
         public override string[] CheckCommand => ["cargo", "fmt", "--version"];
         public override IReadOnlyList<string> DependsOn => ["cargo"];
         public override bool IsAutoInstallable => true;
@@ -64,7 +64,7 @@ public static class RustRequirements
 
     public class CargoClippyRequirement : Requirement
     {
-        public override string Name => "cargo-clippy";
+        public override string Name => "clippy";
         public override string[] CheckCommand => ["cargo", "clippy", "--version"];
         public override IReadOnlyList<string> DependsOn => ["cargo"];
         public override bool IsAutoInstallable => true;

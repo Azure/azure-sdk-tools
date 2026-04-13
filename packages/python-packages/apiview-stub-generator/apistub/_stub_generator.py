@@ -16,10 +16,10 @@ import importlib
 import logging
 import shutil
 import tempfile
-from subprocess import check_call
+import re
+from subprocess import check_call, CalledProcessError, run, PIPE
 import zipfile
 import tarfile
-import re
 try:
     import tomllib
 except ModuleNotFoundError:
@@ -450,4 +450,20 @@ class StubGenerator:
 
     def _install_package(self):
         commands = [sys.executable, "-m", "pip", "install", self.pkg_path, "-q"]
-        check_call(commands, timeout=120)
+        result = run(commands, timeout=120, stderr=PIPE, text=True)
+        if result.stderr:
+            logging.debug("pip stderr: %s", result.stderr.strip())
+        if result.returncode != 0:
+            stderr = result.stderr or ""
+            # pip error format for Python version mismatch:
+            # "ERROR: Package 'x' requires a different Python: 3.10.x not in '>=3.12'"
+            match = re.search(r"requires a different Python[^']*'([^']+)'", stderr, re.IGNORECASE)
+            if match:
+                constraint = match.group(1)  # e.g. ">=3.12" or ">=3.12,<4"
+                ver_match = re.search(r">=?\s*([\d.]+)", constraint)
+                required = ver_match.group(1) if ver_match else constraint
+                raise RuntimeError(
+                    f"This package requires Python >={required}. "
+                    f"Please install at least Python {required} to generate an APIView for this package."
+                )
+            raise CalledProcessError(result.returncode, commands, stderr=stderr)

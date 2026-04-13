@@ -256,6 +256,44 @@ class SomethingWithInheritedOverloads(MixinWithOverloads):
     pass
 
 
+class _BaseWithOverloads:
+    """Base class with two overloads for ``process``."""
+
+    @overload
+    def process(self, val: str) -> str:
+        ...
+
+    @overload
+    def process(self, val: int) -> int:
+        ...
+
+    def process(self, val: str | int) -> str | int:
+        return val
+
+
+class SomethingWithRedefinedOverloads(_BaseWithOverloads):
+    """Derived class that redefines ``process`` with three overloads.
+
+    APIView must show only the three overloads below, not the two
+    inherited from ``_BaseWithOverloads`` as well.
+    """
+
+    @overload
+    def process(self, val: str) -> str:
+        ...
+
+    @overload
+    def process(self, val: int) -> int:
+        ...
+
+    @overload
+    def process(self, val: float) -> float:
+        ...
+
+    def process(self, val: str | int | float) -> str | int | float:
+        return val
+
+
 class SomethingWithDecorators:
 
     @my_decorator

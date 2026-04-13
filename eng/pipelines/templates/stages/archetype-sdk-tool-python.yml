@@ -48,12 +48,12 @@ extends:
 
               - script: |
                   python --version
-                  python -m pip install virtualenv aiohttp chardet trio setuptools wheel packaging
+                  python -m pip install virtualenv aiohttp chardet trio setuptools wheel packaging build==1.2.2.post1
                 displayName: 'Setup Python Environment'
 
               - pwsh: |
                   Write-Host "Bundling stable version of python apiview-stub-generator"
-                  python setup.py bdist_wheel --universal --dist-dir $(Build.ArtifactStagingDirectory)
+                  python -m build --wheel --outdir $(Build.ArtifactStagingDirectory)
                 displayName: 'Build ${{ parameters.PackageName }}'
                 workingDirectory: $(Build.SourcesDirectory)/${{ parameters.PackagePath }}
 

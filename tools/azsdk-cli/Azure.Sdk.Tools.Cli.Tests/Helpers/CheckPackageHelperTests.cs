@@ -133,19 +133,19 @@ public class CheckPackageHelperTests
     }
 
     [Test]
-    public void CheckPackage_SupersetServiceLabelMatch_Passes()
+    public void CheckPackage_ServiceLabelSupersetDoesNotMatch_Throws()
     {
-        var result = _helper.CheckPackage(
-            "sdk/superset-match/Azure.SupersetMatch",
-            _entries);
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            _helper.CheckPackage(
+                "sdk/superset-match/Azure.SupersetMatch",
+                _entries));
 
-        Assert.That(result, Is.Not.Null);
-        Assert.That(result.PRLabels, Does.Contain("MultiLabel1"));
-        Assert.That(result.ServiceOwners.Count, Is.GreaterThanOrEqualTo(2));
+        Assert.That(ex.Message, Does.Contain("check-package failed"));
+        Assert.That(ex.Message, Does.Contain("No service label entry found"));
     }
 
     [Test]
-    public void CheckPackage_MultiplePrLabels_RequiresSupersetServiceLabel()
+    public void CheckPackage_MultiplePrLabels_ExactServiceLabelMatch_Passes()
     {
         var result = _helper.CheckPackage(
             "sdk/multi-label/Azure.MultiLabel",
@@ -181,6 +181,104 @@ public class CheckPackageHelperTests
     }
 
     [Test]
+    public void CheckPackage_ServiceOwnerSearch_LastMatchingEntryWins()
+    {
+        var entries = new List<CodeownersEntry>
+        {
+            new()
+            {
+                PathExpression = "/sdk/test/Azure.Test/",
+                SourceOwners = ["ownerAlice", "ownerBob"],
+                PRLabels = ["TestLabel"],
+            },
+            new()
+            {
+                ServiceLabels = ["TestLabel"],
+                ServiceOwners = ["serviceOwnerAlice"],
+            },
+            new()
+            {
+                ServiceLabels = ["TestLabel"],
+                ServiceOwners = ["serviceOwnerAlice", "serviceOwnerBob"],
+            }
+        };
+
+        var result = _helper.CheckPackage(
+            "sdk/test/Azure.Test",
+            entries);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.ServiceOwners, Is.EquivalentTo(new[] { "serviceOwnerAlice", "serviceOwnerBob" }));
+    }
+
+    [Test]
+    public void CheckPackage_ServiceAttentionLabel_IsIgnoredDuringServiceOwnerMatch()
+    {
+        var entries = CreateEntries(
+            sourceOwners: ["ownerAlice", "ownerBob"],
+            serviceOwners: ["serviceOwnerAlice", "serviceOwnerBob"],
+            serviceLabels: ["TestLabel", "Service Attention"]);
+
+        var result = _helper.CheckPackage(
+            "sdk/test/Azure.Test",
+            entries);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.ServiceOwners, Is.EquivalentTo(new[] { "serviceOwnerAlice", "serviceOwnerBob" }));
+        Assert.That(result.ServiceLabels, Is.EquivalentTo(new[] { "TestLabel", "Service Attention" }));
+    }
+
+    [Test]
+    public void CheckPackage_UnresolvedTeamAliasInSourceOwners_DoesNotCountTowardMinimum_Throws()
+    {
+        var entries = CreateEntries(
+            sourceOwners: ["ownerAlice", "Azure/unresolved-team"],
+            serviceOwners: ["serviceOwnerAlice", "serviceOwnerBob"]);
+
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            _helper.CheckPackage(
+                "sdk/test/Azure.Test",
+                entries));
+
+        Assert.That(ex.Message, Does.Contain("check-package failed"));
+        Assert.That(ex.Message, Does.Contain("1 unique owner"));
+        Assert.That(ex.Message, Does.Contain("Azure/unresolved-team"));
+    }
+
+    [Test]
+    public void CheckPackage_UnresolvedTeamAliasInServiceOwners_DoesNotCountTowardMinimum_Throws()
+    {
+        var entries = CreateEntries(
+            sourceOwners: ["ownerAlice", "ownerBob"],
+            serviceOwners: ["serviceOwnerAlice", "Azure/unresolved-team"]);
+
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            _helper.CheckPackage(
+                "sdk/test/Azure.Test",
+                entries));
+
+        Assert.That(ex.Message, Does.Contain("check-package failed"));
+        Assert.That(ex.Message, Does.Contain("1 unique service owner"));
+        Assert.That(ex.Message, Does.Contain("Azure/unresolved-team"));
+    }
+
+    [Test]
+    public void CheckPackage_UnresolvedTeamAliases_AreFilteredFromSuccessfulResponse()
+    {
+        var entries = CreateEntries(
+            sourceOwners: ["ownerAlice", "ownerBob", "Azure/unresolved-team"],
+            serviceOwners: ["serviceOwnerAlice", "serviceOwnerBob", "Azure/unresolved-team"]);
+
+        var result = _helper.CheckPackage(
+            "sdk/test/Azure.Test",
+            entries);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Owners, Is.EquivalentTo(new[] { "ownerAlice", "ownerBob" }));
+        Assert.That(result.ServiceOwners, Is.EquivalentTo(new[] { "serviceOwnerAlice", "serviceOwnerBob" }));
+    }
+
+    [Test]
     public void CheckPackage_EmptyEntries_Throws()
     {
         var ex = Assert.Throws<ArgumentException>(() =>
@@ -196,5 +294,28 @@ public class CheckPackageHelperTests
     {
         Assert.Throws<ArgumentException>(() =>
             _helper.CheckPackage(null!, _entries));
+    }
+
+    private static List<CodeownersEntry> CreateEntries(
+        List<string> sourceOwners,
+        List<string> serviceOwners,
+        List<string>? serviceLabels = null)
+    {
+        var effectiveServiceLabels = serviceLabels ?? new List<string> { "TestLabel" };
+
+        return
+        [
+            new CodeownersEntry
+            {
+                PathExpression = "/sdk/test/Azure.Test/",
+                SourceOwners = sourceOwners,
+                PRLabels = ["TestLabel"],
+            },
+            new CodeownersEntry
+            {
+                ServiceLabels = effectiveServiceLabels,
+                ServiceOwners = serviceOwners,
+            }
+        ];
     }
 }

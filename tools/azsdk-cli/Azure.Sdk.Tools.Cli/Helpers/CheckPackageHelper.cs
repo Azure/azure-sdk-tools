@@ -14,7 +14,10 @@ public interface ICheckPackageHelper
     /// based on parsed CODEOWNERS entries. Throws on validation failure.
     /// </summary>
     /// <param name="directoryPath">Relative path from repo root to the package directory.</param>
-    /// <param name="codeownersEntries">Pre-parsed CODEOWNERS entries (teams already expanded).</param>
+    /// <param name="codeownersEntries">
+    /// Pre-parsed CODEOWNERS entries from <see cref="CodeownersParser"/>. This helper relies on parser behavior
+    /// such as metadata block parsing and attempted team expansion when evaluating owners and labels.
+    /// </param>
     /// <returns>A <see cref="CheckPackageResponse"/> on success.</returns>
     /// <exception cref="InvalidOperationException">Thrown when validation fails.</exception>
     CheckPackageResponse CheckPackage(
@@ -25,7 +28,11 @@ public interface ICheckPackageHelper
 public class CheckPackageHelper : ICheckPackageHelper
 {
     private const int MinimumOwnerCount = 2;
+    private const string ServiceAttentionLabel = "Service Attention";
 
+    /// <summary>
+    /// Validates a package path against CODEOWNERS entries produced by <see cref="CodeownersParser"/>.
+    /// </summary>
     public CheckPackageResponse CheckPackage(
         string directoryPath,
         List<CodeownersEntry> codeownersEntries)
@@ -40,14 +47,26 @@ public class CheckPackageHelper : ICheckPackageHelper
         }
 
         var matchedEntry = FindMatchingEntry(directoryPath, codeownersEntries);
-        ThrowIfInsufficientOwners(matchedEntry, directoryPath);
-        ThrowIfNoPRLabels(matchedEntry, directoryPath);
+        var owners = GetUniqueIndividualOwners(matchedEntry.SourceOwners);
+        if (owners.Count < MinimumOwnerCount)
+        {
+            throw new InvalidOperationException(
+                $"check-package failed for path '{directoryPath}': " +
+                $"Found {owners.Count} unique owner(s) but at least {MinimumOwnerCount} are required. " +
+                $"Owners: [{string.Join(", ", matchedEntry.SourceOwners)}]");
+        }
+        if (matchedEntry.PRLabels == null || matchedEntry.PRLabels.Count == 0)
+        {
+            throw new InvalidOperationException(
+                $"check-package failed for path '{directoryPath}': " +
+                $"No PR labels found on the matching CODEOWNERS entry (path expression: '{matchedEntry.PathExpression}').");
+        }
         var (serviceOwners, serviceLabels) = ThrowIfInsufficientServiceOwners(matchedEntry, codeownersEntries);
 
         return new CheckPackageResponse
         {
             DirectoryPath = directoryPath,
-            Owners = matchedEntry.SourceOwners,
+            Owners = owners,
             PRLabels = matchedEntry.PRLabels,
             ServiceOwners = serviceOwners,
             ServiceLabels = serviceLabels,
@@ -94,41 +113,9 @@ public class CheckPackageHelper : ICheckPackageHelper
     }
 
     /// <summary>
-    /// Validates that the matched entry has at least <see cref="MinimumOwnerCount"/> unique source owners.
-    /// </summary>
-    internal static void ThrowIfInsufficientOwners(CodeownersEntry entry, string directoryPath)
-    {
-        var uniqueOwners = entry.SourceOwners
-            .Select(o => o.TrimStart('@').Trim())
-            .Where(o => !string.IsNullOrEmpty(o))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
-        if (uniqueOwners.Count < MinimumOwnerCount)
-        {
-            throw new InvalidOperationException(
-                $"check-package failed for path '{directoryPath}': " +
-                $"Found {uniqueOwners.Count} unique owner(s) but at least {MinimumOwnerCount} are required. " +
-                $"Owners: [{string.Join(", ", entry.SourceOwners)}]");
-        }
-    }
-
-    /// <summary>
-    /// Validates that the matched entry has at least one PR label.
-    /// </summary>
-    internal static void ThrowIfNoPRLabels(CodeownersEntry entry, string directoryPath)
-    {
-        if (entry.PRLabels == null || entry.PRLabels.Count == 0)
-        {
-            throw new InvalidOperationException(
-                $"check-package failed for path '{directoryPath}': " +
-                $"No PR labels found on the matching CODEOWNERS entry (path expression: '{entry.PathExpression}').");
-        }
-    }
-
-    /// <summary>
-    /// Finds the first CODEOWNERS entry whose ServiceLabels are a superset of the matched entry's PRLabels,
-    /// and validates that it has at least <see cref="MinimumOwnerCount"/> unique service owners.
+    /// Finds the last CODEOWNERS entry whose ServiceLabels, after removing Service Attention,
+    /// are fully contained within the matched entry's PRLabels, and validates that it has at least
+    /// <see cref="MinimumOwnerCount"/> unique service owners.
     /// </summary>
     internal static (List<string> serviceOwners, List<string> serviceLabels) ThrowIfInsufficientServiceOwners(
         CodeownersEntry matchedEntry,
@@ -136,21 +123,23 @@ public class CheckPackageHelper : ICheckPackageHelper
     {
         var requiredLabels = new HashSet<string>(matchedEntry.PRLabels, StringComparer.OrdinalIgnoreCase);
 
-        foreach (var entry in allEntries)
+        for (int i = allEntries.Count - 1; i >= 0; i--)
         {
+            var entry = allEntries[i];
             if (entry.ServiceLabels == null || entry.ServiceLabels.Count == 0)
             {
                 continue;
             }
 
-            var entryServiceLabels = new HashSet<string>(entry.ServiceLabels, StringComparer.OrdinalIgnoreCase);
-            if (requiredLabels.IsSubsetOf(entryServiceLabels))
+            // Service Attention can still appear on service-owner entries, but it is not part of
+            // the package's required ownership identity. Ignore it here to match GitHubEventProcessor.
+            var entryServiceLabels = entry.ServiceLabels
+                .Where(label => !label.Equals(ServiceAttentionLabel, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (requiredLabels.Intersect(entryServiceLabels, StringComparer.OrdinalIgnoreCase).Count() == entryServiceLabels.Count)
             {
-                var uniqueServiceOwners = entry.ServiceOwners
-                    .Select(o => o.TrimStart('@').Trim())
-                    .Where(o => !string.IsNullOrEmpty(o))
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .ToList();
+                var uniqueServiceOwners = GetUniqueIndividualOwners(entry.ServiceOwners);
 
                 if (uniqueServiceOwners.Count < MinimumOwnerCount)
                 {
@@ -162,13 +151,27 @@ public class CheckPackageHelper : ICheckPackageHelper
                         $"Service owners: [{string.Join(", ", entry.ServiceOwners)}]");
                 }
 
-                return (entry.ServiceOwners, entry.ServiceLabels);
+                return (uniqueServiceOwners, entry.ServiceLabels);
             }
         }
 
         throw new InvalidOperationException(
             $"check-package failed for path '{matchedEntry.PathExpression}': " +
-            $"No service label entry found whose labels are a superset of PR labels " +
+            $"No service label entry found whose labels are fully contained within PR labels " +
             $"[{string.Join(", ", matchedEntry.PRLabels)}].");
+    }
+
+    /// <summary>
+    /// Returns a distinct list of individual owner aliases.
+    /// GitHub team aliases are intentionally omitted because the CODEOWNERS parser can leave
+    /// unresolved teams in the owner list when team expansion fails against the cache.
+    /// </summary>
+    internal static List<string> GetUniqueIndividualOwners(IEnumerable<string>? owners)
+    {
+        return (owners ?? [])
+            .Select(o => o.TrimStart('@').Trim())
+            .Where(o => !string.IsNullOrEmpty(o) && !ParsingUtils.IsGitHubTeam(o))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 }

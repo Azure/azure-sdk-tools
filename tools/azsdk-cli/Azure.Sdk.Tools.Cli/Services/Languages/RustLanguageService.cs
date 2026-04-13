@@ -67,11 +67,13 @@ public sealed class RustLanguageService : LanguageService
                 return CreateEmptyPackageInfo(fullPath, repoRoot, relativePath);
             }
 
-            // Use 'cargo read-manifest' to extract package metadata, matching the
-            // Language-Settings.ps1 approach: $package = cargo read-manifest ... | ConvertFrom-Json
+            // Use 'cargo metadata' to extract package metadata.
+            // cargo metadata --no-deps returns a packages array
+            // that we filter by matching the directory name.
+            var expectedCrateName = Path.GetFileName(fullPath);
             var cargoResult = await processHelper.Run(new ProcessOptions(
                 command: "cargo",
-                args: ["read-manifest", "--manifest-path", cargoTomlPath],
+                args: ["metadata", "--format-version", "1", "--no-deps", "--manifest-path", cargoTomlPath],
                 logOutputStream: false,
                 workingDirectory: fullPath,
                 timeout: TimeSpan.FromSeconds(30)
@@ -79,7 +81,7 @@ public sealed class RustLanguageService : LanguageService
 
             if (cargoResult.ExitCode != 0)
             {
-                logger.LogDebug("cargo read-manifest failed with exit code {ExitCode} for {Path}: {Output}",
+                logger.LogDebug("cargo metadata failed with exit code {ExitCode} for {Path}: {Output}",
                     cargoResult.ExitCode, cargoTomlPath, cargoResult.Output);
                 return CreateEmptyPackageInfo(fullPath, repoRoot, relativePath);
             }
@@ -90,19 +92,25 @@ public sealed class RustLanguageService : LanguageService
             using (var jsonDoc = JsonDocument.Parse(cargoResult.Stdout))
             {
                 var root = jsonDoc.RootElement;
-                if (root.TryGetProperty("name", out var nameElement))
+                if (root.TryGetProperty("packages", out var packagesElement) && packagesElement.ValueKind == JsonValueKind.Array)
                 {
-                    packageName = nameElement.GetString();
-                }
-                if (root.TryGetProperty("version", out var versionElement))
-                {
-                    packageVersion = versionElement.GetString();
+                    foreach (var pkg in packagesElement.EnumerateArray())
+                    {
+                        var name = pkg.TryGetProperty("name", out var n) ? n.GetString() : null;
+                        if (string.Equals(name, expectedCrateName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            packageName = name;
+                            packageVersion = pkg.TryGetProperty("version", out var v) ? v.GetString() : null;
+                            break;
+                        }
+                    }
                 }
             }
 
             if (string.IsNullOrEmpty(packageName))
             {
-                logger.LogDebug("Unable to extract package name from cargo read-manifest at {Path}", cargoTomlPath);
+                logger.LogDebug("Unable to find package matching '{ExpectedName}' in cargo metadata output for {Path}",
+                    expectedCrateName, cargoTomlPath);
                 return CreateEmptyPackageInfo(fullPath, repoRoot, relativePath);
             }
 
@@ -110,8 +118,8 @@ public sealed class RustLanguageService : LanguageService
             var normalizedRelative = relativePath.Replace(Path.DirectorySeparatorChar, '/');
             var serviceDirectory = GetServiceDirectory(normalizedRelative);
 
-            // Determine SDK type: "mgmt" if name contains "mgmt", otherwise "client"
-            var sdkType = packageName.Contains("mgmt", StringComparison.OrdinalIgnoreCase) ? "mgmt" : "client";
+            // Determine SDK type: "mgmt" if name contains "azure_resourcemanager_", otherwise "client"
+            var sdkType = packageName.Contains("azure_resourcemanager_", StringComparison.OrdinalIgnoreCase) ? "mgmt" : "client";
 
             var readmePath = Path.Combine(fullPath, "README.md");
             var changelogPath = Path.Combine(fullPath, "CHANGELOG.md");
@@ -142,7 +150,7 @@ public sealed class RustLanguageService : LanguageService
                 SpecProjectPath = GetSpecProjectPath(fullPath)
             };
 
-            logger.LogDebug("Resolved Rust package: {packageName} v{packageVersion}", model.PackageName ?? "(unknown)", model.PackageVersion ?? "(unknown)");
+            logger.LogDebug("Resolved Rust package: {Package}", $"{model.PackageName ?? "(unknown)"}@{model.PackageVersion ?? "(unknown)"}");
             return model;
         }
         catch (Exception ex)

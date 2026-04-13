@@ -765,7 +765,7 @@ def check_links_kb(language: Optional[str] = None, fix: Optional[str] = None):
 
             changed = False
             for op in item_ops:
-                arr = item.get(op[1], [])
+                arr = item.setdefault(op[1], [])
                 if op[0] == "replace":
                     _, field, old_id, new_id = op
                     if old_id in arr:

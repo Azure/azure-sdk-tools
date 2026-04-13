@@ -26,7 +26,7 @@ _NEW_MEMORY_SENTINEL = "__new_memory__"
 def check_for_duplicate_memory(
     *,
     raw_memory: dict,
-    guideline_ids: List[str] = None,
+    guideline_ids: Optional[List[str]] = None,
 ) -> Optional[dict]:
     """Check whether a new memory is redundant with existing memories on the same guidelines.
 
@@ -443,6 +443,9 @@ def apply_consolidation(actions: List[dict]) -> dict:
     Returns:
         ``{"merged": int, "deleted": int, "errors": [str]}``
     """
+    if not actions:
+        return {"merged": 0, "deleted": 0, "errors": []}
+
     from src._models import Example, Guideline, Memory
     from src._utils import guideline_id_from_db
 

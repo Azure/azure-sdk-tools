@@ -28,6 +28,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     private readonly IFeedbackClassifierService _classifierService;
     private readonly ITypeSpecCustomizationService typeSpecCustomizationService;
     private readonly ITypeSpecHelper typeSpecHelper;
+    private readonly INpxHelper npxHelper;
 
     private const string CustomizedCodeUpdateToolName = "azsdk_customized_code_update";
     private const int CommandTimeoutInMinutes = 30;
@@ -56,7 +57,8 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         IAPIViewFeedbackService feedbackService,
         IFeedbackClassifierService classifierService,
         ITypeSpecCustomizationService typeSpecCustomizationService,
-        ITypeSpecHelper typeSpecHelper
+        ITypeSpecHelper typeSpecHelper,
+        INpxHelper npxHelper
     ) : base(languageServices, gitHelper, logger)
     {
         this.tspClientHelper = tspClientHelper ?? throw new ArgumentNullException(nameof(tspClientHelper));
@@ -64,6 +66,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         _classifierService = classifierService ?? throw new ArgumentNullException(nameof(classifierService));
         this.typeSpecCustomizationService = typeSpecCustomizationService ?? throw new ArgumentNullException(nameof(typeSpecCustomizationService));
         this.typeSpecHelper = typeSpecHelper ?? throw new ArgumentNullException(nameof(typeSpecHelper));
+        this.npxHelper = npxHelper ?? throw new ArgumentNullException(nameof(npxHelper));
     }
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec, SharedCommandGroups.TypeSpecClient];
@@ -332,6 +335,9 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             }
             else
             {
+                // JavaScript: apply customization merge after regeneration
+                await ApplyJavaScriptCustomizationAsync(languageService, packagePath, ct);
+
                 logger.LogDebug("Building {packagePath}", packagePath);
                 var (success, error, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
                 buildSucceeded = success;
@@ -593,6 +599,49 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             sb.AppendLine(buildError);
         }
         return sb.ToString();
+    }
+
+    /// <summary>
+    /// For JavaScript packages with customizations (<c>generated/</c> folder), runs
+    /// <c>npx dev-tool customization apply</c> to perform a 3-way merge of newly regenerated
+    /// code with existing customizations in <c>src/</c>.
+    /// </summary>
+    private async Task ApplyJavaScriptCustomizationAsync(LanguageService languageService, string packagePath, CancellationToken ct)
+    {
+        if (languageService.Language != SdkLanguage.JavaScript)
+        {
+            return;
+        }
+
+        if (languageService.HasCustomizations(packagePath, ct) == null)
+        {
+            return;
+        }
+
+        // dev-tool customization apply merges regenerated code with src/ customizations.
+        // If src/ doesn't exist, there's nothing to merge into.
+        var srcDir = Path.Combine(packagePath, "src");
+        if (!Directory.Exists(srcDir))
+        {
+            logger.LogDebug("No src/ directory found at {SrcDir}, skipping dev-tool customization apply", srcDir);
+            return;
+        }
+
+        logger.LogInformation("Running dev-tool customization apply for JavaScript package...");
+        var result = await npxHelper.Run(
+            new NpxOptions(
+                package: null,
+                args: ["dev-tool", "customization", "apply"],
+                workingDirectory: packagePath),
+            ct);
+
+        if (result.ExitCode != 0)
+        {
+            logger.LogError("dev-tool customization apply exited with code {ExitCode}: {Output}", result.ExitCode, result.Output);
+            throw new InvalidOperationException($"dev-tool customization apply failed with exit code {result.ExitCode}: {result.Output}");
+        }
+
+        logger.LogInformation("dev-tool customization apply completed successfully.");
     }
 
     /// <summary>

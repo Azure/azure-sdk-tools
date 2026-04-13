@@ -80,25 +80,6 @@
           ]
         },
         {
-      "repository": {
-        "url": "git@github.com:Azure/typespec-cpp.git",
-        "branch": "main",
-        "authType": "ssh",
-        "sshHost": "github-microsoft"
-      },
-      "paths": [
-        {
-          "description": "AutoRest Cpp customization documentation",
-          "path": "/docs",
-          "folder": "autorest_cpp_docs",
-          "relativeByRepoPath": true,
-          "metadata": {
-            "scope": "branded"
-          }
-        }
-      ]
-    },
-        {
           "description": "TypeSpec Azure HTTP specification test cases",
           "path": "/packages/azure-http-specs/specs",
           "folder": "typespec_azure_http_specs",

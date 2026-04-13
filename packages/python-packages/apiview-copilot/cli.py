@@ -1303,14 +1303,90 @@ def db_get(container_name: str, id: str):
 
 
 def db_delete(container_name: str, id: str):
-    """Permanently delete an item from the database (hard delete)."""
+    """Soft-delete an item from the database.
+
+    Automatically removes back-links from related items. Orphaned examples
+    (no remaining ``memory_ids`` or ``guideline_ids``) are soft-deleted.
+    Orphaned memories and guidelines are always retained.
+    """
     db = DatabaseManager.get_instance()
     container = db.get_container_client(container_name)
+
+    # Map container names to item types
+    container_type = {
+        "guidelines": "guideline",
+        "memories": "memory",
+        "examples": "example",
+    }.get(container_name)
+
     try:
-        container.delete_item(item=id, partition_key=id)
-        print(f"Item {id} deleted from container {container_name}.")
+        item = container.get(id)
+    except Exception as e:
+        print(f"Error retrieving item: {e}")
+        return
+
+    if container_type:
+        _cascade_unlink(db, item, container_type)
+
+    try:
+        container.delete(id)
+        print(f"Item {id} soft-deleted from container {container_name}.")
     except Exception as e:
         print(f"Error deleting item: {e}")
+
+
+# Mapping: (source_type) -> list of (field_on_source, target_type, field_on_target)
+_RELATION_MAP = {
+    "guideline": [
+        ("related_memories", "memory", "related_guidelines"),
+        ("related_examples", "example", "guideline_ids"),
+        ("related_guidelines", "guideline", "related_guidelines"),
+    ],
+    "memory": [
+        ("related_guidelines", "guideline", "related_memories"),
+        ("related_examples", "example", "memory_ids"),
+        ("related_memories", "memory", "related_memories"),
+    ],
+    "example": [
+        ("guideline_ids", "guideline", "related_examples"),
+        ("memory_ids", "memory", "related_examples"),
+    ],
+}
+
+_TYPE_CONTAINERS = {
+    "guideline": "guidelines",
+    "memory": "memories",
+    "example": "examples",
+}
+
+
+def _get_container(db, item_type: str):
+    return getattr(db, _TYPE_CONTAINERS[item_type])
+
+
+def _cascade_unlink(db, item: dict, item_type: str):
+    """Remove back-links from all related items. Soft-delete orphaned examples."""
+    item_id = item["id"]
+
+    for source_field, target_type, target_field in _RELATION_MAP.get(item_type, []):
+        target_container = _get_container(db, target_type)
+
+        for target_id in item.get(source_field, []):
+            try:
+                raw_target = target_container.get(target_id)
+                refs = raw_target.get(target_field, [])
+                if item_id in refs:
+                    refs.remove(item_id)
+
+                # Check if the target is now orphaned and should be deleted
+                if target_type == "example" and not raw_target.get("memory_ids", []) and not raw_target.get("guideline_ids", []):
+                    target_container.delete(target_id, run_indexer=False)
+                    print(f"  Soft-deleted orphaned example {target_id}")
+                else:
+                    target_container.client.upsert_item(raw_target)
+                    print(f"  Unlinked {target_type} {target_id}")
+            except Exception as e:
+                print(f"  Warning: failed to clean {target_type} {target_id}: {e}")
 
 
 def _try_run_indexers(containers: list[tuple[str, object]]):
@@ -1447,16 +1523,17 @@ def db_unlink(guideline: str = None, memory: str = None, example: str = None, re
 
 
 def db_purge(containers: Optional[list[str]] = None, run_indexer: bool = False):
-    """Purge soft-deleted items from the database."""
+    """Purge soft-deleted items from the database. Use --verbose for per-item output."""
+    verbose = logging.getLogger().level <= logging.DEBUG
     gc = GarbageCollector()
     containers = containers or ContainerNames.data_containers()
     for container_name in containers:
         try:
             start_count = gc.get_item_count(container_name)
             if run_indexer:
-                gc.run_indexer_and_purge(container_name)
+                gc.run_indexer_and_purge(container_name, verbose=verbose)
             else:
-                gc.purge_items(container_name)
+                gc.purge_items(container_name, verbose=verbose)
             final_count = gc.get_item_count(container_name)
             if start_count - final_count:
                 print(

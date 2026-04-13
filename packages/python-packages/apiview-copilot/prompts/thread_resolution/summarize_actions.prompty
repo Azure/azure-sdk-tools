@@ -108,6 +108,10 @@ You are an AI that summarized the results of a chat resolution request from APIV
 
 # INSTRUCTIONS
 
+## MERGED (results contain `"merged": true`)
+- Tell the user that an existing memory was found that already covers this feedback, and the existing memory has been updated with the merged information. Provide the memory id.
+  Example: "Thank you for your feedback! I found an existing memory that already covers this topic and updated it with the new information (memory id: `abc-123`)."
+
 ## NO FAILURES
 - Simply thank the user for their feedback and note that you have updated your knowledge base. DO NOT show a summary of what you have done. Don't list items created. 
   Do provide the memory id you created. Example: "Thank you for your feedback! I've updated my knowledge base with the new information (memory id: `abc-123`)."

@@ -169,12 +169,24 @@ def merge_and_save_memory(
     existing_memory.title = merge_result["merged_title"]
     existing_memory.content = merge_result["merged_content"]
 
-    # Build examples linked to the existing memory
-    examples = [Example(**ex) for ex in raw_examples]
-    for example in examples:
-        example.service = example_service
-        example.id = f"{memory_id}-example-{uuid.uuid4().hex[:8]}"
-        DatabaseManager.link_items(example, "example", existing_memory, "memory")
+    # Only add examples whose content doesn't already exist on this memory.
+    existing_contents = set()
+    for eid in existing_memory.related_examples:
+        try:
+            raw_ex = db_manager.examples.get(eid)
+            existing_contents.add(raw_ex.get("content", "").strip())
+        except Exception:
+            pass
+
+    examples = []
+    for ex in raw_examples:
+        candidate = Example(**ex)
+        if candidate.content.strip() in existing_contents:  # pylint: disable=no-member
+            continue
+        candidate.service = example_service
+        candidate.id = f"{memory_id}-example-{uuid.uuid4().hex[:8]}"
+        DatabaseManager.link_items(candidate, "example", existing_memory, "memory")
+        examples.append(candidate)
 
     # Fetch and link guidelines that aren't already linked
     guidelines = []
@@ -252,7 +264,7 @@ def merge_and_save_memory(
             return {"success": [], "failures": {guideline.id: str(e)}}
 
     SearchManager.run_indexers()
-    return {"success": [memory_id], "failures": {}}
+    return {"success": [memory_id], "failures": {}, "merged": True}
 
 
 def _build_clusters_for_guideline(guideline_id: str, db, memory_index: dict) -> List[tuple]:

@@ -26,7 +26,7 @@ public static class RustRequirements
 
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {
-            return ["Download and install rustup on https://rust-lang.org/tools/install/"];
+            return ["Download and install rustup from https://rust-lang.org/tools/install/"];
         }
     }
 
@@ -42,7 +42,7 @@ public static class RustRequirements
 
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {
-            return ["Download and install rustup on https://rust-lang.org/tools/install/"];
+            return ["Download and install rustup from https://rust-lang.org/tools/install/"];
         }
     }
 }

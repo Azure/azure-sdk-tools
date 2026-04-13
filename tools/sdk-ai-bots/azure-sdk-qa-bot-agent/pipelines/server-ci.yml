@@ -32,7 +32,7 @@ variables:
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
   parameters:
-    Use1ESOfficial: false
+    Use1ESOfficial: true
     stages:
       - stage: CI
         displayName: 'Lint & Test'
@@ -52,9 +52,6 @@ extends:
                 inputs:
                   versionSpec: $(pythonVersion)
 
-              # Install before 1ES network isolation blocks PyPI access.
-              # The AzureCLI@2 wrapper does not bypass the firewall either,
-              # so this must remain a plain bash step that runs early.
               - bash: |
                   set -euo pipefail
                   python -m pip install --upgrade pip

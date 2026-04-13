@@ -6,7 +6,9 @@
 
 - Added support to collect telemetry for sanitized user prompts
 - Added `azsdk_apiview_get_review_url` MCP tool and `azsdk apiview get-review-url` CLI command to retrieve the APIView review URL for a package by name and language
-- Added recorded and live test support for Python, JavaScript, Java and .NET.
+- Added recorded and live test support for Python, JavaScript, Java and .NET
+- Added support for updating `ci.yml` in SDK projects
+- Implemented version update for Java, Python, and .NET language services
 
 ### Other Changes
 

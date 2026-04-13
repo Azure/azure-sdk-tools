@@ -9,7 +9,6 @@ Collect these details (do not use temporary values):
 - **Service Tree ID**: GUID format - confirm with user
 - **Product Service Tree ID**: GUID format - confirm with user
 - **Expected Release Timeline**: "Month YYYY" format
-- **API Version**: e.g., "2024-01-01" or "2024-01-01-preview"
 - **SDK Release Type**: "beta" (preview) or "stable" (GA)
 
 ## SDK Details Update

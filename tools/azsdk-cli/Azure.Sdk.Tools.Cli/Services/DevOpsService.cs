@@ -92,7 +92,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<ReleasePlanWorkItem> GetReleasePlanAsync(int releasePlanId, CancellationToken ct);
         public Task<ReleasePlanWorkItem> GetReleasePlanForWorkItemAsync(int workItemId, CancellationToken ct);
         public Task<ReleasePlanWorkItem> GetReleasePlanAsync(string pullRequestUrl, CancellationToken ct);
-        public Task<List<ReleasePlanWorkItem>> GetReleasePlansForProductAsync(string productTreeId, string specApiVersion, string sdkReleaseType, bool isTestReleasePlan = false, CancellationToken ct = default);
+        public Task<List<ReleasePlanWorkItem>> GetReleasePlansForProductAsync(string productTreeId, string sdkReleaseType, bool isTestReleasePlan = false, CancellationToken ct = default);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansForPackageAsync(string packageName, string language, bool isTestReleasePlan = false, CancellationToken ct = default);
         public Task<WorkItem> CreateReleasePlanWorkItemAsync(ReleasePlanWorkItem releasePlan, CancellationToken ct);
         public Task<Build> RunSDKGenerationPipelineAsync(string apiSpecBranchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch = "", CancellationToken ct = default);
@@ -196,7 +196,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             return await MapWorkItemToReleasePlanAsync(releasePlanWorkItems[0], ct);
         }
 
-        public async Task<List<ReleasePlanWorkItem>> GetReleasePlansForProductAsync(string productTreeId, string specApiVersion, string sdkReleaseType, bool isTestReleasePlan = false, CancellationToken ct = default)
+        public async Task<List<ReleasePlanWorkItem>> GetReleasePlansForProductAsync(string productTreeId, string sdkReleaseType, bool isTestReleasePlan = false, CancellationToken ct = default)
         {
             try
             {
@@ -218,10 +218,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 foreach (var workItem in releasePlanWorkItems)
                 {
                     var releasePlan = await MapWorkItemToReleasePlanAsync(workItem, ct);
-                    if (releasePlan.SpecAPIVersion == specApiVersion)
-                    {
-                        releasePlans.Add(releasePlan);
-                    }
+                    releasePlans.Add(releasePlan);
                 }
 
                 return releasePlans;
@@ -836,11 +833,15 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                  { "ConfigType", "TypeSpec"},
                  { "ConfigPath", $"{typespecProjectRoot}/tspconfig.yaml" },
-                 { "ApiVersion", apiVersion },
                  { "SdkReleaseType", sdkReleaseType },
                  { "CreatePullRequest", "true" },
                  { "ReleasePlanWorkItemId", $"{workItemId}"}
             };
+
+            if (!string.IsNullOrEmpty(apiVersion))
+            {
+                templateParams["ApiVersion"] = apiVersion;
+            }
 
             if (!string.IsNullOrEmpty(sdkRepoBranch))
             {

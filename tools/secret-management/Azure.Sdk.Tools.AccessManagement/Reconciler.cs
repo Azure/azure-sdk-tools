@@ -121,6 +121,12 @@ public class Reconciler
 
     public async Task ReconcileGithubRepositorySecrets(ApplicationAccessConfig appAccessConfig, ReconcileOptions options)
     {
+        if (options.NoGitHubSecrets)
+        {
+            Log.LogInformation("Skipping GitHub repository secrets (--no-github-secrets)");
+            return;
+        }
+
         foreach (var config in appAccessConfig.GithubRepositorySecrets)
         {
             foreach (var repository in config.Repositories)

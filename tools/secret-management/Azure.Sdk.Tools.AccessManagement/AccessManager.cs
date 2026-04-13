@@ -14,7 +14,7 @@ public class AccessManager
         try
         {
             accessConfig = new AccessConfig(logger, configFiles);
-            credential = new ChainedTokenCredential(new AzurePowerShellCredential(), new AzureCliCredential());
+            credential = new ChainedTokenCredential(new AzureCliCredential(), new AzurePowerShellCredential());
             reconciler = new Reconciler(
                 logger,
                 new ManagedIdentityClient(logger, credential),

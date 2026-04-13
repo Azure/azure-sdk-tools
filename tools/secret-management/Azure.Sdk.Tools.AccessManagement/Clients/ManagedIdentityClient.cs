@@ -3,6 +3,7 @@ using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.ManagedServiceIdentities;
 using Azure.ResourceManager.Resources;
+using System.Text.Json;
 
 namespace Azure.Sdk.Tools.AccessManagement;
 
@@ -15,9 +16,12 @@ public class ManagedIdentityClient : IManagedIdentityClient
     private ArmClient ArmClient { get; }
     private ILogger Log { get; }
 
+    private TokenCredential Credential { get; }
+
     public ManagedIdentityClient(ILogger logger, TokenCredential credential)
     {
         Log = logger;
+        Credential = credential;
         ArmClient = new ArmClient(credential);
     }
 
@@ -80,22 +84,45 @@ public class ManagedIdentityClient : IManagedIdentityClient
         string subscriptionId, string resourceGroup, string identityName,
         FederatedIdentityCredentialsConfig config)
     {
-        var resourceId = UserAssignedIdentityResource.CreateResourceIdentifier(subscriptionId, resourceGroup, identityName);
-        var resource = ArmClient.GetUserAssignedIdentityResource(resourceId);
-        var collection = resource.GetFederatedIdentityCredentials();
+        // Use a direct ARM REST call instead of the SDK's FederatedIdentityCredentialData
+        // because its IssuerUri property is typed as System.Uri, which normalizes
+        // "https://token.actions.githubusercontent.com" to include a trailing slash.
+        // Azure Policy performs exact string matching on the issuer and rejects the
+        // trailing slash variant with RequestDisallowedByPolicy.
+        var url = $"https://management.azure.com/subscriptions/{subscriptionId}" +
+                  $"/resourceGroups/{resourceGroup}" +
+                  $"/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{identityName}" +
+                  $"/federatedIdentityCredentials/{config.Name}?api-version=2023-01-31";
 
-        var credentialData = new FederatedIdentityCredentialData
+        var body = new
         {
-            IssuerUri = new Uri(config.Issuer!),
-            Subject = config.Subject!,
+            properties = new
+            {
+                issuer = config.Issuer!,
+                subject = config.Subject!,
+                audiences = config.Audiences ?? new List<string>()
+            }
         };
-        foreach (var audience in config.Audiences ?? Enumerable.Empty<string>())
-        {
-            credentialData.Audiences.Add(audience);
-        }
+
+        var token = await Credential.GetTokenAsync(
+            new TokenRequestContext(new[] { "https://management.azure.com/.default" }), default);
+
+        using var httpClient = new HttpClient();
+        httpClient.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token.Token);
+
+        var json = JsonSerializer.Serialize(body);
+        using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
         Log.LogInformation($"Creating federated identity credential '{config.Name}' for identity '{identityName}'...");
-        await collection.CreateOrUpdateAsync(WaitUntil.Completed, config.Name!, credentialData);
+        var response = await httpClient.PutAsync(url, content);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorBody = await response.Content.ReadAsStringAsync();
+            throw new RequestFailedException((int)response.StatusCode, errorBody);
+        }
+
         Log.LogInformation($"Created federated identity credential '{config.Name}' for identity '{identityName}'");
     }
 

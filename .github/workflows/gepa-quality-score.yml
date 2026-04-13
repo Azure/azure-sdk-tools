@@ -30,7 +30,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install GEPA evaluator deps
-        run: pip install "gepa==0.7.0"
+        run: pip install "gepa>=0.1.1"
 
       - name: Score skills
         id: score

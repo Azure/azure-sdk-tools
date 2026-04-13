@@ -32,6 +32,12 @@ from apistub._generated.treestyle.parser._model_base import (
     SdkJSONEncoder as APIViewEncoder,
 )
 
+try:
+    import yaml as _yaml
+    _YAML_AVAILABLE = True
+except ImportError:
+    _YAML_AVAILABLE = False
+
 INIT_PY_FILE = "__init__.py"
 INIT_EXTENSION_SUBSTRING = ".extend_path(__path__, __name__)"
 
@@ -49,8 +55,19 @@ class StubGenerator:
             )
             parser.add_argument(
                 "--pkg-path",
-                required=True,
+                required=False,
+                default=None,
                 help=("Path to the package source root, WHL, ZIP, or TAR file."),
+            )
+            parser.add_argument(
+                "--code-model-path",
+                required=False,
+                default=None,
+                help=(
+                    "Path to a preprocessed code-model.yaml file produced by the TypeSpec emitter. "
+                    "When provided, generates the token file directly from the CodeModel, "
+                    "skipping package install and inspection."
+                ),
             )
             parser.add_argument(
                 "--temp-path",
@@ -98,6 +115,7 @@ class StubGenerator:
             self._args = parser.parse_args()
 
         pkg_path = self._parse_arg("pkg_path")
+        code_model_path = self._parse_arg("code_model_path")
         temp_path = self._parse_arg("temp_path") or tempfile.gettempdir()
         out_path = self._parse_arg("out_path")
         mapping_path = self._parse_arg("mapping_path")
@@ -106,16 +124,43 @@ class StubGenerator:
         source_url = self._parse_arg("source_url")
         skip_pylint = self._parse_arg("skip_pylint")
 
-        if not os.path.exists(pkg_path):
-            logging.error("Package path [{}] is invalid".format(pkg_path))
-            exit(1)
-        elif not os.path.exists(temp_path):
-            logging.error("Temp path [{0}] is invalid".format(temp_path))
-            exit(1)
+        self.code_model_path = code_model_path
 
-        if os.path.isdir(pkg_path):
-            pkg_path = os.path.abspath(pkg_path)
-        self.pkg_path = pkg_path
+        if code_model_path:
+            # Code-model path: skip package validation entirely
+            if not os.path.exists(code_model_path):
+                logging.error("Code model path [{}] is invalid".format(code_model_path))
+                exit(1)
+            if not os.path.exists(temp_path):
+                logging.error("Temp path [{0}] is invalid".format(temp_path))
+                exit(1)
+            self.pkg_path = None
+            self.wheel_path = None
+        else:
+            if not pkg_path:
+                logging.error("Either --pkg-path or --code-model-path must be provided")
+                exit(1)
+            if not os.path.exists(pkg_path):
+                logging.error("Package path [{}] is invalid".format(pkg_path))
+                exit(1)
+            elif not os.path.exists(temp_path):
+                logging.error("Temp path [{0}] is invalid".format(temp_path))
+                exit(1)
+
+            if os.path.isdir(pkg_path):
+                pkg_path = os.path.abspath(pkg_path)
+            self.pkg_path = pkg_path
+            self.temp_path = temp_path
+
+            # Extract package to temp directory if it is wheel or sdist
+            if self.pkg_path.endswith((".whl", ".zip", ".tar.gz")):
+                self.wheel_path = self._extract_wheel()
+            else:
+                self.wheel_path = None
+
+            if not skip_pylint:
+                PylintParser.parse(self.wheel_path or self.pkg_path)
+
         self.temp_path = temp_path
         self.out_path = out_path
         self.source_url = source_url
@@ -124,15 +169,6 @@ class StubGenerator:
         self.namespace = ""
         if verbose:
             logging.getLogger().setLevel(logging.DEBUG)
-
-        # Extract package to temp directory if it is wheel or sdist
-        if self.pkg_path.endswith((".whl", ".zip", ".tar.gz")):
-            self.wheel_path = self._extract_wheel()
-        else:
-            self.wheel_path = None
-
-        if not skip_pylint:
-            PylintParser.parse(self.wheel_path or self.pkg_path)
 
     def _parse_arg(self, name):
         value = self._kwargs.get(name, None)
@@ -191,6 +227,9 @@ class StubGenerator:
         return pkg_root_path, pkg_name, version
 
     def generate_tokens(self):
+        if self.code_model_path:
+            return self._generate_tokens_from_code_model()
+
         # TODO: We should install to a virtualenv
         logging.debug("Installing package from {}".format(self.pkg_path))
         self._install_package()
@@ -231,6 +270,26 @@ class StubGenerator:
             logging.info(
                 "*************** Completed parsing package and generating tokens ***************"
             )
+        return apiview
+
+    def _generate_tokens_from_code_model(self):
+        """Generate tokens directly from a preprocessed code-model.yaml file, skipping package install/inspection."""
+        from apistub.nodes._code_model_parser import CodeModelParser
+
+        if not _YAML_AVAILABLE:
+            raise RuntimeError(
+                "PyYAML is required to use --code-model-path. Install it with: pip install pyyaml"
+            )
+
+        logging.info("Generating tokens from code model: {}".format(self.code_model_path))
+        with open(self.code_model_path, "r", encoding="utf-8") as f:
+            yaml_data = _yaml.safe_load(f)
+
+        parser = CodeModelParser(yaml_data, mapping_path=self.mapping_path, source_url=self.source_url)
+        apiview = parser.generate_tokens()
+
+        self.check_unique_line_ids(apiview)
+        logging.info("*************** Completed generating tokens from code model ***************")
         return apiview
 
     def check_unique_line_ids(self, apiview: ApiView):

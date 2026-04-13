@@ -49,6 +49,10 @@ SDK_PARAMS = [
     ("azure-mgmt-compute", "37.2.0", "compute", "azure.mgmt.compute", "whl"),
     ("azure-mgmt-compute", "37.2.0", "compute", "azure.mgmt.compute", "sdist"),
     ("azure-mgmt-compute", "37.2.0", "compute", "azure.mgmt.compute", "src"),
+    # Management plane packages: pylint is skipped automatically (see test_sdks).
+    ("azure-mgmt-network", "27.0.0", "network", "azure.mgmt.network", "whl"),
+    ("azure-mgmt-network", "27.0.0", "network", "azure.mgmt.network", "sdist"),
+    ("azure-mgmt-network", "27.0.0", "network", "azure.mgmt.network", "src"),
 ]
 SDK_IDS = [f"{pkg_name}_{version}[{pkg_type}]" for pkg_name, version, _, _, pkg_type in SDK_PARAMS]
 
@@ -338,9 +342,11 @@ class TestApiViewAzure:
     def test_sdks(self, pkg_name, version, directory, pkg_namespace, pkg_type):
         pkg_path, mapping_file = self._download_packages(directory, pkg_name, version, pkg_type)
         temp_path = tempfile.gettempdir()
-        # Explicitly pass through mapping file path
+        # Management-plane packages: skip pylint (diagnostics not meaningful for mgmt, and it's slow).
+        is_mgmt = pkg_name.startswith("azure-mgmt-")
         stub_gen = StubGenerator(
-            pkg_path=pkg_path, temp_path=temp_path, out_path=temp_path, mapping_path=mapping_file
+            pkg_path=pkg_path, temp_path=temp_path, out_path=temp_path,
+            mapping_path=mapping_file, skip_pylint=is_mgmt,
         )
         apiview = self._write_tokens(stub_gen)
         self._validate_line_ids(apiview)

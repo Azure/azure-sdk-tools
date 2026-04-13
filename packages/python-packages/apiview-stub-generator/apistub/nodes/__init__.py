@@ -12,6 +12,7 @@ from ._key_node import KeyNode
 from ._module_node import ModuleNode
 from ._property_node import PropertyNode
 from ._variable_node import VariableNode
+from ._code_model_parser import CodeModelParser
 
 
 __all__ = [

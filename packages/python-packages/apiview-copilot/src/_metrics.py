@@ -26,6 +26,7 @@ METRICS_COMMENT_FIELDS = [
     "IsResolved",
     "Upvotes",
     "Downvotes",
+    "ConfidenceScore",
 ]
 
 
@@ -56,6 +57,13 @@ class MetricsSegment:
     implicit_good_ai_comment_count: Optional[int] = None
     implicit_bad_ai_comment_count: Optional[int] = None
     neutral_ai_comment_count: Optional[int] = None
+
+    # Average confidence scores per category (None when no confidence scores available)
+    avg_confidence_upvoted: Optional[float] = None
+    avg_confidence_downvoted: Optional[float] = None
+    avg_confidence_deleted: Optional[float] = None
+    avg_confidence_implicit_good: Optional[float] = None
+    avg_confidence_implicit_bad: Optional[float] = None
 
     # Dimension (e.g., {"language": "python"}) or {} for "All"
     dimension: Dict[str, str] = field(default_factory=dict)
@@ -249,22 +257,43 @@ def _build_metrics_segment(
     implicit_bad_count = 0
     neutral_count = 0
 
+    # Accumulate confidence scores per category
+    scores_upvoted: list[float] = []
+    scores_downvoted: list[float] = []
+    scores_deleted: list[float] = []
+    scores_implicit_good: list[float] = []
+    scores_implicit_bad: list[float] = []
+
     for c in all_ai_comments:
+        score = c.get("ConfidenceScore")
         if c.get("IsDeleted"):
             deleted_count += 1
+            if score is not None:
+                scores_deleted.append(score)
         elif c.get("Downvotes"):
             # Any downvote trumps upvotes
             downvoted_count += 1
+            if score is not None:
+                scores_downvoted.append(score)
         elif c.get("Upvotes"):
             upvoted_count += 1
+            if score is not None:
+                scores_upvoted.append(score)
         elif c.get("IsResolved"):
             implicit_good_count += 1
+            if score is not None:
+                scores_implicit_good.append(score)
         elif c.get("APIRevisionId") in approved_revision_ids:
             # In approved revision, not resolved, no votes = implicit bad
             implicit_bad_count += 1
+            if score is not None:
+                scores_implicit_bad.append(score)
         else:
             # In unapproved revision, not resolved, no votes = neutral
             neutral_count += 1
+
+    def _avg(scores: list[float]) -> Optional[float]:
+        return sum(scores) / len(scores) if scores else None
 
     metrics.total_ai_comment_count = len(all_ai_comments)
     metrics.deleted_ai_comment_count = deleted_count
@@ -273,6 +302,12 @@ def _build_metrics_segment(
     metrics.implicit_good_ai_comment_count = implicit_good_count
     metrics.implicit_bad_ai_comment_count = implicit_bad_count
     metrics.neutral_ai_comment_count = neutral_count
+
+    metrics.avg_confidence_upvoted = _avg(scores_upvoted)
+    metrics.avg_confidence_downvoted = _avg(scores_downvoted)
+    metrics.avg_confidence_deleted = _avg(scores_deleted)
+    metrics.avg_confidence_implicit_good = _avg(scores_implicit_good)
+    metrics.avg_confidence_implicit_bad = _avg(scores_implicit_bad)
 
     return metrics
 
@@ -344,6 +379,12 @@ def _build_metrics_report(data: Dict[str, MetricsSegment]) -> dict:
                     _calculate_rate(segment.implicit_bad_ai_comment_count, segment.total_ai_comment_count)
                 ),
                 "neutral_count": segment.neutral_ai_comment_count,
+                # Average confidence scores per category
+                "avg_confidence_good": fmt(segment.avg_confidence_upvoted) if segment.avg_confidence_upvoted is not None else None,
+                "avg_confidence_bad": fmt(segment.avg_confidence_downvoted) if segment.avg_confidence_downvoted is not None else None,
+                "avg_confidence_deleted": fmt(segment.avg_confidence_deleted) if segment.avg_confidence_deleted is not None else None,
+                "avg_confidence_implicit_good": fmt(segment.avg_confidence_implicit_good) if segment.avg_confidence_implicit_good is not None else None,
+                "avg_confidence_implicit_bad": fmt(segment.avg_confidence_implicit_bad) if segment.avg_confidence_implicit_bad is not None else None,
             },
             "comment_makeup": {
                 "human_comment_count_without_copilot": segment.human_comment_count_without_ai,

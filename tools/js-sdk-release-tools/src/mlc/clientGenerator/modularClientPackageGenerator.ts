@@ -27,7 +27,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
     try {
         const packageDirectory = await getGeneratedPackageDirectory(options.typeSpecDirectory, options.sdkRepoRoot);
         const relativePackageDirToSdkRoot = posix.relative(posix.normalize(options.sdkRepoRoot), posix.normalize(packageDirectory));
-        await codeOwnersAndIgnoreLinkGenerator(relativePackageDirToSdkRoot, options.typeSpecDirectory);
+        await codeOwnersAndIgnoreLinkGenerator(relativePackageDirToSdkRoot, options.typeSpecDirectory, options.runMode);
         const packageJsonPath = posix.join(packageDirectory, 'package.json');
         let originalNpmPackageInfo: undefined | NpmPackageInfo;
         if (await exists(packageJsonPath)) originalNpmPackageInfo = await getNpmPackageInfo(packageDirectory);

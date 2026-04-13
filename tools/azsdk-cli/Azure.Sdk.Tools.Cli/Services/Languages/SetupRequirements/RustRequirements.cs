@@ -53,15 +53,13 @@ public static class RustRequirements
         public override string Name => "cargo-fmt";
         public override string[] CheckCommand => ["cargo", "fmt", "--version"];
         public override IReadOnlyList<string> DependsOn => ["cargo"];
-        public override string? NotAutoInstallableReason => NotInstallableReasons.BundledWithLanguage;
+        public override bool IsAutoInstallable => true;
 
         public override bool ShouldCheck(RequirementContext ctx)
             => ctx.Languages.Contains(SdkLanguage.Rust);
 
-        public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
-        {
-            return ["Install rustfmt via: rustup component add rustfmt"];
-        }
+        public override string[][]? GetInstallCommands(RequirementContext ctx)
+            => [["rustup", "component", "add", "rustfmt"]];
     }
 
     public class CargoClippyRequirement : Requirement
@@ -69,14 +67,12 @@ public static class RustRequirements
         public override string Name => "cargo-clippy";
         public override string[] CheckCommand => ["cargo", "clippy", "--version"];
         public override IReadOnlyList<string> DependsOn => ["cargo"];
-        public override string? NotAutoInstallableReason => NotInstallableReasons.BundledWithLanguage;
+        public override bool IsAutoInstallable => true;
 
         public override bool ShouldCheck(RequirementContext ctx)
             => ctx.Languages.Contains(SdkLanguage.Rust);
 
-        public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
-        {
-            return ["Install clippy via: rustup component add clippy"];
-        }
+        public override string[][]? GetInstallCommands(RequirementContext ctx)
+            => [["rustup", "component", "add", "clippy"]];
     }
 }

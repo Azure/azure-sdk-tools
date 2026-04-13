@@ -16,7 +16,6 @@ pr:
   branches:
     include:
       - main
-      - feature/chatbot_agent
   paths:
     include:
       - tools/sdk-ai-bots/azure-sdk-qa-bot-agent

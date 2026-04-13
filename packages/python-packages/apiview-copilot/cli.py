@@ -622,7 +622,7 @@ def check_links_kb(language: Optional[str] = None, fix: Optional[str] = None):
     issues_one_way = []  # A→B but B does not reference A back
 
     def _check_links(source_type, source_items, field, target_type, target_ids_set, target_items,
-                     reverse_field, source_id_is_guideline=False):
+                     reverse_field):
         """Check one direction of a relationship pair."""
         for item in source_items.values():
             source_id = item["id"]

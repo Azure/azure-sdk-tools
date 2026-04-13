@@ -19,15 +19,14 @@ namespace Azure.Sdk.Tools.Cli.Services.TypeSpec
             logger.LogInformation("Analyzing TypeSpec changes for breaking changes...");
             if (string.IsNullOrEmpty(referenceContent))
             {
-                throw new ArgumentNullException(nameof(referenceContent), "Reference content cannot be null or empty");
+                logger.LogWarning("No reference content provided. The analysis may be less accurate without known SDK breaking change patterns.");
+                return null; 
             }
             logger.LogInformation("Using reference content");
 
             var agent = new CopilotAgent<SDKBreakingChangeDetectionResponse>
             {
                 Instructions = this.BuildInstructions(referenceContent, typespecChanges),
-                //Tools = tools,
-                //MaxIterations = maxIterations,
                 Model = "claude-opus-4.5"
             };
             var result = await copilotAgentRunner.RunAsync(agent, ct);

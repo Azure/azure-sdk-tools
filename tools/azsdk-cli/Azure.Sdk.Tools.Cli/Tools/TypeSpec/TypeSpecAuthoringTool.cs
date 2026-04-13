@@ -1,16 +1,13 @@
 using System.CommandLine;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
-using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion;
-using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.TypeSpec;
 using Azure.Sdk.Tools.Cli.Tools.Core;
-using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
@@ -191,7 +188,7 @@ Returns an answer with supporting references and documentation links
                         ResponseError = "Did not receive a result from knowledge base service."
                     };
                 }
-                ///* detect breaking changes from the response. */
+                // detect breaking changes from the response.
                 var breakingPatternsContent = await TryLoadBreakingPatternsAsync(typeSpecProjectRootPath, ct);
                 var result = await _detectionService.DetectBreakingChangesAsync(response.Answer, breakingPatternsContent, ct);
                 return new TypeSpecAuthoringResponse

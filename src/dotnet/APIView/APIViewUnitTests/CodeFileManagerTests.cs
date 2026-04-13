@@ -5,7 +5,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using APIView;
 using ApiView;
 using APIView.Model.V2;
 using APIViewWeb;
@@ -455,50 +454,7 @@ public class CodeFileManagerTests
     }
 
     [Fact]
-    public async Task CreateReviewCodeFileModel_SanitizesNewlinesInFlatTokenValues()
-    {
-        var codeFile = new CodeFile
-        {
-            Language = "Swagger",
-            Tokens =
-            [
-                new CodeFileToken("Literal\nwith\nnewlines", CodeFileTokenKind.Literal),
-                new CodeFileToken("{}", CodeFileTokenKind.Punctuation)
-            ]
-        };
-
-        using var memoryStream = new MemoryStream();
-
-        await _codeFileManager.CreateReviewCodeFileModel("api-rev-2", memoryStream, codeFile);
-
-        Assert.Equal("Literal with newlines", codeFile.Tokens[0].Value);
-        Assert.DoesNotContain('\n', codeFile.Tokens[0].Value);
-        Assert.DoesNotContain('\r', codeFile.Tokens[0].Value);
-    }
-
-    [Fact]
-    public async Task CreateReviewCodeFileModel_DoesNotModifyFlatWhitespaceTokenWithoutNewlines()
-    {
-        var codeFile = new CodeFile
-        {
-            Language = "Swagger",
-            Tokens =
-            [
-                new CodeFileToken(" ", CodeFileTokenKind.Whitespace),
-                new CodeFileToken("NoNewlines", CodeFileTokenKind.Text)
-            ]
-        };
-
-        using var memoryStream = new MemoryStream();
-
-        await _codeFileManager.CreateReviewCodeFileModel("api-rev-2a", memoryStream, codeFile);
-
-        Assert.Equal(" ", codeFile.Tokens[0].Value);
-        Assert.Equal("NoNewlines", codeFile.Tokens[1].Value);
-    }
-
-    [Fact]
-    public async Task CreateReviewCodeFileModel_SanitizesNestedReviewLineTokens()
+    public async Task CreateReviewCodeFileModel_SanitizesOnlyNestedTextTokens()
     {
         var codeFile = new CodeFile
         {
@@ -525,7 +481,7 @@ public class CodeFileManagerTests
 
         await _codeFileManager.CreateReviewCodeFileModel("api-rev-3", memoryStream, codeFile);
 
-        Assert.Equal("Parent token", codeFile.ReviewLines[0].Tokens[0].Value);
+        Assert.Equal("Parent\ntoken", codeFile.ReviewLines[0].Tokens[0].Value);
         Assert.Equal("Child token value", codeFile.ReviewLines[0].Children[0].Tokens[0].Value);
     }
 

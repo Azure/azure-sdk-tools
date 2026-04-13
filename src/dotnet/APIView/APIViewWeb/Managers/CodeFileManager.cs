@@ -321,8 +321,8 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
-        /// Sanitizes all token values in the CodeFile by removing embedded newlines.
-        /// Processes both tree-style (ReviewLines) and flat-style (Tokens) token structures.
+        /// Sanitizes tree-style token values in the CodeFile by removing embedded newlines.
+        /// Legacy flat tokens are intentionally left unchanged.
         /// </summary>
         private static void SanitizeTokenValues(CodeFile codeFile)
         {
@@ -330,18 +330,6 @@ namespace APIViewWeb.Managers
             if (codeFile.ReviewLines != null && codeFile.ReviewLines.Count > 0)
             {
                 SanitizeReviewLines(codeFile.ReviewLines);
-            }
-
-            // Flat/legacy style (CodeFileToken is a struct, so mutate via index)
-            if (codeFile.Tokens != null && codeFile.Tokens.Length > 0)
-            {
-                for (int i = 0; i < codeFile.Tokens.Length; i++)
-                {
-                    if (codeFile.Tokens[i].Kind != APIView.CodeFileTokenKind.Whitespace &&
-                        codeFile.Tokens[i].Kind != APIView.CodeFileTokenKind.Newline &&
-                        !string.IsNullOrEmpty(codeFile.Tokens[i].Value))
-                        codeFile.Tokens[i].Value = NormalizeTokenValue(codeFile.Tokens[i].Value);
-                }
             }
         }
 
@@ -355,7 +343,7 @@ namespace APIViewWeb.Managers
             {
                 foreach (var token in line.Tokens)
                 {
-                    if (!string.IsNullOrEmpty(token.Value))
+                    if (token.Kind == TokenKind.Text && !string.IsNullOrEmpty(token.Value))
                         token.Value = NormalizeTokenValue(token.Value);
                 }
                 if (line.Children != null && line.Children.Count > 0)

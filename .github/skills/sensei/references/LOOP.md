@@ -208,10 +208,10 @@ description: "[ACTION VERB] [UNIQUE_DOMAIN]. [One clarifying sentence]. WHEN: \"
 **Command:**
 ```bash
 # Standard (unit + trigger tests only - fast)
-cd tests && npm test -- --testPathPattern={skill-name} --testPathIgnorePatterns=integration
+cd tests && npm test -- --testPathPatterns={skill-name} --testPathIgnorePatterns=integration
 
 # With integration tests (slower, requires Copilot SDK)
-cd tests && npm test -- --testPathPattern={skill-name}
+cd tests && npm test -- --testPathPatterns={skill-name}
 ```
 
 **Skip Integration Tests Flag:**
@@ -277,7 +277,7 @@ wc -l plugin/skills/{skill-name}/SKILL.md
 ```
 Report a warning if SKILL.md exceeds 500 lines (spec recommendation).
 
-**Token Budgets** (from skill-authoring):
+**Token Budgets** (from [skill-authoring](/.github/skills/skill-authoring)):
 - SKILL.md: < 500 tokens (soft limit), < 5000 (hard limit)
 - references/*.md: < 1000 tokens each
 
@@ -288,7 +288,7 @@ Report a warning if SKILL.md exceeds 500 lines (spec recommendation).
 
 **Note:** Token optimizations are captured but NOT automatically applied. The user decides whether to implement them or create an issue for follow-up.
 
-See [SCORING.md § Token Integration](SCORING.md) for details on token optimization patterns.
+See [TOKEN-INTEGRATION.md](TOKEN-INTEGRATION.md) for details on token optimization patterns.
 
 ### Step 7: SUMMARY
 

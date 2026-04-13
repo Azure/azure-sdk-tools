@@ -267,9 +267,10 @@ There are two generation paths based on the source: **TypeSpec project** or **Sw
 |---|---|---|---|---|
 | **1. Get Target Package Dir** | ✅ Required | `getGeneratedPackageDirectory()` | Parse `emitter-output-dir` / `service-dir` + `package-dir` from `tspconfig.yaml` | [generateRLCInPipeline.ts#L46](../src/llc/generateRLCInPipeline/generateRLCInPipeline.ts#L46) |
 | **2. Clean Up Package Dir** | ✅ Required | `cleanUpPackageDirectory()` | Cleanup strategy based on `runMode` and SDK type (see [Section 4](#4-folder-cleanup-logic)) | [generateRLCInPipeline.ts#L48](../src/llc/generateRLCInPipeline/generateRLCInPipeline.ts#L48) |
-| **3a. Code Gen (command mode)** | ✅ Required | TypeSpec direct compile | ① Copy `emitter-package.json` → ② `npm install` → ③ Update `tspconfig.yaml` → ④ `npx tsp compile {source} --emit @azure-tools/typespec-ts --arg "js-sdk-folder={sdkRepo}"` | [generateRLCInPipeline.ts#L68](../src/llc/generateRLCInPipeline/generateRLCInPipeline.ts#L68) |
-| **3b. Code Gen (script mode)** | ✅ Required | tsp-client generation | `npm --prefix eng/common/tsp-client exec -- tsp-client init --update-if-exists --debug --tsp-config {tspconfig.yaml} --local-spec-repo {tspDefDir} --repo {repoUrl} --commit {commitId}` | [generateRLCInPipeline.ts#L82](../src/llc/generateRLCInPipeline/generateRLCInPipeline.ts#L82) |
+| **3a. Code Gen (command mode)** | ✅ Conditional (`sdkGenerationType = command`) | TypeSpec direct compile | ① Copy `emitter-package.json` → ② `npm install` → ③ Update `tspconfig.yaml` → ④ `npx tsp compile {source} --emit @azure-tools/typespec-ts --arg "js-sdk-folder={sdkRepo}"` | [generateRLCInPipeline.ts#L68](../src/llc/generateRLCInPipeline/generateRLCInPipeline.ts#L68) |
+| **3b. Code Gen (script mode)** | ✅ Conditional (`sdkGenerationType = script`) | tsp-client generation | `npm --prefix eng/common/tsp-client exec -- tsp-client init --update-if-exists --debug --tsp-config {tspconfig.yaml} --local-spec-repo {tspDefDir} --repo {repoUrl} --commit {commitId}` | [generateRLCInPipeline.ts#L82](../src/llc/generateRLCInPipeline/generateRLCInPipeline.ts#L82) |
 
+> Note: Steps **3a** and **3b** are mutually exclusive alternatives. The pipeline executes only one of them per run, based on `sdkGenerationType`.
 #### Path B: Swagger Project (no `typespecProject`)
 
 | Step | Required | Operation | Command / Details | Code Link |

@@ -9,7 +9,7 @@ public class FederatedIdentityCredentialsConfig : BaseConfig, IEquatable<Federat
     [JsonRequired, JsonPropertyName("audiences"), JsonPropertyOrder(0)]
     public List<string>? Audiences { get; set; }
 
-    [JsonRequired, JsonPropertyName("description"), JsonPropertyOrder(1)]
+    [JsonPropertyName("description"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull), JsonPropertyOrder(1)]
     public string? Description { get; set; }
 
     [JsonRequired, JsonPropertyName("issuer"), JsonPropertyOrder(2)]
@@ -97,6 +97,17 @@ public class FederatedIdentityCredentialsConfig : BaseConfig, IEquatable<Federat
         sb.AppendLine(indent + $"Subject: {Subject}");
 
         return sb.ToString();
+    }
+
+    public bool Matches(FederatedCredentialInfo info)
+    {
+        if (info.Audiences?.SequenceEqual(Audiences ?? Enumerable.Empty<string>()) == false)
+        {
+            return false;
+        }
+        return info.Name == Name &&
+               info.Issuer?.TrimEnd('/') == Issuer?.TrimEnd('/') &&
+               info.Subject == Subject;
     }
 
     public override string ToString()

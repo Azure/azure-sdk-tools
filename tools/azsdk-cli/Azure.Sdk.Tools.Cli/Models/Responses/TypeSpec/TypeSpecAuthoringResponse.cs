@@ -25,6 +25,9 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public QueryIntention? QueryIntention { get; set; }
 
+        [JsonPropertyName("has_sdk_breaking_changes")]
+        public bool HasSdkBreakingChanges => SdkBreakingChanges != null && SdkBreakingChanges.Any();
+
         [JsonPropertyName("sdk_breaking_changes")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public List<string>? SdkBreakingChanges { get; set; }

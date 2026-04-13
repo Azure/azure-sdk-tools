@@ -159,7 +159,7 @@ RLC packages are identified as `"sdk-type": "client"` without modular markers.
 | `Release` / `Local` | **Skip cleanup (tool-level)** | The tool does not delete the package directory. Before writing new files, the emitter automatically empties the sources directory. |
 | `SpecPullRequest` / `Batch` | **Full cleanup** | Removes the entire package directory and recreates it empty. |
 
-> **Note on generation path**: The emitter behavior described below applies **only to the TypeSpec path** (Path A in §4). When RLC packages are generated from Swagger via autorest (Path B), the TypeSpec emitter is not involved — autorest directly overwrites files under `--output-folder` without the priority-based source directory selection described below.
+> **Note on generation path**: The emitter behavior described below applies **only to the TypeSpec path** (Path A in §3.2). When RLC packages are generated from Swagger via autorest (Path B), the TypeSpec emitter is not involved — autorest directly overwrites files under `--output-folder` without the priority-based source directory selection described below.
 
 #### What the emitter clears before writing (TypeSpec path only)
 

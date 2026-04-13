@@ -84,6 +84,9 @@ Ensure accurate information goes into CODEOWNERS and triage automation has relia
 - The codeowners management flow does not model or require explicit `Service`/`Product` links for label-owner operations.
 - `RemoveOwnersFromLabelsAndPath` expects exactly one matching `Label Owner` record for `(repo, path, section, ownerType, label set)` and uses `Single(...)`; duplicate candidates can throw.
 - Team owner validation supports only aliases in `Azure/<team>` format and requires the team to descend from `azure-sdk-write`.
+- `check-package` validates rendered CODEOWNERS content from a cache file rather than querying live Azure DevOps work items.
+- `check-package` expects `CodeownersEntry` values produced by `CodeownersParser`; unresolved team aliases left behind when parser team expansion fails do not count toward owner minimums.
+- The repo-derived validation cache currently reflects the exported `Client Libraries` section uploaded by pipeline, so packages outside the exported sections are out of scope for that cache.
 - `GitHubLableWorkItem` type name contains a legacy spelling (`Lable`) in code and responses.
 
 ---
@@ -94,7 +97,7 @@ Ensure accurate information goes into CODEOWNERS and triage automation has relia
 
 Two command groups are documented:
 
-- `config codeowners`: view, generate, export-section, add/remove package owners, add/remove package labels, add/remove label owners on optional path scope.
+- `config codeowners`: view, generate, export-section, check-package, add/remove package owners, add/remove package labels, add/remove label owners on optional path scope.
 - `config github-label`: check/create service labels in GitHub CSV and sync service labels to Azure DevOps `Label` work items.
 
 ### Command and Tool Surface
@@ -110,6 +113,7 @@ Two command groups are documented:
 - `remove-package-label`
 - `remove-label-owner`
 - `export-section` (no MCP)
+- `check-package`
 
 `CodeownersTool` MCP tools:
 
@@ -120,6 +124,7 @@ Two command groups are documented:
 - `azsdk_engsys_codeowner_remove_package_owner`
 - `azsdk_engsys_codeowner_remove_package_label`
 - `azsdk_engsys_codeowner_remove_label_owner`
+- `azsdk_engsys_codeowner_check_package`
 
 `GitHubLabelsTool` commands:
 
@@ -131,6 +136,39 @@ Two command groups are documented:
 
 - `azsdk_check_service_label`
 - `azsdk_create_service_label`
+
+### Cache-backed Package Validation
+
+`check-package` validates rendered CODEOWNERS ownership by reading a cache file instead of querying live Azure DevOps work items. This enables validation and unblocking in both PR and Release scenarios without requiring changes to the underlying repo.
+
+Inputs:
+
+- `--directory-path` (required): relative path from repo root to the package directory.
+- `--repo` (optional): `owner/repo` repository identity. If omitted, the command resolves the current git repo.
+- `--codeowners-cache` (optional): local filesystem path to a CODEOWNERS cache file. When specified, it overrides repo-derived cache lookup.
+
+Cache resolution:
+
+- If `--codeowners-cache` is provided, validation reads that local file directly. This is mostly useful for testing.
+- Otherwise, validation resolves the repo and reads:
+  `https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/cache/<owner-lower>/<repo>/CODEOWNERS.cache`
+
+Pipeline requirements for producing the cache:
+
+1. Render `.github/CODEOWNERS`.
+2. Export the named section(s) required for validation using `config codeowners export-section`.
+3. Upload the exported content to `azure-sdk-write-teams/cache/<owner-lower>/<repo>/CODEOWNERS.cache`.
+
+Current pipeline usage exports the `Client Libraries` section and uploads it as `cache/azure/<repo>/CODEOWNERS.cache`.
+
+Validation rules:
+
+1. Parse the cache using `CodeownersParser.ParseCodeownersFile`; validation logic expects parser-produced `CodeownersEntry` instances.
+2. Find the matching path entry using GitHub-style precedence (the last matching path entry wins). Try both the raw package path and a trailing-slash form.
+3. Require at least 2 unique individual source owners. Unresolved GitHub team aliases left behind when parser team expansion fails do not count.
+4. Require at least 1 PR label on the matched path entry.
+5. Find the matching service-owner entry by scanning service-label entries from the end of the parsed file. Ignore `Service Attention` for label comparison, and require the matched service-label set to be fully contained within the package PR labels.
+6. Require at least 2 unique individual service owners on that service-owner entry. Unresolved team aliases do not count.
 
 ### Data Model
 
@@ -239,6 +277,7 @@ In this example, `Storage` exists as a label entity but is not attached to the p
 - Package entries are generated from selecting the latest `Package` work item by version and hydrated related owners/labels/label-owners.
 - Service-level path entries are generated from unlinked `Label Owner` records with non-empty `RepoPath`.
 - Pathless metadata entries are grouped by service-label set from unlinked `Label Owner` records with empty `RepoPath`.
+- Validation cache artifacts can be produced by exporting named sections from rendered CODEOWNERS. The current pipeline exports `Client Libraries` and uploads the result to `azure-sdk-write-teams/cache/<owner-lower>/<repo>/CODEOWNERS.cache`.
 - Original owner collections are preserved in generated `CodeownersEntry` via:
   - `OriginalSourceOwners`
   - `OriginalServiceOwners`
@@ -268,6 +307,9 @@ Sorting is implemented in `CodeownersEntrySorter.cs`.
 CodeownersTool
   -> resolves repo and arguments
   -> delegates view/add/remove/generate/export logic to helpers
+  -> for check-package, resolves cache source (local file or blob URL)
+  -> parses CODEOWNERS cache with CodeownersParser
+  -> validates package ownership via ICheckPackageHelper
   -> helpers query/update Azure DevOps via IDevOpsService
   -> helpers query/validate GitHub identities or teams via IGitHubService
 
@@ -387,6 +429,21 @@ Add @alice as a PR Label owner for labels service-attention and needs-team-atten
 2. Find or create matching `Label Owner` work item by repo/path/section/label type + label set.
 3. Link owner/labels.
 4. Return updated view by path.
+
+### Check package ownership from CODEOWNERS cache
+
+**Prompt:**
+
+```text
+Check whether sdk/storage/Azure.Storage.Blobs has enough CODEOWNERS coverage to unblock release.
+```
+
+**Expected Agent Activity:**
+
+1. Resolve the repo or use an explicitly provided repo.
+2. Read the repo-derived `CODEOWNERS.cache` since another cache location is not supplied in the prompt.
+3. Call `azsdk_engsys_codeowner_check_package` with `directoryPath` and optional `repo` / `codeownersCachePath`.
+4. Return the matched owners, PR labels, and service owners, or the validation failure reason.
 
 ### Check service label
 
@@ -514,6 +571,38 @@ azsdk config codeowners remove-label-owner --github-user alice --label service-a
 azsdk config codeowners export-section --codeowners-path .github/CODEOWNERS --section "Client Libraries" --output-file out/CODEOWNERS.client
 ```
 
+### Check package ownership from CODEOWNERS cache
+
+**Command:**
+
+```bash
+azsdk config codeowners check-package --directory-path sdk/storage/Azure.Storage.Blobs --repo Azure/azure-sdk-for-net
+```
+
+**Options:**
+
+- `--directory-path <relative-path>`: Relative path from repo root to the package directory.
+- `--repo <owner/name>`: Optional repository identity. If omitted, the current git repo is used to derive the cache URL.
+- `--codeowners-cache <path>`: Optional local cache file path. Overrides repo-derived cache lookup.
+
+**Expected Output:**
+
+```text
+Path: sdk/storage/Azure.Storage.Blobs
+Owners: owner1, owner2
+PR Labels: Storage
+Service Labels: Storage
+Service Owners: owner3, owner4
+```
+
+**Error Cases:**
+
+```text
+Error: CODEOWNERS cache file not found: <path>
+Error: Invalid repo format '<repo>'. Expected '<owner>/<repo>'.
+Error: check-package failed: <validation failure>
+```
+
 ### Check/create service label
 
 ```bash
@@ -572,6 +661,7 @@ The following dependency map defines the required dependencies across `Codeowner
 | `IDevOpsService` / `DevOpsService` | Internal service | Both tool groups + management/generation helpers | Wrapper over Azure DevOps work item and relation operations. |
 | `ICodeownersManagementHelper` | Internal helper | `CodeownersTool` | View/add/remove behavior for package owners, package labels, and label-owner path records. |
 | `ICodeownersGenerateHelper` | Internal helper | `CodeownersTool` | Generates CODEOWNERS section content from Azure DevOps + repo package metadata. |
+| `ICheckPackageHelper` | Internal helper | `CodeownersTool` | Validates a package path against parser-produced CODEOWNERS cache entries. |
 | `ICodeownersValidatorHelper` | Internal helper | `CodeownersTool` | Validates individual GitHub users as Azure SDK code owners before owner WI creation. |
 | `IGitHelper` | Internal helper | `CodeownersTool` | Repo root/repo full name discovery. |
 | `IPowershellHelper` | Internal helper | `CodeownersGenerateHelper` | Runs `eng/common/scripts/common.ps1` to resolve package metadata in repo. |

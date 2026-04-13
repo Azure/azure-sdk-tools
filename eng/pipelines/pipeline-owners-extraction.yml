@@ -15,7 +15,7 @@ parameters:
               version: 10.0.x
 
 stages:
-- stage: Run
+- stage: BuildTeamCache
   variables:
   - template: ./templates/variables/globals.yml
 
@@ -71,7 +71,7 @@ stages:
         condition: succeededOrFailed()
 
 - stage: GenerateCodeowners
-  dependsOn: []
+  dependsOn: BuildTeamCache
   variables:
     - template: /eng/pipelines/templates/variables/image.yml
 

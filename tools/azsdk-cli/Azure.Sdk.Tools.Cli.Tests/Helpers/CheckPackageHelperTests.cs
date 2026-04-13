@@ -10,8 +10,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers;
 [TestFixture]
 public class CheckPackageHelperTests
 {
-    private CheckPackageHelper _helper;
-    private List<CodeownersEntry> _entries;
+    private CheckPackageHelper helper;
+    private List<CodeownersEntry> entries;
 
     [OneTimeSetUp]
     public void OneTimeSetUp()
@@ -24,21 +24,21 @@ public class CheckPackageHelperTests
         Assert.That(File.Exists(fixturePath), Is.True,
             $"Test fixture not found at {fixturePath}");
 
-        _entries = CodeownersParser.ParseCodeownersFile(fixturePath);
+        entries = CodeownersParser.ParseCodeownersFile(fixturePath);
     }
 
     [SetUp]
     public void SetUp()
     {
-        _helper = new CheckPackageHelper();
+        helper = new CheckPackageHelper();
     }
 
     [Test]
     public void CheckPackage_TwoOwners_ValidServiceOwners_Passes()
     {
-        var result = _helper.CheckPackage(
+        var result = helper.CheckPackage(
             "sdk/two-owners/Azure.TwoOwners",
-            _entries);
+            entries);
 
         Assert.That(result, Is.Not.Null);
         Assert.That(result.DirectoryPath, Is.EqualTo("sdk/two-owners/Azure.TwoOwners"));
@@ -50,9 +50,9 @@ public class CheckPackageHelperTests
     [Test]
     public void CheckPackage_ThreeOwners_ValidServiceOwners_Passes()
     {
-        var result = _helper.CheckPackage(
+        var result = helper.CheckPackage(
             "sdk/three-owners/Azure.ThreeOwners",
-            _entries);
+            entries);
 
         Assert.That(result, Is.Not.Null);
         Assert.That(result.Owners.Count, Is.EqualTo(3));
@@ -63,9 +63,9 @@ public class CheckPackageHelperTests
     public void CheckPackage_OneOwner_Throws()
     {
         var ex = Assert.Throws<InvalidOperationException>(() =>
-            _helper.CheckPackage(
+            helper.CheckPackage(
                 "sdk/one-owner/Azure.OneOwner",
-                _entries));
+                entries));
 
         Assert.That(ex.Message, Does.Contain("check-package failed"));
         Assert.That(ex.Message, Does.Contain("1 unique owner"));
@@ -76,9 +76,9 @@ public class CheckPackageHelperTests
     public void CheckPackage_NoPrLabels_Throws()
     {
         var ex = Assert.Throws<InvalidOperationException>(() =>
-            _helper.CheckPackage(
+            helper.CheckPackage(
                 "sdk/no-labels/Azure.NoLabels",
-                _entries));
+                entries));
 
         Assert.That(ex.Message, Does.Contain("check-package failed"));
         Assert.That(ex.Message, Does.Contain("No PR labels"));
@@ -88,9 +88,9 @@ public class CheckPackageHelperTests
     public void CheckPackage_ZeroServiceOwners_Throws()
     {
         var ex = Assert.Throws<InvalidOperationException>(() =>
-            _helper.CheckPackage(
+            helper.CheckPackage(
                 "sdk/zero-svc-owners/Azure.ZeroSvcOwners",
-                _entries));
+                entries));
 
         Assert.That(ex.Message, Does.Contain("check-package failed"));
         Assert.That(ex.Message, Does.Contain("service owner"));
@@ -100,9 +100,9 @@ public class CheckPackageHelperTests
     public void CheckPackage_NoMatchingServiceLabel_Throws()
     {
         var ex = Assert.Throws<InvalidOperationException>(() =>
-            _helper.CheckPackage(
+            helper.CheckPackage(
                 "sdk/no-svc-match/Azure.NoSvcMatch",
-                _entries));
+                entries));
 
         Assert.That(ex.Message, Does.Contain("check-package failed"));
         Assert.That(ex.Message, Does.Contain("No service label entry found"));
@@ -112,9 +112,9 @@ public class CheckPackageHelperTests
     public void CheckPackage_InsufficientServiceOwners_Throws()
     {
         var ex = Assert.Throws<InvalidOperationException>(() =>
-            _helper.CheckPackage(
+            helper.CheckPackage(
                 "sdk/insufficient-svc/Azure.InsufficientSvc",
-                _entries));
+                entries));
 
         Assert.That(ex.Message, Does.Contain("check-package failed"));
         Assert.That(ex.Message, Does.Contain("1 unique service owner"));
@@ -124,9 +124,9 @@ public class CheckPackageHelperTests
     public void CheckPackage_NoMatchingPath_Throws()
     {
         var ex = Assert.Throws<InvalidOperationException>(() =>
-            _helper.CheckPackage(
+            helper.CheckPackage(
                 "sdk/does-not-exist/Azure.NonExistent",
-                _entries));
+                entries));
 
         Assert.That(ex.Message, Does.Contain("check-package failed"));
         Assert.That(ex.Message, Does.Contain("No CODEOWNERS entry matches path"));
@@ -136,9 +136,9 @@ public class CheckPackageHelperTests
     public void CheckPackage_ServiceLabelSupersetDoesNotMatch_Throws()
     {
         var ex = Assert.Throws<InvalidOperationException>(() =>
-            _helper.CheckPackage(
+            helper.CheckPackage(
                 "sdk/superset-match/Azure.SupersetMatch",
-                _entries));
+                entries));
 
         Assert.That(ex.Message, Does.Contain("check-package failed"));
         Assert.That(ex.Message, Does.Contain("No service label entry found"));
@@ -147,9 +147,9 @@ public class CheckPackageHelperTests
     [Test]
     public void CheckPackage_MultiplePrLabels_ExactServiceLabelMatch_Passes()
     {
-        var result = _helper.CheckPackage(
+        var result = helper.CheckPackage(
             "sdk/multi-label/Azure.MultiLabel",
-            _entries);
+            entries);
 
         Assert.That(result, Is.Not.Null);
         Assert.That(result.PRLabels.Count, Is.EqualTo(2));
@@ -159,9 +159,9 @@ public class CheckPackageHelperTests
     [Test]
     public void CheckPackage_ReverseOrderMatching_LastEntryWins()
     {
-        var result = _helper.CheckPackage(
+        var result = helper.CheckPackage(
             "sdk/reverse-test/Azure.ReverseTest",
-            _entries);
+            entries);
 
         Assert.That(result, Is.Not.Null);
         Assert.That(result.Owners.Count, Is.EqualTo(3));
@@ -172,9 +172,9 @@ public class CheckPackageHelperTests
     [Test]
     public void CheckPackage_ServiceOwners_ThreeOwners_Passes()
     {
-        var result = _helper.CheckPackage(
+        var result = helper.CheckPackage(
             "sdk/three-owners/Azure.ThreeOwners",
-            _entries);
+            entries);
 
         Assert.That(result, Is.Not.Null);
         Assert.That(result.ServiceOwners.Count, Is.EqualTo(3));
@@ -203,7 +203,7 @@ public class CheckPackageHelperTests
             }
         };
 
-        var result = _helper.CheckPackage(
+        var result = helper.CheckPackage(
             "sdk/test/Azure.Test",
             entries);
 
@@ -219,7 +219,7 @@ public class CheckPackageHelperTests
             serviceOwners: ["serviceOwnerAlice", "serviceOwnerBob"],
             serviceLabels: ["TestLabel", "Service Attention"]);
 
-        var result = _helper.CheckPackage(
+        var result = helper.CheckPackage(
             "sdk/test/Azure.Test",
             entries);
 
@@ -236,7 +236,7 @@ public class CheckPackageHelperTests
             serviceOwners: ["serviceOwnerAlice", "serviceOwnerBob"]);
 
         var ex = Assert.Throws<InvalidOperationException>(() =>
-            _helper.CheckPackage(
+            helper.CheckPackage(
                 "sdk/test/Azure.Test",
                 entries));
 
@@ -253,7 +253,7 @@ public class CheckPackageHelperTests
             serviceOwners: ["serviceOwnerAlice", "Azure/unresolved-team"]);
 
         var ex = Assert.Throws<InvalidOperationException>(() =>
-            _helper.CheckPackage(
+            helper.CheckPackage(
                 "sdk/test/Azure.Test",
                 entries));
 
@@ -269,7 +269,7 @@ public class CheckPackageHelperTests
             sourceOwners: ["ownerAlice", "ownerBob", "Azure/unresolved-team"],
             serviceOwners: ["serviceOwnerAlice", "serviceOwnerBob", "Azure/unresolved-team"]);
 
-        var result = _helper.CheckPackage(
+        var result = helper.CheckPackage(
             "sdk/test/Azure.Test",
             entries);
 
@@ -282,7 +282,7 @@ public class CheckPackageHelperTests
     public void CheckPackage_EmptyEntries_Throws()
     {
         var ex = Assert.Throws<ArgumentException>(() =>
-            _helper.CheckPackage(
+            helper.CheckPackage(
                 "sdk/test",
                 new List<CodeownersEntry>()));
 
@@ -293,7 +293,7 @@ public class CheckPackageHelperTests
     public void CheckPackage_NullDirectoryPath_Throws()
     {
         Assert.Throws<ArgumentException>(() =>
-            _helper.CheckPackage(null!, _entries));
+            helper.CheckPackage(null!, entries));
     }
 
     private static List<CodeownersEntry> CreateEntries(

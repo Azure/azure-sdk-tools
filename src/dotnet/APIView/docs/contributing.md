@@ -61,7 +61,7 @@ Right-click `APIViewWeb` in Visual Studio > **Manage User Secrets**, then insert
 
 Secrets and service connections load automatically via App Configuration and Key Vault.
 
-> **Need the App Config URL?** Reach out to Alitzel.Mendez@microsoft.com for the user secrets.
+> **Need the App Config URL?** Reach out to the APIView engineering team for the user secrets.
 
 <br>
 

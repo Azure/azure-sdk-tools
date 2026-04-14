@@ -94,7 +94,7 @@ The Rust APIView parser (`@azure-tools/rust-genapi`) version is managed in three
    | [`APIViewWeb/Languages/PythonLanguageService.cs` (line 20)](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/Languages/PythonLanguageService.cs#L20) | Tell APIView the current version so it knows whether to upgrade |
 
 4. Update [`eng/apiview_reqs.txt`](https://github.com/Azure/azure-sdk-for-python/blob/main/eng/apiview_reqs.txt) in the `azure-sdk-for-python` repo to include the new version + pinned dependencies. Copy all requirements from [apiview_reqs.txt in azure-sdk-tools](https://github.com/Azure/azure-sdk-tools/blob/main/packages/python-packages/apiview-stub-generator/apiview_reqs.txt). **Ensure `apiview-stub-generator==x` is included** (not `./.`).
-5. Deploy APIView changes — reach out to the APIView Eng Sys team (Dozie, Praveen, or Mariana) or tag them in the APIView channel. After deployment, all APIViews should be updated in 4-5 hours.
+5. Deploy APIView changes — reach out to the APIView Eng Sys team or tag them in the APIView channel. After deployment, all APIViews should be updated in 4-5 hours.
 
 ### Mirroring packages to dev feed
 

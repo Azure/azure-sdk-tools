@@ -11,8 +11,6 @@ This document covers deployment, test environments, configuration, secrets, and 
 | **Website** | [Prod](https://apiview.dev) | [Staging](https://staging.apiview.dev) |
 | **Resources** | [Prod (Azure Portal)](https://portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/apiview) | [Staging (Azure Portal)](https://portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/apiview) |
 | **Source Code** | [azure-sdk-tools/src/dotnet/APIView](https://github.com/Azure/azure-sdk-tools/tree/main/src/dotnet/APIView) | |
-| **Primary Owner** | Dozie Ononiwu | |
-| **Secondary Owner** | Praveen Kuttappan | |
 
 ---
 

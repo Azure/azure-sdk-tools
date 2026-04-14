@@ -94,15 +94,45 @@ model MyProperties {
 
 When adding a new **optional capability property** to a tracked ARM resource, directly spreading the property into the resource model will affect **all existing API versions**, resulting in a breaking change. At the same time, adding such a property directly to the resource envelope may be invalid and trigger warnings. Use a **spread property combined with a versioning decorator** to scope the new property to a target API version.
 
+The key insight is that the `@@added` augment decorator targets the **individual property name** from the spread model (not the spread operation itself). For example, if `MyExampleModel` contributes a property named `MyExampleProperty`, you use `@@added(Employee.MyExampleProperty, ...)` to version that specific property:
+
 ```typespec
 /** A ContosoProviderHub resource */
 model Employee is TrackedResource<EmployeeProperties> {
   ...ResourceNameParameter<Employee>;
-  ...FeatureXProperty;
+  ...MyExampleModel;  // spreads MyExampleProperty into Employee
 }
 
-@@added(Employee.identity, Versions.`2024-10-01-preview`);
+// Version the property contributed by the spread using its property name:
+@@added(Employee.MyExampleProperty, Versions.`2025-11-01`);
 ```
+
+This pattern works because TypeSpec resolves spread properties by name on the containing model. After spreading, `Employee.MyExampleProperty` is a valid augment target.
+
+## TypeSpec does not support versioning decorator arguments (e.g., changing @maxValue per version)
+
+TypeSpec versioning decorators (`@added`, `@removed`, `@renamedFrom`, etc.) apply to **model elements** (models, properties, operations), not to **decorator arguments**. This means you cannot change a constraint like `@maxValue(30)` to `@maxValue(90)` in only a specific API version by using a versioning decorator on the decorator itself.
+
+**Correct pattern**: Use the **add/remove/rename pattern** on the property itself to apply different constraints in different API versions:
+
+```typespec
+model LeafCertificateConfiguration {
+  // Old property with max 30: removed in new version, renamed internally
+  @maxValue(30)
+  @removed(Versions.v2025_11_01_preview)
+  @renamedFrom(Versions.v2025_11_01_preview, "validityPeriodInDays")
+  validityPeriodInDaysV1: int32;
+
+  // New property with max 90: only present in new version+
+  @added(Versions.v2025_11_01_preview)
+  @maxValue(90)
+  validityPeriodInDays: int32;
+}
+```
+
+This avoids duplicate operation errors and ensures the correct schema is emitted per version. Do NOT directly update a decorator argument value for just one version — that change will affect all versions.
+
+If the operation signature also changes with the model, use `@sharedRoute` and `@renamedFrom` on the operation as well.
 
 ## Versioning Behavior for an Existing Operation
 

@@ -20,6 +20,28 @@ model MyResourceProperties {
 }
 ```
 
+This is enforced by the `@azure-tools/typespec-azure-resource-manager/arm-no-record` linting rule. `{}` (empty object type) is also invalid in ARM TypeSpec specs.
+
+**If you truly need an arbitrary key/value dictionary**, you must get architecture/review board approval first. Then explicitly suppress the rule with justification:
+
+```typespec
+#suppress "@azure-tools/typespec-azure-resource-manager/arm-no-record" "Approved free-form metadata bag"
+metadata?: Record<string>;
+```
+
+This should be rare — arbitrary dictionaries are strongly discouraged in ARM.
+
+**Important: If this is actually resource tags**, do NOT redefine them. Use the built-in ARM tags support already included in `TrackedResource`:
+
+```typespec
+model MyResource is TrackedResource<MyProperties> {
+  ...ResourceNameParameter<MyResource>;
+  // tags are already included — do not add Record<string> tags property
+}
+```
+
+Or use `...Foundations.ArmTagsProperty` explicitly. ARM tags already use `Record<string>` internally and are exempt from the `arm-no-record` rule.
+
 This guidance applies to ARM (management plane) only.
 
 ## Use @useFinalStateVia to control LRO final-state resolution in ARM PUT operations

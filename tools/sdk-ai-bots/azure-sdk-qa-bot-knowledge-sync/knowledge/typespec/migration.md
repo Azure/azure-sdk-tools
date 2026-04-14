@@ -24,3 +24,23 @@ If `oav generate-examples` fails, it may be an oav bug — file an issue at the 
 During TypeSpec migration, the AutoRest emitter normalizes swagger output, producing thousands of functionally equivalent but textually different diffs. The LintDiff auto-baselining algorithm cannot recognize unchanged areas in large diffs, so pre-existing violations get flagged as new errors.
 
 **Fix**: Explicitly suppress all LintDiff errors in your `readme.md` file regardless of whether they are new or pre-existing. Do not rely on the auto-baselining mechanism for TSP migration PRs.
+
+## Restoring x-ms-client-flatten behavior during TypeSpec migration using Legacy.flattenProperty
+
+When migrating a Swagger ARM spec to TypeSpec, `x-ms-client-flatten: true` on a properties bag is not automatically preserved. If the original Swagger had this flag to flatten the `properties` envelope into the SDK client model, you need to explicitly apply it in TypeSpec.
+
+**Fix**: Use the augment decorator `@@Azure.ClientGenerator.Core.Legacy.flattenProperty` targeting the property you want flattened:
+
+```typespec
+@@Azure.ClientGenerator.Core.Legacy.flattenProperty(ArcSetting.properties);
+```
+
+By convention, place this decorator in a `back-compatible.tsp` file (e.g., `back-compat.tsp`) in your spec folder. This keeps backward-compatibility concerns separate from the main TypeSpec definition.
+
+This is the correct way to preserve SDK client flatten behavior from Swagger in a TypeSpec-based spec.
+
+## The service-under-conversion label does not block existing or concurrent PRs
+
+The `service-under-conversion` label is an informational/coordination label indicating that the service is undergoing TypeSpec conversion. It does **not** block or delay merging of other PRs (including stable API PRs) for the same service.
+
+If there is a later API version than the conversion PR, the TypeSpec conversion would normally be based on that later API version once it is checked in. The label is applied to track conversion status, not to create a merge dependency.

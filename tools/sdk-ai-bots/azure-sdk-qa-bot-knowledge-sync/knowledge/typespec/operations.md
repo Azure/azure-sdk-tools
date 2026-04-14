@@ -26,3 +26,11 @@ op update(
 
 Do **not** use `| null` in the model to indicate erasable fields. Merge-patch support is treated as a fundamental protocol decision of the service, not something reflected in the type system. A new `MergePatch` template is being designed to address this gap for generation-first languages.
 
+## PATCH requests over discriminated types should include the discriminator property
+
+When modeling a PATCH operation for a resource that uses a discriminated union (polymorphic type with a `@discriminator` field), the PATCH request body should **require the discriminator property**. This is important because the service typically needs the discriminator value on the wire to determine how to apply the PATCH to the existing resource.
+
+Using `ArmResourcePatchAsync` with a discriminated resource type may trigger OAV errors like `OBJECT_MISSING_REQUIRED_PROPERTY_DEFINITION` because the generated patch model may not include the discriminator as required.
+
+**Recommended**: Include the discriminator property as required in the PATCH body. This may result in some LintDiff violations (since PATCH bodies are normally all-optional), but those violations are expected and can be suppressed with the `Approved-LintDiff` label. This is the suggested approach when the PATCH semantics require the discriminator value to be present.
+

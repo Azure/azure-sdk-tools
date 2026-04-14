@@ -2,6 +2,30 @@
 
 Common issues and solutions for TypeSpec validation errors and CI fixes.
 
+## Suppressing SdkTspConfigValidation sub-rules for SDKs not in scope
+
+When a service does not have an SDK for a particular language (e.g., Go), the `SdkTspConfigValidation` rule may fail because it expects SDK-specific configuration options to be present in `tspconfig.yaml`. If your service does not plan to support that SDK, you can suppress the specific sub-rules in a `suppressions.yaml` file rather than adding the SDK configuration.
+
+Create or update `suppressions.yaml` in your spec folder with entries like:
+
+```yaml
+- tool: TypeSpecValidation
+  paths:
+    - tspconfig.yaml
+  rules:
+    - SdkTspConfigValidation
+  sub-rules:
+    - options.@azure-tools/typespec-go.generate-fakes
+    - options.@azure-tools/typespec-go.inject-spans
+    - options.@azure-tools/typespec-go.service-dir
+    - options.@azure-tools/typespec-go.package-dir
+  reason: 'This service does not support a Go SDK currently'
+```
+
+This approach suppresses only the specific Go sub-rules, not the entire `SdkTspConfigValidation` rule. The same pattern applies to other language-specific sub-rules (e.g., `.Net`, `Java`, `JavaScript`, `Python`) if those SDKs are not in scope for your service.
+
+Reference: https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Validation#suppressing-sdktspconfigvalidation-rules
+
 ## TypeSpec installation fails with spawn EINVAL error on Windows
 
 This error typically indicates an outdated globally installed TypeSpec compiler. Update to the latest version:

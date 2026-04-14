@@ -32,8 +32,17 @@ extends:
               image: $(LINUXVMIMAGE)
               os: linux
         jobs:
+
           - job: 'evaluation'
-            displayName: 'evaluation'
+            displayName: 'evaluation - $(testPrefix)'
+            strategy:
+              matrix:
+                typespec:
+                  testPrefix: typespec
+                onboarding:
+                  testPrefix: onboarding
+                python:
+                  testPrefix: python
             steps:
               - template: /eng/pipelines/templates/steps/use-python-version.yml
                 parameters:
@@ -80,14 +89,18 @@ extends:
                 displayName: 'install requirements'
                 workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
               - task: AzureCLI@2
-                displayName: 'Run Evals'
+                displayName: 'Run Evals ($(testPrefix))'
                 inputs:
                   azureSubscription: 'azuresdkqabot-dev'
                   scriptType: bash
                   scriptLocation: inlineScript
                   workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
                   inlineScript: |
-                    python evals_run.py --evaluation_name_prefix $(Build.BuildId) --evaluators "similarity,groundedness,response_completeness,reference_match,knowledge_match" --cache_result full
+                    python evals_run.py \
+                      --evaluation_name_prefix $(Build.BuildId) \
+                      --prefix "$(testPrefix)" \
+                      --evaluators "similarity,groundedness,response_completeness,reference_match,knowledge_match" \
+                      --cache_result full
                 env:
                   SYSTEM_ACCESSTOKEN: $(System.AccessToken)
                   AZURE_AI_PROJECT_ENDPOINT: $(AZURE_AI_PROJECT_ENDPOINT)
@@ -105,6 +118,6 @@ extends:
               outputs:
                 - output: pipelineArtifact
                   path: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/cache
-                  artifact: evaluation-results
-                  displayName: Publish Evaluation Results Artifact
+                  artifact: evaluation-results-$(testPrefix)
+                  displayName: Publish Evaluation Results Artifact ($(testPrefix))
                   condition: always()

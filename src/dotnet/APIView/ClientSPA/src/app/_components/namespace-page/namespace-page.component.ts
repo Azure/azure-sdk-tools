@@ -206,7 +206,7 @@ export class NamespacePageComponent implements OnInit, OnDestroy {
       for (const namespaceEntry of entries) {
         // Match the review by language + packageName so multi-package languages each link to the right review.
         const review = this.relatedReviews.find(
-          r => r.language?.toLowerCase() === lang?.toLowerCase() && r.packageName === namespaceEntry.packageName
+          r => r.language?.toLowerCase() === lang?.toLowerCase() && r.packageName?.toLowerCase() === namespaceEntry.packageName?.toLowerCase()
         ) ?? this.relatedReviews.find(r => r.language?.toLowerCase() === lang?.toLowerCase()) ?? null;
 
         this.tableRows.push({

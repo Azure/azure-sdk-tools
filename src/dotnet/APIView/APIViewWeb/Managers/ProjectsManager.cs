@@ -445,8 +445,8 @@ public class ProjectsManager : IProjectsManager
 
         return current.All(kvp =>
             updated.TryGetValue(kvp.Key, out var updatedList) &&
-            kvp.Value.Count == updatedList.Count &&
-            kvp.Value.All(p => updatedList.Any(u =>
+            (kvp.Value ?? []).Count == (updatedList ?? []).Count &&
+            (kvp.Value ?? []).All(p => (updatedList ?? []).Any(u =>
                 string.Equals(p?.Namespace, u?.Namespace, StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(p?.PackageName, u?.PackageName, StringComparison.OrdinalIgnoreCase))));
     }

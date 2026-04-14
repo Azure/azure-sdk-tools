@@ -16,6 +16,7 @@ public static class NamespaceManagerConstants
 {
     public const string AutoApprovalNotes = "Auto-approved: review was already approved at namespace proposal creation";
     public const string AutoWithdrawalLanguageRemoved = "Automatically withdrawn as language was removed from expected packages";
+    public const string AutoWithdrawalPackageRemoved = "Automatically withdrawn as package was removed from expected packages";
     public const string AutoWithdrawalNewNameSuggested = "Automatically withdrawn as new name was suggested";
 }
 
@@ -320,7 +321,7 @@ public class NamespaceManager : INamespaceManager
                     existing.Status = NamespaceDecisionStatus.Withdrawn;
                     existing.DecidedBy = userName;
                     existing.DecidedOn = DateTime.UtcNow;
-                    existing.Notes += NamespaceManagerConstants.AutoWithdrawalLanguageRemoved;
+                    existing.Notes += NamespaceManagerConstants.AutoWithdrawalPackageRemoved;
                     EnsureHistoryList(currentInfo, lang).Add(existing);
                     currentEntries.Remove(existing);
                 }

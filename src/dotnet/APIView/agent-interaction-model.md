@@ -88,7 +88,7 @@ Before any operation, the agent must authenticate on behalf of the user.
 - **Agent action:** Authenticate via token-based auth (Bearer token from GitHub OAuth or Managed Identity). The agent cannot use cookie-based auth — all interactions must go through token-authenticated endpoints.
 - **Returned to user:** Confirmation of identity (username, roles, permissions).
 - **Impact:** HIGH
-- **Implemented:** 🟡 `APIViewAuthenticationService` in azsdk CLI handles token auth (Azure Managed Identity + GitHub tokens). No standalone "whoami" endpoint exists under token auth; `GET /api/auth` and `GET /api/permissions/me` are cookie-auth only.
+- **Implemented:** 🟡 `APIViewAuthenticationService` in azsdk CLI currently acquires Azure identity tokens via the Azure credential chain (for example Azure CLI and Managed Identity). The service may also accept GitHub bearer tokens, but the CLI does not currently obtain GitHub OAuth/PAT tokens. A token-authenticated identity check exists via the test endpoint `GET /api/AuthTest/token-only`; `GET /api/auth` and `GET /api/permissions/me` are cookie-auth only.
 
 ### 1b. Check Permissions
 - **Persona:** Both
@@ -357,7 +357,7 @@ Before the user attempts to approve, the agent should proactively verify:
 - **Key challenge:** Today the review endpoint is a batch operation — the agent submits a job, then polls `CopilotPollingBackgroundHostedService` for completion. This means the user would have to ask "is my review done yet?", which is a non-starter. The endpoint needs to behave more like a streaming response: the user says "review this" and comments start appearing in the conversation as they're generated. This likely requires rearchitecting the review endpoint from fire-and-poll to a streaming or server-sent events model.
 - **Impact:** HIGH
 - **Copilot service:** ✅ `POST /api-review/start` accepts `language`, `target`, `base` (optional diff baseline), `outline`, and `comments`; returns a `jobId`. `GET /api-review/{jobId}` polls for results. Separate prompty templates handle full review vs. diff review.
-- **Implemented:** 🟡 Cookie-auth: `POST /api/apirevisions/{reviewId}/generateReview` does full orchestration — fetches revision content, assembles payload, calls Copilot service, enqueues background polling, and persists comments back to Cosmos DB via `CopilotPollingBackgroundHostedService`. Token-auth: `POST /api/reviews/start-copilot-review-job` and `GET /api/reviews/get-copilot-review-job/{jobId}` exist as raw proxies — the caller must supply pre-assembled `target`/`base`/`outline` text, and results are returned directly without being persisted as comments. No streaming support exists in either path. Not in CLI/MCP.
+- **Implemented:** 🟡 Cookie-auth: `POST /api/apirevisions/{reviewId}/generateReview` does full orchestration — fetches revision content, assembles payload, calls Copilot service, enqueues background polling, and persists comments back to Cosmos DB via `CopilotPollingBackgroundHostedService`. Token-auth: `POST /api/reviews/start-copilot-review-job` and `GET /api/reviews/get-copilot-review-job/{jobId}` exist as raw proxies — the caller must supply pre-assembled `target`/`base`/`outline` text, and results are returned directly without being persisted as comments. These token-auth endpoints are exposed in CLI/MCP via `azsdk apiview request-copilot-review` / `azsdk apiview get-copilot-review` and the corresponding MCP tools. No streaming support exists in either path.
 
 ### 7b. Get AI Overview of an API
 - **Persona:** Both
@@ -477,7 +477,7 @@ Before the user attempts to approve, the agent should proactively verify:
   - **Pending (202):** "Release blocked — approval is still pending."
   - **Not found (404):** "No review exists for this package."
 - **Impact:** HIGH
-- **Implemented:** ✅ `GET /review?language=...&packageName=...&packageVersion=...` (no auth restriction on this MVC endpoint). Also derivable from `azsdk apiview create-ci-revision` status codes (200/201/202).
+- **Implemented:** ✅ `GET /AutoReview/GetReviewStatus?language=...&packageName=...&packageVersion=...` via the default MVC route (no auth restriction on this endpoint). Note: `GET /review?package=...&language=...&version=...` is the canonical review-URL lookup endpoint, not the release-readiness status check. Also derivable from `azsdk apiview create-ci-revision` status codes (200/201/202).
 
 ### 11b. Mark a Revision as Released
 - **Persona:** Service Teams

@@ -2,7 +2,7 @@ import { ModularClientPackageOptions, ModularSDKType, PackageResult, RunMode } f
 import { access } from 'node:fs/promises';
 import { basename, join, normalize, posix, relative, resolve } from 'node:path';
 import pkg from 'fs-extra';
-const { ensureDir, writeFile } = pkg;
+const { ensureDir, readFile, writeFile } = pkg;
 import { getArtifactName, getNpmPackageInfo } from './npmUtils.js';
 import { runCommand, runCommandOptions, cleanupSamplesFolder } from './utils.js';
 

@@ -356,5 +356,15 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             var emptyResult = new SearchCodeResult(0, false, new List<SearchCode>());
             return Task.FromResult(emptyResult);
         }
+
+        public Task<IReadOnlyList<Issue>> ListIssuesForSLAAsync(string owner, string repo, string serviceLabel, DateTimeOffset since, bool includeClosed, CancellationToken ct)
+        {
+            return Task.FromResult<IReadOnlyList<Issue>>(new List<Issue>().AsReadOnly());
+        }
+
+        public Task<IReadOnlyList<IssueComment>> GetIssueCommentsAsync(string owner, string repo, int issueNumber, CancellationToken ct)
+        {
+            return Task.FromResult<IReadOnlyList<IssueComment>>(new List<IssueComment>().AsReadOnly());
+        }
     }
 }

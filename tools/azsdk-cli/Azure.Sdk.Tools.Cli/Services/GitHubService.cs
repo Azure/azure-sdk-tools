@@ -122,6 +122,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<HashSet<string>?> GetPublicOrgMembership(string username, CancellationToken ct);
         public Task<bool> HasWritePermission(string owner, string repo, string username, CancellationToken ct);
         public Task<Octokit.SearchCodeResult> SearchFilesAsync(string searchQuery, CancellationToken ct);
+        public Task<Team> GetTeamByNameAsync(string org, string teamSlug, CancellationToken ct);
     }
 
     // We enforce cancellation token usage broadly via an analyzer across this codebase,
@@ -700,6 +701,11 @@ namespace Azure.Sdk.Tools.Cli.Services
         {
             var searchRequest = new Octokit.SearchCodeRequest(searchQuery);
             return await gitHubClient.Search.SearchCode(searchRequest);
+        }
+
+        public async Task<Team> GetTeamByNameAsync(string org, string teamSlug, CancellationToken ct)
+        {
+            return await gitHubClient.Organization.Team.GetByName(org, teamSlug);
         }
     }
 }

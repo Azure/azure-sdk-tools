@@ -8,5 +8,6 @@ namespace APIViewWeb.Models
         CommentTag,
         SubscriberComment,
         NewRevision,
+        ReviewOrRevisionApproval,
     }
 }

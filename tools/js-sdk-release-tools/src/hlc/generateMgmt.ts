@@ -15,6 +15,7 @@ import {getOutputPackageInfo} from "../utils/getOutputPackageInfo.js";
 import {getReleaseTool} from "./utils/getReleaseTool.js";
 import { addApiViewInfo } from "../utils/addApiViewInfo.js";
 import { defaultChildProcessTimeout } from '../common/utils.js'
+import { sanitizeAdditionalArgs } from '../common/utils.js'
 import { isRushRepo } from "../common/rushUtils.js";
 import { lintFix, updateSnippets } from "../common/devToolUtils.js";
 import { ChangelogResult } from "../changelog/v2/ChangelogGenerator.js";
@@ -57,7 +58,7 @@ export async function generateMgmt(options: {
         }
 
         if (options.additionalArgs) {
-            cmd += ` ${options.additionalArgs}`;
+            cmd += ` ${sanitizeAdditionalArgs(options.additionalArgs)}`;
         }
 
         logger.info(`Start to execute command '${cmd}'`);

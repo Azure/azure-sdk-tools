@@ -25,9 +25,6 @@ public class ToolCallRecord
     /// <summary>Gets the tool call duration in milliseconds, or null if unavailable.</summary>
     public double? DurationMs { get; init; }
 
-    /// <summary>Gets the MCP server name extracted from the tool name prefix, or null.</summary>
-    public string? McpServerName { get; init; }
-
     /// <summary>
     /// Gets the tool arguments as a string-keyed dictionary of JsonElements.
     /// Returns an empty dictionary if args are null or not a JSON object.

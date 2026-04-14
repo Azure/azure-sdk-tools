@@ -415,13 +415,24 @@ export function generateApiView(options: {
   dependencies: Record<string, string>;
   apiModel: ApiModel;
   crossLanguageDefinitionIds?: Record<string, string>;
+  crossLanguagePackageId?: string;
 }): CodeFile {
-  const { meta, dependencies, apiModel, crossLanguageDefinitionIds } = options;
+  const { meta, dependencies, apiModel, crossLanguageDefinitionIds, crossLanguagePackageId } =
+    options;
   const review: ReviewLine[] = [];
   buildReview(review, dependencies, apiModel, crossLanguageDefinitionIds);
 
-  return {
+  const codeFile: CodeFile = {
     ...meta,
     ReviewLines: review,
   };
+
+  if (crossLanguagePackageId !== undefined || crossLanguageDefinitionIds !== undefined) {
+    codeFile.CrossLanguageMetadata = {
+      CrossLanguagePackageId: crossLanguagePackageId ?? "",
+      CrossLanguageDefinitionId: crossLanguageDefinitionIds ?? {},
+    };
+  }
+
+  return codeFile;
 }

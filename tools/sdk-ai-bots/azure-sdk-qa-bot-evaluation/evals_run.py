@@ -9,7 +9,7 @@ from typing import Any
 from _evals_runner import EvalsRunner, EvaluatorClass
 from dotenv import load_dotenv
 from azure.ai.evaluation import SimilarityEvaluator, GroundednessEvaluator, ResponseCompletenessEvaluator
-from azure.identity import DefaultAzureCredential, AzureCliCredential
+from azure.identity import AzurePipelinesCredential, DefaultAzureCredential, AzureCliCredential
 from _evals_result import EvalsResult, VerificationResult
 from eval import AzureBotEvaluator, AzureBotReferenceEvaluator
 
@@ -193,17 +193,32 @@ if __name__ == "__main__":
 
         eval_result = EvalsResult(weights=weights, metrics=metrics, suppressions=suppression)
 
-        evals_runner = EvalsRunner(evaluators=evals, evals_result=eval_result)
-
+        credential = None
         kwargs: dict[str, Any] = {}
         if args.send_result:
             if args.is_ci:
-                kwargs = {"credential": DefaultAzureCredential()}
+                service_connection_id = os.getenv("AZURESUBSCRIPTION_SERVICE_CONNECTION_ID")
+                client_id = os.getenv("AZURESUBSCRIPTION_CLIENT_ID")
+                tenant_id = os.getenv("AZURESUBSCRIPTION_TENANT_ID")
+                system_access_token = os.getenv("SYSTEM_ACCESSTOKEN")
+                if all([service_connection_id, client_id, tenant_id, system_access_token]):
+                    credential = AzurePipelinesCredential(
+                        service_connection_id=service_connection_id,
+                        client_id=client_id,
+                        tenant_id=tenant_id,
+                        system_access_token=system_access_token,
+                    )
+                else:
+                    logging.warning(
+                        "One or more AZURESUBSCRIPTION_* or SYSTEM_ACCESSTOKEN "
+                        "environment variables are missing. Falling back to default credentials."
+                    )
+                    credential = DefaultAzureCredential()
             else:
-                kwargs = {
-                    # run in local, use Azure Cli Credential, make sure you already run `az login`
-                    "credential": AzureCliCredential()
-                }
+                credential = AzureCliCredential()
+            kwargs = {"credential": credential}
+
+        evals_runner = EvalsRunner(evaluators=evals, evals_result=eval_result, credential=credential)
 
         all_results = evals_runner.evaluate_run(
             args.test_folder,

@@ -33,7 +33,6 @@ pip install -r requirements.txt
 
 Create a `.env` file in the project root with:
 ```
-AZURE_APP_CONFIG_ENDPOINT="https://avc-appconfig-staging.azconfig.io"
 ENVIRONMENT_NAME="staging"
 ```
 
@@ -42,7 +41,7 @@ All other settings (Cosmos DB, Search, Key Vault, etc.) are resolved from App Co
 ### 4. Grant Azure RBAC permissions
 
 ```bash
-avc permissions grant
+avc ops grant
 ```
 
 This grants your identity the required roles:
@@ -65,7 +64,7 @@ pytest tests
 avc review generate -l python -t scratch/apiviews/python/test.txt
 
 # Health check the deployed service
-avc app check
+avc ops check
 ```
 
 ## Gotchas
@@ -73,5 +72,5 @@ avc app check
 - **Always activate the venv** before running any commands (`avc`, `pytest`, `pylint`, etc.)
 - **`avc` not found?** Use `.\avc` on Windows PowerShell, or ensure the project root is in your PATH
 - **`ModuleNotFoundError: prompty`** — You're running outside the venv. Activate it first.
-- **Azure auth errors** — Run `az login` first, then `avc permissions grant` to set up RBAC
+- **Azure auth errors** — Run `az login` first, then `avc ops grant` to set up RBAC
 - **Staging vs production** — The `.env` defaults to staging. To use production, swap to the production App Config endpoint and set `ENVIRONMENT_NAME="production"`

@@ -3,7 +3,8 @@
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec;
+using Azure.Sdk.Tools.Cli.Benchmarks.Interaction;
+using Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.TypeSpec;
 
 namespace Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
 
@@ -73,12 +74,11 @@ public static class AuthoringScenarioLoader
                     name: testCase.Name,
                     description: testCase.Description ?? string.Empty,
                     prompt: testCase.Prompt,
-                    tspProjectPath: null,
+                    tspProjectPath: testCase.TspProject,
                     testTspFiles: testCase.TestFiles,
                     toolsToCall: testCase.ToolsToCall,
                     verifyPlan: testCase.VerifyPlan ?? new List<string>(),
-                    authoringSpecRepo: testCase.AuthoringSpecRepo,
-                    authoringSkillPath: testCase.AuthoringSkillPath
+                    questionAndAnswers: testCase.QuestionAndAnswers
                 );
             }
         }
@@ -107,6 +107,9 @@ public static class AuthoringScenarioLoader
         [JsonPropertyName("prompt")]
         public string Prompt { get; set; } = string.Empty;
 
+        [JsonPropertyName("tspProject")]
+        public string? TspProject { get; set; }
+
         [JsonPropertyName("testfiles")]
         public List<string>? TestFiles { get; set; }
 
@@ -116,11 +119,7 @@ public static class AuthoringScenarioLoader
         [JsonPropertyName("verifyPlan")]
         public List<string>? VerifyPlan { get; set; }
 
-        [JsonPropertyName("authoringSpecRepo")]
-        public string? AuthoringSpecRepo { get; set; }
-
-        [JsonPropertyName("authoringSkillPath")]
-        public string? AuthoringSkillPath { get; set; }
-
+        [JsonPropertyName("qas")]
+        public List<QuestionAndAnswer>? QuestionAndAnswers { get; set; }
     }
 }

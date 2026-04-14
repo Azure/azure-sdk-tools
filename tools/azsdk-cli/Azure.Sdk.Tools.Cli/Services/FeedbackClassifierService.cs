@@ -20,11 +20,16 @@ public interface IFeedbackClassifierService
 {
     /// <summary>
     /// Classifies feedback items in chunked batch LLM calls. Mutates items in place.
+    /// When <paramref name="items"/> is empty and <paramref name="apiViewUrl"/> or
+    /// <paramref name="plainTextFeedback"/> is supplied, feedback items are gathered
+    /// from those sources first and added to <paramref name="items"/> before classification.
     /// </summary>
     Task<FeedbackClassificationResponse> ClassifyItemsAsync(
         List<FeedbackItem> items,
         string globalContext,
         string tspProjectPath,
+        string? apiViewUrl = null,
+        string? plainTextFeedback = null,
         string? language = null,
         string? serviceName = null,
         int? batchSize = null,
@@ -46,31 +51,46 @@ public class FeedbackClassifierService : IFeedbackClassifierService
     private readonly ICopilotAgentRunner _agentRunner;
     private readonly ILogger<FeedbackClassifierService> _logger;
     private readonly ITypeSpecHelper _typeSpecHelper;
+    private readonly IAPIViewFeedbackService _feedbackService;
 
     public const int DefaultBatchSize = 50;
 
     public FeedbackClassifierService(
         ICopilotAgentRunner agentRunner,
         ILoggerFactory loggerFactory,
-        ITypeSpecHelper typeSpecHelper)
+        ITypeSpecHelper typeSpecHelper,
+        IAPIViewFeedbackService feedbackService)
     {
         _agentRunner = agentRunner;
         _logger = loggerFactory.CreateLogger<FeedbackClassifierService>();
         _typeSpecHelper = typeSpecHelper;
+        _feedbackService = feedbackService;
     }
 
     /// <summary>
     /// Classifies feedback items in chunked batch LLM calls. Mutates items in place.
+    /// When <paramref name="items"/> is empty and <paramref name="apiViewUrl"/> or
+    /// <paramref name="plainTextFeedback"/> is supplied, feedback items are gathered
+    /// from those sources first and added to <paramref name="items"/> before classification.
     /// </summary>
     public async Task<FeedbackClassificationResponse> ClassifyItemsAsync(
         List<FeedbackItem> items,
         string globalContext,
         string tspProjectPath,
+        string? apiViewUrl = null,
+        string? plainTextFeedback = null,
         string? language = null,
         string? serviceName = null,
         int? batchSize = null,
         CancellationToken ct = default)
     {
+        // If no items were provided, try gathering them from the input sources first.
+        if (items.Count == 0)
+        {
+            var gathered = await GatherFeedbackItemsAsync(apiViewUrl, plainTextFeedback, ct);
+            items.AddRange(gathered);
+        }
+
         if (items.Count == 0)
         {
             throw new ArgumentException("No feedback items to classify. Provide an APIView URL or plain text feedback.");
@@ -95,6 +115,27 @@ public class FeedbackClassifierService : IFeedbackClassifierService
             await BatchClassifyAsync(chunk.ToList(), globalContext, language, serviceName, referenceDocContent, specRepoBasePath, ct);
         }
         return BuildClassificationResponse(items);
+    }
+
+    /// <summary>
+    /// Gathers feedback items from the provided sources: an APIView URL or a plain text string.
+    /// </summary>
+    private async Task<List<FeedbackItem>> GatherFeedbackItemsAsync(
+        string? apiViewUrl,
+        string? plainTextFeedback,
+        CancellationToken ct)
+    {
+        if (!string.IsNullOrWhiteSpace(apiViewUrl))
+        {
+            return await _feedbackService.GetFeedbackItemsAsync(apiViewUrl, ct);
+        }
+
+        if (!string.IsNullOrWhiteSpace(plainTextFeedback))
+        {
+            return [new FeedbackItem { Text = plainTextFeedback, Context = string.Empty }];
+        }
+
+        return [];
     }
 
     private static FeedbackClassificationResponse BuildClassificationResponse(List<FeedbackItem> items)
@@ -154,7 +195,7 @@ public class FeedbackClassifierService : IFeedbackClassifierService
     {
         var template = new FeedbackClassificationTemplate(
             serviceName: serviceName,
-            language: language,
+            language: language ?? string.Empty,
             referenceDocContent: referenceDocContent,
             items: items,
             globalContext: globalContext

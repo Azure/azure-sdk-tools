@@ -26,6 +26,7 @@ public class FeedbackClassifierServiceTests
     private Mock<ICopilotAgentRunner> _mockAgentRunner = null!;
     private Mock<ITypeSpecHelper> _mockTypeSpecHelper = null!;
     private Mock<ILoggerFactory> _mockLoggerFactory = null!;
+    private Mock<IAPIViewFeedbackService> _mockFeedbackService = null!;
     private string _testTspPath = null!;
     private string _specRepoRoot = null!;
     private string _typeSpecProjectPath = null!;
@@ -58,6 +59,7 @@ public class FeedbackClassifierServiceTests
         _mockAgentRunner = new Mock<ICopilotAgentRunner>();
         _mockTypeSpecHelper = new Mock<ITypeSpecHelper>();
         _mockLoggerFactory = new Mock<ILoggerFactory>();
+        _mockFeedbackService = new Mock<IAPIViewFeedbackService>();
         _mockLoggerFactory.Setup(f => f.CreateLogger(It.IsAny<string>()))
             .Returns(new TestLogger<FeedbackClassifierService>());
         
@@ -91,7 +93,8 @@ public class FeedbackClassifierServiceTests
         return new FeedbackClassifierService(
             _mockAgentRunner.Object,
             _mockLoggerFactory.Object,
-            _mockTypeSpecHelper.Object);
+            _mockTypeSpecHelper.Object,
+            _mockFeedbackService.Object);
     }
 
     private static FeedbackItem CreateTestItem(string text, string? id = null)
@@ -142,7 +145,8 @@ public class FeedbackClassifierServiceTests
         return new FeedbackClassifierService(
             copilotAgentRunner,
             mockLoggerFactory.Object,
-            typeSpecHelper);
+            typeSpecHelper,
+            Mock.Of<IAPIViewFeedbackService>());
     }
 
     private static FeedbackItem CreateLiveTestItem(string text, string context = "")
@@ -177,6 +181,7 @@ public class FeedbackClassifierServiceTests
         var items = new List<FeedbackItem>();
 
         // Act & Assert
+        // Empty list with no input sources should throw
         Assert.ThrowsAsync<ArgumentException>(
             () => service.ClassifyItemsAsync(items, "global context", _testTspPath, language: "python", serviceName: "TestService"));
 

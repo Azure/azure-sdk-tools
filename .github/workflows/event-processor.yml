@@ -1,6 +1,7 @@
 name: GitHub Event Processor
 
 on:
+  workflow_dispatch:
   issues:
     types: [edited, labeled, opened, reopened, unlabeled]
   # issue_comment is used for both issues and pull_requests

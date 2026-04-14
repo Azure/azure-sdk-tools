@@ -143,7 +143,7 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 		PromptTemplate: "typespec/qa.md",
 		Sources:        append(typespecSources, model.Source_AzureSDKDocsEng),
 		SourceFilter: map[model.Source]string{
-			model.Source_AzureSDKDocsEng:      "search.ismatch('design*', 'title')",
+			model.Source_AzureSDKDocsEng:     "search.ismatch('design*', 'title')",
 			model.Source_AzureSDKQAKnowledge: "search.ismatch('typespec*', 'title')",
 		},
 		IntentionPromptTemplate: "typespec/intention.md",
@@ -157,8 +157,8 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 		IntentionPromptTemplate: "azure_sdk_onboarding/intention.md",
 	},
 	model.TenantID_AzureTypespecAuthoring: {
-		PromptTemplate:          "azure_typespec_authoring/qa.md",
-		Sources:                 azureTypespecAuthoringSources,
+		PromptTemplate: "azure_typespec_authoring/qa.md",
+		Sources:        azureTypespecAuthoringSources,
 		SourceFilter: map[model.Source]string{
 			model.Source_AzureSDKQAKnowledge: "search.ismatch('typespec*', 'title')",
 		},
@@ -175,7 +175,7 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 		PromptTemplate: "api_spec_review/qa.md",
 		Sources:        []model.Source{model.Source_StaticAzureDocs, model.Source_AzureSDKQAKnowledge, model.Source_AzureRestAPISpec, model.Source_AzureRestAPISpecDocs, model.Source_AzureOpenapiDiffDocs, model.Source_AzureSDKDocsEng},
 		SourceFilter: map[model.Source]string{
-			model.Source_AzureSDKDocsEng:      "search.ismatch('design*', 'title')",
+			model.Source_AzureSDKDocsEng:     "search.ismatch('design*', 'title')",
 			model.Source_AzureSDKQAKnowledge: "search.ismatch('api-spec-review*', 'title')",
 		},
 		IntentionPromptTemplate: "api_spec_review/intention.md",

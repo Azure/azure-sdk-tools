@@ -34,11 +34,13 @@ extends:
         jobs:
 
           - job: 'evaluation'
-            displayName: 'evaluation - $(testPrefix)'
+            displayName: 'evaluation'
             strategy:
               matrix:
                 typespec:
                   testPrefix: typespec
+                apispec:
+                  testPrefix: apispec
                 onboarding:
                   testPrefix: onboarding
                 python:

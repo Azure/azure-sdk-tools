@@ -6,21 +6,20 @@ This document describes how a user would interact with the APIView service throu
 
 ## Table of Contents
 
+- [Implementation](#implementation)
 - [1. Authentication & Identity](#1-authentication--identity)
   - [1a. Establish Session](#1a-establish-session)
   - [1b. Check Permissions](#1b-check-permissions)
 - [2. Discovering & Browsing Packages](#2-discovering--browsing-packages)
   - [2a. List / Search Packages](#2a-list--search-packages)
   - [2b. Get Package Details](#2b-get-package-details)
-  - [2c. List Package Names](#2c-list-package-names)
 - [3. Working with API Revisions](#3-working-with-api-revisions)
   - [3a. List Revisions for a Package](#3a-list-revisions-for-a-package)
-  - [3b. Get Latest Revision](#3b-get-latest-revision)
-  - [3c. View API Surface](#3c-view-api-surface)
-  - [3d. Get CodeFile](#3d-get-codefile)
-  - [3e. View API Surface as Outline / Summary](#3e-view-api-surface-as-outline--summary)
-  - [3f. Upload a New Revision](#3f-upload-a-new-revision)
-  - [3g. Delete / Restore Revisions](#3g-delete--restore-revisions)
+  - [3b. View API Surface](#3b-view-api-surface)
+  - [3c. Get CodeFile](#3c-get-codefile)
+  - [3d. View API Surface as Outline](#3d-view-api-surface-as-outline)
+  - [3e. Upload a New Revision](#3e-upload-a-new-revision)
+  - [3f. Delete / Restore Revisions](#3f-delete--restore-revisions)
 - [4. Diffing Revisions](#4-diffing-revisions)
   - [4a. Diff Two Revisions](#4a-diff-two-revisions)
 - [5. Comments & Conversations](#5-comments--conversations)
@@ -78,6 +77,28 @@ This document describes how a user would interact with the APIView service throu
 
 ---
 
+## Implementation
+
+To turn these scenarios into a usable end-to-end agent experience, each use case should be implemented in three layers:
+
+1. **Expose the capability in APIView or AVC APIs**
+   - Add or extend the backend endpoint needed for the scenario.
+   - Prefer token-authenticated, composable APIs that return stable JSON or text responses suitable for agent use.
+   - Keep responsibilities clear: APIView should own review, revision, comment, and approval state; AVC should own AI generation and summarization where appropriate.
+
+2. **Add an `azsdk` CLI command and MCP tool**
+   - Wrap the backend capability in `azsdk apiview ...` so it is usable both by humans and by Copilot/MCP clients.
+   - Normalize authentication, input validation, error handling, and output formatting.
+   - Ensure the command shape maps cleanly to natural user requests.
+
+3. **Create agent instructions and skills that leverage MCP**
+   - Add Copilot instructions, skills, or workflows that teach the agent when to call the tool, how to disambiguate user intent, and how to present the result.
+   - Include expected prompts, fallback behavior for partially implemented scenarios, and clear guidance when a capability is not yet available.
+
+> **Impact** in this document means the importance of a use case to the overall agent scenario and how often users are likely to need it. It is a product-priority / expected-usage signal, not an estimate of engineering effort or implementation difficulty.
+
+In practice, we should prioritize the most important and frequently used scenarios by implementing them in that order: **API first, then CLI/MCP, then agent experience**. A use case should only be considered fully complete when all three layers are in place.
+
 ## 1. Authentication & Identity
 
 ### 1a. Establish Session
@@ -120,14 +141,6 @@ Before any operation, the agent must authenticate on behalf of the user.
 - **Impact:** HIGH
 - **Implemented:** 🟡 `GET /api/reviews/resolve` (token-auth) can resolve a package from package name + language + version or URL (`?packageQuery=...&language=...&version=...&link=...`). `GET /api/reviews/{reviewId}` is cookie-auth only. Not yet exposed as a standalone CLI command.
 
-### 2c. List Package Names
-- **Persona:** Both
-- **User says:** "What Python packages are tracked in APIView?"
-- **Agent action:** Retrieve distinct package names for a given language.
-- **Returned to user:** List of package names.
-- **Impact:** LOW
-- **Implemented:** ❌ `GET /api/reviews/languages/{language}/packagenames` is cookie-auth only. Not in CLI/MCP.
-
 ---
 
 ## 3. Working with API Revisions
@@ -144,15 +157,7 @@ Before any operation, the agent must authenticate on behalf of the user.
 - **Impact:** HIGH
 - **Implemented:** ❌ `POST /api/apirevisions` (list revisions) is cookie-auth only. Not in CLI/MCP.
 
-### 3b. Get Latest Revision
-- **Persona:** Both
-- **User says:** "What's the latest revision for this package?" / "What's the latest released version?" / "What's the latest GA release?" / "What's the latest preview?"
-- **Agent action:** Fetch the latest non-deleted revision. The agent should support asking for the latest *released* revision and/or the latest revision on a specific release track (GA vs. preview/beta/alpha). The backend can filter by type (All, Manual, Automatic, PullRequest), but the agent should default to the most recent revision regardless of type.
-- **Returned to user:** Revision details (version, release track, approval status, release status, approvers, quality score if available, etc.).
-- **Impact:** HIGH
-- **Implemented:** ❌ `GET /api/apirevisions/{reviewId}/latest` is cookie-auth only. Not in CLI/MCP.
-
-### 3c. View API Surface
+### 3b. View API Surface
 - **Persona:** Both
 - **User says:** "Show me the API surface for Azure.Storage.Blobs v12.14.0" / "What does the public API look like?"
 - **Agent action:** Fetch the rendered review content as text for a given revision. This is the core experience — the agent presents the API surface as readable, formatted text.
@@ -160,7 +165,7 @@ Before any operation, the agent must authenticate on behalf of the user.
 - **Impact:** HIGH
 - **Implemented:** ✅ `GET /api/apirevisions/getRevisionContent` (token-auth) with `contentReturnType=text`. CLI: `azsdk apiview get-content --url <url> --content-return-type text`.
 
-### 3d. Get CodeFile
+### 3c. Get CodeFile
 - **Persona:** Both
 - **User says:** "Give me the CodeFile for this revision" / "Download the raw CodeFile JSON"
 - **Agent action:** Fetch the revision content in CodeFile JSON format. This is for advanced users, tooling integration, or piping into other analysis tools.
@@ -168,15 +173,15 @@ Before any operation, the agent must authenticate on behalf of the user.
 - **Impact:** LOW
 - **Implemented:** ✅ `GET /api/apirevisions/getRevisionContent` with `contentReturnType=codefile` (token-auth). CLI: `azsdk apiview get-content --content-return-type codefile`.
 
-### 3e. View API Surface as Outline / Summary
+### 3d. View API Surface as Outline
 - **Persona:** Both
-- **User says:** "Give me the outline of this API revision" / "Summarize the API surface"
-- **Agent action:** Fetch the revision outline/summary text, which provides a condensed view of the API without the full token stream.
-- **Returned to user:** A structured summary of the API surface (namespace → types → members).
+- **User says:** "Give me the outline of this API revision"
+- **Agent action:** Fetch the revision outline text, which provides a condensed structural view of the API without the full token stream.
+- **Returned to user:** A structured outline of the API surface (namespace → types → members).
 - **Impact:** LOW
 - **Implemented:** ✅ `GET /api/apirevisions/{apiRevisionId}/outline` (token-auth). Not yet exposed as a CLI command.
 
-### 3f. Upload a New Revision
+### 3e. Upload a New Revision
 - **Persona:** Service Teams
 - **User says:** "Upload this DLL for review" / "Create a new revision from my build artifact"
 - **Agent action:** For most languages, the agent should advise the user to push their changes to GitHub, which will automatically generate a new API revision via CI. Manual upload is only appropriate for languages that do not have CI-based automatic revision generation (e.g., Swift). If the user insists or the language requires it, upload a file (SDK artifact: .dll, .jar, .whl, .api.json, etc.) to create a new package or add a revision to an existing one. May also specify a label, language, and file path.
@@ -184,7 +189,7 @@ Before any operation, the agent must authenticate on behalf of the user.
 - **Impact:** LOW
 - **Implemented:** 🟡 `POST /autoreview/upload` (token-auth) supports CI/automated uploads. `POST /api/reviews` (manual create) is cookie-auth only. Not exposed as a manual-upload CLI command.
 
-### 3g. Delete / Restore Revisions
+### 3f. Delete / Restore Revisions
 - **Persona:** Both
 - **User says:** "Delete revision {id}" / "Restore the deleted revisions"
 - **Agent action:** This should only be permitted for APIView admins. If the user is not an admin, the agent should decline and suggest contacting an admin. If authorized, soft-delete or restore one or more revisions.
@@ -362,12 +367,12 @@ Before the user attempts to approve, the agent should proactively verify:
 ### 7b. Get AI Overview of an API
 - **Persona:** Both
 - **User says:** "Give me an overview of this API" / "What does this package do?" / "Explain this API to me"
-- **Agent action:** Call the APIView backend, which proxies the request to Azure Verified Copilot (AVC) to generate a natural-language overview of the API surface. This is distinct from the structural outline (3e) — it provides a human-readable narrative.
+- **Agent action:** Call the APIView backend, which proxies the request to Azure Verified Copilot (AVC) to generate a natural-language overview of the API surface. This is distinct from the structural outline (3d) — it provides a human-readable narrative.
 - **Returned to user:** A natural-language summary (e.g., "Azure.Storage.Blobs provides client classes for interacting with Azure Blob Storage. The main entry points are `BlobServiceClient`, `BlobContainerClient`, and `BlobClient`, which support creating containers, uploading/downloading blobs, and managing metadata.").
 - **Impact:** MEDIUM
 - **Copilot service:** ✅ `POST /api-review/summarize` accepts `language` and `target` (API text) with no `base`. Uses `summarize_api.prompty` to generate a natural-language overview.
 - **Implemented:** ❌ The Copilot service endpoint exists but is not wired through any APIView backend endpoint (neither cookie-auth nor token-auth). An agent would need to either call the Copilot service directly (requires separate auth) or the backend needs a new pass-through endpoint.
-- **Alternative:** The agent could skip the Copilot service proxy and instead fetch the API surface text (3c) and generate its own summary using the host LLM (e.g., GitHub Copilot). This avoids the need for a new backend endpoint but loses the benefit of the Copilot service's domain-tuned prompts and caching.
+- **Alternative:** The agent could skip the Copilot service proxy and instead fetch the API surface text (3b) and generate its own summary using the host LLM (e.g., GitHub Copilot). This avoids the need for a new backend endpoint but loses the benefit of the Copilot service's domain-tuned prompts and caching.
 
 ### 7c. Summarize Changes Between Revisions
 - **Persona:** Both
@@ -566,27 +571,27 @@ These are workflows where the agent adds value by orchestrating multiple API cal
 - **User says:** "Is azure-core Python ready for release?"
 - **Composes:**
   1. **2b** (Get Package Details) — Resolve the review from package name + language.
-  2. **3b** (Get Latest Revision) — Fetch the latest revision.
+  2. **3a** (List Revisions for a Package) — Fetch the latest revision.
   3. **6b** (Check Approval Status) — Check approval status and list approvers.
   4. **5a** (View Comments) — Check for unresolved must-fix comments.
   5. **6c** (Check Approval Prerequisites) — Verify Copilot review status and other guards.
   6. **11a** (Check Release Readiness) — Query the release gate endpoint.
 - **Returned to user:** A complete readiness report: "azure-core Python v1.30.0 — Approved by @archboard, @reviewer2. No unresolved must-fix comments. Copilot review completed. Release gate: APPROVED (HTTP 200)."
 - **Impact:** HIGH
-- **Implemented:** 🟡 Steps 1 (2b), 4 (5a), and 6 (11a) have token-auth endpoints. Steps 2 (3b), 3 (6b), and 5 (6c) require cookie-auth endpoints. Cannot be fully assembled via token-auth today.
+- **Implemented:** 🟡 Steps 1 (2b), 4 (5a), and 6 (11a) have token-auth endpoints. Steps 2 (3a), 3 (6b), and 5 (6c) require cookie-auth endpoints. Cannot be fully assembled via token-auth today.
 
 ### 15b. New API Review Walkthrough
 - **Persona:** Both
 - **User says:** "I have a new Python package to review — walk me through it."
 - **Composes:**
-  1. **3f** (Upload a New Revision) — Accept the artifact upload (wheel file) and wait for parsing.
-  2. **3e** (View API Surface as Outline) — Present the API surface outline.
-  3. **3c** (View API Surface) — Show the full API surface, highlighting areas that might need attention.
+  1. **3e** (Upload a New Revision) — Accept the artifact upload (wheel file) and wait for parsing.
+  2. **3d** (View API Surface as Outline) — Present the API surface outline.
+  3. **3b** (View API Surface) — Show the full API surface, highlighting areas that might need attention.
   4. **7a** (Request AI Review) — Offer to run Copilot AI review.
   5. **5a** (View Comments) — Present AI comments alongside the API surface.
   6. **5f** (Resolve / Unresolve a Thread) + **6d** (Approve / Revert Approval) — Guide the user through resolving comments or approving.
 - **Impact:** MEDIUM
-- **Implemented:** 🟡 Steps 2–3 (3e, 3c) use token-auth. Steps 1 (3f — manual upload), 4 (7a), 5–6 (5a read-only ✅, but 5f and 6d write operations) lack token-auth endpoints.
+- **Implemented:** 🟡 Steps 2–3 (3d, 3b) use token-auth. Steps 1 (3e — manual upload), 4 (7a), 5–6 (5a read-only ✅, but 5f and 6d write operations) lack token-auth endpoints.
 
 ### 15c. Cross-Language Consistency Check
 - **Persona:** Architects
@@ -594,9 +599,9 @@ These are workflows where the agent adds value by orchestrating multiple API cal
 - **Composes:**
   1. **8b** (Find Related Reviews in a Project) — Find all related reviews in the same project.
   2. **8a** (Check Cross-Language Review Status) — Fetch the cross-language content for each.
-  3. **3c** (View API Surface) — Fetch each language's API surface and present a comparison highlighting discrepancies.
+  3. **3b** (View API Surface) — Fetch each language's API surface and present a comparison highlighting discrepancies.
 - **Impact:** MEDIUM
-- **Implemented:** ❌ Steps 1–2 (8b, 8a) are cookie-auth only. Step 3 (3c) is available via token-auth but the prerequisite steps are not.
+- **Implemented:** ❌ Steps 1–2 (8b, 8a) are cookie-auth only. Step 3 (3b) is available via token-auth but the prerequisite steps are not.
 
 ### 15d. Approval Audit Trail
 - **Persona:** Both
@@ -612,12 +617,12 @@ These are workflows where the agent adds value by orchestrating multiple API cal
 - **Persona:** Service Teams
 - **User says:** "What happened with the latest CI build for azure-storage-blobs?"
 - **Composes:**
-  1. **3b** (Get Latest Revision) — Look up the most recent automatic revision.
+  1. **3a** (List Revisions for a Package) — Look up the most recent automatic revision.
   2. **6b** (Check Approval Status) — Report whether approval was carried forward from a prior revision.
   3. **10a** (View PRs Linked to a Revision) — Check if there are linked PRs.
   4. **11a** (Check Release Readiness) — Report the release gate status.
 - **Impact:** MEDIUM
-- **Implemented:** 🟡 Step 4 (11a) is available via token-auth. Steps 1–3 (3b, 6b, 10a) are cookie-auth only.
+- **Implemented:** 🟡 Step 4 (11a) is available via token-auth. Steps 1–3 (3a, 6b, 10a) are cookie-auth only.
 
 ---
 

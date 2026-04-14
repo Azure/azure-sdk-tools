@@ -1,6 +1,6 @@
 # APIView — Operations Guide
 
-This document covers deployment, test environments, configuration, secrets, and troubleshooting for the APIView engineering team. For contributor setup, see [contributing.md](contributing.md). For architecture, see [overview.md](overview.md).
+This document covers deployment, test environments, configuration, secrets, and troubleshooting for the APIView engineering team. For contributor setup, see [contributing.md](contributing.md). For architecture, see [overview.md](overview.md). For language parser updates and releases, see [parser-guide.md](parser-guide.md).
 
 ---
 
@@ -66,7 +66,9 @@ A safe test environment with its own dedicated database, updated daily with prod
 
 API revision approvers are the architects and deputy architects tracked in the GitHub team [azure-sdk-api-approvers](https://github.com/orgs/Azure/teams/azure-sdk-api-approvers).
 
-> **Note:** The GitHub team is not currently hooked up to APIView. The list is maintained in the service config setting `APIVIEW_APPROVERS`.
+Approver permissions are managed at runtime via Cosmos DB through the `PermissionsManager`. Users are granted the approver role through group membership configuration stored in the Cosmos DB "Permissions" container.
+
+> **Note:** The GitHub team is not currently hooked up to APIView directly. The `APIVIEW_APPROVERS` environment variable is listed in the service configuration but the actual authorization checks use the Cosmos DB permissions system. For the current list of approvers by language, see [user-guide.md](user-guide.md#who-can-approve).
 
 ### Copilot Review Required
 
@@ -91,7 +93,7 @@ To configure which languages require Copilot Review:
 |------|---------|
 | `allowedList-bot-github-accounts` | |
 | `APIVIEW_ApiKey` | |
-| `APIVIEW_APPROVERS` | List of approved API reviewers |
+| `APIVIEW_APPROVERS` | List of approved API reviewers (legacy — actual approver checks use Cosmos DB PermissionsManager) |
 | `APIVIEW_BLOB__CONNECTIONSTRING` | Storage account connection string |
 | `APIVIEW_COSMOS__CONNECTIONSTRING` | Cosmos account connection string |
 | `APIVIEW_GITHUB__CLIENTID` | User login via GitHub OAuth |

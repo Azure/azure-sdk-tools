@@ -6,9 +6,7 @@ This guide is for SDK authors, architects, and reviewers who use APIView to revi
 
 ## What Is APIView?
 
-APIView generates public API surface-level revisions showing all publicly available classes, methods, properties, etc. It is used by REST API Stewardship and SDK architects to review API signatures of all public APIs available in Azure SDK packages.
-
-**How it works:** APIView shows only the stub version of classes, methods, properties, and method signatures in each Azure SDK. This helps architects identify any potential change that can impact consumers of an Azure SDK or REST API. APIView is also used as an enforcing tool to make sure Azure SDK packages are only released after they are approved by an architect.
+APIView is the Azure SDK team's API review platform. It shows the public API surface of Azure SDK packages — classes, methods, properties, and signatures — so that architects can review, comment on, and approve APIs before release. For the full architecture and technical details, see [overview.md](overview.md).
 
 ---
 
@@ -23,8 +21,10 @@ APIView generates public API surface-level revisions showing all publicly availa
 | Type | Description |
 |------|-------------|
 | **Automatic** | A daily CI pipeline checks for any new change in public API surface and creates a new revision if it finds a difference. These revisions cannot be deleted or updated manually — only comments and approvals are allowed. |
-| **Pull Request** | Created automatically when a PR introduces an API surface change. See [ci-integration.md](ci-integration.md) for details. |
+| **Pull Request** | Created automatically when a PR introduces an API surface change. |
 | **Manual** | Created by uploading an artifact through the web UI. |
+
+For details on when and why these revisions are created, see [ci-integration.md](ci-integration.md#types-of-api-revisions).
 
 ---
 
@@ -49,11 +49,13 @@ There are two types of approvals based on package version:
 | **First Release Approval** | Before releasing a preview version of a package that has never been GA'd | Ensures the package name is appropriate before the first beta release. Not required if an API revision was previously approved for the same package. |
 | **GA Release Approval** | Before releasing a GA version | Ensures all APIs are reviewed and approved. Release builds submit the package to APIView to compare against the last approved revision — if API surface differs, a new revision is created and the pipeline fails. |
 
-For detailed approval workflows and release gating, see [release_approval.md](release_approval.md).
+For details on when releases are blocked and the enforcement logic, see [ci-integration.md](ci-integration.md#release-enforcement-logic). For the full approval workflow including prerequisites, carry-forward mechanics, and release gating endpoints, see [release_approval.md](release_approval.md).
 
 ### Who Can Approve?
 
-The following architects and deputy architects can approve API revisions:
+API revision approvers are the architects and deputy architects for each language. The authoritative list is managed at runtime in the APIView service configuration — see [operations.md](operations.md#approvers) for how the list is maintained.
+
+> **Note:** The approver list below is provided for reference and may not reflect the latest configuration. Always check the APIView UI or service configuration for the current list.
 
 | Language | Approvers |
 |----------|-----------|

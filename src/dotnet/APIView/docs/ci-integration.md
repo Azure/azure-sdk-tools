@@ -1,6 +1,6 @@
 # APIView — How Reviews, Revisions, and Pipelines Work
 
-This document explains how APIView integrates with SDK pull requests, CI pipelines, and releases. It clarifies when API revisions are created, when approvals are required, and why certain pipelines fail. For the detailed approval workflow and code references, see [release_approval.md](release_approval.md).
+This document explains how APIView integrates with SDK pull requests, CI pipelines, and releases. It clarifies when API revisions are created, when approvals are required, and why certain pipelines fail. For the detailed approval workflow and code references, see [release_approval.md](release_approval.md). For the technical workflow details (endpoints, sequence diagrams, per-language parsing), see [overview.md](overview.md#10-core-workflows).
 
 ---
 
@@ -62,6 +62,8 @@ If the release date is not set, approval status is ignored.
 | GA | Required |
 | Beta | Not required (namespace approval still applies) |
 | Alpha / Dev | Not enforced |
+
+For the detailed version classification rules (how versions are parsed, Copilot review requirements, and auto-archive behavior by version type), see [release_approval.md](release_approval.md#2-ga-vs-preview-version-classification).
 
 This prevents surprise failures right before release, since scheduled pipelines surface issues early.
 

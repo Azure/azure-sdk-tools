@@ -1,6 +1,6 @@
 # APIView — Copilot Comments REST API
 
-This document describes the REST API and database schema for the Azure SDK Guidelines Copilot's semantic search system. The Copilot uses vector embeddings to find known bad code patterns and suggest fixes during API reviews.
+This document describes the REST API and database schema for the Azure SDK Guidelines Copilot's semantic search system. The Copilot uses vector embeddings to find known bad code patterns and suggest fixes during API reviews. For how Copilot fits into the overall architecture, see the background services section in [overview.md](overview.md#e-background-services-hostedservices). For configuring which languages require Copilot review, see [operations.md](operations.md#copilot-review-required).
 
 ---
 

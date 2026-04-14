@@ -8,12 +8,7 @@ Common issues and solutions for APIView users. For engineering team troubleshoot
 
 ### Why can't I access APIView?
 
-> **Important:** Your membership in the Microsoft or Azure organization must be set to **PUBLIC** visibility. Private memberships cannot be verified by APIView.
-
-The most common reason for access denial is that your GitHub organization membership is set to private. Change it to public:
-
-- Microsoft: https://github.com/orgs/Microsoft/people
-- Azure: https://github.com/orgs/Azure/people
+The most common reason is that your GitHub organization membership is set to **private**. APIView requires **PUBLIC** visibility. See [Getting Access](user-guide.md#getting-access) for the full requirements and links to change your membership visibility.
 
 ### I receive a 403 Forbidden Error page
 
@@ -58,9 +53,11 @@ If the problem persists, check the [detailed instructions for manual uploads](ht
 
 ## Release Blocking
 
+> For details on when and why releases are blocked, see [ci-integration.md](ci-integration.md#release-enforcement-logic) and [release_approval.md](release_approval.md#6-release-gating-cicd-integration).
+
 ### Why is APIView blocking my package release?
 
-Release builds submit the package to APIView to compare against the last approved revision. If there is a **difference in API surface**, a new revision is created and the **pipeline fails**. If there is no difference, the approval status is returned and the pipeline succeeds.
+The release pipeline queries APIView to check whether the API surface has been approved. If the current API surface does not match any approved revision, the pipeline fails. See [ci-integration.md](ci-integration.md#release-enforcement-logic) for the full enforcement logic.
 
 **To resolve:**
 1. Reach out to the language architect and get your revision approved
@@ -69,7 +66,7 @@ Release builds submit the package to APIView to compare against the last approve
 
 ### Manually created revision is approved. Do I still need approval for the automatic revision?
 
-No. A GA package release will **not** be blocked as long as the package API surface matches **at least one** previously approved revision, regardless of revision type.
+No. APIView compares **API surfaces**, not revision types — a release will not be blocked as long as the API surface matches at least one previously approved revision. See [ci-integration.md](ci-integration.md#key-concept-api-surface-not-versions) for details.
 
 ### Why is the prepare release script failing with key vault access permission error?
 

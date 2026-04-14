@@ -29,7 +29,7 @@ Create a PR to update the package version in these files:
 | File | What to Update |
 |------|----------------|
 | `CSharpLanguageService.cs` | Upgrade version reference |
-| `CSharpAPIParser/TreeToken/CodeFileBuilder.cs` | Upgrade version reference |
+| `APIView/Languages/CodeFileBuilder.cs` | Upgrade version reference |
 | `apiview.yml` | Update the `CSharpAPIParserVersion` parameter to match the new version |
 
 > **Example:** See [this pull request](https://github.com/Azure/azure-sdk-tools/pull/example) for reference on the required changes.

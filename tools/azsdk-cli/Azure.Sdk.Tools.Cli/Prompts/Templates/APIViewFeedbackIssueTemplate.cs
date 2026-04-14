@@ -144,16 +144,23 @@ public class APIViewFeedbackIssueTemplate : BasePromptTemplate
             - If a Commit SHA is provided, use it as the base for your changes
             - Include the APIView URL in PR description
             
-            - CRITICAL: You MUST update the PR description with a summary table. The PR description MUST include a markdown table in EXACTLY this format (do not change column names):
-              | LineNo | Addressed? | Summary |
-              |--------|------------|---------|
-              | <lineNo> | ✅ | Brief description of changes (or "No action needed" if feedback says keep as-is) |
-              | <lineNo> | ⚠️ | Reason not addressed (unclear info, TypeSpec limitation, needs SDK code customization) |
-              
-              Include one row for EVERY LineNo from the feedback table above. This table is required even if the PR is long.
+            - CRITICAL: You MUST update the PR description with two summary tables. Both tables are required even if the PR is long.
+              Use the exact column headers shown below for both tables. Do NOT rename, reword, reorder, or omit any column headers.
+
+              **Table 1 – Addressed (Yes)**: Include one row for every feedback item (`LineNo` + `Element`) where feedback was addressed or required no action. Use exactly this header:
+              | LineNo | Element | What Changed |
+              |--------|---------|--------------|
+              | <lineNo> | <element> | Brief description of the TypeSpec change made (or "No action needed" if feedback says keep as-is) |
+
+              **Table 2 – Not Addressed (No)**: Include one row for every feedback item (`LineNo` + `Element`) where feedback could NOT be addressed. Use exactly this header:
+              | LineNo | Element | Reason Not Addressed |
+              |--------|---------|----------------------|
+              | <lineNo> | <element> | Reason (e.g. unclear info, TypeSpec limitation, needs SDK code customization) |
+
+              Every feedback item MUST appear in at least one table. Items typically appear in only one table, but may appear in both if a single feedback item contains multiple points (e.g. rename + type change) where some were addressed and others were not.
 
             - Note: If a review comment CANNOT be addressed, explanation comments MUST NOT be added to the `client.tsp` file.
-              ONLY explain in the "Summary" column why it could not be addressed.
+              ONLY explain in the "Reason Not Addressed" column why it could not be addressed.
             - Include SDK code customization guidance: {GetCodeCustomizationDocUrl(_language)}
 
             ---

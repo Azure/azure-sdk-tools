@@ -28,7 +28,7 @@ compatibility:
 
 1. **Prerequisites** — Check for API spec PR; prompt if unavailable.
 2. **Check Existing** — Query by plan number or spec PR link.
-3. **Gather Info** — Collect Service Tree IDs, timeline, API version. See [details](references/release-plan-details.md).
+3. **Gather Info** — Collect Service Tree IDs, timeline. See [details](references/release-plan-details.md).
 4. **Create** — Run `azure-sdk-mcp:azsdk_create_release_plan`.
 5. **SDK Details** — Map emitters to languages.
 6. **Namespace** — For mgmt plane first releases, link approval issue.

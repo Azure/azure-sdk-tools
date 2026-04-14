@@ -1,6 +1,9 @@
 name: GitHub Event Processor
 
 on:
+  push:
+    branches:
+      - benbp-gh-actions-oidc-managed-identity-test
   issues:
     types: [edited, labeled, opened, reopened, unlabeled]
   # issue_comment is used for both issues and pull_requests
@@ -33,14 +36,12 @@ jobs:
     steps:
       - name: 'Az CLI login'
         uses: azure/login@v3
-        if: ${{ github.event_name == 'issues' && github.event.action == 'opened' }}
         with:
             client-id: e4cb9fd5-0875-4ca1-bc43-56196f5dfb8f
             tenant-id: 72f988bf-86f1-41af-91ab-2d7cd011db47
             allow-no-subscriptions: true
 
       - name: 'Run Azure CLI commands'
-        if: ${{ github.event_name == 'issues' && github.event.action == 'opened' }}
         run: |
           LABEL_SERVICE_API_KEY=$(az keyvault secret show \
             --vault-name issue-labeler \

@@ -79,6 +79,8 @@ public class APIVersionsManager : IAPIVersionsManager
         {
             version.IsDeleted = true;
             version.LastUpdated = now;
+            // TODO (WI-3): Set version.RetainUntil = now + <configured hard-delete grace period>
+            // so that AutoHardDeleteExpiredVersionsAsync can pick it up after the retention window expires.
             version.ChangeHistory.Add(new APIVersionChangeHistoryModel
             {
                 ChangeAction = APIVersionChangeAction.Deleted, ChangedOn = now

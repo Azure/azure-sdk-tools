@@ -1,9 +1,11 @@
 ---
-description: Python-specific Azure SDK design guidelines and APIView filter exceptions. Load for all Python API reviews.
-applyTo: "**"
+description: Python-specific Azure SDK design guidelines and APIView filter exceptions. Supporting skill for Python API reviews only.
+applyTo: "scratch/apiviews/python/**"
 ---
 
 # Python Azure SDK Design Guidelines
+
+Use this skill only when reviewing a Python SDK API surface in APIView format. Do not use it for general Python coding or implementation tasks.
 
 ## APIView Filter Exceptions
 

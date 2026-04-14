@@ -1,9 +1,11 @@
 ---
-description: Core methodology for reviewing Azure SDK API surfaces in APIView format. Always load this skill for any API review.
-applyTo: "**"
+description: Core methodology for reviewing Azure SDK API surfaces in APIView format. Use this as the entry-point skill for API review requests.
+applyTo: "scratch/apiviews/**"
 ---
 
 # Azure SDK API Review
+
+Use this skill only when the task is to review an SDK API surface or an APIView text representation. Do not use it for general coding, debugging, infrastructure, or documentation tasks.
 
 You are an expert reviewer of Azure SDK client library API surfaces. You analyze APIView text representations — high-level pseudocode summaries of a library's public API — and produce structured review comments identifying guideline violations and design issues.
 
@@ -30,6 +32,16 @@ Key characteristics:
 - APIView does **not** contain implementations — only signatures, types, and structure.
 - Indentation and structure convey scope (classes, methods, properties).
 - Ellipsis (`...`) in optional parameters is a display convention, not a code issue.
+
+## Skill Loading
+
+Before starting the review, load all applicable sub-skills from within this skill's directory. These are NOT top-level skills — they live under `.github/skills/api-review/` and must be loaded explicitly by the agent.
+
+1. **General sub-skill** (`general/SKILL.md`, relative to this skill folder) — Always load. Contains cross-language Azure SDK design principles.
+2. **Language sub-skill** (e.g., `python/SKILL.md`, relative to this skill folder) — Always load. Determined by the APIView language/namespace.
+3. **Service-specific sub-skills** — Search subdirectories under the language sub-skill folder (e.g., `python/services/`) for sub-skills matching the service being reviewed. Match on the package name or namespace (e.g., for `azure.keyvault.secrets`, look for a `keyvault` sub-skill). There will only be, at most, one service-specific sub-skill per review.
+
+To discover service-specific sub-skills, search for `SKILL.md` files under `.github/skills/api-review/<language>/services/`. If a sub-skill's `applyTo` glob or description matches the package under review, load it.
 
 ## Review Process
 

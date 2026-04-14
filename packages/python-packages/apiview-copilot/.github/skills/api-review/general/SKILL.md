@@ -1,9 +1,11 @@
 ---
-description: Cross-language Azure SDK design principles for API surface review. Applies to all languages.
-applyTo: "**"
+description: Cross-language Azure SDK design principles for API surface review. Supporting skill for API review only.
+applyTo: "scratch/apiviews/**"
 ---
 
 # General Azure SDK Design Principles
+
+Use this skill only to review Azure SDK API surfaces. Do not apply it to general application development, debugging, tests, infrastructure, or documentation work.
 
 These principles apply to all Azure SDK client libraries, regardless of language. They represent the cross-cutting design philosophy that guides API surface decisions.
 

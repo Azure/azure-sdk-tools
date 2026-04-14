@@ -1,9 +1,11 @@
 ---
-description: Python Key Vault service-specific patterns, conventions, and approved exceptions. Load when reviewing azure-keyvault-* Python packages.
-applyTo: "**"
+description: Key Vault-specific patterns, exceptions, and review heuristics for Python APIView reviews of azure-keyvault packages.
+applyTo: "scratch/apiviews/python/**/*keyvault*.txt"
 ---
 
-# Key Vault Python SDK — Service-Specific Patterns
+# Key Vault Python API Review — Service-Specific Patterns
+
+Use this skill only when reviewing Python APIView text for Azure Key Vault libraries. Load it alongside the core API review and Python review skills when the package or namespace is under `azure.keyvault.*`, including secrets, keys, certificates, administration, and their `aio` variants.
 
 These are approved patterns and known exceptions specific to the Azure Key Vault Python SDKs (`azure-keyvault-secrets`, `azure-keyvault-keys`, `azure-keyvault-certificates`, `azure-keyvault-administration`). They represent decisions made by Azure SDK architects through past API reviews.
 
@@ -56,5 +58,7 @@ Key Vault uses `ApiVersion(str, Enum)` with version strings like `V7_5 = "7.5"` 
 
 ## Common Review Points (NOT exceptions — these ARE issues if violated)
 
-- `roll_secret` is a new operation (v4.11+) — review its parameter design against `set_secret` for consistency.
-- New model classes (e.g., `RollSecretParametersObject`) should not have the `Object` suffix — this would be a valid naming concern.
+- `roll_secret` is a new operation (v4.11+) — review its parameter design against `set_secret` for consistency, especially around keyword-only optional arguments.
+- Async Key Vault soft-delete and recovery operations should preserve the same long-running semantics and `begin_` naming pattern as the sync client.
+- New public model classes (for example, `RollSecretParametersObject`) should not have the `Object` suffix — this is a valid naming concern.
+- If a Key Vault secret API suddenly exposes unrelated storage or blob-style parameters, treat that as a likely generation or surface-shaping issue worth flagging.

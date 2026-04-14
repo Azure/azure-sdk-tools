@@ -64,6 +64,11 @@ class MemoryContextProvider(BaseContextProvider):
 
         self._update_delay = get_memory_update_delay()
 
+        # Tenant memory search toggle (default: enabled)
+        self._enable_tenant_memory_search = cfg(
+            "ENABLE_TENANT_MEMORY_SEARCH", "true"
+        ).lower() == "true"
+
         # Episode search config
         self._episode_top_k = int(cfg("MEMORY_EPISODE_SEARCH_TOP_K", "3"))
         self._episode_similarity_threshold = float(
@@ -75,9 +80,11 @@ class MemoryContextProvider(BaseContextProvider):
 
         logger.info(
             "MemoryContextProvider initialized: user_store=%s, "
-            "update_delay=%d, episode_top_k=%d, similarity_threshold=%.2f",
+            "update_delay=%d, enable_tenant_memory_search=%s, "
+            "episode_top_k=%d, similarity_threshold=%.2f",
             self._user_store_name,
             self._update_delay,
+            self._enable_tenant_memory_search,
             self._episode_top_k,
             self._episode_similarity_threshold,
         )
@@ -134,8 +141,10 @@ class MemoryContextProvider(BaseContextProvider):
 
         # --- Episode search (Cosmos DB vector similarity) ---
         episodes: list[dict] = []
-        if tenant_scope:
+        if tenant_scope and self._enable_tenant_memory_search:
             episodes = await self._search_episodes(context, tenant_scope)
+        elif tenant_scope and not self._enable_tenant_memory_search:
+            logger.info("Tenant memory search disabled by config")
 
         memory_text = self._format_all_memories(all_user, episodes)
 

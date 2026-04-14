@@ -7,11 +7,11 @@ This document describes how the JS SDK release automation pipeline works, coveri
 
 1. [Overall Architecture](#1-overall-architecture)
 2. [Overall Flow & Utilities](#2-overall-flow--utilities)
-3. [Folder Cleanup Logic](#4-folder-cleanup-logic)
-4. [SDK Generation Steps](#3-sdk-generation-steps)
+3. [SDK Generation Steps](#3-sdk-generation-steps)
    - [3.1 HighLevelClient (HLC)](#31-highlevelclient-hlc--management-plane-sdk)
    - [3.2 RestLevelClient (RLC)](#32-restlevelclient-rlc--rest-level-client)
    - [3.3 ModularClient (MLC)](#33-modularclient-mlc--modular-client)
+4. [Folder Cleanup Logic](#4-folder-cleanup-logic)
 5. [Changelog & Version Bump (Common)](#5-changelog--version-bump-common)
 6. [Output JSON Structure](#6-output-json-structure)
 

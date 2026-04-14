@@ -1,9 +1,13 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using System.Collections.Concurrent;
 using System.Text.Json;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
+using Azure.Sdk.Tools.Cli.CopilotAgents.Tools;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
+using Azure.Sdk.Tools.Cli.Prompts.Templates;
 
 namespace Azure.Sdk.Tools.Cli.Services.Languages;
 
@@ -11,10 +15,12 @@ public sealed partial class JavaScriptLanguageService : LanguageService
 {
     private const string GeneratedFolderName = "generated";
     private readonly INpxHelper npxHelper;
+    private readonly ICopilotAgentRunner copilotAgentRunner;
 
     public JavaScriptLanguageService(
         IProcessHelper processHelper,
         INpxHelper npxHelper,
+        ICopilotAgentRunner copilotAgentRunner,
         IGitHelper gitHelper,
         ILogger<LanguageService> logger,
         ICommonValidationHelpers commonValidationHelpers,
@@ -25,6 +31,7 @@ public sealed partial class JavaScriptLanguageService : LanguageService
         : base(processHelper, gitHelper, logger, commonValidationHelpers, packageInfoHelper, fileHelper, specGenSdkConfigHelper, changelogHelper)
     {
         this.npxHelper = npxHelper;
+        this.copilotAgentRunner = copilotAgentRunner;
     }
     public override SdkLanguage Language { get; } = SdkLanguage.JavaScript;
     public override bool IsCustomizedCodeUpdateSupported => true;
@@ -354,6 +361,93 @@ public sealed partial class JavaScriptLanguageService : LanguageService
         {
             logger.LogWarning(ex, "Error searching for JavaScript customization files in {PackagePath}", packagePath);
             return null;
+        }
+    }
+
+    /// <summary>
+    /// Applies patches to customization files in <c>src/</c> based on build errors.
+    /// Handles TypeScript compiler errors and merge conflict markers left by
+    /// <c>dev-tool customization apply</c>.
+    /// </summary>
+    public override async Task<List<AppliedPatch>> ApplyPatchesAsync(
+        string customizationRoot,
+        string packagePath,
+        string buildContext,
+        CancellationToken ct)
+    {
+        try
+        {
+            // Always normalize to src/ - we only patch customization files there, never generated/
+            customizationRoot = Path.Combine(packagePath, "src");
+
+            if (!Directory.Exists(customizationRoot))
+            {
+                logger.LogDebug("Customization root does not exist: {Root}", customizationRoot);
+                return [];
+            }
+
+            var generatedDirectorySegment = Path.DirectorySeparatorChar + GeneratedFolderName + Path.DirectorySeparatorChar;
+            var nodeModulesDirectorySegment = Path.DirectorySeparatorChar + "node_modules" + Path.DirectorySeparatorChar;
+
+            // Collect TypeScript and JavaScript files in src/ only, excluding generated/ and node_modules/
+            string[] jsExtensions = ["*.ts", "*.tsx", "*.mts", "*.cts", "*.js", "*.jsx", "*.mjs", "*.cjs"];
+            var tsFiles = jsExtensions
+                .SelectMany(ext => Directory.GetFiles(customizationRoot, ext, SearchOption.AllDirectories))
+                .Where(f => !f.Contains(nodeModulesDirectorySegment) && !f.Contains(generatedDirectorySegment))
+                .Distinct()
+                .ToArray();
+
+            if (tsFiles.Length == 0)
+            {
+                logger.LogDebug("No TypeScript/JavaScript files found in customization root: {Root}", customizationRoot);
+                return [];
+            }
+
+            var patchLog = new ConcurrentBag<AppliedPatch>();
+
+            var readFilePaths = tsFiles.Select(f => Path.GetRelativePath(packagePath, f)).ToList();
+            var patchFilePaths = tsFiles.Select(f => Path.GetRelativePath(customizationRoot, f)).ToList();
+
+            var prompt = new JavaScriptErrorDrivenPatchTemplate(
+                buildContext, packagePath, customizationRoot, readFilePaths, patchFilePaths).BuildPrompt();
+
+            var agent = new CopilotAgent<string>
+            {
+                Instructions = prompt,
+                MaxIterations = 25,
+                Tools =
+                [
+                    FileTools.CreateGrepSearchTool(packagePath,
+                        description: "Search for text or regex patterns in files. Use this to find specific symbols or references without reading entire files."),
+                    FileTools.CreateReadFileTool(packagePath, includeLineNumbers: true,
+                        description: "Read files from the package directory (generated code, src/ customization files, etc.)"),
+                    CodePatchTools.CreateCodePatchTool(customizationRoot,
+                        description: "Apply code patches to src/ customization files only (never generated/ files)",
+                        onPatchApplied: patchLog.Add)
+                ]
+            };
+
+            try
+            {
+                await copilotAgentRunner.RunAsync(agent, ct);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception agentEx)
+            {
+                logger.LogDebug(agentEx, "CopilotAgent terminated early");
+            }
+
+            var appliedPatches = patchLog.ToList();
+            logger.LogInformation("Patch application completed, patches applied: {PatchCount}", appliedPatches.Count);
+            return appliedPatches;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to apply patches");
+            return [];
         }
     }
 }

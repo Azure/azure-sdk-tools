@@ -84,19 +84,29 @@ public class ProjectsManager : IProjectsManager
 
         project.ChangeHistory ??= [];
 
-        if (!string.IsNullOrEmpty(normalizedLanguage) && project.Reviews.TryAdd(normalizedLanguage, review.Id))
+        if (!string.IsNullOrEmpty(normalizedLanguage))
         {
-            project.ChangeHistory.Add(new ProjectChangeHistory
+            if (!project.Reviews.TryGetValue(normalizedLanguage, out var ids))
             {
-                ChangedOn = DateTime.UtcNow,
-                ChangedBy = userName,
-                ChangeAction = ProjectChangeAction.ReviewLinked,
-                Notes = $"Review {review.Id} ({review.Language}/{review.PackageName}) linked to project"
-            });
+                ids = [];
+                project.Reviews[normalizedLanguage] = ids;
+            }
 
-            await _projectsRepository.UpsertProjectAsync(project);
-            _logger.LogInformation("Linked review {ReviewId} to project {ProjectId} by {User}", review.Id, project.Id,
-                userName);
+            if (!ids.Contains(review.Id, StringComparer.OrdinalIgnoreCase))
+            {
+                ids.Add(review.Id);
+                project.ChangeHistory.Add(new ProjectChangeHistory
+                {
+                    ChangedOn = DateTime.UtcNow,
+                    ChangedBy = userName,
+                    ChangeAction = ProjectChangeAction.ReviewLinked,
+                    Notes = $"Review {review.Id} ({review.Language}/{review.PackageName}) linked to project"
+                });
+
+                await _projectsRepository.UpsertProjectAsync(project);
+                _logger.LogInformation("Linked review {ReviewId} to project {ProjectId} by {User}", review.Id, project.Id,
+                    userName);
+            }
         }
 
         review.ProjectId = project.Id;
@@ -107,7 +117,7 @@ public class ProjectsManager : IProjectsManager
 
     private async Task<Project> CreateProjectFromMetadataAsync(string userName, TypeSpecMetadata metadata, ReviewListItemModel typeSpecReview)
     {
-        Dictionary<string, PackageInfo> expectedPackages = BuildExpectedPackages(metadata);
+        Dictionary<string, List<PackageInfo>> expectedPackages = BuildExpectedPackages(metadata);
         var project = new Project
         {
             Id = Guid.NewGuid().ToString(),
@@ -116,7 +126,8 @@ public class ProjectsManager : IProjectsManager
             Description = metadata.TypeSpec.Documentation,
             Namespace = metadata.TypeSpec.Namespace,
             ExpectedPackages = expectedPackages,
-            Reviews = { [ApiViewConstants.TypeSpecLanguage] = typeSpecReview.Id },
+            PackageLookup = BuildPackageLookup(expectedPackages),
+            Reviews = { [ApiViewConstants.TypeSpecLanguage] = [typeSpecReview.Id] },
             Owners = [userName],
             ChangeHistory =
             [
@@ -133,12 +144,18 @@ public class ProjectsManager : IProjectsManager
             IsDeleted = false
         };
 
-        var packagesToSearch = expectedPackages.Where(ep => !string.IsNullOrEmpty(ep.Value?.PackageName));
+        var packagesToSearch = expectedPackages.Where(ep => ep.Value?.Any(p => !string.IsNullOrEmpty(p.PackageName)) == true);
         ReviewLinkChanges relatedReviews = await DiscoverReviewsForLinkingAsync(
             project.Id, userName, packagesToSearch, excludeReviewIds: [typeSpecReview.Id]);
         foreach (ReviewListItemModel review in relatedReviews.ReviewsToAdd)
         {
-            project.Reviews[review.Language] = review.Id;
+            if (!project.Reviews.TryGetValue(review.Language, out var ids))
+            {
+                ids = [];
+                project.Reviews[review.Language] = ids;
+            }
+            if (!ids.Contains(review.Id, StringComparer.OrdinalIgnoreCase))
+                ids.Add(review.Id);
         }
 
         project.NamespaceInfo = _namespaceManager.BuildInitialNamespaceInfo(userName, metadata, relatedReviews.ReviewsToAdd);
@@ -196,21 +213,29 @@ public class ProjectsManager : IProjectsManager
         {
             var oldExpectedPackages = project.ExpectedPackages;
             project.ExpectedPackages = newExpectedPackages;
+            project.PackageLookup = BuildPackageLookup(newExpectedPackages);
             changes.Add("ExpectedPackages");
 
             var reconciled = await ReconcileReviewLinksAsync(userName, project, typeSpecReview.Id);
 
             project.ChangeHistory ??= [];
 
-            foreach (string key in project.Reviews.Where(r => reconciled.ReviewsToRemove.Contains(r.Value))
-                         .Select(r => r.Key).ToList())
+            foreach (var (key, ids) in project.Reviews.ToList())
             {
-                project.Reviews.Remove(key);
+                ids.RemoveAll(id => reconciled.ReviewsToRemove.Contains(id));
+                if (ids.Count == 0)
+                    project.Reviews.Remove(key);
             }
 
             foreach (ReviewListItemModel reviewListItemModel in reconciled.ReviewsToAdd)
             {
-                project.Reviews[reviewListItemModel.Language] = reviewListItemModel.Id;
+                if (!project.Reviews.TryGetValue(reviewListItemModel.Language, out var ids))
+                {
+                    ids = [];
+                    project.Reviews[reviewListItemModel.Language] = ids;
+                }
+                if (!ids.Contains(reviewListItemModel.Id, StringComparer.OrdinalIgnoreCase))
+                    ids.Add(reviewListItemModel.Id);
             }
 
             project.HistoricalReviewIds ??= [];
@@ -249,7 +274,11 @@ public class ProjectsManager : IProjectsManager
         var changeEntries = new List<ProjectChangeHistory>();
         var reviewsToUpsert = new List<ReviewListItemModel>();
 
-        List<string> reviewIdsToCheck = project.Reviews.Values.Where(id => id != typeSpecReviewId).ToList();
+        List<string> reviewIdsToCheck = project.Reviews.Values
+            .SelectMany(ids => ids)
+            .Where(id => id != typeSpecReviewId)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
         var reviews = reviewIdsToCheck.Count > 0
             ? (await _reviewsRepository.GetReviewsAsync(reviewIdsToCheck)).ToList()
             : [];
@@ -273,9 +302,9 @@ public class ProjectsManager : IProjectsManager
         {
             bool stillMatches = !string.IsNullOrEmpty(review.Language)
                                && project.ExpectedPackages != null
-                               && project.ExpectedPackages.TryGetValue(review.Language, out var expected)
-                               && string.Equals(expected.PackageName, review.PackageName,
-                                   StringComparison.OrdinalIgnoreCase);
+                               && project.ExpectedPackages.TryGetValue(review.Language, out var expectedList)
+                               && expectedList.Any(p => string.Equals(p.PackageName, review.PackageName,
+                                   StringComparison.OrdinalIgnoreCase));
 
             if (stillMatches)
             {
@@ -302,8 +331,17 @@ public class ProjectsManager : IProjectsManager
         }
 
         // For every expected-package language without a linked review, try to find and link one.
-        var uncoveredPackages = (project.ExpectedPackages ?? new Dictionary<string, PackageInfo>())
-            .Where(ep => !coveredLanguages.Contains(ep.Key) && !string.IsNullOrEmpty(ep.Value?.PackageName));
+        var coveredPackageTokens = new HashSet<string>(
+            stillLinkedReviews
+                .Where(r => !string.IsNullOrEmpty(r.Language) && !string.IsNullOrEmpty(r.PackageName))
+                .Select(r => $"{r.Language.ToLowerInvariant()}::{r.PackageName.ToLowerInvariant()}"),
+            StringComparer.OrdinalIgnoreCase);
+        var uncoveredPackages = (project.ExpectedPackages ?? new Dictionary<string, List<PackageInfo>>())
+            .Select(ep => new KeyValuePair<string, List<PackageInfo>>(
+                ep.Key,
+                ep.Value.Where(p => !string.IsNullOrEmpty(p.PackageName)
+                    && !coveredPackageTokens.Contains($"{ep.Key.ToLowerInvariant()}::{p.PackageName.ToLowerInvariant()}")).ToList()))
+            .Where(ep => ep.Value.Count > 0);
         var discovered = await DiscoverReviewsForLinkingAsync(
             project.Id, userName, uncoveredPackages, excludeReviewIds: [typeSpecReviewId]);
 
@@ -315,77 +353,101 @@ public class ProjectsManager : IProjectsManager
     private async Task<ReviewLinkChanges> DiscoverReviewsForLinkingAsync(
         string projectId,
         string userName,
-        IEnumerable<KeyValuePair<string, PackageInfo>> packagesToSearch,
+        IEnumerable<KeyValuePair<string, List<PackageInfo>>> packagesToSearch,
         HashSet<string> excludeReviewIds)
     {
         var reviews = new List<ReviewListItemModel>();
+        var addedReviewIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var changeEntries = new List<ProjectChangeHistory>();
 
-        foreach (var (language, pkg) in packagesToSearch)
+        foreach (var (language, packages) in packagesToSearch)
         {
-            ReviewListItemModel candidate = await _reviewsRepository.GetReviewAsync(language, pkg.PackageName, false);
-            if (candidate == null || excludeReviewIds.Contains(candidate.Id))
+            foreach (var pkg in packages.Where(p => !string.IsNullOrEmpty(p.PackageName)))
             {
-                continue;
+                ReviewListItemModel candidate = await _reviewsRepository.GetReviewAsync(language, pkg.PackageName, false);
+                if (candidate == null || excludeReviewIds.Contains(candidate.Id) || !addedReviewIds.Add(candidate.Id))
+                {
+                    continue;
+                }
+
+                string previousProjectId = candidate.ProjectId;
+
+                if (string.Equals(previousProjectId, projectId, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                candidate.ProjectId = projectId;
+
+                string notes = !string.IsNullOrEmpty(previousProjectId)
+                    ? $"Review {candidate.Id} ({language}/{pkg.PackageName}) re-linked from project {previousProjectId}"
+                    : $"Review {candidate.Id} ({language}/{pkg.PackageName}) linked to project";
+
+                changeEntries.Add(new ProjectChangeHistory
+                {
+                    ChangedOn = DateTime.UtcNow,
+                    ChangedBy = userName,
+                    ChangeAction = ProjectChangeAction.ReviewLinked,
+                    Notes = notes
+                });
+                reviews.Add(candidate);
             }
-
-            string previousProjectId = candidate.ProjectId;
-
-            if (string.Equals(previousProjectId, projectId, StringComparison.Ordinal))
-            {
-                continue;
-            }
-
-            candidate.ProjectId = projectId;
-
-            string notes = !string.IsNullOrEmpty(previousProjectId)
-                ? $"Review {candidate.Id} ({candidate.Language}/{candidate.PackageName}) re-linked from project {previousProjectId}"
-                : $"Review {candidate.Id} ({candidate.Language}/{candidate.PackageName}) linked to project";
-
-            changeEntries.Add(new ProjectChangeHistory
-            {
-                ChangedOn = DateTime.UtcNow,
-                ChangedBy = userName,
-                ChangeAction = ProjectChangeAction.ReviewLinked,
-                Notes = notes
-            });
-            reviews.Add(candidate);
         }
 
         return new ReviewLinkChanges(reviews, changeEntries);
     }
 
-    private static Dictionary<string, PackageInfo> BuildExpectedPackages(TypeSpecMetadata metadata)
+    private static Dictionary<string, List<PackageInfo>> BuildExpectedPackages(TypeSpecMetadata metadata)
     {
         if (metadata?.Languages == null)
         {
-            return new Dictionary<string, PackageInfo>(StringComparer.OrdinalIgnoreCase);
+            return new Dictionary<string, List<PackageInfo>>(StringComparer.OrdinalIgnoreCase);
         }
 
-        return metadata.Languages
-            .Where(lang => !string.IsNullOrEmpty(lang.Value.Namespace) || !string.IsNullOrEmpty(lang.Value.PackageName))
-            .ToDictionary(
-                lang => LanguageServiceHelpers.MapLanguageAlias(lang.Key),
-                lang => new PackageInfo { Namespace = lang.Value.Namespace, PackageName = lang.Value.PackageName },
-                StringComparer.OrdinalIgnoreCase);
+        var result = new Dictionary<string, List<PackageInfo>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var (key, configs) in metadata.Languages)
+        {
+            var language = LanguageServiceHelpers.MapLanguageAlias(key);
+            // Deduplicate by (PackageName, Namespace) — multiple emitters for the same package
+            var packages = configs
+                .Where(c => !string.IsNullOrEmpty(c.Namespace) || !string.IsNullOrEmpty(c.PackageName))
+                .GroupBy(
+                    c => $"{c.PackageName ?? ""}::{c.Namespace ?? ""}",
+                    StringComparer.OrdinalIgnoreCase)
+                .Select(g => g.First())
+                .Select(c => new PackageInfo { Namespace = c.Namespace, PackageName = c.PackageName })
+                .ToList();
+            if (packages.Count > 0)
+                result[language] = packages;
+        }
+        return result;
     }
 
-    private static bool AreExpectedPackagesEqual(Dictionary<string, PackageInfo> current,
-        Dictionary<string, PackageInfo> updated)
+    /// <summary>
+    /// Builds a flat list of lowercase "language::packagename" tokens for cheap Cosmos ARRAY_CONTAINS lookups.
+    /// </summary>
+    private static List<string> BuildPackageLookup(Dictionary<string, List<PackageInfo>> expectedPackages)
     {
-        if (current == null && updated == null)
-        {
-            return true;
-        }
+        return expectedPackages
+            .SelectMany(kvp => (kvp.Value ?? [])
+                .Where(p => !string.IsNullOrEmpty(p.PackageName))
+                .Select(p => $"{kvp.Key.ToLowerInvariant()}::{p.PackageName.ToLowerInvariant()}"))
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+    }
 
-        if (current == null || updated == null)
-        {
-            return false;
-        }
+    private static bool AreExpectedPackagesEqual(Dictionary<string, List<PackageInfo>> current,
+        Dictionary<string, List<PackageInfo>> updated)
+    {
+        if (current == null && updated == null) return true;
+        if (current == null || updated == null) return false;
+        if (current.Count != updated.Count) return false;
 
-        return current.Count == updated.Count &&
-               current.All(kvp => updated.TryGetValue(kvp.Key, out var u) &&
-                                  string.Equals(kvp.Value?.Namespace, u?.Namespace, StringComparison.OrdinalIgnoreCase) &&
-                                  string.Equals(kvp.Value?.PackageName, u?.PackageName, StringComparison.OrdinalIgnoreCase));
+        return current.All(kvp =>
+            updated.TryGetValue(kvp.Key, out var updatedList) &&
+            kvp.Value.Count == updatedList.Count &&
+            kvp.Value.All(p => updatedList.Any(u =>
+                string.Equals(p?.Namespace, u?.Namespace, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(p?.PackageName, u?.PackageName, StringComparison.OrdinalIgnoreCase))));
     }
 }

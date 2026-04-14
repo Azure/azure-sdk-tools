@@ -92,12 +92,12 @@ public class CodeFileManagerTests
         TypeSpecMetadata metadata = new()
         {
             TypeSpec = new TypeSpecInfo { Namespace = "Azure.Core", Documentation = "Azure Core TypeSpec" },
-            Languages = new Dictionary<string, LanguageConfig>
+            Languages = new Dictionary<string, List<LanguageConfig>>
             {
-                ["Python"] = new() { PackageName = "azure-core", Namespace = "azure.core" },
-                ["JavaScript"] = new() { PackageName = "@azure/core", Namespace = "@azure/core" },
-                ["Java"] = new() { PackageName = "com.azure.core", Namespace = "com.azure.core" },
-                ["DotNet"] = new() { PackageName = "Azure.Core", Namespace = "Azure.Core" }
+                ["Python"] = [new() { PackageName = "azure-core", Namespace = "azure.core" }],
+                ["JavaScript"] = [new() { PackageName = "@azure/core", Namespace = "@azure/core" }],
+                ["Java"] = [new() { PackageName = "com.azure.core", Namespace = "com.azure.core" }],
+                ["DotNet"] = [new() { PackageName = "Azure.Core", Namespace = "Azure.Core" }]
             }
         };
 
@@ -128,10 +128,10 @@ public class CodeFileManagerTests
         Assert.NotNull(result.Metadata);
         Assert.NotNull(result.Metadata.Languages);
         Assert.Equal(4, result.Metadata.Languages.Count);
-        Assert.Equal("azure-core", result.Metadata.Languages["Python"].PackageName);
-        Assert.Equal("@azure/core", result.Metadata.Languages["JavaScript"].PackageName);
-        Assert.Equal("com.azure.core", result.Metadata.Languages["Java"].PackageName);
-        Assert.Equal("Azure.Core", result.Metadata.Languages["DotNet"].PackageName);
+        Assert.Equal("azure-core", result.Metadata.Languages["Python"][0].PackageName);
+        Assert.Equal("@azure/core", result.Metadata.Languages["JavaScript"][0].PackageName);
+        Assert.Equal("com.azure.core", result.Metadata.Languages["Java"][0].PackageName);
+        Assert.Equal("Azure.Core", result.Metadata.Languages["DotNet"][0].PackageName);
     }
 
     [Fact]
@@ -247,13 +247,13 @@ public class CodeFileManagerTests
             EmitterVersion = "0.7.2",
             TypeSpec =
                 new TypeSpecInfo { Namespace = typeSpecNamespace, Documentation = documentation, Type = "client" },
-            Languages = new Dictionary<string, LanguageConfig>
+            Languages = new Dictionary<string, List<LanguageConfig>>
             {
-                ["Python"] = new()
+                ["Python"] = [new()
                 {
                     PackageName = packageName.ToLower().Replace(".", "-"),
                     Namespace = packageName.ToLower().Replace(".", ".")
-                }
+                }]
             }
         };
 

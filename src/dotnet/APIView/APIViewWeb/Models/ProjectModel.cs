@@ -26,11 +26,13 @@ public class Project
     public string Description { get; set; }
     public List<string> Owners { get; set; }
     public string Namespace { get; set; }
-    public Dictionary<string, PackageInfo> ExpectedPackages { get; set; }
+    public Dictionary<string, List<PackageInfo>> ExpectedPackages { get; set; }
+    // Flat lookup tokens in the form "language::packagename" (lowercase). Used for cheap Cosmos ARRAY_CONTAINS queries.
+    public List<string> PackageLookup { get; set; } = [];
     public ProjectNamespaceInfo NamespaceInfo { get; set; }
     public List<ProjectChangeHistory> ChangeHistory { get; set; }
-    // Maps language name (e.g. "Python", "JavaScript") to the associated review ID.
-    public Dictionary<string, string> Reviews { get; set; } = new (StringComparer.OrdinalIgnoreCase);
+    // Maps language name (e.g. "Python", "JavaScript") to the list of associated review IDs.
+    public Dictionary<string, List<string>> Reviews { get; set; } = new (StringComparer.OrdinalIgnoreCase);
     public HashSet<string> HistoricalReviewIds { get; set; }
     public DateTime CreatedOn { get; set; }
     public DateTime LastUpdatedOn { get; set; }

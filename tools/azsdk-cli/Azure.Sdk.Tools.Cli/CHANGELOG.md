@@ -1,16 +1,21 @@
 # Release History
 
-## 0.6.7 (Unreleased)
+## 0.6.7 (2026-04-13)
 
 ### Features Added
 
+- Added support to collect telemetry for sanitized user prompts
 - Added `azsdk_apiview_get_review_url` MCP tool and `azsdk apiview get-review-url` CLI command to retrieve the APIView review URL for a package by name and language
-
-### Breaking Changes
-
-### Bugs Fixed
+- Added recorded and live test support for Python, JavaScript, Java and .NET
+- Enhanced `azsdk_customized_code_update` with a two-phase AI-assisted customization workflow: Phase A applies TypeSpec decorators (`client.tsp`) to fix ~80% of issues, Phase B applies targeted code-level patches to customization files when the build still fails after regeneration
+- `azsdk_customized_code_update` now accepts APIView review URLs as input in addition to plain-text customization requests and build error output, enabling direct resolution of API review feedback
+- `azsdk_customized_code_update` customization flow is now enabled for .NET, Java, JavaScript, and Python
+- Added support for updating `ci.yml` in SDK projects
+- Implemented version update for Java, Python, and .NET language services
 
 ### Other Changes
+
+- Updated `azsdk_typespec_delegate_apiview_feedback` to split the feedback summary table into addressed/not-addressed sections for easier review
 
 ## 0.6.6 (2026-04-01)
 

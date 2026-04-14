@@ -182,3 +182,4 @@ applyTo: "src/**"
 - **Endpoints**: The FastAPI app uses role-based auth. Test changes with `avc ops check --include-auth`.
 - **CI**: The CI pipeline (`ci.yml`) runs packaging, unit tests (`pytest tests`), linting (`pylint src scripts tests`), and copyright header checks (`python scripts/check_copyright_headers.py`).
 - **Dependencies**: Runtime deps go in `requirements.txt`; dev/test deps go in `dev_requirements.txt`.
+- **Documentation**: When changing behavior in `src/`, `cli.py`, `app.py`, or `prompts/`, check whether `docs/` needs a corresponding update. Key docs: `docs/api-review.md` (review pipeline), `docs/cli.md` (CLI reference), `docs/kb.md` (knowledge base), `docs/metrics.md` (telemetry/metrics). Keep docs accurate — do not describe behavior that doesn't exist or omit behavior that does.

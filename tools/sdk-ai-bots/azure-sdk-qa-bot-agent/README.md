@@ -155,8 +155,6 @@ To see the complete Python-level logs, copy the **Trace ID** from step 2 and que
 
 Click the trace, it returns all log records for that request — credential acquisition, agent session loading, conversation retrieval, tool calls, and any custom log messages — in chronological order.
 
-![Application Insights span](images/tracing_step4_app_insights_span.png)
-
 You can also click **View timeline** to see the span timeline view, which shows the same `HostedAgents-*` → Chat → Execute Tool hierarchy as the Foundry Traces detail (Step 3).
 ![Application Insights timeline view](images/tracing_step4_app_insights_timeline.png)
 

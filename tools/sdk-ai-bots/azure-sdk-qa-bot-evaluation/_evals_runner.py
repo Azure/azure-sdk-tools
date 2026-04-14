@@ -266,11 +266,13 @@ class EvalsRunner:
                             answer = api_response.get("answer", "")
                             full_context = api_response.get("full_context", "")
                             references = api_response.get("references", [])
+                            response_id = api_response.get("id", "")
                             latency = time.time() - start_time
                             processed_test_data = {
                                 "query": record["query"],
                                 "ground_truth": record["ground_truth"],
                                 "response": answer,
+                                "response_id": response_id,
                                 "context": full_context,
                                 "latency": latency,
                                 "response_length": len(answer),

@@ -56,29 +56,31 @@ def check_for_duplicate_memory(
     # Collect all existing memories linked to the target guidelines.
     existing_memories: dict = {}  # memory_id -> {id, title, content}
     parent_title = None
-    prefix = "https://azure.github.io/azure-sdk/"
 
-    for gid in guideline_ids:
-        try:
-            if gid.startswith(prefix):
-                gid = gid[len(prefix):]
-            raw_g = db.guidelines.get(gid)
-            if parent_title is None:
-                parent_title = raw_g.get("title", gid)
-            for mid in raw_g.get("related_memories", []):
-                if mid not in existing_memories:
-                    try:
-                        raw_m = db.memories.get(mid)
-                        existing_memories[mid] = {
-                            "id": mid,
-                            "title": raw_m.get("title", ""),
-                            "content": raw_m.get("content", ""),
-                        }
-                    except Exception:
-                        pass
-        except Exception as e:
-            logger.warning("Failed to fetch guideline %s for dedup: %s", gid, e)
-            continue
+    try:
+        raw_guidelines = db.guidelines.get_batched(guideline_ids)
+    except Exception as e:
+        logger.warning("Failed to batch fetch guidelines for dedup: %s", e)
+        raw_guidelines = []
+
+    memory_ids = []
+    for raw_g in raw_guidelines:
+        if parent_title is None:
+            parent_title = raw_g.get("title", raw_g.get("id", "Unknown"))
+        memory_ids.extend(raw_g.get("related_memories", []))
+
+    try:
+        raw_memories = db.memories.get_batched(memory_ids)
+        for raw_m in raw_memories:
+            mid = raw_m.get("id")
+            if mid:
+                existing_memories[mid] = {
+                    "id": mid,
+                    "title": raw_m.get("title", ""),
+                    "content": raw_m.get("content", ""),
+                }
+    except Exception as e:
+        logger.warning("Failed to batch fetch memories for dedup: %s", e)
 
     if not existing_memories:
         return None
@@ -191,11 +193,8 @@ def merge_and_save_memory(
     # Fetch and link guidelines that aren't already linked
     guidelines = []
     guideline_snapshots = {}
-    prefix = "https://azure.github.io/azure-sdk/"
     for gid in guideline_ids:
         try:
-            if gid.startswith(prefix):
-                gid = gid[len(prefix):]
             raw_guideline = db_manager.guidelines.get(gid)
             guideline_snapshots[raw_guideline["id"]] = json.loads(json.dumps(raw_guideline))
             guideline = Guideline(**raw_guideline)
@@ -267,74 +266,70 @@ def merge_and_save_memory(
     return {"success": [memory_id], "failures": {}, "merged": True}
 
 
-def _build_clusters_for_guideline(guideline_id: str, db, memory_index: dict) -> List[tuple]:
-    """Build a cluster from a single guideline's related memories."""
+def _populate_memory_index(memory_ids: List[str], db, memory_index: dict):
+    """Fetch missing memories in a single batch and cache them in memory_index."""
+    missing_ids = [mid for mid in memory_ids if mid not in memory_index]
+    if not missing_ids:
+        return
+
     try:
-        raw_g = db.guidelines.get(guideline_id)
+        for raw_m in db.memories.get_batched(missing_ids):
+            mid = raw_m.get("id")
+            if mid:
+                memory_index[mid] = raw_m
     except Exception as e:
-        logger.warning("Failed to fetch guideline '%s': %s", guideline_id, e)
+        logger.warning("Failed to batch fetch memory items %s: %s", missing_ids, e)
+
+
+def _build_parent_clusters(kind: str, ids: List[str], db, memory_index: dict) -> List[tuple]:
+    """Build memory clusters for guideline or example parents."""
+    if not ids:
         return []
 
-    mem_ids = raw_g.get("related_memories", [])
-    for mid in mem_ids:
-        if mid not in memory_index:
-            try:
-                memory_index[mid] = db.memories.get(mid)
-            except Exception:
-                pass
-    mem_ids = [mid for mid in mem_ids if mid in memory_index]
-    if len(mem_ids) >= 2:
-        return [("guideline", raw_g["id"], raw_g.get("title", raw_g["id"]), mem_ids)]
-    return []
+    config = {
+        "guideline": (db.guidelines, "guideline", "related_memories"),
+        "example": (db.examples, "example", "memory_ids"),
+    }
+    container, parent_type, memory_field = config[kind]
 
-
-def _build_clusters_for_example(example_id: str, db, memory_index: dict) -> List[tuple]:
-    """Build a cluster from a single example's related memories."""
     try:
-        raw_e = db.examples.get(example_id)
+        raw_items = container.get_batched(ids)
     except Exception as e:
-        logger.warning("Failed to fetch example '%s': %s", example_id, e)
+        logger.warning("Failed to batch fetch %ss %s: %s", kind, ids, e)
         return []
 
-    mem_ids = raw_e.get("memory_ids", [])
-    for mid in mem_ids:
-        if mid not in memory_index:
-            try:
-                memory_index[mid] = db.memories.get(mid)
-            except Exception:
-                pass
-    mem_ids = [mid for mid in mem_ids if mid in memory_index]
-    if len(mem_ids) >= 2:
-        return [("example", raw_e["id"], raw_e.get("title", raw_e["id"]), mem_ids)]
-    return []
+    clusters = []
+    for raw_item in raw_items:
+        mem_ids = raw_item.get(memory_field, [])
+        _populate_memory_index(mem_ids, db, memory_index)
+        mem_ids = [mid for mid in mem_ids if mid in memory_index]
+        if len(mem_ids) >= 2:
+            clusters.append((parent_type, raw_item["id"], raw_item.get("title", raw_item["id"]), mem_ids))
+    return clusters
 
 
-def _build_clusters_for_memory(memory_id: str, db, memory_index: dict) -> List[tuple]:
-    """Build clusters from the parents of a single memory.
+def _build_memory_clusters(memory_ids: List[str], db, memory_index: dict) -> List[tuple]:
+    """Build clusters from the parents of one or more memory items."""
+    if not memory_ids:
+        return []
 
-    Finds all guidelines and examples that reference the given memory,
-    then returns clusters for those parents (if they have 2+ memories).
-    """
     try:
-        raw_mem = db.memories.get(memory_id)
-    except Exception:
-        logger.warning("Memory '%s' not found.", memory_id)
+        raw_memories = db.memories.get_batched(memory_ids)
+    except Exception as e:
+        logger.warning("Failed to batch fetch memories %s: %s", memory_ids, e)
         return []
-
-    if memory_id not in memory_index:
-        memory_index[memory_id] = raw_mem
 
     from src._models import Memory
 
-    mem = Memory(**raw_mem)
     clusters: List[tuple] = []
-
-    for gid in mem.related_guidelines:
-        clusters.extend(_build_clusters_for_guideline(gid, db, memory_index))
-
-    for eid in mem.related_examples:
-        clusters.extend(_build_clusters_for_example(eid, db, memory_index))
-
+    for raw_mem in raw_memories:
+        mid = raw_mem.get("id")
+        if not mid:
+            continue
+        memory_index[mid] = raw_mem
+        mem = Memory(**raw_mem)
+        clusters.extend(_build_parent_clusters("guideline", mem.related_guidelines, db, memory_index))
+        clusters.extend(_build_parent_clusters("example", mem.related_examples, db, memory_index))
     return clusters
 
 
@@ -362,16 +357,13 @@ def find_consolidation_candidates(
     """
     db = DatabaseManager.get_instance()
     memory_index: dict = {}
-    clusters: List[tuple] = []
 
-    builder = {
-        "guideline": _build_clusters_for_guideline,
-        "example": _build_clusters_for_example,
-        "memory": _build_clusters_for_memory,
-    }
-    build_fn = builder[kind]
-    for item_id in ids:
-        clusters.extend(build_fn(item_id, db, memory_index))
+    if kind in {"guideline", "example"}:
+        clusters = _build_parent_clusters(kind, ids, db, memory_index)
+    elif kind == "memory":
+        clusters = _build_memory_clusters(ids, db, memory_index)
+    else:
+        raise ValueError(f"Unsupported kind: {kind}")
 
     if not clusters:
         return []

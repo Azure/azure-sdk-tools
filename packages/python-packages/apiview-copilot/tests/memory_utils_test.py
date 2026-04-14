@@ -62,7 +62,7 @@ class TestCheckForDuplicateMemory:
         """When the guideline can't be fetched, should return None."""
         mock_db = MagicMock()
         mock_db_cls.get_instance.return_value = mock_db
-        mock_db.guidelines.get.side_effect = Exception("Not found")
+        mock_db.guidelines.get_batched.side_effect = Exception("Not found")
 
         result = check_for_duplicate_memory(
             raw_memory=_make_raw_memory(), guideline_ids=["g1"]
@@ -74,7 +74,7 @@ class TestCheckForDuplicateMemory:
         """When the guideline has no related memories, should return None."""
         mock_db = MagicMock()
         mock_db_cls.get_instance.return_value = mock_db
-        mock_db.guidelines.get.return_value = {"id": "g1", "title": "Guideline", "related_memories": []}
+        mock_db.guidelines.get_batched.return_value = [{"id": "g1", "title": "Guideline", "related_memories": []}]
 
         result = check_for_duplicate_memory(
             raw_memory=_make_raw_memory(), guideline_ids=["g1"]
@@ -87,12 +87,12 @@ class TestCheckForDuplicateMemory:
         """When the consolidation prompt groups the new memory with an existing one, should return merge result."""
         mock_db = MagicMock()
         mock_db_cls.get_instance.return_value = mock_db
-        mock_db.guidelines.get.return_value = {
-            "id": "g1", "title": "Guideline", "related_memories": ["mem-existing"]
-        }
-        mock_db.memories.get.return_value = {
-            "id": "mem-existing", "title": "Existing title", "content": "Existing content"
-        }
+        mock_db.guidelines.get_batched.return_value = [
+            {"id": "g1", "title": "Guideline", "related_memories": ["mem-existing"]}
+        ]
+        mock_db.memories.get_batched.return_value = [
+            {"id": "mem-existing", "title": "Existing title", "content": "Existing content"}
+        ]
 
         mock_run_prompt.return_value = json.dumps({
             "groups": [{
@@ -117,12 +117,12 @@ class TestCheckForDuplicateMemory:
         """When the consolidation prompt doesn't group the new memory, should return None."""
         mock_db = MagicMock()
         mock_db_cls.get_instance.return_value = mock_db
-        mock_db.guidelines.get.return_value = {
-            "id": "g1", "title": "Guideline", "related_memories": ["mem-existing"]
-        }
-        mock_db.memories.get.return_value = {
-            "id": "mem-existing", "title": "Existing title", "content": "Existing content"
-        }
+        mock_db.guidelines.get_batched.return_value = [
+            {"id": "g1", "title": "Guideline", "related_memories": ["mem-existing"]}
+        ]
+        mock_db.memories.get_batched.return_value = [
+            {"id": "mem-existing", "title": "Existing title", "content": "Existing content"}
+        ]
 
         mock_run_prompt.return_value = json.dumps({"groups": []})
 
@@ -137,12 +137,12 @@ class TestCheckForDuplicateMemory:
         """When the consolidation prompt fails, should return None (fallback to create)."""
         mock_db = MagicMock()
         mock_db_cls.get_instance.return_value = mock_db
-        mock_db.guidelines.get.return_value = {
-            "id": "g1", "title": "Guideline", "related_memories": ["mem-existing"]
-        }
-        mock_db.memories.get.return_value = {
-            "id": "mem-existing", "title": "Existing title", "content": "Existing content"
-        }
+        mock_db.guidelines.get_batched.return_value = [
+            {"id": "g1", "title": "Guideline", "related_memories": ["mem-existing"]}
+        ]
+        mock_db.memories.get_batched.return_value = [
+            {"id": "mem-existing", "title": "Existing title", "content": "Existing content"}
+        ]
 
         mock_run_prompt.side_effect = Exception("LLM error")
 
@@ -153,21 +153,25 @@ class TestCheckForDuplicateMemory:
 
     @patch("src._memory_utils.run_prompt")
     @patch("src._memory_utils.DatabaseManager")
-    def test_strips_url_prefix_from_guideline_ids(self, mock_db_cls, mock_run_prompt):
-        """Should strip the azure.github.io URL prefix before fetching guidelines."""
+    def test_bad_guideline_ids_are_passed_through_container_preprocessing(self, mock_db_cls, mock_run_prompt):
+        """The caller should pass guideline IDs through unchanged and let the container preprocess them."""
         mock_db = MagicMock()
         mock_db_cls.get_instance.return_value = mock_db
-        mock_db.guidelines.get.return_value = {
-            "id": "python_design.html#some-rule", "title": "Some Rule", "related_memories": ["mem-1"]
-        }
-        mock_db.memories.get.return_value = {"id": "mem-1", "title": "M1", "content": "C1"}
+        mock_db.guidelines.get_batched.return_value = [
+            {"id": "python_design=html=some-rule", "title": "Some Rule", "related_memories": ["mem-1"]}
+        ]
+        mock_db.memories.get_batched.return_value = [
+            {"id": "mem-1", "title": "M1", "content": "C1"}
+        ]
         mock_run_prompt.return_value = json.dumps({"groups": []})
 
         check_for_duplicate_memory(
             raw_memory=_make_raw_memory(),
             guideline_ids=["https://azure.github.io/azure-sdk/python_design.html#some-rule"],
         )
-        mock_db.guidelines.get.assert_called_once_with("python_design.html#some-rule")
+        mock_db.guidelines.get_batched.assert_called_once_with(
+            ["https://azure.github.io/azure-sdk/python_design.html#some-rule"]
+        )
 
     @patch("src._memory_utils.run_prompt")
     @patch("src._memory_utils.DatabaseManager")
@@ -176,30 +180,62 @@ class TestCheckForDuplicateMemory:
         mock_db = MagicMock()
         mock_db_cls.get_instance.return_value = mock_db
 
-        def _get_guideline(gid):
-            if gid == "g1":
-                return {"id": "g1", "title": "G1", "related_memories": ["mem-1"]}
-            return {"id": "g2", "title": "G2", "related_memories": ["mem-2"]}
-
-        mock_db.guidelines.get.side_effect = _get_guideline
-
-        def _get_memory(mid):
-            return {"id": mid, "title": f"Title {mid}", "content": f"Content {mid}"}
-
-        mock_db.memories.get.side_effect = _get_memory
+        mock_db.guidelines.get_batched.return_value = [
+            {"id": "g1", "title": "G1", "related_memories": ["mem-1"]},
+            {"id": "g2", "title": "G2", "related_memories": ["mem-2"]},
+        ]
+        mock_db.memories.get_batched.return_value = [
+            {"id": "mem-1", "title": "Title mem-1", "content": "Content mem-1"},
+            {"id": "mem-2", "title": "Title mem-2", "content": "Content mem-2"},
+        ]
         mock_run_prompt.return_value = json.dumps({"groups": []})
 
         check_for_duplicate_memory(
             raw_memory=_make_raw_memory(), guideline_ids=["g1", "g2"]
         )
 
-        # The prompt should have been called with 3 memories (mem-1, mem-2, __new_memory__)
         call_args = mock_run_prompt.call_args
         memories_json = json.loads(call_args[1]["inputs"]["memories"])
         assert len(memories_json) == 3
         memory_ids = {m["id"] for m in memories_json}
         assert memory_ids == {"mem-1", "mem-2", _NEW_MEMORY_SENTINEL}
 
+    @patch("src._memory_utils.run_prompt")
+    @patch("src._memory_utils.DatabaseManager")
+    def test_batches_guideline_and_memory_fetches(self, mock_db_cls, mock_run_prompt):
+        """Should batch guideline and memory reads instead of fetching each item individually."""
+        mock_db = MagicMock()
+        mock_db_cls.get_instance.return_value = mock_db
+
+        mock_db.guidelines.get.side_effect = AssertionError("unexpected individual guideline get")
+        mock_db.memories.get.side_effect = AssertionError("unexpected individual memory get")
+
+        mock_db.guidelines.get_batched.return_value = [
+            {"id": "g1", "title": "G1", "related_memories": ["mem-1", "mem-2"]},
+            {"id": "g2", "title": "G2", "related_memories": ["mem-2", "mem-3"]},
+        ]
+        mock_db.memories.get_batched.return_value = [
+            {"id": "mem-1", "title": "Title 1", "content": "Content 1"},
+            {"id": "mem-2", "title": "Title 2", "content": "Content 2"},
+            {"id": "mem-3", "title": "Title 3", "content": "Content 3"},
+        ]
+        mock_run_prompt.return_value = json.dumps({
+            "groups": [{
+                "memory_ids": ["mem-1", _NEW_MEMORY_SENTINEL],
+                "merged_title": "Merged title",
+                "merged_content": "Merged content",
+            }]
+        })
+
+        result = check_for_duplicate_memory(
+            raw_memory=_make_raw_memory(),
+            guideline_ids=["g1", "g2"],
+        )
+
+        assert result is not None
+        assert result["existing_memory_id"] == "mem-1"
+        mock_db.guidelines.get_batched.assert_called_once_with(["g1", "g2"])
+        mock_db.memories.get_batched.assert_called_once_with(["mem-1", "mem-2", "mem-2", "mem-3"])
 
 class TestMergeAndSaveMemory:
 
@@ -320,8 +356,8 @@ class TestFindConsolidationCandidates:
         guideline = _make_guideline_doc("g1", memories=["m1"])
         m1 = _make_memory_doc("m1")
 
-        mock_db.guidelines.get.return_value = guideline
-        mock_db.memories.get.return_value = m1
+        mock_db.guidelines.get_batched.return_value = [guideline]
+        mock_db.memories.get_batched.return_value = [m1]
 
         result = find_consolidation_candidates(kind="guideline", ids=["g1"])
         assert result == []
@@ -339,8 +375,8 @@ class TestFindConsolidationCandidates:
         m2 = _make_memory_doc("m2", title="Use 404 for not-found resources")
         m3 = _make_memory_doc("m3", title="Use 409 for conflict errors")
 
-        mock_db.guidelines.get.return_value = guideline
-        mock_db.memories.get.side_effect = lambda mid: {"m1": m1, "m2": m2, "m3": m3}[mid]
+        mock_db.guidelines.get_batched.return_value = [guideline]
+        mock_db.memories.get_batched.side_effect = lambda ids: [{"m1": m1, "m2": m2, "m3": m3}[mid] for mid in ids]
 
         mock_run_prompt.return_value = json.dumps({
             "groups": [{
@@ -368,8 +404,8 @@ class TestFindConsolidationCandidates:
         m1 = _make_memory_doc("m1", title="Topic A")
         m2 = _make_memory_doc("m2", title="Topic B")
 
-        mock_db.guidelines.get.return_value = guideline
-        mock_db.memories.get.side_effect = lambda mid: {"m1": m1, "m2": m2}[mid]
+        mock_db.guidelines.get_batched.return_value = [guideline]
+        mock_db.memories.get_batched.side_effect = lambda ids: [{"m1": m1, "m2": m2}[mid] for mid in ids]
 
         mock_run_prompt.return_value = json.dumps({"groups": []})
 
@@ -387,8 +423,8 @@ class TestFindConsolidationCandidates:
         m1 = _make_memory_doc("m1")
         m2 = _make_memory_doc("m2")
 
-        mock_db.guidelines.get.return_value = guideline
-        mock_db.memories.get.side_effect = lambda mid: {"m1": m1, "m2": m2}[mid]
+        mock_db.guidelines.get_batched.return_value = [guideline]
+        mock_db.memories.get_batched.side_effect = lambda ids: [{"m1": m1, "m2": m2}[mid] for mid in ids]
 
         mock_run_prompt.side_effect = Exception("LLM error")
 
@@ -409,8 +445,8 @@ class TestFindConsolidationCandidates:
         m3 = _make_memory_doc("m3")
         m4 = _make_memory_doc("m4")
 
-        mock_db.guidelines.get.side_effect = lambda gid: {"g1": g1, "g2": g2}[gid]
-        mock_db.memories.get.side_effect = lambda mid: {"m1": m1, "m2": m2, "m3": m3, "m4": m4}[mid]
+        mock_db.guidelines.get_batched.return_value = [g1, g2]
+        mock_db.memories.get_batched.side_effect = lambda ids: [{"m1": m1, "m2": m2, "m3": m3, "m4": m4}[mid] for mid in ids]
 
         mock_run_prompt.return_value = json.dumps({"groups": []})
 
@@ -424,14 +460,13 @@ class TestFindConsolidationCandidates:
         mock_db = MagicMock()
         mock_db_cls.get_instance.return_value = mock_db
 
-        # Two guidelines with the same two memories
         g1 = _make_guideline_doc("g1", title="Guideline A", memories=["m1", "m2"])
         g2 = _make_guideline_doc("g2", title="Guideline B", memories=["m1", "m2"])
         m1 = _make_memory_doc("m1")
         m2 = _make_memory_doc("m2")
 
-        mock_db.guidelines.get.side_effect = lambda gid: {"g1": g1, "g2": g2}[gid]
-        mock_db.memories.get.side_effect = lambda mid: {"m1": m1, "m2": m2}[mid]
+        mock_db.guidelines.get_batched.return_value = [g1, g2]
+        mock_db.memories.get_batched.side_effect = lambda ids: [{"m1": m1, "m2": m2}[mid] for mid in ids]
 
         mock_run_prompt.return_value = json.dumps({
             "groups": [{
@@ -457,8 +492,8 @@ class TestFindConsolidationCandidates:
         m1 = _make_memory_doc("m1", title="Memory A")
         m2 = _make_memory_doc("m2", title="Memory B")
 
-        mock_db.examples.get.return_value = example
-        mock_db.memories.get.side_effect = lambda mid: {"m1": m1, "m2": m2}[mid]
+        mock_db.examples.get_batched.return_value = [example]
+        mock_db.memories.get_batched.side_effect = lambda ids: [{"m1": m1, "m2": m2}[mid] for mid in ids]
 
         mock_run_prompt.return_value = json.dumps({"groups": []})
 
@@ -477,7 +512,8 @@ class TestFindConsolidationCandidates:
         guideline = _make_guideline_doc("g1", title="Guideline 1", memories=["m1", "m2"])
 
         mock_db.memories.get.side_effect = lambda mid: {"m1": memory_doc, "m2": m2}[mid]
-        mock_db.guidelines.get.return_value = guideline
+        mock_db.memories.get_batched.side_effect = lambda ids: [{"m1": memory_doc, "m2": m2}[mid] for mid in ids]
+        mock_db.guidelines.get_batched.return_value = [guideline]
 
         mock_run_prompt.return_value = json.dumps({
             "groups": [{

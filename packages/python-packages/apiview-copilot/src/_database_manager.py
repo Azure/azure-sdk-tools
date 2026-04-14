@@ -302,11 +302,8 @@ class DatabaseManager:
 
         guidelines = []
         guideline_snapshots = {}  # DB-format id -> raw dict snapshot for rollback
-        prefix = "https://azure.github.io/azure-sdk/"
         for guideline_id in guideline_ids:
             try:
-                if guideline_id.startswith(prefix):
-                    guideline_id = guideline_id[len(prefix):]
                 raw_guideline = self.guidelines.get(guideline_id)
                 guideline_snapshots[raw_guideline["id"]] = _json.loads(_json.dumps(raw_guideline))
                 guideline = Guideline(**raw_guideline)
@@ -442,6 +439,35 @@ class BasicContainer:
             # pylint: disable=not-callable
             item_id = self.preprocess_id(item_id)
         return self.client.read_item(item=item_id, partition_key=item_id)
+
+    def get_batched(self, item_ids: list[str], *, batch_size: int = 50) -> list[dict]:
+        """Get multiple items by ID using batched cross-partition queries."""
+        if not item_ids:
+            return []
+
+        if self.preprocess_id:
+            # pylint: disable=not-callable
+            item_ids = [self.preprocess_id(item_id) for item_id in item_ids]
+
+        unique_ids = list(dict.fromkeys(item_ids))
+        results = []
+
+        for start in range(0, len(unique_ids), batch_size):
+            batch = unique_ids[start : start + batch_size]
+            placeholders = ",".join(f"@id{i}" for i in range(len(batch)))
+            query = f"SELECT * FROM c WHERE c.id IN ({placeholders})"
+            parameters = [{"name": f"@id{i}", "value": value} for i, value in enumerate(batch)]
+            results.extend(
+                list(
+                    self.client.query_items(
+                        query=query,
+                        parameters=parameters,
+                        enable_cross_partition_query=True,
+                    )
+                )
+            )
+
+        return results
 
     def delete(self, item_id: str, *, run_indexer: bool = True):
         """

@@ -184,20 +184,6 @@ Returns an answer with supporting references and documentation links
                     });
                 }
 
-                // Load SDK breaking change patterns for SDK impact detection
-                var breakingPatternsContent = await TryLoadBreakingPatternsAsync(typeSpecProjectRootPath, ct);
-                if (!string.IsNullOrWhiteSpace(breakingPatternsContent))
-                {
-                    completionRequest.AdditionalInfos.Add(new AdditionalInfo
-                    {
-                        Type = AdditionalInfoType.Text,
-                        Content = $"## SDK Breaking Change Patterns Reference\n\n" +
-                                  $"If the planned TypeSpec changes match any of these known SDK breaking change patterns, " +
-                                  $"include SDK IMPACT warnings in the solution with language-specific client.tsp mitigations.\n\n" +
-                                  breakingPatternsContent
-                    });
-                }
-
                 // Include SDK changelog for deeper breaking change detection
                 if (!string.IsNullOrWhiteSpace(sdkChangelog))
                 {

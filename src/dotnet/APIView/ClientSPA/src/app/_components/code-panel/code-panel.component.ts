@@ -1384,6 +1384,14 @@ export class CodePanelComponent implements OnChanges {
     await adapter.relax();
     this.scheduleCommentThreadCenteringCorrection(targetIndex);
 
+    const nodeId = row.nodeId ?? this.codePanelRowData
+      .slice(0, targetIndex)
+      .reverse()
+      .find(r => r.nodeId)?.nodeId;
+    const newQueryParams = getQueryParams(this.route);
+    newQueryParams[SCROLL_TO_NODE_QUERY_PARAM] = nodeId ?? null;
+    this.router.navigate([], { queryParams: newQueryParams, state: { skipStateUpdate: true } });
+
     setTimeout(() => {
       rowClasses.delete('active');
     }, 1500);

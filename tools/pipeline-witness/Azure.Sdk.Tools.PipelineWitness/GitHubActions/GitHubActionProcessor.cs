@@ -337,7 +337,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
                 string blobPath = $"{repository}/{run.RunStartedAt:yyyy/MM/dd}/{runId}-{attempt}.jsonl".ToLower();
                 BlobClient blobClient = this.logsContainerClient.GetBlobClient(blobPath);
 
-                if (await blobClient.ExistsAsync())
+                try
                 {
                     var properties = await blobClient.GetPropertiesAsync();
                     if (properties.Value.ContentLength > 0)
@@ -345,6 +345,10 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
                         this.logger.LogInformation("Skipping existing log for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, workflowName, runId, attempt);
                         return;
                     }
+                }
+                catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.NotFound)
+                {
+                    // Blob doesn't exist yet, proceed to create it
                 }
 
                 this.logger.LogInformation("Processing log for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, workflowName, runId, attempt);

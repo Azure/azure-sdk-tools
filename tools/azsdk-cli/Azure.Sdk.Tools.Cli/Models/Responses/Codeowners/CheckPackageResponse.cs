@@ -7,7 +7,7 @@ using System.Text.Json.Serialization;
 namespace Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
 
 /// <summary>
-/// Response for the check-package command. Returned on success; failures throw exceptions.
+/// Response for a successful check-package command. Failures are reported separately as error responses by the command.
 /// </summary>
 public class CheckPackageResponse : CommandResponse
 {

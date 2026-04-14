@@ -16,7 +16,7 @@
       </p-select>
     </div>
     <!-- Read-only badge when no edit permission -->
-    <div *ngIf="!canEdit && hasSeverity">
+    <div *ngIf="!canEdit">
       <span [ngClass]="severityBadgeClass" class="severity-badge px-2 py-1 rounded text-xs">
         {{ severityLabel }}
       </span>
@@ -24,7 +24,7 @@
   </div>
 
   <!-- Click-to-edit mode (for comment threads where editable=true) -->
-  <div *ngIf="editable && hasSeverity">
+  <div *ngIf="editable">
     <div *ngIf="canEdit">
       <!-- Edit mode -->
       <div *ngIf="isEditingMode" class="severity-edit-container">
@@ -35,6 +35,7 @@
           (onHide)="onDropdownHide()"
           optionLabel="label"
           optionValue="value"
+          placeholder="Unknown"
           [style]="{'min-width': '100px', 'font-size': '0.75rem'}"
           styleClass="severity-dropdown"
           (click)="$event.stopPropagation()">

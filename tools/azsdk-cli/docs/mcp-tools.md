@@ -1,6 +1,6 @@
 # Tools available in Azure SDK MCP server
 
-This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.6.3.
+This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.6.6.
 
 <style>
 table td:nth-child(2),
@@ -17,6 +17,7 @@ table th:nth-child(2) {
 | azsdk_analyze_log_file | `azsdk azp log analyze` | Analyzes a log file for errors and issues |
 | azsdk_analyze_pipeline | `azsdk azp analyze` | Analyze what happened in an Azure pipeline build. Investigates pipeline runs, identifies failures, and explains build issues. |
 | azsdk_apiview_get_comments | `azsdk apiview get-comments` | Get API review comments and feedback from APIView for a package. Retrieves all reviewer comments left on the API review. |
+| azsdk_apiview_get_review_url | `azsdk apiview get-review-url` | Get the APIView review URL for a package by name and language. Returns the direct link to the API review page for the specified package. |
 | azsdk_check_api_spec_ready_for_sdk | `azsdk release-plan check-api-readiness` | Checks whether a TypeSpec API spec is ready to generate SDK. Provide a pull request number and path to TypeSpec project json as params. |
 | azsdk_check_service_label |  | Checks if a service label exists and returns its details |
 | azsdk_convert_swagger_to_typespec | `azsdk tsp convert` | Converts an existing Azure service swagger definition to a TypeSpec project. Returns path to the created project. |
@@ -30,9 +31,7 @@ table th:nth-child(2) {
 | azsdk_engsys_codeowner_remove_label_owner |  | Remove owner(s) from a label with an optional path in CODEOWNERS work items. Valid ownerType values: service-owner, azsdk-owner, pr-label. |
 | azsdk_engsys_codeowner_remove_package_label |  | Remove PR label(s) from a package in CODEOWNERS work items. |
 | azsdk_engsys_codeowner_remove_package_owner |  | Remove source owner(s) from a package in CODEOWNERS work items. |
-| azsdk_engsys_codeowner_update |  | Adds or deletes codeowners for a given service label or path in a repo. When isAdding is false, the inputted users will be removed. |
 | azsdk_engsys_codeowner_view |  | View CODEOWNERS associations for a user, label(s), package, or path. Exactly one axis (githubUser, label, package, or path) must be specified. Multiple labels are treated as AND. |
-| azsdk_engsys_validate_codeowners_entry_for_service |  | Validates codeowners in a specific repository for a given service or repo path. |
 | azsdk_get_failed_test_case_data |  | Get detailed information (error messages, stack traces, output) for a specific failed test case by title from a TRX file. Use this to debug a particular test failure. |
 | azsdk_get_failed_test_cases | `azsdk pkg test results` | Get list of all failed test case titles (names only) from a TRX file. Use this to quickly see which tests failed without details. |
 | azsdk_get_failed_test_run_data |  | Get complete details for all failed test cases from a TRX file. Returns full data including error messages, stack traces, and output for every failed test. Use this for comprehensive analysis. |
@@ -81,9 +80,11 @@ Returns an answer with supporting references and documentation links
 | azsdk_update_api_spec_pull_request_in_release_plan | `azsdk release-plan update-spec-pr` | Update TypeSpec pull request URL in a release plan using work item id or release plan id. |
 | azsdk_update_language_exclusion_justification |  | Update language exclusion justification in release plan work item. This tool is called to update justification for excluded languages in the release plan. Optionally pass a language name to explicitly request exclusion for a specific language. |
 | azsdk_update_release_plan | `azsdk release-plan update` | Update an existing release plan. Updates spec PR URL, TypeSpec project path, API version, SDK release type, and optionally service/product IDs. Runs TypeSpec metadata emitter to resolve package names and updates SDK details. If work item ID is not provided, finds the active release plan by TypeSpec project path or spec PR URL. |
-| azsdk_update_sdk_details_in_release_plan |  | Update the SDK details in the release plan work item. This tool is called to update SDK language and package name in the release plan work item. sdkDetails parameter is a JSON of list of SDKInfo and each SDKInfo contains Language and PackageName as properties. |
+| azsdk_update_sdk_details_in_release_plan |  | Update the SDK details in the release plan work item by resolving package names from a TypeSpec project. Takes releasePlanWorkItemId and typeSpecProjectPath as parameters. Runs TypeSpec metadata emitter to resolve package names per language and updates SDK details. |
 | azsdk_upgrade | `azsdk upgrade` | Upgrade the MCP server to the latest version. IMPORTANT: After upgrade completes, the MCP server must be restarted to use the new version. |
 | azsdk_verify_setup | `azsdk verify setup check` | Verifies the developer environment for MCP release tool requirements. Accepts a list of supported languages to check requirements for, the packagePath of the repo to check, and an optional list of requirement names to try installing. To auto-install, call with `requirementsToInstall` containing the exact requirement names the user wants to install. |
+|  | `azsdk apiview create-pull-request-revision` | Create an API revision if API changes are detected in a pull request (PR pipeline usage) |
+|  | `azsdk apiview create-ci-revision` | Create an API revision from Azure DevOps pipeline artifacts (CI/release pipeline usage) |
 |  | `azsdk apiview get-content` | Get content by APIView URL |
 |  | `azsdk tsp generate-authoring-plan` | Generate a solution or execution plan for defining and updating a TypeSpec-based API specification for an Azure service. |
 |  | `azsdk release-plan update-release-status` |  |
@@ -93,22 +94,21 @@ Returns an answer with supporting references and documentation links
 |  | `azsdk pkg samples generate` | Generates sample files |
 |  | `azsdk pkg readme generate` | Generate README content for a package |
 |  | `azsdk eng package-info` | Generate PackageInfo JSON files for CI pipelines |
+|  | `azsdk ingest-telemetry` |  |
 |  | `azsdk config github-label sync-ado` | Synchronize service labels from the GitHub CSV to Azure DevOps Work Items |
-|  | `azsdk config github-label create` | Creates a PR for a new label given a proposed label and brand documentation |
+|  | `azsdk config codeowners add-label-owner` | Add owner(s) to a label and optional path |
 |  | `azsdk config github-label check` | Check if a service label exists in the common labels CSV |
-|  | `azsdk config codeowners view` | View CODEOWNERS associations for a user, label, package, or path |
+|  | `azsdk config codeowners export-section` | Export one or more named sections from a CODEOWNERS file |
 |  | `azsdk config codeowners remove-label-owner` | Remove owner(s) from a label and optional path |
 |  | `azsdk config codeowners remove-package-label` | Remove PR label(s) from a package |
 |  | `azsdk config codeowners remove-package-owner` | Remove source owner(s) from a package |
-|  | `azsdk config codeowners add-label-owner` | Add owner(s) to a label and optional path |
+|  | `azsdk verify setup install` | Install missing environment requirements. Exit codes: 0 = all requirements met, 1 = blocking (manual intervention needed).  |
 |  | `azsdk config codeowners add-package-label` | Add PR label(s) to a package |
 |  | `azsdk config codeowners add-package-owner` | Add source owner(s) to a package |
-|  | `azsdk verify setup install` | Install missing environment requirements |
+|  | `azsdk config codeowners view` | View CODEOWNERS associations for a user, label, package, or path |
 |  | `azsdk config codeowners generate` | Generate CODEOWNERS file from Azure DevOps work items |
-|  | `azsdk config codeowners validate` | Validate codeowners for an existing service entry |
-|  | `azsdk config codeowners update` | Update codeowners in a repository |
 |  | `azsdk start` | Starts the MCP server (stdio mode) |
 |  | `azsdk mcp` | Starts the MCP server (stdio mode) |
-|  | `azsdk config codeowners export-section` | Export one or more named sections from a CODEOWNERS file |
+|  | `azsdk config github-label create` | Creates a PR for a new label given a proposed label and brand documentation |
 |  | `azsdk list` |  |
 

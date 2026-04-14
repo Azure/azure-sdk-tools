@@ -220,16 +220,12 @@ class TestExampleModel:
         assert e.guideline_ids == ["python_design.html#naming"]
 
     def test_empty_guideline_ids(self):
-        e = Example(
-            id="ex-1", title="T", content="C", example_type=ExampleType.GOOD, guideline_ids=[]
-        )
+        e = Example(id="ex-1", title="T", content="C", example_type=ExampleType.GOOD, guideline_ids=[])
         assert e.guideline_ids == []
         assert e.model_dump_db()["guideline_ids"] == []
 
     def test_none_guideline_ids_defaults_to_empty(self):
-        e = Example(
-            id="ex-1", title="T", content="C", example_type=ExampleType.GOOD, guideline_ids=None
-        )
+        e = Example(id="ex-1", title="T", content="C", example_type=ExampleType.GOOD, guideline_ids=None)
         assert e.guideline_ids == []
 
 
@@ -300,16 +296,12 @@ class TestMemoryModel:
         assert m.related_guidelines == ["python_design.html#naming"]
 
     def test_empty_related_guidelines(self):
-        m = Memory(
-            id="mem-1", title="T", content="C", source="manual", related_guidelines=[]
-        )
+        m = Memory(id="mem-1", title="T", content="C", source="manual", related_guidelines=[])
         assert m.related_guidelines == []
         assert m.model_dump_db()["related_guidelines"] == []
 
     def test_none_related_guidelines_defaults_to_empty(self):
-        m = Memory(
-            id="mem-1", title="T", content="C", source="manual", related_guidelines=None
-        )
+        m = Memory(id="mem-1", title="T", content="C", source="manual", related_guidelines=None)
         assert m.related_guidelines == []
 
 

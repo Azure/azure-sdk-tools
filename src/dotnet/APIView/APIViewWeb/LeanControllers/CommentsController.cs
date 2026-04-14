@@ -176,8 +176,15 @@ namespace APIViewWeb.LeanControllers
         [HttpPatch("{reviewId}/{commentId}/updateCommentSeverity", Name = "UpdateCommentSeverity")]
         public async Task<ActionResult> UpdateCommentSeverityAsync(string reviewId, string commentId, [FromForm] CommentSeverity? severity)
         {
-            await _commentsManager.UpdateCommentSeverityAsync(User, reviewId, commentId, severity);
-            return Ok();
+            try
+            {
+                await _commentsManager.UpdateCommentSeverityAsync(User, reviewId, commentId, severity);
+                return Ok();
+            }
+            catch (InvalidOperationException e)
+            {
+                return BadRequest(e.Message);
+            }
         }
 
         /// <summary>
@@ -217,8 +224,15 @@ namespace APIViewWeb.LeanControllers
         [HttpPatch("{reviewId}/resolveComments", Name = "ResolveComments")]
         public async Task<ActionResult> ResolveCommentsAsync(string reviewId, string elementId, string threadId = null)
         {
-            await _commentsManager.ResolveConversation(User, reviewId, elementId, threadId);
-            return Ok();
+            try
+            {
+                await _commentsManager.ResolveConversation(User, reviewId, elementId, threadId);
+                return Ok();
+            }
+            catch (InvalidOperationException e)
+            {
+                return BadRequest(e.Message);
+            }
         }
 
         /// <summary>
@@ -230,8 +244,15 @@ namespace APIViewWeb.LeanControllers
         [HttpPatch("{reviewId}/{commentId}/toggleCommentUpVote", Name = "ToggleCommentUpVote")]
         public async Task<ActionResult> ToggleCommentUpVoteAsync(string reviewId, string commentId)
         {
-            await _commentsManager.ToggleUpvoteAsync(User, reviewId, commentId);
-            return Ok();
+            try
+            {
+                await _commentsManager.ToggleUpvoteAsync(User, reviewId, commentId);
+                return Ok();
+            }
+            catch (InvalidOperationException e)
+            {
+                return BadRequest(e.Message);
+            }
         }
 
         /// <summary>
@@ -243,8 +264,15 @@ namespace APIViewWeb.LeanControllers
         [HttpPatch("{reviewId}/{commentId}/toggleCommentDownVote", Name = "ToggleCommentDownVote")]
         public async Task<ActionResult> ToggleDownUpVoteAsync(string reviewId, string commentId)
         {
-            await _commentsManager.ToggleDownvoteAsync(User, reviewId, commentId);
-            return Ok();
+            try
+            {
+                await _commentsManager.ToggleDownvoteAsync(User, reviewId, commentId);
+                return Ok();
+            }
+            catch (InvalidOperationException e)
+            {
+                return BadRequest(e.Message);
+            }
         }
 
         /// <summary>
@@ -272,8 +300,15 @@ namespace APIViewWeb.LeanControllers
         [HttpDelete("{reviewId}/{commentId}", Name = "DeleteComments")]
         public async Task<ActionResult> DeleteCommentsAsync(string reviewId, string commentId, string elementId)
         {
-            await _commentsManager.SoftDeleteCommentAsync(User, reviewId, commentId);
-            return Ok();
+            try
+            {
+                await _commentsManager.SoftDeleteCommentAsync(User, reviewId, commentId);
+                return Ok();
+            }
+            catch (InvalidOperationException e)
+            {
+                return BadRequest(e.Message);
+            }
         }
 
         /// <summary>

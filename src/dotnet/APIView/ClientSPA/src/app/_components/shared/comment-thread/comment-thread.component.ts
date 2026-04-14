@@ -142,6 +142,9 @@ export class CommentThreadComponent {
     }
 
     const firstComment = this.codePanelRowData.comments[0];
+    if (this.isDiagnostic(firstComment)) {
+      return false;
+    }
     return firstComment.createdBy === this.userProfile?.userName ||
            this.permissionsService.isAdmin(this.userProfile?.permissions) ||
            (firstComment.createdBy === 'azure-sdk' && this.permissionsService.isApproverFor(this.userProfile?.permissions, this.reviewContextService.getLanguage()));
@@ -170,6 +173,14 @@ export class CommentThreadComponent {
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['codePanelRowData']) {
+      // Ensure comments within the thread are always in chronological order.
+      // The server normalizes timestamps, but this is a defense-in-depth
+      // measure against legacy data with mixed timezone kinds.
+      if (this.codePanelRowData?.comments && this.codePanelRowData.comments.length > 1) {
+        this.codePanelRowData.comments.sort((a, b) =>
+          new Date(a.createdOn).getTime() - new Date(b.createdOn).getTime()
+        );
+      }
       this.setCommentResolutionState();
       this.updateConversationCodeContext();
     }
@@ -243,13 +254,13 @@ export class CommentThreadComponent {
         { label: 'Edit', icon: 'pi pi-pencil', command: (event) => this.showEditEditor(event) },
         { label: 'Delete', icon: 'pi pi-trash', command: (event) => this.deleteComment(event) }
       ]});
-    } else if (comment && this.permissionsService.isAdmin(this.userProfile?.permissions)) {
+    } else if (comment && this.permissionsService.isAdmin(this.userProfile?.permissions) && this.canDeleteComment(comment)) {
       // Admins can delete any comment but not edit others' comments
       menu.push({ separator: true });
       menu.push({ items: [
         { label: 'Delete', icon: 'pi pi-trash', command: (event) => this.deleteComment(event) }
       ]});
-    } else if (comment && comment.createdBy == "azure-sdk" && this.permissionsService.isApproverFor(this.userProfile?.permissions, this.reviewContextService.getLanguage())) {
+    } else if (comment && comment.createdBy == "azure-sdk" && this.permissionsService.isApproverFor(this.userProfile?.permissions, this.reviewContextService.getLanguage()) && this.canDeleteComment(comment)) {
       menu.push({ separator: true });
       menu.push({ items: [
         { label: 'Delete', icon: 'pi pi-trash', command: (event) => this.deleteComment(event) }
@@ -440,7 +451,7 @@ export class CommentThreadComponent {
 
     if (this.instanceLocation === "conversations") {
       revisionIdForConversationGroup = target.closest(".conversation-group-revision-id")?.getAttribute("data-conversation-group-revision-id");
-      elementId = (target.closest(".conversation-group-threads")?.getElementsByClassName("conversation-group-element-id")[0] as HTMLElement).innerText;
+      elementId = this.elementId || this.codePanelRowData?.comments?.[0]?.elementId;
     } else if (this.instanceLocation === "samples") {
       elementId = target.closest(".user-comment-thread")?.getAttribute("title");
     } else if (this.instanceLocation === "code-panel") {
@@ -692,7 +703,11 @@ export class CommentThreadComponent {
     this.stopEditingSeverity();
   }
 
-  onSeverityChange(newSeverity: CommentSeverity, commentId: string): void {
+  onSeverityChange(newSeverity: CommentSeverity | null | undefined, commentId: string): void {
+    if (newSeverity === null || newSeverity === undefined) {
+      return;
+    }
+
     // Update the comment's severity value locally first
     const comment = this.codePanelRowData?.comments?.find(c => c.id === commentId);
     if (comment && this.reviewId && this.reviewId.trim() !== '') {
@@ -743,10 +758,6 @@ export class CommentThreadComponent {
   stopEditingSeverity(): void {
     this.isEditingSeverity = null;
     this.changeDetectorRef.detectChanges();
-  }
-
-  hasSeverity(severity: CommentSeverity | null | undefined): boolean {
-    return severity !== null && severity !== undefined;
   }
 
   onSeveritySelectionChange(newSeverity: CommentSeverity): void {
@@ -939,6 +950,13 @@ export class CommentThreadComponent {
 
   isSystemGenerated(comment: CommentItemModel): boolean {
     return this.isAIGenerated(comment) || this.isDiagnostic(comment);
+  }
+  canDeleteComment(comment: CommentItemModel): boolean {
+    return !this.isDiagnostic(comment);
+  }
+
+  get canResolveThread(): boolean {
+    return !(this.codePanelRowData?.comments || []).some(c => this.isDiagnostic(c));
   }
 
   hasAIInfo(comment: CommentItemModel): boolean {

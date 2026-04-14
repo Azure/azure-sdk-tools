@@ -1,6 +1,6 @@
 {
   "name": "@azure-tools/js-sdk-release-tools",
-  "version": "2.16.4",
+  "version": "2.16.7",
   "description": "",
   "files": [
     "dist"
@@ -22,7 +22,8 @@
     "code-gen-pipeline": "./dist/autoGenerateInPipeline.js",
     "rlc-code-gen": "./dist/rlcCodegenCli.js",
     "update-changelog": "./dist/generateChangelogCli.js",
-    "update-version": "./dist/updateBumpVersionCli.js"
+    "update-version": "./dist/updateBumpVersionCli.js",
+    "generate-ci-yaml": "./dist/generateCiYamlCli.js"
   },
   "author": "Microsoft Corporation",
   "license": "MIT",

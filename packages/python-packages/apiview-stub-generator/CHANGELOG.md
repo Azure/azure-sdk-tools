@@ -1,5 +1,12 @@
 # Release History
 
+## Version 0.3.28 (Unreleased)
+Dropped 3.7/3.8/3.9 support and added 3.11/3.12/3.13/3.14.
+Added `crossLanguageVersion` to the `CrossLanguageMetadata` model.
+Updated the source code parsing/inspecting so that source files are cached for perf.
+Fixed a bug where class supertypes were resolving as runtime internal name rather than source code representation.
+Fixed a bug where overridden base class overloads were leaking into API.
+
 ## Version 0.3.27 (2026-03-17)
 Removed `ivar`/`cvar` keywords from token file in favor of the `ClassVar` type annotation to distinguish then.
 Fixed a bug where classes without children were not being post-fixed with blank lines.

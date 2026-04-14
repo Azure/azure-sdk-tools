@@ -387,7 +387,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 result.NextSteps = new List<string>
                 {
                     "Run with --fix flag to automatically fix spelling errors using AI-assisted corrections",
-                    "Add valid technical terms to the cspell.json dictionary in the package directory",
+                    "Add valid technical terms to the repo-root cspell configuration (e.g., .vscode/cspell.json)",
                     "Review the spelling errors and fix them manually in source files"
                 };
             }

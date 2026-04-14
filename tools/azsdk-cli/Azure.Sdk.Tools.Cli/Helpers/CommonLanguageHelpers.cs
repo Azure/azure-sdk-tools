@@ -107,8 +107,8 @@ public class CommonValidationHelpers : ICommonValidationHelpers
                 return new PackageCheckResponse(1, "", $"PowerShell script not found at expected location: {scriptPath}")
                 {
                     NextSteps = [
-                        "Verify that the repository has the eng/common submodule initialized",
-                        "Run 'git submodule update --init' to initialize eng/common scripts"
+                        "Verify that the repository has the eng/common directory with the latest synced scripts",
+                        "eng/common is synced via the eng/common sync pipeline - see https://github.com/Azure/azure-sdk-tools/blob/main/doc/common/common_engsys.md"
                     ]
                 };
             }
@@ -127,8 +127,6 @@ public class CommonValidationHelpers : ICommonValidationHelpers
                 {
                     NextSteps = [
                         "Review and update the CHANGELOG.md file to ensure it follows the proper format",
-                        "Verify that unreleased changes are properly documented under an '## Unreleased' section",
-                        "Check that version numbers and release dates are correctly formatted",
                         "Refer to the Azure SDK changelog guidelines: https://aka.ms/azsdk/changelog"
                     ]
                 };
@@ -142,7 +140,7 @@ public class CommonValidationHelpers : ICommonValidationHelpers
             return new PackageCheckResponse(1, "", $"Unhandled exception: {ex.Message}")
             {
                 NextSteps = [
-                    "Ensure PowerShell (pwsh) is installed and available in PATH",
+                    "Run 'azsdk verify setup' to check all required tool dependencies are installed",
                     "Verify that the CHANGELOG.md file exists in the package directory"
                 ]
             };
@@ -169,8 +167,8 @@ public class CommonValidationHelpers : ICommonValidationHelpers
                 return new PackageCheckResponse(1, "", $"PowerShell script not found at expected location: {scriptPath}")
                 {
                     NextSteps = [
-                        "Verify that the repository has the eng/common submodule initialized",
-                        "Run 'git submodule update --init' to initialize eng/common scripts"
+                        "Verify that the repository has the eng/common directory with the latest synced scripts",
+                        "eng/common is synced via the eng/common sync pipeline - see https://github.com/Azure/azure-sdk-tools/blob/main/doc/common/common_engsys.md#engcommon-sync"
                     ]
                 };
             }
@@ -229,7 +227,7 @@ public class CommonValidationHelpers : ICommonValidationHelpers
             return new PackageCheckResponse(1, "", $"Unhandled exception: {ex.Message}")
             {
                 NextSteps = [
-                    "Ensure PowerShell (pwsh) is installed and available in PATH",
+                    "Run 'azsdk verify setup' to check all required tool dependencies are installed",
                     "Verify that a README.md file exists in the package directory"
                 ]
             };
@@ -253,7 +251,13 @@ public class CommonValidationHelpers : ICommonValidationHelpers
 
             if (!File.Exists(scriptPath))
             {
-                return new PackageCheckResponse(1, "", $"Invoke-Cspell.ps1 script not found at expected location: {scriptPath}");
+                return new PackageCheckResponse(1, "", $"Invoke-Cspell.ps1 script not found at expected location: {scriptPath}")
+                {
+                    NextSteps = [
+                        "Verify that the repository has the eng/common directory with the latest synced scripts",
+                        "eng/common is synced via the eng/common sync pipeline - see https://github.com/Azure/azure-sdk-tools/blob/main/doc/common/common_engsys.md"
+                    ]
+                };
             }
 
             var cspellConfigPath = Path.Combine(packageRepoRoot, ".vscode", "cspell.json");
@@ -334,7 +338,7 @@ public class CommonValidationHelpers : ICommonValidationHelpers
                     {
                         NextSteps = [
                             "Auto-fix agent failed - manually fix spelling errors listed in the output above",
-                            "Add valid technical terms to the cspell.json dictionary in the package directory",
+                            "Add valid technical terms to the repo-root cspell configuration (e.g., .vscode/cspell.json)",
                             "Run with --fix flag again after resolving any agent configuration issues"
                         ]
                     };
@@ -349,7 +353,7 @@ public class CommonValidationHelpers : ICommonValidationHelpers
                 {
                     NextSteps = [
                         "Run with --fix flag to automatically fix spelling errors using AI-assisted corrections",
-                        "Add valid technical terms to the cspell.json dictionary in the package directory",
+                        "Add valid technical terms to the repo-root cspell configuration (e.g., .vscode/cspell.json)",
                         "Review the spelling errors listed above and fix them manually in source files"
                     ]
                 };
@@ -363,8 +367,7 @@ public class CommonValidationHelpers : ICommonValidationHelpers
             return new PackageCheckResponse(1, "", ex.Message)
             {
                 NextSteps = [
-                    "Ensure Node.js and npx are installed and available in PATH",
-                    "Verify that the .vscode/cspell.json configuration file exists in the repository root"
+                    "Run 'azsdk verify setup' to check all required tool dependencies are installed"
                 ]
             };
         }

@@ -267,7 +267,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
             var cspellErrorResult = new ProcessResult { ExitCode = 1 };
             cspellErrorResult.AppendStdout("test.md:1:5 - Unknown word (teh)");
 
-            _mockCommonValidationHelpers.Setup(x => x.CheckSpelling(It.IsAny<string>(), It.IsAny<string>(), false, It.IsAny<CancellationToken>()))
+            _mockCommonValidationHelpers.Setup(x => x.CheckSpelling(It.IsAny<string>(), false, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new PackageCheckResponse(cspellErrorResult.ExitCode, cspellErrorResult.Output, "Spelling check failed."));
 
             // Act

@@ -20,7 +20,7 @@ To reduce the surface area for potential attacks, APIView is **only accessible f
 
 ### I don't see my manually created reviews from older APIView
 
-As of December 7th, APIView shows only **one review per package**. All previously separate reviews are now added as revisions within a single review. To find them:
+As of December 7, 2023, APIView shows only **one review per package**. All previously separate reviews are now added as revisions within a single review. To find them:
 
 1. Click on the review link for your package
 2. Select **Manual** in the Revision Type dropdown
@@ -28,7 +28,7 @@ As of December 7th, APIView shows only **one review per package**. All previousl
 
 ### Why do I see so many comments that were not present earlier?
 
-As of December 7th, APIView shows **all comments ever created across multiple revisions** for a package in a single review.
+As of December 7, 2023, APIView shows **all comments ever created across multiple revisions** for a package in a single review.
 
 ### My pull request has links to previously generated API revisions. Are those links still valid?
 

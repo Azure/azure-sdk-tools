@@ -8,7 +8,9 @@ This guide explains how to update and release APIView language parsers. Each lan
 
 ### Step 1 — Verify pipeline execution
 
-Navigate to the [C# API Parser Pipeline](https://dev.azure.com/azure-sdk/internal/_build?definitionId=5789) and confirm a pipeline run with your changes has triggered and completed successfully.
+Navigate to the C# API Parser Pipeline in [Azure DevOps](https://dev.azure.com/azure-sdk/internal/_build) (search for **tools - CSharpAPIParser**) and confirm a pipeline run with your changes has triggered and completed successfully.
+
+> **Note:** Verify the exact pipeline definition ID before bookmarking a direct link.
 
 ### Step 2 — Identify the updated package
 
@@ -32,7 +34,7 @@ Create a PR to update the package version in these files:
 | `APIView/Languages/CodeFileBuilder.cs` | Upgrade version reference |
 | `apiview.yml` | Update the `CSharpAPIParserVersion` parameter to match the new version |
 
-> **Example:** See [this pull request](https://github.com/Azure/azure-sdk-tools/pull/example) for reference on the required changes.
+> **Example:** See a past PR updating `CSharpLanguageService.cs`, `CodeFileBuilder.cs`, and `apiview.yml` for reference on the required changes.
 
 ### Step 5 — Configure review updates (optional)
 
@@ -85,7 +87,9 @@ The Rust APIView parser (`@azure-tools/rust-genapi`) version is managed in three
 ### Release process
 
 1. Ensure all PRs are merged in the [apiview-stub-generator](https://github.com/Azure/azure-sdk-tools/tree/main/packages/python-packages/apiview-stub-generator) and version + release date are updated
-2. Run the [release pipeline](https://dev.azure.com/azure-sdk/internal/_build?definitionId=5789) manually: **tools - apiview-stub-generator**. Wait for the release to complete before proceeding.
+2. Run the [**tools - apiview-stub-generator** release pipeline](https://dev.azure.com/azure-sdk/internal/_build) manually (search for **tools - apiview-stub-generator** in Azure DevOps). Wait for the release to complete before proceeding.
+
+   > **Note:** Verify the exact pipeline definition ID before bookmarking a direct link.
 3. Update these two files in `azure-sdk-tools` to pin the new version:
 
    | File | Purpose |
@@ -106,6 +110,8 @@ ERROR: Could not find a version that satisfies the requirement setuptools_scm>=8
 
 You need to mirror the missing package to the dev feed:
 
-1. Run the [mirror-packages-to-dev-feed pipeline](https://dev.azure.com/azure-sdk/internal/_build?definitionId=5789) from branch `resolve-mirror-job`
+1. Run the **mirror-packages-to-dev-feed** pipeline from [Azure DevOps](https://dev.azure.com/azure-sdk/internal/_build) (search for **mirror-packages-to-dev-feed**) from branch `resolve-mirror-job`
+
+   > **Note:** Verify the exact pipeline definition ID before bookmarking a direct link.
 2. Add all package requirements to **"PackageSpecifiers"** (e.g., `setuptools_scm>=8`)
 3. Verify the package appears in [azure-sdk-for-python artifacts](https://dev.azure.com/azure-sdk/public/_artifacts/feed/azure-sdk-for-python) with the correct version

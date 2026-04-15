@@ -1,8 +1,16 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using System.IO.Enumeration;
+using System.Reflection;
+using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Telemetry;
+using Azure.Sdk.Tools.Cli.Tools.Core;
+using Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 using Microsoft.Extensions.AI;
+using Microsoft.TeamFoundation.TestManagement.WebApi;
+using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.CopilotAgents.Tools;
 
@@ -76,6 +84,22 @@ public static class TypeSpecTools
             },
             "CompileTypeSpec",
             "Compile the TypeSpec project to validate there are no errors in the TypeSpec definitions");
+    }
+
+
+    public static AIFunction CreateTypeSpecAuthoringTool(
+        string workingDirectory,
+        INpxHelper npxHelper,
+        string entryPoint = "./client.tsp",
+        TimeSpan? timeout = null)
+    {
+        JsonSerializerOptions? serializerOptions = null;
+        timeout ??= TimeSpan.FromMinutes(2);
+        var toolType = typeof(TypeSpecAuthoringTool);
+        var toolMethods = toolType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance)
+                                    .Where(m => m.GetCustomAttribute<McpServerToolAttribute>() is not null);
+        var toolMethod = toolMethods.First(m => m.Name == nameof(TypeSpecAuthoringTool.GenerateTypeSpecAuthoringPlan));
+        return AIFunctionFactory.Create(toolMethod, toolMethod.Name, toolMethod.GetCustomAttribute<DescriptionAttribute>()?.Description ?? "TypeSpec authoring tool");
     }
 
     /// <summary>

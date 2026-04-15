@@ -73,6 +73,7 @@ internal class TypeSpecCustomizationServiceTests
             new TestLogger<NpxHelper>(),
             rawOutputHelper);
         var tokenUsageHelper = new TokenUsageHelper(rawOutputHelper);
+        var azureSdkKnowledgeBaseService = Mock.Of<IAzureSdkKnowledgeBaseService>();
         var gitHelper = CreateRealGitHelper();
         var typeSpecHelper = new TypeSpecHelper(gitHelper);
 
@@ -94,6 +95,7 @@ internal class TypeSpecCustomizationServiceTests
             npxHelper,
             tokenUsageHelper,
             typeSpecHelper,
+            azureSdkKnowledgeBaseService,
             gitHelper);
 
         // A simple customization request
@@ -134,6 +136,7 @@ internal class TypeSpecCustomizationServiceTests
         var tokenUsageHelper = new TokenUsageHelper(Mock.Of<IRawOutputHelper>());
         var typeSpecHelper = new TypeSpecHelper(Mock.Of<IGitHelper>());
         var gitHelper = Mock.Of<IGitHelper>();
+        var azureSdkKnowledgeBaseService = Mock.Of<IAzureSdkKnowledgeBaseService>();
 
         var service = new TypeSpecCustomizationService(
             logger,
@@ -141,6 +144,7 @@ internal class TypeSpecCustomizationServiceTests
             npxHelper,
             tokenUsageHelper,
             typeSpecHelper,
+            azureSdkKnowledgeBaseService,
             gitHelper);
 
         var ex = Assert.ThrowsAsync<ArgumentException>(async () =>
@@ -160,6 +164,7 @@ internal class TypeSpecCustomizationServiceTests
         var tokenUsageHelper = new TokenUsageHelper(Mock.Of<IRawOutputHelper>());
         var gitHelper = CreateRealGitHelper();
         var typeSpecHelper = new TypeSpecHelper(gitHelper);
+        var azureSdkKnowledgeBaseService = Mock.Of<IAzureSdkKnowledgeBaseService>();    
 
         var service = new TypeSpecCustomizationService(
             logger,
@@ -167,6 +172,7 @@ internal class TypeSpecCustomizationServiceTests
             npxHelper,
             tokenUsageHelper,
             typeSpecHelper,
+            azureSdkKnowledgeBaseService,
             gitHelper);
 
         var ex = Assert.ThrowsAsync<FileNotFoundException>(async () =>

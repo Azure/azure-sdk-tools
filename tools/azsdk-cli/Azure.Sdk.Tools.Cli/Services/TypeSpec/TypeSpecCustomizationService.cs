@@ -5,6 +5,7 @@ using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.CopilotAgents.Tools;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion;
 using Azure.Sdk.Tools.Cli.Prompts.Templates;
 using Microsoft.Extensions.AI;
 
@@ -42,6 +43,7 @@ public class TypeSpecCustomizationService : ITypeSpecCustomizationService
     private readonly INpxHelper npxHelper;
     private readonly TokenUsageHelper tokenUsageHelper;
     private readonly ITypeSpecHelper typeSpecHelper;
+    private readonly IAzureSdkKnowledgeBaseService azureSdkKnowledgeBaseService;
     private readonly IGitHelper gitHelper;
 
     public TypeSpecCustomizationService(
@@ -50,6 +52,7 @@ public class TypeSpecCustomizationService : ITypeSpecCustomizationService
         INpxHelper npxHelper,
         TokenUsageHelper tokenUsageHelper,
         ITypeSpecHelper typeSpecHelper,
+        IAzureSdkKnowledgeBaseService azureSdkKnowledgeBaseService,
         IGitHelper gitHelper)
     {
         this.logger = logger;
@@ -57,6 +60,7 @@ public class TypeSpecCustomizationService : ITypeSpecCustomizationService
         this.npxHelper = npxHelper;
         this.tokenUsageHelper = tokenUsageHelper;
         this.typeSpecHelper = typeSpecHelper;
+        this.azureSdkKnowledgeBaseService = azureSdkKnowledgeBaseService;
         this.gitHelper = gitHelper;
     }
 
@@ -107,6 +111,24 @@ public class TypeSpecCustomizationService : ITypeSpecCustomizationService
 
         var instructions = template.BuildPrompt();
         logger.LogDebug("Generated prompt with {Length} characters", instructions.Length);
+
+        // Build request
+        var completionRequest = new CompletionRequest
+        {
+            AzureSdkKnowledgeServiceTenant = AzureSdkKnowledgeServiceTenant.AzureTypespecAuthoring,
+            Message = new Message
+            {
+                Role = Role.User,
+                Content = "how to" + customizationRequest,
+            },
+            WithAgenticSearch = false, // For authoring, disable agentic search
+        };
+
+        var response = await azureSdkKnowledgeBaseService.SendCompletionRequestAsync(completionRequest, ct);
+
+        instructions = "apply the solution:" + response.Answer;
+        logger.LogInformation("Received response from Azure SDK Knowledge Base service. Answer: {Answer}",
+           response.Answer);
 
         // Create the tools using shared tool factories
         var tools = CreateTools(typespecProjectPath);

@@ -27,8 +27,9 @@ public class MavenOptions : ProcessOptions, IProcessOptions
         string[] args,
         bool logOutputStream = true,
         string? workingDirectory = null,
-        TimeSpan? timeout = null
-    ) : base(MVN, args, logOutputStream, workingDirectory, timeout)
+        TimeSpan? timeout = null,
+        IDictionary<string, string>? environmentVariables = null
+    ) : base(MVN, args, logOutputStream, workingDirectory, timeout, environmentVariables)
     {
     }
 
@@ -37,8 +38,9 @@ public class MavenOptions : ProcessOptions, IProcessOptions
         string[] args,
         bool logOutputStream = true,
         string? workingDirectory = null,
-        TimeSpan? timeout = null
-    ) : base(MVN, [goal, .. args], logOutputStream, workingDirectory, timeout)
+        TimeSpan? timeout = null,
+        IDictionary<string, string>? environmentVariables = null
+    ) : base(MVN, [goal, .. args], logOutputStream, workingDirectory, timeout, environmentVariables)
     {
         Goal = goal;
     }
@@ -49,8 +51,9 @@ public class MavenOptions : ProcessOptions, IProcessOptions
         string pomPath,
         bool logOutputStream = true,
         string? workingDirectory = null,
-        TimeSpan? timeout = null
-    ) : base(MVN, [goal, .. args, "-f", pomPath], logOutputStream, workingDirectory, timeout)
+        TimeSpan? timeout = null,
+        IDictionary<string, string>? environmentVariables = null
+    ) : base(MVN, [goal, .. args, "-f", pomPath], logOutputStream, workingDirectory, timeout, environmentVariables)
     {
         Goal = goal;
         PomPath = pomPath;

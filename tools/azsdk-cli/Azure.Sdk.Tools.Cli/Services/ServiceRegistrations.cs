@@ -63,7 +63,8 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ICodeownersGenerateHelper, CodeownersGenerateHelper>();
             services.AddSingleton<IPackageInfoHelper, PackageInfoHelper>();
             services.AddSingleton<ITeamUserCache, TeamUserCache>();
-            services.AddSingleton<ICodeownersManagementHelper, CodeownersManagementHelper>(); 
+            services.AddSingleton<ICodeownersManagementHelper, CodeownersManagementHelper>();
+            services.AddSingleton<ICheckPackageHelper, CheckPackageHelper>();
             services.AddSingleton<IEnvironmentHelper, EnvironmentHelper>();
             services.AddSingleton<IEnvFileHelper, EnvFileHelper>();
             services.AddSingleton<IMcpServerContextAccessor, McpServerContextAccessor>();
@@ -80,6 +81,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ITspClientHelper, TspClientHelper>();
             services.AddSingleton<IAPIViewFeedbackService, APIViewFeedbackService>();
             services.AddScoped<IFeedbackClassifierService, FeedbackClassifierService>();
+            services.AddScoped<IUserPromptProcessor, UserPromptProcessor>();
 
             // Process Helper Classes
             services.AddSingleton<INpxHelper, NpxHelper>();

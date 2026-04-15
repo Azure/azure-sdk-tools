@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.13.35931.197
+# Visual Studio Version 18
+VisualStudioVersion = 18.6.11630.250 main
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.Cli", "Azure.Sdk.Tools.Cli\Azure.Sdk.Tools.Cli.csproj", "{162CDABB-D3C2-46DF-A955-183488D5716F}"
 EndProject
@@ -11,6 +11,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.Cli.Evaluations", "Azure.Sdk.Tools.Cli.Evaluations\Azure.Sdk.Tools.Cli.Evaluations.csproj", "{991F7B28-97C7-2E3F-3EB8-50BA8DFF51D8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.Cli.Benchmarks", "Azure.Sdk.Tools.Cli.Benchmarks\Azure.Sdk.Tools.Cli.Benchmarks.csproj", "{935EF53C-2B7D-4275-B4C3-84109D81F144}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.CodeownersUtils", "..\codeowners-utils\Azure.Sdk.Tools.CodeownersUtils\Azure.Sdk.Tools.CodeownersUtils.csproj", "{D27C2C44-3AC4-0732-FF87-DD1697A9DF37}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -82,6 +84,18 @@ Global
 		{935EF53C-2B7D-4275-B4C3-84109D81F144}.Release|x64.Build.0 = Release|Any CPU
 		{935EF53C-2B7D-4275-B4C3-84109D81F144}.Release|x86.ActiveCfg = Release|Any CPU
 		{935EF53C-2B7D-4275-B4C3-84109D81F144}.Release|x86.Build.0 = Release|Any CPU
+		{D27C2C44-3AC4-0732-FF87-DD1697A9DF37}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D27C2C44-3AC4-0732-FF87-DD1697A9DF37}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D27C2C44-3AC4-0732-FF87-DD1697A9DF37}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D27C2C44-3AC4-0732-FF87-DD1697A9DF37}.Debug|x64.Build.0 = Debug|Any CPU
+		{D27C2C44-3AC4-0732-FF87-DD1697A9DF37}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D27C2C44-3AC4-0732-FF87-DD1697A9DF37}.Debug|x86.Build.0 = Debug|Any CPU
+		{D27C2C44-3AC4-0732-FF87-DD1697A9DF37}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D27C2C44-3AC4-0732-FF87-DD1697A9DF37}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D27C2C44-3AC4-0732-FF87-DD1697A9DF37}.Release|x64.ActiveCfg = Release|Any CPU
+		{D27C2C44-3AC4-0732-FF87-DD1697A9DF37}.Release|x64.Build.0 = Release|Any CPU
+		{D27C2C44-3AC4-0732-FF87-DD1697A9DF37}.Release|x86.ActiveCfg = Release|Any CPU
+		{D27C2C44-3AC4-0732-FF87-DD1697A9DF37}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

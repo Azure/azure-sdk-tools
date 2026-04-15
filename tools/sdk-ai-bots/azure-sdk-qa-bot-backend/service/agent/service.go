@@ -383,22 +383,19 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) []openai.Cha
 	if len(req.AdditionalInfos) > 0 {
 		// Parallel process link content fetching
 		type linkResult struct {
-			index   int
 			link    string
 			content string
 		}
-		var linkInfos []struct {
+		type linkRequest struct {
 			index int
 			info  model.AdditionalInfo
 		}
+		var linkInfos []linkRequest
 		for i, info := range req.AdditionalInfos {
 			if info.Type == model.AdditionalInfoType_Link {
 				info.Link = preprocessService.PreprocessHTMLContent(info.Link)
 				req.AdditionalInfos[i] = info
-				linkInfos = append(linkInfos, struct {
-					index int
-					info  model.AdditionalInfo
-				}{i, info})
+				linkInfos = append(linkInfos, linkRequest{i, info})
 			}
 		}
 
@@ -442,7 +439,7 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) []openai.Cha
 					}
 
 					mu.Lock()
-					linkResults[idx] = linkResult{index: idx, link: info.Link, content: content}
+					linkResults[idx] = linkResult{link: info.Link, content: content}
 					mu.Unlock()
 				}(li.index, li.info)
 			}
@@ -451,7 +448,11 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) []openai.Cha
 
 		for i, info := range req.AdditionalInfos {
 			if info.Type == model.AdditionalInfoType_Link {
-				lr := linkResults[i]
+				lr, ok := linkResults[i]
+				if !ok {
+					log.Printf("No link result found for index %d, skipping", i)
+					continue
+				}
 				content := lr.content
 				if len(content) > config.AppConfig.AOAI_CHAT_MAX_TOKENS {
 					log.Printf("Link content is too long, truncating to %d characters", config.AppConfig.AOAI_CHAT_MAX_TOKENS)

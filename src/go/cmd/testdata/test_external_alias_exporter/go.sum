@@ -1,0 +1,2 @@
+github.com/Azure/azure-sdk-tools/src/go/cmd/testdata/test_external_alias_source v0.0.0-20260415044058-98b92d368b8a h1:tEqs37Bdu0PABME4/WUE6AJbXDsXBBlEIfilhnQ+46w=
+github.com/Azure/azure-sdk-tools/src/go/cmd/testdata/test_external_alias_source v0.0.0-20260415044058-98b92d368b8a/go.mod h1:z93m+Ekiuqy54PlAzRt4pwdVheIJkSJxyAFhGwKSUcI=

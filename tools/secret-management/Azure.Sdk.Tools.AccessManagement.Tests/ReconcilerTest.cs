@@ -3,16 +3,13 @@ using NUnit.Framework;
 using FluentAssertions;
 using Moq;
 using Microsoft.Extensions.Logging;
-using Microsoft.Graph.Models;
 
 namespace Azure.Sdk.Tools.AccessManagement.Tests;
 
 public class ReconcilerTest
 {
-    ApplicationCollectionResponse AppResult { get; set; } = default!;
-    Application TestApplication { get; set; } = default!;
-    ServicePrincipal TestServicePrincipal { get; set; } = default!;
-    Mock<IGraphClient> GraphClientMock { get; set; } = default!;
+    ManagedIdentityInfo TestIdentityInfo { get; set; } = default!;
+    Mock<IManagedIdentityClient> ManagedIdentityClientMock { get; set; } = default!;
     Mock<IRbacClient> RbacClientMock { get; set; } = default!;
     Mock<IGitHubClient> GitHubClientMock { get; set; } = default!;
 
@@ -48,23 +45,14 @@ public class ReconcilerTest
     [SetUp]
     public void BeforeEach()
     {
-        GraphClientMock = new Mock<IGraphClient>();
+        ManagedIdentityClientMock = new Mock<IManagedIdentityClient>();
         RbacClientMock = new Mock<IRbacClient>();
         GitHubClientMock = new Mock<IGitHubClient>();
 
-        TestApplication = new Application
-        {
-            DisplayName = "",
-            AppId = "00000000-0000-0000-0000-000000000000",
-            Id = "00000000-0000-0000-0000-000000000000",
-        };
-
-        TestServicePrincipal = new ServicePrincipal
-        {
-            DisplayName = "",
-            AppId = TestApplication.AppId,
-            Id = "00000000-0000-0000-0000-000000000000",
-        };
+        TestIdentityInfo = new ManagedIdentityInfo(
+            ClientId: Guid.Parse("00000000-0000-0000-0000-000000000000"),
+            PrincipalId: Guid.Parse("00000000-0000-0000-0000-000000000000"),
+            TenantId: Guid.Parse("00000000-0000-0000-0000-000000000000"));
     }
 
     [Test]
@@ -81,25 +69,26 @@ public class ReconcilerTest
     [Test]
     public async Task TestReconcileWithTemplateMissingProperties()
     {
-        var reconciler = new Reconciler(Mock.Of<ILogger>(), GraphClientMock.Object, RbacClientMock.Object, GitHubClientMock.Object);
-        GraphClientMock.Setup(c => c.GetApplicationByDisplayName(It.IsAny<string>()).Result).Returns(TestApplication);
-        GraphClientMock.Setup(c => c.GetApplicationServicePrincipal(It.IsAny<Application>()).Result).Returns(TestServicePrincipal);
-        GraphClientMock.Setup(c => c.ListFederatedIdentityCredentials(It.IsAny<Application>()).Result).Returns(new List<FederatedIdentityCredential>());
+        var reconciler = new Reconciler(Mock.Of<ILogger>(), ManagedIdentityClientMock.Object, RbacClientMock.Object, GitHubClientMock.Object);
+        ManagedIdentityClientMock.Setup(c => c.GetManagedIdentity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(TestIdentityInfo);
+        ManagedIdentityClientMock.Setup(c => c.ListFederatedIdentityCredentials(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(new List<FederatedCredentialInfo>());
 
-        Func<Task> func = async () => await reconciler.Reconcile(TemplateMissingPropertyAccessConfig);
+        Func<Task> func = async () => await reconciler.Reconcile(TemplateMissingPropertyAccessConfig, new ReconcileOptions());
         await func.Should().ThrowAsync<AggregateException>();
     }
 
     [Test]
     public async Task TestReconcileWithGithubSecrets()
     {
-        var reconciler = new Reconciler(Mock.Of<ILogger>(), GraphClientMock.Object, RbacClientMock.Object, GitHubClientMock.Object);
+        var reconciler = new Reconciler(Mock.Of<ILogger>(), ManagedIdentityClientMock.Object, RbacClientMock.Object, GitHubClientMock.Object);
 
         GitHubClientMock.Setup(c => c.SetRepositorySecret(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .Returns(Task.CompletedTask);
 
-        await reconciler.ReconcileGithubRepositorySecrets(TestApplication, GithubAccessConfig.Configs.First().ApplicationAccessConfig);
+        await reconciler.ReconcileGithubRepositorySecrets(GithubAccessConfig.Configs.First().ApplicationAccessConfig, new ReconcileOptions());
 
         var config = GithubAccessConfig.Configs.First().ApplicationAccessConfig;
 
@@ -122,153 +111,198 @@ public class ReconcilerTest
     }
 
     [Test]
-    public async Task TestReconcileWithExistingApp()
+    public async Task TestReconcileWithExistingIdentity()
     {
-        var reconciler = new Reconciler(Mock.Of<ILogger>(), GraphClientMock.Object, RbacClientMock.Object, GitHubClientMock.Object);
-        TestApplication.DisplayName = NoGitHubAccessConfig.Configs.First().ApplicationAccessConfig.AppDisplayName;
-        TestServicePrincipal.DisplayName = TestApplication.DisplayName;
+        var reconciler = new Reconciler(Mock.Of<ILogger>(), ManagedIdentityClientMock.Object, RbacClientMock.Object, GitHubClientMock.Object);
 
-        GraphClientMock.Setup(c => c.GetApplicationByDisplayName(It.IsAny<string>()).Result).Returns(TestApplication);
-        GraphClientMock.Setup(c => c.GetApplicationServicePrincipal(It.IsAny<Application>()).Result).Returns(TestServicePrincipal);
-        GraphClientMock.Setup(c => c.CreateApplication(It.IsAny<Application>())).Throws(new Exception("Application should not be created"));
-        GraphClientMock.Setup(c => c.CreateApplicationServicePrincipal(It.IsAny<Application>())).Throws(new Exception("Service Principal should not be created"));
+        ManagedIdentityClientMock.Setup(c => c.GetManagedIdentity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(TestIdentityInfo);
+        ManagedIdentityClientMock.Setup(c => c.CreateManagedIdentity(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .Throws(new Exception("Managed identity should not be created"));
 
-        var (app, servicePrincipal) = await reconciler.ReconcileApplication(NoGitHubAccessConfig.Configs.First().ApplicationAccessConfig);
-        app.DisplayName.Should().Be(TestApplication.DisplayName);
-        app.AppId.Should().Be(TestApplication.AppId);
-        app.Id.Should().Be(TestApplication.Id);
+        var identityInfo = await reconciler.ReconcileManagedIdentity(
+            NoGitHubAccessConfig.Configs.First().ApplicationAccessConfig, new ReconcileOptions());
 
-        servicePrincipal.DisplayName.Should().Be(TestServicePrincipal.DisplayName);
-        servicePrincipal.AppId.Should().Be(TestServicePrincipal.AppId);
+        identityInfo.Should().NotBeNull();
+        identityInfo!.ClientId.Should().Be(TestIdentityInfo.ClientId);
+        identityInfo.PrincipalId.Should().Be(TestIdentityInfo.PrincipalId);
     }
 
     [Test]
-    public async Task TestReconcileWithNewApp()
+    public async Task TestReconcileWithNewIdentity()
     {
-        var reconciler = new Reconciler(Mock.Of<ILogger>(), GraphClientMock.Object, RbacClientMock.Object, GitHubClientMock.Object);
-        TestApplication.DisplayName = NoGitHubAccessConfig.Configs.First().ApplicationAccessConfig.AppDisplayName;
-        TestServicePrincipal.DisplayName = TestApplication.DisplayName;
+        var reconciler = new Reconciler(Mock.Of<ILogger>(), ManagedIdentityClientMock.Object, RbacClientMock.Object, GitHubClientMock.Object);
 
-        GraphClientMock.Setup(c => c.GetApplicationByDisplayName(It.IsAny<string>()).Result).Returns<Application>(null);
-        GraphClientMock.Setup(c => c.CreateApplication(It.IsAny<Application>()).Result).Returns(TestApplication);
-        GraphClientMock.Setup(c => c.GetApplicationServicePrincipal(It.IsAny<Application>()).Result).Returns<ServicePrincipal>(null);
-        GraphClientMock.Setup(c => c.CreateApplicationServicePrincipal(It.IsAny<Application>()).Result).Returns(TestServicePrincipal);
+        ManagedIdentityClientMock.Setup(c => c.GetManagedIdentity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync((ManagedIdentityInfo?)null);
+        ManagedIdentityClientMock.Setup(c => c.CreateManagedIdentity(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(TestIdentityInfo);
 
-        var (app, servicePrincipal) = await reconciler.ReconcileApplication(NoGitHubAccessConfig.Configs.First().ApplicationAccessConfig);
-        app.DisplayName.Should().Be(TestApplication.DisplayName);
-        app.AppId.Should().Be(TestApplication.AppId);
-        app.Id.Should().Be(TestApplication.Id);
-        servicePrincipal.DisplayName.Should().Be(TestServicePrincipal.DisplayName);
-        servicePrincipal.AppId.Should().Be(TestServicePrincipal.AppId);
-        servicePrincipal.Id.Should().Be(TestServicePrincipal.Id);
-    }
+        var identityInfo = await reconciler.ReconcileManagedIdentity(
+            NoGitHubAccessConfig.Configs.First().ApplicationAccessConfig, new ReconcileOptions());
 
-    [Test]
-    public async Task TestReconcileWithMissingServicePrincipal()
-    {
-        var reconciler = new Reconciler(Mock.Of<ILogger>(), GraphClientMock.Object, RbacClientMock.Object, GitHubClientMock.Object);
-        TestApplication.DisplayName = NoGitHubAccessConfig.Configs.First().ApplicationAccessConfig.AppDisplayName;
-        TestServicePrincipal.DisplayName = TestApplication.DisplayName;
-
-        GraphClientMock.Setup(c => c.GetApplicationByDisplayName(It.IsAny<string>()).Result).Returns<Application>(null);
-        GraphClientMock.Setup(c => c.CreateApplication(It.IsAny<Application>()).Result).Returns(TestApplication);
-        GraphClientMock.Setup(c => c.GetApplicationServicePrincipal(It.IsAny<Application>()).Result).Returns<ServicePrincipal>(null);
-        GraphClientMock.Setup(c => c.CreateApplicationServicePrincipal(It.IsAny<Application>()).Result).Returns(TestServicePrincipal);
-
-        var (app, servicePrincipal) = await reconciler.ReconcileApplication(NoGitHubAccessConfig.Configs.First().ApplicationAccessConfig);
-        GraphClientMock.Verify(c => c.CreateApplicationServicePrincipal(It.IsAny<Application>()), Times.Once);
-
-        app.DisplayName.Should().Be(TestApplication.DisplayName);
-        app.AppId.Should().Be(TestApplication.AppId);
-        app.Id.Should().Be(TestApplication.Id);
-        servicePrincipal.DisplayName.Should().Be(TestServicePrincipal.DisplayName);
-        servicePrincipal.AppId.Should().Be(TestServicePrincipal.AppId);
-        servicePrincipal.Id.Should().Be(TestServicePrincipal.Id);
+        identityInfo.Should().NotBeNull();
+        identityInfo!.ClientId.Should().Be(TestIdentityInfo.ClientId);
+        identityInfo.PrincipalId.Should().Be(TestIdentityInfo.PrincipalId);
+        ManagedIdentityClientMock.Verify(c => c.CreateManagedIdentity(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
     }
 
     [Test]
     public async Task TestReconcileWithEmptyFederatedIdentityCredentials()
     {
-        var reconciler = new Reconciler(Mock.Of<ILogger>(), GraphClientMock.Object, RbacClientMock.Object, GitHubClientMock.Object);
+        var reconciler = new Reconciler(Mock.Of<ILogger>(), ManagedIdentityClientMock.Object, RbacClientMock.Object, GitHubClientMock.Object);
         var configApp = FederatedCredentialsOnlyConfig.Configs.First().ApplicationAccessConfig;
-        TestApplication.DisplayName = configApp.AppDisplayName;
 
-        GraphClientMock.Setup(c => c.ListFederatedIdentityCredentials(It.IsAny<Application>()).Result).Returns(new List<FederatedIdentityCredential>());
+        ManagedIdentityClientMock.Setup(c => c.ListFederatedIdentityCredentials(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(new List<FederatedCredentialInfo>());
 
-        await reconciler.ReconcileFederatedIdentityCredentials(TestApplication, configApp);
+        await reconciler.ReconcileFederatedIdentityCredentials(configApp, new ReconcileOptions());
 
-        GraphClientMock.Verify(c => c.DeleteFederatedIdentityCredential(It.IsAny<Application>(), It.IsAny<FederatedIdentityCredential>()), Times.Never);
-        GraphClientMock.Verify(
+        ManagedIdentityClientMock.Verify(c => c.DeleteFederatedIdentityCredential(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        ManagedIdentityClientMock.Verify(
             c => c.CreateFederatedIdentityCredential(
-                It.Is<Application>(a => a.DisplayName == configApp.AppDisplayName),
-                It.IsAny<FederatedIdentityCredential>()), Times.Exactly(2));
+                configApp.SubscriptionId!, configApp.ResourceGroup!, configApp.IdentityName!,
+                It.IsAny<FederatedIdentityCredentialsConfig>()), Times.Exactly(2));
     }
 
     [Test]
     public async Task TestReconcileMergingFederatedIdentityCredentials()
     {
-        var reconciler = new Reconciler(Mock.Of<ILogger>(), GraphClientMock.Object, RbacClientMock.Object, GitHubClientMock.Object);
+        var reconciler = new Reconciler(Mock.Of<ILogger>(), ManagedIdentityClientMock.Object, RbacClientMock.Object, GitHubClientMock.Object);
         var configApp = FederatedCredentialsOnlyConfig.Configs.First().ApplicationAccessConfig;
-        TestApplication.DisplayName = configApp.AppDisplayName;
 
-        var existingCredentials = new List<FederatedIdentityCredential>
+        var firstConfig = configApp.FederatedIdentityCredentials.First();
+        var existingCredentials = new List<FederatedCredentialInfo>
         {
-            configApp.FederatedIdentityCredentials.First(),
-            new FederatedIdentityCredential(),
-            new FederatedIdentityCredential
-            {
-                Audiences = new List<string> { "api://azureadtokenexchange" },
-                Description = "Test PreExisting To Replace",
-                Issuer = "https://token.actions.githubusercontent.com",
-                Name = "test-pre-existing-replace-1",
-                Subject = "repo:accessmanagertest/azure-sdk-tools:ref:refs/heads/main"
-            },
+            new FederatedCredentialInfo(firstConfig.Name!, firstConfig.Issuer!, firstConfig.Subject!, firstConfig.Audiences!),
+            new FederatedCredentialInfo("extra-empty", "", "", new List<string>()),
+            new FederatedCredentialInfo(
+                "test-pre-existing-replace-1",
+                "https://token.actions.githubusercontent.com",
+                "repo:accessmanagertest/azure-sdk-tools:ref:refs/heads/main",
+                new List<string> { "api://azureadtokenexchange" }),
         };
 
-        GraphClientMock.Setup(c => c.ListFederatedIdentityCredentials(It.IsAny<Application>()).Result).Returns(existingCredentials);
+        ManagedIdentityClientMock.Setup(c => c.ListFederatedIdentityCredentials(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(existingCredentials);
 
-        await reconciler.ReconcileFederatedIdentityCredentials(TestApplication, configApp);
+        await reconciler.ReconcileFederatedIdentityCredentials(configApp, new ReconcileOptions());
 
         // Delete two, keep one, create one
-        GraphClientMock.Verify(c => c.DeleteFederatedIdentityCredential(
-            It.IsAny<Application>(), It.IsAny<FederatedIdentityCredential>()), Times.Exactly(2));
-        GraphClientMock.Verify(c => c.CreateFederatedIdentityCredential(
-            It.Is<Application>(a => a.DisplayName == configApp.AppDisplayName),
-            It.IsAny<FederatedIdentityCredential>()), Times.Once);
+        ManagedIdentityClientMock.Verify(c => c.DeleteFederatedIdentityCredential(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(2));
+        ManagedIdentityClientMock.Verify(c => c.CreateFederatedIdentityCredential(
+            configApp.SubscriptionId!, configApp.ResourceGroup!, configApp.IdentityName!,
+            It.IsAny<FederatedIdentityCredentialsConfig>()), Times.Once);
     }
 
     [Test]
     public async Task TestReconcileRoleBasedAccessControl()
     {
-        var reconciler = new Reconciler(Mock.Of<ILogger>(), GraphClientMock.Object, RbacClientMock.Object, GitHubClientMock.Object);
+        var reconciler = new Reconciler(Mock.Of<ILogger>(), ManagedIdentityClientMock.Object, RbacClientMock.Object, GitHubClientMock.Object);
         var configApp = RbacOnlyConfig.Configs.First().ApplicationAccessConfig;
-        TestApplication.DisplayName = configApp.AppDisplayName;
-        TestServicePrincipal.DisplayName = configApp.AppDisplayName;
 
-        await reconciler.ReconcileRoleBasedAccessControls(TestServicePrincipal, configApp);
+        await reconciler.ReconcileRoleBasedAccessControls(TestIdentityInfo.PrincipalId, configApp, new ReconcileOptions());
 
         RbacClientMock.Verify(c => c.CreateRoleAssignment(
-            It.IsAny<ServicePrincipal>(), It.IsAny<RoleBasedAccessControlsConfig>()), Times.Exactly(3));
+            It.IsAny<Guid>(), It.IsAny<RoleBasedAccessControlsConfig>()), Times.Exactly(3));
     }
 
     [Test]
-    [TestCase("FullAccessConfig", 1, 1, 3, 1, 0, 3, 2)]
-    [TestCase("MultiAccessConfig", 3, 3, 9, 2, 0, 2, 3)]
+    public async Task TestReconcileNoDeleteSkipsDeletion()
+    {
+        var reconciler = new Reconciler(Mock.Of<ILogger>(), ManagedIdentityClientMock.Object, RbacClientMock.Object, GitHubClientMock.Object);
+        var configApp = FederatedCredentialsOnlyConfig.Configs.First().ApplicationAccessConfig;
+
+        var firstConfig = configApp.FederatedIdentityCredentials.First();
+        var existingCredentials = new List<FederatedCredentialInfo>
+        {
+            new FederatedCredentialInfo(firstConfig.Name!, firstConfig.Issuer!, firstConfig.Subject!, firstConfig.Audiences!),
+            new FederatedCredentialInfo(
+                "extra-to-delete",
+                "https://token.actions.githubusercontent.com",
+                "repo:test/azure-sdk:ref:refs/heads/main",
+                new List<string> { "api://azureadtokenexchange" }),
+        };
+
+        ManagedIdentityClientMock.Setup(c => c.ListFederatedIdentityCredentials(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(existingCredentials);
+
+        var options = new ReconcileOptions { NoDelete = true };
+        await reconciler.ReconcileFederatedIdentityCredentials(configApp, options);
+
+        // Should NOT delete the extra credential
+        ManagedIdentityClientMock.Verify(c => c.DeleteFederatedIdentityCredential(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        // Should still create the missing credential
+        ManagedIdentityClientMock.Verify(c => c.CreateFederatedIdentityCredential(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<FederatedIdentityCredentialsConfig>()), Times.Once);
+    }
+
+    [Test]
+    public async Task TestReconcileDryRunSkipsWrites()
+    {
+        var reconciler = new Reconciler(Mock.Of<ILogger>(), ManagedIdentityClientMock.Object, RbacClientMock.Object, GitHubClientMock.Object);
+
+        ManagedIdentityClientMock.Setup(c => c.GetManagedIdentity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(TestIdentityInfo);
+        ManagedIdentityClientMock.Setup(c => c.ListFederatedIdentityCredentials(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(new List<FederatedCredentialInfo>
+            {
+                new FederatedCredentialInfo("existing-cred", "https://example.com", "test-subject", new List<string> { "api://test" })
+            });
+
+        var accessConfig = new AccessConfig(Mock.Of<ILogger>(), new List<string>{"./test-configs/full-access-config.json"});
+        var options = new ReconcileOptions { DryRun = true };
+        await reconciler.Reconcile(accessConfig, options);
+
+        // Should call read operations
+        ManagedIdentityClientMock.Verify(c => c.GetManagedIdentity(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        ManagedIdentityClientMock.Verify(c => c.ListFederatedIdentityCredentials(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+
+        // Should NOT call any write operations
+        ManagedIdentityClientMock.Verify(c => c.CreateManagedIdentity(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        ManagedIdentityClientMock.Verify(c => c.CreateFederatedIdentityCredential(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<FederatedIdentityCredentialsConfig>()), Times.Never);
+        ManagedIdentityClientMock.Verify(c => c.DeleteFederatedIdentityCredential(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        RbacClientMock.Verify(c => c.CreateRoleAssignment(
+            It.IsAny<Guid>(), It.IsAny<RoleBasedAccessControlsConfig>()), Times.Never);
+        GitHubClientMock.Verify(c => c.SetRepositorySecret(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Test]
+    [TestCase("FullAccessConfig", 1, 3, 1, 0, 3, 2)]
+    [TestCase("MultiAccessConfig", 3, 9, 2, 0, 2, 3)]
     public async Task TestReconcileWithMultipleConfigs(
         string accessConfigName,
-        int createAppCount,
-        int createServicePrincipalCount,
+        int createIdentityCount,
         int setRepositorySecretCount,
         int setClientIdCount,
         int deleteFederatedIdentityCredentialCount,
         int createFederatedIdentityCredentialCount,
         int createRoleAssignmentCount
     ) {
-        var reconciler = new Reconciler(Mock.Of<ILogger>(), GraphClientMock.Object, RbacClientMock.Object, GitHubClientMock.Object);
-        TestApplication.DisplayName = "access-config-multi-test";
-        TestServicePrincipal.DisplayName = TestApplication.DisplayName;
-        // Override AppId to ensure we inject it into downstream properties and rendered template values
-        TestApplication.AppId = "11111111-1111-1111-1111-111111111111";
+        var reconciler = new Reconciler(Mock.Of<ILogger>(), ManagedIdentityClientMock.Object, RbacClientMock.Object, GitHubClientMock.Object);
+        // Override ClientId to ensure we inject it into downstream properties and rendered template values
+        TestIdentityInfo = new ManagedIdentityInfo(
+            ClientId: Guid.Parse("11111111-1111-1111-1111-111111111111"),
+            PrincipalId: Guid.Parse("00000000-0000-0000-0000-000000000000"),
+            TenantId: Guid.Parse("00000000-0000-0000-0000-000000000000"));
+
         var prop = this.GetType().GetProperty(accessConfigName, BindingFlags.NonPublic | BindingFlags.Instance);
         if (prop?.GetValue(this) is not AccessConfig)
         {
@@ -278,43 +312,45 @@ public class ReconcilerTest
         var accessConfig = prop!.GetValue(this) as AccessConfig;
         foreach (var cfg in accessConfig!.Configs)
         {
-            cfg.ApplicationAccessConfig.AppDisplayName = TestApplication.DisplayName;
+            cfg.ApplicationAccessConfig.IdentityName = "access-config-multi-test";
         }
 
-        // Application mocks
-        GraphClientMock.Setup(c => c.GetApplicationByDisplayName(It.IsAny<string>()).Result).Returns<Application>(null);
-        GraphClientMock.Setup(c => c.CreateApplication(It.IsAny<Application>()).Result).Returns(TestApplication);
-        GraphClientMock.Setup(c => c.GetApplicationServicePrincipal(It.IsAny<Application>()).Result).Returns<ServicePrincipal>(null);
-        GraphClientMock.Setup(c => c.CreateApplicationServicePrincipal(It.IsAny<Application>()).Result).Returns(TestServicePrincipal);
+        // Managed Identity mocks
+        ManagedIdentityClientMock.Setup(c => c.GetManagedIdentity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync((ManagedIdentityInfo?)null);
+        ManagedIdentityClientMock.Setup(c => c.CreateManagedIdentity(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(TestIdentityInfo);
         // GitHub mocks
         GitHubClientMock.Setup(c => c.SetRepositorySecret(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .Returns(Task.CompletedTask);
         // Federated Identity Credential mocks
-        GraphClientMock.Setup(c => c.ListFederatedIdentityCredentials(
-            It.IsAny<Application>()).Result).Returns(new List<FederatedIdentityCredential>());
+        ManagedIdentityClientMock.Setup(c => c.ListFederatedIdentityCredentials(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(new List<FederatedCredentialInfo>());
 
-        await reconciler.Reconcile(accessConfig);
+        await reconciler.Reconcile(accessConfig, new ReconcileOptions());
 
-        // Create application and service principal
-        GraphClientMock.Verify(c => c.CreateApplication(It.IsAny<Application>()), Times.Exactly(createAppCount));
-        GraphClientMock.Verify(c => c.CreateApplicationServicePrincipal(It.IsAny<Application>()), Times.Exactly(createServicePrincipalCount));
+        // Create managed identity
+        ManagedIdentityClientMock.Verify(c => c.CreateManagedIdentity(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(createIdentityCount));
 
         // Create repository secrets
         GitHubClientMock.Verify(c => c.SetRepositorySecret(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(setRepositorySecretCount));
         GitHubClientMock.Verify(c => c.SetRepositorySecret(
-            It.IsAny<string>(), It.IsAny<string>(), "AZURE_CLIENT_ID", TestApplication.AppId), Times.Exactly(setClientIdCount));
+            It.IsAny<string>(), It.IsAny<string>(), "AZURE_CLIENT_ID", TestIdentityInfo.ClientId.ToString()), Times.Exactly(setClientIdCount));
 
-        // Delete zero, keep zero, create three
-        GraphClientMock.Verify(c => c.DeleteFederatedIdentityCredential(
-            It.IsAny<Application>(), It.IsAny<FederatedIdentityCredential>()), Times.Exactly(deleteFederatedIdentityCredentialCount));
-        GraphClientMock.Verify(c => c.CreateFederatedIdentityCredential(
-            It.Is<Application>(a => a.DisplayName == TestApplication.DisplayName),
-            It.IsAny<FederatedIdentityCredential>()), Times.Exactly(createFederatedIdentityCredentialCount));
+        // Federated identity credentials
+        ManagedIdentityClientMock.Verify(c => c.DeleteFederatedIdentityCredential(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(deleteFederatedIdentityCredentialCount));
+        ManagedIdentityClientMock.Verify(c => c.CreateFederatedIdentityCredential(
+            It.IsAny<string>(), It.IsAny<string>(), "access-config-multi-test",
+            It.IsAny<FederatedIdentityCredentialsConfig>()), Times.Exactly(createFederatedIdentityCredentialCount));
 
-        // Create 2
+        // RBAC
         RbacClientMock.Verify(c => c.CreateRoleAssignment(
-            It.IsAny<ServicePrincipal>(), It.IsAny<RoleBasedAccessControlsConfig>()), Times.Exactly(createRoleAssignmentCount));
+            It.IsAny<Guid>(), It.IsAny<RoleBasedAccessControlsConfig>()), Times.Exactly(createRoleAssignmentCount));
     }
 }

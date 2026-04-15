@@ -1,13 +1,13 @@
 ---
 description: Key Vault-specific patterns, exceptions, and review heuristics for Python APIView reviews of azure-keyvault packages.
-applyTo: "scratch/apiviews/python/**/*keyvault*.txt"
+applyTo: "**/*keyvault*"
 ---
 
 # Key Vault Python API Review — Service-Specific Patterns
 
 Use this skill only when reviewing Python APIView text for Azure Key Vault libraries. Load it alongside the core API review and Python review skills when the package or namespace is under `azure.keyvault.*`, including secrets, keys, certificates, administration, and their `aio` variants.
 
-These are approved patterns and known exceptions specific to the Azure Key Vault Python SDKs (`azure-keyvault-secrets`, `azure-keyvault-keys`, `azure-keyvault-certificates`, `azure-keyvault-administration`). They represent decisions made by Azure SDK architects through past API reviews.
+These are approved patterns and known exceptions specific to the Azure Key Vault Python SDKs (`azure-keyvault-secrets`, `azure-keyvault-keys`, `azure-keyvault-certificates`, etc.). They represent decisions made by Azure SDK architects through past API reviews.
 
 ## Approved Exceptions
 

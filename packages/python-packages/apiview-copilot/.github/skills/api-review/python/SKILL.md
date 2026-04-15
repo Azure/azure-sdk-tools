@@ -1,39 +1,42 @@
 ---
 description: Python-specific Azure SDK design guidelines and APIView filter exceptions. Supporting skill for Python API reviews only.
-applyTo: "scratch/apiviews/python/**"
+applyTo: ""
 ---
 
 # Python Azure SDK Design Guidelines
 
 Use this skill only when reviewing a Python SDK API surface in APIView format. Do not use it for general Python coding or implementation tasks.
 
+## Python APIView Conventions
+
+Python APIView uses non-standard pseudocode to represent API surfaces. The following are **display conventions**, not code issues — do not comment on any of them:
+
+- A `namespace` declaration denotes package structure.
+- Classes include their full namespace in their definition: `class azure.contoso.ClassName` where `azure.contoso` is the namespace and `ClassName` is the class name.
+- Indentation and structure convey scope (classes, methods, properties).
+- Ellipsis (`...`) in optional parameters is a default-value placeholder.
+- `implements` pseudocode expresses interface implementation.
+- TypedDict syntax may be non-standard.
+- Instance variables use a non-standard `ivar` syntax.
+- Properties use a custom `property` syntax rather than standard `@property` decorators or attribute annotations.
+- Method signatures will not end with `:` (colon) because they don't contain an implementation.
+
 ## APIView Filter Exceptions
 
-The following are **not** issues in Python APIView format. DO NOT comment on any of these:
+The following are **not** issues in Python APIView. DO NOT comment on any of these:
 
-1. DO NOT make comments that don't actually identify a problem
-2. DO NOT comment on the `send_request` method
-3. DO NOT suggest changes to class inheritance patterns (i.e. base-class relationships only)
-4. DO NOT suggest removing non-standard `implements` pseudocode
-5. DO NOT comment on removing ellipsis (`...`) usage in optional parameters
-6. DO NOT comment on `__init__` overloads in model classes
-7. DO NOT suggest adding docstrings
-8. DO NOT suggest using pydantic or dataclasses for models
-9. DO NOT comment on indentation
-10. DO NOT suggest consolidating multiple overloads
-11. DO NOT suggest providing convenience methods directly on the client
-12. DO NOT comment on non-standard use of TypedDict syntax
-13. DO NOT comment about using non-standard ivar syntax
-14. DO NOT comment about using standard attribute annotations (or @property decorators) rather than a custom 'property' syntax
-15. DO NOT comment about methods ending with `:` (colon)
-16. DO NOT comment on namespaces unless they are violating guidelines
-17. DO NOT comment about removing the non-standard 'namespace' declaration
-18. DO NOT suggest removing the full package prefix from class names
-19. DO NOT comment on the overuse of `**kwargs`
-20. DO NOT comment that the *syntax* of including a module path in the *definition* is wrong (e.g. flagging `class azure.foo.FooClient:` itself as illegal)
-21. DO NOT suggest renaming parameters or attributes named `type`, `id`, or `object` to avoid shadowing Python built-ins. These are established Azure SDK patterns.
-22. DO NOT suggest uppercasing or quoting `Literal` type annotation values. The enum-name-uppercase guideline applies only to `Enum` class member names, not to `Literal` string values which must match the service wire format.
-23. DO NOT suggest adding an explicit `timeout` parameter to methods that already accept `**kwargs`. Timeout is passed through `**kwargs` in the Azure SDK for Python.
+1. DO NOT comment on the `send_request` method.
+2. DO NOT suggest changes to class inheritance patterns (i.e. base-class relationships only).
+3. DO NOT comment on `__init__` overloads in model classes.
+4. DO NOT suggest adding docstrings.
+5. DO NOT suggest using pydantic or dataclasses for models.
+6. DO NOT suggest consolidating multiple overloads.
+7. DO NOT suggest providing convenience methods directly on the client.
+8. DO NOT comment on namespaces unless they are violating guidelines.
+9. DO NOT comment on the overuse of `**kwargs`.
+10. DO NOT suggest renaming parameters or attributes named `type`, `id`, or `object` to avoid shadowing Python built-ins. These are established Azure SDK patterns.
+11. DO NOT suggest uppercasing or quoting `Literal` type annotation values. The enum-name-uppercase guideline applies only to `Enum` class member names, not to `Literal` string values which must match the service wire format.
+12. DO NOT suggest adding an explicit `timeout` parameter to methods that already accept `**kwargs`. Timeout is passed through `**kwargs` in the Azure SDK for Python.
 
 ## Pythonic Design Evaluation
 

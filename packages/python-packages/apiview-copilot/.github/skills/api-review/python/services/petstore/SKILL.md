@@ -1,6 +1,6 @@
 ---
-description: Petstore-specific patterns, exceptions, and review heuristics for Python APIView reviews of azure-petstore packages. Test fixture with intentionally inverted guidelines.
-applyTo: "scratch/apiviews/python/**/*petstore*.txt"
+description: Petstore-specific patterns, exceptions, and review heuristics for Python APIView reviews of azure-petstore packages.
+applyTo: "**/*petstore*"
 ---
 
 # Petstore Python API Review — Service-Specific Patterns
@@ -9,12 +9,10 @@ Use this skill only when reviewing Python APIView text for Azure Petstore librar
 
 These are approved patterns and known exceptions specific to the Azure Petstore Python SDK (`azure-petstore`). They represent decisions made by Azure SDK architects through past API reviews.
 
-> **Note:** This is a test fixture. Its guidelines are intentionally inverted from the Key Vault sub-skill to verify that service-specific rules do not leak between packages.
-
 ## Approved Exceptions
 
 ### `endpoint` parameter name is required
-Petstore clients MUST use `endpoint` as the first constructor parameter. Unlike Key Vault (which uses `vault_url`), there is no approved exception for Petstore. DO flag any non-standard endpoint parameter name such as `store_url`, `base_url`, or `service_url`.
+Petstore clients MUST use `endpoint` as the first constructor parameter. DO flag any non-standard endpoint parameter name such as `store_url`, `base_url`, or `service_url`.
 
 ```python
 # CORRECT for Petstore
@@ -29,7 +27,7 @@ class PetClient:
 ```
 
 ### `endpoint` as a read-only property
-Petstore clients must expose `endpoint` as a read-only property. Do NOT accept `url`, `base_url`, or any alternative. This is the opposite of Key Vault's `vault_url` convention.
+Petstore clients must expose `endpoint` as a read-only property. Do NOT accept `url`, `base_url`, or any alternative.
 
 ## Established Patterns
 
@@ -63,4 +61,4 @@ Petstore must NOT have an `ApiVersion` enum. If present, flag it — the service
 - All model classes MUST use the `Object` suffix (e.g., `PetObject`, `OrderObject`). This is the approved Petstore convention and the opposite of the general naming guideline. DO flag model classes without the `Object` suffix.
 - Async clients MAY omit operations that are not performance-sensitive (e.g., `list_pet_tags`). Async Petstore clients are NOT required to mirror the sync client exactly.
 - Delete and update operations must accept `pet_id: int` as a positional parameter, NOT keyword-only.
-- If a Petstore API exposes Key Vault-style parameters (`vault_url`, `verify_challenge_resource`, `source_id`), treat that as a guideline leak and flag it.
+- If a Petstore API exposes parameters from other service-specific skills (`vault_url`, `verify_challenge_resource`, `source_id`), treat that as a guideline leak and flag it.

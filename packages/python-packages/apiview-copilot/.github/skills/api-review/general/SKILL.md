@@ -1,6 +1,6 @@
 ---
 description: Cross-language Azure SDK design principles for API surface review. Supporting skill for API review only.
-applyTo: "scratch/apiviews/**"
+applyTo: ""
 ---
 
 # General Azure SDK Design Principles
@@ -13,7 +13,7 @@ These principles apply to all Azure SDK client libraries, regardless of language
 
 ### Service Client Pattern
 - Each Azure service should have a dedicated **service client** class as the primary entry point.
-- Service clients should be named `{ServiceName}Client` (e.g., `SecretClient`, `BlobClient`).
+- Service clients should be named `{ServiceName}Client` (e.g., `FooClient`, `BarClient`).
 - Service clients take a service endpoint (URL) and a credential as their primary constructor arguments.
 - Service clients should support both synchronous and asynchronous usage patterns appropriate for the language.
 

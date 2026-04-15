@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
@@ -42,6 +43,7 @@ public class JavaScriptLanguageServiceVersionUpdateTests
         _jsLanguageService = new JavaScriptLanguageService(
             _mockProcessHelper.Object,
             Mock.Of<INpxHelper>(),
+            Mock.Of<ICopilotAgentRunner>(),
             _mockGitHelper.Object,
             NullLogger<JavaScriptLanguageService>.Instance,
             Mock.Of<ICommonValidationHelpers>(),

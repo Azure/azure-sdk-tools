@@ -1405,6 +1405,26 @@ public class APIRevisionsManagerTests
 
         Assert.Equal(80, result.Score); // 100 - 20
         Assert.Equal(1, result.UnresolvedMustFixCount);
+        Assert.Equal(0, result.UnresolvedMustFixDiagnostics);
+    }
+
+    [Fact]
+    public async Task GetReviewQualityScoreAsync_DiagnosticMustFix_DoesNotIncrementNonDiagnosticMustFixCount()
+    {
+        var revision = CreateRevisionForQualityTest();
+        var comments = new List<CommentItemModel>
+        {
+            CreateComment(CommentSeverity.MustFix, source: CommentSource.Diagnostic)
+        };
+        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
+            .ReturnsAsync(comments);
+
+        var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
+
+        Assert.Equal(80, result.Score);
+        Assert.Equal(1, result.UnresolvedMustFixCount);
+        Assert.Equal(1, result.UnresolvedMustFixDiagnostics);
     }
 
     [Fact]

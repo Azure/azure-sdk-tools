@@ -27,10 +27,12 @@ public class APIViewReviewTool : MCPMultiCommandTool
     private const string CreatePullRequestRevisionCmd = "create-pull-request-revision";
     private const string RequestCopilotReviewCmd = "request-copilot-review";
     private const string GetCopilotReviewCmd = "get-copilot-review";
+    private const string GetReviewUrlCmd = "get-review-url";
 
     private const string ApiViewGetCommentsToolName = "azsdk_apiview_get_comments";
     private const string ApiViewRequestCopilotReviewToolName = "azsdk_apiview_request_copilot_review";
     private const string ApiViewGetCopilotReviewToolName = "azsdk_apiview_get_copilot_review";
+    private const string ApiViewGetReviewUrlToolName = "azsdk_apiview_get_review_url";
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.APIView];
 
@@ -129,6 +131,13 @@ public class APIViewReviewTool : MCPMultiCommandTool
         Description = "The source branch for the build"
     };
 
+    // get-review-url specific options
+    private readonly Option<string> languageQueryOption = new("--language")
+    {
+        Description = $"The language of the package. Supported values: {string.Join(", ", SupportedLanguages)}.",
+        Required = true
+    };
+
     // create-pull-request-revision specific options
     private readonly Option<string> commitShaOption = new("--commit-sha")
     {
@@ -208,6 +217,10 @@ public class APIViewReviewTool : MCPMultiCommandTool
             repoNameOption, packageNameOption, pullRequestNumberOption,
             projectOption, packageTypeOption, codeFileOption, languageOption, baselineCodeFileOption, metadataFileOption
         },
+        new McpCommand(GetReviewUrlCmd, "Get the APIView review URL for a package and language", ApiViewGetReviewUrlToolName)
+        {
+            packageNameOption, languageQueryOption, packageVersionOption
+        },
         new McpCommand(RequestCopilotReviewCmd, "Submit an API for automated Copilot review", ApiViewRequestCopilotReviewToolName)
         {
             apiViewUrlOption, languageOption, apiTextOption, baseApiTextOption, outlineOption, existingCommentsOption
@@ -227,6 +240,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
             GetContentCmd => await GetContent(parseResult, ct),
             CreateCIRevisionCmd => await CreateCIRevision(parseResult, ct),
             CreatePullRequestRevisionCmd => await CreatePullRequestRevision(parseResult, ct),
+            GetReviewUrlCmd => await GetReviewUrl(parseResult, ct),
             RequestCopilotReviewCmd => await RequestCopilotReview(parseResult, ct),
             GetCopilotReviewCmd => await GetCopilotReview(parseResult, ct),
             _ => new APIViewResponse { ResponseError = $"Unknown command: {commandName}" }
@@ -263,6 +277,56 @@ public class APIViewReviewTool : MCPMultiCommandTool
     {
         string? apiViewUrl = parseResult.GetValue(apiViewUrlRequiredOption);
         return await GetComments(apiViewUrl!, ct);
+    }
+
+    [McpServerTool(Name = ApiViewGetReviewUrlToolName), Description("Get the APIView review URL for a package by name and language. Returns the direct link to the API review page for the specified package.")]
+    public async Task<APIViewResponse> GetReviewUrlByPackage(string package, string language, string? version = null, CancellationToken ct = default)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(package) || string.IsNullOrEmpty(language))
+            {
+                return new APIViewResponse { ResponseError = "Both 'package' and 'language' parameters are required." };
+            }
+
+            string? resolvedLanguage = ResolveLanguage(language);
+            if (resolvedLanguage == null)
+            {
+                var supported = string.Join(", ", SupportedLanguages);
+                return new APIViewResponse
+                {
+                    ResponseError = $"Unsupported language '{language}'. Supported languages are: {supported}."
+                };
+            }
+
+            string? url = await _apiViewService.GetReviewUrlByPackageAsync(package, resolvedLanguage, version, ct);
+
+            if (url == null)
+            {
+                return new APIViewResponse
+                {
+                    ResponseError = $"Could not find an APIView review for package '{package}' in language '{resolvedLanguage}'" +
+                                   (!string.IsNullOrEmpty(version) ? $" with version '{version}'" : "") + "." +
+                                   " Please verify the package name and language are correct."
+                };
+            }
+
+            return new APIViewResponse { Result = url };
+        }
+        catch (Exception ex)
+        {
+            string context = $"package '{package}' ({language})" +
+                             (!string.IsNullOrEmpty(version) ? $" version '{version}'" : "");
+            return new APIViewResponse { ResponseError = $"Failed to get review URL for {context}: {ex.Message}" };
+        }
+    }
+
+    private async Task<APIViewResponse> GetReviewUrl(ParseResult parseResult, CancellationToken ct)
+    {
+        string? package = parseResult.GetValue(packageNameOption);
+        string? language = parseResult.GetValue(languageQueryOption);
+        string? version = parseResult.GetValue(packageVersionOption);
+        return await GetReviewUrlByPackage(package!, language!, version, ct);
     }
 
     private async Task<APIViewResponse> GetContent(ParseResult parseResult, CancellationToken ct)
@@ -542,4 +606,31 @@ public class APIViewReviewTool : MCPMultiCommandTool
             throw new ArgumentException($"Error parsing URL: {ex.Message}", nameof(url), ex);
         }
     }
+
+    // Supported APIView languages and their common aliases
+    private static readonly string[] SupportedLanguages =
+        ["C", "C#", "C++", "Go", "Java", "JavaScript", "Json", "Kotlin", "Python", "Rust", "Swift", "TypeSpec", "Xml"];
+
+    private static readonly Dictionary<string, string> LanguageAliases = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["net"] = "C#",
+        [".net"] = "C#",
+        ["dotnet"] = "C#",
+        ["csharp"] = "C#",
+        ["cs"] = "C#",
+        ["cpp"] = "C++",
+        ["js"] = "JavaScript",
+        ["typescript"] = "JavaScript",
+        ["ts"] = "JavaScript",
+        ["golang"] = "Go",
+        ["py"] = "Python",
+    };
+
+    /// <summary>Resolves a language input to a canonical APIView language name, or null if unsupported.</summary>
+    public static string? ResolveLanguage(string language)
+    {
+        string? canonical = SupportedLanguages.FirstOrDefault(l => l.Equals(language, StringComparison.OrdinalIgnoreCase));
+        return canonical ?? (LanguageAliases.GetValueOrDefault(language));
+    }
+
 }

@@ -122,7 +122,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(releasePlan);
         }
 
-        Task<List<ReleasePlanWorkItem>> IDevOpsService.GetReleasePlansForProductAsync(string productTreeId, string specApiVersion, string sdkReleaseType, bool isTestReleasePlan, CancellationToken ct)
+        Task<List<ReleasePlanWorkItem>> IDevOpsService.GetReleasePlansForProductAsync(string productTreeId, string sdkReleaseType, bool isTestReleasePlan, CancellationToken ct)
         {
             var releasePlans = new List<ReleasePlanWorkItem>();
             return Task.FromResult(releasePlans);

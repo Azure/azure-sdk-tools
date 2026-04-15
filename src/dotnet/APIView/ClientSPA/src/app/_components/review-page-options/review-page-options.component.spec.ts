@@ -185,6 +185,51 @@ describe('ReviewPageOptionsComponent', () => {
       component.toggleAPIRevisionApproval();
       expect(component.showAPIRevisionApprovalModal).not.toBeTruthy();
     });
+
+    it('should show approval modal when only diagnostic must fix comments remain', () => {
+      component.isAPIRevisionApprovalDisabled = false;
+      component.activeAPIRevisionIsApprovedByCurrentUser = false;
+      component.hasActiveConversation = false;
+      component.hasFatalDiagnostics = false;
+      component.qualityScore = {
+        score: 80,
+        unresolvedMustFixCount: 1,
+        unresolvedMustFixDiagnostics: 1,
+        unresolvedShouldFixCount: 0,
+        unresolvedSuggestionCount: 0,
+        unresolvedQuestionCount: 0,
+        unresolvedUnknownCount: 0,
+        totalUnresolvedCount: 1
+      };
+      component.hasDiagnosticMustFixApprovalWarning = true;
+
+      component.handleAPIRevisionApprovalAction();
+
+      expect(component.showAPIRevisionApprovalModal).toBe(true);
+    });
+
+    it('should approve directly when no approval warning conditions apply', () => {
+      component.isAPIRevisionApprovalDisabled = false;
+      component.activeAPIRevisionIsApprovedByCurrentUser = false;
+      component.hasActiveConversation = false;
+      component.hasFatalDiagnostics = false;
+      component.qualityScore = {
+        score: 100,
+        unresolvedMustFixCount: 0,
+        unresolvedMustFixDiagnostics: 0,
+        unresolvedShouldFixCount: 0,
+        unresolvedSuggestionCount: 0,
+        unresolvedQuestionCount: 0,
+        unresolvedUnknownCount: 0,
+        totalUnresolvedCount: 0
+      };
+      const emitSpy = vi.spyOn(component.apiRevisionApprovalEmitter, 'emit');
+
+      component.handleAPIRevisionApprovalAction();
+
+      expect(component.showAPIRevisionApprovalModal).toBe(false);
+      expect(emitSpy).toHaveBeenCalledWith(true);
+    });
   });
 
   describe('Copilot Review Support', () => {
@@ -364,6 +409,22 @@ describe('ReviewPageOptionsComponent', () => {
         component.unresolvedMustFixCount = 1;
         const result = component['getApprovalDisabledReasons'](true, true);
         expect(result).toEqual([ApprovalDisabledReason.UnresolvedMustFix]);
+      });
+
+      it('should return [] when only diagnostic must fix comments remain', () => {
+        component.qualityScore = {
+          score: 80,
+          unresolvedMustFixCount: 1,
+          unresolvedMustFixDiagnostics: 1,
+          unresolvedShouldFixCount: 0,
+          unresolvedSuggestionCount: 0,
+          unresolvedQuestionCount: 0,
+          unresolvedUnknownCount: 0,
+          totalUnresolvedCount: 1
+        };
+        component.unresolvedMustFixCount = component.qualityScore.unresolvedMustFixCount - (component.qualityScore.unresolvedMustFixDiagnostics ?? 0);
+        const result = component['getApprovalDisabledReasons'](false, false);
+        expect(result).toEqual([]);
       });
 
       it('should return [UnresolvedMustFix] when copilot is not supported but must fix remain', () => {

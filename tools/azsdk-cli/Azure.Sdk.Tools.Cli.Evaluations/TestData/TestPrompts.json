@@ -6,6 +6,10 @@
     { "toolName": "azsdk_apiview_get_comments", "prompt": "Show me the API review feedback for this package", "category": "all" },
     { "toolName": "azsdk_apiview_get_comments", "prompt": "What comments did the API reviewers leave?", "category": "all" },
 
+    { "toolName": "azsdk_apiview_get_review_url", "prompt": "Get the APIView review link for the Azure.Storage.Blobs C# package", "category": "all" },
+    { "toolName": "azsdk_apiview_get_review_url", "prompt": "What is the APIView URL for the azure-core Python package?", "category": "all" },
+    { "toolName": "azsdk_apiview_get_review_url", "prompt": "Give me the link to the API review page for the Java storage blob package version 12.32.0", "category": "all" },
+
     { "toolName": "azsdk_apiview_request_copilot_review", "prompt": "Request a Copilot review for this API", "category": "all" },
     { "toolName": "azsdk_apiview_request_copilot_review", "prompt": "Run an automated review on my package's API surface", "category": "all" },
     { "toolName": "azsdk_apiview_request_copilot_review", "prompt": "Submit this APIView URL for an automated Copilot review", "category": "all" },

@@ -3,6 +3,8 @@ using System.Text.Json;
 
 namespace Azure.Sdk.Tools.Cli.Services.APIView;
 
+using System.Net;
+
 public interface IAPIViewService
 {
     Task<string?> GetRevisionContent(string apiRevisionId, string reviewId, string contentReturnType, CancellationToken ct);
@@ -20,6 +22,11 @@ public interface IAPIViewService
         string? label = null, bool compareAllRevisions = false, string? packageVersion = null,
         bool setReleaseTag = false, string? packageType = null, string? sourceBranch = null,
         CancellationToken ct = default);
+
+    /// <summary>
+    /// Retrieves the canonical APIView review URL for a given package and language.
+    /// </summary>
+    Task<string?> GetReviewUrlByPackageAsync(string packageName, string language, string? version, CancellationToken ct);
 
     /// <summary>
     /// Creates an API revision for a pull request if API surface changes are detected.
@@ -235,6 +242,41 @@ public class APIViewService : IAPIViewService
         string endpoint = $"/api/PullRequests/CreateAPIRevisionIfAPIHasChanges?{string.Join("&", queryParams)}";
 
         return await _httpService.GetAsync(endpoint, ct);
+    }
+
+    /// <inheritdoc />
+    public async Task<string?> GetReviewUrlByPackageAsync(string packageName, string language, string? version, CancellationToken ct)
+    {
+        var queryParams = new List<string>
+        {
+            $"package={Uri.EscapeDataString(packageName)}",
+            $"language={Uri.EscapeDataString(language)}",
+            "redirect=false"
+        };
+
+        if (!string.IsNullOrEmpty(version))
+        {
+            queryParams.Add($"version={Uri.EscapeDataString(version)}");
+        }
+
+        string endpoint = $"/review?{string.Join("&", queryParams)}";
+
+        try
+        {
+            (string? result, _) = await _httpService.GetAsync(endpoint, ct);
+
+            if (string.IsNullOrWhiteSpace(result))
+            {
+                return null;
+            }
+
+            var json = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(result);
+            return json.GetProperty("url").GetString();
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
     }
 
     /// <inheritdoc />

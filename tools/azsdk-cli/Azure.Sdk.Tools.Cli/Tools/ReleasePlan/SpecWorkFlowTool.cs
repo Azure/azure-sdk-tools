@@ -48,7 +48,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private readonly Option<string> apiVersionOpt = new("--api-version")
         {
             Description = "API version",
-            Required = true,
+            Required = false,
         };
 
         private readonly Option<string> sdkReleaseTypeOpt = new("--release-type")
@@ -107,11 +107,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             return command switch
             {
                 generateSdkCommandName => await RunGenerateSdkAsync(commandParser.GetValue(typeSpecProjectPathOpt),
-                                        commandParser.GetValue(apiVersionOpt),
                                         commandParser.GetValue(sdkReleaseTypeOpt),
                                         commandParser.GetValue(languageOpt),
                                         commandParser.GetValue(pullRequestNumberOpt),
                                         commandParser.GetValue(workItemIdOpt),
+                                        commandParser.GetValue(apiVersionOpt),
                                         ct),
                 getSdkPullRequestCommandName => await GetSDKPullRequestDetails(commandParser.GetValue(languageOpt), workItemId: commandParser.GetValue(workItemIdOpt), buildId: commandParser.GetValue(pipelineRunIdOpt), ct: ct),
                 _ => new DefaultCommandResponse { ResponseError = $"Unknown command: '{command}'" },
@@ -179,7 +179,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         }
 
         [McpServerTool(Name = RunGenerateSdkToolName), Description("Generate SDK from a TypeSpec project using pipeline.")]
-        public async Task<ReleaseWorkflowResponse> RunGenerateSdkAsync(string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int pullRequestNumber = 0, int workItemId = 0, CancellationToken ct = default)
+        public async Task<ReleaseWorkflowResponse> RunGenerateSdkAsync(string typespecProjectRoot, string sdkReleaseType, string language, int pullRequestNumber = 0, int workItemId = 0, string apiVersion = "", CancellationToken ct = default)
         {
             try
             {
@@ -215,12 +215,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 {
                     typeSpecProjectPath = typespecHelper.GetTypeSpecProjectRelativePath(typespecProjectRoot);
                     response.TypeSpecProject = typeSpecProjectPath;
-                }
-
-                if (string.IsNullOrEmpty(apiVersion))
-                {
-                    response.ResponseErrors.Add("API version is required to generate SDK.");
-                    response.Status = "Failed";
                 }
 
                 List<string> validReleaseTypes = ["beta", "stable"];

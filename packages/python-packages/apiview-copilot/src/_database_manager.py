@@ -38,8 +38,8 @@ class ContainerNames(Enum):
 
     @classmethod
     def data_containers(cls) -> list[str]:
-        """Return a list of all data container names, omitting containers that are for internal bookkeeping."""
-        return [name.value for name in cls if name not in {cls.REVIEW_JOBS, cls.METRICS}]
+        """Return the knowledge base container names (those with Azure AI Search indexers)."""
+        return [cls.GUIDELINES.value, cls.EXAMPLES.value, cls.MEMORIES.value]
 
 
 class DatabaseManager:

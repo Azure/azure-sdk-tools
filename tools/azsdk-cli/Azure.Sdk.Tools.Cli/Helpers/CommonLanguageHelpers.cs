@@ -107,8 +107,8 @@ public class CommonValidationHelpers : ICommonValidationHelpers
                 return new PackageCheckResponse(1, "", $"PowerShell script not found at expected location: {scriptPath}")
                 {
                     NextSteps = [
-                        "Verify that the repository has the eng/common directory with the latest synced scripts",
-                        "eng/common is synced via the eng/common sync pipeline - see https://github.com/Azure/azure-sdk-tools/blob/main/doc/common/common_engsys.md"
+                        "Run 'azsdk verify setup' to check required tools and repository prerequisites",
+                        "If eng/common scripts are missing, use the eng/common sync process: https://github.com/Azure/azure-sdk-tools/blob/main/doc/common/common_engsys.md#engcommon-sync"
                     ]
                 };
             }
@@ -167,7 +167,7 @@ public class CommonValidationHelpers : ICommonValidationHelpers
                 return new PackageCheckResponse(1, "", $"PowerShell script not found at expected location: {scriptPath}")
                 {
                     NextSteps = [
-                        "Verify that the repository has the eng/common directory with the latest synced scripts",
+                        "Run 'azsdk verify setup' to check required tools and repository prerequisites",
                         "eng/common is synced via the eng/common sync pipeline - see https://github.com/Azure/azure-sdk-tools/blob/main/doc/common/common_engsys.md#engcommon-sync"
                     ]
                 };
@@ -180,6 +180,7 @@ public class CommonValidationHelpers : ICommonValidationHelpers
                 return new PackageCheckResponse(1, "", $"Doc settings file not found at expected location: {settingsPath}")
                 {
                     NextSteps = [
+                        "Run 'azsdk verify setup' to check required tools and repository prerequisites",
                         "Ensure the eng/.docsettings.yml file exists in the repository root",
                         "This file is required for README validation - check repository documentation setup"
                     ]
@@ -254,8 +255,8 @@ public class CommonValidationHelpers : ICommonValidationHelpers
                 return new PackageCheckResponse(1, "", $"Invoke-Cspell.ps1 script not found at expected location: {scriptPath}")
                 {
                     NextSteps = [
-                        "Verify that the repository has the eng/common directory with the latest synced scripts",
-                        "eng/common is synced via the eng/common sync pipeline - see https://github.com/Azure/azure-sdk-tools/blob/main/doc/common/common_engsys.md"
+                        "Run 'azsdk verify setup' to check required tools and repository prerequisites",
+                        "If eng/common scripts are missing, use the eng/common sync process: https://github.com/Azure/azure-sdk-tools/blob/main/doc/common/common_engsys.md#engcommon-sync"
                     ]
                 };
             }

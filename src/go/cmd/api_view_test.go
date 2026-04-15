@@ -153,6 +153,7 @@ func TestDiagnostics(t *testing.T) {
 func TestExternalModule(t *testing.T) {
 	review, err := createReview(filepath.Clean("testdata/test_external_module"))
 	require.NoError(t, err)
+	require.Equal(t, "1.0.0-beta.1", review.PackageVersion)
 	require.Equal(t, 1, len(review.Diagnostics))
 	require.Equal(t, aliasFor+"github.com/Azure/azure-sdk-for-go/sdk/azcore.Policy", review.Diagnostics[0].Text)
 	require.Equal(t, 1, len(review.Navigation))
@@ -290,6 +291,7 @@ func TestMajorVersion(t *testing.T) {
 func TestVars(t *testing.T) {
 	review, err := createReview(filepath.Clean("testdata/test_vars"))
 	require.NoError(t, err)
+	require.Empty(t, review.PackageVersion)
 	require.NotZero(t, review)
 	countSomeChoice := 0
 	hasHTTPClient := false

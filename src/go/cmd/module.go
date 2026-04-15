@@ -29,7 +29,7 @@ var versionReg = regexp.MustCompile(`/v\d+$|/v\d+/`)
 // used to find the semver const definition. the definition
 // is pretty standard so this is easier than using the ast,
 // plus the constant isn't exported
-var moduleVerReg = regexp.MustCompile(`.+\s*=\s*".*v(?<version>\d+\.\d+\.\d+(?:-[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)?)"`)
+var moduleVerReg = regexp.MustCompile(`^\s*(?:const\s+)?[A-Za-z_][A-Za-z0-9_]*\s*=\s*"v(?P<version>\d+\.\d+\.\d+(?:-[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)?)"\s*$`)
 
 // Module collects the data required to describe an Azure SDK module's public API.
 type Module struct {
@@ -41,7 +41,7 @@ type Module struct {
 	Name string
 	// Packages maps import paths to the module's Packages
 	Packages map[string]*Pkg
-	// Version is the semantic version of the module, e.g. v1.2.3
+	// Version is the semantic version of the module without the leading "v", e.g. 1.2.3
 	Version string
 }
 
@@ -84,7 +84,7 @@ func NewModule(dir string) (*Module, error) {
 		// if not, then the package name added below won't match the imported packages.
 		baseImportPath = ""
 	}
-	err = filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+	err = filepath.WalkDir(dir, func(path string, d fs.DirEntry, _ error) error {
 		if d.IsDir() {
 			if !indexTestdata && strings.Contains(path, "testdata") {
 				return filepath.SkipDir
@@ -115,11 +115,20 @@ func NewModule(dir string) (*Module, error) {
 			scanner := bufio.NewScanner(f)
 			for scanner.Scan() {
 				if match := moduleVerReg.FindStringSubmatch(scanner.Text()); match != nil {
-					m.Version = match[moduleVerReg.SubexpIndex("version")]
+					matched := match[moduleVerReg.SubexpIndex("version")]
+					if m.Version != "" {
+						return fmt.Errorf("multiple semver matches, found %s when version is already %s", matched, m.Version)
+					}
+					m.Version = matched
 					break
 				}
 			}
-			_ = f.Close()
+			if err := scanner.Err(); err != nil {
+				return err
+			}
+			if err := f.Close(); err != nil {
+				return err
+			}
 		}
 		return nil
 	})

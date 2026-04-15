@@ -403,10 +403,14 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) []openai.Cha
 		if len(linkInfos) > 0 {
 			var mu sync.Mutex
 			var wg sync.WaitGroup
+			const maxConcurrentLinkFetches = 5
+			sem := make(chan struct{}, maxConcurrentLinkFetches)
 			for _, li := range linkInfos {
 				wg.Add(1)
+				sem <- struct{}{}
 				go func(idx int, info model.AdditionalInfo) {
 					defer wg.Done()
+					defer func() { <-sem }()
 					content := info.Content
 
 					if utils.IsPipelineLink(info.Link) {

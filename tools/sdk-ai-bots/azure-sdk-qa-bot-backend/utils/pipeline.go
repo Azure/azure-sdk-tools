@@ -36,9 +36,6 @@ func ExtractBuildID(url string) string {
 // If the command times out or fails with agent mode, automatically retries without agent.
 // Returns the plain text output from the CLI tool
 func AnalyzePipeline(pipelineURL string, query string, useAgent bool) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), AnalyzePipelineTimeout)
-	defer cancel()
-
 	startTime := time.Now()
 	defer func() {
 		elapsed := time.Since(startTime)
@@ -54,14 +51,18 @@ func AnalyzePipeline(pipelineURL string, query string, useAgent bool) (string, e
 
 	// Try with agent mode first if requested
 	if useAgent {
+		ctx, cancel := context.WithTimeout(context.Background(), AnalyzePipelineTimeout)
 		result, err := executeAnalyzePipelineCommand(ctx, buildID, query, true)
+		cancel()
 		if err == nil {
 			return result, nil
 		}
 		log.Printf("Agent mode failed: %v, falling back to non-agent mode", err)
 	}
 
-	// Fallback to non-agent mode
+	// Fallback to non-agent mode with a fresh timeout
+	ctx, cancel := context.WithTimeout(context.Background(), AnalyzePipelineTimeout)
+	defer cancel()
 	return executeAnalyzePipelineCommand(ctx, buildID, query, false)
 }
 
@@ -90,8 +91,8 @@ func executeAnalyzePipelineCommand(ctx context.Context, buildID string, query st
 	err := cmd.Run()
 	if err != nil {
 		if ctx.Err() == context.DeadlineExceeded {
-			log.Printf("azsdk CLI timed out after %v", ctx.Err())
-			return "", fmt.Errorf("failed to analyze pipeline: timeout exceeded")
+			log.Printf("azsdk CLI timed out after %v", AnalyzePipelineTimeout)
+			return "", fmt.Errorf("failed to analyze pipeline after %v: %w", AnalyzePipelineTimeout, ctx.Err())
 		}
 		log.Printf("Error running azsdk CLI: %v, stderr: %s", err, stderr.String())
 		return "", fmt.Errorf("failed to analyze pipeline: %v, stderr: %s", err, stderr.String())

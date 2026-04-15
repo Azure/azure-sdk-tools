@@ -97,6 +97,7 @@ func TestSubpackage(t *testing.T) {
 	review, err := createReview(filepath.Clean("testdata/test_subpackage"))
 	require.NoError(t, err)
 	require.Equal(t, "Go", review.Language)
+	require.Equal(t, "1.8.9", review.PackageVersion)
 	require.Equal(t, "test_subpackage", review.Name)
 	seen := map[string]bool{}
 	searchLines(review.ReviewLines, func(rl ReviewLine) bool {
@@ -126,6 +127,7 @@ func TestDiagnostics(t *testing.T) {
 	review, err := createReview(filepath.Clean("testdata/test_diagnostics"))
 	require.NoError(t, err)
 	require.Equal(t, "Go", review.Language)
+	require.Equal(t, "1.1.0", review.PackageVersion)
 	require.Equal(t, "test_diagnostics", review.Name)
 	require.Equal(t, 4, len(review.Diagnostics))
 	for _, diagnostic := range review.Diagnostics {
@@ -231,6 +233,7 @@ func TestRecursiveAliasDefinitions(t *testing.T) {
 			review, err := createReview(filepath.Clean(test.path))
 			require.NoError(t, err)
 			require.Equal(t, "Go", review.Language)
+			require.Equal(t, "1.2.3", review.PackageVersion)
 			require.Equal(t, 2, len(review.Diagnostics))
 			require.Equal(t, test.diagLevel, review.Diagnostics[0].Level)
 			require.Equal(t, aliasFor+test.sourceName, review.Diagnostics[0].Text)
@@ -277,9 +280,11 @@ func TestMajorVersion(t *testing.T) {
 	review, err := createReview(filepath.Clean("testdata/test_major_version"))
 	require.NoError(t, err)
 	require.Equal(t, "Go", review.Language)
+	require.Equal(t, "2.0.1", review.PackageVersion)
 	require.Equal(t, "test_major_version", review.Name)
-	require.Equal(t, 1, len(review.Navigation))
-	require.Equal(t, "test_major_version/subpackage", review.Navigation[0].Text)
+	require.Equal(t, 2, len(review.Navigation))
+	require.Equal(t, "test_major_version", review.Navigation[0].Text)
+	require.Equal(t, "test_major_version/subpackage", review.Navigation[1].Text)
 }
 
 func TestVars(t *testing.T) {

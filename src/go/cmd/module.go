@@ -4,6 +4,7 @@
 package cmd
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"go/ast"
@@ -25,6 +26,11 @@ var indexTestdata bool
 // versionReg is the regex for version part in import
 var versionReg = regexp.MustCompile(`/v\d+$|/v\d+/`)
 
+// used to find the semver const definition. the definition
+// is pretty standard so this is easier than using the ast,
+// plus the constant isn't exported
+var moduleVerReg = regexp.MustCompile(`.+\s*=\s*".*v(?<version>\d+\.\d+\.\d+(?:-[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)?)"`)
+
 // Module collects the data required to describe an Azure SDK module's public API.
 type Module struct {
 	// ExternalAliases are type aliases referring to other modules
@@ -35,6 +41,8 @@ type Module struct {
 	Name string
 	// Packages maps import paths to the module's Packages
 	Packages map[string]*Pkg
+	// Version is the semantic version of the module, e.g. v1.2.3
+	Version string
 }
 
 // getPackageNameFromModPath gets the API review name for the module at modPath
@@ -95,6 +103,23 @@ func NewModule(dir string) (*Module, error) {
 			} else if !errors.Is(err, ErrNoPackages) {
 				return err
 			}
+		} else if fileName := d.Name(); strings.Contains(fileName, "constant") || strings.Contains(fileName, "version") {
+			// find the constant that contains the semver
+			// e.g.
+			// moduleVersion = "v1.2.0"
+			// Version = "v1.21.1-beta.1"
+			f, err := os.Open(path)
+			if err != nil {
+				return err
+			}
+			scanner := bufio.NewScanner(f)
+			for scanner.Scan() {
+				if match := moduleVerReg.FindStringSubmatch(scanner.Text()); match != nil {
+					m.Version = match[moduleVerReg.SubexpIndex("version")]
+					break
+				}
+			}
+			_ = f.Close()
 		}
 		return nil
 	})

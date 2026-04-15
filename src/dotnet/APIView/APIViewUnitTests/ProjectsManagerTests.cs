@@ -782,6 +782,170 @@ public class ProjectsManagerTests
 
     #endregion
 
+    #region BuildExpectedPackages Deduplication Tests
+
+    [Fact]
+    public async Task BuildExpectedPackages_JavaKeyVaultFlavorScenario_TwoDifferentPackages_KeepsBoth()
+    {
+        ReviewListItemModel typeSpecReview = CreateTypeSpecReview("ts-1", "Azure.Security.KeyVault.Administration");
+        TypeSpecMetadata metadata = new()
+        {
+            TypeSpec = new TypeSpecInfo { Namespace = "Azure.Security.KeyVault.Administration", Documentation = "KeyVault" },
+            Languages = new Dictionary<string, List<LanguageConfig>>
+            {
+                ["java"] =
+                [
+                    // azurev2 flavor
+                    new LanguageConfig { EmitterName = "@azure-tools/typespec-java",
+                            PackageName = "com.azure.v2:azure-security-keyvault-administration",
+                            Namespace = "com.azure.v2.security.keyvault.administration",
+                            ServiceDir = "sdk/keyvault",
+                            Flavor = "azurev2"
+                    },
+                    // azure flavor 
+                    new LanguageConfig { EmitterName = "@azure-tools/typespec-java-v2",
+                            PackageName = "com.azure:azure-security-keyvault-administration",
+                            Namespace = "com.azure.security.keyvault.administration",
+                            ServiceDir = "sdk/keyvault",
+                            Flavor = "azure"
+
+                    }
+                ]
+            }
+        };
+
+        Project capturedProject = null;
+        _mockProjectsRepository
+            .Setup(r => r.UpsertProjectAsync(It.IsAny<Project>()))
+            .Callback<Project>(p => capturedProject = p)
+            .Returns(Task.CompletedTask);
+
+        await _projectsManager.UpsertProjectFromMetadataAsync("testUser", metadata, typeSpecReview);
+
+        Assert.NotNull(capturedProject);
+        // Two distinct PackageName::Namespace tokens → both kept, each needs its own approval
+        Assert.Equal(2, capturedProject.ExpectedPackages["Java"].Count);
+        Assert.Contains(capturedProject.ExpectedPackages["Java"],
+            p => p.PackageName == "com.azure.v2:azure-security-keyvault-administration"
+              && p.Namespace == "com.azure.v2.security.keyvault.administration");
+        Assert.Contains(capturedProject.ExpectedPackages["Java"],
+            p => p.PackageName == "com.azure:azure-security-keyvault-administration"
+              && p.Namespace == "com.azure.security.keyvault.administration");
+        // Two PackageLookup tokens for Java
+        Assert.Equal(2, capturedProject.PackageLookup.Count(t => t.Contains("java::")));
+    }
+
+    [Fact]
+    public async Task BuildExpectedPackages_CSharpTwoEmittersSamePackage_DeduplicatesToOne()
+    {
+        // C# scenario: two tspconfig entries both resolve to the SAME PackageName + Namespace
+        // so only one namespace approval should be required.
+        ReviewListItemModel typeSpecReview = CreateTypeSpecReview("ts-1", "Azure.Core");
+        TypeSpecMetadata metadata = new()
+        {
+            TypeSpec = new TypeSpecInfo { Namespace = "Azure.Core", Documentation = "Azure Core" },
+            Languages = new Dictionary<string, List<LanguageConfig>>
+            {
+                ["csharp"] =
+                [
+                    new() { EmitterName = "@azure-tools/typespec-csharp",
+                            PackageName = "Azure.Core", Namespace = "Azure.Core" },
+                    // Different emitter, but same PackageName + Namespace → deduplicates to one entry
+                    new() { EmitterName = "@azure-tools/typespec-csharp-v2",
+                            PackageName = "Azure.Core", Namespace = "Azure.Core" }
+                ]
+            }
+        };
+
+        Project capturedProject = null;
+        _mockProjectsRepository
+            .Setup(r => r.UpsertProjectAsync(It.IsAny<Project>()))
+            .Callback<Project>(p => capturedProject = p)
+            .Returns(Task.CompletedTask);
+
+        await _projectsManager.UpsertProjectFromMetadataAsync("testUser", metadata, typeSpecReview);
+
+        Assert.NotNull(capturedProject);
+        // Two configs, same PackageName::Namespace → deduplicated to one entry
+        Assert.Single(capturedProject.ExpectedPackages["C#"]);
+        Assert.Equal("Azure.Core", capturedProject.ExpectedPackages["C#"][0].PackageName);
+        Assert.Equal("Azure.Core", capturedProject.ExpectedPackages["C#"][0].Namespace);
+        // One PackageLookup token for C#
+        Assert.Single(capturedProject.PackageLookup.Where(t => t.Contains("c#::")));
+    }
+
+    [Fact]
+    public async Task BuildExpectedPackages_CSharpTwoEmittersDifferentPackages_KeepsBoth()
+    {
+        // C# scenario: two tspconfig entries pointing to DIFFERENT packages/namespaces.
+        // Both should be preserved as separate PackageInfo entries, each requiring its own approval.
+        ReviewListItemModel typeSpecReview = CreateTypeSpecReview("ts-1", "Azure.AI.Projects");
+        TypeSpecMetadata metadata = new()
+        {
+            TypeSpec = new TypeSpecInfo { Namespace = "Azure.AI.Projects", Documentation = "AI Projects" },
+            Languages = new Dictionary<string, List<LanguageConfig>>
+            {
+                ["csharp"] =
+                [
+                    new LanguageConfig { PackageName = "Azure.AI.Projects",            Namespace = "Azure.AI.Projects", Flavor = "azure"},
+                    new LanguageConfig { PackageName = "Azure.AI.Agents.Contracts.V2", Namespace = "Azure.AI.Agents.Contracts.V2", Flavor = "azure" }
+                ]
+            }
+        };
+
+        Project capturedProject = null;
+        _mockProjectsRepository
+            .Setup(r => r.UpsertProjectAsync(It.IsAny<Project>()))
+            .Callback<Project>(p => capturedProject = p)
+            .Returns(Task.CompletedTask);
+
+        await _projectsManager.UpsertProjectFromMetadataAsync("testUser", metadata, typeSpecReview);
+
+        Assert.NotNull(capturedProject);
+        // Two distinct packages → both kept
+        Assert.Equal(2, capturedProject.ExpectedPackages["C#"].Count);
+        Assert.Contains(capturedProject.ExpectedPackages["C#"], p => p.PackageName == "Azure.AI.Projects");
+        Assert.Contains(capturedProject.ExpectedPackages["C#"], p => p.PackageName == "Azure.AI.Agents.Contracts.V2");
+        // Two PackageLookup tokens for C#
+        Assert.Equal(2, capturedProject.PackageLookup.Count(t => t.Contains("c#::")));
+    }
+
+    [Fact]
+    public async Task BuildExpectedPackages_TwoEmittersSamePackageNameDifferentNamespace_KeepsBoth()
+    {
+        // Edge case: same PackageName but different Namespace → different "PackageName::Namespace" keys
+        // → treated as two distinct entries (not deduplicated).
+        ReviewListItemModel typeSpecReview = CreateTypeSpecReview("ts-1", "Azure.Widget");
+        TypeSpecMetadata metadata = new()
+        {
+            TypeSpec = new TypeSpecInfo { Namespace = "Azure.Widget", Documentation = "Widget" },
+            Languages = new Dictionary<string, List<LanguageConfig>>
+            {
+                ["python"] =
+                [
+                    new() { PackageName = "azure-widget", Namespace = "azure.widget.v1" },
+                    new() { PackageName = "azure-widget", Namespace = "azure.widget.v2" }
+                ]
+            }
+        };
+
+        Project capturedProject = null;
+        _mockProjectsRepository
+            .Setup(r => r.UpsertProjectAsync(It.IsAny<Project>()))
+            .Callback<Project>(p => capturedProject = p)
+            .Returns(Task.CompletedTask);
+
+        await _projectsManager.UpsertProjectFromMetadataAsync("testUser", metadata, typeSpecReview);
+
+        Assert.NotNull(capturedProject);
+        // Same PackageName but different Namespace → two distinct tokens → both kept
+        Assert.Equal(2, capturedProject.ExpectedPackages["Python"].Count);
+        Assert.Contains(capturedProject.ExpectedPackages["Python"], p => p.Namespace == "azure.widget.v1");
+        Assert.Contains(capturedProject.ExpectedPackages["Python"], p => p.Namespace == "azure.widget.v2");
+    }
+
+    #endregion
+
     #region AreExpectedPackagesEqual / PackageListsAreEqual Tests
     // When packages are considered equal → no reconciliation → UpsertProjectAsync is NOT called.
     // When packages are considered unequal → reconciliation runs → UpsertProjectAsync IS called.

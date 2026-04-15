@@ -28,7 +28,7 @@ variables:
   - name: pythonVersion
     value: '3.12'
   - name: PythonIndexUrl
-    value: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/'
+    value: 'https://pkgs.dev.azure.com/azure-sdk/internal/_packaging/azure-sdk-for-python-pr/pypi/simple/'
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -55,9 +55,16 @@ extends:
 
               - bash: |
                   set -euo pipefail
+                  # Use Azure SDK feed only. External indexes are blocked in CI network isolation.
                   python -m pip install --upgrade pip --index-url $(PythonIndexUrl)
-                  pip install --pre -r requirements.txt --index-url $(PythonIndexUrl)
-                  pip install pytest pytest-asyncio pyright --index-url $(PythonIndexUrl)
+                  pip install -r requirements.txt \
+                    --index-url $(PythonIndexUrl) \
+                    --retries 5 \
+                    --timeout 60
+                  pip install pytest pytest-asyncio pytest-cov pyright \
+                    --index-url $(PythonIndexUrl) \
+                    --retries 5 \
+                    --timeout 60
                 displayName: 'Install dependencies'
                 workingDirectory: $(workingDirectory)
 
@@ -83,6 +90,12 @@ extends:
                     --ignore=tests/azsdk_mcp_tools_test.py \
                     --ignore=tests/github_tools_test.py \
                     --ignore=tests/knowledge_tools_test.py \
+                    --cov=config \
+                    --cov=services \
+                    --cov=tools \
+                    --cov=utils \
+                    --cov-report=term-missing \
+                    --cov-report=xml:$(workingDirectory)/coverage.xml \
                     -v \
                     --tb=short \
                     --junitxml=$(workingDirectory)/test-results.xml
@@ -97,3 +110,11 @@ extends:
                   testResultsFiles: '$(workingDirectory)/test-results.xml'
                   testRunTitle: 'QA Bot Agent Unit Tests'
                   failTaskOnFailedTests: true
+
+              - task: PublishCodeCoverageResults@2
+                displayName: 'Publish Code Coverage'
+                condition: always()
+                inputs:
+                  codeCoverageTool: 'Cobertura'
+                  summaryFileLocation: '$(workingDirectory)/coverage.xml'
+                  failIfCoverageEmpty: false

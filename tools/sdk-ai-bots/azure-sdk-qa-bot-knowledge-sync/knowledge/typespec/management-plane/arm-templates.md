@@ -283,3 +283,13 @@ interface MyResources {
 ```
 
 The advantage to using transformations is that, as the model versions, the PATCH model will also version automatically, whereas if you use a completely bespoke patch model, you will need to remember to make appropriate versioning changes there as well as in the resource model.
+
+## ArmResourcePatchAsync with discriminated resource types
+
+When using `ArmResourcePatchAsync` (or `ArmResourcePatchSync`) with a resource that has a discriminator, OAV may fail with `OBJECT_MISSING_REQUIRED_PROPERTY_DEFINITION`. This is because the discriminator is typically a required property on the resource, but PATCH requests should not require all properties.
+
+The general guidance is that **PATCH requests over discriminated types should require the discriminator property**. This may result in some LintDiff violations (e.g., `PatchBodyParametersSchema`), but that is expected and those violations can be suppressed. This is especially true if, as most services, your PATCH operation would need the discriminator value on the wire to determine how to apply the PATCH request to the existing resource.
+
+Most services need the discriminator value on the wire in the PATCH request body to know which subtype-specific logic to apply. Without it, the service cannot determine the resource variant and cannot correctly process partial updates. Making the discriminator required in the PATCH schema avoids the `OBJECT_MISSING_REQUIRED_PROPERTY_DEFINITION` OAV error and correctly communicates the API contract.
+
+The LintDiff `PatchBodyParametersSchema` rule may flag the required discriminator as a violation. This is a known false positive in this specific scenario. You can request the `Approved-LintDiff` label to suppress it for the PR, or add a permanent suppression via the AutoRest suppression mechanism.

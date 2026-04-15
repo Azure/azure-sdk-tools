@@ -55,69 +55,6 @@
         "overall_score": 7.494252873563219
     },
     {
-        "testcase": "ArmResourcePatchAsync & discriminator",
-        "expected": {
-            "answer": "we generally suggest that PATCH requests over discriminated types should require the discriminator property.  This may result in some lintdiff violations, but that is expected, and those cna be suppressed.  This is especially true if, as most services, your PATCH operation would need the discriminator value on the wire to determine how to apply the PATCH request to the existing reosurce.",
-            "references": [
-                {
-                    "title": "TypeSpec for OpenAPI Developers | Schema Object | allOf and polymorphism using allOf",
-                    "link": "https://typespec.io/docs/getting-started/typespec-for-openapi-dev"
-                },
-                {
-                    "title": "TypeSpec ARM Operation Mapping to Swagger Documentation | 23. ArmResourcePatchAsync | TypeSpec Example",
-                    "link": ""
-                },
-                {
-                    "title": "Interfaces and Operations | Azure.ResourceManager | ArmResourcePatchAsync",
-                    "link": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces"
-                },
-                {
-                    "title": "TypeSpec for OpenAPI Developers | Schema Object | Polymorphism using anyOf and oneOf (OAS3)",
-                    "link": "https://typespec.io/docs/getting-started/typespec-for-openapi-dev"
-                }
-            ]
-        },
-        "actual": {
-            "answer": "When using ArmResourcePatchAsync for a resource with a discriminator (polymorphic resource), you must ensure that the PATCH request body schema includes all required properties, especially the discriminator property. The OBJECT_MISSING_REQUIRED_PROPERTY_DEFINITION error from oav typically means the PATCH schema is missing the discriminator property, which is required for correct deserialization and validation.\n\nIn TypeSpec, the PATCH request body is generated from the resource's properties model. For polymorphic resources, you should:\n\n1. Use the @discriminator decorator on your base model and ensure all derived models set the discriminator property as a required string literal.\n2. When defining the PATCH operation, use ArmResourcePatchAsync<Resource, ResourceProperties> (or ArmCustomPatchAsync if you need a custom PATCH shape).\n3. Make sure the PATCH request body model includes the discriminator property as required. If your PATCH model omits the discriminator, OpenAPI and oav will fail validation.\n\nExample:\n\n```typespec\n@discriminator(\"kind\")\nmodel HostProperties {\n  kind: string;\n  // ... other properties\n}\n\nmodel WindowsHostProperties extends HostProperties {\n  kind: \"Windows\";\n  // ... windows-specific properties\n}\n\nmodel LinuxHostProperties extends HostProperties {\n  kind: \"Linux\";\n  // ... linux-specific properties\n}\n\nmodel Host is TrackedResource<HostProperties> {}\n\n@armResourceOperations\ninterface Hosts {\n  update is ArmResourcePatchAsync<Host, HostProperties>;\n}\n```\n\nThis ensures the PATCH request body includes the discriminator property (\"kind\") as required, satisfying both OpenAPI and oav validation. If you use a PATCH model that omits the discriminator, you will get OBJECT_MISSING_REQUIRED_PROPERTY_DEFINITION.\n\nIf you need to allow partial updates and want the discriminator to be optional in PATCH, this is not allowed by Azure API guidelines: the discriminator must always be present for polymorphic models in PATCH bodies.\n\n**Summary:**\n- Always include the discriminator property as required in your PATCH request body model for resources with polymorphism.\n- Use @discriminator and ensure all derived types set the discriminator property.\n- Use ArmResourcePatchAsync with the correct properties model.\n\nThis approach is fully compliant with Azure ARM and OpenAPI guidelines.",
-            "references": [
-                {
-                    "title": "TypeSpec for OpenAPI Developers | Schema Object | allOf and polymorphism using allOf",
-                    "link": "https://typespec.io/docs/getting-started/typespec-for-openapi-dev"
-                },
-                {
-                    "title": "Patch Resource # | Rules ## | General impact of violating the rules ###",
-                    "link": "https://github.com/cloud-and-ai-microsoft/resource-provider-contract/blob/master/v1.0/patch-resource.md"
-                },
-                {
-                    "title": "TypeSpec for OpenAPI Developers | Schema Object | Polymorphism using anyOf and oneOf (OAS3)",
-                    "link": "https://typespec.io/docs/getting-started/typespec-for-openapi-dev"
-                },
-                {
-                    "title": "TypeSpec ARM Operation Mapping to Swagger Documentation | 23. ArmResourcePatchAsync | TypeSpec Example",
-                    "link": ""
-                }
-            ]
-        },
-        "similarity": 4.0,
-        "gpt_similarity": 4.0,
-        "similarity_result": "pass",
-        "similarity_threshold": 4,
-        "groundedness": 5.0,
-        "gpt_groundedness": 5.0,
-        "groundedness_reason": "The RESPONSE is fully grounded in the CONTEXT, accurately and thoroughly conveying all essential information about PATCH operations for polymorphic resources, including the need for a required discriminator property and the use of TypeSpec features. No unsupported additions or omissions are present.",
-        "groundedness_result": "pass",
-        "groundedness_threshold": 3.0,
-        "response_completeness": 4.0,
-        "response_completeness_result": "pass",
-        "response_completeness_threshold": 4,
-        "response_completeness_reason": "The response is mostly complete, covering all major points about requiring the discriminator property in PATCH requests for discriminated types, but it misses the minor detail about lintdiff violations and their suppression.",
-        "reference_match": 0.75,
-        "reference_match_result": "fail",
-        "knowledge_match": 0.8076923076923077,
-        "knowledge_match_result": "pass",
-        "overall_score": 7.5576923076923075
-    },
-    {
         "testcase": "CI Failure – Swagger LintDiff",
         "expected": {
             "answer": "if you are fixing bugs already in main, this is expected.  lintdiff needs to run on your spec both before and after your PR, and if before is crashing, the PR to fix it will still crash.",
@@ -286,17 +223,17 @@
         "overall_score": 6.833333333333333
     },
     {
-        "average_score": 7.682858090185676,
-        "total_evals": 6,
-        "similarity_pass_rate": 6,
+        "average_score": 7.724580017683467,
+        "total_evals": 5,
+        "similarity_pass_rate": 5,
         "similarity_fail_rate": 0,
-        "groundedness_pass_rate": 4,
+        "groundedness_pass_rate": 3,
         "groundedness_fail_rate": 0,
-        "response_completeness_pass_rate": 6,
+        "response_completeness_pass_rate": 5,
         "response_completeness_fail_rate": 0,
-        "knowledge_match_pass_rate": 5,
+        "knowledge_match_pass_rate": 4,
         "knowledge_match_fail_rate": 1,
         "reference_match_pass_rate": 2,
-        "reference_match_fail_rate": 4
+        "reference_match_fail_rate": 3
     }
 ]

@@ -43,3 +43,15 @@ The general guidance is that **PATCH requests over discriminated types should re
 TypeSpec linter suppressions can only be provided **inline** at the use site using `#suppress`. There is no mechanism to attach suppression rules to a shared package definition that would apply only when those types are consumed — suppressions do not follow type references.
 
 Linter rules **can** be disabled globally in `tspconfig.yaml` using the `linter` options, but this disables the rule for the **entire project**, not just the files where the shared types are defined. There is currently no way to scope suppression to specific files within a shared/imported package.
+
+# Missing APIs in default tag error for TypeSpec conversion PR
+
+Part of the TypeSpec conversion is replacing the existing hand-authored swagger with a generated swagger. The generated swagger is still used for some purposes (SDK generation, Avocado validation, breaking change detection), and Avocado protects the ability to process it. The generated swagger needs to be **equivalent** to the original, but not necessarily **identical** — textually different representations (e.g., different `$ref` structures, common-types references like `TrackedResource/properties/tags`, or property ordering) are acceptable as long as the API surface is the same.
+
+Generally, issues reflected in the generated swagger will also show up in **breaking change checks**, which will have to be resolved (or suppressed if they are false positives). Review each violation carefully — the conversion is not guaranteed to be 100% accurate, and real breaking changes should still go through the breaking change process. Adding the `Approved-Avocado` label to bypass Avocado is appropriate only if the Avocado error is a known false positive.
+
+## Suppressing the Avocado failure
+
+If the `MISSING_APIS_IN_DEFAULT_TAG` error is a known false positive (for example, from a TypeSpec conversion PR that does not change the API surface), you can request the `Approved-Avocado` label on your PR. This is a one-time, per-PR suppression. Permanent suppression is not available for Avocado.
+
+For the newer `MULTIPLE_API_VERSION` rule (blocking error as of 7/1/2025), check the [Uniform Versioning Violation Guide](https://github.com/Azure/azure-rest-api-specs/wiki/Uniform-Versioning-Violation-Guide) or contact azversioning@service.microsoft.com for guidance.

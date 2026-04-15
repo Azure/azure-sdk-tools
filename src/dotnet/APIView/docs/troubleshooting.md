@@ -16,26 +16,6 @@ To reduce the surface area for potential attacks, APIView is **only accessible f
 
 ---
 
-## Reviews and Revisions
-
-### I don't see my manually created reviews from older APIView
-
-As of December 7, 2023, APIView shows only **one review per package**. All previously separate reviews are now added as revisions within a single review. To find them:
-
-1. Click on the review link for your package
-2. Select **Manual** in the Revision Type dropdown
-3. All previously created manual API revisions will appear
-
-### Why do I see so many comments that were not present earlier?
-
-As of December 7, 2023, APIView shows **all comments ever created across multiple revisions** for a package in a single review.
-
-### My pull request has links to previously generated API revisions. Are those links still valid?
-
-Yes. Previously generated links are still valid — APIView automatically redirects to the newly created review for the package.
-
----
-
 ## Upload Failures
 
 ### Why is my manual revision failing?

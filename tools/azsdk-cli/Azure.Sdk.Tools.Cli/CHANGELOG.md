@@ -1,14 +1,10 @@
 # Release History
 
-## 0.6.8 (Unreleased)
+## 0.6.8 (2026-04-15)
 
 ### Features Added
 
-### Breaking Changes
-
-### Bugs Fixed
-
-### Other Changes
+- Added CODEOWNERS validation for paths, useful for release and PR checks
 
 ## 0.6.7 (2026-04-13)
 

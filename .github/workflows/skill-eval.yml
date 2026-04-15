@@ -12,6 +12,7 @@ on:
 
 permissions:
   contents: read
+  packages: read
 
 jobs:
   check-skills:
@@ -20,10 +21,24 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Validate YAML syntax
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@microsoft'
+
+      - name: Validate skills and eval specs
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          pip install yamllint --quiet
-          yamllint -c .github/skills/.yamllint.yml .github/skills/
+          npm install -g @microsoft/vally-cli
+          echo "=== Linting skills ==="
+          vally lint .github/skills --strict
+          echo "=== Validating eval specs ==="
+          for eval_file in $(find .github/skills -name "eval.yaml" -type f); do
+            echo "--- $eval_file ---"
+            vally lint --eval "$eval_file" --strict
+          done
 
       - name: Install Azure Developer CLI
         uses: Azure/setup-azd@v2

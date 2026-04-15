@@ -64,6 +64,7 @@ export class SamplesPageComponent {
   review : Review | undefined = undefined;
   sideMenu: MenuItem[] | undefined;
   latestApiRevision: APIRevision | undefined = undefined;
+  activeApiRevision: APIRevision | null = null;
   samplesRevisions: SamplesRevision[] = [];
   samplesRevisionTotalCount: number = 0;
   userProfile : UserProfile | undefined;
@@ -245,6 +246,15 @@ export class SamplesPageComponent {
     this.activeApiRevisionId = params[ACTIVE_API_REVISION_ID_QUERY_PARAM];
     this.diffApiRevisionId = params[DIFF_API_REVISION_ID_QUERY_PARAM];
 
+    if (!this.activeApiRevisionId || this.activeApiRevisionId === this.latestApiRevision?.id) {
+      this.activeApiRevision = this.latestApiRevision ?? null;
+    } else {
+      this.apiRevisionsService.getAPIRevisions(0, 1, this.reviewId!, undefined, undefined, [], 'lastUpdatedOn', 1, false, false, false, [this.activeApiRevisionId])
+        .pipe(take(1), takeUntil(this.destroy$)).subscribe(result => {
+          this.activeApiRevision = result.result?.[0] ?? this.latestApiRevision ?? null;
+        });
+    }
+
     if (this.activeSamplesRevisionId) {
       this.activeView = 'detail';
       this.isLoading = true;
@@ -303,6 +313,9 @@ export class SamplesPageComponent {
       .pipe(takeUntil(this.destroy$)).subscribe({
         next: (apiRevision: APIRevision) => {
           this.latestApiRevision = apiRevision;
+          if (!this.activeApiRevision) {
+            this.activeApiRevision = apiRevision;
+          }
         }
     });
   }
@@ -430,6 +443,8 @@ export class SamplesPageComponent {
       this.createSamplesButton = "Creating Usage Sample...";
     }
     formData.append('title', this.addEditSamplesTitle);
+    const apiVersionId = this.activeApiRevision?.apiVersionId ?? this.latestApiRevision?.apiVersionId;
+    if (apiVersionId) formData.append('apiVersionId', apiVersionId);
 
     this.samplesRevisionService.createUsageSample(this.reviewId!, formData)
       .pipe(takeUntil(this.destroy$)).subscribe({

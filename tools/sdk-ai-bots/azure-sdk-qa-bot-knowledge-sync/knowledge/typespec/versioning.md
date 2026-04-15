@@ -109,6 +109,35 @@ model Employee is TrackedResource<EmployeeProperties> {
 
 This pattern works because TypeSpec resolves spread properties by name on the containing model. After spreading, `Employee.MyExampleProperty` is a valid augment target.
 
+## Adding a new optional parameter to an existing operation: prefer @added on the property
+
+When adding a new optional parameter (e.g., a `$filter` query parameter) to an existing ARM operation in a new API version, the **simplest approach** is to use `@added` on the parameter property within the same operation definition. This avoids the complexity of duplicating operations with `@sharedRoute` and `@removed/@renamedFrom`.
+
+**Example**: Adding a filter parameter to an ARM list operation in a new preview version:
+
+```typespec
+@armResourceOperations
+interface QuantumOffers {
+  listBySubscription is ArmListBySubscription<
+    QuantumSuiteOffer,
+    Parameters = {
+      /**
+       * The filter to apply to the operation. Example: '$filter=kind eq "v1"'
+       */
+      @added(Versions.v2025_11_01_preview)
+      @query("$filter")
+      filter?: string;
+    }
+  >;
+}
+```
+
+**Important naming convention**: Name the property `filter` (not `$filter`). The `@query("$filter")` decorator sets the wire name — the TypeSpec property name should follow standard naming rules.
+
+This pattern works because optional properties added with `@added` are simply absent from older API versions and present in newer ones. No operation duplication is needed.
+
+**When to use the more complex sharedRoute pattern instead**: Use `@removed`/`@renamedFrom`/`@sharedRoute` only when the operation itself fundamentally changes (e.g., converting sync to async, changing the response type, or modifying required parameters). For simply adding an optional parameter, `@added` is sufficient and preferred.
+
 ## TypeSpec does not support versioning decorator arguments (e.g., changing @maxValue per version)
 
 TypeSpec versioning decorators (`@added`, `@removed`, `@renamedFrom`, etc.) apply to **model elements** (models, properties, operations), not to **decorator arguments**. This means you cannot change a constraint like `@maxValue(30)` to `@maxValue(90)` in only a specific API version by using a versioning decorator on the decorator itself.

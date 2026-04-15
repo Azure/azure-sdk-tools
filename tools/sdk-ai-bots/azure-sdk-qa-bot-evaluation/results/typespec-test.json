@@ -143,7 +143,7 @@
     {
         "testcase": "Design question about suppression rules",
         "expected": {
-            "answer": "suppression can only be provided inline for now. Linter rules can be disabled globally but that would apply to the whole project, can't filter by files",
+            "answer": "Suppression can only be provided inline (`#suppress` directives) for now, and those are carried wherever the package is imported. Linter rules can be disabled globally via `tspconfig.yaml` in the shared package, but that applies to the whole project scope and cannot filter by files. The `suppressions.yaml` mechanism used in azure-rest-api-specs PR validation is discovered by walking up from the compiled project and does not merge suppressions from imported packages. The recommended pattern is to use linter configuration in the shared package's `tspconfig.yaml` and let each consuming Azure API project manage its own `suppressions.yaml` for remaining service-specific issues.",
             "references": [
                 {
                     "title": "Swagger LintDiff validation for certain models | question",

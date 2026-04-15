@@ -44,6 +44,30 @@ Or use `...Foundations.ArmTagsProperty` explicitly. ARM tags already use `Record
 
 This guidance applies to ARM (management plane) only.
 
+## ARM PUT LRO patterns: do NOT model 202 on PUT for new services
+
+Per ARM RPC guidelines, the required pattern for ARM resource PUT is: return `201` for create and `200` for update. If the operation is long-running, use `x-ms-long-running-operation: true` and include the appropriate LRO headers (`Azure-AsyncOperation` and/or `Location`).
+
+**Returning `202` for PUT is explicitly deprecated and not supported for new resource types.** This is an old model. For greenfield services (starting Jan 2025), `Azure-AsyncOperation` is required per the RPC contract.
+
+If the service returns an `Azure-AsyncOperation` polling header on the `200` response, it is OK to model it — but only if the operation is actually long-running. The standard ARM TypeSpec templates already handle this correctly: `200` and `201` responses with the resource body, and LRO headers on the create response.
+
+**Choosing between `ArmResourceCreateOrUpdateAsync` vs `ArmResourceCreateOrReplaceAsync`:**
+- `ArmResourceCreateOrUpdateAsync`: 201 response contains `Azure-AsyncOperation` LRO header. Use when final-state polling should use `azure-async-operation`.
+- `ArmResourceCreateOrReplaceAsync`: 201 response contains `Location` LRO header. Use when final-state polling should use `location`.
+
+```typespec
+@armResourceOperations
+interface ManagedClusters {
+  // Produces 200/201 + x-ms-long-running-operation and final-state-via azure-async-operation.
+  createOrUpdate is ArmResourceCreateOrReplaceAsync<ManagedCluster>;
+}
+```
+
+If you truly must keep 202-on-PUT behavior (brownfield), you should discuss with ARM/API review because it conflicts with the current ARM contract guidance for PUT. The guidance is to fix the service to return `200/201` for PUT (even when async) and rely on LRO headers + provisioningState.
+
+Use standard ARM templates so the LRO metadata is consistent (headers + `x-ms-long-running-operation` + `final-state-via`). Do not invent one-off patterns unless absolutely necessary.
+
 ## Use @useFinalStateVia to control LRO final-state resolution in ARM PUT operations
 
 Final-state can be retrieved from `"original-uri"`, `"azure-async-operation"`, `"location"`. ARM defaults to `Azure-AsyncOperation` when that header is present, even for PUT operations.

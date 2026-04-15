@@ -41,6 +41,8 @@ This is the correct way to preserve SDK client flatten behavior from Swagger in 
 
 ## The service-under-conversion label does not block existing or concurrent PRs
 
-The `service-under-conversion` label is an informational/coordination label indicating that the service is undergoing TypeSpec conversion. It does **not** block or delay merging of other PRs (including stable API PRs) for the same service.
+The `service-under-conversion` label on azure-rest-api-specs PRs is an informational/coordination label indicating that the service is undergoing TypeSpec conversion. It does **not** block or delay merging of other PRs (including stable API PRs) for the same service. The label does not require additional changes to your existing PR, nor does it create a merge dependency between the conversion PR and your service PR.
 
-If there is a later API version than the conversion PR, the TypeSpec conversion would normally be based on that later API version once it is checked in. The label is applied to track conversion status, not to create a merge dependency.
+If there is a later API version than the conversion PR, the TypeSpec conversion would normally be based on that later API version once it is checked in. For example, if your stable API PR ships a newer version while a TypeSpec migration PR was drafted against an older preview, the TypeSpec migration will eventually re-base on the stable version after it merges.
+
+Your PR continues to follow normal merge requirements (CI/spec validations, breaking-change labels, reviewer sign-off). You do not need to wait for the TypeSpec migration PR to complete.

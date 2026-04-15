@@ -53,18 +53,24 @@ extends:
                 inputs:
                   versionSpec: $(pythonVersion)
 
+              - task: PipAuthenticate@1
+                displayName: 'Authenticate pip to Azure Artifacts'
+                inputs:
+                  artifactFeeds: 'internal/azure-sdk-for-python-pr'
+
               - bash: |
                   set -euo pipefail
-                  # Use Azure SDK feed only. External indexes are blocked in CI network isolation.
-                  python -m pip install --upgrade pip --index-url $(PythonIndexUrl)
-                  pip install -r requirements.txt \
-                    --index-url $(PythonIndexUrl) \
-                    --retries 5 \
-                    --timeout 60
-                  pip install pytest pytest-asyncio pytest-cov pyright \
-                    --index-url $(PythonIndexUrl) \
-                    --retries 5 \
-                    --timeout 60
+                  # Match Azure Artifacts pip guidance in CI:
+                  # 1) install keyring helpers, 2) use authenticated feed index only.
+                  python -m pip install --upgrade pip
+                  python -m pip install keyring artifacts-keyring --retries 5 --timeout 60
+
+                  # Use only the authenticated feed URL from PipAuthenticate.
+                  python -m pip config set global.index-url "$PIP_INDEX_URL"
+                  python -m pip config unset global.extra-index-url || true
+
+                  pip install -r requirements.txt --retries 5 --timeout 60
+                  pip install pytest pytest-asyncio pytest-cov pyright --retries 5 --timeout 60
                 displayName: 'Install dependencies'
                 workingDirectory: $(workingDirectory)
 

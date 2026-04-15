@@ -1,6 +1,6 @@
 # Release History
 
-## Version 0.3.28 (Unreleased)
+## Version 0.3.28 (2026-04-14)
 Dropped 3.7/3.8/3.9 support and added 3.11/3.12/3.13/3.14.
 Added `crossLanguageVersion` to the `CrossLanguageMetadata` model.
 Updated the source code parsing/inspecting so that source files are cached for perf.

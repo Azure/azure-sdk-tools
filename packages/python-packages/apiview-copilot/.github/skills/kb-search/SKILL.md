@@ -49,25 +49,19 @@ python cli.py kb search --ids <id1> <id2> ...
 
 ## Running the Command
 
-### Step 1: Run the Search
+Run directly in a **foreground terminal** with a **60-second timeout** (`timeout: 60000`). Do **not** redirect output to a file — let the terminal capture it so the agent can read it directly from the terminal output.
 
-Run in a **foreground terminal** with a **60-second timeout** (`timeout: 60000`). For text queries, redirect to a file since output can be large. For ID lookups, terminal output is usually sufficient.
-
-**Text search** (redirect to file):
+**Text search**:
 ```bash
-mkdir -p output && rm -f output/kb_search_output.md && python cli.py kb search -l <language> --text "<query>" --markdown > output/kb_search_output.md
+python cli.py kb search -l <language> --text "<query>" --markdown
 ```
 
-**ID lookup** (redirect to file):
+**ID lookup**:
 ```bash
-mkdir -p output && rm -f output/kb_search_output.json && python cli.py kb search --ids <id1> <id2> > output/kb_search_output.json
+python cli.py kb search --ids <id1> <id2>
 ```
 
-After the command completes, **read the output file** with `read_file` to get the results. Summarize the findings for the user.
-
-### Step 2: Answer Follow-up Questions
-
-For follow-up questions about the same results, **read the output file** with `read_file` instead of re-running the command.
+After the command completes, read the terminal output and summarize the findings for the user.
 
 ### Examples
 

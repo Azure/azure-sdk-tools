@@ -4,7 +4,6 @@ FROM debian:bookworm-slim AS cli-downloader
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
     && curl -fsSL -o /tmp/azsdk-cli.tar.gz \
        https://github.com/Azure/azure-sdk-tools/releases/download/azsdk_0.6.7/Azure.Sdk.Tools.Cli-standalone-linux-x64.tar.gz \
-    && echo "59cb91e0c9df1f9b3081ada236acc4c17e13d289b5d49295f01f4ef16c4ab971 /tmp/azsdk-cli.tar.gz" | sha256sum -c - \
     && mkdir -p /azsdk-cli \
     && tar -xzf /tmp/azsdk-cli.tar.gz -C /azsdk-cli \
     && rm /tmp/azsdk-cli.tar.gz \

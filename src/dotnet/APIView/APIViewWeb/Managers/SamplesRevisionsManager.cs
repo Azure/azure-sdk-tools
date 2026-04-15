@@ -114,8 +114,11 @@ namespace APIViewWeb.Managers
         public async Task<SamplesRevisionModel> UpsertSamplesRevisionsAsync(ClaimsPrincipal user, string reviewId, Stream fileStream, string revisionTitle, string FileName, string apiVersionId = null)
         {
             // For file upload. Read stream then continue.
-            var reader = new StreamReader(fileStream);
-            var sample = reader.ReadToEnd();
+            string sample;
+            using (var reader = new StreamReader(fileStream, leaveOpen: true))
+            {
+                sample = reader.ReadToEnd();
+            }
             return await UpsertSamplesRevisionsAsync(user, reviewId, sample, revisionTitle, FileName, apiVersionId);
         }
 

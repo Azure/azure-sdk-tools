@@ -76,10 +76,10 @@ public class AutoReviewService : IAutoReviewService
                 }
 
                 // Delete pending apiRevisions if it is not in approved state before adding new revision
-                // This is to keep only one pending revision since last approval or from initial review revision
+                // This is to keep only one pending revision since last approval or from initial review revision.
                 var automaticRevisions = apiRevisions
                     .Where(r => r.APIRevisionType == APIRevisionType.Automatic
-                        && (incomingVersionModel == null || r.APIVersionId == incomingVersionModel.Id))
+                        && (incomingVersionModel == null|| r.APIVersionId == incomingVersionModel.Id || string.IsNullOrEmpty(r.APIVersionId)))
                     .ToList();
                 if (automaticRevisions.Count > 0)
                 {

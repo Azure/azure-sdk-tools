@@ -107,6 +107,9 @@ public class APIRevisionsManagerTests
         _mockConfiguration = new Mock<IConfiguration>();
         _mockProjectsManager = new Mock<IProjectsManager>();
         _mockApiVersionsManager = new Mock<IAPIVersionsManager>();
+        _mockApiVersionsManager
+            .Setup(m => m.GetOrCreateVersionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()))
+            .ReturnsAsync(new APIVersionModel { Id = "default-version-id" });
 
         TelemetryConfiguration telemetryConfiguration = new();
         _telemetryClient = new TelemetryClient(telemetryConfiguration);

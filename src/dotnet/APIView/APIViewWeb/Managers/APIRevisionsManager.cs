@@ -1341,6 +1341,7 @@ namespace APIViewWeb.Managers
                 language: codeFile.Language,
                 createdBy: userName,
                 prNumber: prNumber,
+                sourceBranch: sourceBranch,
                 label: label,
                 packageVersion: codeFile.PackageVersion);
 

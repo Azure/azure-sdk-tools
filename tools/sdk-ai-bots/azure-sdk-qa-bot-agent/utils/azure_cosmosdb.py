@@ -23,6 +23,14 @@ _DEFAULT_MAPPING_CONTAINER_NAME = "conversation-mappings"
 _DEFAULT_MESSAGE_CONTAINER_NAME = "conversation-messages"
 _DEFAULT_EPISODE_CONTAINER_NAME = "experience-episodes"
 
+# Retry defaults for the Cosmos DB client
+_DEFAULT_RETRY_TOTAL = 3  # Maximum number of total retry attempts
+_DEFAULT_RETRY_CONNECT = 3  # Maximum retries on connection errors
+_DEFAULT_RETRY_READ = 3  # Maximum retries on read errors
+_DEFAULT_RETRY_STATUS = 3  # Maximum retries on bad status codes
+_DEFAULT_RETRY_BACKOFF_FACTOR = 0.8  # Exponential backoff multiplier (seconds)
+_DEFAULT_RETRY_BACKOFF_MAX = 30  # Maximum backoff interval (seconds)
+
 # Embedding dimensions for text-embedding-3-small
 _EMBEDDING_DIMENSIONS = 1536
 
@@ -54,6 +62,30 @@ async def _get_client() -> CosmosClient:
             _client = CosmosClient(
                 url=_get_endpoint(),
                 credential=get_credential(),
+                retry_total=int(
+                    cfg("AZURE_COSMOSDB_RETRY_TOTAL", str(_DEFAULT_RETRY_TOTAL))
+                ),
+                retry_connect=int(
+                    cfg("AZURE_COSMOSDB_RETRY_CONNECT", str(_DEFAULT_RETRY_CONNECT))
+                ),
+                retry_read=int(
+                    cfg("AZURE_COSMOSDB_RETRY_READ", str(_DEFAULT_RETRY_READ))
+                ),
+                retry_status=int(
+                    cfg("AZURE_COSMOSDB_RETRY_STATUS", str(_DEFAULT_RETRY_STATUS))
+                ),
+                retry_backoff_factor=float(
+                    cfg(
+                        "AZURE_COSMOSDB_RETRY_BACKOFF_FACTOR",
+                        str(_DEFAULT_RETRY_BACKOFF_FACTOR),
+                    )
+                ),
+                retry_backoff_max=int(
+                    cfg(
+                        "AZURE_COSMOSDB_RETRY_BACKOFF_MAX",
+                        str(_DEFAULT_RETRY_BACKOFF_MAX),
+                    )
+                ),
             )
             await _client.__aenter__()
             logger.info("Initialized Azure Cosmos DB client for %s", _get_endpoint())
@@ -148,6 +180,7 @@ async def close_cosmos_client() -> None:
 # ---------------------------------------------------------------------------
 # Episode container (experience-episodes)
 # ---------------------------------------------------------------------------
+
 
 async def ensure_episode_container() -> ContainerProxy:
     """Return the ``experience-episodes`` container, creating it if needed.
@@ -258,7 +291,9 @@ async def search_episodes_by_vector(
     ):
         items.append(item)
     logger.info(
-        "Vector search returned %d episodes for tenant=%s", len(items), tenant_id,
+        "Vector search returned %d episodes for tenant=%s",
+        len(items),
+        tenant_id,
     )
     return items
 

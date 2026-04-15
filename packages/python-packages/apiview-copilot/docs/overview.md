@@ -38,6 +38,7 @@ APIView Copilot (AVC) is an AI-powered automated reviewer for Azure SDK API surf
 | Sectioning | `src/_sectioned_document.py` | Splits large API text into manageable chunks |
 | Search / RAG | `src/_search_manager.py` | Azure AI Search integration for guideline/context retrieval |
 | Database | `src/_database_manager.py` | Cosmos DB access for guidelines, memories, examples, jobs, metrics |
+| Memory utilities | `src/_memory_utils.py` | Write-time deduplication and batch memory consolidation |
 | Settings | `src/_settings.py` | Azure App Configuration + Key Vault resolution |
 | Prompts | `prompts/` | `.prompty` template files organized by feature |
 | Metadata | `metadata/<lang>/` | Per-language `filter.yaml` and `guidance.yaml` configuration |

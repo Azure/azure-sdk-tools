@@ -2,11 +2,11 @@
 
 Common issues and solutions for API spec pipeline errors, CI failures, and linting issues.
 
-## Swagger breaking change false positives in TypeSpec conversion PRs can be suppressed
+## Missing APIs in default tag error for TypeSpec conversion PR
 
-TypeSpec conversion PRs may trigger false-positive swagger breaking change errors when the generated swagger uses common-types references (e.g., `TrackedResource/properties/tags`) that differ textually from the original hand-written swagger but are semantically equivalent.
+Part of the TypeSpec conversion is replacing the existing hand-authored swagger with a generated swagger. The generated swagger is still used for some purposes (SDK generation, Avocado validation, breaking change detection), and Avocado protects the ability to process it. The generated swagger needs to be **equivalent** to the original, but not necessarily **identical** — textually different representations (e.g., different `$ref` structures, common-types references like `TrackedResource/properties/tags`, or property ordering) are acceptable as long as the API surface is the same.
 
-These violations are suppressible. Follow the suppression docs for false positives at the PR suppression guide. Review each violation carefully — the conversion is not guaranteed to be 100% accurate, and real breaking changes should still go through the breaking change process.
+Generally, issues reflected in the generated swagger will also show up in **breaking change checks**, which will have to be resolved (or suppressed if they are false positives). Review each violation carefully — the conversion is not guaranteed to be 100% accurate, and real breaking changes should still go through the breaking change process. Adding the `Approved-Avocado` label to bypass Avocado is appropriate only if the Avocado error is a known false positive.
 
 ## Avocado MISSING_APIS_IN_DEFAULT_TAG error after @renamedFrom on action routes
 
@@ -26,15 +26,17 @@ When a PR fails with a Swagger LintDiff error stating that **no affected swagger
 
 ## Swagger LintDiff CI failure is expected when fixing bugs already in main
 
-If you are fixing a bug that is already present in the `main` branch (e.g., a malformed `readme.md` or a broken `input-file` path), the Swagger LintDiff check will still fail on your fix PR. This is by design: LintDiff runs on the spec in both the **before** state (the base branch) and the **after** state (your PR). If the base branch is already broken and causes LintDiff to crash or produce no input, the "before" run will fail — and LintDiff cannot compute a diff. This means the PR that fixes the bug will itself fail LintDiff. This is expected behavior, not a tooling bug. You can request a suppression (`Approved-LintDiff` label) for the PR if the failure is purely a consequence of fixing a pre-existing main-branch issue.
+If you are fixing a bug that is already present in the `main` branch (e.g., a malformed `readme.md` or a broken `input-file` path), the Swagger LintDiff check will still fail on your fix PR. This is by design: LintDiff runs on the spec in both the **before** state (the base branch) and the **after** state (your PR). If the base branch is already broken and causes LintDiff to crash or produce no input, the "before" run will fail — and LintDiff cannot compute a diff. This means the PR that fixes the bug will itself fail LintDiff. This is expected behavior, not a tooling bug.
 
-## TypeSpec conversion replaces existing swagger with generated swagger — Avocado validates equivalence
+A common symptom is LintDiff reporting `[Exception] No input files provided.` — this happens when the base branch `readme.md` is malformed or references nonexistent files, so AutoRest resolves an empty `input-file` set for the "before" state.
 
-As part of a TypeSpec conversion PR, the existing hand-authored Swagger is replaced by a Swagger generated from TypeSpec. The generated Swagger is still used for some purposes (SDK generation, Avocado validation, breaking change detection), so Avocado protects the ability to process it.
+You can request a suppression (`Approved-LintDiff` label) for the PR if the failure is purely a consequence of fixing a pre-existing main-branch issue.
 
-The generated Swagger needs to be **equivalent** to the original, but not necessarily **identical**. Textually different representations (e.g., different `$ref` structures or property ordering) are acceptable as long as the API surface is the same.
+## ArmResourcePatchAsync with discriminated resource types
 
-Generally, any issue reflected in the generated Swagger will also show up in **breaking change checks**, which must be resolved or suppressed if they are false positives. Adding the `Approved-Avocado` label to bypass Avocado is appropriate only if the Avocado error is a known false positive (e.g., `MISSING_APIS_IN_DEFAULT_TAG` triggered by path renames handled by `@renamedFrom`). Real API differences must be fixed in the TypeSpec source first.
+When using `ArmResourcePatchAsync` (or `ArmResourcePatchSync`) with a resource that has a discriminator, OAV may fail with `OBJECT_MISSING_REQUIRED_PROPERTY_DEFINITION`. This is because the discriminator is typically a required property on the resource, but PATCH requests should not require all properties.
+
+The general guidance is that **PATCH requests over discriminated types should require the discriminator property**. This may result in some LintDiff violations (e.g., `PatchBodyParametersSchema`), but that is expected and those violations can be suppressed. This is especially true if, as most services, your PATCH operation would need the discriminator value on the wire to determine how to apply the PATCH request to the existing resource.
 
 ## Linter suppression in TypeSpec can only be provided inline — cannot be filtered by files in shared packages
 

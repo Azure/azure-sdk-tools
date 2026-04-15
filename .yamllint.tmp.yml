@@ -1,0 +1,1 @@
+extends: relaxed`nrules:`n  line-length: disable`n  new-lines: disable`n  indentation:`n    level: error

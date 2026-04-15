@@ -33,6 +33,7 @@ class TenantID(str, Enum):
     AZURE_SDK_ONBOARDING = "azure_sdk_onboarding"
     AZURE_TYPESPEC_AUTHORING = "azure_typespec_authoring"
     API_SPEC_REVIEW_BOT = "api_spec_review_bot"
+    AZURE_SDK_QA_BOT = "azure_sdk_qa_bot"
 
 
 # ---------------------------------------------------------------------------

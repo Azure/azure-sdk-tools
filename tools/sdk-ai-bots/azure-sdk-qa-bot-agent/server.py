@@ -36,8 +36,8 @@ from utils.azure_monitor import (
     record_chat_request,
     record_chat_duration,
 )
-from pydantic import BaseModel
 import config.app_config as app_config
+from config.tenant_config import TenantID
 import uvicorn
 
 _request_id_ctx_var: ContextVar[str] = ContextVar("request_id", default="system")
@@ -140,6 +140,9 @@ _thread_memory_service = ThreadMemoryService()
 @app.post("/agent/chat", response_model=ChatResponse)
 async def handle_chat(req: ChatRequest):
     """Process a chat request through the chat service."""
+    # backwards azure-sdk-qa-bot tenant ID
+    if req.tenant_id == TenantID.AZURE_SDK_QA_BOT:
+        req.tenant_id = TenantID.TYPESPEC_CHANNEL_QA_BOT
     tenant = req.tenant_id.value
     logger.info(
         "Chat request: tenant=%s, conversation=%s, user=%s, message=%s",

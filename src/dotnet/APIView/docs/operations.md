@@ -12,6 +12,8 @@ This document covers deployment, test environments, configuration, secrets, and 
 | **Resources** | [Prod (Azure Portal)](https://portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/apiview) | [Staging (Azure Portal)](https://portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/apiview) |
 | **Source Code** | [azure-sdk-tools/src/dotnet/APIView](https://github.com/Azure/azure-sdk-tools/tree/main/src/dotnet/APIView) | |
 
+> **Staging terminology:** Two distinct "staging" concepts are used in this document. `staging.apiview.dev` is a **shared staging environment** (its own dedicated deployment with its own database, used for testing). The **staging slot** (`apiview-staging.azurewebsites.net`) is an [Azure App Service deployment slot](https://learn.microsoft.com/azure/app-service/deploy-staging-slots) on the production App Service used to warm up new builds before swapping them to production.
+
 ---
 
 ## Deployment
@@ -51,7 +53,7 @@ A safe test environment with its own dedicated database, updated daily with prod
 
 **How to deploy to the test environment:**
 
-1. Run the [APIView pipeline](https://dev.azure.com/azure-sdk/internal/_build?definitionId=5789) manually
+1. Run the [APIView pipeline](https://dev.azure.com/azure-sdk/internal/_build?definitionId=1136) manually
 2. Set **Commit** to the full SHA of the latest commit from your branch or PR
 3. Wait for the **Build and Test** stage to complete — it will run **Publish Test UI** automatically
 4. Done — your changes are deployed
@@ -164,6 +166,8 @@ To disable:
 
 If a Python wheel upload stays at "being generated" for more than 5 minutes:
 
-1. Check the [Python sandboxing pipeline](https://dev.azure.com/azure-sdk/internal/_build?definitionId=5789) for failures
+1. Check the **tools - generate-Python-apireview** [pipeline](https://dev.azure.com/azure-sdk/internal/_build) for failures (search by pipeline name in Azure DevOps)
+
+   > **Note:** Verify the exact pipeline definition ID before bookmarking a direct link.
 2. Common causes: the uploaded wheel has import issues, or the DevOps pipeline queue is overloaded
 3. Known limitation: pipeline failures are not reported back to the APIView UI

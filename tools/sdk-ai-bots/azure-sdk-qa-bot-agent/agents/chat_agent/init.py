@@ -63,6 +63,20 @@ def _load_instructions(file_path: Path) -> str:
 async def main() -> None:
     """Start the hosted Chat Agent as an HTTP server."""
     await app_config.init()
+
+    # Init LoggerProvider
+    try:
+        otel_log_handler = LoggingHandler(
+            level=logging.INFO,
+            logger_provider=get_logger_provider(),
+        )
+        logging.getLogger().addHandler(otel_log_handler)
+        logger.info(
+            "OTel logging bridge attached - Python logs will export to Application Insights"
+        )
+    except Exception as exc:
+        logger.warning("Failed to attach OTel logging bridge: %s", exc)
+
     agent_client = get_agent_client()
     # Limit tool-call loop iterations to prevent infinite loops.
     agent_client.function_invocation_configuration["max_iterations"] = 5
@@ -135,19 +149,6 @@ async def main() -> None:
             provider.add_span_processor(
                 FoundryAgentSpanEnricher(foundry_project_id, agent_name, agent_id)
             )
-
-    # Init LoggerProvider
-    try:
-        otel_log_handler = LoggingHandler(
-            level=logging.INFO,
-            logger_provider=get_logger_provider(),
-        )
-        logging.getLogger().addHandler(otel_log_handler)
-        logger.info(
-            "OTel logging bridge attached — Python logs will export to Application Insights"
-        )
-    except Exception as exc:
-        logger.warning("Failed to attach OTel logging bridge: %s", exc)
 
     await server.run_async()
 

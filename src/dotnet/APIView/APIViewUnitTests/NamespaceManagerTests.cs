@@ -830,7 +830,7 @@ public class NamespaceManagerTests
     }
 
     [Fact]
-    public async Task UpdateNamespaceStatusAsync_AzureAIProjects_UnknownNamespace_ReturnsLanguageNotFound()
+    public async Task UpdateNamespaceStatusAsync_AzureAIProjects_UnknownNamespace_ReturnsNamespaceEntryNotFound()
     {
         SetupPermissions(true);
         var csEntries = new List<NamespaceDecisionEntry>
@@ -846,7 +846,7 @@ public class NamespaceManagerTests
             "ai-project-1", "csharp", "Azure.AI.DoesNotExist", NamespaceDecisionStatus.Approved, null, CreateUser("approver"));
 
         Assert.False(result.IsSuccess);
-        Assert.Equal(NamespaceOperationError.LanguageNotFound, result.Error);
+        Assert.Equal(NamespaceOperationError.NamespaceEntryNotFound, result.Error);
     }
 
     [Fact]

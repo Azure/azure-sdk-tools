@@ -40,6 +40,7 @@ public enum NamespaceOperationError
     Unauthorized,
     ProjectNotFound,
     LanguageNotFound,
+    NamespaceEntryNotFound,
     InvalidStateTransition
 }
 

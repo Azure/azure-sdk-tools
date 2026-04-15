@@ -781,4 +781,192 @@ public class ProjectsManagerTests
     }
 
     #endregion
+
+    #region AreExpectedPackagesEqual / PackageListsAreEqual Tests
+    // When packages are considered equal → no reconciliation → UpsertProjectAsync is NOT called.
+    // When packages are considered unequal → reconciliation runs → UpsertProjectAsync IS called.
+
+    [Fact]
+    public async Task ExpectedPackagesEqual_SamePackages_SkipsReconciliation()
+    {
+        // Identical packages: equal → no update.
+        ReviewListItemModel typeSpecReview = CreateTypeSpecReview("ts-1", "Azure.Core", "project-1");
+        Project project = CreateProject("project-1", "Azure.Core", "Azure.Core", "Azure Core",
+            Packages(("Python", "azure-core"), ("JavaScript", "@azure/core")));
+        TypeSpecMetadata metadata = CreateMetadata("Azure.Core", "Azure Core",
+            ("Python", "azure-core"), ("JavaScript", "@azure/core"));
+
+        SetupGetProject("project-1", project);
+
+        Project result = await _projectsManager.UpsertProjectFromMetadataAsync("testUser", metadata, typeSpecReview);
+
+        Assert.Empty(result.ChangeHistory);
+        _mockProjectsRepository.Verify(r => r.UpsertProjectAsync(It.IsAny<Project>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ExpectedPackagesEqual_DifferentCasing_TreatedAsEqual()
+    {
+        // Packages that differ only by casing should be treated as equal.
+        ReviewListItemModel typeSpecReview = CreateTypeSpecReview("ts-1", "Azure.Core", "project-1");
+        Project project = CreateProject("project-1", "Azure.Core", "Azure.Core", "Azure Core",
+            Packages(("Python", "azure-core")));
+
+        TypeSpecMetadata metadata = new()
+        {
+            TypeSpec = new TypeSpecInfo { Namespace = "Azure.Core", Documentation = "Azure Core" },
+            Languages = new Dictionary<string, List<LanguageConfig>>
+            {
+                ["Python"] = [new() { PackageName = "Azure-Core", Namespace = "azure-core" }]
+            },
+        };
+
+        SetupGetProject("project-1", project);
+
+        Project result = await _projectsManager.UpsertProjectFromMetadataAsync("testUser", metadata, typeSpecReview);
+
+        // azure-core::azure-core vs azure-core::azure-core (both lowered) → equal → no update.
+        Assert.Empty(result.ChangeHistory);
+        _mockProjectsRepository.Verify(r => r.UpsertProjectAsync(It.IsAny<Project>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ExpectedPackagesEqual_MultiplePackagesSameLanguage_SameSet_TreatedAsEqual()
+    {
+        // Two packages for C# — same set in both old and new → equal → no reconciliation.
+        ReviewListItemModel typeSpecReview = CreateTypeSpecReview("ts-1", "Azure.AI.Projects", "project-1");
+        var expectedPackages = new Dictionary<string, List<PackageInfo>>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["C#"] =
+            [
+                new() { PackageName = "Azure.AI.Projects",            Namespace = "Azure.AI.Projects" },
+                new() { PackageName = "Azure.AI.Agents.Contracts.V2", Namespace = "Azure.AI.Agents.Contracts.V2" }
+            ]
+        };
+        Project project = CreateProject("project-1", "Azure.AI.Projects", "Azure.AI.Projects", "AI Projects",
+            expectedPackages);
+
+        TypeSpecMetadata metadata = new()
+        {
+            TypeSpec = new TypeSpecInfo { Namespace = "Azure.AI.Projects", Documentation = "AI Projects" },
+            Languages = new Dictionary<string, List<LanguageConfig>>
+            {
+                ["csharp"] =
+                [
+                    new() { PackageName = "Azure.AI.Projects",            Namespace = "Azure.AI.Projects" },
+                    new() { PackageName = "Azure.AI.Agents.Contracts.V2", Namespace = "Azure.AI.Agents.Contracts.V2" }
+                ]
+            }
+        };
+
+        SetupGetProject("project-1", project);
+
+        Project result = await _projectsManager.UpsertProjectFromMetadataAsync("testUser", metadata, typeSpecReview);
+
+        Assert.Empty(result.ChangeHistory);
+        _mockProjectsRepository.Verify(r => r.UpsertProjectAsync(It.IsAny<Project>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ExpectedPackagesEqual_MultiplePackagesSameLanguage_DifferentCount_TreatedAsUnequal()
+    {
+        // Old has one C# package, new adds a second → unequal → reconciliation runs.
+        ReviewListItemModel typeSpecReview = CreateTypeSpecReview("ts-1", "Azure.AI.Projects", "project-1");
+        var existingPackages = new Dictionary<string, List<PackageInfo>>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["C#"] = [new() { PackageName = "Azure.AI.Projects", Namespace = "Azure.AI.Projects" }]
+        };
+        Project project = CreateProject("project-1", "Azure.AI.Projects", "Azure.AI.Projects", "AI Projects",
+            existingPackages);
+
+        TypeSpecMetadata metadata = new()
+        {
+            TypeSpec = new TypeSpecInfo { Namespace = "Azure.AI.Projects", Documentation = "AI Projects" },
+            Languages = new Dictionary<string, List<LanguageConfig>>
+            {
+                ["csharp"] =
+                [
+                    new() { PackageName = "Azure.AI.Projects",            Namespace = "Azure.AI.Projects" },
+                    new() { PackageName = "Azure.AI.Agents.Contracts.V2", Namespace = "Azure.AI.Agents.Contracts.V2" }
+                ]
+            }
+        };
+
+        SetupGetProject("project-1", project);
+        // No existing reviews to reconcile against.
+        SetupGetReviews([]);
+
+        Project result = await _projectsManager.UpsertProjectFromMetadataAsync("testUser", metadata, typeSpecReview);
+
+        // Packages changed → at least one change entry recorded and project was saved.
+        Assert.Contains(result.ChangeHistory, h => h.ChangeAction == ProjectChangeAction.Edited);
+        _mockProjectsRepository.Verify(r => r.UpsertProjectAsync(It.IsAny<Project>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ExpectedPackagesEqual_SamePackageNameDifferentNamespace_TreatedAsUnequal()
+    {
+        // Package name is identical but the namespace changed.
+        // The Key function is "packagename::namespace", so the tokens differ → unequal → reconciliation.
+        ReviewListItemModel typeSpecReview = CreateTypeSpecReview("ts-1", "Azure.Storage", "project-1");
+        var existingPackages = new Dictionary<string, List<PackageInfo>>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Python"] = [new() { PackageName = "azure-storage", Namespace = "azure.storage.old" }]
+        };
+        Project project = CreateProject("project-1", "Azure.Storage", "Azure.Storage", "Azure Storage",
+            existingPackages);
+
+        TypeSpecMetadata metadata = new()
+        {
+            TypeSpec = new TypeSpecInfo { Namespace = "Azure.Storage", Documentation = "Azure Storage" },
+            Languages = new Dictionary<string, List<LanguageConfig>>
+            {
+                // Same PackageName, different Namespace
+                ["python"] = [new() { PackageName = "azure-storage", Namespace = "azure.storage.new" }]
+            }
+        };
+
+        SetupGetProject("project-1", project);
+        SetupGetReviews([]);
+
+        Project result = await _projectsManager.UpsertProjectFromMetadataAsync("testUser", metadata, typeSpecReview);
+
+        // "azure-storage::azure.storage.old" ≠ "azure-storage::azure.storage.new" → unequal → update.
+        Assert.Contains(result.ChangeHistory, h => h.ChangeAction == ProjectChangeAction.Edited);
+        _mockProjectsRepository.Verify(r => r.UpsertProjectAsync(It.IsAny<Project>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ExpectedPackagesEqual_SameNamespaceDifferentPackageName_TreatedAsUnequal()
+    {
+        // Namespace is identical but the package name changed (e.g. a rename).
+        ReviewListItemModel typeSpecReview = CreateTypeSpecReview("ts-1", "Azure.Storage", "project-1");
+        var existingPackages = new Dictionary<string, List<PackageInfo>>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Python"] = [new() { PackageName = "azure-storage-old", Namespace = "azure.storage" }]
+        };
+        Project project = CreateProject("project-1", "Azure.Storage", "Azure.Storage", "Azure Storage",
+            existingPackages);
+
+        TypeSpecMetadata metadata = new()
+        {
+            TypeSpec = new TypeSpecInfo { Namespace = "Azure.Storage", Documentation = "Azure Storage" },
+            Languages = new Dictionary<string, List<LanguageConfig>>
+            {
+                // Same Namespace, different PackageName
+                ["python"] = [new() { PackageName = "azure-storage-new", Namespace = "azure.storage" }]
+            }
+        };
+
+        SetupGetProject("project-1", project);
+        SetupGetReviews([]);
+
+        Project result = await _projectsManager.UpsertProjectFromMetadataAsync("testUser", metadata, typeSpecReview);
+
+        // "azure-storage-old::azure.storage" ≠ "azure-storage-new::azure.storage" → unequal → update.
+        Assert.Contains(result.ChangeHistory, h => h.ChangeAction == ProjectChangeAction.Edited);
+        _mockProjectsRepository.Verify(r => r.UpsertProjectAsync(It.IsAny<Project>()), Times.Once);
+    }
+
+    #endregion
 }

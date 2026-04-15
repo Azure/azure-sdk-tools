@@ -445,9 +445,21 @@ public class ProjectsManager : IProjectsManager
 
         return current.All(kvp =>
             updated.TryGetValue(kvp.Key, out var updatedList) &&
-            (kvp.Value ?? []).Count == (updatedList ?? []).Count &&
-            (kvp.Value ?? []).All(p => (updatedList ?? []).Any(u =>
-                string.Equals(p?.Namespace, u?.Namespace, StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(p?.PackageName, u?.PackageName, StringComparison.OrdinalIgnoreCase))));
+            PackageListsAreEqual(kvp.Value ?? [], updatedList ?? []));
+    }
+
+    /// <summary>
+    /// Compares two package lists as multisets, grouping by normalized (PackageName::Namespace) tokens
+    /// and comparing per-token counts. This correctly handles duplicates that a simple All/Any check would miss.
+    /// </summary>
+    private static bool PackageListsAreEqual(List<PackageInfo> a, List<PackageInfo> b)
+    {
+        if (a.Count != b.Count) return false;
+        static string Key(PackageInfo p) =>
+            $"{p?.PackageName?.ToLowerInvariant() ?? ""}::{p?.Namespace?.ToLowerInvariant() ?? ""}";
+        var aGroups = a.GroupBy(Key).ToDictionary(g => g.Key, g => g.Count());
+        var bGroups = b.GroupBy(Key).ToDictionary(g => g.Key, g => g.Count());
+        return aGroups.Count == bGroups.Count &&
+               aGroups.All(g => bGroups.TryGetValue(g.Key, out int bCount) && bCount == g.Value);
     }
 }

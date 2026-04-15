@@ -98,7 +98,7 @@ public class NamespaceManager : INamespaceManager
 
         if (entry == null)
         {
-            return NamespaceOperationResult.Failure(NamespaceOperationError.LanguageNotFound);
+            return NamespaceOperationResult.Failure(NamespaceOperationError.NamespaceEntryNotFound);
         }
 
         if (!allowedManualTransitions.TryGetValue(entry.Status, out var allowed) || !allowed.Contains(newStatus))

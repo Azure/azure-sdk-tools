@@ -10,9 +10,22 @@ internal class ProgramTests
         // Force app builder to build and verify things like DI lifetimes
         Assert.That(() => Program.CreateAppBuilder(["--help"], "hidden", LogLevel.None).Build(), Throws.Nothing);
 
-        // Run full builder setup and CLI parsing end to end
-        var result = await Program.Run(["-o", "hidden", "example", "hello-world", "test"], LogLevel.None);
-        Assert.That(result, Is.EqualTo(0));
+        // Suppress console output from the end-to-end CLI invocation
+        var originalOut = Console.Out;
+        var originalErr = Console.Error;
+        Console.SetOut(TextWriter.Null);
+        Console.SetError(TextWriter.Null);
+        try
+        {
+            // Run full builder setup and CLI parsing end to end
+            var result = await Program.Run(["-o", "hidden", "example", "hello-world", "test"], LogLevel.None);
+            Assert.That(result, Is.EqualTo(0));
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+            Console.SetError(originalErr);
+        }
     }
 
     [Test]

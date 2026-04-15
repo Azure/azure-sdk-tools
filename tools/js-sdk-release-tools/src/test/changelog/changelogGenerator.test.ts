@@ -50,14 +50,14 @@ describe("Change log for first release package", () => {
         const root = path.join(__dirname, "testCases/modular-first-release/");
         const content = getFirstReleaseContent(root, true);
         expect(content).toBe(
-            "This is the first stable version with the package of @azure/arm-test",
+            "This is the first stable release of the @azure/arm-test package. It introduces a new SDK generation with layered APIs, smaller bundles, and improved ergonomics. For more details, see the https://aka.ms/azsdk/js/sdk/quickstart.",
         );
     });
 
     test("ModularClient -> firstBeta", async () => {
         const root = path.join(__dirname, "testCases/modular-first-release/");
         const content = getFirstReleaseContent(root, false);
-        expect(content).toBe("Initial release of the @azure/arm-test package");
+        expect(content).toBe("This is the first preview release of the @azure/arm-test package. It introduces a new SDK generation with layered APIs, smaller bundles, and improved ergonomics. For more details, see the https://aka.ms/azsdk/js/sdk/quickstart.");
     });
 
     test("HLC -> firstGA", async () => {
@@ -519,6 +519,69 @@ describe("Breaking change detection for v2 (compared to v1)", () => {
         ).toBe(
             "Operation DataProductsCatalogs_sig_change.get has a new signature",
         );
+    });
+
+    test("HLC -> Modular: name collision - Organization and OrganizationOperations both renamed without conflict", async () => {
+        const oldViewPath = path.join(
+            __dirname,
+            "testCases/operationGroups.5.old.hlc.api.md",
+        );
+        const newViewPath = path.join(
+            __dirname,
+            "testCases/operationGroups.5.new.modular.api.md",
+        );
+
+        const changelogItems = await generateChangelogItems(
+            { path: oldViewPath, sdkType: SDKType.HighLevelClient },
+            { path: newViewPath, sdkType: SDKType.ModularClient },
+        );
+
+        // Old `Organization` → new `OrganizationOperations`
+        // Old `OrganizationOperations` → new `OrganizationOperationsOperations`
+        // Neither should appear as a removed operation group.
+        expect(
+            getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.OperationGroupRemoved,
+            ),
+        ).toHaveLength(0);
+        expect(
+            getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.OperationGroupAdded,
+            ),
+        ).toHaveLength(0);
+    });
+
+    test("HLC -> Modular: 'Operations' maps to 'OperationsOperations'; 'XOperations' stays when 'XOperationsOperations' absent", async () => {
+        const oldViewPath = path.join(
+            __dirname,
+            "testCases/operationGroups.6.old.hlc.api.md",
+        );
+        const newViewPath = path.join(
+            __dirname,
+            "testCases/operationGroups.6.new.modular.api.md",
+        );
+
+        const changelogItems = await generateChangelogItems(
+            { path: oldViewPath, sdkType: SDKType.HighLevelClient },
+            { path: newViewPath, sdkType: SDKType.ModularClient },
+        );
+
+        // Old `Operations` → new `OperationsOperations` (target exists)
+        // Old `PrivateEndpointConnectionOperations` stays as-is (target `PrivateEndpointConnectionOperationsOperations` absent)
+        expect(
+            getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.OperationGroupRemoved,
+            ),
+        ).toHaveLength(0);
+        expect(
+            getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.OperationGroupAdded,
+            ),
+        ).toHaveLength(0);
     });
 
     test("Patch RLC -> RLC's basic breaking changes", async () => {

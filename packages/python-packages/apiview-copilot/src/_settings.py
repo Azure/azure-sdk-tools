@@ -18,32 +18,45 @@ load_dotenv(override=True)
 
 
 class SettingsManager:
-    _instance = None
+    _instances = {}
     _lock = threading.Lock()
 
-    def __new__(cls, *args, **kwargs):
-        if not cls._instance:
-            with cls._lock:
-                if not cls._instance:
-                    cls._instance = super(SettingsManager, cls).__new__(cls)
-        return cls._instance
+    APP_CONFIG_ENDPOINTS = {
+        "production": "https://avc-appconfig.azconfig.io",
+        "staging": "https://avc-appconfig-staging.azconfig.io",
+    }
 
-    def __init__(self):
+    def __new__(cls, environment=None):
+        env_key = (environment or os.getenv("ENVIRONMENT_NAME") or "").strip().lower()
+        if not env_key:
+            raise ValueError(
+                "ENVIRONMENT_NAME must be set in the environment or a non-empty 'environment' must be provided."
+            )
+        if env_key not in cls._instances:
+            with cls._lock:
+                if env_key not in cls._instances:
+                    cls._instances[env_key] = super(SettingsManager, cls).__new__(cls)
+        return cls._instances[env_key]
+
+    def __init__(self, environment=None):
         # pylint: disable=access-member-before-definition
         if hasattr(self, "_initialized") and self._initialized:
             return
-        self._initialized = True
-        self.credential = DefaultAzureCredential()
-        self.app_config_endpoint = os.getenv("AZURE_APP_CONFIG_ENDPOINT")
-        if not self.app_config_endpoint:
-            raise ValueError("AZURE_APP_CONFIG_ENDPOINT must be set in the environment.")
-        self.label = os.getenv("ENVIRONMENT_NAME")
-        if not self.label:
-            raise ValueError("ENVIRONMENT_NAME must be set in the environment.")
-        self.label = self.label.strip().lower()
-        self.app_config_client = AzureAppConfigurationClient(self.app_config_endpoint, self.credential)
-        self._keyvault_clients = {}
-        self._cache = {}
+        with self._lock:
+            if hasattr(self, "_initialized") and self._initialized:
+                return
+            self.credential = DefaultAzureCredential()
+            self.label = (environment or os.getenv("ENVIRONMENT_NAME")).strip().lower()
+            self.app_config_endpoint = self.APP_CONFIG_ENDPOINTS.get(self.label)
+            if not self.app_config_endpoint:
+                raise ValueError(
+                    f"No App Configuration endpoint for environment '{self.label}'. "
+                    f"Valid environments: {', '.join(sorted(self.APP_CONFIG_ENDPOINTS))}"
+                )
+            self.app_config_client = AzureAppConfigurationClient(self.app_config_endpoint, self.credential)
+            self._keyvault_clients = {}
+            self._cache = {}
+            self._initialized = True
 
     def get(self, key) -> Union[str, None]:
         key = key.strip().lower()

@@ -26,6 +26,7 @@ from src._credential import get_credential
 from src._database_manager import ContainerNames, DatabaseManager
 from src._models import Example, Guideline, Memory
 from src._settings import SettingsManager
+from src._utils import guideline_id_from_db, guideline_id_to_db
 
 
 class SearchItem:
@@ -231,7 +232,7 @@ class ContextItem:
         """
         Processes the ID to convert the Search-compatible values with web-compatible ones.
         """
-        return id.replace("=html=", ".html#")
+        return guideline_id_from_db(id)
 
     def _metadata_markdown(self) -> str:
         """
@@ -284,7 +285,13 @@ class ContextItem:
 class SearchManager:
     """Manages search operations using Azure Search."""
 
-    def __init__(self, *, language: Optional[str] = None, include_general_guidelines: bool = False):
+    def __init__(
+        self,
+        *,
+        language: Optional[str] = None,
+        include_general_guidelines: bool = False,
+        environment: Optional[str] = None,
+    ):
         self.language = language
         self.filter_expression = None
         if language:
@@ -295,7 +302,7 @@ class SearchManager:
                 self.filter_expression += f" or {general_guidelines_filter}"
             else:
                 self.filter_expression = general_guidelines_filter
-        self._settings = SettingsManager()
+        self._settings = SettingsManager(environment=environment)
         self._search_endpoint = self._settings.get("SEARCH_ENDPOINT")
         self._credential = get_credential()
         self._index_name = self._settings.get("SEARCH_INDEX_NAME")
@@ -378,7 +385,7 @@ class SearchManager:
         if not ids:
             return []
         # Convert IDs from web format (with .html#) to search format (with =html=)
-        search_ids = [id.replace(".html#", "=html=") for id in ids]
+        search_ids = [guideline_id_to_db(id) for id in ids]
         escaped = ",".join(id.replace("'", "''") for id in search_ids)
         filter_expr = f"search.in(id, '{escaped}', ',')"
         # Note: Don't apply language filter when searching by explicit IDs
@@ -398,19 +405,27 @@ class SearchManager:
         """
         database = DatabaseManager.get_instance()
 
-        # Partition input items by kind using SearchItem attributes
+        # Partition input items by kind using SearchItem attributes.
+        # Normalize guideline IDs from DB format to web format so that all
+        # internal tracking in this method uses web-format IDs consistently.
         guidelines = {}
         examples = {}
         memories = {}
         for item in search_results:
             if item.kind == "guidelines":
-                guidelines[item.id] = item
+                web_id = guideline_id_from_db(item.id)
+                item.id = web_id
+                guidelines[web_id] = item
             elif item.kind == "examples":
                 examples[item.id] = item
             elif item.kind == "memories":
                 memories[item.id] = item
-        # Save scores for each id
-        scores = {item.id: item.score for item in search_results if hasattr(item, "score")}
+        # Save scores for each id (normalize guideline IDs)
+        scores = {}
+        for item in search_results:
+            if hasattr(item, "score"):
+                key = guideline_id_from_db(item.id) if item.kind == "guidelines" else item.id
+                scores[key] = item.score
 
         # Track seen IDs to avoid cycles
         seen_guideline_ids = set()
@@ -424,13 +439,15 @@ class SearchManager:
 
         batch_size = 50
 
-        def batch_query(container, id_list):
+        def batch_query(container, id_list, *, is_guidelines=False):
             results = []
             for i in range(0, len(id_list), batch_size):
                 batch = id_list[i : i + batch_size]
-                placeholders = ",".join([f"@id{i}" for i in range(len(batch))])
+                # Guideline IDs are tracked in web format but stored in DB format in Cosmos
+                query_batch = [guideline_id_to_db(uid) for uid in batch] if is_guidelines else batch
+                placeholders = ",".join([f"@id{i}" for i in range(len(query_batch))])
                 query = f"SELECT * FROM c WHERE c.id IN ({placeholders})"
-                parameters = [{"name": f"@id{i}", "value": value} for i, value in enumerate(batch)]
+                parameters = [{"name": f"@id{i}", "value": value} for i, value in enumerate(query_batch)]
                 results.extend(
                     list(
                         container.query_items(
@@ -455,7 +472,7 @@ class SearchManager:
             # Process guidelines
             if guideline_queue:
                 batch_ids = [guideline_queue.popleft() for _ in range(min(batch_size, len(guideline_queue)))]
-                new_guidelines = batch_query(database.guidelines.client, batch_ids)
+                new_guidelines = batch_query(database.guidelines.client, batch_ids, is_guidelines=True)
                 for guideline in new_guidelines:
                     gid = guideline.id
                     if gid in seen_guideline_ids:

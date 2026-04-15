@@ -1,5 +1,6 @@
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
+using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages;
 
@@ -11,25 +12,25 @@ public class PackageCheckResponseTests
     {
         var notUsed = new ProcessResult();
 
-        var ex = Assert.Throws<ArgumentException>(() => new PackageCheckResponse("", Models.SdkLanguage.Go, [notUsed]));
+        var ex = Assert.Throws<ArgumentException>(() => new PackageCheckResponse("", SdkLanguage.Go, [notUsed]));
         Assert.That(ex.ParamName, Is.EqualTo("packageName"));
 
         // purposefully allowing a null
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
-        ex = Assert.Throws<ArgumentNullException>(() => new PackageCheckResponse(null, Models.SdkLanguage.Go, [notUsed]));
+        ex = Assert.Throws<ArgumentNullException>(() => new PackageCheckResponse(null, SdkLanguage.Go, [notUsed]));
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         Assert.That(ex.ParamName, Is.EqualTo("packageName"));
 
-        ex = Assert.Throws<ArgumentException>(() => new PackageCheckResponse("aztemplate", Models.SdkLanguage.Unknown, [notUsed]));
+        ex = Assert.Throws<ArgumentException>(() => new PackageCheckResponse("aztemplate", SdkLanguage.Unknown, [notUsed]));
         Assert.That(ex.ParamName, Is.EqualTo("language"));
 
-        ex = Assert.Throws<ArgumentException>(() => new PackageCheckResponse("aztemplate", Models.SdkLanguage.Go, []));
+        ex = Assert.Throws<ArgumentException>(() => new PackageCheckResponse("aztemplate", SdkLanguage.Go, []));
         Assert.That(ex.ParamName, Is.EqualTo("processResults"));
 
         // purposefully allowing a null
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
 #pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
-        ex = Assert.Throws<ArgumentNullException>(() => new PackageCheckResponse("aztemplate", Models.SdkLanguage.Go, (IEnumerable<ProcessResult>)null));
+        ex = Assert.Throws<ArgumentNullException>(() => new PackageCheckResponse("aztemplate", SdkLanguage.Go, (IEnumerable<ProcessResult>)null));
 #pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         Assert.That(ex.ParamName, Is.EqualTo("processResults"));
@@ -39,21 +40,21 @@ public class PackageCheckResponseTests
     public void TestConstructorSingleResponse_Validation()
     {
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
-        ArgumentException ex = Assert.Throws<ArgumentNullException>(() => new PackageCheckResponse(null, Models.SdkLanguage.Go, 0, "", ""));
+        ArgumentException ex = Assert.Throws<ArgumentNullException>(() => new PackageCheckResponse(null, SdkLanguage.Go, 0, "", ""));
         Assert.That(ex.ParamName, Is.EqualTo("packageName"));
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
-        ex = Assert.Throws<ArgumentException>(() => new PackageCheckResponse("", Models.SdkLanguage.Go, 0, "", ""));
+        ex = Assert.Throws<ArgumentException>(() => new PackageCheckResponse("", SdkLanguage.Go, 0, "", ""));
         Assert.That(ex.ParamName, Is.EqualTo("packageName"));
 
-        ex = Assert.Throws<ArgumentException>(() => new PackageCheckResponse("aztemplate", Models.SdkLanguage.Unknown, 0, "", ""));
+        ex = Assert.Throws<ArgumentException>(() => new PackageCheckResponse("aztemplate", SdkLanguage.Unknown, 0, "", ""));
         Assert.That(ex.ParamName, Is.EqualTo("language"));
     }
 
     [Test]
     public void TestConstructWithMultipleResponses()
     {
-        var resp = new PackageCheckResponse("github.com/Azure/azure-sdk-for-go/sdk/template/aztemplate", Models.SdkLanguage.Go, [
+        var resp = new PackageCheckResponse("github.com/Azure/azure-sdk-for-go/sdk/template/aztemplate", SdkLanguage.Go, [
             CreateProcessResult(1001, "output", "error")
         ]);
 
@@ -64,10 +65,10 @@ public class PackageCheckResponseTests
                 $"output{Environment.NewLine}error{Environment.NewLine}" + Environment.NewLine));
             Assert.That(resp.ExitCode, Is.EqualTo(1001));
             Assert.That(resp.PackageName, Is.EqualTo("github.com/Azure/azure-sdk-for-go/sdk/template/aztemplate"));
-            Assert.That(resp.Language, Is.EqualTo(Models.SdkLanguage.Go));
+            Assert.That(resp.Language, Is.EqualTo(SdkLanguage.Go));
         });
 
-        resp = new PackageCheckResponse("github.com/Azure/azure-sdk-for-go/sdk/template/aztemplate", Models.SdkLanguage.Go, [
+        resp = new PackageCheckResponse("github.com/Azure/azure-sdk-for-go/sdk/template/aztemplate", SdkLanguage.Go, [
             // NOTE: the "output\nerror\n" is just how the ProcessResult class handles stdout and stderr being added, it's not part of the formatting in PackageCheckResponse.
             CreateProcessResult(0, "first-output", "first-error"),
             CreateProcessResult(1001, "last-output", "last-error")
@@ -82,7 +83,7 @@ public class PackageCheckResponseTests
             // last exit code wins.
             Assert.That(resp.ExitCode, Is.EqualTo(1001));
             Assert.That(resp.PackageName, Is.EqualTo("github.com/Azure/azure-sdk-for-go/sdk/template/aztemplate"));
-            Assert.That(resp.Language, Is.EqualTo(Models.SdkLanguage.Go));
+            Assert.That(resp.Language, Is.EqualTo(SdkLanguage.Go));
         });
     }
 

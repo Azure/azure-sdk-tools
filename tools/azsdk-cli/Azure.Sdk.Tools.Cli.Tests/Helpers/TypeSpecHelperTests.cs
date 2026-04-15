@@ -1,4 +1,5 @@
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -131,6 +132,62 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             var gitHelperMock = new Mock<IGitHelper>();
             gitHelperMock.Setup(ghm => ghm.GetRepoRemoteUriAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(getRepoRemoteUri);
             return gitHelperMock.Object;
+        }
+        [Test]
+        public async Task Test_ParseTypeSpecProjectAsync_parses_package_names_from_typespec_project()
+        {
+            var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+            var logger = new TestLogger<TypeSpecHelperTests>();
+
+            // Metadata YAML that the emitter would produce
+            var metadataYaml = """
+            languages:
+              .NET:
+                packageName: Azure.ResourceManager.Contoso
+              Java:
+                packageName: com.azure.resourcemanager.contoso
+              Python:
+                packageName: azure-mgmt-contoso
+              JavaScript:
+                packageName: "@azure/arm-contoso"
+              Go:
+                packageName: sdk/resourcemanager/contoso/armcontoso
+            """;
+
+            // Set up the metadata output directory and file as the emitter would
+            var metadataDir = Path.Combine(testCodeFilePath, "tsp-output", "@azure-tools", "typespec-metadata");
+            Directory.CreateDirectory(metadataDir);
+            var metadataFilePath = Path.Combine(metadataDir, "typespec-metadata.yaml");
+            await File.WriteAllTextAsync(metadataFilePath, metadataYaml);
+
+            try
+            {
+                // Mock npx to return success (emitter ran successfully)
+                var mockNpxHelper = new Mock<INpxHelper>();
+                mockNpxHelper.Setup(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(new ProcessResult { ExitCode = 0 });
+
+                var result = await typeSpecHelper.ParseTypeSpecProjectAsync(testCodeFilePath, mockNpxHelper.Object, logger, CancellationToken.None);
+
+                Assert.IsNotNull(result);
+                Assert.That(result.Packages.Count, Is.EqualTo(5));
+                Assert.That(result.IsManagementPlane, Is.True);
+
+                Assert.That(result.Packages.Any(p => p.Language == SdkLanguage.DotNet && p.PackageName == "Azure.ResourceManager.Contoso"));
+                Assert.That(result.Packages.Any(p => p.Language == SdkLanguage.Java && p.PackageName == "com.azure.resourcemanager.contoso"));
+                Assert.That(result.Packages.Any(p => p.Language == SdkLanguage.Python && p.PackageName == "azure-mgmt-contoso"));
+                Assert.That(result.Packages.Any(p => p.Language == SdkLanguage.JavaScript && p.PackageName == "@azure/arm-contoso"));
+                Assert.That(result.Packages.Any(p => p.Language == SdkLanguage.Go && p.PackageName == "sdk/resourcemanager/contoso/armcontoso"));
+            }
+            finally
+            {
+                // Clean up the generated metadata directory
+                var tspOutputDir = Path.Combine(testCodeFilePath, "tsp-output");
+                if (Directory.Exists(tspOutputDir))
+                {
+                    Directory.Delete(tspOutputDir, recursive: true);
+                }
+            }
         }
     }
 }

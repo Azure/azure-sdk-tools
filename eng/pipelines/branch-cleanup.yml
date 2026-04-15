@@ -20,12 +20,12 @@ parameters:
 - name: ForkAutomationBranches
   type: object
   default:
-    - azure-sdk/azure-powershell
     - azure-sdk/azure-sdk-for-go
     - azure-sdk/azure-sdk-for-java
     - azure-sdk/azure-sdk-for-js
     - azure-sdk/azure-sdk-for-net
     - azure-sdk/azure-sdk-for-python
+    - azure-sdk/azure-sdk-for-rust
 
 - name: SDKPrivate
   type: object
@@ -35,12 +35,13 @@ parameters:
     - Azure/azure-sdk-for-js-pr
     - Azure/azure-sdk-for-net-pr
     - Azure/azure-sdk-for-python-pr
-    - azure-sdk/azure-powershell-pr
+    - Azure/azure-sdk-for-rust-pr
     - azure-sdk/azure-sdk-for-go-pr
     - azure-sdk/azure-sdk-for-java-pr
     - azure-sdk/azure-sdk-for-js-pr
     - azure-sdk/azure-sdk-for-net-pr
     - azure-sdk/azure-sdk-for-python-pr
+    - azure-sdk/azure-sdk-for-rust-pr
 
 - name: DailyBranchRepos
   type: object
@@ -106,7 +107,7 @@ jobs:
             arguments: >
               -RepoId "${{ repo }}"
               -CentralRepoId "Azure/azure-sdk-tools"
-              -BranchRegex "^sync-.github/workflows.*-(?<PrNumber>\d+).*$"
+              -BranchRegex "^sync-.github.*-(?<PrNumber>\d+).*$"
               -AuthToken $(GH_TOKEN_Azure)
               -WhatIf:$${{parameters.WhatIfPreference}}
 

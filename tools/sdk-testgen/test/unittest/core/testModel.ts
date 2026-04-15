@@ -1,11 +1,12 @@
+import { SchemaType } from '@autorest/codemodel';
+import { Session } from '@autorest/extension-base';
+import { serialize } from '@azure-tools/codegen';
+
+import { configDefaults } from '../../../src/common/constant';
+import { TestConfig } from '../../../src/common/testConfig';
 import { ExampleParameter, ExampleValue, TestCodeModel, TestCodeModeler } from '../../../src/core/model';
 import { Helper } from '../../../src/util/helper';
 import { MockTool } from '../../tools';
-import { SchemaType } from '@autorest/codemodel';
-import { Session } from '@autorest/extension-base';
-import { TestConfig } from '../../../src/common/testConfig';
-import { configDefaults } from '../../../src/common/constant';
-import { serialize } from '@azure-tools/codegen';
 
 describe('ExampleValue.createInstance(...)', () => {
     const codeModel = MockTool.createCodeModel();

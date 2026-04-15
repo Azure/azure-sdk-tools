@@ -1,5 +1,6 @@
 using System.ClientModel.Primitives;
 using System.Text.Json;
+using Azure.Core;
 using Azure.Identity;
 using Azure.Search.Documents;
 using Azure.Search.Documents.Indexes;
@@ -49,7 +50,14 @@ public class Program
         var csvOutput = args.FirstOrDefault(a => a.StartsWith("--output="))?.Split('=')[1] 
             ?? "mcp_evaluation_results.csv";
 
-        var credential = new DefaultAzureCredential();
+        TokenCredential credential = new ChainedTokenCredential(
+            new AzureCliCredential(),
+            new EnvironmentCredential(),
+            new VisualStudioCodeCredential(),
+            new VisualStudioCredential(),
+            new AzurePowerShellCredential(),
+            new AzureDeveloperCliCredential()
+        );
 
         if (extractReal)
         {
@@ -122,7 +130,7 @@ public class Program
         return issue;
     }
 
-    static ILabeler? CreateLabeler(IConfiguration configuration, ILoggerFactory loggerFactory, ILogger logger, DefaultAzureCredential credential)
+    static ILabeler? CreateLabeler(IConfiguration configuration, ILoggerFactory loggerFactory, ILogger logger, TokenCredential credential)
     {
         try
         {
@@ -176,7 +184,7 @@ public class Program
         }
     }
 
-    static async Task ExtractRealIssuesAsync(IConfiguration configuration, ILogger logger, DefaultAzureCredential credential)
+    static async Task ExtractRealIssuesAsync(IConfiguration configuration, ILogger logger, TokenCredential credential)
     {
         using var cts = new CancellationTokenSource();
         Console.CancelKeyPress += (_, e) =>

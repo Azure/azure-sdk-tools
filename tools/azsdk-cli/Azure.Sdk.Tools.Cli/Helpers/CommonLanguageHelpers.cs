@@ -1,9 +1,9 @@
 using System.ComponentModel;
-using System.Threading;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Microagents;
-using Azure.Sdk.Tools.Cli.Microagents.Tools;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
+using Azure.Sdk.Tools.Cli.CopilotAgents.Tools;
+using Microsoft.Extensions.AI;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Prompts.Templates;
 
@@ -43,13 +43,11 @@ public interface ICommonValidationHelpers
     /// <summary>
     /// Common spelling check implementation
     /// </summary>
-    /// <param name="spellingCheckPath">Path to check for spelling errors (provided by language-specific implementation)</param>
     /// <param name="packagePath">Absolute path to the package directory</param>
     /// <param name="fixCheckErrors">Whether to attempt to automatically fix spelling issues where supported by cspell</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
     Task<PackageCheckResponse> CheckSpelling(
-        string spellingCheckPath,
         string packagePath,
         bool fixCheckErrors = false,
         CancellationToken ct = default);
@@ -69,23 +67,23 @@ public interface ICommonValidationHelpers
 public class CommonValidationHelpers : ICommonValidationHelpers
 {
     private readonly IProcessHelper _processHelper;
-    private readonly INpxHelper _npxHelper;
+    private readonly IPowershellHelper _powershellHelper;
     private readonly IGitHelper _gitHelper;
     private readonly ILogger<CommonValidationHelpers> _logger;
-    private readonly IMicroagentHostService _microagentHostService;
+    private readonly ICopilotAgentRunner _copilotAgentRunner;
 
     public CommonValidationHelpers(
         IProcessHelper processHelper,
-        INpxHelper npxHelper,
+        IPowershellHelper powershellHelper,
         IGitHelper gitHelper,
         ILogger<CommonValidationHelpers> logger,
-        IMicroagentHostService microagentHostService)
+        ICopilotAgentRunner copilotAgentRunner)
     {
         _processHelper = processHelper ?? throw new ArgumentNullException(nameof(processHelper));
-        _npxHelper = npxHelper ?? throw new ArgumentNullException(nameof(npxHelper));
+        _powershellHelper = powershellHelper ?? throw new ArgumentNullException(nameof(powershellHelper));
         _gitHelper = gitHelper ?? throw new ArgumentNullException(nameof(gitHelper));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _microagentHostService = microagentHostService ?? throw new ArgumentNullException(nameof(microagentHostService));
+        _copilotAgentRunner = copilotAgentRunner ?? throw new ArgumentNullException(nameof(copilotAgentRunner));
     }
 
     public async Task<PackageCheckResponse> ValidateChangelog(
@@ -193,7 +191,6 @@ public class CommonValidationHelpers : ICommonValidationHelpers
     }
 
     public async Task<PackageCheckResponse> CheckSpelling(
-        string spellingCheckPath,
         string packagePath, 
         bool fixCheckErrors = false, 
         CancellationToken ct = default)
@@ -206,6 +203,13 @@ public class CommonValidationHelpers : ICommonValidationHelpers
                 return errorResponse;
             }
 
+            var scriptPath = Path.Combine(packageRepoRoot, "eng", "common", "spelling", "Invoke-Cspell.ps1");
+
+            if (!File.Exists(scriptPath))
+            {
+                return new PackageCheckResponse(1, "", $"Invoke-Cspell.ps1 script not found at expected location: {scriptPath}");
+            }
+
             var cspellConfigPath = Path.Combine(packageRepoRoot, ".vscode", "cspell.json");
 
             if (!File.Exists(cspellConfigPath))
@@ -213,30 +217,67 @@ public class CommonValidationHelpers : ICommonValidationHelpers
                 return new PackageCheckResponse(1, "", $"Cspell config file not found at expected location: {cspellConfigPath}");
             }
 
-            var npxOptions = new NpxOptions(
-                null,
-                ["cspell", "lint", "--config", cspellConfigPath, "--root", packageRepoRoot, spellingCheckPath],
-                logOutputStream: true
-            );
-            var processResult = await _npxHelper.Run(npxOptions, ct: ct);
+            // Escape single quotes in paths for use in PowerShell script blocks
+            var escapedScriptPath = scriptPath.Replace("'", "''");
+            var escapedConfigPath = cspellConfigPath.Replace("'", "''");
+            var escapedRepoRoot = packageRepoRoot.Replace("'", "''");
 
-            // If cspell checked 0 files, treat as success
-            if (processResult.Output != null && processResult.Output.Contains("Files checked: 0"))
+            // Get only the files with changes that have changed between the current branch and the default (main) branch.
+            // This avoids scanning thousands of files in directories like .tox, node_modules, etc.
+            var mergeBaseSha = await _gitHelper.GetMergeBaseCommitShaAsync(packageRepoRoot, "main", ct);
+
+            // Normalize package path to be relative to the repo root and use forward slashes for git pathspecs
+            var relativePackagePath = Path.GetRelativePath(packageRepoRoot, packagePath);
+            var normalizedDiffPath = relativePackagePath
+                .Replace(Path.DirectorySeparatorChar, '/')
+                .Replace(Path.AltDirectorySeparatorChar, '/');
+
+            var changedFiles = await _gitHelper.GetChangedFilesAsync(
+                packageRepoRoot,
+                mergeBaseSha,
+                null, // compare against working tree to include uncommitted changes
+                normalizedDiffPath,
+                "d", // exclude deleted files
+                ct);
+
+            if (changedFiles.Count == 0)
             {
-                return new PackageCheckResponse(0, processResult.Output);
+                _logger.LogInformation("No changed files detected in {PackagePath}. Skipping spelling check.", packagePath);
+                return new PackageCheckResponse(0, "No changed files detected. Spelling check skipped.");
             }
 
-            // If fix is requested and there are spelling issues, use Microagent to automatically apply fixes
+            _logger.LogInformation("Git detected {Count} changed file(s) in {PackagePath}", changedFiles.Count, packagePath);
+
+            // Resolve changed file paths to absolute paths
+            var absoluteChangedFiles = changedFiles
+                .Select(f => Path.GetFullPath(Path.Combine(packageRepoRoot, f)))
+                .Where(File.Exists)
+                .ToList();
+
+            if (absoluteChangedFiles.Count == 0)
+            {
+                _logger.LogInformation("No resolvable changed files in {PackagePath}. Skipping spelling check.", packagePath);
+                return new PackageCheckResponse(0, "No resolvable changed files detected. Spelling check skipped.");
+            }
+
+            // Build file list as a PowerShell array of quoted paths
+            var fileListLiteral = string.Join(", ", absoluteChangedFiles.Select(f => $"'{f.Replace("'", "''")}'"));
+            var command = $"$files = @({fileListLiteral}); & '{escapedScriptPath}' -CSpellConfigPath '{escapedConfigPath}' -SpellCheckRoot '{escapedRepoRoot}' -FileList $files";
+
+            var timeout = TimeSpan.FromMinutes(10);
+            var processResult = await _powershellHelper.Run(new PowershellOptions([command], timeout: timeout, workingDirectory: packageRepoRoot), ct);
+
+            // If fix is requested and there are spelling issues, use CopilotAgent to automatically apply fixes
             if (fixCheckErrors && processResult.ExitCode != 0 && !string.IsNullOrWhiteSpace(processResult.Output))
             {
                 try
                 {
-                    var fixResult = await RunSpellingFixMicroagent(packageRepoRoot, processResult.Output, ct);
+                    var fixResult = await RunSpellingFixAgent(packageRepoRoot, processResult.Output, ct);
                     return new PackageCheckResponse(0, fixResult.Summary);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error running spelling fix microagent");
+                    _logger.LogError(ex, "Error running spelling fix agent");
                     return new PackageCheckResponse(processResult.ExitCode, processResult.Output, ex.Message);
                 }
             }
@@ -274,35 +315,34 @@ public class CommonValidationHelpers : ICommonValidationHelpers
     }
 
     /// <summary>
-    /// Result of the spelling fix microagent operation.
+    /// Result of the spelling fix agent operation.
     /// </summary>
     public record SpellingFixResult(
         [property: Description("Summary of the operations performed")] string Summary
     );
 
     /// <summary>
-    /// Runs a microagent to automatically fix spelling issues by either correcting typos or adding legitimate terms to cspell.json.
+    /// Runs a copilot agent to automatically fix spelling issues by either correcting typos or adding legitimate terms to cspell.json.
     /// </summary>
     /// <param name="repoRoot">Repository root path</param>
     /// <param name="cspellOutput">Output from cspell lint command</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Result of the spelling fix operation</returns>
-    private async Task<SpellingFixResult> RunSpellingFixMicroagent(string repoRoot, string cspellOutput, CancellationToken ct)
+    private async Task<SpellingFixResult> RunSpellingFixAgent(string repoRoot, string cspellOutput, CancellationToken ct)
     {
         var spellingTemplate = new SpellingValidationTemplate(cspellOutput, repoRoot);
-        var agent = new Microagent<SpellingFixResult>
+        var agent = new CopilotAgent<SpellingFixResult>
         {
             Instructions = spellingTemplate.BuildPrompt(),
-            MaxToolCalls = 10,
-            Model = "gpt-4",
-            Tools = new IAgentTool[]
-            {
-                new ReadFileTool(repoRoot),
-                new WriteFileTool(repoRoot),
-                new UpdateCspellWordsTool(repoRoot)
-            }
+            MaxIterations = 10,
+            Tools =
+            [
+                FileTools.CreateReadFileTool(repoRoot),
+                FileTools.CreateWriteFileTool(repoRoot),
+                CspellTools.CreateUpdateCspellWordsTool(repoRoot)
+            ]
         };
 
-        return await _microagentHostService.RunAgentToCompletion(agent, ct);
+        return await _copilotAgentRunner.RunAsync(agent, ct);
     }
 }

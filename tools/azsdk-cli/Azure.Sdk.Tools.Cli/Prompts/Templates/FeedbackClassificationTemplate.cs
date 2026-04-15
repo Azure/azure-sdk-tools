@@ -18,7 +18,7 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
     public override string Description => "Classify SDK feedback items in batch and route to appropriate phase";
 
     private readonly string? _serviceName;
-    private readonly string? _language;
+    private readonly string _language;
     private readonly string _referenceDocContent;
     private readonly List<FeedbackItem> _items;
     private readonly string _globalContext;
@@ -26,14 +26,14 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
     /// <summary>
     /// Initializes a new batch classification template.
     /// </summary>
-    /// <param name="serviceName">The name of the service being customized</param>
-    /// <param name="language">Target SDK language (e.g., python, csharp, java) (optional)</param>
+    /// <param name="serviceName">The name of the service being customized (optional)</param>
+    /// <param name="language">Target SDK language (e.g., python, csharp, java)</param>
     /// <param name="referenceDocContent">Content of the customizing-client-tsp.md reference document</param>
     /// <param name="items">The feedback items to classify</param>
     /// <param name="globalContext">Global context containing all changes and history</param>
     public FeedbackClassificationTemplate(
         string? serviceName,
-        string? language,
+        string language,
         string referenceDocContent,
         List<FeedbackItem> items,
         string globalContext)
@@ -77,13 +77,17 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         sb.AppendLine($"""
         **Current Context:**
         - Service: {_serviceName ?? "N/A"}
-        - Language: {_language ?? "N/A"}
+        - Language: {_language}
 
         **Task:**
-        Classify ALL of the feedback items listed below. For each item, determine the appropriate classification: **TSP_APPLICABLE**, **SUCCESS**, or **REQUIRES_MANUAL_INTERVENTION**.
+        Classify ALL of the feedback items listed below. For each item, determine the appropriate classification: **TSP_APPLICABLE**, **CODE_CUSTOMIZATION**, **SUCCESS**, or **REQUIRES_MANUAL_INTERVENTION**.
         - If the feedback is non-actionable (discussion, informational, "keep as is", or about build/generation succeeding), classify as **SUCCESS**.
         - If the feedback is actionable AND TypeSpec client customization decorators can address it (based on the reference documentation below), classify as **TSP_APPLICABLE**.
-        - If the feedback is actionable but NO TypeSpec decorators can address it (requires code-level changes), classify as **REQUIRES_MANUAL_INTERVENTION**.
+        - If the feedback is actionable, TypeSpec decorators CANNOT address it, but automated code patching could fix it (e.g., compile errors from method signature changes, parameter additions/removals, symbol renames in generated code), classify as **CODE_CUSTOMIZATION**. Include specific repair instructions in the Reason.
+        - If the feedback is actionable but requires complex manual work that cannot be automated (e.g., new feature implementation, architectural changes, custom business logic), classify as **REQUIRES_MANUAL_INTERVENTION**.
+
+        **IMPORTANT — Check for already-applied customizations:**
+        Before classifying any item as TSP_APPLICABLE, use the available tools to search the TypeSpec project files (e.g., `client.tsp`, `customizations.tsp`) for the decorator or customization that would address the feedback. If the customization is already present in the TypeSpec files, classify the item as **SUCCESS** (the change has already been applied). Use `grep_search` or `read_file` to verify.
 
         Use the available tools to inspect the TypeSpec project files when needed to determine if decorators are applicable.
 
@@ -131,18 +135,22 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         **Decision Logic (apply to EACH item independently):**
 
         **If Context is NON-EMPTY** (check first):
-        - Contains error indicators ("Failed", "error", "COMPILATION ERROR", "cannot find", "did not address") → **REQUIRES_MANUAL_INTERVENTION**
+        - Contains error indicators ("Failed", "error", "COMPILATION ERROR", "cannot find", "did not address") → **CODE_CUSTOMIZATION** (if patching can fix) or **REQUIRES_MANUAL_INTERVENTION** (if too complex)
         - Contains success ("Successfully applied", "Build succeeded") → **SUCCESS**
         - Otherwise (unclear or no clear indicator) → **REQUIRES_MANUAL_INTERVENTION**
 
         **If Context is EMPTY** (first attempt):
         - Non-actionable (informational, "keep as is", past tense, build success, discussion, question) → **SUCCESS**
-        - Actionable AND a TypeSpec decorator from the reference doc can address it → **TSP_APPLICABLE**
-        - Actionable BUT no TypeSpec decorator can address it (requires code changes) → **REQUIRES_MANUAL_INTERVENTION**
+        - Actionable AND a TypeSpec decorator from the reference doc could address it → **check the TypeSpec files first** using `grep_search` or `read_file`
+          - If the decorator/customization is already present in the TypeSpec files → **SUCCESS** (already applied)
+          - If not present → **TSP_APPLICABLE**
+        - Actionable, no TypeSpec decorator applies, but automated patching can fix (compile errors, signature changes, parameter additions/removals, symbol renames, linting or typing errors) → **CODE_CUSTOMIZATION**
+        - Actionable BUT requires complex manual implementation → **REQUIRES_MANUAL_INTERVENTION**
 
         **What counts as "Non-actionable" (SUCCESS):**
         - Explicit acceptance: "Keep as is", "No changes needed", "This is fine"
         - Past tense (already done): "Method was made private", "Client was renamed"
+        - Already applied in TypeSpec: the requested customization decorator is already present in `client.tsp` or another TypeSpec customization file (verified by reading/searching the files)
         - Informational: Explanations, questions, acknowledgments
         - Build/generation success with no errors
         - Discussion or questions without a clear directive
@@ -150,6 +158,8 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         **TypeSpec Decorator Applicability (TSP_APPLICABLE):**
         Consult the reference documentation provided to determine if any supported
         TypeSpec client customization decorator can address the feedback.
+        **Always search the TypeSpec files first** (using `grep_search` or `read_file`) to confirm the decorator
+        is NOT already present before classifying as TSP_APPLICABLE. If it is already present, classify as SUCCESS.
 
         **Common feedback patterns that ARE TypeSpec-applicable:**
         - Renaming (client, operation, model, property, enum value) → `@@clientName` or `@clientName`
@@ -160,9 +170,20 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         - Type overrides (use different type in SDK) → `@@alternateType`, `@@override`
 
         **Code Changes Required (REQUIRES_MANUAL_INTERVENTION):**
-        If the feedback requires changes that TypeSpec decorators cannot handle (e.g., custom
-        serialization logic, complex method implementations, test changes, documentation edits
-        outside TypeSpec), classify as REQUIRES_MANUAL_INTERVENTION.
+        If the feedback requires complex changes that neither TypeSpec decorators nor automated patching can handle
+        (e.g., new feature implementation, architectural redesign, custom business logic,
+        test changes, documentation edits outside TypeSpec), classify as REQUIRES_MANUAL_INTERVENTION.
+
+        **Automated Code Patching (CODE_CUSTOMIZATION):**
+        If the feedback involves compile errors or straightforward code-level fixes that automated patching
+        can handle (e.g., method signature changes, parameter additions/removals, symbol renames, linting or typing errors),
+        classify as CODE_CUSTOMIZATION.
+
+        Build errors often reference GENERATED files, but those must NOT be edited directly — they
+        are regenerated from TypeSpec. The root cause is typically in a customization file that
+        references a renamed or removed symbol. In your Reason, identify the failing symbol and
+        what changed, but do NOT instruct editing the generated file. The automated patch agent
+        will locate and fix the correct customization file.
         """;
     }
 
@@ -180,8 +201,12 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         Reason: @@clientName decorator can rename the client in client.tsp
 
         [ghi-789]
+        Classification: CODE_CUSTOMIZATION
+        Reason: Method `buildDocumentModelRequest` in the customization file needs a new `options` parameter of type `BuildDocumentModelOptions` to match the updated generated signature.
+
+        [jkl-012]
         Classification: REQUIRES_MANUAL_INTERVENTION
-        Reason: Custom retry logic requires code changes; no TypeSpec decorator applies
+        Reason: Requires implementing new retry policy with custom business logic; no TypeSpec decorator or automated patch applies
         ```
         """;
     }
@@ -196,20 +221,21 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
 
         ```
         [<item-id>]
-        Classification: [TSP_APPLICABLE | SUCCESS | REQUIRES_MANUAL_INTERVENTION]
-        Reason: <one-line explanation>
+        Classification: [TSP_APPLICABLE | CODE_CUSTOMIZATION | SUCCESS | REQUIRES_MANUAL_INTERVENTION]
+        Reason: <one-line explanation — for CODE_CUSTOMIZATION, include specific repair instructions>
 
         [<next-item-id>]
-        Classification: [TSP_APPLICABLE | SUCCESS | REQUIRES_MANUAL_INTERVENTION]
+        Classification: [TSP_APPLICABLE | CODE_CUSTOMIZATION | SUCCESS | REQUIRES_MANUAL_INTERVENTION]
         Reason: <one-line explanation>
         ```
 
         **Rules:**
         - The `[<item-id>]` header MUST match the exact ID from each feedback item
-        - Classification must be exactly one of: TSP_APPLICABLE, SUCCESS, or REQUIRES_MANUAL_INTERVENTION
+        - Classification must be exactly one of: TSP_APPLICABLE, CODE_CUSTOMIZATION, SUCCESS, or REQUIRES_MANUAL_INTERVENTION
         - Reason must clearly state which condition triggered the classification
         - For TSP_APPLICABLE: mention which TypeSpec decorator(s) can address the feedback
-        - For REQUIRES_MANUAL_INTERVENTION: explain why no TypeSpec decorator applies
+        - For CODE_CUSTOMIZATION: explain what code changes are needed with specific repair instructions in the Reason
+        - For REQUIRES_MANUAL_INTERVENTION: explain why no TypeSpec decorator or automated patch applies
         - For SUCCESS: explain why the feedback is non-actionable or already resolved
         - Do NOT include Next Action or step-by-step guidance (that is handled separately)
         - Output ALL items — every single item ID must appear in your response

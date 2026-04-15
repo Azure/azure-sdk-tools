@@ -149,7 +149,15 @@ export class DifferenceDetector {
     });
   }
 
-  private convertHighLevelClientToModularClientCode(code: string): string {
+  // Returns the target name for a baseline operations-group interface.
+  // Appends 'Operations' only if the resulting name exists in the target Modular interface set;
+  // otherwise keeps the original name unchanged.
+  private getOperationsGroupName(name: string, targetInterfaceNames: Set<string>): string {
+    const nameWithOps = name + 'Operations';
+    return targetInterfaceNames.has(nameWithOps) ? nameWithOps : name;
+  }
+
+  private convertHighLevelClientToModularClientCode(code: string, targetInterfaceNames: Set<string>): string {
     const project = new Project({
       compilerOptions: {
         jsx: JsxEmit.Preserve,
@@ -163,34 +171,45 @@ export class DifferenceDetector {
       },
     });
     const sourceFile = project.createSourceFile('index.ts', code, { overwrite: true });
+    const outputFile = project.createSourceFile('output.ts', '', { overwrite: true });
 
-    sourceFile
-      .getInterfaces()
-      .filter((i) => {
-        const hasMethod = i.getMembers().filter((m) => isPropertyMethod(m.getSymbolOrThrow())).length > 0;
-        if (!hasMethod) return false;
-        const isEveryMemberMethod = i.getMembers().every((m) => isPropertyMethod(m.getSymbolOrThrow()));
-        return isEveryMemberMethod;
-      })
-      .forEach((g) => {
-        const methodSigs = g.getMembers().filter((m) => m.getKind() === SyntaxKind.MethodSignature);
-        g.rename(g.getName() + 'Operations');
-        for (const method of methodSigs) {
+    for (const statement of sourceFile.getStatements()) {
+      if (statement.getKind() !== SyntaxKind.InterfaceDeclaration) {
+        outputFile.addStatements(statement.getText().trim());
+        continue;
+      }
+
+      const iface = statement.asKindOrThrow(SyntaxKind.InterfaceDeclaration);
+      const members = iface.getMembers();
+      const isOperationsGroup =
+        members.length > 0 && members.every((m) => isPropertyMethod(m.getSymbolOrThrow()));
+
+      if (!isOperationsGroup) {
+        outputFile.addStatements(statement.getText().trim());
+        continue;
+      }
+
+      // Build converted interface in the new file to avoid rename conflicts in the original
+      const newName = this.getOperationsGroupName(iface.getName(), targetInterfaceNames);
+      const properties = members
+        .filter((m) => m.getKind() === SyntaxKind.MethodSignature)
+        .map((method) => {
           const methodSig = method.asKindOrThrow(SyntaxKind.MethodSignature);
-          const name = methodSig.getName();
           const params = methodSig.getParameters().map((p) => ({
             name: p.getName(),
             type: p.getTypeNodeOrThrow().getText(),
           }));
           const returnType = methodSig.getReturnTypeNodeOrThrow().getText();
-          methodSig.remove();
-          g.addProperty({
-            name,
+          return {
+            name: methodSig.getName(),
             type: `(${params.map((p) => `${p.name}: ${p.type}`).join(', ')}) => ${returnType}`,
-          });
-        }
-      });
-    return sourceFile.getFullText();
+          };
+        });
+
+      outputFile.addInterface({ name: newName, isExported: iface.isExported(), properties });
+    }
+
+    return outputFile.getFullText();
   }
 
   private async preprocess() {
@@ -204,8 +223,10 @@ export class DifferenceDetector {
       return;
     }
 
+    const targetInterfaceNames = new Set(this.context!.current.getInterfaces().map((i) => i.getName()));
     const highLevelCodeInModularWay = this.convertHighLevelClientToModularClientCode(
-      this.context?.baseline.getFullText()!
+      this.context?.baseline.getFullText()!,
+      targetInterfaceNames
     );
     const generateApiView = (code: string) => {
       return `

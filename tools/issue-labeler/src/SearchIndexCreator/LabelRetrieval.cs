@@ -104,17 +104,26 @@ namespace SearchIndexCreator
                 });
         }
 
-        private static IEnumerable<object> McpLabelFilter(IReadOnlyList<Label> labels)
+        private IEnumerable<object> McpLabelFilter(IReadOnlyList<Label> labels)
         {
+            var primaryPrefixes = (_config["McpPrimaryLabelPrefixes"]
+                ?? throw new InvalidOperationException("Configuration key 'McpPrimaryLabelPrefixes' is required but was not found."))
+                .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var secondaryPrefixes = (_config["McpSecondaryLabelPrefixes"]
+                ?? throw new InvalidOperationException("Configuration key 'McpSecondaryLabelPrefixes' is required but was not found."))
+                .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+            var allPrefixes = primaryPrefixes.Concat(secondaryPrefixes).ToArray();
+
             return labels
                 .Where(label =>
-                    label.Name.StartsWith("server-", StringComparison.OrdinalIgnoreCase) ||
-                    label.Name.StartsWith("tools-", StringComparison.OrdinalIgnoreCase) ||
-                    label.Name.Equals("remote-mcp", StringComparison.OrdinalIgnoreCase))
+                    allPrefixes.Any(prefix =>
+                        label.Name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))
                 .Select(label => new
                 {
                     Name = label.Name,
-                    Type = label.Name.StartsWith("server-", StringComparison.OrdinalIgnoreCase) ? "Server" : "Tool",
+                    Type = primaryPrefixes.Any(prefix =>
+                        label.Name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) ? "Server" : "Tool",
                 })
                 .OrderBy(label => label.Name);
         }

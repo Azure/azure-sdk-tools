@@ -17,7 +17,7 @@ internal abstract class UnixMachineInformationProvider(ILogger<UnixMachineInform
     /// <exception cref="InvalidOperationException">If there is no folder to persist data in.</exception>
     public abstract string GetStoragePath();
 
-    public override async Task<string?> GetOrCreateDeviceId()
+    public override async Task<string?> GetOrCreateDeviceId(CancellationToken ct)
     {
         string cachePath;
         try
@@ -30,14 +30,14 @@ internal abstract class UnixMachineInformationProvider(ILogger<UnixMachineInform
             return null;
         }
 
-        var existingValue = await ReadValueFromDisk(cachePath, DeviceId);
+        var existingValue = await ReadValueFromDisk(cachePath, DeviceId, ct);
         if (existingValue != null)
         {
             return existingValue;
         }
 
         var deviceId = GenerateDeviceId();
-        if (await WriteValueToDisk(cachePath, DeviceId, deviceId))
+        if (await WriteValueToDisk(cachePath, DeviceId, deviceId, ct))
         {
             return deviceId;
         }
@@ -56,7 +56,7 @@ internal abstract class UnixMachineInformationProvider(ILogger<UnixMachineInform
     /// <param name="value">The value to write in the file.</param>
     /// <returns>True, if the value was successfully written.</returns>
     /// 
-    public async virtual Task<bool> WriteValueToDisk(string directoryPath, string fileName, string? value)
+    public async virtual Task<bool> WriteValueToDisk(string directoryPath, string fileName, string? value, CancellationToken ct)
     {
         // If the value is not set, return immediately.
         if (string.IsNullOrWhiteSpace(value))
@@ -80,7 +80,7 @@ internal abstract class UnixMachineInformationProvider(ILogger<UnixMachineInform
         {
             File.Delete(fullPath);
 
-            await File.WriteAllTextAsync(fullPath, value, Encoding.UTF8);
+            await File.WriteAllTextAsync(fullPath, value, Encoding.UTF8, ct);
             return true;
         }
         catch (Exception ex)
@@ -94,7 +94,7 @@ internal abstract class UnixMachineInformationProvider(ILogger<UnixMachineInform
     /// Try and read the value from disk. If <paramref name="value"/> is null or empty, this method will return false.
     /// </summary>
     /// <returns>Returns a value if the value could be written on disk. Otherwise, false.</returns>
-    public async virtual Task<string?> ReadValueFromDisk(string directoryPath, string fileName)
+    public async virtual Task<string?> ReadValueFromDisk(string directoryPath, string fileName, CancellationToken ct)
     {
         var path = Path.Combine(directoryPath, fileName);
 
@@ -105,7 +105,7 @@ internal abstract class UnixMachineInformationProvider(ILogger<UnixMachineInform
 
         try
         {
-            var contents = await File.ReadAllTextAsync(path, Encoding.UTF8);
+            var contents = await File.ReadAllTextAsync(path, Encoding.UTF8, ct);
             return contents;
         }
         catch (Exception ex)

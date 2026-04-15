@@ -11,6 +11,12 @@ param tenantConfigBlobName string
 @secure()
 param ragScope string
 
+// GitHub App
+param githubAppId string
+param githubAppKeyVaultName string
+param githubAppKeyName string
+param githubAppInstallOwner string
+
 // Resources
 @maxLength(20)
 @minLength(5)
@@ -166,6 +172,23 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
         {
           name: 'AZURE_CLIENT_ID'
           value: identity.properties.clientId
+        }
+        // GitHub App
+        {
+          name: 'GITHUB_APP_ID'
+          value: githubAppId
+        }
+        {
+          name: 'GITHUB_APP_KEY_VAULT_NAME'
+          value: githubAppKeyVaultName
+        }
+        {
+          name: 'GITHUB_APP_KEY_NAME'
+          value: githubAppKeyName
+        }
+        {
+          name: 'GITHUB_APP_INSTALL_OWNER'
+          value: githubAppInstallOwner
         }
       ]
       ftpsState: 'FtpsOnly'

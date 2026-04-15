@@ -1,4 +1,6 @@
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
@@ -16,6 +18,7 @@ internal class PythonLanguageSpecificChecksTests
     private Mock<IGitHelper> _gitHelperMock = null!;
     private Mock<ICommonValidationHelpers> _commonValidationHelpersMock = null!;
     private PythonLanguageService _languageService = null!;
+    private string _packagePath = null!;
 
     [SetUp]
     public void SetUp()
@@ -31,6 +34,7 @@ internal class PythonLanguageSpecificChecksTests
             _processHelperMock.Object,
             _pythonHelperMock.Object,
             _npxHelperMock.Object,
+            Mock.Of<ICopilotAgentRunner>(),
             _gitHelperMock.Object,
             NullLogger<PythonLanguageService>.Instance,
             _commonValidationHelpersMock.Object,
@@ -38,6 +42,8 @@ internal class PythonLanguageSpecificChecksTests
             Mock.Of<IFileHelper>(),
             Mock.Of<ISpecGenSdkConfigHelper>(),
             Mock.Of<IChangelogHelper>());
+
+        _packagePath = "/tmp/python-package";
     }
 
     #region HasCustomizations Tests
@@ -165,6 +171,7 @@ internal class PythonLanguageSpecificChecksTests
             Assert.That(result.ExitCode, Is.EqualTo(1));
             Assert.That(result.CheckStatusDetails, Does.Contain("Dependency conflicts detected"));
             Assert.That(result.ResponseError, Does.Contain("Dependency analysis found issues with minimum dependency versions"));
+            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty);
         });
 
         // Verify Python helper was called
@@ -192,6 +199,8 @@ internal class PythonLanguageSpecificChecksTests
             Assert.That(result.ExitCode, Is.EqualTo(1));
             Assert.That(result.ResponseError, Does.Contain("Error running dependency analysis: Python execution failed"));
             Assert.That(result.CheckStatusDetails, Is.Empty);
+            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty);
+            Assert.That(result.NextSteps, Has.Some.Contains("azsdk_verify_setup"));
         });
 
         // Verify Python command was attempted
@@ -222,6 +231,489 @@ internal class PythonLanguageSpecificChecksTests
         _pythonHelperMock.Verify(x => x.Run(It.Is<PythonOptions>(p => 
             p.Timeout == TimeSpan.FromMinutes(5)), 
             It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region LintCode Tests
+
+    [Test]
+    public async Task LintCode_ReturnsSuccess_WhenAllLintingToolsPass()
+    {
+        // Arrange
+        using var tempDir = TempDirectory.Create("python-lint-success-test");
+        var packagePath = tempDir.DirectoryPath;
+        File.WriteAllText(Path.Combine(packagePath, "pyproject.toml"), "");
+
+        var successResult = new ProcessResult
+        {
+            ExitCode = 0,
+            OutputDetails = [(StdioLevel.StandardOutput, "No issues found")]
+        };
+        _pythonHelperMock.Setup(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(successResult);
+
+        // Act
+        var result = await _languageService.LintCode(packagePath, false, CancellationToken.None);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(0));
+            Assert.That(result.CheckStatusDetails, Does.Contain("All linting tools completed successfully"));
+            Assert.That(result.NextSteps, Is.Null.Or.Empty);
+        });
+    }
+
+    [Test]
+    public async Task LintCode_ReturnsNextStepsWithPylintGuidance_WhenPylintFails()
+    {
+        // Arrange
+        using var tempDir = TempDirectory.Create("python-lint-pylint-fail-test");
+        var packagePath = tempDir.DirectoryPath;
+        File.WriteAllText(Path.Combine(packagePath, "pyproject.toml"), "");
+
+        _pythonHelperMock
+            .Setup(p => p.Run(It.Is<PythonOptions>(o => o.Args.Contains("pylint")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardOutput, "pylint errors")] });
+        _pythonHelperMock
+            .Setup(p => p.Run(It.Is<PythonOptions>(o => o.Args.Contains("mypy")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "Success")] });
+
+        // Act
+        var result = await _languageService.LintCode(packagePath, false, CancellationToken.None);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(1));
+            Assert.That(result.ResponseError, Does.Contain("pylint"));
+            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty);
+            Assert.That(result.NextSteps, Has.Some.Contains("pylint"));
+        });
+    }
+
+    [Test]
+    public async Task LintCode_ReturnsNextStepsWithMypyGuidance_WhenMypyFails()
+    {
+        // Arrange
+        using var tempDir = TempDirectory.Create("python-lint-mypy-fail-test");
+        var packagePath = tempDir.DirectoryPath;
+        File.WriteAllText(Path.Combine(packagePath, "pyproject.toml"), "");
+
+        _pythonHelperMock
+            .Setup(p => p.Run(It.Is<PythonOptions>(o => o.Args.Contains("pylint")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "Success")] });
+        _pythonHelperMock
+            .Setup(p => p.Run(It.Is<PythonOptions>(o => o.Args.Contains("mypy")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardOutput, "mypy errors")] });
+
+        // Act
+        var result = await _languageService.LintCode(packagePath, false, CancellationToken.None);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(1));
+            Assert.That(result.ResponseError, Does.Contain("mypy"));
+            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty);
+            Assert.That(result.NextSteps, Has.Some.Contains("mypy"));
+        });
+    }
+
+    [Test]
+    public async Task LintCode_ReturnsNextStepsWithInstallGuidance_WhenExceptionThrown()
+    {
+        // Arrange
+        using var tempDir = TempDirectory.Create("python-lint-exception-test");
+        var packagePath = tempDir.DirectoryPath;
+        File.WriteAllText(Path.Combine(packagePath, "pyproject.toml"), "");
+
+        _pythonHelperMock.Setup(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("azpysdk not found"));
+
+        // Act
+        var result = await _languageService.LintCode(packagePath, false, CancellationToken.None);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(1));
+            Assert.That(result.ResponseError, Does.Contain("Error running code linting"));
+            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty);
+            Assert.That(result.NextSteps, Has.Some.Contains("azsdk_verify_setup"));
+        });
+    }
+
+    #endregion
+
+    #region FormatCode Tests
+
+    [Test]
+    public async Task FormatCode_ReturnsSuccess_WhenFormattingSucceeds()
+    {
+        // Arrange
+        using var tempDir = TempDirectory.Create("python-format-success-test");
+        var packagePath = tempDir.DirectoryPath;
+
+        _pythonHelperMock.Setup(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "All done!")] });
+
+        // Act
+        var result = await _languageService.FormatCode(packagePath, false, CancellationToken.None);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(0));
+            Assert.That(result.CheckStatusDetails, Does.Contain("formatting completed"));
+            Assert.That(result.NextSteps, Is.Null.Or.Empty);
+        });
+    }
+
+    [Test]
+    public async Task FormatCode_ReturnsNextSteps_WhenFormattingFails()
+    {
+        // Arrange
+        using var tempDir = TempDirectory.Create("python-format-fail-test");
+        var packagePath = tempDir.DirectoryPath;
+
+        _pythonHelperMock.Setup(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardOutput, "error: cannot format file.py")] });
+
+        // Act
+        var result = await _languageService.FormatCode(packagePath, false, CancellationToken.None);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(1));
+            Assert.That(result.ResponseError, Does.Contain("failed to apply"));
+            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty);
+        });
+    }
+
+    [Test]
+    public async Task FormatCode_ReturnsNextStepsWithInstallGuidance_WhenExceptionThrown()
+    {
+        // Arrange
+        using var tempDir = TempDirectory.Create("python-format-exception-test");
+        var packagePath = tempDir.DirectoryPath;
+
+        _pythonHelperMock.Setup(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("black not found"));
+
+        // Act
+        var result = await _languageService.FormatCode(packagePath, false, CancellationToken.None);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(1));
+            Assert.That(result.ResponseError, Does.Contain("Error running code formatting"));
+            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty);
+            Assert.That(result.NextSteps, Has.Some.Contains("azsdk_verify_setup"));
+        });
+    }
+
+    #endregion
+
+    #region UpdateSnippets Tests
+
+    [Test]
+    public async Task UpdateSnippets_ReturnsNextStepsWithSnippetGuidance_WhenUpdateFails()
+    {
+        // Arrange
+        using var tempDir = TempDirectory.Create("python-snippets-update-fail-test");
+        var packagePath = tempDir.DirectoryPath;
+
+        _gitHelperMock.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(tempDir.DirectoryPath);
+
+        var scriptDir = Path.Combine(tempDir.DirectoryPath, "eng", "tools", "azure-sdk-tools", "ci_tools", "snippet_update");
+        Directory.CreateDirectory(scriptDir);
+        File.WriteAllText(Path.Combine(scriptDir, "python_snippet_updater.py"), "# placeholder");
+
+        // Python check succeeds
+        _pythonHelperMock.Setup(p => p.Run(
+                It.Is<PythonOptions>(o => o.Args.Contains("--version")),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "Python 3.11.0")] });
+
+        // Snippet script fails
+        _pythonHelperMock.Setup(p => p.Run(
+                It.Is<PythonOptions>(o => !o.Args.Contains("--version")),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardOutput, "Snippet mismatch found")] });
+
+        // Act
+        var result = await _languageService.UpdateSnippets(packagePath, false, CancellationToken.None);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(1));
+            Assert.That(result.ResponseError, Does.Contain("snippets"));
+            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty);
+            Assert.That(result.NextSteps, Has.Some.Contains("snippet"));
+        });
+    }
+
+    [Test]
+    public async Task UpdateSnippets_ReturnsNextStepsWithInstallGuidance_WhenExceptionThrown()
+    {
+        // Arrange
+        using var tempDir = TempDirectory.Create("python-snippets-exception-test");
+        var packagePath = tempDir.DirectoryPath;
+
+        _gitHelperMock.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Git not found"));
+
+        // Act
+        var result = await _languageService.UpdateSnippets(packagePath, false, CancellationToken.None);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(1));
+            Assert.That(result.ResponseError, Does.Contain("Error updating snippets"));
+            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty);
+            Assert.That(result.NextSteps, Has.Some.Contains("azsdk_verify_setup"));
+        });
+    }
+
+    #endregion
+
+    #region RunAllTests Tests
+
+    [Test]
+    [TestCase(TestMode.Record, true, false)]
+    [TestCase(TestMode.Live, true, true)]
+    [TestCase(TestMode.Playback, false, true)]
+    public async Task RunAllTests_SetsCorrectTestModeEnvironmentVariables(TestMode testMode, bool expectLive, bool expectSkipRecording)
+    {
+        var processResult = new ProcessResult { ExitCode = 0 };
+        processResult.AppendStdout("Tests passed!");
+
+        PythonOptions? capturedOptions = null;
+        _pythonHelperMock
+            .Setup(p => p.Run(It.Is<PythonOptions>(o => o.Args.Contains("tests")), It.IsAny<CancellationToken>()))
+            .Callback<PythonOptions, CancellationToken>((options, _) => capturedOptions = options)
+            .ReturnsAsync(processResult);
+
+        var result = await _languageService.RunAllTests(_packagePath, testMode, ct: CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(0));
+            Assert.That(capturedOptions, Is.Not.Null);
+            Assert.That(capturedOptions!.EnvironmentVariables, Is.Not.Null);
+
+            Assert.That(capturedOptions.EnvironmentVariables!["AZURE_TEST_RUN_LIVE"], Is.EqualTo(expectLive ? "true" : "false"));
+            Assert.That(capturedOptions.EnvironmentVariables!["AZURE_SKIP_LIVE_RECORDING"], Is.EqualTo(expectSkipRecording ? "true" : "false"));
+        });
+    }
+
+    [Test]
+    public async Task RunAllTests_PassesThroughLiveTestEnvironmentVariables()
+    {
+        var processResult = new ProcessResult { ExitCode = 0 };
+        processResult.AppendStdout("Tests passed!");
+
+        PythonOptions? capturedOptions = null;
+        _pythonHelperMock
+            .Setup(p => p.Run(It.Is<PythonOptions>(o => o.Args.Contains("tests")), It.IsAny<CancellationToken>()))
+            .Callback<PythonOptions, CancellationToken>((options, _) => capturedOptions = options)
+            .ReturnsAsync(processResult);
+
+        var envVars = new Dictionary<string, string>
+        {
+            ["AZURE_SUBSCRIPTION_ID"] = "sub-123",
+            ["AZURE_RESOURCE_GROUP"] = "rg-test",
+        };
+
+        var result = await _languageService.RunAllTests(_packagePath, TestMode.Live, envVars, ct: CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(0));
+            Assert.That(capturedOptions, Is.Not.Null);
+            Assert.That(capturedOptions!.EnvironmentVariables!["AZURE_SUBSCRIPTION_ID"], Is.EqualTo("sub-123"));
+            Assert.That(capturedOptions.EnvironmentVariables["AZURE_RESOURCE_GROUP"], Is.EqualTo("rg-test"));
+            Assert.That(capturedOptions.EnvironmentVariables["AZURE_TEST_RUN_LIVE"], Is.EqualTo("true"));
+        });
+    }
+
+    [Test]
+    public async Task RunAllTests_UsesDefaultTimeoutForPlayback()
+    {
+        var processResult = new ProcessResult { ExitCode = 0 };
+
+        PythonOptions? capturedOptions = null;
+        _pythonHelperMock
+            .Setup(p => p.Run(It.Is<PythonOptions>(o => o.Args.Contains("tests")), It.IsAny<CancellationToken>()))
+            .Callback<PythonOptions, CancellationToken>((options, _) => capturedOptions = options)
+            .ReturnsAsync(processResult);
+
+        await _languageService.RunAllTests(_packagePath, TestMode.Playback, ct: CancellationToken.None);
+
+        Assert.That(capturedOptions!.Timeout, Is.EqualTo(ProcessOptions.DEFAULT_PROCESS_TIMEOUT));
+    }
+
+    [Test]
+    [TestCase(TestMode.Record)]
+    [TestCase(TestMode.Live)]
+    public async Task RunAllTests_UsesLongerTimeoutForLiveAndRecordModes(TestMode testMode)
+    {
+        var processResult = new ProcessResult { ExitCode = 0 };
+
+        PythonOptions? capturedOptions = null;
+        _pythonHelperMock
+            .Setup(p => p.Run(It.Is<PythonOptions>(o => o.Args.Contains("tests")), It.IsAny<CancellationToken>()))
+            .Callback<PythonOptions, CancellationToken>((options, _) => capturedOptions = options)
+            .ReturnsAsync(processResult);
+
+        await _languageService.RunAllTests(_packagePath, testMode, ct: CancellationToken.None);
+
+        Assert.That(capturedOptions!.Timeout, Is.GreaterThan(ProcessOptions.DEFAULT_PROCESS_TIMEOUT));
+    }
+
+    [Test]
+    public async Task RunAllTests_PushesAssetsAfterSuccessfulRecordMode()
+    {
+        using var tempDir = TempDirectory.Create("python-asset-push-test");
+        File.WriteAllText(Path.Combine(tempDir.DirectoryPath, "assets.json"), "{}");
+
+        var testResult = new ProcessResult { ExitCode = 0 };
+        testResult.AppendStdout("Tests passed!");
+
+        var pushResult = new ProcessResult { ExitCode = 0 };
+        pushResult.AppendStdout("Assets pushed!");
+
+        // Setup gitHelper to return tempDir as the repo root
+        _gitHelperMock
+            .Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(tempDir.DirectoryPath);
+
+        // First call is test run (pytest tests), second call is asset push (manage_recordings.py)
+        var callCount = 0;
+        _pythonHelperMock
+            .Setup(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() => ++callCount == 1 ? testResult : pushResult);
+
+        var result = await _languageService.RunAllTests(tempDir.DirectoryPath, TestMode.Record, ct: CancellationToken.None);
+
+        Assert.That(result.ExitCode, Is.EqualTo(0));
+        // Verify both test run and asset push were called via pythonHelper
+        _pythonHelperMock.Verify(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+        // Verify asset push used manage_recordings.py with push verb
+        _pythonHelperMock.Verify(p => p.Run(
+            It.Is<PythonOptions>(o => o.Args.Contains("push") && o.Args.Any(a => a.Contains("manage_recordings.py"))),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task RunAllTests_DoesNotPushAssetsInPlaybackMode()
+    {
+        using var tempDir = TempDirectory.Create("python-no-push-playback-test");
+        File.WriteAllText(Path.Combine(tempDir.DirectoryPath, "assets.json"), "{}");
+
+        var processResult = new ProcessResult { ExitCode = 0 };
+        processResult.AppendStdout("Tests passed!");
+
+        _pythonHelperMock
+            .Setup(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(processResult);
+
+        await _languageService.RunAllTests(tempDir.DirectoryPath, TestMode.Playback, ct: CancellationToken.None);
+
+        // Only the test run should be called, not asset push
+        _pythonHelperMock.Verify(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task RunAllTests_DoesNotPushAssetsWhenTestsFail()
+    {
+        using var tempDir = TempDirectory.Create("python-no-push-fail-test");
+        File.WriteAllText(Path.Combine(tempDir.DirectoryPath, "assets.json"), "{}");
+
+        var processResult = new ProcessResult { ExitCode = 1 };
+        processResult.AppendStderr("Tests failed!");
+
+        _pythonHelperMock
+            .Setup(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(processResult);
+
+        var result = await _languageService.RunAllTests(tempDir.DirectoryPath, TestMode.Record, ct: CancellationToken.None);
+
+        Assert.That(result.ExitCode, Is.EqualTo(1));
+        // Only the test run should be called, not asset push
+        _pythonHelperMock.Verify(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task RunAllTests_DoesNotPushAssetsWhenNoAssetsJson()
+    {
+        var processResult = new ProcessResult { ExitCode = 0 };
+        processResult.AppendStdout("Tests passed!");
+
+        _pythonHelperMock
+            .Setup(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(processResult);
+
+        // _packagePath doesn't have an assets.json file
+        var result = await _languageService.RunAllTests(_packagePath, TestMode.Record, ct: CancellationToken.None);
+
+        Assert.That(result.ExitCode, Is.EqualTo(0));
+        // Only the test run should be called
+        _pythonHelperMock.Verify(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task RunAllTests_ModeEnvVarsCannotBeOverriddenByLiveTestEnvironment()
+    {
+        var processResult = new ProcessResult { ExitCode = 0 };
+        processResult.AppendStdout("Tests passed!");
+
+        PythonOptions? capturedOptions = null;
+        _pythonHelperMock
+            .Setup(p => p.Run(It.Is<PythonOptions>(o => o.Args.Contains("tests")), It.IsAny<CancellationToken>()))
+            .Callback<PythonOptions, CancellationToken>((options, _) => capturedOptions = options)
+            .ReturnsAsync(processResult);
+
+        // Attempt to override mode-critical env vars via liveTestEnvironment
+        var envVars = new Dictionary<string, string>
+        {
+            ["AZURE_TEST_RUN_LIVE"] = "false",
+            ["AZURE_SKIP_LIVE_RECORDING"] = "true",
+        };
+
+        await _languageService.RunAllTests(_packagePath, TestMode.Record, envVars, ct: CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            // Mode env vars should reflect Record mode, not the user-provided overrides
+            Assert.That(capturedOptions!.EnvironmentVariables!["AZURE_TEST_RUN_LIVE"], Is.EqualTo("true"));
+            Assert.That(capturedOptions.EnvironmentVariables["AZURE_SKIP_LIVE_RECORDING"], Is.EqualTo("false"));
+        });
+    }
+
+    [Test]
+    public async Task RunAllTests_DefaultMode_IsPlayback()
+    {
+        var processResult = new ProcessResult { ExitCode = 0 };
+
+        PythonOptions? capturedOptions = null;
+        _pythonHelperMock
+            .Setup(p => p.Run(It.Is<PythonOptions>(o => o.Args.Contains("tests")), It.IsAny<CancellationToken>()))
+            .Callback<PythonOptions, CancellationToken>((options, _) => capturedOptions = options)
+            .ReturnsAsync(processResult);
+
+        // Call without specifying testMode - should default to Playback
+        await _languageService.RunAllTests(_packagePath, ct: CancellationToken.None);
+
+        Assert.That(capturedOptions!.EnvironmentVariables!["AZURE_TEST_RUN_LIVE"], Is.EqualTo("false"));
+        Assert.That(capturedOptions.EnvironmentVariables["AZURE_SKIP_LIVE_RECORDING"], Is.EqualTo("true"));
     }
 
     #endregion

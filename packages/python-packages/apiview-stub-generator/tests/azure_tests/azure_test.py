@@ -4,9 +4,11 @@
 # license information.
 # --------------------------------------------------------------------------
 
+import itertools
 import os
 import tempfile
 import shutil
+import difflib
 import requests
 from subprocess import check_call
 from pytest import fail, mark
@@ -37,7 +39,16 @@ SDK_PARAMS = [
     ("azure-eventhub-checkpointstoreblob-aio", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblobaio", "src"),
     ("azure-eventhub-checkpointstoreblob-aio", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblobaio", "sdist"),
     ("azure-eventhub-checkpointstoreblob-aio", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblobaio", "whl"),
-    #("azure-synapse-artifacts", "0.20.0", "synapse", "azure.synapse.artifacts")
+    ("azure-identity", "1.25.3", "identity", "azure.identity", "whl"),
+    ("azure-identity", "1.25.3", "identity", "azure.identity", "src"),
+    ("azure-identity", "1.25.3", "identity", "azure.identity", "sdist"),
+    ("azure-storage-blob", "12.28.0", "storage", "azure.storage.blob", "whl"),
+    ("azure-storage-blob", "12.28.0", "storage", "azure.storage.blob", "src"),
+    ("azure-storage-blob", "12.28.0", "storage", "azure.storage.blob", "sdist"),
+    # Large package (700+ model classes) — validates perf fix for large packages.
+    ("azure-mgmt-compute", "37.2.0", "compute", "azure.mgmt.compute", "whl"),
+    ("azure-mgmt-compute", "37.2.0", "compute", "azure.mgmt.compute", "sdist"),
+    ("azure-mgmt-compute", "37.2.0", "compute", "azure.mgmt.compute", "src"),
 ]
 SDK_IDS = [f"{pkg_name}_{version}[{pkg_type}]" for pkg_name, version, _, _, pkg_type in SDK_PARAMS]
 
@@ -172,14 +183,26 @@ def _add_init_for_whl(pkg_path):
                 azure_dir = root
                 break
 
-        # Add __init__.py recursively up the directory tree inside azure if needed
+        # Add __init__.py recursively up the directory tree inside azure if needed.
+        # Use the single-line pkgutil namespace-package pattern so that:
+        #  1. astroid can still resolve sub-packages (e.g. azure.core) from the installed
+        #     site-packages, preventing spurious enum-must-inherit-case-insensitive-enum-meta
+        #     diagnostics caused by an opaque azure/ package.
+        #  2. The stub generator's _set_root_namespace() recognises this as a namespace
+        #     extension file (INIT_EXTENSION_SUBSTRING match) and skips it, allowing the
+        #     real package root (azure.mgmt.compute) to be detected correctly.
+        # NOTE: _normalize_namespace_inits in _pylint_parser.py checks for this marker to
+        # distinguish synthetically-added WHL stubs (which should be preserved) from
+        # organic sdist/src namespace __init__.py files (which should be emptied).
+        NAMESPACE_INIT = "# __apiview_whl_namespace_stub__\n__path__ = __import__('pkgutil').extend_path(__path__, __name__)\n"
+
         def add_init_recursively(folder):
             # Stop if __init__.py exists in this folder
             if os.path.exists(os.path.join(folder, '__init__.py')):
                 return
-            # Add __init__.py to this folder
+            # Add namespace-package __init__.py to this folder
             with open(os.path.join(folder, '__init__.py'), 'w') as f:
-                pass
+                f.write(NAMESPACE_INIT)
             # Check if this folder contains exactly one subfolder (and no files except __init__.py)
             entries = [e for e in os.listdir(folder) if e != '__init__.py']
             subfolders = [e for e in entries if os.path.isdir(os.path.join(folder, e))]
@@ -264,16 +287,37 @@ class TestApiViewAzure:
             old_tokens["ReviewLines"][0]["Tokens"][0]["Value"] = "Package is parsed using apiview-stub-generator(version:x.x.x), Python version: x.x.x"
             new_tokens["ReviewLines"][0]["Tokens"][0]["Value"] = "Package is parsed using apiview-stub-generator(version:x.x.x), Python version: x.x.x"
 
-            # Pretty-print both JSON objects for easier diff comparison on failure
-            old_json_str = json.dumps(old_tokens, indent=2, sort_keys=True)
-            new_json_str = json.dumps(new_tokens, indent=2, sort_keys=True)
-            
-            assert old_json_str == new_json_str, (
-                f"Generated token file does not match the provided token file.\n"
-                f"Expected file: {old_file}\n"
-                f"Generated file: {new_file}\n"
-                f"Differences will be shown in the assertion diff below."
-            )
+            # Compare dicts directly — avoids building huge serialized strings just for equality.
+            # Only serialize on failure, and limit output to avoid hanging on large packages.
+            if old_tokens != new_tokens:
+                # Find which top-level keys differ to produce a compact diff.
+                # Serializing the full 19 MB dict to a string is O(n) and then
+                # running difflib over millions of lines is O(n²) — avoid it.
+                MAX_DIFF_LINES = 200
+                diff_lines = []
+                all_keys = sorted(set(old_tokens) | set(new_tokens))
+                for key in all_keys:
+                    if key not in old_tokens:
+                        diff_lines.append(f"+++ key {key!r} missing in expected file\n")
+                    elif key not in new_tokens:
+                        diff_lines.append(f"--- key {key!r} missing in generated file\n")
+                    elif old_tokens[key] != new_tokens[key]:
+                        old_section = json.dumps({key: old_tokens[key]}, indent=2, sort_keys=True).splitlines(keepends=True)
+                        new_section = json.dumps({key: new_tokens[key]}, indent=2, sort_keys=True).splitlines(keepends=True)
+                        section_diff = list(itertools.islice(
+                            difflib.unified_diff(old_section, new_section, fromfile=f"expected/{key}", tofile=f"generated/{key}", n=3),
+                            MAX_DIFF_LINES - len(diff_lines) + 1
+                        ))
+                        diff_lines.extend(section_diff)
+                    if len(diff_lines) >= MAX_DIFF_LINES:
+                        diff_lines.append("\n... (more diff lines truncated)")
+                        break
+                fail(
+                    f"Generated token file does not match the provided token file.\n"
+                    f"Expected file: {old_file}\n"
+                    f"Generated file: {new_file}\n\n"
+                    f"{''.join(diff_lines)}"
+                )
 
     def _write_tokens(self, stub_gen):
         apiview = stub_gen.generate_tokens()
@@ -292,8 +336,6 @@ class TestApiViewAzure:
 
     @mark.parametrize("pkg_name,version,directory,pkg_namespace,pkg_type", SDK_PARAMS, ids=SDK_IDS)
     def test_sdks(self, pkg_name, version, directory, pkg_namespace, pkg_type):
-        print("Pip freeze before test")
-        check_call(["pip", "freeze"])
         pkg_path, mapping_file = self._download_packages(directory, pkg_name, version, pkg_type)
         temp_path = tempfile.gettempdir()
         # Explicitly pass through mapping file path

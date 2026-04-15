@@ -1,9 +1,11 @@
 # Release
 
-## Unreleased - 0.32.0
+## 2026-04-03 - 0.32.0
 
 - Remove `autorest`, `autorest/core`, and `autorest/openapi-to-typespec` from tsp-client dependencies.
 - Use `npx` to call openapi-to-typespec conversion tool.
+- Changed log level from error->debug when tsp-location.yaml isn't found during `init` with the `--update-if-exists` flag.
+- Updated supported node versions to `">=20.19.0"`.
 
 ## 2025-11-24 - 0.31.0
 

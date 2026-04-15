@@ -8,6 +8,7 @@
 
 from ._version import VERSION
 from ._client import (
+    AdvancedTypeHintClient,
     DefaultValuesClient,
     DocstringTypeHintClient,
     PylintCheckerViolationsClient,

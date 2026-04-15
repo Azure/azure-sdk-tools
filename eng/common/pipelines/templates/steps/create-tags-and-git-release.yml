@@ -7,6 +7,8 @@ parameters:
   WorkingDirectory: ''
   ScriptDirectory: eng/common/scripts
   AuthToken: $(GH_TOKEN)
+  NpmConfigUserConfig: ''
+  NpmConfigRegistry: ''
 
 steps:
 - task: PowerShell@2
@@ -24,3 +26,8 @@ steps:
   timeoutInMinutes: 5
   env:
     GH_TOKEN: ${{ parameters.AuthToken }}
+    SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+    ${{ if ne(parameters.NpmConfigUserConfig, '') }}:
+      NPM_CONFIG_USERCONFIG: ${{ parameters.NpmConfigUserConfig }}
+    ${{ if ne(parameters.NpmConfigRegistry, '') }}:
+      NPM_CONFIG_REGISTRY: ${{ parameters.NpmConfigRegistry }}

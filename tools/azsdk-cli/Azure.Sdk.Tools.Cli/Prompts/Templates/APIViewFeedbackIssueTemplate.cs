@@ -128,6 +128,13 @@ public class APIViewFeedbackIssueTemplate : BasePromptTemplate
         return """
             - Apply TypeSpec client customizations to resolve as many comments as possible
             - MUST consult: https://github.com/Azure/azure-rest-api-specs/blob/main/eng/common/knowledge/customizing-client-tsp.md
+            - ONLY commit the client.tsp file(s). TypeSpec compilation regenerates output files (e.g. Swagger/OpenAPI JSON files in data-plane/) as a side effect - do NOT commit these generated files. Revert them before creating the pull request.
+            - Update ONLY the client.tsp file(s) for the spec directory referenced by this APIView. Do not modify other spec directories, even if feedback mentions related namespaces.
+              
+              Example of feedback that should only update `specification/ai/Azure.AI.Projects/client.tsp` and NOT `specification/ai/Azure.AI.Agents/client.tsp` even though they mention Agents-related elements:
+              - Package Name: azure-ai-projects
+                - LineNo 227: `azure.ai.projects.aio.operations.AgentsOperations.delete:async.returntype` | Return 'None' on delete.
+                - LineNo 10120: `azure.ai.projects.telemetry.trace_function` | Does this need to be a public function?
             """;
     }
 
@@ -136,25 +143,24 @@ public class APIViewFeedbackIssueTemplate : BasePromptTemplate
         return $"""
             - If a Commit SHA is provided, use it as the base for your changes
             - Include the APIView URL in PR description
-            - Update ONLY the client.tsp file(s) for the spec directory referenced by this APIView. Do not modify other spec directories, even if feedback mentions related namespaces.
-              
-              Example of feedback that should only update `specification/ai/Azure.AI.Projects/client.tsp`:
-              - Package Name: azure-ai-projects
-                - LineNo 227: `azure.ai.projects.aio.operations.AgentsOperations.delete:async.returntype` | Return 'None' on delete.
-                - LineNo 10120: `azure.ai.projects.telemetry.trace_function` | Does this need to be a public function?
-              
-              These should NOT also update `specification/ai/Azure.AI.Agents/client.tsp` even though they mention Agents-related elements.
             
-            - CRITICAL: You MUST update the PR description with a summary table. The PR description MUST include a markdown table in EXACTLY this format (do not change column names):
-              | LineNo | Addressed? | Summary |
-              |--------|------------|---------|
-              | <lineNo> | ✅ | Brief description of changes (or "No action needed" if feedback says keep as-is) |
-              | <lineNo> | ⚠️ | Reason not addressed (unclear info, TypeSpec limitation, needs SDK code customization) |
-              
-              Include one row for EVERY LineNo from the feedback table above. This table is required even if the PR is long.
+            - CRITICAL: You MUST update the PR description with two summary tables. Both tables are required even if the PR is long.
+              Use the exact column headers shown below for both tables. Do NOT rename, reword, reorder, or omit any column headers.
+
+              **Table 1 – Addressed (Yes)**: Include one row for every feedback item (`LineNo` + `Element`) where feedback was addressed or required no action. Use exactly this header:
+              | LineNo | Element | What Changed |
+              |--------|---------|--------------|
+              | <lineNo> | <element> | Brief description of the TypeSpec change made (or "No action needed" if feedback says keep as-is) |
+
+              **Table 2 – Not Addressed (No)**: Include one row for every feedback item (`LineNo` + `Element`) where feedback could NOT be addressed. Use exactly this header:
+              | LineNo | Element | Reason Not Addressed |
+              |--------|---------|----------------------|
+              | <lineNo> | <element> | Reason (e.g. unclear info, TypeSpec limitation, needs SDK code customization) |
+
+              Every feedback item MUST appear in at least one table. Items typically appear in only one table, but may appear in both if a single feedback item contains multiple points (e.g. rename + type change) where some were addressed and others were not.
 
             - Note: If a review comment CANNOT be addressed, explanation comments MUST NOT be added to the `client.tsp` file.
-              ONLY explain in the "Summary" column why it could not be addressed.
+              ONLY explain in the "Reason Not Addressed" column why it could not be addressed.
             - Include SDK code customization guidance: {GetCodeCustomizationDocUrl(_language)}
 
             ---

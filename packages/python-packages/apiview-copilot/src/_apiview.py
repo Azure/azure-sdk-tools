@@ -21,9 +21,7 @@ from src._utils import get_language_pretty_name, to_iso8601
 FEEDBACK_REASON_MESSAGES = {
     "FactuallyIncorrect": "This comment is factually incorrect.",
     "RenderingBug": "This is a rendering bug in the associated language parser. Please open an issue to correct.",
-    "AcceptedRenderingChoice": (
-        "This is how things are deliberately rendered in APIView. It is not a valid comment."
-    ),
+    "AcceptedRenderingChoice": ("This is how things are deliberately rendered in APIView. It is not a valid comment."),
     "AcceptedSDKPattern": "This is a pattern we accept and encourage in our SDKs. DO NOT suggest otherwise.",
     "OutdatedGuideline": (
         "This is a valid comment for the guideline listed, but this guideline itself is out-of-date."
@@ -178,7 +176,7 @@ class ApiViewClient:
             endpoint = endpoint[1:]
 
         apiview_endpoints = {
-            "production": "https://apiview.org",
+            "production": "https://apiview.dev",
             "staging": "https://apiviewstagingtest.com",
         }
         endpoint_root = apiview_endpoints.get(self.environment)
@@ -233,21 +231,24 @@ def get_active_reviews(
     *,
     environment: str = "production",
     omit_languages: Optional[list[str]] = None,
-) -> list[ActiveReviewMetadata]:
+    select_fields: Optional[list[str]] = None,
+) -> tuple[list[ActiveReviewMetadata], list[dict]]:
     """
     Lists distinct active APIView review IDs in the specified environment during the specified period.
-    The definition of "active" is any review that has comments created during the time period.
+    The definition of "active" is any review that has non-Diagnostic comments created during the time period.
     For each active review, also returns the active revisions (those with comments in the period)
     along with their package versions.
 
     Returns:
-        list[ActiveReviewMetadata] - list of metadata objects considered "active" during the query window,
-                                     including active revisions with package versions.
+        tuple of:
+            list[ActiveReviewMetadata] - metadata objects considered "active" during the query window.
+            list[dict] - raw comments (dicts) fetched from the Comments container.
     """
     metadata: list[ActiveReviewMetadata] = []
 
-    # Get comments in the date range
-    comments = get_comments_in_date_range(start_date, end_date, environment=environment)
+    # Get comments in the date range, excluding Diagnostic comments
+    raw_comments = get_comments_in_date_range(start_date, end_date, environment=environment, select_fields=select_fields)
+    comments = [c for c in raw_comments if c.get("CommentSource") != "Diagnostic"]
 
     # Extract unique review IDs and revision IDs from comments
     review_ids = set()
@@ -268,7 +269,7 @@ def get_active_reviews(
                 review_to_revisions[review_id].add(revision_id)
 
     if not review_ids:
-        return metadata
+        return metadata, raw_comments
 
     # Query Reviews container for review metadata
     reviews_container = get_apiview_cosmos_client(container_name="Reviews", environment=environment)
@@ -387,7 +388,7 @@ def get_active_reviews(
         omit_lower = {l.lower() for l in omit_languages}
         metadata = [r for r in metadata if r.language.lower() not in omit_lower]
 
-    return metadata
+    return metadata, raw_comments
 
 
 def get_active_review_ids(start_date: str, end_date: str, environment: str = "production") -> list:
@@ -413,17 +414,27 @@ def get_active_review_ids(start_date: str, end_date: str, environment: str = "pr
     return list(review_ids)
 
 
-def get_comments_in_date_range(start_date: str, end_date: str, environment: str = "production") -> list:
+def get_comments_in_date_range(
+    start_date: str, end_date: str, environment: str = "production", select_fields: Optional[list[str]] = None
+) -> list:
     """
     Retrieves all comments created within the specified date range in the given environment.
     Applies ISO8601 midnight/end-of-day formatting to start_date and end_date.
+
+    Args:
+        select_fields: Optional list of field names to select. If None, uses the default full field list.
     """
     start_iso = to_iso8601(start_date)
     end_iso = to_iso8601(end_date, end_of_day=True)
 
+    if select_fields:
+        select_clause = ", ".join(f"c.{f}" for f in select_fields)
+    else:
+        select_clause = ", ".join(APIVIEW_COMMENT_SELECT_FIELDS)
+
     comments_client = get_apiview_cosmos_client(container_name="Comments", environment=environment)
     result = comments_client.query_items(
-        query=f"SELECT {', '.join(APIVIEW_COMMENT_SELECT_FIELDS)} FROM c WHERE c.CreatedOn >= @start_date AND c.CreatedOn <= @end_date",
+        query=f"SELECT {select_clause} FROM c WHERE c.CreatedOn >= @start_date AND c.CreatedOn <= @end_date",
         parameters=[
             {"name": "@start_date", "value": start_iso},
             {"name": "@end_date", "value": end_iso},
@@ -464,7 +475,7 @@ def get_approvers(*, language: str = None, environment: str = "production") -> s
 
 
 def get_ai_comment_feedback(
-    language: str,
+    language: Optional[str],
     start_date: str,
     end_date: str,
     exclude: Optional[list[str]] = None,
@@ -482,7 +493,7 @@ def get_ai_comment_feedback(
     will not be returned.
 
     Args:
-        language: Language to filter by (e.g., 'python', 'java')
+        language: Language to filter by (e.g., 'python', 'java'). If None, returns all languages.
         start_date: Start date in YYYY-MM-DD format (filters by feedback submission time)
         end_date: End date in YYYY-MM-DD format (filters by feedback submission time)
         exclude: List of feedback types to exclude. Can include 'good', 'bad', 'delete'.
@@ -549,8 +560,8 @@ def get_ai_comment_feedback(
         )
         review_lang_map = {r["id"]: get_language_pretty_name(r.get("Language", "")) for r in review_results}
 
-    # Normalize target language
-    target_language = get_language_pretty_name(language).lower()
+    # Normalize target language (None means all languages)
+    target_language = get_language_pretty_name(language).lower() if language else None
 
     # Filter comments by language and feedback presence
     result = []
@@ -558,8 +569,11 @@ def get_ai_comment_feedback(
         # Check language
         review_id = comment.get("ReviewId", "")
         comment_language = review_lang_map.get(review_id, "").lower()
-        if comment_language != target_language:
+        if target_language and comment_language != target_language:
             continue
+
+        # Add language to each result for identification
+        comment["Language"] = review_lang_map.get(review_id, "")
 
         # Determine feedback type based on Upvotes, Downvotes, and IsDeleted
         upvotes = comment.get("Upvotes") or []
@@ -618,7 +632,7 @@ def resolve_package(
 
         Returns None if no matching package is found.
     """
-    from src._utils import run_prompty
+    from src._prompt_runner import run_prompt
 
     try:
         reviews_container = get_apiview_cosmos_client(container_name="Reviews", environment=environment)
@@ -658,7 +672,7 @@ def resolve_package(
 
             # Use LLM to find the best match
             try:
-                llm_result = run_prompty(
+                llm_result = run_prompt(
                     folder="other",
                     filename="resolve_package.prompty",
                     inputs={

@@ -27,6 +27,18 @@ def _load_classify_prompt() -> str:
     return (_PROMPTS_DIR / "intention_classify.md").read_text(encoding="utf-8").strip()
 
 
+def _cfg_or_default(key: str, default: str) -> str:
+    try:
+        value = cfg(key, default)
+        return value if value is not None else default
+    except RuntimeError:
+        logger.debug(
+            "App config is not initialized; using default for %s",
+            key,
+        )
+        return default
+
+
 class IntentionService:
     """Classifies whether the bot should auto-reply to a Teams channel message."""
 
@@ -41,6 +53,18 @@ class IntentionService:
         classification for ambiguous cases.
         """
         history: list[ConversationMessageItem] = []
+
+        if req.message.user_id and req.conversation_id and req.conversation_type:
+            if await self._conversation_service.has_expert_reply(
+                req.conversation_id,
+                req.conversation_type,
+                req.message.user_id,
+            ):
+                return IntentionResponse(
+                    should_respond=False,
+                    reason="expert_already_replied",
+                )
+
         if req.conversation_id and req.conversation_type:
             history = await self._conversation_service.get_messages_by_conversation(
                 req.conversation_id,
@@ -60,7 +84,8 @@ class IntentionService:
         self, history: Sequence[ConversationMessageItem], user_id: str
     ) -> bool:
         return any(
-            item.sender_role == Role.User and item.sender_id != user_id for item in history
+            item.sender_role == Role.User and item.sender_id != user_id
+            for item in history
         )
 
     async def _classify_with_llm(
@@ -73,13 +98,16 @@ class IntentionService:
         When conversation context is available, includes the full thread
         so the model can make a better decision.
         """
-        project_client = get_project_client()
-        openai_client = project_client.get_openai_client()
-
-        model = cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL", "gpt-4o-mini")
-        reasoning_effort = cfg("AI_FOUNDRY_INTENTION_REASONING_EFFORT", "low")
-
         try:
+            project_client = get_project_client()
+            openai_client = project_client.get_openai_client()
+
+            model = _cfg_or_default("AI_FOUNDRY_AGENT_COMPLETION_MODEL", "gpt-4o-mini")
+            reasoning_effort = _cfg_or_default(
+                "AI_FOUNDRY_INTENTION_REASONING_EFFORT",
+                "low",
+            )
+
             messages: list[dict] = [
                 Message(role=Role.System, content=self._classify_prompt).model_dump(
                     exclude_none=True

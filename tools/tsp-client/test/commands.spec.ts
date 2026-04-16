@@ -863,7 +863,7 @@ describe.sequential("Verify commands", () => {
     } catch (error) {
       assert.fail(`Failed to generate lock file with npm args. Error: ${error}`);
     } finally {
-      rm(joinPaths(repoRoot, "eng", "emitter-package-lock.json"), { force: true });
+      await rm(joinPaths(repoRoot, "eng", "emitter-package-lock.json"), { force: true });
     }
   });
 

@@ -141,6 +141,12 @@ FakeTypedDict = TypedDict(
     {'name': str, 'age': int, 'union': Union[bool, FakeObject, PetEnumPy3MetaclassAlt]}
 )
 
+FakeTypedDictOptional = TypedDict(
+    'FakeTypedDictOptional',
+    {'name': str, 'age': int},
+    total=False
+)
+
 
 class PublicPrivateClass:
 

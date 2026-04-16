@@ -1,5 +1,8 @@
 # Release History
 
+## Version 0.3.29 (Unreleased)
+Removed `key "name"` formatting for TypedDict keys (both required and optional) so all keys render as `name: type`.
+
 ## Version 0.3.28 (2026-04-14)
 Dropped 3.7/3.8/3.9 support and added 3.11/3.12/3.13/3.14.
 Added `crossLanguageVersion` to the `CrossLanguageMetadata` model.

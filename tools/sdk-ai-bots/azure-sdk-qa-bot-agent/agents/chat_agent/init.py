@@ -105,9 +105,6 @@ async def main() -> None:
     # Init Tools
     knowledge_tools = KnowledgeTools()
     web_tools = WebTools()
-    ado_mcp_tool = await create_ado_mcp_tool()
-    azsdk_mcp_tool = await create_azsdk_mcp_tool()
-    github_mcp_tool = await create_github_mcp_tool(agent_client)
     web_search_tool = agent_client.get_web_search_tool(
         search_context_size="medium",
     )
@@ -115,13 +112,30 @@ async def main() -> None:
     tools = [
         knowledge_tools.search_knowledge_base,
         web_tools.web_fetch,
-        ado_mcp_tool,
-        azsdk_mcp_tool,
-        github_mcp_tool,
         web_search_tool,
     ]
-    # Filter out tools that failed to initialize (returned None).
-    tools = [t for t in tools if t is not None]
+
+    # Append external MCP tools only when they initialise successfully.
+    try:
+        tools.append(await create_ado_mcp_tool())
+    except Exception:
+        logger.exception(
+            "%s failed to initialize, skipped", create_ado_mcp_tool.__name__
+        )
+
+    try:
+        tools.append(await create_azsdk_mcp_tool())
+    except Exception:
+        logger.exception(
+            "%s failed to initialize, skipped", create_azsdk_mcp_tool.__name__
+        )
+
+    try:
+        tools.append(await create_github_mcp_tool(agent_client))
+    except Exception:
+        logger.exception(
+            "%s failed to initialize, skipped", create_github_mcp_tool.__name__
+        )
 
     # Init Skills
     skills = create_tenant_skills()

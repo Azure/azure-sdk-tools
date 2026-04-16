@@ -65,10 +65,11 @@ async def _validate_mcp_endpoint(token: str) -> bool:
     Returns ``False`` when the endpoint is unreachable, returns auth
     errors, or rejects the request with a transport error.
     """
+    # Use the exact Content-Type that Foundry's internal MCP client sends.
     headers = {
         "Authorization": f"Bearer {token}",
         "Accept": "application/json, text/event-stream",
-        "Content-Type": "application/json",
+        "Content-Type": "application/json; charset=utf-8",
     }
     # Minimal MCP "initialize" request — the response content doesn't
     # matter; we only care whether the endpoint accepts the request.
@@ -302,14 +303,9 @@ async def create_github_mcp_tool(client: BaseChatClient):
         raise RuntimeError("Failed to initialize GitHub MCP token for GitHub MCP auth.")
 
     # Probe the remote endpoint before registering the tool.  If the
-    # endpoint is broken (e.g. 415 due to a protocol change), skip the
-    # tool so the agent can still start without GitHub capabilities.
+    # endpoint is broken
     if not await _validate_mcp_endpoint(token):
-        logger.warning(
-            "GitHub MCP endpoint is unavailable — the agent will start "
-            "without GitHub capabilities."
-        )
-        return None
+        raise RuntimeError("GitHub MCP endpoint is unavailable (health check failed).")
 
     headers = {**_GITHUB_MCP_HEADERS, "Authorization": f"Bearer {token}"}
     mcp_tool = client.get_mcp_tool(

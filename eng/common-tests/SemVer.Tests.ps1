@@ -391,3 +391,78 @@ Describe "Post-release version increment - Python convention" {
         $ver.ToString() | Should -Be "0.2.0"
     }
 }
+
+Describe "Post-release version bump - IncrementAndSetToPostRelease" {
+    It "Should bump GA post-release '1.0.0.post1' to '1.0.0.post2'" {
+        $ver = [AzureEngSemanticVersion]::ParsePythonVersionString("1.0.0.post1")
+        $ver.IncrementAndSetToPostRelease()
+        $ver.ToString() | Should -Be "1.0.0.post2"
+    }
+
+    It "Should bump beta post-release '1.0.0b2.post1' to '1.0.0b2.post2'" {
+        $ver = [AzureEngSemanticVersion]::ParsePythonVersionString("1.0.0b2.post1")
+        $ver.IncrementAndSetToPostRelease()
+        $ver.ToString() | Should -Be "1.0.0b2.post2"
+    }
+
+    It "Should set GA version '1.0.0' to '1.0.0.post1'" {
+        $ver = [AzureEngSemanticVersion]::ParsePythonVersionString("1.0.0")
+        $ver.IncrementAndSetToPostRelease()
+        $ver.ToString() | Should -Be "1.0.0.post1"
+    }
+
+    It "Should set beta version '1.0.0b2' to '1.0.0b2.post1'" {
+        $ver = [AzureEngSemanticVersion]::ParsePythonVersionString("1.0.0b2")
+        $ver.IncrementAndSetToPostRelease()
+        $ver.ToString() | Should -Be "1.0.0b2.post1"
+    }
+
+    It "Should bump '1.0.0.post2' to '1.0.0.post3'" {
+        $ver = [AzureEngSemanticVersion]::ParsePythonVersionString("1.0.0.post2")
+        $ver.IncrementAndSetToPostRelease()
+        $ver.ToString() | Should -Be "1.0.0.post3"
+    }
+}
+
+Describe "SetPrerelease - clears post-release state" {
+    It "Should set prerelease on GA version '1.0.0'" {
+        $ver = [AzureEngSemanticVersion]::ParseVersionString("1.0.0")
+        $ver.SetPrerelease("beta", 12345)
+        $ver.ToString() | Should -Be "1.0.0-beta.12345"
+        $ver.IsPrerelease | Should -Be $true
+        $ver.IsPostRelease | Should -Be $false
+    }
+
+    It "Should set prerelease on Python GA version '1.0.0'" {
+        $ver = [AzureEngSemanticVersion]::ParsePythonVersionString("1.0.0")
+        $ver.SetPrerelease("b", 12345)
+        $ver.ToString() | Should -Be "1.0.0b12345"
+        $ver.IsPrerelease | Should -Be $true
+        $ver.IsPostRelease | Should -Be $false
+    }
+
+    It "Should clear post-release state when setting prerelease on '1.0.0.post1'" {
+        $ver = [AzureEngSemanticVersion]::ParsePythonVersionString("1.0.0.post1")
+        $ver.SetPrerelease("b", 12345)
+        $ver.ToString() | Should -Be "1.0.0b12345"
+        $ver.IsPrerelease | Should -Be $true
+        $ver.IsPostRelease | Should -Be $false
+        $ver.PostReleaseNumber | Should -Be 0
+    }
+
+    It "Should clear post-release state when setting prerelease on beta post-release '1.0.0b2.post1'" {
+        $ver = [AzureEngSemanticVersion]::ParsePythonVersionString("1.0.0b2.post1")
+        $ver.SetPrerelease("b", 12345)
+        $ver.ToString() | Should -Be "1.0.0b12345"
+        $ver.IsPrerelease | Should -Be $true
+        $ver.IsPostRelease | Should -Be $false
+    }
+
+    It "Should replace existing prerelease with new values" {
+        $ver = [AzureEngSemanticVersion]::ParseVersionString("1.0.0-beta.1")
+        $ver.SetPrerelease("alpha", 99)
+        $ver.ToString() | Should -Be "1.0.0-alpha.99"
+        $ver.PrereleaseLabel | Should -Be "alpha"
+        $ver.PrereleaseNumber | Should -Be 99
+    }
+}

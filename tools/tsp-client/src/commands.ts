@@ -749,7 +749,7 @@ export async function generateLockFileCommandCore(
   }
   args.push(...npmArgs);
   if (npmArgs.length > 0) {
-    Logger.info(`Passing additional npm args: ${npmArgs.join(" ")}`);
+    Logger.info(`Passing ${npmArgs.length} additional npm arg(s).`);
   }
   const tempRoot = await createTempDirectory(outputDir);
   await cp(emitterPackageJsonPath, joinPaths(tempRoot, "package.json"));

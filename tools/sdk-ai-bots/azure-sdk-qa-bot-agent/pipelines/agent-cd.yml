@@ -33,6 +33,8 @@ variables:
     - group: 'Azure SDK QA Bot Prod Variables'
   - name: workingDirectory
     value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-agent'
+  - name: PythonIndexUrl
+    value: 'https://pkgs.dev.azure.com/azure-sdk/internal/_packaging/azure-sdk-for-python-pr/pypi/simple/'
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -52,6 +54,11 @@ extends:
               - checkout: self
                 displayName: 'Checkout repository'
 
+              - task: PipAuthenticate@1
+                displayName: 'Authenticate pip to Azure Artifacts'
+                inputs:
+                  artifactFeeds: 'internal/azure-sdk-for-python-pr'
+
               - task: AzureCLI@2
                 displayName: 'Build, Push & Deploy Agent'
                 inputs:
@@ -62,7 +69,15 @@ extends:
                   inlineScript: |
                     set -euo pipefail
 
-                    pip install -r requirements.txt
+                    python -m pip install --upgrade pip
+                    python -m pip install keyring artifacts-keyring --retries 5 --timeout 60
+
+                    # Use the internal feed as primary; fall back to PyPI for
+                    # packages (especially pre-release) not in the internal feed.
+                    python -m pip config set global.index-url "$PIP_INDEX_URL"
+                    python -m pip config set global.extra-index-url "https://pypi.org/simple/"
+
+                    pip install -r requirements.txt --retries 5 --timeout 60
 
                     python scripts/deploy_hosted_agent.py \
                       ${{ parameters.agentName }} \

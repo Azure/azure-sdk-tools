@@ -1,14 +1,10 @@
 # Release History
 
-## 0.6.9 (Unreleased)
+## 0.6.9 (2026-04-16)
 
 ### Features Added
 
-### Breaking Changes
-
-### Bugs Fixed
-
-### Other Changes
+- Added MCP tool for updating the CODEOWNERS cache
 
 ## 0.6.8 (2026-04-15)
 

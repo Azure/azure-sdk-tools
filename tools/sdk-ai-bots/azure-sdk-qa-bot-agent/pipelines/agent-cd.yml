@@ -26,11 +26,11 @@ variables:
   - template: /eng/pipelines/templates/variables/globals.yml
   - template: /eng/pipelines/templates/variables/image.yml
   - ${{ if eq(parameters.environment, 'dev') }}:
-    - group: 'Azure SDK QA Bot Agent Dev Variables'
+    - group: 'Azure SDK QA Bot Dev Variables'
   - ${{ if eq(parameters.environment, 'preview') }}:
-    - group: 'Azure SDK QA Bot Agent Preview Variables'
+    - group: 'Azure SDK QA Bot Preview Variables'
   - ${{ if eq(parameters.environment, 'prod') }}:
-    - group: 'Azure SDK QA Bot Agent Prod Variables'
+    - group: 'Azure SDK QA Bot Prod Variables'
   - name: workingDirectory
     value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-agent'
 

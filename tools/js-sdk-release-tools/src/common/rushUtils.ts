@@ -12,7 +12,7 @@ import { customizeCodes, formatSdk, lintFix, updateSnippets } from './devToolUti
 import { getModularSDKType } from '../utils/generateInputUtils.js';
 
 
-async function packPackage(packageDirectory: string, packageName: string, sdkRepoRoot: string) {
+async function packPackage(packageDirectory: string, packageName: string) {
     const cwd = join(packageDirectory);
     await runCommand('pnpm', ['run', '--filter', `${packageName}...`, 'pack'], { ...runCommandOptions, cwd }, false);
     logger.info(`Pack '${packageName}' successfully.`);

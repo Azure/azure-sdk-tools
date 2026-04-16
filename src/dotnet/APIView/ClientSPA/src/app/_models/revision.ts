@@ -58,7 +58,7 @@ export class APIRevision {
     this.releasedOn = '',
     this.isDeleted = false,
     this.approvers = []
-    this.apiVersionId = ''
+    this.apiVersionId = null
   }
 }
 

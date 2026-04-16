@@ -41,9 +41,9 @@ The question must be classified into one of these categories:
   - how to implement x-ms-pageable in typespec?
   - how to implement allOf in typespec?
 
-- **TypeSpec Customization**:  Questions about how to customize typespec for client SDKs
+- **TypeSpec Customization**:  Questions about how to customize TypeSpec for client SDKs
   - how to rename model AuthorizeCopyRequest to AuthorizeCopyRequestOptions for SDKs
-  - how to rename model AuthorizeCopyRequest to AuthorizeCopyRequestOptions for java SDK
+  - how to rename model AuthorizeCopyRequest to AuthorizeCopyRequestOptions for Java SDK
   - how to change operation parameter order from (context.Context, string, string, string, *ClientListReplicaSKUsOptions) to (string, string, string, *ClientListReplicaSKUsOptions, context.Context) for SDKs
   - how to change property age type from int to string for SDKs
 

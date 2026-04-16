@@ -7,6 +7,7 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.TypeSpec;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using GitHub.Copilot.SDK;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 using static Azure.Sdk.Tools.Cli.Tests.TestHelpers.TestCategories;
@@ -60,6 +61,18 @@ internal class TypeSpecCustomizationServiceTests
     }
 
     /// <summary>
+    /// Creates a mock ILoggerFactory that returns TestLogger instances.
+    /// </summary>
+    private static ILoggerFactory CreateMockLoggerFactory()
+    {
+        var mockFactory = new Mock<ILoggerFactory>();
+        mockFactory
+            .Setup(x => x.CreateLogger(It.IsAny<string>()))
+            .Returns((string categoryName) => new TestLogger<object>() as ILogger);
+        return mockFactory.Object;
+    }
+
+    /// <summary>
     /// Live integration test that makes actual LLM calls through the GitHub Copilot SDK.
     /// Requires GitHub Copilot CLI to be installed and authenticated.
     /// </summary>
@@ -76,6 +89,7 @@ internal class TypeSpecCustomizationServiceTests
         var azureSdkKnowledgeBaseService = Mock.Of<IAzureSdkKnowledgeBaseService>();
         var gitHelper = CreateRealGitHelper();
         var typeSpecHelper = new TypeSpecHelper(gitHelper);
+        var loggerFactory = CreateMockLoggerFactory();
 
         // Create real CopilotClient - this will use GitHub credentials
         var copilotClient = new CopilotClient(new CopilotClientOptions
@@ -96,7 +110,8 @@ internal class TypeSpecCustomizationServiceTests
             tokenUsageHelper,
             typeSpecHelper,
             azureSdkKnowledgeBaseService,
-            gitHelper);
+            gitHelper,
+            loggerFactory);
 
         // A simple customization request
         var customizationRequest = "Add a friendly name 'Contoso Employee' to the Employee model";
@@ -137,6 +152,7 @@ internal class TypeSpecCustomizationServiceTests
         var typeSpecHelper = new TypeSpecHelper(Mock.Of<IGitHelper>());
         var gitHelper = Mock.Of<IGitHelper>();
         var azureSdkKnowledgeBaseService = Mock.Of<IAzureSdkKnowledgeBaseService>();
+        var loggerFactory = CreateMockLoggerFactory();
 
         var service = new TypeSpecCustomizationService(
             logger,
@@ -145,7 +161,8 @@ internal class TypeSpecCustomizationServiceTests
             tokenUsageHelper,
             typeSpecHelper,
             azureSdkKnowledgeBaseService,
-            gitHelper);
+            gitHelper,
+            loggerFactory);
 
         var ex = Assert.ThrowsAsync<ArgumentException>(async () =>
             await service.ApplyCustomizationAsync(
@@ -164,7 +181,8 @@ internal class TypeSpecCustomizationServiceTests
         var tokenUsageHelper = new TokenUsageHelper(Mock.Of<IRawOutputHelper>());
         var gitHelper = CreateRealGitHelper();
         var typeSpecHelper = new TypeSpecHelper(gitHelper);
-        var azureSdkKnowledgeBaseService = Mock.Of<IAzureSdkKnowledgeBaseService>();    
+        var azureSdkKnowledgeBaseService = Mock.Of<IAzureSdkKnowledgeBaseService>();
+        var loggerFactory = CreateMockLoggerFactory();
 
         var service = new TypeSpecCustomizationService(
             logger,
@@ -173,7 +191,8 @@ internal class TypeSpecCustomizationServiceTests
             tokenUsageHelper,
             typeSpecHelper,
             azureSdkKnowledgeBaseService,
-            gitHelper);
+            gitHelper,
+            loggerFactory);
 
         var ex = Assert.ThrowsAsync<FileNotFoundException>(async () =>
             await service.ApplyCustomizationAsync(

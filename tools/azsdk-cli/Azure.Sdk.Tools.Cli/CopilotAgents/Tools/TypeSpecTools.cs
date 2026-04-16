@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using System.ComponentModel;
 using System.IO.Enumeration;
 using System.Reflection;
 using System.Text.Json;
@@ -88,18 +89,29 @@ public static class TypeSpecTools
 
 
     public static AIFunction CreateTypeSpecAuthoringTool(
+        TypeSpecAuthoringTool toolInstance,
         string workingDirectory,
         INpxHelper npxHelper,
         string entryPoint = "./client.tsp",
         TimeSpan? timeout = null)
     {
-        JsonSerializerOptions? serializerOptions = null;
+        ArgumentNullException.ThrowIfNull(toolInstance);
+
         timeout ??= TimeSpan.FromMinutes(2);
         var toolType = typeof(TypeSpecAuthoringTool);
         var toolMethods = toolType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance)
                                     .Where(m => m.GetCustomAttribute<McpServerToolAttribute>() is not null);
         var toolMethod = toolMethods.First(m => m.Name == nameof(TypeSpecAuthoringTool.GenerateTypeSpecAuthoringPlan));
-        return AIFunctionFactory.Create(toolMethod, toolMethod.Name, toolMethod.GetCustomAttribute<DescriptionAttribute>()?.Description ?? "TypeSpec authoring tool");
+        var mcpToolAttr = toolMethod.GetCustomAttribute<McpServerToolAttribute>();
+        var toolName = mcpToolAttr?.Name ?? toolMethod.Name;
+        Console.WriteLine($"Creating TypeSpec Authoring Tool with method: {toolMethod.Name}, tool name: {toolName}");
+        var description = toolMethod.GetCustomAttribute<DescriptionAttribute>()?.Description ?? "TypeSpec authoring tool";
+
+        return AIFunctionFactory.Create(
+            toolMethod,
+            toolInstance,  // Pass the target instance
+            toolName,
+            description);
     }
 
     /// <summary>

@@ -7,6 +7,7 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion;
 using Azure.Sdk.Tools.Cli.Prompts.Templates;
+using Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 using Microsoft.Extensions.AI;
 
 namespace Azure.Sdk.Tools.Cli.Services.TypeSpec;
@@ -41,10 +42,10 @@ public class TypeSpecCustomizationService : ITypeSpecCustomizationService
     private readonly ILogger<TypeSpecCustomizationService> logger;
     private readonly ICopilotAgentRunner copilotAgentRunner;
     private readonly INpxHelper npxHelper;
-    private readonly TokenUsageHelper tokenUsageHelper;
     private readonly ITypeSpecHelper typeSpecHelper;
     private readonly IAzureSdkKnowledgeBaseService azureSdkKnowledgeBaseService;
     private readonly IGitHelper gitHelper;
+    private readonly ILoggerFactory loggerFactory;
 
     public TypeSpecCustomizationService(
         ILogger<TypeSpecCustomizationService> logger,
@@ -53,7 +54,8 @@ public class TypeSpecCustomizationService : ITypeSpecCustomizationService
         TokenUsageHelper tokenUsageHelper,
         ITypeSpecHelper typeSpecHelper,
         IAzureSdkKnowledgeBaseService azureSdkKnowledgeBaseService,
-        IGitHelper gitHelper)
+        IGitHelper gitHelper,
+        ILoggerFactory loggerFactory)
     {
         this.logger = logger;
         this.copilotAgentRunner = copilotAgentRunner;
@@ -62,6 +64,7 @@ public class TypeSpecCustomizationService : ITypeSpecCustomizationService
         this.typeSpecHelper = typeSpecHelper;
         this.azureSdkKnowledgeBaseService = azureSdkKnowledgeBaseService;
         this.gitHelper = gitHelper;
+        this.loggerFactory = loggerFactory;
     }
 
     /// <inheritdoc />
@@ -124,12 +127,21 @@ public class TypeSpecCustomizationService : ITypeSpecCustomizationService
             WithAgenticSearch = false, // For authoring, disable agentic search
         };
 
-        var response = await azureSdkKnowledgeBaseService.SendCompletionRequestAsync(completionRequest, ct);
+        //var response = await azureSdkKnowledgeBaseService.SendCompletionRequestAsync(completionRequest, ct);
 
-        instructions = "apply the solution:" + response.Answer;
-        logger.LogInformation("Received response from Azure SDK Knowledge Base service. Answer: {Answer}",
-           response.Answer);
+        //instructions = "apply the solution:" + response.Answer;
+        //logger.LogInformation("Received response from Azure SDK Knowledge Base service. Answer: {Answer}",
+        //   response.Answer);
+        instructions = $"""
+            Please follow the steps:
+            step 1: invoke `azure-sdk-mcp:azsdk_typespec_generate_authoring_plan` with:
 
+            | Parameter                 | Value                                                                                                                                                                       |
+            | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+            | `request`                 |  {customizationRequest} (verbatim)|
+            | `typeSpecProjectRootPath` | {typespecProjectPath}|
+            step 2: apply the solution return from step 1
+            """;
         // Create the tools using shared tool factories
         var tools = CreateTools(typespecProjectPath);
 
@@ -157,11 +169,19 @@ public class TypeSpecCustomizationService : ITypeSpecCustomizationService
     /// </summary>
     private List<AIFunction> CreateTools(string typespecProjectPath)
     {
+        // Create an instance of TypeSpecAuthoringTool with required dependencies
+        var authoringToolLogger = loggerFactory.CreateLogger<Tools.TypeSpec.TypeSpecAuthoringTool>();
+        var typeSpecAuthoringToolInstance = new Tools.TypeSpec.TypeSpecAuthoringTool(
+            azureSdkKnowledgeBaseService,
+            authoringToolLogger,
+            typeSpecHelper);
+
         return
         [
             FileTools.CreateReadFileTool(typespecProjectPath, description: "Read the contents of a file from the TypeSpec project directory"),
             FileTools.CreateWriteFileTool(typespecProjectPath, "Write content to a file in the TypeSpec project directory"),
-            TypeSpecTools.CreateCompileTypeSpecTool(typespecProjectPath, npxHelper)
+            TypeSpecTools.CreateCompileTypeSpecTool(typespecProjectPath, npxHelper),
+            TypeSpecTools.CreateTypeSpecAuthoringTool(typeSpecAuthoringToolInstance, typespecProjectPath, npxHelper)
         ];
     }
 

@@ -28,7 +28,7 @@ variables:
   - name: pythonVersion
     value: '3.12'
   - name: PythonIndexUrl
-    value: 'https://pkgs.dev.azure.com/azure-sdk/internal/_packaging/azure-sdk-for-python-pr/pypi/simple/'
+    value: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/'
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -56,7 +56,7 @@ extends:
               - task: PipAuthenticate@1
                 displayName: 'Authenticate pip to Azure Artifacts'
                 inputs:
-                  artifactFeeds: 'internal/azure-sdk-for-python-pr'
+                  artifactFeeds: 'public/azure-sdk-for-python'
 
               - bash: |
                   set -euo pipefail

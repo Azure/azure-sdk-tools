@@ -11,7 +11,8 @@ openpyxl==3.1.5
 python-dotenv>=1.2.2
 pyyaml>=6.0.3
 httpx[http2]>=0.27.0
-agent-framework==1.0.0rc3
+agent-framework-core==1.0.0rc3
+agent-framework-azure-ai==1.0.0rc3
 # Backend server
 fastapi
 uvicorn[standard]

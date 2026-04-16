@@ -52,6 +52,11 @@ from utils.memory_context_provider import MemoryContextProvider
 
 logger = logging.getLogger(__name__)
 
+# -- Agent configuration constants ----------------------------------------
+MAX_TOOL_CALL_ITERATIONS = 5
+MAX_TOOL_CALLS_PER_TURN = 10
+COMPACT_THRESHOLD = 100000
+
 
 def _load_instructions(file_path: Path) -> str:
     """Load agent instructions from the instructions markdown file."""
@@ -79,7 +84,9 @@ async def main() -> None:
 
     agent_client = get_agent_client()
     # Limit tool-call loop iterations to prevent infinite loops.
-    agent_client.function_invocation_configuration["max_iterations"] = 5
+    agent_client.function_invocation_configuration["max_iterations"] = (
+        MAX_TOOL_CALL_ITERATIONS
+    )
     agent_dir = Path(__file__).parent
     instructions = _load_instructions(agent_dir / "instruction.md")
     with open(agent_dir / "agent.yaml", encoding="utf-8") as f:
@@ -113,6 +120,8 @@ async def main() -> None:
         github_mcp_tool,
         web_search_tool,
     ]
+    # Filter out tools that failed to initialize (returned None).
+    tools = [t for t in tools if t is not None]
 
     # Init Skills
     skills = create_tenant_skills()
@@ -129,8 +138,10 @@ async def main() -> None:
         default_options={
             "reasoning": ReasoningOptions(effort=reasoning_effort),
             "truncation": "auto",
-            "max_tool_calls": 10,
-            "context_management": [{"type": "compaction", "compact_threshold": 100000}],
+            "max_tool_calls": MAX_TOOL_CALLS_PER_TURN,
+            "context_management": [
+                {"type": "compaction", "compact_threshold": COMPACT_THRESHOLD}
+            ],
             "include": ["web_search_call.action.sources"],
         },
     )

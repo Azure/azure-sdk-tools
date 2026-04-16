@@ -36,6 +36,9 @@ from models.knowledge import KnowledgeChunk
 
 logger = logging.getLogger(__name__)
 
+_KB_MAX_OUTPUT_SIZE = 20000
+_HIERARCHY_EXPANSION_TOP = 50
+
 # Chunks below this rerank score are considered low-relevance and dropped.
 _RERANK_SCORE_LOW_RELEVANCE_THRESHOLD = 2.0
 
@@ -98,7 +101,7 @@ class SearchClient:
             include_activity=True,
             output_mode="extractiveData",
             knowledge_source_params=kb_params,
-            max_output_size=20000,
+            max_output_size=_KB_MAX_OUTPUT_SIZE,
         )
 
         result = await self._kb_client.retrieve(
@@ -237,7 +240,7 @@ class SearchClient:
         sibling_results = await self._search_client.search(
             search_text="*",
             filter=hierarchy_filter,
-            top=50,
+            top=_HIERARCHY_EXPANSION_TOP,
             order_by=["ordinal_position asc"],
             select=[
                 "chunk_id",

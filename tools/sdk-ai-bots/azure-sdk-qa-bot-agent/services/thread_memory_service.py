@@ -25,6 +25,8 @@ from config.app_config import get as cfg
 
 logger = logging.getLogger(__name__)
 
+_EPISODE_EXTRACTION_TEMPERATURE = 0.2
+
 _EPISODE_PROMPT_PATH = (
     Path(__file__).resolve().parent.parent / "prompts" / "episode_extraction.md"
 )
@@ -148,7 +150,7 @@ class ThreadMemoryService:
                     {"role": "user", "content": formatted_thread},
                 ],
                 response_format={"type": "json_object"},
-                temperature=0.2,
+                temperature=_EPISODE_EXTRACTION_TEMPERATURE,
             )
         except Exception:
             logger.warning("Episode extraction LLM call failed", exc_info=True)

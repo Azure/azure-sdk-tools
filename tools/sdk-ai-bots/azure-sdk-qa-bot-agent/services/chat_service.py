@@ -45,6 +45,10 @@ from config.tenant_config import TenantID
 
 logger = logging.getLogger(__name__)
 
+# -- Polling constants for empty-response retry loop ----------------------
+POLL_MAX_RETRIES = 5
+POLL_RETRY_DELAY_SECS = 3.0
+
 COMPACT_THRESHOLD = 100000
 """Token count at which conversation history is compacted."""
 
@@ -163,8 +167,8 @@ class ChatService:
     async def _poll_response_text(
         openai_client: AsyncOpenAI,
         response: OpenAIResponse,
-        max_retries: int = 5,
-        retry_delay: float = 3.0,
+        max_retries: int = POLL_MAX_RETRIES,
+        retry_delay: float = POLL_RETRY_DELAY_SECS,
     ) -> OpenAIResponse:
         """Poll ``responses.retrieve()`` until output_text appears."""
         for attempt in range(1, max_retries + 1):

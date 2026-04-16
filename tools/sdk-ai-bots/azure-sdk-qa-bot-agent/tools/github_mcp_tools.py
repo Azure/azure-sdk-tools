@@ -40,32 +40,73 @@ _GITHUB_MCP_HEADERS = {
     "X-MCP-Toolsets": "repos,issues,actions,pull_requests",
     "X-MCP-Readonly": "true",
 }
+# HTTP timeout for MCP endpoint validation and GitHub API calls.
+_MCP_VALIDATION_TIMEOUT_SECS = 10.0
+_GITHUB_API_TIMEOUT_SECS = 10.0
+# JWT timing: clock-skew buffer and expiration (seconds).
+_JWT_CLOCK_SKEW_SECS = 10
+_JWT_EXPIRY_SECS = 600
+# Fallback token lifetime when GitHub doesn't return expires_at.
+_DEFAULT_TOKEN_LIFETIME_HOURS = 1
+# Background token refresh interval (seconds).
+_DEFAULT_REFRESH_INTERVAL_SECS = 30
 
 # Keep strong references to background tasks so they are not garbage collected.
 _background_refresh_tasks: list[asyncio.Task] = []
 
 
-async def _validate_mcp_token(token: str) -> bool:
-    """Best-effort validation that a token is accepted by GitHub MCP.
+async def _validate_mcp_endpoint(token: str) -> bool:
+    """Validate that the remote GitHub MCP endpoint is reachable.
 
-    Returns True when the endpoint does not reject the token with auth errors.
+    Sends a POST request that mimics what the Foundry runtime does when
+    it enumerates MCP tools. This catches protocol-level failures
+    (e.g. 415 UnsupportedMediaType) that a simple GET would miss.
+
+    Returns ``False`` when the endpoint is unreachable, returns auth
+    errors, or rejects the request with a transport error.
     """
     headers = {
         "Authorization": f"Bearer {token}",
-        "Accept": "application/json",
+        "Accept": "application/json, text/event-stream",
+        "Content-Type": "application/json",
+    }
+    # Minimal MCP "initialize" request — the response content doesn't
+    # matter; we only care whether the endpoint accepts the request.
+    body = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "initialize",
+        "params": {
+            "protocolVersion": "2025-03-26",
+            "capabilities": {},
+            "clientInfo": {"name": "health-check", "version": "0.1.0"},
+        },
     }
     try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            resp = await client.get(_GITHUB_MCP_URL, headers=headers)
+        async with httpx.AsyncClient(timeout=_MCP_VALIDATION_TIMEOUT_SECS) as client:
+            resp = await client.post(_GITHUB_MCP_URL, headers=headers, json=body)
         if resp.status_code in (401, 403):
             logger.error(
                 "GitHub MCP auth validation failed (status=%s)",
                 resp.status_code,
             )
             return False
+        if resp.status_code == 415:
+            logger.error(
+                "GitHub MCP endpoint returned 415 UnsupportedMediaType — "
+                "the remote server likely has a protocol incompatibility. "
+                "GitHub MCP tool will be disabled until the endpoint is fixed."
+            )
+            return False
+        if resp.status_code >= 500:
+            logger.error(
+                "GitHub MCP endpoint returned server error (status=%s)",
+                resp.status_code,
+            )
+            return False
         return True
     except Exception as ex:
-        logger.warning("GitHub MCP auth validation probe failed: %s", ex)
+        logger.warning("GitHub MCP endpoint health check failed: %s", ex)
         return False
 
 
@@ -97,7 +138,13 @@ async def _create_app_jwt(vault_url: str, key_name: str, app_id: str) -> str:
     header = _b64url(json.dumps({"alg": "RS256", "typ": "JWT"}).encode())
     now = int(_time.time())
     payload = _b64url(
-        json.dumps({"iat": now - 10, "exp": now + 600, "iss": app_id}).encode()
+        json.dumps(
+            {
+                "iat": now - _JWT_CLOCK_SKEW_SECS,
+                "exp": now + _JWT_EXPIRY_SECS,
+                "iss": app_id,
+            }
+        ).encode()
     )
     unsigned = f"{header}.{payload}"
     digest = hashlib.sha256(unsigned.encode()).digest()
@@ -116,7 +163,7 @@ async def _get_installation_token(jwt: str, owner: str) -> tuple[str, datetime]:
         "Accept": "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
     }
-    async with httpx.AsyncClient(timeout=10.0) as client:
+    async with httpx.AsyncClient(timeout=_GITHUB_API_TIMEOUT_SECS) as client:
         resp = await client.get(f"{_GITHUB_API}/app/installations", headers=headers)
         resp.raise_for_status()
         installations = resp.json()
@@ -141,7 +188,7 @@ async def _get_installation_token(jwt: str, owner: str) -> tuple[str, datetime]:
         except (KeyError, ValueError):
             # Fallback: assume 1 hour (default GitHub installation token lifetime).
             expires_at = datetime.now(timezone.utc).replace(microsecond=0) + timedelta(
-                hours=1
+                hours=_DEFAULT_TOKEN_LIFETIME_HOURS
             )
         return token, expires_at
 
@@ -160,7 +207,7 @@ async def _get_github_app_token() -> tuple[str, datetime]:
 
     jwt = await _create_app_jwt(vault_url, key_name, app_id)
     token, expires_at = await _get_installation_token(jwt, owner)
-    if not await _validate_mcp_token(token):
+    if not await _validate_mcp_endpoint(token):
         raise RuntimeError(
             "GitHub App installation token rejected by GitHub MCP "
             f"(owner={owner}). Check GITHUB_APP_* settings and installation owner."
@@ -188,7 +235,7 @@ def _start_background_token_refresh(
     *,
     mcp_tool,
     token_expires_at: datetime,
-    interval_seconds: int = 30,
+    interval_seconds: int = _DEFAULT_REFRESH_INTERVAL_SECS,
 ) -> None:
     """Start proactive background refresh for a GitHub App MCP tool."""
     lock = asyncio.Lock()
@@ -253,6 +300,16 @@ async def create_github_mcp_tool(client: BaseChatClient):
     token, expires_at = await _get_github_token()
     if not token:
         raise RuntimeError("Failed to initialize GitHub MCP token for GitHub MCP auth.")
+
+    # Probe the remote endpoint before registering the tool.  If the
+    # endpoint is broken (e.g. 415 due to a protocol change), skip the
+    # tool so the agent can still start without GitHub capabilities.
+    if not await _validate_mcp_endpoint(token):
+        logger.warning(
+            "GitHub MCP endpoint is unavailable — the agent will start "
+            "without GitHub capabilities."
+        )
+        return None
 
     headers = {**_GITHUB_MCP_HEADERS, "Authorization": f"Bearer {token}"}
     mcp_tool = client.get_mcp_tool(

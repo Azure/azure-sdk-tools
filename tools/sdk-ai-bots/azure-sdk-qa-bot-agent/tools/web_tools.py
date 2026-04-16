@@ -23,6 +23,8 @@ logger = logging.getLogger(__name__)
 _DEFAULT_TIMEOUT_SECONDS = 8
 _DEFAULT_MAX_CHARS = 6000
 _MAX_ALLOWED_CHARS = 20000
+_MAX_HEADINGS = 50
+_MIN_ALLOWED_CHARS = 1000
 
 
 class _HtmlOutlineParser(HTMLParser):
@@ -175,7 +177,7 @@ async def _fetch_async(url: str, max_chars: int) -> FetchWebpageResult:
         parser = _HtmlOutlineParser()
         parser.feed(text)
         title = parser.title
-        headings = parser.headings[:50]
+        headings = parser.headings[:_MAX_HEADINGS]
 
         # Extract visible text only, stripping tags and noise
         extractor = _HtmlTextExtractor()
@@ -222,5 +224,7 @@ class WebTools:
         if not _is_public_url(normalized_url):
             raise ValueError("Only public http/https URLs are allowed.")
 
-        bounded_max_chars = max(1000, min(int(max_chars), _MAX_ALLOWED_CHARS))
+        bounded_max_chars = max(
+            _MIN_ALLOWED_CHARS, min(int(max_chars), _MAX_ALLOWED_CHARS)
+        )
         return await _fetch_async(normalized_url, bounded_max_chars)

@@ -22,6 +22,8 @@ from azure.identity.aio import (
 
 logger = logging.getLogger(__name__)
 
+_IMAGE_DOWNLOAD_TIMEOUT_SECS = 30.0
+
 _BOTFRAMEWORK_SCOPE = "https://api.botframework.com/.default"
 _ALLOWED_HOSTNAME = "smba.trafficmanager.net"
 
@@ -70,7 +72,7 @@ async def get_image_data_uri(url: str) -> str:
         tenant_id=bot_tenant_id or None,
     )
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
+    async with httpx.AsyncClient(timeout=_IMAGE_DOWNLOAD_TIMEOUT_SECS) as client:
         resp = await client.get(
             url,
             headers={"Authorization": f"Bearer {token.token}"},

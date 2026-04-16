@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 _SANITIZE_RE = re.compile(r"[^A-Za-z0-9_-]")
+_MAX_SCOPE_LENGTH = 256
 
 
 def get_user_store_name() -> str | None:
@@ -38,12 +39,14 @@ def get_memory_update_delay() -> int:
 
     Local env var overrides App Config for flexibility during development.
     """
-    return int(os.environ.get("MEMORY_UPDATE_DELAY") or cfg("MEMORY_UPDATE_DELAY", "300"))
+    return int(
+        os.environ.get("MEMORY_UPDATE_DELAY") or cfg("MEMORY_UPDATE_DELAY", "300")
+    )
 
 
 def sanitize_scope(raw: str) -> str:
     """Keep only characters allowed by Foundry Memory Store: A-Z, a-z, 0-9, '-', '_'."""
-    return _SANITIZE_RE.sub("", raw)[:256]
+    return _SANITIZE_RE.sub("", raw)[:_MAX_SCOPE_LENGTH]
 
 
 # ---------------------------------------------------------------------------
@@ -59,6 +62,7 @@ _USER_PROFILE_DETAILS = (
 # ---------------------------------------------------------------------------
 # Ensure helpers
 # ---------------------------------------------------------------------------
+
 
 async def _ensure_memory_store(
     project_client: AIProjectClient,

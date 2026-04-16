@@ -18,6 +18,8 @@ from utils.azure_credential import get_credential
 
 logger = logging.getLogger(__name__)
 
+_DEFAULT_EPISODE_SEARCH_TOP_K = 5
+
 _DEFAULT_DATABASE_NAME = "azure-sdk-qa-bot"
 _DEFAULT_MAPPING_CONTAINER_NAME = "conversation-mappings"
 _DEFAULT_MESSAGE_CONTAINER_NAME = "conversation-messages"
@@ -261,7 +263,7 @@ async def search_episodes_by_vector(
     tenant_id: str,
     query_embedding: list[float],
     *,
-    top_k: int = 5,
+    top_k: int = _DEFAULT_EPISODE_SEARCH_TOP_K,
 ) -> list[dict[str, Any]]:
     """Search episodes by vector similarity within a tenant partition.
 

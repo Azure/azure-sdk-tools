@@ -41,6 +41,8 @@ from utils.azure_memory_store import (
 
 logger = logging.getLogger(__name__)
 
+_MAX_MEMORIES_PER_SEARCH = 10
+
 _SCOPE_MARKER_RE = re.compile(r"^\[memory_scope\]\s*value=(.+)$", re.IGNORECASE)
 _TENANT_CONTEXT_RE = re.compile(
     r"^\[tenant_context\]\s*original_tenant_id=(\S+)", re.IGNORECASE
@@ -60,14 +62,16 @@ class MemoryContextProvider(BaseContextProvider):
         # User store (None if not configured — memory features disabled)
         self._user_store_name = get_user_store_name()
         if not self._user_store_name:
-            logger.warning("MEMORY_USER_STORE_NAME not set — user memory search/update disabled")
+            logger.warning(
+                "MEMORY_USER_STORE_NAME not set — user memory search/update disabled"
+            )
 
         self._update_delay = get_memory_update_delay()
 
         # Tenant memory search toggle (default: enabled)
-        self._enable_tenant_memory_search = cfg(
-            "ENABLE_TENANT_MEMORY_SEARCH", "true"
-        ).lower() == "true"
+        self._enable_tenant_memory_search = (
+            cfg("ENABLE_TENANT_MEMORY_SEARCH", "true").lower() == "true"
+        )
 
         # Episode search config
         self._episode_top_k = int(cfg("MEMORY_EPISODE_SEARCH_TOP_K", "3"))
@@ -93,7 +97,9 @@ class MemoryContextProvider(BaseContextProvider):
     # before_run — search both stores and inject memories
     # ------------------------------------------------------------------
 
-    async def before_run(self, *, agent, session, context, state: dict[str, Any]) -> None:
+    async def before_run(
+        self, *, agent, session, context, state: dict[str, Any]
+    ) -> None:
         if not self._user_store_name:
             logger.info("before_run skipped: no stores configured")
             return
@@ -104,7 +110,9 @@ class MemoryContextProvider(BaseContextProvider):
         state["tenant_scope"] = tenant_scope
         logger.info(
             "before_run: session=%s, user_scope=%s, tenant_scope=%s, input_messages=%d",
-            session.session_id, user_scope, tenant_scope,
+            session.session_id,
+            user_scope,
+            tenant_scope,
             len(list(context.input_messages or [])),
         )
 
@@ -133,7 +141,11 @@ class MemoryContextProvider(BaseContextProvider):
         user_ctx_mems: list = []
         if self._user_store_name and user_scope:
             user_ctx_mems = await self._search_contextual(
-                self._user_store_name, user_scope, items, state, "user_previous_search_id"
+                self._user_store_name,
+                user_scope,
+                items,
+                state,
+                "user_previous_search_id",
             )
 
         # Combine user memories
@@ -152,12 +164,16 @@ class MemoryContextProvider(BaseContextProvider):
             context.extend_messages(self, [Message("system", [memory_text])])
             logger.info(
                 "Injected memory context for session=%s user_scope=%s tenant_scope=%s",
-                session.session_id, user_scope, tenant_scope,
+                session.session_id,
+                user_scope,
+                tenant_scope,
             )
         else:
             logger.info(
                 "No memory context found for session=%s user_scope=%s tenant_scope=%s",
-                session.session_id, user_scope, tenant_scope,
+                session.session_id,
+                user_scope,
+                tenant_scope,
             )
 
     async def _search_contextual(
@@ -172,7 +188,7 @@ class MemoryContextProvider(BaseContextProvider):
         search_kwargs: dict[str, Any] = {
             "name": store_name,
             "scope": scope,
-            "options": MemorySearchOptions(max_memories=10),
+            "options": MemorySearchOptions(max_memories=_MAX_MEMORIES_PER_SEARCH),
             "items": items,
         }
         prev_search_id = state.get(prev_id_key)
@@ -181,23 +197,32 @@ class MemoryContextProvider(BaseContextProvider):
 
         logger.info(
             "Contextual search: store=%s, scope=%s, items=%d, prev_search_id=%s",
-            store_name, scope, len(items), prev_search_id,
+            store_name,
+            scope,
+            len(items),
+            prev_search_id,
         )
 
         try:
-            result = await self._project_client.beta.memory_stores.search_memories(**search_kwargs)
+            result = await self._project_client.beta.memory_stores.search_memories(
+                **search_kwargs
+            )
             if hasattr(result, "search_id") and result.search_id:
                 state[prev_id_key] = result.search_id
             mems = list(result.memories or [])
             logger.info(
                 "Contextual search result: store=%s, scope=%s, %d memories returned",
-                store_name, scope, len(mems),
+                store_name,
+                scope,
+                len(mems),
             )
             return mems
         except Exception:
             logger.warning(
                 "Memory search failed for store=%s scope=%s",
-                store_name, scope, exc_info=True,
+                store_name,
+                scope,
+                exc_info=True,
             )
             return []
 
@@ -218,28 +243,36 @@ class MemoryContextProvider(BaseContextProvider):
         try:
             embedding = await self._generate_query_embedding(user_text)
         except Exception:
-            logger.warning("Episode search skipped: embedding generation failed", exc_info=True)
+            logger.warning(
+                "Episode search skipped: embedding generation failed", exc_info=True
+            )
             return []
 
         try:
             results = await search_episodes_by_vector(
-                tenant_id, embedding, top_k=self._episode_top_k,
+                tenant_id,
+                embedding,
+                top_k=self._episode_top_k,
             )
         except Exception:
             logger.warning(
-                "Episode search failed for tenant=%s", tenant_id, exc_info=True,
+                "Episode search failed for tenant=%s",
+                tenant_id,
+                exc_info=True,
             )
             return []
 
         # Filter by similarity threshold
         filtered = [
-            ep for ep in results
+            ep
+            for ep in results
             if ep.get("similarity_score", 0) >= self._episode_similarity_threshold
         ]
         for ep in filtered:
             logger.info(
                 "Episode matched: id=%s similarity=%.3f",
-                ep.get("id", "?"), ep.get("similarity_score", 0),
+                ep.get("id", "?"),
+                ep.get("similarity_score", 0),
             )
         return filtered
 
@@ -247,7 +280,8 @@ class MemoryContextProvider(BaseContextProvider):
         """Generate a vector embedding for the user's query."""
         client = get_embedding_client()
         response = await client.embeddings.create(
-            model=self._episode_embedding_model, input=text,
+            model=self._episode_embedding_model,
+            input=text,
         )
         return response.data[0].embedding
 
@@ -266,30 +300,44 @@ class MemoryContextProvider(BaseContextProvider):
     # after_run — update user store
     # ------------------------------------------------------------------
 
-    async def after_run(self, *, agent, session, context, state: dict[str, Any]) -> None:
+    async def after_run(
+        self, *, agent, session, context, state: dict[str, Any]
+    ) -> None:
         if not self._user_store_name:
             logger.info("after_run skipped: no user store configured")
             return
 
         user_scope = state.get("user_scope")
         if not user_scope:
-            logger.info("after_run skipped: no user_scope in state for session=%s", session.session_id)
+            logger.info(
+                "after_run skipped: no user_scope in state for session=%s",
+                session.session_id,
+            )
             return
 
         items = self._build_update_items(context)
         if not items:
-            logger.info("after_run skipped: no user/assistant messages to update for session=%s", session.session_id)
+            logger.info(
+                "after_run skipped: no user/assistant messages to update for session=%s",
+                session.session_id,
+            )
             return
 
         logger.info(
             "after_run: session=%s, user_scope=%s, %d items to update",
-            session.session_id, user_scope, len(items),
+            session.session_id,
+            user_scope,
+            len(items),
         )
 
         # Update user store only
         await self._update_store(
-            self._user_store_name, user_scope, items, state,
-            "user_previous_update_id", session,
+            self._user_store_name,
+            user_scope,
+            items,
+            state,
+            "user_previous_update_id",
+            session,
         )
 
     async def _update_store(
@@ -304,7 +352,10 @@ class MemoryContextProvider(BaseContextProvider):
         """Submit a memory update to a single store."""
         logger.info(
             "after_run: submitting %d items to store=%s scope=%s delay=%d",
-            len(items), store_name, scope, self._update_delay,
+            len(items),
+            store_name,
+            scope,
+            self._update_delay,
         )
 
         update_kwargs: dict[str, Any] = {
@@ -318,17 +369,25 @@ class MemoryContextProvider(BaseContextProvider):
             update_kwargs["previous_update_id"] = prev_update_id
 
         try:
-            poller = await self._project_client.beta.memory_stores.begin_update_memories(**update_kwargs)
+            poller = (
+                await self._project_client.beta.memory_stores.begin_update_memories(
+                    **update_kwargs
+                )
+            )
             if hasattr(poller, "update_id") and poller.update_id:
                 state[prev_id_key] = poller.update_id
             logger.info(
                 "Memory update submitted for store=%s scope=%s (update_id=%s)",
-                store_name, scope, getattr(poller, "update_id", None),
+                store_name,
+                scope,
+                getattr(poller, "update_id", None),
             )
         except Exception:
             logger.warning(
                 "Memory update failed for store=%s scope=%s",
-                store_name, scope, exc_info=True,
+                store_name,
+                scope,
+                exc_info=True,
             )
 
     # ------------------------------------------------------------------
@@ -341,31 +400,42 @@ class MemoryContextProvider(BaseContextProvider):
         """Fetch user-profile memories (no items/query) from the user store."""
         if self._user_store_name and user_scope:
             state["user_static_memories"] = await self._fetch_static_from_store(
-                self._user_store_name, user_scope, session,
+                self._user_store_name,
+                user_scope,
+                session,
             )
         else:
             state["user_static_memories"] = []
 
     async def _fetch_static_from_store(
-        self, store_name: str, scope: str, session,
+        self,
+        store_name: str,
+        scope: str,
+        session,
     ) -> list:
         """Fetch static memories from a single store."""
         try:
             result = await self._project_client.beta.memory_stores.search_memories(
                 name=store_name,
                 scope=scope,
-                options=MemorySearchOptions(max_memories=10),
+                options=MemorySearchOptions(max_memories=_MAX_MEMORIES_PER_SEARCH),
             )
             mems = result.memories or []
             logger.info(
                 "Retrieved %d static memories from store=%s scope=%s session=%s",
-                len(mems), store_name, scope, session.session_id,
+                len(mems),
+                store_name,
+                scope,
+                session.session_id,
             )
             return list(mems)
         except Exception:
             logger.warning(
                 "Static memory retrieval failed for store=%s scope=%s session=%s",
-                store_name, scope, session.session_id, exc_info=True,
+                store_name,
+                scope,
+                session.session_id,
+                exc_info=True,
             )
             return []
 
@@ -386,7 +456,10 @@ class MemoryContextProvider(BaseContextProvider):
                     scope = sanitize_scope(candidate)
                     logger.info("User scope resolved from marker: %s", scope)
                     return scope
-        logger.info("User scope not found in %d input messages", len(list(context.input_messages or [])))
+        logger.info(
+            "User scope not found in %d input messages",
+            len(list(context.input_messages or [])),
+        )
         return None
 
     def _resolve_tenant_scope(self, context) -> str | None:
@@ -416,14 +489,16 @@ class MemoryContextProvider(BaseContextProvider):
     def _build_search_items(messages) -> list[dict]:
         """Convert non-empty input messages to search items, excluding scope markers."""
         items = []
-        for msg in (messages or []):
+        for msg in messages or []:
             role = getattr(msg, "role", None)
             if role not in ("user", "assistant", "system"):
                 continue
             text = (getattr(msg, "text", "") or "").strip()
             if not text:
                 continue
-            if role == "system" and (_SCOPE_MARKER_RE.match(text) or _TENANT_CONTEXT_RE.match(text)):
+            if role == "system" and (
+                _SCOPE_MARKER_RE.match(text) or _TENANT_CONTEXT_RE.match(text)
+            ):
                 continue
             items.append({"type": "message", "role": role, "content": text})
         return items
@@ -432,14 +507,14 @@ class MemoryContextProvider(BaseContextProvider):
     def _build_update_items(context) -> list[dict]:
         """Collect user + assistant messages for memory update."""
         items = []
-        for msg in (context.input_messages or []):
+        for msg in context.input_messages or []:
             role = getattr(msg, "role", None)
             text = (getattr(msg, "text", "") or "").strip()
             if not text or role not in ("user", "assistant"):
                 continue
             items.append({"type": "message", "role": role, "content": text})
         if context.response:
-            for msg in (context.response.messages or []):
+            for msg in context.response.messages or []:
                 role = getattr(msg, "role", None)
                 text = (getattr(msg, "text", "") or "").strip()
                 if not text or role != "assistant":
@@ -449,7 +524,8 @@ class MemoryContextProvider(BaseContextProvider):
 
     @staticmethod
     def _format_all_memories(
-        user_memories, episodes: list[dict] | None = None,
+        user_memories,
+        episodes: list[dict] | None = None,
     ) -> str | None:
         """Format user memories + expert episodes into labeled sections."""
         user_text = MemoryContextProvider._format_section(
@@ -467,7 +543,7 @@ class MemoryContextProvider(BaseContextProvider):
         """Deduplicate and format a single memory section."""
         seen: set[str] = set()
         unique: list[str] = []
-        for mem in (memories or []):
+        for mem in memories or []:
             mid = mem.memory_item.memory_id
             if mid in seen:
                 continue
@@ -476,9 +552,8 @@ class MemoryContextProvider(BaseContextProvider):
 
         if not unique:
             return None
-        return (
-            f"{header}\n{description}\n"
-            + "\n".join(f"- {content}" for content in unique)
+        return f"{header}\n{description}\n" + "\n".join(
+            f"- {content}" for content in unique
         )
 
     @staticmethod

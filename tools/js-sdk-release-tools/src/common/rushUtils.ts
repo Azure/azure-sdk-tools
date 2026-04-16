@@ -69,7 +69,7 @@ async function addApiViewInfo(
 }
 
 export function isRushRepo(sdkRepoRoot: string): boolean {
-    return false;
+    throw new Error(`Rush repository detection is no longer supported. Update callers to stop using isRushRepo(). sdkRepoRoot: '${sdkRepoRoot}'`);
 }
 
 export async function buildPackage(

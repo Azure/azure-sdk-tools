@@ -251,7 +251,7 @@
     }
   ],
   "PackageName": "github.com/Azure/azure-sdk-tools/src/go/cmd/testdata/test_output",
-  "PackageVersion": "",
+  "PackageVersion": "1.3.3",
   "ParserVersion": "0.1",
   "ReviewLines": [
     {

@@ -46,6 +46,10 @@ A **Memory** is a learned observation from past API reviews. Memories are create
 1. **@mention handling** — When a reviewer @-mentions the bot with feedback (e.g., "this is correct"), a memory is created to prevent repeating the same comment.
 2. **Thread resolution** — When a conversation thread is marked resolved with the bot's comment still open, a memory is created to encode the reviewer's decision.
 
+Both workflows perform **write-time deduplication**: before creating a new memory, the system checks existing memories linked to the same guidelines. If a semantically equivalent memory already exists, the existing memory is updated (merged) instead of creating a duplicate. Examples attached to the merged memory are also deduplicated by content.
+
+For batch cleanup of older duplicates, use `avc kb consolidate-memories` (see `docs/cli.md`).
+
 | Field | Description |
 |-------|-------------|
 | `id` | Unique identifier |
@@ -108,7 +112,11 @@ KB items are typically linked at creation time. In rare cases where links need t
 
 ## Soft Deletion
 
-All KB items support **soft deletion**: instead of removing the document from Cosmos DB, a `isDeleted: true` flag is set. Soft-deleted items are excluded from search results. This preserves audit history and simplifies rollback.
+All KB items support **soft deletion**: instead of removing the document from Cosmos DB, an `isDeleted: true` flag is set. Soft-deleted items are excluded from search results. This preserves audit history and simplifies rollback.
+
+When an item is soft-deleted via `avc db delete`, back-links are automatically removed from all related items. Orphaned examples (those with no remaining `memory_ids` or `guideline_ids`) are also soft-deleted. Orphaned memories and guidelines are always retained.
+
+To permanently remove soft-deleted items, use `avc db purge`.
 
 ## Inspecting the KB Locally
 

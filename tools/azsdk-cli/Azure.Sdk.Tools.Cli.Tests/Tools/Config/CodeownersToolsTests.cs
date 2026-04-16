@@ -22,6 +22,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
         private Mock<ICodeownersManagementHelper> _mockCodeownersManagement;
         private Mock<IDevOpsService> _mockDevOps;
         private Mock<ITeamUserCache> _mockTeamUserCache;
+        private Mock<ICheckPackageHelper> _mockCheckPackageHelper;
 
         private CodeownersTool _tool;
 
@@ -36,6 +37,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
             _mockDevOps = new Mock<IDevOpsService>();
             _mockTeamUserCache = new Mock<ITeamUserCache>();
             _mockTeamUserCache.Setup(c => c.GetUsersForTeam(It.IsAny<string>())).Returns(new List<string>());
+            _mockCheckPackageHelper = new Mock<ICheckPackageHelper>();
 
             _tool = new CodeownersTool(
                 _mockGithub,
@@ -45,6 +47,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
                 _mockcodeownersGenerateHelper.Object,
                 _mockGitHelper.Object,
                 _mockCodeownersManagement.Object,
+                _mockCheckPackageHelper.Object,
                 _mockDevOps.Object
             );
         }

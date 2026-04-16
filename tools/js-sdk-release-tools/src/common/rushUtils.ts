@@ -158,7 +158,7 @@ export async function tryTestPackage(packageDirectory: string, sdkRepoRoot: stri
 export async function createArtifact(packageDirectory: string, sdkRepoRoot: string): Promise<string> {
     logger.info(`Start to create artifact in '${packageDirectory}'`);
     const info = await getNpmPackageInfo(packageDirectory);
-    await packPackage(packageDirectory, info.name, sdkRepoRoot);
+    await packPackage(packageDirectory, info.name);
     const artifactName = getArtifactName(info);
     const artifactPath = posix.join(packageDirectory, artifactName);
     await access(artifactPath);

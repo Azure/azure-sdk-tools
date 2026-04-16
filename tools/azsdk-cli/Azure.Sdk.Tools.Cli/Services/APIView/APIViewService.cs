@@ -1,5 +1,9 @@
 
+using System.Text.Json;
+
 namespace Azure.Sdk.Tools.Cli.Services.APIView;
+
+using System.Net;
 
 public interface IAPIViewService
 {
@@ -20,6 +24,11 @@ public interface IAPIViewService
         CancellationToken ct = default);
 
     /// <summary>
+    /// Retrieves the canonical APIView review URL for a given package and language.
+    /// </summary>
+    Task<string?> GetReviewUrlByPackageAsync(string packageName, string language, string? version, CancellationToken ct);
+
+    /// <summary>
     /// Creates an API revision for a pull request if API surface changes are detected.
     /// Use this during PR validation to compare the PR's API against the baseline.
     /// </summary>
@@ -29,6 +38,19 @@ public interface IAPIViewService
         int pullRequestNumber = 0, string? codeFile = null, string? baselineCodeFile = null,
         string? language = null, string? project = null, string? packageType = null,
         string? metadataFile = null, CancellationToken ct = default);
+
+    /// <summary>
+    /// Submits API surface text for automated Copilot review.
+    /// </summary>
+    Task<(string? content, int statusCode)> StartCopilotReviewAsync(
+        string apiText, string? language = null, string? baseApiText = null,
+        string? outline = null, string? existingCommentsJson = null, CancellationToken ct = default);
+
+    /// <summary>
+    /// Gets the status or results of a Copilot review job.
+    /// </summary>
+    Task<(string? content, int statusCode)> GetCopilotReviewAsync(
+        string jobId, CancellationToken ct = default);
 }
 
 public class APIViewService : IAPIViewService
@@ -219,6 +241,89 @@ public class APIViewService : IAPIViewService
 
         string endpoint = $"/api/PullRequests/CreateAPIRevisionIfAPIHasChanges?{string.Join("&", queryParams)}";
 
+        return await _httpService.GetAsync(endpoint, ct);
+    }
+
+    /// <inheritdoc />
+    public async Task<string?> GetReviewUrlByPackageAsync(string packageName, string language, string? version, CancellationToken ct)
+    {
+        var queryParams = new List<string>
+        {
+            $"package={Uri.EscapeDataString(packageName)}",
+            $"language={Uri.EscapeDataString(language)}",
+            "redirect=false"
+        };
+
+        if (!string.IsNullOrEmpty(version))
+        {
+            queryParams.Add($"version={Uri.EscapeDataString(version)}");
+        }
+
+        string endpoint = $"/review?{string.Join("&", queryParams)}";
+
+        try
+        {
+            (string? result, _) = await _httpService.GetAsync(endpoint, ct);
+
+            if (string.IsNullOrWhiteSpace(result))
+            {
+                return null;
+            }
+
+            var json = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(result);
+            return json.GetProperty("url").GetString();
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(string? content, int statusCode)> StartCopilotReviewAsync(
+        string apiText,
+        string? language = null,
+        string? baseApiText = null,
+        string? outline = null,
+        string? existingCommentsJson = null,
+        CancellationToken ct = default
+    )
+    {
+        var payload = new Dictionary<string, object?> { ["target"] = apiText };
+
+        if (!string.IsNullOrEmpty(language))
+        {
+            payload["language"] = language;
+        }
+
+        if (!string.IsNullOrEmpty(baseApiText))
+        {
+            payload["base"] = baseApiText;
+        }
+
+        if (!string.IsNullOrEmpty(outline))
+        {
+            payload["outline"] = outline;
+        }
+
+        if (!string.IsNullOrEmpty(existingCommentsJson))
+        {
+            using var existingCommentsDoc = JsonDocument.Parse(existingCommentsJson);
+            if (existingCommentsDoc.RootElement.ValueKind != JsonValueKind.Array)
+            {
+                throw new ArgumentException("existingCommentsJson must be a JSON array.", nameof(existingCommentsJson));
+            }
+            payload["existingComments"] = existingCommentsDoc.RootElement.Clone();
+        }
+
+        string jsonBody = JsonSerializer.Serialize(payload);
+        return await _httpService.PostAsync("/api/reviews/start-copilot-review-job", jsonBody, ct);
+    }
+
+    /// <inheritdoc />
+    public async Task<(string? content, int statusCode)> GetCopilotReviewAsync(string jobId, CancellationToken ct = default)
+    {
+        string endpoint = $"/api/reviews/get-copilot-review-job/{Uri.EscapeDataString(jobId)}";
         return await _httpService.GetAsync(endpoint, ct);
     }
 }

@@ -2,17 +2,28 @@
     "$schema": "http://json-schema.org/draft-04/schema#",
     "$id": "https://raw.githubusercontent.com/azure/azure-sdk-tools/main/tools/secret-management/schema/1.0.0/access.json",
     "title": "AccessConfiguration",
-    "description": "An application access configuration",
+    "description": "A managed identity access configuration. Identity parameters (identityName, subscriptionId, resourceGroup) can be specified as top-level fields or within the properties dictionary.",
     "type": "object",
-    "required": [
-        "appDisplayName"
-    ],
     "properties": {
-        "appDisplayName": {
-            "type": "string"
+        "identityName": {
+            "type": "string",
+            "description": "Name of the user-assigned managed identity. Can also be set via properties.identityName."
+        },
+        "subscriptionId": {
+            "type": "string",
+            "description": "Azure subscription ID containing the managed identity. Can also be set via properties.subscriptionId."
+        },
+        "resourceGroup": {
+            "type": "string",
+            "description": "Resource group containing the managed identity. Can also be set via properties.resourceGroup."
+        },
+        "location": {
+            "type": "string",
+            "description": "Azure location for creating a new managed identity (e.g. eastus). Required only when the identity does not yet exist."
         },
         "properties": {
             "type": "object",
+            "description": "Template properties for rendering {{ variable }} placeholders in config values. Also used as fallback for identityName, subscriptionId, and resourceGroup.",
             "additionalProperties": true
         },
         "githubRepositorySecrets": {
@@ -65,7 +76,6 @@
                 "type": "object",
                 "required": [
                     "audiences",
-                    "description",
                     "issuer",
                     "name",
                     "subject"

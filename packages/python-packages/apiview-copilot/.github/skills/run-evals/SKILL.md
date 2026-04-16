@@ -17,22 +17,22 @@ Always activate the virtualenv first: `.venv\Scripts\activate` (Windows) or `sou
 ### Via CLI
 ```bash
 # Run all workflows
-avc eval run
+avc test eval
 
 # Run a specific workflow
-avc eval run --test-paths evals/tests/mention_action
+avc test eval --test-paths evals/tests/mention_action
 
 # Run a single test file
-avc eval run --test-paths evals/tests/filter_existing_comment/discard_azure_sdk_repeat_comment.yaml
+avc test eval --test-paths evals/tests/filter_existing_comment/discard_azure_sdk_repeat_comment.yaml
 
 # Multiple runs (median result kept)
-avc eval run --num-runs 5 --test-paths evals/tests/filter_comment_metadata
+avc test eval --num-runs 5 --test-paths evals/tests/filter_comment_metadata
 
 # Use recordings (cached LLM responses) — first run saves, subsequent runs reuse
-avc eval run --use-recording --test-paths evals/tests/mention_action
+avc test eval --use-recording --test-paths evals/tests/mention_action
 
 # Verbose output (show passing tests too)
-avc eval run --style verbose
+avc test eval --style verbose
 ```
 
 ### Via run.py directly
@@ -70,7 +70,7 @@ python run.py --test-paths tests/mention_action
 
 ## Gotchas
 
-- **Use `python cli.py` not `.\avc`**: The `avc.bat` script calls bare `python` which may resolve to the system Python instead of the venv. Use `.venv\Scripts\activate; python cli.py eval run ...` to ensure the venv Python is used.
+- **Use `python cli.py` not `.\avc`**: The `avc.bat` script calls bare `python` which may resolve to the system Python instead of the venv. Use `.venv\Scripts\activate; python cli.py test eval ...` to ensure the venv Python is used.
 - **Field name mismatch**: Test YAML fields must exactly match target function parameter names (excluding `testcase` and `response`)
 - **Stale recordings**: After changing a prompt, delete recordings or run without `--use-recording` to get fresh results
 - **Testcase uniqueness**: The `testcase` field must be unique across all test files in a workflow — it's the cache key

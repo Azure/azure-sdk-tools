@@ -118,8 +118,8 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 			model.Source_TypeSpecAzure:      "search.ismatch('typespec-java*', 'title') or search.ismatch('generate*', 'title')",
 			model.Source_AzureRestAPISpec:   "search.ismatch('SDK*', 'title')",
 		},
-		PromptTemplate:          "language_channel/qa.md",
-		IntentionPromptTemplate: "language_channel/intention.md",
+		PromptTemplate:          "language_java/qa.md",
+		IntentionPromptTemplate: "language_java/intention.md",
 		AgenticSearchPrompt:     "language_channel/agentic_search.md",
 	},
 	model.TenantID_JavaScriptChannelQaBot: {

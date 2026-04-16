@@ -9,11 +9,13 @@ from apistubgentest.models import (
     AliasNewType,
     AliasUnion,
     ClassWithDecorators,
+    ClassWithForwardRefBase,
     ClassWithIvarsAndCvars,
     FakeTypedDict,
     FakeObject,
     GenericStack,
     PetEnumPy3MetaclassAlt,
+    PublicCaseInsensitiveEnumMeta,
     PublicPrivateClass,
     PropertyWithNoNameAttr,
     RequiredKwargObject,
@@ -23,6 +25,7 @@ from apistubgentest.models import (
     SomethingWithDecorators,
     SomethingWithInheritedOverloads,
     SomethingWithOverloads,
+    SomethingWithRedefinedOverloads,
     SomethingWithProperties,
     SomeProtocolDecorator,
     SomethingWithLiterals,
@@ -110,7 +113,7 @@ class TestClassParsing:
         tokens = _tokenize(class_node)
         actuals = _render_lines(tokens)
         expected = [
-            "class FakeTypedDict(dict):",
+            "class FakeTypedDict(TypedDict):",
             'key "age": int',
             'key "name": str',
             'key "union": Union[bool, FakeObject, PetEnumPy3MetaclassAlt]',
@@ -248,13 +251,61 @@ class TestClassParsing:
         )
         tokens = _tokenize(class_node)
         actuals = _render_lines(tokens)
-        expected = ["class PetEnumPy3MetaclassAlt(str, Enum):", 'CAT = "cat"', 'DEFAULT = "cat"', 'DOG = "dog"']
+        expected = ["class PetEnumPy3MetaclassAlt(str, Enum, metaclass=PublicCaseInsensitiveEnumMeta):", 'CAT = "cat"', 'DEFAULT = "cat"', 'DOG = "dog"']
         _check_all(actuals, expected, obj)
 
         metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
         metadata = _count_review_line_metadata(tokens, metadata)
         assert metadata["RelatedToLine"] == 2
         assert metadata["IsContextEndLine"] == 1
+
+    def test_forward_ref_base_class(self):
+        """Test that forward-reference strings in base classes are rendered without quotes.
+
+        e.g. Generic["Foo"] should appear as Generic[Foo], not Generic['Foo'].
+        """
+        obj = ClassWithForwardRefBase
+        class_node = ClassNode(
+            name=obj.__name__,
+            namespace=obj.__name__,
+            parent_node=None,
+            obj=obj,
+            pkg_root_namespace=self.pkg_namespace,
+            apiview=MockApiView,
+        )
+        tokens = _tokenize(class_node)
+        actuals = _render_lines(tokens)
+        _check(actuals[0].lstrip(), "class ClassWithForwardRefBase(List[ClassWithForwardRefBase]):", obj)
+
+    def test_enum_meta_inheritance(self):
+        """Test that classes inheriting from EnumMeta show 'EnumMeta' not 'EnumType'.
+
+        This is a regression test for Python 3.11+ where EnumType is the actual class
+        but EnumMeta is the public alias. We want to show the source code representation
+        (EnumMeta) not the runtime internal name (EnumType).
+        """
+        obj = PublicCaseInsensitiveEnumMeta
+        class_node = ClassNode(
+            name=obj.__name__,
+            namespace=obj.__name__,
+            parent_node=None,
+            obj=obj,
+            pkg_root_namespace=self.pkg_namespace,
+            apiview=MockApiView,
+        )
+        tokens = _tokenize(class_node)
+        actuals = _render_lines(tokens)
+
+        # The key assertion: should show "EnumMeta" as written in source, not "EnumType"
+        expected = ["class PublicCaseInsensitiveEnumMeta(EnumMeta):"]
+        _check_all(actuals, expected, obj)
+
+        # Without the AST parsing fix, this would show:
+        # ["class PublicCaseInsensitiveEnumMeta(EnumType):"]
+        # which is incorrect because the source code says "EnumMeta"
+
+        full_output = " ".join(actuals)
+        assert "EnumType" not in full_output, f"Found 'EnumType' in output, should be 'EnumMeta'. Got: {actuals}"
 
     def test_overloads(self):
         obj = SomethingWithOverloads
@@ -358,6 +409,32 @@ class TestClassParsing:
         # 5 empty lines, 3 overloads
         assert metadata["RelatedToLine"] == 8
         assert metadata["IsContextEndLine"] == 1, tokens
+
+    def test_redefined_overloads_no_duplicates(self):
+        """Derived class redefines an overloaded method: only the derived overloads must appear."""
+        obj = SomethingWithRedefinedOverloads
+        class_node = ClassNode(
+            name=obj.__name__,
+            namespace=obj.__name__,
+            parent_node=None,
+            obj=obj,
+            pkg_root_namespace=self.pkg_namespace,
+            apiview=MockApiView,
+        )
+        tokens = _tokenize(class_node)
+        lines = _render_lines(tokens)
+
+        overload_lines = [l for l in lines if l.lstrip() == "@overload"]
+        assert len(overload_lines) == 3, (
+            f"Expected exactly 3 overloads for the derived class, got {len(overload_lines)}. "
+            "The base class overloads must not duplicate when the derived class redefines the method."
+        )
+
+        # Verify the three derived overloads are present.
+        process_defs = [l.strip() for l in lines if "def process(" in l]
+        assert "def process(self, val: str) -> str: ..." in process_defs
+        assert "def process(self, val: int) -> int: ..." in process_defs
+        assert "def process(self, val: float) -> float: ..." in process_defs
 
     def test_overload_line_ids(self):
         obj = SomethingWithOverloads

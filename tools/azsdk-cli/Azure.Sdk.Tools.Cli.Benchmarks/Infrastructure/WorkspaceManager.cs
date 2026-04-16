@@ -286,5 +286,6 @@ public class WorkspaceManager
     {
         // Force test mode for the tools.
         Environment.SetEnvironmentVariable("AZSDKTOOLS_AGENT_TESTING", "true");
+        Environment.SetEnvironmentVariable("AZSDKTOOLS_COLLECT_TELEMETRY", "false");
     }
 }

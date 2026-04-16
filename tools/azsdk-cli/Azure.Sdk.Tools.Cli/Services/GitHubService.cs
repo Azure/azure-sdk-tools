@@ -126,6 +126,8 @@ namespace Azure.Sdk.Tools.Cli.Services
         // SLA-related methods
         public Task<IReadOnlyList<Issue>> ListIssuesForSLAAsync(string owner, string repo, string serviceLabel, DateTimeOffset since, bool includeClosed, CancellationToken ct);
         public Task<IReadOnlyList<IssueComment>> GetIssueCommentsAsync(string owner, string repo, int issueNumber, CancellationToken ct);
+      
+        public Task<Team> GetTeamByNameAsync(string org, string teamSlug, CancellationToken ct);
     }
 
     // We enforce cancellation token usage broadly via an analyzer across this codebase,
@@ -727,6 +729,10 @@ namespace Azure.Sdk.Tools.Cli.Services
         public async Task<IReadOnlyList<IssueComment>> GetIssueCommentsAsync(string owner, string repo, int issueNumber, CancellationToken ct)
         {
             return await gitHubClient.Issue.Comment.GetAllForIssue(owner, repo, issueNumber);
+        }    
+        public async Task<Team> GetTeamByNameAsync(string org, string teamSlug, CancellationToken ct)
+        {
+            return await gitHubClient.Organization.Team.GetByName(org, teamSlug);
         }
     }
 }

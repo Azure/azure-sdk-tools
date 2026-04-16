@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using ApiView;
+using APIView.Model.V2;
 using APIViewWeb;
 using APIViewWeb.Managers;
 using APIViewWeb.Models;
@@ -32,12 +33,16 @@ public class CodeFileManagerTests
         _mockDevopsArtifactRepository = new Mock<IDevopsArtifactRepository>();
         var mockLogger = new Mock<ILogger<CodeFileManager>>();
 
+        var languageServices = new List<LanguageService>
+        {
+            new MockLanguageService("C#", true)
+        };
         // Setup empty language services list
         _mockLanguageServices.Setup(x => x.GetEnumerator())
             .Returns(new List<LanguageService>().GetEnumerator());
 
         _codeFileManager = new CodeFileManager(
-            _mockLanguageServices.Object,
+            languageServices,
             _mockCodeFileRepository.Object,
             _mockOriginalsRepository.Object,
             _mockDevopsArtifactRepository.Object,
@@ -333,4 +338,181 @@ public class CodeFileManagerTests
     }
 
     #endregion
+
+    #region ComputeAPIContentHashAsync Tests
+
+    [Fact]
+    public async Task ComputeAPIContentHashAsync_AndAreAPICodeFilesTheSame_TreatFilesWithOnlySkipDiffDifferences_AsEqual()
+    {
+         ReviewLine MakeClassLine(bool withAddedInAnnotation)
+        {
+            var line = new ReviewLine { LineId = "MyClass" };
+            line.AddToken(ReviewToken.CreateKeywordToken("public"));
+            line.AddToken(ReviewToken.CreateTypeNameToken("MyClass"));
+            if (withAddedInAnnotation)
+            {
+                line.AddToken(new ReviewToken { Value = "// Added in 1.2.0", SkipDiff = true });
+            }
+            return line;
+        }
+
+        var fileA = new CodeFile
+        {
+            VersionString = "1.0.0",
+            Language = "C#",
+            ReviewLines = [MakeClassLine(withAddedInAnnotation: false)]
+        };
+
+        var fileB = new CodeFile
+        {
+            VersionString = "1.0.0",
+            Language = "C#",
+            ReviewLines = [MakeClassLine(withAddedInAnnotation: true)]
+        };
+
+        string hashA = await _codeFileManager.ComputeAPIContentHashAsync(fileA);
+        string hashB = await _codeFileManager.ComputeAPIContentHashAsync(fileB);
+        Assert.Equal(hashA, hashB);
+       Assert.True(_codeFileManager.AreAPICodeFilesTheSame(new RenderedCodeFile(fileA), new RenderedCodeFile(fileB)));
+    }
+
+    [Fact]
+    public async Task ComputeAPIContentHashAsync_ProducesDifferentHash_WhenApiSurfaceDiffers()
+    {
+        var fileA = new CodeFile
+        {
+            VersionString = "1.0.0",
+            Language = "C#",
+            ReviewLines =
+            [
+                new ReviewLine
+                {
+                    LineId = "line-1",
+                    Tokens = [ReviewToken.CreateKeywordToken("public"), ReviewToken.CreateTypeNameToken("ClassA")]
+                }
+            ]
+        };
+
+        var fileB = new CodeFile
+        {
+            VersionString = "1.0.0",
+            Language = "C#",
+            ReviewLines =
+            [
+                new ReviewLine
+                {
+                    LineId = "line-1",
+                    Tokens = [ReviewToken.CreateKeywordToken("public"), ReviewToken.CreateTypeNameToken("ClassB")]
+                }
+            ]
+        };
+
+        string hashA = await _codeFileManager.ComputeAPIContentHashAsync(fileA);
+        string hashB = await _codeFileManager.ComputeAPIContentHashAsync(fileB);
+
+        Assert.NotEqual(hashA, hashB);
+        Assert.False(_codeFileManager.AreAPICodeFilesTheSame(new RenderedCodeFile(fileA), new RenderedCodeFile(fileB)));
+    }
+
+    #endregion
+
+    #region Token Sanitization Tests
+
+    [Fact]
+    public async Task CreateReviewCodeFileModel_SanitizesNewlinesInTreeTokenValues()
+    {
+        var codeFile = new CodeFile
+        {
+            Language = "Java",
+            PackageName = "com.azure.storage",
+            ReviewLines =
+            [
+                new ReviewLine
+                {
+                    LineId = "doc-1",
+                    Tokens =
+                    [
+                        new ReviewToken
+                        {
+                            Value = "\n    This package contains clients.\n    For details see README.md\n  ",
+                            Kind = TokenKind.Text,
+                            IsDocumentation = true
+                        }
+                    ]
+                }
+            ]
+        };
+
+        using var memoryStream = new MemoryStream();
+
+        await _codeFileManager.CreateReviewCodeFileModel("api-rev-1", memoryStream, codeFile);
+
+        string value = codeFile.ReviewLines[0].Tokens[0].Value;
+        Assert.Equal("     This package contains clients.     For details see README.md   ", value);
+        Assert.DoesNotContain('\n', value);
+        Assert.DoesNotContain('\r', value);
+    }
+
+    [Fact]
+    public async Task CreateReviewCodeFileModel_SanitizesOnlyNestedTextTokens()
+    {
+        var codeFile = new CodeFile
+        {
+            Language = "C#",
+            ReviewLines =
+            [
+                new ReviewLine
+                {
+                    LineId = "parent",
+                    Tokens = [new ReviewToken("Parent\ntoken", TokenKind.Keyword)],
+                    Children =
+                    [
+                        new ReviewLine
+                        {
+                            LineId = "child",
+                            Tokens = [new ReviewToken("Child\ntoken\nvalue", TokenKind.Text)]
+                        }
+                    ]
+                }
+            ]
+        };
+
+        using var memoryStream = new MemoryStream();
+
+        await _codeFileManager.CreateReviewCodeFileModel("api-rev-3", memoryStream, codeFile);
+
+        Assert.Equal("Parent\ntoken", codeFile.ReviewLines[0].Tokens[0].Value);
+        Assert.Equal("Child token value", codeFile.ReviewLines[0].Children[0].Tokens[0].Value);
+    }
+
+    [Fact]
+    public async Task CreateReviewCodeFileModel_DoesNotModifyTreeTokenWithoutNewlines()
+    {
+        var codeFile = new CodeFile
+        {
+            Language = "Java",
+            ReviewLines =
+            [
+                new ReviewLine
+                {
+                    LineId = "tree-1",
+                    Tokens =
+                    [
+                        new ReviewToken("    ", TokenKind.Text),
+                        new ReviewToken("NoNewlines", TokenKind.Text)
+                    ]
+                }
+            ]
+        };
+
+        using var memoryStream = new MemoryStream();
+
+        await _codeFileManager.CreateReviewCodeFileModel("api-rev-3a", memoryStream, codeFile);
+
+        Assert.Equal("    ", codeFile.ReviewLines[0].Tokens[0].Value);
+        Assert.Equal("NoNewlines", codeFile.ReviewLines[0].Tokens[1].Value);
+    }
+
+    #endregion
+
 }

@@ -2,6 +2,7 @@ import astroid
 import inspect
 from inspect import Parameter
 import re
+import types as _builtin_types
 
 from ._pylint_parser import PylintParser
 
@@ -30,7 +31,7 @@ def normalize_all_literals(value: str) -> str:
     return literal_regex.sub(normalize_literal_match, value)
 
 
-def process_literal_args(obj, args):
+def process_literal_args(obj, args, namespace=""):
     """Unified function to handle Literal type arguments with proper quote normalization.
     """
     processed_args = []
@@ -41,7 +42,13 @@ def process_literal_args(obj, args):
                  "Literal[" in obj_str)
 
     for arg in args:
-        arg_string = str(arg)
+        # Call get_qualified_name for any parameterised generic (has __origin__) or
+        # PEP 604 union (types.UnionType, Python 3.10+). On Python 3.14, str() on
+        # these types emits X | Y notation; get_qualified_name normalises to Union[X, Y].
+        if hasattr(arg, '__origin__') or isinstance(arg, _builtin_types.UnionType):
+            arg_string = get_qualified_name(arg, namespace)
+        else:
+            arg_string = str(arg)
 
         if is_literal and obj_str.startswith(("typing.Literal[")):
             # If individual string literal arg and not enum, return normalized string
@@ -158,6 +165,16 @@ def get_qualified_name(obj, namespace: str) -> str:
     if module_name.startswith("astroid"):
         return obj.as_string()
     elif module_name == "types":
+        # PEP 604 (Python 3.10+): X | Y produces a types.UnionType. Normalise to
+        # Union[X, Y] / Optional[X] for consistent rendering across all supported versions.
+        if isinstance(obj, _builtin_types.UnionType) and hasattr(obj, '__args__'):
+            union_args = [get_qualified_name(a, namespace) for a in obj.__args__]
+            non_none = [a for a in union_args if a not in ("NoneType", "None")]
+            if len(non_none) < len(union_args):
+                if len(non_none) == 1:
+                    return f"Optional[{non_none[0]}]"
+                return f"Optional[Union[{', '.join(non_none)}]]"
+            return f"Union[{', '.join(union_args)}]"
         return str(obj)
 
     if obj is Parameter.empty:
@@ -175,15 +192,18 @@ def get_qualified_name(obj, namespace: str) -> str:
     # and are no longer part of the name
     if hasattr(obj, "__args__"):
         # Process all arguments with unified Literal handling
-        processed_args = process_literal_args(obj, obj.__args__ or [])
+        processed_args = process_literal_args(obj, obj.__args__ or [], namespace)
 
         for arg_string in processed_args:
             if keyword_regex.match(arg_string):
                 value = keyword_regex.search(arg_string).group(2)
                 if value == "NoneType":
-                    # we ignore NoneType since Optional implies that NoneType is
-                    # acceptable
-                    if not name.startswith("Optional"):
+                    # NoneType means the type is nullable; track it via wrap_optional.
+                    # Extract the bare name (strip module prefix and brackets) to avoid
+                    # double-wrapping when the name is already "Optional" (Python 3.13).
+                    base = name_regex.search(name).group(0)
+                    bare_name = base.split(".")[-1] if "." in base else base
+                    if not bare_name.startswith("Optional"):
                         wrap_optional = True
                 else:
                     args.append(value)
@@ -196,14 +216,25 @@ def get_qualified_name(obj, namespace: str) -> str:
     # omit any brackets for Python 3.9/3.10 compatibility
     value = name_regex.search(name).group(0)
     if module_name and module_name.startswith(namespace):
-        value = f"{module_name}.{name}"
+        # Guard against re-adding the module prefix when str(obj) already returns
+        # a fully-qualified name (e.g. typing._GenericAlias on Python 3.9+).
+        if not value.startswith(module_name):
+            value = f"{module_name}.{value}"
     elif module_name and module_name != value and value.startswith(module_name):
         # strip the module name if it isn't the namespace (example: typing)
         value = value[len(module_name) + 1 :]
 
     if args and "[" not in value:
-        arg_string = ", ".join(args)
-        value = f"{value}[{arg_string}]"
+        bare_value = value.split(".")[-1] if "." in value else value
+        if wrap_optional and bare_value == "Union" and len(args) == 1:
+            # Union[X, None] with a single non-None arg collapses to Optional[X].
+            # Use bare_value (module prefix stripped) because value may be "typing.Union"
+            # when namespace is empty. 3.9 and 3.14 both yield __name__ == "Union" here;
+            # 3.13 yields "Optional" and skips this branch entirely.
+            value = args[0]
+        else:
+            arg_string = ", ".join(args)
+            value = f"{value}[{arg_string}]"
     if wrap_optional:
         value = f"Optional[{value}]"
     return value

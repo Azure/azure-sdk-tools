@@ -35,8 +35,8 @@ DEFAULT_NUM_RUNS: int = 1
 class ExecutionContext:
     """Shared context for evaluation execution."""
 
-    def __init__(self):
-        self.settings = SettingsManager()
+    def __init__(self, environment: str = None):
+        self.settings = SettingsManager(environment=environment)
         self._azure_ai_project = {
             "subscription_id": self.settings.get("EVALS_SUBSCRIPTION"),
             "resource_group_name": self.settings.get("EVALS_RG"),
@@ -137,15 +137,23 @@ class EvaluationResult:
 class EvaluationRunner:
     """Executes evaluations targets with shared context"""
 
-    def __init__(self, *, num_runs: int = DEFAULT_NUM_RUNS, use_recording: bool = False, verbose: bool = False):
+    def __init__(
+        self,
+        *,
+        num_runs: int = DEFAULT_NUM_RUNS,
+        use_recording: bool = False,
+        verbose: bool = False,
+        environment: str = None,
+    ):
         self.num_runs = num_runs
         self._context: ExecutionContext | None = None
         self._use_recording = use_recording
         self._verbose = verbose
+        self._environment = environment
 
     def _ensure_context(self):
         if self._context is None:
-            self._context = ExecutionContext()
+            self._context = ExecutionContext(environment=self._environment)
             # Pre-acquire a token so parallel workers find it cached
             # instead of all racing to spawn az-cli subprocesses.
             if not self._context.in_ci():

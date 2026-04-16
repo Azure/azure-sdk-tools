@@ -27,7 +27,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
     try {
         const packageDirectory = await getGeneratedPackageDirectory(options.typeSpecDirectory, options.sdkRepoRoot);
         const relativePackageDirToSdkRoot = posix.relative(posix.normalize(options.sdkRepoRoot), posix.normalize(packageDirectory));
-        await codeOwnersAndIgnoreLinkGenerator(relativePackageDirToSdkRoot, options.typeSpecDirectory);
+        await codeOwnersAndIgnoreLinkGenerator(relativePackageDirToSdkRoot, options.typeSpecDirectory, options.runMode);
         const packageJsonPath = posix.join(packageDirectory, 'package.json');
         let originalNpmPackageInfo: undefined | NpmPackageInfo;
         if (await exists(packageJsonPath)) originalNpmPackageInfo = await getNpmPackageInfo(packageDirectory);
@@ -66,10 +66,11 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
 
         const ciYamlPath = await createOrUpdateCiYaml(
             relativePackageDirToSdkRoot,
-            options.versionPolicyName,
             npmPackageInfo
         );
-        packageResult.path.push(ciYamlPath);
+        if (ciYamlPath) {
+            packageResult.path.push(ciYamlPath);
+        }
 
         packageResult.result = 'succeeded';
         logger.info(`Generated package successfully.`);

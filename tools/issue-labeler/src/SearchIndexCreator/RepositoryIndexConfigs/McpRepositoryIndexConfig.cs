@@ -4,6 +4,7 @@
 using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
 using Azure.Search.Documents.Indexes.Models;
 using IssueLabeler.Shared;
+using Microsoft.Extensions.Configuration;
 using Octokit;
 
 namespace SearchIndexCreator.RepositoryIndexConfigs
@@ -17,6 +18,19 @@ namespace SearchIndexCreator.RepositoryIndexConfigs
         private const int DefaultMaxPageLength = 2200;
         private const int DefaultPageOverlapLength = 250;
         private const int DefaultMinCommentLength = 150;
+
+        private readonly string[] _primaryPrefixes;
+        private readonly string[] _secondaryPrefixes;
+
+        public McpRepositoryIndexConfig(IConfiguration config)
+        {
+            _primaryPrefixes = (config["McpPrimaryLabelPrefixes"]
+                ?? throw new InvalidOperationException("Configuration key 'McpPrimaryLabelPrefixes' is required but was not found."))
+                .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            _secondaryPrefixes = (config["McpSecondaryLabelPrefixes"]
+                ?? throw new InvalidOperationException("Configuration key 'McpSecondaryLabelPrefixes' is required but was not found."))
+                .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries );
+        }
 
         public string DisplayName => "MCP";
         public int MaxPageLength => DefaultMaxPageLength;
@@ -70,11 +84,12 @@ namespace SearchIndexCreator.RepositoryIndexConfigs
             return CodeOwnerUtils.GetCodeownersEntryForLabelList(labels).ServiceOwners;
         }
 
-        private static bool IsServerLabel(Octokit.Label label) =>
-            label.Name.StartsWith("server-", StringComparison.OrdinalIgnoreCase);
+        private bool IsServerLabel(Octokit.Label label) =>
+            _primaryPrefixes.Any(prefix =>
+                label.Name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
 
-        private static bool IsToolLabel(Octokit.Label label) =>
-            label.Name.StartsWith("tools-", StringComparison.OrdinalIgnoreCase) ||
-            label.Name.Equals("remote-mcp", StringComparison.OrdinalIgnoreCase);
+        private bool IsToolLabel(Octokit.Label label) =>
+            _secondaryPrefixes.Any(prefix =>
+                label.Name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
     }
 }

@@ -110,6 +110,66 @@ describe('workflowHelpers', () => {
         []
       )).rejects.toThrow('generateScript is not configured');
     });
+
+    it('should pass sdkReleaseType as undefined in generateInput when not provided', async () => {
+      mockContext.config.sdkReleaseType = undefined;
+
+      const mockGenerateOutput = {
+        packages: [
+          {
+            packageName: 'test-package',
+            path: ['path/to/package'],
+            result: 'succeeded'
+          }
+        ]
+      };
+
+      vi.spyOn(fsUtils, 'writeTmpJsonFile').mockImplementation(() => undefined);
+      vi.spyOn(fsUtils, 'deleteTmpJsonFile').mockImplementation(() => undefined);
+      vi.spyOn(fsUtils, 'readTmpJsonFile').mockReturnValue(mockGenerateOutput);
+      vi.spyOn(runScript, 'runSdkAutoCustomScript').mockResolvedValue('succeeded');
+
+      const result = await workflowCallGenerateScript(
+        mockContext,
+        ['file1.tsp'],
+        [],
+        ['project1']
+      );
+
+      expect(result.status).toBe('succeeded');
+      const writtenInput = vi.mocked(fsUtils.writeTmpJsonFile).mock.calls[0][2] as any;
+      expect(writtenInput.sdkReleaseType).toBeUndefined();
+    });
+
+    it('should pass sdkReleaseType in generateInput when provided as stable', async () => {
+      mockContext.config.sdkReleaseType = 'stable';
+
+      const mockGenerateOutput = {
+        packages: [
+          {
+            packageName: 'test-package',
+            path: ['path/to/package'],
+            result: 'succeeded'
+          }
+        ]
+      };
+
+      vi.spyOn(fsUtils, 'writeTmpJsonFile').mockImplementation(() => undefined);
+      vi.spyOn(fsUtils, 'deleteTmpJsonFile').mockImplementation(() => undefined);
+      vi.spyOn(fsUtils, 'readTmpJsonFile').mockReturnValue(mockGenerateOutput);
+      vi.spyOn(runScript, 'runSdkAutoCustomScript').mockResolvedValue('succeeded');
+
+      const result = await workflowCallGenerateScript(
+        mockContext,
+        ['file1.tsp'],
+        [],
+        ['project1']
+      );
+
+      expect(result.status).toBe('succeeded');
+      const writtenInput = vi.mocked(fsUtils.writeTmpJsonFile).mock.calls[0][2] as any;
+      expect(writtenInput.sdkReleaseType).toBe('stable');
+    });
   });
 
   describe('workflowDetectChangedPackages', () => {

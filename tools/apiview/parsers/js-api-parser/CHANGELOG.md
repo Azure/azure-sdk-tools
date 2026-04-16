@@ -1,3 +1,30 @@
+# 2.0.11
+
+## New Features
+
+- Add dedicated token generator for type aliases
+- Add dedicated token generators for constructors and enum members
+- Add namespace token generator
+- Add call signature, construct signature, and index signature token generators
+
+## Bug Fixes
+
+- Fix PropertySignature and TypeAlias type navigation — add NavigateToId support for type references using a hybrid
+reference map approach
+- Fix extra colon rendering in variable declarations without type annotations
+- Fix destructured parameter double-rendering in constructor, method, function, and callable signature generators
+- Fix package version parsing
+
+## Breaking Changes
+
+- Remove fallback of the old token parser generator
+
+## Other Changes
+
+- Bump minimatch, flatted, ajv, picomatch
+- Release documentation for API view parser
+- Code refactoring 
+
 # 2.0.10
 
 - Fix the path in bin/ts-genapi.cjs

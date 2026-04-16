@@ -26,7 +26,7 @@ WORKFLOW_REGISTRY = {
 
 
 def _parse_conversation_action(
-    *, language: str, code: str, package_name: str, trigger_comment: str, other_comments: list[str]
+    *, language: str, code: str, package_name: str, trigger_comment: dict, other_comments: list[dict]
 ):
     inputs = {
         "language": language,
@@ -51,7 +51,9 @@ def _run_workflow(workflow_name, **kwargs):
     return workflow.run()
 
 
-def handle_mention_request(*, comments: list[str], language: str, package_name: str, code: str) -> str:
+def handle_mention_request(
+    *, comments: list[dict], language: str, package_name: str, code: str, source_comment_id: str = None
+) -> str:
     """
     Central entry point for @mention requests. Parses the action and dispatches to the appropriate workflow.
     """
@@ -80,5 +82,6 @@ def handle_mention_request(*, comments: list[str], language: str, package_name: 
             trigger_comment=trigger_comment,
             other_comments=other_comments,
             reasoning=reasoning,
+            source_comment_id=source_comment_id,
         )
     return f"Unknown or unsupported action: {action}"

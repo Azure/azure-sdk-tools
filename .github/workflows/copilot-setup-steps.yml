@@ -15,15 +15,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: |
-            8.0.x
-            9.0.x
-
-      - name: Build azsdk cli
+      - name: Install azsdk mcp server
+        shell: pwsh
         run: |
-          set -ex
-          dotnet publish -f net8.0 -c Release -r linux-x64 -p:PublishSingleFile=true --self-contained --output ./artifacts/linux-x64 ./tools/azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj
-          cp ./artifacts/linux-x64/azsdk /home/runner/azsdk
-          /home/runner/azsdk --help
+          ./eng/common/mcp/azure-sdk-mcp.ps1 -InstallDirectory $HOME/bin
+

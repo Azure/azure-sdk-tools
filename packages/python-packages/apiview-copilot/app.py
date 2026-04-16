@@ -70,7 +70,12 @@ class ApiReviewJobRequest(BaseModel):
     base: str = None
     outline: str = None
     comments: list = None
-    target_id: str = None
+    target_id: Optional[str] = Field(None, alias="targetId")
+
+    class Config:
+        """Configuration for Pydantic model."""
+
+        populate_by_name = True
 
 
 class ApiReviewJobStatusResponse(BaseModel):
@@ -81,7 +86,18 @@ class ApiReviewJobStatusResponse(BaseModel):
     details: str = None
 
 
-@app.post("/api-review/start", status_code=202)
+class ApiReviewJobStartResponse(BaseModel):
+    """Response model for starting an API review job."""
+
+    job_id: str = Field(..., alias="jobId")
+
+    class Config:
+        """Configuration for Pydantic model."""
+
+        populate_by_name = True
+
+
+@app.post("/api-review/start", status_code=202, response_model=ApiReviewJobStartResponse)
 async def submit_api_review_job(
     job_request: ApiReviewJobRequest,
     _claims=Depends(require_roles(AppRole.WRITER, AppRole.APP_WRITER)),
@@ -126,7 +142,7 @@ async def submit_api_review_job(
 
     # Schedule the job in the background
     asyncio.create_task(run_review_job())
-    return {"job_id": job_id}
+    return ApiReviewJobStartResponse(job_id=job_id)
 
 
 @app.get("/api-review/{job_id}", response_model=ApiReviewJobStatusResponse)
@@ -138,8 +154,8 @@ async def get_api_review_job_status(
     try:
         job = db_manager.review_jobs.get(job_id)
         return job
-    except CosmosResourceNotFoundError:
-        raise HTTPException(status_code=404, detail=f"Job with id {html.escape(str(job_id))} not found")
+    except CosmosResourceNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=f"Job with id {html.escape(str(job_id))} not found") from exc
 
 
 @app.get("/auth-test")
@@ -166,17 +182,27 @@ def cleanup_job_store():
 class AgentChatRequest(BaseModel):
     """Request model for agent chat interaction."""
 
-    user_input: str
-    thread_id: str = None
+    user_input: str = Field(..., alias="userInput")
+    thread_id: Optional[str] = Field(None, alias="threadId")
     messages: list = None  # Optional: for multi-turn
+
+    class Config:
+        """Configuration for Pydantic model."""
+
+        populate_by_name = True
 
 
 class AgentChatResponse(BaseModel):
     """Response model for agent chat interaction."""
 
     response: str
-    thread_id: str
+    thread_id: str = Field(..., alias="threadId")
     messages: list
+
+    class Config:
+        """Configuration for Pydantic model."""
+
+        populate_by_name = True
 
 
 @app.post("/agent/chat", response_model=AgentChatResponse)
@@ -258,6 +284,7 @@ class MentionRequest(BaseModel):
     language: str
     package_name: str = Field(..., alias="packageName")
     code: str
+    source_comment_id: Optional[str] = Field(None, alias="sourceCommentId")
 
     class Config:
         """Configuration for Pydantic model."""
@@ -284,6 +311,7 @@ async def handle_mention(
             language=pretty_language,
             package_name=request.package_name,
             code=request.code,
+            source_comment_id=request.source_comment_id,
         )
         return AgentChatResponse(
             response=response, thread_id="", messages=[]  # No thread ID for this endpoint  # No messages to return
@@ -312,6 +340,7 @@ async def handle_thread_resolution(
             language=pretty_language,
             package_name=request.package_name,
             code=request.code,
+            source_comment_id=request.source_comment_id,
         )
         return AgentChatResponse(
             response=response, thread_id="", messages=[]  # No thread ID for this endpoint  # No messages to return

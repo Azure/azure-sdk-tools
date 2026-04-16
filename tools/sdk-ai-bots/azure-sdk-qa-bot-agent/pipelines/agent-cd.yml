@@ -72,10 +72,7 @@ extends:
                     python -m pip install --upgrade pip
                     python -m pip install keyring artifacts-keyring --retries 5 --timeout 60
 
-                    # Use the internal feed as primary; fall back to PyPI for
-                    # packages (especially pre-release) not in the internal feed.
                     python -m pip config set global.index-url "$PIP_INDEX_URL"
-                    python -m pip config set global.extra-index-url "https://pypi.org/simple/"
 
                     pip install -r requirements.txt --retries 5 --timeout 60
 

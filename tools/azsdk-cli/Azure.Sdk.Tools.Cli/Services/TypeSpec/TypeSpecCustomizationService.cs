@@ -60,7 +60,6 @@ public class TypeSpecCustomizationService : ITypeSpecCustomizationService
         this.logger = logger;
         this.copilotAgentRunner = copilotAgentRunner;
         this.npxHelper = npxHelper;
-        this.tokenUsageHelper = tokenUsageHelper;
         this.typeSpecHelper = typeSpecHelper;
         this.azureSdkKnowledgeBaseService = azureSdkKnowledgeBaseService;
         this.gitHelper = gitHelper;
@@ -87,60 +86,30 @@ public class TypeSpecCustomizationService : ITypeSpecCustomizationService
                 $"Invalid TypeSpec project path: {typespecProjectPath}. Directory must exist and contain tspconfig.yaml.",
                 nameof(typespecProjectPath));
         }
+        
+        var instructions = $"""
+            You are applying TypeSpec client customizations to a client.tsp file.
 
-        // Find reference doc path if not provided
-        if (string.IsNullOrEmpty(referenceDocPath))
-        {
-            referenceDocPath = await FindReferenceDocAsync(typespecProjectPath, ct) ?? throw new FileNotFoundException(
-                    "Could not find customizing-client-tsp.md reference document. Please provide the reference doc path.");
-        }
+            **TypeSpec Project Path:** {typespecProjectPath}
 
-        if (!File.Exists(referenceDocPath))
-        {
-            throw new FileNotFoundException(
-                $"Reference document not found: {referenceDocPath}", referenceDocPath);
-        }
+            **Working Directory for Tools:**
+            All file operations use RELATIVE paths from the TypeSpec project directory above.
+            - To read client.tsp, use: ReadFile("client.tsp")
+            - To read main.tsp, use: ReadFile("main.tsp")
+            - To read files in subdirectories, use: ReadFile("connections/models.tsp")
+            - Do NOT use absolute paths or paths relative to the repository root
+            - The WriteFile and CompileTypeSpec tools also use relative paths from this directory
 
-        logger.LogInformation("Using reference doc: {RefDoc}", referenceDocPath);
-
-        // Read the reference doc content
-        var referenceDocContent = await File.ReadAllTextAsync(referenceDocPath, ct);
-
-        // Build the prompt template
-        var template = new TypeSpecCustomizationTemplate(
-            customizationRequest: customizationRequest,
-            typespecProjectPath: typespecProjectPath,
-            referenceDocContent: referenceDocContent);
-
-        var instructions = template.BuildPrompt();
-        logger.LogDebug("Generated prompt with {Length} characters", instructions.Length);
-
-        // Build request
-        var completionRequest = new CompletionRequest
-        {
-            AzureSdkKnowledgeServiceTenant = AzureSdkKnowledgeServiceTenant.AzureTypespecAuthoring,
-            Message = new Message
-            {
-                Role = Role.User,
-                Content = "how to" + customizationRequest,
-            },
-            WithAgenticSearch = false, // For authoring, disable agentic search
-        };
-
-        //var response = await azureSdkKnowledgeBaseService.SendCompletionRequestAsync(completionRequest, ct);
-
-        //instructions = "apply the solution:" + response.Answer;
-        //logger.LogInformation("Received response from Azure SDK Knowledge Base service. Answer: {Answer}",
-        //   response.Answer);
-        instructions = $"""
-            Please follow the steps:
-            step 1: invoke `azure-sdk-mcp:azsdk_typespec_generate_authoring_plan` with:
+            **Your Tasks:**
+            step 1: Understand the customization request: {customizationRequest}, and read the relavant '.tsp' code from the project to understand the context.
+            step 2: invoke `azure-sdk-mcp:azsdk_typespec_generate_authoring_plan` with:
 
             | Parameter                 | Value                                                                                                                                                                       |
             | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
             | `request`                 |  {customizationRequest} (verbatim)|
+            | `additionalInformation`   | All content gathered from Steps 1 (analysis, relevant `.tsp` code read from the project) |
             | `typeSpecProjectRootPath` | {typespecProjectPath}|
-            step 2: apply the solution return from step 1
+            step 3: apply the solution return from step 2
             """;
         // Create the tools using shared tool factories
         var tools = CreateTools(typespecProjectPath);
@@ -181,7 +150,7 @@ public class TypeSpecCustomizationService : ITypeSpecCustomizationService
             FileTools.CreateReadFileTool(typespecProjectPath, description: "Read the contents of a file from the TypeSpec project directory"),
             FileTools.CreateWriteFileTool(typespecProjectPath, "Write content to a file in the TypeSpec project directory"),
             TypeSpecTools.CreateCompileTypeSpecTool(typespecProjectPath, npxHelper),
-            TypeSpecTools.CreateTypeSpecAuthoringTool(typeSpecAuthoringToolInstance, typespecProjectPath, npxHelper)
+            TypeSpecTools.CreateTypeSpecAuthoringTool(typeSpecAuthoringToolInstance)
         ];
     }
 

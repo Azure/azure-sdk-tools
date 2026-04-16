@@ -89,22 +89,16 @@ public static class TypeSpecTools
 
 
     public static AIFunction CreateTypeSpecAuthoringTool(
-        TypeSpecAuthoringTool toolInstance,
-        string workingDirectory,
-        INpxHelper npxHelper,
-        string entryPoint = "./client.tsp",
-        TimeSpan? timeout = null)
+        TypeSpecAuthoringTool toolInstance)
     {
         ArgumentNullException.ThrowIfNull(toolInstance);
 
-        timeout ??= TimeSpan.FromMinutes(2);
         var toolType = typeof(TypeSpecAuthoringTool);
         var toolMethods = toolType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance)
                                     .Where(m => m.GetCustomAttribute<McpServerToolAttribute>() is not null);
         var toolMethod = toolMethods.First(m => m.Name == nameof(TypeSpecAuthoringTool.GenerateTypeSpecAuthoringPlan));
         var mcpToolAttr = toolMethod.GetCustomAttribute<McpServerToolAttribute>();
         var toolName = mcpToolAttr?.Name ?? toolMethod.Name;
-        Console.WriteLine($"Creating TypeSpec Authoring Tool with method: {toolMethod.Name}, tool name: {toolName}");
         var description = toolMethod.GetCustomAttribute<DescriptionAttribute>()?.Description ?? "TypeSpec authoring tool";
 
         return AIFunctionFactory.Create(

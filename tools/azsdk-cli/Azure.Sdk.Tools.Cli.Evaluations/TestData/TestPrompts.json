@@ -25,6 +25,8 @@
     { "toolName": "azsdk_engsys_codeowner_check_package", "prompt": "Check whether this package has enough CODEOWNERS coverage to unblock release", "category": "all" },
     { "toolName": "azsdk_engsys_codeowner_check_package", "prompt": "Validate package owners, PR labels, and service owners for this SDK package path", "category": "all" },
     { "toolName": "azsdk_engsys_codeowner_check_package", "prompt": "Run the codeowner package check for sdk/storage/Azure.Storage.Blobs", "category": "all" },
+    { "toolName": "azsdk_engsys_codeowner_update_cache", "prompt": "Run the codeowner cache update pipeline to unblock releases", "category": "all" },
+    { "toolName": "azsdk_engsys_codeowner_update_cache", "prompt": "Update the owners cache", "category": "all" },
 
     { "toolName": "azsdk_analyze_log_file", "prompt": "Analyze this log file for errors", "category": "all" },
     { "toolName": "azsdk_analyze_log_file", "prompt": "What errors are in this build log?", "category": "all" },

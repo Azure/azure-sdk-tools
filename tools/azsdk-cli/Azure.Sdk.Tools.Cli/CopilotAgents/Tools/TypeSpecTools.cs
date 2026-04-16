@@ -2,15 +2,10 @@
 // Licensed under the MIT License.
 
 using System.ComponentModel;
-using System.IO.Enumeration;
 using System.Reflection;
-using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Telemetry;
-using Azure.Sdk.Tools.Cli.Tools.Core;
 using Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 using Microsoft.Extensions.AI;
-using Microsoft.TeamFoundation.TestManagement.WebApi;
 using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.CopilotAgents.Tools;

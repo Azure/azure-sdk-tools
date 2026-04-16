@@ -5,9 +5,6 @@ using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.CopilotAgents.Tools;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion;
-using Azure.Sdk.Tools.Cli.Prompts.Templates;
-using Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 using Microsoft.Extensions.AI;
 
 namespace Azure.Sdk.Tools.Cli.Services.TypeSpec;

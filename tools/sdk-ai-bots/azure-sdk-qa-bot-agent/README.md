@@ -53,8 +53,10 @@ Ensure your Azure identity has the following roles:
 3. Install dependencies:
 
    ```bash
-   pip install -r requirements.txt
+   pip install -r requirements-dev.txt
    ```
+
+   This installs all production dependencies plus development tools (`debugpy`, `agent-dev-cli`). CI/CD pipelines and Docker images use `requirements.txt` (production only).
 
 4. Create a `.env` file in the project root with the App Configuration endpoint:
 

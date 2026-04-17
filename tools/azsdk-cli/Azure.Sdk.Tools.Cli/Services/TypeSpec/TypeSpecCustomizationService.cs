@@ -99,7 +99,7 @@ public class TypeSpecCustomizationService : ITypeSpecCustomizationService
 
             **Your Tasks:**
             step 1: Understand the customization request: {customizationRequest}, and read the relevant '.tsp' code from the project to understand the context.
-            step 2: invoke `azsdk_typespec_generate_authoring_plan` with:
+            step 2: invoke `azure-sdk-mcp:azsdk_typespec_generate_authoring_plan` with:
 
             | Parameter                 | Value                                                                                                                                                                       |
             | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

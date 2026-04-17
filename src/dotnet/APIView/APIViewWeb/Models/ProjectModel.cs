@@ -26,9 +26,8 @@ public class Project
     public string Description { get; set; }
     public List<string> Owners { get; set; }
     public string Namespace { get; set; }
-    public Dictionary<string, List<PackageInfo>> ExpectedPackages { get; set; }
-    // Flat lookup tokens in the form "language::packagename" (lowercase). Used for cheap Cosmos ARRAY_CONTAINS queries.
-    public List<string> PackageLookup { get; set; } = [];
+    public List<string> ExpectedPackages { get; set; } = [];
+    public List<string> ExpectedNamespaces { get; set; } = [];
     public ProjectNamespaceInfo NamespaceInfo { get; set; }
     public List<ProjectChangeHistory> ChangeHistory { get; set; }
     // Maps language name (e.g. "Python", "JavaScript") to the list of associated review IDs.

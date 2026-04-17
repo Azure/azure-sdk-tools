@@ -157,20 +157,9 @@ namespace APIViewWeb.LeanControllers
                 return new LeanJsonResult(new { status = (string)null }, StatusCodes.Status200OK);
             }
 
-            // Resolve the namespace for this review via ExpectedPackages (the authoritative language→package→namespace map).
-            // This is stable even if PackageName or ReviewId changes on the entry.
-            string resolvedNamespace = null;
-            if (project.ExpectedPackages != null &&
-                project.ExpectedPackages.TryGetValue(review.Language, out var pkgInfos))
-            {
-                resolvedNamespace = pkgInfos
-                    .FirstOrDefault(p => string.Equals(p.PackageName, review.PackageName, StringComparison.OrdinalIgnoreCase))
-                    ?.Namespace;
-            }
-
-            NamespaceDecisionEntry entry = resolvedNamespace != null
-                ? nsEntries.FirstOrDefault(e => string.Equals(e.Namespace, resolvedNamespace, StringComparison.OrdinalIgnoreCase))
-                : nsEntries.Count == 1 ? nsEntries[0] : null;
+            NamespaceDecisionEntry entry = nsEntries.Count == 1
+                ? nsEntries[0]
+                : nsEntries.FirstOrDefault(e => string.Equals(e.PackageName, review.PackageName, StringComparison.OrdinalIgnoreCase));
 
             if (entry == null)
             {

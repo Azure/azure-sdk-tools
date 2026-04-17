@@ -170,10 +170,10 @@ public class TypeSpecMetadataIntegrationTests
         Assert.Equal("Azure Purview Analytics client library", capturedProject.Description);
         Assert.Equal(4, capturedProject.ExpectedPackages.Count);
 
-        Assert.Equal("azure-purview-analytics", capturedProject.ExpectedPackages["Python"][0].PackageName);
-        Assert.Equal("@azure/purview-analytics", capturedProject.ExpectedPackages["JavaScript"][0].PackageName);
-        Assert.Equal("com.azure.analytics.purview", capturedProject.ExpectedPackages["Java"][0].PackageName);
-        Assert.Equal("Azure.Analytics.Purview", capturedProject.ExpectedPackages["C#"][0].PackageName);  // "DotNet" aliased to "C#"
+        Assert.Contains("python::azure-purview-analytics", capturedProject.ExpectedPackages);
+        Assert.Contains("javascript::@azure/purview-analytics", capturedProject.ExpectedPackages);
+        Assert.Contains("java::com.azure.analytics.purview", capturedProject.ExpectedPackages);
+        Assert.Contains("c#::azure.analytics.purview", capturedProject.ExpectedPackages);  // "DotNet" aliased to "C#"
 
         Assert.Equal(capturedProject.Id, typeSpecReview.ProjectId);
         _mockProjectsRepository.Verify(r => r.UpsertProjectAsync(capturedProject), Times.Once);
@@ -190,12 +190,7 @@ public class TypeSpecMetadataIntegrationTests
             Id = "project-azure-core",
             CrossLanguagePackageId = "Azure.Core",
             Namespace = "Azure.Core",
-            ExpectedPackages = new Dictionary<string, List<PackageInfo>>
-            {
-                ["Python"] = [new() { PackageName = "azure-core", Namespace = "azure.core" }],
-                ["JavaScript"] =
-                    [new() { PackageName = "@azure/core-rest-pipeline", Namespace = "@azure/core-rest-pipeline" }]
-            },
+            ExpectedPackages = ["python::azure-core", "javascript::@azure/core-rest-pipeline"],
             Reviews = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase),
             ChangeHistory = new List<ProjectChangeHistory>()
         };
@@ -221,7 +216,8 @@ public class TypeSpecMetadataIntegrationTests
         Assert.NotNull(linkedProject);
         Assert.Equal("project-azure-core", linkedProject.Id);
         Assert.Equal("project-azure-core", pythonReview.ProjectId);
-        Assert.True(linkedProject.Reviews.Values.Any(v => v.Contains("python-review-azure-core")));
+        Assert.Contains("python-review-azure-core", linkedProject.Reviews.Values.SelectMany(v => v));
+
 
         _mockProjectsRepository.Verify(r => r.GetProjectByExpectedPackageAsync("Python", "azure-core"), Times.Once);
         _mockReviewsRepository.Verify(r => r.UpsertReviewAsync(pythonReview), Times.Once);
@@ -236,10 +232,8 @@ public class TypeSpecMetadataIntegrationTests
             CrossLanguagePackageId = "Azure.Storage",
             Namespace = "Azure.Storage.Old",
             Description = "Old description",
-            ExpectedPackages = new Dictionary<string, List<PackageInfo>>
-            {
-                ["Python"] = [new() { PackageName = "azure-storage-old", Namespace = "azure.storage" }]
-            },
+            ExpectedPackages = ["python::azure-storage-old"],
+            ExpectedNamespaces = ["python::azure.storage"],
             ChangeHistory = new List<ProjectChangeHistory>(),
             Reviews = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase)
         };
@@ -275,7 +269,7 @@ public class TypeSpecMetadataIntegrationTests
         Assert.NotNull(updatedProject);
         Assert.Equal("Azure.Storage.Blobs", updatedProject.Namespace);
         Assert.Equal("New blob storage documentation", updatedProject.Description);
-        Assert.Equal("azure-storage-blob", updatedProject.ExpectedPackages["Python"][0].PackageName);
+        Assert.Contains("python::azure-storage-blob", updatedProject.ExpectedPackages);
 
         Assert.Single(updatedProject.ChangeHistory);
         Assert.Equal(ProjectChangeAction.Edited, updatedProject.ChangeHistory[0].ChangeAction);

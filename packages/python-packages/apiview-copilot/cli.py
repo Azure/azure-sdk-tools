@@ -1796,7 +1796,7 @@ def report_metrics(
 def report_comment_bucket_trends(
     months: int = 6,
     languages: Optional[list[str]] = None,
-    human: bool = False,
+    exclude_human: bool = False,
     neutral: bool = False,
     environment: str = "production",
     end_date: Optional[str] = None,
@@ -1809,25 +1809,27 @@ def report_comment_bucket_trends(
         except ValueError as exc:
             raise CLIError("Invalid --end-date value. Use YYYY-MM-DD format.") from exc
 
+    include_human = not exclude_human
+
     reports = build_language_comment_bucket_reports(
         languages=languages,
         months=months,
         end_date=parsed_end_date,
-        include_human=human,
+        include_human=include_human,
         include_neutral=neutral,
         environment=environment,
     )
     saved_path = generate_comment_bucket_chart(
         reports,
         output_path=DEFAULT_COMMENT_BUCKET_OUTPUT_PATH,
-        include_human=human,
+        include_human=include_human,
         include_neutral=neutral,
         raw=False,
     )
     print_comment_bucket_report(
         reports,
         saved_path,
-        include_human=human,
+        include_human=include_human,
         include_neutral=neutral,
     )
 
@@ -2771,10 +2773,10 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="Languages to include. Defaults to Python, C#, Java, and JavaScript.",
             )
             ac.argument(
-                "human",
+                "exclude_human",
                 action="store_true",
-                options_list=["--human"],
-                help="Include human comments as a separate bucket.",
+                options_list=["--exclude-human"],
+                help="Exclude human comments from the chart.",
             )
             ac.argument(
                 "neutral",

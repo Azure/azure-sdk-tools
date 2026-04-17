@@ -596,9 +596,9 @@ def main() -> None:
         help="Languages to include. Defaults to Python, C#, Java, and JavaScript.",
     )
     parser.add_argument(
-        "--human",
+        "--exclude-human",
         action="store_true",
-        help="Include human comments from Copilot-enabled approved revisions as a light-blue bucket.",
+        help="Exclude human comments from Copilot-enabled approved revisions.",
     )
     parser.add_argument(
         "--neutral",
@@ -628,24 +628,26 @@ def main() -> None:
     args = parser.parse_args()
     raw = args.chart_format == "raw"
 
+    include_human = not args.exclude_human
+
     reports = build_language_comment_bucket_reports(
         languages=args.languages,
         months=args.months,
         end_date=args.end_date,
-        include_human=args.human,
+        include_human=include_human,
         include_neutral=args.neutral,
         environment=args.environment,
     )
     output_path = generate_comment_bucket_chart(
         reports,
         output_path=args.output,
-        include_human=args.human,
+        include_human=include_human,
         include_neutral=args.neutral,
         raw=raw,
     )
     print_comment_bucket_report(
         reports,
         output_path,
-        include_human=args.human,
+        include_human=include_human,
         include_neutral=args.neutral,
     )

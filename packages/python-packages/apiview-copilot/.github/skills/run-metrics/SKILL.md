@@ -98,10 +98,10 @@ if (Test-Path output/charts/comment_bucket_trends.png) { Remove-Item output/char
 ```
 
 Optional additions:
-- `--environment staging`
-- `--languages Python CSharp Java TypeScript`
-- `--human`
-- `--neutral`
+- --environment staging
+- --languages Python CSharp Java TypeScript
+- --exclude-human
+- --neutral
 
 After it completes, summarize the terminal output and use `view_image` to show the saved chart at `output/charts/comment_bucket_trends.png`.
 

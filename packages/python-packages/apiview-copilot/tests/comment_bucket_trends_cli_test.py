@@ -25,7 +25,7 @@ def test_get_last_n_month_ranges_includes_partial_end_month():
 
 
 def test_report_comment_bucket_trends_generates_chart(monkeypatch):
-    """The CLI helper should pass the selected options through to the chart generator."""
+    """The CLI helper should include human comments by default and pass options through."""
     observed = {}
 
     def fake_build_language_comment_bucket_reports(
@@ -72,7 +72,7 @@ def test_report_comment_bucket_trends_generates_chart(monkeypatch):
         months=4,
         end_date="2026-04-01",
         languages=["Python", "Java"],
-        human=True,
+        exclude_human=False,
         neutral=True,
     )
 
@@ -90,3 +90,27 @@ def test_report_comment_bucket_trends_generates_chart(monkeypatch):
     assert observed["chart"]["include_neutral"] is True
     assert observed["chart"]["raw"] is False
     assert observed["print"]["output_path"] == cli.DEFAULT_COMMENT_BUCKET_OUTPUT_PATH
+
+
+def test_report_comment_bucket_trends_can_exclude_human_comments(monkeypatch):
+    """The CLI helper should exclude human comments only when explicitly requested."""
+    observed = {}
+
+    def fake_build_language_comment_bucket_reports(
+        languages,
+        months,
+        end_date,
+        include_human,
+        include_neutral,
+        environment,
+    ):
+        observed["include_human"] = include_human
+        return {"Python": []}
+
+    monkeypatch.setattr(cli, "build_language_comment_bucket_reports", fake_build_language_comment_bucket_reports)
+    monkeypatch.setattr(cli, "generate_comment_bucket_chart", lambda *args, **kwargs: cli.DEFAULT_COMMENT_BUCKET_OUTPUT_PATH)
+    monkeypatch.setattr(cli, "print_comment_bucket_report", lambda *args, **kwargs: None)
+
+    cli.report_comment_bucket_trends(exclude_human=True)
+
+    assert observed["include_human"] is False

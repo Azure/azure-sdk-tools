@@ -172,6 +172,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         private const string removeLabelToPackageCommandName = "remove-package-label";
         private const string removeLabelOwnerCommandName = "remove-label-owner";
         private const string checkPackageCommandName = "check-package";
+        private const string updateCacheCommandName = "update-cache";
 
 
         // MCP Tool Names
@@ -183,6 +184,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         private const string CodeownerRemoveLabelToolName = "azsdk_engsys_codeowner_remove_package_label";
         private const string CodeownerRemoveLabelOwnerToolName = "azsdk_engsys_codeowner_remove_label_owner";
         private const string CodeownerCheckPackageToolName = "azsdk_engsys_codeowner_check_package";
+        private const string CodeownerUpdateCacheToolName = "azsdk_engsys_codeowner_update_cache";
 
         public CodeownersTool(
             IGitHubService githubService,
@@ -249,7 +251,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             new(checkPackageCommandName, "Check that a package has sufficient owners, PR labels, and service owners from a CODEOWNERS cache file")
             {
                 directoryPathOption, optionalRepoOption, codeownersCacheOption,
-            }
+            },
+            new McpCommand(updateCacheCommandName, "Run the CODEOWNERS cache update pipeline", CodeownerUpdateCacheToolName),
         ];
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
@@ -345,6 +348,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 var cachePath = parseResult.GetValue(codeownersCacheOption);
                 var repo = parseResult.GetValue(optionalRepoOption);
                 return await CheckPackage(directoryPath!, cachePath, repo, ct);
+            }
+
+            if (command == updateCacheCommandName)
+            {
+                return await UpdateCache(ct);
             }
 
             return new DefaultCommandResponse { ResponseError = $"Unknown command: '{command}'" };
@@ -711,6 +719,31 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             {
                 logger.LogError(ex, "Error removing label owner(s)");
                 return new DefaultCommandResponse { ResponseError = ex.Message };
+            }
+        }
+
+        private const int UpdateCachePipelineDefinitionId = 5112;
+
+        [McpServerTool(Name = CodeownerUpdateCacheToolName), Description("Run the CODEOWNERS cache update pipeline. Use this after making changes to ownership information to unblock releases or other pipelines.")]
+        public async Task<DefaultCommandResponse> UpdateCache(CancellationToken ct = default)
+        {
+            try
+            {
+                var build = await devOpsService.RunPipelineAsync(UpdateCachePipelineDefinitionId, new Dictionary<string, string>(), ct: ct);
+                var pipelineUrl = DevOpsService.GetPipelineUrl(build.Id);
+                logger.LogInformation("Started CODEOWNERS cache update pipeline: {pipelineUrl}", pipelineUrl);
+                return new DefaultCommandResponse
+                {
+                    Message = $"CODEOWNERS cache update pipeline started successfully. Build id: {build.Id}. Pipeline run: {pipelineUrl}"
+                };
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to start CODEOWNERS cache update pipeline");
+                return new DefaultCommandResponse
+                {
+                    ResponseError = $"Failed to start CODEOWNERS cache update pipeline: {ex.Message}"
+                };
             }
         }
 

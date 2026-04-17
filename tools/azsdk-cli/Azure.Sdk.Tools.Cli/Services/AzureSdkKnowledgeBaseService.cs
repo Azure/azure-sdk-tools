@@ -29,9 +29,9 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         private static readonly ServiceInfo DefaultAzureSdkKnowledgeService = new()
         {
-            Endpoint = "https://azuresdkqabot-dev-serve-authoring-epgbcvbpa3adcvcu.westus2-01.azurewebsites.net",
-            ClientId = "830f1656-8b36-4e8e-9781-87ccdd038644",
-            AuthScope = "api://azure-sdk-qa-bot-dev/token"
+            Endpoint = "https://azuresdkqabot-server-c8czabhzhweadwgu.westus2-01.azurewebsites.net",
+            ClientId = "899da762-d510-48f2-911a-db9ea0cc41fd",
+            AuthScope = "api://azure-sdk-qa-bot/token"
         };
 
         public AzureSdkKnowledgeBaseService(

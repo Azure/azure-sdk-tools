@@ -17,7 +17,7 @@ namespace APIViewWeb
         public override string Name { get; } = "Go";
         public override string [] Extensions { get; } = { ".gosource" };
         public override string ProcessName { get; } = "apiviewgo";
-        public override string VersionString { get; } = "0.1";
+        public override string VersionString { get; } = "0.2";
 
         public GoLanguageService(TelemetryClient telemetryClient) : base(telemetryClient)
         {

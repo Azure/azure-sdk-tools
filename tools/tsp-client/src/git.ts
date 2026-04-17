@@ -2,14 +2,18 @@ import { spawn } from "child_process";
 import { simpleGit } from "simple-git";
 
 export async function getRepoRoot(repoPath: string): Promise<string> {
-  return simpleGit(repoPath).revparse(["--show-toplevel"]);
+  return simpleGit(repoPath)
+    .revparse(["--show-toplevel"])
+    .catch((err) => {
+      throw new Error(`Failed to get repo root: ${err}`);
+    });
 }
 
 export async function cloneRepo(rootUrl: string, cloneDir: string, repo: string): Promise<void> {
   return new Promise((resolve, reject) => {
     simpleGit(rootUrl).clone(repo, cloneDir, ["--no-checkout", "--filter=tree:0"], (err) => {
       if (err) {
-        reject(err);
+        reject(new Error(`git clone failed with error: ${err}`));
       }
       resolve();
     });
@@ -58,7 +62,7 @@ export async function checkoutCommit(cloneDir: string, commit: string): Promise<
   return new Promise((resolve, reject) => {
     simpleGit(cloneDir).checkout(commit, undefined, (err) => {
       if (err) {
-        reject(err);
+        reject(new Error(`git checkout failed with error: ${err}`));
       }
       resolve();
     });

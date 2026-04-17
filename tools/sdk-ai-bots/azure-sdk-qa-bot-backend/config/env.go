@@ -23,12 +23,13 @@ const (
 )
 
 type Config struct {
-	AOAI_CHAT_REASONING_MODEL      string
-	AOAI_CHAT_COMPLETIONS_MODEL    string
-	AOAI_CHAT_COMPLETIONS_TOP_P    float32
-	AOAI_CHAT_MAX_TOKENS           int
-	AOAI_CHAT_CONTEXT_MAX_TOKENS   int
-	AOAI_CHAT_COMPLETIONS_ENDPOINT string
+	AOAI_CHAT_REASONING_MODEL                  string
+	AOAI_CHAT_REASONING_MODEL_REASONING_EFFORT string
+	AOAI_CHAT_COMPLETIONS_MODEL                string
+	AOAI_CHAT_COMPLETIONS_REASONING_EFFORT     string
+	AOAI_CHAT_MAX_TOKENS                       int
+	AOAI_CHAT_CONTEXT_MAX_TOKENS               int
+	AOAI_CHAT_COMPLETIONS_ENDPOINT             string
 
 	AI_SEARCH_BASE_URL           string
 	AI_SEARCH_INDEX              string
@@ -36,6 +37,7 @@ type Config struct {
 	AI_SEARCH_KNOWLEDGE_BASE     string
 	AI_SEARCH_KNOWLEDGE_SOURCE   string
 	AI_SEARCH_KNOWLEDGE_BASE_API string
+	AI_SEARCH_TOPK               int
 
 	STORAGE_BASE_URL            string
 	STORAGE_KNOWLEDGE_CONTAINER string
@@ -43,6 +45,11 @@ type Config struct {
 	STORAGE_RECORDS_CONTAINER   string
 
 	KEYVAULT_ENDPOINT string
+
+	GITHUB_APP_ID                 string
+	GITHUB_APP_KEY_NAME           string
+	GITHUB_APP_KEYVAULT_URL       string
+	GITHUB_APP_INSTALLATION_OWNER string
 }
 
 var BotEnv *BotENV
@@ -95,6 +102,27 @@ func GetBotTenantID() string {
 }
 
 func initCredential() error {
+	// Detect Azure DevOps pipeline environment via SYSTEM_ACCESSTOKEN.
+	// When running in a pipeline, use AzurePipelinesCredential directly.
+	systemAccessToken := os.Getenv("SYSTEM_ACCESSTOKEN")
+	if len(systemAccessToken) > 0 {
+		pipelinesClientID := os.Getenv("AZURESUBSCRIPTION_CLIENT_ID")
+		pipelinesTenantID := os.Getenv("AZURESUBSCRIPTION_TENANT_ID")
+		serviceConnectionID := os.Getenv("AZURESUBSCRIPTION_SERVICE_CONNECTION_ID")
+		if len(pipelinesClientID) > 0 && len(pipelinesTenantID) > 0 && len(serviceConnectionID) > 0 {
+			pipelinesCred, pipelinesErr := azidentity.NewAzurePipelinesCredential(pipelinesTenantID, pipelinesClientID, serviceConnectionID, systemAccessToken, nil)
+			if pipelinesErr == nil {
+				Credential = pipelinesCred
+				log.Printf("Running in Azure DevOps pipeline; using Azure Pipelines credential")
+				return nil
+			}
+			log.Printf("Azure Pipelines credential creation failed: %v", pipelinesErr)
+		} else {
+			log.Printf("SYSTEM_ACCESSTOKEN is set but AZURESUBSCRIPTION_* env vars are incomplete; falling back to credential chain")
+		}
+	}
+
+	// Not in a pipeline (or pipeline credential setup failed) — build a credential chain.
 	var creds []azcore.TokenCredential
 
 	// 1: Workload Identity
@@ -145,6 +173,8 @@ func initCredential() error {
 }
 
 func InitConfiguration() {
+	// Try to load environment variables from .env file
+	LoadEnvFile()
 	// Initialize the global credential first
 	if err := initCredential(); err != nil {
 		log.Fatalf("Failed to create credential: %v", err)

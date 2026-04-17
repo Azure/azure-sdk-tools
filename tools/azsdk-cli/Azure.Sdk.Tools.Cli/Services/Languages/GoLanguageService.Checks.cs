@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 namespace Azure.Sdk.Tools.Cli.Services.Languages;
@@ -11,6 +12,13 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages;
 public partial class GoLanguageService : LanguageService
 {
     #region Go specific functions, not part of the LanguageRepoService
+
+    private string goUnix => "go";
+    private string goWin => "go.exe";
+    private string gofmtUnix => "gofmt";
+    private string gofmtWin => "gofmt.exe";
+    private string golangciLintUnix => "golangci-lint";
+    private string golangciLintWin => "golangci-lint.exe";
 
     public async Task<bool> CheckDependencies(CancellationToken ct)
     {
@@ -85,7 +93,7 @@ public partial class GoLanguageService : LanguageService
 
                 if (goModVersion.Major == 1 && goModVersion.Minor == 23)
                 {
-                    // For compatibility, we'll ensure that the toolchain/go-version does not upgrade for modules 
+                    // For compatibility, we'll ensure that the toolchain/go-version does not upgrade for modules
                     // that are still set at 1.23. See this issue for some context:
                     //   https://github.com/Azure/azure-sdk-for-go/issues/25407
                     goGetArgs.AddRange(["toolchain@none", "go@1.23.0"]);
@@ -142,7 +150,7 @@ public partial class GoLanguageService : LanguageService
             var processResults = new List<ProcessResult>();
 
             // run the standard golangci-lint
-            var repoRoot = gitHelper.DiscoverRepoRoot(packagePath);
+            var repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
             var packageName = await GetSubPath(packagePath, ct);
             var result = await processHelper.Run(new ProcessOptions(golangciLintUnix, golangciLintWin, ["run", "--config", Path.Join(repoRoot, "eng", ".golangci.yml")], workingDirectory: packagePath), ct);
             processResults.Add(result);
@@ -193,9 +201,9 @@ public partial class GoLanguageService : LanguageService
     /// </summary>
     /// <param name="packagePath">The full path to the package</param>
     /// <returns>The sub-path (ex: sdk/messaging/azservicebus)</returns>
-    public Task<string> GetSubPath(string packagePath, CancellationToken cancellationToken = default)
+    public async Task<string> GetSubPath(string packagePath, CancellationToken cancellationToken = default)
     {
-        var gitRepoPath = gitHelper.DiscoverRepoRoot(packagePath);
+        var gitRepoPath = await gitHelper.DiscoverRepoRootAsync(packagePath, cancellationToken);
 
         // ex: sdk/messaging/azservicebus/
         var relativePath = Path.GetRelativePath(gitRepoPath, packagePath);
@@ -203,7 +211,7 @@ public partial class GoLanguageService : LanguageService
         // Ensure forward slashes for Go package names and remove trailing slash
         var subPathNormalized = relativePath.Replace(Path.DirectorySeparatorChar, '/');
 
-        return Task.FromResult(subPathNormalized.TrimEnd('/'));
+        return subPathNormalized.TrimEnd('/');
     }
 
     public override async Task<PackageCheckResponse> UpdateSnippets(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
@@ -217,11 +225,11 @@ public partial class GoLanguageService : LanguageService
         return await commonValidationHelpers.ValidateChangelog(packageSubPath, packagePath, fixCheckErrors, cancellationToken);
     }
 
-    public override async Task<TestRunResponse> RunAllTests(string packagePath, CancellationToken ct = default)
+    public override async Task<TestRunResponse> RunAllTests(string packagePath, TestMode testMode = TestMode.Playback, IDictionary<string, string>? liveTestEnvironment = null, TimeSpan? timeout = null, CancellationToken ct = default)
     {
         try
         {
-            var result = await processHelper.Run(new ProcessOptions(goUnix, goWin, ["test", "-v", "-timeout", "1h", "./..."], workingDirectory: packagePath), ct);
+            var result = await processHelper.Run(new ProcessOptions(goUnix, goWin, ["test", "-v", "-timeout", "1h", "./..."], workingDirectory: packagePath, timeout: timeout), ct);
             return new TestRunResponse(result);
         }
         catch (Exception ex)

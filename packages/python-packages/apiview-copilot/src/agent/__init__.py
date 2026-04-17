@@ -8,6 +8,6 @@
 Initialize the agent module for APIView Copilot.
 """
 
-from ._agent import get_main_agent
+from ._agent import get_readwrite_agent
 
-__all__ = ["get_main_agent"]
+__all__ = ["get_readwrite_agent"]

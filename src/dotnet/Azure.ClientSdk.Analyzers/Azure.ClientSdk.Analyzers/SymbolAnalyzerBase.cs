@@ -11,6 +11,7 @@ namespace Azure.ClientSdk.Analyzers
         private const string ClientOptionsSuffix = "ClientOptions";
         private const string ClientsOptionsSuffix = "ClientsOptions";
         private const string AzureCoreClientOptions = "Azure.Core.ClientOptions";
+        private const string SystemClientModelClientSettings = "System.ClientModel.Primitives.ClientSettings";
 
         public abstract SymbolKind[] SymbolKinds { get; }
         public abstract void Analyze(ISymbolAnalysisContext context);
@@ -51,6 +52,29 @@ namespace Azure.ClientSdk.Analyzers
                 if ($"{fullName}".Equals(AzureCoreClientOptions))
                 {
                     return typeSymbol.Name.EndsWith(ClientOptionsSuffix) || typeSymbol.Name.EndsWith(ClientsOptionsSuffix);
+                }
+
+                baseType = baseType.BaseType;
+            }
+
+            return false;
+        }
+
+        protected bool IsClientSettingsType(ITypeSymbol typeSymbol)
+        {
+            if (typeSymbol.TypeKind != TypeKind.Class || typeSymbol.DeclaredAccessibility != Accessibility.Public)
+            {
+                return false;
+            }
+            
+            ITypeSymbol baseType = typeSymbol.BaseType;
+            while (baseType != null) 
+            {
+                // validate if the base type is System.ClientModel.ClientSettings
+                var fullName = $"{baseType.ContainingNamespace.GetFullNamespaceName()}.{baseType.Name}";
+                if ($"{fullName}".Equals(SystemClientModelClientSettings))
+                {
+                    return true;
                 }
 
                 baseType = baseType.BaseType;

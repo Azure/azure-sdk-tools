@@ -1,4 +1,8 @@
 # Release History
+
+## 0.7.3
+- Made directory wildcard exclusions ending in `dir/**` stop the tool from traversing that directory. This prevents unnecessary traversal of deeply nested folders like `node_modules`.
+
 ## 0.7.2
 - Add and `--repo-root` argument. This allows scoping of the run to any directory in the repo as long as all entries in the config file are relative to this directory.
 

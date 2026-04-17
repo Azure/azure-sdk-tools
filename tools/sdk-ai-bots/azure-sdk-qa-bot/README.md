@@ -53,11 +53,41 @@ For example, resources in the production East Asia environment would be prefixed
 
 This naming convention ensures consistency and makes it easy to identify which environment and region each resource belongs to.
 
+## Debug in local
+
+we can debug/test bot frontend and backend service locally.
+> **Prerequisites**
+>
+> - Install [Teams Toolkit VS Code Extension](https://marketplace.visualstudio.com/items?itemName=TeamsDevApp.ms-teams-vscode-extension)
+
+### Start Backend Service
+
+```bash
+cd ../azure-sdk-qa-bot-backend
+go mod download
+go run main.go
+```
+
+### Start Bot app
+
+1. Click 'Debug in Microsoft 365 Agents Playground' button in ENVIRONMENT 'testtool'
+   ![debug-local](doc\images\debug-local.png)
+2. choose 'Node.js' -> Run Script: dev:teamsfx:testtool
+
+### Start Microsoft 365 Agents Playground - Simulate Teams Channel
+
+1. Click 'Debug in Microsoft 365 Agents Playground' button in ENVIRONMENT 'testtool'
+2. choose 'Node.js' -> Run Script: dev:teamsfx:launch-teams-testtool
+
+### Test
+
+Type question in Microsoft 365 Agents Playground
+
 ## Deploy to Azure
 
 ## Environments
 
-`<env>` mentioned below sections can be found in `env/.env.*` as the last part, which indicate the environments for the bot 
+`<env>` mentioned below sections can be found in `env/.env.*` as the last part, which indicate the environments for the bot.
 
 - prod: Production environment for Azure SDK team
 - preprod: Pre-production environment for Azure SDK Q&A Bot Testing team

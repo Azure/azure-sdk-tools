@@ -15,7 +15,7 @@ WEBAPP_NAME: apiview-copilot
 FOUNDRY_ACCOUNT_NAME: azsdk-engsys-ai
 FOUNDRY_PROJECT_NAME: azsdk-engsys-ai
 FOUNDRY_KERNEL_MODEL: gpt-5
-FOUNDRY_API_VERSION: 2025-05-15-preview
+FOUNDRY_API_VERSION: 2025-11-15-preview
 AI_RG: azsdk-engsys-ai
 OPENAI_NAME: azsdk-engsys-openai
 OPENAI_EMBEDDING_MODEL: text-embedding-3-large

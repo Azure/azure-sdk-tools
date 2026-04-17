@@ -1,12 +1,13 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
-using Microsoft.TeamFoundation.TestManagement.WebApi;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Core
 {
-    public abstract class LanguageMcpTool: MCPTool
+    public abstract class LanguageMcpTool : MCPTool
     {
         protected IEnumerable<LanguageService> languageServices;
         protected ILogger<LanguageMcpTool> logger;
@@ -20,9 +21,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Core
         }
 
 #pragma warning disable MCP003 // Tool methods must return Response types, built-in value types, or string
-        public LanguageService GetLanguageService(string packagePath)
+        public async Task<LanguageService> GetLanguageServiceAsync(string packagePath, CancellationToken ct = default)
         {
-            var language = SdkLanguageHelpers.GetLanguageForRepoPath(gitHelper, packagePath);
+            var language = await SdkLanguageHelpers.GetLanguageForRepoPathAsync(gitHelper, packagePath, ct);
             if (language == SdkLanguage.Unknown)
             {
                 return null;
@@ -35,6 +36,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Core
             var service = languageServices.FirstOrDefault(s => s.Language == language);
             return service;
         }
-#pragma warning restore MCP003 // Tool methods must return Response types, built-in value types, or string        
+#pragma warning restore MCP003 // Tool methods must return Response types, built-in value types, or string
     }
 }

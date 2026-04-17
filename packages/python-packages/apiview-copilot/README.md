@@ -9,10 +9,9 @@ The simplest way to get started:
 1. Install this package with `pip install -r requirements.txt` or `pip install -r dev_requirements.txt` if you also need to run evaluations.
 2. Create a `.env` file with the following contents to access the staging environment:
 ```
-AZURE_APP_CONFIG_ENDPOINT="https://avc-appconfig-staging.azconfig.io"
 ENVIRONMENT_NAME="staging"
-OPENAI_ENDPOINT="https://azsdk-engsys-openai.openai.azure.com/"
 ```
+> **Note:** The App Configuration endpoint is resolved automatically from `ENVIRONMENT_NAME`. All other settings (Foundry endpoint, project, API keys, Cosmos DB, etc.) are resolved at runtime from Azure App Configuration.
 3. Create one or more test files in plain-text for the language of choice. Store them in `scratch/apiviews/<lang>/`.
 4. Generate a review using `avc review generate -l <LANG> -t <PATH_TO_TARGET_FILE> [-b <PATH_TO_BASE_FILE>] [--debug-log] [--remote]`.
 5. Examine the output under `scratch/output/<LANG>/<TEST_FILE>.json`.
@@ -49,7 +48,7 @@ avc review get-job --job-id <JOB_ID>
 
 Commands available for working with the Flask app:
 
-- `avc app deploy`: Deploy the Flask app to Azure App Service based on what App Configuration is set in your .env file.
+- `avc ops deploy`: Deploy the Flask app to Azure App Service based on what App Configuration is set in your .env file.
 
 ## Running Evaluations
 
@@ -59,15 +58,37 @@ To run evaluations, see: [evals/README.md](./evals/README.md)
 
 Commands available for querying the search indexes:
 
-- `avc search guidelines`: Search the guidelines for a query.
-- `avc search examples`: Search the examples index for a query.
-- `avc search kb`: This searches the examples and guidelines index for a query. It will resolve references and return a `Context` object that is filled into the prompt.
+- `avc kb search`: This searches the examples and guidelines index for a query. It will resolve references and return a `Context` object that is filled into the prompt.
 
 If you would like to search the knowledge base and see the output the way the LLM will see it, you can do the following:
 
-`avc search kb --text "query" -l <LANG> --markdown > context.md`
+`avc kb search --text "query" -l <LANG> --markdown > context.md`
 
 This will dump the results to context.md which you can then view in VSCode with the preview editor.
+
+## Database Commands
+
+Commands for managing knowledge base items:
+
+### Linking Items
+
+```bash
+avc db link -g <GUIDELINE_ID> -m <MEMORY_ID> [--reindex]
+avc db link -g <GUIDELINE_ID> -e <EXAMPLE_ID> [--reindex]
+avc db link -m <MEMORY_ID> -e <EXAMPLE_ID> [--reindex]
+```
+
+Links two knowledge base items by adding each other's ID to their related collections. Provide exactly two of `--guideline (-g)`, `--memory (-m)`, or `--example (-e)`. If the second update fails, a best-effort rollback of the first is attempted to keep both items consistent. Use `--reindex` to trigger a full search reindex after linking.
+
+### Unlinking Items
+
+```bash
+avc db unlink -g <GUIDELINE_ID> -m <MEMORY_ID> [--reindex]
+avc db unlink -g <GUIDELINE_ID> -e <EXAMPLE_ID> [--reindex]
+avc db unlink -m <MEMORY_ID> -e <EXAMPLE_ID> [--reindex]
+```
+
+Removes the link between two knowledge base items. Same flags and best-effort rollback behavior as `db link`. Use `--reindex` to trigger a full search reindex after unlinking.
 
 ## Getting Comments from APIView
 
@@ -77,8 +98,38 @@ If you need to retrieve comments from APIView, you can use the following command
 
 This command retrieves comments from APIView for a specific review ID. You can specify the environment (production or staging) to get the comments from the appropriate APIView instance, but the default is production.
 
+### Resolving Package Information
+
+`avc apiview resolve-package --package <PACKAGE_DESCRIPTION> --language <LANGUAGE> [--version <VERSION>] [--environment "production"|"staging"]`
+
+This command resolves package information from a package description and language. It uses a multi-stage matching strategy (exact match → LLM fallback):
+1. **Exact match**: Searches for packages that exactly match the description (case-insensitive)
+2. **LLM-powered matching (fallback)**: If no exact match is found, retrieves all packages for the language and uses an LLM to find the best semantic match
+
+Returns:
+- The actual package name
+- The review ID (can be used with ApiViewClient to get revisions)
+- Language and version information
+
+Note: To get the actual revision content, use the returned `review_id` with the `ApiViewClient.get_revision_text()` method.
+
+Examples:
+```bash
+# Get latest revision for azure-core in Python
+avc apiview resolve-package --package azure-core --language python
+
+# Get specific version
+avc apiview resolve-package --package azure-storage-blob --language python --version 12.19.0
+
+# Use natural language descriptions - LLM will find the best match
+avc apiview resolve-package --package "storage blobs" --language python
+avc apiview resolve-package --package "cosmos database" --language python
+```
+
 If you need RBAC permissions to access CosmosDB, you can run the following script:
 `python scripts\apiview_permissions.py`
+
+Alternatively, use `avc ops grant` / `avc ops revoke` for local development permissions.
 
 You must be logged in to the "Azure SDK Engineering System" subscription (`az login`) and have the necessary permissions for this script to succeed.
 
@@ -87,12 +138,40 @@ You must be logged in to the "Azure SDK Engineering System" subscription (`az lo
 Report is now available at [PowerBI](https://msit.powerbi.com/groups/3e17dcb0-4257-4a30-b843-77f47f1d4121/reports/d8fdff73-ac33-49dd-873a-3948d7cb3c48?ctid=72f988bf-86f1-41af-91ab-2d7cd011db47&pbi_source=linkShare)
 
 Underneath, we use a script to generate the metrics. You can use the following command:
-`avc report metrics -s <YYYY-MM-DD> -e <YYYY-MM-DD> [--markdown] [--environment "production"|"staging"]`
+```bash
+avc report metrics -s <YYYY-MM-DD> -e <YYYY-MM-DD> [--environment "production"|"staging"] [--charts] [--exclude <LANG1> <LANG2> ...]
+```
 
-Specify the start and end dates for the metrics you want to report. The `--markdown` option will pass the results through an LLM to summarize the results in markdown. The `--environment` option allows you to specify whether to report metrics from the production or staging environment, with production being the default.
+Options:
+- `-s/--start-date`: Start date for the metrics report (YYYY-MM-DD)
+- `-e/--end-date`: End date for the metrics report (YYYY-MM-DD)
+- `--environment`: Specify whether to report metrics from the production or staging environment (default: production)
+- `--charts`: Generate PNG charts from the metrics and save to `output/charts/`
+- `--exclude`: Languages to exclude from the report (e.g., `--exclude Java Go`)
 
-To dump the markdown results to file:
-`avc report metrics -s <YYYY-MM-DD> -e <YYYY-MM-DD> --markdown > metrics.md`
+To generate charts:
+```bash
+avc report metrics -s 2026-01-01 -e 2026-01-31 --charts
+```
+
+This generates four PNG charts in `output/charts/`:
+- **adoption.png**: Stacked bar chart showing Copilot vs non-Copilot reviews per language
+- **comment_quality.png**: Stacked percent bar chart showing AI comment quality categories per language
+- **human_copilot_split.png**: Human vs AI comments for reviews with Copilot
+- **human_comments_comparison.png**: Side-by-side comparison of human comments with vs without Copilot
+
+### Comment Quality Categories
+
+The `comment_quality` metrics track AI comment outcomes with the following mutually exclusive categories (which sum to `ai_comment_count`):
+
+| Category | Description |
+|----------|-------------|
+| `good` / `good_count` | AI comments that were upvoted |
+| `implicit_good` / `implicit_good_count` | AI comments marked resolved but not voted on |
+| `neutral` / `neutral_count` | AI comments in unapproved revisions with no action |
+| `implicit_bad` / `implicit_bad_count` | AI comments in approved revisions with no action (not resolved, not voted) |
+| `bad` / `bad_count` | AI comments that were downvoted (any downvote trumps upvotes) |
+| `deleted` / `deleted_count` | AI comments that were deleted |
 
 ## Notes
 
@@ -100,4 +179,10 @@ On Windows CMD.exe, use `avc.bat` in lieu of `avc` for all CLI commands.
 
 ## Documentation
 
-For more information, visit the [API Documentation](https://apiviewuat.azurewebsites.net/swagger/index.html).
+- [Overview](./docs/overview.md) — Architecture overview and Azure resource dependencies
+- [API Review Algorithm](./docs/api-review.md) — Detailed description of the review pipeline stages
+- [Knowledge Base](./docs/kb.md) — Knowledge base structure and how it is used at review time
+- [Metrics](./docs/metrics.md) — Metrics collected, why, and how to access them
+- [CLI Reference](./docs/cli.md) — All `avc` CLI commands for local development
+
+For the REST API documentation, visit the [API Documentation](https://apiviewuat.azurewebsites.net/swagger/index.html).

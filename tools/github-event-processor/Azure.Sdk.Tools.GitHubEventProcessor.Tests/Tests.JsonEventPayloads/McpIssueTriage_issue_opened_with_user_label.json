@@ -1,0 +1,50 @@
+{
+  "action": "opened",
+  "issue": {
+    "id": 1234567891,
+    "number": 101,
+    "title": "Fabric MCP integration question",
+    "body": "Need help with Fabric MCP setup.",
+    "state": "open",
+    "locked": false,
+    "assignee": null,
+    "assignees": [],
+    "labels": [
+      {
+        "id": 1,
+        "name": "server-fabric.mcp",
+        "color": "0366d6"
+      }
+    ],
+    "created_at": "2026-01-11T10:00:00Z",
+    "updated_at": "2026-01-11T10:00:00Z",
+    "closed_at": null,
+    "user": {
+      "login": "InternalUser",
+      "id": 54321,
+      "type": "User"
+    },
+    "comments": 0,
+    "html_url": "https://github.com/microsoft/mcp/issues/101",
+    "url": "https://api.github.com/repos/microsoft/mcp/issues/101"
+  },
+  "repository": {
+    "id": 887099834,
+    "name": "mcp",
+    "full_name": "microsoft/mcp",
+    "private": false,
+    "owner": {
+      "login": "microsoft",
+      "id": 6154722,
+      "type": "Organization"
+    },
+    "html_url": "https://github.com/microsoft/mcp",
+    "url": "https://api.github.com/repos/microsoft/mcp",
+    "default_branch": "main"
+  },
+  "sender": {
+    "login": "InternalUser",
+    "id": 54321,
+    "type": "User"
+  }
+}

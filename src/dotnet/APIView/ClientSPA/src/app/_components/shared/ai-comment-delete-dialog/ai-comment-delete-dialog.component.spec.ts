@@ -1,17 +1,23 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { initializeTestBed } from '../../../../test-setup';
 import { FormsModule } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { DialogModule } from 'primeng/dialog';
+import { vi } from 'vitest';
 import { AICommentDeleteDialogComponent } from './ai-comment-delete-dialog.component';
 
 describe('AICommentDeleteDialogComponent', () => {
   let component: AICommentDeleteDialogComponent;
   let fixture: ComponentFixture<AICommentDeleteDialogComponent>;
 
+  beforeAll(() => {
+    initializeTestBed();
+  });
+
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [AICommentDeleteDialogComponent],
       imports: [
+        AICommentDeleteDialogComponent,
         FormsModule,
         DialogModule,
         NoopAnimationsModule
@@ -33,32 +39,32 @@ describe('AICommentDeleteDialogComponent', () => {
   });
 
   it('should not emit deleteConfirm on delete without reason', () => {
-    spyOn(component.deleteConfirm, 'emit');
+    vi.spyOn(component.deleteConfirm, 'emit');
     component.commentId = 'test-123';
     component.reason = '';
-    
+
     component.onDelete();
-    
+
     expect(component.deleteConfirm.emit).not.toHaveBeenCalled();
   });
 
   it('should reset form after successful delete', () => {
     component.reason = 'This comment is wrong';
-    
+
     component.onDelete();
-    
+
     expect(component.reason).toBe('');
   });
 
   it('should reset form on cancel', () => {
     component.reason = 'Some reason';
     component.visible = true;
-    
-    spyOn(component.visibleChange, 'emit');
-    spyOn(component.cancel, 'emit');
-    
+
+    vi.spyOn(component.visibleChange, 'emit');
+    vi.spyOn(component.cancel, 'emit');
+
     component.onCancel();
-    
+
     expect(component.reason).toBe('');
     expect(component.visible).toBe(false);
     expect(component.visibleChange.emit).toHaveBeenCalledWith(false);
@@ -67,11 +73,11 @@ describe('AICommentDeleteDialogComponent', () => {
 
   it('should reset form on hide', () => {
     component.reason = 'Some reason';
-    
-    spyOn(component.cancel, 'emit');
-    
+
+    vi.spyOn(component.cancel, 'emit');
+
     component.onHide();
-    
+
     expect(component.reason).toBe('');
     expect(component.cancel.emit).toHaveBeenCalled();
   });

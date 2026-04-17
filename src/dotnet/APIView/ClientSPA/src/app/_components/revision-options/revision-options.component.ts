@@ -1,47 +1,55 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { SelectModule } from 'primeng/select';
+import { SelectButtonModule } from 'primeng/selectbutton';
+import { TimeagoModule } from 'ngx-timeago';
+import { LastUpdatedOnPipe } from 'src/app/_pipes/last-updated-on.pipe';
 import { AUTOMATIC_ICON, getTypeClass, MANUAL_ICON, PR_ICON, TREE_DIFF_STYLE } from 'src/app/_helpers/common-helpers';
-import { ACTIVE_API_REVISION_ID_QUERY_PARAM, ACTIVE_SAMPLES_REVISION_ID_QUERY_PARAM, DIFF_API_REVISION_ID_QUERY_PARAM, DIFF_STYLE_QUERY_PARAM, getQueryParams } from 'src/app/_helpers/router-helpers';
+import { ACTIVE_API_REVISION_ID_QUERY_PARAM, DIFF_API_REVISION_ID_QUERY_PARAM, DIFF_STYLE_QUERY_PARAM, getQueryParams } from 'src/app/_helpers/router-helpers';
 import { AzureEngSemanticVersion } from 'src/app/_models/azureEngSemanticVersion';
 import { APIRevision } from 'src/app/_models/revision';
-import { SamplesRevision } from 'src/app/_models/samples';
 
 @Component({
-  selector: 'app-revision-options',
-  templateUrl: './revision-options.component.html',
-  styleUrls: ['./revision-options.component.scss']
+    selector: 'app-revision-options',
+    templateUrl: './revision-options.component.html',
+    styleUrls: ['./revision-options.component.scss'],
+    standalone: true,
+    imports: [
+        CommonModule,
+        FormsModule,
+        SelectModule,
+        SelectButtonModule,
+        TimeagoModule,
+        LastUpdatedOnPipe
+    ]
 })
 export class RevisionOptionsComponent implements OnChanges {
   @Input() apiRevisions: APIRevision[] = [];
   @Input() activeApiRevisionId: string | null = '';
-  @Input() activeSamplesRevisionId: string | null = '';
   @Input() diffApiRevisionId: string | null = '';
-  @Input() samplesRevisions: SamplesRevision[] = [];
   @Input() crossLanguageAPIRevisions: APIRevision[] = [];
 
   @Output() crossLangaugeAPIRevisionChange : EventEmitter<APIRevision> = new EventEmitter<APIRevision>();
 
   mappedApiRevisions: any[] = [];
   activeApiRevisionsMenu: any[] = [];
-  activeSamplesRevisionsMenu: any[] = [];
   diffApiRevisionsMenu: any[] = [];
   crossLanguageAPIRevisionsMenu: any[] = [];
   selectedActiveAPIRevision: any;
-  selectedActiveSamplesRevision: any;
   selectedDiffAPIRevision: any = null;
   selectedCrossLanguageAPIRevision: any = null;
 
   manualIcon = MANUAL_ICON;
   prIcon = PR_ICON;
   automaticIcon = AUTOMATIC_ICON;
-  
+
   ACTIVE_API_REVISION_SELECT : string = 'active-api';
-  ACTIVE_SAMPLES_REVISION_SELECT : string = 'active-samples';
   DIFF_API_REVISION_SELECT : string = 'diff-api';
   CROSS_LANGUAGE_API_REVISION_SELECT : string = 'cross-language';
 
   activeApiRevisionsSearchValue: string = '';
-  activeSamplesRevisionsSearchValue: string = '';
   diffApiRevisionsSearchValue: string = '';
   crossLangaugeRevisionsSearchValue: string = '';
 
@@ -79,13 +87,6 @@ export class RevisionOptionsComponent implements OnChanges {
       }
     }
 
-    if (changes['samplesRevisions'] || changes['activeSamplesRevisionId']) {
-      if (this.samplesRevisions.length > 0) {
-        this.activeSamplesRevisionsMenu = this.samplesRevisions;
-        this.selectedActiveSamplesRevision = this.samplesRevisions.find((samplesRevision: SamplesRevision) => samplesRevision.id === this.activeSamplesRevisionId);
-      }
-    }
-
     if (changes['crossLanguageAPIRevisions']) {
       if (this.crossLanguageAPIRevisions.length > 0) {
         this.crossLanguageAPIRevisionsMenu = this.mapRevisionToMenu(this.crossLanguageAPIRevisions)
@@ -99,11 +100,6 @@ export class RevisionOptionsComponent implements OnChanges {
     this.searchAndFilterDropdown(this.activeApiRevisionsSearchValue, this.activeApiRevisionsFilterValue, this.ACTIVE_API_REVISION_SELECT);
   }
 
-  activeSamplesRevisionSearchFunction(event: KeyboardEvent) {
-    this.activeSamplesRevisionsSearchValue = (event.target as HTMLInputElement).value;
-    this.searchAndFilterDropdown(this.activeSamplesRevisionsSearchValue, undefined, this.ACTIVE_SAMPLES_REVISION_SELECT);
-  }
-
   activeApiRevisionFilterFunction(event: any) {
     this.activeApiRevisionsFilterValue = event.value;
     this.searchAndFilterDropdown(this.activeApiRevisionsSearchValue, this.activeApiRevisionsFilterValue, this.ACTIVE_API_REVISION_SELECT);
@@ -112,12 +108,6 @@ export class RevisionOptionsComponent implements OnChanges {
   activeApiRevisionChange(event: any) {
     let newQueryParams = getQueryParams(this.route);
     newQueryParams[ACTIVE_API_REVISION_ID_QUERY_PARAM] = event.value.id;
-    this.router.navigate([], { queryParams: newQueryParams });
-  }
-
-  activeSamplesRevisionChange(event: any) {
-    let newQueryParams = getQueryParams(this.route);
-    newQueryParams[ACTIVE_SAMPLES_REVISION_ID_QUERY_PARAM] = event.value.id;
     this.router.navigate([], { queryParams: newQueryParams });
   }
 
@@ -173,7 +163,7 @@ export class RevisionOptionsComponent implements OnChanges {
             return true;
         }
       });
-      
+
       filtered = filtered.filter((apiRevision: APIRevision) => {
         return apiRevision.resolvedLabel.toLowerCase().includes(searchValue.toLowerCase());
       });
@@ -190,13 +180,6 @@ export class RevisionOptionsComponent implements OnChanges {
         if (this.selectedDiffAPIRevision && !this.diffApiRevisionsMenu.includes(this.selectedDiffAPIRevision)) {
           this.diffApiRevisionsMenu.unshift(this.selectedDiffAPIRevision);
         }
-      }
-    } else if (dropDownMenu === this.ACTIVE_SAMPLES_REVISION_SELECT) {
-      this.activeSamplesRevisionsMenu = this.samplesRevisions.filter((samplesRevision: SamplesRevision) => {
-        return (searchValue) ? samplesRevision.title?.toLowerCase().includes(searchValue.toLowerCase()) : true;
-      });
-      if (this.selectedActiveSamplesRevision && !this.activeSamplesRevisionsMenu.includes(this.selectedActiveSamplesRevision)) {
-        this.activeSamplesRevisionsMenu.unshift(this.selectedActiveSamplesRevision);
       }
     } else if (dropDownMenu === this.CROSS_LANGUAGE_API_REVISION_SELECT) {
       this.crossLanguageAPIRevisionsMenu = this.crossLanguageAPIRevisionsMenu.filter((apiRevision: APIRevision) => {
@@ -221,11 +204,6 @@ export class RevisionOptionsComponent implements OnChanges {
       this.searchAndFilterDropdown(this.diffApiRevisionsSearchValue, this.diffApiRevisionsFilterValue, this.DIFF_API_REVISION_SELECT);
     }
 
-    if (dropDownMenu === this.ACTIVE_SAMPLES_REVISION_SELECT) {
-      this.activeSamplesRevisionsSearchValue = '';
-      this.searchAndFilterDropdown(this.activeSamplesRevisionsSearchValue, undefined, this.ACTIVE_SAMPLES_REVISION_SELECT);
-    }
-
     if (dropDownMenu === this.CROSS_LANGUAGE_API_REVISION_SELECT) {
       this.crossLangaugeRevisionsSearchValue = '';
       this.searchAndFilterDropdown(this.crossLangaugeRevisionsSearchValue, undefined, this.CROSS_LANGUAGE_API_REVISION_SELECT);
@@ -235,11 +213,11 @@ export class RevisionOptionsComponent implements OnChanges {
   mapRevisionToMenu(apiRevisions: APIRevision[]) {
     return apiRevisions
       .map((apiRevision: APIRevision) => {
-      return {
+      const mapped = {
         id : apiRevision.id,
-        resolvedLabel: apiRevision.resolvedLabel,
+        resolvedLabel: apiRevision.resolvedLabel || apiRevision.label || apiRevision.packageVersion || `PR ${apiRevision.pullRequestNo}` || 'Revision',
         language: apiRevision.language,
-        label: apiRevision.label,
+        label: apiRevision.label || apiRevision.resolvedLabel || apiRevision.packageVersion || `PR ${apiRevision.pullRequestNo}` || 'Revision',
         files: apiRevision.files,
         packageName: apiRevision.packageName,
         typeClass: getTypeClass(apiRevision.apiRevisionType),
@@ -260,6 +238,8 @@ export class RevisionOptionsComponent implements OnChanges {
         command: () => {
         }
       };
+
+      return mapped;
     });
   }
 
@@ -267,7 +247,7 @@ export class RevisionOptionsComponent implements OnChanges {
     this.tagLatestGARevision(mappedApiRevisions);
     this.tagLatestApprovedRevision(mappedApiRevisions);
     this.tagCurrentMainRevision(mappedApiRevisions);
-    this.tagLatestReleasedRevision(mappedApiRevisions);   
+    this.tagLatestReleasedRevision(mappedApiRevisions);
   }
 
   tagLatestGARevision(apiRevisions: any[]) {

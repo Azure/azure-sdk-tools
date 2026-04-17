@@ -1,19 +1,20 @@
-using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Reflection.Emit;
-using System.Text;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
 using Azure.Sdk.Tools.GitHubEventProcessor.GitHubPayload;
-using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
+using Microsoft.Extensions.Logging;
 using Octokit;
-using Octokit.Internal;
 
 namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 {
     public class ScheduledEventProcessing
     {
+        private readonly ILogger<ScheduledEventProcessing> Logger;
+        public ScheduledEventProcessing(ILogger<ScheduledEventProcessing> logger)
+        {
+            Logger = logger;
+        }
+
         /// <summary>
         /// Scheduled events, unlike regular actions, need to have which scheduled event to run, passed in otherwise, it require
         /// looking at the cron schedule to determine the event. Doing it this way means if the schedule changes only the cron
@@ -22,8 +23,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="scheduledEventPayload">ScheduledEventGitHubPayload deserialized from the json event payload</param>
         /// <param name="cronTaskToRun">String, the scheduled event</param>
-        public static async Task ProcessScheduledEvent(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload, string cronTaskToRun)
+        public async Task ProcessScheduledEvent(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload, string cronTaskToRun)
         {
+            Logger.LogInformation("Processing scheduled event. Task: {CronTask}, Repository: {Repository}",
+                cronTaskToRun, scheduledEventPayload.Repository.FullName);
+
             // Scheduled events can make multiple calls to SearchIssues due to pagination. Any call to SearchIssues can
             // run into a SecondaryRateLimitExceededException, regardless of the page, and there could be pending updates
             // from previous pages that were processed. Because of this, the call to process pending updates should be made
@@ -70,7 +74,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         }
                     default:
                         {
-                            Console.WriteLine($"{cronTaskToRun} is not valid Scheduled Event rule. Please ensure the scheduled event yml is correctly passing in the correct rules constant.");
+                            Logger.LogError("{CronTask} is not a valid Scheduled Event rule. Please ensure the scheduled event yml is correctly passing in the correct rules constant.", cronTaskToRun);
                             break;
                         }
                 }
@@ -95,10 +99,12 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="scheduledEventPayload">ScheduledEventGitHubPayload deserialized from the json event payload</param>
-        public static async Task CloseAddressedIssues(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload)
+        public async Task CloseAddressedIssues(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.CloseAddressedIssues))
             {
+                Logger.LogInformation("CloseAddressedIssues: Starting scheduled task for repository {Repository}", scheduledEventPayload.Repository.FullName);
+
                 int ScheduledTaskUpdateLimit = await gitHubEventClient.ComputeScheduledTaskUpdateLimit();
 
                 List<string> includeLabels = new List<string>
@@ -160,6 +166,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         break;
                     }
                 }
+                Logger.LogInformation("CloseAddressedIssues: Completed. Processed {NumUpdates} updates.", numUpdates);
             }
         }
 
@@ -175,10 +182,12 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="scheduledEventPayload">ScheduledEventGitHubPayload deserialized from the json event payload</param>
-        public static async Task CloseStaleIssues(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload)
+        public async Task CloseStaleIssues(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.CloseStaleIssues))
             {
+                Logger.LogInformation("CloseStaleIssues: Starting scheduled task for repository {Repository}", scheduledEventPayload.Repository.FullName);
+
                 int ScheduledTaskUpdateLimit = await gitHubEventClient.ComputeScheduledTaskUpdateLimit();
 
                 List<string> includeLabels = new List<string>
@@ -201,7 +210,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                 // In theory, maximumPage will be 10 since there's 100 results per-page returned by default but
                 // this ensures that if we opt to change the page size
                 int maximumPage = RateLimitConstants.SearchIssuesRateLimit / request.PerPage;
-                for (request.Page = 1;request.Page <= maximumPage; request.Page++)
+                for (request.Page = 1; request.Page <= maximumPage; request.Page++)
                 {
                     SearchIssuesResult result = await gitHubEventClient.QueryIssues(request);
                     int iCounter = 0;
@@ -217,8 +226,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         IssueUpdate issueUpdate = gitHubEventClient.GetIssueUpdate(issue, false);
                         issueUpdate.State = ItemState.Closed;
                         issueUpdate.StateReason = ItemStateReason.NotPlanned;
-                        gitHubEventClient.AddToIssueUpdateList(scheduledEventPayload.Repository.Id, 
-                                                               issue.Number, 
+                        gitHubEventClient.AddToIssueUpdateList(scheduledEventPayload.Repository.Id,
+                                                               issue.Number,
                                                                issueUpdate);
                         numUpdates++;
                     }
@@ -238,6 +247,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         break;
                     }
                 }
+                Logger.LogInformation("CloseStaleIssues: Completed. Processed {NumUpdates} updates.", numUpdates);
             }
         }
 
@@ -253,10 +263,12 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="scheduledEventPayload">ScheduledEventGitHubPayload deserialized from the json event payload</param>
-        public static async Task CloseStalePullRequests(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload)
+        public async Task CloseStalePullRequests(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.CloseStalePullRequests))
             {
+                Logger.LogInformation("CloseStalePullRequests: Starting scheduled task for repository {Repository}", scheduledEventPayload.Repository.FullName);
+
                 int ScheduledTaskUpdateLimit = await gitHubEventClient.ComputeScheduledTaskUpdateLimit();
 
                 List<string> includeLabels = new List<string>
@@ -318,6 +330,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         break;
                     }
                 }
+                Logger.LogInformation("CloseStalePullRequests: Completed. Processed {NumUpdates} updates.", numUpdates);
             }
         }
 
@@ -333,10 +346,12 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="scheduledEventPayload">ScheduledEventGitHubPayload deserialized from the json event payload</param>
-        public static async Task IdentifyStalePullRequests(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload)
+        public async Task IdentifyStalePullRequests(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.IdentifyStalePullRequests))
             {
+                Logger.LogInformation("IdentifyStalePullRequests: Starting scheduled task for repository {Repository}", scheduledEventPayload.Repository.FullName);
+
                 int ScheduledTaskUpdateLimit = await gitHubEventClient.ComputeScheduledTaskUpdateLimit();
 
                 List<string> excludeLabels = new List<string>
@@ -357,7 +372,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                 // In theory, maximumPage will be 10 since there's 100 results per-page returned by default but
                 // this ensures that if we opt to change the page size
                 int maximumPage = RateLimitConstants.SearchIssuesRateLimit / request.PerPage;
-                
+
                 for (request.Page = 1; request.Page <= maximumPage; request.Page++)
                 {
                     SearchIssuesResult result = await gitHubEventClient.QueryIssues(request);
@@ -381,7 +396,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                                                         issue.Number,
                                                         comment);
                         // There are 2 updates per result
-                        numUpdates +=2;
+                        numUpdates += 2;
                     }
 
                     // The number of items in the query isn't known until the query is run.
@@ -399,6 +414,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         break;
                     }
                 }
+                Logger.LogInformation("IdentifyStalePullRequests: Completed. Processed {NumUpdates} updates.", numUpdates);
             }
         }
 
@@ -415,10 +431,12 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="scheduledEventPayload">ScheduledEventGitHubPayload deserialized from the json event payload</param>
-        public static async Task IdentifyStaleIssues(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload)
+        public async Task IdentifyStaleIssues(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.IdentifyStaleIssues))
             {
+                Logger.LogInformation("IdentifyStaleIssues: Starting scheduled task for repository {Repository}", scheduledEventPayload.Repository.FullName);
+
                 int ScheduledTaskUpdateLimit = await gitHubEventClient.ComputeScheduledTaskUpdateLimit();
 
                 List<string> includeLabels = new List<string>
@@ -485,6 +503,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         break;
                     }
                 }
+                Logger.LogInformation("IdentifyStaleIssues: Completed. Processed {NumUpdates} updates.", numUpdates);
             }
         }
 
@@ -499,10 +518,12 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="scheduledEventPayload">ScheduledEventGitHubPayload deserialized from the json event payload</param>
-        public static async Task LockClosedIssues(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload)
+        public async Task LockClosedIssues(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.LockClosedIssues))
             {
+                Logger.LogInformation("LockClosedIssues: Starting scheduled task for repository {Repository}", scheduledEventPayload.Repository.FullName);
+
                 int ScheduledTaskUpdateLimit = await gitHubEventClient.ComputeScheduledTaskUpdateLimit();
 
                 SearchIssuesRequest request = gitHubEventClient.CreateSearchRequest(
@@ -541,13 +562,14 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                     // the last page of results has been processed which was not a full page
                     // OR
                     // The number of updates has hit the limit for a scheduled task
-                    if (result.Items.Count == result.TotalCount || 
-                        result.Items.Count < request.PerPage || 
+                    if (result.Items.Count == result.TotalCount ||
+                        result.Items.Count < request.PerPage ||
                         numUpdates >= ScheduledTaskUpdateLimit)
                     {
                         break;
                     }
                 }
+                Logger.LogInformation("LockClosedIssues: Completed. Processed {NumUpdates} updates.", numUpdates);
             }
         }
         /// <summary>
@@ -569,10 +591,12 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="scheduledEventPayload">ScheduledEventGitHubPayload deserialized from the json event payload</param>
-        public static async Task EnforceMaxLifeOfIssues(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload)
+        public async Task EnforceMaxLifeOfIssues(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.EnforceMaxLifeOfIssues))
             {
+                Logger.LogInformation("EnforceMaxLifeOfIssues: Starting scheduled task for repository {Repository}", scheduledEventPayload.Repository.FullName);
+
                 int ScheduledTaskUpdateLimit = await gitHubEventClient.ComputeScheduledTaskUpdateLimit();
 
                 /// An issue with the auto-close-exempt label will exempt the issue from being closed by this rule
@@ -590,7 +614,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                     new List<IssueIsQualifier> { IssueIsQualifier.Unlocked },
                     null,
                     excludeLabels,
-                    365*2 // Created date > 2 years
+                    365 * 2 // Created date > 2 years
                     );
 
                 int numUpdates = 0;
@@ -643,6 +667,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         break;
                     }
                 }
+                Logger.LogInformation("EnforceMaxLifeOfIssues: Completed. Processed {NumUpdates} updates.", numUpdates);
             }
         }
     }

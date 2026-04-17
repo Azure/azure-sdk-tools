@@ -1,12 +1,18 @@
 import { TestBed } from '@angular/core/testing';
+import { initializeTestBed } from '../../../test-setup';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { APIRevisionsService } from './revisions.service';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ConfigService } from '../config/config.service';
 import { of } from 'rxjs';
 
 describe('RevisionsService', () => {
   let service: APIRevisionsService;
+
+  beforeAll(() => {
+    initializeTestBed();
+  });
 
   beforeEach(() => {
     const configServiceMock = {
@@ -15,8 +21,9 @@ describe('RevisionsService', () => {
     };
 
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
       providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
         APIRevisionsService,
         { provide: ConfigService, useValue: configServiceMock }
       ]

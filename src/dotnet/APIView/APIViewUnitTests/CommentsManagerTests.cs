@@ -7,6 +7,7 @@ using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using ApiView;
+using APIView;
 using APIViewWeb;
 using APIViewWeb.DTOs;
 using APIViewWeb.Hubs;
@@ -34,8 +35,18 @@ public class CommentsManagerTests
         out Mock<ICosmosCommentsRepository> commentsRepoMock,
         out Mock<IHubContext<SignalRHub>> hubContextMock)
     {
+        return CreateManager(out commentsRepoMock, out hubContextMock, out _);
+    }
+
+    private CommentsManager CreateManager(
+        out Mock<ICosmosCommentsRepository> commentsRepoMock,
+        out Mock<IHubContext<SignalRHub>> hubContextMock,
+        out Mock<IAPIRevisionsManager> apiRevisionsManagerMock)
+    {
         commentsRepoMock = new Mock<ICosmosCommentsRepository>();
         hubContextMock = new Mock<IHubContext<SignalRHub>>();
+        apiRevisionsManagerMock = new Mock<IAPIRevisionsManager>();
+        var diagnosticCommentServiceMock = new Mock<IDiagnosticCommentService>();
 
         var mockClients = new Mock<IHubClients>();
         var mockClientProxy = new Mock<IClientProxy>();
@@ -45,7 +56,6 @@ public class CommentsManagerTests
             .Returns(Task.CompletedTask);
 
         Mock<IConfiguration> configMock = new();
-        configMock.Setup(c => c["approvers"]).Returns("architect1");
         configMock.Setup(c => c["CopilotServiceEndpoint"]).Returns("https://dummy.api/endpoint");
 
         Mock<IOptions<OrganizationOptions>> orgOptionsMock = new();
@@ -54,7 +64,6 @@ public class CommentsManagerTests
 
         APIRevisionListItemModel apiRevision = new() { Id = "rev1" };
         Mock<IBlobCodeFileRepository> codeFileRepoMock = new();
-        Mock<IAPIRevisionsManager> apiRevisionsManagerMock = new();
         apiRevisionsManagerMock.Setup(m => m.GetAPIRevisionAsync("rev1")).ReturnsAsync(apiRevision);
         codeFileRepoMock.Setup(r => r.GetCodeFileAsync(apiRevision, false))
             .ReturnsAsync(new RenderedCodeFile(new CodeFile()));
@@ -76,6 +85,12 @@ public class CommentsManagerTests
         Mock<INotificationManager> notificationManagerMock = new();
         Mock<IHttpClientFactory> httpClientFactoryMock = new();
         Mock<ILogger<CommentsManager>> logger = new();
+        Mock<IPermissionsManager> permissionsManagerMock = new();
+        permissionsManagerMock.Setup(p => p.GetEffectivePermissionsAsync("architect1")).ReturnsAsync(
+            new EffectivePermissions()
+            {
+                Roles = [new GlobalRoleAssignment() { Role = GlobalRole.Admin }]
+            });
 
         Mock<HttpMessageHandler> handlerMock = new();
         handlerMock
@@ -109,6 +124,7 @@ public class CommentsManagerTests
 
         return new CommentsManager(
             apiRevisionsManagerMock.Object,
+            diagnosticCommentServiceMock.Object,
             authServiceMock.Object,
             commentsRepoMock.Object,
             reviewRepoMock.Object,
@@ -120,6 +136,7 @@ public class CommentsManagerTests
             configMock.Object,
             orgOptionsMock.Object,
             backgroundTaskQueueMock.Object,
+            permissionsManagerMock.Object,
             copilotAuthService.Object,
             logger.Object
         );
@@ -299,6 +316,67 @@ public class CommentsManagerTests
         Assert.Empty(comment.Upvotes);
         Assert.Empty(comment.Downvotes);
         commentsRepoMock.Verify(r => r.UpsertCommentAsync(comment), Times.Once);
+    }
+
+    [Fact]
+    public async Task ToggleUpvoteAsync_DiagnosticComment_ThrowsInvalidOperationException()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+        CommentItemModel comment = CreateComment();
+        comment.CommentSource = CommentSource.Diagnostic;
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => manager.ToggleUpvoteAsync(user, "review1", "comment1"));
+
+        commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ToggleDownvoteAsync_DiagnosticComment_ThrowsInvalidOperationException()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+        CommentItemModel comment = CreateComment();
+        comment.CommentSource = CommentSource.Diagnostic;
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => manager.ToggleDownvoteAsync(user, "review1", "comment1"));
+
+        commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ResolveConversation_DiagnosticComment_ThrowsInvalidOperationException()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+        CommentItemModel comment = CreateComment();
+        comment.CommentSource = CommentSource.Diagnostic;
+        commentsRepoMock.Setup(r => r.GetCommentsAsync("review1", "element1"))
+            .ReturnsAsync(new List<CommentItemModel> { comment });
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => manager.ResolveConversation(user, "review1", "element1", comment.ThreadId));
+
+        commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateCommentSeverityAsync_DiagnosticComment_ThrowsInvalidOperationException()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+        CommentItemModel comment = CreateComment();
+        comment.CommentSource = CommentSource.Diagnostic;
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => manager.UpdateCommentSeverityAsync(user, "review1", "comment1", comment.Severity));
+
+        commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()), Times.Never);
     }
 
     #endregion
@@ -572,6 +650,68 @@ public class CommentsManagerTests
 
         commentsRepoMock.Verify(r => r.GetCommentAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SoftDeleteCommentAsync_DiagnosticComment_ThrowsInvalidOperationException()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+        CommentItemModel comment = CreateComment();
+        comment.CommentSource = CommentSource.Diagnostic;
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => manager.SoftDeleteCommentAsync(user, "review1", "comment1"));
+
+        commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CommentsBatchOperationAsync_DiagnosticComment_SkipsDeleteAndResolve()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+
+        // Diagnostic comment should be skipped on delete
+        CommentItemModel diagnosticComment = CreateComment(id: "comment1", elementId: "element1");
+        diagnosticComment.CommentSource = CommentSource.Diagnostic;
+
+        // Regular comment should still be deleted
+        CommentItemModel regularComment = CreateComment(id: "comment2", elementId: "element2");
+
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(diagnosticComment);
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment2")).ReturnsAsync(regularComment);
+
+        BatchConversationRequest deleteRequest = new()
+        {
+            CommentIds = new List<string> { "comment1", "comment2" },
+            Disposition = ConversationDisposition.Delete
+        };
+
+        await manager.CommentsBatchOperationAsync(user, "review1", deleteRequest);
+
+        Assert.False(diagnosticComment.IsDeleted); // Diagnostic skipped
+        Assert.True(regularComment.IsDeleted);     // Regular comment deleted
+
+        // Verify resolve is also skipped for diagnostic comments
+        CommentItemModel diagnosticToResolve = CreateComment(id: "comment3", elementId: "element3");
+        diagnosticToResolve.CommentSource = CommentSource.Diagnostic;
+
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment3")).ReturnsAsync(diagnosticToResolve);
+        commentsRepoMock.Setup(r => r.GetCommentsAsync("review1", "element3"))
+            .ReturnsAsync(new List<CommentItemModel> { diagnosticToResolve });
+
+        BatchConversationRequest resolveRequest = new()
+        {
+            CommentIds = new List<string> { "comment3" },
+            Disposition = ConversationDisposition.Resolve
+        };
+
+        await manager.CommentsBatchOperationAsync(user, "review1", resolveRequest);
+
+        Assert.False(diagnosticToResolve.IsResolved); // Resolve skipped for diagnostics
+        commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.Is<CommentItemModel>(c => c.Id == "comment3")), Times.Never);
     }
 
     [Fact]
@@ -977,6 +1117,886 @@ public class CommentsManagerTests
         Assert.Equal("Downvoting with reason", comment.Feedback[0].Comment);
     }
 
+    [Fact]
+    public async Task AddCommentFeedbackAsync_AIGeneratedComment_QueuesCopilotNotification()
+    {
+        var commentsRepoMock = new Mock<ICosmosCommentsRepository>();
+        var hubContextMock = new Mock<IHubContext<SignalRHub>>();
+        var apiRevisionsManagerMock = new Mock<IAPIRevisionsManager>();
+        var backgroundTaskQueueMock = new Mock<IBackgroundTaskQueue>();
+        var copilotAuthServiceMock = new Mock<ICopilotAuthenticationService>();
+
+        var mockClients = new Mock<IHubClients>();
+        var mockClientProxy = new Mock<IClientProxy>();
+        hubContextMock.Setup(h => h.Clients).Returns(mockClients.Object);
+        mockClients.Setup(c => c.All).Returns(mockClientProxy.Object);
+        mockClientProxy.Setup(p => p.SendCoreAsync(It.IsAny<string>(), It.IsAny<object[]>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        Mock<IConfiguration> configMock = new();
+        configMock.Setup(c => c["CopilotServiceEndpoint"]).Returns("https://dummy.api/endpoint");
+
+        Mock<IOptions<OrganizationOptions>> orgOptionsMock = new();
+        orgOptionsMock.Setup(o => o.Value)
+            .Returns(new OrganizationOptions { RequiredOrganization = [] });
+
+        APIRevisionListItemModel apiRevision = new() { Id = "rev1" };
+        Mock<IBlobCodeFileRepository> codeFileRepoMock = new();
+        apiRevisionsManagerMock.Setup(m => m.GetAPIRevisionAsync("rev1")).ReturnsAsync(apiRevision);
+        codeFileRepoMock.Setup(r => r.GetCodeFileAsync(apiRevision, false))
+            .ReturnsAsync(new RenderedCodeFile(new CodeFile()));
+
+        Mock<ICosmosReviewRepository> reviewRepoMock = new();
+        reviewRepoMock.Setup(r => r.GetReviewAsync("review1"))
+            .ReturnsAsync(new ReviewListItemModel { Id = "review1", Language = "CSharp" });
+
+        Mock<IMemoryCache> memoryCacheMock = new();
+        Mock<IUserProfileManager> userProfileManagerMock = new();
+        Mock<ILogger<UserProfileCache>> userProfileCacheLoggerMock = new();
+        UserProfileCache userProfileCache = new(
+            memoryCacheMock.Object,
+            userProfileManagerMock.Object,
+            userProfileCacheLoggerMock.Object
+        );
+
+        Mock<IAuthorizationService> authServiceMock = new();
+        Mock<INotificationManager> notificationManagerMock = new();
+        Mock<IHttpClientFactory> httpClientFactoryMock = new();
+        Mock<IPermissionsManager> permissionsManagerMock = new();
+        Mock<ILogger<CommentsManager>> logger = new();
+
+        Mock<HttpMessageHandler> handlerMock = new();
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent("{}")
+            });
+
+        copilotAuthServiceMock.Setup(c => c.GetAccessTokenAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync("test-token");
+
+        HttpClient httpClient = new(handlerMock.Object);
+        httpClientFactoryMock
+            .Setup(f => f.CreateClient(It.IsAny<string>()))
+            .Returns(httpClient);
+
+        bool backgroundTaskQueued = false;
+        backgroundTaskQueueMock.Setup(q => q.QueueBackgroundWorkItem(It.IsAny<Func<CancellationToken, Task>>()))
+            .Callback<Func<CancellationToken, Task>>(workItem =>
+            {
+                backgroundTaskQueued = true;
+                _ = workItem.Invoke(CancellationToken.None);
+            });
+
+        authServiceMock.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<object>(), It.IsAny<IEnumerable<IAuthorizationRequirement>>()))
+            .ReturnsAsync(AuthorizationResult.Success());
+
+        var manager = new CommentsManager(
+            apiRevisionsManagerMock.Object,
+            new Mock<IDiagnosticCommentService>().Object,
+            authServiceMock.Object,
+            commentsRepoMock.Object,
+            reviewRepoMock.Object,
+            notificationManagerMock.Object,
+            codeFileRepoMock.Object,
+            hubContextMock.Object,
+            httpClientFactoryMock.Object,
+            userProfileCache,
+            configMock.Object,
+            orgOptionsMock.Object,
+            backgroundTaskQueueMock.Object,
+            permissionsManagerMock.Object,
+            copilotAuthServiceMock.Object,
+            logger.Object
+        );
+
+        ClaimsPrincipal user = CreateUser("test-user");
+        CommentItemModel comment = new()
+        {
+            ReviewId = "review1",
+            APIRevisionId = "rev1",
+            Id = "comment1",
+            ElementId = "element1",
+            CommentSource = CommentSource.AIGenerated,
+            CommentText = "This is an AI comment",
+            Feedback = new List<CommentFeedback>(),
+            Upvotes = new List<string>(),
+            Downvotes = new List<string>()
+        };
+
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment);
+
+        CommentFeedbackRequest feedbackRequest = new()
+        {
+            Reasons = new List<AICommentFeedbackReason> { AICommentFeedbackReason.FactuallyIncorrect },
+            Comment = "This is incorrect",
+            IsDelete = false
+        };
+
+        await manager.AddCommentFeedbackAsync(user, "review1", "comment1", feedbackRequest);
+
+        Assert.True(backgroundTaskQueued);
+        backgroundTaskQueueMock.Verify(q => q.QueueBackgroundWorkItem(It.IsAny<Func<CancellationToken, Task>>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task AddCommentFeedbackAsync_UserGeneratedComment_DoesNotQueueCopilotNotification()
+    {
+        var commentsRepoMock = new Mock<ICosmosCommentsRepository>();
+        var backgroundTaskQueueMock = new Mock<IBackgroundTaskQueue>();
+
+        var hubContextMock = new Mock<IHubContext<SignalRHub>>();
+        var mockClients = new Mock<IHubClients>();
+        var mockClientProxy = new Mock<IClientProxy>();
+        hubContextMock.Setup(h => h.Clients).Returns(mockClients.Object);
+        mockClients.Setup(c => c.All).Returns(mockClientProxy.Object);
+
+        Mock<IConfiguration> configMock = new();
+        Mock<IOptions<OrganizationOptions>> orgOptionsMock = new();
+        orgOptionsMock.Setup(o => o.Value).Returns(new OrganizationOptions { RequiredOrganization = [] });
+
+        Mock<IMemoryCache> memoryCacheMock = new();
+        Mock<IUserProfileManager> userProfileManagerMock = new();
+        Mock<ILogger<UserProfileCache>> userProfileCacheLoggerMock = new();
+        UserProfileCache userProfileCache = new(
+            memoryCacheMock.Object,
+            userProfileManagerMock.Object,
+            userProfileCacheLoggerMock.Object
+        );
+
+        var manager = new CommentsManager(
+            new Mock<IAPIRevisionsManager>().Object,
+            new Mock<IDiagnosticCommentService>().Object,
+            new Mock<IAuthorizationService>().Object,
+            commentsRepoMock.Object,
+            new Mock<ICosmosReviewRepository>().Object,
+            new Mock<INotificationManager>().Object,
+            new Mock<IBlobCodeFileRepository>().Object,
+            hubContextMock.Object,
+            new Mock<IHttpClientFactory>().Object,
+            userProfileCache,
+            configMock.Object,
+            orgOptionsMock.Object,
+            backgroundTaskQueueMock.Object,
+            new Mock<IPermissionsManager>().Object,
+            new Mock<ICopilotAuthenticationService>().Object,
+            new Mock<ILogger<CommentsManager>>().Object
+        );
+
+        ClaimsPrincipal user = CreateUser("test-user");
+        CommentItemModel comment = new()
+        {
+            ReviewId = "review1",
+            Id = "comment1",
+            CommentSource = CommentSource.UserGenerated,
+            Feedback = new List<CommentFeedback>()
+        };
+
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment);
+
+        CommentFeedbackRequest feedbackRequest = new()
+        {
+            Reasons = new List<AICommentFeedbackReason> { AICommentFeedbackReason.FactuallyIncorrect },
+            Comment = "This is incorrect",
+            IsDelete = false
+        };
+
+        await manager.AddCommentFeedbackAsync(user, "review1", "comment1", feedbackRequest);
+
+        backgroundTaskQueueMock.Verify(q => q.QueueBackgroundWorkItem(It.IsAny<Func<CancellationToken, Task>>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task AddCommentFeedbackAsync_AIGeneratedCommentNoReasons_DoesNotQueueCopilotNotification()
+    {
+        var commentsRepoMock = new Mock<ICosmosCommentsRepository>();
+        var backgroundTaskQueueMock = new Mock<IBackgroundTaskQueue>();
+
+        var hubContextMock = new Mock<IHubContext<SignalRHub>>();
+        var mockClients = new Mock<IHubClients>();
+        var mockClientProxy = new Mock<IClientProxy>();
+        hubContextMock.Setup(h => h.Clients).Returns(mockClients.Object);
+        mockClients.Setup(c => c.All).Returns(mockClientProxy.Object);
+
+        Mock<IConfiguration> configMock = new();
+        Mock<IOptions<OrganizationOptions>> orgOptionsMock = new();
+        orgOptionsMock.Setup(o => o.Value).Returns(new OrganizationOptions { RequiredOrganization = [] });
+
+        Mock<IMemoryCache> memoryCacheMock = new();
+        Mock<IUserProfileManager> userProfileManagerMock = new();
+        Mock<ILogger<UserProfileCache>> userProfileCacheLoggerMock = new();
+        UserProfileCache userProfileCache = new(
+            memoryCacheMock.Object,
+            userProfileManagerMock.Object,
+            userProfileCacheLoggerMock.Object
+        );
+
+        var manager = new CommentsManager(
+            new Mock<IAPIRevisionsManager>().Object,
+            new Mock<IDiagnosticCommentService>().Object,
+            new Mock<IAuthorizationService>().Object,
+            commentsRepoMock.Object,
+            new Mock<ICosmosReviewRepository>().Object,
+            new Mock<INotificationManager>().Object,
+            new Mock<IBlobCodeFileRepository>().Object,
+            hubContextMock.Object,
+            new Mock<IHttpClientFactory>().Object,
+            userProfileCache,
+            configMock.Object,
+            orgOptionsMock.Object,
+            backgroundTaskQueueMock.Object,
+            new Mock<IPermissionsManager>().Object,
+            new Mock<ICopilotAuthenticationService>().Object,
+            new Mock<ILogger<CommentsManager>>().Object
+        );
+
+        ClaimsPrincipal user = CreateUser("test-user");
+        CommentItemModel comment = new()
+        {
+            ReviewId = "review1",
+            Id = "comment1",
+            CommentSource = CommentSource.AIGenerated,
+            Feedback = new List<CommentFeedback>()
+        };
+
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment);
+
+        CommentFeedbackRequest feedbackRequest = new()
+        {
+            Reasons = new List<AICommentFeedbackReason>(),
+            Comment = "Just a comment without reasons",
+            IsDelete = false
+        };
+
+        await manager.AddCommentFeedbackAsync(user, "review1", "comment1", feedbackRequest);
+
+        backgroundTaskQueueMock.Verify(q => q.QueueBackgroundWorkItem(It.IsAny<Func<CancellationToken, Task>>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task AddCommentFeedbackAsync_AIGeneratedCommentIsDelete_QueuesCopilotNotification()
+    {
+        var commentsRepoMock = new Mock<ICosmosCommentsRepository>();
+        var hubContextMock = new Mock<IHubContext<SignalRHub>>();
+        var apiRevisionsManagerMock = new Mock<IAPIRevisionsManager>();
+        var backgroundTaskQueueMock = new Mock<IBackgroundTaskQueue>();
+        var copilotAuthServiceMock = new Mock<ICopilotAuthenticationService>();
+
+        var mockClients = new Mock<IHubClients>();
+        var mockClientProxy = new Mock<IClientProxy>();
+        hubContextMock.Setup(h => h.Clients).Returns(mockClients.Object);
+        mockClients.Setup(c => c.All).Returns(mockClientProxy.Object);
+        mockClientProxy.Setup(p => p.SendCoreAsync(It.IsAny<string>(), It.IsAny<object[]>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        Mock<IConfiguration> configMock = new();
+        configMock.Setup(c => c["CopilotServiceEndpoint"]).Returns("https://dummy.api/endpoint");
+
+        Mock<IOptions<OrganizationOptions>> orgOptionsMock = new();
+        orgOptionsMock.Setup(o => o.Value)
+            .Returns(new OrganizationOptions { RequiredOrganization = [] });
+
+        APIRevisionListItemModel apiRevision = new() { Id = "rev1" };
+        Mock<IBlobCodeFileRepository> codeFileRepoMock = new();
+        apiRevisionsManagerMock.Setup(m => m.GetAPIRevisionAsync("rev1")).ReturnsAsync(apiRevision);
+        codeFileRepoMock.Setup(r => r.GetCodeFileAsync(apiRevision, false))
+            .ReturnsAsync(new RenderedCodeFile(new CodeFile()));
+
+        Mock<ICosmosReviewRepository> reviewRepoMock = new();
+        reviewRepoMock.Setup(r => r.GetReviewAsync("review1"))
+            .ReturnsAsync(new ReviewListItemModel { Id = "review1", Language = "CSharp" });
+
+        Mock<IMemoryCache> memoryCacheMock = new();
+        Mock<IUserProfileManager> userProfileManagerMock = new();
+        Mock<ILogger<UserProfileCache>> userProfileCacheLoggerMock = new();
+        UserProfileCache userProfileCache = new(
+            memoryCacheMock.Object,
+            userProfileManagerMock.Object,
+            userProfileCacheLoggerMock.Object
+        );
+
+        Mock<IHttpClientFactory> httpClientFactoryMock = new();
+        Mock<HttpMessageHandler> handlerMock = new();
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent("{}")
+            });
+
+        copilotAuthServiceMock.Setup(c => c.GetAccessTokenAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync("test-token");
+
+        HttpClient httpClient = new(handlerMock.Object);
+        httpClientFactoryMock
+            .Setup(f => f.CreateClient(It.IsAny<string>()))
+            .Returns(httpClient);
+
+        bool backgroundTaskQueued = false;
+        backgroundTaskQueueMock.Setup(q => q.QueueBackgroundWorkItem(It.IsAny<Func<CancellationToken, Task>>()))
+            .Callback<Func<CancellationToken, Task>>(workItem =>
+            {
+                backgroundTaskQueued = true;
+                _ = workItem.Invoke(CancellationToken.None);
+            });
+
+        var manager = new CommentsManager(
+            apiRevisionsManagerMock.Object,
+            new Mock<IDiagnosticCommentService>().Object,
+            new Mock<IAuthorizationService>().Object,
+            commentsRepoMock.Object,
+            reviewRepoMock.Object,
+            new Mock<INotificationManager>().Object,
+            codeFileRepoMock.Object,
+            hubContextMock.Object,
+            httpClientFactoryMock.Object,
+            userProfileCache,
+            configMock.Object,
+            orgOptionsMock.Object,
+            backgroundTaskQueueMock.Object,
+            new Mock<IPermissionsManager>().Object,
+            copilotAuthServiceMock.Object,
+            new Mock<ILogger<CommentsManager>>().Object
+        );
+
+        ClaimsPrincipal user = CreateUser("test-user");
+        CommentItemModel comment = new()
+        {
+            ReviewId = "review1",
+            APIRevisionId = "rev1",
+            Id = "comment1",
+            ElementId = "element1",
+            CommentSource = CommentSource.AIGenerated,
+            CommentText = "This is an AI comment",
+            Feedback = new List<CommentFeedback>(),
+            Upvotes = new List<string>(),
+            Downvotes = new List<string>()
+        };
+
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment);
+
+        CommentFeedbackRequest feedbackRequest = new()
+        {
+            Reasons = new List<AICommentFeedbackReason>(),
+            Comment = "This comment is egregiously wrong",
+            IsDelete = true
+        };
+
+        await manager.AddCommentFeedbackAsync(user, "review1", "comment1", feedbackRequest);
+
+        Assert.Single(comment.Feedback);
+        Assert.True(comment.Feedback[0].IsDelete);
+        Assert.True(backgroundTaskQueued);
+        backgroundTaskQueueMock.Verify(q => q.QueueBackgroundWorkItem(It.IsAny<Func<CancellationToken, Task>>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CommentsBatchOperationAsync_SameCorrelationId_StoresFeedbackAndNotifiesOnce()
+    {
+        var commentsRepoMock = new Mock<ICosmosCommentsRepository>();
+        var hubContextMock = new Mock<IHubContext<SignalRHub>>();
+        var apiRevisionsManagerMock = new Mock<IAPIRevisionsManager>();
+        var backgroundTaskQueueMock = new Mock<IBackgroundTaskQueue>();
+        var copilotAuthServiceMock = new Mock<ICopilotAuthenticationService>();
+
+        var mockClients = new Mock<IHubClients>();
+        var mockClientProxy = new Mock<IClientProxy>();
+        hubContextMock.Setup(h => h.Clients).Returns(mockClients.Object);
+        mockClients.Setup(c => c.All).Returns(mockClientProxy.Object);
+        mockClientProxy.Setup(p => p.SendCoreAsync(It.IsAny<string>(), It.IsAny<object[]>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        Mock<IConfiguration> configMock = new();
+        configMock.Setup(c => c["CopilotServiceEndpoint"]).Returns("https://dummy.api/endpoint");
+
+        Mock<IOptions<OrganizationOptions>> orgOptionsMock = new();
+        orgOptionsMock.Setup(o => o.Value)
+            .Returns(new OrganizationOptions { RequiredOrganization = [] });
+
+        APIRevisionListItemModel apiRevision = new() { Id = "rev1" };
+        Mock<IBlobCodeFileRepository> codeFileRepoMock = new();
+        apiRevisionsManagerMock.Setup(m => m.GetAPIRevisionAsync("rev1")).ReturnsAsync(apiRevision);
+        codeFileRepoMock.Setup(r => r.GetCodeFileAsync(apiRevision, false))
+            .ReturnsAsync(new RenderedCodeFile(new CodeFile()));
+
+        Mock<ICosmosReviewRepository> reviewRepoMock = new();
+        reviewRepoMock.Setup(r => r.GetReviewAsync("review1"))
+            .ReturnsAsync(new ReviewListItemModel { Id = "review1", Language = "CSharp" });
+
+        Mock<IMemoryCache> memoryCacheMock = new();
+        Mock<IUserProfileManager> userProfileManagerMock = new();
+        Mock<ILogger<UserProfileCache>> userProfileCacheLoggerMock = new();
+        UserProfileCache userProfileCache = new(
+            memoryCacheMock.Object,
+            userProfileManagerMock.Object,
+            userProfileCacheLoggerMock.Object
+        );
+
+        Mock<IHttpClientFactory> httpClientFactoryMock = new();
+        Mock<HttpMessageHandler> handlerMock = new();
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent("{}")
+            });
+
+        copilotAuthServiceMock.Setup(c => c.GetAccessTokenAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync("test-token");
+
+        HttpClient httpClient = new(handlerMock.Object);
+        httpClientFactoryMock
+            .Setup(f => f.CreateClient(It.IsAny<string>()))
+            .Returns(httpClient);
+
+        int notificationCount = 0;
+        backgroundTaskQueueMock.Setup(q => q.QueueBackgroundWorkItem(It.IsAny<Func<CancellationToken, Task>>()))
+            .Callback<Func<CancellationToken, Task>>(workItem =>
+            {
+                notificationCount++;
+                _ = workItem.Invoke(CancellationToken.None);
+            });
+
+        var manager = new CommentsManager(
+            apiRevisionsManagerMock.Object,
+            new Mock<IDiagnosticCommentService>().Object,
+            new Mock<IAuthorizationService>().Object,
+            commentsRepoMock.Object,
+            reviewRepoMock.Object,
+            new Mock<INotificationManager>().Object,
+            codeFileRepoMock.Object,
+            hubContextMock.Object,
+            httpClientFactoryMock.Object,
+            userProfileCache,
+            configMock.Object,
+            orgOptionsMock.Object,
+            backgroundTaskQueueMock.Object,
+            new Mock<IPermissionsManager>().Object,
+            copilotAuthServiceMock.Object,
+            new Mock<ILogger<CommentsManager>>().Object
+        );
+
+        ClaimsPrincipal user = CreateUser("test-user");
+        const string sharedCorrelationId = "corr-123";
+
+        CommentItemModel comment1 = new()
+        {
+            ReviewId = "review1",
+            APIRevisionId = "rev1",
+            Id = "comment1",
+            ElementId = "element1",
+            CommentSource = CommentSource.AIGenerated,
+            CommentText = "AI comment 1",
+            CorrelationId = sharedCorrelationId,
+            Feedback = new List<CommentFeedback>(),
+            Upvotes = new List<string>(),
+            Downvotes = new List<string>()
+        };
+
+        CommentItemModel comment2 = new()
+        {
+            ReviewId = "review1",
+            APIRevisionId = "rev1",
+            Id = "comment2",
+            ElementId = "element2",
+            CommentSource = CommentSource.AIGenerated,
+            CommentText = "AI comment 2",
+            CorrelationId = sharedCorrelationId,
+            Feedback = new List<CommentFeedback>(),
+            Upvotes = new List<string>(),
+            Downvotes = new List<string>()
+        };
+
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment1);
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment2")).ReturnsAsync(comment2);
+
+        BatchConversationRequest request = new()
+        {
+            CommentIds = new List<string> { "comment1", "comment2" },
+            Feedback = new CommentFeedbackRequest
+            {
+                Reasons = new List<AICommentFeedbackReason> { AICommentFeedbackReason.FactuallyIncorrect },
+                Comment = "Both comments are wrong",
+                IsDelete = false
+            },
+            Disposition = ConversationDisposition.KeepOpen
+        };
+
+        await manager.CommentsBatchOperationAsync(user, "review1", request);
+
+        // Only the first comment with this correlation ID should have feedback stored
+        Assert.Single(comment1.Feedback);
+        Assert.Empty(comment2.Feedback);
+        // And only one copilot notification should be queued
+        Assert.Equal(1, notificationCount);
+        backgroundTaskQueueMock.Verify(q => q.QueueBackgroundWorkItem(It.IsAny<Func<CancellationToken, Task>>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CommentsBatchOperationAsync_SameCorrelationId_StillDeletesAllComments()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("architect1");
+
+        const string sharedCorrelationId = "corr-shared";
+
+        CommentItemModel comment1 = new()
+        {
+            ReviewId = "review1",
+            Id = "comment1",
+            ElementId = "element1",
+            CommentSource = CommentSource.AIGenerated,
+            CorrelationId = sharedCorrelationId,
+            Feedback = new List<CommentFeedback>(),
+            Upvotes = new List<string>(),
+            Downvotes = new List<string>(),
+            CreatedBy = "copilot"
+        };
+
+        CommentItemModel comment2 = new()
+        {
+            ReviewId = "review1",
+            Id = "comment2",
+            ElementId = "element2",
+            CommentSource = CommentSource.AIGenerated,
+            CorrelationId = sharedCorrelationId,
+            Feedback = new List<CommentFeedback>(),
+            Upvotes = new List<string>(),
+            Downvotes = new List<string>(),
+            CreatedBy = "copilot"
+        };
+
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment1);
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment2")).ReturnsAsync(comment2);
+
+        BatchConversationRequest request = new()
+        {
+            CommentIds = new List<string> { "comment1", "comment2" },
+            Feedback = new CommentFeedbackRequest
+            {
+                Reasons = new List<AICommentFeedbackReason> { AICommentFeedbackReason.FactuallyIncorrect },
+                IsDelete = true
+            },
+            Disposition = ConversationDisposition.Delete
+        };
+
+        await manager.CommentsBatchOperationAsync(user, "review1", request);
+
+        // Feedback stored only once (first comment)
+        Assert.Single(comment1.Feedback);
+        Assert.Empty(comment2.Feedback);
+
+        // But both comments should be soft-deleted
+        Assert.True(comment1.IsDeleted);
+        Assert.True(comment2.IsDeleted);
+    }
+
+    [Fact]
+    public async Task CommentsBatchOperationAsync_DifferentCorrelationIds_StoresFeedbackAndNotifiesForEach()
+    {
+        var commentsRepoMock = new Mock<ICosmosCommentsRepository>();
+        var hubContextMock = new Mock<IHubContext<SignalRHub>>();
+        var apiRevisionsManagerMock = new Mock<IAPIRevisionsManager>();
+        var backgroundTaskQueueMock = new Mock<IBackgroundTaskQueue>();
+        var copilotAuthServiceMock = new Mock<ICopilotAuthenticationService>();
+
+        var mockClients = new Mock<IHubClients>();
+        var mockClientProxy = new Mock<IClientProxy>();
+        hubContextMock.Setup(h => h.Clients).Returns(mockClients.Object);
+        mockClients.Setup(c => c.All).Returns(mockClientProxy.Object);
+        mockClientProxy.Setup(p => p.SendCoreAsync(It.IsAny<string>(), It.IsAny<object[]>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        Mock<IConfiguration> configMock = new();
+        configMock.Setup(c => c["CopilotServiceEndpoint"]).Returns("https://dummy.api/endpoint");
+
+        Mock<IOptions<OrganizationOptions>> orgOptionsMock = new();
+        orgOptionsMock.Setup(o => o.Value)
+            .Returns(new OrganizationOptions { RequiredOrganization = [] });
+
+        APIRevisionListItemModel apiRevision = new() { Id = "rev1" };
+        Mock<IBlobCodeFileRepository> codeFileRepoMock = new();
+        apiRevisionsManagerMock.Setup(m => m.GetAPIRevisionAsync("rev1")).ReturnsAsync(apiRevision);
+        codeFileRepoMock.Setup(r => r.GetCodeFileAsync(apiRevision, false))
+            .ReturnsAsync(new RenderedCodeFile(new CodeFile()));
+
+        Mock<ICosmosReviewRepository> reviewRepoMock = new();
+        reviewRepoMock.Setup(r => r.GetReviewAsync("review1"))
+            .ReturnsAsync(new ReviewListItemModel { Id = "review1", Language = "CSharp" });
+
+        Mock<IMemoryCache> memoryCacheMock = new();
+        Mock<IUserProfileManager> userProfileManagerMock = new();
+        Mock<ILogger<UserProfileCache>> userProfileCacheLoggerMock = new();
+        UserProfileCache userProfileCache = new(
+            memoryCacheMock.Object,
+            userProfileManagerMock.Object,
+            userProfileCacheLoggerMock.Object
+        );
+
+        Mock<IHttpClientFactory> httpClientFactoryMock = new();
+        Mock<HttpMessageHandler> handlerMock = new();
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent("{}")
+            });
+
+        copilotAuthServiceMock.Setup(c => c.GetAccessTokenAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync("test-token");
+
+        HttpClient httpClient = new(handlerMock.Object);
+        httpClientFactoryMock
+            .Setup(f => f.CreateClient(It.IsAny<string>()))
+            .Returns(httpClient);
+
+        int notificationCount = 0;
+        backgroundTaskQueueMock.Setup(q => q.QueueBackgroundWorkItem(It.IsAny<Func<CancellationToken, Task>>()))
+            .Callback<Func<CancellationToken, Task>>(workItem =>
+            {
+                notificationCount++;
+                _ = workItem.Invoke(CancellationToken.None);
+            });
+
+        var manager = new CommentsManager(
+            apiRevisionsManagerMock.Object,
+            new Mock<IDiagnosticCommentService>().Object,
+            new Mock<IAuthorizationService>().Object,
+            commentsRepoMock.Object,
+            reviewRepoMock.Object,
+            new Mock<INotificationManager>().Object,
+            codeFileRepoMock.Object,
+            hubContextMock.Object,
+            httpClientFactoryMock.Object,
+            userProfileCache,
+            configMock.Object,
+            orgOptionsMock.Object,
+            backgroundTaskQueueMock.Object,
+            new Mock<IPermissionsManager>().Object,
+            copilotAuthServiceMock.Object,
+            new Mock<ILogger<CommentsManager>>().Object
+        );
+
+        ClaimsPrincipal user = CreateUser("test-user");
+
+        CommentItemModel comment1 = new()
+        {
+            ReviewId = "review1",
+            APIRevisionId = "rev1",
+            Id = "comment1",
+            ElementId = "element1",
+            CommentSource = CommentSource.AIGenerated,
+            CommentText = "AI comment 1",
+            CorrelationId = "corr-1",
+            Feedback = new List<CommentFeedback>(),
+            Upvotes = new List<string>(),
+            Downvotes = new List<string>()
+        };
+
+        CommentItemModel comment2 = new()
+        {
+            ReviewId = "review1",
+            APIRevisionId = "rev1",
+            Id = "comment2",
+            ElementId = "element2",
+            CommentSource = CommentSource.AIGenerated,
+            CommentText = "AI comment 2",
+            CorrelationId = "corr-2",
+            Feedback = new List<CommentFeedback>(),
+            Upvotes = new List<string>(),
+            Downvotes = new List<string>()
+        };
+
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment1);
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment2")).ReturnsAsync(comment2);
+
+        BatchConversationRequest request = new()
+        {
+            CommentIds = new List<string> { "comment1", "comment2" },
+            Feedback = new CommentFeedbackRequest
+            {
+                Reasons = new List<AICommentFeedbackReason> { AICommentFeedbackReason.FactuallyIncorrect },
+                Comment = "Both comments are wrong",
+                IsDelete = false
+            },
+            Disposition = ConversationDisposition.KeepOpen
+        };
+
+        await manager.CommentsBatchOperationAsync(user, "review1", request);
+
+        // Both comments should have feedback stored and each should queue its own copilot notification
+        Assert.Single(comment1.Feedback);
+        Assert.Single(comment2.Feedback);
+        Assert.Equal(2, notificationCount);
+        backgroundTaskQueueMock.Verify(q => q.QueueBackgroundWorkItem(It.IsAny<Func<CancellationToken, Task>>()), Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task CommentsBatchOperationAsync_NoCorrelationId_StoresFeedbackAndNotifiesForEach()
+    {
+        var commentsRepoMock = new Mock<ICosmosCommentsRepository>();
+        var hubContextMock = new Mock<IHubContext<SignalRHub>>();
+        var apiRevisionsManagerMock = new Mock<IAPIRevisionsManager>();
+        var backgroundTaskQueueMock = new Mock<IBackgroundTaskQueue>();
+        var copilotAuthServiceMock = new Mock<ICopilotAuthenticationService>();
+
+        var mockClients = new Mock<IHubClients>();
+        var mockClientProxy = new Mock<IClientProxy>();
+        hubContextMock.Setup(h => h.Clients).Returns(mockClients.Object);
+        mockClients.Setup(c => c.All).Returns(mockClientProxy.Object);
+        mockClientProxy.Setup(p => p.SendCoreAsync(It.IsAny<string>(), It.IsAny<object[]>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        Mock<IConfiguration> configMock = new();
+        configMock.Setup(c => c["CopilotServiceEndpoint"]).Returns("https://dummy.api/endpoint");
+
+        Mock<IOptions<OrganizationOptions>> orgOptionsMock = new();
+        orgOptionsMock.Setup(o => o.Value)
+            .Returns(new OrganizationOptions { RequiredOrganization = [] });
+
+        APIRevisionListItemModel apiRevision = new() { Id = "rev1" };
+        Mock<IBlobCodeFileRepository> codeFileRepoMock = new();
+        apiRevisionsManagerMock.Setup(m => m.GetAPIRevisionAsync("rev1")).ReturnsAsync(apiRevision);
+        codeFileRepoMock.Setup(r => r.GetCodeFileAsync(apiRevision, false))
+            .ReturnsAsync(new RenderedCodeFile(new CodeFile()));
+
+        Mock<ICosmosReviewRepository> reviewRepoMock = new();
+        reviewRepoMock.Setup(r => r.GetReviewAsync("review1"))
+            .ReturnsAsync(new ReviewListItemModel { Id = "review1", Language = "CSharp" });
+
+        Mock<IMemoryCache> memoryCacheMock = new();
+        Mock<IUserProfileManager> userProfileManagerMock = new();
+        Mock<ILogger<UserProfileCache>> userProfileCacheLoggerMock = new();
+        UserProfileCache userProfileCache = new(
+            memoryCacheMock.Object,
+            userProfileManagerMock.Object,
+            userProfileCacheLoggerMock.Object
+        );
+
+        Mock<IHttpClientFactory> httpClientFactoryMock = new();
+        Mock<HttpMessageHandler> handlerMock = new();
+        handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent("{}")
+            });
+
+        copilotAuthServiceMock.Setup(c => c.GetAccessTokenAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync("test-token");
+
+        HttpClient httpClient = new(handlerMock.Object);
+        httpClientFactoryMock
+            .Setup(f => f.CreateClient(It.IsAny<string>()))
+            .Returns(httpClient);
+
+        int notificationCount = 0;
+        backgroundTaskQueueMock.Setup(q => q.QueueBackgroundWorkItem(It.IsAny<Func<CancellationToken, Task>>()))
+            .Callback<Func<CancellationToken, Task>>(workItem =>
+            {
+                notificationCount++;
+                _ = workItem.Invoke(CancellationToken.None);
+            });
+
+        var manager = new CommentsManager(
+            apiRevisionsManagerMock.Object,
+            new Mock<IDiagnosticCommentService>().Object,
+            new Mock<IAuthorizationService>().Object,
+            commentsRepoMock.Object,
+            reviewRepoMock.Object,
+            new Mock<INotificationManager>().Object,
+            codeFileRepoMock.Object,
+            hubContextMock.Object,
+            httpClientFactoryMock.Object,
+            userProfileCache,
+            configMock.Object,
+            orgOptionsMock.Object,
+            backgroundTaskQueueMock.Object,
+            new Mock<IPermissionsManager>().Object,
+            copilotAuthServiceMock.Object,
+            new Mock<ILogger<CommentsManager>>().Object
+        );
+
+        ClaimsPrincipal user = CreateUser("test-user");
+
+        CommentItemModel comment1 = new()
+        {
+            ReviewId = "review1",
+            APIRevisionId = "rev1",
+            Id = "comment1",
+            ElementId = "element1",
+            CommentSource = CommentSource.AIGenerated,
+            CommentText = "AI comment 1",
+            CorrelationId = null,
+            Feedback = new List<CommentFeedback>(),
+            Upvotes = new List<string>(),
+            Downvotes = new List<string>()
+        };
+
+        CommentItemModel comment2 = new()
+        {
+            ReviewId = "review1",
+            APIRevisionId = "rev1",
+            Id = "comment2",
+            ElementId = "element2",
+            CommentSource = CommentSource.AIGenerated,
+            CommentText = "AI comment 2",
+            CorrelationId = null,
+            Feedback = new List<CommentFeedback>(),
+            Upvotes = new List<string>(),
+            Downvotes = new List<string>()
+        };
+
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment1);
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment2")).ReturnsAsync(comment2);
+
+        BatchConversationRequest request = new()
+        {
+            CommentIds = new List<string> { "comment1", "comment2" },
+            Feedback = new CommentFeedbackRequest
+            {
+                Reasons = new List<AICommentFeedbackReason> { AICommentFeedbackReason.FactuallyIncorrect },
+                Comment = "Comments are wrong",
+                IsDelete = false
+            },
+            Disposition = ConversationDisposition.KeepOpen
+        };
+
+        await manager.CommentsBatchOperationAsync(user, "review1", request);
+
+        // Both comments should have feedback stored and each should queue its own notification
+        Assert.Single(comment1.Feedback);
+        Assert.Single(comment2.Feedback);
+        Assert.Equal(2, notificationCount);
+        backgroundTaskQueueMock.Verify(q => q.QueueBackgroundWorkItem(It.IsAny<Func<CancellationToken, Task>>()), Times.Exactly(2));
+    }
+
     #endregion
 
     #region ThreadId Tests
@@ -1263,5 +2283,478 @@ public class CommentsManagerTests
         Assert.All(thread3, c => Assert.False(c.IsResolved));
     }
 
+    [Fact]
+    public async Task AddCommentAsync_ReplyToResolvedThread_InheritsResolvedState()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+
+        // Existing resolved thread
+        var existingComments = new List<CommentItemModel>
+        {
+            CreateComment("c1", elementId: "elem-1", threadId: "thread-1", isResolved: true),
+            CreateComment("c2", elementId: "elem-1", threadId: "thread-1", isResolved: true)
+        };
+        commentsRepoMock.Setup(r => r.GetCommentsAsync("review1", "elem-1"))
+            .ReturnsAsync(existingComments);
+
+        // New reply to the resolved thread
+        var newComment = new CommentItemModel
+        {
+            ReviewId = "review1",
+            ElementId = "elem-1",
+            ThreadId = "thread-1",
+            CommentText = "A reply",
+            IsResolved = false // default
+        };
+
+        await manager.AddCommentAsync(user, newComment);
+
+        // The reply should have inherited IsResolved = true from the thread
+        Assert.True(newComment.IsResolved);
+        commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.Is<CommentItemModel>(c => c.IsResolved == true)), Times.Once);
+    }
+
+    [Fact]
+    public async Task AddCommentAsync_ReplyToUnresolvedThread_StaysUnresolved()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+
+        // Existing unresolved thread
+        var existingComments = new List<CommentItemModel>
+        {
+            CreateComment("c1", elementId: "elem-1", threadId: "thread-1", isResolved: false)
+        };
+        commentsRepoMock.Setup(r => r.GetCommentsAsync("review1", "elem-1"))
+            .ReturnsAsync(existingComments);
+
+        var newComment = new CommentItemModel
+        {
+            ReviewId = "review1",
+            ElementId = "elem-1",
+            ThreadId = "thread-1",
+            CommentText = "A reply",
+            IsResolved = false
+        };
+
+        await manager.AddCommentAsync(user, newComment);
+
+        Assert.False(newComment.IsResolved);
+    }
+
+    [Fact]
+    public async Task AddCommentAsync_OldStyle_NoThreadId_NoExistingComments_StaysUnresolved()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+
+        // No existing comments on this element
+        commentsRepoMock.Setup(r => r.GetCommentsAsync("review1", "elem-1"))
+            .ReturnsAsync(new List<CommentItemModel>());
+
+        var newComment = new CommentItemModel
+        {
+            ReviewId = "review1",
+            ElementId = "elem-1",
+            ThreadId = null,
+            CommentText = "First comment on element",
+            IsResolved = false
+        };
+
+        await manager.AddCommentAsync(user, newComment);
+
+        Assert.False(newComment.IsResolved);
+    }
+
+    [Fact]
+    public async Task AddCommentAsync_OldStyle_NoThreadId_ReplyToResolvedThread_InheritsResolved()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+
+        // Existing resolved old-style comments (null ThreadId) on the same element
+        var existingComments = new List<CommentItemModel>
+        {
+            CreateComment("c1", elementId: "elem-1", threadId: null, isResolved: true),
+            CreateComment("c2", elementId: "elem-1", threadId: null, isResolved: true)
+        };
+        commentsRepoMock.Setup(r => r.GetCommentsAsync("review1", "elem-1"))
+            .ReturnsAsync(existingComments);
+
+        var newComment = new CommentItemModel
+        {
+            ReviewId = "review1",
+            ElementId = "elem-1",
+            ThreadId = null,
+            CommentText = "Reply to resolved old-style thread",
+            IsResolved = false
+        };
+
+        await manager.AddCommentAsync(user, newComment);
+
+        // Should inherit resolved state from the existing old-style thread
+        Assert.True(newComment.IsResolved);
+    }
+
+    [Fact]
+    public async Task AddCommentAsync_OldStyle_NoThreadId_ReplyToUnresolvedThread_StaysUnresolved()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+
+        // Existing unresolved old-style comments on the same element
+        var existingComments = new List<CommentItemModel>
+        {
+            CreateComment("c1", elementId: "elem-1", threadId: null, isResolved: false)
+        };
+        commentsRepoMock.Setup(r => r.GetCommentsAsync("review1", "elem-1"))
+            .ReturnsAsync(existingComments);
+
+        var newComment = new CommentItemModel
+        {
+            ReviewId = "review1",
+            ElementId = "elem-1",
+            ThreadId = null,
+            CommentText = "Reply to unresolved old-style thread",
+            IsResolved = false
+        };
+
+        await manager.AddCommentAsync(user, newComment);
+
+        Assert.False(newComment.IsResolved);
+    }
+
+    [Fact]
+    public async Task UnresolveConversation_ThenAddReply_ReplyIsUnresolved()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+
+        // Thread was resolved, then unresolve is called
+        var existingComments = new List<CommentItemModel>
+        {
+            CreateComment("c1", elementId: "elem-1", threadId: "thread-1", isResolved: true),
+            CreateComment("c2", elementId: "elem-1", threadId: "thread-1", isResolved: true)
+        };
+        commentsRepoMock.Setup(r => r.GetCommentsAsync("review1", "elem-1"))
+            .ReturnsAsync(existingComments);
+
+        // Unresolve the thread — all comments become IsResolved = false
+        await manager.UnresolveConversation(user, "review1", "elem-1", "thread-1");
+        Assert.All(existingComments, c => Assert.False(c.IsResolved));
+
+        // Now add a reply — it should be unresolved since the thread is unresolved
+        var newComment = new CommentItemModel
+        {
+            ReviewId = "review1",
+            ElementId = "elem-1",
+            ThreadId = "thread-1",
+            CommentText = "Reply after unresolve",
+            IsResolved = false
+        };
+
+        await manager.AddCommentAsync(user, newComment);
+
+        Assert.False(newComment.IsResolved);
+    }
+
+    [Fact]
+    public async Task AddCommentAsync_MixedResolutionThread_RepairsAndInheritsResolved()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+
+        // Thread has inconsistent state: one resolved, one not (e.g. agent reply added after resolve)
+        var existingComments = new List<CommentItemModel>
+        {
+            CreateComment("c1", elementId: "elem-1", threadId: "thread-1", isResolved: true),
+            CreateComment("c2", elementId: "elem-1", threadId: "thread-1", isResolved: false)
+        };
+        commentsRepoMock.Setup(r => r.GetCommentsAsync("review1", "elem-1"))
+            .ReturnsAsync(existingComments);
+
+        var newComment = new CommentItemModel
+        {
+            ReviewId = "review1",
+            ElementId = "elem-1",
+            ThreadId = "thread-1",
+            CommentText = "Reply to mixed-state thread",
+            IsResolved = false
+        };
+
+        await manager.AddCommentAsync(user, newComment);
+
+        // The mixed thread should be repaired: c2 should now be resolved with a ChangeHistory entry
+        Assert.True(existingComments[1].IsResolved);
+        Assert.Contains(existingComments[1].ChangeHistory,
+            h => h.ChangeAction == CommentChangeAction.Resolved && h.ChangedBy == "System");
+
+        // The new reply should inherit the resolved state
+        Assert.True(newComment.IsResolved);
+
+        // c2 was repaired via upsert, plus the new comment was upserted
+        commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.Is<CommentItemModel>(c => c.Id == "c2" && c.IsResolved)), Times.Once);
+    }
+
+    [Fact]
+    public async Task AddCommentAsync_CallerSetsIsResolvedTrue_PreservedEvenIfThreadUnresolved()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+
+        // Existing unresolved thread
+        var existingComments = new List<CommentItemModel>
+        {
+            CreateComment("c1", elementId: "elem-1", threadId: "thread-1", isResolved: false)
+        };
+        commentsRepoMock.Setup(r => r.GetCommentsAsync("review1", "elem-1"))
+            .ReturnsAsync(existingComments);
+
+        // Caller explicitly sets IsResolved = true (e.g. batch resolve adds reply + resolves)
+        var newComment = new CommentItemModel
+        {
+            ReviewId = "review1",
+            ElementId = "elem-1",
+            ThreadId = "thread-1",
+            CommentText = "Resolve reply",
+            IsResolved = true
+        };
+
+        await manager.AddCommentAsync(user, newComment);
+
+        // Caller's explicit true should be preserved, not overwritten by thread state
+        Assert.True(newComment.IsResolved);
+    }
+
+    #endregion
+
+    #region Timestamp Normalization and Thread Sort Tests
+
+    [Fact]
+    public void NormalizeTimestampsToUtc_LocalCreatedOn_ConvertedToUtc()
+    {
+        var localTime = new DateTime(2026, 3, 25, 2, 0, 0, DateTimeKind.Local);
+        var comment = new CommentItemModel
+        {
+            ReviewId = "review1",
+            CreatedOn = localTime,
+            ChangeHistory = new List<CommentChangeHistoryModel>()
+        };
+
+        bool changed = CommentsManager.NormalizeTimestampsToUtc(comment);
+
+        Assert.True(changed);
+        Assert.Equal(DateTimeKind.Utc, comment.CreatedOn.Kind);
+        Assert.Equal(localTime.ToUniversalTime(), comment.CreatedOn);
+    }
+
+    [Fact]
+    public void NormalizeTimestampsToUtc_UtcCreatedOn_NoChange()
+    {
+        var utcTime = new DateTime(2026, 3, 25, 10, 0, 0, DateTimeKind.Utc);
+        var comment = new CommentItemModel
+        {
+            ReviewId = "review1",
+            CreatedOn = utcTime,
+            ChangeHistory = new List<CommentChangeHistoryModel>()
+        };
+
+        bool changed = CommentsManager.NormalizeTimestampsToUtc(comment);
+
+        Assert.False(changed);
+        Assert.Equal(utcTime, comment.CreatedOn);
+    }
+
+    [Fact]
+    public void NormalizeTimestampsToUtc_UnspecifiedCreatedOn_ConvertedToUtc()
+    {
+        var unspecifiedTime = new DateTime(2026, 3, 25, 2, 0, 0, DateTimeKind.Unspecified);
+        var comment = new CommentItemModel
+        {
+            ReviewId = "review1",
+            CreatedOn = unspecifiedTime,
+            ChangeHistory = new List<CommentChangeHistoryModel>()
+        };
+
+        bool changed = CommentsManager.NormalizeTimestampsToUtc(comment);
+
+        Assert.True(changed);
+        Assert.Equal(DateTimeKind.Utc, comment.CreatedOn.Kind);
+    }
+
+    [Fact]
+    public void NormalizeTimestampsToUtc_LocalLastEditedOn_ConvertedToUtc()
+    {
+        var localTime = new DateTime(2026, 3, 25, 2, 0, 0, DateTimeKind.Local);
+        var comment = new CommentItemModel
+        {
+            ReviewId = "review1",
+            CreatedOn = DateTime.UtcNow,
+            LastEditedOn = localTime,
+            ChangeHistory = new List<CommentChangeHistoryModel>()
+        };
+
+        bool changed = CommentsManager.NormalizeTimestampsToUtc(comment);
+
+        Assert.True(changed);
+        Assert.Equal(DateTimeKind.Utc, comment.LastEditedOn!.Value.Kind);
+        Assert.Equal(localTime.ToUniversalTime(), comment.LastEditedOn.Value);
+    }
+
+    [Fact]
+    public void NormalizeTimestampsToUtc_LocalChangeHistoryEntry_ConvertedToUtc()
+    {
+        var localTime = new DateTime(2026, 3, 25, 2, 0, 0, DateTimeKind.Local);
+        var comment = new CommentItemModel
+        {
+            ReviewId = "review1",
+            CreatedOn = DateTime.UtcNow,
+            ChangeHistory = new List<CommentChangeHistoryModel>
+            {
+                new CommentChangeHistoryModel
+                {
+                    ChangeAction = CommentChangeAction.Created,
+                    ChangedBy = "user1",
+                    ChangedOn = localTime
+                }
+            }
+        };
+
+        bool changed = CommentsManager.NormalizeTimestampsToUtc(comment);
+
+        Assert.True(changed);
+        Assert.Equal(DateTimeKind.Utc, comment.ChangeHistory[0].ChangedOn!.Value.Kind);
+    }
+
+    [Fact]
+    public async Task GetCommentsAsync_NormalizesAndPersistsNonUtcTimestamps()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+
+        var localTime = new DateTime(2026, 3, 25, 2, 0, 0, DateTimeKind.Local);
+        var utcTime = new DateTime(2026, 3, 25, 10, 0, 0, DateTimeKind.Utc);
+        var comments = new List<CommentItemModel>
+        {
+            new CommentItemModel
+            {
+                Id = "c1", ReviewId = "review1", CreatedOn = localTime,
+                CommentType = CommentType.APIRevision,
+                ChangeHistory = new List<CommentChangeHistoryModel>()
+            },
+            new CommentItemModel
+            {
+                Id = "c2", ReviewId = "review1", CreatedOn = utcTime,
+                CommentType = CommentType.APIRevision,
+                ChangeHistory = new List<CommentChangeHistoryModel>()
+            }
+        };
+        commentsRepoMock.Setup(r => r.GetCommentsAsync("review1", false, CommentType.APIRevision))
+            .ReturnsAsync(comments);
+
+        var result = (await manager.GetCommentsAsync("review1", commentType: CommentType.APIRevision)).ToList();
+
+        // c1 had local time — should have been normalized and persisted
+        Assert.Equal(DateTimeKind.Utc, result[0].CreatedOn.Kind);
+        commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.Is<CommentItemModel>(c => c.Id == "c1")), Times.Once);
+        // c2 was already UTC — should NOT have been persisted
+        commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.Is<CommentItemModel>(c => c.Id == "c2")), Times.Never);
+    }
+
+    [Fact]
+    public void NormalizeTimestampsToUtc_MixedKindsInThread_SortCorrectlyAfterNormalization()
+    {
+        // Simulate the real-world bug: AI comment at 10:00 UTC, user reply 5 min later
+        // but stored with DateTime.Now (Kind=Local) instead of DateTime.UtcNow.
+        // The local face value depends on the machine timezone, so raw Ticks comparison
+        // may give wrong order in westward timezones. After normalization, both are UTC
+        // and the sort is always correct regardless of timezone.
+        var aiCommentTime = new DateTime(2026, 3, 25, 10, 0, 0, DateTimeKind.Utc);
+        var userReplyActualUtc = new DateTime(2026, 3, 25, 10, 5, 0, DateTimeKind.Utc);
+        // What DateTime.Now would have returned (same instant, local representation)
+        var userReplyLocalTime = userReplyActualUtc.ToLocalTime();
+
+        var aiComment = new CommentItemModel
+        {
+            Id = "ai-1", ReviewId = "r1", ElementId = "e1", ThreadId = "t1",
+            CreatedOn = aiCommentTime,
+            ChangeHistory = new List<CommentChangeHistoryModel>()
+        };
+        var userReply = new CommentItemModel
+        {
+            Id = "user-1", ReviewId = "r1", ElementId = "e1", ThreadId = "t1",
+            CreatedOn = userReplyLocalTime,
+            ChangeHistory = new List<CommentChangeHistoryModel>()
+        };
+
+        // After normalization: both are UTC, so the sort is always correct
+        CommentsManager.NormalizeTimestampsToUtc(aiComment);
+        CommentsManager.NormalizeTimestampsToUtc(userReply);
+
+        var sorted = new List<CommentItemModel> { aiComment, userReply }
+            .OrderBy(c => c.CreatedOn).ToList();
+        Assert.Equal("ai-1", sorted[0].Id);
+        Assert.Equal("user-1", sorted[1].Id);
+    }
+
+    [Fact]
+    public void NormalizeTimestampsToUtc_AllUtc_ThreadSortRemainsCorrect()
+    {
+        var time1 = new DateTime(2026, 3, 25, 10, 0, 0, DateTimeKind.Utc);
+        var time2 = new DateTime(2026, 3, 25, 10, 5, 0, DateTimeKind.Utc);
+        var time3 = new DateTime(2026, 3, 25, 10, 10, 0, DateTimeKind.Utc);
+
+        var comments = new List<CommentItemModel>
+        {
+            new CommentItemModel { Id = "c1", CreatedOn = time1, ChangeHistory = [] },
+            new CommentItemModel { Id = "c2", CreatedOn = time2, ChangeHistory = [] },
+            new CommentItemModel { Id = "c3", CreatedOn = time3, ChangeHistory = [] }
+        };
+
+        // No changes needed
+        foreach (var c in comments)
+        {
+            Assert.False(CommentsManager.NormalizeTimestampsToUtc(c));
+        }
+
+        // Sort is correct
+        var sorted = comments.OrderBy(c => c.CreatedOn).ToList();
+        Assert.Equal("c1", sorted[0].Id);
+        Assert.Equal("c2", sorted[1].Id);
+        Assert.Equal("c3", sorted[2].Id);
+    }
+
+    [Fact]
+    public async Task GetCommentsAsync_AllUtc_SkipsNormalizationEntirely()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+
+        var comments = new List<CommentItemModel>
+        {
+            new CommentItemModel
+            {
+                Id = "c1", ReviewId = "review1",
+                CreatedOn = new DateTime(2026, 3, 25, 10, 0, 0, DateTimeKind.Utc),
+                CommentType = CommentType.APIRevision,
+                ChangeHistory = new List<CommentChangeHistoryModel>()
+            },
+            new CommentItemModel
+            {
+                Id = "c2", ReviewId = "review1",
+                CreatedOn = new DateTime(2026, 3, 25, 11, 0, 0, DateTimeKind.Utc),
+                CommentType = CommentType.APIRevision,
+                ChangeHistory = new List<CommentChangeHistoryModel>()
+            }
+        };
+        commentsRepoMock.Setup(r => r.GetCommentsAsync("review1", false, CommentType.APIRevision))
+            .ReturnsAsync(comments);
+
+        await manager.GetCommentsAsync("review1", commentType: CommentType.APIRevision);
+
+        // When all timestamps are already UTC, UpsertCommentAsync should never be called (performance guard)
+        commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()), Times.Never);
+    }
+
     #endregion
 }
+

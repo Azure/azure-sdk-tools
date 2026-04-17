@@ -7,10 +7,12 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using APIView;
 using APIViewWeb.DTOs;
 using APIViewWeb.Helpers;
 using APIViewWeb.Hubs;
@@ -30,6 +32,7 @@ namespace APIViewWeb.Managers
     public class CommentsManager : ICommentsManager
     {
         private readonly IAPIRevisionsManager _apiRevisionsManager;
+        private readonly IDiagnosticCommentService _diagnosticCommentService;
         private readonly IAuthorizationService _authorizationService;
         private readonly ICosmosCommentsRepository _commentsRepository;
         private readonly ICosmosReviewRepository _reviewRepository;
@@ -41,6 +44,7 @@ namespace APIViewWeb.Managers
         private readonly ILogger<CommentsManager> _logger;
         private readonly IBackgroundTaskQueue _backgroundTaskQueue;
         private readonly ICopilotAuthenticationService _copilotAuthService;
+        private readonly IPermissionsManager _permissionsManager;
 
         public readonly UserProfileCache _userProfileCache;
         private readonly OrganizationOptions _Options;
@@ -48,6 +52,7 @@ namespace APIViewWeb.Managers
         public HashSet<GithubUser> TaggableUsers;
 
         public CommentsManager(IAPIRevisionsManager apiRevisionsManager,
+            IDiagnosticCommentService diagnosticCommentService,
             IAuthorizationService authorizationService,
             ICosmosCommentsRepository commentsRepository,
             ICosmosReviewRepository reviewRepository,
@@ -59,10 +64,12 @@ namespace APIViewWeb.Managers
             IConfiguration configuration,
             IOptions<OrganizationOptions> options,
             IBackgroundTaskQueue backgroundTaskQueue,
+            IPermissionsManager permissionsManager,
             ICopilotAuthenticationService copilotAuthService,
             ILogger<CommentsManager> logger)
         {
             _apiRevisionsManager = apiRevisionsManager;
+            _diagnosticCommentService = diagnosticCommentService;
             _authorizationService = authorizationService;
             _commentsRepository = commentsRepository;
             _reviewRepository = reviewRepository;
@@ -75,6 +82,7 @@ namespace APIViewWeb.Managers
             _Options = options.Value;
             _backgroundTaskQueue = backgroundTaskQueue;
             _copilotAuthService = copilotAuthService;
+            _permissionsManager = permissionsManager;
             _logger = logger;
 
             TaggableUsers = new HashSet<GithubUser>();
@@ -108,9 +116,35 @@ namespace APIViewWeb.Managers
             TaggableUsers = new HashSet<GithubUser>(TaggableUsers.OrderBy(g => g.Login));
         }
         
-        public async Task<IEnumerable<CommentItemModel>> GetCommentsAsync(string reviewId, bool isDeleted = false, CommentType? commentType = null)
+        public async Task<IEnumerable<CommentItemModel>> GetCommentsAsync(string reviewId, bool isDeleted = false, CommentType? commentType = null, bool excludeDiagnostics = false)
         {
-            return await _commentsRepository.GetCommentsAsync(reviewId, isDeleted, commentType);
+            IEnumerable<CommentItemModel> comments = await _commentsRepository.GetCommentsAsync(reviewId, isDeleted, commentType);
+            
+            if (excludeDiagnostics)
+            {
+                comments = comments.Where(c => c.CommentSource != CommentSource.Diagnostic);
+            }
+
+            // Self-heal: normalize any non-UTC timestamps and persist corrections.
+            // Legacy data may contain DateTime.Now (local time) values mixed with
+            // DateTime.UtcNow values, causing incorrect sort order on the server.
+            var commentsList = comments.ToList();
+            var commentsToNormalize = commentsList
+                .Where(NormalizeTimestampsToUtc)
+                .ToList();
+
+            if (commentsToNormalize.Count > 0)
+            {
+                foreach (var comment in commentsToNormalize)
+                {
+                    _logger.LogInformation(
+                        "Normalized non-UTC timestamps for comment {CommentId} in review {ReviewId}.",
+                        comment.Id, comment.ReviewId);
+                }
+                await Task.WhenAll(commentsToNormalize.Select(c => _commentsRepository.UpsertCommentAsync(c)));
+            }
+
+            return commentsList;
         }
 
         public async Task<ReviewCommentsModel> GetReviewCommentsAsync(string reviewId)
@@ -138,17 +172,24 @@ namespace APIViewWeb.Managers
                 {
                     ChangeAction = CommentChangeAction.Created,
                     ChangedBy = user.GetGitHubLogin(),
-                    ChangedOn = DateTime.Now,
+                    ChangedOn = DateTime.UtcNow,
                 });
             comment.CreatedBy = user.GetGitHubLogin();
-            comment.CreatedOn = DateTime.Now;
+            comment.CreatedOn = DateTime.UtcNow;
+
+            // Inherit thread resolution state: if this comment is joining an existing
+            // resolved thread, mark it resolved so the thread stays consistently resolved.
+            // This applies to both new-style threads (shared ThreadId) and old-style
+            // threads (null ThreadId, grouped by ElementId).
+            // Preserve explicit IsResolved=true from callers (e.g. batch resolve).
+            comment.IsResolved = comment.IsResolved || await IsThreadResolvedAsync(comment.ReviewId, comment.ElementId, comment.ThreadId);
 
             await _commentsRepository.UpsertCommentAsync(comment);
 
             if (!comment.IsResolved)
             {
-                await _notificationManager.NotifyUserOnCommentTag(comment);
-                await _notificationManager.NotifySubscribersOnComment(user, comment);
+                await _notificationManager.NotifyUserOnCommentTagAsync(comment);
+                await _notificationManager.NotifySubscribersOnCommentAsync(user, comment);
             }
 
             await _signalRHubContext.Clients.All.SendAsync("ReceiveCommentUpdates",
@@ -174,9 +215,9 @@ namespace APIViewWeb.Managers
                {
                    ChangeAction = CommentChangeAction.Edited,
                    ChangedBy = user.GetGitHubLogin(),
-                   ChangedOn = DateTime.Now,
+                   ChangedOn = DateTime.UtcNow,
                });
-            comment.LastEditedOn = DateTime.Now;
+            comment.LastEditedOn = DateTime.UtcNow;
             comment.CommentText = commentText;
 
             foreach (var taggedUser in taggedUsers)
@@ -188,8 +229,8 @@ namespace APIViewWeb.Managers
             }
 
             await _commentsRepository.UpsertCommentAsync(comment);
-            await _notificationManager.NotifyUserOnCommentTag(comment);
-            await _notificationManager.NotifySubscribersOnComment(user, comment);
+            await _notificationManager.NotifyUserOnCommentTagAsync(comment);
+            await _notificationManager.NotifySubscribersOnCommentAsync(user, comment);
 
             await _signalRHubContext.Clients.All.SendAsync("ReceiveCommentUpdates",
                 new CommentUpdatesDto()
@@ -211,6 +252,11 @@ namespace APIViewWeb.Managers
         {
             CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
 
+            if (comment.CommentSource == CommentSource.Diagnostic)
+            {
+                throw new InvalidOperationException("Diagnostic comments cannot have their severity changed.");
+            }
+
             await AssertOwnerAsync(user, comment);
             
             comment.ChangeHistory.Add(
@@ -218,9 +264,9 @@ namespace APIViewWeb.Managers
                 {
                     ChangeAction = CommentChangeAction.Edited,
                     ChangedBy = user.GetGitHubLogin(),
-                    ChangedOn = DateTime.Now,
+                    ChangedOn = DateTime.UtcNow,
                 });
-            comment.LastEditedOn = DateTime.Now;
+            comment.LastEditedOn = DateTime.UtcNow;
             comment.Severity = severity;
 
             await _commentsRepository.UpsertCommentAsync(comment);
@@ -270,7 +316,8 @@ namespace APIViewWeb.Managers
                     Language = review.Language,
                     PackageName = activeApiRevision.PackageName,
                     Code = AgentHelpers.GetCodeLineForElement(activeCodeFile, comment.ElementId),
-                    Comments = commentsForAgent
+                    Comments = commentsForAgent,
+                    SourceCommentId = comment.Id
                 };
 
                 string agentMentionEndPoint = $"{_configuration["CopilotServiceEndpoint"]}/api-review/mention";
@@ -317,6 +364,11 @@ namespace APIViewWeb.Managers
 
         private async Task AddAgentComment(CommentItemModel comment, string response)
         {
+            // Inherit thread resolution state so agent replies don't un-resolve a thread.
+            // This applies to both new-style threads (shared ThreadId) and old-style
+            // threads (null ThreadId, grouped by ElementId).
+            bool threadResolved = await IsThreadResolvedAsync(comment.ReviewId, comment.ElementId, comment.ThreadId);
+
             var commentResult = new CommentItemModel
             {
                 ReviewId = comment.ReviewId,
@@ -329,7 +381,8 @@ namespace APIViewWeb.Managers
                 CreatedOn = DateTime.UtcNow,
                 CommentSource = CommentSource.AIGenerated,
                 ThreadId = comment.ThreadId,
-                CommentType = CommentType.APIRevision
+                CommentType = CommentType.APIRevision,
+                IsResolved = threadResolved
             };
 
             await _commentsRepository.UpsertCommentAsync(commentResult);
@@ -350,21 +403,15 @@ namespace APIViewWeb.Managers
 
         private async Task<bool> IsUserAllowedToChatWithAgentAsync(ClaimsPrincipal user, ReviewListItemModel review)
         {
-            return await IsUserLanguageArchitectAsync(user, review);
-        }
-
-        private async Task<bool> IsUserLanguageArchitectAsync(ClaimsPrincipal user, ReviewListItemModel review)
-        {
-            if (user == null || review == null)
-                return false;
-
-            string githubUser = user.GetGitHubLogin();
-            HashSet<string> approvers = await PageModelHelpers.GetPreferredApproversAsync(_configuration, _userProfileCache, user, review);
-            return approvers != null && approvers.Contains(githubUser);
+            string userId = user.GetGitHubLogin();
+            EffectivePermissions permissions = await _permissionsManager.GetEffectivePermissionsAsync(userId);
+            return permissions != null && permissions.IsApproverFor(review.Language);
         }
 
         /// <summary>
-        /// Delete Comment
+        /// Soft-delete all comments for a review (cascade delete).
+        /// Skips per-comment owner checks — the caller is responsible for
+        /// verifying that the user has permission to delete the parent review.
         /// </summary>
         /// <param name="user"></param>
         /// <param name="reviewId"></param>
@@ -372,23 +419,45 @@ namespace APIViewWeb.Managers
         public async Task SoftDeleteCommentsAsync(ClaimsPrincipal user, string reviewId)
         {
             var comments = await _commentsRepository.GetCommentsAsync(reviewId);
+            var userName = user.GetGitHubLogin();
 
-            foreach (var  comment in comments)
+            foreach (var comment in comments)
             {
-                await SoftDeleteCommentAsync(user, comment);
+                var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(comment.ChangeHistory, CommentChangeAction.Deleted, userName);
+                comment.ChangeHistory = changeUpdate.ChangeHistory;
+                comment.IsDeleted = changeUpdate.ChangeStatus;
+                await _commentsRepository.UpsertCommentAsync(comment);
             }
         }
 
         public async Task SoftDeleteAutoGeneratedCommentsAsync(ClaimsPrincipal user, string apiRevisionId)
         {
-            var autGeneratedComments = await GetAPIRevisionCommentsAsync(apiRevisionId: apiRevisionId, createdBy: "azure-sdk");
+            var autoGeneratedComments = await GetAPIRevisionCommentsAsync(apiRevisionId: apiRevisionId, createdBy: "azure-sdk");
             var apiRevision = await _apiRevisionsManager.GetAPIRevisionAsync(apiRevisionId);
-            foreach (var comment in autGeneratedComments)
+
+            // Bulk soft-delete: mark each comment as deleted in DB without individual SignalR notifications
+            foreach (var comment in autoGeneratedComments)
             {
-                await SoftDeleteCommentAsync(user, comment);
+                await AssertOwnerAsync(user, comment);
+                var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(comment.ChangeHistory, CommentChangeAction.Deleted, user.GetGitHubLogin());
+                comment.ChangeHistory = changeUpdate.ChangeHistory;
+                comment.IsDeleted = changeUpdate.ChangeStatus;
+                await _commentsRepository.UpsertCommentAsync(comment);
             }
+
             apiRevision.HasAutoGeneratedComments = false;
             await _apiRevisionsManager.UpdateAPIRevisionAsync(apiRevision);
+
+            // Send a single SignalR notification for the bulk delete
+            if (autoGeneratedComments.Any())
+            {
+                await _signalRHubContext.Clients.All.SendAsync("ReceiveCommentUpdates",
+                    new CommentUpdatesDto()
+                    {
+                        CommentThreadUpdateAction = CommentThreadUpdateAction.AutoGeneratedCommentsDeleted,
+                        ReviewId = apiRevision.ReviewId
+                    });
+            }
         }
 
         /// <summary>
@@ -412,6 +481,10 @@ namespace APIViewWeb.Managers
         /// <returns></returns>
         public async Task SoftDeleteCommentAsync(ClaimsPrincipal user, CommentItemModel comment)
         {
+            if (comment.CommentSource == CommentSource.Diagnostic)
+            {
+                throw new InvalidOperationException("Diagnostic comments cannot be deleted.");
+            }
             await AssertOwnerAsync(user, comment);
             var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(comment.ChangeHistory, CommentChangeAction.Deleted, user.GetGitHubLogin());
             comment.ChangeHistory = changeUpdate.ChangeHistory;
@@ -434,7 +507,12 @@ namespace APIViewWeb.Managers
         {
             IEnumerable<CommentItemModel> comments = await _commentsRepository.GetCommentsAsync(reviewId, lineId);
             comments = comments.Where(c => c.ThreadId == threadId);
-            
+
+            if (comments.Any(c => c.CommentSource == CommentSource.Diagnostic))
+            {
+                throw new InvalidOperationException("Diagnostic comments cannot be resolved.");
+            }
+
             foreach (var comment in comments)
             {
                 comment.ChangeHistory.Add(
@@ -442,7 +520,7 @@ namespace APIViewWeb.Managers
                     {
                         ChangeAction = CommentChangeAction.Resolved,
                         ChangedBy = user.GetGitHubLogin(),
-                        ChangedOn = DateTime.Now,
+                        ChangedOn = DateTime.UtcNow,
                     });
                 comment.IsResolved = true;
                 await _commentsRepository.UpsertCommentAsync(comment);
@@ -475,7 +553,7 @@ namespace APIViewWeb.Managers
                     {
                         ChangeAction = CommentChangeAction.UnResolved,
                         ChangedBy = user.GetGitHubLogin(),
-                        ChangedOn = DateTime.Now,
+                        ChangedOn = DateTime.UtcNow,
                     });
                 comment.IsResolved = false;
                 await _commentsRepository.UpsertCommentAsync(comment);
@@ -498,14 +576,21 @@ namespace APIViewWeb.Managers
         public async Task<List<CommentItemModel>> CommentsBatchOperationAsync(ClaimsPrincipal user, string reviewId, BatchConversationRequest request)
         {
             var response = new List<CommentItemModel>();
-            
+            var processedCorrelationIds = new HashSet<string>();
+
             foreach (string commentId in request.CommentIds)
             {
                 CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
                 
                 if (request.Feedback != null)
                 {
-                    await AddCommentFeedbackAsync(user, reviewId, commentId, request.Feedback);
+                    // Store feedback and trigger copilot mention only once per unique correlation ID.
+                    bool isNew = string.IsNullOrEmpty(comment?.CorrelationId) ||
+                                 processedCorrelationIds.Add(comment.CorrelationId);
+                    if (isNew)
+                    {
+                        await AddCommentFeedbackAsync(user, reviewId, commentId, request.Feedback);
+                    }
                 }
                 
                 if (request.Vote != FeedbackVote.None)
@@ -541,10 +626,16 @@ namespace APIViewWeb.Managers
                 switch (request.Disposition)
                 {
                     case ConversationDisposition.Delete:
-                        await SoftDeleteCommentAsync(user, reviewId, commentId);
+                        if (comment.CommentSource != CommentSource.Diagnostic)
+                        {
+                            await SoftDeleteCommentAsync(user, reviewId, commentId);
+                        }
                         break;
                     case ConversationDisposition.Resolve:
-                        await ResolveConversation(user, reviewId, comment.ElementId, comment.ThreadId);
+                        if (comment.CommentSource != CommentSource.Diagnostic)
+                        {
+                            await ResolveConversation(user, reviewId, comment.ElementId, comment.ThreadId);
+                        }
                         break;
                     case ConversationDisposition.KeepOpen:
                     default:
@@ -558,12 +649,20 @@ namespace APIViewWeb.Managers
         public async Task ToggleUpvoteAsync(ClaimsPrincipal user, string reviewId, string commentId)
         {
             CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+            if (comment.CommentSource == CommentSource.Diagnostic)
+            {
+                throw new InvalidOperationException("Diagnostic comments cannot be voted on.");
+            }
             await ToggleVoteAsync(user, comment, FeedbackVote.Up);
         }
 
         public async Task ToggleDownvoteAsync(ClaimsPrincipal user, string reviewId, string commentId)
         {
             CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+            if (comment.CommentSource == CommentSource.Diagnostic)
+            {
+                throw new InvalidOperationException("Diagnostic comments cannot be voted on.");
+            }
             await ToggleVoteAsync(user, comment, FeedbackVote.Down);
         }
 
@@ -588,9 +687,204 @@ namespace APIViewWeb.Managers
             });
 
             await _commentsRepository.UpsertCommentAsync(comment);
+
+            // Send feedback to Copilot if this is an AI-generated comment
+            if (comment.CommentSource == CommentSource.AIGenerated && (feedback.Reasons?.Count > 0 || feedback.IsDelete))
+            {
+                _backgroundTaskQueue.QueueBackgroundWorkItem(async cancellationToken =>
+                {
+                    await SendFeedbackToCopilotAsync(user, comment, feedback, cancellationToken);
+                });
+            }
+        }
+
+        private async Task SendFeedbackToCopilotAsync(ClaimsPrincipal user, CommentItemModel comment, CommentFeedbackRequest feedback, CancellationToken cancellationToken)
+        {
+            try
+            {
+                ReviewListItemModel review = await _reviewRepository.GetReviewAsync(comment.ReviewId);
+                var activeApiRevision = await _apiRevisionsManager.GetAPIRevisionAsync(apiRevisionId: comment.APIRevisionId);
+                var activeCodeFile = await _codeFileRepository.GetCodeFileAsync(activeApiRevision, false);
+
+                // Build feedback message from reasons
+                var feedbackMessages = new List<string>();
+                if (feedback.Reasons != null)
+                {
+                    feedbackMessages.AddRange(feedback.Reasons.Select(r => r.ToFeedbackMessage()));
+                }
+
+                if (feedback.IsDelete)
+                {
+                    feedbackMessages.Insert(0, "This comment was flagged for deletion by the user, which means it was so egregiously bad that they didn't even want the service team to see it.");
+                }
+
+                if (!string.IsNullOrEmpty(feedback.Comment))
+                {
+                    feedbackMessages.Add($"Additional feedback: {feedback.Comment}");
+                }
+
+                string feedbackText = $"@azure-sdk user '{user.GetGitHubLogin()}' has provided the following feedback on your previous comment:\n\n" +
+                    string.Join("\n", feedbackMessages.Select(m => $"- {m}"));
+
+                string codeLine = AgentHelpers.GetCodeLineForElement(activeCodeFile, comment.ElementId);
+
+                // Create a synthetic comment representing the feedback
+                var feedbackComment = new ApiViewAgentComment
+                {
+                    LineNumber = 0,
+                    LineId = comment.ElementId,
+                    LineText = codeLine,
+                    CreatedOn = DateTimeOffset.UtcNow,
+                    Upvotes = 0,
+                    Downvotes = 0,
+                    CreatedBy = user.GetGitHubLogin(),
+                    CommentText = feedbackText,
+                    IsResolved = false,
+                    ThreadId = comment.ThreadId
+                };
+
+                // Include the original AI comment for context
+                var originalAIComment = new ApiViewAgentComment
+                {
+                    LineNumber = 0,
+                    LineId = comment.ElementId,
+                    LineText = codeLine,
+                    CreatedOn = comment.CreatedOn,
+                    Upvotes = comment.Upvotes?.Count ?? 0,
+                    Downvotes = comment.Downvotes?.Count ?? 0,
+                    CreatedBy = comment.CreatedBy,
+                    CommentText = comment.CommentText,
+                    IsResolved = comment.IsResolved,
+                    ThreadId = comment.ThreadId
+                };
+
+                MentionRequest mentionRequest = new()
+                {
+                    Language = review.Language,
+                    PackageName = activeApiRevision.PackageName,
+                    Code = codeLine,
+                    Comments = new List<ApiViewAgentComment> { originalAIComment, feedbackComment },
+                    SourceCommentId = comment.Id
+                };
+
+                string agentMentionEndPoint = $"{_configuration["CopilotServiceEndpoint"]}/api-review/mention";
+                var request = new HttpRequestMessage(HttpMethod.Post, agentMentionEndPoint)
+                {
+                    Content = new StringContent(
+                        JsonSerializer.Serialize(mentionRequest),
+                        Encoding.UTF8,
+                        "application/json")
+                };
+
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await _copilotAuthService.GetAccessTokenAsync(cancellationToken));
+
+                var client = _httpClientFactory.CreateClient();
+                var clientResponse = await client.SendAsync(request, cancellationToken);
+                clientResponse.EnsureSuccessStatusCode();
+
+                _logger.LogInformation("Feedback sent to Copilot for AI comment {CommentId} in review {ReviewId}", comment.Id, comment.ReviewId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending feedback to Copilot for AI comment {CommentId} in review {ReviewId}", comment.Id, comment.ReviewId);
+            }
         }
 
         public HashSet<GithubUser> GetTaggableUsers() => TaggableUsers;
+
+        /// <summary>
+        /// Returns the resolution state of an existing thread. All comments in a thread
+        /// must have the same IsResolved value. If an inconsistency is found (some resolved,
+        /// some not), the thread is treated as resolved and the inconsistent comments are
+        /// repaired in-place. Returns false when no existing comments are found
+        /// (i.e., this is the first comment in the thread).
+        /// </summary>
+        private async Task<bool> IsThreadResolvedAsync(string reviewId, string elementId, string threadId)
+        {
+            // Normalize: treat empty string the same as null for old-style threads.
+            if (string.IsNullOrEmpty(threadId))
+            {
+                threadId = null;
+            }
+
+            var existingComments = await _commentsRepository.GetCommentsAsync(reviewId, elementId);
+            var threadComments = existingComments.Where(c => (c.ThreadId ?? string.Empty) == (threadId ?? string.Empty)).ToList();
+
+            if (threadComments.Count == 0)
+            {
+                return false;
+            }
+
+            bool anyResolved = threadComments.Any(c => c.IsResolved);
+            bool anyUnresolved = threadComments.Any(c => !c.IsResolved);
+
+            if (anyResolved && anyUnresolved)
+            {
+                _logger.LogWarning(
+                    "Thread has inconsistent IsResolved state. ReviewId: {ReviewId}, ElementId: {ElementId}, ThreadId: {ThreadId}. " +
+                    "Repairing by marking all comments as resolved.",
+                    reviewId, elementId, threadId);
+
+                var commentsToRepair = threadComments.Where(c => !c.IsResolved).ToList();
+                foreach (var comment in commentsToRepair)
+                {
+                    comment.IsResolved = true;
+                    comment.ChangeHistory.Add(new CommentChangeHistoryModel
+                    {
+                        ChangeAction = CommentChangeAction.Resolved,
+                        ChangedBy = "System",
+                        ChangedOn = DateTime.UtcNow
+                    });
+                }
+                await Task.WhenAll(commentsToRepair.Select(c => _commentsRepository.UpsertCommentAsync(c)));
+            }
+
+            return anyResolved;
+        }
+
+        /// <summary>
+        /// Normalizes all DateTime fields on a comment to UTC. Returns true if any
+        /// field was changed (indicating the comment needs to be persisted).
+        /// Legacy data may contain DateTime.Now (local time) values that cause
+        /// incorrect ordering when compared with DateTime.UtcNow values.
+        /// DateTimeKind.Unspecified values (common after Cosmos DB deserialization)
+        /// are assumed to already be UTC and are re-tagged without conversion.
+        /// </summary>
+        public static bool NormalizeTimestampsToUtc(CommentItemModel comment)
+        {
+            bool changed = false;
+
+            if (comment.CreatedOn.Kind != DateTimeKind.Utc)
+            {
+                comment.CreatedOn = ToUtc(comment.CreatedOn);
+                changed = true;
+            }
+
+            if (comment.LastEditedOn.HasValue && comment.LastEditedOn.Value.Kind != DateTimeKind.Utc)
+            {
+                comment.LastEditedOn = ToUtc(comment.LastEditedOn.Value);
+                changed = true;
+            }
+
+            foreach (var entry in comment.ChangeHistory)
+            {
+                if (entry.ChangedOn.HasValue && entry.ChangedOn.Value.Kind != DateTimeKind.Utc)
+                {
+                    entry.ChangedOn = ToUtc(entry.ChangedOn.Value);
+                    changed = true;
+                }
+            }
+
+            return changed;
+        }
+
+        private static DateTime ToUtc(DateTime value)
+        {
+            return value.Kind == DateTimeKind.Local
+                ? value.ToUniversalTime()
+                : DateTime.SpecifyKind(value, DateTimeKind.Utc);
+        }
+
         private async Task AssertOwnerAsync(ClaimsPrincipal user, CommentItemModel commentModel)
         {
             var result = await _authorizationService.AuthorizeAsync(user, commentModel, new[] { CommentOwnerRequirement.Instance });
@@ -645,6 +939,11 @@ namespace APIViewWeb.Managers
         {
             CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
 
+            if (comment.CommentSource == CommentSource.Diagnostic)
+            {
+                return;
+            }
+
             string userName = user.GetGitHubLogin();
             bool voteChanged = false;
 
@@ -687,6 +986,38 @@ namespace APIViewWeb.Managers
                         Comment = comment
                     });
             }
+        }
+
+        /// <summary>
+        /// Synchronizes diagnostic comments for an API revision based on the current set of diagnostics.
+        /// Creates new comments for new diagnostics, resolves comments for removed diagnostics,
+        /// and updates existing comments when severity or help link changes.
+        /// Uses hash-based caching to skip synchronization when diagnostics haven't changed.
+        /// </summary>
+        /// <param name="apiRevision">The API revision to sync diagnostics for.</param>
+        /// <param name="diagnostics">The current set of diagnostics from the code file.</param>
+        /// <param name="existingComments">Pre-fetched comments to avoid additional database calls. </param>
+        /// <returns>A list of diagnostic comments for the API revision after synchronization.</returns>
+        public async Task<List<CommentItemModel>> SyncDiagnosticCommentsAsync(
+            APIRevisionListItemModel apiRevision,
+            CodeDiagnostic[] diagnostics,
+            IEnumerable<CommentItemModel> existingComments)
+        {
+            DiagnosticSyncResult result = await _diagnosticCommentService.SyncDiagnosticCommentsAsync(
+                apiRevision.ReviewId,
+                apiRevision.Id,
+                apiRevision.DiagnosticsHash,
+                diagnostics,
+                existingComments);
+
+            // Update the revision's hash if sync occurred
+            if (result.WasSynced)
+            {
+                apiRevision.DiagnosticsHash = result.DiagnosticsHash;
+                await _apiRevisionsManager.UpdateAPIRevisionAsync(apiRevision);
+            }
+
+            return result.Comments;
         }
     }
 }

@@ -1,9 +1,10 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param (
   [Parameter(Mandatory = $true)]
   [string]$BuildId,
   [string]$RepoName = "azure/azure-sdk-tools",
   [string]$ArtifactName = "apiview",
+  [string]$MetadataFileName = "",
   [string]$ApiviewUpdateUrl = "https://apiview.dev/review/UpdateApiReview"
 )
 
@@ -21,6 +22,10 @@ param (
 ####################################################################################################################
 
 $uri = $ApiviewUpdateUrl + "?artifact=" + $ArtifactName + "&buildId=" + $BuildId + "&repoName=" + $repoName
+if ($MetadataFileName) {
+    $encodedMetadataFileName = [Uri]::EscapeDataString($MetadataFileName)
+    $uri = $uri + "&metadataFile=" + $encodedMetadataFileName
+}
 Write-Host "Request URI: $($uri)"
 try
 {

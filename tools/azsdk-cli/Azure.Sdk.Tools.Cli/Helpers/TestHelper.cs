@@ -7,18 +7,18 @@ namespace Azure.Sdk.Tools.Cli.Services;
 
 public interface ITestHelper
 {
-    Task<FailedTestRunListResponse> GetFailedTestCases(string trxFilePath, string filterTitle = "");
-    Task<FailedTestRunResponse> GetFailedTestCaseData(string trxFilePath, string testCaseTitle);
-    Task<FailedTestRunListResponse> GetFailedTestRunDataFromTrx(string trxFilePath);
+    Task<FailedTestRunListResponse> GetFailedTestCases(string trxFilePath, string filterTitle = "", CancellationToken ct = default);
+    Task<FailedTestRunResponse> GetFailedTestCaseData(string trxFilePath, string testCaseTitle, CancellationToken ct);
+    Task<FailedTestRunListResponse> GetFailedTestRunDataFromTrx(string trxFilePath, CancellationToken ct);
 }
 
 public class TestHelper(ILogger<TestHelper> logger) : ITestHelper
 {
     private readonly ILogger<TestHelper> logger = logger;
 
-    public async Task<FailedTestRunListResponse> GetFailedTestCases(string trxFilePath, string filterTitle = "")
+    public async Task<FailedTestRunListResponse> GetFailedTestCases(string trxFilePath, string filterTitle = "", CancellationToken ct = default)
     {
-        var failedTestRuns = await GetFailedTestRunDataFromTrx(trxFilePath);
+        var failedTestRuns = await GetFailedTestRunDataFromTrx(trxFilePath, ct);
         failedTestRuns.Items = failedTestRuns.Items
                 .Where(run => string.IsNullOrEmpty(filterTitle) || run.TestCaseTitle.Contains(filterTitle, StringComparison.OrdinalIgnoreCase))
                 .Select(run => new FailedTestRunResponse
@@ -30,13 +30,13 @@ public class TestHelper(ILogger<TestHelper> logger) : ITestHelper
         return failedTestRuns;
     }
 
-    public async Task<FailedTestRunResponse> GetFailedTestCaseData(string trxFilePath, string testCaseTitle)
+    public async Task<FailedTestRunResponse> GetFailedTestCaseData(string trxFilePath, string testCaseTitle, CancellationToken ct)
     {
-        var failedTestRuns = await GetFailedTestRunDataFromTrx(trxFilePath);
+        var failedTestRuns = await GetFailedTestRunDataFromTrx(trxFilePath, ct);
         return failedTestRuns.Items.FirstOrDefault(run => run.TestCaseTitle.Equals(testCaseTitle, StringComparison.OrdinalIgnoreCase));
     }
 
-    public async Task<FailedTestRunListResponse> GetFailedTestRunDataFromTrx(string trxFilePath)
+    public async Task<FailedTestRunListResponse> GetFailedTestRunDataFromTrx(string trxFilePath, CancellationToken ct)
     {
         var failedTestRuns = new FailedTestRunListResponse();
         if (!File.Exists(trxFilePath))
@@ -45,7 +45,7 @@ public class TestHelper(ILogger<TestHelper> logger) : ITestHelper
             return failedTestRuns;
         }
 
-        var xmlContent = await File.ReadAllTextAsync(trxFilePath);
+        var xmlContent = await File.ReadAllTextAsync(trxFilePath, ct);
         var doc = new XmlDocument();
         doc.LoadXml(xmlContent);
         var unitTestResults = doc.GetElementsByTagName("UnitTestResult");

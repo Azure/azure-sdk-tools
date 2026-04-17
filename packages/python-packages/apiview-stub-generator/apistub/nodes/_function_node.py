@@ -3,7 +3,7 @@ import inspect
 from collections import OrderedDict
 import astroid
 import re
-from typing import Dict
+from typing import Dict, Optional
 
 from ._annotation_parser import FunctionAnnotationParser
 from ._astroid_parser import AstroidFunctionParser
@@ -17,6 +17,21 @@ from .._generated.treestyle.parser.models import ReviewLines
 # Regex is used to find shorten such instances in complex type
 # for e,g, ~azure.core.ItemPaged.ItemPaged[~azure.communication.chat.ChatThreadInfo] to ItemPaged[ChatThreadInfo]
 REGEX_FIND_LONG_TYPE = r"((?:~?)[\\w.]+\.+([\\w]+))"
+
+# Cache astroid FunctionDef nodes by id(func_obj).
+# Inherited methods are shared across all subclasses (same object in memory),
+# so without this cache every subclass triggers a redundant astroid.extract_node
+# call for the same source.  Cleared by clear_func_caches() between runs.
+_FUNC_ASTROID_CACHE: Dict[int, Optional[object]] = {}
+
+
+def clear_func_caches() -> None:
+    """Reset the FunctionNode astroid parse cache.
+
+    Called from StubGenerator._generate_tokens() at the start of each run
+    so that back-to-back package runs stay correct.
+    """
+    _FUNC_ASTROID_CACHE.clear()
 
 
 class FunctionNode(NodeEntityBase):
@@ -66,10 +81,31 @@ class FunctionNode(NodeEntityBase):
         # Some of the methods wont be listed in API review
         # For e.g. ABC methods if class implements all ABC methods
         self.hidden = False
-        try:
-            self.node = node or astroid.extract_node(inspect.getsource(obj))
-        except OSError:
-            self.node = None
+        if node:
+            self.node = node
+        else:
+            obj_id = id(obj) if obj is not None else None
+            if obj_id is not None and obj_id in _FUNC_ASTROID_CACHE:
+                self.node = _FUNC_ASTROID_CACHE[obj_id]
+            else:
+                try:
+                    candidate = astroid.extract_node(inspect.getsource(obj))
+                    # astroid.extract_node() finds the first top-level AST node in the source
+                    # without `# @` markers, so it can return non-FunctionDef nodes (e.g. a
+                    # ClassDef) when getsource() returns the enclosing class. Fall back to
+                    # reflection-based parsing in that case.
+                    if not isinstance(candidate, (astroid.FunctionDef, astroid.AsyncFunctionDef)):
+                        logging.debug(
+                            "astroid.extract_node returned unexpected node type %s for %s; falling back to reflection",
+                            type(candidate).__name__,
+                            self.name,
+                        )
+                        candidate = None
+                except OSError:
+                    candidate = None
+                if obj_id is not None:
+                    _FUNC_ASTROID_CACHE[obj_id] = candidate
+                self.node = candidate
         self._inspect()
         self.kwargs = OrderedDict(sorted(self.kwargs.items()))
 
@@ -377,6 +413,9 @@ class FunctionNode(NodeEntityBase):
             review_line.add_type(
                 self.return_type, apiview=self.apiview, has_suffix_space=False
             )
+
+        # Add punctuation for closer alignment with syntactically correct Python file
+        review_line.add_punctuation(": ...", has_suffix_space=False)
 
         review_line = self._reviewline_if_needed(
             param_lines, review_line, use_multi_line

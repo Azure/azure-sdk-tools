@@ -1,5 +1,84 @@
 # Release History
 
+## 0.9.5 (2026-04-15)
+
+### Features Added
+
+* Parallelize link content fetching to improve response times when multiple links are provided
+* Add timeout and fallback for pipeline analysis to prevent long-running requests
+
+### Other Changes
+
+* Use pre-built azsdk CLI release binary in Dockerfile instead of building from source
+
+## 0.9.4 (2026-04-10)
+
+### Other Changes
+
+* Use dedicated Java channel prompts to improve response quality for Java-related queries
+* Add `review-request` category to Java intention prompt to prevent the bot from responding to PR review requests
+
+## 0.9.3 (2026-03-27)
+
+### Features Added
+
+* Add `AzurePipelinesCredential` to the credential chain for Azure DevOps pipeline authentication
+
+## 0.9.2 (2026-03-06)
+
+### Features Added
+
+* Support access github check run logs
+
+## 0.9.1 (2026-02-13)
+
+### Features Added
+
+* Enable tenant routing for `azure_sdk_qa_bot` tenant.
+
+### Other Changes
+
+* Set fixed seed to reduce randomness of LLM
+* Adjust prompt to adopt GPT-5 series models
+* Migrate azopenai sdk to official openai go library
+
+## 0.9.0 (2026-02-02)
+
+### Features Added
+
+* Add new tenant Authoring
+
+### Other Changes
+
+* Enhance prompt and knowledge source for language channel tenant
+* Add WithAgenticSearch parameter to the Completion API to enable or disable agentic search.
+
+## 0.8.0 (2026-01-29)
+
+### Features Added
+
+* Add metadata for knowledge and clarify management-plane and data-plane
+
+## 0.7.1 (2026-01-20)
+
+### Bugs Fixed
+
+* Remove redundant source setting logic in intent recognition
+
+## 0.7.0 (2026-01-20)
+
+### Features Added
+
+* Add new tenants General, API Review, JS, Java and .Net
+* Add new knowledge sources from JS, Java and .Net
+* Support routing tenant based on question domain
+
+### Other Changes
+
+* Refine prompt for onboarding channel to improve answer accuracy
+* Refactor post process of merging and sorting and complete chunk logic, to give better context to LLM
+* Refine prompt for PR reviewing questions and inaccessible link scenarios
+
 ## 0.6.0 (2025-12-16)
 
 ### Features Added

@@ -1,7 +1,9 @@
 using System.CommandLine;
 using System.CommandLine.Help;
+using OpenTelemetry.Trace;
 using Azure.Sdk.Tools.Cli.Commands.HostServer;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Services.Upgrade;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 
@@ -16,7 +18,8 @@ namespace Azure.Sdk.Tools.Cli.Commands
         public static async Task<int> BuildAndRun(
             string[] args,
             IServiceProvider serviceProvider,
-            bool debug = false
+            bool debug = false,
+            CancellationToken ct = default
         )
         {
             var rootCommand = new RootCommand("azsdk cli - A Model Context Protocol (MCP) server that facilitates tasks for anyone working with the Azure SDK team.");
@@ -54,6 +57,10 @@ namespace Azure.Sdk.Tools.Cli.Commands
             // here so we can resolve those services in CLI mode as well.
             using var scope = serviceProvider.CreateAsyncScope();
             var scopedProvider = scope.ServiceProvider;
+
+            // Force TracerProvider instantiation so that it registers a listener for activity events
+            _ = scopedProvider.GetRequiredService<TracerProvider>();
+
             var toolInstances = toolTypes
                 .Select(t =>
                 {
@@ -61,6 +68,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
                     _tool.Initialize(
                         scopedProvider.GetRequiredService<IOutputHelper>(),
                         scopedProvider.GetRequiredService<ITelemetryService>(),
+                        scopedProvider.GetRequiredService<IUpgradeService>(),
                         debug);
                     return _tool;
                 })
@@ -71,9 +79,15 @@ namespace Azure.Sdk.Tools.Cli.Commands
 #if DEBUG
             ValidateCommandTree(rootCommand);
 #endif
+            // Disable response file support as it led to unexpected behaviour when cli command takes package name with '@' symbol as value.
+            // @azure/template package name causes the parser to look for a response file named 'azure/template' which is not the intended behaviour.
+            var parseConfig = new CommandLineConfiguration(rootCommand)
+            {
+                ResponseFileTokenReplacer = null
+            };
 
-            var parseResult = rootCommand.Parse(args);
-            return await parseResult.InvokeAsync();
+            var parseResult = rootCommand.Parse(args, parseConfig);
+            return await parseResult.InvokeAsync(ct);
         }
 
         private static void PopulateToolHierarchy(RootCommand rootCommand, List<MCPToolBase> toolList)

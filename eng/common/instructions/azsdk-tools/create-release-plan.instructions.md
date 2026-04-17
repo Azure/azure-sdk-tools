@@ -29,10 +29,9 @@ If any details are missing, prompt the user accordingly:
 - **Service Tree ID**: GUID format identifier for the service in Service Tree. Before creating release plan, always show the value to user and ask them to confirm it's a valid value in service tree.
 - **Product Service Tree ID**: GUID format identifier for the product in Service Tree. Before creating release plan, always show the value to user and ask them to confirm it's a valid value in service tree.
 - **Expected Release Timeline**: Format must be in "Month YYYY"
-- **API Version**: The version of the API being released
 - **SDK Release Type**: Value must be beta or stable.
-    - "beta" for preview API versions
-    - "stable" for GA API versions
+    - "beta"
+    - "stable"
 
 ## Step 4: Create Release Plan
 - If the user doesn't know the required details, direct them to create a release plan using the release planner
@@ -51,6 +50,10 @@ If any details are missing, prompt the user accordingly:
 - If SDK pull requests exist:
     - Collect the pull request links from the user
     - Use `azsdk_link_sdk_pull_request_to_release_plan` to link each SDK pull request to the release plan
+        > **GitHub CLI Authentication Required:**  
+        > Before running any SDK PR linking steps, ensure you are authenticated with GitHub CLI.  
+        > Run: `gh auth login`  
+        > You can check authentication status with `gh auth status`. 
     - Confirm successful linking for each SDK pull request
 
 ## Step 7: Summary

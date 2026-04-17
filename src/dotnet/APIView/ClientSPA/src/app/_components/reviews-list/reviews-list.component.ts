@@ -11,9 +11,10 @@ import { UserProfile } from 'src/app/_models/userProfile';
 import { getSupportedLanguages } from 'src/app/_helpers/common-helpers';
 
 @Component({
-  selector: 'app-reviews-list',
-  templateUrl: './reviews-list.component.html',
-  styleUrls: ['./reviews-list.component.scss']
+    selector: 'app-reviews-list',
+    templateUrl: './reviews-list.component.html',
+    styleUrls: ['./reviews-list.component.scss'],
+    standalone: false
 })
 export class ReviewsListComponent implements OnInit, AfterViewInit {
   @Input() userProfile: UserProfile | undefined;

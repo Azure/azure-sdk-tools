@@ -1,5 +1,5 @@
 parameters:
-  # Provde a list of repos
+  # Provide a list of repos
   # Example:
   #   Azure/azure-rest-api-specs:
   #     Branch: main
@@ -14,14 +14,15 @@ parameters:
   #       Azure/azure-sdk-for-go-pr:
   - name: Repos
     type: object
-  - name: GH_TOKEN
-    type: string
   - name: ScriptDirectory
     type: string
     default: eng/scripts
   - name: WorkingDirectory
     type: string
     default: $(System.DefaultWorkingDirectory)
+  - name: EnvVars
+    type: object
+    default: {}
 
 steps:
 
@@ -40,4 +41,4 @@ steps:
           -TargetRepo '${{ target.key }}'
           -TargetBranch '${{ coalesce(target.value.Branch, repo.value.Branch) }}'
           -Rebase '${{ target.value.Rebase }}'
-          -AuthToken '${{ parameters.GH_TOKEN }}'
+      env: ${{ parameters.EnvVars }}

@@ -29,7 +29,7 @@ steps:
 
 - ${{ each repo in parameters.Repos }}:
   - pwsh: |
-      git clone --filter=tree:0 "https://${{ parameters.GH_TOKEN }}@github.com/${{ repo.key }}.git" ${{ repo.key }}
+      git clone --filter=tree:0 "https://x-access-token:${{ parameters.GH_TOKEN }}@github.com/${{ repo.key }}.git" ${{ repo.key }}
     displayName: Clone ${{ repo.key }}
     workingDirectory: ${{ parameters.WorkingDirectory }}
 

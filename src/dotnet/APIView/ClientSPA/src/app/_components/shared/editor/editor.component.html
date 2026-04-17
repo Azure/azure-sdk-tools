@@ -1,1 +1,1 @@
-<simplemde #simpleEditor [ngModel]="content" (ngModelChange)="contentChange.emit($event)" [options]="editorOptions" [attr.data-editor-id]="editorId"></simplemde>
+<simplemde #simpleEditor [ngModel]="content" (ngModelChange)="onContentChange($event)" [options]="editorOptions" [attr.data-editor-id]="editorId"></simplemde>

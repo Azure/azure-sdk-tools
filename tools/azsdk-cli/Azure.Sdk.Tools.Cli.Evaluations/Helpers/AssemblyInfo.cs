@@ -4,4 +4,4 @@ using NUnit.Framework;
 [assembly: Parallelizable(ParallelScope.All)]
 
 // Set conservative parallelism
-[assembly: LevelOfParallelism(5)]
+[assembly: LevelOfParallelism(10)]

@@ -67,7 +67,7 @@ namespace APIViewWeb.Helpers
             }
         }
 
-        public static string ResolveReviewUrl(string reviewId, string apiRevisionId, string language, IConfiguration configuration, IEnumerable<LanguageService> languageServices, string diffRevisionId = null)
+        public static string ResolveReviewUrl(string reviewId, string apiRevisionId, string language, IConfiguration configuration, IEnumerable<LanguageService> languageServices, string diffRevisionId = null, string elementId = null)
         {
             var host = configuration["APIVIew-Host-Url"];
             var spaHost = configuration["APIVIew-SPA-Host-Url"];
@@ -82,6 +82,10 @@ namespace APIViewWeb.Helpers
                 {
                     reviewSpaUrlTemplate += $"&diffApiRevisionId={diffRevisionId}";
                 }
+                if (!String.IsNullOrWhiteSpace(elementId))
+                {
+                    reviewSpaUrlTemplate += $"&nId={Uri.EscapeDataString(elementId)}";
+                }
                 return reviewSpaUrlTemplate;
             }
             else
@@ -89,6 +93,10 @@ namespace APIViewWeb.Helpers
                 if (!String.IsNullOrWhiteSpace(diffRevisionId))
                 {
                     reviewUrlTemplate += $"&diffRevisionId={diffRevisionId}";
+                }
+                if (!String.IsNullOrWhiteSpace(elementId))
+                {
+                    reviewUrlTemplate += $"#{Uri.EscapeDataString(elementId)}";
                 }
                 return reviewUrlTemplate;
             }

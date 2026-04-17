@@ -1,8 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using Azure.Sdk.Tools.Cli.Commands;
+using Azure.Sdk.Tools.Cli.Extensions;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Services.Upgrade;
 using Azure.Sdk.Tools.Cli.Telemetry;
 
 namespace Azure.Sdk.Tools.Cli;
@@ -16,12 +18,13 @@ public class Program
         return await Run(args);
     }
 
-    public static async Task<int> Run(string[] args, LogLevel? logLevel = null)
+    public static async Task<int> Run(string[] args, LogLevel? logLevel = null, CancellationToken ct = default)
     {
         var (outputFormat, debug) = SharedOptions.GetGlobalOptionValues(args);
         logLevel ??= debug ? LogLevel.Debug : LogLevel.Information;
+
         ServerApp = CreateAppBuilder(args, outputFormat, logLevel.Value, debug).Build();
-        return await CommandRunner.BuildAndRun(args, ServerApp.Services, debug);
+        return await CommandRunner.BuildAndRun(args, ServerApp.Services, debug, ct);
     }
 
     // todo: make this honor subcommands of `start` and the like, instead of simply looking presence of `start` verb
@@ -45,29 +48,32 @@ public class Program
             options.ValidateOnBuild = true;
         });
 
-        builder.Logging.AddConsole(consoleLogOptions =>
-        {
-            // Log everything to stderr in mcp mode so the client doesn't try to interpret stdout messages that aren't json rpc
-            var logErrorThreshold = isCommandLine ? LogLevel.Error : LogLevel.Debug;
-            consoleLogOptions.LogToStandardErrorThreshold = logErrorThreshold;
-        });
+        // In MCP server mode skip console output except for fatal server errors (which may happen
+        // before the MCP logging transport is initialized).
+        // All other logs will be redirected via the mcp logger over json-rpc to the mcp client only
+        builder.Logging.ConfigureMcpConsoleFallbackLogging(isCommandLine, debug);
 
-        // Skip azure client logging noise
+        // Skip azure client and noisy third-party logging
         builder.Logging.AddFilter((category, level) =>
         {
             if (debug || null == category) { return level >= logLevel; }
             var isAzureClient = category.StartsWith("Azure.", StringComparison.Ordinal);
             var isToolsClient = category.StartsWith("Azure.Sdk.Tools.", StringComparison.Ordinal);
             if (isAzureClient && !isToolsClient) { return level >= LogLevel.Error; }
+
+            // Suppress noisy third-party/framework categories
+            if (category.StartsWith("System.Net.Http.HttpClient", StringComparison.Ordinal)
+                || category.StartsWith("GitHub.Copilot.SDK", StringComparison.Ordinal)
+                || category.StartsWith("Microsoft.AspNetCore", StringComparison.Ordinal))
+            {
+                return level >= LogLevel.Warning;
+            }
+
             return level >= logLevel;
         });
 
-        // add the console logger
-        builder.Services.AddLogging(l =>
-        {
-            l.AddConsole();
-            l.SetMinimumLevel(logLevel);
-        });
+        // Set the minimum log level
+        builder.Services.ConfigureDefaultLogging(logLevel);
 
         var outputMode = !isCommandLine ? OutputHelper.OutputModes.Mcp : outputFormat switch
         {
@@ -77,26 +83,27 @@ public class Program
             _ => throw new ArgumentException($"Invalid output format '{outputFormat}'. Supported formats are: plain, json")
         };
 
-        // register common services
         ServiceRegistrations.RegisterCommonServices(builder.Services, outputMode);
-        // register MCP tools
         ServiceRegistrations.RegisterInstrumentedMcpTools(builder.Services, args);
 
-        if (isCommandLine)
+        builder.Services.AddTelemetry(debug);
+
+        if (!isCommandLine)
         {
-            return builder;
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                options.Listen(System.Net.IPAddress.Loopback, 0); // 0 = dynamic port
+            });
+            builder.Services.ConfigureMcpLogging();
+            builder.Services
+                .AddMcpServer()
+                .WithStdioServerTransport();
         }
 
-        TelemetryService.RegisterServerTelemetry(builder.Services, debug);
-
-        builder.WebHost.ConfigureKestrel(options =>
-        {
-            options.Listen(System.Net.IPAddress.Loopback, 0); // 0 = dynamic port
-        });
-
-        builder.Services
-            .AddMcpServer()
-            .WithStdioServerTransport();
+        // NOTE: This must be called AFTER the above MCP registrations to ensure
+        // the upgrade notification hosted service is only started after the MCP host.
+        // Otherwise upgrade notification logs will not be forwarded to the client.
+        ServiceRegistrations.RegisterUpgradeServices(builder.Services);
 
         return builder;
     }

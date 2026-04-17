@@ -177,7 +177,7 @@ namespace APIViewUnitTests
                 .Callback<ReviewListItemModel>(review => updatedReviews.Add(review))
                 .Returns(Task.CompletedTask);
 
-            _mockNotificationManager.Setup(n => n.NotifyApproversOnNamespaceReviewRequest(
+            _mockNotificationManager.Setup(n => n.NotifyNamespaceReviewRequestRecipientsAsync(
                     It.IsAny<ClaimsPrincipal>(), It.IsAny<ReviewListItemModel>(), It.IsAny<IEnumerable<ReviewListItemModel>>(), It.IsAny<string>()))
                 .Returns(Task.CompletedTask);
 
@@ -193,7 +193,7 @@ namespace APIViewUnitTests
             updatedReviews.Should().HaveCount(0);
 
             // Verify notification was sent
-            _mockNotificationManager.Verify(n => n.NotifyApproversOnNamespaceReviewRequest(
+            _mockNotificationManager.Verify(n => n.NotifyNamespaceReviewRequestRecipientsAsync(
                 It.IsAny<ClaimsPrincipal>(),
                 It.Is<ReviewListItemModel>(r => r.Id == reviewId),
                 It.IsAny<IEnumerable<ReviewListItemModel>>(), It.IsAny<string>()), Times.Once);
@@ -241,7 +241,7 @@ namespace APIViewUnitTests
                 .Returns(Task.CompletedTask);
 
             // Setup notification to fail
-            _mockNotificationManager.Setup(n => n.NotifyApproversOnNamespaceReviewRequest(
+            _mockNotificationManager.Setup(n => n.NotifyNamespaceReviewRequestRecipientsAsync(
                     It.IsAny<ClaimsPrincipal>(), It.IsAny<ReviewListItemModel>(), It.IsAny<IEnumerable<ReviewListItemModel>>(), It.IsAny<string>()))
                 .ThrowsAsync(new InvalidOperationException("Email service unavailable"));
 
@@ -290,7 +290,7 @@ namespace APIViewUnitTests
                 .Callback<ReviewListItemModel>(review => updatedReviews.Add(review))
                 .Returns(Task.CompletedTask);
 
-            _mockNotificationManager.Setup(n => n.NotifyApproversOnNamespaceReviewRequest(
+            _mockNotificationManager.Setup(n => n.NotifyNamespaceReviewRequestRecipientsAsync(
                     It.IsAny<ClaimsPrincipal>(), It.IsAny<ReviewListItemModel>(), It.IsAny<IEnumerable<ReviewListItemModel>>(), It.IsAny<string>()))
                 .Returns(Task.CompletedTask);
 
@@ -367,7 +367,7 @@ namespace APIViewUnitTests
                 .Callback<ReviewListItemModel>(review => updatedReviews.Add(review))
                 .Returns(Task.CompletedTask);
 
-            _mockNotificationManager.Setup(n => n.NotifyApproversOnNamespaceReviewRequest(
+            _mockNotificationManager.Setup(n => n.NotifyNamespaceReviewRequestRecipientsAsync(
                     It.IsAny<ClaimsPrincipal>(), It.IsAny<ReviewListItemModel>(), It.IsAny<IEnumerable<ReviewListItemModel>>(), It.IsAny<string>()))
                 .Returns(Task.CompletedTask);
 
@@ -459,7 +459,7 @@ namespace APIViewUnitTests
 
             // Act & Assert - Should fail authorization check during notification
             // Note: Authorization is checked in NotificationManager, so we'll simulate that
-            _mockNotificationManager.Setup(n => n.NotifyApproversOnNamespaceReviewRequest(
+            _mockNotificationManager.Setup(n => n.NotifyNamespaceReviewRequestRecipientsAsync(
                     It.IsAny<ClaimsPrincipal>(), It.IsAny<ReviewListItemModel>(), It.IsAny<IEnumerable<ReviewListItemModel>>(), It.IsAny<string>()))
                 .ThrowsAsync(new UnauthorizedAccessException("User not authorized to request namespace reviews"));
 
@@ -552,7 +552,7 @@ namespace APIViewUnitTests
                 .Callback<ReviewListItemModel>(review => updatedReviews.Add(review))
                 .Returns(Task.CompletedTask);
 
-            _mockNotificationManager.Setup(n => n.NotifyApproversOnNamespaceReviewRequest(
+            _mockNotificationManager.Setup(n => n.NotifyNamespaceReviewRequestRecipientsAsync(
                     It.IsAny<ClaimsPrincipal>(), It.IsAny<ReviewListItemModel>(), It.IsAny<IEnumerable<ReviewListItemModel>>(), It.IsAny<string>()))
                 .Returns(Task.CompletedTask);
 

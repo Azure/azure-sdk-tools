@@ -174,6 +174,11 @@ public partial class JavaScriptLanguageService : LanguageService
         return Path.GetFileName(packagePath);
     }
 
+    public override async Task<PackageCheckResponse> CheckSpelling(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        return await commonValidationHelpers.CheckSpelling(packagePath, fixCheckErrors, cancellationToken);
+    }
+
     public override async Task<PackageCheckResponse> ValidateReadme(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         return await commonValidationHelpers.ValidateReadme(packagePath, fixCheckErrors, cancellationToken);
@@ -181,7 +186,7 @@ public partial class JavaScriptLanguageService : LanguageService
 
     public override async Task<PackageCheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        var repoRoot = gitHelper.DiscoverRepoRoot(packagePath);
+        var repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, cancellationToken);
         var packageName = await GetSDKPackageName(repoRoot, packagePath, cancellationToken);
         return await commonValidationHelpers.ValidateChangelog(packageName, packagePath, fixCheckErrors, cancellationToken);
     }

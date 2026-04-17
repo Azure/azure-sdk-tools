@@ -211,9 +211,7 @@ namespace APIViewWeb.Helpers
         private static NavigationTreeNode CreateNavigationNode(ReviewLine reviewLine, string nodeIdHashed)
         {
             NavigationTreeNode navTreeNode = null;
-            //Generate navigation node only from active revision
-            if (!reviewLine.IsActiveRevisionLine)
-                return navTreeNode;
+            // Generate navigation node for both active revision lines and removed lines (from diff revision)
             var navToken = reviewLine.Tokens.FirstOrDefault(t => !string.IsNullOrEmpty(t.NavigationDisplayName));
             if (navToken != null && reviewLine.IsHidden != true)
             {
@@ -293,9 +291,6 @@ namespace APIViewWeb.Helpers
             var commentsForRow = CollectUserCommentsForRow(codePanelRawData, reviewLine.LineId, nodeIdHashed, codePanelRow);
             //Add code line and comment to code panel data
             InsertCodePanelRowData(codePanelData: codePanelData, rowData: codePanelRow, nodeIdHashed: nodeIdHashed, codePanelRawData: codePanelRawData, commentsForRow: commentsForRow);
-
-            // Add diagnostic row
-            AddDiagnosticRow(codePanelData: codePanelData, codeFile: codePanelRawData.activeRevisionCodeFile, nodeId: reviewLine.LineId, nodeIdHashed: nodeIdHashed);
         }
 
         private static CodePanelRowData GetCodePanelRowData(CodePanelData codePanelData, ReviewLine reviewLine, string nodeIdHashed, int indent)
@@ -458,27 +453,6 @@ namespace APIViewWeb.Helpers
             }
         }
 
-        private static void AddDiagnosticRow(CodePanelData codePanelData, CodeFile codeFile, string nodeId, string nodeIdHashed)
-        {
-            if (codeFile.Diagnostics == null || codeFile.Diagnostics.Length == 0)
-                return;
-
-            var diagnostics = codeFile.Diagnostics.Where(d => d.TargetId == nodeId);
-            foreach (var diagnostic in diagnostics)
-            {
-                var rowData = new CodePanelRowData()
-                {
-                    Type = CodePanelRowDatatype.Diagnostics,
-                    NodeIdHashed = nodeIdHashed,
-                    NodeId = nodeId,
-                    Diagnostics = diagnostic,
-                    RowClassesObj = new HashSet<string>() { "diagnostics", diagnostic.Level.ToString().ToLower() },
-                    RowPositionInGroup = codePanelData.NodeMetaDataObj[nodeIdHashed].DiagnosticsObj.Count()
-                };
-                codePanelData.NodeMetaDataObj[nodeIdHashed].DiagnosticsObj.Add(rowData);
-            }
-        }
-
         public static bool AreCodeFilesSame(CodeFile codeFileA, CodeFile codeFileB)
         {
             return AreReviewLinesSame(codeFileA.ReviewLines, codeFileB.ReviewLines);
@@ -523,6 +497,28 @@ namespace APIViewWeb.Helpers
                     contextLineId = line.LineId;
                 }
             }
+        }
+
+        /// <summary>
+        /// Adds a line to resultLines, positioning it before its related line if needed.
+        /// </summary>
+        private static void AddLineToResult(List<ReviewLine> resultLines, ReviewLine line)
+        {
+            bool isDecorator = string.IsNullOrEmpty(line.LineId) 
+                && !string.IsNullOrEmpty(line.RelatedToLine) 
+                && line.IsContextEndLine != true
+                && line.Tokens.Count > 0;
+            
+            if (isDecorator)
+            {
+                int relatedIndex = resultLines.FindIndex(l => l.LineId == line.RelatedToLine);
+                if (relatedIndex >= 0)
+                {
+                    resultLines.Insert(relatedIndex, line);
+                    return;
+                }
+            }
+            resultLines.Add(line);
         }
 
         public static List<ReviewLine> FindDiff(List<ReviewLine> activeLines, List<ReviewLine> diffLines)
@@ -602,7 +598,7 @@ namespace APIViewWeb.Helpers
                     }
                     else
                     {
-                        resultLines.Add(line);
+                        AddLineToResult(resultLines, line);
                     }
                     continue;
                 }

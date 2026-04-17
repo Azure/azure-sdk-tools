@@ -1,5 +1,5 @@
 using System.CommandLine;
-using Azure.Sdk.Tools.Cli.Tools;
+using Azure.Sdk.Tools.Cli.Tools.CliManagement;
 using Azure.Sdk.Tools.Cli.Tools.EngSys;
 using Azure.Sdk.Tools.Cli.Tools.GitHub;
 using Azure.Sdk.Tools.Cli.Tools.Package;
@@ -19,10 +19,12 @@ namespace Azure.Sdk.Tools.Cli.Commands
     {
         public static readonly List<Type> ToolsList = [
             typeof(PipelineTool),
-            typeof(PipelineAnalysisTool),            
+            typeof(PipelineAnalysisTool),
             typeof(CodeownersTool),
             typeof(GitHubLabelsTool),
             typeof(LogAnalysisTool),
+            typeof(TelemetryIngestionTool),
+            typeof(PackageInfoTool),
             typeof(PackageCheckTool),
             typeof(PipelineTestsTool),
             typeof(QuokkaTool),
@@ -30,25 +32,31 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(SampleGeneratorTool),
             typeof(SampleTranslatorTool),
             typeof(ReleasePlanTool),
+            typeof(PackageReleaseStatusTool),
             typeof(SpecWorkflowTool),
             typeof(SdkBuildTool),
+            typeof(PackTool),
             typeof(SdkGenerationTool),
             typeof(MetadataUpdateTool),
             typeof(ChangelogContentUpdateTool),
             typeof(VersionUpdateTool),
             typeof(SdkReleaseTool),
             typeof(SpecCommonTools),
-            typeof(PullRequestTools),            
+            typeof(PullRequestTools),
             typeof(SpecValidationTools),
             typeof(TestAnalysisTool),
             typeof(TypeSpecConvertTool),
             typeof(TypeSpecInitTool),
             typeof(CustomizedCodeUpdateTool),
             typeof(TypeSpecPublicRepoValidationTool),
+            typeof(TypeSpecAuthoringTool),
             typeof(APIViewReviewTool),
+            typeof(DelegateAPIViewFeedbackTool),
             typeof(VerifySetupTool),
+            typeof(VerifySetupInstallTool),
             typeof(TestTool),
             typeof(ListCommandTool),
+            typeof(UpgradeTool),
 #if DEBUG
             // only add these tools in debug mode
             typeof(CleanupTool),

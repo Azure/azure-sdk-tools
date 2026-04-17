@@ -36,14 +36,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
-            await Task.CompletedTask;
             var command = parseResult.CommandResult.Command.Name;
 
             switch (command)
             {
                 case checkPublicRepoCommandName:
                     var typeSpecProjectPath = parseResult.GetValue(typeSpecProjectPathOpt);
-                    var checkResult = CheckTypeSpecProjectInPublicRepo(typeSpecProjectPath);
+                    var checkResult = await CheckTypeSpecProjectInPublicRepoAsync(typeSpecProjectPath, ct);
                     checkResult.Message = "Public repo check result:";
                     return checkResult;
 
@@ -56,13 +55,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         /// Checks if a TypeSpec project is in a public spec repository.
         /// </summary>
         /// <param name="typeSpecProjectPath">The path to the TypeSpec project.</param>
+        /// <param name="ct">Cancellation token.</param>
         [McpServerTool(Name = CheckProjectInPublicRepoToolName), Description("Check if TypeSpec project is in public spec repo. Provide absolute path to TypeSpec project root as param.")]
-        public DefaultCommandResponse CheckTypeSpecProjectInPublicRepo(string typeSpecProjectPath)
+        public async Task<DefaultCommandResponse> CheckTypeSpecProjectInPublicRepoAsync(string typeSpecProjectPath, CancellationToken ct = default)
         {
             try
             {
                 var repoRootPath = typeSpecHelper.GetSpecRepoRootPath(typeSpecProjectPath);
-                var isPublicRepo = typeSpecHelper.IsRepoPathForPublicSpecRepo(repoRootPath);
+                var isPublicRepo = await typeSpecHelper.IsRepoPathForPublicSpecRepoAsync(repoRootPath, ct);
                 return new() { Result = isPublicRepo };
             }
             catch (Exception ex)

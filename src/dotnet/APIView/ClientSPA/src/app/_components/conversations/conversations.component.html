@@ -1,8 +1,80 @@
 <div *ngIf="isLoading" class="spinner-border m-3" role="status">
     <span class="visually-hidden">Loading...</span>
 </div>
-<p *ngIf="!isLoading && (getAPIRevisionWithComments()).length == 0" class="ms-4">This Review has no comments</p>
-<p-timeline *ngIf="!isLoading" [value]="getAPIRevisionWithComments()">
+
+<div *ngIf="!isLoading && apiRevisionsWithComments.length > 0" class="filter-toolbar">
+    <div class="filter-row">
+        <div class="filter-section">
+            <div class="segmented-control">
+                <button class="seg-btn" [class.seg-active]="filterStatus === 'active'" (click)="setStatusFilter('active')">
+                    <i class="bi bi-chat-left-text"></i> Active
+                </button>
+                <button class="seg-btn" [class.seg-active]="filterStatus === 'resolved'" (click)="setStatusFilter('resolved')">
+                    <i class="bi bi-check-circle"></i> Resolved
+                </button>
+                <button class="seg-btn" [class.seg-active]="filterStatus === 'all'" (click)="setStatusFilter('all')">All</button>
+            </div>
+        </div>
+
+        <div class="filter-divider"></div>
+
+        <div class="filter-section filter-section-labeled">
+            <span class="filter-group-label">Severity</span>
+            <div class="filter-section-buttons">
+                <ng-container *ngFor="let sev of severityOptions">
+                    <button *ngIf="sev.key !== 'unknown' || showUnknownSeverityFilter"
+                        class="sev-btn" [ngClass]="'sev-' + sev.key.toLowerCase()"
+                        [class.sev-on]="filterSeverities.has(sev.key)"
+                        (click)="toggleSeverityFilter(sev.key)">
+                        <i class="bi" [ngClass]="sev.icon"></i> {{ sev.label }}
+                    </button>
+                </ng-container>
+            </div>
+        </div>
+
+        <div class="filter-divider"></div>
+
+        <div class="filter-section filter-section-labeled">
+            <span class="filter-group-label">Source</span>
+            <div class="filter-section-buttons">
+                <button class="src-btn src-human" [class.src-on]="filterKinds.has('human')" (click)="toggleKindFilter('human')">
+                    <i class="bi bi-person-fill"></i> Reviewer
+                </button>
+                <button class="src-btn src-ai" [class.src-on]="filterKinds.has('ai')" (click)="toggleKindFilter('ai')">
+                    <i class="bi bi-stars"></i> AI
+                </button>
+                <button class="src-btn src-diag" [class.src-on]="filterKinds.has('diagnostic')" (click)="toggleKindFilter('diagnostic')">
+                    <i class="bi bi-wrench"></i> Diagnostic
+                </button>
+            </div>
+        </div>
+
+        <!-- Reset filters -->
+        <div class="filter-meta">
+            <button *ngIf="hasActiveFilters" class="reset-btn" title="Reset filters" (click)="clearAllFilters()">
+                <i class="bi bi-arrow-counterclockwise"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<p *ngIf="!isLoading && apiRevisionsWithComments.length == 0 && !diagnosticsTruncated" class="ms-4">This Review has no comments</p>
+<p *ngIf="!isLoading && apiRevisionsWithComments.length > 0 && filteredApiRevisionsWithComments.length === 0" class="empty-state">
+    <i class="bi bi-funnel"></i> No threads match the current filters.
+</p>
+<div *ngIf="!isLoading && hiddenUnresolvedDiagnosticsCount > 0 && filterStatus !== 'resolved'" class="mx-4 mb-3">
+    <div class="alert alert-warning py-2 mb-0" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <small>Diagnostic display is limited to 250. Some unresolved diagnostics are not shown here — view them all in the code panel.</small>
+    </div>
+</div>
+<div *ngIf="!isLoading && hiddenResolvedDiagnosticsCount > 0 && filterStatus !== 'active'" class="mx-4 mb-3">
+    <div class="alert alert-secondary py-2 mb-0" role="alert">
+        <i class="bi bi-info-circle me-2"></i>
+        <small>Diagnostic display is limited to 250. Some resolved diagnostics are not shown here — view them all in the code panel.</small>
+    </div>
+</div>
+<p-timeline *ngIf="!isLoading && filteredApiRevisionsWithComments.length > 0" [value]="filteredApiRevisionsWithComments">
     <ng-template pTemplate="marker" let-apiRevision>
         <i class="bi bi-clock-history"></i>
     </ng-template>
@@ -19,15 +91,16 @@
                 <span class="emphasis-badge secondary me-2">last updated: {{ apiRevision | lastUpdatedOn | timeago }}</span>
                 <span class="me-2" *ngIf="apiRevision.label">{{ apiRevision.label }}</span>
             </span>
-            <div *ngFor="let commentThread of commentThreads.get(apiRevision.id); let isLast = last" class="my-2 conversation-group-threads">
-                <a class="small conversation-group-element-id" (click)="navigateToCommentThreadOnRevisionPage($event)">{{ commentThread!.comments[0].elementId }}</a>
+            <div *ngFor="let commentThread of filteredCommentThreads.get(apiRevision.id); trackBy: trackByThreadId; let isLast = last" class="my-2 conversation-group-threads">
                 <app-comment-thread 
                     [codePanelRowData]="commentThread"
                     [allComments]="comments"
+                    [allCodePanelRowData]="allCodePanelRowData"
                     [instanceLocation]='"conversations"'
                     [userProfile]="userProfile"
-                    [preferredApprovers]="preferredApprovers"
                     [reviewId]="review?.id || ''"
+                    [elementId]="commentThread!.comments[0].elementId"
+                    (navigateToElementEmitter)="navigateToElement(apiRevision.id, $event)"
                     (saveCommentActionEmitter)="handleSaveCommentActionEmitter($event)"
                     (deleteCommentActionEmitter)="handleDeleteCommentActionEmitter($event)"
                     (commentUpvoteActionEmitter)="handleCommentUpvoteActionEmitter($event)"

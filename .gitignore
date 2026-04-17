@@ -479,6 +479,9 @@ tools/test-proxy/docker/docker_build
 # npm pack artifacts
 *.tgz
 
+# pnpm lockfiles (this repo does not use pnpm)
+pnpm-lock.yaml
+
 # Visual Studio launch settings (frequently user-specific)
 launchSettings.json
 
@@ -521,6 +524,8 @@ tools/apiview/emitters/typespec-apiview/temp/
 
 # ApiView Spa
 src/dotnet/APIView/APIViewWeb/wwwroot/spa
+src/dotnet/APIView/ClientSPA/**/playwright-report/**
+src/dotnet/APIView/ClientSPA/**/test-results/**
 
 # Issue Labeler Deploy
 tools/issue-labeler/src/IssueLabeler/Properties/*Zip Deploy.json
@@ -554,3 +559,10 @@ tools/sdk-ai-bots/azure-sdk-qa-bot-backend-shared/infra/azure.parameters.generat
 
 # Azure SDK CLI Tool logs
 *.logs
+
+# Benchmark generated reports
+*-report.md
+
+# sdk-sample-generator artifacts
+.artifacts/
+tools/tsp-client/test/examples/sdk/alternate-entrypoint/test-results.browser.xml

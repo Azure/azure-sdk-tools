@@ -1,0 +1,138 @@
+import { ApiConstructor, ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
+import * as ts from "typescript";
+import { TokenKind } from "../models";
+import { TokenGenerator, GeneratorResult } from "./index";
+import { createToken, processExcerptTokens, TokenCollector } from "./helpers";
+
+const PARAMETER_PROPERTY_MODIFIERS = new Set([
+  "public",
+  "private",
+  "protected",
+  "readonly",
+  "override",
+]);
+
+function isValid(item: ApiItem): item is ApiConstructor {
+  return item.kind === ApiItemKind.Constructor;
+}
+
+function getConstructorNode(item: ApiConstructor): ts.ConstructorDeclaration | undefined {
+  const signatureText = item.excerpt?.text?.trim();
+  if (!signatureText) {
+    return undefined;
+  }
+
+  const sourceText = `declare class __ApiViewConstructorContainer { ${signatureText} }`;
+  const sourceFile = ts.createSourceFile(
+    "constructor.ts",
+    sourceText,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS,
+  );
+
+  for (const statement of sourceFile.statements) {
+    if (!ts.isClassDeclaration(statement)) {
+      continue;
+    }
+
+    for (const member of statement.members) {
+      if (ts.isConstructorDeclaration(member)) {
+        return member;
+      }
+    }
+  }
+
+  return undefined;
+}
+
+function getParameterPropertyModifiers(item: ApiConstructor): string[][] {
+  const constructorNode = getConstructorNode(item);
+  if (!constructorNode) {
+    return [];
+  }
+
+  return constructorNode.parameters.map((parameter) => {
+    const modifiers = parameter.modifiers ?? [];
+    return modifiers
+      .map((modifier) => modifier.getText())
+      .filter((modifier) => PARAMETER_PROPERTY_MODIFIERS.has(modifier));
+  });
+}
+
+function generate(item: ApiConstructor, deprecated?: boolean): GeneratorResult {
+  const collector = new TokenCollector();
+
+  if (item.kind !== ApiItemKind.Constructor) {
+    throw new Error(
+      `Invalid item ${item.displayName} of kind ${item.kind} for Constructor token generator.`,
+    );
+  }
+
+  const parameters = item.parameters;
+  const parameterModifiersByIndex = getParameterPropertyModifiers(item);
+
+  if (item.isProtected) {
+    collector.push(
+      createToken(TokenKind.Keyword, "protected", {
+        hasSuffixSpace: true,
+        deprecated,
+      }),
+    );
+  }
+
+  collector.push(createToken(TokenKind.Keyword, "constructor", { deprecated }));
+  collector.push(createToken(TokenKind.Text, "(", { deprecated }));
+
+  // Filter out destructured parameters (names starting with "{") - API Extractor reports
+  // destructured parameters in raw form followed by a synthetic normalized parameter with
+  // the actual type info. We skip the raw destructuring pattern and only emit the synthetic one.
+  const filteredParameters =
+    parameters?.map((param, originalIndex) => ({ param, originalIndex })).filter(
+      ({ param }) => !param.name.startsWith("{"),
+    ) ?? [];
+
+  if (filteredParameters.length > 0) {
+    filteredParameters.forEach(({ param, originalIndex }, index) => {
+      const parameterModifiers = parameterModifiersByIndex[originalIndex] ?? [];
+
+      parameterModifiers.forEach((modifier, modifierIndex) => {
+        collector.push(
+          createToken(TokenKind.Keyword, modifier, {
+            hasPrefixSpace: index > 0 && modifierIndex === 0,
+            hasSuffixSpace: true,
+            deprecated,
+          }),
+        );
+      });
+
+      collector.push(
+        createToken(TokenKind.Text, param.name, {
+          hasPrefixSpace: index > 0 && parameterModifiers.length === 0,
+          deprecated,
+        }),
+      );
+
+      if (param.isOptional) {
+        collector.push(createToken(TokenKind.Text, "?", { deprecated }));
+      }
+
+      collector.push(createToken(TokenKind.Text, ":", { hasSuffixSpace: true, deprecated }));
+      processExcerptTokens(param.parameterTypeExcerpt.spannedTokens, collector, deprecated);
+
+      if (index < filteredParameters.length - 1) {
+        collector.push(createToken(TokenKind.Text, ",", { hasSuffixSpace: true, deprecated }));
+      }
+    });
+  }
+
+  collector.push(createToken(TokenKind.Text, ")", { deprecated }));
+  collector.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
+
+  return collector.toResult();
+}
+
+export const constructorTokenGenerator: TokenGenerator<ApiConstructor> = {
+  isValid,
+  generate,
+};

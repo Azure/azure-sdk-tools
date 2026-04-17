@@ -1,11 +1,12 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+
+#if DEBUG
 using Moq;
 using NUnit.Framework.Internal;
 using Azure.Core;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
@@ -22,7 +23,7 @@ internal class ExampleToolTests
     private MockGitHubService? mockGitHubService;
     private Mock<IProcessHelper>? mockProcessHelper;
     private Mock<IPowershellHelper>? mockPowershellHelper;
-    private Mock<Azure.Sdk.Tools.Cli.Microagents.IMicroagentHostService>? mockMicroagentHostService;
+    private Mock<Azure.Sdk.Tools.Cli.CopilotAgents.ICopilotAgentRunner>? mockCopilotAgentRunner;
 
     [SetUp]
     public void Setup()
@@ -33,7 +34,7 @@ internal class ExampleToolTests
         mockGitHubService = new MockGitHubService();
         mockProcessHelper = new Mock<IProcessHelper>();
         mockPowershellHelper = new Mock<IPowershellHelper>();
-        mockMicroagentHostService = new Mock<Azure.Sdk.Tools.Cli.Microagents.IMicroagentHostService>();
+        mockCopilotAgentRunner = new Mock<Azure.Sdk.Tools.Cli.CopilotAgents.ICopilotAgentRunner>();
 
         // Set up Azure service mock to return a mock credential
         var mockCredential = new Mock<TokenCredential>();
@@ -47,7 +48,7 @@ internal class ExampleToolTests
 
         // Set up DevOps service mock
         mockDevOpsService
-            .Setup(x => x.GetPackageWorkItemAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .Setup(x => x.GetPackageWorkItemAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PackageWorkitemResponse { PipelineDefinitionUrl = "https://dev.azure.com/test-pipeline" });
 
         // Create the tool instance
@@ -56,7 +57,7 @@ internal class ExampleToolTests
             mockAzureService.Object,
             mockDevOpsService.Object,
             mockGitHubService,
-            mockMicroagentHostService.Object,
+            mockCopilotAgentRunner.Object,
             mockProcessHelper.Object,
             mockPowershellHelper.Object,
             tokenUsageHelper: new TokenUsageHelper(new OutputHelper()),
@@ -100,7 +101,7 @@ internal class ExampleToolTests
         Assert.That(result.Details["package_pipeline_url"], Is.EqualTo("https://dev.azure.com/test-pipeline"));
 
         // Verify the service was called with correct parameters
-        mockDevOpsService!.Verify(x => x.GetPackageWorkItemAsync(packageName, language, It.IsAny<string>()), Times.Once);
+        mockDevOpsService!.Verify(x => x.GetPackageWorkItemAsync(packageName, language, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -159,7 +160,7 @@ internal class ExampleToolTests
         Assert.That(subCommandNames, Does.Contain("error"));
         Assert.That(subCommandNames, Does.Contain("process"));
         Assert.That(subCommandNames, Does.Contain("powershell"));
-        Assert.That(subCommandNames, Does.Contain("microagent"));
+        Assert.That(subCommandNames, Does.Contain("agent"));
     }
 
     [Test]
@@ -243,14 +244,16 @@ internal class ExampleToolTests
     }
 
     [Test]
-    public async Task DemonstrateMicroagentFibonacci_Success()
+    public async Task DemonstrateAgentFibonacci_Success()
     {
-        mockMicroagentHostService!.Setup(m => m.RunAgentToCompletion(It.IsAny<Azure.Sdk.Tools.Cli.Microagents.Microagent<int>>(), It.IsAny<CancellationToken>()))
+        mockCopilotAgentRunner!.Setup(m => m.RunAsync(It.IsAny<Azure.Sdk.Tools.Cli.CopilotAgents.CopilotAgent<int>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(13);
 
-        var response = await tool.DemonstrateMicroagentFibonacci(7);
+        var response = await tool.DemonstrateAgentFibonacci(7);
 
         Assert.That(response.ResponseError, Is.Null);
         Assert.That(response.Result as string, Does.Contain("Fibonacci(7) = 13"));
     }
 }
+
+#endif

@@ -1,18 +1,62 @@
 <app-review-page-layout
     [review]="review"
-    [sideMenu]="sideMenu"
     [apiRevisions]="apiRevisions"
     [activeApiRevisionId]="activeApiRevisionId"
     [diffApiRevisionId]="diffApiRevisionId"
     [userProfile]="userProfile"
     [showPageoptionsButton]="true"
-    (pageOptionsEmitter)="handlePageOptionsEmitter($event)">
-    <p-splitter
+    [showLeftNavigation]="showLeftNavigation"
+    [activePage]="activeView"
+    [samplesRevisionCount]="samplesRevisionCount"
+    [conversationCount]="numberOfActiveConversation"
+    (navigateToSamplesEmitter)="navigateToSamples()"
+    (navigateToRevisionsEmitter)="navigateToRevisions()"
+    (navigateToReviewsEmitter)="showReviewView()"
+    (navigateToConversationsEmitter)="showConversationsView()"
+    (navigateToNamespaceEmitter)="navigateToNamespace()"
+    (pageOptionsEmitter)="handlePageOptionsEmitter($event)"
+    (showLeftNavigationEmitter)="handleShowLeftNavigationEmitter($event)">
+    <div [hidden]="activeView !== 'conversations'" class="conversation-panel overflow-auto border rounded py-3">
+        <app-conversations
+            [apiRevisions]="apiRevisions"
+            [comments]="comments"
+            [review]="review"
+            [userProfile]="userProfile"
+            [activeApiRevisionId]="activeApiRevisionId"
+            [allCodePanelRowData]="codePanelRowData"
+            (numberOfActiveThreadsEmitter)="handleNumberOfActiveThreadsEmitter($event)"
+            (scrollToNodeEmitter)="handleConversationScrollToNode($event)"
+            (dismissSidebarAndNavigateEmitter)="handleDismissSidebarAndNavigate($event)">
+        </app-conversations>
+    </div>
+    <div *ngIf="revisionsActivated" [hidden]="activeView !== 'revisions'" class="revisions-panel">
+        <app-revisions-list
+            [review]="review"
+            [userProfile]="userProfile">
+        </app-revisions-list>
+    </div>
+    <div *ngIf="samplesActivated" [hidden]="activeView !== 'samples'" class="samples-panel">
+        <app-samples-page
+            [embedded]="true"
+            [embeddedReviewId]="reviewId"
+            [embeddedReview]="review"
+            [embeddedUserProfile]="userProfile">
+        </app-samples-page>
+    </div>
+    <div *ngIf="namespaceActivated" [hidden]="activeView !== 'namespace'" class="namespace-panel">
+        <app-namespace-page
+            [embedded]="true"
+            [embeddedReviewId]="reviewId"
+            [embeddedReview]="review"
+            [embeddedUserProfile]="userProfile">
+        </app-namespace-page>
+    </div>
+    <p-splitter [hidden]="activeView !== 'reviews'"
         [panelSizes]="panelSizes"
         [minSizes]="minSizes"
         [gutterSize]="6" (onResizeEnd)="handleSplitterResizeEnd($event)">
         <ng-template pTemplate>
-            <div *ngIf="showLeftNavigation" class="col flex align-items-center justify-content-center border rounded overflow-auto review-panel">
+            <div *ngIf="showLeftNavigation" class="col flex align-items-center justify-content-center rounded overflow-auto review-panel">
                 <app-review-nav
                     [reviewPageNavigation]="reviewPageNavigation"
                     [loadFailed]="loadFailed"
@@ -20,30 +64,56 @@
             </div>
         </ng-template>
         <ng-template pTemplate>
-            <div class="col flex align-items-center justify-content-center border rounded review-panel">
-                <app-code-panel [codePanelRowData]="codePanelRowData" [codePanelData]="codePanelData"
-                    [crossLanguageRowData]="crossLanguageRowData"
-                    [language]="language" [languageSafeName]="languageSafeName"
+            <div class="flex flex-column ng-star-inserted review-panel-container" style="overflow: hidden; display: flex; flex-direction: column;">
+                <app-review-toolbar
+                    style="width: 100%; flex-shrink: 0; flex-grow: 0;"
+                    [apiRevisions]="apiRevisions"
+                    [activeApiRevisionId]="activeApiRevisionId"
+                    [diffApiRevisionId]="diffApiRevisionId"
                     [isDiffView]="!!diffApiRevisionId"
-                    [reviewId]="reviewId!" [activeApiRevisionId]="activeApiRevisionId!"
+                    [contentHasDiff]="codePanelData?.hasDiff"
+                    [diffStyleInput]="diffStyle!"
                     [userProfile]="userProfile"
-                    [allComments]="comments"
-                    [loadFailed]="loadFailed"
-                    [loadFailedMessage]="loadFailedMessage"
-                    [showLineNumbers]="showLineNumbers"
-                    [showDocumentation]="userProfile?.preferences?.showDocumentation ?? true"
-                    [scrollToNodeIdHashed]="scrollToNodeIdHashed"
-                    [scrollToNodeId]="scrollToNodeId"
-                    [codeLineSearchText]="codeLineSearchText"
                     [codeLineSearchInfo]="codeLineSearchInfo"
-                    [preferredApprovers]="preferredApprovers"
-                    (hasActiveConversationEmitter)="handleHasActiveConversationEmitter($event)"
-                    (codeLineSearchInfoEmitter)="handleCodeLineSearchInfoEmitter($event)">
-                </app-code-panel>
+                    [hasHiddenAPIs]="hasHiddenAPIs"
+                    (diffStyleEmitter)="handleDiffStyleEmitter($event)"
+                    (diffNavigationEmitter)="handleDiffNavigationEmitter($event)"
+                    (showCommentsEmitter)="handleShowCommentsEmitter($event)"
+                    (showSystemCommentsEmitter)="handleShowSystemCommentsEmitter($event)"
+                    (showDocumentationEmitter)="handleShowDocumentationEmitter($event)"
+                    (showLineNumbersEmitter)="handleShowLineNumbersEmitter($event)"
+                    (disableCodeLinesLazyLoadingEmitter)="handleDisableCodeLinesLazyLoadingEmitter($event)"
+                    (codeLineSearchTextEmitter)="handleCodeLineSearchTextEmitter($event)"
+                    (codeLineSearchInfoEmitter)="handleCodeLineSearchInfoEmitter($event)"
+                    (showHiddenAPIEmitter)="handleShowHiddenAPIEmitter($event)"
+                    (copyReviewTextEmitter)="handleCopyReviewTextEmitter($event)"
+                    (commentNavigationEmitter)="handleCommentThreadNavigationEmitter($event)">
+                </app-review-toolbar>
+                <div class="review-panel" style="width: 100%; flex: 1; min-height: 0; overflow: hidden;">
+                    <app-code-panel [codePanelRowData]="codePanelRowData" [codePanelData]="codePanelData"
+                        [crossLanguageRowData]="crossLanguageRowData"
+                        [language]="language" [languageSafeName]="languageSafeName"
+                        [isDiffView]="!!diffApiRevisionId"
+                        [reviewId]="reviewId!" [activeApiRevisionId]="activeApiRevisionId!"
+                        [userProfile]="userProfile"
+                        [allComments]="comments"
+                        [loadFailed]="loadFailed"
+                        [loadFailedMessage]="loadFailedMessage"
+                        [loadingMessage]="loadingMessage"
+                        [showLineNumbers]="showLineNumbers"
+                        [showDocumentation]="userProfile?.preferences?.showDocumentation ?? true"
+                        [scrollToNodeIdHashed]="scrollToNodeIdHashed"
+                        [scrollToNodeId]="scrollToNodeId"
+                        [codeLineSearchText]="codeLineSearchText"
+                        [codeLineSearchInfo]="codeLineSearchInfo"
+                        (hasActiveConversationEmitter)="handleHasActiveConversationEmitter($event)"
+                        (codeLineSearchInfoEmitter)="handleCodeLineSearchInfoEmitter($event)">
+                    </app-code-panel>
+                </div>
             </div>
         </ng-template>
         <ng-template pTemplate>
-            <div *ngIf="showPageOptions" class="col flex align-items-center justify-content-center border rounded overflow-auto review-panel options-panel px-3">
+            <div *ngIf="showPageOptions" class="col flex align-items-center justify-content-center rounded review-panel options-panel px-3">
                 <app-review-page-options
                     [loadingStatus]="getLoadingStatus()"
                     [isDiffView]="!!diffApiRevisionId"
@@ -53,7 +123,6 @@
                     [review]="review"
                     [activeAPIRevision]="activeAPIRevision"
                     [diffAPIRevision]="diffAPIRevision"
-                    [preferredApprovers]="preferredApprovers"
                     [hasFatalDiagnostics]="hasFatalDiagnostics"
                     [hasActiveConversation]="hasActiveConversation"
                     [hasHiddenAPIs]="hasHiddenAPIs"
@@ -61,17 +130,13 @@
                     (showSystemCommentsEmitter)="handleShowSystemCommentsEmitter($event)"
                     (showDocumentationEmitter)="handleShowDocumentationEmitter($event)"
                     (showCommentsEmitter)="handleShowCommentsEmitter($event)"
-                    (showLeftNavigationEmitter)="handleShowLeftNavigationEmitter($event)"
                     (diffStyleEmitter)="handleDiffStyleEmitter($event)"
                     (subscribeEmitter)="handleSubscribeEmitter($event)"
                     (showLineNumbersEmitter)="handleShowLineNumbersEmitter($event)"
                     (apiRevisionApprovalEmitter)="handleApiRevisionApprovalEmitter($event)"
                     (reviewApprovalEmitter)="handleReviewApprovalEmitter($event)"
-                    (showHiddenAPIEmitter)="handleShowHiddenAPIEmitter($event)"
-                    (disableCodeLinesLazyLoadingEmitter)="handleDisableCodeLinesLazyLoadingEmitter($event)"
                     (commentThreadNavigationEmitter)="handleCommentThreadNavigationEmitter($event)"
                     (diffNavigationEmitter)="handleDiffNavigationEmitter($event)"
-                    (copyReviewTextEmitter)="handleCopyReviewTextEmitter($event)"
                     (codeLineSearchTextEmitter)="handleCodeLineSearchTextEmitter($event)"
                     (codeLineSearchInfoEmitter)="handleCodeLineSearchInfoEmitter($event)"
                     (namespaceApprovalEmitter)="handleNamespaceApprovalEmitter($event)"></app-review-page-options>
@@ -79,36 +144,7 @@
         </ng-template>
     </p-splitter>
 </app-review-page-layout>
-<p-sidebar *ngIf="getLoadingStatus() === 'completed'" [(visible)]="revisionSidePanel!" position="right" [modal]="true" [showCloseIcon]="false" styleClass="revisions-sidebar" appendTo="body">
-    <div (click)="$event.stopPropagation()" style="height: 100%">
-        <app-revisions-list *ngIf="review"
-            [review]="review"
-            [userProfile]="userProfile"
-            [revisionSidePanel]="revisionSidePanel!">
-        </app-revisions-list>
-    </div>
-</p-sidebar>
-<p-sidebar *ngIf="getLoadingStatus() === 'completed'" [(visible)]="conversationSidePanel!" position="right" [modal]="true" [showCloseIcon]="false" styleClass="conversation-sidebar" appendTo="body">
-    <ng-template pTemplate="header">
-        <div class="flex align-items-center gap-2" (click)="$event.stopPropagation()">
-            <a [routerLink]="['/conversation', this.reviewId]" class="h4">Conversations</a>
-        </div>
-    </ng-template>
-    <div (click)="$event.stopPropagation()" style="height: 100%; overflow-y: auto">
-        <app-conversations
-            [apiRevisions]="apiRevisions"
-            [comments]="comments"
-            [review]="review"
-            [userProfile]="userProfile"
-            [activeApiRevisionId]="activeApiRevisionId"
-            [preferredApprovers]="preferredApprovers"
-            (scrollToNodeEmitter)="handleScrollToNodeEmitter($event)"
-            (numberOfActiveThreadsEmitter)="handleNumberOfActiveThreadsEmitter($event)"
-            (dismissSidebarAndNavigateEmitter)="handleDismissSidebarAndNavigate($event)">
-        </app-conversations>
-    </div>
-</p-sidebar>
-<p-sidebar *ngIf="getLoadingStatus() === 'completed' && crossLanguageAPIRevisions.length > 0" [(visible)]="crosslanguageRevisionSidePanel!" position="right" [modal]="true" [showCloseIcon]="false" styleClass="cross-language-revisions-sidebar" appendTo="body">
+<p-drawer *ngIf="getLoadingStatus() === 'completed' && crossLanguageAPIRevisions.length > 0" [(visible)]="crosslanguageRevisionSidePanel!" position="right" [modal]="true" [showCloseIcon]="false" styleClass="cross-language-revisions-sidebar" appendTo="body">
     <ng-template pTemplate="header">
         <div class="flex align-items-center gap-2" (click)="$event.stopPropagation()">
             <h4>Cross Language Revisions</h4>
@@ -124,4 +160,4 @@
             </span>
         </div>
     </div>
-</p-sidebar>
+</p-drawer>

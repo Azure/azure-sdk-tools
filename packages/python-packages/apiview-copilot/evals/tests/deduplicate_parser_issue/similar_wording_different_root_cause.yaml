@@ -24,7 +24,7 @@ existing_issues: |
       "number": 234,
       "url": "https://github.com/tjprescott/azure-sdk-tools/issues/234",
       "title": "[Python APIView] Import resolution fails for undefined types",
-      "body": "Parser cannot resolve types imported from other modules. When using 'from typing import CustomType' where CustomType doesn't exist in typing module, APIView shows incorrect information."
+      "body": "Parser cannot resolve types imported from other modules. When using 'from typing import CustomType' where CustomType doesn't exist in typing module, APIView shows incorrect information.",
       "created_at": "2025-10-10T12:00:00Z"
     }
   ]

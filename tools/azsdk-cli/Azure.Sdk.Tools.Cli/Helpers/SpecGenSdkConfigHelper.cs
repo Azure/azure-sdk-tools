@@ -3,6 +3,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using System.CommandLine.Parsing;
 using Microsoft.Extensions.Logging;
 using Azure.Sdk.Tools.Cli.Models;
@@ -17,8 +18,8 @@ namespace Azure.Sdk.Tools.Cli.Helpers
     public interface ISpecGenSdkConfigHelper
     {
         // Config value retrieval methods
-        Task<T> GetConfigValueFromRepoAsync<T>(string repositoryRoot, string jsonPath);
-        Task<(SpecGenSdkConfigContentType type, string value)> GetConfigurationAsync(string repositoryRoot, SpecGenSdkConfigType configType);
+        Task<T> GetConfigValueFromRepoAsync<T>(string repositoryRoot, string jsonPath, CancellationToken ct);
+        Task<(SpecGenSdkConfigContentType type, string value)> GetConfigurationAsync(string repositoryRoot, SpecGenSdkConfigType configType, CancellationToken ct);
 
         // Command processing methods
         string SubstituteCommandVariables(string command, Dictionary<string, string> variables);
@@ -78,7 +79,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         }
 
         // Gets a configuration value from the swagger_to_sdk_config.json file
-        public async Task<T> GetConfigValueFromRepoAsync<T>(string repositoryRoot, string jsonPath)
+        public async Task<T> GetConfigValueFromRepoAsync<T>(string repositoryRoot, string jsonPath, CancellationToken ct)
         {
             var specToSdkConfigFilePath = Path.Combine(repositoryRoot, SpecToSdkConfigPath);
 
@@ -92,7 +93,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             try
             {
                 // Read and parse the configuration file
-                var configContent = await File.ReadAllTextAsync(specToSdkConfigFilePath);
+                var configContent = await File.ReadAllTextAsync(specToSdkConfigFilePath, ct);
                 using var configJson = JsonDocument.Parse(configContent);
 
                 // Use helper method to navigate JSON path
@@ -119,14 +120,14 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         }
 
         // Get configuration for a specific type (either command or script path)
-        public async Task<(SpecGenSdkConfigContentType type, string value)> GetConfigurationAsync(string repositoryRoot, SpecGenSdkConfigType configType)
+        public async Task<(SpecGenSdkConfigContentType type, string value)> GetConfigurationAsync(string repositoryRoot, SpecGenSdkConfigType configType, CancellationToken ct)
         {
             var (commandPath, scriptPath) = GetConfigPaths(configType);
             
             // Try command first
             try
             {
-                var command = await GetConfigValueFromRepoAsync<string>(repositoryRoot, commandPath);
+                var command = await GetConfigValueFromRepoAsync<string>(repositoryRoot, commandPath, ct);
                 if (!string.IsNullOrEmpty(command))
                 {
                     _logger.LogDebug("Found {ConfigType} command configuration", configType);
@@ -142,7 +143,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             // Try path
             try
             {
-                var path = await GetConfigValueFromRepoAsync<string>(repositoryRoot, scriptPath);
+                var path = await GetConfigValueFromRepoAsync<string>(repositoryRoot, scriptPath, ct);
                 if (!string.IsNullOrEmpty(path))
                 {
                     _logger.LogDebug("Found {ConfigType} script path configuration", configType);
@@ -178,7 +179,32 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             foreach (var variable in variables)
             {
                 var placeholder = $"{{{variable.Key}}}";
-                result = result.Replace(placeholder, variable.Value, StringComparison.OrdinalIgnoreCase);
+                var value = variable.Value;
+                
+                // Check if value needs quoting - contains special characters that require quoting in shell commands
+                // Including: spaces, ampersand, pipe, semicolon, less than, greater than, parentheses, backtick, dollar sign, single quote
+                bool needsQuoting = value.IndexOfAny(new[] { ' ', '&', '|', ';', '<', '>', '(', ')', '`', '$', '\'' }) >= 0;
+                
+                if (needsQuoting)
+                {
+                    // Use regex to find placeholder and capture path continuation
+                    // Path continuation stops at common delimiters: whitespace, quotes, =, ;, ,
+                    var pattern = Regex.Escape(placeholder) + @"([^\s""=;,]*)";
+                    var regex = new Regex(pattern, RegexOptions.IgnoreCase);
+                    
+                    result = regex.Replace(result, match =>
+                    {
+                        // Extract the path continuation from the match
+                        string pathContinuation = match.Groups[1].Value;
+                        // Build the quoted replacement including the continuation
+                        return $"\"{value}{pathContinuation}\"";
+                    });
+                }
+                else
+                {
+                    // No quoting needed, simple replacement
+                    result = result.Replace(placeholder, value, StringComparison.OrdinalIgnoreCase);
+                }
             }
 
             _logger.LogDebug("Command after variable substitution: {result}", result);
@@ -316,7 +342,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 timeout: TimeSpan.FromMinutes(timeoutMinutes)
             );
 
-            _logger.LogInformation("Created command process options: {Command} {Args}", options.Command, string.Join(" ", options.Args));
+            _logger.LogDebug("Created command process options: {Command} {Args}", options.Command, string.Join(" ", options.Args));
             return options;
         }
 

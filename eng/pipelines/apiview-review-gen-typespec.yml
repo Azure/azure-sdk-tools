@@ -1,4 +1,4 @@
-pr: none
+﻿pr: none
 
 trigger: none
 
@@ -67,4 +67,5 @@ jobs:
       filePath: $(Build.SourcesDirectory)/eng/scripts/Apiview-Update-Generated-Review.ps1
       arguments: >
         -BuildId $(Build.BuildId)
+        -MetadataFileName "typespec-metadata.json"
         -ApiviewUpdateUrl "$(APIViewURL)/review/UpdateApiReview"

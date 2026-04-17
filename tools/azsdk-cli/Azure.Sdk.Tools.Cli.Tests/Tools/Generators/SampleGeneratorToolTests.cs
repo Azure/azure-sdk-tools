@@ -1,17 +1,19 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services.Languages.Samples;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
+using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 using Azure.Sdk.Tools.Cli.Tools.Package;
 using Azure.Sdk.Tools.Cli.Tools.Package.Samples;
-using LibGit2Sharp;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators;
@@ -21,7 +23,7 @@ public class SampleGeneratorToolTests
 {
     private TestLogger<SampleGeneratorTool> logger;
     private OutputHelper _outputHelper;
-    private Mock<IMicroagentHostService> microagentHostServiceMock;
+    private Mock<ICopilotAgentRunner> copilotAgentRunnerMock;
     private SampleGeneratorTool tool;
     private Mock<ITelemetryService> telemetryServiceMock;
     private Mock<INpxHelper> _mockNpxHelper;
@@ -35,19 +37,18 @@ public class SampleGeneratorToolTests
     private IGitHelper realGitHelper;
     private Mock<ICommonValidationHelpers> _commonValidationHelpers;
 
-
     [Test]
     public async Task GenerateSamples_MultiScenarioPrompt_ProducesMultipleFiles()
     {
-        var (_, packagePath) = CreateFakeGoPackage();
+        var (_, packagePath) = await CreateFakeGoPackageAsync();
         var generatedSamples = new List<GeneratedSample>
         {
             new("create_key", "package main\nfunc main(){}"),
             new("list_keys", "package main\nfunc main(){}")
         };
 
-        microagentHostServiceMock
-            .Setup(m => m.RunAgentToCompletion(It.IsAny<Microagent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
+        copilotAgentRunnerMock
+            .Setup(m => m.RunAsync(It.IsAny<CopilotAgent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(generatedSamples);
 
         var command = tool.GetCommandInstances().First();
@@ -71,7 +72,7 @@ public class SampleGeneratorToolTests
     {
         using var tempRepo = TempDirectory.Create($"sample-gen-{language}");
         var repoRoot = tempRepo.DirectoryPath;
-        Repository.Init(repoRoot);
+        await GitTestHelper.GitInitAsync(repoRoot);
         var relativePath = Path.Combine("sdk", "group", "service", "pkg");
         var packagePath = Path.Combine(repoRoot, relativePath);
         Directory.CreateDirectory(packagePath);
@@ -106,13 +107,14 @@ public class SampleGeneratorToolTests
         }
 
         var generatedSamples = new List<GeneratedSample> { new("scenario_one", $"// sample {language}") };
-        microagentHostServiceMock
-            .Setup(m => m.RunAgentToCompletion(It.IsAny<Microagent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
+        copilotAgentRunnerMock
+            .Setup(m => m.RunAsync(It.IsAny<CopilotAgent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(generatedSamples);
 
         var gitHubServiceMock = new Mock<IGitHubService>();
         var gitLogger = new TestLogger<GitHelper>();
-        var realGitHelper = new GitHelper(gitHubServiceMock.Object, gitLogger);
+        var gitCommandHelper = new GitCommandHelper(NullLogger<GitCommandHelper>.Instance, Mock.Of<IRawOutputHelper>());
+        var realGitHelper = new GitHelper(gitHubServiceMock.Object, gitCommandHelper, gitLogger);
 
         if (language == SdkLanguage.Go)
         {
@@ -133,8 +135,8 @@ public class SampleGeneratorToolTests
         }
 
         var mockGitHelper = new Mock<IGitHelper>();
-        mockGitHelper.Setup(g => g.DiscoverRepoRoot(It.IsAny<string>())).Returns(repoRoot);
-        mockGitHelper.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns(() =>
+        mockGitHelper.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(repoRoot);
+        mockGitHelper.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(() =>
         {
             return language switch
             {
@@ -146,8 +148,9 @@ public class SampleGeneratorToolTests
                 _ => "unknown-sdk"
             };
         });
-        tool = new SampleGeneratorTool(microagentHostServiceMock.Object, logger, mockGitHelper.Object, _languageServices);
-        tool.Initialize(_outputHelper, telemetryServiceMock.Object);
+        var testServiceLogger = new TestLogger<SampleGeneratorTool>();
+        tool = new SampleGeneratorTool(copilotAgentRunnerMock.Object, testServiceLogger, mockGitHelper.Object, _languageServices);
+        tool.Initialize(_outputHelper, telemetryServiceMock.Object, new MockUpgradeService());
         var command = tool.GetCommandInstances().First();
         var parseResult = command.Parse(["generate", "--prompt", "Do thing", "--package-path", packagePath]);
         int exitCode = await parseResult.InvokeAsync();
@@ -161,13 +164,13 @@ public class SampleGeneratorToolTests
     }
 
     [Test]
-    public async Task GenerateSamples_ModelOption_PassedToMicroagent()
+    public async Task GenerateSamples_ModelOption_PassedToAgent()
     {
-        var (_, packagePath) = CreateFakeGoPackage();
-        Microagent<List<GeneratedSample>>? captured = null;
-        microagentHostServiceMock
-            .Setup(m => m.RunAgentToCompletion(It.IsAny<Microagent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
-            .Callback<Microagent<List<GeneratedSample>>, CancellationToken>((agent, _) => captured = agent)
+        var (_, packagePath) = await CreateFakeGoPackageAsync();
+        CopilotAgent<List<GeneratedSample>>? captured = null;
+        copilotAgentRunnerMock
+            .Setup(m => m.RunAsync(It.IsAny<CopilotAgent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
+            .Callback<CopilotAgent<List<GeneratedSample>>, CancellationToken>((agent, _) => captured = agent)
             .ReturnsAsync(new List<GeneratedSample> { new("sample_one", "package main\nfunc main(){}") });
 
         var command = tool.GetCommandInstances().First();
@@ -185,14 +188,14 @@ public class SampleGeneratorToolTests
     [Test]
     public async Task GenerateSamples_PromptFilePath_LoadsFileContent()
     {
-        var (repoRoot, packagePath) = CreateFakeGoPackage();
+        var (repoRoot, packagePath) = await CreateFakeGoPackageAsync();
         var promptFile = Path.Combine(repoRoot, "prompt.md");
         File.WriteAllText(promptFile, "# Scenarios\n1) Create key\n2) List keys\n");
 
-        Microagent<List<GeneratedSample>>? captured = null;
-        microagentHostServiceMock
-            .Setup(m => m.RunAgentToCompletion(It.IsAny<Microagent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
-            .Callback<Microagent<List<GeneratedSample>>, CancellationToken>((agent, _) => captured = agent)
+        CopilotAgent<List<GeneratedSample>>? captured = null;
+        copilotAgentRunnerMock
+            .Setup(m => m.RunAsync(It.IsAny<CopilotAgent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
+            .Callback<CopilotAgent<List<GeneratedSample>>, CancellationToken>((agent, _) => captured = agent)
             .ReturnsAsync(new List<GeneratedSample> { new("create_key", "package main\nfunc main(){}") });
 
         var command = tool.GetCommandInstances().First();
@@ -202,7 +205,7 @@ public class SampleGeneratorToolTests
         Assert.Multiple(() =>
         {
             Assert.That(exitCode, Is.EqualTo(0));
-            Assert.That(captured, Is.Not.Null, "Microagent should have been invoked");
+            Assert.That(captured, Is.Not.Null, "Agent should have been invoked");
         });
 
         Assert.That(captured!.Instructions, Does.Contain("Create key"));
@@ -215,13 +218,13 @@ public class SampleGeneratorToolTests
     [Test]
     public async Task GenerateSamples_PromptFilePath_Nonexistent_FallsBackToRawText()
     {
-        var (repoRoot, packagePath) = CreateFakeGoPackage();
+        var (repoRoot, packagePath) = await CreateFakeGoPackageAsync();
         var missingPromptPath = Path.Combine(repoRoot, "nonexistent-prompt.md");
 
-        Microagent<List<GeneratedSample>>? captured = null;
-        microagentHostServiceMock
-            .Setup(m => m.RunAgentToCompletion(It.IsAny<Microagent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
-            .Callback<Microagent<List<GeneratedSample>>, CancellationToken>((agent, _) => captured = agent)
+        CopilotAgent<List<GeneratedSample>>? captured = null;
+        copilotAgentRunnerMock
+            .Setup(m => m.RunAsync(It.IsAny<CopilotAgent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
+            .Callback<CopilotAgent<List<GeneratedSample>>, CancellationToken>((agent, _) => captured = agent)
             .ReturnsAsync(new List<GeneratedSample> { new("scenario", "package main\nfunc main(){}") });
 
         var command = tool.GetCommandInstances().First();
@@ -240,9 +243,9 @@ public class SampleGeneratorToolTests
     [Test]
     public async Task GenerateSamples_SanitizesFileName()
     {
-        var (_, packagePath) = CreateFakeGoPackage();
-        microagentHostServiceMock
-            .Setup(m => m.RunAgentToCompletion(It.IsAny<Microagent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
+        var (_, packagePath) = await CreateFakeGoPackageAsync();
+        copilotAgentRunnerMock
+            .Setup(m => m.RunAsync(It.IsAny<CopilotAgent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<GeneratedSample> { new("nested/folder/sample-name", "package main\nfunc main(){}") });
 
         var command = tool.GetCommandInstances().First();
@@ -257,7 +260,7 @@ public class SampleGeneratorToolTests
     [Test]
     public async Task GenerateSamples_SkipsInvalidSamples()
     {
-        var (_, packagePath) = CreateFakeGoPackage();
+        var (_, packagePath) = await CreateFakeGoPackageAsync();
 
         var samples = new List<GeneratedSample>
         {
@@ -265,8 +268,8 @@ public class SampleGeneratorToolTests
             new("valid", ""),
             new("ok_sample", "package main\nfunc main(){ println(\"hi\") }")
         };
-        microagentHostServiceMock
-            .Setup(m => m.RunAgentToCompletion(It.IsAny<Microagent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
+        copilotAgentRunnerMock
+            .Setup(m => m.RunAsync(It.IsAny<CopilotAgent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(samples);
 
         var command = tool.GetCommandInstances().First();
@@ -291,8 +294,9 @@ public class SampleGeneratorToolTests
         var pkgPath = Path.Combine(tempDir.DirectoryPath, "sdk", "group", "service", "pkg");
         Directory.CreateDirectory(pkgPath);
 
-        var errorTool = new SampleGeneratorTool(microagentHostServiceMock.Object, logger, _mockGitHelper.Object, []);
-        errorTool.Initialize(_outputHelper, telemetryServiceMock.Object);
+        var emptyToolLogger = new TestLogger<SampleGeneratorTool>();
+        var errorTool = new SampleGeneratorTool(copilotAgentRunnerMock.Object, emptyToolLogger, _mockGitHelper.Object, []);
+        errorTool.Initialize(_outputHelper, telemetryServiceMock.Object, new MockUpgradeService());
         var command = errorTool.GetCommandInstances().First();
         var parseResult = command.Parse(["generate", "--prompt", "Anything", "--package-path", pkgPath]);
         int exitCode = await parseResult.InvokeAsync();
@@ -305,29 +309,29 @@ public class SampleGeneratorToolTests
     [Test]
     public async Task GenerateSamples_DefaultModelUsedWhenNotSpecified()
     {
-        var (_, packagePath) = CreateFakeGoPackage();
-        Microagent<List<GeneratedSample>>? captured = null;
-        microagentHostServiceMock
-            .Setup(m => m.RunAgentToCompletion(It.IsAny<Microagent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
-            .Callback<Microagent<List<GeneratedSample>>, CancellationToken>((agent, _) => captured = agent)
+        var (_, packagePath) = await CreateFakeGoPackageAsync();
+        CopilotAgent<List<GeneratedSample>>? captured = null;
+        copilotAgentRunnerMock
+            .Setup(m => m.RunAsync(It.IsAny<CopilotAgent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
+            .Callback<CopilotAgent<List<GeneratedSample>>, CancellationToken>((agent, _) => captured = agent)
             .ReturnsAsync(new List<GeneratedSample> { new("one", "package main\nfunc main(){}") });
         var command = tool.GetCommandInstances().First();
         var parseResult = command.Parse(["generate", "--prompt", "Scenario", "--package-path", packagePath]);
         int exitCode = await parseResult.InvokeAsync();
         Assert.That(exitCode, Is.EqualTo(0));
         Assert.That(captured, Is.Not.Null);
-        Assert.That(captured!.Model, Is.EqualTo("gpt-4.1"));
+        Assert.That(captured!.Model, Is.EqualTo("claude-sonnet-4.5"));
     }
 
     [Test]
     public async Task GenerateSamples_MultilinePrompt_NotTreatedAsFile()
     {
-        var (_, packagePath) = CreateFakeGoPackage();
+        var (_, packagePath) = await CreateFakeGoPackageAsync();
         var multilinePrompt = "First line\nSecond line";
-        Microagent<List<GeneratedSample>>? captured = null;
-        microagentHostServiceMock
-            .Setup(m => m.RunAgentToCompletion(It.IsAny<Microagent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
-            .Callback<Microagent<List<GeneratedSample>>, CancellationToken>((agent, _) => captured = agent)
+        CopilotAgent<List<GeneratedSample>>? captured = null;
+        copilotAgentRunnerMock
+            .Setup(m => m.RunAsync(It.IsAny<CopilotAgent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
+            .Callback<CopilotAgent<List<GeneratedSample>>, CancellationToken>((agent, _) => captured = agent)
             .ReturnsAsync(new List<GeneratedSample> { new("multi", "package main\nfunc main(){}`") });
         var command = tool.GetCommandInstances().First();
         var parseResult = command.Parse(["generate", "--prompt", multilinePrompt, "--package-path", packagePath]);
@@ -342,7 +346,7 @@ public class SampleGeneratorToolTests
     {
         logger = new TestLogger<SampleGeneratorTool>();
         _outputHelper = new OutputHelper();
-        microagentHostServiceMock = new Mock<IMicroagentHostService>();
+        copilotAgentRunnerMock = new Mock<ICopilotAgentRunner>();
         telemetryServiceMock = new Mock<ITelemetryService>();
         _mockNpxHelper = new Mock<INpxHelper>();
         _mockPowerShellHelper = new Mock<IPowershellHelper>();
@@ -356,31 +360,33 @@ public class SampleGeneratorToolTests
         var languageLogger = new TestLogger<LanguageService>();
         var gitLogger = new TestLogger<GitHelper>();
         var gitHubServiceMock = new Mock<IGitHubService>();
-        realGitHelper = new GitHelper(gitHubServiceMock.Object, gitLogger);
+        var gitCommandHelper = new GitCommandHelper(NullLogger<GitCommandHelper>.Instance, Mock.Of<IRawOutputHelper>());
+        realGitHelper = new GitHelper(gitHubServiceMock.Object, gitCommandHelper, gitLogger);
+        var packageInfoHelper = new PackageInfoHelper(new TestLogger<PackageInfoHelper>(), realGitHelper);
         // Use a real FileHelper instance instead of mock
         var fileHelper = new FileHelper(new TestLogger<FileHelper>());
         _languageServices = [
-            new PythonLanguageService(_mockProcessHelper.Object, _mockPythonHelper.Object, _mockNpxHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object, fileHelper),
-            new JavaLanguageService(_mockProcessHelper.Object, realGitHelper, new Mock<IMavenHelper>().Object, microagentHostServiceMock.Object, languageLogger, _commonValidationHelpers.Object, fileHelper),
-            new JavaScriptLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object, fileHelper),
+            new PythonLanguageService(_mockProcessHelper.Object, _mockPythonHelper.Object, _mockNpxHelper.Object, Mock.Of<ICopilotAgentRunner>(), realGitHelper, languageLogger, _commonValidationHelpers.Object, packageInfoHelper, fileHelper, Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>()),
+            new JavaLanguageService(_mockProcessHelper.Object, realGitHelper, new Mock<IMavenHelper>().Object, _mockPythonHelper.Object, copilotAgentRunnerMock.Object, languageLogger, _commonValidationHelpers.Object, packageInfoHelper, fileHelper, Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>()),
+            new JavaScriptLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, Mock.Of<ICopilotAgentRunner>(), realGitHelper, languageLogger, _commonValidationHelpers.Object, packageInfoHelper, fileHelper, Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>()),
             _mockGoLanguageService.Object,
-            new DotnetLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object, fileHelper)
+            new DotnetLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, Mock.Of<ICopilotAgentRunner>(), realGitHelper, languageLogger, _commonValidationHelpers.Object, packageInfoHelper, fileHelper, Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>())
         ];
 
         _mockGoLanguageService.Setup(ls => ls.Language).Returns(SdkLanguage.Go);
         _mockGoLanguageService.Setup(r => r.SampleLanguageContext).Returns(new GoSampleLanguageContext(fileHelper));
 
         tool = new SampleGeneratorTool(
-            microagentHostServiceMock.Object,
+            copilotAgentRunnerMock.Object,
             logger,
             _mockGitHelper.Object,
             _languageServices
         );
 
-        tool.Initialize(_outputHelper, telemetryServiceMock.Object);
+        tool.Initialize(_outputHelper, telemetryServiceMock.Object, new MockUpgradeService());
     }
 
-    private (string repoRoot, string packagePath) CreateFakeGoPackage()
+    private async Task<(string repoRoot, string packagePath)> CreateFakeGoPackageAsync()
     {
         var tempDir = TempDirectory.Create("azure-sdk-for-go");
         var repoRoot = tempDir.DirectoryPath;
@@ -389,14 +395,14 @@ public class SampleGeneratorToolTests
         Directory.CreateDirectory(packagePath);
         if (!Directory.Exists(Path.Combine(repoRoot, ".git")))
         {
-            Repository.Init(repoRoot);
+            await GitTestHelper.GitInitAsync(repoRoot);
         }
         File.WriteAllText(Path.Combine(packagePath, "client.go"), "package azkeys\n// minimal source for tests\nfunc noop() {}\n");
         var engScripts = Path.Combine(repoRoot, "eng", "scripts");
         Directory.CreateDirectory(engScripts);
         File.WriteAllText(Path.Combine(engScripts, "Language-Settings.ps1"), "$Language = 'Go'\n");
-        _mockGitHelper.Setup(g => g.DiscoverRepoRoot(It.IsAny<string>())).Returns(repoRoot);
-        _mockGitHelper.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-go");
+        _mockGitHelper.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(repoRoot);
+        _mockGitHelper.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-go");
 
         _mockGoLanguageService
             .Setup(m => m.GetPackageInfo(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -418,14 +424,14 @@ public class SampleGeneratorToolTests
     [Test]
     public async Task GenerateSamples_CreatesFiles()
     {
-        var (_, packagePath) = CreateFakeGoPackage();
+        var (_, packagePath) = await CreateFakeGoPackageAsync();
         var generatedSamples = new List<GeneratedSample>
         {
             new("retrieve_keys", "package main\nfunc main() { println(\"hi\") }")
         };
 
-        microagentHostServiceMock
-            .Setup(m => m.RunAgentToCompletion(It.IsAny<Microagent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
+        copilotAgentRunnerMock
+            .Setup(m => m.RunAsync(It.IsAny<CopilotAgent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(generatedSamples);
 
         var command = tool.GetCommandInstances().First();
@@ -443,7 +449,7 @@ public class SampleGeneratorToolTests
     [Test]
     public async Task GenerateSamples_SkipsExistingWithoutOverwrite()
     {
-        var (_, packagePath) = CreateFakeGoPackage();
+        var (_, packagePath) = await CreateFakeGoPackageAsync();
         var existingFile = Path.Combine(packagePath, "retrieve_keys.go");
         await File.WriteAllTextAsync(existingFile, "// original\n");
 
@@ -452,8 +458,8 @@ public class SampleGeneratorToolTests
             new("retrieve_keys", "// new content\n")
         };
 
-        microagentHostServiceMock
-            .Setup(m => m.RunAgentToCompletion(It.IsAny<Microagent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
+        copilotAgentRunnerMock
+            .Setup(m => m.RunAsync(It.IsAny<CopilotAgent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(generatedSamples);
 
         var command = tool.GetCommandInstances().First();
@@ -468,7 +474,7 @@ public class SampleGeneratorToolTests
     [Test]
     public async Task GenerateSamples_OverwritesWithFlag()
     {
-        var (_, packagePath) = CreateFakeGoPackage();
+        var (_, packagePath) = await CreateFakeGoPackageAsync();
         var existingFile = Path.Combine(packagePath, "retrieve_keys.go");
         await File.WriteAllTextAsync(existingFile, "// original\n");
 
@@ -477,8 +483,8 @@ public class SampleGeneratorToolTests
             new("retrieve_keys", "// overwritten\n")
         };
 
-        microagentHostServiceMock
-            .Setup(m => m.RunAgentToCompletion(It.IsAny<Microagent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
+        copilotAgentRunnerMock
+            .Setup(m => m.RunAsync(It.IsAny<CopilotAgent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(generatedSamples);
 
         var command = tool.GetCommandInstances().First();
@@ -493,11 +499,11 @@ public class SampleGeneratorToolTests
     [Test]
     public async Task GenerateSamples_NoSamplesReturned_NoFilesCreated()
     {
-        var (_, packagePath) = CreateFakeGoPackage();
+        var (_, packagePath) = await CreateFakeGoPackageAsync();
         var baseline = Directory.GetFiles(packagePath, "*.go").ToHashSet();
 
-        microagentHostServiceMock
-            .Setup(m => m.RunAgentToCompletion(It.IsAny<Microagent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
+        copilotAgentRunnerMock
+            .Setup(m => m.RunAsync(It.IsAny<CopilotAgent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
 
         var command = tool.GetCommandInstances().First();
@@ -507,7 +513,7 @@ public class SampleGeneratorToolTests
         Assert.That(exitCode, Is.EqualTo(0));
         var after = Directory.GetFiles(packagePath, "*.go").ToHashSet();
         after.ExceptWith(baseline);
-        Assert.That(after, Is.Empty, "No additional sample files should be created when microagent returns empty list");
+        Assert.That(after, Is.Empty, "No additional sample files should be created when agent returns empty list");
     }
 
     [Test]
@@ -533,14 +539,46 @@ public class SampleGeneratorToolTests
     public async Task GenerateSamples_MissingPromptOption_ShowsError()
     {
         // Arrange: create a valid package path but omit --prompt (required)
-        var (_, packagePath) = CreateFakeGoPackage();
+        var (_, packagePath) = await CreateFakeGoPackageAsync();
         var command = tool.GetCommandInstances().First();
 
-        // Act: invoke without required --prompt
+        // Act: parse without required --prompt
         var parseResult = command.Parse(["generate", "--package-path", packagePath]);
-        int exitCode = await parseResult.InvokeAsync();
 
         // Assert: parser/tool should fail with non-zero exit code
-        Assert.That(exitCode, Is.Not.EqualTo(0), "Expected non-zero exit code when required --prompt option is missing");
+        Assert.That(parseResult.Errors, Is.Not.Empty, "Expected parse errors when required --prompt option is missing");
+    }
+
+    [Test]
+    public async Task GenerateSamples_PopulatesTelemetryFields()
+    {
+        // Arrange
+        var (_, packagePath) = await CreateFakeGoPackageAsync();
+        var generatedSamples = new List<GeneratedSample>
+        {
+            new("sample_one", "package main\nfunc main(){}"),
+            new("sample_two", "package main\nfunc main(){}")
+        };
+
+        copilotAgentRunnerMock
+            .Setup(m => m.RunAsync(It.IsAny<CopilotAgent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(generatedSamples);
+
+        // Act
+        var response = await tool.GenerateSamplesAsync(packagePath, "Generate samples", overwrite: false);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.Language, Is.EqualTo(SdkLanguage.Go), "Language should be set");
+            Assert.That(response.PackageName, Is.EqualTo("sdk/security/keyvault/azkeys"), "Package name should be set");
+            Assert.That(response.PackageType, Is.EqualTo(SdkType.Dataplane), "Package type should be set");
+            Assert.That(response.Version, Is.EqualTo("1.5.0"), "Version should be set");
+
+            // Verify samples_count is in Result as an anonymous type
+            Assert.That(response.Result, Is.Not.Null, "Result should not be null");
+            var json = System.Text.Json.JsonSerializer.Serialize(response.Result);
+            Assert.That(json, Does.Contain("\"samples_count\":2"), "Result should contain samples_count with value 2");
+        });
     }
 }

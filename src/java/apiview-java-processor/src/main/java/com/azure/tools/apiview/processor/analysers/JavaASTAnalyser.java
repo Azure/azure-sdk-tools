@@ -555,13 +555,19 @@ public class JavaASTAnalyser implements Analyser {
             configurationLine.addContextEndTokens();
         }
 
+        String sanitizedName = sanitizeMavenText(mavenPom.getName());
+        String sanitizedDescription = sanitizeMavenText(mavenPom.getDescription());
+
+        // Skip diff as the change in Maven name and description is not significant
+        // and will not require a reviewer to approve the change
+
         // Maven name
-        MiscUtils.tokeniseMavenKeyValue(mavenLine, "name", mavenPom.getName())
-                .addProperty(PROPERTY_MAVEN_NAME, mavenPom.getName());
+        MiscUtils.tokeniseMavenKeyValue(mavenLine, "name", sanitizedName, true)
+                .addProperty(PROPERTY_MAVEN_NAME, sanitizedName);
 
         // Maven description
-        MiscUtils.tokeniseMavenKeyValue(mavenLine, "description", mavenPom.getDescription())
-                .addProperty(PROPERTY_MAVEN_DESCRIPTION, mavenPom.getDescription());
+        MiscUtils.tokeniseMavenKeyValue(mavenLine, "description", sanitizedDescription, true)
+                .addProperty(PROPERTY_MAVEN_DESCRIPTION, sanitizedDescription);
 
         // dependencies
         ReviewLine dependenciesLine = mavenLine.addChildLine()
@@ -595,7 +601,24 @@ public class JavaASTAnalyser implements Analyser {
         mavenLine.addContextEndTokens();
     }
 
+    /**
+     * Sanitizes the input Maven text by replacing carriage return and newline characters
+     * with their corresponding encoded representations. Only new lines are encoded, as
+     * APIView does not support multi-line tokens.
+     *
+     * @param mavenText the input text to be sanitized; can be null
+     * @return the sanitized text with carriage return replaced by %0D and newline replaced by %0A,
+     * or null if the input mavenText is null
+     */
+    private static String sanitizeMavenText(String mavenText) {
+        if (mavenText == null) {
+            return null;
+        }
 
+        return mavenText
+            .replace("\r", "%0D")
+            .replace("\n", "%0A");
+    }
 
     /************************************************************************************************
      *
@@ -1005,6 +1028,22 @@ public class JavaASTAnalyser implements Analyser {
         }
     }
 
+    /**
+     * Visits and processes the constructors or methods of a given type declaration. Depending on the context, it handles
+     * constructors or methods differently, filters them based on access specifiers, and organizes their representation
+     * for further review.
+     *
+     * @param typeDeclaration The type declaration being examined. This specifies the class or interface whose constructors
+     *                        or methods are to be visited.
+     * @param isInterfaceDeclaration Indicates whether the provided type declaration corresponds to an interface. If true,
+     *                                all methods are considered as part of the visit.
+     * @param isConstructor A flag to determine if the processing is specifically for constructors. If true, it analyzes
+     *                      constructors, otherwise, it processes methods.
+     * @param callableDeclarations A list of callable declarations (constructors or methods) associated with the type
+     *                              declaration. These are filtered and sorted based on the processing rules.
+     * @param parentLine The parent review line where tokens or child lines will be added as output during the processing
+     *                   of constructors or methods in the type declaration.
+     */
     private void visitConstructorsOrMethods(final TypeDeclaration<?> typeDeclaration,
                                             final boolean isInterfaceDeclaration,
                                             final boolean isConstructor,
@@ -1045,8 +1084,11 @@ public class JavaASTAnalyser implements Analyser {
                 } else if (isPrivateOrPackagePrivate(callableDeclaration.getAccessSpecifier())) {
                     // Skip if not public API
                     return false;
+                } else {
+                    // Skip serialization methods (fromJson, toJson, fromXml, toXml) as they are implementation
+                    // details of the serialization mechanism, not part of the public API contract.
+                    return !isSerializationMethod(typeDeclaration, callableDeclaration);
                 }
-                return true;
             })
             .sorted(this::sortMethods)
             .collect(collector)
@@ -1058,6 +1100,41 @@ public class JavaASTAnalyser implements Analyser {
                 }
                 group.forEach(callableDeclaration -> visitDefinition(callableDeclaration, parentLine));
             });
+    }
+
+    /**
+     * Checks if a method is a serialization method based on interface implementation and method name.
+     * A method is considered a serialization method if:
+     * <ul>
+     * <li>The class implements JsonSerializable and method name is toJson or fromJson</li>
+     * <li>The class implements XmlSerializable and method name is toXml or fromXml</li>
+     * </ul>
+     *
+     * @param typeDeclaration     The type declaration to check interface implementations
+     * @param callableDeclaration The method declaration to check the name
+     * @return true if the method is a serialization method, false otherwise
+     */
+    private boolean isSerializationMethod(TypeDeclaration<?> typeDeclaration, CallableDeclaration<?> callableDeclaration) {
+        if (!typeDeclaration.isClassOrInterfaceDeclaration()) {
+            return false;
+        }
+        ClassOrInterfaceDeclaration classOrInterfaceDeclaration = (ClassOrInterfaceDeclaration) typeDeclaration;
+        if (classOrInterfaceDeclaration.isInterface()) {
+            return false;
+        }
+
+        String methodName = callableDeclaration.getNameAsString();
+        return classOrInterfaceDeclaration.getImplementedTypes()
+                .stream()
+                .anyMatch(implementedType -> {
+                    String interfaceName = implementedType.getNameAsString();
+                    boolean isJsonSerializationMethod = (interfaceName.equals("JsonSerializable") || interfaceName.equals("com.azure.json.JsonSerializable"))
+                            && (methodName.equals("toJson") || methodName.equals("fromJson"));
+                    boolean isXmlSerializationMethod = (interfaceName.equals("XmlSerializable") || interfaceName.equals("com.azure.xml.XmlSerializable"))
+                            && (methodName.equals("toXml") || methodName.equals("fromXml"));
+
+                    return isJsonSerializationMethod || isXmlSerializationMethod;
+                });
     }
 
     private void visitExtendsAndImplements(TypeDeclaration<?> typeDeclaration, ReviewLine definitionLine) {

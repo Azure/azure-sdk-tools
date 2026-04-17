@@ -1,9 +1,14 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+#if DEBUG
 using System.CommandLine;
 using Moq;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.Example;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.Example;
 
@@ -14,7 +19,7 @@ internal class HelloWorldToolTests
     {
         OutputHelper outputHelper = new(OutputHelper.OutputModes.Hidden);
         var tool = new HelloWorldTool(new TestLogger<HelloWorldTool>());
-        tool.Initialize(outputHelper, new Mock<ITelemetryService>().Object);
+        tool.Initialize(outputHelper, new Mock<ITelemetryService>().Object, new MockUpgradeService());
         var cmd = tool.GetCommandInstances().First();
 
         var parseResult = cmd.Parse(["hello-world", "HI. MY NAME IS"]);
@@ -28,7 +33,10 @@ Duration: 1ms
 
         Assert.That(outputHelper.Outputs.Count(), Is.EqualTo(1));
         Assert.That(outputHelper.Outputs.First().Stream, Is.EqualTo(OutputHelper.StreamType.Stdout));
-        Assert.That(outputHelper.Outputs.Last().Output, Is.EqualTo(expected));
+        // Normalize line endings before comparison. The repo .gitattributes enforces LF in source
+        // files, so verbatim string literals contain \n, but production code uses Environment.NewLine
+        // which is \r\n on Windows.
+        Assert.That(outputHelper.Outputs.Last().Output.ReplaceLineEndings("\n"), Is.EqualTo(expected.ReplaceLineEndings("\n")));
     }
 
     [Test]
@@ -36,7 +44,7 @@ Duration: 1ms
     {
         OutputHelper outputHelper = new(OutputHelper.OutputModes.Hidden);
         var tool = new HelloWorldTool(new TestLogger<HelloWorldTool>());
-        tool.Initialize(outputHelper, new Mock<ITelemetryService>().Object);
+        tool.Initialize(outputHelper, new Mock<ITelemetryService>().Object, new MockUpgradeService());
         var cmd = tool.GetCommandInstances().First();
 
         var parseResult = cmd.Parse(["hello-world", "HI. MY NAME IS", "--fail"]);
@@ -50,3 +58,5 @@ Duration: 1ms
         Assert.That(outputHelper.Outputs.Last().Output, Is.EqualTo(expected));
     }
 }
+
+#endif

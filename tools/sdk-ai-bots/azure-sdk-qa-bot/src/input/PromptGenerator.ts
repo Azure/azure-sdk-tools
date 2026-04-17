@@ -24,8 +24,6 @@ export class PromptGenerator {
   private linkContentExtractor = new LinkContentExtractor();
   private loggingAnalyzer = new LoggingAnalyzer();
 
-  constructor() {}
-
   public async generateFullPrompt(
     prompt: Prompt,
     conversationMessages: ConversationMessage[],

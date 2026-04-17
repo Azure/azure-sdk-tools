@@ -181,32 +181,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public void TestMultipartMixedCanRoundTrip()
-        {
-            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
-            var targetPath = "multipartroundtrip.json";
-            var recordingSession = new RecordSession();
-
-            // build up a raw request from what we we would see in a real recording
-            RecordEntry rawEntry = new RecordEntry();
-            rawEntry.Request.Headers["Content-Type"] = ["multipart/mixed; boundary=batch_dbed2534-1685-4042-8992-9f259d8c24c7"];
-            using var stream = System.IO.File.OpenRead("Test.RecordEntries/raw_multipart_request_body.txt");
-            using var reader = new StreamReader(stream);
-            string rawbase64content = reader.ReadToEnd().Trim();
-            rawEntry.Request.Body = Convert.FromBase64String(rawbase64content);
-            rawEntry.RequestMethod = Core.RequestMethod.Post;
-            recordingSession.Entries.Add(rawEntry);
-
-            // write the raw recording to disk
-            var sessionForDisk = new ModifiableRecordSession(recordingSession, new SanitizerDictionary(), "abc123");
-            sessionForDisk.Path = targetPath;
-            testRecordingHandler.WriteToDisk(sessionForDisk);
-
-            var loadedFromDisk = TestHelpers.LoadRecordSession(targetPath);
-            Assert.Equal(rawEntry.Request.Body, loadedFromDisk.Session.Entries[0].Request.Body);
-        }
-
-        [Fact]
         public async Task TestPlaybackThrowsOnDifferentUriOrder()
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());

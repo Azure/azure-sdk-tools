@@ -1,4 +1,4 @@
-# Mirror the default branch for each repo folder to all subscribed langauge repos.
+# Mirror the default branch for each repo folder to all subscribed language repos.
 
 trigger: none
 pr: none
@@ -12,11 +12,21 @@ jobs:
     displayName: Sync public repos
 
     steps:
+    - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+      parameters:
+        TokenOwners:
+          - Azure
+          - azure-sdk
+          - microsoft
+          - MicrosoftDocs
+
     - template: ./templates/steps/sync-repo-branch.yml
       parameters:
-        GH_TOKEN: $(azuresdk-github-pat)
-        Repos:
+        EnvVars:
+          GH_TOKEN_Azure: $(GH_TOKEN_Azure)
+          GH_TOKEN_azure-sdk: $(GH_TOKEN_azure-sdk)
 
+        Repos:
           Azure/azure-rest-api-specs:
             TargetRepos:
               Azure/azure-rest-api-specs-pr:
@@ -28,7 +38,7 @@ jobs:
 
     - template: ./templates/steps/sync-repo-merge-branch.yml
       parameters:
-        GH_TOKEN: $(azuresdk-github-pat)
+        GH_TOKEN: $(GH_TOKEN_Azure)
         Repos:
 
           Azure/azure-rest-api-specs-pr:
@@ -62,9 +72,13 @@ jobs:
 
     - template: ./templates/steps/sync-repo-branch.yml
       parameters:
-        GH_TOKEN: $(azuresdk-github-pat)
-        Repos:
+        EnvVars:
+          GH_TOKEN_Azure: $(GH_TOKEN_Azure)
+          GH_TOKEN_azure-sdk: $(GH_TOKEN_azure-sdk)
+          GH_TOKEN_MicrosoftDocs: $(GH_TOKEN_MicrosoftDocs)
+          GH_TOKEN_microsoft: $(GH_TOKEN_microsoft)
 
+        Repos:
           Azure/azure-sdk-for-cpp:
             TargetRepos:
               Azure/azure-sdk-for-cpp-pr:

@@ -306,33 +306,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
 
-        [Fact]
-        public async void HeaderRegexSanitizerMultipartReplace()
-        {
-            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_header.json");
-            var targetEntry = session.Session.Entries[0];
-            var targetKey = "Cookie";
 
-            var headerRegexSanitizer = new HeaderRegexSanitizer(targetKey, value: "REDACTED", regex: "SuperDifferent");
-            await session.Session.Sanitize(headerRegexSanitizer);
-
-            Assert.Equal("REDACTEDCookie", targetEntry.Request.Headers[targetKey][0]);
-            Assert.Equal("KindaDifferentCookie", targetEntry.Request.Headers[targetKey][1]);
-        }
-
-        [Fact]
-        public async void HeaderRegexSanitizerMultipartReplaceLatterOnly()
-        {
-            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_header.json");
-            var targetEntry = session.Session.Entries[0];
-            var targetKey = "Cookie";
-
-            var headerRegexSanitizer = new HeaderRegexSanitizer(targetKey, value: "REDACTED", regex: "KindaDifferent");
-            await session.Session.Sanitize(headerRegexSanitizer);
-
-            Assert.Equal("SuperDifferentCookie", targetEntry.Request.Headers[targetKey][0]);
-            Assert.Equal("REDACTEDCookie", targetEntry.Request.Headers[targetKey][1]);
-        }
 
         [Fact]
         public async void HeaderRegexSanitizerGroupedRegexReplace()
@@ -849,53 +823,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal(sanitizerCount, testDict.DefaultSanitizerList.Count);
         }
 
-        [Fact]
-        public async Task MultipartRequestsCanSanitizeWithoutChangingBytes()
-        {
-            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_request.json");
-            var worklessSanitizer = new BodyRegexSanitizer(regex: "abc123");
-            var requestRef = session.Session.Entries[0].Request;
-            var responseRef = session.Session.Entries[0].Response;
-            var requestBodyBytesBefore = Encoding.UTF8.GetString(requestRef.Body);
-            var responseBodyBytesBefore = Encoding.UTF8.GetString(responseRef.Body);
-           
-            await session.Session.Sanitize(worklessSanitizer);
 
-            var requestBodyBytesAfter = Encoding.UTF8.GetString(requestRef.Body);
-            var responseBodyBytesAfter = Encoding.UTF8.GetString(responseRef.Body);
-
-            Assert.Equal(requestBodyBytesBefore, requestBodyBytesAfter);
-            Assert.Equal(responseBodyBytesBefore, responseBodyBytesAfter);
-        }
-
-        [Fact]
-        public void CanDeserializeFromOriginalMultipartMixedRecording()
-        {
-            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/old_multipart_request.json");
-
-            Assert.NotNull(session.Session.Entries.First().Request.Body);
-        }
-
-        [Fact]
-        public async Task CanSanitizeComplexRequest()
-        {
-            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
-            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/failing_multipart_body.json");
-            var breakingSanitizer = new GeneralRegexSanitizer(value: "00000000-0000-0000-0000-000000000000", regex: "batch[a-z]*_([0-9a-f]{8}\\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\\b[0-9a-f]{12}\\b)", groupForReplace: "1");
-            await session.Session.Sanitize(breakingSanitizer);
-        }
-
-        [Fact]
-        public async Task ContentDispositionFilePathSanitizerNormalizesWindowsEndings()
-        {
-            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_form_data_windows.json");
-            var sanitizer = new ContentDispositionFilePathSanitizer();
-            await session.Session.Sanitize(sanitizer);
-            var requestBody = session.Session.Entries[0].Request.Body;
-            var requestBodyString = Encoding.UTF8.GetString(requestBody);
-
-            Assert.DoesNotContain("\\", requestBodyString);
-            Assert.DoesNotContain("%5C", requestBodyString);
-        }
     }
 }

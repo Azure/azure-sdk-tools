@@ -1,0 +1,12 @@
+testcase: similar_wording_different_topic
+parent_type: example
+parent_title: "Exception handling patterns"
+memories: |
+  [
+    {"id": "mem-030", "title": "Wrap service errors in SDK exceptions", "content": "When the service returns an error HTTP response, the SDK should wrap it in a language-appropriate exception type (e.g., HttpResponseError in Python) rather than exposing raw HTTP details."},
+    {"id": "mem-031", "title": "Include retry-after in rate limit exceptions", "content": "When the service returns 429 Too Many Requests, the SDK exception should include the Retry-After header value so callers can implement backoff."},
+    {"id": "mem-032", "title": "Do not catch and swallow exceptions silently", "content": "SDK code should not catch exceptions and silently ignore them. Either re-raise, wrap in an SDK-specific exception, or log the error."}
+  ]
+response:
+  action: ""
+  rationale: ""

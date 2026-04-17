@@ -16,9 +16,6 @@ The GitHub repository will synced.
 .PARAMETER TargetBranch
 The branch of Target GitHub repository will synced.
 
-.PARAMETER AuthToken
-A personal access token
-
 .PARAMETER Rebase
 Keep the commit record when syning.
 
@@ -37,12 +34,8 @@ param(
   [Parameter(Mandatory = $false)]
   [string] $TargetBranch,
 
-  [Parameter(Mandatory = $true)]
-  [string] $AuthToken,
-
   [Parameter(Mandatory = $false)]
   [string] $Rebase
-
 )
 
 . (Join-Path $PSScriptRoot ../common/scripts/common.ps1)
@@ -52,6 +45,20 @@ $Email="azuresdk@microsoft.com"
 
 Set-PsDebug -Trace 1
 
+function Get-RepoUrl([string]$Repo) 
+{
+  $owner = $Repo.Split("/")[0]
+  $token = Get-Item -Path "env:GH_TOKEN_${owner}" -ErrorAction SilentlyContinue
+  if (!$token) {
+    $token = Get-Item -Path "env:GH_TOKEN" -ErrorAction SilentlyContinue
+  }
+
+  if ($token) {
+    return "https://x-access-token:$($token.Value)@github.com/${Repo}.git"
+  }
+
+  return "https://github.com/${Repo}.git"
+}
 Function FailOnError([string]$ErrorMessage, $CleanUpScripts = 0) {
     if ($LASTEXITCODE -ne 0) {
       $failedCode = $LASTEXITCODE
@@ -65,7 +72,7 @@ if (-not (Test-Path $SourceRepo)) {
   New-Item -Path $SourceRepo -ItemType Directory -Force
   Set-Location $SourceRepo
   git init
-  git remote add Source "https://$($AuthToken)@github.com/$($SourceRepo).git"
+  git remote add Source (Get-RepoUrl $SourceRepo)
 } else {
   Set-Location $SourceRepo
 }
@@ -83,7 +90,7 @@ FailOnError "Failed to fetch $($SourceRepo):$($SourceBranch)"
 git checkout ${SourceBranch}
 
 try {
-  git remote add Target "https://$($AuthToken)@github.com/$($TargetRepo).git"
+  git remote add Target (Get-RepoUrl $TargetRepo)
 
   $defaultBranch = (git remote show Target | Out-String) -replace "(?ms).*HEAD branch: (\w+).*", '$1'
   if (!$SourceBranch) {

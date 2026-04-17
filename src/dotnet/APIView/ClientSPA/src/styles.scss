@@ -1,14 +1,19 @@
-@import "bootstrap/dist/css/bootstrap.min.css";
-@import "bootstrap-icons/font/bootstrap-icons.min.css";
-@import "node_modules/@fortawesome/fontawesome-free/css/all.min.css";
-@import "node_modules/highlight.js/styles/atom-one-dark.css";
-@import "primeicons/primeicons.css";
+@use "bootstrap/dist/css/bootstrap.min.css";
+@use "bootstrap-icons/font/bootstrap-icons.min.css";
+@use "node_modules/@fortawesome/fontawesome-free/css/all.min.css";
+@use "node_modules/highlight.js/styles/atom-one-dark.css";
+@use "primeicons/primeicons.css";
 
-@import "../../../APIView/APIViewWeb/Client/css/shared/theme-colors.scss";
-@import "../../../APIView/APIViewWeb/Client/css/shared/bootstraps-overrides.scss";
-@import "./ng-prime-overrides.scss";
+@use "../../../APIView/APIViewWeb/Client/css/shared/theme-colors.scss";
+@use "../../../APIView/APIViewWeb/Client/css/shared/bootstraps-overrides.scss";
+@use "./ng-prime-overrides.scss";
 
 body {
     background-color: var(--base-bg-color);
     color: var(--base-fg-color);
+}
+
+:root {
+    --page-content-height: calc(100vh - 122px);
+    --tab-hover-bg: color-mix(in srgb, var(--text-color) 10%, transparent);
 }

@@ -15,7 +15,12 @@ namespace IssueLabelerService
         private TriageRag _ragService;
         private BlobServiceClient _blobClient;
 
-        public LabelerFactory(ILogger<LabelerFactory> logger, IModelHolderFactoryLite modelHolderFactory, ILabelerLite labeler, TriageRag ragService, BlobServiceClient blobClient)
+        public LabelerFactory(
+            ILogger<LabelerFactory> logger,
+            IModelHolderFactoryLite modelHolderFactory,
+            ILabelerLite labeler,
+            TriageRag ragService,
+            BlobServiceClient blobClient)
         {
             _logger = logger;
             _modelHolderFactory = modelHolderFactory;
@@ -33,6 +38,8 @@ namespace IssueLabelerService
                     {
                         case "OpenAI":
                             return new OpenAiLabeler(_logger, config, _ragService, _blobClient);
+                        case "McpOpenAI":
+                            return new McpOpenAiLabeler(_logger, config, _ragService, _blobClient);
                         case "Legacy":
                             return new LegacyLabeler(_logger, _modelHolderFactory, _labeler, config);
                         default:

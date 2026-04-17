@@ -1,11 +1,15 @@
 import { Component, EventEmitter, Input, Output, SimpleChanges } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { ConfigService } from 'src/app/_services/config/config.service';
 
 
 @Component({
-  selector: 'app-code-editor',
-  templateUrl: './code-editor.component.html',
-  styleUrls: ['./code-editor.component.scss']
+    selector: 'app-code-editor',
+    templateUrl: './code-editor.component.html',
+    styleUrls: ['./code-editor.component.scss'],
+    standalone: true,
+    imports: [FormsModule, MonacoEditorModule]
 })
 export class CodeEditorComponent {
   @Input() language: string | undefined = undefined;

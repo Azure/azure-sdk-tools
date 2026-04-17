@@ -35,6 +35,7 @@ namespace APIViewWeb.Pages.Assemblies
         private readonly IConfiguration _configuration;
         private readonly IHubContext<SignalRHub> _signalRHubContext;
         private readonly IEnumerable<LanguageService> _languageServices;
+        private readonly IPermissionsManager _permissionsManager;
 
         public ReviewPageModel(
             IReviewManager reviewManager,
@@ -47,7 +48,8 @@ namespace APIViewWeb.Pages.Assemblies
             ICosmosUserProfileRepository userProfileRepository,
             IConfiguration configuration,
             IHubContext<SignalRHub> signalRHub,
-            IEnumerable<LanguageService> languageServices)
+            IEnumerable<LanguageService> languageServices,
+            IPermissionsManager permissionsManager)
         {
             _reviewManager = reviewManager;
             _apiRevisionsManager = reviewRevisionManager;
@@ -60,6 +62,7 @@ namespace APIViewWeb.Pages.Assemblies
             _configuration = configuration;
             _signalRHubContext = signalRHub;
             _languageServices = languageServices;
+            _permissionsManager = permissionsManager;
         }
 
         public ReviewContentModel ReviewContent { get; set; }
@@ -90,7 +93,7 @@ namespace APIViewWeb.Pages.Assemblies
             ReviewContent = await PageModelHelpers.GetReviewContentAsync(configuration: _configuration,
                 reviewManager: _reviewManager, userProfileCache: _userProfileCache, reviewRevisionsManager: _apiRevisionsManager,
                 commentManager: _commentsManager, codeFileRepository: _codeFileRepository, signalRHubContext: _signalRHubContext,
-                user: User, reviewId: id, revisionId: revisionId, diffRevisionId: DiffRevisionId, showDocumentation: (ShowDocumentation ?? false),
+                permissionsManager: _permissionsManager, user: User, reviewId: id, revisionId: revisionId, diffRevisionId: DiffRevisionId, showDocumentation: (ShowDocumentation ?? false),
                 showDiffOnly: ShowDiffOnly, diffContextSize: REVIEW_DIFF_CONTEXT_SIZE, diffContextSeperator: DIFF_CONTEXT_SEPERATOR);
 
             if (ReviewContent.Directive == ReviewContentModelDirective.RedirectToSPAUI)
@@ -154,7 +157,7 @@ namespace APIViewWeb.Pages.Assemblies
                     var reviewContent = await PageModelHelpers.GetReviewContentAsync(configuration: _configuration,
                         reviewManager: _reviewManager, userProfileCache: _userProfileCache, reviewRevisionsManager: _apiRevisionsManager,
                         commentManager: _commentsManager, codeFileRepository: _codeFileRepository, signalRHubContext: _signalRHubContext,
-                        user: User, review: review, revisionId: null, diffRevisionId: null, showDocumentation: (ShowDocumentation ?? false),
+                        permissionsManager: _permissionsManager, user: User, review: review, revisionId: null, diffRevisionId: null, showDocumentation: (ShowDocumentation ?? false),
                         showDiffOnly: ShowDiffOnly, diffContextSize: REVIEW_DIFF_CONTEXT_SIZE, diffContextSeperator: DIFF_CONTEXT_SEPERATOR);
 
                     ReviewContent.CrossLanguageViewContent.Add(review.Language, reviewContent);
@@ -308,7 +311,7 @@ namespace APIViewWeb.Pages.Assemblies
             (var updateReview, var apiRevision) = await _apiRevisionsManager.ToggleAPIRevisionApprovalAsync(User, id, revisionId);
             if (updateReview)
             {
-                await OnPostToggleReviewApprovalAsync(id, revisionId);
+                await _reviewManager.ToggleReviewApprovalAsync(User, id, apiRevision.Id);
             }
             return RedirectToPage(new { id = id, revisionId = revisionId });
         }
@@ -322,8 +325,18 @@ namespace APIViewWeb.Pages.Assemblies
         /// <returns></returns>
         public async Task<ActionResult> OnPostRequestReviewersAsync(string id, string apiRevisionId, HashSet<string> reviewers)
         {
+            var currentApiRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, apiRevisionId);
+            var existingReviewers = new HashSet<string>(
+                currentApiRevision.AssignedReviewers.Select(assignment => assignment.AssingedTo),
+                StringComparer.OrdinalIgnoreCase);
+
             await _apiRevisionsManager.AssignReviewersToAPIRevisionAsync(User, apiRevisionId, reviewers);
-            await _notificationManager.NotifyApproversOfReview(User, apiRevisionId, reviewers);
+
+            var newlyAddedReviewers = reviewers
+                .Where(reviewer => !existingReviewers.Contains(reviewer))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            await _notificationManager.NotifyAssignedReviewersAsync(User, apiRevisionId, newlyAddedReviewers);
             return RedirectToPage(new { id = id, revisionId = apiRevisionId });
         }
 
@@ -420,21 +433,21 @@ namespace APIViewWeb.Pages.Assemblies
         /// </summary>
         /// <param name="hasActiveConversations"></param>
         /// <param name="hasFatalDiagnostics"></param>
-        /// <param name="userInApprovers"></param>
+        /// <param name="userIsLanguageApprover"></param>
         /// <param name="isActiveRevisionAhead"></param>
         /// <returns></returns>
 
-        public string GetDataBSTarget(bool hasActiveConversations, bool hasFatalDiagnostics, bool userInApprovers, bool isActiveRevisionAhead)
+        public string GetDataBSTarget(bool hasActiveConversations, bool hasFatalDiagnostics, bool userIsLanguageApprover, bool isActiveRevisionAhead)
         {
-            if (hasActiveConversations && hasFatalDiagnostics && userInApprovers && isActiveRevisionAhead)
+            if (hasActiveConversations && hasFatalDiagnostics && userIsLanguageApprover && isActiveRevisionAhead)
             {
                 return "#convoFatalModel";
             }
-            else if (hasActiveConversations && !hasFatalDiagnostics && userInApprovers && isActiveRevisionAhead)
+            else if (hasActiveConversations && !hasFatalDiagnostics && userIsLanguageApprover && isActiveRevisionAhead)
             {
                 return "#openConversationModel";
             }
-            else if (!hasActiveConversations && hasFatalDiagnostics && userInApprovers && isActiveRevisionAhead)
+            else if (!hasActiveConversations && hasFatalDiagnostics && userIsLanguageApprover && isActiveRevisionAhead)
             {
                 return "#fatalErrorModel";
             }

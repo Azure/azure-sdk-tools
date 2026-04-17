@@ -26,6 +26,10 @@ internal static class TelemetryConstants
         public const string CommandArgs = "CommandArgs";
         public const string CommandResponse = "CommandResponse";
         public const string DebugTag = "IsDebugEnvironment";
+        public const string SkillName = "SkillName";
+        public const string SessionId = "SessionId";
+        public const string PromptCategory = "PromptCategory";
+        public const string PromptDetails = "PromptDetails";
 
         // Custom Properties that get promoted to tags
         public const string Language = "language";
@@ -37,6 +41,7 @@ internal static class TelemetryConstants
         public const string TotalTokens = "total_tokens";
         public const string ModelsUsed = "models_used";
         public const string OperationStatus = "operation_status";
+        public const string SamplesCount = "samples_count";
     }
 
     internal class ActivityName

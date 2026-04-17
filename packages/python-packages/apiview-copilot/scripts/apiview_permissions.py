@@ -5,11 +5,11 @@
 # --------------------------------------------------------------------------
 
 """
-Grant access to the APIView Cosmos DB for the current user.
+Grant or revoke access to the APIView Cosmos DB accounts for a given principal.
 This script requires the user has elevated access to the Azure SDK Engineering System
 subscription. It will assign the "DocumentDB Account Contributor" ARM role and the
-"Built-in Data Reader" SQL role to the current user for the production and staging
-APIView Cosmos DB accounts.
+"Built-in Data Contributor" SQL role to the principal for all APIView Cosmos DB
+accounts (production, staging, and uxtest).
 """
 
 import argparse
@@ -21,29 +21,63 @@ from azure.mgmt.authorization import AuthorizationManagementClient
 from azure.mgmt.cosmosdb import CosmosDBManagementClient
 
 
-def get_current_user_object_id():
-    """Retrieve the current user's object ID from Microsoft Graph API."""
-    credential = DefaultAzureCredential()
+def get_principal_type(credential, principal_id: str) -> str:
+    """Determine if the principal ID is a User or ServicePrincipal using Microsoft Graph."""
     token = credential.get_token("https://graph.microsoft.com/.default")
     headers = {"Authorization": f"Bearer {token.token}"}
-    resp = requests.get("https://graph.microsoft.com/v1.0/me", headers=headers, timeout=20)
-    resp.raise_for_status()
-    return resp.json()["id"]
+
+    # Try to find as a user first
+    resp = requests.get(
+        f"https://graph.microsoft.com/v1.0/users/{principal_id}",
+        headers=headers,
+        timeout=20,
+    )
+    if resp.status_code == 200:
+        return "User"
+
+    # Try as a service principal
+    resp = requests.get(
+        f"https://graph.microsoft.com/v1.0/servicePrincipals/{principal_id}",
+        headers=headers,
+        timeout=20,
+    )
+    if resp.status_code == 200:
+        return "ServicePrincipal"
+
+    raise ValueError(f"Could not find principal with ID '{principal_id}' as User or ServicePrincipal.")
 
 
 def modify_permissions():
-    """Grant or revoke APIView Cosmos DB permissions for the current user."""
-    parser = argparse.ArgumentParser(description="Grant or revoke Cosmos DB permissions for the current user.")
+    """Grant or revoke APIView Cosmos DB permissions for a specified principal."""
+    parser = argparse.ArgumentParser(description="Grant or revoke Cosmos DB permissions for a principal.")
+    parser.add_argument(
+        "--principal-id",
+        type=str,
+        required=True,
+        help="The principal ID (user or service principal) to grant/revoke permissions for.",
+    )
     parser.add_argument("--revoke", action="store_true", help="Revoke permissions instead of granting them.")
+    parser.add_argument(
+        "--environments",
+        nargs="+",
+        choices=["production", "staging", "uxtest"],
+        default=None,
+        help="Space-separated list of environments to process (production, staging, uxtest). Defaults to all.",
+    )
     args = parser.parse_args()
 
-    user_principal_id = get_current_user_object_id()
-    print("Current user object ID:", user_principal_id)
+    user_principal_id = args.principal_id
+    print(f"Principal ID: {user_principal_id}")
 
     subscription_id = "a18897a6-7e44-457d-9260-f2854c0aca42"
 
     # Auth
     credential = DefaultAzureCredential()
+
+    # Detect principal type
+    principal_type = get_principal_type(credential, user_principal_id)
+    print(f"Principal Type: {principal_type}")
+
     auth_client = AuthorizationManagementClient(credential, subscription_id)
     cosmos_client = CosmosDBManagementClient(credential, subscription_id)
 
@@ -69,7 +103,11 @@ def modify_permissions():
             assignment = auth_client.role_assignments.create(
                 scope,
                 str(uuid4()),
-                {"principal_id": user_principal_id, "role_definition_id": role_def_id, "principal_type": "User"},
+                {
+                    "principal_id": user_principal_id,
+                    "role_definition_id": role_def_id,
+                    "principal_type": principal_type,
+                },
             )
             print(f"✓ ARM role assigned: {assignment.id}")
 
@@ -96,12 +134,13 @@ def modify_permissions():
 
         def assign_sql_role():
             # pylint: disable=line-too-long
+            # Use Built-in Data Contributor (not Reader) to allow readMetadata action
             sql_role_id = f"/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.DocumentDB/databaseAccounts/{cosmos_account}/sqlRoleDefinitions/00000000-0000-0000-0000-000000000002"
             assignments = list(cosmos_client.sql_resources.list_sql_role_assignments(resource_group, cosmos_account))
             if any(a.principal_id == user_principal_id for a in assignments):
                 print("ℹ️ SQL role already assigned – skipping")
                 return
-            print("Assigning SQL role (Built-in Data Reader)...")
+            print("Assigning SQL role (Built-in Data Contributor)...")
             poller = cosmos_client.sql_resources.begin_create_update_sql_role_assignment(
                 resource_group_name=resource_group,
                 account_name=cosmos_account,
@@ -142,16 +181,26 @@ def modify_permissions():
             assign_arm_role()
             assign_sql_role()
 
-    settings = {
+    environments = {
+        "production": {"resource_group": "apiview", "cosmos_account": "apiview-cosmos"},
         "staging": {"resource_group": "apiviewstagingrg", "cosmos_account": "apiviewstaging"},
-        "prod": {"resource_group": "apiview", "cosmos_account": "apiview-cosmos"},
+        "uxtest": {"resource_group": "APIView-UI", "cosmos_account": "apiviewuitest"},
     }
 
-    for env, data in settings.items():
-        print(f"\n=== Processing {env} ===")
-        resource_group = data["resource_group"]
-        cosmos_account = data["cosmos_account"]
-        process_permissions(resource_group, cosmos_account)
+    selected = {k: v for k, v in environments.items() if k in args.environments} if args.environments else environments
+
+    failures = []
+    for env_name, data in selected.items():
+        print(f"\n=== Processing {env_name} ===")
+        try:
+            process_permissions(data["resource_group"], data["cosmos_account"])
+        except Exception as e:
+            print(f"ERROR: Failed to process {env_name}: {e}")
+            failures.append(env_name)
+
+    if failures:
+        print(f"\nFailed environments: {', '.join(failures)}")
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

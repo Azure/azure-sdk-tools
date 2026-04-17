@@ -6,7 +6,7 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
-from dataclasses import dataclass, make_dataclass, KW_ONLY, field
+from dataclasses import dataclass, make_dataclass, field, KW_ONLY
 from typing import Any
 
 

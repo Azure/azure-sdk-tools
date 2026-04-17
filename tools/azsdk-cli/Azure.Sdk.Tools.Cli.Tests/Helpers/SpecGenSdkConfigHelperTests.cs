@@ -65,7 +65,7 @@ public class SpecGenSdkConfigHelperTests
         File.WriteAllText(_configFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
 
         // Act
-        var result = await _helper.GetConfigurationAsync(_tempDirectory.DirectoryPath, SpecGenSdkConfigType.Build);
+        var result = await _helper.GetConfigurationAsync(_tempDirectory.DirectoryPath, SpecGenSdkConfigType.Build, CancellationToken.None);
 
         // Assert
         Assert.That(result.type, Is.EqualTo(SpecGenSdkConfigContentType.Command));
@@ -89,7 +89,7 @@ public class SpecGenSdkConfigHelperTests
         File.WriteAllText(_configFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
 
         // Act
-        var result = await _helper.GetConfigurationAsync(_tempDirectory.DirectoryPath, SpecGenSdkConfigType.Build);
+        var result = await _helper.GetConfigurationAsync(_tempDirectory.DirectoryPath, SpecGenSdkConfigType.Build, CancellationToken.None);
 
         // Assert
         Assert.That(result.type, Is.EqualTo(SpecGenSdkConfigContentType.ScriptPath));
@@ -114,7 +114,7 @@ public class SpecGenSdkConfigHelperTests
         File.WriteAllText(_configFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
 
         // Act
-        var result = await _helper.GetConfigurationAsync(_tempDirectory.DirectoryPath, SpecGenSdkConfigType.Build);
+        var result = await _helper.GetConfigurationAsync(_tempDirectory.DirectoryPath, SpecGenSdkConfigType.Build, CancellationToken.None);
 
         // Assert
         Assert.That(result.type, Is.EqualTo(SpecGenSdkConfigContentType.Command));
@@ -135,7 +135,7 @@ public class SpecGenSdkConfigHelperTests
         File.WriteAllText(_configFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
 
         // Act
-        var result = await _helper.GetConfigurationAsync(_tempDirectory.DirectoryPath, SpecGenSdkConfigType.Build);
+        var result = await _helper.GetConfigurationAsync(_tempDirectory.DirectoryPath, SpecGenSdkConfigType.Build, CancellationToken.None);
 
         // Assert
         Assert.That(result.type, Is.EqualTo(SpecGenSdkConfigContentType.Unknown));
@@ -146,7 +146,7 @@ public class SpecGenSdkConfigHelperTests
     public void GetBuildConfigurationAsync_ConfigFileNotFound_ThrowsException()
     {
         // Act & Assert
-        var ex = Assert.ThrowsAsync<FileNotFoundException>(() => _helper.GetConfigurationAsync(_tempDirectory.DirectoryPath, SpecGenSdkConfigType.Build));
+        var ex = Assert.ThrowsAsync<FileNotFoundException>(() => _helper.GetConfigurationAsync(_tempDirectory.DirectoryPath, SpecGenSdkConfigType.Build, CancellationToken.None));
         Assert.That(ex.Message, Does.Contain("Configuration file not found"));
     }
 
@@ -171,7 +171,7 @@ public class SpecGenSdkConfigHelperTests
         File.WriteAllText(_configFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
 
         // Act
-        var result = await _helper.GetConfigValueFromRepoAsync<string>(_tempDirectory.DirectoryPath, BuildCommandJsonPath);
+        var result = await _helper.GetConfigValueFromRepoAsync<string>(_tempDirectory.DirectoryPath, BuildCommandJsonPath, CancellationToken.None);
 
         // Assert
         Assert.That(result, Is.EqualTo("dotnet build {packagePath}"));
@@ -192,7 +192,7 @@ public class SpecGenSdkConfigHelperTests
         File.WriteAllText(_configFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
 
         // Act
-        var result = await _helper.GetConfigValueFromRepoAsync<Dictionary<string, string>>(_tempDirectory.DirectoryPath, "packageOptions/buildOptions");
+        var result = await _helper.GetConfigValueFromRepoAsync<Dictionary<string, string>>(_tempDirectory.DirectoryPath, "packageOptions/buildOptions", CancellationToken.None);
 
         // Assert
         Assert.That(result["configuration"], Is.EqualTo("Release"));
@@ -207,7 +207,7 @@ public class SpecGenSdkConfigHelperTests
         File.WriteAllText(_configFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
 
         // Act & Assert
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => _helper.GetConfigValueFromRepoAsync<string>(_tempDirectory.DirectoryPath, "nonexistent/path"));
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => _helper.GetConfigValueFromRepoAsync<string>(_tempDirectory.DirectoryPath, "nonexistent/path", CancellationToken.None));
         Assert.That(ex.Message, Does.Contain("Property not found at JSON path"));
     }
 
@@ -306,6 +306,109 @@ public class SpecGenSdkConfigHelperTests
 
         // Assert
         Assert.That(result, Is.EqualTo(command));
+    }
+
+    [Test]
+    public void SubstituteCommandVariables_PathWithSpaces_QuotesValue()
+    {
+        // Arrange
+        var command = "dotnet build {PackagePath}/src";
+        var variables = new Dictionary<string, string>
+        {
+            { "PackagePath", "c:\\Users\\user\\Code\\AzSDK Tools Agent Demo\\azure-sdk-for-net\\sdk\\healthdataaiservices\\Azure.ResourceManager.HealthDataAIServices" }
+        };
+
+        // Act
+        var result = _helper.SubstituteCommandVariables(command, variables);
+
+        // Assert
+        Assert.That(result, Is.EqualTo("dotnet build \"c:\\Users\\user\\Code\\AzSDK Tools Agent Demo\\azure-sdk-for-net\\sdk\\healthdataaiservices\\Azure.ResourceManager.HealthDataAIServices/src\""));
+    }
+
+    [Test]
+    public void SubstituteCommandVariables_PathWithoutSpaces_DoesNotQuote()
+    {
+        // Arrange
+        var command = "dotnet build {PackagePath}/src";
+        var variables = new Dictionary<string, string>
+        {
+            { "PackagePath", "/path/to/package" }
+        };
+
+        // Act
+        var result = _helper.SubstituteCommandVariables(command, variables);
+
+        // Assert
+        Assert.That(result, Is.EqualTo("dotnet build /path/to/package/src"));
+    }
+
+    [Test]
+    public void SubstituteCommandVariables_PathWithSpacesNoContinuation_QuotesCorrectly()
+    {
+        // Arrange
+        var command = "dotnet build {PackagePath}";
+        var variables = new Dictionary<string, string>
+        {
+            { "PackagePath", "c:\\Program Files\\My Project" }
+        };
+
+        // Act
+        var result = _helper.SubstituteCommandVariables(command, variables);
+
+        // Assert
+        Assert.That(result, Is.EqualTo("dotnet build \"c:\\Program Files\\My Project\""));
+    }
+
+    [Test]
+    public void SubstituteCommandVariables_MultipleOccurrencesWithSpaces_QuotesAll()
+    {
+        // Arrange
+        var command = "dotnet build {PackagePath}/src && copy {PackagePath}/output /dest";
+        var variables = new Dictionary<string, string>
+        {
+            { "PackagePath", "c:\\Program Files\\My Project" }
+        };
+
+        // Act
+        var result = _helper.SubstituteCommandVariables(command, variables);
+
+        // Assert
+        Assert.That(result, Is.EqualTo("dotnet build \"c:\\Program Files\\My Project/src\" && copy \"c:\\Program Files\\My Project/output\" /dest"));
+    }
+
+    [Test]
+    public void SubstituteCommandVariables_MultipleVariablesWithSpaces_QuotesAll()
+    {
+        // Arrange
+        var command = "dotnet build {projectPath} --output {outputDir}";
+        var variables = new Dictionary<string, string>
+        {
+            { "projectPath", "c:\\Program Files\\My Project" },
+            { "outputDir", "c:\\Build Output\\bin" }
+        };
+
+        // Act
+        var result = _helper.SubstituteCommandVariables(command, variables);
+
+        // Assert
+        Assert.That(result, Is.EqualTo("dotnet build \"c:\\Program Files\\My Project\" --output \"c:\\Build Output\\bin\""));
+    }
+
+    [Test]
+    public void SubstituteCommandVariables_PathWithSpecialCharacters_QuotesValue()
+    {
+        // Arrange
+        var command = "echo {Message}";
+        var variables = new Dictionary<string, string>
+        {
+            { "Message", "Hello & goodbye | test" }
+        };
+
+        // Act
+        var result = _helper.SubstituteCommandVariables(command, variables);
+
+        // Assert
+        Assert.That(result, Is.EqualTo("echo \"Hello & goodbye | test\""));
     }
 
     #endregion

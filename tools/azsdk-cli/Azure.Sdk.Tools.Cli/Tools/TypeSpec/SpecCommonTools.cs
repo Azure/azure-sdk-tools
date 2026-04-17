@@ -44,7 +44,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
-            await Task.CompletedTask;
             var command = parseResult.CommandResult.Command.Name;
 
             switch (command)
@@ -52,7 +51,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 case getModifiedProjectsCommandName:
                     var repoRootPath = parseResult.GetValue(repoRootOpt);
                     var targetBranch = parseResult.GetValue(targetBranchOpt);
-                    var modifiedProjects = GetModifiedTypeSpecProjects(repoRootPath, targetBranch);
+                    var modifiedProjects = await GetModifiedTypeSpecProjectsAsync(repoRootPath, targetBranch, ct);
                     modifiedProjects.Message = "Modified TypeSpec projects:";
                     return modifiedProjects;
 
@@ -62,11 +61,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         }
 
         [McpServerTool(Name = GetModifiedTypeSpecProjectsToolName), Description("This tool returns list of TypeSpec projects modified in current branch")]
-        public ObjectCommandResponse GetModifiedTypeSpecProjects(string repoRootPath, string targetBranch = "main")
+        public async Task<ObjectCommandResponse> GetModifiedTypeSpecProjectsAsync(string repoRootPath, string targetBranch = "main", CancellationToken ct = default)
         {
             try
             {
-                var baseCommitSha = gitHelper.GetMergeBaseCommitSha(repoRootPath, targetBranch);
+                var baseCommitSha = await gitHelper.GetMergeBaseCommitShaAsync(repoRootPath, targetBranch, ct);
                 if (string.IsNullOrEmpty(baseCommitSha))
                 {
                     List<string> _out = [$"Failed to get merge base commit SHA for {repoRootPath}"];

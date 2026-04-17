@@ -1,13 +1,19 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using ApiView;
+using APIView.Model.V2;
 using APIViewWeb.Helpers;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
+using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb.Managers
 {
@@ -17,19 +23,23 @@ namespace APIViewWeb.Managers
         private readonly IBlobCodeFileRepository _codeFileRepository;
         private readonly IBlobOriginalsRepository _originalsRepository;
         private readonly IDevopsArtifactRepository _devopsArtifactRepository;
+        private readonly ILogger<CodeFileManager> _logger;
 
         public CodeFileManager(
             IEnumerable<LanguageService> languageServices, IBlobCodeFileRepository codeFileRepository,
-            IBlobOriginalsRepository originalsRepository, IDevopsArtifactRepository devopsArtifactRepository)
+            IBlobOriginalsRepository originalsRepository, IDevopsArtifactRepository devopsArtifactRepository,
+            ILogger<CodeFileManager> logger)
         {
             _originalsRepository = originalsRepository;
             _codeFileRepository = codeFileRepository;
             _languageServices = languageServices;
             _devopsArtifactRepository = devopsArtifactRepository;
+            _logger = logger;
         }
 
         /// <summary>
-        /// Get CodeFile
+        /// Downloads and extracts a CodeFile from an Azure DevOps build artifact.
+        /// For TypeSpec artifacts, also extracts metadata if a metadata file is provided.
         /// </summary>
         /// <param name="repoName"></param>
         /// <param name="buildId"></param>
@@ -42,8 +52,9 @@ namespace APIViewWeb.Managers
         /// <param name="baselineStream"></param>
         /// <param name="project"></param>
         /// <param name="language"></param>
-        /// <returns></returns>
-        public async Task<CodeFile> GetCodeFileAsync(string repoName,
+        /// <param name="metadataFileName">Optional TypeSpec metadata file name (e.g., "typespec-metadata.json").</param>
+        /// <returns>A CodeFileResult containing the CodeFile and optionally TypeSpec metadata.</returns>
+        public async Task<CodeFileResult> GetCodeFileAsync(string repoName,
             string buildId,
             string artifactName,
             string packageName,
@@ -53,10 +64,12 @@ namespace APIViewWeb.Managers
             string baselineCodeFileName = "",
             MemoryStream baselineStream = null,
             string project = "public",
-            string language = null
-            )
+            string language = null,
+            string metadataFileName = null)
         {
             CodeFile codeFile = null;
+            TypeSpecMetadata metadata = null;
+
             if (string.IsNullOrEmpty(codeFileName))
             {
                 // backward compatibility until all languages moved to sandboxing of codefile to pipeline
@@ -97,9 +110,29 @@ namespace APIViewWeb.Managers
                         codeFile = await CodeFile.DeserializeAsync(entryStream);
                     }
                 }
+
+                if (!string.IsNullOrEmpty(metadataFileName))
+                {
+                    var metadataEntry = archive.Entries.FirstOrDefault(e => Path.GetFileName(e.Name).Equals(metadataFileName, StringComparison.OrdinalIgnoreCase));
+                    if (metadataEntry != null)
+                    {
+                        try
+                        {
+                            await using var metadataStream = metadataEntry.Open();
+                            metadata = await JsonSerializer.DeserializeAsync<TypeSpecMetadata>(metadataStream, new JsonSerializerOptions
+                            {
+                                PropertyNameCaseInsensitive = true
+                            });
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to deserialize TypeSpec metadata file '{MetadataFileName}'. Continuing without metadata.", metadataFileName);
+                        }
+                    }
+                }
             }
 
-            return codeFile;
+            return new CodeFileResult { CodeFile = codeFile, Metadata = metadata };
         }
 
         /// <summary>
@@ -184,8 +217,53 @@ namespace APIViewWeb.Managers
                 memoryStream.Position = 0;
                 await _originalsRepository.UploadOriginalAsync(reviewCodeFileModel.FileId, memoryStream);
             }
+            
+            SanitizeTokenValues(codeFile);
+
             await _codeFileRepository.UpsertCodeFileAsync(apiRevisionId, reviewCodeFileModel.FileId, codeFile);
+            reviewCodeFileModel.ContentHash = await ComputeAPIContentHashAsync(codeFile);
             return reviewCodeFileModel;
+        }
+
+        /// <summary>
+        /// Computes a SHA-256 hash of the API surface content, using the same filtering logic
+        /// as <see cref="AreAPICodeFilesTheSame"/> so that hashes are invariant to skip-diff
+        /// regions and documentation lines. PackageVersion is excluded intentionally so that
+        /// a version-only change does not produce a different hash.
+        /// </summary>
+        public async Task<string> ComputeAPIContentHashAsync(CodeFile codeFile)
+        {
+            var languageService = LanguageServiceHelpers.GetLanguageService(codeFile.Language, _languageServices);
+            bool isTreeStyle = languageService?.UsesTreeStyleParser ?? codeFile.ReviewLines.Count > 0;
+
+            var sb = new StringBuilder();
+            sb.Append('\n');
+
+            if (isTreeStyle)
+            {
+                AppendComparableLines(sb, codeFile.ReviewLines);
+            }
+            else
+            {
+                foreach (var line in new RenderedCodeFile(codeFile).RenderText(false, skipDiff: true))
+                {
+                    sb.Append(line.DisplayString).Append(':').Append(line.ElementId).Append(':').Append(line.IsHiddenApi).Append('\n');
+                }
+            }
+
+            byte[] bytes = Encoding.UTF8.GetBytes(sb.ToString());
+            using var ms = new MemoryStream(bytes);
+            return Convert.ToHexString(await SHA256.HashDataAsync(ms)).ToLowerInvariant();
+        }
+
+        private static void AppendComparableLines(StringBuilder sb, List<ReviewLine> lines, int depth = 0)
+        {
+            string indent = new(' ', depth * 2);
+            foreach (var line in lines.Where(l => l.Tokens.Count > 0 && !l.IsDocumentation && !l.IsSkippedFromDiff()))
+            {
+                sb.Append(indent).Append(line).Append('\n');
+                AppendComparableLines(sb, line.Children, depth + 1);
+            }
         }
 
         /// <summary>
@@ -240,6 +318,54 @@ namespace APIViewWeb.Managers
             file.PackageVersion = codeFile.PackageVersion;
             file.CrossLanguagePackageId = codeFile.CrossLanguageMetadata != null ? codeFile.CrossLanguageMetadata.CrossLanguagePackageId : codeFile.CrossLanguagePackageId;
             file.ParserStyle = (codeFile.ReviewLines.Count > 0) ? ParserStyle.Tree : ParserStyle.Flat;
+        }
+
+        /// <summary>
+        /// Sanitizes tree-style token values in the CodeFile by removing embedded newlines.
+        /// Legacy flat tokens are intentionally left unchanged.
+        /// </summary>
+        private static void SanitizeTokenValues(CodeFile codeFile)
+        {
+            // Tree-style (ReviewToken is a class, so mutate in place)
+            if (codeFile.ReviewLines != null && codeFile.ReviewLines.Count > 0)
+            {
+                SanitizeReviewLines(codeFile.ReviewLines);
+            }
+        }
+
+        /// <summary>
+        /// Recursively sanitizes token values in ReviewLines and their children.
+        /// ReviewToken is a reference type, so mutations are applied in place.
+        /// </summary>
+        private static void SanitizeReviewLines(List<ReviewLine> lines)
+        {
+            foreach (var line in lines)
+            {
+                foreach (var token in line.Tokens)
+                {
+                    if (token.Kind == TokenKind.Text && !string.IsNullOrEmpty(token.Value))
+                        token.Value = NormalizeTokenValue(token.Value);
+                }
+                if (line.Children != null && line.Children.Count > 0)
+                {
+                    SanitizeReviewLines(line.Children);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Normalizes a token value by replacing all newline characters (both \r\n and \n\r)
+        /// with single spaces, then trimming leading/trailing whitespace.
+        /// </summary>
+        private static string NormalizeTokenValue(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return value;
+
+            return value
+                .Replace("\r\n", " ")
+                .Replace('\r', ' ')
+                .Replace('\n', ' ');
         }
     }
 }

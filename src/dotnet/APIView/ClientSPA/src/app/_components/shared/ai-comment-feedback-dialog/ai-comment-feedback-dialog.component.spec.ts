@@ -1,18 +1,24 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { initializeTestBed } from '../../../../test-setup';
 import { FormsModule } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { DialogModule } from 'primeng/dialog';
 import { CheckboxModule } from 'primeng/checkbox';
+import { vi } from 'vitest';
 import { AICommentFeedbackDialogComponent } from './ai-comment-feedback-dialog.component';
 
 describe('AICommentFeedbackDialogComponent', () => {
   let component: AICommentFeedbackDialogComponent;
   let fixture: ComponentFixture<AICommentFeedbackDialogComponent>;
 
+  beforeAll(() => {
+    initializeTestBed();
+  });
+
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [AICommentFeedbackDialogComponent],
       imports: [
+        AICommentFeedbackDialogComponent,
         FormsModule,
         DialogModule,
         CheckboxModule,
@@ -42,13 +48,13 @@ describe('AICommentFeedbackDialogComponent', () => {
   });
 
   it('should emit feedback on submit with valid reasons', () => {
-    spyOn(component.feedbackSubmit, 'emit');
+    vi.spyOn(component.feedbackSubmit, 'emit');
     component.commentId = 'test-123';
     component.selectedReasons = ['This comment is factually incorrect'];
     component.additionalComments = 'Test comment';
-    
+
     component.onSubmit();
-    
+
     expect(component.feedbackSubmit.emit).toHaveBeenCalledWith({
       commentId: 'test-123',
       reasons: ['This comment is factually incorrect'],
@@ -57,22 +63,22 @@ describe('AICommentFeedbackDialogComponent', () => {
   });
 
   it('should not emit feedback on submit without reasons', () => {
-    spyOn(component.feedbackSubmit, 'emit');
+    vi.spyOn(component.feedbackSubmit, 'emit');
     component.commentId = 'test-123';
     component.selectedReasons = [];
     component.additionalComments = 'Test comment';
-    
+
     component.onSubmit();
-    
+
     expect(component.feedbackSubmit.emit).not.toHaveBeenCalled();
   });
 
   it('should reset form after successful submit', () => {
     component.selectedReasons = ['This comment is factually incorrect'];
     component.additionalComments = 'Test comment';
-    
+
     component.onSubmit();
-    
+
     expect(component.selectedReasons.length).toBe(0);
     expect(component.additionalComments).toBe('');
   });
@@ -81,12 +87,12 @@ describe('AICommentFeedbackDialogComponent', () => {
     component.selectedReasons = ['This comment is factually incorrect'];
     component.additionalComments = 'Test comment';
     component.visible = true;
-    
-    spyOn(component.visibleChange, 'emit');
-    spyOn(component.cancel, 'emit');
-    
+
+    vi.spyOn(component.visibleChange, 'emit');
+    vi.spyOn(component.cancel, 'emit');
+
     component.onCancel();
-    
+
     expect(component.selectedReasons.length).toBe(0);
     expect(component.additionalComments).toBe('');
     expect(component.visible).toBe(false);
@@ -97,11 +103,11 @@ describe('AICommentFeedbackDialogComponent', () => {
   it('should reset form on hide', () => {
     component.selectedReasons = ['This comment is factually incorrect'];
     component.additionalComments = 'Test comment';
-    
-    spyOn(component.cancel, 'emit');
-    
+
+    vi.spyOn(component.cancel, 'emit');
+
     component.onHide();
-    
+
     expect(component.selectedReasons.length).toBe(0);
     expect(component.additionalComments).toBe('');
     expect(component.cancel.emit).toHaveBeenCalled();

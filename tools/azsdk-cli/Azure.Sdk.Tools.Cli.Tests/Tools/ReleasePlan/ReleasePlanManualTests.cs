@@ -1,15 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.ReleasePlan;
-using Microsoft.VisualStudio.TestPlatform.CoreUtilities.Helpers;
 using Moq;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
@@ -26,6 +18,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         private IEnvironmentHelper environmentHelper;
         private readonly IGitHelper gitHelper;
         private IInputSanitizer inputSanitizer;
+        private HttpClient httpClient;
 
         public ReleasePlanManualTests()
         {
@@ -37,13 +30,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             logger = new TestLogger<ReleasePlanTool>();
             gitHubService = new Mock<IGitHubService>().Object;
             inputSanitizer = new InputSanitizer();
+            httpClient = new Mock<HttpClient>().Object;
 
             var typeSpecHelperMock = new Mock<ITypeSpecHelper>();
-            typeSpecHelperMock.Setup(x => x.IsRepoPathForPublicSpecRepo(It.IsAny<string>())).Returns(true);
+            typeSpecHelperMock.Setup(x => x.IsRepoPathForPublicSpecRepoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
             typeSpecHelper = typeSpecHelperMock.Object;
 
             var userHelperMock = new Mock<IUserHelper>();
-            userHelperMock.Setup(x => x.GetUserEmail()).ReturnsAsync("test@example.com");
+            userHelperMock.Setup(x => x.GetUserEmail(It.IsAny<CancellationToken>())).ReturnsAsync("test@example.com");
             userHelper = userHelperMock.Object;
 
             var environmentHelperMock = new Mock<IEnvironmentHelper>();
@@ -51,14 +45,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             environmentHelper = environmentHelperMock.Object;
 
             var gitHelperMock = new Mock<IGitHelper>();
-            gitHelperMock.Setup(x => x.GetBranchName(It.IsAny<string>())).Returns("testBranch");
+            gitHelperMock.Setup(x => x.GetBranchNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("testBranch");
             gitHelper = gitHelperMock.Object;
 
-            releasePlan = new ReleasePlanTool(devOpsService, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer);
+            releasePlan = new ReleasePlanTool(devOpsService, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>());
         }
 
-        [Test] // disabled by default because it makes real API calls
-        [Ignore("Manual test - requires real API calls")]
+        [Test, Explicit]
+        [Category(TestCategories.ReleasePlan)]
         public async Task Test_UpdateExclusionJustification()
         {
             int releasePlanWorkItemId = 28940; // replace with a real release plan ID
@@ -67,12 +61,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.IsNotNull(updateStatus);
             Assert.That(updateStatus.Message, Does.Contain("Updated language exclusion"));
 
-            var releasePlanInfo = await this.devOpsService.GetReleasePlanForWorkItemAsync(releasePlanWorkItemId);
+            var releasePlanInfo = await this.devOpsService.GetReleasePlanForWorkItemAsync(releasePlanWorkItemId, CancellationToken.None);
             Assert.That(exclusionJustification, Is.EqualTo(releasePlanInfo.LanguageExclusionRequesterNote));
         }
 
-        [Test] // disabled by default because it makes real API calls
-        [Ignore("Manual test - requires real API calls")]
+        [Test, Explicit]
+        [Category(TestCategories.ReleasePlan)]
         public async Task Test_UpdateExclusionJustificationWithLanguage()
         {
             int releasePlanWorkItemId = 28940; // replace with a real release plan ID
@@ -81,19 +75,19 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.IsNotNull(updateStatus);
             Assert.That(updateStatus.Message, Does.Contain("Updated language exclusion"));
 
-            var releasePlanInfo = await this.devOpsService.GetReleasePlanForWorkItemAsync(releasePlanWorkItemId);
+            var releasePlanInfo = await this.devOpsService.GetReleasePlanForWorkItemAsync(releasePlanWorkItemId, CancellationToken.None);
             Assert.That(exclusionJustification, Is.EqualTo(releasePlanInfo.LanguageExclusionRequesterNote));
         }
 
 
-        [Test] // disabled by default because it makes real API calls
-        [Ignore("Manual test - requires real API calls")]
+        [Test, Explicit]
+        [Category(TestCategories.ReleasePlan)]
         public async Task Test_Get_ReleaseExclusionStatus()
         {
             int releasePlan = 28940; // replace with a real release plan ID
-            var releasePlanInfo = await this.devOpsService.GetReleasePlanForWorkItemAsync(releasePlan);
+            var releasePlanInfo = await this.devOpsService.GetReleasePlanForWorkItemAsync(releasePlan, CancellationToken.None);
             Assert.IsNotNull(releasePlanInfo);
-            
+
             var pythonSdk = releasePlanInfo.SDKInfo.FirstOrDefault(sdk => sdk.Language.Equals("Python", StringComparison.OrdinalIgnoreCase));
             Assert.IsNotNull(pythonSdk);
             Assert.That(pythonSdk.ReleaseExclusionStatus, Is.EqualTo("Requested"));

@@ -48,7 +48,8 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Evaluators
 
                 // Generate embeddings for all tool descriptions
                 var descriptions = tools.Select(t => t.Description ?? string.Empty).ToList();
-                var embeddings = await GenerateEmbeddingsAsync(descriptions, cancellationToken);
+                var embeddings = await EvaluationHelper.GenerateEmbeddingsAsync(
+                    _openAIClient, _embeddingModelDeployment, descriptions, cancellationToken);
 
                 // Collect all comparisons with their similarity scores
                 var comparisons = new List<(double similarity, string tool1Name, string tool2Name, string desc1, string desc2)>();
@@ -70,7 +71,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Evaluators
                             continue;
                         }
 
-                        var similarity = CalculateCosineSimilarity(embeddings[i], embeddings[j]);
+                        var similarity = EvaluationHelper.CalculateCosineSimilarity(embeddings[i], embeddings[j]);
                         comparisons.Add((similarity, tool1.Name, tool2.Name, desc1, desc2));
                     }
                 }
@@ -117,67 +118,6 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Evaluators
                 MetricError($"Error during similarity evaluation: {ex.Message}", metric);
                 return new EvaluationResult(metric);
             }
-        }
-
-        /// <summary>
-        /// Generate embeddings for a list of texts using Azure OpenAI
-        /// </summary>
-        private async Task<List<ReadOnlyMemory<float>>> GenerateEmbeddingsAsync(
-            List<string> texts, 
-            CancellationToken cancellationToken)
-        {
-            var embeddingClient = _openAIClient.GetEmbeddingClient(_embeddingModelDeployment);
-            var embeddings = new List<ReadOnlyMemory<float>>();
-
-            // Azure OpenAI has a limit on batch size, so process in chunks if needed
-            const int batchSize = 100;
-            for (int i = 0; i < texts.Count; i += batchSize)
-            {
-                var batch = texts.Skip(i).Take(batchSize).ToList();
-                var response = await embeddingClient.GenerateEmbeddingsAsync(batch, cancellationToken: cancellationToken);
-                
-                foreach (var embedding in response.Value)
-                {
-                    embeddings.Add(embedding.ToFloats());
-                }
-            }
-
-            return embeddings;
-        }
-
-        /// <summary>
-        /// Calculate cosine similarity between two embedding vectors
-        /// </summary>
-        private static double CalculateCosineSimilarity(ReadOnlyMemory<float> vector1, ReadOnlyMemory<float> vector2)
-        {
-            var v1 = vector1.Span;
-            var v2 = vector2.Span;
-
-            if (v1.Length != v2.Length)
-            {
-                throw new ArgumentException("Vectors must have the same length");
-            }
-
-            double dotProduct = 0.0;
-            double magnitude1 = 0.0;
-            double magnitude2 = 0.0;
-
-            for (int i = 0; i < v1.Length; i++)
-            {
-                dotProduct += v1[i] * v2[i];
-                magnitude1 += v1[i] * v1[i];
-                magnitude2 += v2[i] * v2[i];
-            }
-
-            magnitude1 = Math.Sqrt(magnitude1);
-            magnitude2 = Math.Sqrt(magnitude2);
-
-            if (magnitude1 == 0.0 || magnitude2 == 0.0)
-            {
-                return 0.0;
-            }
-
-            return dotProduct / (magnitude1 * magnitude2);
         }
 
         private static void Interpret(BooleanMetric metric)

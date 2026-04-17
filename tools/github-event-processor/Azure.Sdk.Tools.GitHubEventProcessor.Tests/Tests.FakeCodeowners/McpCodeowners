@@ -1,0 +1,13 @@
+# MCP CODEOWNERS file for testing
+# Format follows Azure SDK CODEOWNERS conventions:
+# ServiceLabel defines the label used on issues
+# ServiceOwners defines the code owners (individuals and/or teams)
+
+# ServiceLabel: %server-azure.mcp
+# ServiceOwners: @microsoft/azure-mcp @McpOwner1
+
+# ServiceLabel: %server-fabric.mcp
+# ServiceOwners: @microsoft/fabric-mcp @McpOwner2 @McpOwner3
+
+# ServiceLabel: %tools-prompts
+# ServiceOwners: @microsoft/mcp-tools @McpOwner1 @McpOwner2

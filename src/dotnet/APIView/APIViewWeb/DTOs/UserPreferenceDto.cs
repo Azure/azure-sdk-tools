@@ -1,5 +1,4 @@
 using APIViewWeb.LeanModels;
-using APIViewWeb.Models;
 using System.Collections.Generic;
 
 namespace APIViewWeb.DTOs
@@ -7,7 +6,6 @@ namespace APIViewWeb.DTOs
     public class UserPreferenceDto
     {
         public IEnumerable<string> Language { get; set; }
-        public IEnumerable<string> ApprovedLanguages { get; set; }
         public IEnumerable<APIRevisionType> APIRevisionType { get; set; }
         public IEnumerable<string> State { get; set; }
         public IEnumerable<string> Status { get; set; }
@@ -23,6 +21,5 @@ namespace APIViewWeb.DTOs
         public bool? ShowSystemComments { get; set; }
         public bool? DisableCodeLinesLazyLoading { get; set; }
         public string Theme { get; set; }
-        public ScrollBarSizes? ScrollBarSize { get; set; }
     }
 }

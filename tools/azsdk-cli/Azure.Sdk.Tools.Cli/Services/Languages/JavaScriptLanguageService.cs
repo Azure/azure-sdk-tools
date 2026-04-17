@@ -364,7 +364,162 @@ public sealed partial class JavaScriptLanguageService : LanguageService
         }
     }
 
+    private static readonly TimeSpan versioningScriptTimeout = TimeSpan.FromMinutes(5);
+
     /// <summary>
+    /// Updates the JavaScript package version by calling the existing versioning script.
+    /// Follows SetPackageVersion from azure-sdk-for-js/eng/scripts/Language-Settings.ps1,
+    /// excluding changelog updates because changelog changes are handled by the base language workflow.
+    /// </summary>
+    protected override async Task<PackageOperationResponse> UpdatePackageVersionInFilesAsync(
+        string packagePath,
+        string version,
+        string? releaseType,
+        CancellationToken ct)
+    {
+        try
+        {
+            logger.LogInformation("Updating JavaScript package version to {Version} in {PackagePath}", version, packagePath);
+
+            // Read the package name from package.json to compute the artifact name, same as:
+            // $artifactName = $PackageName.Replace("@", "").Replace("/", "-")
+            var (packageName, _, _) = await TryGetPackageInfoAsync(packagePath, ct);
+            if (string.IsNullOrWhiteSpace(packageName))
+            {
+                return PackageOperationResponse.CreateFailure(
+                    "Could not read package name from package.json.",
+                    nextSteps: ["Ensure package.json exists with a valid name field"]);
+            }
+
+            var artifactName = packageName.Replace("@", "").Replace("/", "-");
+
+            // Discover repo root (equivalent to $RepoRoot in the PowerShell script)
+            string repoRoot;
+            try
+            {
+                repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
+            }
+            catch (Exception ex)
+            {
+                logger.LogDebug(ex, "Failed to discover repo root for {PackagePath}", packagePath);
+                return PackageOperationResponse.CreateFailure(
+                    "Failed to discover repository root.",
+                    nextSteps: ["Ensure you are running inside a valid git repository"]);
+            }
+
+            var scriptResult = await TryUpdateVersionUsingScriptAsync(repoRoot, artifactName, version, ct);
+            if (!scriptResult.ScriptsAvailable || !scriptResult.Success)
+            {
+                return PackageOperationResponse.CreateFailure(
+                    scriptResult.Message ?? "Failed to run JavaScript versioning script.",
+                    nextSteps:
+                    [
+                        "Run 'azsdk verify setup' to verify Node.js is available",
+                        "Ensure eng/tools/versioning/set-version.js exists",
+                        "Run the script manually and verify version propagation"
+                    ]);
+            }
+
+            return PackageOperationResponse.CreateSuccess(
+                $"Version updated to {version} via set-version.js.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Unexpected error while updating JavaScript package version in {PackagePath}", packagePath);
+            return PackageOperationResponse.CreateFailure(
+                "Failed to update JavaScript package version due to an unexpected error.",
+                nextSteps:
+                [
+                    "Ensure package.json is valid JSON and readable",
+                    "Verify the repository and target files are accessible",
+                    "Check logs for more details"
+                ]);
+        }
+    }
+
+    /// <summary>
+    /// Attempts to run the JavaScript set-version.js script to update the package version.
+    /// Follows SetPackageVersion from azure-sdk-for-js/eng/scripts/Language-Settings.ps1.
+    /// </summary>
+    /// <param name="repoRoot">Root of the azure-sdk-for-js repository.</param>
+    /// <param name="artifactName">The npm artifact name (e.g. azure-keyvault-secrets).</param>
+    /// <param name="version">Target version string.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>A <see cref="ScriptUpdateResult"/> describing script availability, outcome, and details.</returns>
+    private async Task<ScriptUpdateResult> TryUpdateVersionUsingScriptAsync(
+        string repoRoot,
+        string artifactName,
+        string version,
+        CancellationToken ct)
+    {
+        var engPackageUtilsDir = Path.Combine(repoRoot, "eng", "tools", "eng-package-utils");
+        var versioningDir = Path.Combine(repoRoot, "eng", "tools", "versioning");
+        var setVersionScript = Path.Combine(versioningDir, "set-version.js");
+
+        if (!File.Exists(setVersionScript))
+        {
+            logger.LogDebug("JavaScript versioning script not found at {SetVersionScript}; script propagation skipped", setVersionScript);
+            return ScriptUpdateResult.NotAvailable("JavaScript versioning script was not found under eng/tools/versioning.");
+        }
+
+        try
+        {
+            // npm install in $EngDir/tools/eng-package-utils
+            if (Directory.Exists(engPackageUtilsDir))
+            {
+                logger.LogDebug("Running npm install in {Dir}", engPackageUtilsDir);
+                var installResult = await processHelper.Run(
+                    new NpmOptions(["install"], workingDirectory: engPackageUtilsDir, timeout: versioningScriptTimeout),
+                    ct);
+                if (installResult.ExitCode != 0)
+                {
+                    return ScriptUpdateResult.Failed($"npm install failed in eng/tools/eng-package-utils: {installResult.Output}");
+                }
+            }
+
+            // npm install in $EngDir/tools/versioning
+            logger.LogDebug("Running npm install in {Dir}", versioningDir);
+            var versioningInstallResult = await processHelper.Run(
+                new NpmOptions(["install"], workingDirectory: versioningDir, timeout: versioningScriptTimeout),
+                ct);
+            if (versioningInstallResult.ExitCode != 0)
+            {
+                return ScriptUpdateResult.Failed($"npm install failed in eng/tools/versioning: {versioningInstallResult.Output}");
+            }
+
+            // node ./set-version.js --artifact-name $artifactName --new-version $version --repo-root $RepoRoot
+            // --replace-latest-entry-title false: changelog title replacement is managed by UpdateChangelogContentAsync in the base class
+            logger.LogInformation("Running set-version.js for artifact {ArtifactName}", artifactName);
+            var scriptResult = await processHelper.Run(
+                new ProcessOptions(
+                    "node",
+                    ["./set-version.js", "--artifact-name", artifactName, "--new-version", version, "--repo-root", repoRoot, "--replace-latest-entry-title", "false"],
+                    workingDirectory: versioningDir,
+                    timeout: versioningScriptTimeout),
+                ct);
+
+            if (scriptResult.ExitCode != 0)
+            {
+                logger.LogError("set-version.js failed for {ArtifactName} with exit code {ExitCode}", artifactName, scriptResult.ExitCode);
+                return ScriptUpdateResult.Failed($"set-version.js failed: {scriptResult.Output}");
+            }
+
+            return ScriptUpdateResult.Succeeded($"Version updated to {version} via set-version.js.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to run JavaScript versioning script for {ArtifactName}", artifactName);
+            return ScriptUpdateResult.Failed($"Unexpected error running versioning script: {ex.Message}");
+        }
+    }
+
+    private sealed record ScriptUpdateResult(bool ScriptsAvailable, bool Success, string? Message)
+    {
+        public static ScriptUpdateResult NotAvailable(string message) => new(false, false, message);
+        public static ScriptUpdateResult Failed(string message) => new(true, false, message);
+        public static ScriptUpdateResult Succeeded(string message) => new(true, true, message);
+    }
+    
     /// Applies patches to customization files in <c>src/</c> based on build errors.
     /// Handles TypeScript compiler errors and merge conflict markers left by
     /// <c>dev-tool customization apply</c>.

@@ -12,7 +12,8 @@ inputs:
   prompt: "After regenerating the Java SDK, the build is failing because the service team renamed 'displayName' to 'name' in the TypeSpec. Our customization class still references getField('displayName') and it can't find the symbol. Can you fix this?"
 expected:
   output_contains:
-    - "customiz"
+    - "customize"
+    - "customization"
     - "TypeSpec"
   output_excludes:
     - "cannot help"

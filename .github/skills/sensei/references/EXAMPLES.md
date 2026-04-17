@@ -10,7 +10,7 @@ Before and after examples of frontmatter improvements, including token counts.
 ```yaml
 ---
 name: appinsights-instrumentation
-description: 'Implement retry logic for HTTP client requests with exponential backoff'
+description: 'Instrument a webapp to send useful telemetry data to Azure App Insights'
 ---
 ```
 
@@ -44,7 +44,7 @@ const shouldNotTriggerPrompts = [
 ```yaml
 ---
 name: appinsights-instrumentation
-description: "Implement retry logic with exponential backoff for HTTP requests. WHEN: \"add retry logic\", \"implement exponential backoff\", \"handle transient failures\", \"add resilience\", \"HTTP retry pattern\"."
+description: "Instrument web applications to send telemetry to Azure Application Insights for monitoring and diagnostics. WHEN: \"add App Insights\", \"instrument my app\", \"set up application monitoring\", \"add telemetry\", \"track requests and dependencies\", \"ASP.NET Core telemetry\", \"Node.js Application Insights\"."
 ---
 ```
 
@@ -67,16 +67,16 @@ const shouldTriggerPrompts = [
   'Set up telemetry for my Node.js app',
   'How do I track requests in App Insights?',
   'Add Application Insights monitoring to my project',
-  'Add retry logic to my HTTP client',
+  'Configure App Insights for my Azure web app',
 ];
 
 const shouldNotTriggerPrompts = [
   'What is the weather today?',
   'Help me write a poem',
   'Query my Application Insights logs',  // → azure-observability
-  'Create a health check endpoint',     // → service-health
+  'Create an alert in Azure Monitor',     // → azure-observability
   'Show me my App Insights dashboard',    // → azure-observability
-  'How much does App Insights cost?',     // → azure-cost-optimization
+  'How much does App Insights cost?',     // → azure-cost
   'Help me with AWS CloudWatch',          // Wrong cloud provider
 ];
 ```
@@ -91,7 +91,7 @@ const shouldNotTriggerPrompts = [
 ```yaml
 ---
 name: azure-security
-description: 'Security best practices including secrets management, authentication patterns, role-based access control, and threat detection.'
+description: 'Azure Security Services including Key Vault, Managed Identity, RBAC, Entra ID, and Defender. Provides secrets management, credential-free authentication, role-based access control, and threat protection.'
 ---
 ```
 
@@ -191,7 +191,7 @@ description: "Deploy applications to Azure App Service, Azure Functions, and Sta
 'Validate my Bicep template',        // → azure-deployment-preflight
 'Create an azure.yaml file',         // → azure-create-app
 'Why did my deployment fail?',       // → azure-diagnostics
-'How much will this deployment cost?', // → azure-cost-optimization
+'How much will this deployment cost?', // → azure-cost
 ```
 
 ---

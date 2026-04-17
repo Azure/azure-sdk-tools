@@ -282,7 +282,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 ReleasePlanId = 77,
                 IsDataPlane = true
             };
-            mockDevOps.Setup(x => x.GetReleasePlanByTypeSpecProjectPathAsync("specification/testcontoso/Contoso.Management", It.IsAny<CancellationToken>()))
+            mockDevOps.Setup(x => x.GetReleasePlanByTypeSpecProjectPathAsync("specification/testcontoso/Contoso.Management", It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(expectedReleasePlan);
 
             var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>());
@@ -1019,7 +1019,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 IsManagementPlane = true
             };
             // Work item ID not provided (0), TypeSpec path lookup returns null, PR URL lookup returns the plan
-            mockDevOps.Setup(x => x.GetReleasePlanByTypeSpecProjectPathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((ReleasePlanWorkItem?)null);
+            mockDevOps.Setup(x => x.GetReleasePlanByTypeSpecProjectPathAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>())).ReturnsAsync((ReleasePlanWorkItem?)null);
             mockDevOps.Setup(x => x.GetReleasePlanAsync("https://github.com/Azure/azure-rest-api-specs/pull/99999", It.IsAny<CancellationToken>())).ReturnsAsync(releasePlan);
             mockDevOps.Setup(x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 500 });
@@ -1043,7 +1043,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.Message, Does.Contain("Successfully updated release plan 500"));
             Assert.That(result.PackageType, Is.EqualTo(SdkType.Management));
 
-            mockDevOps.Verify(x => x.GetReleasePlanByTypeSpecProjectPathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+            mockDevOps.Verify(x => x.GetReleasePlanByTypeSpecProjectPathAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Once);
             mockDevOps.Verify(x => x.GetReleasePlanAsync("https://github.com/Azure/azure-rest-api-specs/pull/99999", It.IsAny<CancellationToken>()), Times.Once);
         }
 
@@ -1129,6 +1129,35 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOps.Verify(x => x.UpdateReleasePlanSDKDetailsAsync(It.IsAny<int>(), It.IsAny<List<SDKInfo>>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
+        // ==================== KPI Attestation Tests ====================
+
+        [Test]
+        public async Task Test_GetKPIAttestationStatus_NoInputs_ReturnsError()
+        {
+            var result = await releasePlanTool.GetKPIAttestationStatus("", "", "");
+            Assert.That(result.ResponseError, Does.Contain("Either provide both product ID and lifecycle"));
+
+            var badLifecycle = await releasePlanTool.GetKPIAttestationStatus("product-123", "InvalidLifecycle");
+            Assert.That(badLifecycle.ResponseError, Does.Contain("Invalid lifecycle value"));
+        }
+
+        [Test]
+        public async Task Test_GetKPIAttestationStatus_WithProductAndLifecycle_ReturnsNoError()
+        {
+            var result = await releasePlanTool.GetKPIAttestationStatus("product-123", "Private Preview");
+            Assert.IsNull(result.ResponseError);
+            Assert.That(result.Message, Does.Contain("No release plans found"));
+        }
+
+        [Test]
+        public async Task Test_GetKPIAttestationStatus_WithTypeSpecPath_ResolvesProductInfo()
+        {
+            var result = await releasePlanTool.GetKPIAttestationStatus(typeSpecProjectPath: "specification/testcontoso/Contoso.Management");
+            Assert.IsNull(result.ResponseError);
+            Assert.That(result.Message, Does.Contain("12345678-1234-5678-9012-123456789012"));
+            Assert.That(result.Message, Does.Contain("GA"));
+        }
+      
         private ReleasePlanTool CreateReleasePlanToolWithMockedTypeSpec(string typeSpecPath, TypeSpecProject typeSpecProject)
         {
             var mockTypeSpecHelper = new Mock<ITypeSpecHelper>();

@@ -140,13 +140,14 @@ extends:
                       $nextVersion = "$major.$minor.$patch"
                     }
 
-                    $(Build.SourcesDirectory)/eng/common/scripts/Update-Changelog.ps1 -Version $currentVersion -ChangelogPath $changelogPath -Unreleased $false -ReleaseDate $releaseDate
-                    $(Build.SourcesDirectory)/eng/common/scripts/Update-Changelog.ps1 -Version $nextVersion -ChangelogPath $changelogPath -Unreleased $true
+                    $(Build.SourcesDirectory)/eng/common/scripts/Update-ChangeLog.ps1 -Version $currentVersion -ChangelogPath $changelogPath -Unreleased $false -ReleaseDate $releaseDate
+                    $(Build.SourcesDirectory)/eng/common/scripts/Update-ChangeLog.ps1 -Version $nextVersion -ChangelogPath $changelogPath -Unreleased $true
                 displayName: 'Roll APIView changelog to next cycle'
                 condition: eq(variables['Build.Reason'], 'Manual')
 
               - ${{ if and(eq(parameters.RollChangelog, true), eq(variables['System.TeamProject'], 'internal')) }}:
                 - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
+                  condition: eq(variables['Build.Reason'], 'Manual')
                   parameters:
                     RepoName: azure-sdk-tools
                     PRBranchName: apiview-changelog-roll-$(Build.BuildId)

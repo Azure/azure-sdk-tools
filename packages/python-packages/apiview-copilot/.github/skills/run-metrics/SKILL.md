@@ -99,7 +99,7 @@ if (Test-Path output/charts/comment_bucket_trends.png) { Remove-Item output/char
 
 Optional additions:
 - --environment staging
-- --languages Python CSharp Java TypeScript
+- --languages Python CSharp C# Java TypeScript JavaScript Go
 - --exclude-human
 - --neutral
 

@@ -1809,10 +1809,14 @@ def report_comment_bucket_trends(
         except ValueError as exc:
             raise CLIError("Invalid --end-date value. Use YYYY-MM-DD format.") from exc
 
+    normalized_languages = None
+    if languages:
+        normalized_languages = [resolve_language(language)[1] for language in languages]
+
     include_human = not exclude_human
 
     reports = build_language_comment_bucket_reports(
-        languages=languages,
+        languages=normalized_languages,
         months=months,
         end_date=parsed_end_date,
         include_human=include_human,
@@ -1825,12 +1829,14 @@ def report_comment_bucket_trends(
         include_human=include_human,
         include_neutral=neutral,
         raw=False,
+        environment=environment,
     )
     print_comment_bucket_report(
         reports,
         saved_path,
         include_human=include_human,
         include_neutral=neutral,
+        environment=environment,
     )
 
 

@@ -6,6 +6,8 @@ APIView is the Azure SDK team's **API review platform**. It ingests SDK artifact
 
 It supports **16+ languages** (C#, Java, Python, JavaScript/TypeScript, Go, Rust, C, C++, Swift, Protocol Buffers, Swagger/OpenAPI, TypeSpec, and more) through a common token model that normalizes every language into the same reviewable format.
 
+For APIView release notes, see [../CHANGELOG.md](../CHANGELOG.md).
+
 > **Development policy:** New features should target the Angular SPA and tree-token model only. The legacy Razor Pages frontend and flat-token parser are not receiving new investment. See [legacy.md](legacy.md) for details on what remains and the migration path.
 
 ### a. What APIView Does

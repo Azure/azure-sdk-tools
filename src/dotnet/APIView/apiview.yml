@@ -2,6 +2,14 @@ parameters:
   - name: AzureSdkForNetDevOpsFeed
     type: string
     default: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json'
+  - name: RollChangelog
+    displayName: Roll APIView changelog and create PR (manual only)
+    type: boolean
+    default: false
+  - name: NextChangelogVersion
+    displayName: Next changelog version (x.y.z, optional)
+    type: string
+    default: ''
   - name: CSharpAPIParserVersion
     type: string
     default: '1.0.0-dev.20260223.3'
@@ -101,6 +109,53 @@ extends:
                   enabled: true # Enable CG only on the build job
 
             steps:
+              - pwsh: |
+                  $changelogPath = "$(Build.SourcesDirectory)/src/dotnet/APIView/CHANGELOG.md"
+                  $entry = Select-String -Path $changelogPath -Pattern '^##\s+(?<version>\d+\.\d+\.\d+)\s+\((?<status>Unreleased|\d{4}-\d{2}-\d{2})\)$' | Select-Object -First 1
+                  if (-not $entry) {
+                    throw "Could not find semver changelog heading like '## x.y.z (Unreleased)' in $changelogPath"
+                  }
+
+                  $currentVersion = $entry.Matches[0].Groups['version'].Value
+                  Write-Host "##vso[task.setvariable variable=APIViewCurrentVersion]$currentVersion"
+                  $(Build.SourcesDirectory)/eng/common/scripts/Verify-ChangeLog.ps1 -ChangeLogLocation $changelogPath -VersionString $currentVersion -ForRelease $false
+                displayName: 'Validate APIView changelog format'
+
+              - ${{ if eq(parameters.RollChangelog, true) }}:
+                - pwsh: |
+                    $changelogPath = "$(Build.SourcesDirectory)/src/dotnet/APIView/CHANGELOG.md"
+                    $currentVersion = "$(APIViewCurrentVersion)"
+                    $releaseDate = (Get-Date).ToString('yyyy-MM-dd')
+
+                    $nextVersion = '${{ parameters.NextChangelogVersion }}'
+                    if ([string]::IsNullOrWhiteSpace($nextVersion)) {
+                      $parts = $currentVersion.Split('.')
+                      if ($parts.Count -ne 3) {
+                        throw "Current changelog version is not semver: $currentVersion"
+                      }
+
+                      $major = [int]$parts[0]
+                      $minor = [int]$parts[1]
+                      $patch = [int]$parts[2] + 1
+                      $nextVersion = "$major.$minor.$patch"
+                    }
+
+                    $(Build.SourcesDirectory)/eng/common/scripts/Update-Changelog.ps1 -Version $currentVersion -ChangelogPath $changelogPath -Unreleased $false -ReleaseDate $releaseDate
+                    $(Build.SourcesDirectory)/eng/common/scripts/Update-Changelog.ps1 -Version $nextVersion -ChangelogPath $changelogPath -Unreleased $true
+                displayName: 'Roll APIView changelog to next cycle'
+                condition: eq(variables['Build.Reason'], 'Manual')
+
+              - ${{ if and(eq(parameters.RollChangelog, true), eq(variables['System.TeamProject'], 'internal')) }}:
+                - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
+                  parameters:
+                    RepoName: azure-sdk-tools
+                    PRBranchName: apiview-changelog-roll-$(Build.BuildId)
+                    CommitMsg: "[APIView] Roll changelog for next cycle ($(Date:yyyy-MM-dd))"
+                    PRTitle: "[APIView] Roll changelog for next cycle ($(Date:yyyy-MM-dd))"
+                    WorkingDirectory: $(Build.SourcesDirectory)
+                    ScriptDirectory: eng/common/scripts
+                
+
               - task: NodeTool@0
                 inputs:
                   versionSpec: '$(NodeVersion)'

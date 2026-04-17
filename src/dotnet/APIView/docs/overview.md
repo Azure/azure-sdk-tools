@@ -54,17 +54,25 @@ Review (ReviewListItemModel)
 │   One per package (e.g., "Azure.Storage.Blobs" for C#).
 │   Fields: id, PackageName, Language, CreatedBy, IsApproved
 │
-└──► APIRevision (APIRevisionListItemModel)   [1 → many per Review]
-    │   One per upload / version. Type is Manual, Automatic, or PullRequest.
-    │   Fields: ReviewId, APIRevisionType, IsApproved, Approvers, IsReleased, ReleasedOn
-    │   Carries change history (ChangeHistory[]) for audit.
+└──► APIVersion (APIVersionModel)   [1 → many per Review]
+    │   One per distinct package version string (e.g. "1.0.0-beta.1").
+    │   Normalizes the raw version into a canonical VersionIdentifier and classifies
+    │   it as Stable, Preview, or Rolling. Tracks PR association and retention state.
+    │   Fields: ReviewId, VersionIdentifier, Kind, PullRequestNumber, PrStatus,
+    │           RetainUntil, IsDeleted, ChangeHistory[]
     │
-    └──► CodeFile (APICodeFileModel)   [1 → many per APIRevision]
-             The parsed token stream stored in Blob Storage.
-             Fields: Language, PackageVersion, PackageName, ContentHash
+    └──► APIRevision (APIRevisionListItemModel)   [1 → many per APIVersion / Review]
+        │   One per upload / version snapshot. Type is Manual, Automatic, or PullRequest.
+        │   Fields: ReviewId, APIRevisionType, IsApproved, Approvers, IsReleased, ReleasedOn
+        │   Carries change history (ChangeHistory[]) for audit.
+        │
+        └──► CodeFile (APICodeFileModel)   [1 → many per APIRevision]
+                 The parsed token stream stored in Blob Storage.
+                 Fields: Language, PackageVersion, PackageName, ContentHash
 ```
 
 A **Review** is the long-lived container for a package.  
+An **APIVersion** represents a specific version string of the package and groups all revisions built from that version. It provides a stable identity for version-level operations such as approval, retention, and PR association.  
 An **APIRevision** is a snapshot of the API surface at a point in time.  
 A **CodeFile** is the serialized parser output (tokens + navigation + diagnostics).
 
@@ -120,6 +128,7 @@ A separate set of controllers use **token authentication** (`RequireTokenAuthent
 | `AutoReviewService` | Automatic revision creation, matching against approved revisions |
 | `NotificationManager` | Email and SignalR notifications |
 | `PermissionsManager` | RBAC for users and approvers |
+| `APIVersionsManager` | Version entity lifecycle |
 
 ### d. Data Stores
 

@@ -17,9 +17,10 @@ export function getFirstReleaseContent(packageFolderPath: string, isStableReleas
     const firstBetaContent = `Initial release of the ${packageJsonData.name} package`;
     const firstStableContent = `This is the first stable version with the package of ${packageJsonData.name}`;
     const hlcClientContent = `The package of ${packageJsonData.name} is using our next generation design principles. To learn more, please refer to our documentation [Quick Start](https://aka.ms/azsdk/js/mgmt/quickstart).`
+    const modularClientFirstReleaseContent = `This is the first ${isStableRelease ? 'stable' : 'preview'} release of the ${packageJsonData.name} package. It introduces a new SDK generation with layered APIs, smaller bundles, and improved ergonomics. For more details, see the https://aka.ms/azsdk/js/sdk/quickstart.`;
     switch (sdkType) {
         case SDKType.ModularClient:
-            return isStableRelease ? firstStableContent : firstBetaContent;
+            return modularClientFirstReleaseContent;
         case SDKType.HighLevelClient:
             return hlcClientContent;
         case SDKType.RestLevelClient:
@@ -69,18 +70,16 @@ export async function makeChangesForMigrateTrack1ToTrack2(
     updateMode: UpdateMode
 ) {
     const packageJsonData: any = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), 'utf8'));
+    const sdkType = getSDKType(packageFolderPath);
+    const modularClientMigrationContent = `The ${packageJsonData.name} package has been upgraded to a new SDK generation that provides layered APIs, smaller bundles, and improved ergonomics. Starting from version ${nextPackageVersion}, this release includes breaking changes.\n\nTo migrate existing applications, see the https://aka.ms/azsdk/js/sdk/migration. For more information, refer to the https://aka.ms/azsdk/js/sdk/quickstart.`;
+    const defaultMigrationContent = `The package of ${packageJsonData.name} is using our next generation design principles since version ${nextPackageVersion}, which contains breaking changes.\n\nTo understand the detail of the change, please refer to [Changelog](https://aka.ms/js-track2-changelog).\n\nTo migrate the existing applications to the latest version, please refer to [Migration Guide](https://aka.ms/js-track2-migration-guide).\n\nTo learn more, please refer to our documentation [Quick Start](https://aka.ms/azsdk/js/mgmt/quickstart).`;
+    const migrationContent = sdkType === SDKType.ModularClient ? modularClientMigrationContent : defaultMigrationContent;
     const content = `# Release History
     
 ## ${nextPackageVersion} (${sdkReleaseDate})
 ### Features Added
 
-The package of ${packageJsonData.name} is using our next generation design principles since version ${nextPackageVersion}, which contains breaking changes.
-
-To understand the detail of the change, please refer to [Changelog](https://aka.ms/js-track2-changelog).
-
-To migrate the existing applications to the latest version, please refer to [Migration Guide](https://aka.ms/js-track2-migration-guide).
-
-To learn more, please refer to our documentation [Quick Start](https://aka.ms/azsdk/js/mgmt/quickstart).
+${migrationContent}
 `;
     
     // Decide how to handle changelog based on update mode

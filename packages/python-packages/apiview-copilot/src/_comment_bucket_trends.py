@@ -11,20 +11,14 @@ from __future__ import annotations
 import argparse
 import calendar
 import math
-import sys
 from dataclasses import asdict, dataclass
 from datetime import date
 from pathlib import Path
 from typing import Optional
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
-
 from src._apiview import (
     ActiveReviewMetadata,
     ActiveRevisionMetadata,
-    get_active_reviews,
     get_apiview_cosmos_client,
     get_comments_in_date_range,
     get_version_type,
@@ -64,26 +58,29 @@ class MonthlyCommentBucketPoint:
     positive_boundary_percentage: float
 
 
-def get_last_n_month_ranges(months: int = DEFAULT_MONTHS, today: Optional[date] = None) -> list[tuple[date, date]]:
-    """Return discrete calendar-month ranges for the last N full months.
+def get_last_n_month_ranges(
+    months: int = DEFAULT_MONTHS,
+    end_date: Optional[date] = None,
+) -> list[tuple[date, date]]:
+    """Return calendar-month ranges ending on the supplied end date.
 
-    The current (potentially partial) month is excluded. For example, if today
-    is 2026-04-17 and *months* is 6 the ranges cover October 2025 through
-    March 2026.
+    The month containing the end date counts as one of the requested months,
+    even when it is only a partial month.
     """
     if months < 1:
         raise ValueError("months must be at least 1")
 
-    today = today or date.today()
-    # Exclude the current partial month: the most recent full month is last month.
-    last_full_month_index = today.year * 12 + (today.month - 1) - 1
+    end_date = end_date or date.today()
+    end_month_index = end_date.year * 12 + (end_date.month - 1)
     ranges: list[tuple[date, date]] = []
 
-    for month_index in range(last_full_month_index - months + 1, last_full_month_index + 1):
+    for month_index in range(end_month_index - months + 1, end_month_index + 1):
         year = month_index // 12
         month = (month_index % 12) + 1
         last_day = calendar.monthrange(year, month)[1]
-        ranges.append((date(year, month, 1), date(year, month, last_day)))
+        month_start = date(year, month, 1)
+        month_end = end_date if month_index == end_month_index else date(year, month, last_day)
+        ranges.append((month_start, month_end))
 
     return ranges
 
@@ -105,7 +102,7 @@ def _build_language_comment_bucket_point(
     include_human: bool,
     include_neutral: bool,
 ) -> MonthlyCommentBucketPoint:
-    """Build one monthly bucket point using the current metrics.py logic plus optional buckets."""
+    """Build one monthly bucket point using current metrics logic plus optional buckets."""
     filtered_reviews = [review for review in reviews if review.language.lower() == language.lower()]
     segment = _build_metrics_segment(
         start_date=start_date.isoformat(),
@@ -124,13 +121,7 @@ def _build_language_comment_bucket_point(
     deleted_count = segment.deleted_ai_comment_count or 0
 
     total_included = (
-        good_count
-        + implicit_good_count
-        + neutral_count
-        + human_count
-        + implicit_bad_count
-        + bad_count
-        + deleted_count
+        good_count + implicit_good_count + neutral_count + human_count + implicit_bad_count + bad_count + deleted_count
     )
 
     good_percentage = _to_percentage(good_count, total_included)
@@ -168,27 +159,22 @@ def _build_language_comment_bucket_point(
 def build_language_comment_bucket_reports(
     languages: Optional[list[str]] = None,
     months: int = DEFAULT_MONTHS,
-    today: Optional[date] = None,
+    end_date: Optional[date] = None,
     *,
     include_human: bool = False,
     include_neutral: bool = False,
+    environment: str = PRODUCTION_ENVIRONMENT,
 ) -> dict[str, list[dict]]:
-    """Build per-language bucket reports for the last N discrete calendar months.
-
-    Fetches all Cosmos data once for the full date range (3 queries), then
-    partitions comments by month locally to avoid repeated round-trips.
-    """
+    """Build per-language bucket reports for the requested month lookback window."""
     selected_languages = languages or DEFAULT_LANGUAGES
     reports = {language: [] for language in selected_languages}
-    month_ranges = get_last_n_month_ranges(months=months, today=today)
+    month_ranges = get_last_n_month_ranges(months=months, end_date=end_date)
     if not month_ranges:
         return reports
 
     full_start = month_ranges[0][0]
     full_end = month_ranges[-1][1]
 
-    # --- Single fetch for the entire window (3 Cosmos queries) ---
-    # Need CreatedOn in the projection so we can partition by month locally.
     select_fields = list(METRICS_COMMENT_FIELDS)
     if "CreatedOn" not in select_fields:
         select_fields.append("CreatedOn")
@@ -196,28 +182,28 @@ def build_language_comment_bucket_reports(
     all_raw_comments = get_comments_in_date_range(
         full_start.isoformat(),
         full_end.isoformat(),
-        environment=PRODUCTION_ENVIRONMENT,
+        environment=environment,
         select_fields=select_fields,
     )
-    non_diag = [c for c in all_raw_comments if c.get("CommentSource") != "Diagnostic"]
+    non_diag = [comment for comment in all_raw_comments if comment.get("CommentSource") != "Diagnostic"]
 
     review_ids: set[str] = set()
     revision_ids: set[str] = set()
     for comment in non_diag:
-        rid = comment.get("ReviewId")
-        rev_id = comment.get("APIRevisionId")
-        if rid:
-            review_ids.add(rid)
-        if rev_id:
-            revision_ids.add(rev_id)
+        review_id = comment.get("ReviewId")
+        revision_id = comment.get("APIRevisionId")
+        if review_id:
+            review_ids.add(review_id)
+        if revision_id:
+            revision_ids.add(revision_id)
 
     review_results: list[dict] = []
     revision_results: list[dict] = []
 
     if review_ids:
-        reviews_container = get_apiview_cosmos_client(container_name="Reviews", environment=PRODUCTION_ENVIRONMENT)
-        params = [{"name": f"@id_{i}", "value": rid} for i, rid in enumerate(review_ids)]
-        clauses = [f"c.id = @id_{i}" for i in range(len(review_ids))]
+        reviews_container = get_apiview_cosmos_client(container_name="Reviews", environment=environment)
+        params = [{"name": f"@id_{index}", "value": review_id} for index, review_id in enumerate(review_ids)]
+        clauses = [f"c.id = @id_{index}" for index in range(len(review_ids))]
         query = f"SELECT c.id, c.PackageName, c.Language FROM c WHERE ({' OR '.join(clauses)})"
         review_results = list(
             reviews_container.query_items(query=query, parameters=params, enable_cross_partition_query=True)
@@ -225,28 +211,36 @@ def build_language_comment_bucket_reports(
 
     if revision_ids:
         revisions_container = get_apiview_cosmos_client(
-            container_name="APIRevisions", environment=PRODUCTION_ENVIRONMENT
+            container_name="APIRevisions",
+            environment=environment,
         )
-        rev_params = [{"name": f"@rev_id_{i}", "value": rev_id} for i, rev_id in enumerate(revision_ids)]
-        rev_clauses = [f"c.id = @rev_id_{i}" for i in range(len(revision_ids))]
+        rev_params = [
+            {"name": f"@rev_id_{index}", "value": revision_id} for index, revision_id in enumerate(revision_ids)
+        ]
+        rev_clauses = [f"c.id = @rev_id_{index}" for index in range(len(revision_ids))]
         rev_query = (
             "SELECT c.id, c.ReviewId, c.packageVersion, c.ChangeHistory, c.HasAutoGeneratedComments "
             f"FROM c WHERE ({' OR '.join(rev_clauses)})"
         )
         revision_results = list(
             revisions_container.query_items(
-                query=rev_query, parameters=rev_params, enable_cross_partition_query=True
+                query=rev_query,
+                parameters=rev_params,
+                enable_cross_partition_query=True,
             )
         )
 
-    # --- Partition per month locally ---
     for start_date, end_date in month_ranges:
         reviews, month_comments = _build_month_metadata(
-            start_date, end_date, all_raw_comments, review_results, revision_results
+            start_date,
+            end_date,
+            all_raw_comments,
+            review_results,
+            revision_results,
         )
         if OMIT_LANGUAGES:
-            omit_lower = {lang.lower() for lang in OMIT_LANGUAGES}
-            reviews = [r for r in reviews if r.language.lower() not in omit_lower]
+            omit_lower = {language.lower() for language in OMIT_LANGUAGES}
+            reviews = [review for review in reviews if review.language.lower() not in omit_lower]
 
         for language in selected_languages:
             reports[language].append(
@@ -273,50 +267,46 @@ def _build_month_metadata(
     review_results: list[dict],
     revision_results: list[dict],
 ) -> tuple[list[ActiveReviewMetadata], list[dict]]:
-    """Partition pre-fetched data into one month's ActiveReviewMetadata + raw comments.
-
-    Mirrors the logic in ``get_active_reviews`` but operates on already-fetched data
-    instead of issuing new Cosmos queries.
-    """
+    """Partition pre-fetched data into one month's metadata and raw comments."""
     start_iso = to_iso8601(start_date.isoformat())
     end_iso = to_iso8601(end_date.isoformat(), end_of_day=True)
 
-    # Filter comments to this month
-    month_comments = [c for c in all_raw_comments if start_iso <= (c.get("CreatedOn") or "") <= end_iso]
-    non_diag = [c for c in month_comments if c.get("CommentSource") != "Diagnostic"]
+    month_comments = [
+        comment for comment in all_raw_comments if start_iso <= (comment.get("CreatedOn") or "") <= end_iso
+    ]
+    non_diag = [comment for comment in month_comments if comment.get("CommentSource") != "Diagnostic"]
 
     review_to_revisions: dict[str, set[str]] = {}
     active_revision_ids: set[str] = set()
     for comment in non_diag:
-        rid = comment.get("ReviewId")
-        rev_id = comment.get("APIRevisionId")
-        if rid and rev_id:
-            active_revision_ids.add(rev_id)
-            review_to_revisions.setdefault(rid, set()).add(rev_id)
+        review_id = comment.get("ReviewId")
+        revision_id = comment.get("APIRevisionId")
+        if review_id and revision_id:
+            active_revision_ids.add(revision_id)
+            review_to_revisions.setdefault(review_id, set()).add(revision_id)
 
     active_review_ids = set(review_to_revisions.keys())
 
-    # Build revision map with month-scoped approval windowing
     revision_map: dict[str, dict] = {}
-    for rev in revision_results:
-        if rev["id"] not in active_revision_ids:
+    for revision in revision_results:
+        if revision["id"] not in active_revision_ids:
             continue
         approval = None
-        change_history = rev.get("ChangeHistory", [])
+        change_history = revision.get("ChangeHistory", [])
         if change_history and isinstance(change_history, list):
-            for change in sorted(change_history, key=lambda x: x.get("ChangedOn", ""), reverse=True):
+            for change in sorted(change_history, key=lambda item: item.get("ChangedOn", ""), reverse=True):
                 if change.get("ChangeAction") == "Approved":
                     changed_on = change.get("ChangedOn")
                     if changed_on and start_iso <= changed_on <= end_iso:
                         approval = changed_on
                         break
-        pkg_version = rev.get("packageVersion")
-        revision_map[rev["id"]] = {
-            "review_id": rev.get("ReviewId"),
-            "package_version": pkg_version,
+        package_version = revision.get("packageVersion")
+        revision_map[revision["id"]] = {
+            "review_id": revision.get("ReviewId"),
+            "package_version": package_version,
             "approval": approval,
-            "has_auto_generated_comments": rev.get("HasAutoGeneratedComments", False),
-            "version_type": get_version_type(pkg_version),
+            "has_auto_generated_comments": revision.get("HasAutoGeneratedComments", False),
+            "version_type": get_version_type(package_version),
         }
 
     metadata: list[ActiveReviewMetadata] = []
@@ -332,37 +322,52 @@ def _build_month_metadata(
         active_revisions: list[ActiveRevisionMetadata] = []
         if review_id in review_to_revisions:
             version_to_revisions: dict[str, list[str]] = {}
-            for rev_id in review_to_revisions[review_id]:
-                if rev_id in revision_map:
-                    pkg = revision_map[rev_id]["package_version"]
-                    version_to_revisions.setdefault(pkg, []).append(rev_id)
+            for revision_id in review_to_revisions[review_id]:
+                if revision_id in revision_map:
+                    package_version = revision_map[revision_id]["package_version"]
+                    version_to_revisions.setdefault(package_version, []).append(revision_id)
 
-            for pkg_version, rev_ids in version_to_revisions.items():
-                approvals = [revision_map[r].get("approval") for r in rev_ids if r in revision_map]
-                most_recent = max((a for a in approvals if a is not None), default=None)
+            for package_version, revision_ids in version_to_revisions.items():
+                approvals = [
+                    revision_map[revision_id].get("approval")
+                    for revision_id in revision_ids
+                    if revision_id in revision_map
+                ]
+                most_recent = max((approval for approval in approvals if approval is not None), default=None)
                 has_copilot = any(
-                    revision_map[r].get("has_auto_generated_comments", False)
-                    for r in rev_ids
-                    if r in revision_map
+                    revision_map[revision_id].get("has_auto_generated_comments", False)
+                    for revision_id in revision_ids
+                    if revision_id in revision_map
                 )
                 active_revisions.append(
                     ActiveRevisionMetadata(
-                        revision_ids=rev_ids,
-                        package_version=pkg_version,
+                        revision_ids=revision_ids,
+                        package_version=package_version,
                         approval=most_recent,
                         has_copilot_review=has_copilot,
-                        version_type=get_version_type(pkg_version),
+                        version_type=get_version_type(package_version),
                     )
                 )
 
         metadata.append(
-            ActiveReviewMetadata(review_id=review_id, name=review_name, language=language, revisions=active_revisions)
+            ActiveReviewMetadata(
+                review_id=review_id,
+                name=review_name,
+                language=language,
+                revisions=active_revisions,
+            )
         )
 
     return metadata, month_comments
 
 
-def _build_chart_rows(report: list[dict], *, include_human: bool, include_neutral: bool, raw: bool = False) -> list[dict]:
+def _build_chart_rows(
+    report: list[dict],
+    *,
+    include_human: bool,
+    include_neutral: bool,
+    raw: bool = False,
+) -> list[dict]:
     """Return stacked chart rows in display order for one language report."""
     if raw:
         rows = [
@@ -403,7 +408,7 @@ def _build_chart_rows(report: list[dict], *, include_human: bool, include_neutra
     return rows
 
 
-def generate_chart(
+def generate_comment_bucket_chart(
     reports: dict[str, list[dict]],
     output_path: Path = DEFAULT_OUTPUT_PATH,
     *,
@@ -524,7 +529,7 @@ def generate_chart(
     return output_path
 
 
-def _print_report(
+def print_comment_bucket_report(
     reports: dict[str, list[dict]],
     output_path: Path,
     *,
@@ -576,13 +581,19 @@ def main() -> None:
         "--months",
         type=int,
         default=DEFAULT_MONTHS,
-        help="Number of calendar months to include. Defaults to 6.",
+        help="Number of calendar months to look back from the end date. Defaults to 6.",
+    )
+    parser.add_argument(
+        "--end-date",
+        type=date.fromisoformat,
+        default=None,
+        help="Inclusive query end date in YYYY-MM-DD format. Defaults to today.",
     )
     parser.add_argument(
         "--languages",
         nargs="+",
         default=DEFAULT_LANGUAGES,
-        help="Languages to include. Defaults to C#, Java, JavaScript, and Python.",
+        help="Languages to include. Defaults to Python, C#, Java, and JavaScript.",
     )
     parser.add_argument(
         "--human",
@@ -599,7 +610,7 @@ def main() -> None:
         choices=["normalize", "raw"],
         default="normalize",
         dest="chart_format",
-        help="Chart format: 'normalize' (default) shows percentage bars; 'raw' shows raw count bars.",
+        help="Chart format: normalize shows percentage bars; raw shows raw count bars.",
     )
     parser.add_argument(
         "--output",
@@ -607,24 +618,34 @@ def main() -> None:
         default=DEFAULT_OUTPUT_PATH,
         help="Output PNG path. Defaults to output/charts/comment_bucket_trends.png.",
     )
+    parser.add_argument(
+        "--environment",
+        type=str,
+        default=PRODUCTION_ENVIRONMENT,
+        choices=["production", "staging"],
+        help="The APIView environment to query. Defaults to production.",
+    )
     args = parser.parse_args()
     raw = args.chart_format == "raw"
 
     reports = build_language_comment_bucket_reports(
         languages=args.languages,
         months=args.months,
+        end_date=args.end_date,
         include_human=args.human,
         include_neutral=args.neutral,
+        environment=args.environment,
     )
-    output_path = generate_chart(
+    output_path = generate_comment_bucket_chart(
         reports,
         output_path=args.output,
         include_human=args.human,
         include_neutral=args.neutral,
         raw=raw,
     )
-    _print_report(reports, output_path, include_human=args.human, include_neutral=args.neutral)
-
-
-if __name__ == "__main__":
-    main()
+    print_comment_bucket_report(
+        reports,
+        output_path,
+        include_human=args.human,
+        include_neutral=args.neutral,
+    )

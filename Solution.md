@@ -242,24 +242,23 @@ Diagnostic comments also do not create submit-review notification batches.
 2. Single reviewer submits `Approve` → existing approval state updates and submission is recorded.
 3. Two reviewers submit independently → two submissions, no cross-contamination.
 4. Single reviewer submits `Feedback` → review remains not approved and submission is recorded.
-5. Submit includes invalid/foreign `commentIds` → request is rejected.
-6. Legacy comments remain visible and queryable.
-7. Cross-version isolation: submission for version A never includes comments from version B.
-8. Reviewer already assigned with no open request: clicking `Request Review` button creates a new `ReviewRequestModel` and sends notification without creating a `ReviewSubmissionModel`.
-9. Reviewer already assigned with an open request: `Request Review` button is disabled and shows `Already Requested`.
-10. Copilot submission creates its own `ReviewSubmissionModel` and never bundles comments with a human reviewer's submission.
-11. Copilot submission never sets approved state, even if a `Decision` value is present.
-12. `Feedback` submit with no grouped comments and empty `submissionMessage` is rejected.
-13. `Approve` submit with no comments and empty `submissionMessage` is accepted.
-14. Editing/deleting a comment after submit does not rewrite historical submission rendering.
-15. Reviewer A submits `Approve`, then reviewer B submits `Feedback` (blocking): version remains not approved until policy is satisfied.
-16. A later `Approve` from reviewer B updates only reviewer B's latest decision; approval state is recomputed from all reviewers' latest decisions.
-17. One reviewer's submission does not overwrite another reviewer's latest decision record.
-18. Reviewer A submits `Approve` and reviewer B has not submitted yet: version remains approved unless there is blocking `Feedback`.
-19. Two assigned reviewers both submit `Approve`: version becomes approved.
-20. Removing a reviewer cancels any open request for that reviewer, but does not automatically invalidate that reviewer's previously submitted approval.
-21. No reviewers assigned and no `Approve` submissions for the version: version remains not approved.
-22. One reviewer submits `Approve`, is later removed, and no other blocking feedback exists: version remains approved.
-23. Submit with no open request auto-adds submitter as reviewer, creates an implicit `ReviewRequestModel`, and still succeeds.
-24. Submit with no open request uses prior-submission boundary (or version creation time for first submit) as `RequestedOn` anchor for comment grouping.
-25. Existing unresolved-comment approval gating behavior is unchanged: if current server rules block `Approve` with unresolved comments, submit is rejected the same way as today.
+5. Legacy comments remain visible and queryable.
+6. Cross-version isolation: submission for version A never includes comments from version B.
+7. Reviewer already assigned with no open request: clicking `Request Review` button creates a new `ReviewRequestModel` and sends notification without creating a `ReviewSubmissionModel`.
+8. Reviewer already assigned with an open request: `Request Review` button is disabled and shows `Already Requested`.
+9. Copilot submission creates its own `ReviewSubmissionModel` and never bundles comments with a human reviewer's submission.
+10. Copilot submission never sets approved state, even if a `Decision` value is present.
+11. `Feedback` submit with no grouped comments and empty `submissionMessage` is rejected.
+12. `Approve` submit with no comments and empty `submissionMessage` is accepted.
+13. Editing/deleting a comment after submit does not rewrite historical submission rendering.
+14. Reviewer A submits `Approve`, then reviewer B submits `Feedback` (blocking): version remains not approved until policy is satisfied.
+15. A later `Approve` from reviewer B updates only reviewer B's latest decision; approval state is recomputed from all reviewers' latest decisions.
+16. One reviewer's submission does not overwrite another reviewer's latest decision record.
+17. Reviewer A submits `Approve` and reviewer B has not submitted yet: version remains approved unless there is blocking `Feedback`.
+18. Two assigned reviewers both submit `Approve`: version becomes approved.
+19. Removing a reviewer cancels any open request for that reviewer, but does not automatically invalidate that reviewer's previously submitted approval.
+20. No reviewers assigned and no `Approve` submissions for the version: version remains not approved.
+21. One reviewer submits `Approve`, is later removed, and no other blocking feedback exists: version remains approved.
+22. Submit with no open request auto-adds submitter as reviewer, creates an implicit `ReviewRequestModel`, and still succeeds.
+23. Submit with no open request uses prior-submission boundary (or version creation time for first submit) as `RequestedOn` anchor for comment grouping.
+24. Existing unresolved-comment approval gating behavior is unchanged: if current server rules block `Approve` with unresolved comments, submit is rejected the same way as today.

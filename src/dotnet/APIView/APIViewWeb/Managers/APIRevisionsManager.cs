@@ -196,7 +196,7 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
-        /// GetNewAPIRevisionAsync
+        /// CreateAPIRevisionAsync
         /// </summary>
         /// <param name="apiRevisionType"></param>
         /// <param name="reviewId"></param>
@@ -208,7 +208,7 @@ namespace APIViewWeb.Managers
         /// <param name="sourceBranch"></param>
         /// <param name="packageVersion"></param>
         /// <returns></returns>
-        public async Task<APIRevisionListItemModel> GetNewAPIRevisionAsync(APIRevisionType apiRevisionType,
+        public async Task<APIRevisionListItemModel> CreateAPIRevisionAsync(APIRevisionType apiRevisionType,
             string reviewId = null, string packageName = null, string language = null,
             string label = null, int? prNumber = null, string createdBy= ApiViewConstants.AzureSdkBotName, string sourceBranch = null, string packageVersion = null)
         {
@@ -643,7 +643,7 @@ namespace APIViewWeb.Managers
             CodeFile preParsedCodeFile = null,
             MemoryStream preParsedMemoryStream = null)
         {
-            var apiRevision = await GetNewAPIRevisionAsync(apiRevisionType: apiRevisionType,
+            var apiRevision = await CreateAPIRevisionAsync(apiRevisionType: apiRevisionType,
                 reviewId: review.Id,
                 packageName: review.PackageName,
                 language: review.Language,
@@ -1334,7 +1334,7 @@ namespace APIViewWeb.Managers
         public async Task<APIRevisionListItemModel> CreateAPIRevisionAsync(string userName, string reviewId, APIRevisionType apiRevisionType, string label,
             MemoryStream memoryStream, CodeFile codeFile, string originalName = null, int? prNumber = null, string sourceBranch = null)
         {
-            var apiRevision = await GetNewAPIRevisionAsync(
+            var apiRevision = await CreateAPIRevisionAsync(
                 reviewId: reviewId,
                 apiRevisionType: apiRevisionType,
                 packageName: codeFile.PackageName,

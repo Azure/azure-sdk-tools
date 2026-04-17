@@ -48,15 +48,21 @@ class MonthlyRatioPoint:
 
 
 def get_last_n_month_ranges(months: int = DEFAULT_MONTHS, today: Optional[date] = None) -> list[tuple[date, date]]:
-    """Return discrete calendar-month ranges for the current month and the previous months."""
+    """Return discrete calendar-month ranges for the last N full months.
+
+    The current (potentially partial) month is excluded. For example, if today
+    is 2026-04-17 and *months* is 6 the ranges cover October 2025 through
+    March 2026.
+    """
     if months < 1:
         raise ValueError("months must be at least 1")
 
     today = today or date.today()
-    current_month_index = today.year * 12 + (today.month - 1)
+    # Exclude the current partial month: the most recent full month is last month.
+    last_full_month_index = today.year * 12 + (today.month - 1) - 1
     ranges: list[tuple[date, date]] = []
 
-    for month_index in range(current_month_index - months + 1, current_month_index + 1):
+    for month_index in range(last_full_month_index - months + 1, last_full_month_index + 1):
         year = month_index // 12
         month = (month_index % 12) + 1
         last_day = calendar.monthrange(year, month)[1]
@@ -189,7 +195,7 @@ def build_language_reports(
     return reports
 
 
-def generate_chart(reports: dict[str, list[dict]], output_path: Path = DEFAULT_OUTPUT_PATH) -> Path:
+def generate_chart(reports: dict[str, list[dict]], output_path: Path = DEFAULT_OUTPUT_PATH, *, raw: bool = False) -> Path:
     """Render one PNG containing one subplot per language."""
     try:
         import matplotlib.pyplot as plt
@@ -210,37 +216,56 @@ def generate_chart(reports: dict[str, list[dict]], output_path: Path = DEFAULT_O
         axis = axes[index]
         report = reports[language]
         labels = [item["label"] for item in report]
-        ai_percentages = [item["ai_comment_percentage"] for item in report]
-        human_percentages = [item["human_comment_percentage"] for item in report]
         human_counts = [item["human_comment_count"] for item in report]
         ai_counts = [item["ai_comment_count"] for item in report]
         x_positions = list(range(len(labels)))
 
-        axis.bar(x_positions, ai_percentages, color="steelblue", label="AI %")
-        axis.bar(x_positions, human_percentages, bottom=ai_percentages, color="lightgreen", label="Human %")
-        axis.plot(x_positions, ai_percentages, marker="o", linewidth=2.0, color="navy", label="AI % Trend")
-        axis.set_title(language)
-        axis.set_xticks(x_positions, labels, rotation=45, ha="right")
-        axis.set_ylim(0, 105)
-        axis.grid(True, axis="y", linestyle="--", alpha=0.4)
+        if raw:
+            axis.bar(x_positions, ai_counts, color="steelblue", label="AI")
+            axis.bar(x_positions, human_counts, bottom=ai_counts, color="lightgreen", label="Human")
+            axis.set_title(language)
+            axis.set_xticks(x_positions, labels, rotation=45, ha="right")
+            axis.grid(True, axis="y", linestyle="--", alpha=0.4)
 
-        for point_index, ai_percentage in enumerate(ai_percentages):
-            axis.annotate(
-                f"{ai_percentage:.1f}%",
-                (x_positions[point_index], ai_percentage),
-                textcoords="offset points",
-                xytext=(0, 6),
-                ha="center",
-                fontsize=7,
-            )
-            axis.annotate(
-                f"H={human_counts[point_index]} A={ai_counts[point_index]}",
-                (x_positions[point_index], 2),
-                textcoords="offset points",
-                xytext=(0, 0),
-                ha="center",
-                fontsize=6,
-            )
+            totals = [a + h for a, h in zip(ai_counts, human_counts)]
+            for point_index in range(len(labels)):
+                axis.annotate(
+                    f"H={human_counts[point_index]} A={ai_counts[point_index]}",
+                    (x_positions[point_index], totals[point_index]),
+                    textcoords="offset points",
+                    xytext=(0, 4),
+                    ha="center",
+                    fontsize=6,
+                )
+        else:
+            ai_percentages = [item["ai_comment_percentage"] for item in report]
+            human_percentages = [item["human_comment_percentage"] for item in report]
+
+            axis.bar(x_positions, ai_percentages, color="steelblue", label="AI %")
+            axis.bar(x_positions, human_percentages, bottom=ai_percentages, color="lightgreen", label="Human %")
+            axis.plot(x_positions, ai_percentages, marker="o", linewidth=2.0, color="navy", label="AI % Trend")
+            axis.set_title(language)
+            axis.set_xticks(x_positions, labels, rotation=45, ha="right")
+            axis.set_ylim(0, 105)
+            axis.grid(True, axis="y", linestyle="--", alpha=0.4)
+
+            for point_index, ai_percentage in enumerate(ai_percentages):
+                axis.annotate(
+                    f"{ai_percentage:.1f}%",
+                    (x_positions[point_index], ai_percentage),
+                    textcoords="offset points",
+                    xytext=(0, 6),
+                    ha="center",
+                    fontsize=7,
+                )
+                axis.annotate(
+                    f"H={human_counts[point_index]} A={ai_counts[point_index]}",
+                    (x_positions[point_index], 2),
+                    textcoords="offset points",
+                    xytext=(0, 0),
+                    ha="center",
+                    fontsize=6,
+                )
 
         if legend_handles is None:
             legend_handles, legend_labels = axis.get_legend_handles_labels()
@@ -251,12 +276,13 @@ def generate_chart(reports: dict[str, list[dict]], output_path: Path = DEFAULT_O
     if legend_handles and legend_labels:
         figure.legend(legend_handles, legend_labels, loc="upper center", ncol=3, frameon=False)
 
+    format_label = "Raw Counts" if raw else "Normalized %"
     figure.suptitle(
-        f"AI Share of Total Comments by Language\nLast {month_count} Calendar Months (APIView Production)",
+        f"AI Share of Total Comments by Language ({format_label})\nLast {month_count} Calendar Months (APIView Production)",
         fontsize=14,
     )
     figure.supxlabel("Month")
-    figure.supylabel("Percent of Total Comments")
+    figure.supylabel("Comment Count" if raw else "Percent of Total Comments")
     plt.tight_layout(rect=(0.02, 0.03, 1, 0.92))
     figure.savefig(output_path, dpi=150)
     plt.close(figure)
@@ -299,15 +325,23 @@ def main() -> None:
         help="Languages to include. Defaults to C#, Java, JavaScript, and Python.",
     )
     parser.add_argument(
+        "--format",
+        choices=["normalize", "raw"],
+        default="normalize",
+        dest="chart_format",
+        help="Chart format: 'normalize' (default) shows percentage bars; 'raw' shows raw count bars.",
+    )
+    parser.add_argument(
         "--output",
         type=Path,
         default=DEFAULT_OUTPUT_PATH,
         help="Output PNG path. Defaults to output/charts/human_ai_ratio_trends.png.",
     )
     args = parser.parse_args()
+    raw = args.chart_format == "raw"
 
     reports = build_language_reports(languages=args.languages, months=args.months)
-    output_path = generate_chart(reports, output_path=args.output)
+    output_path = generate_chart(reports, output_path=args.output, raw=raw)
     _print_report(reports, output_path)
 
 

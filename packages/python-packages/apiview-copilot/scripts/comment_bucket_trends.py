@@ -65,15 +65,21 @@ class MonthlyCommentBucketPoint:
 
 
 def get_last_n_month_ranges(months: int = DEFAULT_MONTHS, today: Optional[date] = None) -> list[tuple[date, date]]:
-    """Return discrete calendar-month ranges for the current month and the previous months."""
+    """Return discrete calendar-month ranges for the last N full months.
+
+    The current (potentially partial) month is excluded. For example, if today
+    is 2026-04-17 and *months* is 6 the ranges cover October 2025 through
+    March 2026.
+    """
     if months < 1:
         raise ValueError("months must be at least 1")
 
     today = today or date.today()
-    current_month_index = today.year * 12 + (today.month - 1)
+    # Exclude the current partial month: the most recent full month is last month.
+    last_full_month_index = today.year * 12 + (today.month - 1) - 1
     ranges: list[tuple[date, date]] = []
 
-    for month_index in range(current_month_index - months + 1, current_month_index + 1):
+    for month_index in range(last_full_month_index - months + 1, last_full_month_index + 1):
         year = month_index // 12
         month = (month_index % 12) + 1
         last_day = calendar.monthrange(year, month)[1]
@@ -356,26 +362,40 @@ def _build_month_metadata(
     return metadata, month_comments
 
 
-def _build_chart_rows(report: list[dict], *, include_human: bool, include_neutral: bool) -> list[dict]:
+def _build_chart_rows(report: list[dict], *, include_human: bool, include_neutral: bool, raw: bool = False) -> list[dict]:
     """Return stacked chart rows in display order for one language report."""
-    rows = [
-        {"key": "good_percentage", "label": "Confirmed Good", "color": "darkgreen"},
-        {"key": "implicit_good_percentage", "label": "Implicit Good", "color": "lightgreen"},
-    ]
-
-    if include_neutral:
-        rows.append({"key": "neutral_percentage", "label": "Neutral", "color": "lightgray"})
-
-    if include_human:
-        rows.append({"key": "human_percentage", "label": "Human Comment", "color": "lightblue"})
-
-    rows.extend(
-        [
-            {"key": "implicit_bad_percentage", "label": "Implicit Bad", "color": "lightcoral"},
-            {"key": "bad_percentage", "label": "Confirmed Bad", "color": "red"},
-            {"key": "deleted_percentage", "label": "Deleted", "color": "darkred"},
+    if raw:
+        rows = [
+            {"key": "good_count", "label": "Confirmed Good", "color": "darkgreen"},
+            {"key": "implicit_good_count", "label": "Implicit Good", "color": "lightgreen"},
         ]
-    )
+        if include_neutral:
+            rows.append({"key": "neutral_count", "label": "Neutral", "color": "lightgray"})
+        if include_human:
+            rows.append({"key": "human_comment_count", "label": "Human Comment", "color": "lightblue"})
+        rows.extend(
+            [
+                {"key": "implicit_bad_count", "label": "Implicit Bad", "color": "lightcoral"},
+                {"key": "bad_count", "label": "Confirmed Bad", "color": "red"},
+                {"key": "deleted_count", "label": "Deleted", "color": "darkred"},
+            ]
+        )
+    else:
+        rows = [
+            {"key": "good_percentage", "label": "Confirmed Good", "color": "darkgreen"},
+            {"key": "implicit_good_percentage", "label": "Implicit Good", "color": "lightgreen"},
+        ]
+        if include_neutral:
+            rows.append({"key": "neutral_percentage", "label": "Neutral", "color": "lightgray"})
+        if include_human:
+            rows.append({"key": "human_percentage", "label": "Human Comment", "color": "lightblue"})
+        rows.extend(
+            [
+                {"key": "implicit_bad_percentage", "label": "Implicit Bad", "color": "lightcoral"},
+                {"key": "bad_percentage", "label": "Confirmed Bad", "color": "red"},
+                {"key": "deleted_percentage", "label": "Deleted", "color": "darkred"},
+            ]
+        )
 
     for row in rows:
         row["values"] = [item[row["key"]] for item in report]
@@ -389,6 +409,7 @@ def generate_chart(
     *,
     include_human: bool = False,
     include_neutral: bool = False,
+    raw: bool = False,
 ) -> Path:
     """Render one PNG containing a bucket subplot per language."""
     try:
@@ -422,35 +443,49 @@ def generate_chart(
         x_positions = list(range(len(labels)))
         bottom = [0.0] * len(labels)
 
-        for row in _build_chart_rows(report, include_human=include_human, include_neutral=include_neutral):
+        for row in _build_chart_rows(report, include_human=include_human, include_neutral=include_neutral, raw=raw):
             axis.bar(x_positions, row["values"], bottom=bottom, color=row["color"], label=row["label"])
             bottom = [current + value for current, value in zip(bottom, row["values"])]
 
-        boundary = [item["positive_boundary_percentage"] for item in report]
         included_counts = [item["total_included_comment_count"] for item in report]
-        axis.plot(x_positions, boundary, marker="o", linewidth=2.0, color="navy", label="Top of Implicit Good")
-        axis.set_title(language)
-        axis.set_xticks(x_positions, labels, rotation=45, ha="right")
-        axis.set_ylim(0, 105)
-        axis.grid(True, axis="y", linestyle="--", alpha=0.4)
+        if raw:
+            axis.set_title(language)
+            axis.set_xticks(x_positions, labels, rotation=45, ha="right")
+            axis.grid(True, axis="y", linestyle="--", alpha=0.4)
+            for point_index in range(len(labels)):
+                axis.annotate(
+                    f"N={included_counts[point_index]}",
+                    (x_positions[point_index], bottom[point_index]),
+                    textcoords="offset points",
+                    xytext=(0, 4),
+                    ha="center",
+                    fontsize=7,
+                )
+        else:
+            boundary = [item["positive_boundary_percentage"] for item in report]
+            axis.plot(x_positions, boundary, marker="o", linewidth=2.0, color="navy", label="Top of Implicit Good")
+            axis.set_title(language)
+            axis.set_xticks(x_positions, labels, rotation=45, ha="right")
+            axis.set_ylim(0, 105)
+            axis.grid(True, axis="y", linestyle="--", alpha=0.4)
 
-        for point_index, boundary_value in enumerate(boundary):
-            axis.annotate(
-                f"{boundary_value:.1f}%",
-                (x_positions[point_index], boundary_value),
-                textcoords="offset points",
-                xytext=(0, 6),
-                ha="center",
-                fontsize=7,
-            )
-            axis.annotate(
-                f"N={included_counts[point_index]}",
-                (x_positions[point_index], 2),
-                textcoords="offset points",
-                xytext=(0, 0),
-                ha="center",
-                fontsize=6,
-            )
+            for point_index, boundary_value in enumerate(boundary):
+                axis.annotate(
+                    f"{boundary_value:.1f}%",
+                    (x_positions[point_index], boundary_value),
+                    textcoords="offset points",
+                    xytext=(0, 6),
+                    ha="center",
+                    fontsize=7,
+                )
+                axis.annotate(
+                    f"N={included_counts[point_index]}",
+                    (x_positions[point_index], 2),
+                    textcoords="offset points",
+                    xytext=(0, 0),
+                    ha="center",
+                    fontsize=6,
+                )
 
         if legend_handles is None:
             legend_handles, legend_labels = axis.get_legend_handles_labels()
@@ -474,14 +509,15 @@ def generate_chart(
     if include_human:
         title_suffix_parts.append("human")
     title_suffix = f" + {' + '.join(title_suffix_parts)}" if title_suffix_parts else ""
+    format_label = "Raw Counts" if raw else "Normalized %"
 
     figure.suptitle(
-        f"Comment Buckets by Language{title_suffix}\nLast {month_count} Calendar Months (APIView Production)",
+        f"Comment Buckets by Language{title_suffix} ({format_label})\nLast {month_count} Calendar Months (APIView Production)",
         fontsize=14,
         y=0.985,
     )
     figure.supxlabel("Month")
-    figure.supylabel("Percent of Included Comments")
+    figure.supylabel("Comment Count" if raw else "Percent of Included Comments")
     plt.tight_layout(rect=(0.02, 0.03, 1, 0.80))
     figure.savefig(output_path, dpi=150)
     plt.close(figure)
@@ -559,12 +595,20 @@ def main() -> None:
         help="Include neutral AI comments as a light-gray bucket.",
     )
     parser.add_argument(
+        "--format",
+        choices=["normalize", "raw"],
+        default="normalize",
+        dest="chart_format",
+        help="Chart format: 'normalize' (default) shows percentage bars; 'raw' shows raw count bars.",
+    )
+    parser.add_argument(
         "--output",
         type=Path,
         default=DEFAULT_OUTPUT_PATH,
         help="Output PNG path. Defaults to output/charts/comment_bucket_trends.png.",
     )
     args = parser.parse_args()
+    raw = args.chart_format == "raw"
 
     reports = build_language_comment_bucket_reports(
         languages=args.languages,
@@ -577,6 +621,7 @@ def main() -> None:
         output_path=args.output,
         include_human=args.human,
         include_neutral=args.neutral,
+        raw=raw,
     )
     _print_report(reports, output_path, include_human=args.human, include_neutral=args.neutral)
 

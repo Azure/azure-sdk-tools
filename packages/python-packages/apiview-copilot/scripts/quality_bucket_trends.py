@@ -38,6 +38,11 @@ class MonthlyQualityPoint:
     start_date: str
     end_date: str
     ai_comment_count: int
+    good_count: int
+    implicit_good_count: int
+    implicit_bad_count: int
+    bad_count: int
+    deleted_count: int
     good_percentage: float
     implicit_good_percentage: float
     implicit_bad_percentage: float
@@ -47,15 +52,21 @@ class MonthlyQualityPoint:
 
 
 def get_last_n_month_ranges(months: int = DEFAULT_MONTHS, today: Optional[date] = None) -> list[tuple[date, date]]:
-    """Return discrete calendar-month ranges for the current month and the previous months."""
+    """Return discrete calendar-month ranges for the last N full months.
+
+    The current (potentially partial) month is excluded. For example, if today
+    is 2026-04-17 and *months* is 6 the ranges cover October 2025 through
+    March 2026.
+    """
     if months < 1:
         raise ValueError("months must be at least 1")
 
     today = today or date.today()
-    current_month_index = today.year * 12 + (today.month - 1)
+    # Exclude the current partial month: the most recent full month is last month.
+    last_full_month_index = today.year * 12 + (today.month - 1) - 1
     ranges: list[tuple[date, date]] = []
 
-    for month_index in range(current_month_index - months + 1, current_month_index + 1):
+    for month_index in range(last_full_month_index - months + 1, last_full_month_index + 1):
         year = month_index // 12
         month = (month_index % 12) + 1
         last_day = calendar.monthrange(year, month)[1]
@@ -108,6 +119,11 @@ def _build_language_quality_point(
         start_date=start_date.isoformat(),
         end_date=end_date.isoformat(),
         ai_comment_count=segment.total_ai_comment_count or 0,
+        good_count=good_count,
+        implicit_good_count=implicit_good_count,
+        implicit_bad_count=implicit_bad_count,
+        bad_count=bad_count,
+        deleted_count=deleted_count,
         good_percentage=good_percentage,
         implicit_good_percentage=implicit_good_percentage,
         implicit_bad_percentage=implicit_bad_percentage,
@@ -142,7 +158,7 @@ def build_language_quality_reports(
     return reports
 
 
-def generate_chart(reports: dict[str, list[dict]], output_path: Path = DEFAULT_OUTPUT_PATH) -> Path:
+def generate_chart(reports: dict[str, list[dict]], output_path: Path = DEFAULT_OUTPUT_PATH, *, raw: bool = False) -> Path:
     """Render one PNG containing a quality-bucket subplot per language."""
     try:
         import matplotlib.pyplot as plt
@@ -159,13 +175,21 @@ def generate_chart(reports: dict[str, list[dict]], output_path: Path = DEFAULT_O
     legend_handles = None
     legend_labels = None
 
-    bucket_specs = [
+    bucket_specs_normalized = [
         ("good_percentage", "darkgreen", "Good"),
         ("implicit_good_percentage", "lightgreen", "Implicit Good"),
         ("implicit_bad_percentage", "lightcoral", "Implicit Bad"),
         ("bad_percentage", "red", "Bad"),
         ("deleted_percentage", "darkred", "Deleted"),
     ]
+    bucket_specs_raw = [
+        ("good_count", "darkgreen", "Good"),
+        ("implicit_good_count", "lightgreen", "Implicit Good"),
+        ("implicit_bad_count", "lightcoral", "Implicit Bad"),
+        ("bad_count", "red", "Bad"),
+        ("deleted_count", "darkred", "Deleted"),
+    ]
+    bucket_specs = bucket_specs_raw if raw else bucket_specs_normalized
 
     for index, language in enumerate(languages):
         axis = axes[index]
@@ -179,31 +203,45 @@ def generate_chart(reports: dict[str, list[dict]], output_path: Path = DEFAULT_O
             axis.bar(x_positions, values, bottom=bottom, color=color, label=label)
             bottom = [current + value for current, value in zip(bottom, values)]
 
-        boundary = [item["positive_boundary_percentage"] for item in report]
         ai_counts = [item["ai_comment_count"] for item in report]
-        axis.plot(x_positions, boundary, marker="o", linewidth=2.0, color="navy", label="Good/Bad Boundary")
-        axis.set_title(language)
-        axis.set_xticks(x_positions, labels, rotation=45, ha="right")
-        axis.set_ylim(0, 105)
-        axis.grid(True, axis="y", linestyle="--", alpha=0.4)
+        if raw:
+            axis.set_title(language)
+            axis.set_xticks(x_positions, labels, rotation=45, ha="right")
+            axis.grid(True, axis="y", linestyle="--", alpha=0.4)
+            for point_index in range(len(labels)):
+                axis.annotate(
+                    f"AI={ai_counts[point_index]}",
+                    (x_positions[point_index], bottom[point_index]),
+                    textcoords="offset points",
+                    xytext=(0, 4),
+                    ha="center",
+                    fontsize=7,
+                )
+        else:
+            boundary = [item["positive_boundary_percentage"] for item in report]
+            axis.plot(x_positions, boundary, marker="o", linewidth=2.0, color="navy", label="Good/Bad Boundary")
+            axis.set_title(language)
+            axis.set_xticks(x_positions, labels, rotation=45, ha="right")
+            axis.set_ylim(0, 105)
+            axis.grid(True, axis="y", linestyle="--", alpha=0.4)
 
-        for point_index, boundary_value in enumerate(boundary):
-            axis.annotate(
-                f"{boundary_value:.1f}%",
-                (x_positions[point_index], boundary_value),
-                textcoords="offset points",
-                xytext=(0, 6),
-                ha="center",
-                fontsize=7,
-            )
-            axis.annotate(
-                f"AI={ai_counts[point_index]}",
-                (x_positions[point_index], 2),
-                textcoords="offset points",
-                xytext=(0, 0),
-                ha="center",
-                fontsize=6,
-            )
+            for point_index, boundary_value in enumerate(boundary):
+                axis.annotate(
+                    f"{boundary_value:.1f}%",
+                    (x_positions[point_index], boundary_value),
+                    textcoords="offset points",
+                    xytext=(0, 6),
+                    ha="center",
+                    fontsize=7,
+                )
+                axis.annotate(
+                    f"AI={ai_counts[point_index]}",
+                    (x_positions[point_index], 2),
+                    textcoords="offset points",
+                    xytext=(0, 0),
+                    ha="center",
+                    fontsize=6,
+                )
 
         if legend_handles is None:
             legend_handles, legend_labels = axis.get_legend_handles_labels()
@@ -214,12 +252,13 @@ def generate_chart(reports: dict[str, list[dict]], output_path: Path = DEFAULT_O
     if legend_handles and legend_labels:
         figure.legend(legend_handles, legend_labels, loc="upper center", ncol=6, frameon=False)
 
+    format_label = "Raw Counts" if raw else "Normalized %"
     figure.suptitle(
-        f"AI Quality Buckets by Language\nLast {month_count} Calendar Months (APIView Production)",
+        f"AI Quality Buckets by Language ({format_label})\nLast {month_count} Calendar Months (APIView Production)",
         fontsize=14,
     )
     figure.supxlabel("Month")
-    figure.supylabel("Percent of Non-Neutral AI Comments")
+    figure.supylabel("Comment Count" if raw else "Percent of Non-Neutral AI Comments")
     plt.tight_layout(rect=(0.02, 0.03, 1, 0.92))
     figure.savefig(output_path, dpi=150)
     plt.close(figure)
@@ -262,15 +301,23 @@ def main() -> None:
         help="Languages to include. Defaults to C#, Java, JavaScript, and Python.",
     )
     parser.add_argument(
+        "--format",
+        choices=["normalize", "raw"],
+        default="normalize",
+        dest="chart_format",
+        help="Chart format: 'normalize' (default) shows percentage bars; 'raw' shows raw count bars.",
+    )
+    parser.add_argument(
         "--output",
         type=Path,
         default=DEFAULT_OUTPUT_PATH,
         help="Output PNG path. Defaults to output/charts/quality_bucket_trends.png.",
     )
     args = parser.parse_args()
+    raw = args.chart_format == "raw"
 
     reports = build_language_quality_reports(languages=args.languages, months=args.months)
-    output_path = generate_chart(reports, output_path=args.output)
+    output_path = generate_chart(reports, output_path=args.output, raw=raw)
     _print_report(reports, output_path)
 
 

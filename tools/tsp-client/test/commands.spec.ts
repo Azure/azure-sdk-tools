@@ -863,7 +863,7 @@ describe.sequential("Verify commands", () => {
     } catch (error) {
       assert.fail(`Failed to generate lock file with npm args. Error: ${error}`);
     } finally {
-      rm(joinPaths(repoRoot, "eng", "emitter-package-lock.json"), { force: true });
+      await rm(joinPaths(repoRoot, "eng", "emitter-package-lock.json"), { force: true });
     }
   });
 
@@ -903,7 +903,7 @@ describe.sequential("Verify commands", () => {
     } catch (error) {
       assert.fail(`Failed to generate lock file with empty npm args. Error: ${error}`);
     } finally {
-      rm(joinPaths(repoRoot, "eng", "emitter-package-lock.json"), { force: true });
+      await rm(joinPaths(repoRoot, "eng", "emitter-package-lock.json"), { force: true });
     }
   });
 
@@ -919,8 +919,8 @@ describe.sequential("Verify commands", () => {
     } catch (error: any) {
       assert.fail("Failed to generate config files with npm args. Error: " + error);
     } finally {
-      rm(joinPaths(repoRoot, "eng", "emitter-package.json"), { force: true });
-      rm(joinPaths(repoRoot, "eng", "emitter-package-lock.json"), { force: true });
+      await rm(joinPaths(repoRoot, "eng", "emitter-package.json"), { force: true });
+      await rm(joinPaths(repoRoot, "eng", "emitter-package-lock.json"), { force: true });
     }
   });
 

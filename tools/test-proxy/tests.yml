@@ -29,7 +29,7 @@ stages:
         - template: /eng/common/pipelines/templates/steps/login-to-github.yml
           parameters:
             TokenOwners:
-              - azure-sdk
+              - Azure
         - template: pipelines/proxy-solution-integration-tests.yml
 
     - job: Solution_Integration_Test_Mac
@@ -42,7 +42,7 @@ stages:
         - template: /eng/common/pipelines/templates/steps/login-to-github.yml
           parameters:
             TokenOwners:
-              - azure-sdk
+              - Azure
         - template: pipelines/proxy-solution-integration-tests.yml
 
     - job: CLI_Integration_Test
@@ -65,7 +65,7 @@ stages:
         - template: /eng/common/pipelines/templates/steps/login-to-github.yml
           parameters:
             TokenOwners:
-              - azure-sdk
+              - Azure
         - template: pipelines/proxy-cli-integration-tests.yml
 
     - job: CLI_Integration_Test_Mac
@@ -78,7 +78,7 @@ stages:
         - template: /eng/common/pipelines/templates/steps/login-to-github.yml
           parameters:
             TokenOwners:
-              - azure-sdk
+              - Azure
         - template: pipelines/proxy-cli-integration-tests.yml
 
   - stage: RepoUnitTests

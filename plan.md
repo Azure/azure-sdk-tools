@@ -451,4 +451,38 @@ Reasons:
 | Cascade fixes could remove too many relations | Rule harness performs full rebuild of AuditContext from ADO after each rule's fixes |
 | Partial completion on transient failure | Audit re-fetches from ADO on re-run; idempotent wrappers handle already-applied fixes |
 | Double-delete of work items on re-run | Idempotent delete wrapper treats 404 as success |
-| Concurrent ADO modification during relation removal | 409 conflict handling with re-fetch and index recomputation |
+| Concurrent ADO modification during relation removal | Fails immediately per no-retries contract; re-run is safe |
+
+---
+
+## Implementation Status
+
+### Completed ✅
+
+| Phase | Description | Commit |
+|-------|-------------|--------|
+| Phase 0 | Folder reorganization — moved 6 files to `Helpers/Codeowners/`, created `Rules/` | `Move Codeowners helpers to Helpers/Codeowners/ subfolder` |
+| Phase 1 | Infrastructure — AuditModels, IAuditRule, ICodeownersAuditHelper, CodeownersAuditHelper, audit subcommand, --fix/--force/--repo options | `Implement codeowners audit command with 7 rules and tests` |
+| Phase 2 | All 7 audit rules — OWN-001/002/003, LBL-001/002, STR-001/002 | Same commit as Phase 1 |
+| Phase 3 | Service additions — DeleteWorkItemAsync (IDevOpsService), GetRepoLabels (IGitHubService) | Same commit as Phase 1 |
+| Phase 4 | DI registrations, mock updates, initial 25 tests | Same commit as Phase 1 |
+| Review 1 | LabelNotInGitHubRule per-repo fix, ServiceAttentionMisuseRule type name, narrowed exception matching, harness try/catch, ConcurrentDictionary, 9 new tests | `Address review feedback: fix correctness and safety issues` |
+| Review 2 | TeamNotWriteRule azure-sdk-write self-check, STR-001 safety threshold, cache staleness fix, remove 409 retry, 5 new tests | `Address final review: safety thresholds, cache staleness, remove retry` |
+
+### Test Coverage: 39 tests
+
+- InvalidOwnerRule: 7 tests (valid, invalid, error propagation, threshold, force override, team skip, relation generation)
+- MalformedTeamRule: 5 tests (valid format, invalid formats, fix output)
+- TeamNotWriteRule: 6 tests (individual skip, malformed skip, cache hit, azure-sdk-write self, NotFoundException, fix generation)
+- LabelNotInGitHubRule: 4 tests (label present, missing from one repo, unreferenced label, no fixes)
+- ServiceAttentionMisuseRule: 5 tests (PR Label, Service Owner sole label, Service Owner multiple labels, Package, Azure SDK Owner)
+- LabelOwnerMissingOwnersRule: 5 tests (with owners, zero owners, delete fix, threshold, force override)
+- LabelOwnerMissingLabelsRule: 3 tests (with labels, zero labels, no fixes)
+- CodeownersAuditHelper: 4 tests (empty report, repo filter, fix exception, rebuild after fix)
+
+### Deferred
+
+- AUD-OWN-004 (MSFT Identity population) — requires identity-resolution integration
+- AUD-STR-003/004/005 — deferred structural rules
+- Spec update (`8-operations-codeowners-management.spec.md`)
+- Path validation for `add-label-owner --path`

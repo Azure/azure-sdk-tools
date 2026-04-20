@@ -27,6 +27,7 @@ public class FeedbackClassifierServiceTests
     private Mock<ITypeSpecHelper> _mockTypeSpecHelper = null!;
     private Mock<ILoggerFactory> _mockLoggerFactory = null!;
     private Mock<IAPIViewFeedbackService> _mockFeedbackService = null!;
+    private Mock<IAzureSdkKnowledgeBaseService> _mockKnowledgeBaseService = null!;
     private string _testTspPath = null!;
     private string _specRepoRoot = null!;
     private string _typeSpecProjectPath = null!;
@@ -60,7 +61,8 @@ public class FeedbackClassifierServiceTests
         _mockTypeSpecHelper = new Mock<ITypeSpecHelper>();
         _mockLoggerFactory = new Mock<ILoggerFactory>();
         _mockFeedbackService = new Mock<IAPIViewFeedbackService>();
-        _mockLoggerFactory.Setup(f => f.CreateLogger(It.IsAny<string>()))
+        _mockKnowledgeBaseService = new Mock<IAzureSdkKnowledgeBaseService>();
+       _mockLoggerFactory.Setup(f => f.CreateLogger(It.IsAny<string>()))
             .Returns(new TestLogger<FeedbackClassifierService>());
         
         // Set up a fake tsp project path for mocked tests
@@ -94,7 +96,8 @@ public class FeedbackClassifierServiceTests
             _mockAgentRunner.Object,
             _mockLoggerFactory.Object,
             _mockTypeSpecHelper.Object,
-            _mockFeedbackService.Object);
+            _mockFeedbackService.Object,
+            _mockKnowledgeBaseService.Object);
     }
 
     private static FeedbackItem CreateTestItem(string text, string? id = null)
@@ -146,7 +149,8 @@ public class FeedbackClassifierServiceTests
             copilotAgentRunner,
             mockLoggerFactory.Object,
             typeSpecHelper,
-            Mock.Of<IAPIViewFeedbackService>());
+            Mock.Of<IAPIViewFeedbackService>(),
+            _mockKnowledgeBaseService.Object);
     }
 
     private static FeedbackItem CreateLiveTestItem(string text, string context = "")

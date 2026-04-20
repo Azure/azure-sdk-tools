@@ -45,6 +45,7 @@ const (
 	Source_AzureOpenapiDiffDocs            Source = "azure_openapi_diff_docs"
 	Source_APISpecViewQA                   Source = "static_api_spec_view_qa"
 	Source_TypeSpecAzureResourceManagerLib Source = "typespec-azure-resource-manager-lib"
+	Source_TypeSpecCustomization           Source = "azure_sdk_customization_docs"
 )
 
 type Role string
@@ -94,6 +95,17 @@ type CompletionReq struct {
 	Intention         *Intention       `json:"intention,omitempty" jsonschema:"omitempty,description=Optional intention fields that override LLM intention recognition results"`
 	ModelConfig       *ModelConfig     `json:"model_config,omitempty" jsonschema:"omitempty,description=Optional model configuration to override default models for this request"`
 	WithAgenticSearch *bool            `json:"with_agentic_search" jsonschema:"description=omitempty,Whether to run agentic search to search context. Default is true"`
+}
+
+type SearchResp struct {
+	ID          string      `json:"id" jsonschema:"required,description=The unique ID of the completion"`
+	Answer      string      `json:"answer" jsonschema:"required,description=The answer from the agent"`
+	HasResult   bool        `json:"has_result" jsonschema:"required,description=Whether the agent has a result"` // TODO resultType
+	References  []Reference `json:"references" jsonschema:"omitempty,description=The references to the documents used to generate the answer"`
+	FullContext *string     `json:"full_context" jsonschema:"omitempty,description=The full context used to generate the answer"`
+	Intention   *Intention  `json:"intention" jsonschema:"omitempty,description=The intention of the question"`
+	Reasoning   *string     `json:"reasoning,omitempty" jsonschema:"omitempty,description=The reasoning progress of generating the answer"`
+	RouteTenant *TenantID   `json:"route_tenant,omitempty" jsonschema:"omitempty,description=The tenant ID the question is routed to"`
 }
 
 type CompletionResp struct {

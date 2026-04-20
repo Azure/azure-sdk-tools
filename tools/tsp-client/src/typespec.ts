@@ -55,7 +55,7 @@ export async function discoverEntrypointFile(
   const files = await readdir(srcDir, { recursive: true });
 
   function findEntrypoint(name: string): string | undefined {
-    const normalized = name.split(/[/\\]+/).join(path.sep);
+    const normalized = path.normalize(name.replaceAll("\\", "/"));
     return files.find((file) => file === normalized) ?? undefined;
   }
   if (specifiedEntrypointFile) {

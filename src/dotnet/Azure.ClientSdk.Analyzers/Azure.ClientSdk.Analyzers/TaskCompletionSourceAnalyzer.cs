@@ -14,19 +14,13 @@ namespace Azure.ClientSdk.Analyzers
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public sealed class TaskCompletionSourceAnalyzer : DiagnosticAnalyzer
     {
-        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(Descriptors.AZC0013);
+        // AZC0013 migrated to Azure.SdkAnalyzers - this analyzer is retained but disabled
+        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray<DiagnosticDescriptor>.Empty;
 
         public override void Initialize(AnalysisContext context) 
         {
-            context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics);
+            context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
             context.EnableConcurrentExecution();
-            context.RegisterCompilationStartAction(CompilationStart);
-        }
-
-        private void CompilationStart(CompilationStartAnalysisContext context)
-        {
-            var oca = new ObjectCreationAnalyzer(context.Compilation);
-            context.RegisterOperationAction(oca.Analyze, OperationKind.ObjectCreation);
         }
 
         private class ObjectCreationAnalyzer 

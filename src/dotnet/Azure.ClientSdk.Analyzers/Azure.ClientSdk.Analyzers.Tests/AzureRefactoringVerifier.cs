@@ -19,8 +19,13 @@ namespace Azure.ClientSdk.Analyzers.Tests
 
         public static CSharpCodeRefactoringTest<TRefactoring, XUnitVerifier> CreateRefactoring(string source, string fixedCode)
         {
+#if NET6_0_OR_GREATER
             var normalizedSource = source.ReplaceLineEndings();
             var normalizedFixedCode = fixedCode.ReplaceLineEndings();
+#else
+            var normalizedSource = source.Replace("\r\n", "\n").Replace("\n", Environment.NewLine);
+            var normalizedFixedCode = fixedCode.Replace("\r\n", "\n").Replace("\n", Environment.NewLine);
+#endif
             return new CSharpCodeRefactoringTest<TRefactoring, XUnitVerifier>()
             {
                 ReferenceAssemblies = DefaultReferenceAssemblies,

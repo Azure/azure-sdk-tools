@@ -17,7 +17,6 @@ from src._apiview import (
 from src._database_manager import DatabaseManager
 
 # Minimal fields needed from the Comments container for metrics computation.
-# Omits large payload fields like CommentText, CreatedBy, CreatedOn, ElementId, etc.
 METRICS_COMMENT_FIELDS = [
     "ReviewId",
     "APIRevisionId",
@@ -27,6 +26,9 @@ METRICS_COMMENT_FIELDS = [
     "Upvotes",
     "Downvotes",
     "ConfidenceScore",
+    "ThreadId",
+    "ElementId",
+    "CreatedOn",
 ]
 
 
@@ -147,6 +149,40 @@ def get_metrics_report(
     return report
 
 
+def _filter_to_root_comments(comments: list[dict]) -> list[dict]:
+    """Reduce comments to thread roots only.
+
+    For comments that share a ``ThreadId``, only the earliest comment (by
+    ``CreatedOn``) is kept.  For comments without a ``ThreadId``, only the
+    earliest comment per ``(APIRevisionId, ElementId)`` is kept.  This ensures
+    each conversation thread is counted once rather than counting every reply.
+    """
+    from collections import defaultdict
+
+    threaded: dict[str, list[dict]] = defaultdict(list)
+    unthreaded: dict[tuple, list[dict]] = defaultdict(list)
+
+    for c in comments:
+        thread_id = c.get("ThreadId")
+        if thread_id:
+            threaded[thread_id].append(c)
+        else:
+            key = (c.get("APIRevisionId"), c.get("ElementId"))
+            unthreaded[key].append(c)
+
+    roots: list[dict] = []
+
+    for group in threaded.values():
+        group.sort(key=lambda x: x.get("CreatedOn") or "")
+        roots.append(group[0])
+
+    for group in unthreaded.values():
+        group.sort(key=lambda x: x.get("CreatedOn") or "")
+        roots.append(group[0])
+
+    return roots
+
+
 def _build_metrics_segment(
     *,
     start_date: str,
@@ -216,11 +252,16 @@ def _build_metrics_segment(
             if rev.approval is not None:
                 approved_revision_ids.add(revision_id)
 
-    # Filter comments to only those belonging to approved revisions, excluding Diagnostic
+    # Reduce to root comments only (one per thread/line) so replies are not counted separately.
+    root_comments = _filter_to_root_comments(
+        [c for c in comments if c.get("CommentSource") != "Diagnostic"]
+    )
+
+    # Filter root comments to only those belonging to approved revisions
     # (for human comment counts - comment_makeup metrics)
     approved_revision_comments = [
-        c for c in comments
-        if c.get("APIRevisionId") in approved_revision_ids and c.get("CommentSource") != "Diagnostic"
+        c for c in root_comments
+        if c.get("APIRevisionId") in approved_revision_ids
     ]
 
     # Categorize comments based on whether the revision has Copilot (for comment_makeup)
@@ -245,7 +286,7 @@ def _build_metrics_segment(
 
     # For comment_quality: count ALL AI comments across ALL active revisions (approved + unapproved)
     all_ai_comments = [
-        c for c in comments
+        c for c in root_comments
         if c.get("APIRevisionId") in all_revision_ids and c.get("CommentSource") == "AIGenerated"
     ]
 

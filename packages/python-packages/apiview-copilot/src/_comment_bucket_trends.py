@@ -177,8 +177,6 @@ def build_language_comment_bucket_reports(
     full_end = month_ranges[-1][1]
 
     select_fields = list(METRICS_COMMENT_FIELDS)
-    if "CreatedOn" not in select_fields:
-        select_fields.append("CreatedOn")
 
     non_diag = get_comments_in_date_range(
         full_start.isoformat(),

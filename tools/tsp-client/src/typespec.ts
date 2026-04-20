@@ -7,7 +7,7 @@ import {
 import { Logger } from "./log.js";
 import { readFile, readdir, realpath, stat } from "fs/promises";
 import { pathToFileURL } from "url";
-import * as path from "path";
+import { normalize } from "path";
 
 export interface TspLocation {
   directory?: string;
@@ -55,7 +55,7 @@ export async function discoverEntrypointFile(
   const files = await readdir(srcDir, { recursive: true });
 
   function findEntrypoint(name: string): string | undefined {
-    const normalized = path.normalize(name.replaceAll("\\", "/"));
+    const normalized = normalize(name.replaceAll("\\", "/"));
     return files.find((file) => file === normalized) ?? undefined;
   }
   if (specifiedEntrypointFile) {

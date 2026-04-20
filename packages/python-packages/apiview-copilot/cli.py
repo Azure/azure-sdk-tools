@@ -18,6 +18,7 @@ import pathlib
 import sys
 import time
 from collections import OrderedDict
+from datetime import date
 from typing import List, Optional
 
 import colorama
@@ -44,6 +45,14 @@ from src._apiview import (
 from src._apiview_reviewer import SUPPORTED_LANGUAGES, ApiViewReview
 from src._database_manager import ContainerNames, DatabaseManager
 from src._garbage_collector import GarbageCollector
+from src._comment_bucket_trends import (
+    DEFAULT_OUTPUT_PATH as DEFAULT_COMMENT_BUCKET_OUTPUT_PATH,
+)
+from src._comment_bucket_trends import (
+    build_language_comment_bucket_reports,
+    generate_comment_bucket_chart,
+    print_comment_bucket_report,
+)
 from src._mention import handle_mention_request
 from src._metrics import get_metrics_report
 from src._models import APIViewComment
@@ -586,9 +595,7 @@ def check_links_kb(language: Optional[str] = None, fix: Optional[str] = None):
         else:
             query = "SELECT * FROM c WHERE NOT IS_DEFINED(c.isDeleted) OR c.isDeleted = false"
             params = None
-        return list(
-            container.client.query_items(query=query, parameters=params, enable_cross_partition_query=True)
-        )
+        return list(container.client.query_items(query=query, parameters=params, enable_cross_partition_query=True))
 
     print("Loading knowledge base items...")
     guidelines = _query_all(db.guidelines, language)
@@ -621,8 +628,7 @@ def check_links_kb(language: Optional[str] = None, fix: Optional[str] = None):
     issues_dangling = []  # references to non-existent items
     issues_one_way = []  # A→B but B does not reference A back
 
-    def _check_links(source_type, source_items, field, target_type, target_ids_set, target_items,
-                     reverse_field):
+    def _check_links(source_type, source_items, field, target_type, target_ids_set, target_items, reverse_field):
         """Check one direction of a relationship pair."""
         for item in source_items.values():
             source_id = item["id"]
@@ -630,17 +636,19 @@ def check_links_kb(language: Optional[str] = None, fix: Optional[str] = None):
             for ref_id in refs:
                 # Dangling reference?
                 if ref_id not in target_ids_set:
-                    issues_dangling.append({
-                        "source_type": source_type,
-                        "source_id": guideline_id_from_db(source_id) if source_type == "guideline" else source_id,
-                        "field": field,
-                        "target_type": target_type,
-                        "missing_id": guideline_id_from_db(ref_id) if target_type == "guideline" else ref_id,
-                        # Store raw IDs for fix operations
-                        "_raw_source_id": source_id,
-                        "_raw_ref_id": ref_id,
-                        "_source_container": source_type,
-                    })
+                    issues_dangling.append(
+                        {
+                            "source_type": source_type,
+                            "source_id": guideline_id_from_db(source_id) if source_type == "guideline" else source_id,
+                            "field": field,
+                            "target_type": target_type,
+                            "missing_id": guideline_id_from_db(ref_id) if target_type == "guideline" else ref_id,
+                            # Store raw IDs for fix operations
+                            "_raw_source_id": source_id,
+                            "_raw_ref_id": ref_id,
+                            "_source_container": source_type,
+                        }
+                    )
                     continue
 
                 # One-way link? Check reverse direction
@@ -649,36 +657,52 @@ def check_links_kb(language: Optional[str] = None, fix: Optional[str] = None):
                 # For the reverse link, the source_id must appear in the target's reverse field
                 # Guideline IDs are already in DB format in the dict
                 if source_id not in reverse_refs:
-                    issues_one_way.append({
-                        "source_type": source_type,
-                        "source_id": guideline_id_from_db(source_id) if source_type == "guideline" else source_id,
-                        "field": field,
-                        "target_type": target_type,
-                        "target_id": guideline_id_from_db(ref_id) if target_type == "guideline" else ref_id,
-                        "reverse_field": reverse_field,
-                        # Store raw DB IDs for fix operations
-                        "_raw_source_id": source_id,
-                        "_raw_target_id": ref_id,
-                        "_target_container": target_type,
-                    })
+                    issues_one_way.append(
+                        {
+                            "source_type": source_type,
+                            "source_id": guideline_id_from_db(source_id) if source_type == "guideline" else source_id,
+                            "field": field,
+                            "target_type": target_type,
+                            "target_id": guideline_id_from_db(ref_id) if target_type == "guideline" else ref_id,
+                            "reverse_field": reverse_field,
+                            # Store raw DB IDs for fix operations
+                            "_raw_source_id": source_id,
+                            "_raw_target_id": ref_id,
+                            "_target_container": target_type,
+                        }
+                    )
 
     # Check all relationship directions
-    _check_links("guideline", guideline_index, "related_memories", "memory",
-                 all_memory_ids, memory_index, "related_guidelines")
-    _check_links("guideline", guideline_index, "related_examples", "example",
-                 all_example_ids, example_index, "guideline_ids")
-    _check_links("guideline", guideline_index, "related_guidelines", "guideline",
-                 all_guideline_ids, guideline_index, "related_guidelines")
-    _check_links("memory", memory_index, "related_guidelines", "guideline",
-                 all_guideline_ids, guideline_index, "related_memories")
-    _check_links("memory", memory_index, "related_examples", "example",
-                 all_example_ids, example_index, "memory_ids")
-    _check_links("memory", memory_index, "related_memories", "memory",
-                 all_memory_ids, memory_index, "related_memories")
-    _check_links("example", example_index, "guideline_ids", "guideline",
-                 all_guideline_ids, guideline_index, "related_examples")
-    _check_links("example", example_index, "memory_ids", "memory",
-                 all_memory_ids, memory_index, "related_examples")
+    _check_links(
+        "guideline", guideline_index, "related_memories", "memory", all_memory_ids, memory_index, "related_guidelines"
+    )
+    _check_links(
+        "guideline", guideline_index, "related_examples", "example", all_example_ids, example_index, "guideline_ids"
+    )
+    _check_links(
+        "guideline",
+        guideline_index,
+        "related_guidelines",
+        "guideline",
+        all_guideline_ids,
+        guideline_index,
+        "related_guidelines",
+    )
+    _check_links(
+        "memory",
+        memory_index,
+        "related_guidelines",
+        "guideline",
+        all_guideline_ids,
+        guideline_index,
+        "related_memories",
+    )
+    _check_links("memory", memory_index, "related_examples", "example", all_example_ids, example_index, "memory_ids")
+    _check_links("memory", memory_index, "related_memories", "memory", all_memory_ids, memory_index, "related_memories")
+    _check_links(
+        "example", example_index, "guideline_ids", "guideline", all_guideline_ids, guideline_index, "related_examples"
+    )
+    _check_links("example", example_index, "memory_ids", "memory", all_memory_ids, memory_index, "related_examples")
 
     # ── 3. Deduplicate symmetric one-way issues ─────────────────────────
     # For symmetric relationships (guideline↔guideline, memory↔memory) we may
@@ -695,15 +719,19 @@ def check_links_kb(language: Optional[str] = None, fix: Optional[str] = None):
     if issues_dangling:
         print(f"\n  {Fore.RED}Dangling references ({len(issues_dangling)}):{RESET}")
         for issue in issues_dangling:
-            print(f"    {issue['source_type']} '{issue['source_id']}' .{issue['field']}"
-                  f" -> {issue['target_type']} '{issue['missing_id']}' (NOT FOUND)")
+            print(
+                f"    {issue['source_type']} '{issue['source_id']}' .{issue['field']}"
+                f" -> {issue['target_type']} '{issue['missing_id']}' (NOT FOUND)"
+            )
 
     if issues_one_way:
         print(f"\n  {Fore.YELLOW}One-way links ({len(issues_one_way)}):{RESET}")
         for issue in issues_one_way:
-            print(f"    {issue['source_type']} '{issue['source_id']}' .{issue['field']}"
-                  f" -> {issue['target_type']} '{issue['target_id']}'"
-                  f" (missing reverse in .{issue['reverse_field']})")
+            print(
+                f"    {issue['source_type']} '{issue['source_id']}' .{issue['field']}"
+                f" -> {issue['target_type']} '{issue['target_id']}'"
+                f" (missing reverse in .{issue['reverse_field']})"
+            )
 
     print(f"\n  Total: {len(issues_dangling)} dangling, {len(issues_one_way)} one-way")
 
@@ -747,7 +775,9 @@ def check_links_kb(language: Optional[str] = None, fix: Optional[str] = None):
                         "guideline": guideline_index,
                         "memory": memory_index,
                         "example": example_index,
-                    }[issue["_source_container"]].get(issue["_raw_source_id"], {})
+                    }[
+                        issue["_source_container"]
+                    ].get(issue["_raw_source_id"], {})
                     existing_refs = source_item.get(field, [])
                     if converted not in existing_refs:
                         ops.setdefault(key, []).append(("replace", field, ref_id, converted))
@@ -773,8 +803,10 @@ def check_links_kb(language: Optional[str] = None, fix: Optional[str] = None):
                         arr[idx] = new_id
                         changed = True
                         display_src = guideline_id_from_db(source_id) if source_type == "guideline" else source_id
-                        print(f"  {GREEN}Healed {source_type} '{display_src}' .{field}: "
-                              f"'{guideline_id_from_db(old_id)}' -> '{guideline_id_from_db(new_id)}'{RESET}")
+                        print(
+                            f"  {GREEN}Healed {source_type} '{display_src}' .{field}: "
+                            f"'{guideline_id_from_db(old_id)}' -> '{guideline_id_from_db(new_id)}'{RESET}"
+                        )
                 else:  # remove
                     _, field, ref_id = op
                     if ref_id in arr:
@@ -871,8 +903,10 @@ def consolidate_memories_kb(
     # Report findings
     total_groups = sum(len(a["groups"]) for a in actions)
     total_redundant = sum(len(g["memory_ids"]) - 1 for a in actions for g in a["groups"])
-    print(f"\nFound {total_groups} merge group(s) across {len(actions)} parent(s), "
-          f"affecting {total_redundant} redundant memory(ies):\n")
+    print(
+        f"\nFound {total_groups} merge group(s) across {len(actions)} parent(s), "
+        f"affecting {total_redundant} redundant memory(ies):\n"
+    )
 
     for action in actions:
         parent_id = action["parent_id"]
@@ -1379,7 +1413,11 @@ def _cascade_unlink(db, item: dict, item_type: str):
                     refs.remove(item_id)
 
                 # Check if the target is now orphaned and should be deleted
-                if target_type == "example" and not raw_target.get("memory_ids", []) and not raw_target.get("guideline_ids", []):
+                if (
+                    target_type == "example"
+                    and not raw_target.get("memory_ids", [])
+                    and not raw_target.get("guideline_ids", [])
+                ):
                     target_container.delete(target_id, run_indexer=False)
                     print(f"  Soft-deleted orphaned example {target_id}")
                 else:
@@ -1639,7 +1677,18 @@ def get_active_reviews(
                 print(
                     f"{'LANGUAGE':<{max_lang_len}}\t{'PACKAGE':<{max_name_len}}\t{'VERSION':<{max_version_len}}\t{'STATUS':<{max_status_len}}\t{'COPILOT':<{max_copilot_len}}\t{'TYPE':<{max_type_len}}\tAPPROVED"
                 )
-                print("-" * (max_lang_len + max_name_len + max_version_len + max_status_len + max_copilot_len + max_type_len + 60))
+                print(
+                    "-"
+                    * (
+                        max_lang_len
+                        + max_name_len
+                        + max_version_len
+                        + max_status_len
+                        + max_copilot_len
+                        + max_type_len
+                        + 60
+                    )
+                )
 
                 for item in summary_data:
                     print(
@@ -1742,6 +1791,53 @@ def report_metrics(
     report = get_metrics_report(start_date, end_date, environment, save, charts, exclude)
     sys.stdout.buffer.write(json.dumps(report, indent=2, ensure_ascii=False, default=str).encode("utf-8"))
     sys.stdout.buffer.write(b"\n")
+
+
+def report_comment_bucket_trends(
+    months: int = 6,
+    languages: Optional[list[str]] = None,
+    exclude_human: bool = False,
+    neutral: bool = False,
+    environment: str = "production",
+    end_date: Optional[str] = None,
+) -> None:
+    """Generate a comment-bucket trend chart for the month window ending on end_date."""
+    parsed_end_date = None
+    if end_date:
+        try:
+            parsed_end_date = date.fromisoformat(end_date)
+        except ValueError as exc:
+            raise CLIError("Invalid --end-date value. Use YYYY-MM-DD format.") from exc
+
+    normalized_languages = None
+    if languages:
+        normalized_languages = [resolve_language(language)[1] for language in languages]
+
+    include_human = not exclude_human
+
+    reports = build_language_comment_bucket_reports(
+        languages=normalized_languages,
+        months=months,
+        end_date=parsed_end_date,
+        include_human=include_human,
+        include_neutral=neutral,
+        environment=environment,
+    )
+    saved_path = generate_comment_bucket_chart(
+        reports,
+        output_path=DEFAULT_COMMENT_BUCKET_OUTPUT_PATH,
+        include_human=include_human,
+        include_neutral=neutral,
+        raw=False,
+        environment=environment,
+    )
+    print_comment_bucket_report(
+        reports,
+        saved_path,
+        include_human=include_human,
+        include_neutral=neutral,
+        environment=environment,
+    )
 
 
 def grant_permissions(assignee_id: str = None):
@@ -2234,6 +2330,7 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("unlink", "db_unlink")
         with CommandGroup(self, "report", "__main__#{}") as g:
             g.command("metrics", "report_metrics")
+            g.command("quality-trends", "report_comment_bucket_trends")
             g.command("active-reviews", "get_active_reviews")
             g.command("feedback", "audit_feedback")
             g.command("memory", "audit_memory")
@@ -2282,7 +2379,6 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--comments-path", "-c"],
                 default=None,
             )
-
 
         with ArgumentsContext(self, "review") as ac:
             ac.argument(
@@ -2658,6 +2754,41 @@ class CliCommandsLoader(CLICommandsLoader):
                 "save",
                 action="store_true",
                 help="Save the metrics report to CosmosDB.",
+            )
+        with ArgumentsContext(self, "report quality-trends") as ac:
+            ac.argument(
+                "months",
+                type=int,
+                options_list=["--months"],
+                default=6,
+                help="Number of calendar months to look back from the end date. Defaults to 6.",
+            )
+            ac.argument(
+                "end_date",
+                type=str,
+                options_list=["--end-date", "-e"],
+                default=None,
+                help="Inclusive query end date in YYYY-MM-DD format. Defaults to today.",
+            )
+            ac.argument(
+                "languages",
+                type=str,
+                nargs="+",
+                options_list=["--languages"],
+                default=None,
+                help="Languages to include. Defaults to Python, C#, Java, and JavaScript.",
+            )
+            ac.argument(
+                "exclude_human",
+                action="store_true",
+                options_list=["--exclude-human"],
+                help="Exclude human comments from the chart.",
+            )
+            ac.argument(
+                "neutral",
+                action="store_true",
+                options_list=["--neutral"],
+                help="Include neutral AI comments as a separate bucket.",
             )
         with ArgumentsContext(self, "ops check") as ac:
             ac.argument(

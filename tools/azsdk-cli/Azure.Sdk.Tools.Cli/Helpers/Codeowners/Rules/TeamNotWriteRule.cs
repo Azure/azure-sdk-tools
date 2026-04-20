@@ -104,7 +104,13 @@ public class TeamNotWriteRule(
 
     private async Task<bool> CheckTeamIsUnderWriteTeam(string teamSlug, CancellationToken ct)
     {
-        // First check the azure-sdk-write team cache (contains all teams under azure-sdk-write)
+        // azure-sdk-write itself is valid
+        if (teamSlug.Equals("azure-sdk-write", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        // Check the azure-sdk-write team cache (contains all descendant teams)
         if (teamUserCache.TeamUserDict.ContainsKey(teamSlug))
         {
             return true;
@@ -113,19 +119,14 @@ public class TeamNotWriteRule(
         // Fall back to GitHub API parent-chain check
         try
         {
-            var team = await githubService.GetTeamByNameAsync("Azure", teamSlug, ct);
-            if (team?.Parent != null)
+            var current = await githubService.GetTeamByNameAsync("Azure", teamSlug, ct);
+            while (current?.Parent != null)
             {
-                // Walk parent chain to look for azure-sdk-write
-                var current = team;
-                while (current?.Parent != null)
+                if (current.Parent.Slug.Equals("azure-sdk-write", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (current.Parent.Slug.Equals("azure-sdk-write", StringComparison.OrdinalIgnoreCase))
-                    {
-                        return true;
-                    }
-                    current = await githubService.GetTeamByNameAsync("Azure", current.Parent.Slug, ct);
+                    return true;
                 }
+                current = await githubService.GetTeamByNameAsync("Azure", current.Parent.Slug, ct);
             }
             return false;
         }

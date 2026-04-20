@@ -28,6 +28,9 @@ public class LabelNotInGitHubRule(
 
     public async Task<List<AuditViolation>> Evaluate(AuditContext context, CancellationToken ct)
     {
+        // Clear per-run cache to avoid stale data in long-lived processes (MCP server)
+        _repoLabelCache.Clear();
+
         var violations = new List<AuditViolation>();
 
         // Build a map of label → repos where it's used

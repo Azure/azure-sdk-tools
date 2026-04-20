@@ -10,12 +10,15 @@ namespace Azure.Sdk.Tools.Cli.Helpers.Codeowners.Rules;
 /// AUD-STR-001: Detect Label Owner work items with zero Owner relations.
 /// Depends on: AUD-OWN-001, AUD-OWN-003 (owner removals may leave Label Owners orphaned).
 /// Fix: Delete the Label Owner work item.
+/// Safety threshold: throws if >5 deletions with --fix unless --force.
 /// </summary>
 public class LabelOwnerMissingOwnersRule(
     IDevOpsService devOpsService,
     ILogger<LabelOwnerMissingOwnersRule> logger
 ) : IAuditRule
 {
+    private const int SafetyThreshold = 5;
+
     public string RuleId => "AUD-STR-001";
     public string Description => "Label Owner has zero owner relations";
     public bool CanFix => true;
@@ -39,11 +42,29 @@ public class LabelOwnerMissingOwnersRule(
             }
         }
 
+        // Log all zero-owner Label Owners for human review
+        if (violations.Count > 0)
+        {
+            logger.LogWarning("{RuleId}: Found {Count} Label Owner(s) with zero owners:", RuleId, violations.Count);
+            foreach (var v in violations)
+            {
+                logger.LogWarning("  - {Description} ({Detail})", v.Description, v.Detail);
+            }
+        }
+
         return Task.FromResult(violations);
     }
 
     public Task<List<AuditFixAction>> GetFixes(AuditContext context, List<AuditViolation> violations, CancellationToken ct)
     {
+        // Safety threshold: if more than 5 deletions, require --force
+        if (violations.Count > SafetyThreshold && !context.Force)
+        {
+            throw new InvalidOperationException(
+                $"{RuleId}: {violations.Count} Label Owner deletions pending (threshold is {SafetyThreshold}). " +
+                $"Use --force to override. All zero-owner Label Owners have been logged above for review.");
+        }
+
         var fixes = new List<AuditFixAction>();
 
         foreach (var violation in violations)

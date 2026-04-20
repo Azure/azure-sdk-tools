@@ -154,22 +154,5 @@ public class InvalidOwnerRule(
             // Idempotent: work item has no relations at all
             return new AuditFixResult { RuleId = RuleId, Description = desc, Success = true, AlreadyApplied = true };
         }
-        catch (Exception ex) when (ex.Message.Contains("409") || ex.Message.Contains("conflict", StringComparison.OrdinalIgnoreCase))
-        {
-            // Conflict: work item was modified concurrently; retry once
-            logger.LogWarning("409 conflict removing relation {Source} → {Target}, retrying", sourceId, targetId);
-            try
-            {
-                await devOpsService.RemoveWorkItemRelationAsync(sourceId, "Related", targetId, ct);
-                return new AuditFixResult { RuleId = RuleId, Description = desc, Success = true };
-            }
-            catch (Exception retryEx) when (
-                (retryEx.Message.Contains("Relation of type", StringComparison.OrdinalIgnoreCase) &&
-                 retryEx.Message.Contains("not found", StringComparison.OrdinalIgnoreCase)) ||
-                retryEx.Message.Contains("has no relations", StringComparison.OrdinalIgnoreCase))
-            {
-                return new AuditFixResult { RuleId = RuleId, Description = desc, Success = true, AlreadyApplied = true };
-            }
-        }
     }
 }

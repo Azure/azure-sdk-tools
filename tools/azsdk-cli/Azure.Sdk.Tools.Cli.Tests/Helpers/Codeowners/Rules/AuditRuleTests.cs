@@ -356,6 +356,57 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
             Assert.That(fixes, Has.Count.EqualTo(1));
             Assert.That(fixes[0].Description, Does.Contain("Delete"));
         }
+
+        [Test]
+        public void GetFixes_ExceedsThreshold_ThrowsWithoutForce()
+        {
+            var violations = Enumerable.Range(1, 6).Select(i => new AuditViolation
+            {
+                RuleId = "AUD-STR-001",
+                Description = $"zero owners {i}",
+                WorkItemId = i,
+            }).ToList();
+
+            var context = new AuditContext
+            {
+                Force = false,
+                WorkItemData = new WorkItemData(
+                    new Dictionary<int, PackageWorkItem>(),
+                    new Dictionary<int, OwnerWorkItem>(),
+                    new Dictionary<int, LabelWorkItem>(),
+                    new List<LabelOwnerWorkItem>()
+                ),
+            };
+
+            Assert.ThrowsAsync<InvalidOperationException>(
+                () => _rule.GetFixes(context, violations, CancellationToken.None));
+        }
+
+        [Test]
+        public async Task GetFixes_ExceedsThreshold_AllowedWithForce()
+        {
+            var violations = Enumerable.Range(1, 6).Select(i => new AuditViolation
+            {
+                RuleId = "AUD-STR-001",
+                Description = $"zero owners {i}",
+                WorkItemId = i,
+            }).ToList();
+
+            var context = new AuditContext
+            {
+                Force = true,
+                WorkItemData = new WorkItemData(
+                    new Dictionary<int, PackageWorkItem>(),
+                    new Dictionary<int, OwnerWorkItem>(),
+                    new Dictionary<int, LabelWorkItem>(),
+                    new List<LabelOwnerWorkItem>()
+                ),
+            };
+
+            var fixes = await _rule.GetFixes(context, violations, CancellationToken.None);
+
+            Assert.That(fixes, Has.Count.EqualTo(6));
+        }
     }
 
     [TestFixture]
@@ -618,6 +669,100 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
             Assert.That(capturedContext.Force, Is.True);
             Assert.That(capturedContext.Repo, Is.EqualTo("Azure/azure-sdk-for-net"));
         }
+
+        [Test]
+        public async Task RunAudit_FixException_RecordsFailedResult()
+        {
+            var mockDevOps = new Mock<IDevOpsService>();
+            mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                    It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>(),
+                    It.IsAny<Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItemExpand>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem>());
+
+            var mockRule = new Mock<IAuditRule>();
+            mockRule.SetupGet(r => r.RuleId).Returns("TEST-001");
+            mockRule.SetupGet(r => r.Description).Returns("Test rule");
+            mockRule.SetupGet(r => r.CanFix).Returns(true);
+            mockRule.Setup(r => r.Evaluate(It.IsAny<AuditContext>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<AuditViolation>
+                {
+                    new() { RuleId = "TEST-001", Description = "test violation" }
+                });
+
+            // GetFixes returns one action that throws
+            mockRule.Setup(r => r.GetFixes(It.IsAny<AuditContext>(), It.IsAny<List<AuditViolation>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<AuditFixAction>
+                {
+                    new()
+                    {
+                        RuleId = "TEST-001",
+                        Description = "Broken fix",
+                        Apply = _ => throw new InvalidOperationException("Something went wrong"),
+                    }
+                });
+
+            var helper = new CodeownersAuditHelper(
+                mockDevOps.Object,
+                new[] { mockRule.Object },
+                new TestLogger<CodeownersAuditHelper>()
+            );
+
+            var report = await helper.RunAudit(true, false, null, CancellationToken.None);
+
+            Assert.That(report.FixesApplied, Has.Count.EqualTo(1));
+            Assert.That(report.FixesApplied[0].Success, Is.False);
+            Assert.That(report.FixesApplied[0].ErrorMessage, Does.Contain("Something went wrong"));
+        }
+
+        [Test]
+        public async Task RunAudit_SuccessfulFix_TriggersRebuild()
+        {
+            int fetchCount = 0;
+            var mockDevOps = new Mock<IDevOpsService>();
+            mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                    It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>(),
+                    It.IsAny<Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItemExpand>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem>())
+                .Callback(() => fetchCount++);
+
+            var mockRule = new Mock<IAuditRule>();
+            mockRule.SetupGet(r => r.RuleId).Returns("TEST-001");
+            mockRule.SetupGet(r => r.Description).Returns("Test rule");
+            mockRule.SetupGet(r => r.CanFix).Returns(true);
+            mockRule.Setup(r => r.Evaluate(It.IsAny<AuditContext>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<AuditViolation>
+                {
+                    new() { RuleId = "TEST-001", Description = "test violation" }
+                });
+            mockRule.Setup(r => r.GetFixes(It.IsAny<AuditContext>(), It.IsAny<List<AuditViolation>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<AuditFixAction>
+                {
+                    new()
+                    {
+                        RuleId = "TEST-001",
+                        Description = "Good fix",
+                        Apply = _ => Task.FromResult(new AuditFixResult
+                        {
+                            RuleId = "TEST-001",
+                            Description = "Good fix",
+                            Success = true,
+                        }),
+                    }
+                });
+
+            var helper = new CodeownersAuditHelper(
+                mockDevOps.Object,
+                new[] { mockRule.Object },
+                new TestLogger<CodeownersAuditHelper>()
+            );
+
+            await helper.RunAudit(true, false, null, CancellationToken.None);
+
+            // Initial fetch (4 work item types) + rebuild after fix (4 more) = 8
+            Assert.That(fetchCount, Is.EqualTo(8));
+        }
     }
 
     [TestFixture]
@@ -670,6 +815,16 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
             _mockTeamUserCache.SetupGet(c => c.TeamUserDict)
                 .Returns(new Dictionary<string, List<string>> { ["my-team"] = new() });
             var context = CreateContext(new OwnerWorkItem { WorkItemId = 1, GitHubAlias = "Azure/my-team" });
+
+            var violations = await _rule.Evaluate(context, CancellationToken.None);
+
+            Assert.That(violations, Is.Empty);
+        }
+
+        [Test]
+        public async Task Evaluate_AzureSdkWriteTeamItself_NoViolation()
+        {
+            var context = CreateContext(new OwnerWorkItem { WorkItemId = 1, GitHubAlias = "Azure/azure-sdk-write" });
 
             var violations = await _rule.Evaluate(context, CancellationToken.None);
 

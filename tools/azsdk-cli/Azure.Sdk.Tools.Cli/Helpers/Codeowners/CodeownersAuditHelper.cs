@@ -54,7 +54,21 @@ public class CodeownersAuditHelper(
                 bool anyApplied = false;
                 foreach (var fixAction in fixes)
                 {
-                    var result = await fixAction.Apply(ct);
+                    AuditFixResult result;
+                    try
+                    {
+                        result = await fixAction.Apply(ct);
+                    }
+                    catch (Exception ex)
+                    {
+                        result = new AuditFixResult
+                        {
+                            RuleId = fixAction.RuleId,
+                            Description = fixAction.Description,
+                            Success = false,
+                            ErrorMessage = ex.Message,
+                        };
+                    }
                     report.FixesApplied.Add(result);
 
                     if (result.Success || result.AlreadyApplied)

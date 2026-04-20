@@ -47,7 +47,7 @@ public class ServiceAttentionMisuseRule : IAuditRule
                 });
             }
             else if (lo.LabelType.Equals("Service Owner", StringComparison.OrdinalIgnoreCase) ||
-                     lo.LabelType.Equals("AzureSdkOwners", StringComparison.OrdinalIgnoreCase))
+                     lo.LabelType.Equals("Azure SDK Owner", StringComparison.OrdinalIgnoreCase))
             {
                 if (lo.Labels.Count == 1)
                 {

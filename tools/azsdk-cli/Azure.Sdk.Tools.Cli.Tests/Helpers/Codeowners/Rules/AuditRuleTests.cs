@@ -619,4 +619,237 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
             Assert.That(capturedContext.Repo, Is.EqualTo("Azure/azure-sdk-for-net"));
         }
     }
+
+    [TestFixture]
+    public class TeamNotWriteRuleTests
+    {
+        private Mock<ITeamUserCache> _mockTeamUserCache;
+        private Mock<IGitHubService> _mockGithub;
+        private Mock<IDevOpsService> _mockDevOps;
+        private TeamNotWriteRule _rule;
+
+        [SetUp]
+        public void Setup()
+        {
+            _mockTeamUserCache = new Mock<ITeamUserCache>();
+            _mockTeamUserCache.SetupGet(c => c.TeamUserDict)
+                .Returns(new Dictionary<string, List<string>>());
+            _mockGithub = new Mock<IGitHubService>();
+            _mockDevOps = new Mock<IDevOpsService>();
+            _rule = new TeamNotWriteRule(
+                _mockTeamUserCache.Object,
+                _mockGithub.Object,
+                _mockDevOps.Object,
+                new TestLogger<TeamNotWriteRule>()
+            );
+        }
+
+        [Test]
+        public async Task Evaluate_SkipsIndividualOwners()
+        {
+            var context = CreateContext(new OwnerWorkItem { WorkItemId = 1, GitHubAlias = "individual-user" });
+
+            var violations = await _rule.Evaluate(context, CancellationToken.None);
+
+            Assert.That(violations, Is.Empty);
+        }
+
+        [Test]
+        public async Task Evaluate_SkipsMalformedTeamAliases()
+        {
+            var context = CreateContext(new OwnerWorkItem { WorkItemId = 1, GitHubAlias = "badorg/team" });
+
+            var violations = await _rule.Evaluate(context, CancellationToken.None);
+
+            Assert.That(violations, Is.Empty);
+        }
+
+        [Test]
+        public async Task Evaluate_TeamInCache_NoViolation()
+        {
+            _mockTeamUserCache.SetupGet(c => c.TeamUserDict)
+                .Returns(new Dictionary<string, List<string>> { ["my-team"] = new() });
+            var context = CreateContext(new OwnerWorkItem { WorkItemId = 1, GitHubAlias = "Azure/my-team" });
+
+            var violations = await _rule.Evaluate(context, CancellationToken.None);
+
+            Assert.That(violations, Is.Empty);
+        }
+
+        [Test]
+        public async Task Evaluate_TeamNotInCacheAndNotFound_ReturnsViolation()
+        {
+            _mockGithub.Setup(g => g.GetTeamByNameAsync("Azure", "bad-team", It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new Octokit.NotFoundException("Not found", System.Net.HttpStatusCode.NotFound));
+
+            var context = CreateContext(new OwnerWorkItem { WorkItemId = 1, GitHubAlias = "Azure/bad-team" });
+
+            var violations = await _rule.Evaluate(context, CancellationToken.None);
+
+            Assert.That(violations, Has.Count.EqualTo(1));
+            Assert.That(violations[0].RuleId, Is.EqualTo("AUD-OWN-003"));
+        }
+
+        [Test]
+        public async Task GetFixes_RemovesRelationsFromLabelOwnersAndPackages()
+        {
+            var invalidTeam = new OwnerWorkItem { WorkItemId = 10, GitHubAlias = "Azure/invalid-team" };
+            var lo = new LabelOwnerWorkItem { WorkItemId = 20, LabelType = "Service Owner", Repository = "Azure/azure-sdk-for-net" };
+            lo.Owners.Add(invalidTeam);
+
+            var pkg = new PackageWorkItem { WorkItemId = 30, PackageName = "azure-test", Language = "dotnet" };
+            pkg.Owners.Add(invalidTeam);
+
+            var context = new AuditContext
+            {
+                WorkItemData = new WorkItemData(
+                    new Dictionary<int, PackageWorkItem> { [30] = pkg },
+                    new Dictionary<int, OwnerWorkItem> { [10] = invalidTeam },
+                    new Dictionary<int, LabelWorkItem>(),
+                    new List<LabelOwnerWorkItem> { lo }
+                ),
+            };
+
+            var violations = new List<AuditViolation>
+            {
+                new() { RuleId = "AUD-OWN-003", Description = "Invalid team", WorkItemId = 10 }
+            };
+
+            var fixes = await _rule.GetFixes(context, violations, CancellationToken.None);
+
+            Assert.That(fixes, Has.Count.EqualTo(2));
+            Assert.That(fixes[0].Description, Does.Contain("Label Owner 20"));
+            Assert.That(fixes[1].Description, Does.Contain("Package 30"));
+        }
+
+        private static AuditContext CreateContext(params OwnerWorkItem[] owners)
+        {
+            var ownerDict = owners.ToDictionary(o => o.WorkItemId);
+            return new AuditContext
+            {
+                WorkItemData = new WorkItemData(
+                    new Dictionary<int, PackageWorkItem>(),
+                    ownerDict,
+                    new Dictionary<int, LabelWorkItem>(),
+                    new List<LabelOwnerWorkItem>()
+                ),
+            };
+        }
+    }
+
+    [TestFixture]
+    public class LabelNotInGitHubRuleTests
+    {
+        private Mock<IGitHubService> _mockGithub;
+        private LabelNotInGitHubRule _rule;
+
+        [SetUp]
+        public void Setup()
+        {
+            _mockGithub = new Mock<IGitHubService>();
+            _rule = new LabelNotInGitHubRule(
+                _mockGithub.Object,
+                new TestLogger<LabelNotInGitHubRule>()
+            );
+        }
+
+        [Test]
+        public async Task Evaluate_LabelExistsInAllRepos_NoViolation()
+        {
+            var label = new LabelWorkItem { WorkItemId = 1, LabelName = "Storage" };
+            var lo = new LabelOwnerWorkItem { WorkItemId = 10, LabelType = "Service Owner", Repository = "Azure/azure-sdk-for-net" };
+            lo.Labels.Add(label);
+
+            _mockGithub.Setup(g => g.GetRepoLabels("Azure", "azure-sdk-for-net", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Storage" });
+
+            var context = new AuditContext
+            {
+                WorkItemData = new WorkItemData(
+                    new Dictionary<int, PackageWorkItem>(),
+                    new Dictionary<int, OwnerWorkItem>(),
+                    new Dictionary<int, LabelWorkItem> { [1] = label },
+                    new List<LabelOwnerWorkItem> { lo }
+                ),
+            };
+
+            var violations = await _rule.Evaluate(context, CancellationToken.None);
+
+            Assert.That(violations, Is.Empty);
+        }
+
+        [Test]
+        public async Task Evaluate_LabelMissingFromOneRepo_ReturnsViolation()
+        {
+            var label = new LabelWorkItem { WorkItemId = 1, LabelName = "Storage" };
+            var lo1 = new LabelOwnerWorkItem { WorkItemId = 10, LabelType = "Service Owner", Repository = "Azure/azure-sdk-for-net" };
+            lo1.Labels.Add(label);
+            var lo2 = new LabelOwnerWorkItem { WorkItemId = 11, LabelType = "Service Owner", Repository = "Azure/azure-sdk-for-java" };
+            lo2.Labels.Add(label);
+
+            _mockGithub.Setup(g => g.GetRepoLabels("Azure", "azure-sdk-for-net", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Storage" });
+            _mockGithub.Setup(g => g.GetRepoLabels("Azure", "azure-sdk-for-java", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Other" });
+
+            var context = new AuditContext
+            {
+                WorkItemData = new WorkItemData(
+                    new Dictionary<int, PackageWorkItem>(),
+                    new Dictionary<int, OwnerWorkItem>(),
+                    new Dictionary<int, LabelWorkItem> { [1] = label },
+                    new List<LabelOwnerWorkItem> { lo1, lo2 }
+                ),
+            };
+
+            var violations = await _rule.Evaluate(context, CancellationToken.None);
+
+            Assert.That(violations, Has.Count.EqualTo(1));
+            Assert.That(violations[0].Description, Does.Contain("azure-sdk-for-java"));
+            Assert.That(violations[0].Description, Does.Not.Contain("azure-sdk-for-net"));
+        }
+
+        [Test]
+        public async Task Evaluate_LabelNotReferencedByAny_Skipped()
+        {
+            var label = new LabelWorkItem { WorkItemId = 1, LabelName = "Orphan" };
+
+            var context = new AuditContext
+            {
+                WorkItemData = new WorkItemData(
+                    new Dictionary<int, PackageWorkItem>(),
+                    new Dictionary<int, OwnerWorkItem>(),
+                    new Dictionary<int, LabelWorkItem> { [1] = label },
+                    new List<LabelOwnerWorkItem>()
+                ),
+            };
+
+            var violations = await _rule.Evaluate(context, CancellationToken.None);
+
+            Assert.That(violations, Is.Empty);
+        }
+
+        [Test]
+        public async Task GetFixes_ReturnsEmpty()
+        {
+            var violations = new List<AuditViolation>
+            {
+                new() { RuleId = "AUD-LBL-001", Description = "Missing label" }
+            };
+
+            var context = new AuditContext
+            {
+                WorkItemData = new WorkItemData(
+                    new Dictionary<int, PackageWorkItem>(),
+                    new Dictionary<int, OwnerWorkItem>(),
+                    new Dictionary<int, LabelWorkItem>(),
+                    new List<LabelOwnerWorkItem>()
+                ),
+            };
+
+            var fixes = await _rule.GetFixes(context, violations, CancellationToken.None);
+
+            Assert.That(fixes, Is.Empty);
+        }
+    }
 }

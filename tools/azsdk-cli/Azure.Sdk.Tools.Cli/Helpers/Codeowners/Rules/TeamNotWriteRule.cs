@@ -143,8 +143,13 @@ public class TeamNotWriteRule(
             await devOpsService.RemoveWorkItemRelationAsync(sourceId, "Related", targetId, ct);
             return new AuditFixResult { RuleId = RuleId, Description = desc, Success = true };
         }
-        catch (Exception ex) when (ex.Message.Contains("not found", StringComparison.OrdinalIgnoreCase) ||
-                                    ex.Message.Contains("no relations", StringComparison.OrdinalIgnoreCase))
+        catch (Exception ex) when (ex.Message.Contains("Relation of type", StringComparison.OrdinalIgnoreCase) &&
+                                    ex.Message.Contains("not found", StringComparison.OrdinalIgnoreCase))
+        {
+            // Idempotent: the specific relation was already removed
+            return new AuditFixResult { RuleId = RuleId, Description = desc, Success = true, AlreadyApplied = true };
+        }
+        catch (Exception ex) when (ex.Message.Contains("has no relations", StringComparison.OrdinalIgnoreCase))
         {
             return new AuditFixResult { RuleId = RuleId, Description = desc, Success = true, AlreadyApplied = true };
         }

@@ -143,10 +143,15 @@ public class InvalidOwnerRule(
             await devOpsService.RemoveWorkItemRelationAsync(sourceId, "Related", targetId, ct);
             return new AuditFixResult { RuleId = RuleId, Description = desc, Success = true };
         }
-        catch (Exception ex) when (ex.Message.Contains("not found", StringComparison.OrdinalIgnoreCase) ||
-                                    ex.Message.Contains("no relations", StringComparison.OrdinalIgnoreCase))
+        catch (Exception ex) when (ex.Message.Contains("Relation of type", StringComparison.OrdinalIgnoreCase) &&
+                                    ex.Message.Contains("not found", StringComparison.OrdinalIgnoreCase))
         {
-            // Idempotent: relation was already removed
+            // Idempotent: the specific relation was already removed
+            return new AuditFixResult { RuleId = RuleId, Description = desc, Success = true, AlreadyApplied = true };
+        }
+        catch (Exception ex) when (ex.Message.Contains("has no relations", StringComparison.OrdinalIgnoreCase))
+        {
+            // Idempotent: work item has no relations at all
             return new AuditFixResult { RuleId = RuleId, Description = desc, Success = true, AlreadyApplied = true };
         }
         catch (Exception ex) when (ex.Message.Contains("409") || ex.Message.Contains("conflict", StringComparison.OrdinalIgnoreCase))
@@ -158,8 +163,10 @@ public class InvalidOwnerRule(
                 await devOpsService.RemoveWorkItemRelationAsync(sourceId, "Related", targetId, ct);
                 return new AuditFixResult { RuleId = RuleId, Description = desc, Success = true };
             }
-            catch (Exception retryEx) when (retryEx.Message.Contains("not found", StringComparison.OrdinalIgnoreCase) ||
-                                             retryEx.Message.Contains("no relations", StringComparison.OrdinalIgnoreCase))
+            catch (Exception retryEx) when (
+                (retryEx.Message.Contains("Relation of type", StringComparison.OrdinalIgnoreCase) &&
+                 retryEx.Message.Contains("not found", StringComparison.OrdinalIgnoreCase)) ||
+                retryEx.Message.Contains("has no relations", StringComparison.OrdinalIgnoreCase))
             {
                 return new AuditFixResult { RuleId = RuleId, Description = desc, Success = true, AlreadyApplied = true };
             }

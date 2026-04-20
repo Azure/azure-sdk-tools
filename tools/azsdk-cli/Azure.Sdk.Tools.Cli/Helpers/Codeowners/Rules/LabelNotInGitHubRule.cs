@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using System.Collections.Concurrent;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Codeowners;
 using Azure.Sdk.Tools.Cli.Services;
@@ -23,7 +24,7 @@ public class LabelNotInGitHubRule(
     public bool CanFix => false;
 
     // Cache repo labels to avoid redundant API calls
-    private readonly Dictionary<string, HashSet<string>> _repoLabelCache = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, HashSet<string>> _repoLabelCache = new(StringComparer.OrdinalIgnoreCase);
 
     public async Task<List<AuditViolation>> Evaluate(AuditContext context, CancellationToken ct)
     {
@@ -40,26 +41,25 @@ public class LabelNotInGitHubRule(
                 continue;
             }
 
-            bool foundInAnyRepo = false;
+            var missingRepos = new List<string>();
             foreach (var repo in repos)
             {
                 var repoLabels = await GetRepoLabels(repo, ct);
-                if (repoLabels.Contains(label.LabelName))
+                if (!repoLabels.Contains(label.LabelName))
                 {
-                    foundInAnyRepo = true;
-                    break;
+                    missingRepos.Add(repo);
                 }
             }
 
-            if (!foundInAnyRepo)
+            if (missingRepos.Count > 0)
             {
                 violations.Add(new AuditViolation
                 {
                     RuleId = RuleId,
-                    Description = $"Label '{label.LabelName}' (WI {label.WorkItemId}): not found in GitHub repos [{string.Join(", ", repos)}]",
+                    Description = $"Label '{label.LabelName}' (WI {label.WorkItemId}): not found in GitHub repos [{string.Join(", ", missingRepos)}]",
                     WorkItemId = label.WorkItemId,
                     WorkItemTitle = label.Title,
-                    Detail = $"Checked repos: {string.Join(", ", repos)}",
+                    Detail = $"Missing from: {string.Join(", ", missingRepos)}, Referenced in: {string.Join(", ", repos)}",
                 });
             }
         }

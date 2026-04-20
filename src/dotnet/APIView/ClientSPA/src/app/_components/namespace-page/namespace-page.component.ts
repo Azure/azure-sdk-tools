@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
@@ -6,7 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { DialogModule } from 'primeng/dialog';
 import { Subject, takeUntil, forkJoin, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, finalize, map } from 'rxjs/operators';
 import { REVIEW_ID_ROUTE_PARAM, getQueryParams } from 'src/app/_helpers/router-helpers';
 import { Review } from 'src/app/_models/review';
 import { UserProfile } from 'src/app/_models/userProfile';
@@ -79,7 +79,8 @@ export class NamespacePageComponent implements OnInit, OnDestroy {
     private projectsService: ProjectsService,
     private apiRevisionsService: APIRevisionsService,
     private messageService: MessageService,
-    private titleService: Title
+    private titleService: Title,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -122,6 +123,7 @@ export class NamespacePageComponent implements OnInit, OnDestroy {
         error: (err) => {
           this.loadFailed = true;
           this.isLoading = false;
+          this.cdr.detectChanges();
         }
       });
   }
@@ -130,6 +132,7 @@ export class NamespacePageComponent implements OnInit, OnDestroy {
     if (!this.reviewId) {
       this.isLoading = false;
       this.loadFailed = true;
+      this.cdr.detectChanges();
       return;
     }
 
@@ -146,6 +149,7 @@ export class NamespacePageComponent implements OnInit, OnDestroy {
           } else {
             this.buildTableRows();
             this.isLoading = false;
+            this.cdr.detectChanges();
           }
         },
         error: (err) => {
@@ -158,6 +162,7 @@ export class NamespacePageComponent implements OnInit, OnDestroy {
             this.loadFailed = true;
             this.isLoading = false;
           }
+          this.cdr.detectChanges();
         }
       });
   }
@@ -166,27 +171,31 @@ export class NamespacePageComponent implements OnInit, OnDestroy {
     if (!this.projectId) {
       this.buildTableRows();
       this.isLoading = false;
+      this.cdr.detectChanges();
       return;
     }
 
     this.projectsService.getProjectNamespaces(this.projectId)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.isLoading = false;
+          this.cdr.detectChanges();
+        })
+      )
       .subscribe({
         next: (info: ProjectNamespaceInfo) => {
           this.namespaceInfo = info;
           this.buildTableRows();
-          this.isLoading = false;
         },
         error: (err) => {
           // If error is 404, treat it as "no namespace info configured" and show empty state
           if (err && err.status === 404) {
             this.namespaceInfo = null;
             this.buildTableRows();
-            this.isLoading = false;
           } else {
             // For other errors, mark load as failed so the user gets feedback
             this.loadFailed = true;
-            this.isLoading = false;
           }
         }
       });
@@ -247,6 +256,7 @@ export class NamespacePageComponent implements OnInit, OnDestroy {
             row.latestRevisionId = result.revisionId;
           }
         }
+        this.cdr.detectChanges();
       });
   }
 

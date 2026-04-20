@@ -14,6 +14,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         public ReleasePlanWorkItem? ConfiguredReleasePlanForWorkItem { get; set; }
         public string? ConfiguredSDKPullRequest { get; set; }
         public Build? ConfiguredRunSDKGenerationPipeline { get; set; }
+        public string ConfiguredAPIViewStatus { get; set; } = "Approved";
 
         public Task<List<PackageWorkitemResponse>> ListPartialPackageWorkItemAsync(string packageName, string language, CancellationToken ct)
         {
@@ -39,7 +40,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
                     PipelineDefinitionUrl = "https://dev.azure.com/fake-org/fake-project/_build?definitionId=1",
                     WorkItemId = 0,
                     changeLogStatus = "Approved",
-                    APIViewStatus = "Approved",
+                    APIViewStatus = ConfiguredAPIViewStatus,
                     PackageNameStatus = "Approved",
                     PackageRepoPath = "template",
                     LatestPipelineRun = "https://dev.azure.com/fake-org/fake-project/_build/results?buildId=1",

@@ -47,7 +47,10 @@ internal class OutputHelperTests
         var output = new OutputHelper(OutputHelper.OutputModes.Json);
         var formatted = output.ValidateAndFormat<LogAnalysisResponse>(json);
 
-        Assert.That(formatted, Is.EqualTo(json));
+        // Normalize line endings before comparison. The repo .gitattributes enforces LF in source
+        // files, so verbatim string literals contain \n, but production code uses Environment.NewLine
+        // which is \r\n on Windows.
+        Assert.That(formatted.ReplaceLineEndings("\n"), Is.EqualTo(json.ReplaceLineEndings("\n")));
     }
 
     [Test]
@@ -78,6 +81,7 @@ message2
         var output = new OutputHelper(OutputHelper.OutputModes.Plain);
         var formatted = output.Format(response);
 
-        Assert.That(formatted, Is.EqualTo(expectedStr));
+        // Normalize line endings before comparison. See comment in TestTypedJsonOutput.
+        Assert.That(formatted.ReplaceLineEndings("\n"), Is.EqualTo(expectedStr.ReplaceLineEndings("\n")));
     }
 }

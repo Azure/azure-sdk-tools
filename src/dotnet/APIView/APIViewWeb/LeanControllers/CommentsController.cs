@@ -97,6 +97,9 @@ namespace APIViewWeb.LeanControllers
         /// <param name="severity"></param>
         /// <param name="resolutionLocked"></param>
         /// <param name="threadId"></param>
+        /// <param name="crossLanguageId"></param>
+        /// <param name="crossLanguagePackageId"></param>
+        /// <param name="isTodo"></param>
         /// <returns></returns>
         [HttpPost(Name = "CreateComment")]
         public async Task<ActionResult> CreateCommentAsync(

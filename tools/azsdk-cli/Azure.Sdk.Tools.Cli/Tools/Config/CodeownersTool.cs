@@ -119,6 +119,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         private readonly ICheckPackageHelper checkPackageHelper;
         private readonly IGitHelper gitHelper;
         private readonly IDevOpsService devOpsService;
+        private readonly ICodeownersAuditHelper codeownersAuditHelper;
 
         // URL constants
         private const string azureWriteTeamsBlobUrl = "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob";
@@ -162,6 +163,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             Required = false,
         };
 
+        // Audit command options
+        private readonly Option<bool> fixOption = new("--fix")
+        {
+            Description = "Apply fixes for violations that support automated repair",
+            Required = false,
+            DefaultValueFactory = _ => false,
+        };
+
+        private readonly Option<bool> forceOption = new("--force")
+        {
+            Description = "Override safety thresholds (e.g., allow fixing more than 5 invalid owners)",
+            Required = false,
+            DefaultValueFactory = _ => false,
+        };
+
         // Command names
         private const string generateCodeownersCommandName = "generate";
         private const string viewCodeownersCommandName = "view";
@@ -174,6 +190,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         private const string removeLabelOwnerCommandName = "remove-label-owner";
         private const string checkPackageCommandName = "check-package";
         private const string updateCacheCommandName = "update-cache";
+        private const string auditCommandName = "audit";
 
 
         // MCP Tool Names
@@ -196,7 +213,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             IGitHelper gitHelper,
             ICodeownersManagementHelper codeownersManagementHelper,
             ICheckPackageHelper checkPackageHelper,
-            IDevOpsService devOpsService
+            IDevOpsService devOpsService,
+            ICodeownersAuditHelper codeownersAuditHelper
         )
         {
             this.githubService = githubService;
@@ -207,6 +225,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             this.checkPackageHelper = checkPackageHelper;
             this.gitHelper = gitHelper;
             this.devOpsService = devOpsService;
+            this.codeownersAuditHelper = codeownersAuditHelper;
 
             CodeownersUtils.Utils.Log.Configure(loggerFactory);
         }
@@ -254,6 +273,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 directoryPathOption, optionalRepoOption, codeownersCacheOption,
             },
             new McpCommand(updateCacheCommandName, "Run the CODEOWNERS cache update pipeline", CodeownerUpdateCacheToolName),
+            new(auditCommandName, "Audit CODEOWNERS work items for violations and optionally fix them")
+            {
+                fixOption, forceOption, optionalRepoOption,
+            },
         ];
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
@@ -354,6 +377,23 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             if (command == updateCacheCommandName)
             {
                 return await UpdateCache(ct);
+            }
+
+            if (command == auditCommandName)
+            {
+                var fix = parseResult.GetValue(fixOption);
+                var force = parseResult.GetValue(forceOption);
+                var repo = parseResult.GetValue(optionalRepoOption);
+
+                if (!string.IsNullOrEmpty(repo) && !repo.StartsWith("Azure/", StringComparison.OrdinalIgnoreCase))
+                {
+                    return new DefaultCommandResponse
+                    {
+                        ResponseError = $"Invalid --repo format: '{repo}'. Must be of the form 'Azure/<repo>' (e.g., Azure/azure-sdk-for-net)."
+                    };
+                }
+
+                return await Audit(fix, force, repo, ct);
             }
 
             return new DefaultCommandResponse { ResponseError = $"Unknown command: '{command}'" };
@@ -836,6 +876,57 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         private static bool IsTeamAlias(string alias)
         {
             return alias.Contains('/');
+        }
+
+        /// <summary>
+        /// Audits CODEOWNERS work items for violations.
+        /// When --fix is set, applies automated fixes for rules that support them.
+        /// When --force is set, overrides safety thresholds.
+        /// When --repo is set, scopes Packages (by language) and Label Owners (by Custom.Repository)
+        /// to the specified repo, but all Owners and Labels are always in scope.
+        /// </summary>
+        private async Task<DefaultCommandResponse> Audit(bool fix, bool force, string? repo, CancellationToken ct)
+        {
+            var report = await codeownersAuditHelper.RunAudit(fix, force, repo, ct);
+
+            var lines = new List<string>();
+            lines.Add($"=== CODEOWNERS Audit Report ===");
+            lines.Add($"Fix mode: {fix}, Force: {force}, Repo: {repo ?? "(all)"}");
+            lines.Add($"Total violations: {report.Violations.Count}");
+            lines.Add($"Fixes applied: {report.FixesApplied.Count(r => r.Success && !r.AlreadyApplied)}");
+            lines.Add($"Fixes already applied: {report.FixesApplied.Count(r => r.AlreadyApplied)}");
+            lines.Add($"Fixes failed: {report.FixesApplied.Count(r => !r.Success)}");
+            lines.Add("");
+
+            foreach (var group in report.Violations.GroupBy(v => v.RuleId).OrderBy(g => g.Key))
+            {
+                lines.Add($"--- {group.Key} ({group.Count()} violations) ---");
+                foreach (var v in group)
+                {
+                    lines.Add($"  {v.Description}");
+                    if (!string.IsNullOrEmpty(v.Detail))
+                    {
+                        lines.Add($"    Detail: {v.Detail}");
+                    }
+                }
+                lines.Add("");
+            }
+
+            if (report.FixesApplied.Any())
+            {
+                lines.Add("--- Fix Results ---");
+                foreach (var r in report.FixesApplied)
+                {
+                    var status = r.AlreadyApplied ? "ALREADY_APPLIED" : r.Success ? "SUCCESS" : "FAILED";
+                    lines.Add($"  [{status}] {r.Description}");
+                    if (!string.IsNullOrEmpty(r.ErrorMessage))
+                    {
+                        lines.Add($"    Error: {r.ErrorMessage}");
+                    }
+                }
+            }
+
+            return new DefaultCommandResponse { Message = string.Join("\n", lines) };
         }
     }
 }

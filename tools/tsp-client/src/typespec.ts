@@ -54,7 +54,11 @@ export async function discoverEntrypointFile(
   const files = await readdir(srcDir, { recursive: true });
 
   function findEntrypoint(name: string): string | undefined {
-    return files.find((file) => file === name) ?? undefined;
+    // Normalize path separators to forward slashes so that entrypoint paths
+    // in sub-directories match on Windows (where readdir returns "\" separators)
+    // as well as on POSIX systems.
+    const normalizedName = name.replace(/\\/g, "/");
+    return files.find((file) => file.replace(/\\/g, "/") === normalizedName) ?? undefined;
   }
   if (specifiedEntrypointFile) {
     entryTsp = findEntrypoint(specifiedEntrypointFile);

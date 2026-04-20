@@ -1,5 +1,9 @@
 # Release
 
+## Unreleased
+
+- Fix crash when `entrypointFile` in `tsp-location.yaml` points to a file in a sub-directory on Windows by normalizing path separators when matching the entrypoint file.
+
 ## 2026-04-03 - 0.32.0
 
 - Remove `autorest`, `autorest/core`, and `autorest/openapi-to-typespec` from tsp-client dependencies.

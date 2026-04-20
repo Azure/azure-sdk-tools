@@ -1,21 +1,10 @@
-name: azure-typespec-author-eval
+﻿name: azure-typespec-author-eval
 description: Evaluation suite for azure-typespec-author.
 version: "1.0"
 type: capability               # capability | regression
 
-# Root-level environment (merged into all stimuli)
-environment:
-  skills:
-    - ../../SKILL.md
-  mcpServers:
-    azure-sdk-mcp:
-      type: stdio
-      command: pwsh
-      args: ["../../../../../eng/common/mcp/azure-sdk-mcp.ps1", "-Run"]
-      env: {
-        AZURE_SDK_KB_ENDPOINT: http://localhost:8088
-      }
-      timeout: 60000
+# Root-level environment
+environment: azsdk-mcp
 
 # Execution configuration
 config:
@@ -27,33 +16,35 @@ config:
 # Test cases
 stimuli:
 - prompt: |
-    In the specification/widget/resource-manager/Microsoft.Widget/Widget project, add a sync operation exportEmployeeData for employee resource.
+    In the Widget project, add a sync operation exportEmployeeData for employee resource.
   name: 002010-arm-action-sync-operation
   constraints:
     max_turns: 10
-    expect_tools:
-    - edit
-    - azsdk_run_typespec_validation
     max_tokens: 5000
   environment:
     files:
-    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+    - src: ../fixtures/002010-arm-action-sync-operation/employee.tsp
       dest: employee.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+    - src: ../fixtures/002010-arm-action-sync-operation/main.tsp
       dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+    - src: ../fixtures/002010-arm-action-sync-operation/package.json
       dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+    - src: ../fixtures/002010-arm-action-sync-operation/readme.md
       dest: readme.md
-    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+    - src: ../fixtures/002010-arm-action-sync-operation/shared.tsp
       dest: shared.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+    - src: ../fixtures/002010-arm-action-sync-operation/tspconfig.yaml
       dest: tspconfig.yaml
   graders:
+  - type: tool-calls
+    config:
+      required:
+        - edit
+        - azsdk_run_typespec_validation
   - type: file-matches
     config:
       path: employee.tsp
-      pattern: 'exportEmployeeData is ArmResourceActionSync<Employee, void, ExportResult>;'
+      pattern: 'exportData is ArmResourceActionSync<Employee, void, ExportResult>;'
   - type: prompt
     config:
       scoring: scale_1_5
@@ -62,6 +53,7 @@ stimuli:
       model: claude-opus-4.6-1m
 scoring:
   weights:
+    tool-calls: 1
     prompt: 1
     file-matches: 1
   threshold: 1.0

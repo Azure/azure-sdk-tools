@@ -6,6 +6,7 @@ import {
   tryParseEmitterOptionAsObject,
 } from "../src/typespec.js";
 import { joinPaths, resolvePath } from "@typespec/compiler";
+import * as path from "path";
 
 describe("Check diagnostic reporting", function () {
   it.skip("Check diagnostic format", async function () {
@@ -65,7 +66,25 @@ describe("Check diagnostic reporting", function () {
       joinPaths(process.cwd(), "test", "examples", "specification", "convert"),
       "batch/batch-client.tsp",
     );
-    assert.equal(entrypointFile.replace(/\\/g, "/"), "batch/batch-client.tsp");
+    assert.equal(entrypointFile, path.join("batch", "batch-client.tsp"));
+    // Same file, specified with a back-slash separator.
+    entrypointFile = await discoverEntrypointFile(
+      joinPaths(process.cwd(), "test", "examples", "specification", "convert"),
+      "batch\\batch-client.tsp",
+    );
+    assert.equal(entrypointFile, path.join("batch", "batch-client.tsp"));
+    // Nested sub-directories with forward-slash separators.
+    entrypointFile = await discoverEntrypointFile(
+      joinPaths(process.cwd(), "test", "examples", "specification", "convert"),
+      "batch/nested/nested-client.tsp",
+    );
+    assert.equal(entrypointFile, path.join("batch", "nested", "nested-client.tsp"));
+    // Nested sub-directories with back-slash separators.
+    entrypointFile = await discoverEntrypointFile(
+      joinPaths(process.cwd(), "test", "examples", "specification", "convert"),
+      "batch\\nested\\nested-client.tsp",
+    );
+    assert.equal(entrypointFile, path.join("batch", "nested", "nested-client.tsp"));
   });
 
   it("Check discoverEntrypointFile() with unexpected entrypoint name", async function () {

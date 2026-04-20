@@ -7,6 +7,7 @@ import {
 import { Logger } from "./log.js";
 import { readFile, readdir, realpath, stat } from "fs/promises";
 import { pathToFileURL } from "url";
+import * as path from "path";
 
 export interface TspLocation {
   directory?: string;
@@ -54,11 +55,8 @@ export async function discoverEntrypointFile(
   const files = await readdir(srcDir, { recursive: true });
 
   function findEntrypoint(name: string): string | undefined {
-    // Normalize path separators to forward slashes so that entrypoint paths
-    // in sub-directories match on Windows (where readdir returns "\" separators)
-    // as well as on POSIX systems.
-    const normalizedName = name.replace(/\\/g, "/");
-    return files.find((file) => file.replace(/\\/g, "/") === normalizedName) ?? undefined;
+    const normalized = name.split(/[/\\]+/).join(path.sep);
+    return files.find((file) => file === normalized) ?? undefined;
   }
   if (specifiedEntrypointFile) {
     entryTsp = findEntrypoint(specifiedEntrypointFile);

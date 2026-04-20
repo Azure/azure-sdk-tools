@@ -20,9 +20,6 @@ stimuli:
   name: 005001-warning-suppress-warning
   constraints:
     max_turns: 10
-    expect_tools:
-    - edit
-    - azsdk_run_typespec_validation
     max_tokens: 5000
   environment:
     files:
@@ -31,6 +28,11 @@ stimuli:
     - src: ../fixtures/005001-warning-suppress-warning/package.json
       dest: package.json
   graders:
+  - type: tool-calls
+    config:
+      required:
+        - edit
+        - azsdk_run_typespec_validation
   - type: file-matches
     config:
       path: models.tsp
@@ -47,8 +49,7 @@ stimuli:
       model: claude-opus-4.6-1m
 scoring:
   weights:
+    tool-calls: 1
     prompt: 1
     file-matches: 2
   threshold: 1.0
-
-

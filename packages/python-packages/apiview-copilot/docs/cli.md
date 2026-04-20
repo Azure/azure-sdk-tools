@@ -372,6 +372,25 @@ See [metrics.md](./metrics.md) for details on what is measured and how.
 
 ---
 
+### `avc report quality-trends`
+
+Generate the multi-language comment bucket trend chart for a calendar-month lookback ending on a specified date. The chart is saved under output/charts, matching the metrics command behavior.
+
+```bash
+avc report quality-trends [--end-date 2026-04-17] [--months 6] [--languages Python Java] [--exclude-human] [--neutral] [--environment production|staging]
+```
+
+| Option | Description |
+|--------|-------------|
+| `-e/--end-date` | Inclusive query end date; defaults to today, and its month counts as one of the requested months |
+| `--months` | Number of calendar months to look back from the end date |
+| `--languages` | Languages to include; defaults to Python, C#, Java, and JavaScript |
+| `--exclude-human` | Exclude human comments from the chart |
+| `--neutral` | Include neutral AI comments as a separate bucket |
+| `--environment` | `production` (default) or `staging` |
+
+---
+
 ### `avc report active-reviews`
 
 Query active APIView reviews in a date range.

@@ -12,7 +12,8 @@ inputs:
   prompt: "The Java SDK build is failing after regeneration. The error says 'variable operationId is already defined in class AnalyzeOperationDetails'. It looks like the service team added operationId to the TypeSpec, but our DocumentIntelligenceCustomizations.java already injects that field manually. Can you fix this?"
 expected:
   output_contains:
-    - "customiz"
+    - "customize"
+    - "customization"
     - "duplicate"
   output_excludes:
     - "cannot help"

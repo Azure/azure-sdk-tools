@@ -126,6 +126,8 @@ public partial class JavaLanguageService : LanguageService
             };
 
             // Configure ALL linting tools in fail-safe mode - accumulate errors instead of failing fast
+            // Note: --fix flag for linting runs in fail-safe mode to collect all errors, but does NOT auto-fix them.
+            // Linting tools (Checkstyle, SpotBugs, RevAPI, Javadoc) require manual code changes.
             if (fixCheckErrors)
             {
                 args.AddRange([
@@ -178,25 +180,31 @@ public partial class JavaLanguageService : LanguageService
                     fullCommand);
 
                 var nextSteps = new List<string>();
+
+                if (fixCheckErrors)
+                {
+                    nextSteps.Add("Auto-fix is not available for linting tools. The --fix flag ran linting in fail-safe mode to report all errors without stopping the build.");
+                }
+
                 if (failedTools.Any(t => t.Tool == "Checkstyle"))
                 {
-                    nextSteps.Add("Checkstyle: Review and manually fix code quality violations - no auto-fix available");
+                    nextSteps.Add("Checkstyle: Review and manually fix code style violations. No auto-fix available - see reported violations above for file locations and rule names.");
                 }
                 if (failedTools.Any(t => t.Tool == "SpotBugs"))
                 {
-                    nextSteps.Add("SpotBugs: Review and manually fix potential bugs - no auto-fix available");
+                    nextSteps.Add("SpotBugs: Review and manually fix potential bugs. No auto-fix available - see bug reports above for details.");
                 }
                 if (failedTools.Any(t => t.Tool == "RevAPI"))
                 {
-                    nextSteps.Add("RevAPI: Manually review API compatibility - requires design decisions");
+                    nextSteps.Add("RevAPI: Review API compatibility changes. No auto-fix available - breaking changes require design decisions. Add @Deprecated or update revapi configuration if intentional.");
                 }
                 if (failedTools.Any(t => t.Tool == "Javadoc"))
                 {
-                    nextSteps.Add("Javadoc: Fix javadoc comments, missing documentation, or invalid HTML in docstrings");
+                    nextSteps.Add("Javadoc: Fix javadoc comments, missing documentation, or invalid HTML in docstrings. No auto-fix available.");
                 }
 
-                nextSteps.Add("Review the linting errors and fix them manually - no auto-fix available");
-                nextSteps.Add("Use -Dcheckstyle.skip=true, -Dspotbugs.skip=true, -Drevapi.skip=true, -Dmaven.javadoc.skip=true to skip specific tools during development");
+                nextSteps.Add("Review the linting errors above and fix them manually in your source code");
+                nextSteps.Add("To skip specific tools during development, use: -Dcheckstyle.skip=true, -Dspotbugs.skip=true, -Drevapi.skip=true, -Dmaven.javadoc.skip=true");
 
                 return new PackageCheckResponse(result.ExitCode, output, errorMessage)
                 {

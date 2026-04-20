@@ -10,8 +10,8 @@
 1. [Goal](#goal)
 2. [Prerequisite](#prerequisite)
 3. [Proposed Model](#proposed-model)
-   - [New Class: `ReviewSubmissionModel`](#new-class-reviewsubmissionmodel)
-   - [New Class: `ReviewRequestModel`](#new-class-reviewrequestmodel)
+   - [New Class: `ReviewSubmission`](#new-class-reviewsubmission)
+   - [New Class: `ReviewRequest`](#new-class-reviewrequest)
 4. [Database / Cosmos Changes](#database--cosmos-changes)
 5. [API Surface Changes](#api-surface-changes)
 6. [Comment Grouping Rules](#comment-grouping-rules)
@@ -42,36 +42,34 @@ Mimic GitHub submit-review behavior so that:
 
 Reviewer decisions are captured through explicit submission events (`Approve` / `Feedback`) rather than inferred from comments. Comments remain unchanged. In the version-centric model, each submission is scoped to a specific version.
 
-### New Class: `ReviewSubmissionModel`
+### New Class: `ReviewSubmission`
 
 Represents one submitted review event (`Approve` or `Feedback`).
 
-This is the review outcome record. It captures what the reviewer actually submitted, when they submitted it, which comments were included, and any additional state captured at submit time, such as the approval API hash.
+This is the review outcome record. It captures what the reviewer actually submitted, when they submitted it, which comments were included, and any additional state captured at submit time, such as the approval `ContentHash`.
 
 | Field | Notes |
 |---|---|
 | `Id` | Unique submission ID |
-| `ReviewId` | Parent review |
 | `VersionId` | Active version at submit time |
 | `ReviewerId` | Submitting reviewer |
 | `Decision` | `Approve` or `Feedback` |
-| `ApiHash` | API hash captured at approval time; null for non-approve submissions |
+| `ContentHash` | SHA-256 hash of the approved revision's API surface, captured at approval time. Used by the approval inheritance system to detect whether a new revision has the same API surface without downloading blobs. Null for non-approve submissions. |
 | `SubmissionMessage` | Optional message entered in the Submit Review dialog (included in notification email) |
 | `CommentIds` | `List<string>` grouped into this submission |
 | `SubmittedOn` | Submission timestamp |
 
-### New Class: `ReviewRequestModel`
+### New Class: `ReviewRequest`
 
 Represents a review window opened for a specific reviewer on a specific version.
 
 This is the review window record. It captures who was asked to review, which version they were asked to review, when that window opened, whether it is still open, and whether it was later submitted or canceled.
 
-Each open `ReviewRequestModel` can produce at most one `ReviewSubmissionModel`.
+Each open `ReviewRequest` can produce at most one `ReviewSubmission`.
 
 | Field | Notes |
 |---|---|
 | `Id` | Unique request ID |
-| `ReviewId` | Parent review |
 | `VersionId` | Target version |
 | `ReviewerId` | Reviewer this request applies to |
 | `RequestedBy` | User/service account that requested review |
@@ -79,7 +77,7 @@ Each open `ReviewRequestModel` can produce at most one `ReviewSubmissionModel`.
 | `Status` | `Open`, `Submitted`, `Canceled` |
 | `SubmittedOn` | Optional timestamp when reviewer submits |
 | `CanceledOn` | Optional timestamp when request is canceled (reviewer removal) |
-| `SubmissionId` | Optional link to `ReviewSubmissionModel` |
+| `SubmissionId` | Optional link to `ReviewSubmission` |
 
 ## Database / Cosmos Changes
 
@@ -87,46 +85,45 @@ Each open `ReviewRequestModel` can produce at most one `ReviewSubmissionModel`.
 
 Add containers:
 
-- `ReviewSubmissions` (partition key `/ReviewId`)
-- `ReviewRequests` (partition key `/ReviewId`)
+- `ReviewSubmissions` (partition key `/VersionId`)
+- `ReviewRequests` (partition key `/VersionId`)
 
 Why this approach:
 
 - Keeps comment read/write path unchanged.
-- Adds a single new write path for submission records.
-- Keeps timeline and notification queries explicit.
-- Matches Version-scoped comments (submission can query by `ReviewId + VersionId`).
+- Adds two new write paths: one for submission records and one for request records.
+- Separates request lifecycle from submission records for clear audit trail and explicit notification triggers.
+- Scopes submissions and requests by version for efficient querying of approval state and comment grouping.
 
 ## API Surface Changes
 
 ### Endpoints
 
-#### `POST /reviews/{reviewId}/{versionId}/reviewers` (Existing Endpoint)
+#### `POST /versions/{versionId}/reviewers` (Existing Endpoint)
 
 This is an existing API endpoint used for adding/updating reviewers on a version.
 
 In this proposal, we modify this existing add-reviewer endpoint to also drive review-request lifecycle behavior:
 
-- Initial assignment: adds reviewer membership, creates `ReviewRequestModel` (`Status = Open`), and notifies reviewer.
-- Re-request: if reviewer is already assigned, the endpoint creates a new `ReviewRequestModel` (`Status = Open`) for that reviewer/version and notifies reviewer (per open-request invariant, does not reuse canceled requests).
-- This action does not create a `ReviewSubmissionModel` ever.
+- Initial assignment: adds reviewer membership, creates `ReviewRequest` (`Status = Open`), and notifies reviewer.
+- Re-request: if reviewer is already assigned, the endpoint creates a new `ReviewRequest` (`Status = Open`) for that reviewer/version and notifies reviewer (per open-request invariant, does not reuse canceled requests).
+- This action does not create a `ReviewSubmission` ever.
 - UI trigger: a per-reviewer `Request Review` action (arrow icon, GitHub-style) invokes this same endpoint for already-assigned reviewers (when they do not already have an open request).
 
 ##### Reviewer Removal Lifecycle
 
 When a reviewer is removed from a review:
 
-- If the reviewer has an open (not yet submitted) `ReviewRequestModel`, set its `Status = Canceled` and record the `CanceledOn` timestamp.
+- If the reviewer has an open (not yet submitted) `ReviewRequest`, set its `Status = Canceled` and record the `CanceledOn` timestamp.
 - Retain the canceled request record for audit trail; do not delete it.
-- Removing a reviewer affects who is currently requested, but does not automatically invalidate or dismiss any already-submitted `ReviewSubmissionModel`.
+- Removing a reviewer affects who is currently requested, but does not automatically invalidate or dismiss any already-submitted `ReviewSubmission`.
 - If the reviewer is re-added later, create a new request record (per open-request invariant, do not reuse a canceled record).
 
-#### `POST /reviews/{reviewId}/submit-review`
+#### `POST /versions/{versionId}/submit-review`
 
 Input:
 
-- `versionId`
-- `revisionId` (required — needed to capture the API hash)
+- `revisionId` (required — needed to capture the `ContentHash`)
 - `decision`
 - `submissionMessage`
 
@@ -134,10 +131,10 @@ Behavior:
 
 1. Resolve reviewer request context for this reviewer/version:
     - This fallback path applies to human submitters only.
-    - If an open `ReviewRequestModel` exists for this reviewer/version, use it.
+    - If an open `ReviewRequest` exists for this reviewer/version, use it.
     - If no open request exists, auto-add the submitting user to reviewer membership for this version.
-    - In the no-open-request path, create an implicit `ReviewRequestModel` (`Status = Open`) for this reviewer/version with `RequestedBy` set to the submitting user and `RequestedOn` set to:
-        - The reviewer's most recent prior `ReviewSubmissionModel.SubmittedOn` on the same version, if one exists, or
+    - In the no-open-request path, create an implicit `ReviewRequest` (`Status = Open`) for this reviewer/version with `RequestedBy` set to the submitting user and `RequestedOn` set to:
+        - The reviewer's most recent prior `ReviewSubmission.SubmittedOn` on the same version, if one exists, or
         - The version creation timestamp if no prior submission exists.
 2. Query for eligible `commentIds` using [comment grouping rules](#comment-grouping-rules).
 3. Enforce empty-submit policy:
@@ -145,13 +142,13 @@ Behavior:
     - `Approve` may be submitted with no comments and no message.
 4. Preserve existing unresolved-comment approval gating:
   - Any current server-side rule that blocks `Approve` while unresolved comments exist remains unchanged in this proposal.
-5. Create `ReviewSubmissionModel` with those `commentIds`.
+5. Create `ReviewSubmission` with those `commentIds`.
 6. Complete the active request lifecycle for this reviewer/version:
-    - Set the corresponding open `ReviewRequestModel.Status` to `Submitted`.
-    - Set `ReviewRequestModel.SubmittedOn` to the submit timestamp.
-    - Set `ReviewRequestModel.SubmissionId` to the new `ReviewSubmissionModel.Id`.
+    - Set the corresponding open `ReviewRequest.Status` to `Submitted`.
+    - Set `ReviewRequest.SubmittedOn` to the submit timestamp.
+    - Set `ReviewRequest.SubmissionId` to the new `ReviewSubmission.Id`.
 7. Apply decision side effects:
-  - `Approve`: read the API hash from the specified revision (`revisionId`), persist it on the submission (`ApiHash`), and record this reviewer/version latest decision as `Approve`.
+  - `Approve`: read the `ContentHash` from `APICodeFileModel` on the specified revision (`revisionId`) and persist it on the submission. This records the API surface fingerprint at approval time so the system can later determine whether a new revision has the same API surface and can auto-inherit approval, without downloading blobs.
   - `Feedback`: record this reviewer/version latest decision as `Feedback`.
   - Recompute version approval state on the server from reviewers' latest submitted decisions for the version, then persist the result to the `APIVersionModel` record:
     - Precedence rule: `Feedback` supersedes `Approve`.
@@ -165,33 +162,33 @@ Behavior:
 
 ## Comment Grouping Rules
 
-For human reviewers, on submit the server queries comments within the window defined by the reviewer's active request context and the new `ReviewSubmissionModel`.
+For human reviewers, on submit the server queries comments within the window defined by the reviewer's active request context and the new `ReviewSubmission`.
 
 Comments are eligible if:
 
-- `CreatedBy == ReviewRequestModel.ReviewerId`
-- `VersionId == ReviewRequestModel.VersionId`
-- `CreatedOn >= ReviewRequestModel.RequestedOn`
-- `CreatedOn < ReviewSubmissionModel.SubmittedOn`
+- `CreatedBy == ReviewRequest.ReviewerId`
+- `VersionId == ReviewRequest.VersionId`
+- `CreatedOn >= ReviewRequest.RequestedOn`
+- `CreatedOn < ReviewSubmission.SubmittedOn`
 - Not a diagnostic/system-generated comment, and not a Copilot-authored comment when grouping a human reviewer's submission
 
-Because each re-request creates a new `ReviewRequestModel` with a fresh `RequestedOn`, the active request window naturally excludes comments that were part of an earlier submission.
+Because each re-request creates a new `ReviewRequest` with a fresh `RequestedOn`, the active request window naturally excludes comments that were part of an earlier submission.
 
 Copilot grouping and request-window semantics are defined in [Copilot Review Behavior](#copilot-review-behavior).
 
-Submission history is immutable: once `ReviewSubmissionModel.CommentIds` is recorded, later edits/deletes to those comments do not rewrite historical submission rendering.
+Submission history is immutable: once `ReviewSubmission.CommentIds` is recorded, later edits/deletes to those comments do not rewrite historical submission rendering.
 
 ## Copilot Review Behavior
 
 Copilot review is a first-class review flow, not a special case of human review submission.
 
-- Copilot does not participate in reviewer assignment lifecycle and does not use `ReviewRequestModel` records.
+- Copilot does not participate in reviewer assignment lifecycle and does not use `ReviewRequest` records.
 - Copilot does not use the human no-open-request fallback and is never auto-added to reviewer membership.
-- Copilot comment grouping is evaluated in a Copilot-specific submission window on the same `ReviewId` + `VersionId`.
-- Window end is current `ReviewSubmissionModel.SubmittedOn`.
+- Copilot comment grouping is evaluated in a Copilot-specific submission window scoped to `VersionId`.
+- Window end is current `ReviewSubmission.SubmittedOn`.
 - Window start is the `SubmittedOn` of Copilot's most recent prior submission on that version, or version creation timestamp when none exists.
 - Eligible comments must be Copilot-authored, match `VersionId`, fall within the window, and exclude diagnostic/system-generated comments.
-- Copilot comments are grouped only into Copilot's own `ReviewSubmissionModel`.
+- Copilot comments are grouped only into Copilot's own `ReviewSubmission`.
 - Copilot comments must never be bundled with an architect's or any other human reviewer's submission.
 - Copilot may complete a review and submit a batch of comments as its own review event.
 - Copilot submissions are advisory only: they do not approve a version and do not affect approval state.
@@ -202,7 +199,7 @@ Copilot review is a first-class review flow, not a special case of human review 
 Batch notification happens on submit-review events only.
 
 - Recipients: service team and subscribers only.
-- Collect comments via `ReviewSubmissionModel.CommentIds`.
+- Collect comments via `ReviewSubmission.CommentIds`.
 - Send one notification/email payload containing:
   - reviewer,
   - decision,
@@ -232,7 +229,7 @@ Diagnostic comments also do not create submit-review notification batches.
   - Optional comment field (used in notification email)
 - Adding a reviewer uses the existing dropdown/click flow (unchanged).
 - Each assigned reviewer in the reviewer list has a small arrow icon next to their name to represent `Re-Request Review`, similar to GitHub, for re-requesting review without removing them.
-- Clicking the button creates a new `ReviewRequestModel` (`Status = Open`), opens a request window for that reviewer, and sends a notification.
+- Clicking the button creates a new `ReviewRequest` (`Status = Open`), opens a request window for that reviewer, and sends a notification.
 - The button is disabled and shown as `Already Requested` when that reviewer already has an open request.
 - After that reviewer submits and the open request transitions to `Submitted`, the button becomes enabled again so the service team can issue another re-request without removing the reviewer.
 
@@ -244,9 +241,9 @@ Diagnostic comments also do not create submit-review notification batches.
 4. Single reviewer submits `Feedback` → review remains not approved and submission is recorded.
 5. Legacy comments remain visible and queryable.
 6. Cross-version isolation: submission for version A never includes comments from version B.
-7. Reviewer already assigned with no open request: clicking `Request Review` button creates a new `ReviewRequestModel` and sends notification without creating a `ReviewSubmissionModel`.
+7. Reviewer already assigned with no open request: clicking `Request Review` button creates a new `ReviewRequest` and sends notification without creating a `ReviewSubmission`.
 8. Reviewer already assigned with an open request: `Request Review` button is disabled and shows `Already Requested`.
-9. Copilot submission creates its own `ReviewSubmissionModel` and never bundles comments with a human reviewer's submission.
+9. Copilot submission creates its own `ReviewSubmission` and never bundles comments with a human reviewer's submission.
 10. Copilot submission never sets approved state, even if a `Decision` value is present.
 11. `Feedback` submit with no grouped comments and empty `submissionMessage` is rejected.
 12. `Approve` submit with no comments and empty `submissionMessage` is accepted.
@@ -259,6 +256,6 @@ Diagnostic comments also do not create submit-review notification batches.
 19. Removing a reviewer cancels any open request for that reviewer, but does not automatically invalidate that reviewer's previously submitted approval.
 20. No reviewers assigned and no `Approve` submissions for the version: version remains not approved.
 21. One reviewer submits `Approve`, is later removed, and no other blocking feedback exists: version remains approved.
-22. Submit with no open request auto-adds submitter as reviewer, creates an implicit `ReviewRequestModel`, and still succeeds.
+22. Submit with no open request auto-adds submitter as reviewer, creates an implicit `ReviewRequest`, and still succeeds.
 23. Submit with no open request uses prior-submission boundary (or version creation time for first submit) as `RequestedOn` anchor for comment grouping.
 24. Existing unresolved-comment approval gating behavior is unchanged: if current server rules block `Approve` with unresolved comments, submit is rejected the same way as today.

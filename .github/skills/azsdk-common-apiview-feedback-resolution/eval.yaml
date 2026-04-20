@@ -1,7 +1,7 @@
-name: prepare-release-plan-evals
-description: Evaluations for the release plan preparation skill
-skill: prepare-release-plan
-version: "1.0"
+name: azsdk-common-apiview-feedback-resolution-eval
+description: Evaluation suite for APIView feedback resolution skill.
+skill: azsdk-common-apiview-feedback-resolution
+version: '1.0'
 config:
   model: gpt-4o
   executor: mock
@@ -18,12 +18,12 @@ metrics:
     threshold: 0.7
     description: Did the skill stay within behavior limits?
 graders:
-- type: text
-  name: no_fatal_errors
-  config:
-    regex_not_match:
-    - (?i)fatal error
-    - (?i)unhandled exception
-    - '(?i)panic:'
+  - type: text
+    name: no_fatal_errors
+    config:
+      regex_not_match:
+        - (?i)fatal error
+        - (?i)unhandled exception
+        - '(?i)panic:'
 tasks:
   - "tasks/*.yaml"

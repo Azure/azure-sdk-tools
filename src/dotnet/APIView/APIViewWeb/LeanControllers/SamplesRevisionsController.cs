@@ -67,12 +67,12 @@ namespace APIViewWeb.LeanControllers
         {
             if (!string.IsNullOrEmpty(usageSampleAPIParam.Content))
             {
-                var samplesRevision = await _samplesRevisionsManager.UpsertSamplesRevisionsAsync(User, reviewId, usageSampleAPIParam.Content, usageSampleAPIParam.Title);
+                var samplesRevision = await _samplesRevisionsManager.UpsertSamplesRevisionsAsync(User, reviewId, usageSampleAPIParam.Content, usageSampleAPIParam.Title, apiVersionId: usageSampleAPIParam.ApiVersionId);
                 return new LeanJsonResult(samplesRevision, StatusCodes.Status200OK);
             } 
             else if (usageSampleAPIParam.File != null)
             {
-                var samplesRevision = await _samplesRevisionsManager.UpsertSamplesRevisionsAsync(User, reviewId, usageSampleAPIParam.File.OpenReadStream(), usageSampleAPIParam.Title, usageSampleAPIParam.File.FileName);
+                var samplesRevision = await _samplesRevisionsManager.UpsertSamplesRevisionsAsync(User, reviewId, usageSampleAPIParam.File.OpenReadStream(), usageSampleAPIParam.Title, usageSampleAPIParam.File.FileName, usageSampleAPIParam.ApiVersionId);
                 return new LeanJsonResult(samplesRevision, StatusCodes.Status200OK);
             }
             else

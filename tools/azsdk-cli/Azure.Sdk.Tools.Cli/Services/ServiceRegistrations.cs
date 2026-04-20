@@ -49,6 +49,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddScoped<LanguageService, JavaScriptLanguageService>();
             services.AddScoped<LanguageService, PythonLanguageService>();
             services.AddScoped<LanguageService, GoLanguageService>();
+            services.AddScoped<LanguageService, RustLanguageService>();
 
             // Helper classes
             services.AddSingleton<IFileHelper, FileHelper>();
@@ -63,7 +64,8 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ICodeownersGenerateHelper, CodeownersGenerateHelper>();
             services.AddSingleton<IPackageInfoHelper, PackageInfoHelper>();
             services.AddSingleton<ITeamUserCache, TeamUserCache>();
-            services.AddSingleton<ICodeownersManagementHelper, CodeownersManagementHelper>(); 
+            services.AddSingleton<ICodeownersManagementHelper, CodeownersManagementHelper>();
+            services.AddSingleton<ICheckPackageHelper, CheckPackageHelper>();
             services.AddSingleton<IEnvironmentHelper, EnvironmentHelper>();
             services.AddSingleton<IEnvFileHelper, EnvFileHelper>();
             services.AddSingleton<IMcpServerContextAccessor, McpServerContextAccessor>();

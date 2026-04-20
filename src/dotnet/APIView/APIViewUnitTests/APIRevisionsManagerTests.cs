@@ -87,6 +87,7 @@ public class APIRevisionsManagerTests
     private readonly Mock<IBlobOriginalsRepository> _mockOriginalsRepository;
     private readonly Mock<ICosmosReviewRepository> _mockReviewsRepository;
     private readonly Mock<IProjectsManager> _mockProjectsManager;
+    private readonly Mock<IAPIVersionsManager> _mockApiVersionsManager;
     private readonly TelemetryClient _telemetryClient;
     private readonly TestLanguageService _testLanguageService;
 
@@ -105,6 +106,10 @@ public class APIRevisionsManagerTests
         _mockCommentsRepository = new Mock<ICosmosCommentsRepository>();
         _mockConfiguration = new Mock<IConfiguration>();
         _mockProjectsManager = new Mock<IProjectsManager>();
+        _mockApiVersionsManager = new Mock<IAPIVersionsManager>();
+        _mockApiVersionsManager
+            .Setup(m => m.GetOrCreateVersionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()))
+            .ReturnsAsync(new APIVersionModel { Id = "default-version-id" });
 
         TelemetryConfiguration telemetryConfiguration = new();
         _telemetryClient = new TelemetryClient(telemetryConfiguration);
@@ -128,6 +133,7 @@ public class APIRevisionsManagerTests
             _mockCommentsRepository.Object,
             _telemetryClient,
             _mockProjectsManager.Object,
+            _mockApiVersionsManager.Object,
             _mockConfiguration.Object
         );
     }
@@ -316,6 +322,48 @@ public class APIRevisionsManagerTests
             x => x.UpsertAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()),
             Times.Never);
     }
+
+    #region APIVersionId Tests
+
+    [Fact]
+    public async Task CreateAPIRevisionAsync_WithPackageVersion_SetsAPIVersionId()
+    {
+        const string reviewId = "review-id";
+        const string expectedVersionId = "ver-id";
+
+        var codeFile = new CodeFile
+        {
+            Name = "test.json",
+            Language = "C#",
+            PackageName = "TestPackage",
+            PackageVersion = "1.0.0"
+        };
+
+        _mockApiVersionsManager
+            .Setup(m => m.GetOrCreateVersionAsync(reviewId, "1.0.0", It.IsAny<int?>(), It.IsAny<string>()))
+            .ReturnsAsync(new APIVersionModel { Id = expectedVersionId });
+
+        _mockCodeFileManager
+            .Setup(m => m.CreateReviewCodeFileModel(It.IsAny<string>(), It.IsAny<MemoryStream>(), It.IsAny<CodeFile>()))
+            .ReturnsAsync(new APICodeFileModel { FileId = "file-id", FileName = "test.json" });
+
+        _mockDiagnosticCommentService
+            .Setup(m => m.SyncDiagnosticCommentsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CodeDiagnostic[]>(), It.IsAny<IEnumerable<CommentItemModel>>()))
+            .ReturnsAsync(new DiagnosticSyncResult { DiagnosticsHash = "hash" });
+
+        _mockAPIRevisionsRepository
+            .Setup(m => m.UpsertAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()))
+            .Returns(Task.CompletedTask);
+
+        using var memoryStream = new MemoryStream();
+        APIRevisionListItemModel revision = await _manager.CreateAPIRevisionAsync(
+            userName: "testuser", reviewId: reviewId, apiRevisionType: APIRevisionType.Automatic,
+            label: "test-label", memoryStream: memoryStream, codeFile: codeFile, originalName: "test.json");
+
+        Assert.Equal(expectedVersionId, revision.APIVersionId);
+    }
+
+    #endregion
 
     private APIRevisionListItemModel CreateTestRevision(string revisionId = "test-revision-id",
         string fileId = "test-file-id",

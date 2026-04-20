@@ -107,7 +107,7 @@ The Ralph loop is an iterative improvement cycle inspired by the ["Ralph Wiggum"
 
 **Files to read:**
 ```
-plugin/skills/{skill-name}/SKILL.md    # Required
+.github/skills/{skill-name}/SKILL.md    # Required
 tests/{skill-name}/unit.test.ts        # If exists
 tests/{skill-name}/triggers.test.ts    # If exists
 tests/{skill-name}/integration.test.ts # If exists
@@ -208,10 +208,10 @@ description: "[ACTION VERB] [UNIQUE_DOMAIN]. [One clarifying sentence]. WHEN: \"
 **Command:**
 ```bash
 # Standard (unit + trigger tests only - fast)
-cd tests && npm test -- --testPathPattern={skill-name} --testPathIgnorePatterns=integration
+cd tests && npm test -- --testPathPatterns={skill-name} --testPathIgnorePatterns=integration
 
 # With integration tests (slower, requires Copilot SDK)
-cd tests && npm test -- --testPathPattern={skill-name}
+cd tests && npm test -- --testPathPatterns={skill-name}
 ```
 
 **Skip Integration Tests Flag:**
@@ -267,17 +267,17 @@ cd scripts && npm run references {skill-name}
 
 **Commands:**
 ```bash
-cd scripts && npm run tokens -- check plugin/skills/{skill-name}/SKILL.md
-cd scripts && npm run tokens -- suggest plugin/skills/{skill-name}/SKILL.md
+cd scripts && npm run tokens -- check .github/skills/{skill-name}/SKILL.md
+cd scripts && npm run tokens -- suggest .github/skills/{skill-name}/SKILL.md
 ```
 
 **Line count check (per spec):**
 ```bash
-wc -l plugin/skills/{skill-name}/SKILL.md
+wc -l .github/skills/{skill-name}/SKILL.md
 ```
 Report a warning if SKILL.md exceeds 500 lines (spec recommendation).
 
-**Token Budgets** (from skill-authoring):
+**Token Budgets** (from [skill-authoring](/.github/skills/skill-authoring)):
 - SKILL.md: < 500 tokens (soft limit), < 5000 (hard limit)
 - references/*.md: < 1000 tokens each
 
@@ -288,7 +288,7 @@ Report a warning if SKILL.md exceeds 500 lines (spec recommendation).
 
 **Note:** Token optimizations are captured but NOT automatically applied. The user decides whether to implement them or create an issue for follow-up.
 
-See [SCORING.md § Token Integration](SCORING.md) for details on token optimization patterns.
+See [TOKEN-INTEGRATION.md](TOKEN-INTEGRATION.md) for details on token optimization patterns.
 
 ### Step 7: SUMMARY
 
@@ -339,7 +339,7 @@ Choose an action:
 
 **Commit flow:**
 ```bash
-git add plugin/skills/{skill-name}/SKILL.md
+git add .github/skills/{skill-name}/SKILL.md
 git add tests/{skill-name}/
 git commit -m "sensei: improve {skill-name} frontmatter
 
@@ -417,7 +417,7 @@ Skills: [skill-a, skill-b, skill-c]
 
 ### Skill Not Found
 
-1. Verify skill exists: `ls plugin/skills/{skill-name}`
+1. Verify skill exists: `ls .github/skills/{skill-name}`
 2. Check spelling (case-sensitive)
 3. Report error and skip to next skill
 
@@ -432,7 +432,7 @@ Sensei tracks progress via git commits. To review:
 git log --oneline --grep="sensei:"
 
 # See specific skill history
-git log --oneline -- plugin/skills/{skill-name}/SKILL.md
+git log --oneline -- .github/skills/{skill-name}/SKILL.md
 
 # See diff for a commit
 git show {commit-hash}

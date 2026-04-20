@@ -1,6 +1,6 @@
 # APIView — Operations Guide
 
-This document covers deployment, test environments, configuration, and troubleshooting for the APIView engineering team. For contributor setup, see [contributing.md](contributing.md). For architecture, see [overview.md](overview.md). For language parser updates and releases, see [parser-guide.md](parser-guide.md).
+This document covers deployment, test environments, configuration, and troubleshooting for the APIView engineering team. For contributor setup, see [contributing.md](contributing.md). For architecture, see [overview.md](overview.md).
 
 ---
 

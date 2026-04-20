@@ -12,7 +12,6 @@
 | [operations.md](docs/operations.md) | Ops, deployment, and configuration |
 | [release-approval.md](docs/release-approval.md) | Approval and release gating |
 | [copilot-api.md](docs/copilot-api.md) | Copilot semantic search API |
-| [parser-guide.md](docs/parser-guide.md) | Language parser updates and releases |
 | [legacy.md](docs/legacy.md) | Legacy Razor Pages system |
 | [sandboxing.md](docs/sandboxing.md) | Sandboxed parser execution |
 
@@ -87,12 +86,6 @@ Developer setup and workflow for contributing to APIView.
 - Local Setup (GitHub OAuth, user secrets, build and run)
 - Making Changes (where to modify, how to test, submitting PRs)
 - Logs and Monitoring
-
-### [parser-guide.md](parser-guide.md) — Language Parser Guide
-How to update and release APIView language parsers.
-- C# Language Parser (pipeline, package, deployment, validation — 7 steps)
-- Rust Language Parser (version sync across 3 files)
-- Python Parser Release (release process, mirroring packages to dev feed)
 
 ### [copilot-api.md](copilot-api.md) — Copilot Comments REST API
 REST API and database schema for the Copilot semantic search system.

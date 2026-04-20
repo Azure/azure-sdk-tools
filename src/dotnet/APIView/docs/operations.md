@@ -17,26 +17,7 @@ This document covers deployment, test environments, configuration, and troublesh
 
 ## Deployment
 
-APIView runs as an Azure App Service in the Azure SDK Engineering Systems subscription. For full contributor-level deployment details, see [APIViewWeb/CONTRIBUTING.md](../APIViewWeb/CONTRIBUTING.md#deployment-to-production).
-
-**Step 1 — Approve the Prod stage**
-
-The [APIView Pipeline](https://dev.azure.com/azure-sdk/internal/_build?definitionId=1136) runs automatically when changes are merged to `main`. Find the completed build you want to deploy and approve the **Prod** stage (the final deployment step awaiting approval).
-
-**Step 2 — Wait for pipeline completion**
-
-After the pipeline completes, the code is deployed to the **staging slot** of the `APIView` Web App in Azure Portal.
-
-**Step 3 — Swap deployment slots**
-
-1. Go to the `APIView` Web App in Azure Portal
-2. Click **Swap**
-3. Ensure the source is `apiview-staging` and the target is `APIView`
-4. Click **Start swap**
-
-**Step 4 — Rollback (if needed)**
-
-In case of a regression (and when there are no database changes), repeat Step 3 to swap back. This restores the previous version.
+APIView runs as an Azure App Service in the Azure SDK Engineering Systems subscription. For deployment steps, see [APIViewWeb/CONTRIBUTING.md](../APIViewWeb/CONTRIBUTING.md#deployment-to-production).
 
 ---
 

@@ -837,12 +837,72 @@ function resolveEmitterPathFromArgs(argv: any): string | undefined {
 }
 
 /**
- * Parses a space-separated string of npm arguments into an array.
+ * Parses a shell-like string of npm arguments into an array, properly handling quoted strings and escaping.
+ * Supports both single and double quotes, and treats quoted content as single arguments.
+ * Examples:
+ *   - `--tag "foo bar"` becomes `["--tag", "foo bar"]`
+ *   - `--name 'my package'` becomes `["--name", "my package"]`
+ *   - `--message "He said \"hello\""` becomes `["--message", "He said \"hello\""]`
  * Returns an empty array if the input is undefined or empty.
  */
 export function parseNpmArgs(npmArgsString: string | undefined): string[] {
   if (!npmArgsString) {
     return [];
   }
-  return npmArgsString.split(/\s+/).filter((arg) => arg.length > 0);
+
+  const args: string[] = [];
+  let current = "";
+  let inQuote = false;
+  let quoteChar = "";
+  let i = 0;
+
+  while (i < npmArgsString.length) {
+    const char = npmArgsString[i];
+
+    if (!inQuote && /\s/.test(char)) {
+      // Outside quotes, whitespace separates arguments
+      if (current.length > 0) {
+        args.push(current);
+        current = "";
+      }
+      // Skip consecutive whitespace
+      while (i + 1 < npmArgsString.length && /\s/.test(npmArgsString[i + 1])) {
+        i++;
+      }
+    } else if (!inQuote && (char === '"' || char === "'")) {
+      // Start of quoted section
+      inQuote = true;
+      quoteChar = char;
+    } else if (inQuote && char === quoteChar) {
+      // End of quoted section
+      inQuote = false;
+      quoteChar = "";
+    } else if (char === "\\" && i + 1 < npmArgsString.length) {
+      // Handle escaped characters (including escaped quotes)
+      const nextChar = npmArgsString[i + 1];
+      if (inQuote && nextChar === quoteChar) {
+        // Escaped quote within quoted string
+        current += nextChar;
+      } else if (!inQuote && /\s/.test(nextChar)) {
+        // Escaped whitespace outside quotes
+        current += nextChar;
+      } else {
+        // Other escaped characters - keep the backslash for now
+        current += char + nextChar;
+      }
+      i++; // Skip the next character since we processed it
+    } else {
+      // Regular character (including quotes that don't match the current quote char)
+      current += char;
+    }
+
+    i++;
+  }
+
+  // Add the last argument if there is one
+  if (current.length > 0) {
+    args.push(current);
+  }
+
+  return args;
 }

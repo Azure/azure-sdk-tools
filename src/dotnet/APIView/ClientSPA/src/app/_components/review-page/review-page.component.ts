@@ -112,7 +112,9 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
     return this.apiRevisions.some(rev =>
       rev.id !== this.activeAPIRevision?.id &&
       rev.isApproved &&
-      rev.isReleased
+      rev.isReleased &&
+      !!rev.packageVersion &&
+      !rev.packageVersion.includes('-')
     );
   }
 

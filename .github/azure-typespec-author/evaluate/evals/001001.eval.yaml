@@ -3,17 +3,8 @@ description: Evaluation suite for azure-typespec-author.
 version: "1.0"
 type: capability               # capability | regression
 
-# Root-level environment (merged into all stimuli)
-environment:
-  mcpServers:
-    azure-sdk-mcp:
-      type: stdio
-      command: pwsh
-      args: ["../../../../../eng/common/mcp/azure-sdk-mcp.ps1", "-Run"]
-      env: {
-        AZURE_SDK_KB_ENDPOINT: http://localhost:8088
-      }
-      timeout: 60000
+# Root-level environment
+environment: azsdk-mcp
 
 # Execution configuration
 config:
@@ -41,18 +32,23 @@ stimuli:
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
   graders:
+  - type: tool-calls
+    config:
+      required:
+        - edit
+        - azsdk_typespec_generate_authoring_plan
   - type: file-matches
     config:
-      path: main.tsp
+      path: Widget/main.tsp
       pattern: 2025-05-04-preview
   - type: file-matches
     config:
-      path: employee.tsp
+      path: Widget/employee.tsp
       pattern: "\\.\\.\\.ManagedServiceIdentityProperty;"
   - type: file-matches
     config:
-      path: employee.tsp
-      pattern: "@@added\\(Employee\\.identity, Versions\\.(v2025_05_04_preview|`2025-05-04-preview`)\\);"
+      path: Widget/employee.tsp
+      pattern: "@@added\\(Employee\\.identity, (Microsoft\\.Widget\\.)?Versions\\.(v2025_05_04_preview|`2025-05-04-preview`)\\);"
   - type: prompt
     config:
       prompt: Verify changes are scoped to this task only, with no unrelated edits beyond introducing preview-only identity via versioning.
@@ -62,14 +58,9 @@ stimuli:
   constraints:
     max_turns: 10
     max_tokens: 50000
-    expect_tools:
-    - edit
-    - azsdk_run_typespec_validation
 scoring:
   weights:
     file-matches: 3
+    tool-calls: 1
     prompt: 1
   threshold: 1.0
-
-
-

@@ -1,6 +1,6 @@
 # Release
 
-## Unreleased
+## 2026-04-20 - 0.32.1
 
 - Fix crash when `entrypointFile` in `tsp-location.yaml` points to a file in a sub-directory on Windows by normalizing path separators when matching the entrypoint file.
 

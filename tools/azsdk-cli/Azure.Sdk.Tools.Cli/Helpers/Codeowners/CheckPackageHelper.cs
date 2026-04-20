@@ -5,7 +5,7 @@ using Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
 using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 using Azure.Sdk.Tools.CodeownersUtils.Utils;
 
-namespace Azure.Sdk.Tools.Cli.Helpers;
+namespace Azure.Sdk.Tools.Cli.Helpers.Codeowners;
 
 public interface ICheckPackageHelper
 {

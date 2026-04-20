@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Helpers.Codeowners;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Codeowners;
 using Azure.Sdk.Tools.Cli.Services;

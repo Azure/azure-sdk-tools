@@ -11,7 +11,7 @@ using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 using Azure.Sdk.Tools.CodeownersUtils.Utils;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 
-namespace Azure.Sdk.Tools.Cli.Helpers;
+namespace Azure.Sdk.Tools.Cli.Helpers.Codeowners;
 
 /// <summary>
 /// Generates CODEOWNERS files from Azure DevOps work items.

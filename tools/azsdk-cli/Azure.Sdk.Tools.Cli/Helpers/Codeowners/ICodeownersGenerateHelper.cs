@@ -3,7 +3,7 @@
 
 using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 
-namespace Azure.Sdk.Tools.Cli.Helpers;
+namespace Azure.Sdk.Tools.Cli.Helpers.Codeowners;
 
 /// <summary>
 /// Interface for generating CODEOWNERS files from Azure DevOps work items.

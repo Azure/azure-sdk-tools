@@ -11,6 +11,7 @@ using GitHub.Copilot.SDK;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Helpers.Codeowners;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Services.Languages;

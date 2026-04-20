@@ -7,6 +7,7 @@ using Octokit;
 
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Helpers.Codeowners;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Codeowners;
 using Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;

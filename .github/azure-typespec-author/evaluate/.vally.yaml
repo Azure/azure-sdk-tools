@@ -7,6 +7,19 @@ paths:
   skills: [../]
   results: results/
 
+environments:
+  azsdk-mcp:
+    mcpServers:
+      azure-sdk-mcp:
+        type: stdio
+        command: dotnet
+        args: ["run", "--project", "../../../tools/azsdk-cli/Azure.Sdk.Tools.Cli", "--", "start"]
+        timeout: 30000
+        env:
+          AZSDKTOOLS_AGENT_TESTING: "false"
+          AZSDKTOOLS_COLLECT_TELEMETRY: "false"
+          AZURE_SDK_KB_ENDPOINT: "http://localhost:8088"
+
 suites:
   versioning:
     evals: ["evals/001001.eval.yaml","evals/001002.eval.yaml","evals/001003.eval.yaml","evals/001004.eval.yaml","evals/001005.eval.yaml","evals/001006.eval.yaml","evals/001007.eval.yaml","evals/001008.eval.yaml","evals/001009.eval.yaml","evals/001010.eval.yaml","evals/001011.eval.yaml","evals/001012.eval.yaml","evals/001013.eval.yaml"]

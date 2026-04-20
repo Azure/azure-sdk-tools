@@ -56,11 +56,10 @@ export async function discoverEntrypointFile(
 ): Promise<string> {
   Logger.debug(`Discovering entry file in ${srcDir}`);
   let entryTsp: string | undefined = undefined;
-  const files = await readdir(srcDir, { recursive: true });
+  const files = (await readdir(srcDir, { recursive: true })).map(normalizePath);
 
   function findEntrypoint(name: string): string | undefined {
-    const normalized = normalizePath(name);
-    return files.find((file) => normalizePath(file) === normalized) ?? undefined;
+    return files.find((file) => file === normalizePath(name)) ?? undefined;
   }
   if (specifiedEntrypointFile) {
     entryTsp = findEntrypoint(specifiedEntrypointFile);

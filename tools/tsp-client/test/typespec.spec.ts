@@ -6,7 +6,6 @@ import {
   tryParseEmitterOptionAsObject,
 } from "../src/typespec.js";
 import { joinPaths, resolvePath } from "@typespec/compiler";
-import * as path from "path";
 
 describe("Check diagnostic reporting", function () {
   it.skip("Check diagnostic format", async function () {
@@ -66,13 +65,13 @@ describe("Check diagnostic reporting", function () {
       joinPaths(process.cwd(), "test", "examples", "specification", "convert"),
       "batch/batch-client.tsp",
     );
-    assert.equal(entrypointFile, path.join("batch", "batch-client.tsp"));
+    assert.equal(entrypointFile, "batch/batch-client.tsp");
     // Same file, specified with a back-slash separator.
     entrypointFile = await discoverEntrypointFile(
       joinPaths(process.cwd(), "test", "examples", "specification", "convert"),
       "batch\\batch-client.tsp",
     );
-    assert.equal(entrypointFile, path.join("batch", "batch-client.tsp"));
+    assert.equal(entrypointFile, "batch/batch-client.tsp");
   });
 
   it("Check discoverEntrypointFile() with unexpected entrypoint name", async function () {

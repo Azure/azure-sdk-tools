@@ -122,13 +122,6 @@ Start the backend by opening `APIViewWeb` in Visual Studio and pressing **F5**.
 | `APIViewIntegrationTests` | Obsolete | Required Cosmos/Storage emulators |
 | `APIViewUITests` | Obsolete | Selenium-based; replaced by Angular test suite |
 
-**Submitting a PR:**
-
-1. Create a branch from `main`
-2. Make and test your changes
-3. Open a PR via GitHub — the **CLA bot** validates first-time contributors automatically
-4. Tag reviewers or your team lead as needed
-
 <br>
 
 ## Logs and Monitoring
@@ -138,11 +131,14 @@ Monitor production issues via [Application Insights](https://ms.portal.azure.com
 **Useful Kusto queries:**
 
 ```kusto
--- Errors and warnings
-traces | where severityLevel > 1
-
--- Exceptions
+-- Exceptions grouped by problem
 exceptions
+| summarize count() by problemId
+
+-- Errors and warnings grouped by message
+traces
+| where severityLevel > 1
+| summarize count() by message
 ```
 
 For additional internal documentation, visit the [Internal Wiki](https://dev.azure.com/azure-sdk/internal/_wiki/wikis/internal.wiki/356/ApiView).

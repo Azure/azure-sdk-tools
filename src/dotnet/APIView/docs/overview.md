@@ -153,7 +153,7 @@ A separate set of controllers use **token authentication** (`RequireTokenAuthent
 
 ## 5. Frontend Architecture (ClientSPA — Angular)
 
-**Stack:** Angular 20 · PrimeNG 20 · Bootstrap 5.3 · SignalR · Monaco Editor · RxJS · esbuild (Vitest for testing)
+**Stack:** Angular 20 · PrimeNG 20 · Bootstrap 5.3 · SignalR · Monaco Editor · RxJS · Vitest · esbuild
 
 The Angular SPA is the **primary UI**. It is built separately (`npm run build`) and output to `APIViewWeb/wwwroot/spa/`. The ASP.NET backend serves it as static files and acts purely as an API host.
 
@@ -252,7 +252,7 @@ Modern (`ReviewToken.Kind`): `Text`, `Punctuation`, `Keyword`, `TypeName`, `Memb
 
 ### e. Content Hashing
 
-Each CodeFile gets a **SHA-256 hash** of its API surface (excluding package version, documentation, and `SkipDiff` regions). This enables O(1) comparison between revisions. See [release_approval.md](release_approval.md#5-automatic-approval-carry-forward) for how content hashing drives automatic approval carry-forward.
+Each CodeFile gets a **SHA-256 hash** of its API surface (excluding package version, documentation, and `SkipDiff` regions). This enables O(1) comparison between revisions. See [release-approval.md](release-approval.md#5-automatic-approval-carry-forward) for how content hashing drives automatic approval carry-forward.
 
 ---
 
@@ -271,13 +271,13 @@ Each CodeFile gets a **SHA-256 hash** of its API surface (excluding package vers
 
 APIView supports manual approval by reviewers, automatic carry-forward of approvals when the API surface is unchanged between revisions, and release tagging when a release pipeline marks a revision as shipped.
 
-For the complete approval workflow — including prerequisites, toggle flow, carry-forward mechanics, release gating endpoints, and HTTP response codes — see [release_approval.md](release_approval.md). For the user-facing approval process and who can approve, see [user-guide.md](user-guide.md#api-approvals).
+For the complete approval workflow — including prerequisites, toggle flow, carry-forward mechanics, release gating endpoints, and HTTP response codes — see [release-approval.md](release-approval.md). For the user-facing approval process and who can approve, see [user-guide.md](user-guide.md#api-approvals).
 
 ---
 
 ## 9. Language Parsers
 
-Parsers live in various locations across the `azure-sdk-tools` repo. For details on which parsers use the legacy flat-token format vs. the modern tree-token format, and the migration path, see [legacy.md](legacy.md#3-which-languages-use-which-format).
+Parsers live in various locations across the `azure-sdk-tools` repo.
 
 | Language | Repo Path | Input | Token Format | Server Can Parse? |
 |---|---|---|---|---|

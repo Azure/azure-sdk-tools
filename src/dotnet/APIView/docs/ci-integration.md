@@ -1,6 +1,6 @@
 # APIView — How Reviews, Revisions, and Pipelines Work
 
-This document explains how APIView integrates with SDK pull requests, CI pipelines, and releases. It clarifies when API revisions are created, when approvals are required, and why certain pipelines fail. For the detailed approval workflow and code references, see [release_approval.md](release_approval.md). For the technical workflow details (endpoints, sequence diagrams, per-language parsing), see [overview.md](overview.md#10-core-workflows).
+This document explains how APIView integrates with SDK pull requests, CI pipelines, and releases. It clarifies when API revisions are created, when approvals are required, and why certain pipelines fail. For the detailed approval workflow and code references, see [release-approval.md](release-approval.md). For the technical workflow details (endpoints, sequence diagrams, per-language parsing), see [overview.md](overview.md#10-core-workflows).
 
 ---
 
@@ -63,7 +63,7 @@ If the release date is not set, approval status is ignored.
 | Beta | Not required (namespace approval still applies) |
 | Alpha / Dev | Not enforced |
 
-For the detailed version classification rules (how versions are parsed, Copilot review requirements, and auto-archive behavior by version type), see [release_approval.md](release_approval.md#2-ga-vs-preview-version-classification).
+For the detailed version classification rules (how versions are parsed, Copilot review requirements, and auto-archive behavior by version type), see [release-approval.md](release-approval.md#2-ga-vs-preview-version-classification).
 
 This prevents surprise failures right before release, since scheduled pipelines surface issues early.
 
@@ -71,30 +71,7 @@ This prevents surprise failures right before release, since scheduled pipelines 
 
 ## Common Scenarios
 
-### "Why didn't my PR create an APIView revision?"
-
-Most common reasons:
-- The PR did not change the API surface
-- Only the version or changelog was updated
-
-This is expected behavior.
-
-### "My PR has no API changes, but the release is blocked"
-
-Possible cause:
-- A **previous** API change already exists in `main`
-- The latest automatic revision is still pending approval
-
-The release correctly blocks — even if the most recent PR has no API changes.
-
-### How to check release readiness
-
-Instead of manually investigating pipelines, use the **SDK Tools MCP server** and ask whether a package is ready for release. It checks:
-- API approval status
-- Namespace approval
-- Provides relevant pipeline links
-
-This is the fastest and least error-prone way to diagnose release issues.
+For common questions like "Why didn't my PR create an APIView revision?" or "My PR has no API changes but the release is blocked", see the [source wiki](https://dev.azure.com/azure-sdk/internal/_wiki/wikis/internal.wiki/1275/API-View-How-Reviews-Revisions-and-Pipelines-Work).
 
 ---
 

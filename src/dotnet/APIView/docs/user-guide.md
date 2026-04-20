@@ -49,7 +49,7 @@ There are two types of approvals based on package version:
 | **First Release Approval** | Before releasing a preview version of a package that has never been GA'd | Ensures the package name is appropriate before the first beta release. Not required if an API revision was previously approved for the same package. |
 | **GA Release Approval** | Before releasing a GA version | Ensures all APIs are reviewed and approved. Release builds submit the package to APIView to compare against the last approved revision — if API surface differs, a new revision is created and the pipeline fails. |
 
-For details on when releases are blocked and the enforcement logic, see [ci-integration.md](ci-integration.md#release-enforcement-logic). For the full approval workflow including prerequisites, carry-forward mechanics, and release gating endpoints, see [release_approval.md](release_approval.md).
+For details on when releases are blocked and the enforcement logic, see [ci-integration.md](ci-integration.md#release-enforcement-logic). For the full approval workflow including prerequisites, carry-forward mechanics, and release gating endpoints, see [release-approval.md](release-approval.md).
 
 ### Who Can Approve?
 

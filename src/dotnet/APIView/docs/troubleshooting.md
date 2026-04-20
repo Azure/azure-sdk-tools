@@ -33,7 +33,7 @@ If the problem persists, check the [detailed instructions for manual uploads](ht
 
 ## Release Blocking
 
-> For details on when and why releases are blocked, see [ci-integration.md](ci-integration.md#release-enforcement-logic) and [release_approval.md](release_approval.md#6-release-gating-cicd-integration).
+> For details on when and why releases are blocked, see [ci-integration.md](ci-integration.md#release-enforcement-logic) and [release-approval.md](release-approval.md#6-release-gating-cicd-integration).
 
 ### Why is APIView blocking my package release?
 

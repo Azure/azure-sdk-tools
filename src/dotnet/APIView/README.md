@@ -1,20 +1,20 @@
 # APIView Documentation
 
-## How to Use This Guide
+## Contents
 
-| Audience | Start Here |
-|----------|------------|
-| **SDK authors & reviewers** | [user-guide.md](user-guide.md) |
-| **Understanding CI/release behavior** | [ci-integration.md](ci-integration.md) |
-| **Troubleshooting issues** | [troubleshooting.md](troubleshooting.md) |
-| **New contributors** | [contributing.md](contributing.md) |
-| **Architecture & internals** | [overview.md](overview.md) |
-| **Ops & deployment** | [operations.md](operations.md) |
-| **Approval & release gating** | [release_approval.md](release_approval.md) |
-| **Language parser updates** | [parser-guide.md](parser-guide.md) |
-| **Copilot semantic search API** | [copilot-api.md](copilot-api.md) |
-| **Legacy Razor Pages system** | [legacy.md](legacy.md) |
-| **Sandboxed parser execution** | [sandboxing.md](sandboxing.md) |
+| Document | Description |
+|----------|-------------|
+| [user-guide.md](docs/user-guide.md) | Guide for SDK authors and reviewers |
+| [ci-integration.md](docs/ci-integration.md) | CI/release pipeline behavior |
+| [troubleshooting.md](docs/troubleshooting.md) | Common issues and solutions |
+| [contributing.md](contributing.md) | Contributor setup and development |
+| [overview.md](docs/overview.md) | Architecture and internals |
+| [operations.md](docs/operations.md) | Ops, deployment, and configuration |
+| [release-approval.md](docs/release-approval.md) | Approval and release gating |
+| [copilot-api.md](docs/copilot-api.md) | Copilot semantic search API |
+| [parser-guide.md](docs/parser-guide.md) | Language parser updates and releases |
+| [legacy.md](docs/legacy.md) | Legacy Razor Pages system |
+| [sandboxing.md](docs/sandboxing.md) | Sandboxed parser execution |
 
 ---
 
@@ -29,7 +29,7 @@ Full system architecture: backend, frontend, data model, token format, diff algo
 - 5\. Frontend Architecture (Angular SPA: routes, components, services, backend communication)
 - 6\. Token File Format (flat vs tree, fields, token kinds, ID system, content hashing)
 - 7\. Diff Pipeline
-- 8\. Approval & Release Flow *(details in [release_approval.md](release_approval.md))*
+- 8\. Approval & Release Flow *(details in [release-approval.md](docs/release-approval.md))*
 - 9\. Language Parsers
 - 10\. Core Workflows (CI Automatic, CI Pull Request, Manual upload — with sequence diagrams)
 - 11\. SDK CI Pipelines (per-language pipeline chain)
@@ -53,7 +53,7 @@ When and why API revisions are created, when approvals are required, and why pip
 - Common Scenarios (FAQ for PR/release issues)
 - Design Principles
 
-### [release_approval.md](release_approval.md) — API Approval & Release Gating
+### [release-approval.md](docs/release-approval.md) — API Approval & Release Gating
 Complete approval workflow: prerequisites, toggle flow, carry-forward, release gating endpoints.
 - 1\. Approval Levels (revision, review-level, namespace)
 - 2\. GA vs Preview Version Classification

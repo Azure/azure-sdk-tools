@@ -1,6 +1,6 @@
 # APIView — Operations Guide
 
-This document covers deployment, test environments, configuration, secrets, and troubleshooting for the APIView engineering team. For contributor setup, see [contributing.md](contributing.md). For architecture, see [overview.md](overview.md). For language parser updates and releases, see [parser-guide.md](parser-guide.md).
+This document covers deployment, test environments, configuration, and troubleshooting for the APIView engineering team. For contributor setup, see [contributing.md](contributing.md). For architecture, see [overview.md](overview.md). For language parser updates and releases, see [parser-guide.md](parser-guide.md).
 
 ---
 
@@ -8,36 +8,35 @@ This document covers deployment, test environments, configuration, secrets, and 
 
 | | Production | Staging |
 |---|---|---|
-| **Website** | [Prod](https://apiview.dev) | [Staging](https://staging.apiview.dev) |
-| **Resources** | [Prod (Azure Portal)](https://portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/apiview) | [Staging (Azure Portal)](https://portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/apiview) |
+| **Website** | [Prod](https://apiview.dev) | [Staging](https://apiviewstagingtest.com) |
 | **Source Code** | [azure-sdk-tools/src/dotnet/APIView](https://github.com/Azure/azure-sdk-tools/tree/main/src/dotnet/APIView) | |
 
-> **Staging terminology:** Two distinct "staging" concepts are used in this document. `staging.apiview.dev` is a **shared staging environment** (its own dedicated deployment with its own database, used for testing). The **staging slot** (`apiview-staging.azurewebsites.net`) is an [Azure App Service deployment slot](https://learn.microsoft.com/azure/app-service/deploy-staging-slots) on the production App Service used to warm up new builds before swapping them to production.
+> **Staging terminology:** Two distinct "staging" concepts are used in this document. `apiviewstagingtest.com` is a **shared staging environment** (its own dedicated deployment with its own database, used for testing). The **staging slot** (`apiview-staging.azurewebsites.net`) is an [Azure App Service deployment slot](https://learn.microsoft.com/azure/app-service/deploy-staging-slots) on the production App Service used to warm up new builds before swapping them to production.
 
 ---
 
 ## Deployment
 
-APIView runs as an Azure App Service in the Azure SDK Engineering Systems subscription.
+APIView runs as an Azure App Service in the Azure SDK Engineering Systems subscription. For full contributor-level deployment details, see [APIViewWeb/CONTRIBUTING.md](../APIViewWeb/CONTRIBUTING.md#deployment-to-production).
 
-**Step 1 — Deploy to staging slot**
+**Step 1 — Approve the Prod stage**
 
-APIView uses an [Azure DevOps release pipeline](https://dev.azure.com/azure-sdk/internal/_release?definitionId=60). A CI pipeline runs whenever APIView changes are merged to `main` and automatically creates a new release. The release pipeline requires approval before deploying.
+The [APIView Pipeline](https://dev.azure.com/azure-sdk/internal/_build?definitionId=1136) runs automatically when changes are merged to `main`. Find the completed build you want to deploy and approve the **Prod** stage (the final deployment step awaiting approval).
 
-The pipeline deploys to the **staging slot** (not the same as the apiview staging instance used for testing).
+**Step 2 — Wait for pipeline completion**
 
-**Step 2 — Verify staging slot**
+After the pipeline completes, the code is deployed to the **staging slot** of the `APIView` Web App in Azure Portal.
 
-1. Go to the [APIView staging slot](https://apiview-staging.azurewebsites.net) and click **Browse** in the overview page
-2. Download the `azure-template` package wheel from [PyPI](https://pypi.org/project/azure-template/)
-3. Create a review using the **Create a review** button
-4. If the review is created successfully, proceed to Step 3
-5. If it fails, check [Application Insights](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/apiview/providers/microsoft.insights/components/APIView/logs) for the staging slot to identify the failure
+**Step 3 — Swap deployment slots**
 
-**Step 3 — Swap staging to production**
+1. Go to the `APIView` Web App in Azure Portal
+2. Click **Swap**
+3. Ensure the source is `apiview-staging` and the target is `APIView`
+4. Click **Start swap**
 
-1. Go to the [staging slot in Azure Portal](https://portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/apiview/providers/Microsoft.Web/sites/apiview/slots/staging)
-2. Click **Swap** in the overview page
+**Step 4 — Rollback (if needed)**
+
+In case of a regression (and when there are no database changes), repeat Step 3 to swap back. This restores the previous version.
 
 ---
 
@@ -45,11 +44,11 @@ The pipeline deploys to the **staging slot** (not the same as the apiview stagin
 
 A safe test environment with its own dedicated database, updated daily with production data. You can deploy freely provided no active testing is underway.
 
-| Resource | Link |
+| Resource | Name |
 |----------|------|
 | **URI** | https://apiviewuxtest.com/ |
-| **Cosmos DB** | https://cosmos.azure.com/ (Subscription: Azure SDK Engineering System, Account: `apiviewuitest`) |
-| **App Config** | [apiviewuikvconfig](https://portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/apiview/providers/Microsoft.AppConfiguration/configurationStores/apiviewuikvconfig) |
+| **Cosmos DB** | `apiviewuitest` |
+| **App Config** | `apiviewuikvconfig` |
 
 **How to deploy to the test environment:**
 
@@ -74,7 +73,7 @@ Approver permissions are managed at runtime via Cosmos DB through the `Permissio
 
 To configure which languages require Copilot Review:
 
-1. Open [APIView App Configuration](https://portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/apiview/providers/Microsoft.AppConfiguration/configurationStores/apiviewkvconfig)
+1. Open the `apiviewappconfig` App Configuration store in Azure Portal
 2. Edit the `CopilotReviewIsRequired` key:
    - Specific languages: `Python,JavaScript,TypeSpec,C#`
    - All languages: `*` or `true`
@@ -87,58 +86,10 @@ To configure which languages require Copilot Review:
 
 ---
 
-## Environment Variables
-
-| Name | Purpose |
-|------|---------|
-| `allowedList-bot-github-accounts` | |
-| `APIVIEW_ApiKey` | |
-| `APIVIEW_APPROVERS` | List of approved API reviewers (legacy — actual approver checks use Cosmos DB PermissionsManager) |
-| `APIVIEW_BLOB__CONNECTIONSTRING` | Storage account connection string |
-| `APIVIEW_COSMOS__CONNECTIONSTRING` | Cosmos account connection string |
-| `APIVIEW_GITHUB__CLIENTID` | User login via GitHub OAuth |
-| `APIVIEW_GITHUB__CLIENTSECRET` | User login via GitHub OAuth |
-| `APPINSIGHTS_INSTRUMENTATIONKEY` | Authentication to App Insights |
-| `APPLICATIONINSIGHTS_CONNECTION_STRING` | Authentication to App Insights |
-| `Azure-Devops-PAT` | Authentication to Azure DevOps |
-| `github-access-token` | Authentication to GitHub as common app principal for PR management |
-| `letsencrypt:ClientId` | |
-| `letsencrypt:ClientSecret` | |
-| `letsencrypt:ResourceGroupName` | |
-| `letsencrypt:ServicePlanResourceGroupName` | |
-| `letsencrypt:SiteSlot` | |
-| `letsencrypt:SubscriptionId` | |
-| `letsencrypt:Tenant` | |
-| `letsencrypt:UseIPBasedSSL` | |
-
-## Secrets
-
-| Name | Content | Purpose |
-|------|---------|---------|
-| *(See Key Vault for current entries)* | | |
-
-## Principals
-
-| Name | Type | Configured via | Notes |
-|------|------|----------------|-------|
-| `azuresdk@microsoft.com` | AAD/ADO user | Environment variable | Azure SDK bot account |
-| Per-user | GitHub user | OAuth authorization code flow | Browser-based APIView user |
-| *(GitHub app)* | GitHub app | Environment variables | |
-
-## Resources
-
-| Type | Name | Principal | Purpose |
-|------|------|-----------|---------|
-| Cosmos account | `apiview` / `apiviewstaging` | Key in environment variable | |
-| Storage Account | `apiviewstorage` / `apiviewstagingstorage` | Key in environment variable | |
-| ADO Account | `azure-sdk` | `azuresdk@microsoft.com` | ADO API interaction |
-
----
-
 ## Troubleshooting (Engineering Team)
 
 > **User-facing errors:** http://aka.ms/azsdk/engsys/apireview/faq
-> **Eng team troubleshooting:** [troubleshooting guide (eng sys)](https://dev.azure.com/azure-sdk/internal/_wiki/wikis/internal.wiki/356/ApiView)
+> **Eng team troubleshooting:** [troubleshooting guide (eng sys)](https://dev.azure.com/azure-sdk/internal/_wiki/wikis/internal.wiki/429/Troubleshooting-guide-EngSys-team)
 
 ### APIView is not accessible
 
@@ -146,11 +97,11 @@ Possible causes: deployment in progress, Cosmos DB or Azure Storage Blob not acc
 
 **Step 1 — Check for in-progress deployment**
 
-Check the status of the APIView web instance in Azure Portal. If it's not running, check the [release pipeline](https://dev.azure.com/azure-sdk/internal/_release?definitionId=60) for any in-progress deployments. Wait for completion, then re-check.
+Check the status of the `APIView` App Service in Azure Portal. If it's not running, check the [release pipeline](https://dev.azure.com/azure-sdk/internal/_release?_a=releases&view=mine&definitionId=73) for any in-progress deployments. Wait for completion, then re-check.
 
 **Step 2 — Check Application Insights**
 
-[Application Insights](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/apiview/providers/microsoft.insights/components/APIView/logs) should surface errors if Cosmos DB is not accessible or if there's a system crash during startup. If Cosmos errors appear, check if Cosmos DB is accessible (this has happened during Cosmos DB outages). For startup exceptions, debug using a local instance.
+The `APIView` Application Insights resource should surface errors if Cosmos DB is not accessible or if there's a system crash during startup. If Cosmos errors appear, check if Cosmos DB is accessible (this has happened during Cosmos DB outages). For startup exceptions, debug using a local instance.
 
 ### Can we override or disable release check?
 
@@ -166,8 +117,6 @@ To disable:
 
 If a Python wheel upload stays at "being generated" for more than 5 minutes:
 
-1. Check the **tools - generate-Python-apireview** [pipeline](https://dev.azure.com/azure-sdk/internal/_build) for failures (search by pipeline name in Azure DevOps)
-
-   > **Note:** Verify the exact pipeline definition ID before bookmarking a direct link.
+1. Check the [Python sandboxing pipeline](https://dev.azure.com/azure-sdk/internal/_build?definitionId=5102) for failures
 2. Common causes: the uploaded wheel has import issues, or the DevOps pipeline queue is overloaded
 3. Known limitation: pipeline failures are not reported back to the APIView UI

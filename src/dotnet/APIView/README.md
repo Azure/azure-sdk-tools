@@ -6,7 +6,7 @@
 |----------|-------------|
 | [user-guide.md](docs/user-guide.md) | Guide for SDK authors and reviewers |
 | [ci-integration.md](docs/ci-integration.md) | CI/release pipeline behavior |
-| [troubleshooting.md](docs/troubleshooting.md) | Common issues and solutions |
+| [troubleshooting.md](docs/troubleshooting.md) | FAQ — access, uploads, CI, releases |
 | [contributing.md](contributing.md) | Contributor setup and development |
 | [overview.md](docs/overview.md) | Architecture and internals |
 | [operations.md](docs/operations.md) | Ops, deployment, and configuration |

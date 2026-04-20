@@ -86,37 +86,6 @@ To configure which languages require Copilot Review:
 
 ---
 
-## Troubleshooting (Engineering Team)
+## Troubleshooting
 
-> **User-facing errors:** http://aka.ms/azsdk/engsys/apireview/faq
-> **Eng team troubleshooting:** [troubleshooting guide (eng sys)](https://dev.azure.com/azure-sdk/internal/_wiki/wikis/internal.wiki/429/Troubleshooting-guide-EngSys-team)
-
-### APIView is not accessible
-
-Possible causes: deployment in progress, Cosmos DB or Azure Storage Blob not accessible, or bad deployment.
-
-**Step 1 — Check for in-progress deployment**
-
-Check the status of the `APIView` App Service in Azure Portal. If it's not running, check the [release pipeline](https://dev.azure.com/azure-sdk/internal/_release?_a=releases&view=mine&definitionId=73) for any in-progress deployments. Wait for completion, then re-check.
-
-**Step 2 — Check Application Insights**
-
-The `APIView` Application Insights resource should surface errors if Cosmos DB is not accessible or if there's a system crash during startup. If Cosmos errors appear, check if Cosmos DB is accessible (this has happened during Cosmos DB outages). For startup exceptions, debug using a local instance.
-
-### Can we override or disable release check?
-
-Yes, but **only after consulting the release owner and architect** for each language — an override can lead to release of breaking changes or unapproved APIs.
-
-To disable:
-1. In the pipeline run, click **Variables** under Advanced options
-2. Click **Add variables**
-3. Set **Name** to `Skip.CreateApiReview` and **Value** to `true`
-4. Click **Create**, then click back
-
-### Python sandboxing review not generating
-
-If a Python wheel upload stays at "being generated" for more than 5 minutes:
-
-1. Check the [Python sandboxing pipeline](https://dev.azure.com/azure-sdk/internal/_build?definitionId=5102) for failures
-2. Common causes: the uploaded wheel has import issues, or the DevOps pipeline queue is overloaded
-3. Known limitation: pipeline failures are not reported back to the APIView UI
+See [troubleshooting.md](troubleshooting.md) for the full FAQ covering access issues, upload failures, CI/revision questions, release blocking, and engineering team diagnostics.

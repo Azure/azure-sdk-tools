@@ -71,7 +71,7 @@ This prevents surprise failures right before release, since scheduled pipelines 
 
 ## Common Scenarios
 
-For common questions like "Why didn't my PR create an APIView revision?" or "My PR has no API changes but the release is blocked", see the [source wiki](https://dev.azure.com/azure-sdk/internal/_wiki/wikis/internal.wiki/1275/API-View-How-Reviews-Revisions-and-Pipelines-Work).
+See [troubleshooting.md](troubleshooting.md) for common questions like "Why didn't my PR create an APIView revision?" and "My PR has no API changes but the release is blocked".
 
 ---
 

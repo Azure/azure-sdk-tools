@@ -11,7 +11,6 @@
 | [overview.md](docs/overview.md) | Architecture and internals |
 | [operations.md](docs/operations.md) | Ops, deployment, and configuration |
 | [release-approval.md](docs/release-approval.md) | Approval and release gating |
-| [copilot-api.md](docs/copilot-api.md) | Copilot semantic search API |
 | [legacy.md](docs/legacy.md) | Legacy Razor Pages system |
 | [sandboxing.md](docs/sandboxing.md) | Sandboxed parser execution |
 
@@ -86,13 +85,6 @@ Developer setup and workflow for contributing to APIView.
 - Local Setup (GitHub OAuth, user secrets, build and run)
 - Making Changes (where to modify, how to test, submitting PRs)
 - Logs and Monitoring
-
-### [copilot-api.md](copilot-api.md) — Copilot Comments REST API
-REST API and database schema for the Copilot semantic search system.
-- Overview (vector embeddings, cosine similarity)
-- Database Schema (Cosmos DB document fields)
-- Document CRUD API (create, update, delete, get)
-- Document Search API (request/response format)
 
 ### [legacy.md](legacy.md) — Legacy Razor Pages System
 The deprecated Razor Pages frontend: what remains, format routing, and migration path.

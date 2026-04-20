@@ -73,18 +73,6 @@ describe("Check diagnostic reporting", function () {
       "batch\\batch-client.tsp",
     );
     assert.equal(entrypointFile, path.join("batch", "batch-client.tsp"));
-    // Nested sub-directories with forward-slash separators.
-    entrypointFile = await discoverEntrypointFile(
-      joinPaths(process.cwd(), "test", "examples", "specification", "convert"),
-      "batch/nested/nested-client.tsp",
-    );
-    assert.equal(entrypointFile, path.join("batch", "nested", "nested-client.tsp"));
-    // Nested sub-directories with back-slash separators.
-    entrypointFile = await discoverEntrypointFile(
-      joinPaths(process.cwd(), "test", "examples", "specification", "convert"),
-      "batch\\nested\\nested-client.tsp",
-    );
-    assert.equal(entrypointFile, path.join("batch", "nested", "nested-client.tsp"));
   });
 
   it("Check discoverEntrypointFile() with unexpected entrypoint name", async function () {

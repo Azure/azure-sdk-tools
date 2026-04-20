@@ -1,4 +1,9 @@
-import { resolvePath, getDirectoryPath, ResolveCompilerOptionsOptions } from "@typespec/compiler";
+import {
+  normalizePath,
+  resolvePath,
+  getDirectoryPath,
+  ResolveCompilerOptionsOptions,
+} from "@typespec/compiler";
 import {
   ModuleResolutionResult,
   resolveModule,
@@ -7,7 +12,6 @@ import {
 import { Logger } from "./log.js";
 import { readFile, readdir, realpath, stat } from "fs/promises";
 import { pathToFileURL } from "url";
-import { sep } from "path";
 
 export interface TspLocation {
   directory?: string;
@@ -55,8 +59,8 @@ export async function discoverEntrypointFile(
   const files = await readdir(srcDir, { recursive: true });
 
   function findEntrypoint(name: string): string | undefined {
-    const normalized = name.replaceAll(/[/\\]/g, sep);
-    return files.find((file) => file === normalized) ?? undefined;
+    const normalized = normalizePath(name);
+    return files.find((file) => normalizePath(file) === normalized) ?? undefined;
   }
   if (specifiedEntrypointFile) {
     entryTsp = findEntrypoint(specifiedEntrypointFile);

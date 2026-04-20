@@ -18,7 +18,8 @@
 7. [Copilot Review Behavior](#copilot-review-behavior)
 8. [Notification Behavior](#notification-behavior)
 9. [UI Behavior (Minimal)](#ui-behavior-minimal)
-10. [Testing Checklist](#testing-checklist)
+10. [Workflow Scenarios and Edge Cases](#workflow-scenarios-and-edge-cases)
+11. [Testing Checklist](#testing-checklist)
 
 ---
 
@@ -142,6 +143,7 @@ Behavior:
     - `Approve` may be submitted with no comments and no message.
 4. Preserve existing unresolved-comment approval gating:
   - Any current server-side rule that blocks `Approve` while unresolved comments exist remains unchanged in this proposal.
+  - This includes existing severity behavior (for example, unresolved `MUST FIX`/`SHOULD FIX` block `Approve` while `SUGGESTION`/`QUESTION` do not).
 5. Create `ReviewSubmission` with those `commentIds`.
 6. Complete the active request lifecycle for this reviewer/version:
     - Set the corresponding open `ReviewRequest.Status` to `Submitted`.
@@ -182,11 +184,12 @@ Submission history is immutable: once `ReviewSubmission.CommentIds` is recorded,
 
 Copilot review is a first-class review flow, not a special case of human review submission.
 
-- Copilot does not participate in reviewer assignment lifecycle and does not use `ReviewRequest` records.
-- Copilot does not use the human no-open-request fallback and is never auto-added to reviewer membership.
-- Copilot comment grouping is evaluated in a Copilot-specific submission window scoped to `VersionId`.
-- Window end is current `ReviewSubmission.SubmittedOn`.
-- Window start is the `SubmittedOn` of Copilot's most recent prior submission on that version, or version creation timestamp when none exists.
+- Copilot review is triggered by the `Request Copilot Review` button.
+- `Request Copilot Review` creates an open `ReviewRequest` for the Copilot reviewer identity on the current `VersionId`.
+- Copilot uses the same request/submission lifecycle as other reviewers: submit transitions `ReviewRequest.Status` to `Submitted` and links `ReviewRequest.SubmissionId` to the created `ReviewSubmission`.
+- Copilot does not use the human no-open-request fallback; Copilot submit requires an active Copilot `ReviewRequest`.
+- Copilot comment grouping is evaluated within the active Copilot request window on the same `VersionId`.
+- Window start is `ReviewRequest.RequestedOn` and window end is `ReviewSubmission.SubmittedOn`.
 - Eligible comments must be Copilot-authored, match `VersionId`, fall within the window, and exclude diagnostic/system-generated comments.
 - Copilot comments are grouped only into Copilot's own `ReviewSubmission`.
 - Copilot comments must never be bundled with an architect's or any other human reviewer's submission.
@@ -259,3 +262,4 @@ Diagnostic comments also do not create submit-review notification batches.
 22. Submit with no open request auto-adds submitter as reviewer, creates an implicit `ReviewRequest`, and still succeeds.
 23. Submit with no open request uses prior-submission boundary (or version creation time for first submit) as `RequestedOn` anchor for comment grouping.
 24. Existing unresolved-comment approval gating behavior is unchanged: if current server rules block `Approve` with unresolved comments, submit is rejected the same way as today.
+25. Clicking `Request Copilot Review` creates a Copilot `ReviewRequest` (`Status = Open`), and Copilot submit requires that open request and transitions it to `Submitted` with `SubmissionId` set.

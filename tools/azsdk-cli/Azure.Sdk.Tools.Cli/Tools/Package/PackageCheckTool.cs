@@ -114,34 +114,62 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 return CreateUnsupportedLanguageResponse(packagePath);
             }
 
-            // --fix is disallowed at the entry point when checkType == All, so every check below is
-            // read-only and safe to run in parallel. Fix mode must be invoked per-check-type.
-            var checks = new (string Name, Func<Task<PackageCheckResponse>> Run)[]
+            // Even with fixCheckErrors=false, some language implementations still write files
+            // (e.g., Python's FormatCode runs `black` without --check, and UpdateSnippets rewrites
+            // snippet files regardless of the flag). Running those in parallel with each other or
+            // with Linting (which reads the same source files) can cause file-write races.
+            // Run them sequentially *after* the read-only checks to keep everything safe.
+            var readOnlyChecks = new (string Name, Func<Task<PackageCheckResponse>> Run)[]
             {
                 ("Dependency",        () => languageChecks.AnalyzeDependencies(packagePath, false, ct)),
                 ("Changelog",         () => languageChecks.ValidateChangelog(packagePath, false, ct)),
                 ("README",            () => languageChecks.ValidateReadme(packagePath, false, ct)),
                 ("Spelling",          () => languageChecks.CheckSpelling(packagePath, false, ct)),
-                ("Snippets",          () => languageChecks.UpdateSnippets(packagePath, false, ct)),
                 ("Linting",           () => languageChecks.LintCode(packagePath, false, ct)),
-                ("Format",            () => languageChecks.FormatCode(packagePath, false, ct)),
                 ("AOT Compatibility", () => languageChecks.CheckAotCompat(packagePath, false, ct)),
                 ("Generated Code",    () => languageChecks.CheckGeneratedCode(packagePath, false, ct)),
                 ("Sample Validation", () => languageChecks.ValidateSamples(packagePath, false, ct)),
             };
 
-            var tasks = checks.Select(c => c.Run()).ToArray();
-            var checkResults = await Task.WhenAll(tasks);
+            // Potentially-mutating checks (see comment above). Run after read-only checks finish,
+            // and sequentially relative to each other.
+            var mutatingChecks = new (string Name, Func<Task<PackageCheckResponse>> Run)[]
+            {
+                ("Snippets", () => languageChecks.UpdateSnippets(packagePath, false, ct)),
+                ("Format",   () => languageChecks.FormatCode(packagePath, false, ct)),
+            };
+
+            var readOnlyTasks = readOnlyChecks.Select(c => c.Run()).ToArray();
+            var readOnlyResults = await Task.WhenAll(readOnlyTasks);
+
+            var mutatingResults = new PackageCheckResponse[mutatingChecks.Length];
+            for (int i = 0; i < mutatingChecks.Length; i++)
+            {
+                mutatingResults[i] = await mutatingChecks[i].Run();
+            }
+
+            // Preserve the original reporting order for stable output.
+            var ordered = new (string Name, PackageCheckResponse Result)[]
+            {
+                ("Dependency",        readOnlyResults[0]),
+                ("Changelog",         readOnlyResults[1]),
+                ("README",            readOnlyResults[2]),
+                ("Spelling",          readOnlyResults[3]),
+                ("Snippets",          mutatingResults[0]),
+                ("Linting",           readOnlyResults[4]),
+                ("Format",            mutatingResults[1]),
+                ("AOT Compatibility", readOnlyResults[5]),
+                ("Generated Code",    readOnlyResults[6]),
+                ("Sample Validation", readOnlyResults[7]),
+            };
 
             var results = new List<PackageCheckResponse>();
             var failedChecks = new List<string>();
             var successfulChecks = new List<string>();
             var overallSuccess = true;
 
-            for (int i = 0; i < checks.Length; i++)
+            foreach (var (name, result) in ordered)
             {
-                var name = checks[i].Name;
-                var result = checkResults[i];
                 results.Add(result);
                 if (result.ExitCode != 0)
                 {

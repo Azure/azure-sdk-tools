@@ -297,11 +297,10 @@ def _build_month_metadata(
     month_comments = [
         comment for comment in all_raw_comments if start_iso <= (comment.get("CreatedOn") or "") <= end_iso
     ]
-    non_diag = [comment for comment in month_comments if comment.get("CommentSource") != "Diagnostic"]
 
     review_to_revisions: dict[str, set[str]] = {}
     active_revision_ids: set[str] = set()
-    for comment in non_diag:
+    for comment in month_comments:
         review_id = comment.get("ReviewId")
         revision_id = comment.get("APIRevisionId")
         if review_id and revision_id:

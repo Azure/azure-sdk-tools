@@ -72,7 +72,8 @@ APIView supports comment severity levels to communicate the importance of feedba
 
 - The **comment author** selects the severity when creating the comment
 - Only the **comment author** can modify the severity
-- Architects can also modify the severity of **Copilot-generated comments only** (not comments by other users)
+- Language approvers can also modify the severity of **`azure-sdk` bot comments** (not comments by other users)
+- Severity cannot be changed on **diagnostic comments**
 
 ### Diagnostic Severity Mapping
 
@@ -91,10 +92,9 @@ Comments are tagged with a source to indicate how they were created:
 
 | Source | Description |
 |--------|-------------|
+| **UserGenerated** | Created manually by human reviewers (default) |
 | **AIGenerated** | Created by Copilot during automated API review |
 | **Diagnostic** | Generated from API guideline diagnostics / linting rules |
-
-Comments created manually by human reviewers are not tagged with a source label.
 
 ---
 

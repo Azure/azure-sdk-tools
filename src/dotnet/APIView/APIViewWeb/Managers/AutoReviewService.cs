@@ -83,31 +83,34 @@ public class AutoReviewService : IAutoReviewService
                     .ToList();
                 if (automaticRevisions.Count > 0)
                 {
-                    var automaticRevisionsQueue = new Queue<APIRevisionListItemModel>(automaticRevisions);
                     var comments = await _commentsManager.GetCommentsAsync(review.Id);
+                    var revisionIdsWithComments = comments.Select(c => c.APIRevisionId).ToHashSet();
                     APIRevisionListItemModel latestAutomaticAPIRevision = null;
-                    
-                    while (automaticRevisionsQueue.Count > 0)
-                    {
-                        latestAutomaticAPIRevision = automaticRevisionsQueue.Dequeue();
 
-                        // Check if we should keep this revision
-                        if (latestAutomaticAPIRevision.IsApproved ||
-                            latestAutomaticAPIRevision.IsReleased ||
-                            await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile, incomingContentHash: incomingContentHash) ||
-                            comments.Any(c => latestAutomaticAPIRevision.Id == c.APIRevisionId))
+                    foreach (var revision in automaticRevisions)
+                    {
+                        // Hard stop: this revision and everything older is protected — stop processing
+                        if (revision.IsApproved || revision.IsReleased || revisionIdsWithComments.Contains(revision.Id))
                         {
+                            latestAutomaticAPIRevision ??= revision;
                             break;
                         }
 
-                        // Delete this revision
-                        await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(apiRevision: latestAutomaticAPIRevision, notes: "Deleted by Automatic Review Creation...");
-                        latestAutomaticAPIRevision = null;  // Mark as consumed
+                        if (latestAutomaticAPIRevision == null)
+                        {
+                            // First (newest) unprotected revision: keep it as the candidate to reuse or replace
+                            latestAutomaticAPIRevision = revision;
+                        }
+                        else
+                        {
+                            // Older unprotected revision: always delete
+                            await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(apiRevision: revision, notes: "Deleted by Automatic Review Creation...");
+                        }
                     }
 
-                    // We should compare against only latest revision when calling this API from scheduled CI runs
-                    // But any manual pipeline run at release time should compare against all approved revisions to ensure hotfix release doesn't have API change
-                    // If review surface doesn't match with any approved revisions then we will create new revision if it doesn't match pending latest revision
+                    // For release pipeline runs, compare against all approved revisions first to catch hotfix API changes.
+                    // Otherwise, check if the candidate revision (newest unprotected) matches the incoming content.
+                    // If it matches, reuse it. If not, delete the candidate and create a new revision.
 
                     bool considerPackageVersion = !string.IsNullOrWhiteSpace(codeFile.PackageVersion);
 
@@ -128,6 +131,14 @@ public class AutoReviewService : IAutoReviewService
                     {
                         apiRevision = latestAutomaticAPIRevision;
                         createNewRevision = false;
+                    }
+                    else if (latestAutomaticAPIRevision != null &&
+                             !latestAutomaticAPIRevision.IsApproved &&
+                             !latestAutomaticAPIRevision.IsReleased &&
+                             !revisionIdsWithComments.Contains(latestAutomaticAPIRevision.Id))
+                    {
+                        // Candidate doesn't match incoming content and is unprotected — delete it before creating the new revision
+                        await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(apiRevision: latestAutomaticAPIRevision, notes: "Deleted by Automatic Review Creation...");
                     }
                 }
             }

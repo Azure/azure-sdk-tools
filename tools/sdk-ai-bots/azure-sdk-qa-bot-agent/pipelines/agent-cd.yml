@@ -83,3 +83,5 @@ extends:
                 env:
                   UMI_BACKEND_CLIENT_ID: $(UMI_BACKEND_CLIENT_ID)
                   UMI_FRONTEND_CLIENT_ID: $(UMI_FRONTEND_CLIENT_ID)
+                  ACR_NAME: $(ACR_NAME)
+                  ACR_RESOURCE_GROUP: $(ACR_RESOURCE_GROUP)

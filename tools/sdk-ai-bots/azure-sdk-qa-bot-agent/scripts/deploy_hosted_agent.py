@@ -500,24 +500,26 @@ def main() -> None:
             "Make sure you are logged in to the correct subscription."
         )
 
-    # ── Login to ACR, build & push ──
+    # ── Build & push via remote ACR build ──
     acr_name = registry.split(".")[0]
-    print(f"Logging in to ACR: {acr_name}")
-    _run(["az", "acr", "login", "--name", acr_name], shell=True)
     print(f"Building: {image}")
+    # Use remote ACR build to avoid 1ES hosted-agent network restrictions during pip install.
     _run(
         [
-            "docker",
+            "az",
+            "acr",
             "build",
-            "--platform",
-            "linux/amd64",
-            "-t",
-            image,
-            "-f",
+            "--registry",
+            acr_name,
+            "--image",
+            f"{image_name}:{tag}",
+            "--file",
             str(dockerfile),
             str(_PROJECT_DIR),
-        ]
+        ],
+        shell=True,
     )
+    print(f"Image pushed: {image}")
 
     # ── Remove user-assigned identities before deployment ──
     if _has_project_user_assigned_identities(project_resource_id):
@@ -525,9 +527,6 @@ def main() -> None:
         _set_project_identity_type(project_resource_id, "SystemAssigned")
     else:
         print("No user-assigned identities found on the project.")
-
-    print(f"Pushing: {image}")
-    _run(["docker", "push", image])
 
     # ── Deploy ──
     print(f"Deploying: {image_name}")

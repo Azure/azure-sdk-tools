@@ -75,7 +75,6 @@ steps:
       continueOnError: true
       env:
         PoolSubnet: $(PoolSubnet)
-        SYSTEM_ACCESSTOKEN: $(System.AccessToken)
 
   - ${{ else }}:
     - pwsh: |
@@ -98,5 +97,4 @@ steps:
       continueOnError: true
       env:
         PoolSubnet: $(PoolSubnet)
-        SYSTEM_ACCESSTOKEN: $(System.AccessToken)
 

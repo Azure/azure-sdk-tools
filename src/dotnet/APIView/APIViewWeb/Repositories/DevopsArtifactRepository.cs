@@ -24,6 +24,9 @@ namespace APIViewWeb.Repositories
         private readonly IConfiguration _configuration;
         private readonly string _hostUrl;
         private readonly TelemetryClient _telemetryClient;
+        private VssConnection _cachedConnection;
+        private DateTimeOffset _connectionExpiresAt = DateTimeOffset.MinValue;
+        private readonly SemaphoreSlim _connectionLock = new SemaphoreSlim(1, 1);
 
         public DevopsArtifactRepository(IConfiguration configuration, TelemetryClient telemetryClient)
         {
@@ -79,9 +82,35 @@ namespace APIViewWeb.Repositories
 
         private async Task<VssConnection> CreateVssConnection()
         {
-            var accessToken = await getAccessToken();
-            var token = new VssAadToken("Bearer", accessToken);
-            return new VssConnection(new Uri("https://dev.azure.com/azure-sdk/"), new VssAadCredential(token));
+            // Fast path: return cached connection if token is still valid
+            if (_cachedConnection != null && DateTimeOffset.UtcNow < _connectionExpiresAt)
+            {
+                return _cachedConnection;
+            }
+
+            await _connectionLock.WaitAsync();
+            try
+            {
+                // Re-check under lock to avoid double initialization
+                if (_cachedConnection != null && DateTimeOffset.UtcNow < _connectionExpiresAt)
+                {
+                    return _cachedConnection;
+                }
+
+                var credential = Helpers.CredentialProvider.GetAzureCredential();
+                var tokenRequestContext = new TokenRequestContext(VssAadSettings.DefaultScopes);
+                var tokenResult = await credential.GetTokenAsync(tokenRequestContext, CancellationToken.None);
+
+                var token = new VssAadToken("Bearer", tokenResult.Token);
+                _cachedConnection = new VssConnection(new Uri("https://dev.azure.com/azure-sdk/"), new VssAadCredential(token));
+                // Refresh 5 minutes before the token actually expires
+                _connectionExpiresAt = tokenResult.ExpiresOn.AddMinutes(-5);
+                return _cachedConnection;
+            }
+            finally
+            {
+                _connectionLock.Release();
+            }
         }
 
         private async Task<string> getAccessToken()

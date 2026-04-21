@@ -44,7 +44,20 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
         }
 
         [Test]
-        public async Task Evaluate_InvalidOwner_ReturnsViolation()
+        public async Task Evaluate_ValidOwner_WithInvalidSince_ReturnsClearInvalidViolation()
+        {
+            var context = CreateContext(new OwnerWorkItem { WorkItemId = 1, GitHubAlias = "recovereduser", InvalidSince = DateTime.UtcNow.AddDays(-7) });
+            _mockValidator.Setup(v => v.ValidateCodeOwnerAsync("recovereduser", false, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new CodeownersValidationResult { Status = "Success", IsValidCodeOwner = true });
+
+            var violations = await _rule.Evaluate(context, CancellationToken.None);
+
+            Assert.That(violations, Has.Count.EqualTo(1));
+            Assert.That(violations[0].Detail, Is.EqualTo(InvalidOwnerRule.ClearInvalidDetail));
+        }
+
+        [Test]
+        public async Task Evaluate_InvalidOwner_NoInvalidSince_ReturnsSetInvalid()
         {
             var context = CreateContext(new OwnerWorkItem { WorkItemId = 1, GitHubAlias = "invaliduser" });
             _mockValidator.Setup(v => v.ValidateCodeOwnerAsync("invaliduser", false, It.IsAny<CancellationToken>()))
@@ -54,11 +67,24 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
 
             Assert.That(violations, Has.Count.EqualTo(1));
             Assert.That(violations[0].RuleId, Is.EqualTo("AUD-OWN-001"));
-            Assert.That(violations[0].WorkItemId, Is.EqualTo(1));
+            Assert.That(violations[0].Detail, Is.EqualTo(InvalidOwnerRule.SetInvalidDetail));
         }
 
         [Test]
-        public async Task Evaluate_NotFoundOwner_ReturnsViolation()
+        public async Task Evaluate_InvalidOwner_AlreadyMarkedInvalid_ReturnsDoNothing()
+        {
+            var context = CreateContext(new OwnerWorkItem { WorkItemId = 1, GitHubAlias = "invaliduser", InvalidSince = DateTime.UtcNow.AddDays(-3) });
+            _mockValidator.Setup(v => v.ValidateCodeOwnerAsync("invaliduser", false, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new CodeownersValidationResult { Status = "Success", IsValidCodeOwner = false, Message = "Not a member" });
+
+            var violations = await _rule.Evaluate(context, CancellationToken.None);
+
+            Assert.That(violations, Has.Count.EqualTo(1));
+            Assert.That(violations[0].Detail, Is.EqualTo(InvalidOwnerRule.DoNothingDetail));
+        }
+
+        [Test]
+        public async Task Evaluate_NotFoundOwner_ReturnsSetInvalid()
         {
             var context = CreateContext(new OwnerWorkItem { WorkItemId = 1, GitHubAlias = "ghostuser" });
             _mockValidator.Setup(v => v.ValidateCodeOwnerAsync("ghostuser", false, It.IsAny<CancellationToken>()))
@@ -68,6 +94,20 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
 
             Assert.That(violations, Has.Count.EqualTo(1));
             Assert.That(violations[0].Description, Does.Contain("not found"));
+            Assert.That(violations[0].Detail, Is.EqualTo(InvalidOwnerRule.SetInvalidDetail));
+        }
+
+        [Test]
+        public async Task Evaluate_NotFoundOwner_AlreadyMarked_ReturnsDoNothing()
+        {
+            var context = CreateContext(new OwnerWorkItem { WorkItemId = 1, GitHubAlias = "ghostuser", InvalidSince = DateTime.UtcNow.AddDays(-1) });
+            _mockValidator.Setup(v => v.ValidateCodeOwnerAsync("ghostuser", false, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new CodeownersValidationResult { Status = "Error", Message = "GitHub user not found 'ghostuser' not found" });
+
+            var violations = await _rule.Evaluate(context, CancellationToken.None);
+
+            Assert.That(violations, Has.Count.EqualTo(1));
+            Assert.That(violations[0].Detail, Is.EqualTo(InvalidOwnerRule.DoNothingDetail));
         }
 
         [Test]
@@ -95,15 +135,27 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
         [Test]
         public void GetFixes_ExceedsThreshold_WithoutForce_Throws()
         {
-            var context = CreateContext();
-            context.Fix = true;
-            context.Force = false;
+            var owners = Enumerable.Range(1, 6).Select(i =>
+                new OwnerWorkItem { WorkItemId = i, GitHubAlias = $"invalid{i}" }).ToList();
 
-            var violations = Enumerable.Range(1, 6).Select(i => new AuditViolation
+            var context = new AuditContext
+            {
+                WorkItemData = new WorkItemData(
+                    new Dictionary<int, PackageWorkItem>(),
+                    owners.ToDictionary(o => o.WorkItemId),
+                    new Dictionary<int, LabelWorkItem>(),
+                    new List<LabelOwnerWorkItem>()
+                ),
+                Fix = true,
+                Force = false,
+            };
+
+            var violations = owners.Select(o => new AuditViolation
             {
                 RuleId = "AUD-OWN-001",
-                Description = $"Invalid owner {i}",
-                WorkItemId = i,
+                Description = $"Invalid owner {o.GitHubAlias}",
+                WorkItemId = o.WorkItemId,
+                Detail = InvalidOwnerRule.SetInvalidDetail,
             }).ToList();
 
             Assert.ThrowsAsync<InvalidOperationException>(
@@ -113,52 +165,46 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
         [Test]
         public async Task GetFixes_ExceedsThreshold_WithForce_ReturnsFixes()
         {
-            var owner = new OwnerWorkItem { WorkItemId = 100, GitHubAlias = "invalid1" };
-            var lo = new LabelOwnerWorkItem { WorkItemId = 200, LabelType = "Service Owner", Repository = "Azure/azure-sdk-for-net" };
-            lo.Owners.Add(owner);
+            var owners = Enumerable.Range(1, 6).Select(i =>
+                new OwnerWorkItem { WorkItemId = i, GitHubAlias = $"invalid{i}" }).ToList();
 
             var context = new AuditContext
             {
                 WorkItemData = new WorkItemData(
                     new Dictionary<int, PackageWorkItem>(),
-                    new Dictionary<int, OwnerWorkItem> { [100] = owner },
+                    owners.ToDictionary(o => o.WorkItemId),
                     new Dictionary<int, LabelWorkItem>(),
-                    new List<LabelOwnerWorkItem> { lo }
+                    new List<LabelOwnerWorkItem>()
                 ),
                 Fix = true,
                 Force = true,
             };
 
-            var violations = Enumerable.Range(1, 6).Select(i => new AuditViolation
+            var violations = owners.Select(o => new AuditViolation
             {
                 RuleId = "AUD-OWN-001",
-                Description = $"Invalid owner {i}",
-                WorkItemId = 100,
+                Description = $"Invalid owner {o.GitHubAlias}",
+                WorkItemId = o.WorkItemId,
+                Detail = InvalidOwnerRule.SetInvalidDetail,
             }).ToList();
 
             var fixes = await _rule.GetFixes(context, violations, CancellationToken.None);
 
-            Assert.That(fixes, Has.Count.EqualTo(1));
-            Assert.That(fixes[0].Description, Does.Contain("Label Owner 200"));
+            Assert.That(fixes, Has.Count.EqualTo(6));
+            Assert.That(fixes[0].Description, Does.Contain("Set Invalid Since"));
         }
 
         [Test]
-        public async Task GetFixes_RemovesRelationsFromLabelOwnersAndPackages()
+        public async Task GetFixes_SetInvalid_CreatesSetFix()
         {
-            var invalidOwner = new OwnerWorkItem { WorkItemId = 10, GitHubAlias = "baduser" };
-            var lo = new LabelOwnerWorkItem { WorkItemId = 20, LabelType = "Service Owner", Repository = "Azure/azure-sdk-for-net" };
-            lo.Owners.Add(invalidOwner);
-
-            var pkg = new PackageWorkItem { WorkItemId = 30, PackageName = "azure-test", Language = "dotnet" };
-            pkg.Owners.Add(invalidOwner);
-
+            var owner = new OwnerWorkItem { WorkItemId = 10, GitHubAlias = "baduser" };
             var context = new AuditContext
             {
                 WorkItemData = new WorkItemData(
-                    new Dictionary<int, PackageWorkItem> { [30] = pkg },
-                    new Dictionary<int, OwnerWorkItem> { [10] = invalidOwner },
+                    new Dictionary<int, PackageWorkItem>(),
+                    new Dictionary<int, OwnerWorkItem> { [10] = owner },
                     new Dictionary<int, LabelWorkItem>(),
-                    new List<LabelOwnerWorkItem> { lo }
+                    new List<LabelOwnerWorkItem>()
                 ),
                 Fix = true,
                 Force = false,
@@ -166,14 +212,93 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
 
             var violations = new List<AuditViolation>
             {
-                new() { RuleId = "AUD-OWN-001", Description = "Invalid", WorkItemId = 10 }
+                new() { RuleId = "AUD-OWN-001", Description = "Invalid", WorkItemId = 10, Detail = InvalidOwnerRule.SetInvalidDetail }
             };
 
             var fixes = await _rule.GetFixes(context, violations, CancellationToken.None);
 
-            Assert.That(fixes, Has.Count.EqualTo(2));
-            Assert.That(fixes[0].Description, Does.Contain("Label Owner 20"));
-            Assert.That(fixes[1].Description, Does.Contain("Package 30"));
+            Assert.That(fixes, Has.Count.EqualTo(1));
+            Assert.That(fixes[0].Description, Does.Contain("Set Invalid Since"));
+            Assert.That(fixes[0].Description, Does.Contain("baduser"));
+        }
+
+        [Test]
+        public async Task GetFixes_DoNothing_NoFix()
+        {
+            var owner = new OwnerWorkItem { WorkItemId = 10, GitHubAlias = "baduser", InvalidSince = DateTime.UtcNow.AddDays(-5) };
+            var context = new AuditContext
+            {
+                WorkItemData = new WorkItemData(
+                    new Dictionary<int, PackageWorkItem>(),
+                    new Dictionary<int, OwnerWorkItem> { [10] = owner },
+                    new Dictionary<int, LabelWorkItem>(),
+                    new List<LabelOwnerWorkItem>()
+                ),
+                Fix = true,
+                Force = false,
+            };
+
+            var violations = new List<AuditViolation>
+            {
+                new() { RuleId = "AUD-OWN-001", Description = "Invalid", WorkItemId = 10, Detail = InvalidOwnerRule.DoNothingDetail }
+            };
+
+            var fixes = await _rule.GetFixes(context, violations, CancellationToken.None);
+
+            Assert.That(fixes, Is.Empty);
+        }
+
+        [Test]
+        public async Task GetFixes_ClearInvalid_CreatesClearFix()
+        {
+            var owner = new OwnerWorkItem { WorkItemId = 10, GitHubAlias = "recovereduser", InvalidSince = DateTime.UtcNow.AddDays(-7) };
+            var context = new AuditContext
+            {
+                WorkItemData = new WorkItemData(
+                    new Dictionary<int, PackageWorkItem>(),
+                    new Dictionary<int, OwnerWorkItem> { [10] = owner },
+                    new Dictionary<int, LabelWorkItem>(),
+                    new List<LabelOwnerWorkItem>()
+                ),
+                Fix = true,
+                Force = false,
+            };
+
+            var violations = new List<AuditViolation>
+            {
+                new() { RuleId = "AUD-OWN-001", Description = "Now valid", WorkItemId = 10, Detail = InvalidOwnerRule.ClearInvalidDetail }
+            };
+
+            var fixes = await _rule.GetFixes(context, violations, CancellationToken.None);
+
+            Assert.That(fixes, Has.Count.EqualTo(1));
+            Assert.That(fixes[0].Description, Does.Contain("Clear Invalid Since"));
+            Assert.That(fixes[0].Description, Does.Contain("recovereduser"));
+        }
+
+        [Test]
+        public void GetFixes_InvalidDetail_ThrowsException()
+        {
+            var owner = new OwnerWorkItem { WorkItemId = 10, GitHubAlias = "user" };
+            var context = new AuditContext
+            {
+                WorkItemData = new WorkItemData(
+                    new Dictionary<int, PackageWorkItem>(),
+                    new Dictionary<int, OwnerWorkItem> { [10] = owner },
+                    new Dictionary<int, LabelWorkItem>(),
+                    new List<LabelOwnerWorkItem>()
+                ),
+                Fix = true,
+                Force = false,
+            };
+
+            var violations = new List<AuditViolation>
+            {
+                new() { RuleId = "AUD-OWN-001", Description = "Invalid", WorkItemId = 10, Detail = "bogus detail" }
+            };
+
+            Assert.ThrowsAsync<InvalidOperationException>(
+                async () => await _rule.GetFixes(context, violations, CancellationToken.None));
         }
 
         private static AuditContext CreateContext(params OwnerWorkItem[] owners)
@@ -843,38 +968,184 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
 
             Assert.That(violations, Has.Count.EqualTo(1));
             Assert.That(violations[0].RuleId, Is.EqualTo("AUD-OWN-003"));
+            Assert.That(violations[0].Detail, Is.EqualTo(TeamNotWriteRule.SetInvalidDetail));
         }
 
         [Test]
-        public async Task GetFixes_RemovesRelationsFromLabelOwnersAndPackages()
+        public async Task Evaluate_InvalidTeamAlreadyMarked_DoNothing()
+        {
+            _mockGithub.Setup(g => g.GetTeamByNameAsync("Azure", "bad-team", It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new Octokit.NotFoundException("Not found", System.Net.HttpStatusCode.NotFound));
+
+            var context = CreateContext(new OwnerWorkItem
+            {
+                WorkItemId = 1,
+                GitHubAlias = "Azure/bad-team",
+                InvalidSince = DateTime.UtcNow.AddDays(-5)
+            });
+
+            var violations = await _rule.Evaluate(context, CancellationToken.None);
+
+            Assert.That(violations, Has.Count.EqualTo(1));
+            Assert.That(violations[0].Detail, Is.EqualTo(TeamNotWriteRule.DoNothingDetail));
+        }
+
+        [Test]
+        public async Task Evaluate_PreviouslyInvalidTeamNowValid_ClearInvalid()
+        {
+            // Team is in the cache (valid) but has InvalidSince set
+            _mockTeamUserCache.SetupGet(c => c.TeamUserDict)
+                .Returns(new Dictionary<string, List<string>> { ["recovered-team"] = new() });
+
+            var context = CreateContext(new OwnerWorkItem
+            {
+                WorkItemId = 1,
+                GitHubAlias = "Azure/recovered-team",
+                InvalidSince = DateTime.UtcNow.AddDays(-10)
+            });
+
+            var violations = await _rule.Evaluate(context, CancellationToken.None);
+
+            Assert.That(violations, Has.Count.EqualTo(1));
+            Assert.That(violations[0].Detail, Is.EqualTo(TeamNotWriteRule.ClearInvalidDetail));
+        }
+
+        [Test]
+        public async Task GetFixes_SetsInvalidSinceOnNewlyInvalidTeams()
         {
             var invalidTeam = new OwnerWorkItem { WorkItemId = 10, GitHubAlias = "Azure/invalid-team" };
-            var lo = new LabelOwnerWorkItem { WorkItemId = 20, LabelType = "Service Owner", Repository = "Azure/azure-sdk-for-net" };
-            lo.Owners.Add(invalidTeam);
-
-            var pkg = new PackageWorkItem { WorkItemId = 30, PackageName = "azure-test", Language = "dotnet" };
-            pkg.Owners.Add(invalidTeam);
 
             var context = new AuditContext
             {
                 WorkItemData = new WorkItemData(
-                    new Dictionary<int, PackageWorkItem> { [30] = pkg },
+                    new Dictionary<int, PackageWorkItem>(),
                     new Dictionary<int, OwnerWorkItem> { [10] = invalidTeam },
                     new Dictionary<int, LabelWorkItem>(),
-                    new List<LabelOwnerWorkItem> { lo }
+                    new List<LabelOwnerWorkItem>()
                 ),
             };
 
             var violations = new List<AuditViolation>
             {
-                new() { RuleId = "AUD-OWN-003", Description = "Invalid team", WorkItemId = 10 }
+                new() { RuleId = "AUD-OWN-003", Description = "Invalid team", WorkItemId = 10, Detail = TeamNotWriteRule.SetInvalidDetail }
             };
 
             var fixes = await _rule.GetFixes(context, violations, CancellationToken.None);
 
-            Assert.That(fixes, Has.Count.EqualTo(2));
-            Assert.That(fixes[0].Description, Does.Contain("Label Owner 20"));
-            Assert.That(fixes[1].Description, Does.Contain("Package 30"));
+            Assert.That(fixes, Has.Count.EqualTo(1));
+            Assert.That(fixes[0].Description, Does.Contain("Set Invalid Since"));
+            Assert.That(fixes[0].Description, Does.Contain("Azure/invalid-team"));
+        }
+
+        [Test]
+        public async Task GetFixes_ClearsInvalidSinceOnRecoveredTeams()
+        {
+            var recoveredTeam = new OwnerWorkItem
+            {
+                WorkItemId = 10,
+                GitHubAlias = "Azure/recovered-team",
+                InvalidSince = DateTime.UtcNow.AddDays(-10)
+            };
+
+            var context = new AuditContext
+            {
+                WorkItemData = new WorkItemData(
+                    new Dictionary<int, PackageWorkItem>(),
+                    new Dictionary<int, OwnerWorkItem> { [10] = recoveredTeam },
+                    new Dictionary<int, LabelWorkItem>(),
+                    new List<LabelOwnerWorkItem>()
+                ),
+            };
+
+            var violations = new List<AuditViolation>
+            {
+                new() { RuleId = "AUD-OWN-003", Description = "Recovered team", WorkItemId = 10, Detail = TeamNotWriteRule.ClearInvalidDetail }
+            };
+
+            var fixes = await _rule.GetFixes(context, violations, CancellationToken.None);
+
+            Assert.That(fixes, Has.Count.EqualTo(1));
+            Assert.That(fixes[0].Description, Does.Contain("Clear Invalid Since"));
+        }
+
+        [Test]
+        public async Task GetFixes_DoNothingViolations_ProduceNoFixes()
+        {
+            var markedTeam = new OwnerWorkItem
+            {
+                WorkItemId = 10,
+                GitHubAlias = "Azure/already-marked",
+                InvalidSince = DateTime.UtcNow.AddDays(-5)
+            };
+
+            var context = new AuditContext
+            {
+                WorkItemData = new WorkItemData(
+                    new Dictionary<int, PackageWorkItem>(),
+                    new Dictionary<int, OwnerWorkItem> { [10] = markedTeam },
+                    new Dictionary<int, LabelWorkItem>(),
+                    new List<LabelOwnerWorkItem>()
+                ),
+            };
+
+            var violations = new List<AuditViolation>
+            {
+                new() { RuleId = "AUD-OWN-003", Description = "Already marked", WorkItemId = 10, Detail = TeamNotWriteRule.DoNothingDetail }
+            };
+
+            var fixes = await _rule.GetFixes(context, violations, CancellationToken.None);
+
+            Assert.That(fixes, Is.Empty);
+        }
+
+        [Test]
+        public void GetFixes_InvalidDetail_Throws()
+        {
+            var context = new AuditContext
+            {
+                WorkItemData = new WorkItemData(
+                    new Dictionary<int, PackageWorkItem>(),
+                    new Dictionary<int, OwnerWorkItem>(),
+                    new Dictionary<int, LabelWorkItem>(),
+                    new List<LabelOwnerWorkItem>()
+                ),
+            };
+
+            var violations = new List<AuditViolation>
+            {
+                new() { RuleId = "AUD-OWN-003", Description = "Bad detail", WorkItemId = 10, Detail = "Unexpected value" }
+            };
+
+            Assert.ThrowsAsync<InvalidOperationException>(
+                async () => await _rule.GetFixes(context, violations, CancellationToken.None));
+        }
+
+        [Test]
+        public void GetFixes_ExceedsThreshold_ThrowsWithoutForce()
+        {
+            var owners = Enumerable.Range(1, 6).ToDictionary(
+                i => i,
+                i => new OwnerWorkItem { WorkItemId = i, GitHubAlias = $"Azure/team-{i}" }
+            );
+
+            var context = new AuditContext
+            {
+                Force = false,
+                WorkItemData = new WorkItemData(
+                    new Dictionary<int, PackageWorkItem>(),
+                    owners,
+                    new Dictionary<int, LabelWorkItem>(),
+                    new List<LabelOwnerWorkItem>()
+                ),
+            };
+
+            var violations = Enumerable.Range(1, 6).Select(i => new AuditViolation
+            {
+                RuleId = "AUD-OWN-003", Description = $"Team {i}", WorkItemId = i, Detail = TeamNotWriteRule.SetInvalidDetail
+            }).ToList();
+
+            Assert.ThrowsAsync<InvalidOperationException>(
+                async () => await _rule.GetFixes(context, violations, CancellationToken.None));
         }
 
         private static AuditContext CreateContext(params OwnerWorkItem[] owners)

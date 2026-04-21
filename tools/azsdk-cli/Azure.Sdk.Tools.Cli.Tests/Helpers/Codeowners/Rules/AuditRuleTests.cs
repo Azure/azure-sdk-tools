@@ -462,16 +462,15 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
         }
 
         [Test]
-        public async Task GetFixes_ReturnsEmpty()
+        public void GetFixes_ThrowsNotImplementedException()
         {
             var violations = new List<AuditViolation>
             {
                 new() { RuleId = "AUD-OWN-002", Description = "Malformed" }
             };
 
-            var fixes = await _rule.GetFixes(CreateContext(), violations, CancellationToken.None);
-
-            Assert.That(fixes, Is.Empty);
+            Assert.ThrowsAsync<NotImplementedException>(
+                () => _rule.GetFixes(CreateContext(), violations, CancellationToken.None));
         }
 
         private static AuditContext CreateContext(params OwnerWorkItem[] owners)
@@ -731,23 +730,22 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
         }
 
         [Test]
-        public async Task GetFixes_ReturnsEmpty()
+        public void GetFixes_ThrowsNotImplementedException()
         {
-            var fixes = await _rule.GetFixes(
-                new AuditContext
-                {
-                    WorkItemData = new WorkItemData(
-                        new Dictionary<int, PackageWorkItem>(),
-                        new Dictionary<int, OwnerWorkItem>(),
-                        new Dictionary<int, LabelWorkItem>(),
-                        new List<LabelOwnerWorkItem>()
-                    ),
-                },
-                new List<AuditViolation>(),
-                CancellationToken.None
-            );
-
-            Assert.That(fixes, Is.Empty);
+            Assert.ThrowsAsync<NotImplementedException>(
+                () => _rule.GetFixes(
+                    new AuditContext
+                    {
+                        WorkItemData = new WorkItemData(
+                            new Dictionary<int, PackageWorkItem>(),
+                            new Dictionary<int, OwnerWorkItem>(),
+                            new Dictionary<int, LabelWorkItem>(),
+                            new List<LabelOwnerWorkItem>()
+                        ),
+                    },
+                    new List<AuditViolation>(),
+                    CancellationToken.None
+                ));
         }
     }
 
@@ -1492,7 +1490,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
         }
 
         [Test]
-        public async Task GetFixes_ReturnsEmpty()
+        public void GetFixes_ThrowsNotImplementedException()
         {
             var violations = new List<AuditViolation>
             {
@@ -1509,9 +1507,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
                 ),
             };
 
-            var fixes = await _rule.GetFixes(context, violations, CancellationToken.None);
-
-            Assert.That(fixes, Is.Empty);
+            Assert.ThrowsAsync<NotImplementedException>(
+                () => _rule.GetFixes(context, violations, CancellationToken.None));
         }
     }
 }

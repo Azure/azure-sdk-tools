@@ -40,7 +40,6 @@ public class LabelOwnerMissingLabelsRule : IAuditRule
 
     public Task<List<AuditFixAction>> GetFixes(AuditContext context, List<AuditViolation> violations, CancellationToken ct)
     {
-        // Report only
-        return Task.FromResult(new List<AuditFixAction>());
+        throw new NotImplementedException($"{RuleId} is report-only and does not support fixes.");
     }
 }

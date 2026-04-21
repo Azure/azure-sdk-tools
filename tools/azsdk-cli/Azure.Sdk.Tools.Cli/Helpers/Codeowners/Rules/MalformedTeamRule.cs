@@ -45,7 +45,6 @@ public class MalformedTeamRule : IAuditRule
 
     public Task<List<AuditFixAction>> GetFixes(AuditContext context, List<AuditViolation> violations, CancellationToken ct)
     {
-        // Report only — no fixes
-        return Task.FromResult(new List<AuditFixAction>());
+        throw new NotImplementedException($"{RuleId} is report-only and does not support fixes.");
     }
 }

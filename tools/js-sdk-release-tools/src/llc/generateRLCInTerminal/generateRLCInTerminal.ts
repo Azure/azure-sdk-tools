@@ -5,6 +5,7 @@ import {generateChangelog} from "../utils/generateChangelog.js";
 import {changeConfigOfTestAndSample, ChangeModel, SdkType} from "../../utils/changeConfigOfTestAndSample.js";
 import {generateExtraFiles} from "../utils/generateExtraFiles.js";
 import { defaultChildProcessTimeout } from "../../common/utils.js";
+import { ensurePnpmInstalled } from "../../common/rushUtils.js";
 
 import shell from 'shelljs';
 
@@ -21,6 +22,7 @@ export async function generateCodes(sdkRepo: string, packagePath: string, packag
 export async function buildGeneratedCodes(sdkrepo: string, packagePath: string, packageName: string) {
     shell.cd(sdkrepo);
     logger.info(`Start to update.`);
+    await ensurePnpmInstalled();
     execSync('pnpm install', {stdio: 'inherit'});
     logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually`);
     // To build generated codes except test and sample, we need to change tsconfig.json.

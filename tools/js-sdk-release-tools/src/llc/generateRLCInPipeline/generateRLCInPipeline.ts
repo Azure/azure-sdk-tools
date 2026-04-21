@@ -15,6 +15,7 @@ import { defaultChildProcessTimeout, getGeneratedPackageDirectory, generateRepoD
 import { generateChangelogAndBumpVersion } from "../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js";
 import { updateChangelogResult } from "../../common/packageResultUtils.js";
 import { formatSdk, updateSnippets, lintFix, customizeCodes } from "../../common/devToolUtils.js";
+import { ensurePnpmInstalled } from "../../common/rushUtils.js";
 import { RunMode } from "../../common/types.js";
 import { exists } from 'fs-extra';
 
@@ -193,6 +194,7 @@ export async function generateRLCInPipeline(options: {
         }
 
         let buildStatus = `succeeded`;
+        await ensurePnpmInstalled();
         logger.info(`Start to update.`);
         execSync('pnpm install', {stdio: 'inherit'});
 

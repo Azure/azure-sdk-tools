@@ -18,7 +18,7 @@ async function packPackage(packageDirectory: string, packageName: string) {
     logger.info(`Pack '${packageName}' successfully.`);
 }
 
-async function ensurePnpmInstalled() {
+export async function ensurePnpmInstalled() {
     try {
         await runCommand('pnpm', ['--version'], runCommandOptions, false);
         logger.info('pnpm is already installed.');

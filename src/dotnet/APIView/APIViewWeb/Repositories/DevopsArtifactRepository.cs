@@ -27,6 +27,7 @@ namespace APIViewWeb.Repositories
         private readonly TelemetryClient _telemetryClient;
         private CachedConnection _cachedConnectionEntry;
         private readonly SemaphoreSlim _connectionLock = new SemaphoreSlim(1, 1);
+        private int _disposed = 0;
 
         public DevopsArtifactRepository(IConfiguration configuration, TelemetryClient telemetryClient)
         {
@@ -37,6 +38,10 @@ namespace APIViewWeb.Repositories
 
         public void Dispose()
         {
+            if (Interlocked.Exchange(ref _disposed, 1) != 0)
+            {
+                return;
+            }
             _cachedConnectionEntry?.Connection.Dispose();
             _connectionLock.Dispose();
         }

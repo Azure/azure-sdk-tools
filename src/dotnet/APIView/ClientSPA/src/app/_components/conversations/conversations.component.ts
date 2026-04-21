@@ -366,7 +366,7 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
     else {
       const isNewThread = commentUpdates.isReply === false;
       const resolutionLocked = commentUpdates.allowAnyOneToResolve !== undefined ? !commentUpdates.allowAnyOneToResolve : false;
-      this.commentsService.createComment(this.review?.id!, commentUpdates.revisionId!, commentUpdates.elementId!, commentUpdates.commentText!, CommentType.APIRevision, resolutionLocked, commentUpdates.severity, commentUpdates.threadId)
+      this.commentsService.createComment(this.review?.id!, commentUpdates.revisionId!, commentUpdates.elementId!, commentUpdates.commentText!, CommentType.APIRevision, resolutionLocked, commentUpdates.severity, commentUpdates.threadId, commentUpdates.apiVersionId)
         .pipe(take(1)).subscribe({
             next: (response: CommentItemModel) => {
               commentUpdates.comment = response;

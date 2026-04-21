@@ -81,6 +81,7 @@ export class CommentThreadComponent {
   @Input() elementId: string = '';
 
   @Input() userProfile : UserProfile | undefined;
+  @Input() apiVersionId: string | null | undefined;
   @Output() cancelCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() saveCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() deleteCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
@@ -489,7 +490,8 @@ export class CommentThreadComponent {
             elementId: elementIdValue,
             revisionId: revisionIdForConversationGroup,
             severity: isReply ? null : this.selectedSeverity,
-            isReply: isReply
+            isReply: isReply,
+            apiVersionId: this.apiVersionId
           } as CommentUpdatesDto
         );
         this.selectedSeverity = null;

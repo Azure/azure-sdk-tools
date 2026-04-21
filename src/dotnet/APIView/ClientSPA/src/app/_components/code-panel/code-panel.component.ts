@@ -35,6 +35,7 @@ export class CodePanelComponent implements OnChanges {
   @Input() scrollToNodeId: string | undefined;
   @Input() reviewId: string | undefined;
   @Input() activeApiRevisionId: string | undefined;
+  @Input() activeApiVersionId: string | undefined;
   @Input() userProfile: UserProfile | undefined;
   @Input() showLineNumbers: boolean = true;
   @Input() showDocumentation: boolean = true;
@@ -772,7 +773,7 @@ export class CodePanelComponent implements OnChanges {
     else {
       const isNewThread = commentUpdates.isReply === false;
       const resolutionLocked = commentUpdates.allowAnyOneToResolve !== undefined ? !commentUpdates.allowAnyOneToResolve : false;
-      this.commentsService.createComment(this.reviewId!, this.activeApiRevisionId!, commentUpdates.nodeId!, commentUpdates.commentText!, CommentType.APIRevision, resolutionLocked, commentUpdates.severity, commentUpdates.threadId)
+      this.commentsService.createComment(this.reviewId!, this.activeApiRevisionId!, commentUpdates.nodeId!, commentUpdates.commentText!, CommentType.APIRevision, resolutionLocked, commentUpdates.severity, commentUpdates.threadId, commentUpdates.apiVersionId)
         .pipe(take(1)).subscribe({
             next: (response: CommentItemModel) => {
               if (!commentUpdates.threadId && response.threadId) {

@@ -47,6 +47,7 @@
         [associatedCodeLine]="getAssociatedCodeLine(item)"
         [actualLineNumber]="getAssociatedCodeLine(item)?.lineNumber || 0"
         [userProfile]="userProfile"
+        [apiVersionId]="activeApiVersionId"
         [reviewId]="reviewId || ''"
         (cancelCommentActionEmitter)="handleCancelCommentActionEmitter($event)"
         (saveCommentActionEmitter)="handleSaveCommentActionEmitter($event)"

@@ -97,6 +97,7 @@ namespace APIViewWeb.LeanControllers
         /// <param name="severity"></param>
         /// <param name="resolutionLocked"></param>
         /// <param name="threadId"></param>
+        /// <param name="apiVersionId"></param>
         /// <returns></returns>
         [HttpPost(Name = "CreateComment")]
         public async Task<ActionResult> CreateCommentAsync(
@@ -108,7 +109,8 @@ namespace APIViewWeb.LeanControllers
             [FromForm] string sampleRevisionId = null,
             [FromForm] CommentSeverity? severity = null,
             [FromForm] bool resolutionLocked = false,
-            [FromForm] string threadId = null)
+            [FromForm] string threadId = null,
+            [FromForm] string apiVersionId = null)
         {
             if (string.IsNullOrEmpty(commentText) || (string.IsNullOrEmpty(apiRevisionId) && string.IsNullOrEmpty(sampleRevisionId)))
             {
@@ -123,6 +125,7 @@ namespace APIViewWeb.LeanControllers
             {
                 ReviewId = reviewId,
                 APIRevisionId = apiRevisionId,
+                APIVersionId = apiVersionId,
                 SampleRevisionId = sampleRevisionId,
                 ElementId = elementId,
                 CommentText = commentText,

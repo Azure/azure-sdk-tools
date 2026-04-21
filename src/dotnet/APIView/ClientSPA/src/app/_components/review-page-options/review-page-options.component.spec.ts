@@ -670,7 +670,7 @@ describe('ReviewPageOptionsComponent', () => {
           component.generateAIReview();
 
           expect(confirmSpy).toHaveBeenCalledWith(expect.objectContaining({
-            header: 'API Already Approved'
+            header: 'Are you sure?'
           }));
           expect(component.aiReviewGenerationState).toBe('NotStarted');
         });
@@ -704,8 +704,8 @@ describe('ReviewPageOptionsComponent', () => {
             vi.runAllTimers();
 
             expect(confirmSpy).toHaveBeenCalledTimes(2);
-            expect(confirmSpy).toHaveBeenNthCalledWith(1, expect.objectContaining({ header: 'API Already Approved' }));
-            expect(confirmSpy).toHaveBeenNthCalledWith(2, expect.objectContaining({ header: 'API Already Reviewed by Copilot' }));
+            expect(confirmSpy).toHaveBeenNthCalledWith(1, expect.objectContaining({ header: 'Are you sure?' }));
+            expect(confirmSpy).toHaveBeenNthCalledWith(2, expect.objectContaining({ header: 'Are you sure?' }));
           } finally {
             vi.useRealTimers();
           }
@@ -728,9 +728,9 @@ describe('ReviewPageOptionsComponent', () => {
             vi.runAllTimers();
 
             expect(confirmSpy).toHaveBeenCalledTimes(3);
-            expect(confirmSpy).toHaveBeenNthCalledWith(1, expect.objectContaining({ header: 'API Already Approved' }));
-            expect(confirmSpy).toHaveBeenNthCalledWith(2, expect.objectContaining({ header: 'API Already Reviewed by Copilot' }));
-            expect(confirmSpy).toHaveBeenNthCalledWith(3, expect.objectContaining({ header: 'Full API Review' }));
+            expect(confirmSpy).toHaveBeenNthCalledWith(1, expect.objectContaining({ header: 'Are you sure?' }));
+            expect(confirmSpy).toHaveBeenNthCalledWith(2, expect.objectContaining({ header: 'Are you sure?' }));
+            expect(confirmSpy).toHaveBeenNthCalledWith(3, expect.objectContaining({ header: 'Are you sure?' }));
           } finally {
             vi.useRealTimers();
           }
@@ -747,7 +747,7 @@ describe('ReviewPageOptionsComponent', () => {
           component.generateAIReview();
 
           expect(confirmSpy).toHaveBeenCalledWith(expect.objectContaining({
-            header: 'API Already Reviewed by Copilot'
+            header: 'Are you sure?'
           }));
           expect(component.aiReviewGenerationState).toBe('NotStarted');
         });
@@ -780,8 +780,8 @@ describe('ReviewPageOptionsComponent', () => {
             vi.runAllTimers();
 
             expect(confirmSpy).toHaveBeenCalledTimes(2);
-            expect(confirmSpy).toHaveBeenNthCalledWith(1, expect.objectContaining({ header: 'API Already Reviewed by Copilot' }));
-            expect(confirmSpy).toHaveBeenNthCalledWith(2, expect.objectContaining({ header: 'Full API Review' }));
+            expect(confirmSpy).toHaveBeenNthCalledWith(1, expect.objectContaining({ header: 'Are you sure?' }));
+            expect(confirmSpy).toHaveBeenNthCalledWith(2, expect.objectContaining({ header: 'Are you sure?' }));
           } finally {
             vi.useRealTimers();
           }
@@ -817,7 +817,7 @@ describe('ReviewPageOptionsComponent', () => {
           component.generateAIReview();
 
           expect(confirmSpy).toHaveBeenCalledWith(expect.objectContaining({
-            header: 'Full API Review'
+            header: 'Are you sure?'
           }));
           expect(component.aiReviewGenerationState).toBe('NotStarted');
         });

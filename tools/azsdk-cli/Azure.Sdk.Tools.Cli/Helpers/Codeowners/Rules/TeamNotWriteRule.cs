@@ -10,7 +10,9 @@ namespace Azure.Sdk.Tools.Cli.Helpers.Codeowners.Rules;
 /// <summary>
 /// AUD-OWN-003: Detect team Owner work items that don't descend from azure-sdk-write.
 /// Skips malformed aliases internally (OWN-002 is report-only, can't rely on it fixing them).
-/// Fix: Remove relations from all linked Label Owner and Package work items.
+/// Fix: Set "Invalid Since" field to current date/time on newly invalid teams.
+///       Clear "Invalid Since" field on teams that have become valid again.
+/// Safety threshold: throws if >5 newly invalid teams detected with --fix unless --force.
 /// </summary>
 public class TeamNotWriteRule(
     ITeamUserCache teamUserCache,
@@ -19,6 +21,12 @@ public class TeamNotWriteRule(
     ILogger<TeamNotWriteRule> logger
 ) : IAuditRule
 {
+    private const int SafetyThreshold = 5;
+    public const string DoNothingDetail = "Do nothing";
+    public const string SetInvalidDetail = "Set Invalid";
+    public const string ClearInvalidDetail = "Clear Invalid";
+    public static readonly string[] ValidDetails = [DoNothingDetail, SetInvalidDetail, ClearInvalidDetail];
+
     public string RuleId => "AUD-OWN-003";
     public string Description => "Team doesn't descend from azure-sdk-write";
     public bool CanFix => true;
@@ -49,9 +57,22 @@ public class TeamNotWriteRule(
                 violations.Add(new AuditViolation
                 {
                     RuleId = RuleId,
-                    Description = $"Team '{owner.GitHubAlias}' (WI {owner.WorkItemId}): not a descendant of azure-sdk-write",
+                    Description = $"Team '{owner.GitHubAlias}' ({owner.WorkItemId}): not a descendant of azure-sdk-write",
                     WorkItemId = owner.WorkItemId,
                     WorkItemTitle = owner.Title,
+                    Detail = owner.InvalidSince.HasValue ? DoNothingDetail : SetInvalidDetail,
+                });
+            }
+            else if (owner.InvalidSince.HasValue)
+            {
+                // Valid team that was previously marked invalid — report for recovery
+                violations.Add(new AuditViolation
+                {
+                    RuleId = RuleId,
+                    Description = $"Team '{owner.GitHubAlias}' ({owner.WorkItemId}): now valid, clear Invalid Since",
+                    WorkItemId = owner.WorkItemId,
+                    WorkItemTitle = owner.Title,
+                    Detail = ClearInvalidDetail,
                 });
             }
         }
@@ -61,42 +82,47 @@ public class TeamNotWriteRule(
 
     public Task<List<AuditFixAction>> GetFixes(AuditContext context, List<AuditViolation> violations, CancellationToken ct)
     {
-        var fixes = new List<AuditFixAction>();
-        var invalidTeamIds = violations
-            .Where(v => v.WorkItemId.HasValue)
-            .Select(v => v.WorkItemId!.Value)
-            .ToHashSet();
+        var clearInvalidViolations = violations.Where(v => v.Detail == ClearInvalidDetail).ToList();
+        var setInvalidViolations = violations.Where(v => v.Detail == SetInvalidDetail).ToList();
 
-        foreach (var labelOwner in context.WorkItemData.LabelOwners)
+        if (violations.Any(v => !ValidDetails.Contains(v.Detail)))
         {
-            foreach (var owner in labelOwner.Owners.Where(o => invalidTeamIds.Contains(o.WorkItemId)))
-            {
-                var loId = labelOwner.WorkItemId;
-                var ownerId = owner.WorkItemId;
-                var alias = owner.GitHubAlias;
-                fixes.Add(new AuditFixAction
-                {
-                    RuleId = RuleId,
-                    Description = $"Remove relation: Label Owner {loId} → Team '{alias}' ({ownerId})",
-                    Apply = async (fixCt) => await RemoveRelationSafe(loId, ownerId, alias, fixCt),
-                });
-            }
+            throw new InvalidOperationException($"Unexpected violation detail value detected in {RuleId} fixes: {string.Join(", ", violations.Select(v => v.Detail))}");
         }
 
-        foreach (var package in context.WorkItemData.Packages.Values)
+        // Safety threshold applies only to newly invalid teams (not already marked, not recoveries)
+        if (setInvalidViolations.Count > SafetyThreshold && !context.Force)
         {
-            foreach (var owner in package.Owners.Where(o => invalidTeamIds.Contains(o.WorkItemId)))
+            throw new InvalidOperationException(
+                $"{RuleId}: {setInvalidViolations.Count} newly invalid teams detected (threshold is {SafetyThreshold}). " +
+                $"Use --force to override. All invalid teams have been logged for review.");
+        }
+
+        var fixes = new List<AuditFixAction>();
+        var now = DateTime.UtcNow;
+
+        foreach (var violation in setInvalidViolations)
+        {
+            var ownerId = violation.WorkItemId!.Value;
+            var alias = context.WorkItemData.Owners[ownerId].GitHubAlias;
+            fixes.Add(new AuditFixAction
             {
-                var pkgId = package.WorkItemId;
-                var ownerId = owner.WorkItemId;
-                var alias = owner.GitHubAlias;
-                fixes.Add(new AuditFixAction
-                {
-                    RuleId = RuleId,
-                    Description = $"Remove relation: Package {pkgId} ({package.PackageName}) → Team '{alias}' ({ownerId})",
-                    Apply = async (fixCt) => await RemoveRelationSafe(pkgId, ownerId, alias, fixCt),
-                });
-            }
+                RuleId = RuleId,
+                Description = $"Set Invalid Since on Team '{alias}' ({ownerId})",
+                Apply = async (fixCt) => await SetInvalidSince(ownerId, alias, now, fixCt),
+            });
+        }
+
+        foreach (var violation in clearInvalidViolations)
+        {
+            var ownerId = violation.WorkItemId!.Value;
+            var alias = context.WorkItemData.Owners[ownerId].GitHubAlias;
+            fixes.Add(new AuditFixAction
+            {
+                RuleId = RuleId,
+                Description = $"Clear Invalid Since on Team '{alias}' ({ownerId})",
+                Apply = async (fixCt) => await ClearInvalidSince(ownerId, alias, fixCt),
+            });
         }
 
         return Task.FromResult(fixes);
@@ -136,23 +162,37 @@ public class TeamNotWriteRule(
         }
     }
 
-    private async Task<AuditFixResult> RemoveRelationSafe(int sourceId, int targetId, string alias, CancellationToken ct)
+    private async Task<AuditFixResult> SetInvalidSince(int ownerId, string alias, DateTime invalidSince, CancellationToken ct)
     {
-        var desc = $"Remove relation: {sourceId} → Team '{alias}' ({targetId})";
+        var desc = $"Set Invalid Since on Team '{alias}' ({ownerId})";
         try
         {
-            await devOpsService.RemoveWorkItemRelationAsync(sourceId, "Related", targetId, ct);
+            await devOpsService.UpdateWorkItemAsync(ownerId, new Dictionary<string, string>
+            {
+                ["Custom.InvalidSince"] = invalidSince.ToString("o")
+            }, ct);
             return new AuditFixResult { RuleId = RuleId, Description = desc, Success = true };
         }
-        catch (Exception ex) when (ex.Message.Contains("Relation of type", StringComparison.OrdinalIgnoreCase) &&
-                                    ex.Message.Contains("not found", StringComparison.OrdinalIgnoreCase))
+        catch (Exception ex)
         {
-            // Idempotent: the specific relation was already removed
-            return new AuditFixResult { RuleId = RuleId, Description = desc, Success = true, AlreadyApplied = true };
+            return new AuditFixResult { RuleId = RuleId, Description = desc, Success = false, ErrorMessage = ex.Message };
         }
-        catch (Exception ex) when (ex.Message.Contains("has no relations", StringComparison.OrdinalIgnoreCase))
+    }
+
+    private async Task<AuditFixResult> ClearInvalidSince(int ownerId, string alias, CancellationToken ct)
+    {
+        var desc = $"Clear Invalid Since on Team '{alias}' ({ownerId})";
+        try
         {
-            return new AuditFixResult { RuleId = RuleId, Description = desc, Success = true, AlreadyApplied = true };
+            await devOpsService.UpdateWorkItemAsync(ownerId, new Dictionary<string, string>
+            {
+                ["Custom.InvalidSince"] = ""
+            }, ct);
+            return new AuditFixResult { RuleId = RuleId, Description = desc, Success = true };
+        }
+        catch (Exception ex)
+        {
+            return new AuditFixResult { RuleId = RuleId, Description = desc, Success = false, ErrorMessage = ex.Message };
         }
     }
 }

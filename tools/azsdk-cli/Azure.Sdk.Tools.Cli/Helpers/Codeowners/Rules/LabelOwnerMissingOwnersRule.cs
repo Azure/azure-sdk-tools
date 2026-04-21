@@ -69,11 +69,7 @@ public class LabelOwnerMissingOwnersRule(
 
         foreach (var violation in violations)
         {
-            if (!violation.WorkItemId.HasValue)
-            {
-                continue;
-            }
-            var wiId = violation.WorkItemId.Value;
+            var wiId = violation.WorkItemId.Value!;
 
             fixes.Add(new AuditFixAction
             {
@@ -89,16 +85,7 @@ public class LabelOwnerMissingOwnersRule(
     private async Task<AuditFixResult> DeleteWorkItemSafe(int workItemId, CancellationToken ct)
     {
         var desc = $"Delete Label Owner work item {workItemId}";
-        try
-        {
-            await devOpsService.DeleteWorkItemAsync(workItemId, ct);
-            return new AuditFixResult { RuleId = RuleId, Description = desc, Success = true };
-        }
-        catch (Exception ex) when (ex.Message.Contains("404") ||
-                                    ex.Message.Contains("not found", StringComparison.OrdinalIgnoreCase))
-        {
-            // Idempotent: already deleted
-            return new AuditFixResult { RuleId = RuleId, Description = desc, Success = true, AlreadyApplied = true };
-        }
+        await devOpsService.DeleteWorkItemAsync(workItemId, ct);
+        return new AuditFixResult { RuleId = RuleId, Description = desc, Success = true };
     }
 }

@@ -33,7 +33,7 @@ public class MalformedTeamRule : IAuditRule
                 violations.Add(new AuditViolation
                 {
                     RuleId = RuleId,
-                    Description = $"Team owner '{owner.GitHubAlias}' (WI {owner.WorkItemId}): malformed alias, expected Azure/<team>",
+                    Description = $"Team owner '{owner.GitHubAlias}' ({owner.WorkItemId}): malformed alias, expected Azure/<team>",
                     WorkItemId = owner.WorkItemId,
                     WorkItemTitle = owner.Title,
                 });

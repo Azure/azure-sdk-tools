@@ -59,7 +59,7 @@ public class LabelNotInGitHubRule(
                 violations.Add(new AuditViolation
                 {
                     RuleId = RuleId,
-                    Description = $"Label '{label.LabelName}' (WI {label.WorkItemId}): not found in GitHub repos [{string.Join(", ", missingRepos)}]",
+                    Description = $"Label '{label.LabelName}' ({label.WorkItemId}): not found in GitHub repos [{string.Join(", ", missingRepos)}]",
                     WorkItemId = label.WorkItemId,
                     WorkItemTitle = label.Title,
                     Detail = $"Missing from: {string.Join(", ", missingRepos)}, Referenced in: {string.Join(", ", repos)}",

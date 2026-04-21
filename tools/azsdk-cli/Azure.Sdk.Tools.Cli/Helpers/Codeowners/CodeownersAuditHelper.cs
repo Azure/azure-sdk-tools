@@ -31,7 +31,7 @@ public class CodeownersAuditHelper(
 
         // Rules are injected in the order they are registered in DI.
         // Execution order:
-        // 1. AUD-OWN-001 — no dependencies
+        // 1. AUD-OWN-001 — no dependencies; marks/clears Invalid Since on owners
         // 2. AUD-OWN-002 — no dependencies
         // 3. AUD-OWN-003 — skips malformed aliases internally (OWN-002 is report-only)
         // 4. AUD-LBL-001 — no dependencies on owner rules

@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Codeowners;
 using Azure.Sdk.Tools.Cli.Services;
 
@@ -9,9 +8,10 @@ namespace Azure.Sdk.Tools.Cli.Helpers.Codeowners.Rules;
 
 /// <summary>
 /// AUD-OWN-001: Detect individual Owner work items that fail GitHub validation
-/// (not in Azure/Microsoft orgs, no write access to azure-sdk-for-net).
-/// Fix: Remove relations from all linked Label Owner and Package work items.
-/// Safety threshold: throws if >5 invalid owners detected with --fix unless --force.
+/// (not in Azure or Microsoft orgs, no write access to azure-sdk-for-net).
+/// Fix: Set "Invalid Since" field to current date/time on newly invalid owners.
+///       Clear "Invalid Since" field on owners that have become valid again.
+/// Safety threshold: throws if >5 newly invalid owners detected with --fix unless --force.
 /// </summary>
 public class InvalidOwnerRule(
     ICodeownersValidatorHelper validatorHelper,
@@ -20,6 +20,10 @@ public class InvalidOwnerRule(
 ) : IAuditRule
 {
     private const int SafetyThreshold = 5;
+    public const string DoNothingDetail = "Do nothing";
+    public const string SetInvalidDetail = "Set Invalid";
+    public const string ClearInvalidDetail = "Clear Invalid";
+    public static readonly string[] ValidDetails = [DoNothingDetail, SetInvalidDetail, ClearInvalidDetail];
 
     public string RuleId => "AUD-OWN-001";
     public string Description => "Individual owner fails GitHub validation";
@@ -32,8 +36,17 @@ public class InvalidOwnerRule(
             .Where(o => !o.IsGitHubTeam)
             .ToList();
 
+        int count = 0;
         foreach (var owner in individualOwners)
         {
+            count++;
+            logger.LogInformation(
+                "{count}/{total} Validating owner '{OwnerAlias}' ({WorkItemId})",
+                count,
+                individualOwners.Count,
+                owner.GitHubAlias,
+                owner.WorkItemId
+            );
             var result = await validatorHelper.ValidateCodeOwnerAsync(owner.GitHubAlias, ct: ct);
 
             // If the validator returns an error status for a NotFoundException, treat as invalid
@@ -42,10 +55,10 @@ public class InvalidOwnerRule(
                 violations.Add(new AuditViolation
                 {
                     RuleId = RuleId,
-                    Description = $"Owner '{owner.GitHubAlias}' (WI {owner.WorkItemId}): GitHub user not found",
+                    Description = $"Owner '{owner.GitHubAlias}' ({owner.WorkItemId}): GitHub user not found",
                     WorkItemId = owner.WorkItemId,
                     WorkItemTitle = owner.Title,
-                    Detail = result.Message,
+                    Detail = owner.InvalidSince.HasValue ? DoNothingDetail : SetInvalidDetail, // If user not found, only set Invalid Since if not already set
                 });
                 continue;
             }
@@ -54,29 +67,42 @@ public class InvalidOwnerRule(
             if (result.Status == "Error")
             {
                 throw new InvalidOperationException(
-                    $"Validation error for owner '{owner.GitHubAlias}' (WI {owner.WorkItemId}): {result.Message}");
+                    $"Validation error for owner '{owner.GitHubAlias}' ({owner.WorkItemId}): {result.Message}");
             }
 
             if (!result.IsValidCodeOwner)
             {
+                var orgs = string.Join(", ", result.Organizations.Select(kv => $"{kv.Key}={kv.Value}"));
+                var description = $"Owner '{owner.GitHubAlias}' ({owner.WorkItemId}): not a valid code owner (Organizations: {orgs}, HasWritePermission: {result.HasWritePermission})";
+
+                logger.LogWarning(
+                    "Owner '{alias}' ({WorkItemId}): not a valid code owner (Organizations: {orgs}, HasWritePermission: {hasWritePermission})",
+                    owner.GitHubAlias,
+                    owner.WorkItemId,
+                    orgs,
+                    result.HasWritePermission
+                );
+
                 violations.Add(new AuditViolation
                 {
                     RuleId = RuleId,
-                    Description = $"Owner '{owner.GitHubAlias}' (WI {owner.WorkItemId}): not a valid code owner",
+                    Description = description,
                     WorkItemId = owner.WorkItemId,
                     WorkItemTitle = owner.Title,
-                    Detail = result.Message,
+                    Detail = owner.InvalidSince.HasValue ? DoNothingDetail : SetInvalidDetail, // Only set Invalid Since if not already set
                 });
             }
-        }
-
-        // Log all invalid owners for human review
-        if (violations.Count > 0)
-        {
-            logger.LogWarning("{RuleId}: Found {Count} invalid owner(s):", RuleId, violations.Count);
-            foreach (var v in violations)
+            else if (owner.InvalidSince.HasValue)
             {
-                logger.LogWarning("  - {Description}", v.Description);
+                // Valid owner that was previously marked invalid — report for recovery
+                violations.Add(new AuditViolation
+                {
+                    RuleId = RuleId,
+                    Description = $"Owner '{owner.GitHubAlias}' ({owner.WorkItemId}): now valid, clear Invalid Since",
+                    WorkItemId = owner.WorkItemId,
+                    WorkItemTitle = owner.Title,
+                    Detail = ClearInvalidDetail,
+                });
             }
         }
 
@@ -85,74 +111,83 @@ public class InvalidOwnerRule(
 
     public Task<List<AuditFixAction>> GetFixes(AuditContext context, List<AuditViolation> violations, CancellationToken ct)
     {
-        // Safety threshold: if more than 5 invalid owners, require --force
-        if (violations.Count > SafetyThreshold && !context.Force)
+        var clearInvalidViolations = violations.Where(v => v.Detail == ClearInvalidDetail).ToList();
+        var setInvalidViolations = violations.Where(v => v.Detail == SetInvalidDetail).ToList();
+
+        if (violations.Any(v => !ValidDetails.Contains(v.Detail)))
+        {
+            throw new InvalidOperationException($"Unexpected violation detail value detected in {RuleId} fixes: {string.Join(", ", violations.Select(v => v.Detail))}");
+        }
+
+        // Safety threshold applies only to newly invalid owners (not already marked, not recoveries)
+        if (setInvalidViolations.Count > SafetyThreshold && !context.Force)
         {
             throw new InvalidOperationException(
-                $"{RuleId}: {violations.Count} invalid owners detected (threshold is {SafetyThreshold}). " +
-                $"Use --force to override. All invalid owners have been logged above for review.");
+                $"{RuleId}: {setInvalidViolations.Count} newly invalid owners detected (threshold is {SafetyThreshold}). " +
+                $"Use --force to override. All invalid owners have been logged for review.");
         }
 
         var fixes = new List<AuditFixAction>();
-        var invalidOwnerIds = violations
-            .Where(v => v.WorkItemId.HasValue)
-            .Select(v => v.WorkItemId!.Value)
-            .ToHashSet();
+        var now = DateTime.UtcNow;
 
-        // Find all Label Owners and Packages that reference invalid owners
-        foreach (var labelOwner in context.WorkItemData.LabelOwners)
+        foreach (var violation in setInvalidViolations)
         {
-            foreach (var owner in labelOwner.Owners.Where(o => invalidOwnerIds.Contains(o.WorkItemId)))
+            var ownerId = violation.WorkItemId!.Value;
+            var owner = context.WorkItemData.Owners[ownerId].GitHubAlias!;
+            fixes.Add(new AuditFixAction
             {
-                var loId = labelOwner.WorkItemId;
-                var ownerId = owner.WorkItemId;
-                var ownerAlias = owner.GitHubAlias;
-                fixes.Add(new AuditFixAction
-                {
-                    RuleId = RuleId,
-                    Description = $"Remove relation: Label Owner {loId} → Owner '{ownerAlias}' ({ownerId})",
-                    Apply = async (fixCt) => await RemoveRelationSafe(loId, ownerId, ownerAlias, fixCt),
-                });
-            }
+                RuleId = RuleId,
+                Description = $"Set Invalid Since on Owner '{owner}' ({ownerId})",
+                Apply = async (fixCt) => await SetInvalidSince(ownerId, owner, now, fixCt),
+            });
         }
 
-        foreach (var package in context.WorkItemData.Packages.Values)
+        foreach (var violation in clearInvalidViolations)
         {
-            foreach (var owner in package.Owners.Where(o => invalidOwnerIds.Contains(o.WorkItemId)))
+            var ownerId = violation.WorkItemId!.Value;
+            var owner = context.WorkItemData.Owners[ownerId].GitHubAlias!;
+            fixes.Add(new AuditFixAction
             {
-                var pkgId = package.WorkItemId;
-                var ownerId = owner.WorkItemId;
-                var ownerAlias = owner.GitHubAlias;
-                fixes.Add(new AuditFixAction
-                {
-                    RuleId = RuleId,
-                    Description = $"Remove relation: Package {pkgId} ({package.PackageName}) → Owner '{ownerAlias}' ({ownerId})",
-                    Apply = async (fixCt) => await RemoveRelationSafe(pkgId, ownerId, ownerAlias, fixCt),
-                });
-            }
+                RuleId = RuleId,
+                Description = $"Clear Invalid Since on Owner '{owner}' ({ownerId})",
+                Apply = async (fixCt) => await ClearInvalidSince(ownerId, owner, fixCt),
+            });
         }
 
         return Task.FromResult(fixes);
     }
 
-    private async Task<AuditFixResult> RemoveRelationSafe(int sourceId, int targetId, string ownerAlias, CancellationToken ct)
+    private async Task<AuditFixResult> SetInvalidSince(int ownerId, string alias, DateTime invalidSince, CancellationToken ct)
     {
-        var desc = $"Remove relation: {sourceId} → Owner '{ownerAlias}' ({targetId})";
+        var desc = $"Set Invalid Since on Owner '{alias}' ({ownerId})";
         try
         {
-            await devOpsService.RemoveWorkItemRelationAsync(sourceId, "Related", targetId, ct);
+            await devOpsService.UpdateWorkItemAsync(ownerId, new Dictionary<string, string>
+            {
+                ["Custom.InvalidSince"] = invalidSince.ToString("o")
+            }, ct);
             return new AuditFixResult { RuleId = RuleId, Description = desc, Success = true };
         }
-        catch (Exception ex) when (ex.Message.Contains("Relation of type", StringComparison.OrdinalIgnoreCase) &&
-                                    ex.Message.Contains("not found", StringComparison.OrdinalIgnoreCase))
+        catch (Exception ex)
         {
-            // Idempotent: the specific relation was already removed
-            return new AuditFixResult { RuleId = RuleId, Description = desc, Success = true, AlreadyApplied = true };
+            return new AuditFixResult { RuleId = RuleId, Description = desc, Success = false, ErrorMessage = ex.Message };
         }
-        catch (Exception ex) when (ex.Message.Contains("has no relations", StringComparison.OrdinalIgnoreCase))
+    }
+
+    private async Task<AuditFixResult> ClearInvalidSince(int ownerId, string alias, CancellationToken ct)
+    {
+        var desc = $"Clear Invalid Since on Owner '{alias}' ({ownerId})";
+        try
         {
-            // Idempotent: work item has no relations at all
-            return new AuditFixResult { RuleId = RuleId, Description = desc, Success = true, AlreadyApplied = true };
+            await devOpsService.UpdateWorkItemAsync(ownerId, new Dictionary<string, string>
+            {
+                ["Custom.InvalidSince"] = ""
+            }, ct);
+            return new AuditFixResult { RuleId = RuleId, Description = desc, Success = true };
+        }
+        catch (Exception ex)
+        {
+            return new AuditFixResult { RuleId = RuleId, Description = desc, Success = false, ErrorMessage = ex.Message };
         }
     }
 }

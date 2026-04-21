@@ -163,6 +163,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             Required = false,
         };
 
+        private readonly Option<int> invalidOwnerLookbackDaysOption = new("--invalid-owner-lookback-days")
+        {
+            Description = "Number of days after which an owner marked 'Invalid Since' is excluded from CODEOWNERS generation. Owners within this window are still treated as valid.",
+            Required = false,
+            DefaultValueFactory = _ => 90,
+        };
+
         // Audit command options
         private readonly Option<bool> fixOption = new("--fix")
         {
@@ -234,7 +241,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         [
             new(generateCodeownersCommandName, "Generate CODEOWNERS file from Azure DevOps work items")
             {
-                repoRootOption, packageTypesOption, sectionOption,
+                repoRootOption, packageTypesOption, sectionOption, invalidOwnerLookbackDaysOption,
             },
             new(viewCodeownersCommandName, "View CODEOWNERS associations for a user, label, package, or path")
             {
@@ -290,7 +297,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 );
                 var packageTypes = parseResult.GetValue(packageTypesOption);
                 var section = parseResult.GetValue(sectionOption);
-                var generateResult = await GenerateCodeowners(repoRoot, packageTypes, section, ct);
+                var invalidOwnerLookbackDays = parseResult.GetValue(invalidOwnerLookbackDaysOption);
+                var generateResult = await GenerateCodeowners(repoRoot, packageTypes, section, invalidOwnerLookbackDays, ct);
                 return generateResult;
             }
 
@@ -406,6 +414,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             string repoRoot,
             string[] packageTypes,
             string section,
+            int invalidOwnerLookbackDays,
             CancellationToken ct)
         {
             try
@@ -437,7 +446,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                     };
                 }
 
-                await codeownersGenerateHelper.GenerateCodeowners(repoRoot, repo, packageTypes, section, ct);
+                await codeownersGenerateHelper.GenerateCodeowners(repoRoot, repo, packageTypes, section, invalidOwnerLookbackDays, ct);
 
                 return new DefaultCommandResponse
                 {

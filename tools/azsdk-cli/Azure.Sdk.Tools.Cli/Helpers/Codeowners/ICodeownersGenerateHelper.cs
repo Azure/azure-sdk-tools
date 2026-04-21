@@ -17,6 +17,7 @@ public interface ICodeownersGenerateHelper
     /// <param name="repoName">Repository name in the format Azure/azure-sdk-for-{lang}</param>
     /// <param name="packageTypes">Package types to filter by</param>
     /// <param name="sectionName">Section name in CODEOWNERS file to update</param>
+    /// <param name="invalidOwnerLookbackDays">Number of days after which an owner marked invalid is excluded</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>The generated CODEOWNERS content that was written</returns>
     Task GenerateCodeowners(
@@ -24,5 +25,6 @@ public interface ICodeownersGenerateHelper
         string repoName,
         string[] packageTypes,
         string sectionName,
+        int invalidOwnerLookbackDays = 90,
         CancellationToken ct = default);
 }

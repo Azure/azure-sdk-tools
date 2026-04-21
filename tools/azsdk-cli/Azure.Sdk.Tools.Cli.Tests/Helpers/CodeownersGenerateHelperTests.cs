@@ -276,7 +276,7 @@ public class CodeownersGenerateHelperTests
             _logger
         );
 
-        return method?.Invoke(helper, [data, packageLookup, _repoRoot]) as List<CodeownersEntry> ?? [];
+        return method?.Invoke(helper, [data, packageLookup, _repoRoot, DateTime.MinValue]) as List<CodeownersEntry> ?? [];
     }
 
     #endregion

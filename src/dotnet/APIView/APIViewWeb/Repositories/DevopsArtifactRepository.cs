@@ -108,11 +108,12 @@ namespace APIViewWeb.Repositories
                 var tokenResult = await GetAccessTokenAsync();
                 var vssToken = new VssAadToken("Bearer", tokenResult.Token);
                 var connection = new VssConnection(new Uri("https://dev.azure.com/azure-sdk/"), new VssAadCredential(vssToken));
-                // Dispose the previous connection before replacing it (VssConnection is IDisposable).
-                var previous = Volatile.Read(ref _cachedConnectionEntry);
-                // Refresh 5 minutes before the token actually expires.
-                Volatile.Write(ref _cachedConnectionEntry, new CachedConnection(connection, tokenResult.ExpiresOn.AddMinutes(-5)));
-                previous?.Connection.Dispose();
+                var refreshTime = tokenResult.ExpiresOn.AddMinutes(-5);
+                if (refreshTime < DateTimeOffset.UtcNow)
+                {
+                    refreshTime = DateTimeOffset.UtcNow;
+                }
+                Volatile.Write(ref _cachedConnectionEntry, new CachedConnection(connection, refreshTime));
                 return connection;
             }
             finally

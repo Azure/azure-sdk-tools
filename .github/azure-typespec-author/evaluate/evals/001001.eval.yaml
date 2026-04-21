@@ -36,18 +36,18 @@ stimuli:
     config:
       required:
         - edit
-        - azsdk_typespec_generate_authoring_plan
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
   - type: file-matches
     config:
-      path: Widget/main.tsp
+      path: main.tsp
       pattern: 2025-05-04-preview
   - type: file-matches
     config:
-      path: Widget/employee.tsp
+      path: employee.tsp
       pattern: "\\.\\.\\.ManagedServiceIdentityProperty;"
   - type: file-matches
     config:
-      path: Widget/employee.tsp
+      path: employee.tsp
       pattern: "@@added\\(Employee\\.identity, (Microsoft\\.Widget\\.)?Versions\\.(v2025_05_04_preview|`2025-05-04-preview`)\\);"
   - type: prompt
     config:

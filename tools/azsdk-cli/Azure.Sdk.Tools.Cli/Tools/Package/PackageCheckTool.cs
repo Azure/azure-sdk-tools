@@ -56,7 +56,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return await RunPackageCheck(packagePath, checkType, fixCheckErrors, ct);
         }
 
-        [McpServerTool(Name = PackageRunCheckToolName), Description("Run validation checks for SDK packages. Provide package path, check type (All, Changelog, Dependency, Readme, Cspell, Snippets), and whether to fix errors.")]
+        [McpServerTool(Name = PackageRunCheckToolName), Description("Run validation checks for SDK packages. Provide package path, check type (All, Changelog, Dependency, Readme, Cspell, Snippets), and whether to fix errors. Note: --fix (fixCheckErrors=true) is not supported with check type 'All' because checks run in parallel; use a specific check type with --fix instead.")]
         public async Task<PackageCheckResponse> RunPackageCheck(string packagePath, PackageCheckType checkType, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             try
@@ -65,6 +65,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 if (!Directory.Exists(packagePath))
                 {
                     return new PackageCheckResponse(1, "", $"Package path does not exist: {packagePath}");
+                }
+
+                if (checkType == PackageCheckType.All && fixCheckErrors)
+                {
+                    return new PackageCheckResponse(
+                        1,
+                        "",
+                        "--fix is not supported with check type 'All' because mutating checks run in parallel " +
+                        "and can race on the same files. Run a specific check type (e.g., Cspell, Snippets, Format) with --fix instead.");
                 }
 
                 var response = checkType switch
@@ -99,144 +108,50 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running all validation checks");
 
-            var results = new List<PackageCheckResponse>();
-            var overallSuccess = true;
-            var failedChecks = new List<string>();
-            var successfulChecks = new List<string>();
-
-            // Run dependency check
             var languageChecks = await GetLanguageServiceAsync(packagePath, ct);
             if (languageChecks == null)
             {
                 return CreateUnsupportedLanguageResponse(packagePath);
             }
 
-            var dependencyCheckResult = await languageChecks.AnalyzeDependencies(packagePath, fixCheckErrors, ct);
-            results.Add(dependencyCheckResult);
-            if (dependencyCheckResult.ExitCode != 0)
+            // --fix is disallowed at the entry point when checkType == All, so every check below is
+            // read-only and safe to run in parallel. Fix mode must be invoked per-check-type.
+            var checks = new (string Name, Func<Task<PackageCheckResponse>> Run)[]
             {
-                overallSuccess = false;
-                failedChecks.Add("Dependency");
-            }
-            else if (dependencyCheckResult.CheckStatusDetails != "noop")
-            {
-                successfulChecks.Add("Dependency");
-            }
+                ("Dependency",        () => languageChecks.AnalyzeDependencies(packagePath, false, ct)),
+                ("Changelog",         () => languageChecks.ValidateChangelog(packagePath, false, ct)),
+                ("README",            () => languageChecks.ValidateReadme(packagePath, false, ct)),
+                ("Spelling",          () => languageChecks.CheckSpelling(packagePath, false, ct)),
+                ("Snippets",          () => languageChecks.UpdateSnippets(packagePath, false, ct)),
+                ("Linting",           () => languageChecks.LintCode(packagePath, false, ct)),
+                ("Format",            () => languageChecks.FormatCode(packagePath, false, ct)),
+                ("AOT Compatibility", () => languageChecks.CheckAotCompat(packagePath, false, ct)),
+                ("Generated Code",    () => languageChecks.CheckGeneratedCode(packagePath, false, ct)),
+                ("Sample Validation", () => languageChecks.ValidateSamples(packagePath, false, ct)),
+            };
 
-            // Run changelog validation
-            var changelogValidationResult = await languageChecks.ValidateChangelog(packagePath, fixCheckErrors, ct);
-            results.Add(changelogValidationResult);
-            if (changelogValidationResult.ExitCode != 0)
-            {
-                overallSuccess = false;
-                failedChecks.Add("Changelog");
-            }
-            else if (changelogValidationResult.CheckStatusDetails != "noop")
-            {
-                successfulChecks.Add("Changelog");
-            }
+            var tasks = checks.Select(c => c.Run()).ToArray();
+            var checkResults = await Task.WhenAll(tasks);
 
-            // Run README validation
-            var readmeValidationResult = await languageChecks.ValidateReadme(packagePath, fixCheckErrors, ct);
-            results.Add(readmeValidationResult);
-            if (readmeValidationResult.ExitCode != 0)
-            {
-                overallSuccess = false;
-                failedChecks.Add("README");
-            }
-            else if (readmeValidationResult.CheckStatusDetails != "noop")
-            {
-                successfulChecks.Add("README");
-            }
+            var results = new List<PackageCheckResponse>();
+            var failedChecks = new List<string>();
+            var successfulChecks = new List<string>();
+            var overallSuccess = true;
 
-            // Run spelling check
-            var spellingCheckResult = await languageChecks.CheckSpelling(packagePath, fixCheckErrors, ct);
-            results.Add(spellingCheckResult);
-            if (spellingCheckResult.ExitCode != 0)
+            for (int i = 0; i < checks.Length; i++)
             {
-                overallSuccess = false;
-                failedChecks.Add("Spelling");
-            }
-            else if (spellingCheckResult.CheckStatusDetails != "noop")
-            {
-                successfulChecks.Add("Spelling");
-            }
-
-            // Run snippet update
-            var snippetUpdateResult = await languageChecks.UpdateSnippets(packagePath, fixCheckErrors, ct);
-            results.Add(snippetUpdateResult);
-            if (snippetUpdateResult.ExitCode != 0)
-            {
-                overallSuccess = false;
-                failedChecks.Add("Snippets");
-            }
-            else if (snippetUpdateResult.CheckStatusDetails != "noop")
-            {
-                successfulChecks.Add("Snippets");
-            }
-
-            // Run code linting
-            var lintCodeResult = await languageChecks.LintCode(packagePath, fixCheckErrors, ct);
-            results.Add(lintCodeResult);
-            if (lintCodeResult.ExitCode != 0)
-            {
-                overallSuccess = false;
-                failedChecks.Add("Linting");
-            }
-            else if (lintCodeResult.CheckStatusDetails != "noop")
-            {
-                successfulChecks.Add("Linting");
-            }
-
-            // Run code formatting
-            var formatCodeResult = await languageChecks.FormatCode(packagePath, fixCheckErrors, ct);
-            results.Add(formatCodeResult);
-            if (formatCodeResult.ExitCode != 0)
-            {
-                overallSuccess = false;
-                failedChecks.Add("Format");
-            }
-            else if (formatCodeResult.CheckStatusDetails != "noop")
-            {
-                successfulChecks.Add("Format");
-            }
-
-            // Run AOT compatibility check
-            var aotCompatResult = await languageChecks.CheckAotCompat(packagePath, fixCheckErrors, ct);
-            results.Add(aotCompatResult);
-            if (aotCompatResult.ExitCode != 0)
-            {
-                overallSuccess = false;
-                failedChecks.Add("AOT Compatibility");
-            }
-            else if (aotCompatResult.CheckStatusDetails != "noop")
-            {
-                successfulChecks.Add("AOT Compatibility");
-            }
-
-            // Run generated code check
-            var generatedCodeResult = await languageChecks.CheckGeneratedCode(packagePath, fixCheckErrors, ct);
-            results.Add(generatedCodeResult);
-            if (generatedCodeResult.ExitCode != 0)
-            {
-                overallSuccess = false;
-                failedChecks.Add("Generated Code");
-            }
-            else if (generatedCodeResult.CheckStatusDetails != "noop")
-            {
-                successfulChecks.Add("Generated Code");
-            }
-            // Run sample validation
-            var sampleValidationResult = await languageChecks.ValidateSamples(packagePath, fixCheckErrors, ct);
-            results.Add(sampleValidationResult);
-            if (sampleValidationResult.ExitCode != 0)
-            {
-                overallSuccess = false;
-                failedChecks.Add("Sample Validation");
-            }
-            else if (sampleValidationResult.CheckStatusDetails != "noop")
-            {
-                successfulChecks.Add("Sample Validation");
+                var name = checks[i].Name;
+                var result = checkResults[i];
+                results.Add(result);
+                if (result.ExitCode != 0)
+                {
+                    overallSuccess = false;
+                    failedChecks.Add(name);
+                }
+                else if (result.CheckStatusDetails != "noop")
+                {
+                    successfulChecks.Add(name);
+                }
             }
 
             var message = overallSuccess ? "All checks completed successfully" : "Some checks failed";

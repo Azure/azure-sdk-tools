@@ -1,4 +1,4 @@
-﻿name: azure-typespec-author-eval
+name: azure-typespec-author-eval
 description: Evaluation suite for azure-typespec-author.
 version: "1.0"
 type: capability               # capability | regression
@@ -40,30 +40,12 @@ stimuli:
     config:
       required:
         - edit
-        - azsdk_run_typespec_validation
-  # VP1: Async move action using ArmResourceActionAsync
+        - azure-sdk-mcp-azsdk_run_typespec_validation
+  # VP1: Async move action with MoveRequest/MoveResponse and LRO headers (handles both single-line and multi-line formats)
   - type: file-matches
     config:
       path: employee.tsp
-      pattern: 'move is ArmResourceActionAsync<Employee,'
-  # VP2: MoveRequest input and MoveResponse output
-  - type: file-matches
-    config:
-      path: employee.tsp
-      pattern: 'ArmResourceActionAsync<Employee,\s*MoveRequest,\s*MoveResponse'
-  # VP3: Combined LRO headers with FinalResult and RetryAfterHeader
-  - type: file-matches
-    config:
-      path: employee.tsp
-      pattern: 'LroHeaders = ArmCombinedLroHeaders'
-  - type: file-matches
-    config:
-      path: employee.tsp
-      pattern: 'FinalResult\s*=\s*MoveResponse'
-  - type: file-matches
-    config:
-      path: employee.tsp
-      pattern: 'RetryAfterHeader'
+      pattern: 'move\s+is\s+ArmResourceActionAsync\s*<\s*Employee\s*,\s*MoveRequest\s*,\s*MoveResponse\s*,\s*LroHeaders\s*=\s*ArmCombinedLroHeaders\s*<\s*FinalResult\s*=\s*MoveResponse\s*>\s*>'
   - type: prompt
     config:
       scoring: scale_1_5

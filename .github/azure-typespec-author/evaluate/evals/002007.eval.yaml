@@ -1,4 +1,4 @@
-﻿name: azure-typespec-author-eval
+name: azure-typespec-author-eval
 description: Evaluation suite for azure-typespec-author.
 version: "1.0"
 type: capability               # capability | regression
@@ -40,7 +40,7 @@ stimuli:
     config:
       required:
         - edit
-        - azsdk_run_typespec_validation
+        - azure-sdk-mcp-azsdk_run_typespec_validation
   # VP1: Extensible enum for notification priority levels (Low, Medium, High)
   - type: file-matches
     config:

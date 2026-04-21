@@ -1,4 +1,4 @@
-﻿name: azure-typespec-author-eval
+name: azure-typespec-author-eval
 description: Evaluation suite for azure-typespec-author.
 version: "1.0"
 type: capability               # capability | regression
@@ -80,7 +80,7 @@ stimuli:
     config:
       required:
         - edit
-        - azsdk_run_typespec_validation
+        - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-exists
     config:
       path: examples/2025-01-01/Employees_Get_MaximumSet_Gen.json

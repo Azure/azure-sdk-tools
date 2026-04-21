@@ -46,8 +46,6 @@ A safe test environment with its own dedicated database, updated daily with prod
 
 Approver permissions are managed at runtime via Cosmos DB through the `PermissionsManager`. Users are granted the approver role through group membership configuration stored in the Cosmos DB "Permissions" container.
 
-For a reference list of current approvers by language, see the [APIView documentation page](https://eng.ms/docs/products/azure-developer-experience/support/apiview#who-can-approve-my-revision).
-
 ### Copilot Review Required
 
 To configure which languages require Copilot Review:

@@ -1,0 +1,12 @@
+testcase: merge_obvious_duplicates
+parent_type: guideline
+parent_title: "DO use standard HTTP status codes"
+memories: |
+  [
+    {"id": "mem-001", "title": "Return 404 for missing resources", "content": "When a resource is not found, return HTTP 404. Do not return 200 with an empty body."},
+    {"id": "mem-002", "title": "Use 404 for not-found resources", "content": "APIs should return 404 Not Found when the requested resource does not exist, rather than returning 200 with null or empty body."},
+    {"id": "mem-003", "title": "Use 409 for conflict errors", "content": "Return HTTP 409 Conflict when the request conflicts with the current state of the resource, such as duplicate creation attempts."}
+  ]
+response:
+  action: "(mem-001,mem-002)"
+  rationale: "Both memories give the same recommendation about returning 404 for not-found resources and warn against returning 200 with an empty or null body."

@@ -53,19 +53,7 @@ For details on when releases are blocked and the enforcement logic, see [ci-inte
 
 ### Who Can Approve?
 
-API revision approvers are the architects and deputy architects for each language. Approver permissions are managed at runtime through the `PermissionsManager` in APIView — see [operations.md](operations.md#approvers) for details.
-
-> **Note:** The approver list below is provided for reference and may not reflect the latest configuration. Always check the APIView UI or service configuration for the current list.
-
-| Language | Approvers |
-|----------|-----------|
-| **C#** | Krzysztof Cwalina, Ted Glaza, Christopher Scott, Jess Squire, Michael Nash, Arthur Ma |
-| **Java** | Jonathan Giles, Srikanta Nagaraja, Alan Zimmer, Josh Free |
-| **JavaScript** | Brian Terlson, Jeff Fisher, Maor Leger, Jeremy Meng, Jose Manuel Heredia Hidalgo, Deyaaeldeen Almahallawi |
-| **Python** | Johan Stenberg, Anna Tisch, Kashif Khan |
-| **C / C++** | Jeffrey Richter, Larry Osterman |
-| **Go** | Jeffrey Richter, Joel Hendrix, Charles Lowell |
-| **Rust** | Jeffrey Richter, Heath Stewart, Larry Osterman, Joel Hendrix |
+API revision approvers are the architects and deputy architects for each language. For the current list of approvers by language, see the [APIView documentation page](https://eng.ms/docs/products/azure-developer-experience/support/apiview#who-can-approve-my-revision).
 
 ---
 

@@ -96,14 +96,16 @@ function executeCommand(
 }
 
 /**
- * Check if a Git tag exists in the repository
+ * Check if a Git tag exists in the repository.
+ * In the normal case, `git tag -l` prints matching tag names to stdout and prints nothing
+ * when there is no match. If the command itself fails, Git may return a non-zero exit code,
+ * so we check both for a successful exit code and non-empty output.
  * @param tag The Git tag to check
  * @returns boolean indicating if the tag exists
  */
-function checkGitTagExists(tag: string): boolean {
-    const tagCheckCommand = `git tag -l ${tag}`;
-    const tagExists = executeCommand(tagCheckCommand)?.stdout.trim();
-    return !!tagExists;
+export function checkGitTagExists(tag: string): boolean {
+    const result = shell.exec(`git tag -l ${tag}`, { silent: true });
+    return result.code === 0 && result.stdout.trim().length > 0;
 }
 
 // TODO: refactor this function to support praparing files from github in general way

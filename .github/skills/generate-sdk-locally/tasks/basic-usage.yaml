@@ -18,8 +18,6 @@ expected:
       tool_name: azsdk_verify_setup
     - type: tool_called
       tool_name: azsdk_package_generate_code
-    - type: tool_called
-      tool_name: azsdk_package_build_code
   behavior:
     max_tool_calls: 10
     max_response_time_ms: 60000

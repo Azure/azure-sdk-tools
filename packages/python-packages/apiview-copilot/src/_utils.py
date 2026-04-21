@@ -95,10 +95,13 @@ def to_epoch_seconds(date_str: str, *, end_of_day: bool = False) -> int:
 
 
 def guideline_id_to_db(gid: str) -> str:
-    """Convert a guideline ID from web format to database-safe format.
+    """Convert a guideline ID or guideline URL to database-safe format.
 
     Example: ``python_design.html#naming`` -> ``python_design=html=naming``
     """
+    prefix = "https://azure.github.io/azure-sdk/"
+    if gid.startswith(prefix):
+        gid = gid[len(prefix):]
     return gid.replace(".html#", "=html=")
 
 

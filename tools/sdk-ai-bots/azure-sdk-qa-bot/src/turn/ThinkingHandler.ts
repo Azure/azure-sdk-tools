@@ -3,7 +3,7 @@ import { getTurnContextLogMeta } from '../logging/utils.js';
 import { ConversationHandler, ConversationMessage, Prompt, RAGReply } from '../input/ConversationHandler.js';
 import { createContactCard } from '../cards/components/contact.js';
 import { contactCardVersion } from '../config/config.js';
-import { TenantConfigManager } from '../config/tenant.js';
+import { TenantConfigManager, KnownTenants } from '../config/tenant.js';
 import { CompletionResponsePayload, isCompletionResponsePayload, RagApiError } from '../backend/rag.js';
 import { logger } from '../logging/logger.js';
 import { setTimeout } from 'node:timers/promises';
@@ -60,10 +60,10 @@ export class ThinkingHandler {
   }
 
   // separate this method from cancelTimer to make sure complete message is always shown
-  public async stop(replyStartTime: Date, reply: CompletionResponsePayload | RagApiError, currentPrompt: Prompt) {
+  public async stop(replyStartTime: Date, reply: CompletionResponsePayload | RagApiError, currentPrompt: Prompt, currentChannelTenant?: string) {
     const { answer, isError } = this.generateAnswer(reply);
     const routeTenant = isCompletionResponsePayload(reply) ? reply.route_tenant : undefined;
-    const formattedAnswer = await this.formatAnswer(answer, isError, routeTenant);
+    const formattedAnswer = await this.formatAnswer(answer, isError, routeTenant, currentChannelTenant);
     const updated: Partial<TurnContext> = {
       type: 'message',
       id: this.resourceId,
@@ -102,7 +102,7 @@ export class ThinkingHandler {
    * Format the answer with conditional footer based on route_tenant.
    * For error responses, returns the answer as-is without footer.
    */
-  private async formatAnswer(answer: string, isError: boolean, routeTenant?: string): Promise<string> {
+  private async formatAnswer(answer: string, isError: boolean, routeTenant?: string, currentChannelTenant?: string): Promise<string> {
     // For error responses, return plain text without footer
     if (isError) {
       return answer;
@@ -112,7 +112,6 @@ export class ThinkingHandler {
 
     if (routeTenant) {
       try {
-        // Get channel info (name and url) from tenant ID
         const tenant = this.tenantConfigManager.getTenant(routeTenant);
         if (!tenant) {
           logger.warn(`Tenant not found for route_tenant: ${routeTenant}`, { meta: this.meta });
@@ -125,6 +124,13 @@ export class ThinkingHandler {
       } catch (error) {
         logger.error(`Failed to get tenant info for route_tenant: ${routeTenant}`, { error: error.message, meta: this.meta });
       }
+    }
+
+    // Show TypeSpec skill promo when the effective tenant is the TypeSpec channel (or the default channel for backward compatibility)
+    const effectiveTenant = routeTenant ?? currentChannelTenant;
+    if (effectiveTenant === KnownTenants.TypeSpec || effectiveTenant === KnownTenants.Default) {
+      const typeSpecSkillPromo = `🚀 **Try the Azure TypeSpec Author skill** to write API specifications in TypeSpec! Check out the Quick Start and samples [here](https://azure.github.io/typespec-azure/docs/getstarted/typespec-authoring-skill/).`;
+      footer = `${footer}\n\n${typeSpecSkillPromo}`;
     }
 
     return `${answer}\n\n---\n\n${footer}`;

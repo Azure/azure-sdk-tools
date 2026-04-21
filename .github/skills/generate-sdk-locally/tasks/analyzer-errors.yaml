@@ -12,7 +12,8 @@ inputs:
   prompt: "The .NET SDK build is failing with analyzer errors: AZC0030 says the model name ends with 'Parameters' and AZC0012 says type name 'Tasks' is too generic. Can you fix these?"
 expected:
   output_contains:
-    - "customiz"
+    - "customize"
+    - "customization"
     - "clientName"
   output_excludes:
     - "cannot help"

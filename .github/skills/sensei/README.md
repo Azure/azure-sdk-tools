@@ -22,7 +22,7 @@ Sensei automates the improvement of [Agent Skills](https://agentskills.io) front
 
 ### The Problem
 
-The [frontmatter audit](https://gist.github.com/spboyer/28c31bf0cafb87489406832633aa31a7) revealed that all SDK skills have:
+The [frontmatter audit](https://gist.github.com/spboyer/28c31bf0cafb87489406832633aa31a7) revealed that all Azure skills have:
 - **0% High adherence** - No skills have triggers + anti-triggers + compatibility
 - **46% Low adherence** - 12 skills have minimal descriptions without clear triggers
 - **0/26 anti-triggers** - No skills tell agents when NOT to use them
@@ -108,7 +108,7 @@ cd tests
 npm install
 
 # Verify tests run
-npm test -- --testPathPattern=azure-validation
+npm test -- --testPathPatterns=azure-validation
 ```
 
 ---
@@ -123,7 +123,7 @@ npm test -- --testPathPattern=azure-validation
 └─────────────────────┬───────────────────────────────────┘
                       ▼
 ┌─────────────────────────────────────────────────────────┐
-│  1. READ: Load plugin/skills/{skill-name}/SKILL.md      │
+│  1. READ: Load .github/skills/{skill-name}/SKILL.md      │
 │           Load tests/{skill-name}/ (if exists)          │
 │           Count tokens (baseline for comparison)        │
 └─────────────────────┬───────────────────────────────────┘
@@ -164,7 +164,7 @@ npm test -- --testPathPattern=azure-validation
 └─────────────────────┬───────────────────────────────────┘
                       ▼
 ┌─────────────────────────────────────────────────────────┐
-│  6. VERIFY: npm test -- --testPathPattern={skill-name}  │
+│  6. VERIFY: npm test -- --testPathPatterns={skill-name}  │
 │     • If tests fail → fix and retry                     │
 │     • If tests pass → continue                          │
 └─────────────────────┬───────────────────────────────────┘
@@ -178,7 +178,7 @@ npm test -- --testPathPattern=azure-validation
                       ▼
 ┌─────────────────────────────────────────────────────────┐
 │  8. CHECK TOKENS:                                       │
-│     npm run tokens -- check plugin/skills/{skill-name}  │
+│     npm run tokens -- check .github/skills/{skill-name}  │
 │     npm run tokens -- suggest (gather optimizations)    │
 └─────────────────────┬───────────────────────────────────┘
                       ▼
@@ -283,10 +283,10 @@ To reach Medium-High, a skill must have:
 
 ### Token Budget
 
-From **skill-authoring**:
+From [skill-authoring](/.github/skills/skill-authoring):
 - **SKILL.md:** < 500 tokens (soft), < 5000 (hard)
 - **references/*.md:** < 1000 tokens each
-- Check with: `cd scripts && npm run tokens -- check plugin/skills/{skill}/SKILL.md`
+- Check with: `cd scripts && npm run tokens -- check .github/skills/{skill}/SKILL.md`
 
 ---
 
@@ -297,7 +297,7 @@ From **skill-authoring**:
 ```yaml
 ---
 name: appinsights-instrumentation
-description: 'Implement retry logic for HTTP client requests with exponential backoff'
+description: 'Instrument a webapp to send useful telemetry data to Azure App Insights'
 ---
 ```
 
@@ -313,7 +313,7 @@ description: 'Implement retry logic for HTTP client requests with exponential ba
 ---
 name: appinsights-instrumentation
 description: >-
-  Implement retry logic with exponential backoff for HTTP requests.
+  Instrument web apps to send telemetry to Azure Application Insights.
   USE FOR: "add App Insights", "instrument my app", "set up monitoring",
   "add telemetry", "track requests", "ASP.NET Core telemetry", "Node.js monitoring".
   DO NOT USE FOR: querying logs (use azure-observability), creating alerts,
@@ -368,7 +368,7 @@ const shouldNotTriggerPrompts = [
 3. Run tests manually to see specific failures:
    ```bash
    cd tests
-   npm test -- --testPathPattern={skill-name} --verbose
+   npm test -- --testPathPatterns={skill-name} --verbose
    ```
 
 ### Skill Not Reaching Target Score
@@ -398,7 +398,7 @@ git reset --hard {commit-before-sensei}
 git log --oneline --grep="sensei:"
 
 # See changes to a specific skill
-git log --oneline -p plugin/skills/{skill-name}/SKILL.md
+git log --oneline -p .github/skills/{skill-name}/SKILL.md
 ```
 
 ---
@@ -441,5 +441,5 @@ If Sensei produces unexpected results:
 
 ### Related Skills
 
-- **markdown-token-optimizer** - Token analysis and optimization suggestions
-- **skill-authoring** - Guidelines for writing compliant Agent Skills
+- [markdown-token-optimizer](/.github/skills/markdown-token-optimizer) - Token analysis and optimization suggestions
+- [skill-authoring](/.github/skills/skill-authoring) - Guidelines for writing compliant Agent Skills

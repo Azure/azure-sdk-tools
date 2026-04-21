@@ -149,7 +149,8 @@ class EvalsRunner:
         "java": "Language - Java",
         "net": "Language - DotNet",
         "javascript": "Language - JavaScript",
-        "general": "General"
+        "general": "General",
+        "releasesupport": "SDK release support"
     }
 
     def __init__(

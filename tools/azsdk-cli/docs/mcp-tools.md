@@ -1,6 +1,6 @@
 # Tools available in Azure SDK MCP server
 
-This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.6.8.
+This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.6.9.
 
 <style>
 table td:nth-child(2),
@@ -34,6 +34,7 @@ table th:nth-child(2) {
 | azsdk_engsys_codeowner_remove_label_owner |  | Remove owner(s) from a label with an optional path in CODEOWNERS work items. Valid ownerType values: service-owner, azsdk-owner, pr-label. |
 | azsdk_engsys_codeowner_remove_package_label |  | Remove PR label(s) from a package in CODEOWNERS work items. |
 | azsdk_engsys_codeowner_remove_package_owner |  | Remove source owner(s) from a package in CODEOWNERS work items. |
+| azsdk_engsys_codeowner_update_cache | `azsdk config codeowners update-cache` | Run the CODEOWNERS cache update pipeline. Use this after making changes to ownership information to unblock releases or other pipelines. |
 | azsdk_engsys_codeowner_view |  | View CODEOWNERS associations for a user, label(s), package, or path. Exactly one axis (githubUser, label, package, or path) must be specified. Multiple labels are treated as AND. |
 | azsdk_get_failed_test_case_data |  | Get detailed information (error messages, stack traces, output) for a specific failed test case by title from a TRX file. Use this to debug a particular test failure. |
 | azsdk_get_failed_test_cases | `azsdk pkg test results` | Get list of all failed test case titles (names only) from a TRX file. Use this to quickly see which tests failed without details. |

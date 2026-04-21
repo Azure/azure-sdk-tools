@@ -206,13 +206,6 @@ namespace Azure.ClientSdk.Analyzers
             DiagnosticCategory.Usage,
             DiagnosticSeverity.Warning, true);
 
-        public static DiagnosticDescriptor AZC0101 = new DiagnosticDescriptor(
-            nameof(AZC0101),
-            "Use ConfigureAwait(false) instead of ConfigureAwait(true).",
-            "Use ConfigureAwait(false) instead of ConfigureAwait(true).",
-            DiagnosticCategory.Usage,
-            DiagnosticSeverity.Warning, true);
-
         public static DiagnosticDescriptor AZC0102 = new DiagnosticDescriptor(
             nameof(AZC0102),
             "Do not use GetAwaiter().GetResult().",

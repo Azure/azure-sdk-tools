@@ -35,7 +35,7 @@ export class CodePanelComponent implements OnChanges {
   @Input() scrollToNodeId: string | undefined;
   @Input() reviewId: string | undefined;
   @Input() activeApiRevisionId: string | undefined;
-  @Input() activeApiVersionId: string | undefined;
+  @Input() activeApiVersionId: string | null | undefined;
   @Input() userProfile: UserProfile | undefined;
   @Input() showLineNumbers: boolean = true;
   @Input() showDocumentation: boolean = true;

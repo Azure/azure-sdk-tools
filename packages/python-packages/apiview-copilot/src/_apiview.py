@@ -5,9 +5,11 @@
 # --------------------------------------------------------------------------
 
 import asyncio
+import logging
 import re
 import sys
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from typing import Optional
 
 import httpx
@@ -665,9 +667,7 @@ def get_created_revisions(
         {"name": "@end", "value": end_iso},
     ]
 
-    revisions = list(
-        revisions_container.query_items(query=query, parameters=params, enable_cross_partition_query=True)
-    )
+    revisions = list(revisions_container.query_items(query=query, parameters=params, enable_cross_partition_query=True))
 
     if not revisions:
         return {"by_language": {}, "totals_by_type": {}, "total": 0}
@@ -691,9 +691,192 @@ def get_created_revisions(
             r_params.append({"name": pname, "value": rid})
 
         r_query = f"SELECT c.id, c.Language FROM c WHERE ({' OR '.join(r_clauses)})"
-        for row in reviews_container.query_items(
-            query=r_query, parameters=r_params, enable_cross_partition_query=True
-        ):
+        for row in reviews_container.query_items(query=r_query, parameters=r_params, enable_cross_partition_query=True):
+            lang = get_language_pretty_name(row.get("Language", "Unknown"))
+            review_language_map[row["id"]] = lang
+
+    exclude_set = {l.lower() for l in (exclude_languages or [])}
+
+    # Tally counts by language and revision type
+    by_language: dict[str, dict[str, int]] = {}
+    totals_by_type: dict[str, int] = {}
+    total = 0
+
+    for rev in revisions:
+        lang = review_language_map.get(rev.get("ReviewId", ""), "Unknown")
+        if lang.lower() in exclude_set:
+            continue
+
+        raw_type = rev.get("APIRevisionType", "Unknown")
+        type_name = raw_type if raw_type in _KNOWN_REVISION_TYPES else "Unknown"
+
+        by_language.setdefault(lang, {})
+        by_language[lang][type_name] = by_language[lang].get(type_name, 0) + 1
+        totals_by_type[type_name] = totals_by_type.get(type_name, 0) + 1
+        total += 1
+
+    return {"by_language": by_language, "totals_by_type": totals_by_type, "total": total}
+
+
+# Application Insights resource coordinates for querying APIView page views.
+_APPINSIGHTS_SUBSCRIPTION_ID = "a18897a6-7e44-457d-9260-f2854c0aca42"
+_APPINSIGHTS_RESOURCE_GROUP = "apiview"
+_APPINSIGHTS_NAME = "APIView"
+_APPINSIGHTS_RESOURCE_ID = (
+    f"/subscriptions/{_APPINSIGHTS_SUBSCRIPTION_ID}"
+    f"/resourceGroups/{_APPINSIGHTS_RESOURCE_GROUP}"
+    f"/providers/microsoft.insights/components/{_APPINSIGHTS_NAME}"
+)
+
+logger = logging.getLogger(__name__)
+
+
+def _query_viewed_review_ids(start_date: str, end_date: str) -> set:
+    """
+    Query Application Insights for distinct review IDs that were actually
+    opened by users in the given date window.
+
+    Captures both:
+    - Legacy Razor page: GET /Assemblies/Review/{reviewId}/{revisionId?}
+    - SPA content endpoint: GET /api/reviews/{reviewId}/content
+
+    Returns:
+        A set of review ID strings.
+    """
+    from azure.monitor.query import LogsQueryClient, LogsQueryStatus
+
+    credential = get_credential()
+
+    kql = (
+        "let legacy_views = requests\n"
+        '| where name startswith "GET /Assemblies/Review/"\n'
+        '| where resultCode == "200"\n'
+        '| extend parts = split(replace_string(name, "GET /Assemblies/Review/", ""), "/")\n'
+        "| extend ReviewId = tostring(parts[0])\n"
+        "| where isnotempty(ReviewId)\n"
+        "| distinct ReviewId;\n"
+        "let spa_views = requests\n"
+        '| where url has "/api/reviews/" and url has "/content"\n'
+        '| where resultCode == "200"\n'
+        '| extend ReviewId = extract(@"/api/reviews/([^/]+)/content", 1, url)\n'
+        "| where isnotempty(ReviewId)\n"
+        "| distinct ReviewId;\n"
+        "union legacy_views, spa_views\n"
+        "| distinct ReviewId"
+    )
+
+    start_dt = datetime.strptime(start_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+    end_dt = datetime.strptime(end_date, "%Y-%m-%d").replace(hour=23, minute=59, second=59, tzinfo=timezone.utc)
+
+    client = LogsQueryClient(credential)
+    response = client.query_resource(
+        resource_id=_APPINSIGHTS_RESOURCE_ID,
+        query=kql,
+        timespan=(start_dt, end_dt),
+    )
+
+    viewed_review_ids = set()
+    if response.status == LogsQueryStatus.SUCCESS:
+        for table in response.tables:
+            for row in table.rows:
+                if row and row[0]:
+                    viewed_review_ids.add(row[0])
+    elif response.status == LogsQueryStatus.PARTIAL:
+        logger.warning("Partial results from Application Insights: %s", response.partial_error)
+        for table in response.partial_data:
+            for row in table.rows:
+                if row and row[0]:
+                    viewed_review_ids.add(row[0])
+    else:
+        raise RuntimeError(f"Application Insights query failed: {response}")
+
+    return viewed_review_ids
+
+
+def get_opened_revisions(
+    start_date: str,
+    end_date: str,
+    *,
+    environment: str = "production",
+    exclude_languages: Optional[list] = None,
+) -> dict:
+    """
+    Counts APIRevisions that were actually opened/viewed in APIView in the given date window,
+    broken out by language and revision type.
+
+    First queries Application Insights for distinct review IDs that had page views,
+    then enriches with revision metadata from Cosmos DB.
+
+    Args:
+        start_date: Start date (YYYY-MM-DD).
+        end_date: End date (YYYY-MM-DD).
+        environment: 'production' or 'staging'.
+        exclude_languages: Pretty language names to exclude (e.g. ["Java", "Go"]).
+
+    Returns:
+        A dict with:
+            - by_language: {language: {type_name: count, ...}, ...}
+            - totals_by_type: {type_name: count, ...}
+            - total: int
+    """
+    start_iso = to_iso8601(start_date)
+    end_iso = to_iso8601(end_date, end_of_day=True)
+
+    # Step 1: Get review IDs that were actually opened from App Insights
+    viewed_review_ids = _query_viewed_review_ids(start_date, end_date)
+    if not viewed_review_ids:
+        return {"by_language": {}, "totals_by_type": {}, "total": 0}
+
+    # Step 2: Query APIRevisions for revisions belonging to viewed reviews
+    revisions_container = get_apiview_cosmos_client(container_name="APIRevisions", environment=environment)
+
+    viewed_list = list(viewed_review_ids)
+    batch_size = 200
+    revisions = []
+
+    for i in range(0, len(viewed_list), batch_size):
+        batch = viewed_list[i : i + batch_size]
+        params = [
+            {"name": "@start", "value": start_iso},
+            {"name": "@end", "value": end_iso},
+        ]
+        clauses = []
+        for j, rid in enumerate(batch):
+            pname = f"@rid_{j}"
+            clauses.append(f"c.ReviewId = {pname}")
+            params.append({"name": pname, "value": rid})
+
+        query = (
+            "SELECT c.id, c.ReviewId, c.APIRevisionType, c.CreatedOn "
+            "FROM c "
+            "WHERE c.CreatedOn >= @start AND c.CreatedOn <= @end "
+            f"AND ({' OR '.join(clauses)})"
+        )
+
+        revisions.extend(
+            list(revisions_container.query_items(query=query, parameters=params, enable_cross_partition_query=True))
+        )
+
+    if not revisions:
+        return {"by_language": {}, "totals_by_type": {}, "total": 0}
+
+    # Step 3: Look up language for each review
+    review_ids = {r["ReviewId"] for r in revisions if r.get("ReviewId")}
+    reviews_container = get_apiview_cosmos_client(container_name="Reviews", environment=environment)
+
+    review_language_map: dict[str, str] = {}
+    review_id_list = list(review_ids)
+    for i in range(0, len(review_id_list), batch_size):
+        batch = review_id_list[i : i + batch_size]
+        r_params = []
+        r_clauses = []
+        for j, rid in enumerate(batch):
+            pname = f"@rid_{j}"
+            r_clauses.append(f"c.id = {pname}")
+            r_params.append({"name": pname, "value": rid})
+
+        r_query = f"SELECT c.id, c.Language FROM c WHERE ({' OR '.join(r_clauses)})"
+        for row in reviews_container.query_items(query=r_query, parameters=r_params, enable_cross_partition_query=True):
             lang = get_language_pretty_name(row.get("Language", "Unknown"))
             review_language_map[row["id"]] = lang
 

@@ -41,6 +41,7 @@ from src._apiview import (
     get_comment_with_context,
     get_comments_in_date_range,
     get_created_revisions,
+    get_opened_revisions,
     resolve_package,
 )
 from src._apiview_reviewer import SUPPORTED_LANGUAGES, ApiViewReview
@@ -1787,16 +1788,33 @@ def list_created_revisions(
     exclude: list = None,
 ) -> None:
     """List the number of APIRevisions created in APIView in the given date window, by language and type."""
-    data = get_created_revisions(
-        start_date, end_date, environment=environment, exclude_languages=exclude
-    )
+    data = get_created_revisions(start_date, end_date, environment=environment, exclude_languages=exclude)
+    _print_revision_table(data, empty_msg="No revisions found in the specified date range.")
 
+
+def list_opened_revisions(
+    start_date: str,
+    end_date: str,
+    environment: str = "production",
+    exclude: list = None,
+) -> None:
+    """List revisions that were actually opened/viewed in APIView, by language and type.
+
+    Queries Application Insights for reviews that had page views, then enriches
+    with revision metadata from Cosmos DB.
+    """
+    data = get_opened_revisions(start_date, end_date, environment=environment, exclude_languages=exclude)
+    _print_revision_table(data, empty_msg="No opened revisions found in the specified date range.")
+
+
+def _print_revision_table(data: dict, *, empty_msg: str = "No revisions found.") -> None:
+    """Shared table printer for revision breakdown commands."""
     by_language = data["by_language"]
     totals_by_type = data["totals_by_type"]
     total = data["total"]
 
     if not by_language:
-        print("No revisions found in the specified date range.")
+        print(empty_msg)
         return
 
     # Collect all type names across languages
@@ -2362,6 +2380,7 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("get-comments", "get_apiview_comments")
             g.command("resolve-package", "resolve_package_info")
             g.command("list-created-revisions", "list_created_revisions")
+            g.command("list-opened-revisions", "list_opened_revisions")
         with CommandGroup(self, "review", "__main__#{}") as g:
             g.command("generate", "generate_review")
             g.command("start-job", "review_job_start")
@@ -2774,6 +2793,15 @@ class CliCommandsLoader(CLICommandsLoader):
                 default=None,
             )
         with ArgumentsContext(self, "apiview list-created-revisions") as ac:
+            ac.argument(
+                "exclude",
+                type=str,
+                nargs="*",
+                help="Languages to exclude (e.g., --exclude Java Go).",
+                options_list=["--exclude"],
+                default=None,
+            )
+        with ArgumentsContext(self, "apiview list-opened-revisions") as ac:
             ac.argument(
                 "exclude",
                 type=str,

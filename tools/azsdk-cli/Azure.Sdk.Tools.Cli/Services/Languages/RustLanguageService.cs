@@ -230,7 +230,7 @@ public sealed class RustLanguageService : LanguageService
 
             var options = new PowershellOptions(
                 scriptPath,
-                ["-PackagePath", packagePath],
+                ["-ManifestDir", packagePath],
                 logOutputStream: true,
                 workingDirectory: sdkRepoRoot,
                 timeout: TimeSpan.FromMinutes(timeoutMinutes)
@@ -291,15 +291,9 @@ public sealed class RustLanguageService : LanguageService
                 return (false, $"Pack script not found at: {scriptPath}.", packageInfo, null);
             }
 
-            var packageName = packageInfo?.PackageName;
-            if (string.IsNullOrEmpty(packageName))
-            {
-                return (false, $"Could not determine package name from path: {packagePath}.", packageInfo, null);
-            }
+            logger.LogDebug("Executing Rust pack script: {ScriptPath} for package: {PackageName}", scriptPath, packageInfo?.PackageName ?? "(unknown)");
 
-            logger.LogDebug("Executing Rust pack script: {ScriptPath} for package: {PackageName}", scriptPath, packageName);
-
-            var args = new List<string> { "-PackageNames", packageName, "-NoVerify" };
+            var args = new List<string> { "-ManifestDir", packagePath, "-NoVerify" };
             if (!string.IsNullOrWhiteSpace(outputPath))
             {
                 args.AddRange(["-OutputPath", outputPath]);
@@ -324,6 +318,11 @@ public sealed class RustLanguageService : LanguageService
             }
 
             var artifactPath = ResolveArtifactPath(sdkRepoRoot, packageInfo, outputPath);
+            if (artifactPath == null)
+            {
+                logger.LogDebug("Could not resolve artifact path. Package name: {Name}, version: {Version}",
+                    packageInfo?.PackageName ?? "(null)", packageInfo?.PackageVersion ?? "(null)");
+            }
             logger.LogDebug("Pack completed successfully. Artifact: {ArtifactPath}", artifactPath ?? "(unknown)");
             return (true, null, packageInfo, artifactPath);
         }

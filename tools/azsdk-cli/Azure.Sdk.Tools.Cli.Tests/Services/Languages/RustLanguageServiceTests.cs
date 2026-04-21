@@ -132,7 +132,7 @@ public class RustLanguageServiceTests
         Assert.That(errorMessage, Is.Null);
         _mockPowershellHelper.Verify(x => x.Run(
             It.Is<PowershellOptions>(o =>
-                o.Args.Contains("-PackagePath") &&
+                o.Args.Contains("-ManifestDir") &&
                 o.Args.Contains(packageDir)),
             It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -265,8 +265,8 @@ public class RustLanguageServiceTests
         Assert.That(success, Is.True);
         _mockPowershellHelper.Verify(x => x.Run(
             It.Is<PowershellOptions>(o =>
-                o.Args.Contains("-PackageNames") &&
-                o.Args.Contains("azure_core") &&
+                o.Args.Contains("-ManifestDir") &&
+                o.Args.Contains(packageDir) &&
                 o.Args.Contains("-NoVerify")),
             It.IsAny<CancellationToken>()), Times.Once);
     }

@@ -629,8 +629,8 @@ public class PackToolTests
         // Assert
         _mockPowerShellHelper.Verify(x => x.Run(
             It.Is<PowershellOptions>(o =>
-                o.Args.Contains("-PackageNames") &&
-                o.Args.Contains("azure_core") &&
+                o.Args.Contains("-ManifestDir") &&
+                o.Args.Contains(packageDir) &&
                 o.Args.Contains("-NoVerify")),
             It.IsAny<CancellationToken>()), Times.Once);
     }

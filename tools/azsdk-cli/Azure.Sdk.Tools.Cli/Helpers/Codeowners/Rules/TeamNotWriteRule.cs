@@ -165,34 +165,20 @@ public class TeamNotWriteRule(
     private async Task<AuditFixResult> SetInvalidSince(int ownerId, string alias, DateTime invalidSince, CancellationToken ct)
     {
         var desc = $"Set Invalid Since on Team '{alias}' ({ownerId})";
-        try
+        await devOpsService.UpdateWorkItemAsync(ownerId, new Dictionary<string, string>
         {
-            await devOpsService.UpdateWorkItemAsync(ownerId, new Dictionary<string, string>
-            {
-                ["Custom.InvalidSince"] = invalidSince.ToString("o")
-            }, ct);
-            return new AuditFixResult { RuleId = RuleId, Description = desc, Success = true };
-        }
-        catch (Exception ex)
-        {
-            return new AuditFixResult { RuleId = RuleId, Description = desc, Success = false, ErrorMessage = ex.Message };
-        }
+            ["Custom.InvalidSince"] = invalidSince.ToString("o")
+        }, ct);
+        return new AuditFixResult { RuleId = RuleId, Description = desc, Success = true };
     }
 
     private async Task<AuditFixResult> ClearInvalidSince(int ownerId, string alias, CancellationToken ct)
     {
         var desc = $"Clear Invalid Since on Team '{alias}' ({ownerId})";
-        try
+        await devOpsService.UpdateWorkItemAsync(ownerId, new Dictionary<string, string>
         {
-            await devOpsService.UpdateWorkItemAsync(ownerId, new Dictionary<string, string>
-            {
-                ["Custom.InvalidSince"] = ""
-            }, ct);
-            return new AuditFixResult { RuleId = RuleId, Description = desc, Success = true };
-        }
-        catch (Exception ex)
-        {
-            return new AuditFixResult { RuleId = RuleId, Description = desc, Success = false, ErrorMessage = ex.Message };
-        }
+            ["Custom.InvalidSince"] = ""
+        }, ct);
+        return new AuditFixResult { RuleId = RuleId, Description = desc, Success = true };
     }
 }

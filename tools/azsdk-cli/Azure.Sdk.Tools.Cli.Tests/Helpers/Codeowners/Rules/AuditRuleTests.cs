@@ -277,6 +277,97 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
         }
 
         [Test]
+        public async Task ApplyFix_SetInvalid_CallsUpdateWithInvalidSince()
+        {
+            var owner = new OwnerWorkItem { WorkItemId = 10, GitHubAlias = "baduser" };
+            var context = new AuditContext
+            {
+                WorkItemData = new WorkItemData(
+                    new Dictionary<int, PackageWorkItem>(),
+                    new Dictionary<int, OwnerWorkItem> { [10] = owner },
+                    new Dictionary<int, LabelWorkItem>(),
+                    new List<LabelOwnerWorkItem>()
+                ),
+            };
+
+            var violations = new List<AuditViolation>
+            {
+                new() { RuleId = "AUD-OWN-001", Description = "Invalid", WorkItemId = 10, Detail = InvalidOwnerRule.SetInvalidDetail }
+            };
+
+            var fixes = await _rule.GetFixes(context, violations, CancellationToken.None);
+            var result = await fixes[0].Apply(CancellationToken.None);
+
+            Assert.That(result.Success, Is.True);
+            _mockDevOps.Verify(d => d.UpdateWorkItemAsync(
+                10,
+                It.Is<Dictionary<string, string>>(fields =>
+                    fields.ContainsKey("Custom.InvalidSince") &&
+                    !string.IsNullOrEmpty(fields["Custom.InvalidSince"])),
+                It.IsAny<CancellationToken>()),
+                Times.Once);
+        }
+
+        [Test]
+        public async Task ApplyFix_ClearInvalid_CallsUpdateWithEmptyString()
+        {
+            var owner = new OwnerWorkItem { WorkItemId = 10, GitHubAlias = "recovereduser", InvalidSince = DateTime.UtcNow.AddDays(-7) };
+            var context = new AuditContext
+            {
+                WorkItemData = new WorkItemData(
+                    new Dictionary<int, PackageWorkItem>(),
+                    new Dictionary<int, OwnerWorkItem> { [10] = owner },
+                    new Dictionary<int, LabelWorkItem>(),
+                    new List<LabelOwnerWorkItem>()
+                ),
+            };
+
+            var violations = new List<AuditViolation>
+            {
+                new() { RuleId = "AUD-OWN-001", Description = "Now valid", WorkItemId = 10, Detail = InvalidOwnerRule.ClearInvalidDetail }
+            };
+
+            var fixes = await _rule.GetFixes(context, violations, CancellationToken.None);
+            var result = await fixes[0].Apply(CancellationToken.None);
+
+            Assert.That(result.Success, Is.True);
+            _mockDevOps.Verify(d => d.UpdateWorkItemAsync(
+                10,
+                It.Is<Dictionary<string, string>>(fields =>
+                    fields.ContainsKey("Custom.InvalidSince") &&
+                    fields["Custom.InvalidSince"] == ""),
+                It.IsAny<CancellationToken>()),
+                Times.Once);
+        }
+
+        [Test]
+        public void ApplyFix_SetInvalid_UpdateThrows_PropagatesException()
+        {
+            _mockDevOps.Setup(d => d.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new Exception("ADO error"));
+
+            var owner = new OwnerWorkItem { WorkItemId = 10, GitHubAlias = "baduser" };
+            var context = new AuditContext
+            {
+                WorkItemData = new WorkItemData(
+                    new Dictionary<int, PackageWorkItem>(),
+                    new Dictionary<int, OwnerWorkItem> { [10] = owner },
+                    new Dictionary<int, LabelWorkItem>(),
+                    new List<LabelOwnerWorkItem>()
+                ),
+            };
+
+            var violations = new List<AuditViolation>
+            {
+                new() { RuleId = "AUD-OWN-001", Description = "Invalid", WorkItemId = 10, Detail = InvalidOwnerRule.SetInvalidDetail }
+            };
+
+            var fixes = _rule.GetFixes(context, violations, CancellationToken.None).Result;
+
+            Assert.ThrowsAsync<Exception>(async () => await fixes[0].Apply(CancellationToken.None));
+        }
+
+        [Test]
         public void GetFixes_InvalidDetail_ThrowsException()
         {
             var owner = new OwnerWorkItem { WorkItemId = 10, GitHubAlias = "user" };
@@ -480,6 +571,57 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
 
             Assert.That(fixes, Has.Count.EqualTo(1));
             Assert.That(fixes[0].Description, Does.Contain("Delete"));
+        }
+
+        [Test]
+        public async Task ApplyFix_Delete_CallsDeleteWorkItemAsync()
+        {
+            var violations = new List<AuditViolation>
+            {
+                new() { RuleId = "AUD-STR-001", Description = "zero owners", WorkItemId = 10 }
+            };
+
+            var context = new AuditContext
+            {
+                WorkItemData = new WorkItemData(
+                    new Dictionary<int, PackageWorkItem>(),
+                    new Dictionary<int, OwnerWorkItem>(),
+                    new Dictionary<int, LabelWorkItem>(),
+                    new List<LabelOwnerWorkItem>()
+                ),
+            };
+
+            var fixes = await _rule.GetFixes(context, violations, CancellationToken.None);
+            var result = await fixes[0].Apply(CancellationToken.None);
+
+            Assert.That(result.Success, Is.True);
+            _mockDevOps.Verify(d => d.DeleteWorkItemAsync(10, It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Test]
+        public async Task ApplyFix_Delete_Throws_PropagatesException()
+        {
+            _mockDevOps.Setup(d => d.DeleteWorkItemAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new Exception("ADO delete error"));
+
+            var violations = new List<AuditViolation>
+            {
+                new() { RuleId = "AUD-STR-001", Description = "zero owners", WorkItemId = 10 }
+            };
+
+            var context = new AuditContext
+            {
+                WorkItemData = new WorkItemData(
+                    new Dictionary<int, PackageWorkItem>(),
+                    new Dictionary<int, OwnerWorkItem>(),
+                    new Dictionary<int, LabelWorkItem>(),
+                    new List<LabelOwnerWorkItem>()
+                ),
+            };
+
+            var fixes = await _rule.GetFixes(context, violations, CancellationToken.None);
+
+            Assert.ThrowsAsync<Exception>(async () => await fixes[0].Apply(CancellationToken.None));
         }
 
         [Test]
@@ -796,7 +938,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
         }
 
         [Test]
-        public async Task RunAudit_FixException_RecordsFailedResult()
+        public void RunAudit_FixException_PropagatesException()
         {
             var mockDevOps = new Mock<IDevOpsService>();
             mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
@@ -833,11 +975,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
                 new TestLogger<CodeownersAuditHelper>()
             );
 
-            var report = await helper.RunAudit(true, false, null, CancellationToken.None);
-
-            Assert.That(report.FixesApplied, Has.Count.EqualTo(1));
-            Assert.That(report.FixesApplied[0].Success, Is.False);
-            Assert.That(report.FixesApplied[0].ErrorMessage, Does.Contain("Something went wrong"));
+            Assert.ThrowsAsync<InvalidOperationException>(
+                async () => await helper.RunAudit(true, false, null, CancellationToken.None));
         }
 
         [Test]
@@ -1066,6 +1205,103 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
 
             Assert.That(fixes, Has.Count.EqualTo(1));
             Assert.That(fixes[0].Description, Does.Contain("Clear Invalid Since"));
+        }
+
+        [Test]
+        public async Task ApplyFix_SetInvalid_CallsUpdateWithInvalidSince()
+        {
+            var invalidTeam = new OwnerWorkItem { WorkItemId = 10, GitHubAlias = "Azure/invalid-team" };
+            var context = new AuditContext
+            {
+                WorkItemData = new WorkItemData(
+                    new Dictionary<int, PackageWorkItem>(),
+                    new Dictionary<int, OwnerWorkItem> { [10] = invalidTeam },
+                    new Dictionary<int, LabelWorkItem>(),
+                    new List<LabelOwnerWorkItem>()
+                ),
+            };
+
+            var violations = new List<AuditViolation>
+            {
+                new() { RuleId = "AUD-OWN-003", Description = "Invalid team", WorkItemId = 10, Detail = TeamNotWriteRule.SetInvalidDetail }
+            };
+
+            var fixes = await _rule.GetFixes(context, violations, CancellationToken.None);
+            var result = await fixes[0].Apply(CancellationToken.None);
+
+            Assert.That(result.Success, Is.True);
+            _mockDevOps.Verify(d => d.UpdateWorkItemAsync(
+                10,
+                It.Is<Dictionary<string, string>>(fields =>
+                    fields.ContainsKey("Custom.InvalidSince") &&
+                    !string.IsNullOrEmpty(fields["Custom.InvalidSince"])),
+                It.IsAny<CancellationToken>()),
+                Times.Once);
+        }
+
+        [Test]
+        public async Task ApplyFix_ClearInvalid_CallsUpdateWithEmptyString()
+        {
+            var recoveredTeam = new OwnerWorkItem
+            {
+                WorkItemId = 10,
+                GitHubAlias = "Azure/recovered-team",
+                InvalidSince = DateTime.UtcNow.AddDays(-10)
+            };
+
+            var context = new AuditContext
+            {
+                WorkItemData = new WorkItemData(
+                    new Dictionary<int, PackageWorkItem>(),
+                    new Dictionary<int, OwnerWorkItem> { [10] = recoveredTeam },
+                    new Dictionary<int, LabelWorkItem>(),
+                    new List<LabelOwnerWorkItem>()
+                ),
+            };
+
+            var violations = new List<AuditViolation>
+            {
+                new() { RuleId = "AUD-OWN-003", Description = "Recovered team", WorkItemId = 10, Detail = TeamNotWriteRule.ClearInvalidDetail }
+            };
+
+            var fixes = await _rule.GetFixes(context, violations, CancellationToken.None);
+            var result = await fixes[0].Apply(CancellationToken.None);
+
+            Assert.That(result.Success, Is.True);
+            _mockDevOps.Verify(d => d.UpdateWorkItemAsync(
+                10,
+                It.Is<Dictionary<string, string>>(fields =>
+                    fields.ContainsKey("Custom.InvalidSince") &&
+                    fields["Custom.InvalidSince"] == ""),
+                It.IsAny<CancellationToken>()),
+                Times.Once);
+        }
+
+        [Test]
+        public void ApplyFix_SetInvalid_UpdateThrows_PropagatesException()
+        {
+            _mockDevOps.Setup(d => d.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new Exception("ADO error"));
+
+            var invalidTeam = new OwnerWorkItem { WorkItemId = 10, GitHubAlias = "Azure/invalid-team" };
+            var context = new AuditContext
+            {
+                WorkItemData = new WorkItemData(
+                    new Dictionary<int, PackageWorkItem>(),
+                    new Dictionary<int, OwnerWorkItem> { [10] = invalidTeam },
+                    new Dictionary<int, LabelWorkItem>(),
+                    new List<LabelOwnerWorkItem>()
+                ),
+            };
+
+            var violations = new List<AuditViolation>
+            {
+                new() { RuleId = "AUD-OWN-003", Description = "Invalid team", WorkItemId = 10, Detail = TeamNotWriteRule.SetInvalidDetail }
+            };
+
+            var fixes = _rule.GetFixes(context, violations, CancellationToken.None).Result;
+
+            Assert.ThrowsAsync<Exception>(async () => await fixes[0].Apply(CancellationToken.None));
         }
 
         [Test]

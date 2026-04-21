@@ -54,21 +54,7 @@ public class CodeownersAuditHelper(
                 bool anyApplied = false;
                 foreach (var fixAction in fixes)
                 {
-                    AuditFixResult result;
-                    try
-                    {
-                        result = await fixAction.Apply(ct);
-                    }
-                    catch (Exception ex)
-                    {
-                        result = new AuditFixResult
-                        {
-                            RuleId = fixAction.RuleId,
-                            Description = fixAction.Description,
-                            Success = false,
-                            ErrorMessage = ex.Message,
-                        };
-                    }
+                    var result = await fixAction.Apply(ct);
                     report.FixesApplied.Add(result);
 
                     if (result.Success || result.AlreadyApplied)
@@ -76,10 +62,6 @@ public class CodeownersAuditHelper(
                         anyApplied = true;
                         logger.LogInformation("  Fixed: {Description} (AlreadyApplied={AlreadyApplied})",
                             result.Description, result.AlreadyApplied);
-                    }
-                    else
-                    {
-                        logger.LogError("  Fix failed: {Description} — {Error}", result.Description, result.ErrorMessage);
                     }
                 }
 

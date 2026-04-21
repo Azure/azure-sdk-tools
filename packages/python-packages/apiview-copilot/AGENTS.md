@@ -93,6 +93,7 @@ Invoked via `avc` (or `python cli.py`):
 - `avc ops grant` / `avc ops revoke` — Manage Azure RBAC permissions.
 - `avc apiview get-comments` — Query APIView comment data.
 - `avc apiview resolve-package` — Resolve package information.
+- `avc apiview list-created-revisions` — Count revisions created in a date window, by language and type.
 
 ## Environment Setup
 

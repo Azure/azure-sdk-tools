@@ -465,6 +465,26 @@ Returns: package name, review ID, language, version.
 
 ---
 
+### `avc apiview list-created-revisions`
+
+Count APIRevisions created in a date window, broken out by language and revision type (Automatic, Manual, PullRequest).
+
+```bash
+avc apiview list-created-revisions -s 2026-03-01 -e 2026-03-31
+
+# Exclude specific languages
+avc apiview list-created-revisions -s 2026-03-01 -e 2026-03-31 --exclude Java Go
+```
+
+| Option | Description |
+|--------|-------------|
+| `-s/--start-date` | Start date (`YYYY-MM-DD`) |
+| `-e/--end-date` | End date (`YYYY-MM-DD`) |
+| `--exclude` | Languages to exclude (e.g., `--exclude Java Go`) |
+| `--environment` | `production` (default) or `staging` |
+
+---
+
 ## `avc ops` — Deployment and Infrastructure
 
 ### `avc ops deploy`

@@ -40,6 +40,7 @@ from src._apiview import (
     get_approvers,
     get_comment_with_context,
     get_comments_in_date_range,
+    get_created_revisions,
     resolve_package,
 )
 from src._apiview_reviewer import SUPPORTED_LANGUAGES, ApiViewReview
@@ -1779,6 +1780,71 @@ def resolve_package_info(
             print(f"No package found matching '{package_query}' for language '{language}'")
 
 
+def list_created_revisions(
+    start_date: str,
+    end_date: str,
+    environment: str = "production",
+    exclude: list = None,
+) -> None:
+    """List the number of APIRevisions created in APIView in the given date window, by language and type."""
+    data = get_created_revisions(
+        start_date, end_date, environment=environment, exclude_languages=exclude
+    )
+
+    by_language = data["by_language"]
+    totals_by_type = data["totals_by_type"]
+    total = data["total"]
+
+    if not by_language:
+        print("No revisions found in the specified date range.")
+        return
+
+    # Collect all type names across languages
+    all_types = sorted(totals_by_type.keys())
+
+    # Build rows: one per language, plus a totals row
+    rows = []
+    for lang in sorted(by_language.keys()):
+        counts = by_language[lang]
+        lang_total = sum(counts.values())
+        row = {"Language": lang}
+        for t in all_types:
+            val = counts.get(t, 0)
+            col_total = totals_by_type.get(t, 0)
+            pct = (val / col_total * 100) if col_total else 0
+            row[t] = f"{val} ({pct:.0f}%)"
+        lang_pct = (lang_total / total * 100) if total else 0
+        row["Total"] = f"{lang_total} ({lang_pct:.0f}%)"
+        rows.append(row)
+
+    # Totals row
+    totals_row = {"Language": "TOTAL"}
+    for t in all_types:
+        val = totals_by_type.get(t, 0)
+        pct = (val / total * 100) if total else 0
+        totals_row[t] = f"{val} ({pct:.0f}%)"
+    totals_row["Total"] = str(total)
+
+    # Compute column widths from display strings
+    columns = ["Language"] + all_types + ["Total"]
+    col_widths = {}
+    for col in columns:
+        col_widths[col] = max(len(col), max(len(str(r[col])) for r in rows + [totals_row]))
+
+    # Print header
+    header = "  ".join(f"{col:<{col_widths[col]}}" for col in columns)
+    print(header)
+    print("-" * len(header))
+
+    # Print rows
+    for row in rows:
+        print("  ".join(f"{row[col]:<{col_widths[col]}}" for col in columns))
+
+    # Print totals
+    print("-" * len(header))
+    print("  ".join(f"{totals_row[col]:<{col_widths[col]}}" for col in columns))
+
+
 def report_metrics(
     start_date: str,
     end_date: str,
@@ -2295,6 +2361,7 @@ class CliCommandsLoader(CLICommandsLoader):
         with CommandGroup(self, "apiview", "__main__#{}") as g:
             g.command("get-comments", "get_apiview_comments")
             g.command("resolve-package", "resolve_package_info")
+            g.command("list-created-revisions", "list_created_revisions")
         with CommandGroup(self, "review", "__main__#{}") as g:
             g.command("generate", "generate_review")
             g.command("start-job", "review_job_start")
@@ -2704,6 +2771,15 @@ class CliCommandsLoader(CLICommandsLoader):
                 type=str,
                 help="Optional version to filter by. If not provided, gets the latest revision.",
                 options_list=["--version", "-v"],
+                default=None,
+            )
+        with ArgumentsContext(self, "apiview list-created-revisions") as ac:
+            ac.argument(
+                "exclude",
+                type=str,
+                nargs="*",
+                help="Languages to exclude (e.g., --exclude Java Go).",
+                options_list=["--exclude"],
                 default=None,
             )
         with ArgumentsContext(self, "test prompt") as ac:

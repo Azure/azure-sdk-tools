@@ -81,15 +81,15 @@ CLI Entry (autoGenerateInPipeline.ts)
   │   ├── HighLevelClient ──→ generateMgmt()
   │   │   ├── autorest code generation
   │   │   ├── Find changed packages (git diff)
-  │   │   ├── Update rush.json / ci.yml / _meta.json
-  │   │   ├── rush update → rush build → changelog → rush pack
+  │   │   ├── Update ci.yml / _meta.json
+  │   │   ├── pnpm install → pnpm build → changelog → pnpm pack
   │   │   └── Update snippets / README
   │   │
   │   ├── RestLevelClient ──→ generateRLCInPipeline()
   │   │   ├── TypeSpec → tsp-client init or tsp compile
   │   │   │   OR
   │   │   ├── Swagger → autorest code generation
-  │   │   ├── Update rush.json / ci.yml
+  │   │   ├── Update ci.yml
   │   │   ├── install → customize → lint → build → pack
   │   │   ├── format → snippets → changelog
   │   │   └── Output artifacts & apiView
@@ -98,7 +98,7 @@ CLI Entry (autoGenerateInPipeline.ts)
   │       ├── CODEOWNERS & ignore-links
   │       ├── tsp-client init code generation
   │       ├── buildPackage:
-  │       │   ├── rush/pnpm update
+  │       │   ├── pnpm install
   │       │   ├── lint fix (Release/Local)
   │       │   ├── customize (Data Plane)
   │       │   ├── turbo build
@@ -121,9 +121,9 @@ CLI Entry (autoGenerateInPipeline.ts)
 |---|---|---|---|
 | Backup node_modules | `backupNodeModules()` | ✅ Required (non-local) | Recursively rename `node_modules` → `node_modules_backup` |
 | Restore node_modules | `restoreNodeModules()` | ✅ Required (non-local) | Recursively rename back to `node_modules` |
-| Format code | `formatSdk()` | ✅ Required | `dev-tool run vendored prettier --write ...` |
+| Format code | `formatSdk()` | ✅ Required | `npm run format` |
 | Update snippets | `updateSnippets()` | ✅ Required | `dev-tool run update-snippets` |
-| Lint fix | `lintFix()` | ⚠️ Optional (`Release`/`Local` only) | Builds eslint plugin then `dev-tool run vendored eslint ... --fix` |
+| Lint fix | `lintFix()` | ⚠️ Optional (`Release`/`Local` only) | `npm run lint:fix` |
 | Apply custom code | `customizeCodes()` | ⚠️ Optional (Data Plane, pnpm) | `dev-tool customization apply-v2 -s ./generated -c ./src` |
 | Clean up package dir | `cleanUpPackageDirectory()` | ✅ Required | Cleanup strategy based on SDK type + `RunMode` |
 | Specify API version | `specifyApiVersionToGenerateSDKByTypeSpec()` | ⚠️ Optional | Modify `api-version` field in `tspconfig.yaml` |
@@ -241,19 +241,18 @@ When generating a brand-new package (no directory yet), or regenerating a packag
 |---|---|---|---|---|
 | **1. Code Generation** | ✅ Required (unless `skipGeneration`) | Run autorest to generate code | `autorest --version=3.9.7 --typescript --modelerfour.lenient-model-deduplication --azure-arm --head-as-boolean=true --license-header=MICROSOFT_MIT_NO_VERSION --generate-test --typescript-sdks-folder={sdkRepo} {readmeMd}` + optional `--tag=package-{apiVersion}` `--use={use}` | [generateMgmt.ts#L50](../src/hlc/generateMgmt.ts#L50) |
 | **2. Find Changed Packages** | ✅ Required | `getChangedPackageDirectory()` | Uses `git diff` to find changed package directories after generation | [generateMgmt.ts#L73](../src/hlc/generateMgmt.ts#L73) |
-| **3. Update `rush.json`** | ✅ Required (rush repo) | `changeRushJson()` | Add package entry to `rush.json` | [generateMgmt.ts#L85](../src/hlc/generateMgmt.ts#L85) |
-| **4. Modify Test/Sample Config** | ✅ Required | `changeConfigOfTestAndSample()` | Modify `tsconfig.json` to skip compiling `test/` and `sample/` directories | [generateMgmt.ts#L88](../src/hlc/generateMgmt.ts#L88) |
-| **5. Write `_meta.json`** | ✅ Required (non-skipGeneration) | Write code generation metadata | Contains `commit`, `readme`, `autorest_command`, `repository_url`, `release_tool`, etc. | [generateMgmt.ts#L90](../src/hlc/generateMgmt.ts#L90) |
-| **6. Generate/Modify CI YAML** | ✅ Required (non-skipGeneration) | `modifyOrGenerateCiYml()` | Create or update `ci.mgmt.yml` | [generateMgmt.ts#L105](../src/hlc/generateMgmt.ts#L105) |
-| **7. Install Dependencies** | ✅ Required | Rush or pnpm | `node common/scripts/install-run-rush.js update` (rush repo) or `pnpm install` (pnpm repo) | [generateMgmt.ts#L124](../src/hlc/generateMgmt.ts#L124) |
-| **8. Lint Fix** | ⚠️ Optional | `lintFix()` — only in `Release` / `Local` mode (pnpm repo) | First builds `@azure/eslint-plugin-azure-sdk`, then `dev-tool run vendored eslint ... --fix` | [generateMgmt.ts#L139](../src/hlc/generateMgmt.ts#L139) |
-| **9. Build** | ✅ Required | Compile package (excluding test/sample) | `node common/scripts/install-run-rush.js build -t {packageName}` (rush) or `pnpm build --filter {packageName}...` (pnpm) | [generateMgmt.ts#L127](../src/hlc/generateMgmt.ts#L127) |
-| **10. Generate Changelog & Bump Version** | ✅ Required (non-skipGeneration) | `generateChangelogAndBumpVersion()` | Compare `api.md` between npm published version and local; detect breaking changes; generate changelog; bump version | [generateMgmt.ts#L130](../src/hlc/generateMgmt.ts#L130) |
-| **11. Pack** | ✅ Required | Generate `.tgz` package | `node common/scripts/install-run-rush.js pack --to {packageName} --verbose` (rush) or `pnpm run --filter {packageName}... pack` (pnpm) | [generateMgmt.ts#L133](../src/hlc/generateMgmt.ts#L133) |
-| **12. Update Snippets** | ✅ Required | `updateSnippets()` | `dev-tool run update-snippets` | [generateMgmt.ts#L152](../src/hlc/generateMgmt.ts#L152) |
-| **13. Modify README** | ✅ Required (non-skipGeneration) | `changeReadmeMd()` | Update package `README.md` | [generateMgmt.ts#L155](../src/hlc/generateMgmt.ts#L155) |
-| **14. Add ApiView Info** | ✅ Required | `addApiViewInfo()` | Find `temp/**/*.api.json` file path and add to `outputJson` | [generateMgmt.ts#L182](../src/hlc/generateMgmt.ts#L182) |
-| **15. Restore Config** | ✅ Required (non-skipGeneration) | `changeConfigOfTestAndSample(Revert)` | Restore original `tsconfig.json` configuration | [generateMgmt.ts#L203](../src/hlc/generateMgmt.ts#L203) |
+| **3. Modify Test/Sample Config** | ✅ Required | `changeConfigOfTestAndSample()` | Modify `tsconfig.json` to skip compiling `test/` and `sample/` directories | [generateMgmt.ts#L88](../src/hlc/generateMgmt.ts#L88) |
+| **4. Write `_meta.json`** | ✅ Required (non-skipGeneration) | Write code generation metadata | Contains `commit`, `readme`, `autorest_command`, `repository_url`, `release_tool`, etc. | [generateMgmt.ts#L90](../src/hlc/generateMgmt.ts#L90) |
+| **5. Generate/Modify CI YAML** | ✅ Required (non-skipGeneration) | `modifyOrGenerateCiYml()` | Create or update `ci.mgmt.yml` | [generateMgmt.ts#L105](../src/hlc/generateMgmt.ts#L105) |
+| **6. Install Dependencies** | ✅ Required | pnpm | `pnpm install` | [generateMgmt.ts#L124](../src/hlc/generateMgmt.ts#L124) |
+| **7. Lint Fix** | ⚠️ Optional | `lintFix()` — only in `Release` / `Local` mode | `npm run lint:fix` | [generateMgmt.ts#L139](../src/hlc/generateMgmt.ts#L139) |
+| **8. Build** | ✅ Required | Compile package (excluding test/sample) | `pnpm build --filter {packageName}...` | [generateMgmt.ts#L127](../src/hlc/generateMgmt.ts#L127) |
+| **9. Generate Changelog & Bump Version** | ✅ Required (non-skipGeneration) | `generateChangelogAndBumpVersion()` | Compare `api.md` between npm published version and local; detect breaking changes; generate changelog; bump version | [generateMgmt.ts#L130](../src/hlc/generateMgmt.ts#L130) |
+| **10. Pack** | ✅ Required | Generate `.tgz` package | `pnpm run --filter {packageName}... pack` | [generateMgmt.ts#L133](../src/hlc/generateMgmt.ts#L133) |
+| **11. Update Snippets** | ✅ Required | `updateSnippets()` | `dev-tool run update-snippets` | [generateMgmt.ts#L152](../src/hlc/generateMgmt.ts#L152) |
+| **12. Modify README** | ✅ Required (non-skipGeneration) | `changeReadmeMd()` | Update package `README.md` | [generateMgmt.ts#L155](../src/hlc/generateMgmt.ts#L155) |
+| **13. Add ApiView Info** | ✅ Required | `addApiViewInfo()` | Find `temp/**/*.api.json` file path and add to `outputJson` | [generateMgmt.ts#L182](../src/hlc/generateMgmt.ts#L182) |
+| **14. Restore Config** | ✅ Required (non-skipGeneration) | `changeConfigOfTestAndSample(Revert)` | Restore original `tsconfig.json` configuration | [generateMgmt.ts#L203](../src/hlc/generateMgmt.ts#L203) |
 
 ---
 
@@ -284,12 +283,12 @@ There are two generation paths based on the source: **TypeSpec project** or **Sw
 |---|---|---|---|---|
 | **4. Generate/Modify CI YAML** | ✅ Required | `modifyOrGenerateCiYml()` | Create or update `ci.yml` | [generateRLCInPipeline.ts#L180](../src/llc/generateRLCInPipeline/generateRLCInPipeline.ts#L180) |
 | **5. Modify Test/Sample Config** | ✅ Required | `changeConfigOfTestAndSample()` | Skip test/sample compilation | [generateRLCInPipeline.ts#L186](../src/llc/generateRLCInPipeline/generateRLCInPipeline.ts#L186) |
-| **6. Install Dependencies** | ✅ Required | Rush or pnpm | `node common/scripts/install-run-rush.js update` (rush) or `pnpm install` (pnpm) | [generateRLCInPipeline.ts#L204](../src/llc/generateRLCInPipeline/generateRLCInPipeline.ts#L204) |
+| **6. Install Dependencies** | ✅ Required | pnpm | `pnpm install` | [generateRLCInPipeline.ts#L204](../src/llc/generateRLCInPipeline/generateRLCInPipeline.ts#L204) |
 | **7. Apply Custom Code** | ⚠️ Optional | `customizeCodes()` — pnpm repo only | `dev-tool customization apply-v2 -s ./generated -c ./src` | [generateRLCInPipeline.ts#L215](../src/llc/generateRLCInPipeline/generateRLCInPipeline.ts#L215) |
-| **8. Lint Fix** | ⚠️ Optional | `lintFix()` — `Release` / `Local` mode only | `pnpm turbo build --filter @azure/eslint-plugin-azure-sdk...` then `dev-tool run vendored eslint ... --fix` | [generateRLCInPipeline.ts#L218](../src/llc/generateRLCInPipeline/generateRLCInPipeline.ts#L218) |
-| **9. Build** | ✅ Required | Compile package | `pnpm turbo build --filter {packageName}...` | [generateRLCInPipeline.ts#L208](../src/llc/generateRLCInPipeline/generateRLCInPipeline.ts#L208) |
-| **10. Pack** | ✅ Required | Generate `.tgz` | `node common/scripts/install-run-rush.js pack --to {packageName}` (rush) or `pnpm run --filter {packageName}... pack` (pnpm) | [generateRLCInPipeline.ts#L210](../src/llc/generateRLCInPipeline/generateRLCInPipeline.ts#L210) |
-| **11. Format Code** | ✅ Required | `formatSdk()` | `dev-tool run vendored prettier --write "src/**/*.{ts,cts,mts}" ...` | [generateRLCInPipeline.ts#L239](../src/llc/generateRLCInPipeline/generateRLCInPipeline.ts#L239) |
+| **8. Lint Fix** | ⚠️ Optional | `lintFix()` — `Release` / `Local` mode only | `npm run lint:fix` | [generateRLCInPipeline.ts#L218](../src/llc/generateRLCInPipeline/generateRLCInPipeline.ts#L218) |
+| **9. Build** | ✅ Required | Compile package | `pnpm build --filter {packageName}...` (`Release`/`Local`) or `pnpm run --filter {packageName}... build` (other modes) | [generateRLCInPipeline.ts#L208](../src/llc/generateRLCInPipeline/generateRLCInPipeline.ts#L208) |
+| **10. Pack** | ✅ Required | Generate `.tgz` | `pnpm run --filter {packageName}... pack` | [generateRLCInPipeline.ts#L210](../src/llc/generateRLCInPipeline/generateRLCInPipeline.ts#L210) |
+| **11. Format Code** | ✅ Required | `formatSdk()` | `npm run format` | [generateRLCInPipeline.ts#L239](../src/llc/generateRLCInPipeline/generateRLCInPipeline.ts#L239) |
 | **12. Update Snippets** | ✅ Required | `updateSnippets()` | `dev-tool run update-snippets` | [generateRLCInPipeline.ts#L240](../src/llc/generateRLCInPipeline/generateRLCInPipeline.ts#L240) |
 | **13. Generate Changelog & Bump Version** | ✅ Required | `generateChangelogAndBumpVersion()` | Same as HLC | [generateRLCInPipeline.ts#L249](../src/llc/generateRLCInPipeline/generateRLCInPipeline.ts#L249) |
 | **14. Add ApiView Info** | ✅ Required | `addApiViewInfo()` | Find `*.api.json` files | [generateRLCInPipeline.ts#L260](../src/llc/generateRLCInPipeline/generateRLCInPipeline.ts#L260) |
@@ -314,21 +313,20 @@ There are two generation paths based on the source: **TypeSpec project** or **Sw
 | **9. Generate Changelog & Bump Version** | ✅ Required | `generateChangelogAndBumpVersion()` | Same as HLC; skipped for Data Plane packages | [modularClientPackageGenerator.ts#L47](../src/mlc/clientGenerator/modularClientPackageGenerator.ts#L47) |
 | **10. Try Build Samples** | ⚠️ Conditional | `tryBuildSamples()` | `dev-tool run build:samples`. Blocking rules: **Management plane** — failure is a hard error in `Release` mode only; treated as a warning in all other modes (`SpecPullRequest`, `Batch`, `Local`). **Data plane** — always treated as a warning (never blocks). Known gap ([#14610](https://github.com/Azure/azure-sdk-tools/issues/14610)): sample failures are not caught during spec PR validation (`SpecPullRequest` mode), so a package that passes spec PR checks can still fail at release time. | [modularClientPackageGenerator.ts#L49](../src/mlc/clientGenerator/modularClientPackageGenerator.ts#L49) |
 | **11. Update Package Result** | ✅ Required | `updateNpmPackageResult()` | Read `package.json` name/version into `PackageResult` | [modularClientPackageGenerator.ts#L56](../src/mlc/clientGenerator/modularClientPackageGenerator.ts#L56) |
-| **12. Create Release Artifact** | ✅ Required | `createArtifact()` | `node rushx pack` (rush) or `pnpm run --filter {packageName}... pack` (pnpm), generates `.tgz` | [modularClientPackageGenerator.ts#L63](../src/mlc/clientGenerator/modularClientPackageGenerator.ts#L63) |
+| **12. Create Release Artifact** | ✅ Required | `createArtifact()` | `pnpm run --filter {packageName}... pack`, generates `.tgz` | [modularClientPackageGenerator.ts#L63](../src/mlc/clientGenerator/modularClientPackageGenerator.ts#L63) |
 | **13. Create/Update CI YAML** | ✅ Required | `createOrUpdateCiYaml()` | Create or update `ci.mgmt.yml` | [modularClientPackageGenerator.ts#L67](../src/mlc/clientGenerator/modularClientPackageGenerator.ts#L67) |
 
 #### `buildPackage()` Sub-steps Detail
 
 | Sub-step | Required | Command / Operation | Code Link |
 |---|---|---|---|
-| Update `rush.json` | ✅ Required (rush repo) | Add package to `rush.json` project list | [rushUtils.ts#L120](../src/common/rushUtils.ts#L120) |
-| pnpm / rush install | ✅ Required | `node rushScript update` (rush) or `pnpm install` (pnpm) | [rushUtils.ts#L127](../src/common/rushUtils.ts#L127) |
-| Lint fix | ⚠️ Optional | `dev-tool run vendored eslint ... --fix` — only in `Release` / `Local` mode (pnpm repo) | [rushUtils.ts#L139](../src/common/rushUtils.ts#L139) |
+| pnpm install | ✅ Required | `pnpm install` | [rushUtils.ts#L127](../src/common/rushUtils.ts#L127) |
+| Lint fix | ⚠️ Optional | `npm run lint:fix` — only in `Release` / `Local` mode | [rushUtils.ts#L139](../src/common/rushUtils.ts#L139) |
 | Apply custom code | ⚠️ Optional | `dev-tool customization apply-v2 -s ./generated -c ./src` — Data Plane packages only | [rushUtils.ts#L146](../src/common/rushUtils.ts#L146) |
 | turbo build | ✅ Required | `pnpm turbo build --filter {packageName}... --token 1` (build errors are warnings for Data Plane) | [rushUtils.ts#L150](../src/common/rushUtils.ts#L150) |
 | Extract ApiView info | ✅ Required | Find `temp/**/*-node.api.json` or `temp/**/*.api.json` | [rushUtils.ts#L157](../src/common/rushUtils.ts#L157) |
-| Test package | ⚠️ Optional | `rushx test:node` or `pnpm run test:node` — `TEST_MODE=record`; failure does not block | [rushUtils.ts#L169](../src/common/rushUtils.ts#L169) |
-| Format | ✅ Required | `dev-tool run vendored prettier --write ...` | [rushUtils.ts#L170](../src/common/rushUtils.ts#L170) |
+| Test package | ⚠️ Optional | `pnpm run test:node` — `TEST_MODE=record`; failure does not block | [rushUtils.ts#L169](../src/common/rushUtils.ts#L169) |
+| Format | ✅ Required | `npm run format` | [rushUtils.ts#L170](../src/common/rushUtils.ts#L170) |
 | Update snippets | ✅ Required | `dev-tool run update-snippets` | [rushUtils.ts#L171](../src/common/rushUtils.ts#L171) |
 
 ---

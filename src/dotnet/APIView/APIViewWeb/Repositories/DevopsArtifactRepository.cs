@@ -138,7 +138,7 @@ namespace APIViewWeb.Repositories
 
         private async Task<HttpResponseMessage> GetFromDevopsAsync(string request)
         {
-            var httpClient = new HttpClient();            
+            using var httpClient = new HttpClient();
             var accessToken = (await GetAccessTokenAsync()).Token;
             httpClient.DefaultRequestHeaders.Accept.Clear();
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));

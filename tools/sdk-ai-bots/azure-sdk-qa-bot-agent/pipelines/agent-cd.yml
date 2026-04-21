@@ -79,7 +79,7 @@ extends:
                     python scripts/deploy_hosted_agent.py \
                       ${{ parameters.agentName }} \
                       --tag "$(Build.BuildId)" \
-                      --appconfig-endpoint "$(APPCONFIG_ENDPOINT)"
+                      --appconfig-endpoint "$(AZURE_APPCONFIG_ENDPOINT)"
                 env:
                   UMI_BACKEND_CLIENT_ID: $(UMI_BACKEND_CLIENT_ID)
                   UMI_FRONTEND_CLIENT_ID: $(UMI_FRONTEND_CLIENT_ID)

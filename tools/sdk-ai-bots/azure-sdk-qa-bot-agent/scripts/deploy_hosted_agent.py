@@ -19,6 +19,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from urllib.parse import urlparse
 
 from dotenv import load_dotenv
 
@@ -430,8 +431,6 @@ def main() -> None:
     registry = cfg("ACR_LOGIN_SERVER")
     project_endpoint = cfg("AI_FOUNDRY_PROJECT_ENDPOINT")
     appconfig_endpoint = args.appconfig_endpoint
-    account_name = cfg("AI_FOUNDRY_ACCOUNT_NAME")
-    project_name = cfg("AI_FOUNDRY_PROJECT")
 
     if not registry:
         sys.exit("ERROR: ACR_LOGIN_SERVER not found in App Configuration")
@@ -441,10 +440,19 @@ def main() -> None:
         sys.exit(
             "ERROR: AZURE_APPCONFIG_ENDPOINT not set in .env or --appconfig-endpoint"
         )
+
+    # Extract account_name and project_name from the project endpoint URL
+    # Expected format: https://<account>.services.ai.azure.com/api/projects/<project>
+    parsed = urlparse(project_endpoint)
+    account_name = parsed.hostname.split(".")[0] if parsed.hostname else ""
+    path_parts = [p for p in parsed.path.split("/") if p]
+    project_name = ""
+    if len(path_parts) >= 3 and path_parts[-2] == "projects":
+        project_name = path_parts[-1]
     if not account_name or not project_name:
         sys.exit(
-            "ERROR: AI_FOUNDRY_ACCOUNT_NAME and AI_FOUNDRY_PROJECT "
-            "must be set in App Configuration to start the agent."
+            "ERROR: Could not extract account name and project name from "
+            f"AI_FOUNDRY_PROJECT_ENDPOINT: {project_endpoint}"
         )
 
     print(f"Deployment config:")

@@ -37,7 +37,7 @@ from azure.ai.projects.models import (
     HostedAgentDefinition,
     ProtocolVersionRecord,
 )
-from azure.identity import DefaultAzureCredential
+from azure.identity import AzureCliCredential
 
 import config.app_config as app_config
 from config.app_config import get as cfg
@@ -532,7 +532,7 @@ def main() -> None:
     print(f"Deploying: {image_name}")
     project = AIProjectClient(
         endpoint=project_endpoint,
-        credential=DefaultAzureCredential(),
+        credential=AzureCliCredential(),
         allow_preview=True,
         headers={"Foundry-Features": "HostedAgents=V1Preview"},
     )

@@ -795,6 +795,20 @@ html body .p-multiselect-overlay .p-multiselect-list .p-multiselect-option:not(.
     color: var(--base-text-color);
 }
 
+.p-tree .p-tree-node-content {
+    color: var(--base-text-color);
+}
+
+.p-tree .p-tree-node-content a {
+    color: var(--link-color);
+    text-decoration: none;
+}
+
+.p-tree .p-tree-node-content a:hover {
+    color: var(--link-active);
+    text-decoration: underline;
+}
+
 .p-tree .p-tree-node-toggle-button {
     color: var(--base-text-color) !important;
     width: 1.5rem;

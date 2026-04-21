@@ -8,6 +8,8 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Services.APIView;
+using Azure.Sdk.Tools.Cli.Tools.APIView;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
@@ -15,6 +17,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     [McpServerToolType, Description("This type contains the tools to release SDK package")]
     public class SdkReleaseTool(
         IDevOpsService devopsService,
+        IAPIViewService apiViewService,
         ILogger<SdkReleaseTool> logger,
         IInputSanitizer inputSanitizer) : MCPTool
     {
@@ -244,7 +247,37 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     {
                         package.IsPackageReady = false;
                         package.PackageReadinessDetails += $"API view is not approved for GA release of package '{packageName}'. ";
+
+                        // Resolve APIView URL so the user can navigate directly to the review
+                        try
+                        {
+                            string? resolvedLanguage = APIViewReviewTool.ResolveLanguage(language);
+                            if (resolvedLanguage != null)
+                            {
+                                var apiViewUrl = await apiViewService.GetReviewUrlByPackageAsync(packageName, resolvedLanguage, package.Version, ct);
+                                if (!string.IsNullOrEmpty(apiViewUrl))
+                                {
+                                    package.ApiViewUrl = apiViewUrl;
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogWarning(ex, "Failed to resolve APIView URL for package '{PackageName}' in language '{Language}'.", packageName, language);
+                        }
+
+                        // If URL could not be resolved, provide fallback guidance
+                        if (string.IsNullOrEmpty(package.ApiViewUrl))
+                        {
+                            package.PackageReadinessDetails += $"Search for the API review at https://apiview.dev by selecting the language and searching for '{packageName}'. ";
+                        }
+                        else
+                        {
+                            package.PackageReadinessDetails += $"API Review required at {package.ApiViewUrl}. ";
+                        }
                     }
+
+                    
                 }
                 else
                 {

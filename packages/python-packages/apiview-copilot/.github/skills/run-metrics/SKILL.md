@@ -1,6 +1,6 @@
 ---
 name: run-metrics
-description: "Run metrics reports for APIView Copilot. Use for: run metrics, metrics report, generate metrics, monthly metrics, metrics for March, metrics for January, adoption metrics, comment quality, save metrics, metrics charts."
+description: "Run metrics reports for APIView Copilot. Use for: run metrics, metrics report, generate metrics, monthly metrics, metrics for March, metrics for January, adoption metrics, comment quality, quality trends, save metrics, metrics charts."
 argument-hint: "Month name (e.g. 'March') or date range (e.g. '2025-03-01 to 2025-03-31')"
 ---
 
@@ -10,6 +10,7 @@ argument-hint: "Month name (e.g. 'March') or date range (e.g. '2025-03-01 to 202
 - Generating monthly or custom-range metrics reports
 - Reviewing adoption rates and comment quality across languages
 - Producing charts for metrics visualization
+- Reviewing companion quality trends across recent months
 - Saving finalized metrics to the database (only when user explicitly requests)
 
 ## Defaults
@@ -20,6 +21,8 @@ Unless the user says otherwise, always apply these defaults:
 - **Languages**: All languages (do not pass `--exclude`)
 - **Save**: Do **NOT** pass `--save` unless the user explicitly asks to save (e.g. "save it", "persist", "write to DB")
 - **Format**: JSON output (UTF-8 encoded)
+- **Quality trends follow-up**: If the user asks for metrics but does **not** explicitly ask for quality trends, ask a short follow-up after sharing the metrics results: "Do you want the quality trends chart for the same period too?"
+- **Quality trends auto-run**: If the user explicitly asks for quality trends, comment trends, or asks broadly for charts/trends/quality, also run the companion `quality-trends` report for the same period.
 
 ## Date Resolution
 
@@ -68,6 +71,40 @@ python cli.py report metrics -s 2025-03-10 -e 2025-03-20 --charts
 python cli.py report metrics -s 2025-03-01 -e 2025-03-31 --charts --save
 ```
 
+## Companion Quality Trends
+
+The quality-trends report is the companion chart view for metrics work.
+
+- If the user explicitly asks for quality trends, comment trends, or a broader trends/chart view, run it automatically for the same time window.
+- If the user only asked for metrics, ask whether they want the quality trends chart too after presenting the metrics result.
+
+### Translating the date window
+
+The quality-trends command uses `--months` plus an optional `--end-date`, not a start date.
+Convert the requested metrics window into an **inclusive calendar-month count**:
+
+| Window | Use for `--months` |
+|--------|--------------------|
+| 2026-03-01 to 2026-03-31 | `1` |
+| 2026-03-01 to 2026-03-15 | `1` |
+| 2026-01-15 to 2026-03-02 | `3` |
+
+Use the same resolved end date from the metrics request for `--end-date`.
+
+### Quality trends command
+
+```powershell
+if (Test-Path output/charts/comment_bucket_trends.png) { Remove-Item output/charts/comment_bucket_trends.png -Force }; python cli.py report quality-trends --months <month_count> --end-date <end_date>
+```
+
+Optional additions:
+- --environment staging
+- --languages Python CSharp C# Java TypeScript JavaScript Go
+- --exclude-human
+- --neutral
+
+After it completes, summarize the terminal output and use `view_image` to show the saved chart at `output/charts/comment_bucket_trends.png`.
+
 ## Follow-up: "Save it"
 
 If the user asks to save after a metrics run (e.g. "okay save it", "persist that", "write to DB"), re-run the **same command** with `--save` appended. Keep all other flags identical to the previous run.
@@ -100,5 +137,6 @@ When `--charts` is enabled, 4 PNGs are saved to `output/charts/`:
 - **Use `New-Item -ItemType Directory` not `mkdir`**: `mkdir` is aliased differently across shells. Use `New-Item -ItemType Directory -Path output -Force | Out-Null` for reliable directory creation.
 - **Read results with `read_file` and `view_image`**: After the command finishes, use `read_file` for the JSON and `view_image` for charts. Do NOT launch additional terminal commands to read the file.
 - **Use `python cli.py` not `.\avc`**: The `avc.bat` script may resolve to system Python. Use `python cli.py report metrics ...` to ensure the correct environment.
+- **Quality trends is separate**: It uses `report quality-trends` with `--months` and optional `--end-date`, not `--start-date`.
 - **Month end dates**: February has 28/29 days, April/June/Sept/Nov have 30 days. Get it right.
 - **Built-in exclusions**: `c`, `c++`, `typespec`, `swagger`, `xml` are always excluded automatically — no need to add them.

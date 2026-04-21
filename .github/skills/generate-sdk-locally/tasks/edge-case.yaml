@@ -10,7 +10,8 @@ inputs:
   prompt: "I generated the .NET SDK locally but the build is failing with compilation errors. The error says a type name conflicts with a reserved keyword."
 expected:
   output_contains:
-    - "customiz"
+    - "customize"
+    - "customization"
     - "client.tsp"
   output_excludes:
     - "cannot help"

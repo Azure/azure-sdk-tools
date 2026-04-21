@@ -116,7 +116,7 @@ public class RustLanguageServiceTests
         Directory.CreateDirectory(packageDir);
         var scriptDir = Path.Combine(_tempDirectory.DirectoryPath, "eng", "scripts");
         Directory.CreateDirectory(scriptDir);
-        File.WriteAllText(Path.Combine(scriptDir, "Build-Sdk.ps1"), "# build script");
+        File.WriteAllText(Path.Combine(scriptDir, "Build-Crates.ps1"), "# build script");
 
         _mockGitHelper
             .Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -144,7 +144,7 @@ public class RustLanguageServiceTests
         Directory.CreateDirectory(packageDir);
         var scriptDir = Path.Combine(_tempDirectory.DirectoryPath, "eng", "scripts");
         Directory.CreateDirectory(scriptDir);
-        File.WriteAllText(Path.Combine(scriptDir, "Build-Sdk.ps1"), "# build script");
+        File.WriteAllText(Path.Combine(scriptDir, "Build-Crates.ps1"), "# build script");
 
         _mockGitHelper
             .Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))

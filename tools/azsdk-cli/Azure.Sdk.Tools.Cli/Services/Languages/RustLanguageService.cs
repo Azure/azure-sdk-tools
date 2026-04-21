@@ -8,11 +8,11 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages;
 
 /// <summary>
 /// Language-specific service for Rust packages. Since the Rust SDK repo does not have a
-/// swagger_to_sdk_config.json, the build script path is hardcoded to eng/scripts/Build-Sdk.ps1.
+/// swagger_to_sdk_config.json, the build script path is hardcoded to eng/scripts/Build-Crates.ps1.
 /// </summary>
 public sealed class RustLanguageService : LanguageService
 {
-    private const string BuildScriptRelativePath = "eng/scripts/Build-Sdk.ps1";
+    private const string BuildScriptRelativePath = "eng/scripts/Build-Crates.ps1";
     private const string PackScriptRelativePath = "eng/scripts/Pack-Crates.ps1";
 
     public RustLanguageService(

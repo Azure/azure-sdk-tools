@@ -902,8 +902,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             lines.Add($"=== CODEOWNERS Audit Report ===");
             lines.Add($"Fix mode: {fix}, Force: {force}, Repo: {repo ?? "(all)"}");
             lines.Add($"Total violations: {report.Violations.Count}");
-            lines.Add($"Fixes applied: {report.FixesApplied.Count(r => r.Success && !r.AlreadyApplied)}");
-            lines.Add($"Fixes already applied: {report.FixesApplied.Count(r => r.AlreadyApplied)}");
+            lines.Add($"Fixes applied: {report.FixesApplied.Count(r => r.Success)}");
             lines.Add($"Fixes failed: {report.FixesApplied.Count(r => !r.Success)}");
             lines.Add("");
 
@@ -926,7 +925,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 lines.Add("--- Fix Results ---");
                 foreach (var r in report.FixesApplied)
                 {
-                    var status = r.AlreadyApplied ? "ALREADY_APPLIED" : r.Success ? "SUCCESS" : "FAILED";
+                    var status = r.Success ? "SUCCESS" : "FAILED";
                     lines.Add($"  [{status}] {r.Description}");
                     if (!string.IsNullOrEmpty(r.ErrorMessage))
                     {

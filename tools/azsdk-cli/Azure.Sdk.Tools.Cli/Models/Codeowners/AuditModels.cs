@@ -44,6 +44,5 @@ public class AuditFixResult
     public required string RuleId { get; set; }
     public required string Description { get; set; }
     public bool Success { get; set; }
-    public bool AlreadyApplied { get; set; }
     public string? ErrorMessage { get; set; }
 }

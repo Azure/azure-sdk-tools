@@ -57,11 +57,10 @@ public class CodeownersAuditHelper(
                     var result = await fixAction.Apply(ct);
                     report.FixesApplied.Add(result);
 
-                    if (result.Success || result.AlreadyApplied)
+                    if (result.Success)
                     {
                         anyApplied = true;
-                        logger.LogInformation("  Fixed: {Description} (AlreadyApplied={AlreadyApplied})",
-                            result.Description, result.AlreadyApplied);
+                        logger.LogInformation("  Fixed: {Description}", result.Description);
                     }
                 }
 

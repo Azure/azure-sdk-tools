@@ -84,7 +84,6 @@ def _has_project_user_assigned_identities(project_resource_id: str) -> bool:
             "-o",
             "json",
         ],
-        shell=True,
     )
     if result.returncode != 0 or not result.stdout.strip():
         return False
@@ -117,7 +116,6 @@ def _resolve_umi_resource_ids() -> list[str]:
                 "-o",
                 "tsv",
             ],
-            shell=True,
         )
         if result.returncode != 0 or not result.stdout.strip():
             print(
@@ -151,7 +149,6 @@ def _set_project_identity_type(project_resource_id: str, identity_type: str) -> 
                 "--set",
                 f"identity={identity_payload}",
             ],
-            shell=True,
         )
         return
 
@@ -165,7 +162,6 @@ def _set_project_identity_type(project_resource_id: str, identity_type: str) -> 
             "--set",
             f"identity.type={identity_type}",
         ],
-        shell=True,
     )
 
 
@@ -193,7 +189,6 @@ def _restore_project_user_assigned_identities(
             "--set",
             f"identity={identity_payload}",
         ],
-        shell=True,
     )
 
 
@@ -228,7 +223,6 @@ def _wait_for_agent_running(
                 "-o",
                 "json",
             ],
-            shell=True,
         )
         if result.returncode != 0:
             # Command failed — likely project/account not found or not authenticated
@@ -317,7 +311,6 @@ def _wait_for_agent_not_stopping(
                 "-o",
                 "tsv",
             ],
-            shell=True,
         )
         if result.returncode != 0:
             error_msg = (
@@ -366,7 +359,7 @@ def _start_agent(
         agent_version,
     ]
 
-    result = _run_quiet(start_cmd, shell=True)
+    result = _run_quiet(start_cmd)
     if result.returncode == 0:
         return
 
@@ -393,7 +386,6 @@ def _stop_agent(
             "--agent-version",
             agent_version,
         ],
-        shell=True,
     )
 
 
@@ -417,12 +409,10 @@ def main() -> None:
     asyncio.run(app_config.init())
 
     # Consume Azure CLI welcome banner before real commands.
-    _run_quiet(["az", "version"], shell=True)
+    _run_quiet(["az", "version"])
 
     # Show current subscription context
-    sub_result = _run_quiet(
-        ["az", "account", "show", "--query", "id", "-o", "tsv"], shell=True
-    )
+    sub_result = _run_quiet(["az", "account", "show", "--query", "id", "-o", "tsv"])
     sub_id = ""
     if sub_result.returncode == 0:
         uuid_match = re.search(
@@ -502,7 +492,6 @@ def main() -> None:
                 "-o",
                 "tsv",
             ],
-            shell=True,
         )
         if result.returncode == 0:
             for line in result.stdout.strip().splitlines():
@@ -534,7 +523,6 @@ def main() -> None:
             str(dockerfile),
             str(_PROJECT_DIR),
         ],
-        shell=True,
     )
     print(f"Image pushed: {image}")
 
@@ -563,6 +551,17 @@ def main() -> None:
             latest_version = 0
         next_version = str(latest_version + 1)
 
+        env_vars = {
+            "AZURE_APPCONFIG_ENDPOINT": appconfig_endpoint,
+            "ENABLE_INSTRUMENTATION": "true",
+            "AGENT_VERSION": next_version,
+            "AI_FOUNDRY_PROJECT_RESOURCE_ID": project_resource_id,
+        }
+        for key in ("UMI_BACKEND_CLIENT_ID", "UMI_FRONTEND_CLIENT_ID"):
+            val = os.environ.get(key, "")
+            if val:
+                env_vars[key] = val
+
         agent = project.agents.create_version(
             agent_name=image_name,
             definition=HostedAgentDefinition(
@@ -574,14 +573,7 @@ def main() -> None:
                 cpu="2",
                 memory="4Gi",
                 image=image,
-                environment_variables={
-                    "AZURE_APPCONFIG_ENDPOINT": appconfig_endpoint,
-                    "UMI_BACKEND_CLIENT_ID": os.environ.get("UMI_BACKEND_CLIENT_ID"),
-                    "UMI_FRONTEND_CLIENT_ID": os.environ.get("UMI_FRONTEND_CLIENT_ID"),
-                    "ENABLE_INSTRUMENTATION": "true",
-                    "AGENT_VERSION": next_version,
-                    "AI_FOUNDRY_PROJECT_RESOURCE_ID": project_resource_id,
-                },
+                environment_variables=env_vars,
             ),
         )
         print(f"Created — agent: {agent.name}, version: {agent.version}")

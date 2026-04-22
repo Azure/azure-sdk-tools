@@ -1797,13 +1797,14 @@ def list_opened_revisions(
     end_date: str,
     environment: str = "production",
     exclude: list = None,
+    created_in_window: bool = False,
 ) -> None:
     """List revisions that were actually opened/viewed in APIView, by language and type.
 
     Queries Application Insights for reviews that had page views, then enriches
     with revision metadata from Cosmos DB.
     """
-    data = get_opened_revisions(start_date, end_date, environment=environment, exclude_languages=exclude)
+    data = get_opened_revisions(start_date, end_date, environment=environment, exclude_languages=exclude, created_in_window=created_in_window)
     _print_revision_table(data, empty_msg="No opened revisions found in the specified date range.")
 
 
@@ -2809,6 +2810,13 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="Languages to exclude (e.g., --exclude Java Go).",
                 options_list=["--exclude"],
                 default=None,
+            )
+            ac.argument(
+                "created_in_window",
+                action="store_true",
+                help="Only count revisions created within the date window (default: count all revisions for viewed reviews).",
+                options_list=["--created-in-window"],
+                default=False,
             )
         with ArgumentsContext(self, "test prompt") as ac:
             ac.argument(

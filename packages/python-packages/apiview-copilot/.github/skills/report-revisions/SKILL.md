@@ -15,6 +15,8 @@ Two commands for counting APIView revisions by language and type:
 
 Choose the right command based on the user's intent. If they ask about "created" or "how many revisions", use `list-created-revisions`. If they ask about "opened", "viewed", "actually looked at", or "page views", use `list-opened-revisions`.
 
+By default, `list-opened-revisions` counts all revisions belonging to viewed reviews regardless of when those revisions were created. If the user wants to limit to revisions **created** within the window (e.g. to pair with `list-created-revisions`), add `--created-in-window`.
+
 ## Defaults
 
 Unless the user says otherwise, always apply these defaults:

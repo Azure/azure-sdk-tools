@@ -356,5 +356,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             var emptyResult = new SearchCodeResult(0, false, new List<SearchCode>());
             return Task.FromResult(emptyResult);
         }
+
+        public Task<Team> GetTeamByNameAsync(string org, string teamSlug, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

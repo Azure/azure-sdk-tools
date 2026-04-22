@@ -110,6 +110,15 @@ export class ConversationPageComponent {
     this.router.navigate(['/review', this.reviewId], { queryParams: queryParams });
   }
 
+  navigateToNamespace() {
+    const queryParams: any = {};
+    if (this.activeApiRevisionId) {
+      queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
+    }
+    queryParams['view'] = 'namespace';
+    this.router.navigate(['/review', this.reviewId], { queryParams: queryParams });
+  }
+
   handleNumberOfActiveThreadsEmitter(value: number) {
     this.numberOfActiveConversation = value;
   }

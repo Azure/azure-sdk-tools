@@ -13,6 +13,7 @@
     (navigateToRevisionsEmitter)="navigateToRevisions()"
     (navigateToReviewsEmitter)="showReviewView()"
     (navigateToConversationsEmitter)="showConversationsView()"
+    (navigateToNamespaceEmitter)="navigateToNamespace()"
     (pageOptionsEmitter)="handlePageOptionsEmitter($event)"
     (showLeftNavigationEmitter)="handleShowLeftNavigationEmitter($event)">
     <div [hidden]="activeView !== 'conversations'" class="conversation-panel overflow-auto border rounded py-3">
@@ -41,6 +42,14 @@
             [embeddedReview]="review"
             [embeddedUserProfile]="userProfile">
         </app-samples-page>
+    </div>
+    <div *ngIf="namespaceActivated" [hidden]="activeView !== 'namespace'" class="namespace-panel">
+        <app-namespace-page
+            [embedded]="true"
+            [embeddedReviewId]="reviewId"
+            [embeddedReview]="review"
+            [embeddedUserProfile]="userProfile">
+        </app-namespace-page>
     </div>
     <p-splitter [hidden]="activeView !== 'reviews'"
         [panelSizes]="panelSizes"
@@ -98,7 +107,8 @@
                         [codeLineSearchText]="codeLineSearchText"
                         [codeLineSearchInfo]="codeLineSearchInfo"
                         (hasActiveConversationEmitter)="handleHasActiveConversationEmitter($event)"
-                        (codeLineSearchInfoEmitter)="handleCodeLineSearchInfoEmitter($event)">
+                        (codeLineSearchInfoEmitter)="handleCodeLineSearchInfoEmitter($event)"
+                        (isLoadingChanged)="handleCodePanelIsLoadingChanged($event)">
                     </app-code-panel>
                 </div>
             </div>
@@ -106,7 +116,7 @@
         <ng-template pTemplate>
             <div *ngIf="showPageOptions" class="col flex align-items-center justify-content-center rounded review-panel options-panel px-3">
                 <app-review-page-options
-                    [loadingStatus]="getLoadingStatus()"
+                    [loadingStatus]="loadingStatus"
                     [isDiffView]="!!diffApiRevisionId"
                     [contentHasDiff]="codePanelData?.hasDiff"
                     [diffStyleInput]="diffStyle!"
@@ -114,6 +124,7 @@
                     [review]="review"
                     [activeAPIRevision]="activeAPIRevision"
                     [diffAPIRevision]="diffAPIRevision"
+                    [hasReleasedApprovedGARevision]="hasReleasedApprovedGARevision"
                     [hasFatalDiagnostics]="hasFatalDiagnostics"
                     [hasActiveConversation]="hasActiveConversation"
                     [hasHiddenAPIs]="hasHiddenAPIs"
@@ -135,7 +146,7 @@
         </ng-template>
     </p-splitter>
 </app-review-page-layout>
-<p-drawer *ngIf="getLoadingStatus() === 'completed' && crossLanguageAPIRevisions.length > 0" [(visible)]="crosslanguageRevisionSidePanel!" position="right" [modal]="true" [showCloseIcon]="false" styleClass="cross-language-revisions-sidebar" appendTo="body">
+<p-drawer *ngIf="loadingStatus === 'completed' && crossLanguageAPIRevisions.length > 0" [(visible)]="crosslanguageRevisionSidePanel!" position="right" [modal]="true" [showCloseIcon]="false" styleClass="cross-language-revisions-sidebar" appendTo="body">
     <ng-template pTemplate="header">
         <div class="flex align-items-center gap-2" (click)="$event.stopPropagation()">
             <h4>Cross Language Revisions</h4>

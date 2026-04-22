@@ -18,19 +18,22 @@ public class AutoReviewService : IAutoReviewService
     private readonly ICommentsManager _commentsManager;
     private readonly IProjectsManager _projectsManager;
     private readonly ICodeFileManager _codeFileManager;
+    private readonly IAPIVersionsManager _apiVersionsManager;
 
     public AutoReviewService(
         IReviewManager reviewManager,
         IAPIRevisionsManager apiRevisionsManager,
         ICommentsManager commentsManager,
         IProjectsManager projectsManager,
-        ICodeFileManager codeFileManager)
+        ICodeFileManager codeFileManager,
+        IAPIVersionsManager apiVersionsManager)
     {
         _reviewManager = reviewManager;
         _apiRevisionsManager = apiRevisionsManager;
         _commentsManager = commentsManager;
         _projectsManager = projectsManager;
         _codeFileManager = codeFileManager;
+        _apiVersionsManager = apiVersionsManager;
     }
 
     public async Task<(ReviewListItemModel review, APIRevisionListItemModel apiRevision)> CreateAutomaticRevisionAsync(
@@ -66,9 +69,18 @@ public class AutoReviewService : IAutoReviewService
                 apiRevisions = apiRevisions.OrderByDescending(r => r.CreatedOn);
                 incomingContentHash = await _codeFileManager.ComputeAPIContentHashAsync(codeFile);
 
+                APIVersionModel incomingVersionModel = null;
+                if (!string.IsNullOrEmpty(codeFile.PackageVersion))
+                {
+                    incomingVersionModel = await _apiVersionsManager.GetOrCreateVersionAsync(review.Id, codeFile.PackageVersion);
+                }
+
                 // Delete pending apiRevisions if it is not in approved state before adding new revision
-                // This is to keep only one pending revision since last approval or from initial review revision
-                var automaticRevisions = apiRevisions.Where(r => r.APIRevisionType == APIRevisionType.Automatic).ToList();
+                // This is to keep only one pending revision since last approval or from initial review revision.
+                var automaticRevisions = apiRevisions
+                    .Where(r => r.APIRevisionType == APIRevisionType.Automatic
+                        && (incomingVersionModel == null|| r.APIVersionId == incomingVersionModel.Id || string.IsNullOrEmpty(r.APIVersionId)))
+                    .ToList();
                 if (automaticRevisions.Count > 0)
                 {
                     var automaticRevisionsQueue = new Queue<APIRevisionListItemModel>(automaticRevisions);

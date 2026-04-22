@@ -10,12 +10,15 @@ import { CommentItemModel, CommentType, CommentSource, CommentSeverity } from 's
 import { APIRevision } from 'src/app/_models/revision';
 import { getTypeClass } from 'src/app/_helpers/common-helpers';
 import { getVisibleComments } from 'src/app/_helpers/comment-visibility.helper';
+import { CommentSeverityHelper } from 'src/app/_helpers/comment-severity.helper';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { Subject, take, takeUntil } from 'rxjs';
 import { Review } from 'src/app/_models/review';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
+
+const UNKNOWN_SEVERITY_KEY = 'unknown';
 
 @Component({
     selector: 'app-conversations',
@@ -51,6 +54,8 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
   // Flag to indicate if diagnostics were truncated due to limit
   diagnosticsTruncated: boolean = false;
   totalDiagnosticsInRevision: number = 0;
+  hiddenUnresolvedDiagnosticsCount: number = 0;
+  hiddenResolvedDiagnosticsCount: number = 0;
 
   apiRevisionsWithComments: APIRevision[] = [];
 
@@ -72,6 +77,7 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
     { key: 'suggestion', label: 'Suggestion', icon: 'bi-lightbulb' },
     { key: 'shouldfix', label: 'Should Fix', icon: 'bi-exclamation-triangle' },
     { key: 'mustfix', label: 'Must Fix', icon: 'bi-exclamation-octagon-fill' },
+    { key: UNKNOWN_SEVERITY_KEY, label: 'Unknown', icon: 'bi-dash-circle' },
   ];
 
   // Filtered view
@@ -79,6 +85,31 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
   filteredApiRevisionsWithComments: APIRevision[] = [];
   filteredThreadCount: number = 0;
   totalThreadCount: number = 0;
+  showUnknownSeverityFilter: boolean = false;
+  hasAnyUnknownThreads: boolean = false;
+
+  // Keep filter behavior aligned with the displayed severity badge/label in CommentThread,
+  // which is derived from codePanelRowData.comments[0].severity.
+  private getDisplayedThreadSeverityKey(thread: CodePanelRowData): string {
+    const firstComment = thread.comments?.[0];
+    if (!firstComment) return UNKNOWN_SEVERITY_KEY;
+    return CommentSeverityHelper.normalizeSeverity(firstComment.severity) ?? UNKNOWN_SEVERITY_KEY;
+  }
+
+  private threadMatchesStatusAndKindFilters(thread: CodePanelRowData): boolean {
+    const firstComment = thread.comments?.[0];
+    if (!firstComment) return false;
+
+    if (this.filterStatus === 'active' && thread.isResolvedCommentThread) return false;
+    if (this.filterStatus === 'resolved' && !thread.isResolvedCommentThread) return false;
+
+    if (this.filterKinds.size > 0) {
+      const kind = this.getThreadKind(firstComment);
+      if (!this.filterKinds.has(kind)) return false;
+    }
+
+    return true;
+  }
 
   constructor(private commentsService: CommentsService, private signalRService: SignalRService, private changeDetectorRef: ChangeDetectorRef) { }
 
@@ -119,15 +150,40 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
       this.commentThreads = new Map<string, CodePanelRowData[]>();
       this.numberOfActiveThreads = 0;
       this.diagnosticsTruncated = false;
+      this.hasAnyUnknownThreads = false;
+      this.showUnknownSeverityFilter = false;
+      this.hiddenUnresolvedDiagnosticsCount = 0;
+      this.hiddenResolvedDiagnosticsCount = 0;
+      this.totalDiagnosticsInRevision = 0;
 
       // Use shared visibility logic — single source of truth for which comments are relevant
       const { allVisibleComments, diagnosticCommentsForRevision } = getVisibleComments(this.comments, this.activeApiRevisionId);
 
       this.totalDiagnosticsInRevision = diagnosticCommentsForRevision.length;
-      this.diagnosticsTruncated = diagnosticCommentsForRevision.length > this.MAX_DIAGNOSTICS_DISPLAY;
 
-      // For display, cap diagnostics at MAX_DIAGNOSTICS_DISPLAY; for badge counts, use the full set
-      const limitedDiagnostics = diagnosticCommentsForRevision.slice(0, this.MAX_DIAGNOSTICS_DISPLAY);
+      // Sort priority: 1) MustFix unresolved, 2) other unresolved, 3) resolved (secondary: severity desc)
+      const getTier = (c: CommentItemModel) => {
+        if ((CommentSeverityHelper.getSeverityEnumValue(c.severity) ?? -1) >= CommentSeverity.MustFix && !c.isResolved) return 0;
+        if (!c.isResolved) return 1;
+        return 2;
+      };
+      const sortedDiagnostics = [...diagnosticCommentsForRevision].sort((a, b) => {
+        const tierDiff = getTier(a) - getTier(b);
+        if (tierDiff !== 0) return tierDiff;
+        return (CommentSeverityHelper.getSeverityEnumValue(b.severity) ?? -1) - (CommentSeverityHelper.getSeverityEnumValue(a.severity) ?? -1);
+      });
+
+      // Always show all MustFix unresolved; fill remaining slots up to MAX_DIAGNOSTICS_DISPLAY
+      const mustFixUnresolvedCount = diagnosticCommentsForRevision.filter(
+        c => (CommentSeverityHelper.getSeverityEnumValue(c.severity) ?? -1) >= CommentSeverity.MustFix && !c.isResolved
+      ).length;
+      const displayLimit = Math.max(this.MAX_DIAGNOSTICS_DISPLAY, mustFixUnresolvedCount);
+
+      const limitedDiagnostics = sortedDiagnostics.slice(0, displayLimit);
+      const hiddenDiagnostics = sortedDiagnostics.slice(displayLimit);
+      this.hiddenUnresolvedDiagnosticsCount = hiddenDiagnostics.filter(c => !c.isResolved).length;
+      this.hiddenResolvedDiagnosticsCount = hiddenDiagnostics.filter(c => c.isResolved).length;
+      this.diagnosticsTruncated = hiddenDiagnostics.length > 0;
       const filteredComments = [
         ...allVisibleComments.filter(c => c.commentSource !== CommentSource.Diagnostic),
         ...limitedDiagnostics
@@ -203,6 +259,10 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
             codePanelRowData.threadId = threadId;
             codePanelRowData.isResolvedCommentThread = comments.some(c => c.isResolved);
 
+            if (!this.hasAnyUnknownThreads && this.getDisplayedThreadSeverityKey(codePanelRowData) === UNKNOWN_SEVERITY_KEY) {
+              this.hasAnyUnknownThreads = true;
+            }
+
             if (this.commentThreads.has(apiRevisionIdForThread)) {
               this.commentThreads.get(apiRevisionIdForThread)?.push(codePanelRowData);
             }
@@ -216,6 +276,7 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
       this.numberOfActiveThreadsEmitter.emit(this.numberOfActiveThreads);
       this.apiRevisionsWithComments = this.apiRevisions.filter(apiRevision => this.commentThreads.has(apiRevision.id));
 
+      this.updateUnknownSeverityFilterVisibility();
       this.applyFilters();
       this.isLoading = false;
       this.changeDetectorRef.markForCheck();
@@ -226,6 +287,9 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
       this.filteredCommentThreads = new Map();
       this.filteredThreadCount = 0;
       this.totalThreadCount = 0;
+      this.hasAnyUnknownThreads = false;
+      this.showUnknownSeverityFilter = false;
+      this.filterSeverities.delete(UNKNOWN_SEVERITY_KEY);
       this.numberOfActiveThreads = 0;
       this.numberOfActiveThreadsEmitter.emit(this.numberOfActiveThreads);
       setTimeout(() => {
@@ -463,6 +527,33 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
 
   // --- Filter methods ---
 
+  private updateUnknownSeverityFilterVisibility(): void {
+    if (!this.hasAnyUnknownThreads) {
+      this.showUnknownSeverityFilter = false;
+      this.filterSeverities.delete(UNKNOWN_SEVERITY_KEY);
+      return;
+    }
+
+    // Compute Unknown chip visibility from the current status/kind context.
+    // This does not depend on currently selected severity chips.
+    this.showUnknownSeverityFilter = false;
+    for (const threads of this.commentThreads.values()) {
+      for (const thread of threads) {
+        if (this.threadMatchesStatusAndKindFilters(thread) && this.getDisplayedThreadSeverityKey(thread) === UNKNOWN_SEVERITY_KEY) {
+          this.showUnknownSeverityFilter = true;
+          break;
+        }
+      }
+      if (this.showUnknownSeverityFilter) {
+        break;
+      }
+    }
+
+    if (!this.showUnknownSeverityFilter) {
+      this.filterSeverities.delete(UNKNOWN_SEVERITY_KEY);
+    }
+  }
+
   applyFilters() {
     this.filteredCommentThreads = new Map();
     this.totalThreadCount = 0;
@@ -483,37 +574,13 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
   }
 
   private threadMatchesFilters(thread: CodePanelRowData): boolean {
-    const firstComment = thread.comments?.[0];
-    if (!firstComment) return false;
+    // First check status and kind
+    if (!this.threadMatchesStatusAndKindFilters(thread)) return false;
 
-    // Status filter
-    if (this.filterStatus === 'active' && thread.isResolvedCommentThread) return false;
-    if (this.filterStatus === 'resolved' && !thread.isResolvedCommentThread) return false;
-
-    // Severity filter (empty set = show all)
-    // severity arrives as camelCase string from API (JsonStringEnumConverter with CamelCase policy)
-    // Normalize to lowercase for reliable comparison
+    // Then check severity (empty set = show all)
     if (this.filterSeverities.size > 0) {
-      const rawSev = firstComment.severity;
-      if (rawSev == null) return false;
-      // Handle both numeric enum values and camelCase string values from the API
-      let normalizedSev: string;
-      if (typeof rawSev === 'number') {
-        const enumName = CommentSeverity[rawSev];
-        if (!enumName) return false;
-        normalizedSev = enumName.toLowerCase();
-      } else {
-        normalizedSev = String(rawSev).toLowerCase();
-      }
-      if (!this.filterSeverities.has(normalizedSev)) {
-        return false;
-      }
-    }
-
-    // Kind filter (empty set = show all)
-    if (this.filterKinds.size > 0) {
-      const kind = this.getThreadKind(firstComment);
-      if (!this.filterKinds.has(kind)) return false;
+      const normalizedSev = this.getDisplayedThreadSeverityKey(thread);
+      if (!this.filterSeverities.has(normalizedSev)) return false;
     }
 
     return true;
@@ -527,6 +594,7 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
 
   setStatusFilter(status: 'all' | 'active' | 'resolved') {
     this.filterStatus = status;
+    this.updateUnknownSeverityFilterVisibility();
     this.applyFilters();
     this.changeDetectorRef.markForCheck();
   }
@@ -547,6 +615,7 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
     } else {
       this.filterKinds.add(kind);
     }
+    this.updateUnknownSeverityFilterVisibility();
     this.applyFilters();
     this.changeDetectorRef.markForCheck();
   }
@@ -555,6 +624,7 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
     this.filterStatus = 'active';
     this.filterSeverities.clear();
     this.filterKinds.clear();
+    this.updateUnknownSeverityFilterVisibility();
     this.applyFilters();
     this.changeDetectorRef.markForCheck();
   }
@@ -563,14 +633,8 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
     return this.filterStatus !== 'active' || this.filterSeverities.size > 0 || this.filterKinds.size > 0;
   }
 
-  getSeverityLabel(severity: CommentSeverity): string {
-    switch (severity) {
-      case CommentSeverity.Question: return 'Question';
-      case CommentSeverity.Suggestion: return 'Suggestion';
-      case CommentSeverity.ShouldFix: return 'Should Fix';
-      case CommentSeverity.MustFix: return 'Must Fix';
-      default: return '';
-    }
+  getSeverityLabel(severity: CommentSeverity | string | null | undefined): string {
+    return CommentSeverityHelper.getSeverityLabel(severity);
   }
 
   ngOnDestroy() {

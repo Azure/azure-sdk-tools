@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
 using ApiView;
 using APIView;
+using APIView.Identity;
 using APIView.Model;
 using APIViewWeb;
 using APIViewWeb.Helpers;
@@ -85,6 +87,7 @@ public class APIRevisionsManagerTests
     private readonly Mock<IBlobOriginalsRepository> _mockOriginalsRepository;
     private readonly Mock<ICosmosReviewRepository> _mockReviewsRepository;
     private readonly Mock<IProjectsManager> _mockProjectsManager;
+    private readonly Mock<IAPIVersionsManager> _mockApiVersionsManager;
     private readonly TelemetryClient _telemetryClient;
     private readonly TestLanguageService _testLanguageService;
 
@@ -103,6 +106,10 @@ public class APIRevisionsManagerTests
         _mockCommentsRepository = new Mock<ICosmosCommentsRepository>();
         _mockConfiguration = new Mock<IConfiguration>();
         _mockProjectsManager = new Mock<IProjectsManager>();
+        _mockApiVersionsManager = new Mock<IAPIVersionsManager>();
+        _mockApiVersionsManager
+            .Setup(m => m.GetOrCreateVersionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()))
+            .ReturnsAsync(new APIVersionModel { Id = "default-version-id" });
 
         TelemetryConfiguration telemetryConfiguration = new();
         _telemetryClient = new TelemetryClient(telemetryConfiguration);
@@ -126,8 +133,95 @@ public class APIRevisionsManagerTests
             _mockCommentsRepository.Object,
             _telemetryClient,
             _mockProjectsManager.Object,
+            _mockApiVersionsManager.Object,
             _mockConfiguration.Object
         );
+    }
+
+    [Fact]
+    public async Task ToggleAPIRevisionApprovalAsync_SendsSubscriberEmail_WhenRevisionApprovedAndReviewAlreadyApproved()
+    {
+        var user = CreateTestUser("approver1");
+        const string reviewId = "review-1";
+        const string revisionId = "revision-1";
+
+        var review = new ReviewListItemModel
+        {
+            Id = reviewId,
+            IsApproved = true,
+            ChangeHistory = new List<ReviewChangeHistoryModel>()
+        };
+
+        var revision = new APIRevisionListItemModel
+        {
+            Id = revisionId,
+            ReviewId = reviewId,
+            IsApproved = false,
+            Approvers = new HashSet<string>(),
+            ChangeHistory = new List<APIRevisionChangeHistoryModel>()
+        };
+
+        SetupSignalRMocks();
+        _mockAuthorizationService
+            .Setup(a => a.AuthorizeAsync(
+                It.IsAny<ClaimsPrincipal>(),
+                It.IsAny<object>(),
+                It.IsAny<IEnumerable<IAuthorizationRequirement>>()))
+            .ReturnsAsync(AuthorizationResult.Success());
+        _mockAPIRevisionsRepository.Setup(r => r.GetAPIRevisionAsync(revisionId)).ReturnsAsync(revision);
+        _mockReviewsRepository.Setup(r => r.GetReviewAsync(reviewId)).ReturnsAsync(review);
+        _mockAPIRevisionsRepository.Setup(r => r.UpsertAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>())).Returns(Task.CompletedTask);
+
+        var result = await _manager.ToggleAPIRevisionApprovalAsync(user, reviewId, revisionId);
+
+        Assert.False(result.updateReview);
+        Assert.True(result.apiRevision.IsApproved);
+        _mockNotificationManager.Verify(
+            n => n.NotifySubscribersOnApprovalAsync(review, revision, user, false),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task ToggleAPIRevisionApprovalAsync_DoesNotSendRevisionEmail_WhenReviewWillBeAutoApproved()
+    {
+        var user = CreateTestUser("approver1");
+        const string reviewId = "review-1";
+        const string revisionId = "revision-1";
+
+        var review = new ReviewListItemModel
+        {
+            Id = reviewId,
+            IsApproved = false,
+            ChangeHistory = new List<ReviewChangeHistoryModel>()
+        };
+
+        var revision = new APIRevisionListItemModel
+        {
+            Id = revisionId,
+            ReviewId = reviewId,
+            IsApproved = false,
+            Approvers = new HashSet<string>(),
+            ChangeHistory = new List<APIRevisionChangeHistoryModel>()
+        };
+
+        SetupSignalRMocks();
+        _mockAuthorizationService
+            .Setup(a => a.AuthorizeAsync(
+                It.IsAny<ClaimsPrincipal>(),
+                It.IsAny<object>(),
+                It.IsAny<IEnumerable<IAuthorizationRequirement>>()))
+            .ReturnsAsync(AuthorizationResult.Success());
+        _mockAPIRevisionsRepository.Setup(r => r.GetAPIRevisionAsync(revisionId)).ReturnsAsync(revision);
+        _mockReviewsRepository.Setup(r => r.GetReviewAsync(reviewId)).ReturnsAsync(review);
+        _mockAPIRevisionsRepository.Setup(r => r.UpsertAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>())).Returns(Task.CompletedTask);
+
+        var result = await _manager.ToggleAPIRevisionApprovalAsync(user, reviewId, revisionId);
+
+        Assert.True(result.updateReview);
+        Assert.True(result.apiRevision.IsApproved);
+        _mockNotificationManager.Verify(
+            n => n.NotifySubscribersOnApprovalAsync(It.IsAny<ReviewListItemModel>(), It.IsAny<APIRevisionListItemModel>(), It.IsAny<ClaimsPrincipal>(), false),
+            Times.Never);
     }
 
     [Fact]
@@ -229,6 +323,48 @@ public class APIRevisionsManagerTests
             Times.Never);
     }
 
+    #region APIVersionId Tests
+
+    [Fact]
+    public async Task CreateAPIRevisionAsync_WithPackageVersion_SetsAPIVersionId()
+    {
+        const string reviewId = "review-id";
+        const string expectedVersionId = "ver-id";
+
+        var codeFile = new CodeFile
+        {
+            Name = "test.json",
+            Language = "C#",
+            PackageName = "TestPackage",
+            PackageVersion = "1.0.0"
+        };
+
+        _mockApiVersionsManager
+            .Setup(m => m.GetOrCreateVersionAsync(reviewId, "1.0.0", It.IsAny<int?>(), It.IsAny<string>()))
+            .ReturnsAsync(new APIVersionModel { Id = expectedVersionId });
+
+        _mockCodeFileManager
+            .Setup(m => m.CreateReviewCodeFileModel(It.IsAny<string>(), It.IsAny<MemoryStream>(), It.IsAny<CodeFile>()))
+            .ReturnsAsync(new APICodeFileModel { FileId = "file-id", FileName = "test.json" });
+
+        _mockDiagnosticCommentService
+            .Setup(m => m.SyncDiagnosticCommentsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CodeDiagnostic[]>(), It.IsAny<IEnumerable<CommentItemModel>>()))
+            .ReturnsAsync(new DiagnosticSyncResult { DiagnosticsHash = "hash" });
+
+        _mockAPIRevisionsRepository
+            .Setup(m => m.UpsertAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()))
+            .Returns(Task.CompletedTask);
+
+        using var memoryStream = new MemoryStream();
+        APIRevisionListItemModel revision = await _manager.CreateAPIRevisionAsync(
+            userName: "testuser", reviewId: reviewId, apiRevisionType: APIRevisionType.Automatic,
+            label: "test-label", memoryStream: memoryStream, codeFile: codeFile, originalName: "test.json");
+
+        Assert.Equal(expectedVersionId, revision.APIVersionId);
+    }
+
+    #endregion
+
     private APIRevisionListItemModel CreateTestRevision(string revisionId = "test-revision-id",
         string fileId = "test-file-id",
         string fileName = "test-package_python.json")
@@ -268,6 +404,31 @@ public class APIRevisionsManagerTests
             VersionString = "2.0.0",
             CrossLanguageMetadata = crossLanguageMetadata
         };
+    }
+
+    private static ClaimsPrincipal CreateTestUser(string login)
+    {
+        var identity = new ClaimsIdentity(new[]
+        {
+            new Claim(ClaimConstants.Login, login),
+            new Claim(ClaimConstants.Name, login),
+            new Claim(ClaimConstants.Email, $"{login}@contoso.com")
+        });
+        return new ClaimsPrincipal(identity);
+    }
+
+    private void SetupSignalRMocks()
+    {
+        var clients = new Mock<IHubClients>();
+        var proxy = new Mock<IClientProxy>();
+
+        proxy
+            .Setup(p => p.SendCoreAsync(It.IsAny<string>(), It.IsAny<object[]>(), It.IsAny<System.Threading.CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        clients.Setup(c => c.Group(It.IsAny<string>())).Returns(proxy.Object);
+        clients.Setup(c => c.All).Returns(proxy.Object);
+        _mockHubContext.Setup(h => h.Clients).Returns(clients.Object);
     }
 
     #region UpdateAPIRevisionCodeFileAsync Tests
@@ -1292,6 +1453,26 @@ public class APIRevisionsManagerTests
 
         Assert.Equal(80, result.Score); // 100 - 20
         Assert.Equal(1, result.UnresolvedMustFixCount);
+        Assert.Equal(0, result.UnresolvedMustFixDiagnostics);
+    }
+
+    [Fact]
+    public async Task GetReviewQualityScoreAsync_DiagnosticMustFix_DoesNotIncrementNonDiagnosticMustFixCount()
+    {
+        var revision = CreateRevisionForQualityTest();
+        var comments = new List<CommentItemModel>
+        {
+            CreateComment(CommentSeverity.MustFix, source: CommentSource.Diagnostic)
+        };
+        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
+            .ReturnsAsync(comments);
+
+        var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
+
+        Assert.Equal(80, result.Score);
+        Assert.Equal(1, result.UnresolvedMustFixCount);
+        Assert.Equal(1, result.UnresolvedMustFixDiagnostics);
     }
 
     [Fact]
@@ -2050,6 +2231,121 @@ public class APIRevisionsManagerTests
         Assert.False(result);
         _mockCodeFileRepository.Verify(
             x => x.GetCodeFileAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<bool>()),
+            Times.Never);
+    }
+
+    #endregion
+
+    #region CreateAPIRevisionAsync_PreParsed Tests
+
+    [Fact]
+    public async Task CreateAPIRevisionAsync_WithPreParsedCodeFile_DoesNotParseAgain()
+    {
+        // Arrange
+        var user = CreateTestUser("testuser");
+        var review = new ReviewListItemModel
+        {
+            Id = "review-1",
+            PackageName = "test-package",
+            Language = "Python",
+            ChangeHistory = new List<ReviewChangeHistoryModel>()
+        };
+
+        var preParsedCodeFile = new CodeFile
+        {
+            Name = "test.whl",
+            Language = "Python",
+            PackageName = "test-package",
+            PackageVersion = "1.0.0"
+        };
+
+        var preParsedMemoryStream = new MemoryStream();
+        var codeFileModel = new APICodeFileModel { FileId = "file-1", Language = "Python" };
+
+        SetupSignalRMocks();
+
+        // Setup: CreateReviewCodeFileModel should be called with the pre-parsed data
+        _mockCodeFileManager
+            .Setup(m => m.CreateReviewCodeFileModel(It.IsAny<string>(), preParsedMemoryStream, preParsedCodeFile))
+            .ReturnsAsync(codeFileModel);
+
+        _mockDiagnosticCommentService
+            .Setup(d => d.SyncDiagnosticCommentsAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<CodeDiagnostic[]>(), It.IsAny<List<CommentItemModel>>()))
+            .ReturnsAsync(new DiagnosticSyncResult());
+
+        _mockAPIRevisionsRepository
+            .Setup(x => x.UpsertAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _manager.CreateAPIRevisionAsync(
+            user: user, review: review, file: null, filePath: "test.whl",
+            language: "Python", label: "test",
+            preParsedCodeFile: preParsedCodeFile, preParsedMemoryStream: preParsedMemoryStream);
+
+        // Assert: CreateReviewCodeFileModel was called (reusing pre-parsed data)
+        _mockCodeFileManager.Verify(
+            m => m.CreateReviewCodeFileModel(It.IsAny<string>(), preParsedMemoryStream, preParsedCodeFile),
+            Times.Once);
+
+        // Assert: CreateCodeFileAsync was NOT called (no re-parsing)
+        _mockCodeFileManager.Verify(
+            m => m.CreateCodeFileAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<Stream>(), It.IsAny<string>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateAPIRevisionAsync_WithoutPreParsedCodeFile_ParsesFile()
+    {
+        // Arrange
+        var user = CreateTestUser("testuser");
+        var review = new ReviewListItemModel
+        {
+            Id = "review-1",
+            PackageName = "test-package",
+            Language = "Python",
+            ChangeHistory = new List<ReviewChangeHistoryModel>()
+        };
+
+        var codeFileModel = new APICodeFileModel { FileId = "file-1", Language = "Python" };
+        var codeFile = new CodeFile { Name = "test.whl", Language = "Python", PackageName = "test-package" };
+
+        SetupSignalRMocks();
+
+        // Setup: CreateCodeFileAsync should be called (normal parsing path)
+        _mockCodeFileManager
+            .Setup(m => m.CreateCodeFileAsync(It.IsAny<string>(), "test.whl", true, null, "Python"))
+            .ReturnsAsync(codeFileModel);
+
+        _mockCodeFileRepository
+            .Setup(m => m.GetCodeFileFromStorageAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(codeFile);
+
+        _mockDiagnosticCommentService
+            .Setup(d => d.SyncDiagnosticCommentsAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<CodeDiagnostic[]>(), It.IsAny<List<CommentItemModel>>()))
+            .ReturnsAsync(new DiagnosticSyncResult());
+
+        _mockAPIRevisionsRepository
+            .Setup(x => x.UpsertAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _manager.CreateAPIRevisionAsync(
+            user: user, review: review, file: null, filePath: "test.whl",
+            language: "Python", label: "test");
+
+        // Assert: CreateCodeFileAsync WAS called (normal path)
+        _mockCodeFileManager.Verify(
+            m => m.CreateCodeFileAsync(It.IsAny<string>(), "test.whl", true, null, "Python"),
+            Times.Once);
+
+        // Assert: CreateReviewCodeFileModel was NOT called directly
+        _mockCodeFileManager.Verify(
+            m => m.CreateReviewCodeFileModel(It.IsAny<string>(), It.IsAny<MemoryStream>(), It.IsAny<CodeFile>()),
             Times.Never);
     }
 

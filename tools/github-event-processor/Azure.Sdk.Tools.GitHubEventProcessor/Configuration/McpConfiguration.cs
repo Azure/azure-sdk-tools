@@ -1,8 +1,8 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
-using Microsoft.Extensions.Configuration;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
+using Microsoft.Extensions.Configuration;
 
 namespace Azure.Sdk.Tools.GitHubEventProcessor.Configuration
 {
@@ -16,43 +16,31 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Configuration
         }
 
         /// <summary>
-        /// Gets the mapping of server labels to their corresponding GitHub team mentions.
+        /// Gets the primary label prefixes (e.g. "server-") from configuration.
+        /// Config key: "microsoft/mcp:McpPrimaryLabelPrefixes", semicolon-delimited.
         /// </summary>
-        public Dictionary<string, string> GetServerTeamMappings()
+        public IReadOnlyList<string> GetPrimaryLabelPrefixes()
         {
-            var mappings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            
-            string? configValue = Configuration[$"{McpConstants.McpConfigPrefix}:ServerTeamMappings"];
-            
+            string? configValue = Configuration[$"{McpConstants.McpConfigPrefix}:{McpConstants.McpServerLabelPrefix}"];
             if (string.IsNullOrEmpty(configValue))
             {
-                Console.WriteLine("ServerTeamMappings not found in configuration. Using empty mappings.");
-                return mappings;
+                return Array.Empty<string>();
             }
-
-            var pairs = configValue.Split(';', StringSplitOptions.RemoveEmptyEntries);
-            foreach (var pair in pairs)
-            {
-                var keyValue = pair.Split('=', 2);
-                if (keyValue.Length == 2)
-                {
-                    var serverLabel = keyValue[0].Trim();
-                    var teamMention = keyValue[1].Trim();
-                    mappings[serverLabel] = teamMention;
-                }
-            }
-
-            Console.WriteLine($"Loaded {mappings.Count} server team mappings from configuration.");
-            return mappings;
+            return configValue.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         }
 
         /// <summary>
-        /// Gets the team mention for a specific server label. Returns null if no mapping exists.
+        /// Gets the secondary label prefixes (e.g. "tools-;remote-mcp;packages-") from configuration.
+        /// Config key: "microsoft/mcp:McpSecondaryLabelPrefixes", semicolon-delimited.
         /// </summary>
-        public string? GetTeamMentionForServerLabel(string serverLabel)
+        public IReadOnlyList<string> GetSecondaryLabelPrefixes()
         {
-            var mappings = GetServerTeamMappings();
-            return mappings.TryGetValue(serverLabel, out string? team) ? team : null;
+            string? configValue = Configuration[$"{McpConstants.McpConfigPrefix}:{McpConstants.McpToolLabelPrefix}"];
+            if (string.IsNullOrEmpty(configValue))
+            {
+                return Array.Empty<string>();
+            }
+            return configValue.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         }
     }
 }

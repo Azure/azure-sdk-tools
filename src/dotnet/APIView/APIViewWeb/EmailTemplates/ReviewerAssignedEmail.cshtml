@@ -2,6 +2,7 @@
 @{
 	Layout = "/EmailTemplates/_EmailLayout.cshtml";
 	ViewData["EmailTitle"] = "New Review Request";
+	ViewData["EmailPreheader"] = $"{Model.RequesterUserName} requested your review on {Model.ReviewName}.";
 }
 
 <p class="section">

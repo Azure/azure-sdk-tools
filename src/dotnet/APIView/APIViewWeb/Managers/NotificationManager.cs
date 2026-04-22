@@ -137,6 +137,14 @@ namespace APIViewWeb.Managers
                 NewRevisionEmailModel.Create(_apiviewEndpoint, review, revision));
             await SendSubscriberEmailsAsync(review, user, htmlContent, null, "New Revision Uploaded");
         }
+
+        public async Task NotifySubscribersOnApprovalAsync(ReviewListItemModel review, APIRevisionListItemModel revision, ClaimsPrincipal user, bool isReviewApproval)
+        {
+            var htmlContent = await _emailTemplateService.RenderAsync(
+                EmailTemplateKey.ReviewOrRevisionApproval,
+                ReviewOrRevisionApprovalEmailModel.Create(_apiviewEndpoint, review, revision, user.GetGitHubLogin(), isReviewApproval));
+            await SendSubscriberEmailsAsync(review, user, htmlContent, null, isReviewApproval ? "First Release Approved" : "Revision Approved");
+        }
         
         /// <summary>
         /// Toggle Subscription to a Review
@@ -240,6 +248,7 @@ namespace APIViewWeb.Managers
             var subscribers = review.Subscribers.ToList()
                     .Where(e => e != initiatingUserEmail && !notifiedEmails.Contains(e)) // don't include the initiating user and tagged users in the comment
                     .ToList();
+
             if (subscribers.Count == 0)
             {
                 return;

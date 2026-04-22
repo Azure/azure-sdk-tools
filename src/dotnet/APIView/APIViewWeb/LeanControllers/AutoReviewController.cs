@@ -68,10 +68,17 @@ public class AutoReviewController : ControllerBase
                 var codeFile = await _codeFileManager.CreateCodeFileAsync(originalName: file.FileName, fileStream: openReadStream,
                     runAnalysis: false, memoryStream: memoryStream);
 
+                // Override the CI daily-build version embedded in the token file with the caller-supplied version.
+                bool shouldOverrideCodeFileVersion = string.IsNullOrWhiteSpace(codeFile.PackageVersion) || new AzureEngSemanticVersion(codeFile.PackageVersion).IsDailyDevBuild;
+                packageVersion = !string.IsNullOrWhiteSpace(packageVersion) && shouldOverrideCodeFileVersion
+                    ? packageVersion
+                    : codeFile.PackageVersion;
+
+                codeFile.PackageVersion = packageVersion;
                 (ReviewListItemModel review, APIRevisionListItemModel apiRevision) = await _autoReviewService.CreateAutomaticRevisionAsync(user: User, codeFile: codeFile, label: label, originalName: file.FileName, memoryStream: memoryStream, packageType: packageType, compareAllRevisions: compareAllRevisions);
                 if (apiRevision != null)
                 {
-                    apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label, setReleaseTag);
+                    apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion, label, setReleaseTag);
                     var reviewUrl = ManagerHelpers.ResolveReviewUrl(reviewId: apiRevision.ReviewId, apiRevisionId: apiRevision.Id, language: apiRevision.Language, configuration: _configuration, languageServices: _languageServices);
 
                     if (apiRevision.IsApproved)
@@ -146,13 +153,20 @@ public class AutoReviewController : ControllerBase
                 return StatusCode(statusCode: StatusCodes.Status204NoContent, $"API review code file for package {packageName} is not found in DevOps pipeline artifacts.");
             }
 
+            // Override the CI daily-build version embedded in the token file with the caller-supplied version.
+            bool shouldOverrideCodeFileVersion = string.IsNullOrWhiteSpace(codeFile.PackageVersion) || new AzureEngSemanticVersion(codeFile.PackageVersion).IsDailyDevBuild;
+            packageVersion = !string.IsNullOrWhiteSpace(packageVersion) && shouldOverrideCodeFileVersion
+                ? packageVersion
+                : codeFile.PackageVersion;
+            codeFile.PackageVersion = packageVersion;
+
             (ReviewListItemModel review, APIRevisionListItemModel apiRevision) = await _autoReviewService.CreateAutomaticRevisionAsync(user: User, codeFile: codeFile, label: label, originalName: originalFilePath, memoryStream: memoryStream, packageType: packageType, compareAllRevisions: compareAllRevisions, sourceBranch: sourceBranch);
             if (apiRevision == null)
             {
                 return StatusCode(statusCode: StatusCodes.Status500InternalServerError, "API revision creation returned null. This may indicate an issue with the code file parsing or revision creation process.");
             }
 
-            apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label, setReleaseTag);
+            apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion, label, setReleaseTag);
             var reviewUrl = ManagerHelpers.ResolveReviewUrl(reviewId: apiRevision.ReviewId, apiRevisionId: apiRevision.Id, language: apiRevision.Language, configuration: _configuration, languageServices: _languageServices);
 
             if (apiRevision.IsApproved)
@@ -198,5 +212,6 @@ public class AutoReviewController : ControllerBase
             });
         }
     }
+
 
 }

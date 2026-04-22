@@ -2,6 +2,7 @@ scratch/prompts
 scratch/output
 scratch/logs
 scratch/charts
+output
 raw_requests
 build
 .runs

@@ -76,17 +76,12 @@ public class SessionExecutor : IDisposable
                             ? input.Timestamp - startTs
                             : null;
 
-                        var mcpServerName = input.ToolName.Contains("__")
-                            ? input.ToolName.Split("__", 2)[0]
-                            : null;
-
                         toolCalls.Add(new ToolCallRecord
                         {
                             ToolName = input.ToolName,
                             ToolArgs = input.ToolArgs,
                             ToolResult = input.ToolResult,
                             DurationMs = durationMs,
-                            McpServerName = mcpServerName,
                         });
 
                         return Task.FromResult<PostToolUseHookOutput?>(null);
@@ -137,11 +132,9 @@ public class SessionExecutor : IDisposable
                     tokenUsage.CacheReadTokens += usageEvent.Data.CacheReadTokens ?? 0;
                     tokenUsage.CacheWriteTokens += usageEvent.Data.CacheWriteTokens ?? 0;
                 }
-                if (evt is SessionIdleEvent idleEvent)
+                if (evt is SessionIdleEvent)
                 {
                     mainTaskCompleted = true;
-                    // Dispose session immediately when main task is completed to free up resources, since we won't receive any more events after this
-                    session.DisposeAsync();
                 }
             });
             if (config.Verbose)

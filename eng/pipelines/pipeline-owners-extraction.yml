@@ -14,12 +14,8 @@ parameters:
             inputs:
               version: 10.0.x
 
-        # TODO: Remove when this is ready for production
-        DraftPr: true
-        CloseAfterOpeningForTesting: true
-
 stages:
-- stage: Run
+- stage: BuildTeamCache
   variables:
   - template: ./templates/variables/globals.yml
 
@@ -75,7 +71,7 @@ stages:
         condition: succeededOrFailed()
 
 - stage: GenerateCodeowners
-  dependsOn: []
+  dependsOn: BuildTeamCache
   variables:
     - template: /eng/pipelines/templates/variables/image.yml
 
@@ -118,18 +114,42 @@ stages:
               inlineScript: |
                 & "$(AZSDK)" config codeowners generate `
                   --repo-root "$(Build.SourcesDirectory)/${{ repo.Name }}" `
-                  --package-types mgmt `
-                  --section "Management Libraries"
-
-                & "$(AZSDK)" config codeowners generate `
-                  --repo-root "$(Build.SourcesDirectory)/${{ repo.Name }}" `
                   --package-types client `
                   --package-types compat `
                   --package-types data `
+                  --package-types functions `
+                  --package-types datamovement `
                   --section "Client Libraries"
             env:
               # Explicit mapping required for secrets
               GH_TOKEN: $(GH_TOKEN)
+
+          - task: AzureCLI@2
+            displayName: "Export Client Libraries section for ${{ repo.Name }}"
+            inputs:
+              azureSubscription: 'opensource-api-connection'
+              scriptType: pscore
+              scriptLocation: inlineScript
+              inlineScript: |
+                & "$(AZSDK)" config codeowners export-section `
+                  --codeowners-path "$(Build.SourcesDirectory)/${{ repo.Name }}/.github/CODEOWNERS" `
+                  --section "Client Libraries" `
+                  --output-file "$(Agent.TempDirectory)/${{ repo.Name }}-CODEOWNERS.cache"
+
+          - task: AzureCLI@2
+            displayName: "Upload CODEOWNERS cache for ${{ repo.Name }}"
+            inputs:
+              azureSubscription: 'Azure SDK Artifacts'
+              scriptType: pscore
+              scriptLocation: inlineScript
+              inlineScript: |
+                az storage blob upload `
+                  --account-name azuresdkartifacts `
+                  --container-name azure-sdk-write-teams `
+                  --name "cache/azure/${{ repo.Name }}/CODEOWNERS.cache" `
+                  --file "$(Agent.TempDirectory)/${{ repo.Name }}-CODEOWNERS.cache" `
+                  --overwrite true `
+                  --auth-mode login
 
           - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
             parameters:
@@ -140,8 +160,6 @@ stages:
               RepoName: ${{ repo.Name }}
               PushArgs: '-f'
               CommitMsg: "[CODEOWNERS] Automated CODEOWNERS update for ${{ repo.Name }}"
-              OpenAsDraft: ${{ repo.DraftPr }}
-              CloseAfterOpenForTesting: ${{ repo.CloseAfterOpeningForTesting }}
               PRTitle: '[CODEOWNERS] Automated CODEOWNERS Update'
               PRBody: |
                 Updating CODEOWNERS

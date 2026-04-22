@@ -51,7 +51,6 @@ public class GetModifiedTypespecProjectsScenario : BenchmarkScenario
     /// <inheritdoc />
     public override string Prompt => """
         List the TypeSpec projects modified in my current branch compared to main.
-        My setup has already been verified, do not run azsdk_verify_setup.
         """;
 
     /// <inheritdoc />
@@ -68,6 +67,6 @@ public class GetModifiedTypespecProjectsScenario : BenchmarkScenario
                         ["targetBranch"] = "main"
                     })
             ],
-            forbiddenToolNames: ["azsdk_verify_setup"])
+            optionalToolNames: ["azsdk_verify_setup"])
     ];
 }

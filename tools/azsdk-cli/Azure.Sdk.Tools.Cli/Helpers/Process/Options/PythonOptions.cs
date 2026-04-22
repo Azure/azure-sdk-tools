@@ -21,18 +21,21 @@ public class PythonOptions : ProcessOptions
     /// <param name="workingDirectory">Working directory for the process</param>
     /// <param name="timeout">Execution timeout</param>
     /// <param name="logOutputStream">Whether to log stdout/stderr</param>
+    /// <param name="environmentVariables">Optional environment variables to pass to the process</param>
     public PythonOptions(
         string executableName,
         string[] args,
         string? workingDirectory = null,
         TimeSpan? timeout = null,
-        bool logOutputStream = true
+        bool logOutputStream = true,
+        IDictionary<string, string>? environmentVariables = null
     ) : base(
         ResolvePythonExecutable(executableName),
         args,
         logOutputStream,
         workingDirectory,
-        timeout
+        timeout,
+        environmentVariables
     )
     {
     }

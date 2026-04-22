@@ -78,6 +78,7 @@ namespace APIViewWeb.Services
                 EmailTemplateKey.CommentTag => "CommentTagEmail.cshtml",
                 EmailTemplateKey.SubscriberComment => "SubscriberCommentEmail.cshtml",
                 EmailTemplateKey.NewRevision => "NewRevisionEmail.cshtml",
+                EmailTemplateKey.ReviewOrRevisionApproval => "ReviewOrRevisionApprovalEmail.cshtml",
                 _ => throw new ArgumentOutOfRangeException(nameof(templateKey), templateKey, "Unsupported email template key"),
             };
         }

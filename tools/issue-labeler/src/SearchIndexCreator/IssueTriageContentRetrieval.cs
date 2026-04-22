@@ -30,7 +30,7 @@ namespace SearchIndexCreator
             _accountName = config["StorageName"];
             _containerName = $@"{config["ContainerName"]}-blob";
             _repo = config["repo"];
-            _repoConfig = RepositoryIndexConfigFactory.Create(_repo);
+            _repoConfig = RepositoryIndexConfigFactory.Create(_repo, config);
         }
 
         public async Task<List<IssueTriageContent>> RetrieveContent(string repoOwner)

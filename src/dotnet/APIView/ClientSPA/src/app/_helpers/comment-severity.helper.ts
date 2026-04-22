@@ -15,8 +15,8 @@ export class CommentSeverityHelper {
 
   static getSeverityEnumValue(severity: CommentSeverity | string | null | undefined): CommentSeverity | null {
     if (severity === null || severity === undefined) return null;
-    if (typeof severity === 'number') return severity; 
-    
+    if (typeof severity === 'number') return severity;
+
     const normalized = CommentSeverityHelper.normalizeSeverity(severity);
     switch (normalized) {
       case 'question': return CommentSeverity.Question;
@@ -34,7 +34,7 @@ export class CommentSeverityHelper {
       case 'suggestion': return 'Suggestion';
       case 'shouldfix': return 'Should fix';
       case 'mustfix': return 'Must fix';
-      default: return '';
+      default: return 'Unknown';
     }
   }
 
@@ -45,7 +45,7 @@ export class CommentSeverityHelper {
       case 'suggestion': return 'severity-suggestion';
       case 'shouldfix': return 'severity-should-fix';
       case 'mustfix': return 'severity-must-fix';
-      default: return '';
+      default: return 'severity-unknown';
     }
   }
 }

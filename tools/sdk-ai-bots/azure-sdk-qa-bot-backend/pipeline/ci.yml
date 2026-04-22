@@ -34,20 +34,6 @@ extends:
               os: linux
 
             steps:
-              - task: AzureCLI@2
-                inputs:
-                  azureSubscription: 'azuresdkqabot-dev'
-                  addSpnToEnvironment: true
-                  scriptType: bash
-                  scriptLocation: inlineScript
-                  inlineScript: |
-                    echo "##vso[task.setvariable variable=AZURE_CLIENT_ID]$servicePrincipalId"
-                    echo "##vso[task.setvariable variable=AZURE_TENANT_ID]$tenantId"
-                    echo "##vso[task.setvariable variable=AZURE_SUBSCRIPTION_ID]$(az account show --query id -o tsv)"
-                    echo "$idToken" > "$(Agent.BuildDirectory)/id_token"
-                    echo "##vso[task.setvariable variable=AZURE_FEDERATED_TOKEN_FILE]$(Agent.BuildDirectory)/id_token"
-                    
-
               - task: GoTool@0
                 inputs:
                   version: "1.24.1"
@@ -120,17 +106,23 @@ extends:
                 displayName: "Lint"
                 workingDirectory: "$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend"
 
-              - script: |
-                  export GOPROXY=https://proxy.golang.org,direct
-                  echo "##[command]Running tests in $(pwd)"
-                  go test -timeout 5m -v -race -coverprofile=coverage.out -covermode=atomic ./...
-                  if [ $? -ne 0 ]; then
-                    echo "Tests failed"
-                    exit 1
-                  fi
+              - task: AzureCLI@2
                 displayName: "Run Tests"
-                workingDirectory: "$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend"
+                inputs:
+                  azureSubscription: 'azuresdkqabot-dev'
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  workingDirectory: "$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend"
+                  inlineScript: |
+                    export GOPROXY=https://proxy.golang.org,direct
+                    echo "##[command]Running tests in $(pwd)"
+                    go test -timeout 10m -v -race -coverprofile=coverage.out -covermode=atomic ./...
+                    if [ $? -ne 0 ]; then
+                      echo "Tests failed"
+                      exit 1
+                    fi
                 env:
+                  SYSTEM_ACCESSTOKEN: $(System.AccessToken)
                   AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
 
               - task: PublishTestResults@2

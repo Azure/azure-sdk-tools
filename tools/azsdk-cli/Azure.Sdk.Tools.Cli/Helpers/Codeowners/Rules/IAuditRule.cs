@@ -10,6 +10,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers.Codeowners.Rules;
 /// </summary>
 public interface IAuditRule
 {
+    int Priority { get; }
     string RuleId { get; }
     string Description { get; }
     bool CanFix { get; }

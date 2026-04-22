@@ -878,6 +878,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
         {
             var mockDevOps = new Mock<IDevOpsService>();
             var mockRule = new Mock<IAuditRule>();
+            mockRule.SetupGet(r => r.Priority).Returns(10);
             mockRule.SetupGet(r => r.RuleId).Returns("TEST-001");
             mockRule.SetupGet(r => r.Description).Returns("Test rule");
             mockRule.SetupGet(r => r.CanFix).Returns(false);
@@ -920,6 +921,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
 
             AuditContext? capturedContext = null;
             var mockRule = new Mock<IAuditRule>();
+            mockRule.SetupGet(r => r.Priority).Returns(10);
             mockRule.SetupGet(r => r.RuleId).Returns("TEST-001");
             mockRule.SetupGet(r => r.Description).Returns("Test rule");
             mockRule.SetupGet(r => r.CanFix).Returns(false);
@@ -952,6 +954,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
                 .ReturnsAsync(new List<Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem>());
 
             var mockRule = new Mock<IAuditRule>();
+            mockRule.SetupGet(r => r.Priority).Returns(10);
             mockRule.SetupGet(r => r.RuleId).Returns("TEST-001");
             mockRule.SetupGet(r => r.Description).Returns("Test rule");
             mockRule.SetupGet(r => r.CanFix).Returns(true);
@@ -996,6 +999,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
                 .Callback(() => fetchCount++);
 
             var mockRule = new Mock<IAuditRule>();
+            mockRule.SetupGet(r => r.Priority).Returns(10);
             mockRule.SetupGet(r => r.RuleId).Returns("TEST-001");
             mockRule.SetupGet(r => r.Description).Returns("Test rule");
             mockRule.SetupGet(r => r.CanFix).Returns(true);
@@ -1030,6 +1034,47 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
 
             // Initial fetch (4 work item types) + rebuild after fix (4 more) = 8
             Assert.That(fetchCount, Is.EqualTo(8));
+        }
+
+        [Test]
+        public async Task RunAudit_OrdersRulesByPriority()
+        {
+            var mockDevOps = new Mock<IDevOpsService>();
+            mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                    It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>(),
+                    It.IsAny<Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItemExpand>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem>());
+
+            var executionOrder = new List<string>();
+
+            var highPriorityRule = new Mock<IAuditRule>();
+            highPriorityRule.SetupGet(r => r.Priority).Returns(20);
+            highPriorityRule.SetupGet(r => r.RuleId).Returns("TEST-020");
+            highPriorityRule.SetupGet(r => r.Description).Returns("Priority 20 rule");
+            highPriorityRule.SetupGet(r => r.CanFix).Returns(false);
+            highPriorityRule.Setup(r => r.Evaluate(It.IsAny<AuditContext>(), It.IsAny<CancellationToken>()))
+                .Callback(() => executionOrder.Add("TEST-020"))
+                .ReturnsAsync(new List<AuditViolation>());
+
+            var lowPriorityRule = new Mock<IAuditRule>();
+            lowPriorityRule.SetupGet(r => r.Priority).Returns(10);
+            lowPriorityRule.SetupGet(r => r.RuleId).Returns("TEST-010");
+            lowPriorityRule.SetupGet(r => r.Description).Returns("Priority 10 rule");
+            lowPriorityRule.SetupGet(r => r.CanFix).Returns(false);
+            lowPriorityRule.Setup(r => r.Evaluate(It.IsAny<AuditContext>(), It.IsAny<CancellationToken>()))
+                .Callback(() => executionOrder.Add("TEST-010"))
+                .ReturnsAsync(new List<AuditViolation>());
+
+            var helper = new CodeownersAuditHelper(
+                mockDevOps.Object,
+                [highPriorityRule.Object, lowPriorityRule.Object],
+                new TestLogger<CodeownersAuditHelper>()
+            );
+
+            await helper.RunAudit(false, false, null, CancellationToken.None);
+
+            Assert.That(executionOrder, Is.EqualTo(new[] { "TEST-010", "TEST-020" }));
         }
     }
 

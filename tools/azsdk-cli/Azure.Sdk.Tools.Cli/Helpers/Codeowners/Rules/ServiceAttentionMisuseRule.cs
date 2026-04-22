@@ -17,6 +17,7 @@ public class ServiceAttentionMisuseRule : IAuditRule
 {
     private const string ServiceAttentionLabel = "Service Attention";
 
+    public int Priority => 50;
     public string RuleId => "AUD-LBL-002";
     public string Description => "Service Attention misused as PR label or sole service label";
     public bool CanFix => false;

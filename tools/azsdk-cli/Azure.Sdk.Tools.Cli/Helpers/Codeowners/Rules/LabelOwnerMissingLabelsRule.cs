@@ -12,6 +12,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers.Codeowners.Rules;
 /// </summary>
 public class LabelOwnerMissingLabelsRule : IAuditRule
 {
+    public int Priority => 70;
     public string RuleId => "AUD-STR-002";
     public string Description => "Label Owner has zero label relations";
     public bool CanFix => false;

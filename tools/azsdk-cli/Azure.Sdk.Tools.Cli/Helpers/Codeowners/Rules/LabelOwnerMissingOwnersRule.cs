@@ -19,6 +19,7 @@ public class LabelOwnerMissingOwnersRule(
 {
     private const int SafetyThreshold = 5;
 
+    public int Priority => 60;
     public string RuleId => "AUD-STR-001";
     public string Description => "Label Owner has zero owner relations";
     public bool CanFix => true;

@@ -19,6 +19,7 @@ public class LabelNotInGitHubRule(
     IGitHubService githubService
 ) : IAuditRule
 {
+    public int Priority => 40;
     public string RuleId => "AUD-LBL-001";
     public string Description => "Label work item doesn't exist as a GitHub repo label";
     public bool CanFix => false;

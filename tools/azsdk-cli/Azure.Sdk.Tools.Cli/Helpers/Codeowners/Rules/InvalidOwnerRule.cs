@@ -25,6 +25,7 @@ public class InvalidOwnerRule(
     public const string ClearInvalidDetail = "Clear Invalid";
     public static readonly string[] ValidDetails = [DoNothingDetail, SetInvalidDetail, ClearInvalidDetail];
 
+    public int Priority => 10;
     public string RuleId => "AUD-OWN-001";
     public string Description => "Individual owner fails GitHub validation";
     public bool CanFix => true;

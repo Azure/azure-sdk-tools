@@ -35,16 +35,16 @@ public class CodeownersAuditHelper(
             Repo = repo,
         };
 
-        // Rules are injected in the order they are registered in DI.
+        // Rules are evaluated in ascending Priority order.
         // Execution order:
-        // 1. AUD-OWN-001 — no dependencies; marks/clears Invalid Since on owners
-        // 2. AUD-OWN-002 — no dependencies
-        // 3. AUD-OWN-003 — skips malformed aliases internally (OWN-002 is report-only)
-        // 4. AUD-LBL-001 — no dependencies on owner rules
-        // 5. AUD-LBL-002 — no dependencies on owner rules
-        // 6. AUD-STR-001 — depends on OWN-001, OWN-003 (owner removals may orphan Label Owners)
-        // 7. AUD-STR-002 — depends on LBL-001, LBL-002 (report only, no fix)
-        foreach (var rule in rules)
+        // 10. AUD-OWN-001 — no dependencies; marks/clears Invalid Since on owners
+        // 20. AUD-OWN-002 — no dependencies
+        // 30. AUD-OWN-003 — skips malformed aliases internally (AUD-OWN-002 is report-only)
+        // 40. AUD-LBL-001 — no dependencies on owner rules
+        // 50. AUD-LBL-002 — no dependencies on owner rules
+        // 60. AUD-STR-001 — depends on AUD-OWN-001, AUD-OWN-003 (owner removals may orphan Label Owners)
+        // 70. AUD-STR-002 — depends on AUD-LBL-001, AUD-LBL-002 (report only, no fix)
+        foreach (var rule in rules.OrderBy(r => r.Priority))
         {
             logger.LogInformation("Evaluating rule {RuleId}: {Description}", rule.RuleId, rule.Description);
             var violations = await rule.Evaluate(context, ct);

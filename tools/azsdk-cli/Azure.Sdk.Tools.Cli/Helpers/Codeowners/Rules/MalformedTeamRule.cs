@@ -11,6 +11,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers.Codeowners.Rules;
 /// </summary>
 public class MalformedTeamRule : IAuditRule
 {
+    public int Priority => 20;
     public string RuleId => "AUD-OWN-002";
     public string Description => "Team alias doesn't match Azure/<team> format";
     public bool CanFix => false;

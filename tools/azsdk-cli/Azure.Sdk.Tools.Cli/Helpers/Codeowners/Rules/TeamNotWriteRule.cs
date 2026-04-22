@@ -9,7 +9,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers.Codeowners.Rules;
 
 /// <summary>
 /// AUD-OWN-003: Detect team Owner work items that don't descend from azure-sdk-write.
-/// Skips malformed aliases internally (OWN-002 is report-only, can't rely on it fixing them).
+/// Skips malformed aliases internally (AUD-OWN-002 is report-only, can't rely on it fixing them).
 /// Fix: Set "Invalid Since" field to current date/time on newly invalid teams.
 ///       Clear "Invalid Since" field on teams that have become valid again.
 /// Safety threshold: throws if >5 newly invalid teams detected with --fix unless --force.
@@ -26,6 +26,7 @@ public class TeamNotWriteRule(
     public const string ClearInvalidDetail = "Clear Invalid";
     public static readonly string[] ValidDetails = [DoNothingDetail, SetInvalidDetail, ClearInvalidDetail];
 
+    public int Priority => 30;
     public string RuleId => "AUD-OWN-003";
     public string Description => "Team doesn't descend from azure-sdk-write";
     public bool CanFix => true;

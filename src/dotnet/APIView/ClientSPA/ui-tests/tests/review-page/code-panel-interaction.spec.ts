@@ -99,12 +99,11 @@ test.describe('Code Panel - Line Click Actions', () => {
 
     await commentBtn.click();
 
-    // Wait for the comment thread to appear
-    const threadsAfter = await page
-      .locator('app-comment-thread')
-      .count({ timeout: 5000 });
-
-    expect(threadsAfter).toBeGreaterThan(threadsBefore);
+    // Wait for the new comment thread to appear
+    await expect(page.locator('app-comment-thread')).toHaveCount(
+      threadsBefore + 1,
+      { timeout: 5000 },
+    );
   });
 });
 

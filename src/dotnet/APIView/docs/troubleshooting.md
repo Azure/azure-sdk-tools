@@ -104,6 +104,10 @@ Use the **SDK Tools MCP server** and ask whether a package is ready for release.
 - Namespace approval
 - Provides relevant pipeline links
 
+Example prompt:
+
+> "Check if azure-storage-blob is ready for release."
+
 This is the fastest and least error-prone way to diagnose release issues.
 
 ---

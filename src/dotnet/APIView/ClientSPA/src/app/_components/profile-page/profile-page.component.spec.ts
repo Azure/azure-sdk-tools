@@ -58,7 +58,7 @@ describe('ProfilePageComponent', () => {
           provide: ActivatedRoute,
           useValue: {
             snapshot: {
-              paramMap: convertToParamMap({ userNme: 'test' }),
+              paramMap: convertToParamMap({ userName: 'testuser' }),
             }
           }
         }
@@ -67,10 +67,10 @@ describe('ProfilePageComponent', () => {
       .compileComponents();
     fixture = TestBed.createComponent(ProfilePageComponent);
     component = fixture.componentInstance;
-    fixture.detectChanges();
   });
 
   it('should create', () => {
+    fixture.detectChanges();
     expect(component).toBeTruthy();
   });
 

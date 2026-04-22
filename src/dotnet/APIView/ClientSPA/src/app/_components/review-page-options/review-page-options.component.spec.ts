@@ -113,7 +113,7 @@ describe('ReviewPageOptionsComponent', () => {
   describe('First Release Approval Button', () => {
     it('should disable first release approval button when review is approved', () => {
       component.reviewIsApproved = true;
-      component.loadingStatus = "completed";
+      fixture.componentRef.setInput('loadingStatus', 'completed');
       fixture.detectChanges();
       const button = fixture.nativeElement.querySelector('#first-release-approval-button');
       expect(button).not.toBeTruthy();
@@ -123,11 +123,14 @@ describe('ReviewPageOptionsComponent', () => {
     it('should disable first release approval button when review is not approved and user is not an approver', () => {
       mockPermissionsService.isApproverFor.mockReturnValue(false);
       component.reviewIsApproved = false;
-      component.review = { language: 'Python' } as Review;
-      component.userProfile = new UserProfile();
-      component.userProfile.userName = "test-user-1";
-      component.userProfile.permissions = { userId: 'test-user-1', roles: [] };
-      component.loadingStatus = "completed";
+      const userProfile1 = new UserProfile();
+      userProfile1.userName = "test-user-1";
+      userProfile1.permissions = { userId: 'test-user-1', roles: [] };
+      const review1 = new Review();
+      review1.language = 'Python';
+      fixture.componentRef.setInput('review', review1);
+      fixture.componentRef.setInput('userProfile', userProfile1);
+      fixture.componentRef.setInput('loadingStatus', 'completed');
       fixture.detectChanges();
       const button = fixture.nativeElement.querySelector('#first-release-approval-button');
       expect(button).not.toBeTruthy();
@@ -137,11 +140,14 @@ describe('ReviewPageOptionsComponent', () => {
     it('should enable first release approval button when review is not approved and user is an approver', () => {
       mockPermissionsService.isApproverFor.mockReturnValue(true);
       component.reviewIsApproved = false;
-      component.review = { language: 'Python' } as Review;
-      component.userProfile = new UserProfile();
-      component.userProfile.userName = "test-user";
-      component.userProfile.permissions = mockApproverPermissions;
-      component.loadingStatus = "completed";
+      const userProfile = new UserProfile();
+      userProfile.userName = "test-user";
+      userProfile.permissions = mockApproverPermissions;
+      const review = new Review();
+      review.language = 'Python';
+      fixture.componentRef.setInput('review', review);
+      fixture.componentRef.setInput('userProfile', userProfile);
+      fixture.componentRef.setInput('loadingStatus', 'completed');
       fixture.detectChanges();
       const button = fixture.nativeElement.querySelector('#first-release-approval-button');
       expect(button).toBeTruthy();
@@ -151,11 +157,14 @@ describe('ReviewPageOptionsComponent', () => {
     it('should emit reviewApprovalEmitter when first release approval button is clicked', () => {
       mockPermissionsService.isApproverFor.mockReturnValue(true);
       component.reviewIsApproved = false;
-      component.review = { language: 'Python' } as Review;
-      component.userProfile = new UserProfile();
-      component.userProfile.userName = "test-user";
-      component.userProfile.permissions = mockApproverPermissions;
-      component.loadingStatus = "completed";
+      const userProfile = new UserProfile();
+      userProfile.userName = "test-user";
+      userProfile.permissions = mockApproverPermissions;
+      const review = new Review();
+      review.language = 'Python';
+      fixture.componentRef.setInput('review', review);
+      fixture.componentRef.setInput('userProfile', userProfile);
+      fixture.componentRef.setInput('loadingStatus', 'completed');
       fixture.detectChanges();
       const emitSpy = vi.spyOn(component.reviewApprovalEmitter, 'emit');
       const button: HTMLButtonElement = fixture.nativeElement.querySelector('#first-release-approval-button');
@@ -180,7 +189,7 @@ describe('ReviewPageOptionsComponent', () => {
   describe('Toggle APIRevision Approval', () => {
     it('should close APIRevision Approval Modal', () => {
       component.showAPIRevisionApprovalModal = true;
-      component.loadingStatus = "completed";
+      fixture.componentRef.setInput('loadingStatus', 'completed');
       fixture.detectChanges();
       component.toggleAPIRevisionApproval();
       expect(component.showAPIRevisionApprovalModal).not.toBeTruthy();
@@ -634,6 +643,225 @@ describe('ReviewPageOptionsComponent', () => {
 
         expect(component.isAPIRevisionApprovalDisabled).toBe(true);
         expect(component.apiRevisionApprovalMessages).toEqual(["Cannot approve due to outstanding \"Must Fix\" comments."]);
+      });
+    });
+
+    describe('generateAIReview confirmation dialogs', () => {
+      let confirmationService: ConfirmationService;
+
+      beforeEach(() => {
+        confirmationService = TestBed.inject(ConfirmationService);
+        component.review = new Review();
+        component.review.id = 'review-1';
+        component.activeAPIRevision = new APIRevision();
+        component.activeAPIRevision.id = 'rev-active';
+        component.activeAPIRevision.reviewId = 'review-1';
+        component.userProfile = new UserProfile();
+        component.userProfile.userName = 'test-user';
+      });
+
+      describe('1) already approved revision warning', () => {
+        it('should show already-approved dialog when active revision is approved', () => {
+          const confirmSpy = vi.spyOn(confirmationService, 'confirm');
+          component.activeAPIRevision!.isApproved = true;
+          component.diffAPIRevision = undefined;
+          component.hasReleasedApprovedGARevision = false;
+
+          component.generateAIReview();
+
+          expect(confirmSpy).toHaveBeenCalledWith(expect.objectContaining({
+            header: 'Are you sure?'
+          }));
+          expect(component.aiReviewGenerationState).toBe('NotStarted');
+        });
+
+        it('should not show already-approved dialog when active revision is not approved', () => {
+          const confirmSpy = vi.spyOn(confirmationService, 'confirm');
+          component.activeAPIRevision!.isApproved = false;
+          component.diffAPIRevision = undefined;
+          component.hasReleasedApprovedGARevision = false;
+
+          component.generateAIReview();
+
+          expect(confirmSpy).not.toHaveBeenCalled();
+          expect(component.aiReviewGenerationState).toBe('InProgress');
+        });
+
+        it('should chain into already-reviewed check after accepting already-approved dialog', () => {
+          vi.useFakeTimers();
+          try {
+            const confirmSpy = vi.spyOn(confirmationService, 'confirm');
+            confirmSpy.mockImplementation((confirmation: any) => {
+              confirmation.accept();
+              return confirmationService;
+            });
+            component.activeAPIRevision!.isApproved = true;
+            component.activeAPIRevision!.hasAutoGeneratedComments = true;
+            component.diffAPIRevision = undefined;
+            component.hasReleasedApprovedGARevision = false;
+
+            component.generateAIReview();
+            vi.runAllTimers();
+
+            expect(confirmSpy).toHaveBeenCalledTimes(2);
+            expect(confirmSpy).toHaveBeenNthCalledWith(1, expect.objectContaining({ header: 'Are you sure?' }));
+            expect(confirmSpy).toHaveBeenNthCalledWith(2, expect.objectContaining({ header: 'Are you sure?' }));
+          } finally {
+            vi.useRealTimers();
+          }
+        });
+
+        it('should chain all three dialogs when approved, already reviewed, and full-API all apply', () => {
+          vi.useFakeTimers();
+          try {
+            const confirmSpy = vi.spyOn(confirmationService, 'confirm');
+            confirmSpy.mockImplementation((confirmation: any) => {
+              confirmation.accept();
+              return confirmationService;
+            });
+            component.activeAPIRevision!.isApproved = true;
+            component.activeAPIRevision!.hasAutoGeneratedComments = true;
+            component.diffAPIRevision = undefined;
+            component.hasReleasedApprovedGARevision = true;
+
+            component.generateAIReview();
+            vi.runAllTimers();
+
+            expect(confirmSpy).toHaveBeenCalledTimes(3);
+            expect(confirmSpy).toHaveBeenNthCalledWith(1, expect.objectContaining({ header: 'Are you sure?' }));
+            expect(confirmSpy).toHaveBeenNthCalledWith(2, expect.objectContaining({ header: 'Are you sure?' }));
+            expect(confirmSpy).toHaveBeenNthCalledWith(3, expect.objectContaining({ header: 'Are you sure?' }));
+          } finally {
+            vi.useRealTimers();
+          }
+        });
+      });
+
+      describe('2) already reviewed by Copilot warning', () => {
+        it('should show already-reviewed dialog when revision has auto-generated comments', () => {
+          const confirmSpy = vi.spyOn(confirmationService, 'confirm');
+          component.activeAPIRevision!.hasAutoGeneratedComments = true;
+          component.diffAPIRevision = undefined;
+          component.hasReleasedApprovedGARevision = false;
+
+          component.generateAIReview();
+
+          expect(confirmSpy).toHaveBeenCalledWith(expect.objectContaining({
+            header: 'Are you sure?'
+          }));
+          expect(component.aiReviewGenerationState).toBe('NotStarted');
+        });
+
+        it('should not show already-reviewed dialog when revision has no auto-generated comments', () => {
+          const confirmSpy = vi.spyOn(confirmationService, 'confirm');
+          component.activeAPIRevision!.hasAutoGeneratedComments = false;
+          component.diffAPIRevision = undefined;
+          component.hasReleasedApprovedGARevision = false;
+
+          component.generateAIReview();
+
+          expect(confirmSpy).not.toHaveBeenCalled();
+          expect(component.aiReviewGenerationState).toBe('InProgress');
+        });
+
+        it('should chain into full-API check after accepting already-reviewed dialog', () => {
+          vi.useFakeTimers();
+          try {
+            const confirmSpy = vi.spyOn(confirmationService, 'confirm');
+            confirmSpy.mockImplementation((confirmation: any) => {
+              confirmation.accept();
+              return confirmationService;
+            });
+            component.activeAPIRevision!.hasAutoGeneratedComments = true;
+            component.diffAPIRevision = undefined;
+            component.hasReleasedApprovedGARevision = true;
+
+            component.generateAIReview();
+            vi.runAllTimers();
+
+            expect(confirmSpy).toHaveBeenCalledTimes(2);
+            expect(confirmSpy).toHaveBeenNthCalledWith(1, expect.objectContaining({ header: 'Are you sure?' }));
+            expect(confirmSpy).toHaveBeenNthCalledWith(2, expect.objectContaining({ header: 'Are you sure?' }));
+          } finally {
+            vi.useRealTimers();
+          }
+        });
+
+        it('should execute review after accepting already-reviewed dialog when no full-API warning needed', () => {
+          vi.useFakeTimers();
+          try {
+            vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: any) => {
+              confirmation.accept();
+              return confirmationService;
+            });
+            component.activeAPIRevision!.hasAutoGeneratedComments = true;
+            component.diffAPIRevision = undefined;
+            component.hasReleasedApprovedGARevision = false;
+
+            component.generateAIReview();
+            vi.runAllTimers();
+
+            expect(component.aiReviewGenerationState).toBe('InProgress');
+          } finally {
+            vi.useRealTimers();
+          }
+        });
+      });
+
+      describe('3) full-API review warning', () => {
+        it('should show full-API dialog when not in diff mode and released GA revisions exist', () => {
+          const confirmSpy = vi.spyOn(confirmationService, 'confirm');
+          component.diffAPIRevision = undefined;
+          component.hasReleasedApprovedGARevision = true;
+
+          component.generateAIReview();
+
+          expect(confirmSpy).toHaveBeenCalledWith(expect.objectContaining({
+            header: 'Are you sure?'
+          }));
+          expect(component.aiReviewGenerationState).toBe('NotStarted');
+        });
+
+        it('should not show full-API dialog when in diff mode', () => {
+          const confirmSpy = vi.spyOn(confirmationService, 'confirm');
+          component.diffAPIRevision = { id: 'rev-diff' } as APIRevision;
+          component.hasReleasedApprovedGARevision = true;
+
+          component.generateAIReview();
+
+          expect(confirmSpy).not.toHaveBeenCalled();
+          expect(component.aiReviewGenerationState).toBe('InProgress');
+        });
+
+        it('should not show full-API dialog when no released GA revisions exist', () => {
+          const confirmSpy = vi.spyOn(confirmationService, 'confirm');
+          component.diffAPIRevision = undefined;
+          component.hasReleasedApprovedGARevision = false;
+
+          component.generateAIReview();
+
+          expect(confirmSpy).not.toHaveBeenCalled();
+          expect(component.aiReviewGenerationState).toBe('InProgress');
+        });
+
+        it('should proceed with review when user accepts the full-API confirmation', () => {
+          vi.useFakeTimers();
+          try {
+            vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: any) => {
+              confirmation.accept();
+              return confirmationService;
+            });
+            component.diffAPIRevision = undefined;
+            component.hasReleasedApprovedGARevision = true;
+
+            component.generateAIReview();
+            vi.runAllTimers();
+
+            expect(component.aiReviewGenerationState).toBe('InProgress');
+          } finally {
+            vi.useRealTimers();
+          }
+        });
       });
     });
   });

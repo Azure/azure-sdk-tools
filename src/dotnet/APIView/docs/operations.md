@@ -1,6 +1,6 @@
 # APIView — Operations Guide
 
-This document covers deployment, test environments, configuration, and troubleshooting for the APIView engineering team. For contributor setup, see [contributing.md](contributing.md). For architecture, see [overview.md](overview.md).
+This document covers deployment, test environments, configuration, and troubleshooting for the APIView engineering team. For contributor setup, see [CONTRIBUTING.md](../CONTRIBUTING.md). For architecture, see [overview.md](overview.md).
 
 ---
 
@@ -44,11 +44,7 @@ A safe test environment with its own dedicated database, updated daily with prod
 
 ### Approvers
 
-API revision approvers are the architects and deputy architects tracked in the GitHub team [azure-sdk-api-approvers](https://github.com/orgs/Azure/teams/azure-sdk-api-approvers).
-
 Approver permissions are managed at runtime via Cosmos DB through the `PermissionsManager`. Users are granted the approver role through group membership configuration stored in the Cosmos DB "Permissions" container.
-
-> **Note:** The GitHub team is not currently hooked up to APIView directly. The `APIVIEW_APPROVERS` environment variable is listed in the service configuration but the actual authorization checks use the Cosmos DB permissions system. For the current list of approvers by language, see [user-guide.md](user-guide.md#who-can-approve).
 
 ### Copilot Review Required
 

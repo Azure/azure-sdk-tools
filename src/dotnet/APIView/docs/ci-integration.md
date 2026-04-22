@@ -80,4 +80,5 @@ See [troubleshooting.md](troubleshooting.md) for common questions like "Why didn
 - Do **not** require approvals for version-only changes
 - Surface issues **early** via PR and scheduled pipelines
 - Only **block** at release time, and only for GA versions
+- **Namespace approval** is still required for Beta releases (first release of a new package)
 - Reuse approvals automatically when API surface is unchanged

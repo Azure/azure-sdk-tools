@@ -896,10 +896,16 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
                 new TestLogger<CodeownersAuditHelper>()
             );
 
-            var report = await helper.RunAudit(false, false, null, CancellationToken.None);
+            var response = await helper.RunAudit(false, false, null, CancellationToken.None);
 
-            Assert.That(report.Violations, Is.Empty);
-            Assert.That(report.FixesApplied, Is.Empty);
+            Assert.Multiple(() =>
+            {
+                Assert.That(response.Violations, Is.Empty);
+                Assert.That(response.FixResults, Is.Empty);
+                Assert.That(response.TotalViolations, Is.EqualTo(0));
+                Assert.That(response.FixesApplied, Is.EqualTo(0));
+                Assert.That(response.FixesFailed, Is.EqualTo(0));
+            });
         }
 
         [Test]

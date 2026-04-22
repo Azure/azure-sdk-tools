@@ -6,6 +6,7 @@ using Azure.Sdk.Tools.Cli.Helpers.Codeowners.Rules;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Codeowners;
+using Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
 using Azure.Sdk.Tools.Cli.Services;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 
@@ -17,7 +18,7 @@ public class CodeownersAuditHelper(
     ILogger<CodeownersAuditHelper> logger
 ) : ICodeownersAuditHelper
 {
-    public async Task<AuditReport> RunAudit(bool fix, bool force, string? repo, CancellationToken ct)
+    public async Task<CodeownersAuditResponse> RunAudit(bool fix, bool force, string? repo, CancellationToken ct)
     {
         var context = new AuditContext
         {
@@ -27,7 +28,12 @@ public class CodeownersAuditHelper(
             Repo = repo,
         };
 
-        var report = new AuditReport();
+        var response = new CodeownersAuditResponse
+        {
+            FixRequested = fix,
+            ForceRequested = force,
+            Repo = repo,
+        };
 
         // Rules are injected in the order they are registered in DI.
         // Execution order:
@@ -43,7 +49,7 @@ public class CodeownersAuditHelper(
             logger.LogInformation("Evaluating rule {RuleId}: {Description}", rule.RuleId, rule.Description);
             var violations = await rule.Evaluate(context, ct);
 
-            report.Violations.AddRange(violations);
+            response.Violations.AddRange(violations);
             logger.LogInformation("Rule {RuleId}: {Count} violation(s) found", rule.RuleId, violations.Count);
 
             if (violations.Count > 0 && fix && rule.CanFix)
@@ -55,7 +61,7 @@ public class CodeownersAuditHelper(
                 foreach (var fixAction in fixes)
                 {
                     var result = await fixAction.Apply(ct);
-                    report.FixesApplied.Add(result);
+                    response.FixResults.Add(result);
 
                     if (result.Success)
                     {
@@ -73,7 +79,7 @@ public class CodeownersAuditHelper(
             }
         }
 
-        return report;
+        return response;
     }
 
     internal async Task<WorkItemData> FetchAllWorkItems(string? repo, CancellationToken ct)

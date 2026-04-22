@@ -8,6 +8,7 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Helpers.Codeowners;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Codeowners;
+using Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 using Azure.Sdk.Tools.CodeownersUtils.Utils;
@@ -367,15 +368,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 var fix = parseResult.GetValue(fixOption);
                 var force = parseResult.GetValue(forceOption);
                 var repo = parseResult.GetValue(repoOption);
-
-                if (!string.IsNullOrEmpty(repo) && !repo.StartsWith("Azure/", StringComparison.OrdinalIgnoreCase))
-                {
-                    return new DefaultCommandResponse
-                    {
-                        ResponseError = $"Invalid --repo format: '{repo}'. Must be of the form 'Azure/<repo>' (e.g., Azure/azure-sdk-for-net)."
-                    };
-                }
-
                 return await Audit(fix, force, repo, ct);
             }
 
@@ -772,6 +764,36 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             }
         }
 
+        /// <summary>
+        /// Audits CODEOWNERS work items for violations.
+        /// When --fix is set, applies automated fixes for rules that support them.
+        /// When --force is set, overrides safety thresholds.
+        /// When --repo is set, scopes Packages (by language) and Label Owners (by Custom.Repository)
+        /// to the specified repo, but all Owners and Labels are always in scope.
+        /// </summary>
+        public async Task<CommandResponse> Audit(bool fix, bool force, string? repo, CancellationToken ct)
+        {
+            try
+            {
+                // TODO: Validate repo
+                if (!string.IsNullOrEmpty(repo) && !repo.StartsWith("Azure/", StringComparison.OrdinalIgnoreCase))
+                {
+                    return new DefaultCommandResponse
+                    {
+                        ResponseError = $"Invalid --repo format: '{repo}'. Must be of the form 'Azure/<repo>' (e.g., Azure/azure-sdk-for-net)."
+                    };
+                }
+
+                return await codeownersAuditHelper.RunAudit(fix, force, repo, ct);
+
+            } 
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Audit failed");
+                return new DefaultCommandResponse { ResponseError = $"Audit failed: {ex.Message}" };
+            }
+        }
+
         private async Task<string> ResolveRepo(string? repo, CancellationToken ct)
         {
             if (string.IsNullOrEmpty(repo))
@@ -860,56 +882,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         private static bool IsTeamAlias(string alias)
         {
             return alias.Contains('/');
-        }
-
-        /// <summary>
-        /// Audits CODEOWNERS work items for violations.
-        /// When --fix is set, applies automated fixes for rules that support them.
-        /// When --force is set, overrides safety thresholds.
-        /// When --repo is set, scopes Packages (by language) and Label Owners (by Custom.Repository)
-        /// to the specified repo, but all Owners and Labels are always in scope.
-        /// </summary>
-        private async Task<DefaultCommandResponse> Audit(bool fix, bool force, string? repo, CancellationToken ct)
-        {
-            var report = await codeownersAuditHelper.RunAudit(fix, force, repo, ct);
-
-            var lines = new List<string>();
-            lines.Add($"=== CODEOWNERS Audit Report ===");
-            lines.Add($"Fix mode: {fix}, Force: {force}, Repo: {repo ?? "(all)"}");
-            lines.Add($"Total violations: {report.Violations.Count}");
-            lines.Add($"Fixes applied: {report.FixesApplied.Count(r => r.Success)}");
-            lines.Add($"Fixes failed: {report.FixesApplied.Count(r => !r.Success)}");
-            lines.Add("");
-
-            foreach (var group in report.Violations.GroupBy(v => v.RuleId).OrderBy(g => g.Key))
-            {
-                lines.Add($"--- {group.Key} ({group.Count()} violations) ---");
-                foreach (var v in group)
-                {
-                    lines.Add($"  {v.Description}");
-                    if (!string.IsNullOrEmpty(v.Detail))
-                    {
-                        lines.Add($"    Detail: {v.Detail}");
-                    }
-                }
-                lines.Add("");
-            }
-
-            if (report.FixesApplied.Any())
-            {
-                lines.Add("--- Fix Results ---");
-                foreach (var r in report.FixesApplied)
-                {
-                    var status = r.Success ? "SUCCESS" : "FAILED";
-                    lines.Add($"  [{status}] {r.Description}");
-                    if (!string.IsNullOrEmpty(r.ErrorMessage))
-                    {
-                        lines.Add($"    Error: {r.ErrorMessage}");
-                    }
-                }
-            }
-
-            return new DefaultCommandResponse { Message = string.Join("\n", lines) };
         }
     }
 }

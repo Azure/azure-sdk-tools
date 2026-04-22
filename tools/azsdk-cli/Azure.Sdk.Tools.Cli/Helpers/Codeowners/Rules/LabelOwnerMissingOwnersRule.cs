@@ -74,14 +74,14 @@ public class LabelOwnerMissingOwnersRule(
             {
                 RuleId = RuleId,
                 Description = $"Delete Label Owner work item {wiId}",
-                Apply = async (fixCt) => await DeleteWorkItemSafe(wiId, fixCt),
+                Apply = async (fixCt) => await DeleteWorkItem(wiId, fixCt),
             });
         }
 
         return Task.FromResult(fixes);
     }
 
-    private async Task<AuditFixResult> DeleteWorkItemSafe(int workItemId, CancellationToken ct)
+    private async Task<AuditFixResult> DeleteWorkItem(int workItemId, CancellationToken ct)
     {
         var desc = $"Delete Label Owner work item {workItemId}";
         await devOpsService.DeleteWorkItemAsync(workItemId, ct);

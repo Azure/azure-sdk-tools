@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using System.Text.Json.Serialization;
+
 namespace Azure.Sdk.Tools.Cli.Models.Codeowners;
 
 /// <summary>
@@ -19,9 +21,18 @@ public class AuditContext
 /// </summary>
 public class AuditViolation
 {
+    [JsonPropertyName("rule_id")]
     public required string RuleId { get; set; }
+
+    [JsonPropertyName("description")]
     public required string Description { get; set; }
+
+    [JsonPropertyName("work_item_id")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? WorkItemId { get; set; }
+
+    [JsonPropertyName("detail")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Detail { get; set; }
 }
 
@@ -40,8 +51,16 @@ public class AuditFixAction
 /// </summary>
 public class AuditFixResult
 {
+    [JsonPropertyName("rule_id")]
     public required string RuleId { get; set; }
+
+    [JsonPropertyName("description")]
     public required string Description { get; set; }
+
+    [JsonPropertyName("success")]
     public bool Success { get; set; }
+
+    [JsonPropertyName("error_message")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? ErrorMessage { get; set; }
 }

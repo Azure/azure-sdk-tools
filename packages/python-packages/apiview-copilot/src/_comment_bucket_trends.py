@@ -185,6 +185,7 @@ def build_language_comment_bucket_reports(
         full_end.isoformat(),
         environment=environment,
         select_fields=select_fields,
+        include_deleted=True,
     )
 
     review_ids: set[str] = set()

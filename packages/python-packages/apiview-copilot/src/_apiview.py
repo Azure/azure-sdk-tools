@@ -247,8 +247,9 @@ def get_active_reviews(
     metadata: list[ActiveReviewMetadata] = []
 
     # Get comments in the date range, excluding Diagnostic comments
+    # include_deleted=True because metrics calculations need deleted comments for deleted_* bucket counts
     comments = get_comments_in_date_range(
-        start_date, end_date, environment=environment, select_fields=select_fields
+        start_date, end_date, environment=environment, select_fields=select_fields, include_deleted=True
     )
 
     # Extract unique review IDs and revision IDs from comments

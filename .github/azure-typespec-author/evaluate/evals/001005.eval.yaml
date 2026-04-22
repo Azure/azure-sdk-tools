@@ -97,7 +97,7 @@ stimuli:
     config:
       scoring: scale_1_5
       threshold: 1.0
-      prompt: 'Evaluate only the semantic interpretation of the request: the excluded feature is the default value 21 on age, while age itself should remain as optional int32 (not removed). Also check the agent clearly explains this rationale. Do not re-evaluate version renaming, old version removal, oldAge removal, or example folder/file changes, since those are already covered by file-based graders.'
+      prompt: 'Evaluate the following change: the excluded feature is the default value 21 on age, The oldAge property should be deleted entirely along with its @removed decorator". The @renamedFrom decorator should be removed along with the oldAge property itself. The workLocation property should have its versioning decorator updated to reference `2025-05-04-preview`.'
       model: claude-opus-4.6-1m
 scoring:
   weights:

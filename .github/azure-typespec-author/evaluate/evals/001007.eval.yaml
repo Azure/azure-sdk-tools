@@ -111,7 +111,7 @@ stimuli:
     config:
       scoring: scale_1_5
       threshold: 1.0
-      prompt: 'Evaluate only the semantic interpretation of the request: the excluded features are workLocation property and WorkLocation model (both should not appear in the new version), while other features should be carried. Also check the agent clearly explains this semantic rationale. Do not re-evaluate version renaming (2024-10-01-preview → 2025-01-01), old version removal, new version example setup, or decorators, since those are already covered by file-based graders.'
+      prompt: 'Evaluate only the semantic interpretation of the request: the excluded features are workLocation property and WorkLocation model, while other features should be carried. Double check the plan has correctly implemented version renaming (2024-10-01-preview → 2025-01-01), old version removal, new version example setup and old version example removal.'
       model: claude-opus-4.6-1m
 scoring:
   weights:

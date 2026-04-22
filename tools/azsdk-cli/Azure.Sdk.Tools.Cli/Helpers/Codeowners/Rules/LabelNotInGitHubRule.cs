@@ -16,8 +16,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers.Codeowners.Rules;
 /// Prerequisite: IGitHubService.GetRepoLabels must be implemented.
 /// </summary>
 public class LabelNotInGitHubRule(
-    IGitHubService githubService,
-    ILogger<LabelNotInGitHubRule> logger
+    IGitHubService githubService
 ) : IAuditRule
 {
     public string RuleId => "AUD-LBL-001";

@@ -17,8 +17,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers.Codeowners.Rules;
 public class TeamNotWriteRule(
     ITeamUserCache teamUserCache,
     IGitHubService githubService,
-    IDevOpsService devOpsService,
-    ILogger<TeamNotWriteRule> logger
+    IDevOpsService devOpsService
 ) : IAuditRule
 {
     private const int SafetyThreshold = 5;

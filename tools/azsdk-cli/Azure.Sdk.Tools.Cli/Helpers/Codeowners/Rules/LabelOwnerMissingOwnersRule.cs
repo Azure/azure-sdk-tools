@@ -68,7 +68,11 @@ public class LabelOwnerMissingOwnersRule(
 
         foreach (var violation in violations)
         {
-            var wiId = violation.WorkItemId.Value!;
+            if (!violation.WorkItemId.HasValue)
+            {
+                throw new InvalidOperationException($"Violation {violation.Description} does not have a WorkItemId, cannot apply fix.");
+            }
+            var wiId = violation.WorkItemId.Value;
 
             fixes.Add(new AuditFixAction
             {

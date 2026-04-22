@@ -12,9 +12,14 @@ public class SdkLanguageTests
     [TestCase(SdkLanguage.Python, "azure-sdk-for-python")]
     [TestCase(SdkLanguage.Rust, "azure-sdk-for-rust")]
     [TestCase(SdkLanguage.Cpp, "azure-sdk-for-cpp")]
-    [TestCase(SdkLanguage.Unknown, null)]
     public void GetRepoName_ReturnsExpectedRepoName(SdkLanguage language, string expected)
     {
         Assert.That(SdkLanguageHelpers.GetRepoName(language), Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void GetRepoName_Unknown_ReturnsNull()
+    {
+        Assert.That(SdkLanguageHelpers.GetRepoName(SdkLanguage.Unknown), Is.Null);
     }
 }

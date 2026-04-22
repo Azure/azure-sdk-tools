@@ -1052,8 +1052,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
             _rule = new TeamNotWriteRule(
                 _mockTeamUserCache.Object,
                 _mockGithub.Object,
-                _mockDevOps.Object,
-                new TestLogger<TeamNotWriteRule>()
+                _mockDevOps.Object
             );
         }
 
@@ -1413,10 +1412,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
         public void Setup()
         {
             _mockGithub = new Mock<IGitHubService>();
-            _rule = new LabelNotInGitHubRule(
-                _mockGithub.Object,
-                new TestLogger<LabelNotInGitHubRule>()
-            );
+            _rule = new LabelNotInGitHubRule(_mockGithub.Object);
         }
 
         [Test]

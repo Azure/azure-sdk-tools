@@ -5,6 +5,7 @@ import { CodePanelData, CodePanelNodeMetaData, CodePanelRowData, CodePanelRowDat
 import { InsertCodePanelRowDataMessage, ReviewPageWorkerMessageDirective } from '../_models/insertCodePanelRowDataMessage';
 import { NavigationTreeNode } from '../_models/navigationTreeModels';
 import { DIFF_ADDED, DIFF_REMOVED, FULL_DIFF_STYLE, TREE_DIFF_STYLE } from '../_helpers/common-helpers';
+import { applyNavNodeToTree } from './nav-node-helpers';
 import { CommentSource } from '../_models/commentItemModel';
 
 let codePanelData: CodePanelData | null = null;
@@ -191,8 +192,8 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
   }
 
   if (buildNode && node.navigationTreeNode && !isNavigationTreeCreated) {
-    navigationTree.push(node.navigationTreeNode);
-  }  
+    applyNavNodeToTree(navigationTree, node.navigationTreeNode, (node.codeLines || []).map(l => l.diffKind));
+  }
 
   if (node.bottomTokenNodeIdHash) {
     codePanelRowData.push(...diffBuffer);

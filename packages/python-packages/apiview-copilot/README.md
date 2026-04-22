@@ -179,4 +179,10 @@ On Windows CMD.exe, use `avc.bat` in lieu of `avc` for all CLI commands.
 
 ## Documentation
 
-For more information, visit the [API Documentation](https://apiviewuat.azurewebsites.net/swagger/index.html).
+- [Overview](./docs/overview.md) — Architecture overview and Azure resource dependencies
+- [API Review Algorithm](./docs/api-review.md) — Detailed description of the review pipeline stages
+- [Knowledge Base](./docs/kb.md) — Knowledge base structure and how it is used at review time
+- [Metrics](./docs/metrics.md) — Metrics collected, why, and how to access them
+- [CLI Reference](./docs/cli.md) — All `avc` CLI commands for local development
+
+For the REST API documentation, visit the [API Documentation](https://apiviewuat.azurewebsites.net/swagger/index.html).

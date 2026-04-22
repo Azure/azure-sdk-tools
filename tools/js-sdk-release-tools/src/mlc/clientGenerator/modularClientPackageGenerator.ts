@@ -21,9 +21,6 @@ import { codeOwnersAndIgnoreLinkGenerator } from '../../common/codeOwnersAndIgno
 export async function generateAzureSDKPackage(options: ModularClientPackageOptions): Promise<PackageResult> {
     logger.info(`Start to generate modular client package for azure-sdk-for-js.`);
     const packageResult = initPackageResult();
-    const rushScript = posix.join(options.sdkRepoRoot, 'common/scripts/install-run-rush.js');
-    const rushxScript = posix.join(options.sdkRepoRoot, 'common/scripts/install-run-rushx.js');
-
     try {
         const packageDirectory = await getGeneratedPackageDirectory(options.typeSpecDirectory, options.sdkRepoRoot);
         const relativePackageDirToSdkRoot = posix.relative(posix.normalize(options.sdkRepoRoot), posix.normalize(packageDirectory));
@@ -38,7 +35,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         }
         await generateTypeScriptCodeFromTypeSpec(options, originalNpmPackageInfo?.version, packageDirectory);
  
-        await buildPackage(packageDirectory, options, packageResult, rushScript, rushxScript);
+        await buildPackage(packageDirectory, options, packageResult);
 
         // changelog generation will compute package version and bump it in package.json,
         // so changelog generation should be put before any task needs package.json's version,
@@ -46,7 +43,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         // TODO: to be compatible with current tool, input relative generated package dir
         const changelog = await generateChangelogAndBumpVersion(relativePackageDirToSdkRoot, options);
         updateChangelogResult(packageResult, changelog);
-        await tryBuildSamples(packageDirectory, rushxScript, options.sdkRepoRoot, options.runMode);
+        await tryBuildSamples(packageDirectory, options.sdkRepoRoot, options.runMode);
 
         const npmPackageInfo = await getNpmPackageInfo(packageDirectory);
         const relativeTypeSpecDirToSpecRoot = posix.relative(
@@ -60,7 +57,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
             relativePackageDirToSdkRoot
         );
 
-        const artifactPath = await createArtifact(packageDirectory, rushxScript, options.sdkRepoRoot);
+        const artifactPath = await createArtifact(packageDirectory, options.sdkRepoRoot);
         const relativeArtifactPath = posix.relative(unixify(options.sdkRepoRoot), unixify(artifactPath));
         packageResult.artifacts.push(relativeArtifactPath);
 

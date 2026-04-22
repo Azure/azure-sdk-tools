@@ -9,13 +9,10 @@ Module for handling chat thread resolution requests in APIView Copilot.
 """
 
 import json
-import uuid
 
-from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from src._database_manager import DatabaseManager
-from src._models import Example, Guideline, Memory
+from src._memory_utils import check_for_duplicate_memory, merge_and_save_memory
 from src._prompt_runner import run_prompt
-from src._search_manager import SearchManager
 
 
 def handle_thread_resolution_request(
@@ -38,7 +35,10 @@ def handle_thread_resolution_request(
             reasoning=action_results.get("reasoning", ""),
         )
         results = _execute_plan(
-            plan=plan, is_exception=False, package_name=package_name, source_comment_id=source_comment_id
+            plan=plan,
+            is_exception=False,
+            package_name=package_name,
+            source_comment_id=source_comment_id,
         )
         return _summarize_results(results)
     elif action == "record_exception":
@@ -50,7 +50,10 @@ def handle_thread_resolution_request(
             reasoning=action_results.get("reasoning", ""),
         )
         results = _execute_plan(
-            plan=plan, is_exception=True, package_name=package_name, source_comment_id=source_comment_id
+            plan=plan,
+            is_exception=True,
+            package_name=package_name,
+            source_comment_id=source_comment_id,
         )
         return _summarize_results(results)
     elif action == "no_action":
@@ -109,60 +112,28 @@ def _execute_plan(*, plan: dict, is_exception: bool, package_name: str, source_c
 
     raw_examples = raw_memory.pop("related_examples", [])
 
-    memory = Memory(**raw_memory)
-    old_memory_id = memory.id
-    memory.id = str(uuid.uuid4())  # Generate a new UUID for the memory
-    memory_id = memory.id
-    examples = [Example(**ex) for ex in raw_examples]
-    # TODO: Remove once we implement service silos
-    for ex in examples:
-        ex.service = package_name if is_exception else None
-    for example in examples:
-        # ensure the new memory ID is propagated to the example IDs
-        example.id = example.id.replace(old_memory_id, memory_id)
-        example.memory_ids = [memory_id]
-        memory.related_examples.append(example.id)  # pylint: disable=no-member
+    # TODO: Remove service silo logic once we implement service silos
+    example_service = package_name if is_exception else None
 
-    guidelines = []
-    for guideline_id in guideline_ids:
-        try:
-            # strip the prefix from the guideline ID if it exists
-            prefix = "https://azure.github.io/azure-sdk/"
-            if guideline_id.startswith(prefix):
-                guideline_id = guideline_id[len(prefix) :]
-            guideline = Guideline(**db_manager.guidelines.get(guideline_id))
-            guideline.related_memories.append(memory_id)  # pylint: disable=no-member
-            memory.related_guidelines.append(guideline_id)  # pylint: disable=no-member
-            guidelines.append(guideline)
-        except CosmosResourceNotFoundError:
-            continue  # Guideline not found, skip it
-        except Exception as e:
-            print(f"Error retrieving guideline {guideline_id}: {e}")
-            continue
+    # Check for duplicate memories before creating
+    merge_result = check_for_duplicate_memory(
+        raw_memory=raw_memory, guideline_ids=guideline_ids
+    )
+    if merge_result is not None:
+        return merge_and_save_memory(
+            merge_result=merge_result,
+            raw_memory=raw_memory,
+            guideline_ids=guideline_ids,
+            raw_examples=raw_examples,
+            example_service=example_service,
+        )
 
-    success = []
-    failures = {}
-
-    # now update all modified objects in the database
-    for guideline in guidelines:
-        try:
-            success.append(db_manager.guidelines.upsert(guideline.id, data=guideline, run_indexer=False))
-        except Exception as e:
-            print(f"Error updating guideline {guideline.id}: {e}")
-            failures[guideline.id] = str(e)
-    for example in examples:
-        try:
-            success.append(db_manager.examples.upsert(example.id, data=example, run_indexer=False))
-        except Exception as e:
-            print(f"Error updating example {example.id}: {e}")
-            failures[example.id] = str(e)
-    try:
-        success.append(db_manager.memories.upsert(memory.id, data=memory, run_indexer=False))
-    except Exception as e:
-        print(f"Error updating memory {memory.id}: {e}")
-        failures[memory.id] = str(e)
-    SearchManager.run_indexers()
-    return {"success": success, "failures": failures}
+    return db_manager.save_memory_with_links(
+        raw_memory=raw_memory,
+        guideline_ids=guideline_ids,
+        raw_examples=raw_examples,
+        example_service=example_service,
+    )
 
 
 def _summarize_results(results: dict):

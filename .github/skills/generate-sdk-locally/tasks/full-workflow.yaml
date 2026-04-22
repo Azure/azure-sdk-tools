@@ -25,6 +25,12 @@ expected:
       tool_name: azsdk_package_run_check
     - type: tool_called
       tool_name: azsdk_package_run_tests
+    - type: tool_called
+      tool_name: azsdk_package_update_changelog_content
+    - type: tool_called
+      tool_name: azsdk_package_update_metadata
+    - type: tool_called
+      tool_name: azsdk_package_update_version
   behavior:
     max_tool_calls: 15
     max_response_time_ms: 120000

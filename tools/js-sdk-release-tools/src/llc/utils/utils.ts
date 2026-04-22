@@ -63,15 +63,6 @@ export async function getLatestCodegen(packagePath) {
     return stableVersion;
 }
 
-export function getRelativePackagePath(packagePath) {
-    const match = /.*[\/\\](sdk[\/\\][a-zA-Z0-9-.]+[\/\\][a-zA-Z0-9-]+)/.exec(packagePath);
-    if (!!match && match.length == 2) {
-        return match[1].replace(/\\/g, '/');
-    } else {
-        throw `Wrong package path ${packagePath};`;
-    }
-}
-
 export function getPackagePathFromReadmePath(readmePath) {
     if (!fs.existsSync(readmePath)) {
         logger.error(`Invalid README.md file path '${readmePath}'.`);

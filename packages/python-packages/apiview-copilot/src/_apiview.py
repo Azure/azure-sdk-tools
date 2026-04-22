@@ -87,6 +87,8 @@ _APIVIEW_COMMENT_SELECT_FIELDS = [
     "Downvotes",
     "CommentType",
     "CommentSource",
+    "ThreadId",
+    "Severity",
 ]
 APIVIEW_COMMENT_SELECT_FIELDS = [f"c.{field}" for field in _APIVIEW_COMMENT_SELECT_FIELDS]
 
@@ -463,14 +465,30 @@ def get_comments_in_date_range(
 
 def get_approvers(*, language: str = None, environment: str = "production") -> set[str]:
     """
-    Retrieves the set of profile ids for approvers based on ApprovedLanguages.
-    If language is specified, returns profile ids where ApprovedLanguages contains the language.
-    If no language is specified, returns all profile ids with non-empty ApprovedLanguages.
+    Retrieves the set of architect and deputy-architect members from the Permissions container.
+    If language is specified (pretty name, e.g. "Java"), returns members from groups whose
+    roles include that language with role "Architect" or "Deputy Architect".
+    If no language is specified, returns all members from all architect/deputy-architect groups.
     """
-    profiles_client = get_apiview_cosmos_client(container_name="Profiles", environment=environment, db_name="APIView")
-    query = "SELECT c.id, c.Preferences FROM c"
-    parameters = []
-    result = profiles_client.query_items(
+    permissions_client = get_apiview_cosmos_client(container_name="Permissions", environment=environment)
+
+    if language:
+        query = (
+            "SELECT c.members FROM c "
+            "JOIN r IN c.roles "
+            "WHERE r.role IN ('Architect', 'Deputy Architect', 'DeputyArchitect') "
+            "AND LOWER(r.language) = @language"
+        )
+        parameters = [{"name": "@language", "value": language.lower()}]
+    else:
+        query = (
+            "SELECT c.members FROM c "
+            "JOIN r IN c.roles "
+            "WHERE r.role IN ('Architect', 'Deputy Architect', 'DeputyArchitect')"
+        )
+        parameters = []
+
+    result = permissions_client.query_items(
         query=query,
         parameters=parameters,
         enable_cross_partition_query=True,
@@ -478,15 +496,8 @@ def get_approvers(*, language: str = None, environment: str = "production") -> s
 
     approver_ids = set()
     for item in result:
-        preferences = item.get("Preferences", {})
-        approved_languages = preferences.get("ApprovedLanguages", [])
-        if not approved_languages:
-            continue
-        if language:
-            if language in approved_languages:
-                approver_ids.add(item.get("id"))
-        else:
-            approver_ids.add(item.get("id"))
+        members = item.get("members", [])
+        approver_ids.update(members)
 
     return approver_ids
 

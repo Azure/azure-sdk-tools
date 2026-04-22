@@ -19,7 +19,9 @@ This command returns comments written by **human language board approvers** in A
 - **AIGenerated** comments (written by APIView Copilot)
 - **Deleted** comments
 
-The set of approvers is determined from APIView Profiles — users whose `ApprovedLanguages` includes the specified language. When no language is specified, all users with any approved language are included.
+The set of approvers is determined from the APIView Permissions container — members of groups whose roles include "Architect" or "Deputy Architect" for the specified language. When no language is specified, all architect and deputy-architect group members are included.
+
+Use `--all-commenters` to skip approver filtering and return comments from all users.
 
 ## Defaults
 
@@ -66,6 +68,12 @@ python cli.py report architect-comments -s 2026-03-01 -e 2026-03-31
 # Python architect comments only
 python cli.py report architect-comments -s 2026-03-01 -e 2026-03-31 -l python
 
+# All commenters (not just approvers)
+python cli.py report architect-comments -s 2026-03-01 -e 2026-03-31 -l python --all-commenters
+
+# Include reply comments (by default only first comment per thread is returned)
+python cli.py report architect-comments -s 2026-03-01 -e 2026-03-31 -l java --include-replies
+
 # YAML output
 python cli.py report architect-comments -s 2026-03-01 -e 2026-03-31 --format yaml
 
@@ -82,6 +90,8 @@ python cli.py report architect-comments -s 2026-03-01 -e 2026-03-31 --environmen
 | `--language` / `-l` | string | all | Language to filter by (e.g., `python`, `Go`, `C#`) |
 | `--environment` | string | `production` | `production` or `staging` |
 | `--format` / `-f` | string | `json` | Output format: `json` or `yaml` |
+| `--all-commenters` | flag | `false` | Include comments from all users, not just approvers |
+| `--include-replies` | flag | `false` | Include reply comments. By default only the first comment per thread is returned |
 
 ## Gotchas
 

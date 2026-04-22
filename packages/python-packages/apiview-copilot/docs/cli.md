@@ -430,10 +430,10 @@ avc report memory -s 2026-01-01 -e 2026-01-31 [-l python] [--format json|yaml]
 
 ### `avc report architect-comments`
 
-Retrieve human architect review comments for a date range. Returns comments from language board approvers, excluding Diagnostic and AI-generated comments. If `--language` is omitted, returns results for all languages.
+Retrieve human architect review comments for a date range. Returns comments from language board approvers, excluding Diagnostic and AI-generated comments. If `--language` is omitted, returns results for all languages. By default, only the first comment in each thread is returned (replies are excluded). Use `--include-replies` to also include reply comments.
 
 ```bash
-avc report architect-comments -s 2026-01-01 -e 2026-01-31 [-l python] [--environment staging] [--format yaml]
+avc report architect-comments -s 2026-01-01 -e 2026-01-31 [-l python] [--all-commenters] [--include-replies] [--environment staging] [--format yaml]
 ```
 
 ---

@@ -36,6 +36,7 @@ from src._apiview import (
 from src._apiview import get_active_reviews as _get_active_reviews
 from src._apiview import get_ai_comment_feedback as _get_ai_comment_feedback
 from src._apiview import (
+    _APIVIEW_COMMENT_SELECT_FIELDS,
     get_apiview_cosmos_client,
     get_approvers,
     get_comment_with_context,
@@ -2182,47 +2183,72 @@ def get_architect_comments(
     language: Optional[str] = None,
     environment: str = "production",
     output_format: str = "json",
+    all_commenters: bool = False,
+    include_replies: bool = False,
 ):
     """
     Retrieve human architect review comments for a date range.
     Returns comments from language board approvers, excluding Diagnostic and AI-generated comments.
     If --language is omitted, returns results for all languages.
+    If --all-commenters is set, includes comments from all users (not just approvers).
+    By default, only the first comment in each thread (which has a Severity) is returned.
+    Use --include-replies to also include reply comments.
     """
     raw_comments = get_comments_in_date_range(start_date, end_date, environment=environment)
     filtered = [c for c in raw_comments if c.get("CommentSource") != "AIGenerated"]
 
-    if language:
-        pretty_language = resolve_language(language)[1]
-        allowed_commenters = get_approvers(language=pretty_language)
+    if not all_commenters:
+        if language:
+            pretty_language = resolve_language(language)[1]
+            allowed_commenters = get_approvers(language=pretty_language)
+        else:
+            allowed_commenters = get_approvers()
 
-        reviews_container = get_apiview_cosmos_client(container_name="Reviews", environment=environment)
+        if allowed_commenters:
+            filtered = [c for c in filtered if c.get("CreatedBy") in allowed_commenters]
+
+    # Filter by language if specified — look up each comment's review to determine language
+    if language:
+        target_language = resolve_language(language)[1].lower()
         review_ids = set(c.get("ReviewId") for c in filtered if c.get("ReviewId"))
         if review_ids:
+            reviews_container = get_apiview_cosmos_client(container_name="Reviews", environment=environment)
             params = []
             clauses = []
             for i, rid in enumerate(review_ids):
                 param_name = f"@id_{i}"
                 clauses.append(f"c.id = {param_name}")
                 params.append({"name": param_name, "value": rid})
-            query = f"SELECT c.id, c.Language FROM c WHERE ({' OR '.join(clauses)})"
+            review_query = f"SELECT c.id, c.Language FROM c WHERE ({' OR '.join(clauses)})"
             review_results = list(
-                reviews_container.query_items(query=query, parameters=params, enable_cross_partition_query=True)
+                reviews_container.query_items(
+                    query=review_query, parameters=params, enable_cross_partition_query=True
+                )
             )
-            review_lang_map = {r["id"]: r.get("Language", "").lower() for r in review_results}
-        else:
-            review_lang_map = {}
+            review_lang_map = {r["id"]: get_language_pretty_name(r.get("Language", "")).lower() for r in review_results}
+            filtered = [c for c in filtered if review_lang_map.get(c.get("ReviewId"), "").lower() == target_language]
 
-        lang_lower = pretty_language.lower()
-        filtered = [c for c in filtered if review_lang_map.get(c.get("ReviewId", ""), "") == lang_lower]
-    else:
-        allowed_commenters = get_approvers()
+    # By default, exclude replies — keep only the first comment per thread (has a Severity).
+    if not include_replies:
+        seen_threads = {}
+        for c in filtered:
+            thread_id = c.get("ThreadId")
+            if thread_id is None:
+                seen_threads[c.get("id")] = c
+            elif thread_id not in seen_threads:
+                seen_threads[thread_id] = c
+            else:
+                existing = seen_threads[thread_id]
+                if existing.get("CreatedOn", "") > c.get("CreatedOn", ""):
+                    seen_threads[thread_id] = c
+        filtered = list(seen_threads.values())
 
     comments = [APIViewComment(**c) for c in filtered]
 
-    if allowed_commenters:
-        comments = [c for c in comments if c.created_by in allowed_commenters]
-
-    results = [comment.model_dump(by_alias=True) for comment in comments]
+    results = [
+        {k: v for k, v in comment.model_dump(by_alias=True, mode="json").items() if k in _APIVIEW_COMMENT_SELECT_FIELDS}
+        for comment in comments
+    ]
     if output_format == "yaml":
         print(yaml.dump(results, default_flow_style=False, allow_unicode=True, sort_keys=False))
     else:
@@ -2975,6 +3001,20 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--format", "-f"],
                 default="json",
                 choices=["json", "yaml"],
+            )
+            ac.argument(
+                "all_commenters",
+                action="store_true",
+                help="Include comments from all users, not just language board approvers.",
+                options_list=["--all-commenters"],
+                default=False,
+            )
+            ac.argument(
+                "include_replies",
+                action="store_true",
+                help="Include reply comments. By default, only the first comment in each thread is returned.",
+                options_list=["--include-replies"],
+                default=False,
             )
         super(CliCommandsLoader, self).load_arguments(command)
 

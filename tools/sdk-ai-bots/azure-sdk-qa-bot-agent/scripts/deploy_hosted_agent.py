@@ -13,7 +13,6 @@ Usage:
 
 import argparse
 import asyncio
-import configparser
 import json
 import os
 import subprocess
@@ -21,6 +20,11 @@ import sys
 import time
 from pathlib import Path
 from urllib.parse import urlparse
+
+# Suppress Azure CLI welcome banner before any subprocess calls.
+# On fresh CI agents the first `az` invocation dumps an ASCII banner
+# to stdout, corrupting captured command output.
+os.environ.setdefault("AZURE_CORE_WELCOME_MESSAGE", "false")
 
 from dotenv import load_dotenv
 
@@ -53,28 +57,6 @@ def _run(cmd: list[str], **kwargs) -> None:
 def _run_quiet(cmd: list[str], **kwargs) -> subprocess.CompletedProcess:
     """Run a command and return the result without raising on failure."""
     return subprocess.run(cmd, capture_output=True, text=True, **kwargs)
-
-
-def _suppress_azure_cli_welcome() -> None:
-    """Disable Azure CLI welcome banner by writing config directly.
-
-    We cannot use ``az config set`` because that command itself triggers
-    the welcome banner on first run, polluting stdout of later calls.
-    """
-    azure_dir = Path.home() / ".azure"
-    azure_dir.mkdir(exist_ok=True)
-    config_path = azure_dir / "config"
-
-    cfg = configparser.ConfigParser()
-    if config_path.exists():
-        cfg.read(str(config_path))
-    if not cfg.has_section("core"):
-        cfg.add_section("core")
-    cfg.set("core", "welcome_message", "false")
-    cfg.set("core", "collect_telemetry", "false")
-    with open(config_path, "w") as f:
-        cfg.write(f)
-    print(f"  Azure CLI welcome banner suppressed via {config_path}")
 
 
 def _git_short_sha() -> str:
@@ -443,8 +425,6 @@ def main() -> None:
     args = parser.parse_args()
 
     asyncio.run(app_config.init())
-
-    _suppress_azure_cli_welcome()
 
     # Show current subscription context
     sub_result = _run_quiet(

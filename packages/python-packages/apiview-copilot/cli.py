@@ -2176,45 +2176,57 @@ def resolve_language_to_canonical(lang: str) -> str:
     return resolve_language(lang)[0]
 
 
-def analyze_comments(language: str, start_date: str, end_date: str, environment: str = "production"):
+def get_architect_comments(
+    start_date: str,
+    end_date: str,
+    language: Optional[str] = None,
+    environment: str = "production",
+    output_format: str = "json",
+):
     """
-    Analyze APIView comments by language and date window, output count, unique authors, and theme analysis via Prompty.
+    Retrieve human architect review comments for a date range.
+    Returns comments from language board approvers, excluding Diagnostic and AI-generated comments.
+    If --language is omitted, returns results for all languages.
     """
-    filtered = get_comments_in_date_range(start_date, end_date, environment=environment)
+    raw_comments = get_comments_in_date_range(start_date, end_date, environment=environment)
+    filtered = [c for c in raw_comments if c.get("CommentSource") != "AIGenerated"]
 
-    allowed_commenters = get_approvers(language=resolve_language(language)[1])
+    if language:
+        pretty_language = resolve_language(language)[1]
+        allowed_commenters = get_approvers(language=pretty_language)
 
-    reviews_container = get_apiview_cosmos_client(container_name="Reviews", environment=environment)
-    review_ids = set(c.get("ReviewId") for c in filtered if c.get("ReviewId"))
-    if review_ids:
-        params = []
-        clauses = []
-        for i, rid in enumerate(review_ids):
-            param_name = f"@id_{i}"
-            clauses.append(f"c.id = {param_name}")
-            params.append({"name": param_name, "value": rid})
-        query = f"SELECT c.id, c.Language FROM c WHERE ({' OR '.join(clauses)})"
-        review_results = list(
-            reviews_container.query_items(query=query, parameters=params, enable_cross_partition_query=True)
-        )
-        review_lang_map = {r["id"]: r.get("Language", "").lower() for r in review_results}
+        reviews_container = get_apiview_cosmos_client(container_name="Reviews", environment=environment)
+        review_ids = set(c.get("ReviewId") for c in filtered if c.get("ReviewId"))
+        if review_ids:
+            params = []
+            clauses = []
+            for i, rid in enumerate(review_ids):
+                param_name = f"@id_{i}"
+                clauses.append(f"c.id = {param_name}")
+                params.append({"name": param_name, "value": rid})
+            query = f"SELECT c.id, c.Language FROM c WHERE ({' OR '.join(clauses)})"
+            review_results = list(
+                reviews_container.query_items(query=query, parameters=params, enable_cross_partition_query=True)
+            )
+            review_lang_map = {r["id"]: r.get("Language", "").lower() for r in review_results}
+        else:
+            review_lang_map = {}
+
+        lang_lower = pretty_language.lower()
+        filtered = [c for c in filtered if review_lang_map.get(c.get("ReviewId", ""), "") == lang_lower]
     else:
-        review_lang_map = {}
+        allowed_commenters = get_approvers()
 
-    language = resolve_language(language)[1].lower()
-    comments = [APIViewComment(**c) for c in filtered if review_lang_map.get(c.get("ReviewId", ""), "") == language]
+    comments = [APIViewComment(**c) for c in filtered]
 
     if allowed_commenters:
         comments = [c for c in comments if c.created_by in allowed_commenters]
 
-    comment_texts = [comment.comment_text for comment in comments if comment.comment_text]
-
-    theme_output = run_prompt(folder="other", filename="analyze_comment_themes", inputs={"comments": comment_texts})
-    print(theme_output)
-
-    print(f"Comment count: {len(comment_texts)}")
-    created_by_set = {comment.created_by for comment in comments if comment.created_by}
-    print(f"Unique CreatedBy values ({len(created_by_set)}): {sorted(created_by_set)}")
+    results = [comment.model_dump(by_alias=True) for comment in comments]
+    if output_format == "yaml":
+        print(yaml.dump(results, default_flow_style=False, allow_unicode=True, sort_keys=False))
+    else:
+        print(json.dumps(results, indent=2))
 
 
 def _build_auth_header():
@@ -2274,7 +2286,7 @@ def _claims_is_writer(claims: dict) -> bool:
     return ("Write" in token_roles) or ("App.Write" in token_roles)
 
 
-def audit_feedback(
+def get_feedback(
     start_date: str,
     end_date: str,
     language: Optional[str] = None,
@@ -2299,7 +2311,7 @@ def audit_feedback(
         print(json.dumps(results, indent=2))
 
 
-def audit_memory(
+def get_memories(
     start_date: str,
     end_date: str,
     language: Optional[str] = None,
@@ -2418,9 +2430,9 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("metrics", "report_metrics")
             g.command("quality-trends", "report_comment_bucket_trends")
             g.command("active-reviews", "get_active_reviews")
-            g.command("feedback", "audit_feedback")
-            g.command("memory", "audit_memory")
-            g.command("analyze-comments", "analyze_comments")
+            g.command("feedback", "get_feedback")
+            g.command("memory", "get_memories")
+            g.command("architect-comments", "get_architect_comments")
         return OrderedDict(self.command_table)
 
     # ARGUMENT REGISTRATION
@@ -2947,6 +2959,15 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="The language to filter by (e.g., python, csharp, C#, typescript).",
                 options_list=["--language", "-l"],
             )
+            ac.argument(
+                "output_format",
+                type=str,
+                help="Output format. Defaults to 'json'.",
+                options_list=["--format", "-f"],
+                default="json",
+                choices=["json", "yaml"],
+            )
+        with ArgumentsContext(self, "report architect-comments") as ac:
             ac.argument(
                 "output_format",
                 type=str,

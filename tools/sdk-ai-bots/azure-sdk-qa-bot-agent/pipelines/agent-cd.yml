@@ -69,6 +69,11 @@ extends:
                   inlineScript: |
                     set -euo pipefail
 
+                    # Suppress Azure CLI welcome banner on fresh CI agents.
+                    # The banner dumps ASCII art + command listing to stdout,
+                    # corrupting captured output of `az` commands.
+                    export AZURE_CORE_WELCOME_MESSAGE=false
+
                     python -m pip install --upgrade pip
                     python -m pip install keyring artifacts-keyring --retries 5 --timeout 60
 
@@ -81,6 +86,7 @@ extends:
                       --tag "$(Build.BuildId)" \
                       --appconfig-endpoint "$(AZURE_APPCONFIG_ENDPOINT)"
                 env:
+                  AZURE_CORE_WELCOME_MESSAGE: 'false'
                   UMI_BACKEND_CLIENT_ID: $(UMI_BACKEND_CLIENT_ID)
                   UMI_FRONTEND_CLIENT_ID: $(UMI_FRONTEND_CLIENT_ID)
                   ACR_NAME: $(ACR_NAME)

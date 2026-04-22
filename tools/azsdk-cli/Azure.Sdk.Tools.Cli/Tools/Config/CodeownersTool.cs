@@ -775,13 +775,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         {
             try
             {
-                // TODO: Validate repo
                 if (!string.IsNullOrEmpty(repo) && !repo.StartsWith("Azure/", StringComparison.OrdinalIgnoreCase))
                 {
-                    return new DefaultCommandResponse
-                    {
-                        ResponseError = $"Invalid --repo format: '{repo}'. Must be of the form 'Azure/<repo>' (e.g., Azure/azure-sdk-for-net)."
-                    };
+                    throw new ArgumentException($"Invalid repo format: '{repo}'. Must be of the form 'Azure/<repo>' (e.g., Azure/azure-sdk-for-net).", nameof(repo));
                 }
 
                 return await codeownersAuditHelper.RunAudit(fix, force, repo, ct);

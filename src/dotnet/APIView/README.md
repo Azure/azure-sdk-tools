@@ -7,7 +7,7 @@
 | [user-guide.md](docs/user-guide.md) | Guide for SDK authors and reviewers |
 | [ci-integration.md](docs/ci-integration.md) | CI/release pipeline behavior |
 | [troubleshooting.md](docs/troubleshooting.md) | FAQ — access, uploads, CI, releases |
-| [contributing.md](contributing.md) | Contributor setup and development |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Contributor setup and development |
 | [overview.md](docs/overview.md) | Architecture and internals |
 | [operations.md](docs/operations.md) | Ops, deployment, and configuration |
 | [release-approval.md](docs/release-approval.md) | Approval and release gating |
@@ -18,7 +18,7 @@
 
 ## File Index
 
-### [overview.md](overview.md) — Architecture Overview
+### [overview.md](docs/overview.md) — Architecture Overview
 Full system architecture: backend, frontend, data model, token format, diff algorithm, workflows, CI pipelines, and file paths.
 - 1\. What Is APIView?
 - 2\. Solution Structure
@@ -33,7 +33,7 @@ Full system architecture: backend, frontend, data model, token format, diff algo
 - 11\. SDK CI Pipelines (per-language pipeline chain)
 - 12\. Key File Paths
 
-### [user-guide.md](user-guide.md) — User Guide
+### [user-guide.md](docs/user-guide.md) — User Guide
 For SDK authors, architects, and reviewers using APIView day-to-day.
 - What Is APIView?
 - Key Concepts (Review, API Revision, revision types)
@@ -42,7 +42,7 @@ For SDK authors, architects, and reviewers using APIView day-to-day.
 - Review Process (comment severity, comment source)
 - Navigating the Review Page (command bar, revisions panel)
 
-### [ci-integration.md](ci-integration.md) — How Reviews, Revisions, and Pipelines Work
+### [ci-integration.md](docs/ci-integration.md) — How Reviews, Revisions, and Pipelines Work
 When and why API revisions are created, when approvals are required, and why pipelines fail.
 - Background
 - Key Concept: API Surface, Not Versions
@@ -62,23 +62,23 @@ Complete approval workflow: prerequisites, toggle flow, carry-forward, release g
 - 7\. Marking a Revision as Released
 - 8\. End-to-End Lifecycle
 
-### [troubleshooting.md](troubleshooting.md) — Troubleshooting (User FAQ)
+### [troubleshooting.md](docs/troubleshooting.md) — Troubleshooting (User FAQ)
 Common issues and solutions for APIView users.
-- Access Issues (org visibility, CorpNet)
-- Reviews and Revisions
-- Upload Failures (Java, Python)
-- Release Blocking (why blocked, revision types, key vault errors)
+- Access (org visibility, CorpNet)
+- Uploads & Parsing (Java, Python)
+- CI & Revisions
+- Releases & Approvals (why blocked, revision types, key vault errors)
+- Get Help
 
-### [operations.md](operations.md) — Operations Guide
+### [operations.md](docs/operations.md) — Operations Guide
 Deployment, test environments, configuration, and engineering team troubleshooting.
 - Service Overview (prod/staging URLs, Azure Portal links)
 - Deployment (staging slot, verification, swap)
 - Test Environment (UX test instance, deploy steps)
 - Configuration (approvers, Copilot review required)
-- Environment Variables
-- Troubleshooting (accessibility, release check override, Python sandboxing)
+- Troubleshooting (cross-references troubleshooting.md)
 
-### [contributing.md](contributing.md) — Contributor Guide
+### [CONTRIBUTING.md](CONTRIBUTING.md) — Contributor Guide
 Developer setup and workflow for contributing to APIView.
 - Prerequisites
 - Staging Environment Permissions
@@ -86,7 +86,7 @@ Developer setup and workflow for contributing to APIView.
 - Making Changes (where to modify, how to test, submitting PRs)
 - Logs and Monitoring
 
-### [legacy.md](legacy.md) — Legacy Razor Pages System
+### [legacy.md](docs/legacy.md) — Legacy Razor Pages System
 The deprecated Razor Pages frontend: what remains, format routing, and migration path.
 - 1\. Background
 - 2\. Token Format: Flat vs Tree (ParserStyle enum, routing logic)
@@ -98,7 +98,7 @@ The deprecated Razor Pages frontend: what remains, format routing, and migration
 - 8\. Coexistence Model (Razor/SPA routing handoff)
 - 9\. Migration Path (per-language effort estimates)
 
-### [sandboxing.md](sandboxing.md) — Sandboxing (Offline API Review Generation)
+### [sandboxing.md](docs/sandboxing.md) — Sandboxing (Offline API Review Generation)
 Deprecated pattern: running parsers in Azure DevOps pipelines instead of on the server.
 - 1\. What Is Sandboxing?
 - 2\. Languages That Use Sandboxing (Python, TypeSpec, Swagger)

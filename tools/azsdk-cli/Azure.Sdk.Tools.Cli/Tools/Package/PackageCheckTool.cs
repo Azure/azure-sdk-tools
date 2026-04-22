@@ -140,8 +140,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             };
 
             var readOnlyTasks = readOnlyChecks.Select(c => c.Run()).ToArray();
+            logger.LogInformation("Starting {Count} read-only checks in parallel", readOnlyChecks.Length);
             var readOnlyResults = await Task.WhenAll(readOnlyTasks);
 
+            logger.LogInformation("Running {Count} mutating checks sequentially", mutatingChecks.Length);
             var mutatingResults = new PackageCheckResponse[mutatingChecks.Length];
             for (int i = 0; i < mutatingChecks.Length; i++)
             {

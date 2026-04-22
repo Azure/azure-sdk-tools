@@ -6,9 +6,13 @@
 
 ### Breaking Changes
 
+- `azsdk package validate` with check type `All` no longer accepts `--fix`. Run a specific check type (for example, `Cspell`, `Snippets`, or `Format`) with `--fix` instead.
+
 ### Bugs Fixed
 
 ### Other Changes
+
+- `azsdk package validate` with check type `All` now runs read-only checks in parallel, significantly reducing wall time on large packages. Potentially-mutating checks (`Snippets`, `Format`) are serialized after the read-only phase to avoid file-write races.
 
 ## 0.6.9 (2026-04-16)
 

@@ -13,6 +13,7 @@ Usage:
 
 import argparse
 import asyncio
+import configparser
 import json
 import os
 import subprocess
@@ -55,8 +56,25 @@ def _run_quiet(cmd: list[str], **kwargs) -> subprocess.CompletedProcess:
 
 
 def _suppress_azure_cli_welcome() -> None:
-    """Disable Azure CLI welcome banner to prevent stdout pollution."""
-    _run_quiet(["az", "config", "set", "core.welcome_message=false"], shell=True)
+    """Disable Azure CLI welcome banner by writing config directly.
+
+    We cannot use ``az config set`` because that command itself triggers
+    the welcome banner on first run, polluting stdout of later calls.
+    """
+    azure_dir = Path.home() / ".azure"
+    azure_dir.mkdir(exist_ok=True)
+    config_path = azure_dir / "config"
+
+    cfg = configparser.ConfigParser()
+    if config_path.exists():
+        cfg.read(str(config_path))
+    if not cfg.has_section("core"):
+        cfg.add_section("core")
+    cfg.set("core", "welcome_message", "false")
+    cfg.set("core", "collect_telemetry", "false")
+    with open(config_path, "w") as f:
+        cfg.write(f)
+    print(f"  Azure CLI welcome banner suppressed via {config_path}")
 
 
 def _git_short_sha() -> str:
@@ -505,14 +523,23 @@ def main() -> None:
         ],
         shell=True,
     )
-    project_resource_id = result.stdout.strip() if result.returncode == 0 else ""
-    if not project_resource_id or not project_resource_id.startswith("/subscriptions/"):
+    # stdout may contain the Azure CLI welcome banner before the real output.
+    # Extract the line that looks like an ARM resource ID.
+    project_resource_id = ""
+    if result.returncode == 0:
+        for line in result.stdout.strip().splitlines():
+            line = line.strip()
+            if line.startswith("/subscriptions/"):
+                project_resource_id = line
+                break
+    if not project_resource_id:
         sys.exit(
             f"ERROR: Could not resolve a valid ARM resource ID for project '{project_name}' "
-            f"under account '{account_name}'. Got: {project_resource_id[:120]!r}... "
-            "This can happen if the Azure CLI welcome banner pollutes stdout. "
+            f"under account '{account_name}'. "
+            f"Raw stdout (first 200 chars): {result.stdout.strip()[:200]!r} "
             "Make sure you are logged in to the correct subscription."
         )
+    print(f"  Project resource ID: {project_resource_id}")
 
     # ── Build & push via remote ACR build ──
     acr_name = registry.split(".")[0]

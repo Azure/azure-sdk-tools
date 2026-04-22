@@ -15,25 +15,25 @@ config:
 
 # Test cases
 stimuli:
-- prompt: |
+- name: 001002-version-default-value
+  prompt: |
     add a default value `21` for property age in model EmployeeProperties from a new api version 2025-11-01
-  name: 001002-version-default-value
   constraints:
     max_turns: 10
     max_tokens: 5000
   environment:
     files:
-    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+    - src: ../fixtures/001002-version-default-value/employee.tsp
       dest: employee.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+    - src: ../fixtures/001002-version-default-value/main.tsp
       dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+    - src: ../fixtures/001002-version-default-value/package.json
       dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+    - src: ../fixtures/001002-version-default-value/readme.md
       dest: readme.md
-    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+    - src: ../fixtures/001002-version-default-value/shared.tsp
       dest: shared.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+    - src: ../fixtures/001002-version-default-value/tspconfig.yaml
       dest: tspconfig.yaml
   graders:
   - type: tool-calls
@@ -41,6 +41,7 @@ stimuli:
       required:
         - edit
         - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+        - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
       path: employee.tsp

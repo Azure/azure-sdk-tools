@@ -40,6 +40,7 @@ stimuli:
     config:
       required:
         - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
   # VP1: Async move action with MoveRequest/MoveResponse and LRO headers (handles both single-line and multi-line formats)
   - type: file-matches

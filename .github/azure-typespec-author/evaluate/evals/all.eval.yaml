@@ -16,26 +16,27 @@ config:
 # Test cases
 stimuli:
 - name: 001001-version-spread-property
-  prompt: I added `...Azure.ResourceManager.ManagedServiceIdentityProperty;` which updates all my existing API versions and introduces a breaking change. I want to introduce the properties of the spread model '...ManagedServiceIdentityProperty' in a new API version 2025-05-04-preview only.
+  prompt: I added `...Azure.ResourceManager.ManagedServiceIdentityProperty;` which updates all my existing API versions and introduces a breaking change. I want to introduce the properties of the spread model '...ManagedServiceIdentityProperty' in  API version 2025-05-04-preview only.
   environment:
     files:
-    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+    - src: ../fixtures/001-share-version-new-feature/employee.tsp
       dest: employee.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+    - src: ../fixtures/001-share-version-new-feature/main.tsp
       dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+    - src: ../fixtures/001-share-version-new-feature/shared.tsp
       dest: shared.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+    - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
       dest: tspconfig.yaml
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+    - src: ../fixtures/001-share-version-new-feature/package.json
       dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+    - src: ../fixtures/001-share-version-new-feature/readme.md
       dest: readme.md
   graders:
   - type: tool-calls
     config:
       required:
         - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -48,7 +49,7 @@ stimuli:
   - type: file-matches
     config:
       path: employee.tsp
-      pattern: "@@added\\(Employee\\.identity, Versions\\.(v2025_05_04_preview|`2025-05-04-preview`)\\);"
+      pattern: "@@added\\(Employee\\.identity, (Microsoft\\.Widget\\.)?Versions\\.(v2025_05_04_preview|`2025-05-04-preview`)\\);"
   - type: prompt
     config:
       prompt: Verify changes are scoped to this task only, with no unrelated edits beyond introducing preview-only identity via versioning.
@@ -60,36 +61,37 @@ stimuli:
     max_tokens: 50000
   scoring:
     weights:
-      tool-calls: 1
       file-matches: 3
+      tool-calls: 1
       prompt: 1
     threshold: 1.0
 
-- prompt: |
+- name: 001002-version-default-value
+  prompt: |
     add a default value `21` for property age in model EmployeeProperties from a new api version 2025-11-01
-  name: 001002-version-default-value
   constraints:
     max_turns: 10
     max_tokens: 5000
   environment:
     files:
-    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+    - src: ../fixtures/001002-version-default-value/employee.tsp
       dest: employee.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+    - src: ../fixtures/001002-version-default-value/main.tsp
       dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+    - src: ../fixtures/001002-version-default-value/package.json
       dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+    - src: ../fixtures/001002-version-default-value/readme.md
       dest: readme.md
-    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+    - src: ../fixtures/001002-version-default-value/shared.tsp
       dest: shared.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+    - src: ../fixtures/001002-version-default-value/tspconfig.yaml
       dest: tspconfig.yaml
   graders:
   - type: tool-calls
     config:
       required:
         - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -121,31 +123,36 @@ stimuli:
     threshold: 1.0
 
 - prompt: |
-    change the property age of EmployeeProperties from required to optional for new api version 2025-05-04-preview
+    change the property age of EmployeeProperties from required to optional for api version 2025-05-04-preview
   name: 001003-version-required-to-optional
   constraints:
     max_turns: 10
     max_tokens: 5000
   environment:
     files:
-    - src: ../fixtures/001003-version-required-to-optional/employee.tsp
+    - src: ../fixtures/001-share-version-new-feature/employee.tsp
       dest: employee.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+    - src: ../fixtures/001-share-version-new-feature/Widget/main.tsp
       dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+    - src: ../fixtures/001-share-version-new-feature/Widget/package.json
       dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+    - src: ../fixtures/001-share-version-new-feature/Widget/readme.md
       dest: readme.md
-    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+    - src: ../fixtures/001-share-version-new-feature/Widget/shared.tsp
       dest: shared.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+    - src: ../fixtures/001-share-version-new-feature/Widget/tspconfig.yaml
       dest: tspconfig.yaml
   graders:
   - type: tool-calls
     config:
       required:
         - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: file-matches
+    config:
+      path: main.tsp
+      pattern: 2025-05-04-preview
   - type: file-matches
     config:
       path: employee.tsp
@@ -162,9 +169,9 @@ stimuli:
       model: claude-opus-4.6-1m
   scoring:
     weights:
-      tool-calls: 1
       prompt: 1
       file-matches: 2
+      tool-calls: 1
     threshold: 1.0
 
 - prompt: |
@@ -175,23 +182,24 @@ stimuli:
     max_tokens: 5000
   environment:
     files:
-    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+    - src: ../fixtures/001-share-version-new-feature/employee.tsp
       dest: employee.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+    - src: ../fixtures/001-share-version-new-feature/main.tsp
       dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+    - src: ../fixtures/001-share-version-new-feature/package.json
       dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+    - src: ../fixtures/001-share-version-new-feature/readme.md
       dest: readme.md
-    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+    - src: ../fixtures/001-share-version-new-feature/shared.tsp
       dest: shared.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+    - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
       dest: tspconfig.yaml
   graders:
   - type: tool-calls
     config:
       required:
         - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -209,9 +217,9 @@ stimuli:
       model: claude-opus-4.6-1m
   scoring:
     weights:
-      tool-calls: 1
       prompt: 1
       file-matches: 2
+      tool-calls: 1
     threshold: 1.0
 
 - prompt: |
@@ -296,16 +304,16 @@ stimuli:
     config:
       scoring: scale_1_5
       threshold: 1.0
-      prompt: 'Evaluate only the semantic interpretation of the request: the excluded feature is the default value 21 on age, while age itself should remain as optional int32 (not removed). Also check the agent clearly explains this rationale. Do not re-evaluate version renaming, old version removal, oldAge removal, or example folder/file changes, since those are already covered by file-based graders.'
+      prompt: 'Evaluate the following change: the excluded feature is the default value 21 on age, The oldAge property should be deleted entirely along with its @removed decorator". The @renamedFrom decorator should be removed along with the oldAge property itself. The workLocation property should have its versioning decorator updated to reference `2025-05-04-preview`.'
       model: claude-opus-4.6-1m
   scoring:
     weights:
-      tool-calls: 1
       prompt: 1
       file-matches: 1
       file-not-matches: 2
       file-exists: 1
       file-not-exists: 1
+      tool-calls: 1
     threshold: 1.0
 
 - prompt: |
@@ -390,10 +398,10 @@ stimuli:
       model: claude-opus-4.6-1m
   scoring:
     weights:
-      tool-calls: 1
       file-exists: 2
       prompt: 1
       file-matches: 2
+      tool-calls: 1
     threshold: 1.0
 
 - prompt: |
@@ -492,21 +500,17 @@ stimuli:
     config:
       scoring: scale_1_5
       threshold: 1.0
-      prompt: 'Evaluate only the semantic interpretation of the request: the excluded features are workLocation property and WorkLocation model (both should not appear in the new version), while other features should be carried. Also check the agent clearly explains this semantic rationale. Do not re-evaluate version renaming (2024-10-01-preview → 2025-01-01), old version removal, new version example setup, or decorators, since those are already covered by file-based graders.'
+      prompt: 'Evaluate only the semantic interpretation of the request: the excluded features are workLocation property and WorkLocation model, while other features should be carried. Double check the plan has correctly implemented version renaming (2024-10-01-preview → 2025-01-01), old version removal, new version example setup and old version example removal.'
       model: claude-opus-4.6-1m
   scoring:
     weights:
-      tool-calls: 1
       prompt: 1
       file-matches: 2
       file-not-matches: 3
       file-exists: 1
       file-not-exists: 1
+      tool-calls: 1
     threshold: 1.0
-    executor: copilot-sdk
-    runs: 1
-    model: claude-opus-4.6-1m
-    timeout: 1800
 
 - prompt: |
     Add a new stable version `2025-01-01` to my service. Carry over changes.
@@ -600,10 +604,10 @@ stimuli:
       model: claude-opus-4.6-1m
   scoring:
     weights:
-      tool-calls: 1
       file-exists: 2
       prompt: 1
       file-matches: 3
+      tool-calls: 1
     threshold: 1.0
 
 - prompt: |
@@ -614,39 +618,36 @@ stimuli:
     max_tokens: 5000
   environment:
     files:
-    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
-      dest: employee.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
-      dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
-      dest: readme.md
-    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
-      dest: shared.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
-      dest: tspconfig.yaml
+    - src: ../fixtures/001-share-version-new-feature/employee.tsp
+      dest: Microsoft.Widget/Widget/employee.tsp
+    - src: ../fixtures/001-share-version-new-feature/main.tsp
+      dest: Microsoft.Widget/Widget/main.tsp
+    - src: ../fixtures/001-share-version-new-feature/package.json
+      dest: Microsoft.Widget/Widget/package.json
+    - src: ../fixtures/001-share-version-new-feature/readme.md
+      dest: Microsoft.Widget/Widget/readme.md
+    - src: ../fixtures/001-share-version-new-feature/shared.tsp
+      dest: Microsoft.Widget/Widget/shared.tsp
+    - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
+      dest: Microsoft.Widget/Widget/tspconfig.yaml
   graders:
   - type: tool-calls
     config:
       required:
         - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
-      path: main.tsp
+      path: Microsoft.Widget/Widget/main.tsp
       pattern: v2025_05_04_preview
-  - type: file-not-matches
-    config:
-      path: main.tsp
-      pattern: v2024_10_01_preview
   - type: file-matches
     config:
-      path: employee.tsp
+      path: Microsoft.Widget/Widget/employee.tsp
       pattern: '@madeRequired\(Versions\.v2025_05_04_preview\)'
   - type: file-matches
     config:
-      path: employee.tsp
+      path: Microsoft.Widget/Widget/employee.tsp
       pattern: 'email: string;'
   - type: prompt
     config:
@@ -656,9 +657,9 @@ stimuli:
       model: claude-opus-4.6-1m
   scoring:
     weights:
-      tool-calls: 1
       prompt: 1
       file-matches: 3
+      tool-calls: 1
     threshold: 1.0
 
 - prompt: |
@@ -669,35 +670,36 @@ stimuli:
     max_tokens: 5000
   environment:
     files:
-    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
-      dest: employee.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
-      dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
-      dest: readme.md
-    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
-      dest: shared.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
-      dest: tspconfig.yaml
+    - src: ../fixtures/001-share-version-new-feature/employee.tsp
+      dest: Microsoft.Widget/Widget/employee.tsp
+    - src: ../fixtures/001-share-version-new-feature/main.tsp
+      dest: Microsoft.Widget/Widget/main.tsp
+    - src: ../fixtures/001-share-version-new-feature/package.json
+      dest: Microsoft.Widget/Widget/package.json
+    - src: ../fixtures/001-share-version-new-feature/readme.md
+      dest: Microsoft.Widget/Widget/readme.md
+    - src: ../fixtures/001-share-version-new-feature/shared.tsp
+      dest: Microsoft.Widget/Widget/shared.tsp
+    - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
+      dest: Microsoft.Widget/Widget/tspconfig.yaml
   graders:
   - type: tool-calls
     config:
       required:
         - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
-      path: main.tsp
+      path: Microsoft.Widget/Widget/main.tsp
       pattern: v2025_05_04_preview
   - type: file-matches
     config:
-      path: employee.tsp
+      path: Microsoft.Widget/Widget/employee.tsp
       pattern: '@removed\(Versions\.v2025_05_04_preview\)'
   - type: file-matches
     config:
-      path: employee.tsp
+      path: Microsoft.Widget/Widget/employee.tsp
       pattern: 'department\?: string;'
   - type: prompt
     config:
@@ -707,8 +709,8 @@ stimuli:
       model: claude-opus-4.6-1m
   scoring:
     weights:
-      tool-calls: 1
       prompt: 1
+      tool-calls: 1
       file-matches: 3
     threshold: 1.0
 
@@ -721,34 +723,35 @@ stimuli:
   environment:
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
-      dest: employee.tsp
+      dest: Microsoft.Widget/Widget/employee.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
-      dest: main.tsp
+      dest: Microsoft.Widget/Widget/main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
+      dest: Microsoft.Widget/Widget/package.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
-      dest: readme.md
+      dest: Microsoft.Widget/Widget/readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
-      dest: shared.tsp
+      dest: Microsoft.Widget/Widget/shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
-      dest: tspconfig.yaml
+      dest: Microsoft.Widget/Widget/tspconfig.yaml
   graders:
   - type: tool-calls
     config:
       required:
         - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
-      path: main.tsp
+      path: Microsoft.Widget/Widget/main.tsp
       pattern: v2025_05_04_preview
   - type: file-matches
     config:
-      path: employee.tsp
+      path: Microsoft.Widget/Widget/employee.tsp
       pattern: '@renamedFrom\(Versions\.v2025_05_04_preview, "age"\)'
   - type: file-matches
     config:
-      path: employee.tsp
+      path: Microsoft.Widget/Widget/employee.tsp
       pattern: 'employeeAge\?: int32;'
   - type: prompt
     config:
@@ -758,9 +761,9 @@ stimuli:
       model: claude-opus-4.6-1m
   scoring:
     weights:
-      tool-calls: 1
       prompt: 1
       file-matches: 3
+      tool-calls: 1
     threshold: 1.0
 
 - prompt: |
@@ -772,46 +775,47 @@ stimuli:
   environment:
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
-      dest: employee.tsp
+      dest: Microsoft.Widget/Widget/employee.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
-      dest: main.tsp
+      dest: Microsoft.Widget/Widget/main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
+      dest: Microsoft.Widget/Widget/package.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
-      dest: readme.md
+      dest: Microsoft.Widget/Widget/readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
-      dest: shared.tsp
+      dest: Microsoft.Widget/Widget/shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
-      dest: tspconfig.yaml
+      dest: Microsoft.Widget/Widget/tspconfig.yaml
   graders:
   - type: tool-calls
     config:
       required:
         - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
-      path: main.tsp
+      path: Microsoft.Widget/Widget/main.tsp
       pattern: v2025_05_04_preview
   - type: file-matches
     config:
-      path: employee.tsp
+      path: Microsoft.Widget/Widget/employee.tsp
       pattern: 'model DetailedExportResult'
   - type: file-matches
     config:
-      path: employee.tsp
+      path: Microsoft.Widget/Widget/employee.tsp
       pattern: 'format\?: string;'
   - type: file-matches
     config:
-      path: employee.tsp
+      path: Microsoft.Widget/Widget/employee.tsp
       pattern: 'exportedAt\?: utcDateTime;'
   - type: file-matches
     config:
-      path: employee.tsp
+      path: Microsoft.Widget/Widget/employee.tsp
       pattern: '@returnTypeChangedFrom\(Versions\.v2025_05_04_preview, ExportResult\)'
   - type: file-matches
     config:
-      path: employee.tsp
+      path: Microsoft.Widget/Widget/employee.tsp
       pattern: 'exportData is ArmResourceActionSync<Employee, void, DetailedExportResult>;'
   - type: prompt
     config:
@@ -821,9 +825,9 @@ stimuli:
       model: claude-opus-4.6-1m
   scoring:
     weights:
-      tool-calls: 1
       prompt: 1
       file-matches: 6
+      tool-calls: 1
     threshold: 1.0
 
 - prompt: |
@@ -835,34 +839,35 @@ stimuli:
   environment:
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
-      dest: employee.tsp
+      dest: Microsoft.Widget/Widget/employee.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
-      dest: main.tsp
+      dest: Microsoft.Widget/Widget/main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
+      dest: Microsoft.Widget/Widget/package.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
-      dest: readme.md
+      dest: Microsoft.Widget/Widget/readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
-      dest: shared.tsp
+      dest: Microsoft.Widget/Widget/shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
-      dest: tspconfig.yaml
+      dest: Microsoft.Widget/Widget/tspconfig.yaml
   graders:
   - type: tool-calls
     config:
       required:
         - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
-      path: main.tsp
+      path: Microsoft.Widget/Widget/main.tsp
       pattern: v2025_05_04_preview
   - type: file-matches
     config:
-      path: employee.tsp
+      path: Microsoft.Widget/Widget/employee.tsp
       pattern: '@typeChangedFrom\(Versions\.v2025_05_04_preview, string\)'
   - type: file-matches
     config:
-      path: employee.tsp
+      path: Microsoft.Widget/Widget/employee.tsp
       pattern: 'statusCode\?: int32;'
   - type: prompt
     config:
@@ -872,9 +877,9 @@ stimuli:
       model: claude-opus-4.6-1m
   scoring:
     weights:
-      tool-calls: 1
       prompt: 1
       file-matches: 3
+      tool-calls: 1
     threshold: 1.0
 
 - prompt: |
@@ -902,6 +907,7 @@ stimuli:
     config:
       required:
         - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -954,6 +960,7 @@ stimuli:
     config:
       required:
         - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -1005,6 +1012,7 @@ stimuli:
     config:
       required:
         - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -1055,6 +1063,7 @@ stimuli:
     config:
       required:
         - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -1108,6 +1117,7 @@ stimuli:
     config:
       required:
         - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -1154,7 +1164,7 @@ stimuli:
     threshold: 1.0
 
 - prompt: |
-    Create a new "AddressResource" child resource under the parent resource "Employee". Properties: street address, city, state, postal code, country, and a read-only provisioning state. Ensure the definition meets TypeSpec Azure design guidelines.
+    Create a new "AddressResource" child resource under the parent resource "Employee". AddressResource properties:street address fields, city, state, postal code, country, and a read-only provisioningState. Ensure the definition meets TypeSpec Azure design guidelines.
   name: 002006-ARM-define-child-resource
   constraints:
     max_turns: 10
@@ -1178,6 +1188,7 @@ stimuli:
     config:
       required:
         - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -1282,6 +1293,7 @@ stimuli:
     config:
       required:
         - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
   # VP1: Extensible enum for notification priority levels (Low, Medium, High)
   - type: file-matches
@@ -1369,6 +1381,7 @@ stimuli:
     config:
       required:
         - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -1420,6 +1433,7 @@ stimuli:
     config:
       required:
         - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -1439,7 +1453,7 @@ stimuli:
     threshold: 1.0
 
 - prompt: |
-    In the Widget project, add a sync operation exportEmployeeData for employee resource.
+    In the Widget project, add a sync operation exportData for employee resource.
   name: 002010-arm-action-sync-operation
   constraints:
     max_turns: 10
@@ -1463,6 +1477,7 @@ stimuli:
     config:
       required:
         - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -1500,6 +1515,7 @@ stimuli:
     config:
       required:
         - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
   # VP1: Async delete added to StacItems namespace
   - type: file-matches
@@ -1558,30 +1574,13 @@ stimuli:
     config:
       required:
         - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
-  # VP1: Async move action using ArmResourceActionAsync
+  # VP1: Async move action with MoveRequest/MoveResponse and LRO headers (handles both single-line and multi-line formats)
   - type: file-matches
     config:
       path: employee.tsp
-      pattern: 'move is ArmResourceActionAsync<Employee,'
-  # VP2: MoveRequest input and MoveResponse output
-  - type: file-matches
-    config:
-      path: employee.tsp
-      pattern: 'ArmResourceActionAsync<Employee,\s*MoveRequest,\s*MoveResponse'
-  # VP3: Combined LRO headers with FinalResult and RetryAfterHeader
-  - type: file-matches
-    config:
-      path: employee.tsp
-      pattern: 'LroHeaders = ArmCombinedLroHeaders'
-  - type: file-matches
-    config:
-      path: employee.tsp
-      pattern: 'FinalResult\s*=\s*MoveResponse'
-  - type: file-matches
-    config:
-      path: employee.tsp
-      pattern: 'RetryAfterHeader'
+      pattern: 'move\s+is\s+ArmResourceActionAsync\s*<\s*Employee\s*,\s*MoveRequest\s*,\s*MoveResponse\s*,\s*LroHeaders\s*=\s*ArmCombinedLroHeaders\s*<\s*FinalResult\s*=\s*MoveResponse\s*>\s*>'
   - type: prompt
     config:
       scoring: scale_1_5
@@ -1620,6 +1619,7 @@ stimuli:
     config:
       required:
         - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
   # VP1: ArmAsyncOperationHeader with FinalResult = Employee (alias or inline)
   - type: file-matches
@@ -1682,6 +1682,7 @@ stimuli:
     config:
       required:
         - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -1729,6 +1730,7 @@ stimuli:
     config:
       required:
         - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
   # VP1: Custom scalar type with minLength/maxLength constraints
   - type: file-matches
@@ -1797,7 +1799,6 @@ stimuli:
       dest: VpnSiteLinkConnection.tsp
     - src: ../fixtures/004003-delete-and-restore-operationId-decorator/tspconfig.yaml
       dest: tspconfig.yaml
-
   graders:
   - type: tool-calls
     config:
@@ -1862,6 +1863,12 @@ stimuli:
       dest: models.tsp
     - src: ../fixtures/005001-warning-suppress-warning/package.json
       dest: package.json
+    - src: ../fixtures/005001-warning-suppress-warning/tspconfig.yaml
+      dest: tspconfig.yaml
+    - src: ../fixtures/005001-warning-suppress-warning/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/005001-warning-suppress-warning/stubs.tsp
+      dest: stubs.tsp
   graders:
   - type: tool-calls
     config:
@@ -1888,3 +1895,4 @@ stimuli:
       prompt: 1
       file-matches: 2
     threshold: 1.0
+

@@ -16,7 +16,7 @@ config:
 # Test cases
 stimuli:
 - prompt: |
-    In the Widget project, add a sync operation exportEmployeeData for employee resource.
+    In the Widget project, add a sync operation exportData for employee resource.
   name: 002010-arm-action-sync-operation
   constraints:
     max_turns: 10
@@ -40,6 +40,7 @@ stimuli:
     config:
       required:
         - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:

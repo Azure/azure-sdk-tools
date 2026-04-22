@@ -54,6 +54,11 @@ def _run_quiet(cmd: list[str], **kwargs) -> subprocess.CompletedProcess:
     return subprocess.run(cmd, capture_output=True, text=True, **kwargs)
 
 
+def _suppress_azure_cli_welcome() -> None:
+    """Disable Azure CLI welcome banner to prevent stdout pollution."""
+    _run_quiet(["az", "config", "set", "core.welcome_message=false"], shell=True)
+
+
 def _git_short_sha() -> str:
     try:
         r = subprocess.run(
@@ -247,11 +252,16 @@ def _wait_for_agent_running(
                 f"  Account: {account_name}, Project: {project_name}, Agent: {agent_name}"
             )
             return False
+        stdout = result.stdout
+        # Strip any non-JSON prefix (e.g. Azure CLI welcome banner) before parsing.
+        json_start = stdout.find("{")
+        if json_start > 0:
+            stdout = stdout[json_start:]
         try:
-            payload = json.loads(result.stdout)
+            payload = json.loads(stdout)
         except json.JSONDecodeError:
             print(
-                f"  WARNING: Could not parse agent status payload: {result.stdout.strip()}"
+                f"  WARNING: Could not parse agent status payload: {result.stdout.strip()[:200]}"
             )
             return False
 
@@ -416,6 +426,8 @@ def main() -> None:
 
     asyncio.run(app_config.init())
 
+    _suppress_azure_cli_welcome()
+
     # Show current subscription context
     sub_result = _run_quiet(
         ["az", "account", "show", "--query", "id", "-o", "tsv"], shell=True
@@ -494,9 +506,11 @@ def main() -> None:
         shell=True,
     )
     project_resource_id = result.stdout.strip() if result.returncode == 0 else ""
-    if not project_resource_id:
+    if not project_resource_id or not project_resource_id.startswith("/subscriptions/"):
         sys.exit(
-            f"ERROR: Could not find project '{project_name}' under account '{account_name}'. "
+            f"ERROR: Could not resolve a valid ARM resource ID for project '{project_name}' "
+            f"under account '{account_name}'. Got: {project_resource_id[:120]!r}... "
+            "This can happen if the Azure CLI welcome banner pollutes stdout. "
             "Make sure you are logged in to the correct subscription."
         )
 

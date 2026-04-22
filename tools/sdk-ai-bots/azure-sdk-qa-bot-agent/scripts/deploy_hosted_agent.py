@@ -15,15 +15,13 @@ import argparse
 import asyncio
 import json
 import os
+import re
 import subprocess
 import sys
 import time
 from pathlib import Path
 from urllib.parse import urlparse
 
-# Suppress Azure CLI welcome banner before any subprocess calls.
-# On fresh CI agents the first `az` invocation dumps an ASCII banner
-# to stdout, corrupting captured command output.
 os.environ.setdefault("AZURE_CORE_WELCOME_MESSAGE", "false")
 
 from dotenv import load_dotenv
@@ -32,7 +30,6 @@ _PROJECT_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv(_PROJECT_DIR / ".env", override=False)
 
-# Ensure project root is on sys.path for config imports
 if str(_PROJECT_DIR) not in sys.path:
     sys.path.insert(0, str(_PROJECT_DIR))
 
@@ -70,12 +67,6 @@ def _git_short_sha() -> str:
         return r.stdout.strip()
     except (subprocess.CalledProcessError, FileNotFoundError):
         return "latest"
-
-
-# ── User-assigned identity management on the AI Foundry project ───────────
-# UMIs are assigned to the *project* resource (not the hosted agent).
-# We need to temporarily remove them before deployment because the
-# hosted agent platform cannot resolve UMIs for ACR image pull.
 
 
 def _has_project_user_assigned_identities(project_resource_id: str) -> bool:
@@ -253,7 +244,6 @@ def _wait_for_agent_running(
             )
             return False
         stdout = result.stdout
-        # Strip any non-JSON prefix (e.g. Azure CLI welcome banner) before parsing.
         json_start = stdout.find("{")
         if json_start > 0:
             stdout = stdout[json_start:]
@@ -426,12 +416,23 @@ def main() -> None:
 
     asyncio.run(app_config.init())
 
+    # Consume Azure CLI welcome banner before real commands.
+    _run_quiet(["az", "version"], shell=True)
+
     # Show current subscription context
     sub_result = _run_quiet(
         ["az", "account", "show", "--query", "id", "-o", "tsv"], shell=True
     )
+    sub_id = ""
     if sub_result.returncode == 0:
-        sub_id = sub_result.stdout.strip()
+        uuid_match = re.search(
+            r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+            sub_result.stdout,
+            re.IGNORECASE,
+        )
+        if uuid_match:
+            sub_id = uuid_match.group(0)
+    if sub_id:
         print(f"Current subscription: {sub_id}")
     else:
         print(
@@ -451,8 +452,6 @@ def main() -> None:
             "ERROR: AZURE_APPCONFIG_ENDPOINT not set in .env or --appconfig-endpoint"
         )
 
-    # Extract account_name and project_name from the project endpoint URL
-    # Expected format: https://<account>.services.ai.azure.com/api/projects/<project>
     parsed = urlparse(project_endpoint)
     account_name = parsed.hostname.split(".")[0] if parsed.hostname else ""
     path_parts = [p for p in parsed.path.split("/") if p]
@@ -486,45 +485,42 @@ def main() -> None:
     image = f"{registry}/{image_name}:{tag}"
     dockerfile = _PROJECT_DIR / "agents" / args.agent_name / "Dockerfile"
 
-    # ── Resolve project resource ID ──
-    result = _run_quiet(
-        [
-            "az",
-            "resource",
-            "list",
-            "--name",
-            f"{account_name}/{project_name}",
-            "--resource-type",
-            "Microsoft.CognitiveServices/accounts/projects",
-            "--query",
-            "[0].id",
-            "-o",
-            "tsv",
-        ],
-        shell=True,
-    )
-    # stdout may contain the Azure CLI welcome banner before the real output.
-    # Extract the line that looks like an ARM resource ID.
-    project_resource_id = ""
-    if result.returncode == 0:
-        for line in result.stdout.strip().splitlines():
-            line = line.strip()
-            if line.startswith("/subscriptions/"):
-                project_resource_id = line
-                break
+    # Prefer env var from pipeline; fall back to az CLI for local dev.
+    project_resource_id = os.environ.get("AI_FOUNDRY_PROJECT_RESOURCE_ID", "").strip()
+    if not project_resource_id:
+        result = _run_quiet(
+            [
+                "az",
+                "resource",
+                "list",
+                "--name",
+                f"{account_name}/{project_name}",
+                "--resource-type",
+                "Microsoft.CognitiveServices/accounts/projects",
+                "--query",
+                "[0].id",
+                "-o",
+                "tsv",
+            ],
+            shell=True,
+        )
+        if result.returncode == 0:
+            for line in result.stdout.strip().splitlines():
+                line = line.strip()
+                if line.startswith("/subscriptions/"):
+                    project_resource_id = line
+                    break
     if not project_resource_id:
         sys.exit(
             f"ERROR: Could not resolve a valid ARM resource ID for project '{project_name}' "
             f"under account '{account_name}'. "
-            f"Raw stdout (first 200 chars): {result.stdout.strip()[:200]!r} "
-            "Make sure you are logged in to the correct subscription."
+            "Set AI_FOUNDRY_PROJECT_RESOURCE_ID env var or ensure you are logged in "
+            "to the correct subscription."
         )
     print(f"  Project resource ID: {project_resource_id}")
 
-    # ── Build & push via remote ACR build ──
     acr_name = registry.split(".")[0]
     print(f"Building: {image}")
-    # Use remote ACR build to avoid 1ES hosted-agent network restrictions during pip install.
     _run(
         [
             "az",

@@ -4,7 +4,6 @@ import * as path from "path";
 import { addApiViewInfo } from "../../utils/addApiViewInfo.js";
 import { modifyOrGenerateCiYml } from "../../utils/changeCiYaml.js";
 import { changeConfigOfTestAndSample, ChangeModel, SdkType } from "../../utils/changeConfigOfTestAndSample.js";
-import { changeRushJson } from "../../utils/changeRushJson.js";
 import { getOutputPackageInfo } from "../../utils/getOutputPackageInfo.js";
 import { getChangedCiYmlFilesInSpecificFolder } from "../../utils/git.js";
 import { logger } from "../../utils/logger.js";
@@ -12,12 +11,11 @@ import { RunningEnvironment } from "../../utils/runningEnvironment.js";
 import { prepareCommandToInstallDependenciesForTypeSpecProject } from '../utils/prepareCommandToInstallDependenciesForTypeSpecProject.js';
 import { replaceRequireInAutorestConfigurationFile } from '../utils/generateSampleReadmeMd.js';
 import { updateTypeSpecProjectYamlFile } from '../utils/updateTypeSpecProjectYamlFile.js';
-import { getRelativePackagePath } from "../utils/utils.js";
 import { defaultChildProcessTimeout, getGeneratedPackageDirectory, generateRepoDataInTspLocation, specifyApiVersionToGenerateSDKByTypeSpec, cleanUpPackageDirectory } from "../../common/utils.js";
 import { generateChangelogAndBumpVersion } from "../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js";
 import { updateChangelogResult } from "../../common/packageResultUtils.js";
-import { isRushRepo } from "../../common/rushUtils.js";
 import { formatSdk, updateSnippets, lintFix, customizeCodes } from "../../common/devToolUtils.js";
+import { ensurePnpmInstalled } from "../../common/rushUtils.js";
 import { RunMode } from "../../common/types.js";
 import { exists } from 'fs-extra';
 
@@ -178,9 +176,6 @@ export async function generateRLCInPipeline(options: {
         logger.info(`Start to generate some other files for '${packageName}' in '${packagePath}'.`);
         if (!options.skipGeneration) {
             await modifyOrGenerateCiYml(options.sdkRepo, packagePath, packageName, packageName.includes("arm"));
-            if (isRushRepo(options.sdkRepo)) {
-                await changeRushJson(options.sdkRepo, packageName, getRelativePackagePath(packagePath), 'client');
-            }
             // TODO: remove it for typespec project, since no need now, the test and sample are decouple from build
             // change configuration to skip build test, sample
             changeConfigOfTestAndSample(packagePath, ChangeModel.Change, SdkType.Rlc);
@@ -199,42 +194,32 @@ export async function generateRLCInPipeline(options: {
         }
 
         let buildStatus = `succeeded`;
-        if (isRushRepo(options.sdkRepo)) {
-            logger.info(`Start to update rush.`);
-            execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
-        
-            logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually.`);
-            // To build generated codes except test and sample, we need to change tsconfig.json.
-            execSync(`node common/scripts/install-run-rush.js build -t ${packageName} --verbose`, {stdio: 'inherit'});
-            logger.info(`Start to run command 'node common/scripts/install-run-rush.js pack --to ${packageName} --verbose'.`);
-            execSync(`node common/scripts/install-run-rush.js pack --to ${packageName} --verbose`, {stdio: 'inherit'});
-        } else {
-            logger.info(`Start to update.`);
-            execSync('pnpm install', {stdio: 'inherit'});
+        await ensurePnpmInstalled();
+        logger.info(`Start to update.`);
+        execSync('pnpm install', {stdio: 'inherit'});
 
-            await customizeCodes(packagePath);
+        await customizeCodes(packagePath);
 
-            if(options.runMode === RunMode.Local || options.runMode === RunMode.Release){
-                await lintFix(packagePath);
-            }
-                        
-            logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually.`);
-            // To build generated codes except test and sample, we need to change tsconfig.json.
-
-            if(options.runMode === RunMode.Local || options.runMode === RunMode.Release){
-                try {
-                    execSync(`pnpm build --filter ${packageName}...`, {stdio: 'inherit'});
-                } catch (error) {
-                    logger.warn(`Failed to build package due to: ${(error as Error)?.stack ?? error}`);
-                    buildStatus = `failed`;
-                }
-            } else {
-                execSync(`pnpm run --filter ${packageName}... build`, {stdio: 'inherit'});
-            }
-            
-            logger.info(`Start to run command 'pnpm run --filter ${packageJson.name}... pack'.`);
-            execSync(`pnpm run --filter ${packageJson.name}... pack`, {stdio: 'inherit'});
+        if(options.runMode === RunMode.Local || options.runMode === RunMode.Release){
+            await lintFix(packagePath);
         }
+                    
+        logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually.`);
+        // To build generated codes except test and sample, we need to change tsconfig.json.
+
+        if(options.runMode === RunMode.Local || options.runMode === RunMode.Release){
+            try {
+                execSync(`pnpm build --filter ${packageName}...`, {stdio: 'inherit'});
+            } catch (error) {
+                logger.warn(`Failed to build package due to: ${(error as Error)?.stack ?? error}`);
+                buildStatus = `failed`;
+            }
+        } else {
+            execSync(`pnpm run --filter ${packageName}... build`, {stdio: 'inherit'});
+        }
+        
+        logger.info(`Start to run command 'pnpm run --filter ${packageJson.name}... pack'.`);
+        execSync(`pnpm run --filter ${packageJson.name}... pack`, {stdio: 'inherit'});
         
         await formatSdk(packagePath)
         await updateSnippets(packagePath);

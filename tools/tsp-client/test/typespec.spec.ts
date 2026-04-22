@@ -58,6 +58,20 @@ describe("Check diagnostic reporting", function () {
       ),
     );
     assert.equal(entrypointFile, "client.tsp");
+    // Verify that entrypoint files specified with a forward-slash path in a
+    // sub-directory are found, even on Windows where readdir returns paths
+    // with back-slash separators.
+    entrypointFile = await discoverEntrypointFile(
+      joinPaths(process.cwd(), "test", "examples", "specification", "convert"),
+      "batch/batch-client.tsp",
+    );
+    assert.equal(entrypointFile, "batch/batch-client.tsp");
+    // Same file, specified with a back-slash separator.
+    entrypointFile = await discoverEntrypointFile(
+      joinPaths(process.cwd(), "test", "examples", "specification", "convert"),
+      "batch\\batch-client.tsp",
+    );
+    assert.equal(entrypointFile, "batch/batch-client.tsp");
   });
 
   it("Check discoverEntrypointFile() with unexpected entrypoint name", async function () {

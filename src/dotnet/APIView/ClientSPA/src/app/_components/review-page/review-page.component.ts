@@ -108,6 +108,16 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
 
   sideMenu: MenuItem[] | undefined;
 
+  get hasReleasedApprovedGARevision(): boolean {
+    return this.apiRevisions.some(rev =>
+      rev.id !== this.activeAPIRevision?.id &&
+      rev.isApproved &&
+      rev.isReleased &&
+      !!rev.packageVersion &&
+      !rev.packageVersion.includes('-')
+    );
+  }
+
   constructor(private route: ActivatedRoute, private router: Router, private apiRevisionsService: APIRevisionsService,
     private reviewsService: ReviewsService, private workerService: WorkerService,
     private userProfileService: UserProfileService, private commentsService: CommentsService, private signalRService: SignalRService,

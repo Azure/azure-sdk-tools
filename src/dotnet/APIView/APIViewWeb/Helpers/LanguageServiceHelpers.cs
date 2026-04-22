@@ -27,7 +27,8 @@ namespace APIViewWeb.Helpers
 
         public static string MapLanguageAlias(string language)
         {
-            if (language.Equals("net", StringComparison.OrdinalIgnoreCase) || language.Equals(".NET", StringComparison.OrdinalIgnoreCase))
+            if (language.Equals("net", StringComparison.OrdinalIgnoreCase) || language.Equals(".NET", StringComparison.OrdinalIgnoreCase) ||
+                language.Equals("dotnet", StringComparison.OrdinalIgnoreCase))
                 return "C#";
 
             if (language.Equals("csharp", StringComparison.OrdinalIgnoreCase))
@@ -36,7 +37,8 @@ namespace APIViewWeb.Helpers
             if (language.Equals("cpp", StringComparison.OrdinalIgnoreCase))
                 return "C++";
 
-            if (language.Equals("js", StringComparison.OrdinalIgnoreCase))
+            if (language.Equals("js", StringComparison.OrdinalIgnoreCase) || language.Equals("typescript", StringComparison.OrdinalIgnoreCase) ||
+                language.Equals("ts", StringComparison.OrdinalIgnoreCase))
                 return "JavaScript";
 
             if (language.Equals("Cadl", StringComparison.OrdinalIgnoreCase))

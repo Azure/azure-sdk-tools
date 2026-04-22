@@ -247,8 +247,10 @@ def get_active_reviews(
     metadata: list[ActiveReviewMetadata] = []
 
     # Get comments in the date range, excluding Diagnostic comments
-    raw_comments = get_comments_in_date_range(start_date, end_date, environment=environment, select_fields=select_fields)
-    comments = [c for c in raw_comments if c.get("CommentSource") != "Diagnostic"]
+    # include_deleted=True because metrics calculations need deleted comments for deleted_* bucket counts
+    comments = get_comments_in_date_range(
+        start_date, end_date, environment=environment, select_fields=select_fields, include_deleted=True
+    )
 
     # Extract unique review IDs and revision IDs from comments
     review_ids = set()
@@ -269,7 +271,7 @@ def get_active_reviews(
                 review_to_revisions[review_id].add(revision_id)
 
     if not review_ids:
-        return metadata, raw_comments
+        return metadata, comments
 
     # Query Reviews container for review metadata
     reviews_container = get_apiview_cosmos_client(container_name="Reviews", environment=environment)
@@ -388,7 +390,7 @@ def get_active_reviews(
         omit_lower = {l.lower() for l in omit_languages}
         metadata = [r for r in metadata if r.language.lower() not in omit_lower]
 
-    return metadata, raw_comments
+    return metadata, comments
 
 
 def get_active_review_ids(start_date: str, end_date: str, environment: str = "production") -> list:
@@ -415,7 +417,12 @@ def get_active_review_ids(start_date: str, end_date: str, environment: str = "pr
 
 
 def get_comments_in_date_range(
-    start_date: str, end_date: str, environment: str = "production", select_fields: Optional[list[str]] = None
+    start_date: str,
+    end_date: str,
+    environment: str = "production",
+    select_fields: Optional[list[str]] = None,
+    include_diagnostics: bool = False,
+    include_deleted: bool = False,
 ) -> list:
     """
     Retrieves all comments created within the specified date range in the given environment.
@@ -423,6 +430,8 @@ def get_comments_in_date_range(
 
     Args:
         select_fields: Optional list of field names to select. If None, uses the default full field list.
+        include_diagnostics: If False, excludes comments where CommentSource is 'Diagnostic' at the query level.
+        include_deleted: If False, excludes comments where IsDeleted is true at the query level.
     """
     start_iso = to_iso8601(start_date)
     end_iso = to_iso8601(end_date, end_of_day=True)
@@ -432,9 +441,15 @@ def get_comments_in_date_range(
     else:
         select_clause = ", ".join(APIVIEW_COMMENT_SELECT_FIELDS)
 
+    where_clause = "c.CreatedOn >= @start_date AND c.CreatedOn <= @end_date"
+    if not include_diagnostics:
+        where_clause += " AND c.CommentSource != 'Diagnostic'"
+    if not include_deleted:
+        where_clause += " AND (NOT IS_DEFINED(c.IsDeleted) OR c.IsDeleted = false)"
+
     comments_client = get_apiview_cosmos_client(container_name="Comments", environment=environment)
     result = comments_client.query_items(
-        query=f"SELECT {select_clause} FROM c WHERE c.CreatedOn >= @start_date AND c.CreatedOn <= @end_date",
+        query=f"SELECT {select_clause} FROM c WHERE {where_clause}",
         parameters=[
             {"name": "@start_date", "value": start_iso},
             {"name": "@end_date", "value": end_iso},

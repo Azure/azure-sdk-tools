@@ -2095,8 +2095,7 @@ def analyze_comments(language: str, start_date: str, end_date: str, environment:
     """
     Analyze APIView comments by language and date window, output count, unique authors, and theme analysis via Prompty.
     """
-    raw_comments = get_comments_in_date_range(start_date, end_date, environment=environment)
-    filtered = [c for c in raw_comments if c.get("CommentSource") != "Diagnostic" and c.get("IsDeleted") != True]
+    filtered = get_comments_in_date_range(start_date, end_date, environment=environment)
 
     allowed_commenters = get_approvers(language=resolve_language(language)[1])
 

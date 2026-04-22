@@ -4,11 +4,15 @@
 
 ### Features Added
 
+- Added `azsdk_get_kpi_attestation_status` MCP tool to check KPI attestation status for a release plan given product ID and lifecycle.
+
 ### Breaking Changes
 
 ### Bugs Fixed
 
 ### Other Changes
+
+- Surface APIView link in `azsdk_release_sdk` when APIView approval is missing
 
 ## 0.6.9 (2026-04-16)
 

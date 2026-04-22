@@ -70,14 +70,13 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ICheckPackageHelper, CheckPackageHelper>();
             services.AddSingleton<ICodeownersAuditHelper, CodeownersAuditHelper>();
 
-            // Audit rules — registered in execution order (dependencies noted in comments)
-            services.AddSingleton<IAuditRule, InvalidOwnerRule>();       // AUD-OWN-001: no dependencies
-            services.AddSingleton<IAuditRule, MalformedTeamRule>();      // AUD-OWN-002: no dependencies
-            services.AddSingleton<IAuditRule, TeamNotWriteRule>();       // AUD-OWN-003: skips malformed aliases (OWN-002 is report-only)
-            services.AddSingleton<IAuditRule, LabelNotInGitHubRule>();   // AUD-LBL-001: no dependencies on owner rules
-            services.AddSingleton<IAuditRule, ServiceAttentionMisuseRule>(); // AUD-LBL-002: no dependencies on owner rules
-            services.AddSingleton<IAuditRule, LabelOwnerMissingOwnersRule>(); // AUD-STR-001: depends on OWN-001, OWN-003 (owner removals may orphan Label Owners)
-            services.AddSingleton<IAuditRule, LabelOwnerMissingLabelsRule>(); // AUD-STR-002: depends on LBL-001, LBL-002 (report only)
+            services.AddSingleton<IAuditRule, InvalidOwnerRule>();
+            services.AddSingleton<IAuditRule, MalformedTeamRule>();
+            services.AddSingleton<IAuditRule, TeamNotWriteRule>();
+            services.AddSingleton<IAuditRule, LabelNotInGitHubRule>();
+            services.AddSingleton<IAuditRule, ServiceAttentionMisuseRule>();
+            services.AddSingleton<IAuditRule, LabelOwnerMissingOwnersRule>();
+            services.AddSingleton<IAuditRule, LabelOwnerMissingLabelsRule>();
             services.AddSingleton<IEnvironmentHelper, EnvironmentHelper>();
             services.AddSingleton<IEnvFileHelper, EnvFileHelper>();
             services.AddSingleton<IMcpServerContextAccessor, McpServerContextAccessor>();

@@ -16,24 +16,24 @@ config:
 # Test cases
 stimuli:
 - prompt: |
-    change the property age of EmployeeProperties from required to optional for new api version 2025-05-04-preview
+    change the property age of EmployeeProperties from required to optional for api version 2025-05-04-preview
   name: 001003-version-required-to-optional
   constraints:
     max_turns: 10
     max_tokens: 5000
   environment:
     files:
-    - src: ../fixtures/001003-version-required-to-optional/employee.tsp
+    - src: ../fixtures/001-share-version-new-feature/employee.tsp
       dest: employee.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+    - src: ../fixtures/001-share-version-new-feature/Widget/main.tsp
       dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+    - src: ../fixtures/001-share-version-new-feature/Widget/package.json
       dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+    - src: ../fixtures/001-share-version-new-feature/Widget/readme.md
       dest: readme.md
-    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+    - src: ../fixtures/001-share-version-new-feature/Widget/shared.tsp
       dest: shared.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+    - src: ../fixtures/001-share-version-new-feature/Widget/tspconfig.yaml
       dest: tspconfig.yaml
   graders:
   - type: tool-calls
@@ -41,6 +41,11 @@ stimuli:
       required:
         - edit
         - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+        - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: file-matches
+    config:
+      path: main.tsp
+      pattern: 2025-05-04-preview
   - type: file-matches
     config:
       path: employee.tsp

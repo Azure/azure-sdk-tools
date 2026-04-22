@@ -57,7 +57,6 @@ public class InvalidOwnerRule(
                     RuleId = RuleId,
                     Description = $"Owner '{owner.GitHubAlias}' ({owner.WorkItemId}): GitHub user not found",
                     WorkItemId = owner.WorkItemId,
-                    WorkItemTitle = owner.Title,
                     Detail = owner.InvalidSince.HasValue ? DoNothingDetail : SetInvalidDetail, // If user not found, only set Invalid Since if not already set
                 });
                 continue;
@@ -88,7 +87,6 @@ public class InvalidOwnerRule(
                     RuleId = RuleId,
                     Description = description,
                     WorkItemId = owner.WorkItemId,
-                    WorkItemTitle = owner.Title,
                     Detail = owner.InvalidSince.HasValue ? DoNothingDetail : SetInvalidDetail, // Only set Invalid Since if not already set
                 });
             }
@@ -100,7 +98,6 @@ public class InvalidOwnerRule(
                     RuleId = RuleId,
                     Description = $"Owner '{owner.GitHubAlias}' ({owner.WorkItemId}): now valid, clear Invalid Since",
                     WorkItemId = owner.WorkItemId,
-                    WorkItemTitle = owner.Title,
                     Detail = ClearInvalidDetail,
                 });
             }

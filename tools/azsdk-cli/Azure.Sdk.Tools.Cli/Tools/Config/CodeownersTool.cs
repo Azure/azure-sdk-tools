@@ -1,18 +1,14 @@
 using System.ComponentModel;
 using System.CommandLine;
-using System.Text.RegularExpressions;
 
 using ModelContextProtocol.Server;
-using Octokit;
 
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Helpers.Codeowners;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Codeowners;
-using Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
 using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.CodeownersUtils.Editing;
 using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 using Azure.Sdk.Tools.CodeownersUtils.Utils;
 using Azure.Sdk.Tools.Cli.Configuration;
@@ -34,19 +30,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         // Core command options
         private readonly Option<string> repoOption = new("--repo", "-r")
         {
-            Description = "The repository name",
-            Required = true,
-        };
-
-        private readonly Option<string> pathOptionOptional = new("--path", "-p")
-        {
-            Description = "The repository path to check/validate",
-            Required = false,
-        };
-
-        private readonly Option<string> serviceLabelOption = new("--service-label")
-        {
-            Description = "The service label",
+            Description = "Repository name of the format <owner>/<repo> (e.g., Azure/azure-sdk-for-python).",
             Required = false,
         };
 
@@ -103,12 +87,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             Required = false,
         };
 
-        private readonly Option<string> optionalRepoOption = new("--repo", "-r")
-        {
-            Description = "Repository name of the format <owner>/<repo> (e.g., Azure/azure-sdk-for-python).",
-            Required = false,
-        };
-
 
 
         private readonly IGitHubService githubService;
@@ -120,9 +98,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         private readonly IGitHelper gitHelper;
         private readonly IDevOpsService devOpsService;
         private readonly ICodeownersAuditHelper codeownersAuditHelper;
-
-        // URL constants
-        private const string azureWriteTeamsBlobUrl = "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob";
 
         // Export section command options
         private readonly Option<string> codeownersPathOption = new("--codeowners-path")
@@ -245,31 +220,31 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             },
             new(viewCodeownersCommandName, "View CODEOWNERS associations for a user, label, package, or path")
             {
-                githubUserOption, labelsOption, packageOption, pathOption, optionalRepoOption,
+                githubUserOption, labelsOption, packageOption, pathOption, repoOption,
             },
             new(addCodeownersToPackageCommandName, "Add source owner(s) to a package")
             {
-                multipleGithubUserOption, packageOption, optionalRepoOption,
+                multipleGithubUserOption, packageOption, repoOption,
             },
             new(addLabelToPackageCommandName, "Add PR label(s) to a package")
             {
-                labelsOption, packageOption, optionalRepoOption,
+                labelsOption, packageOption, repoOption,
             },
             new(addLabelOwnerCommandName, "Add owner(s) to a label and optional path")
             {
-                multipleGithubUserOption, labelsOption, pathOption, ownerTypeOption, optionalRepoOption, sectionOption,
+                multipleGithubUserOption, labelsOption, pathOption, ownerTypeOption, repoOption, sectionOption,
             },
             new(removeCodeownersToPackageCommandName, "Remove source owner(s) from a package")
             {
-                multipleGithubUserOption, packageOption, optionalRepoOption,
+                multipleGithubUserOption, packageOption, repoOption,
             },
             new(removeLabelToPackageCommandName, "Remove PR label(s) from a package")
             {
-                labelsOption, packageOption, optionalRepoOption,
+                labelsOption, packageOption, repoOption,
             },
             new(removeLabelOwnerCommandName, "Remove owner(s) from a label and optional path")
             {
-                multipleGithubUserOption, labelsOption, pathOption, ownerTypeOption, optionalRepoOption, sectionOption,
+                multipleGithubUserOption, labelsOption, pathOption, ownerTypeOption, repoOption, sectionOption,
             },
             new(exportSectionCommandName, "Export one or more named sections from a CODEOWNERS file")
             {
@@ -277,12 +252,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             },
             new(checkPackageCommandName, "Check that a package has sufficient owners, PR labels, and service owners from a CODEOWNERS cache file")
             {
-                directoryPathOption, optionalRepoOption, codeownersCacheOption,
+                directoryPathOption, repoOption, codeownersCacheOption,
             },
             new McpCommand(updateCacheCommandName, "Run the CODEOWNERS cache update pipeline", CodeownerUpdateCacheToolName),
             new(auditCommandName, "Audit CODEOWNERS work items for violations and optionally fix them")
             {
-                fixOption, forceOption, optionalRepoOption,
+                fixOption, forceOption, repoOption,
             },
         ];
 
@@ -308,7 +283,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 var labels = parseResult.GetValue(labelsOption);
                 var package = parseResult.GetValue(packageOption);
                 var path = parseResult.GetValue(pathOption);
-                var repo = parseResult.GetValue(optionalRepoOption);
+                var repo = parseResult.GetValue(repoOption);
                 return await ViewCodeowners(user, labels, package, path, repo, ct);
             }
 
@@ -316,7 +291,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             {
                 var users = parseResult.GetValue(multipleGithubUserOption);
                 var package = parseResult.GetValue(packageOption);
-                var repo = parseResult.GetValue(optionalRepoOption);
+                var repo = parseResult.GetValue(repoOption);
                 return await AddPackageOwner(users!, package!, repo, ct);
             }
 
@@ -324,7 +299,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             {
                 var labels = parseResult.GetValue(labelsOption);
                 var package = parseResult.GetValue(packageOption);
-                var repo = parseResult.GetValue(optionalRepoOption);
+                var repo = parseResult.GetValue(repoOption);
                 return await AddPackageLabel(labels!, package!, repo, ct);
             }
 
@@ -334,7 +309,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 var labels = parseResult.GetValue(labelsOption);
                 var ownerType = parseResult.GetValue(ownerTypeOption);
                 var path = parseResult.GetValue(pathOption);
-                var repo = parseResult.GetValue(optionalRepoOption);
+                var repo = parseResult.GetValue(repoOption);
                 var section = parseResult.GetValue(sectionOption);
                 return await AddLabelOwner(users!, labels!, ownerType!, path, repo, section, ct);
             }
@@ -343,7 +318,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             {
                 var users = parseResult.GetValue(multipleGithubUserOption);
                 var package = parseResult.GetValue(packageOption);
-                var repo = parseResult.GetValue(optionalRepoOption);
+                var repo = parseResult.GetValue(repoOption);
                 return await RemovePackageOwner(users!, package!, repo, ct);
             }
 
@@ -351,7 +326,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             {
                 var labels = parseResult.GetValue(labelsOption);
                 var package = parseResult.GetValue(packageOption);
-                var repo = parseResult.GetValue(optionalRepoOption);
+                var repo = parseResult.GetValue(repoOption);
                 return await RemovePackageLabel(labels!, package!, repo, ct);
             }
 
@@ -361,7 +336,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 var labels = parseResult.GetValue(labelsOption);
                 var ownerType = parseResult.GetValue(ownerTypeOption);
                 var path = parseResult.GetValue(pathOption);
-                var repo = parseResult.GetValue(optionalRepoOption);
+                var repo = parseResult.GetValue(repoOption);
                 var section = parseResult.GetValue(sectionOption);
                 return await RemoveLabelOwner(users!, labels!, ownerType!, path, repo, section, ct);
             }
@@ -378,7 +353,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             {
                 var directoryPath = parseResult.GetValue(directoryPathOption);
                 var cachePath = parseResult.GetValue(codeownersCacheOption);
-                var repo = parseResult.GetValue(optionalRepoOption);
+                var repo = parseResult.GetValue(repoOption);
                 return await CheckPackage(directoryPath!, cachePath, repo, ct);
             }
 
@@ -391,7 +366,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             {
                 var fix = parseResult.GetValue(fixOption);
                 var force = parseResult.GetValue(forceOption);
-                var repo = parseResult.GetValue(optionalRepoOption);
+                var repo = parseResult.GetValue(repoOption);
 
                 if (!string.IsNullOrEmpty(repo) && !repo.StartsWith("Azure/", StringComparison.OrdinalIgnoreCase))
                 {

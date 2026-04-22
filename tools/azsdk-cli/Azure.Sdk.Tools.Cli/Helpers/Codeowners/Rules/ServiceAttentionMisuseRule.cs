@@ -42,7 +42,6 @@ public class ServiceAttentionMisuseRule : IAuditRule
                     RuleId = RuleId,
                     Description = $"Label Owner {lo.WorkItemId} (PR Label): has 'Service Attention' as a label",
                     WorkItemId = lo.WorkItemId,
-                    WorkItemTitle = lo.Title,
                     Detail = $"Repository: {lo.Repository}, Path: {lo.RepoPath}",
                 });
             }
@@ -56,7 +55,6 @@ public class ServiceAttentionMisuseRule : IAuditRule
                         RuleId = RuleId,
                         Description = $"Label Owner {lo.WorkItemId} ({lo.LabelType}): only label is 'Service Attention'",
                         WorkItemId = lo.WorkItemId,
-                        WorkItemTitle = lo.Title,
                         Detail = $"Repository: {lo.Repository}, Path: {lo.RepoPath}",
                     });
                 }
@@ -76,7 +74,6 @@ public class ServiceAttentionMisuseRule : IAuditRule
                     RuleId = RuleId,
                     Description = $"Package {pkg.WorkItemId} ({pkg.PackageName}): has 'Service Attention' as a label",
                     WorkItemId = pkg.WorkItemId,
-                    WorkItemTitle = pkg.Title,
                     Detail = $"Language: {pkg.Language}",
                 });
             }

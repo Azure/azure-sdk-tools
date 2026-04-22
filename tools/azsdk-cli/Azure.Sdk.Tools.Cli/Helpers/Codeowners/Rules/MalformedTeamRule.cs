@@ -35,7 +35,6 @@ public class MalformedTeamRule : IAuditRule
                     RuleId = RuleId,
                     Description = $"Team owner '{owner.GitHubAlias}' ({owner.WorkItemId}): malformed alias, expected Azure/<team>",
                     WorkItemId = owner.WorkItemId,
-                    WorkItemTitle = owner.Title,
                 });
             }
         }

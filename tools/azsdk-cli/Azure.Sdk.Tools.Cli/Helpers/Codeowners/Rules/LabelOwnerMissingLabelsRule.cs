@@ -29,7 +29,6 @@ public class LabelOwnerMissingLabelsRule : IAuditRule
                     RuleId = RuleId,
                     Description = $"Label Owner {lo.WorkItemId}: has zero labels",
                     WorkItemId = lo.WorkItemId,
-                    WorkItemTitle = lo.Title,
                     Detail = $"Type: {lo.LabelType}, Repository: {lo.Repository}, Path: {lo.RepoPath}, Owners: {lo.Owners.Count}",
                 });
             }

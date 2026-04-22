@@ -59,7 +59,6 @@ public class TeamNotWriteRule(
                     RuleId = RuleId,
                     Description = $"Team '{owner.GitHubAlias}' ({owner.WorkItemId}): not a descendant of azure-sdk-write",
                     WorkItemId = owner.WorkItemId,
-                    WorkItemTitle = owner.Title,
                     Detail = owner.InvalidSince.HasValue ? DoNothingDetail : SetInvalidDetail,
                 });
             }
@@ -71,7 +70,6 @@ public class TeamNotWriteRule(
                     RuleId = RuleId,
                     Description = $"Team '{owner.GitHubAlias}' ({owner.WorkItemId}): now valid, clear Invalid Since",
                     WorkItemId = owner.WorkItemId,
-                    WorkItemTitle = owner.Title,
                     Detail = ClearInvalidDetail,
                 });
             }

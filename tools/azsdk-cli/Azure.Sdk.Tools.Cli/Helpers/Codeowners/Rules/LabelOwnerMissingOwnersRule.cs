@@ -36,7 +36,6 @@ public class LabelOwnerMissingOwnersRule(
                     RuleId = RuleId,
                     Description = $"Label Owner {lo.WorkItemId}: has zero owners",
                     WorkItemId = lo.WorkItemId,
-                    WorkItemTitle = lo.Title,
                     Detail = $"Type: {lo.LabelType}, Repository: {lo.Repository}, Path: {lo.RepoPath}, Labels: {lo.Labels.Count}",
                 });
             }

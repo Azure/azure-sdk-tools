@@ -17,6 +17,4 @@ public class AuditReport
 {
     public List<AuditViolation> Violations { get; set; } = [];
     public List<AuditFixResult> FixesApplied { get; set; } = [];
-    public bool HasRemainingViolations => Violations.Any(v =>
-        !FixesApplied.Any(f => f.RuleId == v.RuleId && f.Description == v.Description && f.Success));
 }

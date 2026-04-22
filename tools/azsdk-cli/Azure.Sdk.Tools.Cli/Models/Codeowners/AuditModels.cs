@@ -22,7 +22,6 @@ public class AuditViolation
     public required string RuleId { get; set; }
     public required string Description { get; set; }
     public int? WorkItemId { get; set; }
-    public string? WorkItemTitle { get; set; }
     public string? Detail { get; set; }
 }
 

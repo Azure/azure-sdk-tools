@@ -6,8 +6,8 @@ The Azure SDK codeowners management system has migrated from hand-edited CODEOWN
 Azure DevOps work items as the source of truth (`config codeowners` commands in azsdk-cli).
 The old `CodeownersLinter` (in `tools/codeowners-utils/`) validates the rendered CODEOWNERS
 file, but there is no equivalent auditing of the ADO work item data itself. Invalid owners
-accumulate over time, MSFT identities are not tracked, and structural issues in the work item
-graph can cause the generated CODEOWNERS to fail the linter.
+accumulate over time, and structural issues in the work item graph can cause the generated
+CODEOWNERS to fail the linter.
 
 ## Approach
 
@@ -16,8 +16,8 @@ Add a `config codeowners audit` command to azsdk-cli that:
 1. Fetches all Owner, Label, Label Owner, and Package work items from ADO.
 2. Runs a configurable set of audit rules against them.
 3. Reports violations in a structured format.
-4. With `--fix`, applies automated fixes where safe (relation removal, field population,
-   orphan cleanup).
+4. With `--fix`, applies automated fixes where safe (Invalid Since field updates and orphan
+   cleanup).
 
 ## Reference Artifacts
 
@@ -76,9 +76,9 @@ repo file access and is explicitly out of scope for the audit.
 
 | Rule | Description | Fix? |
 |------|-------------|------|
-| AUD-OWN-001 | Individual Owner fails GitHub validation (not in Azure/Microsoft orgs, no write access) | Yes — remove relations |
+| AUD-OWN-001 | Individual Owner fails GitHub validation (not in Azure/Microsoft orgs, no write access) | Yes — set/clear `Invalid Since` field |
 | AUD-OWN-002 | Team alias doesn't match `Azure/<team>` format | Report only |
-| AUD-OWN-003 | Team doesn't descend from `azure-sdk-write` | Yes — remove relations |
+| AUD-OWN-003 | Team doesn't descend from `azure-sdk-write` | Yes — set/clear `Invalid Since` field |
 
 ### Label Validation
 
@@ -119,8 +119,8 @@ azsdk config codeowners audit [--fix]
 
 | Option | Description |
 |--------|-------------|
-| `--fix` | Apply automated fixes (remove invalid owner relations, delete orphaned entries). Without this flag, the command reports all violations and what would be fixed — effectively a preview of what `--fix` would do. |
-| `--force` | Override safety thresholds. Required when `--fix` would act on more than the allowed number of violations (e.g., AUD-OWN-001 throws if >5 invalid owners detected). |
+| `--fix` | Apply automated fixes (set/clear `Invalid Since` on invalid owners, delete orphaned entries). Without this flag, the command reports all violations and what would be fixed — effectively a preview of what `--fix` would do. |
+| `--force` | Override safety thresholds. Required when `--fix` would act on more than the allowed number of violations (e.g., AUD-OWN-001 throws if >5 newly invalid owners detected). |
 | `--repo` | Optional. Scopes evaluation and fixes of Package and Label Owner work items to a specific repo (e.g., `Azure/azure-sdk-for-net`). Must be of the form `Azure/<repo>`. Packages are filtered by language via `RepoToLanguageString`; Label Owners are filtered by exact `Custom.Repository` match. Owner and Label work items are always audited globally — even in a repo-scoped run, all owner validation and fixes still apply. If `--repo` does not map to a known SDK language repo, the command rejects it with an error. Validated in `CodeownersTool.cs`. |
 
 ### Behavior
@@ -138,37 +138,43 @@ azsdk config codeowners audit [--fix]
 
 ## Error Handling & Fix Safety
 
-`--fix` makes destructive changes (relation removal, work item deletion). If a transient
-error occurs (rate limits, network failures, auth errors), the audit **fails immediately**
-with a non-zero exit code. No retries. Operations that succeeded before the failure are
-kept — the auditor is **not atomic** and can be re-run safely.
+`--fix` makes changes to ADO work items (setting `Invalid Since` field, deleting orphaned
+Label Owners). If a transient error occurs (rate limits, network failures, auth errors),
+the audit **fails immediately** with a non-zero exit code. No retries. Operations that
+succeeded before the failure are kept — the auditor is **not atomic** and can be re-run safely.
 
 Each run re-fetches all work items from ADO and recomputes violations from scratch — there
-is no resume state. All fix operations are designed to be idempotent against current server
-state (see below), so re-running after a failure produces correct results.
+is no resume state. Re-running after a failure recomputes current server state from ADO and
+re-applies only the fixes that are still needed.
 
-### Idempotent Removal & Delete Operations
+### Idempotent Fix Operations
 
-`RemoveWorkItemRelationAsync` currently throws if the relation is already absent
-(`DevOpsService.cs:622-635`). `DeleteWorkItemAsync` has no 404 handling. For the audit,
-these operations must be safe on re-run:
+- **Set Invalid Since**: If the field is already set, the rule reports `DoNothing` — no update.
+  Setting the same value again would be harmless but is avoided for efficiency.
+- **Clear Invalid Since**: If the field is already empty, no violation is raised. If the field
+  is set and the owner is now valid, clearing it is idempotent.
+- **Work item delete (STR-001)**: No special wrapper. If the delete fails, the exception
+  propagates and the audit fails so the issue can be investigated.
 
-- **Relation removal**: If the relation is not found on the source work item, treat as
-  success (already removed). Do not throw.
-- **Work item delete**: If the target work item returns 404, treat as success (already
-  deleted). Do not throw.
+### InvalidOwnerRule Fix Logic
 
-Implement this as **audit-specific wrappers** (not by changing the existing service methods)
-so other callers are unaffected. The wrappers catch the specific "not found" exceptions and
-return a result indicating `AlreadyApplied`.
+The audit uses a **soft-invalidation** approach instead of relation removal:
 
-### Relation Removal Concurrency
+- **If owner is invalid and `InvalidSince` is not set** → Detail = `SetInvalidDetail` → fix sets `Custom.InvalidSince` to current UTC date/time (ISO 8601)
+- **If owner is invalid and `InvalidSince` is already set** → Detail = `DoNothingDetail` → no fix action
+- **If owner is valid and `InvalidSince` is set** → Detail = `ClearInvalidDetail` → fix clears the field (empty string)
+- **If owner is valid and `InvalidSince` is not set** → no violation reported
 
-`RemoveWorkItemRelationAsync` finds a relation by URL match, gets its index, then PATCHes
-`/relations/{index}` (`DevOpsService.cs:627-644`). If another process modifies the work
-item's relations between GET and PATCH, the index may be stale — either removing the wrong
-relation or getting a 409 conflict. The audit-specific wrapper should handle 409 by
-re-fetching the work item and recomputing the relation index.
+TeamNotWriteRule (AUD-OWN-003) follows the identical pattern for team owners.
+
+Both rules have a safety threshold of 5: if >5 newly invalid owners/teams are detected with `--fix`, the rule throws unless `--force` is specified.
+
+### Invalid Owner Lookback (Generate Command)
+
+The `generate` command accepts `--invalid-owner-lookback-days` (default 90). Owners whose
+`InvalidSince` date is older than the lookback window are excluded from generated CODEOWNERS
+entries via `IsOwnerExpired(owner, cutoff)`. Owners within the window are still treated as
+valid during generation, giving time for investigation before they disappear from CODEOWNERS.
 
 ### Required Changes to `CodeownersValidatorHelper`
 
@@ -221,13 +227,14 @@ Rules only read from `AuditContext` and return fixes; the harness owns mutation 
 1. Fetch all work items into AuditContext
 
 2. AUD-OWN-001: Invalid owner detection
-   // No dependencies — runs first
+   // No dependencies — runs first. Sets/clears Invalid Since.
 
 3. AUD-OWN-002: Malformed team alias
    // No dependencies — pure string validation
 
 4. AUD-OWN-003: Team not under azure-sdk-write
    // Skips malformed aliases internally (OWN-002 is report-only, can't rely on it fixing them)
+   // Sets/clears Invalid Since.
 
 5. AUD-LBL-001: Label not in GitHub
    // No dependencies on owner rules
@@ -236,10 +243,9 @@ Rules only read from `AuditContext` and return fixes; the harness owns mutation 
    // No dependencies on owner rules
 
 7. AUD-STR-001: Label Owner missing owners
-   // Depends on: AUD-OWN-001, AUD-OWN-003 (owner removals may leave Label Owners orphaned)
+   // Evaluates current owner relations (not affected by Invalid Since changes)
 
 8. AUD-STR-002: Label Owner missing labels
-   // Depends on: AUD-LBL-001, AUD-LBL-002 (label changes may leave Label Owners without labels)
    // Report only — no fix, requires human investigation
 
 → After each rule that applied fixes, harness performs a full rebuild of AuditContext from ADO
@@ -250,8 +256,8 @@ Rules only read from `AuditContext` and return fixes; the harness owns mutation 
 ### Crash Recovery
 
 Each run re-fetches all work items from ADO and recomputes violations from scratch. There is
-no resume state. This is safe because all fix operations are designed to be idempotent against
-current server state (see "Error Handling" section).
+no resume state. This is safe because the audit always rebuilds its view from current ADO state
+before evaluating rules.
 
 ---
 
@@ -314,7 +320,7 @@ current server state (see "Error Handling" section).
 - Rules return fix actions but do **not** apply them. The **rule harness**:
   1. Calls `Evaluate` to get violations.
   2. If `--fix`, calls `GetFixes` to get fix actions.
-  3. Applies each fix action **sequentially** via idempotent service wrappers.
+  3. Applies each fix action **sequentially**. Any thrown exception fails the audit immediately.
   4. After all fixes for a rule are applied, refreshes affected work items in `AuditContext`.
   5. Proceeds to the next rule, which sees updated state.
 - `AuditContext` also holds `--fix` and `--force` flags so rules can check them.
@@ -323,18 +329,20 @@ current server state (see "Error Handling" section).
 
 ### Phase 3: Owner Validation Rules
 
-**Todo: `rule-aud-own-001`** — Invalid owner detection and relation removal.
+**Todo: `rule-aud-own-001`** — Invalid owner detection and `Invalid Since` field management.
 - Uses `ICodeownersValidatorHelper` (existing, with audit-specific overload).
 - **Evaluates ALL owners first**, logs all invalid owners, then applies fixes.
-- **Safety threshold**: If >5 invalid owners detected with `--fix`, throws unless `--force`
+- Fix sets `Custom.InvalidSince` on newly invalid owners, clears it on recovered owners.
+- **Safety threshold**: If >5 newly invalid owners detected with `--fix`, throws unless `--force`
   is also specified. See `plans/AUD-OWN-001-invalid-owner.md` for details.
-- Returns fix actions; harness applies via idempotent wrappers.
 
 **Todo: `rule-aud-own-002`** — Malformed team alias detection.
 - Pure string validation, no API calls.
 
 **Todo: `rule-aud-own-003`** — Team not under azure-sdk-write.
 - Uses `ITeamUserCache` (existing) with fallback to `IGitHubService` parent-chain validation.
+- Fix sets `Custom.InvalidSince` on newly invalid teams, clears it on recovered teams.
+- **Safety threshold**: If >5 newly invalid teams detected with `--fix`, throws unless `--force`.
 - Transient errors fail the process immediately.
 
 ### Phase 4: Label & Structure Rules
@@ -343,6 +351,7 @@ current server state (see "Error Handling" section).
 - **Prerequisite**: Add `GetRepoLabels` method to `IGitHubService` / `GitHubService`.
 **Todo: `rule-aud-lbl-002`** — Service Attention misuse.
 - Check **both** Label Owner service labels AND Package PR labels.
+- Remains **report only** in this project. No automated fix is planned.
 **Todo: `rule-aud-str-001`** — Label Owner missing owners.
 **Todo: `rule-aud-str-002`** — Label Owner missing labels (report only, no fix — requires
   human investigation for data integrity issues).
@@ -368,21 +377,25 @@ current server state (see "Error Handling" section).
 - Update `MockGitHubService` and `MockDevOpsService` with new interface members
   (`GetRepoLabels`, generic `DeleteWorkItemAsync`) so tests compile.
 - Test fix behavior with and without `--fix`.
-- Test cascade: invalid owner removal → Label Owner becomes orphaned → detected by STR-001.
+- Test InvalidOwnerRule set/clear/do-nothing detail transitions.
+- Test TeamNotWriteRule set/clear/do-nothing detail transitions.
+- Test STR-001: Label Owner with zero owners is deleted.
 - Test STR-002: Label Owner with zero labels is reported (not fixed).
-- Test AUD-OWN-001 safety threshold: >5 invalid owners with `--fix` throws without `--force`.
-- Test AUD-OWN-001 safety threshold: >5 invalid owners with `--fix --force` proceeds.
+- Test AUD-OWN-001 safety threshold: >5 newly invalid owners with `--fix` throws without `--force`.
+- Test AUD-OWN-001 safety threshold: >5 newly invalid owners with `--fix --force` proceeds.
+- Test AUD-OWN-003 safety threshold: >5 newly invalid teams with `--fix` throws without `--force`.
 - Test AUD-OWN-001 always reports all invalid owners (even above threshold) before throwing.
 - Test that transient errors fail the process immediately.
-- Test idempotent wrappers: removing already-absent relation returns success.
-- Test idempotent wrappers: deleting already-deleted WI returns success.
-- Test 409 conflict handling on relation removal.
+- Test STR-001 delete failure propagation: failed deletes surface as exceptions and stop the audit.
+- Test invalid Detail value throws in OWN-001 and OWN-003.
 - Test rule harness performs full rebuild of context after fixes.
 - Test AUD-OWN-003 skips malformed team aliases without crashing.
 - Test `--repo` filtering: Packages filtered by language, Label Owners by `Custom.Repository`.
-- Test `--repo` with unsupported repo is rejected.
 - Test `--repo` scoped run still evaluates/fixes owners globally.
 - Test AUD-LBL-001 repo derivation: labels checked only in repos where they're referenced.
+- Test generator lookback behavior: expired owners are excluded from generated entries, owners
+  still inside the lookback window remain, and linked label-owner metadata owners are filtered
+  by the same cutoff.
 
 **Todo: `add-label-owner-path-validation`**
 - Add glob/path syntax validation to the `add-label-owner` command when `--path` is specified.
@@ -427,12 +440,12 @@ Reasons:
 ## Key Design Decisions
 
 1. **Scope**: Audits all work items by default; `--repo` narrows to a specific `Azure/<repo>`.
-2. **Fix behavior**: Hard removal of relations from invalid owners (no soft tag/review step).
+2. **Fix behavior**: Owner rules (OWN-001, OWN-003) set `Custom.InvalidSince` to current date/time on newly invalid owners, clear it when owners become valid again. No relation removal — invalid owners are excluded from CODEOWNERS generation via `--invalid-owner-lookback-days` (default 90 days). Structure rule STR-001 deletes orphaned Label Owner work items with zero owner relations.
 3. **Rule ordering**: Owner rules run before structure rules so cascade effects are detected.
 4. **CLI-only**: No MCP tool exposure for now.
 5. **Command location**: `config codeowners audit` alongside existing codeowners commands.
-6. **Deferred rules**: AUD-STR-003/004/005 deferred to later phase. AUD-OWN-004 (MSFT
-   Identity) and identity-resolution integration deferred separately.
+6. **Deferred rules**: AUD-STR-003/004/005 deferred to later phase. MSFT identity population
+   and identity-resolution integration are intentionally out of scope for this project.
 
 ## Key Dependencies
 
@@ -447,11 +460,11 @@ Reasons:
 
 | Risk | Mitigation |
 |------|------------|
-| GitHub API rate limits during bulk owner validation | Fail immediately; re-run is safe due to idempotent fixes |
-| Cascade fixes could remove too many relations | Rule harness performs full rebuild of AuditContext from ADO after each rule's fixes |
-| Partial completion on transient failure | Audit re-fetches from ADO on re-run; idempotent wrappers handle already-applied fixes |
-| Double-delete of work items on re-run | Idempotent delete wrapper treats 404 as success |
-| Concurrent ADO modification during relation removal | Fails immediately per no-retries contract; re-run is safe |
+| GitHub API rate limits during bulk owner validation | Fail immediately; re-run after the transient error clears |
+| Invalid Since field changes affect CODEOWNERS generation | `--invalid-owner-lookback-days` (default 90) provides a grace window before owners are excluded |
+| Partial completion on transient failure | Audit re-fetches from ADO on re-run and recomputes violations from current state |
+| Double-delete of work items on re-run | No silent masking — delete failures surface immediately and should be investigated |
+| Concurrent ADO modification during field updates | Field set/clear is last-writer-wins; re-run produces correct results |
 
 ---
 
@@ -468,21 +481,27 @@ Reasons:
 | Phase 4 | DI registrations, mock updates, initial 25 tests | Same commit as Phase 1 |
 | Review 1 | LabelNotInGitHubRule per-repo fix, ServiceAttentionMisuseRule type name, narrowed exception matching, harness try/catch, ConcurrentDictionary, 9 new tests | `Address review feedback: fix correctness and safety issues` |
 | Review 2 | TeamNotWriteRule azure-sdk-write self-check, STR-001 safety threshold, cache staleness fix, remove 409 retry, 5 new tests | `Address final review: safety thresholds, cache staleness, remove retry` |
+| Refactor | InvalidOwnerRule rewritten: removed relation removal, now sets/clears `Custom.InvalidSince` field on Owner work items | Uncommitted |
+| Refactor | TeamNotWriteRule rewritten: removed relation removal, now sets/clears `Custom.InvalidSince` field on team Owner work items. Added safety threshold (>5 = requires --force). | Uncommitted |
+| Feature | Added `InvalidSince` (DateTime?) property to `OwnerWorkItem` with `[FieldName("Custom.InvalidSince")]` | Uncommitted |
+| Feature | Added `--invalid-owner-lookback-days` option (default 90) to `generate` command. `IsOwnerExpired` filter excludes owners past the lookback window from generated CODEOWNERS. | Uncommitted |
+| Bugfix | Case-insensitive org membership comparison in `CodeownersValidatorHelper.cs` | Uncommitted |
 
-### Test Coverage: 39 tests
+### Test Coverage
 
-- InvalidOwnerRule: 7 tests (valid, invalid, error propagation, threshold, force override, team skip, relation generation)
+- InvalidOwnerRule: 13 tests (valid, invalid, not-found, error propagation, set/clear/do-nothing detail, threshold, force override, team skip, invalid detail throws)
 - MalformedTeamRule: 5 tests (valid format, invalid formats, fix output)
-- TeamNotWriteRule: 6 tests (individual skip, malformed skip, cache hit, azure-sdk-write self, NotFoundException, fix generation)
+- TeamNotWriteRule: 10 tests (individual skip, malformed skip, cache hit, azure-sdk-write self, NotFoundException, set invalid, already marked, clear invalid, do-nothing, invalid detail throws, threshold)
 - LabelNotInGitHubRule: 4 tests (label present, missing from one repo, unreferenced label, no fixes)
 - ServiceAttentionMisuseRule: 5 tests (PR Label, Service Owner sole label, Service Owner multiple labels, Package, Azure SDK Owner)
 - LabelOwnerMissingOwnersRule: 5 tests (with owners, zero owners, delete fix, threshold, force override)
 - LabelOwnerMissingLabelsRule: 3 tests (with labels, zero labels, no fixes)
 - CodeownersAuditHelper: 4 tests (empty report, repo filter, fix exception, rebuild after fix)
+- CodeownersGenerateHelper: 13 tests (BuildCodeownersEntries coverage includes invalid-owner lookback filtering for package owners and linked label-owner metadata)
 
-### Deferred
+### Deferred / Out of Scope
 
-- AUD-OWN-004 (MSFT Identity population) — requires identity-resolution integration
 - AUD-STR-003/004/005 — deferred structural rules
 - Spec update (`8-operations-codeowners-management.spec.md`)
 - Path validation for `add-label-owner --path`
+- MSFT identity population / identity-resolution integration — out of scope for this project

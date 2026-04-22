@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Collections.Concurrent;
+using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Codeowners;
 using Azure.Sdk.Tools.Cli.Services;
@@ -104,11 +105,12 @@ public class LabelNotInGitHubRule(
         // From Packages: map language → repo
         foreach (var pkg in context.WorkItemData.Packages.Values)
         {
-            var repo = LanguageToRepo(pkg.Language);
-            if (string.IsNullOrEmpty(repo))
+            var repoName = SdkLanguageHelpers.GetRepoName(SdkLanguageHelpers.GetSdkLanguage(pkg.Language));
+            if (string.IsNullOrEmpty(repoName))
             {
                 continue;
             }
+            var repo = $"Azure/{repoName}";
 
             foreach (var label in pkg.Labels)
             {
@@ -147,20 +149,5 @@ public class LabelNotInGitHubRule(
         var labels = await githubService.GetRepoLabels(owner, repoName, ct);
         _repoLabelCache[repoFullName] = labels;
         return labels;
-    }
-
-    private static string? LanguageToRepo(string language)
-    {
-        return language?.ToLowerInvariant() switch
-        {
-            "dotnet" or ".net" => "Azure/azure-sdk-for-net",
-            "java" => "Azure/azure-sdk-for-java",
-            "javascript" or "js" => "Azure/azure-sdk-for-js",
-            "python" => "Azure/azure-sdk-for-python",
-            "go" => "Azure/azure-sdk-for-go",
-            "c++" or "cpp" => "Azure/azure-sdk-for-cpp",
-            "rust" => "Azure/azure-sdk-for-rust",
-            _ => null,
-        };
     }
 }

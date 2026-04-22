@@ -1496,6 +1496,32 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
         }
 
         [Test]
+        public async Task Evaluate_LabelReferencedByPackage_UsesSharedLanguageRepoMapping()
+        {
+            var label = new LabelWorkItem { WorkItemId = 1, LabelName = "Storage" };
+            var package = new PackageWorkItem { WorkItemId = 20, Language = "Rust", PackageName = "pkg" };
+            package.Labels.Add(label);
+
+            _mockGithub.Setup(g => g.GetRepoLabels("Azure", "azure-sdk-for-rust", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Storage" });
+
+            var context = new AuditContext
+            {
+                WorkItemData = new WorkItemData(
+                    new Dictionary<int, PackageWorkItem> { [20] = package },
+                    new Dictionary<int, OwnerWorkItem>(),
+                    new Dictionary<int, LabelWorkItem> { [1] = label },
+                    new List<LabelOwnerWorkItem>()
+                ),
+            };
+
+            var violations = await _rule.Evaluate(context, CancellationToken.None);
+
+            Assert.That(violations, Is.Empty);
+            _mockGithub.Verify(g => g.GetRepoLabels("Azure", "azure-sdk-for-rust", It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Test]
         public void GetFixes_ThrowsNotImplementedException()
         {
             var violations = new List<AuditViolation>

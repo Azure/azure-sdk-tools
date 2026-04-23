@@ -4,7 +4,7 @@
 # license information.
 # --------------------------------------------------------------------------
 
-# pylint: disable=missing-class-docstring,missing-function-docstring,redefined-outer-name,unused-argument
+# pylint: disable=missing-class-docstring,missing-function-docstring,redefined-outer-name,unused-argument,no-member
 
 """
 Tests for resolve_package function in _apiview.py.
@@ -19,7 +19,7 @@ import pytest
 sys.modules["azure.cosmos"] = MagicMock()
 sys.modules["azure.cosmos.exceptions"] = MagicMock()
 
-from src._apiview import get_active_reviews, get_version_type, resolve_package
+from src._apiview import get_active_reviews, get_ai_comment_feedback, get_comments_in_date_range, get_version_type, resolve_package
 
 
 class TestGetVersionType:
@@ -556,8 +556,157 @@ class TestGetActiveReviewsCopilotFlag:
 
             mock_client.side_effect = get_container
 
-            results = get_active_reviews("2026-01-01", "2026-01-31", environment="production")
+            results, _ = get_active_reviews("2026-01-01", "2026-01-31", environment="production")
 
             assert len(results) == 1
             assert len(results[0].revisions) == 1
             assert results[0].revisions[0].has_copilot_review is True
+
+
+class TestGetAiCommentFeedback:
+    """Tests for get_ai_comment_feedback function."""
+
+    @pytest.fixture
+    def mock_comments_data(self):
+        """Sample AI-generated comments with feedback."""
+        return [
+            {
+                "id": "comment-1",
+                "ReviewId": "review-1",
+                "CommentText": "Consider using async",
+                "CommentSource": "AIGenerated",
+                "Upvotes": ["user-a"],
+                "Downvotes": [],
+                "IsDeleted": False,
+                "Feedback": [{"SubmittedOn": "2026-01-15T12:00:00Z", "Text": "Helpful"}],
+                "ChangeHistory": [],
+            },
+            {
+                "id": "comment-2",
+                "ReviewId": "review-2",
+                "CommentText": "Missing error handling",
+                "CommentSource": "AIGenerated",
+                "Upvotes": [],
+                "Downvotes": ["user-b"],
+                "IsDeleted": False,
+                "Feedback": [{"SubmittedOn": "2026-01-16T12:00:00Z", "Text": "Not relevant"}],
+                "ChangeHistory": [],
+            },
+            {
+                "id": "comment-3",
+                "ReviewId": "review-1",
+                "CommentText": "Deleted comment",
+                "CommentSource": "AIGenerated",
+                "Upvotes": [],
+                "Downvotes": [],
+                "IsDeleted": True,
+                "Feedback": [],
+                "ChangeHistory": [{"ChangedOn": "2026-01-17T12:00:00Z", "ChangeAction": "Deleted"}],
+            },
+        ]
+
+    @pytest.fixture
+    def mock_reviews_language_data(self):
+        """Reviews with language info."""
+        return [
+            {"id": "review-1", "Language": "Python"},
+            {"id": "review-2", "Language": "Java"},
+        ]
+
+    def _setup_mocks(self, mock_client, comments_data, reviews_data):
+        comments_container = MockContainerClient(comments_data)
+        reviews_container = MockContainerClient(reviews_data)
+
+        def get_container(container_name, environment, db_name=None):
+            if container_name == "Reviews":
+                return reviews_container
+            return comments_container
+
+        mock_client.side_effect = get_container
+
+    def test_language_field_populated(self, mock_comments_data, mock_reviews_language_data):
+        """Test that each returned comment has a Language field from the review."""
+        with patch("src._apiview.get_apiview_cosmos_client") as mock_client:
+            self._setup_mocks(mock_client, mock_comments_data, mock_reviews_language_data)
+            results = get_ai_comment_feedback(None, "2026-01-01", "2026-01-31")
+
+            assert len(results) == 3
+            python_comments = [c for c in results if c["Language"] == "Python"]
+            java_comments = [c for c in results if c["Language"] == "Java"]
+            assert len(python_comments) == 2
+            assert len(java_comments) == 1
+
+    def test_language_none_returns_all(self, mock_comments_data, mock_reviews_language_data):
+        """Test that language=None returns comments from all languages."""
+        with patch("src._apiview.get_apiview_cosmos_client") as mock_client:
+            self._setup_mocks(mock_client, mock_comments_data, mock_reviews_language_data)
+            results = get_ai_comment_feedback(None, "2026-01-01", "2026-01-31")
+
+            languages = {c["Language"] for c in results}
+            assert "Python" in languages
+            assert "Java" in languages
+
+    def test_language_filter(self, mock_comments_data, mock_reviews_language_data):
+        """Test that specifying a language filters results correctly."""
+        with patch("src._apiview.get_apiview_cosmos_client") as mock_client:
+            self._setup_mocks(mock_client, mock_comments_data, mock_reviews_language_data)
+            results = get_ai_comment_feedback("python", "2026-01-01", "2026-01-31")
+
+            assert len(results) == 2
+            assert all(c["Language"] == "Python" for c in results)
+
+    def test_language_empty_for_unknown_review(self, mock_comments_data):
+        """Test that Language is empty string when review ID has no language mapping."""
+        with patch("src._apiview.get_apiview_cosmos_client") as mock_client:
+            # Return no reviews, so no language mapping exists
+            self._setup_mocks(mock_client, mock_comments_data, [])
+            results = get_ai_comment_feedback(None, "2026-01-01", "2026-01-31")
+
+            assert all(c["Language"] == "" for c in results)
+
+
+class TestGetCommentsInDateRange:
+    """Tests for get_comments_in_date_range query construction."""
+
+    def _call_and_capture_query(self, **kwargs):
+        """Call get_comments_in_date_range and return the query string passed to query_items."""
+        with patch("src._apiview.get_apiview_cosmos_client") as mock_client:
+            mock_container = MagicMock()
+            mock_container.query_items.return_value = iter([])
+            mock_client.return_value = mock_container
+
+            get_comments_in_date_range("2026-01-01", "2026-01-31", **kwargs)
+
+            mock_container.query_items.assert_called_once()
+            return mock_container.query_items.call_args[1]["query"]
+
+    def test_default_excludes_diagnostics_and_deleted(self):
+        query = self._call_and_capture_query()
+        assert "CommentSource != 'Diagnostic'" in query
+        assert "IsDeleted" in query
+
+    def test_include_diagnostics_true_omits_diagnostic_filter(self):
+        query = self._call_and_capture_query(include_diagnostics=True)
+        assert "Diagnostic" not in query
+
+    def test_include_diagnostics_false_adds_diagnostic_filter(self):
+        query = self._call_and_capture_query(include_diagnostics=False)
+        assert "CommentSource != 'Diagnostic'" in query
+
+    def test_include_deleted_true_omits_deleted_filter(self):
+        query = self._call_and_capture_query(include_deleted=True)
+        assert "IsDeleted = false" not in query
+
+    def test_include_deleted_false_adds_deleted_filter(self):
+        query = self._call_and_capture_query(include_deleted=False)
+        assert "IsDeleted = false" in query
+
+    def test_both_include_flags_true(self):
+        query = self._call_and_capture_query(include_diagnostics=True, include_deleted=True)
+        where_clause = query.split("WHERE", 1)[1]
+        assert "Diagnostic" not in where_clause
+        assert "IsDeleted" not in where_clause
+
+    def test_select_fields_used_in_query(self):
+        query = self._call_and_capture_query(select_fields=["id", "CreatedOn"])
+        assert query.startswith("SELECT c.id, c.CreatedOn FROM c")

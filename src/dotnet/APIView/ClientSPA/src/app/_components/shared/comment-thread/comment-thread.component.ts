@@ -703,7 +703,11 @@ export class CommentThreadComponent {
     this.stopEditingSeverity();
   }
 
-  onSeverityChange(newSeverity: CommentSeverity, commentId: string): void {
+  onSeverityChange(newSeverity: CommentSeverity | null | undefined, commentId: string): void {
+    if (newSeverity === null || newSeverity === undefined) {
+      return;
+    }
+
     // Update the comment's severity value locally first
     const comment = this.codePanelRowData?.comments?.find(c => c.id === commentId);
     if (comment && this.reviewId && this.reviewId.trim() !== '') {
@@ -754,10 +758,6 @@ export class CommentThreadComponent {
   stopEditingSeverity(): void {
     this.isEditingSeverity = null;
     this.changeDetectorRef.detectChanges();
-  }
-
-  hasSeverity(severity: CommentSeverity | null | undefined): boolean {
-    return severity !== null && severity !== undefined;
   }
 
   onSeveritySelectionChange(newSeverity: CommentSeverity): void {

@@ -1,5 +1,23 @@
 # Release History
 
+## 0.9.5 (2026-04-15)
+
+### Features Added
+
+* Parallelize link content fetching to improve response times when multiple links are provided
+* Add timeout and fallback for pipeline analysis to prevent long-running requests
+
+### Other Changes
+
+* Use pre-built azsdk CLI release binary in Dockerfile instead of building from source
+
+## 0.9.4 (2026-04-10)
+
+### Other Changes
+
+* Use dedicated Java channel prompts to improve response quality for Java-related queries
+* Add `review-request` category to Java intention prompt to prevent the bot from responding to PR review requests
+
 ## 0.9.3 (2026-03-27)
 
 ### Features Added

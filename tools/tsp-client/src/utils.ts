@@ -165,7 +165,31 @@ export async function updateExistingTspLocation(
     }
     return updatedTspLocation;
   } catch (error) {
-    Logger.debug(`Will create a new tsp-location.yaml. Error reading tsp-location.yaml: ${error}`);
+    const errorDetails =
+      error instanceof Error
+        ? (() => {
+            // Don't append details if the cause is an ENOENT error (file not found)
+            const isEnoentCause =
+              (error.cause instanceof Error && (error.cause as any)?.code === "ENOENT") ||
+              (error.cause && String(error.cause).toLowerCase().includes("enoent"));
+            if (isEnoentCause) {
+              return "";
+            }
+
+            // Provide additional details about the cause of the error if available
+            const causeDetails = error.cause !== undefined ? `\nCause: ${String(error.cause)}` : "";
+            return (
+              `For debugging purposes see the error details: ` +
+              "\n----\n" +
+              (error.stack ?? `${error.name}: ${error.message}`) +
+              causeDetails +
+              "\n----\n"
+            );
+          })()
+        : String(error);
+    Logger.debug(
+      `Will create a new tsp-location.yaml file after the check for an existing tsp-location.yaml failed. ${errorDetails}`,
+    );
     return tspLocationData;
   }
 }

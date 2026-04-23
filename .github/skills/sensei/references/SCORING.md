@@ -10,7 +10,7 @@ Sensei evaluates skills on two dimensions:
 
 ## Token Budgets
 
-From skill-authoring:
+From [skill-authoring](/.github/skills/skill-authoring):
 
 | File | Soft Limit | Hard Limit | Notes |
 |------|------------|------------|-------|
@@ -18,7 +18,7 @@ From skill-authoring:
 | references/*.md | 1000 | - | Each reference file |
 | Description | - | 1024 chars | Frontmatter description field |
 
-**Check with:** `cd scripts && npm run tokens -- check plugin/skills/{skill}/SKILL.md`
+**Check with:** `cd scripts && npm run tokens -- check .github/skills/{skill}/SKILL.md`
 
 > **Units note:** Sensei measures in **tokens** (cl100k_base tokenizer), not words. Anthropic's [Complete Guide](https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf) recommends "under 5,000 words" for SKILL.md, while the [Agent Skills spec](https://agentskills.io/specification) recommends "< 5000 tokens" and "under 500 lines." Sensei uses the spec's token-based limits. As a rough conversion: 5000 tokens ≈ 3,750 words.
 
@@ -30,7 +30,7 @@ References load **only when explicitly linked** in SKILL.md, not on activation:
 - No caching between requests
 - Structure with recipes/services patterns for multi-option skills
 
-See skill-authoring REFERENCE-LOADING.md for details.
+See [skill-authoring REFERENCE-LOADING.md](/.github/skills/skill-authoring/references/REFERENCE-LOADING.md) for details.
 
 ## Adherence Levels
 
@@ -121,7 +121,7 @@ Per the [agentskills.io spec](https://agentskills.io/specification), the `name` 
 | Check | Pass | Fail |
 |-------|------|------|
 | Lowercase only | `azure-deploy` | `Azure-Deploy` |
-| Alphanumeric + hyphens | `azure-cost-optimization` | `azure_cost_optimization` |
+| Alphanumeric + hyphens | `azure-cost` | `azure_cost` |
 | No start/end hyphen | `azure-deploy` | `-azure-deploy`, `azure-deploy-` |
 | No consecutive hyphens | `azure-deploy` | `azure--deploy` |
 | Matches directory | `skill-name` = folder name | Mismatch |
@@ -166,6 +166,7 @@ Per the [agentskills.io spec](https://agentskills.io/specification), the `name` 
 | Single skill or small set (1-5 skills) with clear domain boundaries | Low | Anti-triggers are low-risk — domain boundaries are obvious |
 | Medium skill set (5-15 skills) with some overlap | Moderate | Anti-trigger keywords start competing with other skills' triggers |
 | Large skill set (15+ skills) with overlapping domains | **High** | Keyword contamination is measurable — negative keywords become activation keywords on fast-pattern-matching models |
+| **Specialized skill with trigger overlap against a broader skill** | **REQUIRED** | Anti-triggers are the **only** disambiguation mechanism when a specialized skill (e.g., `azure-hosted-copilot-sdk`) competes with a broader skill (e.g., `azure-prepare`) on shared trigger phrases like "deploy to Azure". Removing them causes routing regressions. |
 
 **Why large skill sets are risky:** On Claude Sonnet and similar models that use fast pattern matching (first ~20 words), `DO NOT USE FOR: Function apps` causes Sonnet to key on "Function apps" and **activate** the skill for Functions queries. This was empirically demonstrated across 24 Azure skills ([analysis](https://gist.github.com/kvenkatrajan/52e6e77f5560ca30640490b4cc65d109)). Anthropic's own published skills confirm this pattern — 4 of 5 skills in `anthropics/skills` use positive-only routing.
 
@@ -179,9 +180,15 @@ Per the [agentskills.io spec](https://agentskills.io/specification), the `name` 
 - `Defer to`
 
 **Scoring:**
-- Present in large skill sets → emits cross-model compatibility warning
+- Present in large skill sets without trigger overlap → emits cross-model compatibility warning
 - Present in small skill sets → informational note only
-- Absent → no penalty (preferred for cross-model compatibility)
+- **Present in skills with trigger overlap against broader skills → NO WARNING (required for disambiguation)**
+- Absent → no penalty (preferred for cross-model compatibility, **except** when disambiguation is required)
+
+**Automated routing-regression guard (Sensei rule):**
+- Detect trigger overlap between specialized skills and broad skills (for example `azure-prepare`)
+- Require disambiguation when overlap exists: either `DO NOT USE FOR:` or `PREFER OVER <competing-skill>`
+- Report an error when a PR removes an existing `DO NOT USE FOR:` or `PREFER OVER` clause from a skill (potential routing regression)
 
 ### 5. Compatibility Field
 
@@ -319,8 +326,14 @@ function scoreSkill(skill):
             score = "Medium-High"
     
     # Warn on anti-triggers (keyword contamination risk)
+    # Exception: DO NOT warn if skill has trigger overlap with a broader skill
+    # (e.g., azure-hosted-copilot-sdk overlaps with azure-prepare on "deploy")
+    # In that case, DO NOT USE FOR is REQUIRED for disambiguation
     if containsAntiTriggers(skill.description):
-        warn "DO NOT USE FOR: causes keyword contamination on Sonnet — remove"
+        if hasOverlappingTriggersWithBroaderSkill(skill):
+            pass  # anti-triggers required for disambiguation — no warning
+        else:
+            warn "DO NOT USE FOR: causes keyword contamination on Sonnet — consider removing"
     
     # Check for compatibility
     hasCompatibility = skill.compatibility != null
@@ -349,7 +362,10 @@ function collectSuggestions(skill):
     if usesBlockScalar(skill.rawDescription):
         suggestions.add("Use inline double-quoted string for description (>- incompatible with skills.sh)")
     if containsAntiTriggers(skill.description):
-        suggestions.add("Remove DO NOT USE FOR: — causes keyword contamination on Claude Sonnet")
+        if hasOverlappingTriggersWithBroaderSkill(skill):
+            pass  # anti-triggers required — do not suggest removal
+        else:
+            suggestions.add("Consider removing DO NOT USE FOR: — causes keyword contamination on Claude Sonnet. Run integration tests first to verify routing is unaffected.")
     if wordCount(skill.description) > 60:
         suggestions.add("Trim description to ≤60 words for cross-model reliability")
     return suggestions
@@ -390,7 +406,7 @@ From the [frontmatter audit](https://gist.github.com/spboyer/28c31bf0cafb8748940
 4. `azure-postgres`
 5. `azure-functions`
 6. `azure-quick-review`
-7. `azure-cost-optimization`
+7. `azure-cost`
 8. `azure-kusto`
 9. `azure-keyvault-expiration-audit`
 10. `azure-aigateway`
@@ -398,127 +414,3 @@ From the [frontmatter audit](https://gist.github.com/spboyer/28c31bf0cafb8748940
 12. `microsoft-foundry`
 13. `skill-authoring`
 14. `markdown-token-optimizer`
-# Token Integration
-
-Sensei integrates with the token management system to ensure skills stay within budget while improving frontmatter compliance.
-
-## Token Budgets
-
-From the skill-authoring skill:
-
-| File Type | Soft Limit | Hard Limit |
-|-----------|------------|------------|
-| SKILL.md | 500 tokens | 5000 tokens |
-| references/*.md | 1000 tokens | - |
-| Total skill | 2000 tokens | - |
-
-## Token Commands
-
-Sensei uses the token CLI from `scripts/`:
-
-```bash
-# Count tokens in a file
-cd scripts && npm run tokens -- count plugin/skills/{skill-name}/SKILL.md
-
-# Check against limits
-cd scripts && npm run tokens -- check plugin/skills/{skill-name}/SKILL.md
-
-# Get optimization suggestions
-cd scripts && npm run tokens -- suggest plugin/skills/{skill-name}/SKILL.md
-```
-
-## Integration Points
-
-### 1. READ Phase (Capture Baseline)
-
-At loop start, capture initial token count:
-```bash
-cd scripts && npm run tokens -- count plugin/skills/{skill-name}/SKILL.md --json
-```
-
-Store: `beforeTokens = result.tokens`
-
-### 2. CHECK TOKENS Phase (After Improvements)
-
-After frontmatter improvements pass tests:
-```bash
-# Get current count
-cd scripts && npm run tokens -- count plugin/skills/{skill-name}/SKILL.md --json
-
-# Get suggestions
-cd scripts && npm run tokens -- suggest plugin/skills/{skill-name}/SKILL.md --json
-```
-
-Store:
-- `afterTokens = result.tokens`
-- `tokenDelta = afterTokens - beforeTokens`
-- `suggestions = suggestResult.suggestions`
-
-### 3. SUMMARY Phase (Report)
-
-Include in summary:
-- Token count before/after
-- Delta (+/- tokens)
-- Suggestions not implemented (for user review)
-
-## Optimization Patterns
-
-For detailed optimization guidance, reference the markdown-token-optimizer skill:
-
-- ANTI-PATTERNS.md (in markdown-token-optimizer) - Token-wasting patterns to avoid
-- OPTIMIZATION-PATTERNS.md (in markdown-token-optimizer) - Techniques to reduce tokens
-
-### Quick Reference: Common Optimizations
-
-| Pattern | Savings | Example |
-|---------|---------|---------|
-| Remove emojis | 1-3 tokens each | `✅` → (remove) |
-| Shorten headings | 2-5 tokens | `## Step 1: Configuration` → `## Configuration` |
-| Remove filler words | 1-2 tokens each | "In order to" → "To" |
-| Consolidate lists | 5-10 tokens | Multiple bullets → single sentence |
-| Use abbreviations | 1-2 tokens | "Application Insights" → "App Insights" |
-
-## When to Apply Token Suggestions
-
-Sensei captures token optimization suggestions but does **not** auto-apply them. The user decides:
-
-**Apply immediately if:**
-- Skill exceeds soft limit (500 tokens)
-- Suggestions don't reduce clarity
-- Changes are straightforward
-
-**Create issue if:**
-- Suggestions require careful review
-- Multiple skills need same optimization
-- Changes might affect functionality
-
-**Skip if:**
-- Skill is well under budget
-- Suggestions trade clarity for brevity
-- Time constraints
-
-## Example Summary with Tokens
-
-```
-╔══════════════════════════════════════════════════════════════════╗
-║  SENSEI SUMMARY: appinsights-instrumentation                     ║
-╠══════════════════════════════════════════════════════════════════╣
-║  BEFORE                          AFTER                           ║
-║  ──────                          ─────                           ║
-║  Score: Low                      Score: Medium-High              ║
-║  Tokens: 142                     Tokens: 385                     ║
-║  Triggers: 0                     Triggers: 7                     ║
-║  Anti-triggers: 0                Anti-triggers: 4                ║
-║                                                                  ║
-║  TOKEN STATUS: ✅ Under budget (385 < 500)                       ║
-║                                                                  ║
-║  SUGGESTIONS NOT IMPLEMENTED:                                    ║
-║  • (none - skill is under budget)                                ║
-║                                                                  ║
-╚══════════════════════════════════════════════════════════════════╝
-```
-
-## Related Skills
-
-- markdown-token-optimizer - Token analysis and suggestions
-- skill-authoring - Skill writing guidelines and constraints

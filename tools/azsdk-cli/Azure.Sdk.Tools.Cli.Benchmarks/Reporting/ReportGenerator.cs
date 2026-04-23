@@ -17,6 +17,7 @@ public class ReportGenerator
 {
     private const string DefaultModel = "claude-sonnet-4.5";
     private const string TemplateFileName = "report-template.md";
+    private const int BatchSize = 9;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -57,8 +58,8 @@ public class ReportGenerator
         string agentModel,
         CancellationToken cancellationToken = default)
     {
-        var dataJson = JsonSerializer.Serialize(BuildReportData(results, runName, agentModel), JsonOptions);
-        return await CallLlmAsync(BuildPrompt(dataJson, "Benchmark Data (JSON)"), cancellationToken);
+        var items = results.Select(r => BuildReportData(r, runName, agentModel)).ToList();
+        return await GenerateInBatchesAsync(items, "Benchmark Data (JSON)", cancellationToken);
     }
 
     /// <summary>
@@ -78,19 +79,38 @@ public class ReportGenerator
         var logsJson = await Task.WhenAll(
             logFiles.Select(f => File.ReadAllTextAsync(f, cancellationToken)));
 
-        var combinedData = $"[{string.Join(",\n", logsJson)}]";
-        return await CallLlmAsync(BuildPrompt(combinedData, "Benchmark Log Data (JSON Array)"), cancellationToken);
+        var items = logsJson.Select(j => SimplifyLog(JsonSerializer.Deserialize<BenchmarkLog>(j, JsonOptions)!));
+
+        return await GenerateInBatchesAsync(items, "Benchmark Log Data (JSON Array)", cancellationToken);
     }
 
-    private string BuildPrompt(string dataJson, string dataLabel)
+    private async Task<string> GenerateInBatchesAsync(
+        IEnumerable<object> items, string dataLabel, CancellationToken cancellationToken)
+    {
+        string report = string.Empty;
+        foreach (var batch in items.Chunk(BatchSize))
+        {
+            var dataJson = JsonSerializer.Serialize(batch, JsonOptions);
+            report = await CallLlmAsync(BuildPrompt(dataJson, dataLabel, report), cancellationToken);
+        }
+        return report;
+    }
+
+    private string BuildPrompt(string dataJson, string dataLabel, string existingReport = "")
     {
         return $"""
             Generate a benchmark report using the template and data below.
-            Fill in every section of the template based on the provided data.
+            If an existing report is provided, merge the new data into it — keep all existing
+            per-scenario sections, add new ones, and update aggregate statistics. Otherwise,
+            create a fresh report from the template.
             
             ## Report Template
             
             {_template}
+            
+            ## Existing Report
+            
+            {(string.IsNullOrEmpty(existingReport) ? "None" : existingReport)}
             
             ## {dataLabel}
             
@@ -98,7 +118,7 @@ public class ReportGenerator
             {dataJson}
             ```
             
-            Generate the complete report now. Output only the filled-in markdown, no other text.
+            Output only the filled-in markdown, no other text.
             """;
     }
 
@@ -142,40 +162,20 @@ public class ReportGenerator
     }
 
     private static object BuildReportData(
-        IReadOnlyList<(BenchmarkScenario Scenario, BenchmarkResult Result)> results,
+        (BenchmarkScenario Scenario, BenchmarkResult Result) result,
         string runName,
         string agentModel)
     {
-        var totalUsage = new TokenUsage();
-        foreach (var (_, result) in results)
-        {
-            if (result.TokenUsage != null)
-            {
-                totalUsage.Add(result.TokenUsage);
-            } 
-        }
-
         return new
         {
             RunName = runName,
             Model = agentModel,
             TestDate = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss UTC"),
-            TotalScenarios = results.Count,
-            TotalPassed = results.Count(r => r.Result.Passed),
-            TotalFailed = results.Count(r => !r.Result.Passed),
-            TotalDurationSeconds = results.Sum(r => r.Result.Duration.TotalSeconds),
-            TotalTokenUsage = totalUsage,
-            Scenarios = results.Select((r, i) => new
-            {
-                Index = i + 1,
-                r.Scenario.Name,
-                r.Scenario.Description,
-                r.Scenario.Tags,
-                r.Scenario.Prompt,
-                Repo = r.Scenario.Repo.CloneUrl,
-                r.Result,
-                r.Result.TokenUsage
-            }).ToList()
+            result.Scenario.Name,
+            result.Scenario.Description,
+            result.Scenario.Prompt,
+            result.Scenario.Repo.CloneUrl,
+            result.Result
         };
     }
 
@@ -192,4 +192,25 @@ public class ReportGenerator
 
         return File.ReadAllText(templatePath);
     }
+
+    private static BenchmarkLog SimplifyLog(BenchmarkLog log)
+    {
+        log.ToolCalls = SimplifyToolCalls(log.ToolCalls);
+        log.Messages = [];
+        log.GitDiff = null;
+        return log;
+    }
+
+    private static bool IsDetailedTool(string toolName) =>
+        toolName.Contains("azsdk", StringComparison.OrdinalIgnoreCase)
+        || toolName.Equals("skill", StringComparison.OrdinalIgnoreCase);
+
+    private static List<ToolCallRecord> SimplifyToolCalls(List<ToolCallRecord> toolCalls) =>
+        toolCalls.Select(tc => IsDetailedTool(tc.ToolName)
+            ? tc
+            : new ToolCallRecord { 
+                ToolName = tc.ToolName,
+                DurationMs = tc.DurationMs
+            }
+        ).ToList();
 }

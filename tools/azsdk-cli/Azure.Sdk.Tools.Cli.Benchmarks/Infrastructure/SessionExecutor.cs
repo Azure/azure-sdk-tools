@@ -76,17 +76,12 @@ public class SessionExecutor : IDisposable
                             ? input.Timestamp - startTs
                             : null;
 
-                        var mcpServerName = input.ToolName.Contains("__")
-                            ? input.ToolName.Split("__", 2)[0]
-                            : null;
-
                         toolCalls.Add(new ToolCallRecord
                         {
                             ToolName = input.ToolName,
                             ToolArgs = input.ToolArgs,
                             ToolResult = input.ToolResult,
                             DurationMs = durationMs,
-                            McpServerName = mcpServerName,
                         });
 
                         return Task.FromResult<PostToolUseHookOutput?>(null);

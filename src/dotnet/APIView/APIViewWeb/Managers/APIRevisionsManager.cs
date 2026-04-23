@@ -40,6 +40,7 @@ namespace APIViewWeb.Managers
         private readonly ICosmosCommentsRepository _commentsRepository;
         private readonly TelemetryClient _telemetryClient;
         private readonly IProjectsManager _projectsManager;
+        private readonly IAPIVersionsManager _apiVersionsManager;
         private readonly HashSet<string> _upgradeDisabledLangs = new HashSet<string>();
 
         public APIRevisionsManager(
@@ -57,6 +58,7 @@ namespace APIViewWeb.Managers
             ICosmosCommentsRepository commentsRepository,
             TelemetryClient telemetryClient,
             IProjectsManager projectsManager,
+            IAPIVersionsManager apiVersionsManager,
             IConfiguration configuration)
         {
             _reviewsRepository = reviewsRepository;
@@ -73,6 +75,7 @@ namespace APIViewWeb.Managers
             _commentsRepository = commentsRepository;
             _telemetryClient = telemetryClient;
             _projectsManager = projectsManager;
+            _apiVersionsManager = apiVersionsManager;
             var backgroundTaskDisabledLangs = configuration["ReviewUpdateDisabledLanguages"];
             if(!string.IsNullOrEmpty(backgroundTaskDisabledLangs))
             {
@@ -193,20 +196,21 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
-        /// GetNewAPIRevisionAsync
+        /// CreateAPIRevisionAsync
         /// </summary>
+        /// <param name="apiRevisionType"></param>
         /// <param name="reviewId"></param>
         /// <param name="packageName"></param>
         /// <param name="language"></param>
         /// <param name="label"></param>
         /// <param name="prNumber"></param>
         /// <param name="createdBy"></param>
-        /// <param name="apiRevisionType"></param>
         /// <param name="sourceBranch"></param>
+        /// <param name="packageVersion"></param>
         /// <returns></returns>
-        public APIRevisionListItemModel GetNewAPIRevisionAsync(APIRevisionType apiRevisionType,
+        public async Task<APIRevisionListItemModel> CreateAPIRevisionAsync(APIRevisionType apiRevisionType,
             string reviewId = null, string packageName = null, string language = null,
-            string label = null, int? prNumber = null, string createdBy= ApiViewConstants.AzureSdkBotName, string sourceBranch = null)
+            string label = null, int? prNumber = null, string createdBy= ApiViewConstants.AzureSdkBotName, string sourceBranch = null, string packageVersion = null)
         {
             var apiRevision = new APIRevisionListItemModel()
             {
@@ -227,6 +231,12 @@ namespace APIViewWeb.Managers
             if (!string.IsNullOrEmpty(reviewId))
             {
                 apiRevision.ReviewId = reviewId;
+            }
+
+            if (!string.IsNullOrEmpty(packageVersion) && !string.IsNullOrEmpty(reviewId))
+            {
+                APIVersionModel versionModel = await _apiVersionsManager.GetOrCreateVersionAsync(reviewId, packageVersion, prNumber, sourceBranch);
+                apiRevision.APIVersionId = versionModel.Id;
             }
 
             if (!string.IsNullOrEmpty(packageName))
@@ -381,22 +391,32 @@ namespace APIViewWeb.Managers
         /// <param name="filePath"></param>
         /// <param name="language"></param>
         /// <param name="label"></param>
+        /// <param name="preParsedCodeFile"></param>
+        /// <param name="preParsedMemoryStream"></param>
         /// <returns></returns>
-        public async Task<APIRevisionListItemModel> CreateAPIRevisionAsync(ClaimsPrincipal user, ReviewListItemModel review, IFormFile file, string filePath, string language, string label)
+        public async Task<APIRevisionListItemModel> CreateAPIRevisionAsync(ClaimsPrincipal user, ReviewListItemModel review, IFormFile file, string filePath, string language, string label, CodeFile preParsedCodeFile = null, MemoryStream preParsedMemoryStream = null)
         {
             APIRevisionListItemModel apiRevision = null;
+            string name = file?.FileName ?? filePath;
 
-            if (file != null)
+            if (preParsedCodeFile != null && preParsedMemoryStream != null)
+            {
+                // Use pre-parsed data to avoid duplicate parsing
+                apiRevision = await AddAPIRevisionCoreAsync(user: user, review: review, apiRevisionType: APIRevisionType.Manual,
+                    name: name, label: label, fileStream: null, language: language,
+                    preParsedCodeFile: preParsedCodeFile, preParsedMemoryStream: preParsedMemoryStream);
+            }
+            else if (file != null)
             {
                 using (var openReadStream = file.OpenReadStream())
                 {
-                    apiRevision = await AddAPIRevisionAsync(user: user, review: review, apiRevisionType: APIRevisionType.Manual,
+                    apiRevision = await AddAPIRevisionCoreAsync(user: user, review: review, apiRevisionType: APIRevisionType.Manual,
                         name: file.FileName, label: label, fileStream: openReadStream, language: language);
                 }
             }
             else if (!string.IsNullOrEmpty(filePath))
             {
-                apiRevision = await AddAPIRevisionAsync(user: user, review: review, apiRevisionType: APIRevisionType.Manual,
+                apiRevision = await AddAPIRevisionCoreAsync(user: user, review: review, apiRevisionType: APIRevisionType.Manual,
                            name: filePath, label: label, fileStream: null, language: language);
             }
             return apiRevision;
@@ -608,20 +628,45 @@ namespace APIViewWeb.Managers
             string language,
             bool awaitComputeDiff = false)
         {
-            var apiRevision = GetNewAPIRevisionAsync(
+            return await AddAPIRevisionCoreAsync(user, review, apiRevisionType, name, label, fileStream, language, awaitComputeDiff);
+        }
+
+        private async Task<APIRevisionListItemModel> AddAPIRevisionCoreAsync(
+            ClaimsPrincipal user,
+            ReviewListItemModel review,
+            APIRevisionType apiRevisionType,
+            string name,
+            string label,
+            Stream fileStream,
+            string language,
+            bool awaitComputeDiff = false,
+            CodeFile preParsedCodeFile = null,
+            MemoryStream preParsedMemoryStream = null)
+        {
+            var apiRevision = await CreateAPIRevisionAsync(apiRevisionType: apiRevisionType,
                 reviewId: review.Id,
-                apiRevisionType: apiRevisionType,
                 packageName: review.PackageName,
                 language: review.Language,
+                label: label, 
                 createdBy: user.GetGitHubLogin(),
-                label: label);
+                packageVersion: preParsedCodeFile?.PackageVersion);
 
-            APICodeFileModel codeFileModel = await _codeFileManager.CreateCodeFileAsync(
-                apiRevision.Id,
-                name,
-                true,
-                fileStream,
-                language);
+            APICodeFileModel codeFileModel;
+            if (preParsedCodeFile != null && preParsedMemoryStream != null)
+            {
+                // Reuse pre-parsed code file to avoid duplicate parsing
+                codeFileModel = await _codeFileManager.CreateReviewCodeFileModel(apiRevision.Id, preParsedMemoryStream, preParsedCodeFile);
+                codeFileModel.FileName = name;
+            }
+            else
+            {
+                codeFileModel = await _codeFileManager.CreateCodeFileAsync(
+                    apiRevision.Id,
+                    name,
+                    true,
+                    fileStream,
+                    language);
+            }
 
             apiRevision.Files.Add(codeFileModel);
 
@@ -1289,15 +1334,16 @@ namespace APIViewWeb.Managers
         public async Task<APIRevisionListItemModel> CreateAPIRevisionAsync(string userName, string reviewId, APIRevisionType apiRevisionType, string label,
             MemoryStream memoryStream, CodeFile codeFile, string originalName = null, int? prNumber = null, string sourceBranch = null)
         {
-
-            var apiRevision = GetNewAPIRevisionAsync(
+            var apiRevision = await CreateAPIRevisionAsync(
                 reviewId: reviewId,
                 apiRevisionType: apiRevisionType,
                 packageName: codeFile.PackageName,
                 language: codeFile.Language,
                 createdBy: userName,
                 prNumber: prNumber,
-                label: label);
+                sourceBranch: sourceBranch,
+                label: label,
+                packageVersion: codeFile.PackageVersion);
 
             var apiRevisionCodeFile = await _codeFileManager.CreateReviewCodeFileModel(apiRevisionId: apiRevision.Id, memoryStream: memoryStream, codeFile: codeFile);
             apiRevision.Files.Add(apiRevisionCodeFile);
@@ -1668,6 +1714,10 @@ namespace APIViewWeb.Managers
                 {
                     case CommentSeverity.MustFix:
                         score.UnresolvedMustFixCount++;
+                        if (comment.CommentSource == CommentSource.Diagnostic)
+                        {
+                            score.UnresolvedMustFixDiagnostics++;
+                        }
                         break;
                     case CommentSeverity.ShouldFix:
                         score.UnresolvedShouldFixCount++;

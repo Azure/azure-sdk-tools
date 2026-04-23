@@ -10,7 +10,7 @@ environment: azsdk-mcp
 config:
   runs: 1                      # Trials per stimulus
   timeout: 1800                # Seconds per trial
-  model: claude-opus-4.6-1m    #gpt-4o #claude-sonnet-4.6 # Model for agent execution
+  model: claude-opus-4.6    #gpt-4o #claude-sonnet-4.6 # Model for agent execution
   executor: copilot-sdk        # Which executor to use
 
 # Test cases
@@ -60,19 +60,15 @@ stimuli:
     config:
       path: employee.tsp
       pattern: 'assets:\s*string\[\]'
-  - type: file-matches
-    config:
-      path: employee.tsp
-      pattern: 'assets:.*\[\]'
   - type: prompt
     config:
       scoring: scale_1_5
       threshold: 1.0
-      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
-      model: claude-opus-4.6-1m
+      prompt: 'Verify asset use the custom scalar type with minLength and maxLength constraints instead of plain string.'
+      model: claude-opus-4.6
 scoring:
   weights:
     tool-calls: 1
     prompt: 1
-    file-matches: 5
+    file-matches: 4
   threshold: 1.0

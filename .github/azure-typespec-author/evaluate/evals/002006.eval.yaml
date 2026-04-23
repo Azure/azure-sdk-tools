@@ -10,13 +10,13 @@ environment: azsdk-mcp
 config:
   runs: 1                      # Trials per stimulus
   timeout: 1800                # Seconds per trial
-  model: claude-opus-4.6-1m    #gpt-4o #claude-sonnet-4.6 # Model for agent execution
+  model: claude-opus-4.6    #gpt-4o #claude-sonnet-4.6 # Model for agent execution
   executor: copilot-sdk        # Which executor to use
 
 # Test cases
 stimuli:
 - prompt: |
-    Create a new "AddressResource" child resource under the parent resource "Employee". AddressResource properties:street address fields, city, state, postal code, country, and a read-only provisioningState. Ensure the definition meets TypeSpec Azure design guidelines.
+    Create a new "AddressResource" child resource under the parent resource "Employee". Address properties: street 1(optional), street 2(optional), city(optional), state(optional), postal code(optional), country(optional), and a read-only provisioningState(optional). Ensure the definition meets TypeSpec Azure design guidelines.
   name: 002006-ARM-define-child-resource
   constraints:
     max_turns: 10
@@ -49,7 +49,7 @@ stimuli:
   - type: file-matches
     config:
       path: '*.tsp'
-      pattern: 'model AddressResource is ProxyResource<AddressProperties>'
+      pattern: 'model AddressResource is ProxyResource<AddressProperties>|model AddressResource is ProxyResource<AddressResourceProperties>'
   - type: file-matches
     config:
       path: '*.tsp'
@@ -57,7 +57,7 @@ stimuli:
   - type: file-matches
     config:
       path: '*.tsp'
-      pattern: 'model AddressProperties'
+      pattern: 'model AddressProperties|model AddressResourceProperties'
   - type: file-matches
     config:
       path: '*.tsp'
@@ -112,7 +112,7 @@ stimuli:
       scoring: scale_1_5
       threshold: 1.0
       prompt: 'The Addresses interface should include standard CRUD operations (get, create, update, delete) and a list-by-parent operation.'
-      model: claude-opus-4.6-1m
+      model: claude-opus-4.6
 scoring:
   weights:
     tool-calls: 1

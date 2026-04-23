@@ -836,21 +836,24 @@ export function parseDtsFile(options: DtsParseOptions): Map<string, ReviewLine[]
     );
   }
 
+  // Build a single fallback map (all modules, first-wins) once — O(N×M).
+  // Each per-module scoped map clones this then overwrites with its own types,
+  // reducing total work from O(N²×M) to O(N×M).
+  const fallbackMap: ReferenceMap = new Map();
+  for (const otherMap of perModuleMaps.values()) {
+    for (const [name, id] of otherMap) {
+      if (!fallbackMap.has(name)) fallbackMap.set(name, id);
+    }
+  }
+
   for (const ep of entryPoints) {
     // Build a scoped reference map for this module:
-    //   1. seed with all cross-module types (first-wins among other modules)
+    //   1. clone the fallback map (all modules, first-wins among others)
     //   2. overwrite with this module's own types (always highest priority)
     // This ensures that a type defined locally always navigates to the local
     // definition, even when another module declares a type with the same name.
     const ownMap = perModuleMaps.get(ep.subpath)!;
-    const scopedMap: ReferenceMap = new Map();
-    for (const [subpath, otherMap] of perModuleMaps) {
-      if (subpath !== ep.subpath) {
-        for (const [name, id] of otherMap) {
-          if (!scopedMap.has(name)) scopedMap.set(name, id);
-        }
-      }
-    }
+    const scopedMap: ReferenceMap = new Map(fallbackMap);
     for (const [name, id] of ownMap) {
       scopedMap.set(name, id);
     }

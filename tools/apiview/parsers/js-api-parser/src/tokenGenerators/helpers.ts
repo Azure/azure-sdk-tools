@@ -72,12 +72,16 @@ export function createToken(
   };
 }
 
-export function needsLeadingSpace(value: string): boolean {
+function needsSpace(value: string): boolean {
   return value === "|" || value === "&" || value === "is" || value === "extends";
 }
 
+export function needsLeadingSpace(value: string): boolean {
+  return needsSpace(value);
+}
+
 export function needsTrailingSpace(value: string): boolean {
-  return value === "|" || value === "&" || value === "is" || value === "extends";
+  return needsSpace(value);
 }
 
 function getTokenKind(text: string): TokenKind {

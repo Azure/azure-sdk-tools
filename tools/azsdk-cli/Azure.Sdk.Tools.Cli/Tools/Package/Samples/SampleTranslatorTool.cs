@@ -115,6 +115,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
 
                 return CreateCommandResponse(response);
             }
+            catch (CopilotCliUnavailableException ex)
+            {
+                logger.LogError(ex, "Copilot CLI is not available");
+                return new DefaultCommandResponse { ResponseError = $"Copilot CLI setup error: {ex.Message}" };
+            }
             catch (Exception ex)
             {
                 logger.LogError(ex, "SampleTranslator threw an exception");
@@ -184,6 +189,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
             {
                 logger.LogError(ex, "Validation error while translating samples from {FromPath} to {ToPath}", fromPackagePath, toPackagePath);
                 return PackageOperationResponse.CreateFailure($"SampleTranslator failed with validation errors: {ex.Message}");
+            }
+            catch (CopilotCliUnavailableException ex)
+            {
+                logger.LogError(ex, "Copilot CLI is not available");
+                return PackageOperationResponse.CreateFailure($"Copilot CLI setup error: {ex.Message}");
             }
             catch (InvalidOperationException ex)
             {

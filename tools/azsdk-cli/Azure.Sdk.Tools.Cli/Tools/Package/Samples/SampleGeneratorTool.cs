@@ -98,6 +98,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
 
                 return CreateCommandResponse(response);
             }
+            catch (CopilotCliUnavailableException ex)
+            {
+                logger.LogError(ex, "Copilot CLI is not available");
+                return new DefaultCommandResponse { ResponseError = $"Copilot CLI setup error: {ex.Message}" };
+            }
             catch (Exception ex)
             {
                 logger.LogError(ex, "SampleGenerator threw an exception");
@@ -161,6 +166,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
             {
                 logger.LogError(ex, "Validation error while generating samples for package: {PackagePath}", packagePath);
                 return PackageOperationResponse.CreateFailure($"SampleGenerator failed with validation errors: {ex.Message}");
+            }
+            catch (CopilotCliUnavailableException ex)
+            {
+                logger.LogError(ex, "Copilot CLI is not available");
+                return PackageOperationResponse.CreateFailure($"Copilot CLI setup error: {ex.Message}");
             }
             catch (InvalidOperationException ex)
             {

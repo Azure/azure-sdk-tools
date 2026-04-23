@@ -189,10 +189,16 @@ describe("parseDtsFile — basic.d.ts", () => {
       expect(tokens).toContain("createHttpClient");
     });
 
-    it("emits a semicolon at the end of the function line", () => {
+    it("emits a semicolon somewhere in the function declaration", () => {
       lines = subpathMap.get(".")!;
       const fn = findLine(lines, "createHttpClient:function");
-      expect(tokenValues(fn!).at(-1)).toBe(";");
+      // The inline object parameter type '{timeout?: number}' expands to children,
+      // so the ';' may land on the last child line rather than the header line.
+      const allTokens = [
+        ...tokenValues(fn!),
+        ...(fn!.Children ?? []).flatMap((c) => tokenValues(c)),
+      ];
+      expect(allTokens.at(-1)).toBe(";");
     });
   });
 

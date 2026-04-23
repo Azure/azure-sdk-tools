@@ -486,9 +486,14 @@ export function buildTypeNodeTokens(
     // Handle parenthesized types: (TypeA | TypeB)
     tokens.push(createToken(TokenKind.Punctuation, "(", { deprecated }));
     const nestedChildren = buildTypeNodeTokens(node.type, tokens, deprecated, depth, referenceMap);
-    tokens.push(createToken(TokenKind.Punctuation, ")", { deprecated }));
     if (nestedChildren?.length) {
       children.push(...nestedChildren);
+      // Put the closing ")" on the same line as the last nested child's content.
+      nestedChildren[nestedChildren.length - 1].Tokens.push(
+        createToken(TokenKind.Punctuation, ")", { deprecated }),
+      );
+    } else {
+      tokens.push(createToken(TokenKind.Punctuation, ")", { deprecated }));
     }
     return children.length > 0 ? children : undefined;
   }

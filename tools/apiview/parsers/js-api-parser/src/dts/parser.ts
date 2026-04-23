@@ -199,23 +199,24 @@ function emitTypeParameters(
   const children: ReviewLine[] = [];
   if (!params?.length) return children;
   tokens.push(createToken(TokenKind.Punctuation, "<", { deprecated }));
+  let target = tokens;
   params.forEach((tp, i) => {
-    tokens.push(createToken(TokenKind.TypeName, tp.name.text, { deprecated }));
+    target.push(createToken(TokenKind.TypeName, tp.name.text, { deprecated }));
     if (tp.constraint) {
-      tokens.push(createToken(TokenKind.Keyword, "extends", { hasPrefixSpace: true, hasSuffixSpace: true, deprecated }));
-      const c = buildTypeNodeTokens(tp.constraint, tokens, deprecated, 0, referenceMap);
-      if (c?.length) children.push(...c);
+      target.push(createToken(TokenKind.Keyword, "extends", { hasPrefixSpace: true, hasSuffixSpace: true, deprecated }));
+      const c = buildTypeNodeTokens(tp.constraint, target, deprecated, 0, referenceMap);
+      if (c?.length) { children.push(...c); target = c[c.length - 1].Tokens; }
     }
     if (tp.default) {
-      tokens.push(createToken(TokenKind.Punctuation, "=", { hasPrefixSpace: true, hasSuffixSpace: true, deprecated }));
-      const c = buildTypeNodeTokens(tp.default, tokens, deprecated, 0, referenceMap);
-      if (c?.length) children.push(...c);
+      target.push(createToken(TokenKind.Punctuation, "=", { hasPrefixSpace: true, hasSuffixSpace: true, deprecated }));
+      const c = buildTypeNodeTokens(tp.default, target, deprecated, 0, referenceMap);
+      if (c?.length) { children.push(...c); target = c[c.length - 1].Tokens; }
     }
     if (i < params.length - 1) {
-      tokens.push(createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }));
+      target.push(createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }));
     }
   });
-  tokens.push(createToken(TokenKind.Punctuation, ">", { deprecated }));
+  target.push(createToken(TokenKind.Punctuation, ">", { deprecated }));
   return children;
 }
 
@@ -239,12 +240,13 @@ function emitHeritageClauses(
       tokens.push(createToken(TokenKind.TypeName, exprText, { deprecated, navigateToId }));
       if (ht.typeArguments?.length) {
         tokens.push(createToken(TokenKind.Punctuation, "<", { deprecated }));
+        let argTarget = tokens;
         ht.typeArguments.forEach((arg, j) => {
-          if (j > 0) tokens.push(createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }));
-          const c = buildTypeNodeTokens(arg, tokens, deprecated, 0, referenceMap);
-          if (c?.length) children.push(...c);
+          if (j > 0) argTarget.push(createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }));
+          const c = buildTypeNodeTokens(arg, argTarget, deprecated, 0, referenceMap);
+          if (c?.length) { children.push(...c); argTarget = c[c.length - 1].Tokens; }
         });
-        tokens.push(createToken(TokenKind.Punctuation, ">", { deprecated }));
+        argTarget.push(createToken(TokenKind.Punctuation, ">", { deprecated }));
       }
     });
   }
@@ -258,20 +260,24 @@ function emitParameters(
   tokens: ReviewToken[],
   deprecated: boolean | undefined,
   referenceMap: ReferenceMap,
-): void {
+): ReviewLine[] {
+  const children: ReviewLine[] = [];
   tokens.push(createToken(TokenKind.Punctuation, "(", { deprecated }));
+  let target = tokens;
   params.forEach((param, i) => {
-    if (i > 0) tokens.push(createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }));
-    if (param.dotDotDotToken) tokens.push(createToken(TokenKind.Punctuation, "...", { deprecated }));
+    if (i > 0) target.push(createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }));
+    if (param.dotDotDotToken) target.push(createToken(TokenKind.Punctuation, "...", { deprecated }));
     const name = param.name.getText();
-    tokens.push(createToken(TokenKind.MemberName, name, { deprecated }));
-    if (param.questionToken) tokens.push(createToken(TokenKind.Punctuation, "?", { deprecated }));
+    target.push(createToken(TokenKind.MemberName, name, { deprecated }));
+    if (param.questionToken) target.push(createToken(TokenKind.Punctuation, "?", { deprecated }));
     if (param.type) {
-      tokens.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
-      buildTypeNodeTokens(param.type, tokens, deprecated, 0, referenceMap);
+      target.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
+      const c = buildTypeNodeTokens(param.type, target, deprecated, 0, referenceMap);
+      if (c?.length) { children.push(...c); target = c[c.length - 1].Tokens; }
     }
   });
-  tokens.push(createToken(TokenKind.Punctuation, ")", { deprecated }));
+  target.push(createToken(TokenKind.Punctuation, ")", { deprecated }));
+  return children;
 }
 
 // ---- Release / deprecated preamble -----------------------------------------
@@ -454,8 +460,10 @@ function visitClassMember(
     const lineId = makeId(ctx.packageName, ctx.prefix + "constructor", "constructor");
     const t: ReviewToken[] = [];
     t.push(createToken(TokenKind.Keyword, "constructor", { deprecated }));
-    emitParameters(member.parameters, t, deprecated, ctx.referenceMap);
-    out.push({ LineId: lineId, Tokens: t });
+    const paramChildren = emitParameters(member.parameters, t, deprecated, ctx.referenceMap);
+    const ctorLine: ReviewLine = { LineId: lineId, Tokens: t };
+    if (paramChildren.length) ctorLine.Children = paramChildren;
+    out.push(ctorLine);
   } else if (ts.isPropertyDeclaration(member)) {
     const propName = member.name.getText();
     const lineId = makeId(ctx.packageName, ctx.prefix + propName, "property");
@@ -470,12 +478,19 @@ function visitClassMember(
       t.push(createToken(TokenKind.Keyword, "readonly", { hasSuffixSpace: true, deprecated }));
     t.push(createToken(TokenKind.MemberName, propName, { deprecated }));
     if (member.questionToken) t.push(createToken(TokenKind.Punctuation, "?", { deprecated }));
+    let propSemiTarget = t;
     if (member.type) {
       t.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
-      buildTypeNodeTokens(member.type, t, deprecated, 0, ctx.referenceMap);
+      const propTypeChildren = buildTypeNodeTokens(member.type, t, deprecated, 0, ctx.referenceMap);
+      if (propTypeChildren?.length) propSemiTarget = propTypeChildren[propTypeChildren.length - 1].Tokens;
+      const propLine: ReviewLine = { LineId: lineId, Tokens: t };
+      if (propTypeChildren?.length) propLine.Children = propTypeChildren;
+      propSemiTarget.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
+      out.push(propLine);
+    } else {
+      t.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
+      out.push({ LineId: lineId, Tokens: t });
     }
-    t.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
-    out.push({ LineId: lineId, Tokens: t });
   } else if (ts.isMethodDeclaration(member)) {
     const methodName = member.name.getText();
     // Only the first overload gets the canonical LineId (which matches the
@@ -493,15 +508,23 @@ function visitClassMember(
       t.push(createToken(TokenKind.Keyword, "abstract", { hasSuffixSpace: true, deprecated }));
     t.push(createToken(TokenKind.MemberName, methodName, { deprecated }));
     if (member.questionToken) t.push(createToken(TokenKind.Punctuation, "?", { deprecated }));
+    const allMethodChildren: ReviewLine[] = [];
     const methodTpChildren = emitTypeParameters(member.typeParameters, t, deprecated, ctx.referenceMap);
-    emitParameters(member.parameters, t, deprecated, ctx.referenceMap);
+    allMethodChildren.push(...methodTpChildren);
+    const paramChildren = emitParameters(member.parameters, t, deprecated, ctx.referenceMap);
+    allMethodChildren.push(...paramChildren);
+    let semiTarget = paramChildren.length ? paramChildren[paramChildren.length - 1].Tokens : t;
     if (member.type) {
-      t.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
-      buildTypeNodeTokens(member.type, t, deprecated, 0, ctx.referenceMap);
+      semiTarget.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
+      const returnChildren = buildTypeNodeTokens(member.type, semiTarget, deprecated, 0, ctx.referenceMap);
+      if (returnChildren?.length) {
+        allMethodChildren.push(...returnChildren);
+        semiTarget = returnChildren[returnChildren.length - 1].Tokens;
+      }
     }
-    t.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
+    semiTarget.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
     const methodLine: ReviewLine = { LineId: lineId, Tokens: t };
-    if (methodTpChildren.length) methodLine.Children = methodTpChildren;
+    if (allMethodChildren.length) methodLine.Children = allMethodChildren;
     out.push(methodLine);
   } else if (ts.isIndexSignatureDeclaration(member)) {
     const t: ReviewToken[] = [];
@@ -534,16 +557,22 @@ function visitFunction(
   t.push(nameToken);
 
   const tpChildren = emitTypeParameters(node.typeParameters, t, deprecated, ctx.referenceMap);
-  emitParameters(node.parameters, t, deprecated, ctx.referenceMap);
+  const paramChildren = emitParameters(node.parameters, t, deprecated, ctx.referenceMap);
+  const allFnChildren = [...tpChildren, ...paramChildren];
+  let fnSemiTarget = paramChildren.length ? paramChildren[paramChildren.length - 1].Tokens : t;
 
   if (node.type) {
-    t.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
-    buildTypeNodeTokens(node.type, t, deprecated, 0, ctx.referenceMap);
+    fnSemiTarget.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
+    const returnChildren = buildTypeNodeTokens(node.type, fnSemiTarget, deprecated, 0, ctx.referenceMap);
+    if (returnChildren?.length) {
+      allFnChildren.push(...returnChildren);
+      fnSemiTarget = returnChildren[returnChildren.length - 1].Tokens;
+    }
   }
-  t.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
+  fnSemiTarget.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
 
   const fnLine: ReviewLine = { LineId: lineId, Tokens: t };
-  if (tpChildren.length) fnLine.Children = tpChildren;
+  if (allFnChildren.length) fnLine.Children = allFnChildren;
   out.push(fnLine);
   out.push(emptyLine(lineId));
 }
@@ -571,11 +600,12 @@ function visitTypeAlias(
   const tpChildren = emitTypeParameters(node.typeParameters, t, deprecated, ctx.referenceMap);
   t.push(createToken(TokenKind.Punctuation, "=", { hasPrefixSpace: true, hasSuffixSpace: true, deprecated }));
 
-  const line: ReviewLine = { LineId: lineId, Tokens: t, Children: [] };
+  const line: ReviewLine = { LineId: lineId, Tokens: t };
   const typeChildren = buildTypeNodeTokens(node.type, t, deprecated, 0, ctx.referenceMap);
   const allChildren = [...tpChildren, ...(typeChildren ?? [])];
   if (allChildren.length) line.Children = allChildren;
-  t.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
+  const semiTarget = typeChildren?.length ? typeChildren[typeChildren.length - 1].Tokens : t;
+  semiTarget.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
 
   out.push(line);
   out.push(emptyLine(lineId));

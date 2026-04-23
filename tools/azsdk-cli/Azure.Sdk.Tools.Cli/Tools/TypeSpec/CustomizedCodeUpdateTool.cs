@@ -201,16 +201,28 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 language: languageService.Language.ToString(),
                 ct: ct);
         }
-        catch (Exception ex)
+        catch (InvalidOperationException ex) when (IsCopilotCliException(ex))
         {
-            logger.LogError(ex, "No feedback items to process.");
+            logger.LogError(ex, "GitHub Copilot CLI is not available.");
             return new CustomizedCodeUpdateResponse
             {
                 Success = false,
-                ResponseError = "No feedback items provided. Please supply a customization request or API review URL.",
-                Message = "No feedback items provided. Please supply a customization request or API review URL.",
-                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
-                BuildResult = "No feedback items to process."
+                ResponseError = ex.Message,
+                Message = ex.Message,
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError,
+                BuildResult = ex.Message
+            };
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Feedback classification failed unexpectedly.");
+            return new CustomizedCodeUpdateResponse
+            {
+                Success = false,
+                ResponseError = $"Feedback classification failed: {ex.Message}",
+                Message = $"Feedback classification failed: {ex.Message}",
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError,
+                BuildResult = $"Feedback classification failed: {ex.Message}"
             };
         }
         var feedbackDictionary = feedbackItems.ToDictionary(i => i.Id, i => i);
@@ -659,6 +671,25 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             || host.EndsWith(".apiview.dev", StringComparison.OrdinalIgnoreCase)
             || host.Equals("apiviewstagingtest.com", StringComparison.OrdinalIgnoreCase)
             || host.EndsWith(".apiviewstagingtest.com", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Determines whether an exception (or its inner exception chain) indicates that the
+    /// GitHub Copilot CLI is not installed or failed to start. This is used to surface a
+    /// clear error message instead of the generic "classification failed" message.
+    /// </summary>
+    public static bool IsCopilotCliException(Exception ex)
+    {
+        for (var current = ex; current != null; current = current.InnerException)
+        {
+            if (current.Message.Contains("Copilot CLI", StringComparison.OrdinalIgnoreCase)
+                || current.Message.Contains("copilot.exe", StringComparison.OrdinalIgnoreCase)
+                || current.Message.Contains("Copilot is not authenticated", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

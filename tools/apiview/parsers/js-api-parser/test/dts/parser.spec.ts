@@ -1077,3 +1077,108 @@ declare module "./" {
     expect(findLine(lines, "B:interface")).toBeDefined();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Regression: tuple type in heritage clause type arguments (Bug 1)
+// ---------------------------------------------------------------------------
+
+describe("parseDtsFile — tuple type in heritage clause type argument (basic.d.ts)", () => {
+  let lines: ReviewLine[];
+
+  beforeAll(() => {
+    const result = parseDtsFile({ filePath: path.join(FIXTURES, "basic.d.ts"), packageName: "test-pkg" });
+    lines = collectAllLines(result.get(".")!);
+  });
+
+  it("PairIterable interface is present", () => {
+    expect(findLine(lines, "PairIterable:interface")).toBeDefined();
+  });
+
+  it("PairIterable extends clause contains 'Iterable' TypeName token", () => {
+    const iface = findLine(lines, "PairIterable:interface");
+    expect(iface!.Tokens.some((t) => t.Value === "Iterable")).toBe(true);
+  });
+
+  it("PairIterable extends clause contains tuple element 'string'", () => {
+    const iface = findLine(lines, "PairIterable:interface");
+    // The tuple body '[string, number]' may land on the header tokens or in Children
+    const allTokens = [
+      ...iface!.Tokens,
+      ...(iface!.Children ?? []).flatMap((c) => c.Tokens),
+    ];
+    expect(allTokens.some((t) => t.Value === "string")).toBe(true);
+  });
+
+  it("PairIterable extends clause contains tuple element 'number'", () => {
+    const iface = findLine(lines, "PairIterable:interface");
+    const allTokens = [
+      ...iface!.Tokens,
+      ...(iface!.Children ?? []).flatMap((c) => c.Tokens),
+    ];
+    expect(allTokens.some((t) => t.Value === "number")).toBe(true);
+  });
+
+  it("PairIterable extends clause closes with '>'", () => {
+    const iface = findLine(lines, "PairIterable:interface");
+    const allTokens = [
+      ...iface!.Tokens,
+      ...(iface!.Children ?? []).flatMap((c) => c.Tokens),
+    ];
+    expect(allTokens.some((t) => t.Value === ">")).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Regression: inline object type constraint in generic type parameter (Bug 2)
+// ---------------------------------------------------------------------------
+
+describe("parseDtsFile — inline object constraint in generic type parameter (basic.d.ts)", () => {
+  let lines: ReviewLine[];
+
+  beforeAll(() => {
+    const result = parseDtsFile({ filePath: path.join(FIXTURES, "basic.d.ts"), packageName: "test-pkg" });
+    lines = collectAllLines(result.get(".")!);
+  });
+
+  it("IndexedCollection class is present", () => {
+    expect(findLine(lines, "IndexedCollection:class")).toBeDefined();
+  });
+
+  it("IndexedCollection header contains type parameter 'T'", () => {
+    const cls = findLine(lines, "IndexedCollection:class");
+    expect(cls!.Tokens.some((t) => t.Value === "T")).toBe(true);
+  });
+
+  it("IndexedCollection header contains 'extends' keyword for constraint", () => {
+    const cls = findLine(lines, "IndexedCollection:class");
+    expect(cls!.Tokens.some((t) => t.Value === "extends")).toBe(true);
+  });
+
+  it("IndexedCollection constraint body contains property 'id'", () => {
+    const cls = findLine(lines, "IndexedCollection:class");
+    // Constraint body may expand into Children lines
+    const allTokens = [
+      ...cls!.Tokens,
+      ...(cls!.Children ?? []).flatMap((c) => [...c.Tokens, ...(c.Children ?? []).flatMap((cc) => cc.Tokens)]),
+    ];
+    expect(allTokens.some((t) => t.Value === "id")).toBe(true);
+  });
+
+  it("IndexedCollection constraint body contains property 'name'", () => {
+    const cls = findLine(lines, "IndexedCollection:class");
+    const allTokens = [
+      ...cls!.Tokens,
+      ...(cls!.Children ?? []).flatMap((c) => [...c.Tokens, ...(c.Children ?? []).flatMap((cc) => cc.Tokens)]),
+    ];
+    expect(allTokens.some((t) => t.Value === "name")).toBe(true);
+  });
+
+  it("IndexedCollection constraint body closes with '}'", () => {
+    const cls = findLine(lines, "IndexedCollection:class");
+    const allTokens = [
+      ...cls!.Tokens,
+      ...(cls!.Children ?? []).flatMap((c) => [...c.Tokens, ...(c.Children ?? []).flatMap((cc) => cc.Tokens)]),
+    ];
+    expect(allTokens.some((t) => t.Value === "}")).toBe(true);
+  });
+});

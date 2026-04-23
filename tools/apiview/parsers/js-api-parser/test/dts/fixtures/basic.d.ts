@@ -129,3 +129,20 @@ export interface Factory<T> {
   new <TInput>(opts: TInput): T;
   <TInput>(opts: TInput): T;
 }
+
+/**
+ * Interface extending a generic with a tuple type argument.
+ * Regression: heritage clause type args that are tuples must not be truncated.
+ */
+export interface PairIterable extends Iterable<[string, number]> {
+  readonly size: number;
+}
+
+/**
+ * Class with a constrained type parameter whose constraint is an inline object type.
+ * Regression: inline object constraint bodies must not be dropped.
+ */
+export declare class IndexedCollection<T extends { id: string; name: string }> {
+  get(id: string): T | undefined;
+  add(item: T): void;
+}

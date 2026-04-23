@@ -806,3 +806,105 @@ declare module "@azure/test" {
     expect(findLine(lines, "Bar:interface")).toBeDefined();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Call signatures and construct signatures
+// ---------------------------------------------------------------------------
+
+describe("parseDtsFile — call signatures and construct signatures (basic.d.ts)", () => {
+  let lines: ReviewLine[];
+
+  beforeAll(() => {
+    const result = parseDtsFile({
+      filePath: path.join(FIXTURES, "basic.d.ts"),
+      packageName: "@azure/storage-blob",
+    });
+    lines = collectAllLines(result.get(".")!);
+  });
+
+  describe("call signature interface (Formatter)", () => {
+    it("parses Formatter interface", () => {
+      const iface = findLine(lines, "Formatter:interface");
+      expect(iface).toBeDefined();
+    });
+
+    it("call signature child emits parameter list tokens", () => {
+      const iface = findLine(lines, "Formatter:interface");
+      const children = iface!.Children ?? [];
+      const callSig = children.find((c) =>
+        c.Tokens.some((t) => t.Value === "(") && !c.Tokens.some((t) => t.Value === "defaultFormat"),
+      );
+      expect(callSig).toBeDefined();
+      const vals = callSig!.Tokens.map((t) => t.Value);
+      expect(vals).toContain("(");
+      expect(vals).toContain("value");
+      expect(vals).toContain(")");
+      expect(vals).toContain(":");
+    });
+
+    it("call signature child does NOT emit 'new' keyword", () => {
+      const iface = findLine(lines, "Formatter:interface");
+      const children = iface!.Children ?? [];
+      const hasNew = children.some((c) => c.Tokens.some((t) => t.Value === "new"));
+      expect(hasNew).toBe(false);
+    });
+
+    it("property member defaultFormat is also present", () => {
+      const iface = findLine(lines, "Formatter:interface");
+      const hasDefault = (iface!.Children ?? []).some((c) =>
+        c.Tokens.some((t) => t.Value === "defaultFormat"),
+      );
+      expect(hasDefault).toBe(true);
+    });
+  });
+
+  describe("construct signature interface (ClientConstructor)", () => {
+    it("parses ClientConstructor interface", () => {
+      const iface = findLine(lines, "ClientConstructor:interface");
+      expect(iface).toBeDefined();
+    });
+
+    it("construct signature child emits 'new' keyword", () => {
+      const iface = findLine(lines, "ClientConstructor:interface");
+      const children = iface!.Children ?? [];
+      const constructSig = children.find((c) => c.Tokens.some((t) => t.Value === "new"));
+      expect(constructSig).toBeDefined();
+    });
+
+    it("construct signature child emits parameter and return type tokens", () => {
+      const iface = findLine(lines, "ClientConstructor:interface");
+      const children = iface!.Children ?? [];
+      const constructSig = children.find((c) => c.Tokens.some((t) => t.Value === "new"));
+      const vals = constructSig!.Tokens.map((t) => t.Value);
+      expect(vals).toContain("(");
+      expect(vals).toContain("endpoint");
+      expect(vals).toContain(")");
+    });
+  });
+
+  describe("generic factory interface (Factory<T>) with both call and construct", () => {
+    it("parses Factory interface", () => {
+      const iface = findLine(lines, "Factory:interface");
+      expect(iface).toBeDefined();
+    });
+
+    it("has a construct signature child with 'new'", () => {
+      const iface = findLine(lines, "Factory:interface");
+      const children = iface!.Children ?? [];
+      const constructSig = children.find((c) => c.Tokens.some((t) => t.Value === "new"));
+      expect(constructSig).toBeDefined();
+    });
+
+    it("has a call signature child without 'new'", () => {
+      const iface = findLine(lines, "Factory:interface");
+      const children = iface!.Children ?? [];
+      // call sig: has ( but not new as first token
+      const callSig = children.find(
+        (c) =>
+          c.Tokens.some((t) => t.Value === "(") &&
+          !c.Tokens.some((t) => t.Value === "new"),
+      );
+      expect(callSig).toBeDefined();
+    });
+  });
+});

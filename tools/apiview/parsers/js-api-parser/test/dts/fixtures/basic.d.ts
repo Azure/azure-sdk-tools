@@ -105,3 +105,27 @@ export declare namespace Internal {
     delay: number;
   }
 }
+
+/**
+ * A callable interface — call signature.
+ */
+export interface Formatter {
+  (value: unknown, format: string): string;
+  defaultFormat: string;
+}
+
+/**
+ * A constructable interface — construct signature.
+ */
+export interface ClientConstructor {
+  new (endpoint: string, credential: string): HttpClient;
+  version: string;
+}
+
+/**
+ * An interface with both call and construct signatures (and a generic).
+ */
+export interface Factory<T> {
+  new <TInput>(opts: TInput): T;
+  <TInput>(opts: TInput): T;
+}

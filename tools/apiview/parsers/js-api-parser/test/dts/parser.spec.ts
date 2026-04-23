@@ -719,3 +719,90 @@ declare module "@azure/test" {
     expect(new Set(ids).size).toBe(ids.length);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Enum member NavigationDisplayName
+// ---------------------------------------------------------------------------
+
+describe("parseDtsFile — enum member NavigationDisplayName", () => {
+  const FIXTURE_CONTENT = `
+declare module "@azure/test" {
+  export enum Status {
+    Active = "active",
+    Inactive = "inactive",
+  }
+}
+`;
+
+  let lines: ReviewLine[];
+  const TEMP = path.join(path.dirname(FIXTURES), "tmp-enum-nav.d.ts");
+
+  beforeAll(async () => {
+    const { writeFileSync } = await import("node:fs");
+    writeFileSync(TEMP, FIXTURE_CONTENT);
+    const result = parseDtsFile({ filePath: TEMP, packageName: "@azure/test" });
+    lines = collectAllLines(result.get("@azure/test")!);
+  });
+
+  afterAll(async () => {
+    const { unlinkSync } = await import("node:fs");
+    unlinkSync(TEMP);
+  });
+
+  it("enum member has NavigationDisplayName set on the name token", () => {
+    const en = findLine(lines, "Status:enum");
+    expect(en).toBeDefined();
+    const activeLine = findLine(en!.Children ?? [], "Status.Active:member");
+    expect(activeLine).toBeDefined();
+    const nameToken = activeLine!.Tokens.find((t) => t.Value === "Active");
+    expect(nameToken?.NavigationDisplayName).toBe("Active");
+  });
+
+  it("second enum member also has NavigationDisplayName", () => {
+    const en = findLine(lines, "Status:enum");
+    const inactiveLine = findLine(en!.Children ?? [], "Status.Inactive:member");
+    expect(inactiveLine).toBeDefined();
+    const nameToken = inactiveLine!.Tokens.find((t) => t.Value === "Inactive");
+    expect(nameToken?.NavigationDisplayName).toBe("Inactive");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Duplicate declare module merge
+// ---------------------------------------------------------------------------
+
+describe("parseDtsFile — duplicate declare module blocks are merged", () => {
+  const FIXTURE_CONTENT = `
+declare module "@azure/test" {
+  export interface Foo { x: string; }
+}
+declare module "@azure/test" {
+  export interface Bar { y: number; }
+}
+`;
+
+  let result: Map<string, ReviewLine[]>;
+  const TEMP = path.join(path.dirname(FIXTURES), "tmp-dup-module.d.ts");
+
+  beforeAll(async () => {
+    const { writeFileSync } = await import("node:fs");
+    writeFileSync(TEMP, FIXTURE_CONTENT);
+    result = parseDtsFile({ filePath: TEMP, packageName: "@azure/test" });
+  });
+
+  afterAll(async () => {
+    const { unlinkSync } = await import("node:fs");
+    unlinkSync(TEMP);
+  });
+
+  it("produces exactly one entry in the result map", () => {
+    expect(result.size).toBe(1);
+    expect(result.has("@azure/test")).toBe(true);
+  });
+
+  it("merged module contains both Foo and Bar", () => {
+    const lines = collectAllLines(result.get("@azure/test")!);
+    expect(findLine(lines, "Foo:interface")).toBeDefined();
+    expect(findLine(lines, "Bar:interface")).toBeDefined();
+  });
+});

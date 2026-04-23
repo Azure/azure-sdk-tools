@@ -600,7 +600,9 @@ function visitEnum(
       const memberName = member.name.getText();
       const memberId = makeId(ctx.packageName, symbolPath + "." + memberName, "member");
       const mt: ReviewToken[] = [];
-      mt.push(createToken(TokenKind.MemberName, memberName, { deprecated }));
+      const memberNameToken = createToken(TokenKind.MemberName, memberName, { deprecated });
+      memberNameToken.NavigationDisplayName = memberName;
+      mt.push(memberNameToken);
       if (member.initializer) {
         mt.push(createToken(TokenKind.Punctuation, "=", { hasPrefixSpace: true, hasSuffixSpace: true, deprecated }));
         mt.push(createToken(TokenKind.StringLiteral, member.initializer.getText(), { deprecated }));
@@ -746,7 +748,7 @@ interface EntryPoint {
  * Otherwise the entire file is treated as the default "." subpath.
  */
 function getEntryPoints(sourceFile: ts.SourceFile): EntryPoint[] {
-  const moduleBlocks: EntryPoint[] = [];
+  const moduleMap = new Map<string, ts.Statement[]>();
 
   for (const stmt of sourceFile.statements) {
     if (
@@ -758,11 +760,21 @@ function getEntryPoints(sourceFile: ts.SourceFile): EntryPoint[] {
       // Normalise: strip leading ./ so "." and "./" both map to "."
       const rawName = stmt.name.text;
       const subpath = rawName === "" ? "." : rawName;
-      moduleBlocks.push({ subpath, statements: stmt.body.statements });
+      const existing = moduleMap.get(subpath);
+      if (existing) {
+        existing.push(...stmt.body.statements);
+      } else {
+        moduleMap.set(subpath, [...stmt.body.statements]);
+      }
     }
   }
 
-  if (moduleBlocks.length > 0) return moduleBlocks;
+  if (moduleMap.size > 0) {
+    return Array.from(moduleMap.entries()).map(([subpath, statements]) => ({
+      subpath,
+      statements,
+    }));
+  }
 
   // No declare module blocks — treat whole file as "."
   return [{ subpath: ".", statements: sourceFile.statements }];

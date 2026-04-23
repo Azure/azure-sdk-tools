@@ -336,12 +336,20 @@ function visitInterface(
   const tpChildren = emitTypeParameters(node.typeParameters, t, deprecated, ctx.referenceMap);
   if (tpChildren.length) line.Children!.push(...tpChildren);
 
-  const hcChildren = emitHeritageClauses(node.heritageClauses, t, deprecated, ctx.referenceMap);
-  if (hcChildren.length) line.Children!.push(...hcChildren);
+  // If type-parameter emission created children (e.g. a multiline constraint), subsequent
+  // tokens — heritage clauses, the opening "{" — must be appended to the last child line,
+  // not back onto the header.  Track `headTarget` for this purpose.
+  let headTarget: ReviewToken[] = tpChildren.length ? tpChildren[tpChildren.length - 1].Tokens : t;
+
+  const hcChildren = emitHeritageClauses(node.heritageClauses, headTarget, deprecated, ctx.referenceMap);
+  if (hcChildren.length) {
+    line.Children!.push(...hcChildren);
+    headTarget = hcChildren[hcChildren.length - 1].Tokens;
+  }
 
   if (node.members.length > 0) {
-    t[t.length - 1].HasSuffixSpace = true;
-    t.push(createToken(TokenKind.Punctuation, "{", { deprecated }));
+    headTarget[headTarget.length - 1].HasSuffixSpace = true;
+    headTarget.push(createToken(TokenKind.Punctuation, "{", { deprecated }));
 
     const childCtx: VisitContext = { ...ctx, prefix: symbolPath + ".", deprecated };
     for (const member of node.members) {
@@ -365,9 +373,9 @@ function visitInterface(
       IsContextEndLine: true,
     });
   } else {
-    t[t.length - 1].HasSuffixSpace = true;
-    t.push(createToken(TokenKind.Punctuation, "{", { hasSuffixSpace: true, deprecated }));
-    t.push(createToken(TokenKind.Punctuation, "}", { deprecated }));
+    headTarget[headTarget.length - 1].HasSuffixSpace = true;
+    headTarget.push(createToken(TokenKind.Punctuation, "{", { hasSuffixSpace: true, deprecated }));
+    headTarget.push(createToken(TokenKind.Punctuation, "}", { deprecated }));
     out.push(line);
   }
 
@@ -404,12 +412,20 @@ function visitClass(
   const tpChildren = emitTypeParameters(node.typeParameters, t, deprecated, ctx.referenceMap);
   if (tpChildren.length) line.Children!.push(...tpChildren);
 
-  const hcChildren = emitHeritageClauses(node.heritageClauses, t, deprecated, ctx.referenceMap);
-  if (hcChildren.length) line.Children!.push(...hcChildren);
+  // If type-parameter emission created children (e.g. a multiline constraint `extends { … }`),
+  // the heritage clause and the opening "{" must be appended to the last child line, not back
+  // onto the header.  Track `headTarget` for this purpose.
+  let headTarget: ReviewToken[] = tpChildren.length ? tpChildren[tpChildren.length - 1].Tokens : t;
+
+  const hcChildren = emitHeritageClauses(node.heritageClauses, headTarget, deprecated, ctx.referenceMap);
+  if (hcChildren.length) {
+    line.Children!.push(...hcChildren);
+    headTarget = hcChildren[hcChildren.length - 1].Tokens;
+  }
 
   if (node.members.length > 0) {
-    t[t.length - 1].HasSuffixSpace = true;
-    t.push(createToken(TokenKind.Punctuation, "{", { deprecated }));
+    headTarget[headTarget.length - 1].HasSuffixSpace = true;
+    headTarget.push(createToken(TokenKind.Punctuation, "{", { deprecated }));
 
     const childCtx: VisitContext = {
       ...ctx,
@@ -431,9 +447,9 @@ function visitClass(
       IsContextEndLine: true,
     });
   } else {
-    t[t.length - 1].HasSuffixSpace = true;
-    t.push(createToken(TokenKind.Punctuation, "{", { hasSuffixSpace: true, deprecated }));
-    t.push(createToken(TokenKind.Punctuation, "}", { deprecated }));
+    headTarget[headTarget.length - 1].HasSuffixSpace = true;
+    headTarget.push(createToken(TokenKind.Punctuation, "{", { hasSuffixSpace: true, deprecated }));
+    headTarget.push(createToken(TokenKind.Punctuation, "}", { deprecated }));
     out.push(line);
   }
 

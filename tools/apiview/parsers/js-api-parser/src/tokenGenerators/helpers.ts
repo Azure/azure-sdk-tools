@@ -771,6 +771,40 @@ export function buildTypeNodeTokens(
       return undefined;
     }
 
+    // Inline path: if every element fits on a single line (produces no children of its own),
+    // emit the whole tuple inline as `[elem, elem]`.  This prevents a tuple in a heritage
+    // clause or type-parameter constraint from fragmenting the surrounding context (e.g.
+    // `extends Iterable<[string, string]>` must stay on one header line).
+    const allInline = !node.elements.some((el) => {
+      const probe: ReviewToken[] = [];
+      const probeNode = ts.isNamedTupleMember(el) ? el.type : el;
+      const c = buildTypeNodeTokens(probeNode, probe, deprecated, depth, referenceMap);
+      return c !== undefined && c.length > 0;
+    });
+
+    if (allInline) {
+      tokens.push(createToken(TokenKind.Punctuation, "[", { deprecated }));
+      for (let i = 0; i < node.elements.length; i++) {
+        if (i > 0)
+          tokens.push(createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }));
+        const el = node.elements[i];
+        if (ts.isNamedTupleMember(el)) {
+          if (el.dotDotDotToken)
+            tokens.push(createToken(TokenKind.Punctuation, "...", { deprecated }));
+          tokens.push(createToken(TokenKind.MemberName, el.name.getText(), { deprecated }));
+          if (el.questionToken)
+            tokens.push(createToken(TokenKind.Punctuation, "?", { deprecated }));
+          tokens.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
+          buildTypeNodeTokens(el.type, tokens, deprecated, depth, referenceMap);
+        } else {
+          buildTypeNodeTokens(el, tokens, deprecated, depth, referenceMap);
+        }
+      }
+      tokens.push(createToken(TokenKind.Punctuation, "]", { deprecated }));
+      return undefined;
+    }
+
+    // Multiline path (complex / nested elements):
     tokens.push(createToken(TokenKind.Punctuation, "[", { deprecated }));
 
     for (let i = 0; i < node.elements.length; i++) {

@@ -538,6 +538,7 @@ def main() -> None:
     project = AIProjectClient(
         endpoint=project_endpoint,
         credential=AzureCliCredential(),
+        allow_preview=True,
     )
     try:
         # Predict the next version number so the container can include it

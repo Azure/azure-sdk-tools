@@ -249,6 +249,17 @@ async def test_before_run_injects_user_memories_and_episodes(monkeypatch) -> Non
     assert "## User memories" in injected_text
     assert "User prefers Python" in injected_text
 
+    # Episode should be injected with condensed format
+    assert "## Expert experience" in injected_text
+    assert "tsp-client fails" in injected_text
+    assert "Add emitter to config" in injected_text
+    assert "Config issues cause generation failures" in injected_text
+    # Reasoning chain should be condensed into a single arrow-separated line
+    assert "check config → add emitter" in injected_text
+    # Symptoms should NOT be in the injected text
+    assert "error: emitter not found" not in injected_text
+    assert "Symptoms" not in injected_text
+
 
 @pytest.mark.asyncio
 async def test_after_run_updates_only_user_store(monkeypatch) -> None:

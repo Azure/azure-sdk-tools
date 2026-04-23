@@ -49,7 +49,7 @@ We are building a new agent service (`azure-sdk-qa-bot-agent`) based on the Azur
 
 ![Agent lifecycle](images/agent_lifecycle.png)
 
-### 1.2 Memory — AI Foundry Built-in Memory vs Self-hosted Memory
+### 1.2 Memory — Hybrid Approach (AI Foundry Memory + Cosmos DB Episodes)
 
 > **References:**
 > - [AI Foundry Memory](https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/what-is-memory?tabs=conversational-agent)
@@ -65,7 +65,12 @@ AI Agent Memory is the ability of an agent to store, recall, and use information
 | Filtered queries (by repo, language, service) | Semantic search only, no field-level filters | Structured filters + semantic search |
 | Stability | Public preview — API and behavior may change | Production GA services |
 
-**Decision:** We chose AI Foundry built-in Memory for its simplicity and lower implementation cost. While self-hosted memory offers more control, the AI Foundry memory ecosystem is actively improving, and the additional effort of building and maintaining a custom memory layer is not justified at this stage.
+**Decision:** We adopted a **hybrid memory architecture** that combines both approaches:
+
+1. **AI Foundry Memory Store** — used for **user-scoped memory** (personal preferences, SDK/language context, working patterns). Foundry handles automatic user-profile extraction and chat-summary consolidation, providing low-cost per-user personalisation.
+2. **Self-hosted Cosmos DB** — used for **expert experience episodes** (structured problem-solution pairs with reasoning chains). Episodes require a custom schema, deterministic IDs for upsert, vector embeddings for similarity search, and tenant-scoped partitioning — capabilities that Foundry Memory does not support.
+
+This gives us the simplicity of Foundry for per-user context while retaining full control over the structured knowledge base that drives expert-level answer quality.
 
 ## 2 Design
 
@@ -103,7 +108,66 @@ AI Agent Memory is the ability of an agent to store, recall, and use information
 
 ![Feedback interaction diagram](images/feedback_interact_diagram.png)
 
-### 2.3 API Design
+### 2.3 Memory Design
+
+#### 2.3.1 Memory Types
+
+| Memory Type | Store | Scope | Description |
+| --- | --- | --- | --- |
+| **User profile** (static) | AI Foundry Memory Store | Per user (`user_{user_id}`) | Personal preferences, SDK/language, project context. Fetched once per session via `search_memories` with no query items. |
+| **User contextual** | AI Foundry Memory Store | Per user (`user_{user_id}`) | Conversation-relevant memories retrieved every turn using input messages as search items. Incremental via `previous_search_id`. |
+| **Expert episodes** (tenant) | Cosmos DB `experience-episodes` | Per tenant (`tenant_id` partition key) | Structured problem-solution pairs extracted from expert-resolved threads. Retrieved via cosine vector similarity search against the user's current question. |
+
+#### 2.3.2 Key Components
+
+| Component | Purpose |
+| --- | --- |
+| `utils/memory_context_provider.py` | `MemoryContextProvider` — retrieves and injects memories before each agent turn, updates user store after. |
+| `utils/azure_memory_store.py` | Foundry Memory Store helpers — store creation, config accessors, scope sanitization. |
+| `services/thread_memory_service.py` | `ThreadMemoryService` — extracts episodes from expert-resolved threads and stores in Cosmos DB. |
+| `prompts/episode_extraction.md` | LLM prompt for structured episode extraction. |
+
+#### 2.3.3 Memory Lifecycle
+
+##### Write Path — User Memory
+
+After each agent response, `MemoryContextProvider.after_run` collects user + assistant messages and submits them to the Foundry Memory Store via `begin_update_memories`. Foundry asynchronously extracts and consolidates user-profile facts. A configurable `update_delay` (default 300 s) controls how soon updates are processed.
+
+##### Write Path — Expert Episodes
+
+When a conversation message is saved via `/conversation/save`, `ThreadMemoryService.process_thread_update` runs as a background task:
+
+1. **Quality gate** — Only triggers when the latest message is from an expert (not the original poster or the bot).
+2. **LLM extraction** — Sends the full thread transcript to `chat.completions` with a structured episode-extraction prompt (`prompts/episode_extraction.md`). The LLM returns a JSON `Episode` or `null` if the thread is unresolved or low-value.
+3. **Embedding** — Generates a vector embedding of `trigger + symptoms` using the configured embedding model (default `text-embedding-3-small`).
+4. **Upsert** — Stores the `EpisodeDocument` in the `experience-episodes` Cosmos DB container with a deterministic ID (`episode-{tenant_id}-{source_thread_id}`), so re-extractions as the thread grows replace previous versions.
+
+##### Read Path — Before Each Agent Turn
+
+`MemoryContextProvider.before_run` assembles memory context before model invocation:
+
+1. **Resolve scopes** — Extracts `user_scope` from `[memory_scope] value=…` marker and `tenant_scope` from `[tenant_context] original_tenant_id=…` marker in input messages.
+2. **Fetch static user memories** — On first turn only (per session), queries the user store with no items to retrieve user-profile memories.
+3. **Search contextual user memories** — Every turn, searches the user store using input messages as items (incremental via `previous_search_id`).
+4. **Search expert episodes** — Generates an embedding of the latest user message and performs a Cosmos DB `VectorDistance` query within the tenant partition. Results are filtered by a similarity threshold (default 0.65, top-k default 2).
+5. **Inject context** — Formats all memories into a system message with `## User memories` and `## Expert experience` sections and injects it into the agent context.
+
+#### 2.3.4 Episode Schema
+
+Episodes stored in Cosmos DB follow a structured schema (`models/episode.py`):
+
+| Field | Description |
+| --- | --- |
+| `trigger` | The symptom or question that started the thread. |
+| `symptoms` | Observable signs — error messages, unexpected behavior. |
+| `reasoning_chain` | Step-by-step diagnostic process the expert followed (min 2 steps). |
+| `resolution` | What ultimately fixed the problem or answered the question. |
+| `key_insight` | Generalizable takeaway that applies beyond this specific case. |
+| `confidence` | Extraction confidence (0–1). Episodes below 0.5 are discarded. |
+
+The `EpisodeDocument` extends this with storage fields: `id`, `tenant_id`, `source_thread_id`, `message_count`, `embedding`, and timestamps.
+
+### 2.4 API Design
 
 See the [TypeSpec definitions](../azure-sdk-qa-bot-agent/tsp).
 

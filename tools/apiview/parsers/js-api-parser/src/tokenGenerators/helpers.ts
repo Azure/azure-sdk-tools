@@ -1015,9 +1015,7 @@ export function buildTypeElementTokens(
       tokens.push(createToken(TokenKind.MemberName, param.name.getText(), { deprecated }));
       tokens.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
       if (param.type) {
-        const typeText = param.type.getText();
-        const tokenKind = getTokenKind(typeText);
-        tokens.push(createToken(tokenKind, typeText, { deprecated }));
+        buildTypeNodeTokens(param.type, tokens, deprecated, depth, referenceMap);
       }
     }
 

@@ -963,3 +963,117 @@ declare module "@azure/test" {
     expect(lastChild.Tokens.some((t) => t.Value === ";")).toBe(true);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Private class members excluded from output
+// ---------------------------------------------------------------------------
+
+describe("parseDtsFile — private class members excluded", () => {
+  const FIXTURE_CONTENT = `
+declare module "@azure/test" {
+  export class MyClient {
+    private _secret: string;
+    protected region: string;
+    public endpoint: string;
+    private doInternalWork(): void;
+    send(request: string): string;
+  }
+}
+`;
+
+  let lines: ReviewLine[];
+  const TEMP = path.join(path.dirname(FIXTURES), "tmp-private.d.ts");
+
+  beforeAll(async () => {
+    const { writeFileSync } = await import("node:fs");
+    writeFileSync(TEMP, FIXTURE_CONTENT);
+    const result = parseDtsFile({ filePath: TEMP, packageName: "@azure/test" });
+    lines = collectAllLines(result.get("@azure/test")!);
+  });
+
+  afterAll(async () => {
+    const { unlinkSync } = await import("node:fs");
+    unlinkSync(TEMP);
+  });
+
+  it("private property is excluded", () => {
+    const hasSecret = lines.some((l) => l.Tokens.some((t) => t.Value === "_secret"));
+    expect(hasSecret).toBe(false);
+  });
+
+  it("private method is excluded", () => {
+    const hasInternal = lines.some((l) => l.Tokens.some((t) => t.Value === "doInternalWork"));
+    expect(hasInternal).toBe(false);
+  });
+
+  it("protected member is included", () => {
+    const hasRegion = lines.some((l) => l.Tokens.some((t) => t.Value === "region"));
+    expect(hasRegion).toBe(true);
+  });
+
+  it("public member is included", () => {
+    const hasEndpoint = lines.some((l) => l.Tokens.some((t) => t.Value === "endpoint"));
+    expect(hasEndpoint).toBe(true);
+  });
+
+  it("public method is included", () => {
+    const hasSend = lines.some((l) => l.Tokens.some((t) => t.Value === "send"));
+    expect(hasSend).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// declare module "./" normalises to "."
+// ---------------------------------------------------------------------------
+
+describe('parseDtsFile — declare module "./" normalized to "."', () => {
+  const FIXTURE_CONTENT = `
+declare module "./" {
+  export interface RootExport { id: string; }
+}
+`;
+
+  const TEMP = path.join(path.dirname(FIXTURES), "tmp-dotslash.d.ts");
+
+  beforeAll(async () => {
+    const { writeFileSync } = await import("node:fs");
+    writeFileSync(TEMP, FIXTURE_CONTENT);
+  });
+
+  afterAll(async () => {
+    const { unlinkSync } = await import("node:fs");
+    unlinkSync(TEMP);
+  });
+
+  it('maps "./" to "." key in result', () => {
+    const result = parseDtsFile({ filePath: TEMP, packageName: "@azure/test" });
+    expect(result.has(".")).toBe(true);
+    expect(result.has("./")).toBe(false);
+  });
+
+  it('RootExport is accessible under the "." key', () => {
+    const result = parseDtsFile({ filePath: TEMP, packageName: "@azure/test" });
+    const lines = collectAllLines(result.get(".")!);
+    expect(findLine(lines, "RootExport:interface")).toBeDefined();
+  });
+
+  it('"." and "./" merge into one entry when both present', () => {
+    // Write a fixture with both declare module "." and declare module "./"
+    const { writeFileSync } = require("node:fs");
+    const TEMP2 = path.join(path.dirname(FIXTURES), "tmp-dotslash-merge.d.ts");
+    writeFileSync(TEMP2, `
+declare module "." {
+  export interface A { x: string; }
+}
+declare module "./" {
+  export interface B { y: number; }
+}
+`);
+    const result = parseDtsFile({ filePath: TEMP2, packageName: "@azure/test" });
+    require("node:fs").unlinkSync(TEMP2);
+    expect(result.size).toBe(1);
+    const lines = collectAllLines(result.get(".")!);
+    expect(findLine(lines, "A:interface")).toBeDefined();
+    expect(findLine(lines, "B:interface")).toBeDefined();
+  });
+});

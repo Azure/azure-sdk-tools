@@ -438,6 +438,14 @@ function visitClassMember(
   ctx: VisitContext,
   seenMethodNames?: Set<string>,
 ): void {
+  // Private members are not part of the public API surface.
+  // ECMAScript private fields (#name) are unconditionally private.
+  if (hasModifier(member, ts.ModifierFlags.Private)) return;
+  if (
+    (ts.isPropertyDeclaration(member) || ts.isMethodDeclaration(member)) &&
+    ts.isPrivateIdentifier(member.name)
+  ) return;
+
   const deprecated = ctx.deprecated || isDeprecatedNode(member);
 
   if (ts.isConstructorDeclaration(member)) {
@@ -759,7 +767,7 @@ function getEntryPoints(sourceFile: ts.SourceFile): EntryPoint[] {
     ) {
       // Normalise: strip leading ./ so "." and "./" both map to "."
       const rawName = stmt.name.text;
-      const subpath = rawName === "" ? "." : rawName;
+      const subpath = rawName === "" || rawName === "./" ? "." : rawName;
       const existing = moduleMap.get(subpath);
       if (existing) {
         existing.push(...stmt.body.statements);

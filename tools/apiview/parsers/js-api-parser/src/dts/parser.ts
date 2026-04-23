@@ -798,14 +798,34 @@ export function parseDtsFile(options: DtsParseOptions): Map<string, ReviewLine[]
   const entryPoints = getEntryPoints(sourceFile);
   const result = new Map<string, ReviewLine[]>();
 
-  for (const ep of entryPoints) {
-    // Build a reference map scoped to this entry point's statements
-    const referenceMap = buildLocalReferenceMap(ep.statements as ts.Statement[], packageName);
+  // For named-module entry points (declare module "foo") the package name used
+  // for ID generation is the module name itself, not the packageName parameter.
+  // For the "." fallback (top-level file, no declare module blocks) use packageName.
+  function modulePackageName(ep: EntryPoint): string {
+    return ep.subpath === "." ? packageName : ep.subpath;
+  }
 
+  // Build a combined reference map that spans ALL entry points so that
+  // cross-module type references resolve to the correct canonical ID.
+  const combinedReferenceMap: ReferenceMap = new Map();
+  for (const ep of entryPoints) {
+    const epMap = buildLocalReferenceMap(
+      ep.statements as ts.Statement[],
+      modulePackageName(ep),
+    );
+    for (const [name, id] of epMap) {
+      // Prefer the first definition (main module takes precedence over subpaths).
+      if (!combinedReferenceMap.has(name)) {
+        combinedReferenceMap.set(name, id);
+      }
+    }
+  }
+
+  for (const ep of entryPoints) {
     const ctx: VisitContext = {
-      packageName,
+      packageName: modulePackageName(ep),
       prefix: "",
-      referenceMap,
+      referenceMap: combinedReferenceMap,
       parentReleaseTag: undefined,
       deprecated: false,
     };

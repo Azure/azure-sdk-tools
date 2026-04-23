@@ -89,10 +89,8 @@
 
   <!-- The default auto-bundling breaks CI due to networking/compliance constraints -->
   <!-- See https://github.com/github/copilot-sdk/pull/494 -->
-  <!-- Instead of skipping the download entirely, redirect to the internal Azure DevOps npm registry
-       so the native Copilot CLI binary is still bundled into standalone executables. -->
   <PropertyGroup Condition="'$(TF_BUILD)' == 'True'">
-    <CopilotNpmRegistryUrl>https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-tools/npm/registry/</CopilotNpmRegistryUrl>
+    <CopilotSkipCliDownload>true</CopilotSkipCliDownload>
   </PropertyGroup>
 
 </Project>

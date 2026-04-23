@@ -590,7 +590,7 @@ internal class CopilotAgentRunnerTests
         };
 
         // Act & Assert
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        var ex = Assert.ThrowsAsync<CopilotCliUnavailableException>(async () =>
             await runner.RunAsync(agent));
 
         Assert.Multiple(() =>
@@ -627,7 +627,7 @@ internal class CopilotAgentRunnerTests
         };
 
         // Act & Assert
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        var ex = Assert.ThrowsAsync<CopilotCliUnavailableException>(async () =>
             await runner.RunAsync(agent));
 
         Assert.That(ex!.Message, Does.Contain("not authenticated").Or.Contain("could not be found"));
@@ -655,7 +655,7 @@ internal class CopilotAgentRunnerTests
         };
 
         // Act & Assert
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        var ex = Assert.ThrowsAsync<CopilotCliUnavailableException>(async () =>
             await runner.RunAsync(agent));
 
         Assert.Multiple(() =>
@@ -689,7 +689,7 @@ internal class CopilotAgentRunnerTests
         };
 
         // Act & Assert
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        var ex = Assert.ThrowsAsync<CopilotCliUnavailableException>(async () =>
             await runner.RunAsync(agent));
 
         Assert.Multiple(() =>

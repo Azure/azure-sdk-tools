@@ -3,6 +3,7 @@
 using System.CommandLine;
 using System.ComponentModel;
 using System.Text;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
@@ -201,7 +202,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 language: languageService.Language.ToString(),
                 ct: ct);
         }
-        catch (InvalidOperationException ex) when (IsCopilotCliException(ex))
+        catch (CopilotCliUnavailableException ex)
         {
             logger.LogError(ex, "GitHub Copilot CLI is not available.");
             return new CustomizedCodeUpdateResponse
@@ -671,25 +672,6 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             || host.EndsWith(".apiview.dev", StringComparison.OrdinalIgnoreCase)
             || host.Equals("apiviewstagingtest.com", StringComparison.OrdinalIgnoreCase)
             || host.EndsWith(".apiviewstagingtest.com", StringComparison.OrdinalIgnoreCase);
-    }
-
-    /// <summary>
-    /// Determines whether an exception (or its inner exception chain) indicates that the
-    /// GitHub Copilot CLI is not installed or failed to start. This is used to surface a
-    /// clear error message instead of the generic "classification failed" message.
-    /// </summary>
-    public static bool IsCopilotCliException(Exception ex)
-    {
-        for (var current = ex; current != null; current = current.InnerException)
-        {
-            if (current.Message.Contains("Copilot CLI", StringComparison.OrdinalIgnoreCase)
-                || current.Message.Contains("copilot.exe", StringComparison.OrdinalIgnoreCase)
-                || current.Message.Contains("Copilot is not authenticated", StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-        }
-        return false;
     }
 
 }

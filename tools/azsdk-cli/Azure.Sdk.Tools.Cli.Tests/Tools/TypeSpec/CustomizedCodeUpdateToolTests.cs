@@ -1,3 +1,4 @@
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -281,7 +282,7 @@ public class CustomizedCodeUpdateToolAutoTests
     {
         var innerEx = new InvalidOperationException(
             "Copilot CLI not found at 'runtimes/win-x64/native/copilot.exe'. Ensure the SDK NuGet package was restored correctly.");
-        var copilotEx = new InvalidOperationException(
+        var copilotEx = new CopilotCliUnavailableException(
             "The GitHub Copilot CLI could not be found or failed to start.", innerEx);
 
         var (tool, _) = CreateTool(configureClassifier: c =>
@@ -333,39 +334,6 @@ public class CustomizedCodeUpdateToolAutoTests
         Assert.That(result.Success, Is.False);
         Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError));
         Assert.That(result.Message, Does.Contain("Network timeout"));
-    }
-
-    // ========================================================================
-    // IsCopilotCliException helper tests
-    // ========================================================================
-
-    [Test]
-    public void IsCopilotCliException_DirectMessage_ReturnsTrue()
-    {
-        var ex = new InvalidOperationException("The GitHub Copilot CLI could not be found or failed to start.");
-        Assert.That(CustomizedCodeUpdateTool.IsCopilotCliException(ex), Is.True);
-    }
-
-    [Test]
-    public void IsCopilotCliException_InnerExceptionWithCopilotExe_ReturnsTrue()
-    {
-        var inner = new InvalidOperationException("Copilot CLI not found at 'runtimes/win-x64/native/copilot.exe'.");
-        var outer = new InvalidOperationException("Something went wrong", inner);
-        Assert.That(CustomizedCodeUpdateTool.IsCopilotCliException(outer), Is.True);
-    }
-
-    [Test]
-    public void IsCopilotCliException_AuthenticationError_ReturnsTrue()
-    {
-        var ex = new InvalidOperationException("GitHub Copilot is not authenticated. Please authenticate.");
-        Assert.That(CustomizedCodeUpdateTool.IsCopilotCliException(ex), Is.True);
-    }
-
-    [Test]
-    public void IsCopilotCliException_UnrelatedError_ReturnsFalse()
-    {
-        var ex = new InvalidOperationException("Something completely different went wrong");
-        Assert.That(CustomizedCodeUpdateTool.IsCopilotCliException(ex), Is.False);
     }
 
     [Test]

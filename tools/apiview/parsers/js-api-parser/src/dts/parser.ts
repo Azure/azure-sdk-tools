@@ -767,7 +767,12 @@ function visitNamespace(
 
   const nameToken = createToken(TokenKind.TypeName, name, { deprecated });
   nameToken.NavigateToId = lineId;
-  nameToken.NavigationDisplayName = name;
+  // Detect companion namespace: if a class/interface with the same name already exists
+  // in the reference map, append "(namespace)" to disambiguate the sidebar entry.
+  // e.g. `export class OpenAI` + `export namespace OpenAI` → sidebar shows "OpenAI (namespace)"
+  const siblingId = ctx.referenceMap.get(name);
+  const isCompanion = siblingId !== undefined && !siblingId.endsWith(":namespace");
+  nameToken.NavigationDisplayName = isCompanion ? `${name} (namespace)` : name;
   t.push(nameToken);
   t[t.length - 1].HasSuffixSpace = true;
   t.push(createToken(TokenKind.Punctuation, "{", { deprecated }));

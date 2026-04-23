@@ -37,6 +37,39 @@ async function tryReadPackageJson(dtsFilePath: string): Promise<PackageJson> {
 }
 
 /**
+ * Builds a "Declared Modules" summary section listing every `declare module` block
+ * found in the file. Each entry is a clickable link (via NavigateToId) that jumps
+ * to the corresponding subpath-export section in the review body.
+ *
+ * Only emitted when the file contains explicit named `declare module` blocks (i.e.
+ * when at least one key in subpathMap is not ".").
+ */
+function buildModulesListLines(subpaths: string[]): ReviewLine[] {
+  const header: ReviewLine = {
+    LineId: "Modules",
+    Tokens: [
+      buildToken({
+        Kind: TokenKind.Comment,
+        Value: "// Declared Modules",
+        NavigationDisplayName: "Modules",
+        SkipDiff: true,
+      }),
+    ],
+    Children: subpaths.map((subpath) => ({
+      Tokens: [
+        buildToken({
+          Kind: TokenKind.StringLiteral,
+          Value: `"${subpath}"`,
+          NavigateToId: `Subpath-export-${subpath}`,
+          SkipDiff: true,
+        }),
+      ],
+    })),
+  };
+  return [header, { RelatedToLine: "Modules", Tokens: [] }];
+}
+
+/**
  * Builds the Dependencies section of the review from a package.json dependency map.
  * Reuses the same logic contract as the .api.json path (SkipDiff for @azure/* and tslib).
  */
@@ -112,7 +145,9 @@ export async function generateApiViewFromDts(
     Language: "JavaScript",
   };
 
-  // Parse the .d.ts file into per-subpath ReviewLine arrays
+  // Parse the .d.ts file into per-subpath ReviewLine arrays.
+  // ALL declared modules are included — both package-owned modules and any
+  // third-party modules declared inline (e.g. "openai", "@azure/core-paging").
   const subpathMap = parseDtsFile({ filePath: dtsFilePath, packageName });
 
   const reviewLines: ReviewLine[] = [];
@@ -120,7 +155,14 @@ export async function generateApiViewFromDts(
   // Dependencies (same structure as .api.json path)
   reviewLines.push(...buildDependencyLines(dependencies));
 
-  // One subpath-export entry per entry point
+  // Declared Modules summary — only when explicit `declare module` blocks exist.
+  // The "." fallback (no declare module blocks in file) is not meaningful to list.
+  const moduleKeys = [...subpathMap.keys()];
+  if (moduleKeys.some((k) => k !== ".")) {
+    reviewLines.push(...buildModulesListLines(moduleKeys));
+  }
+
+  // One subpath-export entry per entry point (all modules, including third-party)
   for (const [subpath, lines] of subpathMap) {
     const exportLine: ReviewLine = {
       LineId: `Subpath-export-${subpath}`,

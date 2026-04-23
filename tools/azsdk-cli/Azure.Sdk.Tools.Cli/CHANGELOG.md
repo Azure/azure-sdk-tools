@@ -8,7 +8,7 @@
 
 ### Breaking Changes
 
-- `azsdk package validate` with check type `All` no longer accepts `--fix`. Run a specific check type (for example, `Cspell`, `Snippets`, or `Format`) with `--fix` instead.
+- `azsdk package validate` with check type `All` raises an error when `--fix` is True. Run a specific check type (for example, `Cspell`, `Snippets`, or `Format`) with `--fix` instead.
 
 ### Bugs Fixed
 

@@ -252,7 +252,7 @@ function emitPreamble(
   const releaseTag = getReleaseTagFromNode(node);
   if (releaseTag && releaseTag !== ctx.parentReleaseTag) {
     out.push({
-      Tokens: [createToken(TokenKind.StringLiteral, `@${releaseTag}`, {})],
+      Tokens: [createToken(TokenKind.Keyword, `@${releaseTag}`, {})],
       RelatedToLine: lineId,
     });
   }
@@ -260,7 +260,7 @@ function emitPreamble(
   const deprecated = ctx.deprecated || isDeprecatedNode(node);
   if (deprecated && !ctx.deprecated) {
     out.push({
-      Tokens: [createToken(TokenKind.StringLiteral, "@deprecated", { deprecated: true })],
+      Tokens: [createToken(TokenKind.Keyword, "@deprecated", { deprecated: true })],
       RelatedToLine: lineId,
     });
   }
@@ -642,7 +642,14 @@ function visitVariableStatement(
     const releaseTag = getReleaseTagFromNode(node);
     if (releaseTag && releaseTag !== ctx.parentReleaseTag) {
       out.push({
-        Tokens: [createToken(TokenKind.StringLiteral, `@${releaseTag}`, {})],
+        Tokens: [createToken(TokenKind.Keyword, `@${releaseTag}`, {})],
+        RelatedToLine: lineId,
+      });
+    }
+
+    if (deprecated && !ctx.deprecated) {
+      out.push({
+        Tokens: [createToken(TokenKind.Keyword, "@deprecated", {})],
         RelatedToLine: lineId,
       });
     }
@@ -652,6 +659,7 @@ function visitVariableStatement(
     t.push(createToken(TokenKind.Keyword, keyword, { hasSuffixSpace: true, deprecated }));
 
     const nameToken = createToken(TokenKind.MemberName, varName, { deprecated });
+    nameToken.NavigateToId = lineId;
     nameToken.NavigationDisplayName = varName;
     t.push(nameToken);
 
@@ -661,6 +669,7 @@ function visitVariableStatement(
     }
     t.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
     out.push({ LineId: lineId, Tokens: t });
+    out.push(emptyLine(lineId));
   }
 }
 

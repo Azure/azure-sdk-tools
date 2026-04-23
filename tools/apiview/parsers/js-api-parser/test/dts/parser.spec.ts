@@ -252,6 +252,24 @@ describe("parseDtsFile — basic.d.ts", () => {
       expect(tokens).toContain("const");
       expect(tokens).toContain("DEFAULT_TIMEOUT");
     });
+
+    it("sets NavigateToId on the variable name token", () => {
+      lines = subpathMap.get(".")!;
+      const v = findLine(lines, "DEFAULT_TIMEOUT:var");
+      expect(v).toBeDefined();
+      const nameToken = v!.Tokens.find((t) => t.Value === "DEFAULT_TIMEOUT");
+      expect(nameToken?.NavigateToId).toBeTruthy();
+    });
+
+    it("emits an empty ReviewLine after each variable declaration", () => {
+      lines = subpathMap.get(".")!;
+      const all = collectAllLines(lines);
+      const varLine = all.find((l) => l.LineId?.endsWith("DEFAULT_TIMEOUT:var"));
+      expect(varLine).toBeDefined();
+      const varIdx = all.indexOf(varLine!);
+      const emptyAfter = all[varIdx + 1];
+      expect(emptyAfter?.Tokens.length).toBe(0);
+    });
   });
 
   describe("namespace", () => {
@@ -462,10 +480,13 @@ describe("parseDtsFile — tags.d.ts", () => {
     const all = collectAllLines(lines);
     const varIdx = all.findIndex((l) => l.LineId?.endsWith("ALPHA_CONSTANT:var"));
     const linesBefore = all.slice(0, varIdx);
-    const hasAlpha = linesBefore.some((l) =>
+    const alphaLine = linesBefore.find((l) =>
       l.Tokens.some((t) => t.Value === "@alpha"),
     );
-    expect(hasAlpha).toBe(true);
+    expect(alphaLine).toBeDefined();
+    // Release tag preamble should use Keyword kind, not StringLiteral
+    const alphaToken = alphaLine!.Tokens.find((t) => t.Value === "@alpha");
+    expect(alphaToken?.Kind).toBe(TokenKind.Keyword);
   });
 });
 

@@ -10,14 +10,14 @@ environment: azsdk-mcp
 config:
   runs: 1                      # Trials per stimulus
   timeout: 1800                # Seconds per trial
-  model: claude-opus-4.6-1m    #gpt-4o #claude-sonnet-4.6 # Model for agent execution
+  model: claude-opus-4.6    #gpt-4o #claude-sonnet-4.6 # Model for agent execution
   executor: copilot-sdk        # Which executor to use
 
 # Test cases
 stimuli:
 - prompt: |
-    Add a move async operation to move employee, operation's request is MoveRequest, response is MoveResponse
-  name: 003002-arm-action-lro
+    Modify the LRO createOrUpdate PUT operation in interface Employees so that it returns Azure-AsyncOperation header but NOT Retry-After header in the 201 response. The operation currently uses ArmResourceCreateOrReplaceAsync<Employee> template.
+  name: 003002-arm-modify-response
   constraints:
     max_turns: 10
     max_tokens: 5000
@@ -42,17 +42,35 @@ stimuli:
         - edit
         - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
-  # VP1: Async move action with MoveRequest/MoveResponse and LRO headers (handles both single-line and multi-line formats)
+  # VP1: ArmAsyncOperationHeader with FinalResult = Employee (alias or inline)
   - type: file-matches
     config:
       path: employee.tsp
-      pattern: 'move\s+is\s+ArmResourceActionAsync\s*<\s*Employee\s*,\s*MoveRequest\s*,\s*MoveResponse\s*,\s*LroHeaders\s*=\s*ArmCombinedLroHeaders\s*<\s*FinalResult\s*=\s*MoveResponse\s*>\s*>'
+      pattern: 'ArmAsyncOperationHeader<FinalResult\s*=\s*Employee>'
+  # VP2: createOrUpdate uses ArmResourceCreateOrReplaceAsync with custom LroHeaders
+  - type: file-matches
+    config:
+      path: employee.tsp
+      pattern: 'createOrUpdate is ArmResourceCreateOrReplaceAsync<'
+  - type: file-matches
+    config:
+      path: employee.tsp
+      pattern: 'LroHeaders\s*='
+  # VP3: Other operations unchanged
+  - type: file-matches
+    config:
+      path: employee.tsp
+      pattern: 'update is ArmResourcePatchSync<Employee'
+  - type: file-matches
+    config:
+      path: employee.tsp
+      pattern: 'delete is ArmResourceDeleteWithoutOkAsync<Employee>'
   - type: prompt
     config:
       scoring: scale_1_5
       threshold: 1.0
       prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
-      model: claude-opus-4.6-1m
+      model: claude-opus-4.6
 scoring:
   weights:
     tool-calls: 1

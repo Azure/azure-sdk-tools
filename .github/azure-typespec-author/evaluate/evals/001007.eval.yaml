@@ -10,7 +10,7 @@ environment: azsdk-mcp
 config:
   runs: 1                      # Trials per stimulus
   timeout: 1800                # Seconds per trial
-  model: claude-opus-4.6-1m    #gpt-4o #claude-sonnet-4.6 # Model for agent execution
+  model: claude-opus-4.6    #gpt-4o #claude-sonnet-4.6 # Model for agent execution
   executor: copilot-sdk        # Which executor to use
 
 # Test cases
@@ -112,7 +112,7 @@ stimuli:
       scoring: scale_1_5
       threshold: 1.0
       prompt: 'Evaluate only the semantic interpretation of the request: the excluded features are workLocation property and WorkLocation model, while other features should be carried. Double check the plan has correctly implemented version renaming (2024-10-01-preview → 2025-01-01), old version removal, new version example setup and old version example removal.'
-      model: claude-opus-4.6-1m
+      model: claude-opus-4.6
 scoring:
   weights:
     prompt: 1

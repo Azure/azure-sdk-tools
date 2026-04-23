@@ -10,13 +10,13 @@ environment: azsdk-mcp
 config:
   runs: 1                      # Trials per stimulus
   timeout: 1800                # Seconds per trial
-  model: claude-opus-4.6-1m    #gpt-4o #claude-sonnet-4.6 # Model for agent execution
+  model: claude-opus-4.6    #gpt-4o #claude-sonnet-4.6 # Model for agent execution
   executor: copilot-sdk        # Which executor to use
 
 # Test cases
 stimuli:
 - name: 001001-version-spread-property
-  prompt: I added `...Azure.ResourceManager.ManagedServiceIdentityProperty;` which updates all my existing API versions and introduces a breaking change. I want to introduce the properties of the spread model '...ManagedServiceIdentityProperty' in  API version 2025-05-04-preview only.
+  prompt: I added `...Azure.ResourceManager.ManagedServiceIdentityProperty;` which updates all my existing API versions and introduces a breaking change. I want to introduce the properties of the spread model '...ManagedServiceIdentityProperty' in API version 2025-05-04-preview only.
   environment:
     files:
     - src: ../fixtures/001-share-version-new-feature/employee.tsp
@@ -53,7 +53,7 @@ stimuli:
   - type: prompt
     config:
       prompt: Verify changes are scoped to this task only, with no unrelated edits beyond introducing preview-only identity via versioning.
-      model: claude-opus-4.6-1m
+      model: claude-opus-4.6
       scoring: scale_1_5
       threshold: 1.0
   constraints:

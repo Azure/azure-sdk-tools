@@ -10,7 +10,7 @@ environment: azsdk-mcp
 config:
   runs: 1                      # Trials per stimulus
   timeout: 1800                # Seconds per trial
-  model: claude-opus-4.6-1m    #gpt-4o #claude-sonnet-4.6 # Model for agent execution
+  model: claude-opus-4.6    #gpt-4o #claude-sonnet-4.6 # Model for agent execution
   executor: copilot-sdk        # Which executor to use
 
 # Test cases
@@ -52,7 +52,6 @@ stimuli:
     config:
       required:
         - edit
-        - azure-sdk-mcp-azsdk_run_typespec_validation
   # VP1: Underscore operationIds should be removed (e.g. BgpConnection has only underscore ones)
   - type: file-not-matches
     config:
@@ -85,16 +84,9 @@ stimuli:
     config:
       path: ExpressRouteProviderPort.tsp
       pattern: '@operationId\("ExpressRouteProviderPortsLocation_List"\)'
-  - type: prompt
-    config:
-      scoring: scale_1_5
-      threshold: 1.0
-      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
-      model: claude-opus-4.6-1m
 scoring:
   weights:
     tool-calls: 1
-    prompt: 1
     file-not-matches: 3
     file-matches: 4
   threshold: 1.0

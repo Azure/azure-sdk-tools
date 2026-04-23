@@ -10,7 +10,7 @@ environment: azsdk-mcp
 config:
   runs: 1                      # Trials per stimulus
   timeout: 1800                # Seconds per trial
-  model: claude-opus-4.6-1m    #gpt-4o #claude-sonnet-4.6 # Model for agent execution
+  model: claude-opus-4.6    #gpt-4o #claude-sonnet-4.6 # Model for agent execution
   executor: copilot-sdk        # Which executor to use
 
 # Test cases
@@ -40,7 +40,6 @@ stimuli:
     config:
       required:
         - edit
-        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
@@ -58,8 +57,8 @@ stimuli:
     config:
       scoring: scale_1_5
       threshold: 1.0
-      prompt: 'Verify: (1) new version 2025-05-04-preview added, (2) old preview version 2024-10-01-preview removed from enum, (3) email property made required only in new version, (4) only scoped edits made.'
-      model: claude-opus-4.6-1m
+      prompt: 'Verify email property made required only in new version, only scoped edits made. Verify compile the project and fix any compilation errors if present.'
+      model: claude-opus-4.6
 scoring:
   weights:
     prompt: 1

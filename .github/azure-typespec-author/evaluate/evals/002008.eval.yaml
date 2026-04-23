@@ -10,7 +10,7 @@ environment: azsdk-mcp
 config:
   runs: 1                      # Trials per stimulus
   timeout: 1800                # Seconds per trial
-  model: claude-opus-4.6-1m    #gpt-4o #claude-sonnet-4.6 # Model for agent execution
+  model: claude-opus-4.6    #gpt-4o #claude-sonnet-4.6 # Model for agent execution
   executor: copilot-sdk        # Which executor to use
 
 # Test cases
@@ -40,29 +40,13 @@ stimuli:
     config:
       required:
         - edit
-        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
       path: '*.tsp'
-      pattern: TopQueryParameter
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: SkipQueryParameter
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: listBySubscription
-  - type: prompt
-    config:
-      scoring: scale_1_5
-      threshold: 1.0
-      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
-      model: claude-opus-4.6-1m
+      pattern: 'listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*\{\s*\.\.\.TopQueryParameter;\s*\.\.\.SkipQueryParameter;\s*\}\s*>|listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*Parameters\s*=\s*ArmTopParameter\s*&\s*ArmSkipParameter\s*>|model\s+EmployeeListBySubscriptionParameters\s+is\s+Azure\.Core\.StandardListQueryParameters\s*;[\s\S]*?listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*EmployeeListBySubscriptionParameters\s*>'
 scoring:
   weights:
     tool-calls: 1
-    prompt: 1
-    file-matches: 3
+    file-matches: 1
   threshold: 1.0

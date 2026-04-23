@@ -18,6 +18,7 @@
 8. [Notification Behavior](#notification-behavior)
 9. [UI Behavior (Minimal)](#ui-behavior-minimal)
 10. [Testing Checklist](#testing-checklist)
+11. [Open Scenario](#open-scenario)
 
 ---
 
@@ -133,6 +134,7 @@ Behavior:
 4. Preserve existing unresolved-comment approval gating:
    - Any current server-side rule that blocks `Approve` while unresolved comments exist remains unchanged in this proposal.
    - This includes existing severity behavior (for example, unresolved `MUST FIX`/`SHOULD FIX` block `Approve` while `SUGGESTION`/`QUESTION` do not).
+   - See [Open Scenarios](#open-scenarios) for the related edge case of a `MUST FIX` comment added after an `Approve` has already been submitted.
 5. Submit the reviewer state:
    - Set `SubmissionDecision`, `SubmittedOn`, and `Status = Submitted`.
    - Append a `Submitted` entry to `ChangeHistory` with `SubmissionMessage` and `CommentIds`.
@@ -244,3 +246,21 @@ Notifications are triggered only by explicit review workflow actions.
 21. Copilot comment grouping stays isolated to Copilot submissions and is never bundled with human submissions.
 22. Copilot submissions do not affect version approval-state computation.
 23. UI rule: `Re-Request Review` arrow is shown only when current `Status = Submitted`, and is hidden while `Status = Open`.
+
+---
+
+## Open Scenario
+
+The following edge case is acknowledged but left as an open design question for a future iteration. It does not affect the schema or API design described in this proposal.
+
+### Unresolved MUST FIX Added After Approval
+
+**Scenario:** Architect A submits `Approve`. The service team receives the approval email and prepares to release. Before release, Architect B (also a reviewer) adds a `MUST FIX` comment but has not yet submitted a `Feedback` review. The service team proceeds to release.
+
+**Current behavior:** A live comment, even one with `MUST FIX` severity, does not by itself change the version's computed approval state. Approval state is recomputed only on submit. Because Architect B has not submitted, the version remains `Approved` and release is not blocked. This is likely to be confusing to the service team, who may not realize that a `MUST FIX` comment is outstanding.
+
+**Options under consideration:**
+- Leave as-is. Architect B must submit `Feedback` to flip approval state; this is consistent with the submit-review model.
+- Automatically revert version approval state to `Not Approved` whenever any `MUST FIX` comment is added, regardless of submission status. This would close the gap but breaks the explicit-submit model.
+
+**Resolution:** Open. This proposal does not change the current behavior.

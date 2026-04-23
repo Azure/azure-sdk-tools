@@ -150,27 +150,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 mutatingResults[i] = await mutatingChecks[i].Run();
             }
 
-            // Preserve the original reporting order for stable output.
-            var ordered = new (string Name, PackageCheckResponse Result)[]
-            {
-                ("Dependency",        readOnlyResults[0]),
-                ("Changelog",         readOnlyResults[1]),
-                ("README",            readOnlyResults[2]),
-                ("Spelling",          readOnlyResults[3]),
-                ("Snippets",          mutatingResults[0]),
-                ("Linting",           readOnlyResults[4]),
-                ("Format",            mutatingResults[1]),
-                ("AOT Compatibility", readOnlyResults[5]),
-                ("Generated Code",    readOnlyResults[6]),
-                ("Sample Validation", readOnlyResults[7]),
-            };
-
             var results = new List<PackageCheckResponse>();
             var failedChecks = new List<string>();
             var successfulChecks = new List<string>();
             var overallSuccess = true;
 
-            foreach (var (name, result) in ordered)
+            var allResults = readOnlyChecks.Zip(readOnlyResults, (c, r) => (c.Name, Result: r))
+                .Concat(mutatingChecks.Zip(mutatingResults, (c, r) => (c.Name, Result: r)));
+
+            foreach (var (name, result) in allResults)
             {
                 results.Add(result);
                 if (result.ExitCode != 0)

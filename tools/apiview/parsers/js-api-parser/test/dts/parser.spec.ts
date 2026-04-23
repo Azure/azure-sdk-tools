@@ -563,3 +563,96 @@ describe("parseDtsFile — NavigateToId cross-references (basic.d.ts)", () => {
     expect(extendsToken?.NavigateToId).toContain("HttpClient:class");
   });
 });
+
+// ---------------------------------------------------------------------------
+// Cross-module name collision: each module's own types take priority
+// ---------------------------------------------------------------------------
+
+describe("parseDtsFile — cross-module name collision", () => {
+  // Fixture: openai declares "Agent" first, then @azure/ai-projects also declares
+  // its own "Agent". References to "Agent" within each module must resolve to that
+  // module's own definition, not the other module's.
+  const FIXTURE_CONTENT = `
+declare module "openai" {
+  export interface Agent { openaiField: string; }
+  export interface AgentCreateParams { model: string; }
+}
+declare module "@azure/ai-projects" {
+  export interface Agent { azureField: string; }
+  export interface AgentsOperations {
+    create(params: AgentCreateParams): Agent;
+  }
+  export interface AgentCreateParams { name: string; }
+}
+`;
+
+  let parsed: Map<string, ReviewLine[]>;
+  const TEMP = path.join(path.dirname(FIXTURES), "tmp-name-collision.d.ts");
+
+  beforeAll(async () => {
+    const { writeFileSync } = await import("node:fs");
+    writeFileSync(TEMP, FIXTURE_CONTENT);
+    parsed = parseDtsFile({ filePath: TEMP, packageName: "@azure/ai-projects" });
+    return () => {
+      const { unlinkSync } = require("node:fs");
+      unlinkSync(TEMP);
+    };
+  });
+
+  it("openai Agent navigates to openai!Agent:interface", () => {
+    const openaiLines = parsed.get("openai")!;
+    const all = collectAllLines(openaiLines);
+    const agentLine = all.find((l) => l.LineId === "openai!Agent:interface");
+    expect(agentLine).toBeDefined();
+  });
+
+  it("@azure/ai-projects Agent navigates to @azure/ai-projects!Agent:interface", () => {
+    const azureLines = parsed.get("@azure/ai-projects")!;
+    const all = collectAllLines(azureLines);
+    // AgentsOperations.create() return type Agent must use the local module's ID
+    const createLine = all.find(
+      (l) =>
+        l.Tokens.some((t) => t.Value === "create") &&
+        l.Tokens.some((t) => t.NavigateToId === "@azure/ai-projects!Agent:interface"),
+    );
+    expect(createLine).toBeDefined();
+  });
+
+  it("@azure/ai-projects Agent does NOT navigate to openai!Agent:interface", () => {
+    const azureLines = parsed.get("@azure/ai-projects")!;
+    const all = collectAllLines(azureLines);
+    const wrongNav = all
+      .flatMap((l) => l.Tokens)
+      .find((t) => t.Value === "Agent" && t.NavigateToId === "openai!Agent:interface");
+    expect(wrongNav).toBeUndefined();
+  });
+
+  it("AgentCreateParams in @azure/ai-projects navigates to the local module's AgentCreateParams", () => {
+    // AgentCreateParams is defined in BOTH modules; within @azure/ai-projects
+    // the parameter type must resolve to the local definition.
+    const azureLines = parsed.get("@azure/ai-projects")!;
+    const all = collectAllLines(azureLines);
+    const localNav = all
+      .flatMap((l) => l.Tokens)
+      .find(
+        (t) =>
+          t.Value === "AgentCreateParams" &&
+          t.NavigateToId === "@azure/ai-projects!AgentCreateParams:interface",
+      );
+    expect(localNav).toBeDefined();
+  });
+
+  it("AgentCreateParams in openai module navigates to openai!AgentCreateParams:interface", () => {
+    const openaiLines = parsed.get("openai")!;
+    const all = collectAllLines(openaiLines);
+    // Within openai, AgentCreateParams must resolve to the openai module's own
+    const localNav = all
+      .flatMap((l) => l.Tokens)
+      .find(
+        (t) =>
+          t.Value === "AgentCreateParams" &&
+          t.NavigateToId === "openai!AgentCreateParams:interface",
+      );
+    expect(localNav).toBeDefined();
+  });
+});

@@ -805,27 +805,40 @@ export function parseDtsFile(options: DtsParseOptions): Map<string, ReviewLine[]
     return ep.subpath === "." ? packageName : ep.subpath;
   }
 
-  // Build a combined reference map that spans ALL entry points so that
-  // cross-module type references resolve to the correct canonical ID.
-  const combinedReferenceMap: ReferenceMap = new Map();
+  // Build per-module reference maps first so we can construct scoped lookup
+  // maps for each module: own types at highest priority, other modules' types
+  // as fallback for cross-module references.
+  const perModuleMaps = new Map<string, ReferenceMap>();
   for (const ep of entryPoints) {
-    const epMap = buildLocalReferenceMap(
-      ep.statements as ts.Statement[],
-      modulePackageName(ep),
+    perModuleMaps.set(
+      ep.subpath,
+      buildLocalReferenceMap(ep.statements as ts.Statement[], modulePackageName(ep)),
     );
-    for (const [name, id] of epMap) {
-      // Prefer the first definition (main module takes precedence over subpaths).
-      if (!combinedReferenceMap.has(name)) {
-        combinedReferenceMap.set(name, id);
-      }
-    }
   }
 
   for (const ep of entryPoints) {
+    // Build a scoped reference map for this module:
+    //   1. seed with all cross-module types (first-wins among other modules)
+    //   2. overwrite with this module's own types (always highest priority)
+    // This ensures that a type defined locally always navigates to the local
+    // definition, even when another module declares a type with the same name.
+    const ownMap = perModuleMaps.get(ep.subpath)!;
+    const scopedMap: ReferenceMap = new Map();
+    for (const [subpath, otherMap] of perModuleMaps) {
+      if (subpath !== ep.subpath) {
+        for (const [name, id] of otherMap) {
+          if (!scopedMap.has(name)) scopedMap.set(name, id);
+        }
+      }
+    }
+    for (const [name, id] of ownMap) {
+      scopedMap.set(name, id);
+    }
+
     const ctx: VisitContext = {
       packageName: modulePackageName(ep),
       prefix: "",
-      referenceMap: combinedReferenceMap,
+      referenceMap: scopedMap,
       parentReleaseTag: undefined,
       deprecated: false,
     };

@@ -163,6 +163,15 @@ export async function generateApiViewFromDts(
   }
 
   // One subpath-export entry per entry point (all modules, including third-party)
+
+  // Hoist the cross-language injector so it is not recreated on every iteration.
+  function injectCrossLang(reviewLine: ReviewLine): void {
+    if (reviewLine.LineId && crossLanguageDefinitionIds![reviewLine.LineId]) {
+      reviewLine.CrossLanguageId = crossLanguageDefinitionIds![reviewLine.LineId];
+    }
+    reviewLine.Children?.forEach(injectCrossLang);
+  }
+
   for (const [subpath, lines] of subpathMap) {
     const exportLine: ReviewLine = {
       LineId: `Subpath-export-${subpath}`,
@@ -176,14 +185,7 @@ export async function generateApiViewFromDts(
       Children: lines,
     };
 
-    // Inject CrossLanguageId on children lines that have a matching mapping
     if (crossLanguageDefinitionIds) {
-      function injectCrossLang(reviewLine: ReviewLine): void {
-        if (reviewLine.LineId && crossLanguageDefinitionIds![reviewLine.LineId]) {
-          reviewLine.CrossLanguageId = crossLanguageDefinitionIds![reviewLine.LineId];
-        }
-        reviewLine.Children?.forEach(injectCrossLang);
-      }
       lines.forEach(injectCrossLang);
     }
 

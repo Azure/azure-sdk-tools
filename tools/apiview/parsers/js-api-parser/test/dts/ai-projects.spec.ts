@@ -18,7 +18,8 @@
  *
  *  • Multiple declare module blocks in one file
  *  • Per-module LineId prefix (@azure/ai-projects! vs @azure/ai-projects/models!)
- *  • Cross-module NavigateToId (combined reference map spans both modules)
+ *  • Cross-module NavigateToId (scoped reference map: own types always win,
+ *    other modules' types available as cross-module fallback)
  *  • Class with @beta-tagged property
  *  • Overloaded interface methods (AgentsOperations.create × 2)
  *  • PagedAsyncIterableIterator<T> generic return types
@@ -646,9 +647,10 @@ describe("real-world: ai-projects.d.ts (multi-module)", () => {
     });
 
     it("NavigateToId integrity within models subpath resolves across both modules", () => {
-      // Some types (e.g. Tool) are defined in @azure/ai-projects and referenced
-      // from @azure/ai-projects/models; the combined reference map resolves them
-      // correctly. Check integrity using ALL LineIds from both modules.
+      // Each module uses a scoped reference map where own types take highest
+      // priority, with other modules' types available as cross-module fallback.
+      // Verify that every NavigateToId in the models module points to a valid
+      // LineId in either this module or the main module.
       const allMain = collectAllLines(mainLines);
       const allModels = collectAllLines(modelsLines);
       const allLineIds = new Set(
@@ -658,6 +660,26 @@ describe("real-world: ai-projects.d.ts (multi-module)", () => {
         .flatMap((l) => l.Tokens)
         .filter((t) => t.NavigateToId && !allLineIds.has(t.NavigateToId));
       expect(brokenInModels).toHaveLength(0);
+    });
+
+    it("Tool in models subpath navigates to the models module's own Tool:interface", () => {
+      // When both modules define a type with the same name, references within each
+      // module must resolve to that module's own definition (not another module's).
+      const all = collectAllLines(modelsLines);
+      // BingGroundingTool extends Tool — the extends token should navigate into models
+      const bingLine = findLine(modelsLines, "BingGroundingTool:interface")!;
+      const toolToken = bingLine.Tokens.find(
+        (t) => t.Value === "Tool" && t.NavigateToId === `${MODELS_MODULE}!Tool:interface`,
+      );
+      expect(toolToken).toBeDefined();
+    });
+
+    it("Tool in models subpath does NOT navigate to main module's Tool:interface", () => {
+      const bingLine = findLine(modelsLines, "BingGroundingTool:interface")!;
+      const wrongToken = bingLine.Tokens.find(
+        (t) => t.Value === "Tool" && t.NavigateToId === `${MAIN_MODULE}!Tool:interface`,
+      );
+      expect(wrongToken).toBeUndefined();
     });
   });
 

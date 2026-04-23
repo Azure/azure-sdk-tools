@@ -908,3 +908,58 @@ describe("parseDtsFile — call signatures and construct signatures (basic.d.ts)
     });
   });
 });
+
+// ---------------------------------------------------------------------------
+// buildSignatureBodyTokens — inline return type produces children correctly
+// ---------------------------------------------------------------------------
+
+describe("parseDtsFile — signature with inline object return type", () => {
+  // Exercises the target-pointer update path in buildSignatureBodyTokens:
+  // when the return type expands to child lines (inline type literal),
+  // the semicolon must land on the last child line, not on tokens[].
+  const FIXTURE_CONTENT = `
+declare module "@azure/test" {
+  export interface Builder {
+    build(name: string): { id: string; value: number };
+  }
+}
+`;
+
+  let lines: ReviewLine[];
+  const TEMP = path.join(path.dirname(FIXTURES), "tmp-sig-inline-return.d.ts");
+
+  beforeAll(async () => {
+    const { writeFileSync } = await import("node:fs");
+    writeFileSync(TEMP, FIXTURE_CONTENT);
+    const result = parseDtsFile({ filePath: TEMP, packageName: "@azure/test" });
+    lines = collectAllLines(result.get("@azure/test")!);
+  });
+
+  afterAll(async () => {
+    const { unlinkSync } = await import("node:fs");
+    unlinkSync(TEMP);
+  });
+
+  it("parses the Builder interface", () => {
+    expect(findLine(lines, "Builder:interface")).toBeDefined();
+  });
+
+  it("build method has children for the inline return type", () => {
+    const iface = findLine(lines, "Builder:interface");
+    const buildMethod = (iface!.Children ?? []).find((c) =>
+      c.Tokens.some((t) => t.Value === "build"),
+    );
+    expect(buildMethod).toBeDefined();
+    expect(buildMethod!.Children?.length).toBeGreaterThan(0);
+  });
+
+  it("semicolon appears in the children (on the closing brace line), not duplicated on header", () => {
+    const iface = findLine(lines, "Builder:interface");
+    const buildMethod = (iface!.Children ?? []).find((c) =>
+      c.Tokens.some((t) => t.Value === "build"),
+    );
+    const allChildren = collectAllLines(buildMethod!.Children ?? []);
+    const lastChild = allChildren[allChildren.length - 1];
+    expect(lastChild.Tokens.some((t) => t.Value === ";")).toBe(true);
+  });
+});

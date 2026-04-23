@@ -960,7 +960,7 @@ function buildSignatureBodyTokens(
 
   if (returnType) {
     target.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
-    addTypeNodeTokensOrInlineLiteral(returnType, target, sigChildren, deprecated, depth, referenceMap);
+    target = addTypeNodeTokensOrInlineLiteral(returnType, target, sigChildren, deprecated, depth, referenceMap);
   }
 
   return target;

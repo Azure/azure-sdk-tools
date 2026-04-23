@@ -8,7 +8,6 @@ import { version as parserVersion } from "../package.json";
 
 async function loadApiJson(fileName: string) {
   const apiModel = new ApiModel();
-
   apiModel.loadPackage(fileName);
 
   const apiJson = JSON.parse(await readFile(fileName, { encoding: "utf-8" }));
@@ -96,25 +95,33 @@ async function main() {
     });
     result = JSON.stringify(codeFile);
   } else {
-    // .api.json path (existing behaviour)
-    const { Name, PackageName, PackageVersion, dependencies, apiModel } =
-      await loadApiJson(inputFile);
+    const rawContent = await readFile(inputFile, { encoding: "utf-8" });
+    const rawJson = JSON.parse(rawContent);
 
-    result = JSON.stringify(
-      generateApiView({
-        meta: {
-          Name,
-          PackageName,
-          PackageVersion,
-          ParserVersion: parserVersion,
-          Language: "JavaScript",
-        },
-        dependencies,
-        apiModel,
-        crossLanguagePackageId,
-        crossLanguageDefinitionIds,
-      }),
-    );
+    if (rawJson.ReviewLines !== undefined) {
+      // Already a CodeFile JSON (e.g. generated from a .d.ts file) — pass through unchanged.
+      result = rawContent;
+    } else {
+      // api-extractor .api.json path (existing behaviour)
+      const { Name, PackageName, PackageVersion, dependencies, apiModel } =
+        await loadApiJson(inputFile);
+
+      result = JSON.stringify(
+        generateApiView({
+          meta: {
+            Name,
+            PackageName,
+            PackageVersion,
+            ParserVersion: parserVersion,
+            Language: "JavaScript",
+          },
+          dependencies,
+          apiModel,
+          crossLanguagePackageId,
+          crossLanguageDefinitionIds,
+        }),
+      );
+    }
   }
 
   await writeFile(outputFile, result);

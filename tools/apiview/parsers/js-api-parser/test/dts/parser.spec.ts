@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import path from "node:path";
 import { parseDtsFile } from "../../src/dts/parser.js";
 import { ReviewLine, TokenKind } from "../../src/models.js";
@@ -593,10 +593,11 @@ declare module "@azure/ai-projects" {
     const { writeFileSync } = await import("node:fs");
     writeFileSync(TEMP, FIXTURE_CONTENT);
     parsed = parseDtsFile({ filePath: TEMP, packageName: "@azure/ai-projects" });
-    return () => {
-      const { unlinkSync } = require("node:fs");
-      unlinkSync(TEMP);
-    };
+  });
+
+  afterAll(async () => {
+    const { unlinkSync } = await import("node:fs");
+    unlinkSync(TEMP);
   });
 
   it("openai Agent navigates to openai!Agent:interface", () => {
@@ -654,5 +655,67 @@ declare module "@azure/ai-projects" {
           t.NavigateToId === "openai!AgentCreateParams:interface",
       );
     expect(localNav).toBeDefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Class method overloads: no duplicate LineIds
+// ---------------------------------------------------------------------------
+
+describe("parseDtsFile — class method overloads", () => {
+  // Verify that overloaded class methods do not share a LineId.
+  // The first overload gets the canonical LineId; subsequent overloads get none.
+  const FIXTURE_CONTENT = `
+declare module "@azure/test" {
+  export class Client {
+    create(opts: OptionsA): Promise<Result>;
+    create(opts: OptionsB): Promise<Result>;
+    get(id: string): Promise<Result>;
+  }
+  export interface OptionsA { a: string; }
+  export interface OptionsB { b: number; }
+  export interface Result { id: string; }
+}
+`;
+
+  let lines: ReviewLine[];
+  const TEMP = path.join(path.dirname(FIXTURES), "tmp-overloads.d.ts");
+
+  beforeAll(async () => {
+    const { writeFileSync } = await import("node:fs");
+    writeFileSync(TEMP, FIXTURE_CONTENT);
+    const result = parseDtsFile({ filePath: TEMP, packageName: "@azure/test" });
+    lines = collectAllLines(result.get("@azure/test")!);
+  });
+
+  afterAll(async () => {
+    const { unlinkSync } = await import("node:fs");
+    unlinkSync(TEMP);
+  });
+
+  it("first create overload gets the canonical LineId", () => {
+    const createLines = lines.filter((l) => l.Tokens.some((t) => t.Value === "create"));
+    const withId = createLines.filter((l) => l.LineId);
+    expect(withId).toHaveLength(1);
+    expect(withId[0].LineId).toBe("@azure/test!Client.create:method");
+  });
+
+  it("second create overload has no LineId", () => {
+    const createLines = lines.filter((l) => l.Tokens.some((t) => t.Value === "create"));
+    expect(createLines).toHaveLength(2);
+    const withoutId = createLines.filter((l) => !l.LineId);
+    expect(withoutId).toHaveLength(1);
+  });
+
+  it("non-overloaded get method retains its LineId", () => {
+    const getLine = lines.find(
+      (l) => l.LineId === "@azure/test!Client.get:method",
+    );
+    expect(getLine).toBeDefined();
+  });
+
+  it("all LineIds across the module are unique", () => {
+    const ids = lines.filter((l) => l.LineId).map((l) => l.LineId!);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 });

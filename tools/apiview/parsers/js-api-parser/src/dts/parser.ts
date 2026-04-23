@@ -410,8 +410,10 @@ function visitClass(
       deprecated,
     };
 
+    // Track method names seen so far to give overloads a disambiguated LineId.
+    const seenMethodNames = new Set<string>();
     for (const member of node.members) {
-      visitClassMember(member, line.Children!, childCtx);
+      visitClassMember(member, line.Children!, childCtx, seenMethodNames);
     }
 
     out.push(line);
@@ -434,6 +436,7 @@ function visitClassMember(
   member: ts.ClassElement,
   out: ReviewLine[],
   ctx: VisitContext,
+  seenMethodNames?: Set<string>,
 ): void {
   const deprecated = ctx.deprecated || isDeprecatedNode(member);
 
@@ -465,7 +468,12 @@ function visitClassMember(
     out.push({ LineId: lineId, Tokens: t });
   } else if (ts.isMethodDeclaration(member)) {
     const methodName = member.name.getText();
-    const lineId = makeId(ctx.packageName, ctx.prefix + methodName, "method");
+    // Only the first overload gets the canonical LineId (which matches the
+    // reference map entry). Subsequent overloads of the same name must not
+    // share it — give them no LineId so the uniqueness invariant is preserved.
+    const isOverload = seenMethodNames?.has(methodName) ?? false;
+    seenMethodNames?.add(methodName);
+    const lineId = isOverload ? undefined : makeId(ctx.packageName, ctx.prefix + methodName, "method");
     const t: ReviewToken[] = [];
     const access = getAccessibilityKeyword(member);
     if (access) t.push(createToken(TokenKind.Keyword, access, { hasSuffixSpace: true, deprecated }));

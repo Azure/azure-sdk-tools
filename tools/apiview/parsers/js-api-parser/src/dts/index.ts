@@ -165,9 +165,11 @@ export async function generateApiViewFromDts(
   // One subpath-export entry per entry point (all modules, including third-party)
 
   // Hoist the cross-language injector so it is not recreated on every iteration.
+  // Safe to call unconditionally; guards internally against missing mapping.
   function injectCrossLang(reviewLine: ReviewLine): void {
-    if (reviewLine.LineId && crossLanguageDefinitionIds![reviewLine.LineId]) {
-      reviewLine.CrossLanguageId = crossLanguageDefinitionIds![reviewLine.LineId];
+    if (crossLanguageDefinitionIds && reviewLine.LineId) {
+      const crossId = crossLanguageDefinitionIds[reviewLine.LineId];
+      if (crossId) reviewLine.CrossLanguageId = crossId;
     }
     reviewLine.Children?.forEach(injectCrossLang);
   }
@@ -185,9 +187,7 @@ export async function generateApiViewFromDts(
       Children: lines,
     };
 
-    if (crossLanguageDefinitionIds) {
-      lines.forEach(injectCrossLang);
-    }
+    lines.forEach(injectCrossLang);
 
     reviewLines.push(exportLine);
     reviewLines.push({ RelatedToLine: exportLine.LineId, Tokens: [] });

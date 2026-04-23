@@ -100,19 +100,11 @@ public class AutoReviewService : IAutoReviewService
                     var comments = await _commentsManager.GetCommentsAsync(review.Id);
                     var revisionIdsWithComments = comments.Select(c => c.APIRevisionId).ToHashSet();
 
-                    // Find the newest pending automatic revision that can be reused or replaced.
+                    // Find the newest pending automatic revision to replace.
                     var latestAutomaticAPIRevision = automaticRevisions.FirstOrDefault(
                         r => !r.IsApproved && !r.IsReleased && !revisionIdsWithComments.Contains(r.Id));
 
-                    // The pre-filter above already scopes candidates to the same APIVersionId, just checking for content
-                    // This allows rolling/nightly builds to reuse the existing revision when the API surface is unchanged.
-                    if (latestAutomaticAPIRevision != null &&
-                        await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile, false, incomingContentHash))
-                    {
-                        apiRevision = latestAutomaticAPIRevision;
-                        createNewRevision = false;
-                    }
-                    else if (latestAutomaticAPIRevision != null)
+                    if (latestAutomaticAPIRevision != null)
                     {
                         await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(apiRevision: latestAutomaticAPIRevision, notes: "Deleted by Automatic Review Creation...");
                     }

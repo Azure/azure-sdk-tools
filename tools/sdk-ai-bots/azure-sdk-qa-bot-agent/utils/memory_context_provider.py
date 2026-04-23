@@ -26,7 +26,7 @@ import re
 from typing import Any
 
 from agent_framework import Message
-from agent_framework._sessions import BaseContextProvider
+from agent_framework._sessions import ContextProvider
 from azure.ai.projects.aio import AIProjectClient
 from azure.ai.projects.models import MemorySearchOptions
 
@@ -49,7 +49,7 @@ _TENANT_CONTEXT_RE = re.compile(
 )
 
 
-class MemoryContextProvider(BaseContextProvider):
+class MemoryContextProvider(ContextProvider):
     """Agent context provider that owns memory retrieval and memory updates."""
 
     def __init__(

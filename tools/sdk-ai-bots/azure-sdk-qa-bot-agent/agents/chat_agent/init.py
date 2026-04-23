@@ -24,9 +24,7 @@ load_dotenv(override=False)
 
 from agent_framework import Agent
 from agent_framework import SkillsProvider
-from agent_framework.azure import AzureOpenAIResponsesClient
-from agent_framework.openai._responses_client import ReasoningOptions
-from azure.ai.agentserver.agentframework import from_agent_framework
+from agent_framework_foundry_hosting import ResponsesHostServer
 from opentelemetry import trace as otel_trace
 from opentelemetry._logs import get_logger_provider
 from opentelemetry.sdk._logs import LoggingHandler
@@ -55,7 +53,6 @@ logger = logging.getLogger(__name__)
 # -- Agent configuration constants ----------------------------------------
 MAX_TOOL_CALL_ITERATIONS = 5
 MAX_TOOL_CALLS_PER_TURN = 10
-COMPACT_THRESHOLD = 100000
 
 
 def _load_instructions(file_path: Path) -> str:
@@ -150,20 +147,15 @@ async def main() -> None:
         tools=tools,
         context_providers=[skills_provider, memory_provider],
         default_options={
-            "reasoning": ReasoningOptions(effort=reasoning_effort),
-            "truncation": "auto",
+            "reasoning": {"effort": reasoning_effort},
             "max_tool_calls": MAX_TOOL_CALLS_PER_TURN,
-            "context_management": [
-                {"type": "compaction", "compact_threshold": COMPACT_THRESHOLD}
-            ],
             "include": ["web_search_call.action.sources"],
         },
     )
 
-    server = from_agent_framework(agent)
+    server = ResponsesHostServer(agent)
 
-    # Init TracerProvider
-    server.init_tracing()
+    # Init TracerProvider (auto-configured by ResponsesHostServer)
     foundry_project_id = os.environ.get("AI_FOUNDRY_PROJECT_RESOURCE_ID", "")
     provider = otel_trace.get_tracer_provider()
     if hasattr(provider, "add_span_processor"):

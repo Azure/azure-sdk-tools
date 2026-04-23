@@ -538,8 +538,6 @@ def main() -> None:
     project = AIProjectClient(
         endpoint=project_endpoint,
         credential=AzureCliCredential(),
-        allow_preview=True,
-        headers={"Foundry-Features": "HostedAgents=V1Preview"},
     )
     try:
         # Predict the next version number so the container can include it

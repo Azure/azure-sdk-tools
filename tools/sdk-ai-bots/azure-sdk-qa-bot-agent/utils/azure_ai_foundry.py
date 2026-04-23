@@ -8,7 +8,8 @@ import asyncio
 import logging
 import re
 
-from agent_framework.azure import AzureOpenAIResponsesClient
+from agent_framework import TruncationStrategy
+from agent_framework.foundry import FoundryChatClient
 from azure.ai.projects.aio import AIProjectClient
 from openai import AsyncAzureOpenAI
 from opentelemetry.sdk.trace import SpanProcessor
@@ -18,20 +19,28 @@ from utils.azure_credential import get_credential
 
 logger = logging.getLogger(__name__)
 
-_agent_client: AzureOpenAIResponsesClient | None = None
+# -- Compaction constants (token counts) -----------------------------------
+COMPACTION_TRIGGER_TOKENS = 100000
+COMPACTION_TARGET_TOKENS = 80000
+
+_agent_client: FoundryChatClient | None = None
 _project_client: AIProjectClient | None = None
 _openai_client = None
 _embedding_client: AsyncAzureOpenAI | None = None
 
 
-def get_agent_client() -> AzureOpenAIResponsesClient:
-    """Return the shared AzureOpenAIResponsesClient (created once on first call)."""
+def get_agent_client() -> FoundryChatClient:
+    """Return the shared FoundryChatClient (created once on first call)."""
     global _agent_client
     if _agent_client is None:
-        _agent_client = AzureOpenAIResponsesClient(
+        _agent_client = FoundryChatClient(
             project_endpoint=cfg("AI_FOUNDRY_PROJECT_ENDPOINT"),
-            deployment_name=cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL"),
+            model=cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL"),
             credential=get_credential(),
+            compaction_strategy=TruncationStrategy(
+                max_n=COMPACTION_TRIGGER_TOKENS,
+                compact_to=COMPACTION_TARGET_TOKENS,
+            ),
         )
     return _agent_client
 

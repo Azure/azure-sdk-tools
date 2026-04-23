@@ -20,5 +20,5 @@ export interface NamespaceDecisionEntry {
 export interface ProjectNamespaceInfo {
   approvedNamespaces: NamespaceDecisionEntry[];
   namespaceHistory: { [language: string]: NamespaceDecisionEntry[] };
-  currentNamespaceStatus: { [language: string]: NamespaceDecisionEntry };
+  currentNamespaceStatus: { [language: string]: NamespaceDecisionEntry[] };
 }

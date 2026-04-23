@@ -1,6 +1,6 @@
 # APIView — Contributor Guide
 
-This guide helps contributors get up and running with APIView development. For architecture and internals, see [overview.md](overview.md).
+This guide helps contributors get up and running with APIView development. For architecture and internals, see [overview.md](docs/overview.md).
 
 ---
 

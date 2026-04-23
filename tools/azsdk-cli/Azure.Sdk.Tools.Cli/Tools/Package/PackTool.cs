@@ -36,7 +36,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
         private static readonly Option<string?> OutputPath = new("--output-path")
         {
-            Description = "Output directory for generated artifacts. If not specified, uses the default location for the language.",
+            Description = "Output directory for generated artifacts. Relative paths are resolved to absolute. If not specified, uses the default location for the language.",
             Required = false,
         };
 
@@ -59,7 +59,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             IProgress<ProgressNotificationValue>? progress,
             [Description("Absolute path to the SDK package directory.")]
             string packagePath,
-            [Description("Optional output directory for the generated artifact.")]
+            [Description("Optional output directory for the generated artifact. Relative paths are resolved to absolute.")]
             string? outputPath = null,
             CancellationToken ct = default)
         {
@@ -88,13 +88,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 reporter.NextStep($"Packing {languageService.Language} SDK project");
                 logger.LogInformation("Packing SDK project at: {PackagePath} for language: {Language}", fullPath, languageService.Language);
 
+                // Normalize outputPath to absolute so language services receive a consistent path
+                string? fullOutputPath = !string.IsNullOrWhiteSpace(outputPath) ? Path.GetFullPath(outputPath) : null;
+
                 bool success;
                 string? errorMessage;
                 PackageInfo? packageInfo;
                 string? artifactPath;
                 await using (reporter.StartHeartbeat($"Packing {languageService.Language} SDK project", ct))
                 {
-                    (success, errorMessage, packageInfo, artifactPath) = await languageService.PackAsync(fullPath, outputPath, CommandTimeoutInMinutes, ct);
+                    (success, errorMessage, packageInfo, artifactPath) = await languageService.PackAsync(fullPath, fullOutputPath, CommandTimeoutInMinutes, ct);
                 }
 
                 reporter.NextStep(success ? "Pack completed successfully" : "Pack failed");

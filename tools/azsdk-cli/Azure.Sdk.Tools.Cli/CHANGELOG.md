@@ -4,6 +4,8 @@
 
 ### Features Added
 
+- Added `azsdk_get_kpi_attestation_status` MCP tool to check KPI attestation status for a release plan given product ID and lifecycle.
+
 ### Breaking Changes
 
 - `azsdk package validate` with check type `All` no longer accepts `--fix`. Run a specific check type (for example, `Cspell`, `Snippets`, or `Format`) with `--fix` instead.
@@ -13,12 +15,17 @@
 ### Other Changes
 
 - `azsdk package validate` with check type `All` now runs read-only checks in parallel, significantly reducing wall time on large packages. Potentially-mutating checks (`Snippets`, `Format`) are serialized after the read-only phase to avoid file-write races.
+- Surface APIView link in `azsdk_release_sdk` when APIView approval is missing
 
 ## 0.6.9 (2026-04-16)
 
 ### Features Added
 
 - Added MCP tool for updating the CODEOWNERS cache
+
+### Other Changes
+
+- Made spec PR optional parameter for both `azsdk_create_release_plan` and `azsdk_get_release_plan`
 
 ## 0.6.8 (2026-04-15)
 

@@ -630,6 +630,41 @@ def get_ai_comment_feedback(
 _KNOWN_REVISION_TYPES = {"Manual", "Automatic", "PullRequest"}
 
 
+def _tally_revisions(
+    revisions: list,
+    exclude_languages: Optional[list] = None,
+) -> dict:
+    """Tallies revision counts by language and revision type.
+
+    Args:
+        revisions: List of revision dicts, each with at least ``Language`` and ``APIRevisionType``.
+        exclude_languages: Pretty language names to exclude (e.g. ["Java", "Go"]).
+
+    Returns:
+        A dict with ``by_language``, ``totals_by_type``, and ``total``.
+    """
+    exclude_set = {l.lower() for l in (exclude_languages or [])}
+
+    by_language: dict[str, dict[str, int]] = {}
+    totals_by_type: dict[str, int] = {}
+    total = 0
+
+    for rev in revisions:
+        lang = get_language_pretty_name(rev.get("Language", "Unknown"))
+        if lang.lower() in exclude_set:
+            continue
+
+        raw_type = rev.get("APIRevisionType", "Unknown")
+        type_name = raw_type if raw_type in _KNOWN_REVISION_TYPES else "Unknown"
+
+        by_language.setdefault(lang, {})
+        by_language[lang][type_name] = by_language[lang].get(type_name, 0) + 1
+        totals_by_type[type_name] = totals_by_type.get(type_name, 0) + 1
+        total += 1
+
+    return {"by_language": by_language, "totals_by_type": totals_by_type, "total": total}
+
+
 def get_created_revisions(
     start_date: str,
     end_date: str,
@@ -658,7 +693,7 @@ def get_created_revisions(
     revisions_container = get_apiview_cosmos_client(container_name="APIRevisions", environment=environment)
 
     query = (
-        "SELECT c.ReviewId, c.APIRevisionType "
+        "SELECT c.ReviewId, c.APIRevisionType, c.Language "
         "FROM c "
         "WHERE c.CreatedOn >= @start AND c.CreatedOn <= @end"
     )
@@ -672,50 +707,7 @@ def get_created_revisions(
     if not revisions:
         return {"by_language": {}, "totals_by_type": {}, "total": 0}
 
-    # Collect unique review IDs so we can look up language
-    review_ids = {r["ReviewId"] for r in revisions if r.get("ReviewId")}
-
-    reviews_container = get_apiview_cosmos_client(container_name="Reviews", environment=environment)
-
-    # Batch-query Reviews for Language (parameterised OR clauses)
-    review_language_map: dict[str, str] = {}
-    review_id_list = list(review_ids)
-    batch_size = 200
-    for i in range(0, len(review_id_list), batch_size):
-        batch = review_id_list[i : i + batch_size]
-        r_params = []
-        r_clauses = []
-        for j, rid in enumerate(batch):
-            pname = f"@rid_{j}"
-            r_clauses.append(f"c.id = {pname}")
-            r_params.append({"name": pname, "value": rid})
-
-        r_query = f"SELECT c.id, c.Language FROM c WHERE ({' OR '.join(r_clauses)})"
-        for row in reviews_container.query_items(query=r_query, parameters=r_params, enable_cross_partition_query=True):
-            lang = get_language_pretty_name(row.get("Language", "Unknown"))
-            review_language_map[row["id"]] = lang
-
-    exclude_set = {l.lower() for l in (exclude_languages or [])}
-
-    # Tally counts by language and revision type
-    by_language: dict[str, dict[str, int]] = {}
-    totals_by_type: dict[str, int] = {}
-    total = 0
-
-    for rev in revisions:
-        lang = review_language_map.get(rev.get("ReviewId", ""), "Unknown")
-        if lang.lower() in exclude_set:
-            continue
-
-        raw_type = rev.get("APIRevisionType", "Unknown")
-        type_name = raw_type if raw_type in _KNOWN_REVISION_TYPES else "Unknown"
-
-        by_language.setdefault(lang, {})
-        by_language[lang][type_name] = by_language[lang].get(type_name, 0) + 1
-        totals_by_type[type_name] = totals_by_type.get(type_name, 0) + 1
-        total += 1
-
-    return {"by_language": by_language, "totals_by_type": totals_by_type, "total": total}
+    return _tally_revisions(revisions, exclude_languages=exclude_languages)
 
 
 # Application Insights resource coordinates for querying APIView page views.
@@ -870,7 +862,7 @@ def get_opened_revisions(
             date_filter = "WHERE "
 
         query = (
-            "SELECT c.ReviewId, c.APIRevisionType "
+            "SELECT c.ReviewId, c.APIRevisionType, c.Language "
             "FROM c "
             f"{date_filter}"
             f"({' OR '.join(clauses)})"
@@ -883,47 +875,7 @@ def get_opened_revisions(
     if not revisions:
         return {"by_language": {}, "totals_by_type": {}, "total": 0}
 
-    # Step 3: Look up language for each review
-    review_ids = {r["ReviewId"] for r in revisions if r.get("ReviewId")}
-    reviews_container = get_apiview_cosmos_client(container_name="Reviews", environment=environment)
-
-    review_language_map: dict[str, str] = {}
-    review_id_list = list(review_ids)
-    for i in range(0, len(review_id_list), batch_size):
-        batch = review_id_list[i : i + batch_size]
-        r_params = []
-        r_clauses = []
-        for j, rid in enumerate(batch):
-            pname = f"@rid_{j}"
-            r_clauses.append(f"c.id = {pname}")
-            r_params.append({"name": pname, "value": rid})
-
-        r_query = f"SELECT c.id, c.Language FROM c WHERE ({' OR '.join(r_clauses)})"
-        for row in reviews_container.query_items(query=r_query, parameters=r_params, enable_cross_partition_query=True):
-            lang = get_language_pretty_name(row.get("Language", "Unknown"))
-            review_language_map[row["id"]] = lang
-
-    exclude_set = {l.lower() for l in (exclude_languages or [])}
-
-    # Tally counts by language and revision type
-    by_language: dict[str, dict[str, int]] = {}
-    totals_by_type: dict[str, int] = {}
-    total = 0
-
-    for rev in revisions:
-        lang = review_language_map.get(rev.get("ReviewId", ""), "Unknown")
-        if lang.lower() in exclude_set:
-            continue
-
-        raw_type = rev.get("APIRevisionType", "Unknown")
-        type_name = raw_type if raw_type in _KNOWN_REVISION_TYPES else "Unknown"
-
-        by_language.setdefault(lang, {})
-        by_language[lang][type_name] = by_language[lang].get(type_name, 0) + 1
-        totals_by_type[type_name] = totals_by_type.get(type_name, 0) + 1
-        total += 1
-
-    return {"by_language": by_language, "totals_by_type": totals_by_type, "total": total}
+    return _tally_revisions(revisions, exclude_languages=exclude_languages)
 
 
 def resolve_package(

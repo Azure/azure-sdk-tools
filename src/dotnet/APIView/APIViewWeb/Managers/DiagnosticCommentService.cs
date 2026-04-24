@@ -27,7 +27,7 @@ public class DiagnosticCommentService : IDiagnosticCommentService
         string currentDiagnosticsHash,
         CodeDiagnostic[] diagnostics,
         IEnumerable<CommentItemModel> existingComments,
-        string apiVersionId)
+        string? apiVersionId = null)
     {
         diagnostics ??= [];
 

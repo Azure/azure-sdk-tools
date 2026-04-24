@@ -7,6 +7,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CodeLineRowNavigationDirection, convertRowOfTokensToString, isDiffRow, DIFF_ADDED, DIFF_REMOVED, getCodePanelRowDataClass, getStructuredTokenClass } from 'src/app/_helpers/common-helpers';
 import { SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/router-helpers';
 import { CodePanelData, CodePanelRowData, CodePanelRowDatatype, CrossLanguageContentDto, CrossLanguageRowDto } from 'src/app/_models/codePanelModels';
+import { APIRevision } from 'src/app/_models/revision';
 import { StructuredToken } from 'src/app/_models/structuredToken';
 import { CommentItemModel, CommentSeverity, CommentSource, CommentType } from 'src/app/_models/commentItemModel';
 import { UserProfile } from 'src/app/_models/userProfile';
@@ -34,8 +35,7 @@ export class CodePanelComponent implements OnChanges {
   @Input() scrollToNodeIdHashed: Observable<string> | undefined;
   @Input() scrollToNodeId: string | undefined;
   @Input() reviewId: string | undefined;
-  @Input() activeApiRevisionId: string | undefined;
-  @Input() activeApiVersionId: string | null | undefined;
+  @Input() activeAPIRevision: APIRevision | undefined;
   @Input() userProfile: UserProfile | undefined;
   @Input() showLineNumbers: boolean = true;
   @Input() showDocumentation: boolean = true;
@@ -773,7 +773,7 @@ export class CodePanelComponent implements OnChanges {
     else {
       const isNewThread = commentUpdates.isReply === false;
       const resolutionLocked = commentUpdates.allowAnyOneToResolve !== undefined ? !commentUpdates.allowAnyOneToResolve : false;
-      this.commentsService.createComment(this.reviewId!, this.activeApiRevisionId!, commentUpdates.nodeId!, commentUpdates.commentText!, CommentType.APIRevision, resolutionLocked, commentUpdates.severity, commentUpdates.threadId, commentUpdates.apiVersionId)
+      this.commentsService.createComment(this.reviewId!, this.activeAPIRevision!.id, commentUpdates.nodeId!, commentUpdates.commentText!, CommentType.APIRevision, resolutionLocked, commentUpdates.severity, commentUpdates.threadId, this.activeAPIRevision?.apiVersionId)
         .pipe(take(1)).subscribe({
             next: (response: CommentItemModel) => {
               if (!commentUpdates.threadId && response.threadId) {

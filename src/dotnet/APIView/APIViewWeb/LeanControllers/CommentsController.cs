@@ -110,7 +110,7 @@ namespace APIViewWeb.LeanControllers
             [FromForm] CommentSeverity? severity = null,
             [FromForm] bool resolutionLocked = false,
             [FromForm] string threadId = null,
-            [FromForm] string apiVersionId = null)
+            [FromForm] string? apiVersionId = null)
         {
             if (string.IsNullOrEmpty(commentText) || (string.IsNullOrEmpty(apiRevisionId) && string.IsNullOrEmpty(sampleRevisionId)))
             {

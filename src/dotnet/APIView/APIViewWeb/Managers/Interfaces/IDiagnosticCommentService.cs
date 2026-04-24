@@ -16,7 +16,7 @@ namespace APIViewWeb.Managers.Interfaces
             string currentDiagnosticsHash,
             CodeDiagnostic[] diagnostics,
             IEnumerable<CommentItemModel> existingComments,
-            string apiVersionId);
+            string? apiVersionId = null);
     }
 
     public class DiagnosticSyncResult

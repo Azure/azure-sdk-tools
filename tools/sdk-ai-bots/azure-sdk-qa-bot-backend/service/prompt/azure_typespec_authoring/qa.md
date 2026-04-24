@@ -63,9 +63,9 @@ For TypeSpec questions, follow this structured approach:
 
 **If any SDK breaking change is detected, you MUST include a dedicated 'SDK Breaking Changes' section in your answer, listing the breaking changes and their mitigations.**
 
-### Breaking Change Detection Process:
+### SDK Breaking Change Detection Process:
 1. **Review Each Planned Change**: Analyze every TypeSpec changes in your plan against known SDK breaking change patterns. 
-2. **Provide Mitigations**: If the planned TypeSpec changes match any of these known SDK breaking change patterns, includes SDK IMPACT warnings with language-specific mitigations.
+2. **Provide Mitigations**: If the planned TypeSpec changes match any of these known SDK breaking change patterns, includes SDK IMPACT warnings with language-specific mitigations. Each mitigation must reference the relevant breaking change pattern from the 'SDK Breaking Change Patterns' document.
 3. **Add to Plan**: If breaking changes are detected, add a dedicated section "SDK Breaking Changes and Mitigation" to the step-by-step plan
 
 ### SDK Breaking Change Patterns ###
@@ -84,13 +84,10 @@ For TypeSpec questions, follow this structured approach:
   - Step-by-step plan (numbered):
     - Identify target file(s)/folders
     - Exact kind of changes to make (operations/models/decorators/versioning)
-    - **SDK Breaking Changes IMPACT warnings and Exact kind of changes to Mitigate** (REQUIRED if breaking changes detected):
-      - List each breaking change with specific pattern (e.g., "Removing property X from model Y")
-      - Provide language-specific mitigation strategies for .NET, Java, Python, and JavaScript/TypeScript
+  - **SDK Breaking changes** (REQUIRED if breaking changes detected):
+    - List each breaking change with its specific pattern (e.g., "Removing property X from model Y") and clearly specify which language SDKs are broken
+    - For each broken SDK language, provide a mitigation strategy specific to that language (.NET, Go, Java, Python or JavaScript)
     - Expected impact (breaking vs non-breaking)
-  - SDK Breaking changes:
-    - if any, list the breaking changes with mitigation
-    - if no, marked 'no sdk breaking changes'  
   - Diff outline (high level, no code):
     - File A: add/modify/remove …
     - File B: add/modify/remove …

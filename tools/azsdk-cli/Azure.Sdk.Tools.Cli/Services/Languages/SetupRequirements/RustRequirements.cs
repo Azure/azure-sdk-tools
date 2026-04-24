@@ -12,9 +12,6 @@ public static class RustRequirements
 {
     public static IReadOnlyList<Requirement> All => [
         new RustupRequirement(),
-        new CargoRequirement(),
-        new CargoFmtRequirement(),
-        new CargoClippyRequirement()
     ];
 
     public class RustupRequirement : Requirement
@@ -28,51 +25,7 @@ public static class RustRequirements
 
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {
-            return ["Download and install rustup from https://rust-lang.org/tools/install/"];
+            return ["Download and install rustup from https://rust-lang.org/tools/install/", "Run `rustup install` to install the Rust toolchain"];
         }
-    }
-
-    public class CargoRequirement : Requirement
-    {
-        public override string Name => "cargo";
-        public override string[] CheckCommand => ["cargo", "--version"];
-        public override IReadOnlyList<string> DependsOn => ["rustup"];
-        public override string? NotAutoInstallableReason => NotInstallableReasons.BundledWithLanguage;
-
-        public override bool ShouldCheck(RequirementContext ctx)
-            => ctx.Languages.Contains(SdkLanguage.Rust);
-
-        public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
-        {
-            return ["Download and install rustup from https://rust-lang.org/tools/install/"];
-        }
-    }
-
-    public class CargoFmtRequirement : Requirement
-    {
-        public override string Name => "rustfmt";
-        public override string[] CheckCommand => ["cargo", "fmt", "--version"];
-        public override IReadOnlyList<string> DependsOn => ["cargo", "rustup"];
-        public override bool IsAutoInstallable => true;
-
-        public override bool ShouldCheck(RequirementContext ctx)
-            => ctx.Languages.Contains(SdkLanguage.Rust);
-
-        public override string[][]? GetInstallCommands(RequirementContext ctx)
-            => [["rustup", "component", "add", "rustfmt"]];
-    }
-
-    public class CargoClippyRequirement : Requirement
-    {
-        public override string Name => "clippy";
-        public override string[] CheckCommand => ["cargo", "clippy", "--version"];
-        public override IReadOnlyList<string> DependsOn => ["cargo", "rustup"];
-        public override bool IsAutoInstallable => true;
-
-        public override bool ShouldCheck(RequirementContext ctx)
-            => ctx.Languages.Contains(SdkLanguage.Rust);
-
-        public override string[][]? GetInstallCommands(RequirementContext ctx)
-            => [["rustup", "component", "add", "clippy"]];
     }
 }

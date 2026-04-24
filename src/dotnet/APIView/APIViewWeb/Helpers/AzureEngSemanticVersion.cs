@@ -40,7 +40,8 @@ public class AzureEngSemanticVersion : IComparable<AzureEngSemanticVersion>
     public AzureEngSemanticVersion(string version, string language = null)
     {
         RawVersion = version;
-        var regex = language == "Python" ? PythonSemVerRegex : SemVerRegex;
+        bool isPython = string.Equals(language, "Python", StringComparison.OrdinalIgnoreCase);
+        var regex = isPython ? PythonSemVerRegex : SemVerRegex;
         var match = regex.Match(version);
 
         if (match.Success)
@@ -52,7 +53,7 @@ public class AzureEngSemanticVersion : IComparable<AzureEngSemanticVersion>
             Patch = int.Parse(match.Groups["patch"].Value);
 
             bool skipPrelabel = false;
-            if (language == "Python")
+            if (isPython)
             {
                 SetupPythonConventions();
                 if (match.Groups["postword"].Success)

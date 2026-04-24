@@ -806,6 +806,8 @@ function visitNamespace(
 interface EntryPoint {
   subpath: string;
   statements: readonly ts.Statement[];
+  /** Trailing comment on the declare module line, e.g. "// 2.0.2" */
+  versionComment?: string;
 }
 
 /**
@@ -814,7 +816,7 @@ interface EntryPoint {
  * Otherwise the entire file is treated as the default "." subpath.
  */
 function getEntryPoints(sourceFile: ts.SourceFile): EntryPoint[] {
-  const moduleMap = new Map<string, ts.Statement[]>();
+  const moduleMap = new Map<string, { statements: ts.Statement[]; versionComment?: string }>();
 
   for (const stmt of sourceFile.statements) {
     if (
@@ -826,19 +828,36 @@ function getEntryPoints(sourceFile: ts.SourceFile): EntryPoint[] {
       // Normalise: strip leading ./ so "." and "./" both map to "."
       const rawName = stmt.name.text;
       const subpath = rawName === "" || rawName === "./" ? "." : rawName;
+
+      // Extract trailing comment (e.g. "// 2.0.2") from the opening brace line
+      // The comment appears after the { on the same line: declare module "foo" { // 2.0.2
+      let versionComment: string | undefined;
+      const fullText = sourceFile.getFullText();
+      const afterName = fullText.slice(stmt.name.end);
+      const braceIndex = afterName.indexOf("{");
+      if (braceIndex !== -1) {
+        const posAfterBrace = stmt.name.end + braceIndex + 1;
+        const trailingComments = ts.getTrailingCommentRanges(fullText, posAfterBrace);
+        if (trailingComments && trailingComments.length > 0) {
+          const comment = fullText.slice(trailingComments[0].pos, trailingComments[0].end).trim();
+          if (comment) versionComment = comment;
+        }
+      }
+
       const existing = moduleMap.get(subpath);
       if (existing) {
-        existing.push(...stmt.body.statements);
+        existing.statements.push(...stmt.body.statements);
       } else {
-        moduleMap.set(subpath, [...stmt.body.statements]);
+        moduleMap.set(subpath, { statements: [...stmt.body.statements], versionComment });
       }
     }
   }
 
   if (moduleMap.size > 0) {
-    return Array.from(moduleMap.entries()).map(([subpath, statements]) => ({
+    return Array.from(moduleMap.entries()).map(([subpath, data]) => ({
       subpath,
-      statements,
+      statements: data.statements,
+      versionComment: data.versionComment,
     }));
   }
 
@@ -857,11 +876,17 @@ export interface DtsParseOptions {
   packageName: string;
 }
 
+export interface ParsedModule {
+  lines: ReviewLine[];
+  /** Trailing comment on the declare module line, e.g. "// 2.0.2" */
+  versionComment?: string;
+}
+
 /**
  * Parses a `.d.ts` file and returns ReviewLine arrays keyed by subpath.
  * Each subpath corresponds to one entry in the final CodeFile review.
  */
-export function parseDtsFile(options: DtsParseOptions): Map<string, ReviewLine[]> {
+export function parseDtsFile(options: DtsParseOptions): Map<string, ParsedModule> {
   const { filePath, packageName } = options;
 
   const program = ts.createProgram([filePath], {
@@ -882,7 +907,7 @@ export function parseDtsFile(options: DtsParseOptions): Map<string, ReviewLine[]
   }
 
   const entryPoints = getEntryPoints(sourceFile);
-  const result = new Map<string, ReviewLine[]>();
+  const result = new Map<string, ParsedModule>();
 
   // For named-module entry points (declare module "foo") the package name used
   // for ID generation is the module name itself, not the packageName parameter.
@@ -937,7 +962,7 @@ export function parseDtsFile(options: DtsParseOptions): Map<string, ReviewLine[]
       visitStatement(stmt as ts.Statement, lines, ctx);
     }
 
-    result.set(ep.subpath, lines);
+    result.set(ep.subpath, { lines, versionComment: ep.versionComment });
   }
 
   return result;

@@ -26,7 +26,7 @@
 
 import path from "node:path";
 import { describe, it, beforeAll, expect } from "vitest";
-import { parseDtsFile } from "../../src/dts/parser.js";
+import { parseDtsFile, ParsedModule } from "../../src/dts/parser.js";
 import { generateApiViewFromDts } from "../../src/dts/index.js";
 import { ReviewLine, ReviewToken, TokenKind } from "../../src/models.js";
 
@@ -83,16 +83,16 @@ function joinTokens(line: ReviewLine): string {
 // ---------------------------------------------------------------------------
 
 describe("ai-projects-openai.d.ts — parseDtsFile", () => {
-    let parsed: Map<string, ReviewLine[]>;
+    let parsed: Map<string, ParsedModule>;
     let openaiLines: ReviewLine[];
     let corePageLines: ReviewLine[];
     let mainLines: ReviewLine[];
 
     beforeAll(() => {
         parsed = parseDtsFile({ filePath: FIXTURE, packageName: PACKAGE });
-        openaiLines = parsed.get(OPENAI_MODULE)!;
-        corePageLines = parsed.get(CORE_PAGING_MODULE)!;
-        mainLines = parsed.get(PACKAGE)!;
+        openaiLines = parsed.get(OPENAI_MODULE)!.lines;
+        corePageLines = parsed.get(CORE_PAGING_MODULE)!.lines;
+        mainLines = parsed.get(PACKAGE)!.lines;
     });
 
     describe("module detection", () => {
@@ -445,8 +445,8 @@ describe("ai-projects-openai.d.ts — parseDtsFile", () => {
 
         it("all LineIds across all three modules are unique", () => {
             const allIds: string[] = [];
-            for (const lines of parsed.values()) {
-                collectAll(lines)
+            for (const mod of parsed.values()) {
+                collectAll(mod.lines)
                     .filter((l) => l.LineId)
                     .forEach((l) => allIds.push(l.LineId!));
             }

@@ -16,7 +16,7 @@
 
 import path from "node:path";
 import { describe, it, beforeAll, expect } from "vitest";
-import { parseDtsFile } from "../../src/dts/parser.js";
+import { parseDtsFile, ParsedModule } from "../../src/dts/parser.js";
 import { ReviewLine, TokenKind } from "../../src/models.js";
 
 // ---------------------------------------------------------------------------
@@ -58,7 +58,7 @@ function joinTokens(line: ReviewLine): string {
 // ---------------------------------------------------------------------------
 
 describe("real-world: ts-http-runtime-browser.d.ts", () => {
-  let subpathMap: Map<string, ReviewLine[]>;
+  let subpathMap: Map<string, ParsedModule>;
   let lines: ReviewLine[];
 
   beforeAll(() => {
@@ -66,7 +66,7 @@ describe("real-world: ts-http-runtime-browser.d.ts", () => {
       filePath: path.join(FIXTURES, "ts-http-runtime-browser.d.ts"),
       packageName: PACKAGE_NAME,
     });
-    lines = subpathMap.get(PACKAGE_NAME)!;
+    lines = subpathMap.get(PACKAGE_NAME)!.lines;
   });
 
   // ── Module detection ──────────────────────────────────────────────────────
@@ -757,7 +757,7 @@ describe("real-world: ts-http-runtime-browser.d.ts", () => {
 // ---------------------------------------------------------------------------
 
 describe("real-world: ts-http-runtime-require.d.ts (Node.js variant)", () => {
-  let subpathMap: Map<string, ReviewLine[]>;
+  let subpathMap: Map<string, ParsedModule>;
   let lines: ReviewLine[];
 
   beforeAll(() => {
@@ -765,7 +765,7 @@ describe("real-world: ts-http-runtime-require.d.ts (Node.js variant)", () => {
       filePath: path.join(FIXTURES, "ts-http-runtime-require.d.ts"),
       packageName: PACKAGE_NAME,
     });
-    lines = subpathMap.get(PACKAGE_NAME)!;
+    lines = subpathMap.get(PACKAGE_NAME)!.lines;
   });
 
   it("parses without throwing", () => {

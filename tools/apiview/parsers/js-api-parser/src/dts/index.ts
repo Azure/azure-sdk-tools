@@ -5,7 +5,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { CodeFile, ReviewLine, TokenKind } from "../models.js";
 import { buildToken } from "../jstokens.js";
-import { parseDtsFile } from "./parser.js";
+import { parseDtsFile, ParsedModule } from "./parser.js";
 
 interface DtsMetadata {
   Name: string;
@@ -174,20 +174,33 @@ export async function generateApiViewFromDts(
     reviewLine.Children?.forEach(injectCrossLang);
   }
 
-  for (const [subpath, lines] of subpathMap) {
+  for (const [subpath, parsed] of subpathMap) {
+    const tokens = [
+      buildToken({
+        Kind: TokenKind.StringLiteral,
+        Value: ` "${subpath}"`,
+        NavigationDisplayName: `"${subpath}"`,
+      }),
+    ];
+
+    // Include version comment if present (e.g. "// 2.0.2")
+    if (parsed.versionComment) {
+      tokens.push(
+        buildToken({
+          Kind: TokenKind.Comment,
+          Value: ` ${parsed.versionComment}`,
+          SkipDiff: true,
+        }),
+      );
+    }
+
     const exportLine: ReviewLine = {
       LineId: `Subpath-export-${subpath}`,
-      Tokens: [
-        buildToken({
-          Kind: TokenKind.StringLiteral,
-          Value: ` "${subpath}"`,
-          NavigationDisplayName: `"${subpath}"`,
-        }),
-      ],
-      Children: lines,
+      Tokens: tokens,
+      Children: parsed.lines,
     };
 
-    lines.forEach(injectCrossLang);
+    parsed.lines.forEach(injectCrossLang);
 
     reviewLines.push(exportLine);
     reviewLines.push({ RelatedToLine: exportLine.LineId, Tokens: [] });

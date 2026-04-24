@@ -3,7 +3,7 @@
 
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import path from "node:path";
-import { parseDtsFile } from "../../src/dts/parser.js";
+import { parseDtsFile, ParsedModule } from "../../src/dts/parser.js";
 import { ReviewLine, TokenKind } from "../../src/models.js";
 
 const FIXTURES = path.join(__dirname, "fixtures");
@@ -45,7 +45,7 @@ function collectAllLines(lines: ReviewLine[]): ReviewLine[] {
 // ---------------------------------------------------------------------------
 
 describe("parseDtsFile — basic.d.ts", () => {
-  let subpathMap: Map<string, ReviewLine[]>;
+  let subpathMap: Map<string, ParsedModule>;
   let lines: ReviewLine[];
   let pkg: string;
 
@@ -60,19 +60,19 @@ describe("parseDtsFile — basic.d.ts", () => {
   it("produces a single '.' entry point when no declare module blocks are present", () => {
     expect(subpathMap.size).toBe(1);
     expect(subpathMap.has(".")).toBe(true);
-    lines = subpathMap.get(".")!;
+    lines = subpathMap.get(".")!.lines;
     expect(lines.length).toBeGreaterThan(0);
   });
 
   describe("interface", () => {
     it("generates an interface declaration line with correct LineId", () => {
-      lines = subpathMap.get(".")!;
+      lines = subpathMap.get(".")!.lines;
       const iface = findLine(lines, ":interface");
       expect(iface).toBeDefined();
     });
 
     it("emits export + interface keywords and name for RequestPolicy", () => {
-      lines = subpathMap.get(".")!;
+      lines = subpathMap.get(".")!.lines;
       const iface = findLine(lines, "RequestPolicy:interface");
       expect(iface).toBeDefined();
       const tokens = tokenValues(iface!);
@@ -82,21 +82,21 @@ describe("parseDtsFile — basic.d.ts", () => {
     });
 
     it("sets NavigationDisplayName on the interface name token", () => {
-      lines = subpathMap.get(".")!;
+      lines = subpathMap.get(".")!.lines;
       const iface = findLine(lines, "RequestPolicy:interface");
       const nameToken = iface!.Tokens.find((t) => t.Value === "RequestPolicy");
       expect(nameToken?.NavigationDisplayName).toBe("RequestPolicy");
     });
 
     it("sets RenderClasses=['interface'] on the name token", () => {
-      lines = subpathMap.get(".")!;
+      lines = subpathMap.get(".")!.lines;
       const iface = findLine(lines, "RequestPolicy:interface");
       const nameToken = iface!.Tokens.find((t) => t.Value === "RequestPolicy");
       expect(nameToken?.RenderClasses).toContain("interface");
     });
 
     it("has the method as a child of the interface", () => {
-      lines = subpathMap.get(".")!;
+      lines = subpathMap.get(".")!.lines;
       const iface = findLine(lines, "RequestPolicy:interface");
       const memberNames = (iface!.Children ?? []).flatMap((c) =>
         c.Tokens.map((t) => t.Value),
@@ -105,13 +105,13 @@ describe("parseDtsFile — basic.d.ts", () => {
     });
 
     it("emits opening brace on the declaration line", () => {
-      lines = subpathMap.get(".")!;
+      lines = subpathMap.get(".")!.lines;
       const iface = findLine(lines, "RequestPolicy:interface");
       expect(tokenValues(iface!)).toContain("{");
     });
 
     it("emits a context-end line with closing brace after the interface", () => {
-      lines = subpathMap.get(".")!;
+      lines = subpathMap.get(".")!.lines;
       const all = collectAllLines(lines);
       const ifaceLine = all.find((l) => l.LineId?.endsWith("RequestPolicy:interface"));
       expect(ifaceLine).toBeDefined();
@@ -124,7 +124,7 @@ describe("parseDtsFile — basic.d.ts", () => {
 
   describe("class", () => {
     it("generates a class declaration with correct keywords", () => {
-      lines = subpathMap.get(".")!;
+      lines = subpathMap.get(".")!.lines;
       const cls = findLine(lines, "HttpClient:class");
       expect(cls).toBeDefined();
       const tokens = tokenValues(cls!);
@@ -134,14 +134,14 @@ describe("parseDtsFile — basic.d.ts", () => {
     });
 
     it("sets RenderClasses=['class'] on the name token", () => {
-      lines = subpathMap.get(".")!;
+      lines = subpathMap.get(".")!.lines;
       const cls = findLine(lines, "HttpClient:class");
       const nameToken = cls!.Tokens.find((t) => t.Value === "HttpClient");
       expect(nameToken?.RenderClasses).toContain("class");
     });
 
     it("emits 'extends' and parent class name for RetryableHttpClient", () => {
-      lines = subpathMap.get(".")!;
+      lines = subpathMap.get(".")!.lines;
       const cls = findLine(lines, "RetryableHttpClient:class");
       const tokens = tokenValues(cls!);
       expect(tokens).toContain("extends");
@@ -149,7 +149,7 @@ describe("parseDtsFile — basic.d.ts", () => {
     });
 
     it("generates a constructor child line", () => {
-      lines = subpathMap.get(".")!;
+      lines = subpathMap.get(".")!.lines;
       const cls = findLine(lines, "RetryableHttpClient:class");
       const ctorLine = (cls!.Children ?? []).find((c) =>
         c.LineId?.endsWith(":constructor"),
@@ -159,7 +159,7 @@ describe("parseDtsFile — basic.d.ts", () => {
     });
 
     it("generates property child lines with correct modifiers", () => {
-      lines = subpathMap.get(".")!;
+      lines = subpathMap.get(".")!.lines;
       const cls = findLine(lines, "RetryableHttpClient:class");
       const maxRetriesProp = (cls!.Children ?? []).find((c) =>
         c.LineId?.endsWith("maxRetries:property"),
@@ -169,7 +169,7 @@ describe("parseDtsFile — basic.d.ts", () => {
     });
 
     it("generates method child lines", () => {
-      lines = subpathMap.get(".")!;
+      lines = subpathMap.get(".")!.lines;
       const cls = findLine(lines, "RetryableHttpClient:class");
       const methodLine = (cls!.Children ?? []).find((c) =>
         c.LineId?.endsWith("sendRequest:method"),
@@ -180,7 +180,7 @@ describe("parseDtsFile — basic.d.ts", () => {
 
   describe("function", () => {
     it("generates a function declaration line", () => {
-      lines = subpathMap.get(".")!;
+      lines = subpathMap.get(".")!.lines;
       const fn = findLine(lines, "createHttpClient:function");
       expect(fn).toBeDefined();
       const tokens = tokenValues(fn!);
@@ -190,7 +190,7 @@ describe("parseDtsFile — basic.d.ts", () => {
     });
 
     it("emits a semicolon somewhere in the function declaration", () => {
-      lines = subpathMap.get(".")!;
+      lines = subpathMap.get(".")!.lines;
       const fn = findLine(lines, "createHttpClient:function");
       // The inline object parameter type '{timeout?: number}' expands to children,
       // so the ';' may land on the last child line rather than the header line.
@@ -204,7 +204,7 @@ describe("parseDtsFile — basic.d.ts", () => {
 
   describe("enum", () => {
     it("generates an enum declaration with correct structure", () => {
-      lines = subpathMap.get(".")!;
+      lines = subpathMap.get(".")!.lines;
       const en = findLine(lines, "HttpMethod:enum");
       expect(en).toBeDefined();
       const tokens = tokenValues(en!);
@@ -215,7 +215,7 @@ describe("parseDtsFile — basic.d.ts", () => {
     });
 
     it("generates enum member children with values", () => {
-      lines = subpathMap.get(".")!;
+      lines = subpathMap.get(".")!.lines;
       const en = findLine(lines, "HttpMethod:enum");
       const getMember = findLine(en!.Children ?? [], "HttpMethod.Get:member");
       expect(getMember).toBeDefined();
@@ -228,7 +228,7 @@ describe("parseDtsFile — basic.d.ts", () => {
 
   describe("type alias", () => {
     it("generates a type alias declaration with export + type keywords", () => {
-      lines = subpathMap.get(".")!;
+      lines = subpathMap.get(".")!.lines;
       const ta = findLine(lines, "ContentType:typealias");
       expect(ta).toBeDefined();
       const tokens = tokenValues(ta!);
@@ -239,7 +239,7 @@ describe("parseDtsFile — basic.d.ts", () => {
     });
 
     it("generates a generic type alias with type parameters", () => {
-      lines = subpathMap.get(".")!;
+      lines = subpathMap.get(".")!.lines;
       const ta = findLine(lines, "OperationOptions:typealias");
       expect(ta).toBeDefined();
       const tokens = tokenValues(ta!);
@@ -250,7 +250,7 @@ describe("parseDtsFile — basic.d.ts", () => {
 
   describe("variable", () => {
     it("generates a const declaration", () => {
-      lines = subpathMap.get(".")!;
+      lines = subpathMap.get(".")!.lines;
       const v = findLine(lines, "DEFAULT_TIMEOUT:var");
       expect(v).toBeDefined();
       const tokens = tokenValues(v!);
@@ -260,7 +260,7 @@ describe("parseDtsFile — basic.d.ts", () => {
     });
 
     it("sets NavigateToId on the variable name token", () => {
-      lines = subpathMap.get(".")!;
+      lines = subpathMap.get(".")!.lines;
       const v = findLine(lines, "DEFAULT_TIMEOUT:var");
       expect(v).toBeDefined();
       const nameToken = v!.Tokens.find((t) => t.Value === "DEFAULT_TIMEOUT");
@@ -268,7 +268,7 @@ describe("parseDtsFile — basic.d.ts", () => {
     });
 
     it("emits an empty ReviewLine after each variable declaration", () => {
-      lines = subpathMap.get(".")!;
+      lines = subpathMap.get(".")!.lines;
       const all = collectAllLines(lines);
       const varLine = all.find((l) => l.LineId?.endsWith("DEFAULT_TIMEOUT:var"));
       expect(varLine).toBeDefined();
@@ -280,7 +280,7 @@ describe("parseDtsFile — basic.d.ts", () => {
 
   describe("namespace", () => {
     it("generates a namespace declaration with export + namespace keywords", () => {
-      lines = subpathMap.get(".")!;
+      lines = subpathMap.get(".")!.lines;
       const ns = findLine(lines, "Internal:namespace");
       expect(ns).toBeDefined();
       const tokens = tokenValues(ns!);
@@ -290,7 +290,7 @@ describe("parseDtsFile — basic.d.ts", () => {
     });
 
     it("places nested members as children of the namespace", () => {
-      lines = subpathMap.get(".")!;
+      lines = subpathMap.get(".")!.lines;
       const ns = findLine(lines, "Internal:namespace");
       expect(ns!.Children?.length).toBeGreaterThan(0);
     });
@@ -298,7 +298,7 @@ describe("parseDtsFile — basic.d.ts", () => {
 
   describe("documentation", () => {
     it("emits JSDoc comment lines as documentation tokens related to the declaration", () => {
-      lines = subpathMap.get(".")!;
+      lines = subpathMap.get(".")!.lines;
       const all = collectAllLines(lines);
       const ifaceIdx = all.findIndex((l) => l.LineId?.endsWith("RequestPolicy:interface"));
       // Comment lines appear before the declaration line and reference it
@@ -313,7 +313,7 @@ describe("parseDtsFile — basic.d.ts", () => {
 
   describe("blank lines between declarations", () => {
     it("emits an empty ReviewLine after each top-level declaration", () => {
-      lines = subpathMap.get(".")!;
+      lines = subpathMap.get(".")!.lines;
       const all = collectAllLines(lines);
       const ifaceLine = all.find((l) => l.LineId?.endsWith("RequestPolicy:interface"));
       expect(ifaceLine).toBeDefined();
@@ -350,27 +350,27 @@ describe("parseDtsFile — subpaths.d.ts", () => {
   });
 
   it('"./models" subpath contains StorageOptions interface', () => {
-    const modelsLines = subpathMap.get("./models")!;
+    const modelsLines = subpathMap.get("./models")!.lines;
     const iface = findLine(modelsLines, "StorageOptions:interface");
     expect(iface).toBeDefined();
     expect(tokenValues(iface!)).toContain("StorageOptions");
   });
 
   it('"./models" subpath contains StorageErrorCode enum', () => {
-    const modelsLines = subpathMap.get("./models")!;
+    const modelsLines = subpathMap.get("./models")!.lines;
     const en = findLine(modelsLines, "StorageErrorCode:enum");
     expect(en).toBeDefined();
   });
 
   it('"./storage" subpath contains BlobClient class', () => {
-    const storageLines = subpathMap.get("./storage")!;
+    const storageLines = subpathMap.get("./storage")!.lines;
     const cls = findLine(storageLines, "BlobClient:class");
     expect(cls).toBeDefined();
     expect(tokenValues(cls!)).toContain("BlobClient");
   });
 
   it("BlobClient has constructor, url property, and upload method", () => {
-    const storageLines = subpathMap.get("./storage")!;
+    const storageLines = subpathMap.get("./storage")!.lines;
     const cls = findLine(storageLines, "BlobClient:class");
     const children = cls!.Children ?? [];
     expect(children.some((c) => c.LineId?.endsWith(":constructor"))).toBe(true);
@@ -392,7 +392,7 @@ describe("parseDtsFile — tags.d.ts", () => {
       filePath: path.join(FIXTURES, "tags.d.ts"),
       packageName: "@azure/tags-test",
     });
-    lines = subpathMap.get(".")!;
+    lines = subpathMap.get(".")!.lines;
   });
 
   it("emits a @beta line before BetaFeatureOptions", () => {
@@ -509,7 +509,7 @@ describe("parseDtsFile — namespace.d.ts", () => {
       filePath: path.join(FIXTURES, "namespace.d.ts"),
       packageName: "@azure/ns-test",
     });
-    lines = subpathMap.get(".")!;
+    lines = subpathMap.get(".")!.lines;
   });
 
   it("generates Outer namespace", () => {
@@ -559,7 +559,7 @@ describe("parseDtsFile — NavigateToId cross-references (basic.d.ts)", () => {
       filePath: path.join(FIXTURES, "basic.d.ts"),
       packageName: "@azure/http-client",
     });
-    lines = subpathMap.get(".")!;
+    lines = subpathMap.get(".")!.lines;
   });
 
   it("sets NavigateToId on the 'extends HttpClient' reference in RetryableHttpClient", () => {
@@ -607,14 +607,14 @@ declare module "@azure/ai-projects" {
   });
 
   it("openai Agent navigates to openai!Agent:interface", () => {
-    const openaiLines = parsed.get("openai")!;
+    const openaiLines = parsed.get("openai")!.lines;
     const all = collectAllLines(openaiLines);
     const agentLine = all.find((l) => l.LineId === "openai!Agent:interface");
     expect(agentLine).toBeDefined();
   });
 
   it("@azure/ai-projects Agent navigates to @azure/ai-projects!Agent:interface", () => {
-    const azureLines = parsed.get("@azure/ai-projects")!;
+    const azureLines = parsed.get("@azure/ai-projects")!.lines;
     const all = collectAllLines(azureLines);
     // AgentsOperations.create() return type Agent must use the local module's ID
     const createLine = all.find(
@@ -626,7 +626,7 @@ declare module "@azure/ai-projects" {
   });
 
   it("@azure/ai-projects Agent does NOT navigate to openai!Agent:interface", () => {
-    const azureLines = parsed.get("@azure/ai-projects")!;
+    const azureLines = parsed.get("@azure/ai-projects")!.lines;
     const all = collectAllLines(azureLines);
     const wrongNav = all
       .flatMap((l) => l.Tokens)
@@ -637,7 +637,7 @@ declare module "@azure/ai-projects" {
   it("AgentCreateParams in @azure/ai-projects navigates to the local module's AgentCreateParams", () => {
     // AgentCreateParams is defined in BOTH modules; within @azure/ai-projects
     // the parameter type must resolve to the local definition.
-    const azureLines = parsed.get("@azure/ai-projects")!;
+    const azureLines = parsed.get("@azure/ai-projects")!.lines;
     const all = collectAllLines(azureLines);
     const localNav = all
       .flatMap((l) => l.Tokens)
@@ -650,7 +650,7 @@ declare module "@azure/ai-projects" {
   });
 
   it("AgentCreateParams in openai module navigates to openai!AgentCreateParams:interface", () => {
-    const openaiLines = parsed.get("openai")!;
+    const openaiLines = parsed.get("openai")!.lines;
     const all = collectAllLines(openaiLines);
     // Within openai, AgentCreateParams must resolve to the openai module's own
     const localNav = all
@@ -691,7 +691,7 @@ declare module "@azure/test" {
     const { writeFileSync } = await import("node:fs");
     writeFileSync(TEMP, FIXTURE_CONTENT);
     const result = parseDtsFile({ filePath: TEMP, packageName: "@azure/test" });
-    lines = collectAllLines(result.get("@azure/test")!);
+    lines = collectAllLines(result.get("@azure/test")!.lines);
   });
 
   afterAll(async () => {
@@ -747,7 +747,7 @@ declare module "@azure/test" {
     const { writeFileSync } = await import("node:fs");
     writeFileSync(TEMP, FIXTURE_CONTENT);
     const result = parseDtsFile({ filePath: TEMP, packageName: "@azure/test" });
-    lines = collectAllLines(result.get("@azure/test")!);
+    lines = collectAllLines(result.get("@azure/test")!.lines);
   });
 
   afterAll(async () => {
@@ -807,7 +807,7 @@ declare module "@azure/test" {
   });
 
   it("merged module contains both Foo and Bar", () => {
-    const lines = collectAllLines(result.get("@azure/test")!);
+    const lines = collectAllLines(result.get("@azure/test")!.lines);
     expect(findLine(lines, "Foo:interface")).toBeDefined();
     expect(findLine(lines, "Bar:interface")).toBeDefined();
   });
@@ -825,7 +825,7 @@ describe("parseDtsFile — call signatures and construct signatures (basic.d.ts)
       filePath: path.join(FIXTURES, "basic.d.ts"),
       packageName: "@azure/storage-blob",
     });
-    lines = collectAllLines(result.get(".")!);
+    lines = collectAllLines(result.get(".")!.lines);
   });
 
   describe("call signature interface (Formatter)", () => {
@@ -938,7 +938,7 @@ declare module "@azure/test" {
     const { writeFileSync } = await import("node:fs");
     writeFileSync(TEMP, FIXTURE_CONTENT);
     const result = parseDtsFile({ filePath: TEMP, packageName: "@azure/test" });
-    lines = collectAllLines(result.get("@azure/test")!);
+    lines = collectAllLines(result.get("@azure/test")!.lines);
   });
 
   afterAll(async () => {
@@ -994,7 +994,7 @@ declare module "@azure/test" {
     const { writeFileSync } = await import("node:fs");
     writeFileSync(TEMP, FIXTURE_CONTENT);
     const result = parseDtsFile({ filePath: TEMP, packageName: "@azure/test" });
-    lines = collectAllLines(result.get("@azure/test")!);
+    lines = collectAllLines(result.get("@azure/test")!.lines);
   });
 
   afterAll(async () => {
@@ -1059,7 +1059,7 @@ declare module "./" {
 
   it('RootExport is accessible under the "." key', () => {
     const result = parseDtsFile({ filePath: TEMP, packageName: "@azure/test" });
-    const lines = collectAllLines(result.get(".")!);
+    const lines = collectAllLines(result.get(".")!.lines);
     expect(findLine(lines, "RootExport:interface")).toBeDefined();
   });
 
@@ -1078,7 +1078,7 @@ declare module "./" {
     const result = parseDtsFile({ filePath: TEMP2, packageName: "@azure/test" });
     require("node:fs").unlinkSync(TEMP2);
     expect(result.size).toBe(1);
-    const lines = collectAllLines(result.get(".")!);
+    const lines = collectAllLines(result.get(".")!.lines);
     expect(findLine(lines, "A:interface")).toBeDefined();
     expect(findLine(lines, "B:interface")).toBeDefined();
   });
@@ -1093,7 +1093,7 @@ describe("parseDtsFile — tuple type in heritage clause type argument (basic.d.
 
   beforeAll(() => {
     const result = parseDtsFile({ filePath: path.join(FIXTURES, "basic.d.ts"), packageName: "test-pkg" });
-    lines = collectAllLines(result.get(".")!);
+    lines = collectAllLines(result.get(".")!.lines);
   });
 
   it("PairIterable interface is present", () => {
@@ -1143,7 +1143,7 @@ describe("parseDtsFile — inline object constraint in generic type parameter (b
 
   beforeAll(() => {
     const result = parseDtsFile({ filePath: path.join(FIXTURES, "basic.d.ts"), packageName: "test-pkg" });
-    lines = collectAllLines(result.get(".")!);
+    lines = collectAllLines(result.get(".")!.lines);
   });
 
   it("IndexedCollection class is present", () => {

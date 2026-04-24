@@ -33,6 +33,7 @@
 import path from "node:path";
 import { describe, it, beforeAll, expect } from "vitest";
 import { parseDtsFile } from "../../src/dts/parser.js";
+import type { ParsedModule } from "../../src/dts/parser.js";
 import { ReviewLine, TokenKind } from "../../src/models.js";
 
 // ---------------------------------------------------------------------------
@@ -75,14 +76,14 @@ function joinTokens(line: ReviewLine): string {
 // ---------------------------------------------------------------------------
 
 describe("real-world: ai-projects.d.ts (multi-module)", () => {
-  let parsed: Map<string, ReviewLine[]>;
+  let parsed: Map<string, ParsedModule>;
   let mainLines: ReviewLine[];
   let modelsLines: ReviewLine[];
 
   beforeAll(() => {
     parsed = parseDtsFile({ filePath: FIXTURE, packageName: MAIN_MODULE });
-    mainLines = parsed.get(MAIN_MODULE)!;
-    modelsLines = parsed.get(MODELS_MODULE)!;
+    mainLines = parsed.get(MAIN_MODULE)!.lines;
+    modelsLines = parsed.get(MODELS_MODULE)!.lines;
   });
 
   // ── Module detection ──────────────────────────────────────────────────────

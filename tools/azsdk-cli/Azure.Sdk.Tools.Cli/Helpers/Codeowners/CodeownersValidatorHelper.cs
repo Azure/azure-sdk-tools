@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Octokit;
 
-namespace Azure.Sdk.Tools.Cli.Helpers
+namespace Azure.Sdk.Tools.Cli.Helpers.Codeowners
 {
     public interface ICodeownersValidatorHelper
     {

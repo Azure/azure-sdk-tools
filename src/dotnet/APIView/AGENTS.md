@@ -4,7 +4,7 @@
 
 APIView is an API review platform for the Azure SDK team. It parses SDK artifacts into a language-agnostic token model, renders them in a web UI for review/diff/approval, and integrates with GitHub PRs and CI/CD pipelines.
 
-See [docs/overview.md](docs/overview.md) for full architecture. See [docs/legacy.md](docs/legacy.md) for legacy vs modern boundaries. See [docs/release_approval.md](docs/release_approval.md) for API approval and release gating.
+See [docs/overview.md](docs/overview.md) for full architecture. See [docs/legacy.md](docs/legacy.md) for legacy vs modern boundaries. See [docs/release-approval.md](docs/release-approval.md) for API approval and release gating.
 
 ## Solution Structure
 

@@ -18,7 +18,7 @@ compatibility:
 
 ## Workflow
 
-> Analyze → Intake → Plan → Apply → Validate
+> Analyze → Intake → Plan → Apply → Validate → Output reference links
 
 - [ ] Step 1 — Analyze project
 - [ ] Step 2 — Intake

@@ -45,7 +45,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
-        private string GetGitHubAuthToken()
+        protected string GetGitHubAuthToken()
         {
             var token = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
             if (!string.IsNullOrEmpty(token))
@@ -99,6 +99,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
     public interface IGitHubService
     {
+        public string GetAuthToken();
         public Task<User> GetGitUserDetailsAsync(CancellationToken ct);
         public Task<List<String>> GetPullRequestChecksAsync(int pullRequestNumber, string repoName, string repoOwner, CancellationToken ct);
         public Task<PullRequest> GetPullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, CancellationToken ct);
@@ -136,6 +137,8 @@ namespace Azure.Sdk.Tools.Cli.Services
         {
             logger = _logger;
         }
+
+        public string GetAuthToken() => GetGitHubAuthToken();
 
         public async Task<User> GetGitUserDetailsAsync(CancellationToken ct)
         {

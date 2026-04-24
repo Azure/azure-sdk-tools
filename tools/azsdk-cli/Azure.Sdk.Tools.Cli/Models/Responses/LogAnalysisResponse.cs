@@ -1,47 +1,43 @@
+using System.Text;
 using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models;
 
 public class LogAnalysisResponse : CommandResponse
 {
-    [JsonPropertyName("summary")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public string Summary { get; set; }
+    [JsonIgnore()]
+    public bool HasErrors => Errors != null && Errors.Count > 0;
 
     [JsonPropertyName("errors")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<LogEntry> Errors { get; set; } = null;
 
-    [JsonPropertyName("matches")]
+    [JsonPropertyName("pipeline_url")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<LogEntry> Matches { get; set; } = null;
-
-    [JsonPropertyName("suggested_fix")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public string SuggestedFix { get; set; }
+    public string? PipelineUrl { get; set; }
 
     protected override string Format()
     {
-        var output = $"### Summary:" + Environment.NewLine +
-                     $"{Summary}" + Environment.NewLine + Environment.NewLine;
-
-        if (Matches?.Count > 0)
-        {
-            output += $"### Matches:" + Environment.NewLine +
-                      $"{string.Join(Environment.NewLine, Matches.Select(m => $"{m.File}:{m.Line} - {m.Message}"))}" +
-                      Environment.NewLine + Environment.NewLine;
-        }
+        var sb = new StringBuilder();
 
         if (Errors?.Count > 0)
         {
-            output += $"### Suggested Fix:" + Environment.NewLine +
-                      $"{SuggestedFix}" + Environment.NewLine + Environment.NewLine +
-                      $"### Errors:" + Environment.NewLine +
-                      $"{string.Join(Environment.NewLine + Environment.NewLine, Errors.Select(e => $"--> {e.File}:{e.Line}{Environment.NewLine}{e.Message}"))}" +
-                      Environment.NewLine;
+            sb.AppendLine($"### Errors:");
+            sb.AppendLine(string.Join(Environment.NewLine + Environment.NewLine, Errors.Select(e => $"--> {e.File}:{e.Line}{Environment.NewLine}{e.Message}")));
         }
 
-        return output;
+        if (!string.IsNullOrEmpty(PipelineUrl))
+        {
+            sb.AppendLine();
+            sb.AppendLine($"### Pipeline: {PipelineUrl}");
+        }
+
+        if (Errors?.Count == 0)
+        {
+            sb.AppendLine("No errors found in pipeline logs.");
+        }
+
+        return sb.ToString();
     }
 }
 

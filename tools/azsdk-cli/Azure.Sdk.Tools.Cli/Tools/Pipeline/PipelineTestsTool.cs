@@ -1,15 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Parsing;
 using System.ComponentModel;
-using Azure.Core;
-using Microsoft.TeamFoundation.Build.WebApi;
-using Microsoft.VisualStudio.Services.OAuth;
-using Microsoft.VisualStudio.Services.WebApi;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
-using Azure.Sdk.Tools.Cli.Configuration;
+using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tools.Core;
@@ -18,7 +13,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Pipeline;
 
 [McpServerToolType, Description("Fetches test data from Azure Pipelines")]
 public class PipelineTestsTool(
-    IAzureService azureService,
+    IPipelineIdentifierHelper pipelineHelper,
     IDevOpsService devopsService,
     ILogger<PipelineTestsTool> logger
 ) : MCPTool
@@ -26,71 +21,81 @@ public class PipelineTestsTool(
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.AzurePipelines];
 
     private const string GetPipelineLlmArtifactsToolName = "azsdk_get_pipeline_llm_artifacts";
-    private readonly Argument<int> buildIdArg = new("Pipeline/Build ID");
+
+    private readonly Option<string> projectOpt = new("--project", "-p")
+    {
+        Description = "Pipeline project name",
+        Required = false,
+    };
 
     protected override Command GetCommand() =>
-        new McpCommand("test-results", "Get test results for a pipeline run", GetPipelineLlmArtifactsToolName) { buildIdArg };
+        new McpCommand("test-results", "Get test results for a pipeline run", GetPipelineLlmArtifactsToolName) { SharedOptions.PipelineLocator, projectOpt };
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
-        Initialize(ct);
-        var buildId = parseResult.GetValue(buildIdArg);
+        var pipelineIdentifier = parseResult.GetValue(SharedOptions.PipelineLocator);
+        var project = parseResult.GetValue(projectOpt);
 
-        logger.LogInformation("Getting test results for pipeline {buildId}...", buildId);
-        return await GetPipelineLlmArtifacts(buildId, ct);
+        return await GetPipelineLlmArtifacts(pipelineIdentifier, ct);
     }
 
-    private BuildHttpClient buildClient;
-    private readonly bool initialized = false;
-
-    private void Initialize(CancellationToken ct = default)
+    [McpServerTool(Name = GetPipelineLlmArtifactsToolName), Description("Downloads artifacts intended for LLM analysis from a pipeline run. Accepts an Azure Pipeline link, Build ID, GitHub Pull Request link, or PR number.")]
+    public async Task<ObjectCommandResponse> GetPipelineLlmArtifacts(
+        [Description("Azure Pipeline link, Build ID, GitHub Pull Request link, or PR number")] string pipelineIdentifier,
+        CancellationToken ct = default)
     {
-        if (initialized)
-        {
-            return;
-        }
-        var tokenScope = new[] { Constants.AZURE_DEVOPS_TOKEN_SCOPE };  // Azure DevOps scope
-        var token = azureService.GetCredential().GetToken(new TokenRequestContext(tokenScope), ct);
-        var tokenCredential = new VssOAuthAccessTokenCredential(token.Token);
-        var connection = new VssConnection(new Uri(Constants.AZURE_SDK_DEVOPS_BASE_URL), tokenCredential);
-        buildClient = connection.GetClient<BuildHttpClient>();
-    }
-
-    [McpServerTool(Name = GetPipelineLlmArtifactsToolName), Description("Downloads artifacts intended for LLM analysis from a pipeline run")]
-    public async Task<ObjectCommandResponse> GetPipelineLlmArtifacts(int buildId, CancellationToken ct = default)
-    {
-        string project = "";
         try
         {
-            var build = await GetPipelineRun(buildId, ct: ct);
-            project = build.Project.Name;
-            logger.LogInformation("Fetching artifacts for build {buildId} in project {project}", buildId, project);
-            var result = await devopsService.GetPipelineLlmArtifacts(project, buildId, ct);
-            return new ObjectCommandResponse { Result = result };
+            var builds = await pipelineHelper.ResolveBuildsAsync(pipelineIdentifier, null, ct);
+
+            if (builds.Count == 0)
+            {
+                return new ObjectCommandResponse
+                {
+                    ResponseError = $"No failed Azure Pipeline builds found for {pipelineIdentifier}"
+                };
+            }
+
+            var allArtifacts = new Dictionary<string, Dictionary<string, List<string>>>();
+            foreach (var build in builds)
+            {
+                var buildProject = build.Project;
+                if (string.IsNullOrEmpty(buildProject))
+                {
+                    buildProject = await pipelineHelper.GetPipelineProjectAsync(build.BuildId, null, ct);
+                }
+
+                logger.LogInformation("Fetching artifacts for build {buildId} in project {project}", build.BuildId, buildProject);
+                var result = await devopsService.GetPipelineLlmArtifacts(buildProject, build.BuildId, ct);
+                var buildKey = build.PipelineUrl ?? pipelineHelper.GetPipelineUrl(buildProject, build.BuildId);
+                allArtifacts[buildKey] = result;
+            }
+
+            // If single build, return flat result for backwards compatibility
+            if (allArtifacts.Count == 1)
+            {
+                return new ObjectCommandResponse { Result = allArtifacts.Values.First() };
+            }
+
+            return new ObjectCommandResponse { Result = allArtifacts };
+        }
+        catch (Exception ex) when (ex.ToString().Contains("401") || ex.ToString().Contains("403") || ex.ToString().Contains("NonAuthoritativeInformation") || ex.ToString().Contains("Not authorized") || ex.ToString().Contains("unauthorized", StringComparison.OrdinalIgnoreCase))
+        {
+            logger.LogError(ex, "Authorization failure accessing pipeline artifacts for {pipelineIdentifier}", pipelineIdentifier);
+            return new ObjectCommandResponse
+            {
+                ResponseError = $"Not authorized to access pipeline artifacts for {pipelineIdentifier}. " +
+                    "This may be an internal build requiring authentication. " +
+                    "Ensure you are signed in with `az login` in the corp tenant (not TME).",
+            };
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to get pipeline artifacts for build {buildId} in project {project}", buildId, project);
+            logger.LogError(ex, "Failed to get pipeline artifacts for {pipelineIdentifier}", pipelineIdentifier);
             return new ObjectCommandResponse
             {
-                ResponseError = $"Failed to get pipeline artifacts for build {buildId} in project {project}",
+                ResponseError = $"Failed to get pipeline artifacts for {pipelineIdentifier}: {ex.Message}",
             };
-        }
-    }
-
-    private async Task<Build> GetPipelineRun(int buildId, string? project = null, CancellationToken ct = default)
-    {
-        if (!string.IsNullOrEmpty(project))
-        {
-            return await buildClient.GetBuildAsync(project, buildId, cancellationToken: ct);
-        }
-        try
-        {
-            return await buildClient.GetBuildAsync(Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT, buildId, cancellationToken: ct);
-        }
-        catch (Exception)
-        {
-            return await buildClient.GetBuildAsync(Constants.AZURE_SDK_DEVOPS_INTERNAL_PROJECT, buildId, cancellationToken: ct);
         }
     }
 }

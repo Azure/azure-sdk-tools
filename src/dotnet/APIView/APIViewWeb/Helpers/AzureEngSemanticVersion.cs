@@ -77,7 +77,7 @@ public class AzureEngSemanticVersion : IComparable<AzureEngSemanticVersion>
                 SetupDefaultConventions();
             }
 
-            if (match.Groups["prelabel"].Success)
+            if (!skipPrelabel && match.Groups["prelabel"].Success)
             {
                 PrereleaseLabel = match.Groups["prelabel"].Value;
                 PrereleaseLabelSeparator = match.Groups["presep"].Value;

@@ -100,9 +100,6 @@ internal class VerifySetupServiceTests
                     { "goimports", "goimports" },
                     { "generator", "generator 0.4.3" },
                     { "rustup", "rustup 1.27.0" },
-                    { "fmt", "rustfmt 1.7.0" },
-                    { "clippy", "clippy 0.1.78" },
-                    { "cargo", "cargo 1.78.0" },
                     { "core.longpaths", "true" }
                 };
                 foreach (var kvp in successfulCommands)

@@ -36,10 +36,17 @@ public static class WorkItemMappers
     }
     public static OwnerWorkItem MapToOwnerWorkItem(WorkItem wi)
     {
+        DateTime? invalidSince = null;
+        if (wi.Fields.TryGetValue("Custom.InvalidSince", out var invalidSinceValue) && invalidSinceValue is DateTime dt)
+        {
+            invalidSince = dt;
+        }
+
         return new OwnerWorkItem
         {
             WorkItemId = wi.Id!.Value,
             GitHubAlias = GetFieldValue(wi, "Custom.GitHubAlias"),
+            InvalidSince = invalidSince,
             RelatedIds = wi.ExtractRelatedIds()
         };
     }
@@ -62,6 +69,7 @@ public static class WorkItemMappers
             LabelType = wi.GetFieldValue("Custom.LabelType"),
             Repository = wi.GetFieldValue("Custom.Repository"),
             RepoPath = wi.GetFieldValue("Custom.RepoPath"),
+            Section = wi.GetFieldValue("Custom.Section"),
             RelatedIds = ExtractRelatedIds(wi)
         };
     }

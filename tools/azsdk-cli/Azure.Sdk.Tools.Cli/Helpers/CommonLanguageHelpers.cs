@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Threading;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
@@ -44,13 +43,11 @@ public interface ICommonValidationHelpers
     /// <summary>
     /// Common spelling check implementation
     /// </summary>
-    /// <param name="spellingCheckPath">Path to check for spelling errors (provided by language-specific implementation)</param>
     /// <param name="packagePath">Absolute path to the package directory</param>
     /// <param name="fixCheckErrors">Whether to attempt to automatically fix spelling issues where supported by cspell</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
     Task<PackageCheckResponse> CheckSpelling(
-        string spellingCheckPath,
         string packagePath,
         bool fixCheckErrors = false,
         CancellationToken ct = default);
@@ -70,20 +67,20 @@ public interface ICommonValidationHelpers
 public class CommonValidationHelpers : ICommonValidationHelpers
 {
     private readonly IProcessHelper _processHelper;
-    private readonly INpxHelper _npxHelper;
+    private readonly IPowershellHelper _powershellHelper;
     private readonly IGitHelper _gitHelper;
     private readonly ILogger<CommonValidationHelpers> _logger;
     private readonly ICopilotAgentRunner _copilotAgentRunner;
 
     public CommonValidationHelpers(
         IProcessHelper processHelper,
-        INpxHelper npxHelper,
+        IPowershellHelper powershellHelper,
         IGitHelper gitHelper,
         ILogger<CommonValidationHelpers> logger,
         ICopilotAgentRunner copilotAgentRunner)
     {
         _processHelper = processHelper ?? throw new ArgumentNullException(nameof(processHelper));
-        _npxHelper = npxHelper ?? throw new ArgumentNullException(nameof(npxHelper));
+        _powershellHelper = powershellHelper ?? throw new ArgumentNullException(nameof(powershellHelper));
         _gitHelper = gitHelper ?? throw new ArgumentNullException(nameof(gitHelper));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _copilotAgentRunner = copilotAgentRunner ?? throw new ArgumentNullException(nameof(copilotAgentRunner));
@@ -107,7 +104,13 @@ public class CommonValidationHelpers : ICommonValidationHelpers
 
             if (!File.Exists(scriptPath))
             {
-                return new PackageCheckResponse(1, "", $"PowerShell script not found at expected location: {scriptPath}");
+                return new PackageCheckResponse(1, "", $"PowerShell script not found at expected location: {scriptPath}")
+                {
+                    NextSteps = [
+                        "Run 'azsdk verify setup' to check required tools and repository prerequisites",
+                        "If eng/common scripts are missing, use the eng/common sync process: https://github.com/Azure/azure-sdk-tools/blob/main/doc/common/common_engsys.md#engcommon-sync"
+                    ]
+                };
             }
 
             var command = "pwsh";
@@ -120,7 +123,13 @@ public class CommonValidationHelpers : ICommonValidationHelpers
             {
                 _logger.LogWarning("Changelog validation failed. Exit Code: {ExitCode}, Output: {Output}",
                     processResult.ExitCode, processResult.Output);
-                return new PackageCheckResponse(processResult.ExitCode, processResult.Output, "Changelog validation failed.");
+                return new PackageCheckResponse(processResult.ExitCode, processResult.Output, "Changelog validation failed.")
+                {
+                    NextSteps = [
+                        "Review and update the CHANGELOG.md file to ensure it follows the proper format",
+                        "Refer to the Azure SDK changelog guidelines: https://aka.ms/azsdk/changelog"
+                    ]
+                };
             }
 
             return new PackageCheckResponse(processResult);
@@ -128,7 +137,13 @@ public class CommonValidationHelpers : ICommonValidationHelpers
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in ValidateChangelog");
-            return new PackageCheckResponse(1, "", $"Unhandled exception: {ex.Message}");
+            return new PackageCheckResponse(1, "", $"Unhandled exception: {ex.Message}")
+            {
+                NextSteps = [
+                    "Run 'azsdk verify setup' to check all required tool dependencies are installed",
+                    "Verify that the CHANGELOG.md file exists in the package directory"
+                ]
+            };
         }
     }
 
@@ -149,14 +164,27 @@ public class CommonValidationHelpers : ICommonValidationHelpers
 
             if (!File.Exists(scriptPath))
             {
-                return new PackageCheckResponse(1, "", $"PowerShell script not found at expected location: {scriptPath}");
+                return new PackageCheckResponse(1, "", $"PowerShell script not found at expected location: {scriptPath}")
+                {
+                    NextSteps = [
+                        "Run 'azsdk verify setup' to check required tools and repository prerequisites",
+                        "eng/common is synced via the eng/common sync pipeline - see https://github.com/Azure/azure-sdk-tools/blob/main/doc/common/common_engsys.md#engcommon-sync"
+                    ]
+                };
             }
 
             var settingsPath = Path.Combine(packageRepoRoot, "eng", ".docsettings.yml");
 
             if (!File.Exists(settingsPath))
             {
-                return new PackageCheckResponse(1, "", $"Doc settings file not found at expected location: {settingsPath}");
+                return new PackageCheckResponse(1, "", $"Doc settings file not found at expected location: {settingsPath}")
+                {
+                    NextSteps = [
+                        "Run 'azsdk verify setup' to check required tools and repository prerequisites",
+                        "Ensure the eng/.docsettings.yml file exists in the repository root",
+                        "This file is required for README validation - check repository documentation setup"
+                    ]
+                };
             }
 
             // TODO: investigate doc-warden code, this normalizes package path for Scan Paths
@@ -181,7 +209,15 @@ public class CommonValidationHelpers : ICommonValidationHelpers
             {
                 _logger.LogWarning("Readme validation failed. Exit Code: {ExitCode}, Output: {Output}",
                     processResult.ExitCode, processResult.Output);
-                return new PackageCheckResponse(processResult.ExitCode, processResult.Output, "Readme validation failed.");
+                return new PackageCheckResponse(processResult.ExitCode, processResult.Output, "Readme validation failed.")
+                {
+                    NextSteps = [
+                        "Create or update the README.md file to include required sections",
+                        "Ensure the README follows Azure SDK documentation standards",
+                        "Include installation instructions, usage examples, and API documentation links",
+                        "Verify that all code samples in the README are working and up-to-date"
+                    ]
+                };
             }
 
             return new PackageCheckResponse(processResult);
@@ -189,12 +225,17 @@ public class CommonValidationHelpers : ICommonValidationHelpers
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in ValidateReadme");
-            return new PackageCheckResponse(1, "", $"Unhandled exception: {ex.Message}");
+            return new PackageCheckResponse(1, "", $"Unhandled exception: {ex.Message}")
+            {
+                NextSteps = [
+                    "Run 'azsdk verify setup' to check all required tool dependencies are installed",
+                    "Verify that a README.md file exists in the package directory"
+                ]
+            };
         }
     }
 
     public async Task<PackageCheckResponse> CheckSpelling(
-        string spellingCheckPath,
         string packagePath, 
         bool fixCheckErrors = false, 
         CancellationToken ct = default)
@@ -207,25 +248,81 @@ public class CommonValidationHelpers : ICommonValidationHelpers
                 return errorResponse;
             }
 
+            var scriptPath = Path.Combine(packageRepoRoot, "eng", "common", "spelling", "Invoke-Cspell.ps1");
+
+            if (!File.Exists(scriptPath))
+            {
+                return new PackageCheckResponse(1, "", $"Invoke-Cspell.ps1 script not found at expected location: {scriptPath}")
+                {
+                    NextSteps = [
+                        "Run 'azsdk verify setup' to check required tools and repository prerequisites",
+                        "If eng/common scripts are missing, use the eng/common sync process: https://github.com/Azure/azure-sdk-tools/blob/main/doc/common/common_engsys.md#engcommon-sync"
+                    ]
+                };
+            }
+
             var cspellConfigPath = Path.Combine(packageRepoRoot, ".vscode", "cspell.json");
 
             if (!File.Exists(cspellConfigPath))
             {
-                return new PackageCheckResponse(1, "", $"Cspell config file not found at expected location: {cspellConfigPath}");
+                return new PackageCheckResponse(1, "", $"Cspell config file not found at expected location: {cspellConfigPath}")
+                {
+                    NextSteps = [
+                        "Ensure the .vscode/cspell.json configuration file exists in the repository root",
+                        "This file is required for spelling validation - check repository setup"
+                    ]
+                };
             }
 
-            var npxOptions = new NpxOptions(
-                null,
-                ["cspell", "lint", "--config", cspellConfigPath, "--root", packageRepoRoot, spellingCheckPath],
-                logOutputStream: true
-            );
-            var processResult = await _npxHelper.Run(npxOptions, ct: ct);
+            // Escape single quotes in paths for use in PowerShell script blocks
+            var escapedScriptPath = scriptPath.Replace("'", "''");
+            var escapedConfigPath = cspellConfigPath.Replace("'", "''");
+            var escapedRepoRoot = packageRepoRoot.Replace("'", "''");
 
-            // If cspell checked 0 files, treat as success
-            if (processResult.Output != null && processResult.Output.Contains("Files checked: 0"))
+            // Get only the files with changes that have changed between the current branch and the default (main) branch.
+            // This avoids scanning thousands of files in directories like .tox, node_modules, etc.
+            var mergeBaseSha = await _gitHelper.GetMergeBaseCommitShaAsync(packageRepoRoot, "main", ct);
+
+            // Normalize package path to be relative to the repo root and use forward slashes for git pathspecs
+            var relativePackagePath = Path.GetRelativePath(packageRepoRoot, packagePath);
+            var normalizedDiffPath = relativePackagePath
+                .Replace(Path.DirectorySeparatorChar, '/')
+                .Replace(Path.AltDirectorySeparatorChar, '/');
+
+            var changedFiles = await _gitHelper.GetChangedFilesAsync(
+                packageRepoRoot,
+                mergeBaseSha,
+                null, // compare against working tree to include uncommitted changes
+                normalizedDiffPath,
+                "d", // exclude deleted files
+                ct);
+
+            if (changedFiles.Count == 0)
             {
-                return new PackageCheckResponse(0, processResult.Output);
+                _logger.LogInformation("No changed files detected in {PackagePath}. Skipping spelling check.", packagePath);
+                return new PackageCheckResponse(0, "No changed files detected. Spelling check skipped.");
             }
+
+            _logger.LogInformation("Git detected {Count} changed file(s) in {PackagePath}", changedFiles.Count, packagePath);
+
+            // Resolve changed file paths to absolute paths
+            var absoluteChangedFiles = changedFiles
+                .Select(f => Path.GetFullPath(Path.Combine(packageRepoRoot, f)))
+                .Where(File.Exists)
+                .ToList();
+
+            if (absoluteChangedFiles.Count == 0)
+            {
+                _logger.LogInformation("No resolvable changed files in {PackagePath}. Skipping spelling check.", packagePath);
+                return new PackageCheckResponse(0, "No resolvable changed files detected. Spelling check skipped.");
+            }
+
+            // Build file list as a PowerShell array of quoted paths
+            var fileListLiteral = string.Join(", ", absoluteChangedFiles.Select(f => $"'{f.Replace("'", "''")}'"));
+            var command = $"$files = @({fileListLiteral}); & '{escapedScriptPath}' -CSpellConfigPath '{escapedConfigPath}' -SpellCheckRoot '{escapedRepoRoot}' -FileList $files";
+
+            var timeout = TimeSpan.FromMinutes(10);
+            var processResult = await _powershellHelper.Run(new PowershellOptions([command], timeout: timeout, workingDirectory: packageRepoRoot), ct);
 
             // If fix is requested and there are spelling issues, use CopilotAgent to automatically apply fixes
             if (fixCheckErrors && processResult.ExitCode != 0 && !string.IsNullOrWhiteSpace(processResult.Output))
@@ -238,7 +335,14 @@ public class CommonValidationHelpers : ICommonValidationHelpers
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error running spelling fix agent");
-                    return new PackageCheckResponse(processResult.ExitCode, processResult.Output, ex.Message);
+                    return new PackageCheckResponse(processResult.ExitCode, processResult.Output, ex.Message)
+                    {
+                        NextSteps = [
+                            "Auto-fix agent failed - manually fix spelling errors listed in the output above",
+                            "Add valid technical terms to the repo-root cspell configuration (e.g., .vscode/cspell.json)",
+                            "Run with --fix flag again after resolving any agent configuration issues"
+                        ]
+                    };
                 }
             }
 
@@ -246,7 +350,14 @@ public class CommonValidationHelpers : ICommonValidationHelpers
             {
                 _logger.LogWarning("Spelling check failed. Exit Code: {ExitCode}, Output: {Output}",
                     processResult.ExitCode, processResult.Output);
-                return new PackageCheckResponse(processResult.ExitCode, processResult.Output, "Spelling check failed.");
+                return new PackageCheckResponse(processResult.ExitCode, processResult.Output, "Spelling check failed.")
+                {
+                    NextSteps = [
+                        "Run with --fix flag to automatically fix spelling errors using AI-assisted corrections",
+                        "Add valid technical terms to the repo-root cspell configuration (e.g., .vscode/cspell.json)",
+                        "Review the spelling errors listed above and fix them manually in source files"
+                    ]
+                };
             }
 
             return new PackageCheckResponse(processResult);
@@ -254,7 +365,12 @@ public class CommonValidationHelpers : ICommonValidationHelpers
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in CheckSpelling");
-            return new PackageCheckResponse(1, "", ex.Message);
+            return new PackageCheckResponse(1, "", ex.Message)
+            {
+                NextSteps = [
+                    "Run 'azsdk verify setup' to check all required tool dependencies are installed"
+                ]
+            };
         }
     }
 

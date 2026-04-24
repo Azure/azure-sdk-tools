@@ -189,7 +189,7 @@ public class VersionUpdateToolTests
         var testPath = _tempDirectory.DirectoryPath;
         _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync(TestRepoRoot);
         _mockGitHelper.Setup(x => x.GetRepoNameAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
-        _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion))
+        _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion, It.IsAny<CancellationToken>()))
             .ReturnsAsync((SpecGenSdkConfigContentType.Command, TestConfigValue));
 
         var mockProcessOptions = new ProcessOptions("echo", ["test"]);
@@ -241,7 +241,7 @@ public class VersionUpdateToolTests
         var testPath = _tempDirectory.DirectoryPath;
         _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync(TestRepoRoot);
         _mockGitHelper.Setup(x => x.GetRepoNameAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
-        _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion))
+        _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion, It.IsAny<CancellationToken>()))
             .ReturnsAsync((SpecGenSdkConfigContentType.Command, TestConfigValue));
 
         _mockSpecGenSdkConfigHelper.Setup(x => x.CreateProcessOptions(
@@ -271,7 +271,7 @@ public class VersionUpdateToolTests
         var testPath = _tempDirectory.DirectoryPath;
         _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync(TestRepoRoot);
         _mockGitHelper.Setup(x => x.GetRepoNameAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
-        _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion))
+        _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion, It.IsAny<CancellationToken>()))
             .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
 
         _mockLanguageService.Setup(x => x.UpdateVersionAsync(testPath, It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
@@ -318,7 +318,7 @@ public class VersionUpdateToolTests
         
         _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync(TestRepoRoot);
         _mockGitHelper.Setup(x => x.GetRepoNameAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
-        _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion))
+        _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion, It.IsAny<CancellationToken>()))
             .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
 
         _mockLanguageService.Setup(x => x.UpdateVersionAsync(testPath, It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>(), cancellationToken))
@@ -345,7 +345,7 @@ public class VersionUpdateToolTests
         
         _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync(TestRepoRoot);
         _mockGitHelper.Setup(x => x.GetRepoNameAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
-        _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion))
+        _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion, It.IsAny<CancellationToken>()))
             .ReturnsAsync((SpecGenSdkConfigContentType.Command, scriptContent));
 
         var processOptions = new ProcessOptions("echo", ["test"]);
@@ -375,7 +375,7 @@ public class VersionUpdateToolTests
         Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
         
         // Verify the complete flow
-        _mockSpecGenSdkConfigHelper.Verify(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion), Times.Once);
+        _mockSpecGenSdkConfigHelper.Verify(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion, It.IsAny<CancellationToken>()), Times.Once);
         _mockSpecGenSdkConfigHelper.Verify(x => x.CreateProcessOptions(
             SpecGenSdkConfigContentType.Command,
             scriptContent,
@@ -402,7 +402,7 @@ public class VersionUpdateToolTests
         
         _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync(TestRepoRoot);
         _mockGitHelper.Setup(x => x.GetRepoNameAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
-        _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion))
+        _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion, It.IsAny<CancellationToken>()))
             .ReturnsAsync((SpecGenSdkConfigContentType.Command, "test-command"));
 
         var processOptions = new ProcessOptions("echo", ["test"]);
@@ -451,7 +451,7 @@ public class VersionUpdateToolTests
         
         _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync(TestRepoRoot);
         _mockGitHelper.Setup(x => x.GetRepoNameAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
-        _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion))
+        _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion, It.IsAny<CancellationToken>()))
             .ReturnsAsync((SpecGenSdkConfigContentType.Command, "test-command"));
 
         var processOptions = new ProcessOptions("echo", ["test"]);
@@ -496,7 +496,7 @@ public class VersionUpdateToolTests
         
         _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync(TestRepoRoot);
         _mockGitHelper.Setup(x => x.GetRepoNameAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
-        _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion))
+        _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion, It.IsAny<CancellationToken>()))
             .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
 
         _mockLanguageService.Setup(x => x.UpdateVersionAsync(testPath, It.IsAny<string?>(), version, releaseDate, It.IsAny<CancellationToken>()))
@@ -539,7 +539,7 @@ public class VersionUpdateToolTests
         
         _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync(TestRepoRoot);
         _mockGitHelper.Setup(x => x.GetRepoNameAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
-        _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion))
+        _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion, It.IsAny<CancellationToken>()))
             .ReturnsAsync((SpecGenSdkConfigContentType.Command, "test-command"));
 
         var processOptions = new ProcessOptions("echo", ["test"]);
@@ -576,7 +576,7 @@ public class VersionUpdateToolTests
         
         _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync(TestRepoRoot);
         _mockGitHelper.Setup(x => x.GetRepoNameAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
-        _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion))
+        _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion, It.IsAny<CancellationToken>()))
             .ReturnsAsync((SpecGenSdkConfigContentType.Command, "test-command"));
 
         var processOptions = new ProcessOptions("echo", ["test"]);

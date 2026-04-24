@@ -66,6 +66,7 @@ namespace APIViewWeb.Helpers
         public IFormFile File { get; set; }
         public string Title { get; set; }
         public string Content { get; set; }
+        public string ApiVersionId { get; set; }
     }
 
     public class PagedList<T> : List<T>

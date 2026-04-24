@@ -7,15 +7,10 @@ version: 1.0.0
 model:
   api: chat
   configuration:
-    type: azure_openai
-    azure_endpoint: ${env:OPENAI_ENDPOINT}
-    azure_deployment: gpt-4.1
+    azure_deployment: gpt-5.4-mini
     api_version: 2025-03-01-preview
   parameters:
-    temperature: 0.0
-    top_p: 1.0
-    stop: []
-    max_tokens: 16384
+    max_completion_tokens: 16384
 sample:
   language: python
   package_name: azure.widget
@@ -70,12 +65,16 @@ You are an agent that processes architects' mention requests from APIView.
 - "Hey service team, I understand your point, but @azure-sdk is correct here."
 
 `update_kb` means that the architect's comments imply that copilot made some kind of error that needs to be recorded in the Knowledge Base. This could
-be because the copilot suggestion was incorrect and could be improved with examples, or because the copilot cited a guideline incorrectly, or otherwise
-made some kind of mistake that we want to record in the Knowledge Base.
+be because the copilot suggestion was incorrect and could be improved with examples, or because the copilot cited a guideline incorrectly, or because
+the copilot criticized a pattern that is actually an allowed or intentional design choice, or otherwise made some kind of mistake that we want to record
+in the Knowledge Base. Even if the architect's tone is calm or matter-of-fact, if they are saying the copilot is wrong about a practice, that is an error
+that warrants a KB update.
 
 ## update_kb
 - "@azure-sdk this is incorrect. The appropriate approach is XYZ."
 - "@azure-sdk, the guideline is correct, but your suggestion is off. The correct suggestions is `def Foo`."
+- "@azure-sdk, that pattern is actually by design and follows our established conventions."
+- "@azure-sdk, this is an accepted practice in our SDK, the code is intentionally written this way."
 
 `open_parser_issue` means that the architect indicated that the comment is not applicable because the issue
 is actually a bug with the underlying APIView language parser.

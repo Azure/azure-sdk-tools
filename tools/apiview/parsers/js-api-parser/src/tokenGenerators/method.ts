@@ -98,10 +98,15 @@ function generate(item: MethodLike, deprecated?: boolean): GeneratorResult {
     collector.push(createToken(TokenKind.Punctuation, ">", { deprecated }));
   }
 
+  // Filter out destructured parameters (names starting with "{") - API Extractor reports
+  // destructured parameters in raw form followed by a synthetic normalized parameter with
+  // the actual type info. We skip the raw destructuring pattern and only emit the synthetic one.
+  const filteredParameters = parameters?.filter((param) => !param.name.startsWith("{")) ?? [];
+
   // Add parameters
   collector.push(createToken(TokenKind.Punctuation, "(", { deprecated }));
-  if (parameters?.length > 0) {
-    parameters.forEach((param, index) => {
+  if (filteredParameters.length > 0) {
+    filteredParameters.forEach((param, index) => {
       collector.push(
         createToken(TokenKind.Text, param.name, {
           hasPrefixSpace: index > 0,
@@ -118,7 +123,7 @@ function generate(item: MethodLike, deprecated?: boolean): GeneratorResult {
       );
       processExcerptTokens(param.parameterTypeExcerpt.spannedTokens, collector, deprecated);
 
-      if (index < parameters.length - 1) {
+      if (index < filteredParameters.length - 1) {
         collector.push(
           createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }),
         );

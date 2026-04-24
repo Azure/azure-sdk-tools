@@ -7,7 +7,7 @@
 import json
 
 from src._github_manager import GithubManager
-from src._utils import run_prompty
+from src._prompt_runner import run_prompt
 
 
 def create_issue(
@@ -45,6 +45,114 @@ def create_issue(
         body=body_with_metadata,
         labels=labels,
     )
+
+
+def check_for_duplicate_issue(
+    client: GithubManager,
+    *,
+    plan: dict,
+    owner: str,
+    repo: str,
+    workflow_tag: str,
+    source_tag: str = "APIView Copilot",
+    dedup_prompt_file: str,
+    dedup_inputs: dict,
+) -> dict | None:
+    """Check whether a planned issue is a duplicate of an existing one.
+
+    Returns a no-op result dict if a duplicate was found, or ``None`` to
+    indicate that no duplicate exists and the caller should proceed with
+    creation.
+
+    Args:
+        client: GithubManager instance
+        plan: Dict with 'title' and 'body' for the planned issue
+        owner: Repository owner
+        repo: Repository name
+        workflow_tag: Tag identifying workflow type (e.g., "parser-issue")
+        source_tag: Tag identifying the source (default: "APIView Copilot")
+        dedup_prompt_file: Filename of deduplication prompty file (in mention folder)
+        dedup_inputs: Dict of inputs for the deduplication prompt (without issue_context)
+
+    Returns:
+        Dict with action/url/title/body/created_at if duplicate found, or ``None``.
+    """
+    issue_context = f"{plan.get('title')}\n\n{plan.get('body')}"
+    full_dedup_inputs = {
+        **dedup_inputs,
+        "issue_context": issue_context,
+    }
+
+    recent_issues = _fetch_recent_issues(client, owner, repo, workflow_tag, source_tag)
+    dedup_result = _check_for_duplicate(plan, recent_issues, dedup_prompt_file, full_dedup_inputs)
+
+    if dedup_result["action"] == "no-op":
+        issue_number = dedup_result["issue"]
+        for issue in recent_issues:
+            if issue["number"] == issue_number:
+                return {
+                    "action": "no-op",
+                    "url": issue["html_url"],
+                    "title": issue["title"],
+                    "body": issue.get("body", ""),
+                    "created_at": issue["created_at"],
+                }
+        raise ValueError(f"Issue number {issue_number} from deduplication prompt not found in recent issues.")
+
+    return None
+
+
+def create_and_submit_issue(
+    client: GithubManager,
+    *,
+    plan: dict,
+    owner: str,
+    repo: str,
+    workflow_tag: str,
+    source_tag: str = "APIView Copilot",
+    base_labels: list[str] | None = None,
+    language: str | None = None,
+    language_labels: dict[str, str] | None = None,
+) -> dict:
+    """Create a GitHub issue from a plan (assumes dedup already passed).
+
+    Args:
+        client: GithubManager instance
+        plan: Dict with 'title' and 'body'
+        owner: Repository owner
+        repo: Repository name
+        workflow_tag: Tag identifying workflow type
+        source_tag: Tag identifying the source (default: "APIView Copilot")
+        base_labels: Optional base labels to apply
+        language: Optional language for language-specific labeling
+        language_labels: Optional mapping of language names to GitHub labels
+
+    Returns:
+        Dict with action/url/title/body/created_at for the created issue.
+    """
+    labels = _build_labels_with_language(
+        base_labels or [],
+        language,
+        language_labels or {},
+    )
+
+    issue = create_issue(
+        client,
+        owner=owner,
+        repo=repo,
+        title=plan.get("title"),
+        body=plan.get("body"),
+        workflow_tag=workflow_tag,
+        source_tag=source_tag,
+        labels=labels,
+    )
+    return {
+        "action": "create",
+        "url": issue["html_url"],
+        "title": issue["title"],
+        "body": issue["body"],
+        "created_at": issue["created_at"],
+    }
 
 
 def execute_workflow(
@@ -172,7 +280,7 @@ def _check_for_duplicate(plan: dict, recent_issues: list[dict], dedup_prompt_fil
         **dedup_inputs,
         "existing_issues": _format_issues_for_dedup(recent_issues),
     }
-    raw_dedup = run_prompty(folder="mention", filename=dedup_prompt_file, inputs=full_inputs)
+    raw_dedup = run_prompt(folder="mention", filename=dedup_prompt_file, inputs=full_inputs)
     try:
         return json.loads(raw_dedup)
     except json.JSONDecodeError as e:

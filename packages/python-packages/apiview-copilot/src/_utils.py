@@ -10,7 +10,6 @@ Module of utility functions for APIView Copilot.
 
 import os
 from datetime import datetime, timezone
-from typing import Any
 
 
 def get_language_pretty_name(language: str) -> str:
@@ -37,8 +36,8 @@ def get_language_pretty_name(language: str) -> str:
 def get_prompt_path(*, folder: str, filename: str) -> str:
     """
     Returns the full path to a prompt file.
-    :param folder: Folder containing the prompty file.
-    :param filename: Name of the prompty file.
+    :param folder: Folder containing the prompt file.
+    :param filename: Name of the prompt file.
     """
     # if filename doesn't end with .prompty, append it
     if not filename.endswith(".prompty"):
@@ -52,26 +51,6 @@ def get_prompt_path(*, folder: str, filename: str) -> str:
     if not os.path.exists(prompt_path):
         raise FileNotFoundError(f"Prompt file not found: {prompt_path}")
     return prompt_path
-
-
-def run_prompty(*, folder: str, filename: str, inputs: dict = None, **kwargs) -> Any:
-    """
-    Run a prompty prompt with the given inputs. Sets OPENAI_ENDPOINT from settings.
-    Ensures that the prompt file exists before executing.
-
-    :param folder: Folder containing the prompty file.
-    :param filename: Name of the prompty file.
-    :param inputs: Dictionary of inputs for the prompt.
-    :param kwargs: Additional keyword arguments to pass to prompty.execute.
-    """
-    import prompty
-    import prompty.azure
-    from src._settings import SettingsManager
-
-    settings = SettingsManager()
-    os.environ["OPENAI_ENDPOINT"] = settings.get("OPENAI_ENDPOINT")
-    prompt_path = get_prompt_path(folder=folder, filename=filename)
-    return prompty.execute(prompt_path, inputs=inputs, **kwargs)
 
 
 def to_epoch_seconds(date_str: str, *, end_of_day: bool = False) -> int:
@@ -113,6 +92,25 @@ def to_epoch_seconds(date_str: str, *, end_of_day: bool = False) -> int:
         return int(dt.timestamp())
     except Exception as exc:
         raise ValueError(f"Unrecognized date format: {date_str}") from exc
+
+
+def guideline_id_to_db(gid: str) -> str:
+    """Convert a guideline ID or guideline URL to database-safe format.
+
+    Example: ``python_design.html#naming`` -> ``python_design=html=naming``
+    """
+    prefix = "https://azure.github.io/azure-sdk/"
+    if gid.startswith(prefix):
+        gid = gid[len(prefix):]
+    return gid.replace(".html#", "=html=")
+
+
+def guideline_id_from_db(gid: str) -> str:
+    """Convert a guideline ID from database-safe format to web format.
+
+    Example: ``python_design=html=naming`` -> ``python_design.html#naming``
+    """
+    return gid.replace("=html=", ".html#")
 
 
 def to_iso8601(date_str: str, *, end_of_day: bool = False) -> str:

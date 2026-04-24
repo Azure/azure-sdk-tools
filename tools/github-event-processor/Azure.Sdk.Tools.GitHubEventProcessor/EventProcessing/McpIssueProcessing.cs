@@ -16,7 +16,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
     {
         private readonly ILogger<McpIssueProcessing> Logger;
         private readonly McpConfiguration McpConfiguration;
-
+        
         public McpIssueProcessing(ILogger<McpIssueProcessing> logger, McpConfiguration mcpConfiguration) : base(logger)
         {
             Logger = logger;
@@ -98,10 +98,12 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
             {
                 gitHubEventClient.AddLabel(TriageLabelConstants.NeedsTeamTriage);
 
-                if (usePredictedLabels.UsePredictedServer &&
-                    usePredictedLabels.PredictedServerLabel != null)
+                string? serverLabelForComment = usePredictedLabels.UsePredictedServer ? usePredictedLabels.PredictedServerLabel : finalLabels.FirstOrDefault(IsServerLabel);
+
+                if (serverLabelForComment != null)
                 {
-                    CreateServerTeamComment(gitHubEventClient, issueEventPayload, usePredictedLabels.PredictedServerLabel, triageOutput);
+                    CodeownersEntry serverCodeOwnersEntry = CodeOwnerUtils.GetCodeownersEntryForLabelList(new List<string> { serverLabelForComment });
+                    CreateComment(serverCodeOwnersEntry, gitHubEventClient, issueEventPayload);
                 }
             }
             else
@@ -185,32 +187,14 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 
         private void CreateComment(CodeownersEntry codeOwnersEntry, GitHubEventClient gitHubEventClient, IssueEventGitHubPayload issueEventPayload)
         {
-            string mcpOwnersAtMention = CodeOwnerUtils.CreateAtMentionForOwnerList(codeOwnersEntry.ServiceOwners);
-            string issueComment = $"Thanks for the feedback! We are routing this to the appropriate team for follow-up. cc {mcpOwnersAtMention}.";
-            gitHubEventClient.CreateComment(issueEventPayload.Repository.Id, issueEventPayload.Issue.Number, issueComment);
-        }
-
-        private void CreateServerTeamComment(
-            GitHubEventClient gitHubEventClient,
-            IssueEventGitHubPayload issueEventPayload,
-            string serverLabel,
-            IssueTriageResponse triageOutput)
-        {
-            string? teamMention = GetTeamMentionForServerLabel(serverLabel);
-
-            string issueComment = teamMention != null
-                ? $"Thanks for the feedback! We are routing this to the appropriate team for follow-up. cc {teamMention}."
+            string issueComment = codeOwnersEntry.ServiceOwners.Count > 0
+                ? $"Thanks for the feedback! We are routing this to the appropriate team for follow-up. cc {CodeOwnerUtils.CreateAtMentionForOwnerList(codeOwnersEntry.ServiceOwners)}."
                 : "Thanks for the feedback! We are routing this to the appropriate team for follow-up.";
 
             gitHubEventClient.CreateComment(issueEventPayload.Repository.Id, issueEventPayload.Issue.Number, issueComment);
         }
 
-        private string? GetTeamMentionForServerLabel(string serverLabel)
-        {
-            return McpConfiguration.GetTeamMentionForServerLabel(serverLabel);
-        }
-
-        private static McpPredictedLabelDecision EvaluatePredictedLabelsForMcp(IEnumerable<string> userLabels, IEnumerable<string> predictedLabels)
+        private McpPredictedLabelDecision EvaluatePredictedLabelsForMcp(IEnumerable<string> userLabels, IEnumerable<string> predictedLabels)
         {
             if (predictedLabels == null || !predictedLabels.Any())
             {
@@ -238,15 +222,16 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 
         }
 
-        private static bool IsServerLabel(string label)
+        private bool IsServerLabel(string label)
         {
-            return label.StartsWith(McpConstants.McpServerLabelPrefix, StringComparison.OrdinalIgnoreCase);
+            return McpConfiguration.GetPrimaryLabelPrefixes()
+                .Any(prefix => label.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
         }
 
-        private static bool IsToolLabel(string label)
+        private bool IsToolLabel(string label)
         {
-            return label.StartsWith(McpConstants.McpToolLabelPrefix, StringComparison.OrdinalIgnoreCase) ||
-            McpConstants.McpOtherLabels.Any(otherLabel => label.Equals(otherLabel, StringComparison.OrdinalIgnoreCase));
+            return McpConfiguration.GetSecondaryLabelPrefixes()
+                .Any(prefix => label.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
         }
 
         private async Task<bool> GetCustomerReportedLabel(GitHubEventClient gitHubEventClient, IssueEventGitHubPayload issueEventPayload)

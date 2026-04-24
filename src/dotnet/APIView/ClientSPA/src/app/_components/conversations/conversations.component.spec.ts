@@ -387,13 +387,95 @@ describe('ConversationComponent', () => {
 
       expect(component.totalDiagnosticsInRevision).toBe(300);
       expect(component.diagnosticsTruncated).toBe(true);
+      expect(component.hiddenUnresolvedDiagnosticsCount).toBe(50);
+      expect(component.hiddenResolvedDiagnosticsCount).toBe(0);
 
-      // Badge should reflect ALL unresolved threads (1 user + 300 diagnostics = 301)
-      // The badge count is emitted first from allCommentsForCount before the display cap
-      // (verified via the numberOfActiveThreads after final recalculation with display-capped set)
       // Display threads are capped: 1 user + 250 diagnostics = 251 threads shown
       const allDisplayedThreads = Array.from(component.commentThreads.values()).flat();
       expect(allDisplayedThreads).toHaveLength(251);
+    });
+
+    it('should always show all MustFix unresolved diagnostics even when they exceed 250', () => {
+      const apiRevisions = [
+        { id: 'rev-1', createdOn: '2021-10-01T00:00:00Z' }
+      ] as APIRevision[];
+
+      // 300 MustFix unresolved + 50 lower-severity unresolved + 40 resolved
+      const mustFixDiagnostics = Array.from({ length: 300 }, (_, i) => ({
+        id: `mf-${i}`, elementId: `mf-elem-${i}`,
+        apiRevisionId: 'rev-1', commentSource: CommentSource.Diagnostic,
+        severity: CommentSeverity.MustFix, isResolved: false,
+      })) as CommentItemModel[];
+      const otherUnresolved = Array.from({ length: 50 }, (_, i) => ({
+        id: `oth-${i}`, elementId: `oth-elem-${i}`,
+        apiRevisionId: 'rev-1', commentSource: CommentSource.Diagnostic,
+        severity: CommentSeverity.Suggestion, isResolved: false,
+      })) as CommentItemModel[];
+      const resolved = Array.from({ length: 40 }, (_, i) => ({
+        id: `res-${i}`, elementId: `res-elem-${i}`,
+        apiRevisionId: 'rev-1', commentSource: CommentSource.Diagnostic,
+        severity: CommentSeverity.MustFix, isResolved: true,
+      })) as CommentItemModel[];
+
+      component.apiRevisions = apiRevisions;
+      component.comments = [...mustFixDiagnostics, ...otherUnresolved, ...resolved];
+      component.activeApiRevisionId = 'rev-1';
+      component.createCommentThreads();
+
+      // displayLimit = max(250, 300) = 300; so all 300 MustFix unresolved fit,
+      // but the 50 other unresolved and 40 resolved are all hidden
+      expect(component.totalDiagnosticsInRevision).toBe(390);
+      expect(component.diagnosticsTruncated).toBe(true);
+      expect(component.hiddenUnresolvedDiagnosticsCount).toBe(50);
+      expect(component.hiddenResolvedDiagnosticsCount).toBe(40);
+
+      const allDisplayedThreads = Array.from(component.commentThreads.values()).flat();
+      expect(allDisplayedThreads).toHaveLength(300);
+    });
+
+    it('should correctly detect MustFix and sort when severity is a camelCase string from the API', () => {
+      const apiRevisions = [
+        { id: 'rev-1', createdOn: '2021-10-01T00:00:00Z' }
+      ] as APIRevision[];
+
+      // Simulate real API payload: severity as camelCase strings, not numeric enum values
+      const mustFixUnresolved = Array.from({ length: 10 }, (_, i) => ({
+        id: `mf-${i}`, elementId: `mf-elem-${i}`,
+        apiRevisionId: 'rev-1', commentSource: CommentSource.Diagnostic,
+        severity: 'mustFix' as any, isResolved: false,
+      })) as CommentItemModel[];
+      const suggestionUnresolved = Array.from({ length: 5 }, (_, i) => ({
+        id: `sug-${i}`, elementId: `sug-elem-${i}`,
+        apiRevisionId: 'rev-1', commentSource: CommentSource.Diagnostic,
+        severity: 'suggestion' as any, isResolved: false,
+      })) as CommentItemModel[];
+      const resolved = Array.from({ length: 3 }, (_, i) => ({
+        id: `res-${i}`, elementId: `res-elem-${i}`,
+        apiRevisionId: 'rev-1', commentSource: CommentSource.Diagnostic,
+        severity: 'mustFix' as any, isResolved: true,
+      })) as CommentItemModel[];
+
+      component.apiRevisions = apiRevisions;
+      component.comments = [...mustFixUnresolved, ...suggestionUnresolved, ...resolved];
+      component.activeApiRevisionId = 'rev-1';
+      component.createCommentThreads();
+
+      // All 18 fit within 250 so none are hidden
+      expect(component.totalDiagnosticsInRevision).toBe(18);
+      expect(component.diagnosticsTruncated).toBe(false);
+      expect(component.hiddenUnresolvedDiagnosticsCount).toBe(0);
+      expect(component.hiddenResolvedDiagnosticsCount).toBe(0);
+
+      // All threads displayed
+      const allDisplayedThreads = Array.from(component.commentThreads.values()).flat();
+      expect(allDisplayedThreads).toHaveLength(18);
+
+      // First 10 threads should be the MustFix unresolved (tier 0), next 5 suggestion, last 3 resolved
+      const firstThread = allDisplayedThreads[0];
+      expect(firstThread.comments![0].severity).toBe('mustFix');
+      expect(firstThread.isResolvedCommentThread).toBe(false);
+      const lastThread = allDisplayedThreads[17];
+      expect(lastThread.isResolvedCommentThread).toBe(true);
     });
   });
 
@@ -452,6 +534,60 @@ describe('ConversationComponent', () => {
       } as CommentUpdatesDto);
 
       expect(notifySpy).toHaveBeenCalled();
+    });
+
+    it('should pass undefined threadId to API when resolving legacy comments without a real threadId', () => {
+      const resolveSpy = vi.spyOn(commentsService, 'resolveComments').mockReturnValue(of({}));
+      vi.spyOn(component as any, 'applyCommentResolutionUpdate').mockImplementation(() => {});
+
+      // Simulate legacy comments that have no threadId
+      component.comments = [
+        { id: 'c1', elementId: 'elem-1', threadId: undefined, apiRevisionId: 'rev-1', isResolved: false } as any,
+        { id: 'c2', elementId: 'elem-1', threadId: null, apiRevisionId: 'rev-1', isResolved: false } as any,
+      ];
+
+      component.handleCommentResolutionActionEmitter({
+        elementId: 'elem-1',
+        threadId: 'elem-1', // synthetic threadId == elementId (no real threadId exists)
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentResolved,
+      } as CommentUpdatesDto);
+
+      // The third argument (threadId) must be undefined, not 'elem-1'
+      expect(resolveSpy).toHaveBeenCalledWith('test-review', 'elem-1', undefined);
+    });
+
+    it('should pass undefined threadId to API when unresolving legacy comments without a real threadId', () => {
+      const unresolveSpy = vi.spyOn(commentsService, 'unresolveComments').mockReturnValue(of({}));
+      vi.spyOn(component as any, 'applyCommentResolutionUpdate').mockImplementation(() => {});
+
+      component.comments = [
+        { id: 'c1', elementId: 'elem-1', threadId: undefined, apiRevisionId: 'rev-1', isResolved: true } as any,
+      ];
+
+      component.handleCommentResolutionActionEmitter({
+        elementId: 'elem-1',
+        threadId: 'elem-1',
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentUnResolved,
+      } as CommentUpdatesDto);
+
+      expect(unresolveSpy).toHaveBeenCalledWith('test-review', 'elem-1', undefined);
+    });
+
+    it('should pass real threadId to API when resolving comments that have a threadId', () => {
+      const resolveSpy = vi.spyOn(commentsService, 'resolveComments').mockReturnValue(of({}));
+      vi.spyOn(component as any, 'applyCommentResolutionUpdate').mockImplementation(() => {});
+
+      component.comments = [
+        { id: 'c1', elementId: 'elem-1', threadId: 'thread-abc', apiRevisionId: 'rev-1', isResolved: false } as any,
+      ];
+
+      component.handleCommentResolutionActionEmitter({
+        elementId: 'elem-1',
+        threadId: 'thread-abc',
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentResolved,
+      } as CommentUpdatesDto);
+
+      expect(resolveSpy).toHaveBeenCalledWith('test-review', 'elem-1', 'thread-abc');
     });
 
     it('should call notifyQualityScoreRefresh after creating a new thread', () => {
@@ -663,7 +799,21 @@ describe('ConversationComponent', () => {
       expect(component.filteredThreadCount).toBe(3);
     });
 
-    it('should exclude threads with null severity when severity filter is active', () => {
+    it('should include threads with null severity when the "unknown" severity chip is selected', () => {
+      const noSeverity = makeThread({ severity: null });
+      const explicitUnknown = makeThread({ severity: 'unknown' });
+      const mustFix = makeThread({ severity: 'mustFix' });
+      setThreads(component, [noSeverity, explicitUnknown, mustFix]);
+
+      component.filterStatus = 'all';
+      component.filterSeverities = new Set(['unknown']);
+      component.filterKinds.clear();
+      component.applyFilters();
+
+      expect(component.filteredThreadCount).toBe(2);
+    });
+
+    it('should exclude threads with null severity when severity filter is active without "unknown" selected', () => {
       const noSeverity = makeThread({ severity: null });
       const mustFix = makeThread({ severity: 'mustFix' });
       setThreads(component, [noSeverity, mustFix]);

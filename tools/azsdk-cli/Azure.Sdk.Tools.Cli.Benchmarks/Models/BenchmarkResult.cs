@@ -34,9 +34,9 @@ public class BenchmarkResult
     public string? GitDiff { get; init; }
 
     /// <summary>
-    /// Gets the list of tool calls made during execution.
+    /// Gets the tool calls made during execution.
     /// </summary>
-    public IReadOnlyList<string> ToolCalls { get; init; } = [];
+    public IReadOnlyList<ToolCallRecord> ToolCalls { get; init; } = [];
 
     /// <summary>
     /// Gets the path to the workspace where the benchmark was executed.
@@ -52,4 +52,9 @@ public class BenchmarkResult
     /// Gets the validation summary (null if no validators defined).
     /// </summary>
     public ValidationSummary? Validation { get; init; }
+
+    /// <summary>
+    /// Gets the token usage for this benchmark execution.
+    /// </summary>
+    public TokenUsage? TokenUsage { get; init; }
 }

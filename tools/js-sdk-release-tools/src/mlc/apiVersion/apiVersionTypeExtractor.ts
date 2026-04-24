@@ -4,9 +4,9 @@ import { getApiVersionTypeFromRestClient, tryFindRestClientPath, getApiVersionTy
 import { logger } from "../../utils/logger.js";
 import { getNpmPackageName } from "../../common/utils.js";
 import { isBetaVersion } from "../../utils/version.js";
-import { checkDirectoryExistsInGithub } from "../../common/npmUtils.js";
+import { checkDirectoryExistsInGithub, checkGitTagExists } from "../../common/npmUtils.js";
 import { tryGetNpmView } from "../../common/npmUtils.js";
-import { getLatestStableVersion } from "../../utils/version.js";
+import { getLatestStableVersion, getNextBetaVersion, getUsedVersions } from "../../utils/version.js";
 
 export const getApiVersionType: IApiVersionTypeExtractor = async (
     packageRoot: string,
@@ -42,7 +42,43 @@ export const getApiVersionType: IApiVersionTypeExtractor = async (
     return ApiVersionType.None;
 };
 
-export const isModelOnly: IModelOnlyChecker = async (packageRoot: string): Promise<boolean> => {
+/**
+ * Resolve the npm version to use when looking up a git tag for model-only detection.
+ *
+ * Strategy:
+ * 1. For beta releases, prefer the beta/next dist-tag version; otherwise use stable.
+ * 2. Verify the chosen version has a real git tag locally.
+ * 3. If not, fall back to the most recent npm-published version that does have a local git tag.
+ *    e.g. if 3.0.0 tag is missing but 4.0.0-beta.1/2/3 exist, use 4.0.0-beta.3.
+ */
+function resolveReferenceVersion(
+    packageName: string,
+    npmViewResult: Record<string, unknown>,
+    stableVersion: string,
+    isBetaRelease?: boolean
+): string {
+    const betaVersion = isBetaRelease ? getNextBetaVersion(npmViewResult) : undefined;
+    const preferredVersion = betaVersion ?? stableVersion;
+    logger.info(`[resolveReferenceVersion] preferred=${preferredVersion} (isBetaRelease=${isBetaRelease}, stableVersion=${stableVersion}, betaVersion=${betaVersion})`);
+
+    // Build candidate list: preferred version first, then all npm versions newest-first
+    const allVersions = getUsedVersions(npmViewResult).reverse();
+    const candidates = [preferredVersion, ...allVersions.filter(v => v !== preferredVersion)];
+
+    for (const v of candidates) {
+        if (checkGitTagExists(`${packageName}_${v}`)) {
+            if (v !== preferredVersion) {
+                logger.info(`[resolveReferenceVersion] git tag ${packageName}_${preferredVersion} not found, falling back to ${v}`);
+            }
+            return v;
+        }
+    }
+
+    logger.warn(`[resolveReferenceVersion] no git tag found for any version of ${packageName}, using preferred version ${preferredVersion} as-is`);
+    return preferredVersion;
+}
+
+export const isModelOnly: IModelOnlyChecker = async (packageRoot: string, isBetaRelease?: boolean): Promise<boolean> => {
     // Get npm view to find the latest stable version
     const packageName = getNpmPackageName(packageRoot);
     const npmViewResult = await tryGetNpmView(packageName);
@@ -57,12 +93,15 @@ export const isModelOnly: IModelOnlyChecker = async (packageRoot: string): Promi
         return true;
     }
 
+    const referenceVersion = resolveReferenceVersion(packageName, npmViewResult, stableVersion, isBetaRelease);
+
+
     // Check if src/api exists in the GitHub repository
     const hasOperationsInGithub = await checkDirectoryExistsInGithub(
         packageRoot,
         ["src/api", "src/operations"],
         packageName,
-        stableVersion
+        referenceVersion
     );
 
     if (!hasOperationsInGithub) {

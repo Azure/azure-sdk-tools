@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Helpers.Codeowners;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
@@ -10,6 +11,7 @@ using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.CodeownersUtils.Caches;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Moq;
+using Octokit;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Helpers;
 
@@ -18,6 +20,7 @@ public class CodeownersManagementHelperTests
 {
     private Mock<IDevOpsService> _mockDevOps;
     private Mock<ITeamUserCache> _mockTeamUserCache;
+    private Mock<IGitHubService> _mockGitHub;
     private CodeownersManagementHelper _helper;
 
     [SetUp]
@@ -26,10 +29,13 @@ public class CodeownersManagementHelperTests
         _mockDevOps = new Mock<IDevOpsService>();
         _mockTeamUserCache = new Mock<ITeamUserCache>();
         _mockTeamUserCache.Setup(c => c.GetUsersForTeam(It.IsAny<string>())).Returns(new List<string>());
+        _mockTeamUserCache.Setup(c => c.TeamUserDict).Returns(new Dictionary<string, List<string>>(StringComparer.InvariantCultureIgnoreCase));
+        _mockGitHub = new Mock<IGitHubService>();
         _helper = new CodeownersManagementHelper(
             new TestLogger<CodeownersManagementHelper>(),
             _mockDevOps.Object,
-            _mockTeamUserCache.Object
+            _mockTeamUserCache.Object,
+            _mockGitHub.Object
         );
     }
 
@@ -85,7 +91,8 @@ public class CodeownersManagementHelperTests
         {
             { "Custom.LabelType", labelType },
             { "Custom.Repository", repository },
-            { "Custom.RepoPath", repoPath }
+            { "Custom.RepoPath", repoPath },
+            { "Custom.Section", "" }
         }, relatedIds);
 
     // ========================
@@ -105,7 +112,7 @@ public class CodeownersManagementHelperTests
         }
     }
 
-    private static void AssertLabelOwner(LabelOwnerResponse lo, string expectedRepo, string expectedPath, string[]? expectedOwners = null, string[]? expectedLabels = null)
+    private static void AssertLabelOwner(LabelOwnerResponse lo, string expectedRepo, string expectedPath, string[]? expectedOwners = null, string[]? expectedLabels = null, string? expectedSection = null)
     {
         Assert.That(lo.Repo, Is.EqualTo(expectedRepo));
         Assert.That(lo.Path, Is.EqualTo(expectedPath));
@@ -116,6 +123,10 @@ public class CodeownersManagementHelperTests
         if (expectedLabels != null)
         {
             Assert.That(lo.Labels, Is.EquivalentTo(expectedLabels));
+        }
+        if (expectedSection != null)
+        {
+            Assert.That(lo.Section, Is.EqualTo(expectedSection));
         }
     }
 
@@ -148,10 +159,10 @@ public class CodeownersManagementHelperTests
                 It.Is<string>(q => q.Contains("'Owner'") && q.Contains("Custom.GitHubAlias") && q.Contains("nonexistent-owner")),
                 It.IsAny<int>(),
                 It.IsAny<int>(),
-                It.IsAny<WorkItemExpand>()))
+                It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
 
-        var result = await _helper.GetViewByUser("nonexistent-owner", null);
+        var result = await _helper.GetViewByUser("nonexistent-owner", null, CancellationToken.None);
 
         Assert.That(result.ResponseError, Does.Contain("No Owner work item found"));
     }
@@ -171,7 +182,7 @@ public class CodeownersManagementHelperTests
                 It.Is<string>(q => q.Contains("'Owner'") && q.Contains("Custom.GitHubAlias") && q.Contains("owner1")),
                 It.IsAny<int>(),
                 It.IsAny<int>(),
-                It.IsAny<WorkItemExpand>()))
+                It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { ownerWi });
 
         // GetWorkItemsByIdsAsync for related IDs of the owner — returns package + label owner
@@ -181,7 +192,7 @@ public class CodeownersManagementHelperTests
         _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
                 It.Is<IEnumerable<int>>(ids => ids.Contains(pkgId) && ids.Contains(loId)),
                 It.IsAny<int>(),
-                WorkItemExpand.Relations))
+                WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { pkgWi, loWi });
 
         // Hydration: fetch owners and labels for the package's and label owner's related IDs
@@ -191,10 +202,10 @@ public class CodeownersManagementHelperTests
         _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
                 It.Is<IEnumerable<int>>(ids => ids.Contains(ownerId) && ids.Contains(labelId)),
                 It.IsAny<int>(),
-                WorkItemExpand.All))
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { ownerForHydration, labelForHydration });
 
-        var result = await _helper.GetViewByUser("owner1", null);
+        var result = await _helper.GetViewByUser("owner1", null, CancellationToken.None);
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.Packages, Has.Count.EqualTo(1));
@@ -216,7 +227,7 @@ public class CodeownersManagementHelperTests
                 It.Is<string>(q => q.Contains("'Owner'") && q.Contains("Custom.GitHubAlias") && q.Contains("owner1")),
                 It.IsAny<int>(),
                 It.IsAny<int>(),
-                It.IsAny<WorkItemExpand>()))
+                It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { ownerWi });
 
         var netPkg = MakePackageWorkItem(netPkgId, "Azure.Storage.Blobs", language: ".NET", relatedIds: [ownerId]);
@@ -225,17 +236,17 @@ public class CodeownersManagementHelperTests
         _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
                 It.Is<IEnumerable<int>>(ids => ids.Contains(netPkgId) && ids.Contains(pyPkgId)),
                 It.IsAny<int>(),
-                WorkItemExpand.Relations))
+                WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { netPkg, pyPkg });
 
         // Hydration for the one .NET package
         _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
                 It.Is<IEnumerable<int>>(ids => ids.Contains(ownerId)),
                 It.IsAny<int>(),
-                WorkItemExpand.All))
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { MakeOwnerWorkItem(ownerId, "owner1") });
 
-        var result = await _helper.GetViewByUser("owner1", "azure-sdk-for-python");
+        var result = await _helper.GetViewByUser("owner1", "azure-sdk-for-python", CancellationToken.None);
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.Packages, Has.Count.EqualTo(1));
@@ -252,17 +263,17 @@ public class CodeownersManagementHelperTests
                 It.Is<string>(q => q.Contains("'Owner'") && q.Contains("Custom.GitHubAlias") && q.Contains("owner1")),
                 It.IsAny<int>(),
                 It.IsAny<int>(),
-                It.IsAny<WorkItemExpand>()))
+                It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { ownerWi });
 
         // Empty response for no IDs
         _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
                 It.IsAny<IEnumerable<int>>(),
                 It.IsAny<int>(),
-                WorkItemExpand.Relations))
+                WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
 
-        var result = await _helper.GetViewByUser("owner1", null);
+        var result = await _helper.GetViewByUser("owner1", null, CancellationToken.None);
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.Packages, Is.Null);
@@ -281,10 +292,10 @@ public class CodeownersManagementHelperTests
                 It.Is<string>(q => q.Contains("'Label'") && q.Contains("Custom.Label") && q.Contains("NonExistent")),
                 It.IsAny<int>(),
                 It.IsAny<int>(),
-                It.IsAny<WorkItemExpand>()))
+                It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
 
-        var result = await _helper.GetViewByLabel(["NonExistent"], null);
+        var result = await _helper.GetViewByLabel(["NonExistent"], null, CancellationToken.None);
 
         Assert.That(result.ResponseError, Does.Contain("No Label work item found for 'NonExistent'"));
     }
@@ -302,7 +313,7 @@ public class CodeownersManagementHelperTests
                 It.Is<string>(q => q.Contains("'Label'") && q.Contains("Custom.Label") && q.Contains("Storage")),
                 It.IsAny<int>(),
                 It.IsAny<int>(),
-                It.IsAny<WorkItemExpand>()))
+                It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { labelWi });
 
         var pkgWi = MakePackageWorkItem(pkgId, "Azure.Storage.Blobs", relatedIds: [ownerId, labelId]);
@@ -310,20 +321,20 @@ public class CodeownersManagementHelperTests
         _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
                 It.Is<IEnumerable<int>>(ids => ids.Contains(pkgId)),
                 It.IsAny<int>(),
-                WorkItemExpand.Relations))
+                WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { pkgWi });
 
         _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
                 It.Is<IEnumerable<int>>(ids => ids.Contains(ownerId) && ids.Contains(labelId)),
                 It.IsAny<int>(),
-                WorkItemExpand.All))
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>
             {
                 MakeOwnerWorkItem(ownerId, "owner2"),
                 MakeLabelWorkItem(labelId, "Storage")
             });
 
-        var result = await _helper.GetViewByLabel(["Storage"], null);
+        var result = await _helper.GetViewByLabel(["Storage"], null, CancellationToken.None);
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.Packages, Has.Count.EqualTo(1));
@@ -349,13 +360,13 @@ public class CodeownersManagementHelperTests
                 It.Is<string>(q => q.Contains("'Label'") && q.Contains("Custom.Label") && q.Contains("Storage")),
                 It.IsAny<int>(),
                 It.IsAny<int>(),
-                It.IsAny<WorkItemExpand>()))
+                It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { labelAWi });
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
                 It.Is<string>(q => q.Contains("'Label'") && q.Contains("Custom.Label") && q.Contains("Blobs")),
                 It.IsAny<int>(),
                 It.IsAny<int>(),
-                It.IsAny<WorkItemExpand>()))
+                It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { labelBWi });
 
         var pkgWi = MakePackageWorkItem(sharedPkgId, "Azure.Storage.Blobs", relatedIds: [ownerId, labelAId]);
@@ -369,21 +380,21 @@ public class CodeownersManagementHelperTests
                     && !ids.Contains(40)
                 ),
                 It.IsAny<int>(),
-                WorkItemExpand.Relations))
+                WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { pkgWi, loWi });
 
         // Hydration: fetch owners and labels for the package's and label owner's related IDs
         _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
                 It.Is<IEnumerable<int>>(ids => ids.Contains(ownerId) && ids.Contains(labelAId)),
                 It.IsAny<int>(),
-                WorkItemExpand.All))
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>
             {
                 MakeOwnerWorkItem(ownerId, "owner1"),
                 MakeLabelWorkItem(labelAId, "Storage")
             });
 
-        var result = await _helper.GetViewByLabel(["Storage", "Blobs"], null);
+        var result = await _helper.GetViewByLabel(["Storage", "Blobs"], null, CancellationToken.None);
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.Packages, Has.Count.EqualTo(1));
@@ -401,16 +412,16 @@ public class CodeownersManagementHelperTests
                 It.Is<string>(q => q.Contains("'Label'") && q.Contains("Custom.Label") && q.Contains("Storage")),
                 It.IsAny<int>(),
                 It.IsAny<int>(),
-                It.IsAny<WorkItemExpand>()))
+                It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { labelWi });
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
                 It.Is<string>(q => q.Contains("'Label'") && q.Contains("Custom.Label") && q.Contains("Missing")),
                 It.IsAny<int>(),
                 It.IsAny<int>(),
-                It.IsAny<WorkItemExpand>()))
+                It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
 
-        var result = await _helper.GetViewByLabel(["Storage", "Missing"], null);
+        var result = await _helper.GetViewByLabel(["Storage", "Missing"], null, CancellationToken.None);
 
         Assert.That(result.ResponseError, Does.Contain("No Label work item found for 'Missing'"));
     }
@@ -432,25 +443,65 @@ public class CodeownersManagementHelperTests
                 It.Is<string>(q => q.Contains("/sdk/storage")),
                 It.IsAny<int>(),
                 It.IsAny<int>(),
-                WorkItemExpand.Relations))
+                WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { loWi });
 
         _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
                 It.Is<IEnumerable<int>>(ids => ids.Contains(ownerId) && ids.Contains(labelId)),
                 It.IsAny<int>(),
-                WorkItemExpand.All))
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>
             {
                 MakeOwnerWorkItem(ownerId, "owner2"),
                 MakeLabelWorkItem(labelId, "Storage")
             });
 
-        var result = await _helper.GetViewByPath("/sdk/storage", null);
+        var result = await _helper.GetViewByPath("/sdk/storage", null, CancellationToken.None);
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.Packages, Is.Null); // GetViewByPath returns no packages
         Assert.That(result.PathBasedLabelOwners, Has.Count.EqualTo(1));
         AssertLabelOwner(result.PathBasedLabelOwners![0], "Azure/azure-sdk-for-net", "/sdk/storage", ["owner2"], ["Storage"]);
+    }
+
+    [Test]
+    public async Task GetViewByPath_ReturnsSectionInResponse()
+    {
+        var loId = 1;
+        var ownerId = 10;
+        var labelId = 11;
+
+        var loWi = MakeWorkItem(loId, "Label Owner", new Dictionary<string, object>
+        {
+            { "Custom.LabelType", "Service Owner" },
+            { "Custom.Repository", "Azure/azure-sdk-for-net" },
+            { "Custom.RepoPath", "/sdk/storage" },
+            { "Custom.Section", "Test Section" }
+        }, ownerId, labelId);
+
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("/sdk/storage")),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<WorkItem> { loWi });
+
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(ownerId) && ids.Contains(labelId)),
+                It.IsAny<int>(),
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<WorkItem>
+            {
+                MakeOwnerWorkItem(ownerId, "owner2"),
+                MakeLabelWorkItem(labelId, "Storage")
+            });
+
+        var result = await _helper.GetViewByPath("/sdk/storage", null, CancellationToken.None);
+
+        Assert.That(result.ResponseError, Is.Null);
+        Assert.That(result.PathBasedLabelOwners, Has.Count.EqualTo(1));
+        AssertLabelOwner(result.PathBasedLabelOwners![0], "Azure/azure-sdk-for-net", "/sdk/storage",
+            expectedOwners: ["owner2"], expectedLabels: ["Storage"], expectedSection: "Test Section");
     }
 
     [Test]
@@ -460,15 +511,15 @@ public class CodeownersManagementHelperTests
                 It.Is<string>(q => q.Contains("/sdk/storage") && q.Contains("Azure/azure-sdk-for-net")),
                 It.IsAny<int>(),
                 It.IsAny<int>(),
-                WorkItemExpand.Relations))
+                WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
 
-        var result = await _helper.GetViewByPath("/sdk/storage", "Azure/azure-sdk-for-net");
+        var result = await _helper.GetViewByPath("/sdk/storage", "Azure/azure-sdk-for-net", CancellationToken.None);
 
         Assert.That(result.ResponseError, Is.Null);
         _mockDevOps.Verify(d => d.FetchWorkItemsPagedAsync(
             It.Is<string>(q => q.Contains("Custom.Repository") && q.Contains("Azure/azure-sdk-for-net")),
-            It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()), Times.Once);
+            It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -478,10 +529,10 @@ public class CodeownersManagementHelperTests
                 It.IsAny<string>(),
                 It.IsAny<int>(),
                 It.IsAny<int>(),
-                WorkItemExpand.Relations))
+                WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
 
-        var result = await _helper.GetViewByPath("/nonexistent/path", null);
+        var result = await _helper.GetViewByPath("/nonexistent/path", null, CancellationToken.None);
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.PathBasedLabelOwners, Is.Null);
@@ -499,10 +550,10 @@ public class CodeownersManagementHelperTests
                 It.Is<string>(q => q.Contains("'Package'") && q.Contains("Custom.Package") && q.Contains("NoSuch.Package")),
                 It.IsAny<int>(),
                 It.IsAny<int>(),
-                It.IsAny<WorkItemExpand>()))
+                It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
 
-        var result = await _helper.GetViewByPackage("NoSuch.Package");
+        var result = await _helper.GetViewByPackage("NoSuch.Package", default);
 
         Assert.That(result.ResponseError, Does.Contain("No Package work item found for 'NoSuch.Package'"));
     }
@@ -520,14 +571,14 @@ public class CodeownersManagementHelperTests
                 It.Is<string>(q => q.Contains("'Package'") && q.Contains("Custom.Package") && q.Contains("Azure.Storage.Blobs")),
                 It.IsAny<int>(),
                 It.IsAny<int>(),
-                It.IsAny<WorkItemExpand>()))
+                It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { pkgWi });
 
         // Hydration for package's related IDs
         _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
                 It.Is<IEnumerable<int>>(ids => ids.Contains(ownerId) && ids.Contains(labelId)),
                 It.IsAny<int>(),
-                WorkItemExpand.All))
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>
             {
                 MakeOwnerWorkItem(ownerId, "owner2"),
@@ -538,10 +589,10 @@ public class CodeownersManagementHelperTests
         _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
                 It.Is<IEnumerable<int>>(ids => ids.Contains(ownerId) && ids.Contains(labelId)),
                 It.IsAny<int>(),
-                WorkItemExpand.Relations))
+                WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>()); // No label owners in this set
 
-        var result = await _helper.GetViewByPackage("Azure.Storage.Blobs");
+        var result = await _helper.GetViewByPackage("Azure.Storage.Blobs", default);
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.Packages, Has.Count.EqualTo(1));
@@ -561,16 +612,16 @@ public class CodeownersManagementHelperTests
                 It.Is<string>(q => q.Contains("'Package'") && q.Contains("Custom.Package") && q.Contains("Azure.Storage.Blobs")),
                 It.IsAny<int>(),
                 It.IsAny<int>(),
-                It.IsAny<WorkItemExpand>()))
+                It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { pkgV1Wi, pkgV2Wi });
 
         // Hydration
-        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(It.IsAny<IEnumerable<int>>(), It.IsAny<int>(), WorkItemExpand.All))
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(It.IsAny<IEnumerable<int>>(), It.IsAny<int>(), WorkItemExpand.All, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
-        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(It.IsAny<IEnumerable<int>>(), It.IsAny<int>(), WorkItemExpand.Relations))
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(It.IsAny<IEnumerable<int>>(), It.IsAny<int>(), WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
 
-        var result = await _helper.GetViewByPackage("Azure.Storage.Blobs");
+        var result = await _helper.GetViewByPackage("Azure.Storage.Blobs", default);
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.Packages, Has.Count.EqualTo(1));
@@ -598,7 +649,7 @@ public class CodeownersManagementHelperTests
                     && q.Contains(".NET")),
                 It.IsAny<int>(),
                 It.IsAny<int>(),
-                It.IsAny<WorkItemExpand>()))
+                It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { netPkgWi });
 
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
@@ -608,13 +659,13 @@ public class CodeownersManagementHelperTests
                     && !q.Contains("Custom.Language")),
                 It.IsAny<int>(),
                 It.IsAny<int>(),
-                It.IsAny<WorkItemExpand>()))
+                It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Unfiltered package query should not be called when repo filter is provided."));
 
         _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
                 It.Is<IEnumerable<int>>(ids => ids.Contains(owner1Id) && ids.Contains(owner2Id)),
                 It.IsAny<int>(),
-                WorkItemExpand.All))
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>
             {
                 MakeOwnerWorkItem(owner1Id, "owner1"),
@@ -624,10 +675,10 @@ public class CodeownersManagementHelperTests
         _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
                 It.Is<IEnumerable<int>>(ids => ids.Contains(owner1Id) && ids.Contains(owner2Id)),
                 It.IsAny<int>(),
-                WorkItemExpand.Relations))
+                WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
 
-        var result = await _helper.GetViewByPackage("Azure.Storage.Blobs", "Azure/azure-sdk-for-net");
+        var result = await _helper.GetViewByPackage("Azure.Storage.Blobs", "Azure/azure-sdk-for-net", CancellationToken.None);
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.Packages, Has.Count.EqualTo(1));
@@ -642,7 +693,7 @@ public class CodeownersManagementHelperTests
                 && q.Contains(".NET")),
             It.IsAny<int>(),
             It.IsAny<int>(),
-            It.IsAny<WorkItemExpand>()), Times.Once);
+            It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // ========================
@@ -662,7 +713,7 @@ public class CodeownersManagementHelperTests
                 It.Is<string>(q => q.Contains("'Owner'") && q.Contains("Custom.GitHubAlias") && q.Contains("owner1")),
                 It.IsAny<int>(),
                 It.IsAny<int>(),
-                It.IsAny<WorkItemExpand>()))
+                It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { ownerWi });
 
         var netLo = MakeLabelOwnerWorkItem(netLoId, "Service Owner", "Azure/azure-sdk-for-net", "/sdk/storage");
@@ -671,10 +722,10 @@ public class CodeownersManagementHelperTests
         _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
                 It.Is<IEnumerable<int>>(ids => ids.Contains(netLoId) && ids.Contains(pyLoId)),
                 It.IsAny<int>(),
-                WorkItemExpand.Relations))
+                WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { netLo, pyLo });
 
-        var result = await _helper.GetViewByUser("owner1", "Azure/azure-sdk-for-net");
+        var result = await _helper.GetViewByUser("owner1", "Azure/azure-sdk-for-net", CancellationToken.None);
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.PathBasedLabelOwners, Has.Count.EqualTo(1));
@@ -701,14 +752,14 @@ public class CodeownersManagementHelperTests
                 It.Is<string>(q => q.Contains("'Package'") && q.Contains("Azure.Storage.Blobs")),
                 It.IsAny<int>(),
                 It.IsAny<int>(),
-                It.IsAny<WorkItemExpand>()))
+                It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { pkgWi });
 
         // Hydration: owner is a team
         _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
                 It.Is<IEnumerable<int>>(ids => ids.Contains(teamOwnerId) && ids.Contains(labelId)),
                 It.IsAny<int>(),
-                WorkItemExpand.All))
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>
             {
                 MakeOwnerWorkItem(teamOwnerId, "azure/azure-sdk-team"),
@@ -718,10 +769,10 @@ public class CodeownersManagementHelperTests
         _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
                 It.Is<IEnumerable<int>>(ids => ids.Contains(teamOwnerId) && ids.Contains(labelId)),
                 It.IsAny<int>(),
-                WorkItemExpand.Relations))
+                WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
 
-        var result = await _helper.GetViewByPackage("Azure.Storage.Blobs");
+        var result = await _helper.GetViewByPackage("Azure.Storage.Blobs", default);
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.Packages, Has.Count.EqualTo(1));
@@ -745,20 +796,20 @@ public class CodeownersManagementHelperTests
                 It.Is<string>(q => q.Contains("/sdk/storage")),
                 It.IsAny<int>(),
                 It.IsAny<int>(),
-                WorkItemExpand.Relations))
+                WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { loWi });
 
         _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
                 It.Is<IEnumerable<int>>(ids => ids.Contains(teamOwnerId) && ids.Contains(labelId)),
                 It.IsAny<int>(),
-                WorkItemExpand.All))
+                WorkItemExpand.All, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>
             {
                 MakeOwnerWorkItem(teamOwnerId, "azure/sdk-storage-team"),
                 MakeLabelWorkItem(labelId, "Storage")
             });
 
-        var result = await _helper.GetViewByPath("/sdk/storage", null);
+        var result = await _helper.GetViewByPath("/sdk/storage", null, CancellationToken.None);
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.PathBasedLabelOwners, Has.Count.EqualTo(1));
@@ -791,19 +842,19 @@ public class CodeownersManagementHelperTests
         var labelWi = new LabelWorkItem { WorkItemId = labelId, LabelName = "Storage" };
 
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
-                It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("Azure/azure-sdk-for-net") && q.Contains("Service Owner")),
-                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+                It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("Azure/azure-sdk-for-net") && q.Contains("Service Owner") && q.Contains("Custom.Section") && q.Contains("Client Libraries")),
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { loWi });
 
         _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
                 It.Is<IEnumerable<int>>(ids => ids.Contains(labelId)),
-                It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+                It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { labelWiRaw });
 
-        var result = await _helper.FindOrCreateLabelOwnerAsync("Azure/azure-sdk-for-net", OwnerType.ServiceOwner, null, [labelWi]);
+        var result = await _helper.FindOrCreateLabelOwnerAsync("Azure/azure-sdk-for-net", OwnerType.ServiceOwner, null, [labelWi], "Client Libraries", default);
 
         Assert.That(result.WorkItemId, Is.EqualTo(55));
-        _mockDevOps.Verify(d => d.CreateWorkItemAsync(It.IsAny<WorkItemBase>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int?>()), Times.Never);
+        _mockDevOps.Verify(d => d.CreateWorkItemAsync(It.IsAny<WorkItemBase>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test]
@@ -816,24 +867,24 @@ public class CodeownersManagementHelperTests
         var expectedLabelWi = new LabelWorkItem { WorkItemId = expectedLabelId, LabelName = "Storage" };
 
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
-                It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("Azure/azure-sdk-for-net") && q.Contains("Service Owner")),
-                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+                It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("Azure/azure-sdk-for-net") && q.Contains("Service Owner") && q.Contains("Custom.Section") && q.Contains("Client Libraries")),
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { loWi });
 
         _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
                 It.Is<IEnumerable<int>>(ids => ids.Contains(otherLabelId)),
-                It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+                It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { otherLabelWiRaw });
 
         var createdLoWi = MakeLabelOwnerWorkItem(99, "Service Owner", "Azure/azure-sdk-for-net", "");
         _mockDevOps.Setup(d => d.CreateWorkItemAsync(
-                It.IsAny<WorkItemBase>(), "Label Owner", "Service Owner: Storage", It.IsAny<int?>(), It.IsAny<int?>()))
+                It.IsAny<WorkItemBase>(), "Label Owner", "Service Owner: Storage", It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(createdLoWi);
 
-        var result = await _helper.FindOrCreateLabelOwnerAsync("Azure/azure-sdk-for-net", OwnerType.ServiceOwner, null, [expectedLabelWi]);
+        var result = await _helper.FindOrCreateLabelOwnerAsync("Azure/azure-sdk-for-net", OwnerType.ServiceOwner, null, [expectedLabelWi], "Client Libraries", default);
 
         Assert.That(result.WorkItemId, Is.EqualTo(99));
-        _mockDevOps.Verify(d => d.CreateWorkItemAsync(It.IsAny<WorkItemBase>(), "Label Owner", "Service Owner: Storage", It.IsAny<int?>(), It.IsAny<int?>()), Times.Once);
+        _mockDevOps.Verify(d => d.CreateWorkItemAsync(It.IsAny<WorkItemBase>(), "Label Owner", "Service Owner: Storage", It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -842,19 +893,19 @@ public class CodeownersManagementHelperTests
         var labelWi = new LabelWorkItem { WorkItemId = 100, LabelName = "Storage" };
 
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
-                It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("Azure/azure-sdk-for-net")),
-                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+                It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("Azure/azure-sdk-for-net") && q.Contains("Custom.Section") && q.Contains("Client Libraries")),
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
 
         var createdLoWi = MakeLabelOwnerWorkItem(77, "Service Owner", "Azure/azure-sdk-for-net", "");
         _mockDevOps.Setup(d => d.CreateWorkItemAsync(
-                It.IsAny<WorkItemBase>(), "Label Owner", "Service Owner: Storage", It.IsAny<int?>(), It.IsAny<int?>()))
+                It.IsAny<WorkItemBase>(), "Label Owner", "Service Owner: Storage", It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(createdLoWi);
 
-        var result = await _helper.FindOrCreateLabelOwnerAsync("Azure/azure-sdk-for-net", OwnerType.ServiceOwner, null, [labelWi]);
+        var result = await _helper.FindOrCreateLabelOwnerAsync("Azure/azure-sdk-for-net", OwnerType.ServiceOwner, null, [labelWi], "Client Libraries", default);
 
         Assert.That(result.WorkItemId, Is.EqualTo(77));
-        _mockDevOps.Verify(d => d.CreateWorkItemAsync(It.IsAny<WorkItemBase>(), "Label Owner", "Service Owner: Storage", It.IsAny<int?>(), It.IsAny<int?>()), Times.Once);
+        _mockDevOps.Verify(d => d.CreateWorkItemAsync(It.IsAny<WorkItemBase>(), "Label Owner", "Service Owner: Storage", It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -863,16 +914,16 @@ public class CodeownersManagementHelperTests
         var labelWi = new LabelWorkItem { WorkItemId = 100, LabelName = "Storage" };
 
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
-                It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("sdk/service/")),
-                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+                It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("sdk/service/") && q.Contains("Custom.Section") && q.Contains("Client Libraries")),
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
 
         var createdLoWi = MakeLabelOwnerWorkItem(88, "Service Owner", "Azure/azure-sdk-for-net", "sdk/service/");
         _mockDevOps.Setup(d => d.CreateWorkItemAsync(
-                It.IsAny<WorkItemBase>(), "Label Owner", "Service Owner: sdk/service/", It.IsAny<int?>(), It.IsAny<int?>()))
+                It.IsAny<WorkItemBase>(), "Label Owner", "Service Owner: sdk/service/", It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(createdLoWi);
 
-        var result = await _helper.FindOrCreateLabelOwnerAsync("Azure/azure-sdk-for-net", OwnerType.ServiceOwner, "sdk/service/", [labelWi]);
+        var result = await _helper.FindOrCreateLabelOwnerAsync("Azure/azure-sdk-for-net", OwnerType.ServiceOwner, "sdk/service/", [labelWi], "Client Libraries", default);
 
         Assert.That(result.WorkItemId, Is.EqualTo(88));
     }
@@ -886,11 +937,11 @@ public class CodeownersManagementHelperTests
     {
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
                 It.Is<string>(q => q.Contains("'Package'") && q.Contains("NoSuchPackage")),
-                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
 
         var ownerWi = new OwnerWorkItem { GitHubAlias = "user1" };
-        var result = await _helper.AddOwnersToPackage([ownerWi], "NoSuchPackage", "Azure/azure-sdk-for-net");
+        var result = await _helper.AddOwnersToPackage([ownerWi], "NoSuchPackage", "Azure/azure-sdk-for-net", default);
 
         Assert.That(result.ResponseError, Does.Contain("No Package work item found"));
     }
@@ -904,15 +955,15 @@ public class CodeownersManagementHelperTests
 
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
                 It.Is<string>(q => q.Contains("'Package'") && q.Contains("Azure.Storage.Blobs")),
-                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { pkgWi });
 
-        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(It.IsAny<IEnumerable<int>>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(It.IsAny<IEnumerable<int>>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { ownerRawWi });
 
-        var result = await _helper.AddOwnersToPackage([new OwnerWorkItem { WorkItemId = ownerId, GitHubAlias = "user1" }], "Azure.Storage.Blobs", "Azure/azure-sdk-for-net");
+        var result = await _helper.AddOwnersToPackage([new OwnerWorkItem { WorkItemId = ownerId, GitHubAlias = "user1" }], "Azure.Storage.Blobs", "Azure/azure-sdk-for-net", default);
 
-        _mockDevOps.Verify(d => d.CreateWorkItemRelationAsync(It.IsAny<int>(), It.Is<string>(s => s == "related"), It.IsAny<int?>(), It.IsAny<string?>()), Times.Never);
+        _mockDevOps.Verify(d => d.CreateWorkItemRelationAsync(It.IsAny<int>(), It.Is<string>(s => s == "related"), It.IsAny<int?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test]
@@ -923,19 +974,19 @@ public class CodeownersManagementHelperTests
 
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
                 It.Is<string>(q => q.Contains("'Package'") && q.Contains("Azure.Storage.Blobs")),
-                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { pkgWi });
 
-        _mockDevOps.Setup(d => d.CreateWorkItemRelationAsync(pkgId, "related", ownerId, It.IsAny<string?>())).ReturnsAsync(new WorkItem());
+        _mockDevOps.Setup(d => d.CreateWorkItemRelationAsync(pkgId, "related", ownerId, It.IsAny<string?>(), It.IsAny<CancellationToken>())).ReturnsAsync(new WorkItem());
 
-        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(It.IsAny<IEnumerable<int>>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(It.IsAny<IEnumerable<int>>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
 
-        var result = await _helper.AddOwnersToPackage([new OwnerWorkItem { WorkItemId = ownerId, GitHubAlias = "user1" }], "Azure.Storage.Blobs", "Azure/azure-sdk-for-net");
+        var result = await _helper.AddOwnersToPackage([new OwnerWorkItem { WorkItemId = ownerId, GitHubAlias = "user1" }], "Azure.Storage.Blobs", "Azure/azure-sdk-for-net", default);
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.View, Is.Not.Null);
-        _mockDevOps.Verify(d => d.CreateWorkItemRelationAsync(pkgId, "related", ownerId, It.IsAny<string?>()), Times.Once);
+        _mockDevOps.Verify(d => d.CreateWorkItemRelationAsync(pkgId, "related", ownerId, It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // ========================
@@ -950,16 +1001,16 @@ public class CodeownersManagementHelperTests
 
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
                 It.Is<string>(q => q.Contains("'Package'")),
-                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { pkgWi });
 
-        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(It.IsAny<IEnumerable<int>>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(It.IsAny<IEnumerable<int>>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
 
-        var result = await _helper.AddLabelsToPackage([new LabelWorkItem { WorkItemId = labelId, LabelName = "StorageLabel" }], "Azure.Storage.Blobs", "Azure/azure-sdk-for-net");
+        var result = await _helper.AddLabelsToPackage([new LabelWorkItem { WorkItemId = labelId, LabelName = "StorageLabel" }], "Azure.Storage.Blobs", "Azure/azure-sdk-for-net", default);
 
         Assert.That(result.View, Is.Not.Null);
-        _mockDevOps.Verify(d => d.CreateWorkItemRelationAsync(It.IsAny<int>(), It.Is<string>(s => s == "related"), It.IsAny<int?>(), It.IsAny<string?>()), Times.Never);
+        _mockDevOps.Verify(d => d.CreateWorkItemRelationAsync(It.IsAny<int>(), It.Is<string>(s => s == "related"), It.IsAny<int?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test]
@@ -970,18 +1021,18 @@ public class CodeownersManagementHelperTests
 
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
                 It.Is<string>(q => q.Contains("'Package'")),
-                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { pkgWi });
 
-        _mockDevOps.Setup(d => d.CreateWorkItemRelationAsync(pkgId, "related", labelId, It.IsAny<string?>())).ReturnsAsync(new WorkItem());
-        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(It.IsAny<IEnumerable<int>>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+        _mockDevOps.Setup(d => d.CreateWorkItemRelationAsync(pkgId, "related", labelId, It.IsAny<string?>(), It.IsAny<CancellationToken>())).ReturnsAsync(new WorkItem());
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(It.IsAny<IEnumerable<int>>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
 
-        var result = await _helper.AddLabelsToPackage([new LabelWorkItem { WorkItemId = labelId, LabelName = "StorageLabel" }], "Azure.Storage.Blobs", "Azure/azure-sdk-for-net");
+        var result = await _helper.AddLabelsToPackage([new LabelWorkItem { WorkItemId = labelId, LabelName = "StorageLabel" }], "Azure.Storage.Blobs", "Azure/azure-sdk-for-net", default);
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.View, Is.Not.Null);
-        _mockDevOps.Verify(d => d.CreateWorkItemRelationAsync(pkgId, "related", labelId, It.IsAny<string?>()), Times.Once);
+        _mockDevOps.Verify(d => d.CreateWorkItemRelationAsync(pkgId, "related", labelId, It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // ========================
@@ -993,10 +1044,10 @@ public class CodeownersManagementHelperTests
     {
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
                 It.Is<string>(q => q.Contains("'Package'")),
-                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
 
-        var result = await _helper.RemoveOwnersFromPackage([new OwnerWorkItem { GitHubAlias = "user1" }], "NoSuchPackage", "Azure/azure-sdk-for-net");
+        var result = await _helper.RemoveOwnersFromPackage([new OwnerWorkItem { GitHubAlias = "user1" }], "NoSuchPackage", "Azure/azure-sdk-for-net", default);
 
         Assert.That(result.ResponseError, Does.Contain("No Package work item found"));
     }
@@ -1009,16 +1060,16 @@ public class CodeownersManagementHelperTests
 
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
                 It.Is<string>(q => q.Contains("'Package'")),
-                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { pkgWi });
 
-        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(It.IsAny<IEnumerable<int>>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(It.IsAny<IEnumerable<int>>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
 
-        var result = await _helper.RemoveOwnersFromPackage([new OwnerWorkItem { WorkItemId = ownerId, GitHubAlias = "user1" }], "Azure.Storage.Blobs", "Azure/azure-sdk-for-net");
+        var result = await _helper.RemoveOwnersFromPackage([new OwnerWorkItem { WorkItemId = ownerId, GitHubAlias = "user1" }], "Azure.Storage.Blobs", "Azure/azure-sdk-for-net", default);
 
         Assert.That(result.View, Is.Not.Null);
-        _mockDevOps.Verify(d => d.RemoveWorkItemRelationAsync(It.IsAny<int>(), It.Is<string>(s => s == "related"), It.IsAny<int>()), Times.Never);
+        _mockDevOps.Verify(d => d.RemoveWorkItemRelationAsync(It.IsAny<int>(), It.Is<string>(s => s == "related"), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test]
@@ -1030,18 +1081,18 @@ public class CodeownersManagementHelperTests
 
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
                 It.Is<string>(q => q.Contains("'Package'")),
-                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { pkgWi });
 
-        _mockDevOps.Setup(d => d.RemoveWorkItemRelationAsync(pkgId, "related", ownerId)).Returns(Task.CompletedTask);
-        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(It.IsAny<IEnumerable<int>>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+        _mockDevOps.Setup(d => d.RemoveWorkItemRelationAsync(pkgId, "related", ownerId, It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(It.IsAny<IEnumerable<int>>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { ownerRawWi });
 
-        var result = await _helper.RemoveOwnersFromPackage([new OwnerWorkItem { WorkItemId = ownerId, GitHubAlias = "user1" }], "Azure.Storage.Blobs", "Azure/azure-sdk-for-net");
+        var result = await _helper.RemoveOwnersFromPackage([new OwnerWorkItem { WorkItemId = ownerId, GitHubAlias = "user1" }], "Azure.Storage.Blobs", "Azure/azure-sdk-for-net", default);
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.View, Is.Not.Null);
-        _mockDevOps.Verify(d => d.RemoveWorkItemRelationAsync(pkgId, "related", ownerId), Times.Once);
+        _mockDevOps.Verify(d => d.RemoveWorkItemRelationAsync(pkgId, "related", ownerId, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // ========================
@@ -1056,13 +1107,13 @@ public class CodeownersManagementHelperTests
 
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
                 It.Is<string>(q => q.Contains("'Package'")),
-                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { pkgWi });
 
-        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(It.IsAny<IEnumerable<int>>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(It.IsAny<IEnumerable<int>>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
 
-        var result = await _helper.RemoveLabelsFromPackage([new LabelWorkItem { WorkItemId = labelId, LabelName = "StorageLabel" }], "Azure.Storage.Blobs", "Azure/azure-sdk-for-net");
+        var result = await _helper.RemoveLabelsFromPackage([new LabelWorkItem { WorkItemId = labelId, LabelName = "StorageLabel" }], "Azure.Storage.Blobs", "Azure/azure-sdk-for-net", default);
 
         Assert.That(result.View, Is.Not.Null);
     }
@@ -1076,18 +1127,18 @@ public class CodeownersManagementHelperTests
 
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
                 It.Is<string>(q => q.Contains("'Package'")),
-                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { pkgWi });
 
-        _mockDevOps.Setup(d => d.RemoveWorkItemRelationAsync(pkgId, "related", labelId)).Returns(Task.CompletedTask);
-        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(It.IsAny<IEnumerable<int>>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+        _mockDevOps.Setup(d => d.RemoveWorkItemRelationAsync(pkgId, "related", labelId, It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(It.IsAny<IEnumerable<int>>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { labelRawWi });
 
-        var result = await _helper.RemoveLabelsFromPackage([new LabelWorkItem { WorkItemId = labelId, LabelName = "StorageLabel" }], "Azure.Storage.Blobs", "Azure/azure-sdk-for-net");
+        var result = await _helper.RemoveLabelsFromPackage([new LabelWorkItem { WorkItemId = labelId, LabelName = "StorageLabel" }], "Azure.Storage.Blobs", "Azure/azure-sdk-for-net", default);
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.View, Is.Not.Null);
-        _mockDevOps.Verify(d => d.RemoveWorkItemRelationAsync(pkgId, "related", labelId), Times.Once);
+        _mockDevOps.Verify(d => d.RemoveWorkItemRelationAsync(pkgId, "related", labelId, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // ========================
@@ -1106,33 +1157,37 @@ public class CodeownersManagementHelperTests
 
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
                 It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("/sdk/storage") && q.Contains("Azure/azure-sdk-for-net")),
-                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations))
+                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { labelOwnerRawWi });
 
         // Hydration of the label owner candidate — returns the label work item so SetEquals matches
         _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
                 It.Is<IEnumerable<int>>(ids => ids.Contains(labelId)),
-                It.IsAny<int>(), WorkItemExpand.All))
+                It.IsAny<int>(), WorkItemExpand.All, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { MakeLabelWorkItem(labelId, "Storage") });
 
         // Label is already linked to the label owner, so CreateWorkItemRelationAsync for label should NOT be called
         // Owner is NOT related, so CreateWorkItemRelationAsync for owner should be called
-        _mockDevOps.Setup(d => d.CreateWorkItemRelationAsync(labelOwnerWiId, "related", ownerId, It.IsAny<string?>())).ReturnsAsync(new WorkItem());
+        _mockDevOps.Setup(d => d.CreateWorkItemRelationAsync(labelOwnerWiId, "related", ownerId, It.IsAny<string?>(), It.IsAny<CancellationToken>())).ReturnsAsync(new WorkItem());
 
         // GetViewByPath at the end — return empty for simplicity
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
                 It.Is<string>(q => q.Contains("/sdk/storage") && !q.Contains("'Label Owner'")),
-                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations))
+                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
 
         var owners = new[] { new OwnerWorkItem { WorkItemId = ownerId, GitHubAlias = "user1" } };
         var labels = new[] { new LabelWorkItem { WorkItemId = labelId, LabelName = "Storage" } };
 
-        var result = await _helper.AddOwnersAndLabelsToPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/storage", OwnerType.ServiceOwner);
+        var result = await _helper.AddOwnersAndLabelsToPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/storage", OwnerType.ServiceOwner, "Client Libraries", default);
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.View, Is.Not.Null);
-        _mockDevOps.Verify(d => d.CreateWorkItemRelationAsync(labelOwnerWiId, "related", ownerId, It.IsAny<string?>()), Times.Once);
+        _mockDevOps.Verify(d => d.CreateWorkItemRelationAsync(labelOwnerWiId, "related", ownerId, It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+        // Verify FindOrCreateLabelOwnerAsync included section in WIQL query
+        _mockDevOps.Verify(d => d.FetchWorkItemsPagedAsync(
+            It.Is<string>(q => q.Contains("Custom.Section") && q.Contains("Client Libraries")),
+            It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
     }
 
     [Test]
@@ -1147,29 +1202,29 @@ public class CodeownersManagementHelperTests
 
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
                 It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("/sdk/storage")),
-                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations))
+                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { labelOwnerRawWi });
 
         // Hydration — label matches so FindOrCreateLabelOwnerAsync returns existing
         _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
                 It.Is<IEnumerable<int>>(ids => ids.Contains(labelId)),
-                It.IsAny<int>(), WorkItemExpand.All))
+                It.IsAny<int>(), WorkItemExpand.All, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { MakeLabelWorkItem(labelId, "Storage") });
 
         // GetViewByPath at the end
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
                 It.Is<string>(q => q.Contains("/sdk/storage") && !q.Contains("'Label Owner'")),
-                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations))
+                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
 
         var owners = new[] { new OwnerWorkItem { WorkItemId = ownerId, GitHubAlias = "user1" } };
         var labels = new[] { new LabelWorkItem { WorkItemId = labelId, LabelName = "Storage" } };
 
-        var result = await _helper.AddOwnersAndLabelsToPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/storage", OwnerType.ServiceOwner);
+        var result = await _helper.AddOwnersAndLabelsToPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/storage", OwnerType.ServiceOwner, "Client Libraries", default);
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.View, Is.Not.Null);
-        _mockDevOps.Verify(d => d.CreateWorkItemRelationAsync(labelOwnerWiId, "related", ownerId, It.IsAny<string?>()), Times.Never);
+        _mockDevOps.Verify(d => d.CreateWorkItemRelationAsync(labelOwnerWiId, "related", ownerId, It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test]
@@ -1185,20 +1240,20 @@ public class CodeownersManagementHelperTests
 
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
                 It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("/sdk/storage")),
-                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations))
+                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { labelOwnerRawWi });
 
         _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
                 It.Is<IEnumerable<int>>(ids => ids.Contains(labelId)),
-                It.IsAny<int>(), WorkItemExpand.All))
+                It.IsAny<int>(), WorkItemExpand.All, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { MakeLabelWorkItem(labelId, "Storage") });
 
-        _mockDevOps.Setup(d => d.CreateWorkItemRelationAsync(labelOwnerWiId, "related", owner2Id, It.IsAny<string?>())).ReturnsAsync(new WorkItem());
+        _mockDevOps.Setup(d => d.CreateWorkItemRelationAsync(labelOwnerWiId, "related", owner2Id, It.IsAny<string?>(), It.IsAny<CancellationToken>())).ReturnsAsync(new WorkItem());
 
         // GetViewByPath at the end
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
                 It.Is<string>(q => q.Contains("/sdk/storage") && !q.Contains("'Label Owner'")),
-                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations))
+                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
 
         var owners = new[]
@@ -1208,12 +1263,12 @@ public class CodeownersManagementHelperTests
         };
         var labels = new[] { new LabelWorkItem { WorkItemId = labelId, LabelName = "Storage" } };
 
-        var result = await _helper.AddOwnersAndLabelsToPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/storage", OwnerType.ServiceOwner);
+        var result = await _helper.AddOwnersAndLabelsToPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/storage", OwnerType.ServiceOwner, "Client Libraries", default);
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.View, Is.Not.Null);
-        _mockDevOps.Verify(d => d.CreateWorkItemRelationAsync(labelOwnerWiId, "related", owner1Id, It.IsAny<string?>()), Times.Never);
-        _mockDevOps.Verify(d => d.CreateWorkItemRelationAsync(labelOwnerWiId, "related", owner2Id, It.IsAny<string?>()), Times.Once);
+        _mockDevOps.Verify(d => d.CreateWorkItemRelationAsync(labelOwnerWiId, "related", owner1Id, It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockDevOps.Verify(d => d.CreateWorkItemRelationAsync(labelOwnerWiId, "related", owner2Id, It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -1226,36 +1281,36 @@ public class CodeownersManagementHelperTests
         // No existing label owner found
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
                 It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("/sdk/newpath")),
-                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations))
+                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
 
         // CreateWorkItemAsync returns a new Label Owner work item
         var createdWi = MakeLabelOwnerWorkItem(newLabelOwnerWiId, "Service Owner", "Azure/azure-sdk-for-net", "/sdk/newpath");
         _mockDevOps.Setup(d => d.CreateWorkItemAsync(
-                It.IsAny<WorkItemBase>(), "Label Owner", It.Is<string>(t => t.Contains("/sdk/newpath")), It.IsAny<int?>(), It.IsAny<int?>()))
+                It.IsAny<WorkItemBase>(), "Label Owner", It.Is<string>(t => t.Contains("/sdk/newpath")), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(createdWi);
 
         // Link label to the new label owner
-        _mockDevOps.Setup(d => d.CreateWorkItemRelationAsync(newLabelOwnerWiId, "related", labelId, It.IsAny<string?>())).ReturnsAsync(new WorkItem());
+        _mockDevOps.Setup(d => d.CreateWorkItemRelationAsync(newLabelOwnerWiId, "related", labelId, It.IsAny<string?>(), It.IsAny<CancellationToken>())).ReturnsAsync(new WorkItem());
         // Link owner to the new label owner
-        _mockDevOps.Setup(d => d.CreateWorkItemRelationAsync(newLabelOwnerWiId, "related", ownerId, It.IsAny<string?>())).ReturnsAsync(new WorkItem());
+        _mockDevOps.Setup(d => d.CreateWorkItemRelationAsync(newLabelOwnerWiId, "related", ownerId, It.IsAny<string?>(), It.IsAny<CancellationToken>())).ReturnsAsync(new WorkItem());
 
         // GetViewByPath at the end
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
                 It.Is<string>(q => q.Contains("/sdk/newpath") && !q.Contains("'Label Owner'")),
-                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations))
+                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
 
         var owners = new[] { new OwnerWorkItem { WorkItemId = ownerId, GitHubAlias = "user1" } };
         var labels = new[] { new LabelWorkItem { WorkItemId = labelId, LabelName = "Storage" } };
 
-        var result = await _helper.AddOwnersAndLabelsToPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/newpath", OwnerType.ServiceOwner);
+        var result = await _helper.AddOwnersAndLabelsToPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/newpath", OwnerType.ServiceOwner, "Client Libraries", default);
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.View, Is.Not.Null);
-        _mockDevOps.Verify(d => d.CreateWorkItemAsync(It.IsAny<WorkItemBase>(), "Label Owner", It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int?>()), Times.Once);
-        _mockDevOps.Verify(d => d.CreateWorkItemRelationAsync(newLabelOwnerWiId, "related", labelId, It.IsAny<string?>()), Times.Once);
-        _mockDevOps.Verify(d => d.CreateWorkItemRelationAsync(newLabelOwnerWiId, "related", ownerId, It.IsAny<string?>()), Times.Once);
+        _mockDevOps.Verify(d => d.CreateWorkItemAsync(It.IsAny<WorkItemBase>(), "Label Owner", It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockDevOps.Verify(d => d.CreateWorkItemRelationAsync(newLabelOwnerWiId, "related", labelId, It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockDevOps.Verify(d => d.CreateWorkItemRelationAsync(newLabelOwnerWiId, "related", ownerId, It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -1274,29 +1329,29 @@ public class CodeownersManagementHelperTests
         // Since label sets don't match, a new one will be created.
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
                 It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("/sdk/storage")),
-                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations))
+                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { labelOwnerRawWi });
 
         // Hydration returns only label1
         _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
                 It.Is<IEnumerable<int>>(ids => ids.Contains(label1Id)),
-                It.IsAny<int>(), WorkItemExpand.All))
+                It.IsAny<int>(), WorkItemExpand.All, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { MakeLabelWorkItem(label1Id, "Storage") });
 
         // No exact label-set match, so a new Label Owner is created
         const int newLabelOwnerWiId = 200;
         var createdWi = MakeLabelOwnerWorkItem(newLabelOwnerWiId, "Service Owner", "Azure/azure-sdk-for-net", "/sdk/storage");
         _mockDevOps.Setup(d => d.CreateWorkItemAsync(
-                It.IsAny<WorkItemBase>(), "Label Owner", It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int?>()))
+                It.IsAny<WorkItemBase>(), "Label Owner", It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(createdWi);
 
         // Link both labels and owner to the new label owner
-        _mockDevOps.Setup(d => d.CreateWorkItemRelationAsync(newLabelOwnerWiId, "related", It.IsAny<int?>(), It.IsAny<string?>())).ReturnsAsync(new WorkItem());
+        _mockDevOps.Setup(d => d.CreateWorkItemRelationAsync(newLabelOwnerWiId, "related", It.IsAny<int?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>())).ReturnsAsync(new WorkItem());
 
         // GetViewByPath at the end
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
                 It.Is<string>(q => q.Contains("/sdk/storage") && !q.Contains("'Label Owner'")),
-                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations))
+                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
 
         var owners = new[] { new OwnerWorkItem { WorkItemId = ownerId, GitHubAlias = "user1" } };
@@ -1306,14 +1361,14 @@ public class CodeownersManagementHelperTests
             new LabelWorkItem { WorkItemId = label2Id, LabelName = "Blobs" }
         };
 
-        var result = await _helper.AddOwnersAndLabelsToPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/storage", OwnerType.ServiceOwner);
+        var result = await _helper.AddOwnersAndLabelsToPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/storage", OwnerType.ServiceOwner, "Client Libraries", default);
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.View, Is.Not.Null);
         // Both labels should be linked to the new label owner
-        _mockDevOps.Verify(d => d.CreateWorkItemRelationAsync(newLabelOwnerWiId, "related", label1Id, It.IsAny<string?>()), Times.Once);
-        _mockDevOps.Verify(d => d.CreateWorkItemRelationAsync(newLabelOwnerWiId, "related", label2Id, It.IsAny<string?>()), Times.Once);
-        _mockDevOps.Verify(d => d.CreateWorkItemRelationAsync(newLabelOwnerWiId, "related", ownerId, It.IsAny<string?>()), Times.Once);
+        _mockDevOps.Verify(d => d.CreateWorkItemRelationAsync(newLabelOwnerWiId, "related", label1Id, It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockDevOps.Verify(d => d.CreateWorkItemRelationAsync(newLabelOwnerWiId, "related", label2Id, It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockDevOps.Verify(d => d.CreateWorkItemRelationAsync(newLabelOwnerWiId, "related", ownerId, It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // ========================
@@ -1324,14 +1379,14 @@ public class CodeownersManagementHelperTests
     public async Task RemoveOwnersFromLabelsAndPath_NoLabelOwnerFound_ReturnsError()
     {
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
-                It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("/sdk/nopath")),
-                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations))
+                It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("/sdk/nopath") && q.Contains("Custom.Section") && q.Contains("Client Libraries")),
+                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
 
         var owners = new[] { new OwnerWorkItem { WorkItemId = 10, GitHubAlias = "user1" } };
         var labels = new[] { new LabelWorkItem { WorkItemId = 20, LabelName = "Storage" } };
 
-        var result = await _helper.RemoveOwnersFromLabelsAndPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/nopath", OwnerType.ServiceOwner);
+        var result = await _helper.RemoveOwnersFromLabelsAndPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/nopath", OwnerType.ServiceOwner, "Client Libraries", default);
 
         Assert.That(result.ResponseError, Does.Contain("No Label Owner work item found for path '/sdk/nopath'"));
     }
@@ -1348,34 +1403,38 @@ public class CodeownersManagementHelperTests
 
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
                 It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("/sdk/storage")),
-                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations))
+                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { labelOwnerRawWi });
 
         // Hydration of the label owner — returns owner and label work items
         _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
                 It.Is<IEnumerable<int>>(ids => ids.Contains(ownerId) && ids.Contains(labelId)),
-                It.IsAny<int>(), WorkItemExpand.All))
+                It.IsAny<int>(), WorkItemExpand.All, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>
             {
                 MakeOwnerWorkItem(ownerId, "user1"),
                 MakeLabelWorkItem(labelId, "Storage")
             });
 
-        _mockDevOps.Setup(d => d.RemoveWorkItemRelationAsync(labelOwnerWiId, "related", ownerId)).Returns(Task.CompletedTask);
+        _mockDevOps.Setup(d => d.RemoveWorkItemRelationAsync(labelOwnerWiId, "related", ownerId, It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         // GetViewByPath at the end
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
                 It.Is<string>(q => q.Contains("/sdk/storage") && !q.Contains("'Label Owner'")),
-                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations))
+                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
 
         var owners = new[] { new OwnerWorkItem { WorkItemId = ownerId, GitHubAlias = "user1" } };
         var labels = new[] { new LabelWorkItem { WorkItemId = labelId, LabelName = "Storage" } };
 
-        var result = await _helper.RemoveOwnersFromLabelsAndPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/storage", OwnerType.ServiceOwner);
+        var result = await _helper.RemoveOwnersFromLabelsAndPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/storage", OwnerType.ServiceOwner, "Client Libraries", default);
 
         Assert.That(result.ResponseError, Is.Null);
-        _mockDevOps.Verify(d => d.RemoveWorkItemRelationAsync(labelOwnerWiId, "related", ownerId), Times.Once);
+        _mockDevOps.Verify(d => d.RemoveWorkItemRelationAsync(labelOwnerWiId, "related", ownerId, It.IsAny<CancellationToken>()), Times.Once);
+        // Verify QueryLabelOwnersByPath included section in WIQL query
+        _mockDevOps.Verify(d => d.FetchWorkItemsPagedAsync(
+            It.Is<string>(q => q.Contains("Custom.Section") && q.Contains("Client Libraries")),
+            It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
     }
 
     [Test]
@@ -1390,29 +1449,33 @@ public class CodeownersManagementHelperTests
 
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
                 It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("/sdk/storage")),
-                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations))
+                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { labelOwnerRawWi });
 
         // Hydration — only label, no owner
         _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
                 It.Is<IEnumerable<int>>(ids => ids.Contains(labelId)),
-                It.IsAny<int>(), WorkItemExpand.All))
+                It.IsAny<int>(), WorkItemExpand.All, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { MakeLabelWorkItem(labelId, "Storage") });
 
         // GetViewByPath at the end
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
                 It.Is<string>(q => q.Contains("/sdk/storage") && !q.Contains("'Label Owner'")),
-                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations))
+                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
 
         var owners = new[] { new OwnerWorkItem { WorkItemId = ownerId, GitHubAlias = "user1" } };
         var labels = new[] { new LabelWorkItem { WorkItemId = labelId, LabelName = "Storage" } };
 
-        var result = await _helper.RemoveOwnersFromLabelsAndPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/storage", OwnerType.ServiceOwner);
+        var result = await _helper.RemoveOwnersFromLabelsAndPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/storage", OwnerType.ServiceOwner, "Client Libraries", default);
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.View, Is.Not.Null);
-        _mockDevOps.Verify(d => d.RemoveWorkItemRelationAsync(It.IsAny<int>(), "related", It.IsAny<int>()), Times.Never);
+        _mockDevOps.Verify(d => d.RemoveWorkItemRelationAsync(It.IsAny<int>(), "related", It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+        // Verify QueryLabelOwnersByPath included section in WIQL query
+        _mockDevOps.Verify(d => d.FetchWorkItemsPagedAsync(
+            It.Is<string>(q => q.Contains("Custom.Section") && q.Contains("Client Libraries")),
+            It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
     }
 
     [Test]
@@ -1428,25 +1491,25 @@ public class CodeownersManagementHelperTests
 
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
                 It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("/sdk/storage")),
-                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations))
+                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { labelOwnerRawWi });
 
         // Hydration
         _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
                 It.Is<IEnumerable<int>>(ids => ids.Contains(owner1Id) && ids.Contains(labelId)),
-                It.IsAny<int>(), WorkItemExpand.All))
+                It.IsAny<int>(), WorkItemExpand.All, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>
             {
                 MakeOwnerWorkItem(owner1Id, "linkedUser"),
                 MakeLabelWorkItem(labelId, "Storage")
             });
 
-        _mockDevOps.Setup(d => d.RemoveWorkItemRelationAsync(labelOwnerWiId, "related", owner1Id)).Returns(Task.CompletedTask);
+        _mockDevOps.Setup(d => d.RemoveWorkItemRelationAsync(labelOwnerWiId, "related", owner1Id, It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         // GetViewByPath at the end
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
                 It.Is<string>(q => q.Contains("/sdk/storage") && !q.Contains("'Label Owner'")),
-                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations))
+                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
 
         var owners = new[]
@@ -1456,12 +1519,16 @@ public class CodeownersManagementHelperTests
         };
         var labels = new[] { new LabelWorkItem { WorkItemId = labelId, LabelName = "Storage" } };
 
-        var result = await _helper.RemoveOwnersFromLabelsAndPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/storage", OwnerType.ServiceOwner);
+        var result = await _helper.RemoveOwnersFromLabelsAndPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/storage", OwnerType.ServiceOwner, "Client Libraries", default);
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.View, Is.Not.Null);
-        _mockDevOps.Verify(d => d.RemoveWorkItemRelationAsync(labelOwnerWiId, "related", owner1Id), Times.Once);
-        _mockDevOps.Verify(d => d.RemoveWorkItemRelationAsync(labelOwnerWiId, "related", owner2Id), Times.Never);
+        _mockDevOps.Verify(d => d.RemoveWorkItemRelationAsync(labelOwnerWiId, "related", owner1Id, It.IsAny<CancellationToken>()), Times.Once);
+        _mockDevOps.Verify(d => d.RemoveWorkItemRelationAsync(labelOwnerWiId, "related", owner2Id, It.IsAny<CancellationToken>()), Times.Never);
+        // Verify QueryLabelOwnersByPath included section in WIQL query
+        _mockDevOps.Verify(d => d.FetchWorkItemsPagedAsync(
+            It.Is<string>(q => q.Contains("Custom.Section") && q.Contains("Client Libraries")),
+            It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
     }
 
     [Test]
@@ -1479,13 +1546,13 @@ public class CodeownersManagementHelperTests
 
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
                 It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("/sdk/storage")),
-                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations))
+                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem> { lo1RawWi, lo2RawWi });
 
         // Hydration — fetch all related IDs from both label owners
         _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
                 It.IsAny<IEnumerable<int>>(),
-                It.IsAny<int>(), WorkItemExpand.All))
+                It.IsAny<int>(), WorkItemExpand.All, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>
             {
                 MakeOwnerWorkItem(ownerId, "user1"),
@@ -1493,23 +1560,286 @@ public class CodeownersManagementHelperTests
                 MakeLabelWorkItem(label2Id, "Blobs")
             });
 
-        _mockDevOps.Setup(d => d.RemoveWorkItemRelationAsync(labelOwner1Id, "related", ownerId)).Returns(Task.CompletedTask);
+        _mockDevOps.Setup(d => d.RemoveWorkItemRelationAsync(labelOwner1Id, "related", ownerId, It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         // GetViewByPath at the end
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
                 It.Is<string>(q => q.Contains("/sdk/storage") && !q.Contains("'Label Owner'")),
-                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations))
+                It.IsAny<int>(), It.IsAny<int>(), WorkItemExpand.Relations, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<WorkItem>());
 
         // Request removal from the label owner that has label1 ("Storage")
         var owners = new[] { new OwnerWorkItem { WorkItemId = ownerId, GitHubAlias = "user1" } };
         var labels = new[] { new LabelWorkItem { WorkItemId = label1Id, LabelName = "Storage" } };
 
-        var result = await _helper.RemoveOwnersFromLabelsAndPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/storage", OwnerType.ServiceOwner);
+        var result = await _helper.RemoveOwnersFromLabelsAndPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/storage", OwnerType.ServiceOwner, "Client Libraries", default);
 
         Assert.That(result.ResponseError, Is.Null);
         // Should remove from labelOwner1 (which has label1), not labelOwner2
-        _mockDevOps.Verify(d => d.RemoveWorkItemRelationAsync(labelOwner1Id, "related", ownerId), Times.Once);
-        _mockDevOps.Verify(d => d.RemoveWorkItemRelationAsync(labelOwner2Id, "related", It.IsAny<int>()), Times.Never);
+        _mockDevOps.Verify(d => d.RemoveWorkItemRelationAsync(labelOwner1Id, "related", ownerId, It.IsAny<CancellationToken>()), Times.Once);
+        _mockDevOps.Verify(d => d.RemoveWorkItemRelationAsync(labelOwner2Id, "related", It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+        // Verify QueryLabelOwnersByPath included section in WIQL query
+        _mockDevOps.Verify(d => d.FetchWorkItemsPagedAsync(
+            It.Is<string>(q => q.Contains("Custom.Section") && q.Contains("Client Libraries")),
+            It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+    }
+
+    // ========================
+    // ThrowIfInvalidTeamAlias tests
+    // ========================
+
+    private static Team CreateTeam(string slug, Team? parent = null)
+    {
+        return new Team(
+            url: $"https://api.github.com/orgs/Azure/teams/{slug}",
+            htmlUrl: $"https://github.com/orgs/Azure/teams/{slug}",
+            id: slug.GetHashCode(),
+            nodeId: $"T_{slug.GetHashCode()}",
+            slug: slug,
+            name: slug,
+            description: "",
+            privacy: TeamPrivacy.Closed,
+            permission: "push",
+            teamRepositoryPermissions: null,
+            membersCount: 1,
+            reposCount: 0,
+            organization: null,
+            parent: parent,
+            ldapDistinguishedName: null
+        );
+    }
+
+    [Test]
+    public void ThrowIfInvalidTeamAlias_FoundInCache_DoesNotThrow()
+    {
+        var alias = "Azure/my-cached-team";
+        _mockTeamUserCache
+            .Setup(c => c.TeamUserDict)
+            .Returns(new Dictionary<string, List<string>>(StringComparer.InvariantCultureIgnoreCase)
+            {
+                { "my-cached-team", new List<string> { "user1", "user2" } }
+            });
+
+        Assert.DoesNotThrowAsync(() => _helper.ThrowIfInvalidTeamAlias(alias, CancellationToken.None));
+
+        // Should not call GitHub API when found in cache
+        _mockGitHub.Verify(
+            g => g.GetTeamByNameAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Test]
+    public void ThrowIfInvalidTeamAlias_FoundInCache_EmptyTeam_DoesNotThrow()
+    {
+        var alias = "Azure/azure-sdk-partners";
+        _mockTeamUserCache
+            .Setup(c => c.TeamUserDict)
+            .Returns(new Dictionary<string, List<string>>(StringComparer.InvariantCultureIgnoreCase)
+            {
+                { "azure-sdk-partners", new List<string>() }
+            });
+
+        Assert.DoesNotThrowAsync(() => _helper.ThrowIfInvalidTeamAlias(alias, CancellationToken.None));
+
+        // Should not call GitHub API when the team key exists in the cache, even with zero members
+        _mockGitHub.Verify(
+            g => g.GetTeamByNameAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Test]
+    public void ThrowIfInvalidTeamAlias_NotInCache_DirectlyIsAzureSdkWrite_DoesNotThrow()
+    {
+        var alias = "Azure/azure-sdk-write";
+        var team = CreateTeam("azure-sdk-write");
+
+        _mockGitHub
+            .Setup(g => g.GetTeamByNameAsync("Azure", "azure-sdk-write", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(team);
+
+        Assert.DoesNotThrowAsync(() => _helper.ThrowIfInvalidTeamAlias(alias, CancellationToken.None));
+        _mockGitHub.Verify(g => g.GetTeamByNameAsync("Azure", "azure-sdk-write", It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public void ThrowIfInvalidTeamAlias_NotInCache_ParentIsAzureSdkWrite_DoesNotThrow()
+    {
+        var alias = "Azure/my-child-team";
+        var parentTeam = CreateTeam("azure-sdk-write");
+        var childTeam = CreateTeam("my-child-team", parent: parentTeam);
+
+        _mockGitHub
+            .Setup(g => g.GetTeamByNameAsync("Azure", "my-child-team", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(childTeam);
+        _mockGitHub
+            .Setup(g => g.GetTeamByNameAsync("Azure", "azure-sdk-write", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(parentTeam);
+
+        Assert.DoesNotThrowAsync(() => _helper.ThrowIfInvalidTeamAlias(alias, CancellationToken.None));
+        _mockGitHub.Verify(g => g.GetTeamByNameAsync("Azure", "my-child-team", It.IsAny<CancellationToken>()), Times.Once);
+        _mockGitHub.Verify(g => g.GetTeamByNameAsync("Azure", "azure-sdk-write", It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public void ThrowIfInvalidTeamAlias_NotInCache_GrandparentIsAzureSdkWrite_DoesNotThrow()
+    {
+        var alias = "Azure/deep-child-team";
+        var azureSdkWrite = CreateTeam("azure-sdk-write");
+        var midTeam = CreateTeam("mid-team", parent: azureSdkWrite);
+        var deepChild = CreateTeam("deep-child-team", parent: midTeam);
+
+        _mockGitHub
+            .Setup(g => g.GetTeamByNameAsync("Azure", "deep-child-team", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(deepChild);
+        _mockGitHub
+            .Setup(g => g.GetTeamByNameAsync("Azure", "mid-team", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(midTeam);
+        _mockGitHub
+            .Setup(g => g.GetTeamByNameAsync("Azure", "azure-sdk-write", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(azureSdkWrite);
+
+        Assert.DoesNotThrowAsync(() => _helper.ThrowIfInvalidTeamAlias(alias, CancellationToken.None));
+        _mockGitHub.Verify(g => g.GetTeamByNameAsync("Azure", "deep-child-team", It.IsAny<CancellationToken>()), Times.Once);
+        _mockGitHub.Verify(g => g.GetTeamByNameAsync("Azure", "mid-team", It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public void ThrowIfInvalidTeamAlias_NotInCache_NotDescendantOfAzureSdkWrite_Throws()
+    {
+        var alias = "Azure/unrelated-team";
+        var unrelatedTeam = CreateTeam("unrelated-team", parent: null);
+
+        _mockGitHub
+            .Setup(g => g.GetTeamByNameAsync("Azure", "unrelated-team", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(unrelatedTeam);
+
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(
+            () => _helper.ThrowIfInvalidTeamAlias(alias, CancellationToken.None));
+        Assert.That(ex!.Message, Does.Contain("is not a child of 'azure-sdk-write'"));
+    }
+
+    [Test]
+    public void ThrowIfInvalidTeamAlias_NotInCache_ParentChainDoesNotReachAzureSdkWrite_Throws()
+    {
+        var alias = "Azure/wrong-tree-team";
+        var otherRoot = CreateTeam("other-root", parent: null);
+        var wrongTreeTeam = CreateTeam("wrong-tree-team", parent: otherRoot);
+
+        _mockGitHub
+            .Setup(g => g.GetTeamByNameAsync("Azure", "wrong-tree-team", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(wrongTreeTeam);
+        _mockGitHub
+            .Setup(g => g.GetTeamByNameAsync("Azure", "other-root", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(otherRoot);
+
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(
+            () => _helper.ThrowIfInvalidTeamAlias(alias, CancellationToken.None));
+        Assert.That(ex!.Message, Does.Contain("is not a child of 'azure-sdk-write'"));
+    }
+
+    [Test]
+    public void ThrowIfInvalidTeamAlias_InvalidFormat_MultipleSlashes_Throws()
+    {
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(
+            () => _helper.ThrowIfInvalidTeamAlias("Azure/sub/team", CancellationToken.None));
+        Assert.That(ex!.Message, Does.Contain("Team aliases must be in the format '<org>/<team>' with exactly one '/'"));
+    }
+
+    [Test]
+    public void ThrowIfInvalidTeamAlias_NoSlash_Throws()
+    {
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(
+            () => _helper.ThrowIfInvalidTeamAlias("just-a-name", CancellationToken.None));
+        Assert.That(ex!.Message, Does.Contain("Team aliases must be in the format '<org>/<team>' with exactly one '/'"));
+    }
+
+    [Test]
+    public void ThrowIfInvalidTeamAlias_NotInCache_NotFoundOnGitHub_Throws()
+    {
+        var alias = "Azure/nonexistent-team";
+
+        _mockGitHub
+            .Setup(g => g.GetTeamByNameAsync("Azure", "nonexistent-team", It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Octokit.NotFoundException("Not Found", System.Net.HttpStatusCode.NotFound));
+
+        Assert.ThrowsAsync<Octokit.NotFoundException>(
+            () => _helper.ThrowIfInvalidTeamAlias(alias, CancellationToken.None));
+    }
+
+    [Test]
+    public void ThrowIfInvalidTeamAlias_AtPrefixed_FoundInCache_DoesNotThrow()
+    {
+        var alias = "@Azure/azure-sdk-eng";
+        _mockTeamUserCache
+            .Setup(c => c.TeamUserDict)
+            .Returns(new Dictionary<string, List<string>>(StringComparer.InvariantCultureIgnoreCase)
+            {
+                { "azure-sdk-eng", new List<string> { "engineer1", "engineer2" } }
+            });
+
+        Assert.DoesNotThrowAsync(() => _helper.ThrowIfInvalidTeamAlias(alias, CancellationToken.None));
+
+        // Should not call GitHub API when found in cache
+        _mockGitHub.Verify(
+            g => g.GetTeamByNameAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Test]
+    public void ThrowIfInvalidTeamAlias_AtPrefixed_NotInCache_ValidatesViaGitHub()
+    {
+        var alias = "@Azure/azure-sdk-release";
+        var parentTeam = CreateTeam("azure-sdk-write");
+        var childTeam = CreateTeam("azure-sdk-release", parent: parentTeam);
+
+        _mockGitHub
+            .Setup(g => g.GetTeamByNameAsync("Azure", "azure-sdk-release", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(childTeam);
+        _mockGitHub
+            .Setup(g => g.GetTeamByNameAsync("Azure", "azure-sdk-write", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(parentTeam);
+
+        Assert.DoesNotThrowAsync(() => _helper.ThrowIfInvalidTeamAlias(alias, CancellationToken.None));
+        _mockGitHub.Verify(g => g.GetTeamByNameAsync("Azure", "azure-sdk-release", It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public void ThrowIfInvalidTeamAlias_EmptyTeamName_Throws()
+    {
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(
+            () => _helper.ThrowIfInvalidTeamAlias("Azure/", CancellationToken.None));
+        Assert.That(ex!.Message, Does.Contain("Both the organization and team name must be non-empty"));
+    }
+
+    [Test]
+    public void ThrowIfInvalidTeamAlias_EmptyOrgName_Throws()
+    {
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(
+            () => _helper.ThrowIfInvalidTeamAlias("/azure-sdk-core", CancellationToken.None));
+        Assert.That(ex!.Message, Does.Contain("Both the organization and team name must be non-empty"));
+    }
+
+    [Test]
+    public void ThrowIfInvalidTeamAlias_AtPrefixedEmptyOrg_Throws()
+    {
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(
+            () => _helper.ThrowIfInvalidTeamAlias("@/azure-sdk-tooling", CancellationToken.None));
+        Assert.That(ex!.Message, Does.Contain("Both the organization and team name must be non-empty"));
+    }
+
+    [Test]
+    public void ThrowIfInvalidTeamAlias_NonAzureOrg_Throws()
+    {
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(
+            () => _helper.ThrowIfInvalidTeamAlias("contoso/azure-sdk-storage", CancellationToken.None));
+        Assert.That(ex!.Message, Does.Contain("Only teams in the 'Azure' organization are supported"));
+    }
+
+    [Test]
+    public void ThrowIfInvalidTeamAlias_AtPrefixedNonAzureOrg_Throws()
+    {
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(
+            () => _helper.ThrowIfInvalidTeamAlias("@microsoft/azure-sdk-infra", CancellationToken.None));
+        Assert.That(ex!.Message, Does.Contain("Only teams in the 'Azure' organization are supported"));
     }
 }

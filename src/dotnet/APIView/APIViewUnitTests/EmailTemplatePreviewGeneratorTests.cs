@@ -114,6 +114,16 @@ namespace APIViewUnitTests
                     NewRevisionEmailModel.Create(endpoint, review, revision),
                     "new-revision.html"
                 ),
+                (
+                    EmailTemplateKey.ReviewOrRevisionApproval,
+                    ReviewOrRevisionApprovalEmailModel.Create(endpoint, review, revision, "jane-approver", isReviewApproval: true),
+                    "subscriber-approval-review.html"
+                ),
+                (
+                    EmailTemplateKey.ReviewOrRevisionApproval,
+                    ReviewOrRevisionApprovalEmailModel.Create(endpoint, review, revision, "jane-approver", isReviewApproval: false),
+                    "subscriber-approval-revision.html"
+                ),
             };
 
             foreach (var template in templates)
@@ -166,6 +176,7 @@ namespace APIViewUnitTests
                 EmailTemplateKey.CommentTag => await renderer.RenderAsync(key, (CommentTagEmailModel)model),
                 EmailTemplateKey.SubscriberComment => await renderer.RenderAsync(key, (SubscriberCommentEmailModel)model),
                 EmailTemplateKey.NewRevision => await renderer.RenderAsync(key, (NewRevisionEmailModel)model),
+                EmailTemplateKey.ReviewOrRevisionApproval => await renderer.RenderAsync(key, (ReviewOrRevisionApprovalEmailModel)model),
                 _ => throw new ArgumentOutOfRangeException(nameof(key), key, "Unsupported template key"),
             };
         }

@@ -11,6 +11,7 @@ using ApiView;
 using APIViewWeb;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
+using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.Extensions.Logging;
@@ -28,6 +29,7 @@ public class TypeSpecMetadataIntegrationTests
     private readonly Mock<ILogger<ProjectsManager>> _mockProjectsLogger;
     private readonly Mock<ICosmosProjectRepository> _mockProjectsRepository;
     private readonly Mock<ICosmosReviewRepository> _mockReviewsRepository;
+    private readonly Mock<INamespaceManager> _mockNamespaceManager;
     private readonly ProjectsManager _projectsManager;
 
     public TypeSpecMetadataIntegrationTests()
@@ -38,6 +40,7 @@ public class TypeSpecMetadataIntegrationTests
         _mockCodeFileRepository = new Mock<IBlobCodeFileRepository>();
         _mockOriginalsRepository = new Mock<IBlobOriginalsRepository>();
         _mockProjectsLogger = new Mock<ILogger<ProjectsManager>>();
+        _mockNamespaceManager = new Mock<INamespaceManager>();
 
         List<LanguageService> languageServices = new();
 
@@ -52,6 +55,7 @@ public class TypeSpecMetadataIntegrationTests
         _projectsManager = new ProjectsManager(
             _mockProjectsRepository.Object,
             _mockReviewsRepository.Object,
+            _mockNamespaceManager.Object,
             _mockProjectsLogger.Object);
     }
 
@@ -69,34 +73,44 @@ public class TypeSpecMetadataIntegrationTests
                     Documentation = "Azure Purview Analytics client library",
                     Type = "client"
                 },
-            Languages = new Dictionary<string, LanguageConfig>
+            Languages = new Dictionary<string, List<LanguageConfig>>
             {
                 ["Python"] =
-                    new()
-                    {
-                        EmitterName = "@azure-tools/typespec-python",
-                        PackageName = "azure-purview-analytics",
-                        Namespace = "azure.purview.analytics"
-                    },
+                    [
+                        new()
+                        {
+                            EmitterName = "@azure-tools/typespec-python",
+                            PackageName = "azure-purview-analytics",
+                            Namespace = "azure.purview.analytics"
+                        }
+                    ],
                 ["JavaScript"] =
-                    new()
-                    {
-                        EmitterName = "@azure-tools/typespec-ts",
-                        PackageName = "@azure/purview-analytics",
-                        Namespace = "@azure/purview-analytics"
-                    },
-                ["Java"] = new()
-                {
-                    EmitterName = "@azure-tools/typespec-java",
-                    PackageName = "com.azure.analytics.purview",
-                    Namespace = "com.azure.analytics.purview"
-                },
-                ["DotNet"] = new()
-                {
-                    EmitterName = "@azure-tools/typespec-csharp",
-                    PackageName = "Azure.Analytics.Purview",
-                    Namespace = "Azure.Analytics.Purview"
-                }
+                    [
+                        new()
+                        {
+                            EmitterName = "@azure-tools/typespec-ts",
+                            PackageName = "@azure/purview-analytics",
+                            Namespace = "@azure/purview-analytics"
+                        }
+                    ],
+                ["Java"] =
+                    [
+                        new()
+                        {
+                            EmitterName = "@azure-tools/typespec-java",
+                            PackageName = "com.azure.analytics.purview",
+                            Namespace = "com.azure.analytics.purview"
+                        }
+                    ],
+                ["DotNet"] =
+                    [
+                        new()
+                        {
+                            EmitterName = "@azure-tools/typespec-csharp",
+                            PackageName = "Azure.Analytics.Purview",
+                            Namespace = "Azure.Analytics.Purview"
+                        }
+                    ]
             }
         };
 
@@ -156,10 +170,10 @@ public class TypeSpecMetadataIntegrationTests
         Assert.Equal("Azure Purview Analytics client library", capturedProject.Description);
         Assert.Equal(4, capturedProject.ExpectedPackages.Count);
 
-        Assert.Equal("azure-purview-analytics", capturedProject.ExpectedPackages["Python"].PackageName);
-        Assert.Equal("@azure/purview-analytics", capturedProject.ExpectedPackages["JavaScript"].PackageName);
-        Assert.Equal("com.azure.analytics.purview", capturedProject.ExpectedPackages["Java"].PackageName);
-        Assert.Equal("Azure.Analytics.Purview", capturedProject.ExpectedPackages["DotNet"].PackageName);
+        Assert.Contains("python::azure-purview-analytics", capturedProject.ExpectedPackages);
+        Assert.Contains("javascript::@azure/purview-analytics", capturedProject.ExpectedPackages);
+        Assert.Contains("java::com.azure.analytics.purview", capturedProject.ExpectedPackages);
+        Assert.Contains("c#::azure.analytics.purview", capturedProject.ExpectedPackages);  // "DotNet" aliased to "C#"
 
         Assert.Equal(capturedProject.Id, typeSpecReview.ProjectId);
         _mockProjectsRepository.Verify(r => r.UpsertProjectAsync(capturedProject), Times.Once);
@@ -176,13 +190,8 @@ public class TypeSpecMetadataIntegrationTests
             Id = "project-azure-core",
             CrossLanguagePackageId = "Azure.Core",
             Namespace = "Azure.Core",
-            ExpectedPackages = new Dictionary<string, PackageInfo>
-            {
-                ["Python"] = new() { PackageName = "azure-core", Namespace = "azure.core" },
-                ["JavaScript"] =
-                    new() { PackageName = "@azure/core-rest-pipeline", Namespace = "@azure/core-rest-pipeline" }
-            },
-            ReviewIds = new HashSet<string>(),
+            ExpectedPackages = ["python::azure-core", "javascript::@azure/core-rest-pipeline"],
+            Reviews = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase),
             ChangeHistory = new List<ProjectChangeHistory>()
         };
 
@@ -207,7 +216,8 @@ public class TypeSpecMetadataIntegrationTests
         Assert.NotNull(linkedProject);
         Assert.Equal("project-azure-core", linkedProject.Id);
         Assert.Equal("project-azure-core", pythonReview.ProjectId);
-        Assert.Contains("python-review-azure-core", linkedProject.ReviewIds);
+        Assert.Contains("python-review-azure-core", linkedProject.Reviews.Values.SelectMany(v => v));
+
 
         _mockProjectsRepository.Verify(r => r.GetProjectByExpectedPackageAsync("Python", "azure-core"), Times.Once);
         _mockReviewsRepository.Verify(r => r.UpsertReviewAsync(pythonReview), Times.Once);
@@ -222,12 +232,10 @@ public class TypeSpecMetadataIntegrationTests
             CrossLanguagePackageId = "Azure.Storage",
             Namespace = "Azure.Storage.Old",
             Description = "Old description",
-            ExpectedPackages = new Dictionary<string, PackageInfo>
-            {
-                ["Python"] = new() { PackageName = "azure-storage-old", Namespace = "azure.storage" }
-            },
+            ExpectedPackages = ["python::azure-storage-old"],
+            ExpectedNamespaces = ["python::azure.storage"],
             ChangeHistory = new List<ProjectChangeHistory>(),
-            ReviewIds = new HashSet<string>()
+            Reviews = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase)
         };
 
         ReviewListItemModel typeSpecReview = new()
@@ -246,9 +254,9 @@ public class TypeSpecMetadataIntegrationTests
                 Namespace = "Azure.Storage.Blobs", // Changed
                 Documentation = "New blob storage documentation" // Changed
             },
-            Languages = new Dictionary<string, LanguageConfig>
+            Languages = new Dictionary<string, List<LanguageConfig>>
             {
-                ["Python"] = new() { PackageName = "azure-storage-blob", Namespace = "azure.storage.blob" } // Changed
+                ["Python"] = [new() { PackageName = "azure-storage-blob", Namespace = "azure.storage.blob" }] // Changed
             }
         };
 
@@ -261,7 +269,7 @@ public class TypeSpecMetadataIntegrationTests
         Assert.NotNull(updatedProject);
         Assert.Equal("Azure.Storage.Blobs", updatedProject.Namespace);
         Assert.Equal("New blob storage documentation", updatedProject.Description);
-        Assert.Equal("azure-storage-blob", updatedProject.ExpectedPackages["Python"].PackageName);
+        Assert.Contains("python::azure-storage-blob", updatedProject.ExpectedPackages);
 
         Assert.Single(updatedProject.ChangeHistory);
         Assert.Equal(ProjectChangeAction.Edited, updatedProject.ChangeHistory[0].ChangeAction);

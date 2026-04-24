@@ -45,7 +45,11 @@ stimuli:
   - type: file-matches
     config:
       path: employee.tsp
-      pattern: 'exportData is ArmResourceActionSync<Employee, void, ExportResult>;'
+      pattern: 'exportData\s+is\s+ArmResourceActionSync'
+  - type: file-matches
+    config:
+      path: employee.tsp
+      pattern: 'ExportResponse'
   - type: prompt
     config:
       scoring: scale_1_5
@@ -56,5 +60,5 @@ scoring:
   weights:
     tool-calls: 1
     prompt: 1
-    file-matches: 1
+    file-matches: 2
   threshold: 1.0

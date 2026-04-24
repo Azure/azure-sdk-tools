@@ -93,17 +93,26 @@ stimuli:
     config:
       path: employee.tsp
       pattern: oldAge
-  - type: prompt
+  - type: file-matches
     config:
-      scoring: scale_1_5
-      threshold: 1.0
-      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
-      model: claude-opus-4.6
+      path: employee.tsp
+      pattern: '@added\(Versions\.v2025_05_04_preview\)\s+workLocation\?: WorkLocation;'
+  - type: file-not-matches
+    config:
+      path: employee.tsp
+      pattern: v2024_10_01_preview
+  - type: file-matches
+    config:
+      path: employee.tsp
+      pattern: 'age\?: int32;'
+  - type: file-matches
+    config:
+      path: employee.tsp
+      pattern: '@typeChangedFrom\(Versions\.v2025_05_04_preview, string\[\]\)'
 scoring:
   weights:
-    prompt: 1
-    file-matches: 1
-    file-not-matches: 2
+    file-matches: 4
+    file-not-matches: 3
     file-exists: 1
     file-not-exists: 1
     tool-calls: 1

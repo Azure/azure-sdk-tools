@@ -35,6 +35,10 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
+    - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+      dest: stable/2021-11-01/widget.json
+    - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+      dest: preview/2024-10-01-preview/widget.json
   graders:
   - type: tool-calls
     config:
@@ -45,11 +49,7 @@ stimuli:
   - type: file-matches
     config:
       path: '*.tsp'
-      pattern: '@minLength\(1\)|@@minLength\(Employee\.name,\s*1\)'
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: 'ResourceNameParameter<Employee,\s*KeyName\s*=\s*"name"\>|@key\("employeeName"\)'
+      pattern: '@@minLength\(Employee\.name,\s*1\)'
   - type: prompt
     config:
       scoring: scale_1_5

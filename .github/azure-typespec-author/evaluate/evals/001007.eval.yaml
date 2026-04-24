@@ -102,20 +102,17 @@ stimuli:
   - type: file-matches
     config:
       path: employee.tsp
-      pattern: '@added\(Versions\.v2025_01_01\)'
+      pattern: '@removed\(Versions\.v2025_01_01\)\s*@renamedFrom\(Versions\.v2025_01_01, "age"\)\s*oldAge\?: int32;'
+  - type: file-matches
+    config:
+      path: employee.tsp
+      pattern: '@added\(Versions\.v2025_01_01\)\s*age\?: int32 = 21;'
   - type: file-not-matches
     config:
       path: employee.tsp
       pattern: v2024_10_01_preview
-  - type: prompt
-    config:
-      scoring: scale_1_5
-      threshold: 1.0
-      prompt: 'Evaluate only the semantic interpretation of the request: the excluded features are workLocation property and WorkLocation model, while other features should be carried. Double check the plan has correctly implemented version renaming (2024-10-01-preview → 2025-01-01), old version removal, new version example setup and old version example removal.'
-      model: claude-opus-4.6
 scoring:
   weights:
-    prompt: 1
     file-matches: 2
     file-not-matches: 3
     file-exists: 1

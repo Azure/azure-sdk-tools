@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, OnDestroy, Output, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, inject, Input, OnChanges, OnInit, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToggleSwitchChangeEvent } from 'primeng/toggleswitch';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
@@ -34,6 +34,18 @@ const AI_REVIEW_BUTTON_TEXT = {
   FAILED: 'Failed to generate Copilot review'
 } as const;
 
+export enum ApprovalDisabledReason {
+  MissingPackageVersion = 'missingPackageVersion',
+  CopilotReviewRequired = 'copilotReviewRequired',
+  UnresolvedMustFix = 'unresolvedMustFix',
+}
+
+const APPROVAL_DISABLED_MESSAGES: Record<ApprovalDisabledReason, string> = {
+  [ApprovalDisabledReason.MissingPackageVersion]: 'A package version must be set before approving.',
+  [ApprovalDisabledReason.CopilotReviewRequired]: 'Copilot review must be completed before approving.',
+  [ApprovalDisabledReason.UnresolvedMustFix]: 'Cannot approve due to outstanding "Must Fix" comments.',
+};
+
 @Component({
     selector: 'app-review-page-options',
     templateUrl: './review-page-options.component.html',
@@ -49,6 +61,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
   @Input() review : Review | undefined = undefined;
   @Input() activeAPIRevision : APIRevision | undefined = undefined;
   @Input() diffAPIRevision : APIRevision | undefined = undefined;
+  @Input() hasReleasedApprovedGARevision : boolean = false;
   @Input() hasFatalDiagnostics : boolean = false;
   @Input() hasActiveConversation : boolean = false;
   @Input() hasHiddenAPIs : boolean = false;
@@ -70,6 +83,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
   @Output() codeLineSearchInfoEmitter : EventEmitter<CodeLineSearchInfo> = new EventEmitter<CodeLineSearchInfo>();
 
   private destroy$ = new Subject<void>();
+  private qualityScoreRequestId: number = 0;
+  private cdr = inject(ChangeDetectorRef);
 
   webAppUrl : string = this.configService.webAppUrl
   assetsPath : string = environment.assetsPath;
@@ -86,7 +101,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
   activeAPIRevisionIsApprovedByCurrentUser: boolean = false;
   isAPIRevisionApprovalDisabled: boolean = false;
   isMissingPackageVersion: boolean = false;
-  apiRevisionApprovalMessage: string = '';
+  apiRevisionApprovalMessages: string[] = [];
   apiRevisionApprovalBtnClass: string = '';
   apiRevisionApprovalBtnLabel: string = '';
   showAPIRevisionApprovalModal: boolean = false;
@@ -120,6 +135,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
 
   qualityScore: ReviewQualityScore | undefined = undefined;
   qualityScoreLoading: boolean = false;
+  unresolvedMustFixCount: number = 0;
+  hasDiagnosticMustFixApprovalWarning: boolean = false;
 
   associatedPullRequests  : PullRequestModel[] = [];
   pullRequestsOfAssociatedAPIRevisions : PullRequestModel[] = [];
@@ -196,6 +213,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
     if (changes['activeAPIRevision'] && changes['activeAPIRevision'].currentValue != undefined) {
       this.selectedApprovers = this.activeAPIRevision!.assignedReviewers.map(reviewer => reviewer.assingedTo);
       this.isCopilotReviewSupported = this.isCopilotReviewSupportedForPackage();
+      this.unresolvedMustFixCount = 0;
+      this.qualityScore = undefined;
       this.setAPIRevisionApprovalStates();
       this.setPullRequestsInfo();
       this.setNamespaceReviewStates();
@@ -401,9 +420,11 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
       combineLatest([isRequired$, isVersionReviewed$]).pipe(take(1)).subscribe({
         next: ([isRequired, isVersionReviewed]: [boolean, boolean]) => {
           this.updateApprovalStates(isRequired, isVersionReviewed);
+          this.cdr.markForCheck();
         },
         error: (error) => {
           this.updateApprovalStates(false, false);
+          this.cdr.markForCheck();
         }
       });
     } else {
@@ -415,7 +436,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
     this.activeAPIRevisionIsApprovedByCurrentUser = this.activeAPIRevision?.approvers.includes(this.userProfile?.userName!)!;
     this.canToggleApproveAPIRevision = (!this.diffAPIRevision || this.diffAPIRevision.approvers.length > 0);
 
-    this.isAPIRevisionApprovalDisabled = this.shouldDisableApproval(isReviewByCopilotRequired, isVersionReviewedByCopilot);
+    const disabledReasons = this.getApprovalDisabledReasons(isReviewByCopilotRequired, isVersionReviewedByCopilot);
+    this.isAPIRevisionApprovalDisabled = disabledReasons.length > 0;
 
     if (this.canToggleApproveAPIRevision) {
       if (this.isAPIRevisionApprovalDisabled) {
@@ -424,27 +446,19 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
         this.apiRevisionApprovalBtnClass = (this.activeAPIRevisionIsApprovedByCurrentUser) ? "btn btn-outline-secondary" : "btn btn-success";
       }
       this.apiRevisionApprovalBtnLabel = (this.activeAPIRevisionIsApprovedByCurrentUser) ? "Revert API Approval" : "Approve";
-      this.apiRevisionApprovalMessage = this.activeAPIRevisionIsApprovedByCurrentUser ? "" :
-        this.isAPIRevisionApprovalDisabled ? this.getApprovalDisabledMessage(isReviewByCopilotRequired, isVersionReviewedByCopilot) :
-        "Approves the Current API Revision";
+      if (this.activeAPIRevisionIsApprovedByCurrentUser) {
+        this.apiRevisionApprovalMessages = [];
+      } else if (this.isAPIRevisionApprovalDisabled) {
+        this.apiRevisionApprovalMessages = disabledReasons.map(r => APPROVAL_DISABLED_MESSAGES[r]);
+      } else {
+        this.apiRevisionApprovalMessages = ["Approves the Current API Revision"];
+      }
     } else {
       this.apiRevisionApprovalBtnClass = "btn btn-outline-secondary";
       this.apiRevisionApprovalBtnLabel = (this.activeAPIRevisionIsApprovedByCurrentUser) ? "Revert API Approval" : "Approve";
     }
   }
 
-  private getApprovalDisabledMessage(isReviewByCopilotRequired: boolean, isVersionReviewedByCopilot: boolean): string {
-    if (this.isMissingPackageVersion) {
-      return "This API revision cannot be approved because it is missing a package version. Please ensure the package version is set.";
-    }
-    if (this.hasUnresolvedMustFix()) {
-      return "Cannot approve while unresolved Must Fix comments remain.";
-    }
-    if (isReviewByCopilotRequired && !isVersionReviewedByCopilot) {
-      return "To approve the current API revision, it must first be reviewed by Copilot";
-    }
-    return "";
-  }
   setReviewApprovalStatus() {
     this.reviewIsApproved = !!this.review?.isApproved;
     if (this.reviewIsApproved) {
@@ -472,17 +486,27 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
 
   fetchQualityScore() {
     if (!this.activeAPIRevision?.id) return;
+    const requestId = ++this.qualityScoreRequestId;
     this.qualityScoreLoading = true;
     this.apiRevisionsService.getQualityScore(this.activeAPIRevision.id).pipe(take(1)).subscribe({
       next: (score: ReviewQualityScore) => {
+        if (requestId !== this.qualityScoreRequestId) return;
         this.qualityScore = score;
+        const mustFixDiagnosticsCount = score.unresolvedMustFixDiagnostics ?? 0;
+        this.unresolvedMustFixCount = score.unresolvedMustFixCount - mustFixDiagnosticsCount;
+        this.hasDiagnosticMustFixApprovalWarning = mustFixDiagnosticsCount > 0;
         this.qualityScoreLoading = false;
-        // Re-evaluate approval states since must-fix count may have changed
         this.setAPIRevisionApprovalStates();
+        this.cdr.markForCheck();
       },
       error: () => {
+        if (requestId !== this.qualityScoreRequestId) return;
         this.qualityScore = undefined;
+        this.unresolvedMustFixCount = 0;
+        this.hasDiagnosticMustFixApprovalWarning = false;
         this.qualityScoreLoading = false;
+        this.setAPIRevisionApprovalStates();
+        this.cdr.markForCheck();
       }
     });
   }
@@ -499,6 +523,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
       this.pullRequestService.getAssociatedPullRequests(this.activeAPIRevision.reviewId, this.activeAPIRevision.id).pipe(take(1)).subscribe({
         next: (response: PullRequestModel[]) => {
           this.associatedPullRequests = response;
+          this.cdr.markForCheck();
         }
       });
 
@@ -513,6 +538,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
           }
           // Re-evaluate namespace review states after associated reviews are loaded
           this.setNamespaceReviewStates();
+          this.cdr.markForCheck();
         }
       });
     }
@@ -523,6 +549,69 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
   }
 
   generateAIReview() {
+    // 1) Warn if the active revision is already approved.
+    if (this.activeAPIRevision?.isApproved) {
+      this.confirmationService.confirm({
+        message: 'This API is already approved. Are you sure you want to request a Copilot review?',
+        header: 'Are you sure?',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'Review anyway',
+        rejectLabel: 'Cancel',
+        acceptButtonStyleClass: 'p-button-warning',
+        rejectButtonStyleClass: 'p-button-danger p-button-outlined',
+        accept: () => {
+          setTimeout(() => this.checkAlreadyReviewedAndExecute());
+        }
+      });
+      return;
+    }
+
+    this.checkAlreadyReviewedAndExecute();
+  }
+
+  private checkAlreadyReviewedAndExecute() {
+    // 2) Warn if Copilot has already reviewed this revision.
+    if (this.activeAPIRevision?.hasAutoGeneratedComments) {
+      this.confirmationService.confirm({
+        message: 'Copilot has already reviewed this API. Are you sure you want Copilot to review again?',
+        header: 'Are you sure?',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'Review again',
+        rejectLabel: 'Cancel',
+        acceptButtonStyleClass: 'p-button-warning',
+        rejectButtonStyleClass: 'p-button-danger p-button-outlined',
+        accept: () => {
+          setTimeout(() => this.checkFullApiReviewAndExecute());
+        }
+      });
+      return;
+    }
+
+    this.checkFullApiReviewAndExecute();
+  }
+
+  private checkFullApiReviewAndExecute() {
+    // 3) If not in diff mode and there are pre-existing approved, released GA versions,
+    // show a confirmation dialog to discourage full-API reviews.
+    if (!this.diffAPIRevision && this.hasReleasedApprovedGARevision) {
+      this.confirmationService.confirm({
+        message: 'You are requesting a Copilot review of the entire API. Unless this is a new API or a major version bump, that probably is not what you want. If you want to review the changes only, switch to diff mode and then request review.',
+        header: 'Are you sure?',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'Review full API',
+        rejectLabel: 'Cancel',
+        acceptButtonStyleClass: 'p-button-warning',
+        rejectButtonStyleClass: 'p-button-danger p-button-outlined',
+        accept: () => {
+          setTimeout(() => this.executeAIReview());
+        }
+      });
+    } else {
+      this.executeAIReview();
+    }
+  }
+
+  private executeAIReview() {
     this.aiReviewGenerationState = 'InProgress';
     this.generateAIReviewButtonText = AI_REVIEW_BUTTON_TEXT.GENERATING;
     const diffApiRevisionId = this.diffAPIRevision ? this.diffAPIRevision.id : undefined;
@@ -600,12 +689,14 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
       return;
     }
 
-    if (!this.activeAPIRevisionIsApprovedByCurrentUser && (this.hasActiveConversation || this.hasFatalDiagnostics)) {
+    if (!this.activeAPIRevisionIsApprovedByCurrentUser && (this.hasActiveConversation || this.hasFatalDiagnostics || this.hasDiagnosticMustFixApprovalWarning)) {
       this.showAPIRevisionApprovalModal = true;
     } else {
       this.toggleAPIRevisionApproval();
     }
   }
+
+
 
   handleReviewApprovalAction() {
     this.reviewApprovalEmitter.emit(true);
@@ -788,18 +879,14 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
     }
   }
 
-  private shouldDisableApproval(isReviewByCopilotRequired: boolean, isVersionReviewedByCopilot: boolean): boolean {
-    if (this.isMissingPackageVersion) return true;
-    if(this.activeAPIRevision?.isApproved) return false;
-    if (this.hasUnresolvedMustFix()) return true;
-    if (!this.isCopilotReviewSupported) return false;
-    if (this.isPreviewVersion()) return false;
+  private getApprovalDisabledReasons(isReviewByCopilotRequired: boolean, isVersionReviewedByCopilot: boolean): ApprovalDisabledReason[] {
+    if (this.activeAPIRevision?.isApproved) return [];
 
-    return isReviewByCopilotRequired && !isVersionReviewedByCopilot;
-  }
-
-  private hasUnresolvedMustFix(): boolean {
-    return (this.qualityScore?.unresolvedMustFixCount ?? 0) > 0;
+    const reasons: ApprovalDisabledReason[] = [];
+    if (this.isMissingPackageVersion) reasons.push(ApprovalDisabledReason.MissingPackageVersion);
+    if (this.isCopilotReviewSupported && !this.isPreviewVersion() && isReviewByCopilotRequired && !isVersionReviewedByCopilot) reasons.push(ApprovalDisabledReason.CopilotReviewRequired);
+    if (this.unresolvedMustFixCount > 0) reasons.push(ApprovalDisabledReason.UnresolvedMustFix);
+    return reasons;
   }
 
   private isCopilotReviewSupportedForPackage(): boolean {

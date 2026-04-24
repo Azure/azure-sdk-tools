@@ -23,8 +23,16 @@ public class APIViewReviewTool : MCPMultiCommandTool
     // Sub-command constants
     private const string GetCommentsCmd = "get-comments";
     private const string GetContentCmd = "get-content";
+    private const string CreateCIRevisionCmd = "create-ci-revision";
+    private const string CreatePullRequestRevisionCmd = "create-pull-request-revision";
+    private const string RequestCopilotReviewCmd = "request-copilot-review";
+    private const string GetCopilotReviewCmd = "get-copilot-review";
+    private const string GetReviewUrlCmd = "get-review-url";
 
     private const string ApiViewGetCommentsToolName = "azsdk_apiview_get_comments";
+    private const string ApiViewRequestCopilotReviewToolName = "azsdk_apiview_request_copilot_review";
+    private const string ApiViewGetCopilotReviewToolName = "azsdk_apiview_get_copilot_review";
+    private const string ApiViewGetReviewUrlToolName = "azsdk_apiview_get_review_url";
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.APIView];
 
@@ -38,9 +46,149 @@ public class APIViewReviewTool : MCPMultiCommandTool
         DefaultValueFactory = _ => "text"
     };
 
-    private readonly Option<string> apiViewUrlOption = new("--url")
+    private readonly Option<string> apiViewUrlRequiredOption = new("--url")
     {
         Description = "The URL to the API review in APIView (e.g., https://apiview.dev/review/{reviewId}?activeApiRevisionId={revisionId})",
+        Required = true
+    };
+
+    private readonly Option<string> apiViewUrlOption = new("--url")
+    {
+        Description = "The URL to the API review in APIView (e.g., https://apiview.dev/review/{reviewId}?activeApiRevisionId={revisionId}). Use --api-text instead to provide the text directly."
+    };
+
+    private readonly Option<string> buildIdOption = new("--build-id")
+    {
+        Description = "The Azure DevOps build ID",
+        Required = true
+    };
+
+    private readonly Option<string> codeFileOption = new("--code-token-file-path")
+    {
+        Description = "The APIView token file path within the artifact (e.g., 'azure-core_python.json')",
+        Required = true,
+    };
+
+    private readonly Option<string> sourceFileOption = new("--source-file-path")
+    {
+        Description = "The original source/package file path relative to the artifact (e.g., 'azure-core-1.0.0.whl', 'Microsoft.Cache-Redis.New.json')",
+        Required = true
+    };
+
+    private readonly Option<string> repoNameOption = new("--repo-name")
+    {
+        Description = "The repository name in 'owner/repo' format (e.g., 'Azure/azure-sdk-for-python')",
+        Required = true
+    };
+
+    private readonly Option<string> packageNameOption = new("--package-name")
+    {
+        Description = "The package name (e.g., 'azure-core')",
+        Required = true
+    };
+
+    private readonly Option<string> artifactNameOption = new("--artifact-name")
+    {
+        Description = "The Azure DevOps artifact name",
+        Required = true
+    };
+
+    private readonly Option<string> projectOption = new("--project")
+    {
+        Description = "The Azure DevOps project name (defaults to 'internal')",
+        DefaultValueFactory = _ => "internal"
+    };
+
+    private readonly Option<string> labelOption = new("--label")
+    {
+        Description = "A label to associate with the API review. If not provided, defaults to 'Source Branch:{sourceBranch}'"
+    };
+
+    private readonly Option<string> packageVersionOption = new("--package-version")
+    {
+        Description = "The package version for the API review"
+    };
+
+    private readonly Option<bool> compareAllRevisionsOption = new("--compare-all-revisions")
+    {
+        Description = "Whether to compare all revisions (typically set for released packages)",
+        DefaultValueFactory = _ => false
+    };
+
+    private readonly Option<bool> setReleaseTagOption = new("--set-release-tag")
+    {
+        Description = "Whether to tag the revision as released (used from release pipelines)",
+        DefaultValueFactory = _ => false
+    };
+
+    private readonly Option<string> packageTypeOption = new("--package-type")
+    {
+        Description = "The SDK package type"
+    };
+
+    private readonly Option<string> sourceBranchOption = new("--source-branch")
+    {
+        Description = "The source branch for the build"
+    };
+
+    // get-review-url specific options
+    private readonly Option<string> languageQueryOption = new("--language")
+    {
+        Description = $"The language of the package. Supported values: {string.Join(", ", SupportedLanguages)}.",
+        Required = true
+    };
+
+    // create-pull-request-revision specific options
+    private readonly Option<string> commitShaOption = new("--commit-sha")
+    {
+        Description = "The git commit SHA of the pull request head",
+        Required = true
+    };
+
+    private readonly Option<int> pullRequestNumberOption = new("--pull-request-number")
+    {
+        Description = "The pull request number",
+        Required = true
+    };
+
+    private readonly Option<string> languageOption = new("--language")
+    {
+        Description = "The language identifier (e.g., 'python', 'java', 'js', 'net', 'go')"
+    };
+
+    private readonly Option<string> baselineCodeFileOption = new("--baseline-code-file")
+    {
+        Description = "The baseline code file name for API comparison"
+    };
+
+    private readonly Option<string> metadataFileOption = new("--metadata-file")
+    {
+        Description = "TypeSpec metadata file name within the artifact (e.g., 'typespec-metadata.json')"
+    };
+
+    private readonly Option<string> apiTextOption = new("--api-text")
+    {
+        Description = "The API surface text to review. Accepts raw text or a markdown code block — if a language-tagged fence is used (e.g. ```python ... ```), the language is inferred automatically."
+    };
+
+    private readonly Option<string> baseApiTextOption = new("--base-api-text")
+    {
+        Description = "Previous version of the API surface text. When provided, the Copilot focuses its feedback on what changed between this and --api-text."
+    };
+
+    private readonly Option<string> outlineOption = new("--outline")
+    {
+        Description = "A brief description of the API's purpose and design intent. Helps the Copilot understand context that may not be evident from the surface text alone."
+    };
+
+    private readonly Option<string> existingCommentsOption = new("--existing-comments")
+    {
+        Description = "Existing review comments as a JSON array (use get-comments to retrieve them). Gives the Copilot context about feedback already left on this API."
+    };
+
+    private readonly Option<string> jobIdOption = new("--job-id")
+    {
+        Description = "Job ID returned by request-copilot-review. Use this to check review status and retrieve generated comments.",
         Required = true
     };
 
@@ -52,10 +200,34 @@ public class APIViewReviewTool : MCPMultiCommandTool
 
     protected override List<Command> GetCommands() =>
     [
-        new McpCommand(GetCommentsCmd, "Get comments for a specific APIView URL", ApiViewGetCommentsToolName) { apiViewUrlOption },
-        new(GetContentCmd, "Get content by APIView URL") 
+        new McpCommand(GetCommentsCmd, "Get comments for a specific APIView URL", ApiViewGetCommentsToolName) { apiViewUrlRequiredOption },
+        new(GetContentCmd, "Get content by APIView URL")
         {
-            apiViewUrlOption, outputFileOption, contentReturnTypeOption
+            apiViewUrlRequiredOption, outputFileOption, contentReturnTypeOption
+        },
+        new(CreateCIRevisionCmd, "Create an API revision from Azure DevOps pipeline artifacts (CI/release pipeline usage)")
+        {
+            buildIdOption, artifactNameOption, sourceFileOption, codeFileOption,
+            repoNameOption, packageNameOption, projectOption,
+            labelOption, compareAllRevisionsOption, packageVersionOption, setReleaseTagOption, packageTypeOption, sourceBranchOption
+        },
+        new(CreatePullRequestRevisionCmd, "Create an API revision if API changes are detected in a pull request (PR pipeline usage)")
+        {
+            buildIdOption, artifactNameOption, sourceFileOption, commitShaOption,
+            repoNameOption, packageNameOption, pullRequestNumberOption,
+            projectOption, packageTypeOption, codeFileOption, languageOption, baselineCodeFileOption, metadataFileOption
+        },
+        new McpCommand(GetReviewUrlCmd, "Get the APIView review URL for a package and language", ApiViewGetReviewUrlToolName)
+        {
+            packageNameOption, languageQueryOption, packageVersionOption
+        },
+        new McpCommand(RequestCopilotReviewCmd, "Submit an API for automated Copilot review", ApiViewRequestCopilotReviewToolName)
+        {
+            apiViewUrlOption, languageOption, apiTextOption, baseApiTextOption, outlineOption, existingCommentsOption
+        },
+        new McpCommand(GetCopilotReviewCmd, "Get the status and results of a Copilot review", ApiViewGetCopilotReviewToolName)
+        {
+            jobIdOption
         }
     ];
 
@@ -66,20 +238,25 @@ public class APIViewReviewTool : MCPMultiCommandTool
         {
             GetCommentsCmd => await GetComments(parseResult, ct),
             GetContentCmd => await GetContent(parseResult, ct),
+            CreateCIRevisionCmd => await CreateCIRevision(parseResult, ct),
+            CreatePullRequestRevisionCmd => await CreatePullRequestRevision(parseResult, ct),
+            GetReviewUrlCmd => await GetReviewUrl(parseResult, ct),
+            RequestCopilotReviewCmd => await RequestCopilotReview(parseResult, ct),
+            GetCopilotReviewCmd => await GetCopilotReview(parseResult, ct),
             _ => new APIViewResponse { ResponseError = $"Unknown command: {commandName}" }
         };
-        
+
         return result;
     }
 
     [McpServerTool(Name = ApiViewGetCommentsToolName), Description("Get API review comments and feedback from APIView for a package. Retrieves all reviewer comments left on the API review.")]
-    public async Task<APIViewResponse> GetComments(string apiViewUrl)
+    public async Task<APIViewResponse> GetComments(string apiViewUrl, CancellationToken ct = default)
     {
         try
         {
             (string revisionId, _) = ExtractIdsFromUrl(apiViewUrl);
 
-            string? result = await _apiViewService.GetCommentsByRevisionAsync(revisionId);
+            string? result = await _apiViewService.GetCommentsByRevisionAsync(revisionId, ct);
             if (result == null)
             {
                 return new APIViewResponse { ResponseError = $"Failed to retrieve comments for API View: {apiViewUrl}" };
@@ -87,7 +264,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
 
             return new APIViewResponse
             {
-               Message = $"Comments retrieved successfully", Result = result
+                Result = result
             };
         }
         catch (Exception ex)
@@ -98,13 +275,63 @@ public class APIViewReviewTool : MCPMultiCommandTool
 
     private async Task<APIViewResponse> GetComments(ParseResult parseResult, CancellationToken ct)
     {
-        string? apiViewUrl = parseResult.GetValue(apiViewUrlOption);
-        return await GetComments(apiViewUrl!);
+        string? apiViewUrl = parseResult.GetValue(apiViewUrlRequiredOption);
+        return await GetComments(apiViewUrl!, ct);
+    }
+
+    [McpServerTool(Name = ApiViewGetReviewUrlToolName), Description("Get the APIView review URL for a package by name and language. Returns the direct link to the API review page for the specified package.")]
+    public async Task<APIViewResponse> GetReviewUrlByPackage(string package, string language, string? version = null, CancellationToken ct = default)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(package) || string.IsNullOrEmpty(language))
+            {
+                return new APIViewResponse { ResponseError = "Both 'package' and 'language' parameters are required." };
+            }
+
+            string? resolvedLanguage = ResolveLanguage(language);
+            if (resolvedLanguage == null)
+            {
+                var supported = string.Join(", ", SupportedLanguages);
+                return new APIViewResponse
+                {
+                    ResponseError = $"Unsupported language '{language}'. Supported languages are: {supported}."
+                };
+            }
+
+            string? url = await _apiViewService.GetReviewUrlByPackageAsync(package, resolvedLanguage, version, ct);
+
+            if (url == null)
+            {
+                return new APIViewResponse
+                {
+                    ResponseError = $"Could not find an APIView review for package '{package}' in language '{resolvedLanguage}'" +
+                                   (!string.IsNullOrEmpty(version) ? $" with version '{version}'" : "") + "." +
+                                   " Please verify the package name and language are correct."
+                };
+            }
+
+            return new APIViewResponse { Result = url };
+        }
+        catch (Exception ex)
+        {
+            string context = $"package '{package}' ({language})" +
+                             (!string.IsNullOrEmpty(version) ? $" version '{version}'" : "");
+            return new APIViewResponse { ResponseError = $"Failed to get review URL for {context}: {ex.Message}" };
+        }
+    }
+
+    private async Task<APIViewResponse> GetReviewUrl(ParseResult parseResult, CancellationToken ct)
+    {
+        string? package = parseResult.GetValue(packageNameOption);
+        string? language = parseResult.GetValue(languageQueryOption);
+        string? version = parseResult.GetValue(packageVersionOption);
+        return await GetReviewUrlByPackage(package!, language!, version, ct);
     }
 
     private async Task<APIViewResponse> GetContent(ParseResult parseResult, CancellationToken ct)
     {
-        string? apiViewUrl = parseResult.GetValue(apiViewUrlOption);
+        string? apiViewUrl = parseResult.GetValue(apiViewUrlRequiredOption);
         string? outputFile = parseResult.GetValue(outputFileOption);
         string? contentType = parseResult.GetValue(contentReturnTypeOption);
 
@@ -114,10 +341,10 @@ public class APIViewReviewTool : MCPMultiCommandTool
             return new APIViewResponse { ResponseError = $"Invalid content type '{contentType}'. Must be one of: {validValues}." };
         }
 
-        (string revisionId, string reviewId) = ExtractIdsFromUrl(apiViewUrl!);
+        (string revisionId, string reviewId) = ExtractIdsFromUrl(apiViewUrl);
         try
         {
-            string? result = await _apiViewService.GetRevisionContent(revisionId, reviewId, contentType);
+            string? result = await _apiViewService.GetRevisionContent(revisionId, reviewId, contentType, ct);
             if (result == null)
             {
                 return new APIViewResponse { ResponseError = $"Content not found" };
@@ -135,7 +362,6 @@ public class APIViewReviewTool : MCPMultiCommandTool
 
             return new APIViewResponse
             {
-                Message = $"Content retrieved successfully ({result.Length:N0} characters)",
                 Result = result
             };
         }
@@ -147,6 +373,205 @@ public class APIViewReviewTool : MCPMultiCommandTool
         {
             return new APIViewResponse { ResponseError = $"Failed to get content: {ex.Message}" };
         }
+    }
+
+    private async Task<APIViewResponse> CreateCIRevision(ParseResult parseResult, CancellationToken ct)
+    {
+        string? reviewFilePath = parseResult.GetValue(codeFileOption);
+        string? buildId = parseResult.GetValue(buildIdOption);
+        string? artifactName = parseResult.GetValue(artifactNameOption);
+        string? originalFilePath = parseResult.GetValue(sourceFileOption);
+        string? label = parseResult.GetValue(labelOption);
+        string? repoName = parseResult.GetValue(repoNameOption);
+        string? packageName = parseResult.GetValue(packageNameOption);
+        string? project = parseResult.GetValue(projectOption);
+        bool compareAllRevisions = parseResult.GetValue(compareAllRevisionsOption);
+        string? packageVersion = parseResult.GetValue(packageVersionOption);
+        bool setReleaseTag = parseResult.GetValue(setReleaseTagOption);
+        string? packageType = parseResult.GetValue(packageTypeOption);
+        string? sourceBranch = parseResult.GetValue(sourceBranchOption);
+        label ??= !string.IsNullOrEmpty(sourceBranch) ? $"Source Branch:{sourceBranch}" : null;
+
+        if (string.IsNullOrEmpty(repoName) || !repoName.Contains('/'))
+        {
+            return new APIViewResponse { ResponseError = $"Invalid --repo-name '{repoName}'. Must be in 'owner/repo' format (e.g., 'Azure/azure-sdk-for-python')." };
+        }
+
+        try
+        {
+            (string? content, int statusCode) = await _apiViewService.CreateCIReviewAsync(
+                buildId!, artifactName!, originalFilePath!, reviewFilePath!,
+                repoName!, packageName!, project!,
+                label, compareAllRevisions, packageVersion, setReleaseTag, packageType, sourceBranch, ct);
+
+            return statusCode switch
+            {
+                200 => new APIViewResponse
+                {
+                    Message = $"API review approved and package name approved for {packageName}",
+                    Result = content
+                },
+                201 => new APIViewResponse
+                {
+                    Message = $"API review is not yet approved, but package name is approved for {packageName}",
+                    Result = content
+                },
+                202 => new APIViewResponse
+                {
+                    Message = $"API review created. API review and package name are not yet approved for {packageName}",
+                    Result = content
+                },
+                _ => new APIViewResponse
+                {
+                    ResponseError = $"Invalid status code from APIView. Status code {statusCode}. Please reach out to Azure SDK engineering systems on Teams channel."
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            return new APIViewResponse { ResponseError = $"Failed to create API revision: {ex.Message}" };
+        }
+    }
+
+    private async Task<APIViewResponse> CreatePullRequestRevision(ParseResult parseResult, CancellationToken ct)
+    {
+        string? buildId = parseResult.GetValue(buildIdOption);
+        string? artifactName = parseResult.GetValue(artifactNameOption);
+        string? filePath = parseResult.GetValue(sourceFileOption);
+        string? commitSha = parseResult.GetValue(commitShaOption);
+        string? repoName = parseResult.GetValue(repoNameOption);
+        string? packageName = parseResult.GetValue(packageNameOption);
+        int pullRequestNumber = parseResult.GetValue(pullRequestNumberOption);
+        string? project = parseResult.GetValue(projectOption);
+        string? packageType = parseResult.GetValue(packageTypeOption);
+        string? language = parseResult.GetValue(languageOption);
+        string? codeFile = parseResult.GetValue(codeFileOption);
+        string? baselineCodeFile = parseResult.GetValue(baselineCodeFileOption);
+        string? metadataFile = parseResult.GetValue(metadataFileOption);
+
+        if (string.IsNullOrEmpty(repoName) || !repoName.Contains('/'))
+        {
+            return new APIViewResponse { ResponseError = $"Invalid --repo-name '{repoName}'. Must be in 'owner/repo' format (e.g., 'Azure/azure-sdk-for-python')." };
+        }
+
+        try
+        {
+            (string? content, int statusCode) = await _apiViewService.CreatePullRequestRevisionAsync(
+                buildId!, artifactName!, filePath!, commitSha!,
+                repoName!, packageName!,
+                pullRequestNumber, codeFile, baselineCodeFile, language, project, packageType, metadataFile, ct);
+
+            return statusCode switch
+            {
+                201 => new APIViewResponse
+                {
+                    Message = $"API changes detected for {packageName}. New API revision created.",
+                    Result = content
+                },
+                208 => new APIViewResponse
+                {
+                    Message = $"No API changes detected for {packageName}. Existing revision is up to date.",
+                    Result = content
+                },
+                _ => new APIViewResponse
+                {
+                    ResponseError = $"Invalid status code from APIView. Status code {statusCode}. Please reach out to Azure SDK engineering systems on Teams channel."
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            return new APIViewResponse { ResponseError = $"Failed to create API revision: {ex.Message}" };
+        }
+    }
+
+    [McpServerTool(Name = ApiViewRequestCopilotReviewToolName), Description("Submit an API surface text for automated Copilot review. Provide the text directly via 'api-text' (raw or markdown-fenced), or supply an APIView URL to have the text fetched automatically. Returns a job ID — use get-copilot-review to poll for results and comments.")]
+    public async Task<APIViewResponse> RequestCopilotReview(string? apiViewUrl = null, string? language = null, string? apiText = null, string? baseApiText = null, string? outline = null, string? existingComments = null, CancellationToken ct = default)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(apiViewUrl) && string.IsNullOrEmpty(apiText))
+            {
+                return new APIViewResponse { ResponseError = "Either --url or --api-text is required to submit a Copilot review." };
+            }
+
+            string? reviewTarget;
+            if (!string.IsNullOrEmpty(apiText))
+            {
+                reviewTarget = apiText;
+            }
+            else
+            {
+                (string revisionId, string reviewId) = ExtractIdsFromUrl(apiViewUrl);
+                reviewTarget = await _apiViewService.GetRevisionContent(revisionId, reviewId, "text", ct);
+                if (string.IsNullOrEmpty(reviewTarget))
+                {
+                    return new APIViewResponse { ResponseError = $"Failed to fetch content from APIView URL: {apiViewUrl}" };
+                }
+            }
+
+            (string? content, int statusCode) = await _apiViewService.StartCopilotReviewAsync(reviewTarget, language, baseApiText, outline, existingComments, ct);
+
+            if (string.IsNullOrEmpty(content))
+            {
+                return new APIViewResponse { ResponseError = $"Failed to start Copilot review job. No content returned (status: {statusCode})." };
+            }
+
+            return new APIViewResponse
+            {
+                Message = "Copilot review started. Use the job ID from the result with get-copilot-review to check status and retrieve results.",
+                Result = content
+            };
+        }
+        catch (Exception ex)
+        {
+            return new APIViewResponse { ResponseError = $"Failed to submit Copilot review: {ex.Message}" };
+        }
+    }
+
+    private async Task<APIViewResponse> RequestCopilotReview(ParseResult parseResult, CancellationToken ct)
+    {
+        string? apiViewUrl = parseResult.GetValue(apiViewUrlOption);
+        string? language = parseResult.GetValue(languageOption);
+        string? apiText = parseResult.GetValue(apiTextOption);
+        string? baseApiText = parseResult.GetValue(baseApiTextOption);
+        string? outline = parseResult.GetValue(outlineOption);
+        string? existingComments = parseResult.GetValue(existingCommentsOption);
+        return await RequestCopilotReview(apiViewUrl, language, apiText, baseApiText, outline, existingComments, ct);
+    }
+
+    [McpServerTool(Name = ApiViewGetCopilotReviewToolName), Description("Get the status and results of a Copilot review job. When complete, the response includes all generated review comments.")]
+    public async Task<APIViewResponse> GetCopilotReview(string jobId, CancellationToken ct = default)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(jobId))
+            {
+                return new APIViewResponse { ResponseError = "Job ID is required." };
+            }
+
+            (string? content, int statusCode) = await _apiViewService.GetCopilotReviewAsync(jobId, ct);
+
+            if (content == null)
+            {
+                return new APIViewResponse { ResponseError = $"Failed to retrieve Copilot review results for job ID: {jobId}" };
+            }
+
+            return new APIViewResponse
+            {
+                Result = content
+            };
+        }
+        catch (Exception ex)
+        {
+            return new APIViewResponse { ResponseError = $"Failed to get Copilot review results: {ex.Message}" };
+        }
+    }
+
+    private async Task<APIViewResponse> GetCopilotReview(ParseResult parseResult, CancellationToken ct)
+    {
+        string? jobId = parseResult.GetValue(jobIdOption);
+        return await GetCopilotReview(jobId!, ct);
     }
 
     public static (string revisionId, string reviewId) ExtractIdsFromUrl(string url)
@@ -165,7 +590,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
         {
             // Pattern: /review/{reviewId} in path and activeApiRevisionId={revisionId} in query string
             var match = Regex.Match(url, @"/review/([^/?]+).*[?&]activeApiRevisionId=([^&#]+)", RegexOptions.IgnoreCase);
-            
+
             if (!match.Success)
             {
                 throw new ArgumentException("APIView URL must contain both 'activeApiRevisionId' query parameter AND '/review/{reviewId}' path segment");
@@ -181,4 +606,31 @@ public class APIViewReviewTool : MCPMultiCommandTool
             throw new ArgumentException($"Error parsing URL: {ex.Message}", nameof(url), ex);
         }
     }
+
+    // Supported APIView languages and their common aliases
+    private static readonly string[] SupportedLanguages =
+        ["C", "C#", "C++", "Go", "Java", "JavaScript", "Json", "Kotlin", "Python", "Rust", "Swift", "TypeSpec", "Xml"];
+
+    private static readonly Dictionary<string, string> LanguageAliases = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["net"] = "C#",
+        [".net"] = "C#",
+        ["dotnet"] = "C#",
+        ["csharp"] = "C#",
+        ["cs"] = "C#",
+        ["cpp"] = "C++",
+        ["js"] = "JavaScript",
+        ["typescript"] = "JavaScript",
+        ["ts"] = "JavaScript",
+        ["golang"] = "Go",
+        ["py"] = "Python",
+    };
+
+    /// <summary>Resolves a language input to a canonical APIView language name, or null if unsupported.</summary>
+    public static string? ResolveLanguage(string language)
+    {
+        string? canonical = SupportedLanguages.FirstOrDefault(l => l.Equals(language, StringComparison.OrdinalIgnoreCase));
+        return canonical ?? (LanguageAliases.GetValueOrDefault(language));
+    }
+
 }

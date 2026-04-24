@@ -20,6 +20,7 @@ Help me create a new tool using #new-tool.md as a reference
    * [Registration and Testing](#registration-and-testing)
    * [Tool Discoverability Testing](#add-test-prompts-for-tool-discoverability)
    * [Required Tool Conventions](#required-tool-conventions)
+   * [Progress Reporting for Long-Running Operations](#7-progress-reporting-for-long-running-operations)
    * [Common Patterns and Anti-patterns](#common-patterns-and-anti-patterns)
 
 ## Tool Architecture Overview
@@ -474,14 +475,14 @@ if (errors.Any())
 
 ## Prompt Template System
 
-For tools using AI models (microagents, LLMs), use the standardized Prompt Template System instead of ad-hoc string formatting. This provides consistent structure, built-in safety guidelines, and Microsoft policy compliance.
+For tools using AI models (copilot agents, LLMs), use the standardized Prompt Template System instead of ad-hoc string formatting. This provides consistent structure, built-in safety guidelines, and Microsoft policy compliance.
 
 ### Quick Start
 
 **Use built-in templates directly:**
 ```csharp
 // Common scenarios - spelling, README, log analysis
-var prompt = PromptTemplates.GetMicroagentSpellingFixPrompt(cspellOutput, "Azure SDK for .NET");
+var prompt = PromptTemplates.GetSpellingFixPrompt(cspellOutput, "Azure SDK for .NET");
 var prompt = PromptTemplates.GetReadMeGenerationPrompt(templateContent, serviceDocUrl, packagePath);
 var prompt = PromptTemplates.GetLogAnalysisPrompt(logContent, "Azure DevOps Pipeline", "json");
 ```
@@ -524,12 +525,11 @@ public class MyCustomTemplate : BasePromptTemplate
 var template = new MyCustomTemplate();
 var prompt = template.BuildPrompt(analysisData, "statistical");
 
-// Use with microagent
-var microagent = new Microagent<AnalysisResult>
+// Use with copilot agent
+var agent = new CopilotAgent<AnalysisResult>
 {
     Instructions = prompt,
-    Model = "gpt-4",
-    MaxToolCalls = 10
+    MaxIterations = 10
 };
 ```
 
@@ -688,7 +688,65 @@ dotnet test Azure.Sdk.Tools.Cli.Evaluations --filter "Name~AllToolsHaveTestPromp
 - **Respect cancellation tokens** in long-running operations
 - **Dispose resources properly** using `using` statements or try/finally
 
-### 7. Namespace and Organization Rules
+### 7. Progress Reporting for Long-Running Operations
+
+Tools that perform multi-step, long-running work (e.g., building, generating, or packaging SDKs) should use [`ProgressReporter`](../Azure.Sdk.Tools.Cli/Helpers/ProgressReporter.cs) to keep users and MCP clients informed. In MCP mode this sends `notifications/progress` messages; in CLI mode it renders an ASCII progress bar to stderr.
+
+**Setup:**
+
+Inject `IRawOutputHelper` through your tool's constructor and accept an `IProgress<ProgressNotificationValue>` parameter on your MCP method:
+
+```csharp
+[McpServerToolType, Description("Compile SDK code")]
+public class BuildTool(
+    ILogger<BuildTool> logger,
+    IRawOutputHelper outputHelper
+) : MCPTool
+{
+    [McpServerTool(Name = "azsdk_package_build"), Description("Compile the SDK")]
+    public async Task<BuildResponse> BuildAsync(
+        IProgress<ProgressNotificationValue>? progress,
+        string packagePath,
+        CancellationToken ct = default)
+    {
+        // Declare the total number of discrete steps up front
+        var reporter = new ProgressReporter(progress, logger, totalSteps: 3, outputHelper);
+
+        reporter.NextStep("Restoring dependencies");
+        await RestoreAsync(packagePath, ct);
+
+        reporter.NextStep("Compiling");
+        await CompileAsync(packagePath, ct);
+
+        reporter.NextStep("Running tests");
+        await TestAsync(packagePath, ct);
+
+        reporter.EnsureComplete(); // optional — throws if steps != totalSteps
+        return new BuildResponse { Result = "Build succeeded" };
+    }
+}
+```
+
+**Heartbeat for long-running steps:**
+
+If a single step takes a long time (e.g., waiting for an external process), wrap it in a heartbeat scope so the client knows the tool is still alive:
+
+```csharp
+reporter.NextStep("Generating SDK code");
+await using (reporter.StartHeartbeat("Generating SDK code", ct))
+{
+    await RunCodeGeneratorAsync(ct); // may take minutes
+}
+// Heartbeat stops automatically when the scope is disposed
+```
+
+**Key rules:**
+- Call `NextStep()` exactly once per step — the reporter auto-increments and throws if you exceed `totalSteps`
+- Call `NextStep()` *before* `StartHeartbeat()` — the heartbeat repeats the current step's progress, it does not advance the counter
+- Use `await using` for heartbeat scopes to ensure cleanup on exceptions
+- `EnsureComplete()` is optional but recommended at the end of a happy path to catch miscounted steps during development
+
+### 8. Namespace and Organization Rules
 
 - **Correct namespace**: `Azure.Sdk.Tools.Cli.Tools.[YourToolCategory]`
 - **File organization**: Group related tools in sub-directories, but keep flat namespace

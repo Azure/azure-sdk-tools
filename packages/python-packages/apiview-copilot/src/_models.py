@@ -12,8 +12,9 @@ from datetime import datetime
 from enum import Enum
 from typing import Dict, List, Optional, Set
 
-from pydantic import BaseModel, Field, PrivateAttr
+from pydantic import BaseModel, Field, PrivateAttr, field_validator
 from src._sectioned_document import Section
+from src._utils import guideline_id_from_db, guideline_id_to_db
 
 
 class ExistingComment(BaseModel):
@@ -100,6 +101,16 @@ class APIViewComment(BaseModel):
         description="Whether the comment is deleted.",
         alias="IsDeleted",
     )
+    thread_id: Optional[str] = Field(
+        default=None,
+        description="The thread ID grouping this comment with its replies.",
+        alias="ThreadId",
+    )
+    severity: Optional[str] = Field(
+        default=None,
+        description="The severity level of the comment.",
+        alias="Severity",
+    )
 
 
 class Comment(BaseModel):
@@ -168,6 +179,23 @@ class Guideline(BaseModel):
         default_factory=list, description="List of memory IDs that are related to this guideline."
     )
 
+    @field_validator("id", mode="before")
+    @classmethod
+    def _normalize_id(cls, v: str) -> str:
+        return guideline_id_from_db(v)
+
+    @field_validator("related_guidelines", mode="before")
+    @classmethod
+    def _normalize_related_guidelines(cls, v):
+        return [guideline_id_from_db(x) for x in (v or [])]
+
+    def model_dump_db(self, **kwargs) -> dict:
+        """Return a dict with guideline IDs converted to database-safe format."""
+        data = self.model_dump(**kwargs)
+        data["id"] = guideline_id_to_db(data["id"])
+        data["related_guidelines"] = [guideline_id_to_db(x) for x in data.get("related_guidelines", [])]
+        return data
+
 
 class ExampleType(str, Enum):
     """Represents the type of example, either 'good' or 'bad'."""
@@ -207,6 +235,17 @@ class Example(BaseModel):
     )
     memory_ids: List[str] = Field(default_factory=list, description="List of memory IDs to which this example applies.")
 
+    @field_validator("guideline_ids", mode="before")
+    @classmethod
+    def _normalize_guideline_ids(cls, v):
+        return [guideline_id_from_db(x) for x in (v or [])]
+
+    def model_dump_db(self, **kwargs) -> dict:
+        """Return a dict with guideline IDs converted to database-safe format."""
+        data = self.model_dump(**kwargs)
+        data["guideline_ids"] = [guideline_id_to_db(x) for x in data.get("guideline_ids", [])]
+        return data
+
 
 class Memory(BaseModel):
     """
@@ -227,7 +266,11 @@ class Memory(BaseModel):
         False,
         description="Indicates if this memory provides an exception to the guidelines rather than an amplification.",
     )
-    source: str = Field(description="The source of the memory, such as 'manual' or 'teams_conversation'.")
+    source: str = Field(description="The source of the memory, such as 'mention_agent' or 'thread_resolution'.")
+    source_comment_id: Optional[str] = Field(
+        None,
+        description="The ID of the APIView comment that triggered the creation of this memory, for auditing.",
+    )
     tags: Optional[List[str]] = Field(
         None,
         description="List of tags that classify the memory.",
@@ -243,6 +286,17 @@ class Memory(BaseModel):
     related_memories: List[str] = Field(
         default_factory=list, description="List of memory IDs that are related to this memory."
     )
+
+    @field_validator("related_guidelines", mode="before")
+    @classmethod
+    def _normalize_related_guidelines(cls, v):
+        return [guideline_id_from_db(x) for x in (v or [])]
+
+    def model_dump_db(self, **kwargs) -> dict:
+        """Return a dict with guideline IDs converted to database-safe format."""
+        data = self.model_dump(**kwargs)
+        data["related_guidelines"] = [guideline_id_to_db(x) for x in data.get("related_guidelines", [])]
+        return data
 
 
 class ReviewResult(BaseModel):
@@ -265,7 +319,7 @@ class ReviewResult(BaseModel):
         super().__init__(comments=[])
 
         # sanitize allowed_ids to convert the search IDs to the proper format
-        allowed_ids = [x.replace("=html=", ".html#") for x in allowed_ids] if allowed_ids else None
+        allowed_ids = [guideline_id_from_db(x) for x in allowed_ids] if allowed_ids else None
 
         # initialize private attr outside of Pydantic’s field system
         object.__setattr__(

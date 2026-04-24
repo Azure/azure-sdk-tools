@@ -1,9 +1,12 @@
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages;
 
@@ -14,6 +17,7 @@ internal class DotNetLanguageSpecificChecksTests
     private Mock<IGitHelper> _gitHelperMock = null!;
     private Mock<IPowershellHelper> _powerShellHelperMock = null!;
     private Mock<ICommonValidationHelpers> _commonValidationHelperMock = null!;
+    private Mock<IPackageInfoHelper> _packageInfoHelperMock = null!;
     private DotnetLanguageService _languageChecks = null!;
     private string _packagePath = null!;
     private string _repoRoot = null!;
@@ -27,14 +31,16 @@ internal class DotNetLanguageSpecificChecksTests
         _gitHelperMock.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
         _powerShellHelperMock = new Mock<IPowershellHelper>();
         _commonValidationHelperMock = new Mock<ICommonValidationHelpers>();
+        _packageInfoHelperMock = new Mock<IPackageInfoHelper>();
 
         _languageChecks = new DotnetLanguageService(
             _processHelperMock.Object,
             _powerShellHelperMock.Object,
+            Mock.Of<ICopilotAgentRunner>(),
             _gitHelperMock.Object,
             NullLogger<DotnetLanguageService>.Instance,
             _commonValidationHelperMock.Object,
-            Mock.Of<IPackageInfoHelper>(),
+            _packageInfoHelperMock.Object,
             Mock.Of<IFileHelper>(),
             Mock.Of<ISpecGenSdkConfigHelper>(),
             Mock.Of<IChangelogHelper>());
@@ -61,6 +67,16 @@ internal class DotNetLanguageSpecificChecksTests
         _gitHelperMock
             .Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_repoRoot);
+
+        // Dynamically compute relative path from sdk/ for any package path
+        _packageInfoHelperMock
+            .Setup(p => p.ParsePackagePathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns<string, CancellationToken>((path, _) =>
+            {
+                var sdkRoot = Path.Combine(_repoRoot, "sdk");
+                var relativePath = Path.GetRelativePath(sdkRoot, path);
+                return Task.FromResult((_repoRoot, relativePath, path));
+            });
     }
 
     [Test]
@@ -81,6 +97,8 @@ internal class DotNetLanguageSpecificChecksTests
         {
             Assert.That(result.ExitCode, Is.EqualTo(1));
             Assert.That(result.CheckStatusDetails, Does.Contain("dotnet --list-sdks failed"));
+            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty, "NextSteps should be populated on failure");
+            Assert.That(result.NextSteps, Has.Some.Contain("Install the .NET SDK"));
         });
     }
 
@@ -103,6 +121,8 @@ internal class DotNetLanguageSpecificChecksTests
         {
             Assert.That(result.ExitCode, Is.EqualTo(1));
             Assert.That(result.ResponseError, Does.Contain(".NET SDK version 8.0.404 is below minimum requirement of 9.0.102"));
+            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty, "NextSteps should be populated on version failure");
+            Assert.That(result.NextSteps, Has.Some.Contain("Update the .NET SDK"));
         });
     }
 
@@ -187,6 +207,7 @@ internal class DotNetLanguageSpecificChecksTests
             {
                 var processResult = new ProcessResult { ExitCode = 1 };
                 processResult.AppendStdout(errorMessage);
+                processResult.AppendStdout($"error : {errorMessage}");
                 return processResult;
             });
 
@@ -196,6 +217,8 @@ internal class DotNetLanguageSpecificChecksTests
         {
             Assert.That(result.ExitCode, Is.EqualTo(1));
             Assert.That(result.CheckStatusDetails, Does.Contain(expectedDetail));
+            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty, "NextSteps should be populated on failure");
+            Assert.That(result.NextSteps, Has.Some.Contain(errorMessage));
         });
     }
 
@@ -217,6 +240,8 @@ internal class DotNetLanguageSpecificChecksTests
         {
             Assert.That(result.ExitCode, Is.EqualTo(1));
             Assert.That(result.CheckStatusDetails, Does.Contain("dotnet --list-sdks failed"));
+            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty, "NextSteps should be populated on failure");
+            Assert.That(result.NextSteps, Has.Some.Contain("Install the .NET SDK"));
         });
     }
 
@@ -239,6 +264,8 @@ internal class DotNetLanguageSpecificChecksTests
         {
             Assert.That(result.ExitCode, Is.EqualTo(1));
             Assert.That(result.ResponseError, Does.Contain(".NET SDK version 8.0.404 is below minimum requirement of 9.0.102"));
+            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty, "NextSteps should be populated on version failure");
+            Assert.That(result.NextSteps, Has.Some.Contain("Update the .NET SDK"));
         });
     }
 
@@ -326,6 +353,8 @@ internal class DotNetLanguageSpecificChecksTests
                 Assert.That(result.ExitCode, Is.EqualTo(1));
                 Assert.That(result.CheckStatusDetails, Does.Contain("Trim analysis warning"));
                 Assert.That(result.CheckStatusDetails, Does.Contain("RequiresUnreferencedCodeAttribute"));
+                Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty, "NextSteps should be populated on AOT failure");
+                Assert.That(result.NextSteps, Has.Some.Contain("AOT"));
             });
         }
         finally
@@ -528,6 +557,14 @@ internal class DotNetLanguageSpecificChecksTests
          (options.Command == "cmd.exe" && options.Args.Contains("dotnet") && options.Args.Contains("test"))) &&
         options.WorkingDirectory == expectedWorkingDirectory;
 
+    /// <summary>
+    /// Checks if the ProcessOptions represents a test-proxy push command.
+    /// Handles both Unix (test-proxy push) and Windows (cmd.exe /C test-proxy push) patterns.
+    /// </summary>
+    private static bool IsTestProxyPushCommand(ProcessOptions options) =>
+        (options.Command == "test-proxy" && options.Args.Contains("push")) ||
+        (options.Command == "cmd.exe" && options.Args.Contains("test-proxy") && options.Args.Contains("push"));
+
     #endregion
 
     #region HasCustomizations Tests
@@ -614,7 +651,7 @@ public partial class TestClient
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(processResult);
 
-        var result = await _languageChecks.RunAllTests(tempDir.DirectoryPath, CancellationToken.None);
+        var result = await _languageChecks.RunAllTests(tempDir.DirectoryPath, ct: CancellationToken.None);
 
         Assert.Multiple(() =>
         {
@@ -641,7 +678,7 @@ public partial class TestClient
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(processResult);
 
-        var result = await _languageChecks.RunAllTests(tempDir.DirectoryPath, CancellationToken.None);
+        var result = await _languageChecks.RunAllTests(tempDir.DirectoryPath, ct: CancellationToken.None);
 
         Assert.Multiple(() =>
         {
@@ -652,6 +689,337 @@ public partial class TestClient
         _processHelperMock.Verify(x => x.Run(
             It.Is<ProcessOptions>(p => IsDotNetTestCommand(p, tempDir.DirectoryPath)),
             It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    [TestCase(TestMode.Playback, "playback")]
+    [TestCase(TestMode.Record, "record")]
+    [TestCase(TestMode.Live, "live")]
+    public async Task RunAllTests_WhenFrameworkUnknown_SetsBothTestModeEnvironmentVariables(TestMode testMode, string expectedEnvValue)
+    {
+        // No .csproj files in the temp directory, so framework detection returns Unknown
+        // and both AZURE_TEST_MODE and CLIENTMODEL_TEST_MODE should be set.
+        var processResult = new ProcessResult { ExitCode = 0 };
+        processResult.AppendStdout("Tests passed!");
+
+        ProcessOptions? capturedOptions = null;
+        _processHelperMock
+            .Setup(p => p.Run(It.Is<ProcessOptions>(o => o.Args.Contains("test")), It.IsAny<CancellationToken>()))
+            .Callback<ProcessOptions, CancellationToken>((options, _) => capturedOptions = options)
+            .ReturnsAsync(processResult);
+
+        var result = await _languageChecks.RunAllTests(_packagePath, testMode, ct: CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(0));
+            Assert.That(capturedOptions, Is.Not.Null);
+            Assert.That(capturedOptions!.EnvironmentVariables, Is.Not.Null);
+            Assert.That(capturedOptions.EnvironmentVariables!["AZURE_TEST_MODE"], Is.EqualTo(expectedEnvValue));
+            Assert.That(capturedOptions.EnvironmentVariables!["CLIENTMODEL_TEST_MODE"], Is.EqualTo(expectedEnvValue));
+        });
+    }
+
+    [Test]
+    public async Task RunAllTests_PassesThroughLiveTestEnvironmentVariables()
+    {
+        var processResult = new ProcessResult { ExitCode = 0 };
+        processResult.AppendStdout("Tests passed!");
+
+        ProcessOptions? capturedOptions = null;
+        _processHelperMock
+            .Setup(p => p.Run(It.Is<ProcessOptions>(o => o.Args.Contains("test")), It.IsAny<CancellationToken>()))
+            .Callback<ProcessOptions, CancellationToken>((options, _) => capturedOptions = options)
+            .ReturnsAsync(processResult);
+
+        var envVars = new Dictionary<string, string>
+        {
+            ["AZURE_SUBSCRIPTION_ID"] = "sub-123",
+            ["AZURE_RESOURCE_GROUP"] = "rg-test",
+        };
+
+        var result = await _languageChecks.RunAllTests(_packagePath, TestMode.Live, envVars, ct: CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(0));
+            Assert.That(capturedOptions, Is.Not.Null);
+            Assert.That(capturedOptions!.EnvironmentVariables!["AZURE_SUBSCRIPTION_ID"], Is.EqualTo("sub-123"));
+            Assert.That(capturedOptions.EnvironmentVariables["AZURE_RESOURCE_GROUP"], Is.EqualTo("rg-test"));
+            Assert.That(capturedOptions.EnvironmentVariables["AZURE_TEST_MODE"], Is.EqualTo("live"));
+            Assert.That(capturedOptions.EnvironmentVariables["CLIENTMODEL_TEST_MODE"], Is.EqualTo("live"));
+        });
+    }
+
+    [Test]
+    public async Task RunAllTests_UsesDefaultTimeoutForPlayback()
+    {
+        var processResult = new ProcessResult { ExitCode = 0 };
+
+        ProcessOptions? capturedOptions = null;
+        _processHelperMock
+            .Setup(p => p.Run(It.Is<ProcessOptions>(o => o.Args.Contains("test")), It.IsAny<CancellationToken>()))
+            .Callback<ProcessOptions, CancellationToken>((options, _) => capturedOptions = options)
+            .ReturnsAsync(processResult);
+
+        await _languageChecks.RunAllTests(_packagePath, TestMode.Playback, ct: CancellationToken.None);
+
+        Assert.That(capturedOptions!.Timeout, Is.EqualTo(ProcessOptions.DEFAULT_PROCESS_TIMEOUT));
+    }
+
+    [Test]
+    [TestCase(TestMode.Record)]
+    [TestCase(TestMode.Live)]
+    public async Task RunAllTests_UsesLongerTimeoutForLiveAndRecordModes(TestMode testMode)
+    {
+        var processResult = new ProcessResult { ExitCode = 0 };
+
+        ProcessOptions? capturedOptions = null;
+        _processHelperMock
+            .Setup(p => p.Run(It.Is<ProcessOptions>(o => o.Args.Contains("test")), It.IsAny<CancellationToken>()))
+            .Callback<ProcessOptions, CancellationToken>((options, _) => capturedOptions = options)
+            .ReturnsAsync(processResult);
+
+        await _languageChecks.RunAllTests(_packagePath, testMode, ct: CancellationToken.None);
+
+        Assert.That(capturedOptions!.Timeout, Is.GreaterThan(ProcessOptions.DEFAULT_PROCESS_TIMEOUT));
+    }
+
+    [Test]
+    public async Task RunAllTests_PushesAssetsAfterSuccessfulRecordMode()
+    {
+        using var tempDir = TempDirectory.Create("dotnet-asset-push-test");
+        File.WriteAllText(Path.Combine(tempDir.DirectoryPath, "assets.json"), "{}");
+
+        var testResult = new ProcessResult { ExitCode = 0 };
+        testResult.AppendStdout("Tests passed!");
+
+        var pushResult = new ProcessResult { ExitCode = 0 };
+        pushResult.AppendStdout("Assets pushed!");
+
+        _processHelperMock
+            .Setup(p => p.Run(It.Is<ProcessOptions>(o => o.Args.Contains("test")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(testResult);
+
+        _processHelperMock
+            .Setup(p => p.Run(It.Is<ProcessOptions>(o => o.Args.Contains("push")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(pushResult);
+
+        var result = await _languageChecks.RunAllTests(tempDir.DirectoryPath, TestMode.Record, ct: CancellationToken.None);
+
+        Assert.That(result.ExitCode, Is.EqualTo(0));
+        _processHelperMock.Verify(p => p.Run(It.Is<ProcessOptions>(o => o.Args.Contains("test")), It.IsAny<CancellationToken>()), Times.Once);
+        _processHelperMock.Verify(p => p.Run(
+            It.Is<ProcessOptions>(o => IsTestProxyPushCommand(o)),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task RunAllTests_DoesNotPushAssetsInPlaybackMode()
+    {
+        using var tempDir = TempDirectory.Create("dotnet-no-push-playback-test");
+        File.WriteAllText(Path.Combine(tempDir.DirectoryPath, "assets.json"), "{}");
+
+        var processResult = new ProcessResult { ExitCode = 0 };
+        processResult.AppendStdout("Tests passed!");
+
+        _processHelperMock
+            .Setup(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(processResult);
+
+        await _languageChecks.RunAllTests(tempDir.DirectoryPath, TestMode.Playback, ct: CancellationToken.None);
+
+        _processHelperMock.Verify(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task RunAllTests_DoesNotPushAssetsWhenTestsFail()
+    {
+        using var tempDir = TempDirectory.Create("dotnet-no-push-fail-test");
+        File.WriteAllText(Path.Combine(tempDir.DirectoryPath, "assets.json"), "{}");
+
+        var processResult = new ProcessResult { ExitCode = 1 };
+        processResult.AppendStderr("Tests failed!");
+
+        _processHelperMock
+            .Setup(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(processResult);
+
+        var result = await _languageChecks.RunAllTests(tempDir.DirectoryPath, TestMode.Record, ct: CancellationToken.None);
+
+        Assert.That(result.ExitCode, Is.EqualTo(1));
+        _processHelperMock.Verify(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task RunAllTests_DoesNotPushAssetsWhenNoAssetsJson()
+    {
+        var processResult = new ProcessResult { ExitCode = 0 };
+        processResult.AppendStdout("Tests passed!");
+
+        _processHelperMock
+            .Setup(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(processResult);
+
+        var result = await _languageChecks.RunAllTests(_packagePath, TestMode.Record, ct: CancellationToken.None);
+
+        Assert.That(result.ExitCode, Is.EqualTo(0));
+        _processHelperMock.Verify(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task RunAllTests_WhenFrameworkUnknown_DefaultModeIsPlayback()
+    {
+        // No .csproj files in the temp directory, so framework detection returns Unknown
+        // and both AZURE_TEST_MODE and CLIENTMODEL_TEST_MODE should be set to playback.
+        var processResult = new ProcessResult { ExitCode = 0 };
+
+        ProcessOptions? capturedOptions = null;
+        _processHelperMock
+            .Setup(p => p.Run(It.Is<ProcessOptions>(o => o.Args.Contains("test")), It.IsAny<CancellationToken>()))
+            .Callback<ProcessOptions, CancellationToken>((options, _) => capturedOptions = options)
+            .ReturnsAsync(processResult);
+
+        // Call without specifying testMode - should default to Playback
+        await _languageChecks.RunAllTests(_packagePath, ct: CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(capturedOptions!.EnvironmentVariables!["AZURE_TEST_MODE"], Is.EqualTo("playback"));
+            Assert.That(capturedOptions.EnvironmentVariables["CLIENTMODEL_TEST_MODE"], Is.EqualTo("playback"));
+        });
+    }
+
+    #endregion
+
+    #region CheckSpelling Tests
+
+    [Test]
+    public async Task CheckSpelling_DelegatesToCommonValidationHelpers()
+    {
+        var expectedSuccess = new PackageCheckResponse(0, "No spelling errors found");
+
+        string? capturedPackagePath = null;
+        _commonValidationHelperMock
+            .Setup(c => c.CheckSpelling(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .Callback<string, bool, CancellationToken>((pkgPath, _, _) =>
+            {
+                capturedPackagePath = pkgPath;
+            })
+            .ReturnsAsync(expectedSuccess);
+
+        var response = await _languageChecks.CheckSpelling(_packagePath, false, CancellationToken.None);
+
+        Assert.That(response.ExitCode, Is.EqualTo(0));
+        Assert.That(capturedPackagePath, Is.EqualTo(_packagePath));
+
+        _commonValidationHelperMock.Verify(
+            c => c.CheckSpelling(_packagePath, false, It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Test]
+    public async Task CheckSpelling_WithFixEnabled_DelegatesToCommonValidationHelpers()
+    {
+        _commonValidationHelperMock
+            .Setup(c => c.CheckSpelling(It.IsAny<string>(), true, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PackageCheckResponse(0, "Spelling issues fixed"));
+
+        var response = await _languageChecks.CheckSpelling(_packagePath, true, CancellationToken.None);
+
+        Assert.That(response.ExitCode, Is.EqualTo(0));
+
+        _commonValidationHelperMock.Verify(
+            c => c.CheckSpelling(_packagePath, true, It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    #endregion
+
+    #region RunAllTests with Framework Detection Tests
+
+    [Test]
+    public async Task RunAllTests_SetsOnlyAzureTestMode_WhenAzureCoreTestFrameworkDetected()
+    {
+        using var tempDir = TempDirectory.Create("dotnet-runall-azcore");
+        var testsDir = Path.Combine(tempDir.DirectoryPath, "tests");
+        Directory.CreateDirectory(testsDir);
+
+        File.WriteAllText(Path.Combine(testsDir, "MyPackage.Tests.csproj"), @"
+<Project Sdk=""Microsoft.NET.Sdk"">
+  <ItemGroup>
+    <ProjectReference Include=""$(AzureCoreTestFramework)"" />
+  </ItemGroup>
+</Project>");
+
+        var processResult = new ProcessResult { ExitCode = 0 };
+        ProcessOptions? capturedOptions = null;
+        _processHelperMock
+            .Setup(p => p.Run(It.Is<ProcessOptions>(o => o.Args.Contains("test")), It.IsAny<CancellationToken>()))
+            .Callback<ProcessOptions, CancellationToken>((options, _) => capturedOptions = options)
+            .ReturnsAsync(processResult);
+
+        await _languageChecks.RunAllTests(tempDir.DirectoryPath, TestMode.Record, ct: CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(capturedOptions!.EnvironmentVariables, Does.ContainKey("AZURE_TEST_MODE"));
+            Assert.That(capturedOptions.EnvironmentVariables!["AZURE_TEST_MODE"], Is.EqualTo("record"));
+            Assert.That(capturedOptions.EnvironmentVariables.ContainsKey("CLIENTMODEL_TEST_MODE"), Is.False);
+        });
+    }
+
+    [Test]
+    public async Task RunAllTests_SetsOnlyClientModelTestMode_WhenClientModelTestFrameworkDetected()
+    {
+        using var tempDir = TempDirectory.Create("dotnet-runall-clientmodel");
+        var testsDir = Path.Combine(tempDir.DirectoryPath, "tests");
+        Directory.CreateDirectory(testsDir);
+
+        File.WriteAllText(Path.Combine(testsDir, "MyPackage.Tests.csproj"), @"
+<Project Sdk=""Microsoft.NET.Sdk"">
+  <ItemGroup>
+    <PackageReference Include=""Microsoft.ClientModel.TestFramework"" Version=""1.0.0"" />
+  </ItemGroup>
+</Project>");
+
+        var processResult = new ProcessResult { ExitCode = 0 };
+        ProcessOptions? capturedOptions = null;
+        _processHelperMock
+            .Setup(p => p.Run(It.Is<ProcessOptions>(o => o.Args.Contains("test")), It.IsAny<CancellationToken>()))
+            .Callback<ProcessOptions, CancellationToken>((options, _) => capturedOptions = options)
+            .ReturnsAsync(processResult);
+
+        await _languageChecks.RunAllTests(tempDir.DirectoryPath, TestMode.Live, ct: CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(capturedOptions!.EnvironmentVariables, Does.ContainKey("CLIENTMODEL_TEST_MODE"));
+            Assert.That(capturedOptions.EnvironmentVariables!["CLIENTMODEL_TEST_MODE"], Is.EqualTo("live"));
+            Assert.That(capturedOptions.EnvironmentVariables.ContainsKey("AZURE_TEST_MODE"), Is.False);
+        });
+    }
+
+    [Test]
+    public async Task RunAllTests_SetsBothEnvVars_WhenFrameworkUnknown()
+    {
+        // _packagePath doesn't have a real .csproj, so framework is Unknown
+        var processResult = new ProcessResult { ExitCode = 0 };
+        ProcessOptions? capturedOptions = null;
+        _processHelperMock
+            .Setup(p => p.Run(It.Is<ProcessOptions>(o => o.Args.Contains("test")), It.IsAny<CancellationToken>()))
+            .Callback<ProcessOptions, CancellationToken>((options, _) => capturedOptions = options)
+            .ReturnsAsync(processResult);
+
+        await _languageChecks.RunAllTests(_packagePath, TestMode.Playback, ct: CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(capturedOptions!.EnvironmentVariables, Does.ContainKey("AZURE_TEST_MODE"));
+            Assert.That(capturedOptions.EnvironmentVariables, Does.ContainKey("CLIENTMODEL_TEST_MODE"));
+            Assert.That(capturedOptions.EnvironmentVariables!["AZURE_TEST_MODE"], Is.EqualTo("playback"));
+            Assert.That(capturedOptions.EnvironmentVariables["CLIENTMODEL_TEST_MODE"], Is.EqualTo("playback"));
+        });
     }
 
     #endregion

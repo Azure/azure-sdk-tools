@@ -5,8 +5,8 @@ using System.CommandLine;
 using System.ComponentModel;
 using System.Text;
 using Azure.Sdk.Tools.Cli.Commands;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services.Languages;
@@ -40,16 +40,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
     [McpServerToolType, Description("Translates sample code files from a source Azure SDK package to a target package in a different programming language. Takes samples from the source package's samples directory, understands the functionality being demonstrated, and generates equivalent idiomatic code for the target language.")]
     public class SampleTranslatorTool : LanguageMcpTool
     {
-        private readonly IMicroagentHostService _microagentHostService;
+        private readonly ICopilotAgentRunner _copilotAgentRunner;
 
         public SampleTranslatorTool(
-            IMicroagentHostService microagentHostService,
+            ICopilotAgentRunner copilotAgentRunner,
             ILogger<SampleTranslatorTool> logger,
             IGitHelper gitHelper,
             IEnumerable<LanguageService> languageServices
         ) : base(languageServices, gitHelper, logger)
         {
-            _microagentHostService = microagentHostService;
+            _copilotAgentRunner = copilotAgentRunner;
         }
 
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package, SharedCommandGroups.PackageSample];
@@ -166,16 +166,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
                 var result = await TranslateSamplesInternalAsync(
                     fromPackagePath, toPackagePath, overwrite, model, batchSize, ct);
 
-                if (result.TranslatedCount == 0)
-                {
-                    return PackageOperationResponse.CreateSuccess(
+                var response = result.TranslatedCount == 0
+                    ? PackageOperationResponse.CreateSuccess(
                         $"No samples found to translate from {result.SourceLanguage}.",
-                        nextSteps: ["Verify the source package has sample files", "Check the samples directory exists"]);
-                }
+                        packageInfo: result.PackageInfo,
+                        nextSteps: ["Verify the source package has sample files", "Check the samples directory exists"])
+                    : PackageOperationResponse.CreateSuccess(
+                        $"Successfully translated {result.TranslatedCount} sample(s) from {result.SourceLanguage} to {result.TargetLanguage}: {result.FileNames}",
+                        packageInfo: result.PackageInfo,
+                        nextSteps: ["Review the translated samples", "Test the samples to ensure they compile and run correctly"]);
 
-                return PackageOperationResponse.CreateSuccess(
-                    $"Successfully translated {result.TranslatedCount} sample(s) from {result.SourceLanguage} to {result.TargetLanguage}: {result.FileNames}",
-                    nextSteps: ["Review the translated samples", "Test the samples to ensure they compile and run correctly"]);
+                // Set samples_count for telemetry tracking (including 0 for failed translations)
+                response.Result = new { samples_count = result.TranslatedCount };
+                return response;
             }
             catch (ArgumentException ex)
             {
@@ -194,7 +197,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
             }
         }
 
-        private async Task<(int TranslatedCount, string OutputDirectory, string SourceLanguage, string TargetLanguage, string FileNames)> TranslateSamplesInternalAsync(
+        private async Task<(int TranslatedCount, string OutputDirectory, string SourceLanguage, string TargetLanguage, string FileNames, PackageInfo PackageInfo)> TranslateSamplesInternalAsync(
             string fromPackagePath,
             string toPackagePath,
             bool overwrite,
@@ -231,7 +234,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
             if (!sampleFiles.Any())
             {
                 logger.LogWarning("No sample files found at {samplesPath}", samplesPath);
-                return (0, outputDirectory, sourceLanguage, targetLanguage, "");
+                return (0, outputDirectory, sourceLanguage, targetLanguage, "", packageInfo);
             }
 
             logger.LogInformation("Found {count} sample files to translate", sampleFiles.Count);
@@ -276,7 +279,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
 
             logger.LogInformation("Sample translation completed");
             var fileNames = string.Join(", ", allTranslatedSamples.Select(s => $"{s.OriginalFileName} -> {s.TranslatedFileName}"));
-            return (allTranslatedSamples.Count, outputDirectory, sourceLanguage, targetLanguage, fileNames);
+            return (allTranslatedSamples.Count, outputDirectory, sourceLanguage, targetLanguage, fileNames, packageInfo);
         }
 
         private async Task<List<SourceSampleFile>> DiscoverSampleFilesAsync(
@@ -350,16 +353,18 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
         {
             var batchList = batch.ToList();
             logger.LogInformation("Translating batch of {count} samples to {targetLanguage}", batchList.Count, targetLanguage);
-            var originalsByName = batchList.ToDictionary(
-                sample => Path.GetFileName(sample.FilePath),
+            var fullSourceSamplesPath = Path.GetFullPath(sourceSamplesPath);
+            var originalsByRelativePath = batchList.ToDictionary(
+                sample => Path.GetRelativePath(fullSourceSamplesPath, sample.FilePath),
                 sample => sample,
-                StringComparer.Ordinal);
+                StringComparer.OrdinalIgnoreCase);
 
-            // Build samples context for the batch
+            // Build samples context for the batch, including relative paths so the AI preserves directory structure
             var samplesContext = new StringBuilder();
             foreach (var sample in batchList)
             {
-                samplesContext.AppendLine($"## Source Sample: {Path.GetFileName(sample.FilePath)} ({sample.SourceLanguage})");
+                var relativePath = Path.GetRelativePath(fullSourceSamplesPath, sample.FilePath);
+                samplesContext.AppendLine($"## Source Sample: {relativePath} ({sample.SourceLanguage})");
                 samplesContext.AppendLine("```");
                 samplesContext.AppendLine(sample.Content);
                 samplesContext.AppendLine("```");
@@ -389,28 +394,29 @@ SOURCE SAMPLES TO TRANSLATE:
 {samplesContext}
 
 For each source sample, provide a translation with:
-1. Original filename
+1. Original file path (the relative path exactly as shown in the '## Source Sample:' headers above, e.g. 'subfolder/sample_name.ext')
 2. Appropriate new filename for {targetLanguage} (following naming conventions)
 3. Translated code content
 
 Return a JSON array of objects with 'OriginalFileName', 'TranslatedFileName', and 'Content' properties.
+The 'OriginalFileName' must be the relative file path exactly as shown in the source sample headers (e.g. 'subfolder/sample_name.ext', not just 'sample_name.ext').
 ";
 
             logger.LogDebug("Enhanced prompt prepared with {contextLength} characters of context", targetPackageContext.Length);
 
-            var microagent = string.IsNullOrEmpty(model)
-                ? new Microagent<List<TranslatedSample>>() { Instructions = enhancedPrompt }
-                : new Microagent<List<TranslatedSample>>() { Instructions = enhancedPrompt, Model = model };
+            var agent = string.IsNullOrEmpty(model)
+                ? new CopilotAgent<List<TranslatedSample>>() { Instructions = enhancedPrompt }
+                : new CopilotAgent<List<TranslatedSample>>() { Instructions = enhancedPrompt, Model = model };
 
-            logger.LogInformation("Calling translation microagent service...");
-            var translatedSamples = await _microagentHostService.RunAgentToCompletion(microagent, ct);
-            logger.LogInformation("Translation microagent service returned");
+            logger.LogInformation("Calling translation copilot agent service...");
+            var translatedSamples = await _copilotAgentRunner.RunAsync(agent, ct);
+            logger.LogInformation("Translation copilot agent service returned");
 
             var writtenSamples = new List<TranslatedSample>();
 
             if (translatedSamples == null || translatedSamples.Count == 0)
             {
-                logger.LogWarning("Translation microagent returned no samples for this batch");
+                logger.LogWarning("Translation copilot agent returned no samples for this batch");
                 return writtenSamples;
             }
 
@@ -428,17 +434,44 @@ Return a JSON array of objects with 'OriginalFileName', 'TranslatedFileName', an
                     continue;
                 }
 
-                // Find the original source file to get its directory structure
-                var lookupKey = Path.GetFileName(translatedSample.OriginalFileName);
-                if (!originalsByName.TryGetValue(lookupKey, out var originalSample))
+                // Find the original source file by matching the relative path returned by the AI
+                var lookupKey = translatedSample.OriginalFileName
+                    .Replace('\\', Path.DirectorySeparatorChar)
+                    .Replace('/', Path.DirectorySeparatorChar);
+
+                if (!originalsByRelativePath.TryGetValue(lookupKey, out var originalSample))
                 {
-                    logger.LogWarning("Could not find original sample file for: {original}",
-                        translatedSample.OriginalFileName);
-                    continue;
+                    // Fallback: try matching by filename only for backwards compatibility.
+                    // If multiple matches are found, treat as ambiguous and skip to avoid writing to the wrong path.
+                    var fileName = Path.GetFileName(lookupKey);
+                    var filenameMatches = originalsByRelativePath.Values
+                        .Where(s => string.Equals(Path.GetFileName(s.FilePath), fileName, StringComparison.OrdinalIgnoreCase))
+                        .ToList();
+
+                    if (filenameMatches.Count == 1)
+                    {
+                        originalSample = filenameMatches[0];
+                        logger.LogDebug("Matched translated sample '{original}' to source file by filename fallback", translatedSample.OriginalFileName);
+                    }
+                    else if (filenameMatches.Count == 0)
+                    {
+                        logger.LogWarning("Could not find original sample file for: {original}",
+                            translatedSample.OriginalFileName);
+                        continue;
+                    }
+                    else
+                    {
+                        logger.LogWarning(
+                            "Ambiguous filename-only match for translated sample: {original}. Found {count} source files named '{fileName}'. " +
+                            "Please disambiguate by providing a relative path.",
+                            translatedSample.OriginalFileName,
+                            filenameMatches.Count,
+                            fileName);
+                        continue;
+                    }
                 }
 
                 // Calculate the relative path from the source samples directory
-                var fullSourceSamplesPath = Path.GetFullPath(sourceSamplesPath);
                 var relativePath = Path.GetRelativePath(fullSourceSamplesPath, originalSample.FilePath);
                 var relativeDir = Path.GetDirectoryName(relativePath) ?? "";
 

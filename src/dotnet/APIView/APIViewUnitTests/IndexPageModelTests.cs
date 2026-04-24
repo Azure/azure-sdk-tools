@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using ApiView;
 using APIView.Identity;
 using APIViewWeb.Hubs;
 using APIViewWeb.LeanModels;
@@ -93,7 +95,9 @@ public class IndexPageModelTests
                 null,
                 "/path/to/file.json",
                 "Python",
-                "Test Label"))
+                "Test Label",
+                It.IsAny<CodeFile>(),
+                It.IsAny<MemoryStream>()))
             .ReturnsAsync(newApiRevision);
 
         IActionResult result = await _pageModel.OnPostUploadAsync();
@@ -137,7 +141,7 @@ public class IndexPageModelTests
                 "/path/to/file.json",
                 "Python",
                 false))
-            .ReturnsAsync(createdReview);
+            .ReturnsAsync((createdReview, (CodeFile)null, new MemoryStream()));
 
         _mockApiRevisionsManager.Setup(m => m.CreateAPIRevisionAsync(
                 It.IsAny<ClaimsPrincipal>(),
@@ -145,7 +149,9 @@ public class IndexPageModelTests
                 null,
                 "/path/to/file.json",
                 "Python",
-                "Test Label"))
+                "Test Label",
+                It.IsAny<CodeFile>(),
+                It.IsAny<MemoryStream>()))
             .ReturnsAsync(newApiRevision);
 
         IActionResult result = await _pageModel.OnPostUploadAsync();
@@ -193,7 +199,7 @@ public class IndexPageModelTests
                 "/path/to/file.json",
                 "Python",
                 false))
-            .ReturnsAsync(createdReview);
+            .ReturnsAsync((createdReview, (CodeFile)null, new MemoryStream()));
 
         _mockApiRevisionsManager.Setup(m => m.CreateAPIRevisionAsync(
                 It.IsAny<ClaimsPrincipal>(),
@@ -201,7 +207,9 @@ public class IndexPageModelTests
                 null,
                 "/path/to/file.json",
                 "Python",
-                "Test Label"))
+                "Test Label",
+                It.IsAny<CodeFile>(),
+                It.IsAny<MemoryStream>()))
             .ReturnsAsync(newApiRevision);
 
         IActionResult result = await _pageModel.OnPostUploadAsync();

@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Configuration;
-using Azure.Sdk.Tools.Cli.Microagents;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Prompts.Templates;
 using Azure.Sdk.Tools.Cli.Tools.Core;
@@ -17,7 +17,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     //[McpServerToolType, Description("Generates a README file, using service documentation")]
     public class ReadMeGeneratorTool(
         ILogger<ReadMeGeneratorTool> logger,
-        IMicroagentHostService microAgentHostService
+        ICopilotAgentRunner copilotAgentRunner
     ) : MCPTool
     {
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package, SharedCommandGroups.PackageReadme];
@@ -75,7 +75,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
                 var generator = new ReadmeGenerator(
                     logger: logger,
-                    microAgentHostService: microAgentHostService,
+                    copilotAgentRunner: copilotAgentRunner,
                     templatePath: templatePath,
                     serviceDocumentation: new Uri(serviceDocumentation),
                     packagePath: parseResult.GetValue(packagePathOption),
@@ -101,7 +101,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     public partial class ReadmeGenerator
     {
         private readonly ILogger<ReadMeGeneratorTool> logger;
-        private readonly IMicroagentHostService microAgentHostService;
+        private readonly ICopilotAgentRunner copilotAgentRunner;
         private readonly string templatePath;
         private readonly Uri serviceDocumentation;
         private readonly string subPackagePath;
@@ -110,12 +110,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private readonly string model;
 
         public ReadmeGenerator(
-            ILogger<ReadMeGeneratorTool> logger, IMicroagentHostService microAgentHostService,
+            ILogger<ReadMeGeneratorTool> logger, ICopilotAgentRunner copilotAgentRunner,
             string templatePath, Uri serviceDocumentation, string packagePath, string outputPath,
             string model)
         {
             this.logger = logger;
-            this.microAgentHostService = microAgentHostService;
+            this.copilotAgentRunner = copilotAgentRunner;
 
             this.templatePath = templatePath;
             this.serviceDocumentation = serviceDocumentation;
@@ -149,14 +149,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 packagePath: subPackagePath);
             var prompt = template.BuildPrompt();
 
-            var result = await this.microAgentHostService.RunAgentToCompletion(new Microagent<ReadmeContents>()
+            var result = await this.copilotAgentRunner.RunAsync(new CopilotAgent<ReadmeContents>()
             {
                 Instructions = prompt,
-                MaxToolCalls = 100,
+                MaxIterations = 100,
                 Model = this.model,
                 Tools =
                 [
-                    AgentTool<ReadmeContents, CheckReadmeResult>.FromFunc("check_readme_tool", "Checks a readme to make sure that all the required values have been replaced", CheckReadme),
+                    Microsoft.Extensions.AI.AIFunctionFactory.Create(
+                        async (ReadmeContents input, CancellationToken ct) => await CheckReadme(input, ct),
+                        "check_readme_tool",
+                        "Checks a readme to make sure that all the required values have been replaced"),
                 ]
             }, ct);
 

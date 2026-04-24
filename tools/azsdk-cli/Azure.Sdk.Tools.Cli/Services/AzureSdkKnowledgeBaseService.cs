@@ -24,14 +24,14 @@ namespace Azure.Sdk.Tools.Cli.Services
         private readonly IList<string> scopes = new List<string>();
         private const string authUrl = "https://login.microsoftonline.com/organizations/";
 
-        private readonly object _initializeLock = new();
+        private readonly SemaphoreSlim _initializeSemaphore = new(1, 1);
         private bool _initialized = false;
 
         private static readonly ServiceInfo DefaultAzureSdkKnowledgeService = new()
         {
-            Endpoint = "https://azuresdkqabot-dev-serve-authoring-epgbcvbpa3adcvcu.westus2-01.azurewebsites.net",
-            ClientId = "830f1656-8b36-4e8e-9781-87ccdd038644",
-            AuthScope = "api://azure-sdk-qa-bot-dev/token"
+            Endpoint = "https://azuresdkqabot-server-c8czabhzhweadwgu.westus2-01.azurewebsites.net",
+            ClientId = "899da762-d510-48f2-911a-db9ea0cc41fd",
+            AuthScope = "api://azure-sdk-qa-bot/token"
         };
 
         public AzureSdkKnowledgeBaseService(
@@ -90,14 +90,24 @@ namespace Azure.Sdk.Tools.Cli.Services
             _initialized = true;
         }
 
-        private void Initialize()
+        private async Task Initialize(CancellationToken ct)
         {
-            lock (_initializeLock)
+            if (_initialized)
+            {
+                return;
+            }
+
+            await _initializeSemaphore.WaitAsync(ct);
+            try
             {
                 if (!_initialized)
                 {
                     _initialize();
                 }
+            }
+            finally
+            {
+                _initializeSemaphore.Release();
             }
         }
 
@@ -112,7 +122,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 throw new ArgumentException("Request validation failed", nameof(request));
             }
 
-            Initialize();
+            await Initialize(cancellationToken);
 
             try
             {

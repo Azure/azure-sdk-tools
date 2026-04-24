@@ -82,7 +82,7 @@ namespace APIViewWeb.Managers
             return htmlString;
         }
 
-        public async Task<SamplesRevisionModel> UpsertSamplesRevisionsAsync(ClaimsPrincipal user, string reviewId, string sample, string revisionTitle, string FileName = null)
+        public async Task<SamplesRevisionModel> UpsertSamplesRevisionsAsync(ClaimsPrincipal user, string reviewId, string sample, string revisionTitle, string FileName = null, string apiVersionId = null)
         {
             // markdig parser with syntax highlighting
             var pipeline = new MarkdownPipelineBuilder()
@@ -96,11 +96,14 @@ namespace APIViewWeb.Managers
             var originalStream = new MemoryStream(Encoding.UTF8.GetBytes(sample));
 
             // Create new file and upsert the updated model
-            var sampleRevision = new SamplesRevisionModel();
-            sampleRevision.ReviewId = reviewId;
-            sampleRevision.Title = revisionTitle ?? FileName;
-            sampleRevision.CreatedOn = System.DateTime.UtcNow;
-            sampleRevision.CreatedBy = user.GetGitHubLogin();
+            var sampleRevision = new SamplesRevisionModel
+            {
+                ReviewId = reviewId,
+                Title = revisionTitle ?? FileName,
+                CreatedOn = System.DateTime.UtcNow,
+                CreatedBy = user.GetGitHubLogin(),
+                APIVersionId = apiVersionId
+            };
 
             await _samplesRevisionsRepository.UpsertSamplesRevisionAsync(sampleRevision);
             await _sampleFilesRepository.UploadUsageSampleAsync(sampleRevision.FileId, stream);
@@ -108,12 +111,15 @@ namespace APIViewWeb.Managers
             return sampleRevision;
         }
 
-        public async Task<SamplesRevisionModel> UpsertSamplesRevisionsAsync(ClaimsPrincipal user, string reviewId, Stream fileStream, string revisionTitle, string FileName)
+        public async Task<SamplesRevisionModel> UpsertSamplesRevisionsAsync(ClaimsPrincipal user, string reviewId, Stream fileStream, string revisionTitle, string FileName, string apiVersionId = null)
         {
             // For file upload. Read stream then continue.
-            var reader = new StreamReader(fileStream);
-            var sample = reader.ReadToEnd();
-            return await UpsertSamplesRevisionsAsync(user, reviewId, sample, revisionTitle, FileName);
+            string sample;
+            using (var reader = new StreamReader(fileStream, leaveOpen: true))
+            {
+                sample = reader.ReadToEnd();
+            }
+            return await UpsertSamplesRevisionsAsync(user, reviewId, sample, revisionTitle, FileName, apiVersionId);
         }
 
         public async Task UpdateSamplesRevisionAsync(ClaimsPrincipal user, string reviewId, string sampleRevisionId, string newContent = null, string newTitle = null)

@@ -19,6 +19,9 @@ public class LabelOwnerWorkItem : WorkItemBase
     [FieldName("Custom.RepoPath")]
     public string RepoPath { get; set; } = string.Empty;
 
+    [FieldName("Custom.Section")]
+    public string Section { get; set; } = string.Empty;
+
     /// <summary>
     /// IDs of related work items (populated from work item relations).
     /// </summary>

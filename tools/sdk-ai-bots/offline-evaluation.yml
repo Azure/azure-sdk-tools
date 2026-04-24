@@ -59,47 +59,39 @@ extends:
                   go version
                 displayName: 'check go'
               - task: AzureCLI@2
+                displayName: 'start backend AI agent service'
                 inputs:
                   azureSubscription: 'azuresdkqabot-dev'
-                  addSpnToEnvironment: true
                   scriptType: bash
                   scriptLocation: inlineScript
+                  workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
                   inlineScript: |
-                    echo "##vso[task.setvariable variable=AZURE_CLIENT_ID]$servicePrincipalId"
-                    echo "##vso[task.setvariable variable=AZURE_TENANT_ID]$tenantId"
-                    echo "##vso[task.setvariable variable=AZURE_SUBSCRIPTION_ID]$(az account show --query id -o tsv)"
-                    echo "$idToken" > "$(Agent.BuildDirectory)/id_token"
-                    echo "##vso[task.setvariable variable=AZURE_FEDERATED_TOKEN_FILE]$(Agent.BuildDirectory)/id_token"
-              
-              - script: |
-                  export GOPROXY=https://proxy.golang.org,direct
-                  go build -o qa-bot-service
-                  chmod +x qa-bot-service
-                  ./qa-bot-service &
-                  sleep 20
-                  lsof -ti:8088
-                displayName: 'start backend AI agent service'
-                workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
+                    export GOPROXY=https://proxy.golang.org,direct
+                    go build -o qa-bot-service
+                    chmod +x qa-bot-service
+                    nohup ./qa-bot-service </dev/null >/dev/null 2>&1 &
+                    sleep 20
+                    lsof -ti:8088
                 env:
-                  AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
-                  AZURE_TENANT_ID: $(AZURE_TENANT_ID)
-                  AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
-                  AZURE_FEDERATED_TOKEN_FILE: $(AZURE_FEDERATED_TOKEN_FILE)
+                  SYSTEM_ACCESSTOKEN: $(System.AccessToken)
                   AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
               - script: |
                   pip install -r requirements.txt
                 displayName: 'install requirements'
                 workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
-              - script: |
-                  python evals_run.py --evaluation_name_prefix $(Build.BuildId) --evaluators "similarity,groundedness,response_completeness,reference_match,knowledge_match" --cache_result full
+              - task: AzureCLI@2
                 displayName: 'Run Evals'
-                workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
+                inputs:
+                  azureSubscription: 'azuresdkqabot-dev'
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
+                  inlineScript: |
+                    python evals_run.py --evaluation_name_prefix $(Build.BuildId) --evaluators "similarity,groundedness,response_completeness,reference_match,knowledge_match" --cache_result full
                 env:
+                  SYSTEM_ACCESSTOKEN: $(System.AccessToken)
                   AZURE_AI_PROJECT_ENDPOINT: $(AZURE_AI_PROJECT_ENDPOINT)
                   AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
-                  AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
-                  AZURE_TENANT_ID: $(AZURE_TENANT_ID)
-                  AZURE_FEDERATED_TOKEN_FILE: $(AZURE_FEDERATED_TOKEN_FILE)
                   AZURE_OPENAI_ENDPOINT: $(AZURE_OPENAI_ENDPOINT)
                   AZURE_OPENAI_API_KEY: $(AZURE_OPENAI_API_KEY)
                   AZURE_COMPLETION_MODEL_NAME: $(AZURE_COMPLETION_MODEL_NAME)

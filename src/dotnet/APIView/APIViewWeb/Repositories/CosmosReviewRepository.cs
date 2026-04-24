@@ -13,7 +13,6 @@ using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
-
 namespace APIViewWeb
 {
     public class CosmosReviewRepository : ICosmosReviewRepository
@@ -33,6 +32,17 @@ namespace APIViewWeb
         {
             review.LastUpdatedOn = DateTime.UtcNow;
             await _reviewsContainer.UpsertItemAsync(review, new PartitionKey(review.Id));
+        }
+
+        public async Task UpsertReviewsAsync(IEnumerable<ReviewListItemModel> reviews)
+        {
+            var now = DateTime.UtcNow;
+            var tasks = reviews.Select(review =>
+            {
+                review.LastUpdatedOn = now;
+                return _reviewsContainer.UpsertItemAsync(review, new PartitionKey(review.Id));
+            });
+            await Task.WhenAll(tasks);
         }
 
         public async Task<ReviewListItemModel> GetReviewAsync(string reviewId)
@@ -78,8 +88,7 @@ namespace APIViewWeb
             var queryText = $@"
                 SELECT * FROM Reviews r 
                 WHERE r.Language IN ({languageList}) 
-                AND r.NamespaceReviewStatus = 'Pending'
-                AND IS_DEFINED(r.NamespaceApprovalRequestedOn)
+                AND (r.NamespaceDecisionStatus = 'Proposed' OR r.NamespaceReviewStatus = 'Pending')
                 AND r.IsDeleted = false";
             
             var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<ReviewListItemModel>(queryText);
@@ -129,7 +138,7 @@ namespace APIViewWeb
 
         public async Task<ReviewListItemModel> GetReviewAsync(string language, string packageName, bool? isClosed = false)
         {
-            var queryStringBuilder = new StringBuilder("SELECT * FROM Reviews r WHERE LOWER(r.Language) = LOWER(@language) AND LOWER(r.PackageName) = LOWER(@packageName)");
+            var queryStringBuilder = new StringBuilder("SELECT * FROM Reviews r WHERE LOWER(r.Language) = LOWER(@language) AND LOWER(r.PackageName) = LOWER(@packageName) AND r.IsDeleted = false");
             if (isClosed.HasValue)
             {
                 queryStringBuilder.Append(" AND r.IsClosed = @isClosed");

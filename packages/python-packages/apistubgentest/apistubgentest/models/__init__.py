@@ -11,6 +11,7 @@ from ._models import (
     AliasNewType,
     AliasUnion,
     ClassWithDecorators,
+    ClassWithForwardRefBase,
     ClassWithIvarsAndCvars,
     DocstringClass,
     FakeError,
@@ -30,6 +31,7 @@ from ._models import (
     SomethingWithDecorators,
     SomethingWithInheritedOverloads,
     SomethingWithOverloads,
+    SomethingWithRedefinedOverloads,
     SomethingWithProperties,
     SomeProtocolDecorator,
     SomethingWithLiterals,
@@ -39,19 +41,19 @@ from ._dataclasses import (
     DataClassSimple,
     DataClassWithFields,
     DataClassDynamic,
+    DataClassWithPostInit,
     DataClassWithKeywordOnly,
-    DataClassWithPostInit
 )
 
 __all__ = (
     "AliasNewType",
     "AliasUnion",
     "ClassWithDecorators",
+    "ClassWithForwardRefBase",
     "ClassWithIvarsAndCvars",
     "DataClassSimple",
     "DataClassWithFields",
     "DataClassDynamic",
-    "DataClassWithKeywordOnly",
     "DataClassWithPostInit",
     "DocstringClass",
     "FakeError",
@@ -71,8 +73,10 @@ __all__ = (
     "SomethingWithDecorators",
     "SomethingWithInheritedOverloads",
     "SomethingWithOverloads",
+    "SomethingWithRedefinedOverloads",
     "SomethingWithProperties",
     "SomeProtocolDecorator",
     "SomethingWithLiterals",
-    "SomeEnum"
+    "SomeEnum",
+    "DataClassWithKeywordOnly",
 )

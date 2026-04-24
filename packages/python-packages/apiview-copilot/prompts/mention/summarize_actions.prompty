@@ -11,15 +11,10 @@ inputs:
 model:
   api: chat
   configuration:
-    type: azure_openai
-    azure_endpoint: ${env:OPENAI_ENDPOINT}
-    azure_deployment: gpt-4.1
+    azure_deployment: gpt-5.4-mini
     api_version: 2025-03-01-preview
   parameters:
-    temperature: 0.0
-    top_p: 1.0
-    stop: []
-    max_tokens: 16384
+    max_completion_tokens: 16384
 sample:
   results: | 
     {
@@ -112,6 +107,10 @@ system:
 You are an AI that summarized the results of an @mention request from APIView.
 
 # INSTRUCTIONS
+
+## MERGED (results contain `"merged": true`)
+- Tell the user that an existing memory was found that already covers this feedback, and the existing memory has been updated with the merged information. Provide the memory id.
+  Example: "Thank you for your feedback! I found an existing memory that already covers this topic and updated it with the new information (memory id: `abc-123`)."
 
 ## NO FAILURES
 - Simply thank the user for their feedback and note that you have updated your knowledge base. DO NOT show a summary of what you have done. Don't list items created. 

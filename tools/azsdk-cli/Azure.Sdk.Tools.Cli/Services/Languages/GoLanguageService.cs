@@ -31,6 +31,16 @@ public partial class GoLanguageService(
     public override bool IsCustomizedCodeUpdateSupported => true;
 
     /// <summary>
+    /// Go does not produce distributable artifacts, so pack is a no-op.
+    /// </summary>
+    public override async Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo, string? ArtifactPath)> PackAsync(
+        string packagePath, string? outputPath = null, int timeoutMinutes = 30, CancellationToken ct = default)
+    {
+        var packageInfo = await GetPackageInfo(packagePath, ct);
+        return (true, "Go SDK does not produce distributable artifacts. No pack operation needed.", packageInfo, null);
+    }
+
+    /// <summary>
     /// Go packages are identified by go.mod files.
     /// </summary>
     protected override string[] PackageManifestPatterns => ["go.mod"];

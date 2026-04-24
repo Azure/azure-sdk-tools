@@ -304,6 +304,13 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
     this.disableCodeLinesLazyLoading = false;
   }
 
+  onSearchKeydown(event: Event) {
+    event.preventDefault();
+    const ke = event as KeyboardEvent;
+    const direction = ke.shiftKey ? -1 : 1;
+    this.navigateSearch(direction);
+  }
+
   navigateSearch(direction: number) {
     const searchInfo = this.codeLineSearchInfo;
     if (searchInfo && searchInfo.currentMatch && searchInfo.totalMatchCount !== undefined && direction !== 0) {

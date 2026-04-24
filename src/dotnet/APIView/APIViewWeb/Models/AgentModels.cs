@@ -48,6 +48,8 @@ public class MentionRequest
     public string Code { get; set; }
     [JsonPropertyName("comments")]
     public List<ApiViewAgentComment> Comments { get; set; }
+    [JsonPropertyName("sourceCommentId")]
+    public string SourceCommentId { get; set; }
 }
 
 public class AgentChatResponse
@@ -55,7 +57,7 @@ public class AgentChatResponse
     [JsonPropertyName("response")]
     public string Response { get; set; }
 
-    [JsonPropertyName("thread_id")]
+    [JsonPropertyName("threadId")]
     public string ThreadId { get; set; }
 
     [JsonPropertyName("messages")]

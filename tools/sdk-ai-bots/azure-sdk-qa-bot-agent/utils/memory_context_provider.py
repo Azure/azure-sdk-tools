@@ -76,7 +76,7 @@ class MemoryContextProvider(ContextProvider):
         # Episode search config
         self._episode_top_k = int(cfg("MEMORY_EPISODE_SEARCH_TOP_K", "2"))
         self._episode_similarity_threshold = float(
-            cfg("MEMORY_EPISODE_SIMILARITY_THRESHOLD", "0.65")
+            cfg("MEMORY_EPISODE_SIMILARITY_THRESHOLD", "0.8")
         )
         self._episode_embedding_model = cfg(
             "MEMORY_STORE_EMBEDDING_MODEL", "text-embedding-3-small"

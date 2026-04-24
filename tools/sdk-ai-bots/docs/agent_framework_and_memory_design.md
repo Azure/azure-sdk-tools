@@ -149,7 +149,7 @@ When a conversation message is saved via `/conversation/save`, `ThreadMemoryServ
 1. **Resolve scopes** — Extracts `user_scope` from `[memory_scope] value=…` marker and `tenant_scope` from `[tenant_context] original_tenant_id=…` marker in input messages.
 2. **Fetch static user memories** — On first turn only (per session), queries the user store with no items to retrieve user-profile memories.
 3. **Search contextual user memories** — Every turn, searches the user store using input messages as items (incremental via `previous_search_id`).
-4. **Search expert episodes** — Generates an embedding of the latest user message and performs a Cosmos DB `VectorDistance` query within the tenant partition. Results are filtered by a similarity threshold (default 0.65, top-k default 2).
+4. **Search expert episodes** — Generates an embedding of the latest user message and performs a Cosmos DB `VectorDistance` query within the tenant partition. Results are filtered by a similarity threshold (default 0.80, top-k default 2).
 5. **Inject context** — Formats all memories into a system message with `## User memories` and `## Expert experience` sections and injects it into the agent context.
 
 #### 2.3.4 Episode Schema

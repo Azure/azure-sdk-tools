@@ -52,7 +52,7 @@ public static class RustRequirements
     {
         public override string Name => "rustfmt";
         public override string[] CheckCommand => ["cargo", "fmt", "--version"];
-        public override IReadOnlyList<string> DependsOn => ["cargo"];
+        public override IReadOnlyList<string> DependsOn => ["cargo", "rustup"];
         public override bool IsAutoInstallable => true;
 
         public override bool ShouldCheck(RequirementContext ctx)
@@ -66,7 +66,7 @@ public static class RustRequirements
     {
         public override string Name => "clippy";
         public override string[] CheckCommand => ["cargo", "clippy", "--version"];
-        public override IReadOnlyList<string> DependsOn => ["cargo"];
+        public override IReadOnlyList<string> DependsOn => ["cargo", "rustup"];
         public override bool IsAutoInstallable => true;
 
         public override bool ShouldCheck(RequirementContext ctx)

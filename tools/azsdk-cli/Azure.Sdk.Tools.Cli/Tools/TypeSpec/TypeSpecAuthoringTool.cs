@@ -47,11 +47,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             Required = false,
         };
 
-        private readonly Option<string> _sdkChangelogOption = new("--sdk-changelog")
-        {
-            Description = "SDK changelog content for breaking change detection. When provided, the tool analyzes the changelog to detect SDK breaking changes and includes mitigation recommendations in the plan.",
-            Required = false,
-        };
 
         public TypeSpecAuthoringTool(
             IAzureSdkKnowledgeBaseService azureSdkKnowledgeBaseService,
@@ -72,7 +67,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 _requestOption,
                 _additionalInformationOption,
                 _typeSpecProjectPathOption,
-                _sdkChangelogOption,
             };
 
             return command;
@@ -83,8 +77,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             var request = parseResult.GetValue(_requestOption);
             var additionalInformation = parseResult.GetValue(_additionalInformationOption);
             var typespecProjectRootPath = parseResult.GetValue(_typeSpecProjectPathOption);
-            var sdkChangelog = parseResult.GetValue(_sdkChangelogOption);
-
             if (string.IsNullOrWhiteSpace(request))
             {
                 _logger.LogError("Request cannot be empty");
@@ -99,7 +91,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                   request,
                   additionalInformation,
                   typespecProjectRootPath,
-                  sdkChangelog,
                   ct: ct
                 );
 
@@ -134,7 +125,6 @@ This tool applies to all tasks involving **TypeSpec**:
 - **Detecting SDK breaking changes** and recommending client.tsp mitigations
 Pass in a `request` to get an AI-generated response with references.
 If the planned changes may cause SDK breaking changes, the response includes SDK IMPACT warnings with language-specific mitigations.
-Optionally pass `sdkChangelog` with SDK changelog content for deeper breaking change detection.
 Returns an answer with supporting references and documentation links
 ")]
         public async Task<TypeSpecAuthoringResponse> GenerateTypeSpecAuthoringPlan(
@@ -144,8 +134,6 @@ Returns an answer with supporting references and documentation links
             string additionalInformation = null,
             [Description("The root path of the TypeSpec project")]
             string typeSpecProjectRootPath = null,
-            [Description("SDK changelog content for breaking change detection. When provided, the tool analyzes the changelog to detect SDK breaking changes and includes mitigation recommendations in the plan.")]
-            string sdkChangelog = null,
             CancellationToken ct = default)
         {
             var typespecProject = _typeSpecHelper.GetTypeSpecProjectRelativePath(typeSpecProjectRootPath);
@@ -181,18 +169,6 @@ Returns an answer with supporting references and documentation links
                     {
                         Type = AdditionalInfoType.Text,
                         Content = additionalInformation
-                    });
-                }
-
-                // Include SDK changelog for deeper breaking change detection
-                if (!string.IsNullOrWhiteSpace(sdkChangelog))
-                {
-                    completionRequest.AdditionalInfos.Add(new AdditionalInfo
-                    {
-                        Type = AdditionalInfoType.Text,
-                        Content = $"## SDK Changelog for Breaking Change Detection\n\n" +
-                                  $"Analyze the following SDK changelog to detect breaking changes and recommend client.tsp mitigations:\n\n" +
-                                  sdkChangelog
                     });
                 }
 

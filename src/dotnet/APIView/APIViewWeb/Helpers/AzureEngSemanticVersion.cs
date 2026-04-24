@@ -92,8 +92,7 @@ public class AzureEngSemanticVersion : IComparable<AzureEngSemanticVersion>
                 // CI daily builds encode a YYYYMMDD date as the prerelease number;
                 IsDailyDevBuild = PrereleaseNumber >= 20000101;
             }
-            else
-            if (skipPrelabel || !match.Groups["prelabel"].Success)
+            else if (skipPrelabel || !match.Groups["prelabel"].Success)
             {
                 // Artificially provide these values for non-prereleases to enable easy sorting of them later than prereleases.
                 PrereleaseLabel = "zzz";

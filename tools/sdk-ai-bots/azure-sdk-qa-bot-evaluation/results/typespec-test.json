@@ -1758,8 +1758,79 @@
         "overall_score": 7.1
     },
     {
+        "testcase": "Adding optional body parameter to existing ARM action operation",
+        "expected": {
+            "answer": "Yes, adding an optional body is the compatible way to evolve this. Don't change the existing stable version in place — add a new API version and introduce the body there.\n\nKeep the same action/operationId, define a request model, and set OptionalRequestBody = true:\nmodel ApplyMaintenanceWindowRequest {\n  durationInSeconds?: int32;\n  force?: boolean;\n}\n@action(\"applyMaintenanceWindow\")\n@operationId(\"managedApplyMaintenanceWindow_Post\")\npost is ArmResourceActionSync<\n  ManagedClusterResource,\n  ApplyMaintenanceWindowRequest,\n  ArmResponse<ApplyMaintenanceWindowResult>,\n  OptionalRequestBody = true\n>;\n\nIf the action returns no body, use the no-content POST template instead.",
+            "references": [
+                {
+                    "title": "Adding a Stable Version when the Last Version was Stable | Making Changes to your TypeSpec spec",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/versioning/arm/05-stable-after-stable"
+                },
+                {
+                    "title": "ARM ResourceManager operation templates reference",
+                    "link": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces"
+                },
+                {
+                    "title": "TypeSpec versioning",
+                    "link": "https://azure.github.io/typespec-azure/docs/getstarted/versioning"
+                },
+                {
+                    "title": "Versioning | Simple Scenarios | Adding a Parameter to an Operation and Making Another Parameter Optional",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/arm/versioning"
+                },
+                {
+                    "title": "Adding a stable version after a stable version",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/versioning/arm/05-stable-after-stable"
+                },
+                {
+                    "title": "Breaking-change FAQ for migration/versioning details",
+                    "link": "https://azure.github.io/typespec-azure/docs/migrate-swagger/faq/breakingchange"
+                },
+                {
+                    "title": "ARM resource actions how-to",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-operations"
+                }
+            ]
+        },
+        "actual": {
+            "answer": "Model the change as a versioned operation: keep the old no-body action for old versions and introduce a new action with an optional body for the new version, sharing the same route.\n\nAssuming you already have a `Versions` enum and `@versioned(Versions)` on your namespace, you can do:\n\n```typespec\n@armResourceOperations\ninterface ManagedResources {\n  // Old operation (no body) – present in old versions only\n  @renamedFrom(Versions.`2025-10-01-preview`, \"post\")\n  @removed(Versions.`2025-10-01-preview`)\n  @sharedRoute\n  postNoBody is ArmResourceActionSync;\n\n  // New operation – available in the new version, with optional body\n  @sharedRoute\n  post is ArmResourceActionSync<\n    /* Resource */    ManagedResource,\n    /* Request */     ApplyMaintenanceWindowRequest?, // optional body\n    /* Response */    ApplyMaintenanceWindowResponse\n  >;\n}\n```\n\nKey points:\n- Use `@sharedRoute` on both operations so they share the same path and method.\n- Use `@renamedFrom` and `@removed` on the old op so it only appears in older api-versions.\n- Define the new `post` as `ArmResourceActionSync<Resource, Request?, Response>` with the request model marked optional (`?`).\n\nAdjust `Versions.<...>`, `ManagedResource`, and the request/response models to match your RP. Keep `@action(\"applyMaintenanceWindow\")` and `@operationId(\"managedApplyMaintenanceWindow_Post\")` on the new `post` if those are still correct for the latest version.",
+            "references": [
+                {
+                    "title": "Interfaces and Operations | Azure.ResourceManager | `ArmResourceActionSync`",
+                    "link": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/interfaces"
+                },
+                {
+                    "title": "Versioning",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/arm/versioning"
+                },
+                {
+                    "title": "Versioning the LRO headers | answer",
+                    "link": ""
+                }
+            ]
+        },
+        "similarity": -1.0,
+        "gpt_similarity": -1.0,
+        "similarity_result": "N/A",
+        "similarity_threshold": 4,
+        "groundedness": -1.0,
+        "gpt_groundedness": -1.0,
+        "groundedness_reason": "N/A",
+        "groundedness_result": "N/A",
+        "groundedness_threshold": 3.0,
+        "response_completeness": -1.0,
+        "response_completeness_result": "N/A",
+        "response_completeness_threshold": 4,
+        "response_completeness_reason": "N/A",
+        "reference_match": 0.33,
+        "reference_match_result": "fail",
+        "knowledge_match": 0.0,
+        "knowledge_match_result": "fail",
+        "overall_score": 0.33
+    },
+    {
         "average_score": NaN,
-        "total_evals": 34,
+        "total_evals": 35,
         "similarity_pass_rate": 34,
         "groundedness_pass_rate": 23,
         "response_completeness_pass_rate": 34,

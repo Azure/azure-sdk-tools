@@ -27,7 +27,7 @@ export class AzureEngSemanticVersion {
     postReleaseSeparator : string = '';
 
     constructor(version: string, language: string) {
-        const isPython = language?.toLowerCase() === "python";
+        const isPython = language.toLowerCase() === "python";
         const regex = isPython ? AzureEngSemanticVersion.PYTHON_SEM_VAR_REGEX : AzureEngSemanticVersion.SEM_VAR_REGEX;
         const versionParts = regex.exec(version);
         

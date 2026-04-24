@@ -218,7 +218,7 @@ public class AzureEngSemanticVersion : IComparable<AzureEngSemanticVersion>
     {
         var versions = versionStrings
             .Select(v => new AzureEngSemanticVersion(v))
-            .Where(v => v != null)
+            .Where(v => v.IsSemVerFormat)
             .ToList();
         versions.Sort();
         return versions.Select(v => v.RawVersion).ToList();
@@ -228,7 +228,7 @@ public class AzureEngSemanticVersion : IComparable<AzureEngSemanticVersion>
     {
         var versions = versionStrings
             .Select(v => new AzureEngSemanticVersion(v, language))
-            .Where(v => v != null)
+            .Where(v => v.IsSemVerFormat)
             .ToList();
         versions.Sort();
         return versions.Select(v => v.RawVersion).ToList();

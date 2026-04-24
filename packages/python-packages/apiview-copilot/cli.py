@@ -43,6 +43,7 @@ from src._apiview import (
     get_comments_in_date_range,
     get_created_revisions,
     get_opened_revisions,
+    get_thread_start_dates,
     resolve_package,
 )
 from src._apiview_reviewer import SUPPORTED_LANGUAGES, ApiViewReview
@@ -63,7 +64,7 @@ from src._prompt_runner import run_prompt
 from src._search_manager import SearchManager
 from src._settings import SettingsManager
 from src._thread_resolution import handle_thread_resolution_request
-from src._utils import get_language_pretty_name
+from src._utils import get_language_pretty_name, to_iso8601
 from src.agent._agent import get_readonly_agent, get_readwrite_agent, invoke_agent
 
 colorama.init(autoreset=True)
@@ -2207,29 +2208,49 @@ def get_architect_comments(
         if allowed_commenters:
             filtered = [c for c in filtered if c.get("CreatedBy") in allowed_commenters]
 
-    # Filter by language if specified — look up each comment's review to determine language
+    # Look up the language for each comment's review
+    review_lang_map: dict[str, str] = {}
+    review_ids = set(c.get("ReviewId") for c in filtered if c.get("ReviewId"))
+    if review_ids:
+        reviews_container = get_apiview_cosmos_client(container_name="Reviews", environment=environment)
+        params = []
+        clauses = []
+        for i, rid in enumerate(review_ids):
+            param_name = f"@id_{i}"
+            clauses.append(f"c.id = {param_name}")
+            params.append({"name": param_name, "value": rid})
+        review_query = f"SELECT c.id, c.Language FROM c WHERE ({' OR '.join(clauses)})"
+        review_results = list(
+            reviews_container.query_items(
+                query=review_query, parameters=params, enable_cross_partition_query=True
+            )
+        )
+        review_lang_map = {r["id"]: get_language_pretty_name(r.get("Language", "")) for r in review_results}
+
+    # Filter by language if specified
     if language:
         target_language = resolve_language(language)[1].lower()
-        review_ids = set(c.get("ReviewId") for c in filtered if c.get("ReviewId"))
-        if review_ids:
-            reviews_container = get_apiview_cosmos_client(container_name="Reviews", environment=environment)
-            params = []
-            clauses = []
-            for i, rid in enumerate(review_ids):
-                param_name = f"@id_{i}"
-                clauses.append(f"c.id = {param_name}")
-                params.append({"name": param_name, "value": rid})
-            review_query = f"SELECT c.id, c.Language FROM c WHERE ({' OR '.join(clauses)})"
-            review_results = list(
-                reviews_container.query_items(
-                    query=review_query, parameters=params, enable_cross_partition_query=True
-                )
-            )
-            review_lang_map = {r["id"]: get_language_pretty_name(r.get("Language", "")).lower() for r in review_results}
-            filtered = [c for c in filtered if review_lang_map.get(c.get("ReviewId"), "").lower() == target_language]
+        filtered = [c for c in filtered if review_lang_map.get(c.get("ReviewId"), "").lower() == target_language]
 
-    # By default, exclude replies — keep only the first comment per thread (has a Severity).
+    # By default, exclude replies — keep only the thread-starting comment for threads
+    # that actually *started* in the date window (not merely replied to).
     if not include_replies:
+        start_iso = to_iso8601(start_date)
+        end_iso = to_iso8601(end_date, end_of_day=True)
+        thread_starts = get_thread_start_dates(filtered, environment=environment)
+        started_in_window = set()
+        for key, min_created in thread_starts.items():
+            if start_iso <= min_created <= end_iso:
+                started_in_window.add(key)
+
+        # Keep only comments belonging to threads that started in the window
+        filtered = [
+            c
+            for c in filtered
+            if (c.get("ThreadId") or c.get("ElementId")) in started_in_window
+        ]
+
+        # Keep only the first (earliest) comment per thread
         seen_threads = {}
         for c in filtered:
             thread_id = c.get("ThreadId")
@@ -2246,7 +2267,10 @@ def get_architect_comments(
     comments = [APIViewComment(**c) for c in filtered]
 
     results = [
-        {k: v for k, v in comment.model_dump(by_alias=True, mode="json").items() if k in _APIVIEW_COMMENT_SELECT_FIELDS}
+        {
+            **{k: v for k, v in comment.model_dump(by_alias=True, mode="json").items() if k in _APIVIEW_COMMENT_SELECT_FIELDS},
+            "Language": review_lang_map.get(comment.review_id, ""),
+        }
         for comment in comments
     ]
     if output_format == "yaml":

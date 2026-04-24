@@ -192,9 +192,11 @@ test.describe('Related Comments - Dialog', () => {
 });
 
 test.describe('Related Comments - Batch Operations Workflows', () => {
-  test('should show selectable severity options in bulk actions dropdown', async ({
+  test('should complete full batch severity workflow: open dropdown -> verify all options visible -> select -> verify API', async ({
     page,
   }) => {
+    let batchRequest: { url: string; body: any } | null = null;
+
     const commentsOwnedByUser = mockCommentsWithRelatedComments.map((c: any) => ({
       ...c,
       createdBy: 'testuser',
@@ -205,6 +207,23 @@ test.describe('Related Comments - Batch Operations Workflows', () => {
       codePanelData: mockCodePanelDataWithRelatedComments,
       comments: commentsOwnedByUser,
     });
+
+    // Intercept batch operation API to verify the severity change is submitted
+    await page.route(
+      '**/api/comments/**/commentsBatchOperation',
+      async (route) => {
+        const postData = route.request().postData();
+        batchRequest = {
+          url: route.request().url(),
+          body: postData ? JSON.parse(postData) : null,
+        };
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify([]),
+        });
+      }
+    );
 
     const reviewPage = new ReviewPage(page);
     await reviewPage.goto('test-review-id');
@@ -253,6 +272,21 @@ test.describe('Related Comments - Batch Operations Workflows', () => {
     // After selecting, the dropdown closes and the badge updates with the new severity.
     const updatedBadge = page.locator('.severity-badge-editable').filter({ hasText: /question/i }).first();
     await expect(updatedBadge).toBeVisible({ timeout: 3000 });
+
+    // Click "Apply Changes" and verify the batch API is called with the new severity
+    const submitButton = dialog
+      .locator('button')
+      .filter({ hasText: /apply changes/i })
+      .first();
+    await expect(submitButton).toBeVisible({ timeout: 3000 });
+    await submitButton.click();
+    await expect(dialog).not.toBeVisible({ timeout: 5000 });
+
+    await expect.poll(() => batchRequest, { timeout: 5000 }).not.toBeNull();
+    expect(batchRequest!.url).toContain('commentsBatchOperation');
+    expect(batchRequest!.body.severity).toBe(0); // CommentSeverity.Question = 0
+    expect(batchRequest!.body.commentIds).toBeDefined();
+    expect(batchRequest!.body.commentIds.length).toBe(2);
   });
 
   test('should complete full batch resolve workflow: select comments -> resolve -> verify API', async ({

@@ -46,7 +46,11 @@ stimuli:
   - type: file-matches
     config:
       path: employee.tsp
-      pattern: 'move\s+is\s+ArmResourceActionAsync\s*<\s*Employee\s*,\s*MoveRequest\s*,\s*MoveResponse\s*,\s*LroHeaders\s*=\s*(ArmCombinedLroHeaders\s*<\s*FinalResult\s*=\s*MoveResponse\s*>|EmployeeMoveLroHeaders)\s*>'
+      pattern: 'move\s+is\s+ArmResourceActionAsync\s*<\s*Employee\s*,\s*MoveRequest\s*,\s*MoveResponse\s*,\s*LroHeaders\s*='
+  - type: file-matches
+    config:
+      path: employee.tsp
+      pattern: 'ArmCombinedLroHeaders\s*<\s*FinalResult\s*=\s*MoveResponse\s*>'
   - type: prompt
     config:
       scoring: scale_1_5
@@ -57,5 +61,5 @@ scoring:
   weights:
     tool-calls: 1
     prompt: 1
-    file-matches: 1
+    file-matches: 2
   threshold: 1.0

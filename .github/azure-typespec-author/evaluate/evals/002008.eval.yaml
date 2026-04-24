@@ -35,6 +35,10 @@ stimuli:
         dest: shared.tsp
       - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
         dest: tspconfig.yaml
+      - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+        dest: stable/2021-11-01/widget.json
+      - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+        dest: preview/2024-10-01-preview/widget.json
   graders:
   - type: tool-calls
     config:

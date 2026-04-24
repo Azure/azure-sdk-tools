@@ -2,6 +2,10 @@
 export class AzureEngSemanticVersion {
     private static SEM_VAR_REGEX = /(?<major>0|[1-9]\d*)\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)(?:(?<presep>-?)(?<prelabel>[a-zA-Z]+)(?:(?<prenumsep>\.?)(?<prenumber>[0-9]{1,8})(?:(?<buildnumsep>\.?)(?<buildnumber>\d{1,3}))?)?)?/;
 
+    // Python PEP 440 post-release extension
+    // Handles all PEP 440 alternate formats: .postN, -postN, _postN, postN, .post.N, .post (implicit 0) (case-insensitive)
+    private static PYTHON_SEM_VAR_REGEX = /(?<major>0|[1-9]\d*)\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)(?:(?<presep>-?)(?<prelabel>[a-zA-Z]+)(?:(?<prenumsep>\.?)(?<prenumber>[0-9]{1,8})(?:(?<buildnumsep>\.?)(?<buildnumber>\d{1,3}))?)?)?(?:(?<postsep>[.\-_]?)(?<postword>[Pp][Oo][Ss][Tt])\.?(?<postnum>\d+)?)?/;
+
     major : number = 0;
     minor : number = 0;
     patch : number = 0
@@ -17,9 +21,14 @@ export class AzureEngSemanticVersion {
     isSemVerFormat : boolean;
     defaultPrereleaseLabel : string = '';
     defaultAlphaReleaseLabel : string = '';
+    // For Python PEP440 post-release support only
+    isPostRelease : boolean = false;
+    postReleaseNumber : number = 0;
+    postReleaseSeparator : string = '';
 
     constructor(version: string, language: string) {
-        const versionParts = AzureEngSemanticVersion.SEM_VAR_REGEX.exec(version);
+        const regex = language === "Python" ? AzureEngSemanticVersion.PYTHON_SEM_VAR_REGEX : AzureEngSemanticVersion.SEM_VAR_REGEX;
+        const versionParts = regex.exec(version);
         
         if (versionParts) {
             this.isSemVerFormat = true;
@@ -29,23 +38,28 @@ export class AzureEngSemanticVersion {
             this.minor = parseInt(versionParts.groups!['minor']);
             this.patch = parseInt(versionParts.groups!['patch']);
 
+            let skipPrelabel = false;
             if (language === "Python") {
                 this.setupPythonConventions();
-
+                if (versionParts.groups!['postword']) {
+                    this.isPostRelease = true;
+                    this.postReleaseNumber = versionParts.groups!['postnum'] ? parseInt(versionParts.groups!['postnum']) : 0;
+                    this.postReleaseSeparator = ".post";
+                }
+                else if (versionParts.groups!['prelabel'] && 
+                         versionParts.groups!['prelabel'].toLowerCase() === 'post') {
+                    // Alternate PEP 440 forms like "1.0.0-post1" or "1.0.0post1" where the regex
+                    // matched "post" as a prerelease label — reinterpret as post-release.
+                    this.isPostRelease = true;
+                    this.postReleaseNumber = versionParts.groups!['prenumber'] ? parseInt(versionParts.groups!['prenumber']) : 0;
+                    this.postReleaseSeparator = ".post";
+                    skipPrelabel = true;
+                }
             } else {
                 this.setupDefaultConventions();
             }
 
-            if (versionParts.groups!['prelabel']) {
-                this.prereleaseLabel = versionParts.groups!['prelabel']
-                this.prereleaseLabelSeparator = versionParts.groups!["presep"]
-                this.prereleaseNumber = versionParts.groups!["prenumber"] as unknown as number
-                this.prereleaseNumberSeparator = versionParts.groups!["prenumsep"]
-                this.isPrerelease = true
-                this.versionType = "Beta"
-                this.buildNumberSeparator = versionParts.groups!["buildnumsep"]
-                this.buildNumber = versionParts.groups!["buildnumber"] ?? ''
-            } else {
+            if (skipPrelabel || !versionParts.groups!['prelabel']) {
                 // artifically provide these values for non-prereleases to enable easy sorting of them later than prereleases.
                 this.prereleaseLabel = "zzz"
                 this.prereleaseNumber = 99999999
@@ -59,6 +73,15 @@ export class AzureEngSemanticVersion {
                 else if (this.patch !== 0) {
                   this.versionType = "Patch"
                 }
+            } else {
+                this.prereleaseLabel = versionParts.groups!['prelabel']
+                this.prereleaseLabelSeparator = versionParts.groups!["presep"]
+                this.prereleaseNumber = parseInt(versionParts.groups!["prenumber"])
+                this.prereleaseNumberSeparator = versionParts.groups!["prenumsep"]
+                this.isPrerelease = true
+                this.versionType = "Beta"
+                this.buildNumberSeparator = versionParts.groups!["buildnumsep"]
+                this.buildNumber = versionParts.groups!["buildnumber"] ?? ''
             }
         } else {
             this.rawVersion = version
@@ -100,6 +123,17 @@ export class AzureEngSemanticVersion {
         ret = this.prereleaseNumber - other.prereleaseNumber;
         if (ret !== 0) return ret;
 
-        return (this.buildNumber as unknown as number) - (other.buildNumber as unknown as number);
+        let thisBuildNum = this.buildNumber ? parseInt(this.buildNumber as string) : 0;
+        let otherBuildNum = other.buildNumber ? parseInt(other.buildNumber as string) : 0;
+        ret = thisBuildNum - otherBuildNum;
+        if (ret !== 0) return ret;
+
+        // Post-release versions sort after their base version
+        let thisPost = this.isPostRelease ? 1 : 0;
+        let otherPost = other.isPostRelease ? 1 : 0;
+        ret = thisPost - otherPost;
+        if (ret !== 0) return ret;
+
+        return this.postReleaseNumber - other.postReleaseNumber;
     }
 }

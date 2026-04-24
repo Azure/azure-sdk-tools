@@ -10,6 +10,10 @@ public class AzureEngSemanticVersion : IComparable<AzureEngSemanticVersion>
         @"^(?<major>0|[1-9]\d*)\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)(?:(?<presep>-?)(?<prelabel>[a-zA-Z]+)(?:(?<prenumsep>\.?)(?<prenumber>[0-9]{1,8})(?:(?<buildnumsep>\.?)(?<buildnumber>\d{1,3}))?)?)?$",
         RegexOptions.Compiled);
 
+    private static readonly Regex PythonSemVerRegex = new Regex(
+        @"^(?<major>0|[1-9]\d*)\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)(?:(?<presep>-?)(?<prelabel>[a-zA-Z]+)(?:(?<prenumsep>\.?)(?<prenumber>[0-9]{1,8})(?:(?<buildnumsep>\.?)(?<buildnumber>\d{1,3}))?)?)?(?:(?<postsep>[.\-_]?)(?<postword>[Pp][Oo][Ss][Tt])\.?(?<postnum>\d+)?)?$",
+        RegexOptions.Compiled);
+
     public int Major { get; private set; }
     public int Minor { get; private set; }
     public int Patch { get; private set; }
@@ -25,11 +29,16 @@ public class AzureEngSemanticVersion : IComparable<AzureEngSemanticVersion>
     public bool IsSemVerFormat { get; private set; }
     public string DefaultPrereleaseLabel { get; private set; } = string.Empty;
     public string DefaultAlphaReleaseLabel { get; private set; } = string.Empty;
+    // For Python PEP440 post-release support only
+    public bool IsPostRelease { get; private set; }
+    public int PostReleaseNumber { get; private set; }
+    public string PostReleaseSeparator { get; private set; } = string.Empty;
 
     public AzureEngSemanticVersion(string version, string language = null)
     {
         RawVersion = version;
-        var match = SemVerRegex.Match(version);
+        var regex = language == "Python" ? PythonSemVerRegex : SemVerRegex;
+        var match = regex.Match(version);
 
         if (match.Success)
         {
@@ -39,27 +48,33 @@ public class AzureEngSemanticVersion : IComparable<AzureEngSemanticVersion>
             Minor = int.Parse(match.Groups["minor"].Value);
             Patch = int.Parse(match.Groups["patch"].Value);
 
+            bool skipPrelabel = false;
             if (language == "Python")
             {
                 SetupPythonConventions();
+                if (match.Groups["postword"].Success)
+                {
+                    IsPostRelease = true;
+                    PostReleaseNumber = match.Groups["postnum"].Success ? int.Parse(match.Groups["postnum"].Value) : 0;
+                    PostReleaseSeparator = ".post";
+                }
+                else if (match.Groups["prelabel"].Success && 
+                         string.Equals(match.Groups["prelabel"].Value, "post", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Alternate PEP 440 forms like "1.0.0-post1" or "1.0.0post1" where the regex
+                    // matched "post" as a prerelease label — reinterpret as post-release.
+                    IsPostRelease = true;
+                    PostReleaseNumber = match.Groups["prenumber"].Success ? int.Parse(match.Groups["prenumber"].Value) : 0;
+                    PostReleaseSeparator = ".post";
+                    skipPrelabel = true;
+                }
             }
             else
             {
                 SetupDefaultConventions();
             }
 
-            if (match.Groups["prelabel"].Success)
-            {
-                PrereleaseLabel = match.Groups["prelabel"].Value;
-                PrereleaseLabelSeparator = match.Groups["presep"].Value;
-                PrereleaseNumber = match.Groups["prenumber"].Success ? int.Parse(match.Groups["prenumber"].Value) : 0;
-                PrereleaseNumberSeparator = match.Groups["prenumsep"].Value;
-                IsPrerelease = true;
-                VersionType = "Beta";
-                BuildNumberSeparator = match.Groups["buildnumsep"].Value;
-                BuildNumber = match.Groups["buildnumber"].Success ? match.Groups["buildnumber"].Value : string.Empty;
-            }
-            else
+            if (skipPrelabel || !match.Groups["prelabel"].Success)
             {
                 // Artificially provide these values for non-prereleases to enable easy sorting of them later than prereleases.
                 PrereleaseLabel = "zzz";
@@ -77,6 +92,17 @@ public class AzureEngSemanticVersion : IComparable<AzureEngSemanticVersion>
                 {
                     VersionType = "Patch";
                 }
+            }
+            else
+            {
+                PrereleaseLabel = match.Groups["prelabel"].Value;
+                PrereleaseLabelSeparator = match.Groups["presep"].Value;
+                PrereleaseNumber = match.Groups["prenumber"].Success ? int.Parse(match.Groups["prenumber"].Value) : 0;
+                PrereleaseNumberSeparator = match.Groups["prenumsep"].Value;
+                IsPrerelease = true;
+                VersionType = "Beta";
+                BuildNumberSeparator = match.Groups["buildnumsep"].Value;
+                BuildNumber = match.Groups["buildnumber"].Success ? match.Groups["buildnumber"].Value : string.Empty;
             }
         }
         else
@@ -107,13 +133,19 @@ public class AzureEngSemanticVersion : IComparable<AzureEngSemanticVersion>
     {
         string versionString = $"{Major}.{Minor}.{Patch}";
 
-        if (!string.IsNullOrEmpty(PrereleaseLabel))
+        // Only output prerelease label if it's a real one (not the artificial "zzz" used for sorting)
+        if (!string.IsNullOrEmpty(PrereleaseLabel) && PrereleaseLabel != "zzz")
         {
             versionString += $"{PrereleaseLabelSeparator}{PrereleaseLabel}{PrereleaseNumberSeparator}{PrereleaseNumber}";
             if (!string.IsNullOrEmpty(BuildNumber))
             {
                 versionString += $"{BuildNumberSeparator}{BuildNumber}";
             }
+        }
+
+        if (IsPostRelease)
+        {
+            versionString += $"{PostReleaseSeparator}{PostReleaseNumber}";
         }
 
         return versionString;
@@ -151,13 +183,32 @@ public class AzureEngSemanticVersion : IComparable<AzureEngSemanticVersion>
 
         int thisBuildNumber = string.IsNullOrEmpty(this.BuildNumber) ? 0 : int.Parse(this.BuildNumber);
         int otherBuildNumber = string.IsNullOrEmpty(other.BuildNumber) ? 0 : int.Parse(other.BuildNumber);
-        return otherBuildNumber.CompareTo(thisBuildNumber);
+        ret = otherBuildNumber.CompareTo(thisBuildNumber);
+        if (ret != 0) return ret;
+
+        // Post-release versions sort after their base version
+        int thisPost = this.IsPostRelease ? 1 : 0;
+        int otherPost = other.IsPostRelease ? 1 : 0;
+        ret = otherPost.CompareTo(thisPost);
+        if (ret != 0) return ret;
+
+        return other.PostReleaseNumber.CompareTo(this.PostReleaseNumber);
     }
 
     public static List<string> SortVersionStrings(IEnumerable<string> versionStrings)
     {
         var versions = versionStrings
             .Select(v => new AzureEngSemanticVersion(v))
+            .Where(v => v != null)
+            .ToList();
+        versions.Sort();
+        return versions.Select(v => v.RawVersion).ToList();
+    }
+
+    public static List<string> SortVersionStrings(IEnumerable<string> versionStrings, string language)
+    {
+        var versions = versionStrings
+            .Select(v => new AzureEngSemanticVersion(v, language))
             .Where(v => v != null)
             .ToList();
         versions.Sort();

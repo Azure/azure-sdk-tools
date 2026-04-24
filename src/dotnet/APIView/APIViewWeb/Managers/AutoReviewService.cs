@@ -48,7 +48,6 @@ public class AutoReviewService : IAutoReviewService
     {
         // Parse package type once at the beginning
         var parsedPackageType = !string.IsNullOrEmpty(packageType) && Enum.TryParse<PackageType>(packageType, true, out var result) ? (PackageType?)result : null;
-        var createNewRevision = true;
         var review = await _reviewManager.GetReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: null);
         var apiRevision = default(APIRevisionListItemModel);
         var renderedCodeFile = new RenderedCodeFile(codeFile);
@@ -75,40 +74,15 @@ public class AutoReviewService : IAutoReviewService
                     incomingVersionModel = await _apiVersionsManager.GetOrCreateVersionAsync(review.Id, codeFile.PackageVersion);
                 }
 
-                // Delete pending apiRevisions if it is not in approved state before adding new revision
-                // This is to keep only one pending revision since last approval or from initial review revision.
+                // Scope to automatic revisions for the same logical version as the incoming upload.
                 var automaticRevisions = apiRevisions
                     .Where(r => r.APIRevisionType == APIRevisionType.Automatic
                         && (incomingVersionModel == null|| r.APIVersionId == incomingVersionModel.Id || string.IsNullOrEmpty(r.APIVersionId)))
                     .ToList();
                 if (automaticRevisions.Count > 0)
                 {
-                    var automaticRevisionsQueue = new Queue<APIRevisionListItemModel>(automaticRevisions);
-                    var comments = await _commentsManager.GetCommentsAsync(review.Id);
-                    APIRevisionListItemModel latestAutomaticAPIRevision = null;
-                    
-                    while (automaticRevisionsQueue.Count > 0)
-                    {
-                        latestAutomaticAPIRevision = automaticRevisionsQueue.Dequeue();
-
-                        // Check if we should keep this revision
-                        if (latestAutomaticAPIRevision.IsApproved ||
-                            latestAutomaticAPIRevision.IsReleased ||
-                            await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile, incomingContentHash: incomingContentHash) ||
-                            comments.Any(c => latestAutomaticAPIRevision.Id == c.APIRevisionId))
-                        {
-                            break;
-                        }
-
-                        // Delete this revision
-                        await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(apiRevision: latestAutomaticAPIRevision, notes: "Deleted by Automatic Review Creation...");
-                        latestAutomaticAPIRevision = null;  // Mark as consumed
-                    }
-
-                    // We should compare against only latest revision when calling this API from scheduled CI runs
-                    // But any manual pipeline run at release time should compare against all approved revisions to ensure hotfix release doesn't have API change
-                    // If review surface doesn't match with any approved revisions then we will create new revision if it doesn't match pending latest revision
-
+                    // For release pipeline runs, compare against all approved revisions first to catch hotfix API changes.
+                    // Use the full package version in that comparison to distinguish stable releases from pre-release builds.
                     bool considerPackageVersion = !string.IsNullOrWhiteSpace(codeFile.PackageVersion);
 
                     if (compareAllRevisions)
@@ -122,12 +96,17 @@ public class AutoReviewService : IAutoReviewService
                         }
                     }
 
-                    // Only reuse latestAutomaticAPIRevision if one was kept
-                    if (latestAutomaticAPIRevision != null &&
-                        await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile, considerPackageVersion, incomingContentHash))
+                    var comments = await _commentsManager.GetCommentsAsync(review.Id);
+                    var revisionIdsWithComments = comments.Select(c => c.APIRevisionId).ToHashSet();
+
+                    // Find the newest pending automatic revision to replace.
+                    var latestAutomaticAPIRevision = automaticRevisions.FirstOrDefault(
+                        r => !r.IsApproved && !r.IsReleased && !revisionIdsWithComments.Contains(r.Id)
+                        && r.PackageVersion == codeFile.PackageVersion);
+
+                    if (latestAutomaticAPIRevision != null)
                     {
-                        apiRevision = latestAutomaticAPIRevision;
-                        createNewRevision = false;
+                        await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(apiRevision: latestAutomaticAPIRevision, notes: "Deleted by Automatic Review Creation...");
                     }
                 }
             }
@@ -136,11 +115,8 @@ public class AutoReviewService : IAutoReviewService
         {
             review = await _reviewManager.CreateReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: false, packageType: parsedPackageType, crossLanguagePackageId: codeFile.CrossLanguagePackageId);
         }
-        
-        if (createNewRevision)
-        {
-            apiRevision = await _apiRevisionsManager.CreateAPIRevisionAsync(userName: user.GetGitHubLogin(), reviewId: review.Id, apiRevisionType: APIRevisionType.Automatic, label: label, memoryStream: memoryStream, codeFile: codeFile, originalName: originalName, sourceBranch: sourceBranch);
-        }
+
+        apiRevision = await _apiRevisionsManager.CreateAPIRevisionAsync(userName: user.GetGitHubLogin(), reviewId: review.Id, apiRevisionType: APIRevisionType.Automatic, label: label, memoryStream: memoryStream, codeFile: codeFile, originalName: originalName, sourceBranch: sourceBranch);
 
         await _projectsManager.TryLinkReviewToProjectAsync(user.GetGitHubLogin(), review);
 

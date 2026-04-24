@@ -1,33 +1,52 @@
 import { AzureEngSemanticVersion } from "../azureEngSemanticVersion";
 
 describe('AzureEngSemanticVersion', () => {
-  it('should sort versions correctly', () => {
-    const versions = [
-      { version: "1.0.1", language: "C#" },
-      { version: "2.0.0", language: "C#" },
-      { version: "2.0.0-alpha.20200920", language: "C#" },
-      { version: "2.0.0-beta.2", language: "C#" },
-      { version: "2.0.0-beta.1", language: "C#" },
-      { version: "1.0.0", language: "C#" },
-      { version: "1.0.0b2", language: "Python" },
-    ];
-    const expectedSort = [
-      { version: "2.0.0", language: "C#" },
-      { version: "2.0.0-beta.2", language: "C#" },
-      { version: "2.0.0-beta.1", language: "C#" },
-      { version: "2.0.0-alpha.20200920", language: "C#" },
-      { version: "1.0.1", language: "C#" },
-      { version: "1.0.0", language: "C#" },
-      { version: "1.0.0b2", language: "Python" },
-    ];
+  const version = [
+    { version: "1.0.1", language: "C#" },
+    { version: "2.0.0", language: "C#" },
+    { version: "2.0.0-alpha.20200920", language: "C#" },
+    { version: "2.0.0-alpha.20200920.1", language: "C#" },
+    { version: "2.0.0-beta.2", language: "C#" },
+    { version: "1.0.10", language: "C#" },
+    { version: "2.0.0-alpha.20201221.03", language: "C#" },
+    { version: "2.0.0-alpha.20201221.1", language: "C#" },
+    { version: "2.0.0-alpha.20201221.5", language: "C#" },
+    { version: "2.0.0-alpha.20201221.2", language: "C#" },
+    { version: "2.0.0-alpha.20201221.10", language: "C#" },
+    { version: "2.0.0-beta.1", language: "C#" },
+    { version: "2.0.0-beta.10", language: "C#" },
+    { version: "1.0.0", language: "C#" },
+    { version: "1.0.0b2", language: "Python" },
+    { version: "1.0.2", language: "C#" }, 
+  ];
 
-    versions.sort((a, b) => {
-      const aVer = new AzureEngSemanticVersion(a.version, a.language);
-      const bVer = new AzureEngSemanticVersion(b.version, b.language);
-      return bVer.compareTo(aVer);
+  const expectedSort = [
+    { version: "2.0.0", language: "C#" },
+    { version: "2.0.0-beta.10", language: "C#" },
+    { version: "2.0.0-beta.2", language: "C#" },
+    { version: "2.0.0-beta.1", language: "C#" },
+    { version: "2.0.0-alpha.20201221.10", language: "C#" },
+    { version: "2.0.0-alpha.20201221.5", language: "C#" },
+    { version: "2.0.0-alpha.20201221.03", language: "C#" },
+    { version: "2.0.0-alpha.20201221.2", language: "C#" },
+    { version: "2.0.0-alpha.20201221.1", language: "C#" },
+    { version: "2.0.0-alpha.20200920.1", language: "C#" },
+    { version: "2.0.0-alpha.20200920", language: "C#" },
+    { version: "1.0.10", language: "C#" },
+    { version: "1.0.2", language: "C#" },
+    { version: "1.0.1", language: "C#" },
+    { version: "1.0.0", language: "C#" },
+    { version: "1.0.0b2", language: "Python" },
+  ];
+
+  it('should sort the versions correctly', () => {
+    version.sort((a: any, b: any) => {
+      const aVersion = new AzureEngSemanticVersion(a.version, a.language);
+      const bVersion = new AzureEngSemanticVersion(b.version, b.language);
+      return bVersion.compareTo(aVersion);
     });
 
-    expect(versions).toEqual(expectedSort);
+    expect(version).toEqual(expectedSort);
   });
 });
 
@@ -85,7 +104,7 @@ describe('AzureEngSemanticVersion - Python Post-release', () => {
       { version: "1.0.0", language: "Python" },
     ];
 
-    versions.sort((a, b) => {
+    versions.sort((a: any, b: any) => {
       const aVer = new AzureEngSemanticVersion(a.version, a.language);
       const bVer = new AzureEngSemanticVersion(b.version, b.language);
       return bVer.compareTo(aVer);

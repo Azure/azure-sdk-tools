@@ -48,7 +48,6 @@ public class AutoReviewService : IAutoReviewService
     {
         // Parse package type once at the beginning
         var parsedPackageType = !string.IsNullOrEmpty(packageType) && Enum.TryParse<PackageType>(packageType, true, out var result) ? (PackageType?)result : null;
-        var createNewRevision = true;
         var review = await _reviewManager.GetReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: null);
         var apiRevision = default(APIRevisionListItemModel);
         var renderedCodeFile = new RenderedCodeFile(codeFile);
@@ -102,7 +101,8 @@ public class AutoReviewService : IAutoReviewService
 
                     // Find the newest pending automatic revision to replace.
                     var latestAutomaticAPIRevision = automaticRevisions.FirstOrDefault(
-                        r => !r.IsApproved && !r.IsReleased && !revisionIdsWithComments.Contains(r.Id));
+                        r => !r.IsApproved && !r.IsReleased && !revisionIdsWithComments.Contains(r.Id)
+                        && r.PackageVersion == codeFile.PackageVersion);
 
                     if (latestAutomaticAPIRevision != null)
                     {
@@ -115,11 +115,8 @@ public class AutoReviewService : IAutoReviewService
         {
             review = await _reviewManager.CreateReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: false, packageType: parsedPackageType, crossLanguagePackageId: codeFile.CrossLanguagePackageId);
         }
-        
-        if (createNewRevision)
-        {
-            apiRevision = await _apiRevisionsManager.CreateAPIRevisionAsync(userName: user.GetGitHubLogin(), reviewId: review.Id, apiRevisionType: APIRevisionType.Automatic, label: label, memoryStream: memoryStream, codeFile: codeFile, originalName: originalName, sourceBranch: sourceBranch);
-        }
+
+        apiRevision = await _apiRevisionsManager.CreateAPIRevisionAsync(userName: user.GetGitHubLogin(), reviewId: review.Id, apiRevisionType: APIRevisionType.Automatic, label: label, memoryStream: memoryStream, codeFile: codeFile, originalName: originalName, sourceBranch: sourceBranch);
 
         await _projectsManager.TryLinkReviewToProjectAsync(user.GetGitHubLogin(), review);
 

@@ -646,9 +646,8 @@ namespace APIViewUnitTests
         #region Rolling Build / Package Version Tests
 
         /// <summary>
-        /// Rolling (alpha/nightly) builds produce a new package version every day,
-        /// e.g. 1.4.0-alpha.20201211.0 → 1.4.0-alpha.20201212.0.
-        /// The previous pending revision is always deleted and a fresh one created.
+        /// Rollin builds that re-run with the same version string
+        /// (e.g. a CI retry) delete the previous pending revision and create a fresh one.
         /// Both belong to the same <c>APIVersionId</c> so the v1-stable bucket is never touched.
         /// </summary>
         [Fact]
@@ -660,18 +659,19 @@ namespace APIViewUnitTests
             var review = new ReviewListItemModel { Id = "review-id", PackageName = "TestPackage", Language = "C#" };
             var versionModel = new APIVersionModel { Id = "ver-alpha" };
 
+            // Same version as the incoming build — represents a CI retry or resubmit
             var previousBuild = new APIRevisionListItemModel
             {
-                Id = "alpha-20201211",
+                Id = "alpha-20201212-prev",
                 ReviewId = "review-id",
                 APIRevisionType = APIRevisionType.Automatic,
                 IsApproved = false,
                 APIVersionId = "ver-alpha",
-                CreatedOn = DateTime.UtcNow.AddDays(-1),
-                Files = [new APICodeFileModel { PackageVersion = "1.4.0-alpha.20201211.0" }]
+                CreatedOn = DateTime.UtcNow.AddHours(-1),
+                Files = [new APICodeFileModel { PackageVersion = "1.4.0-alpha.20201212.0" }]
             };
 
-            var newBuild = new APIRevisionListItemModel { Id = "alpha-20201212", ReviewId = "review-id" };
+            var newBuild = new APIRevisionListItemModel { Id = "alpha-20201212-new", ReviewId = "review-id" };
 
             _mockReviewManager.Setup(m => m.GetReviewAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool?>()))
                 .ReturnsAsync(review);
@@ -693,9 +693,9 @@ namespace APIViewUnitTests
             var (_, apiRevision) = await _service.CreateAutomaticRevisionAsync(
                 _testUser, codeFile, "build-label", "test.json", memoryStream, null);
 
-            // Previous build deleted, fresh revision created
+            // Previous build (same version) is deleted; fresh revision created
             _mockApiRevisionsManager.Verify(m => m.SoftDeleteAPIRevisionAsync(
-                It.Is<APIRevisionListItemModel>(r => r.Id == "alpha-20201211"),
+                It.Is<APIRevisionListItemModel>(r => r.Id == "alpha-20201212-prev"),
                 It.IsAny<string>(), It.IsAny<string>()), Times.Once);
             _mockApiRevisionsManager.Verify(m => m.CreateAPIRevisionAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>(),
@@ -703,33 +703,27 @@ namespace APIViewUnitTests
                 It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()), Times.Once);
 
             apiRevision.Should().NotBeNull();
-            apiRevision.Id.Should().Be("alpha-20201212");
+            apiRevision.Id.Should().Be("alpha-20201212-new");
         }
 
-        /// <summary>
-        /// Even when a rolling build uploads identical API surface to the previous day,
-        /// the previous revision is deleted and a new one created — no reuse.
-        /// </summary>
         [Fact]
-        public async Task CreateAutomaticRevisionAsync_RollingAlphaBuild_WithSameAPISurface_StillDeletesAndCreatesNew()
+        public async Task CreateAutomaticRevisionAsync_RollingAlphaBuild_DifferentDailyVersion_OnlyCreatesRevision()
         {
-            // Same API surface as yesterday's build — only the date in the version string differs
-            var codeFile = CreateCodeFile("TestPackage", "1.4.0-alpha.20201212.0", "C#");
+            var codeFile = CreateCodeFile("TestPackage", "1.4.0", "C#");
             using var memoryStream = new MemoryStream();
 
             var review = new ReviewListItemModel { Id = "review-id", PackageName = "TestPackage", Language = "C#" };
             var versionModel = new APIVersionModel { Id = "ver-alpha" };
-
             var previousBuild = new APIRevisionListItemModel
             {
-                Id = "alpha-20201211", ReviewId = "review-id",
+                Id = "beta-20201211", ReviewId = "review-id",
                 APIRevisionType = APIRevisionType.Automatic,
                 IsApproved = false, APIVersionId = "ver-alpha",
                 CreatedOn = DateTime.UtcNow.AddDays(-1),
-                Files = [new APICodeFileModel { PackageVersion = "1.4.0-alpha.20201211.0" }]
+                Files = [new APICodeFileModel { PackageVersion = "1.5.0" }]
             };
 
-            var newBuild = new APIRevisionListItemModel { Id = "alpha-20201212", ReviewId = "review-id" };
+            var newBuild = new APIRevisionListItemModel { Id = "beta-20201212", ReviewId = "review-id" };
 
             _mockReviewManager.Setup(m => m.GetReviewAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool?>()))
                 .ReturnsAsync(review);
@@ -751,17 +745,89 @@ namespace APIViewUnitTests
             var (_, apiRevision) = await _service.CreateAutomaticRevisionAsync(
                 _testUser, codeFile, "build-label", "test.json", memoryStream, null);
 
-            // Identical API surface is not a reason to reuse — must delete old and create new
+            // Different versions — no candidate match, nothing is deleted
             _mockApiRevisionsManager.Verify(m => m.SoftDeleteAPIRevisionAsync(
-                It.Is<APIRevisionListItemModel>(r => r.Id == "alpha-20201211"),
-                It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+                It.IsAny<APIRevisionListItemModel>(),
+                It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+
+            // A new revision is still always created
             _mockApiRevisionsManager.Verify(m => m.CreateAPIRevisionAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>(),
                 It.IsAny<string>(), It.IsAny<MemoryStream>(), It.IsAny<CodeFile>(),
                 It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()), Times.Once);
 
             apiRevision.Should().NotBeNull();
-            apiRevision.Id.Should().Be("alpha-20201212");
+            apiRevision.Id.Should().Be("beta-20201212");
+        }
+
+        /// <summary>
+        /// When <c>codeFile.PackageVersion</c> is null, empty, or whitespace, no existing revision
+        /// can ever match the candidate filter (<c>r.PackageVersion == codeFile.PackageVersion</c>
+        /// will be false for any revision that carries a real version string), so nothing is deleted
+        /// and a new revision is always created — and nothing throws.
+        /// </summary>
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task CreateAutomaticRevisionAsync_NullOrEmptyPackageVersion_NothingDeletedNewRevisionCreated(string packageVersion)
+        {
+            var codeFile = new CodeFile
+            {
+                Name = "test", Language = "C#",
+                PackageName = "TestPackage",
+                PackageVersion = packageVersion
+            };
+            using var memoryStream = new MemoryStream();
+
+            var review = new ReviewListItemModel { Id = "review-id", PackageName = "TestPackage", Language = "C#" };
+            var versionModel = new APIVersionModel { Id = "ver-1" };
+
+            var existingRevision = new APIRevisionListItemModel
+            {
+                Id = "existing", ReviewId = "review-id",
+                APIRevisionType = APIRevisionType.Automatic,
+                IsApproved = false, IsReleased = false,
+                CreatedOn = DateTime.UtcNow.AddDays(-1),
+                Files = [new APICodeFileModel { PackageVersion = "1.0.0" }]
+            };
+
+            var newRevision = new APIRevisionListItemModel { Id = "new-rev", ReviewId = "review-id" };
+
+            _mockReviewManager.Setup(m => m.GetReviewAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool?>()))
+                .ReturnsAsync(review);
+            _mockApiRevisionsManager.Setup(m => m.GetAPIRevisionsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>()))
+                .ReturnsAsync(new List<APIRevisionListItemModel> { existingRevision });
+            _mockApiVersionsManager.Setup(m => m.GetOrCreateVersionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()))
+                .ReturnsAsync(versionModel);
+            _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType?>(), It.IsAny<bool>()))
+                .ReturnsAsync(new List<CommentItemModel>());
+            _mockApiRevisionsManager.Setup(m => m.SoftDeleteAPIRevisionAsync(
+                    It.IsAny<APIRevisionListItemModel>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(Task.CompletedTask);
+            _mockApiRevisionsManager.Setup(m => m.CreateAPIRevisionAsync(
+                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>(),
+                    It.IsAny<string>(), It.IsAny<MemoryStream>(), It.IsAny<CodeFile>(),
+                    It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()))
+                .ReturnsAsync(newRevision);
+
+            // Must not throw regardless of null/empty/whitespace PackageVersion
+            var (_, apiRevision) = await _service.CreateAutomaticRevisionAsync(
+                _testUser, codeFile, "test-label", "test.json", memoryStream, null);
+
+            // Existing revision has a real version ("1.0.0") — it will never match null/empty/whitespace
+            _mockApiRevisionsManager.Verify(m => m.SoftDeleteAPIRevisionAsync(
+                It.IsAny<APIRevisionListItemModel>(),
+                It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+
+            // A new revision is always created
+            _mockApiRevisionsManager.Verify(m => m.CreateAPIRevisionAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>(),
+                It.IsAny<string>(), It.IsAny<MemoryStream>(), It.IsAny<CodeFile>(),
+                It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()), Times.Once);
+
+            apiRevision.Should().NotBeNull();
+            apiRevision.Id.Should().Be("new-rev");
         }
 
         #endregion
@@ -784,14 +850,16 @@ namespace APIViewUnitTests
                 Id = "rev-v1", ReviewId = "review-id",
                 APIRevisionType = APIRevisionType.Automatic, APIVersionId = "ver-v1",
                 IsApproved = false, IsReleased = false,
-                CreatedOn = DateTime.UtcNow.AddDays(-1), Files = new List<APICodeFileModel>()
+                CreatedOn = DateTime.UtcNow.AddDays(-1),
+                Files = [new APICodeFileModel { PackageVersion = "1.0.0" }]
             };
             var revisionV2 = new APIRevisionListItemModel
             {
                 Id = "rev-v2", ReviewId = "review-id",
                 APIRevisionType = APIRevisionType.Automatic, APIVersionId = "ver-v2",
                 IsApproved = false, IsReleased = false,
-                CreatedOn = DateTime.UtcNow.AddDays(-2), Files = new List<APICodeFileModel>()
+                CreatedOn = DateTime.UtcNow.AddDays(-2),
+                Files = [new APICodeFileModel { PackageVersion = "2.0.0" }]
             };
 
             _mockReviewManager.Setup(m => m.GetReviewAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool?>()))

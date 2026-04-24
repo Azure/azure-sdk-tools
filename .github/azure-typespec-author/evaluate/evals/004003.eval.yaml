@@ -61,6 +61,30 @@ stimuli:
     config:
       path: NetworkInterface.tsp
       pattern: '@operationId\('
+  - type: file-not-matches
+    config:
+      path: ExpressRouteGateway.tsp
+      pattern: '@operationId\('
+  - type: file-not-matches
+    config:
+      path: ExpressRoutePort.tsp
+      pattern: '@operationId\('
+  - type: file-not-matches
+    config:
+      path: NetworkInterface.tsp
+      pattern: '@operationId\('
+  - type: file-not-matches
+    config:
+      path: P2SVpnGateway.tsp
+      pattern: '@operationId\('
+  - type: file-not-matches
+    config:
+      path: VpnServerConfigurationPolicyGroup.tsp
+      pattern: '@operationId\('
+  - type: file-not-matches
+    config:
+      path: VpnSiteLinkConnection.tsp
+      pattern: '@operationId\('
   # VP2: Non-standard PascalCase operationIds restored with @operationId
   - type: file-matches
     config:

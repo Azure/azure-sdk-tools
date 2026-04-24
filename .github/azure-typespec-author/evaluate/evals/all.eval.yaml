@@ -275,12 +275,22 @@ stimuli:
     config:
       path: employee.tsp
       pattern: oldAge
-  - type: prompt
+  - type: file-matches
     config:
-      scoring: scale_1_5
-      threshold: 1
-      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
-      model: claude-opus-4.6
+      path: employee.tsp
+      pattern: '@added\(Versions\.v2025_05_04_preview\)\s+workLocation\?: WorkLocation;'
+  - type: file-not-matches
+    config:
+      path: employee.tsp
+      pattern: v2024_10_01_preview
+  - type: file-matches
+    config:
+      path: employee.tsp
+      pattern: 'age\?: int32;'
+  - type: file-matches
+    config:
+      path: employee.tsp
+      pattern: '@typeChangedFrom\(Versions\.v2025_05_04_preview, string\[\]\)'
 - name: 001006-version-add-preview-after-stable
   prompt: |
     Add a new preview version `2025-05-04-preview` to my service widget resource manager. Carry over all the features from the latest stable version
@@ -425,8 +435,8 @@ stimuli:
   - type: tool-calls
     config:
       required:
-      - edit
-      - azure-sdk-mcp-azsdk_run_typespec_validation
+        - edit
+        - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-exists
     config:
       path: examples/2025-01-01/Employees_Get_MaximumSet_Gen.json
@@ -448,17 +458,15 @@ stimuli:
   - type: file-matches
     config:
       path: employee.tsp
-      pattern: '@added\(Versions\.v2025_01_01\)'
+      pattern: '@removed\(Versions\.v2025_01_01\)\s*@renamedFrom\(Versions\.v2025_01_01, "age"\)\s*oldAge\?: int32;'
+  - type: file-matches
+    config:
+      path: employee.tsp
+      pattern: '@added\(Versions\.v2025_01_01\)\s*age\?: int32 = 21;'
   - type: file-not-matches
     config:
       path: employee.tsp
       pattern: v2024_10_01_preview
-  - type: prompt
-    config:
-      scoring: scale_1_5
-      threshold: 1
-      prompt: 'Evaluate only the semantic interpretation of the request: the excluded features are workLocation property and WorkLocation model, while other features should be carried. Double check the plan has correctly implemented version renaming (2024-10-01-preview → 2025-01-01), old version removal, new version example setup and old version example removal.'
-      model: claude-opus-4.6
 - name: 001008-version-add-stable-after-stable
   prompt: |
     Add a new stable version `2025-01-01` to my service. Carry over changes.
@@ -573,8 +581,8 @@ stimuli:
   - type: tool-calls
     config:
       required:
-      - edit
-      - azure-sdk-mcp-azsdk_run_typespec_validation
+        - edit
+        - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
       path: Microsoft.Widget/Widget/main.tsp
@@ -590,8 +598,8 @@ stimuli:
   - type: prompt
     config:
       scoring: scale_1_5
-      threshold: 1
-      prompt: Verify email property made required only in new version, only scoped edits made. Verify compile the project and fix any compilation errors if present.
+      threshold: 1.0
+      prompt: 'Verify email property made required only in new version, only scoped edits made. Verify compile the project and fix any compilation errors if present.'
       model: claude-opus-4.6
 - name: 001010-version-model-property-removed
   prompt: |
@@ -617,8 +625,8 @@ stimuli:
   - type: tool-calls
     config:
       required:
-      - edit
-      - azure-sdk-mcp-azsdk_run_typespec_validation
+        - edit
+        - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: file-matches
     config:
       path: Microsoft.Widget/Widget/main.tsp
@@ -651,6 +659,10 @@ stimuli:
       dest: Microsoft.Widget/Widget/shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: Microsoft.Widget/Widget/tspconfig.yaml
+    - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+      dest: Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+    - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+      dest: Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
   graders:
   - type: tool-calls
     config:
@@ -1185,6 +1197,10 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
+    - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+      dest: stable/2021-11-01/widget.json
+    - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+      dest: preview/2024-10-01-preview/widget.json
   graders:
   - type: tool-calls
     config:
@@ -1262,7 +1278,11 @@ stimuli:
   - type: file-matches
     config:
       path: employee.tsp
-      pattern: exportData is ArmResourceActionSync<Employee, void, ExportResult>;
+      pattern: 'exportData\s+is\s+ArmResourceActionSync'
+  - type: file-matches
+    config:
+      path: employee.tsp
+      pattern: 'ExportResponse'
   - type: prompt
     config:
       scoring: scale_1_5
@@ -1299,7 +1319,11 @@ stimuli:
   - type: file-matches
     config:
       path: employee.tsp
-      pattern: move\s+is\s+ArmResourceActionAsync\s*<\s*Employee\s*,\s*MoveRequest\s*,\s*MoveResponse\s*,\s*LroHeaders\s*=\s*(ArmCombinedLroHeaders\s*<\s*FinalResult\s*=\s*MoveResponse\s*>|EmployeeMoveLroHeaders)\s*>
+      pattern: 'move\s+is\s+ArmResourceActionAsync\s*<\s*Employee\s*,\s*MoveRequest\s*,\s*MoveResponse\s*,\s*LroHeaders\s*='
+  - type: file-matches
+    config:
+      path: employee.tsp
+      pattern: 'ArmCombinedLroHeaders\s*<\s*FinalResult\s*=\s*MoveResponse\s*>'
   - type: prompt
     config:
       scoring: scale_1_5
@@ -1416,10 +1440,12 @@ stimuli:
       dest: package.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
-    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
-      dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
+    - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+      dest: stable/2021-11-01/widget.json
+    - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+      dest: preview/2024-10-01-preview/widget.json
   graders:
   - type: tool-calls
     config:
@@ -1545,4 +1571,11 @@ stimuli:
     config:
       path: models.tsp
       pattern: 'FIXME: Update justification, follow aka\.ms/tsp/conversion-fix for details'
-
+scoring:
+  weights:
+    file-matches: 1
+    file-not-matches: 1
+    file-exists: 1
+    file-not-exists: 1
+    tool-calls: 1
+  threshold: 1.0

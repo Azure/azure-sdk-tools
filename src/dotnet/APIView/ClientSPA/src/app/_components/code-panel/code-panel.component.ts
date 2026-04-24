@@ -773,7 +773,8 @@ export class CodePanelComponent implements OnChanges {
     else {
       const isNewThread = commentUpdates.isReply === false;
       const resolutionLocked = commentUpdates.allowAnyOneToResolve !== undefined ? !commentUpdates.allowAnyOneToResolve : false;
-      this.commentsService.createComment(this.reviewId!, this.activeAPIRevision!.id, commentUpdates.nodeId!, commentUpdates.commentText!, CommentType.APIRevision, resolutionLocked, commentUpdates.severity, commentUpdates.threadId, this.activeAPIRevision?.apiVersionId)
+      const apiVersionId = isNewThread ? this.activeAPIRevision?.apiVersionId : commentUpdates.apiVersionId;
+      this.commentsService.createComment(this.reviewId!, this.activeAPIRevision!.id, commentUpdates.nodeId!, commentUpdates.commentText!, CommentType.APIRevision, resolutionLocked, commentUpdates.severity, commentUpdates.threadId, apiVersionId)
         .pipe(take(1)).subscribe({
             next: (response: CommentItemModel) => {
               if (!commentUpdates.threadId && response.threadId) {

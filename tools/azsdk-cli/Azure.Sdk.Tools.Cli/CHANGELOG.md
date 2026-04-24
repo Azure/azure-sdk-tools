@@ -1,14 +1,11 @@
 # Release History
 
-## 0.6.10 (Unreleased)
+## 0.6.10 (2026-0)
 
 ### Features Added
 
 - Added `azsdk_get_kpi_attestation_status` MCP tool to check KPI attestation status for a release plan given product ID and lifecycle.
-
-### Breaking Changes
-
-### Bugs Fixed
+- Added CODEOWNERS Audit command (CLI only) that brings data model to a valid state.
 
 ### Other Changes
 

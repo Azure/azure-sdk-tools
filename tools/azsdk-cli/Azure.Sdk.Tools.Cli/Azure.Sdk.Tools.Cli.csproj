@@ -87,11 +87,10 @@
   </Target>
   <!-- END Exclude asp net configs from release archives -->
 
-  <!-- CI runners cannot reach registry.npmjs.org (see PR #14537), so redirect
-       copilot CLI download to the internal Azure DevOps feed instead of skipping
-       it entirely. This ensures standalone release builds bundle copilot.exe. -->
+  <!-- The default auto-bundling breaks CI due to networking/compliance constraints -->
+  <!-- See https://github.com/github/copilot-sdk/pull/494 -->
   <PropertyGroup Condition="'$(TF_BUILD)' == 'True'">
-    <CopilotNpmRegistryUrl>https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-tools/npm/registry/</CopilotNpmRegistryUrl>
+    <CopilotSkipCliDownload>true</CopilotSkipCliDownload>
   </PropertyGroup>
 
 </Project>

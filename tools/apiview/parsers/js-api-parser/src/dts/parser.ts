@@ -310,6 +310,27 @@ function emitPreamble(
   return { releaseTag, deprecated };
 }
 
+// ---- Name token helper -----------------------------------------------------
+
+interface NameTokenOptions {
+  name: string;
+  lineId: string;
+  kind: TokenKind;
+  deprecated?: boolean;
+  renderClass?: string;
+}
+
+/**
+ * Creates a navigable name token with consistent NavigateToId and NavigationDisplayName.
+ */
+function createNameToken(opts: NameTokenOptions): ReviewToken {
+  const token = createToken(opts.kind, opts.name, { deprecated: opts.deprecated });
+  token.NavigateToId = opts.lineId;
+  token.NavigationDisplayName = opts.name;
+  if (opts.renderClass) token.RenderClasses = [opts.renderClass];
+  return token;
+}
+
 // ---- Interface -------------------------------------------------------------
 
 function visitInterface(
@@ -326,12 +347,7 @@ function visitInterface(
 
   t.push(createToken(TokenKind.Keyword, "export", { hasSuffixSpace: true, deprecated }));
   t.push(createToken(TokenKind.Keyword, "interface", { hasSuffixSpace: true, deprecated }));
-
-  const nameToken = createToken(TokenKind.TypeName, node.name.text, { deprecated });
-  nameToken.NavigateToId = lineId;
-  nameToken.NavigationDisplayName = node.name.text;
-  nameToken.RenderClasses = ["interface"];
-  t.push(nameToken);
+  t.push(createNameToken({ name: node.name.text, lineId, kind: TokenKind.TypeName, deprecated, renderClass: "interface" }));
 
   const tpChildren = emitTypeParameters(node.typeParameters, t, deprecated, ctx.referenceMap);
   if (tpChildren.length) line.Children!.push(...tpChildren);
@@ -402,12 +418,7 @@ function visitClass(
     t.push(createToken(TokenKind.Keyword, "abstract", { hasSuffixSpace: true, deprecated }));
   }
   t.push(createToken(TokenKind.Keyword, "class", { hasSuffixSpace: true, deprecated }));
-
-  const nameToken = createToken(TokenKind.TypeName, name, { deprecated });
-  nameToken.NavigateToId = lineId;
-  nameToken.NavigationDisplayName = name;
-  nameToken.RenderClasses = ["class"];
-  t.push(nameToken);
+  t.push(createNameToken({ name, lineId, kind: TokenKind.TypeName, deprecated, renderClass: "class" }));
 
   const tpChildren = emitTypeParameters(node.typeParameters, t, deprecated, ctx.referenceMap);
   if (tpChildren.length) line.Children!.push(...tpChildren);
@@ -566,11 +577,7 @@ function visitFunction(
   const t: ReviewToken[] = [];
   t.push(createToken(TokenKind.Keyword, "export", { hasSuffixSpace: true, deprecated }));
   t.push(createToken(TokenKind.Keyword, "function", { hasSuffixSpace: true, deprecated }));
-
-  const nameToken = createToken(TokenKind.MemberName, name, { deprecated });
-  nameToken.NavigateToId = lineId;
-  nameToken.NavigationDisplayName = name;
-  t.push(nameToken);
+  t.push(createNameToken({ name, lineId, kind: TokenKind.MemberName, deprecated }));
 
   const tpChildren = emitTypeParameters(node.typeParameters, t, deprecated, ctx.referenceMap);
   const paramChildren = emitParameters(node.parameters, t, deprecated, ctx.referenceMap);
@@ -607,11 +614,7 @@ function visitTypeAlias(
   const t: ReviewToken[] = [];
   t.push(createToken(TokenKind.Keyword, "export", { hasSuffixSpace: true, deprecated }));
   t.push(createToken(TokenKind.Keyword, "type", { hasSuffixSpace: true, deprecated }));
-
-  const nameToken = createToken(TokenKind.TypeName, node.name.text, { deprecated });
-  nameToken.NavigateToId = lineId;
-  nameToken.NavigationDisplayName = node.name.text;
-  t.push(nameToken);
+  t.push(createNameToken({ name: node.name.text, lineId, kind: TokenKind.TypeName, deprecated }));
 
   const tpChildren = emitTypeParameters(node.typeParameters, t, deprecated, ctx.referenceMap);
   t.push(createToken(TokenKind.Punctuation, "=", { hasPrefixSpace: true, hasSuffixSpace: true, deprecated }));
@@ -646,12 +649,7 @@ function visitEnum(
     t.push(createToken(TokenKind.Keyword, "const", { hasSuffixSpace: true, deprecated }));
   }
   t.push(createToken(TokenKind.Keyword, "enum", { hasSuffixSpace: true, deprecated }));
-
-  const nameToken = createToken(TokenKind.TypeName, node.name.text, { deprecated });
-  nameToken.NavigateToId = lineId;
-  nameToken.NavigationDisplayName = node.name.text;
-  nameToken.RenderClasses = ["enum"];
-  t.push(nameToken);
+  t.push(createNameToken({ name: node.name.text, lineId, kind: TokenKind.TypeName, deprecated, renderClass: "enum" }));
 
   if (node.members.length > 0) {
     t[t.length - 1].HasSuffixSpace = true;
@@ -695,7 +693,6 @@ function visitVariableStatement(
   out: ReviewLine[],
   ctx: VisitContext,
 ): void {
-  const deprecated = ctx.deprecated || isDeprecatedNode(node);
   const isConst = !!(node.declarationList.flags & ts.NodeFlags.Const);
   const isLet = !!(node.declarationList.flags & ts.NodeFlags.Let);
   const keyword = isConst ? "const" : isLet ? "let" : "var";
@@ -706,33 +703,13 @@ function visitVariableStatement(
     const symbolPath = ctx.prefix + varName;
     const lineId = makeId(ctx.packageName, symbolPath, "var");
 
-    // Emit preamble on the declaration (JSDoc is on the VariableStatement)
-    const docLines = buildDocumentationLines(node, lineId);
-    out.push(...docLines);
-
-    const releaseTag = getReleaseTagFromNode(node);
-    if (releaseTag && releaseTag !== ctx.parentReleaseTag) {
-      out.push({
-        Tokens: [createToken(TokenKind.Keyword, `@${releaseTag}`, {})],
-        RelatedToLine: lineId,
-      });
-    }
-
-    if (deprecated && !ctx.deprecated) {
-      out.push({
-        Tokens: [createToken(TokenKind.Keyword, "@deprecated", {})],
-        RelatedToLine: lineId,
-      });
-    }
+    // JSDoc is on the VariableStatement, so pass `node` to emitPreamble
+    const { deprecated } = emitPreamble(node, lineId, out, ctx);
 
     const t: ReviewToken[] = [];
     t.push(createToken(TokenKind.Keyword, "export", { hasSuffixSpace: true, deprecated }));
     t.push(createToken(TokenKind.Keyword, keyword, { hasSuffixSpace: true, deprecated }));
-
-    const nameToken = createToken(TokenKind.MemberName, varName, { deprecated });
-    nameToken.NavigateToId = lineId;
-    nameToken.NavigationDisplayName = varName;
-    t.push(nameToken);
+    t.push(createNameToken({ name: varName, lineId, kind: TokenKind.MemberName, deprecated }));
 
     if (decl.type) {
       t.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));

@@ -183,13 +183,12 @@ export async function generateApiViewFromDts(
       }),
     ];
 
-    // Include version comment if present (e.g. "// 2.0.2")
-    if (parsed.versionComment) {
+    // Include trailing comment if present
+    if (parsed.trailingComment) {
       tokens.push(
         buildToken({
           Kind: TokenKind.Comment,
-          Value: ` ${parsed.versionComment}`,
-          SkipDiff: true,
+          Value: ` ${parsed.trailingComment}`,
         }),
       );
     }

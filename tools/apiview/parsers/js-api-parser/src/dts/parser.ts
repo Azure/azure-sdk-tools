@@ -806,8 +806,8 @@ function visitNamespace(
 interface EntryPoint {
   subpath: string;
   statements: readonly ts.Statement[];
-  /** Trailing comment on the declare module line, e.g. "// 2.0.2" */
-  versionComment?: string;
+  /** Trailing comment on the declare module line */
+  trailingComment?: string;
 }
 
 /**
@@ -816,7 +816,7 @@ interface EntryPoint {
  * Otherwise the entire file is treated as the default "." subpath.
  */
 function getEntryPoints(sourceFile: ts.SourceFile): EntryPoint[] {
-  const moduleMap = new Map<string, { statements: ts.Statement[]; versionComment?: string }>();
+  const moduleMap = new Map<string, { statements: ts.Statement[]; trailingComment?: string }>();
 
   for (const stmt of sourceFile.statements) {
     if (
@@ -829,9 +829,9 @@ function getEntryPoints(sourceFile: ts.SourceFile): EntryPoint[] {
       const rawName = stmt.name.text;
       const subpath = rawName === "" || rawName === "./" ? "." : rawName;
 
-      // Extract trailing comment (e.g. "// 2.0.2") from the opening brace line
-      // The comment appears after the { on the same line: declare module "foo" { // 2.0.2
-      let versionComment: string | undefined;
+      // Extract trailing comment from the opening brace line
+      // e.g. declare module "foo" { // some comment
+      let trailingComment: string | undefined;
       const fullText = sourceFile.getFullText();
       const afterName = fullText.slice(stmt.name.end);
       const braceIndex = afterName.indexOf("{");
@@ -840,7 +840,7 @@ function getEntryPoints(sourceFile: ts.SourceFile): EntryPoint[] {
         const trailingComments = ts.getTrailingCommentRanges(fullText, posAfterBrace);
         if (trailingComments && trailingComments.length > 0) {
           const comment = fullText.slice(trailingComments[0].pos, trailingComments[0].end).trim();
-          if (comment) versionComment = comment;
+          if (comment) trailingComment = comment;
         }
       }
 
@@ -848,7 +848,7 @@ function getEntryPoints(sourceFile: ts.SourceFile): EntryPoint[] {
       if (existing) {
         existing.statements.push(...stmt.body.statements);
       } else {
-        moduleMap.set(subpath, { statements: [...stmt.body.statements], versionComment });
+        moduleMap.set(subpath, { statements: [...stmt.body.statements], trailingComment });
       }
     }
   }
@@ -857,7 +857,7 @@ function getEntryPoints(sourceFile: ts.SourceFile): EntryPoint[] {
     return Array.from(moduleMap.entries()).map(([subpath, data]) => ({
       subpath,
       statements: data.statements,
-      versionComment: data.versionComment,
+      trailingComment: data.trailingComment,
     }));
   }
 
@@ -878,8 +878,8 @@ export interface DtsParseOptions {
 
 export interface ParsedModule {
   lines: ReviewLine[];
-  /** Trailing comment on the declare module line, e.g. "// 2.0.2" */
-  versionComment?: string;
+  /** Trailing comment on the declare module line */
+  trailingComment?: string;
 }
 
 /**
@@ -962,7 +962,7 @@ export function parseDtsFile(options: DtsParseOptions): Map<string, ParsedModule
       visitStatement(stmt as ts.Statement, lines, ctx);
     }
 
-    result.set(ep.subpath, { lines, versionComment: ep.versionComment });
+    result.set(ep.subpath, { lines, trailingComment: ep.trailingComment });
   }
 
   return result;

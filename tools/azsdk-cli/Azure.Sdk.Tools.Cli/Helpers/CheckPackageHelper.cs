@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Azure.Sdk.Tools.Cli.Models.Codeowners;
 using Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
 using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 using Azure.Sdk.Tools.CodeownersUtils.Utils;
@@ -18,11 +19,13 @@ public interface ICheckPackageHelper
     /// Pre-parsed CODEOWNERS entries from <see cref="CodeownersParser"/>. This helper relies on parser behavior
     /// such as metadata block parsing and attempted team expansion when evaluating owners and labels.
     /// </param>
+    /// <param name="ownersConfig">Repository-level owner configuration used to control skip gates.</param>
     /// <returns>A <see cref="CheckPackageResponse"/> on success.</returns>
     /// <exception cref="InvalidOperationException">Thrown when validation fails.</exception>
     CheckPackageResponse CheckPackage(
         string directoryPath,
-        List<CodeownersEntry> codeownersEntries);
+        List<CodeownersEntry> codeownersEntries,
+        OwnersConfig ownersConfig);
 }
 
 public class CheckPackageHelper : ICheckPackageHelper
@@ -35,15 +38,27 @@ public class CheckPackageHelper : ICheckPackageHelper
     /// </summary>
     public CheckPackageResponse CheckPackage(
         string directoryPath,
-        List<CodeownersEntry> codeownersEntries)
+        List<CodeownersEntry> codeownersEntries,
+        OwnersConfig ownersConfig)
     {
         if (string.IsNullOrWhiteSpace(directoryPath))
         {
             throw new ArgumentException("Directory path is required.", nameof(directoryPath));
         }
-        if (codeownersEntries == null || codeownersEntries.Count == 0)
+        if (codeownersEntries.Count == 0)
         {
             throw new ArgumentException("CODEOWNERS entries list is empty.", nameof(codeownersEntries));
+        }
+
+        var matchedSkipGate = FindMatchingSkipGate(directoryPath, ownersConfig);
+        if (matchedSkipGate != null)
+        {
+            return new CheckPackageResponse
+            {
+                DirectoryPath = directoryPath,
+                Skipped = true,
+                Details = $"Matched skipGates entry '{matchedSkipGate}' in {OwnersConfig.RelativePath}.",
+            };
         }
 
         var matchedEntry = FindMatchingEntry(directoryPath, codeownersEntries);
@@ -81,30 +96,19 @@ public class CheckPackageHelper : ICheckPackageHelper
     /// </summary>
     internal static CodeownersEntry FindMatchingEntry(string directoryPath, List<CodeownersEntry> entries)
     {
-        // Build the set of target paths to try: the original path, and if it doesn't
-        // end with '/', also try with a trailing slash appended. CODEOWNERS directory
-        // patterns like /sdk/foo/ only match paths *under* that directory, so
-        // "sdk/foo/" will match but "sdk/foo" will not.
-        var pathsToTry = new List<string> { directoryPath };
+        string[] targetPaths = [directoryPath];
         if (!directoryPath.EndsWith("/"))
         {
-            pathsToTry.Add(directoryPath + "/");
+            targetPaths = [directoryPath, $"{directoryPath}/"];
         }
 
         for (int i = entries.Count - 1; i >= 0; i--)
         {
             var entry = entries[i];
-            if (string.IsNullOrWhiteSpace(entry.PathExpression))
+            if (!string.IsNullOrWhiteSpace(entry.PathExpression) &&
+                targetPaths.Any(targetPath => DirectoryUtils.PathExpressionMatchesTargetPath(entry.PathExpression, targetPath)))
             {
-                continue;
-            }
-
-            foreach (var targetPath in pathsToTry)
-            {
-                if (DirectoryUtils.PathExpressionMatchesTargetPath(entry.PathExpression, targetPath))
-                {
-                    return entry;
-                }
+                return entry;
             }
         }
 
@@ -159,6 +163,12 @@ public class CheckPackageHelper : ICheckPackageHelper
             $"check-package failed for path '{matchedEntry.PathExpression}': " +
             $"No service label entry found whose labels are fully contained within PR labels " +
             $"[{string.Join(", ", matchedEntry.PRLabels)}].");
+    }
+
+    internal static string? FindMatchingSkipGate(string directoryPath, OwnersConfig ownersConfig)
+    {
+        return ownersConfig.SkipGates
+            .FirstOrDefault(skipGate => DirectoryUtils.PathExpressionMatchesTargetPath(skipGate, directoryPath));
     }
 
     /// <summary>

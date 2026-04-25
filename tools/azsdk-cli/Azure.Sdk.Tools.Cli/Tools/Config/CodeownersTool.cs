@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.CommandLine;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 using ModelContextProtocol.Server;
@@ -49,7 +50,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             Required = false,
         };
 
-        // Generate command options
+        // Repo-scoped command options
         private readonly Option<string> repoRootOption = new("--repo-root")
         {
             Description = "Path to the repository root (default: repo root of current directory)",
@@ -157,7 +158,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
 
         private readonly Option<string> codeownersCacheOption = new("--codeowners-cache")
         {
-            Description = "Local filesystem path to a rendered CODEOWNERS cache file (overrides --repo-derived URL)",
+            Description = "Local filesystem path to a rendered CODEOWNERS cache file (overrides inferred cache lookup)",
             Required = false,
         };
 
@@ -250,7 +251,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             },
             new(checkPackageCommandName, "Check that a package has sufficient owners, PR labels, and service owners from a CODEOWNERS cache file")
             {
-                directoryPathOption, optionalRepoOption, codeownersCacheOption,
+                directoryPathOption, codeownersCacheOption, repoRootOption,
             },
             new McpCommand(updateCacheCommandName, "Run the CODEOWNERS cache update pipeline", CodeownerUpdateCacheToolName),
         ];
@@ -346,8 +347,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             {
                 var directoryPath = parseResult.GetValue(directoryPathOption);
                 var cachePath = parseResult.GetValue(codeownersCacheOption);
-                var repo = parseResult.GetValue(optionalRepoOption);
-                return await CheckPackage(directoryPath!, cachePath, repo, ct);
+                var repoRoot = parseResult.GetValue(repoRootOption);
+                return await CheckPackage(directoryPath!, cachePath, repoRoot!, ct);
             }
 
             if (command == updateCacheCommandName)
@@ -504,18 +505,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         /// <summary>
         /// Validates that a package has sufficient owners, PR labels, and service owners
         /// by reading from a CODEOWNERS cache. Uses --codeowners-cache if specified,
-        /// otherwise builds a blob URL from --repo (explicit or inferred from git remote).
+        /// otherwise builds a blob URL from the repo inferred from --repo-root.
         /// </summary>
         [McpServerTool(Name = CodeownerCheckPackageToolName), Description("Check that a package has sufficient owners, PR labels, and service owners from a CODEOWNERS cache file.")]
         public async Task<CommandResponse> CheckPackage(
             string directoryPath,
             string? codeownersCachePath = null,
-            string? repo = null,
+            string repoRoot = ".",
             CancellationToken ct = default)
         {
             try
             {
-                string cacheSource;
+                var resolvedRepoRoot = await gitHelper.DiscoverRepoRootAsync(repoRoot, ct);
+                var resolvedRepo = await gitHelper.GetRepoFullNameAsync(resolvedRepoRoot, ct: ct);
+                
+                string cacheSource = $"{CacheBaseUrl}/{resolvedRepo.ToLowerInvariant()}/CODEOWNERS.cache";
                 if (!string.IsNullOrEmpty(codeownersCachePath))
                 {
                     if (!File.Exists(codeownersCachePath))
@@ -527,29 +531,58 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                     }
                     cacheSource = codeownersCachePath;
                 }
-                else
-                {
-                    repo = await ResolveRepo(repo, ct);
-                    // repo is "Azure/azure-sdk-for-net" → split to build URL
-                    var parts = repo.Split('/');
-                    if (parts.Length != 2)
-                    {
-                        return new DefaultCommandResponse
-                        {
-                            ResponseError = $"Invalid repo format '{repo}'. Expected '<owner>/<repo>'."
-                        };
-                    }
-                    cacheSource = $"{CacheBaseUrl}/{parts[0].ToLowerInvariant()}/{parts[1]}/CODEOWNERS.cache";
-                }
 
                 var entries = CodeownersParser.ParseCodeownersFile(cacheSource);
+                var ownersConfig = LoadOwnersConfig(resolvedRepoRoot);
 
-                return checkPackageHelper.CheckPackage(directoryPath, entries);
+                return checkPackageHelper.CheckPackage(directoryPath, entries, ownersConfig);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "check-package failed");
                 return new DefaultCommandResponse { ResponseError = ex.Message };
+            }
+        }
+
+        private static OwnersConfig LoadOwnersConfig(string repoRoot)
+        {
+            var config = new OwnersConfig();
+            var configPath = Path.Combine(repoRoot, OwnersConfig.RelativePath);
+            if (File.Exists(configPath))
+            {
+                try
+                {
+                    config = JsonSerializer.Deserialize<OwnersConfig>(File.ReadAllText(configPath))
+                        ?? throw new InvalidOperationException($"Failed to parse owners config file '{configPath}'.");
+                    ThrowIfSkipGateExpresionsInvalid(config.SkipGates, configPath);
+                }
+                catch (JsonException ex)
+                {
+                    throw new InvalidOperationException(
+                        $"Failed to parse owners config file '{configPath}': {ex.Message}",
+                        ex);
+                }
+            }
+
+            return config;
+        }
+
+        private static void ThrowIfSkipGateExpresionsInvalid(List<string> skipGates, string configPath)
+        {
+            foreach (var skipGate in skipGates)
+            {
+                if (string.IsNullOrWhiteSpace(skipGate))
+                {
+                    throw new InvalidOperationException(
+                        $"owners-config file '{configPath}' contains an empty skipGates entry.");
+                }
+
+                if (!DirectoryUtils.IsValidCodeownersPathExpression(skipGate))
+                {
+                    throw new InvalidOperationException(
+                        $"owners-config file '{configPath}' contains invalid skipGates entry '{skipGate}'. " +
+                        "Entries must be valid CODEOWNERS path expressions.");
+                }
             }
         }
 

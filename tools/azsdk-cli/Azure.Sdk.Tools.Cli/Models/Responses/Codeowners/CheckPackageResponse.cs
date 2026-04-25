@@ -14,6 +14,14 @@ public class CheckPackageResponse : CommandResponse
     [JsonPropertyName("directory_path")]
     public string DirectoryPath { get; set; } = string.Empty;
 
+    [JsonPropertyName("skipped")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool Skipped { get; set; }
+
+    [JsonPropertyName("details")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Details { get; set; }
+
     [JsonPropertyName("owners")]
     public List<string> Owners { get; set; } = new();
 
@@ -30,6 +38,16 @@ public class CheckPackageResponse : CommandResponse
     {
         var sb = new StringBuilder();
         sb.AppendLine($"Path: {DirectoryPath}");
+        if (Skipped)
+        {
+            sb.AppendLine("Skipped: True");
+            if (!string.IsNullOrWhiteSpace(Details))
+            {
+                sb.AppendLine($"Details: {Details}");
+            }
+            return sb.ToString();
+        }
+
         sb.AppendLine($"Owners: {string.Join(", ", Owners)}");
         sb.AppendLine($"PR Labels: {string.Join(", ", PRLabels)}");
         sb.AppendLine($"Service Labels: {string.Join(", ", ServiceLabels)}");

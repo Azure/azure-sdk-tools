@@ -9,6 +9,7 @@ using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 using Azure.Sdk.Tools.Cli.Tools.Config;
 using Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
 using Azure.Sdk.Tools.CodeownersUtils.Caches;
+using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
 {

@@ -144,22 +144,42 @@ Two command groups are documented:
 Inputs:
 
 - `--directory-path` (required): relative path from repo root to the package directory.
-- `--repo` (optional): `owner/repo` repository identity. If omitted, the command resolves the current git repo.
-- `--codeowners-cache` (optional): local filesystem path to a CODEOWNERS cache file. When specified, it overrides repo-derived cache lookup.
+- `--codeowners-cache` (optional): local filesystem path to a CODEOWNERS cache file. When specified, it overrides inferred cache lookup.
+- `--repo-root` (optional): local repository root used to infer the repository identity and load `.github/owners-config.json`. If omitted, `check-package` resolves the repo root from the current path.
+- optional local config: `<repoRoot>/.github/owners-config.json` may define `skipGates`, a list of CODEOWNERS-style path expressions (leading `/` required). Use `/sdk/foo/` to skip a service directory subtree or `/sdk/foo/package` to skip one direct directory path. If one matches the directory being checked, `check-package` short-circuits and succeeds for that path.
+
+Per-repo config file:
+
+```json
+{
+  "skipGates": [
+    "/sdk/extensions/",
+    "/sdk/foo/package"
+  ]
+}
+```
+
+Implementation notes:
+
+- `OwnersConfig` models the per-repo file at `.github/owners-config.json`.
+- `CodeownersTool` loads and validates that file once per `check-package` invocation, then passes the deserialized `OwnersConfig` into `ICheckPackageHelper`.
+- `ICheckPackageHelper` operates only on parsed CODEOWNERS entries plus `OwnersConfig`; it does not perform file I/O for repo config.
+- `skipGates` are validated as CODEOWNERS path expressions during config load.
+- skip-gate matching uses the provided `directoryPath` as-is. Use `/sdk/foo/` to skip a service subtree or `/sdk/foo/package` to skip one direct package directory.
 
 Cache resolution:
 
 - If `--codeowners-cache` is provided, validation reads that local file directly. This is mostly useful for testing.
-- Otherwise, validation resolves the repo and reads:
-  `https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/cache/<owner-lower>/<repo>/CODEOWNERS.cache`
+- Otherwise, validation resolves the repo from the repo root and reads:
+  `https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/cache/<repo-full-name-lower>/CODEOWNERS.cache`
 
 Pipeline requirements for producing the cache:
 
 1. Render `.github/CODEOWNERS`.
 2. Export the named section(s) required for validation using `config codeowners export-section`.
-3. Upload the exported content to `azure-sdk-write-teams/cache/<owner-lower>/<repo>/CODEOWNERS.cache`.
+3. Upload the exported content to `azure-sdk-write-teams/cache/<repo-full-name-lower>/CODEOWNERS.cache`.
 
-Current pipeline usage exports the `Client Libraries` section and uploads it as `cache/azure/<repo>/CODEOWNERS.cache`.
+Current pipeline usage exports the `Client Libraries` section and uploads it as `cache/azure/azure-sdk-for-net/CODEOWNERS.cache`.
 
 Validation rules:
 
@@ -277,7 +297,7 @@ In this example, `Storage` exists as a label entity but is not attached to the p
 - Package entries are generated from selecting the latest `Package` work item by version and hydrated related owners/labels/label-owners.
 - Service-level path entries are generated from unlinked `Label Owner` records with non-empty `RepoPath`.
 - Pathless metadata entries are grouped by service-label set from unlinked `Label Owner` records with empty `RepoPath`.
-- Validation cache artifacts can be produced by exporting named sections from rendered CODEOWNERS. The current pipeline exports `Client Libraries` and uploads the result to `azure-sdk-write-teams/cache/<owner-lower>/<repo>/CODEOWNERS.cache`.
+- Validation cache artifacts can be produced by exporting named sections from rendered CODEOWNERS. The current pipeline exports `Client Libraries` and uploads the result to `azure-sdk-write-teams/cache/<repo-full-name-lower>/CODEOWNERS.cache`.
 - Original owner collections are preserved in generated `CodeownersEntry` via:
   - `OriginalSourceOwners`
   - `OriginalServiceOwners`
@@ -307,9 +327,10 @@ Sorting is implemented in `CodeownersEntrySorter.cs`.
 CodeownersTool
   -> resolves repo and arguments
   -> delegates view/add/remove/generate/export logic to helpers
-  -> for check-package, resolves cache source (local file or blob URL)
+  -> for check-package, resolves repo root, infers repo, then resolves cache source (local file or blob URL)
+  -> loads and validates optional .github/owners-config.json into OwnersConfig
   -> parses CODEOWNERS cache with CodeownersParser
-  -> validates package ownership via ICheckPackageHelper
+  -> validates package ownership via ICheckPackageHelper using parsed entries plus OwnersConfig
   -> helpers query/update Azure DevOps via IDevOpsService
   -> helpers query/validate GitHub identities or teams via IGitHubService
 
@@ -576,14 +597,25 @@ azsdk config codeowners export-section --codeowners-path .github/CODEOWNERS --se
 **Command:**
 
 ```bash
-azsdk config codeowners check-package --directory-path sdk/storage/Azure.Storage.Blobs --repo Azure/azure-sdk-for-net
+azsdk config codeowners check-package --repo-root /path/to/azure-sdk-for-net --directory-path sdk/storage/Azure.Storage.Blobs
 ```
 
 **Options:**
 
 - `--directory-path <relative-path>`: Relative path from repo root to the package directory.
-- `--repo <owner/name>`: Optional repository identity. If omitted, the current git repo is used to derive the cache URL.
-- `--codeowners-cache <path>`: Optional local cache file path. Overrides repo-derived cache lookup.
+- `--codeowners-cache <path>`: Optional local cache file path. Overrides inferred cache lookup.
+- `--repo-root <path>`: Optional repository root path used to infer the repo identity and read `.github/owners-config.json`. Defaults to the current path.
+
+**Per-repo config file:**
+
+```json
+{
+  "skipGates": [
+    "/sdk/extensions/",
+    "/sdk/foo/package"
+  ]
+}
+```
 
 **Expected Output:**
 
@@ -599,7 +631,8 @@ Service Owners: owner3, owner4
 
 ```text
 Error: CODEOWNERS cache file not found: <path>
-Error: Invalid repo format '<repo>'. Expected '<owner>/<repo>'.
+Error: Failed to parse owners config file '<repoRoot>/.github/owners-config.json': <json error>
+Error: owners-config file '<repoRoot>/.github/owners-config.json' contains invalid skipGates entry '<entry>'. Entries must be valid CODEOWNERS path expressions.
 Error: check-package failed: <validation failure>
 ```
 

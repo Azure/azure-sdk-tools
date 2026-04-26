@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+import { readFileSync } from "node:fs";
 import * as ts from "typescript";
 import { ReviewLine, ReviewToken, TokenKind } from "../models.js";
 import {
@@ -924,22 +925,18 @@ export interface ParsedModule {
 export function parseDtsFile(options: DtsParseOptions): Map<string, ParsedModule> {
   const { filePath, packageName } = options;
 
-  const program = ts.createProgram([filePath], {
-    target: ts.ScriptTarget.Latest,
-    moduleResolution: ts.ModuleResolutionKind.Bundler,
-    noEmit: true,
-    declaration: true,
-  });
-
-  // Trigger binding so that parent pointers are set on all AST nodes.
-  // Without this, calls to node.getText() will throw because they walk the
-  // parent chain to find the SourceFile's text buffer.
-  program.getTypeChecker();
-
-  const sourceFile = program.getSourceFile(filePath);
-  if (!sourceFile) {
-    throw new Error(`Could not load source file: ${filePath}`);
-  }
+  // Use createSourceFile with setParentNodes=true instead of creating a full
+  // ts.Program. This is much faster as it skips type checking, module resolution,
+  // and other compiler passes we don't need. The setParentNodes flag ensures
+  // parent pointers are set so node.getText() works correctly.
+  const sourceText = readFileSync(filePath, "utf-8");
+  const sourceFile = ts.createSourceFile(
+    filePath,
+    sourceText,
+    ts.ScriptTarget.Latest,
+    /* setParentNodes */ true,
+    ts.ScriptKind.TS,
+  );
 
   const entryPoints = getEntryPoints(sourceFile);
   const result = new Map<string, ParsedModule>();

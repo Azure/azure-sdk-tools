@@ -125,7 +125,8 @@ export function buildLocalReferenceMap(
 function isExported(node: ts.Node): boolean {
   return !!(
     ts.getCombinedModifierFlags(node as ts.Declaration) & ts.ModifierFlags.Export ||
-    (node.parent && ts.isSourceFile(node.parent))  // top-level in module block is implicitly exported
+    // Top-level in source file or ambient module block is implicitly exported
+    (node.parent && (ts.isSourceFile(node.parent) || ts.isModuleBlock(node.parent)))
   );
 }
 
@@ -559,6 +560,39 @@ function visitClassMember(
     const childLine: ReviewLine = { Tokens: t };
     if (memberChildren?.length) childLine.Children = memberChildren;
     out.push(childLine);
+  } else if (ts.isGetAccessorDeclaration(member) || ts.isSetAccessorDeclaration(member)) {
+    const accessorName = member.name.getText();
+    const accessorKind = ts.isGetAccessorDeclaration(member) ? "get" : "set";
+    const lineId = makeId(ctx.packageName, ctx.prefix + accessorName, accessorKind);
+    const t: ReviewToken[] = [];
+    const access = getAccessibilityKeyword(member);
+    if (access) t.push(createToken(TokenKind.Keyword, access, { hasSuffixSpace: true, deprecated }));
+    if (hasModifier(member, ts.ModifierFlags.Static))
+      t.push(createToken(TokenKind.Keyword, "static", { hasSuffixSpace: true, deprecated }));
+    if (hasModifier(member, ts.ModifierFlags.Abstract))
+      t.push(createToken(TokenKind.Keyword, "abstract", { hasSuffixSpace: true, deprecated }));
+    t.push(createToken(TokenKind.Keyword, accessorKind, { hasSuffixSpace: true, deprecated }));
+    t.push(createToken(TokenKind.MemberName, accessorName, { deprecated }));
+
+    const accessorChildren: ReviewLine[] = [];
+    const paramChildren = emitParameters(member.parameters, t, deprecated, ctx.referenceMap);
+    accessorChildren.push(...paramChildren);
+
+    let semiTarget = paramChildren.length ? paramChildren[paramChildren.length - 1].Tokens : t;
+    // Getters have return type, setters don't
+    if (ts.isGetAccessorDeclaration(member) && member.type) {
+      semiTarget.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
+      const returnChildren = buildTypeNodeTokens(member.type, semiTarget, deprecated, 0, ctx.referenceMap);
+      if (returnChildren?.length) {
+        accessorChildren.push(...returnChildren);
+        semiTarget = returnChildren[returnChildren.length - 1].Tokens;
+      }
+    }
+    semiTarget.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
+
+    const accessorLine: ReviewLine = { LineId: lineId, Tokens: t };
+    if (accessorChildren.length) accessorLine.Children = accessorChildren;
+    out.push(accessorLine);
   }
 }
 
@@ -711,12 +745,23 @@ function visitVariableStatement(
     t.push(createToken(TokenKind.Keyword, keyword, { hasSuffixSpace: true, deprecated }));
     t.push(createNameToken({ name: varName, lineId, kind: TokenKind.MemberName, deprecated }));
 
+    const line: ReviewLine = { LineId: lineId, Tokens: t };
     if (decl.type) {
       t.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
-      buildTypeNodeTokens(decl.type, t, deprecated, 0, ctx.referenceMap);
+      const typeChildren = buildTypeNodeTokens(decl.type, t, deprecated, 0, ctx.referenceMap);
+      if (typeChildren?.length) {
+        line.Children = typeChildren;
+        // Place semicolon on last child line
+        typeChildren[typeChildren.length - 1].Tokens.push(
+          createToken(TokenKind.Punctuation, ";", { deprecated }),
+        );
+      } else {
+        t.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
+      }
+    } else {
+      t.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
     }
-    t.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
-    out.push({ LineId: lineId, Tokens: t });
+    out.push(line);
     out.push(emptyLine(lineId));
   }
 }

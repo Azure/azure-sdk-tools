@@ -146,3 +146,20 @@ export declare class IndexedCollection<T extends { id: string; name: string }> {
   get(id: string): T | undefined;
   add(item: T): void;
 }
+
+/**
+ * Class with getter and setter accessors.
+ */
+export declare class AccessorExample {
+  get value(): number;
+  set value(v: number);
+  static get instanceCount(): number;
+}
+
+/**
+ * Variable with an inline object type (multiline rendering test).
+ */
+export declare const CONFIG: {
+  endpoint: string;
+  timeout: number;
+};

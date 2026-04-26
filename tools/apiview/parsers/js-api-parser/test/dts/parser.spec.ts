@@ -276,6 +276,54 @@ describe("parseDtsFile — basic.d.ts", () => {
       const emptyAfter = all[varIdx + 1];
       expect(emptyAfter?.Tokens.length).toBe(0);
     });
+
+    it("handles multiline object type with children", () => {
+      lines = subpathMap.get(".")!.lines;
+      const v = findLine(lines, "CONFIG:var");
+      expect(v).toBeDefined();
+      // Should have children for the object type members
+      expect(v!.Children).toBeDefined();
+      expect(v!.Children!.length).toBeGreaterThan(0);
+      // Last child should have the closing brace and semicolon
+      const lastChild = v!.Children![v!.Children!.length - 1];
+      const lastTokens = tokenValues(lastChild);
+      expect(lastTokens).toContain("}");
+      expect(lastTokens).toContain(";");
+    });
+  });
+
+  describe("accessors", () => {
+    it("generates getter accessor with correct keywords", () => {
+      lines = subpathMap.get(".")!.lines;
+      const cls = findLine(lines, "AccessorExample:class");
+      expect(cls?.Children).toBeDefined();
+      const getter = findLine(cls!.Children!, "value:get");
+      expect(getter).toBeDefined();
+      const tokens = tokenValues(getter!);
+      expect(tokens).toContain("get");
+      expect(tokens).toContain("value");
+    });
+
+    it("generates setter accessor with correct keywords", () => {
+      lines = subpathMap.get(".")!.lines;
+      const cls = findLine(lines, "AccessorExample:class");
+      const setter = findLine(cls!.Children!, "value:set");
+      expect(setter).toBeDefined();
+      const tokens = tokenValues(setter!);
+      expect(tokens).toContain("set");
+      expect(tokens).toContain("value");
+    });
+
+    it("generates static getter accessor", () => {
+      lines = subpathMap.get(".")!.lines;
+      const cls = findLine(lines, "AccessorExample:class");
+      const staticGetter = findLine(cls!.Children!, "instanceCount:get");
+      expect(staticGetter).toBeDefined();
+      const tokens = tokenValues(staticGetter!);
+      expect(tokens).toContain("static");
+      expect(tokens).toContain("get");
+      expect(tokens).toContain("instanceCount");
+    });
   });
 
   describe("namespace", () => {

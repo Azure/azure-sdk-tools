@@ -163,3 +163,15 @@ export declare const CONFIG: {
   endpoint: string;
   timeout: number;
 };
+
+/**
+ * Function with multiline type parameter constraint.
+ */
+export declare function processEntity<T extends { id: string; name: string }>(
+  entity: T,
+): T;
+
+/**
+ * Type alias with multiline type parameter constraint.
+ */
+export type EntityProcessor<T extends { id: string }> = (entity: T) => T;

@@ -200,6 +200,22 @@ describe("parseDtsFile — basic.d.ts", () => {
       ];
       expect(allTokens.at(-1)).toBe(";");
     });
+
+    it("handles multiline type parameter constraint correctly", () => {
+      lines = subpathMap.get(".")!.lines;
+      const fn = findLine(lines, "processEntity:function");
+      expect(fn).toBeDefined();
+      // Should have children for the constraint object
+      expect(fn!.Children).toBeDefined();
+      expect(fn!.Children!.length).toBeGreaterThan(0);
+      // Last child should have } > ( ... ) : T ;
+      const lastChild = fn!.Children![fn!.Children!.length - 1];
+      const lastTokens = tokenValues(lastChild);
+      expect(lastTokens).toContain("}");
+      expect(lastTokens).toContain(">");
+      expect(lastTokens).toContain("(");
+      expect(lastTokens.at(-1)).toBe(";");
+    });
   });
 
   describe("enum", () => {
@@ -245,6 +261,22 @@ describe("parseDtsFile — basic.d.ts", () => {
       const tokens = tokenValues(ta!);
       expect(tokens).toContain("<");
       expect(tokens).toContain("T");
+    });
+
+    it("handles multiline type parameter constraint correctly", () => {
+      lines = subpathMap.get(".")!.lines;
+      const ta = findLine(lines, "EntityProcessor:typealias");
+      expect(ta).toBeDefined();
+      // Should have children for the constraint object
+      expect(ta!.Children).toBeDefined();
+      expect(ta!.Children!.length).toBeGreaterThan(0);
+      // Last child should have } > = and the type body ending with ;
+      const lastChild = ta!.Children![ta!.Children!.length - 1];
+      const lastTokens = tokenValues(lastChild);
+      expect(lastTokens).toContain("}");
+      expect(lastTokens).toContain(">");
+      expect(lastTokens).toContain("=");
+      expect(lastTokens.at(-1)).toBe(";");
     });
   });
 

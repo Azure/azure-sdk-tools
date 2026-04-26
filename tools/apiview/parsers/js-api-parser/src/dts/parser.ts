@@ -608,29 +608,36 @@ function visitFunction(
   const lineId = makeId(ctx.packageName, symbolPath, "function");
   const { deprecated } = emitPreamble(node, lineId, out, ctx);
 
-  const t: ReviewToken[] = [];
+  const line: ReviewLine = { LineId: lineId, Tokens: [], Children: [] };
+  const t = line.Tokens;
   t.push(createToken(TokenKind.Keyword, "export", { hasSuffixSpace: true, deprecated }));
   t.push(createToken(TokenKind.Keyword, "function", { hasSuffixSpace: true, deprecated }));
   t.push(createNameToken({ name, lineId, kind: TokenKind.MemberName, deprecated }));
 
   const tpChildren = emitTypeParameters(node.typeParameters, t, deprecated, ctx.referenceMap);
-  const paramChildren = emitParameters(node.parameters, t, deprecated, ctx.referenceMap);
-  const allFnChildren = [...tpChildren, ...paramChildren];
-  let fnSemiTarget = paramChildren.length ? paramChildren[paramChildren.length - 1].Tokens : t;
+  if (tpChildren.length) line.Children!.push(...tpChildren);
+
+  // Track target for subsequent tokens (params, return type)
+  let target: ReviewToken[] = tpChildren.length ? tpChildren[tpChildren.length - 1].Tokens : t;
+
+  const paramChildren = emitParameters(node.parameters, target, deprecated, ctx.referenceMap);
+  if (paramChildren.length) {
+    line.Children!.push(...paramChildren);
+    target = paramChildren[paramChildren.length - 1].Tokens;
+  }
 
   if (node.type) {
-    fnSemiTarget.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
-    const returnChildren = buildTypeNodeTokens(node.type, fnSemiTarget, deprecated, 0, ctx.referenceMap);
+    target.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
+    const returnChildren = buildTypeNodeTokens(node.type, target, deprecated, 0, ctx.referenceMap);
     if (returnChildren?.length) {
-      allFnChildren.push(...returnChildren);
-      fnSemiTarget = returnChildren[returnChildren.length - 1].Tokens;
+      line.Children!.push(...returnChildren);
+      target = returnChildren[returnChildren.length - 1].Tokens;
     }
   }
-  fnSemiTarget.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
+  target.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
 
-  const fnLine: ReviewLine = { LineId: lineId, Tokens: t };
-  if (allFnChildren.length) fnLine.Children = allFnChildren;
-  out.push(fnLine);
+  if (!line.Children!.length) delete line.Children;
+  out.push(line);
   out.push(emptyLine(lineId));
 }
 
@@ -645,21 +652,27 @@ function visitTypeAlias(
   const lineId = makeId(ctx.packageName, symbolPath, "typealias");
   const { deprecated } = emitPreamble(node, lineId, out, ctx);
 
-  const t: ReviewToken[] = [];
+  const line: ReviewLine = { LineId: lineId, Tokens: [], Children: [] };
+  const t = line.Tokens;
   t.push(createToken(TokenKind.Keyword, "export", { hasSuffixSpace: true, deprecated }));
   t.push(createToken(TokenKind.Keyword, "type", { hasSuffixSpace: true, deprecated }));
   t.push(createNameToken({ name: node.name.text, lineId, kind: TokenKind.TypeName, deprecated }));
 
   const tpChildren = emitTypeParameters(node.typeParameters, t, deprecated, ctx.referenceMap);
-  t.push(createToken(TokenKind.Punctuation, "=", { hasPrefixSpace: true, hasSuffixSpace: true, deprecated }));
+  if (tpChildren.length) line.Children!.push(...tpChildren);
 
-  const line: ReviewLine = { LineId: lineId, Tokens: t };
-  const typeChildren = buildTypeNodeTokens(node.type, t, deprecated, 0, ctx.referenceMap);
-  const allChildren = [...tpChildren, ...(typeChildren ?? [])];
-  if (allChildren.length) line.Children = allChildren;
-  const semiTarget = typeChildren?.length ? typeChildren[typeChildren.length - 1].Tokens : t;
-  semiTarget.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
+  // Track target for subsequent tokens (= and type body)
+  let target: ReviewToken[] = tpChildren.length ? tpChildren[tpChildren.length - 1].Tokens : t;
+  target.push(createToken(TokenKind.Punctuation, "=", { hasPrefixSpace: true, hasSuffixSpace: true, deprecated }));
 
+  const typeChildren = buildTypeNodeTokens(node.type, target, deprecated, 0, ctx.referenceMap);
+  if (typeChildren?.length) {
+    line.Children!.push(...typeChildren);
+    target = typeChildren[typeChildren.length - 1].Tokens;
+  }
+  target.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
+
+  if (!line.Children!.length) delete line.Children;
   out.push(line);
   out.push(emptyLine(lineId));
 }

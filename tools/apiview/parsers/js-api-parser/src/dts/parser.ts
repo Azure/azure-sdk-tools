@@ -529,6 +529,8 @@ function visitClassMember(
       t.push(createToken(TokenKind.Keyword, "static", { hasSuffixSpace: true, deprecated }));
     if (hasModifier(member, ts.ModifierFlags.Abstract))
       t.push(createToken(TokenKind.Keyword, "abstract", { hasSuffixSpace: true, deprecated }));
+    if (hasModifier(member, ts.ModifierFlags.Override))
+      t.push(createToken(TokenKind.Keyword, "override", { hasSuffixSpace: true, deprecated }));
     if (hasModifier(member, ts.ModifierFlags.Readonly))
       t.push(createToken(TokenKind.Keyword, "readonly", { hasSuffixSpace: true, deprecated }));
     t.push(createToken(TokenKind.MemberName, propName, { deprecated }));
@@ -561,6 +563,8 @@ function visitClassMember(
       t.push(createToken(TokenKind.Keyword, "static", { hasSuffixSpace: true, deprecated }));
     if (hasModifier(member, ts.ModifierFlags.Abstract))
       t.push(createToken(TokenKind.Keyword, "abstract", { hasSuffixSpace: true, deprecated }));
+    if (hasModifier(member, ts.ModifierFlags.Override))
+      t.push(createToken(TokenKind.Keyword, "override", { hasSuffixSpace: true, deprecated }));
     t.push(createToken(TokenKind.MemberName, methodName, { deprecated }));
     if (member.questionToken) t.push(createToken(TokenKind.Punctuation, "?", { deprecated }));
     const allMethodChildren: ReviewLine[] = [];
@@ -605,6 +609,8 @@ function visitClassMember(
       t.push(createToken(TokenKind.Keyword, "static", { hasSuffixSpace: true, deprecated }));
     if (hasModifier(member, ts.ModifierFlags.Abstract))
       t.push(createToken(TokenKind.Keyword, "abstract", { hasSuffixSpace: true, deprecated }));
+    if (hasModifier(member, ts.ModifierFlags.Override))
+      t.push(createToken(TokenKind.Keyword, "override", { hasSuffixSpace: true, deprecated }));
     t.push(createToken(TokenKind.Keyword, accessorKind, { hasSuffixSpace: true, deprecated }));
     t.push(createToken(TokenKind.MemberName, accessorName, { deprecated }));
 
@@ -829,29 +835,50 @@ function visitNamespace(
   out: ReviewLine[],
   ctx: VisitContext,
 ): void {
-  const name = (node.name as ts.Identifier).text;
+  // Handle chained namespaces (namespace A.B.C {}) by unwrapping nested ModuleDeclarations
+  let currentNode = node;
+  const nameParts: string[] = [];
+  while (currentNode && ts.isModuleDeclaration(currentNode)) {
+    if (ts.isIdentifier(currentNode.name)) {
+      nameParts.push(currentNode.name.text);
+    }
+    if (currentNode.body && ts.isModuleDeclaration(currentNode.body)) {
+      currentNode = currentNode.body;
+    } else {
+      break;
+    }
+  }
+
+  const name = nameParts.join(".");
   const symbolPath = ctx.prefix + name;
   const lineId = makeId(ctx.packageName, symbolPath, "namespace");
   const { releaseTag, deprecated } = emitPreamble(node, lineId, out, ctx);
 
-  const body = node.body;
+  const body = currentNode.body;
   if (!body || !ts.isModuleBlock(body)) return;
 
   const line: ReviewLine = { LineId: lineId, Tokens: [], Children: [] };
   const t = line.Tokens;
 
-  t.push(createToken(TokenKind.Keyword, "export", { hasSuffixSpace: true, deprecated }));
-  t.push(createToken(TokenKind.Keyword, "namespace", { hasSuffixSpace: true, deprecated }));
+  // Check for global scope augmentation (declare global {})
+  const isGlobal = (node.flags & ts.NodeFlags.GlobalAugmentation) !== 0;
+  if (isGlobal) {
+    t.push(createToken(TokenKind.Keyword, "declare", { hasSuffixSpace: true, deprecated }));
+    t.push(createToken(TokenKind.Keyword, "global", { hasSuffixSpace: true, deprecated }));
+  } else {
+    t.push(createToken(TokenKind.Keyword, "export", { hasSuffixSpace: true, deprecated }));
+    t.push(createToken(TokenKind.Keyword, "namespace", { hasSuffixSpace: true, deprecated }));
 
-  const nameToken = createToken(TokenKind.TypeName, name, { deprecated });
-  nameToken.NavigateToId = lineId;
-  // Detect companion namespace: if a class/interface with the same name already exists
-  // in the reference map, append "(namespace)" to disambiguate the sidebar entry.
-  // e.g. `export class OpenAI` + `export namespace OpenAI` → sidebar shows "OpenAI (namespace)"
-  const siblingId = ctx.referenceMap.get(name);
-  const isCompanion = siblingId !== undefined && !siblingId.endsWith(":namespace");
-  nameToken.NavigationDisplayName = isCompanion ? `${name} (namespace)` : name;
-  t.push(nameToken);
+    const nameToken = createToken(TokenKind.TypeName, name, { deprecated });
+    nameToken.NavigateToId = lineId;
+    // Detect companion namespace: if a class/interface with the same name already exists
+    // in the reference map, append "(namespace)" to disambiguate the sidebar entry.
+    // e.g. `export class OpenAI` + `export namespace OpenAI` → sidebar shows "OpenAI (namespace)"
+    const siblingId = ctx.referenceMap.get(nameParts[0]);
+    const isCompanion = siblingId !== undefined && !siblingId.endsWith(":namespace");
+    nameToken.NavigationDisplayName = isCompanion ? `${name} (namespace)` : name;
+    t.push(nameToken);
+  }
   t[t.length - 1].HasSuffixSpace = true;
   t.push(createToken(TokenKind.Punctuation, "{", { deprecated }));
 

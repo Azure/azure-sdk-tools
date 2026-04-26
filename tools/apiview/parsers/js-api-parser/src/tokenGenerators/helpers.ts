@@ -655,7 +655,10 @@ export function buildTypeNodeTokens(
   }
 
   if (ts.isImportTypeNode(node)) {
-    // Handle import("@azure/logger").AzureLogger
+    // Handle typeof import("...") and import("@azure/logger").AzureLogger
+    if (node.isTypeOf) {
+      tokens.push(createToken(TokenKind.Keyword, "typeof", { hasSuffixSpace: true, deprecated }));
+    }
     tokens.push(createToken(TokenKind.Keyword, "import", { deprecated }));
     tokens.push(createToken(TokenKind.Punctuation, "(", { deprecated }));
 

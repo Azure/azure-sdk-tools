@@ -235,3 +235,31 @@ export type PropertyType<T, K extends keyof T> = T[K];
  * Mapped type example.
  */
 export type Readonly2<T> = { readonly [K in keyof T]: T[K] };
+
+/**
+ * Type using typeof import().
+ */
+export type LoggerType = typeof import("@azure/logger");
+
+/**
+ * Chained namespace example.
+ */
+export namespace Outer.Inner {
+  export interface NestedInterface {
+    value: string;
+  }
+}
+
+/**
+ * Class with override modifier.
+ */
+export class ChildClass extends BaseClass {
+  override process(): void;
+}
+
+/**
+ * Base class for override example.
+ */
+export class BaseClass {
+  process(): void;
+}

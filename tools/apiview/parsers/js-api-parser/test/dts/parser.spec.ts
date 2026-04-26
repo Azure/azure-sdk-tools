@@ -489,6 +489,49 @@ describe("parseDtsFile — basic.d.ts", () => {
       expect(values).toContain("in");
       expect(values).toContain("keyof");
     });
+
+    it("renders typeof import()", () => {
+      lines = subpathMap.get(".")!.lines;
+      const ta = findLine(lines, "LoggerType:typealias");
+      expect(ta).toBeDefined();
+      const allTokens = collectAllTokens(ta!);
+      const values = allTokens.map((t) => t.Value);
+      expect(values).toContain("typeof");
+      expect(values).toContain("import");
+    });
+  });
+
+  describe("chained namespace", () => {
+    it("handles namespace A.B with chained name", () => {
+      lines = subpathMap.get(".")!.lines;
+      const ns = findLine(lines, "Outer.Inner:namespace");
+      expect(ns).toBeDefined();
+      const tokens = tokenValues(ns!);
+      expect(tokens).toContain("namespace");
+      expect(tokens).toContain("Outer.Inner");
+    });
+
+    it("places nested members as children of chained namespace", () => {
+      lines = subpathMap.get(".")!.lines;
+      const ns = findLine(lines, "Outer.Inner:namespace");
+      expect(ns?.Children).toBeDefined();
+      const nested = findLine(ns!.Children!, "NestedInterface:interface");
+      expect(nested).toBeDefined();
+    });
+  });
+
+  describe("override modifier", () => {
+    it("emits override keyword for overridden method", () => {
+      lines = subpathMap.get(".")!.lines;
+      const cls = findLine(lines, "ChildClass:class");
+      expect(cls?.Children).toBeDefined();
+      const method = cls!.Children!.find((c) =>
+        tokenValues(c).includes("process"),
+      );
+      expect(method).toBeDefined();
+      const tokens = tokenValues(method!);
+      expect(tokens).toContain("override");
+    });
   });
 
   describe("namespace", () => {

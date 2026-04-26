@@ -4,7 +4,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import path from "node:path";
 import { parseDtsFile, ParsedModule } from "../../src/dts/parser.js";
-import { ReviewLine, TokenKind } from "../../src/models.js";
+import { ReviewLine, ReviewToken, TokenKind } from "../../src/models.js";
 
 const FIXTURES = path.join(__dirname, "fixtures");
 
@@ -36,6 +36,16 @@ function collectAllLines(lines: ReviewLine[]): ReviewLine[] {
   for (const line of lines) {
     result.push(line);
     if (line.Children) result.push(...collectAllLines(line.Children));
+  }
+  return result;
+}
+
+function collectAllTokens(line: ReviewLine): ReviewToken[] {
+  const result: ReviewToken[] = [...line.Tokens];
+  if (line.Children) {
+    for (const child of line.Children) {
+      result.push(...collectAllTokens(child));
+    }
   }
   return result;
 }
@@ -355,6 +365,37 @@ describe("parseDtsFile — basic.d.ts", () => {
       expect(tokens).toContain("static");
       expect(tokens).toContain("get");
       expect(tokens).toContain("instanceCount");
+    });
+  });
+
+  describe("export default", () => {
+    it("emits export default keyword for default exported class", () => {
+      lines = subpathMap.get(".")!.lines;
+      const cls = findLine(lines, "DefaultClient:class");
+      expect(cls).toBeDefined();
+      const tokens = tokenValues(cls!);
+      expect(tokens).toContain("export");
+      expect(tokens).toContain("default");
+      expect(tokens).toContain("class");
+      expect(tokens).toContain("DefaultClient");
+    });
+  });
+
+  describe("class method multiline type constraint", () => {
+    it("handles method with multiline type parameter constraint", () => {
+      lines = subpathMap.get(".")!.lines;
+      const cls = findLine(lines, "ConstraintMethodClass:class");
+      expect(cls?.Children).toBeDefined();
+      const method = findLine(cls!.Children!, "process:method");
+      expect(method).toBeDefined();
+      // Should have children for the constraint object
+      expect(method!.Children).toBeDefined();
+      expect(method!.Children!.length).toBeGreaterThan(0);
+      // Opening `(` should be on a child line (after multiline constraint), not header
+      const allTokens = collectAllTokens(method!);
+      const openParenIdx = allTokens.findIndex((t) => t.Value === "(");
+      const closeAngleIdx = allTokens.findIndex((t) => t.Value === ">");
+      expect(openParenIdx).toBeGreaterThan(closeAngleIdx);
     });
   });
 

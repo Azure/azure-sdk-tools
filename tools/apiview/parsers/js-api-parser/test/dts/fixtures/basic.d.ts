@@ -175,3 +175,20 @@ export declare function processEntity<T extends { id: string; name: string }>(
  * Type alias with multiline type parameter constraint.
  */
 export type EntityProcessor<T extends { id: string }> = (entity: T) => T;
+
+/**
+ * Default export class.
+ */
+export default class DefaultClient {
+  constructor();
+}
+
+/**
+ * Class with method having multiline type parameter constraint.
+ */
+export class ConstraintMethodClass {
+  process<T extends {
+    id: string;
+    name: string;
+  }>(entity: T): T;
+}

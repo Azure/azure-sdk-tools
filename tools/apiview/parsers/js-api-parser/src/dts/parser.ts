@@ -142,6 +142,10 @@ function getAccessibilityKeyword(node: ts.ClassElement): string | undefined {
   return undefined;
 }
 
+function isDefaultExport(node: ts.Node): boolean {
+  return hasModifier(node, ts.ModifierFlags.Default);
+}
+
 // ---------------------------------------------------------------------------
 // Individual declaration visitors
 // ---------------------------------------------------------------------------
@@ -348,6 +352,7 @@ function visitInterface(
   const t = line.Tokens;
 
   t.push(createToken(TokenKind.Keyword, "export", { hasSuffixSpace: true, deprecated }));
+  if (isDefaultExport(node)) t.push(createToken(TokenKind.Keyword, "default", { hasSuffixSpace: true, deprecated }));
   t.push(createToken(TokenKind.Keyword, "interface", { hasSuffixSpace: true, deprecated }));
   t.push(createNameToken({ name: node.name.text, lineId, kind: TokenKind.TypeName, deprecated, renderClass: "interface" }));
 
@@ -416,6 +421,7 @@ function visitClass(
   const t = line.Tokens;
 
   t.push(createToken(TokenKind.Keyword, "export", { hasSuffixSpace: true, deprecated }));
+  if (isDefaultExport(node)) t.push(createToken(TokenKind.Keyword, "default", { hasSuffixSpace: true, deprecated }));
   if (hasModifier(node, ts.ModifierFlags.Abstract)) {
     t.push(createToken(TokenKind.Keyword, "abstract", { hasSuffixSpace: true, deprecated }));
   }
@@ -538,11 +544,18 @@ function visitClassMember(
     t.push(createToken(TokenKind.MemberName, methodName, { deprecated }));
     if (member.questionToken) t.push(createToken(TokenKind.Punctuation, "?", { deprecated }));
     const allMethodChildren: ReviewLine[] = [];
-    const methodTpChildren = emitTypeParameters(member.typeParameters, t, deprecated, ctx.referenceMap);
-    allMethodChildren.push(...methodTpChildren);
-    const paramChildren = emitParameters(member.parameters, t, deprecated, ctx.referenceMap);
-    allMethodChildren.push(...paramChildren);
-    let semiTarget = paramChildren.length ? paramChildren[paramChildren.length - 1].Tokens : t;
+    let headTarget = t; // Track where subsequent tokens go after multiline constructs
+    const methodTpChildren = emitTypeParameters(member.typeParameters, headTarget, deprecated, ctx.referenceMap);
+    if (methodTpChildren.length) {
+      allMethodChildren.push(...methodTpChildren);
+      headTarget = methodTpChildren[methodTpChildren.length - 1].Tokens;
+    }
+    const paramChildren = emitParameters(member.parameters, headTarget, deprecated, ctx.referenceMap);
+    if (paramChildren.length) {
+      allMethodChildren.push(...paramChildren);
+      headTarget = paramChildren[paramChildren.length - 1].Tokens;
+    }
+    let semiTarget = headTarget;
     if (member.type) {
       semiTarget.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
       const returnChildren = buildTypeNodeTokens(member.type, semiTarget, deprecated, 0, ctx.referenceMap);
@@ -612,6 +625,7 @@ function visitFunction(
   const line: ReviewLine = { LineId: lineId, Tokens: [], Children: [] };
   const t = line.Tokens;
   t.push(createToken(TokenKind.Keyword, "export", { hasSuffixSpace: true, deprecated }));
+  if (isDefaultExport(node)) t.push(createToken(TokenKind.Keyword, "default", { hasSuffixSpace: true, deprecated }));
   t.push(createToken(TokenKind.Keyword, "function", { hasSuffixSpace: true, deprecated }));
   t.push(createNameToken({ name, lineId, kind: TokenKind.MemberName, deprecated }));
 
@@ -656,6 +670,7 @@ function visitTypeAlias(
   const line: ReviewLine = { LineId: lineId, Tokens: [], Children: [] };
   const t = line.Tokens;
   t.push(createToken(TokenKind.Keyword, "export", { hasSuffixSpace: true, deprecated }));
+  if (isDefaultExport(node)) t.push(createToken(TokenKind.Keyword, "default", { hasSuffixSpace: true, deprecated }));
   t.push(createToken(TokenKind.Keyword, "type", { hasSuffixSpace: true, deprecated }));
   t.push(createNameToken({ name: node.name.text, lineId, kind: TokenKind.TypeName, deprecated }));
 
@@ -693,6 +708,7 @@ function visitEnum(
   const t = line.Tokens;
 
   t.push(createToken(TokenKind.Keyword, "export", { hasSuffixSpace: true, deprecated }));
+  if (isDefaultExport(node)) t.push(createToken(TokenKind.Keyword, "default", { hasSuffixSpace: true, deprecated }));
   if (hasModifier(node, ts.ModifierFlags.Const)) {
     t.push(createToken(TokenKind.Keyword, "const", { hasSuffixSpace: true, deprecated }));
   }
@@ -756,6 +772,7 @@ function visitVariableStatement(
 
     const t: ReviewToken[] = [];
     t.push(createToken(TokenKind.Keyword, "export", { hasSuffixSpace: true, deprecated }));
+    if (isDefaultExport(node)) t.push(createToken(TokenKind.Keyword, "default", { hasSuffixSpace: true, deprecated }));
     t.push(createToken(TokenKind.Keyword, keyword, { hasSuffixSpace: true, deprecated }));
     t.push(createNameToken({ name: varName, lineId, kind: TokenKind.MemberName, deprecated }));
 

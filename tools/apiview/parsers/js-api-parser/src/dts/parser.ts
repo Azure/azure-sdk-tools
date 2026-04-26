@@ -923,6 +923,7 @@ interface EntryPoint {
  */
 function getEntryPoints(sourceFile: ts.SourceFile): EntryPoint[] {
   const moduleMap = new Map<string, { statements: ts.Statement[]; trailingComment?: string }>();
+  const topLevelStatements: ts.Statement[] = [];
 
   for (const stmt of sourceFile.statements) {
     if (
@@ -956,15 +957,44 @@ function getEntryPoints(sourceFile: ts.SourceFile): EntryPoint[] {
       } else {
         moduleMap.set(subpath, { statements: [...stmt.body.statements], trailingComment });
       }
+    } else {
+      // Collect non-module top-level statements (interfaces, classes, etc.)
+      topLevelStatements.push(stmt);
     }
   }
 
+  // If we have declare module blocks, include both named modules AND any top-level declarations
   if (moduleMap.size > 0) {
-    return Array.from(moduleMap.entries()).map(([subpath, data]) => ({
-      subpath,
-      statements: data.statements,
-      trailingComment: data.trailingComment,
-    }));
+    const entries: EntryPoint[] = [];
+    
+    // Add top-level declarations to "." if there are any exportable ones
+    const exportableTopLevel = topLevelStatements.filter((s) =>
+      ts.isInterfaceDeclaration(s) ||
+      ts.isClassDeclaration(s) ||
+      ts.isFunctionDeclaration(s) ||
+      ts.isTypeAliasDeclaration(s) ||
+      ts.isEnumDeclaration(s) ||
+      ts.isVariableStatement(s) ||
+      (ts.isModuleDeclaration(s) && ts.isIdentifier(s.name)), // namespace
+    );
+    if (exportableTopLevel.length > 0) {
+      const existing = moduleMap.get(".");
+      if (existing) {
+        // Prepend top-level to existing "." module
+        existing.statements.unshift(...exportableTopLevel);
+      } else {
+        moduleMap.set(".", { statements: exportableTopLevel });
+      }
+    }
+    
+    for (const [subpath, data] of moduleMap.entries()) {
+      entries.push({
+        subpath,
+        statements: data.statements,
+        trailingComment: data.trailingComment,
+      });
+    }
+    return entries;
   }
 
   // No declare module blocks — treat whole file as "."

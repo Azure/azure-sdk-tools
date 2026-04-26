@@ -263,3 +263,18 @@ export class ChildClass extends BaseClass {
 export class BaseClass {
   process(): void;
 }
+
+/**
+ * Type guard function.
+ */
+export declare function isString(value: unknown): value is string;
+
+/**
+ * Assertion function.
+ */
+export declare function assertDefined<T>(value: T | undefined): asserts value is T;
+
+/**
+ * Constructor type example.
+ */
+export type Constructor<T> = new (...args: any[]) => T;

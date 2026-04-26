@@ -534,6 +534,44 @@ describe("parseDtsFile — basic.d.ts", () => {
     });
   });
 
+  describe("type predicate", () => {
+    it("renders type guard with 'is' keyword", () => {
+      lines = subpathMap.get(".")!.lines;
+      const fn = findLine(lines, "isString:function");
+      expect(fn).toBeDefined();
+      const allTokens = collectAllTokens(fn!);
+      const values = allTokens.map((t) => t.Value);
+      expect(values).toContain("value");
+      expect(values).toContain("is");
+      expect(values).toContain("string");
+    });
+
+    it("renders assertion function with 'asserts' keyword", () => {
+      lines = subpathMap.get(".")!.lines;
+      const fn = findLine(lines, "assertDefined:function");
+      expect(fn).toBeDefined();
+      const allTokens = collectAllTokens(fn!);
+      const values = allTokens.map((t) => t.Value);
+      expect(values).toContain("asserts");
+      expect(values).toContain("value");
+      expect(values).toContain("is");
+    });
+  });
+
+  describe("constructor type", () => {
+    it("renders constructor type with 'new' keyword", () => {
+      lines = subpathMap.get(".")!.lines;
+      const ta = findLine(lines, "Constructor:typealias");
+      expect(ta).toBeDefined();
+      const allTokens = collectAllTokens(ta!);
+      const values = allTokens.map((t) => t.Value);
+      expect(values).toContain("new");
+      expect(values).toContain("(");
+      expect(values).toContain(":");
+      expect(values).toContain("T");
+    });
+  });
+
   describe("namespace", () => {
     it("generates a namespace declaration with export + namespace keywords", () => {
       lines = subpathMap.get(".")!.lines;

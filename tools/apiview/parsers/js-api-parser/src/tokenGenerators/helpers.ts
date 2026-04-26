@@ -987,6 +987,41 @@ export function buildTypeNodeTokens(
     return children.length > 0 ? children : undefined;
   }
 
+  // Type predicate: x is Foo, asserts x, asserts x is Foo
+  if (ts.isTypePredicateNode(node)) {
+    if (node.assertsModifier) {
+      tokens.push(createToken(TokenKind.Keyword, "asserts", { hasSuffixSpace: true, deprecated }));
+    }
+    const paramName = ts.isIdentifier(node.parameterName)
+      ? node.parameterName.text
+      : node.parameterName.getText(); // "this"
+    tokens.push(createToken(TokenKind.MemberName, paramName, { deprecated }));
+    if (node.type) {
+      tokens.push(createToken(TokenKind.Keyword, "is", { hasPrefixSpace: true, hasSuffixSpace: true, deprecated }));
+      const typeChildren = buildTypeNodeTokens(node.type, tokens, deprecated, depth, referenceMap);
+      if (typeChildren?.length) children.push(...typeChildren);
+    }
+    return children.length > 0 ? children : undefined;
+  }
+
+  // Constructor type: new <T>(...args) => T
+  if (ts.isConstructorTypeNode(node)) {
+    tokens.push(createToken(TokenKind.Keyword, "new", { hasSuffixSpace: true, deprecated }));
+    const sigChildren: ReviewLine[] = [];
+    buildSignatureBodyTokens(
+      node.typeParameters,
+      node.parameters,
+      node.type,
+      tokens,
+      sigChildren,
+      deprecated,
+      depth,
+      referenceMap,
+    );
+    if (sigChildren.length) children.push(...sigChildren);
+    return children.length > 0 ? children : undefined;
+  }
+
   const text = node.getText();
   const tokenKind = getTokenKind(text);
   tokens.push(createToken(tokenKind, text, { deprecated }));

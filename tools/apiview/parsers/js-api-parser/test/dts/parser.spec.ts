@@ -399,6 +399,98 @@ describe("parseDtsFile — basic.d.ts", () => {
     });
   });
 
+  describe("constructor overloads", () => {
+    it("first constructor overload gets LineId", () => {
+      lines = subpathMap.get(".")!.lines;
+      const cls = findLine(lines, "OverloadedConstructor:class");
+      expect(cls?.Children).toBeDefined();
+      const ctors = cls!.Children!.filter((c) =>
+        tokenValues(c).includes("constructor"),
+      );
+      expect(ctors.length).toBe(3);
+      // First overload should have LineId
+      expect(ctors[0].LineId).toBeDefined();
+      expect(ctors[0].LineId).toContain("constructor");
+      // Subsequent overloads should not have LineId
+      expect(ctors[1].LineId).toBeUndefined();
+      expect(ctors[2].LineId).toBeUndefined();
+    });
+  });
+
+  describe("constructor parameter properties", () => {
+    it("emits parameter modifiers in constructor", () => {
+      lines = subpathMap.get(".")!.lines;
+      const cls = findLine(lines, "ParameterProperties:class");
+      const ctor = cls!.Children!.find((c) =>
+        tokenValues(c).includes("constructor"),
+      );
+      expect(ctor).toBeDefined();
+      const tokens = tokenValues(ctor!);
+      expect(tokens).toContain("public");
+      expect(tokens).toContain("private");
+      expect(tokens).toContain("readonly");
+    });
+  });
+
+  describe("function overloads", () => {
+    it("first function overload gets LineId", () => {
+      lines = subpathMap.get(".")!.lines;
+      const all = collectAllLines(lines);
+      const parseFns = all.filter((l) =>
+        l.Tokens.some((t) => t.Value === "parse") &&
+        l.Tokens.some((t) => t.Value === "function"),
+      );
+      expect(parseFns.length).toBe(2);
+      // First overload should have LineId
+      expect(parseFns[0].LineId).toBeDefined();
+      expect(parseFns[0].LineId).toContain("parse:function");
+      // Subsequent overload should not have LineId
+      expect(parseFns[1].LineId).toBeUndefined();
+    });
+  });
+
+  describe("type operators", () => {
+    it("renders keyof keyword", () => {
+      lines = subpathMap.get(".")!.lines;
+      const ta = findLine(lines, "Keys:typealias");
+      expect(ta).toBeDefined();
+      const tokens = tokenValues(ta!);
+      expect(tokens).toContain("keyof");
+    });
+
+    it("renders typeof keyword", () => {
+      lines = subpathMap.get(".")!.lines;
+      const ta = findLine(lines, "ConfigType:typealias");
+      expect(ta).toBeDefined();
+      const tokens = tokenValues(ta!);
+      expect(tokens).toContain("typeof");
+      expect(tokens).toContain("CONFIG_OBJ");
+    });
+
+    it("renders indexed access type", () => {
+      lines = subpathMap.get(".")!.lines;
+      const ta = findLine(lines, "PropertyType:typealias");
+      expect(ta).toBeDefined();
+      const allTokens = collectAllTokens(ta!);
+      const values = allTokens.map((t) => t.Value);
+      expect(values).toContain("T");
+      expect(values).toContain("[");
+      expect(values).toContain("K");
+      expect(values).toContain("]");
+    });
+
+    it("renders mapped type", () => {
+      lines = subpathMap.get(".")!.lines;
+      const ta = findLine(lines, "Readonly2:typealias");
+      expect(ta).toBeDefined();
+      const allTokens = collectAllTokens(ta!);
+      const values = allTokens.map((t) => t.Value);
+      expect(values).toContain("readonly");
+      expect(values).toContain("in");
+      expect(values).toContain("keyof");
+    });
+  });
+
   describe("namespace", () => {
     it("generates a namespace declaration with export + namespace keywords", () => {
       lines = subpathMap.get(".")!.lines;

@@ -175,13 +175,14 @@ function visitStatement(
   stmt: ts.Statement,
   out: ReviewLine[],
   ctx: VisitContext,
+  seenFunctionNames?: Set<string>,
 ): void {
   if (ts.isInterfaceDeclaration(stmt)) {
     visitInterface(stmt, out, ctx);
   } else if (ts.isClassDeclaration(stmt) && stmt.name) {
     visitClass(stmt, out, ctx);
   } else if (ts.isFunctionDeclaration(stmt) && stmt.name) {
-    visitFunction(stmt, out, ctx);
+    visitFunction(stmt, out, ctx, seenFunctionNames);
   } else if (ts.isTypeAliasDeclaration(stmt)) {
     visitTypeAlias(stmt, out, ctx);
   } else if (ts.isEnumDeclaration(stmt)) {
@@ -266,12 +267,24 @@ function emitParameters(
   tokens: ReviewToken[],
   deprecated: boolean | undefined,
   referenceMap: ReferenceMap,
+  emitModifiers = false,
 ): ReviewLine[] {
   const children: ReviewLine[] = [];
   tokens.push(createToken(TokenKind.Punctuation, "(", { deprecated }));
   let target = tokens;
   params.forEach((param, i) => {
     if (i > 0) target.push(createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }));
+    // Emit parameter modifiers (for constructor parameter properties)
+    if (emitModifiers) {
+      if (hasModifier(param, ts.ModifierFlags.Public))
+        target.push(createToken(TokenKind.Keyword, "public", { hasSuffixSpace: true, deprecated }));
+      else if (hasModifier(param, ts.ModifierFlags.Protected))
+        target.push(createToken(TokenKind.Keyword, "protected", { hasSuffixSpace: true, deprecated }));
+      else if (hasModifier(param, ts.ModifierFlags.Private))
+        target.push(createToken(TokenKind.Keyword, "private", { hasSuffixSpace: true, deprecated }));
+      if (hasModifier(param, ts.ModifierFlags.Readonly))
+        target.push(createToken(TokenKind.Keyword, "readonly", { hasSuffixSpace: true, deprecated }));
+    }
     if (param.dotDotDotToken) target.push(createToken(TokenKind.Punctuation, "...", { deprecated }));
     const name = param.name.getText();
     target.push(createToken(TokenKind.MemberName, name, { deprecated }));
@@ -453,10 +466,10 @@ function visitClass(
       deprecated,
     };
 
-    // Track method names seen so far to give overloads a disambiguated LineId.
-    const seenMethodNames = new Set<string>();
+    // Track member names seen so far to give overloads a disambiguated LineId.
+    const seenMemberNames = new Set<string>();
     for (const member of node.members) {
-      visitClassMember(member, line.Children!, childCtx, seenMethodNames);
+      visitClassMember(member, line.Children!, childCtx, seenMemberNames);
     }
 
     out.push(line);
@@ -479,7 +492,7 @@ function visitClassMember(
   member: ts.ClassElement,
   out: ReviewLine[],
   ctx: VisitContext,
-  seenMethodNames?: Set<string>,
+  seenMemberNames?: Set<string>,
 ): void {
   // Private members are not part of the public API surface.
   // ECMAScript private fields (#name) are unconditionally private.
@@ -492,10 +505,17 @@ function visitClassMember(
   const deprecated = ctx.deprecated || isDeprecatedNode(member);
 
   if (ts.isConstructorDeclaration(member)) {
-    const lineId = makeId(ctx.packageName, ctx.prefix + "constructor", "constructor");
+    // Only the first constructor overload gets the canonical LineId. Subsequent
+    // overloads must not share it — give them no LineId.
+    const isOverload = seenMemberNames?.has("constructor") ?? false;
+    seenMemberNames?.add("constructor");
+    const lineId = isOverload ? undefined : makeId(ctx.packageName, ctx.prefix + "constructor", "constructor");
     const t: ReviewToken[] = [];
+    const access = getAccessibilityKeyword(member);
+    if (access) t.push(createToken(TokenKind.Keyword, access, { hasSuffixSpace: true, deprecated }));
     t.push(createToken(TokenKind.Keyword, "constructor", { deprecated }));
-    const paramChildren = emitParameters(member.parameters, t, deprecated, ctx.referenceMap);
+    // Pass emitModifiers=true for constructor parameter properties
+    const paramChildren = emitParameters(member.parameters, t, deprecated, ctx.referenceMap, true);
     const ctorLine: ReviewLine = { LineId: lineId, Tokens: t };
     if (paramChildren.length) ctorLine.Children = paramChildren;
     out.push(ctorLine);
@@ -531,8 +551,8 @@ function visitClassMember(
     // Only the first overload gets the canonical LineId (which matches the
     // reference map entry). Subsequent overloads of the same name must not
     // share it — give them no LineId so the uniqueness invariant is preserved.
-    const isOverload = seenMethodNames?.has(methodName) ?? false;
-    seenMethodNames?.add(methodName);
+    const isOverload = seenMemberNames?.has(methodName) ?? false;
+    seenMemberNames?.add(methodName);
     const lineId = isOverload ? undefined : makeId(ctx.packageName, ctx.prefix + methodName, "method");
     const t: ReviewToken[] = [];
     const access = getAccessibilityKeyword(member);
@@ -616,10 +636,15 @@ function visitFunction(
   node: ts.FunctionDeclaration,
   out: ReviewLine[],
   ctx: VisitContext,
+  seenFunctionNames?: Set<string>,
 ): void {
   const name = node.name!.text;
   const symbolPath = ctx.prefix + name;
-  const lineId = makeId(ctx.packageName, symbolPath, "function");
+  // Only the first overload gets the canonical LineId. Subsequent overloads
+  // of the same name must not share it — give them no LineId.
+  const isOverload = seenFunctionNames?.has(name) ?? false;
+  seenFunctionNames?.add(name);
+  const lineId = isOverload ? undefined : makeId(ctx.packageName, symbolPath, "function");
   const { deprecated } = emitPreamble(node, lineId, out, ctx);
 
   const line: ReviewLine = { LineId: lineId, Tokens: [], Children: [] };
@@ -838,8 +863,9 @@ function visitNamespace(
   };
 
   const childLines: ReviewLine[] = [];
+  const seenFunctionNames = new Set<string>();
   for (const stmt of body.statements) {
-    visitStatement(stmt, childLines, childCtx);
+    visitStatement(stmt, childLines, childCtx, seenFunctionNames);
   }
   line.Children = childLines;
 
@@ -1007,8 +1033,9 @@ export function parseDtsFile(options: DtsParseOptions): Map<string, ParsedModule
     };
 
     const lines: ReviewLine[] = [];
+    const seenFunctionNames = new Set<string>();
     for (const stmt of ep.statements) {
-      visitStatement(stmt as ts.Statement, lines, ctx);
+      visitStatement(stmt as ts.Statement, lines, ctx, seenFunctionNames);
     }
 
     result.set(ep.subpath, { lines, trailingComment: ep.trailingComment });

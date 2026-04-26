@@ -192,3 +192,46 @@ export class ConstraintMethodClass {
     name: string;
   }>(entity: T): T;
 }
+
+/**
+ * Class with constructor overloads.
+ */
+export class OverloadedConstructor {
+  constructor();
+  constructor(value: string);
+  constructor(value: number, name: string);
+}
+
+/**
+ * Class with constructor parameter properties.
+ */
+export class ParameterProperties {
+  constructor(public name: string, private readonly id: number);
+}
+
+/**
+ * Function with overloads.
+ */
+export declare function parse(input: string): object;
+export declare function parse(input: Buffer): object;
+
+/**
+ * Type using keyof operator.
+ */
+export type Keys<T> = keyof T;
+
+/**
+ * Type using typeof operator.
+ */
+export declare const CONFIG_OBJ: { timeout: number };
+export type ConfigType = typeof CONFIG_OBJ;
+
+/**
+ * Type using indexed access.
+ */
+export type PropertyType<T, K extends keyof T> = T[K];
+
+/**
+ * Mapped type example.
+ */
+export type Readonly2<T> = { readonly [K in keyof T]: T[K] };

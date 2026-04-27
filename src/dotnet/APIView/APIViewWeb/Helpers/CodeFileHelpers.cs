@@ -1,6 +1,5 @@
 
 using Amazon.Runtime.Internal.Transform;
-using APIViewLegacy;
 using APIView;
 using APIView.Model.V2;
 using APIView.TreeToken;

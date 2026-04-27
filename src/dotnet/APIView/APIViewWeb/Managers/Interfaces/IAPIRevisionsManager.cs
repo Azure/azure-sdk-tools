@@ -1,6 +1,5 @@
 using APIView.Diff;
 using APIView;
-using APIViewLegacy;
 using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Models;

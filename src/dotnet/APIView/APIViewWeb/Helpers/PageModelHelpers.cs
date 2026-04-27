@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using APIView.Diff;
-using APIViewLegacy;
 using APIView;
 using APIViewWeb.Managers;
 using APIViewWeb.Models;

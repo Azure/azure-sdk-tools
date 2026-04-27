@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using APIViewLegacy;
+using APIView;
 using APIView.Identity;
 using APIViewWeb;
 using APIViewWeb.Helpers;

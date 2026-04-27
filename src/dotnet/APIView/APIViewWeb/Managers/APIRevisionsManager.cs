@@ -7,7 +7,6 @@ using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
 using APIView;
-using APIViewLegacy;
 using APIView.Diff;
 using APIView.Model;
 using APIViewWeb.Helpers;

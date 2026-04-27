@@ -8,7 +8,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using APIView;
-using APIViewLegacy;
 
 public static class Program
 {

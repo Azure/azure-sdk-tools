@@ -4,7 +4,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using APIViewLegacy;
 using APIView;
 using APIViewWeb;
 using APIViewWeb.Hubs;

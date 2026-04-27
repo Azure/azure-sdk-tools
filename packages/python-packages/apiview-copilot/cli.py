@@ -2198,6 +2198,7 @@ def get_architect_comments(
     raw_comments = get_comments_in_date_range(start_date, end_date, environment=environment)
     filtered = [c for c in raw_comments if c.get("CommentSource") != "AIGenerated"]
 
+    allowed_commenters = None
     if not all_commenters:
         if language:
             pretty_language = resolve_language(language)[1]
@@ -2205,7 +2206,8 @@ def get_architect_comments(
         else:
             allowed_commenters = get_approvers()
 
-        if allowed_commenters:
+        if allowed_commenters and not include_replies:
+            # When not including replies, simply keep only approver comments.
             filtered = [c for c in filtered if c.get("CreatedBy") in allowed_commenters]
 
     # Look up the language for each comment's review
@@ -2263,6 +2265,30 @@ def get_architect_comments(
                 if existing.get("CreatedOn", "") > c.get("CreatedOn", ""):
                     seen_threads[thread_id] = c
         filtered = list(seen_threads.values())
+    else:
+        # When including replies, identify threads started by an approver and include
+        # *all* comments in those threads (not just approver-authored ones).
+        if allowed_commenters:
+            # Find the earliest comment per thread to determine who started it
+            thread_starters: dict[str, str] = {}
+            thread_earliest: dict[str, str] = {}
+            for c in filtered:
+                thread_key = c.get("ThreadId") or c.get("ElementId")
+                if thread_key is None:
+                    continue
+                created = c.get("CreatedOn", "")
+                if thread_key not in thread_earliest or created < thread_earliest[thread_key]:
+                    thread_earliest[thread_key] = created
+                    thread_starters[thread_key] = c.get("CreatedBy", "")
+
+            approver_threads = {
+                k for k, author in thread_starters.items() if author in allowed_commenters
+            }
+            filtered = [
+                c
+                for c in filtered
+                if (c.get("ThreadId") or c.get("ElementId")) in approver_threads
+            ]
 
     comments = [APIViewComment(**c) for c in filtered]
 

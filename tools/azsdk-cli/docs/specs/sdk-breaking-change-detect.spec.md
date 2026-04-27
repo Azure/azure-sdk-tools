@@ -31,7 +31,7 @@
 
 - **TypeSpec**: A language for describing cloud service APIs and generating other API description languages, client and service code, documentation, and other assets. TypeSpec provides highly extensible core language primitives that can describe API shapes common among REST, OpenAPI, GraphQL, gRPC, and other protocols. See [TypeSpec official documentation](https://typespec.io)
 
-- **SDK Breaking change**: 
+- **SDK Breaking change**: A change between SDK versions that modifies public API surface area or behavior in a way that can break existing customer code. In this spec, SDK breaking changes may be introduced by spec changes, emitter changes, or APIView conversion differences.
 - **Breaking change category**: classify breaking changes to different category according to the root cause. Current categories: 
   - emitter change
   - conversion-by design
@@ -79,16 +79,16 @@ A changelog-breakingchange pattern guide (e.g. https://github.com/Azure/azure-sd
 **Output Format**
 ```json
 {
-    "hasBreadkingChange": true,
+    "hasBreakingChange": true,
     "language": "java",
     "breakingchanges": [
         {
             "breakingchange": "model `ResourceInfo` is renamed to `Resource`",
-            "category": "Conversion-need to be resolve",
+            "category": "Conversion-need to be resolve"
         },
         {
             "breakingchange": "Type of property `Prop` has been changed from `string` to `int32`",
-            "category": "typespec change",
+            "category": "typespec change"
         }
     ]
 }
@@ -204,7 +204,7 @@ azsdk package detect --changelog value --language go --tsp-config-path C:/dev/az
 Flow:
 1. Agent invoke `azsdk_package_generate_code` to generate sdk code
 2. Agent invoke `azsdk_package_update_changelog_content` to update change log
-3. Agent invoke `azsdk_package_detect_breaking_chang` to detect and classify breaking changes
+3. Agent invoke `azsdk_package_detect_breaking_change` to detect and classify breaking changes
 4. Label 'SDK-breakingchange' if breaking change detected for a language
 
 #### SDK breaking change resolve in Spec PR and Code PR
@@ -218,7 +218,7 @@ flowchart TD
     A[Generate SDK Changelog]
     B[Detect SDK Breaking Changes azsdk_package_detect_breaking_change]
     C[PR owner Ask Copilot to Resolve Breaking Changes]
-    D[Copilot Calls azsdk_customized_Code_Update]
+    D[Copilot Calls azsdk_customized_code_update]
     E[SDK Breaking Change Resolved]
 
     A -->|changelog| B

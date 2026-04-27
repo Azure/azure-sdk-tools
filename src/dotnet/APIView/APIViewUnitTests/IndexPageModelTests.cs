@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using APIViewLegacy;
+using APIView;
 using APIView.Identity;
 using APIViewWeb.Hubs;
 using APIViewWeb.LeanModels;

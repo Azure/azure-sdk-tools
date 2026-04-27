@@ -9,11 +9,11 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using APIView;
 using APIView.Model;
 using APIView.Model.V2;
+using APIViewLegacy;
 
-namespace APIViewLegacy
+namespace APIView
 {
     public class CodeFile
     {

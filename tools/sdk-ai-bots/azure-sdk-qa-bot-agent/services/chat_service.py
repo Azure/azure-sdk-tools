@@ -243,7 +243,7 @@ class ChatService:
 
     async def _get_agent(self, project_client: AIProjectClient) -> AgentDetails:
         """Load hosted-agent definition from Foundry."""
-        agent_name = cfg("AI_FOUNDRY_AGENT_NAME", "azure-sdk-qa-bot-chat-agent")
+        agent_name = cfg("AI_FOUNDRY_AGENT_NAME", "azure-sdk-chat-agent")
         agent = await project_client.agents.get(agent_name)
         if agent is None:
             raise RuntimeError(

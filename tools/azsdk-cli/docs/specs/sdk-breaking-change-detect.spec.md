@@ -15,7 +15,7 @@
     - [Detailed Design](#detailed-design)
     - [Architecture Diagram](#architecture-diagram)
       - [Component 1: Breaking change detector](#component-1-breaking-change-detector)
-      - [Component 2: Changelog-breaking change pattern](#component-2-changelog-breaking-change-pattern)
+      - [Component 2: ChangelogOrRevapi-breakingChange pattern](#component-2-changelogorrevapi-breakingchange-pattern)
       - [Component 3: Breaking change classifier](#component-3-breaking-change-classifier)
       - [Component 4: Breaking change Result](#component-4-breaking-change-result)
     - [User Experience](#user-experience)
@@ -103,7 +103,7 @@ flowchart TD
     B{Has Breaking Change?}
     C[Copilot agent Classify Breaking Changes]
     D[Breaking Change Result]
-    E[SDK changelogOrRevapi-breaking change pattern]
+    E[SDK changelogOrRevapi-breakingChange pattern]
     F[SDK changelog/ Revapi]
     subgraph Detector
         A
@@ -137,9 +137,9 @@ Compare the package against the latest GA release to detect breaking changes. Th
 | **JS/TS** | API Extractor + `git diff` | `.api.md` review files | Git baseline | Generated review files |
 | **Python** | `jsondiff` + AST/`inspect` introspection | JSON API reports | PyPI stable package | Current code |
 
-#### Component 2: Changelog-breaking change pattern
+#### Component 2: ChangelogOrRevapi-breakingChange pattern
 
-This document describe which changelog pattern will cause breaking changes and also provide the root cause of the breaking changes.
+This document describe which changelog/revapi will cause breaking changes and also provide the root cause of the breaking changes.
 
 e.g.
 For python:
@@ -150,7 +150,7 @@ Paired removal and addition entries showing naming changes from words to numbers
 - Enum `Minute` deleted or renamed its member `THIRTY`
 - Enum `Minute` added member `ENUM_0`
 - Enum `Minute` added member `ENUM_30`
-Reason: Swagger automatically converts numeric names to words during code generation, while TypeSpec preserves the original naming. This affects all type names, including enums, models, and operations.
+Reason: Swagger automatically converts numeric names to words during code generation, while TypeSpec preserves the original naming. This affects all type names, including enums, models, and operations. Emitter change
 
 Spec Pattern:
 
@@ -171,7 +171,7 @@ Use client customization to restore the original names from the removal entries:
 
 #### Component 3: Breaking change classifier
 
-Copilot Agent refer changelog-breakingchange pattern guide to classify the breaking changes.
+Copilot Agent refer changelogOrRevapi-breakingchange pattern guide to classify the breaking changes.
 
 Parse out the actually breaking changes and classify them into different category
 
@@ -182,7 +182,7 @@ Parse out the actually breaking changes and classify them into different categor
   - spec change
   - unknown
 
-input: changelog
+input: changelog or Revapi
 output:
 ```json
 {
@@ -201,6 +201,9 @@ output:
 ```
 
 #### Component 4: Breaking change Result
+
+The result of the `azsdk_package_detect_breaking_change` tool. It provides an overall assessment of whether the package introduces breaking changes, along with details for each breaking change (breakingchange and category) if any are detected.
+The result is JSON-formatted.
 
 **No Breaking change**
 

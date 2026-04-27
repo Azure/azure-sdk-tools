@@ -25,7 +25,7 @@ public static class RustRequirements
 
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {
-            return ["Download and install rustup from https://rust-lang.org/tools/install/", "Run `rustup install` to install the Rust toolchain"];
+            return ["Download and install rustup from https://rust-lang.org/tools/install/", "Run `rustup install` from the root of the repository to install the Rust toolchain"];
         }
     }
 }

@@ -25,6 +25,8 @@
     { "toolName": "azsdk_engsys_codeowner_check_package", "prompt": "Check whether this package has enough CODEOWNERS coverage to unblock release", "category": "all" },
     { "toolName": "azsdk_engsys_codeowner_check_package", "prompt": "Validate package owners, PR labels, and service owners for this SDK package path", "category": "all" },
     { "toolName": "azsdk_engsys_codeowner_check_package", "prompt": "Run the codeowner package check for sdk/storage/Azure.Storage.Blobs", "category": "all" },
+    { "toolName": "azsdk_engsys_codeowner_update_cache", "prompt": "Run the codeowner cache update pipeline to unblock releases", "category": "all" },
+    { "toolName": "azsdk_engsys_codeowner_update_cache", "prompt": "Update the owners cache", "category": "all" },
 
     { "toolName": "azsdk_analyze_log_file", "prompt": "Analyze this log file for errors", "category": "all" },
     { "toolName": "azsdk_analyze_log_file", "prompt": "What errors are in this build log?", "category": "all" },
@@ -153,6 +155,10 @@
     { "toolName": "azsdk_update_release_plan", "prompt": "Update TypeSpec project in release plan", "category": "all" },
     { "toolName": "azsdk_typespec_delegate_apiview_feedback", "prompt": "Help me fix these comments: https://spa.apiview.dev/review/c375391d5ab9419f83e3bdsfas9asdfadf2e?activeApiRevisionId=fc2a4adfasdfasdagae3w3hhtd", "category": "all" },
     { "toolName": "azsdk_typespec_delegate_apiview_feedback", "prompt": "Fix this feedback: https://spa.apiview.dev/review/c375391d5ab9419f83e3bdsfas9asdfadf2e?activeApiRevisionId=fc2a4adfasdfasdagae3w3hhtd", "category": "all" },
-    { "toolName": "azsdk_typespec_delegate_apiview_feedback", "prompt": "Create an issue and assign to copilot to fix this: https://spa.apiview.dev/review/adfaset5391d5ab9419f83e3bds9asdfadf2e?activeApiRevisionId=adf34adfasadastasdagae3w3hhtd", "category": "all" }
+    { "toolName": "azsdk_typespec_delegate_apiview_feedback", "prompt": "Create an issue and assign to copilot to fix this: https://spa.apiview.dev/review/adfaset5391d5ab9419f83e3bds9asdfadf2e?activeApiRevisionId=adf34adfasadastasdagae3w3hhtd", "category": "all" },
+
+    { "toolName": "azsdk_get_kpi_attestation_status", "prompt": "What is the status of my KPI attestation.", "category": "all" },
+    { "toolName": "azsdk_get_kpi_attestation_status", "prompt": "Check KPI attestation for my TypeSpec project", "category": "all" },
+    { "toolName": "azsdk_get_kpi_attestation_status", "prompt": "Is KPI attestation completed for product ID 12345 in GA?", "category": "all" }
   ]
 }

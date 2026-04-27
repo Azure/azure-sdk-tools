@@ -8,7 +8,7 @@ public class TypeSpecMetadata
     public string EmitterVersion { get; set; }
     public DateTime GeneratedAt { get; set; }
     public TypeSpecInfo TypeSpec { get; set; }
-    public Dictionary<string, LanguageConfig> Languages { get; set; }
+    public Dictionary<string, List<LanguageConfig>> Languages { get; set; }
     public string SourceConfigPath { get; set; }
 }
 

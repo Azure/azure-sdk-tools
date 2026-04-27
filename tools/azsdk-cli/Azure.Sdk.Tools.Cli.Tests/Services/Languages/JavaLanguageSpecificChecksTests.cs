@@ -670,6 +670,58 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         }
 
         [Test]
+        public async Task TestLintCode_WithFix_FailedTools_ReturnsAutoFixNotAvailableMessage()
+        {
+            // Arrange
+            SetupSuccessfulMavenVersionCheck();
+            var checkstyleErrorOutput = "[ERROR] Failed to execute goal com.puppycrawl.tools:checkstyle:9.3:check (default) on project test: You have 5 Checkstyle violations.";
+
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => IsMavenInstallCommand(p)),
+                It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardError, checkstyleErrorOutput)] });
+
+            // Act - run with fixCheckErrors=true
+            var result = await LangService.LintCode(JavaPackageDir, true, CancellationToken.None);
+
+            // Assert - verify that NextSteps explicitly explains auto-fix is not available
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ExitCode, Is.EqualTo(1));
+                Assert.That(result.NextSteps, Is.Not.Null);
+                Assert.That(result.NextSteps, Has.Count.GreaterThan(0));
+                Assert.That(result.NextSteps!.Any(step => step.Contains("Auto-fix is not available")), Is.True,
+                    "NextSteps should explicitly state auto-fix is not available for linting tools");
+                Assert.That(result.NextSteps!.Any(step => step.Contains("fail-safe mode")), Is.True,
+                    "NextSteps should explain that --fix ran in fail-safe mode");
+                Assert.That(result.NextSteps!.Any(step => step.Contains("Checkstyle")), Is.True,
+                    "NextSteps should include Checkstyle-specific guidance");
+            });
+        }
+
+        [Test]
+        public async Task TestLintCode_WithoutFix_FailedTools_DoesNotMentionAutoFix()
+        {
+            // Arrange
+            SetupSuccessfulMavenVersionCheck();
+            var checkstyleErrorOutput = "[ERROR] Failed to execute goal com.puppycrawl.tools:checkstyle:9.3:check (default) on project test: You have 5 Checkstyle violations.";
+            SetupMavenInstallWithToolErrors(checkstyleErrorOutput);
+
+            // Act - run without fixCheckErrors
+            var result = await LangService.LintCode(JavaPackageDir, false, CancellationToken.None);
+
+            // Assert - verify no auto-fix related message since --fix was not used
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ExitCode, Is.EqualTo(1));
+                Assert.That(result.NextSteps, Is.Not.Null);
+                Assert.That(result.NextSteps!.Any(step => step.Contains("Auto-fix is not available")), Is.False,
+                    "NextSteps should not mention auto-fix when --fix was not used");
+                Assert.That(result.NextSteps!.Any(step => step.Contains("Checkstyle")), Is.True,
+                    "NextSteps should still include Checkstyle-specific guidance");
+            });
+        }
+
+        [Test]
         public async Task TestLintCode_CheckstyleAndJavadocFail_ReturnsError()
         {
             // Arrange

@@ -1,5 +1,26 @@
 # Release History
 
+## 0.6.10 (2026-04-24)
+
+### Features Added
+
+- Added `azsdk_get_kpi_attestation_status` MCP tool to check KPI attestation status for a release plan given product ID and lifecycle.
+- Added CODEOWNERS Audit command (CLI only) that brings data model to a valid state.
+
+### Other Changes
+
+- Surface APIView link in `azsdk_release_sdk` when APIView approval is missing
+
+## 0.6.9 (2026-04-16)
+
+### Features Added
+
+- Added MCP tool for updating the CODEOWNERS cache
+
+### Other Changes
+
+- Made spec PR optional parameter for both `azsdk_create_release_plan` and `azsdk_get_release_plan`
+
 ## 0.6.8 (2026-04-15)
 
 ### Features Added

@@ -36,10 +36,17 @@ public static class WorkItemMappers
     }
     public static OwnerWorkItem MapToOwnerWorkItem(WorkItem wi)
     {
+        DateTime? invalidSince = null;
+        if (wi.Fields.TryGetValue("Custom.InvalidSince", out var invalidSinceValue) && invalidSinceValue is DateTime dt)
+        {
+            invalidSince = dt;
+        }
+
         return new OwnerWorkItem
         {
             WorkItemId = wi.Id!.Value,
             GitHubAlias = GetFieldValue(wi, "Custom.GitHubAlias"),
+            InvalidSince = invalidSince,
             RelatedIds = wi.ExtractRelatedIds()
         };
     }

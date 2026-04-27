@@ -19,17 +19,31 @@ using System.Threading.Tasks;
 
 namespace APIViewWeb.Repositories
 {
-    public class DevopsArtifactRepository : IDevopsArtifactRepository
+    public class DevopsArtifactRepository : IDevopsArtifactRepository, IDisposable
     {
+        private sealed record CachedConnection(VssConnection Connection, DateTimeOffset ExpiresAt);
         private readonly IConfiguration _configuration;
         private readonly string _hostUrl;
         private readonly TelemetryClient _telemetryClient;
+        private CachedConnection _cachedConnectionEntry;
+        private readonly SemaphoreSlim _connectionLock = new SemaphoreSlim(1, 1);
+        private int _disposed = 0;
 
         public DevopsArtifactRepository(IConfiguration configuration, TelemetryClient telemetryClient)
         {
             _configuration = configuration;
             _hostUrl = _configuration["APIVIew-Host-Url"];
             _telemetryClient = telemetryClient;
+        }
+
+        public void Dispose()
+        {
+            if (Interlocked.Exchange(ref _disposed, 1) != 0)
+            {
+                return;
+            }
+            _cachedConnectionEntry?.Connection.Dispose();
+            _connectionLock.Dispose();
         }
 
         public async Task<Stream> DownloadPackageArtifact(string repoName, string buildId, string artifactName, string filePath, string project, string format= "file")
@@ -79,25 +93,53 @@ namespace APIViewWeb.Repositories
 
         private async Task<VssConnection> CreateVssConnection()
         {
-            var accessToken = await getAccessToken();
-            var token = new VssAadToken("Bearer", accessToken);
-            return new VssConnection(new Uri("https://dev.azure.com/azure-sdk/"), new VssAadCredential(token));
+            // Fast path: single volatile read of the immutable snapshot — no torn struct reads.
+            var entry = Volatile.Read(ref _cachedConnectionEntry);
+            if (entry != null && DateTimeOffset.UtcNow < entry.ExpiresAt)
+            {
+                return entry.Connection;
+            }
+
+            await _connectionLock.WaitAsync();
+            try
+            {
+                // Re-check under lock to avoid double initialization.
+                entry = Volatile.Read(ref _cachedConnectionEntry);
+                if (entry != null && DateTimeOffset.UtcNow < entry.ExpiresAt)
+                {
+                    return entry.Connection;
+                }
+
+                var tokenResult = await GetAccessTokenAsync();
+                var vssToken = new VssAadToken("Bearer", tokenResult.Token);
+                var connection = new VssConnection(new Uri("https://dev.azure.com/azure-sdk/"), new VssAadCredential(vssToken));
+                var refreshTime = tokenResult.ExpiresOn.AddMinutes(-5);
+                if (refreshTime < DateTimeOffset.UtcNow)
+                {
+                    refreshTime = DateTimeOffset.UtcNow;
+                }
+                Volatile.Write(ref _cachedConnectionEntry, new CachedConnection(connection, refreshTime));
+                return connection;
+            }
+            finally
+            {
+                _connectionLock.Release();
+            }
         }
 
-        private async Task<string> getAccessToken()
+        private async Task<AccessToken> GetAccessTokenAsync()
         {
-            // APIView deployed instances uses managed identity to authenticate requests to Azure DevOps.
-            // For local testing, CLI-based credentials are used to create token
+            // APIView deployed instances use managed identity to authenticate to Azure DevOps.
+            // For local testing, CLI-based credentials are used.
             var credential = Helpers.CredentialProvider.GetAzureCredential();
             var tokenRequestContext = new TokenRequestContext(VssAadSettings.DefaultScopes);
-            var token = await credential.GetTokenAsync(tokenRequestContext, CancellationToken.None);
-            return token.Token;
+            return await credential.GetTokenAsync(tokenRequestContext, CancellationToken.None);
         }
 
         private async Task<HttpResponseMessage> GetFromDevopsAsync(string request)
         {
-            var httpClient = new HttpClient();            
-            var accessToken = await getAccessToken();
+            using var httpClient = new HttpClient();
+            var accessToken = (await GetAccessTokenAsync()).Token;
             httpClient.DefaultRequestHeaders.Accept.Clear();
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);

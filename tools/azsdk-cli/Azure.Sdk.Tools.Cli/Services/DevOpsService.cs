@@ -120,6 +120,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         Task<WorkItem> CreateWorkItemAsync(WorkItemBase workItem, string workItemType, string title, int? parentId = null, int? relatedId = null, CancellationToken ct = default);
         Task<WorkItem> CreateWorkItemRelationAsync(int id, string relationType, int? targetId = null, string? targetUrl = null, CancellationToken ct = default);
         Task RemoveWorkItemRelationAsync(int id, string relationType, int targetId, CancellationToken ct);
+        Task DeleteWorkItemAsync(int workItemId, CancellationToken ct);
     }
 
     public partial class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
@@ -1851,6 +1852,12 @@ namespace Azure.Sdk.Tools.Cli.Services
                 workItems.AddRange(batch);
             }
             return workItems;
+        }
+
+        public async Task DeleteWorkItemAsync(int workItemId, CancellationToken ct)
+        {
+            var workItemClient = connection.GetWorkItemClient(ct);
+            await workItemClient.DeleteWorkItemAsync(workItemId, destroy: false, cancellationToken: ct);
         }
     }
 }

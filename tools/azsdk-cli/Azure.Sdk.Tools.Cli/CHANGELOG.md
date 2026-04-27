@@ -1,6 +1,6 @@
 # Release History
 
-## 0.6.10 (Unreleased)
+## 0.6.10 (2026-04-24)
 
 ### Features Added
 
@@ -11,6 +11,7 @@
 - `azsdk package validate` with check type `All` raises an error when `--fix` is True. Run a specific check type (for example, `Cspell`, `Snippets`, or `Format`) with `--fix` instead.
 
 ### Bugs Fixed
+- Added CODEOWNERS Audit command (CLI only) that brings data model to a valid state.
 
 ### Other Changes
 

@@ -44,10 +44,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             DefaultValueFactory = _ => "Released"
         };
 
+        private readonly Option<string?> packageVersionOpt = new("--package-version")
+        {
+            Description = "SDK package version being released",
+            Required = false,
+        };
+
         protected override Command GetCommand() =>
             new McpCommand(updateReleaseStatusCommandName, "Update package release status in the release plan")
             {
-                packageNameOpt, languageOpt, releaseStatusOpt
+                packageNameOpt, languageOpt, releaseStatusOpt, packageVersionOpt
             };
 
 
@@ -61,7 +67,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     var packageName = commandParser.GetValue(packageNameOpt);
                     var language = commandParser.GetValue(languageOpt);
                     var releaseStatus = commandParser.GetValue(releaseStatusOpt);
-                    return await UpdatePackageReleaseStatus(packageName, language, releaseStatus, ct);
+                    var packageVersion = commandParser.GetValue(packageVersionOpt);
+                    return await UpdatePackageReleaseStatus(packageName, language, releaseStatus, packageVersion, ct);
 
                 default:
                     logger.LogError("Unknown command: {command}", command);
@@ -69,7 +76,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        public async Task<ReleaseStatusUpdateResponse> UpdatePackageReleaseStatus(string packageName, string language, string releaseStatus, CancellationToken ct)
+        public async Task<ReleaseStatusUpdateResponse> UpdatePackageReleaseStatus(string packageName, string language, string releaseStatus, string? packageVersion, CancellationToken ct)
         {
             try
             {
@@ -87,7 +94,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 {
                     PackageName = packageName,
                     Language = SdkLanguageHelpers.GetSdkLanguage(language),
-                    ReleaseStatus = releaseStatus
+                    ReleaseStatus = releaseStatus,
+                    PackageVersion = packageVersion
                 };
 
                 if (!ReleasePlanTool.SUPPORTED_LANGUAGES.Contains(language.ToLower()))
@@ -132,10 +140,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 logger.LogInformation("Updating release status for package {packageName} in release plan work item {workItemId}", packageName, releasePlan.WorkItemId);
 
                 // Update the release status for the specific language
+                var languageId = DevOpsService.MapLanguageToId(language);
                 var fieldsToUpdate = new Dictionary<string, string>
                 {
-                    { $"Custom.ReleaseStatusFor{DevOpsService.MapLanguageToId(language)}", releaseStatus }
+                    { $"Custom.ReleaseStatusFor{languageId}", releaseStatus }
                 };
+
+                if (!string.IsNullOrWhiteSpace(packageVersion))
+                {
+                    fieldsToUpdate[$"Custom.ReleasedVersionFor{languageId}"] = packageVersion;
+                }
 
                 await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, fieldsToUpdate, ct);
                 logger.LogInformation("Successfully updated release status for package {packageName} in release plan {workItemId}", packageName, releasePlan.WorkItemId);

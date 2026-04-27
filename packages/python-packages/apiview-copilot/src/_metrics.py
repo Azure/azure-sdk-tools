@@ -50,6 +50,8 @@ class MetricsSegment:
     # Human comment counts
     human_comment_count_with_ai: Optional[int] = None
     human_comment_count_without_ai: Optional[int] = None
+    human_comment_count_before_ai: Optional[int] = None
+    human_comment_count_after_ai: Optional[int] = None
 
     # AI comment classifications (mutually exclusive, sum to total_ai_comment_count)
     total_ai_comment_count: Optional[int] = None
@@ -149,6 +151,38 @@ def get_metrics_report(
     return report
 
 
+def build_thread_start_index(comments: list[dict]) -> dict:
+    """Build a mapping from thread keys to their earliest ``CreatedOn``.
+
+    Thread keys are ``ThreadId`` strings for threaded comments, or
+    ``(APIRevisionId, ElementId)`` tuples for unthreaded ones.
+    """
+    index: dict = {}
+    for c in comments:
+        created = c.get("CreatedOn", "")
+        thread_id = c.get("ThreadId")
+        if thread_id:
+            if thread_id not in index or created < index[thread_id]:
+                index[thread_id] = created
+        else:
+            key = (c.get("APIRevisionId"), c.get("ElementId"))
+            if key not in index or created < index[key]:
+                index[key] = created
+    return index
+
+
+def get_thread_start_date(comment: dict, thread_start_index: dict) -> Optional[str]:
+    """Return the ``CreatedOn`` of the first comment in the thread containing *comment*.
+
+    *thread_start_index* is produced by :func:`build_thread_start_index`.
+    """
+    thread_id = comment.get("ThreadId")
+    if thread_id:
+        return thread_start_index.get(thread_id, comment.get("CreatedOn"))
+    key = (comment.get("APIRevisionId"), comment.get("ElementId"))
+    return thread_start_index.get(key, comment.get("CreatedOn"))
+
+
 def _filter_to_root_comments(comments: list[dict]) -> list[dict]:
     """Reduce comments to thread roots only.
 
@@ -190,6 +224,7 @@ def _build_metrics_segment(
     reviews: list[ActiveReviewMetadata],
     comments: list[dict],
     language: Optional[str] = None,
+    thread_start_index: Optional[dict] = None,
 ) -> MetricsSegment:
     """Build a MetricsSegment from reviews and raw comment dicts.
 
@@ -244,13 +279,17 @@ def _build_metrics_segment(
     all_revision_ids = set()
     approved_revision_ids = set()
     revision_has_copilot = {}
+    # Map each revision ID to its (review_id, package_version) composite key
+    revision_to_review_version: dict[str, tuple[str, str]] = {}
 
-    for rev in all_revisions:
-        for revision_id in rev.revision_ids:
-            all_revision_ids.add(revision_id)
-            revision_has_copilot[revision_id] = rev.has_copilot_review
-            if rev.approval is not None:
-                approved_revision_ids.add(revision_id)
+    for review in reviews:
+        for rev in review.revisions:
+            for revision_id in rev.revision_ids:
+                all_revision_ids.add(revision_id)
+                revision_has_copilot[revision_id] = rev.has_copilot_review
+                revision_to_review_version[revision_id] = (review.review_id, rev.package_version or "")
+                if rev.approval is not None:
+                    approved_revision_ids.add(revision_id)
 
     # Reduce to root comments only (one per thread/line) so replies are not counted separately.
     root_comments = _filter_to_root_comments(
@@ -267,22 +306,61 @@ def _build_metrics_segment(
     # Categorize comments based on whether the revision has Copilot (for comment_makeup)
     human_comments_with_copilot_count = 0
     human_comments_without_copilot_count = 0
+    human_comments_before_ai_count = 0
+    human_comments_after_ai_count = 0
+
+    # Build (review_id, package_version) → earliest AI comment CreatedOn index from
+    # ALL (pre-root-filter) non-diagnostic comments so we can determine whether a
+    # human thread was opened before or after Copilot weighed in on the same
+    # review/version (across any revision for that version).
+    review_version_earliest_ai: dict[tuple[str, str], str] = {}
+    for c in comments:
+        if c.get("CommentSource") != "AIGenerated":
+            continue
+        rv_key = revision_to_review_version.get(c.get("APIRevisionId", ""))
+        if rv_key is None:
+            continue
+        created = c.get("CreatedOn", "")
+        if rv_key not in review_version_earliest_ai or created < review_version_earliest_ai[rv_key]:
+            review_version_earliest_ai[rv_key] = created
+
+    # When a thread start index is provided, only count human threads
+    # that originated within the current window.
+    if thread_start_index is not None:
+        from src._utils import to_iso8601
+
+        window_start_iso = to_iso8601(start_date)
+        window_end_iso = to_iso8601(end_date, end_of_day=True)
 
     for comment in approved_revision_comments:
         rev_id = comment.get("APIRevisionId")
         has_copilot = revision_has_copilot.get(rev_id, False)
         source = comment.get("CommentSource")
 
+        if source == "AIGenerated":
+            continue
+
+        if thread_start_index is not None:
+            thread_start = get_thread_start_date(comment, thread_start_index)
+            if thread_start and not (window_start_iso <= thread_start <= window_end_iso):
+                continue
+
         if has_copilot:
-            if source != "AIGenerated":
-                human_comments_with_copilot_count += 1
+            human_comments_with_copilot_count += 1
+            # Determine before/after AI based on review/version-level comparison
+            rv_key = revision_to_review_version.get(rev_id)
+            earliest_ai = review_version_earliest_ai.get(rv_key) if rv_key else None
+            if earliest_ai and (comment.get("CreatedOn") or "") >= earliest_ai:
+                human_comments_after_ai_count += 1
+            else:
+                human_comments_before_ai_count += 1
         else:
-            # For revisions without Copilot, all comments should be human
-            if source != "AIGenerated":
-                human_comments_without_copilot_count += 1
+            human_comments_without_copilot_count += 1
 
     metrics.human_comment_count_with_ai = human_comments_with_copilot_count
     metrics.human_comment_count_without_ai = human_comments_without_copilot_count
+    metrics.human_comment_count_before_ai = human_comments_before_ai_count
+    metrics.human_comment_count_after_ai = human_comments_after_ai_count
 
     # For comment_quality: count ALL AI comments across ALL active revisions (approved + unapproved)
     all_ai_comments = [

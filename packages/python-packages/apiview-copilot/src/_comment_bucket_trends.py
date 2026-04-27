@@ -23,7 +23,7 @@ from src._apiview import (
     get_comments_in_date_range,
     get_version_type,
 )
-from src._metrics import METRICS_COMMENT_FIELDS, _build_metrics_segment
+from src._metrics import METRICS_COMMENT_FIELDS, _build_metrics_segment, build_thread_start_index
 from src._utils import get_language_pretty_name, to_iso8601
 
 PRODUCTION_ENVIRONMENT = "production"
@@ -45,14 +45,16 @@ class MonthlyCommentBucketPoint:
     good_count: int
     implicit_good_count: int
     neutral_count: int
-    human_comment_count: int
+    human_before_ai_count: int
+    human_after_ai_count: int
     implicit_bad_count: int
     bad_count: int
     deleted_count: int
     good_percentage: float
     implicit_good_percentage: float
     neutral_percentage: float
-    human_percentage: float
+    human_before_ai_percentage: float
+    human_after_ai_percentage: float
     implicit_bad_percentage: float
     bad_percentage: float
     deleted_percentage: float
@@ -102,6 +104,7 @@ def _build_language_comment_bucket_point(
     *,
     include_human: bool,
     include_neutral: bool,
+    thread_start_index: Optional[dict] = None,
 ) -> MonthlyCommentBucketPoint:
     """Build one monthly bucket point using current metrics logic plus optional buckets."""
     filtered_reviews = [review for review in reviews if review.language.lower() == language.lower()]
@@ -111,24 +114,34 @@ def _build_language_comment_bucket_point(
         reviews=filtered_reviews,
         comments=raw_comments,
         language=language,
+        thread_start_index=thread_start_index,
     )
 
     good_count = segment.upvoted_ai_comment_count or 0
     implicit_good_count = segment.implicit_good_ai_comment_count or 0
     neutral_count = (segment.neutral_ai_comment_count or 0) if include_neutral else 0
-    human_count = (segment.human_comment_count_with_ai or 0) if include_human else 0
+    human_before_ai_count = (segment.human_comment_count_before_ai or 0) if include_human else 0
+    human_after_ai_count = (segment.human_comment_count_after_ai or 0) if include_human else 0
     implicit_bad_count = segment.implicit_bad_ai_comment_count or 0
     bad_count = segment.downvoted_ai_comment_count or 0
     deleted_count = segment.deleted_ai_comment_count or 0
 
     total_included = (
-        good_count + implicit_good_count + neutral_count + human_count + implicit_bad_count + bad_count + deleted_count
+        good_count
+        + implicit_good_count
+        + neutral_count
+        + human_before_ai_count
+        + human_after_ai_count
+        + implicit_bad_count
+        + bad_count
+        + deleted_count
     )
 
     good_percentage = _to_percentage(good_count, total_included)
     implicit_good_percentage = _to_percentage(implicit_good_count, total_included)
     neutral_percentage = _to_percentage(neutral_count, total_included)
-    human_percentage = _to_percentage(human_count, total_included)
+    human_before_ai_percentage = _to_percentage(human_before_ai_count, total_included)
+    human_after_ai_percentage = _to_percentage(human_after_ai_count, total_included)
     implicit_bad_percentage = _to_percentage(implicit_bad_count, total_included)
     bad_percentage = _to_percentage(bad_count, total_included)
     deleted_percentage = _to_percentage(deleted_count, total_included)
@@ -142,14 +155,16 @@ def _build_language_comment_bucket_point(
         good_count=good_count,
         implicit_good_count=implicit_good_count,
         neutral_count=neutral_count,
-        human_comment_count=human_count,
+        human_before_ai_count=human_before_ai_count,
+        human_after_ai_count=human_after_ai_count,
         implicit_bad_count=implicit_bad_count,
         bad_count=bad_count,
         deleted_count=deleted_count,
         good_percentage=good_percentage,
         implicit_good_percentage=implicit_good_percentage,
         neutral_percentage=neutral_percentage,
-        human_percentage=human_percentage,
+        human_before_ai_percentage=human_before_ai_percentage,
+        human_after_ai_percentage=human_after_ai_percentage,
         implicit_bad_percentage=implicit_bad_percentage,
         bad_percentage=bad_percentage,
         deleted_percentage=deleted_percentage,
@@ -220,6 +235,8 @@ def build_language_comment_bucket_reports(
             id_parameter_prefix="rev_id",
         )
 
+    thread_start_index = build_thread_start_index(non_diag)
+
     for start_date, end_date in month_ranges:
         reviews, month_comments = _build_month_metadata(
             start_date,
@@ -243,6 +260,7 @@ def build_language_comment_bucket_reports(
                         month_comments,
                         include_human=include_human,
                         include_neutral=include_neutral,
+                        thread_start_index=thread_start_index,
                     )
                 )
             )
@@ -396,10 +414,10 @@ def _build_chart_rows(
             {"key": "good_count", "label": "Confirmed Good", "color": "darkgreen"},
             {"key": "implicit_good_count", "label": "Implicit Good", "color": "lightgreen"},
         ]
+        if include_human:
+            rows.append({"key": "human_after_ai_count", "label": "Human (After AI)", "color": "lightblue"})
         if include_neutral:
             rows.append({"key": "neutral_count", "label": "Neutral", "color": "lightgray"})
-        if include_human:
-            rows.append({"key": "human_comment_count", "label": "Human Comment", "color": "lightblue"})
         rows.extend(
             [
                 {"key": "implicit_bad_count", "label": "Implicit Bad", "color": "lightcoral"},
@@ -412,10 +430,10 @@ def _build_chart_rows(
             {"key": "good_percentage", "label": "Confirmed Good", "color": "darkgreen"},
             {"key": "implicit_good_percentage", "label": "Implicit Good", "color": "lightgreen"},
         ]
+        if include_human:
+            rows.append({"key": "human_after_ai_percentage", "label": "Human (After AI)", "color": "lightblue"})
         if include_neutral:
             rows.append({"key": "neutral_percentage", "label": "Neutral", "color": "lightgray"})
-        if include_human:
-            rows.append({"key": "human_percentage", "label": "Human Comment", "color": "lightblue"})
         rows.extend(
             [
                 {"key": "implicit_bad_percentage", "label": "Implicit Bad", "color": "lightcoral"},
@@ -555,6 +573,103 @@ def generate_comment_bucket_chart(
     return output_path
 
 
+DEFAULT_HUMAN_TIMING_OUTPUT_PATH = Path("output/charts/human_comment_timing.png")
+
+
+def generate_human_comment_timing_chart(
+    reports: dict[str, list[dict]],
+    output_path: Path = DEFAULT_HUMAN_TIMING_OUTPUT_PATH,
+    *,
+    environment: str = PRODUCTION_ENVIRONMENT,
+) -> Optional[Path]:
+    """Render a stacked bar chart showing human comments before vs after AI, normalized to 100%."""
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    try:
+        import matplotlib.pyplot as plt
+    except ImportError:
+        print("matplotlib is not installed; skipping human comment timing chart generation.")
+        return None
+
+    languages = list(reports.keys())
+    cols = 2 if len(languages) > 1 else 1
+    rows = max(1, math.ceil(len(languages) / cols))
+    month_count = len(next(iter(reports.values()), [])) if reports else 0
+
+    figure, axes = plt.subplots(rows, cols, figsize=(8 * cols, 5 * rows), sharey=True)
+    if not isinstance(axes, (list, tuple)):
+        try:
+            axes = axes.flatten()
+        except AttributeError:
+            axes = [axes]
+    else:
+        axes = list(axes)
+
+    legend_handles = None
+    legend_labels = None
+
+    for index, language in enumerate(languages):
+        axis = axes[index]
+        report = reports[language]
+        labels = [item["label"] for item in report]
+        x_positions = list(range(len(labels)))
+
+        after_counts = [item["human_after_ai_count"] for item in report]
+        before_counts = [item["human_before_ai_count"] for item in report]
+        totals = [a + b for a, b in zip(after_counts, before_counts)]
+
+        after_pct = [round(a / t * 100, 1) if t > 0 else 0.0 for a, t in zip(after_counts, totals)]
+        before_pct = [round(b / t * 100, 1) if t > 0 else 0.0 for b, t in zip(before_counts, totals)]
+
+        axis.bar(x_positions, after_pct, color="mediumseagreen", label="After AI")
+        axis.bar(x_positions, before_pct, bottom=after_pct, color="gold", label="Before AI")
+
+        axis.set_title(language)
+        axis.set_xticks(x_positions, labels, rotation=45, ha="right")
+        axis.set_ylim(0, 105)
+        axis.grid(True, axis="y", linestyle="--", alpha=0.4)
+
+        for point_index in range(len(labels)):
+            total = totals[point_index]
+            axis.annotate(
+                f"N={total}",
+                (x_positions[point_index], 2),
+                textcoords="offset points",
+                xytext=(0, 0),
+                ha="center",
+                fontsize=6,
+            )
+
+        if legend_handles is None:
+            legend_handles, legend_labels = axis.get_legend_handles_labels()
+
+    for index in range(len(languages), len(axes)):
+        figure.delaxes(axes[index])
+
+    if legend_handles and legend_labels:
+        figure.legend(
+            legend_handles,
+            legend_labels,
+            loc="upper center",
+            bbox_to_anchor=(0.5, 0.935),
+            ncol=2,
+            frameon=False,
+        )
+
+    environment_label = (environment or PRODUCTION_ENVIRONMENT).strip().lower()
+    figure.suptitle(
+        f"Human Comment Timing: Before vs After AI Review\nLast {month_count} Calendar Months (APIView {environment_label})",
+        fontsize=14,
+        y=0.985,
+    )
+    figure.supxlabel("Month")
+    figure.supylabel("Percent of Human Comments")
+    plt.tight_layout(rect=(0.02, 0.03, 1, 0.80))
+    figure.savefig(output_path, dpi=150)
+    plt.close(figure)
+    return output_path
+
+
 def print_comment_bucket_report(
     reports: dict[str, list[dict]],
     output_path: Optional[Path],
@@ -574,8 +689,8 @@ def print_comment_bucket_report(
         if include_neutral:
             header.insert(3, "Neutral")
         if include_human:
-            human_index = 4 if include_neutral else 3
-            header.insert(human_index, "Human")
+            header.insert(2, "H>AI")
+            header.insert(3, "H<AI")
         print("  ".join(f"{column:>8}" for column in header))
         print("  ".join(["--------"] * len(header)))
 
@@ -583,12 +698,13 @@ def print_comment_bucket_report(
             values = [
                 f"{item['label']:>8}",
                 f"{item['good_percentage']:>8.1f}",
-                f"{item['implicit_good_percentage']:>8.1f}",
             ]
+            if include_human:
+                values.append(f"{item['human_after_ai_percentage']:>8.1f}")
+                values.append(f"{item['human_before_ai_percentage']:>8.1f}")
+            values.append(f"{item['implicit_good_percentage']:>8.1f}")
             if include_neutral:
                 values.append(f"{item['neutral_percentage']:>8.1f}")
-            if include_human:
-                values.append(f"{item['human_percentage']:>8.1f}")
             values.extend(
                 [
                     f"{item['implicit_bad_percentage']:>8.1f}",
@@ -677,6 +793,11 @@ def main() -> None:
         raw=raw,
         environment=args.environment,
     )
+    if include_human:
+        generate_human_comment_timing_chart(
+            reports,
+            environment=args.environment,
+        )
     print_comment_bucket_report(
         reports,
         output_path,

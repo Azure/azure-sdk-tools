@@ -33,7 +33,6 @@ Do this **before** the bug bash starts so you don't burn session time on install
 
 ### Account access
 
-- A GitHub account with read access to at least one `Azure/azure-sdk-for-*` repo and `Azure/azure-rest-api-specs`
 - APIView access and Azure SDK Architecture Board access — needed for the release-plan and APIView scenarios. If you don't have these, just skip those scenarios.
 
 ### ⚠️ Required: set `AZSDKTOOLS_AGENT_TESTING=true`

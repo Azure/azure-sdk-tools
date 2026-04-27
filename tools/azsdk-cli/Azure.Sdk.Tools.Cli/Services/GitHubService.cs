@@ -122,6 +122,11 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<HashSet<string>?> GetPublicOrgMembership(string username, CancellationToken ct);
         public Task<bool> HasWritePermission(string owner, string repo, string username, CancellationToken ct);
         public Task<Octokit.SearchCodeResult> SearchFilesAsync(string searchQuery, CancellationToken ct);
+
+        // SLA-related methods
+        public Task<IReadOnlyList<Issue>> ListIssuesForSLAAsync(string owner, string repo, string serviceLabel, DateTimeOffset since, bool includeClosed, CancellationToken ct);
+        public Task<IReadOnlyList<IssueComment>> GetIssueCommentsAsync(string owner, string repo, int issueNumber, CancellationToken ct);
+      
         public Task<Team> GetTeamByNameAsync(string org, string teamSlug, CancellationToken ct);
         public Task<HashSet<string>> GetRepoLabels(string owner, string repo, CancellationToken ct);
     }
@@ -704,6 +709,28 @@ namespace Azure.Sdk.Tools.Cli.Services
             return await gitHubClient.Search.SearchCode(searchRequest);
         }
 
+        public async Task<IReadOnlyList<Issue>> ListIssuesForSLAAsync(string owner, string repo, string serviceLabel, DateTimeOffset since, bool includeClosed, CancellationToken ct)
+        {
+            var request = new RepositoryIssueRequest
+            {
+                Filter = IssueFilter.All,
+                State = includeClosed ? ItemStateFilter.All : ItemStateFilter.Open,
+                Since = since,
+                SortProperty = IssueSort.Created,
+                SortDirection = SortDirection.Ascending,
+            };
+            request.Labels.Add(serviceLabel);
+
+            var allIssues = await gitHubClient.Issue.GetAllForRepository(owner, repo, request);
+
+            // Filter out pull requests (GitHub API returns PRs in the issues endpoint)
+            return allIssues.Where(i => i.PullRequest == null).ToList();
+        }
+
+        public async Task<IReadOnlyList<IssueComment>> GetIssueCommentsAsync(string owner, string repo, int issueNumber, CancellationToken ct)
+        {
+            return await gitHubClient.Issue.Comment.GetAllForIssue(owner, repo, issueNumber);
+        }    
         public async Task<Team> GetTeamByNameAsync(string org, string teamSlug, CancellationToken ct)
         {
             return await gitHubClient.Organization.Team.GetByName(org, teamSlug);

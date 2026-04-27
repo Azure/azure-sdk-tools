@@ -357,6 +357,15 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(emptyResult);
         }
 
+        public Task<IReadOnlyList<Issue>> ListIssuesForSLAAsync(string owner, string repo, string serviceLabel, DateTimeOffset since, bool includeClosed, CancellationToken ct)
+        {
+            return Task.FromResult<IReadOnlyList<Issue>>(new List<Issue>().AsReadOnly());
+        }
+
+        public Task<IReadOnlyList<IssueComment>> GetIssueCommentsAsync(string owner, string repo, int issueNumber, CancellationToken ct)
+        {
+            return Task.FromResult<IReadOnlyList<IssueComment>>(new List<IssueComment>().AsReadOnly());
+        }
         public Task<Team> GetTeamByNameAsync(string org, string teamSlug, CancellationToken ct)
         {
             throw new NotImplementedException();

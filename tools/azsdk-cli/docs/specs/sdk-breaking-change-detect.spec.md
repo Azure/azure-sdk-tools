@@ -204,7 +204,7 @@ azsdk package detect --changelog value --language go --tsp-config-path C:/dev/az
 Flow:
 1. Agent invoke `azsdk_package_generate_code` to generate sdk code
 2. Agent invoke `azsdk_package_update_changelog_content` to update change log
-3. Agent invoke `azsdk_package_detect_breaking_chang` to detect and classify breaking changes
+3. Agent invoke `azsdk_package_detect_breaking_change` to detect and classify breaking changes
 4. Label 'SDK-breakingchange' if breaking change detected for a language
 
 #### SDK breaking change resolve in Spec PR and Code PR

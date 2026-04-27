@@ -91,7 +91,7 @@ async def main() -> None:
     agent_name = agent_config["name"]
 
     # Append agent version so Foundry can filter traces per version.
-    agent_version = os.environ.get("AGENT_VERSION")
+    agent_version = os.environ.get("APP_VERSION")
     agent_id = f"{agent_name}:{agent_version}" if agent_version else agent_name
     project_client = get_project_client()
 

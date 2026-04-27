@@ -245,7 +245,7 @@ def main() -> None:
         env_vars = {
             "AZURE_APPCONFIG_ENDPOINT": appconfig_endpoint,
             "ENABLE_INSTRUMENTATION": "true",
-            "AGENT_VERSION": next_version,
+            "APP_VERSION": next_version,
             "AI_FOUNDRY_PROJECT_RESOURCE_ID": project_resource_id,
         }
         for key in ("UMI_BACKEND_CLIENT_ID", "UMI_FRONTEND_CLIENT_ID"):

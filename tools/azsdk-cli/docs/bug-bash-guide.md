@@ -1,6 +1,6 @@
 # Azure SDK Tools Agent Bug Bash — Participant Guide
 
-Welcome! You've been invited to help bug-bash the **Azure SDK Tools Agent** (`azsdk-cli`) — an AI-assisted CLI and MCP server that helps Azure SDK engineers convert Swagger to TypeSpec, generate SDKs, manage release plans, diagnose pipelines, work with APIView, and more.
+Welcome! You've been invited to help bug-bash the **Azure SDK Tools Agent** (`azsdk-cli`) — an AI-assisted CLI and MCP server that helps Azure SDK engineers work with TypeSpec, generate SDKs, manage release plans, diagnose pipelines, work with APIView, and more.
 
 We want you to use the agent like you'd use any new tool: try the scenarios below, push on edge cases, and tell us where it breaks, surprises you, or just feels wrong. **Good feedback is specific** — a clear repro, what you expected, what actually happened, and a screenshot or log if you have one. Small papercuts count.
 
@@ -33,10 +33,8 @@ Do this **before** the bug bash starts so you don't burn session time on install
 
 ### Account access
 
-- A GitHub account with read access to `Azure/azure-sdk-tools`, at least one `Azure/azure-sdk-for-*` repo, and `Azure/azure-rest-api-specs`
-- A GitHub PAT with `repo` and `workflow` scopes (set as `GITHUB_TOKEN`)
-- For pipeline / release-plan scenarios: an Azure DevOps PAT for the `azure-sdk` org (set as `AZURE_DEVOPS_PAT`)
-- **Internal Microsoft only:** APIView access and Azure SDK Architecture Board access — needed for the release-plan and APIView scenarios. If you don't have these, just skip those scenarios.
+- A GitHub account with read access to at least one `Azure/azure-sdk-for-*` repo and `Azure/azure-rest-api-specs`
+- APIView access and Azure SDK Architecture Board access — needed for the release-plan and APIView scenarios. If you don't have these, just skip those scenarios.
 
 ### ⚠️ Required: set `AZSDKTOOLS_AGENT_TESTING=true`
 
@@ -52,52 +50,17 @@ PowerShell:
 $env:AZSDKTOOLS_AGENT_TESTING = "true"
 ```
 
-This flag tells the agent that your session is bug-bash activity, **not a real release**. Without it, you can accidentally create real release plans, kick off real pipelines, and notify real partner teams — which pollutes production tracking and wastes other people's time chasing fake work. Set it in every shell you use, and put it in your MCP `env` block (below) too.
+This flag tells the agent that your session is bug-bash activity, **not a real release**. Without it, you can accidentally create real release plans, kick off real pipelines, and notify real partner teams — which pollutes production tracking and wastes other people's time chasing fake work. Set it in every shell you use.
 
-### Install the agent
+### Use the agent
 
-Pick whichever option matches how you want to test. You can do more than one.
+The agent is auto-enabled in our repos. To use it, just open one of the Azure SDK language repos (e.g. `azure-sdk-for-net`, `azure-sdk-for-python`) in VS Code or in the Copilot CLI and the Azure SDK Tools Agent will be available.
 
-**Option A — Standalone CLI**
+If you have **Agency** access, you can start the agent in any repo with this command:
 
 ```bash
-git clone https://github.com/Azure/azure-sdk-tools.git
-cd azure-sdk-tools
-./eng/common/mcp/azure-sdk-mcp.ps1 -UpdatePathInProfile
-azsdk --version
+agency copilot --plugin mp:azure-sdk-tools@playground
 ```
-
-**Option B — MCP server in VS Code (recommended for "agent" testing)**
-
-Create or update `.vscode/mcp.json` in your test workspace. **Note `AZSDKTOOLS_AGENT_TESTING` is in the `env` block** — it has to be set here too, not just in your shell:
-
-```json
-{
-  "servers": {
-    "azure-sdk": {
-      "command": "dotnet",
-      "args": [
-        "run",
-        "--project",
-        "<path-to-azure-sdk-tools>/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj",
-        "--",
-        "mcp"
-      ],
-      "env": {
-        "AZURE_DEVOPS_PAT": "<your-ado-pat>",
-        "GITHUB_TOKEN": "<your-github-token>",
-        "AZSDKTOOLS_AGENT_TESTING": "true"
-      }
-    }
-  }
-}
-```
-
-Reload VS Code, open Copilot Chat, and confirm the `azure-sdk` tools show up.
-
-**Option C — GitHub Coding Agent**
-
-Fork an Azure SDK language repo (e.g. `azure-sdk-for-net`). The repo already ships a `.vscode/mcp.json`. Open an issue in your fork and invoke the GitHub Coding Agent on it.
 
 ### Test workspace
 
@@ -114,12 +77,10 @@ gh repo clone Azure/azure-rest-api-specs
 
 Before you start scenarios, confirm all of these:
 
-- [ ] `azsdk --version` prints a version number
-- [ ] `azsdk --help` lists commands
 - [ ] `gh auth status` shows you're authenticated
 - [ ] You can `cd` into at least one cloned Azure SDK repo
-- [ ] **`echo $AZSDKTOOLS_AGENT_TESTING` prints `true`** (and your `.vscode/mcp.json` `env` block has it too if you're using MCP)
-- [ ] If using MCP: `azure-sdk` tools appear in VS Code Copilot Chat
+- [ ] **`echo $AZSDKTOOLS_AGENT_TESTING` prints `true`** in every shell you'll use
+- [ ] The Azure SDK Tools Agent responds in your chosen repo (open the repo in VS Code or the Copilot CLI and ask it something like *"What can you help me with?"*)
 - [ ] You know where you'll file feedback (see [How to File Feedback](#how-to-file-feedback))
 
 If any of these fail, that's already feedback worth filing — setup friction counts.
@@ -129,13 +90,6 @@ If any of these fail, that's already feedback worth filing — setup friction co
 Each scenario is a "Try this:" — pick whatever looks interesting and run it yourself. Aim for **3–5 scenarios** during the session, mixed across categories. If something blows up, file it (see the next section).
 
 ### TypeSpec
-
-**Try this: Convert a Swagger to TypeSpec**
-
-1. Find a service with Swagger but no TypeSpec yet (older Azure services often qualify).
-2. Run `azsdk tsp convert --swagger-path <path-to-swagger> --output-dir <output-path>`.
-3. Check that the generated TypeSpec compiles and looks reasonable compared to a hand-written one.
-4. Push on it: try complex inheritance, custom `x-ms-*` extensions, discriminated unions.
 
 **Try this: Generate an SDK from TypeSpec**
 
@@ -170,7 +124,7 @@ Each scenario is a "Try this:" — pick whatever looks interesting and run it yo
 2. Run `azsdk pkg test results --trx-file <path>`.
 3. Can you actually figure out the root cause from the output? Try an empty TRX, a malformed TRX, and a huge TRX (100+ tests).
 
-### Release plans *(internal Microsoft only)*
+### Release plans
 
 These need Architecture Board access. **Make sure `AZSDKTOOLS_AGENT_TESTING=true` is set** so you don't create a real release plan that someone has to clean up.
 
@@ -216,7 +170,7 @@ These need Architecture Board access. **Make sure `AZSDKTOOLS_AGENT_TESTING=true
 1. Run `azsdk azp test-results --build-id <id>`.
 2. Confirm artifacts land in your local directory and match what's in ADO.
 
-### APIView *(internal Microsoft only)*
+### APIView
 
 **Try this: Get an APIView review URL**
 
@@ -250,11 +204,11 @@ These need Architecture Board access. **Make sure `AZSDKTOOLS_AGENT_TESTING=true
 1. Run `azsdk config codeowners update-cache`.
 2. Confirm the pipeline is triggered, watch it complete, and re-run the previous scenario to see updated data.
 
-### Agent integration (MCP / GitHub Coding Agent)
+### Agent integration
 
 **Try this: Ask the agent in VS Code Copilot Chat**
 
-1. With the MCP server connected, open Copilot Chat.
+1. Open one of the Azure SDK language repos in VS Code and open Copilot Chat.
 2. Ask: *"What TypeSpec projects were modified in this branch?"*
 3. Confirm it actually invokes the `azsdk_get_modified_typespec_projects` tool, and the answer is right.
 4. More prompts to try:
@@ -264,8 +218,8 @@ These need Architecture Board access. **Make sure `AZSDKTOOLS_AGENT_TESTING=true
 
 **Try this: GitHub Coding Agent on an issue**
 
-1. In your fork, open an issue and trigger the GitHub Coding Agent (label or `@-mention`, depending on repo).
-2. Watch the workflow run. Did the agent use the right `azsdk` MCP tools? Did it produce something useful or ask sensible clarifying questions?
+1. In an Azure SDK language repo, open an issue and trigger the GitHub Coding Agent (label or `@-mention`, depending on repo).
+2. Watch the workflow run. Did the agent use the right `azsdk` tools? Did it produce something useful or ask sensible clarifying questions?
 3. Sample issues to try:
    - *"Generate SDK for the TypeSpec project at specs/foo/Foo.Management"*
    - *"Analyze why the latest CI run failed"*
@@ -275,8 +229,8 @@ These need Architecture Board access. **Make sure `AZSDKTOOLS_AGENT_TESTING=true
 
 Chain a real workflow end-to-end in Copilot Chat:
 
-1. *"Convert the Swagger at specification/foo/stable/2023-01-01/swagger.json to TypeSpec"*
-2. *"Generate the .NET SDK from the new TypeSpec"*
+1. *"Find the modified TypeSpec project in this branch"*
+2. *"Generate the .NET SDK from that TypeSpec"*
 3. *"Build the SDK and report any compilation errors"*
 4. *"Fix the compilation errors"*
 5. *"Create a PR with these changes"*
@@ -292,7 +246,6 @@ Run several different `azsdk` commands at once in different terminals. Watch for
 **Try this: Big inputs**
 
 - Analyze a >50 MB log file
-- Convert a Swagger with 100+ operations
 - Generate an SDK for a service with 50+ models
 
 Look for memory blowups, unreasonable runtime, or unclear timeouts.
@@ -307,46 +260,15 @@ Disconnect your network (or block specific endpoints) and run network-dependent 
 
 ## How to File Feedback
 
-**File one GitHub issue per finding** in [`Azure/azure-sdk-tools`](https://github.com/Azure/azure-sdk-tools/issues/new/choose). One issue per bug — don't batch.
+**File one issue per finding** in `Azure/azure-sdk-tools` using the **[Bug Bash Feedback](https://github.com/Azure/azure-sdk-tools/issues/new?template=bug-bash-feedback.yml)** issue template. That template is the single feedback path for this bug bash — please don't use other templates and don't batch multiple findings into one issue.
 
-**Use this template** (copy/paste into the issue body):
+**What makes a great bug report:**
 
-```markdown
-## Bug Bash Feedback
-
-**Scenario:** <which "Try this:" you were running, or "ad-hoc">
-
-**What I did:**
-1. ...
-2. ...
-
-**What I expected:**
-...
-
-**What actually happened:**
-...
-
-**Environment:**
-- OS: <Windows 11 / macOS 14 / Ubuntu 22.04>
-- `azsdk --version`: <output>
-- Mode: <CLI / MCP server / GitHub Coding Agent>
-- Language SDK (if relevant): <.NET / Java / Python / JS>
-
-**Logs / screenshots:**
-<attach or paste>
-```
-
-**Labels to apply:**
-- `bug-bash` (so we can find them all)
-- `azsdk-cli`
-- One of `bug` / `enhancement` / `documentation` / `question`
-- A severity label if you can: `severity:critical`, `severity:high`, `severity:medium`, `severity:low`
-
-**What makes a feedback issue great:**
-- A repro another engineer can run without asking you anything
-- The exact command, exact error, and exact `azsdk --version`
-- Screenshots or attached log files instead of "it looked weird"
-- Expected vs. actual stated explicitly — even if it feels obvious
+- **Clear repro steps** — exact commands, exact inputs. Another engineer should be able to follow them without asking you anything.
+- **Environment** — OS, repo you ran against, how you invoked the agent (VS Code / Copilot CLI / Agency), and `azsdk --version` if you have a CLI handy.
+- **Expected vs. actual** — state both explicitly, even when it feels obvious.
+- **Screenshots or logs** — attach files or paste output rather than describing it. Include the agent's response in full when relevant.
+- **Scenario** — note which "Try this:" you were running, or "ad-hoc" if you were exploring.
 
 If you're not sure whether something is a bug or "working as designed" — file it anyway. We'd rather close a few extra issues than miss real friction.
 

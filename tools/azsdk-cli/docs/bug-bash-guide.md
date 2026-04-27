@@ -150,6 +150,24 @@ Participants should complete these steps **before** the bug bash begins.
 - Java 11+ (for Java SDK testing)
 - Python 3.8+ (for Python SDK testing)
 
+### ⚠️ Required: Testing Mode Environment Variable
+
+**All bug bash participants MUST set this environment variable before exercising any scenarios:**
+
+```bash
+export AZSDKTOOLS_AGENT_TESTING=true
+```
+
+PowerShell:
+
+```pwsh
+$env:AZSDKTOOLS_AGENT_TESTING = "true"
+```
+
+This flag tells the Azure SDK Tools Agent that the session is **test/bug-bash activity, not a real release**. It prevents test runs from triggering production-only side effects (release plan creation, pipeline kickoffs, partner notifications, etc.). Forgetting to set it can pollute real release tracking — please double-check before each session.
+
+If you're using the MCP server, also add it to the `env` block of your `.vscode/mcp.json` (see Option 2 below).
+
 ### Account Setup
 
 **GitHub:**
@@ -201,7 +219,8 @@ azsdk --version
       ],
       "env": {
         "AZURE_DEVOPS_PAT": "<your-ado-pat>",
-        "GITHUB_TOKEN": "<your-github-token>"
+        "GITHUB_TOKEN": "<your-github-token>",
+        "AZSDKTOOLS_AGENT_TESTING": "true"
       }
     }
   }
@@ -245,6 +264,7 @@ Before starting testing, confirm:
 - [ ] GitHub CLI authenticated: `gh auth status`
 - [ ] Can access at least one Azure SDK repo
 - [ ] MCP server connects in VS Code (if testing MCP mode)
+- [ ] **`AZSDKTOOLS_AGENT_TESTING=true` is set in your shell / MCP `env` block**
 - [ ] Feedback submission mechanism ready (see [Feedback Capture](#feedback-capture))
 
 ## Testing Scenarios

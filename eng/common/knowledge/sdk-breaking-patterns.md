@@ -20,9 +20,13 @@ When generating an authoring plan for TypeSpec changes, check if the planned cha
 
 **Mitigation:**
 ```typespec
-// In client.tsp — use @@alternateType to preserve enum behavior for affected languages
-@@alternateType(MyService.FooStatus, string, "java");
-@@alternateType(MyService.FooStatus, string, "go");
+// In client.tsp — Define a new enum with all original enum values, then use @@alternateType to map to the new enum type for affacted languages.
+enum FooStatusEnum
+{
+ // ... all values from original FooStatus Enum
+}
+@@alternateType(MyService.FooStatus, FooStatusEnum, "java");
+@@alternateType(MyService.FooStatus, FooStatusEnum, "go");
 ```
 
 ---
@@ -465,6 +469,15 @@ options:
 **Mitigation:** Cannot be resolved through `client.tsp` customizations in Go. The spec change must be reconsidered if backward compatibility is required.
 
 ---
+
+### 21. Combine multiple model properties into one
+
+**Detection:** TypeSpec diff shows that one or more properties in a model are combined into a new model, and a new property of that model is added.
+
+**Per-Language Impact:**
+- **All languages:** ❌ Breaking — missing properties and new property added in a model
+
+**Mitigation:** This can be resolved by applying `@flattenProperty` to the new combined property in `client.tsp`.
 
 ## Detection Sources
 

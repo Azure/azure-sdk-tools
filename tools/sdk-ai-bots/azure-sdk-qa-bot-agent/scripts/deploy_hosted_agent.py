@@ -207,22 +207,44 @@ def main() -> None:
     project_resource_id = os.environ.get("AI_FOUNDRY_PROJECT_RESOURCE_ID", "").strip()
 
     acr_name = registry.split(".")[0]
-    print(f"Building: {image}")
-    _run(
+
+    # Check if the image tag already exists in ACR
+    tag_check = _run_quiet(
         [
             "az",
             "acr",
-            "build",
-            "--registry",
+            "repository",
+            "show-tags",
+            "--name",
             acr_name,
-            "--image",
-            f"{image_name}:{tag}",
-            "--file",
-            str(dockerfile),
-            str(_PROJECT_DIR),
+            "--repository",
+            image_name,
+            "--output",
+            "tsv",
         ],
     )
-    print(f"Image pushed: {image}")
+    existing_tags = (
+        tag_check.stdout.strip().splitlines() if tag_check.returncode == 0 else []
+    )
+    if tag in existing_tags:
+        print(f"Image {image} already exists in ACR — skipping build.")
+    else:
+        print(f"Building: {image}")
+        _run(
+            [
+                "az",
+                "acr",
+                "build",
+                "--registry",
+                acr_name,
+                "--image",
+                f"{image_name}:{tag}",
+                "--file",
+                str(dockerfile),
+                str(_PROJECT_DIR),
+            ],
+        )
+        print(f"Image pushed: {image}")
 
     # ── Deploy ──
     print(f"Deploying: {image_name}")

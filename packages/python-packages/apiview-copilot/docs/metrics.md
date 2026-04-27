@@ -156,7 +156,7 @@ avc report memory -l python
 
 ### Architect Comments
 
-Retrieve human architect review comments for a date range:
+Retrieve human architect review comments for a date range. By default, only threads whose first comment falls within the date window are included — replies to older threads are excluded even if the reply itself was created during the window.
 
 ```bash
 avc report architect-comments -s 2026-01-01 -e 2026-01-31 [-l python] [--all-commenters] [--include-replies] [--environment staging] [--format yaml]

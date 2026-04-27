@@ -2255,15 +2255,16 @@ def get_architect_comments(
         # Keep only the first (earliest) comment per thread
         seen_threads = {}
         for c in filtered:
-            thread_id = c.get("ThreadId")
-            if thread_id is None:
+            thread_key = c.get("ThreadId") or c.get("ElementId")
+            if thread_key is None:
+                # No ThreadId or ElementId — treat as standalone
                 seen_threads[c.get("id")] = c
-            elif thread_id not in seen_threads:
-                seen_threads[thread_id] = c
+            elif thread_key not in seen_threads:
+                seen_threads[thread_key] = c
             else:
-                existing = seen_threads[thread_id]
+                existing = seen_threads[thread_key]
                 if existing.get("CreatedOn", "") > c.get("CreatedOn", ""):
-                    seen_threads[thread_id] = c
+                    seen_threads[thread_key] = c
         filtered = list(seen_threads.values())
     else:
         # When including replies, identify threads started by an approver and include

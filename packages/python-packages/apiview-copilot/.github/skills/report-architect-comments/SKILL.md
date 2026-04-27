@@ -96,7 +96,7 @@ python cli.py report architect-comments -s 2026-03-01 -e 2026-03-31 --environmen
 ## Gotchas
 
 - **Output can be large**: Redirect to file and use `read_file` rather than relying on terminal output.
-- **Date range filters by comment creation time**: Comments are filtered by when they were posted in APIView.
+- **Date range filters by thread start time**: Only threads whose first comment falls within the date window are included. A reply created during the window is excluded if the thread itself started before the window.
 - **Use `python cli.py` not `.\avc`**: The `avc.bat` script may resolve to system Python.
 - **Do NOT use `2>&1`**: Merges stderr into stdout, corrupting JSON. Only redirect stdout.
 - **Do NOT use `>`**: Produces UTF-16 in PowerShell 5.1. Use `| Out-File -Encoding UTF8`.

@@ -36,7 +36,7 @@ def _make_comment(
     comment_text: str = "Fix this.",
     element_id: str = "SomeClass.method",
 ) -> dict:
-    return {
+    result = {
         "id": id,
         "ReviewId": review_id,
         "APIRevisionId": "apirev1",
@@ -50,9 +50,11 @@ def _make_comment(
         "CommentType": "APIRevision",
         "CommentSource": comment_source,
         "IsDeleted": False,
-        "ThreadId": thread_id,
         "Severity": severity,
     }
+    if thread_id is not None:
+        result["ThreadId"] = thread_id
+    return result
 
 
 def _patch_common(monkeypatch, raw_comments, approvers=None, review_lang_items=None, thread_starts=None):
@@ -290,3 +292,137 @@ def test_empty_approvers_returns_no_comments(monkeypatch, capsys):
     output = json.loads(capsys.readouterr().out)
 
     assert output == [], "Empty approvers set should produce no output, not fall back to all commenters"
+
+
+# ---------------------------------------------------------------------------
+# Tests — threadless comments (ThreadId=None, keyed by ElementId)
+# ---------------------------------------------------------------------------
+
+
+def test_threadless_default_keeps_only_first_comment_per_element(monkeypatch, capsys):
+    """Without include_replies, only the earliest comment per ElementId is returned
+    when comments have no ThreadId."""
+    comments = [
+        _make_comment(
+            "c1", thread_id=None, element_id="Ns.Class.method",
+            created_by="architect1", created_on="2026-04-10T00:00:00Z",
+        ),
+        _make_comment(
+            "c2", thread_id=None, element_id="Ns.Class.method",
+            created_by="architect1", created_on="2026-04-10T01:00:00Z",
+        ),
+    ]
+    _patch_common(
+        monkeypatch,
+        raw_comments=comments,
+        approvers={"architect1"},
+        review_lang_items=[{"id": "rev1", "Language": "Python"}],
+        # Thread start keyed by ElementId
+        thread_starts={"Ns.Class.method": "2026-04-10T00:00:00Z"},
+    )
+
+    cli.get_architect_comments(start_date="2026-04-01", end_date="2026-04-30")
+    output = json.loads(capsys.readouterr().out)
+
+    assert len(output) == 1
+    assert output[0]["id"] == "c1"
+
+
+def test_threadless_include_replies_returns_all_in_element_group(monkeypatch, capsys):
+    """With include_replies, all comments sharing the same ElementId (no ThreadId) are returned."""
+    comments = [
+        _make_comment(
+            "c1", thread_id=None, element_id="Ns.Class.method",
+            created_by="architect1", created_on="2026-04-10T00:00:00Z",
+        ),
+        _make_comment(
+            "c2", thread_id=None, element_id="Ns.Class.method",
+            created_by="sdk_dev", created_on="2026-04-10T01:00:00Z",
+        ),
+    ]
+    _patch_common(
+        monkeypatch,
+        raw_comments=comments,
+        approvers={"architect1"},
+        review_lang_items=[{"id": "rev1", "Language": "Python"}],
+        thread_starts={"Ns.Class.method": "2026-04-10T00:00:00Z"},
+    )
+
+    cli.get_architect_comments(
+        start_date="2026-04-01", end_date="2026-04-30", include_replies=True,
+    )
+    output = json.loads(capsys.readouterr().out)
+
+    ids = {c["id"] for c in output}
+    assert ids == {"c1", "c2"}
+
+
+def test_threadless_window_filter_excludes_old_threads(monkeypatch, capsys):
+    """Threadless comments whose ElementId thread started before the window are excluded."""
+    comments = [
+        _make_comment(
+            "c1", thread_id=None, element_id="Ns.Old.method",
+            created_by="architect1", created_on="2026-04-10T00:00:00Z",
+        ),
+        _make_comment(
+            "c2", thread_id=None, element_id="Ns.New.method",
+            created_by="architect1", created_on="2026-04-11T00:00:00Z",
+        ),
+    ]
+    _patch_common(
+        monkeypatch,
+        raw_comments=comments,
+        approvers={"architect1"},
+        review_lang_items=[{"id": "rev1", "Language": "Python"}],
+        thread_starts={
+            # Ns.Old.method started before the window
+            "Ns.Old.method": "2026-03-15T00:00:00Z",
+            "Ns.New.method": "2026-04-11T00:00:00Z",
+        },
+    )
+
+    cli.get_architect_comments(start_date="2026-04-01", end_date="2026-04-30")
+    output = json.loads(capsys.readouterr().out)
+
+    assert len(output) == 1
+    assert output[0]["id"] == "c2"
+
+
+def test_mixed_threaded_and_threadless_comments(monkeypatch, capsys):
+    """A mix of ThreadId-keyed and ElementId-keyed comments are both deduplicated correctly."""
+    comments = [
+        # Threaded: two comments in thread1
+        _make_comment(
+            "c1", thread_id="thread1", element_id="Ns.Class.a",
+            created_by="architect1", created_on="2026-04-10T00:00:00Z",
+        ),
+        _make_comment(
+            "c2", thread_id="thread1", element_id="Ns.Class.a",
+            created_by="architect1", created_on="2026-04-10T01:00:00Z",
+        ),
+        # Threadless: two comments on the same ElementId
+        _make_comment(
+            "c3", thread_id=None, element_id="Ns.Class.b",
+            created_by="architect1", created_on="2026-04-11T00:00:00Z",
+        ),
+        _make_comment(
+            "c4", thread_id=None, element_id="Ns.Class.b",
+            created_by="architect1", created_on="2026-04-11T01:00:00Z",
+        ),
+    ]
+    _patch_common(
+        monkeypatch,
+        raw_comments=comments,
+        approvers={"architect1"},
+        review_lang_items=[{"id": "rev1", "Language": "Python"}],
+        thread_starts={
+            "thread1": "2026-04-10T00:00:00Z",
+            "Ns.Class.b": "2026-04-11T00:00:00Z",
+        },
+    )
+
+    cli.get_architect_comments(start_date="2026-04-01", end_date="2026-04-30")
+    output = json.loads(capsys.readouterr().out)
+
+    ids = {c["id"] for c in output}
+    assert ids == {"c1", "c3"}, "Should keep only earliest per thread/element group"

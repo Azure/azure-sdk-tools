@@ -47,6 +47,10 @@ stimuli:
         - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
   # VP1: Extensible enum for notification priority levels (Low, Medium, High)
+  - type: skill-invocation
+    config:
+      required:
+        - azure-typespec-author
   - type: file-matches
     config:
       path: 'employee.tsp'
@@ -103,6 +107,7 @@ stimuli:
 scoring:
   weights:
     tool-calls: 1
+    skill-invocation: 1
     prompt: 1
     file-matches: 11
   threshold: 1.0

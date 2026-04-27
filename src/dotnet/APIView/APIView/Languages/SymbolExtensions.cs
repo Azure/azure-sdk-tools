@@ -3,7 +3,7 @@
 
 using Microsoft.CodeAnalysis;
 
-namespace APIViewLegacy
+namespace APIView
 {
     public static class SymbolExtensions
     {

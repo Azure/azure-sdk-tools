@@ -159,6 +159,8 @@ In addition to Razor Pages, the legacy system uses traditional MVC controllers a
 
 When a flat-token (`ParserStyle.Flat`) review is rendered, the pipeline is:
 
+> **Namespace note:** All types in this rendering pipeline (`CodeFileRenderer`, `CodeFileHtmlRenderer`, `CodeFileTokensBuilder`, `CodeLine`, `CodeFileBuilder`) live in the `APIViewLegacy` namespace. The shared `CodeFile` model and Roslyn utilities (`CompilationFactory`, `DependencyInfo`, `SymbolExtensions`) live in the `APIView` namespace.
+
 ```
 CodeFile.Tokens[]  (flat CodeFileToken[] array)
         │

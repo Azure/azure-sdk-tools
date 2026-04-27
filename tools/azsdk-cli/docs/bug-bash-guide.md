@@ -1,158 +1,46 @@
-# Azure SDK Tools Agent Bug Bash Guide
+# Azure SDK Tools Agent Bug Bash — Participant Guide
 
-This guide provides comprehensive instructions for organizing and executing a bug bash for the Azure SDK Tools Agent (azsdk-cli). Use this guide to plan effective testing sessions that help identify issues and improve the agent's capabilities.
+Welcome! You've been invited to help bug-bash the **Azure SDK Tools Agent** (`azsdk-cli`) — an AI-assisted CLI and MCP server that helps Azure SDK engineers convert Swagger to TypeSpec, generate SDKs, manage release plans, diagnose pipelines, work with APIView, and more.
+
+We want you to use the agent like you'd use any new tool: try the scenarios below, push on edge cases, and tell us where it breaks, surprises you, or just feels wrong. **Good feedback is specific** — a clear repro, what you expected, what actually happened, and a screenshot or log if you have one. Small papercuts count.
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [Scope and Goals](#scope-and-goals)
-- [Participant Invite List](#participant-invite-list)
-- [Prerequisites and Setup](#prerequisites-and-setup)
-- [Testing Scenarios](#testing-scenarios)
-- [Feedback Capture](#feedback-capture)
-- [Post-Bash Triage Workflow](#post-bash-triage-workflow)
-- [Tips for Organizers](#tips-for-organizers)
+- [Setup](#setup)
+- [Verification Checklist](#verification-checklist)
+- [Scenarios to Try](#scenarios-to-try)
+- [How to File Feedback](#how-to-file-feedback)
+- [Tips](#tips)
 
-## Overview
+## Setup
 
-A bug bash is a focused testing event where participants exercise the Azure SDK Tools Agent across diverse scenarios to discover bugs, usability issues, and unexpected behaviors. The agent provides both CLI commands and MCP (Model Context Protocol) tools for Azure SDK development workflows.
+Do this **before** the bug bash starts so you don't burn session time on installs.
 
-**Agent Capabilities:**
-- TypeSpec project operations (conversion, generation, updates)
-- SDK package management (build, release, versioning)
-- Release plan creation and management
-- APIView integration and automated reviews
-- Pipeline analysis and troubleshooting
-- CODEOWNERS management
-- Test result analysis
+### Prerequisites
 
-## Scope and Goals
+**OS:** Windows 10/11, macOS 12+, or Linux (Ubuntu 20.04+).
 
-### What's Being Tested
-
-The bug bash focuses on the Azure SDK Tools Agent in both operational modes:
-
-1. **CLI Mode** - Direct command-line usage (`azsdk <command>`)
-2. **MCP Server Mode** - Agent integration via GitHub Copilot or other MCP clients
-3. **GitHub Coding Agent Integration** - Usage within GitHub Actions workflows
-
-### Testing Boundaries
-
-**In Scope:**
-- Command correctness and output quality
-- MCP tool invocations and responses
-- Error handling and recovery
-- Integration with Azure SDK repos (azure-sdk-for-net, azure-sdk-for-java, etc.)
-- TypeSpec workflow end-to-end (convert → generate → build → test)
-- Release plan workflows
-- APIView integration
-- Pipeline diagnostics
-- Documentation clarity and completeness
-
-**Out of Scope:**
-- Underlying Azure services (APIView backend, Azure DevOps infrastructure)
-- Language-specific SDK runtime behavior (unless directly caused by generated code)
-- Non-agent eng/common tooling
-
-### Success Criteria
-
-A successful bug bash achieves:
-
-- **Coverage**: Each major tool/command exercised at least 3 times by different participants
-- **Quality Issues Identified**: 10+ actionable bugs or improvement suggestions logged
-- **Documentation Gaps**: All unclear or missing documentation noted
-- **Usability Insights**: 5+ UX friction points documented
-- **CI/CD Validation**: All workflows tested in realistic scenarios (not just happy paths)
-
-### Metrics to Track
-
-- Total participants
-- Hours of testing time
-- Issues filed (by severity/category)
-- Commands/tools exercised (coverage map)
-- Time to complete key scenarios
-- Success rate per scenario
-
-## Participant Invite List
-
-### Internal Participants (Microsoft Employees)
-
-**Required Roles:**
-- **Azure SDK Engineers** (2-4 per language) - Familiar with SDK development workflows
-- **Service Team Representatives** (1-2) - Users of TypeSpec and SDK generation
-- **Engineering Systems Team** (1-2) - Pipeline and automation expertise
-- **Product Managers** (1-2) - User experience perspective
-
-**Recommended Team Distribution:**
-- .NET SDK team members
-- Java SDK team members
-- JavaScript/TypeScript SDK team members
-- Python SDK team members
-- Azure REST API Specs reviewers
-- EngSys/tools maintainers
-
-**How to Invite Internal:**
-1. Send calendar invite with:
-   - Bug bash timeframe (recommend 2-4 hour window or full day)
-   - Link to this guide
-   - Link to feedback form/template
-   - Slack/Teams channel for coordination
-2. Share in relevant Teams channels:
-   - `Azure SDK` team channels
-   - `azure-sdk-tools` repository discussions
-3. Post in internal Azure SDK coordination meetings
-
-### External Participants (Customers/Partners)
-
-**Target Profiles:**
-- Service teams actively using TypeSpec for new APIs
-- Early adopters of the agent/MCP tools
-- Azure SDK contributors (community members)
-- Partners building on Azure SDKs
-
-**How to Invite External:**
-1. GitHub repository announcements (if public bug bash)
-2. Azure SDK blog post or newsletter
-3. Direct outreach to known service team contacts
-4. Office hours sessions converted to bug bash participation
-
-**Note:** For external participants, ensure:
-- They have appropriate access to test resources
-- Clear NDA/confidentiality boundaries if testing unreleased features
-- Separate feedback channels (avoid exposing internal-only information)
-
-### Team Size Recommendations
-
-- **Minimum Viable**: 5-8 participants (ensures scenario coverage)
-- **Optimal**: 15-20 participants (good diversity without coordination overhead)
-- **Maximum Practical**: 30 participants (requires dedicated coordinator)
-
-## Prerequisites and Setup
-
-Participants should complete these steps **before** the bug bash begins.
-
-### Environment Requirements
-
-**Operating System:**
-- Windows 10/11, macOS 12+, or Linux (Ubuntu 20.04+)
-- Bash/PowerShell/Zsh shell access
-
-**Software Prerequisites:**
+**Software:**
 - [.NET 8.0 SDK or later](https://dotnet.microsoft.com/download)
-- [Node.js 18+ and npm](https://nodejs.org/) (for TypeSpec and JavaScript SDK testing)
+- [Node.js 18+ and npm](https://nodejs.org/) (for TypeSpec scenarios)
 - [Git](https://git-scm.com/)
-- [GitHub CLI (`gh`)](https://cli.github.com/)
-- [VS Code](https://code.visualstudio.com/) with [GitHub Copilot extension](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot) (for MCP testing)
+- [GitHub CLI (`gh`)](https://cli.github.com/) — authenticated (`gh auth login`)
+- [VS Code](https://code.visualstudio.com/) with the [GitHub Copilot extension](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot) (only needed for MCP scenarios)
 
-**Optional but Recommended:**
-- Docker Desktop (for isolated testing environments)
+**Optional:**
 - Azure CLI (`az`) for Azure-authenticated scenarios
-- Java 11+ (for Java SDK testing)
-- Python 3.8+ (for Python SDK testing)
+- Java 11+ / Python 3.8+ if you want to test those SDK languages
 
-### ⚠️ Required: Testing Mode Environment Variable
+### Account access
 
-**All bug bash participants MUST set this environment variable before exercising any scenarios:**
+- A GitHub account with read access to `Azure/azure-sdk-tools`, at least one `Azure/azure-sdk-for-*` repo, and `Azure/azure-rest-api-specs`
+- A GitHub PAT with `repo` and `workflow` scopes (set as `GITHUB_TOKEN`)
+- For pipeline / release-plan scenarios: an Azure DevOps PAT for the `azure-sdk` org (set as `AZURE_DEVOPS_PAT`)
+- **Internal Microsoft only:** APIView access and Azure SDK Architecture Board access — needed for the release-plan and APIView scenarios. If you don't have these, just skip those scenarios.
+
+### ⚠️ Required: set `AZSDKTOOLS_AGENT_TESTING=true`
+
+**Set this environment variable before you run anything.** This is the single most important step in the whole guide.
 
 ```bash
 export AZSDKTOOLS_AGENT_TESTING=true
@@ -164,46 +52,24 @@ PowerShell:
 $env:AZSDKTOOLS_AGENT_TESTING = "true"
 ```
 
-This flag tells the Azure SDK Tools Agent that the session is **test/bug-bash activity, not a real release**. It prevents test runs from triggering production-only side effects (release plan creation, pipeline kickoffs, partner notifications, etc.). Forgetting to set it can pollute real release tracking — please double-check before each session.
+This flag tells the agent that your session is bug-bash activity, **not a real release**. Without it, you can accidentally create real release plans, kick off real pipelines, and notify real partner teams — which pollutes production tracking and wastes other people's time chasing fake work. Set it in every shell you use, and put it in your MCP `env` block (below) too.
 
-If you're using the MCP server, also add it to the `env` block of your `.vscode/mcp.json` (see Option 2 below).
+### Install the agent
 
-### Account Setup
+Pick whichever option matches how you want to test. You can do more than one.
 
-**GitHub:**
-- GitHub account with access to:
-  - `Azure/azure-sdk-tools` (contributor or read access)
-  - At least one Azure SDK language repo (`Azure/azure-sdk-for-*`)
-  - `Azure/azure-rest-api-specs` (for TypeSpec testing)
-- Personal access token (PAT) with `repo` and `workflow` scopes
+**Option A — Standalone CLI**
 
-**Azure DevOps:**
-- Access to `azure-sdk` Azure DevOps organization
-- Permissions to view pipeline runs
-
-**Internal Microsoft Users:**
-- Azure SDK Architecture Board access (for release plan testing)
-- APIView access
-
-### Agent Installation
-
-**Option 1: Standalone CLI Installation**
-
-```pwsh
-# Clone azure-sdk-tools
+```bash
 git clone https://github.com/Azure/azure-sdk-tools.git
 cd azure-sdk-tools
-
-# Run installation script
 ./eng/common/mcp/azure-sdk-mcp.ps1 -UpdatePathInProfile
-
-# Verify installation
 azsdk --version
 ```
 
-**Option 2: MCP Server Setup (for GitHub Copilot testing)**
+**Option B — MCP server in VS Code (recommended for "agent" testing)**
 
-1. Create or update `.vscode/mcp.json` in your test workspace:
+Create or update `.vscode/mcp.json` in your test workspace. **Note `AZSDKTOOLS_AGENT_TESTING` is in the `env` block** — it has to be set here too, not just in your shell:
 
 ```json
 {
@@ -227,807 +93,271 @@ azsdk --version
 }
 ```
 
-2. Reload VS Code window
-3. Verify MCP connection in Copilot Chat (type `@workspace` and confirm `azure-sdk` tools available)
+Reload VS Code, open Copilot Chat, and confirm the `azure-sdk` tools show up.
 
-**Option 3: GitHub Coding Agent Testing**
+**Option C — GitHub Coding Agent**
 
-For testing in GitHub Actions context:
-1. Fork an Azure SDK language repo
-2. Verify `.vscode/mcp.json` is present (pre-configured in SDK repos)
-3. Invoke GitHub Coding Agent on an issue in your fork
+Fork an Azure SDK language repo (e.g. `azure-sdk-for-net`). The repo already ships a `.vscode/mcp.json`. Open an issue in your fork and invoke the GitHub Coding Agent on it.
 
-### Test Workspace Setup
+### Test workspace
 
-Create a dedicated testing directory:
+Make a scratch directory you can throw away afterwards:
 
 ```bash
 mkdir ~/azsdk-bugbash-workspace
 cd ~/azsdk-bugbash-workspace
-
-# Clone a test Azure SDK repo
 gh repo clone Azure/azure-sdk-for-net
-
-# Clone TypeSpec repo for conversion testing
 gh repo clone Azure/azure-rest-api-specs
-
-# Clone azure-sdk-tools for tool development testing
-gh repo clone Azure/azure-sdk-tools
 ```
 
-### Verification Checklist
+## Verification Checklist
 
-Before starting testing, confirm:
+Before you start scenarios, confirm all of these:
 
-- [ ] `azsdk --version` returns version number
-- [ ] `azsdk --help` displays command list
-- [ ] GitHub CLI authenticated: `gh auth status`
-- [ ] Can access at least one Azure SDK repo
-- [ ] MCP server connects in VS Code (if testing MCP mode)
-- [ ] **`AZSDKTOOLS_AGENT_TESTING=true` is set in your shell / MCP `env` block**
-- [ ] Feedback submission mechanism ready (see [Feedback Capture](#feedback-capture))
+- [ ] `azsdk --version` prints a version number
+- [ ] `azsdk --help` lists commands
+- [ ] `gh auth status` shows you're authenticated
+- [ ] You can `cd` into at least one cloned Azure SDK repo
+- [ ] **`echo $AZSDKTOOLS_AGENT_TESTING` prints `true`** (and your `.vscode/mcp.json` `env` block has it too if you're using MCP)
+- [ ] If using MCP: `azure-sdk` tools appear in VS Code Copilot Chat
+- [ ] You know where you'll file feedback (see [How to File Feedback](#how-to-file-feedback))
 
-## Testing Scenarios
+If any of these fail, that's already feedback worth filing — setup friction counts.
 
-These scenarios represent real-world Azure SDK development workflows. Each participant should attempt **3-5 scenarios** minimum, prioritizing areas relevant to their expertise.
+## Scenarios to Try
 
-### Scenario Categories
+Each scenario is a "Try this:" — pick whatever looks interesting and run it yourself. Aim for **3–5 scenarios** during the session, mixed across categories. If something blows up, file it (see the next section).
 
-1. [TypeSpec Operations](#typespec-operations)
-2. [SDK Package Management](#sdk-package-management)
-3. [Release Planning](#release-planning)
-4. [Pipeline Diagnostics](#pipeline-diagnostics)
-5. [APIView Integration](#apiview-integration)
-6. [CODEOWNERS Management](#codeowners-management)
-7. [Agent Integration (MCP/GitHub Coding Agent)](#agent-integration-mcpgithub-coding-agent)
+### TypeSpec
 
----
+**Try this: Convert a Swagger to TypeSpec**
 
-### TypeSpec Operations
+1. Find a service with Swagger but no TypeSpec yet (older Azure services often qualify).
+2. Run `azsdk tsp convert --swagger-path <path-to-swagger> --output-dir <output-path>`.
+3. Check that the generated TypeSpec compiles and looks reasonable compared to a hand-written one.
+4. Push on it: try complex inheritance, custom `x-ms-*` extensions, discriminated unions.
 
-#### Scenario 1: Convert Swagger to TypeSpec
+**Try this: Generate an SDK from TypeSpec**
 
-**Objective:** Convert an existing Azure service Swagger definition to TypeSpec.
+1. From inside a TypeSpec project, run `azsdk tsp client generate --language <lang> --typespec-project <path>`.
+2. Test at least one of: .NET, Java, Python, JavaScript.
+3. Build the generated SDK and see whether the build succeeds (or whether the error is actionable).
+4. Try variations: brand-new project, regenerating an existing SDK, custom emitter options.
 
-**Steps:**
-1. Identify a service with Swagger but no TypeSpec (e.g., older Azure service)
-2. Run: `azsdk tsp convert --swagger-path <path-to-swagger> --output-dir <output-path>`
-3. Validate the generated TypeSpec compiles
-4. Compare output structure with hand-written TypeSpec
+**Try this: Customized code update**
 
-**Success Criteria:**
-- Conversion completes without errors
-- Generated TypeSpec follows Azure conventions
-- README or conversion report is generated
+1. Generate an SDK (above), then manually edit some generated code (add a custom method or comment).
+2. Run `azsdk tsp client customized-update --language <lang>`.
+3. Confirm your customizations survived. Try forcing a conflict between your edits and a spec change.
 
-**Known Complexity Areas:**
-- Complex inheritance hierarchies
-- Custom x-ms extensions
-- Discriminated unions
+**Try this: Find modified TypeSpec projects**
 
----
+1. In `azure-rest-api-specs`, create a branch and modify 1–2 TypeSpec projects.
+2. Commit and run `azsdk tsp project modified-projects`.
+3. Verify only the projects you changed are listed — no false positives, no false negatives.
 
-#### Scenario 2: Generate SDK from TypeSpec
+### SDK packages
 
-**Objective:** Generate a language SDK from a TypeSpec project.
+**Try this: Check API spec readiness**
 
-**Steps:**
-1. Navigate to a TypeSpec project (or use one from Scenario 1)
-2. Run: `azsdk tsp client generate --language <lang> --typespec-project <path>`
-3. Verify SDK code is generated in expected location
-4. Build the generated SDK
+1. Open (or find) a PR in `azure-rest-api-specs` with TypeSpec changes.
+2. Run `azsdk release-plan check-api-readiness --pr <number> --tsp-config <path>`.
+3. Read the report. Is the feedback actionable when the spec isn't ready? Is it correct when the spec is ready? Try an incomplete spec, a bad `tspconfig.yaml`, and a spec with breaking changes.
 
-**Languages to Test:** .NET, Java, Python, JavaScript
+**Try this: Analyze failed test cases**
 
-**Success Criteria:**
-- Generation completes successfully
-- Generated code follows language SDK conventions
-- Build succeeds (or fails with actionable error)
+1. Run SDK tests that fail and find the resulting `.trx` file.
+2. Run `azsdk pkg test results --trx-file <path>`.
+3. Can you actually figure out the root cause from the output? Try an empty TRX, a malformed TRX, and a huge TRX (100+ tests).
 
-**Variations:**
-- Generate from a brand-new TypeSpec project
-- Regenerate existing SDK (incremental update scenario)
-- Generate with custom emitter options
+### Release plans *(internal Microsoft only)*
 
----
+These need Architecture Board access. **Make sure `AZSDKTOOLS_AGENT_TESTING=true` is set** so you don't create a real release plan that someone has to clean up.
 
-#### Scenario 3: Customized Code Update
+**Try this: Create a release plan**
 
-**Objective:** Apply customizations to generated SDK and rebuild.
+1. Pick a TypeSpec project that's "ready" for SDK release.
+2. Run `azsdk release-plan create --typespec-project <path> --service-id <id> --product-id <id>`.
+3. Confirm the work item shows up in Azure DevOps with the right metadata. Try the variant where service/product are auto-discovered from just the TypeSpec project.
 
-**Steps:**
-1. Generate SDK for a service (use Scenario 2)
-2. Manually modify generated code (add custom method or comment)
-3. Run: `azsdk tsp client customized-update --language <lang>`
-4. Verify customizations are preserved
-5. Build and confirm compilation
+**Try this: Check release plan status**
 
-**Success Criteria:**
-- Customizations are not overwritten
-- Regeneration succeeds
-- Build output includes customized code
+1. Use the plan from the previous scenario, or pick an existing one.
+2. Run `azsdk release-plan status --id <plan-id>`.
+3. Does the status (Draft / In Progress / Released / Abandoned) match what's actually in ADO? Do the linked items resolve?
 
-**Known Edge Cases:**
-- Conflicts between customizations and spec changes
-- Java-specific patch application
+**Try this: Abandon a release plan**
 
----
+1. Pick a test plan you created.
+2. Run `azsdk release-plan abandon --id <plan-id>`.
+3. Confirm it's marked Abandoned in ADO and that the audit trail is intact.
 
-#### Scenario 4: Find Modified TypeSpec Projects
+### Pipeline diagnostics
 
-**Objective:** Identify which TypeSpec projects changed in a branch.
+**Try this: Analyze a pipeline failure**
 
-**Setup:**
-1. Create a test branch in azure-rest-api-specs
-2. Modify 1-2 TypeSpec projects (change model, add operation)
-3. Commit changes
+1. Find a recent failed pipeline run in ADO and grab its build ID.
+2. Run `azsdk azp analyze --build-id <id>`.
+3. Did it actually identify the root cause? Try one of each: compile failure, test failure, infra/timeout, config error.
 
-**Steps:**
-1. Run: `azsdk tsp project modified-projects`
-2. Verify output lists only modified projects
+**Try this: Analyze a log file**
 
-**Success Criteria:**
-- Correct projects identified
-- No false positives/negatives
-- Output format is parseable
+1. Download a log from a failed pipeline run.
+2. Run `azsdk azp log analyze --log-file <path>`.
+3. Are the errors and warnings extracted with enough surrounding context? Are duplicates collapsed?
 
----
+**Try this: Check pipeline status**
 
-### SDK Package Management
+1. Run `azsdk azp status --build-id <id>` against a running and a completed build.
+2. Is the status, duration, and summary right?
 
-#### Scenario 5: Check API Spec Readiness
+**Try this: Download test artifacts**
 
-**Objective:** Validate that a TypeSpec spec is ready for SDK generation.
+1. Run `azsdk azp test-results --build-id <id>`.
+2. Confirm artifacts land in your local directory and match what's in ADO.
 
-**Setup:**
-1. Create PR in azure-rest-api-specs with TypeSpec changes
-2. Note PR number
+### APIView *(internal Microsoft only)*
 
-**Steps:**
-1. Run: `azsdk release-plan check-api-readiness --pr <number> --tsp-config <path>`
-2. Review readiness report
+**Try this: Get an APIView review URL**
 
-**Success Criteria:**
-- Validation runs without errors
-- Clear actionable feedback if spec not ready
-- Validation passes for complete specs
+1. Run `azsdk apiview get-review-url --package-name <name> --language <lang>`.
+2. Open the URL — does it land on the right review?
 
-**Failure Mode Testing:**
-- Incomplete TypeSpec (missing operations)
-- Incorrectly configured tspconfig.yaml
-- Spec with breaking changes
+**Try this: Pull APIView comments**
 
----
+1. Pick a package with existing review comments.
+2. Run `azsdk apiview get-comments --package-name <name> --language <lang>`.
+3. Are author, timestamp, and resolved/unresolved status all there?
 
-#### Scenario 6: Get Failed Test Cases
+**Try this: Request a Copilot review**
 
-**Objective:** Analyze test failures from a .trx file.
+1. Run `azsdk apiview request-copilot-review --api-text <text-or-url>`, save the job ID.
+2. Poll with `azsdk apiview get-copilot-review --job-id <id>`.
+3. Try a very large API surface, malformed text, and an unsupported language.
 
-**Setup:**
-1. Run SDK tests that produce failures
-2. Locate generated .trx file
+### CODEOWNERS
 
-**Steps:**
-1. Run: `azsdk pkg test results --trx-file <path>`
-2. Review list of failed tests
-3. Get details for a specific failure (use follow-up command if needed)
+**Try this: Look up CODEOWNERS associations**
 
-**Success Criteria:**
-- Failed test names displayed
-- Stack traces and error messages accessible
-- Output helps identify root cause
+1. Run `azsdk config codeowners view --package <package-name>`.
+2. Are the owners, labels, and paths all correct?
+3. Try the variations: `--github-user <username>`, `--label <label>`, `--path <file-path>`.
 
-**Edge Cases:**
-- TRX with no failures
-- Malformed TRX file
-- Large TRX file (100+ tests)
+**Try this: Refresh the CODEOWNERS cache**
 
----
+> Make sure `AZSDKTOOLS_AGENT_TESTING=true` is set — this triggers a real ADO pipeline.
 
-### Release Planning
+1. Run `azsdk config codeowners update-cache`.
+2. Confirm the pipeline is triggered, watch it complete, and re-run the previous scenario to see updated data.
 
-#### Scenario 7: Create Release Plan
+### Agent integration (MCP / GitHub Coding Agent)
 
-**Objective:** Create a release plan for a new TypeSpec service.
+**Try this: Ask the agent in VS Code Copilot Chat**
 
-**Prerequisites:** Internal Microsoft access to Architecture Board.
+1. With the MCP server connected, open Copilot Chat.
+2. Ask: *"What TypeSpec projects were modified in this branch?"*
+3. Confirm it actually invokes the `azsdk_get_modified_typespec_projects` tool, and the answer is right.
+4. More prompts to try:
+   - *"Analyze the latest pipeline failure for this repo"*
+   - *"Create a release plan for the TypeSpec project at specification/foo/bar"*
+   - *"Get APIView comments for package Azure.Foo"*
 
-**Steps:**
-1. Identify a TypeSpec project ready for SDK release
-2. Run: `azsdk release-plan create --typespec-project <path> --service-id <id> --product-id <id>`
-3. Verify release plan created in Azure DevOps
+**Try this: GitHub Coding Agent on an issue**
 
-**Success Criteria:**
-- Release plan work item created
-- Contains correct service/product metadata
-- Links to relevant specs/repos
+1. In your fork, open an issue and trigger the GitHub Coding Agent (label or `@-mention`, depending on repo).
+2. Watch the workflow run. Did the agent use the right `azsdk` MCP tools? Did it produce something useful or ask sensible clarifying questions?
+3. Sample issues to try:
+   - *"Generate SDK for the TypeSpec project at specs/foo/Foo.Management"*
+   - *"Analyze why the latest CI run failed"*
+   - *"Add a CODEOWNERS entry for package Azure.Foo.Bar with owner @username"*
 
-**Variations:**
-- Create with only TypeSpec project (service/product auto-discovered)
-- Create for existing service (updated release plan)
+**Try this: Multi-step agent workflow**
 
----
+Chain a real workflow end-to-end in Copilot Chat:
 
-#### Scenario 8: Check Release Plan Status
+1. *"Convert the Swagger at specification/foo/stable/2023-01-01/swagger.json to TypeSpec"*
+2. *"Generate the .NET SDK from the new TypeSpec"*
+3. *"Build the SDK and report any compilation errors"*
+4. *"Fix the compilation errors"*
+5. *"Create a PR with these changes"*
 
-**Objective:** Query status of an existing release plan.
+Where does it lose the thread? Where does it shine? File both.
 
-**Setup:** Use a release plan from Scenario 7 or identify existing plan ID.
+### Stress and edge cases
 
-**Steps:**
-1. Run: `azsdk release-plan status --id <plan-id>`
-2. Review status details
+**Try this: Concurrent commands**
 
-**Success Criteria:**
-- Status displays correctly (Draft, In Progress, Released, Abandoned)
-- Metadata matches Azure DevOps work item
-- Links to related items work
+Run several different `azsdk` commands at once in different terminals. Watch for crashes, hangs, or interleaved output.
 
----
+**Try this: Big inputs**
 
-#### Scenario 9: Abandon Release Plan
+- Analyze a >50 MB log file
+- Convert a Swagger with 100+ operations
+- Generate an SDK for a service with 50+ models
 
-**Objective:** Mark a release plan as abandoned.
+Look for memory blowups, unreasonable runtime, or unclear timeouts.
 
-**Setup:** Create or identify a test release plan.
+**Try this: Bad inputs**
 
-**Steps:**
-1. Run: `azsdk release-plan abandon --id <plan-id>`
-2. Confirm status updated in Azure DevOps
+Throw garbage at it: non-existent paths, malformed TypeSpec, invalid build IDs, missing required parameters, wrong types. You want clear error messages, no exposed stack traces (unless verbose), and a non-zero exit code.
 
-**Success Criteria:**
-- Status changes to "Abandoned"
-- Confirmation message displayed
-- Audit trail preserved
+**Try this: Offline behavior**
 
----
+Disconnect your network (or block specific endpoints) and run network-dependent commands. Are timeouts reasonable? Do error messages clearly say "network problem"? Do offline-capable commands still work?
 
-### Pipeline Diagnostics
+## How to File Feedback
 
-#### Scenario 10: Analyze Pipeline Failure
+**File one GitHub issue per finding** in [`Azure/azure-sdk-tools`](https://github.com/Azure/azure-sdk-tools/issues/new/choose). One issue per bug — don't batch.
 
-**Objective:** Diagnose why a pipeline run failed.
-
-**Setup:**
-1. Find a recent failed pipeline run in Azure DevOps
-2. Note the build ID
-
-**Steps:**
-1. Run: `azsdk azp analyze --build-id <id>`
-2. Review failure analysis
-
-**Success Criteria:**
-- Root cause identified (or hypotheses provided)
-- Relevant log excerpts surfaced
-- Actionable recommendations given
-
-**Good Test Cases:**
-- Compilation failure
-- Test failure
-- Timeout/infrastructure issue
-- Configuration error
-
----
-
-#### Scenario 11: Analyze Log File
-
-**Objective:** Analyze a downloaded log file for errors.
-
-**Setup:**
-1. Download a log file from failed pipeline run
-
-**Steps:**
-1. Run: `azsdk azp log analyze --log-file <path>`
-2. Review error analysis
-
-**Success Criteria:**
-- Errors and warnings extracted
-- Context around errors provided
-- Duplicates deduplicated
-
----
-
-#### Scenario 12: Get Pipeline Status
-
-**Objective:** Check current status of a running or completed pipeline.
-
-**Steps:**
-1. Run: `azsdk azp status --build-id <id>`
-2. Observe status output
-
-**Success Criteria:**
-- Status displayed (Queued, Running, Completed, Failed)
-- Duration shown if completed
-- Summary of results included
-
----
-
-#### Scenario 13: Download Test Results
-
-**Objective:** Retrieve test artifacts from a pipeline run.
-
-**Steps:**
-1. Run: `azsdk azp test-results --build-id <id>`
-2. Verify artifacts downloaded to local directory
-
-**Success Criteria:**
-- Artifacts downloaded successfully
-- File paths displayed
-- Contents match Azure DevOps artifacts
-
----
-
-### APIView Integration
-
-#### Scenario 14: Get APIView Review URL
-
-**Objective:** Find the APIView review link for a package.
-
-**Steps:**
-1. Run: `azsdk apiview get-review-url --package-name <name> --language <lang>`
-2. Open returned URL in browser
-3. Verify it navigates to correct APIView review
-
-**Success Criteria:**
-- URL returned quickly
-- URL is valid and accessible
-- Package displayed in APIView
-
----
-
-#### Scenario 15: Get APIView Comments
-
-**Objective:** Retrieve reviewer feedback from APIView.
-
-**Steps:**
-1. Identify a package with existing APIView review comments
-2. Run: `azsdk apiview get-comments --package-name <name> --language <lang>`
-3. Review returned comments
-
-**Success Criteria:**
-- Comments retrieved
-- Comment text, author, and timestamp shown
-- Resolved vs. unresolved status indicated
-
----
-
-#### Scenario 16: Request Copilot Review
-
-**Objective:** Submit API surface for automated Copilot review.
-
-**Steps:**
-1. Prepare API surface text (or use APIView URL)
-2. Run: `azsdk apiview request-copilot-review --api-text <text-or-url>`
-3. Note job ID
-4. Poll for results: `azsdk apiview get-copilot-review --job-id <id>`
-
-**Success Criteria:**
-- Review job accepted
-- Job ID returned
-- Results available within reasonable time
-- Review comments returned in structured format
-
-**Edge Cases:**
-- Very large API surface
-- Malformed API surface text
-- Unsupported language
-
----
-
-### CODEOWNERS Management
-
-#### Scenario 17: View CODEOWNERS Associations
-
-**Objective:** Look up ownership information.
-
-**Steps:**
-1. Run: `azsdk config codeowners view --package <package-name>`
-2. Review owners, labels, and paths
-
-**Success Criteria:**
-- Owners listed with GitHub handles
-- Labels associated with package shown
-- Paths covered displayed
-
-**Variations:**
-- Query by GitHub user: `--github-user <username>`
-- Query by label: `--label <label-name>`
-- Query by path: `--path <file-path>`
-
----
-
-#### Scenario 18: Update CODEOWNERS Cache
-
-**Objective:** Refresh CODEOWNERS cache after making changes.
-
-**Steps:**
-1. Run: `azsdk config codeowners update-cache`
-2. Confirm pipeline triggered in Azure DevOps
-3. Wait for completion and verify cache updated
-
-**Success Criteria:**
-- Pipeline successfully triggered
-- Status reported
-- Subsequent queries reflect updated data
-
----
-
-### Agent Integration (MCP/GitHub Coding Agent)
-
-#### Scenario 19: MCP Tool Invocation in VS Code
-
-**Objective:** Use agent tools via GitHub Copilot in VS Code.
-
-**Setup:** MCP server configured (see [Prerequisites](#prerequisites-and-setup)).
-
-**Steps:**
-1. Open Copilot Chat in VS Code
-2. Ask: "What TypeSpec projects were modified in this branch?"
-3. Verify agent invokes `azsdk_get_modified_typespec_projects`
-4. Review response quality
-
-**Success Criteria:**
-- Tool invoked automatically by Copilot
-- Results returned to chat
-- Response is accurate and helpful
-
-**More Test Prompts:**
-- "Analyze the latest pipeline failure for this repo"
-- "Create a release plan for the TypeSpec project at specification/foo/bar"
-- "Get APIView comments for package Azure.Foo"
-
----
-
-#### Scenario 20: GitHub Coding Agent in Actions
-
-**Objective:** Invoke agent within a GitHub Actions workflow.
-
-**Setup:**
-1. Fork an Azure SDK repo
-2. Create an issue in your fork
-
-**Steps:**
-1. Tag the issue for GitHub Coding Agent (add agent-invoke label or command)
-2. Wait for workflow to run
-3. Review agent's work (commits, comments)
-
-**Success Criteria:**
-- Agent activates in response to issue
-- Uses azsdk MCP tools as appropriate
-- Produces useful results or asks clarifying questions
-
-**Example Scenarios:**
-- "Generate SDK for the TypeSpec project at specs/foo/Foo.Management"
-- "Analyze why the latest CI run failed"
-- "Add CODEOWNERS entry for package Azure.Foo.Bar with owner @username"
-
----
-
-#### Scenario 21: Multi-Step Agent Workflow
-
-**Objective:** Test agent across multi-command workflow.
-
-**Workflow Example:** TypeSpec → SDK → PR
-1. Ask agent: "Convert the Swagger at specification/foo/stable/2023-01-01/swagger.json to TypeSpec"
-2. After conversion: "Generate .NET SDK from the new TypeSpec"
-3. After generation: "Build the SDK and report any compilation errors"
-4. If errors: "Fix the compilation errors"
-5. After fixes: "Create a PR with these changes"
-
-**Success Criteria:**
-- Agent successfully chains commands
-- Intermediate results used in subsequent steps
-- Final PR created with correct changes
-- Agent handles errors gracefully mid-workflow
-
----
-
-### Stress and Edge Case Scenarios
-
-#### Scenario 22: Concurrent Operations
-
-**Objective:** Test agent behavior under concurrent usage.
-
-**Steps:**
-1. Open multiple terminal windows
-2. Simultaneously run different azsdk commands in each
-3. Observe for crashes, hangs, or corrupted output
-
-**Success Criteria:**
-- No crashes or hangs
-- Output not interleaved between commands
-- Each command completes successfully
-
----
-
-#### Scenario 23: Large Input Handling
-
-**Objective:** Test with large files or datasets.
-
-**Test Cases:**
-- Analyze a very large log file (>50 MB)
-- Convert a complex Swagger file (100+ operations)
-- Generate SDK for a service with 50+ models
-
-**Success Criteria:**
-- Commands complete (or fail gracefully with clear error)
-- No memory exhaustion
-- Performance is acceptable (or timeout is reasonable)
-
----
-
-#### Scenario 24: Invalid Input Handling
-
-**Objective:** Verify error handling for bad inputs.
-
-**Test Cases:**
-- Non-existent file paths
-- Malformed TypeSpec
-- Invalid build IDs
-- Missing required parameters
-- Incorrect parameter types
-
-**Success Criteria:**
-- Clear error messages
-- No stack traces exposed to user (unless verbose mode)
-- Suggested corrections where applicable
-- Command exits with non-zero code
-
----
-
-#### Scenario 25: Offline/Disconnected Testing
-
-**Objective:** Test behavior when network resources unavailable.
-
-**Steps:**
-1. Disconnect network or block specific endpoints
-2. Run commands requiring network (e.g., APIView, pipeline analysis)
-3. Observe error messages
-
-**Success Criteria:**
-- Timeouts are reasonable (not excessive)
-- Error messages clearly indicate network issue
-- Commands that can work offline still function
-
----
-
-## Feedback Capture
-
-Effective bug bash feedback is **specific, actionable, and categorized**. Use the mechanisms below to report findings.
-
-### GitHub Issues
-
-**Primary Feedback Mechanism:** File issues in the [Azure/azure-sdk-tools](https://github.com/Azure/azure-sdk-tools/issues) repository.
-
-**Issue Template:**
+**Use this template** (copy/paste into the issue body):
 
 ```markdown
-## Bug Bash Feedback - [Category]
+## Bug Bash Feedback
 
-**Scenario:** [Name or number from this guide]
+**Scenario:** <which "Try this:" you were running, or "ad-hoc">
 
-**Description:**
-[Clear description of the issue or observation]
+**What I did:**
+1. ...
+2. ...
 
-**Steps to Reproduce:**
-1. [First step]
-2. [Second step]
-3. [...]
+**What I expected:**
+...
 
-**Expected Behavior:**
-[What you expected to happen]
-
-**Actual Behavior:**
-[What actually happened]
+**What actually happened:**
+...
 
 **Environment:**
-- OS: [Windows 11 / macOS 14 / Ubuntu 22.04]
-- Agent Version: [Output of `azsdk --version`]
-- Mode: [CLI / MCP Server / GitHub Coding Agent]
-- Language SDK: [.NET / Java / Python / JavaScript / N/A]
+- OS: <Windows 11 / macOS 14 / Ubuntu 22.04>
+- `azsdk --version`: <output>
+- Mode: <CLI / MCP server / GitHub Coding Agent>
+- Language SDK (if relevant): <.NET / Java / Python / JS>
 
-**Severity:**
-- [ ] Critical (blocks testing or causes data loss)
-- [ ] High (major functionality broken)
-- [ ] Medium (workaround exists but inconvenient)
-- [ ] Low (cosmetic or minor issue)
-
-**Category:**
-- [ ] Bug (incorrect behavior)
-- [ ] Usability (confusing UX)
-- [ ] Performance (slow response)
-- [ ] Documentation (missing or unclear docs)
-- [ ] Feature Request (new capability needed)
-
-**Logs/Screenshots:**
-[Attach relevant output, screenshots, or log files]
-
-**Additional Context:**
-[Any other relevant information]
+**Logs / screenshots:**
+<attach or paste>
 ```
 
-### Required Labels
+**Labels to apply:**
+- `bug-bash` (so we can find them all)
+- `azsdk-cli`
+- One of `bug` / `enhancement` / `documentation` / `question`
+- A severity label if you can: `severity:critical`, `severity:high`, `severity:medium`, `severity:low`
 
-Apply these labels to bug bash issues:
+**What makes a feedback issue great:**
+- A repro another engineer can run without asking you anything
+- The exact command, exact error, and exact `azsdk --version`
+- Screenshots or attached log files instead of "it looked weird"
+- Expected vs. actual stated explicitly — even if it feels obvious
 
-- `bug-bash-2025` (or appropriate date)
-- `azsdk-cli` (component)
-- Severity: `severity:critical`, `severity:high`, `severity:medium`, `severity:low`
-- Type: `bug`, `enhancement`, `documentation`, `question`
+If you're not sure whether something is a bug or "working as designed" — file it anyway. We'd rather close a few extra issues than miss real friction.
 
-### Real-Time Coordination Channel
+## Tips
 
-For live bug bash events, use a dedicated communication channel:
-
-**Internal Microsoft:**
-- Teams channel: [Create dedicated channel for event]
-- Tag issues with `@azure-sdk-tools` maintainers for urgent items
-
-**External/Open:**
-- GitHub Discussions: Use [Azure/azure-sdk-tools Discussions](https://github.com/Azure/azure-sdk-tools/discussions)
-- Tag discussion with `bug-bash` topic
-
-### Feedback Form (Optional)
-
-For structured data collection, create a form (Microsoft Forms, Google Forms, etc.) with fields:
-
-- Participant name/alias
-- Scenarios attempted (checklist)
-- Scenarios completed successfully
-- Scenarios with issues
-- Most confusing aspect
-- Most impressive capability
-- Overall satisfaction (1-5 scale)
-- Would you use this in your daily workflow? (Yes/No/Maybe)
-- Additional comments
-
-### Anonymous Feedback
-
-Provide an option for anonymous feedback (e.g., dedicated email alias or form) to capture candid usability observations.
-
-## Post-Bash Triage Workflow
-
-After the bug bash concludes, organizers follow this process to review, prioritize, and address findings.
-
-### Immediate Actions (Within 24 Hours)
-
-1. **Thank Participants:**
-   - Send follow-up message with summary statistics
-   - Recognize top contributors
-
-2. **Collect All Issues:**
-   - Query GitHub for all `bug-bash-2025` labeled issues
-   - Export to spreadsheet for analysis
-
-3. **Critical Bug Triage:**
-   - Identify severity:critical issues
-   - Assign to maintainers for immediate investigation
-   - Communicate ETA for fixes to participants
-
-### First Week Actions
-
-4. **Categorize and Deduplicate:**
-   - Group similar issues
-   - Mark duplicates and cross-reference
-   - Tag issues by component (TypeSpec, Release Plan, Pipeline, etc.)
-
-5. **Prioritize Bugs:**
-   - Use severity + impact matrix:
-     - **P0 (Critical):** Blocks core scenarios, data loss, security issues
-     - **P1 (High):** Major functionality broken, no workaround
-     - **P2 (Medium):** Significant inconvenience, workaround exists
-     - **P3 (Low):** Minor issues, cosmetic problems
-
-6. **Assign Owners:**
-   - Each issue assigned to a maintainer or team
-   - Set milestone targets (next release, backlog)
-
-7. **Documentation Issues:**
-   - Group documentation feedback
-   - Assign to PM or documentation owner
-   - Target for rapid update (within 1 sprint)
-
-### First Sprint Actions
-
-8. **Fix High-Priority Bugs:**
-   - P0/P1 bugs addressed in next release
-   - Regression tests added for fixed bugs
-
-9. **Update Documentation:**
-   - Address documentation gaps identified
-   - Add clarifications for confusing areas
-   - Update this bug bash guide based on learnings
-
-10. **Feature Requests:**
-    - Review enhancement suggestions
-    - Add to roadmap if aligned with strategy
-    - Provide rationale in issue if declining
-
-### Follow-Up Communication
-
-11. **Publish Results:**
-    - Blog post or repo discussion summarizing:
-      - Participation statistics
-      - Top issues found
-      - Issues fixed
-      - Roadmap updates based on feedback
-    - Thank participants publicly
-
-12. **Close the Loop:**
-    - Comment on every issue with disposition (fixed, planned, deferred, won't fix)
-    - Provide links to PRs that addressed issues
-    - Ask original reporters to verify fixes
-
-### Metrics Analysis
-
-13. **Evaluate Bug Bash Effectiveness:**
-    - Review success criteria (see [Scope and Goals](#scope-and-goals))
-    - Calculate:
-      - Issue discovery rate (issues per participant-hour)
-      - Fix rate (% fixed within 1 sprint)
-      - Scenario coverage (% scenarios attempted)
-      - Participant satisfaction (from feedback forms)
-    - Document lessons learned for future bug bashes
-
-### Continuous Improvement
-
-14. **Update This Guide:**
-    - Incorporate feedback on the bug bash process itself
-    - Add newly discovered "good" test scenarios
-    - Refine prerequisites based on setup pain points
-    - Update tool list as agent capabilities expand
-
-15. **Schedule Next Bug Bash:**
-    - Recommend quarterly bug bashes for active development
-    - Pre-release bug bash for major version milestones
-
-## Tips for Organizers
-
-### Before the Bug Bash
-
-- **Send Reminders:** 1 week and 1 day before, with setup checklist
-- **Pre-Test:** Run through all scenarios yourself to identify broken setup instructions
-- **Prepare Resources:** Have sample TypeSpec projects, test repos, example commands ready
-- **Assign Coordinators:** Have 1-2 people available during event to unblock participants
-
-### During the Bug Bash
-
-- **Monitor Channels:** Watch for common blockers and address proactively
-- **Encourage Sharing:** Participants share interesting findings in real-time
-- **Celebrate Discoveries:** Recognize great bug reports publicly
-- **Be Available:** Quick response to questions maintains momentum
-
-### After the Bug Bash
-
-- **Don't Let Issues Languish:** Triage within 48 hours
-- **Communicate Progress:** Update participants on fixes weekly
-- **Document Patterns:** If multiple participants hit the same issue, it's a priority
-
-### Recommended Frequency
-
-- **Pre-Release:** Always before major version releases
-- **Quarterly:** For actively developed features
-- **After Major Changes:** When new tools or workflows added
-
-## Appendix: Command Reference
-
-For a complete list of all azsdk commands and MCP tools, see [mcp-tools.md](./mcp-tools.md).
-
-**Quick Command Summary:**
-
-| Category | Example Commands |
-|----------|------------------|
-| TypeSpec | `azsdk tsp convert`, `azsdk tsp client generate`, `azsdk tsp project modified-projects` |
-| Release Plan | `azsdk release-plan create`, `azsdk release-plan status`, `azsdk release-plan abandon` |
-| APIView | `azsdk apiview get-review-url`, `azsdk apiview get-comments`, `azsdk apiview request-copilot-review` |
-| Pipeline | `azsdk azp analyze`, `azsdk azp status`, `azsdk azp log analyze`, `azsdk azp test-results` |
-| CODEOWNERS | `azsdk config codeowners view`, `azsdk config codeowners update-cache` |
-| Package/Test | `azsdk pkg test results` |
+- **Try things you'd never normally try.** The agent should handle weird, partial, or unrealistic inputs gracefully. Throw the dumb stuff at it.
+- **File small papercuts.** Confusing wording, slightly-off help text, a missing example — those add up. Don't only file the big bugs.
+- **Don't fix bugs, just file them.** Even if you know exactly what's wrong, filing the issue is more valuable than a private patch — it gives us coverage data.
+- **Ask in chat if you're stuck.** Setup snags are themselves feedback (file the issue first, then ask).
+- **Note things you liked.** "This was great" comments help us know what not to break.
 
 ---
 
-**Document Version:** 1.0  
-**Last Updated:** 2025-01-24  
-**Maintained By:** Azure SDK Tools PM Team
-
-For questions or suggestions about this guide, file an issue in [Azure/azure-sdk-tools](https://github.com/Azure/azure-sdk-tools/issues) with the `documentation` label.
+*For organizers: see [bug-bash-organizer-notes.md](./bug-bash-organizer-notes.md).*

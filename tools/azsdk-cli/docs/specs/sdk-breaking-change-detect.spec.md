@@ -31,7 +31,7 @@
 
 - **TypeSpec**: A language for describing cloud service APIs and generating other API description languages, client and service code, documentation, and other assets. TypeSpec provides highly extensible core language primitives that can describe API shapes common among REST, OpenAPI, GraphQL, gRPC, and other protocols. See [TypeSpec official documentation](https://typespec.io)
 
-- **SDK Breaking change**: 
+- **SDK Breaking change**: A change between SDK versions that modifies public API surface area or behavior in a way that can break existing customer code. In this spec, SDK breaking changes may be introduced by spec changes, emitter changes, or APIView conversion differences.
 - **Breaking change category**: classify breaking changes to different category according to the root cause. Current categories: 
   - emitter change
   - conversion-by design

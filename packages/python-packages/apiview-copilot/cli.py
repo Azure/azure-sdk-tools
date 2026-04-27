@@ -2202,11 +2202,11 @@ def get_architect_comments(
     if not all_commenters:
         if language:
             pretty_language = resolve_language(language)[1]
-            allowed_commenters = get_approvers(language=pretty_language)
+            allowed_commenters = get_approvers(language=pretty_language, environment=environment)
         else:
-            allowed_commenters = get_approvers()
+            allowed_commenters = get_approvers(environment=environment)
 
-        if allowed_commenters and not include_replies:
+        if allowed_commenters is not None and not include_replies:
             # When not including replies, simply keep only approver comments.
             filtered = [c for c in filtered if c.get("CreatedBy") in allowed_commenters]
 
@@ -2234,17 +2234,17 @@ def get_architect_comments(
         target_language = resolve_language(language)[1].lower()
         filtered = [c for c in filtered if review_lang_map.get(c.get("ReviewId"), "").lower() == target_language]
 
+    # Compute ISO bounds and true thread start dates (via Cosmos) for both branches.
+    start_iso = to_iso8601(start_date)
+    end_iso = to_iso8601(end_date, end_of_day=True)
+    thread_starts = get_thread_start_dates(filtered, environment=environment)
+    started_in_window = {
+        key for key, min_created in thread_starts.items() if start_iso <= min_created <= end_iso
+    }
+
     # By default, exclude replies — keep only the thread-starting comment for threads
     # that actually *started* in the date window (not merely replied to).
     if not include_replies:
-        start_iso = to_iso8601(start_date)
-        end_iso = to_iso8601(end_date, end_of_day=True)
-        thread_starts = get_thread_start_dates(filtered, environment=environment)
-        started_in_window = set()
-        for key, min_created in thread_starts.items():
-            if start_iso <= min_created <= end_iso:
-                started_in_window.add(key)
-
         # Keep only comments belonging to threads that started in the window
         filtered = [
             c
@@ -2268,17 +2268,24 @@ def get_architect_comments(
     else:
         # When including replies, identify threads started by an approver and include
         # *all* comments in those threads (not just approver-authored ones).
-        if allowed_commenters:
-            # Find the earliest comment per thread to determine who started it
+        # First, restrict to threads that actually started in the date window.
+        filtered = [
+            c
+            for c in filtered
+            if (c.get("ThreadId") or c.get("ElementId")) in started_in_window
+        ]
+
+        if allowed_commenters is not None:
+            # Find who authored the earliest comment per thread
             thread_starters: dict[str, str] = {}
-            thread_earliest: dict[str, str] = {}
+            thread_earliest_in_window: dict[str, str] = {}
             for c in filtered:
                 thread_key = c.get("ThreadId") or c.get("ElementId")
                 if thread_key is None:
                     continue
                 created = c.get("CreatedOn", "")
-                if thread_key not in thread_earliest or created < thread_earliest[thread_key]:
-                    thread_earliest[thread_key] = created
+                if thread_key not in thread_earliest_in_window or created < thread_earliest_in_window[thread_key]:
+                    thread_earliest_in_window[thread_key] = created
                     thread_starters[thread_key] = c.get("CreatedBy", "")
 
             approver_threads = {

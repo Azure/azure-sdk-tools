@@ -21,7 +21,7 @@ class MockContainerClient:
     def __init__(self, items):
         self.items = items
 
-    def query_items(self, query, parameters, enable_cross_partition_query=True):
+    def query_items(self, **_kwargs):  # pylint: disable=unused-argument
         return iter(self.items)
 
 
@@ -172,6 +172,7 @@ def test_include_replies_returns_non_approver_replies_in_approver_threads(monkey
         raw_comments=comments,
         approvers={"architect1"},
         review_lang_items=[{"id": "rev1", "Language": "Python"}],
+        thread_starts={"thread1": "2026-04-10T00:00:00Z", "thread2": "2026-04-10T02:00:00Z"},
     )
 
     cli.get_architect_comments(
@@ -196,6 +197,7 @@ def test_include_replies_without_approver_filter_returns_all(monkeypatch, capsys
         raw_comments=comments,
         approvers={"architect1"},
         review_lang_items=[{"id": "rev1", "Language": "Python"}],
+        thread_starts={"thread1": "2026-04-10T00:00:00Z", "thread2": "2026-04-10T00:00:00Z"},
     )
 
     cli.get_architect_comments(
@@ -268,3 +270,23 @@ def test_default_excludes_threads_not_started_in_window(monkeypatch, capsys):
 
     assert len(output) == 1
     assert output[0]["id"] == "c1"
+
+
+def test_empty_approvers_returns_no_comments(monkeypatch, capsys):
+    """When get_approvers() returns an empty set, no comments should be returned."""
+    comments = [
+        _make_comment("c1", created_by="some_user"),
+        _make_comment("c2", created_by="another_user", thread_id="thread2"),
+    ]
+    _patch_common(
+        monkeypatch,
+        raw_comments=comments,
+        approvers=set(),
+        review_lang_items=[{"id": "rev1", "Language": "Python"}],
+        thread_starts={"thread1": "2026-04-10T00:00:00Z", "thread2": "2026-04-10T00:00:00Z"},
+    )
+
+    cli.get_architect_comments(start_date="2026-04-01", end_date="2026-04-30")
+    output = json.loads(capsys.readouterr().out)
+
+    assert output == [], "Empty approvers set should produce no output, not fall back to all commenters"

@@ -478,8 +478,9 @@ def get_thread_start_dates(
       - Diagnostic comments (CommentSource == 'Diagnostic') are ignored.
 
     For each unique ThreadId or ElementId, queries Cosmos for the earliest CreatedOn
-    across ALL comments in that thread on the same ReviewId (not just those in the
-    original date window).
+    across ALL comments in that thread (not just those in the original date window).
+    ThreadId is globally unique, so no ReviewId filter is needed for threaded comments.
+    For threadless comments keyed by ElementId, queries are scoped to the same ReviewId.
 
     Returns:
         dict mapping ThreadId (or ElementId for threadless comments) to the earliest

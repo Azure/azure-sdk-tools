@@ -154,12 +154,12 @@ List memories stored in the knowledge base, with optional filters:
 avc report memory -l python
 ```
 
-### Analyze Comments
+### Architect Comments
 
-Analyze AI comment quality for a review or set of comments:
+Retrieve human architect review comments for a date range:
 
 ```bash
-avc report analyze-comments --review-id <REVIEW_ID>
+avc report architect-comments -s 2026-01-01 -e 2026-01-31 [-l python] [--all-commenters] [--include-replies] [--environment staging] [--format yaml]
 ```
 
 ## OpenTelemetry Metrics

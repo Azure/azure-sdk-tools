@@ -11,7 +11,7 @@ using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Linq;
 
-namespace ApiView
+namespace APIViewLegacy
 {
     public class CodeFileBuilder
     {

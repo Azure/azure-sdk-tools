@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace ApiView
+namespace APIViewLegacy
 {
     public class Program
     {

@@ -5,7 +5,7 @@ using System.IO.Compression;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
-using ApiView;
+using APIViewLegacy;
 using APIView;
 using APIView.Identity;
 using APIView.Model;

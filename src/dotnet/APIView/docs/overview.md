@@ -269,7 +269,7 @@ Each CodeFile gets a **SHA-256 hash** of its API surface (excluding package vers
 
 1. Two `CodeFile` blobs are loaded (active revision vs. selected diff revision).
 2. `ReviewLine` trees are flattened to comparable line sequences.
-3. **Myers' O(ND) diff algorithm** (`APIView/DIff/Diff.cs`) computes the minimal edit script.
+3. **Myers' O(ND) diff algorithm** (`APIView/Diff/Diff.cs`) computes the minimal edit script.
 4. Each line is tagged as `Added`, `Removed`, or `Unchanged`.
 5. The frontend renders additions/removals inline with configurable context lines.
 6. Section headings with diffs are pre-computed by `LinesWithDiffBackgroundHostedService` so the nav tree can highlight changed areas.
@@ -484,7 +484,7 @@ Each language repo follows a similar pattern: `ci.yml` → archetype stage → j
 |---|---|
 | Solution | `APIView.sln` |
 | Core models | `APIView/Model/CodeFile.cs`, `APIView/Model/V2/ReviewLine.cs`, `APIView/Model/V2/ReviewToken.cs` |
-| Diff algorithm | `APIView/DIff/Diff.cs` |
+| Diff algorithm | `APIView/Diff/Diff.cs` |
 | C# parser | `APIView/Languages/CodeFileBuilder.cs` |
 | Web app entry | `APIViewWeb/Program.cs`, `APIViewWeb/Startup.cs` |
 | REST controllers | `APIViewWeb/LeanControllers/` |

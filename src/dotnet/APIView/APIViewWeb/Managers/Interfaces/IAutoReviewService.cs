@@ -1,7 +1,7 @@
 using System.IO;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using ApiView;
+using APIViewLegacy;
 using APIViewWeb.LeanModels;
 
 namespace APIViewWeb.Managers.Interfaces;

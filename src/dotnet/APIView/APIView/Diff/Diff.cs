@@ -95,7 +95,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace APIView.DIff
+namespace APIView.Diff
 {
     /// <summary>
     /// A DiffHunk represents a single change in a diff between two files.

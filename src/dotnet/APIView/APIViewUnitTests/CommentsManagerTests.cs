@@ -6,7 +6,7 @@ using System.Net.Http;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
-using ApiView;
+using APIViewLegacy;
 using APIView;
 using APIViewWeb;
 using APIViewWeb.DTOs;

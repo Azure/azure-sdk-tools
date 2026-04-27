@@ -1,4 +1,4 @@
-using ApiView;
+using APIViewLegacy;
 
 namespace APIViewWeb.Models;
 

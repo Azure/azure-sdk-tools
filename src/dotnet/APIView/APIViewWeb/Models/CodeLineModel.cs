@@ -2,9 +2,9 @@
 // Licensed under the MIT License.
 
 using System.Collections.Generic;
-using ApiView;
+using APIViewLegacy;
 using APIView;
-using APIView.DIff;
+using APIView.Diff;
 
 namespace APIViewWeb.Models
 {

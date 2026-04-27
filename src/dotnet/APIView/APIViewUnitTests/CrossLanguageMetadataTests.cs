@@ -1,5 +1,5 @@
 using System.Text.Json;
-using ApiView;
+using APIViewLegacy;
 using APIView.Model;
 using FluentAssertions;
 using Xunit;

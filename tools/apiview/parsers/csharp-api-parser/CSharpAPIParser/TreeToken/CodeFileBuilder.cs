@@ -3,7 +3,7 @@
 
 using System.Collections.Immutable;
 using System.ComponentModel;
-using ApiView;
+using APIViewLegacy;
 using APIView.Analysis;
 using APIView.Model.V2;
 using Microsoft.CodeAnalysis;

@@ -1,5 +1,5 @@
 using System.Reflection;
-using ApiView;
+using APIViewLegacy;
 using System.Text.Json;
 using Newtonsoft.Json.Schema;
 using Newtonsoft.Json.Linq;

@@ -7,7 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace ApiView
+namespace APIViewLegacy
 {
     public static class CompilationFactory
     {

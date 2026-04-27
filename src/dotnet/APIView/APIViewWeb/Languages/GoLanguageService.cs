@@ -6,7 +6,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Diagnostics;
 using System.Threading.Tasks;
-using ApiView;
+using APIViewLegacy;
 using Microsoft.ApplicationInsights;
 using System.Text;
 

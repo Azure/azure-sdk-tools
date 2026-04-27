@@ -1,7 +1,7 @@
 using System;
 using APIView.Model;
 
-namespace ApiView
+namespace APIViewLegacy
 {
     public readonly struct CodeLine: IEquatable<CodeLine>
     {

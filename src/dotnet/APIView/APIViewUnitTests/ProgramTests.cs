@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using ApiView;
+using APIViewLegacy;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Xunit;
 

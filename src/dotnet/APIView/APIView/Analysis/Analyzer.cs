@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using ApiView;
+using APIViewLegacy;
 using Azure.ClientSdk.Analyzers;
 using Microsoft.CodeAnalysis;
 using System.Collections.Generic;

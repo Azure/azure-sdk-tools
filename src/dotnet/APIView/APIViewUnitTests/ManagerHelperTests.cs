@@ -2,7 +2,7 @@ using APIViewWeb;
 using APIViewWeb.Helpers;
 using Xunit;
 using APIViewWeb.LeanModels;
-using ApiView;
+using APIViewLegacy;
 using APIViewWeb.Models;
 using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;

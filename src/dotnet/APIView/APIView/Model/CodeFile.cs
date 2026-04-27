@@ -13,7 +13,7 @@ using APIView;
 using APIView.Model;
 using APIView.Model.V2;
 
-namespace ApiView
+namespace APIViewLegacy
 {
     public class CodeFile
     {

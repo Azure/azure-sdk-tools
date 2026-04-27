@@ -79,16 +79,16 @@ A changelog-breakingchange pattern guide (e.g. https://github.com/Azure/azure-sd
 **Output Format**
 ```json
 {
-    "hasBreadkingChange": true,
+    "hasBreakingChange": true,
     "language": "java",
     "breakingchanges": [
         {
             "breakingchange": "model `ResourceInfo` is renamed to `Resource`",
-            "category": "Conversion-need to be resolve",
+            "category": "Conversion-need to be resolve"
         },
         {
             "breakingchange": "Type of property `Prop` has been changed from `string` to `int32`",
-            "category": "typespec change",
+            "category": "typespec change"
         }
     ]
 }

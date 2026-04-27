@@ -42,6 +42,10 @@ stimuli:
         - edit
         - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+        - azure-typespec-author
   - type: file-matches
     config:
       path: employee.tsp
@@ -67,6 +71,7 @@ stimuli:
 scoring:
   weights:
     tool-calls: 1
+    skill-invocation: 1
     prompt: 1
     file-matches: 4
   threshold: 1.0

@@ -79,7 +79,7 @@ Route every message to exactly one of these paths:
 2. **`search_knowledge_base` should be called ONCE per turn.** Use 2–3 queries in a single call for broad coverage. A second call is allowed ONLY when the first returns insufficient results AND you use different queries or a different `tenant_id`. Never call it more than twice per turn.
 3. Never call the same tool with identical arguments twice in the same turn.
 4. Never pass an empty `tenant_id` to `search_knowledge_base`.
-5. **`load_skill` must run first.** After loading the skill, call all other tools (`search_knowledge_base`, shell, `web_fetch`, `web_search`) **in parallel** in the same turn to minimize latency.
+5. **`load_skill` must run first.** After loading the skill, call **ALL other needed tools in a single parallel batch** in the very next turn. For example, if you need both `search_knowledge_base` and `search_code`, call them simultaneously — do NOT wait for one result before calling the other. The same applies to `web_search`, `web_fetch`, `search_issues`, `list_commits`, etc. Every sequential round-trip adds 10+ seconds of latency, so **minimize the number of LLM turns by batching as many tool calls as possible into each turn**.
 6. **Never call `read_skill_resource`.** Skills have no registered resources — all content is in the skill itself.
 7. **Limit `web_fetch` to at most 3 calls per turn.** Fetch only the most relevant URLs. If the user provides multiple links, prioritize the ones most likely to answer the question and summarize the rest.
 8. **Stdio MCP tools (e.g. ADO MCP) cannot run multiple calls in parallel with themselves** — but they CAN run in parallel with other tools (`github_cli`, `search_knowledge_base`, etc.).

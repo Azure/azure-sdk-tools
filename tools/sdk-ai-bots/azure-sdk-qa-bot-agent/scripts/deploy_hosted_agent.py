@@ -13,7 +13,6 @@ Usage:
 
 import argparse
 import asyncio
-import json
 import os
 import re
 import subprocess
@@ -69,7 +68,7 @@ def _git_short_sha() -> str:
 
 
 def _wait_for_version_active(
-    project_endpoint: str,
+    project: "AIProjectClient",
     agent_name: str,
     agent_version: str,
     timeout: int = 600,
@@ -77,54 +76,53 @@ def _wait_for_version_active(
 ) -> bool:
     """Poll until the hosted agent version reaches 'active' status.
 
+    Uses the SDK (``project.agents.get``) instead of raw ``az rest`` so that
+    authentication, api-version, and response parsing are handled
+    automatically.
+
     In the refreshed preview, compute lifecycle is automatic — the platform
     provisions compute when a request arrives and deprovisions it after
-    inactivity. Versions go through: creating → active (or failed).
+    inactivity.  Versions go through: creating → active (or failed).
     """
-    base_url = project_endpoint.rstrip("/")
-    url = f"{base_url}/agents/{agent_name}/versions/{agent_version}"
     print(
         f"Waiting for agent {agent_name} version {agent_version} to become active (timeout {timeout}s)..."
     )
     deadline = time.time() + timeout
     while time.time() < deadline:
-        result = _run_quiet(
-            [
-                "az",
-                "rest",
-                "--method",
-                "GET",
-                "--url",
-                url,
-                "--resource",
-                "https://ai.azure.com",
-            ],
-        )
-        if result.returncode != 0:
-            error_msg = (result.stderr or result.stdout or "").strip()
-            print(f"  WARNING: Failed to check version status: {error_msg}")
-            time.sleep(poll_interval)
-            continue
-
         try:
-            payload = json.loads(result.stdout)
-        except json.JSONDecodeError:
-            print(f"  WARNING: Could not parse response: {result.stdout.strip()[:200]}")
-            time.sleep(poll_interval)
-            continue
+            info = project.agents.get(agent_name)
+            latest = info.versions.latest if info.versions else None
+            if latest is None:
+                print("  WARNING: No version information returned — retrying...")
+                time.sleep(poll_interval)
+                continue
 
-        status = str(payload.get("provisioningState", "")).lower()
-        if status in ("active", "succeeded"):
-            print(f"  Version status is '{status}'.")
-            return True
-        if status in ("failed", "error", "deleted"):
-            print(f"  Version entered terminal state: '{status}'.")
-            error = payload.get("error", {})
-            if error:
-                print(f"  Error: {json.dumps(error, indent=2)}")
-            return False
+            if str(latest.version) != agent_version:
+                print(
+                    f"  Latest version is {latest.version}, waiting for {agent_version}..."
+                )
+                time.sleep(poll_interval)
+                continue
 
-        print(f"  Status: {status} — retrying in {poll_interval}s...")
+            # Try known attribute names for status
+            status = ""
+            for attr in ("provisioning_state", "provisioningState", "status"):
+                val = getattr(latest, attr, None)
+                if val:
+                    status = str(val).lower()
+                    break
+
+            if status in ("active", "succeeded"):
+                print(f"  Version status is '{status}'.")
+                return True
+            if status in ("failed", "error", "deleted"):
+                print(f"  Version entered terminal state: '{status}'.")
+                return False
+
+            print(f"  Status: {status or 'unknown'} — retrying in {poll_interval}s...")
+        except Exception as exc:
+            print(f"  WARNING: Failed to check version status: {exc}")
+
         time.sleep(poll_interval)
 
     print(f"  Timed out after {timeout}s.")
@@ -296,23 +294,23 @@ def main() -> None:
                 f"  WARNING: Predicted version {next_version} but got {agent.version}. "
                 "Traces will use the predicted version in gen_ai.agent.id."
             )
+
+        # ── Wait for version to become active ──
+        # In the refreshed preview, compute lifecycle is automatic — no manual
+        # start/stop needed. The platform provisions compute on first request
+        # and deprovisions after 15 min of inactivity.
+        agent_version = str(agent.version)
+        if _wait_for_version_active(project, agent.name, agent_version):
+            print(f"Done — agent {agent.name} v{agent_version} is active.")
+        else:
+            print(
+                f"WARNING: Agent {agent.name} v{agent_version} did not reach active status. "
+                "Check the Azure portal or run: az rest --method GET "
+                f'--url "{project_endpoint}/agents/{agent.name}/versions/{agent_version}" '
+                '--resource "https://ai.azure.com"'
+            )
     finally:
         project.close()
-
-    # ── Wait for version to become active ──
-    # In the refreshed preview, compute lifecycle is automatic — no manual
-    # start/stop needed. The platform provisions compute on first request
-    # and deprovisions after 15 min of inactivity.
-    agent_version = str(agent.version)
-    if _wait_for_version_active(project_endpoint, agent.name, agent_version):
-        print(f"Done — agent {agent.name} v{agent_version} is active.")
-    else:
-        print(
-            f"WARNING: Agent {agent.name} v{agent_version} did not reach active status. "
-            "Check the Azure portal or run: az rest --method GET "
-            f'--url "{project_endpoint}/agents/{agent.name}/versions/{agent_version}" '
-            '--resource "https://ai.azure.com"'
-        )
 
 
 if __name__ == "__main__":

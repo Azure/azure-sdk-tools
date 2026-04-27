@@ -31,7 +31,7 @@ from agent_framework import MCPStreamableHTTPTool
 
 from config.app_config import get as cfg
 from tools import truncating_mcp_parser
-from utils.azure_credential import get_frontend_credential
+from utils.azure_credential import get_credential
 
 logger = logging.getLogger(__name__)
 
@@ -224,7 +224,7 @@ async def _sign_with_keyvault(vault_url: str, key_name: str, digest: bytes) -> b
     Constructs the key ID directly to avoid needing the ``keys/get``
     permission — only ``keys/sign`` is required (matches Go backend).
     """
-    credential = get_frontend_credential()
+    credential = get_credential()
     key_id = f"{vault_url.rstrip('/')}/keys/{key_name}"
     crypto = CryptographyClient(key_id, credential=credential)
     try:

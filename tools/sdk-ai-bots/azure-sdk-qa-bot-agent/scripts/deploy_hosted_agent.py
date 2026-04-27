@@ -268,11 +268,6 @@ def main() -> None:
             "APP_VERSION": next_version,
             "AI_FOUNDRY_PROJECT_RESOURCE_ID": project_resource_id,
         }
-        for key in ("UMI_BACKEND_CLIENT_ID", "UMI_FRONTEND_CLIENT_ID"):
-            val = os.environ.get(key, "")
-            if val:
-                env_vars[key] = val
-
         agent = project.agents.create_version(
             agent_name=image_name,
             definition=HostedAgentDefinition(

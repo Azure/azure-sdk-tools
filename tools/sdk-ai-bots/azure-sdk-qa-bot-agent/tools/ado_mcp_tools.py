@@ -28,15 +28,6 @@ async def create_ado_mcp_tool() -> MCPStdioTool:
     org = cfg("ADO_ORG", _DEFAULT_ADO_ORG) or _DEFAULT_ADO_ORG
     env = {**os.environ}
 
-    az_client_id = os.environ.get("UMI_BACKEND_CLIENT_ID")
-    if az_client_id:
-        env["AZURE_CLIENT_ID"] = az_client_id.strip()
-        logger.info("ADO MCP tool configured with AZURE_CLIENT_ID (UMI)")
-    else:
-        logger.info(
-            "UMI_BACKEND_CLIENT_ID not set — ADO MCP tool will use default managed identity"
-        )
-
     logger.info("ADO MCP tool configured (org=%s)", org)
 
     return MCPStdioTool(

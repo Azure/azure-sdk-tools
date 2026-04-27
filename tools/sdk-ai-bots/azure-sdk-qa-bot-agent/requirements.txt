@@ -13,6 +13,7 @@ pyyaml>=6.0.3
 httpx[http2]>=0.27.0,<1.0.dev1
 agent-framework-core>=1.1.0
 agent-framework-foundry>=1.1.0
+mcp>=1.0.0
 # Backend server
 fastapi
 uvicorn[standard]

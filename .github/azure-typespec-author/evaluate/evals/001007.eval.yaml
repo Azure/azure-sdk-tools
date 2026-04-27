@@ -81,6 +81,10 @@ stimuli:
       required:
         - edit
         - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+        - azure-typespec-author
   - type: file-exists
     config:
       path: examples/2025-01-01/Employees_Get_MaximumSet_Gen.json
@@ -118,4 +122,5 @@ scoring:
     file-exists: 1
     file-not-exists: 1
     tool-calls: 1
+    skill-invocation: 1
   threshold: 1.0

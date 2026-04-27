@@ -23,22 +23,18 @@ stimuli:
     max_tokens: 5000
   environment:
     files:
-    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+    - src: ../fixtures/004002-decorate-length-constrains-on-array-item/employee.tsp
       dest: employee.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+    - src: ../fixtures/004002-decorate-length-constrains-on-array-item/main.tsp
       dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+    - src: ../fixtures/004002-decorate-length-constrains-on-array-item/package.json
       dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+    - src: ../fixtures/004002-decorate-length-constrains-on-array-item/readme.md
       dest: readme.md
-    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+    - src: ../fixtures/004002-decorate-length-constrains-on-array-item/shared.tsp
       dest: shared.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+    - src: ../fixtures/004002-decorate-length-constrains-on-array-item/tspconfig.yaml
       dest: tspconfig.yaml
-    - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
-      dest: stable/2021-11-01/widget.json
-    - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
-      dest: preview/2024-10-01-preview/widget.json
   graders:
   - type: tool-calls
     config:
@@ -46,7 +42,10 @@ stimuli:
         - edit
         - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
-  # VP1: Custom scalar type with minLength/maxLength constraints
+  - type: skill-invocation
+    config:
+      required:
+        - azure-typespec-author
   - type: file-matches
     config:
       path: employee.tsp
@@ -73,6 +72,7 @@ stimuli:
 scoring:
   weights:
     tool-calls: 1
+    skill-invocation: 1
     prompt: 1
     file-matches: 4
   threshold: 1.0

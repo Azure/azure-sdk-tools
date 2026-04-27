@@ -1,10 +1,16 @@
 """GitHub tools for the Azure SDK QA Bot Agent.
 
-Provides a server-side MCP tool that connects to GitHub's remote MCP
-server via the Foundry Agents API.  Authentication mirrors the Go
-backend: a GitHub App JWT is signed via Azure Key Vault and exchanged
-for a short-lived installation token, with automatic refresh before
-expiry (same 5-minute buffer as the Go code).
+Provides a local MCP tool (MCPStreamableHTTPTool) that connects to
+GitHub's remote MCP server directly from the agent container.
+Authentication mirrors the Go backend: a GitHub App JWT is signed via
+Azure Key Vault and exchanged for a short-lived installation token,
+with automatic refresh before expiry (same 5-minute buffer as the Go
+code).
+
+Using a local MCP client instead of server-side delegation means:
+- Full tool-call logging in the container (agent framework traces every
+  MCP request/response).
+- Token refresh runs in-process — no reliance on Foundry proxy state.
 """
 
 from __future__ import annotations
@@ -21,7 +27,7 @@ from datetime import datetime, timedelta, timezone
 import httpx
 from azure.keyvault.keys.crypto.aio import CryptographyClient
 from azure.keyvault.keys.crypto import SignatureAlgorithm
-from agent_framework import BaseChatClient
+from agent_framework import MCPStreamableHTTPTool
 
 from config.app_config import get as cfg
 from utils.azure_credential import get_frontend_credential
@@ -40,6 +46,36 @@ _GITHUB_MCP_HEADERS = {
     "X-MCP-Toolsets": "repos,issues,actions,pull_requests",
     "X-MCP-Readonly": "true",
 }
+# Client-side allowed tool names (defence in depth).
+# Server-side filtering is handled by X-MCP-Toolsets + X-MCP-Readonly headers.
+# This list restricts what the *model* is allowed to invoke via the Foundry API.
+# See https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/tool-best-practice
+# and https://github.com/github/github-mcp-server for tool names.
+_GITHUB_ALLOWED_TOOLS: list[str] = [
+    # repos (read-only)
+    "get_file_contents",
+    "search_repositories",
+    "search_code",
+    "list_branches",
+    "get_commit",
+    "list_commits",
+    # issues (read-only)
+    "get_issue",
+    "list_issues",
+    "search_issues",
+    "get_issue_comments",
+    # pull_requests (read-only)
+    "get_pull_request",
+    "list_pull_requests",
+    "get_pull_request_files",
+    "get_pull_request_status",
+    "get_pull_request_comments",
+    "get_pull_request_reviews",
+    # actions (read-only)
+    "list_workflow_runs",
+    "get_workflow_run",
+    "get_workflow_run_logs",
+]
 # HTTP timeout for MCP endpoint validation and GitHub API calls.
 _MCP_VALIDATION_TIMEOUT_SECS = 10.0
 _GITHUB_API_TIMEOUT_SECS = 10.0
@@ -50,9 +86,72 @@ _JWT_EXPIRY_SECS = 600
 _DEFAULT_TOKEN_LIFETIME_HOURS = 1
 # Background token refresh interval (seconds).
 _DEFAULT_REFRESH_INTERVAL_SECS = 30
+# MCP request timeout (seconds) — GitHub MCP may take time for large repos.
+_MCP_REQUEST_TIMEOUT_SECS = 60
 
 # Keep strong references to background tasks so they are not garbage collected.
 _background_refresh_tasks: list[asyncio.Task] = []
+
+
+class _GitHubTokenManager:
+    """Thread-safe, auto-refreshing GitHub installation token manager.
+
+    Provides fresh auth headers to ``MCPStreamableHTTPTool`` via a
+    ``header_provider`` callback.  Token refresh happens proactively in a
+    background task so that MCP calls never block on token acquisition.
+    """
+
+    def __init__(self, token: str, expires_at: datetime | None) -> None:
+        self._token = token
+        self._expires_at = expires_at
+        self._lock = asyncio.Lock()
+
+    @property
+    def is_static(self) -> bool:
+        return self._expires_at is None
+
+    def get_headers(self, _kwargs: dict | None = None) -> dict[str, str]:
+        """Return current auth + toolset headers (called per-request)."""
+        return {
+            **_GITHUB_MCP_HEADERS,
+            "Authorization": f"Bearer {self._token}",
+        }
+
+    def _needs_refresh(self) -> bool:
+        if self._expires_at is None:
+            return False
+        buffer = timedelta(seconds=_TOKEN_REFRESH_BUFFER_SECS)
+        return datetime.now(timezone.utc) >= self._expires_at - buffer
+
+    async def _refresh_once(self) -> None:
+        async with self._lock:
+            if not self._needs_refresh():
+                return
+            logger.info("Refreshing GitHub App installation token...")
+            token, new_expires_at = await _acquire_github_app_token()
+            self._token = token
+            self._expires_at = new_expires_at
+            logger.info(
+                "GitHub token refreshed, expires at %s",
+                new_expires_at.isoformat(),
+            )
+
+    def start_background_refresh(
+        self, interval_seconds: int = _DEFAULT_REFRESH_INTERVAL_SECS
+    ) -> None:
+        """Start a background task that proactively refreshes the token."""
+
+        async def _loop() -> None:
+            while True:
+                try:
+                    await self._refresh_once()
+                except Exception as ex:
+                    logger.exception("GitHub token background refresh failed: %s", ex)
+                await asyncio.sleep(interval_seconds)
+
+        task = asyncio.get_running_loop().create_task(_loop())
+        _background_refresh_tasks.append(task)
+        logger.info("Started GitHub token background refresh loop")
 
 
 async def _validate_mcp_endpoint(token: str) -> bool:
@@ -194,8 +293,13 @@ async def _get_installation_token(jwt: str, owner: str) -> tuple[str, datetime]:
         return token, expires_at
 
 
-async def _get_github_app_token() -> tuple[str, datetime]:
-    """Get a GitHub MCP token using GitHub App + Key Vault config."""
+async def _acquire_github_app_token() -> tuple[str, datetime]:
+    """Acquire a new GitHub App installation token (no endpoint validation).
+
+    Use this for background token refresh where we only need a fresh token
+    from GitHub — endpoint validation is skipped so that a temporarily
+    unreachable MCP server does not block token renewal.
+    """
     app_id = cfg("GITHUB_APP_ID")
     key_name = cfg("GITHUB_APP_KEY_NAME")
     vault_url = cfg("GITHUB_APP_KEYVAULT_URL")
@@ -207,13 +311,16 @@ async def _get_github_app_token() -> tuple[str, datetime]:
         )
 
     jwt = await _create_app_jwt(vault_url, key_name, app_id)
-    token, expires_at = await _get_installation_token(jwt, owner)
-    if not await _validate_mcp_endpoint(token):
-        raise RuntimeError(
-            "GitHub App installation token rejected by GitHub MCP "
-            f"(owner={owner}). Check GITHUB_APP_* settings and installation owner."
-        )
-    return token, expires_at
+    return await _get_installation_token(jwt, owner)
+
+
+async def _get_github_app_token() -> tuple[str, datetime]:
+    """Get a GitHub MCP token using GitHub App + Key Vault config.
+
+    Acquires a fresh installation token.  Endpoint validation is left
+    to the caller (``create_github_mcp_tool``).
+    """
+    return await _acquire_github_app_token()
 
 
 async def _get_github_token() -> tuple[str, datetime | None]:
@@ -232,64 +339,23 @@ async def _get_github_token() -> tuple[str, datetime | None]:
     return token, expires_at
 
 
-def _start_background_token_refresh(
-    *,
-    mcp_tool,
-    token_expires_at: datetime,
-    interval_seconds: int = _DEFAULT_REFRESH_INTERVAL_SECS,
-) -> None:
-    """Start proactive background refresh for a GitHub App MCP tool."""
-    lock = asyncio.Lock()
-    expires_at = token_expires_at
-
-    def _needs_refresh() -> bool:
-        buffer = timedelta(seconds=_TOKEN_REFRESH_BUFFER_SECS)
-        return datetime.now(timezone.utc) >= expires_at - buffer
-
-    async def _refresh_once() -> None:
-        nonlocal expires_at
-        async with lock:
-            if not _needs_refresh():
-                return
-            logger.info("Refreshing GitHub App installation token...")
-            token, new_expires_at = await _get_github_app_token()
-            mcp_tool["headers"]["Authorization"] = f"Bearer {token}"
-            expires_at = new_expires_at
-            logger.info(
-                "GitHub token refreshed, expires at %s", new_expires_at.isoformat()
-            )
-
-    async def _loop() -> None:
-        while True:
-            try:
-                await _refresh_once()
-            except Exception as ex:
-                logger.exception("GitHub token background refresh failed: %s", ex)
-            await asyncio.sleep(interval_seconds)
-
-    task = asyncio.get_running_loop().create_task(_loop())
-    _background_refresh_tasks.append(task)
-    logger.info("Started GitHub token background refresh loop")
-
-
 # -- public ----------------------------------------------------------------
 
 
-async def create_github_mcp_tool(client: BaseChatClient):
-    """Create a server-side MCP tool for GitHub with auto-refreshing auth.
+async def create_github_mcp_tool() -> MCPStreamableHTTPTool:
+    """Create a local MCP tool for GitHub with auto-refreshing auth.
 
-    Supports two authentication modes (checked in order), both
-    server-side so end-users are never prompted to sign in:
+    The tool connects directly from the agent container to GitHub's
+    remote MCP server (``api.githubcopilot.com``).  A custom httpx client
+    with an event hook injects fresh auth and toolset headers on every
+    outbound HTTP request (including the MCP handshake), so there is no
+    reliance on Foundry-side proxy state.
 
-    1. **Environment token** — uses a ``GITHUB_TOKEN`` environment
-       variable (e.g. a PAT) for shared, key-based authentication.
+    Supports two authentication modes (checked in order):
 
-    2. **GitHub App JWT via Key Vault** — uses a GitHub App private key
-       stored in Azure Key Vault to mint installation tokens, with
-       automatic refresh before expiry.
-
-    Args:
-        client: The agent client.
+    1. **Environment token** — ``GITHUB_TOKEN`` env var (e.g. a PAT).
+    2. **GitHub App JWT via Key Vault** — mints short-lived installation
+       tokens with proactive background refresh.
 
     Config keys (from App Configuration / ``.env``):
 
@@ -300,33 +366,55 @@ async def create_github_mcp_tool(client: BaseChatClient):
     """
     token, expires_at = await _get_github_token()
     if not token:
-        raise RuntimeError("Failed to initialize GitHub MCP token for GitHub MCP auth.")
+        raise RuntimeError("Failed to obtain GitHub token for MCP auth.")
 
-    # Probe the remote endpoint before registering the tool.  If the
-    # endpoint is broken
+    # Validate the endpoint once at startup.
     if not await _validate_mcp_endpoint(token):
         raise RuntimeError("GitHub MCP endpoint is unavailable (health check failed).")
 
-    headers = {**_GITHUB_MCP_HEADERS, "Authorization": f"Bearer {token}"}
-    mcp_tool = client.get_mcp_tool(
+    token_mgr = _GitHubTokenManager(token, expires_at)
+
+    # Build a custom httpx client with an event hook that injects auth +
+    # toolset headers on *every* outbound request.  This is necessary
+    # because ``header_provider`` only fires during ``call_tool()`` — the
+    # initial MCP handshake (``initialize``, ``tools/list``) does NOT go
+    # through ``call_tool`` and would otherwise lack the Authorization
+    # header, causing a 401.
+    async def _inject_auth(request: httpx.Request) -> None:  # noqa: RUF029
+        for key, value in token_mgr.get_headers().items():
+            request.headers[key] = value
+
+    http_client = httpx.AsyncClient(
+        follow_redirects=True,
+        timeout=httpx.Timeout(
+            _MCP_REQUEST_TIMEOUT_SECS, read=_MCP_REQUEST_TIMEOUT_SECS
+        ),
+        event_hooks={"request": [_inject_auth]},
+    )
+
+    mcp_tool = MCPStreamableHTTPTool(
         name="github",
-        description="The GitHub MCP Server has the ability to read repositories and code files, manage issues and PRs, analyze code, and automate workflows.",
         url=_GITHUB_MCP_URL,
+        description=(
+            "The GitHub MCP Server has the ability to read repositories "
+            "and code files, manage issues and PRs, analyze code, and "
+            "automate workflows."
+        ),
         approval_mode="never_require",
-        headers=headers,
+        allowed_tools=_GITHUB_ALLOWED_TOOLS,
+        load_prompts=False,
+        request_timeout=_MCP_REQUEST_TIMEOUT_SECS,
+        http_client=http_client,
     )
 
-    if expires_at is None:
+    if token_mgr.is_static:
         logger.info("GitHub MCP tool configured via GITHUB_TOKEN env (static)")
-        return mcp_tool
+    else:
+        logger.info(
+            "GitHub MCP tool configured via GitHub App token (owner=%s, expires=%s)",
+            cfg("GITHUB_APP_INSTALLATION_OWNER", _DEFAULT_INSTALLATION_OWNER),
+            expires_at.isoformat() if expires_at else "unknown",
+        )
+        token_mgr.start_background_refresh()
 
-    logger.info(
-        "GitHub MCP tool configured via GitHub App token " "(owner=%s, expires=%s)",
-        cfg("GITHUB_APP_INSTALLATION_OWNER", _DEFAULT_INSTALLATION_OWNER),
-        expires_at.isoformat() if expires_at else "unknown",
-    )
-    _start_background_token_refresh(
-        mcp_tool=mcp_tool,
-        token_expires_at=expires_at or datetime.now(timezone.utc),
-    )
     return mcp_tool

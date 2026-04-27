@@ -35,6 +35,7 @@ from azure.identity.aio import DefaultAzureCredential
 import config.app_config as app_config
 from tools.github_mcp_tools import create_github_mcp_tool
 
+
 @pytest_asyncio.fixture(scope="module")
 async def ai_client():
     """Initialise App Configuration and return an AzureAIClient (new Foundry)."""
@@ -47,11 +48,12 @@ async def ai_client():
         credential=DefaultAzureCredential(),
     )
 
+
 @pytest.mark.asyncio
 @pytest.mark.usefixtures("_require_github_connection")
 async def test_agent_with_github_mcp_tool(ai_client) -> None:
     """Run a simple agent with the GitHub MCP tool and ask about a repo."""
-    github_mcp_tool = await create_github_mcp_tool(ai_client)
+    github_mcp_tool = await create_github_mcp_tool()
 
     async with Agent(
         client=ai_client,

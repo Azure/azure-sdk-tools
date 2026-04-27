@@ -128,7 +128,7 @@ async def main() -> None:
         )
 
     try:
-        tools.append(await create_github_mcp_tool(agent_client))
+        tools.append(await create_github_mcp_tool())
     except Exception:
         logger.exception(
             "%s failed to initialize, skipped", create_github_mcp_tool.__name__

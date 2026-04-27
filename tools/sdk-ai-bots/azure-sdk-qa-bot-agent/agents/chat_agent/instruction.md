@@ -42,6 +42,8 @@ Route every message to exactly one of these paths:
 
 **Web Fetch (`web_fetch`)** — Fetch and read actual web page content. **Never call `web_fetch` on `github.com` URLs** — always use GitHub MCP tools instead for any GitHub content (repos, files, issues, PRs, etc.).
 
+**Tool Failure Handling** — When a tool call fails or returns no results, explain what happened briefly and try an alternative path (e.g., fall back from GitHub MCP to web search, or refine the search query). If no alternative is available, ask the user a follow-up question.
+
 ## Skills & Tenant Context
 
 - Load the matching skill for domain questions to get guideline, tenant ID, and knowledge sources.

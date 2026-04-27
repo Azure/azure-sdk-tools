@@ -2206,10 +2206,6 @@ def get_architect_comments(
         else:
             allowed_commenters = get_approvers(environment=environment)
 
-        if allowed_commenters is not None and not include_replies:
-            # When not including replies, simply keep only approver comments.
-            filtered = [c for c in filtered if c.get("CreatedBy") in allowed_commenters]
-
     # Look up the language for each comment's review
     review_lang_map: dict[str, str] = {}
     review_ids = set(c.get("ReviewId") for c in filtered if c.get("ReviewId"))
@@ -2266,6 +2262,10 @@ def get_architect_comments(
                 if existing.get("CreatedOn", "") > c.get("CreatedOn", ""):
                     seen_threads[thread_key] = c
         filtered = list(seen_threads.values())
+
+        # When filtering to approvers, exclude threads whose starter is not an approver.
+        if allowed_commenters is not None:
+            filtered = [c for c in filtered if c.get("CreatedBy") in allowed_commenters]
     else:
         # When including replies, identify threads started by an approver and include
         # *all* comments in those threads (not just approver-authored ones).

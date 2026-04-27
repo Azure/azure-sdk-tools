@@ -426,3 +426,248 @@ def test_mixed_threaded_and_threadless_comments(monkeypatch, capsys):
 
     ids = {c["id"] for c in output}
     assert ids == {"c1", "c3"}, "Should keep only earliest per thread/element group"
+
+
+def test_default_excludes_thread_started_by_non_approver(monkeypatch, capsys):
+    """In default mode, a thread started by a non-approver should be excluded
+    even if an approver replies to it."""
+    comments = [
+        # Thread started by non-approver
+        _make_comment(
+            "c1", thread_id="thread1", created_by="sdk_dev",
+            created_on="2026-04-10T00:00:00Z",
+        ),
+        # Approver reply in the same thread
+        _make_comment(
+            "c2", thread_id="thread1", created_by="architect1",
+            created_on="2026-04-10T01:00:00Z",
+        ),
+        # Thread started by approver (should be kept)
+        _make_comment(
+            "c3", thread_id="thread2", created_by="architect1",
+            created_on="2026-04-11T00:00:00Z",
+        ),
+    ]
+    _patch_common(
+        monkeypatch,
+        raw_comments=comments,
+        approvers={"architect1"},
+        review_lang_items=[{"id": "rev1", "Language": "Python"}],
+        thread_starts={
+            "thread1": "2026-04-10T00:00:00Z",
+            "thread2": "2026-04-11T00:00:00Z",
+        },
+    )
+
+    cli.get_architect_comments(start_date="2026-04-01", end_date="2026-04-30")
+    output = json.loads(capsys.readouterr().out)
+
+    assert len(output) == 1
+    assert output[0]["id"] == "c3", "Only thread started by approver should be returned"
+
+
+# ---------------------------------------------------------------------------
+# Tests — language filtering
+# ---------------------------------------------------------------------------
+
+
+def test_language_filter_restricts_to_matching_reviews(monkeypatch, capsys):
+    """When language is specified, only comments from reviews in that language are returned."""
+    comments = [
+        _make_comment("c1", review_id="rev_py", created_by="architect1", thread_id="thread1"),
+        _make_comment("c2", review_id="rev_js", created_by="architect1", thread_id="thread2"),
+    ]
+    _patch_common(
+        monkeypatch,
+        raw_comments=comments,
+        approvers={"architect1"},
+        review_lang_items=[
+            {"id": "rev_py", "Language": "Python"},
+            {"id": "rev_js", "Language": "JavaScript"},
+        ],
+        thread_starts={"thread1": "2026-04-10T00:00:00Z", "thread2": "2026-04-10T00:00:00Z"},
+    )
+
+    cli.get_architect_comments(start_date="2026-04-01", end_date="2026-04-30", language="python")
+    output = json.loads(capsys.readouterr().out)
+
+    assert len(output) == 1
+    assert output[0]["id"] == "c1"
+
+
+# ---------------------------------------------------------------------------
+# Tests — Diagnostic comment exclusion
+# ---------------------------------------------------------------------------
+
+
+def test_excludes_diagnostic_comments(monkeypatch, capsys):
+    """Diagnostic comments should be excluded regardless of author."""
+    comments = [
+        _make_comment("c1", created_by="architect1", comment_source="UserGenerated"),
+        _make_comment("c2", created_by="architect1", comment_source="Diagnostic", thread_id="thread2"),
+    ]
+    _patch_common(
+        monkeypatch,
+        raw_comments=comments,
+        approvers={"architect1"},
+        review_lang_items=[{"id": "rev1", "Language": "Python"}],
+        thread_starts={"thread1": "2026-04-10T00:00:00Z"},
+    )
+
+    cli.get_architect_comments(start_date="2026-04-01", end_date="2026-04-30")
+    output = json.loads(capsys.readouterr().out)
+
+    assert len(output) == 1
+    assert output[0]["id"] == "c1"
+
+
+# ---------------------------------------------------------------------------
+# Tests — include_replies + window filtering
+# ---------------------------------------------------------------------------
+
+
+def test_include_replies_excludes_threads_not_started_in_window(monkeypatch, capsys):
+    """With include_replies=True, threads that started before the window are excluded."""
+    comments = [
+        _make_comment(
+            "c1", thread_id="thread_new", created_by="architect1",
+            created_on="2026-04-10T00:00:00Z",
+        ),
+        _make_comment(
+            "c2", thread_id="thread_new", created_by="sdk_dev",
+            created_on="2026-04-10T01:00:00Z",
+        ),
+        _make_comment(
+            "c3", thread_id="thread_old", created_by="architect1",
+            created_on="2026-04-11T00:00:00Z",
+        ),
+    ]
+    _patch_common(
+        monkeypatch,
+        raw_comments=comments,
+        approvers={"architect1"},
+        review_lang_items=[{"id": "rev1", "Language": "Python"}],
+        thread_starts={
+            "thread_new": "2026-04-10T00:00:00Z",
+            "thread_old": "2026-03-01T00:00:00Z",
+        },
+    )
+
+    cli.get_architect_comments(
+        start_date="2026-04-01", end_date="2026-04-30", include_replies=True,
+    )
+    output = json.loads(capsys.readouterr().out)
+
+    ids = {c["id"] for c in output}
+    assert ids == {"c1", "c2"}, "Old thread should be excluded even with include_replies"
+
+
+def test_include_replies_threadless_excludes_non_approver_starter(monkeypatch, capsys):
+    """With include_replies=True, threadless comments whose ElementId group was
+    started by a non-approver should be excluded."""
+    comments = [
+        # ElementId group started by non-approver
+        _make_comment(
+            "c1", thread_id=None, element_id="Ns.Class.a",
+            created_by="sdk_dev", created_on="2026-04-10T00:00:00Z",
+        ),
+        _make_comment(
+            "c2", thread_id=None, element_id="Ns.Class.a",
+            created_by="architect1", created_on="2026-04-10T01:00:00Z",
+        ),
+        # ElementId group started by approver
+        _make_comment(
+            "c3", thread_id=None, element_id="Ns.Class.b",
+            created_by="architect1", created_on="2026-04-11T00:00:00Z",
+        ),
+    ]
+    _patch_common(
+        monkeypatch,
+        raw_comments=comments,
+        approvers={"architect1"},
+        review_lang_items=[{"id": "rev1", "Language": "Python"}],
+        thread_starts={
+            "Ns.Class.a": "2026-04-10T00:00:00Z",
+            "Ns.Class.b": "2026-04-11T00:00:00Z",
+        },
+    )
+
+    cli.get_architect_comments(
+        start_date="2026-04-01", end_date="2026-04-30", include_replies=True,
+    )
+    output = json.loads(capsys.readouterr().out)
+
+    ids = {c["id"] for c in output}
+    assert ids == {"c3"}, "Threadless group started by non-approver should be excluded"
+
+
+# ---------------------------------------------------------------------------
+# Tests — edge cases
+# ---------------------------------------------------------------------------
+
+
+def test_comment_with_no_thread_id_and_no_element_id(monkeypatch, capsys):
+    """A comment with neither ThreadId nor ElementId is treated as standalone."""
+    comments = [
+        _make_comment(
+            "c1", thread_id=None, element_id=None,
+            created_by="architect1", created_on="2026-04-10T00:00:00Z",
+        ),
+    ]
+    _patch_common(
+        monkeypatch,
+        raw_comments=comments,
+        approvers={"architect1"},
+        review_lang_items=[{"id": "rev1", "Language": "Python"}],
+        # Neither ThreadId nor ElementId → no key in thread_starts → excluded by window filter
+        thread_starts={},
+    )
+
+    cli.get_architect_comments(start_date="2026-04-01", end_date="2026-04-30")
+    output = json.loads(capsys.readouterr().out)
+
+    assert output == [], "Comment with no thread key has no thread_start, so window filter excludes it"
+
+
+def test_dedup_picks_earliest_regardless_of_input_order(monkeypatch, capsys):
+    """Dedup should pick the earliest comment even if a later comment appears first in the list."""
+    comments = [
+        # Later comment appears first in list
+        _make_comment(
+            "c2", thread_id="thread1", created_by="architect1",
+            created_on="2026-04-10T01:00:00Z",
+        ),
+        _make_comment(
+            "c1", thread_id="thread1", created_by="architect1",
+            created_on="2026-04-10T00:00:00Z",
+        ),
+    ]
+    _patch_common(
+        monkeypatch,
+        raw_comments=comments,
+        approvers={"architect1"},
+        review_lang_items=[{"id": "rev1", "Language": "Python"}],
+        thread_starts={"thread1": "2026-04-10T00:00:00Z"},
+    )
+
+    cli.get_architect_comments(start_date="2026-04-01", end_date="2026-04-30")
+    output = json.loads(capsys.readouterr().out)
+
+    assert len(output) == 1
+    assert output[0]["id"] == "c1", "Should pick c1 (earliest) not c2"
+
+
+def test_no_comments_returns_empty(monkeypatch, capsys):
+    """When there are no comments at all, output should be an empty list."""
+    _patch_common(
+        monkeypatch,
+        raw_comments=[],
+        approvers={"architect1"},
+        review_lang_items=[],
+        thread_starts={},
+    )
+
+    cli.get_architect_comments(start_date="2026-04-01", end_date="2026-04-30")
+    output = json.loads(capsys.readouterr().out)
+
+    assert output == []

@@ -53,6 +53,10 @@ stimuli:
       required:
         - edit
   # VP1: Underscore operationIds should be removed (e.g. BgpConnection has only underscore ones)
+  - type: skill-invocation
+    config:
+      required:
+        - azure-typespec-author
   - type: file-not-matches
     config:
       path: BgpConnection.tsp
@@ -111,6 +115,7 @@ stimuli:
 scoring:
   weights:
     tool-calls: 1
+    skill-invocation: 1
     file-not-matches: 3
     file-matches: 4
   threshold: 1.0

@@ -2174,3 +2174,201 @@ export class DataProductClient {
         expect(actualBreakingChanges).toHaveLength(0);
     });
 });
+
+describe("Breaking change detection v2 - Class method changes", () => {
+    test("Class Method Removed", async () => {
+        const baselineApiView = `
+\`\`\`ts
+// @public
+export class DataProductClient {
+    constructor(credential: TokenCredential, subscriptionId: string);
+    listGitHubAuth(options?: ListGitHubAuthOptionalParams): Promise<ListGitHubAuthResponse>;
+}
+\`\`\`
+`;
+        const currentApiView = `
+\`\`\`ts
+// @public
+export class DataProductClient {
+    constructor(credential: TokenCredential, subscriptionId: string);
+}
+\`\`\`
+`;
+        const changelogItems = await generateChangelogItems(
+            { apiView: baselineApiView, sdkType: SDKType.ModularClient },
+            { apiView: currentApiView, sdkType: SDKType.ModularClient },
+        );
+        const items = getItemsByCategory(
+            changelogItems,
+            ChangelogItemCategory.ClassMethodRemoved,
+        );
+        expect(items).toHaveLength(1);
+        expect(items[0]).toBe(
+            "Removed operation DataProductClient.listGitHubAuth",
+        );
+        // should NOT generate the generic "has a new signature" message
+        expect(
+            getItemsByCategory(changelogItems, ChangelogItemCategory.ClassChanged),
+        ).toHaveLength(0);
+    });
+
+    test("Class Method Added", async () => {
+        const baselineApiView = `
+\`\`\`ts
+// @public
+export class DataProductClient {
+    constructor(credential: TokenCredential, subscriptionId: string);
+}
+\`\`\`
+`;
+        const currentApiView = `
+\`\`\`ts
+// @public
+export class DataProductClient {
+    constructor(credential: TokenCredential, subscriptionId: string);
+    listGitHubAuth(options?: ListGitHubAuthOptionalParams): Promise<ListGitHubAuthResponse>;
+}
+\`\`\`
+`;
+        const changelogItems = await generateChangelogItems(
+            { apiView: baselineApiView, sdkType: SDKType.ModularClient },
+            { apiView: currentApiView, sdkType: SDKType.ModularClient },
+        );
+        const items = getItemsByCategory(
+            changelogItems,
+            ChangelogItemCategory.ClassMethodAdded,
+        );
+        expect(items).toHaveLength(1);
+        expect(items[0]).toBe(
+            "Added operation DataProductClient.listGitHubAuth",
+        );
+    });
+
+    test("Class Method Return Type Changed", async () => {
+        const baselineApiView = `
+\`\`\`ts
+// @public
+export class DataProductClient {
+    constructor(credential: TokenCredential, subscriptionId: string);
+    get(resourceGroupName: string): string;
+}
+\`\`\`
+`;
+        const currentApiView = `
+\`\`\`ts
+// @public
+export class DataProductClient {
+    constructor(credential: TokenCredential, subscriptionId: string);
+    get(resourceGroupName: string): number;
+}
+\`\`\`
+`;
+        const changelogItems = await generateChangelogItems(
+            { apiView: baselineApiView, sdkType: SDKType.ModularClient },
+            { apiView: currentApiView, sdkType: SDKType.ModularClient },
+        );
+        const items = getItemsByCategory(
+            changelogItems,
+            ChangelogItemCategory.ClassMethodSignatureChanged,
+        );
+        expect(items).toHaveLength(1);
+        expect(items[0]).toBe(
+            "Operation DataProductClient.get has a new signature",
+        );
+    });
+
+    test("Class Method Parameter Count Changed", async () => {
+        const baselineApiView = `
+\`\`\`ts
+// @public
+export class DataProductClient {
+    constructor(credential: TokenCredential, subscriptionId: string);
+    get(resourceGroupName: string, name: string): Promise<DataProduct>;
+}
+\`\`\`
+`;
+        const currentApiView = `
+\`\`\`ts
+// @public
+export class DataProductClient {
+    constructor(credential: TokenCredential, subscriptionId: string);
+    get(resourceGroupName: string): Promise<DataProduct>;
+}
+\`\`\`
+`;
+        const changelogItems = await generateChangelogItems(
+            { apiView: baselineApiView, sdkType: SDKType.ModularClient },
+            { apiView: currentApiView, sdkType: SDKType.ModularClient },
+        );
+        const items = getItemsByCategory(
+            changelogItems,
+            ChangelogItemCategory.ClassMethodSignatureChanged,
+        );
+        expect(items).toHaveLength(1);
+        expect(items[0]).toBe(
+            "Operation DataProductClient.get has a new signature",
+        );
+    });
+
+    test("Class Method Parameter Type Changed", async () => {
+        const baselineApiView = `
+\`\`\`ts
+// @public
+export class DataProductClient {
+    constructor(credential: TokenCredential, subscriptionId: string);
+    get(resourceGroupName: string): Promise<DataProduct>;
+}
+\`\`\`
+`;
+        const currentApiView = `
+\`\`\`ts
+// @public
+export class DataProductClient {
+    constructor(credential: TokenCredential, subscriptionId: string);
+    get(resourceGroupName: number): Promise<DataProduct>;
+}
+\`\`\`
+`;
+        const changelogItems = await generateChangelogItems(
+            { apiView: baselineApiView, sdkType: SDKType.ModularClient },
+            { apiView: currentApiView, sdkType: SDKType.ModularClient },
+        );
+        const items = getItemsByCategory(
+            changelogItems,
+            ChangelogItemCategory.ClassMethodSignatureChanged,
+        );
+        expect(items).toHaveLength(1);
+        expect(items[0]).toBe(
+            "Operation DataProductClient.get has a new signature",
+        );
+    });
+
+    test("Constructor change still generates ClassChanged (not ClassMethodRemoved)", async () => {
+        const baselineApiView = `
+\`\`\`ts
+// @public
+export class DataProductClient {
+    constructor(credential: string, subscriptionId: string);
+}
+\`\`\`
+`;
+        const currentApiView = `
+\`\`\`ts
+// @public
+export class DataProductClient {
+    constructor(credential: string, subscriptionId: string, resourceId: string);
+}
+\`\`\`
+`;
+        const changelogItems = await generateChangelogItems(
+            { apiView: baselineApiView, sdkType: SDKType.ModularClient },
+            { apiView: currentApiView, sdkType: SDKType.ModularClient },
+        );
+        expect(
+            getItemsByCategory(changelogItems, ChangelogItemCategory.ClassChanged),
+        ).toHaveLength(1);
+        expect(
+            getItemsByCategory(changelogItems, ChangelogItemCategory.ClassMethodRemoved),
+        ).toHaveLength(0);
+    });
+});

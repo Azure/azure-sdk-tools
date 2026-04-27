@@ -100,3 +100,4 @@ extends:
                   AI_FOUNDRY_PROJECT_RESOURCE_ID: $(AI_FOUNDRY_PROJECT_RESOURCE_ID)
                   GITHUB_TOKEN: $(GITHUB_TOKEN)
                   ADO_MCP_AUTH_TOKEN: $(ADO_MCP_AUTH_TOKEN)
+                  SYSTEM_ACCESSTOKEN: $(System.AccessToken)

@@ -14,9 +14,10 @@
     - [Overview](#overview)
     - [Detailed Design](#detailed-design)
     - [Architecture Diagram](#architecture-diagram)
-      - [Component 1: Breaking change detect](#component-1-breaking-change-detect)
+      - [Component 1: Breaking change detector](#component-1-breaking-change-detector)
       - [Component 2: Changelog-breaking change pattern](#component-2-changelog-breaking-change-pattern)
       - [Component 3: Breaking change classifier](#component-3-breaking-change-classifier)
+      - [Component 4: Breaking change Result](#component-4-breaking-change-result)
     - [User Experience](#user-experience)
       - [Code Generation pipeline](#code-generation-pipeline)
       - [SDK breaking change resolve in Spec PR and Code PR](#sdk-breaking-change-resolve-in-spec-pr-and-code-pr)
@@ -101,9 +102,17 @@ flowchart TD
     A[Detect Breaking Change]
     B{Has Breaking Change?}
     C[Copilot agent Classify Breaking Changes]
-    D[Return Breaking Change Result]
-    E[SDK changelog-breaking change pattern]
-    F[SDK changelog]
+    D[Breaking Change Result]
+    E[SDK changelogOrRevapi-breaking change pattern]
+    F[SDK changelog/ Revapi]
+    subgraph Detector
+        A
+    end
+    subgraph Classifier
+        E
+        F
+        C
+    end
 
     A --> B
     B -- Yes --> C
@@ -114,9 +123,9 @@ flowchart TD
 ```
 
 ---
-#### Component 1: Breaking change detect
+#### Component 1: Breaking change detector
 
-detect package breaking changes and convert it as changelog.
+Compare the package against the latest GA release to detect breaking changes. The output is a changelog (or Revapi report for Java) along with an overall assessment of whether the package introduces SDK breaking changes according to the language-specific breaking change policy.
 
 **Summary of the detection mechanism**
 | Language | Tool | Compares | Old Source | New Source |
@@ -189,6 +198,36 @@ output:
     ]
 }
 
+```
+
+#### Component 4: Breaking change Result
+
+**No Breaking change**
+
+```json
+{
+    "hasBreakingChange": false,
+    "language": "java"
+}
+```
+
+**Has Breaking changes**
+
+```json
+{
+    "hasBreakingChange": true,
+    "language": "java",
+    "breakingchanges": [
+        {
+            "breakingchange": "model `ResourceInfo` is renamed to `Resource`",
+            "category": "Conversion-need to be resolve"
+        },
+        {
+            "breakingchange": "Type of property `Prop` has been changed from `string` to `int32`",
+            "category": "typespec change"
+        }
+    ]
+}
 ```
 
 ---

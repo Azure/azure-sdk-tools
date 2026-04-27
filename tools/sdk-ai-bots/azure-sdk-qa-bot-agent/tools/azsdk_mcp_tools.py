@@ -12,6 +12,7 @@ import os
 from agent_framework import MCPStdioTool
 
 from config.app_config import get as cfg
+from tools import truncating_mcp_parser
 
 logger = logging.getLogger(__name__)
 

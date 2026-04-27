@@ -24,6 +24,7 @@ load_dotenv(override=False)
 
 from agent_framework import Agent
 from agent_framework import SkillsProvider
+from agent_framework import ToolResultCompactionStrategy
 from agent_framework_foundry_hosting import ResponsesHostServer
 from opentelemetry import trace as otel_trace
 from opentelemetry._logs import get_logger_provider
@@ -146,6 +147,7 @@ async def main() -> None:
         instructions=instructions,
         tools=tools,
         context_providers=[skills_provider, memory_provider],
+        compaction_strategy=ToolResultCompactionStrategy(keep_last_tool_call_groups=2),
         default_options={
             "reasoning": {"effort": reasoning_effort},
             "max_tool_calls": MAX_TOOL_CALLS_PER_TURN,

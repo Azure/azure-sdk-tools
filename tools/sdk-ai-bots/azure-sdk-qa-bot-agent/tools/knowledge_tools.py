@@ -20,6 +20,10 @@ from utils.azure_ai_search import get_search_client
 logger = logging.getLogger(__name__)
 
 
+# Expanded content beyond this limit is truncated to control context size.
+_MAX_CONTENT_CHARS_PER_RESULT = 3000
+
+
 class SearchMode(str, Enum):
     """Search strategy for knowledge retrieval."""
 
@@ -186,7 +190,7 @@ class KnowledgeTools:
                 ),
                 source=expanded[i].source,
                 link=expanded[i].link,
-                content=expanded[i].content,
+                content=_truncate_content(expanded[i].content),
                 score=unique_chunks[i].rerank_score,
             )
             for i in range(len(expanded))
@@ -238,6 +242,13 @@ def _resolve_source_filters(
             filter_clauses.append(service_type_filter)
         source_filters[source_name] = " and ".join(filter_clauses)
     return source_filters
+
+
+def _truncate_content(content: str | None) -> str | None:
+    """Truncate content to _MAX_CONTENT_CHARS_PER_RESULT to control context size."""
+    if not content or len(content) <= _MAX_CONTENT_CHARS_PER_RESULT:
+        return content
+    return content[:_MAX_CONTENT_CHARS_PER_RESULT] + "\n... [truncated]"
 
 
 def _build_reference_title(

@@ -13,6 +13,7 @@ import os
 from agent_framework import MCPStdioTool
 
 from config.app_config import get as cfg
+from tools import truncating_mcp_parser
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +45,7 @@ async def create_ado_mcp_tool() -> MCPStdioTool:
         args=["-y", "@azure-devops/mcp", org, "-d", "core", "pipelines", "-a", "env"],
         env=env,
         load_prompts=False,
+        parse_tool_results=truncating_mcp_parser,
         description=(
             "Azure DevOps stdio MCP server tools for pipeline lookup. "
             "Use this tool to find release and CI pipeline definitions "

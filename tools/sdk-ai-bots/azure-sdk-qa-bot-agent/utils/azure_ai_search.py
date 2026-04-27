@@ -37,7 +37,7 @@ from models.knowledge import KnowledgeChunk
 logger = logging.getLogger(__name__)
 
 _KB_MAX_OUTPUT_SIZE = 20000
-_HIERARCHY_EXPANSION_TOP = 50
+_HIERARCHY_EXPANSION_TOP = 20
 
 # Chunks below this rerank score are considered low-relevance and dropped.
 _RERANK_SCORE_LOW_RELEVANCE_THRESHOLD = 2.0

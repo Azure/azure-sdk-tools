@@ -30,6 +30,7 @@ from azure.keyvault.keys.crypto import SignatureAlgorithm
 from agent_framework import MCPStreamableHTTPTool
 
 from config.app_config import get as cfg
+from tools import truncating_mcp_parser
 from utils.azure_credential import get_frontend_credential
 
 logger = logging.getLogger(__name__)
@@ -405,6 +406,7 @@ async def create_github_mcp_tool() -> MCPStreamableHTTPTool:
         load_prompts=False,
         request_timeout=_MCP_REQUEST_TIMEOUT_SECS,
         http_client=http_client,
+        parse_tool_results=truncating_mcp_parser,
     )
 
     if token_mgr.is_static:

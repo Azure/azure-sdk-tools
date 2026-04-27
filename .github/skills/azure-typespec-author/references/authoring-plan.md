@@ -4,7 +4,7 @@
 
 ## 3.1 General (All Cases)
 
-Use **one or both** tools to build an authoring plan:
+Use **both** tools to build an authoring plan, if the retrieved results have conflict, rely on agentic search.
 
 1. **MCP Tool** — call `azsdk_typespec_generate_authoring_plan` with:
    - `request`: user request (verbatim)
@@ -21,6 +21,5 @@ Use **one or both** tools to build an authoring plan:
 
 > **Must** use Agentic Search (option 2 above) to build the plan — do not call the MCP tool.
 
-1. Only one preview version allowed; decorate with `@previewVersion`.
-2. Copy `.json` files from latest version's `examples/` into new version's `examples/`. Update `api-version` in each file. Delete old version's example folder if old version is no longer existed.
-3. Update `readme.md`.
+1. Copy `.json` files from latest version's `examples/` into new version's `examples/`. Update `api-version` in each file. Delete old version's example folder if old version is no longer existed.
+2. Update `readme.md`.

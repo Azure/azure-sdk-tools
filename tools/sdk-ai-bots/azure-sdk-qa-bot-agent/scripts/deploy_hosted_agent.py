@@ -144,6 +144,18 @@ def main() -> None:
         default=os.environ.get("AZURE_APPCONFIG_ENDPOINT"),
         help="Override App Configuration endpoint",
     )
+    parser.add_argument(
+        "--github-token",
+        default=os.environ.get("GITHUB_TOKEN"),
+        help="GitHub token injected as GITHUB_TOKEN in the container "
+        "(workaround until agent identity has GitHub App permissions)",
+    )
+    parser.add_argument(
+        "--ado-token",
+        default=os.environ.get("ADO_MCP_AUTH_TOKEN"),
+        help="Azure DevOps bearer token injected as ADO_MCP_AUTH_TOKEN "
+        "in the container (workaround until agent identity has ADO permissions)",
+    )
     args = parser.parse_args()
 
     asyncio.run(app_config.init())
@@ -268,6 +280,14 @@ def main() -> None:
             "APP_VERSION": next_version,
             "AI_FOUNDRY_PROJECT_RESOURCE_ID": project_resource_id,
         }
+        # Temporary workaround: inject tokens until the agent identity
+        # has the required permissions for GitHub App and Azure DevOps.
+        if args.github_token:
+            env_vars["GITHUB_TOKEN"] = args.github_token
+            print("  Injecting GITHUB_TOKEN into container env")
+        if args.ado_token:
+            env_vars["ADO_MCP_AUTH_TOKEN"] = args.ado_token
+            print("  Injecting ADO_MCP_AUTH_TOKEN into container env")
         agent = project.agents.create_version(
             agent_name=image_name,
             definition=HostedAgentDefinition(

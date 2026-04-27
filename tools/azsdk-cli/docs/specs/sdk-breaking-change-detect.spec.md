@@ -218,7 +218,7 @@ flowchart TD
     A[Generate SDK Changelog]
     B[Detect SDK Breaking Changes azsdk_package_detect_breaking_change]
     C[PR owner Ask Copilot to Resolve Breaking Changes]
-    D[Copilot Calls azsdk_customized_Code_Update]
+    D[Copilot Calls azsdk_customized_code_update]
     E[SDK Breaking Change Resolved]
 
     A -->|changelog| B

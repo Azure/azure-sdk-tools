@@ -21,6 +21,7 @@ export interface TspLocation {
   entrypointFile?: string;
   emitterPackageJsonPath?: string;
   batch?: string[];
+  apiVersion?: string;
 }
 
 export function resolveTspConfigUrl(configUrl: string): {

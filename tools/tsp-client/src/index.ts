@@ -131,6 +131,10 @@ const parser = yargs(hideBin(process.argv))
           type: "boolean",
           description: "Update the library if it exists, keeping extra tsp-location.yaml data",
           default: false,
+        })
+        .option("api-version", {
+          type: "string",
+          description: "The api-version to pass to the emitter",
         });
     },
     async (argv: any) => {
@@ -220,6 +224,10 @@ const parser = yargs(hideBin(process.argv))
         .option("trace", {
           type: "array",
           description: "Enable tracing during compile",
+        })
+        .option("api-version", {
+          type: "string",
+          description: "The api-version to pass to the emitter",
         });
     },
     async (argv: any) => {

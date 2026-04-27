@@ -229,6 +229,9 @@ export async function initCommand(argv: any) {
     repo: "",
     additionalDirectories: [],
   };
+  if (argv["api-version"]) {
+    tspLocationData.apiVersion = argv["api-version"];
+  }
   if (isUrl) {
     // URL scenario
     const resolvedConfigUrl = resolveTspConfigUrl(tspConfigPath);
@@ -432,6 +435,20 @@ export async function generateCommand(argv: any) {
       "tsp-location.yaml is missing required field(s) for generate operation: directory",
     );
   }
+
+  // Merge api-version from tsp-location.yaml with emitter options.
+  // CLI --emitter-options takes precedence if api-version is specified in both places.
+  let resolvedEmitterOptions = emitterOptions;
+  if (tspLocation.apiVersion) {
+    const apiVersionOption = `api-version=${tspLocation.apiVersion}`;
+    if (resolvedEmitterOptions) {
+      if (!resolvedEmitterOptions.includes("api-version=")) {
+        resolvedEmitterOptions = `${apiVersionOption};${resolvedEmitterOptions}`;
+      }
+    } else {
+      resolvedEmitterOptions = apiVersionOption;
+    }
+  }
   const dirSplit = tspLocation.directory.split("/");
   let projectName = dirSplit[dirSplit.length - 1];
   if (!projectName) {
@@ -495,7 +512,7 @@ export async function generateCommand(argv: any) {
     outputPath: legacyPathResolution ? outputDir : repoRoot, // always use repo root when using emitter-output-dir
     resolvedMainFilePath,
     saveInputs: saveInputs,
-    additionalEmitterOptions: emitterOptions,
+    additionalEmitterOptions: resolvedEmitterOptions,
     trace: argv["trace"],
     legacyPathResolution: legacyPathResolution,
   });
@@ -581,6 +598,10 @@ export async function updateCommand(argv: any) {
       "Commit SHA is required when specifying `--repo`; please specify a commit using `--commit`",
     );
   }
+  const apiVersion = argv["api-version"];
+  if (apiVersion) {
+    tspLocation.apiVersion = apiVersion;
+  }
   if (commit) {
     tspLocation.commit = commit ?? tspLocation.commit;
     tspLocation.repo = repo ?? tspLocation.repo;
@@ -589,6 +610,8 @@ export async function updateCommand(argv: any) {
     tspConfig = resolveTspConfigUrl(tspConfig);
     tspLocation.commit = tspConfig.commit ?? tspLocation.commit;
     tspLocation.repo = tspConfig.repo ?? tspLocation.repo;
+    await writeTspLocationYaml(tspLocation, outputDir);
+  } else if (apiVersion) {
     await writeTspLocationYaml(tspLocation, outputDir);
   }
   // update argv in case anything changed and call into sync and generate

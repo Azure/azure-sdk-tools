@@ -116,6 +116,9 @@ export async function writeTspLocationYaml(
   if (tspLocation.emitterPackageJsonPath) {
     tspLocationContent += `\nemitterPackageJsonPath: ${tspLocation.emitterPackageJsonPath}`;
   }
+  if (tspLocation.apiVersion) {
+    tspLocationContent += `\napiVersion: ${tspLocation.apiVersion}`;
+  }
   await writeFile(joinPaths(projectPath, "tsp-location.yaml"), tspLocationContent);
 }
 
@@ -138,6 +141,7 @@ export async function updateExistingTspLocation(
       "directory",
       "entrypointFile",
       "additionalDirectories",
+      "apiVersion",
     ];
 
     // Update each property if it has a valid value

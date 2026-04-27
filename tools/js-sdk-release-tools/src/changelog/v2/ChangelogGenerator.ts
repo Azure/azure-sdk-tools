@@ -16,6 +16,7 @@ export enum ChangelogItemCategory {
   // class
   ClassAdded = 300,
   ClassConstructorAdded = 301,
+  ClassMethodAdded = 302,
   // model
   ModelAdded = 400,
   ModelOptionalPropertyAdded = 401,
@@ -41,6 +42,8 @@ export enum ChangelogItemCategory {
   ClassChanged = 40001,
   ClassPropertyRemoved = 40002,
   ClassPropertyOptionalToRequired = 40003,
+  ClassMethodRemoved = 40004,
+  ClassMethodSignatureChanged = 40005,
   // model
   ModelRemoved = 50000,
   ModelRequiredPropertyAdded = 50001,
@@ -124,6 +127,9 @@ export class ChangelogGenerator {
   private classChangedTemplate = 'Class {className} has a new signature';
   // NOTE: not in v1
   private classConstructorAddedTemplate = 'Class {className} has a new constructor "{constructorSignature}"';
+  private classMethodAddedTemplate = 'Added operation {className}.{methodName}';
+  private classMethodRemovedTemplate = 'Removed operation {className}.{methodName}';
+  private classMethodSignatureChangedTemplate = 'Operation {className}.{methodName} has a new signature';
 
   /** type alias */
   // TODO: add more detection for class changes
@@ -344,17 +350,47 @@ export class ChangelogGenerator {
         const message = template(this.classRemovedTemplate, { className });
         this.addChangelogItem(ChangelogItemCategory.ClassRemoved, message);
       }
-      // class signature added
+      // class signature added: distinguish constructor vs method
       if (p.location === DiffLocation.Signature && this.hasReasons(p.reasons, DiffReasons.Added)) {
-        const constructorSignature = p.source!.node.getText();
-        const message = template(this.classConstructorAddedTemplate, { className, constructorSignature });
-        this.addChangelogItem(ChangelogItemCategory.ClassConstructorAdded, message);
+        const signatureName = p.source!.name;
+        if (signatureName.startsWith('constructor')) {
+          const constructorSignature = p.source!.node.getText();
+          const message = template(this.classConstructorAddedTemplate, { className, constructorSignature });
+          this.addChangelogItem(ChangelogItemCategory.ClassConstructorAdded, message);
+        } else {
+          const message = template(this.classMethodAddedTemplate, { className, methodName: signatureName });
+          this.addChangelogItem(ChangelogItemCategory.ClassMethodAdded, message);
+        }
       }
-      // class type changed
-      // NOTE: not detected in v1 except constructor and it's parameters
+      // class signature removed: distinguish constructor vs method
       if (p.location === DiffLocation.Signature && this.hasReasons(p.reasons, DiffReasons.Removed)) {
-        const message = template(this.classChangedTemplate, { className });
-        this.addChangelogItem(ChangelogItemCategory.ClassChanged, message);
+        const signatureName = p.target!.name;
+        if (signatureName.startsWith('constructor')) {
+          const message = template(this.classChangedTemplate, { className });
+          this.addChangelogItem(ChangelogItemCategory.ClassChanged, message);
+        } else {
+          const message = template(this.classMethodRemovedTemplate, { className, methodName: signatureName });
+          this.addChangelogItem(ChangelogItemCategory.ClassMethodRemoved, message);
+        }
+      }
+      // class method return type changed
+      if (p.location === DiffLocation.Signature_ReturnType && this.hasReasons(p.reasons, DiffReasons.TypeChanged)) {
+        const message = template(this.classMethodSignatureChangedTemplate, { className, methodName: p.target!.name });
+        this.addChangelogItem(ChangelogItemCategory.ClassMethodSignatureChanged, message);
+      }
+      // class method parameter list changed
+      if (p.location === DiffLocation.Signature_ParameterList && this.hasReasons(p.reasons, DiffReasons.CountChanged)) {
+        const message = template(this.classMethodSignatureChangedTemplate, { className, methodName: p.target!.name });
+        this.addChangelogItem(ChangelogItemCategory.ClassMethodSignatureChanged, message);
+      }
+      // class method parameter type changed
+      if (p.location === DiffLocation.Parameter && this.hasReasons(p.reasons, DiffReasons.TypeChanged)) {
+        const parent = p.target!.node.asKindOrThrow(SyntaxKind.Parameter).getParentOrThrow();
+        if (parent.getKind() === SyntaxKind.MethodDeclaration) {
+          const methodName = parent.asKindOrThrow(SyntaxKind.MethodDeclaration).getName();
+          const message = template(this.classMethodSignatureChangedTemplate, { className, methodName });
+          this.addChangelogItem(ChangelogItemCategory.ClassMethodSignatureChanged, message);
+        }
       }
       // class property removed
       if (p.location === DiffLocation.Property && this.hasReasons(p.reasons, DiffReasons.Removed)) {

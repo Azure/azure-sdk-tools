@@ -11,6 +11,6 @@ steps:
       TargetTags: "Integration"
       TargetDirectory: tools/test-proxy/scripts/test-scripts/
       EnvVars:
-        GIT_TOKEN: $(azuresdk-github-pat)
+        GIT_TOKEN: $(GH_TOKEN)
         GIT_COMMIT_OWNER: azure-sdk
         GIT_COMMIT_EMAIL: azuresdk@microsoft.com

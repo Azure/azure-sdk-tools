@@ -20,6 +20,11 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Validate YAML syntax
+        run: |
+          pip install yamllint --quiet
+          yamllint -c .github/skills/.yamllint.yml .github/skills/
+
       - name: Install Azure Developer CLI
         uses: Azure/setup-azd@v2
 

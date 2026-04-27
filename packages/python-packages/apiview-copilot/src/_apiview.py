@@ -5,9 +5,11 @@
 # --------------------------------------------------------------------------
 
 import asyncio
+import logging
 import re
 import sys
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from typing import Optional
 
 import httpx
@@ -622,6 +624,258 @@ def get_ai_comment_feedback(
         result.append(comment)
 
     return result
+
+
+# Valid APIRevisionType string values stored in Cosmos DB (C# JsonStringEnumConverter).
+_KNOWN_REVISION_TYPES = {"Manual", "Automatic", "PullRequest"}
+
+
+def _tally_revisions(
+    revisions: list,
+    exclude_languages: Optional[list] = None,
+) -> dict:
+    """Tallies revision counts by language and revision type.
+
+    Args:
+        revisions: List of revision dicts, each with at least ``Language`` and ``APIRevisionType``.
+        exclude_languages: Pretty language names to exclude (e.g. ["Java", "Go"]).
+
+    Returns:
+        A dict with ``by_language``, ``totals_by_type``, and ``total``.
+    """
+    exclude_set = {l.lower() for l in (exclude_languages or [])}
+
+    by_language: dict[str, dict[str, int]] = {}
+    totals_by_type: dict[str, int] = {}
+    total = 0
+
+    for rev in revisions:
+        lang = get_language_pretty_name(rev.get("Language", "Unknown"))
+        if lang.lower() in exclude_set:
+            continue
+
+        raw_type = rev.get("APIRevisionType", "Unknown")
+        type_name = raw_type if raw_type in _KNOWN_REVISION_TYPES else "Unknown"
+
+        by_language.setdefault(lang, {})
+        by_language[lang][type_name] = by_language[lang].get(type_name, 0) + 1
+        totals_by_type[type_name] = totals_by_type.get(type_name, 0) + 1
+        total += 1
+
+    return {"by_language": by_language, "totals_by_type": totals_by_type, "total": total}
+
+
+def get_created_revisions(
+    start_date: str,
+    end_date: str,
+    *,
+    environment: str = "production",
+    exclude_languages: Optional[list] = None,
+) -> dict:
+    """
+    Counts APIRevisions created in the given date window, broken out by language and revision type.
+
+    Args:
+        start_date: Start date (YYYY-MM-DD).
+        end_date: End date (YYYY-MM-DD).
+        environment: 'production' or 'staging'.
+        exclude_languages: Pretty language names to exclude (e.g. ["Java", "Go"]).
+
+    Returns:
+        A dict with:
+            - by_language: {language: {type_name: count, ...}, ...}
+            - totals_by_type: {type_name: count, ...}
+            - total: int
+    """
+    start_iso = to_iso8601(start_date)
+    end_iso = to_iso8601(end_date, end_of_day=True)
+
+    revisions_container = get_apiview_cosmos_client(container_name="APIRevisions", environment=environment)
+
+    query = (
+        "SELECT c.ReviewId, c.APIRevisionType, c.Language "
+        "FROM c "
+        "WHERE c.CreatedOn >= @start AND c.CreatedOn <= @end"
+    )
+    params = [
+        {"name": "@start", "value": start_iso},
+        {"name": "@end", "value": end_iso},
+    ]
+
+    revisions = list(revisions_container.query_items(query=query, parameters=params, enable_cross_partition_query=True))
+
+    if not revisions:
+        return {"by_language": {}, "totals_by_type": {}, "total": 0}
+
+    return _tally_revisions(revisions, exclude_languages=exclude_languages)
+
+
+# Application Insights resource coordinates for querying APIView page views.
+_APPINSIGHTS_SUBSCRIPTION_ID = "a18897a6-7e44-457d-9260-f2854c0aca42"
+_APPINSIGHTS_RESOURCE_IDS = {
+    "production": (
+        f"/subscriptions/{_APPINSIGHTS_SUBSCRIPTION_ID}"
+        f"/resourceGroups/apiview"
+        f"/providers/microsoft.insights/components/APIView"
+    ),
+    "staging": (
+        f"/subscriptions/{_APPINSIGHTS_SUBSCRIPTION_ID}"
+        f"/resourceGroups/apiviewstagingrg"
+        f"/providers/microsoft.insights/components/apiviewstaging"
+    ),
+}
+
+logger = logging.getLogger(__name__)
+
+
+def _query_viewed_revision_ids(start_date: str, end_date: str, *, environment: str = "production") -> set:
+    """
+    Query Application Insights for distinct API revision IDs that were actually
+    opened by users in the given date window.
+
+    Extracts the ``activeApiRevisionId`` and ``diffApiRevisionId`` query-string
+    parameters from SPA page-view URLs of the form::
+
+        https://spa.apiview.dev/review/{reviewId}?activeApiRevisionId={id}&diffApiRevisionId={id}
+
+    Args:
+        start_date: Start date (YYYY-MM-DD).
+        end_date: End date (YYYY-MM-DD).
+        environment: 'production' or 'staging'.
+
+    Returns:
+        A set of revision ID strings.
+    """
+    resource_id = _APPINSIGHTS_RESOURCE_IDS.get(environment)
+    if not resource_id:
+        raise ValueError(
+            f"Unrecognized environment: {environment}. "
+            f"Valid options are: {', '.join(_APPINSIGHTS_RESOURCE_IDS.keys())}."
+        )
+
+    from azure.monitor.query import LogsQueryClient, LogsQueryStatus
+
+    credential = get_credential()
+
+    kql = (
+        "let active_views = requests\n"
+        '| where url has "/api/reviews/" and url has "activeApiRevisionId"\n'
+        '| extend RevisionId = extract(@"activeApiRevisionId=([^&]+)", 1, url)\n'
+        "| where isnotempty(RevisionId)\n"
+        "| distinct RevisionId;\n"
+        "let diff_views = requests\n"
+        '| where url has "/api/reviews/" and url has "diffApiRevisionId"\n'
+        '| extend RevisionId = extract(@"diffApiRevisionId=([^&]+)", 1, url)\n'
+        "| where isnotempty(RevisionId)\n"
+        "| distinct RevisionId;\n"
+        "union active_views, diff_views\n"
+        "| distinct RevisionId"
+    )
+
+    start_dt = datetime.strptime(start_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+    end_dt = datetime.strptime(end_date, "%Y-%m-%d").replace(hour=23, minute=59, second=59, tzinfo=timezone.utc)
+
+    client = LogsQueryClient(credential)
+    response = client.query_resource(
+        resource_id=resource_id,
+        query=kql,
+        timespan=(start_dt, end_dt),
+    )
+
+    viewed_revision_ids = set()
+    if response.status == LogsQueryStatus.SUCCESS:
+        for table in response.tables:
+            for row in table.rows:
+                if row and row[0]:
+                    viewed_revision_ids.add(row[0])
+    elif response.status == LogsQueryStatus.PARTIAL:
+        logger.warning("Partial results from Application Insights: %s", response.partial_error)
+        for table in response.partial_data:
+            for row in table.rows:
+                if row and row[0]:
+                    viewed_revision_ids.add(row[0])
+    else:
+        raise RuntimeError(f"Application Insights query failed: {response}")
+
+    return viewed_revision_ids
+
+
+def get_opened_revisions(
+    start_date: str,
+    end_date: str,
+    *,
+    environment: str = "production",
+    exclude_languages: Optional[list] = None,
+    created_in_window: bool = False,
+) -> dict:
+    """
+    Counts APIRevisions that were actually opened/viewed in APIView in the given date window,
+    broken out by language and revision type.
+
+    First queries Application Insights for distinct revision IDs that had page views,
+    then enriches with revision metadata from Cosmos DB.
+
+    Args:
+        start_date: Start date (YYYY-MM-DD).
+        end_date: End date (YYYY-MM-DD).
+        environment: 'production' or 'staging'.
+        exclude_languages: Pretty language names to exclude (e.g. ["Java", "Go"]).
+        created_in_window: If True, only include revisions created within the date window.
+            If False (default), include all revisions for viewed reviews regardless of creation date.
+
+    Returns:
+        A dict with:
+            - by_language: {language: {type_name: count, ...}, ...}
+            - totals_by_type: {type_name: count, ...}
+            - total: int
+    """
+    start_iso = to_iso8601(start_date)
+    end_iso = to_iso8601(end_date, end_of_day=True)
+
+    # Step 1: Get revision IDs that were actually opened from App Insights
+    viewed_revision_ids = _query_viewed_revision_ids(start_date, end_date, environment=environment)
+    if not viewed_revision_ids:
+        return {"by_language": {}, "totals_by_type": {}, "total": 0}
+
+    # Step 2: Query APIRevisions by their IDs
+    revisions_container = get_apiview_cosmos_client(container_name="APIRevisions", environment=environment)
+
+    viewed_list = list(viewed_revision_ids)
+    batch_size = 200
+    revisions = []
+
+    for i in range(0, len(viewed_list), batch_size):
+        batch = viewed_list[i : i + batch_size]
+        params = []
+        clauses = []
+        for j, rid in enumerate(batch):
+            pname = f"@rid_{j}"
+            clauses.append(f"c.id = {pname}")
+            params.append({"name": pname, "value": rid})
+
+        date_filter = ""
+        if created_in_window:
+            params.append({"name": "@start", "value": start_iso})
+            params.append({"name": "@end", "value": end_iso})
+            date_filter = "WHERE c.CreatedOn >= @start AND c.CreatedOn <= @end AND "
+        else:
+            date_filter = "WHERE "
+
+        query = (
+            "SELECT c.ReviewId, c.APIRevisionType, c.Language "
+            "FROM c "
+            f"{date_filter}"
+            f"({' OR '.join(clauses)})"
+        )
+
+        revisions.extend(
+            list(revisions_container.query_items(query=query, parameters=params, enable_cross_partition_query=True))
+        )
+
+    if not revisions:
+        return {"by_language": {}, "totals_by_type": {}, "total": 0}
+
+    return _tally_revisions(revisions, exclude_languages=exclude_languages)
 
 
 def resolve_package(

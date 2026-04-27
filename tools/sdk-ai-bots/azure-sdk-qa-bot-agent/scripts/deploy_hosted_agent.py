@@ -109,7 +109,10 @@ def _wait_for_version_active(
             for attr in ("provisioning_state", "provisioningState", "status"):
                 val = getattr(latest, attr, None)
                 if val:
-                    status = str(val).lower()
+                    # Enum str() may produce "enumclass.value" — extract
+                    # the trailing segment after the last dot.
+                    raw = str(val).lower()
+                    status = raw.rsplit(".", 1)[-1]
                     break
 
             if status in ("active", "succeeded"):

@@ -1,14 +1,15 @@
 # Release History
 
-## 0.6.10 (Unreleased)
+## 0.6.10 (2026-04-24)
 
 ### Features Added
 
-### Breaking Changes
-
-### Bugs Fixed
+- Added `azsdk_get_kpi_attestation_status` MCP tool to check KPI attestation status for a release plan given product ID and lifecycle.
+- Added CODEOWNERS Audit command (CLI only) that brings data model to a valid state.
 
 ### Other Changes
+
+- Surface APIView link in `azsdk_release_sdk` when APIView approval is missing
 
 ## 0.6.9 (2026-04-16)
 

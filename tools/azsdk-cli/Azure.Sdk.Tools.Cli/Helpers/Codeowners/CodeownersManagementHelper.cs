@@ -11,7 +11,7 @@ using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Octokit;
 
-namespace Azure.Sdk.Tools.Cli.Helpers;
+namespace Azure.Sdk.Tools.Cli.Helpers.Codeowners;
 
 public enum OwnerType
 {

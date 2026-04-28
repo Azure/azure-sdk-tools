@@ -411,6 +411,26 @@ Outputs JSON with a top-level `versions` key containing per-language monthly dat
 
 ---
 
+### `avc report cross-language-compliance`
+
+Monitor progress toward 100% cross-language metadata compliance across parsers. For each month, checks the latest revision per review and reports whether it includes `CrossLanguageMetadata` (signaled by `CrossLanguagePackageId` on the revision document).
+
+```bash
+avc report cross-language-compliance [--end-date 2026-04-28] [--months 6] [--languages Python Java] [--chart] [--environment production|staging]
+```
+
+| Option | Description |
+|--------|-------------|
+| `-e/--end-date` | Inclusive query end date; defaults to today |
+| `--months` | Number of calendar months to look back from the end date (default 6) |
+| `--languages` | Languages to include; defaults to Python, C#, Java, JavaScript, and Go |
+| `--chart` | Generate a PNG trend chart saved to `output/charts/` |
+| `--environment` | `production` (default) or `staging` |
+
+Outputs JSON with a top-level `compliance` key containing per-language monthly data points, followed by a compact terminal summary table.
+
+---
+
 ### `avc report active-reviews`
 
 Query active APIView reviews in a date range.

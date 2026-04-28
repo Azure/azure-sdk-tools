@@ -14,7 +14,7 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import Optional
 
-from src._apiview import _KNOWN_REVISION_TYPES, get_apiview_cosmos_client
+from src._apiview import _KNOWN_REVISION_TYPES, get_apiview_cosmos_client, get_cross_language_compliance
 from src._comment_bucket_trends import get_last_n_month_ranges
 from src._utils import get_language_pretty_name, to_iso8601
 
@@ -22,6 +22,7 @@ PRODUCTION_ENVIRONMENT = "production"
 DEFAULT_LANGUAGES = ["Python", "C#", "Java", "JavaScript", "Go"]
 DEFAULT_MONTHS = 6
 DEFAULT_OUTPUT_PATH = Path("output/charts/apiview_version_trends.png")
+DEFAULT_COMPLIANCE_OUTPUT_PATH = Path("output/charts/cross_language_compliance.png")
 OMIT_LANGUAGES = ["c++", "c", "typespec", "swagger", "xml"]
 
 
@@ -305,6 +306,177 @@ def print_version_report(
                 f"{pr['total']:>10}",
                 f"{item['versioned_pct']:>10.1f}",
                 f"{item['total']:>10}",
+            ]
+            print("  ".join(values))
+
+    if output_path and output_path.exists():
+        print(f"\nSaved chart: {output_path}")
+    else:
+        print("\nChart was not generated.")
+
+
+# ---------------------------------------------------------------------------
+# Cross-language compliance metrics
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class MonthlyCompliancePoint:
+    """Monthly cross-language compliance data for a single language."""
+
+    label: str
+    start_date: str
+    end_date: str
+    compliant: int = 0
+    non_compliant: int = 0
+    total: int = 0
+    pct: float = 0.0
+
+
+def build_compliance_reports(
+    languages: Optional[list[str]] = None,
+    months: int = DEFAULT_MONTHS,
+    end_date: Optional[date] = None,
+    *,
+    environment: str = PRODUCTION_ENVIRONMENT,
+) -> dict[str, list[dict]]:
+    """Build per-language cross-language compliance reports for the requested month lookback window.
+
+    For each month, queries the latest revision per review created in that month and
+    checks whether ``CrossLanguagePackageId`` is populated (set from ``CrossLanguageMetadata``).
+
+    Returns:
+        A dict mapping language name to a list of monthly data-point dicts.
+    """
+    selected_languages = languages or DEFAULT_LANGUAGES
+    month_ranges = get_last_n_month_ranges(months=months, end_date=end_date)
+    if not month_ranges:
+        return {lang: [] for lang in selected_languages}
+
+    reports: dict[str, list[dict]] = {lang: [] for lang in selected_languages}
+    for start, end in month_ranges:
+        label = f"{start.year}-{start.month:02d}"
+        data = get_cross_language_compliance(
+            start.isoformat(),
+            end.isoformat(),
+            environment=environment,
+        )
+        by_language = data["by_language"]
+        for language in selected_languages:
+            entry = by_language.get(language, {"compliant": 0, "non_compliant": 0, "total": 0, "pct": 0.0})
+            point = MonthlyCompliancePoint(
+                label=label,
+                start_date=start.isoformat(),
+                end_date=end.isoformat(),
+                compliant=entry["compliant"],
+                non_compliant=entry["non_compliant"],
+                total=entry["total"],
+                pct=entry["pct"],
+            )
+            reports[language].append(asdict(point))
+
+    return reports
+
+
+def generate_compliance_chart(
+    reports: dict[str, list[dict]],
+    output_path: Path = DEFAULT_COMPLIANCE_OUTPUT_PATH,
+    *,
+    environment: str = PRODUCTION_ENVIRONMENT,
+) -> Optional[Path]:
+    """Render a PNG chart showing cross-language compliance percentage trends per language."""
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    try:
+        import matplotlib.pyplot as plt
+    except ImportError:
+        print("matplotlib is not installed; skipping chart generation.")
+        return None
+
+    languages = list(reports.keys())
+    month_count = len(next(iter(reports.values()), [])) if reports else 0
+    if month_count == 0:
+        return None
+
+    cols = 2 if len(languages) > 1 else 1
+    rows = max(1, math.ceil(len(languages) / cols))
+
+    figure, axes = plt.subplots(rows, cols, figsize=(8 * cols, 5 * rows), sharey=True)
+    if not isinstance(axes, (list, tuple)):
+        try:
+            axes = axes.flatten()
+        except AttributeError:
+            axes = [axes]
+    else:
+        axes = list(axes)
+
+    for index, language in enumerate(languages):
+        axis = axes[index]
+        report = reports[language]
+        labels = [item["label"] for item in report]
+        x_positions = list(range(len(labels)))
+        pcts = [item["pct"] for item in report]
+
+        bars = axis.bar(x_positions, pcts, color="#4CAF50", width=0.6)
+
+        # Annotate each bar with count
+        for bar_pos, item in zip(x_positions, report):
+            if item["total"] > 0:
+                axis.annotate(
+                    f"{item['compliant']}/{item['total']}",
+                    (bar_pos, item["pct"]),
+                    textcoords="offset points",
+                    xytext=(0, 4),
+                    ha="center",
+                    fontsize=7,
+                )
+
+        axis.axhline(y=100, color="gray", linestyle=":", linewidth=1.0, alpha=0.5)
+        axis.set_title(language)
+        axis.set_xticks(x_positions, labels, rotation=45, ha="right")
+        axis.set_ylim(0, 115)
+        axis.grid(True, axis="y", linestyle="--", alpha=0.4)
+
+    for index in range(len(languages), len(axes)):
+        figure.delaxes(axes[index])
+
+    environment_label = (environment or PRODUCTION_ENVIRONMENT).strip().lower()
+    figure.suptitle(
+        f"Cross-Language Metadata Compliance %\nLast {month_count} Calendar Months (APIView {environment_label})",
+        fontsize=14,
+        y=0.985,
+    )
+    figure.supxlabel("Month")
+    figure.supylabel("% Reviews with CrossLanguageMetadata")
+    plt.tight_layout(rect=(0.02, 0.03, 1, 0.90))
+    figure.savefig(output_path, dpi=150)
+    plt.close(figure)
+    return output_path
+
+
+def print_compliance_report(
+    reports: dict[str, list[dict]],
+    output_path: Optional[Path],
+    *,
+    environment: str = PRODUCTION_ENVIRONMENT,
+) -> None:
+    """Print a compact terminal summary of cross-language compliance."""
+    environment_label = (environment or PRODUCTION_ENVIRONMENT).strip().lower()
+    print(f"Cross-language metadata compliance % by month (APIView {environment_label})")
+
+    for language, report in reports.items():
+        print(f"\n{language}")
+        header = ["Month", "Compliant", "Non-Compliant", "Total", "Compliance %"]
+        print("  ".join(f"{col:>14}" for col in header))
+        print("  ".join(["----------"] * len(header)))
+
+        for item in report:
+            values = [
+                f"{item['label']:>14}",
+                f"{item['compliant']:>14}",
+                f"{item['non_compliant']:>14}",
+                f"{item['total']:>14}",
+                f"{item['pct']:>14.1f}",
             ]
             print("  ".join(values))
 

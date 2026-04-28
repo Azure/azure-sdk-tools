@@ -112,7 +112,10 @@ async def main() -> None:
 
     # Parallelise slow async startup tasks to reduce cold-start latency.
     async def _init_memory() -> None:
-        await ensure_user_memory_store(project_client)
+        try:
+            await ensure_user_memory_store(project_client)
+        except Exception:
+            logger.exception("Memory store initialization failed, skipped")
 
     async def _init_mcp(factory):
         try:

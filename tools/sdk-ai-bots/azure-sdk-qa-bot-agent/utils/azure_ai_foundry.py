@@ -52,6 +52,7 @@ def get_project_client() -> AIProjectClient:
         _project_client = AIProjectClient(
             endpoint=cfg("AI_FOUNDRY_PROJECT_ENDPOINT"),
             credential=get_credential(),
+            allow_preview=True,
         )
     return _project_client
 
@@ -60,7 +61,9 @@ def get_openai_client():
     """Return the shared OpenAI client (created once on first call)."""
     global _openai_client
     if _openai_client is None:
-        _openai_client = get_project_client().get_openai_client()
+        agent_name = cfg("AI_FOUNDRY_AGENT_NAME", "azure-sdk-chat-agent")
+        # Hosted agents in refreshed preview must be called via per-agent endpoint.
+        _openai_client = get_project_client().get_openai_client(agent_name=agent_name)
     return _openai_client
 
 

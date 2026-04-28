@@ -1,5 +1,3 @@
-FROM mcr.microsoft.com/azurelinux/base/nodejs:24 AS nodejs
-
 FROM mcr.microsoft.com/azurelinux/base/python:3.12
 
 WORKDIR /app
@@ -8,12 +6,13 @@ ENV PYTHONUNBUFFERED=1
 ENV ENABLE_INSTRUMENTATION=true
 
 ARG AZSDK_CLI_VERSION=0.6.3
+ARG NODE_VERSION=22.12.0
 
 # Install Azure SDK CLI (azsdk) used by `azsdk mcp`.
-# Node.js is copied from an MCR image to avoid third-party binary downloads.
-RUN tdnf install -y ca-certificates curl tar gzip icu git
-COPY --from=nodejs /usr/local/ /usr/local/
-RUN AZSDK_CLI_VERSION=${AZSDK_CLI_VERSION} \
+# Node.js >=20.19 is required by yargs@18 (transitive dep of ADO MCP).
+RUN tdnf install -y ca-certificates curl tar gzip icu git \
+	&& curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" \
+		| tar -xJ --strip-components=1 -C /usr/local \
 	&& curl -fsSL -o /tmp/azsdk.tar.gz "https://github.com/Azure/azure-sdk-tools/releases/download/azsdk_${AZSDK_CLI_VERSION}/Azure.Sdk.Tools.Cli-standalone-linux-x64.tar.gz" \
 	&& mkdir -p /opt/azsdk \
 	&& tar -xzf /tmp/azsdk.tar.gz -C /opt/azsdk \

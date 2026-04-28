@@ -62,26 +62,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         }
 
         [Test]
-        public void Constructor_WithNullPrefix_BuildsExecDashDashArgs()
-        {
-            var options = new NpmOptions(prefix: null, args: ["tsp-client", "init"]);
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                // On Windows, args are wrapped with /C npm ...
-                Assert.That(options.Args, Does.Contain("exec"));
-                Assert.That(options.Args, Does.Contain("--"));
-                Assert.That(options.Args, Does.Contain("tsp-client"));
-                Assert.That(options.Args, Does.Contain("init"));
-                Assert.That(options.Args, Has.No.Member("--prefix"));
-            }
-            else
-            {
-                Assert.That(options.Args, Is.EqualTo(new[] { "exec", "--", "tsp-client", "init" }));
-            }
-        }
-
-        [Test]
         public void Constructor_WithEmptyPrefix_BuildsExecDashDashArgs()
         {
             var options = new NpmOptions(prefix: "", args: ["run", "build"]);

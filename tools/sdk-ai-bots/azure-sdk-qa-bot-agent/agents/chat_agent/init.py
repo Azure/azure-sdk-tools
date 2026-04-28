@@ -96,11 +96,7 @@ async def main() -> None:
     agent_id = f"{agent_name}:{agent_version}" if agent_version else agent_name
     project_client = get_project_client()
 
-    # Memory stores — ensure user store exists and create context provider
-    await ensure_user_memory_store(project_client)
-    memory_provider = MemoryContextProvider(project_client)
-
-    # Init Tools
+    # Init Tools (synchronous / instant)
     knowledge_tools = KnowledgeTools()
     web_tools = WebTools()
     web_search_tool = agent_client.get_web_search_tool(
@@ -113,27 +109,30 @@ async def main() -> None:
         web_search_tool,
     ]
 
-    # Append external MCP tools only when they initialise successfully.
-    try:
-        tools.append(await create_ado_mcp_tool())
-    except Exception:
-        logger.exception(
-            "%s failed to initialize, skipped", create_ado_mcp_tool.__name__
-        )
+    # Parallelise slow async startup tasks to reduce cold-start latency.
+    async def _init_memory() -> None:
+        await ensure_user_memory_store(project_client)
 
-    try:
-        tools.append(await create_azsdk_mcp_tool())
-    except Exception:
-        logger.exception(
-            "%s failed to initialize, skipped", create_azsdk_mcp_tool.__name__
-        )
+    async def _init_mcp(factory):
+        try:
+            return await factory()
+        except Exception:
+            logger.exception("%s failed to initialize, skipped", factory.__name__)
+            return None
 
-    try:
-        tools.append(await create_github_mcp_tool())
-    except Exception:
-        logger.exception(
-            "%s failed to initialize, skipped", create_github_mcp_tool.__name__
-        )
+    memory_task, ado_task, azsdk_task, github_task = await asyncio.gather(
+        _init_memory(),
+        _init_mcp(create_ado_mcp_tool),
+        _init_mcp(create_azsdk_mcp_tool),
+        _init_mcp(create_github_mcp_tool),
+    )
+
+    for mcp_tool in (ado_task, azsdk_task, github_task):
+        if mcp_tool is not None:
+            tools.append(mcp_tool)
+
+    # Memory context provider (memory store is ready after gather)
+    memory_provider = MemoryContextProvider(project_client)
 
     # Init Skills
     skills = create_tenant_skills()

@@ -1,5 +1,9 @@
 # Release
 
+## 2026-04-28 - 0.33.0
+
+- Add support for resolving pnpm workspace protocol versions (e.g., `workspace:~`, `workspace:^0.66.0`) during `generate-config-files` dependency pinning. When workspace versions are detected, the tool queries the npm registry for the published package's resolved dependencies. Falls back to stripping the `workspace:` prefix for versions with explicit semver, and skips bare workspace references that cannot be resolved. **NOTE: emitter-package.json creation will fail if the command is called with an unpublished version of the emitter.**
+
 ## 2026-04-20 - 0.32.1
 
 - Fix crash when `entrypointFile` in `tsp-location.yaml` points to a file in a sub-directory on Windows by normalizing path separators when matching the entrypoint file.

@@ -710,8 +710,7 @@ export async function generateConfigFilesCommand(argv: any) {
   let resolvedDevDependencies: Record<string, string> | undefined;
   if (hasWorkspaceVersions(localDevDeps, possiblyPinnedPackages)) {
     Logger.info("Workspace protocol versions detected. Resolving from npm registry...");
-    const publishedPkg = await npmViewPackage(packageJson["name"], packageJson["version"]);
-    resolvedDevDependencies = publishedPkg?.["devDependencies"];
+    resolvedDevDependencies = await npmViewPackage(packageJson["name"], packageJson["version"]);
   }
 
   for (const pinnedPackage of possiblyPinnedPackages) {

@@ -1,0 +1,24 @@
+# Vally configuration for Azure SDK Typespec Author MCP tool evaluations
+# See: https://vally.dev/reference/vally-config
+
+paths:
+  evals: [evals/]
+  evalFilenames: ["*.eval.yaml"]
+  skills: [../]
+  results: results/
+
+environments:
+  azsdk-mcp:
+    mcpServers:
+      azure-sdk-mcp:
+        type: stdio
+        command: dotnet
+        args: ["run", "--project", "../../../../tools/azsdk-cli/Azure.Sdk.Tools.Cli", "--", "start"]
+        timeout: 30000
+        env:
+          AZSDKTOOLS_AGENT_TESTING: "false"
+          AZSDKTOOLS_COLLECT_TELEMETRY: "false"
+          AZURE_SDK_KB_ENDPOINT: "http://localhost:8088"
+suites:
+  all:
+    evals: ["evals/*.eval.yaml"]

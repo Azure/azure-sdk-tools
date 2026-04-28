@@ -726,9 +726,7 @@ export async function generateConfigFilesCommand(argv: any) {
           // Fallback: strip workspace: prefix
           pinnedVersion = pinnedVersion.replace(/^workspace:/, "");
           if (pinnedVersion === "*" || pinnedVersion === "^" || pinnedVersion === "~") {
-            Logger.warn(
-              `Could not resolve workspace version for ${pinnedPackage}. Skipping.`,
-            );
+            Logger.warn(`Could not resolve workspace version for ${pinnedPackage}. Skipping.`);
             continue;
           }
         }

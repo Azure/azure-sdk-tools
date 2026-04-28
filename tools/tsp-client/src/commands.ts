@@ -19,7 +19,7 @@ import {
   npxCommand,
   isWorkspaceVersion,
   hasWorkspaceVersions,
-  npmViewPackageJson,
+  npmViewPackage,
 } from "./npm.js";
 import {
   compileTsp,
@@ -710,7 +710,7 @@ export async function generateConfigFilesCommand(argv: any) {
   let resolvedDevDependencies: Record<string, string> | undefined;
   if (hasWorkspaceVersions(localDevDeps, possiblyPinnedPackages)) {
     Logger.info("Workspace protocol versions detected. Resolving from npm registry...");
-    const publishedPkg = await npmViewPackageJson(packageJson["name"], packageJson["version"]);
+    const publishedPkg = await npmViewPackage(packageJson["name"], packageJson["version"]);
     resolvedDevDependencies = publishedPkg?.["devDependencies"];
   }
 

@@ -256,7 +256,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 directoryPathOption, repoOption, codeownersCacheOption,
             },
             new McpCommand(updateCacheCommandName, "Run the CODEOWNERS cache update pipeline", CodeownerUpdateCacheToolName),
-            new(auditCommandName, "Audit CODEOWNERS work items for violations and optionally fix them")
+            new(auditCommandName, "Audit CODEOWNERS work items for violations and optionally fix them. You MUST update the CODEOWNERS cache before running this command.")
             {
                 fixOption, forceOption, repoOption,
             },
@@ -766,6 +766,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
 
         /// <summary>
         /// Audits CODEOWNERS work items for violations.
+        /// The CODEOWNERS cache MUST be updated before running audit.
         /// When --fix is set, applies automated fixes for rules that support them.
         /// When --force is set, overrides safety thresholds.
         /// When --repo is set, scopes Packages (by language) and Label Owners (by Custom.Repository)

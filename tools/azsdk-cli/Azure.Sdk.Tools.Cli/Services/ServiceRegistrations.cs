@@ -21,6 +21,7 @@ using Azure.Sdk.Tools.Cli.Services.TypeSpec;
 using Azure.Sdk.Tools.Cli.Services.Upgrade;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.CodeownersUtils.Caches;
+using Azure.Sdk.Tools.CodeownersUtils.Utils;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -66,6 +67,8 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ICodeownersGenerateHelper, CodeownersGenerateHelper>();
             services.AddSingleton<IPackageInfoHelper, PackageInfoHelper>();
             services.AddSingleton<ITeamUserCache, TeamUserCache>();
+            services.AddSingleton<UserOrgVisibilityCache>();
+            services.AddSingleton<ICacheValidator, CacheValidator>();
             services.AddSingleton<ICodeownersManagementHelper, CodeownersManagementHelper>();
             services.AddSingleton<ICheckPackageHelper, CheckPackageHelper>();
             services.AddSingleton<ICodeownersAuditHelper, CodeownersAuditHelper>();

@@ -4,6 +4,8 @@
 using Azure.Sdk.Tools.Cli.Models.Codeowners;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.CodeownersUtils.Caches;
+using Azure.Sdk.Tools.CodeownersUtils.Constants;
+using Azure.Sdk.Tools.CodeownersUtils.Utils;
 
 namespace Azure.Sdk.Tools.Cli.Helpers.Codeowners.Rules;
 
@@ -16,6 +18,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers.Codeowners.Rules;
 /// </summary>
 public class TeamNotWriteRule(
     ITeamUserCache teamUserCache,
+    ICacheValidator cacheValidator,
     IGitHubService githubService,
     IDevOpsService devOpsService
 ) : IAuditRule
@@ -37,6 +40,13 @@ public class TeamNotWriteRule(
         var teamOwners = context.WorkItemData.Owners.Values
             .Where(o => o.IsGitHubTeam)
             .ToList();
+
+        if (teamOwners.Count == 0)
+        {
+            return violations;
+        }
+
+        await EnsureTeamCacheIsFresh(ct);
 
         foreach (var owner in teamOwners)
         {
@@ -178,5 +188,23 @@ public class TeamNotWriteRule(
             ["Custom.InvalidSince"] = ""
         }, ct);
         return new AuditFixResult { RuleId = RuleId, Description = desc, Success = true };
+    }
+
+    private async Task EnsureTeamCacheIsFresh(CancellationToken ct)
+    {
+        DateTime minimumLastModifiedUtc = DateTime.UtcNow.Subtract(AuditRuleCacheSettings.CacheMaxAge);
+
+        try
+        {
+            await cacheValidator.ThrowIfCacheOlderThan(DefaultStorageConstants.TeamUserBlobUri, minimumLastModifiedUtc, ct);
+        }
+        catch (InvalidOperationException ex)
+        {
+            throw new InvalidOperationException(
+                "CODEOWNERS cache MUST be updated before running audit. " +
+                "Run `azsdk config codeowners update-cache` and wait for the pipeline to complete. " +
+                ex.Message,
+                ex);
+        }
     }
 }

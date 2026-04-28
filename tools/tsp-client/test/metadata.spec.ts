@@ -44,7 +44,7 @@ describe.sequential("tsp-client metadata generation", () => {
     await rm(testOutputDir, { recursive: true, force: true });
   });
 
-  it("should create tsp-client-metadata.yaml with correct structure", async function () {
+  it("should create tsp-client-metadata.yaml with correct structure", async () => {
     await cp(
       joinPaths(cwd(), "test/utils/tsp-client-config-metadata.yaml"),
       defaultTspClientConfigPath,
@@ -77,7 +77,7 @@ describe.sequential("tsp-client metadata generation", () => {
     );
   });
 
-  it("should handle date format correctly", async function () {
+  it("should handle date format correctly", async () => {
     await cp(
       joinPaths(cwd(), "test/utils/tsp-client-config-metadata.yaml"),
       defaultTspClientConfigPath,
@@ -98,7 +98,7 @@ describe.sequential("tsp-client metadata generation", () => {
     );
   });
 
-  it("verify that metadata file isnt created if there's no tsp-client-config.yaml", async function () {
+  it("verify that metadata file isnt created if there's no tsp-client-config.yaml", async () => {
     await rm(defaultTspClientConfigPath).catch(() => {});
 
     await createTspClientMetadata(testOutputDir, repoRoot, testEmitterPackageJsonPath);
@@ -114,7 +114,7 @@ describe.sequential("tsp-client metadata generation", () => {
     }
   });
 
-  it("verify that the metadata file isnt created if generateMetadata doesnt exist in tsp-client-config.yaml", async function () {
+  it("verify that the metadata file isnt created if generateMetadata doesnt exist in tsp-client-config.yaml", async () => {
     await cp(joinPaths(cwd(), "test/utils/tsp-client-config.yaml"), defaultTspClientConfigPath);
 
     await createTspClientMetadata(testOutputDir, repoRoot, testEmitterPackageJsonPath);
@@ -130,7 +130,7 @@ describe.sequential("tsp-client metadata generation", () => {
     }
   });
 
-  it("verify that metadata file isnt created if generateMetadata is set to false in tsp-client-config.yaml", async function () {
+  it("verify that metadata file isnt created if generateMetadata is set to false in tsp-client-config.yaml", async () => {
     await cp(
       joinPaths(cwd(), "test/utils/tsp-client-config-metadata-false.yaml"),
       defaultTspClientConfigPath,
@@ -149,7 +149,7 @@ describe.sequential("tsp-client metadata generation", () => {
     }
   });
 
-  it('verify that metadata file isnt created if generateMetadata is set to \"false\" in tsp-client-config.yaml', async function () {
+  it('verify that metadata file isnt created if generateMetadata is set to \"false\" in tsp-client-config.yaml', async () => {
     await cp(
       joinPaths(cwd(), "test/utils/tsp-client-config-metadata-false-string.yaml"),
       defaultTspClientConfigPath,
@@ -168,7 +168,7 @@ describe.sequential("tsp-client metadata generation", () => {
     }
   });
 
-  it("verify that metadata file isnt created if generateMetadata is set to random string in tsp-client-config.yaml", async function () {
+  it("verify that metadata file isnt created if generateMetadata is set to random string in tsp-client-config.yaml", async () => {
     await cp(
       joinPaths(cwd(), "test/utils/tsp-client-config-metadata-random-string.yaml"),
       defaultTspClientConfigPath,

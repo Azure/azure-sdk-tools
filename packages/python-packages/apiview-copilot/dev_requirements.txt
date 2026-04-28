@@ -24,6 +24,9 @@ pyyaml==6.0.2
 pytest==7.4.2
 uvicorn[standard]==0.29.0
 
+# scripts requirements
+azure-monitor-query==2.0.0
+
 # evals requirements
 azure-ai-evaluation==1.15.3
 pytest==7.4.2

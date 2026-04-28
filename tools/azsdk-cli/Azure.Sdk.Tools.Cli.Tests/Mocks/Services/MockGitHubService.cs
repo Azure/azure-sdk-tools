@@ -361,5 +361,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         {
             throw new NotImplementedException();
         }
+
+        public Task<HashSet<string>> GetRepoLabels(string owner, string repo, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

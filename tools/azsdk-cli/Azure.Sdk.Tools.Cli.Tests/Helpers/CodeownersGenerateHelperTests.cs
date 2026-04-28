@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Helpers.Codeowners;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Codeowners;
 using Azure.Sdk.Tools.Cli.Services;
@@ -263,7 +264,89 @@ public class CodeownersGenerateHelperTests
         });
     }
 
-    private List<CodeownersEntry> InvokeBuildCodeownersEntries(WorkItemData data, Dictionary<string, RepoPackage> packageLookup)
+    [Test]
+    public void BuildCodeownersEntries_ExcludesOwnersOlderThanLookbackWindow()
+    {
+        var cutoff = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var data = new WorkItemDataBuilder()
+            .AddOwner("expiredowner", out var expiredOwnerId)
+            .AddOwner("activeowner", out var activeOwnerId)
+            .AddLabel("Storage", out var labelId)
+            .AddPackage("Azure.Storage.Blobs", out _, relatedTo: [expiredOwnerId, activeOwnerId, labelId])
+            .Build();
+        data.Owners[expiredOwnerId].InvalidSince = cutoff.AddDays(-1);
+
+        var packageLookup = new Dictionary<string, RepoPackage>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "Azure.Storage.Blobs", new RepoPackage { Name = "Azure.Storage.Blobs", DirectoryPath = Path.Combine(_repoRoot, "sdk", "storage", "Azure.Storage.Blobs") } }
+        };
+
+        var entries = InvokeBuildCodeownersEntries(data, packageLookup, cutoff);
+
+        Assert.That(entries, Has.Count.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(entries[0].SourceOwners, Does.Not.Contain("expiredowner"));
+            Assert.That(entries[0].SourceOwners, Does.Contain("activeowner"));
+        });
+    }
+
+    [Test]
+    public void BuildCodeownersEntries_RetainsOwnersWithinLookbackWindow()
+    {
+        var cutoff = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var data = new WorkItemDataBuilder()
+            .AddOwner("recentinvalidowner", out var ownerId)
+            .AddLabel("Storage", out var labelId)
+            .AddPackage("Azure.Storage.Blobs", out _, relatedTo: [ownerId, labelId])
+            .Build();
+        data.Owners[ownerId].InvalidSince = cutoff.AddDays(1);
+
+        var packageLookup = new Dictionary<string, RepoPackage>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "Azure.Storage.Blobs", new RepoPackage { Name = "Azure.Storage.Blobs", DirectoryPath = Path.Combine(_repoRoot, "sdk", "storage", "Azure.Storage.Blobs") } }
+        };
+
+        var entries = InvokeBuildCodeownersEntries(data, packageLookup, cutoff);
+
+        Assert.That(entries, Has.Count.EqualTo(1));
+        Assert.That(entries[0].SourceOwners, Does.Contain("recentinvalidowner"));
+    }
+
+    [Test]
+    public void BuildCodeownersEntries_ExcludesExpiredLabelOwnerMetadataOwners()
+    {
+        var cutoff = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var data = new WorkItemDataBuilder()
+            .AddOwner("pkgdev", out var pkgDevId)
+            .AddOwner("expiredserviceowner", out var expiredServiceOwnerId)
+            .AddOwner("recentserviceowner", out var recentServiceOwnerId)
+            .AddLabel("Storage", out var labelId)
+            .AddServiceOwner(out var labelOwnerId, relatedTo: [expiredServiceOwnerId, recentServiceOwnerId, labelId])
+            .AddPackage("Azure.Storage.Blobs", out _, relatedTo: [pkgDevId, labelId, labelOwnerId])
+            .Build();
+        data.Owners[expiredServiceOwnerId].InvalidSince = cutoff.AddDays(-1);
+        data.Owners[recentServiceOwnerId].InvalidSince = cutoff.AddDays(1);
+
+        var packageLookup = new Dictionary<string, RepoPackage>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "Azure.Storage.Blobs", new RepoPackage { Name = "Azure.Storage.Blobs", DirectoryPath = Path.Combine(_repoRoot, "sdk", "storage", "Azure.Storage.Blobs") } }
+        };
+
+        var entries = InvokeBuildCodeownersEntries(data, packageLookup, cutoff);
+
+        Assert.That(entries, Has.Count.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(entries[0].ServiceOwners, Does.Not.Contain("expiredserviceowner"));
+            Assert.That(entries[0].ServiceOwners, Does.Contain("recentserviceowner"));
+        });
+    }
+
+    private List<CodeownersEntry> InvokeBuildCodeownersEntries(
+        WorkItemData data,
+        Dictionary<string, RepoPackage> packageLookup,
+        DateTime? invalidOwnerCutoff = null)
     {
         var method = typeof(CodeownersGenerateHelper).GetMethod(
             "BuildCodeownersEntries",
@@ -275,7 +358,7 @@ public class CodeownersGenerateHelperTests
             _logger
         );
 
-        return method?.Invoke(helper, [data, packageLookup, _repoRoot]) as List<CodeownersEntry> ?? [];
+        return method?.Invoke(helper, [data, packageLookup, _repoRoot, invalidOwnerCutoff ?? DateTime.MinValue]) as List<CodeownersEntry> ?? [];
     }
 
     #endregion

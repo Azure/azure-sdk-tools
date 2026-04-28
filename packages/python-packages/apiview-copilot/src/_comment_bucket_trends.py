@@ -180,13 +180,13 @@ def build_language_comment_bucket_reports(
     if "CreatedOn" not in select_fields:
         select_fields.append("CreatedOn")
 
-    all_raw_comments = get_comments_in_date_range(
+    non_diag = get_comments_in_date_range(
         full_start.isoformat(),
         full_end.isoformat(),
         environment=environment,
         select_fields=select_fields,
+        include_deleted=True,
     )
-    non_diag = [comment for comment in all_raw_comments if comment.get("CommentSource") != "Diagnostic"]
 
     review_ids: set[str] = set()
     revision_ids: set[str] = set()
@@ -226,7 +226,7 @@ def build_language_comment_bucket_reports(
         reviews, month_comments = _build_month_metadata(
             start_date,
             end_date,
-            all_raw_comments,
+            non_diag,
             review_results,
             revision_results,
         )

@@ -465,6 +465,54 @@ Returns: package name, review ID, language, version.
 
 ---
 
+### `avc apiview list-created-revisions`
+
+Count APIRevisions created in a date window, broken out by language and revision type (Automatic, Manual, PullRequest).
+
+```bash
+avc apiview list-created-revisions -s 2026-03-01 -e 2026-03-31
+
+# Exclude specific languages
+avc apiview list-created-revisions -s 2026-03-01 -e 2026-03-31 --exclude Java Go
+```
+
+| Option | Description |
+|--------|-------------|
+| `-s/--start-date` | Start date (`YYYY-MM-DD`) |
+| `-e/--end-date` | End date (`YYYY-MM-DD`) |
+| `--exclude` | Languages to exclude (e.g., `--exclude Java Go`) |
+| `--environment` | `production` (default) or `staging` |
+
+---
+
+### `avc apiview list-opened-revisions`
+
+Count APIRevisions that were actually opened/viewed in APIView in a date window, broken out by language and revision type. Queries Application Insights for page views, then enriches with Cosmos DB metadata.
+
+By default, all revisions belonging to viewed reviews are counted regardless of when they were created. Use `--created-in-window` to restrict to only revisions created within the date window.
+
+> **Note:** Application Insights default retention is 90 days. Queries beyond that window may return incomplete data.
+
+```bash
+avc apiview list-opened-revisions -s 2026-03-01 -e 2026-03-31
+
+# Exclude specific languages
+avc apiview list-opened-revisions -s 2026-03-01 -e 2026-03-31 --exclude Java Go
+
+# Only count revisions created within the window
+avc apiview list-opened-revisions -s 2026-03-01 -e 2026-03-31 --created-in-window
+```
+
+| Option | Description |
+|--------|-------------|
+| `-s/--start-date` | Start date (`YYYY-MM-DD`) |
+| `-e/--end-date` | End date (`YYYY-MM-DD`) |
+| `--exclude` | Languages to exclude (e.g., `--exclude Java Go`) |
+| `--created-in-window` | Only count revisions created within the date window |
+| `--environment` | `production` (default) or `staging` |
+
+---
+
 ## `avc ops` — Deployment and Infrastructure
 
 ### `avc ops deploy`

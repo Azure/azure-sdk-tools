@@ -26,7 +26,6 @@
         border-color: color-mix(in srgb, var(--diagnostic-accent-color) 54%, var(--border-color));
         color: var(--diagnostic-accent-color);
         .bi { font-size: .7rem; }
-        .pi { font-size: .8rem; margin: .2rem 0 0 .25rem; }
     }
 
     .related-comments-btn { background: none; border: none; padding: 0; }
@@ -177,7 +176,7 @@
 
     .rendered-comment-content {
         overflow-wrap: anywhere;
-        white-space: normal;
+        white-space: pre-line;
         pre { max-width: 100%; white-space: pre-wrap; background-color: var(--editor-bg-color); border: 1px solid var(--border-color); border-radius: 5px;
             code { background-color: var(--editor-bg-color);
                 .line-actions { text-align: right; white-space: nowrap; display: inline-block; cursor: pointer; width: 20px; padding-inline-end: 15px; position: sticky; left: 0; background-color: inherit; color: var(--base-text-color);

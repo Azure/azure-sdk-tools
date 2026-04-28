@@ -53,19 +53,7 @@ For details on when releases are blocked and the enforcement logic, see [ci-inte
 
 ### Who Can Approve?
 
-API revision approvers are the architects and deputy architects for each language. The authoritative list is managed at runtime in the APIView service configuration — see [operations.md](operations.md#approvers) for how the list is maintained.
-
-> **Note:** The approver list below is provided for reference and may not reflect the latest configuration. Always check the APIView UI or service configuration for the current list.
-
-| Language | Approvers |
-|----------|-----------|
-| **C#** | Krzysztof Cwalina, Ted Glaza, Christopher Scott, Jess Squire, Michael Nash, Arthur Ma |
-| **Java** | Jonathan Giles, Srikanta Nagaraja, Alan Zimmer, Josh Free |
-| **JavaScript** | Brian Terlson, Jeff Fisher, Maor Leger, Jeremy Meng, Jose Manuel Heredia Hidalgo, Deyaaeldeen Almahallawi |
-| **Python** | Johan Stenberg, Anna Tisch, Kashif Khan |
-| **C / C++** | Jeffrey Richter, Larry Osterman |
-| **Go** | Jeffrey Richter, Joel Hendrix, Charles Lowell |
-| **Rust** | Jeffrey Richter, Heath Stewart, Larry Osterman, Joel Hendrix |
+API revision approvers are the architects and deputy architects for each language. For the current list of approvers by language, see the [APIView documentation page](https://eng.ms/docs/products/azure-developer-experience/support/apiview#who-can-approve-my-revision).
 
 ---
 
@@ -84,7 +72,8 @@ APIView supports comment severity levels to communicate the importance of feedba
 
 - The **comment author** selects the severity when creating the comment
 - Only the **comment author** can modify the severity
-- Architects can also modify the severity of **Copilot-generated comments only** (not comments by other users)
+- Language approvers can also modify the severity of **`azure-sdk` bot comments** (not comments by other users)
+- Severity cannot be changed on **diagnostic comments**
 
 ### Diagnostic Severity Mapping
 
@@ -103,10 +92,9 @@ Comments are tagged with a source to indicate how they were created:
 
 | Source | Description |
 |--------|-------------|
+| **UserGenerated** | Created manually by human reviewers (default) |
 | **AIGenerated** | Created by Copilot during automated API review |
 | **Diagnostic** | Generated from API guideline diagnostics / linting rules |
-
-Comments created manually by human reviewers are not tagged with a source label.
 
 ---
 

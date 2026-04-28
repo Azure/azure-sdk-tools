@@ -1,0 +1,19 @@
+{
+  "name": "azure-typespec-authoring",
+  "owner": {
+    "name": "Azure SDK Team",
+    "email": "azsdkeng@microsoft.com"
+  },
+  "metadata": {
+    "description": "Marketplace for TypeSpec API specification authoring plugins.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "azure-typespec-authoring",
+      "description": "Author, modify, and troubleshoot .tsp files for Azure ARM and data-plane API specifications.",
+      "version": "0.0.1-alpha",
+      "source": "plugin"
+    }
+  ]
+}

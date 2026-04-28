@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Linq;
 using APIView;
-using APIViewLegacy;
 using APIViewWeb.Models;
 using Xunit;
 

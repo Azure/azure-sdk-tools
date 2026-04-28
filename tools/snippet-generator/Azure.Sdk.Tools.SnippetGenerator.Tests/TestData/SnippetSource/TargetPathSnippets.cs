@@ -1,3 +1,4 @@
+using System;
 using NUnit.Framework;
 
 namespace Azure.Sdk.Tools.SnippetGenerator.TestData
@@ -9,6 +10,7 @@ namespace Azure.Sdk.Tools.SnippetGenerator.TestData
         {
             #region Snippet:TargetPathSnippet
             var greeting = "Hello from a separate directory!";
+            Console.WriteLine(greeting);
             #endregion
         }
     }

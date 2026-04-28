@@ -280,6 +280,7 @@ def main() -> None:
         env_vars = {
             "AZURE_APPCONFIG_ENDPOINT": appconfig_endpoint,
             "ENABLE_INSTRUMENTATION": "true",
+            "AZURE_TRACING_GEN_AI_CONTENT_RECORDING_ENABLED": "true",
             "APP_VERSION": next_version,
             "AI_FOUNDRY_PROJECT_RESOURCE_ID": project_resource_id,
         }

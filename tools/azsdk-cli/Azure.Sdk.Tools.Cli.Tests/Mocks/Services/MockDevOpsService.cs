@@ -300,5 +300,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         {
             throw new NotImplementedException();
         }
+
+        public Task DeleteWorkItemAsync(int workItemId, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

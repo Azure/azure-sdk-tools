@@ -11,7 +11,7 @@ using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 using Azure.Sdk.Tools.CodeownersUtils.Utils;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 
-namespace Azure.Sdk.Tools.Cli.Helpers;
+namespace Azure.Sdk.Tools.Cli.Helpers.Codeowners;
 
 /// <summary>
 /// Generates CODEOWNERS files from Azure DevOps work items.
@@ -31,6 +31,7 @@ public class CodeownersGenerateHelper(
         string repoName,
         string[] packageTypes,
         string sectionName,
+        int invalidOwnerLookbackDays = 90,
         CancellationToken ct = default)
     {
 
@@ -64,7 +65,8 @@ public class CodeownersGenerateHelper(
         var workItemData = await FetchAllWorkItemsAsync(repoName, language, packageTypes, ct);
 
         logger.LogInformation("Building CODEOWNERS entries...");
-        var entries = BuildCodeownersEntries(workItemData, packageLookup, repoRoot);
+        var invalidOwnerCutoff = DateTime.UtcNow.AddDays(-invalidOwnerLookbackDays);
+        var entries = BuildCodeownersEntries(workItemData, packageLookup, repoRoot, invalidOwnerCutoff);
         logger.LogInformation("Total entries: {Count}", entries.Count);
 
         logger.LogInformation("Sorting entries...");
@@ -186,7 +188,8 @@ public class CodeownersGenerateHelper(
     private List<CodeownersEntry> BuildCodeownersEntries(
         WorkItemData data,
         Dictionary<string, RepoPackage> packageLookup,
-        string repoRoot)
+        string repoRoot,
+        DateTime invalidOwnerCutoff)
     {
         var entries = new List<CodeownersEntry>();
         var packagesNotFound = new List<string>();
@@ -204,6 +207,7 @@ public class CodeownersGenerateHelper(
             {
                 PathExpression = BuildPathExpression(repoPkg.DirectoryPath, repoRoot),
                 SourceOwners = pkg.Owners
+                    .Where(o => !IsOwnerExpired(o, invalidOwnerCutoff))
                     .Select(o => o.GitHubAlias)
                     .Where(a => !string.IsNullOrWhiteSpace(a))
                     .ToList(),
@@ -217,7 +221,7 @@ public class CodeownersGenerateHelper(
             // Add metadata from related label owners
             foreach (var lo in pkg.LabelOwners)
             {
-                AddLabelOwnerMetadata(entry, lo);
+                AddLabelOwnerMetadata(entry, lo, invalidOwnerCutoff);
             }
 
             entries.Add(entry);
@@ -241,6 +245,7 @@ public class CodeownersGenerateHelper(
             string pathExpression = "/" + lo.RepoPath.TrimStart('/');
 
             var sourceOwners = lo.Owners
+                .Where(o => !IsOwnerExpired(o, invalidOwnerCutoff))
                 .Select(o => o.GitHubAlias)
                 .Where(a => !string.IsNullOrWhiteSpace(a))
                 .ToList();
@@ -301,7 +306,7 @@ public class CodeownersGenerateHelper(
                 pathlessEntriesByLabel[key] = entry;
             }
 
-            AddLabelOwnerMetadata(entry, lo);
+            AddLabelOwnerMetadata(entry, lo, invalidOwnerCutoff);
         }
         entries.AddRange(pathlessEntriesByLabel.Values);
 
@@ -313,12 +318,13 @@ public class CodeownersGenerateHelper(
         return entries;
     }
 
-    private static void AddLabelOwnerMetadata(CodeownersEntry entry, LabelOwnerWorkItem lo)
+    private static void AddLabelOwnerMetadata(CodeownersEntry entry, LabelOwnerWorkItem lo, DateTime invalidOwnerCutoff)
     {
         var labels = lo.Labels
             .Select(l => l.LabelName)
             .Where(l => !string.IsNullOrWhiteSpace(l));
         var owners = lo.Owners
+            .Where(o => !IsOwnerExpired(o, invalidOwnerCutoff))
             .Select(o => o.GitHubAlias)
             .Where(a => !string.IsNullOrWhiteSpace(a));
 
@@ -351,6 +357,15 @@ public class CodeownersGenerateHelper(
                 target.Add(owner);
             }
         }
+    }
+
+    /// <summary>
+    /// Returns true if the owner's InvalidSince date is older than the cutoff,
+    /// meaning the grace period has expired and this owner should be excluded.
+    /// </summary>
+    private static bool IsOwnerExpired(OwnerWorkItem owner, DateTime invalidOwnerCutoff)
+    {
+        return owner.InvalidSince.HasValue && owner.InvalidSince.Value < invalidOwnerCutoff;
     }
 
     /// <summary>

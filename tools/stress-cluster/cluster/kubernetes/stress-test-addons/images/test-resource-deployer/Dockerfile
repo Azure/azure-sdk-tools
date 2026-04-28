@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/azure-powershell:mariner-2
+FROM mcr.microsoft.com/azure-powershell:azurelinux-3.0
 
 RUN yum update -y
 

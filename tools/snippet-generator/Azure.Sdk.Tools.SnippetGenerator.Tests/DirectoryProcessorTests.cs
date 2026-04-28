@@ -56,5 +56,25 @@ namespace Azure.Sdk.Tools.SnippetGenerator.Tests
             StringAssert.Contains("var x = 1;", result);
             StringAssert.Contains("var y = 2;", result);
         }
+
+        [Test]
+        public async System.Threading.Tasks.Task TargetPathUsedForReplacements()
+        {
+            var basePath = Path.Join(TestContext.CurrentContext.TestDirectory, "TestData");
+            var snippetDir = Path.Join(basePath, "SnippetSource");
+            var targetDir = Path.Join(basePath, "SnippetTarget");
+            var mdFile = Path.Join(targetDir, "TargetPathTest.md");
+
+            // Reset the markdown file to its original state
+            File.WriteAllText(mdFile, "```C# Snippet:TargetPathSnippet\n```\n");
+
+            // Snippets discovered from snippetDir, replacements applied in targetDir
+            var sut = new DirectoryProcessor(snippetDir, targetDir);
+            await sut.ProcessAsync(new[] { mdFile });
+
+            var result = File.ReadAllText(mdFile);
+
+            StringAssert.Contains("var greeting = \"Hello from a separate directory!\";", result);
+        }
     }
 }

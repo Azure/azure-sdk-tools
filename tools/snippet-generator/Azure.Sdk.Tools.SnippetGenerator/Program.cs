@@ -15,6 +15,7 @@ namespace Azure.Sdk.Tools.SnippetGenerator
     public class Program
     {
         [Option(ShortName = "b")] public string BasePath { get; set; }
+        [Option(ShortName = "t")] public string TargetPath { get; set; }
         [Option(ShortName = "sm")] public bool StrictMode { get; set; }
 
         public async Task OnExecuteAsync()
@@ -22,13 +23,17 @@ namespace Azure.Sdk.Tools.SnippetGenerator
             List<string> unUsedSnippets = null;
             Stopwatch sw = new Stopwatch();
             sw.Start();
+            var targetPath = TargetPath ?? BasePath;
             var baseDirectory = new DirectoryInfo(BasePath).Name;
             if (baseDirectory.Equals("sdk"))
             {
                 var tasks = new List<Task<IEnumerable<string>>>();
                 foreach (var sdkDir in Directory.GetDirectories(BasePath))
                 {
-                    tasks.Add(new DirectoryProcessor(sdkDir).ProcessAsync());
+                    var targetDir = TargetPath != null
+                        ? Path.Combine(targetPath, new DirectoryInfo(sdkDir).Name)
+                        : sdkDir;
+                    tasks.Add(new DirectoryProcessor(sdkDir, targetDir).ProcessAsync());
                 }
 
                 await Task.WhenAll(tasks);
@@ -38,7 +43,7 @@ namespace Azure.Sdk.Tools.SnippetGenerator
             }
             else
             {
-                unUsedSnippets = (await new DirectoryProcessor(BasePath).ProcessAsync()).ToList();
+                unUsedSnippets = (await new DirectoryProcessor(BasePath, targetPath).ProcessAsync()).ToList();
             }
             Console.WriteLine();
             if (unUsedSnippets.Any())

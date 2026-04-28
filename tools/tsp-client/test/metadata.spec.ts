@@ -8,18 +8,18 @@ import * as yaml from "yaml";
 import { getRepoRoot } from "../src/git.js";
 import { cwd } from "process";
 
-describe.sequential("tsp-client metadata generation", function () {
+describe.sequential("tsp-client metadata generation", () => {
   const testOutputDir = "./test/test-output-metadata";
   const testEmitterPackageJsonPath = "./test/test-output-metadata/test-emitter-package.json";
   let repoRoot = "";
   let defaultTspClientConfigPath = "";
 
-  beforeAll(async function () {
+  beforeAll(async () => {
     repoRoot = await getRepoRoot(cwd());
     defaultTspClientConfigPath = joinPaths(repoRoot, "eng", "tsp-client-config.yaml");
   });
 
-  beforeEach(async function () {
+  beforeEach(async () => {
     // Create test directory and emitter-package.json
     await ensureDirectory(testOutputDir);
 
@@ -39,7 +39,7 @@ describe.sequential("tsp-client metadata generation", function () {
     await writeFile(testEmitterPackageJsonPath, JSON.stringify(sampleEmitterPackageJson, null, 2));
   });
 
-  afterEach(async function () {
+  afterEach(async () => {
     // Clean up test files
     await rm(testOutputDir, { recursive: true, force: true });
   });

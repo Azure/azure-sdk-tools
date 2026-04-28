@@ -31,11 +31,7 @@
 
 ### Current State
 
-Partner and service teams rely on the SDK team as intermediaries to check SLA status, issue queues, and ownership. The SDK team manually queries Kusto dashboards and composes emails to service leads. The existing infrastructure has comprehensive issue triage automation ([github-event-processor](../../tools/github-event-processor), [issue-labeler](../../tools/issue-labeler)) and well-defined triage labels (`customer-reported`, `needs-team-triage`, `needs-team-attention`), but no self-service query surface for SLA metrics.
-
-### Why This Matters
-
-The SDK team spends significant time acting as middlemen. Service team leads cannot independently check whether their issues are approaching SLA breach. This creates delays and scales poorly as more services onboard. See [#14115](https://github.com/Azure/azure-sdk-tools/issues/14115) and [#14116](https://github.com/Azure/azure-sdk-tools/issues/14116).
+Some partner and service teams still rely on SDK engineering support to check SLA status, issue queues, and ownership. In those workflows, status checks can involve manual dashboard lookups and ad-hoc follow-up. The existing infrastructure has comprehensive issue triage automation ([github-event-processor](../../../github-event-processor), [issue-labeler](../../../issue-labeler)) and well-defined triage labels (`customer-reported`, `needs-team-triage`, `needs-team-attention`), but no self-service query surface for SLA metrics.
 
 ---
 
@@ -58,16 +54,6 @@ The SDK team spends significant time acting as middlemen. Service team leads can
 
 **Workaround:** Require `--repo` for initial version; use aggressive label+date filtering; surface rate limit warnings.
 
-#### No Historical Trend Data
-
-**Description:** GitHub API provides current state only — no pre-computed historical metrics.
-
-**Impact:** Cannot show week-over-week SLA compliance trends.
-
-**Workaround:** Phase 2 will add Kusto integration for historical analysis behind an `ISLADataProvider` interface.
-
----
-
 ## Design Proposal
 
 ### Overview
@@ -76,7 +62,7 @@ Add a new `SLAStatusTool` to azsdk-cli that queries the GitHub Issues API, compu
 
 ### Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────┐
 │  CLI: azsdk sla status --service KeyVault   │
 │  MCP: azsdk_sla_status { service: "..." }   │
@@ -103,19 +89,19 @@ Add a new `SLAStatusTool` to azsdk-cli that queries the GitHub Issues API, compu
 ### SLA Metric Definitions
 
 | Metric | Definition | Default Threshold |
-|--------|-----------|-------------------|
+| ------ | ---------- | ----------------- |
 | **FQR** | Issue creation → first team member comment | 3 business days |
 | **Bug Resolution** | Bug issue creation → close | 90 calendar days |
+| **Question Resolution** | Non-bug customer issue creation → close or current `issue-addressed` state | 14 calendar days |
 
-> **Note on lookback window:** The default `--days` value (180) is intentionally 2× the longest SLA threshold (90d bug resolution). If the lookback equaled the SLA threshold, a bug would fall out of the query window the moment it breached — making breached issues invisible. The lookback must always exceed the longest SLA to capture both approaching and breached issues.
-| **Question Resolution** | Question issue creation → close or `issue-addressed` label | 14 calendar days |
+> **Note on lookback window:** The default `--days` value (180) is intentionally 2× the longest SLA threshold (90d bug resolution). If the lookback equaled the SLA threshold, a bug would fall out of the query window the moment it breached, making breached issues invisible. The lookback must always exceed the longest SLA to capture both approaching and breached issues.
+> **Note on label semantics:** The GitHub event processor automatically adds `question` to new external customer-reported issues. Because that label does not uniquely identify actual question issues, this tool tracks non-bug customer-reported issues for the 14-day resolution metric instead of keying off the raw `question` label.
 
 **Label-based filtering:**
 
-- `customer-reported` → tracked for FQR
+- `customer-reported` → tracked for FQR and non-bug question resolution
 - `bug` → bug resolution SLA
-- `question` → question resolution SLA
-- `issue-addressed` → excluded from active tracking
+- `issue-addressed` → treated as resolved for the question resolution metric while the issue remains open
 
 **Team member detection:** `author_association` is `MEMBER`, `COLLABORATOR`, or `OWNER`; exclude accounts ending in `[bot]`.
 
@@ -123,33 +109,33 @@ Add a new `SLAStatusTool` to azsdk-cli that queries the GitHub Issues API, compu
 
 The existing `IGitHubService` will be extended with:
 
-```cs
+```csharp
 Task<IReadOnlyList<Issue>> SearchIssuesAsync(string repo, string owner, IReadOnlyList<string> labels, DateTimeOffset? since, ItemStateFilter state, CancellationToken ct);
 Task<IReadOnlyList<IssueComment>> GetIssueCommentsAsync(string repo, string owner, int issueNumber, CancellationToken ct);
 ```
 
 ### GitHub API Query Strategy
 
-```
+```text
 GET /repos/{owner}/{repo}/issues?labels={service},{customer-reported}&state=open&since={lookback}&per_page=100
 ```
 
 For FQR, fetch only the first comment per issue:
 
-```
+```text
 GET /repos/{owner}/{repo}/issues/{number}/comments?per_page=1
 ```
 
 ### Response Model
 
-```cs
+```csharp
 public class SLAStatusResponse : CommandResponse
 {
     public string Service { get; set; }
     public SLASummary Summary { get; set; }
     public SLAMetricSummary FirstQuestionResponse { get; set; }
     public SLAMetricSummary BugResolution { get; set; }
-    public SLAMetricSummary QuestionResolution { get; set; }
+  public SLAMetricSummary QuestionResolution { get; set; }
     public List<SLAIssueDetail> ApproachingBreaches { get; set; }
     public List<SLAIssueDetail> BreachedIssues { get; set; }
 }
@@ -180,7 +166,7 @@ public class SLAIssueDetail
 
 ### File Structure
 
-```
+```text
 Azure.Sdk.Tools.Cli/
 ├── Tools/SLA/SLAStatusTool.cs
 ├── Services/SLA/
@@ -290,7 +276,12 @@ azsdk sla status --service <label> [--repo <repo>] [--days <lookback>] [--approa
 - `--approaching-window <n>`: Days before breach to flag as approaching (default: 7)
 - `--include-closed`: Include recently closed issues in metrics
 
-**Expected Output:**
+**Output shape (current behavior):**
+
+- If `--repo` is provided: returns one report section for that repo.
+- If `--repo` is omitted: returns one aggregated report section across the default SDK repos.
+
+**Expected Output (single-repo example):**
 
 ```text
 SLA Status: KeyVault — azure-sdk-for-python (last 180 days)
@@ -335,7 +326,7 @@ Available labels: KeyVault, Storage, EventHubs, ...
 ## Metrics/Telemetry
 
 | Metric | Description | Purpose |
-|--------|-------------|---------|
+| ------ | ----------- | ------- |
 | `azsdk_sla_status.invocations` | Count of tool invocations | Track adoption |
 | `azsdk_sla_status.duration_ms` | Execution time | Monitor API performance / rate limit impact |
 | `azsdk_sla_status.repos_queried` | Number of repos queried per invocation | Understand usage patterns |

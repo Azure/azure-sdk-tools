@@ -63,7 +63,12 @@ namespace Azure.Sdk.Tools.Cli.Services
             ProcessResult result;
             try
             {
-                var options = new ProcessOptions("gh", ["auth", "token"], timeout: TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs));
+                // `gh auth token` writes the PAT to stdout; never stream subprocess output for this command.
+                var options = new ProcessOptions(
+                    "gh",
+                    ["auth", "token"],
+                    logOutputStream: false,
+                    timeout: TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs));
                 using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs));
                 result = processHelper.Run(options, timeoutCts.Token).GetAwaiter().GetResult();
             }
@@ -126,6 +131,8 @@ namespace Azure.Sdk.Tools.Cli.Services
         // SLA-related methods
         public Task<IReadOnlyList<Issue>> ListIssuesForSLAAsync(string owner, string repo, string serviceLabel, DateTimeOffset since, bool includeClosed, CancellationToken ct);
         public Task<IReadOnlyList<IssueComment>> GetIssueCommentsAsync(string owner, string repo, int issueNumber, CancellationToken ct);
+        public Task<IssueComment?> GetFirstTeamIssueCommentAsync(string owner, string repo, int issueNumber, CancellationToken ct);
+        public Task<IReadOnlyList<string>> ListRepositoryLabelsAsync(string owner, string repo, CancellationToken ct);
     }
 
     // We enforce cancellation token usage broadly via an analyzer across this codebase,
@@ -727,6 +734,81 @@ namespace Azure.Sdk.Tools.Cli.Services
         public async Task<IReadOnlyList<IssueComment>> GetIssueCommentsAsync(string owner, string repo, int issueNumber, CancellationToken ct)
         {
             return await gitHubClient.Issue.Comment.GetAllForIssue(owner, repo, issueNumber);
+        }
+
+        public async Task<IssueComment?> GetFirstTeamIssueCommentAsync(string owner, string repo, int issueNumber, CancellationToken ct)
+        {
+            const int pageSize = 100;
+            const int maxPages = 10;
+
+            // Fast path: most issues have few comments, so try page 1 and return early.
+            var firstPageComments = await gitHubClient.Issue.Comment.GetAllForIssue(
+                owner,
+                repo,
+                issueNumber,
+                new ApiOptions
+                {
+                    StartPage = 1,
+                    PageCount = 1,
+                    PageSize = pageSize,
+                });
+
+            var firstTeamComment = firstPageComments.FirstOrDefault(IsTeamCommentAndNotBot);
+            if (firstTeamComment != null)
+            {
+                return firstTeamComment;
+            }
+
+            if (firstPageComments.Count < pageSize)
+            {
+                return null;
+            }
+
+            for (var page = 2; page <= maxPages; page++)
+            {
+                var comments = await gitHubClient.Issue.Comment.GetAllForIssue(
+                    owner,
+                    repo,
+                    issueNumber,
+                    new ApiOptions
+                    {
+                        StartPage = page,
+                        PageCount = 1,
+                        PageSize = pageSize,
+                    });
+
+                var pagedTeamComment = comments.FirstOrDefault(IsTeamCommentAndNotBot);
+                if (pagedTeamComment != null)
+                {
+                    return pagedTeamComment;
+                }
+
+                if (comments.Count < pageSize)
+                {
+                    break;
+                }
+            }
+
+            return null;
+        }
+
+        public async Task<IReadOnlyList<string>> ListRepositoryLabelsAsync(string owner, string repo, CancellationToken ct)
+        {
+            var labels = await gitHubClient.Issue.Labels.GetAllForRepository(owner, repo);
+            return labels.Select(l => l.Name).ToList();
+        }
+
+        private static bool IsTeamCommentAndNotBot(IssueComment comment)
+        {
+            if (comment.User?.Login?.EndsWith("[bot]", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                return false;
+            }
+
+            var association = comment.AuthorAssociation.StringValue;
+            return string.Equals(association, "MEMBER", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(association, "COLLABORATOR", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(association, "OWNER", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

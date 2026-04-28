@@ -7,12 +7,12 @@ namespace Azure.Sdk.Tools.Cli.Services.SLA;
 
 /// <summary>
 /// Core SLA metrics computation service. Fetches GitHub issues by service label,
-/// categorizes them by type (customer-reported, bug, question), and computes
+/// categorizes them by type (customer-reported, bug, non-bug customer issue), and computes
 /// compliance against configured SLA thresholds.
 ///
 /// Data flow:
 ///   1. Query issues from GitHub API by service label + lookback window
-///   2. Categorize each issue by its labels (customer-reported → FQR, bug, question)
+///   2. Categorize each issue by its labels (customer-reported → FQR, bug, non-bug customer issue)
 ///   3. For customer-reported issues, fetch comments to find first team response
 ///   4. Compute per-metric compliance (within SLA, approaching, breached)
 ///   5. Return structured response with actionable issue lists
@@ -23,17 +23,6 @@ public class SLAMetricsService(
     ILogger<SLAMetricsService> logger
 ) : ISLAMetricsService
 {
-    /// <summary>
-    /// GitHub author_association values that indicate a comment is from a team member.
-    /// MEMBER = org member, COLLABORATOR = outside collaborator with access, OWNER = repo owner.
-    /// </summary>
-    private static readonly HashSet<string> TeamAssociationValues = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "MEMBER",
-        "COLLABORATOR",
-        "OWNER",
-    };
-
     public async Task<SLAStatusResponse> ComputeSLAStatusAsync(
         string serviceLabel,
         string? repo,
@@ -46,14 +35,26 @@ public class SLAMetricsService(
         var since = DateTimeOffset.UtcNow.AddDays(-lookbackDays);
         var now = DateTimeOffset.UtcNow;
 
-        // Step 1: Fetch issues from each repo matching the service label within the lookback window.
-        // Errors on individual repos are logged and skipped (partial results are better than none).
+        // Step 1: Fetch issues from each repo, and validate service label only for explicit repo queries.
+        // Errors on individual repos are logged and surfaced as response warnings.
         var allIssues = new List<(Issue Issue, string RepoName)>();
+        var failedRepos = new List<string>();
 
         foreach (var repoName in repos)
         {
             try
             {
+                if (repo != null)
+                {
+                    var labels = await gitHubService.ListRepositoryLabelsAsync(config.RepoOwner, repoName, ct);
+                    if (!labels.Contains(serviceLabel, StringComparer.OrdinalIgnoreCase))
+                    {
+                        var availableLabels = string.Join(", ", labels.OrderBy(l => l).Take(25));
+                        throw new InvalidOperationException(
+                            $"Service label '{serviceLabel}' not found in {repoName}. Available labels: {availableLabels}");
+                    }
+                }
+
                 var issues = await gitHubService.ListIssuesForSLAAsync(
                     config.RepoOwner, repoName, serviceLabel, since, includeClosed, ct);
 
@@ -64,6 +65,12 @@ public class SLAMetricsService(
             }
             catch (Exception ex)
             {
+                if (repo != null && ex is InvalidOperationException)
+                {
+                    throw;
+                }
+
+                failedRepos.Add(repoName);
                 logger.LogWarning(ex, "Failed to query issues from {Owner}/{Repo} for label '{Label}'",
                     config.RepoOwner, repoName, serviceLabel);
             }
@@ -71,9 +78,9 @@ public class SLAMetricsService(
 
         // Step 2: Categorize issues by label into the three SLA metric buckets.
         // An issue can appear in multiple buckets (e.g., customer-reported + bug).
-        var fqrIssues = new List<(Issue Issue, string Repo, IssueComment? FirstTeamComment)>();
-        var bugIssues = new List<(Issue Issue, string Repo)>();
-        var questionIssues = new List<(Issue Issue, string Repo)>();
+        var customerReportedIssues = new List<(Issue Issue, string Repo)>();
+        var bugIssues = new List<(Issue Issue, string Repo, bool IsAddressed)>();
+        var customerIssueResolutionIssues = new List<(Issue Issue, string Repo, bool IsAddressed)>();
 
         foreach (var (issue, repoName) in allIssues)
         {
@@ -81,44 +88,25 @@ public class SLAMetricsService(
 
             var isCustomerReported = config.CustomerReportedLabels.Any(l => labels.Contains(l));
             var isBug = labels.Contains(config.BugLabel);
-            var isQuestion = labels.Contains(config.QuestionLabel);
             var isAddressed = labels.Contains(config.IssueAddressedLabel);
-
-            if (isAddressed && issue.State.Value == ItemState.Open)
-            {
-                // Issue marked as addressed but still open — skip from active tracking
-                continue;
-            }
 
             if (isCustomerReported)
             {
-                IssueComment? firstTeamComment = null;
-                try
-                {
-                    var comments = await gitHubService.GetIssueCommentsAsync(
-                        config.RepoOwner, repoName, issue.Number, ct);
-
-                    firstTeamComment = comments.FirstOrDefault(c => IsTeamMember(c));
-                }
-                catch (Exception ex)
-                {
-                    logger.LogWarning(ex, "Failed to fetch comments for {Owner}/{Repo}#{Number}",
-                        config.RepoOwner, repoName, issue.Number);
-                }
-
-                fqrIssues.Add((issue, repoName, firstTeamComment));
+                customerReportedIssues.Add((issue, repoName));
             }
 
             if (isBug)
             {
-                bugIssues.Add((issue, repoName));
+                bugIssues.Add((issue, repoName, isAddressed));
             }
 
-            if (isQuestion)
+            if (isCustomerReported && !isBug)
             {
-                questionIssues.Add((issue, repoName));
+                customerIssueResolutionIssues.Add((issue, repoName, isAddressed));
             }
         }
+
+        var fqrIssues = await FetchFirstTeamCommentsAsync(customerReportedIssues, ct);
 
         // Step 3: Compute SLA metrics for each bucket.
         // The approaching/breached lists are populated as side effects by each metric computation.
@@ -128,12 +116,19 @@ public class SLAMetricsService(
         var fqrMetric = ComputeFQRMetric(fqrIssues, now, approachingWindowDays, approaching, breached);
         var bugMetric = ComputeResolutionMetric("Bug Resolution", config.BugResolutionThresholdDays,
             bugIssues, now, approachingWindowDays, approaching, breached, "bug_resolution");
-        var questionMetric = ComputeResolutionMetric("Question Resolution", config.QuestionResolutionThresholdDays,
-            questionIssues, now, approachingWindowDays, approaching, breached, "question_resolution");
+        var customerIssueMetric = ComputeResolutionMetric("Question Resolution", config.QuestionResolutionThresholdDays,
+            customerIssueResolutionIssues, now, approachingWindowDays, approaching, breached, "question_resolution");
 
         // Sort actionable lists: breached first (most overdue), then approaching (least time remaining)
         approaching.Sort((a, b) => (a.TimeUntilBreachDays ?? 0).CompareTo(b.TimeUntilBreachDays ?? 0));
         breached.Sort((a, b) => (a.TimeUntilBreachDays ?? 0).CompareTo(b.TimeUntilBreachDays ?? 0));
+
+        var warnings = new List<string>();
+        if (failedRepos.Count > 0)
+        {
+            warnings.Add(
+                $"Failed to query {failedRepos.Count} repo(s): {string.Join(", ", failedRepos.OrderBy(r => r))}. Results may be incomplete.");
+        }
 
         return new SLAStatusResponse
         {
@@ -144,10 +139,47 @@ public class SLAMetricsService(
             CustomerReportedOpen = fqrIssues.Count(i => i.Issue.State.Value == ItemState.Open),
             FirstQuestionResponse = fqrMetric,
             BugResolution = bugMetric,
-            QuestionResolution = questionMetric,
+            QuestionResolution = customerIssueMetric,
             ApproachingBreaches = approaching.Count > 0 ? approaching : null,
             BreachedIssues = breached.Count > 0 ? breached : null,
+            Warnings = warnings.Count > 0 ? warnings : null,
         };
+    }
+
+    private async Task<List<(Issue Issue, string Repo, IssueComment? FirstTeamComment)>> FetchFirstTeamCommentsAsync(
+        List<(Issue Issue, string Repo)> issues,
+        CancellationToken ct)
+    {
+        const int commentFetchBatchSize = 10;
+
+        var results = new List<(Issue Issue, string Repo, IssueComment? FirstTeamComment)>();
+
+        foreach (var batch in issues.Chunk(commentFetchBatchSize))
+        {
+            var fetchTasks = batch.Select(async item =>
+            {
+                try
+                {
+                    var firstTeamComment = await gitHubService.GetFirstTeamIssueCommentAsync(
+                        config.RepoOwner,
+                        item.Repo,
+                        item.Issue.Number,
+                        ct);
+
+                    return (item.Issue, item.Repo, firstTeamComment);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Failed to fetch comments for {Owner}/{Repo}#{Number}",
+                        config.RepoOwner, item.Repo, item.Issue.Number);
+                    return (item.Issue, item.Repo, (IssueComment?)null);
+                }
+            });
+
+            results.AddRange(await Task.WhenAll(fetchTasks));
+        }
+
+        return results;
     }
 
     /// <summary>
@@ -220,7 +252,12 @@ public class SLAMetricsService(
             else
             {
                 // Closed without team response — count as breached
+                var closedAt = issue.ClosedAt ?? now;
+                var elapsedBusinessDays = BusinessDayCalculator.CountBusinessDays(issue.CreatedAt, closedAt);
+                var daysRemaining = config.FqrThresholdBusinessDays - elapsedBusinessDays;
+
                 breachedCount++;
+                breached.Add(CreateIssueDetail(issue, repo, "breached", "fqr", daysRemaining));
             }
         }
 
@@ -238,11 +275,12 @@ public class SLAMetricsService(
     }
 
     /// <summary>
-    /// Computes a resolution-time SLA metric (used for both Bug Resolution and Question Resolution).
+    /// Computes a resolution-time SLA metric (used for both Bug Resolution and Customer Issue Resolution).
     /// Uses calendar days for threshold comparison.
     ///
     /// Classification logic per issue:
     ///   - Closed within threshold days → within SLA
+    ///   - Open with issue-addressed label → treated as resolved at current time
     ///   - Closed beyond threshold days → breached
     ///   - Open, age within threshold → within SLA (or approaching if near threshold)
     ///   - Open, age beyond threshold → breached
@@ -250,7 +288,7 @@ public class SLAMetricsService(
     private SLAMetricSummary ComputeResolutionMetric(
         string metricName,
         int thresholdDays,
-        List<(Issue Issue, string Repo)> issues,
+        List<(Issue Issue, string Repo, bool IsAddressed)> issues,
         DateTimeOffset now,
         int approachingWindowDays,
         List<SLAIssueDetail> approaching,
@@ -262,13 +300,27 @@ public class SLAMetricsService(
         int approachingCount = 0;
         int breachedCount = 0;
 
-        foreach (var (issue, repo) in issues)
+        foreach (var (issue, repo, isAddressed) in issues)
         {
             totalTracked++;
 
             if (issue.State.Value == ItemState.Closed && issue.ClosedAt.HasValue)
             {
                 var resolutionDays = (issue.ClosedAt.Value - issue.CreatedAt).TotalDays;
+                if (resolutionDays <= thresholdDays)
+                {
+                    withinSla++;
+                }
+                else
+                {
+                    breachedCount++;
+                    breached.Add(CreateIssueDetail(issue, repo, "breached", metricType,
+                        thresholdDays - resolutionDays));
+                }
+            }
+            else if (isAddressed)
+            {
+                var resolutionDays = (now - issue.CreatedAt).TotalDays;
                 if (resolutionDays <= thresholdDays)
                 {
                     withinSla++;
@@ -336,19 +388,4 @@ public class SLAMetricsService(
         };
     }
 
-    /// <summary>
-    /// Determines if a comment was posted by a team member (not a bot).
-    /// Checks the GitHub author_association field against known team values,
-    /// and excludes bot accounts (usernames ending in "[bot]").
-    /// </summary>
-    private static bool IsTeamMember(IssueComment comment)
-    {
-        if (comment.User?.Login?.EndsWith("[bot]", StringComparison.OrdinalIgnoreCase) == true)
-        {
-            return false;
-        }
-
-        var association = comment.AuthorAssociation.StringValue;
-        return !string.IsNullOrEmpty(association) && TeamAssociationValues.Contains(association);
-    }
 }

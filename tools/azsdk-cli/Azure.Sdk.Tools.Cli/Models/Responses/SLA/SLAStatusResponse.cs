@@ -46,7 +46,7 @@ public class SLAStatusResponse : CommandResponse
     [JsonPropertyName("bug_resolution")]
     public SLAMetricSummary BugResolution { get; set; } = new();
 
-    /// <summary>Question resolution metric: measures time from creation to close/addressed (calendar days).</summary>
+    /// <summary>Question resolution metric: measures time from non-bug customer issue creation to close/addressed (calendar days).</summary>
     [JsonPropertyName("question_resolution")]
     public SLAMetricSummary QuestionResolution { get; set; } = new();
 
@@ -60,6 +60,11 @@ public class SLAStatusResponse : CommandResponse
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<SLAIssueDetail>? BreachedIssues { get; set; }
 
+    /// <summary>Warnings about partial data (e.g., failed repos or missing labels). Null if none.</summary>
+    [JsonPropertyName("warnings")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<string>? Warnings { get; set; }
+
     protected override string Format()
     {
         var sb = new StringBuilder();
@@ -71,13 +76,23 @@ public class SLAStatusResponse : CommandResponse
         sb.AppendLine(FormatMetricLine(BugResolution));
         sb.AppendLine(FormatMetricLine(QuestionResolution));
 
+        if (Warnings is { Count: > 0 })
+        {
+            sb.AppendLine();
+            sb.AppendLine("⚠ Warnings");
+            foreach (var warning in Warnings)
+            {
+                sb.AppendLine($"  - {warning}");
+            }
+        }
+
         if (ApproachingBreaches is { Count: > 0 })
         {
             sb.AppendLine();
             sb.AppendLine($"⚠ Approaching ({ApproachingBreaches.Count})");
             foreach (var issue in ApproachingBreaches)
             {
-                sb.AppendLine($"  #{issue.IssueNumber}  \"{issue.Title}\"  {FormatTimeRemaining(issue.TimeUntilBreachDays)}  → {issue.Assignee ?? "unassigned"}");
+                sb.AppendLine($"  #{issue.IssueNumber}  \"{issue.Title}\"  {FormatMetricType(issue.SLAMetricType)} {FormatTimeRemaining(issue.TimeUntilBreachDays, issue.SLAMetricType)}  → {issue.Assignee ?? "unassigned"}");
             }
         }
 
@@ -87,7 +102,7 @@ public class SLAStatusResponse : CommandResponse
             sb.AppendLine($"🚨 Breached ({BreachedIssues.Count})");
             foreach (var issue in BreachedIssues)
             {
-                sb.AppendLine($"  #{issue.IssueNumber}  \"{issue.Title}\"  {issue.SLAMetricType} {FormatOverdue(issue.TimeUntilBreachDays)}  → {issue.Assignee ?? "unassigned"}");
+                sb.AppendLine($"  #{issue.IssueNumber}  \"{issue.Title}\"  {FormatMetricType(issue.SLAMetricType)} {FormatOverdue(issue.TimeUntilBreachDays, issue.SLAMetricType)}  → {issue.Assignee ?? "unassigned"}");
             }
         }
 
@@ -104,29 +119,47 @@ public class SLAStatusResponse : CommandResponse
         return $"  {metric.MetricName} ({metric.SLAThresholdDisplay}):  {metric.CompliancePercent:F1}%  ({metric.WithinSLA}/{metric.TotalTracked})";
     }
 
-    private static string FormatTimeRemaining(double? days)
+    private static string FormatMetricType(string? metricType)
+    {
+        return metricType?.ToLowerInvariant() switch
+        {
+            "fqr" => "FQR",
+            "bug_resolution" => "Bug Resolution",
+            "question_resolution" => "Question Resolution",
+            _ => metricType ?? string.Empty,
+        };
+    }
+
+    private static string FormatTimeRemaining(double? days, string? metricType)
     {
         if (days == null)
         {
             return "";
         }
 
+        var unit = UsesBusinessDays(metricType) ? "bd" : "d";
         var d = days.Value;
         if (d >= 0)
         {
-            return $"{d:F0}d remaining";
+            return $"{d:F0}{unit} remaining";
         }
 
-        return $"{Math.Abs(d):F0}d overdue";
+        return $"{Math.Abs(d):F0}{unit} overdue";
     }
 
-    private static string FormatOverdue(double? days)
+    private static string FormatOverdue(double? days, string? metricType)
     {
         if (days == null)
         {
             return "";
         }
 
-        return $"{Math.Abs(days.Value):F0}d overdue";
+        var unit = UsesBusinessDays(metricType) ? "bd" : "d";
+        return $"{Math.Abs(days.Value):F0}{unit} overdue";
+    }
+
+    private static bool UsesBusinessDays(string? metricType)
+    {
+        return string.Equals(metricType, "fqr", StringComparison.OrdinalIgnoreCase);
     }
 }

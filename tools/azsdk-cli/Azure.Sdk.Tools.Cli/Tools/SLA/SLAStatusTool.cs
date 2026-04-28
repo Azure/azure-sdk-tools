@@ -12,7 +12,7 @@ using Azure.Sdk.Tools.Cli.Tools.Core;
 
 namespace Azure.Sdk.Tools.Cli.Tools.SLA;
 
-[McpServerToolType, Description("Check SLA status metrics for Azure SDK service areas")]
+[McpServerToolType, Description("Check SLA status, open issues, and issues needing attention for Azure SDK service areas")]
 public class SLAStatusTool(
     ISLAMetricsService slaMetricsService,
     ILogger<SLAStatusTool> logger
@@ -83,7 +83,8 @@ public class SLAStatusTool(
     [McpServerTool(Name = SLAStatusToolName), Description(
         "Check SLA status metrics for an Azure SDK service area. Returns FQR (First Question Response), " +
         "bug resolution, and question resolution compliance, plus lists of approaching and breached issues. " +
-        "Use this when asked about SLA status, issue response times, or breached SLAs for a service.")]
+        "Use this when asked about SLA status, open issues for a service, issues that need attention, " +
+        "issue response times, or breached SLAs.")]
     public async Task<SLAStatusResponse> GetSLAStatus(
         [Description("Service label to query (e.g., KeyVault, Storage, EventHubs)")] string service,
         [Description("Specific repo name (e.g., azure-sdk-for-python). Omit to query all SDK repos.")] string? repo = null,

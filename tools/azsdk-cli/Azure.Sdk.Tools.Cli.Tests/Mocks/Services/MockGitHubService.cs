@@ -366,5 +366,15 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         {
             return Task.FromResult<IReadOnlyList<IssueComment>>(new List<IssueComment>().AsReadOnly());
         }
+
+        public Task<IssueComment?> GetFirstTeamIssueCommentAsync(string owner, string repo, int issueNumber, CancellationToken ct)
+        {
+            return Task.FromResult<IssueComment?>(null);
+        }
+
+        public Task<IReadOnlyList<string>> ListRepositoryLabelsAsync(string owner, string repo, CancellationToken ct)
+        {
+            return Task.FromResult<IReadOnlyList<string>>(new List<string>().AsReadOnly());
+        }
     }
 }

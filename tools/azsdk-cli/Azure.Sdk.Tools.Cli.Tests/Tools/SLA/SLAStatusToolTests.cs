@@ -31,6 +31,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.SLA
             _tool = new SLAStatusTool(
                 _metricsService,
                 new TestLogger<SLAStatusTool>());
+
+            _mockGitHub.Setup(s => s.ListRepositoryLabelsAsync(
+                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<string> { "TestService" }.AsReadOnly());
+
+            _mockGitHub.Setup(s => s.GetFirstTeamIssueCommentAsync(
+                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((IssueComment?)null);
         }
 
         // ========================
@@ -153,12 +161,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.SLA
                     It.IsAny<DateTimeOffset>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<Issue> { issue }.AsReadOnly());
 
-            _mockGitHub.Setup(s => s.GetIssueCommentsAsync(
+            _mockGitHub.Setup(s => s.GetFirstTeamIssueCommentAsync(
                     It.IsAny<string>(), It.IsAny<string>(), 1, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new List<IssueComment>
-                {
-                    CreateComment(commentCreated, "team-member", AuthorAssociation.Member)
-                }.AsReadOnly());
+                .ReturnsAsync(CreateComment(commentCreated, "team-member", AuthorAssociation.Member));
 
             var result = await _tool.GetSLAStatus("TestService", "test-repo");
 
@@ -265,6 +270,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.SLA
             var result = await _tool.GetSLAStatus("TestService", "test-repo", includeClosed: true);
 
             Assert.That(result.FirstQuestionResponse.Breached, Is.EqualTo(1));
+            Assert.That(result.BreachedIssues, Is.Not.Null);
+            Assert.That(result.BreachedIssues!.Any(i => i.SLAMetricType == "fqr"), Is.True);
         }
 
         // ========================
@@ -322,7 +329,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.SLA
             var issueCreated = DateTimeOffset.UtcNow.AddDays(-10);
 
             var issue = CreateIssue(1, "Approaching question", issueCreated, ItemState.Open,
-                ["question", "TestService"]);
+                ["customer-reported", "TestService"]);
 
             _mockGitHub.Setup(s => s.ListIssuesForSLAAsync(
                     It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
@@ -337,13 +344,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.SLA
         }
 
         // ========================
-        // Issue-addressed exclusion
+        // Issue-addressed handling
         // ========================
 
         [Test]
-        public async Task IssueAddressed_OpenIssue_ExcludedFromTracking()
+        public async Task IssueAddressed_OpenIssue_RemainsTrackedAndCountsAsResolved()
         {
-            var issue = CreateIssue(1, "Addressed issue", DateTimeOffset.UtcNow.AddDays(-30),
+            var issue = CreateIssue(1, "Addressed issue", DateTimeOffset.UtcNow.AddDays(-5),
                 ItemState.Open, ["customer-reported", "issue-addressed", "TestService"]);
 
             _mockGitHub.Setup(s => s.ListIssuesForSLAAsync(
@@ -353,7 +360,32 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.SLA
 
             var result = await _tool.GetSLAStatus("TestService", "test-repo");
 
-            Assert.That(result.FirstQuestionResponse.TotalTracked, Is.EqualTo(0));
+            Assert.That(result.FirstQuestionResponse.TotalTracked, Is.EqualTo(1));
+            Assert.That(result.QuestionResolution.TotalTracked, Is.EqualTo(1));
+            Assert.That(result.QuestionResolution.WithinSLA, Is.EqualTo(1));
+        }
+
+        [Test]
+        public async Task CustomerReportedBug_IsExcludedFromQuestionResolution()
+        {
+            var issueCreated = DateTimeOffset.UtcNow.AddDays(-10);
+
+            var issue = CreateIssue(1, "Customer bug", issueCreated, ItemState.Open,
+                ["customer-reported", "bug", "TestService"]);
+
+            _mockGitHub.Setup(s => s.ListIssuesForSLAAsync(
+                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                    It.IsAny<DateTimeOffset>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<Issue> { issue }.AsReadOnly());
+
+            _mockGitHub.Setup(s => s.GetIssueCommentsAsync(
+                    It.IsAny<string>(), It.IsAny<string>(), 1, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<IssueComment>().AsReadOnly());
+
+            var result = await _tool.GetSLAStatus("TestService", "test-repo");
+
+            Assert.That(result.BugResolution.TotalTracked, Is.EqualTo(1));
+            Assert.That(result.QuestionResolution.TotalTracked, Is.EqualTo(0));
         }
 
         // ========================
@@ -373,12 +405,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.SLA
                     It.IsAny<DateTimeOffset>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<Issue> { issue }.AsReadOnly());
 
-            _mockGitHub.Setup(s => s.GetIssueCommentsAsync(
+            _mockGitHub.Setup(s => s.GetFirstTeamIssueCommentAsync(
                     It.IsAny<string>(), It.IsAny<string>(), 1, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new List<IssueComment>
-                {
-                    CreateComment(issueCreated.AddDays(1), "team-dev", AuthorAssociation.Collaborator)
-                }.AsReadOnly());
+                .ReturnsAsync(CreateComment(issueCreated.AddDays(1), "team-dev", AuthorAssociation.Collaborator));
 
             var result = await _tool.GetSLAStatus("TestService", "test-repo");
 
@@ -403,6 +432,21 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.SLA
             // Per-repo errors are caught — returns partial result, not an exception
             Assert.That(result.Service, Is.EqualTo("TestService"));
             Assert.That(result.TotalOpenIssues, Is.EqualTo(0));
+            Assert.That(result.Warnings, Is.Not.Null);
+            Assert.That(result.Warnings![0], Does.Contain("Results may be incomplete"));
+        }
+
+        [Test]
+        public async Task GetSLAStatus_ServiceLabelMissingInExplicitRepo_ReturnsClearError()
+        {
+            _mockGitHub.Setup(s => s.ListRepositoryLabelsAsync(
+                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<string> { "Storage", "EventHubs" }.AsReadOnly());
+
+            var result = await _tool.GetSLAStatus("TestService", "test-repo");
+
+            Assert.That(result.ResponseError, Does.Contain("Service label 'TestService' not found"));
+            Assert.That(result.ResponseError, Does.Contain("Available labels"));
         }
 
         // ========================

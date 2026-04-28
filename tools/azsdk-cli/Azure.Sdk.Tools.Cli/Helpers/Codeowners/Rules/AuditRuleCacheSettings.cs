@@ -5,5 +5,5 @@ namespace Azure.Sdk.Tools.Cli.Helpers.Codeowners.Rules;
 
 internal static class AuditRuleCacheSettings
 {
-    internal static TimeSpan CacheMaxAge { get; } = TimeSpan.FromHours(12);
+    internal static TimeSpan CacheMaxAge { get; } = TimeSpan.FromHours(6);
 }

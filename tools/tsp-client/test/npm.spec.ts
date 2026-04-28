@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { isWorkspaceVersion, hasWorkspaceVersions } from "../src/npm.js";
 
 describe("isWorkspaceVersion", () => {

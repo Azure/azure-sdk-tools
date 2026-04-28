@@ -119,6 +119,56 @@ This launches the agent via `agentdev run` on `http://localhost:8088/` with `deb
 3. Install REST Client extension
 4. Run tests under `tests/api_test.rest` to verify the server is working.
 
+## Deployment
+
+The project has three independently deployable components, each with its own CD pipeline. All pipelines are manually triggered and parameterized by environment (`dev` / `prod`).
+
+### Agent Deploy
+
+Builds the agent container image, pushes to ACR, and deploys a new hosted agent version to Azure AI Foundry.
+
+- **Pipeline**: [agent-cd.yml](pipelines/agent-cd.yml) | [Run in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8159)
+- **Deploy script**: [scripts/deploy_hosted_agent.py](scripts/deploy_hosted_agent.py)
+- **Parameters**: `environment` (dev/prod), `agentName` (chat_agent)
+- **What it does**:
+  1. Builds the Docker image from `agents/chat_agent/Dockerfile`
+  2. Pushes to `azuresdkqabotcontainer.azurecr.io`
+  3. Runs `deploy_hosted_agent.py` to create a new agent version via Foundry API
+
+**Manual deploy** (from project root):
+
+```bash
+python scripts/deploy_hosted_agent.py chat_agent --tag <image-tag>
+```
+
+### Server Deploy
+
+Builds the backend API (FastAPI) container image and deploys to Azure App Service.
+
+- **Pipeline**: [server-cd.yml](pipelines/server-cd.yml) | [Run in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8128)
+- **Parameters**: `environment` (dev/preview/prod), `slot` (default/agent)
+- **What it does**:
+  1. Resolves image tag from `_version.py` (prod) or git short SHA (dev)
+  2. Builds and pushes image to ACR via `az acr build`
+  3. Deploys to App Service using container image reference
+
+### Logic App Deploy
+
+Deploys the Logic App ARM template for Teams channel message mirroring.
+
+- **Pipeline**: [logicapp-cd.yml](pipelines/logicapp-cd.yml) | [Run in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8177)
+- **Parameters**: `environment` (dev/test/prod)
+- **What it does**:
+  1. Runs `az deployment group create` with environment-specific ARM template parameters
+  2. Idempotent — safe to re-run
+
+### CI Pipeline
+
+Runs linting (pyright) and unit tests on PRs that touch the bot agent code.
+
+- **Pipeline**: [server-ci.yml](pipelines/server-ci.yml) | [View in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8156)
+- **Triggers**: PRs to `main` touching `tools/sdk-ai-bots/azure-sdk-qa-bot-agent`
+
 ## Tracing & Debugging a Response
 
 When the bot replies in Teams, you can trace the full request lifecycle from response ID down to detailed logs according to the environment.
@@ -127,7 +177,8 @@ When the bot replies in Teams, you can trace the full request lifecycle from res
 
 | Environment | Agent Playground | Application Insights |
 |-------------|-----------------|---------------------|
-| **Dev** | [Foundry Agent Playground](https://ai.azure.com/nextgen/r/oYiXpn5ERX2SYPKFTArKQg,azure-sdk-qa-bot-dev,,azuresdkqabot-dev-ai,azuresdkqabot-dev-ai/build/agents/azure-sdk-chat-agent/build) | [azuresdkqabot-dev-agent](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Insights/components/azuresdkqabot-dev-agent/overview) |
+| **Dev** | [Foundry Agent Playground](https://ai.azure.com/nextgen/r/oYiXpn5ERX2SYPKFTArKQg,azure-sdk-qa-bot-dev,,azuresdkqabot-dev-ai-resource,azuresdkqabot-dev-ai/build/agents/azure-sdk-chat-agent/build) | [azuresdkqabot-dev-agent](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Insights/components/azuresdkqabot-dev-agent/overview) |
+| **Test & Prod** | [Foundry Agent Playground](https://ai.azure.com/nextgen/r/oYiXpn5ERX2SYPKFTArKQg,azure-sdk-qa-bot,,azuresdkqabot-ai-resource,azuresdkqabot-prod-ai/build/agents/azure-sdk-chat-agent/build) | [azuresdkqabot-agent](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.Insights/components/azuresdkqabot-agent/overview) |
 
 ### 1. Find the Response ID
 

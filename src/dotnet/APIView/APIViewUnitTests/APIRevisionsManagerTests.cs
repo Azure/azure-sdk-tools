@@ -564,14 +564,14 @@ public class APIRevisionsManagerTests
                 Documentation = "Test documentation",
                 Type = "client"
             },
-            Languages = new Dictionary<string, LanguageConfig>
+            Languages = new Dictionary<string, List<LanguageConfig>>
             {
-                ["python"] = new LanguageConfig
+                ["python"] = [new LanguageConfig
                 {
                     EmitterName = "@azure-tools/typespec-python",
                     PackageName = "azure-ai-textanalytics",
                     Namespace = "azure.ai.textanalytics"
-                }
+                }]
             },
             SourceConfigPath = "specification/ai/Azure.AI.TextAnalytics/tspconfig.yaml"
         };

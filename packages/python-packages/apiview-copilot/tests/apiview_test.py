@@ -4,7 +4,7 @@
 # license information.
 # --------------------------------------------------------------------------
 
-# pylint: disable=missing-class-docstring,missing-function-docstring,redefined-outer-name,unused-argument
+# pylint: disable=missing-class-docstring,missing-function-docstring,redefined-outer-name,unused-argument,no-member
 
 """
 Tests for resolve_package function in _apiview.py.
@@ -19,7 +19,7 @@ import pytest
 sys.modules["azure.cosmos"] = MagicMock()
 sys.modules["azure.cosmos.exceptions"] = MagicMock()
 
-from src._apiview import get_active_reviews, get_ai_comment_feedback, get_version_type, resolve_package
+from src._apiview import get_active_reviews, get_ai_comment_feedback, get_comments_in_date_range, get_version_type, resolve_package
 
 
 class TestGetVersionType:
@@ -663,3 +663,50 @@ class TestGetAiCommentFeedback:
             results = get_ai_comment_feedback(None, "2026-01-01", "2026-01-31")
 
             assert all(c["Language"] == "" for c in results)
+
+
+class TestGetCommentsInDateRange:
+    """Tests for get_comments_in_date_range query construction."""
+
+    def _call_and_capture_query(self, **kwargs):
+        """Call get_comments_in_date_range and return the query string passed to query_items."""
+        with patch("src._apiview.get_apiview_cosmos_client") as mock_client:
+            mock_container = MagicMock()
+            mock_container.query_items.return_value = iter([])
+            mock_client.return_value = mock_container
+
+            get_comments_in_date_range("2026-01-01", "2026-01-31", **kwargs)
+
+            mock_container.query_items.assert_called_once()
+            return mock_container.query_items.call_args[1]["query"]
+
+    def test_default_excludes_diagnostics_and_deleted(self):
+        query = self._call_and_capture_query()
+        assert "CommentSource != 'Diagnostic'" in query
+        assert "IsDeleted" in query
+
+    def test_include_diagnostics_true_omits_diagnostic_filter(self):
+        query = self._call_and_capture_query(include_diagnostics=True)
+        assert "Diagnostic" not in query
+
+    def test_include_diagnostics_false_adds_diagnostic_filter(self):
+        query = self._call_and_capture_query(include_diagnostics=False)
+        assert "CommentSource != 'Diagnostic'" in query
+
+    def test_include_deleted_true_omits_deleted_filter(self):
+        query = self._call_and_capture_query(include_deleted=True)
+        assert "IsDeleted = false" not in query
+
+    def test_include_deleted_false_adds_deleted_filter(self):
+        query = self._call_and_capture_query(include_deleted=False)
+        assert "IsDeleted = false" in query
+
+    def test_both_include_flags_true(self):
+        query = self._call_and_capture_query(include_diagnostics=True, include_deleted=True)
+        where_clause = query.split("WHERE", 1)[1]
+        assert "Diagnostic" not in where_clause
+        assert "IsDeleted" not in where_clause
+
+    def test_select_fields_used_in_query(self):
+        query = self._call_and_capture_query(select_fields=["id", "CreatedOn"])
+        assert query.startswith("SELECT c.id, c.CreatedOn FROM c")

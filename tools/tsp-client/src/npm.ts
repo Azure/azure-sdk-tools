@@ -18,10 +18,10 @@ export function hasWorkspaceVersions(
 }
 
 /**
- * Queries the npm registry for a published package's metadata.
+ * Queries the npm registry for a published package's devDependencies.
  * Returns the parsed JSON object, or undefined if the query fails.
  */
-export async function npmViewPackage(
+export async function npmViewPackageDevDependencies(
   packageName: string,
   version: string,
 ): Promise<Record<string, any> | undefined> {

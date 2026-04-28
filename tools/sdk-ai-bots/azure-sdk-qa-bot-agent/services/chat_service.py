@@ -32,7 +32,7 @@ from utils.teams_image import get_image_data_uri
 from utils.text_util import preprocess_message
 from utils.azure_memory_store import sanitize_scope
 from azure.ai.projects.aio import AIProjectClient
-from azure.ai.projects.models import AgentDetails
+from azure.ai.projects.models import AgentVersionDetails
 from openai import AsyncOpenAI
 from openai.types.responses import Response as OpenAIResponse
 from openai.types.responses import (
@@ -114,6 +114,12 @@ class ChatService:
         image_items = await self._build_image_items(req.additional_infos or [])
         conversation_items.extend(image_items)
 
+        agent_ref: dict = {
+            "name": agent.name,
+            "version": agent.version,
+            "type": AgentReferenceType.agent_reference.value,
+        }
+
         # Streaming is broken for hosted agents — text is lost entirely.
         # See https://github.com/Azure/azure-sdk-for-python/issues/45282
         # and https://github.com/Azure/azure-sdk-for-python/issues/46015
@@ -123,10 +129,7 @@ class ChatService:
             store=True,
             stream=False,
             extra_body={
-                "agent_reference": {
-                    "name": agent.name,
-                    "type": AgentReferenceType.agent_reference.value,
-                }
+                "agent_reference": agent_ref,
             },
         )
 
@@ -241,16 +244,20 @@ class ChatService:
                 exc_info=True,
             )
 
-    async def _get_agent(self, project_client: AIProjectClient) -> AgentDetails:
-        """Load hosted-agent definition from Foundry."""
+    async def _get_agent(self, project_client: AIProjectClient) -> AgentVersionDetails:
+        """Load hosted-agent version definition from Foundry."""
         agent_name = cfg("AI_FOUNDRY_AGENT_NAME", "azure-sdk-chat-agent")
-        agent = await project_client.agents.get(agent_name)
+        agent_version = cfg("AI_FOUNDRY_AGENT_VERSION")
+        agent = await project_client.agents.get_version(agent_name, agent_version)
         if agent is None:
             raise RuntimeError(
-                f"Agent '{agent_name}' not found in AI Foundry. "
-                "Make sure the agent has been deployed."
+                f"Agent '{agent_name}' version '{agent_version}' not found in AI Foundry. "
+                "Make sure the agent version has been deployed."
             )
-        logger.info("Using agent: name=%s, versions=%s", agent.name, agent.versions)
+        logger.info(
+            "Using agent: name=%s, version=%s, status=%s",
+            agent.name, agent.version, agent.status,
+        )
         return agent
 
     async def _resolve_conversation(

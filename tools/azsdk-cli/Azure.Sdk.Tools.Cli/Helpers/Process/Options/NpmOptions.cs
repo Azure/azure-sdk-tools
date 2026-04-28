@@ -62,6 +62,30 @@ public class NpmOptions : ProcessOptions, IProcessOptions
         {
             return ["exec", "--", .. args];
         }
+
+        // When a prefix is provided, resolve the binary from node_modules/.bin directly.
+        // Using "npm exec --prefix <dir> -- <bin>" causes npm to try to fetch a package
+        // named <bin> from the registry when .npmrc is specified, which fails when the binary name differs from
+        // the npm package name (e.g., "tsp-client" binary from "@azure-tools/typespec-client-generator-cli").
+        // Reading the package.json to find the actual providing package and adding --package= avoids this.
+        var packageJsonPath = Path.Combine(prefix, "package.json");
+        if (File.Exists(packageJsonPath))
+        {
+            var packageJson = System.Text.Json.JsonDocument.Parse(File.ReadAllText(packageJsonPath));
+            if (packageJson.RootElement.TryGetProperty("dependencies", out var deps))
+            {
+                var packages = new List<string>();
+                foreach (var dep in deps.EnumerateObject())
+                {
+                    packages.Add($"--package={dep.Name}");
+                }
+                if (packages.Count > 0)
+                {
+                    return ["exec", "--prefix", prefix, .. packages, "--", .. args];
+                }
+            }
+        }
+
         return ["exec", "--prefix", prefix, "--", .. args];
     }
 }

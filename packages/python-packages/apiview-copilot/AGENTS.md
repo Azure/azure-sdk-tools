@@ -19,6 +19,7 @@ AI-powered automated reviewer for Azure SDK API surface reviews. Ingests APIView
   - `_database_manager.py` — Azure Cosmos DB integration. Singleton `DatabaseManager` with typed container clients.
   - `_settings.py` — Singleton `SettingsManager` reading from Azure App Configuration with Key Vault secret resolution.
   - `_prompt_runner.py` — Runs `.prompty` files with retry logic.
+  - `_apiview_metrics.py` — APIView platform metrics (versioned-revision tracking over time).
   - `_comment_grouper.py` — Groups similar comments with correlation IDs.
   - `_diff.py` — Generates numbered diffs between base and target API views.
   - `_mention.py` — Handles @mention feedback processing.
@@ -88,6 +89,7 @@ Invoked via `avc` (or `python cli.py`):
 - `avc report active-reviews` — Query active reviews for a language and date range.
 - `avc report feedback` / `avc report memory` — Audit feedback and memories.
 - `avc report architect-comments` — Retrieve human architect review comments for a language and date range.
+- `avc report apiview-metrics` — Track APIView platform metrics (versioned revision coverage by language/type).
 - `avc ops deploy` — Deploy to Azure App Service.
 - `avc ops check` — Health check the deployed service.
 - `avc ops grant` / `avc ops revoke` — Manage Azure RBAC permissions.

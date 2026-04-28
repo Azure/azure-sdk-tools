@@ -391,6 +391,26 @@ avc report quality-trends [--end-date 2026-04-17] [--months 6] [--languages Pyth
 
 ---
 
+### `avc report apiview-metrics`
+
+Generate APIView platform metrics over a calendar-month lookback window. Currently tracks the percentage of revisions that have a valid `PackageVersion`, broken out by language and revision type (Automatic, Manual, PullRequest).
+
+```bash
+avc report apiview-metrics [--end-date 2026-04-28] [--months 6] [--languages Python Java] [--chart] [--environment production|staging]
+```
+
+| Option | Description |
+|--------|-------------|
+| `-e/--end-date` | Inclusive query end date; defaults to today |
+| `--months` | Number of calendar months to look back from the end date (default 6) |
+| `--languages` | Languages to include; defaults to Python, C#, Java, and JavaScript |
+| `--chart` | Generate a PNG trend chart saved to `output/charts/` |
+| `--environment` | `production` (default) or `staging` |
+
+Outputs JSON with a top-level `versions` key containing per-language monthly data points, followed by a compact terminal summary table.
+
+---
+
 ### `avc report active-reviews`
 
 Query active APIView reviews in a date range.

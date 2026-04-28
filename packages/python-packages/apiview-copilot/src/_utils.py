@@ -25,11 +25,12 @@ def get_language_pretty_name(language: str) -> str:
         "golang": "Go",
         "ios": "Swift",
         "java": "Java",
+        "javascript": "JavaScript",
         "python": "Python",
         "rust": "Rust",
         "typescript": "JavaScript",
     }
-    pretty_name = language_pretty_names.get(language, language.capitalize())
+    pretty_name = language_pretty_names.get(language.lower(), language.capitalize())
     return pretty_name
 
 

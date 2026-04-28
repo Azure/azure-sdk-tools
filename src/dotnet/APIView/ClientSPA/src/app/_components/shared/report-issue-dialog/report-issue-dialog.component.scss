@@ -1,0 +1,151 @@
+::ng-deep .report-issue-dialog {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+    .p-dialog-header {
+        padding: 0.75rem 1.5rem;
+        background-color: var(--base-fg-color);
+        border-bottom: 1px solid var(--border-color);
+        color: var(--base-text-color);
+
+        .p-dialog-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .p-dialog-header-actions {
+            padding: 0;
+
+            .p-dialog-close-button {
+                background-color: var(--primary-color) !important;
+                color: var(--primary-btn-color) !important;
+                width: 2rem;
+                height: 2rem;
+                border-radius: 50%;
+                opacity: 1 !important;
+                transition: background-color 0.2s, color 0.2s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 1px solid var(--primary-color) !important;
+
+                &:hover {
+                    filter: brightness(0.9);
+                }
+
+                &:focus {
+                    box-shadow: 0 0 0 2px var(--base-bg-color), 0 0 0 4px var(--primary-color) !important;
+                }
+
+                .p-button-icon {
+                    color: var(--primary-btn-color) !important;
+                }
+            }
+        }
+    }
+
+    .p-dialog-content {
+        background-color: var(--base-bg-color);
+        color: var(--base-text-color);
+        padding: 1.5rem;
+
+        label {
+            color: var(--base-text-color);
+        }
+    }
+
+    .p-dialog-footer {
+        background-color: var(--base-fg-color);
+        border-top: 1px solid var(--border-color);
+        padding: 0.75rem 1.5rem;
+    }
+}
+
+.comment-context-card {
+    background-color: var(--base-fg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 0.75rem;
+
+    .context-header {
+        display: flex;
+        align-items: center;
+    }
+
+    .bg-copilot {
+        background-color: var(--diagnostic-accent-color, #6f42c1);
+        color: white;
+    }
+
+    .bg-apiview {
+        background-color: var(--human-source-color, #0d6efd);
+        color: white;
+    }
+
+    .context-code {
+        background-color: var(--base-bg-color);
+        border-radius: 4px;
+        padding: 0.5rem;
+        font-size: 0.85rem;
+        overflow-x: auto;
+        max-height: 4rem;
+
+        code {
+            white-space: pre;
+            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            color: var(--base-text-color);
+        }
+    }
+
+    .context-comment {
+        color: var(--text-muted-color);
+        border-top: 1px solid var(--border-color);
+        padding-top: 0.5rem;
+    }
+}
+
+.form-check {
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+}
+
+.form-check-input:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+textarea.form-control {
+    resize: vertical;
+    min-height: 80px;
+}
+
+::ng-deep .report-issue-toast {
+    .issue-link {
+        color: var(--link-color);
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.9rem;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+}
+
+.success-confirmation {
+    .confirmation-icon {
+        font-size: 3rem;
+    }
+
+    .btn-outline-primary {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+
+        &:hover {
+            background-color: var(--primary-color);
+            color: var(--primary-btn-color);
+        }
+    }
+}

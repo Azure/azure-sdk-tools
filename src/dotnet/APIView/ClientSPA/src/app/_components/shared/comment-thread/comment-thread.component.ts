@@ -32,6 +32,7 @@ import { CommentRelationHelper } from 'src/app/_helpers/comment-relation.helper'
 import { CommentResolutionData } from '../related-comments-dialog/related-comments-dialog.component';
 import { AICommentFeedback } from '../ai-comment-feedback-dialog/ai-comment-feedback-dialog.component';
 import { AICommentDeleteReason } from '../ai-comment-delete-dialog/ai-comment-delete-dialog.component';
+import { ReportIssueDialogComponent, CommentContext, ReportIssueData } from '../report-issue-dialog/report-issue-dialog.component';
 
 interface AICommentInfoItem {
   icon: string;
@@ -66,6 +67,7 @@ interface AICommentInfo {
         RelatedCommentsDialogComponent,
         AICommentFeedbackDialogComponent,
         AICommentDeleteDialogComponent,
+        ReportIssueDialogComponent,
         MarkdownToHtmlPipe,
         LanguageNamesPipe
     ]
@@ -98,6 +100,7 @@ export class CommentThreadComponent {
   assetsPath : string = environment.assetsPath;
   currentAIInfoStructured: AICommentInfo | null = null;
   menuItemsGitHubIssue: MenuItem[] = [];
+  menuItemsReportIssue: MenuItem[] = [];
   allowAnyOneToResolve : boolean = false; // Default to false since default severity is "Should fix"
 
   threadResolvedBy : string | undefined = '';
@@ -122,6 +125,8 @@ export class CommentThreadComponent {
 
   showAIFeedbackDialog: boolean = false;
   showAIDeleteDialog: boolean = false;
+  showReportIssueDialog: boolean = false;
+  reportIssueCommentContext: CommentContext | null = null;
   pendingDownvoteAction: CommentUpdatesDto | null = null;
   pendingDeleteAction: CommentUpdatesDto | null = null;
   conversationCodeRow: CodePanelRowData | null = null;
@@ -169,6 +174,13 @@ export class CommentThreadComponent {
         { title: "apiview", label: "APIView", command: (event) => this.createGitHubIssue(event) },
       ]
     });
+
+    this.menuItemsReportIssue = [{
+      label: 'Report Issue',
+      items: [
+        { label: 'Report Issue', icon: 'bi bi-flag', command: (event) => this.openReportIssueFromComment(event) }
+      ]
+    }];
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -271,6 +283,8 @@ export class CommentThreadComponent {
     if (this.instanceLocation !== "samples") {
       menu.push({ separator: true });
       menu.push(...this.menuItemsGitHubIssue);
+      menu.push({ separator: true });
+      menu.push(...this.menuItemsReportIssue);
     }
 
     return menu;
@@ -346,6 +360,46 @@ export class CommentThreadComponent {
     const issueBody = encodeURIComponent(`\`\`\`${event.item?.title}\n${codeLineContent}\n\`\`\`\n#\n${commentData}\n#\n[Created from ApiView comment](${apiViewUrl})`);
 
     window.open(`https://github.com/Azure/${repo}/issues/new?body=${issueBody}`, '_blank');
+  }
+
+  openReportIssueFromComment(event: MenuItemCommandEvent): void {
+    const target = (event.originalEvent?.target as Element)?.closest("a");
+    const commentId = target?.getAttribute("data-item-id") || '';
+    const comment = this.codePanelRowData?.comments?.find(c => c.id === commentId);
+    const commentText = comment?.commentText?.replace(/<[^>]*>/g, '').trim() || '';
+
+    let codeSnippet = this.associatedCodeLine
+      ? this.associatedCodeLine.rowOfTokens.map(token => token.value).join('')
+      : '';
+    if (!codeSnippet) {
+      codeSnippet = this.codePanelRowData?.comments[0]?.elementId || '';
+    }
+
+    const language = this.reviewContextService.getLanguage() || '';
+
+    const source = (comment?.commentSource === CommentSource.AIGenerated || comment?.commentSource === CommentSource.Diagnostic)
+      ? 'copilot' as const
+      : 'apiview' as const;
+
+    this.reportIssueCommentContext = {
+      commentId: commentId,
+      commentText: commentText,
+      codeSnippet: codeSnippet,
+      language: language,
+      elementId: this.codePanelRowData?.comments[0]?.elementId || '',
+      commentSource: source
+    };
+    this.showReportIssueDialog = true;
+  }
+
+  get currentReviewLink(): string | null {
+    const nodeId: string = this.codePanelRowData?.nodeId ?? 'defaultNodeId';
+    return `${window.location.href.split("#")[0]}&nId=${encodeURIComponent(nodeId)}`;
+  }
+
+  onReportIssueSubmit(data: ReportIssueData): void {
+    this.showReportIssueDialog = false;
+    this.reportIssueCommentContext = null;
   }
 
   copyCommentLink(event: MenuItemCommandEvent) {

@@ -4,7 +4,10 @@
         <ng-template let-message pTemplate="message">
             <div class="d-flex flex-column w-100" style="flex: 1; min-width: 0;">
                 <div class="fw-bolder"><i *ngIf="message.icon" class="{{ message.icon }} me-2"></i>{{ message.summary }}</div>
-                <div class="small mt-2" *ngIf="message.detail">{{ message.detail }}</div>
+                <div class="small mt-2" *ngIf="message.detail">
+                    <a *ngIf="message.detail.startsWith('http')" [href]="message.detail" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: underline;">{{ message.detail }}</a>
+                    <span *ngIf="!message.detail.startsWith('http')">{{ message.detail }}</span>
+                </div>
                 <div *ngIf="message.data && message.data.action === 'RefreshPage'" class="small mt-2"><button type="button" class="btn btn-warning btn-sm" (click)="reloadPage()">Refresh</button> page to see changes.</div>
             </div>
         </ng-template>

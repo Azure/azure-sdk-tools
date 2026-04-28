@@ -27,11 +27,20 @@
                         <li><a class="dropdown-item" href="https://eng.ms/docs/products/azure-developer-experience/support/apiview" target="_blank" rel="noopener noreferrer">
                             <i class="bi bi-book me-2"></i>Documentation
                         </a></li>
-                        <li><a class="dropdown-item" href="https://github.com/Azure/azure-sdk-tools/issues/new?labels=APIView" target="_blank" rel="noopener noreferrer">
+                        <li><button class="dropdown-item" type="button" (click)="openReportIssueDialog()">
                             <i class="bi bi-bug me-2"></i>Report an Issue
-                        </a></li>
+                        </button></li>
                     </ul>
                 </li>
+
+<!-- Report Issue Dialog (General mode from ? menu) -->
+<app-report-issue-dialog
+    [(visible)]="showReportIssueDialog"
+    mode="general"
+    [reviewLink]="currentReviewLink"
+    (issueSubmit)="onReportIssueSubmit($event)"
+    (cancel)="showReportIssueDialog = false">
+</app-report-issue-dialog>
 
                 <!-- Notifications icon with badge -->
                 <li *ngIf="isLoggedIn" class="nav-item">

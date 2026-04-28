@@ -1,0 +1,57 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [closable]="true"
+  [resizable]="false"
+  [draggable]="false"
+  [dismissableMask]="false"
+  [header]="dialogTitle"
+  [style]="{width: '520px'}"
+  styleClass="report-issue-dialog"
+  appendTo="body"
+  (onHide)="onHide()">
+
+  <div class="dialog-content">
+
+    <!-- Comment mode: Comment context card -->
+    <div *ngIf="mode === 'comment' && commentContext" class="comment-context-card mb-3">
+      <div class="context-header">
+        <span class="badge" [ngClass]="commentContext.commentSource === 'copilot' ? 'bg-copilot' : 'bg-apiview'">
+          {{ commentSourceLabel }}
+        </span>
+        <span *ngIf="commentContext.language" class="text-muted ms-2 small">{{ commentContext.language }}</span>
+      </div>
+      <div *ngIf="commentContext.codeSnippet" class="context-code mt-2">
+        <code>{{ commentContext.codeSnippet }}</code>
+      </div>
+      <div *ngIf="commentContext.commentText" class="context-comment mt-2">
+        <p class="mb-0 small">{{ commentContext.commentText }}</p>
+      </div>
+    </div>
+
+    <!-- Description -->
+    <div class="description-section mb-3">
+      <label for="issueDescription" class="form-label fw-semibold">
+        Description <span class="text-danger">*</span>
+      </label>
+      <textarea
+        id="issueDescription"
+        class="form-control"
+        [(ngModel)]="description"
+        rows="4"
+        [placeholder]="mode === 'general' ? 'Describe the issue you encountered' : 'Provide additional details'">
+      </textarea>
+    </div>
+
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="d-flex justify-content-end gap-2 w-100">
+      <button class="btn btn-outline-secondary" (click)="onCancel()">Cancel</button>
+      <button class="btn btn-primary" [disabled]="!canSubmit" (click)="onSubmit()">
+        Submit
+      </button>
+    </div>
+  </ng-template>
+
+</p-dialog>

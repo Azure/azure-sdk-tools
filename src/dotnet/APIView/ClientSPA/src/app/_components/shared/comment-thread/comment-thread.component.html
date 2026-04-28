@@ -254,3 +254,13 @@
     (deleteConfirm)="onAIDeleteConfirm($event)"
     (cancel)="onAIDeleteCancel()">
 </app-ai-comment-delete-dialog>
+
+<!-- Report Issue Dialog (Comment mode from "..." menu) -->
+<app-report-issue-dialog *ngIf="showReportIssueDialog"
+    [(visible)]="showReportIssueDialog"
+    mode="comment"
+    [reviewLink]="currentReviewLink"
+    [commentContext]="reportIssueCommentContext"
+    (issueSubmit)="onReportIssueSubmit($event)"
+    (cancel)="showReportIssueDialog = false">
+</app-report-issue-dialog>

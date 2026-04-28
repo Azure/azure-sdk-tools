@@ -1,0 +1,114 @@
+# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+
+trigger: none
+
+pr: none
+
+parameters:
+- name: PythonVersion
+  type: string
+  default: '3.10'
+
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    Use1ESOfficial: false
+    stages:
+      - stage: EvalTypeSpecAuthor
+        displayName: Azure TypeSpec Author Skill Evaluation
+        variables:
+          - template: /eng/pipelines/templates/variables/globals.yml
+          - template: /eng/pipelines/templates/variables/image.yml
+        pool:
+          name: $(LINUXPOOL)
+          image: $(LINUXVMIMAGE)
+          os: linux
+        jobs:
+          - job: RunEvals
+            displayName: Run Vally Evaluations
+            timeoutInMinutes: 120
+            steps:
+              - checkout: self
+                fetchDepth: 0
+
+              # Install Go and build/start the QA bot backend
+              - script: |
+                  echo "Downloading Go 1.24.0..."
+                  curl -LO https://go.dev/dl/go1.24.0.linux-amd64.tar.gz
+
+                  echo "Removing existing Go installation..."
+                  sudo rm -rf /usr/local/go
+
+                  echo "Extracting Go 1.24.0..."
+                  sudo tar -C /usr/local -xzf go1.24.0.linux-amd64.tar.gz
+
+                  echo "Setting environment variables..."
+                  echo "##vso[task.setvariable variable=GOROOT]/usr/local/go"
+                  echo "##vso[task.prependpath]/usr/local/go/bin"
+                displayName: Install Go
+
+              - script: go version
+                displayName: Check Go version
+
+              - task: AzureCLI@2
+                displayName: Start QA bot backend service
+                inputs:
+                  azureSubscription: 'azuresdkqabot-dev'
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
+                  inlineScript: |
+                    export GOPROXY=https://proxy.golang.org,direct
+                    go build -o qa-bot-service
+                    chmod +x qa-bot-service
+                    nohup ./qa-bot-service </dev/null >/dev/null 2>&1 &
+                    sleep 20
+                    lsof -ti:8088
+                env:
+                  SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+                  AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
+
+              # Install .NET SDK for azsdk-cli MCP server
+              - task: UseDotNet@2
+                displayName: Install .NET 8.0 SDK
+                inputs:
+                  version: '8.x'
+
+              # Install Node.js and Vally CLI
+              - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+                parameters:
+                  TokenOwners:
+                    - microsoft
+
+              - task: NodeTool@0
+                inputs:
+                  versionSpec: '22.x'
+                displayName: Install Node.js
+
+              - script: |
+                  npm config set "@microsoft:registry" "https://npm.pkg.github.com"
+                  npm config set "//npm.pkg.github.com/:_authToken" "$(GH_TOKEN)"
+                displayName: Configure GitHub Packages registry
+
+              - script: npm install -g @microsoft/vally-cli
+                displayName: Install Vally CLI
+
+              # Run evaluations
+              - script: |
+                  vally eval --suite all --workspace ./debug --output-dir ./results --verbose || true
+                displayName: Run azure-typespec-author evaluations
+                workingDirectory: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate
+                continueOnError: true
+
+            templateContext:
+              outputs:
+                - output: pipelineArtifact
+                  path: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/debug
+                  artifact: eval-debug-workspace
+                  displayName: Publish Debug Workspace
+                  condition: always()
+                - output: pipelineArtifact
+                  path: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/results
+                  artifact: eval-results
+                  displayName: Publish Evaluation Results
+                  condition: always()

@@ -81,7 +81,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         }
 
         [Test]
-        public void Constructor_WithPrefix_NoPackageJson_BuildsExecWithPrefix()
+        public void Constructor_WithPrefix_BinaryNotInNodeModulesBin_FallsBackToNpmExec()
         {
             var options = new NpmOptions(prefix: tempDir, args: ["tsp-client", "init"]);
 
@@ -101,66 +101,55 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         }
 
         [Test]
-        public void Constructor_WithPrefix_PackageJsonWithDependencies_IncludesPackageFlags()
+        public void Constructor_WithPrefix_BinaryExistsInNodeModulesBin_ResolvesDirectly()
         {
-            File.WriteAllText(
-                Path.Combine(tempDir, "package.json"),
-                """
-                {
-                    "dependencies": {
-                        "@azure-tools/typespec-client-generator-cli": "^1.0.0",
-                        "@azure-tools/typespec-autorest": "^0.40.0"
-                    }
-                }
-                """);
+            var binDir = Path.Combine(tempDir, "node_modules", ".bin");
+            Directory.CreateDirectory(binDir);
 
-            var options = new NpmOptions(prefix: tempDir, args: ["tsp-client", "init"]);
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                // Create a .cmd shim like npm does on Windows
+                var cmdPath = Path.Combine(binDir, "tsp-client.cmd");
+                File.WriteAllText(cmdPath, "@echo off");
 
-            Assert.That(options.Args, Does.Contain("--package=@azure-tools/typespec-client-generator-cli"));
-            Assert.That(options.Args, Does.Contain("--package=@azure-tools/typespec-autorest"));
-            Assert.That(options.Args, Does.Contain("--prefix"));
-            Assert.That(options.Args, Does.Contain(tempDir));
-            Assert.That(options.Args, Does.Contain("--"));
-            Assert.That(options.Args, Does.Contain("tsp-client"));
-            Assert.That(options.Args, Does.Contain("init"));
+                var options = new NpmOptions(prefix: tempDir, args: ["tsp-client", "init"]);
+
+                // On Windows, ProcessOptions wraps with cmd.exe /C
+                Assert.That(options.Command, Is.EqualTo(ProcessOptions.CMD));
+                Assert.That(options.Args, Does.Contain(cmdPath));
+                Assert.That(options.Args, Does.Contain("init"));
+                Assert.That(options.Args, Has.No.Member("tsp-client"));
+                Assert.That(options.Args, Has.No.Member("exec"));
+            }
+            else
+            {
+                var binPath = Path.Combine(binDir, "tsp-client");
+                File.WriteAllText(binPath, "#!/bin/sh");
+
+                var options = new NpmOptions(prefix: tempDir, args: ["tsp-client", "init"]);
+
+                Assert.That(options.Command, Is.EqualTo(binPath));
+                Assert.That(options.Args, Is.EqualTo(new[] { "init" }));
+            }
         }
 
         [Test]
-        public void Constructor_WithPrefix_PackageJsonWithEmptyDependencies_FallsBackToNoPackageFlags()
+        public void Constructor_WithPrefix_BinaryResolved_ArgsSkipBinaryName()
         {
-            File.WriteAllText(
-                Path.Combine(tempDir, "package.json"),
-                """
-                {
-                    "dependencies": {}
-                }
-                """);
+            var binDir = Path.Combine(tempDir, "node_modules", ".bin");
+            Directory.CreateDirectory(binDir);
 
-            var options = new NpmOptions(prefix: tempDir, args: ["tsp-client", "init"]);
+            var shimName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                ? "my-tool.cmd" : "my-tool";
+            File.WriteAllText(Path.Combine(binDir, shimName), "stub");
 
-            Assert.That(options.Args, Has.No.Member("--package="));
-            Assert.That(options.Args, Does.Contain("--prefix"));
-            Assert.That(options.Args, Does.Contain(tempDir));
-        }
+            var options = new NpmOptions(prefix: tempDir, args: ["my-tool", "--flag", "value"]);
 
-        [Test]
-        public void Constructor_WithPrefix_PackageJsonWithoutDependenciesKey_FallsBackToNoPackageFlags()
-        {
-            File.WriteAllText(
-                Path.Combine(tempDir, "package.json"),
-                """
-                {
-                    "name": "test-package",
-                    "version": "1.0.0"
-                }
-                """);
-
-            var options = new NpmOptions(prefix: tempDir, args: ["run", "build"]);
-
-            var argsStr = string.Join(" ", options.Args);
-            Assert.That(argsStr, Does.Not.Contain("--package="));
-            Assert.That(options.Args, Does.Contain("--prefix"));
-            Assert.That(options.Args, Does.Contain(tempDir));
+            // The binary name should be stripped; only remaining args are passed
+            Assert.That(options.Args, Does.Contain("--flag"));
+            Assert.That(options.Args, Does.Contain("value"));
+            Assert.That(options.Args, Has.No.Member("exec"));
+            Assert.That(options.Args, Has.No.Member("--prefix"));
         }
 
         [Test]
@@ -222,51 +211,39 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         }
 
         [Test]
-        public void Constructor_WithPrefix_PackageJsonWithSingleDependency_IncludesSinglePackageFlag()
+        public void Constructor_WithNullPrefix_BuildsExecDashDashArgs()
         {
-            File.WriteAllText(
-                Path.Combine(tempDir, "package.json"),
-                """
-                {
-                    "dependencies": {
-                        "typescript": "^5.0.0"
-                    }
-                }
-                """);
+            var options = new NpmOptions(prefix: null, args: ["tsp-client", "init"]);
 
-            var options = new NpmOptions(prefix: tempDir, args: ["tsc"]);
-
-            Assert.That(options.Args, Does.Contain("--package=typescript"));
-            Assert.That(options.Args, Does.Contain("--"));
-            Assert.That(options.Args, Does.Contain("tsc"));
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                Assert.That(options.Args, Does.Contain("exec"));
+                Assert.That(options.Args, Does.Contain("--"));
+                Assert.That(options.Args, Does.Contain("tsp-client"));
+                Assert.That(options.Args, Does.Contain("init"));
+                Assert.That(options.Args, Has.No.Member("--prefix"));
+            }
+            else
+            {
+                Assert.That(options.Args, Is.EqualTo(new[] { "exec", "--", "tsp-client", "init" }));
+            }
         }
 
         [Test]
-        public void Constructor_PackageFlagsAppearBeforeSeparator()
+        public void Constructor_WithPrefix_BinaryWithNoExtraArgs_ResolvesWithEmptyArgs()
         {
-            File.WriteAllText(
-                Path.Combine(tempDir, "package.json"),
-                """
-                {
-                    "dependencies": {
-                        "pkg-a": "1.0.0",
-                        "pkg-b": "2.0.0"
-                    }
-                }
-                """);
+            var binDir = Path.Combine(tempDir, "node_modules", ".bin");
+            Directory.CreateDirectory(binDir);
 
-            var options = new NpmOptions(prefix: tempDir, args: ["my-bin"]);
+            var shimName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                ? "my-tool.cmd" : "my-tool";
+            File.WriteAllText(Path.Combine(binDir, shimName), "stub");
 
-            var argsList = options.Args;
-            var separatorIndex = argsList.IndexOf("--");
-            var pkgAIndex = argsList.IndexOf("--package=pkg-a");
-            var pkgBIndex = argsList.IndexOf("--package=pkg-b");
+            var options = new NpmOptions(prefix: tempDir, args: ["my-tool"]);
 
-            Assert.That(separatorIndex, Is.GreaterThan(-1), "Args should contain '--' separator");
-            Assert.That(pkgAIndex, Is.GreaterThan(-1), "Args should contain --package=pkg-a");
-            Assert.That(pkgBIndex, Is.GreaterThan(-1), "Args should contain --package=pkg-b");
-            Assert.That(pkgAIndex, Is.LessThan(separatorIndex), "--package flags should appear before '--'");
-            Assert.That(pkgBIndex, Is.LessThan(separatorIndex), "--package flags should appear before '--'");
+            // Only the binary name was provided, so remaining args should be empty
+            Assert.That(options.Args, Has.No.Member("my-tool"));
+            Assert.That(options.Args, Has.No.Member("exec"));
         }
     }
 }

@@ -251,7 +251,8 @@ class ChatService:
         if agent_version:
             agent = await project_client.agents.get_version(agent_name, agent_version)
         else:
-            agent = await project_client.agents.get(agent_name)
+            agent_details = await project_client.agents.get(agent_name)
+            agent = agent_details.versions.latest if agent_details else None
         if agent is None:
             raise RuntimeError(
                 f"Agent '{agent_name}' (version={agent_version or 'latest'}) not found in AI Foundry. "

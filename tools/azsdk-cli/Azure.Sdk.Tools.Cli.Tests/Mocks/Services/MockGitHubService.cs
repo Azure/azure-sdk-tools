@@ -376,5 +376,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         {
             return Task.FromResult<IReadOnlyList<string>>(new List<string>().AsReadOnly());
         }
+
+        public Task<Team> GetTeamByNameAsync(string org, string teamSlug, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

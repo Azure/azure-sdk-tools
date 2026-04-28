@@ -33,7 +33,7 @@ class AstroidFunctionParser:
     def _default_value(self, name):
         try:
             default = self._args.default_value(name)
-            if isinstance(default, astroid.node_classes.Const):
+            if isinstance(default, astroid.nodes.Const):
                 return default.value
             else:
                 return default

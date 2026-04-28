@@ -161,7 +161,7 @@ public class OutputHelper : IOutputHelper, IRawOutputHelper
     {
         if (OutputMode != OutputModes.Mcp && OutputMode != OutputModes.Hidden)
         {
-            Console.WriteLine(output);
+            Console.Error.WriteLine(output);
         }
     }
 

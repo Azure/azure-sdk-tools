@@ -595,6 +595,34 @@ describe('workflow', () => {
       expect(mockLogger.error).toHaveBeenCalledWith(expect.stringContaining('not provided'));
     });
 
+    it('should generate SDK successfully when sdkReleaseType is undefined', async () => {
+      mockWorkflowContext.config.sdkReleaseType = undefined;
+      mockWorkflowContext.specConfigPath = 'test/tspconfig.yaml';
+      vi.mocked(workflowCallGenerateScript).mockResolvedValue({
+        status: 'succeeded',
+        generateInput: {
+          specFolder: 'spec',
+          headSha: 'sha123',
+          repoHttpsUrl: 'https://github.com/test/repo',
+          changedFiles: [],
+          runMode: 'test',
+          installInstructionInput: {
+            isPublic: true,
+            downloadUrlPrefix: '',
+            downloadCommandTemplate: 'downloadCommand',
+          },
+        },
+        generateOutput: {
+          packages: [{ packageName: 'test-package', path: ['test'], result: 'succeeded' }],
+        },
+      });
+
+      await workflowGenerateSdk(mockWorkflowContext);
+
+      expect(workflowCallGenerateScript).toHaveBeenCalledWith(mockWorkflowContext, [], [], ['test']);
+      expect(mockWorkflowContext.handledPackages).toHaveLength(1);
+    });
+
     it('should process all packages sequentially', async () => {
       vi.mocked(workflowCallGenerateScript).mockResolvedValue({
         status: 'succeeded',

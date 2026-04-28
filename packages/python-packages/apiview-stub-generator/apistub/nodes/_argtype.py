@@ -87,7 +87,7 @@ class ArgType:
             if isinstance(default, str) and default not in SPECIAL_DEFAULT_VALUES:
                 review_line.add_string_literal(default, has_suffix_space=False)
             else:
-                if isinstance(default, astroid.node_classes.Name):
+                if isinstance(default, astroid.nodes.Name):
                     value = default.name
                 elif hasattr(default, "as_string"):
                     value = default.as_string()

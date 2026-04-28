@@ -1,7 +1,6 @@
 using NUnit.Framework;
 using FluentAssertions;
 using Moq;
-using Microsoft.Graph.Models;
 
 namespace Azure.Sdk.Tools.AccessManagement.Tests;
 

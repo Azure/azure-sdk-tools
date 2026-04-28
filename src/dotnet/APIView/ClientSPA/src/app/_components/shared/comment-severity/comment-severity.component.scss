@@ -12,7 +12,7 @@
   border-radius: 0.375rem;
   font-size: 0.875rem;
   transition: opacity 0.2s;
-  
+
   &:hover {
     opacity: 0.8;
   }
@@ -53,4 +53,10 @@
 .severity-must-fix {
   background-color: var(--severity-must-fix-bg);
   color: var(--severity-must-fix-text);
+}
+
+.severity-unknown {
+  background-color: var(--severity-unknown-bg);
+  color: var(--severity-unknown-text);
+  border-color: var(--severity-unknown-border);
 }

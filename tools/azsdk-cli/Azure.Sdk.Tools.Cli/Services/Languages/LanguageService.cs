@@ -296,11 +296,62 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// Runs all tests in the specified package.
         /// </summary>
         /// <param name="packagePath">The path to the package containing the tests.</param>
+        /// <param name="testMode">The test mode to use (Playback, Record, or Live).</param>
+        /// <param name="liveTestEnvironment">Optional dictionary of environment variables for live/record test runs (e.g. from test resource deployment).</param>
+        /// <param name="timeout">Optional timeout for the test run. When null, each language service uses its own default.</param>
         /// <param name="ct">A cancellation token.</param>
         /// <returns>A <see cref="TestRunResponse"/> containing process output details.</returns>
-        public virtual Task<TestRunResponse> RunAllTests(string packagePath, CancellationToken ct = default)
+        public virtual Task<TestRunResponse> RunAllTests(string packagePath, TestMode testMode = TestMode.Playback, IDictionary<string, string>? liveTestEnvironment = null, TimeSpan? timeout = null, CancellationToken ct = default)
         {
             return Task.FromResult(new TestRunResponse(0, "This is not an applicable operation for this language."));
+        }
+
+        /// <summary>
+        /// Pushes recorded test assets to the assets repository using test-proxy.
+        /// Called after a successful record-mode test run when assets.json exists.
+        /// Language services that use a different push mechanism should override this method.
+        /// </summary>
+        /// <param name="packagePath">Path to the package directory containing assets.json.</param>
+        /// <param name="response">The test run response to append next steps to on failure.</param>
+        /// <param name="ct">Cancellation token.</param>
+        protected virtual async Task PushTestAssets(string packagePath, TestRunResponse response, CancellationToken ct)
+        {
+            var assetsJsonPath = Path.Combine(packagePath, "assets.json");
+            if (!File.Exists(assetsJsonPath))
+            {
+                logger.LogInformation("No assets.json found in {packagePath}, skipping asset push", packagePath);
+                return;
+            }
+
+            logger.LogInformation("Pushing recorded test assets for {packagePath}", packagePath);
+
+            try
+            {
+                var pushResult = await processHelper.Run(new ProcessOptions(
+                        command: "test-proxy",
+                        args: ["push", "-a", "assets.json"],
+                        workingDirectory: packagePath
+                    ),
+                    ct
+                );
+
+                if (pushResult.ExitCode == 0)
+                {
+                    logger.LogInformation("Successfully pushed test assets");
+                }
+                else
+                {
+                    logger.LogWarning("Asset push failed with exit code {exitCode}: {output}", pushResult.ExitCode, pushResult.Output);
+                    response.NextSteps ??= [];
+                    response.NextSteps.Add($"Asset push failed (exit code {pushResult.ExitCode}). You may need to push assets manually using 'test-proxy push -a assets.json'");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to push test assets. Is test-proxy installed?");
+                response.NextSteps ??= [];
+                response.NextSteps.Add("Could not push test assets automatically. Ensure the test-proxy tool is installed and try running 'test-proxy push -a assets.json' manually");
+            }
         }
 
         /// <summary>
@@ -442,7 +493,9 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                 }
             }
 
-            // Step 1: Update the changelog release date (common across all languages)
+            // Step 1: Update the changelog entry title (common across all languages)
+            // If the latest entry's version matches the target version, only update the release date.
+            // Otherwise, replace the latest entry title with the new version and date.
             var changelogPath = changelogHelper.GetChangelogPath(packagePath);
             if (changelogPath == null)
             {
@@ -457,9 +510,46 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
             }
 
             // releaseDate is already validated and defaulted by VersionUpdateTool
-            // Update the changelog with the release date
-            // This will also validate that an entry exists for the version
-            var changelogResult = changelogHelper.UpdateReleaseDate(changelogPath, targetVersion, releaseDate);
+            // Determine whether to update just the date or replace the entire latest entry title
+            var changelogData = changelogHelper.ParseChangelog(changelogPath);
+            if (changelogData == null)
+            {
+                return PackageOperationResponse.CreateFailure(
+                    $"Error parsing changelog {changelogPath}",
+                    packageInfo: packageInfo,
+                    nextSteps: [
+                        "Ensure CHANGELOG.md exists and is properly formatted",
+                        "Then run this tool again to set the version and release date"
+                    ]);
+            } 
+            else if (changelogData.Entries.Count == 0)
+            {
+              logger.LogWarning("No changelog entries found in: {ChangelogPath}", changelogPath);
+                return PackageOperationResponse.CreateFailure(
+                    "No changelog entries found in CHANGELOG.md.",
+                    packageInfo: packageInfo,
+                    nextSteps: [
+                        "Run another tool to update the changelog content first",
+                        "Then run this tool again to set the version and release date"
+                    ]);
+            }
+
+            var latestEntry = changelogData.Entries[0];
+            ChangelogUpdateResult changelogResult;
+
+            if (string.Equals(latestEntry.Version, targetVersion, StringComparison.OrdinalIgnoreCase))
+            {
+                // Version matches - only update the release date
+                logger.LogInformation("Latest changelog entry version matches target version {Version}. Updating release date only.", targetVersion);
+                changelogResult = changelogHelper.UpdateReleaseDate(changelogPath, targetVersion, releaseDate);
+            }
+            else
+            {
+                // Version doesn't match - replace the latest entry title with new version and date
+                logger.LogInformation("Latest changelog entry version {LatestVersion} differs from target version {TargetVersion}. Replacing latest entry title.", latestEntry.Version, targetVersion);
+                changelogResult = changelogHelper.UpdateLatestEntryTitle(changelogPath, targetVersion, releaseDate);
+            }
+
             if (!changelogResult.Success)
             {
                 logger.LogWarning("Failed to update changelog: {Message}", changelogResult.Message);
@@ -480,7 +570,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
             {
                 // Changelog was updated but version files failed - report partial success
                 return PackageOperationResponse.CreateSuccess(
-                    $"Changelog release date updated to {releaseDate}, but version file update requires additional steps.",
+                    $"Changelog updated to {targetVersion} with release date {releaseDate}, but version file update requires additional steps.",
                     nextSteps: versionUpdateResult.NextSteps?.ToArray() ?? ["Manually update the package version in project files"],
                     result: "partial",
                     packageInfo: packageInfo);

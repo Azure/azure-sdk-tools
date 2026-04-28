@@ -121,6 +121,9 @@
                 },
                 "CrossLanguageDefinitionId": {
                     "$ref": "#/$defs/LanguageIdMap"
+                },
+                "CrossLanguageVersion": {
+                    "type": "string"
                 }
             },
             "required": [

@@ -9,6 +9,7 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.CodeownersUtils.Caches;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Azure.Sdk.Tools.Cli.Configuration;
+using Octokit;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
@@ -34,7 +35,8 @@ public static class OwnerTypeExtensions
 public class CodeownersManagementHelper(
     ILogger<CodeownersManagementHelper> logger,
     IDevOpsService devOpsService,
-    ITeamUserCache teamUserCache
+    ITeamUserCache teamUserCache,
+    IGitHubService githubService
 ) : ICodeownersManagementHelper
 {
     public async Task<CodeownersViewResponse> GetViewByUser(string alias, string? repo, CancellationToken ct)
@@ -83,7 +85,7 @@ public class CodeownersManagementHelper(
 
     public async Task<CodeownersViewResponse> GetViewByPath(string path, string? repo, CancellationToken ct)
     {
-        var labelOwners = await QueryLabelOwnersByPath(path, repo, ct);
+        var labelOwners = await QueryLabelOwnersByPath(path, repo, null, ct);
         await HydrateLabelOwners(labelOwners, ct);
 
         return new CodeownersViewResponse([], labelOwners);
@@ -231,7 +233,7 @@ public class CodeownersManagementHelper(
         return labelOwners;
     }
 
-    private async Task<List<LabelOwnerWorkItem>> QueryLabelOwnersByPath(string path, string? repo, CancellationToken ct)
+    private async Task<List<LabelOwnerWorkItem>> QueryLabelOwnersByPath(string path, string? repo, string? section, CancellationToken ct)
     {
         var escapedPath = string.IsNullOrEmpty(path) ? string.Empty : path.Replace("'", "''");
         var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [System.WorkItemType] = 'Label Owner' AND [Custom.RepoPath] = '{escapedPath}'";
@@ -239,6 +241,11 @@ public class CodeownersManagementHelper(
         {
             var escapedRepo = repo.Replace("'", "''");
             query += $" AND [Custom.Repository] = '{escapedRepo}'";
+        }
+        if (!string.IsNullOrEmpty(section))
+        {
+            var escapedSection = section.Replace("'", "''");
+            query += $" AND [Custom.Section] = '{escapedSection}'";
         }
         var rawWorkItems = await devOpsService.FetchWorkItemsPagedAsync(query, expand: WorkItemExpand.Relations, ct: ct);
         return rawWorkItems.Select(WorkItemMappers.MapToLabelOwnerWorkItem).ToList();
@@ -357,6 +364,7 @@ public class CodeownersManagementHelper(
         OwnerType ownerType,
         string? repoPath,
         LabelWorkItem[] labelWorkItems,
+        string section,
         CancellationToken ct
     ) {
         var labelTypeString = ownerType.ToWorkItemString();
@@ -365,12 +373,14 @@ public class CodeownersManagementHelper(
         var escapedRepo = repo.Replace("'", "''");
         var escapedLabelType = labelTypeString.Replace("'", "''");
         var escapedPath = normalizedPath.Replace("'", "''");
+        var escapedSection = section.Replace("'", "''");
 
         var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'" +
                     $" AND [System.WorkItemType] = 'Label Owner'" +
                     $" AND [Custom.Repository] = '{escapedRepo}'" +
                     $" AND [Custom.LabelType] = '{escapedLabelType}'" +
-                    $" AND [Custom.RepoPath] = '{escapedPath}'";
+                    $" AND [Custom.RepoPath] = '{escapedPath}'" +
+                    $" AND [Custom.Section] = '{escapedSection}'";
 
         var workItems = await devOpsService.FetchWorkItemsPagedAsync(query, expand: WorkItemExpand.Relations, ct: ct);
         if (workItems.Count > 0)
@@ -401,10 +411,84 @@ public class CodeownersManagementHelper(
         {
             LabelType = labelTypeString,
             Repository = repo,
-            RepoPath = normalizedPath
+            RepoPath = normalizedPath,
+            Section = section
         };
         var created = await devOpsService.CreateWorkItemAsync(labelOwnerWi, "Label Owner", title, ct: ct);
         return WorkItemMappers.MapToLabelOwnerWorkItem(created);
+    }
+
+    /// <summary>
+    /// Throws <see cref="InvalidOperationException"/> if the team alias is not in the expected
+    /// format or does not descend from the azure-sdk-write team.
+    /// </summary>
+    public async Task ThrowIfInvalidTeamAlias(string alias, CancellationToken ct)
+    {
+        var normalizedAlias = NormalizeGitHubAlias(alias);
+
+        if (normalizedAlias.Count(c => c == '/') != 1)
+        {
+            throw new InvalidOperationException(
+                $"Invalid team alias '{alias}'. Team aliases must be in the format '<org>/<team>' with exactly one '/'.");
+        }
+
+        // Extract the team name without the org prefix for cache lookup
+        var parts = normalizedAlias.Split('/', StringSplitOptions.TrimEntries);
+        var org = parts[0];
+        var teamSlug = parts[1];
+
+        if (string.IsNullOrEmpty(org) || string.IsNullOrEmpty(teamSlug))
+        {
+            throw new InvalidOperationException(
+                $"Invalid team alias '{alias}'. Both the organization and team name must be non-empty.");
+        }
+
+        if (!string.Equals(org, "Azure", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(
+                $"Invalid team alias '{alias}'. Only teams in the 'Azure' organization are supported.");
+        }
+
+        // Check if the team exists in the TeamUserDict (populated from azure-sdk-write blob).
+        // Use ContainsKey rather than GetUsersForTeam so that teams with zero members
+        // are still accepted — empty-team validation happens later during the release gate.
+        if (teamUserCache.TeamUserDict.ContainsKey(teamSlug))
+        {
+            logger.LogInformation("Team '{Alias}' found in TeamUserCache", alias);
+            return;
+        }
+
+        logger.LogInformation("Team '{Alias}' not found in TeamUserCache, verifying via GitHub API", alias);
+
+        // Fetch the team from GitHub
+        var team = await githubService.GetTeamByNameAsync(org, teamSlug, ct);
+
+        // Walk the parent chain to verify the team is under azure-sdk-write.
+        // The loop is bounded by MaxParentDepth to prevent infinite loops.
+        const int MaxParentDepth = 20;
+        const string AzureSdkWriteTeamSlug = "azure-sdk-write";
+
+        var current = team;
+        for (int depth = 0; depth < MaxParentDepth; depth++)
+        {
+            if (string.Equals(current.Slug, AzureSdkWriteTeamSlug, StringComparison.OrdinalIgnoreCase))
+            {
+                logger.LogInformation("Team '{Alias}' is a descendant of '{Parent}'", alias, AzureSdkWriteTeamSlug);
+                return;
+            }
+
+            if (current.Parent == null)
+            {
+                break;
+            }
+
+            // Re-fetch the parent team to get the complete object with its own Parent populated.
+            current = await githubService.GetTeamByNameAsync(org, current.Parent.Slug, ct);
+        }
+
+        throw new InvalidOperationException(
+            $"GitHub team '{alias}' is not a child of '{AzureSdkWriteTeamSlug}'. " +
+            $"Only teams that descend from '{AzureSdkWriteTeamSlug}' can be added as CODEOWNERS.");
     }
 
     // ========================
@@ -473,9 +557,10 @@ public class CodeownersManagementHelper(
         string repo,
         string path,
         OwnerType ownerType,
+        string section,
         CancellationToken ct
     ) {
-        var labelOwnerWi = await FindOrCreateLabelOwnerAsync(repo, ownerType, path, labels, ct);
+        var labelOwnerWi = await FindOrCreateLabelOwnerAsync(repo, ownerType, path, labels, section, ct);
 
         foreach (var labelWi in labels)
         {
@@ -576,9 +661,10 @@ public class CodeownersManagementHelper(
         string repo,
         string path,
         OwnerType ownerType,
+        string section,
         CancellationToken ct
     ) {
-        var labelOwners = await QueryLabelOwnersByPath(path, repo, ct);
+        var labelOwners = await QueryLabelOwnersByPath(path, repo, section, ct);
         if (labelOwners.Count == 0)
         {
             return new CodeownersModifyResponse { ResponseError = $"No Label Owner work item found for path '{path}'." };

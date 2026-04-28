@@ -42,6 +42,9 @@ parameters:
         ServiceConnection: azure-sdk-tests-cosmos
         SubscriptionConfigurations:
           - $(sub-config-cosmos-azure-cloud-test-resources)
+      - DisplayName: GithubCopilotForAzureTestingSubscription
+        ServiceConnection: GithubCopilotForAzure-Testing
+        AdditionalParameters: "-DeleteNonCompliantGroups -DeleteArmDeployments"
       # - DisplayName: AzureCloud Storage NET - Resource Cleanup
       #   SubscriptionConfigurations:
       #     - $(sub-config-storage-test-resources-net)

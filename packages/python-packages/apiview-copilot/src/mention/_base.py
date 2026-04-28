@@ -26,8 +26,9 @@ class MentionWorkflow(ABC):
         code: str,
         package_name: str,
         trigger_comment: dict,
-        other_comments: dict,
+        other_comments: list[dict],
         reasoning: str,
+        source_comment_id: str = None,
     ):
         self.language = language
         self.code = code
@@ -35,13 +36,25 @@ class MentionWorkflow(ABC):
         self.trigger_comment = trigger_comment
         self.other_comments = other_comments
         self.reasoning = reasoning
+        self.source_comment_id = source_comment_id
         self.plan = None
         self.results = None
 
     def run(self):
         self.plan = self.create_plan()
-        self.results = self.execute_plan(self.plan)
+        self.results = self.check_for_duplicates(self.plan)
+        if self.results is None:
+            self.results = self.execute_plan(self.plan)
         return self.summarize(self.results)
+
+    def check_for_duplicates(self, plan: dict):
+        """Check whether the plan would create a duplicate.
+
+        Returns a result dict if a duplicate was found (short-circuiting
+        ``execute_plan``), or ``None`` to proceed with execution.
+        Subclasses override this to implement workflow-specific dedup logic.
+        """
+        return None
 
     def create_plan(self):
         if not self.prompty_filename:

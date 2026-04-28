@@ -51,13 +51,13 @@ The `APIView/` project uses two root namespaces to separate modern shared code f
 
 | Namespace | Purpose | Key Types |
 |---|---|---|
-| `APIView` | Shared core models, utilities, analysis, and diff | `CodeFile`, `CodeFileToken`, `CodeFileTokenKind`, `NavigationItem`, `CodeDiagnostic`, `CompilationFactory`, `DependencyInfo`, `SymbolExtensions` |
+| `APIView` | Shared core models, utilities, analysis, and diff | `CodeFile`, `CodeFileToken`, `CodeFileTokenKind`, `NavigationItem`, `CodeDiagnostic`, `CodeLine`, `CompilationFactory`, `DependencyInfo`, `SymbolExtensions` |
 | `APIView.Model.V2` | Modern tree-token model | `ReviewLine`, `ReviewToken`, `TokenKind` |
 | `APIView.Diff` | Diff algorithm | `Diff`, `InlineDiff`, `InlineDiffLine`, `DiffLineKind` |
 | `APIView.Analysis` | SDK analysis adapters | `Analyzer`, `SdkAnalyzerAdapter` |
 | `APIView.TreeToken` | Tree-token structured model | `StructuredToken`, `TokenTreeModel` |
 | `APIView.Identity` | Auth helpers | `ClaimConstants`, `TestUser` |
-| `APIViewLegacy` | **Deprecated** flat-token rendering and legacy C# parser | `CodeFileRenderer`, `CodeFileHtmlRenderer`, `CodeFileTokensBuilder`, `CodeLine`, `CodeFileBuilder`, `CodeFileBuilderSymbolSorter` |
+| `APIViewLegacy` | **Deprecated** flat-token rendering and legacy C# parser | `CodeFileRenderer`, `CodeFileHtmlRenderer`, `CodeFileTokensBuilder`, `CodeFileBuilder`, `CodeFileBuilderSymbolSorter` |
 
 > **Rule:** New code should use the `APIView` namespace (or a sub-namespace). Only flat-token rendering and the legacy C# parser belong in `APIViewLegacy`.
 

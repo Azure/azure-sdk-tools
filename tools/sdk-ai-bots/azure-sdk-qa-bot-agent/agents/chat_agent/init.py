@@ -21,6 +21,7 @@ if _project_root not in sys.path:
 
 # Environment
 load_dotenv(override=False)
+os.environ.setdefault("ENABLE_SENSITIVE_DATA", "true")
 
 from agent_framework import Agent
 from agent_framework import SkillsProvider

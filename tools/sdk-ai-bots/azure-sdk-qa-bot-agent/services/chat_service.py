@@ -248,15 +248,20 @@ class ChatService:
         """Load hosted-agent version definition from Foundry."""
         agent_name = cfg("AI_FOUNDRY_AGENT_NAME", "azure-sdk-chat-agent")
         agent_version = cfg("AI_FOUNDRY_AGENT_VERSION")
-        agent = await project_client.agents.get_version(agent_name, agent_version)
+        if agent_version:
+            agent = await project_client.agents.get_version(agent_name, agent_version)
+        else:
+            agent = await project_client.agents.get(agent_name)
         if agent is None:
             raise RuntimeError(
-                f"Agent '{agent_name}' version '{agent_version}' not found in AI Foundry. "
-                "Make sure the agent version has been deployed."
+                f"Agent '{agent_name}' (version={agent_version or 'latest'}) not found in AI Foundry. "
+                "Make sure the agent has been deployed."
             )
         logger.info(
             "Using agent: name=%s, version=%s, status=%s",
-            agent.name, agent.version, agent.status,
+            agent.name,
+            agent.version,
+            agent.status,
         )
         return agent
 

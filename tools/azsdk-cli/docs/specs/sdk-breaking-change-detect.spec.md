@@ -19,7 +19,8 @@
       - [Component 3: SDK Breaking change classifier](#component-3-sdk-breaking-change-classifier)
       - [Component 4: Breaking change Result](#component-4-breaking-change-result)
     - [User Experience](#user-experience)
-      - [Scenario 1: Code Generation pipeline](#scenario-1-code-generation-pipeline)
+    - [Scenarios for Using the Tool](#scenarios-for-using-the-tool)
+      - [Scenario 1: Detect and resolve breaking change local](#scenario-1-detect-and-resolve-breaking-change-local)
       - [Scenario 2: SDK breaking change resolve in Spec PR and Code PR](#scenario-2-sdk-breaking-change-resolve-in-spec-pr-and-code-pr)
   - [Agent Prompts](#agent-prompts)
     - [\[Detect breaking change for Go SDK\]](#detect-breaking-change-for-go-sdk)
@@ -62,7 +63,7 @@ Service teams and SDK teams spend significant manual effort detecting SDK breaki
 
 What are we trying to achieve with this design?
 
-- [ ] detect and classify breaking changes according to the SDK breaking changes for each language, and identify which breaking change is resolvable.
+- [ ] detect and classify breaking changes according to the SDK breaking changes policy for each language, and identify which breaking change is resolvable.
 - [ ] align with the breaking change policy for each language
 
 ## Design Proposal
@@ -76,11 +77,12 @@ _Provide a detailed explanation of your proposed solution._
 ### Detailed Design
 
 **prerequist**:
-The SDK has been generated and built successfully, and the changelog or Revapi report has been generated.
+The SDK has been generated and built successfully.
 
 A changelog-breakingchange pattern guide (e.g. https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/mgmt/sdk-breaking-changes-guide.md) will service as the foundation for teach copilot agent to detect and classify breaking changes for a SDK. The existing TypeSpec code and the configuration will help agent to classify the breaking changes.
 
 **Output Format**
+
 ```json
 {
     "hasBreakingChange": true,
@@ -102,7 +104,7 @@ A changelog-breakingchange pattern guide (e.g. https://github.com/Azure/azure-sd
 
 ```mermaid
 flowchart TD
-    A[Detect Breaking Change]
+    A[Detect SDK Changes]
     B{Has Breaking Change?}
     C[Copilot agent Classify Breaking Changes]
     D[Breaking Change Result]
@@ -131,6 +133,7 @@ flowchart TD
 Compare the package against the latest GA release to detect SDK changes. The output is a changelog (or Revapi report for Java) along with an overall assessment of whether the package introduces SDK breaking changes according to the language-specific breaking change policy.
 
 **Summary of the detection mechanism**
+
 | Language | Tool | Compares | Old Source | New Source |
 |----------|------|----------|------------|-----------|
 | **Go** | Custom Go AST diff (`exports`/`delta`/`report` packages) | Go exported symbols | GitHub release tag ZIP | Generated code |
@@ -139,6 +142,9 @@ Compare the package against the latest GA release to detect SDK changes. The out
 | **.NET** | `Microsoft.DotNet.ApiCompat` MSBuild target | .NET assemblies | NuGet cached baseline DLL | Built DLL |
 | **JS/TS** | API Extractor + `git diff` | `.api.md` review files | Git baseline | Generated review files |
 | **Python** | `jsondiff` + AST/`inspect` introspection | JSON API reports | PyPI stable package | Current code |
+
+**Input**:
+SDK package
 
 **Output**:
 
@@ -172,6 +178,7 @@ For python:
 ```md
 
 ## Naming Changes with Numbers
+
 **changelog pattern**:
 
 Paired removal and addition entries showing naming changes from words to numbers:
@@ -216,8 +223,11 @@ Parse out the actually breaking changes and classify them into different categor
   - spec change
   - unknown
 
-input: changelog or Revapi
-output:
+**input**:
+changelog or Revapi
+
+**output**:
+
 ```json
 {
     "breakingchanges": [
@@ -273,54 +283,57 @@ The result is JSON-formatted.
 
 ```bash
 # Example usage
-azsdk package detect --changelog value --language go --tsp-config-path C:/dev/azure-rest-api-specs/specification/storage/Storage.Management/tspconfig.yaml
+azsdk package detect --sdk-repo-path <sdk-repo-path> --language go --tsp-config-path C:/dev/azure-rest-api-specs/specification/storage/Storage.Management/tspconfig.yaml --generate-sdk false
 ```
+
+### Scenarios for Using the Tool
 
 **NOTE:** Following are two E2E scenario which 'azsdk_package_detect_breaking_change' tool will **take part in.**
 
-#### Scenario 1: Code Generation pipeline
+#### Scenario 1: Detect and resolve breaking change local
+
+Detect and Resolve Breaking change in Local Spec repo or SDK repo
+
+Prompt: detect and resolve breaking changes for service webpubsub
+
 Flow:
-1. Agent invoke `azsdk_package_generate_code` to generate sdk code
-2. Agent invoke `azsdk_package_update_changelog_content` to update change log
-3. Agent invoke `azsdk_package_detect_breaking_change` to detect and classify breaking changes
-4. Label 'SDK-breakingchange' if breaking change detected for a language
+
+1. Agent invoke `azsdk_package_generate_code` to generate sdk code locally
+2. Agent invoke `azsdk_package_detect_breaking_change` to detect and classify breaking changes
+3. Agent list all the SDK breaking changes one-by-one:
+    e.g. SDK breaking changes:
+            1. model `ResourceInfo` is renamed to `Resource`, break Go and Java SDK
+            2. Type of property `Prop` has been changed from `string` to `int32`, breaking Go SDK
+4. Agent invoke `azsdk_customized_code_update` to mitigate breaking changes.
 
 #### Scenario 2: SDK breaking change resolve in Spec PR and Code PR
-prerequisite: Code Generation pipeline already run
 
 prompt: @copilot resolve SDK breaking changes
 Flow:
 
 ```mermaid
 flowchart TD
-    A[Generate SDK Changelog]
+    A[Generate SDK]
     B[Detect SDK Breaking Changes azsdk_package_detect_breaking_change]
     C[PR owner Ask Copilot to Resolve Breaking Changes]
     D[Copilot Calls azsdk_customized_code_update]
     E[SDK Breaking Change Resolved]
 
-    A -->|changelog| B
+    A --> B
     B --> C
     C --> D
     D --> E
 
-    %% invisible anchor above the B -> C edge
-    X(( ))
-    X --- B
-    X --- C
+    F@{ shape: doc, label: "Breaking Changes:<br/>• Model ResourceInfo renamed to Resource, Conversion-need to be resolve, breaking Java SDK<br/>• Property type changed from int to string, typespec change, break Java SDK" }
 
-    BC["Breaking Changes:<br/>
-    • Model ResourceInfo renamed to Resource , Conversion-need to be resolve, breaking Java SDK
-    • Property type changed from int to string, typespec change, break Java SDK
-    "]
-
-    BC --- X
+    B ---> |generate|F
+    F ---> C
 
     %% styling
-    class BC breaking;
+    class F breaking;
     classDef breaking fill:#fff3cd,stroke:#f0ad4e,stroke-width:1.5px;
-    style X fill:transparent,stroke:transparent
 ```
+
 1. Agent invoke `azsdk_package_detect_breaking_change` to detect and classify breaking changes
 2. User (PR owner) check the breaking changes, and choose breaking changes to resolve.
    Use prompt: @copilot resolve breaking changes: XXXXXXX
@@ -340,8 +353,9 @@ detect the breaking changes for Go SDK
 
 **Expected Agent Activity:**
 
-1. compare the changelog with `changelog-breakingchange` pattern for Go SDK
-2. identify breaking changes and classify the breaking changes to different category
+1. detect SDK changes for the SDK package
+2. compare the changelog with `changelog-breakingchange` pattern for Go SDK
+3. identify breaking changes and classify the breaking changes to different category
 
 **Expect output**
 
@@ -356,15 +370,16 @@ _Direct command-line interface usage showing exact commands, options, and expect
 **Command:**
 
 ```bash
-azsdk package detect --changelog <sdk-change-log> --language <language> --tsp-config-path <path-to-tsp-config-file>
+azsdk package detect --sdk-package-path <sdk-package-path> --language <language> --tsp-config-path <path-to-tsp-config-file> --generate-sdk <Ture/False>
 
 ```
 
 **Options:**
 
-- `--changelog <value>`: (Required) The SDK changelog
+- `--sdk-repo-path <value>`: (Required) The SDK repo root path
 - `--language <value>`: (Required) The SDK language
-- `--tsp-config-path`: (Required) Path to the 'tspconfig.yaml' configuration file, it can be a local path or remote HTTPS URL
+- `--tsp-config-path`: (Optional) Path to the 'tspconfig.yaml' configuration file, it can be a local path or remote HTTPS URL
+- `--generate-sdk`: (Optional) indicate whether need to generate sdk. default is False
 
 **Expected Output:**
 

@@ -324,6 +324,9 @@ class ApiViewReview:
             self.logger.error(f"Error executing {task_name}: {str(e)}")
             return None
 
+    # Languages for which the generic review stage is disabled
+    SKIP_GENERIC_LANGUAGES = ["dotnet", "java", "typescript"]
+
     def _generate_comments(self):
         """
         Generate comments for the API view by submitting jobs in parallel.
@@ -331,6 +334,7 @@ class ApiViewReview:
         guideline_tag = "guideline"
         generic_tag = "generic"
         context_tag = "context"
+        skip_generic = self.language in self.SKIP_GENERIC_LANGUAGES
 
         sectioned_doc = self._create_sectioned_document()
 
@@ -352,7 +356,8 @@ class ApiViewReview:
         # Set up progress tracking
         self._print_message("Processing sections: ", overwrite=True)
 
-        total_prompts = len(sections_to_process) * 3  # 3 prompts per section
+        prompts_per_section = 2 if skip_generic else 3
+        total_prompts = len(sections_to_process) * prompts_per_section
         prompt_status = [False] * total_prompts
 
         # Set up keyboard interrupt handler for more responsive cancellation (only in main thread)
@@ -394,31 +399,33 @@ class ApiViewReview:
                     "content": section.numbered(),
                 },
                 task_name=guideline_key,
-                status_idx=idx * 3,
+                status_idx=idx * prompts_per_section,
                 status_array=prompt_status,
             )
 
-            # Generic prompt
-            generic_metadata = self._load_generic_metadata()
-            generic_key = f"{generic_tag}_{section_idx}"
-            all_futures[generic_key] = self.executor.submit(
-                self._execute_prompt_task,
-                folder="api_review",
-                filename=generic_prompt_file,
-                inputs={
-                    "language": get_language_pretty_name(self.language),
-                    "custom_rules": generic_metadata["custom_rules"],
-                    "content": section.numbered(),
-                },
-                task_name=generic_key,
-                status_idx=(idx * 3) + 1,
-                status_array=prompt_status,
-            )
+            # Generic prompt (skipped for languages in SKIP_GENERIC_LANGUAGES)
+            if not skip_generic:
+                generic_metadata = self._load_generic_metadata()
+                generic_key = f"{generic_tag}_{section_idx}"
+                all_futures[generic_key] = self.executor.submit(
+                    self._execute_prompt_task,
+                    folder="api_review",
+                    filename=generic_prompt_file,
+                    inputs={
+                        "language": get_language_pretty_name(self.language),
+                        "custom_rules": generic_metadata["custom_rules"],
+                        "content": section.numbered(),
+                    },
+                    task_name=generic_key,
+                    status_idx=(idx * prompts_per_section) + 1,
+                    status_array=prompt_status,
+                )
 
             # Context prompt
             context_key = f"{context_tag}_{section_idx}"
             context = self._retrieve_context(str(section))
             context_string = context.to_markdown() if context else ""
+            context_status_offset = 2 if not skip_generic else 1
             all_futures[context_key] = self.executor.submit(
                 self._execute_prompt_task,
                 folder="api_review",
@@ -429,7 +436,7 @@ class ApiViewReview:
                     "content": section.numbered(),
                 },
                 task_name=context_key,
-                status_idx=(idx * 3) + 2,
+                status_idx=(idx * prompts_per_section) + context_status_offset,
                 status_array=prompt_status,
             )
 

@@ -750,7 +750,7 @@ export async function generateLockFileCommandCore(
   }
   args.push(...npmArgs);
   if (npmArgs.length > 0) {
-    Logger.info(`Passing ${npmArgs.length} additional npm arg(s).`);
+    Logger.info("Passing additional npm flags to the `npm install` command.");
   }
   const tempRoot = await createTempDirectory(outputDir);
   await cp(emitterPackageJsonPath, joinPaths(tempRoot, "package.json"));
@@ -850,9 +850,9 @@ export function parseNpmArgs(npmArgsString: string | undefined): string[] {
   if (!npmArgsString) {
     return [];
   }
-  
+
   const parsed = parseShell(npmArgsString);
-  
+
   // Filter out any non-string entries (shell-quote can return objects for complex shell constructs)
-  return parsed.filter((arg): arg is string => typeof arg === 'string');
+  return parsed.filter((arg): arg is string => typeof arg === "string");
 }

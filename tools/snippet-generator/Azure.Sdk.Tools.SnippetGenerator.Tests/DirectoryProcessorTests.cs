@@ -76,5 +76,25 @@ namespace Azure.Sdk.Tools.SnippetGenerator.Tests
 
             StringAssert.Contains("var greeting = \"Hello from a separate directory!\";", result);
         }
+
+        [Test]
+        public async System.Threading.Tasks.Task TargetPathUsedForReplacementsWithoutExplicitFiles()
+        {
+            var basePath = Path.Join(TestContext.CurrentContext.TestDirectory, "TestData");
+            var snippetDir = Path.Join(basePath, "SnippetSource");
+            var targetDir = Path.Join(basePath, "SnippetTarget");
+            var mdFile = Path.Join(targetDir, "TargetPathTest.md");
+
+            // Reset the markdown file to its original state
+            File.WriteAllText(mdFile, "```C# Snippet:TargetPathSnippet\n```\n");
+
+            // ProcessAsync with no file list should enumerate targetDir and find TargetPathTest.md
+            var sut = new DirectoryProcessor(snippetDir, targetDir);
+            await sut.ProcessAsync();
+
+            var result = File.ReadAllText(mdFile);
+
+            StringAssert.Contains("var greeting = \"Hello from a separate directory!\";", result);
+        }
     }
 }

@@ -34,6 +34,12 @@ jobs:
     parameters:
       versionSpec: '$(PythonVersion)'
 
+  - task: PipAuthenticate@1
+    displayName: 'Pip Authenticate to feed'
+    inputs:
+      artifactFeeds: 'public/azure-sdk-for-python'
+      onlyAddExtraIndex: false
+
   - script: |
       python -m pip install virtualenv aiohttp chardet trio
       python -m pip install apiview-stub-generator==$(ApiStubVersion) --index-url $(PythonIndexUrl)

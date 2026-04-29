@@ -27,6 +27,9 @@ export async function npmViewPackageDevDependencies(
         }
         try {
           const result = JSON.parse(stdout);
+          Logger.debug(
+            `\`npm view ${spec} devDependencies --json\` result: \n${JSON.stringify(result, null, 2)}`,
+          );
           resolve(result);
         } catch (parseError: any) {
           Logger.warn(`Failed to parse npm view output for ${spec}: ${parseError.message}`);

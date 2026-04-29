@@ -36,6 +36,18 @@ public class Project
     public DateTime CreatedOn { get; set; }
     public DateTime LastUpdatedOn { get; set; }
     public bool IsDeleted { get; set; }
+
+    public List<string> GetAssociatedReviewIds(string language)
+    {
+        return Reviews != null && Reviews.TryGetValue(language, out var reviewIds)
+            ? reviewIds ?? []
+            : [];
+    }
+
+    public string GetCurrentPackageName(string language, string namespaceValue)
+    {
+        return NamespaceInfo?.GetCurrentEntry(language, namespaceValue)?.PackageName;
+    }
 }
 
 public class ProjectChangeHistory : ChangeHistoryModel

@@ -36,23 +36,75 @@ namespace APIViewWeb.Models
         }
     }
 
-    public class NamespaceReviewApprovedEmailModel
+    public class NamespaceApprovedEmailModel
     {
         public string PackageName { get; set; } = string.Empty;
-        public string TypeSpecUrl { get; set; } = string.Empty;
-        public IReadOnlyList<EmailLanguageReviewModel> LanguageReviews { get; set; } = [];
+        public string ProjectName { get; set; } = string.Empty;
+        public string Language { get; set; } = string.Empty;
+        public string ApprovedNamespace { get; set; } = string.Empty;
+        public string ApprovedBy { get; set; } = string.Empty;
+        public DateTime? ApprovedOn { get; set; }
+        public string NamespaceTabUrl { get; set; } = string.Empty;
+        public string LanguageReviewUrl { get; set; } = string.Empty;
 
-        public static NamespaceReviewApprovedEmailModel Create(
+        public static NamespaceApprovedEmailModel Create(
             string packageName,
-            string typeSpecUrl,
-            IEnumerable<ReviewListItemModel> languageReviews,
-            string apiviewEndpoint)
+            string projectName,
+            string language,
+            string approvedNamespace,
+            string approvedBy,
+            DateTime? approvedOn,
+            string namespaceTabUrl,
+            string languageReviewUrl)
         {
-            return new NamespaceReviewApprovedEmailModel
+            return new NamespaceApprovedEmailModel
             {
-                PackageName = packageName,
-                TypeSpecUrl = typeSpecUrl,
-                LanguageReviews = EmailLanguageReviewModel.From(languageReviews, apiviewEndpoint),
+                PackageName = packageName ?? string.Empty,
+                ProjectName = projectName ?? string.Empty,
+                Language = language ?? string.Empty,
+                ApprovedNamespace = approvedNamespace ?? string.Empty,
+                ApprovedBy = approvedBy ?? string.Empty,
+                ApprovedOn = approvedOn,
+                NamespaceTabUrl = namespaceTabUrl ?? string.Empty,
+                LanguageReviewUrl = languageReviewUrl ?? string.Empty,
+            };
+        }
+    }
+
+    public class NamespaceRejectedEmailModel
+    {
+        public string PackageName { get; set; } = string.Empty;
+        public string ProjectName { get; set; } = string.Empty;
+        public string Language { get; set; } = string.Empty;
+        public string RejectedNamespace { get; set; } = string.Empty;
+        public string RejectedBy { get; set; } = string.Empty;
+        public DateTime? RejectedOn { get; set; }
+        public string RejectionReason { get; set; } = string.Empty;
+        public string NamespaceTabUrl { get; set; } = string.Empty;
+        public string LanguageReviewUrl { get; set; } = string.Empty;
+
+        public static NamespaceRejectedEmailModel Create(
+            string packageName,
+            string projectName,
+            string language,
+            string rejectedNamespace,
+            string rejectedBy,
+            DateTime? rejectedOn,
+            string rejectionReason,
+            string namespaceTabUrl,
+            string languageReviewUrl)
+        {
+            return new NamespaceRejectedEmailModel
+            {
+                PackageName = packageName ?? string.Empty,
+                ProjectName = projectName ?? string.Empty,
+                Language = language ?? string.Empty,
+                RejectedNamespace = rejectedNamespace ?? string.Empty,
+                RejectedBy = rejectedBy ?? string.Empty,
+                RejectedOn = rejectedOn,
+                RejectionReason = rejectionReason ?? string.Empty,
+                NamespaceTabUrl = namespaceTabUrl ?? string.Empty,
+                LanguageReviewUrl = languageReviewUrl ?? string.Empty,
             };
         }
     }

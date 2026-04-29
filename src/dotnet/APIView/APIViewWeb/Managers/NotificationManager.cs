@@ -408,14 +408,19 @@ namespace APIViewWeb.Managers
                 // Build TypeSpec URL
                 var typeSpecUrl = $"{_apiviewEndpoint}/Assemblies/Review/{review.Id}";
                 
-                // Use the unified approval email template for manual approval
+                // Use the unified approval email template for manual approval.
+                // Legacy flow does not have project/namespace-tab context, so reuse the TypeSpec review URL.
                 var emailContent = await _emailTemplateService.RenderAsync(
                     EmailTemplateKey.NamespaceReviewApproved,
-                    NamespaceReviewApprovedEmailModel.Create(
+                    NamespaceApprovedEmailModel.Create(
                         review.PackageName,
+                        review.PackageName,
+                        review.Language,
+                        review.PackageName,
+                        review.CreatedBy,
+                        DateTime.UtcNow,
                         typeSpecUrl,
-                        associatedReviews ?? Enumerable.Empty<ReviewListItemModel>(),
-                        _apiviewEndpoint));
+                        typeSpecUrl));
                 
                 var emailToList = string.Join("; ", emailAddresses);
                 
@@ -425,6 +430,143 @@ namespace APIViewWeb.Managers
             {
                 _telemetryClient.TrackException(ex);
             }
+        }
+
+        public async Task NotifyNamespaceRejectedAsync(Project project, NamespaceDecisionEntry rejectedEntry, ReviewListItemModel associatedReview)
+        {
+            try
+            {
+                if (project == null || rejectedEntry == null)
+                {
+                    return;
+                }
+
+                var emailAddresses = await GetNamespaceRejectedEmailRecipientsAsync(project, associatedReview);
+                if (emailAddresses.Count == 0)
+                {
+                    return;
+                }
+
+                string packageName = !string.IsNullOrWhiteSpace(rejectedEntry.PackageName)
+                    ? rejectedEntry.PackageName
+                    : associatedReview?.PackageName ?? project.DisplayName;
+                string languageReviewUrl = associatedReview == null ? string.Empty : $"{_apiviewEndpoint}/Assemblies/Review/{associatedReview.Id}";
+                string namespaceTabUrl = associatedReview == null ? string.Empty : $"{languageReviewUrl}?view=namespace";
+
+                var emailContent = await _emailTemplateService.RenderAsync(
+                    EmailTemplateKey.NamespaceRejected,
+                    NamespaceRejectedEmailModel.Create(
+                        packageName,
+                        project.DisplayName,
+                        rejectedEntry.Language,
+                        rejectedEntry.Namespace,
+                        rejectedEntry.DecidedBy,
+                        rejectedEntry.DecidedOn,
+                        rejectedEntry.Notes,
+                        namespaceTabUrl,
+                        languageReviewUrl));
+
+                var emailToList = string.Join("; ", emailAddresses);
+                await SendEmailAsync(emailToList, BuildEmailSubject("Namespace Rejected", packageName), emailContent);
+            }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackException(ex);
+            }
+        }
+
+        public async Task NotifyNamespaceApprovedAsync(Project project, NamespaceDecisionEntry approvedEntry, ReviewListItemModel associatedReview)
+        {
+            try
+            {
+                if (project == null || approvedEntry == null)
+                {
+                    return;
+                }
+
+                var emailAddresses = await GetNamespaceApprovedEmailRecipientsAsync(project, associatedReview, approvedEntry.DecidedBy);
+                if (emailAddresses.Count == 0)
+                {
+                    return;
+                }
+
+                string packageName = !string.IsNullOrWhiteSpace(approvedEntry.PackageName)
+                    ? approvedEntry.PackageName
+                    : associatedReview?.PackageName ?? project.DisplayName;
+                string languageReviewUrl = associatedReview == null ? string.Empty : $"{_apiviewEndpoint}/Assemblies/Review/{associatedReview.Id}";
+                string namespaceTabUrl = associatedReview == null ? string.Empty : $"{languageReviewUrl}?view=namespace";
+
+                var emailContent = await _emailTemplateService.RenderAsync(
+                    EmailTemplateKey.NamespaceReviewApproved,
+                    NamespaceApprovedEmailModel.Create(
+                        packageName,
+                        project.DisplayName,
+                        approvedEntry.Language,
+                        approvedEntry.Namespace,
+                        approvedEntry.DecidedBy,
+                        approvedEntry.DecidedOn,
+                        namespaceTabUrl,
+                        languageReviewUrl));
+
+                var emailToList = string.Join("; ", emailAddresses);
+                await SendEmailAsync(emailToList, BuildEmailSubject("Namespace Approved", packageName), emailContent);
+            }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackException(ex);
+            }
+        }
+
+        private async Task<List<string>> GetNamespaceApprovedEmailRecipientsAsync(Project project, ReviewListItemModel associatedReview, string approverUserName)
+        {
+            var recipients = new HashSet<string>(
+                (associatedReview?.Subscribers ?? [])
+                    .Where(email => !string.IsNullOrWhiteSpace(email)),
+                StringComparer.OrdinalIgnoreCase);
+
+            var usernames = new HashSet<string>(
+                (project?.Owners ?? Enumerable.Empty<string>())
+                    .Concat(new[] { associatedReview?.CreatedBy, approverUserName })
+                    .Where(username => !string.IsNullOrWhiteSpace(username)),
+                StringComparer.OrdinalIgnoreCase);
+
+            if (usernames.Count > 0)
+            {
+                var userEmails = await Task.WhenAll(usernames.Select(GetEmailAddress));
+                foreach (var userEmail in userEmails.Where(email => !string.IsNullOrWhiteSpace(email)))
+                {
+                    recipients.Add(userEmail);
+                }
+            }
+
+            return recipients.ToList();
+        }
+
+        private async Task<List<string>> GetNamespaceRejectedEmailRecipientsAsync(Project project, ReviewListItemModel associatedReview)
+        {
+            var recipients = new HashSet<string>(
+                (associatedReview?.Subscribers ?? [])
+                    .Where(subscriber => !string.IsNullOrWhiteSpace(subscriber)),
+                StringComparer.OrdinalIgnoreCase);
+
+            var usernames = new HashSet<string>(
+                (project?.Owners ?? Enumerable.Empty<string>())
+                    .Concat(new[] { associatedReview?.CreatedBy })
+                    .Where(username => !string.IsNullOrWhiteSpace(username)),
+                StringComparer.OrdinalIgnoreCase);
+
+            if (usernames.Count == 0)
+            {
+                return recipients.ToList();
+            }
+
+            var userEmails = await Task.WhenAll(usernames.Select(GetEmailAddress));
+            foreach (string userEmail in userEmails.Where(email => !string.IsNullOrWhiteSpace(email)))
+            {
+                recipients.Add(userEmail);
+            }
+
+            return recipients.ToList();
         }
     }
 }

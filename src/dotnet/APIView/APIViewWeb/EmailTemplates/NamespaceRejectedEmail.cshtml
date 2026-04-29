@@ -1,0 +1,45 @@
+@model APIViewWeb.Models.NamespaceRejectedEmailModel
+@{
+    Layout = "/EmailTemplates/_EmailLayout.cshtml";
+    ViewData["EmailTitle"] = "Namespace Rejected";
+    ViewData["EmailPreheader"] = $"The proposed namespace for {Model.PackageName} ({Model.Language}) was rejected.";
+}
+
+<p class="section">Hi Team,</p>
+
+<p class="section">
+    The namespace proposal for <strong>@Model.PackageName</strong> in <strong>@Model.Language</strong> was rejected.
+</p>
+
+<div class="panel">
+    <div>
+        <strong>Package Name:</strong>
+        @if (!string.IsNullOrWhiteSpace(Model.LanguageReviewUrl))
+        {
+            <a href="@Model.LanguageReviewUrl">@Model.PackageName</a>
+        }
+        else
+        {
+            @Model.PackageName
+        }
+    </div>
+    @if (!string.IsNullOrWhiteSpace(Model.ProjectName))
+    {
+        <div><strong>Project Name:</strong> @Model.ProjectName</div>
+    }
+    <div><strong>Language:</strong> @Model.Language</div>
+</div>
+
+<div class="panel">
+    <div><strong>Rejected Namespace:</strong> @Model.RejectedNamespace</div>
+    <div><strong>Rejected By:</strong> @Model.RejectedBy</div>
+    <div><strong>Rejected On (UTC):</strong> @(Model.RejectedOn?.ToString("u") ?? "N/A")</div>
+    <div><strong>Rejection Reason:</strong> @(string.IsNullOrWhiteSpace(Model.RejectionReason) ? "No rejection notes were provided." : Model.RejectionReason)</div>
+</div>
+
+<p class="section"><strong>Next Steps:</strong></p>
+<ul class="list">
+    <li>Review namespace status and history in the <a href="@Model.NamespaceTabUrl">namespace tab</a>.</li>
+</ul>
+
+<p class="section" style="margin-top: 24px;">Thanks,<br /><strong>APIView Team</strong></p>

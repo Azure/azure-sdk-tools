@@ -933,7 +933,6 @@ namespace APIViewWeb.Managers
                 typeSpecReview.NamespaceReviewStatus = NamespaceReviewStatus.Approved;
                 await _reviewsRepository.UpsertReviewAsync(typeSpecReview);
 
-                // Send notification emails
                 await _notificationManager.NotifyStakeholdersOfManualApprovalAsync(typeSpecReview, allReviews);
             }
             catch (Exception ex)

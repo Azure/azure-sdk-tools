@@ -4,6 +4,7 @@ namespace APIViewWeb.Models
     {
         NamespaceReviewRequest,
         NamespaceReviewApproved,
+        NamespaceRejected,
         ReviewerAssigned,
         CommentTag,
         SubscriberComment,

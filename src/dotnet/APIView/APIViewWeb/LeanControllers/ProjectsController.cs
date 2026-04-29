@@ -18,18 +18,24 @@ namespace APIViewWeb.LeanControllers
         private readonly ILogger<ProjectsController> _logger;
         private readonly ICosmosProjectRepository _projectsRepository;
         private readonly ICosmosReviewRepository _reviewsRepository;
+        private readonly IProjectsManager _projectsManager;
         private readonly INamespaceManager _namespaceManager;
+        private readonly INotificationManager _notificationManager;
 
         public ProjectsController(
             ILogger<ProjectsController> logger,
             ICosmosProjectRepository projectsRepository,
             ICosmosReviewRepository reviewsRepository,
-            INamespaceManager namespaceManager)
+            IProjectsManager projectsManager,
+            INamespaceManager namespaceManager,
+            INotificationManager notificationManager)
         {
             _logger = logger;
             _projectsRepository = projectsRepository;
             _reviewsRepository = reviewsRepository;
+            _projectsManager = projectsManager;
             _namespaceManager = namespaceManager;
+            _notificationManager = notificationManager;
         }
 
         /// <summary>
@@ -217,8 +223,32 @@ namespace APIViewWeb.LeanControllers
                         new { message = "An unexpected error occurred while processing the namespace operation." })
                 };
             }
+
+            if (request.Status == NamespaceDecisionStatus.Rejected || request.Status == NamespaceDecisionStatus.Approved)
+            {
+                string normalizedLanguage = LanguageServiceHelpers.MapLanguageAlias(language);
+                var associatedReview = await _projectsManager.GetAssociatedReviewForProjectAsync(result.Project, normalizedLanguage, request.Namespace);
+
+                NamespaceDecisionEntry decisionEntry = result.Project.NamespaceInfo?.GetCurrentEntry(
+                    normalizedLanguage,
+                    request.Namespace);
+
+                if (decisionEntry != null)
+                {
+                    if (request.Status == NamespaceDecisionStatus.Rejected)
+                    {
+                        await _notificationManager.NotifyNamespaceRejectedAsync(result.Project, decisionEntry, associatedReview);
+                    }
+                    else
+                    {
+                        await _notificationManager.NotifyNamespaceApprovedAsync(result.Project, decisionEntry, associatedReview);
+                    }
+                }
+            }
+
             return new LeanJsonResult(result.Project, StatusCodes.Status200OK);
         }
+
     }
 
     public class UpdateNamespaceStatusRequest

@@ -1,0 +1,22 @@
+{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "report_issue_result",
+    "strict": true,
+    "schema": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "A concise GitHub issue title starting with [APIView]."
+        },
+        "body": {
+          "type": "string",
+          "description": "A well-structured GitHub issue body in markdown format."
+        }
+      },
+      "required": ["title", "body"],
+      "additionalProperties": false
+    }
+  }
+}

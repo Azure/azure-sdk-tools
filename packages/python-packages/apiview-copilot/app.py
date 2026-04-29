@@ -27,12 +27,14 @@ from src._apiview_reviewer import SUPPORTED_LANGUAGES, ApiViewReview
 from src._auth import AppRole, require_roles
 from src._database_manager import DatabaseManager
 from src._diff import create_diff_with_line_numbers
+from src._github_manager import GithubManager
 from src._mention import handle_mention_request
 from src._settings import SettingsManager
 from src._thread_resolution import handle_thread_resolution_request
 from src._prompt_runner import run_prompt
 from src._utils import get_language_pretty_name
 from src.agent._agent import get_readonly_agent, get_readwrite_agent, invoke_agent
+from src.mention._github_issue_helpers import create_issue as create_github_issue
 
 # How long to keep completed jobs (seconds)
 JOB_RETENTION_SECONDS = 1800  # 30 minutes
@@ -414,6 +416,186 @@ async def resolve_package_info(
         raise
     except Exception as e:
         logger.error("Error in /api-review/resolve-package: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error") from e
+
+
+# --- Report Issue ---
+
+REPORT_ISSUE_OWNER = "Azure" if os.getenv("ENVIRONMENT_NAME") == "production" else "tjprescott"
+REPORT_ISSUE_REPO = "azure-sdk-tools"
+
+
+class CommentContextRequest(BaseModel):
+    """Optional context about the comment that triggered the issue report."""
+
+    comment_id: Optional[str] = Field(None, alias="commentId")
+    comment_text: Optional[str] = Field(None, alias="commentText")
+    code_snippet: Optional[str] = Field(None, alias="codeSnippet")
+    language: Optional[str] = None
+    element_id: Optional[str] = Field(None, alias="elementId")
+    comment_source: Optional[str] = Field(None, alias="commentSource")
+
+    class Config:
+        """Configuration for Pydantic model."""
+
+        populate_by_name = True
+
+
+class ReportIssueRequest(BaseModel):
+    """Request model for reporting an issue from APIView."""
+
+    mode: Literal["general", "comment"]
+    description: str = Field(..., min_length=1, max_length=5000)
+    review_link: Optional[str] = Field(None, alias="reviewLink")
+    comment_context: Optional[CommentContextRequest] = Field(None, alias="commentContext")
+
+    class Config:
+        """Configuration for Pydantic model."""
+
+        populate_by_name = True
+
+
+class ReportIssueResponse(BaseModel):
+    """Response model for a reported issue."""
+
+    issue_url: str = Field(..., alias="issueUrl")
+    issue_number: int = Field(..., alias="issueNumber")
+
+    class Config:
+        """Configuration for Pydantic model."""
+
+        populate_by_name = True
+
+
+def _build_report_issue_title(request: ReportIssueRequest) -> str:
+    """Build a GitHub issue title from the report request."""
+    if request.mode == "comment":
+        source = (request.comment_context.comment_source or "").lower() if request.comment_context else ""
+        source_label = "AVC" if source == "copilot" else "APIView"
+        return f"[APIView] Issue with {source_label} comment"
+    # General mode: use first 80 chars of description as title
+    snippet = request.description[:80].replace("\n", " ").strip()
+    if len(request.description) > 80:
+        snippet += "..."
+    return f"[APIView] {snippet}"
+
+
+def _build_report_issue_body(request: ReportIssueRequest) -> str:
+    """Build a structured GitHub issue body from the report request."""
+    sections = []
+
+    sections.append(f"## Description\n\n{request.description}")
+
+    if request.comment_context:
+        ctx = request.comment_context
+        parts = ["## Comment Context"]
+        if ctx.comment_source:
+            parts.append(f"**Source:** {ctx.comment_source}")
+        if ctx.language:
+            parts.append(f"**Language:** {ctx.language}")
+        if ctx.comment_text:
+            parts.append(f"**Comment:**\n> {ctx.comment_text}")
+        if ctx.code_snippet:
+            parts.append(f"**Code Snippet:**\n```\n{ctx.code_snippet}\n```")
+        if ctx.element_id:
+            parts.append(f"**Element ID:** `{ctx.element_id}`")
+        sections.append("\n".join(parts))
+
+    if request.review_link:
+        sections.append(f"## Review Link\n\n{request.review_link}")
+
+    sections.append("---\n*Reported via APIView*")
+    return "\n\n".join(sections)
+
+
+def _get_report_issue_labels(request: ReportIssueRequest) -> list[str]:
+    """Determine labels for a reported issue."""
+    if request.mode == "comment" and request.comment_context:
+        source = (request.comment_context.comment_source or "").lower()
+        if source == "copilot":
+            return ["APIView Copilot"]
+    return ["APIView"]
+
+
+def _build_comment_context_text(ctx: CommentContextRequest) -> str:
+    """Format comment context as plain text for the LLM prompt."""
+    parts = []
+    if ctx.comment_source:
+        parts.append(f"Source: {ctx.comment_source}")
+    if ctx.language:
+        parts.append(f"Language: {ctx.language}")
+    if ctx.comment_text:
+        parts.append(f"Comment: {ctx.comment_text}")
+    if ctx.code_snippet:
+        parts.append(f"Code Snippet: {ctx.code_snippet}")
+    if ctx.element_id:
+        parts.append(f"Element ID: {ctx.element_id}")
+    return "\n".join(parts)
+
+
+def _generate_report_issue(request: ReportIssueRequest) -> dict:
+    """Generate a GitHub issue title and body using the LLM.
+
+    Falls back to template-based generation if the LLM call fails.
+
+    Returns:
+        dict with 'title' and 'body' keys.
+    """
+    try:
+        inputs = {
+            "mode": request.mode,
+            "description": request.description,
+            "review_link": request.review_link or "",
+            "comment_context": (
+                _build_comment_context_text(request.comment_context)
+                if request.comment_context
+                else ""
+            ),
+        }
+        raw = run_prompt(folder="report_issue", filename="generate_issue.prompty", inputs=inputs)
+        result = json.loads(raw)
+        title = result.get("title", "").strip()
+        body = result.get("body", "").strip()
+        if title and body:
+            return {"title": title, "body": body}
+        logger.warning("LLM returned empty title or body, falling back to template.")
+    except Exception as e:
+        logger.warning("LLM generation failed, falling back to template: %s", e)
+
+    return {
+        "title": _build_report_issue_title(request),
+        "body": _build_report_issue_body(request),
+    }
+
+
+@app.post("/api-review/report-issue", response_model=ReportIssueResponse)
+async def report_issue(
+    request: ReportIssueRequest,
+    _claims=Depends(require_roles(AppRole.WRITER, AppRole.APP_WRITER)),
+):
+    """Report an issue from APIView UI. Creates a GitHub issue with context."""
+    logger.info(
+        "Received /api-review/report-issue request: mode=%s",
+        request.mode,
+    )
+    try:
+        issue_content = await asyncio.to_thread(_generate_report_issue, request)
+        labels = _get_report_issue_labels(request)
+
+        client = GithubManager.get_instance()
+        issue = create_github_issue(
+            client,
+            owner=REPORT_ISSUE_OWNER,
+            repo=REPORT_ISSUE_REPO,
+            title=issue_content["title"],
+            body=issue_content["body"],
+            workflow_tag="report-issue",
+            source_tag="APIView",
+            labels=labels,
+        )
+        return ReportIssueResponse(issue_url=issue["html_url"], issue_number=issue["number"])
+    except Exception as e:
+        logger.error("Error in /api-review/report-issue: %s", e, exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error") from e
 
 

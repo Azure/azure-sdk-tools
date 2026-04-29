@@ -4,7 +4,7 @@ export class AzureEngSemanticVersion {
 
     // Python PEP 440 post-release extension
     // Handles all PEP 440 alternate formats: .postN, -postN, _postN, postN, .post.N, .post (implicit 0) (case-insensitive)
-    private static PYTHON_SEM_VAR_REGEX = /(?<major>0|[1-9]\d*)\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)(?:(?<presep>-?)(?<prelabel>[a-zA-Z]+)(?:(?<prenumsep>\.?)(?<prenumber>[0-9]{1,8})(?:(?<buildnumsep>\.?)(?<buildnumber>\d{1,3}))?)?)?(?:(?<postsep>[.\-_]?)(?<postword>[Pp][Oo][Ss][Tt])\.?(?<postnum>\d+)?)?/;
+    private static PYTHON_SEM_VAR_REGEX = /(?<major>0|[1-9]\d*)\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)(?:(?<presep>-?)(?<prelabel>[a-zA-Z]+)(?:(?<prenumsep>\.?)(?<prenumber>[0-9]{1,8})(?:(?<buildnumsep>\.?)(?<buildnumber>\d{1,3}))?)?)?(?:(?<postsep>[.\-_]?)(?<postword>[Pp][Oo][Ss][Tt])\.?(?<postnum>\d{1,8})?)?/;
 
     major : number = 0;
     minor : number = 0;

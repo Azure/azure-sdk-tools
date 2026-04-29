@@ -11,7 +11,7 @@ public class AzureEngSemanticVersion : IComparable<AzureEngSemanticVersion>
         RegexOptions.Compiled);
 
     private static readonly Regex PythonSemVerRegex = new Regex(
-        @"^(?<major>0|[1-9]\d*)\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)(?:(?<presep>-?)(?<prelabel>[a-zA-Z]+)(?:(?<prenumsep>\.?)(?<prenumber>[0-9]{1,8})(?:(?<buildnumsep>\.?)(?<buildnumber>\d{1,3}))?)?)?(?:(?<postsep>[.\-_]?)(?<postword>[Pp][Oo][Ss][Tt])\.?(?<postnum>\d+)?)?$",
+        @"^(?<major>0|[1-9]\d*)\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)(?:(?<presep>-?)(?<prelabel>[a-zA-Z]+)(?:(?<prenumsep>\.?)(?<prenumber>[0-9]{1,8})(?:(?<buildnumsep>\.?)(?<buildnumber>\d{1,3}))?)?)?(?:(?<postsep>[.\-_]?)(?<postword>[Pp][Oo][Ss][Tt])\.?(?<postnum>\d{1,8})?)?$",
         RegexOptions.Compiled);
 
     public int Major { get; private set; }

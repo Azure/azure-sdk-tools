@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using APIView;
+using APIView.CSharp;
 using APIViewLegacy;
 using Microsoft.CodeAnalysis;
 using Xunit;

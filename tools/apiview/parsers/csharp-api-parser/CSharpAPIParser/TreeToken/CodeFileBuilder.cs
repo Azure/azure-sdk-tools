@@ -4,7 +4,7 @@
 using System.Collections.Immutable;
 using System.ComponentModel;
 using APIView;
-using APIViewLegacy;
+using APIView.CSharp;
 using APIView.Analysis;
 using APIView.Model.V2;
 using Microsoft.CodeAnalysis;

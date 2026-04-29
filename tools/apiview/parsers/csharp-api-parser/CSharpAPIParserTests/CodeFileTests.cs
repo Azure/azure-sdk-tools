@@ -1,6 +1,6 @@
 using System.Reflection;
 using APIView;
-using APIViewLegacy;
+using APIView.CSharp;
 using System.Text.Json;
 using Newtonsoft.Json.Schema;
 using Newtonsoft.Json.Linq;

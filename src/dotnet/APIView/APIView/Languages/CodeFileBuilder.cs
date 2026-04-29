@@ -3,6 +3,7 @@
 
 using APIView;
 using APIView.Analysis;
+using APIView.CSharp;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.SymbolDisplay;

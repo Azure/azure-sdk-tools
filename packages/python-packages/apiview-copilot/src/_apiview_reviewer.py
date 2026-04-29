@@ -324,9 +324,6 @@ class ApiViewReview:
             self.logger.error(f"Error executing {task_name}: {str(e)}")
             return None
 
-    # Languages for which the generic review stage is disabled
-    SKIP_GENERIC_LANGUAGES = ["dotnet", "java", "typescript"]
-
     def _generate_comments(self):
         """
         Generate comments for the API view by submitting jobs in parallel.
@@ -334,7 +331,7 @@ class ApiViewReview:
         guideline_tag = "guideline"
         generic_tag = "generic"
         context_tag = "context"
-        skip_generic = self.language in self.SKIP_GENERIC_LANGUAGES
+        skip_generic = True  # Generic review is disabled for all languages
 
         sectioned_doc = self._create_sectioned_document()
 

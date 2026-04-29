@@ -40,8 +40,8 @@ AI-powered automated reviewer for Azure SDK API surface reviews. Ingests APIView
 
 The review pipeline in `ApiViewReview.run()` follows these stages:
 1. **Sectioning** — `SectionedDocument` splits the API text into chunks (default 500 lines, 450 for Java/Android).
-2. **Parallel prompt evaluation** — For each section, three prompts run in parallel: guideline review (RAG with language guidelines), context review (RAG with semantic search), and generic review (custom rules).
-3. **Generic comment filtering** — Generic comments are validated against the knowledge base.
+2. **Parallel prompt evaluation** — For each section, prompts run in parallel: guideline review (RAG with language guidelines) and context review (RAG with semantic search). The generic review stage is **disabled** for all languages.
+3. **Generic comment filtering** — Generic comments are validated against the knowledge base (currently skipped since generic review is disabled).
 4. **Deduplication** — Comments on the same line are merged via LLM.
 5. **Hard filtering** — Comments are checked against language-specific filter exceptions and the API outline.
 6. **Pre-existing comment filtering** — New comments are compared against existing human comments on the same lines.

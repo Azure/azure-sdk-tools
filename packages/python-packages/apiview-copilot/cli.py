@@ -51,6 +51,8 @@ from src._database_manager import ContainerNames, DatabaseManager
 from src._garbage_collector import GarbageCollector
 from src._comment_bucket_trends import (
     DEFAULT_OUTPUT_PATH as DEFAULT_COMMENT_BUCKET_OUTPUT_PATH,
+    DEFAULT_GENERIC_OUTPUT_PATH,
+    DEFAULT_GUIDELINE_OUTPUT_PATH,
 )
 from src._comment_bucket_trends import (
     build_language_comment_bucket_reports,
@@ -1924,6 +1926,45 @@ def report_comment_bucket_trends(
         include_human=include_human,
         include_neutral=neutral,
         environment=environment,
+    )
+
+    # Generate breakout charts for generic vs guideline-backed AI comments (no human)
+    generic_reports = build_language_comment_bucket_reports(
+        languages=normalized_languages,
+        months=months,
+        end_date=parsed_end_date,
+        include_human=False,
+        include_neutral=neutral,
+        generic_filter=True,
+        environment=environment,
+    )
+    generate_comment_bucket_chart(
+        generic_reports,
+        output_path=DEFAULT_GENERIC_OUTPUT_PATH,
+        include_human=False,
+        include_neutral=neutral,
+        raw=False,
+        environment=environment,
+        title_prefix="Generic AI Comments by Language",
+    )
+
+    guideline_reports = build_language_comment_bucket_reports(
+        languages=normalized_languages,
+        months=months,
+        end_date=parsed_end_date,
+        include_human=False,
+        include_neutral=neutral,
+        generic_filter=False,
+        environment=environment,
+    )
+    generate_comment_bucket_chart(
+        guideline_reports,
+        output_path=DEFAULT_GUIDELINE_OUTPUT_PATH,
+        include_human=False,
+        include_neutral=neutral,
+        raw=False,
+        environment=environment,
+        title_prefix="Guideline AI Comments by Language",
     )
 
 

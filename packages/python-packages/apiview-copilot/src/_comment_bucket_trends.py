@@ -31,6 +31,8 @@ PRODUCTION_ENVIRONMENT = "production"
 DEFAULT_LANGUAGES = ["Python", "C#", "Java", "JavaScript"]
 DEFAULT_MONTHS = 6
 DEFAULT_OUTPUT_PATH = Path("output/charts/comment_bucket_trends.png")
+DEFAULT_GENERIC_OUTPUT_PATH = Path("output/charts/comment_bucket_trends_generic.png")
+DEFAULT_GUIDELINE_OUTPUT_PATH = Path("output/charts/comment_bucket_trends_guideline.png")
 QUERY_BATCH_SIZE = 100
 OMIT_LANGUAGES = ["c++", "c", "typespec", "swagger", "xml"]
 
@@ -173,9 +175,16 @@ def build_language_comment_bucket_reports(
     *,
     include_human: bool = False,
     include_neutral: bool = False,
+    generic_filter: Optional[bool] = None,
     environment: str = PRODUCTION_ENVIRONMENT,
 ) -> dict[str, list[dict]]:
-    """Build per-language bucket reports for the requested month lookback window."""
+    """Build per-language bucket reports for the requested month lookback window.
+
+    Args:
+        generic_filter: When True, only AI comments with IsGeneric=True are included.
+            When False, only AI comments with IsGeneric=False (guideline-backed).
+            When None (default), all AI comments are included.
+    """
     selected_languages = languages or DEFAULT_LANGUAGES
     reports = {language: [] for language in selected_languages}
     month_ranges = get_last_n_month_ranges(months=months, end_date=end_date)
@@ -231,11 +240,20 @@ def build_language_comment_bucket_reports(
 
     thread_start_index = get_thread_start_dates(non_diag, environment=environment)
 
+    # Apply generic filter: keep non-AI comments as-is, filter AI comments by IsGeneric
+    if generic_filter is not None:
+        filtered_comments = [
+            c for c in non_diag
+            if c.get("CommentSource") != "AIGenerated" or bool(c.get("IsGeneric")) == generic_filter
+        ]
+    else:
+        filtered_comments = non_diag
+
     for start_date, end_date in month_ranges:
         reviews, month_comments = _build_month_metadata(
             start_date,
             end_date,
-            non_diag,
+            filtered_comments,
             review_results,
             revision_results,
         )
@@ -450,6 +468,7 @@ def generate_comment_bucket_chart(
     include_neutral: bool = False,
     raw: bool = False,
     environment: str = PRODUCTION_ENVIRONMENT,
+    title_prefix: str = "Comment Buckets by Language",
 ) -> Optional[Path]:
     """Render one PNG containing a bucket subplot per language."""
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -555,7 +574,7 @@ def generate_comment_bucket_chart(
     environment_label = (environment or PRODUCTION_ENVIRONMENT).strip().lower()
 
     figure.suptitle(
-        f"Comment Buckets by Language{title_suffix} ({format_label})\nLast {month_count} Calendar Months (APIView {environment_label})",
+        f"{title_prefix}{title_suffix} ({format_label})\nLast {month_count} Calendar Months (APIView {environment_label})",
         fontsize=14,
         y=0.985,
     )
@@ -695,4 +714,43 @@ def main() -> None:
         include_human=include_human,
         include_neutral=args.neutral,
         environment=args.environment,
+    )
+
+    # Generate breakout charts for generic vs guideline-backed AI comments (no human)
+    generic_reports = build_language_comment_bucket_reports(
+        languages=args.languages,
+        months=args.months,
+        end_date=args.end_date,
+        include_human=False,
+        include_neutral=args.neutral,
+        generic_filter=True,
+        environment=args.environment,
+    )
+    generate_comment_bucket_chart(
+        generic_reports,
+        output_path=DEFAULT_GENERIC_OUTPUT_PATH,
+        include_human=False,
+        include_neutral=args.neutral,
+        raw=raw,
+        environment=args.environment,
+        title_prefix="Generic AI Comments by Language",
+    )
+
+    guideline_reports = build_language_comment_bucket_reports(
+        languages=args.languages,
+        months=args.months,
+        end_date=args.end_date,
+        include_human=False,
+        include_neutral=args.neutral,
+        generic_filter=False,
+        environment=args.environment,
+    )
+    generate_comment_bucket_chart(
+        guideline_reports,
+        output_path=DEFAULT_GUIDELINE_OUTPUT_PATH,
+        include_human=False,
+        include_neutral=args.neutral,
+        raw=raw,
+        environment=args.environment,
+        title_prefix="Guideline AI Comments by Language",
     )

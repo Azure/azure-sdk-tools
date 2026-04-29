@@ -22,6 +22,7 @@ METRICS_COMMENT_FIELDS = [
     "APIRevisionId",
     "CommentSource",
     "IsDeleted",
+    "IsGeneric",
     "IsResolved",
     "Upvotes",
     "Downvotes",

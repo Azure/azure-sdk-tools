@@ -1,12 +1,12 @@
-name: generate-sdk-locally-eval
-description: Evaluation suite for local SDK generation skill.
-skill: generate-sdk-locally
+name: azsdk-common-pipeline-troubleshooting-eval
+description: Evaluation suite for pipeline troubleshooting skill.
+skill: azsdk-common-pipeline-troubleshooting
 version: '1.0'
 config:
   model: gpt-4o
   executor: mock
   trials_per_task: 1
-  timeout_seconds: 600
+  timeout_seconds: 300
   parallel: false
 metrics:
   - name: task_completion
@@ -22,8 +22,8 @@ graders:
     name: no_fatal_errors
     config:
       regex_not_match:
-        - (?i)error occurred
-        - (?i)failed
-        - (?i)re-run the tool
+        - (?i)fatal error
+        - (?i)unhandled exception
+        - '(?i)panic:'
 tasks:
   - "tasks/*.yaml"

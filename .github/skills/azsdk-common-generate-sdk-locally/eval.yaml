@@ -1,12 +1,12 @@
-name: sdk-release-eval
-description: Evaluation suite for SDK release skill.
-skill: sdk-release
+name: azsdk-common-generate-sdk-locally-eval
+description: Evaluation suite for local SDK generation skill.
+skill: azsdk-common-generate-sdk-locally
 version: '1.0'
 config:
   model: gpt-4o
   executor: mock
   trials_per_task: 1
-  timeout_seconds: 300
+  timeout_seconds: 600
   parallel: false
 metrics:
   - name: task_completion
@@ -24,6 +24,5 @@ graders:
       regex_not_match:
         - (?i)fatal error
         - (?i)unhandled exception
-        - '(?i)panic:'
 tasks:
   - "tasks/*.yaml"

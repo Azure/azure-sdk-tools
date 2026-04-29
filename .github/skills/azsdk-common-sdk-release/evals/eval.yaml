@@ -1,7 +1,7 @@
-name: pipeline-troubleshooting-eval
-description: Evaluation suite for pipeline troubleshooting skill.
-skill: pipeline-troubleshooting
-version: '1.0'
+name: azsdk-common-sdk-release-evals
+description: Evaluations for the SDK release skill
+skill: azsdk-common-sdk-release
+version: "1.0"
 config:
   model: gpt-4o
   executor: mock

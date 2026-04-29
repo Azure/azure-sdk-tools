@@ -1,7 +1,7 @@
-name: sdk-release-evals
-description: Evaluations for the SDK release skill
-skill: sdk-release
-version: "1.0"
+name: azsdk-common-sdk-release-eval
+description: Evaluation suite for SDK release skill.
+skill: azsdk-common-sdk-release
+version: '1.0'
 config:
   model: gpt-4o
   executor: mock
@@ -18,12 +18,12 @@ metrics:
     threshold: 0.7
     description: Did the skill stay within behavior limits?
 graders:
-- type: text
-  name: no_fatal_errors
-  config:
-    regex_not_match:
-    - (?i)fatal error
-    - (?i)unhandled exception
-    - '(?i)panic:'
+  - type: text
+    name: no_fatal_errors
+    config:
+      regex_not_match:
+        - (?i)fatal error
+        - (?i)unhandled exception
+        - '(?i)panic:'
 tasks:
   - "tasks/*.yaml"

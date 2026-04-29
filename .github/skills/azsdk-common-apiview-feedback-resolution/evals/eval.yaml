@@ -1,7 +1,7 @@
-name: prepare-release-plan-eval
-description: Evaluation suite for release plan management skill.
-skill: prepare-release-plan
-version: '1.0'
+name: azsdk-common-apiview-feedback-resolution-evals
+description: Evaluations for the APIView feedback resolution skill
+skill: azsdk-common-apiview-feedback-resolution
+version: "1.0"
 config:
   model: gpt-4o
   executor: mock

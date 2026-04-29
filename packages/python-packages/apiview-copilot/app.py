@@ -27,14 +27,13 @@ from src._apiview_reviewer import SUPPORTED_LANGUAGES, ApiViewReview
 from src._auth import AppRole, require_roles
 from src._database_manager import DatabaseManager
 from src._diff import create_diff_with_line_numbers
-from src._github_manager import GithubManager
 from src._mention import handle_mention_request
+from src._report_issue import handle_report_issue_request
 from src._settings import SettingsManager
 from src._thread_resolution import handle_thread_resolution_request
 from src._prompt_runner import run_prompt
 from src._utils import get_language_pretty_name
 from src.agent._agent import get_readonly_agent, get_readwrite_agent, invoke_agent
-from src.mention._github_issue_helpers import create_issue as create_github_issue
 
 # How long to keep completed jobs (seconds)
 JOB_RETENTION_SECONDS = 1800  # 30 minutes
@@ -419,13 +418,6 @@ async def resolve_package_info(
         raise HTTPException(status_code=500, detail="Internal server error") from e
 
 
-REPORT_ISSUE_REPO = "azure-sdk-tools"
-
-
-def _get_report_issue_owner() -> str:
-    return "Azure" if os.getenv("ENVIRONMENT_NAME") == "production" else "tjprescott"
-
-
 class CommentContextRequest(BaseModel):
     """Optional context about the comment that triggered the issue report."""
 
@@ -437,18 +429,23 @@ class CommentContextRequest(BaseModel):
     comment_source: Optional[Literal["copilot", "apiview"]] = Field(None, alias="commentSource")
 
     class Config:
+        """Configuration for Pydantic model."""
+
         populate_by_name = True
 
 
 class ReportIssueRequest(BaseModel):
     """Request model for reporting an issue from APIView."""
 
-    mode: Literal["general", "comment"]
+    category: Literal["apiview", "copilot", "parser"]
     description: str = Field(..., min_length=1, max_length=5000)
     review_link: Optional[str] = Field(None, alias="reviewLink")
+    language: Optional[str] = None
     comment_context: Optional[CommentContextRequest] = Field(None, alias="commentContext")
 
     class Config:
+        """Configuration for Pydantic model."""
+
         populate_by_name = True
 
 
@@ -459,143 +456,32 @@ class ReportIssueResponse(BaseModel):
     issue_number: int = Field(..., alias="issueNumber")
 
     class Config:
+        """Configuration for Pydantic model."""
+
         populate_by_name = True
 
 
-def _is_copilot_comment(request: ReportIssueRequest) -> bool:
-    """True when the request is a comment-mode report against an APIView Copilot comment."""
-    if request.mode != "comment" or not request.comment_context:
-        return False
-    return request.comment_context.comment_source == "copilot"
-
-
-def _build_report_issue_title(request: ReportIssueRequest) -> str:
-    """Build a fallback GitHub issue title when the LLM does not provide one."""
-    if request.mode == "comment":
-        source_label = "APIView Copilot" if _is_copilot_comment(request) else "APIView"
-        return f"[APIView] Issue with {source_label} comment"
-    snippet = request.description[:80].replace("\n", " ").strip()
-    if len(request.description) > 80:
-        snippet += "..."
-    return f"[APIView] {snippet}"
-
-
-def _get_report_issue_labels(request: ReportIssueRequest) -> list[str]:
-    """Determine labels for a reported issue."""
-    return ["APIView Copilot"] if _is_copilot_comment(request) else ["APIView"]
-
-
-def _build_comment_context_text(ctx: CommentContextRequest) -> str:
-    """Format comment context as plain text for the LLM prompt."""
-    parts = []
-    if ctx.comment_source:
-        parts.append(f"Source: {ctx.comment_source}")
-    if ctx.language:
-        parts.append(f"Language: {ctx.language}")
-    if ctx.comment_text:
-        parts.append(f"Comment: {ctx.comment_text}")
-    if ctx.code_snippet:
-        parts.append(f"Code Snippet: {ctx.code_snippet}")
-    if ctx.element_id:
-        parts.append(f"Element ID: {ctx.element_id}")
-    return "\n".join(parts)
-
-
-def _generate_report_issue(request: ReportIssueRequest) -> dict:
-    """Generate a GitHub issue title and body, using the LLM when possible.
-
-    The LLM produces a concise title and optional ``next_steps`` text describing
-    suggested investigation actions. The user's description is always preserved
-    verbatim by ``_assemble_report_issue_body``. Falls back to a template title
-    if the LLM call fails or returns an empty title.
-    """
-    title: str | None = None
-    next_steps: str | None = None
-    try:
-        inputs = {
-            "mode": request.mode,
-            "description": request.description,
-            "review_link": request.review_link or "",
-            "comment_context": (
-                _build_comment_context_text(request.comment_context) if request.comment_context else ""
-            ),
-        }
-        raw = run_prompt(folder="report_issue", filename="generate_issue.prompty", inputs=inputs)
-        result = json.loads(raw)
-        title = (result.get("title") or "").strip() or None
-        next_steps = (result.get("body") or "").strip() or None
-        if not title:
-            logger.warning("LLM returned empty title; falling back to template.")
-    except Exception as e:
-        logger.warning("LLM generation failed; falling back to template: %s", e)
-
-    if not title:
-        title = _build_report_issue_title(request)
-
-    body = _assemble_report_issue_body(request, next_steps)
-    return {"title": title, "body": body}
-
-
-def _assemble_report_issue_body(request: ReportIssueRequest, next_steps: str | None) -> str:
-    """Assemble the full issue body from request details and optional LLM-generated next steps."""
-    sections: list[str] = []
-
-    if request.review_link:
-        sections.append(f"## Review Link\n\n{request.review_link}")
-
-    sections.append(f"## Description\n\n{request.description}")
-
-    if request.comment_context:
-        ctx = request.comment_context
-        parts = ["## Comment Context"]
-        if ctx.comment_source:
-            parts.append(f"**Source:** {ctx.comment_source}")
-        if ctx.language:
-            parts.append(f"**Language:** {ctx.language}")
-        if ctx.comment_text:
-            parts.append(f"**Comment:**\n> {ctx.comment_text}")
-        if ctx.code_snippet:
-            parts.append(f"**Code Snippet:**\n```\n{ctx.code_snippet}\n```")
-        if ctx.element_id:
-            parts.append(f"**Element ID:** `{ctx.element_id}`")
-        sections.append("\n".join(parts))
-
-    if next_steps:
-        sections.append(f"## Suggested Next Steps\n\n{next_steps}")
-
-    sections.append("---\n*Reported via APIView*")
-    return "\n\n".join(sections)
-
-
-@app.post("/api-review/report-issue", response_model=ReportIssueResponse)
+@app.post("/report-issue", response_model=ReportIssueResponse)
 async def report_issue(
     request: ReportIssueRequest,
     _claims=Depends(require_roles(AppRole.WRITER, AppRole.APP_WRITER)),
 ):
-    """Report an issue from APIView UI. Creates a GitHub issue with context."""
-    logger.info(
-        "Received /api-review/report-issue request: mode=%s",
-        request.mode,
-    )
+    """Report an issue from APIView. Creates a GitHub issue with context."""
+    logger.info("Received /report-issue request: category=%s", request.category)
     try:
-        issue_content = await asyncio.to_thread(_generate_report_issue, request)
-        labels = _get_report_issue_labels(request)
-
-        client = GithubManager.get_instance()
-        issue = await asyncio.to_thread(
-            create_github_issue,
-            client,
-            owner=_get_report_issue_owner(),
-            repo=REPORT_ISSUE_REPO,
-            title=issue_content["title"],
-            body=issue_content["body"],
-            workflow_tag="report-issue",
-            source_tag="APIView",
-            labels=labels,
+        result = await asyncio.to_thread(
+            handle_report_issue_request,
+            category=request.category,
+            description=request.description,
+            review_link=request.review_link,
+            language=request.language,
+            comment_context=request.comment_context.model_dump() if request.comment_context else None,
         )
-        return ReportIssueResponse(issue_url=issue["html_url"], issue_number=issue["number"])
+        return ReportIssueResponse(issue_url=result["issue_url"], issue_number=result["issue_number"])
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
-        logger.error("Error in /api-review/report-issue: %s", e, exc_info=True)
+        logger.error("Error in /report-issue: %s", e, exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error") from e
 
 

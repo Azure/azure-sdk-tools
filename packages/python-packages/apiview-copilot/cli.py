@@ -982,6 +982,73 @@ def review_summarize(language: str, target: str, base: str = None, remote: bool 
         print(summary)
 
 
+def issue_report(
+    category: str,
+    description: str,
+    review_link: str = None,
+    language: str = None,
+    comment_text: str = None,
+    code_snippet: str = None,
+    element_id: str = None,
+    comment_source: str = None,
+    remote: bool = False,
+):
+    """
+    File a GitHub issue from an APIView "Report Issue" interaction.
+
+    Calls the same shared core (``handle_report_issue_request``) whether
+    run locally or via ``--remote``, so both paths produce identical issues.
+    """
+    comment_context = {}
+    if comment_text:
+        comment_context["comment_text"] = comment_text
+    if code_snippet:
+        comment_context["code_snippet"] = code_snippet
+    if element_id:
+        comment_context["element_id"] = element_id
+    if comment_source:
+        comment_context["comment_source"] = comment_source
+    if language:
+        comment_context["language"] = language
+    comment_context = comment_context or None
+
+    if remote:
+        payload = {"category": category, "description": description}
+        if review_link:
+            payload["reviewLink"] = review_link
+        if language:
+            payload["language"] = language
+        if comment_context:
+            _camel_keys = {
+                "comment_text": "commentText",
+                "code_snippet": "codeSnippet",
+                "element_id": "elementId",
+                "comment_source": "commentSource",
+                "language": "language",
+            }
+            payload["commentContext"] = {_camel_keys[k]: v for k, v in comment_context.items()}
+        settings = SettingsManager()
+        base_url = settings.get("WEBAPP_ENDPOINT")
+        api_endpoint = f"{base_url}/report-issue"
+        response = requests.post(api_endpoint, json=payload, headers=_build_auth_header(), timeout=60)
+        if response.status_code == 200:
+            print(json.dumps(response.json(), indent=2))
+        else:
+            print(f"Error: {response.status_code} - {response.text}")
+        return
+
+    from src._report_issue import handle_report_issue_request
+
+    result = handle_report_issue_request(
+        category=category,
+        description=description,
+        review_link=review_link,
+        language=language,
+        comment_context=comment_context,
+    )
+    print(json.dumps(result, indent=2))
+
+
 def handle_agent_chat(
     thread_id: Optional[str] = None, remote: bool = False, quiet: bool = False, readonly: bool = False
 ):
@@ -2421,6 +2488,8 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("feedback", "audit_feedback")
             g.command("memory", "audit_memory")
             g.command("analyze-comments", "analyze_comments")
+        with CommandGroup(self, "issue", "__main__#{}") as g:
+            g.command("report", "issue_report")
         return OrderedDict(self.command_table)
 
     # ARGUMENT REGISTRATION
@@ -2662,6 +2731,56 @@ class CliCommandsLoader(CLICommandsLoader):
                 type=str,
                 help="The APIView comment ID that triggered this request, recorded on any memories created for audit traceability. Automatically set when --fetch-comment-id is used.",
                 options_list=["--source-comment-id"],
+                default=None,
+            )
+        with ArgumentsContext(self, "issue report") as ac:
+            ac.argument(
+                "category",
+                type=str,
+                choices=["apiview", "copilot", "parser"],
+                help="What the issue is about: 'apiview' (UI/service), 'copilot' (an APIView Copilot suggestion), or 'parser' (language-specific parser).",
+                options_list=["--category", "-c"],
+            )
+            ac.argument(
+                "description",
+                type=str,
+                help="The user's description of the problem.",
+                options_list=["--description", "-d"],
+            )
+            ac.argument(
+                "review_link",
+                type=str,
+                help="Optional URL to the APIView review the user is on.",
+                options_list=["--review-link"],
+                default=None,
+            )
+            ac.argument(
+                "comment_text",
+                type=str,
+                help="Optional text of the comment that triggered the report.",
+                options_list=["--comment-text"],
+                default=None,
+            )
+            ac.argument(
+                "code_snippet",
+                type=str,
+                help="Optional code snippet associated with the comment.",
+                options_list=["--code-snippet"],
+                default=None,
+            )
+            ac.argument(
+                "element_id",
+                type=str,
+                help="Optional API element id associated with the comment.",
+                options_list=["--element-id"],
+                default=None,
+            )
+            ac.argument(
+                "comment_source",
+                type=str,
+                choices=["copilot", "apiview"],
+                help="Source of the triggering comment.",
+                options_list=["--comment-source"],
                 default=None,
             )
         with ArgumentsContext(self, "db") as ac:

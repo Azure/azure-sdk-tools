@@ -5,6 +5,7 @@ azure-appconfiguration>=1.8.0
 azure-cosmos>=4.9.0,<4.16.0b1
 azure-identity==1.26.0b2
 azure-keyvault-keys>=4.11.0
+azure-keyvault-secrets>=4.9.0
 azure-storage-blob==12.30.0b1
 et-xmlfile>=2.0.0
 openpyxl==3.1.5

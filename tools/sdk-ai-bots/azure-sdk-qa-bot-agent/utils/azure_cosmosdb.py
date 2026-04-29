@@ -8,10 +8,12 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 from typing import Any
 
 from azure.cosmos import PartitionKey, exceptions as cosmos_exceptions
 from azure.cosmos.aio import ContainerProxy, CosmosClient
+from azure.keyvault.secrets.aio import SecretClient as KeyVaultSecretClient
 
 from config.app_config import get as cfg
 from utils.azure_credential import get_credential
@@ -54,6 +56,41 @@ def _get_endpoint() -> str:
     return endpoint
 
 
+def _get_credential():
+    """Return Cosmos DB key from Key Vault if available, otherwise token credential.
+
+    Workaround: Cosmos DB data-plane RBAC does not yet support AI Foundry
+    agent identity types, so we fall back to key-based auth when the key
+    is stored in Key Vault.
+    """
+    key = os.environ.get("AZURE_COSMOSDB_KEY", "")
+    if not key:
+        kv_endpoint = cfg("KEYVAULT_ENDPOINT", "")
+        if kv_endpoint:
+            try:
+
+                async def _fetch_key() -> str:
+                    client = KeyVaultSecretClient(
+                        vault_url=kv_endpoint, credential=get_credential()
+                    )
+                    try:
+                        secret = await client.get_secret("AZURE-COSMOSDB-KEY")
+                        return secret.value or ""
+                    finally:
+                        await client.close()
+
+                key = asyncio.get_event_loop().run_until_complete(_fetch_key())
+            except Exception:
+                logger.warning(
+                    "Failed to fetch AZURE-COSMOSDB-KEY from Key Vault",
+                    exc_info=True,
+                )
+    if key:
+        logger.info("Using key-based auth for Cosmos DB")
+        return key
+    return get_credential()
+
+
 async def _get_client() -> CosmosClient:
     global _client
     if _client is not None:
@@ -63,7 +100,7 @@ async def _get_client() -> CosmosClient:
         if _client is None:
             _client = CosmosClient(
                 url=_get_endpoint(),
-                credential=get_credential(),
+                credential=_get_credential(),
                 retry_total=int(
                     cfg("AZURE_COSMOSDB_RETRY_TOTAL", str(_DEFAULT_RETRY_TOTAL))
                 ),

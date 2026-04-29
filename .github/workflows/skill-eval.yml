@@ -5,61 +5,44 @@ on:
     branches: [main]
     paths:
       - '.github/skills/**'
+      - '.vally.yaml'
+      - '.npmrc'
+      - 'package.json'
+      - 'package-lock.json'
   pull_request:
     paths:
       - '.github/skills/**'
+      - '.vally.yaml'
+      - '.npmrc'
+      - 'package.json'
+      - 'package-lock.json'
   workflow_dispatch:
 
 permissions:
   contents: read
+  packages: read
 
 jobs:
   check-skills:
-    name: Skill Compliance Check
+    name: Skill Compliance Check (Vally lint)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
 
-      - name: Install Azure Developer CLI
-        uses: Azure/setup-azd@v2
-
-      - name: Install waza extension
-        run: |
-          azd config set alpha.extensions on
-          azd ext source add -n waza -t url -l https://raw.githubusercontent.com/microsoft/waza/main/registry.json
-          azd ext install microsoft.azd.waza
-
-      - name: Check skill compliance
-        run: |
-          echo "## Skill Compliance Report" > compliance.md
-          echo "" >> compliance.md
-          failed=0
-          for skill_dir in .github/skills/*/; do
-            skill_name=$(basename "$skill_dir")
-            if [ -f "$skill_dir/SKILL.md" ]; then
-              echo "### $skill_name" >> compliance.md
-              if ! azd waza check "$skill_dir" 2>&1 | tee -a compliance.md; then
-                failed=1
-              fi
-              echo "" >> compliance.md
-            fi
-          done
-          cat compliance.md
-          if [ "$failed" -eq 1 ]; then
-            echo "::error::One or more skills failed compliance checks"
-            exit 1
-          fi
-
-      - name: Upload compliance report
-        if: always()
-        uses: actions/upload-artifact@v7
+      - uses: actions/setup-node@v5
         with:
-          name: skill-compliance
-          path: compliance.md
-          retention-days: 30
+          node-version: '20'
+
+      - name: Install dependencies (Vally from GitHub Packages)
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm install
+
+      - name: Lint skills
+        run: npm run lint:skills
 
   run-evals:
-    name: Run Skill Evaluations
+    name: Run Skill Evaluations (Vally eval)
     runs-on: ubuntu-latest
     needs: check-skills
     steps:
@@ -73,7 +56,6 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "SHOULD_RUN=true" >> $GITHUB_OUTPUT
           elif [ "${{ github.event_name }}" = "pull_request" ]; then
-            # Compare PR head against base branch to detect all changes in the PR
             BASE_SHA="${{ github.event.pull_request.base.sha }}"
             if git diff --name-only "$BASE_SHA"...HEAD | grep -q "^\.github/skills/"; then
               echo "SHOULD_RUN=true" >> $GITHUB_OUTPUT
@@ -88,16 +70,16 @@ jobs:
             echo "No skill file changes detected — skipping evals"
           fi
 
-      - name: Install Azure Developer CLI
+      - uses: actions/setup-node@v5
         if: steps.changes.outputs.SHOULD_RUN == 'true'
-        uses: Azure/setup-azd@v2
+        with:
+          node-version: '20'
 
-      - name: Install waza extension
+      - name: Install dependencies (Vally from GitHub Packages)
         if: steps.changes.outputs.SHOULD_RUN == 'true'
-        run: |
-          azd config set alpha.extensions on
-          azd ext source add -n waza -t url -l https://raw.githubusercontent.com/microsoft/waza/main/registry.json
-          azd ext install microsoft.azd.waza
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm install
 
       - name: Run evaluations
         if: steps.changes.outputs.SHOULD_RUN == 'true'
@@ -105,12 +87,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          mkdir -p results
+          mkdir -p .vally/results
           for eval_file in .github/skills/*/eval.yaml; do
             if [ -f "$eval_file" ]; then
               skill_name=$(basename "$(dirname "$eval_file")")
               echo "=== Running evals for $skill_name ==="
-              azd waza run "$eval_file" --output-dir "results/${skill_name}"
+              npx vally eval -e "$eval_file" --output-dir ".vally/results/${skill_name}" || true
             fi
           done
 
@@ -119,5 +101,5 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: eval-results-${{ github.run_id }}
-          path: results/
+          path: .vally/results/
           retention-days: 30

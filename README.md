@@ -16,6 +16,33 @@ This repository contains useful tools that the Azure SDK team utilizes across th
 
 [1] Check Enforcer is located in `azure-sdk-actions` repo.
 
+## Running skill evals
+
+Skill definitions live under `.github/skills/` and are validated and executed with [Vally](https://github.com/microsoft/evaluate) (`@microsoft/vally-cli`). Vally is published to **GitHub Packages** (private, `@microsoft` scope) — not the public npm registry — so authentication is required to `npm install`.
+
+```bash
+# 1. Set NODE_AUTH_TOKEN to a GitHub token with `read:packages` scope.
+#    A `gh` token usually works if you authorized the `read:packages` scope:
+#       gh auth refresh -s read:packages
+#    Then:
+export NODE_AUTH_TOKEN=$(gh auth token)
+
+# 2. Install Vally and other root dependencies.
+npm install
+
+# 3. Lint every skill (SKILL.md compliance).
+npm run lint:skills
+
+# 4. Run every eval suite (stimuli + graders).
+npm run eval:skills
+# Or a single suite:
+#   npx vally eval -e .github/skills/<skill>/eval.yaml --runs 1 --model claude-haiku-4.5
+```
+
+The repo-root `.npmrc` expands `${NODE_AUTH_TOKEN}` at install time — no tokens are committed. If your `npm` does not expand env vars in `.npmrc`, put the token in `~/.npmrc` instead (same scope line) or export it via your shell as shown above.
+
+Eval outputs land in `.vally/results/` (git-ignored). CI runs the same commands via `.github/workflows/skill-eval.yml`.
+
 ## Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a

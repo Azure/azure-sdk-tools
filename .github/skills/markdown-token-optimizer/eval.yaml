@@ -1,29 +1,158 @@
 name: markdown-token-optimizer-eval
 description: Evaluation suite for markdown token optimizer skill.
-skill: markdown-token-optimizer
 version: '1.0'
+type: capability
+environment:
+  skills:
+  - .
 config:
+  runs: 1
+  timeout: 300
   model: gpt-4o
-  executor: mock
-  trials_per_task: 1
-  timeout_seconds: 300
-  parallel: false
-metrics:
-  - name: task_completion
-    weight: 0.7
-    threshold: 0.8
-    description: Did the skill complete trigger and anti-trigger checks?
-  - name: efficiency
-    weight: 0.3
-    threshold: 0.7
-    description: Did the skill stay within behavior limits?
-graders:
-  - type: text
-    name: no_fatal_errors
+  executor: copilot-sdk
+stimuli:
+- name: markdown-token-optimizer-basic-001
+  prompt: |
+    Optimize the following markdown content to reduce token count while preserving meaning:
+
+    # Introduction
+
+    This is a very long introduction to the topic. We will be discussing many different aspects of this topic in great detail throughout this document. The purpose of this introduction is to provide context and background information.
+
+    ## Background
+
+    The background section provides additional context about the topic we are discussing.
+  tags:
+    category: basic
+  graders:
+  - type: output-contains
     config:
-      regex_not_match:
-        - (?i)fatal error
-        - (?i)unhandled exception
-        - '(?i)panic:'
-tasks:
-  - "tasks/*.yaml"
+      substring: redundancy
+  - type: output-contains
+    config:
+      substring: key information
+  - type: output-contains
+    config:
+      substring: token count
+- name: anti-trigger
+  prompt: How do I deploy my Azure Function to production?
+  graders:
+  - type: skill-invocation
+    config:
+      disallowed: [markdown-token-optimizer]
+  - type: output-not-contains
+    config:
+      substring: token budget
+  - type: output-not-contains
+    config:
+      substring: reduce tokens
+- name: basic-trigger
+  prompt: My SKILL.md is too large and uses too many tokens. Can you help me optimize it?
+  graders:
+  - type: skill-invocation
+    config:
+      required: [markdown-token-optimizer]
+  - type: output-contains
+    config:
+      substring: token
+- name: trigger-positive-001
+  prompt: optimize markdown for token efficiency
+  tags:
+    category: trigger-test
+    variant: should-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      required: [markdown-token-optimizer]
+- name: trigger-positive-002
+  prompt: reduce tokens in my SKILL.md
+  tags:
+    category: trigger-test
+    variant: should-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      required: [markdown-token-optimizer]
+- name: trigger-positive-003
+  prompt: my file has too many tokens
+  tags:
+    category: trigger-test
+    variant: should-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      required: [markdown-token-optimizer]
+- name: trigger-positive-004
+  prompt: token count is too high
+  tags:
+    category: trigger-test
+    variant: should-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      required: [markdown-token-optimizer]
+- name: trigger-positive-005
+  prompt: make this markdown more concise for AI
+  tags:
+    category: trigger-test
+    variant: should-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      required: [markdown-token-optimizer]
+- name: trigger-positive-006
+  prompt: shrink file size for token budget
+  tags:
+    category: trigger-test
+    variant: should-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      required: [markdown-token-optimizer]
+- name: trigger-negative-001
+  prompt: deploy my Azure Function
+  tags:
+    category: trigger-test
+    variant: should-not-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      disallowed: [markdown-token-optimizer]
+- name: trigger-negative-002
+  prompt: fix my pipeline build error
+  tags:
+    category: trigger-test
+    variant: should-not-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      disallowed: [markdown-token-optimizer]
+- name: trigger-negative-003
+  prompt: create a new TypeSpec definition
+  tags:
+    category: trigger-test
+    variant: should-not-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      disallowed: [markdown-token-optimizer]
+- name: trigger-negative-004
+  prompt: how do I release an SDK package
+  tags:
+    category: trigger-test
+    variant: should-not-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      disallowed: [markdown-token-optimizer]
+- name: trigger-negative-005
+  prompt: review my API design
+  tags:
+    category: trigger-test
+    variant: should-not-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      disallowed: [markdown-token-optimizer]
+scoring:
+  threshold: 0.7

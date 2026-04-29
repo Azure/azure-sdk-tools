@@ -5,8 +5,7 @@ license: MIT
 metadata:
   author: Microsoft
   version: "1.0.0"
-compatibility:
-  platforms: "copilot-chat"
+compatibility: "Platforms: copilot-chat."
 ---
 
 # Skill Authoring Guide
@@ -27,7 +26,7 @@ compatibility:
 
 ## Progressive Disclosure
 
-Metadata loads at startup. SKILL.md on activation. References load when linked via `[text](references/file.md)`.
+Metadata loads at startup. SKILL.md on activation. References load when linked using standard markdown link syntax that points to a file under `references/`.
 
 ## MCP Tools
 

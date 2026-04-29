@@ -1,5 +1,12 @@
 {
   "dependencies": {
     "class-transformer": "^0.5.1"
+  },
+  "devDependencies": {
+    "@microsoft/vally-cli": "^0.2.0"
+  },
+  "scripts": {
+    "lint:skills": "vally lint --strict",
+    "eval:skills": "vally eval --suite all"
   }
 }

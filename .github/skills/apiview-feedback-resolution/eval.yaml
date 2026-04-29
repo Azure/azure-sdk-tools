@@ -1,29 +1,229 @@
 name: apiview-feedback-resolution-eval
 description: Evaluation suite for APIView feedback resolution skill.
-skill: apiview-feedback-resolution
 version: '1.0'
+type: capability
+environment:
+  skills:
+  - .
 config:
+  runs: 1
+  timeout: 300
   model: gpt-4o
-  executor: mock
-  trials_per_task: 1
-  timeout_seconds: 300
-  parallel: false
-metrics:
-  - name: task_completion
-    weight: 0.7
-    threshold: 0.8
-    description: Did the skill complete trigger and anti-trigger checks?
-  - name: efficiency
-    weight: 0.3
-    threshold: 0.7
-    description: Did the skill stay within behavior limits?
-graders:
-  - type: text
-    name: no_fatal_errors
+  executor: copilot-sdk
+stimuli:
+- name: apiview-basic-001
+  prompt: My Python SDK PR has APIView comments that I need to address. Can you help me retrieve and resolve them?
+  tags:
+    category: basic
+    variant: happy-path
+  graders:
+  - type: output-contains
     config:
-      regex_not_match:
-        - (?i)fatal error
-        - (?i)unhandled exception
-        - '(?i)panic:'
-tasks:
-  - "tasks/*.yaml"
+      substring: APIView
+  - type: output-contains
+    config:
+      substring: comment
+  constraints:
+    expect_tools:
+    - azsdk_apiview_get_comments
+    max_turns: 5
+- name: apiview-edge-001
+  prompt: An APIView reviewer says I need to rename 'ComputeProvisioningState' to 'ProvisioningState' in my SDK. This needs
+    a TypeSpec change.
+  tags:
+    category: edge-case
+    feature: typespec-change
+  graders:
+  - type: output-contains
+    config:
+      substring: client.tsp
+  - type: output-contains
+    config:
+      substring: clientName
+  - type: output-not-contains
+    config:
+      substring: cannot help
+  constraints:
+    max_turns: 5
+- name: apiview-no-feedback-001
+  prompt: Check if there are any APIView comments on my .NET SDK PR that I need to address before release.
+  tags:
+    category: basic
+    variant: no-feedback
+  graders:
+  - type: output-contains
+    config:
+      substring: APIView
+  constraints:
+    max_turns: 3
+- name: apiview-negative-001
+  prompt: I need to create a new TypeSpec project for my Azure Storage service.
+  tags:
+    category: negative-test
+    variant: anti-trigger
+  graders:
+  - type: output-not-contains
+    config:
+      substring: azsdk_apiview_get_comments
+  - type: output-not-contains
+    config:
+      substring: APIView
+  constraints:
+    reject_tools:
+    - azsdk_apiview_get_comments
+- name: anti-trigger
+  prompt: How do I set up a new Azure Storage account?
+  graders:
+  - type: skill-invocation
+    config:
+      disallowed: [apiview-feedback-resolution]
+  - type: output-not-contains
+    config:
+      substring: APIView
+  - type: output-not-contains
+    config:
+      substring: API review
+  - type: output-not-contains
+    config:
+      substring: apiview.dev
+  - type: output-not-contains
+    config:
+      substring: apiviewstagingtest.com
+- name: basic-trigger
+  prompt: I have APIView comments on my SDK PR that need to be resolved. Can you help?
+  graders:
+  - type: skill-invocation
+    config:
+      required: [apiview-feedback-resolution]
+  - type: output-contains
+    config:
+      substring: APIView
+- name: url-trigger
+  prompt: 'I have review comments on my SDK PR from this page: https://spa.apiview.dev/review/abc123?activeApiRevisionId=def456
+    — can you help me resolve them?'
+  graders:
+  - type: skill-invocation
+    config:
+      required: [apiview-feedback-resolution]
+  - type: output-contains
+    config:
+      substring: apiview
+- name: trigger-positive-001
+  prompt: resolve APIView feedback on my PR
+  tags:
+    category: trigger-test
+    variant: should-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      required: [apiview-feedback-resolution]
+- name: trigger-positive-002
+  prompt: fix APIView comments
+  tags:
+    category: trigger-test
+    variant: should-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      required: [apiview-feedback-resolution]
+- name: trigger-positive-003
+  prompt: address API review feedback
+  tags:
+    category: trigger-test
+    variant: should-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      required: [apiview-feedback-resolution]
+- name: trigger-positive-004
+  prompt: APIView shows issues with my SDK
+  tags:
+    category: trigger-test
+    variant: should-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      required: [apiview-feedback-resolution]
+- name: trigger-positive-005
+  prompt: help me with APIView suggestions
+  tags:
+    category: trigger-test
+    variant: should-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      required: [apiview-feedback-resolution]
+- name: trigger-positive-006
+  prompt: 'Help me fix these comments: https://spa.apiview.dev/review/0qw98r9qwur9q823r?activeApiRevisionId=afiq948tquajf8jq9f'
+  tags:
+    category: trigger-test
+    variant: should-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      required: [apiview-feedback-resolution]
+- name: trigger-positive-007
+  prompt: 'Address this feedback: https://spa.apiview.dev/review/akldfja9qjta498tjaejg0?activeApiRevisionId=odiufa9sefighj98439'
+  tags:
+    category: trigger-test
+    variant: should-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      required: [apiview-feedback-resolution]
+- name: trigger-positive-008
+  prompt: 'Resolve these comments: https://apiviewstagingtest.com/review/akldfja9qjta498tjaejg0?activeApiRevisionId=odiufa9sefighj98439'
+  tags:
+    category: trigger-test
+    variant: should-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      required: [apiview-feedback-resolution]
+- name: trigger-negative-001
+  prompt: deploy my Azure Function
+  tags:
+    category: trigger-test
+    variant: should-not-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      disallowed: [apiview-feedback-resolution]
+- name: trigger-negative-002
+  prompt: fix my pipeline build error
+  tags:
+    category: trigger-test
+    variant: should-not-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      disallowed: [apiview-feedback-resolution]
+- name: trigger-negative-003
+  prompt: create a new TypeSpec definition
+  tags:
+    category: trigger-test
+    variant: should-not-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      disallowed: [apiview-feedback-resolution]
+- name: trigger-negative-004
+  prompt: how do I release an SDK package
+  tags:
+    category: trigger-test
+    variant: should-not-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      disallowed: [apiview-feedback-resolution]
+- name: trigger-negative-005
+  prompt: set up Azure Storage account
+  tags:
+    category: trigger-test
+    variant: should-not-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      disallowed: [apiview-feedback-resolution]
+scoring:
+  threshold: 0.7

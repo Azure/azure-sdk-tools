@@ -1,29 +1,182 @@
 name: prepare-release-plan-eval
 description: Evaluation suite for release plan management skill.
-skill: prepare-release-plan
 version: '1.0'
+type: capability
+environment:
+  skills:
+  - .
 config:
+  runs: 1
+  timeout: 300
   model: gpt-4o
-  executor: mock
-  trials_per_task: 1
-  timeout_seconds: 300
-  parallel: false
-metrics:
-  - name: task_completion
-    weight: 0.7
-    threshold: 0.8
-    description: Did the skill complete trigger and anti-trigger checks?
-  - name: efficiency
-    weight: 0.3
-    threshold: 0.7
-    description: Did the skill stay within behavior limits?
-graders:
-  - type: text
-    name: no_fatal_errors
+  executor: copilot-sdk
+stimuli:
+- name: release-plan-basic-001
+  prompt: I need to create a release plan for my API spec PR https://github.com/Azure/azure-rest-api-specs/pull/12345. The
+    API version is 2024-06-01 and it's a stable release.
+  tags:
+    category: basic
+    variant: happy-path
+  graders:
+  - type: output-contains
     config:
-      regex_not_match:
-        - (?i)fatal error
-        - (?i)unhandled exception
-        - '(?i)panic:'
-tasks:
-  - "tasks/*.yaml"
+      substring: Service Tree
+  - type: output-contains
+    config:
+      substring: release plan
+  constraints:
+    max_turns: 5
+- name: release-plan-edge-001
+  prompt: 'Update the release plan with these SDK details: JavaScript package ''arm-compute'' and Go package ''sdk/armcompute''.'
+  tags:
+    category: edge-case
+    feature: validation
+  graders:
+  - type: output-contains
+    config:
+      substring: '@azure/'
+  constraints:
+    max_turns: 3
+- name: release-plan-link-001
+  prompt: 'I have release plan 67890 and SDK PRs for Python (PR #100) and .NET (PR #200) in the azure-sdk repos. Link them
+    to the release plan.'
+  tags:
+    category: basic
+    variant: linking
+  graders:
+  - type: output-contains
+    config:
+      substring: link
+  - type: output-contains
+    config:
+      substring: release plan
+  constraints:
+    max_turns: 5
+- name: release-plan-negative-001
+  prompt: Release the azure-mgmt-compute Python package to PyPI now.
+  tags:
+    category: negative-test
+    variant: anti-trigger
+  graders:
+  - type: output-not-contains
+    config:
+      substring: azsdk_create_release_plan
+  - type: output-not-contains
+    config:
+      substring: Service Tree ID
+  constraints:
+    reject_tools:
+    - azsdk_create_release_plan
+- name: anti-trigger
+  prompt: How do I configure logging in my Azure Function?
+  graders:
+  - type: skill-invocation
+    config:
+      disallowed: [prepare-release-plan]
+  - type: output-not-contains
+    config:
+      substring: release plan
+  - type: output-not-contains
+    config:
+      substring: changelog
+- name: basic-trigger
+  prompt: I need to prepare a release plan for the new Azure SDK package version
+  graders:
+  - type: skill-invocation
+    config:
+      required: [prepare-release-plan]
+  - type: output-contains
+    config:
+      substring: release
+- name: trigger-positive-001
+  prompt: prepare a release plan
+  tags:
+    category: trigger-test
+    variant: should-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      required: [prepare-release-plan]
+- name: trigger-positive-002
+  prompt: plan the next SDK release
+  tags:
+    category: trigger-test
+    variant: should-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      required: [prepare-release-plan]
+- name: trigger-positive-003
+  prompt: create release plan for my package
+  tags:
+    category: trigger-test
+    variant: should-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      required: [prepare-release-plan]
+- name: trigger-positive-004
+  prompt: what goes in a release plan
+  tags:
+    category: trigger-test
+    variant: should-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      required: [prepare-release-plan]
+- name: trigger-positive-005
+  prompt: help me prepare for SDK release
+  tags:
+    category: trigger-test
+    variant: should-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      required: [prepare-release-plan]
+- name: trigger-negative-001
+  prompt: deploy my Azure Function
+  tags:
+    category: trigger-test
+    variant: should-not-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      disallowed: [prepare-release-plan]
+- name: trigger-negative-002
+  prompt: fix my pipeline build error
+  tags:
+    category: trigger-test
+    variant: should-not-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      disallowed: [prepare-release-plan]
+- name: trigger-negative-003
+  prompt: create a new TypeSpec definition
+  tags:
+    category: trigger-test
+    variant: should-not-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      disallowed: [prepare-release-plan]
+- name: trigger-negative-004
+  prompt: configure Azure logging
+  tags:
+    category: trigger-test
+    variant: should-not-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      disallowed: [prepare-release-plan]
+- name: trigger-negative-005
+  prompt: resolve APIView feedback
+  tags:
+    category: trigger-test
+    variant: should-not-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      disallowed: [prepare-release-plan]
+scoring:
+  threshold: 0.7

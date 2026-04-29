@@ -1,0 +1,18 @@
+paths:
+  skills: [.github/skills]
+  evals:  [.github/skills]
+  results: .vally/results
+  evalFilenames: [eval.yaml, eval.yml, "*.eval.yaml", "*.eval.yml"]
+
+suites:
+  all:
+    description: All azure-sdk-tools agent skill evals.
+    evals:
+      - .github/skills/apiview-feedback-resolution/eval.yaml
+      - .github/skills/generate-sdk-locally/eval.yaml
+      - .github/skills/markdown-token-optimizer/eval.yaml
+      - .github/skills/pipeline-troubleshooting/eval.yaml
+      - .github/skills/prepare-release-plan/eval.yaml
+      - .github/skills/sdk-release/eval.yaml
+      - .github/skills/sensei/eval.yaml
+      - .github/skills/skill-authoring/eval.yaml

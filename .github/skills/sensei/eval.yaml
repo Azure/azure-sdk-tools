@@ -1,29 +1,166 @@
 name: sensei-eval
 description: Evaluation suite for sensei skill improvement skill.
-skill: sensei
 version: '1.0'
+type: capability
+environment:
+  skills:
+  - .
 config:
+  runs: 1
+  timeout: 300
   model: gpt-4o
-  executor: mock
-  trials_per_task: 1
-  timeout_seconds: 300
-  parallel: false
-metrics:
-  - name: task_completion
-    weight: 0.7
-    threshold: 0.8
-    description: Did the skill complete trigger and anti-trigger checks?
-  - name: efficiency
-    weight: 0.3
-    threshold: 0.7
-    description: Did the skill stay within behavior limits?
-graders:
-  - type: text
-    name: no_fatal_errors
+  executor: copilot-sdk
+stimuli:
+- name: sensei-basic-001
+  prompt: |
+    Review this skill frontmatter for compliance:
+
+    ---
+    name: example-skill
+    description: A skill for doing things
+    ---
+
+    Check if it meets waza requirements and suggest improvements.
+  tags:
+    category: basic
+  graders:
+  - type: output-contains
     config:
-      regex_not_match:
-        - (?i)fatal error
-        - (?i)unhandled exception
-        - '(?i)panic:'
-tasks:
-  - "tasks/*.yaml"
+      substring: missing fields
+  - type: output-contains
+    config:
+      substring: improvements
+  - type: output-contains
+    config:
+      substring: requirements
+- name: anti-trigger
+  prompt: How do I set up automatic retries for my HTTP client?
+  graders:
+  - type: skill-invocation
+    config:
+      disallowed: [sensei]
+  - type: output-not-contains
+    config:
+      substring: frontmatter
+  - type: output-not-contains
+    config:
+      substring: Ralph loop
+- name: basic-trigger
+  prompt: Run sensei on the api-validation skill to improve its frontmatter compliance
+  graders:
+  - type: skill-invocation
+    config:
+      required: [sensei]
+  - type: output-contains
+    config:
+      substring: skill
+- name: trigger-positive-001
+  prompt: run sensei on my skill
+  tags:
+    category: trigger-test
+    variant: should-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      required: [sensei]
+- name: trigger-positive-002
+  prompt: improve skill frontmatter compliance
+  tags:
+    category: trigger-test
+    variant: should-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      required: [sensei]
+- name: trigger-positive-003
+  prompt: fix frontmatter for azure-deploy
+  tags:
+    category: trigger-test
+    variant: should-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      required: [sensei]
+- name: trigger-positive-004
+  prompt: score my skill
+  tags:
+    category: trigger-test
+    variant: should-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      required: [sensei]
+- name: trigger-positive-005
+  prompt: sensei help
+  tags:
+    category: trigger-test
+    variant: should-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      required: [sensei]
+- name: trigger-positive-006
+  prompt: check skill tokens
+  tags:
+    category: trigger-test
+    variant: should-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      required: [sensei]
+- name: trigger-positive-007
+  prompt: frontmatter audit on all skills
+  tags:
+    category: trigger-test
+    variant: should-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      required: [sensei]
+- name: trigger-negative-001
+  prompt: deploy my Azure Function
+  tags:
+    category: trigger-test
+    variant: should-not-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      disallowed: [sensei]
+- name: trigger-negative-002
+  prompt: fix my pipeline build error
+  tags:
+    category: trigger-test
+    variant: should-not-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      disallowed: [sensei]
+- name: trigger-negative-003
+  prompt: create a new TypeSpec definition
+  tags:
+    category: trigger-test
+    variant: should-not-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      disallowed: [sensei]
+- name: trigger-negative-004
+  prompt: how do I release an SDK package
+  tags:
+    category: trigger-test
+    variant: should-not-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      disallowed: [sensei]
+- name: trigger-negative-005
+  prompt: configure Azure Storage geo-redundancy
+  tags:
+    category: trigger-test
+    variant: should-not-trigger
+  graders:
+  - type: skill-invocation
+    config:
+      disallowed: [sensei]
+scoring:
+  threshold: 0.7

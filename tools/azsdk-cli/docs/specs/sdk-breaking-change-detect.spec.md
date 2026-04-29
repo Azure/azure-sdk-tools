@@ -315,22 +315,24 @@ Flow:
 flowchart TD
     A[Generate SDK]
     B[Detect SDK Breaking Changes azsdk_package_detect_breaking_change]
-    C[PR owner Ask Copilot to Resolve Breaking Changes]
-    D[Copilot Calls azsdk_customized_code_update]
-    E[SDK Breaking Change Resolved]
+    C[Github Action Label 'XX-SDK breakingchange' label]
+    D[PR owner Ask Copilot to Resolve Breaking Changes]
+    E[Copilot Calls azsdk_customized_code_update]
+    F[SDK Breaking Change Resolved]
 
     A --> B
     B --> C
     C --> D
     D --> E
+    E --> F
 
-    F@{ shape: doc, label: "Breaking Changes:<br/>• Model ResourceInfo renamed to Resource, Conversion-need to be resolve, breaking Java SDK<br/>• Property type changed from int to string, typespec change, break Java SDK" }
+    G@{ shape: doc, label: "Breaking Changes:<br/>• Model ResourceInfo renamed to Resource, Conversion-need to be resolve, breaking Java SDK<br/>• Property type changed from int to string, typespec change, break Java SDK" }
 
-    B ---> |generate|F
-    F ---> C
+    B ---> |generate|G
+    G ---> D
 
     %% styling
-    class F breaking;
+    class G breaking;
     classDef breaking fill:#fff3cd,stroke:#f0ad4e,stroke-width:1.5px;
 ```
 

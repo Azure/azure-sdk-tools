@@ -13,7 +13,7 @@ environments:
       azure-sdk-mcp:
         type: stdio
         command: dotnet
-        args: ["run", "--project", "../../../tools/azsdk-cli/Azure.Sdk.Tools.Cli", "--", "start"]
+        args: ["run", "--project", "../../../../tools/azsdk-cli/Azure.Sdk.Tools.Cli", "--", "start"]
         timeout: 30000
         env:
           AZSDKTOOLS_AGENT_TESTING: "false"
@@ -24,7 +24,7 @@ environments:
       azure-sdk-mcp:
         type: stdio
         command: dotnet
-        args: ["run", "--project", "../../../tools/azsdk-cli/Azure.Sdk.Tools.Cli", "--", "start"]
+        args: ["run", "--project", "../../../../tools/azsdk-cli/Azure.Sdk.Tools.Cli", "--", "start"]
         timeout: 30000
         env:
           AZSDKTOOLS_AGENT_TESTING: "false"

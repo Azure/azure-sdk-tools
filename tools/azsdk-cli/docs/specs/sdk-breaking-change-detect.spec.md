@@ -14,13 +14,13 @@
     - [Overview](#overview)
     - [Detailed Design](#detailed-design)
     - [Architecture Diagram](#architecture-diagram)
-      - [Component 1: Breaking change detector](#component-1-breaking-change-detector)
+      - [Component 1: SDK change detector](#component-1-sdk-change-detector)
       - [Component 2: ChangelogOrRevapi-breakingChange pattern](#component-2-changelogorrevapi-breakingchange-pattern)
-      - [Component 3: Breaking change classifier](#component-3-breaking-change-classifier)
+      - [Component 3: SDK Breaking change classifier](#component-3-sdk-breaking-change-classifier)
       - [Component 4: Breaking change Result](#component-4-breaking-change-result)
     - [User Experience](#user-experience)
-      - [Code Generation pipeline](#code-generation-pipeline)
-      - [SDK breaking change resolve in Spec PR and Code PR](#sdk-breaking-change-resolve-in-spec-pr-and-code-pr)
+      - [Scenario 1: Code Generation pipeline](#scenario-1-code-generation-pipeline)
+      - [Scenario 2: SDK breaking change resolve in Spec PR and Code PR](#scenario-2-sdk-breaking-change-resolve-in-spec-pr-and-code-pr)
   - [Agent Prompts](#agent-prompts)
     - [\[Detect breaking change for Go SDK\]](#detect-breaking-change-for-go-sdk)
   - [CLI Commands](#cli-commands)
@@ -75,6 +75,9 @@ _Provide a detailed explanation of your proposed solution._
 
 ### Detailed Design
 
+**prerequist**:
+The SDK has been generated and built successfully, and the changelog or Revapi report has been generated.
+
 A changelog-breakingchange pattern guide (e.g. https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/mgmt/sdk-breaking-changes-guide.md) will service as the foundation for teach copilot agent to detect and classify breaking changes for a SDK. The existing TypeSpec code and the configuration will help agent to classify the breaking changes.
 
 **Output Format**
@@ -105,10 +108,10 @@ flowchart TD
     D[Breaking Change Result]
     E[SDK changelogOrRevapi-breakingChange pattern]
     F[SDK changelog/ Revapi]
-    subgraph Detector
+    subgraph SDK Change Detector
         A
     end
-    subgraph Classifier
+    subgraph SDK Breaking Change Classifier
         E
         F
         C
@@ -123,9 +126,9 @@ flowchart TD
 ```
 
 ---
-#### Component 1: Breaking change detector
+#### Component 1: SDK change detector
 
-Compare the package against the latest GA release to detect breaking changes. The output is a changelog (or Revapi report for Java) along with an overall assessment of whether the package introduces SDK breaking changes according to the language-specific breaking change policy.
+Compare the package against the latest GA release to detect SDK changes. The output is a changelog (or Revapi report for Java) along with an overall assessment of whether the package introduces SDK breaking changes according to the language-specific breaking change policy.
 
 **Summary of the detection mechanism**
 | Language | Tool | Compares | Old Source | New Source |
@@ -137,20 +140,46 @@ Compare the package against the latest GA release to detect breaking changes. Th
 | **JS/TS** | API Extractor + `git diff` | `.api.md` review files | Git baseline | Generated review files |
 | **Python** | `jsondiff` + AST/`inspect` introspection | JSON API reports | PyPI stable package | Current code |
 
+**Output**:
+
+- change log or repapi
+- 'hasBreakingChange': true/false
+
+e.g.
+
+```json
+{
+    "changes": "<change log or repapi markdown>",
+    "hasBreakingChange": true
+}
+```
+
 #### Component 2: ChangelogOrRevapi-breakingChange pattern
 
 This document describe which changelog/revapi will cause breaking changes and also provide the root cause of the breaking changes.
 
+Each pattern will contain four parts:
+
+- changelog/revapi pattern
+- Spec pattern (optional)
+- Breaking
+- Reason
+- Resolution: if it cannot mitigate, just text "Cannot be resolved through client customizations."
+
 e.g.
 For python:
-```
+
+```md
+
+## Naming Changes with Numbers
+**changelog pattern**:
+
 Paired removal and addition entries showing naming changes from words to numbers:
 
 - Enum `Minute` deleted or renamed its member `ZERO`
 - Enum `Minute` deleted or renamed its member `THIRTY`
 - Enum `Minute` added member `ENUM_0`
 - Enum `Minute` added member `ENUM_30`
-Reason: Swagger automatically converts numeric names to words during code generation, while TypeSpec preserves the original naming. This affects all type names, including enums, models, and operations. Emitter change
 
 Spec Pattern:
 
@@ -161,7 +190,12 @@ union Minute {
   `0`: 0,
   `30`: 30,
 }
-Resolution:
+
+**Breaking**: The Enum member `ZERO` is renamed to `0`
+
+**Reason**: Emitter change. Emitter from Swagger automatically converts numeric names to words during code generation, while Emitter from TypeSpec preserves the original naming. This affects all type names, including enums, models, and operations.
+
+**Resolution**:
 
 Use client customization to restore the original names from the removal entries:
 
@@ -169,9 +203,9 @@ Use client customization to restore the original names from the removal entries:
 @@clientName(Minute.`30`, "THIRTY", "python");
 ```
 
-#### Component 3: Breaking change classifier
+#### Component 3: SDK Breaking change classifier
 
-Copilot Agent refer changelogOrRevapi-breakingchange pattern guide to classify the breaking changes.
+Copilot Agent refer changelogOrRevapi-breakingchange pattern guide to analyze and classify the breaking changes.
 
 Parse out the actually breaking changes and classify them into different category
 
@@ -242,14 +276,16 @@ The result is JSON-formatted.
 azsdk package detect --changelog value --language go --tsp-config-path C:/dev/azure-rest-api-specs/specification/storage/Storage.Management/tspconfig.yaml
 ```
 
-#### Code Generation pipeline
+**NOTE:** Following are two E2E scenario which 'azsdk_package_detect_breaking_change' tool will **take part in.**
+
+#### Scenario 1: Code Generation pipeline
 Flow:
 1. Agent invoke `azsdk_package_generate_code` to generate sdk code
 2. Agent invoke `azsdk_package_update_changelog_content` to update change log
 3. Agent invoke `azsdk_package_detect_breaking_change` to detect and classify breaking changes
 4. Label 'SDK-breakingchange' if breaking change detected for a language
 
-#### SDK breaking change resolve in Spec PR and Code PR
+#### Scenario 2: SDK breaking change resolve in Spec PR and Code PR
 prerequisite: Code Generation pipeline already run
 
 prompt: @copilot resolve SDK breaking changes

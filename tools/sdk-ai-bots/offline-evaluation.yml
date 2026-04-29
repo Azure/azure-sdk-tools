@@ -39,8 +39,6 @@ extends:
               matrix:
                 typespec:
                   testPrefix: typespec
-                apispec:
-                  testPrefix: apispec
                 onboarding:
                   testPrefix: onboarding
                 python:

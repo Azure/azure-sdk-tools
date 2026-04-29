@@ -61,21 +61,17 @@ _GITHUB_ALLOWED_TOOLS: list[str] = [
     "get_commit",
     "list_commits",
     # issues (read-only)
-    "get_issue",
+    "issue_read",
     "list_issues",
     "search_issues",
-    "get_issue_comments",
     # pull_requests (read-only)
-    "get_pull_request",
+    "pull_request_read",
     "list_pull_requests",
-    "get_pull_request_files",
-    "get_pull_request_status",
-    "get_pull_request_comments",
-    "get_pull_request_reviews",
+    "search_pull_requests",
     # actions (read-only)
-    "list_workflow_runs",
-    "get_workflow_run",
-    "get_workflow_run_logs",
+    "actions_list",
+    "actions_get",
+    "actions_get_job_logs",
 ]
 # HTTP timeout for MCP endpoint validation and GitHub API calls.
 _MCP_VALIDATION_TIMEOUT_SECS = 10.0

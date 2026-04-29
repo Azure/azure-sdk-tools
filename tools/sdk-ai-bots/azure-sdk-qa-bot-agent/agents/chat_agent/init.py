@@ -24,6 +24,7 @@ load_dotenv(override=False)
 os.environ.setdefault("ENABLE_SENSITIVE_DATA", "true")
 
 from agent_framework import Agent
+from agent_framework import CompactionProvider
 from agent_framework import SkillsProvider
 from agent_framework import ToolResultCompactionStrategy
 from agent_framework_foundry_hosting import ResponsesHostServer
@@ -138,6 +139,12 @@ async def main() -> None:
     # Memory context provider (memory store is ready after gather)
     memory_provider = MemoryContextProvider(project_client)
 
+    # Compaction provider — compact history before and after each turn
+    compaction_provider = CompactionProvider(
+        before_strategy=ToolResultCompactionStrategy(keep_last_tool_call_groups=2),
+        after_strategy=ToolResultCompactionStrategy(keep_last_tool_call_groups=1),
+    )
+
     # Init Skills
     skills = create_tenant_skills()
     skills_provider = SkillsProvider(skills=skills)
@@ -149,8 +156,7 @@ async def main() -> None:
         id=agent_id,
         instructions=instructions,
         tools=tools,
-        context_providers=[skills_provider, memory_provider],
-        compaction_strategy=ToolResultCompactionStrategy(keep_last_tool_call_groups=2),
+        context_providers=[skills_provider, memory_provider, compaction_provider],
         default_options={
             "reasoning": {"effort": reasoning_effort},
             "max_tool_calls": MAX_TOOL_CALLS_PER_TURN,

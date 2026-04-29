@@ -3,20 +3,6 @@ import { spawn, execFile } from "node:child_process";
 import { joinPaths } from "@typespec/compiler";
 import { Logger } from "./log.js";
 
-export function isWorkspaceVersion(version: string): boolean {
-  return version.startsWith("workspace:");
-}
-
-export function hasWorkspaceVersions(
-  devDependencies: Record<string, string>,
-  packages: string[],
-): boolean {
-  return packages.some((pkg) => {
-    const v = devDependencies[pkg];
-    return v != null && isWorkspaceVersion(v);
-  });
-}
-
 /**
  * Queries the npm registry for a published package's devDependencies.
  * Returns the parsed JSON object, or undefined if the query fails.

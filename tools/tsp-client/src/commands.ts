@@ -14,13 +14,7 @@ import {
   removeDirectory,
 } from "./fs.js";
 import { cp, mkdir, readFile, stat, unlink, writeFile } from "fs/promises";
-import {
-  npmCommand,
-  npxCommand,
-  isWorkspaceVersion,
-  hasWorkspaceVersions,
-  npmViewPackageDevDependencies,
-} from "./npm.js";
+import { npmCommand, npxCommand, npmViewPackageDevDependencies } from "./npm.js";
 import {
   compileTsp,
   discoverEntrypointFile,

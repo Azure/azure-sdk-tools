@@ -214,6 +214,18 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 BuildResult = ex.Message
             };
         }
+        catch (ArgumentException ex)
+        {
+            logger.LogError(ex, "Invalid input for feedback classification.");
+            return new CustomizedCodeUpdateResponse
+            {
+                Success = false,
+                ResponseError = ex.Message,
+                Message = ex.Message,
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
+                BuildResult = ex.Message
+            };
+        }
         catch (Exception ex)
         {
             logger.LogError(ex, "Feedback classification failed unexpectedly.");

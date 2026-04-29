@@ -16,6 +16,7 @@ public static class CoreRequirements
         new TspClientRequirement(),
         new TspRequirement(),
         new PowerShellRequirement(),
+        new AzurePowerShellRequirement(),
         new GitHubCliRequirement(),
         new LongPathsRequirement(),
         new PythonRequirement(),
@@ -132,6 +133,42 @@ public static class CoreRequirements
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {
             return ["Download and install https://learn.microsoft.com/powershell/scripting/install/install-powershell?view=powershell-7.5"];
+        }
+    }
+
+    public class AzurePowerShellRequirement : Requirement
+    {
+        public override string Name => "Azure PowerShell";
+        public override IReadOnlyList<string> DependsOn => ["PowerShell"];
+        public override bool IsAutoInstallable => true;
+        public override string? Reason => "Azure PowerShell is required to deploy live test resources using New-TestResources.ps1.";
+
+        public override string[][]? GetInstallCommands(RequirementContext ctx)
+        {
+            return [["pwsh", "-Command", "Install-Module -Name Az -Repository PSGallery -Force"]];
+        }
+
+        public override async Task<RequirementCheckOutput> RunCheck(
+            IProcessHelper processHelper,
+            RequirementContext ctx,
+            CancellationToken ct = default)
+        {
+            var result = await RunCommand(processHelper, ["pwsh", "-Command", "Get-InstalledModule Az"], ctx, ct);
+            bool isInstalled = result.ExitCode == 0 && !string.IsNullOrWhiteSpace(result.Output);
+            return new RequirementCheckOutput
+            {
+                Success = isInstalled,
+                Output = result.Output?.Trim(),
+                Error = isInstalled ? null : "Azure PowerShell (Az) module is not installed."
+            };
+        }
+
+        public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
+        {
+            return [
+                "Run in PowerShell: Install-Module -Name Az -Repository PSGallery -Force",
+                "See https://learn.microsoft.com/powershell/azure/install-azps-windows for more details."
+            ];
         }
     }
 

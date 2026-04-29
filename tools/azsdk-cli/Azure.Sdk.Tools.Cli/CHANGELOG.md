@@ -4,7 +4,7 @@
 
 ### Features Added
 
-- Added `AZSDK_COPILOT_CLI_PATH` environment variable to provide a custom path to `copilot.exe` for the GitHub Copilot SDK when the bundled binary is unavailable in standalone builds.
+- Added `AZSDK_COPILOT_CLI_PATH` environment variable to provide a custom path to the Copilot CLI executable (`copilot`/`copilot.exe`) for the GitHub Copilot SDK when the bundled binary is unavailable in standalone builds.
 
 ### Breaking Changes
 

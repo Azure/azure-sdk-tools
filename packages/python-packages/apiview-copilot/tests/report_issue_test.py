@@ -28,10 +28,10 @@ with patch("src._database_manager.DatabaseManager.get_instance", return_value=Ma
         CommentContextRequest,
         ReportIssueRequest,
         _build_report_issue_title,
-        _build_report_issue_body,
         _build_comment_context_text,
         _generate_report_issue,
         _get_report_issue_labels,
+        _assemble_report_issue_body,
     )
 
 
@@ -59,7 +59,7 @@ class TestBuildReportIssueTitle:
         ctx = CommentContextRequest(comment_source="copilot")
         request = ReportIssueRequest(mode="comment", description="Bad suggestion", comment_context=ctx)
         title = _build_report_issue_title(request)
-        assert title == "[APIView] Issue with AVC comment"
+        assert title == "[APIView] Issue with APIView Copilot comment"
 
     def test_comment_mode_apiview_source(self):
         ctx = CommentContextRequest(comment_source="apiview")
@@ -77,61 +77,6 @@ class TestBuildReportIssueTitle:
         request = ReportIssueRequest(mode="comment", description="Issue")
         title = _build_report_issue_title(request)
         assert title == "[APIView] Issue with APIView comment"
-
-
-class TestBuildReportIssueBody:
-
-    def test_general_mode_body(self):
-        request = ReportIssueRequest(mode="general", description="Something is broken")
-        body = _build_report_issue_body(request)
-        assert "## Description" in body
-        assert "Something is broken" in body
-        assert "Reported via APIView" in body
-
-    def test_includes_review_link(self):
-        request = ReportIssueRequest(
-            mode="general",
-            description="Bug",
-            review_link="https://apiview.dev/review/123",
-        )
-        body = _build_report_issue_body(request)
-        assert "## Review Link" in body
-        assert "https://apiview.dev/review/123" in body
-
-    def test_includes_comment_context(self):
-        ctx = CommentContextRequest(
-            comment_text="This API is wrong",
-            code_snippet="public void Foo() {}",
-            language="csharp",
-            comment_source="copilot",
-            element_id="Foo",
-        )
-        request = ReportIssueRequest(
-            mode="comment",
-            description="The suggestion is incorrect",
-            comment_context=ctx,
-        )
-        body = _build_report_issue_body(request)
-        assert "## Comment Context" in body
-        assert "**Source:** copilot" in body
-        assert "**Language:** csharp" in body
-        assert "> This API is wrong" in body
-        assert "public void Foo() {}" in body
-        assert "**Element ID:** `Foo`" in body
-
-    def test_minimal_comment_context(self):
-        ctx = CommentContextRequest(comment_source="apiview")
-        request = ReportIssueRequest(
-            mode="comment",
-            description="Problem",
-            comment_context=ctx,
-        )
-        body = _build_report_issue_body(request)
-        assert "## Comment Context" in body
-        assert "**Source:** apiview" in body
-        # Should not contain fields that are None
-        assert "**Language:**" not in body
-        assert "**Comment:**" not in body
 
 
 class TestGetReportIssueLabels:
@@ -192,27 +137,48 @@ class TestBuildCommentContextText:
 class TestGenerateReportIssue:
 
     @patch("app.run_prompt")
-    def test_llm_success(self, mock_run_prompt):
+    def test_llm_success_with_additional_context(self, mock_run_prompt):
         mock_run_prompt.return_value = json.dumps({
-            "title": "[APIView] LLM generated title",
-            "body": "## Description\n\nLLM generated body",
+            "title": "[APIView] Diff view freezes on large reviews",
+            "body": "This is likely related to DOM rendering of large diff trees. APIView renders all API definitions in a single page without virtualization.",
+        })
+        request = ReportIssueRequest(mode="general", description="When I open the diff view for large reviews it freezes.")
+        result = _generate_report_issue(request)
+        assert result["title"] == "[APIView] Diff view freezes on large reviews"
+        # Body should contain user's description and LLM's additional context
+        assert "## Description" in result["body"]
+        assert "When I open the diff view" in result["body"]
+        assert "## Suggested Next Steps" in result["body"]
+        assert "DOM rendering" in result["body"]
+        mock_run_prompt.assert_called_once()
+
+    @patch("app.run_prompt")
+    def test_llm_empty_additional_context(self, mock_run_prompt):
+        mock_run_prompt.return_value = json.dumps({
+            "title": "[APIView] Something broke",
+            "body": "",
         })
         request = ReportIssueRequest(mode="general", description="Something broke")
         result = _generate_report_issue(request)
-        assert result["title"] == "[APIView] LLM generated title"
-        assert result["body"] == "## Description\n\nLLM generated body"
-        mock_run_prompt.assert_called_once()
+        assert result["title"] == "[APIView] Something broke"
+        # No additional context section when LLM has nothing to add
+        assert "## Description" in result["body"]
+        assert "## Suggested Next Steps" not in result["body"]
 
     @patch("app.run_prompt")
     def test_llm_with_comment_context(self, mock_run_prompt):
         mock_run_prompt.return_value = json.dumps({
-            "title": "[APIView] Issue with AVC comment",
-            "body": "## Description\n\nBad suggestion\n\n## Comment Context\n\ncopilot comment",
+            "title": "[APIView] APIView Copilot incorrectly suggests removing async",
+            "body": "Per Azure SDK guidelines, methods performing network I/O must be async to avoid blocking the event loop.",
         })
         ctx = CommentContextRequest(comment_source="copilot", comment_text="Remove async")
         request = ReportIssueRequest(mode="comment", description="Bad suggestion", comment_context=ctx)
         result = _generate_report_issue(request)
-        assert "AVC" in result["title"]
+        assert "APIView Copilot" in result["title"]
+        assert "## Comment Context" in result["body"]
+        assert "> Remove async" in result["body"]
+        assert "## Suggested Next Steps" in result["body"]
+        assert "Azure SDK guidelines" in result["body"]
         # Verify the prompt received the comment context
         call_args = mock_run_prompt.call_args
         assert call_args[1]["inputs"]["comment_context"] != ""
@@ -222,10 +188,10 @@ class TestGenerateReportIssue:
         mock_run_prompt.side_effect = RuntimeError("LLM unavailable")
         request = ReportIssueRequest(mode="general", description="Something broke")
         result = _generate_report_issue(request)
-        # Should fall back to template
         assert result["title"] == "[APIView] Something broke"
         assert "## Description" in result["body"]
         assert "Something broke" in result["body"]
+        assert "## Suggested Next Steps" not in result["body"]
 
     @patch("app.run_prompt")
     def test_fallback_on_invalid_json(self, mock_run_prompt):
@@ -237,17 +203,49 @@ class TestGenerateReportIssue:
 
     @patch("app.run_prompt")
     def test_fallback_on_empty_title(self, mock_run_prompt):
-        mock_run_prompt.return_value = json.dumps({"title": "", "body": "some body"})
+        mock_run_prompt.return_value = json.dumps({"title": "", "body": "Some context here."})
         request = ReportIssueRequest(mode="general", description="Missing title test")
         result = _generate_report_issue(request)
-        # Empty title triggers fallback
+        # Empty title triggers fallback to template title
         assert result["title"] == "[APIView] Missing title test"
+        # But additional context is still included
+        assert "## Suggested Next Steps" in result["body"]
+        assert "Some context here." in result["body"]
 
-    @patch("app.run_prompt")
-    def test_fallback_on_empty_body(self, mock_run_prompt):
-        mock_run_prompt.return_value = json.dumps({"title": "[APIView] Good title", "body": ""})
-        request = ReportIssueRequest(mode="general", description="Missing body test")
-        result = _generate_report_issue(request)
-        # Empty body triggers fallback
-        assert "## Description" in result["body"]
-        assert "Missing body test" in result["body"]
+
+class TestAssembleReportIssueBody:
+
+    def test_with_additional_context(self):
+        request = ReportIssueRequest(mode="general", description="The page is slow.")
+        body = _assemble_report_issue_body(request, next_steps="Likely a rendering bottleneck.")
+        assert "## Description" in body
+        assert "The page is slow." in body
+        assert "## Suggested Next Steps" in body
+        assert "Likely a rendering bottleneck." in body
+
+    def test_without_additional_context(self):
+        request = ReportIssueRequest(mode="general", description="A bug")
+        body = _assemble_report_issue_body(request, next_steps=None)
+        assert "## Description" in body
+        assert "A bug" in body
+        assert "## Suggested Next Steps" not in body
+
+    def test_empty_string_additional_context(self):
+        request = ReportIssueRequest(mode="general", description="Issue")
+        body = _assemble_report_issue_body(request, next_steps="")
+        assert "## Suggested Next Steps" not in body
+
+    def test_includes_comment_context_and_review_link(self):
+        ctx = CommentContextRequest(comment_source="copilot", comment_text="Bad advice")
+        request = ReportIssueRequest(
+            mode="comment", description="Wrong", comment_context=ctx,
+            review_link="https://apiview.dev/review/456",
+        )
+        body = _assemble_report_issue_body(request, next_steps="The suggestion contradicts Azure SDK guidelines.")
+        assert "## Description" in body
+        assert "## Comment Context" in body
+        assert "> Bad advice" in body
+        assert "## Suggested Next Steps" in body
+        assert "## Review Link" in body
+        assert "https://apiview.dev/review/456" in body
+        assert "Reported via APIView" in body

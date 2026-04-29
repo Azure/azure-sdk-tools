@@ -331,6 +331,8 @@ def _build_month_metadata(
     review_to_revisions: dict[str, set[str]] = {}
     active_revision_ids: set[str] = set()
     for comment in month_comments:
+        if comment.get("CommentSource") == "Diagnostic":
+            continue
         review_id = comment.get("ReviewId")
         revision_id = comment.get("APIRevisionId")
         if review_id and revision_id:
@@ -617,9 +619,9 @@ def print_comment_bucket_report(
             ]
             if include_human:
                 values.append(f"{item['human_percentage']:>8.1f}")
-            values.append(f"{item['implicit_good_percentage']:>8.1f}")
             if include_neutral:
                 values.append(f"{item['neutral_percentage']:>8.1f}")
+            values.append(f"{item['implicit_good_percentage']:>8.1f}")
             values.extend(
                 [
                     f"{item['implicit_bad_percentage']:>8.1f}",

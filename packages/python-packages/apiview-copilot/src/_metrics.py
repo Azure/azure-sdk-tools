@@ -173,8 +173,9 @@ def _filter_to_root_comments(comments: list[dict]) -> list[dict]:
 
     For comments that share a ``ThreadId``, only the earliest comment (by
     ``CreatedOn``) is kept.  For comments without a ``ThreadId``, only the
-    earliest comment per ``(APIRevisionId, ElementId)`` is kept.  This ensures
-    each conversation thread is counted once rather than counting every reply.
+    earliest comment per ``(ReviewId, ElementId)`` is kept.  This matches the
+    key scheme used by :func:`get_thread_start_dates` which scopes unthreaded
+    lookups by ReviewId.
     """
     from collections import defaultdict
 
@@ -186,17 +187,17 @@ def _filter_to_root_comments(comments: list[dict]) -> list[dict]:
         if thread_id:
             threaded[thread_id].append(c)
         else:
-            key = (c.get("APIRevisionId"), c.get("ElementId"))
+            key = (c.get("ReviewId"), c.get("ElementId"))
             unthreaded[key].append(c)
 
     roots: list[dict] = []
 
     for group in threaded.values():
-        group.sort(key=lambda x: x.get("CreatedOn") or "")
+        group.sort(key=lambda x: x.get("CreatedOn") or "\uffff")
         roots.append(group[0])
 
     for group in unthreaded.values():
-        group.sort(key=lambda x: x.get("CreatedOn") or "")
+        group.sort(key=lambda x: x.get("CreatedOn") or "\uffff")
         roots.append(group[0])
 
     return roots
@@ -264,15 +265,12 @@ def _build_metrics_segment(
     all_revision_ids = set()
     approved_revision_ids = set()
     revision_has_copilot = {}
-    # Map each revision ID to its (review_id, package_version) composite key
-    revision_to_review_version: dict[str, tuple[str, str]] = {}
 
     for review in reviews:
         for rev in review.revisions:
             for revision_id in rev.revision_ids:
                 all_revision_ids.add(revision_id)
                 revision_has_copilot[revision_id] = rev.has_copilot_review
-                revision_to_review_version[revision_id] = (review.review_id, rev.package_version or "")
                 if rev.approval is not None:
                     approved_revision_ids.add(revision_id)
 
@@ -304,21 +302,6 @@ def _build_metrics_segment(
     # Categorize comments based on whether the revision has Copilot (for comment_makeup)
     human_comments_with_copilot_count = 0
     human_comments_without_copilot_count = 0
-
-    # Build (review_id, package_version) → earliest AI comment CreatedOn index from
-    # ALL (pre-root-filter) non-diagnostic comments so we can determine whether a
-    # human thread was opened before or after Copilot weighed in on the same
-    # review/version (across any revision for that version).
-    review_version_earliest_ai: dict[tuple[str, str], str] = {}
-    for c in comments:
-        if c.get("CommentSource") != "AIGenerated":
-            continue
-        rv_key = revision_to_review_version.get(c.get("APIRevisionId", ""))
-        if rv_key is None:
-            continue
-        created = c.get("CreatedOn", "")
-        if rv_key not in review_version_earliest_ai or created < review_version_earliest_ai[rv_key]:
-            review_version_earliest_ai[rv_key] = created
 
     for comment in approved_revision_comments:
         rev_id = comment.get("APIRevisionId")

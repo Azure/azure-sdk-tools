@@ -933,4 +933,53 @@ describe.sequential("Verify commands", () => {
     assert.deepEqual(parseNpmArgs(""), []);
     assert.deepEqual(parseNpmArgs("  --force  "), ["--force"]);
   });
+
+  it("parseNpmArgs handles quoted strings and shell-like patterns", () => {
+    // Double quoted strings with spaces
+    assert.deepEqual(parseNpmArgs('--tag "foo bar"'), ["--tag", "foo bar"]);
+    assert.deepEqual(parseNpmArgs('--message "hello world"'), ["--message", "hello world"]);
+
+    // Single quoted strings with spaces
+    assert.deepEqual(parseNpmArgs("--name 'my package'"), ["--name", "my package"]);
+    assert.deepEqual(parseNpmArgs("--title 'my awesome app'"), ["--title", "my awesome app"]);
+
+    // Escaped quotes within strings
+    assert.deepEqual(parseNpmArgs('--message "He said \\"hello\\""'), [
+      "--message",
+      'He said "hello"',
+    ]);
+
+    // Mixed quoting styles
+    assert.deepEqual(parseNpmArgs("--tag \"foo bar\" --name 'baz qux'"), [
+      "--tag",
+      "foo bar",
+      "--name",
+      "baz qux",
+    ]);
+
+    // Escaped whitespace outside quotes
+    assert.deepEqual(parseNpmArgs("--path /usr/local\\ bin"), ["--path", "/usr/local bin"]);
+
+    // Complex real-world examples
+    assert.deepEqual(parseNpmArgs('--registry "https://my-registry.com" --tag "beta release"'), [
+      "--registry",
+      "https://my-registry.com",
+      "--tag",
+      "beta release",
+    ]);
+
+    // Empty quotes should produce empty strings
+    assert.deepEqual(parseNpmArgs('--empty ""'), ["--empty", ""]);
+    assert.deepEqual(parseNpmArgs("--empty ''"), ["--empty", ""]);
+
+    // Multiple spaces between arguments
+    assert.deepEqual(parseNpmArgs('--force    --tag "foo bar"'), ["--force", "--tag", "foo bar"]);
+
+    // Arguments with special characters in quotes
+    assert.deepEqual(parseNpmArgs('--pattern "*.{js,ts}"'), ["--pattern", "*.{js,ts}"]);
+    assert.deepEqual(parseNpmArgs('--url "https://example.com?q=test&r=1"'), [
+      "--url",
+      "https://example.com?q=test&r=1",
+    ]);
+  });
 });

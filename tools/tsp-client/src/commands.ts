@@ -36,6 +36,7 @@ import { basename, dirname, extname, relative, resolve } from "node:path";
 import { doesFileExist } from "./network.js";
 import { sortOpenAPIDocument } from "@azure-tools/typespec-autorest";
 import { createTspClientMetadata } from "./metadata.js";
+import { parse as parseShell } from "shell-quote";
 
 const defaultRelativeEmitterPackageJsonPath = joinPaths("eng", "emitter-package.json");
 
@@ -837,8 +838,8 @@ function resolveEmitterPathFromArgs(argv: any): string | undefined {
 }
 
 /**
- * Parses a shell-like string of npm arguments into an array, properly handling quoted strings and escaping.
- * Supports both single and double quotes, and treats quoted content as single arguments.
+ * Parses a shell-like string of npm arguments into an array using the shell-quote library.
+ * Properly handles quoted strings, escaping, and all standard shell argument patterns.
  * Examples:
  *   - `--tag "foo bar"` becomes `["--tag", "foo bar"]`
  *   - `--name 'my package'` becomes `["--name", "my package"]`
@@ -849,60 +850,9 @@ export function parseNpmArgs(npmArgsString: string | undefined): string[] {
   if (!npmArgsString) {
     return [];
   }
-
-  const args: string[] = [];
-  let current = "";
-  let inQuote = false;
-  let quoteChar = "";
-  let i = 0;
-
-  while (i < npmArgsString.length) {
-    const char = npmArgsString[i];
-
-    if (!inQuote && /\s/.test(char)) {
-      // Outside quotes, whitespace separates arguments
-      if (current.length > 0) {
-        args.push(current);
-        current = "";
-      }
-      // Skip consecutive whitespace
-      while (i + 1 < npmArgsString.length && /\s/.test(npmArgsString[i + 1])) {
-        i++;
-      }
-    } else if (!inQuote && (char === '"' || char === "'")) {
-      // Start of quoted section
-      inQuote = true;
-      quoteChar = char;
-    } else if (inQuote && char === quoteChar) {
-      // End of quoted section
-      inQuote = false;
-      quoteChar = "";
-    } else if (char === "\\" && i + 1 < npmArgsString.length) {
-      // Handle escaped characters (including escaped quotes)
-      const nextChar = npmArgsString[i + 1];
-      if (inQuote && nextChar === quoteChar) {
-        // Escaped quote within quoted string
-        current += nextChar;
-      } else if (!inQuote && /\s/.test(nextChar)) {
-        // Escaped whitespace outside quotes
-        current += nextChar;
-      } else {
-        // Other escaped characters - keep the backslash for now
-        current += char + nextChar;
-      }
-      i++; // Skip the next character since we processed it
-    } else {
-      // Regular character (including quotes that don't match the current quote char)
-      current += char;
-    }
-
-    i++;
-  }
-
-  // Add the last argument if there is one
-  if (current.length > 0) {
-    args.push(current);
-  }
-
-  return args;
+  
+  const parsed = parseShell(npmArgsString);
+  
+  // Filter out any non-string entries (shell-quote can return objects for complex shell constructs)
+  return parsed.filter((arg): arg is string => typeof arg === 'string');
 }

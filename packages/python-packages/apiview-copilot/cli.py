@@ -1918,10 +1918,6 @@ def report_comment_bucket_trends(
         raw=False,
         environment=environment,
     )
-    if include_human:
-        from src._comment_bucket_trends import generate_human_comment_timing_chart
-
-        generate_human_comment_timing_chart(reports, environment=environment)
     print_comment_bucket_report(
         reports,
         saved_path,

@@ -1,5 +1,9 @@
 # Release
 
+## 2026-04-29 - 0.33.0
+
+- Add support for a `use-npm-pinning` flag to the `generate-config-files` command to use dependency information from npm for emitter-package.json version pinning. **NOTE: emitter-package.json creation will fail if the command is called with an unpublished version of the emitter.**
+
 ## 2026-04-20 - 0.32.1
 
 - Fix crash when `entrypointFile` in `tsp-location.yaml` points to a file in a sub-directory on Windows by normalizing path separators when matching the entrypoint file.

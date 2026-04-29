@@ -87,12 +87,14 @@ Invoked via `avc` (or `python cli.py`):
 - `avc report metrics` — Generate metrics reports.
 - `avc report active-reviews` — Query active reviews for a language and date range.
 - `avc report feedback` / `avc report memory` — Audit feedback and memories.
-- `avc report analyze-comments` — Analyze AI comment quality.
+- `avc report architect-comments` — Retrieve human architect review comments for a language and date range.
 - `avc ops deploy` — Deploy to Azure App Service.
 - `avc ops check` — Health check the deployed service.
 - `avc ops grant` / `avc ops revoke` — Manage Azure RBAC permissions.
 - `avc apiview get-comments` — Query APIView comment data.
 - `avc apiview resolve-package` — Resolve package information.
+- `avc apiview list-created-revisions` — Count revisions created in a date window, by language and type.
+- `avc apiview list-opened-revisions` — Count revisions actually opened/viewed in APIView, by language and type (queries Application Insights).
 
 ## Environment Setup
 

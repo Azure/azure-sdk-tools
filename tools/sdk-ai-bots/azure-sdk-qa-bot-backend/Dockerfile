@@ -1,5 +1,5 @@
 # Stage 1: Download the azsdk CLI release
-FROM debian:bookworm-slim AS cli-downloader
+FROM mcr.microsoft.com/mirror/docker/library/debian:bookworm-slim AS cli-downloader
 
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
     && curl -fsSL -o /tmp/azsdk-cli.tar.gz \

@@ -273,6 +273,10 @@ const parser = yargs(hideBin(process.argv))
         .option("emitter-package-json-path", {
           type: "string",
           description: "Alternate path for emitter-package.json file",
+        })
+        .option("use-npm-pinning", {
+          type: "boolean",
+          description: "Use `npm view` to get the package's dependencies for pinning versions",
         });
     },
     async (argv: any) => {

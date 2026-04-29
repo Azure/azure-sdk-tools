@@ -14,7 +14,7 @@ import {
   removeDirectory,
 } from "./fs.js";
 import { cp, mkdir, readFile, stat, unlink, writeFile } from "fs/promises";
-import { npmCommand, npxCommand } from "./npm.js";
+import { npmCommand, npxCommand, npmViewPackageDevDependencies } from "./npm.js";
 import {
   compileTsp,
   discoverEntrypointFile,
@@ -698,8 +698,18 @@ export async function generateConfigFilesCommand(argv: any) {
   const possiblyPinnedPackages: Array<string> =
     packageJson["azure-sdk/emitter-package-json-pinning"] ?? Object.keys(peerDependencies);
 
+  // Get the devDependencies from the emitter's package.json
+  let localDevDeps: Record<string, string> = packageJson["devDependencies"] ?? {};
+
+  // Only query npm if the flag to use npm pinning is set
+  if (argv["use-npm-pinning"]) {
+    Logger.info("Using npm to resolve devDependencies for pinning versions...");
+    localDevDeps =
+      (await npmViewPackageDevDependencies(packageJson["name"], packageJson["version"])) ?? {};
+  }
+
   for (const pinnedPackage of possiblyPinnedPackages) {
-    const pinnedVersion = packageJson["devDependencies"][pinnedPackage];
+    let pinnedVersion = localDevDeps[pinnedPackage];
     if (pinnedVersion && !overrideJson[pinnedPackage]) {
       Logger.info(`Pinning ${pinnedPackage} to ${pinnedVersion}`);
       devDependencies[pinnedPackage] = pinnedVersion;

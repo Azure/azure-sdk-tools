@@ -169,10 +169,7 @@ test.describe('Code Panel - Page Options Toggles', () => {
 
     await commentBtn.click();
 
-    await page.waitForSelector('app-comment-thread', { timeout: 5000 });
-    const threadsAfter = await page.locator('app-comment-thread').count();
-
-    expect(threadsAfter).toBeGreaterThan(threadsBefore);
+    await expect(page.locator('app-comment-thread')).toHaveCount(threadsBefore + 1, { timeout: 5000 });
   });
 
   test('should toggle comments visibility on and off', async ({ page }) => {

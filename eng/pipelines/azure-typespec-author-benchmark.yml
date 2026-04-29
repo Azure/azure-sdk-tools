@@ -18,6 +18,7 @@ extends:
           - template: /eng/pipelines/templates/variables/globals.yml
           - template: /eng/pipelines/templates/variables/image.yml
           - group: Azure SDK QA Bot Dev Variables
+          - group: AzSDK_Eval_Variable_group
         pool:
           name: $(LINUXPOOL)
           image: $(LINUXVMIMAGE)
@@ -84,11 +85,6 @@ extends:
                   version: '8.x'
 
               # Install Node.js and Vally CLI
-              - template: /eng/common/pipelines/templates/steps/login-to-github.yml
-                parameters:
-                  TokenOwners:
-                    - microsoft
-
               - task: NodeTool@0
                 inputs:
                   versionSpec: '22.x'
@@ -96,7 +92,7 @@ extends:
 
               - script: |
                   npm config set "@microsoft:registry" "https://npm.pkg.github.com"
-                  npm config set "//npm.pkg.github.com/:_authToken" "$(GH_TOKEN)"
+                  npm config set "//npm.pkg.github.com/:_authToken" "$(azsdk-microsoft-package-github-token)"
                 displayName: Configure GitHub Packages registry
 
               - script: npm install -g @microsoft/vally-cli

@@ -11,6 +11,8 @@ using GitHub.Copilot.SDK;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Helpers.Codeowners;
+using Azure.Sdk.Tools.Cli.Helpers.Codeowners.Rules;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Services.Languages;
@@ -49,6 +51,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddScoped<LanguageService, JavaScriptLanguageService>();
             services.AddScoped<LanguageService, PythonLanguageService>();
             services.AddScoped<LanguageService, GoLanguageService>();
+            services.AddScoped<LanguageService, RustLanguageService>();
 
             // Helper classes
             services.AddSingleton<IFileHelper, FileHelper>();
@@ -63,7 +66,17 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ICodeownersGenerateHelper, CodeownersGenerateHelper>();
             services.AddSingleton<IPackageInfoHelper, PackageInfoHelper>();
             services.AddSingleton<ITeamUserCache, TeamUserCache>();
-            services.AddSingleton<ICodeownersManagementHelper, CodeownersManagementHelper>(); 
+            services.AddSingleton<ICodeownersManagementHelper, CodeownersManagementHelper>();
+            services.AddSingleton<ICheckPackageHelper, CheckPackageHelper>();
+            services.AddSingleton<ICodeownersAuditHelper, CodeownersAuditHelper>();
+
+            services.AddSingleton<IAuditRule, InvalidOwnerRule>();
+            services.AddSingleton<IAuditRule, MalformedTeamRule>();
+            services.AddSingleton<IAuditRule, TeamNotWriteRule>();
+            services.AddSingleton<IAuditRule, LabelNotInGitHubRule>();
+            services.AddSingleton<IAuditRule, ServiceAttentionMisuseRule>();
+            services.AddSingleton<IAuditRule, LabelOwnerMissingOwnersRule>();
+            services.AddSingleton<IAuditRule, LabelOwnerMissingLabelsRule>();
             services.AddSingleton<IEnvironmentHelper, EnvironmentHelper>();
             services.AddSingleton<IEnvFileHelper, EnvFileHelper>();
             services.AddSingleton<IMcpServerContextAccessor, McpServerContextAccessor>();
@@ -80,6 +93,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ITspClientHelper, TspClientHelper>();
             services.AddSingleton<IAPIViewFeedbackService, APIViewFeedbackService>();
             services.AddScoped<IFeedbackClassifierService, FeedbackClassifierService>();
+            services.AddScoped<IUserPromptProcessor, UserPromptProcessor>();
 
             // Process Helper Classes
             services.AddSingleton<INpxHelper, NpxHelper>();

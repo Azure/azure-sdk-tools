@@ -1,4 +1,3 @@
-import { CommentArray, CommentJSONValue, CommentObject, assign, parse, stringify } from 'comment-json';
 import { ModularClientPackageOptions, ModularSDKType, PackageResult, RunMode } from './types.js';
 import { access } from 'node:fs/promises';
 import { basename, join, normalize, posix, relative, resolve } from 'node:path';
@@ -9,48 +8,17 @@ import { runCommand, runCommandOptions, cleanupSamplesFolder } from './utils.js'
 
 import { glob } from 'glob';
 import { logger } from '../utils/logger.js';
-import unixify from 'unixify';
-import { existsSync } from 'fs';
 import { customizeCodes, formatSdk, lintFix, updateSnippets } from './devToolUtils.js';
 import { getModularSDKType } from '../utils/generateInputUtils.js';
 
-interface ProjectItem {
-    packageName: string;
-    projectFolder: string;
-    versionPolicyName: string;
-}
 
-async function updateRushJson(projectItem: ProjectItem) {
-    const content = await readFile('rush.json', { encoding: 'utf-8' });
-    const rushJson = parse(content.toString());
-    const projects = (rushJson as CommentObject)?.['projects'] as CommentArray<CommentJSONValue>;
-    if (!projects) {
-        throw new Error('Failed to parse projects in rush.json.');
-    }
-    const isCurrentPackageExist = projects.filter((p) => p?.['packageName'] === projectItem.packageName).length > 0;
-    if (isCurrentPackageExist) {
-        logger.info(`'${projectItem.packageName}' exists, no need to update rush.json.`);
-        return;
-    }
-    // add new project and keep comment at the same time
-    const newProjects = assign(projects, [...projects, projectItem]);
-    const newRushJson = assign(rushJson, { ...(rushJson as CommentObject), projects: newProjects });
-    const newRushJsonContent = stringify(newRushJson, undefined, 2);
-    writeFile('rush.json', newRushJsonContent, { encoding: 'utf-8', flush: true });
-    logger.info('Updated rush.json successfully.');
-}
-
-async function packPackage(packageDirectory: string, packageName: string, rushxScript: string, sdkRepoRoot: string) {
+async function packPackage(packageDirectory: string, packageName: string) {
     const cwd = join(packageDirectory);
-    if (isRushRepo(sdkRepoRoot)) {
-        await runCommand('node', [rushxScript, 'pack'], { ...runCommandOptions, cwd }, false);
-    } else {
-        await runCommand('pnpm', ['run', '--filter', `${packageName}...`, 'pack'], { ...runCommandOptions, cwd }, false);
-    }
+    await runCommand('pnpm', ['run', '--filter', `${packageName}...`, 'pack'], { ...runCommandOptions, cwd }, false);
     logger.info(`Pack '${packageName}' successfully.`);
 }
 
-async function ensurePnpmInstalled() {
+export async function ensurePnpmInstalled() {
     try {
         await runCommand('pnpm', ['--version'], runCommandOptions, false);
         logger.info('pnpm is already installed.');
@@ -101,57 +69,39 @@ async function addApiViewInfo(
 }
 
 export function isRushRepo(sdkRepoRoot: string): boolean {
-    const rushJsonPath = join(sdkRepoRoot, 'rush.json');
-    return existsSync(rushJsonPath);
+    throw new Error(`Rush repository detection is no longer supported. Update callers to stop using isRushRepo(). sdkRepoRoot: '${sdkRepoRoot}'`);
 }
 
 export async function buildPackage(
     packageDirectory: string,
     options: ModularClientPackageOptions,
-    packageResult: PackageResult,
-    rushScript: string,
-    rushxScript: string
+    packageResult: PackageResult
 ) {
     const relativePackageDirectoryToSdkRoot = relative(normalize(options.sdkRepoRoot), normalize(packageDirectory));
     logger.info(`Start to build package in '${relativePackageDirectoryToSdkRoot}'.`);
     const { name } = await getNpmPackageInfo(relativePackageDirectoryToSdkRoot);
     let buildStatus = `succeeded`;
-    if (isRushRepo(options.sdkRepoRoot)) {
-        await updateRushJson({
-            packageName: name,
-            projectFolder: unixify(relativePackageDirectoryToSdkRoot),
-            versionPolicyName: options.versionPolicyName
-        });
+    await ensurePnpmInstalled();
+    logger.info(`Start to pnpm install.`);
+    await runCommand(`pnpm`, ['install'], runCommandOptions, false);
+    logger.info(`Pnpm install successfully.`);
 
-        logger.info(`Start to rush update.`);
-        await runCommand(`node`, [rushScript, 'update'], runCommandOptions, false);
-        logger.info(`Rush update successfully.`);
+    if (options.runMode === RunMode.Local || options.runMode === RunMode.Release) {
+        await lintFix(packageDirectory);
+    }
 
-        logger.info(`Start to build package '${name}'.`);
-        await runCommand('node', [rushScript, 'build', '-t', name, '--verbose'], runCommandOptions);
-    } else {
-        await ensurePnpmInstalled();
-        logger.info(`Start to pnpm install.`);
-        await runCommand(`pnpm`, ['install'], runCommandOptions, false);
-        logger.info(`Pnpm install successfully.`);
-
-        if (options.runMode === RunMode.Local || options.runMode === RunMode.Release) {
-            await lintFix(packageDirectory);
-        }
-
-        logger.info(`Start to build package '${name}'.`);
-        const modularSDKType = getModularSDKType(packageDirectory);
-        let errorAsWarning = false;
-        if (modularSDKType === ModularSDKType.DataPlane) {
-            await customizeCodes(packageDirectory);
-            errorAsWarning = true;
-        }
-        try {
-            await runCommand('pnpm', ['turbo', 'build', '--filter', `${name}...`, '--token 1'], runCommandOptions, true, undefined, errorAsWarning);
-        } catch (error) {
-            logger.warn(`Failed to build data plane package due to ${(error as Error)?.stack ?? error}`);
-            buildStatus = `failed`;
-        }
+    logger.info(`Start to build package '${name}'.`);
+    const modularSDKType = getModularSDKType(packageDirectory);
+    let errorAsWarning = false;
+    if (modularSDKType === ModularSDKType.DataPlane) {
+        await customizeCodes(packageDirectory);
+        errorAsWarning = true;
+    }
+    try {
+        await runCommand('pnpm', ['turbo', 'build', '--filter', `${name}...`, '--token 1'], runCommandOptions, true, undefined, errorAsWarning);
+    } catch (error) {
+        logger.warn(`Failed to build data plane package due to ${(error as Error)?.stack ?? error}`);
+        buildStatus = `failed`;
     }
     if (buildStatus === `succeeded`) {
         const apiViewContext = await addApiViewInfo(packageDirectory, options.sdkRepoRoot, name, packageResult);
@@ -166,14 +116,14 @@ export async function buildPackage(
 
     // build sample and test package will NOT throw exceptions
     // note: these commands will delete temp folder
-    await tryTestPackage(packageDirectory, rushxScript, options.sdkRepoRoot);
+    await tryTestPackage(packageDirectory, options.sdkRepoRoot);
     await formatSdk(packageDirectory);
     await updateSnippets(packageDirectory);
 }
 
 // no exception will be thrown in non-release mode, since we don't want it stop sdk generation. sdk author will need to resolve the failure
 // in release mode, exceptions will be thrown to ensure sample build succeeds
-export async function tryBuildSamples(packageDirectory: string, rushxScript: string, sdkRepoRoot: string, runMode: RunMode) {
+export async function tryBuildSamples(packageDirectory: string, sdkRepoRoot: string, runMode: RunMode) {
     logger.info(`Start to build samples in '${packageDirectory}'.`);
     await cleanupSamplesFolder(packageDirectory);
     const cwd = packageDirectory;
@@ -184,11 +134,7 @@ export async function tryBuildSamples(packageDirectory: string, rushxScript: str
         errorAsWarning = true;
     }
     try {
-        if (isRushRepo(sdkRepoRoot)) {
-            await runCommand(`node`, [rushxScript, 'build:samples'], options, true, 300, errorAsWarning);
-        } else {
-            await runCommand(`pnpm`, ['run', 'build:samples'], options, true, 300, errorAsWarning);
-        }
+        await runCommand(`pnpm`, ['run', 'build:samples'], options, true, 300, errorAsWarning);
         logger.info(`built samples successfully.`);
     } catch (err) {
         logger.warn(`Failed to build samples due to: ${(err as Error)?.stack ?? err}`);
@@ -196,27 +142,23 @@ export async function tryBuildSamples(packageDirectory: string, rushxScript: str
 }
 
 // no exception will be thrown, since we don't want it stop sdk generation. sdk author will need to resolve the failure
-export async function tryTestPackage(packageDirectory: string, rushxScript: string, sdkRepoRoot: string) {
+export async function tryTestPackage(packageDirectory: string, sdkRepoRoot: string) {
     logger.info(`Start to test package in '${packageDirectory}'.`);
     const env = { ...process.env, TEST_MODE: 'record' };
     const cwd = join(packageDirectory);
     const options = { ...runCommandOptions, env, cwd };
     try {
-        if (isRushRepo(sdkRepoRoot)) {
-            await runCommand(`node`, [rushxScript, 'test:node'], options, true, 300, true);
-        } else {
-            await runCommand(`pnpm`, ['run', 'test:node'], options, true, 300, true);
-        }
+        await runCommand(`pnpm`, ['run', 'test:node'], options, true, 300, true);
         logger.info(`tested package successfully.`);
     } catch (err) {
         logger.warn(`Failed to test package due to: ${(err as Error)?.stack ?? err}`);
     }
 }
 
-export async function createArtifact(packageDirectory: string, rushxScript: string, sdkRepoRoot: string): Promise<string> {
+export async function createArtifact(packageDirectory: string, sdkRepoRoot: string): Promise<string> {
     logger.info(`Start to create artifact in '${packageDirectory}'`);
     const info = await getNpmPackageInfo(packageDirectory);
-    await packPackage(packageDirectory, info.name, rushxScript, sdkRepoRoot);
+    await packPackage(packageDirectory, info.name);
     const artifactName = getArtifactName(info);
     const artifactPath = posix.join(packageDirectory, artifactName);
     await access(artifactPath);

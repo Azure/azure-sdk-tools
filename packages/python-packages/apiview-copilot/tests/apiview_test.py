@@ -4,7 +4,7 @@
 # license information.
 # --------------------------------------------------------------------------
 
-# pylint: disable=missing-class-docstring,missing-function-docstring,redefined-outer-name,unused-argument
+# pylint: disable=missing-class-docstring,missing-function-docstring,redefined-outer-name,unused-argument,no-member
 
 """
 Tests for resolve_package function in _apiview.py.
@@ -19,7 +19,15 @@ import pytest
 sys.modules["azure.cosmos"] = MagicMock()
 sys.modules["azure.cosmos.exceptions"] = MagicMock()
 
-from src._apiview import get_active_reviews, get_ai_comment_feedback, get_version_type, resolve_package
+from src._apiview import (
+    get_active_reviews,
+    get_ai_comment_feedback,
+    get_comments_in_date_range,
+    get_created_revisions,
+    get_opened_revisions,
+    get_version_type,
+    resolve_package,
+)
 
 
 class TestGetVersionType:
@@ -663,3 +671,280 @@ class TestGetAiCommentFeedback:
             results = get_ai_comment_feedback(None, "2026-01-01", "2026-01-31")
 
             assert all(c["Language"] == "" for c in results)
+
+
+class TestGetCommentsInDateRange:
+    """Tests for get_comments_in_date_range query construction."""
+
+    def _call_and_capture_query(self, **kwargs):
+        """Call get_comments_in_date_range and return the query string passed to query_items."""
+        with patch("src._apiview.get_apiview_cosmos_client") as mock_client:
+            mock_container = MagicMock()
+            mock_container.query_items.return_value = iter([])
+            mock_client.return_value = mock_container
+
+            get_comments_in_date_range("2026-01-01", "2026-01-31", **kwargs)
+
+            mock_container.query_items.assert_called_once()
+            return mock_container.query_items.call_args[1]["query"]
+
+    def test_default_excludes_diagnostics_and_deleted(self):
+        query = self._call_and_capture_query()
+        assert "CommentSource != 'Diagnostic'" in query
+        assert "IsDeleted" in query
+
+    def test_include_diagnostics_true_omits_diagnostic_filter(self):
+        query = self._call_and_capture_query(include_diagnostics=True)
+        assert "Diagnostic" not in query
+
+    def test_include_diagnostics_false_adds_diagnostic_filter(self):
+        query = self._call_and_capture_query(include_diagnostics=False)
+        assert "CommentSource != 'Diagnostic'" in query
+
+    def test_include_deleted_true_omits_deleted_filter(self):
+        query = self._call_and_capture_query(include_deleted=True)
+        assert "IsDeleted = false" not in query
+
+    def test_include_deleted_false_adds_deleted_filter(self):
+        query = self._call_and_capture_query(include_deleted=False)
+        assert "IsDeleted = false" in query
+
+    def test_both_include_flags_true(self):
+        query = self._call_and_capture_query(include_diagnostics=True, include_deleted=True)
+        where_clause = query.split("WHERE", 1)[1]
+        assert "Diagnostic" not in where_clause
+        assert "IsDeleted" not in where_clause
+
+    def test_select_fields_used_in_query(self):
+        query = self._call_and_capture_query(select_fields=["id", "CreatedOn"])
+        assert query.startswith("SELECT c.id, c.CreatedOn FROM c")
+
+
+class TestGetCreatedRevisions:
+    """Tests for get_created_revisions function."""
+
+    @pytest.fixture
+    def revisions_data(self):
+        return [
+            {"id": "rev-1", "ReviewId": "review-1", "APIRevisionType": "Manual", "Language": "Python", "CreatedOn": "2026-03-05T00:00:00Z"},
+            {"id": "rev-2", "ReviewId": "review-1", "APIRevisionType": "Automatic", "Language": "Python", "CreatedOn": "2026-03-06T00:00:00Z"},
+            {"id": "rev-3", "ReviewId": "review-2", "APIRevisionType": "PullRequest", "Language": "Java", "CreatedOn": "2026-03-07T00:00:00Z"},
+        ]
+
+    def _setup_mocks(self, mock_client, revisions):
+        revisions_container = MockContainerClient(revisions)
+
+        def get_container(container_name, environment, db_name=None):
+            if container_name == "APIRevisions":
+                return revisions_container
+            return MockContainerClient([])
+
+        mock_client.side_effect = get_container
+
+    def test_basic_counts(self, revisions_data):
+        with patch("src._apiview.get_apiview_cosmos_client") as mock_client:
+            self._setup_mocks(mock_client, revisions_data)
+            result = get_created_revisions("2026-03-01", "2026-03-31")
+
+            assert result["total"] == 3
+            assert result["by_language"]["Python"]["Manual"] == 1
+            assert result["by_language"]["Python"]["Automatic"] == 1
+            assert result["by_language"]["Java"]["PullRequest"] == 1
+            assert result["totals_by_type"]["Manual"] == 1
+            assert result["totals_by_type"]["Automatic"] == 1
+            assert result["totals_by_type"]["PullRequest"] == 1
+
+    def test_empty_revisions_returns_zeros(self):
+        with patch("src._apiview.get_apiview_cosmos_client") as mock_client:
+            self._setup_mocks(mock_client, [])
+            result = get_created_revisions("2026-03-01", "2026-03-31")
+
+            assert result == {"by_language": {}, "totals_by_type": {}, "total": 0}
+
+    def test_exclude_languages(self, revisions_data):
+        with patch("src._apiview.get_apiview_cosmos_client") as mock_client:
+            self._setup_mocks(mock_client, revisions_data)
+            result = get_created_revisions("2026-03-01", "2026-03-31", exclude_languages=["Python"])
+
+            assert result["total"] == 1
+            assert "Python" not in result["by_language"]
+            assert result["by_language"]["Java"]["PullRequest"] == 1
+
+    def test_exclude_languages_case_insensitive(self, revisions_data):
+        with patch("src._apiview.get_apiview_cosmos_client") as mock_client:
+            self._setup_mocks(mock_client, revisions_data)
+            result = get_created_revisions("2026-03-01", "2026-03-31", exclude_languages=["python"])
+
+            assert "Python" not in result["by_language"]
+            assert result["total"] == 1
+
+    def test_unknown_revision_type_mapped_to_unknown(self):
+        revisions = [
+            {"id": "rev-1", "ReviewId": "review-1", "APIRevisionType": "SomeNewType", "Language": "Python", "CreatedOn": "2026-03-05T00:00:00Z"},
+        ]
+        with patch("src._apiview.get_apiview_cosmos_client") as mock_client:
+            self._setup_mocks(mock_client, revisions)
+            result = get_created_revisions("2026-03-01", "2026-03-31")
+
+            assert result["by_language"]["Python"]["Unknown"] == 1
+            assert result["totals_by_type"]["Unknown"] == 1
+
+    def test_missing_language_maps_to_unknown(self):
+        revisions = [
+            {"id": "rev-1", "APIRevisionType": "Manual", "CreatedOn": "2026-03-05T00:00:00Z"},
+        ]
+        with patch("src._apiview.get_apiview_cosmos_client") as mock_client:
+            self._setup_mocks(mock_client, revisions)
+            result = get_created_revisions("2026-03-01", "2026-03-31")
+
+            assert result["total"] == 1
+            assert result["by_language"]["Unknown"]["Manual"] == 1
+
+    def test_many_revisions(self):
+        revisions = [
+            {"id": f"rev-{i}", "ReviewId": "review-1", "APIRevisionType": "Manual", "Language": "Python", "CreatedOn": "2026-03-05T00:00:00Z"}
+            for i in range(250)
+        ]
+        with patch("src._apiview.get_apiview_cosmos_client") as mock_client:
+            self._setup_mocks(mock_client, revisions)
+            result = get_created_revisions("2026-03-01", "2026-03-31")
+
+            assert result["total"] == 250
+            assert result["by_language"]["Python"]["Manual"] == 250
+
+    def test_environment_parameter_passed(self, revisions_data):
+        with patch("src._apiview.get_apiview_cosmos_client") as mock_client:
+            self._setup_mocks(mock_client, revisions_data)
+            get_created_revisions("2026-03-01", "2026-03-31", environment="staging")
+
+            calls = mock_client.call_args_list
+            assert all(call.kwargs.get("environment") == "staging" for call in calls)
+
+
+class TestGetOpenedRevisions:
+    """Tests for get_opened_revisions function."""
+
+    @pytest.fixture
+    def revisions_data(self):
+        return [
+            {"id": "rev-1", "ReviewId": "review-1", "APIRevisionType": "Manual", "Language": "Python", "CreatedOn": "2026-03-05T00:00:00Z"},
+            {"id": "rev-2", "ReviewId": "review-2", "APIRevisionType": "PullRequest", "Language": "Java", "CreatedOn": "2026-03-10T00:00:00Z"},
+        ]
+
+    def _setup_mocks(self, mock_client, revisions):
+        revisions_container = MockContainerClient(revisions)
+
+        def get_container(container_name, environment, db_name=None):
+            if container_name == "APIRevisions":
+                return revisions_container
+            return MockContainerClient([])
+
+        mock_client.side_effect = get_container
+
+    def test_basic_counts(self, revisions_data):
+        with (
+            patch("src._apiview.get_apiview_cosmos_client") as mock_client,
+            patch("src._apiview._query_viewed_revision_ids") as mock_viewed,
+        ):
+            mock_viewed.return_value = {"rev-1", "rev-2"}
+            self._setup_mocks(mock_client, revisions_data)
+            result = get_opened_revisions("2026-03-01", "2026-03-31")
+
+            assert result["total"] == 2
+            assert result["by_language"]["Python"]["Manual"] == 1
+            assert result["by_language"]["Java"]["PullRequest"] == 1
+
+    def test_no_viewed_revisions_returns_zeros(self):
+        with (
+            patch("src._apiview.get_apiview_cosmos_client"),
+            patch("src._apiview._query_viewed_revision_ids") as mock_viewed,
+        ):
+            mock_viewed.return_value = set()
+            result = get_opened_revisions("2026-03-01", "2026-03-31")
+
+            assert result == {"by_language": {}, "totals_by_type": {}, "total": 0}
+
+    def test_viewed_ids_not_in_cosmos_returns_zeros(self):
+        with (
+            patch("src._apiview.get_apiview_cosmos_client") as mock_client,
+            patch("src._apiview._query_viewed_revision_ids") as mock_viewed,
+        ):
+            mock_viewed.return_value = {"rev-nonexistent"}
+            self._setup_mocks(mock_client, [])
+            result = get_opened_revisions("2026-03-01", "2026-03-31")
+
+            assert result == {"by_language": {}, "totals_by_type": {}, "total": 0}
+
+    def test_exclude_languages(self, revisions_data):
+        with (
+            patch("src._apiview.get_apiview_cosmos_client") as mock_client,
+            patch("src._apiview._query_viewed_revision_ids") as mock_viewed,
+        ):
+            mock_viewed.return_value = {"rev-1", "rev-2"}
+            self._setup_mocks(mock_client, revisions_data)
+            result = get_opened_revisions("2026-03-01", "2026-03-31", exclude_languages=["Java"])
+
+            assert result["total"] == 1
+            assert "Java" not in result["by_language"]
+            assert result["by_language"]["Python"]["Manual"] == 1
+
+    def test_created_in_window_flag_passed(self, revisions_data):
+        """Verify that created_in_window=True still returns results (query filtering is in Cosmos)."""
+        with (
+            patch("src._apiview.get_apiview_cosmos_client") as mock_client,
+            patch("src._apiview._query_viewed_revision_ids") as mock_viewed,
+        ):
+            mock_viewed.return_value = {"rev-1", "rev-2"}
+            self._setup_mocks(mock_client, revisions_data)
+            result = get_opened_revisions("2026-03-01", "2026-03-31", created_in_window=True)
+
+            # MockContainerClient returns all items regardless of query,
+            # so we just verify the function completes and tallies correctly
+            assert result["total"] == 2
+
+    def test_environment_parameter_passed(self, revisions_data):
+        with (
+            patch("src._apiview.get_apiview_cosmos_client") as mock_client,
+            patch("src._apiview._query_viewed_revision_ids") as mock_viewed,
+        ):
+            mock_viewed.return_value = {"rev-1"}
+            self._setup_mocks(mock_client, revisions_data)
+            get_opened_revisions("2026-03-01", "2026-03-31", environment="staging")
+
+            cosmos_calls = mock_client.call_args_list
+            assert all(call.kwargs.get("environment") == "staging" for call in cosmos_calls)
+            mock_viewed.assert_called_once_with("2026-03-01", "2026-03-31", environment="staging")
+
+    def test_batching_with_many_viewed_ids(self):
+        viewed_ids = {f"rev-{i}" for i in range(250)}
+        revisions = [
+            {"id": f"rev-{i}", "ReviewId": "review-1", "APIRevisionType": "Automatic", "Language": "Python", "CreatedOn": "2026-03-05T00:00:00Z"}
+            for i in range(250)
+        ]
+        revision_query_count = [0]
+
+        with (
+            patch("src._apiview.get_apiview_cosmos_client") as mock_client,
+            patch("src._apiview._query_viewed_revision_ids") as mock_viewed,
+        ):
+            mock_viewed.return_value = viewed_ids
+
+            revisions_container = MagicMock()
+
+            def mock_query_items(query, parameters, enable_cross_partition_query=True):
+                revision_query_count[0] += 1
+                return iter(revisions)
+
+            revisions_container.query_items = mock_query_items
+
+            def get_container(container_name, environment, db_name=None):
+                if container_name == "APIRevisions":
+                    return revisions_container
+                return MockContainerClient([])
+
+            mock_client.side_effect = get_container
+            result = get_opened_revisions("2026-03-01", "2026-03-31")
+
+            assert result["total"] == 500  # 250 revisions returned per batch * 2 batches
+            # 250 viewed IDs / 200 batch size = 2 batch queries for APIRevisions
+            assert revision_query_count[0] == 2

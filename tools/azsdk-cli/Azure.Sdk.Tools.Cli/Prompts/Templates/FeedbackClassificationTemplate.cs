@@ -18,7 +18,7 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
     public override string Description => "Classify SDK feedback items in batch and route to appropriate phase";
 
     private readonly string? _serviceName;
-    private readonly string? _language;
+    private readonly string _language;
     private readonly string _referenceDocContent;
     private readonly List<FeedbackItem> _items;
     private readonly string _globalContext;
@@ -26,14 +26,14 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
     /// <summary>
     /// Initializes a new batch classification template.
     /// </summary>
-    /// <param name="serviceName">The name of the service being customized</param>
-    /// <param name="language">Target SDK language (e.g., python, csharp, java) (optional)</param>
+    /// <param name="serviceName">The name of the service being customized (optional)</param>
+    /// <param name="language">Target SDK language (e.g., python, csharp, java)</param>
     /// <param name="referenceDocContent">Content of the customizing-client-tsp.md reference document</param>
     /// <param name="items">The feedback items to classify</param>
     /// <param name="globalContext">Global context containing all changes and history</param>
     public FeedbackClassificationTemplate(
         string? serviceName,
-        string? language,
+        string language,
         string referenceDocContent,
         List<FeedbackItem> items,
         string globalContext)
@@ -77,7 +77,7 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         sb.AppendLine($"""
         **Current Context:**
         - Service: {_serviceName ?? "N/A"}
-        - Language: {_language ?? "N/A"}
+        - Language: {_language}
 
         **Task:**
         Classify ALL of the feedback items listed below. For each item, determine the appropriate classification: **TSP_APPLICABLE**, **CODE_CUSTOMIZATION**, **SUCCESS**, or **REQUIRES_MANUAL_INTERVENTION**.
@@ -85,6 +85,9 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         - If the feedback is actionable AND TypeSpec client customization decorators can address it (based on the reference documentation below), classify as **TSP_APPLICABLE**.
         - If the feedback is actionable, TypeSpec decorators CANNOT address it, but automated code patching could fix it (e.g., compile errors from method signature changes, parameter additions/removals, symbol renames in generated code), classify as **CODE_CUSTOMIZATION**. Include specific repair instructions in the Reason.
         - If the feedback is actionable but requires complex manual work that cannot be automated (e.g., new feature implementation, architectural changes, custom business logic), classify as **REQUIRES_MANUAL_INTERVENTION**.
+
+        **IMPORTANT — Check for already-applied customizations:**
+        Before classifying any item as TSP_APPLICABLE, use the available tools to search the TypeSpec project files (e.g., `client.tsp`, `customizations.tsp`) for the decorator or customization that would address the feedback. If the customization is already present in the TypeSpec files, classify the item as **SUCCESS** (the change has already been applied). Use `grep_search` or `read_file` to verify.
 
         Use the available tools to inspect the TypeSpec project files when needed to determine if decorators are applicable.
 
@@ -138,13 +141,16 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
 
         **If Context is EMPTY** (first attempt):
         - Non-actionable (informational, "keep as is", past tense, build success, discussion, question) → **SUCCESS**
-        - Actionable AND a TypeSpec decorator from the reference doc can address it → **TSP_APPLICABLE**
+        - Actionable AND a TypeSpec decorator from the reference doc could address it → **check the TypeSpec files first** using `grep_search` or `read_file`
+          - If the decorator/customization is already present in the TypeSpec files → **SUCCESS** (already applied)
+          - If not present → **TSP_APPLICABLE**
         - Actionable, no TypeSpec decorator applies, but automated patching can fix (compile errors, signature changes, parameter additions/removals, symbol renames, linting or typing errors) → **CODE_CUSTOMIZATION**
         - Actionable BUT requires complex manual implementation → **REQUIRES_MANUAL_INTERVENTION**
 
         **What counts as "Non-actionable" (SUCCESS):**
         - Explicit acceptance: "Keep as is", "No changes needed", "This is fine"
         - Past tense (already done): "Method was made private", "Client was renamed"
+        - Already applied in TypeSpec: the requested customization decorator is already present in `client.tsp` or another TypeSpec customization file (verified by reading/searching the files)
         - Informational: Explanations, questions, acknowledgments
         - Build/generation success with no errors
         - Discussion or questions without a clear directive
@@ -152,6 +158,8 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         **TypeSpec Decorator Applicability (TSP_APPLICABLE):**
         Consult the reference documentation provided to determine if any supported
         TypeSpec client customization decorator can address the feedback.
+        **Always search the TypeSpec files first** (using `grep_search` or `read_file`) to confirm the decorator
+        is NOT already present before classifying as TSP_APPLICABLE. If it is already present, classify as SUCCESS.
 
         **Common feedback patterns that ARE TypeSpec-applicable:**
         - Renaming (client, operation, model, property, enum value) → `@@clientName` or `@clientName`

@@ -29,7 +29,7 @@ class GarbageCollector:
         self.search_indexer_client = SearchIndexerClient(search_endpoint, credential=credential)
         self.soft_delete_field = "isDeleted"
 
-    def purge_items(self, container_name: str):
+    def purge_items(self, container_name: str, *, verbose: bool = False):
         """Permanently delete items marked as soft-deleted and not present in Azure Search."""
         container = self.database.get_container_client(container_name)
         # Query for soft-deleted items
@@ -40,11 +40,14 @@ class GarbageCollector:
             # check if document still exists in Azure Search
             try:
                 self.search_client.get_document(key=item_id)
-                print(f"Item {item_id} still exists in Azure Search. Skipping hard delete.")
+                if verbose:
+                    print(f"  Skipped {item_id} (still in search index)")
             except Exception:
                 # Not found in search, safe to hard delete
                 partition_key = item.get("partitionKey") or item.get("id")
                 container.delete_item(item, partition_key=partition_key)
+                if verbose:
+                    print(f"  Hard-deleted {item_id}")
 
     def get_item_count(self, container_name: str) -> int:
         """Return the total number of items in the specified container."""
@@ -52,7 +55,7 @@ class GarbageCollector:
         result = container.query_items(query="SELECT VALUE COUNT(1) FROM c", enable_cross_partition_query=True)
         return next(result)
 
-    def run_indexer_and_purge(self, container_name: str):
+    def run_indexer_and_purge(self, container_name: str, *, verbose: bool = False):
         """Run the search indexer and purge soft-deleted items only after indexer is truly finished."""
         indexer_name = f"{container_name}-indexer"
         status = self.search_indexer_client.get_indexer_status(indexer_name)
@@ -67,4 +70,4 @@ class GarbageCollector:
             print(f"Indexer '{indexer_name}' still in progress (status: {state})...")
             time.sleep(5)
         print(f"Indexer '{indexer_name}' completed with status: {state}")
-        self.purge_items(container_name)
+        self.purge_items(container_name, verbose=verbose)

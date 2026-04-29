@@ -87,12 +87,14 @@ Invoked via `avc` (or `python cli.py`):
 - `avc report metrics` — Generate metrics reports.
 - `avc report active-reviews` — Query active reviews for a language and date range.
 - `avc report feedback` / `avc report memory` — Audit feedback and memories.
-- `avc report analyze-comments` — Analyze AI comment quality.
+- `avc report architect-comments` — Retrieve human architect review comments for a language and date range.
 - `avc ops deploy` — Deploy to Azure App Service.
 - `avc ops check` — Health check the deployed service.
 - `avc ops grant` / `avc ops revoke` — Manage Azure RBAC permissions.
 - `avc apiview get-comments` — Query APIView comment data.
 - `avc apiview resolve-package` — Resolve package information.
+- `avc apiview list-created-revisions` — Count revisions created in a date window, by language and type.
+- `avc apiview list-opened-revisions` — Count revisions actually opened/viewed in APIView, by language and type (queries Application Insights).
 
 ## Environment Setup
 
@@ -182,3 +184,4 @@ applyTo: "src/**"
 - **Endpoints**: The FastAPI app uses role-based auth. Test changes with `avc ops check --include-auth`.
 - **CI**: The CI pipeline (`ci.yml`) runs packaging, unit tests (`pytest tests`), linting (`pylint src scripts tests`), and copyright header checks (`python scripts/check_copyright_headers.py`).
 - **Dependencies**: Runtime deps go in `requirements.txt`; dev/test deps go in `dev_requirements.txt`.
+- **Documentation**: When changing behavior in `src/`, `cli.py`, `app.py`, or `prompts/`, check whether `docs/` needs a corresponding update. Key docs: `docs/api-review.md` (review pipeline), `docs/cli.md` (CLI reference), `docs/kb.md` (knowledge base), `docs/metrics.md` (telemetry/metrics). Keep docs accurate — do not describe behavior that doesn't exist or omit behavior that does.

@@ -39,17 +39,17 @@ export class CommentSeverityComponent {
     return CommentSeverityHelper.getSeverityBadgeClass(this.severity);
   }
 
-  get hasSeverity(): boolean {
-    return this.severity !== null && this.severity !== undefined;
-  }
-
   startEditing(): void {
     if (this.canEdit) {
       this.isEditingMode = true;
     }
   }
 
-  onSeverityChange(newSeverity: CommentSeverity): void {
+  onSeverityChange(newSeverity: CommentSeverity | null | undefined): void {
+    if (newSeverity === null || newSeverity === undefined) {
+      return;
+    }
+
     this.severityChange.emit(newSeverity);
   }
 

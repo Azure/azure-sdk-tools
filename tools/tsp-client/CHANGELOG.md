@@ -1,8 +1,13 @@
 # Release
 
-## Unreleased - 0.32.1
+## 2026-04-29 - 0.33.0
 
-- Added support for passing flags to underlying npm commands using the `--npm-args` flag with the `generate-config-files` and `generate-lock-file` commands.
+- Add support for a `use-npm-pinning` flag to the `generate-config-files` command to use dependency information from npm for emitter-package.json version pinning. **NOTE: emitter-package.json creation will fail if the command is called with an unpublished version of the emitter.**
+  -Added support for passing flags to underlying npm commands using the `--npm-args` flag with the `generate-config-files` and `generate-lock-file` commands.
+
+## 2026-04-20 - 0.32.1
+
+- Fix crash when `entrypointFile` in `tsp-location.yaml` points to a file in a sub-directory on Windows by normalizing path separators when matching the entrypoint file.
 
 ## 2026-04-03 - 0.32.0
 

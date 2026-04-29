@@ -9,6 +9,7 @@ import sys
 import tempfile
 import shutil
 from subprocess import check_call, run, PIPE
+import pytest
 from pytest import fail, mark
 
 from apistub import ApiView, TokenKind, StubGenerator, ReviewLines
@@ -49,23 +50,29 @@ def _build_dist(src_dir, build_type, extension):
     return os.path.join(dist_dir, files[0])
 
 
-def _add_pyproject_package_to_temp(src_dir):
-    temp_dir = tempfile.mkdtemp()
+# Kept alive for the module lifetime so the directory is cleaned up at process exit.
+_SETUP_TEMP_DIR = None
+
+
+def _add_setup_package_to_temp(src_dir):
+    global _SETUP_TEMP_DIR
+    _SETUP_TEMP_DIR = tempfile.TemporaryDirectory()
+    temp_dir = _SETUP_TEMP_DIR.name
     dest_dir = os.path.join(temp_dir, os.path.basename(src_dir) + "-copied")
     shutil.copytree(src_dir, dest_dir)
 
-    # Remove setup.py and add pyproject.toml
-    setup_py_path = os.path.join(dest_dir, "setup.py")
-    assert os.path.exists(setup_py_path)
-
-    # Copy _pyproject.toml from tests folder to the package copy folder
-    tests_dir_pyproject = os.path.join(os.path.dirname(__file__), "_pyproject.toml")
+    # Remove pyproject.toml and add setup.py
     pyproject_path = os.path.join(dest_dir, "pyproject.toml")
-    shutil.copy(tests_dir_pyproject, pyproject_path)
-
     assert os.path.exists(pyproject_path)
-    os.remove(setup_py_path)
-    assert not os.path.exists(setup_py_path)
+
+    # Copy _setup.py from tests folder to the package copy folder
+    tests_dir_setup = os.path.join(os.path.dirname(__file__), "_setup.py")
+    setup_py_path = os.path.join(dest_dir, "setup.py")
+    shutil.copy(tests_dir_setup, setup_py_path)
+
+    assert os.path.exists(setup_py_path)
+    os.remove(pyproject_path)
+    assert not os.path.exists(pyproject_path)
 
     # Move the new mapping file to the old mapping file name
     mapping_file_path = os.path.join(dest_dir, "apiview-properties.json")
@@ -81,19 +88,19 @@ PKG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "
 SDIST_PATH = _build_dist(PKG_PATH, "sdist", ".tar.gz")
 WHL_PATH = _build_dist(PKG_PATH, "wheel", ".whl")
 
-PYPROJECT_PKG_PATH = _add_pyproject_package_to_temp(PKG_PATH)
-PYPROJECT_SDIST_PATH = _build_dist(PYPROJECT_PKG_PATH, "sdist", ".tar.gz")
-PYPROJECT_WHL_PATH = _build_dist(PYPROJECT_PKG_PATH, "wheel", ".whl")
+SETUP_PKG_PATH = _add_setup_package_to_temp(PKG_PATH)
+SETUP_SDIST_PATH = _build_dist(SETUP_PKG_PATH, "sdist", ".tar.gz")
+SETUP_WHL_PATH = _build_dist(SETUP_PKG_PATH, "wheel", ".whl")
 
-PYPROJECT_PATHS = [PYPROJECT_PKG_PATH, PYPROJECT_WHL_PATH, PYPROJECT_SDIST_PATH]
-PYPROJECT_IDS = ["pyproject-source", "pyproject-whl", "pyproject-sdist"]
+SETUP_PATHS = [SETUP_PKG_PATH, SETUP_WHL_PATH, SETUP_SDIST_PATH]
+SETUP_IDS = ["setup-source", "setup-whl", "setup-sdist"]
 
-ALL_PATHS = [PKG_PATH, WHL_PATH, SDIST_PATH, PYPROJECT_PKG_PATH, PYPROJECT_WHL_PATH, PYPROJECT_SDIST_PATH]
-ALL_PATH_IDS = ["setup-source", "setup-whl", "setup-sdist", "pyproject-source", "pyproject-whl", "pyproject-sdist"]
+ALL_PATHS = [PKG_PATH, WHL_PATH, SDIST_PATH, SETUP_PKG_PATH, SETUP_WHL_PATH, SETUP_SDIST_PATH]
+ALL_PATH_IDS = ["pyproject-source", "pyproject-whl", "pyproject-sdist", "setup-source", "setup-whl", "setup-sdist"]
 
 MAPPING_FILE_NAME = "apiview-properties.json"
 OLD_MAPPING_FILE_NAME = "apiview_mapping_python.json"
-MAPPING_PATHS = [(PKG_PATH, MAPPING_FILE_NAME), (PYPROJECT_PKG_PATH, OLD_MAPPING_FILE_NAME)]
+MAPPING_PATHS = [(PKG_PATH, MAPPING_FILE_NAME), (SETUP_PKG_PATH, OLD_MAPPING_FILE_NAME)]
 MAPPING_IDS = [mapping_file for _, mapping_file in MAPPING_PATHS]
 
 
@@ -172,14 +179,41 @@ class TestApiView:
         # assert package name is correct
         assert apiview.package_name == "apistubgentest"
 
-    @mark.parametrize("pkg_path", PYPROJECT_PATHS, ids=PYPROJECT_IDS)
-    def test_pyproject_toml_line_ids(self, pkg_path):
+    @mark.parametrize("pkg_path", SETUP_PATHS, ids=SETUP_IDS)
+    def test_setup_py_line_ids(self, pkg_path):
         # uninstall apistubgentest if installed, so new install will be from pkg_path
         self._uninstall_dep("apistubgentest")
         temp_path = tempfile.gettempdir()
         stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=temp_path, verbose=True)
         apiview = stub_gen.generate_tokens()
         self._validate_line_ids(apiview)
+
+    def test_python_runtime_error(self):
+        """StubGenerator should raise a clear RuntimeError when the package requires a newer Python."""
+        with tempfile.TemporaryDirectory() as tmp:
+            pkg_dir = os.path.join(tmp, "fake-future-pkg")
+            os.makedirs(os.path.join(pkg_dir, "fake_future_pkg"))
+            # Minimal __init__.py
+            with open(os.path.join(pkg_dir, "fake_future_pkg", "__init__.py"), "w") as f:
+                f.write("")
+            # pyproject.toml with python_requires >=4.30
+            with open(os.path.join(pkg_dir, "pyproject.toml"), "w") as f:
+                f.write(
+                    "[build-system]\n"
+                    'requires = ["setuptools>=42", "wheel"]\n'
+                    'build-backend = "setuptools.build_meta"\n\n'
+                    "[project]\n"
+                    'name = "fake-future-pkg"\n'
+                    'version = "0.0.1"\n'
+                    'requires-python = ">=4.30"\n'
+                )
+            sdist_path = _build_dist(pkg_dir, "sdist", ".tar.gz")
+            whl_path = _build_dist(pkg_dir, "wheel", ".whl")
+
+            for pkg_path in [pkg_dir, sdist_path, whl_path]:
+                stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=tempfile.gettempdir(), skip_pylint=True)
+                with pytest.raises(RuntimeError, match=r"requires Python >=4\.30"):
+                    stub_gen.generate_tokens()
 
     def test_multiple_newline_only_add_one(self):
         apiview = ApiView()
@@ -211,7 +245,10 @@ class TestApiView:
         apiview = stub_gen.generate_tokens()
         # ensure we have only the expected diagnostics when testing apistubgentest
         unclaimed = PylintParser.get_unclaimed()
-        assert len(apiview.diagnostics) == 93
+        # AdvancedTypeHintClient.validate_endpoint adds 1 diagnostic (client-method-should-not-use-static-method).
+        # Python 3.12+ produces 2 additional diagnostics due to pylint behavior differences.
+        expected_diagnostic_count = 96 if sys.version_info >= (3, 12) else 94
+        assert len(apiview.diagnostics) == expected_diagnostic_count
         # The "needs copyright header" error corresponds to a file, which isn't directly
         # represented in APIView
         assert len(unclaimed) == 1

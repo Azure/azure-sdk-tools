@@ -130,9 +130,9 @@ namespace Azure.Sdk.Tools.Cli.Services
                 // This is useful when the standalone azsdk.exe doesn't include the Copilot CLI executable
                 // but the user has it installed elsewhere (e.g. via npm).
                 var cliPath = Environment.GetEnvironmentVariable("AZSDK_COPILOT_CLI_PATH");
-                if (!string.IsNullOrEmpty(cliPath))
+                if (!string.IsNullOrWhiteSpace(cliPath))
                 {
-                    options.CliPath = cliPath;
+                    options.CliPath = cliPath.Trim();
                 }
 
                 return new CopilotClient(options);

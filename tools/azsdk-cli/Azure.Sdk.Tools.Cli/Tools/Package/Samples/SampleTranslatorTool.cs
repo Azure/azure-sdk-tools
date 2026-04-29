@@ -115,11 +115,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
 
                 return CreateCommandResponse(response);
             }
-            catch (CopilotCliUnavailableException ex)
-            {
-                logger.LogError(ex, "Copilot CLI is not available");
-                return new DefaultCommandResponse { ResponseError = $"Copilot CLI setup error: {ex.Message}" };
-            }
             catch (Exception ex)
             {
                 logger.LogError(ex, "SampleTranslator threw an exception");

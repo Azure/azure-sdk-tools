@@ -13,6 +13,7 @@ This document describes how a user would interact with the APIView service throu
 - [2. Discovering & Browsing Packages](#2-discovering--browsing-packages)
   - [2a. List / Search Packages](#2a-list--search-packages)
   - [2b. Get Package Details](#2b-get-package-details)
+  - [2c. Resolve Package from Name / URL](#2c-resolve-package-from-name--url)
 - [3. Working with API Revisions](#3-working-with-api-revisions)
   - [3a. List Revisions for a Package](#3a-list-revisions-for-a-package)
   - [3b. View API Surface](#3b-view-api-surface)
@@ -109,7 +110,7 @@ Before any operation, the agent must authenticate on behalf of the user.
 - **Agent action:** Authenticate via token-based auth (Bearer token from GitHub OAuth or Managed Identity). The agent cannot use cookie-based auth — all interactions must go through token-authenticated endpoints.
 - **Returned to user:** Confirmation of identity (username, roles, permissions).
 - **Impact:** HIGH
-- **Implemented:** 🟡 `APIViewAuthenticationService` in azsdk CLI currently acquires Azure identity tokens via the Azure credential chain (for example Azure CLI and Managed Identity). The service may also accept GitHub bearer tokens, but the CLI does not currently obtain GitHub OAuth/PAT tokens. A token-authenticated identity check exists via the test endpoint `GET /api/AuthTest/token-only`; `GET /api/auth` and `GET /api/permissions/me` are cookie-auth only.
+- **Implemented:** ✅ `APIViewAuthenticationService` in the azsdk CLI acquires Azure identity tokens via the Azure credential chain (Azure CLI, Managed Identity, etc.). Token-authenticated identity check is available via `GET /api/AuthTest/token-only`. GitHub OAuth/PAT and cookie-auth paths are out of scope for the agent.
 
 ### 1b. Check Permissions
 - **Persona:** Both
@@ -132,14 +133,24 @@ Before any operation, the agent must authenticate on behalf of the user.
 - **Returned to user:** A list of packages with: package name, language, approval status, creator, last updated date, revision count.
 - **Impact:** HIGH
 - **Implemented:** ❌ `GET /api/reviews` is cookie-auth only. Not in CLI/MCP.
+- **Link:** TODO
 
 ### 2b. Get Package Details
 - **Persona:** Both
-- **User says:** "Open the package azure-core" / "Tell me about package {packageName}" / "Find the review for azure-core Python 1.30.0" / "Look up this APIView URL"
-- **Agent action:** Fetch package metadata by ID, or resolve from package name + language + version, or from an APIView URL.
-- **Returned to user:** Package ID, package name, language, creation date, approval status, number of revisions, link to the web UI (for optional follow-up).
+- **User says:** "What's the status of azure-core?" / "Tell me about package {packageName}"
+- **Agent action:** Fetch full package (review) metadata by ID. The `ReviewListItemModel` returned by `GET /api/reviews/{reviewId}` includes: package name, language, package type (client/mgmt), creation date, last updated date, creator, approval status (`IsApproved`), namespace review status, change history (created/approved/reverted/closed events with actor and timestamp), assigned reviewers, subscribers, and project/cross-language IDs. Note: revision count is **not** included — revisions are fetched separately via 3a.
+- **Returned to user:** Package name, language, approval status, assigned reviewers, change history summary, and a link to the web UI.
 - **Impact:** HIGH
-- **Implemented:** 🟡 `GET /api/reviews/resolve` (token-auth) can resolve a package from package name + language + version or URL (`?packageQuery=...&language=...&version=...&link=...`). `GET /api/reviews/{reviewId}` is cookie-auth only. Not yet exposed as a standalone CLI command.
+- **Implemented:** ❌ `GET /api/reviews/{reviewId}` is cookie-auth only. Not in CLI/MCP.
+
+### 2c. Resolve Package from Name / URL
+- **Persona:** Both
+- **User says:** "Find the review for azure-core Python 1.30.0" / "Look up this APIView URL"
+- **Agent action:** Resolve a package from a package name + language + optional version, or from an APIView URL. Returns the review ID, package name, and language so the agent can use it in subsequent calls.
+- **Returned to user:** Review ID, package name, language, and a link to the web UI.
+- **Impact:** HIGH
+- **Implemented:** 🟡 `GET /api/reviews/resolve` (token-auth) supports resolution via `?packageQuery=...&language=...&version=...&link=...`. Not yet exposed as a standalone CLI command.
+- **Link:** TODO
 
 ---
 
@@ -344,6 +355,7 @@ Before the user attempts to approve, the agent should proactively verify:
 - **Key challenge:** "Request a review" is ambiguous — it could mean assigning a reviewer, sending a notification, or both. The agent should default to adding the user as a reviewer on the revision *and* triggering a notification. There is no dedicated "request review" endpoint; this is a combination of adding reviewers (13b) and the notification system.
 - **Impact:** HIGH
 - **Implemented:** ❌ `POST /api/apirevisions/{reviewId}/{apiRevisionId}/reviewers` is cookie-auth only. No notification-trigger endpoint exists under token-auth. Not in CLI/MCP.
+- **Link:** https://github.com/Azure/azure-sdk-tools/issues/13113
 
 ---
 

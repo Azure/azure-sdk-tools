@@ -27,7 +27,8 @@ public class CopilotAgentRunner(
         {
             throw new CopilotCliUnavailableException(
                 "The GitHub Copilot CLI could not be found or failed to start. This tool requires the Copilot CLI to be installed. " +
-                "For installation instructions, see: https://docs.github.com/en/copilot/how-tos/copilot-cli/install-copilot-cli",
+                "For installation instructions, see: https://docs.github.com/en/copilot/how-tos/copilot-cli/install-copilot-cli. " +
+                "If you already have the Copilot CLI installed elsewhere, set the AZSDK_COPILOT_CLI_PATH environment variable to the path of copilot.exe.",
                 ex);
         }
 

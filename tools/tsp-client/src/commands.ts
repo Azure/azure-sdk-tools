@@ -704,35 +704,19 @@ export async function generateConfigFilesCommand(argv: any) {
   const possiblyPinnedPackages: Array<string> =
     packageJson["azure-sdk/emitter-package-json-pinning"] ?? Object.keys(peerDependencies);
 
-  const localDevDeps: Record<string, string> = packageJson["devDependencies"] ?? {};
+  // Get the devDependencies from the emitter's package.json
+  let localDevDeps: Record<string, string> = packageJson["devDependencies"] ?? {};
 
-  // Only query npm registry if workspace protocol versions are detected
-  let resolvedDevDependencies: Record<string, string> | undefined;
-  if (hasWorkspaceVersions(localDevDeps, possiblyPinnedPackages)) {
-    Logger.info("Workspace protocol versions detected. Resolving from npm registry...");
-    resolvedDevDependencies = await npmViewPackageDevDependencies(
-      packageJson["name"],
-      packageJson["version"],
-    );
+  // Only query npm if the flag to use npm pinning is set
+  if (argv["use-npm-pinning"]) {
+    Logger.info("Using npm to resolve devDependencies for pinning versions...");
+    localDevDeps =
+      (await npmViewPackageDevDependencies(packageJson["name"], packageJson["version"])) ?? {};
   }
 
   for (const pinnedPackage of possiblyPinnedPackages) {
     let pinnedVersion = localDevDeps[pinnedPackage];
     if (pinnedVersion && !overrideJson[pinnedPackage]) {
-      // Workspace protocol resolution — only runs for workspace: versions
-      if (isWorkspaceVersion(pinnedVersion)) {
-        const resolved = resolvedDevDependencies?.[pinnedPackage];
-        if (resolved) {
-          pinnedVersion = resolved;
-        } else {
-          // Fallback: strip workspace: prefix
-          pinnedVersion = pinnedVersion.replace(/^workspace:/, "");
-          if (pinnedVersion === "*" || pinnedVersion === "^" || pinnedVersion === "~") {
-            Logger.warn(`Could not resolve workspace version for ${pinnedPackage}. Skipping.`);
-            continue;
-          }
-        }
-      }
       Logger.info(`Pinning ${pinnedPackage} to ${pinnedVersion}`);
       devDependencies[pinnedPackage] = pinnedVersion;
     }

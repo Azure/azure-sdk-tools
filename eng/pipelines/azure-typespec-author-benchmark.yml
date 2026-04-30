@@ -16,11 +16,12 @@ extends:
         displayName: Azure TypeSpec Author Skill Evaluation
         variables:
           - template: /eng/pipelines/templates/variables/globals.yml
+          - template: /eng/pipelines/templates/variables/image.yml
           - group: Azure SDK QA Bot Dev Variables
           - group: AzSDK_Eval_Variable_group
         pool:
-          name: Azure Pipelines
-          vmImage: ubuntu-latest
+          name: $(LINUXPOOL)
+          image: $(LINUXVMIMAGE)
           os: linux
         jobs:
           - job: RunEvals
@@ -85,25 +86,27 @@ extends:
 
               # Install Node.js, Vally CLI, and Copilot SDK
               - task: NodeTool@0
+                displayName: Use Node.js 22
                 inputs:
                   versionSpec: '22.x'
-                displayName: Install Node.js
 
-              - script: |
-                  npm config set "@microsoft:registry" "https://npm.pkg.github.com"
-                  npm config set "//npm.pkg.github.com/:_authToken" "$(azsdk-microsoft-package-github-token)"
-                displayName: Configure GitHub Packages registry
+              - script: npm install -g @microsoft/vally-cli
+                displayName: Install Vally CLI
 
-              - script: |
-                  npm install -g @microsoft/vally-cli
-                  npm install -g @github/copilot-sdk
-                displayName: Install Vally CLI and Copilot SDK
+              - script: npm install -g @github/copilot-sdk
+                displayName: Install Copilot SDK
 
               # Run evaluations
               - script: |
-                  vally eval --suite all --workspace ./debug --output-dir ./results --verbose || true
-                displayName: Run azure-typespec-author evaluations
-                workingDirectory: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate
+                  cd .github/skills
+                  mkdir -p .vally/results
+                  areas=$(ls -d */ 2>/dev/null | xargs -I{} basename {} | grep -v '^results$' | paste -sd, -)
+                  if [ -n "$areas" ]; then
+                    vally eval --tag "priority=p0" --tag "area=${areas}" --output-dir ".vally/results"
+                  else
+                    echo "No skills found — skipping"
+                  fi
+                displayName: Run evaluations
                 continueOnError: true
                 env:
                   GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
@@ -111,12 +114,7 @@ extends:
             templateContext:
               outputs:
                 - output: pipelineArtifact
-                  path: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/debug
-                  artifact: eval-debug-workspace
-                  displayName: Publish Debug Workspace
-                  condition: always()
-                - output: pipelineArtifact
-                  path: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/results
-                  artifact: eval-results
-                  displayName: Publish Evaluation Results
+                  path: $(Build.SourcesDirectory)/.github/skills/.vally/results
+                  artifact: eval-results-$(Build.BuildId)
+                  displayName: Upload eval results
                   condition: always()

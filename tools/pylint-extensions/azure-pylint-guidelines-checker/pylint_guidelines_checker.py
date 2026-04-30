@@ -3772,13 +3772,18 @@ def register(linter):
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
     linter.register_checker(CheckDocstringParameters(linter))
 
-    # Rules are disabled until false positive rate improved
-    # linter.register_checker(CheckForPolicyUse(linter))
-    linter.register_checker(ClientHasApprovedMethodNamePrefix(linter))
+    # CheckForPolicyUse is intentionally NOT registered. It has a high false positive rate
+    # due to the complexity of detecting policy usage across different pipeline configurations.
+    # See https://github.com/Azure/azure-sdk-tools/issues/3228 for details.
 
-    # linter.register_checker(ClientDocstringUsesLiteralIncludeForCodeExample(linter))
-    # linter.register_checker(ClientLROMethodsUseCorePolling(linter))
-    # linter.register_checker(ClientLROMethodsUseCorrectNaming(linter))
+    linter.register_checker(ClientHasApprovedMethodNamePrefix(linter))
+    linter.register_checker(ClientDocstringUsesLiteralIncludeForCodeExample(linter))
+
+    # LRO checkers: registered but may need to be disabled in azure-sdk-for-python pylintrc
+    # if false positive rate is too high. ClientLROMethodsUseCorePolling relies on astroid
+    # inference which may not always resolve return types correctly.
+    linter.register_checker(ClientLROMethodsUseCorePolling(linter))
+    linter.register_checker(ClientLROMethodsUseCorrectNaming(linter))
     linter.register_checker(DoNotUseLoggingException(linter))
     linter.register_checker(DoNotStoreSecretsInTestVariables(linter))
     linter.register_checker(DoNotUseLoggingDirectly(linter))

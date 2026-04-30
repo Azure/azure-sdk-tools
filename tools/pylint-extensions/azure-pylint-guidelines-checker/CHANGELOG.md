@@ -5,6 +5,8 @@
 - Add `remove-deprecated-iscoroutinefunction` check
 - Add `do-not-use-logging-directly` check
 - Add `no-cross-package-private-import` check
+- Enable previously commented-out checkers: `client-docstring-use-literal-include`, `client-lro-methods-use-polling`, `lro-methods-use-correct-naming`
+- Document why `CheckForPolicyUse` remains unregistered (high false positive rate)
 
 ## 0.5.7 (2025-07-15)
 - Bug fix for `do-not-use-logging-exception` checker

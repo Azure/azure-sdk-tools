@@ -67,17 +67,17 @@ Respond with strict JSON matching the provided schema:
       ## Summary
       One or two cleaned-up sentences restating the problem.
 
-      ## Details
-      The user's report rewritten into clear, complete sentences. Fix
-      typos and grammar, expand abbreviations, and group related points
-      into bullets where helpful. Preserve every fact the user gave
-      you; do not add new claims.
-
       ## Context
       Bullet list of the relevant context: review link, language, the
       offending element id, the comment that triggered the report, and
       a short fenced code block of the relevant snippet if one was
       provided. Use the actual values you were given.
+
+      ## Details
+      The user's report rewritten into clear, complete sentences. Fix
+      typos and grammar, expand abbreviations, and group related points
+      into bullets where helpful. Preserve every fact the user gave
+      you; do not add new claims.
 
       ## Suggested Next Steps
       2-4 short bullets pointing at likely components to investigate,
@@ -90,13 +90,17 @@ preceded by `---`.
 
 Hard rules:
 
-* Do not include the user's text verbatim in `## Summary` or `## Details` —
-  rewrite it. The "## Context" section may quote the comment text and
-  code snippet exactly.
+* Do not include the user's free-form description verbatim in `## Summary`
+  or `## Details` — rewrite it. The `## Context` section should quote
+  factual values (review link, language, element id, comment text, code
+  snippet) exactly as given.
 * Do not invent details (review IDs, names, error codes, dates).
-* Do not include diagnostic suggestions for the user; this issue is for
-  engineers, not the reporter.
+* Address the body to the engineer who will fix the issue, not to the
+  reporter. Do not write instructions like "please try X and report back".
 * Never put the prefix anywhere except the very start of the title.
+* If a section has no real content, omit the section entirely. Never
+  emit placeholder text like "N/A" or template tokens such as
+  `{{description}}`.
 
 user:
 A user has reported an issue from APIView.

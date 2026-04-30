@@ -101,7 +101,7 @@ extends:
                   mkdir -p ~/.npm-global
                   npm install -g @microsoft/vally-cli
                   npm install -g @github/copilot-sdk
-                  echo "##vso[task.prependpath]$(HOME)/.npm-global/bin"
+                  echo "##vso[task.prependpath]$HOME/.npm-global/bin"
                 displayName: Install Vally CLI and Copilot SDK
 
               # Run evaluations

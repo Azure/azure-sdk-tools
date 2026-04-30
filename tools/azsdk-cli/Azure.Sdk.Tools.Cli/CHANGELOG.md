@@ -16,6 +16,7 @@
 ### Other Changes
 
 - Bumped `GitHub.Copilot.SDK` from 0.1.32 to 0.2.2.
+- Audit reads data from the cache to reduce GitHub API use
 
 ## 0.6.10 (2026-04-27)
 

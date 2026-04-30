@@ -26,6 +26,7 @@ uvicorn[standard]==0.29.0
 
 # scripts requirements
 azure-monitor-query==2.0.0
+azure-storage-blob==12.26.0
 
 # evals requirements
 azure-ai-evaluation==1.15.3

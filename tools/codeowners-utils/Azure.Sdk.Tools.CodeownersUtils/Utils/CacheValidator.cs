@@ -36,7 +36,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Utils
             throw new InvalidOperationException(
                 $"'{cacheSource}' is {age.TotalHours:F1} hours old " +
                 $"(last modified {lastModifiedUtc:O}), which is older than the required cutoff " +
-                $"{minimumLastModifiedUtc:O}. Refresh the cache and try again.");
+                $"{minimumLastModifiedUtc:O}. Refresh the cache using 'azsdk config codeowners update-cache', wait for the build to complete, and try again.");
         }
 
         private async Task<DateTime> GetLastModifiedUtc(

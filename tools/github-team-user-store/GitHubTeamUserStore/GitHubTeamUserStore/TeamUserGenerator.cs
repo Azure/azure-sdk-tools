@@ -1,12 +1,6 @@
-using Octokit;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
 using GitHubTeamUserStore.Constants;
-using Azure.Storage.Blobs;
+using Octokit;
+using System.Text.Json;
 
 namespace GitHubTeamUserStore
 {
@@ -19,22 +13,21 @@ namespace GitHubTeamUserStore
         /// of azure-sdk-write. This is done to limit the number of calls made because if team/user data for every team
         /// under Azure was pulled there would be roughly 1933 teams. Getting the team/user data for that many teams would
         /// end up taking 2500-3000 GitHub API calls whereas getting the team/user data for azure-sdk-write and its child
-        /// teams is less than 1/10th of that. The team/user data is serialized into json and stored in azure blob storage.
+        /// teams is less than 1/10th of that. The team/user data is serialized into json and written to a local file.
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
-        /// <param name="teamUserBlobStorageUri">The URI of the team/user blob storage URI</param>
-        /// <param name="userOrgVisibilityBlobStorageUri">The URI of the user/org visibility blob</param>
-        /// <returns>true if everything stored successfully, false otherwise</returns>
-        public static async Task<bool> GenerateAndStoreTeamUserAndOrgData(GitHubEventClient gitHubEventClient,
-                                                                          string teamUserBlobStorageUri,
-                                                                          string userOrgVisibilityBlobStorageUri)
+        /// <param name="openSourceApiClient">Authenticated OpenSourceApiClient</param>
+        /// <param name="teamUserOutputPath">The file where the team/user cache will be written.</param>
+        /// <param name="userOrgVisibilityOutputPath">The file where the user/org visibility cache will be written.</param>
+        /// <returns>True if everything is written and verified successfully, false otherwise.</returns>
+        public static async Task<bool> GenerateAndWriteTeamUserAndOrgData(GitHubEventClient gitHubEventClient,
+                                                                          OpenSourceApiClient openSourceApiClient,
+                                                                          string teamUserOutputPath,
+                                                                          string userOrgVisibilityOutputPath)
         {
             // Team/User dictionary where the team name is the key and the list users is the value. It's worth noting
             // that this is the list of Logins (Octokit.User.Login) which are what's used in CODEOWNERS, @mentions, etc.
             Dictionary<string, List<string>> teamUserDict = new Dictionary<string, List<string>>();
-            // The BlobUriBuilder for team/user storage is stored for the verify call
-            Uri teamUserBlobUri = new Uri(teamUserBlobStorageUri);
-            BlobUriBuilder teamUserBlobUriBuilder = new BlobUriBuilder(teamUserBlobUri);
 
             Team azureSdkWrite = await gitHubEventClient.GetTeamById(ProductAndTeamConstants.AzureSdkWriteTeamId);
             await CreateTeamUserEntry(gitHubEventClient, azureSdkWrite, teamUserDict);
@@ -42,16 +35,15 @@ namespace GitHubTeamUserStore
             // a List<KeyValuePair<string, List<string>>> will and it's easy enough to convert to/from.
             var list = teamUserDict.ToList();
             string jsonString = JsonSerializer.Serialize(list);
-            await gitHubEventClient.UploadDataToBlobStorage(jsonString, teamUserBlobUriBuilder);
-            if (await VerifyStoredTeamUsers(gitHubEventClient, teamUserBlobUriBuilder, teamUserDict))
+            await File.WriteAllTextAsync(teamUserOutputPath, jsonString);
+            if (await VerifyWrittenTeamUsers(teamUserOutputPath, teamUserDict))
             {
-                Console.WriteLine("team/user data stored successfully.");
-                // don't bother generating the data unless the team/user data stored
-                return await GenerateAndStoreUserOrgData(gitHubEventClient, userOrgVisibilityBlobStorageUri, teamUserDict);
+                Console.WriteLine($"team/user data written successfully to {teamUserOutputPath}.");
+                return await GenerateAndWriteUserOrgData(openSourceApiClient, userOrgVisibilityOutputPath, teamUserDict);
             }
             else
             {
-                Console.WriteLine("There were issues with generated vs stored data. See above for specifics.");
+                Console.WriteLine("There were issues with the written team/user data. See above for specifics.");
                 return false;
             }
         }
@@ -59,7 +51,7 @@ namespace GitHubTeamUserStore
         /// <summary>
         /// Call GitHub to get users for the team and add a dictionary entry for the team/users. Note: GitHub returns 
         /// a distinct list of all of the users, including users from any/all child teams. After that, get the list
-        /// of child teams and recursively call GetUsersForTeam for each one of those to create their team/user entries.
+        /// of child teams and recursively call CreateTeamUserEntry for each one of those to create their team/user entries.
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="team">Octokit.Team to get users for.</param>
@@ -95,60 +87,54 @@ namespace GitHubTeamUserStore
         }
 
         /// <summary>
-        /// This method is called after the team/user data is stored in blob storage. It verifies that the
-        /// team/user data from blob storage is the same as the in-memory data that was used to create the blob.
+        /// This method is called after the team/user data is written locally. It verifies that the
+        /// team/user data from disk is the same as the in-memory data that was used to create the file.
         /// </summary>
-        /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
-        /// <returns>True, if the team data in storage matches the in-memory data that was used to create the blob, otherwise, false.</returns>
-        private static async Task<bool> VerifyStoredTeamUsers(GitHubEventClient gitHubEventClient, 
-                                                              BlobUriBuilder blobUriBuilder, 
+        /// <param name="teamUserOutputPath">The file containing the written team/user data.</param>
+        /// <returns>True, if the data on disk matches the in-memory data that was used to create the file, otherwise, false.</returns>
+        private static async Task<bool> VerifyWrittenTeamUsers(string teamUserOutputPath,
                                                               Dictionary<string, List<string>> teamUserDict)
         {
-            string rawJson = await gitHubEventClient.GetBlobDataFromStorage(blobUriBuilder);
-            var list = JsonSerializer.Deserialize<List<KeyValuePair<string, List<string>>>>(rawJson);
-            var storedDictionary = list.ToDictionary((keyItem) => keyItem.Key, (valueItem) => valueItem.Value);
+            string rawJson = await File.ReadAllTextAsync(teamUserOutputPath);
+            var list = JsonSerializer.Deserialize<List<KeyValuePair<string, List<string>>>>(rawJson)
+                ?? throw new InvalidOperationException($"Unable to deserialize team/user data from {teamUserOutputPath}.");
+            var writtenDictionary = list.ToDictionary((keyItem) => keyItem.Key, (valueItem) => valueItem.Value);
 
-            // Verify the dictionary from storage contains everything from the teamUserDict
-            if (teamUserDict.Keys.Count != storedDictionary.Keys.Count)
+            // Verify the dictionary from disk contains everything from the in-memory dictionary.
+            if (teamUserDict.Keys.Count != writtenDictionary.Keys.Count)
             {
-                // At this point list the teams and return, don't bother looking at the users.
-                Console.WriteLine($"Error! Created dictionary has {teamUserDict.Keys.Count} teams and stored dictionary has {storedDictionary.Keys.Count} teams.");
+                Console.WriteLine($"Error! Created dictionary has {teamUserDict.Keys.Count} teams and written dictionary has {writtenDictionary.Keys.Count} teams.");
                 Console.WriteLine(string.Format("created list teams {0}", string.Join(", ", teamUserDict.Keys)));
-                Console.WriteLine(string.Format("stored list teams {0}", string.Join(", ", storedDictionary.Keys)));
+                Console.WriteLine(string.Format("written list teams {0}", string.Join(", ", writtenDictionary.Keys)));
                 return false;
             }
 
             bool hasError = false;
-            // If the number of teams in the dictionaries are equal, look at the users for every team.
             foreach (string key in teamUserDict.Keys)
             {
-                var users = teamUserDict[key];
-                var storedUsers = storedDictionary[key];
-                // Since these are just lists of strings, calling sort will sort them in ascending order.
-                // This makes things easier to find differences if there's an error
-                users.Sort();
-                storedUsers.Sort();
-                if (users.Count != storedUsers.Count)
+                if (!writtenDictionary.ContainsKey(key))
+                {
+                    Console.WriteLine($"Error! Written dictionary does not contain the team {key}.");
+                    Console.WriteLine(string.Format("created list teams {0}", string.Join(", ", teamUserDict.Keys)));
+                    Console.WriteLine(string.Format("written list teams {0}", string.Join(", ", writtenDictionary.Keys)));
+                    return false;
+                }
+
+                var users = teamUserDict[key].OrderBy(user => user, StringComparer.OrdinalIgnoreCase).ToList();
+                var writtenUsers = writtenDictionary[key].OrderBy(user => user, StringComparer.OrdinalIgnoreCase).ToList();
+                if (users.Count != writtenUsers.Count)
                 {
                     hasError = true;
-                    Console.WriteLine($"Error! Created dictionary for team {key} has {users.Count} and stored dictionary has {storedUsers.Count}");
+                    Console.WriteLine($"Error! Created dictionary for team {key} has {users.Count} users and written dictionary has {writtenUsers.Count} users.");
                     Console.WriteLine(string.Format("created list users {0}", string.Join(", ", users)));
-                    Console.WriteLine(string.Format("stored list users {0}", string.Join(", ", storedUsers)));
+                    Console.WriteLine(string.Format("written list users {0}", string.Join(", ", writtenUsers)));
                 }
-                else
+                else if (!users.SequenceEqual(writtenUsers, StringComparer.OrdinalIgnoreCase))
                 {
-                    foreach (var user in users)
-                    {
-                        // As soon as difference is found, output all the users for each team and move on to the next team
-                        if (!storedUsers.Contains(user))
-                        {
-                            hasError = true;
-                            Console.WriteLine($"Error! Created dictionary for team {key} has different users than the stored dictionary");
-                            Console.WriteLine(string.Format("created list users {0}", string.Join(", ", users)));
-                            Console.WriteLine(string.Format("stored list users {0}", string.Join(", ", storedUsers)));
-                            break;
-                        }
-                    }
+                    hasError = true;
+                    Console.WriteLine($"Error! Created dictionary for team {key} has different users than the written dictionary.");
+                    Console.WriteLine(string.Format("created list users {0}", string.Join(", ", users)));
+                    Console.WriteLine(string.Format("written list users {0}", string.Join(", ", writtenUsers)));
                 }
             }
             return !hasError;
@@ -159,81 +145,70 @@ namespace GitHubTeamUserStore
         /// the azure-sdk-write group, which is the all inclusive list of users with write permissions,
         /// to generate the org visibility data.
         /// </summary>
-        /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
-        /// <param name="userOrgVisibilityBlobStorageUri">The URI of the user/org visibility blob</param>
-        /// <returns></returns>
-        public static async Task<bool> GenerateAndStoreUserOrgData(GitHubEventClient gitHubEventClient,
-                                                                   string userOrgVisibilityBlobStorageUri,
-                                                                   Dictionary<string, List<string>> teamUserDict)
+        /// <param name="openSourceApiClient">Authenticated OpenSourceApiClient</param>
+        /// <param name="userOrgVisibilityOutputPath">The file where the user/org visibility cache will be written.</param>
+        private static async Task<bool> GenerateAndWriteUserOrgData(OpenSourceApiClient openSourceApiClient,
+                                                                    string userOrgVisibilityOutputPath,
+                                                                    Dictionary<string, List<string>> teamUserDict)
         {
-            // The user list of azure-sdk-write will contain a distinct list of all users from all child teams. For
-            // each one, check if they're a member of azure and store that in here.
-            Dictionary<string, bool> userOrgDict = new Dictionary<string, bool>();
-
-            Uri userOrgVisBlobUri = new Uri(userOrgVisibilityBlobStorageUri);
-            BlobUriBuilder userOrgVisBlobUriBuilder = new BlobUriBuilder(userOrgVisBlobUri);
+            Dictionary<string, bool> userOrgDict = new Dictionary<string, bool>(StringComparer.InvariantCultureIgnoreCase);
 
             // The user list of azure-sdk-write will be a distinct list of all users from all child teams. All
             // users are Azure org members, otherwise they wouldn't be in there. Using the list, create a dictionary
             // with the user as the key and the value, a boolean, true if they're public and false otherwise.
             List<string> allWriteUsers = teamUserDict[ProductAndTeamConstants.AzureSdkWriteTeamName];
+            HashSet<string> publicAzureMembers = await openSourceApiClient.GetPublicOrgMembers(ProductAndTeamConstants.Azure);
             foreach (var user in allWriteUsers)
             {
-                userOrgDict[user] = await gitHubEventClient.IsUserPublicMemberOfOrg(ProductAndTeamConstants.Azure, user);
+                userOrgDict[user] = publicAzureMembers.Contains(user);
             }
-            // Dictionary<string, bool> will serialize as-is and doesn't need to be changed for serialization
+
             string jsonString = JsonSerializer.Serialize(userOrgDict);
-            await gitHubEventClient.UploadDataToBlobStorage(jsonString, userOrgVisBlobUriBuilder);
-            bool dataMatches = await VerifyStoredUserOrgData(gitHubEventClient, userOrgVisBlobUriBuilder, userOrgDict);
+            await File.WriteAllTextAsync(userOrgVisibilityOutputPath, jsonString);
+            bool dataMatches = await VerifyWrittenUserOrgData(userOrgVisibilityOutputPath, userOrgDict);
             if (dataMatches)
             {
-                Console.WriteLine("user/org visibility data stored successfully.");
+                Console.WriteLine($"user/org visibility data written successfully to {userOrgVisibilityOutputPath}.");
             }
             else
             {
-                Console.WriteLine("There were issues with generated vs stored user/org visibility data. See above for specifics.");
+                Console.WriteLine("There were issues with the written user/org visibility data. See above for specifics.");
             }
             return dataMatches;
         }
 
-        public static async Task<bool> VerifyStoredUserOrgData(GitHubEventClient gitHubEventClient, 
-                                                               BlobUriBuilder blobUriBuilder,
-                                                                Dictionary<string, bool> userOrgDict)
+        private static async Task<bool> VerifyWrittenUserOrgData(string userOrgVisibilityOutputPath,
+                                                                 Dictionary<string, bool> userOrgDict)
         {
-
-            string rawJson = await gitHubEventClient.GetBlobDataFromStorage(blobUriBuilder);
-            var storedUserOrgDict = JsonSerializer.Deserialize<Dictionary<string, bool>>(rawJson);
-            if (userOrgDict.Keys.Count != storedUserOrgDict.Keys.Count)
+            string rawJson = await File.ReadAllTextAsync(userOrgVisibilityOutputPath);
+            var writtenUserOrgDict = JsonSerializer.Deserialize<Dictionary<string, bool>>(rawJson)
+                ?? throw new InvalidOperationException($"Unable to deserialize user/org visibility data from {userOrgVisibilityOutputPath}.");
+            if (userOrgDict.Keys.Count != writtenUserOrgDict.Keys.Count)
             {
-                // At this point dictionaries are different, don't bother looking at org membership, output the strings of users (keys)
-                // so they can be compared.
-                Console.WriteLine($"Error! Created user/org dictionary has {userOrgDict.Keys.Count} users and stored dictionary has {storedUserOrgDict.Keys.Count} users.");
+                Console.WriteLine($"Error! Created user/org dictionary has {userOrgDict.Keys.Count} users and written dictionary has {writtenUserOrgDict.Keys.Count} users.");
                 Console.WriteLine(string.Format("created list users {0}", string.Join(", ", userOrgDict.Keys)));
-                Console.WriteLine(string.Format("stored list users {0}", string.Join(", ", storedUserOrgDict.Keys)));
+                Console.WriteLine(string.Format("written list users {0}", string.Join(", ", writtenUserOrgDict.Keys)));
                 return false;
             }
 
-            // Verify that the userOrgDict and the storedUserOrgDict both contain the same set of keys
             foreach (string user in userOrgDict.Keys)
             {
-                if (!storedUserOrgDict.ContainsKey(user))
+                if (!writtenUserOrgDict.ContainsKey(user))
                 {
-                    Console.WriteLine("Error! Created user/org dictionary has different users than the stored dictionary.");
+                    Console.WriteLine("Error! Created user/org dictionary has different users than the written dictionary.");
                     Console.WriteLine(string.Format("created list users {0}", string.Join(", ", userOrgDict.Keys)));
-                    Console.WriteLine(string.Format("stored list users {0}", string.Join(", ", storedUserOrgDict.Keys)));
+                    Console.WriteLine(string.Format("written list users {0}", string.Join(", ", writtenUserOrgDict.Keys)));
                     return false;
                 }
             }
 
-            // A this point both dictionaries contain the same set of keys, now verify that the org visibility data is the same.
-            // Look at every entry and report all of the errors
             bool hasError = false;
             foreach (string user in userOrgDict.Keys)
             {
-                if (userOrgDict[user] != storedUserOrgDict[user])
+                if (userOrgDict[user] != writtenUserOrgDict[user])
                 {
                     hasError = true;
-                    Console.WriteLine($"The created dictionary entry for {user} is '{userOrgDict[user]}' and in stored it is '{storedUserOrgDict[user]}'");
+                    Console.WriteLine($"The created dictionary entry for {user} is '{userOrgDict[user]}' and in written it is '{writtenUserOrgDict[user]}'");
                 }
             }
             return !hasError;

@@ -190,9 +190,10 @@ public class DotnetErrorDrivenPatchTemplate(
         **DO NOT** try to fix these cascading errors individually (e.g., by removing method calls,
         rewriting method bodies, or adding new members). Just rename the class declaration and the file.
 
-        ### 7. IGNORE STYLE ANALYZER RULES (SA*)
-        Ignore style analyzer warnings and errors with codes prefixed `SA*` (e.g., `SA1517`).
-        These are code style rules, not compilation errors. Do NOT reformat code to satisfy them.
+        ### 7. DO NOT FIX STYLE ANALYZER RULES (SA*)
+        Style analyzer warnings and errors with codes prefixed `SA*` (e.g., `SA1517`) are code style rules,
+        not compilation errors. Do NOT attempt to fix them here — they require manual intervention.
+        Leave them for manual review; the error message itself is explanatory enough for a developer to act on.
 
         ### 8. HANDLE AZURE SDK ANALYZER RULES (AZC*) CAREFULLY
         Azure SDK analyzer errors (codes prefixed `AZC*`) are NOT style rules — they enforce SDK design guidelines.

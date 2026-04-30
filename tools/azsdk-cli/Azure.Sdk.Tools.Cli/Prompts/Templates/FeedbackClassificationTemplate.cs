@@ -202,6 +202,12 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
 
         Do NOT classify unknown AZC codes as CODE_CUSTOMIZATION — they represent SDK design guidelines
         that require intentional human decisions about API shape.
+
+        **Style Analyzer Errors (SA codes):**
+        When a feedback item contains an `SA*` code (e.g., SA1517, SA1000), classify as
+        **REQUIRES_MANUAL_INTERVENTION**. These are code style rules that should be fixed but cannot be
+        addressed via TypeSpec decorators or automated patching. In the Reason, include the SA code and
+        your best recommendation for how to resolve it based on the error message.
         """;
     }
 

@@ -77,3 +77,23 @@ To disable a pylint error, add a comment like this to your code:
 ```
 
 If you encounter a false positive, use the disable command to suppress the pylint error.
+
+## Overlap with mypy
+
+Some pylint checkers cover areas that also overlap with mypy type checking. Below is a summary
+of which tools cover what, and recommendations for when to use each:
+
+| Check area | Pylint rule(s) | mypy equivalent | Recommendation |
+|------------|----------------|-----------------|----------------|
+| Missing type annotations | C4722 `client-method-missing-type-annotations` | `--disallow-untyped-defs` | Use **pylint** for SDK-specific annotation style (type comments vs annotations). Use **mypy** for general type correctness. |
+| Return type checking | C4741 `docstring-missing-return`, C4742 `docstring-missing-rtype` | `--warn-return-any` | Use **pylint** for docstring return documentation. Use **mypy** for return type inference. |
+| Overload consistency | C4765 `invalid-use-of-overload` | `@overload` signature checking | Use **both**. Pylint catches async/sync mismatch that mypy may miss when return types are absent. |
+| Parameter types in docstrings | C4739-C4743 `docstring-*` | N/A | **Pylint only** — mypy does not check docstring parameter documentation. |
+| Naming conventions | C4727 `client-incorrect-naming-convention`, C4751 `name-too-long` | N/A | **Pylint only** — mypy does not enforce naming. |
+| Import restrictions | C4749, C4753, C4755-C4764 | N/A | **Pylint only** — these are SDK-specific import rules. |
+
+**General guidance:**
+- **mypy** is best for type correctness, inference, and generic type checking.
+- **pylint (this plugin)** is best for SDK-specific conventions, docstring quality, naming, and import rules.
+- There is minimal actual overlap — most pylint rules here check SDK conventions that mypy cannot enforce.
+- When both tools flag the same code, the pylint rule typically checks a different aspect (e.g., docstring vs type annotation).

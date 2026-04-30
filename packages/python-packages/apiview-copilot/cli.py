@@ -59,6 +59,7 @@ from src._mention import handle_mention_request
 from src._metrics import get_metrics_report
 from src._models import APIViewComment
 from src._prompt_runner import run_prompt
+from src._report_issue import handle_report_issue_request
 from src._search_manager import SearchManager
 from src._settings import SettingsManager
 from src._thread_resolution import handle_thread_resolution_request
@@ -1013,6 +1014,9 @@ def issue_report(
     comment_context = comment_context or None
 
     if remote:
+        settings = SettingsManager()
+        base_url = settings.get("WEBAPP_ENDPOINT")
+        api_endpoint = f"{base_url}/report-issue"
         payload = {"category": category, "description": description}
         if review_link:
             payload["reviewLink"] = review_link
@@ -1027,26 +1031,24 @@ def issue_report(
                 "language": "language",
             }
             payload["commentContext"] = {_camel_keys[k]: v for k, v in comment_context.items()}
-        settings = SettingsManager()
-        base_url = settings.get("WEBAPP_ENDPOINT")
-        api_endpoint = f"{base_url}/report-issue"
-        response = requests.post(api_endpoint, json=payload, headers=_build_auth_header(), timeout=60)
-        if response.status_code == 200:
-            print(json.dumps(response.json(), indent=2))
-        else:
-            print(f"Error: {response.status_code} - {response.text}")
-        return
-
-    from src._report_issue import handle_report_issue_request
-
-    result = handle_report_issue_request(
-        category=category,
-        description=description,
-        review_link=review_link,
-        language=language,
-        comment_context=comment_context,
-    )
-    print(json.dumps(result, indent=2))
+        try:
+            resp = requests.post(api_endpoint, json=payload, headers=_build_auth_header(), timeout=60)
+            data = resp.json()
+            if resp.status_code == 200:
+                print(json.dumps(data, indent=2))
+            else:
+                print(f"Error: {resp.status_code} - {data}")
+        except Exception as e:
+            print(f"Error: {e}")
+    else:
+        result = handle_report_issue_request(
+            category=category,
+            description=description,
+            review_link=review_link,
+            language=language,
+            comment_context=comment_context,
+        )
+        print(json.dumps(result, indent=2))
 
 
 def handle_agent_chat(

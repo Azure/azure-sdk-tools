@@ -186,7 +186,17 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         will locate and fix the correct customization file.
 
         **Azure SDK Analyzer Errors (AZC codes):**
-        When a feedback item contains an AZC analyzer error code, use the following routing table:
+        When a feedback item contains an AZC analyzer error code, first determine WHERE the error originates:
+
+        **CRITICAL: Errors in custom/handwritten code (NOT generated code) should be classified as SUCCESS.**
+        If an AZC or SA error originates from a file in a customization directory (e.g., .NET partial classes
+        in non-Generated folders, Java `*Customization.java`, Python `*_patch.py`), this means the code was
+        written intentionally by a developer who chose not to follow Azure SDK guidelines. Do NOT fix it.
+        Classify as **SUCCESS** with a Reason like: "Analyzer error in custom code — this appears to be an
+        intentional design decision. Recommend reviewing the Azure SDK guidelines and obtaining architect
+        approval if deviating from conventions for a unique scenario."
+
+        For analyzer errors in GENERATED code, use the following routing table:
 
         | Code    | Description                  | Classification          | Action                                                       |
         |---------|------------------------------|-------------------------|--------------------------------------------------------------|
@@ -204,10 +214,10 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         that require intentional human decisions about API shape.
 
         **Style Analyzer Errors (SA codes):**
-        When a feedback item contains an `SA*` code (e.g., SA1517, SA1000), classify as
-        **REQUIRES_MANUAL_INTERVENTION**. These are code style rules that should be fixed but cannot be
-        addressed via TypeSpec decorators or automated patching. In the Reason, include the SA code and
-        your best recommendation for how to resolve it based on the error message.
+        When a feedback item contains an `SA*` code (e.g., SA1517, SA1000):
+        - If the error is in **custom/handwritten code**: classify as **SUCCESS** (same logic as AZC in custom code above).
+        - If the error is in **generated code**: classify as **REQUIRES_MANUAL_INTERVENTION**. Include the SA code
+          and your best recommendation for how to resolve it based on the error message.
         """;
     }
 

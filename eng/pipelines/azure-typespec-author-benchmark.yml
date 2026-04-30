@@ -95,11 +95,14 @@ extends:
                   npm config set "//npm.pkg.github.com/:_authToken" "$(azsdk-microsoft-package-github-token)"
                 displayName: Configure GitHub Packages registry
 
-              - script: npm install -g @microsoft/vally-cli
-                displayName: Install Vally CLI
-
-              - script: npm install -g @github/copilot-sdk
-                displayName: Install Copilot SDK
+              - script: |
+                  # Install to local prefix to avoid permission issues with global install
+                  npm config set prefix ~/.npm-global
+                  mkdir -p ~/.npm-global
+                  npm install -g @microsoft/vally-cli
+                  npm install -g @github/copilot-sdk
+                  echo "##vso[task.prependpath]$(HOME)/.npm-global/bin"
+                displayName: Install Vally CLI and Copilot SDK
 
               # Run evaluations
               - script: |

@@ -16,12 +16,11 @@ extends:
         displayName: Azure TypeSpec Author Skill Evaluation
         variables:
           - template: /eng/pipelines/templates/variables/globals.yml
-          - template: /eng/pipelines/templates/variables/image.yml
           - group: Azure SDK QA Bot Dev Variables
           - group: AzSDK_Eval_Variable_group
         pool:
-          name: $(LINUXPOOL)
-          image: $(LINUXVMIMAGE)
+          name: Azure Pipelines
+          vmImage: ubuntu-latest
           os: linux
         jobs:
           - job: RunEvals
@@ -96,12 +95,8 @@ extends:
                 displayName: Configure GitHub Packages registry
 
               - script: |
-                  # Install to local prefix to avoid permission issues with global install
-                  npm config set prefix ~/.npm-global
-                  mkdir -p ~/.npm-global
                   npm install -g @microsoft/vally-cli
                   npm install -g @github/copilot-sdk
-                  echo "##vso[task.prependpath]$HOME/.npm-global/bin"
                 displayName: Install Vally CLI and Copilot SDK
 
               # Run evaluations

@@ -4,7 +4,7 @@
 # ------------------------------------
 
 """
-Pylint custom checkers for SDK guidelines: C4717 - C4776
+Pylint custom checkers for SDK guidelines: C4717 - C4777
 """
 
 import os
@@ -3728,6 +3728,36 @@ class NoCrossPackagePrivateImport(BaseChecker):
             )
 
 
+class DoNotUseFutureAnnotations(BaseChecker):
+    """Rule to check that `from __future__ import annotations` is not used.
+    This import changes all annotations to strings at runtime, which can
+    impact performance and break runtime type introspection used by the SDK.
+    """
+
+    name = "do-not-use-future-annotations"
+    priority = -1
+    msgs = {
+        "C4777": (
+            "Do not use `from __future__ import annotations`. This impacts runtime behavior"
+            " and performance. See details:"
+            " https://azure.github.io/azure-sdk/python_design.html",
+            "do-not-use-future-annotations",
+            "Do not use `from __future__ import annotations` in SDK code.",
+        ),
+    }
+
+    def visit_importfrom(self, node):
+        """Check for `from __future__ import annotations`."""
+        if node.modname == "__future__":
+            for name, _ in node.names:
+                if name == "annotations":
+                    self.add_message(
+                        msgid="do-not-use-future-annotations",
+                        node=node,
+                        confidence=None,
+                    )
+
+
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
     linter.register_checker(ClientsDoNotUseStaticMethods(linter))
@@ -3783,3 +3813,4 @@ def register(linter):
     linter.register_checker(DoNotStoreSecretsInTestVariables(linter))
     linter.register_checker(DoNotUseLoggingDirectly(linter))
     linter.register_checker(NoCrossPackagePrivateImport(linter))
+    linter.register_checker(DoNotUseFutureAnnotations(linter))

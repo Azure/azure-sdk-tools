@@ -4665,3 +4665,52 @@ class TestNoCrossPackagePrivateImport(pylint.testutils.CheckerTestCase):
         importfrom_node = setup.body[10]
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
+
+
+class TestDoNotUseFutureAnnotations(pylint.testutils.CheckerTestCase):
+    """Test that `from __future__ import annotations` is flagged."""
+
+    CHECKER_CLASS = checker.DoNotUseFutureAnnotations
+
+    def test_acceptable_no_future_annotations(self):
+        file = open(
+            os.path.join(
+                TEST_FOLDER,
+                "test_files",
+                "do_not_use_future_annotations_acceptable.py",
+            )
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        with self.assertNoMessages():
+            for child in node.body:
+                if isinstance(child, astroid.node_classes.ImportFrom):
+                    self.checker.visit_importfrom(child)
+
+    def test_violation_future_annotations(self):
+        file = open(
+            os.path.join(
+                TEST_FOLDER,
+                "test_files",
+                "do_not_use_future_annotations_violation.py",
+            )
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        import_node = [
+            child
+            for child in node.body
+            if isinstance(child, astroid.node_classes.ImportFrom)
+            and child.modname == "__future__"
+        ][0]
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-use-future-annotations",
+                line=import_node.lineno,
+                node=import_node,
+                col_offset=import_node.col_offset,
+                end_line=import_node.end_lineno,
+                end_col_offset=import_node.end_col_offset,
+            ),
+        ):
+            self.checker.visit_importfrom(import_node)

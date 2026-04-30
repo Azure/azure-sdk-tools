@@ -8,11 +8,11 @@
       "properties": {
         "title": {
           "type": "string",
-          "description": "A concise GitHub issue title starting with [APIView]."
+          "description": "A concise GitHub issue title that begins with the title_prefix the caller passed in (e.g. [APIView], [AVC], or [Python APIView])."
         },
         "body": {
           "type": "string",
-          "description": "Technical context the LLM can add beyond what the user reported — likely causes, related components, guidelines references, or investigation suggestions. Empty string if nothing useful to add."
+          "description": "The full GitHub issue body in Markdown, with the sections specified in the system prompt (Summary / Context / Details / Suggested Next Steps), ending with '---\\n*Reported via APIView*'."
         }
       },
       "required": ["title", "body"],

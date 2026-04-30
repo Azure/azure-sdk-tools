@@ -124,16 +124,3 @@ A user has reported an issue from APIView.
 
 **User description:**
 {{description}}
-
-{% if language %}
-**Language:** {{language}}
-{% endif %}
-
-{% if review_link %}
-**Review link:** {{review_link}}
-{% endif %}
-
-{% if comment_context %}
-**Comment context:**
-{{comment_context}}
-{% endif %}

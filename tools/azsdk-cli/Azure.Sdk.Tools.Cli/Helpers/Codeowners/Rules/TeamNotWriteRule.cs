@@ -193,18 +193,6 @@ public class TeamNotWriteRule(
     private async Task EnsureTeamCacheIsFresh(CancellationToken ct)
     {
         DateTime minimumLastModifiedUtc = DateTime.UtcNow.Subtract(AuditRuleCacheSettings.CacheMaxAge);
-
-        try
-        {
-            await cacheValidator.ThrowIfCacheOlderThan(DefaultStorageConstants.TeamUserBlobUri, minimumLastModifiedUtc, ct);
-        }
-        catch (InvalidOperationException ex)
-        {
-            throw new InvalidOperationException(
-                "CODEOWNERS cache MUST be updated before running audit. " +
-                "Run `azsdk config codeowners update-cache` and wait for the pipeline to complete. " +
-                ex.Message,
-                ex);
-        }
+        await cacheValidator.ThrowIfCacheOlderThan(DefaultStorageConstants.TeamUserBlobUri, minimumLastModifiedUtc, ct);
     }
 }

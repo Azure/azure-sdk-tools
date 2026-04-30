@@ -29,3 +29,16 @@ class testingOverload:
         if isinstance(a, str):
             return len(a)
         return a
+
+
+# Module-level acceptable overloads
+@overload
+def module_func(a: str) -> str:
+    ...
+
+@overload
+def module_func(a: int) -> int:
+    ...
+
+def module_func(a: Union[str, int]):
+    return a

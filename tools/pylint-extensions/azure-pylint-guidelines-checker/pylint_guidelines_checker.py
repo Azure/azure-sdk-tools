@@ -3045,51 +3045,63 @@ class InvalidUseOfOverload(BaseChecker):
         ),
     }
 
-    def visit_classdef(self, node):
-        """Check that use of the @overload decorator matches the async/sync nature of the underlying function"""
+    _OVERLOAD_NAMES = {
+        "typing.overload",
+        "typing_extensions.overload",
+        "builtins.overload",
+    }
+
+    def _has_overload_decorator(self, node):
+        """Check if a function node has the @overload decorator."""
         try:
-            # Obtain a list of all functions and function names
-            functions = []
-            node.body
-            for item in node.body:
-                if hasattr(item, "name"):
-                    functions.append(item)
+            return bool(node.decoratornames() & self._OVERLOAD_NAMES)
+        except Exception:
+            return False
 
-            # Dictionary of lists of all functions by name
-            overloadedfunctions = {}
-            for item in functions:
-                if item.name in overloadedfunctions:
-                    overloadedfunctions[item.name].append(item)
-                else:
-                    overloadedfunctions[item.name] = [item]
+    def _check_overloads_in_body(self, body):
+        """Check a list of body nodes for mixed async/sync overloads."""
+        # Group functions by name
+        functions_by_name = {}
+        for item in body:
+            if isinstance(item, (astroid.FunctionDef, astroid.AsyncFunctionDef)):
+                functions_by_name.setdefault(item.name, []).append(item)
 
-            # Loop through the overloaded functions and check they are the same type
-            for funct in overloadedfunctions.values():
-                if (
-                    len(funct) > 1
-                ):  # only need to check if there is more than 1 function with the same name
-                    function_is_async = None
+        for funct_group in functions_by_name.values():
+            if len(funct_group) <= 1:
+                continue
 
-                    for item in funct:
-                        if function_is_async is None:
-                            function_is_async = self.is_function_async(item)
+            # Only check groups where at least one member has @overload
+            has_overload = any(
+                self._has_overload_decorator(f) for f in funct_group
+            )
+            if not has_overload:
+                continue
 
-                        else:
-                            if function_is_async != self.is_function_async(item):
-                                self.add_message(
-                                    msgid=f"invalid-use-of-overload",
-                                    node=item,
-                                    confidence=None,
-                                )
-        except:
+            function_is_async = None
+            for item in funct_group:
+                item_is_async = isinstance(item, astroid.AsyncFunctionDef)
+                if function_is_async is None:
+                    function_is_async = item_is_async
+                elif function_is_async != item_is_async:
+                    self.add_message(
+                        msgid="invalid-use-of-overload",
+                        node=item,
+                        confidence=None,
+                    )
+
+    def visit_classdef(self, node):
+        """Check overloads within a class."""
+        try:
+            self._check_overloads_in_body(node.body)
+        except Exception:
             pass
 
-    def is_function_async(self, node):
+    def visit_module(self, node):
+        """Check overloads at module level."""
         try:
-            str(node.__class__).index("Async")
-            return True
-        except:
-            return False
+            self._check_overloads_in_body(node.body)
+        except Exception:
+            pass
 
 
 class DoNotUseDeprecatedAsyncioIscoroutinefunction(BaseChecker):

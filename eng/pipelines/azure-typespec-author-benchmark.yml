@@ -84,7 +84,7 @@ extends:
                 inputs:
                   version: '8.x'
 
-              # Install Node.js and Vally CLI
+              # Install Node.js, Vally CLI, and Copilot SDK
               - task: NodeTool@0
                 inputs:
                   versionSpec: '22.x'
@@ -98,12 +98,17 @@ extends:
               - script: npm install -g @microsoft/vally-cli
                 displayName: Install Vally CLI
 
+              - script: npm install -g @github/copilot-sdk
+                displayName: Install Copilot SDK
+
               # Run evaluations
               - script: |
                   vally eval --suite all --workspace ./debug --output-dir ./results --verbose || true
                 displayName: Run azure-typespec-author evaluations
                 workingDirectory: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate
                 continueOnError: true
+                env:
+                  GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
 
             templateContext:
               outputs:

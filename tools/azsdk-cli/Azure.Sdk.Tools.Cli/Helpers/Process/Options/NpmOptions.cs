@@ -65,6 +65,8 @@ public class NpmOptions : ProcessOptions, IProcessOptions
     /// Resolves the binary command from node_modules/.bin when a prefix is provided
     /// and the binary exists locally. Returns null to fall back to npm.
     /// On Windows, prefers the .cmd shim; on Unix, uses the script directly.
+    /// This is to solve the issue when '.npmrc' is specified, where npm would try to
+    /// resolve the package from the feed but the command name is not the package name.
     /// </summary>
     private static string? ResolveBinCommand(string? prefix, string[] args)
     {

@@ -43,7 +43,7 @@ $env = & /eng/common/TestResources/New-TestResources.ps1 `
     -TestApplicationSecret "" `
     -TestApplicationOid $identity.PrincipalId `
     -Location 'westus3' `
-    -DeleteAfterHours 168 `
+    -DeleteAfterHours 72 `
     -TestResourcesDirectory 'azure' `
     -SuppressVsoCommands:$true `
     -CI `

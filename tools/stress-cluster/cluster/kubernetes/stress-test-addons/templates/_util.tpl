@@ -27,7 +27,8 @@ Fields added to global context and returned:
 .Stress.Scenario - A `.` value passed down from a range loop over a scenarios list
             from values.yaml or a default value "stress".
 .Stress.ResourceGroupName - A pre-calculated resource group name value that can be passed down to various configurations that require it.
-            Stress test resource groups are always created with the SSS3PT_ prefix.
+            Stress test resource groups are always created with the SSS3PT_ prefix and must stay within the
+            63 character Kubernetes label limit because the full value is also used as a Job label.
 .Stress.BaseName - A random, six character, lowercase alpha string that can be used for naming and is valid for most azure resources.
 
 See https://github.com/Masterminds/sprig/tree/master/docs for template function reference
@@ -37,6 +38,9 @@ See https://github.com/Masterminds/sprig/tree/master/docs for template function 
 {{- $_global := index . 0 -}}
 {{- $_scenario := index . 1 -}}
 {{- $resourceGroupName := print "SSS3PT_" (lower (print $_global.Release.Namespace "-" $_scenario.Scenario "-" $_global.Release.Name "-" $_global.Release.Revision)) -}}
+{{- if gt (len $resourceGroupName) 63 -}}
+{{- fail (printf "Computed stress resource group name '%s' exceeds the 63 character Kubernetes label limit. Shorten the namespace, scenario, or release name." $resourceGroupName) -}}
+{{- end -}}
 {{- /* Use lowercase alphanumeric characters beginning with a letter for maximum azure resource naming compatibility */ -}}
 {{- $uniqueTestId := lower (print "s" (trunc 5 (sha1sum $resourceGroupName) ) ) -}}
 {{- /* Create add Stress context to top level keys of global context */}}

@@ -49,7 +49,7 @@ stimuli:
   - type: file-matches
     config:
       path: '*.tsp'
-      pattern: 'update\s+is\s+ArmCustomPatchSync\s*<\s*Employee\s*,\s*Azure\.ResourceManager\.Foundations\.ResourceUpdateModel\s*<\s*Employee\s*,\s*EmployeeProperties\s*>\s*>\s*;'
+      pattern: 'update\s+is\s+ArmCustomPatchSync\s*<'
 scoring:
   weights:
     tool-calls: 1

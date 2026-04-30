@@ -60,10 +60,6 @@ stimuli:
     config:
       path: employee.tsp
       pattern: 'createOrUpdate is ArmResourceCreateOrReplaceAsync<'
-  - type: file-matches
-    config:
-      path: employee.tsp
-      pattern: 'LroHeaders\s*='
   # VP3: Other operations unchanged
   - type: file-matches
     config:

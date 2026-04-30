@@ -184,6 +184,24 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         references a renamed or removed symbol. In your Reason, identify the failing symbol and
         what changed, but do NOT instruct editing the generated file. The automated patch agent
         will locate and fix the correct customization file.
+
+        **Azure SDK Analyzer Errors (AZC codes):**
+        When a feedback item contains an AZC analyzer error code, use the following routing table:
+
+        | Code    | Description                  | Classification          | Action                                                       |
+        |---------|------------------------------|-------------------------|--------------------------------------------------------------|
+        | AZC0012 | Generic type name violation  | TSP_APPLICABLE          | Add `@@clientName(Type, "SpecificName", "csharp")` decorator |
+        | AZC0030 | Model naming suffix          | TSP_APPLICABLE          | Add `@@clientName(Model, "NameWithSuffix", "csharp")`        |
+        | AZC0034 | Type name conflict           | TSP_APPLICABLE          | Add `@@clientName(Type, "UniqueNonConflictingName", "csharp")`|
+        | AZC0035 | Missing model factory method | TSP_APPLICABLE          | Add `@@usage(Model, Usage.output)` decorator                 |
+
+        For any OTHER AZC code not in the table above (e.g., AZC0002-AZC0021, AZC0100+, AZC0150), classify as
+        **REQUIRES_MANUAL_INTERVENTION**. In the Reason, include:
+        1. The specific AZC code and what it means
+        2. A brief explanation of what fix is needed (e.g., "Add a protected parameterless constructor for mocking")
+
+        Do NOT classify unknown AZC codes as CODE_CUSTOMIZATION — they represent SDK design guidelines
+        that require intentional human decisions about API shape.
         """;
     }
 

@@ -190,10 +190,19 @@ public class DotnetErrorDrivenPatchTemplate(
         **DO NOT** try to fix these cascading errors individually (e.g., by removing method calls,
         rewriting method bodies, or adding new members). Just rename the class declaration and the file.
 
-        ### 7. IGNORE ANALYZER RULES
-        Ignore analyzer warnings and errors with codes like `AZC0007`, `SA1517`, or any `AZC*`/`SA*`
-        prefixed codes. These are style/design analyzers, not compilation errors. Do NOT add constructors,
-        reformat code, or make any changes to satisfy analyzer rules.
+        ### 7. IGNORE STYLE ANALYZER RULES (SA*)
+        Ignore style analyzer warnings and errors with codes prefixed `SA*` (e.g., `SA1517`).
+        These are code style rules, not compilation errors. Do NOT reformat code to satisfy them.
+
+        ### 8. HANDLE AZURE SDK ANALYZER RULES (AZC*) CAREFULLY
+        Azure SDK analyzer errors (codes prefixed `AZC*`) are NOT style rules — they enforce SDK design guidelines.
+        - **AZC0012, AZC0030, AZC0034, AZC0035**: These are naming/type rules that should have been resolved
+          via TypeSpec decorators earlier in the pipeline. If they still appear here, do NOT attempt to fix them
+          in customization code. They require TypeSpec decorator changes (@@clientName, @@usage) that must be
+          applied upstream. Leave them for manual intervention.
+        - **All other AZC codes** (AZC0002-AZC0021, AZC0100+, AZC0150): These are SDK design guidelines
+          (convenience methods, parameter patterns, subclient factories). Do NOT add constructors, methods, or
+          restructure code to satisfy them — they require intentional API design decisions.
 
         """;
     }

@@ -3,6 +3,7 @@
 using System.CommandLine;
 using System.ComponentModel;
 using System.Text;
+using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
@@ -322,6 +323,9 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
         // ── Early exit cases based on first classification ──
 
+        // Append analyzer-specific MCP guidance before any early return
+        AppendAnalyzerGuidanceIfNeeded(manualInterventions);
+
         // Nothing was classified as tsp applicable and at least some feedback requires manual intervention
         if (tspApplicable == 0 && codeCustomizations == 0 && manualChanges > 0)
         {
@@ -424,6 +428,9 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 }
             }
         }
+
+        // Re-append analyzer guidance after Pass 2 may have added new manual intervention items
+        AppendAnalyzerGuidanceIfNeeded(manualInterventions);
 
         // Build for error context if no build happened yet (pure CODE_CUSTOMIZATION path or regen failed)
         if (!buildSucceeded && buildError == null)
@@ -684,6 +691,44 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             || host.EndsWith(".apiview.dev", StringComparison.OrdinalIgnoreCase)
             || host.Equals("apiviewstagingtest.com", StringComparison.OrdinalIgnoreCase)
             || host.EndsWith(".apiviewstagingtest.com", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static readonly Regex AnalyzerCodePattern = new(@"\bAZC\d{4}\b", RegexOptions.Compiled);
+
+    /// <summary>
+    /// Appends MCP guidance to the manual interventions list when Azure SDK analyzer errors are detected.
+    /// Provides two options: using the GeneratorAgent MCP tools (if available) or manual resolution.
+    /// This method is idempotent — it will not append guidance if it has already been added.
+    /// </summary>
+    internal static void AppendAnalyzerGuidanceIfNeeded(List<string> manualInterventions)
+    {
+        if (manualInterventions.Count == 0)
+        {
+            return;
+        }
+
+        // Check if guidance was already appended (idempotency)
+        if (manualInterventions.Any(item => item.StartsWith("[Analyzer Fix Option")))
+        {
+            return;
+        }
+
+        var hasAnalyzerCodes = manualInterventions.Any(item => AnalyzerCodePattern.IsMatch(item));
+        if (!hasAnalyzerCodes)
+        {
+            return;
+        }
+
+        manualInterventions.Add(
+            "[Analyzer Fix Option A] If the Azure.GeneratorAgent MCP server tools are available in your environment " +
+            "(e.g., when working directly in the azure-sdk-for-net repo), use the `build_and_classify` tool to get " +
+            "deterministic fix suggestions, then apply them with `batch_fix`. These tools can automatically resolve " +
+            "many AZC analyzer errors.");
+        manualInterventions.Add(
+            "[Analyzer Fix Option B] If MCP tools are not available (e.g., when working from the specs repo or a " +
+            "different context), apply the fixes manually based on the guidance in the Reason field above. For naming " +
+            "rules (AZC0012, AZC0030, AZC0034, AZC0035), add the appropriate @@clientName or @@usage decorator in " +
+            "client.tsp. For other AZC rules, refer to the Azure SDK design guidelines.");
     }
 
 }

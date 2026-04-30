@@ -52,7 +52,7 @@ stages:
 
       # TODO: Remove --dryrun before merge
       - task: AzureCLI@2
-        displayNamee: 'Upload cache files to storage'
+        displayName: 'Upload cache files to storage'
         inputs:
           azureSubscription: 'Azure SDK Artifacts'
           scriptType: pscore

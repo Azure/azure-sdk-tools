@@ -15,13 +15,13 @@ All commands below should be run from this directory (`evaluate/`).
 ### Run all evaluations
 
 ```bash
-vally run --suite all
+vally eval --suite all --output-dir ./result --workspace ./debug --verbose
 ```
 
 Or equivalently, run every `*.eval.yaml` file at once:
 
 ```bash
-vally run evals/*.eval.yaml
+vally eval --eval-spec evals/eval.yaml --output-dir ./result --workspace ./debug
 ```
 
 ### Run a single evaluation
@@ -29,7 +29,7 @@ vally run evals/*.eval.yaml
 Pass the path to a specific eval file:
 
 ```bash
-vally run evals/001001.eval.yaml
+vally eval --eval-spec evals/001001.eval.yaml --output-dir ./result-001001 --workspace ./debug-001001
 ```
 
 ### Run a named test suite
@@ -49,30 +49,28 @@ Test suites are defined in `.vally.yaml` under the `suites` key. Available suite
 Run a suite by name:
 
 ```bash
-vally run --suite versioning
+vally eval --suite versioning --output-dir versioning
 ```
 
-### Override the environment
+### Parallel run the environment
 
-By default evals use the `azsdk-mcp` environment (local KB at `http://localhost:8088`).
-To use the remote KB environment (no local KB required), specify the environment explicitly:
-
-```bash
-vally run --environment azsdk-mcp-remote-kb evals/001001.eval.yaml
-```
-
-Or for an entire suite:
+By default evals use the `azsdk-mcp` environment (local KB at `http://localhost:8088`) one by one.
+To use the remote KB environment, you can parallel run after editing environment to `azsdk-mcp-remote-kb`, and set workers with:
 
 ```bash
-vally run --suite versioning --environment azsdk-mcp-remote-kb
+vally eval --eval-spec eval.yaml --workers 3
 ```
 
 ## Results
 
-Results are written to the `results/` directory after each run. You can view them with:
+Results are written to the `results/` directory after each run. You can rerun graders with:
 
 ```bash
-vally report results/
+vally eval --eval-spec eval.yaml --skip-grade --output jsonl | vally grade --eval-spec eval.yaml
+```
+
+```bash
+vally grade --eval-spec eval.yaml < results/results.jsonl
 ```
 
 ## File Structure
@@ -83,10 +81,11 @@ evaluate/
 ├── evals/               # Individual eval specs (one per test case)
 │   ├── 001001.eval.yaml
 │   ├── ...
-│   └── all.eval.yaml    # Combined file with all cases (used for parallel runs)
+│   └── eval.yaml        # Combined file with all cases (used for parallel runs)
 ├── fixtures/            # TypeSpec project fixtures referenced by evals
 │   ├── 001-share-version-new-feature/
 │   ├── Microsoft.Widget/
 │   └── ...
-└── results/             # Eval run output (git-ignored)
+└── results/             # Eval run output
+└── debug/               # Eval run workspace
 ```

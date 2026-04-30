@@ -6,8 +6,7 @@ namespace GitHubTeamUserStore
     public class GitHubEventClient
     {
         private const int MaxPageSize = 100;
-        // This needs to be done set because both GetAllMembers and GetAllChildTeams API calls auto-paginate
-        // but default to a page size of 30. Default to 100/page to reduce the number of API calls
+        // The repository label API auto-paginates, but defaults to 30 items per page. Use 100 to reduce calls.
         private static readonly ApiOptions _apiOptions = new ApiOptions() { PageSize = MaxPageSize };
         private readonly GitHubClient _gitHubClient;
 
@@ -46,34 +45,6 @@ namespace GitHubTeamUserStore
                 rateLimitMessage = $"{prependMessage} {rateLimitMessage}";
             }
             Console.WriteLine(rateLimitMessage);
-        }
-
-        // Given a teamId, get the Team from github. Chances are, this is only going to be used to get
-        // the first team
-        public async Task<Team> GetTeamById(int teamId)
-        {
-            return await _gitHubClient.Organization.Team.Get(teamId);
-        }
-
-        /// <summary>
-        /// Given an Octokit.Team, call to get the team members. Note: GitHub's GetTeamMembers API gets all of the Users
-        /// for the team which includes all the members of child teams.
-        /// </summary>
-        /// <param name="team">Octokit.Team, the team whose members to retrieve.</param>
-        /// <returns>IReadOnlyList of Octokit.Users</returns>
-        public async Task<IReadOnlyList<User>> GetTeamMembers(Team team)
-        {
-            return await _gitHubClient.Organization.Team.GetAllMembers(team.Id, _apiOptions);
-        }
-
-        /// <summary>
-        /// Given an Octokit.Team, call to get all child teams.
-        /// </summary>
-        /// <param name="team">Octokit.Team, the team whose child teams to retrieve.</param>
-        /// <returns>IReadOnlyList of Octkit.Team</returns>
-        public async Task<IReadOnlyList<Team>> GetAllChildTeams(Team team)
-        {
-            return await _gitHubClient.Organization.Team.GetAllChildTeams(team.Id, _apiOptions);
         }
 
         public async Task<HashSet<string>> GetRepositoryLabels(string repository)

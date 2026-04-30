@@ -2,7 +2,7 @@
 
 ## Overview
 
-The github-team-user-store is an internal only tool. The tool recursively gets the list of teams/users for Azure/azure-sdk-write and all of the teams within that hierarchy, then writes the resulting cache files locally. The purpose of this is to enable team usage in CODEOWNERS by allowing the CodeOwnersParser to pull the list of users when it encounters a non-user, or team, entry. The reason this code is not directly in the CodeOwnersParser is because it requires privileged GitHub and Open Source API access that is not readily available or prudent to add to every consumer.
+The github-team-user-store is an internal only tool. The tool traverses the Azure/azure-sdk-write team hierarchy through the Open Source Portal (OSP), gets the member lists for each team, and writes the resulting cache files locally. The purpose of this is to enable team usage in CODEOWNERS by allowing the CodeOwnersParser to pull the list of users when it encounters a non-user, or team, entry. The reason this code is not directly in the CodeOwnersParser is because it requires privileged GitHub and Open Source API access that is not readily available or prudent to add to every consumer.
 
 ### github-team-user-store processing
 
@@ -11,14 +11,16 @@ The tool creates:
 - `user-org-visibility-blob`: a `Dictionary<string, bool>` encoded as JSON for the `azure-sdk-write` users, where the value is `true` when the user's Azure org membership is public
 - `repository-labels-blob`: a `Dictionary<string, HashSet<string>>` encoded as JSON keyed by repository name
 
+OSP supplies the team hierarchy, team members, and public Azure org membership. GitHub is still used for repository labels and rate-limit reporting.
+
 The tool writes these files to the directory provided by `--outputDirectory`. A separate step can upload those files.
 
 ### Tool requirements
 
 The tool requires two things:
 
-1. A GitHub PAT from a user that has organization access in the GITHUB_TOKEN environment variable. This requires a GitHub fine-grained token with Organization->Membership read-only permission. A bot account won't work here, this needs to be created by a user with permissions for the org. Note: Nothing is edited here, only read.
-2. An Azure credential that can call the Open Source API at `https://repos.opensource.microsoft.com/api/organizations/Azure/public_memberships`. The tool uses Azure Identity to acquire that token.
+1. A GitHub PAT in the GITHUB_TOKEN environment variable for repository label retrieval and GitHub rate-limit queries.
+2. An Azure credential that can call the Open Source API endpoints used for team children, team members, and public memberships. The tool uses Azure Identity to acquire that token.
 
 ### Command line
 

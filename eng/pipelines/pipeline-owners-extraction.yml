@@ -50,6 +50,21 @@ stages:
         env:
           GITHUB_TOKEN: $(azuresdk-github-pat)
 
+      # TODO: Remove --dryrun before merge
+      - task: AzureCLI@2
+        displayNamee: 'Upload cache files to storage'
+        inputs:
+          azureSubscription: 'Azure SDK Artifacts'
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            az storage blob upload-batch `
+              --account-name azuresdkartifacts `
+              --source "$(CacheOutputDirectory)" `
+              --destination 'azure-sdk-write-teams' `
+              --auth-mode login `
+              --dryrun
+
       - publish: $(CacheOutputDirectory)
         displayName: Publish cache files artifact
         artifact: github-team-user-store-cache

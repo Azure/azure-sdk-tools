@@ -7,7 +7,7 @@ This document describes the full API review pipeline implemented in `src/_apivie
 When a review is requested, the `ApiViewReview` class:
 
 1. Splits the API text into sections
-2. Runs three LLM prompt types in parallel across all sections
+2. Runs two LLM prompt types in parallel across all sections (guideline and context)
 3. Filters, deduplicates, and scores the resulting comments
 4. Returns a sorted, deduplicated list of `Comment` objects
 

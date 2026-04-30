@@ -400,7 +400,6 @@ class ApiViewReview:
                 status_array=prompt_status,
             )
 
-            # Generic prompt (skipped for languages in SKIP_GENERIC_LANGUAGES)
             if not skip_generic:
                 generic_metadata = self._load_generic_metadata()
                 generic_key = f"{generic_tag}_{section_idx}"
@@ -900,12 +899,13 @@ class ApiViewReview:
             )
             self._print_comment_counts()
 
-            # Run generic comments through a filter
-            start_time = time()
-            self._filter_generic_comments()
-            end_time = time()
-            self._print_message(f"  Generic comments filtered in {end_time - start_time:.2f} seconds.")
-            self._print_comment_counts()
+            # Run generic comments through a filter (skip if none exist)
+            if any(c.is_generic for c in self.results.comments):
+                start_time = time()
+                self._filter_generic_comments()
+                end_time = time()
+                self._print_message(f"  Generic comments filtered in {end_time - start_time:.2f} seconds.")
+                self._print_comment_counts()
 
             # Track time for _deduplicate_comments
             deduplicate_start_time = time()

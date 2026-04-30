@@ -5,7 +5,7 @@ applyTo: "**"
 
 # APIView Copilot
 
-AI-powered automated reviewer for Azure SDK API surface reviews. Ingests APIView text representations of SDK public APIs, sections them, runs multi-stage LLM prompts (guideline, context, and generic reviews), filters and deduplicates results, and produces structured review comments. Deployed as a **FastAPI** web service on Azure App Service with a CLI (`avc`) for local development.
+AI-powered automated reviewer for Azure SDK API surface reviews. Ingests APIView text representations of SDK public APIs, sections them, runs multi-stage LLM prompts (guideline and context reviews), filters and deduplicates results, and produces structured review comments. Deployed as a **FastAPI** web service on Azure App Service with a CLI (`avc`) for local development.
 
 ## Project Structure
 

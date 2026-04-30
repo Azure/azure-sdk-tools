@@ -58,8 +58,9 @@ Respond with strict JSON matching the provided schema:
 
 * **title** — A short, factual title that starts with `title_prefix`
   followed by a single space and a concise description of the problem.
-  Aim for 8-14 words after the prefix. No trailing punctuation. Do not
-  paraphrase the prefix.
+  Up to ~14 words after the prefix; shorter is fine when the bug is
+  simple. Use sentence case after the prefix. No trailing punctuation.
+  Do not paraphrase the prefix.
 * **body** — The full GitHub issue body in Markdown. Structure it as
   the following sections, in this order, omitting any section for which
   you have no information:

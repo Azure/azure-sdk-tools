@@ -121,15 +121,15 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
         public void Evaluate_StaleTeamUserCache_ThrowsException()
         {
             var context = CreateContext(new OwnerWorkItem { WorkItemId = 1, GitHubAlias = "someuser" });
+            var expectedMessage = $"{DefaultStorageConstants.TeamUserBlobUri} is stale.";
             _mockCacheValidator
                 .Setup(v => v.ThrowIfCacheOlderThan(DefaultStorageConstants.TeamUserBlobUri, It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-                .ThrowsAsync(new InvalidOperationException($"{DefaultStorageConstants.TeamUserBlobUri} is stale."));
+                .ThrowsAsync(new InvalidOperationException(expectedMessage));
 
             var ex = Assert.ThrowsAsync<InvalidOperationException>(
                 async () => await _rule.Evaluate(context, CancellationToken.None));
 
-            Assert.That(ex!.Message, Does.Contain("CODEOWNERS cache MUST be updated before running audit"));
-            Assert.That(ex.Message, Does.Contain(DefaultStorageConstants.TeamUserBlobUri));
+            Assert.That(ex!.Message, Is.EqualTo(expectedMessage));
         }
 
         [Test]
@@ -1183,15 +1183,15 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
         public void Evaluate_StaleTeamUserCache_ThrowsException()
         {
             var context = CreateContext(new OwnerWorkItem { WorkItemId = 1, GitHubAlias = "Azure/my-team" });
+            var expectedMessage = $"{DefaultStorageConstants.TeamUserBlobUri} is stale.";
             _mockCacheValidator
                 .Setup(v => v.ThrowIfCacheOlderThan(DefaultStorageConstants.TeamUserBlobUri, It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-                .ThrowsAsync(new InvalidOperationException($"{DefaultStorageConstants.TeamUserBlobUri} is stale."));
+                .ThrowsAsync(new InvalidOperationException(expectedMessage));
 
             var ex = Assert.ThrowsAsync<InvalidOperationException>(
                 async () => await _rule.Evaluate(context, CancellationToken.None));
 
-            Assert.That(ex!.Message, Does.Contain("CODEOWNERS cache MUST be updated before running audit"));
-            Assert.That(ex.Message, Does.Contain(DefaultStorageConstants.TeamUserBlobUri));
+            Assert.That(ex!.Message, Is.EqualTo(expectedMessage));
         }
 
         [Test]

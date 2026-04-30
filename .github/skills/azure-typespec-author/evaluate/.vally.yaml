@@ -19,7 +19,7 @@ environments:
           AZSDKTOOLS_AGENT_TESTING: "false"
           AZSDKTOOLS_COLLECT_TELEMETRY: "false"
           AZURE_SDK_KB_ENDPOINT: "http://localhost:8088"
-  azsdk-mcp-remote:
+  azsdk-mcp-remote-kb:
     mcpServers:
       azure-sdk-mcp:
         type: stdio

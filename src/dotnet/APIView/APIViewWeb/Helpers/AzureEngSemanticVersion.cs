@@ -41,7 +41,7 @@ public class AzureEngSemanticVersion : IComparable<AzureEngSemanticVersion>
     {
         RawVersion = version;
         bool isPython = string.Equals(language, "Python", StringComparison.OrdinalIgnoreCase);
-        var regex = isPython ? PythonSemVerRegex : SemVerRegex;
+        var regex = isPython ? SetupPythonConventions() : SetupDefaultConventions();
         var match = regex.Match(version);
 
         if (match.Success)
@@ -55,7 +55,6 @@ public class AzureEngSemanticVersion : IComparable<AzureEngSemanticVersion>
             bool skipPrelabel = false;
             if (isPython)
             {
-                SetupPythonConventions();
                 if (match.Groups["postword"].Success)
                 {
                     IsPostRelease = true;
@@ -72,10 +71,6 @@ public class AzureEngSemanticVersion : IComparable<AzureEngSemanticVersion>
                     PostReleaseSeparator = ".post";
                     skipPrelabel = true;
                 }
-            }
-            else
-            {
-                SetupDefaultConventions();
             }
 
             if (!skipPrelabel && match.Groups["prelabel"].Success)
@@ -130,22 +125,24 @@ public class AzureEngSemanticVersion : IComparable<AzureEngSemanticVersion>
         }
     }
 
-    private void SetupPythonConventions()
+    private Regex SetupPythonConventions()
     {
         PrereleaseLabelSeparator = string.Empty;
         PrereleaseNumberSeparator = string.Empty;
         BuildNumberSeparator = string.Empty;
         DefaultPrereleaseLabel = "b";
         DefaultAlphaReleaseLabel = "a";
+        return PythonSemVerRegex;
     }
 
-    private void SetupDefaultConventions()
+    private Regex SetupDefaultConventions()
     {
         PrereleaseLabelSeparator = "-";
         PrereleaseNumberSeparator = ".";
         BuildNumberSeparator = ".";
         DefaultPrereleaseLabel = "beta";
         DefaultAlphaReleaseLabel = "alpha";
+        return SemVerRegex;
     }
 
     public override string ToString()

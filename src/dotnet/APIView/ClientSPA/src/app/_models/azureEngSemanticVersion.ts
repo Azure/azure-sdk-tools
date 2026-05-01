@@ -28,7 +28,7 @@ export class AzureEngSemanticVersion {
 
     constructor(version: string, language: string) {
         const isPython = language?.toLowerCase() === "python";
-        const regex = isPython ? AzureEngSemanticVersion.PYTHON_SEM_VAR_REGEX : AzureEngSemanticVersion.SEM_VAR_REGEX;
+        const regex = isPython ? this.setupPythonConventions() : this.setupDefaultConventions();
         const versionParts = regex.exec(version);
         
         if (versionParts) {
@@ -41,7 +41,6 @@ export class AzureEngSemanticVersion {
 
             let skipPrelabel = false;
             if (isPython) {
-                this.setupPythonConventions();
                 if (versionParts.groups!['postword']) {
                     this.isPostRelease = true;
                     this.postReleaseNumber = versionParts.groups!['postnum'] ? parseInt(versionParts.groups!['postnum']) : 0;
@@ -56,8 +55,6 @@ export class AzureEngSemanticVersion {
                     this.postReleaseSeparator = ".post";
                     skipPrelabel = true;
                 }
-            } else {
-                this.setupDefaultConventions();
             }
 
             if (skipPrelabel || !versionParts.groups!['prelabel']) {
@@ -90,18 +87,20 @@ export class AzureEngSemanticVersion {
         }
     }
 
-    private setupPythonConventions() : void {
+    private setupPythonConventions() : RegExp {
         this.prereleaseLabelSeparator = this.prereleaseNumberSeparator = this.buildNumberSeparator = ""
         this.defaultPrereleaseLabel = "b"
         this.defaultAlphaReleaseLabel = "a"
+        return AzureEngSemanticVersion.PYTHON_SEM_VAR_REGEX;
     }
 
-    private setupDefaultConventions() : void {
+    private setupDefaultConventions() : RegExp {
         this.prereleaseLabelSeparator = "-"
         this.prereleaseNumberSeparator = "."
         this.buildNumberSeparator = "."
         this.defaultPrereleaseLabel = "beta"
         this.defaultAlphaReleaseLabel = "alpha"
+        return AzureEngSemanticVersion.SEM_VAR_REGEX;
     }
 
     compareTo(other: AzureEngSemanticVersion): number {

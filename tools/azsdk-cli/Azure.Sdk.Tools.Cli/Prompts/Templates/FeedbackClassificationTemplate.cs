@@ -185,16 +185,18 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         what changed, but do NOT instruct editing the generated file. The automated patch agent
         will locate and fix the correct customization file.
 
-        **Azure SDK Analyzer Errors (AZC codes):**
-        When a feedback item contains an AZC analyzer error code, first determine WHERE the error originates:
+        **.NET Azure SDK Analyzer Errors (AZC/SA codes):**
+        These analyzer rules apply ONLY to .NET packages. When a feedback item contains an AZC or SA
+        analyzer error code from a .NET build, first determine WHERE the error originates:
 
-        **CRITICAL: Errors in custom/handwritten code (NOT generated code) should be classified as SUCCESS.**
-        If an AZC or SA error originates from a file in a customization directory (e.g., .NET partial classes
-        in non-Generated folders, Java `*Customization.java`, Python `*_patch.py`), this means the code was
-        written intentionally by a developer who chose not to follow Azure SDK guidelines. Do NOT fix it.
-        Classify as **SUCCESS** with a Reason like: "Analyzer error in custom code — this appears to be an
-        intentional design decision. Recommend reviewing the Azure SDK guidelines and obtaining architect
-        approval if deviating from conventions for a unique scenario."
+        **CRITICAL: Errors in custom/handwritten code (NOT generated code) should be classified as
+        REQUIRES_MANUAL_INTERVENTION.** If an AZC or SA error originates from a customization file
+        (e.g., .NET partial classes in non-Generated folders), this means the developer wrote code that
+        does not align with Azure SDK guidelines. Do NOT attempt to fix it automatically — but DO flag it.
+        Classify as **REQUIRES_MANUAL_INTERVENTION** with a Reason like: "Analyzer error [CODE] in custom
+        code — custom code should be updated to align with Azure SDK design guidelines. Review the guidelines
+        at https://azure.github.io/azure-sdk/dotnet_introduction.html and obtain architect approval if
+        deviating from conventions for a unique scenario."
 
         For analyzer errors in GENERATED code, use the following routing table:
 
@@ -213,9 +215,10 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         Do NOT classify unknown AZC codes as CODE_CUSTOMIZATION — they represent SDK design guidelines
         that require intentional human decisions about API shape.
 
-        **Style Analyzer Errors (SA codes):**
+        **Style Analyzer Errors (SA codes) — .NET only:**
         When a feedback item contains an `SA*` code (e.g., SA1517, SA1000):
-        - If the error is in **custom/handwritten code**: classify as **SUCCESS** (same logic as AZC in custom code above).
+        - If the error is in **custom code**: classify as **REQUIRES_MANUAL_INTERVENTION** with guidance
+          to update custom code to align with Azure SDK style guidelines.
         - If the error is in **generated code**: classify as **REQUIRES_MANUAL_INTERVENTION**. Include the SA code
           and your best recommendation for how to resolve it based on the error message.
         """;

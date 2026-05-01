@@ -197,8 +197,9 @@ public class DotnetErrorDrivenPatchTemplate(
 
         ### 8. HANDLE AZURE SDK ANALYZER RULES (AZC*) CAREFULLY
         Azure SDK analyzer errors (codes prefixed `AZC*`) are NOT style rules — they enforce SDK design guidelines.
-        - **If the error is in custom/handwritten code** (NOT in a Generated folder): do NOT fix it. The developer
-          intentionally wrote that code and chose to deviate from guidelines. Ignore these errors entirely.
+        - **If the error is in custom/handwritten code** (NOT in a Generated folder): do NOT fix it automatically.
+          The developer should update their custom code to align with Azure SDK guidelines, but that is their
+          responsibility — not something to patch here.
         - **AZC0012, AZC0030, AZC0034, AZC0035**: These are naming/type rules that should have been resolved
           via TypeSpec decorators earlier in the pipeline. If they still appear here, do NOT attempt to fix them
           in customization code. They require TypeSpec decorator changes (@@clientName, @@usage) that must be

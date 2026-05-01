@@ -1,3 +1,4 @@
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -274,6 +275,65 @@ public class CustomizedCodeUpdateToolAutoTests
 
         Assert.That(result.Success, Is.False);
         Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput));
+    }
+
+    [Test]
+    public async Task Classification_CopilotCliNotFound_ReturnsCopilotError()
+    {
+        var innerEx = new InvalidOperationException(
+            "Copilot CLI not found at 'runtimes/win-x64/native/copilot.exe'. Ensure the SDK NuGet package was restored correctly.");
+        var copilotEx = new CopilotCliUnavailableException(
+            "The GitHub Copilot CLI could not be found or failed to start.", innerEx);
+
+        var (tool, _) = CreateTool(configureClassifier: c =>
+            c.Setup(x => x.ClassifyItemsAsync(
+                    It.IsAny<List<FeedbackItem>>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<int?>(),
+                    It.IsAny<CancellationToken>()))
+                .ThrowsAsync(copilotEx));
+
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError));
+        Assert.That(result.Message, Does.Contain("Copilot CLI"));
+    }
+
+    [Test]
+    public async Task Classification_UnexpectedException_SurfacesActualError()
+    {
+        var unexpectedEx = new HttpRequestException("Network timeout connecting to AI service");
+
+        var (tool, _) = CreateTool(configureClassifier: c =>
+            c.Setup(x => x.ClassifyItemsAsync(
+                    It.IsAny<List<FeedbackItem>>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<int?>(),
+                    It.IsAny<CancellationToken>()))
+                .ThrowsAsync(unexpectedEx));
+
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError));
+        Assert.That(result.Message, Does.Contain("Network timeout"));
     }
 
     [Test]

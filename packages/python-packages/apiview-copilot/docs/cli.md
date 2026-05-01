@@ -428,12 +428,12 @@ avc report memory -s 2026-01-01 -e 2026-01-31 [-l python] [--format json|yaml]
 
 ---
 
-### `avc report analyze-comments`
+### `avc report architect-comments`
 
-Analyze human reviewer comment themes for a language and date range using an LLM.
+Retrieve human architect review comments for a date range. Returns comments from language board approvers, excluding Diagnostic and AI-generated comments. If `--language` is omitted, returns results for all languages. By default, only the first comment in each thread is returned (replies are excluded), and only threads whose first comment falls within the date window are included — replies to older threads are excluded even if the reply itself was created during the window. Use `--include-replies` to also include reply comments.
 
 ```bash
-avc report analyze-comments -l python -s 2026-01-01 -e 2026-01-31 [--environment staging]
+avc report architect-comments -s 2026-01-01 -e 2026-01-31 [-l python] [--all-commenters] [--include-replies] [--environment staging] [--format yaml]
 ```
 
 ---

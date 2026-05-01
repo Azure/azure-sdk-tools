@@ -92,6 +92,7 @@ stages:
 
         - task: PowerShell@2
           displayName: 'Post to github release'
+          condition: and(succeeded(), eq(${{ parameters.ShouldPublishExecutables }}, true))
           inputs:
             targetType: filePath
             # todo, move this local script from the build tools repo as well

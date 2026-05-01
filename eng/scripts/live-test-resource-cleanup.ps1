@@ -468,11 +468,12 @@ function DeleteAndPurgeGroups([array]$toDelete) {
           SetStorageNetworkAccessRules -ResourceGroupName $rg.ResourceGroupName -SetFirewall -CI:($null -ne $env:SYSTEM_TEAMPROJECTID) 
           Remove-WormStorageAccounts -GroupPrefix $rg.ResourceGroupName -CI:($null -ne $env:SYSTEM_TEAMPROJECTID)
         }
+        Remove-StorageSyncServices -GroupPrefix $rg.ResourceGroupName -CI:($null -ne $env:SYSTEM_TEAMPROJECTID)
 
         Write-Host ($rg | Remove-AzResourceGroup -Force -AsJob).Name
       }
     } catch {
-      $errorMsg = "ERROR: Failure deleting/purging group $($rg.ResourceGroupName): `n $_.ToString()"
+      $errorMsg = "ERROR: Failure deleting/purging group $($rg.ResourceGroupName): `n $($_.ToString())"
       Write-Warning $errorMsg
       $errors += $errorMsg
     }

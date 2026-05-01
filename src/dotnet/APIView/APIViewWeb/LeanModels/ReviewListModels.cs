@@ -142,7 +142,7 @@ namespace APIViewWeb.LeanModels
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string PackageVersion
         {
-            get => this.Files.First().PackageVersion;
+            get => this.Files?.FirstOrDefault()?.PackageVersion;
         }
         public List<APIRevisionChangeHistoryModel> ChangeHistory { get; set; } = new List<APIRevisionChangeHistoryModel>();
         public APIRevisionType APIRevisionType { get; set; }
@@ -161,6 +161,7 @@ namespace APIViewWeb.LeanModels
         public bool IsDeleted { get; set; }
         public bool IsReleased { get; set; }
         public DateTime ReleasedOn { get; set; }
+        public string APIVersionId { get; set; }
         private string _sourceBranch;
         public string SourceBranch 
         { 
@@ -192,5 +193,6 @@ namespace APIViewWeb.LeanModels
         public DateTime CreatedOn { get; set; }
         public string Title { get; set; }
         public bool IsDeleted { get; set; }
+        public string APIVersionId { get; set; }
     }
 }

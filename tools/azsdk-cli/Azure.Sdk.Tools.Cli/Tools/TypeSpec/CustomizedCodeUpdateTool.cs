@@ -3,6 +3,7 @@
 using System.CommandLine;
 using System.ComponentModel;
 using System.Text;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
@@ -201,16 +202,40 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 language: languageService.Language.ToString(),
                 ct: ct);
         }
-        catch (Exception ex)
+        catch (CopilotCliUnavailableException ex)
         {
-            logger.LogError(ex, "No feedback items to process.");
+            logger.LogError(ex, "GitHub Copilot CLI is not available.");
             return new CustomizedCodeUpdateResponse
             {
                 Success = false,
-                ResponseError = "No feedback items provided. Please supply a customization request or API review URL.",
-                Message = "No feedback items provided. Please supply a customization request or API review URL.",
+                ResponseError = ex.Message,
+                Message = ex.Message,
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError,
+                BuildResult = ex.Message
+            };
+        }
+        catch (ArgumentException ex)
+        {
+            logger.LogError(ex, "Invalid input for feedback classification.");
+            return new CustomizedCodeUpdateResponse
+            {
+                Success = false,
+                ResponseError = ex.Message,
+                Message = ex.Message,
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
-                BuildResult = "No feedback items to process."
+                BuildResult = ex.Message
+            };
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Feedback classification failed unexpectedly.");
+            return new CustomizedCodeUpdateResponse
+            {
+                Success = false,
+                ResponseError = $"Feedback classification failed: {ex.Message}",
+                Message = $"Feedback classification failed: {ex.Message}",
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError,
+                BuildResult = $"Feedback classification failed: {ex.Message}"
             };
         }
         var feedbackDictionary = feedbackItems.ToDictionary(i => i.Id, i => i);

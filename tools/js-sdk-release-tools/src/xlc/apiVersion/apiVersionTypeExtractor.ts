@@ -21,11 +21,11 @@ export const getApiVersionType: IApiVersionTypeExtractor = async (packageRoot: s
     }
 }
 
-export const isModelOnly: IModelOnlyChecker = async (packageRoot: string): Promise<boolean> => {
+export const isModelOnly: IModelOnlyChecker = async (packageRoot: string, isBetaRelease?: boolean): Promise<boolean> => {
     const sdkType = getSDKType(packageRoot);
     switch (sdkType) {
         case SDKType.ModularClient:
-            return await mlcApi.isModelOnly(packageRoot);
+            return await mlcApi.isModelOnly(packageRoot, isBetaRelease);
         case SDKType.HighLevelClient:
             return false;
         case SDKType.RestLevelClient:

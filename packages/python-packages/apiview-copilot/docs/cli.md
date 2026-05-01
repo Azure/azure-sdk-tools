@@ -239,6 +239,45 @@ avc kb all-guidelines -l python [--markdown]
 
 ---
 
+### `avc kb check-links`
+
+Audit bidirectional links between guidelines, memories, and examples. Reports dangling references (target doesn't exist) and one-way links (A→B but B does not reference A back).
+
+```bash
+# Report issues for all languages
+avc kb check-links
+
+# Report issues for a single language
+avc kb check-links -l python
+
+# Repair all issues
+avc kb check-links --fix all
+
+# Repair only broken (dangling) references
+avc kb check-links --fix broken
+
+# Repair only one-way links (add missing back-refs)
+avc kb check-links --fix oneway
+```
+
+---
+
+### `avc kb consolidate-memories`
+
+Find and merge duplicate memories linked to the specified items. Runs in dry-run mode by default.
+
+```bash
+# Dry-run: show what would be merged
+avc kb consolidate-memories --kind guideline --ids <ID1> <ID2>
+
+# Execute the consolidation
+avc kb consolidate-memories --kind guideline --ids <ID1> --apply
+```
+
+`--kind` accepts `guideline`, `example`, or `memory`. `--ids` takes one or more IDs of the specified kind.
+
+---
+
 ## `avc db` — Database Operations
 
 ### `avc db get`
@@ -255,7 +294,12 @@ Available containers: `guidelines`, `examples`, `memories`, `review-jobs`, `metr
 
 ### `avc db delete`
 
-Permanently delete an item from the database. This is a **hard delete** — the item is removed from Cosmos DB entirely.
+Soft-delete an item from the database. The item is marked with `isDeleted: true` (not removed from Cosmos DB) and excluded from search results.
+
+For KB containers (`guidelines`, `memories`, `examples`), deletion automatically **cascades**:
+- Back-links are removed from all related items.
+- Orphaned examples (no remaining `memory_ids` or `guideline_ids`) are soft-deleted.
+- Orphaned memories and guidelines are always retained.
 
 ```bash
 avc db delete -c <CONTAINER> -i <ITEM_ID>
@@ -274,6 +318,8 @@ avc db purge
 # Purge specific containers, running the indexer first
 avc db purge -c guidelines memories --run-indexer
 ```
+
+Use `--verbose` (Knack built-in) to print each item as it is hard-deleted or skipped.
 
 ---
 
@@ -326,6 +372,25 @@ See [metrics.md](./metrics.md) for details on what is measured and how.
 
 ---
 
+### `avc report quality-trends`
+
+Generate the multi-language comment bucket trend chart for a calendar-month lookback ending on a specified date. The chart is saved under output/charts, matching the metrics command behavior.
+
+```bash
+avc report quality-trends [--end-date 2026-04-17] [--months 6] [--languages Python Java] [--exclude-human] [--neutral] [--environment production|staging]
+```
+
+| Option | Description |
+|--------|-------------|
+| `-e/--end-date` | Inclusive query end date; defaults to today, and its month counts as one of the requested months |
+| `--months` | Number of calendar months to look back from the end date |
+| `--languages` | Languages to include; defaults to Python, C#, Java, and JavaScript |
+| `--exclude-human` | Exclude human comments from the chart |
+| `--neutral` | Include neutral AI comments as a separate bucket |
+| `--environment` | `production` (default) or `staging` |
+
+---
+
 ### `avc report active-reviews`
 
 Query active APIView reviews in a date range.
@@ -363,12 +428,12 @@ avc report memory -s 2026-01-01 -e 2026-01-31 [-l python] [--format json|yaml]
 
 ---
 
-### `avc report analyze-comments`
+### `avc report architect-comments`
 
-Analyze human reviewer comment themes for a language and date range using an LLM.
+Retrieve human architect review comments for a date range. Returns comments from language board approvers, excluding Diagnostic and AI-generated comments. If `--language` is omitted, returns results for all languages. By default, only the first comment in each thread is returned (replies are excluded), and only threads whose first comment falls within the date window are included — replies to older threads are excluded even if the reply itself was created during the window. Use `--include-replies` to also include reply comments.
 
 ```bash
-avc report analyze-comments -l python -s 2026-01-01 -e 2026-01-31 [--environment staging]
+avc report architect-comments -s 2026-01-01 -e 2026-01-31 [-l python] [--all-commenters] [--include-replies] [--environment staging] [--format yaml]
 ```
 
 ---
@@ -397,6 +462,54 @@ avc apiview resolve-package -p "storage blobs" -l python
 ```
 
 Returns: package name, review ID, language, version.
+
+---
+
+### `avc apiview list-created-revisions`
+
+Count APIRevisions created in a date window, broken out by language and revision type (Automatic, Manual, PullRequest).
+
+```bash
+avc apiview list-created-revisions -s 2026-03-01 -e 2026-03-31
+
+# Exclude specific languages
+avc apiview list-created-revisions -s 2026-03-01 -e 2026-03-31 --exclude Java Go
+```
+
+| Option | Description |
+|--------|-------------|
+| `-s/--start-date` | Start date (`YYYY-MM-DD`) |
+| `-e/--end-date` | End date (`YYYY-MM-DD`) |
+| `--exclude` | Languages to exclude (e.g., `--exclude Java Go`) |
+| `--environment` | `production` (default) or `staging` |
+
+---
+
+### `avc apiview list-opened-revisions`
+
+Count APIRevisions that were actually opened/viewed in APIView in a date window, broken out by language and revision type. Queries Application Insights for page views, then enriches with Cosmos DB metadata.
+
+By default, all revisions belonging to viewed reviews are counted regardless of when they were created. Use `--created-in-window` to restrict to only revisions created within the date window.
+
+> **Note:** Application Insights default retention is 90 days. Queries beyond that window may return incomplete data.
+
+```bash
+avc apiview list-opened-revisions -s 2026-03-01 -e 2026-03-31
+
+# Exclude specific languages
+avc apiview list-opened-revisions -s 2026-03-01 -e 2026-03-31 --exclude Java Go
+
+# Only count revisions created within the window
+avc apiview list-opened-revisions -s 2026-03-01 -e 2026-03-31 --created-in-window
+```
+
+| Option | Description |
+|--------|-------------|
+| `-s/--start-date` | Start date (`YYYY-MM-DD`) |
+| `-e/--end-date` | End date (`YYYY-MM-DD`) |
+| `--exclude` | Languages to exclude (e.g., `--exclude Java Go`) |
+| `--created-in-window` | Only count revisions created within the date window |
+| `--environment` | `production` (default) or `staging` |
 
 ---
 

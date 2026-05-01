@@ -14,6 +14,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         public ReleasePlanWorkItem? ConfiguredReleasePlanForWorkItem { get; set; }
         public string? ConfiguredSDKPullRequest { get; set; }
         public Build? ConfiguredRunSDKGenerationPipeline { get; set; }
+        public string ConfiguredAPIViewStatus { get; set; } = "Approved";
 
         public Task<List<PackageWorkitemResponse>> ListPartialPackageWorkItemAsync(string packageName, string language, CancellationToken ct)
         {
@@ -39,7 +40,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
                     PipelineDefinitionUrl = "https://dev.azure.com/fake-org/fake-project/_build?definitionId=1",
                     WorkItemId = 0,
                     changeLogStatus = "Approved",
-                    APIViewStatus = "Approved",
+                    APIViewStatus = ConfiguredAPIViewStatus,
                     PackageNameStatus = "Approved",
                     PackageRepoPath = "template",
                     LatestPipelineRun = "https://dev.azure.com/fake-org/fake-project/_build/results?buildId=1",
@@ -132,6 +133,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         {
             var releasePlans = new List<ReleasePlanWorkItem>();
             return Task.FromResult(releasePlans);
+        }
+
+        Task<List<ReleasePlanWorkItem>> IDevOpsService.GetReleasePlansByProductAndLifecycleAsync(string productTreeId, string productLifecycle, bool isTestReleasePlan, CancellationToken ct)
+        {
+            return Task.FromResult(new List<ReleasePlanWorkItem>());
         }
 
         Task<ReleasePlanWorkItem> IDevOpsService.GetReleasePlanForWorkItemAsync(int workItemId, CancellationToken ct)
@@ -252,8 +258,18 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult<ProductInfo?>(null);
         }
 
-        Task<ReleasePlanWorkItem?> IDevOpsService.GetReleasePlanByTypeSpecProjectPathAsync(string typeSpecProjectPath, CancellationToken ct)
+        Task<ReleasePlanWorkItem?> IDevOpsService.GetReleasePlanByTypeSpecProjectPathAsync(string typeSpecProjectPath, bool includeFinishedPlans, CancellationToken ct)
         {
+            if (typeSpecProjectPath == "specification/testcontoso/Contoso.Management")
+            {
+                return Task.FromResult<ReleasePlanWorkItem?>(new ReleasePlanWorkItem
+                {
+                    ProductTreeId = "12345678-1234-5678-9012-123456789012",
+                    ProductLifecycle = "GA",
+                    Title = "Contoso Management Release Plan",
+                });
+            }
+
             return Task.FromResult<ReleasePlanWorkItem?>(null);
         }
 
@@ -281,6 +297,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             throw new NotImplementedException();
         }
         public Task RemoveWorkItemRelationAsync(int id, string relationType, int targetId, CancellationToken ct = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task DeleteWorkItemAsync(int workItemId, CancellationToken ct)
         {
             throw new NotImplementedException();
         }

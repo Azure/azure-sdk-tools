@@ -55,7 +55,7 @@ def _title_prefix(category: str, language: Optional[str]) -> str:
     if category == "parser":
         label = GithubManager.language_label(language)
         if label:
-            return f"[{label} APIView]"
+            return f"[{label.value} APIView]"
     return "[APIView]"
 
 

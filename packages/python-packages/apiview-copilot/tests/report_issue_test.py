@@ -13,7 +13,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src._github_manager import GithubManager
+from src._github_manager import GithubManager, LanguageLabel
 from src._report_issue import (
     _build_fallback_body,
     _build_fallback_title,
@@ -408,12 +408,23 @@ class TestGithubManagerOwner:
 
 class TestGithubManagerLanguageLabels:
     def test_canonical_languages_present(self):
-        assert GithubManager.LANGUAGE_LABELS["python"] == "Python"
-        assert GithubManager.LANGUAGE_LABELS["c#"] == ".NET"
-        assert GithubManager.LANGUAGE_LABELS["go"] == "Go"
-        assert GithubManager.LANGUAGE_LABELS["java"] == "Java"
+        assert GithubManager.LANGUAGE_LABELS["python"] is LanguageLabel.PYTHON
+        assert GithubManager.LANGUAGE_LABELS["c#"] is LanguageLabel.DOTNET
+        assert GithubManager.LANGUAGE_LABELS["go"] is LanguageLabel.GO
+        assert GithubManager.LANGUAGE_LABELS["java"] is LanguageLabel.JAVA
+
+    def test_language_label_returns_enum(self):
+        label = GithubManager.language_label("python")
+        assert label is LanguageLabel.PYTHON
+        assert label.value == "Python"
+
+    def test_language_label_unknown_returns_none(self):
+        assert GithubManager.language_label("kotlin") is None
+        assert GithubManager.language_label(None) is None
 
     def test_build_issue_labels_appends_known_language(self):
+        # build_issue_labels returns plain strings (the canonical label values),
+        # not enum members, so the result is API-ready for github.
         assert GithubManager.build_issue_labels(["APIView"], "python") == ["APIView", "Python"]
 
     def test_build_issue_labels_skips_unknown_language(self):
@@ -424,31 +435,3 @@ class TestGithubManagerLanguageLabels:
 
     def test_build_issue_labels_no_duplicate(self):
         assert GithubManager.build_issue_labels(["APIView", "Python"], "python") == ["APIView", "Python"]
-# -------------------------------------------------------------------------
-# Copyright (c) Microsoft Corporation. All rights reserved.
-# Licensed under the MIT License. See License.txt in the project root for
-# license information.
-# --------------------------------------------------------------------------
-
-# pylint: disable=missing-class-docstring,missing-function-docstring
-
-"""Tests for the shared report-issue core in src/_report_issue.py."""
-
-import json
-from unittest.mock import patch
-
-import pytest
-
-from src._github_manager import GithubManager
-from src._report_issue import (
-    _build_fallback_body,
-    _build_fallback_title,
-    _build_labels,
-    _format_comment_context_for_prompt,
-    _generate_issue_content,
-    _lookup_comment_context,
-    _title_prefix,
-    handle_report_issue_request,
-)
-
-

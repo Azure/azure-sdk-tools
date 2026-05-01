@@ -219,8 +219,9 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         When a feedback item contains an `SA*` code (e.g., SA1517, SA1000):
         - If the error is in **custom code**: classify as **REQUIRES_MANUAL_INTERVENTION** with guidance
           to update custom code to align with Azure SDK style guidelines.
-        - If the error is in **generated code**: classify as **REQUIRES_MANUAL_INTERVENTION**. Include the SA code
-          and your best recommendation for how to resolve it based on the error message.
+        - If the error is in **generated code**: classify as **REQUIRES_MANUAL_INTERVENTION**. This indicates
+          a bug in the code generator. In the Reason, note that this is a generator bug and recommend filing
+          an issue against the emitter/generator that produced the code.
         """;
     }
 

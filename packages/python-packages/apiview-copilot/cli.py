@@ -1989,7 +1989,7 @@ def report_apiview_metrics(
     end_date: Optional[str] = None,
     chart: bool = False,
 ) -> None:
-    """Generate APIView platform metrics (versioned-revision tracking)."""
+    """Generate APIView platform metrics (versioned-revision tracking and cross-language compliance)."""
     parsed_end_date = None
     if end_date:
         try:
@@ -2008,40 +2008,6 @@ def report_apiview_metrics(
         environment=environment,
     )
 
-    saved_path = None
-    if chart:
-        saved_path = generate_version_chart(
-            version_reports,
-            output_path=DEFAULT_VERSION_TRENDS_OUTPUT_PATH,
-            environment=environment,
-        )
-
-    output = {"versions": version_reports}
-    sys.stdout.buffer.write(json.dumps(output, indent=2, ensure_ascii=False, default=str).encode("utf-8"))
-    sys.stdout.buffer.write(b"\n")
-
-    print_version_report(version_reports, saved_path, environment=environment)
-
-
-def report_cross_language_compliance(
-    months: int = 6,
-    languages: Optional[list[str]] = None,
-    environment: str = "production",
-    end_date: Optional[str] = None,
-    chart: bool = False,
-) -> None:
-    """Generate cross-language metadata compliance metrics."""
-    parsed_end_date = None
-    if end_date:
-        try:
-            parsed_end_date = date.fromisoformat(end_date)
-        except ValueError as exc:
-            raise CLIError("Invalid --end-date value. Use YYYY-MM-DD format.") from exc
-
-    normalized_languages = None
-    if languages:
-        normalized_languages = [resolve_language(language)[1] for language in languages]
-
     compliance_reports = build_compliance_reports(
         languages=normalized_languages,
         months=months,
@@ -2049,19 +2015,26 @@ def report_cross_language_compliance(
         environment=environment,
     )
 
-    saved_path = None
+    version_chart_path = None
+    compliance_chart_path = None
     if chart:
-        saved_path = generate_compliance_chart(
+        version_chart_path = generate_version_chart(
+            version_reports,
+            output_path=DEFAULT_VERSION_TRENDS_OUTPUT_PATH,
+            environment=environment,
+        )
+        compliance_chart_path = generate_compliance_chart(
             compliance_reports,
             output_path=DEFAULT_COMPLIANCE_OUTPUT_PATH,
             environment=environment,
         )
 
-    output = {"compliance": compliance_reports}
+    output = {"versions": version_reports, "compliance": compliance_reports}
     sys.stdout.buffer.write(json.dumps(output, indent=2, ensure_ascii=False, default=str).encode("utf-8"))
     sys.stdout.buffer.write(b"\n")
 
-    print_compliance_report(compliance_reports, saved_path, environment=environment)
+    print_version_report(version_reports, version_chart_path, environment=environment)
+    print_compliance_report(compliance_reports, compliance_chart_path, environment=environment)
 
 
 def grant_permissions(assignee_id: str = None):
@@ -2655,7 +2628,6 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("memory", "get_memories")
             g.command("architect-comments", "get_architect_comments")
             g.command("apiview-metrics", "report_apiview_metrics")
-            g.command("cross-language-compliance", "report_cross_language_compliance")
         return OrderedDict(self.command_table)
 
     # ARGUMENT REGISTRATION
@@ -3137,35 +3109,6 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="Include neutral AI comments as a separate bucket.",
             )
         with ArgumentsContext(self, "report apiview-metrics") as ac:
-            ac.argument(
-                "months",
-                type=int,
-                options_list=["--months"],
-                default=6,
-                help="Number of calendar months to look back from the end date. Defaults to 6.",
-            )
-            ac.argument(
-                "end_date",
-                type=str,
-                options_list=["--end-date", "-e"],
-                default=None,
-                help="Inclusive query end date in YYYY-MM-DD format. Defaults to today.",
-            )
-            ac.argument(
-                "languages",
-                type=str,
-                nargs="+",
-                options_list=["--languages"],
-                default=None,
-                help="Languages to include. Defaults to Python, C#, Java, JavaScript, and Go.",
-            )
-            ac.argument(
-                "chart",
-                action="store_true",
-                options_list=["--chart"],
-                help="Generate a PNG trend chart and save to output/charts/.",
-            )
-        with ArgumentsContext(self, "report cross-language-compliance") as ac:
             ac.argument(
                 "months",
                 type=int,

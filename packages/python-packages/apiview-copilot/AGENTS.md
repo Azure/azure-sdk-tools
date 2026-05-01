@@ -72,6 +72,7 @@ Invoked via `avc` (or `python cli.py`):
 
 - `avc review generate` — Generate a review locally or remotely.
 - `avc review start-job` / `avc review get-job` — Async review job management.
+- `avc review summarize` — Summarize an API or a diff of two APIs.
 - `avc review group-comments` — Group similar comments in a JSON file.
 - `avc agent chat` — Interactive agent chat session.
 - `avc agent mention` — Process @mention feedback.
@@ -83,14 +84,16 @@ Invoked via `avc` (or `python cli.py`):
 - `avc kb search` — Search the knowledge base.
 - `avc kb reindex` — Trigger search index refresh.
 - `avc kb all-guidelines` — Retrieve all guidelines for a language.
+- `avc kb check-links` — Audit bidirectional links between KB items.
+- `avc kb consolidate-memories` — Find and merge duplicate memories.
 - `avc db get` / `avc db delete` / `avc db purge` — Database operations.
 - `avc db link` / `avc db unlink` — Link/unlink knowledge base items.
 - `avc report metrics` — Generate metrics reports.
+- `avc report quality-trends` — Generate multi-language comment bucket trend charts.
 - `avc report active-reviews` — Query active reviews for a language and date range.
 - `avc report feedback` / `avc report memory` — Audit feedback and memories.
 - `avc report architect-comments` — Retrieve human architect review comments for a language and date range.
-- `avc report apiview-metrics` — Track APIView platform metrics (versioned revision coverage by language/type).
-- `avc report cross-language-compliance` — Monitor cross-language metadata compliance across parsers over time.
+- `avc report apiview-metrics` — Track APIView platform metrics (versioned revision coverage and cross-language compliance).
 - `avc ops deploy` — Deploy to Azure App Service.
 - `avc ops check` — Health check the deployed service.
 - `avc ops grant` / `avc ops revoke` — Manage Azure RBAC permissions.

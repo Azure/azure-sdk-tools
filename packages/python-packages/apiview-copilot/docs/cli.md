@@ -393,7 +393,10 @@ avc report quality-trends [--end-date 2026-04-17] [--months 6] [--languages Pyth
 
 ### `avc report apiview-metrics`
 
-Generate APIView platform metrics over a calendar-month lookback window. Currently tracks the percentage of revisions that have a valid `PackageVersion`, broken out by language and revision type (Automatic, Manual, PullRequest).
+Generate APIView platform metrics over a calendar-month lookback window. Produces a combined report with two metric buckets:
+
+- **versions** — Percentage of revisions that have a valid `PackageVersion`, broken out by language and revision type (Automatic, Manual, PullRequest).
+- **compliance** — Cross-language metadata compliance (whether revisions include `CrossLanguagePackageId`).
 
 ```bash
 avc report apiview-metrics [--end-date 2026-04-28] [--months 6] [--languages Python Java] [--chart] [--environment production|staging]
@@ -404,30 +407,10 @@ avc report apiview-metrics [--end-date 2026-04-28] [--months 6] [--languages Pyt
 | `-e/--end-date` | Inclusive query end date; defaults to today |
 | `--months` | Number of calendar months to look back from the end date (default 6) |
 | `--languages` | Languages to include; defaults to Python, C#, Java, and JavaScript |
-| `--chart` | Generate a PNG trend chart saved to `output/charts/` |
+| `--chart` | Generate PNG trend charts saved to `output/charts/` |
 | `--environment` | `production` (default) or `staging` |
 
-Outputs JSON with a top-level `versions` key containing per-language monthly data points, followed by a compact terminal summary table.
-
----
-
-### `avc report cross-language-compliance`
-
-Monitor progress toward 100% cross-language metadata compliance across parsers. For each month, checks the latest revision per review and reports whether it includes `CrossLanguageMetadata` (signaled by `CrossLanguagePackageId` on the revision document).
-
-```bash
-avc report cross-language-compliance [--end-date 2026-04-28] [--months 6] [--languages Python Java] [--chart] [--environment production|staging]
-```
-
-| Option | Description |
-|--------|-------------|
-| `-e/--end-date` | Inclusive query end date; defaults to today |
-| `--months` | Number of calendar months to look back from the end date (default 6) |
-| `--languages` | Languages to include; defaults to Python, C#, Java, JavaScript, and Go |
-| `--chart` | Generate a PNG trend chart saved to `output/charts/` |
-| `--environment` | `production` (default) or `staging` |
-
-Outputs JSON with a top-level `compliance` key containing per-language monthly data points, followed by a compact terminal summary table.
+Outputs JSON with top-level `versions` and `compliance` keys containing per-language monthly data points, followed by compact terminal summary tables.
 
 ---
 

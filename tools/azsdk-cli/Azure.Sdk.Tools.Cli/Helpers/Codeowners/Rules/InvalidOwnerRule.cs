@@ -10,7 +10,7 @@ using Azure.Sdk.Tools.CodeownersUtils.Utils;
 namespace Azure.Sdk.Tools.Cli.Helpers.Codeowners.Rules;
 
 /// <summary>
-/// AUD-OWN-001: Detect individual Owner work items that fail GitHub validation
+/// AUD-OWN-001: Detect individual Owner work items that fail cached owner validation
 /// using cached azure-sdk-write membership and cached Azure public org visibility.
 /// Fix: Set "Invalid Since" field to current date/time on newly invalid owners.
 ///       Clear "Invalid Since" field on owners that have become valid again.

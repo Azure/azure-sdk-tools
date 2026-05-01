@@ -8,7 +8,6 @@ using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Codeowners;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
-using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 using Azure.Sdk.Tools.Cli.Tools.Config;
 using Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
 
@@ -17,7 +16,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
     [TestFixture]
     public class CodeownersToolsTests
     {
-        private MockGitHubService _mockGithub;
         private Mock<IGitHelper> _mockGitHelper;
         private Mock<ICodeownersValidatorHelper> _mockCodeownersValidator;
         private Mock<ICodeownersGenerateHelper> _mockcodeownersGenerateHelper;
@@ -31,7 +29,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
         [SetUp]
         public void Setup()
         {
-            _mockGithub = new MockGitHubService();
             _mockCodeownersValidator = new Mock<ICodeownersValidatorHelper>();
             _mockcodeownersGenerateHelper = new Mock<ICodeownersGenerateHelper>();
             _mockGitHelper = new Mock<IGitHelper>();
@@ -41,7 +38,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
             _mockAuditHelper = new Mock<ICodeownersAuditHelper>();
 
             _tool = new CodeownersTool(
-                _mockGithub,
                 new TestLogger<CodeownersTool>(),
                 null,
                 _mockCodeownersValidator.Object,

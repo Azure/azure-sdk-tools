@@ -19,7 +19,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers.Codeowners.Rules;
 public class TeamNotWriteRule(
     ITeamUserCache teamUserCache,
     ICacheValidator cacheValidator,
-    IGitHubService githubService,
     IDevOpsService devOpsService
 ) : IAuditRule
 {
@@ -60,7 +59,7 @@ public class TeamNotWriteRule(
             }
 
             var teamSlug = parts[1];
-            var isWriteTeam = await CheckTeamIsUnderWriteTeam(teamSlug, ct);
+            var isWriteTeam = CheckTeamIsUnderWriteTeam(teamSlug);
 
             if (!isWriteTeam)
             {
@@ -136,7 +135,7 @@ public class TeamNotWriteRule(
         return Task.FromResult(fixes);
     }
 
-    private async Task<bool> CheckTeamIsUnderWriteTeam(string teamSlug, CancellationToken ct)
+    private bool CheckTeamIsUnderWriteTeam(string teamSlug)
     {
         // azure-sdk-write itself is valid
         if (teamSlug.Equals("azure-sdk-write", StringComparison.OrdinalIgnoreCase))
@@ -150,24 +149,7 @@ public class TeamNotWriteRule(
             return true;
         }
 
-        // Fall back to GitHub API parent-chain check
-        try
-        {
-            var current = await githubService.GetTeamByNameAsync("Azure", teamSlug, ct);
-            while (current?.Parent != null)
-            {
-                if (current.Parent.Slug.Equals("azure-sdk-write", StringComparison.OrdinalIgnoreCase))
-                {
-                    return true;
-                }
-                current = await githubService.GetTeamByNameAsync("Azure", current.Parent.Slug, ct);
-            }
-            return false;
-        }
-        catch (Octokit.NotFoundException)
-        {
-            return false;
-        }
+        return false;
     }
 
     private async Task<AuditFixResult> SetInvalidSince(int ownerId, string alias, DateTime invalidSince, CancellationToken ct)

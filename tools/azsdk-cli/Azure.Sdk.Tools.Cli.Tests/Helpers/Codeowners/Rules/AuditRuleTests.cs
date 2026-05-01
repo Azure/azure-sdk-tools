@@ -1123,7 +1123,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
     {
         private Mock<ITeamUserCache> _mockTeamUserCache;
         private Mock<ICacheValidator> _mockCacheValidator;
-        private Mock<IGitHubService> _mockGithub;
         private Mock<IDevOpsService> _mockDevOps;
         private TeamNotWriteRule _rule;
 
@@ -1137,12 +1136,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
             _mockCacheValidator
                 .Setup(v => v.ThrowIfCacheOlderThan(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
-            _mockGithub = new Mock<IGitHubService>();
             _mockDevOps = new Mock<IDevOpsService>();
             _rule = new TeamNotWriteRule(
                 _mockTeamUserCache.Object,
                 _mockCacheValidator.Object,
-                _mockGithub.Object,
                 _mockDevOps.Object
             );
         }
@@ -1205,11 +1202,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
         }
 
         [Test]
-        public async Task Evaluate_TeamNotInCacheAndNotFound_ReturnsViolation()
+        public async Task Evaluate_TeamNotInCache_ReturnsViolation()
         {
-            _mockGithub.Setup(g => g.GetTeamByNameAsync("Azure", "bad-team", It.IsAny<CancellationToken>()))
-                .ThrowsAsync(new Octokit.NotFoundException("Not found", System.Net.HttpStatusCode.NotFound));
-
             var context = CreateContext(new OwnerWorkItem { WorkItemId = 1, GitHubAlias = "Azure/bad-team" });
 
             var violations = await _rule.Evaluate(context, CancellationToken.None);
@@ -1222,9 +1216,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
         [Test]
         public async Task Evaluate_InvalidTeamAlreadyMarked_DoNothing()
         {
-            _mockGithub.Setup(g => g.GetTeamByNameAsync("Azure", "bad-team", It.IsAny<CancellationToken>()))
-                .ThrowsAsync(new Octokit.NotFoundException("Not found", System.Net.HttpStatusCode.NotFound));
-
             var context = CreateContext(new OwnerWorkItem
             {
                 WorkItemId = 1,
@@ -1509,16 +1500,24 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
     }
 
     [TestFixture]
-    public class LabelNotInGitHubRuleTests
+    public class LabelNotInRepoLabelsRuleTests
     {
-        private Mock<IGitHubService> _mockGithub;
-        private LabelNotInGitHubRule _rule;
+        private RepoLabelCache _repoLabelCache;
+        private Mock<ICacheValidator> _mockCacheValidator;
+        private LabelNotInRepoLabelsRule _rule;
 
         [SetUp]
         public void Setup()
         {
-            _mockGithub = new Mock<IGitHubService>();
-            _rule = new LabelNotInGitHubRule(_mockGithub.Object);
+            _repoLabelCache = new RepoLabelCache(string.Empty)
+            {
+                RepoLabelDict = new Dictionary<string, HashSet<string>>(StringComparer.InvariantCultureIgnoreCase)
+            };
+            _mockCacheValidator = new Mock<ICacheValidator>();
+            _mockCacheValidator
+                .Setup(v => v.ThrowIfCacheOlderThan(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+            _rule = new LabelNotInRepoLabelsRule(_repoLabelCache, _mockCacheValidator.Object);
         }
 
         [Test]
@@ -1528,8 +1527,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
             var lo = new LabelOwnerWorkItem { WorkItemId = 10, LabelType = "Service Owner", Repository = "Azure/azure-sdk-for-net" };
             lo.Labels.Add(label);
 
-            _mockGithub.Setup(g => g.GetRepoLabels("Azure", "azure-sdk-for-net", It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Storage" });
+            _repoLabelCache.RepoLabelDict["Azure/azure-sdk-for-net"] =
+                new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Storage" };
 
             var context = new AuditContext
             {
@@ -1555,10 +1554,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
             var lo2 = new LabelOwnerWorkItem { WorkItemId = 11, LabelType = "Service Owner", Repository = "Azure/azure-sdk-for-java" };
             lo2.Labels.Add(label);
 
-            _mockGithub.Setup(g => g.GetRepoLabels("Azure", "azure-sdk-for-net", It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Storage" });
-            _mockGithub.Setup(g => g.GetRepoLabels("Azure", "azure-sdk-for-java", It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Other" });
+            _repoLabelCache.RepoLabelDict["Azure/azure-sdk-for-net"] =
+                new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Storage" };
+            _repoLabelCache.RepoLabelDict["Azure/azure-sdk-for-java"] =
+                new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Other" };
 
             var context = new AuditContext
             {
@@ -1604,8 +1603,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
             var package = new PackageWorkItem { WorkItemId = 20, Language = "Rust", PackageName = "pkg" };
             package.Labels.Add(label);
 
-            _mockGithub.Setup(g => g.GetRepoLabels("Azure", "azure-sdk-for-rust", It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Storage" });
+            _repoLabelCache.RepoLabelDict["Azure/azure-sdk-for-rust"] =
+                new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Storage" };
 
             var context = new AuditContext
             {
@@ -1620,7 +1619,58 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers.Codeowners.Rules
             var violations = await _rule.Evaluate(context, CancellationToken.None);
 
             Assert.That(violations, Is.Empty);
-            _mockGithub.Verify(g => g.GetRepoLabels("Azure", "azure-sdk-for-rust", It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Test]
+        public void Evaluate_StaleRepoLabelCache_ThrowsException()
+        {
+            var label = new LabelWorkItem { WorkItemId = 1, LabelName = "Storage" };
+            var lo = new LabelOwnerWorkItem { WorkItemId = 10, LabelType = "Service Owner", Repository = "Azure/azure-sdk-for-net" };
+            lo.Labels.Add(label);
+
+            var expectedMessage = $"{DefaultStorageConstants.RepoLabelBlobStorageURI} is stale.";
+            _mockCacheValidator
+                .Setup(v => v.ThrowIfCacheOlderThan(DefaultStorageConstants.RepoLabelBlobStorageURI, It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new InvalidOperationException(expectedMessage));
+
+            var context = new AuditContext
+            {
+                WorkItemData = new WorkItemData(
+                    new Dictionary<int, PackageWorkItem>(),
+                    new Dictionary<int, OwnerWorkItem>(),
+                    new Dictionary<int, LabelWorkItem> { [1] = label },
+                    new List<LabelOwnerWorkItem> { lo }
+                ),
+            };
+
+            var ex = Assert.ThrowsAsync<InvalidOperationException>(
+                async () => await _rule.Evaluate(context, CancellationToken.None));
+
+            Assert.That(ex!.Message, Is.EqualTo(expectedMessage));
+        }
+
+        [Test]
+        public void Evaluate_RepoMissingFromCache_ThrowsException()
+        {
+            var label = new LabelWorkItem { WorkItemId = 1, LabelName = "Storage" };
+            var lo = new LabelOwnerWorkItem { WorkItemId = 10, LabelType = "Service Owner", Repository = "Azure/missing-repo" };
+            lo.Labels.Add(label);
+
+            var context = new AuditContext
+            {
+                WorkItemData = new WorkItemData(
+                    new Dictionary<int, PackageWorkItem>(),
+                    new Dictionary<int, OwnerWorkItem>(),
+                    new Dictionary<int, LabelWorkItem> { [1] = label },
+                    new List<LabelOwnerWorkItem> { lo }
+                ),
+            };
+
+            var ex = Assert.ThrowsAsync<InvalidOperationException>(
+                async () => await _rule.Evaluate(context, CancellationToken.None));
+
+            Assert.That(ex!.Message, Does.Contain("Azure/missing-repo"));
+            Assert.That(ex.Message, Does.Contain(DefaultStorageConstants.RepoLabelBlobStorageURI));
         }
 
         [Test]

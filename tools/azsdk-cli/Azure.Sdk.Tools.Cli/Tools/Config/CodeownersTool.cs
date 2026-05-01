@@ -87,10 +87,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             Description = "Repository path (e.g., sdk/formrecognizer/)",
             Required = false,
         };
-
-
-
-        private readonly IGitHubService githubService;
         private readonly ILogger<CodeownersTool> logger;
         private readonly ICodeownersValidatorHelper codeownersValidatorHelper;
         private readonly ICodeownersGenerateHelper codeownersGenerateHelper;
@@ -188,7 +184,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         private const string CodeownerUpdateCacheToolName = "azsdk_engsys_codeowner_update_cache";
 
         public CodeownersTool(
-            IGitHubService githubService,
             ILogger<CodeownersTool> logger,
             ILoggerFactory? loggerFactory,
             ICodeownersValidatorHelper codeownersValidator,
@@ -200,7 +195,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             ICodeownersAuditHelper codeownersAuditHelper
         )
         {
-            this.githubService = githubService;
             this.logger = logger;
             this.codeownersValidatorHelper = codeownersValidator;
             this.codeownersGenerateHelper = codeownersGenerateHelper;

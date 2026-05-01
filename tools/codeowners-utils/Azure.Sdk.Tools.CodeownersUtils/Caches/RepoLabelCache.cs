@@ -35,7 +35,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Caches
             }
         }
 
-        public RepoLabelCache(string repoLabelBlobStorageURI)
+        public RepoLabelCache(string repoLabelBlobStorageURI = null)
         {
             if (!string.IsNullOrWhiteSpace(repoLabelBlobStorageURI))
             {

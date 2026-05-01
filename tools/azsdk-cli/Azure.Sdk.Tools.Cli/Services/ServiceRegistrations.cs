@@ -66,6 +66,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ICodeownersValidatorHelper, CodeownersValidatorHelper>();
             services.AddSingleton<ICodeownersGenerateHelper, CodeownersGenerateHelper>();
             services.AddSingleton<IPackageInfoHelper, PackageInfoHelper>();
+            services.AddSingleton<RepoLabelCache>();
             services.AddSingleton<ITeamUserCache, TeamUserCache>();
             services.AddSingleton<UserOrgVisibilityCache>();
             services.AddSingleton<ICacheValidator, CacheValidator>();
@@ -76,7 +77,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IAuditRule, InvalidOwnerRule>();
             services.AddSingleton<IAuditRule, MalformedTeamRule>();
             services.AddSingleton<IAuditRule, TeamNotWriteRule>();
-            services.AddSingleton<IAuditRule, LabelNotInGitHubRule>();
+            services.AddSingleton<IAuditRule, LabelNotInRepoLabelsRule>();
             services.AddSingleton<IAuditRule, ServiceAttentionMisuseRule>();
             services.AddSingleton<IAuditRule, LabelOwnerMissingOwnersRule>();
             services.AddSingleton<IAuditRule, LabelOwnerMissingLabelsRule>();

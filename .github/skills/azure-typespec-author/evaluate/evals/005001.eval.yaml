@@ -1,0 +1,59 @@
+name: azure-typespec-author-eval
+description: Evaluation suite for azure-typespec-author.
+version: "1.0"
+type: capability               # capability | regression
+
+# Root-level environment
+environment: azsdk-mcp
+
+# Execution configuration
+config:
+  runs: 1                      # Trials per stimulus
+  timeout: 1800                # Seconds per trial
+  model: claude-opus-4.6    #gpt-4o #claude-sonnet-4.6 # Model for agent execution
+  executor: copilot-sdk        # Which executor to use
+
+# Test cases
+stimuli:
+- prompt: |
+    Add suppressions for the warnings produced by "tsp compile .", and set the justification to "FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details".
+  name: 005001-warning-suppress-warning
+  constraints:
+    max_turns: 10
+    max_tokens: 5000
+  environment:
+    files:
+    - src: ../fixtures/005001-warning-suppress-warning/models.tsp
+      dest: models.tsp
+    - src: ../fixtures/005001-warning-suppress-warning/package.json
+      dest: package.json
+    - src: ../fixtures/005001-warning-suppress-warning/tspconfig.yaml
+      dest: tspconfig.yaml
+    - src: ../fixtures/005001-warning-suppress-warning/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/005001-warning-suppress-warning/stubs.tsp
+      dest: stubs.tsp
+  graders:
+  - type: tool-calls
+    config:
+      required:
+        - edit
+        - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+        - azure-typespec-author
+  - type: file-matches
+    config:
+      path: models.tsp
+      pattern: '#suppress'
+  - type: file-matches
+    config:
+      path: models.tsp
+      pattern: 'FIXME: Update justification, follow aka\.ms/tsp/conversion-fix for details'
+scoring:
+  weights:
+    tool-calls: 1
+    skill-invocation: 1
+    file-matches: 2
+  threshold: 1.0

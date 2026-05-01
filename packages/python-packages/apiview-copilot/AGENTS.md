@@ -5,7 +5,7 @@ applyTo: "**"
 
 # APIView Copilot
 
-AI-powered automated reviewer for Azure SDK API surface reviews. Ingests APIView text representations of SDK public APIs, sections them, runs multi-stage LLM prompts (guideline, context, and generic reviews), filters and deduplicates results, and produces structured review comments. Deployed as a **FastAPI** web service on Azure App Service with a CLI (`avc`) for local development.
+AI-powered automated reviewer for Azure SDK API surface reviews. Ingests APIView text representations of SDK public APIs, sections them, runs multi-stage LLM prompts (guideline and context reviews), filters and deduplicates results, and produces structured review comments. Deployed as a **FastAPI** web service on Azure App Service with a CLI (`avc`) for local development.
 
 ## Project Structure
 
@@ -40,8 +40,8 @@ AI-powered automated reviewer for Azure SDK API surface reviews. Ingests APIView
 
 The review pipeline in `ApiViewReview.run()` follows these stages:
 1. **Sectioning** — `SectionedDocument` splits the API text into chunks (default 500 lines, 450 for Java/Android).
-2. **Parallel prompt evaluation** — For each section, three prompts run in parallel: guideline review (RAG with language guidelines), context review (RAG with semantic search), and generic review (custom rules).
-3. **Generic comment filtering** — Generic comments are validated against the knowledge base.
+2. **Parallel prompt evaluation** — For each section, prompts run in parallel: guideline review (RAG with language guidelines) and context review (RAG with semantic search). The generic review stage is **disabled** for all languages.
+3. **Generic comment filtering** — Generic comments are validated against the knowledge base (currently skipped since generic review is disabled).
 4. **Deduplication** — Comments on the same line are merged via LLM.
 5. **Hard filtering** — Comments are checked against language-specific filter exceptions and the API outline.
 6. **Pre-existing comment filtering** — New comments are compared against existing human comments on the same lines.
@@ -87,7 +87,7 @@ Invoked via `avc` (or `python cli.py`):
 - `avc report metrics` — Generate metrics reports.
 - `avc report active-reviews` — Query active reviews for a language and date range.
 - `avc report feedback` / `avc report memory` — Audit feedback and memories.
-- `avc report analyze-comments` — Analyze AI comment quality.
+- `avc report architect-comments` — Retrieve human architect review comments for a language and date range.
 - `avc ops deploy` — Deploy to Azure App Service.
 - `avc ops check` — Health check the deployed service.
 - `avc ops grant` / `avc ops revoke` — Manage Azure RBAC permissions.

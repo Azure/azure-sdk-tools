@@ -216,6 +216,26 @@ class TestHandleReportIssueRequestValidation:
         with pytest.raises(ValueError, match="language is required"):
             handle_report_issue_request(category="parser", description="parser broken")
 
+    def test_description_too_long(self):
+        with pytest.raises(ValueError, match="at most 5000"):
+            handle_report_issue_request(category="apiview", description="x" * 5001)
+
+    def test_comment_text_too_long(self):
+        with pytest.raises(ValueError, match=r"comment_text must be at most 10000"):
+            handle_report_issue_request(
+                category="apiview",
+                description="ok",
+                comment_context={"comment_text": "x" * 10001},
+            )
+
+    def test_code_snippet_too_long(self):
+        with pytest.raises(ValueError, match=r"code_snippet must be at most 10000"):
+            handle_report_issue_request(
+                category="apiview",
+                description="ok",
+                comment_context={"code_snippet": "x" * 10001},
+            )
+
 
 class TestHandleReportIssueRequestEndToEnd:
     @patch("src._report_issue.GithubManager")

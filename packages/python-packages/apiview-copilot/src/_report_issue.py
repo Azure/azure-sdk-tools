@@ -63,6 +63,13 @@ LANGUAGE_LABELS: dict[str, str] = {
 
 VALID_CATEGORIES = ("apiview", "copilot", "parser")
 
+# Length caps mirror the FastAPI request models in app.py so that the
+# core behaves the same regardless of entry point (HTTP endpoint, CLI,
+# or any direct Python caller).
+MAX_DESCRIPTION_LENGTH = 5000
+MAX_COMMENT_FIELD_LENGTH = 10000
+_BOUNDED_COMMENT_CONTEXT_FIELDS = ("comment_text", "code_snippet")
+
 
 def get_owner() -> str:
     """Return the GitHub owner the issue should be filed against.
@@ -212,8 +219,17 @@ def handle_report_issue_request(
         raise ValueError(f"Invalid category {category!r}; expected one of {VALID_CATEGORIES}.")
     if not description or not description.strip():
         raise ValueError("description must be a non-empty string.")
+    if len(description) > MAX_DESCRIPTION_LENGTH:
+        raise ValueError(f"description must be at most {MAX_DESCRIPTION_LENGTH} characters.")
     if category == "parser" and not (language and language.strip()):
         raise ValueError("language is required for parser-category reports.")
+    if comment_context:
+        for field in _BOUNDED_COMMENT_CONTEXT_FIELDS:
+            value = comment_context.get(field)
+            if value is not None and len(value) > MAX_COMMENT_FIELD_LENGTH:
+                raise ValueError(
+                    f"comment_context.{field} must be at most {MAX_COMMENT_FIELD_LENGTH} characters."
+                )
 
     content = _generate_issue_content(
         category=category,

@@ -6,8 +6,6 @@
 
 - Added `AZSDK_COPILOT_CLI_PATH` environment variable to provide a custom path to the Copilot CLI executable (`copilot`/`copilot.exe`) for the GitHub Copilot SDK when the bundled binary is unavailable in standalone builds.
 
-### Breaking Changes
-
 ### Bugs Fixed
 
 - Fixed misleading "No feedback items to process" error when Copilot CLI is missing. Now surfaces the actual error with installation instructions and env var workaround.

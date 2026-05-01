@@ -20,10 +20,15 @@ def get_language_pretty_name(language: str) -> str:
     """
     language_pretty_names = {
         "android": "Android",
+        "c++": "C++",
         "cpp": "C++",
+        "c#": "C#",
+        ".net": "C#",
         "dotnet": "C#",
         "golang": "Go",
+        "go": "Go",
         "ios": "Swift",
+        "swift": "Swift",
         "java": "Java",
         "javascript": "JavaScript",
         "python": "Python",

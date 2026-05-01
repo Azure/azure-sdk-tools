@@ -1988,6 +1988,7 @@ def report_apiview_metrics(
     environment: str = "production",
     end_date: Optional[str] = None,
     chart: bool = False,
+    summary: bool = False,
 ) -> None:
     """Generate APIView platform metrics (versioned-revision tracking and cross-language compliance)."""
     parsed_end_date = None
@@ -2033,8 +2034,9 @@ def report_apiview_metrics(
     sys.stdout.buffer.write(json.dumps(output, indent=2, ensure_ascii=False, default=str).encode("utf-8"))
     sys.stdout.buffer.write(b"\n")
 
-    print_version_report(version_reports, version_chart_path, environment=environment)
-    print_compliance_report(compliance_reports, compliance_chart_path, environment=environment)
+    if summary:
+        print_version_report(version_reports, version_chart_path, environment=environment, file=sys.stderr)
+        print_compliance_report(compliance_reports, compliance_chart_path, environment=environment, file=sys.stderr)
 
 
 def grant_permissions(assignee_id: str = None):
@@ -3136,6 +3138,12 @@ class CliCommandsLoader(CLICommandsLoader):
                 action="store_true",
                 options_list=["--chart"],
                 help="Generate a PNG trend chart and save to output/charts/.",
+            )
+            ac.argument(
+                "summary",
+                action="store_true",
+                options_list=["--summary"],
+                help="Print human-readable summary tables to stderr after the JSON output.",
             )
         with ArgumentsContext(self, "ops check") as ac:
             ac.argument(

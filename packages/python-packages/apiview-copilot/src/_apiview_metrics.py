@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import asdict, dataclass
-from datetime import date, datetime
+from datetime import date
 from pathlib import Path
 from typing import Optional
 
@@ -67,10 +67,8 @@ def _build_monthly_version_point(
     language: str,
 ) -> MonthlyVersionPoint:
     """Build a single monthly data point for one language from raw revisions."""
-    start_dt = datetime(start_date.year, start_date.month, start_date.day)
-    end_dt = datetime(end_date.year, end_date.month, end_date.day, 23, 59, 59)
-    start_iso = start_dt.isoformat()
-    end_iso = end_dt.isoformat()
+    start_iso = to_iso8601(start_date.isoformat())
+    end_iso = to_iso8601(end_date.isoformat(), end_of_day=True)
 
     buckets: dict[str, RevisionTypeBucket] = {t: RevisionTypeBucket() for t in _KNOWN_REVISION_TYPES}
     total = 0
@@ -224,7 +222,7 @@ def generate_version_chart(
             color = type_colors[type_name]
             offsets = [x + bar_index * bar_width for x in x_positions]
             values = [item[type_name]["versioned_pct"] for item in report]
-            bars = axis.bar(offsets, values, bar_width, color=color, label=type_name)
+            _bars = axis.bar(offsets, values, bar_width, color=color, label=type_name)
 
             # Annotate each bar with count
             for bar_pos, item in zip(offsets, report):
@@ -281,16 +279,17 @@ def print_version_report(
     output_path: Optional[Path],
     *,
     environment: str = PRODUCTION_ENVIRONMENT,
+    file=None,
 ) -> None:
     """Print a compact terminal summary of version coverage."""
     environment_label = (environment or PRODUCTION_ENVIRONMENT).strip().lower()
-    print(f"Versioned revision % by month (APIView {environment_label})")
+    print(f"Versioned revision % by month (APIView {environment_label})", file=file)
 
     for language, report in reports.items():
-        print(f"\n{language}")
+        print(f"\n{language}", file=file)
         header = ["Month", "Auto %", "Auto N", "Manual %", "Manual N", "PR %", "PR N", "Overall %", "Total N"]
-        print("  ".join(f"{col:>10}" for col in header))
-        print("  ".join(["----------"] * len(header)))
+        print("  ".join(f"{col:>10}" for col in header), file=file)
+        print("  ".join(["----------"] * len(header)), file=file)
 
         for item in report:
             auto = item["Automatic"]
@@ -307,12 +306,12 @@ def print_version_report(
                 f"{item['versioned_pct']:>10.1f}",
                 f"{item['total']:>10}",
             ]
-            print("  ".join(values))
+            print("  ".join(values), file=file)
 
     if output_path and output_path.exists():
-        print(f"\nSaved chart: {output_path}")
+        print(f"\nSaved chart: {output_path}", file=file)
     else:
-        print("\nChart was not generated.")
+        print("\nChart was not generated.", file=file)
 
 
 # ---------------------------------------------------------------------------
@@ -417,7 +416,7 @@ def generate_compliance_chart(
         x_positions = list(range(len(labels)))
         pcts = [item["pct"] for item in report]
 
-        bars = axis.bar(x_positions, pcts, color="#4CAF50", width=0.6)
+        _bars = axis.bar(x_positions, pcts, color="#4CAF50", width=0.6)
 
         # Annotate each bar with count
         for bar_pos, item in zip(x_positions, report):
@@ -459,16 +458,17 @@ def print_compliance_report(
     output_path: Optional[Path],
     *,
     environment: str = PRODUCTION_ENVIRONMENT,
+    file=None,
 ) -> None:
     """Print a compact terminal summary of cross-language compliance."""
     environment_label = (environment or PRODUCTION_ENVIRONMENT).strip().lower()
-    print(f"Cross-language metadata compliance % by month (APIView {environment_label})")
+    print(f"Cross-language metadata compliance % by month (APIView {environment_label})", file=file)
 
     for language, report in reports.items():
-        print(f"\n{language}")
+        print(f"\n{language}", file=file)
         header = ["Month", "Compliant", "Non-Compliant", "Total", "Compliance %"]
-        print("  ".join(f"{col:>14}" for col in header))
-        print("  ".join(["----------"] * len(header)))
+        print("  ".join(f"{col:>14}" for col in header), file=file)
+        print("  ".join(["----------"] * len(header)), file=file)
 
         for item in report:
             values = [
@@ -478,9 +478,9 @@ def print_compliance_report(
                 f"{item['total']:>14}",
                 f"{item['pct']:>14.1f}",
             ]
-            print("  ".join(values))
+            print("  ".join(values), file=file)
 
     if output_path and output_path.exists():
-        print(f"\nSaved chart: {output_path}")
+        print(f"\nSaved chart: {output_path}", file=file)
     else:
-        print("\nChart was not generated.")
+        print("\nChart was not generated.", file=file)

@@ -831,13 +831,13 @@ def get_cross_language_compliance(
 ) -> dict:
     """Check cross-language metadata compliance for the latest revision of each review.
 
-    Queries the Reviews container for non-deleted, non-closed reviews, then for each
-    review fetches the latest non-deleted revision and checks whether
-    ``Files[0].CrossLanguagePackageId`` is populated (which is set from
+    Queries the APIRevisions container for non-deleted revisions created within the
+    date window, groups by ReviewId, picks the latest revision per review, and checks
+    whether ``Files[0].CrossLanguagePackageId`` is populated (which is set from
     ``CrossLanguageMetadata`` on the CodeFile when present).
 
     Args:
-        start_date: Inclusive start date (YYYY-MM-DD) — filters reviews by latest revision CreatedOn.
+        start_date: Inclusive start date (YYYY-MM-DD) — filters revisions by CreatedOn.
         end_date: Inclusive end date (YYYY-MM-DD).
         environment: 'production' or 'staging'.
         exclude_languages: Pretty language names to exclude.
@@ -862,7 +862,7 @@ def get_cross_language_compliance(
         "SELECT c.ReviewId, c.Language, c.APIRevisionType, "
         "c.Files[0].CrossLanguagePackageId AS CrossLanguagePackageId, c.CreatedOn "
         "FROM c "
-        "WHERE c.IsDeleted = false "
+        "WHERE (NOT IS_DEFINED(c.IsDeleted) OR c.IsDeleted = false) "
         "AND c.CreatedOn >= @start AND c.CreatedOn <= @end"
     )
     params = [

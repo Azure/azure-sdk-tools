@@ -399,18 +399,19 @@ Generate APIView platform metrics over a calendar-month lookback window. Produce
 - **compliance** — Cross-language metadata compliance (whether revisions include `CrossLanguagePackageId`).
 
 ```bash
-avc report apiview-metrics [--end-date 2026-04-28] [--months 6] [--languages Python Java] [--chart] [--environment production|staging]
+avc report apiview-metrics [--end-date 2026-04-28] [--months 6] [--languages Python Java] [--chart] [--summary] [--environment production|staging]
 ```
 
 | Option | Description |
 |--------|-------------|
 | `-e/--end-date` | Inclusive query end date; defaults to today |
 | `--months` | Number of calendar months to look back from the end date (default 6) |
-| `--languages` | Languages to include; defaults to Python, C#, Java, and JavaScript |
+| `--languages` | Languages to include; defaults to Python, C#, Java, JavaScript, and Go |
 | `--chart` | Generate PNG trend charts saved to `output/charts/` |
+| `--summary` | Print human-readable summary tables to stderr |
 | `--environment` | `production` (default) or `staging` |
 
-Outputs JSON with top-level `versions` and `compliance` keys containing per-language monthly data points, followed by compact terminal summary tables.
+Outputs JSON to stdout with top-level `versions` and `compliance` keys containing per-language monthly data points. With `--summary`, compact terminal tables are also printed to stderr.
 
 ---
 

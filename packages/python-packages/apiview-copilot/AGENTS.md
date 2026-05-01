@@ -19,7 +19,7 @@ AI-powered automated reviewer for Azure SDK API surface reviews. Ingests APIView
   - `_database_manager.py` — Azure Cosmos DB integration. Singleton `DatabaseManager` with typed container clients.
   - `_settings.py` — Singleton `SettingsManager` reading from Azure App Configuration with Key Vault secret resolution.
   - `_prompt_runner.py` — Runs `.prompty` files with retry logic.
-  - `_apiview_metrics.py` — APIView platform metrics (versioned-revision tracking over time).
+  - `_apiview_metrics.py` — APIView platform metrics (versioned-revision tracking and cross-language compliance over time).
   - `_comment_grouper.py` — Groups similar comments with correlation IDs.
   - `_diff.py` — Generates numbered diffs between base and target API views.
   - `_mention.py` — Handles @mention feedback processing.

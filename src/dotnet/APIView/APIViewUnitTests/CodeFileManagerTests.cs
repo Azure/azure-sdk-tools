@@ -92,12 +92,12 @@ public class CodeFileManagerTests
         TypeSpecMetadata metadata = new()
         {
             TypeSpec = new TypeSpecInfo { Namespace = "Azure.Core", Documentation = "Azure Core TypeSpec" },
-            Languages = new Dictionary<string, LanguageConfig>
+            Languages = new Dictionary<string, List<LanguageConfig>>
             {
-                ["Python"] = new() { PackageName = "azure-core", Namespace = "azure.core" },
-                ["JavaScript"] = new() { PackageName = "@azure/core", Namespace = "@azure/core" },
-                ["Java"] = new() { PackageName = "com.azure.core", Namespace = "com.azure.core" },
-                ["DotNet"] = new() { PackageName = "Azure.Core", Namespace = "Azure.Core" }
+                ["Python"] = [new() { PackageName = "azure-core", Namespace = "azure.core" }],
+                ["JavaScript"] = [new() { PackageName = "@azure/core", Namespace = "@azure/core" }],
+                ["Java"] = [new() { PackageName = "com.azure.core", Namespace = "com.azure.core" }],
+                ["DotNet"] = [new() { PackageName = "Azure.Core", Namespace = "Azure.Core" }]
             }
         };
 
@@ -128,10 +128,10 @@ public class CodeFileManagerTests
         Assert.NotNull(result.Metadata);
         Assert.NotNull(result.Metadata.Languages);
         Assert.Equal(4, result.Metadata.Languages.Count);
-        Assert.Equal("azure-core", result.Metadata.Languages["Python"].PackageName);
-        Assert.Equal("@azure/core", result.Metadata.Languages["JavaScript"].PackageName);
-        Assert.Equal("com.azure.core", result.Metadata.Languages["Java"].PackageName);
-        Assert.Equal("Azure.Core", result.Metadata.Languages["DotNet"].PackageName);
+        Assert.Equal("azure-core", result.Metadata.Languages["Python"][0].PackageName);
+        Assert.Equal("@azure/core", result.Metadata.Languages["JavaScript"][0].PackageName);
+        Assert.Equal("com.azure.core", result.Metadata.Languages["Java"][0].PackageName);
+        Assert.Equal("Azure.Core", result.Metadata.Languages["DotNet"][0].PackageName);
     }
 
     [Fact]
@@ -247,13 +247,13 @@ public class CodeFileManagerTests
             EmitterVersion = "0.7.2",
             TypeSpec =
                 new TypeSpecInfo { Namespace = typeSpecNamespace, Documentation = documentation, Type = "client" },
-            Languages = new Dictionary<string, LanguageConfig>
+            Languages = new Dictionary<string, List<LanguageConfig>>
             {
-                ["Python"] = new()
+                ["Python"] = [new()
                 {
                     PackageName = packageName.ToLower().Replace(".", "-"),
                     Namespace = packageName.ToLower().Replace(".", ".")
-                }
+                }]
             }
         };
 
@@ -415,4 +415,104 @@ public class CodeFileManagerTests
     }
 
     #endregion
+
+    #region Token Sanitization Tests
+
+    [Fact]
+    public async Task CreateReviewCodeFileModel_SanitizesNewlinesInTreeTokenValues()
+    {
+        var codeFile = new CodeFile
+        {
+            Language = "Java",
+            PackageName = "com.azure.storage",
+            ReviewLines =
+            [
+                new ReviewLine
+                {
+                    LineId = "doc-1",
+                    Tokens =
+                    [
+                        new ReviewToken
+                        {
+                            Value = "\n    This package contains clients.\n    For details see README.md\n  ",
+                            Kind = TokenKind.Text,
+                            IsDocumentation = true
+                        }
+                    ]
+                }
+            ]
+        };
+
+        using var memoryStream = new MemoryStream();
+
+        await _codeFileManager.CreateReviewCodeFileModel("api-rev-1", memoryStream, codeFile);
+
+        string value = codeFile.ReviewLines[0].Tokens[0].Value;
+        Assert.Equal("     This package contains clients.     For details see README.md   ", value);
+        Assert.DoesNotContain('\n', value);
+        Assert.DoesNotContain('\r', value);
+    }
+
+    [Fact]
+    public async Task CreateReviewCodeFileModel_SanitizesOnlyNestedTextTokens()
+    {
+        var codeFile = new CodeFile
+        {
+            Language = "C#",
+            ReviewLines =
+            [
+                new ReviewLine
+                {
+                    LineId = "parent",
+                    Tokens = [new ReviewToken("Parent\ntoken", TokenKind.Keyword)],
+                    Children =
+                    [
+                        new ReviewLine
+                        {
+                            LineId = "child",
+                            Tokens = [new ReviewToken("Child\ntoken\nvalue", TokenKind.Text)]
+                        }
+                    ]
+                }
+            ]
+        };
+
+        using var memoryStream = new MemoryStream();
+
+        await _codeFileManager.CreateReviewCodeFileModel("api-rev-3", memoryStream, codeFile);
+
+        Assert.Equal("Parent\ntoken", codeFile.ReviewLines[0].Tokens[0].Value);
+        Assert.Equal("Child token value", codeFile.ReviewLines[0].Children[0].Tokens[0].Value);
+    }
+
+    [Fact]
+    public async Task CreateReviewCodeFileModel_DoesNotModifyTreeTokenWithoutNewlines()
+    {
+        var codeFile = new CodeFile
+        {
+            Language = "Java",
+            ReviewLines =
+            [
+                new ReviewLine
+                {
+                    LineId = "tree-1",
+                    Tokens =
+                    [
+                        new ReviewToken("    ", TokenKind.Text),
+                        new ReviewToken("NoNewlines", TokenKind.Text)
+                    ]
+                }
+            ]
+        };
+
+        using var memoryStream = new MemoryStream();
+
+        await _codeFileManager.CreateReviewCodeFileModel("api-rev-3a", memoryStream, codeFile);
+
+        Assert.Equal("    ", codeFile.ReviewLines[0].Tokens[0].Value);
+        Assert.Equal("NoNewlines", codeFile.ReviewLines[0].Tokens[1].Value);
+    }
+
+    #endregion
+
 }

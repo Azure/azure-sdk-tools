@@ -98,11 +98,11 @@
                     <span>{{qualityScore.unresolvedSuggestionCount}}</span>
                 </div>
                 <div *ngIf="qualityScore.unresolvedQuestionCount > 0" class="d-flex justify-content-between">
-                    <span><i class="bi bi-question-circle-fill text-secondary me-1"></i>Question</span>
+                    <span><i class="bi bi-question-circle-fill quality-question-icon me-1"></i>Question</span>
                     <span>{{qualityScore.unresolvedQuestionCount}}</span>
                 </div>
                 <div *ngIf="qualityScore.unresolvedUnknownCount > 0" class="d-flex justify-content-between">
-                    <span><i class="bi bi-dash-circle-fill text-secondary me-1"></i>Unknown</span>
+                    <span><i class="bi bi-dash-circle-fill quality-unknown-icon me-1"></i>Unknown</span>
                     <span>{{qualityScore.unresolvedUnknownCount}}</span>
                 </div>
             </div>
@@ -266,22 +266,23 @@
     [modal]="true" [(visible)]="showAPIRevisionApprovalModal"
     [style]="{ width: '40dvw' }">
     <ul class="list-group">
+        <li class="list-group-item" *ngIf="hasDiagnosticMustFixApprovalWarning">
+            <p class="mb-0 text-danger fw-bold">
+                This API has unresolved diagnostic "Must Fix" comments. Approval is currently allowed but will be blocked in a future update. Please address these issues in the code or parser.
+            </p>
+        </li>
         <li class="list-group-item" *ngIf="hasActiveConversation">
-            <div class="float-start">
-                <p class="mb-0">There are still active conversations. Would you like to review these first?</p>
-            </div>
-            <div class="float-end">
+            <p class="mb-0">There are still active conversations. Would you like to review these first?</p>
+            <div class="d-flex align-items-center mt-2">
                 <p-toggleswitch [(ngModel)]="overrideActiveConversationforApproval"/>
-                <label class="ms-2">Override</label>
+                <label class="ms-2 mb-0">Override</label>
             </div>
         </li>
         <li class="list-group-item" *ngIf="hasFatalDiagnostics">
-            <div class="float-start">
-                <p class="mb-0">This API has fatal diagnostics.</p>
-            </div>
-            <div class="float-end">
+            <p class="mb-0">This API has fatal diagnostics.</p>
+            <div class="d-flex align-items-center mt-2">
                 <p-toggleswitch [(ngModel)]="overrideFatalDiagnosticsforApproval"/>
-                <label class="ms-2">Override</label>
+                <label class="ms-2 mb-0">Override</label>
             </div>
         </li>
       </ul>

@@ -4,7 +4,6 @@ using Azure.Identity;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Authorization;
 using Azure.ResourceManager.Authorization.Models;
-using Microsoft.Graph.Models;
 
 namespace Azure.Sdk.Tools.AccessManagement;
 
@@ -22,13 +21,12 @@ public class RbacClient : IRbacClient
         ArmClient = new ArmClient(credential);
     }
 
-    public async Task CreateRoleAssignment(ServicePrincipal servicePrincipal, RoleBasedAccessControlsConfig rbac)
+    public async Task CreateRoleAssignment(Guid principalId, RoleBasedAccessControlsConfig rbac)
     {
         var resource = ArmClient.GetGenericResource(new ResourceIdentifier(rbac.Scope!));
         var role = await resource.GetAuthorizationRoleDefinitions().GetAllAsync($"roleName eq '{rbac.Role}'").FirstAsync();
         Log.LogInformation($"Found role '{role.Data.RoleName}' with id '{role.Data.Name}'");
 
-        var principalId = Guid.Parse(servicePrincipal?.Id ?? string.Empty);
         var content = new RoleAssignmentCreateOrUpdateContent(role.Data.Id, principalId)
         {
             PrincipalType = RoleManagementPrincipalType.ServicePrincipal
@@ -55,5 +53,5 @@ public class RbacClient : IRbacClient
 
 public interface IRbacClient
 {
-    public Task CreateRoleAssignment(ServicePrincipal app, RoleBasedAccessControlsConfig rbac);
+    public Task CreateRoleAssignment(Guid principalId, RoleBasedAccessControlsConfig rbac);
 }

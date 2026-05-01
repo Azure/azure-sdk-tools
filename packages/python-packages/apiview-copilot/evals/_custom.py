@@ -211,6 +211,33 @@ def _generate_correlation_ids(testcase: str, response: str, language: str, conte
     return {"actual": json.dumps(transformed)}
 
 
+def _consolidate_memories(testcase: str, response: str, parent_type: str, parent_title: str, memories: str):
+    prompty_path = Path(__file__).parent.parent / "prompts" / "other" / "consolidate_memories.prompty"
+    prompty_kwargs = {
+        "testcase": testcase,
+        "response": response,
+        "parent_type": parent_type,
+        "parent_title": parent_title,
+        "memories": memories,
+    }
+    result = _execute_prompt_template(prompty_path, inputs=prompty_kwargs)
+    # Transform: normalize merge groups to canonical "action" string for PromptEvaluator.
+    # Each group becomes a sorted tuple of memory IDs; groups are sorted and joined by ";".
+    result_data = json.loads(result) if isinstance(result, str) else result
+    groups = result_data.get("groups", [])
+    group_strs = []
+    reason_parts = []
+    for group in groups:
+        ids = sorted(group.get("memory_ids", []))
+        group_strs.append("(" + ",".join(ids) + ")")
+        reason_parts.append(group.get("reason", ""))
+    group_strs.sort()
+    action_str = ";".join(group_strs)
+    rationale = " ".join(reason_parts)
+    transformed = {"action": action_str, "rationale": rationale}
+    return {"actual": json.dumps(transformed)}
+
+
 class BaseEvaluator(ABC):
     """Base class for custom evaluators in the evals framework.
 
@@ -424,6 +451,7 @@ class PromptEvaluator(BaseEvaluator):
             "filter_generic_comment": _filter_generic_comment,
             "judge_comment_confidence": _judge_comment_confidence,
             "generate_correlation_ids": _generate_correlation_ids,
+            "consolidate_memories": _consolidate_memories,
         }
 
         workflow_name = self.config.name

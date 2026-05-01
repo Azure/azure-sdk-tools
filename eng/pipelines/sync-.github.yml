@@ -13,6 +13,7 @@ parameters:
     # Workflows
     - 'workflows/*event*'
     - 'workflows/post-apiview.yml'
+    - 'workflows/protected-files.yml'
     # Skills
     # Shared skills use an azsdk-common- directory prefix and live in .github/skills/
     # in azure-sdk-tools. Only azsdk-common-* directories are synced to target repos.

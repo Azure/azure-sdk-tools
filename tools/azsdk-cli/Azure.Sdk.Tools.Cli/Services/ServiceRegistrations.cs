@@ -119,12 +119,23 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<CopilotClient>(sp =>
             {
                 var logger = sp.GetService<ILogger<CopilotClient>>();
-                return new CopilotClient(new CopilotClientOptions
+                var options = new CopilotClientOptions
                 {
                     UseStdio = true,
                     AutoStart = true,
                     Logger = logger
-                });
+                };
+
+                // Allow overriding the bundled Copilot CLI path via environment variable.
+                // This is useful when the standalone azsdk.exe doesn't include the Copilot CLI executable
+                // but the user has it installed elsewhere (e.g. via npm).
+                var cliPath = Environment.GetEnvironmentVariable("AZSDK_COPILOT_CLI_PATH");
+                if (!string.IsNullOrWhiteSpace(cliPath))
+                {
+                    options.CliPath = cliPath.Trim();
+                }
+
+                return new CopilotClient(options);
             });
             services.AddSingleton<ICopilotClientWrapper, CopilotClientWrapper>();
             services.AddScoped<ICopilotAgentRunner, CopilotAgentRunner>();

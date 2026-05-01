@@ -15,15 +15,15 @@ import { cp, readFile, rm, stat } from "node:fs/promises";
 import { joinPaths } from "@typespec/compiler";
 import { cwd } from "node:process";
 
-describe("get the right service dir from tspconfig.yaml", function () {
-  it("Get custom emitter service-dir", async function () {
+describe("get the right service dir from tspconfig.yaml", () => {
+  it("Get custom emitter service-dir", async () => {
     const data = await readFile("./test/examples/tspconfig-custom-service-dir.yaml", "utf8");
     const configYaml = parseYaml(data);
     const serviceDir = getServiceDir(configYaml, "@azure-tools/typespec-ts");
     assert.strictEqual(serviceDir, "sdk/contosowidgetmanager/widget");
   });
 
-  it("Get default service-dir", async function () {
+  it("Get default service-dir", async () => {
     const data = await readFile("./test/examples/tspconfig-custom-service-dir.yaml", "utf8");
     const configYaml = parseYaml(data);
     const serviceDir = getServiceDir(configYaml, "@azure-tools/typespec-python");
@@ -31,8 +31,8 @@ describe("get the right service dir from tspconfig.yaml", function () {
   });
 });
 
-describe("Verify other utils functions", function () {
-  it("Check makeSparseSpecDir", async function () {
+describe("Verify other utils functions", () => {
+  it("Check makeSparseSpecDir", async () => {
     const specDir = await makeSparseSpecDir("./test/examples/");
     assert.ok(specDir.startsWith("./test/examples/../sparse-spec"));
 
@@ -42,7 +42,7 @@ describe("Verify other utils functions", function () {
     await removeDirectory(specDir);
   });
 
-  it("Check getAdditionalDirectoryName", function () {
+  it("Check getAdditionalDirectoryName", () => {
     const dir = getAdditionalDirectoryName("/specification/foo");
     assert.equal(dir, "foo");
 
@@ -50,13 +50,13 @@ describe("Verify other utils functions", function () {
     assert.equal(dir2, "foo");
   });
 
-  it("Check formatAdditionalDirectories", function () {
+  it("Check formatAdditionalDirectories", () => {
     const result = formatAdditionalDirectories(["/specification/foo", "/specification/bar"]);
     const expected = "\n- /specification/foo\n- /specification/bar\n";
     assert.equal(result, expected);
   });
 
-  it("Check updateExistingTspLocation update some properties", async function () {
+  it("Check updateExistingTspLocation update some properties", async () => {
     const tspLocationData = {
       directory: "test-directory",
       commit: "1234567890abcdef",
@@ -76,7 +76,7 @@ describe("Verify other utils functions", function () {
     });
   });
 
-  it("Check updateExistingTspLocation with extra property", async function () {
+  it("Check updateExistingTspLocation with extra property", async () => {
     const tspLocationData = {
       directory: "test-directory",
       commit: "1234567890abcdef",
@@ -97,7 +97,7 @@ describe("Verify other utils functions", function () {
     });
   });
 
-  it("Check updateExistingTspLocation with override parameter", async function () {
+  it("Check updateExistingTspLocation with override parameter", async () => {
     const tspLocationData = {
       directory: "test-directory",
       commit: "1234567890abcdef",
@@ -125,7 +125,7 @@ describe("Verify other utils functions", function () {
   });
 });
 
-describe("Verify fs functions", function () {
+describe("Verify fs functions", () => {
   beforeAll(async () => {
     await cp(
       joinPaths(cwd(), "test/utils/tsp-client-config.yaml"),
@@ -137,7 +137,7 @@ describe("Verify fs functions", function () {
     await rm(joinPaths(await getRepoRoot("."), "eng", "tsp-client-config.yaml"), { force: true });
   });
 
-  it("Check parseTspClientRepoConfig", async function () {
+  it("Check parseTspClientRepoConfig", async () => {
     const config = await parseTspClientRepoConfig(await getRepoRoot("."));
     assert.ok(config);
     assert.ok(config.supportedEmitters);

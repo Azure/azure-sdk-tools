@@ -63,6 +63,14 @@ namespace ApiViewCopilot {
     @header("Authorization") authorization: string,
   ): ResolvePackageResponse;
 
+  /** Files a GitHub issue from an APIView "Report Issue" interaction. */
+  @route("/report-issue")
+  @post
+  op reportIssue(
+    @body request: ReportIssueRequest,
+    @header("Authorization") authorization: string,
+  ): ReportIssueResponse;
+
   /** Test endpoint to verify authentication is working. */
   @route("/auth-test")
   @get
@@ -261,5 +269,53 @@ namespace ApiViewCopilot {
 
     /** The revision label (e.g., 'Source Branch:main'). */
     revisionLabel?: string;
+  }
+
+  /** Optional context about the comment that triggered the issue report. */
+  model CommentContext {
+    /** The APIView comment id this report originated from. */
+    commentId?: string;
+
+    /** The text of the comment that triggered the report. */
+    commentText?: string;
+
+    /** A short code snippet associated with the comment. */
+    codeSnippet?: string;
+
+    /** The programming language of the comment / element. */
+    language?: string;
+
+    /** The API element id associated with the comment. */
+    elementId?: string;
+
+    /** Source of the triggering comment. */
+    commentSource?: "apiview" | "copilot";
+  }
+
+  /** Request to file a GitHub issue from an APIView "Report Issue" interaction. */
+  model ReportIssueRequest {
+    /** The user's free-form description of the problem (1–5000 chars). */
+    description: string;
+
+    /** Optional URL to the APIView review the user is on. */
+    reviewLink?: string;
+
+    /** Optional language hint (e.g. 'python', 'C#'). The LLM may also infer it from the description / context. */
+    language?: string;
+
+    /** Optional APIView comment id. When provided, the server fetches the comment context (text, code snippet, language, element id, source) automatically; ignored when commentContext is also provided. */
+    commentId?: string;
+
+    /** Optional manually-supplied comment context. */
+    commentContext?: CommentContext;
+  }
+
+  /** Response after filing a GitHub issue. */
+  model ReportIssueResponse {
+    /** The URL of the newly created GitHub issue. */
+    issueUrl: string;
+
+    /** The number of the newly created GitHub issue. */
+    issueNumber: int32;
   }
 }

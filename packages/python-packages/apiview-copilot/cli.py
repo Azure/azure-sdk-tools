@@ -988,10 +988,10 @@ def review_summarize(language: str, target: str, base: str = None, remote: bool 
 
 
 def issue_report(
-    category: str,
     description: str,
     review_link: str = None,
     language: str = None,
+    comment_id: str = None,
     comment_text: str = None,
     code_snippet: str = None,
     element_id: str = None,
@@ -1002,7 +1002,10 @@ def issue_report(
     File a GitHub issue from an APIView "Report Issue" interaction.
 
     Calls the same shared core (``handle_report_issue_request``) whether
-    run locally or via ``--remote``, so both paths produce identical issues.
+    run locally or via ``--remote``, so both paths produce identical
+    issues. The LLM determines whether the issue is an APIView UI
+    problem or a parser problem; the server then derives the title
+    prefix and labels.
     """
     comment_context = {}
     if comment_text:
@@ -1021,11 +1024,13 @@ def issue_report(
         settings = SettingsManager()
         base_url = settings.get("WEBAPP_ENDPOINT")
         api_endpoint = f"{base_url}/report-issue"
-        payload = {"category": category, "description": description}
+        payload = {"description": description}
         if review_link:
             payload["reviewLink"] = review_link
         if language:
             payload["language"] = language
+        if comment_id:
+            payload["commentId"] = comment_id
         if comment_context:
             _camel_keys = {
                 "comment_text": "commentText",
@@ -1046,10 +1051,10 @@ def issue_report(
             print(f"Error: {e}")
     else:
         result = handle_report_issue_request(
-            category=category,
             description=description,
             review_link=review_link,
             language=language,
+            comment_id=comment_id,
             comment_context=comment_context,
         )
         print(json.dumps(result, indent=2))
@@ -2598,6 +2603,7 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("mention", "handle_agent_mention")
             g.command("chat", "handle_agent_chat")
             g.command("resolve-thread", "handle_agent_thread_resolution")
+            g.command("report-issue", "issue_report")
         with CommandGroup(self, "test", "__main__#{}") as g:
             g.command("eval", "run_evals")
             g.command("extract-section", "extract_document_section")
@@ -2628,7 +2634,6 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("memory", "audit_memory")
             g.command("analyze-comments", "analyze_comments")
         with CommandGroup(self, "issue", "__main__#{}") as g:
-            g.command("report", "issue_report")
             g.command("feedback", "get_feedback")
             g.command("memory", "get_memories")
             g.command("architect-comments", "get_architect_comments")
@@ -2875,25 +2880,25 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--source-comment-id"],
                 default=None,
             )
-        with ArgumentsContext(self, "issue report") as ac:
-            ac.argument(
-                "category",
-                type=str,
-                choices=["apiview", "copilot", "parser"],
-                help="What the issue is about: 'apiview' (UI/service), 'copilot' (an APIView Copilot suggestion), or 'parser' (language-specific parser).",
-                options_list=["--category", "-c"],
-            )
+        with ArgumentsContext(self, "agent report-issue") as ac:
             ac.argument(
                 "description",
                 type=str,
                 help="The user's description of the problem.",
-                options_list=["--description", "-d"],
+                options_list=["--description"],
             )
             ac.argument(
                 "review_link",
                 type=str,
                 help="Optional URL to the APIView review the user is on.",
                 options_list=["--review-link"],
+                default=None,
+            )
+            ac.argument(
+                "comment_id",
+                type=str,
+                help="Optional APIView comment id. When provided, the server fetches the comment context (text, code snippet, language, element id, source) automatically.",
+                options_list=["--comment-id"],
                 default=None,
             )
             ac.argument(

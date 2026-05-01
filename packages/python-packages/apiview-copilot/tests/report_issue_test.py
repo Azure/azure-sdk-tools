@@ -13,15 +13,15 @@ from unittest.mock import patch
 
 import pytest
 
+from src._github_manager import GithubManager
 from src._report_issue import (
-    LANGUAGE_LABELS,
     _build_fallback_body,
     _build_fallback_title,
     _build_labels,
     _format_comment_context_for_prompt,
     _generate_issue_content,
+    _lookup_comment_context,
     _title_prefix,
-    get_owner,
     handle_report_issue_request,
 )
 
@@ -30,27 +30,27 @@ class TestTitlePrefix:
     def test_apiview(self):
         assert _title_prefix("apiview", None) == "[APIView]"
 
-    def test_copilot(self):
-        assert _title_prefix("copilot", "python") == "[AVC]"
+    def test_apiview_ignores_language(self):
+        assert _title_prefix("apiview", "python") == "[APIView]"
 
     def test_parser_known_language(self):
         assert _title_prefix("parser", "python") == "[Python APIView]"
         assert _title_prefix("parser", "C#") == "[.NET APIView]"
         assert _title_prefix("parser", "go") == "[Go APIView]"
 
-    def test_parser_unknown_language_uses_raw(self):
-        assert _title_prefix("parser", "kotlin") == "[kotlin APIView]"
+    def test_parser_unknown_language_falls_back_to_apiview(self):
+        assert _title_prefix("parser", "kotlin") == "[APIView]"
 
-    def test_parser_missing_language_falls_back(self):
-        assert _title_prefix("parser", None) == "[Unknown APIView]"
+    def test_parser_missing_language_falls_back_to_apiview(self):
+        assert _title_prefix("parser", None) == "[APIView]"
 
 
 class TestBuildLabels:
     def test_apiview(self):
         assert _build_labels("apiview", None) == ["APIView"]
 
-    def test_copilot(self):
-        assert _build_labels("copilot", None) == ["APIView Copilot"]
+    def test_apiview_ignores_language(self):
+        assert _build_labels("apiview", "python") == ["APIView"]
 
     def test_parser_with_known_language(self):
         assert _build_labels("parser", "python") == ["APIView", "Python"]
@@ -90,25 +90,22 @@ class TestFormatCommentContextForPrompt:
 
 
 class TestBuildFallbackTitle:
-    def test_short_apiview(self):
-        assert _build_fallback_title("apiview", "Page is broken", None) == "[APIView] Page is broken"
+    def test_short(self):
+        assert _build_fallback_title("Page is broken") == "[APIView] Page is broken"
 
-    def test_long_truncates(self):
-        long = "X" * 200
-        title = _build_fallback_title("apiview", long, None)
-        assert title.startswith("[APIView] ")
-        assert title.endswith("...")
-        assert len(title) - len("[APIView] ") - len("...") == 80
+    def test_long_truncates_to_first_14_words(self):
+        desc = " ".join(["word"] * 50)
+        title = _build_fallback_title(desc)
+        body = title[len("[APIView] "):]
+        assert len(body.split()) == 14
+        assert "..." not in title
 
-    def test_newlines_replaced(self):
-        title = _build_fallback_title("apiview", "line one\nline two", None)
-        assert "\n" not in title
+    def test_only_uses_first_line(self):
+        title = _build_fallback_title("first line\nsecond line should be ignored")
+        assert title == "[APIView] first line"
 
-    def test_copilot_prefix(self):
-        assert _build_fallback_title("copilot", "Bad suggestion", None).startswith("[AVC] ")
-
-    def test_parser_prefix(self):
-        assert _build_fallback_title("parser", "Wrong tokens", "python").startswith("[Python APIView] ")
+    def test_empty_description_uses_default(self):
+        assert _build_fallback_title("   ") == "[APIView] Issue reported from APIView"
 
 
 class TestBuildFallbackBody:
@@ -131,48 +128,82 @@ class TestBuildFallbackBody:
 
 class TestGenerateIssueContent:
     @patch("src._report_issue.run_prompt")
-    def test_llm_success(self, mock_run_prompt):
+    def test_llm_apiview_success(self, mock_run_prompt):
         mock_run_prompt.return_value = json.dumps(
             {
-                "title": "[APIView] Java review tree expansion broken beyond 3 levels",
-                "body": "## Summary\n\nNavigation tree fails to expand.\n\n---\n*Reported via APIView*",
+                "category": "apiview",
+                "language": None,
+                "title": "Tree fails to expand for deep namespaces",
+                "body": "## Summary\n\nx\n\n---\n*Reported via APIView*",
             }
         )
         result = _generate_issue_content(
-            category="apiview",
-            description="tree wont expand for deep namespaces",
+            description="tree wont expand",
             review_link=None,
             language=None,
             comment_context=None,
         )
+        assert result["category"] == "apiview"
+        assert result["language"] is None
         assert result["title"].startswith("[APIView] ")
-        assert "## Summary" in result["body"]
+        assert "Tree fails to expand" in result["title"]
 
     @patch("src._report_issue.run_prompt")
-    def test_llm_passes_title_prefix(self, mock_run_prompt):
-        mock_run_prompt.return_value = json.dumps({"title": "[Python APIView] Wrong tokens", "body": "x"})
-        _generate_issue_content(
-            category="parser",
-            description="wrong tokens",
+    def test_llm_parser_success_uses_language_prefix(self, mock_run_prompt):
+        mock_run_prompt.return_value = json.dumps(
+            {
+                "category": "parser",
+                "language": "python",
+                "title": "Wrong tokens for overloaded methods",
+                "body": "## Summary\n\nx",
+            }
+        )
+        result = _generate_issue_content(
+            description="parser is broken",
             review_link=None,
-            language="python",
+            language=None,
             comment_context=None,
         )
-        inputs = mock_run_prompt.call_args[1]["inputs"]
-        assert inputs["category"] == "parser"
-        assert inputs["title_prefix"] == "[Python APIView]"
-        assert inputs["language"] == "python"
+        assert result["category"] == "parser"
+        assert result["language"] == "python"
+        assert result["title"] == "[Python APIView] Wrong tokens for overloaded methods"
+
+    @patch("src._report_issue.run_prompt")
+    def test_llm_emits_prefix_in_title_is_not_double_prepended(self, mock_run_prompt):
+        mock_run_prompt.return_value = json.dumps(
+            {
+                "category": "apiview",
+                "language": None,
+                "title": "[APIView] Tree fails to expand",
+                "body": "x",
+            }
+        )
+        result = _generate_issue_content(
+            description="x", review_link=None, language=None, comment_context=None
+        )
+        assert result["title"] == "[APIView] Tree fails to expand"
+
+    @patch("src._report_issue.run_prompt")
+    def test_unknown_category_defaults_to_apiview(self, mock_run_prompt):
+        mock_run_prompt.return_value = json.dumps(
+            {"category": "copilot", "language": None, "title": "x", "body": "y"}
+        )
+        result = _generate_issue_content(
+            description="x", review_link=None, language=None, comment_context=None
+        )
+        assert result["category"] == "apiview"
+        assert result["title"] == "[APIView] x"
 
     @patch("src._report_issue.run_prompt")
     def test_falls_back_when_llm_raises(self, mock_run_prompt):
         mock_run_prompt.side_effect = RuntimeError("LLM unavailable")
         result = _generate_issue_content(
-            category="apiview",
             description="thing broke",
             review_link="https://apiview.dev/r/1",
             language=None,
             comment_context=None,
         )
+        assert result["category"] == "apiview"
         assert result["title"] == "[APIView] thing broke"
         assert "## Description" in result["body"]
         assert "thing broke" in result["body"]
@@ -181,49 +212,69 @@ class TestGenerateIssueContent:
     def test_falls_back_on_invalid_json(self, mock_run_prompt):
         mock_run_prompt.return_value = "not json"
         result = _generate_issue_content(
-            category="copilot",
-            description="bad suggestion",
-            review_link=None,
-            language=None,
-            comment_context=None,
+            description="bad thing", review_link=None, language=None, comment_context=None
         )
-        assert result["title"] == "[AVC] bad suggestion"
+        assert result["category"] == "apiview"
+        assert result["title"] == "[APIView] bad thing"
 
     @patch("src._report_issue.run_prompt")
-    def test_partial_fallback_keeps_llm_body_when_only_title_missing(self, mock_run_prompt):
-        mock_run_prompt.return_value = json.dumps({"title": "", "body": "## Summary\n\nGood body content."})
-        result = _generate_issue_content(
-            category="apiview",
-            description="something",
-            review_link=None,
-            language=None,
-            comment_context=None,
+    def test_apiview_category_strips_language_from_llm(self, mock_run_prompt):
+        mock_run_prompt.return_value = json.dumps(
+            {"category": "apiview", "language": "python", "title": "Issue", "body": "body"}
         )
-        assert result["title"] == "[APIView] something"
-        assert "Good body content" in result["body"]
+        result = _generate_issue_content(
+            description="x", review_link=None, language=None, comment_context=None
+        )
+        assert result["language"] is None
+        assert result["title"] == "[APIView] Issue"
+
+
+class TestLookupCommentContext:
+    @patch("src._report_issue.get_comment_with_context")
+    def test_maps_db_payload_to_comment_context(self, mock_get):
+        mock_get.return_value = {
+            "comment": {
+                "CommentText": "remove async",
+                "CommentSource": "copilot",
+                "ElementId": "AsyncBlobClient.upload_blob",
+            },
+            "code": "async def upload_blob(self, name: str, data: bytes) -> None: ...",
+            "language": "Python",
+            "package_name": "azure-storage-blob",
+        }
+        result = _lookup_comment_context("comment-123")
+        assert result == {
+            "comment_id": "comment-123",
+            "comment_text": "remove async",
+            "comment_source": "copilot",
+            "code_snippet": "async def upload_blob(self, name: str, data: bytes) -> None: ...",
+            "language": "Python",
+            "element_id": "AsyncBlobClient.upload_blob",
+        }
+
+    @patch("src._report_issue.get_comment_with_context")
+    def test_returns_none_when_comment_not_found(self, mock_get):
+        mock_get.return_value = None
+        assert _lookup_comment_context("missing") is None
+
+    @patch("src._report_issue.get_comment_with_context")
+    def test_returns_none_on_exception(self, mock_get):
+        mock_get.side_effect = RuntimeError("db down")
+        assert _lookup_comment_context("x") is None
 
 
 class TestHandleReportIssueRequestValidation:
-    def test_invalid_category(self):
-        with pytest.raises(ValueError, match="Invalid category"):
-            handle_report_issue_request(category="banana", description="x")
-
     def test_empty_description(self):
         with pytest.raises(ValueError, match="non-empty"):
-            handle_report_issue_request(category="apiview", description="   ")
-
-    def test_parser_requires_language(self):
-        with pytest.raises(ValueError, match="language is required"):
-            handle_report_issue_request(category="parser", description="parser broken")
+            handle_report_issue_request(description="   ")
 
     def test_description_too_long(self):
         with pytest.raises(ValueError, match="at most 5000"):
-            handle_report_issue_request(category="apiview", description="x" * 5001)
+            handle_report_issue_request(description="x" * 5001)
 
     def test_comment_text_too_long(self):
         with pytest.raises(ValueError, match=r"comment_text must be at most 10000"):
             handle_report_issue_request(
-                category="apiview",
                 description="ok",
                 comment_context={"comment_text": "x" * 10001},
             )
@@ -231,27 +282,27 @@ class TestHandleReportIssueRequestValidation:
     def test_code_snippet_too_long(self):
         with pytest.raises(ValueError, match=r"code_snippet must be at most 10000"):
             handle_report_issue_request(
-                category="apiview",
                 description="ok",
                 comment_context={"code_snippet": "x" * 10001},
             )
 
 
 class TestHandleReportIssueRequestEndToEnd:
-    @patch("src._report_issue.GithubManager")
+    @patch("src._report_issue.GithubManager.get_instance")
     @patch("src._report_issue.create_issue")
     @patch("src._report_issue.run_prompt")
-    def test_apiview_issue(self, mock_run_prompt, mock_create_issue, _mock_github_manager):
+    def test_apiview_issue(self, mock_run_prompt, mock_create_issue, _mock_get_instance):
         mock_run_prompt.return_value = json.dumps(
             {
-                "title": "[APIView] Tree fails to expand",
+                "category": "apiview",
+                "language": None,
+                "title": "Tree fails to expand",
                 "body": "## Summary\n\nx\n---\n*Reported via APIView*",
             }
         )
         mock_create_issue.return_value = {"html_url": "https://github.com/foo/bar/issues/1", "number": 1}
 
         result = handle_report_issue_request(
-            category="apiview",
             description="tree wont expand",
             review_link="https://apiview.dev/Review/x",
         )
@@ -263,33 +314,18 @@ class TestHandleReportIssueRequestEndToEnd:
         assert kwargs["workflow_tag"] == "report-issue"
         assert kwargs["source_tag"] == "APIView"
         assert kwargs["repo"] == "azure-sdk-tools"
+        assert kwargs["title"] == "[APIView] Tree fails to expand"
 
-    @patch("src._report_issue.GithubManager")
+    @patch("src._report_issue.GithubManager.get_instance")
     @patch("src._report_issue.create_issue")
     @patch("src._report_issue.run_prompt")
-    def test_copilot_issue_uses_avc_prefix_and_label(self, mock_run_prompt, mock_create_issue, _mock_github_manager):
-        mock_run_prompt.return_value = json.dumps({"title": "[AVC] Suggestion is wrong", "body": "body"})
-        mock_create_issue.return_value = {"html_url": "u", "number": 2}
-
-        handle_report_issue_request(
-            category="copilot",
-            description="suggestion is wrong",
-            comment_context={"comment_source": "copilot", "comment_text": "remove async"},
+    def test_parser_issue_uses_language_label(self, mock_run_prompt, mock_create_issue, _mock_get_instance):
+        mock_run_prompt.return_value = json.dumps(
+            {"category": "parser", "language": "python", "title": "Wrong tokens", "body": "body"}
         )
-
-        kwargs = mock_create_issue.call_args.kwargs
-        assert kwargs["title"] == "[AVC] Suggestion is wrong"
-        assert kwargs["labels"] == ["APIView Copilot"]
-
-    @patch("src._report_issue.GithubManager")
-    @patch("src._report_issue.create_issue")
-    @patch("src._report_issue.run_prompt")
-    def test_parser_issue_uses_language_label(self, mock_run_prompt, mock_create_issue, _mock_github_manager):
-        mock_run_prompt.return_value = json.dumps({"title": "[Python APIView] Wrong tokens", "body": "body"})
         mock_create_issue.return_value = {"html_url": "u", "number": 3}
 
         handle_report_issue_request(
-            category="parser",
             description="parser is broken here",
             language="python",
         )
@@ -298,25 +334,121 @@ class TestHandleReportIssueRequestEndToEnd:
         assert kwargs["title"] == "[Python APIView] Wrong tokens"
         assert kwargs["labels"] == ["APIView", "Python"]
 
+    @patch("src._report_issue.GithubManager.get_instance")
+    @patch("src._report_issue.create_issue")
+    @patch("src._report_issue.run_prompt")
+    @patch("src._report_issue.get_comment_with_context")
+    def test_comment_id_path_fetches_context(
+        self, mock_get, mock_run_prompt, mock_create_issue, _mock_get_instance
+    ):
+        mock_get.return_value = {
+            "comment": {
+                "CommentText": "this is wrong",
+                "CommentSource": "apiview",
+                "ElementId": "BlobClient.upload_blob",
+            },
+            "code": "def upload_blob(...): ...",
+            "language": "Python",
+        }
+        mock_run_prompt.return_value = json.dumps(
+            {"category": "parser", "language": "Python", "title": "Wrong tokens", "body": "b"}
+        )
+        mock_create_issue.return_value = {"html_url": "u", "number": 5}
 
-class TestGetOwner:
-    @patch.dict("os.environ", {"ENVIRONMENT_NAME": "production"})
-    def test_production(self):
-        assert get_owner() == "Azure"
+        handle_report_issue_request(
+            description="parser broken",
+            comment_id="comment-xyz",
+        )
 
-    @patch.dict("os.environ", {"ENVIRONMENT_NAME": "staging"})
-    def test_staging(self):
-        assert get_owner() == "tjprescott"
+        prompt_inputs = mock_run_prompt.call_args.kwargs["inputs"]
+        assert "this is wrong" in prompt_inputs["comment_context"]
+        assert "BlobClient.upload_blob" in prompt_inputs["comment_context"]
+        assert prompt_inputs["language"] == "Python"
+        kwargs = mock_create_issue.call_args.kwargs
+        assert kwargs["title"] == "[Python APIView] Wrong tokens"
+        assert kwargs["labels"] == ["APIView", "Python"]
 
-    @patch.dict("os.environ", {}, clear=True)
-    def test_unset(self):
-        assert get_owner() == "tjprescott"
+    @patch("src._report_issue.GithubManager.get_instance")
+    @patch("src._report_issue.create_issue")
+    @patch("src._report_issue.run_prompt")
+    @patch("src._report_issue.get_comment_with_context")
+    def test_explicit_comment_context_wins_over_comment_id(
+        self, mock_get, mock_run_prompt, mock_create_issue, _mock_get_instance
+    ):
+        mock_run_prompt.return_value = json.dumps(
+            {"category": "apiview", "language": None, "title": "T", "body": "b"}
+        )
+        mock_create_issue.return_value = {"html_url": "u", "number": 6}
+
+        handle_report_issue_request(
+            description="x",
+            comment_id="should-be-ignored",
+            comment_context={"comment_text": "explicit"},
+        )
+
+        mock_get.assert_not_called()
 
 
-class TestLanguageLabels:
+class TestGithubManagerOwner:
+    @patch("src._github_manager.os.getenv")
+    def test_production(self, mock_getenv):
+        mock_getenv.return_value = "production"
+        assert GithubManager.resolve_owner() == "Azure"
+
+    @patch("src._github_manager.os.getenv")
+    def test_staging(self, mock_getenv):
+        mock_getenv.return_value = "staging"
+        assert GithubManager.resolve_owner() == "tjprescott"
+
+    @patch("src._github_manager.os.getenv")
+    def test_unset(self, mock_getenv):
+        mock_getenv.return_value = None
+        assert GithubManager.resolve_owner() == "tjprescott"
+
+
+class TestGithubManagerLanguageLabels:
     def test_canonical_languages_present(self):
-        # Must mirror OpenParserIssueWorkflow.LANGUAGE_LABELS so issues get the correct language label
-        assert LANGUAGE_LABELS["python"] == "Python"
-        assert LANGUAGE_LABELS["c#"] == ".NET"
-        assert LANGUAGE_LABELS["go"] == "Go"
-        assert LANGUAGE_LABELS["java"] == "Java"
+        assert GithubManager.LANGUAGE_LABELS["python"] == "Python"
+        assert GithubManager.LANGUAGE_LABELS["c#"] == ".NET"
+        assert GithubManager.LANGUAGE_LABELS["go"] == "Go"
+        assert GithubManager.LANGUAGE_LABELS["java"] == "Java"
+
+    def test_build_issue_labels_appends_known_language(self):
+        assert GithubManager.build_issue_labels(["APIView"], "python") == ["APIView", "Python"]
+
+    def test_build_issue_labels_skips_unknown_language(self):
+        assert GithubManager.build_issue_labels(["APIView"], "kotlin") == ["APIView"]
+
+    def test_build_issue_labels_no_language(self):
+        assert GithubManager.build_issue_labels(["APIView"], None) == ["APIView"]
+
+    def test_build_issue_labels_no_duplicate(self):
+        assert GithubManager.build_issue_labels(["APIView", "Python"], "python") == ["APIView", "Python"]
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
+# pylint: disable=missing-class-docstring,missing-function-docstring
+
+"""Tests for the shared report-issue core in src/_report_issue.py."""
+
+import json
+from unittest.mock import patch
+
+import pytest
+
+from src._github_manager import GithubManager
+from src._report_issue import (
+    _build_fallback_body,
+    _build_fallback_title,
+    _build_labels,
+    _format_comment_context_for_prompt,
+    _generate_issue_content,
+    _lookup_comment_context,
+    _title_prefix,
+    handle_report_issue_request,
+)
+
+

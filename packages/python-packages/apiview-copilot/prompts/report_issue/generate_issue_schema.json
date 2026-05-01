@@ -6,17 +6,27 @@
     "schema": {
       "type": "object",
       "properties": {
+        "category": {
+          "type": "string",
+          "enum": ["apiview", "parser"],
+          "description": "The kind of issue: 'apiview' for an APIView UI/service problem; 'parser' for a language-specific APIView parser problem."
+        },
+        "language": {
+          "type": ["string", "null"],
+          "description": "Programming language affected. Required when category is 'parser' (e.g. 'python', 'C#'); null when category is 'apiview'."
+        },
         "title": {
           "type": "string",
-          "description": "A concise GitHub issue title that begins with the title_prefix the caller passed in (e.g. [APIView], [AVC], or [Python APIView])."
+          "description": "A concise GitHub issue title in sentence case, up to ~14 words, no trailing punctuation. Do NOT include any prefix such as [APIView] or [Python APIView]; the server prepends one based on category and language."
         },
         "body": {
           "type": "string",
           "description": "The full GitHub issue body in Markdown, with the sections specified in the system prompt (Summary / Context / Details / Suggested Next Steps), ending with '---\\n*Reported via APIView*'."
         }
       },
-      "required": ["title", "body"],
+      "required": ["category", "language", "title", "body"],
       "additionalProperties": false
     }
   }
 }
+

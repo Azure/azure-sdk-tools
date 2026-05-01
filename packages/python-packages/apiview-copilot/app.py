@@ -437,10 +437,10 @@ class CommentContextRequest(BaseModel):
 class ReportIssueRequest(BaseModel):
     """Request model for reporting an issue from APIView."""
 
-    category: Literal["apiview", "copilot", "parser"]
     description: str = Field(..., min_length=1, max_length=5000)
     review_link: Optional[str] = Field(None, alias="reviewLink")
     language: Optional[str] = None
+    comment_id: Optional[str] = Field(None, alias="commentId")
     comment_context: Optional[CommentContextRequest] = Field(None, alias="commentContext")
 
     class Config:
@@ -467,14 +467,14 @@ async def report_issue(
     _claims=Depends(require_roles(AppRole.WRITER, AppRole.APP_WRITER)),
 ):
     """Report an issue from APIView. Creates a GitHub issue with context."""
-    logger.info("Received /report-issue request: category=%s", request.category)
+    logger.info("Received /report-issue request")
     try:
         result = await asyncio.to_thread(
             handle_report_issue_request,
-            category=request.category,
             description=request.description,
             review_link=request.review_link,
             language=request.language,
+            comment_id=request.comment_id,
             comment_context=request.comment_context.model_dump() if request.comment_context else None,
         )
         return ReportIssueResponse(issue_url=result["issue_url"], issue_number=result["issue_number"])

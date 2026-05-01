@@ -1,6 +1,7 @@
+﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.6.11630.250 main
+VisualStudioVersion = 18.6.11630.250
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.Cli", "Azure.Sdk.Tools.Cli\Azure.Sdk.Tools.Cli.csproj", "{162CDABB-D3C2-46DF-A955-183488D5716F}"
 EndProject
@@ -13,6 +14,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.Cli.Benchmarks", "Azure.Sdk.Tools.Cli.Benchmarks\Azure.Sdk.Tools.Cli.Benchmarks.csproj", "{935EF53C-2B7D-4275-B4C3-84109D81F144}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.CodeownersUtils", "..\codeowners-utils\Azure.Sdk.Tools.CodeownersUtils\Azure.Sdk.Tools.CodeownersUtils.csproj", "{D27C2C44-3AC4-0732-FF87-DD1697A9DF37}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.Mock", "Azure.Sdk.Tools.Mock\Azure.Sdk.Tools.Mock.csproj", "{F6CA0C60-A387-4322-A26C-0980EE8C1358}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -96,6 +99,18 @@ Global
 		{D27C2C44-3AC4-0732-FF87-DD1697A9DF37}.Release|x64.Build.0 = Release|Any CPU
 		{D27C2C44-3AC4-0732-FF87-DD1697A9DF37}.Release|x86.ActiveCfg = Release|Any CPU
 		{D27C2C44-3AC4-0732-FF87-DD1697A9DF37}.Release|x86.Build.0 = Release|Any CPU
+		{F6CA0C60-A387-4322-A26C-0980EE8C1358}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F6CA0C60-A387-4322-A26C-0980EE8C1358}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F6CA0C60-A387-4322-A26C-0980EE8C1358}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{F6CA0C60-A387-4322-A26C-0980EE8C1358}.Debug|x64.Build.0 = Debug|Any CPU
+		{F6CA0C60-A387-4322-A26C-0980EE8C1358}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{F6CA0C60-A387-4322-A26C-0980EE8C1358}.Debug|x86.Build.0 = Debug|Any CPU
+		{F6CA0C60-A387-4322-A26C-0980EE8C1358}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F6CA0C60-A387-4322-A26C-0980EE8C1358}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F6CA0C60-A387-4322-A26C-0980EE8C1358}.Release|x64.ActiveCfg = Release|Any CPU
+		{F6CA0C60-A387-4322-A26C-0980EE8C1358}.Release|x64.Build.0 = Release|Any CPU
+		{F6CA0C60-A387-4322-A26C-0980EE8C1358}.Release|x86.ActiveCfg = Release|Any CPU
+		{F6CA0C60-A387-4322-A26C-0980EE8C1358}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

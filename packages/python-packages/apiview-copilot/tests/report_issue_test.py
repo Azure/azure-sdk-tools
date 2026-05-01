@@ -272,20 +272,6 @@ class TestHandleReportIssueRequestValidation:
         with pytest.raises(ValueError, match="at most 5000"):
             handle_report_issue_request(description="x" * 5001)
 
-    def test_comment_text_too_long(self):
-        with pytest.raises(ValueError, match=r"comment_text must be at most 10000"):
-            handle_report_issue_request(
-                description="ok",
-                comment_context={"comment_text": "x" * 10001},
-            )
-
-    def test_code_snippet_too_long(self):
-        with pytest.raises(ValueError, match=r"code_snippet must be at most 10000"):
-            handle_report_issue_request(
-                description="ok",
-                comment_context={"code_snippet": "x" * 10001},
-            )
-
 
 class TestHandleReportIssueRequestEndToEnd:
     @patch("src._report_issue.GithubManager.get_instance")
@@ -367,26 +353,6 @@ class TestHandleReportIssueRequestEndToEnd:
         kwargs = mock_create_issue.call_args.kwargs
         assert kwargs["title"] == "[Python APIView] Wrong tokens"
         assert kwargs["labels"] == ["APIView", "Python"]
-
-    @patch("src._report_issue.GithubManager.get_instance")
-    @patch("src._report_issue.create_issue")
-    @patch("src._report_issue.run_prompt")
-    @patch("src._report_issue.get_comment_with_context")
-    def test_explicit_comment_context_wins_over_comment_id(
-        self, mock_get, mock_run_prompt, mock_create_issue, _mock_get_instance
-    ):
-        mock_run_prompt.return_value = json.dumps(
-            {"category": "apiview", "language": None, "title": "T", "body": "b"}
-        )
-        mock_create_issue.return_value = {"html_url": "u", "number": 6}
-
-        handle_report_issue_request(
-            description="x",
-            comment_id="should-be-ignored",
-            comment_context={"comment_text": "explicit"},
-        )
-
-        mock_get.assert_not_called()
 
 
 class TestGithubManagerOwner:

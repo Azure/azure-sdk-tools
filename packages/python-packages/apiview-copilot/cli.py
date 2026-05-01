@@ -992,10 +992,6 @@ def issue_report(
     review_link: str = None,
     language: str = None,
     comment_id: str = None,
-    comment_text: str = None,
-    code_snippet: str = None,
-    element_id: str = None,
-    comment_source: str = None,
     remote: bool = False,
 ):
     """
@@ -1007,19 +1003,6 @@ def issue_report(
     problem or a parser problem; the server then derives the title
     prefix and labels.
     """
-    comment_context = {}
-    if comment_text:
-        comment_context["comment_text"] = comment_text
-    if code_snippet:
-        comment_context["code_snippet"] = code_snippet
-    if element_id:
-        comment_context["element_id"] = element_id
-    if comment_source:
-        comment_context["comment_source"] = comment_source
-    if language:
-        comment_context["language"] = language
-    comment_context = comment_context or None
-
     if remote:
         settings = SettingsManager()
         base_url = settings.get("WEBAPP_ENDPOINT")
@@ -1031,15 +1014,6 @@ def issue_report(
             payload["language"] = language
         if comment_id:
             payload["commentId"] = comment_id
-        if comment_context:
-            _camel_keys = {
-                "comment_text": "commentText",
-                "code_snippet": "codeSnippet",
-                "element_id": "elementId",
-                "comment_source": "commentSource",
-                "language": "language",
-            }
-            payload["commentContext"] = {_camel_keys[k]: v for k, v in comment_context.items()}
         try:
             resp = requests.post(api_endpoint, json=payload, headers=_build_auth_header(), timeout=60)
             data = resp.json()
@@ -1055,7 +1029,6 @@ def issue_report(
             review_link=review_link,
             language=language,
             comment_id=comment_id,
-            comment_context=comment_context,
         )
         print(json.dumps(result, indent=2))
 
@@ -2899,35 +2872,6 @@ class CliCommandsLoader(CLICommandsLoader):
                 type=str,
                 help="Optional APIView comment id. When provided, the server fetches the comment context (text, code snippet, language, element id, source) automatically.",
                 options_list=["--comment-id"],
-                default=None,
-            )
-            ac.argument(
-                "comment_text",
-                type=str,
-                help="Optional text of the comment that triggered the report.",
-                options_list=["--comment-text"],
-                default=None,
-            )
-            ac.argument(
-                "code_snippet",
-                type=str,
-                help="Optional code snippet associated with the comment.",
-                options_list=["--code-snippet"],
-                default=None,
-            )
-            ac.argument(
-                "element_id",
-                type=str,
-                help="Optional API element id associated with the comment.",
-                options_list=["--element-id"],
-                default=None,
-            )
-            ac.argument(
-                "comment_source",
-                type=str,
-                choices=["copilot", "apiview"],
-                help="Source of the triggering comment.",
-                options_list=["--comment-source"],
                 default=None,
             )
         with ArgumentsContext(self, "db") as ac:

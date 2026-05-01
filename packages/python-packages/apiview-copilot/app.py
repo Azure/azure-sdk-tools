@@ -418,22 +418,6 @@ async def resolve_package_info(
         raise HTTPException(status_code=500, detail="Internal server error") from e
 
 
-class CommentContextRequest(BaseModel):
-    """Optional context about the comment that triggered the issue report."""
-
-    comment_id: Optional[str] = Field(None, alias="commentId")
-    comment_text: Optional[str] = Field(None, alias="commentText", max_length=10000)
-    code_snippet: Optional[str] = Field(None, alias="codeSnippet", max_length=10000)
-    language: Optional[str] = None
-    element_id: Optional[str] = Field(None, alias="elementId")
-    comment_source: Optional[Literal["copilot", "apiview"]] = Field(None, alias="commentSource")
-
-    class Config:
-        """Configuration for Pydantic model."""
-
-        populate_by_name = True
-
-
 class ReportIssueRequest(BaseModel):
     """Request model for reporting an issue from APIView."""
 
@@ -441,7 +425,6 @@ class ReportIssueRequest(BaseModel):
     review_link: Optional[str] = Field(None, alias="reviewLink")
     language: Optional[str] = None
     comment_id: Optional[str] = Field(None, alias="commentId")
-    comment_context: Optional[CommentContextRequest] = Field(None, alias="commentContext")
 
     class Config:
         """Configuration for Pydantic model."""
@@ -475,7 +458,6 @@ async def report_issue(
             review_link=request.review_link,
             language=request.language,
             comment_id=request.comment_id,
-            comment_context=request.comment_context.model_dump() if request.comment_context else None,
         )
         return ReportIssueResponse(issue_url=result["issue_url"], issue_number=result["issue_number"])
     except ValueError as e:

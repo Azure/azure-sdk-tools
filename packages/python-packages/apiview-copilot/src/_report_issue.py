@@ -42,12 +42,10 @@ REPORT_ISSUE_REPO = "azure-sdk-tools"
 # more actionable feedback mechanism.
 _ALLOWED_LLM_CATEGORIES = ("apiview", "parser")
 
-# Length caps mirror the FastAPI request models in app.py so that the
+# Length cap mirrors the FastAPI request model in app.py so that the
 # core behaves the same regardless of entry point (HTTP endpoint, CLI,
 # or any direct Python caller).
 MAX_DESCRIPTION_LENGTH = 5000
-MAX_COMMENT_FIELD_LENGTH = 10000
-_BOUNDED_COMMENT_CONTEXT_FIELDS = ("comment_text", "code_snippet")
 
 
 def _title_prefix(category: str, language: Optional[str]) -> str:
@@ -199,7 +197,6 @@ def handle_report_issue_request(
     description: str,
     review_link: Optional[str] = None,
     language: Optional[str] = None,
-    comment_context: Optional[dict] = None,
     comment_id: Optional[str] = None,
 ) -> dict:
     """Handle a report-issue request end-to-end.
@@ -208,38 +205,26 @@ def handle_report_issue_request(
         description: Free-form user description of the issue (required).
         review_link: Optional URL to the APIView review the user is on.
         language: Optional programming language hint.
-        comment_context: Optional dict describing the comment that
-            triggered the report. Recognised keys: ``comment_id``,
-            ``comment_text``, ``code_snippet``, ``language``,
-            ``element_id``, ``comment_source``.
-        comment_id: Optional APIView comment id. When provided and
-            ``comment_context`` is not, the context is fetched from the
-            APIView database via ``get_comment_with_context``.
+        comment_id: Optional APIView comment id. When provided, the
+            comment text, code snippet, language, element id, and
+            source are fetched from the APIView database via
+            ``get_comment_with_context``.
 
     Returns:
         Dict with ``issue_url``, ``issue_number``, ``title``, ``body``.
 
     Raises:
-        ValueError: For invalid input (empty / oversized description,
-            oversized comment context fields).
+        ValueError: For invalid input (empty / oversized description).
     """
     if not description or not description.strip():
         raise ValueError("description must be a non-empty string.")
     if len(description) > MAX_DESCRIPTION_LENGTH:
         raise ValueError(f"description must be at most {MAX_DESCRIPTION_LENGTH} characters.")
 
-    effective_context = comment_context
-    if comment_id and not effective_context:
+    effective_context: Optional[dict] = None
+    if comment_id:
         effective_context = _lookup_comment_context(comment_id)
-
-    if effective_context:
-        for field in _BOUNDED_COMMENT_CONTEXT_FIELDS:
-            value = effective_context.get(field)
-            if value is not None and len(value) > MAX_COMMENT_FIELD_LENGTH:
-                raise ValueError(
-                    f"comment_context.{field} must be at most {MAX_COMMENT_FIELD_LENGTH} characters."
-                )
-        if not language:
+        if effective_context and not language:
             language = effective_context.get("language") or language
 
     content = _generate_issue_content(

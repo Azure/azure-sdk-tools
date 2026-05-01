@@ -188,14 +188,9 @@ avc agent resolve-thread -c <COMMENTS_JSON_FILE> [--remote]
 File a GitHub issue from an APIView "Report Issue" interaction. The LLM determines whether the report is about the APIView UI/service or a language-specific parser; the server then derives the title prefix (`[APIView]` or `[{Language} APIView]`) and labels.
 
 ```bash
-# Manual context
 avc agent report-issue --description "<text>" \
     [--review-link <URL>] [--language <LANG>] \
-    [--comment-text <TEXT>] [--code-snippet <CODE>] \
-    [--element-id <ID>] [--comment-source apiview|copilot] [--remote]
-
-# Look up comment context server-side from an APIView comment id
-avc agent report-issue --description "<text>" --comment-id <COMMENT_ID> [--remote]
+    [--comment-id <COMMENT_ID>] [--remote]
 ```
 
 | Option | Description |
@@ -204,10 +199,6 @@ avc agent report-issue --description "<text>" --comment-id <COMMENT_ID> [--remot
 | `--review-link` | Optional URL to the APIView review the user is on. |
 | `--language` | Optional language hint (e.g. `python`, `C#`). |
 | `--comment-id` | Optional APIView comment id. When provided, the server fetches the comment text, code snippet, language, element id, and source automatically. |
-| `--comment-text` | Optional text of the comment that triggered the report (used when `--comment-id` is not provided). |
-| `--code-snippet` | Optional code snippet associated with the comment. |
-| `--element-id` | Optional API element id associated with the comment. |
-| `--comment-source` | `apiview` or `copilot` — origin of the triggering comment. |
 | `--remote` | Send to the deployed `/report-issue` endpoint instead of running locally. |
 
 The issue is filed against `Azure/azure-sdk-tools` in production and `tjprescott/azure-sdk-tools` everywhere else.

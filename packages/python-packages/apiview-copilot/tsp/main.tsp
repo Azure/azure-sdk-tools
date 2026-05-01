@@ -271,27 +271,6 @@ namespace ApiViewCopilot {
     revisionLabel?: string;
   }
 
-  /** Optional context about the comment that triggered the issue report. */
-  model CommentContext {
-    /** The APIView comment id this report originated from. */
-    commentId?: string;
-
-    /** The text of the comment that triggered the report. */
-    commentText?: string;
-
-    /** A short code snippet associated with the comment. */
-    codeSnippet?: string;
-
-    /** The programming language of the comment / element. */
-    language?: string;
-
-    /** The API element id associated with the comment. */
-    elementId?: string;
-
-    /** Source of the triggering comment. */
-    commentSource?: "apiview" | "copilot";
-  }
-
   /** Request to file a GitHub issue from an APIView "Report Issue" interaction. */
   model ReportIssueRequest {
     /** The user's free-form description of the problem (1–5000 chars). */
@@ -303,11 +282,8 @@ namespace ApiViewCopilot {
     /** Optional language hint (e.g. 'python', 'C#'). The LLM may also infer it from the description / context. */
     language?: string;
 
-    /** Optional APIView comment id. When provided, the server fetches the comment context (text, code snippet, language, element id, source) automatically; ignored when commentContext is also provided. */
+    /** Optional APIView comment id. When provided, the server fetches the comment context (text, code snippet, language, element id, source) automatically. */
     commentId?: string;
-
-    /** Optional manually-supplied comment context. */
-    commentContext?: CommentContext;
   }
 
   /** Response after filing a GitHub issue. */

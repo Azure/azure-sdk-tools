@@ -35,7 +35,66 @@ class GithubManager:
     Uses GitHub App authentication only.
     """
 
+    # Mapping of normalized language string -> GitHub label. Shared by
+    # every flow that opens issues against ``azure-sdk-tools`` (manual
+    # report, mention parser workflow, etc.) so labels stay consistent
+    # across entry points.
+    LANGUAGE_LABELS: dict[str, str] = {
+        "python": "Python",
+        "py": "Python",
+        "c#": ".NET",
+        "csharp": ".NET",
+        "dotnet": ".NET",
+        ".net": ".NET",
+        "c++": "C++",
+        "cpp": "C++",
+        "c99": "C99",
+        "java": "Java",
+        "android": "Java",
+        "swift": "Swift",
+        "javascript": "javascript",
+        "js": "javascript",
+        "go": "Go",
+        "golang": "Go",
+        "rust": "Rust",
+    }
+
     _instance: "GithubManager" = None
+
+    @staticmethod
+    def resolve_owner(production_owner: str = "Azure", staging_owner: str = "tjprescott") -> str:
+        """Return the GitHub owner to file issues against based on ``ENVIRONMENT_NAME``.
+
+        Production traffic targets ``Azure``; every other environment
+        (local, staging, preview) targets the staging owner so test
+        runs do not pollute the real repo.
+        """
+        return production_owner if os.getenv("ENVIRONMENT_NAME") == "production" else staging_owner
+
+    @classmethod
+    def language_label(cls, language: Optional[str]) -> Optional[str]:
+        """Return the canonical GitHub label for a language string, or ``None``."""
+        if not language:
+            return None
+        return cls.LANGUAGE_LABELS.get(language.strip().lower())
+
+    @classmethod
+    def build_issue_labels(
+        cls,
+        base_labels: Iterable[str],
+        language: Optional[str] = None,
+    ) -> list[str]:
+        """Build a labels list for an issue, appending the language label when known.
+
+        ``base_labels`` is preserved in order; the language label is
+        appended only if ``language`` resolves to a known label and is
+        not already present.
+        """
+        labels = list(base_labels)
+        lang_label = cls.language_label(language)
+        if lang_label and lang_label not in labels:
+            labels.append(lang_label)
+        return labels
 
     @classmethod
     def get_instance(cls, force_new: bool = False) -> "GithubManager":

@@ -9,11 +9,10 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using APIView;
 using APIView.Model;
 using APIView.Model.V2;
 
-namespace ApiView
+namespace APIView
 {
     public class CodeFile
     {
@@ -60,10 +59,6 @@ namespace ApiView
         // Thisis set to true when the content generation is in progress for this code file.
         public bool ContentGenerationInProgress { get; set; } = false;
 
-        public override string ToString()
-        {
-            return new CodeFileRenderer().Render(this).CodeLines.ToString();
-        }  
         public static bool IsCollapsibleSectionSSupported(string language) => _collapsibleLanguages.Contains(language);
 
         public static async Task<CodeFile> DeserializeAsync(Stream stream, bool hasSections = false)

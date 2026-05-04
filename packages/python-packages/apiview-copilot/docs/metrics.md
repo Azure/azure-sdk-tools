@@ -162,6 +162,17 @@ Retrieve human architect review comments for a date range. By default, only thre
 avc report architect-comments -s 2026-01-01 -e 2026-01-31 [-l python] [--all-commenters] [--include-replies] [--environment staging] [--format yaml]
 ```
 
+### APIView Platform Metrics
+
+Track versioned-revision coverage and cross-language compliance over a calendar-month lookback window. Outputs JSON to stdout; use `--summary` to also print human-readable tables to stderr.
+
+```bash
+avc report apiview-metrics [--months 6] [--end-date 2026-04-30] [--languages Python Java] [--chart] [--summary]
+```
+
+- **versions** — Percentage of revisions with a valid `PackageVersion`, broken out by language and revision type (Automatic, Manual, PullRequest).
+- **compliance** — Percentage of reviews whose latest revision includes `CrossLanguagePackageId`.
+
 ## OpenTelemetry Metrics
 
 In addition to the business metrics described above, the AVC service emits **OpenTelemetry (OTLP) metrics** for operational monitoring. These are shipped to Azure Application Insights and are not directly accessible via the CLI.

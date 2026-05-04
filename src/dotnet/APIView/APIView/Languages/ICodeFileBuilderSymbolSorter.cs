@@ -4,7 +4,7 @@
 using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
 
-namespace ApiView
+namespace APIView.CSharp
 {
     public interface ICodeFileBuilderSymbolOrderProvider
     {

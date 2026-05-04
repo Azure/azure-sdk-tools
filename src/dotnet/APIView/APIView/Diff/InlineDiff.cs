@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace APIView.DIff
+namespace APIView.Diff
 {
     public class InlineDiff
     {

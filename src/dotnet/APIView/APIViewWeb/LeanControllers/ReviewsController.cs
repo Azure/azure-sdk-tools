@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using ApiView;
+using APIView;
 using APIViewWeb.Extensions;
 using APIViewWeb.Helpers;
 using APIViewWeb.Hubs;

@@ -185,7 +185,7 @@ avc agent resolve-thread -c <COMMENTS_JSON_FILE> [--remote]
 
 ### `avc agent report-issue`
 
-File a GitHub issue from an APIView "Report Issue" interaction. The LLM determines whether the report is about the APIView UI/service or a language-specific parser; the server then derives the title prefix (`[APIView]` or `[{Language} APIView]`) and labels.
+File a GitHub issue from an APIView "Report Issue" interaction. The LLM determines whether the report is about the APIView UI/service, APIView Copilot (the AI reviewer), or a language-specific parser; the server then derives the title prefix (`[APIView]`, `[AVC]`, or `[{Language} APIView]`) and labels.
 
 ```bash
 avc agent report-issue --description "<text>" \
@@ -195,13 +195,11 @@ avc agent report-issue --description "<text>" \
 
 | Option | Description |
 |--------|-------------|
-| `--description` | Required. The user's free-form description of the problem (1–5000 chars). |
+| `--description` | Required. The user's free-form description of the problem. |
 | `--review-link` | Optional URL to the APIView review the user is on. |
 | `--language` | Optional language hint (e.g. `python`, `C#`). |
 | `--comment-id` | Optional APIView comment id. When provided, the server fetches the comment text, code snippet, language, element id, and source automatically. |
 | `--remote` | Send to the deployed `/report-issue` endpoint instead of running locally. |
-
-The issue is filed against `Azure/azure-sdk-tools` in production and `tjprescott/azure-sdk-tools` everywhere else.
 
 ---
 

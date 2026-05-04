@@ -1,15 +1,15 @@
 ---
 name: Generate Report Issue
-description: Generates a clean GitHub issue title and body from a user-reported APIView problem. Determines the issue category (apiview vs parser) and the affected language so the server can derive labels and a title prefix deterministically.
+description: Generates a clean GitHub issue title and body from a user-reported APIView problem. Determines the issue category (apiview vs avc vs parser) and the affected language so the server can derive labels and a title prefix deterministically.
 authors:
   - gaoh
 version: 1.0.0
 model:
   api: chat
   configuration:
-    azure_deployment: gpt-4
+    azure_deployment: gpt-5.4
   parameters:
-    max_completion_tokens: 4096
+    max_completion_tokens: 16384
     response_format: ${file:generate_issue_schema.json}
 sample:
   description: "the python parser is broken here. it shows two methods with the same signature but they shouldnt look the same in apiview"
@@ -44,6 +44,12 @@ You must determine the **category** yourself. Allowed categories:
 * `apiview` — A problem with the APIView UI or service itself (navigation,
   rendering, performance, login, diff view, search, layout, etc.). The
   issue is not language-specific.
+* `avc` — A problem with **APIView Copilot** (the AI reviewer): bad,
+  wrong, off-topic, duplicated, or hallucinated comments and
+  suggestions; mention/chat agent misbehaviour; thread-resolution bugs;
+  knowledge-base / guideline retrieval problems. Pick this when the
+  user is complaining about something the AI did or said, even if they
+  saw it inside the APIView UI.
 * `parser` — A problem with the language-specific APIView parser
   (incorrect or missing tokens, broken element ids, signatures rendered
   wrong, type information missing, etc.). When you pick `parser` you
@@ -53,18 +59,19 @@ You must determine the **category** yourself. Allowed categories:
   python, `func`/`package` → go, `public class` → C#/Java, etc.).
 
 When in doubt, prefer `apiview` unless the report is clearly about how a
-specific language is parsed.
+specific language is parsed or about something the AI did.
 
 Respond with strict JSON matching the provided schema:
 
-* **category** — `"apiview"` or `"parser"`.
+* **category** — `"apiview"`, `"avc"`, or `"parser"`.
 * **language** — Required when category is `"parser"`; `null` otherwise.
   Echo back the user-supplied language exactly when given; otherwise
   infer it (e.g. `"python"`, `"C#"`, `"go"`).
 * **title** — A short, factual title in sentence case. Up to ~14 words;
   shorter is fine when the bug is simple. No trailing punctuation.
-  **Do not include any prefix like `[APIView]` or `[Python APIView]`** —
-  the server prepends one based on category and language.
+  **Do not include any prefix like `[APIView]`, `[AVC]`, or
+  `[Python APIView]`** — the server prepends one based on category and
+  language.
 * **body** — The full GitHub issue body in Markdown. Structure it as
   the following sections, in this order, omitting any section for which
   you have no information:

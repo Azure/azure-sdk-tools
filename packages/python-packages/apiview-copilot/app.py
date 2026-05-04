@@ -28,7 +28,7 @@ from src._auth import AppRole, require_roles
 from src._database_manager import DatabaseManager
 from src._diff import create_diff_with_line_numbers
 from src._mention import handle_mention_request
-from src._report_issue import MAX_DESCRIPTION_LENGTH, handle_report_issue_request
+from src._report_issue import handle_report_issue_request
 from src._settings import SettingsManager
 from src._thread_resolution import handle_thread_resolution_request
 from src._prompt_runner import run_prompt
@@ -421,7 +421,7 @@ async def resolve_package_info(
 class ReportIssueRequest(BaseModel):
     """Request model for reporting an issue from APIView."""
 
-    description: str = Field(..., min_length=1, max_length=MAX_DESCRIPTION_LENGTH)
+    description: str = Field(..., min_length=1)
     review_link: Optional[str] = Field(None, alias="reviewLink")
     language: Optional[str] = None
     comment_id: Optional[str] = Field(None, alias="commentId")

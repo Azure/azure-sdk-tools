@@ -11,11 +11,12 @@ Used by both the FastAPI endpoint (``app.py``) and the CLI (``cli.py``)
 so that both code paths produce identical GitHub issues from the same
 input.
 
-The LLM determines which kind of issue this is (``apiview`` or
-``parser``) and emits the affected language when relevant. The server
-then deterministically derives a title prefix and labels:
+The LLM determines which kind of issue this is (``apiview``, ``avc``,
+or ``parser``) and emits the affected language when relevant. The
+server then deterministically derives a title prefix and labels:
 
 * ``apiview`` → title prefix ``[APIView]``, labels ``["APIView"]``.
+* ``avc``     → title prefix ``[AVC]``, labels ``["APIView Copilot"]``.
 * ``parser``  → title prefix ``[{Language} APIView]`` (or ``[APIView]``
   when no known language label is available), labels
   ``["APIView", "{Language}"]`` (language label appended only when
@@ -37,15 +38,11 @@ logger = logging.getLogger(__name__)
 
 REPORT_ISSUE_REPO = "azure-sdk-tools"
 
-# Allowed categories the LLM may emit. ``copilot`` is intentionally
-# excluded — problems with APIView Copilot suggestions have a separate,
-# more actionable feedback mechanism.
-_ALLOWED_LLM_CATEGORIES = ("apiview", "parser")
-
-# Length cap mirrors the FastAPI request model in app.py so that the
-# core behaves the same regardless of entry point (HTTP endpoint, CLI,
-# or any direct Python caller).
-MAX_DESCRIPTION_LENGTH = 5000
+# Allowed categories the LLM may emit.
+#   ``apiview`` — APIView UI/service problem.
+#   ``avc``     — APIView Copilot (LLM review/comment) problem.
+#   ``parser``  — language-specific APIView parser problem.
+_ALLOWED_LLM_CATEGORIES = ("apiview", "avc", "parser")
 
 
 def _title_prefix(category: str, language: Optional[str]) -> str:
@@ -54,6 +51,9 @@ def _title_prefix(category: str, language: Optional[str]) -> str:
         label = GithubManager.language_label(language)
         if label:
             return f"[{label.value} APIView]"
+        return "[APIView]"
+    if category == "avc":
+        return "[AVC]"
     return "[APIView]"
 
 
@@ -61,6 +61,8 @@ def _build_labels(category: str, language: Optional[str]) -> list[str]:
     """Build the GitHub labels list for a report-issue."""
     if category == "parser":
         return GithubManager.build_issue_labels(["APIView"], language)
+    if category == "avc":
+        return ["APIView Copilot"]
     return ["APIView"]
 
 
@@ -219,12 +221,10 @@ def handle_report_issue_request(
         Dict with ``issue_url``, ``issue_number``, ``title``, ``body``.
 
     Raises:
-        ValueError: For invalid input (empty / oversized description).
+        ValueError: When ``description`` is empty.
     """
     if not description or not description.strip():
         raise ValueError("description must be a non-empty string.")
-    if len(description) > MAX_DESCRIPTION_LENGTH:
-        raise ValueError(f"description must be at most {MAX_DESCRIPTION_LENGTH} characters.")
 
     effective_context: Optional[dict] = None
     if comment_id:

@@ -273,7 +273,7 @@ namespace ApiViewCopilot {
 
   /** Request to file a GitHub issue from an APIView "Report Issue" interaction. */
   model ReportIssueRequest {
-    /** The user's free-form description of the problem (1–5000 chars). */
+    /** The user's free-form description of the problem. */
     description: string;
 
     /** Optional URL to the APIView review the user is on. */

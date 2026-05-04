@@ -44,6 +44,12 @@ class TestTitlePrefix:
     def test_parser_missing_language_falls_back_to_apiview(self):
         assert _title_prefix("parser", None) == "[APIView]"
 
+    def test_avc(self):
+        assert _title_prefix("avc", None) == "[AVC]"
+
+    def test_avc_ignores_language(self):
+        assert _title_prefix("avc", "python") == "[AVC]"
+
 
 class TestBuildLabels:
     def test_apiview(self):
@@ -60,6 +66,12 @@ class TestBuildLabels:
 
     def test_parser_without_language(self):
         assert _build_labels("parser", None) == ["APIView"]
+
+    def test_avc(self):
+        assert _build_labels("avc", None) == ["APIView Copilot"]
+
+    def test_avc_ignores_language(self):
+        assert _build_labels("avc", "python") == ["APIView Copilot"]
 
 
 class TestFormatCommentContextForPrompt:
@@ -185,13 +197,25 @@ class TestGenerateIssueContent:
     @patch("src._report_issue.run_prompt")
     def test_unknown_category_defaults_to_apiview(self, mock_run_prompt):
         mock_run_prompt.return_value = json.dumps(
-            {"category": "copilot", "language": None, "title": "x", "body": "y"}
+            {"category": "infra", "language": None, "title": "x", "body": "y"}
         )
         result = _generate_issue_content(
             description="x", review_link=None, language=None, comment_context=None
         )
         assert result["category"] == "apiview"
         assert result["title"] == "[APIView] x"
+
+    @patch("src._report_issue.run_prompt")
+    def test_avc_category_uses_avc_prefix(self, mock_run_prompt):
+        mock_run_prompt.return_value = json.dumps(
+            {"category": "avc", "language": None, "title": "Bad suggestion", "body": "details"}
+        )
+        result = _generate_issue_content(
+            description="x", review_link=None, language=None, comment_context=None
+        )
+        assert result["category"] == "avc"
+        assert result["language"] is None
+        assert result["title"] == "[AVC] Bad suggestion"
 
     @patch("src._report_issue.run_prompt")
     def test_falls_back_when_llm_raises(self, mock_run_prompt):
@@ -281,10 +305,6 @@ class TestHandleReportIssueRequestValidation:
     def test_empty_description(self):
         with pytest.raises(ValueError, match="non-empty"):
             handle_report_issue_request(description="   ")
-
-    def test_description_too_long(self):
-        with pytest.raises(ValueError, match="at most 5000"):
-            handle_report_issue_request(description="x" * 5001)
 
 
 class TestHandleReportIssueRequestEndToEnd:

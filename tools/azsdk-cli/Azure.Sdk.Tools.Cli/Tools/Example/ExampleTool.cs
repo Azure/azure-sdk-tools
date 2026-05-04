@@ -9,7 +9,7 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Microagents;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Example;
@@ -21,7 +21,7 @@ public class ExampleTool(
     IAzureService azureService,
     IDevOpsService devOpsService,
     IGitHubService gitHubService,
-    IMicroagentHostService microagentHostService,
+    ICopilotAgentRunner copilotAgentRunner,
     IProcessHelper processHelper,
     IPowershellHelper powershellHelper,
     TokenUsageHelper tokenUsageHelper,
@@ -36,7 +36,7 @@ public class ExampleTool(
     private const string ErrorSubCommand = "error";
     private const string ProcessSubCommand = "process";
     private const string PowershellSubCommand = "powershell";
-    private const string MicroagentSubCommand = "microagent";
+    private const string AgentSubCommand = "agent";
 
     // MCP Tool Names
     private const string AzureServiceToolName = "azsdk_example_azure_service";
@@ -46,7 +46,7 @@ public class ExampleTool(
     private const string ErrorHandlingToolName = "azsdk_example_error_handling";
     private const string ProcessExecutionToolName = "azsdk_example_process_execution";
     private const string PowershellExecutionToolName = "azsdk_example_powershell_execution";
-    private const string MicroagentFibonacciToolName = "azsdk_example_microagent_fibonacci";
+    private const string AgentFibonacciToolName = "azsdk_example_agent_fibonacci";
 
     // azsdk example demo <sub-command>
     public override CommandGroup[] CommandHierarchy { get; set; } = [
@@ -119,7 +119,7 @@ public class ExampleTool(
         new McpCommand(ErrorSubCommand, "Demonstrate error handling patterns", ErrorHandlingToolName) { errorInputArg, forceFailureOption },
         new McpCommand(ProcessSubCommand, "Demonstrate spawning an external process (echo)", ProcessExecutionToolName) { processSleepArg },
         new McpCommand(PowershellSubCommand, "Demonstrate PowerShell helper running a temp script with a parameter", PowershellExecutionToolName) { powershellMessageArg },
-        new McpCommand(MicroagentSubCommand, "Demonstrate micro-agent looping tool calls to compute Fibonacci", MicroagentFibonacciToolName) { fibonacciIndexOption }
+        new McpCommand(AgentSubCommand, "Demonstrate agent looping tool calls to compute Fibonacci", AgentFibonacciToolName) { fibonacciIndexOption }
     ];
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
@@ -135,7 +135,7 @@ public class ExampleTool(
             ErrorSubCommand => await DemonstrateErrorHandling(parseResult.GetValue(errorInputArg), parseResult.GetValue(forceFailureOption), ct),
             ProcessSubCommand => await DemonstrateProcessExecution(parseResult.GetValue(processSleepArg), ct),
             PowershellSubCommand => await DemonstratePowershellExecution(parseResult.GetValue(powershellMessageArg), ct),
-            MicroagentSubCommand => await DemonstrateMicroagentFibonacci(parseResult.GetValue(fibonacciIndexOption), ct),
+            AgentSubCommand => await DemonstrateAgentFibonacci(parseResult.GetValue(fibonacciIndexOption), ct),
             _ => new ExampleServiceResponse { ResponseError = $"Unknown command: {commandName}" }
         };
 
@@ -187,7 +187,7 @@ public class ExampleTool(
                 ["service_type"] = "Azure DevOps"
             };
 
-            var pkg = await devOpsService.GetPackageWorkItemAsync(packageName, language);
+            var pkg = await devOpsService.GetPackageWorkItemAsync(packageName, language, ct: ct);
             details["package_pipeline_url"] = pkg.PipelineDefinitionUrl;
 
             return new ExampleServiceResponse
@@ -218,7 +218,7 @@ public class ExampleTool(
                 ["service_type"] = "GitHub API",
             };
 
-            var user = await gitHubService.GetGitUserDetailsAsync();
+            var user = await gitHubService.GetGitUserDetailsAsync(ct);
             details["user_login"] = user.Login;
             details["user_id"] = user.Id.ToString();
             var result = $"Retrieved user details: {user.Login} (ID: {user.Id})";
@@ -456,28 +456,25 @@ public class ExampleTool(
         public int Current { get; set; }
     }
 
-    [McpServerTool(Name = MicroagentFibonacciToolName), Description("Demonstrates micro-agent computing Nth Fibonacci number via iterative tool calls")]
-    public async Task<DefaultCommandResponse> DemonstrateMicroagentFibonacci(int n, CancellationToken ct = default)
+    [McpServerTool(Name = AgentFibonacciToolName), Description("Demonstrates agent computing Nth Fibonacci number via iterative tool calls")]
+    public async Task<DefaultCommandResponse> DemonstrateAgentFibonacci(int n, CancellationToken ct = default)
     {
         try
         {
             if (n < 2)
             {
-                return new DefaultCommandResponse { ResponseError = "--fibonacci must be >= 2 to run the micro-agent" };
+                return new DefaultCommandResponse { ResponseError = "--fibonacci must be >= 2 to run the agent" };
             }
 
-            var advanceTool = AgentTool<Fibonacci, Fibonacci>.FromFunc(
-                name: "advance_state",
-                description: "Advances state by one step",
-                invokeHandler: (input, ct) =>
+            var advanceTool = Microsoft.Extensions.AI.AIFunctionFactory.Create(
+                (Fibonacci input) => new Fibonacci
                 {
-                    return Task.FromResult(new Fibonacci
-                    {
-                        Index = input.Index + 1,
-                        Previous = input.Current,
-                        Current = input.Previous + input.Current
-                    });
-                });
+                    Index = input.Index + 1,
+                    Previous = input.Current,
+                    Current = input.Previous + input.Current
+                },
+                "advance_state",
+                "Advances state by one step");
 
             // Avoid mentioning 'fibonacci' in the instructions so the LLM doesn't try to calculate it directly
             var instructions = $"""
@@ -486,10 +483,10 @@ public class ExampleTool(
                 Initial state is {nameof(Fibonacci.Index)}=1, {nameof(Fibonacci.Previous)}=0, {nameof(Fibonacci.Current)}=1.
             """;
 
-            var agent = new Microagent<int>
+            var agent = new CopilotAgent<int>
             {
                 Instructions = instructions,
-                MaxToolCalls = 7,
+                MaxIterations = 7,
                 Tools = [advanceTool],
                 ValidateResult = async result =>
                 {
@@ -515,7 +512,7 @@ public class ExampleTool(
                 }
             };
 
-            var resultValue = await microagentHostService.RunAgentToCompletion(agent, ct);
+            var resultValue = await copilotAgentRunner.RunAsync(agent, ct);
 
             tokenUsageHelper.LogUsage();
             return new DefaultCommandResponse { Result = $"Fibonacci({n}) = {resultValue}" };
@@ -523,7 +520,7 @@ public class ExampleTool(
         catch (Exception ex)
         {
             tokenUsageHelper.LogUsage();
-            logger.LogError(ex, "Error demonstrating micro-agent Fibonacci for n={n}", n);
+            logger.LogError(ex, "Error demonstrating agent Fibonacci for n={n}", n);
             return new DefaultCommandResponse { ResponseError = $"Failed to compute Fibonacci({n}): {ex.Message}" };
         }
     }

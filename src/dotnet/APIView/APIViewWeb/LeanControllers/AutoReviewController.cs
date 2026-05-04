@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
-using ApiView;
+using APIView;
 using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers.Interfaces;
@@ -26,12 +27,14 @@ public class AutoReviewController : ControllerBase
     private readonly IEnumerable<LanguageService> _languageServices;
     private readonly IConfiguration _configuration;
     private readonly TelemetryClient _telemetryClient;
+    private readonly INamespaceManager _namespaceManager;
 
     public AutoReviewController(ICodeFileManager codeFileManager, 
         IAPIRevisionsManager apiRevisionsManager,
         IAutoReviewService autoReviewService,
         IEnumerable<LanguageService> languageServices,
         IConfiguration configuration,
+        INamespaceManager namespaceManager,
         TelemetryClient telemetryClient)
     {
         _codeFileManager = codeFileManager;
@@ -39,14 +42,23 @@ public class AutoReviewController : ControllerBase
         _autoReviewService = autoReviewService;
         _languageServices = languageServices;
         _configuration = configuration;
+        _namespaceManager = namespaceManager;
         _telemetryClient = telemetryClient;
     }
 
     // setReleaseTag param is set as true when request is originated from release pipeline to tag matching revision as released
     // regular CI pipeline will not send this flag in request
     [HttpPost("upload")]
-    public async Task<ActionResult> UploadAutoReview([FromForm] IFormFile file, string label, bool compareAllRevisions = false, string packageVersion = null, bool setReleaseTag = false, string packageType = null)
+    public async Task<ActionResult> UploadAutoReview([FromForm] IFormFile file, [FromForm] string label = null, [FromForm] bool compareAllRevisions = false, [FromForm] string packageVersion = null, [FromForm] bool setReleaseTag = false, [FromForm] string packageType = null)
     {
+        label ??= Request.Query["label"].FirstOrDefault();
+        packageVersion ??= Request.Query["packageVersion"].FirstOrDefault();
+        packageType ??= Request.Query["packageType"].FirstOrDefault();
+        if (!setReleaseTag && bool.TryParse(Request.Query["setReleaseTag"].FirstOrDefault(), out var qsReleaseTag))
+            setReleaseTag = qsReleaseTag;
+        if (!compareAllRevisions && bool.TryParse(Request.Query["compareAllRevisions"].FirstOrDefault(), out var qsCompareAll))
+            compareAllRevisions = qsCompareAll;
+
         try
         {
             if (file != null)
@@ -56,17 +68,24 @@ public class AutoReviewController : ControllerBase
                 var codeFile = await _codeFileManager.CreateCodeFileAsync(originalName: file.FileName, fileStream: openReadStream,
                     runAnalysis: false, memoryStream: memoryStream);
 
+                // Override the CI daily-build version embedded in the token file with the caller-supplied version.
+                bool shouldOverrideCodeFileVersion = string.IsNullOrWhiteSpace(codeFile.PackageVersion) || new AzureEngSemanticVersion(codeFile.PackageVersion).IsDailyDevBuild;
+                packageVersion = !string.IsNullOrWhiteSpace(packageVersion) && shouldOverrideCodeFileVersion
+                    ? packageVersion
+                    : codeFile.PackageVersion;
+
+                codeFile.PackageVersion = packageVersion;
                 (ReviewListItemModel review, APIRevisionListItemModel apiRevision) = await _autoReviewService.CreateAutomaticRevisionAsync(user: User, codeFile: codeFile, label: label, originalName: file.FileName, memoryStream: memoryStream, packageType: packageType, compareAllRevisions: compareAllRevisions);
                 if (apiRevision != null)
                 {
-                    apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label, setReleaseTag);
+                    apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion, label, setReleaseTag);
                     var reviewUrl = ManagerHelpers.ResolveReviewUrl(reviewId: apiRevision.ReviewId, apiRevisionId: apiRevision.Id, language: apiRevision.Language, configuration: _configuration, languageServices: _languageServices);
 
                     if (apiRevision.IsApproved)
                     {
                         return Ok(reviewUrl);
                     }
-                    if (review.IsApproved)
+                    if (review.IsApproved || await _namespaceManager.IsNamespaceApprovedAsync(review.ProjectId, review.Language))
                     {
                         return StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
                     }
@@ -134,20 +153,27 @@ public class AutoReviewController : ControllerBase
                 return StatusCode(statusCode: StatusCodes.Status204NoContent, $"API review code file for package {packageName} is not found in DevOps pipeline artifacts.");
             }
 
+            // Override the CI daily-build version embedded in the token file with the caller-supplied version.
+            bool shouldOverrideCodeFileVersion = string.IsNullOrWhiteSpace(codeFile.PackageVersion) || new AzureEngSemanticVersion(codeFile.PackageVersion).IsDailyDevBuild;
+            packageVersion = !string.IsNullOrWhiteSpace(packageVersion) && shouldOverrideCodeFileVersion
+                ? packageVersion
+                : codeFile.PackageVersion;
+            codeFile.PackageVersion = packageVersion;
+
             (ReviewListItemModel review, APIRevisionListItemModel apiRevision) = await _autoReviewService.CreateAutomaticRevisionAsync(user: User, codeFile: codeFile, label: label, originalName: originalFilePath, memoryStream: memoryStream, packageType: packageType, compareAllRevisions: compareAllRevisions, sourceBranch: sourceBranch);
             if (apiRevision == null)
             {
                 return StatusCode(statusCode: StatusCodes.Status500InternalServerError, "API revision creation returned null. This may indicate an issue with the code file parsing or revision creation process.");
             }
 
-            apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label, setReleaseTag);
+            apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion, label, setReleaseTag);
             var reviewUrl = ManagerHelpers.ResolveReviewUrl(reviewId: apiRevision.ReviewId, apiRevisionId: apiRevision.Id, language: apiRevision.Language, configuration: _configuration, languageServices: _languageServices);
 
             if (apiRevision.IsApproved)
             {
                 return Ok(reviewUrl);
             }
-            if (review.IsApproved)
+            if (review.IsApproved || await _namespaceManager.IsNamespaceApprovedAsync(review.ProjectId, review.Language))
             {
                 return StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
             }
@@ -186,5 +212,6 @@ public class AutoReviewController : ControllerBase
             });
         }
     }
+
 
 }

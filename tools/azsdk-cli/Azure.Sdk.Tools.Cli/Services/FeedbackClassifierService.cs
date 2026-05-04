@@ -20,11 +20,16 @@ public interface IFeedbackClassifierService
 {
     /// <summary>
     /// Classifies feedback items in chunked batch LLM calls. Mutates items in place.
+    /// When <paramref name="items"/> is empty and <paramref name="apiViewUrl"/> or
+    /// <paramref name="plainTextFeedback"/> is supplied, feedback items are gathered
+    /// from those sources first and added to <paramref name="items"/> before classification.
     /// </summary>
     Task<FeedbackClassificationResponse> ClassifyItemsAsync(
         List<FeedbackItem> items,
         string globalContext,
         string tspProjectPath,
+        string? apiViewUrl = null,
+        string? plainTextFeedback = null,
         string? language = null,
         string? serviceName = null,
         int? batchSize = null,
@@ -40,37 +45,52 @@ public class FeedbackClassifierService : IFeedbackClassifierService
     private static readonly ConcurrentDictionary<string, string> TspCustomizationGuideCache = new(StringComparer.OrdinalIgnoreCase);
 
     private static readonly Regex BatchResultBlockPattern = new(
-        @"\[(?<id>[^\]]+)\]\s*\n\s*Classification:\s*(?<classification>\S+)\s*\n\s*Reason:\s*(?<reason>.+)",
+        @"\[(?<id>[^\]]+)\]\s*\n\s*Classification:\s*(?<classification>\S+)\s*\n\s*Reason:\s*(?<reason>[^\n]+)",
         RegexOptions.Multiline | RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     private readonly ICopilotAgentRunner _agentRunner;
     private readonly ILogger<FeedbackClassifierService> _logger;
     private readonly ITypeSpecHelper _typeSpecHelper;
+    private readonly IAPIViewFeedbackService _feedbackService;
 
     public const int DefaultBatchSize = 50;
 
     public FeedbackClassifierService(
         ICopilotAgentRunner agentRunner,
         ILoggerFactory loggerFactory,
-        ITypeSpecHelper typeSpecHelper)
+        ITypeSpecHelper typeSpecHelper,
+        IAPIViewFeedbackService feedbackService)
     {
         _agentRunner = agentRunner;
         _logger = loggerFactory.CreateLogger<FeedbackClassifierService>();
         _typeSpecHelper = typeSpecHelper;
+        _feedbackService = feedbackService;
     }
 
     /// <summary>
     /// Classifies feedback items in chunked batch LLM calls. Mutates items in place.
+    /// When <paramref name="items"/> is empty and <paramref name="apiViewUrl"/> or
+    /// <paramref name="plainTextFeedback"/> is supplied, feedback items are gathered
+    /// from those sources first and added to <paramref name="items"/> before classification.
     /// </summary>
     public async Task<FeedbackClassificationResponse> ClassifyItemsAsync(
         List<FeedbackItem> items,
         string globalContext,
         string tspProjectPath,
+        string? apiViewUrl = null,
+        string? plainTextFeedback = null,
         string? language = null,
         string? serviceName = null,
         int? batchSize = null,
         CancellationToken ct = default)
     {
+        // If no items were provided, try gathering them from the input sources first.
+        if (items.Count == 0)
+        {
+            var gathered = await GatherFeedbackItemsAsync(apiViewUrl, plainTextFeedback, ct);
+            items.AddRange(gathered);
+        }
+
         if (items.Count == 0)
         {
             throw new ArgumentException("No feedback items to classify. Provide an APIView URL or plain text feedback.");
@@ -97,11 +117,33 @@ public class FeedbackClassifierService : IFeedbackClassifierService
         return BuildClassificationResponse(items);
     }
 
+    /// <summary>
+    /// Gathers feedback items from the provided sources: an APIView URL or a plain text string.
+    /// </summary>
+    private async Task<List<FeedbackItem>> GatherFeedbackItemsAsync(
+        string? apiViewUrl,
+        string? plainTextFeedback,
+        CancellationToken ct)
+    {
+        if (!string.IsNullOrWhiteSpace(apiViewUrl))
+        {
+            return await _feedbackService.GetFeedbackItemsAsync(apiViewUrl, ct);
+        }
+
+        if (!string.IsNullOrWhiteSpace(plainTextFeedback))
+        {
+            return [new FeedbackItem { Text = plainTextFeedback, Context = string.Empty }];
+        }
+
+        return [];
+    }
+
     private static FeedbackClassificationResponse BuildClassificationResponse(List<FeedbackItem> items)
     {
         var successCount = 0;
         var failureCount = 0;
         var tspApplicableCount = 0;
+        var codeCustomizationCount = 0;
         var classifications = new List<FeedbackClassificationResponse.ItemClassificationDetails>();
 
         foreach (var item in items)
@@ -109,6 +151,7 @@ public class FeedbackClassifierService : IFeedbackClassifierService
             var classification = item.Status switch
             {
                 FeedbackStatus.SUCCESS => "SUCCESS",
+                FeedbackStatus.CODE_CUSTOMIZATION => "CODE_CUSTOMIZATION",
                 FeedbackStatus.REQUIRES_MANUAL_INTERVENTION => "REQUIRES_MANUAL_INTERVENTION",
                 _ => "TSP_APPLICABLE"
             };
@@ -116,6 +159,7 @@ public class FeedbackClassifierService : IFeedbackClassifierService
             switch (item.Status)
             {
                 case FeedbackStatus.SUCCESS: successCount++; break;
+                case FeedbackStatus.CODE_CUSTOMIZATION: codeCustomizationCount++; break;
                 case FeedbackStatus.REQUIRES_MANUAL_INTERVENTION: failureCount++; break;
                 default: tspApplicableCount++; break;
             }
@@ -131,7 +175,7 @@ public class FeedbackClassifierService : IFeedbackClassifierService
 
         return new FeedbackClassificationResponse
         {
-            Message = $"Classification complete: {successCount} success, {failureCount} requires-manual-intervention, {tspApplicableCount} tsp-applicable",
+            Message = $"Classification complete: {successCount} success, {tspApplicableCount} tsp-applicable, {codeCustomizationCount} code-customization, {failureCount} requires-manual-intervention",
             Classifications = classifications
         };
     }
@@ -151,7 +195,7 @@ public class FeedbackClassifierService : IFeedbackClassifierService
     {
         var template = new FeedbackClassificationTemplate(
             serviceName: serviceName,
-            language: language,
+            language: language ?? string.Empty,
             referenceDocContent: referenceDocContent,
             items: items,
             globalContext: globalContext
@@ -186,7 +230,7 @@ public class FeedbackClassifierService : IFeedbackClassifierService
     /// Parses the batch LLM result with ID-keyed blocks and applies classifications to items.
     /// Expected format:
     /// [item-id]
-    /// Classification: TSP_APPLICABLE | SUCCESS | REQUIRES_MANUAL_INTERVENTION
+    /// Classification: TSP_APPLICABLE | SUCCESS | CODE_CUSTOMIZATION | REQUIRES_MANUAL_INTERVENTION
     /// Reason: explanation
     /// </summary>
     private void ParseBatchResult(List<FeedbackItem> items, string result)
@@ -227,6 +271,7 @@ public class FeedbackClassifierService : IFeedbackClassifierService
         var status = classification switch
         {
             "SUCCESS" => FeedbackStatus.SUCCESS,
+            "CODE_CUSTOMIZATION" => FeedbackStatus.CODE_CUSTOMIZATION,
             "REQUIRES_MANUAL_INTERVENTION" => FeedbackStatus.REQUIRES_MANUAL_INTERVENTION,
             "TSP_APPLICABLE" => FeedbackStatus.TSP_APPLICABLE,
             _ => FeedbackStatus.TSP_APPLICABLE

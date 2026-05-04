@@ -63,6 +63,19 @@ stages:
           artifactName: packages-signed
           targetPath: $(Artifacts)
 
+      - ${{ if and(eq(parameters.ShouldTag, 'true'), eq(parameters.ShouldPublishExecutables, 'true')) }}:
+        - ${{ each target in parameters.ExeMatrix }}:
+          - task: DownloadPipelineArtifact@2
+            displayName: Download ${{ target.rid }} Binary
+            inputs:
+              artifact: standalone-${{ target.rid }}
+              path: $(Binaries)
+        - template: ../steps/platform-specific-signing.yml
+          parameters:
+            BinariesPath: $(Binaries)
+            BuildScriptsPath: $(BuildToolScripts)
+            ExeMatrix: ${{ parameters.ExeMatrix }}
+
       - ${{ if eq(parameters.ShouldTag, 'true') }}:
         # sets output variable $(release)
         - task: PowerShell@2
@@ -77,21 +90,9 @@ stages:
           env:
             GH_TOKEN: $(azuresdk-github-pat)
 
-      - ${{ if and(eq(parameters.ShouldTag, 'true'), eq(parameters.ShouldPublishExecutables, 'true')) }}:
-        - ${{ each target in parameters.ExeMatrix }}:
-          - task: DownloadPipelineArtifact@2
-            displayName: Download ${{ target.rid }} Binary
-            inputs:
-              artifact: standalone-${{ target.rid }}
-              path: $(Binaries)
-        - template: ../steps/platform-specific-signing.yml
-          parameters:
-            BinariesPath: $(Binaries)
-            BuildScriptsPath: $(BuildToolScripts)
-            ExeMatrix: ${{ parameters.ExeMatrix }}
-
         - task: PowerShell@2
           displayName: 'Post to github release'
+          condition: and(succeeded(), eq(${{ parameters.ShouldPublishExecutables }}, true))
           inputs:
             targetType: filePath
             # todo, move this local script from the build tools repo as well

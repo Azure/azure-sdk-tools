@@ -2,6 +2,10 @@
 // Licensed under the MIT License.
 using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
+using Microsoft.Extensions.Logging;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
 
 namespace Azure.Sdk.Tools.Cli.Helpers
 {
@@ -9,6 +13,12 @@ namespace Azure.Sdk.Tools.Cli.Helpers
     {
         public bool IsValidTypeSpecProjectPath(string path);
         public bool IsTypeSpecProjectForMgmtPlane(string Path);
+
+        /// <summary>
+        /// Parses the TypeSpec project config and runs the metadata emitter to resolve SDK package names.
+        /// Returns a fully populated <see cref="TypeSpecProject"/> with TypeSpec info and package list.
+        /// </summary>
+        public Task<TypeSpecProject?> ParseTypeSpecProjectAsync(string typeSpecProjectPath, INpxHelper npxHelper, ILogger logger, CancellationToken ct);
 
         /// <summary>
         /// Checks if the path is within either the azure-rest-api-specs repo.
@@ -84,6 +94,121 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         {
             var typeSpecObject = TypeSpecProject.ParseTypeSpecConfig(Path);
             return typeSpecObject?.IsManagementPlane ?? false;
+        }
+
+        /// <inheritdoc/>
+        public async Task<TypeSpecProject?> ParseTypeSpecProjectAsync(string typeSpecProjectPath, INpxHelper npxHelper, ILogger logger, CancellationToken ct)
+        {
+            try
+            {
+                // Find the typespec project directory
+                if (typeSpecProjectPath.EndsWith(TypeSpecProject.TSPCONFIG_FILENAME))
+                {
+                    typeSpecProjectPath = Path.GetDirectoryName(typeSpecProjectPath) ?? string.Empty;
+                }
+
+                if (!IsValidTypeSpecProjectPath(typeSpecProjectPath))
+                {
+                    logger.LogWarning("Invalid TypeSpec project path: {typeSpecProjectPath}. Skipping metadata emitter.", typeSpecProjectPath);
+                    return null;
+                }
+
+                var project = TypeSpecProject.ParseTypeSpecConfig(typeSpecProjectPath);
+
+                logger.LogInformation("Running TypeSpec metadata emitter in {ProjectRootPath}", project.ProjectRootPath);
+
+                var npxOptions = new NpxOptions(
+                    package: "@typespec/compiler",
+                    args: ["tsp", "compile", ".", "--emit", "@azure-tools/typespec-metadata"],
+                    logOutputStream: true,
+                    workingDirectory: project.ProjectRootPath,
+                    timeout: TimeSpan.FromMinutes(5)
+                );
+
+                var result = await npxHelper.Run(npxOptions, ct);
+                if (result.ExitCode != 0)
+                {
+                    logger.LogWarning("TypeSpec metadata emitter failed with exit code {ExitCode}. Output: {Output}", result.ExitCode, result.Output);
+                    return project;
+                }
+
+                var metadataFilePath = Path.Combine(project.ProjectRootPath, "tsp-output", "@azure-tools", "typespec-metadata", "typespec-metadata.yaml");
+                if (!File.Exists(metadataFilePath))
+                {
+                    logger.LogWarning("typespec-metadata.yaml not found at expected path: {metadataFilePath}", metadataFilePath);
+                    return project;
+                }
+
+                var metadataYaml = await File.ReadAllTextAsync(metadataFilePath, ct);
+                logger.LogDebug("TypeSpec metadata YAML: {metadataYaml}", metadataYaml);
+
+                var packages = ParsePackageNamesFromMetadata(metadataYaml);
+                if (packages != null)
+                {
+                    project.Packages = packages;
+                }
+                return project;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to run TypeSpec metadata emitter");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Parses the typespec-metadata.yaml to extract SDK package names per language.
+        /// Returns a list of <see cref="PackageInfo"/> with Language and PackageName populated.
+        /// </summary>
+        public static List<PackageInfo>? ParsePackageNamesFromMetadata(string metadataYaml)
+        {
+            try
+            {
+                var deserializer = new DeserializerBuilder()
+                    .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                    .IgnoreUnmatchedProperties()
+                    .Build();
+
+                var metadata = deserializer.Deserialize<Dictionary<string, object>>(metadataYaml);
+                if (metadata == null || !metadata.TryGetValue("languages", out var languagesObj))
+                {
+                    return null;
+                }
+
+                var packages = new List<PackageInfo>();
+
+                if (languagesObj is Dictionary<object, object> languages)
+                {
+                    foreach (var lang in languages)
+                    {
+                        var languageName = lang.Key?.ToString() ?? string.Empty;
+                        var packageName = string.Empty;
+
+                        if (lang.Value is Dictionary<object, object> langProps)
+                        {
+                            if (langProps.TryGetValue("packageName", out var pkgName))
+                            {
+                                packageName = pkgName?.ToString() ?? string.Empty;
+                            }
+                        }
+                        languageName = languageName.Contains("csharp") ? ".NET" : languageName;
+                        if (!string.IsNullOrEmpty(packageName))
+                        {
+                            packages.Add(new PackageInfo
+                            {
+                                Language = SdkLanguageHelpers.GetSdkLanguage(languageName),
+                                PackageName = packageName
+                            });
+                        }
+                    }
+                }
+
+                return packages.Count > 0 ? packages : null;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
         public async Task<bool> IsRepoPathForPublicSpecRepoAsync(string path, CancellationToken ct = default)

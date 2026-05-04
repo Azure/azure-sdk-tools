@@ -2,6 +2,7 @@ import { ApiVersionType, SDKType } from "../../common/types.js";
 import { getSDKType } from "../../common/utils.js";
 import { logger } from "../../utils/logger.js";
 import { isModelOnly } from "../apiVersion/apiVersionTypeExtractor.js";
+import { isBetaVersion } from "../../utils/version.js";
 
 import * as fs from "fs";
 import * as path from "path";
@@ -33,7 +34,7 @@ let packageName: string;
             break;
         case SDKType.ModularClient:
             // Check if it's a model-only package for MLC
-            const isModelOnlyForModularClient = await isModelOnly(packageFolderPath);
+            const isModelOnlyForModularClient = await isModelOnly(packageFolderPath, isBetaVersion(packageVersion));
             if (isModelOnlyForModularClient) {
                 logger.info(`Modular client package in ${packageFolderPath} is a model-only package, skipping user agent update.`);
                 break;

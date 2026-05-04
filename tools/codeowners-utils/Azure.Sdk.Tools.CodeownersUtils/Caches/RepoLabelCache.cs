@@ -1,9 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Azure.Sdk.Tools.CodeownersUtils.Constants;
 using Azure.Sdk.Tools.CodeownersUtils.Utils;
 
@@ -38,7 +35,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Caches
             }
         }
 
-        public RepoLabelCache(string repoLabelBlobStorageURI)
+        public RepoLabelCache(string repoLabelBlobStorageURI = null)
         {
             if (!string.IsNullOrWhiteSpace(repoLabelBlobStorageURI))
             {
@@ -51,7 +48,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Caches
             if (null == _repoLabelDict)
             {
                 string rawJson = FileHelpers.GetFileOrUrlContents(RepoLabelBlobStorageURI);
-                 var tempDict = JsonSerializer.Deserialize<Dictionary<string, HashSet<string>>>(rawJson);
+                var tempDict = JsonSerializer.Deserialize<Dictionary<string, HashSet<string>>>(rawJson);
                 // The StringComparer needs to be set in order to do an case insensitive lookup for both
                 // the repository (the dictionary key) and for the HashSet of labels.
                 _repoLabelDict = new Dictionary<string, HashSet<string>>(StringComparer.InvariantCultureIgnoreCase);

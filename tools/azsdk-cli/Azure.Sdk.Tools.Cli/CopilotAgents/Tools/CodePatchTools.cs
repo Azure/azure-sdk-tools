@@ -3,7 +3,6 @@
 
 using System.ComponentModel;
 using System.Text.RegularExpressions;
-using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Microsoft.Extensions.AI;
 
@@ -57,16 +56,20 @@ public static partial class CodePatchTools
                 [Description("The replacement text. Only oldText is replaced, preserving surrounding code.")]
                 string newText,
 
+                [Description("Brief human-readable summary of what this patch does (e.g., 'Renamed maxSpeakers to maxSpeakerCount in javadoc comment'). Used in the final output report.")]
+                string patchDescription,
+
                 CancellationToken cancellationToken) =>
             {
                 var result = await ApplyPatchAsync(baseDir, filePath, startLine, endLine, oldText, newText, cancellationToken);
                 if (result.Success && onPatchApplied is not null)
                 {
-                    onPatchApplied(new AppliedPatch(filePath, result.Message, 1));
+                    var summary = !string.IsNullOrWhiteSpace(patchDescription) ? patchDescription : result.Message;
+                    onPatchApplied(new AppliedPatch(filePath, summary, 1));
                 }
                 return result;
             },
-            "ClientCustomizationCodePatch",
+            "CodePatchTool",
             description);
     }
 
@@ -235,7 +238,7 @@ public static partial class CodePatchTools
             // Write back
             await File.WriteAllLinesAsync(safeFilePath, newAllLines, ct).ConfigureAwait(false);
 
-            var description = $"Replaced \"{TruncateForDisplay(cleanOldText, 50)}\" with \"{TruncateForDisplay(cleanNewText, 50)}\" in lines {startLine}-{endLine}";
+            var description = $"Replaced \"{TruncateForDisplay(cleanOldText, 100)}\" with \"{TruncateForDisplay(cleanNewText, 100)}\" in lines {startLine}-{endLine}";
             return new CodePatchResult(true, $"Patch applied to {filePath}: {description}");
         }
         catch (Exception ex)

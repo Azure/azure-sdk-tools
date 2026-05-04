@@ -1,14 +1,142 @@
 # Release History
 
-## 0.5.20 (Unreleased)
+## 0.6.12 (2026-05-04)
+
+### Other Changes
+
+- Resolve npm exec binaries directly from node_modules for NpmOptions when `.npmrc` is in user context
+
+## 0.6.11 (2026-05-01)
 
 ### Features Added
 
-### Breaking Changes
+- Added `AZSDK_COPILOT_CLI_PATH` environment variable to provide a custom path to the Copilot CLI executable (`copilot`/`copilot.exe`) for the GitHub Copilot SDK when the bundled binary is unavailable in standalone builds.
 
 ### Bugs Fixed
 
+- Fixed misleading "No feedback items to process" error when Copilot CLI is missing. Now surfaces the actual error with installation instructions and env var workaround.
+- Introduced `CopilotCliUnavailableException` to distinguish Copilot CLI issues from other failures across all copilot-dependent tools.
+
 ### Other Changes
+
+- Bumped `GitHub.Copilot.SDK` from 0.1.32 to 0.2.2.
+- Audit reads data from the cache to reduce GitHub API use
+
+## 0.6.10 (2026-04-27)
+
+### Features Added
+
+- Added Rust language support for `setup`, `generate`, `build`, and `pack` tools.
+- Added `azsdk_get_kpi_attestation_status` MCP tool to check KPI attestation status for a release plan given product ID and lifecycle.
+- Added CODEOWNERS Audit command (CLI only) that brings data model to a valid state.
+- Added optional package version argument for `azsdk release-plan update-release-status` CLI.
+
+### Other Changes
+
+- Surface APIView link in `azsdk_release_sdk` when APIView approval is missing
+
+### Bugs Fixed
+
+- Release plan ID and work item ID in `azsdk_get_release_plan` were being confused by agent. Reordered arguments and updated description to enforce release plan ID as main argument to provide. 
+
+## 0.6.9 (2026-04-16)
+
+### Features Added
+
+- Added MCP tool for updating the CODEOWNERS cache
+
+### Other Changes
+
+- Made spec PR optional parameter for both `azsdk_create_release_plan` and `azsdk_get_release_plan`
+
+## 0.6.8 (2026-04-15)
+
+### Features Added
+
+- Added CODEOWNERS validation for paths, useful for release and PR checks
+
+## 0.6.7 (2026-04-13)
+
+### Features Added
+
+- Added support to collect telemetry for sanitized user prompts
+- Added `azsdk_apiview_get_review_url` MCP tool and `azsdk apiview get-review-url` CLI command to retrieve the APIView review URL for a package by name and language
+- Added recorded and live test support for Python, JavaScript, Java and .NET
+- Enhanced `azsdk_customized_code_update` with a two-phase AI-assisted customization workflow: Phase A applies TypeSpec decorators (`client.tsp`) to fix ~80% of issues, Phase B applies targeted code-level patches to customization files when the build still fails after regeneration
+- `azsdk_customized_code_update` now accepts APIView review URLs as input in addition to plain-text customization requests and build error output, enabling direct resolution of API review feedback
+- `azsdk_customized_code_update` customization flow is now enabled for .NET, Java, JavaScript, and Python
+- Added support for updating `ci.yml` in SDK projects
+- Implemented version update for Java, Python, and .NET language services
+
+### Other Changes
+
+- Updated `azsdk_typespec_delegate_apiview_feedback` to split the feedback summary table into addressed/not-addressed sections for easier review
+
+## 0.6.6 (2026-04-01)
+
+### Features Added
+
+- Added support for CODEOWNERS "Section" in Label Owners (defaults to "Client Libraries")
+
+### Bugs Fixed
+
+- Fixed sample translation to preserve source directory structure when writing translated files
+
+### Other Changes
+
+- CODEOWNERS generator supports file paths and doesn't assume all paths are directories
+
+## 0.6.5 (2026-03-27)
+
+### Features Added
+
+- Implemented version update for Go language service
+- Added team support for CODEOWNERS add/remove tools
+
+## 0.6.4 (2026-03-25)
+
+### Features Added
+
+- Added a new CLI command to ingest telemetry events from Copilot hooks
+
+## 0.6.3 (2026-03-12)
+
+### Bugs Fixed
+
+- Fixed a bug that caused the update release status CLI command to fail when a release plan was not found for a package.
+
+## 0.6.2 (2026-03-11)
+
+### Features Added
+
+- Added MCP progress reporting to long running tools including SDK generation, build, and pack tools
+
+### Bugs Fixed
+
+- Fixed a bug in get release plan CLI when release plan is fetched using api spec pull request.
+
+## 0.6.1 (2026-03-05)
+
+### Features Added
+
+- Added `azsdk_package_pack` tool to create package artifacts
+- Improved `azsdk_typespec_delegate_apiview_feedback` tool description to better recognize intent expressed as "address", "fix", or "resolve" APIView feedback
+- Added a CLI command `azsdk release-plan update` and MCP tool `azsdk_update_release_plan` to update release plan.
+- Updated CLI command `azsdk release-plan get` to get release plan using API spec pull request or spec project path.
+
+### Bugs Fixed
+
+- Filter out downvoted `azure-sdk` bot comments from APIView feedback to reduce noise in delegated issues
+
+## 0.6.0 (2026-02-27)
+
+### Features Added
+
+- Added auto-install to `azsdk verify setup` MCP and CLI tool, enabling auto-installing of supported missing requirements
+- Changed the CLI interface for verifying setup to `azsdk verify setup check` for non-install mode, and `azsdk verify setup install`
+- Added `azsdk eng package-info` command for CI pipeline package manifest generation
+- Switch Go language service to use C# native package info generation
+- Customized code update tool now uses copilot sdk
 
 ## 0.5.19 (2026-02-25)
 

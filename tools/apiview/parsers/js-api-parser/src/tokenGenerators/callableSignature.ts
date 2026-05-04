@@ -4,9 +4,9 @@ import {
   ApiItem,
   ApiItemKind,
 } from "@microsoft/api-extractor-model";
-import { ReviewToken, TokenKind } from "../models";
+import { TokenKind } from "../models";
 import { TokenGenerator, GeneratorResult } from "./index";
-import { createToken, processExcerptTokens } from "./helpers";
+import { createToken, processExcerptTokens, TokenCollector } from "./helpers";
 
 type SignatureLike = ApiCallSignature | ApiConstructSignature;
 
@@ -15,7 +15,7 @@ function isValid(item: ApiItem): item is SignatureLike {
 }
 
 function generate(item: SignatureLike, deprecated?: boolean): GeneratorResult {
-  const tokens: ReviewToken[] = [];
+  const collector = new TokenCollector();
 
   if (item.kind !== ApiItemKind.CallSignature && item.kind !== ApiItemKind.ConstructSignature) {
     throw new Error(
@@ -28,49 +28,56 @@ function generate(item: SignatureLike, deprecated?: boolean): GeneratorResult {
 
   // Add new keyword for construct signatures
   if (item.kind === ApiItemKind.ConstructSignature) {
-    tokens.push(createToken(TokenKind.Keyword, "new", { deprecated }));
+    collector.push(createToken(TokenKind.Keyword, "new", { deprecated }));
   }
 
   // Add type parameters
   if (typeParameters?.length > 0) {
-    tokens.push(createToken(TokenKind.Punctuation, "<", { deprecated }));
+    collector.push(createToken(TokenKind.Punctuation, "<", { deprecated }));
     typeParameters.forEach((tp, index) => {
-      tokens.push(createToken(TokenKind.TypeName, tp.name, { deprecated }));
+      collector.push(createToken(TokenKind.TypeName, tp.name, { deprecated }));
 
       if (tp.constraintExcerpt?.text.trim()) {
-        tokens.push(
+        collector.push(
           createToken(TokenKind.Keyword, "extends", {
             hasPrefixSpace: true,
             hasSuffixSpace: true,
             deprecated,
           }),
         );
-        processExcerptTokens(tp.constraintExcerpt.spannedTokens, tokens, deprecated);
+        processExcerptTokens(tp.constraintExcerpt.spannedTokens, collector, deprecated);
       }
 
       if (tp.defaultTypeExcerpt?.text.trim()) {
-        tokens.push(
+        collector.push(
           createToken(TokenKind.Punctuation, "=", {
             hasPrefixSpace: true,
             hasSuffixSpace: true,
             deprecated,
           }),
         );
-        processExcerptTokens(tp.defaultTypeExcerpt.spannedTokens, tokens, deprecated);
+        processExcerptTokens(tp.defaultTypeExcerpt.spannedTokens, collector, deprecated);
       }
 
       if (index < typeParameters.length - 1) {
-        tokens.push(createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }));
+        collector.push(
+          createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }),
+        );
       }
     });
-    tokens.push(createToken(TokenKind.Punctuation, ">", { deprecated }));
+    collector.push(createToken(TokenKind.Punctuation, ">", { deprecated }));
   }
 
+  // Filter out destructured parameters (names starting with "{") - API Extractor reports
+  // destructured parameters in raw form followed by a synthetic normalized parameter with
+  // the actual type info. We skip the raw destructuring pattern and only emit the synthetic one.
+  const filteredParameters = parameters?.filter((param) => !param.name.startsWith("{")) ?? [];
+
   // Add parameters
-  tokens.push(createToken(TokenKind.Punctuation, "(", { deprecated }));
-  if (parameters?.length > 0) {
-    parameters.forEach((param, index) => {
-      tokens.push(
+  collector.push(createToken(TokenKind.Punctuation, "(", { deprecated }));
+  if (filteredParameters.length > 0) {
+    filteredParameters.forEach((param, index) => {
+      collector.push(
         createToken(TokenKind.Text, param.name, {
           hasPrefixSpace: index > 0,
           deprecated,
@@ -78,26 +85,30 @@ function generate(item: SignatureLike, deprecated?: boolean): GeneratorResult {
       );
 
       if (param.isOptional) {
-        tokens.push(createToken(TokenKind.Punctuation, "?", { deprecated }));
+        collector.push(createToken(TokenKind.Punctuation, "?", { deprecated }));
       }
 
-      tokens.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
-      processExcerptTokens(param.parameterTypeExcerpt.spannedTokens, tokens, deprecated);
+      collector.push(
+        createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }),
+      );
+      processExcerptTokens(param.parameterTypeExcerpt.spannedTokens, collector, deprecated);
 
-      if (index < parameters.length - 1) {
-        tokens.push(createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }));
+      if (index < filteredParameters.length - 1) {
+        collector.push(
+          createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }),
+        );
       }
     });
   }
 
   // Add return type
-  tokens.push(createToken(TokenKind.Punctuation, ")", { deprecated }));
-  tokens.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
-  processExcerptTokens(item.returnTypeExcerpt.spannedTokens, tokens, deprecated);
+  collector.push(createToken(TokenKind.Punctuation, ")", { deprecated }));
+  collector.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
+  processExcerptTokens(item.returnTypeExcerpt.spannedTokens, collector, deprecated);
 
-  tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
+  collector.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
 
-  return { tokens };
+  return collector.toResult();
 }
 
 export const callableSignatureTokenGenerator: TokenGenerator<SignatureLike> = {

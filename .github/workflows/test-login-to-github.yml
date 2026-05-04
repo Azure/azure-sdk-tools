@@ -1,0 +1,92 @@
+name: Test login-to-github action
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - test-login-to-github
+
+jobs:
+  test-single-owner:
+    name: Test single owner login
+    runs-on: ubuntu-latest
+    environment: AzureSDKEngKeyVault
+    permissions:
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: azure/login@v3
+        with:
+          client-id: 5786d1fb-187e-4ca9-9a81-ab89ea278986
+          tenant-id: 72f988bf-86f1-41af-91ab-2d7cd011db47
+          subscription-id: a18897a6-7e44-457d-9260-f2854c0aca42
+
+      - uses: ./eng/common/actions/login-to-github
+        with:
+          token-owners: Azure
+
+      - name: Verify GH_TOKEN is set
+        run: |
+          if ([string]::IsNullOrEmpty($env:GH_TOKEN)) {
+            throw "GH_TOKEN is not set"
+          }
+          Write-Host "GH_TOKEN is set (length=$($env:GH_TOKEN.Length))"
+        shell: pwsh
+
+      - name: Verify gh CLI works
+        run: gh api rate_limit --jq '.rate.remaining'
+        env:
+          GH_TOKEN: ${{ env.GH_TOKEN }}
+
+      - name: Verify git clone works
+        run: |
+          git clone --depth 1 "https://x-access-token:${{ env.GH_TOKEN }}@github.com/Azure/azure-sdk-tools.git" /tmp/test-clone
+          echo "Clone succeeded"
+          rm -rf /tmp/test-clone
+
+  test-multiple-owners:
+    name: Test multiple owner login
+    runs-on: ubuntu-latest
+    environment: AzureSDKEngKeyVault
+    permissions:
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: azure/login@v3
+        with:
+          client-id: 5786d1fb-187e-4ca9-9a81-ab89ea278986
+          tenant-id: 72f988bf-86f1-41af-91ab-2d7cd011db47
+          subscription-id: a18897a6-7e44-457d-9260-f2854c0aca42
+
+      - uses: ./eng/common/actions/login-to-github
+        with:
+          token-owners: Azure,azure-sdk
+
+      - name: Verify org-specific tokens are set
+        run: |
+          if ([string]::IsNullOrEmpty($env:GH_TOKEN_Azure)) {
+            throw "GH_TOKEN_Azure is not set"
+          }
+          Write-Host "GH_TOKEN_Azure is set (length=$($env:GH_TOKEN_Azure.Length))"
+
+          if ([string]::IsNullOrEmpty($env:GH_TOKEN_azure_sdk)) {
+            throw "GH_TOKEN_azure-sdk is not set"
+          }
+          Write-Host "GH_TOKEN_azure-sdk is set (length=$($env:GH_TOKEN_azure_sdk.Length))"
+        shell: pwsh
+        env:
+          GH_TOKEN_azure_sdk: ${{ env.GH_TOKEN_azure-sdk }}
+
+      - name: Verify Azure token with gh CLI
+        run: gh api rate_limit --jq '.rate.remaining'
+        env:
+          GH_TOKEN: ${{ env.GH_TOKEN_Azure }}
+
+      - name: Verify azure-sdk token with gh CLI
+        run: gh api rate_limit --jq '.rate.remaining'
+        env:
+          GH_TOKEN: ${{ env.GH_TOKEN_azure-sdk }}

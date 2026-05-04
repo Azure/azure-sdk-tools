@@ -4,6 +4,7 @@
 package cmd
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"go/ast"
@@ -25,6 +26,11 @@ var indexTestdata bool
 // versionReg is the regex for version part in import
 var versionReg = regexp.MustCompile(`/v\d+$|/v\d+/`)
 
+// used to find the semver const definition. the definition
+// is pretty standard so this is easier than using the ast,
+// plus the constant isn't exported
+var moduleVerReg = regexp.MustCompile(`^\s*(?:const\s+)?[A-Za-z_][A-Za-z0-9_]*\s*=\s*"v(?P<version>\d+\.\d+\.\d+(?:-[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)?)"\s*$`)
+
 // Module collects the data required to describe an Azure SDK module's public API.
 type Module struct {
 	// ExternalAliases are type aliases referring to other modules
@@ -35,6 +41,8 @@ type Module struct {
 	Name string
 	// Packages maps import paths to the module's Packages
 	Packages map[string]*Pkg
+	// Version is the semantic version of the module without the leading "v", e.g. 1.2.3
+	Version string
 }
 
 // getPackageNameFromModPath gets the API review name for the module at modPath
@@ -76,7 +84,7 @@ func NewModule(dir string) (*Module, error) {
 		// if not, then the package name added below won't match the imported packages.
 		baseImportPath = ""
 	}
-	err = filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+	err = filepath.WalkDir(dir, func(path string, d fs.DirEntry, _ error) error {
 		if d.IsDir() {
 			if !indexTestdata && strings.Contains(path, "testdata") {
 				return filepath.SkipDir
@@ -93,6 +101,32 @@ func NewModule(dir string) (*Module, error) {
 			if err == nil {
 				m.Packages[baseImportPath+p.Name()] = p
 			} else if !errors.Is(err, ErrNoPackages) {
+				return err
+			}
+		} else if fileName := d.Name(); strings.Contains(fileName, "constant") || strings.Contains(fileName, "version") {
+			// find the constant that contains the semver
+			// e.g.
+			// moduleVersion = "v1.2.0"
+			// Version = "v1.21.1-beta.1"
+			f, err := os.Open(path)
+			if err != nil {
+				return err
+			}
+			scanner := bufio.NewScanner(f)
+			for scanner.Scan() {
+				if match := moduleVerReg.FindStringSubmatch(scanner.Text()); match != nil {
+					matched := match[moduleVerReg.SubexpIndex("version")]
+					if m.Version != "" {
+						return fmt.Errorf("multiple semver matches, found %s when version is already %s", matched, m.Version)
+					}
+					m.Version = matched
+					break
+				}
+			}
+			if err := scanner.Err(); err != nil {
+				return err
+			}
+			if err := f.Close(); err != nil {
 				return err
 			}
 		}

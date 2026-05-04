@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, List
 
 from ._base_node import NodeEntityBase
 from ._data_class_node import DataClassNode
-from ._class_node import ClassNode
+from ._class_node import ClassNode, _get_class_astroid_node
 from ._function_node import FunctionNode
 from apistub._generated.treestyle.parser.models import ReviewLines
 from .._parsing_helpers import parse_overloads, add_overload_nodes
@@ -56,8 +56,8 @@ class ModuleNode(NodeEntityBase):
                 class_type = ClassNode
                 try:
                     # see if a class is annotated as a dataclass
-                    node = astroid.extract_node(inspect.getsource(member_obj))
-                    if node.decorators:
+                    node = _get_class_astroid_node(member_obj)
+                    if node and node.decorators:
                         for item in node.decorators.nodes:
                             if getattr(item, "name", None) == "dataclass":
                                 class_type = DataClassNode

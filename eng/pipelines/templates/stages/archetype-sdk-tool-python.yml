@@ -2,6 +2,9 @@ parameters:
 - name: PythonVersion
   type: string
   default: '3.10'
+- name: PythonVersions
+  type: object
+  default: []
 - name: PackagePath
   type: string
   default: ''
@@ -45,12 +48,12 @@ extends:
 
               - script: |
                   python --version
-                  python -m pip install virtualenv aiohttp chardet trio setuptools wheel packaging
+                  python -m pip install virtualenv aiohttp chardet trio setuptools wheel packaging build==1.2.2.post1
                 displayName: 'Setup Python Environment'
 
               - pwsh: |
                   Write-Host "Bundling stable version of python apiview-stub-generator"
-                  python setup.py bdist_wheel --universal --dist-dir $(Build.ArtifactStagingDirectory)
+                  python -m build --wheel --outdir $(Build.ArtifactStagingDirectory)
                 displayName: 'Build ${{ parameters.PackageName }}'
                 workingDirectory: $(Build.SourcesDirectory)/${{ parameters.PackagePath }}
 
@@ -59,11 +62,14 @@ extends:
                   targetPath: '$(Build.ArtifactStagingDirectory)'
                   artifactName: ${{ parameters.ArtifactName }}
 
-          - ${{ if not(eq(length(parameters.TestSteps), 0)) }}:
+          - ${{ if and(not(eq(length(parameters.TestSteps), 0)), ne(length(parameters.PythonVersions), 0)) }}:
             - job: 'Test'
 
-              dependsOn:
-                - 'Build'
+              strategy:
+                matrix:
+                  ${{ each version in parameters.PythonVersions }}:
+                    Python${{ replace(version, '.', '') }}:
+                      PythonTestVersion: '${{ version }}'
 
               pool:
                 name: $(LINUXPOOL)
@@ -71,8 +77,25 @@ extends:
                 os: linux
 
               steps:
-                - template: /eng/pipelines/templates/steps/use-python-version.yml
-                  parameters:
+                - task: UsePythonVersion@0
+                  displayName: 'Use Python $(PythonTestVersion)'
+                  inputs:
+                    versionSpec: '$(PythonTestVersion)'
+
+                - ${{ parameters.TestSteps }}
+
+          - ${{ if and(not(eq(length(parameters.TestSteps), 0)), eq(length(parameters.PythonVersions), 0)) }}:
+            - job: 'Test'
+
+              pool:
+                name: $(LINUXPOOL)
+                image: $(LINUXVMIMAGE)
+                os: linux
+
+              steps:
+                - task: UsePythonVersion@0
+                  displayName: 'Use Python ${{ parameters.PythonVersion }}'
+                  inputs:
                     versionSpec: '${{ parameters.PythonVersion }}'
 
                 - ${{ parameters.TestSteps }}
@@ -163,7 +186,7 @@ extends:
                           Get-ChildItem $esrpDirectory
                         displayName: Isolate files for ESRP Publish
 
-                      - task: EsrpRelease@9
+                      - task: EsrpRelease@11
                         displayName: 'Publish to ESRP'
                         inputs:
                           ConnectedServiceName: 'Azure SDK PME Managed Identity'

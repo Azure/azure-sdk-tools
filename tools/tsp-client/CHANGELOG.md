@@ -1,9 +1,24 @@
 # Release
 
-## Unreleased - 0.32.0
+## 2026-04-30 - 0.33.1
+
+- Added support for passing flags to underlying npm commands using the `--npm-args` flag with the `generate-config-files` and `generate-lock-file` commands.
+- Add more logging when using `use-npm-pinning` flag in the `generate-config-files` command.
+
+## 2026-04-29 - 0.33.0
+
+- Add support for a `use-npm-pinning` flag to the `generate-config-files` command to use dependency information from npm for emitter-package.json version pinning. **NOTE: emitter-package.json creation will fail if the command is called with an unpublished version of the emitter.**
+
+## 2026-04-20 - 0.32.1
+
+- Fix crash when `entrypointFile` in `tsp-location.yaml` points to a file in a sub-directory on Windows by normalizing path separators when matching the entrypoint file.
+
+## 2026-04-03 - 0.32.0
 
 - Remove `autorest`, `autorest/core`, and `autorest/openapi-to-typespec` from tsp-client dependencies.
 - Use `npx` to call openapi-to-typespec conversion tool.
+- Changed log level from error->debug when tsp-location.yaml isn't found during `init` with the `--update-if-exists` flag.
+- Updated supported node versions to `">=20.19.0"`.
 
 ## 2025-11-24 - 0.31.0
 

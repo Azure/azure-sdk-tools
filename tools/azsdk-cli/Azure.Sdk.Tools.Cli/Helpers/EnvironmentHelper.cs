@@ -29,22 +29,19 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         string GetStringVariable(string name, string defaultValue = "");
     }
 
-    public class EnvironmentHelper : IEnvironmentHelper
+    public class EnvironmentHelper(ILogger<EnvironmentHelper> logger) : IEnvironmentHelper
     {
         private const string AZSDKTOOLS_PREFIX = "AZSDKTOOLS_";
-        private readonly ILogger<EnvironmentHelper> logger;
         private readonly ConcurrentDictionary<string, string> cachedVariables = new();
 
-        public EnvironmentHelper(ILogger<EnvironmentHelper> logger)
-        {
-            this.logger = logger;
-            CacheEnvironmentVariables();
-        }
+        private readonly SemaphoreSlim initializeSemaphore = new(1, 1);
+        private bool initialized = false;
 
         /// <summary>
-        /// Cache all environment variables starting with AZSDKTOOLS_ prefix
+        /// Initializes the helper by caching environment variables.
+        /// This is separate from the constructor to allow for lazy initialization.
         /// </summary>
-        private void CacheEnvironmentVariables()
+        private void _initialize()
         {
             try
             {
@@ -65,15 +62,40 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             {
                 logger.LogError(ex, "Failed to cache environment variables");
             }
+
+            initialized = true;
+        }
+
+        private void Initialize()
+        {
+            if (initialized)
+            {
+                return;
+            }
+
+            initializeSemaphore.Wait();
+            try
+            {
+                if (!initialized)
+                {
+                    _initialize();
+                }
+            }
+            finally
+            {
+                initializeSemaphore.Release();
+            }
         }
 
         public Dictionary<string, string> GetEnvironmentVariables()
         {
+            Initialize();
             return new Dictionary<string, string>(cachedVariables);
         }
 
         public bool GetBooleanVariable(string name, bool defaultValue = false)
         {
+            Initialize();
             if (!cachedVariables.TryGetValue(name, out var value) || string.IsNullOrWhiteSpace(value))
             {
                 logger.LogDebug("Environment variable {VariableName} not found, using default value: {DefaultValue}", name, defaultValue);
@@ -94,6 +116,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
         public string GetStringVariable(string name, string defaultValue = "")
         {
+            Initialize();
             if (cachedVariables.TryGetValue(name, out var value))
             {
                 logger.LogDebug("Environment variable {VariableName} found: {Value}", name, value);

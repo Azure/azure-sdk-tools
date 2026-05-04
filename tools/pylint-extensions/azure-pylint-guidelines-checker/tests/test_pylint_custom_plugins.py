@@ -23,7 +23,9 @@ class TestClientMethodsHaveTracingDecorators(pylint.testutils.CheckerTestCase):
     @pytest.fixture(scope="class")
     def setup(self):
         file = open(
-            os.path.join(TEST_FOLDER, "test_files", "client_methods_have_tracing_decorators.py")
+            os.path.join(
+                TEST_FOLDER, "test_files", "client_methods_have_tracing_decorators.py"
+            )
         )
         node = astroid.parse(file.read())
         file.close()
@@ -166,7 +168,9 @@ class TestClientsDoNotUseStaticMethods(pylint.testutils.CheckerTestCase):
     @pytest.fixture(scope="class")
     def setup(self):
         file = open(
-            os.path.join(TEST_FOLDER, "test_files", "clients_do_not_use_static_methods.py")
+            os.path.join(
+                TEST_FOLDER, "test_files", "clients_do_not_use_static_methods.py"
+            )
         )
         node = astroid.parse(file.read())
         file.close()
@@ -306,7 +310,9 @@ class TestClientsDoNotUseStaticMethods(pylint.testutils.CheckerTestCase):
 def _load_file(filename):
     file_path = os.path.join(TEST_FOLDER, "test_files", filename)
     with open(file_path, "r") as file:
-        contents = file.read().split("\n\n\n") # Split by triple newline (2 blank lines)
+        contents = file.read().split(
+            "\n\n\n"
+        )  # Split by triple newline (2 blank lines)
     return [astroid.extract_node(content) for content in contents]
 
 
@@ -316,13 +322,13 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
     @pytest.fixture(scope="class")
     def setup(self):
         trees = _load_file("client_has_approved_method_name_prefix.py")
-        return {tree[0].name:tree for tree in trees}
+        return {tree[0].name: tree for tree in trees}
 
     @pytest.fixture(scope="class")
     def modules(self):
         mods = {
-            "public":astroid.nodes.Module(name="azure.service.subservice.operations"),
-            "private":astroid.nodes.Module(name="azure.mgmt._generated.operations"),
+            "public": astroid.nodes.Module(name="azure.service.subservice.operations"),
+            "private": astroid.nodes.Module(name="azure.mgmt._generated.operations"),
         }
         return mods
 
@@ -393,7 +399,8 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
                 col_offset=func.position.col_offset,
                 end_line=func.position.end_lineno,
                 end_col_offset=func.position.end_col_offset,
-            ) for func in funcs
+            )
+            for func in funcs
         ]
         with self.assertAddsMessages(*msgs):
             self.checker.visit_module(mod)
@@ -413,7 +420,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
 
     def test_ignores_private_client(self, setup, modules):
         mod = modules["public"]
-        cls, func = setup.get("_PrivateClient") 
+        cls, func = setup.get("_PrivateClient")
         with self.assertNoMessages():
             self.checker.visit_module(mod)
             self.checker.visit_classdef(cls)
@@ -444,7 +451,11 @@ class TestClientConstructorTakesCorrectParameters(pylint.testutils.CheckerTestCa
     @pytest.fixture(scope="class")
     def setup(self):
         file = open(
-            os.path.join(TEST_FOLDER, "test_files", "client_constructor_takes_correct_parameters.py")
+            os.path.join(
+                TEST_FOLDER,
+                "test_files",
+                "client_constructor_takes_correct_parameters.py",
+            )
         )
         node = astroid.parse(file.read())
         file.close()
@@ -526,13 +537,19 @@ class TestClientConstructorTakesCorrectParameters(pylint.testutils.CheckerTestCa
         assert response.http_response.status_code == 200
 
 
-class TestClientMethodsUseKwargsWithMultipleParameters(pylint.testutils.CheckerTestCase):
+class TestClientMethodsUseKwargsWithMultipleParameters(
+    pylint.testutils.CheckerTestCase
+):
     CHECKER_CLASS = checker.ClientMethodsUseKwargsWithMultipleParameters
 
     @pytest.fixture(scope="class")
     def setup(self):
         file = open(
-            os.path.join(TEST_FOLDER, "test_files", "client_methods_use_kwargs_with_multiple_parameters.py")
+            os.path.join(
+                TEST_FOLDER,
+                "test_files",
+                "client_methods_use_kwargs_with_multiple_parameters.py",
+            )
         )
         node = astroid.parse(file.read())
         file.close()
@@ -770,7 +787,9 @@ class TestClientMethodsHaveTypeAnnotations(pylint.testutils.CheckerTestCase):
     @pytest.fixture(scope="class")
     def setup(self):
         file = open(
-            os.path.join(TEST_FOLDER, "test_files", "client_methods_have_type_annotations.py")
+            os.path.join(
+                TEST_FOLDER, "test_files", "client_methods_have_type_annotations.py"
+            )
         )
         node = astroid.parse(file.read())
         file.close()
@@ -998,13 +1017,19 @@ class TestClientMethodsHaveTypeAnnotations(pylint.testutils.CheckerTestCase):
         assert response.http_response.status_code == 200
 
 
-class TestClientHasKwargsInPoliciesForCreateConfigurationMethod(pylint.testutils.CheckerTestCase):
+class TestClientHasKwargsInPoliciesForCreateConfigurationMethod(
+    pylint.testutils.CheckerTestCase
+):
     CHECKER_CLASS = checker.ClientHasKwargsInPoliciesForCreateConfigurationMethod
 
     @pytest.fixture(scope="class")
     def setup(self):
         file = open(
-            os.path.join(TEST_FOLDER, "test_files", "client_has_kwargs_in_policies_for_create_config_method.py")
+            os.path.join(
+                TEST_FOLDER,
+                "test_files",
+                "client_has_kwargs_in_policies_for_create_config_method.py",
+            )
         )
         node = astroid.parse(file.read())
         file.close()
@@ -1085,7 +1110,9 @@ class TestClientUsesCorrectNamingConventions(pylint.testutils.CheckerTestCase):
     @pytest.fixture(scope="class")
     def setup(self):
         file = open(
-            os.path.join(TEST_FOLDER, "test_files", "client_uses_correct_naming_conventions.py")
+            os.path.join(
+                TEST_FOLDER, "test_files", "client_uses_correct_naming_conventions.py"
+            )
         )
         node = astroid.parse(file.read())
         file.close()
@@ -1329,7 +1356,9 @@ class TestClientMethodsHaveKwargsParameter(pylint.testutils.CheckerTestCase):
     @pytest.fixture(scope="class")
     def setup(self):
         file = open(
-            os.path.join(TEST_FOLDER, "test_files", "client_methods_have_kwargs_param.py")
+            os.path.join(
+                TEST_FOLDER, "test_files", "client_methods_have_kwargs_param.py"
+            )
         )
         node = astroid.parse(file.read())
         file.close()
@@ -1523,7 +1552,9 @@ class TestSpecifyParameterNamesInCall(pylint.testutils.CheckerTestCase):
     @pytest.fixture(scope="class")
     def setup(self):
         file = open(
-            os.path.join(TEST_FOLDER, "test_files", "specify_parameter_names_in_call.py")
+            os.path.join(
+                TEST_FOLDER, "test_files", "specify_parameter_names_in_call.py"
+            )
         )
         node = astroid.parse(file.read())
         file.close()
@@ -1601,7 +1632,9 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
     @pytest.fixture(scope="class")
     def setup(self):
         file = open(
-            os.path.join(TEST_FOLDER, "test_files", "client_list_methods_use_core_paging.py")
+            os.path.join(
+                TEST_FOLDER, "test_files", "client_list_methods_use_core_paging.py"
+            )
         )
         node = astroid.parse(file.read())
         file.close()
@@ -1780,7 +1813,9 @@ class TestClientLROMethodsUseCorePolling(pylint.testutils.CheckerTestCase):
     @pytest.fixture(scope="class")
     def setup(self):
         file = open(
-            os.path.join(TEST_FOLDER, "test_files", "client_LRO_methods_use_core_polling.py")
+            os.path.join(
+                TEST_FOLDER, "test_files", "client_LRO_methods_use_core_polling.py"
+            )
         )
         node = astroid.parse(file.read())
         file.close()
@@ -1842,7 +1877,9 @@ class TestClientLROMethodsUseCorrectNaming(pylint.testutils.CheckerTestCase):
     @pytest.fixture(scope="class")
     def setup(self):
         file = open(
-            os.path.join(TEST_FOLDER, "test_files", "client_LRO_methods_use_correct_naming.py")
+            os.path.join(
+                TEST_FOLDER, "test_files", "client_LRO_methods_use_correct_naming.py"
+            )
         )
         node = astroid.parse(file.read())
         file.close()
@@ -1908,13 +1945,19 @@ class TestClientLROMethodsUseCorrectNaming(pylint.testutils.CheckerTestCase):
         assert response.http_response.status_code == 200
 
 
-class TestClientConstructorDoesNotHaveConnectionStringParam(pylint.testutils.CheckerTestCase):
+class TestClientConstructorDoesNotHaveConnectionStringParam(
+    pylint.testutils.CheckerTestCase
+):
     CHECKER_CLASS = checker.ClientConstructorDoesNotHaveConnectionStringParam
 
     @pytest.fixture(scope="class")
     def setup(self):
         file = open(
-            os.path.join(TEST_FOLDER, "test_files", "client_constructor_does_not_have_connection_string_param.py")
+            os.path.join(
+                TEST_FOLDER,
+                "test_files",
+                "client_constructor_does_not_have_connection_string_param.py",
+            )
         )
         node = astroid.parse(file.read())
         file.close()
@@ -1973,7 +2016,11 @@ class TestPackageNameDoesNotUseUnderscoreOrPeriod(pylint.testutils.CheckerTestCa
     @pytest.fixture(scope="class")
     def setup(self):
         file = open(
-            os.path.join(TEST_FOLDER, "test_files", "package_name_does_not_use_underscore_or_period.py")
+            os.path.join(
+                TEST_FOLDER,
+                "test_files",
+                "package_name_does_not_use_underscore_or_period.py",
+            )
         )
         node = astroid.parse(file.read())
         file.close()
@@ -2018,7 +2065,11 @@ class TestServiceClientUsesNameWithClientSuffix(pylint.testutils.CheckerTestCase
     @pytest.fixture(scope="class")
     def setup(self):
         file = open(
-            os.path.join(TEST_FOLDER, "test_files", "service_client_uses_name_with_client_suffix.py")
+            os.path.join(
+                TEST_FOLDER,
+                "test_files",
+                "service_client_uses_name_with_client_suffix.py",
+            )
         )
         node = astroid.parse(file.read())
         file.close()
@@ -2057,13 +2108,19 @@ class TestServiceClientUsesNameWithClientSuffix(pylint.testutils.CheckerTestCase
         assert response.http_response.status_code == 200
 
 
-class TestClientMethodNamesDoNotUseDoubleUnderscorePrefix(pylint.testutils.CheckerTestCase):
+class TestClientMethodNamesDoNotUseDoubleUnderscorePrefix(
+    pylint.testutils.CheckerTestCase
+):
     CHECKER_CLASS = checker.ClientMethodNamesDoNotUseDoubleUnderscorePrefix
 
     @pytest.fixture(scope="class")
     def setup(self):
         file = open(
-            os.path.join(TEST_FOLDER, "test_files", "client_method_names_do_not_use_double_underscore_prefix.py")
+            os.path.join(
+                TEST_FOLDER,
+                "test_files",
+                "client_method_names_do_not_use_double_underscore_prefix.py",
+            )
         )
         node = astroid.parse(file.read())
         file.close()
@@ -2208,7 +2265,9 @@ class TestCheckDocstringAdmonitionNewline(pylint.testutils.CheckerTestCase):
     @pytest.fixture(scope="class")
     def setup(self):
         file = open(
-            os.path.join(TEST_FOLDER, "test_files", "check_docstring_admonition_newline.py")
+            os.path.join(
+                TEST_FOLDER, "test_files", "check_docstring_admonition_newline.py"
+            )
         )
         node = astroid.parse(file.read())
         file.close()
@@ -2219,7 +2278,9 @@ class TestCheckDocstringAdmonitionNewline(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_correct_admonition_statement_in_function_with_comments(self, setup):
+    def test_ignores_correct_admonition_statement_in_function_with_comments(
+        self, setup
+    ):
         function_node = setup.body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
@@ -2257,7 +2318,9 @@ class TestCheckDocstringAdmonitionNewline(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_asyncfunctiondef(function_node)
 
-    def test_ignores_correct_admonition_statement_in_function_with_comments_async(self, setup):
+    def test_ignores_correct_admonition_statement_in_function_with_comments_async(
+        self, setup
+    ):
         function_node = setup.body[5]
         with self.assertNoMessages():
             self.checker.visit_asyncfunctiondef(function_node)
@@ -2335,7 +2398,9 @@ class TestCheckNamingMismatchGeneratedCode(pylint.testutils.CheckerTestCase):
     @pytest.fixture(scope="class")
     def setup(self):
         file = open(
-            os.path.join(TEST_FOLDER, "test_files", "check_naming_mismatch_generated_code.py")
+            os.path.join(
+                TEST_FOLDER, "test_files", "check_naming_mismatch_generated_code.py"
+            )
         )
         node = astroid.parse(file.read())
         file.close()
@@ -2414,9 +2479,7 @@ class TestCheckEnum(pylint.testutils.CheckerTestCase):
 
     @pytest.fixture(scope="class")
     def setup(self):
-        file = open(
-            os.path.join(TEST_FOLDER, "test_files", "check_enum.py")
-        )
+        file = open(os.path.join(TEST_FOLDER, "test_files", "check_enum.py"))
         node = astroid.parse(file.read())
         file.close()
         return node
@@ -2528,9 +2591,7 @@ class TestCheckAPIVersion(pylint.testutils.CheckerTestCase):
 
     @pytest.fixture(scope="class")
     def setup(self):
-        file = open(
-            os.path.join(TEST_FOLDER, "test_files", "check_API_version.py")
-        )
+        file = open(os.path.join(TEST_FOLDER, "test_files", "check_API_version.py"))
         node = astroid.parse(file.read())
         file.close()
         return node
@@ -2748,9 +2809,7 @@ class TestRaiseWithTraceback(pylint.testutils.CheckerTestCase):
 
     @pytest.fixture(scope="class")
     def setup(self):
-        file = open(
-            os.path.join(TEST_FOLDER, "test_files", "raise_with_traceback.py")
-        )
+        file = open(os.path.join(TEST_FOLDER, "test_files", "raise_with_traceback.py"))
         node = astroid.parse(file.read())
         file.close()
         return node
@@ -2936,9 +2995,7 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
 
     @pytest.fixture(scope="class")
     def setup(self):
-        file = open(
-            os.path.join(TEST_FOLDER, "test_files", "docstring_parameters.py")
-        )
+        file = open(os.path.join(TEST_FOLDER, "test_files", "docstring_parameters.py"))
         node = astroid.parse(file.read())
         file.close()
         return node
@@ -3078,6 +3135,7 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
             ),
         ):
             self.checker.visit_functiondef(node)
+
     def test_docstring_noreturn(self, setup):
         # Should not raise docstring-missing-return or docstring-missing-rtype for NoReturn
         node = setup.body[13]
@@ -3150,7 +3208,11 @@ class TestCheckNoLegacyAzureCoreHttpResponseImport(pylint.testutils.CheckerTestC
     @pytest.fixture(scope="class")
     def setup(self):
         file = open(
-            os.path.join(TEST_FOLDER, "test_files", "no_legacy_azure_core_http_response_import.py")
+            os.path.join(
+                TEST_FOLDER,
+                "test_files",
+                "no_legacy_azure_core_http_response_import.py",
+            )
         )
         node = astroid.parse(file.read())
         file.close()
@@ -3256,13 +3318,12 @@ class TestCheckNoTypingUnderTypeChecking(pylint.testutils.CheckerTestCase):
 
 class TestDoNotImportAsyncio(pylint.testutils.CheckerTestCase):
     """Test that we are blocking imports of asyncio directly allowing indirect imports."""
+
     CHECKER_CLASS = checker.DoNotImportAsyncio
 
     @pytest.fixture(scope="class")
     def setup(self):
-        file = open(
-            os.path.join(TEST_FOLDER, "test_files", "do_not_import_asyncio.py")
-        )
+        file = open(os.path.join(TEST_FOLDER, "test_files", "do_not_import_asyncio.py"))
         node = astroid.parse(file.read())
         file.close()
         return node
@@ -3271,14 +3332,14 @@ class TestDoNotImportAsyncio(pylint.testutils.CheckerTestCase):
         """Check that illegal imports raise warnings"""
         importfrom_node = setup.body[0]
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id="do-not-import-asyncio",
-                    line=2,
-                    node=importfrom_node,
-                    col_offset=0,
-                    end_line=2,
-                    end_col_offset=25,
-                )
+            pylint.testutils.MessageTest(
+                msg_id="do-not-import-asyncio",
+                line=2,
+                node=importfrom_node,
+                col_offset=0,
+                end_line=2,
+                end_col_offset=25,
+            )
         ):
             self.checker.visit_importfrom(importfrom_node)
 
@@ -3360,7 +3421,9 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
     @pytest.fixture(scope="class")
     def setup(self):
         file = open(
-            os.path.join(TEST_FOLDER, "test_files", "do_not_log_errors_end_up_raising.py")
+            os.path.join(
+                TEST_FOLDER, "test_files", "do_not_log_errors_end_up_raising.py"
+            )
         )
         node = astroid.parse(file.read())
 
@@ -3369,31 +3432,37 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
 
     def test_error_level_not_logged(self, setup):
         """Check that any exceptions raised aren't logged at error level in the exception block."""
-        try_node, expression_node = setup.body[2].body[0], setup.body[2].body[0].handlers[0].body[0]
+        try_node, expression_node = (
+            setup.body[2].body[0],
+            setup.body[2].body[0].handlers[0].body[0],
+        )
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id="do-not-log-raised-errors",
-                    line=10,
-                    node=expression_node,
-                    col_offset=8,
-                    end_line=10,
-                    end_col_offset=24,
-                )
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-raised-errors",
+                line=10,
+                node=expression_node,
+                col_offset=8,
+                end_line=10,
+                end_col_offset=24,
+            )
         ):
             self.checker.visit_try(try_node)
 
     def test_warning_level_not_logged(self, setup):
         """Check that any exceptions raised aren't logged at warning level in the exception block."""
-        try_node, expression_node = setup.body[3].body[0], setup.body[3].body[0].handlers[0].body[0]
+        try_node, expression_node = (
+            setup.body[3].body[0],
+            setup.body[3].body[0].handlers[0].body[0],
+        )
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id="do-not-log-raised-errors",
-                    line=19,
-                    node=expression_node,
-                    col_offset=8,
-                    end_line=19,
-                    end_col_offset=26,
-                )
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-raised-errors",
+                line=19,
+                node=expression_node,
+                col_offset=8,
+                end_line=19,
+                end_col_offset=26,
+            )
         ):
             self.checker.visit_try(try_node)
 
@@ -3417,31 +3486,37 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
 
     def test_mult_exception_blocks_with_raise(self, setup):
         """Check that multiple exception blocks with raise and logging is not allowed."""
-        try_node, expression_node = setup.body[7].body[0], setup.body[7].body[0].handlers[1].body[0]
+        try_node, expression_node = (
+            setup.body[7].body[0],
+            setup.body[7].body[0].handlers[1].body[0],
+        )
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id="do-not-log-raised-errors",
-                    line=56,
-                    node=expression_node,
-                    col_offset=8,
-                    end_line=56,
-                    end_col_offset=24,
-                )
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-raised-errors",
+                line=56,
+                node=expression_node,
+                col_offset=8,
+                end_line=56,
+                end_col_offset=24,
+            )
         ):
             self.checker.visit_try(try_node)
 
     def test_implicit_else_exception_logged(self, setup):
         """Check that any exceptions raised in branches aren't logged at error level."""
-        try_node, expression_node = setup.body[8].body[0], setup.body[8].body[0].handlers[0].body[1]
+        try_node, expression_node = (
+            setup.body[8].body[0],
+            setup.body[8].body[0].handlers[0].body[1],
+        )
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id="do-not-log-raised-errors",
-                    line=71,
-                    node=expression_node,
-                    col_offset=8,
-                    end_line=71,
-                    end_col_offset=56,
-                )
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-raised-errors",
+                line=71,
+                node=expression_node,
+                col_offset=8,
+                end_line=71,
+                end_col_offset=56,
+            )
         ):
             self.checker.visit_try(try_node)
 
@@ -3538,7 +3613,7 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
     #     ):
     #         self.checker.visit_try(try_node)
 
-            
+
 class TestInvalidUseOfOverload(pylint.testutils.CheckerTestCase):
     """Test that use of the @overload decorator matches the async/sync nature of the underlying function"""
 
@@ -3554,7 +3629,6 @@ class TestInvalidUseOfOverload(pylint.testutils.CheckerTestCase):
         file.close()
         with self.assertNoMessages():
             self.checker.visit_classdef(node.body[1])
-
 
     def test_invalid_use_overload(self):
         file = open(
@@ -3587,16 +3661,13 @@ class TestInvalidUseOfOverload(pylint.testutils.CheckerTestCase):
 
 
 class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
-
     """Test that any errors are not logged in exception blocks."""
 
     CHECKER_CLASS = checker.DoNotLogExceptions
 
     @pytest.fixture(scope="class")
     def setup(self):
-        file = open(
-            os.path.join(TEST_FOLDER, "test_files", "do_not_log_exceptions.py")
-        )
+        file = open(os.path.join(TEST_FOLDER, "test_files", "do_not_log_exceptions.py"))
         node = astroid.parse(file.read())
         file.close()
         return node
@@ -3607,7 +3678,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
         error_node = setup.body[2].body[0].handlers[0].body[0]
         warning_node = setup.body[2].body[0].handlers[0].body[1]
         info_node = setup.body[2].body[0].handlers[0].body[2]
-        debug_node = setup.body[2].body[0].handlers[0].body[3] 
+        debug_node = setup.body[2].body[0].handlers[0].body[3]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="do-not-log-exceptions-if-not-debug",
@@ -3624,7 +3695,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 col_offset=8,
                 end_line=12,
                 end_col_offset=28,
-            )
+            ),
         ):
             self.checker.visit_try(try_node)
 
@@ -3659,7 +3730,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 col_offset=8,
                 end_line=23,
                 end_col_offset=29,
-            )
+            ),
         ):
             self.checker.visit_try(try_node)
 
@@ -3699,7 +3770,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 col_offset=12,
                 end_line=50,
                 end_col_offset=32,
-            )
+            ),
         ):
             self.checker.visit_try(try_node)
 
@@ -3724,7 +3795,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 col_offset=12,
                 end_line=62,
                 end_col_offset=30,
-            )
+            ),
         ):
             self.checker.visit_try(try_node)
 
@@ -3758,7 +3829,9 @@ class TestDoNotHardcodeConnectionVerify(pylint.testutils.CheckerTestCase):
         """Check that valid connection_verify hard coding does not raise warnings"""
         file = open(
             os.path.join(
-                TEST_FOLDER, "test_files", "do_not_hardcode_connection_verify_acceptable.py"
+                TEST_FOLDER,
+                "test_files",
+                "do_not_hardcode_connection_verify_acceptable.py",
             )
         )
         node = astroid.parse(file.read())
@@ -3792,7 +3865,9 @@ class TestDoNotHardcodeConnectionVerify(pylint.testutils.CheckerTestCase):
         """Check that hard-coding connection_verify to a bool raise warnings"""
         file = open(
             os.path.join(
-                TEST_FOLDER, "test_files", "do_not_hardcode_connection_verify_violation.py"
+                TEST_FOLDER,
+                "test_files",
+                "do_not_hardcode_connection_verify_violation.py",
             )
         )
         node = astroid.parse(file.read())
@@ -3891,9 +3966,7 @@ class TestDedent(pylint.testutils.CheckerTestCase):
 
     @pytest.fixture(scope="class")
     def setup(self):
-        file = open(
-            os.path.join(TEST_FOLDER, "test_files", "dedent_failure.py")
-        )
+        file = open(os.path.join(TEST_FOLDER, "test_files", "dedent_failure.py"))
         node = astroid.parse(file.read())
         file.close()
         return node
@@ -3936,6 +4009,7 @@ class TestDedent(pylint.testutils.CheckerTestCase):
         ):
             self.checker.visit_classdef(function_node)
 
+
 class TestLoggingException(pylint.testutils.CheckerTestCase):
     """Test that we are checking logging exceptions"""
 
@@ -3973,26 +4047,30 @@ class TestLoggingException(pylint.testutils.CheckerTestCase):
         # Visit assignments first to track logger variables
         for assign_node in setup.nodes_of_class(astroid.Assign):
             self.checker.visit_assign(assign_node)
-        
+
         # Test logging.exception() call - should be flagged
         logging_exception_call = None
         for call_node in setup.nodes_of_class(astroid.Call):
-            if (hasattr(call_node.func, 'attrname') and 
-                call_node.func.attrname == 'exception' and
-                hasattr(call_node.func, 'expr') and
-                hasattr(call_node.func.expr, 'name') and
-                call_node.func.expr.name == 'logging'):
+            if (
+                hasattr(call_node.func, "attrname")
+                and call_node.func.attrname == "exception"
+                and hasattr(call_node.func, "expr")
+                and hasattr(call_node.func.expr, "name")
+                and call_node.func.expr.name == "logging"
+            ):
                 logging_exception_call = call_node
                 break
-        
-        assert logging_exception_call is not None, "Could not find logging.exception() call"
-        
+
+        assert (
+            logging_exception_call is not None
+        ), "Could not find logging.exception() call"
+
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="do-not-use-logging-exception",
                 node=logging_exception_call,
             ),
-            ignore_position=True
+            ignore_position=True,
         ):
             self.checker.visit_call(logging_exception_call)
 
@@ -4000,26 +4078,30 @@ class TestLoggingException(pylint.testutils.CheckerTestCase):
         # Visit assignments first to track logger variables
         for assign_node in setup.nodes_of_class(astroid.Assign):
             self.checker.visit_assign(assign_node)
-        
+
         # Test logger.exception() call - should be flagged
         logger_exception_call = None
         for call_node in setup.nodes_of_class(astroid.Call):
-            if (hasattr(call_node.func, 'attrname') and 
-                call_node.func.attrname == 'exception' and
-                hasattr(call_node.func, 'expr') and
-                hasattr(call_node.func.expr, 'name') and
-                call_node.func.expr.name == 'logger'):
+            if (
+                hasattr(call_node.func, "attrname")
+                and call_node.func.attrname == "exception"
+                and hasattr(call_node.func, "expr")
+                and hasattr(call_node.func.expr, "name")
+                and call_node.func.expr.name == "logger"
+            ):
                 logger_exception_call = call_node
                 break
-        
-        assert logger_exception_call is not None, "Could not find logger.exception() call"
-        
+
+        assert (
+            logger_exception_call is not None
+        ), "Could not find logger.exception() call"
+
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="do-not-use-logging-exception",
                 node=logger_exception_call,
             ),
-            ignore_position=True
+            ignore_position=True,
         ):
             self.checker.visit_call(logger_exception_call)
 
@@ -4027,26 +4109,30 @@ class TestLoggingException(pylint.testutils.CheckerTestCase):
         # Visit assignments first to track logger variables
         for assign_node in setup.nodes_of_class(astroid.Assign):
             self.checker.visit_assign(assign_node)
-        
+
         # Test my_log.exception() call - should be flagged (assigned from logging.getLogger)
         my_log_exception_call = None
         for call_node in setup.nodes_of_class(astroid.Call):
-            if (hasattr(call_node.func, 'attrname') and 
-                call_node.func.attrname == 'exception' and
-                hasattr(call_node.func, 'expr') and
-                hasattr(call_node.func.expr, 'name') and
-                call_node.func.expr.name == 'my_log'):
+            if (
+                hasattr(call_node.func, "attrname")
+                and call_node.func.attrname == "exception"
+                and hasattr(call_node.func, "expr")
+                and hasattr(call_node.func.expr, "name")
+                and call_node.func.expr.name == "my_log"
+            ):
                 my_log_exception_call = call_node
                 break
-        
-        assert my_log_exception_call is not None, "Could not find my_log.exception() call"
-        
+
+        assert (
+            my_log_exception_call is not None
+        ), "Could not find my_log.exception() call"
+
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="do-not-use-logging-exception",
                 node=my_log_exception_call,
             ),
-            ignore_position=True
+            ignore_position=True,
         ):
             self.checker.visit_call(my_log_exception_call)
 
@@ -4054,20 +4140,22 @@ class TestLoggingException(pylint.testutils.CheckerTestCase):
         # Visit assignments first to track logger variables
         for assign_node in setup.nodes_of_class(astroid.Assign):
             self.checker.visit_assign(assign_node)
-        
+
         # Test task.exception() call - should NOT be flagged
         task_exception_call = None
         for call_node in setup.nodes_of_class(astroid.Call):
-            if (hasattr(call_node.func, 'attrname') and 
-                call_node.func.attrname == 'exception' and
-                hasattr(call_node.func, 'expr') and
-                hasattr(call_node.func.expr, 'name') and
-                call_node.func.expr.name == 'task'):
+            if (
+                hasattr(call_node.func, "attrname")
+                and call_node.func.attrname == "exception"
+                and hasattr(call_node.func, "expr")
+                and hasattr(call_node.func.expr, "name")
+                and call_node.func.expr.name == "task"
+            ):
                 task_exception_call = call_node
                 break
-        
+
         assert task_exception_call is not None, "Could not find task.exception() call"
-        
+
         with self.assertNoMessages():
             self.checker.visit_call(task_exception_call)
 
@@ -4075,20 +4163,24 @@ class TestLoggingException(pylint.testutils.CheckerTestCase):
         # Visit assignments first to track logger variables
         for assign_node in setup.nodes_of_class(astroid.Assign):
             self.checker.visit_assign(assign_node)
-        
+
         # Test future.exception() call - should NOT be flagged
         future_exception_call = None
         for call_node in setup.nodes_of_class(astroid.Call):
-            if (hasattr(call_node.func, 'attrname') and 
-                call_node.func.attrname == 'exception' and
-                hasattr(call_node.func, 'expr') and
-                hasattr(call_node.func.expr, 'name') and
-                call_node.func.expr.name == 'future'):
+            if (
+                hasattr(call_node.func, "attrname")
+                and call_node.func.attrname == "exception"
+                and hasattr(call_node.func, "expr")
+                and hasattr(call_node.func.expr, "name")
+                and call_node.func.expr.name == "future"
+            ):
                 future_exception_call = call_node
                 break
-        
-        assert future_exception_call is not None, "Could not find future.exception() call"
-        
+
+        assert (
+            future_exception_call is not None
+        ), "Could not find future.exception() call"
+
         with self.assertNoMessages():
             self.checker.visit_call(future_exception_call)
 
@@ -4099,7 +4191,11 @@ class TestDoNotStoreSecretsInTestVariables(pylint.testutils.CheckerTestCase):
     @pytest.fixture(scope="class")
     def setup(self):
         file = open(
-            os.path.join(TEST_FOLDER, "test_files", "test_do_not_store_secrets_in_test_variables.py")
+            os.path.join(
+                TEST_FOLDER,
+                "test_files",
+                "test_do_not_store_secrets_in_test_variables.py",
+            )
         )
         node = astroid.parse(file.read())
         # Set the file attribute to mimic a test file
@@ -4110,10 +4206,10 @@ class TestDoNotStoreSecretsInTestVariables(pylint.testutils.CheckerTestCase):
     def test_detects_secret_assignment_and_usage(self, setup):
         # Test the first bad function
         function_node = setup.body[18]  # test_bad_secret_usage function (updated index)
-        
+
         # Get the assignment node
         assign_node = function_node.body[0]  # secret_value = my_client.secret
-        
+
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="do-not-store-secrets-in-test-variables",
@@ -4126,12 +4222,12 @@ class TestDoNotStoreSecretsInTestVariables(pylint.testutils.CheckerTestCase):
     def test_detects_multiple_secret_assignments(self, setup):
         # Test the second bad function with multiple secrets
         function_node = setup.body[19]  # test_multiple_secrets function (updated index)
-        
+
         # Get the assignment nodes
         assign_node1 = function_node.body[0]  # secret1 = client.secret
         assign_node2 = function_node.body[1]  # secret2 = auth.secret
         assign_node3 = function_node.body[2]  # secret3 = config.auth.secret
-        
+
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="do-not-store-secrets-in-test-variables",
@@ -4153,16 +4249,18 @@ class TestDoNotStoreSecretsInTestVariables(pylint.testutils.CheckerTestCase):
 
     def test_detects_secrets_in_different_contexts(self, setup):
         # Test the function with secrets in if and for contexts
-        function_node = setup.body[20]  # test_secret_in_contexts function (updated index)
-        
+        function_node = setup.body[
+            20
+        ]  # test_secret_in_contexts function (updated index)
+
         # Get the if statement and for loop
         if_node = function_node.body[0]  # if condition:
         for_node = function_node.body[1]  # for item in items:
-        
+
         # Get the assignment nodes inside contexts
-        if_assign_node = if_node.body[0]    # temp_secret = service.secret
+        if_assign_node = if_node.body[0]  # temp_secret = service.secret
         for_assign_node = for_node.body[0]  # loop_secret = item.secret
-        
+
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="do-not-store-secrets-in-test-variables",
@@ -4179,24 +4277,28 @@ class TestDoNotStoreSecretsInTestVariables(pylint.testutils.CheckerTestCase):
 
     def test_ignores_direct_secret_usage(self, setup):
         # Test the good function that uses secrets directly
-        function_node = setup.body[21]  # test_good_secret_usage function (updated index)
-        
+        function_node = setup.body[
+            21
+        ]  # test_good_secret_usage function (updated index)
+
         # Get the direct usage calls (these are Expr nodes)
         call_node1 = function_node.body[0]  # some_function(my_client.secret)
         call_node2 = function_node.body[1]  # other_function(param=my_client.secret)
-        
+
         with self.assertNoMessages():
             self.checker.visit_call(call_node1.value)
             self.checker.visit_call(call_node2.value)
 
     def test_ignores_non_secret_variables(self, setup):
         # Test the good function with non-secret variables
-        function_node = setup.body[21]  # test_good_secret_usage function (updated index)
-        
+        function_node = setup.body[
+            21
+        ]  # test_good_secret_usage function (updated index)
+
         # Get the non-secret assignment and usage
         assign_node = function_node.body[2]  # normal_value = my_client.get_data()
-        call_node = function_node.body[3]    # some_function(normal_value)
-        
+        call_node = function_node.body[3]  # some_function(normal_value)
+
         with self.assertNoMessages():
             self.checker.visit_assign(assign_node)
             self.checker.visit_call(call_node.value)
@@ -4204,7 +4306,7 @@ class TestDoNotStoreSecretsInTestVariables(pylint.testutils.CheckerTestCase):
     def test_only_applies_to_test_files(self):
         # Test that the checker only applies to test files
         # This is tested by the _is_test_file method which checks filename starts with 'test_'
-        
+
         # Create a mock node with a non-test filename
         code = """
 secret_value = client.secret
@@ -4213,24 +4315,29 @@ use_secret(secret_value)
         node = astroid.parse(code)
         # Simulate non-test file
         node.file = "/some/path/regular_file.py"
-        
+
         assign_node = node.body[0]
         call_node = node.body[1]
-        
+
         # Should not trigger since it's not a test file
         with self.assertNoMessages():
             self.checker.visit_assign(assign_node)
             self.checker.visit_call(call_node)
 
 
-class TestDoNotUseDeprecatedAsyncioIscoroutinefunction(pylint.testutils.CheckerTestCase):
+class TestDoNotUseDeprecatedAsyncioIscoroutinefunction(
+    pylint.testutils.CheckerTestCase
+):
     """Test that we detect and warn about deprecated asyncio.iscoroutinefunction usage."""
+
     CHECKER_CLASS = checker.DoNotUseDeprecatedAsyncioIscoroutinefunction
 
     @pytest.fixture(scope="class")
     def setup(self):
         file = open(
-            os.path.join(TEST_FOLDER, "test_files", "use_inspect_iscoroutinefunction.py")
+            os.path.join(
+                TEST_FOLDER, "test_files", "use_inspect_iscoroutinefunction.py"
+            )
         )
         node = astroid.parse(file.read())
         file.close()
@@ -4256,12 +4363,12 @@ class TestDoNotUseDeprecatedAsyncioIscoroutinefunction(pylint.testutils.CheckerT
         # First, visit the import to set up the checker state
         import_node = setup.body[1]
         self.checker.visit_import(import_node)
-        
+
         # Get the function that contains the call
         function_node = setup.body[2]
         if_node = function_node.body[1]  # The if statement
         call_node = if_node.test  # The if condition contains the call
-        
+
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="remove-deprecated-iscoroutinefunction",
@@ -4279,12 +4386,12 @@ class TestDoNotUseDeprecatedAsyncioIscoroutinefunction(pylint.testutils.CheckerT
         # Visit the import with alias to set up the checker state
         import_node = setup.body[3]
         self.checker.visit_import(import_node)
-        
+
         # Get the function that contains the call with alias
         function_node = setup.body[4]
         if_node = function_node.body[1]  # The if statement
         call_node = if_node.test  # The if condition contains the call
-        
+
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="remove-deprecated-iscoroutinefunction",
@@ -4302,19 +4409,259 @@ class TestDoNotUseDeprecatedAsyncioIscoroutinefunction(pylint.testutils.CheckerT
         function_node = setup.body[6]
         if_node = function_node.body[1]  # The if statement
         call_node = if_node.test  # The if condition contains the call
-        
+
         with self.assertNoMessages():
             self.checker.visit_call(call_node)
 
     def test_acceptable_other_asyncio_usage(self, setup):
         """Check that using other asyncio functions does not raise warnings"""
         function_node = setup.body[7]
-        
+
         # asyncio.run() call
         call_node1 = function_node.body[1].value
         # asyncio.sleep() call
         call_node2 = function_node.body[2].value
-        
+
         with self.assertNoMessages():
             self.checker.visit_call(call_node1)
             self.checker.visit_call(call_node2)
+
+
+class TestDoNotUseLoggingDirectly(pylint.testutils.CheckerTestCase):
+    """Test that we flag direct logging.<method>() calls without a named logger instance."""
+
+    CHECKER_CLASS = checker.DoNotUseLoggingDirectly
+
+    @pytest.fixture(scope="class")
+    def setup(self):
+        with open(
+            os.path.join(TEST_FOLDER, "test_files", "do_not_use_logging_directly.py")
+        ) as file:
+            node = astroid.parse(file.read())
+        return node
+
+    def _find_logging_call(self, node, method_name, module_name="logging"):
+        """Helper to find a specific logging call in the AST."""
+        for call_node in node.nodes_of_class(astroid.nodes.Call):
+            if (
+                hasattr(call_node.func, "attrname")
+                and call_node.func.attrname == method_name
+                and hasattr(call_node.func, "expr")
+                and hasattr(call_node.func.expr, "name")
+                and call_node.func.expr.name == module_name
+            ):
+                return call_node
+        return None
+
+    def test_flags_direct_logging_info(self, setup):
+        """Test that logging.info() is flagged."""
+        call_node = self._find_logging_call(setup, "info")
+        assert call_node is not None, "Could not find logging.info() call"
+
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-use-logging-directly",
+                node=call_node,
+            ),
+            ignore_position=True,
+        ):
+            self.checker.visit_call(call_node)
+
+    def test_flags_direct_logging_debug(self, setup):
+        """Test that logging.debug() is flagged."""
+        call_node = self._find_logging_call(setup, "debug")
+        assert call_node is not None, "Could not find logging.debug() call"
+
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-use-logging-directly",
+                node=call_node,
+            ),
+            ignore_position=True,
+        ):
+            self.checker.visit_call(call_node)
+
+    def test_flags_direct_logging_warning(self, setup):
+        """Test that logging.warning() is flagged."""
+        call_node = self._find_logging_call(setup, "warning")
+        assert call_node is not None, "Could not find logging.warning() call"
+
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-use-logging-directly",
+                node=call_node,
+            ),
+            ignore_position=True,
+        ):
+            self.checker.visit_call(call_node)
+
+    def test_allows_logger_instance_calls(self, setup):
+        """Test that logger.info() on named logger is NOT flagged."""
+        call_node = self._find_logging_call(setup, "info", "logger")
+        assert call_node is not None, "Could not find logger.info() call"
+
+        with self.assertNoMessages():
+            self.checker.visit_call(call_node)
+
+    def test_allows_logging_getlogger(self, setup):
+        """Test that logging.getLogger() is NOT flagged."""
+        call_node = self._find_logging_call(setup, "getLogger")
+        assert call_node is not None, "Could not find logging.getLogger() call"
+
+        with self.assertNoMessages():
+            self.checker.visit_call(call_node)
+
+    def test_allows_logging_basicconfig(self, setup):
+        """Test that logging.basicConfig() is NOT flagged."""
+        call_node = self._find_logging_call(setup, "basicConfig")
+        assert call_node is not None, "Could not find logging.basicConfig() call"
+
+        with self.assertNoMessages():
+            self.checker.visit_call(call_node)
+
+    def test_flags_aliased_logging_import(self, setup):
+        """Test that aliased logging imports (import logging as log) are flagged."""
+        # Visit the module to reset state
+        self.checker.visit_module(setup)
+
+        # Visit all imports to register aliases
+        for import_node in setup.nodes_of_class(astroid.nodes.Import):
+            self.checker.visit_import(import_node)
+
+        # Find the log.info() call
+        call_node = self._find_logging_call(setup, "info", "log")
+        assert call_node is not None, "Could not find log.info() call"
+
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-use-logging-directly",
+                node=call_node,
+            ),
+            ignore_position=True,
+        ):
+            self.checker.visit_call(call_node)
+
+    def test_does_not_flag_unrelated_alias(self, setup):
+        """Test that non-logging aliases named 'unrelated_log' are NOT flagged."""
+        # Visit the module to reset state
+        self.checker.visit_module(setup)
+
+        # Visit all imports to register aliases
+        for import_node in setup.nodes_of_class(astroid.nodes.Import):
+            self.checker.visit_import(import_node)
+
+        # Find the unrelated_log.sqrt() call
+        call_node = self._find_logging_call(setup, "sqrt", "unrelated_log")
+        assert call_node is not None, "Could not find unrelated_log.sqrt() call"
+
+        with self.assertNoMessages():
+            self.checker.visit_call(call_node)
+
+
+class TestNoCrossPackagePrivateImport(pylint.testutils.CheckerTestCase):
+    """Test that we flag imports of private APIs from other Azure packages."""
+
+    CHECKER_CLASS = checker.NoCrossPackagePrivateImport
+
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(
+                TEST_FOLDER, "test_files", "no_cross_package_private_import.py"
+            )
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        # Simulate this file being inside the azure.storage.file.datalake package
+        node.name = "azure.storage.file.datalake._some_module"
+        return node
+
+    def test_flags_cross_package_private_importfrom(self, setup):
+        """from azure.storage.blob._generated.models import BlobProperties should be flagged."""
+        importfrom_node = setup.body[0]
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="no-cross-package-private-import",
+                node=importfrom_node,
+            ),
+            ignore_position=True,
+        ):
+            self.checker.visit_importfrom(importfrom_node)
+
+    def test_flags_cross_package_private_importfrom_serialize(self, setup):
+        """from azure.storage.blob._serialize import serialize_blob_headers should be flagged."""
+        importfrom_node = setup.body[1]
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="no-cross-package-private-import",
+                node=importfrom_node,
+            ),
+            ignore_position=True,
+        ):
+            self.checker.visit_importfrom(importfrom_node)
+
+    def test_flags_cross_package_private_import(self, setup):
+        """import azure.core._pipeline_client should be flagged."""
+        import_node = setup.body[2]
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="no-cross-package-private-import",
+                node=import_node,
+            ),
+            ignore_position=True,
+        ):
+            self.checker.visit_import(import_node)
+
+    def test_flags_cross_package_private_importfrom_mgmt(self, setup):
+        """from azure.mgmt.core._serialization import Serializer should be flagged."""
+        importfrom_node = setup.body[3]
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="no-cross-package-private-import",
+                node=importfrom_node,
+            ),
+            ignore_position=True,
+        ):
+            self.checker.visit_importfrom(importfrom_node)
+
+    def test_allows_same_package_private_importfrom(self, setup):
+        """from azure.storage.file.datalake._models import DataLakeFileClient should NOT be flagged."""
+        importfrom_node = setup.body[4]
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(importfrom_node)
+
+    def test_allows_same_package_private_import(self, setup):
+        """import azure.storage.file.datalake._internal should NOT be flagged."""
+        import_node = setup.body[5]
+        with self.assertNoMessages():
+            self.checker.visit_import(import_node)
+
+    def test_allows_public_importfrom(self, setup):
+        """from azure.storage.blob import BlobServiceClient should NOT be flagged."""
+        importfrom_node = setup.body[6]
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(importfrom_node)
+
+    def test_allows_public_importfrom_core(self, setup):
+        """from azure.core import PipelineClient should NOT be flagged."""
+        importfrom_node = setup.body[7]
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(importfrom_node)
+
+    def test_allows_public_import(self, setup):
+        """import azure.identity should NOT be flagged."""
+        import_node = setup.body[8]
+        with self.assertNoMessages():
+            self.checker.visit_import(import_node)
+
+    def test_allows_non_azure_import(self, setup):
+        """import os should NOT be flagged."""
+        import_node = setup.body[9]
+        with self.assertNoMessages():
+            self.checker.visit_import(import_node)
+
+    def test_allows_non_azure_importfrom(self, setup):
+        """from collections import OrderedDict should NOT be flagged."""
+        importfrom_node = setup.body[10]
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(importfrom_node)

@@ -12,6 +12,15 @@ import json
 import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 
+from opentelemetry import metrics
+
+_meter = metrics.get_meter(__name__)
+_retry_counter = _meter.create_counter(
+    name="apiview.review.prompt_retries",
+    description="Number of prompt retries due to throttling, timeouts, or other transient errors",
+    unit="{retry}",
+)
+
 
 class TimeoutException(Exception):
     """Custom exception for timeouts."""
@@ -86,6 +95,9 @@ def retry_with_backoff(
             if logger:
                 logger.error(error_msg)
 
+        # Determine retry reason for telemetry
+        retry_reason = "timeout" if isinstance(e, TimeoutException) else "other"
+
         # Check for 'Retry-After' header if the exception has it
         retry_after = None
         if e is not None and hasattr(e, "response") and e.response is not None:  # pylint: disable=no-member
@@ -93,6 +105,7 @@ def retry_with_backoff(
             if retry_after:
                 try:
                     retry_after = int(retry_after)
+                    retry_reason = "throttled"
                     if logger:
                         logger.info(f"Retry-After header found: {retry_after} seconds")
                 except ValueError:
@@ -107,6 +120,9 @@ def retry_with_backoff(
         # Call the on_retry callback if provided
         if on_retry:
             on_retry(e, attempt, max_retries)
+
+        # Record retry telemetry
+        _retry_counter.add(1, attributes={"retry.reason": retry_reason, "retry.description": description})
 
         # Wait before retrying
         time.sleep(retry_after)

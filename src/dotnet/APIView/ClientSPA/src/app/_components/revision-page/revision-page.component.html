@@ -1,7 +1,12 @@
 <app-review-page-layout
     [review]="review"
-    [sideMenu]="sideMenu">
-    <div class="revisions-panel overflow-auto border rounded">
+    [activePage]="'revisions'"
+    (navigateToReviewsEmitter)="navigateToReview()"
+    (navigateToRevisionsEmitter)="noop()"
+    (navigateToSamplesEmitter)="navigateToSamples()"
+    (navigateToConversationsEmitter)="navigateToConversations()"
+    (navigateToNamespaceEmitter)="navigateToNamespace()">
+    <div class="revision-panel border rounded">
         <app-revisions-list
             [review]="review"
             (apiRevisionsEmitter)="handleApiRevisionsEmitter($event)">

@@ -110,6 +110,18 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   true,
                   true)]
 
+        // Scenario: AI predicts server-azure.mcp + packages-some-package (packages- prefix classified as tool label)
+        // Expected: server-azure.mcp added, packages-some-package added, owner assigned, needs-team-attention added
+        [TestCase(RulesConstants.InitialIssueTriage,
+                  "Tests.JsonEventPayloads/McpIssueTriage_issue_opened_no_labels.json",
+                  RuleState.On,
+                  "server-azure.mcp, packages-abc",
+                  "",
+                  "McpOwner1",
+                  true,
+                  false,
+                  false)]
+
         // Scenario: Rule is disabled
         // Expected: No processing, no updates
         [TestCase(RulesConstants.InitialIssueTriage,
@@ -167,7 +179,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                 mockGitHubEventClient.OwnersWithAssignPermission = ownersWithPermission;
             }
 
-            var mcpProcessor = new McpIssueProcessing(logger, CreateTestMcpConfiguration());
+            var mcpConfig = CreateTestMcpConfiguration();
+            var mcpProcessor = new McpIssueProcessing(logger, mcpConfig);
 
             await mcpProcessor.ProcessIssueEvent(mockGitHubEventClient, issueEventPayload);
 
@@ -200,12 +213,14 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                     : userProvidedLabels.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
 
                 var labelsToAdd = mockGitHubEventClient.GetLabelsToAdd();
-                var serverPredicted = expectedPredictedLabels.FirstOrDefault(l => l.StartsWith("server-", StringComparison.OrdinalIgnoreCase));
-                var toolPredicted = expectedPredictedLabels.FirstOrDefault(l => l.StartsWith("tools-", StringComparison.OrdinalIgnoreCase));
+                var serverPredicted = expectedPredictedLabels.FirstOrDefault(
+                    l => mcpConfig.GetPrimaryLabelPrefixes().Any(prefix => l.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)));
+                var toolPredicted = expectedPredictedLabels.FirstOrDefault(
+                    l => mcpConfig.GetSecondaryLabelPrefixes().Any(prefix => l.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)));
 
                 if (serverPredicted != null)
                 {
-                    var userHasServerLabel = userLabels.Any(l => l.StartsWith("server-", StringComparison.OrdinalIgnoreCase));
+                    var userHasServerLabel = userLabels.Any(l => mcpConfig.GetPrimaryLabelPrefixes().Any(prefix => l.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)));
                     if (!userHasServerLabel)
                     {
                         Assert.That(labelsToAdd, Does.Contain(serverPredicted),
@@ -215,7 +230,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
 
                 if (toolPredicted != null)
                 {
-                    var userHasToolLabel = userLabels.Any(l => l.StartsWith("tools-", StringComparison.OrdinalIgnoreCase));
+                    var userHasToolLabel = userLabels.Any(l => mcpConfig.GetSecondaryLabelPrefixes().Any(prefix => l.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)));
                     if (!userHasToolLabel)
                     {
                         Assert.That(labelsToAdd, Does.Contain(toolPredicted),
@@ -244,6 +259,28 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                     Assert.That(labelsToAdd, Does.Contain(TriageLabelConstants.CustomerReported));
                     Assert.That(labelsToAdd, Does.Contain(TriageLabelConstants.Question));
                 }
+
+                var comments = mockGitHubEventClient.GetComments();
+                if (hasCodeownersEntry && serverPredicted != null)
+                {
+                    Assert.That(comments.Count, Is.GreaterThan(0),
+                        "Expected at least one comment when CODEOWNERS entry exists for server label");
+
+                    var commentText = comments[0].Comment;
+                    Assert.That(commentText, Does.Contain("Thanks for the feedback!"),
+                        "Comment should contain thank you message");
+
+                    if (serverPredicted == "server-azure.mcp")
+                    {
+                        Assert.That(commentText, Does.Contain("@microsoft/azure-mcp").Or.Contain("@McpOwner1"),
+                            "Comment for server-azure.mcp should mention team from CODEOWNERS");
+                    }
+                    else if (serverPredicted == "server-fabric.mcp")
+                    {
+                        Assert.That(commentText, Does.Contain("@microsoft/fabric-mcp").Or.Contain("@McpOwner2").Or.Contain("@McpOwner3"),
+                            "Comment for server-fabric.mcp should mention team from CODEOWNERS");
+                    }
+                }
             }
         }
 
@@ -254,7 +291,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         {
             var configData = new Dictionary<string, string?>
             {
-                { "microsoft/mcp:ServerTeamMappings", "server-Azure.Mcp=@microsoft/azure-mcp;server-Fabric.Mcp=@microsoft/fabric-mcp" }
+                { $"{McpConstants.McpConfigPrefix}:{McpConstants.McpServerLabelPrefix}", "server-" },
+                { $"{McpConstants.McpConfigPrefix}:{McpConstants.McpToolLabelPrefix}", "tools-;remote-mcp;packages-" },
             };
 
             var configuration = new ConfigurationBuilder()
@@ -263,5 +301,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
 
             return new McpConfiguration(configuration);
         }
+
     }
 }

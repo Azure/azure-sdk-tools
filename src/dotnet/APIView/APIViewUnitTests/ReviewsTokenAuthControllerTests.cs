@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 using APIViewWeb;
 using APIViewWeb.Helpers;
@@ -138,6 +140,93 @@ public class ReviewsTokenAuthControllerTests
         notFoundResult.Value?.ToString().Should().Contain("Could not find an APIView review");
         notFoundResult.Value?.ToString().Should().Contain(package);
         notFoundResult.Value?.ToString().Should().Contain(language);
+    }
+
+    #endregion
+
+    #region StartReviewJob Tests
+
+    [Fact]
+    public async Task StartReviewJob_WithNullRequest_ReturnsBadRequest()
+    {
+        ActionResult<AIReviewJobStartedResponseModel> result = await _controller.StartReviewJob(null);
+        Assert.IsType<BadRequestObjectResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task StartReviewJob_WithEmptyTarget_ReturnsBadRequest()
+    {
+        var request = new StartReviewJobRequest { Target = "" };
+        ActionResult<AIReviewJobStartedResponseModel> result = await _controller.StartReviewJob(request);
+        Assert.IsType<BadRequestObjectResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task StartReviewJob_WithValidRequest_Returns202WithJobId()
+    {
+        var expectedResponse = new AIReviewJobStartedResponseModel { JobId = "job-abc" };
+        _mockReviewManager
+            .Setup(m => m.StartCopilotReviewJobAsync(It.IsAny<StartReviewJobRequest>()))
+            .ReturnsAsync(expectedResponse);
+
+        var request = new StartReviewJobRequest { Target = "def hello(): pass", Language = "python" };
+        ActionResult<AIReviewJobStartedResponseModel> result = await _controller.StartReviewJob(request);
+
+        Assert.IsType<LeanJsonResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task StartReviewJob_WhenManagerThrows_Returns500WithMessage()
+    {
+        _mockReviewManager
+            .Setup(m => m.StartCopilotReviewJobAsync(It.IsAny<StartReviewJobRequest>()))
+            .ThrowsAsync(new HttpRequestException("Copilot service returned 500: Internal Server Error", null, HttpStatusCode.InternalServerError));
+
+        var request = new StartReviewJobRequest { Target = "def hello(): pass", Language = "python" };
+        ActionResult<AIReviewJobStartedResponseModel> result = await _controller.StartReviewJob(request);
+
+        ObjectResult objectResult = Assert.IsType<ObjectResult>(result.Result);
+        Assert.Equal(StatusCodes.Status500InternalServerError, objectResult.StatusCode);
+        objectResult.Value.ToString().Should().Contain("An error occurred while starting the review job.");
+    }
+
+    #endregion
+
+    #region GetReviewJob Tests
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    public async Task GetReviewJob_WithEmptyJobId_ReturnsBadRequest(string jobId)
+    {
+        ActionResult<AIReviewJobPolledResponseModel> result = await _controller.GetReviewJob(jobId);
+        Assert.IsType<BadRequestObjectResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task GetReviewJob_WithValidJobId_Returns200WithStatus()
+    {
+        var expectedResponse = new AIReviewJobPolledResponseModel { Status = "completed" };
+        _mockReviewManager
+            .Setup(m => m.GetCopilotReviewJobAsync("job-123"))
+            .ReturnsAsync(expectedResponse);
+
+        ActionResult<AIReviewJobPolledResponseModel> result = await _controller.GetReviewJob("job-123");
+
+        Assert.IsType<LeanJsonResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task GetReviewJob_WhenManagerThrows_Returns500()
+    {
+        _mockReviewManager
+            .Setup(m => m.GetCopilotReviewJobAsync("bad-job"))
+            .ThrowsAsync(new Exception("connection failed"));
+
+        ActionResult<AIReviewJobPolledResponseModel> result = await _controller.GetReviewJob("bad-job");
+
+        ObjectResult objectResult = Assert.IsType<ObjectResult>(result.Result);
+        Assert.Equal(StatusCodes.Status500InternalServerError, objectResult.StatusCode);
     }
 
     #endregion

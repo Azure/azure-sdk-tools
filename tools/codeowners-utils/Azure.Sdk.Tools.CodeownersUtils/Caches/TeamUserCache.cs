@@ -1,20 +1,24 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Azure.Sdk.Tools.CodeownersUtils.Constants;
 using Azure.Sdk.Tools.CodeownersUtils.Utils;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.CodeownersUtils.Caches
 {
+    public interface ITeamUserCache
+    {
+        public Dictionary<string, List<string>> TeamUserDict { get; set; }
+        public List<string> GetUsersForTeam(string teamName);
+    }
+
     /// <summary>
     /// Holds the team/user information which is used for both verification and team expansion during parsing. Note that
     /// Teams are case insensitive but case preserving which means the dictionary needs to be able to case insensitive lookups.
     /// </summary>
-    public class TeamUserCache
+    public class TeamUserCache : ITeamUserCache
     {
         private string TeamUserStorageURI { get; set; } = DefaultStorageConstants.TeamUserBlobUri;
         private Dictionary<string, List<string>> _teamUserDict = null;
@@ -32,6 +36,10 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Caches
             {
                 _teamUserDict = value;
             }
+        }
+
+        public TeamUserCache()
+        {
         }
 
         public TeamUserCache(string teamUserStorageURI)

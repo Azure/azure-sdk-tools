@@ -8,6 +8,8 @@ namespace Azure.Sdk.Tools.Cli.Models;
 public enum SdkLanguage
 {
     Unknown,
+    [JsonStringEnumMemberName("C++")]
+    Cpp,
     [JsonStringEnumMemberName(".NET")]
     DotNet,
     [JsonStringEnumMemberName("Java")]
@@ -42,8 +44,13 @@ public static class SdkLanguageHelpers
         { "azure-sdk-for-java", SdkLanguage.Java },
         { "azure-sdk-for-js", SdkLanguage.JavaScript },
         { "azure-sdk-for-python", SdkLanguage.Python },
-        { "azure-sdk-for-rust", SdkLanguage.Rust}
+        { "azure-sdk-for-rust", SdkLanguage.Rust},
+        {"azure-sdk-for-cpp", SdkLanguage.Cpp }
     }.ToImmutableDictionary();
+
+    // Create inverse mapping of language -> repo
+    private static readonly ImmutableDictionary<SdkLanguage, string> LanguageToRepoMap =
+        RepoToLanguageMap.ToImmutableDictionary(pair => pair.Value, pair => pair.Key);
 
     public static async Task<SdkLanguage> GetLanguageForRepoPathAsync(IGitHelper gitHelper, string pathInRepo, CancellationToken ct = default)
     {
@@ -69,10 +76,18 @@ public static class SdkLanguageHelpers
         return SdkLanguage.Unknown;
     }
 
+    public static string? GetRepoName(SdkLanguage language)
+    {
+        return LanguageToRepoMap.TryGetValue(language, out var repoName) ? repoName : null;
+    }
+
     public static SdkLanguage GetSdkLanguage(string language)
     {
         switch (language.ToLower())
         {
+            case "c++":
+            case "cpp":
+                return SdkLanguage.Cpp;
             case ".net":
             case "dotnet":
             case "c#":

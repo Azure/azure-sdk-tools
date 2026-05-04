@@ -20,6 +20,7 @@ public static class JavaRequirements
         public override string Name => "Java";
         public override string? MinVersion => "17.0.0";
         public override string[] CheckCommand => ["java", "-version"];
+        public override string? NotAutoInstallableReason => NotInstallableReasons.LanguageRuntime;
 
         public override bool ShouldCheck(RequirementContext ctx) 
             => ctx.Languages.Contains(SdkLanguage.Java);
@@ -53,6 +54,8 @@ public static class JavaRequirements
     {
         public override string Name => "Maven";
         public override string[] CheckCommand => ["mvn", "-v"];
+        public override IReadOnlyList<string> DependsOn => ["Java"];
+        public override string? NotAutoInstallableReason => NotInstallableReasons.BuildTool;
 
         public override bool ShouldCheck(RequirementContext ctx) 
             => ctx.Languages.Contains(SdkLanguage.Java);

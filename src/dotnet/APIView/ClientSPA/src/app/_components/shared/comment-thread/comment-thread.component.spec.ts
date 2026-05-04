@@ -122,7 +122,9 @@ describe('CommentThreadComponent', () => {
       azureSdkComment.createdOn = new Date().toISOString();
       azureSdkComment.commentText = 'Copilot suggestion';
 
-      component.codePanelRowData!.comments = [azureSdkComment];
+      const newData = new CodePanelRowData();
+      newData.comments = [azureSdkComment];
+      fixture.componentRef.setInput('codePanelRowData', newData);
       fixture.detectChanges();
 
       const copilotIcon = fixture.nativeElement.querySelector('img[src="assets/icons/copilot.svg"]');
@@ -137,7 +139,9 @@ describe('CommentThreadComponent', () => {
       regularComment.createdOn = new Date().toISOString();
       regularComment.commentText = 'Regular comment';
 
-      component.codePanelRowData!.comments = [regularComment];
+      const newData = new CodePanelRowData();
+      newData.comments = [regularComment];
+      fixture.componentRef.setInput('codePanelRowData', newData);
       fixture.detectChanges();
 
       const githubAvatar = fixture.nativeElement.querySelector('img[src^="https://github.com/regular-user.png"]');
@@ -154,7 +158,9 @@ describe('CommentThreadComponent', () => {
       azureSdkComment.createdOn = new Date().toISOString();
       azureSdkComment.commentText = 'Copilot suggestion';
 
-      component.codePanelRowData!.comments = [azureSdkComment];
+      const newData = new CodePanelRowData();
+      newData.comments = [azureSdkComment];
+      fixture.componentRef.setInput('codePanelRowData', newData);
       fixture.detectChanges();
 
       const creatorName = fixture.nativeElement.querySelector('.fw-bold');
@@ -168,7 +174,9 @@ describe('CommentThreadComponent', () => {
       regularComment.createdOn = new Date().toISOString();
       regularComment.commentText = 'Regular comment';
 
-      component.codePanelRowData!.comments = [regularComment];
+      const newData = new CodePanelRowData();
+      newData.comments = [regularComment];
+      fixture.componentRef.setInput('codePanelRowData', newData);
       fixture.detectChanges();
 
       const creatorName = fixture.nativeElement.querySelector('.fw-bold');
@@ -199,11 +207,65 @@ describe('CommentThreadComponent', () => {
         }]
       } as CommentItemModel;
 
-      component.codePanelRowData!.comments = [comment1, comment2];
-      component.codePanelRowData!.isResolvedCommentThread = true;
+      const newData = new CodePanelRowData();
+      newData.comments = [comment1, comment2];
+      newData.isResolvedCommentThread = true;
+      fixture.componentRef.setInput('codePanelRowData', newData);
       fixture.detectChanges();
       component.setCommentResolutionState();
       expect(component.threadResolvedBy).toBe('test user 2');
+    });
+
+    it('should compute thread participants from comment createdBy fields', () => {
+      const comment1 = { id: '1', createdBy: 'alice', isResolved: true, changeHistory: [] } as CommentItemModel;
+      const comment2 = { id: '2', createdBy: 'bob', isResolved: true, changeHistory: [] } as CommentItemModel;
+      const comment3 = { id: '3', createdBy: 'alice', isResolved: true, changeHistory: [] } as CommentItemModel;
+
+      component.codePanelRowData!.comments = [comment1, comment2, comment3];
+      component.codePanelRowData!.isResolvedCommentThread = true;
+      component.codePanelRowData!.commentThreadIsResolvedBy = 'alice';
+      component.setCommentResolutionState();
+
+      expect(component.threadParticipants).toBe('alice, bob');
+    });
+
+    it('should render participants text in DOM when thread is resolved', () => {
+      const comment1 = { id: '1', createdBy: 'alice', createdOn: new Date().toISOString(), isResolved: true, changeHistory: [] } as CommentItemModel;
+      const comment2 = { id: '2', createdBy: 'bob', createdOn: new Date().toISOString(), isResolved: true, changeHistory: [] } as CommentItemModel;
+
+      const newData = new CodePanelRowData();
+      newData.comments = [comment1, comment2];
+      newData.isResolvedCommentThread = true;
+      newData.commentThreadIsResolvedBy = 'alice';
+      fixture.componentRef.setInput('codePanelRowData', newData);
+      fixture.detectChanges();
+
+      const participantsSpan = fixture.nativeElement.querySelector('.participants-info');
+      expect(participantsSpan).toBeTruthy();
+      expect(participantsSpan.textContent).toContain('alice, bob');
+    });
+
+    it('should not render participants span in DOM when thread is unresolved', () => {
+      const comment1 = { id: '1', createdBy: 'alice', createdOn: new Date().toISOString(), isResolved: false, changeHistory: [], upvotes: [], downvotes: [] } as CommentItemModel;
+
+      const newData = new CodePanelRowData();
+      newData.comments = [comment1];
+      newData.isResolvedCommentThread = false;
+      fixture.componentRef.setInput('codePanelRowData', newData);
+      fixture.detectChanges();
+
+      const participantsSpan = fixture.nativeElement.querySelector('.participants-info');
+      expect(participantsSpan).toBeFalsy();
+    });
+
+    it('should clear thread participants when thread is unresolved', () => {
+      const comment1 = { id: '1', createdBy: 'alice', isResolved: false, changeHistory: [] } as CommentItemModel;
+
+      component.codePanelRowData!.comments = [comment1];
+      component.codePanelRowData!.isResolvedCommentThread = false;
+      component.setCommentResolutionState();
+
+      expect(component.threadParticipants).toBe('');
     });
   });
 

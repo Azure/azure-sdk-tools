@@ -28,6 +28,7 @@ namespace APIViewWeb.MiddleWare
             _ = await dataBaseResponse.Database.CreateContainerIfNotExistsAsync("PullRequests", "/PullRequestNumber");
             _ = await dataBaseResponse.Database.CreateContainerIfNotExistsAsync("UsageSamples", "/ReviewId");
             _ = await dataBaseResponse.Database.CreateContainerIfNotExistsAsync("UserPreference", "/ReviewId");
+            _ = await dataBaseResponse.Database.CreateContainerIfNotExistsAsync("APIVersions", "/ReviewId");
 
             var blobServiceClient = new BlobServiceClient(new Uri(config["StorageAccountUrl"]), credential);
             var blobCodeFileContainerClient = blobServiceClient.GetBlobContainerClient("codefiles");

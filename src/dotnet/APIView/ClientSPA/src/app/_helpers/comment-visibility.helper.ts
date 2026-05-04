@@ -1,4 +1,4 @@
-import { CommentItemModel, CommentSource } from '../_models/commentItemModel';
+import { CommentItemModel, CommentSource, CommentType } from '../_models/commentItemModel';
 
 /**
  * Result of computing visible comments for an active API revision.
@@ -30,15 +30,20 @@ export function getVisibleComments(
   comments: CommentItemModel[],
   activeApiRevisionId: string | null
 ): VisibleCommentsResult {
-  const userComments = comments.filter(comment =>
+  // Only include comments for API revisions, not sample revisions
+  const apiRevisionComments = comments.filter(comment =>
+    comment.commentType !== CommentType.SampleRevision
+  );
+
+  const userComments = apiRevisionComments.filter(comment =>
     comment.commentSource !== CommentSource.Diagnostic && comment.commentSource !== CommentSource.AIGenerated
   );
 
-  const aiGeneratedComments = comments.filter(comment =>
+  const aiGeneratedComments = apiRevisionComments.filter(comment =>
     comment.commentSource === CommentSource.AIGenerated
   );
 
-  const diagnosticCommentsForRevision = comments.filter(comment =>
+  const diagnosticCommentsForRevision = apiRevisionComments.filter(comment =>
     comment.commentSource === CommentSource.Diagnostic && comment.apiRevisionId === activeApiRevisionId
   );
 

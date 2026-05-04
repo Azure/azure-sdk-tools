@@ -1,0 +1,14 @@
+testcase: groups_returned_out_of_order
+language: Python
+content: |
+  {
+    5: "Enum values should use UPPER_SNAKE_CASE per Python conventions.",
+    6: "Enum members should follow UPPER_SNAKE_CASE naming.",
+    1: "The return type annotation is missing on this public method.",
+    2: "Missing return type annotation on this function.",
+    3: "Consider adding a docstring to this public class.",
+    4: "This public class is missing a docstring."
+  }
+response:
+  action: "(1, 2),(3, 4),(5, 6)"
+  rationale: Comments 1 and 2 are about missing return type annotations. Comments 3 and 4 are about missing docstrings. Comments 5 and 6 are about enum naming conventions.

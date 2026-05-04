@@ -67,6 +67,8 @@ function executeCommand(
     maxRetries = 3,
     retryDelayMs = 1000
 ): shell.ShellString | null {
+    const currentRepo = shell.pwd().stdout.trim();
+    logger.info(`Executing git command in repo: ${currentRepo}`);
     logger.info(`Executing command with retry mode (max attempts: ${maxRetries}): ${command}`);
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -94,14 +96,16 @@ function executeCommand(
 }
 
 /**
- * Check if a Git tag exists in the repository
+ * Check if a Git tag exists in the repository.
+ * In the normal case, `git tag -l` prints matching tag names to stdout and prints nothing
+ * when there is no match. If the command itself fails, Git may return a non-zero exit code,
+ * so we check both for a successful exit code and non-empty output.
  * @param tag The Git tag to check
  * @returns boolean indicating if the tag exists
  */
-function checkGitTagExists(tag: string): boolean {
-    const tagCheckCommand = `git tag -l ${tag}`;
-    const tagExists = executeCommand(tagCheckCommand)?.stdout.trim();
-    return !!tagExists;
+export function checkGitTagExists(tag: string): boolean {
+    const result = shell.exec(`git tag -l ${tag}`, { silent: true });
+    return result.code === 0 && result.stdout.trim().length > 0;
 }
 
 // TODO: refactor this function to support praparing files from github in general way
@@ -119,15 +123,6 @@ export function tryCreateLastestStableNpmViewFromGithub(NpmViewParameters: NpmVi
     const tag = `${packageName}_${version}`;
     const defaultContent = "```ts\n```";
     logger.info(`Start to get and clone ${npmPackagePath} from latest ${packageName} release tag.`);
-
-    // Check if tag exists
-    if (!checkGitTagExists(tag)) {
-        logger.warn(`Warning: Git tag '${tag}' does not exist in the repository.`);
-        if (file !== "CHANGELOG.md") {
-            fs.writeFileSync(targetFilePath, defaultContent, { encoding: 'utf-8' });
-        }
-        return;
-    }
 
     try {
         if (file === "CHANGELOG.md") {
@@ -184,12 +179,6 @@ export async function checkDirectoryExistsInGithub(
 ): Promise<boolean> {
     try {
         const tag = `${packageName}_${version}`;
-
-        // Check if tag exists
-        if (!checkGitTagExists(tag)) {
-            logger.warn(`Warning: Git tag '${tag}' does not exist in the repository.`);
-            return false;
-        }
 
         // Get SDK root path
         const sdkRootPath = process.cwd(); // Assuming we're running from SDK root

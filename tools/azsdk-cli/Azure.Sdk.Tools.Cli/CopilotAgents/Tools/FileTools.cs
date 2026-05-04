@@ -4,7 +4,6 @@
 using System.ComponentModel;
 using System.Text.RegularExpressions;
 using System.Collections.Concurrent;
-using Azure.Sdk.Tools.Cli.Microagents;
 using Microsoft.Extensions.AI;
 
 namespace Azure.Sdk.Tools.Cli.CopilotAgents.Tools;
@@ -37,7 +36,9 @@ public static class FileTools
             : "Read the contents of a file";
 
         return AIFunctionFactory.Create(
-            async ([Description("Relative path of the file to read")] string filePath) =>
+            async ([Description("Relative path of the file to read")] string filePath,
+                   [Description("Optional 1-based start line number to read from (default: read from beginning)")] int? startLine = null,
+                   [Description("Optional 1-based end line number to read to, inclusive (default: read to end)")] int? endLine = null) =>
             {
                 if (string.IsNullOrEmpty(filePath))
                 {
@@ -52,18 +53,45 @@ public static class FileTools
                     throw new ArgumentException($"{path} does not exist");
                 }
 
+                // Fast path: no line numbers and no line range — return raw content
+                if (!includeLineNumbers && startLine == null && endLine == null)
+                {
+                    return await File.ReadAllTextAsync(path);
+                }
+
+                if (startLine.HasValue && startLine.Value < 1)
+                {
+                    throw new ArgumentException("startLine must be >= 1.", nameof(startLine));
+                }
+                if (endLine.HasValue && endLine.Value < 1)
+                {
+                    throw new ArgumentException("endLine must be >= 1.", nameof(endLine));
+                }
+                if (startLine.HasValue && endLine.HasValue && endLine.Value < startLine.Value)
+                {
+                    throw new ArgumentException($"endLine ({endLine.Value}) must be >= startLine ({startLine.Value}).", nameof(endLine));
+                }
+
+                var lines = await File.ReadAllLinesAsync(path);
+                var start = Math.Max(0, (startLine ?? 1) - 1);
+                var end = Math.Min(lines.Length, endLine ?? lines.Length);
+
+                var sb = new System.Text.StringBuilder();
                 if (includeLineNumbers)
                 {
-                    var lines = await File.ReadAllLinesAsync(path);
-                    var sb = new System.Text.StringBuilder();
-                    for (int i = 0; i < lines.Length; i++)
+                    for (int i = start; i < end; i++)
                     {
                         sb.Append(i + 1).Append(": ").AppendLine(lines[i]);
                     }
-                    return sb.ToString();
                 }
-
-                return await File.ReadAllTextAsync(path);
+                else
+                {
+                    for (int i = start; i < end; i++)
+                    {
+                        sb.AppendLine(lines[i]);
+                    }
+                }
+                return sb.ToString();
             },
             "ReadFile",
             description);
@@ -133,7 +161,7 @@ public static class FileTools
 
                 var searchPattern = string.IsNullOrWhiteSpace(filter) ? "*" : filter;
 
-                // Use GetFileSystemEntries to return both files and directories (parity with Microagents)
+                // Use GetFileSystemEntries to return both files and directories
                 var entries = recursive
                     ? EnumerateFileSystemEntries(path, searchPattern)
                         .Select(f => Path.GetRelativePath(baseDir, f))
@@ -326,6 +354,61 @@ public static class FileTools
                 pending.Push(subdirectory);
             }
         }
+    }
+
+    /// <summary>
+    /// Creates a RenameFile tool that renames (moves) a file within a base directory.
+    /// </summary>
+    /// <param name="baseDir">The base directory for relative path resolution.</param>
+    /// <param name="description">Optional custom description for the tool.</param>
+    /// <param name="onFileRenamed">Optional callback invoked after a successful rename.</param>
+    /// <returns>An AIFunction that renames files.</returns>
+    public static AIFunction CreateRenameFileTool(
+        string baseDir,
+        string description = "Rename a file within the project directory",
+        Action<string, string>? onFileRenamed = null)
+    {
+        return AIFunctionFactory.Create(
+            ([Description("Current relative path of the file to rename")] string oldFilePath,
+             [Description("New relative path for the file (typically just a new filename in the same directory)")] string newFilePath) =>
+            {
+                if (string.IsNullOrEmpty(oldFilePath))
+                {
+                    throw new ArgumentException("Old file path cannot be null or empty.", nameof(oldFilePath));
+                }
+                if (string.IsNullOrEmpty(newFilePath))
+                {
+                    throw new ArgumentException("New file path cannot be null or empty.", nameof(newFilePath));
+                }
+                if (!ToolHelpers.TryGetSafeFullPath(baseDir, oldFilePath, out var safeOldPath))
+                {
+                    throw new ArgumentException("The old path is invalid or outside the allowed base directory.");
+                }
+                if (!ToolHelpers.TryGetSafeFullPath(baseDir, newFilePath, out var safeNewPath))
+                {
+                    throw new ArgumentException("The new path is invalid or outside the allowed base directory.");
+                }
+                if (!File.Exists(safeOldPath))
+                {
+                    throw new ArgumentException($"Source file does not exist: {oldFilePath}");
+                }
+                if (File.Exists(safeNewPath))
+                {
+                    throw new ArgumentException($"Destination file already exists: {newFilePath}");
+                }
+
+                var newDir = Path.GetDirectoryName(safeNewPath);
+                if (!string.IsNullOrEmpty(newDir) && !Directory.Exists(newDir))
+                {
+                    Directory.CreateDirectory(newDir);
+                }
+
+                File.Move(safeOldPath, safeNewPath);
+                onFileRenamed?.Invoke(oldFilePath, newFilePath);
+                return $"Successfully renamed {oldFilePath} to {newFilePath}";
+            },
+            "RenameFile",
+            description);
     }
 
     private readonly record struct GrepMatch(int FileIndex, int LineNumber, string FilePath, string Content);

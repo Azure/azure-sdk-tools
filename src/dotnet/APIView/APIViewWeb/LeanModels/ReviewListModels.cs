@@ -111,8 +111,10 @@ namespace APIViewWeb.LeanModels
         public List<ReviewChangeHistoryModel> ChangeHistory { get; set; } = new List<ReviewChangeHistoryModel>();
         public List<ReviewAssignmentModel> AssignedReviewers { get; set; } = new List<ReviewAssignmentModel>();
         public bool IsClosed { get; set; }
-        public bool IsApproved { get; set; } // TODO: Deprecate in the future - redundant with NamespaceReviewStatus
+        // TODO: will be removed once migration to the project-based namespace workflow is complete.
+        public bool IsApproved { get; set; } 
         public PackageType? PackageType { get; set; } // Nullable - null means not yet classified
+        // TODO: Deprecated — will be removed once migration to the project-based namespace workflow is complete.
         public NamespaceReviewStatus NamespaceReviewStatus { get; set; } = NamespaceReviewStatus.NotStarted;
         public string CreatedBy { get; set; }
         public DateTime CreatedOn { get; set; }
@@ -140,7 +142,7 @@ namespace APIViewWeb.LeanModels
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string PackageVersion
         {
-            get => this.Files.First().PackageVersion;
+            get => this.Files?.FirstOrDefault()?.PackageVersion;
         }
         public List<APIRevisionChangeHistoryModel> ChangeHistory { get; set; } = new List<APIRevisionChangeHistoryModel>();
         public APIRevisionType APIRevisionType { get; set; }
@@ -159,6 +161,7 @@ namespace APIViewWeb.LeanModels
         public bool IsDeleted { get; set; }
         public bool IsReleased { get; set; }
         public DateTime ReleasedOn { get; set; }
+        public string APIVersionId { get; set; }
         private string _sourceBranch;
         public string SourceBranch 
         { 
@@ -190,5 +193,6 @@ namespace APIViewWeb.LeanModels
         public DateTime CreatedOn { get; set; }
         public string Title { get; set; }
         public bool IsDeleted { get; set; }
+        public string APIVersionId { get; set; }
     }
 }

@@ -362,8 +362,8 @@ namespace IssueLabelerService
             string server = root.TryGetProperty("Server", out var serverProp) ? serverProp.GetString() ?? string.Empty : string.Empty;
             string tool = root.TryGetProperty("Tool", out var toolProp) ? toolProp.GetString() ?? string.Empty : string.Empty;
 
-            double serverScore = root.TryGetProperty("ServerConfidenceScore", out var serverScoreProp) ? serverScoreProp.GetDouble() : 0.0;
-            double toolScore = root.TryGetProperty("ToolConfidenceScore", out var toolScoreProp) ? toolScoreProp.GetDouble() : 0.0;
+            double serverScore = root.TryGetProperty("ServerConfidenceScore", out var serverScoreProp) && serverScoreProp.ValueKind == JsonValueKind.Number ? serverScoreProp.GetDouble() : 0.0;
+            double toolScore = root.TryGetProperty("ToolConfidenceScore", out var toolScoreProp) && toolScoreProp.ValueKind == JsonValueKind.Number ? toolScoreProp.GetDouble() : 0.0;
 
             var confidenceThreshold = double.Parse(
                 _config.ConfidenceThreshold,

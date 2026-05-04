@@ -14,7 +14,7 @@ using ModelContextProtocol.Server;
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 
 [McpServerToolType]
-[Description("Delegate APIView feedback to GitHub Copilot coding agent for TypeSpec client customizations")]
+[Description("Address, fix, resolve, or delegate APIView feedback/comments from an APIView URL. Use this tool instead of making code changes directly: it reads the reviewer comments, creates a GitHub issue with the feedback, and assigns GitHub Copilot to determine and implement the required TypeSpec client customizations.")]
 public class DelegateAPIViewFeedbackTool : MCPTool
 {
     private const string ToolName = "azsdk_typespec_delegate_apiview_feedback";
@@ -54,7 +54,7 @@ public class DelegateAPIViewFeedbackTool : MCPTool
     }
 
     protected override Command GetCommand() =>
-        new McpCommand("delegate-apiview-feedback", "Delegate APIView feedback to coding agent for TypeSpec customizations", ToolName)
+        new McpCommand("delegate-apiview-feedback", "Address/fix/delegate APIView feedback: creates a GitHub issue from reviewer comments and assigns Copilot to implement TypeSpec client customizations", ToolName)
         {
             _apiViewUrlArg,
             _repoOption,
@@ -71,7 +71,7 @@ public class DelegateAPIViewFeedbackTool : MCPTool
     }
 
     [McpServerTool(Name = ToolName)]
-    [Description("Delegate APIView feedback to GitHub Copilot coding agent for TypeSpec client customizations")]
+    [Description("Address, fix, resolve, or delegate APIView feedback/comments from an APIView URL. Use this tool instead of making code changes directly: it reads the reviewer comments, creates a GitHub issue with the feedback, and assigns GitHub Copilot to determine and implement the required TypeSpec client customizations.")]
     public async Task<DefaultCommandResponse> DelegateAPIViewFeedbackAsync(
         string apiViewUrl,
         string? repo = null,
@@ -92,8 +92,8 @@ public class DelegateAPIViewFeedbackTool : MCPTool
             _logger.LogInformation("Extracted revisionId: {RevisionId}, reviewId: {ReviewId}", revisionId, reviewId);
 
             // Get consolidated comments and metadata
-            var comments = await _service.GetConsolidatedComments(revisionId);
-            var metadata = await _service.ParseReviewMetadata(revisionId);
+            var comments = await _service.GetConsolidatedComments(revisionId, ct);
+            var metadata = await _service.ParseReviewMetadata(revisionId, ct);
 
             if (comments.Count == 0)
             {
@@ -108,7 +108,7 @@ public class DelegateAPIViewFeedbackTool : MCPTool
 
             // Detect commit SHA, TypeSpec project path, and target repo
             _logger.LogInformation("Detecting commit SHA and TypeSpec project path");
-            var (commitSha, tspProjectPath, detectedRepo) = await _service.DetectShaAndTspPath(metadata);
+            var (commitSha, tspProjectPath, detectedRepo) = await _service.DetectShaAndTspPath(metadata, ct);
 
             // Use override repo if specified, otherwise use detected repo, fallback to default
             var targetRepo = !string.IsNullOrEmpty(repo) ? repo : detectedRepo ?? "Azure/azure-rest-api-specs";
@@ -159,7 +159,7 @@ public class DelegateAPIViewFeedbackTool : MCPTool
             // Create issue and assign to Copilot
             _logger.LogInformation("Creating issue in {Owner}/{Repo} and assigning to Copilot", owner, repoName);
             var assignees = new List<string> { "copilot-swe-agent[bot]" };
-            var issue = await _gitHubService.CreateIssueAsync(owner, repoName, title, prompt, assignees);
+            var issue = await _gitHubService.CreateIssueAsync(owner, repoName, title, prompt, assignees, ct);
 
             return new DefaultCommandResponse
             {

@@ -27,7 +27,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         // Options
         private readonly Option<string> packageNameOpt = new("--package-name", "-p")
         {
-            Description = "SDK package name",
+            Description = "SDK package name. For Java packages, must include group name in format groupName:packageName (e.g., com.azure.resourcemanager:azure-resourcemanager-containerservice)",
             Required = true,
         };
 
@@ -44,10 +44,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             DefaultValueFactory = _ => "Released"
         };
 
+        private readonly Option<string?> packageVersionOpt = new("--package-version")
+        {
+            Description = "SDK package version being released",
+            Required = false,
+        };
+
         protected override Command GetCommand() =>
             new McpCommand(updateReleaseStatusCommandName, "Update package release status in the release plan")
             {
-                packageNameOpt, languageOpt, releaseStatusOpt
+                packageNameOpt, languageOpt, releaseStatusOpt, packageVersionOpt
             };
 
 
@@ -61,7 +67,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     var packageName = commandParser.GetValue(packageNameOpt);
                     var language = commandParser.GetValue(languageOpt);
                     var releaseStatus = commandParser.GetValue(releaseStatusOpt);
-                    return await UpdatePackageReleaseStatus(packageName, language, releaseStatus);
+                    var packageVersion = commandParser.GetValue(packageVersionOpt);
+                    return await UpdatePackageReleaseStatus(packageName, language, releaseStatus, packageVersion, ct);
 
                 default:
                     logger.LogError("Unknown command: {command}", command);
@@ -69,7 +76,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        public async Task<ReleaseStatusUpdateResponse> UpdatePackageReleaseStatus(string packageName, string language, string releaseStatus)
+        public async Task<ReleaseStatusUpdateResponse> UpdatePackageReleaseStatus(string packageName, string language, string releaseStatus, string? packageVersion, CancellationToken ct)
         {
             try
             {
@@ -87,22 +94,30 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 {
                     PackageName = packageName,
                     Language = SdkLanguageHelpers.GetSdkLanguage(language),
-                    ReleaseStatus = releaseStatus
+                    ReleaseStatus = releaseStatus,
+                    PackageVersion = packageVersion
                 };
 
                 if (!ReleasePlanTool.SUPPORTED_LANGUAGES.Contains(language.ToLower()))
                 {
-                    response.ResponseError = $"Language '{language}' is not supported. Supported languages: {string.Join(", ", ReleasePlanTool.SUPPORTED_LANGUAGES)}";
+                    response.Message = $"Language '{language}' is not supported. Supported languages: {string.Join(", ", ReleasePlanTool.SUPPORTED_LANGUAGES)}";
+                    return response;
+                }
+
+                // Java packages must include group name in format groupName:packageName
+                if (response.Language == SdkLanguage.Java && !packageName.Contains(':'))
+                {
+                    response.ResponseError = $"Java package name must be in the format 'groupName:packageName' Received: '{packageName}'.";
                     return response;
                 }
                 
                 logger.LogInformation("Searching for in-progress release plans with package {packageName} for {language}", packageName, language);
                 bool isAgentTesting = bool.TryParse(Environment.GetEnvironmentVariable("AZSDKTOOLS_AGENT_TESTING"), out var result) && result;
                 // Find all release plans in "In Progress" status with the given package name
-                var releasePlans = await devOpsService.GetReleasePlansForPackageAsync(packageName, language, isAgentTesting);
+                var releasePlans = await devOpsService.GetReleasePlansForPackageAsync(packageName, language, isAgentTesting, ct);
                 if (releasePlans.Count == 0)
                 {
-                    response.ResponseError = $"No in-progress release plans found for package '{packageName}' in language '{language}'.";
+                    response.Message = $"No in-progress release plans found for package '{packageName}' in language '{language}'.";
                     return response;
                 }
 
@@ -132,12 +147,18 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 logger.LogInformation("Updating release status for package {packageName} in release plan work item {workItemId}", packageName, releasePlan.WorkItemId);
 
                 // Update the release status for the specific language
+                var languageId = DevOpsService.MapLanguageToId(language);
                 var fieldsToUpdate = new Dictionary<string, string>
                 {
-                    { $"Custom.ReleaseStatusFor{DevOpsService.MapLanguageToId(language)}", releaseStatus }
+                    { $"Custom.ReleaseStatusFor{languageId}", releaseStatus }
                 };
 
-                await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, fieldsToUpdate);
+                if (!string.IsNullOrWhiteSpace(packageVersion))
+                {
+                    fieldsToUpdate[$"Custom.ReleasedVersionFor{languageId}"] = packageVersion;
+                }
+
+                await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, fieldsToUpdate, ct);
                 logger.LogInformation("Successfully updated release status for package {packageName} in release plan {workItemId}", packageName, releasePlan.WorkItemId);
                 response.ReleaseStatus = releaseStatus;
                 return response;

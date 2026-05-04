@@ -6,6 +6,7 @@ export const ACTIVE_SAMPLES_REVISION_ID_QUERY_PARAM = "activeSamplesRevisionId";
 export const DIFF_API_REVISION_ID_QUERY_PARAM = "diffApiRevisionId";
 export const DIFF_STYLE_QUERY_PARAM = "diffStyle";
 export const SCROLL_TO_NODE_QUERY_PARAM = "nId";
+export const VIEW_QUERY_PARAM = "view";
 export const USER_NAME_ROUTE_PARAM = "userName";
 
 export const INDEX_PAGE_NAME = "Index";
@@ -13,6 +14,7 @@ export const REVIEW_PAGE_NAME = "Review";
 export const CONVERSATION_PAGE_NAME = "Conversation";
 export const REVISION_PAGE_NAME = "Revision";
 export const SAMPLES_PAGE_NAME = "Samples";
+export const NAMESPACE_PAGE_NAME = "Namespace";
 export const PROFILE_PAGE_NAME = "Your Profile";
 export const ADMIN_PERMISSIONS_PAGE_NAME = "Admin Permissions";
 

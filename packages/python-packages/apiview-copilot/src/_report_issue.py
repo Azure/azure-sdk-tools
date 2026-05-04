@@ -118,7 +118,7 @@ def _lookup_comment_context(comment_id: str) -> Optional[dict]:
     try:
         ctx = get_comment_with_context(comment_id)
     except Exception as e:  # pylint: disable=broad-except
-        logger.warning("Failed to look up comment %s: %s", comment_id, e)
+        logger.warning("Failed to look up comment %s: %s", comment_id, e, exc_info=True)
         return None
     if not ctx:
         return None
@@ -166,7 +166,7 @@ def _generate_issue_content(
                 "LLM returned unexpected category %r; defaulting to apiview.",
                 result.get("category"),
             )
-        final_language = (result.get("language") or language or None) or None
+        final_language = (result.get("language") or language or "").strip() or None
         title = (result.get("title") or "").strip() or None
         body = (result.get("body") or "").strip() or None
         if not title:
@@ -174,7 +174,7 @@ def _generate_issue_content(
         if not body:
             logger.warning("LLM returned empty body; falling back to template.")
     except Exception as e:  # pylint: disable=broad-except
-        logger.warning("LLM generation failed; falling back to template: %s", e)
+        logger.warning("LLM generation failed; falling back to template: %s", e, exc_info=True)
 
     if not category:
         category = "apiview"

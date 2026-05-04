@@ -358,18 +358,26 @@ class TestHandleReportIssueRequestEndToEnd:
 class TestGithubManagerOwner:
     @patch("src._github_manager.os.getenv")
     def test_production(self, mock_getenv):
-        mock_getenv.return_value = "production"
+        mock_getenv.side_effect = lambda key, default=None: {"ENVIRONMENT_NAME": "production"}.get(key, default)
         assert GithubManager.resolve_owner() == "Azure"
 
     @patch("src._github_manager.os.getenv")
     def test_staging(self, mock_getenv):
-        mock_getenv.return_value = "staging"
+        mock_getenv.side_effect = lambda key, default=None: {"ENVIRONMENT_NAME": "staging"}.get(key, default)
         assert GithubManager.resolve_owner() == "tjprescott"
 
     @patch("src._github_manager.os.getenv")
     def test_unset(self, mock_getenv):
-        mock_getenv.return_value = None
+        mock_getenv.side_effect = lambda key, default=None: default
         assert GithubManager.resolve_owner() == "tjprescott"
+
+    @patch("src._github_manager.os.getenv")
+    def test_staging_owner_env_override(self, mock_getenv):
+        mock_getenv.side_effect = lambda key, default=None: {
+            "ENVIRONMENT_NAME": "staging",
+            "APIVIEW_STAGING_REPO_OWNER": "my-fork",
+        }.get(key, default)
+        assert GithubManager.resolve_owner() == "my-fork"
 
 
 class TestGithubManagerLanguageLabels:

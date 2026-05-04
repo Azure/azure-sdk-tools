@@ -1016,13 +1016,20 @@ def issue_report(
             payload["commentId"] = comment_id
         try:
             resp = requests.post(api_endpoint, json=payload, headers=_build_auth_header(), timeout=60)
-            data = resp.json()
-            if resp.status_code == 200:
-                print(json.dumps(data, indent=2))
-            else:
-                print(f"Error: {resp.status_code} - {data}")
-        except Exception as e:
-            print(f"Error: {e}")
+        except requests.RequestException as e:
+            raise CLIError(f"Failed to call /report-issue: {e}") from e
+        content_type = resp.headers.get("Content-Type", "")
+        if "application/json" in content_type:
+            try:
+                data = resp.json()
+            except ValueError:
+                data = resp.text
+        else:
+            data = resp.text
+        if resp.status_code == 200:
+            print(json.dumps(data, indent=2) if isinstance(data, (dict, list)) else data)
+        else:
+            raise CLIError(f"/report-issue failed: {resp.status_code} - {data}")
     else:
         result = handle_report_issue_request(
             description=description,

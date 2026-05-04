@@ -7,7 +7,7 @@ version: 1.0.0
 model:
   api: chat
   configuration:
-    azure_deployment: gpt-5.4-mini
+    azure_deployment: gpt-4
   parameters:
     max_completion_tokens: 4096
     response_format: ${file:generate_issue_schema.json}

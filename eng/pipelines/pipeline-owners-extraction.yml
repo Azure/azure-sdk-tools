@@ -67,6 +67,16 @@ stages:
         artifact: github-team-user-store-cache
         condition: succeededOrFailed()
 
+      - task: AzureCLI@2
+        displayName: Audit CODEOWNERS
+        inputs:
+          azureSubscription: 'opensource-api-connection'
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            dotnet run -- config codeowners audit --fix
+          workingDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli
+
       - task: DotNetCoreCLI@2
         displayName: 'Install Pipeline Owners Extractor'
         inputs:

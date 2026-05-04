@@ -112,8 +112,10 @@ def _build_fallback_title(description: str) -> str:
 def _lookup_comment_context(comment_id: str) -> Optional[dict]:
     """Fetch comment context from the APIView database by comment id.
 
-    Returns a dict matching the shape of the ``commentContext`` request
-    field, or ``None`` if the comment cannot be found.
+    Returns a dict in the shape the prompt template understands
+    (``comment_id``, ``comment_text``, ``comment_source``,
+    ``code_snippet``, ``language``, ``element_id``), or ``None`` if
+    the comment cannot be found.
     """
     try:
         ctx = get_comment_with_context(comment_id)

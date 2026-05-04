@@ -17,7 +17,7 @@ namespace GitHubTeamUserStore
 
             try
             {
-                // Load the repostiory list file
+                // Load the repository list file
                 string fullPath = Path.GetFullPath(repositoryListFile);
                 if (!File.Exists(fullPath))
                 {

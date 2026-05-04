@@ -42,4 +42,5 @@ The team/user json blob is created from the dictionary but, because the serializ
 ```
 
 ### The pipeline where this will run
-This will run as part of the [pipeline-owners-extracton](https://dev.azure.com/azure-sdk/internal/_build?definitionId=5112&_a=summary) pipeline. The tool generates local cache files, and the pipeline publishes that directory as an artifact so a separate step can upload the files.
+This will run as part of the [automation - pipeline-owners-extraction
+](https://dev.azure.com/azure-sdk/internal/_build?definitionId=5112&_a=summary) pipeline. The tool generates local cache files, and the pipeline publishes that directory as an artifact so a separate step can upload the files.

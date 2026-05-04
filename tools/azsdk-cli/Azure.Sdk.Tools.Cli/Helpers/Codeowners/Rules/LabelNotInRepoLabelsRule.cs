@@ -1,36 +1,33 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using System.Collections.Concurrent;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Codeowners;
-using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.CodeownersUtils.Caches;
+using Azure.Sdk.Tools.CodeownersUtils.Constants;
+using Azure.Sdk.Tools.CodeownersUtils.Utils;
 
 namespace Azure.Sdk.Tools.Cli.Helpers.Codeowners.Rules;
 
 /// <summary>
-/// AUD-LBL-001: Detect Label work items that don't exist as GitHub repo labels
-/// in the repos where they are referenced (via Label Owners and Packages).
+/// AUD-LBL-001: Detect Label work items that don't exist in cached repo label data
+/// for the repos where they are referenced (via Label Owners and Packages).
 /// Report only.
-/// Prerequisite: IGitHubService.GetRepoLabels must be implemented.
 /// </summary>
-public class LabelNotInGitHubRule(
-    IGitHubService githubService
+public class LabelNotInRepoLabelsRule(
+    RepoLabelCache repoLabelCache,
+    ICacheValidator cacheValidator
 ) : IAuditRule
 {
     public int Priority => 40;
     public string RuleId => "AUD-LBL-001";
-    public string Description => "Label work item doesn't exist as a GitHub repo label";
+    public string Description => "Label work item doesn't exist in cached repo label data";
     public bool CanFix => false;
-
-    // Cache repo labels to avoid redundant API calls
-    private readonly ConcurrentDictionary<string, HashSet<string>> _repoLabelCache = new(StringComparer.OrdinalIgnoreCase);
 
     public async Task<List<AuditViolation>> Evaluate(AuditContext context, CancellationToken ct)
     {
-        // Clear per-run cache to avoid stale data in long-lived processes (MCP server)
-        _repoLabelCache.Clear();
+        await EnsureRepoLabelCacheIsFresh(ct);
 
         var violations = new List<AuditViolation>();
 
@@ -48,7 +45,7 @@ public class LabelNotInGitHubRule(
             var missingRepos = new List<string>();
             foreach (var repo in repos)
             {
-                var repoLabels = await GetRepoLabels(repo, ct);
+                var repoLabels = GetRepoLabels(repo);
                 if (!repoLabels.Contains(label.LabelName))
                 {
                     missingRepos.Add(repo);
@@ -60,7 +57,7 @@ public class LabelNotInGitHubRule(
                 violations.Add(new AuditViolation
                 {
                     RuleId = RuleId,
-                    Description = $"Label '{label.LabelName}' ({label.WorkItemId}): not found in GitHub repos [{string.Join(", ", missingRepos)}]",
+                    Description = $"Label '{label.LabelName}' ({label.WorkItemId}): not found in cached repo labels for [{string.Join(", ", missingRepos)}]",
                     WorkItemId = label.WorkItemId,
                     Detail = $"Missing from: {string.Join(", ", missingRepos)}, Referenced in: {string.Join(", ", repos)}",
                 });
@@ -126,28 +123,32 @@ public class LabelNotInGitHubRule(
         return map;
     }
 
-    private async Task<HashSet<string>> GetRepoLabels(string repoFullName, CancellationToken ct)
+    private HashSet<string> GetRepoLabels(string repoFullName)
     {
-        if (_repoLabelCache.TryGetValue(repoFullName, out var cached))
+        var normalizedRepo = NormalizeRepoKey(repoFullName);
+        if (repoLabelCache.RepoLabelDict.TryGetValue(normalizedRepo, out var cached))
         {
             return cached;
         }
 
-        var parts = repoFullName.Split('/');
-        string owner, repoName;
-        if (parts.Length == 2)
+        throw new InvalidOperationException(
+            $"Repository label cache does not contain '{normalizedRepo}'. " +
+            $"AUD-LBL-001 can only validate repos present in {DefaultStorageConstants.RepoLabelBlobStorageURI}.");
+    }
+
+    private static string NormalizeRepoKey(string repoFullName)
+    {
+        if (repoFullName.Contains('/'))
         {
-            owner = parts[0];
-            repoName = parts[1];
-        }
-        else
-        {
-            owner = "Azure";
-            repoName = repoFullName;
+            return repoFullName;
         }
 
-        var labels = await githubService.GetRepoLabels(owner, repoName, ct);
-        _repoLabelCache[repoFullName] = labels;
-        return labels;
+        return $"Azure/{repoFullName}";
+    }
+
+    private async Task EnsureRepoLabelCacheIsFresh(CancellationToken ct)
+    {
+        DateTime minimumLastModifiedUtc = DateTime.UtcNow.Subtract(AuditRuleCacheSettings.CacheMaxAge);
+        await cacheValidator.ThrowIfCacheOlderThan(DefaultStorageConstants.RepoLabelBlobStorageURI, minimumLastModifiedUtc, ct);
     }
 }

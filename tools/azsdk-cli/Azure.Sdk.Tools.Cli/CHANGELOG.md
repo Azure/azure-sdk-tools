@@ -1,12 +1,10 @@
 # Release History
 
-## 0.6.11 (Unreleased)
+## 0.6.11 (2026-05-01)
 
 ### Features Added
 
 - Added `AZSDK_COPILOT_CLI_PATH` environment variable to provide a custom path to the Copilot CLI executable (`copilot`/`copilot.exe`) for the GitHub Copilot SDK when the bundled binary is unavailable in standalone builds.
-
-### Breaking Changes
 
 ### Bugs Fixed
 
@@ -16,6 +14,7 @@
 ### Other Changes
 
 - Bumped `GitHub.Copilot.SDK` from 0.1.32 to 0.2.2.
+- Audit reads data from the cache to reduce GitHub API use
 
 ## 0.6.10 (2026-04-27)
 

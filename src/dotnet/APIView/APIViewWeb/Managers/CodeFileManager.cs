@@ -7,7 +7,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using ApiView;
+using APIView;
 using APIView.Model.V2;
 using APIViewWeb.Helpers;
 using APIViewWeb.Managers.Interfaces;

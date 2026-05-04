@@ -14,7 +14,7 @@ from datetime import date
 from pathlib import Path
 from typing import Optional
 
-from src._apiview import _KNOWN_REVISION_TYPES, get_apiview_cosmos_client, get_cross_language_compliance
+from src._apiview import _KNOWN_REVISION_TYPES, get_apiview_cosmos_client
 from src._comment_bucket_trends import get_last_n_month_ranges
 from src._utils import get_language_pretty_name, to_iso8601
 
@@ -341,8 +341,10 @@ def build_compliance_reports(
 ) -> dict[str, list[dict]]:
     """Build per-language cross-language compliance reports for the requested month lookback window.
 
-    For each month, queries the latest revision per review created in that month and
-    checks whether ``CrossLanguagePackageId`` is populated (set from ``CrossLanguageMetadata``).
+    Fetches all non-deleted revisions for the full date window in a single Cosmos query,
+    then buckets them by month in Python. For each month, groups by ReviewId, picks the
+    latest revision per review, and checks whether ``CrossLanguagePackageId`` is populated
+    (set from ``CrossLanguageMetadata``).
 
     Returns:
         A dict mapping language name to a list of monthly data-point dicts.
@@ -352,15 +354,70 @@ def build_compliance_reports(
     if not month_ranges:
         return {lang: [] for lang in selected_languages}
 
+    full_start = month_ranges[0][0]
+    full_end = month_ranges[-1][1]
+
+    start_iso = to_iso8601(full_start.isoformat())
+    end_iso = to_iso8601(full_end.isoformat(), end_of_day=True)
+
+    revisions_container = get_apiview_cosmos_client(container_name="APIRevisions", environment=environment)
+
+    query = (
+        "SELECT c.ReviewId, c.Language, c.APIRevisionType, "
+        "c.Files[0].CrossLanguagePackageId AS CrossLanguagePackageId, c.CreatedOn "
+        "FROM c "
+        "WHERE (NOT IS_DEFINED(c.IsDeleted) OR c.IsDeleted = false) "
+        "AND c.CreatedOn >= @start AND c.CreatedOn <= @end"
+    )
+    params = [
+        {"name": "@start", "value": start_iso},
+        {"name": "@end", "value": end_iso},
+    ]
+
+    all_revisions = list(
+        revisions_container.query_items(query=query, parameters=params, enable_cross_partition_query=True)
+    )
+
+    omit_lower = {lang.lower() for lang in OMIT_LANGUAGES}
+
     reports: dict[str, list[dict]] = {lang: [] for lang in selected_languages}
     for start, end in month_ranges:
         label = f"{start.year}-{start.month:02d}"
-        data = get_cross_language_compliance(
-            start.isoformat(),
-            end.isoformat(),
-            environment=environment,
-        )
-        by_language = data["by_language"]
+        month_start_iso = to_iso8601(start.isoformat())
+        month_end_iso = to_iso8601(end.isoformat(), end_of_day=True)
+
+        # Filter revisions to this month's window
+        month_revisions = [
+            rev for rev in all_revisions if month_start_iso <= rev.get("CreatedOn", "") <= month_end_iso
+        ]
+
+        # Group by ReviewId and keep only the latest revision per review
+        latest_by_review: dict[str, dict] = {}
+        for rev in month_revisions:
+            review_id = rev.get("ReviewId")
+            if not review_id:
+                continue
+            existing = latest_by_review.get(review_id)
+            if existing is None or rev.get("CreatedOn", "") > existing.get("CreatedOn", ""):
+                latest_by_review[review_id] = rev
+
+        # Compute compliance per language
+        by_language: dict[str, dict] = {}
+        for rev in latest_by_review.values():
+            lang = get_language_pretty_name(rev.get("Language", "Unknown"))
+            if lang.lower() in omit_lower:
+                continue
+            has_metadata = bool(rev.get("CrossLanguagePackageId"))
+            entry = by_language.setdefault(lang, {"compliant": 0, "non_compliant": 0, "total": 0})
+            entry["total"] += 1
+            if has_metadata:
+                entry["compliant"] += 1
+            else:
+                entry["non_compliant"] += 1
+
+        for entry in by_language.values():
+            entry["pct"] = round((entry["compliant"] / entry["total"]) * 100, 2) if entry["total"] else 0.0
+
         for language in selected_languages:
             entry = by_language.get(language, {"compliant": 0, "non_compliant": 0, "total": 0, "pct": 0.0})
             point = MonthlyCompliancePoint(

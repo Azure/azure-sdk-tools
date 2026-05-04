@@ -142,14 +142,15 @@ class TestGetCrossLanguageCompliance:
 class TestBuildComplianceReports:
     """Tests for build_compliance_reports."""
 
-    @patch("src._apiview_metrics.get_cross_language_compliance")
-    def test_builds_monthly_reports(self, mock_compliance):
-        mock_compliance.return_value = {
-            "by_language": {
-                "Python": {"compliant": 5, "non_compliant": 3, "total": 8, "pct": 62.5},
-            },
-            "totals": {"compliant": 5, "non_compliant": 3, "total": 8, "pct": 62.5},
-        }
+    @patch("src._apiview_metrics.get_apiview_cosmos_client")
+    def test_builds_monthly_reports(self, mock_cosmos):
+        container = MagicMock()
+        container.query_items.return_value = [
+            _make_revision("r1", "Python", "azure-core", created_on="2026-03-15T00:00:00Z"),
+            _make_revision("r2", "Python", None, created_on="2026-03-20T00:00:00Z"),
+            _make_revision("r3", "Python", "azure-storage", created_on="2026-04-10T00:00:00Z"),
+        ]
+        mock_cosmos.return_value = container
 
         reports = build_compliance_reports(
             languages=["Python"],
@@ -161,14 +162,19 @@ class TestBuildComplianceReports:
         assert len(reports["Python"]) == 2
         assert reports["Python"][0]["label"] == "2026-03"
         assert reports["Python"][1]["label"] == "2026-04"
-        assert reports["Python"][0]["compliant"] == 5
+        # March: r1 compliant, r2 non-compliant
+        assert reports["Python"][0]["compliant"] == 1
+        assert reports["Python"][0]["non_compliant"] == 1
+        assert reports["Python"][0]["total"] == 2
+        # April: r3 compliant
+        assert reports["Python"][1]["compliant"] == 1
+        assert reports["Python"][1]["total"] == 1
 
-    @patch("src._apiview_metrics.get_cross_language_compliance")
-    def test_missing_language_defaults_to_zero(self, mock_compliance):
-        mock_compliance.return_value = {
-            "by_language": {},
-            "totals": {"compliant": 0, "non_compliant": 0, "total": 0, "pct": 0.0},
-        }
+    @patch("src._apiview_metrics.get_apiview_cosmos_client")
+    def test_missing_language_defaults_to_zero(self, mock_cosmos):
+        container = MagicMock()
+        container.query_items.return_value = []
+        mock_cosmos.return_value = container
 
         reports = build_compliance_reports(
             languages=["Go"],

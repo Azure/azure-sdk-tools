@@ -72,7 +72,7 @@ stages:
         artifact: github-team-user-store-cache
         condition: succeededOrFailed()
 
-      - ${{ if or(parameters.RunAudit, eq(variables['Build.Reason'], 'Schedule')) }}:
+      - ${{ if or(parameters.AuditCodeowners, eq(variables['Build.Reason'], 'Schedule')) }}:
         - template: /eng/common/pipelines/templates/steps/install-azsdk-cli.yml
 
         - task: AzureCLI@2

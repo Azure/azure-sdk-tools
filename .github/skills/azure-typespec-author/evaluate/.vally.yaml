@@ -32,7 +32,7 @@ environments:
 
 suites:
   versioning:
-    evals: ["evals/001001.eval.yaml","evals/001002.eval.yaml","evals/001003.eval.yaml","evals/001004.eval.yaml","evals/001005.eval.yaml","evals/001006.eval.yaml","evals/001007.eval.yaml","evals/001008.eval.yaml","evals/001009.eval.yaml","evals/001010.eval.yaml","evals/001011.eval.yaml","evals/001012.eval.yaml","evals/001013.eval.yaml"]
+    evals: ["evals/001001.eval.yaml","evals/001002.eval.yaml","evals/001003.eval.yaml","evals/001004.eval.yaml","evals/001005.eval.yaml","evals/001006.eval.yaml","evals/001007.eval.yaml","evals/001008.eval.yaml","evals/001009.eval.yaml","evals/001010.eval.yaml","evals/001011.eval.yaml","evals/001012.eval.yaml","evals/001013.eval.yaml","evals/001014.eval.yaml","evals/001015.eval.yaml","evals/001016.eval.yaml","evals/001017.eval.yaml","evals/001018.eval.yaml"]
   version-evolution:
     evals: ["evals/001005.eval.yaml","evals/001006.eval.yaml","evals/001007.eval.yaml","evals/001008.eval.yaml"]
   armtemplate:
@@ -43,5 +43,7 @@ suites:
     evals: ["evals/004001.eval.yaml","evals/004002.eval.yaml","evals/004003.eval.yaml"]
   warning:
     evals: ["evals/005001.eval.yaml"]
+  dataplane:
+    evals: ["evals/006001.eval.yaml","evals/006002.eval.yaml","evals/006003.eval.yaml","evals/006004.eval.yaml"]
   all:
     evals: ["evals/*.eval.yaml"]

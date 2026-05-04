@@ -1,0 +1,71 @@
+name: azure-typespec-author-eval
+description: Evaluation suite for azure-typespec-author.
+version: "1.0"
+type: capability               # capability | regression
+
+# Root-level environment
+environment: azsdk-mcp
+
+# Execution configuration
+config:
+  runs: 1                      # Trials per stimulus
+  timeout: 1800                # Seconds per trial
+  model: claude-opus-4.6
+  executor: copilot-sdk        # Which executor to use
+
+# Test cases
+stimuli:
+- name: 001018-dp-version-property-renamed
+  prompt: |
+    In the specification/widget/data-plane/WidgetAnalytics project, rename the `color` property to `widgetColor` in the WidgetSuite model only for version `2023-06-01-preview`. Also add this new version to the Versions enum.
+  constraints:
+    max_turns: 10
+    max_tokens: 50000
+  environment:
+    files:
+    - src: ../fixtures/001017-dp-version-with-color/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/006-dp-share/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/006-dp-share/package.json
+      dest: package.json
+    - src: ../fixtures/006-dp-share/tspconfig.yaml
+      dest: tspconfig.yaml
+    - src: ../fixtures/006-dp-share/readme.md
+      dest: readme.md
+  graders:
+  - type: tool-calls
+    config:
+      required:
+        - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+        - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+        - azure-typespec-author
+  - type: file-matches
+    config:
+      path: main.tsp
+      pattern: "v2023_06_01_Preview"
+  - type: file-matches
+    config:
+      path: main.tsp
+      pattern: "widgetColor"
+  - type: file-matches
+    config:
+      path: main.tsp
+      pattern: '@renamedFrom\(.*Versions\.v2023_06_01_Preview.*"color"\)'
+  - type: prompt
+    config:
+      scoring: scale_1_5
+      threshold: 1.0
+      prompt: Verify that a new version v2023_06_01_Preview was added, the `color` property was renamed to `widgetColor`, and decorated with @renamedFrom scoping the rename to the new version. No unrelated changes.
+      model: claude-opus-4.6
+scoring:
+  weights:
+    file-matches: 3
+    tool-calls: 1
+    skill-invocation: 1
+    prompt: 1
+  threshold: 1.0

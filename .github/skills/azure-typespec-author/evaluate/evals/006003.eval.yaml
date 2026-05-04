@@ -1,0 +1,67 @@
+name: azure-typespec-author-eval
+description: Evaluation suite for azure-typespec-author.
+version: "1.0"
+type: capability               # capability | regression
+
+# Root-level environment
+environment: azsdk-mcp
+
+# Execution configuration
+config:
+  runs: 1                      # Trials per stimulus
+  timeout: 1800                # Seconds per trial
+  model: claude-opus-4.6
+  executor: copilot-sdk        # Which executor to use
+
+# Test cases
+stimuli:
+- name: 006003-dp-add-get-operation
+  prompt: |
+    In the specification/widget/data-plane/WidgetAnalytics project, add a get operation for the WidgetSuite resource to the Widgets interface. The operation should allow fetching a Widget by name.
+  constraints:
+    max_turns: 10
+    max_tokens: 50000
+  environment:
+    files:
+    - src: ../fixtures/006003-dp-add-get-operation/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/006-dp-share/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/006-dp-share/package.json
+      dest: package.json
+    - src: ../fixtures/006-dp-share/tspconfig.yaml
+      dest: tspconfig.yaml
+    - src: ../fixtures/006-dp-share/readme.md
+      dest: readme.md
+  graders:
+  - type: tool-calls
+    config:
+      required:
+        - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+        - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+        - azure-typespec-author
+  - type: file-matches
+    config:
+      path: main.tsp
+      pattern: "ResourceRead<WidgetSuite>"
+  - type: file-matches
+    config:
+      path: main.tsp
+      pattern: "@doc"
+  - type: prompt
+    config:
+      scoring: scale_1_5
+      threshold: 1.0
+      prompt: Verify the Widgets interface includes a get/read operation for WidgetSuite using the ResourceRead Azure.Core operation template. The operation should have a descriptive @doc decorator. No unrelated changes.
+      model: claude-opus-4.6
+scoring:
+  weights:
+    file-matches: 3
+    tool-calls: 1
+    skill-invocation: 1
+    prompt: 1
+  threshold: 1.0

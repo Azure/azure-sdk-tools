@@ -2610,10 +2610,6 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("metrics", "report_metrics")
             g.command("quality-trends", "report_comment_bucket_trends")
             g.command("active-reviews", "get_active_reviews")
-            g.command("feedback", "audit_feedback")
-            g.command("memory", "audit_memory")
-            g.command("analyze-comments", "analyze_comments")
-        with CommandGroup(self, "issue", "__main__#{}") as g:
             g.command("feedback", "get_feedback")
             g.command("memory", "get_memories")
             g.command("architect-comments", "get_architect_comments")

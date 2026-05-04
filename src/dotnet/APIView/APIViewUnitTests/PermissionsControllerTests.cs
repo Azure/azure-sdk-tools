@@ -72,35 +72,6 @@ public class PermissionsControllerTests
 
     #endregion
 
-    #region GetAllGroups Tests
-
-    [Fact]
-    public async Task GetAllGroups_WhenAdmin_ReturnsGroups()
-    {
-        SetupAdminUser();
-
-        var groups = new List<GroupPermissionsModel>
-        {
-            new() { GroupId = "group1", GroupName = "Group 1" },
-            new() { GroupId = "group2", GroupName = "Group 2" }
-        };
-        _mockPermissionsManager.Setup(m => m.GetAllGroupsAsync()).ReturnsAsync(groups);
-
-        var result = await _controller.GetAllGroups();
-        result.Should().BeOfType<LeanJsonResult>();
-    }
-
-    [Fact]
-    public async Task GetAllGroups_WhenNotAdmin_ReturnsForbid()
-    {
-        SetupNonAdminUser();
-
-        var result = await _controller.GetAllGroups();
-        result.Should().BeOfType<ForbidResult>();
-    }
-
-    #endregion
-
     #region GetGroup Tests
 
     [Fact]

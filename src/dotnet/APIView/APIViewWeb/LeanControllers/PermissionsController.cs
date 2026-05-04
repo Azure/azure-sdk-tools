@@ -50,23 +50,6 @@ public class PermissionsController : BaseApiController
     }
 
     /// <summary>
-    ///     Get all permission groups (Admin only)
-    /// </summary>
-    [HttpGet("groups")]
-    public async Task<ActionResult> GetAllGroups()
-    {
-        var userName = User.GetGitHubLogin();
-        var isAdmin = await _permissionsManager.IsAdminAsync(userName);
-        if (!isAdmin)
-        {
-            return Forbid();
-        }
-
-        var groups = await _permissionsManager.GetAllGroupsAsync();
-        return new LeanJsonResult(groups, StatusCodes.Status200OK);
-    }
-
-    /// <summary>
     ///     Get a specific group by ID (Admin only)
     /// </summary>
     [HttpGet("groups/{groupId}")]

@@ -48,7 +48,6 @@ stages:
             dotnet run -- --outputDirectory "$(CacheOutputDirectory)" -rlFile "$(RepoListFile)"
           workingDirectory: tools/github-team-user-store/GitHubTeamUserStore/GitHubTeamUserStore
 
-      # TODO: Remove --dryrun before merge
       - task: AzureCLI@2
         displayName: 'Upload cache files to storage'
         inputs:
@@ -61,7 +60,7 @@ stages:
               --source "$(CacheOutputDirectory)" `
               --destination 'azure-sdk-write-teams' `
               --auth-mode login `
-              --dryrun
+              --overwrite true
 
       - publish: $(CacheOutputDirectory)
         displayName: Publish cache files artifact

@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from typing import Optional
 
 from src._apiview import get_comment_with_context
@@ -118,7 +119,8 @@ def _lookup_comment_context(comment_id: str) -> Optional[dict]:
     the comment cannot be found.
     """
     try:
-        ctx = get_comment_with_context(comment_id)
+        environment = os.getenv("ENVIRONMENT_NAME", "production")
+        ctx = get_comment_with_context(comment_id, environment=environment)
     except Exception as e:  # pylint: disable=broad-except
         logger.warning("Failed to look up comment %s: %s", comment_id, e, exc_info=True)
         return None
@@ -131,7 +133,21 @@ def _lookup_comment_context(comment_id: str) -> Optional[dict]:
         "code_snippet": ctx.get("code"),
         "language": ctx.get("language"),
         "element_id": comment_obj.get("ElementId"),
+        "review_id": comment_obj.get("ReviewId"),
+        "revision_id": comment_obj.get("APIRevisionId"),
     }
+
+
+def _build_review_link(review_id: Optional[str], revision_id: Optional[str]) -> Optional[str]:
+    """Construct an APIView SPA review URL from a review/revision id pair."""
+    if not review_id:
+        return None
+    environment = os.getenv("ENVIRONMENT_NAME", "production").lower()
+    host = "spa.apiview.dev" if environment == "production" else "spa.apiviewstagingtest.com"
+    url = f"https://{host}/review/{review_id}"
+    if revision_id:
+        url = f"{url}?activeApiRevisionId={revision_id}"
+    return url
 
 
 def _generate_issue_content(
@@ -231,6 +247,11 @@ def handle_report_issue_request(
         effective_context = _lookup_comment_context(comment_id)
         if effective_context and not language:
             language = effective_context.get("language") or language
+        if effective_context and not review_link:
+            review_link = _build_review_link(
+                effective_context.get("review_id"),
+                effective_context.get("revision_id"),
+            )
 
     content = _generate_issue_content(
         description=description,

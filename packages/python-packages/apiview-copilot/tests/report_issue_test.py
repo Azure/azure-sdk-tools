@@ -18,6 +18,7 @@ from src._report_issue import (
     _build_fallback_body,
     _build_fallback_title_snippet,
     _build_labels,
+    _build_review_link,
     _format_comment_context_for_prompt,
     _generate_issue_content,
     _lookup_comment_context,
@@ -276,6 +277,8 @@ class TestLookupCommentContext:
                 "CommentText": "remove async",
                 "CommentSource": "copilot",
                 "ElementId": "AsyncBlobClient.upload_blob",
+                "ReviewId": "r-1",
+                "APIRevisionId": "rev-2",
             },
             "code": "async def upload_blob(self, name: str, data: bytes) -> None: ...",
             "language": "Python",
@@ -288,7 +291,25 @@ class TestLookupCommentContext:
             "code_snippet": "async def upload_blob(self, name: str, data: bytes) -> None: ...",
             "language": "Python",
             "element_id": "AsyncBlobClient.upload_blob",
+            "review_id": "r-1",
+            "revision_id": "rev-2",
         }
+
+    @patch("src._report_issue.os.getenv")
+    @patch("src._report_issue.get_comment_with_context")
+    def test_passes_environment_from_env_var(self, mock_get, mock_getenv):
+        mock_getenv.side_effect = lambda key, default=None: {"ENVIRONMENT_NAME": "staging"}.get(key, default)
+        mock_get.return_value = {"comment": {}, "code": None, "language": None}
+        _lookup_comment_context("abc")
+        assert mock_get.call_args.kwargs["environment"] == "staging"
+
+    @patch("src._report_issue.os.getenv")
+    @patch("src._report_issue.get_comment_with_context")
+    def test_environment_defaults_to_production(self, mock_get, mock_getenv):
+        mock_getenv.side_effect = lambda key, default=None: default
+        mock_get.return_value = {"comment": {}, "code": None, "language": None}
+        _lookup_comment_context("abc")
+        assert mock_get.call_args.kwargs["environment"] == "production"
 
     @patch("src._report_issue.get_comment_with_context")
     def test_returns_none_when_comment_not_found(self, mock_get):
@@ -366,6 +387,8 @@ class TestHandleReportIssueRequestEndToEnd:
                 "CommentText": "this is wrong",
                 "CommentSource": "apiview",
                 "ElementId": "BlobClient.upload_blob",
+                "ReviewId": "rev-abc",
+                "APIRevisionId": "rev-def",
             },
             "code": "def upload_blob(...): ...",
             "language": "Python",
@@ -384,9 +407,66 @@ class TestHandleReportIssueRequestEndToEnd:
         assert "this is wrong" in prompt_inputs["comment_context"]
         assert "BlobClient.upload_blob" in prompt_inputs["comment_context"]
         assert prompt_inputs["language"] == "Python"
+        # review link auto-built from comment context when caller didn't supply one
+        assert "rev-abc" in prompt_inputs["review_link"]
+        assert "rev-def" in prompt_inputs["review_link"]
         kwargs = mock_create_issue.call_args.kwargs
         assert kwargs["title"] == "[Python APIView] Wrong tokens"
         assert kwargs["labels"] == ["APIView", "Python"]
+
+    @patch("src._report_issue.GithubManager.get_instance")
+    @patch("src._report_issue.create_issue")
+    @patch("src._report_issue.run_prompt")
+    @patch("src._report_issue.get_comment_with_context")
+    def test_explicit_review_link_overrides_auto_built(
+        self, mock_get, mock_run_prompt, mock_create_issue, _mock_get_instance
+    ):
+        mock_get.return_value = {
+            "comment": {
+                "CommentText": "x",
+                "ReviewId": "db-review",
+                "APIRevisionId": "db-rev",
+            },
+            "code": None,
+            "language": "Python",
+        }
+        mock_run_prompt.return_value = json.dumps(
+            {"category": "avc", "language": None, "title": "t", "body": "b"}
+        )
+        mock_create_issue.return_value = {"html_url": "u", "number": 6}
+
+        handle_report_issue_request(
+            description="d",
+            comment_id="c",
+            review_link="https://example.invalid/explicit",
+        )
+
+        prompt_inputs = mock_run_prompt.call_args.kwargs["inputs"]
+        assert prompt_inputs["review_link"] == "https://example.invalid/explicit"
+
+
+class TestBuildReviewLink:
+    def test_returns_none_without_review_id(self):
+        assert _build_review_link(None, None) is None
+        assert _build_review_link(None, "rev") is None
+
+    @patch("src._report_issue.os.getenv")
+    def test_production_host(self, mock_getenv):
+        mock_getenv.side_effect = lambda key, default=None: {"ENVIRONMENT_NAME": "production"}.get(key, default)
+        assert _build_review_link("r1", "rev1") == "https://spa.apiview.dev/review/r1?activeApiRevisionId=rev1"
+
+    @patch("src._report_issue.os.getenv")
+    def test_staging_host(self, mock_getenv):
+        mock_getenv.side_effect = lambda key, default=None: {"ENVIRONMENT_NAME": "staging"}.get(key, default)
+        assert (
+            _build_review_link("r1", "rev1")
+            == "https://spa.apiviewstagingtest.com/review/r1?activeApiRevisionId=rev1"
+        )
+
+    @patch("src._report_issue.os.getenv")
+    def test_omits_revision_when_missing(self, mock_getenv):
+        mock_getenv.side_effect = lambda key, default=None: {"ENVIRONMENT_NAME": "production"}.get(key, default)
+        assert _build_review_link("r1", None) == "https://spa.apiview.dev/review/r1"
 
 
 class TestGithubManagerOwner:

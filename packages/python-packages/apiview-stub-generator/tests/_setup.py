@@ -11,7 +11,7 @@ import os.path
 from io import open
 from setuptools import find_packages, setup
 
-PACKAGE_NAME = "apistubgentest"
+PACKAGE_NAME = "apiview_stub_generator_test"
 PACKAGE_PPRINT_NAME = "ApiView"
 
 package_folder_path = PACKAGE_NAME.replace('-', '/')

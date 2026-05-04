@@ -99,6 +99,31 @@ namespace GitHubTeamUserStore
             return memberLogins;
         }
 
+        public async Task<HashSet<string>> GetAzureRepositoryLabels(string repositoryName)
+        {
+            if (string.IsNullOrWhiteSpace(repositoryName))
+            {
+                throw new ArgumentException("repositoryName cannot be null or whitespace", nameof(repositoryName));
+            }
+
+            var repositoryLabels = await GetFromOpenSourceApi<List<OpenSourceRepositoryLabel>>(
+                $"organizations/{ProductAndTeamConstants.Azure}/repositories/{Uri.EscapeDataString(repositoryName)}/issues/labels");
+
+            HashSet<string> labelNames = new HashSet<string>();
+            foreach (var repositoryLabel in repositoryLabels)
+            {
+                if (string.IsNullOrWhiteSpace(repositoryLabel.Name))
+                {
+                    throw new InvalidOperationException($"Open Source API returned a repository label without a name for '{repositoryName}'.");
+                }
+
+                labelNames.Add(repositoryLabel.Name);
+            }
+
+            Console.WriteLine($"number of labels in {repositoryName}={labelNames.Count}");
+            return labelNames;
+        }
+
         private async Task<T> GetFromOpenSourceApi<T>(string relativePath)
         {
             AccessToken accessToken = await _credential.GetTokenAsync(OpenSourceApiTokenRequestContext, CancellationToken.None);
@@ -203,6 +228,12 @@ namespace GitHubTeamUserStore
         {
             [JsonPropertyName("login")]
             public string Login { get; set; } = null!;
+        }
+
+        private sealed class OpenSourceRepositoryLabel
+        {
+            [JsonPropertyName("name")]
+            public string Name { get; set; } = null!;
         }
     }
 }

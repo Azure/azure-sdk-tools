@@ -47,8 +47,6 @@ stages:
             New-Item -ItemType Directory -Force -Path "$(CacheOutputDirectory)" | Out-Null
             dotnet run -- --outputDirectory "$(CacheOutputDirectory)" -rlFile "$(RepoListFile)"
           workingDirectory: tools/github-team-user-store/GitHubTeamUserStore/GitHubTeamUserStore
-        env:
-          GITHUB_TOKEN: $(azuresdk-github-pat)
 
       # TODO: Remove --dryrun before merge
       - task: AzureCLI@2

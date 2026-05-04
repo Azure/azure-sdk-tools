@@ -50,22 +50,18 @@ namespace GitHubTeamUserStore
             string userOrgVisibilityOutputPath = Path.Combine(fullOutputDirectory, ProductAndTeamConstants.UserOrgVisibilityCacheFileName);
             string repoLabelOutputPath = Path.Combine(fullOutputDirectory, ProductAndTeamConstants.RepositoryLabelCacheFileName);
 
-            GitHubEventClient gitHubEventClient = new GitHubEventClient(ProductAndTeamConstants.ProductHeaderName);
             OpenSourceApiClient openSourceApiClient = new OpenSourceApiClient();
 
-            await gitHubEventClient.WriteRateLimits("RateLimit at start of execution:");
             bool success = false;
             // The team/user list needs to be generated before the user/org data. The reason being is that the User/Org
             // visibility data is generated for the azure-sdk-write team users.
             if (await TeamUserGenerator.GenerateAndWriteTeamUserAndOrgData(openSourceApiClient, teamUserOutputPath, userOrgVisibilityOutputPath))
             {
-                if (await RepositoryLabelGenerator.GenerateAndWriteRepositoryLabels(gitHubEventClient, repoLabelOutputPath, repositoryListFile))
+                if (await RepositoryLabelGenerator.GenerateAndWriteRepositoryLabels(openSourceApiClient, repoLabelOutputPath, repositoryListFile))
                 {
                     success = true;
                 }
             }
-
-            await gitHubEventClient.WriteRateLimits("RateLimit at end of execution:");
 
             stopWatch.Stop();
             TimeSpan ts = stopWatch.Elapsed;

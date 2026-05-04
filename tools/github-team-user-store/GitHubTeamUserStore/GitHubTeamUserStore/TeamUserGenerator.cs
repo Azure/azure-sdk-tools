@@ -22,7 +22,7 @@ namespace GitHubTeamUserStore
             Console.WriteLine($"=== Starting team/user cache build: {teamUserOutputPath} ===");
 
             // Team/User dictionary where the team name is the key and the list users is the value. It's worth noting
-            // that this is the list of Logins (Octokit.User.Login) which are what's used in CODEOWNERS, @mentions, etc.
+            // that this is the list of GitHub logins which are what's used in CODEOWNERS, @mentions, etc.
             Dictionary<string, List<string>> teamUserDict = new Dictionary<string, List<string>>();
             Dictionary<string, string> teamNameToSlug = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {

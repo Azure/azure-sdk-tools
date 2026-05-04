@@ -5,7 +5,7 @@ namespace GitHubTeamUserStore
 {
     public class RepositoryLabelGenerator
     {
-        public static async Task<bool> GenerateAndWriteRepositoryLabels(GitHubEventClient gitHubEventClient,
+        public static async Task<bool> GenerateAndWriteRepositoryLabels(OpenSourceApiClient openSourceApiClient,
                                                                         string repoLabelOutputPath,
                                                                         string repositoryListFile)
         {
@@ -31,16 +31,16 @@ namespace GitHubTeamUserStore
                     {
                         continue;
                     }
-                    // The repositories in the file will all start with "Azure/" which is fine for storage considering
-                    // that the $(Build.Repository.Name), in a pipeline, will also start with "Azure/" but "Azure/"
-                    // needs to be stripped off for the GetRepositoryLabels call which requires the Org and repository
-                    // be separate arguments. The dictionary key will be full repository name.
+                    // The repositories in the file start with "Azure/" and the output dictionary keeps that full
+                    // repository name as the key, but the OSP repository labels endpoint uses only the repository
+                    // segment in the request path.
                     string repoWithoutOrg = repository;
-                    if (repoWithoutOrg.StartsWith($"{ProductAndTeamConstants.Azure}/"))
+                    string repoPrefix = $"{ProductAndTeamConstants.Azure}/";
+                    if (repoWithoutOrg.StartsWith(repoPrefix, StringComparison.Ordinal))
                     {
-                        repoWithoutOrg = repoWithoutOrg.Replace($"{ProductAndTeamConstants.Azure}/", "");
+                        repoWithoutOrg = repoWithoutOrg[repoPrefix.Length..];
                     }
-                    var labelsHash = await gitHubEventClient.GetRepositoryLabels(repoWithoutOrg);
+                    var labelsHash = await openSourceApiClient.GetAzureRepositoryLabels(repoWithoutOrg);
                     repoLabelDict[repository] = labelsHash;
                 }
 

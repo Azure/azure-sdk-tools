@@ -2,9 +2,6 @@ namespace GitHubTeamUserStore.Constants
 {
     internal class ProductAndTeamConstants
     {
-        // The ProductHeaderName is used to register the GitHubClient for this application
-        public const string ProductHeaderName = "azure-sdk-github-team-user-store";
-
         public const string Azure = "Azure";
         public const string OpenSourceApiBaseUrl = "https://repos.opensource.microsoft.com/api";
         public const string OpenSourceApiScope = "api://2efaf292-00a0-426c-ba7d-f5d2b214b8fc/.default";

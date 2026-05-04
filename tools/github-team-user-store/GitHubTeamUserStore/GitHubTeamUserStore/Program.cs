@@ -1,6 +1,5 @@
 using System.CommandLine;
 using System.Diagnostics;
-using Azure.Storage.Blobs;
 using GitHubTeamUserStore.Constants;
 
 namespace GitHubTeamUserStore
@@ -9,23 +8,11 @@ namespace GitHubTeamUserStore
     {
         static async Task Main(string[] args)
         {
-            var teamUserBlobStorageUriOption = new Option<string>
-                (name: "--teamUserBlobStorageURI", 
-                description: "The team/user blob storage URI.");
-            teamUserBlobStorageUriOption.AddAlias("-tUri");
-            teamUserBlobStorageUriOption.IsRequired = true;
-
-            var userOrgVisibilityBlobStorageUriOption = new Option<string>
-                (name: "--userOrgVisibilityBlobStorageURI",
-                description: "The user/org blob storage URI.");
-            userOrgVisibilityBlobStorageUriOption.AddAlias("-uUri");
-            userOrgVisibilityBlobStorageUriOption.IsRequired = true;
-
-            var repoLabelBlobStorageUriOption = new Option<string>
-                (name: "--repoLabelBlobStorageURI",
-                description: "The repo/label blob storage URI.");
-            repoLabelBlobStorageUriOption.AddAlias("-rUri");
-            repoLabelBlobStorageUriOption.IsRequired = true;
+            var outputDirectoryOption = new Option<string>
+                (name: "--outputDirectory",
+                description: "The directory where cache files will be written.");
+            outputDirectoryOption.AddAlias("-oDir");
+            outputDirectoryOption.IsRequired = true;
 
             // Since this will be running in the pipeline-owners-extraction, azure-sdk-tools
             // will be there. The command line option should be
@@ -38,15 +25,11 @@ namespace GitHubTeamUserStore
 
             var rootCommand = new RootCommand
             {
-                teamUserBlobStorageUriOption,
-                userOrgVisibilityBlobStorageUriOption,
-                repoLabelBlobStorageUriOption,
+                outputDirectoryOption,
                 repositoryListFileOption,
             };
-            rootCommand.SetHandler(PopulateTeamUserData,
-                                   teamUserBlobStorageUriOption,
-                                   userOrgVisibilityBlobStorageUriOption,
-                                   repoLabelBlobStorageUriOption,
+            rootCommand.SetHandler(GenerateCacheFiles,
+                                   outputDirectoryOption,
                                    repositoryListFileOption);
 
             int returnCode = await rootCommand.InvokeAsync(args);
@@ -54,32 +37,31 @@ namespace GitHubTeamUserStore
             Environment.Exit(returnCode);
         }
 
-        private static async Task<int> PopulateTeamUserData(string teamUserBlobStorageUri,
-                                                            string userOrgVisibilityBlobStorageUri,
-                                                            string repoLabelBlobStorageUri, 
-                                                            string repositoryListFile)
+        private static async Task<int> GenerateCacheFiles(string outputDirectory,
+                                                          string repositoryListFile)
         {
-
             // Default the returnCode code to non-zero. If everything is successful it'll be set to 0
             int returnCode = 1;
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
 
-            GitHubEventClient gitHubEventClient = new GitHubEventClient(ProductAndTeamConstants.ProductHeaderName);
+            string fullOutputDirectory = PrepareOutputDirectory(outputDirectory);
+            string teamUserOutputPath = Path.Combine(fullOutputDirectory, ProductAndTeamConstants.TeamUserCacheFileName);
+            string userOrgVisibilityOutputPath = Path.Combine(fullOutputDirectory, ProductAndTeamConstants.UserOrgVisibilityCacheFileName);
+            string repoLabelOutputPath = Path.Combine(fullOutputDirectory, ProductAndTeamConstants.RepositoryLabelCacheFileName);
 
-            await gitHubEventClient.WriteRateLimits("RateLimit at start of execution:");
+            OpenSourceApiClient openSourceApiClient = new OpenSourceApiClient();
+
             bool success = false;
             // The team/user list needs to be generated before the user/org data. The reason being is that the User/Org
             // visibility data is generated for the azure-sdk-write team users.
-            if (await TeamUserGenerator.GenerateAndStoreTeamUserAndOrgData(gitHubEventClient, teamUserBlobStorageUri, userOrgVisibilityBlobStorageUri))
+            if (await TeamUserGenerator.GenerateAndWriteTeamUserAndOrgData(openSourceApiClient, teamUserOutputPath, userOrgVisibilityOutputPath))
             {
-                if (await RepositoryLabelGenerator.GenerateAndStoreRepositoryLabels(gitHubEventClient, repoLabelBlobStorageUri, repositoryListFile))
+                if (await RepositoryLabelGenerator.GenerateAndWriteRepositoryLabels(openSourceApiClient, repoLabelOutputPath, repositoryListFile))
                 {
                     success = true;
                 }
             }
-
-            await gitHubEventClient.WriteRateLimits("RateLimit at end of execution:");
 
             stopWatch.Stop();
             TimeSpan ts = stopWatch.Elapsed;
@@ -90,14 +72,31 @@ namespace GitHubTeamUserStore
 
             if (success)
             {
-                Console.WriteLine("Data stored successfully.");
+                Console.WriteLine($"Cache files generated successfully in {fullOutputDirectory}.");
                 returnCode = 0;
             }
             else
             {
-                Console.WriteLine("There were issues with generated vs stored data. See above for specifics.");
+                Console.WriteLine("There were issues with generated cache files. See above for specifics.");
             }
             return returnCode;
+        }
+
+        private static string PrepareOutputDirectory(string outputDirectory)
+        {
+            if (string.IsNullOrWhiteSpace(outputDirectory))
+            {
+                throw new ArgumentException("The output directory cannot be null or whitespace.", nameof(outputDirectory));
+            }
+
+            string fullOutputDirectory = Path.GetFullPath(outputDirectory);
+            if (File.Exists(fullOutputDirectory))
+            {
+                throw new ArgumentException($"The output directory path '{outputDirectory}' points to a file.", nameof(outputDirectory));
+            }
+
+            Directory.CreateDirectory(fullOutputDirectory);
+            return fullOutputDirectory;
         }
     }
 }

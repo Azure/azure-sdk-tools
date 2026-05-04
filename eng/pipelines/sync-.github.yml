@@ -33,7 +33,8 @@ parameters:
     - azure-sdk-for-net
     - azure-sdk-for-python
     - azure-sdk-for-rust
-    - azure-rest-api-specs
+    # TODO: Re-enable syncing to specs repo after we standardize on workflow linting/naming
+    # - azure-rest-api-specs
 
 trigger: none
 

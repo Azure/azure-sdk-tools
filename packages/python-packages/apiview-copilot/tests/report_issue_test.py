@@ -16,7 +16,7 @@ import pytest
 from src._github_manager import GithubManager, LanguageLabel
 from src._report_issue import (
     _build_fallback_body,
-    _build_fallback_title,
+    _build_fallback_title_snippet,
     _build_labels,
     _format_comment_context_for_prompt,
     _generate_issue_content,
@@ -89,23 +89,22 @@ class TestFormatCommentContextForPrompt:
         assert _format_comment_context_for_prompt(None) == ""
 
 
-class TestBuildFallbackTitle:
+class TestBuildFallbackTitleSnippet:
     def test_short(self):
-        assert _build_fallback_title("Page is broken") == "[APIView] Page is broken"
+        assert _build_fallback_title_snippet("Page is broken") == "Page is broken"
 
     def test_long_truncates_to_first_14_words(self):
         desc = " ".join(["word"] * 50)
-        title = _build_fallback_title(desc)
-        body = title[len("[APIView] "):]
-        assert len(body.split()) == 14
+        title = _build_fallback_title_snippet(desc)
+        assert len(title.split()) == 14
         assert "..." not in title
 
     def test_only_uses_first_line(self):
-        title = _build_fallback_title("first line\nsecond line should be ignored")
-        assert title == "[APIView] first line"
+        title = _build_fallback_title_snippet("first line\nsecond line should be ignored")
+        assert title == "first line"
 
     def test_empty_description_uses_default(self):
-        assert _build_fallback_title("   ") == "[APIView] Issue reported from APIView"
+        assert _build_fallback_title_snippet("   ") == "Issue reported from APIView"
 
 
 class TestBuildFallbackBody:
@@ -228,6 +227,22 @@ class TestGenerateIssueContent:
         assert result["language"] is None
         assert result["title"] == "[APIView] Issue"
 
+    @patch("src._report_issue.run_prompt")
+    def test_parser_with_empty_title_uses_language_aware_prefix(self, mock_run_prompt):
+        # Regression: when the LLM emits a parser category + language but
+        # an empty title, the fallback title must still get the
+        # ``[Java APIView]`` prefix, not the generic ``[APIView]``.
+        mock_run_prompt.return_value = json.dumps(
+            {"category": "parser", "language": "java", "title": "", "body": "real body"}
+        )
+        result = _generate_issue_content(
+            description="parser swallows generics", review_link=None, language=None, comment_context=None
+        )
+        assert result["category"] == "parser"
+        assert result["language"] == "java"
+        assert result["title"].startswith("[Java APIView] ")
+        assert "parser swallows generics" in result["title"]
+
 
 class TestLookupCommentContext:
     @patch("src._report_issue.get_comment_with_context")
@@ -244,7 +259,6 @@ class TestLookupCommentContext:
         }
         result = _lookup_comment_context("comment-123")
         assert result == {
-            "comment_id": "comment-123",
             "comment_text": "remove async",
             "comment_source": "copilot",
             "code_snippet": "async def upload_blob(self, name: str, data: bytes) -> None: ...",

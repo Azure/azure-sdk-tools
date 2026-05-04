@@ -95,18 +95,16 @@ def _build_fallback_body(description: str, review_link: Optional[str], comment_c
     return "\n\n".join(sections)
 
 
-def _build_fallback_title(description: str) -> str:
-    """Build a usable title from the user's description if the LLM fails.
+def _build_fallback_title_snippet(description: str) -> str:
+    """Build a bare title snippet (no prefix) from the user's description.
 
-    Conservative single-line title; the LLM is told to be concise, but
-    if it fails entirely we take the first line of the description and
-    cap to ~14 words so the issue still has a readable title.
+    Used when the LLM fails to emit a title. The server still prepends
+    the category-derived prefix downstream.
     """
     stripped = description.strip()
     first_line = stripped.splitlines()[0].strip() if stripped else ""
     words = first_line.split()
-    snippet = " ".join(words[:14]) if words else "Issue reported from APIView"
-    return f"[APIView] {snippet}"
+    return " ".join(words[:14]) if words else "Issue reported from APIView"
 
 
 def _lookup_comment_context(comment_id: str) -> Optional[dict]:
@@ -126,7 +124,6 @@ def _lookup_comment_context(comment_id: str) -> Optional[dict]:
         return None
     comment_obj = ctx.get("comment") or {}
     return {
-        "comment_id": comment_id,
         "comment_text": comment_obj.get("CommentText"),
         "comment_source": comment_obj.get("CommentSource"),
         "code_snippet": ctx.get("code"),
@@ -151,19 +148,29 @@ def _generate_issue_content(
     final_language: Optional[str] = language
     title: Optional[str] = None
     body: Optional[str] = None
+    inputs = {
+        "description": description,
+        "review_link": review_link or "",
+        "language": language or "",
+        "comment_context": _format_comment_context_for_prompt(comment_context),
+    }
+    result: dict = {}
     try:
-        inputs = {
-            "description": description,
-            "review_link": review_link or "",
-            "language": language or "",
-            "comment_context": _format_comment_context_for_prompt(comment_context),
-        }
         raw = run_prompt(folder="report_issue", filename="generate_issue.prompty", inputs=inputs)
         result = json.loads(raw)
+    except (json.JSONDecodeError, ValueError) as e:
+        logger.warning("LLM returned invalid JSON; falling back to template: %s", e, exc_info=True)
+    except Exception as e:  # pylint: disable=broad-except
+        # ``run_prompt`` wraps Azure OpenAI / network calls — keep a
+        # broad catch here so a transient upstream failure never blocks
+        # the user from filing an issue.
+        logger.warning("LLM generation failed; falling back to template: %s", e, exc_info=True)
+
+    if result:
         emitted_category = (result.get("category") or "").strip().lower()
         if emitted_category in _ALLOWED_LLM_CATEGORIES:
             category = emitted_category
-        else:
+        elif emitted_category:
             logger.warning(
                 "LLM returned unexpected category %r; defaulting to apiview.",
                 result.get("category"),
@@ -175,8 +182,6 @@ def _generate_issue_content(
             logger.warning("LLM returned empty title; falling back to template.")
         if not body:
             logger.warning("LLM returned empty body; falling back to template.")
-    except Exception as e:  # pylint: disable=broad-except
-        logger.warning("LLM generation failed; falling back to template: %s", e, exc_info=True)
 
     if not category:
         category = "apiview"
@@ -185,9 +190,7 @@ def _generate_issue_content(
     if not body:
         body = _build_fallback_body(description, review_link, comment_context)
     if not title:
-        title = _build_fallback_title(description)
-        # Fallback already contains a prefix; return as-is.
-        return {"category": category, "language": final_language, "title": title, "body": body}
+        title = _build_fallback_title_snippet(description)
 
     prefix = _title_prefix(category, final_language)
     full_title = title if title.startswith(prefix) else f"{prefix} {title}"

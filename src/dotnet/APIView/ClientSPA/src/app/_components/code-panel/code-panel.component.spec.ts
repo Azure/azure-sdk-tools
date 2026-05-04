@@ -318,7 +318,7 @@ describe('CodePanelComponent', () => {
       commentsService = TestBed.inject(CommentsService);
       notifySpy = vi.spyOn(commentsService, 'notifyQualityScoreRefresh');
       component.reviewId = 'test-review';
-      component.activeAPIRevision = { id: 'test-revision' } as any;
+      component.activeApiRevisionId = 'test-revision';
     });
 
     afterEach(() => {
@@ -405,7 +405,7 @@ describe('CodePanelComponent', () => {
     beforeEach(() => {
       commentsService = TestBed.inject(CommentsService);
       component.reviewId = 'test-review';
-      component.activeAPIRevision = { id: 'test-revision' } as any;
+      component.activeApiRevisionId = 'test-revision';
     });
 
     it('should pass undefined threadId to API when resolving legacy comments without a real threadId', () => {

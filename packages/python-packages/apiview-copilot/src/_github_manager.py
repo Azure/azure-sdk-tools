@@ -87,11 +87,7 @@ class GithubManager:
         Production traffic targets ``production_owner`` (default
         ``Azure``); every other environment (local, staging, preview)
         targets the staging owner so test runs do not pollute the real
-        repo. The staging owner is resolved in this order:
-
-        1. The explicit ``staging_owner`` argument, when provided.
-        2. The ``APIVIEW_STAGING_REPO_OWNER`` environment variable.
-        3. ``tjprescott`` as the historical default.
+        repo. 
         """
         if os.getenv("ENVIRONMENT_NAME") == "production":
             return production_owner

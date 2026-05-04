@@ -76,7 +76,7 @@ stages:
           scriptType: pscore
           scriptLocation: inlineScript
           inlineScript: |
-            & $AZSDK config codeowners audit --fix
+            & $env:AZSDK config codeowners audit --fix
           workingDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli
 
       - task: DotNetCoreCLI@2

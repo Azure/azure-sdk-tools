@@ -62,7 +62,7 @@ steps:
         arguments: >
           -PRBranchName "${{ parameters.UpstreamBranchName }}"
           -CommitMsg "${{ parameters.CommitMessage }}"
-          -GitUrl "https://x-access-token:$(GH_TOKEN)@github.com/${{ parameters.PROwner }}/${{ repo }}.git"
+          -GitUrl "https://x-access-token:${{ parameters.AuthToken }}@github.com/${{ parameters.PROwner }}/${{ repo }}.git"
           -PushArgs "${{ parameters.PushArgs }}"
           -SkipCommit $${{parameters.SkipCheckingForChanges}}
 
@@ -76,7 +76,7 @@ steps:
         arguments: >
           -PRBranchName "${{ parameters.UpstreamBranchName }}-ForTestPipeline"
           -CommitMsg "${{ parameters.CommitMessage }}"
-          -GitUrl "https://x-access-token:$(GH_TOKEN)@github.com/${{ parameters.PROwner }}/${{ repo }}.git"
+          -GitUrl "https://x-access-token:${{ parameters.AuthToken }}@github.com/${{ parameters.PROwner }}/${{ repo }}.git"
           -PushArgs "${{ parameters.PushArgs }}"
           -AmendCommit $True
 
@@ -132,7 +132,7 @@ steps:
         -Comment "The following pipelines have been queued for testing:<br>$env:QUEUEDPIPELINES`
         <br>You can sign off on the approval gate to test the release stage of each pipeline.`
         <br>See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/README.md#workflow)"
-        -AuthToken "$(GH_TOKEN)"
+        -AuthToken "${{ parameters.AuthToken }}"
 
 - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
   - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
@@ -189,4 +189,4 @@ steps:
 - template: /eng/common/pipelines/templates/steps/emit-rate-limit-metrics.yml
   parameters:
     GitHubUser: azure-sdk
-    GitHubToken: $(GH_TOKEN)
+    GitHubToken: ${{ parameters.AuthToken }}

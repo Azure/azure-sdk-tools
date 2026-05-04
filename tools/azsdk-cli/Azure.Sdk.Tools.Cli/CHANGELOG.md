@@ -1,14 +1,10 @@
 # Release History
 
-## 0.6.12 (Unreleased)
-
-### Features Added
-
-### Breaking Changes
-
-### Bugs Fixed
+## 0.6.12 (2026-05-04)
 
 ### Other Changes
+
+- Resolve npm exec binaries directly from node_modules for NpmOptions when `.npmrc` is in user context
 
 ## 0.6.11 (2026-05-01)
 
@@ -30,6 +26,7 @@
 
 ### Features Added
 
+- Added Rust language support for `setup`, `generate`, `build`, and `pack` tools.
 - Added `azsdk_get_kpi_attestation_status` MCP tool to check KPI attestation status for a release plan given product ID and lifecycle.
 - Added CODEOWNERS Audit command (CLI only) that brings data model to a valid state.
 - Added optional package version argument for `azsdk release-plan update-release-status` CLI.

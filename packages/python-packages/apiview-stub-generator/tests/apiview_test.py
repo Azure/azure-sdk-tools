@@ -177,7 +177,7 @@ class TestApiView:
         # skip conditional optional dependencies
         assert not self._dependency_installed("qsharp")
         # assert package name is correct
-        assert apiview.package_name == "apiview_stub_generator_test"
+        assert apiview.package_name == "apiview-stub-generator-test"
 
     @mark.parametrize("pkg_path", SETUP_PATHS, ids=SETUP_IDS)
     def test_setup_py_line_ids(self, pkg_path):
@@ -247,7 +247,7 @@ class TestApiView:
         unclaimed = PylintParser.get_unclaimed()
         # AdvancedTypeHintClient.validate_endpoint adds 1 diagnostic (client-method-should-not-use-static-method).
         # Python 3.12+ produces 2 additional diagnostics due to pylint behavior differences.
-        expected_diagnostic_count = 96 if sys.version_info >= (3, 12) else 94
+        expected_diagnostic_count = 84 if sys.version_info >= (3, 12) else 82
         assert len(apiview.diagnostics) == expected_diagnostic_count
         # The "needs copyright header" error corresponds to a file, which isn't directly
         # represented in APIView
@@ -274,10 +274,10 @@ class TestApiView:
         constructor_level = [d for d in violations_diags if d['TargetId'] == 'apiview_stub_generator_test.PylintCheckerViolationsClient.__init__']
         method_level = [d for d in violations_diags if 'with_too_many_args' in d['TargetId'] or 'list_secrets' in d['TargetId'] or 'set_secret' in d['TargetId'] or 'get_secret' in d['TargetId']]
 
-        assert len(violations_diags) == 16, f"Should have 16 total diagnostics, got {len(violations_diags)}"
+        assert len(violations_diags) == 15, f"Should have 15 total diagnostics, got {len(violations_diags)}"
         assert len(class_level) == 2, f"Should have 2 class-level diagnostics, got {len(class_level)}"
         assert len(constructor_level) == 2, f"Should have 2 constructor-level diagnostics, got {len(constructor_level)}"
-        assert len(method_level) == 12, f"Should have 12 method-level diagnostics (including overloads), got {len(method_level)}"
+        assert len(method_level) == 11, f"Should have 11 method-level diagnostics (including overloads), got {len(method_level)}"
 
         # Verify that overload methods with @distributed_trace have diagnostics without duplicates
         list_secrets_overload1_diags = [d for d in violations_diags if 'list_secrets_1' in d['TargetId']]

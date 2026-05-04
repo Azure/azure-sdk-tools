@@ -1004,7 +1004,7 @@ namespace APIViewWeb.Managers
                 try
                 {
                     var fileOriginal = await _originalsRepository.GetOriginalAsync(file.FileId);
-                    if (fileOriginal.Length == 0)
+                    if (fileOriginal.CanSeek && fileOriginal.Length == 0)
                     {
                         _telemetryClient.TrackTrace($"Skipping update of {revision.Language} revision with id {revision.Id}: original file is empty.");
                         continue;
@@ -1545,8 +1545,16 @@ namespace APIViewWeb.Managers
                     // instead of running the parser locally.
                     if (codeFileDetails.HasOriginal && !string.IsNullOrEmpty(codeFileDetails.FileName))
                     {
-                        var review = await _reviewsRepository.GetReviewAsync(revisionModel.ReviewId);
-                        await GenerateAPIRevisionInExternalResource(review, revisionModel.Id, codeFileDetails.FileId, codeFileDetails.FileName, revisionModel.Language);
+                        try
+                        {
+                            var review = await _reviewsRepository.GetReviewAsync(revisionModel.ReviewId);
+                            await GenerateAPIRevisionInExternalResource(review, revisionModel.Id, codeFileDetails.FileId, codeFileDetails.FileName, revisionModel.Language);
+                        }
+                        catch (Exception ex)
+                        {
+                            _telemetryClient.TrackTrace($"Failed to trigger pipeline upgrade for {revisionModel.Language} revision with id {revisionModel.Id}");
+                            _telemetryClient.TrackException(ex);
+                        }
                     }
                 }
                 else

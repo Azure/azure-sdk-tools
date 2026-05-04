@@ -552,6 +552,57 @@ public class CodeFileManagerTests
         Assert.Equal("NoNewlines", codeFile.ReviewLines[0].Tokens[1].Value);
     }
 
+    [Fact]
+    public async Task CreateCodeFileAsync_SanitizesTokenValues_ReturnedFromLanguageService()
+    {
+        // Verifies that CreateCodeFileAsync calls SanitizeTokenValues on the CodeFile produced
+        // by the language service, so callers receive clean data regardless of parser output.
+        var dirtyCodeFile = new CodeFile
+        {
+            Language = "C#",
+            ReviewLines =
+            [
+                new ReviewLine
+                {
+                    LineId = "L1",
+                    Tokens = [new ReviewToken { Value = "public\r\nclass Foo", Kind = TokenKind.Text }]
+                }
+            ]
+        };
+
+        var manager = new CodeFileManager(
+            new List<LanguageService> { new DirtyCodeFileLanguageService(dirtyCodeFile) },
+            _mockCodeFileRepository.Object,
+            _mockOriginalsRepository.Object,
+            _mockDevopsArtifactRepository.Object,
+            new Mock<ILogger<CodeFileManager>>().Object);
+
+        using var memoryStream = new MemoryStream();
+        var result = await manager.CreateCodeFileAsync("test.cs", runAnalysis: false, memoryStream: memoryStream);
+
+        Assert.NotNull(result);
+        Assert.DoesNotContain('\r', result.ReviewLines[0].Tokens[0].Value);
+        Assert.DoesNotContain('\n', result.ReviewLines[0].Tokens[0].Value);
+        Assert.Equal("public class Foo", result.ReviewLines[0].Tokens[0].Value);
+    }
+
     #endregion
 
+}
+
+internal class DirtyCodeFileLanguageService : LanguageService
+{
+    private readonly CodeFile _codeFile;
+
+    public DirtyCodeFileLanguageService(CodeFile codeFile) => _codeFile = codeFile;
+
+    public override string Name => "C#";
+    public override string[] Extensions => [".cs"];
+    public override string VersionString => "1.0";
+    public override bool CanUpdate(string versionString) => false;
+    public override bool CanConvert(string versionString) => false;
+    public override bool GeneratePipelineRunParams(APIRevisionGenerationPipelineParamModel param) => false;
+    public override CodeFile GetReviewGenPendingCodeFile(string fileName) => null;
+    public override Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis, string crossLanguageMetadata = null)
+        => Task.FromResult(_codeFile);
 }

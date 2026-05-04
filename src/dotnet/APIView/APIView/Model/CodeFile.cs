@@ -77,7 +77,8 @@ namespace APIView
                 {
                     foreach (var token in line.Tokens)
                     {
-                        if (token.Kind == TokenKind.Text && !string.IsNullOrEmpty(token.Value))
+                        if (token.Kind == TokenKind.Text && !string.IsNullOrEmpty(token.Value)
+                            && token.Value.IndexOfAny(['\r', '\n']) >= 0)
                             token.Value = token.Value.Replace("\r\n", " ").Replace('\r', ' ').Replace('\n', ' ');
                     }
                     if (line.Children != null && line.Children.Count > 0)

@@ -156,6 +156,7 @@ applyTo: "tests/**"
 - Test files named `*_test.py` (e.g., `apiview_test.py`, `metrics_test.py`). Some use `test_*.py` convention.
 - Fixtures in `conftest.py`.
 - Evaluation tests (prompt quality) live in `evals/` and run separately via `avc test eval` or `python evals/run.py`.
+- **ALWAYS run `pylint` on new or modified test files before considering them done.** Example: `pylint tests/my_new_test.py`. Fix all errors before committing.
 
 ---
 applyTo: "evals/**"

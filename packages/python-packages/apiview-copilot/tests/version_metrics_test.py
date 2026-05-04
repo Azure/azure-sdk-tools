@@ -4,6 +4,8 @@
 # license information.
 # --------------------------------------------------------------------------
 
+# pylint: disable=no-member
+
 """Tests for version-coverage metrics (build_version_reports)."""
 
 import sys
@@ -198,5 +200,5 @@ class TestBuildVersionReports:
         )
 
         # get_apiview_cosmos_client called once, query_items called once
-        mock_cosmos.assert_called_once()
-        container.query_items.assert_called_once()
+        assert mock_cosmos.call_count == 1
+        assert container.query_items.call_count == 1

@@ -4,7 +4,8 @@ trigger: none
 pr: none
 
 parameters:
-  - name: RunAudit
+  - name: AuditCodeowners
+    displayName: 'Audit CODEOWNERS'
     type: boolean
     default: false
 

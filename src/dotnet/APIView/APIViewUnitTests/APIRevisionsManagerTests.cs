@@ -381,7 +381,7 @@ public class APIRevisionsManagerTests
 
     private void SetupMocksForUpdate(string revisionId, string fileId, CodeFile existingCodeFile, CodeFile newCodeFile)
     {
-        MemoryStream originalStream = new();
+        MemoryStream originalStream = new(new byte[] { 0x50, 0x4B, 0x03, 0x04 }); // non-empty placeholder
 
         _mockOriginalsRepository
             .Setup(x => x.GetOriginalAsync(fileId))

@@ -3,7 +3,7 @@ requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "apistubgentest"
+name = "apiview-stub-generator-test"
 authors = [{name = "Microsoft Corporation"}]
 description = "ApiView Stub Generator Tests"
 requires-python = ">=3.10"
@@ -37,7 +37,7 @@ testing = [
 ]
 
 [tool.setuptools.dynamic]
-version = {attr = "apistubgentest._version.VERSION"}
+version = {attr = "apiview_stub_generator_test._version.VERSION"}
 readme = {file = ["README.md", "CHANGELOG.md"], content-type = "text/markdown"}
 
 [tool.setuptools.packages.find]

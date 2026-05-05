@@ -63,3 +63,27 @@ public class AgentChatResponse
     [JsonPropertyName("messages")]
     public List<object> Messages { get; set; }
 }
+
+public class ReportIssueRequest
+{
+    [JsonPropertyName("description")]
+    public string Description { get; set; }
+
+    [JsonPropertyName("reviewLink")]
+    public string ReviewLink { get; set; }
+
+    [JsonPropertyName("language")]
+    public string Language { get; set; }
+
+    [JsonPropertyName("commentId")]
+    public string CommentId { get; set; }
+}
+
+public class ReportIssueResponse
+{
+    [JsonPropertyName("issueUrl")]
+    public string IssueUrl { get; set; }
+
+    [JsonPropertyName("issueNumber")]
+    public int IssueNumber { get; set; }
+}

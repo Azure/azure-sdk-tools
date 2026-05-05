@@ -154,7 +154,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 // Trigger the release pipeline
                 if (buildDefinitionId != null)
                 {
-                    var releasePipelineRun = await devopsService.RunPipelineAsync(int.Parse(buildDefinitionId!), new Dictionary<string, string>(), branch, ct);
+                    var templateParams = new Dictionary<string, string>();
+
+                    // The Java release pipeline supports per-package selection through
+                    // boolean parameters named release_<safeName>. Without this, manually
+                    // queued runs fail fast (see azure-sdk-for-java#48465). For all other
+                    // languages no template parameters are required.
+                    if (SdkLanguageHelpers.GetSdkLanguage(language) == SdkLanguage.Java)
+                    {
+                        var safeName = GetJavaSafeName(packageName);
+                        if (!string.IsNullOrEmpty(safeName))
+                        {
+                            templateParams[$"release_{safeName}"] = "true";
+                        }
+                    }
+
+                    var releasePipelineRun = await devopsService.RunPipelineAsync(int.Parse(buildDefinitionId!), templateParams, branch, ct);
                     if (releasePipelineRun != null)
                     {
                         response.ReleasePipelineRunUrl = DevOpsService.GetPipelineUrl(releasePipelineRun.Id);
@@ -350,6 +365,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 logger.LogError(ex, "Failed to get pipeline run details for URL {PipelineRunUrl}", pipelineRunUrl);
                 return $"Failed to get pipeline run details. Error: {ex.Message}";
             }
+        }
+
+        // Mirrors the convention used in azure-sdk-for-java ci.yml files where each artifact
+        // declares a `safeName` (lowercased package name with non-alphanumeric characters
+        // removed) that is exposed as a `release_<safeName>` boolean pipeline parameter.
+        // Example: "azure-storage-blob" -> "azurestorageblob".
+        public static string GetJavaSafeName(string packageName)
+        {
+            if (string.IsNullOrWhiteSpace(packageName))
+            {
+                return string.Empty;
+            }
+
+            var chars = packageName.Where(char.IsLetterOrDigit).ToArray();
+            return new string(chars).ToLowerInvariant();
         }
     }
 }

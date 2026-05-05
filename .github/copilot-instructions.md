@@ -12,6 +12,10 @@ This repository contains tools and libraries used by the Azure SDK team's engine
 - Follow existing patterns and conventions found in the codebase
 - Each tool should be self-contained with its own README, tests, and CI configuration
 
+## APIView Guidelines
+
+Read and follow [APIView Guidelines](../eng/common/instructions/azsdk-tools/apiview-guidelines.instructions.md) as well.
+
 ## Repository Structure
 
 - `/tools/` - Individual tools organized by name, each in its own directory

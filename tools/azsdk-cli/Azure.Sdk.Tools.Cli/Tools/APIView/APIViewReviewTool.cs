@@ -20,7 +20,7 @@ public enum ContentType
 [Description("APIView operations including comments and content")]
 public class APIViewReviewTool : MCPMultiCommandTool
 {
-    // Sub-command constants
+    // Commands
     private const string GetCommentsCmd = "get-comments";
     private const string GetContentCmd = "get-content";
     private const string CreateCIRevisionCmd = "create-ci-revision";
@@ -29,7 +29,9 @@ public class APIViewReviewTool : MCPMultiCommandTool
     private const string GetCopilotReviewCmd = "get-copilot-review";
     private const string GetReviewUrlCmd = "get-review-url";
 
+    // MCP Tool Names
     private const string ApiViewGetCommentsToolName = "azsdk_apiview_get_comments";
+    private const string ApiViewGetContentToolName = "azsdk_apiview_get_content";
     private const string ApiViewRequestCopilotReviewToolName = "azsdk_apiview_request_copilot_review";
     private const string ApiViewGetCopilotReviewToolName = "azsdk_apiview_get_copilot_review";
     private const string ApiViewGetReviewUrlToolName = "azsdk_apiview_get_review_url";
@@ -201,7 +203,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
     protected override List<Command> GetCommands() =>
     [
         new McpCommand(GetCommentsCmd, "Get comments for a specific APIView URL", ApiViewGetCommentsToolName) { apiViewUrlRequiredOption },
-        new(GetContentCmd, "Get content by APIView URL")
+        new McpCommand(GetContentCmd, "Get content by APIView URL", ApiViewGetContentToolName)
         {
             apiViewUrlRequiredOption, outputFileOption, contentReturnTypeOption
         },
@@ -329,22 +331,19 @@ public class APIViewReviewTool : MCPMultiCommandTool
         return await GetReviewUrlByPackage(package!, language!, version, ct);
     }
 
-    private async Task<APIViewResponse> GetContent(ParseResult parseResult, CancellationToken ct)
+    [McpServerTool(Name = ApiViewGetContentToolName), Description("Download and view the public API surface from an APIView revision. Retrieve raw CodeFile JSON or detailed API text showing the structure in both formats.")]
+    public async Task<APIViewResponse> GetContent(string apiViewUrl, string contentReturnType = "text", string? outputFile = null, CancellationToken ct = default)
     {
-        string? apiViewUrl = parseResult.GetValue(apiViewUrlRequiredOption);
-        string? outputFile = parseResult.GetValue(outputFileOption);
-        string? contentType = parseResult.GetValue(contentReturnTypeOption);
-
-        if (!Enum.TryParse<ContentType>(contentType, ignoreCase: true, out _))
-        {
-            var validValues = string.Join(", ", Enum.GetNames<ContentType>());
-            return new APIViewResponse { ResponseError = $"Invalid content type '{contentType}'. Must be one of: {validValues}." };
-        }
-
-        (string revisionId, string reviewId) = ExtractIdsFromUrl(apiViewUrl);
         try
         {
-            string? result = await _apiViewService.GetRevisionContent(revisionId, reviewId, contentType, ct);
+            if (!Enum.TryParse<ContentType>(contentReturnType, ignoreCase: true, out _))
+            {
+                var validValues = string.Join(", ", Enum.GetNames<ContentType>());
+                return new APIViewResponse { ResponseError = $"Invalid content type '{contentReturnType}'. Must be one of: {validValues}." };
+            }
+
+            (string revisionId, string reviewId) = ExtractIdsFromUrl(apiViewUrl);
+            string? result = await _apiViewService.GetRevisionContent(revisionId, reviewId, contentReturnType, ct);
             if (result == null)
             {
                 return new APIViewResponse { ResponseError = $"Content not found" };
@@ -373,6 +372,14 @@ public class APIViewReviewTool : MCPMultiCommandTool
         {
             return new APIViewResponse { ResponseError = $"Failed to get content: {ex.Message}" };
         }
+    }
+
+    private async Task<APIViewResponse> GetContent(ParseResult parseResult, CancellationToken ct)
+    {
+        string? apiViewUrl = parseResult.GetValue(apiViewUrlRequiredOption);
+        string? outputFile = parseResult.GetValue(outputFileOption);
+        string? contentType = parseResult.GetValue(contentReturnTypeOption);
+        return await GetContent(apiViewUrl!, contentType!, outputFile, ct);
     }
 
     private async Task<APIViewResponse> CreateCIRevision(ParseResult parseResult, CancellationToken ct)

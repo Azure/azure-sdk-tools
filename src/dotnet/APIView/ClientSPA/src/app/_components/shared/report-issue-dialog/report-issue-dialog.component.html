@@ -47,9 +47,10 @@
 
   <ng-template pTemplate="footer">
     <div class="d-flex justify-content-end gap-2 w-100">
-      <button class="btn btn-outline-secondary" (click)="onCancel()">Cancel</button>
-      <button class="btn btn-primary" [disabled]="!canSubmit" (click)="onSubmit()">
-        Submit
+      <button class="btn btn-outline-secondary" [disabled]="submitting" (click)="onCancel()">Cancel</button>
+      <button class="btn btn-primary" [disabled]="!canSubmit || submitting" (click)="onSubmit()">
+        <span *ngIf="submitting" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+        {{ submitting ? 'Submitting...' : 'Submit' }}
       </button>
     </div>
   </ng-template>

@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { MessageService } from 'primeng/api';
+import { finalize, take } from 'rxjs/operators';
+import { AgentService, ReportIssueRequest } from 'src/app/_services/agent/agent.service';
 
 export interface CommentContext {
   commentId: string;
@@ -46,8 +48,9 @@ export class ReportIssueDialogComponent implements OnChanges {
   }
 
   description: string = '';
+  submitting: boolean = false;
 
-  constructor(private messageService: MessageService) {}
+  constructor(private messageService: MessageService, private agentService: AgentService) {}
 
   get canSubmit(): boolean {
     return this.description.trim().length > 0;
@@ -65,35 +68,59 @@ export class ReportIssueDialogComponent implements OnChanges {
   }
 
   onSubmit(): void {
-    if (!this.canSubmit) return;
+    if (!this.canSubmit || this.submitting) return;
 
-    const issueUrl = this.buildGitHubIssueUrl();
-    // TODO: replace hardcoded URL with actual created issue URL from backend
-    const submittedIssueUrl = 'https://github.com/Azure/azure-sdk-tools/issues/14863';
-
-    const data: ReportIssueData = {
-      mode: this.mode,
-      description: this.description,
-      reviewLink: this.reviewLink,
-      issueUrl: issueUrl
+    const request: ReportIssueRequest = {
+      description: this.description.trim(),
+      reviewLink: this.reviewLink ?? undefined,
     };
 
-    if (this.mode === 'comment') {
-      data.commentContext = this.commentContext ?? undefined;
+    if (this.mode === 'comment' && this.commentContext) {
+      request.commentId = this.commentContext.commentId || undefined;
+      request.language = this.commentContext.language || undefined;
     }
 
-    this.issueSubmit.emit(data);
-    this.closeDialog();
+    this.submitting = true;
+    this.agentService.reportIssue(request)
+      .pipe(
+        take(1),
+        finalize(() => this.submitting = false)
+      )
+      .subscribe({
+        next: (response) => {
+          const data: ReportIssueData = {
+            mode: this.mode,
+            description: this.description,
+            reviewLink: this.reviewLink,
+            issueUrl: response.issueUrl
+          };
+          if (this.mode === 'comment') {
+            data.commentContext = this.commentContext ?? undefined;
+          }
+          this.issueSubmit.emit(data);
+          this.closeDialog();
 
-    // TODO: replace hardcoded URL with actual created issue URL from backend
-    this.messageService.add({
-      severity: 'success',
-      icon: 'bi bi-check-circle-fill',
-      summary: 'Issue submitted',
-      detail: 'https://github.com/Azure/azure-sdk-tools/issues/14863',
-      life: 10000,
-      key: 'bc'
-    });
+          this.messageService.add({
+            severity: 'success',
+            icon: 'bi bi-check-circle-fill',
+            summary: 'Issue submitted',
+            detail: response.issueUrl,
+            life: 10000,
+            key: 'bc'
+          });
+        },
+        error: (err) => {
+          console.error('Report issue failed', err);
+          this.messageService.add({
+            severity: 'error',
+            icon: 'bi bi-exclamation-triangle-fill',
+            summary: 'Failed to file issue',
+            detail: 'Please try again. If the problem persists, contact the APIView team.',
+            life: 10000,
+            key: 'bc'
+          });
+        }
+      });
   }
 
   onCancel(): void {
@@ -114,66 +141,6 @@ export class ReportIssueDialogComponent implements OnChanges {
 
   private resetForm(): void {
     this.description = '';
-  }
-
-  private buildGitHubIssueUrl(): string {
-    const baseUrl = 'https://github.com/Azure/azure-sdk-tools/issues/new';
-    const labels = this.getLabels();
-    const title = this.getTitle();
-    const body = this.getBody();
-
-    const params = new URLSearchParams();
-    params.set('title', title);
-    params.set('labels', labels.join(','));
-    params.set('body', body);
-
-    return `${baseUrl}?${params.toString()}`;
-  }
-
-  private getLabels(): string[] {
-    const labels = ['APIView'];
-    if (this.mode === 'comment' && this.commentContext?.commentSource === 'copilot') {
-      labels.push('AVC');
-    }
-    return labels;
-  }
-
-  private getTitle(): string {
-    if (this.mode === 'comment') {
-      const source = this.commentContext?.commentSource === 'copilot' ? 'Copilot' : 'APIView';
-      return `[APIView] Issue with ${source} comment`;
-    }
-    return `[APIView] `;
-  }
-
-  private getBody(): string {
-    const sections: string[] = [];
-
-    if (this.description.trim()) {
-      sections.push(`## Description\n${this.description.trim()}`);
-    }
-
-    if (this.mode === 'comment' && this.commentContext) {
-      const source = this.commentContext.commentSource === 'copilot' ? 'Copilot' : 'APIView';
-      const contextLines = [
-        `- **Source**: ${source}`,
-        `- **Language**: ${this.commentContext.language || 'N/A'}`,
-      ];
-      if (this.commentContext.codeSnippet) {
-        contextLines.push(`- **Code**: \`${this.commentContext.codeSnippet}\``);
-      }
-      if (this.commentContext.commentText) {
-        contextLines.push(`- **Comment**: ${this.commentContext.commentText}`);
-      }
-      sections.push(`## Comment context\n${contextLines.join('\n')}`);
-    }
-
-    if (this.reviewLink) {
-      sections.push(`## Review link\n${this.reviewLink}`);
-    }
-
-    sections.push('---\n*Submitted via APIView Report Issue dialog*');
-
-    return sections.join('\n\n');
+    this.submitting = false;
   }
 }

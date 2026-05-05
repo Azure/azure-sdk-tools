@@ -15,7 +15,7 @@ Shared skills (those distributed to other Azure SDK repositories) are identified
 
 | Skill | Triggers | Description |
 | ----- | -------- | ----------- |
-| [generate-sdk-locally](generate-sdk-locally/SKILL.md) | "generate SDK locally", "build SDK", "run SDK tests" | Generate, build, and test Azure SDKs locally from TypeSpec |
+| [generate-sdk-locally](generate-sdk-locally/SKILL.md) | "generate SDK locally", "build SDK", "run SDK tests", "run CI checks", "passes all checks" | Generate, build, and test Azure SDKs locally from TypeSpec |
 | [prepare-release-plan](prepare-release-plan/SKILL.md) | "create release plan", "link SDK PR to plan" | Create and manage release plan work items |
 | [apiview-feedback-resolution](apiview-feedback-resolution/SKILL.md) | "APIView comments", "resolve API review feedback" | Retrieve and resolve APIView review feedback |
 | [pipeline-troubleshooting](pipeline-troubleshooting/SKILL.md) | "pipeline failed", "build failure", "CI check failing" | Diagnose and resolve SDK CI and generation pipeline failures |

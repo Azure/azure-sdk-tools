@@ -4,6 +4,8 @@
 
 ### Features Added
 
+- Added `azsdk_apiview_get_content` MCP tool and `azsdk apiview get-content` CLI command to retrieve APIView API content from a review URL.
+
 ### Breaking Changes
 
 ### Bugs Fixed

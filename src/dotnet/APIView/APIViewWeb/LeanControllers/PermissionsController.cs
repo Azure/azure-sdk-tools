@@ -50,6 +50,23 @@ public class PermissionsController : BaseApiController
     }
 
     /// <summary>
+    ///     Get all permission groups (Admin only)
+    /// </summary>
+    [HttpGet("groups")]
+    public async Task<ActionResult> GetAllGroups()
+    {
+        var userName = User.GetGitHubLogin();
+        var isAdmin = await _permissionsManager.IsAdminAsync(userName);
+        if (!isAdmin)
+        {
+            return Forbid();
+        }
+
+        var groups = await _permissionsManager.GetAllGroupsAsync();
+        return new LeanJsonResult(groups, StatusCodes.Status200OK);
+    }
+
+    /// <summary>
     ///     Get a specific group by ID (Admin only)
     /// </summary>
     [HttpGet("groups/{groupId}")]
@@ -227,19 +244,6 @@ public class PermissionsController : BaseApiController
         }
     }
 
-    /// <summary>
-    ///     Get the list of approvers for a specific language
-    /// </summary>
-    /// <param name="language">The programming language</param>
-    /// <returns>List of usernames who can approve reviews for the specified language, sorted alphabetically</returns>
-    [HttpGet("approvers/{language}")]
-    public async Task<ActionResult<IEnumerable<string>>> GetApproversForLanguage(string language)
-    {
-        HashSet<string> approvers = await _permissionsManager.GetApproversForLanguageAsync(language);
-        List<string> sortedApprovers = approvers.Where(a => !string.IsNullOrWhiteSpace(a))
-            .OrderBy(a => a, StringComparer.OrdinalIgnoreCase).ToList();
-        return new LeanJsonResult(sortedApprovers, StatusCodes.Status200OK);
-    }
 
     /// <summary>
     ///     Get the groups that the current user belongs to
@@ -253,14 +257,4 @@ public class PermissionsController : BaseApiController
         return new LeanJsonResult(groups, StatusCodes.Status200OK);
     }
 
-    /// <summary>
-    ///     Get the list of admin usernames for contact information
-    /// </summary>
-    /// <returns>List of usernames who have admin permissions, sorted alphabetically</returns>
-    [HttpGet("admins")]
-    public async Task<ActionResult<IEnumerable<string>>> GetAdminUsernames()
-    {
-        var admins = await _permissionsManager.GetAdminUsernamesAsync();
-        return new LeanJsonResult(admins, StatusCodes.Status200OK);
-    }
 }

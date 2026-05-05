@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using APIViewWeb.Helpers;
 using APIViewWeb.LeanControllers;
-using APIViewWeb.LeanModels;
 using APIViewWeb.Managers.Interfaces;
 using FluentAssertions;
 using Moq;
@@ -21,20 +20,30 @@ public class PermissionsCookieOrTokenControllerTests
         _controller = new PermissionsCookieOrTokenController(_mockPermissionsManager.Object);
     }
 
-    #region GetAllGroups Tests
+    #region GetApproversForLanguage Tests
 
     [Fact]
-    public async Task GetAllGroups_ReturnsGroups()
+    public async Task GetApproversForLanguage_ReturnsApprovers()
     {
-        var groups = new List<GroupPermissionsModel>
-        {
-            new() { GroupId = "group1", GroupName = "Group 1" },
-            new() { GroupId = "group2", GroupName = "Group 2" }
-        };
-        _mockPermissionsManager.Setup(m => m.GetAllGroupsAsync()).ReturnsAsync(groups);
+        var approvers = new System.Collections.Generic.HashSet<string> { "user2", "user1" };
+        _mockPermissionsManager.Setup(m => m.GetApproversForLanguageAsync("Python")).ReturnsAsync(approvers);
 
-        var result = await _controller.GetAllGroups();
-        result.Should().BeOfType<LeanJsonResult>();
+        var result = await _controller.GetApproversForLanguage("Python");
+        result.Result.Should().BeOfType<LeanJsonResult>();
+    }
+
+    #endregion
+
+    #region GetAdminUsernames Tests
+
+    [Fact]
+    public async Task GetAdminUsernames_ReturnsAdmins()
+    {
+        var admins = new List<string> { "admin1", "admin2" };
+        _mockPermissionsManager.Setup(m => m.GetAdminUsernamesAsync()).ReturnsAsync(admins);
+
+        var result = await _controller.GetAdminUsernames();
+        result.Result.Should().BeOfType<LeanJsonResult>();
     }
 
     #endregion

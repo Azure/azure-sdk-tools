@@ -118,6 +118,8 @@ public class CustomizedCodeUpdateToolAutoTests
 
         var typeSpecHelper = new Mock<ITypeSpecHelper>();
         typeSpecHelper.Setup(t => t.IsValidTypeSpecProjectPath(It.IsAny<string>())).Returns(true);
+        typeSpecHelper.Setup(t => t.GetSpecRepoRootPath(It.IsAny<string>()))
+            .Returns<string>(path => string.IsNullOrEmpty(path) ? string.Empty : path);
 
         var svc = languageService ?? new ConfigurableLanguageService();
         var tsp = tspHelper ?? new MockTspHelper();

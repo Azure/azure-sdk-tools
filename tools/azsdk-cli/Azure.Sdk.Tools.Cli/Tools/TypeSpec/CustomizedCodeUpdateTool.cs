@@ -348,7 +348,26 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         if (tspFixSucceeded > 0)
         {
             logger.LogDebug("Regenerating {packagePath}", packagePath);
-            var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: tspProjectPath, isCli: false, ct: ct);
+            
+            // Resolve the spec repo root path for tsp-client using TypeSpecHelper
+            string? specRepoPath = null;
+            if (!string.IsNullOrWhiteSpace(tspProjectPath))
+            {
+                try
+                {
+                    specRepoPath = typeSpecHelper.GetSpecRepoRootPath(tspProjectPath);
+                    if (!string.IsNullOrEmpty(specRepoPath))
+                    {
+                        logger.LogDebug("Resolved spec repo root via TypeSpecHelper: {specRepoPath}", specRepoPath);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogDebug(ex, "Could not resolve spec repo root, will use remote repo from tsp-location.yaml");
+                }
+            }
+            
+            var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: specRepoPath, isCli: false, ct: ct);
             if (!regenResult.IsSuccessful)
             {
                 logger.LogWarning("Regeneration failed: {Error}", regenResult.ResponseError);
@@ -514,7 +533,22 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         if (languageService.Language == SdkLanguage.Java)
         {
             logger.LogInformation("Regenerating code after patches (Java)...");
-            var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: tspProjectPath, isCli: false, ct: ct);
+            
+            // Resolve the spec repo root path for tsp-client using TypeSpecHelper
+            string? specRepoPath = null;
+            if (!string.IsNullOrWhiteSpace(tspProjectPath))
+            {
+                try
+                {
+                    specRepoPath = typeSpecHelper.GetSpecRepoRootPath(tspProjectPath);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogDebug(ex, "Could not resolve spec repo root for Java regen, will use remote repo");
+                }
+            }
+            
+            var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: specRepoPath, isCli: false, ct: ct);
             if (!regenResult.IsSuccessful)
             {
                 logger.LogWarning("Regeneration failed: {Error}", regenResult.ResponseError);

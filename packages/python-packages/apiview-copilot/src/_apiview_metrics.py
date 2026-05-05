@@ -684,18 +684,13 @@ def build_duplicate_lineid_reports(
         revisions_container.query_items(query=query, parameters=params, enable_cross_partition_query=True)
     )
 
-    # Bucket revisions by month in a single pass (O(revisions + months))
+    # Bucket revisions by month in a single pass O(revisions)
     bucketed: dict[str, list[dict]] = {f"{start.year}-{start.month:02d}": [] for start, _ in month_ranges}
-    month_bounds = [
-        (to_iso8601(start.isoformat()), to_iso8601(end.isoformat(), end_of_day=True), f"{start.year}-{start.month:02d}")
-        for start, end in month_ranges
-    ]
     for rev in all_revisions:
         created_on = rev.get("CreatedOn", "")
-        for m_start_iso, m_end_iso, label in month_bounds:
-            if m_start_iso <= created_on <= m_end_iso:
-                bucketed[label].append(rev)
-                break
+        label = created_on[:7]  # "YYYY-MM" slice from ISO8601
+        if label in bucketed:
+            bucketed[label].append(rev)
 
     omit_lower = {lang.lower() for lang in OMIT_LANGUAGES}
 
@@ -723,9 +718,10 @@ def build_duplicate_lineid_reports(
                 continue
             entry = by_language.setdefault(lang, {"clean": 0, "has_duplicates": 0, "unknown": 0, "total": 0})
             entry["total"] += 1
-            if "HasDuplicateLineIds" not in rev:
+            has_dup = rev.get("HasDuplicateLineIds")
+            if has_dup is None:
                 entry["unknown"] += 1
-            elif rev["HasDuplicateLineIds"]:
+            elif has_dup:
                 entry["has_duplicates"] += 1
             else:
                 entry["clean"] += 1

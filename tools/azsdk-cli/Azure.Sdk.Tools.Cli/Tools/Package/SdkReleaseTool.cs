@@ -165,10 +165,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 {
                     var templateParams = new Dictionary<string, string>();
 
-                    // The Java release pipeline supports per-package selection through
-                    // boolean parameters named release_<safeName>. Without this, manually
-                    // queued runs fail fast (see azure-sdk-for-java#48465). For all other
-                    // languages no template parameters are required.
+                    // Java pipelines require release_<safeName>=true to select a package (azure-sdk-for-java#48465).
                     if (SdkLanguageHelpers.GetSdkLanguage(language) == SdkLanguage.Java)
                     {
                         var safeName = GetJavaSafeName(packageName);
@@ -382,10 +379,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
         }
 
-        // Mirrors the convention used in azure-sdk-for-java ci.yml files where each artifact
-        // declares a `safeName` (lowercased package name with non-alphanumeric characters
-        // removed) that is exposed as a `release_<safeName>` boolean pipeline parameter.
-        // Example: "azure-storage-blob" -> "azurestorageblob".
+        // safeName matches azure-sdk-for-java ci.yml: lowercase, alphanumerics only (e.g. "azure-storage-blob" -> "azurestorageblob").
         public static string GetJavaSafeName(string packageName)
         {
             if (string.IsNullOrWhiteSpace(packageName))

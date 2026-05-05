@@ -35,7 +35,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Caches
             }
         }
 
-        public UserOrgVisibilityCache(string userOrgVisibilityBlobStorageUri)
+        public UserOrgVisibilityCache(string userOrgVisibilityBlobStorageUri = null)
         {
             if (!string.IsNullOrWhiteSpace(userOrgVisibilityBlobStorageUri))
             {

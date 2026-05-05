@@ -1,0 +1,14 @@
+{
+  "name": "azure-sdk-tools",
+  "description": "Azure SDK Tools plugin - for Azure SDK development including generation, build, test, release planning, and pipeline management",
+  "version": "1.0.0",
+  "keywords": ["azure", "sdk", "mcp", "azure-sdk"],
+  "author": {
+    "name": "Azure SDK Team",
+    "email": "azsdk@microsoft.com"
+ },
+  "homepage": "https://aka.ms/azsdk/agent",
+  "license": "MIT",
+  "mcpServers": "./.mcp.json",
+  "skills": "./skills/"
+}

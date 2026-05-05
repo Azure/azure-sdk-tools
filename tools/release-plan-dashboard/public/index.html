@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Azure SDK Release Plan Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>[x-cloak] { display: none !important; }</style>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.15.12/dist/cdn.min.js"></script></script>
+  <script>
+    document.addEventListener('alpine:init', () => {
+      Alpine.store('app', {
+        activeTab: 'tab-release-plans',
+        loading: true,
+        loadingMessage: 'Loading release plans\u2026',
+        error: '',
+        showContent: false,
+        showStatsBar: false,
+        stats: { total: 0, inprogress: 0, partial: 0, new: 0, finished: 0, mgmt: 0, data: 0 },
+        prCount: '',
+        user: { name: '', isPM: false },
+        filters: { search: '', plane: '', month: '', prLang: '', prStatus: '' },
+        prFilterVisible: false,
+
+        // UI state — expansion/collapse keyed by ID (survives reactive re-renders)
+        ui: {
+          expandedPlans: {},    // { [planId]: true }
+          expandedPrs: {},      // { [prUrl]: true }
+          loadedDetails: {},    // { [planId]: true } — PR details fetched
+          collapsedSections: {},// { [sectionId]: true }
+          expandedProduct: {},  // { [planId]: true }
+          expandedSdk: {},      // { [planId]: true }
+        },
+
+        // Canonical data arrays — reactive so Alpine templates can iterate
+        plans: [],
+        prs: [],
+
+        // Computed sections — populated by render() for Alpine x-for iteration
+        sections: {
+          mgmtInprogress: [], mgmtPartial: [], mgmtNew: [], mgmtFinished: [],
+          dataInprogress: [], dataPartial: [], dataNew: [], dataFinished: [],
+        },
+        isFiltering: false,
+
+        setTab(tab) {
+          this.activeTab = tab;
+          this.prFilterVisible = (tab === 'tab-sdk-prs');
+        },
+
+        // Modal state
+        showModal: false,
+        modalTitle: '',
+        modalBody: '',
+        _defaultModalTitle: '',
+        _defaultModalBody: '',
+
+        openModal(title, body) {
+          this.modalTitle = title || this._defaultModalTitle;
+          this.modalBody = body || this._defaultModalBody;
+          this.showModal = true;
+        },
+        closeModal() {
+          this.showModal = false;
+        },
+        openCreatePlanGuide() {
+          this.openModal(this._defaultModalTitle, this._defaultModalBody);
+        },
+      });
+    });
+  </script>
+</head>
+<body>
+  <header>
+    <div class="header-left">
+      <h1>Azure SDK Release Plan Dashboard</h1>
+      <div class="header-meta">
+        <span class="short-link">Short link: <a href="https://aka.ms/azsdk/releaseplan-dashboard">https://aka.ms/azsdk/releaseplan-dashboard</a></span>
+        <span id="last-updated" class="meta-text"></span>
+      </div>
+    </div>
+    <div class="header-right" x-data>
+      <span id="user-info" class="user-info" x-show="$store.app.user.name">
+        <span class="user-name" x-text="$store.app.user.name"></span> <a href="/auth/logout" class="logout-link">Logout</a>
+      </span>
+      <label for="search-box" class="sr-only">Filter release plans</label>
+      <input type="text" id="search-box" placeholder="Filter by title, service, owner, package, spec PR#…" x-model.debounce.250ms="$store.app.filters.search" aria-label="Filter release plans" />
+    </div>
+  </header>
+
+  <div class="tab-bar" x-data>
+    <button class="tab-btn" :class="{ active: $store.app.activeTab === 'tab-release-plans' }" @click="$store.app.setTab('tab-release-plans')">Release Plans</button>
+    <button class="tab-btn" :class="{ active: $store.app.activeTab === 'tab-sdk-prs' }" @click="$store.app.setTab('tab-sdk-prs')">Review Required SDK Pull Requests</button>
+    <button class="tab-btn" :class="{ active: $store.app.activeTab === 'tab-pm-view' }" @click="$store.app.setTab('tab-pm-view')" x-show="$store.app.user.isPM" x-cloak>Attention Required</button>
+    <button id="btn-create-plan" class="btn-create-plan" title="How to create a release plan?">+ Create Release Plan</button>
+    <div class="tab-bar-spacer"></div>
+    <div id="pr-tab-filters" class="tab-bar-filters" x-show="$store.app.prFilterVisible" x-cloak>
+      <select id="pr-filter-lang" x-model="$store.app.filters.prLang">
+        <option value="">All Languages</option>
+        <option value=".NET">.NET</option>
+        <option value="Java">Java</option>
+        <option value="JavaScript">JavaScript</option>
+        <option value="Python">Python</option>
+        <option value="Go">Go</option>
+      </select>
+      <select id="pr-filter-status" x-model="$store.app.filters.prStatus">
+        <option value="">All Statuses</option>
+        <option value="open">Open</option>
+        <option value="draft">Draft</option>
+      </select>
+      <span id="pr-count" class="pr-count-label" x-data x-text="$store.app.prCount" x-cloak></span>
+    </div>
+    <select id="global-plane-filter" class="global-plane-filter" x-model="$store.app.filters.plane">
+      <option value="">All Planes</option>
+      <option value="mgmt">Management Plane</option>
+      <option value="data">Data Plane</option>
+    </select>
+    <select id="global-month-filter" class="global-month-filter" x-model="$store.app.filters.month">
+      <option value="">All Months</option>
+    </select>
+  </div>
+
+  <!-- Create Release Plan Guide Modal -->
+  <div id="create-plan-modal" class="modal-overlay" x-data x-show="$store.app.showModal" x-cloak @click.self="$store.app.closeModal()" @keydown.escape.window="$store.app.closeModal()">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 x-html="$store.app.modalTitle"></h2>
+        <button class="modal-close" @click="$store.app.closeModal()">&times;</button>
+      </div>
+      <div class="modal-body" x-html="$store.app.modalBody"></div>
+    </div>
+  </div>
+
+  <div id="tab-release-plans" class="tab-content" x-data :class="{ active: $store.app.activeTab === 'tab-release-plans' }">
+
+  <div id="stats-bar" class="stats-bar" x-data x-show="$store.app.showStatsBar" x-cloak>
+    <div class="stat"><span id="stat-total" class="stat-value" x-data x-text="$store.app.stats.total">0</span><span class="stat-label">Total</span></div>
+    <div class="stat"><span id="stat-inprogress" class="stat-value" x-data x-text="$store.app.stats.inprogress">0</span><span class="stat-label">In Progress</span></div>
+    <div class="stat"><span id="stat-partial" class="stat-value" x-data x-text="$store.app.stats.partial">0</span><span class="stat-label">Partially Released</span></div>
+    <div class="stat"><span id="stat-new" class="stat-value" x-data x-text="$store.app.stats.new">0</span><span class="stat-label">New / Not Started</span></div>
+    <div class="stat"><span id="stat-finished" class="stat-value" x-data x-text="$store.app.stats.finished">0</span><span class="stat-label">Finished in last 2 months</span></div>
+  </div>
+
+  <div id="loading" class="loading" x-data x-show="$store.app.loading" x-cloak>
+    <div class="spinner"></div>
+    <p x-text="$store.app.loadingMessage">Loading release plans&hellip;</p>
+  </div>
+
+  <div id="error-banner" class="error-banner" x-data x-show="$store.app.error" x-text="$store.app.error" x-cloak></div>
+
+  <main id="content" x-data x-show="$store.app.showContent" x-cloak>
+    <div class="plane-columns">
+      <!-- Management Plane -->
+      <div class="plane-column" id="plane-col-mgmt">
+        <h2 class="plane-heading plane-heading-mgmt">Management Plane <span id="stat-mgmt" class="plane-total" x-data x-text="'(' + $store.app.stats.mgmt + ')'" x-cloak></span></h2>
+
+        <section id="section-mgmt-inprogress" class="plan-section" x-data x-show="!($store.app.isFiltering && !$store.app.sections.mgmtInprogress.length)">
+          <h3 class="section-header" data-target="list-mgmt-inprogress">
+            <span class="caret">&#9660;</span> In Progress <span class="section-count" x-text="'(' + $store.app.sections.mgmtInprogress.length + ')'"></span>
+          </h3>
+          <div id="list-mgmt-inprogress" class="plan-list">
+            <template x-for="plan in $store.app.sections.mgmtInprogress" :key="plan.id">
+              <div x-html="window.dashHelpers.cardHTML(plan)"></div>
+            </template>
+            <p x-show="!$store.app.sections.mgmtInprogress.length" style="padding:8px;color:#605e5c;font-size:.88rem;">No items.</p>
+          </div>
+        </section>
+
+        <section id="section-mgmt-partial" class="plan-section" x-data x-show="!($store.app.isFiltering && !$store.app.sections.mgmtPartial.length)">
+          <h3 class="section-header" data-target="list-mgmt-partial">
+            <span class="caret">&#9660;</span> Partially Released <span class="section-count" x-text="'(' + $store.app.sections.mgmtPartial.length + ')'"></span>
+          </h3>
+          <div id="list-mgmt-partial" class="plan-list">
+            <template x-for="plan in $store.app.sections.mgmtPartial" :key="plan.id">
+              <div x-html="window.dashHelpers.cardHTML(plan)"></div>
+            </template>
+            <p x-show="!$store.app.sections.mgmtPartial.length" style="padding:8px;color:#605e5c;font-size:.88rem;">No items.</p>
+          </div>
+        </section>
+
+        <section id="section-mgmt-new" class="plan-section" x-data x-show="!($store.app.isFiltering && !$store.app.sections.mgmtNew.length)">
+          <h3 class="section-header" data-target="list-mgmt-new">
+            <span class="caret">&#9660;</span> New / Not Started <span class="section-count" x-text="'(' + $store.app.sections.mgmtNew.length + ')'"></span>
+          </h3>
+          <div id="list-mgmt-new" class="plan-list">
+            <template x-for="plan in $store.app.sections.mgmtNew" :key="plan.id">
+              <div x-html="window.dashHelpers.cardHTML(plan)"></div>
+            </template>
+            <p x-show="!$store.app.sections.mgmtNew.length" style="padding:8px;color:#605e5c;font-size:.88rem;">No items.</p>
+          </div>
+        </section>
+
+        <section id="section-mgmt-finished" class="plan-section" x-data :class="{ collapsed: !$store.app.sections.mgmtFinished.length }" x-show="!($store.app.isFiltering && !$store.app.sections.mgmtFinished.length)">
+          <h3 class="section-header" data-target="list-mgmt-finished">
+            <span class="caret">&#9654;</span> Finished in last 2 months <span class="section-count" x-text="'(' + $store.app.sections.mgmtFinished.length + ')'"></span>
+          </h3>
+          <div id="list-mgmt-finished" class="plan-list" hidden>
+            <template x-for="plan in $store.app.sections.mgmtFinished" :key="plan.id">
+              <div x-html="window.dashHelpers.cardHTML(plan)"></div>
+            </template>
+            <p x-show="!$store.app.sections.mgmtFinished.length" style="padding:8px;color:#605e5c;font-size:.88rem;">No items.</p>
+          </div>
+        </section>
+      </div>
+
+      <!-- Data Plane -->
+      <div class="plane-column" id="plane-col-data">
+        <h2 class="plane-heading plane-heading-data">Data Plane <span id="stat-data" class="plane-total" x-data x-text="'(' + $store.app.stats.data + ')'" x-cloak></span></h2>
+
+        <section id="section-data-inprogress" class="plan-section" x-data x-show="!($store.app.isFiltering && !$store.app.sections.dataInprogress.length)">
+          <h3 class="section-header" data-target="list-data-inprogress">
+            <span class="caret">&#9660;</span> In Progress <span class="section-count" x-text="'(' + $store.app.sections.dataInprogress.length + ')'"></span>
+          </h3>
+          <div id="list-data-inprogress" class="plan-list">
+            <template x-for="plan in $store.app.sections.dataInprogress" :key="plan.id">
+              <div x-html="window.dashHelpers.cardHTML(plan)"></div>
+            </template>
+            <p x-show="!$store.app.sections.dataInprogress.length" style="padding:8px;color:#605e5c;font-size:.88rem;">No items.</p>
+          </div>
+        </section>
+
+        <section id="section-data-partial" class="plan-section" x-data x-show="!($store.app.isFiltering && !$store.app.sections.dataPartial.length)">
+          <h3 class="section-header" data-target="list-data-partial">
+            <span class="caret">&#9660;</span> Partially Released <span class="section-count" x-text="'(' + $store.app.sections.dataPartial.length + ')'"></span>
+          </h3>
+          <div id="list-data-partial" class="plan-list">
+            <template x-for="plan in $store.app.sections.dataPartial" :key="plan.id">
+              <div x-html="window.dashHelpers.cardHTML(plan)"></div>
+            </template>
+            <p x-show="!$store.app.sections.dataPartial.length" style="padding:8px;color:#605e5c;font-size:.88rem;">No items.</p>
+          </div>
+        </section>
+
+        <section id="section-data-new" class="plan-section" x-data x-show="!($store.app.isFiltering && !$store.app.sections.dataNew.length)">
+          <h3 class="section-header" data-target="list-data-new">
+            <span class="caret">&#9660;</span> New / Not Started <span class="section-count" x-text="'(' + $store.app.sections.dataNew.length + ')'"></span>
+          </h3>
+          <div id="list-data-new" class="plan-list">
+            <template x-for="plan in $store.app.sections.dataNew" :key="plan.id">
+              <div x-html="window.dashHelpers.cardHTML(plan)"></div>
+            </template>
+            <p x-show="!$store.app.sections.dataNew.length" style="padding:8px;color:#605e5c;font-size:.88rem;">No items.</p>
+          </div>
+        </section>
+
+        <section id="section-data-finished" class="plan-section" x-data :class="{ collapsed: !$store.app.sections.dataFinished.length }" x-show="!($store.app.isFiltering && !$store.app.sections.dataFinished.length)">
+          <h3 class="section-header" data-target="list-data-finished">
+            <span class="caret">&#9654;</span> Finished in last 2 months <span class="section-count" x-text="'(' + $store.app.sections.dataFinished.length + ')'"></span>
+          </h3>
+          <div id="list-data-finished" class="plan-list" hidden>
+            <template x-for="plan in $store.app.sections.dataFinished" :key="plan.id">
+              <div x-html="window.dashHelpers.cardHTML(plan)"></div>
+            </template>
+            <p x-show="!$store.app.sections.dataFinished.length" style="padding:8px;color:#605e5c;font-size:.88rem;">No items.</p>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  </div><!-- end tab-release-plans -->
+
+  <div id="tab-sdk-prs" class="tab-content" x-data :class="{ active: $store.app.activeTab === 'tab-sdk-prs' }">
+    <div id="pr-loading" class="loading" style="display:none;">
+      <div class="spinner"></div>
+      <p>Extracting pull requests&hellip;</p>
+    </div>
+    <div id="pr-list" class="pr-list"></div>
+  </div><!-- end tab-sdk-prs -->
+
+  <div id="tab-pm-view" class="tab-content" x-data :class="{ active: $store.app.activeTab === 'tab-pm-view' }">
+    <div class="pm-view-header">
+      <h2>PM View — Release Plan Health</h2>
+      <p class="pm-view-desc">Highlights release plans that need PM attention.</p>
+      <div class="pm-tip-box">
+        <strong>💡 How to close/abandon a release plan?</strong>
+        <p>Open <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">Copilot CLI</a> or VS Code Copilot Chat from <code>azure-rest-api-specs</code> or any Azure SDK language repo and run:</p>
+        <div class="guide-prompt"><code>Abandon release plan &lt;release plan number&gt;</code></div>
+      </div>
+    </div>
+
+    <div id="pm-loading" class="loading" style="display:none;">
+      <div class="spinner"></div>
+      <p>Analyzing release plans&hellip;</p>
+    </div>
+
+    <div id="pm-content">
+      <section id="section-pm-approaching" class="plan-section">
+        <h3 class="section-header" data-target="list-pm-approaching">
+          <span class="caret">&#9660;</span> 📅 Approaching SDK Release Target (This &amp; Next Month) <span class="section-count"></span>
+        </h3>
+        <div id="list-pm-approaching" class="plan-list"></div>
+      </section>
+
+      <section id="section-pm-pastdue" class="plan-section">
+        <h3 class="section-header" data-target="list-pm-pastdue">
+          <span class="caret">&#9660;</span> 🕐 Past Due Release Plans <span class="section-count"></span>
+        </h3>
+        <div id="list-pm-pastdue" class="plan-list"></div>
+      </section>
+
+      <section id="section-pm-inactive" class="plan-section">
+        <h3 class="section-header" data-target="list-pm-inactive">
+          <span class="caret">&#9660;</span> ⚠️ Stale Release Plans (No activity for 3+ months) <span class="section-count"></span>
+        </h3>
+        <div id="list-pm-inactive" class="plan-list"></div>
+      </section>
+
+      <section id="section-pm-tier1" class="plan-section">
+        <h3 class="section-header" data-target="list-pm-tier1">
+          <span class="caret">&#9660;</span> 🔴 Release Plans Without SDK for All Languages <span class="section-count"></span>
+        </h3>
+        <div id="list-pm-tier1" class="plan-list"></div>
+      </section>
+
+      <section id="section-pm-partial" class="plan-section">
+        <h3 class="section-header" data-target="list-pm-partial">
+          <span class="caret">&#9660;</span> 🟡 Partially Released <span class="section-count"></span>
+        </h3>
+        <div id="list-pm-partial" class="plan-list"></div>
+      </section>
+
+      <section id="section-pm-finished" class="plan-section">
+        <h3 class="section-header" data-target="list-pm-finished">
+          <span class="caret">&#9660;</span> ✅ Recently Finished (Last 2 Months) <span class="section-count"></span>
+        </h3>
+        <div id="list-pm-finished" class="plan-list"></div>
+      </section>
+    </div>
+  </div><!-- end tab-pm-view -->
+
+  <footer class="app-footer">
+    <span>Azure SDK Release Plan Dashboard v1.0.0-dev.1</span>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

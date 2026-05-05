@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using APIViewWeb.Helpers;
@@ -23,13 +24,31 @@ public class PermissionsCookieOrTokenControllerTests
     #region GetApproversForLanguage Tests
 
     [Fact]
-    public async Task GetApproversForLanguage_ReturnsApprovers()
+    public async Task GetApproversForLanguage_ReturnsSortedApprovers()
     {
-        var approvers = new System.Collections.Generic.HashSet<string> { "user2", "user1" };
+        var approvers = new System.Collections.Generic.HashSet<string> { "zebra", "Alice", "bob" };
         _mockPermissionsManager.Setup(m => m.GetApproversForLanguageAsync("Python")).ReturnsAsync(approvers);
 
         var result = await _controller.GetApproversForLanguage("Python");
-        result.Result.Should().BeOfType<LeanJsonResult>();
+
+        var leanResult = Assert.IsType<LeanJsonResult>(result.Result);
+        var usernames = leanResult.Value.Should().BeAssignableTo<IEnumerable<string>>().Subject;
+        usernames.Should().BeInAscendingOrder(StringComparer.OrdinalIgnoreCase);
+        usernames.Should().BeEquivalentTo(new[] { "Alice", "bob", "zebra" }, o => o.WithStrictOrdering());
+    }
+
+    [Fact]
+    public async Task GetApproversForLanguage_FiltersBlankUsernames()
+    {
+        var approvers = new System.Collections.Generic.HashSet<string> { "user1", "", "  ", "user2" };
+        _mockPermissionsManager.Setup(m => m.GetApproversForLanguageAsync("Java")).ReturnsAsync(approvers);
+
+        var result = await _controller.GetApproversForLanguage("Java");
+
+        var leanResult = Assert.IsType<LeanJsonResult>(result.Result);
+        var usernames = leanResult.Value.Should().BeAssignableTo<IEnumerable<string>>().Subject;
+        usernames.Should().BeEquivalentTo(new[] { "user1", "user2" });
+        usernames.Should().NotContain(s => string.IsNullOrWhiteSpace(s));
     }
 
     #endregion
@@ -43,7 +62,10 @@ public class PermissionsCookieOrTokenControllerTests
         _mockPermissionsManager.Setup(m => m.GetAdminUsernamesAsync()).ReturnsAsync(admins);
 
         var result = await _controller.GetAdminUsernames();
-        result.Result.Should().BeOfType<LeanJsonResult>();
+
+        var leanResult = Assert.IsType<LeanJsonResult>(result.Result);
+        var usernames = leanResult.Value.Should().BeAssignableTo<IEnumerable<string>>().Subject;
+        usernames.Should().BeEquivalentTo(new[] { "admin1", "admin2" });
     }
 
     #endregion

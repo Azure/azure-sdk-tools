@@ -18,6 +18,7 @@ public class ConfigureCookieOrTokenPolicy : IConfigureOptions<AuthorizationOptio
         options.AddPolicy(Startup.RequireTokenOrCookieAuthenticationPolicy, policy =>
         {
             policy.RequireAuthenticatedUser();
+            policy.AddAuthenticationSchemes("CookieOrTokenAuth");
             policy.RequireAssertion(context =>
                 AuthenticationValidator.HasOrganizationOrAzureAuthenticationAccess(context.User,
                     _options.Value.RequiredOrganization));

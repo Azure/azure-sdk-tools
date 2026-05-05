@@ -1,12 +1,28 @@
 # Release History
 
-## 0.6.11 (Unreleased)
+## 0.6.13 (Unreleased)
+
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
+- Set `TriggerSource` when running SDK generation so PRs open as ready for review.
+
+## 0.6.12 (2026-05-04)
+
+### Other Changes
+
+- Resolve npm exec binaries directly from node_modules for NpmOptions when `.npmrc` is in user context
+
+## 0.6.11 (2026-05-01)
 
 ### Features Added
 
 - Added `AZSDK_COPILOT_CLI_PATH` environment variable to provide a custom path to the Copilot CLI executable (`copilot`/`copilot.exe`) for the GitHub Copilot SDK when the bundled binary is unavailable in standalone builds.
-
-### Breaking Changes
 
 ### Bugs Fixed
 
@@ -16,11 +32,13 @@
 ### Other Changes
 
 - Bumped `GitHub.Copilot.SDK` from 0.1.32 to 0.2.2.
+- Audit reads data from the cache to reduce GitHub API use
 
 ## 0.6.10 (2026-04-27)
 
 ### Features Added
 
+- Added Rust language support for `setup`, `generate`, `build`, and `pack` tools.
 - Added `azsdk_get_kpi_attestation_status` MCP tool to check KPI attestation status for a release plan given product ID and lifecycle.
 - Added CODEOWNERS Audit command (CLI only) that brings data model to a valid state.
 - Added optional package version argument for `azsdk release-plan update-release-status` CLI.

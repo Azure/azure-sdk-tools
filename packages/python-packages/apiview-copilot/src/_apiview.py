@@ -822,6 +822,96 @@ def get_created_revisions(
     return _tally_revisions(revisions, exclude_languages=exclude_languages)
 
 
+def get_cross_language_compliance(
+    start_date: str,
+    end_date: str,
+    *,
+    environment: str = "production",
+    exclude_languages: Optional[list] = None,
+) -> dict:
+    """Check cross-language metadata compliance for the latest revision of each review.
+
+    Queries the APIRevisions container for non-deleted revisions created within the
+    date window, groups by ReviewId, picks the latest revision per review, and checks
+    whether ``Files[0].CrossLanguagePackageId`` is populated (which is set from
+    ``CrossLanguageMetadata`` on the CodeFile when present).
+
+    Args:
+        start_date: Inclusive start date (YYYY-MM-DD) — filters revisions by CreatedOn.
+        end_date: Inclusive end date (YYYY-MM-DD).
+        environment: 'production' or 'staging'.
+        exclude_languages: Pretty language names to exclude.
+
+    Returns:
+        A dict with:
+            - by_language: {language: {"compliant": int, "non_compliant": int, "total": int, "pct": float}}
+            - totals: {"compliant": int, "non_compliant": int, "total": int, "pct": float}
+    """
+    exclude_set = {lang.lower() for lang in (exclude_languages or [])}
+    omit_lower = {"c++", "c", "typespec", "swagger", "xml"}
+
+    start_iso = to_iso8601(start_date)
+    end_iso = to_iso8601(end_date, end_of_day=True)
+
+    revisions_container = get_apiview_cosmos_client(container_name="APIRevisions", environment=environment)
+
+    # Query the latest non-deleted revision per review that was created in the window.
+    # We fetch the CrossLanguagePackageId from Files[0] which is populated from
+    # CrossLanguageMetadata when the parser provides it.
+    query = (
+        "SELECT c.ReviewId, c.Language, c.APIRevisionType, "
+        "c.Files[0].CrossLanguagePackageId AS CrossLanguagePackageId, c.CreatedOn "
+        "FROM c "
+        "WHERE (NOT IS_DEFINED(c.IsDeleted) OR c.IsDeleted = false) "
+        "AND c.CreatedOn >= @start AND c.CreatedOn <= @end"
+    )
+    params = [
+        {"name": "@start", "value": start_iso},
+        {"name": "@end", "value": end_iso},
+    ]
+
+    all_revisions = list(
+        revisions_container.query_items(query=query, parameters=params, enable_cross_partition_query=True)
+    )
+
+    # Group by ReviewId and keep only the latest revision per review
+    latest_by_review: dict[str, dict] = {}
+    for rev in all_revisions:
+        review_id = rev.get("ReviewId")
+        if not review_id:
+            continue
+        existing = latest_by_review.get(review_id)
+        if existing is None or rev.get("CreatedOn", "") > existing.get("CreatedOn", ""):
+            latest_by_review[review_id] = rev
+
+    by_language: dict[str, dict] = {}
+    totals = {"compliant": 0, "non_compliant": 0, "total": 0}
+
+    for rev in latest_by_review.values():
+        lang = get_language_pretty_name(rev.get("Language", "Unknown"))
+        if lang.lower() in exclude_set or lang.lower() in omit_lower:
+            continue
+
+        has_metadata = bool(rev.get("CrossLanguagePackageId"))
+
+        entry = by_language.setdefault(lang, {"compliant": 0, "non_compliant": 0, "total": 0})
+        entry["total"] += 1
+        totals["total"] += 1
+        if has_metadata:
+            entry["compliant"] += 1
+            totals["compliant"] += 1
+        else:
+            entry["non_compliant"] += 1
+            totals["non_compliant"] += 1
+
+    # Compute percentages
+    for entry in by_language.values():
+        entry["pct"] = round((entry["compliant"] / entry["total"]) * 100, 2) if entry["total"] else 0.0
+    totals["pct"] = round((totals["compliant"] / totals["total"]) * 100, 2) if totals["total"] else 0.0
+
+    return {"by_language": by_language, "totals": totals}
+
+
 # Application Insights resource coordinates for querying APIView page views.
 _APPINSIGHTS_SUBSCRIPTION_ID = "a18897a6-7e44-457d-9260-f2854c0aca42"
 _APPINSIGHTS_RESOURCE_IDS = {

@@ -49,6 +49,20 @@ from src._apiview import (
 from src._apiview_reviewer import SUPPORTED_LANGUAGES, ApiViewReview
 from src._database_manager import ContainerNames, DatabaseManager
 from src._garbage_collector import GarbageCollector
+from src._apiview_metrics import (
+    DEFAULT_OUTPUT_PATH as DEFAULT_VERSION_TRENDS_OUTPUT_PATH,
+)
+from src._apiview_metrics import (
+    DEFAULT_COMPLIANCE_OUTPUT_PATH,
+)
+from src._apiview_metrics import (
+    build_compliance_reports,
+    build_version_reports,
+    generate_compliance_chart,
+    generate_version_chart,
+    print_compliance_report,
+    print_version_report,
+)
 from src._comment_bucket_trends import (
     DEFAULT_OUTPUT_PATH as DEFAULT_COMMENT_BUCKET_OUTPUT_PATH,
     DEFAULT_GENERIC_OUTPUT_PATH,
@@ -63,6 +77,7 @@ from src._mention import handle_mention_request
 from src._metrics import get_metrics_report
 from src._models import APIViewComment
 from src._prompt_runner import run_prompt
+from src._report_issue import handle_report_issue_request
 from src._search_manager import SearchManager
 from src._settings import SettingsManager
 from src._thread_resolution import handle_thread_resolution_request
@@ -984,6 +999,59 @@ def review_summarize(language: str, target: str, base: str = None, remote: bool 
             )
 
         print(summary)
+
+
+def issue_report(
+    description: str,
+    review_link: str = None,
+    language: str = None,
+    comment_id: str = None,
+    remote: bool = False,
+):
+    """
+    File a GitHub issue from an APIView "Report Issue" interaction.
+
+    Calls the same shared core (``handle_report_issue_request``) whether
+    run locally or via ``--remote``, so both paths produce identical
+    issues. The LLM determines whether the issue is an APIView UI
+    problem or a parser problem; the server then derives the title
+    prefix and labels.
+    """
+    if remote:
+        settings = SettingsManager()
+        base_url = settings.get("WEBAPP_ENDPOINT")
+        api_endpoint = f"{base_url}/report-issue"
+        payload = {"description": description}
+        if review_link:
+            payload["reviewLink"] = review_link
+        if language:
+            payload["language"] = language
+        if comment_id:
+            payload["commentId"] = comment_id
+        try:
+            resp = requests.post(api_endpoint, json=payload, headers=_build_auth_header(), timeout=60)
+        except requests.RequestException as e:
+            raise CLIError(f"Failed to call /report-issue: {e}") from e
+        content_type = resp.headers.get("Content-Type", "")
+        if "application/json" in content_type:
+            try:
+                data = resp.json()
+            except ValueError:
+                data = resp.text
+        else:
+            data = resp.text
+        if resp.status_code == 200:
+            print(json.dumps(data, indent=2) if isinstance(data, (dict, list)) else data)
+        else:
+            raise CLIError(f"/report-issue failed: {resp.status_code} - {data}")
+    else:
+        result = handle_report_issue_request(
+            description=description,
+            review_link=review_link,
+            language=language,
+            comment_id=comment_id,
+        )
+        print(json.dumps(result, indent=2))
 
 
 def handle_agent_chat(
@@ -1968,6 +2036,63 @@ def report_comment_bucket_trends(
     )
 
 
+def report_apiview_metrics(
+    months: int = 6,
+    languages: Optional[list[str]] = None,
+    environment: str = "production",
+    end_date: Optional[str] = None,
+    chart: bool = False,
+    summary: bool = False,
+) -> None:
+    """Generate APIView platform metrics (versioned-revision tracking and cross-language compliance)."""
+    parsed_end_date = None
+    if end_date:
+        try:
+            parsed_end_date = date.fromisoformat(end_date)
+        except ValueError as exc:
+            raise CLIError("Invalid --end-date value. Use YYYY-MM-DD format.") from exc
+
+    normalized_languages = None
+    if languages:
+        normalized_languages = [resolve_language(language)[1] for language in languages]
+
+    version_reports = build_version_reports(
+        languages=normalized_languages,
+        months=months,
+        end_date=parsed_end_date,
+        environment=environment,
+    )
+
+    compliance_reports = build_compliance_reports(
+        languages=normalized_languages,
+        months=months,
+        end_date=parsed_end_date,
+        environment=environment,
+    )
+
+    version_chart_path = None
+    compliance_chart_path = None
+    if chart:
+        version_chart_path = generate_version_chart(
+            version_reports,
+            output_path=DEFAULT_VERSION_TRENDS_OUTPUT_PATH,
+            environment=environment,
+        )
+        compliance_chart_path = generate_compliance_chart(
+            compliance_reports,
+            output_path=DEFAULT_COMPLIANCE_OUTPUT_PATH,
+            environment=environment,
+        )
+
+    output = {"versions": version_reports, "compliance": compliance_reports}
+    sys.stdout.buffer.write(json.dumps(output, indent=2, ensure_ascii=False, default=str).encode("utf-8"))
+    sys.stdout.buffer.write(b"\n")
+
+    if summary:
+        print_version_report(version_reports, version_chart_path, environment=environment, file=sys.stderr)
+        print_compliance_report(compliance_reports, compliance_chart_path, environment=environment, file=sys.stderr)
+
+
 def grant_permissions(assignee_id: str = None):
     """
     Grants permissions for running AVC locally.
@@ -2529,6 +2654,7 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("mention", "handle_agent_mention")
             g.command("chat", "handle_agent_chat")
             g.command("resolve-thread", "handle_agent_thread_resolution")
+            g.command("report-issue", "issue_report")
         with CommandGroup(self, "test", "__main__#{}") as g:
             g.command("eval", "run_evals")
             g.command("extract-section", "extract_document_section")
@@ -2558,6 +2684,7 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("feedback", "get_feedback")
             g.command("memory", "get_memories")
             g.command("architect-comments", "get_architect_comments")
+            g.command("apiview-metrics", "report_apiview_metrics")
         return OrderedDict(self.command_table)
 
     # ARGUMENT REGISTRATION
@@ -2801,6 +2928,27 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--source-comment-id"],
                 default=None,
             )
+        with ArgumentsContext(self, "agent report-issue") as ac:
+            ac.argument(
+                "description",
+                type=str,
+                help="The user's description of the problem.",
+                options_list=["--description"],
+            )
+            ac.argument(
+                "review_link",
+                type=str,
+                help="Optional URL to the APIView review the user is on.",
+                options_list=["--review-link"],
+                default=None,
+            )
+            ac.argument(
+                "comment_id",
+                type=str,
+                help="Optional APIView comment id. When provided, the server fetches the comment context (text, code snippet, language, element id, source) automatically.",
+                options_list=["--comment-id"],
+                default=None,
+            )
         with ArgumentsContext(self, "db") as ac:
             ac.argument(
                 "container_name",
@@ -3037,6 +3185,41 @@ class CliCommandsLoader(CLICommandsLoader):
                 action="store_true",
                 options_list=["--neutral"],
                 help="Include neutral AI comments as a separate bucket.",
+            )
+        with ArgumentsContext(self, "report apiview-metrics") as ac:
+            ac.argument(
+                "months",
+                type=int,
+                options_list=["--months"],
+                default=6,
+                help="Number of calendar months to look back from the end date. Defaults to 6.",
+            )
+            ac.argument(
+                "end_date",
+                type=str,
+                options_list=["--end-date", "-e"],
+                default=None,
+                help="Inclusive query end date in YYYY-MM-DD format. Defaults to today.",
+            )
+            ac.argument(
+                "languages",
+                type=str,
+                nargs="+",
+                options_list=["--languages"],
+                default=None,
+                help="Languages to include. Defaults to Python, C#, Java, JavaScript, and Go.",
+            )
+            ac.argument(
+                "chart",
+                action="store_true",
+                options_list=["--chart"],
+                help="Generate a PNG trend chart and save to output/charts/.",
+            )
+            ac.argument(
+                "summary",
+                action="store_true",
+                options_list=["--summary"],
+                help="Print human-readable summary tables to stderr after the JSON output.",
             )
         with ArgumentsContext(self, "ops check") as ac:
             ac.argument(

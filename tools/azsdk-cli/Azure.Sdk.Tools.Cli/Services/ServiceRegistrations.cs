@@ -142,7 +142,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 return new CopilotClient(options);
             });
             services.AddSingleton<ICopilotClientWrapper, CopilotClientWrapper>();
-            services.AddScoped<ICopilotAgentRunner, CopilotAgentRunner>();
+            services.AddScoped<ICopilotAgentRunner, CompositeAgentRunner>();
 
             // TypeSpec Customization Service (uses Copilot SDK)
             services.AddScoped<ITypeSpecCustomizationService, TypeSpecCustomizationService>();

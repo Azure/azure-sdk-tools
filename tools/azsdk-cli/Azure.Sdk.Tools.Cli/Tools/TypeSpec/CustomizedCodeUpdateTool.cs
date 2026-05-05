@@ -691,8 +691,9 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             if (!string.IsNullOrEmpty(resolved))
             {
                 logger.LogDebug("Resolved spec repo root via TypeSpecHelper: {SpecRepoPath}", resolved);
+                return resolved;
             }
-            return string.IsNullOrEmpty(resolved) ? null : resolved;
+            return null;
         }
         catch (Exception ex)
         {

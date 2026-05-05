@@ -1,7 +1,10 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using APIView;
 using APIView.Identity;
+using APIView.Model.V2;
 using APIViewWeb;
 using APIViewWeb.Hubs;
 using APIViewWeb.LeanControllers;
@@ -396,6 +399,140 @@ namespace APIViewUnitTests
             var objectResult = result as ObjectResult;
             objectResult!.StatusCode.Should().Be(403);
             objectResult.Value.Should().Be("You are not authorized to delete this review.");
+        }
+
+        [Fact]
+        public async Task GetReviewContentAsync_WhenHasDuplicateLineIdsIsNull_SelfHealsAndPersists()
+        {
+            // Arrange
+            string reviewId = "test-review-id";
+            string revisionId = "test-revision-id";
+            string fileId = "test-file-id";
+
+            var activeRevision = new APIRevisionListItemModel
+            {
+                Id = revisionId,
+                Language = "C#",
+                HasDuplicateLineIds = null,
+                Files = new List<APICodeFileModel>
+                {
+                    new() { FileId = fileId, ParserStyle = ParserStyle.Tree }
+                }
+            };
+
+            var codeFile = new CodeFile
+            {
+                ReviewLines = new List<APIView.Model.V2.ReviewLine>
+                {
+                    new() { LineId = "line1" },
+                    new() { LineId = "line2" }
+                },
+                ContentGenerationInProgress = false
+            };
+
+            var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
+            {
+                new(ClaimConstants.Login, "testuser"),
+                new(System.Security.Claims.ClaimTypes.Name, "Test User")
+            }, "mock"));
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = user }
+            };
+
+            _mockApiRevisionsManager
+                .Setup(m => m.GetAPIRevisionAsync(user, revisionId))
+                .ReturnsAsync(activeRevision);
+
+            _mockCodeFileRepository
+                .Setup(m => m.GetCodeFileFromStorageAsync(revisionId, fileId))
+                .ReturnsAsync(codeFile);
+
+            _mockCommentsManager
+                .Setup(m => m.GetCommentsAsync(reviewId, false, CommentType.APIRevision, false))
+                .ReturnsAsync(new List<CommentItemModel>());
+
+            _mockCommentsManager
+                .Setup(m => m.SyncDiagnosticCommentsAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<CodeDiagnostic[]>(), It.IsAny<IEnumerable<CommentItemModel>>()))
+                .ReturnsAsync(new List<CommentItemModel>());
+
+            _mockApiRevisionsManager
+                .Setup(m => m.UpdateAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()))
+                .Returns(Task.CompletedTask);
+
+            // Act
+            await _controller.GetReviewContentAsync(reviewId, activeApiRevisionId: revisionId);
+
+            // Assert - verify self-healing persisted the revision
+            _mockApiRevisionsManager.Verify(
+                m => m.UpdateAPIRevisionAsync(It.Is<APIRevisionListItemModel>(r => r.HasDuplicateLineIds == false)),
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task GetReviewContentAsync_WhenHasDuplicateLineIdsIsNotNull_DoesNotUpdate()
+        {
+            // Arrange
+            string reviewId = "test-review-id";
+            string revisionId = "test-revision-id";
+            string fileId = "test-file-id";
+
+            var activeRevision = new APIRevisionListItemModel
+            {
+                Id = revisionId,
+                Language = "C#",
+                HasDuplicateLineIds = false,
+                Files = new List<APICodeFileModel>
+                {
+                    new() { FileId = fileId, ParserStyle = ParserStyle.Tree }
+                }
+            };
+
+            var codeFile = new CodeFile
+            {
+                ReviewLines = new List<APIView.Model.V2.ReviewLine>
+                {
+                    new() { LineId = "line1" },
+                    new() { LineId = "line2" }
+                },
+                ContentGenerationInProgress = false
+            };
+
+            var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
+            {
+                new(ClaimConstants.Login, "testuser"),
+                new(System.Security.Claims.ClaimTypes.Name, "Test User")
+            }, "mock"));
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = user }
+            };
+
+            _mockApiRevisionsManager
+                .Setup(m => m.GetAPIRevisionAsync(user, revisionId))
+                .ReturnsAsync(activeRevision);
+
+            _mockCodeFileRepository
+                .Setup(m => m.GetCodeFileFromStorageAsync(revisionId, fileId))
+                .ReturnsAsync(codeFile);
+
+            _mockCommentsManager
+                .Setup(m => m.GetCommentsAsync(reviewId, false, CommentType.APIRevision, false))
+                .ReturnsAsync(new List<CommentItemModel>());
+
+            _mockCommentsManager
+                .Setup(m => m.SyncDiagnosticCommentsAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<CodeDiagnostic[]>(), It.IsAny<IEnumerable<CommentItemModel>>()))
+                .ReturnsAsync(new List<CommentItemModel>());
+
+            // Act
+            await _controller.GetReviewContentAsync(reviewId, activeApiRevisionId: revisionId);
+
+            // Assert - UpdateAPIRevisionAsync should NOT be called since value is already set
+            _mockApiRevisionsManager.Verify(
+                m => m.UpdateAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()),
+                Times.Never);
         }
     }
 }

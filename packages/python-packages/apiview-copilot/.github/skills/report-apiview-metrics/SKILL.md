@@ -21,7 +21,7 @@ A combined report with three metric buckets:
 |--------|------------------|
 | **versions** | % of revisions with a valid `PackageVersion`, broken out by language and revision type (Automatic, Manual, PullRequest) |
 | **compliance** | % of reviews whose latest revision includes `CrossLanguagePackageId` (from `CrossLanguageMetadata`) |
-| **duplicate_line_ids** | % of reviews whose latest revision does NOT have `HasDuplicateLineIds=true` (clean of duplicate line IDs) |
+| **duplicate_line_ids** | % of evaluated reviews whose latest revision does NOT have `HasDuplicateLineIds=true`. Revisions missing the field are tracked as "unknown" and excluded from the percentage. |
 
 Output is JSON with top-level `"versions"`, `"compliance"`, and `"duplicate_line_ids"` keys. With `--summary`, human-readable tables are printed to stderr.
 

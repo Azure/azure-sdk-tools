@@ -259,6 +259,13 @@ namespace APIViewWeb.LeanControllers
                     return new LeanJsonResult("Content generation in progress", StatusCodes.Status202Accepted, languageServices.ReviewGenerationPipelineUrl);
                 }
 
+                // Self-heal HasDuplicateLineIds for older revisions that were never evaluated
+                if (activeAPIRevision.HasDuplicateLineIds == null)
+                {
+                    activeAPIRevision.HasDuplicateLineIds = CodeFileManager.HasDuplicateLineIds(activeRevisionReviewCodeFile);
+                    await _apiRevisionsManager.UpdateAPIRevisionAsync(activeAPIRevision);
+                }
+
                 IEnumerable<CommentItemModel> allCommentsFromDb = await _commentsManager.GetCommentsAsync(reviewId, commentType: CommentType.APIRevision);
                 List<CommentItemModel> diagnosticComments = await _commentsManager.SyncDiagnosticCommentsAsync(
                     activeAPIRevision,

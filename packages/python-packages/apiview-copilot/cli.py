@@ -50,15 +50,9 @@ from src._apiview_reviewer import SUPPORTED_LANGUAGES, ApiViewReview
 from src._database_manager import ContainerNames, DatabaseManager
 from src._garbage_collector import GarbageCollector
 from src._apiview_metrics import (
-    DEFAULT_OUTPUT_PATH as DEFAULT_VERSION_TRENDS_OUTPUT_PATH,
-)
-from src._apiview_metrics import (
     DEFAULT_COMPLIANCE_OUTPUT_PATH,
-)
-from src._apiview_metrics import (
     DEFAULT_DUPLICATE_LINEIDS_OUTPUT_PATH,
-)
-from src._apiview_metrics import (
+    DEFAULT_OUTPUT_PATH as DEFAULT_VERSION_TRENDS_OUTPUT_PATH,
     build_compliance_reports,
     build_duplicate_lineid_reports,
     build_version_reports,

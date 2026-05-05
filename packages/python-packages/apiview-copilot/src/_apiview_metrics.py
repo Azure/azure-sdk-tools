@@ -636,6 +636,7 @@ class MonthlyDuplicateLineIdPoint:
     end_date: str
     clean: int = 0
     has_duplicates: int = 0
+    unknown: int = 0
     total: int = 0
     clean_pct: float = 0.0
 
@@ -683,18 +684,24 @@ def build_duplicate_lineid_reports(
         revisions_container.query_items(query=query, parameters=params, enable_cross_partition_query=True)
     )
 
+    # Sort once and pre-bucket by month to avoid re-scanning the full list each iteration
+    all_revisions.sort(key=lambda r: r.get("CreatedOn", ""))
+    bucketed: dict[str, list[dict]] = {}
+    for start, end in month_ranges:
+        m_start_iso = to_iso8601(start.isoformat())
+        m_end_iso = to_iso8601(end.isoformat(), end_of_day=True)
+        label = f"{start.year}-{start.month:02d}"
+        bucketed[label] = [
+            rev for rev in all_revisions if m_start_iso <= rev.get("CreatedOn", "") <= m_end_iso
+        ]
+
     omit_lower = {lang.lower() for lang in OMIT_LANGUAGES}
 
     reports: dict[str, list[dict]] = {lang: [] for lang in selected_languages}
     for start, end in month_ranges:
         label = f"{start.year}-{start.month:02d}"
-        month_start_iso = to_iso8601(start.isoformat())
-        month_end_iso = to_iso8601(end.isoformat(), end_of_day=True)
 
-        # Filter revisions to this month's window
-        month_revisions = [
-            rev for rev in all_revisions if month_start_iso <= rev.get("CreatedOn", "") <= month_end_iso
-        ]
+        month_revisions = bucketed[label]
 
         # Group by ReviewId and keep only the latest revision per review
         latest_by_review: dict[str, dict] = {}
@@ -712,25 +719,30 @@ def build_duplicate_lineid_reports(
             lang = get_language_pretty_name(rev.get("Language", "Unknown"))
             if lang.lower() in omit_lower:
                 continue
-            has_dupes = bool(rev.get("HasDuplicateLineIds"))
-            entry = by_language.setdefault(lang, {"clean": 0, "has_duplicates": 0, "total": 0})
+            entry = by_language.setdefault(lang, {"clean": 0, "has_duplicates": 0, "unknown": 0, "total": 0})
             entry["total"] += 1
-            if has_dupes:
+            if "HasDuplicateLineIds" not in rev:
+                entry["unknown"] += 1
+            elif rev["HasDuplicateLineIds"]:
                 entry["has_duplicates"] += 1
             else:
                 entry["clean"] += 1
 
         for entry in by_language.values():
-            entry["clean_pct"] = round((entry["clean"] / entry["total"]) * 100, 2) if entry["total"] else 0.0
+            evaluated = entry["clean"] + entry["has_duplicates"]
+            entry["clean_pct"] = round((entry["clean"] / evaluated) * 100, 2) if evaluated else 0.0
 
         for language in selected_languages:
-            entry = by_language.get(language, {"clean": 0, "has_duplicates": 0, "total": 0, "clean_pct": 0.0})
+            entry = by_language.get(
+                language, {"clean": 0, "has_duplicates": 0, "unknown": 0, "total": 0, "clean_pct": 0.0}
+            )
             point = MonthlyDuplicateLineIdPoint(
                 label=label,
                 start_date=start.isoformat(),
                 end_date=end.isoformat(),
                 clean=entry["clean"],
                 has_duplicates=entry["has_duplicates"],
+                unknown=entry["unknown"],
                 total=entry["total"],
                 clean_pct=entry["clean_pct"],
             )
@@ -782,9 +794,10 @@ def generate_duplicate_lineid_chart(
 
         # Annotate each bar with count
         for bar_pos, item in zip(x_positions, report):
-            if item["total"] > 0:
+            evaluated = item["clean"] + item["has_duplicates"]
+            if evaluated > 0:
                 axis.annotate(
-                    f"{item['clean']}/{item['total']}",
+                    f"{item['clean']}/{evaluated}",
                     (bar_pos, item["clean_pct"]),
                     textcoords="offset points",
                     xytext=(0, 4),
@@ -828,7 +841,7 @@ def print_duplicate_lineid_report(
 
     for language, report in reports.items():
         print(f"\n{language}", file=file)
-        header = ["Month", "Clean", "Has Dupes", "Total", "Clean %"]
+        header = ["Month", "Clean", "Has Dupes", "Unknown", "Total", "Clean %"]
         print("  ".join(f"{col:>14}" for col in header), file=file)
         print("  ".join(["----------"] * len(header)), file=file)
 
@@ -837,6 +850,7 @@ def print_duplicate_lineid_report(
                 f"{item['label']:>14}",
                 f"{item['clean']:>14}",
                 f"{item['has_duplicates']:>14}",
+                f"{item['unknown']:>14}",
                 f"{item['total']:>14}",
                 f"{item['clean_pct']:>14.1f}",
             ]

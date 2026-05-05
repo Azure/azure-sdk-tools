@@ -299,6 +299,14 @@ namespace APIViewWeb.Helpers
             var comments = await commentManager.GetReviewCommentsAsync(review.Id);
             var activeRevisionRenderableCodeFile = await codeFileRepository.GetCodeFileAsync(activeRevision.Id, activeRevision.Files[0], activeRevision.Language);
             var activeRevisionReviewCodeFile = activeRevisionRenderableCodeFile.CodeFile;
+
+            // Self-heal HasDuplicateLineIds for older revisions that were never evaluated
+            if (activeRevision.HasDuplicateLineIds == null)
+            {
+                activeRevision.HasDuplicateLineIds = CodeFileManager.HasDuplicateLineIds(activeRevisionReviewCodeFile);
+                await reviewRevisionsManager.UpdateAPIRevisionAsync(activeRevision);
+            }
+
             var fileDiagnostics = activeRevisionReviewCodeFile.Diagnostics ?? Array.Empty<CodeDiagnostic>();
             var activeRevisionHtmlLines = activeRevisionRenderableCodeFile.Render(showDocumentation: showDocumentation);
             var codeLines = new CodeLineModel[0];

@@ -29,7 +29,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
                 devOpsService,
                 mockApiViewService.Object,
                 logger,
-                new InputSanitizer());
+                new InputSanitizer(),
+                new Mock<IEnvironmentHelper>().Object);
         }
 
         [Test]

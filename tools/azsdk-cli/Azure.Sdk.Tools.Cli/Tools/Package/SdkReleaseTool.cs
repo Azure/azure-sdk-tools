@@ -19,7 +19,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         IDevOpsService devopsService,
         IAPIViewService apiViewService,
         ILogger<SdkReleaseTool> logger,
-        IInputSanitizer inputSanitizer) : MCPTool
+        IInputSanitizer inputSanitizer,
+        IEnvironmentHelper environmentHelper) : MCPTool
     {
         private const string ReleaseSdkToolName = "azsdk_release_sdk";
         private const string Pipeline_Success_Status = "Succeeded";
@@ -130,12 +131,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
                 // Check if the package is ready for release
                 var releaseReadiness = await CheckPackageReleaseReadinessAsync(packageName, language, ct);
+                var isAgentTesting = environmentHelper.GetBooleanVariable("AZSDKTOOLS_AGENT_TESTING", false);
                 if (!releaseReadiness.IsPackageReady)
                 {
-                    response.ReleaseStatusDetails = $"Package is not ready for release. {releaseReadiness.PackageReadinessDetails}";
-                    response.ReleasePipelineStatus = "Failed";
-                    logger.LogError("{details}", response.ReleaseStatusDetails);
-                    return response;
+                    if (isAgentTesting)
+                    {
+                        logger.LogWarning("AZSDKTOOLS_AGENT_TESTING=true; bypassing failed readiness check ({details}) and continuing to pipeline trigger for E2E testing.", releaseReadiness.PackageReadinessDetails);
+                    }
+                    else
+                    {
+                        response.ReleaseStatusDetails = $"Package is not ready for release. {releaseReadiness.PackageReadinessDetails}";
+                        response.ReleasePipelineStatus = "Failed";
+                        logger.LogError("{details}", response.ReleaseStatusDetails);
+                        return response;
+                    }
                 }
 
                 // If check-ready mode, return readiness check results without triggering release
@@ -168,6 +177,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                             templateParams[$"release_{safeName}"] = "true";
                         }
                     }
+
+                    logger.LogInformation(
+                        "Queueing pipeline {buildDefinitionId} on branch {branch} with templateParameters: {templateParams}",
+                        buildDefinitionId,
+                        branch,
+                        System.Text.Json.JsonSerializer.Serialize(templateParams));
 
                     var releasePipelineRun = await devopsService.RunPipelineAsync(int.Parse(buildDefinitionId!), templateParams, branch, ct);
                     if (releasePipelineRun != null)

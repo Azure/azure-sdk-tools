@@ -81,7 +81,7 @@ export class CommentThreadComponent {
   @Input() elementId: string = '';
 
   @Input() userProfile : UserProfile | undefined;
-  @Input() apiVersionId: string | null | undefined;
+  @Input() apiVersionId: string = '';
   @Output() cancelCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() saveCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() deleteCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();

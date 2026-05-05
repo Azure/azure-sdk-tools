@@ -30,6 +30,7 @@ import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
 import { Review } from 'src/app/_models/review';
+import { MessageService } from 'primeng/api';
 
 describe('ConversationComponent', () => {
   let component: ConversationsComponent;
@@ -54,6 +55,7 @@ describe('ConversationComponent', () => {
         provideHttpClientTesting(),
         { provide: SignalRService, useValue: mockSignalRService },
         { provide: NotificationsService, useValue: mockNotificationsService },
+        MessageService,
         {
           provide: ActivatedRoute,
           useValue: {
@@ -602,6 +604,7 @@ describe('ConversationComponent', () => {
         allowAnyOneToResolve: false,
         severity: undefined,
         isReply: false,
+        apiVersionId: 'v1.0.0',
         commentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated,
       } as CommentUpdatesDto);
 
@@ -621,6 +624,7 @@ describe('ConversationComponent', () => {
         allowAnyOneToResolve: undefined,
         severity: null,
         isReply: true,
+        apiVersionId: 'v1.0.0',
         commentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated,
       } as CommentUpdatesDto);
 

@@ -682,8 +682,8 @@ describe('CommentThreadComponent', () => {
       expect(emittedDto!.apiVersionId).toBe('v2026-01-01');
     });
 
-    it('should emit undefined apiVersionId when @Input is not set', () => {
-      component.apiVersionId = undefined;
+    it('should emit empty string apiVersionId when @Input is not set', () => {
+      component.apiVersionId = '';
       component.codePanelRowData!.comments = [];
       component.codePanelRowData!.nodeId = 'node-1';
       component.codePanelRowData!.showReplyTextBox = true;
@@ -692,7 +692,7 @@ describe('CommentThreadComponent', () => {
       component.saveCommentAction(buildReplyEvent());
 
       expect(emittedDto).toBeDefined();
-      expect(emittedDto!.apiVersionId).toBeUndefined();
+      expect(emittedDto!.apiVersionId).toBe('');
     });
 
     it('should force severity to null when replying to an existing thread', () => {

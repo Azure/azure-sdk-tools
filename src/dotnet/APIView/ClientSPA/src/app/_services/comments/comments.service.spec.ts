@@ -3,8 +3,8 @@ import { initializeTestBed } from '../../../test-setup';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { CommentsService } from './comments.service';
+import { CommentType } from 'src/app/_models/commentItemModel';
 import { ConfigService } from '../config/config.service';
-import { CommentType, CommentSeverity } from 'src/app/_models/commentItemModel';
 
 describe('CommentsService', () => {
   let service: CommentsService;
@@ -42,40 +42,6 @@ describe('CommentsService', () => {
     expect(service).toBeTruthy();
   });
 
-  describe('createComment', () => {
-    const reviewId = 'review-1';
-    const revisionId = 'revision-1';
-    const elementId = 'elem-1';
-    const commentText = 'Hello world';
-
-    it('should include apiVersionId in form data when provided', () => {
-      service.createComment(reviewId, revisionId, elementId, commentText, CommentType.APIRevision,
-        false, null, undefined, 'v2026-01-01').subscribe();
-
-      const req = httpMock.expectOne(`${configService.apiUrl}comments`);
-      expect(req.request.method).toBe('POST');
-      expect(req.request.body.get('apiVersionId')).toBe('v2026-01-01');
-      req.flush({});
-    });
-
-    it('should NOT include apiVersionId in form data when not provided', () => {
-      service.createComment(reviewId, revisionId, elementId, commentText, CommentType.APIRevision).subscribe();
-
-      const req = httpMock.expectOne(`${configService.apiUrl}comments`);
-      expect(req.request.body.has('apiVersionId')).toBe(false);
-      req.flush({});
-    });
-
-    it('should NOT include apiVersionId in form data when null', () => {
-      service.createComment(reviewId, revisionId, elementId, commentText, CommentType.APIRevision,
-        false, null, undefined, null).subscribe();
-
-      const req = httpMock.expectOne(`${configService.apiUrl}comments`);
-      expect(req.request.body.has('apiVersionId')).toBe(false);
-      req.flush({});
-    });
-  });
-
   it('should send a PATCH request to update a comment', () => {
     const reviewId = '123';
     const commentId = '456';
@@ -91,5 +57,24 @@ describe('CommentsService', () => {
     expect(req.request.withCredentials).toBe(true);
     expect(req.request.headers.has('Content-Type')).toBe(false);
     req.flush({}); // Mock response
+  });
+
+  describe('createComment', () => {
+    it('should always include apiVersionId in form data', () => {
+      service.createComment('review1', 'revision1', 'elem1', 'text', CommentType.APIRevision, 'v1.0.0').subscribe();
+
+      const req = httpMock.expectOne(`${configService.apiUrl}comments`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body.get('apiVersionId')).toBe('v1.0.0');
+      req.flush({});
+    });
+
+    it('should include empty string for apiVersionId when not provided', () => {
+      service.createComment('review1', 'revision1', 'elem1', 'text', CommentType.APIRevision, '').subscribe();
+
+      const req = httpMock.expectOne(`${configService.apiUrl}comments`);
+      expect(req.request.body.get('apiVersionId')).toBe('');
+      req.flush({});
+    });
   });
 });

@@ -775,7 +775,14 @@ export class CodePanelComponent implements OnChanges {
       const isNewThread = commentUpdates.isReply === false;
       const resolutionLocked = commentUpdates.allowAnyOneToResolve !== undefined ? !commentUpdates.allowAnyOneToResolve : false;
       const apiVersionId = isNewThread ? this.activeAPIRevision?.apiVersionId : commentUpdates.apiVersionId;
-      this.commentsService.createComment(this.reviewId!, this.activeApiRevisionId!, commentUpdates.nodeId!, commentUpdates.commentText!, CommentType.APIRevision, resolutionLocked, commentUpdates.severity, commentUpdates.threadId, apiVersionId)
+      if (!apiVersionId) {
+        const detail = isNewThread
+          ? 'This revision has no package version — comment cannot be created.'
+          : "This thread's revision has no package version — reply cannot be added.";
+        this.messageService.add({ severity: 'warn', icon: 'bi bi-exclamation-triangle', summary: 'Cannot Add Comment', detail, key: 'bc', life: 8000 });
+        return;
+      }
+      this.commentsService.createComment(this.reviewId!, this.activeApiRevisionId!, commentUpdates.nodeId!, commentUpdates.commentText!, CommentType.APIRevision, apiVersionId, resolutionLocked, commentUpdates.severity, commentUpdates.threadId)
         .pipe(take(1)).subscribe({
             next: (response: CommentItemModel) => {
               if (!commentUpdates.threadId && response.threadId) {

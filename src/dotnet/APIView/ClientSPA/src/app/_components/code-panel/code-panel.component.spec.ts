@@ -319,6 +319,7 @@ describe('CodePanelComponent', () => {
       notifySpy = vi.spyOn(commentsService, 'notifyQualityScoreRefresh');
       component.reviewId = 'test-review';
       component.activeApiRevisionId = 'test-revision';
+      component.activeAPIRevision = { id: 'test-revision', apiVersionId: 'v1.0.0' } as any;
     });
 
     afterEach(() => {
@@ -374,6 +375,7 @@ describe('CodePanelComponent', () => {
         allowAnyOneToResolve: false,
         severity: undefined,
         isReply: false,
+        apiVersionId: 'v1.0.0',
         commentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated,
       } as CommentUpdatesDto);
 
@@ -392,6 +394,7 @@ describe('CodePanelComponent', () => {
         allowAnyOneToResolve: undefined,
         severity: null,
         isReply: true,
+        apiVersionId: 'v1.0.0',
         commentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated,
       } as CommentUpdatesDto);
 

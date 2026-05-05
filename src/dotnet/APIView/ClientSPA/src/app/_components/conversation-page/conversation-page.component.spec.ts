@@ -29,6 +29,7 @@ import { RippleModule } from 'primeng/ripple';
 import { LanguageNamesPipe } from 'src/app/_pipes/language-names.pipe';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { DrawerModule } from 'primeng/drawer';
+import { MessageService } from 'primeng/api';
 import { 
   createMockSignalRService, 
   createMockNotificationsService, 
@@ -71,6 +72,7 @@ describe('ConversationPageComponent', () => {
         { provide: SignalRService, useValue: mockSignalRService },
         { provide: NotificationsService, useValue: mockNotificationsService },
         { provide: WorkerService, useValue: mockWorkerService },
+        MessageService,
         {
           provide: ActivatedRoute,
           useValue: {

@@ -43,7 +43,7 @@ export class CommentsService {
     [CommentSeverity.MustFix]: 'MustFix',
   };
 
-  createComment(reviewId: string, revisionId: string, elementId: string, commentText: string, commentType: CommentType, resolutionLocked : boolean = false, severity: CommentSeverity | null = null, threadId?: string, apiVersionId?: string | null) : Observable<CommentItemModel> {
+  createComment(reviewId: string, revisionId: string, elementId: string, commentText: string, commentType: CommentType, apiVersionId: string, resolutionLocked : boolean = false, severity: CommentSeverity | null = null, threadId?: string) : Observable<CommentItemModel> {
     const formData = new FormData();
     formData.append('reviewId', reviewId);
     if (commentType == CommentType.APIRevision) {
@@ -62,9 +62,7 @@ export class CommentsService {
     if (threadId) {
       formData.append('threadId', threadId);
     }
-    if (apiVersionId) {
-      formData.append('apiVersionId', apiVersionId);
-    }
+    formData.append('apiVersionId', apiVersionId);
 
     return this.http.post<CommentItemModel>(this.baseUrl, formData, { withCredentials: true });
   }

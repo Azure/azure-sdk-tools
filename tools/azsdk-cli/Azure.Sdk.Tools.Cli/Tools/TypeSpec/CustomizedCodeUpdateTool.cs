@@ -348,25 +348,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         if (tspFixSucceeded > 0)
         {
             logger.LogDebug("Regenerating {packagePath}", packagePath);
-            
-            // Resolve the spec repo root path for tsp-client using TypeSpecHelper
-            string? specRepoPath = null;
-            if (!string.IsNullOrWhiteSpace(tspProjectPath))
-            {
-                try
-                {
-                    specRepoPath = typeSpecHelper.GetSpecRepoRootPath(tspProjectPath);
-                    if (!string.IsNullOrEmpty(specRepoPath))
-                    {
-                        logger.LogDebug("Resolved spec repo root via TypeSpecHelper: {specRepoPath}", specRepoPath);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    logger.LogDebug(ex, "Could not resolve spec repo root, will use remote repo from tsp-location.yaml");
-                }
-            }
-            
+            var specRepoPath = ResolveSpecRepoPath(tspProjectPath);
             var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: specRepoPath, isCli: false, ct: ct);
             if (!regenResult.IsSuccessful)
             {
@@ -533,21 +515,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         if (languageService.Language == SdkLanguage.Java)
         {
             logger.LogInformation("Regenerating code after patches (Java)...");
-            
-            // Resolve the spec repo root path for tsp-client using TypeSpecHelper
-            string? specRepoPath = null;
-            if (!string.IsNullOrWhiteSpace(tspProjectPath))
-            {
-                try
-                {
-                    specRepoPath = typeSpecHelper.GetSpecRepoRootPath(tspProjectPath);
-                }
-                catch (Exception ex)
-                {
-                    logger.LogDebug(ex, "Could not resolve spec repo root for Java regen, will use remote repo");
-                }
-            }
-            
+            var specRepoPath = ResolveSpecRepoPath(tspProjectPath);
             var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: specRepoPath, isCli: false, ct: ct);
             if (!regenResult.IsSuccessful)
             {
@@ -701,6 +669,36 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         }
 
         logger.LogInformation("dev-tool customization apply completed successfully.");
+    }
+
+    /// <summary>
+    /// Resolves the spec repo root path from a TypeSpec project path using
+    /// <see cref="ITypeSpecHelper.GetSpecRepoRootPath"/>, so that <c>tsp-client update</c>
+    /// receives the repository root rather than a nested <c>specification/…</c> subdirectory.
+    /// Returns <see langword="null"/> if <paramref name="tspProjectPath"/> is blank or resolution fails,
+    /// causing <c>tsp-client</c> to fall back to the remote repo recorded in <c>tsp-location.yaml</c>.
+    /// </summary>
+    private string? ResolveSpecRepoPath(string? tspProjectPath)
+    {
+        if (string.IsNullOrWhiteSpace(tspProjectPath))
+        {
+            return null;
+        }
+
+        try
+        {
+            var resolved = typeSpecHelper.GetSpecRepoRootPath(tspProjectPath);
+            if (!string.IsNullOrEmpty(resolved))
+            {
+                logger.LogDebug("Resolved spec repo root via TypeSpecHelper: {SpecRepoPath}", resolved);
+            }
+            return string.IsNullOrEmpty(resolved) ? null : resolved;
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(ex, "Could not resolve spec repo root, will use remote repo from tsp-location.yaml");
+            return null;
+        }
     }
 
     /// <summary>

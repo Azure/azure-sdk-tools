@@ -35,6 +35,7 @@ public class CustomizedCodeUpdateToolAutoTests
         Action<Mock<IGitHelper>>? configureGit = null,
         Action<Mock<IFeedbackClassifierService>>? configureClassifier = null,
         Action<Mock<ITypeSpecCustomizationService>>? configureTspCustomization = null,
+        Action<Mock<ITypeSpecHelper>>? configureTypeSpecHelper = null,
         ITspClientHelper? tspHelper = null,
         INpxHelper? npxHelper = null)
     {
@@ -120,6 +121,7 @@ public class CustomizedCodeUpdateToolAutoTests
         typeSpecHelper.Setup(t => t.IsValidTypeSpecProjectPath(It.IsAny<string>())).Returns(true);
         typeSpecHelper.Setup(t => t.GetSpecRepoRootPath(It.IsAny<string>()))
             .Returns<string>(path => string.IsNullOrEmpty(path) ? string.Empty : path);
+        configureTypeSpecHelper?.Invoke(typeSpecHelper);
 
         var svc = languageService ?? new ConfigurableLanguageService();
         var tsp = tspHelper ?? new MockTspHelper();
@@ -1167,9 +1169,16 @@ public class CustomizedCodeUpdateToolAutoTests
     }
 
     [Test]
-    public async Task Regeneration_UsesTspProjectPath()
+    public async Task Regeneration_UsesResolvedSpecRepoRoot()
     {
-        // Verify that UpdateGenerationAsync receives the tspProjectPath as localSpecRepoPath
+        // Verify that UpdateGenerationAsync receives the repo root resolved by GetSpecRepoRootPath,
+        // not the raw tspProjectPath. This ensures nested specification/... paths are unwrapped.
+        var pkg = CreateTempDir();
+        var specRepoRoot = CreateTempDir();
+        // Simulate a tspProjectPath nested inside specification/some-service/...
+        var tspDir = Path.Combine(specRepoRoot, "specification", "some-service", "some-project");
+        Directory.CreateDirectory(tspDir);
+
         string? capturedLocalSpecRepo = null;
         var tsp = new Mock<ITspClientHelper>();
         tsp.Setup(t => t.UpdateGenerationAsync(
@@ -1182,14 +1191,65 @@ public class CustomizedCodeUpdateToolAutoTests
                 (_, _, _, localSpec, _) => capturedLocalSpecRepo = localSpec)
             .ReturnsAsync(new TspToolResponse { IsSuccessful = true, TypeSpecProject = "/pkg" });
 
-        var (tool, _) = CreateTool(tspHelper: tsp.Object);
-        var pkg = CreateTempDir();
-        var tspDir = CreateTempDir();
+        var (tool, _) = CreateTool(
+            tspHelper: tsp.Object,
+            configureTypeSpecHelper: t =>
+                t.Setup(h => h.GetSpecRepoRootPath(It.IsAny<string>()))
+                 .Returns(specRepoRoot));
 
         await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
 
-        Assert.That(capturedLocalSpecRepo, Is.EqualTo(tspDir),
-            "Should pass the tspProjectPath as localSpecRepoPath");
+        Assert.That(capturedLocalSpecRepo, Is.EqualTo(specRepoRoot),
+            "Should pass the resolved spec repo root, not the nested project path");
+    }
+
+    [Test]
+    public async Task Java_RegenAfterPatches_UsesResolvedSpecRepoRoot()
+    {
+        // Verify that the Java post-patch regeneration path also uses the resolved repo root.
+        var specRepoRoot = CreateTempDir();
+        var tspDir = Path.Combine(specRepoRoot, "specification", "some-service", "some-project");
+        Directory.CreateDirectory(tspDir);
+
+        string? capturedLocalSpecRepo = null;
+        var captureOnCall = 2; // Java regen is the 2nd UpdateGenerationAsync call
+        var callCount = 0;
+
+        var tsp = new Mock<ITspClientHelper>();
+        tsp.Setup(t => t.UpdateGenerationAsync(
+                It.IsAny<string>(),
+                It.IsAny<string?>(),
+                It.IsAny<bool>(),
+                It.IsAny<string?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, string?, bool, string?, CancellationToken>(
+                (_, _, _, localSpec, _) =>
+                {
+                    callCount++;
+                    if (callCount == captureOnCall)
+                        capturedLocalSpecRepo = localSpec;
+                })
+            .ReturnsAsync(new TspToolResponse { IsSuccessful = true, TypeSpecProject = "/pkg" });
+
+        var svc = new ConfigurableLanguageService(
+            buildFunc: () => (false, "build error", null),
+            hasCustomizations: true,
+            patchesFunc: () => [new AppliedPatch("test.java", "patch", 1)],
+            language: SdkLanguage.Java);
+
+        var (tool, _) = CreateTool(
+            languageService: svc,
+            tspHelper: tsp.Object,
+            configureTypeSpecHelper: t =>
+                t.Setup(h => h.GetSpecRepoRootPath(It.IsAny<string>()))
+                 .Returns(specRepoRoot));
+
+        var pkg = CreateTempDir();
+        await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
+
+        Assert.That(callCount, Is.GreaterThanOrEqualTo(2), "Should call UpdateGenerationAsync at least twice for Java");
+        Assert.That(capturedLocalSpecRepo, Is.EqualTo(specRepoRoot),
+            "Java post-patch regen should also receive the resolved spec repo root");
     }
 
     // ========================================================================

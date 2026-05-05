@@ -34,7 +34,7 @@
 ###########
 /tools/                                 @azure/azure-sdk-eng
 /tools/azure-rest-api-specs-examples-automation/ @weidongxu-microsoft
-/tools/codeowners-utils/                @weshaggard
+/tools/codeowners-utils/                @weshaggard @danieljurek
 /tools/fxlister/                        @KrzysztofCwalina
 /tools/github/                          @jsquire @ronniegeraghty
 /tools/github-event-processor/          @benbp @jsquire @ronniegeraghty
@@ -114,7 +114,8 @@
 /tools/sdk-ai-bots/azure-sdk-qa-bot-backend-shared  @chunyu3 @JiaqiZhang-Dev
 
 # Add owners for notifications for specific pipelines
-/eng/common/pipelines/codeowners-linter.yml         @weshaggard
+/eng/common/pipelines/codeowners-linter.yml         @weshaggard @danieljurek
+/eng/pipelines/pipeline-owners-extraction.yml      @danieljurek
 
 # EngSys should own all package-lock.json under eng/common
 /eng/common/**/package-lock.json                    @mikeharder @danieljurek

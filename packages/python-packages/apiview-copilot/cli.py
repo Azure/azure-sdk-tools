@@ -77,6 +77,7 @@ from src._mention import handle_mention_request
 from src._metrics import get_metrics_report
 from src._models import APIViewComment
 from src._prompt_runner import run_prompt
+from src._report_issue import handle_report_issue_request
 from src._search_manager import SearchManager
 from src._settings import SettingsManager
 from src._thread_resolution import handle_thread_resolution_request
@@ -998,6 +999,59 @@ def review_summarize(language: str, target: str, base: str = None, remote: bool 
             )
 
         print(summary)
+
+
+def issue_report(
+    description: str,
+    review_link: str = None,
+    language: str = None,
+    comment_id: str = None,
+    remote: bool = False,
+):
+    """
+    File a GitHub issue from an APIView "Report Issue" interaction.
+
+    Calls the same shared core (``handle_report_issue_request``) whether
+    run locally or via ``--remote``, so both paths produce identical
+    issues. The LLM determines whether the issue is an APIView UI
+    problem or a parser problem; the server then derives the title
+    prefix and labels.
+    """
+    if remote:
+        settings = SettingsManager()
+        base_url = settings.get("WEBAPP_ENDPOINT")
+        api_endpoint = f"{base_url}/report-issue"
+        payload = {"description": description}
+        if review_link:
+            payload["reviewLink"] = review_link
+        if language:
+            payload["language"] = language
+        if comment_id:
+            payload["commentId"] = comment_id
+        try:
+            resp = requests.post(api_endpoint, json=payload, headers=_build_auth_header(), timeout=60)
+        except requests.RequestException as e:
+            raise CLIError(f"Failed to call /report-issue: {e}") from e
+        content_type = resp.headers.get("Content-Type", "")
+        if "application/json" in content_type:
+            try:
+                data = resp.json()
+            except ValueError:
+                data = resp.text
+        else:
+            data = resp.text
+        if resp.status_code == 200:
+            print(json.dumps(data, indent=2) if isinstance(data, (dict, list)) else data)
+        else:
+            raise CLIError(f"/report-issue failed: {resp.status_code} - {data}")
+    else:
+        result = handle_report_issue_request(
+            description=description,
+            review_link=review_link,
+            language=language,
+            comment_id=comment_id,
+        )
+        print(json.dumps(result, indent=2))
 
 
 def handle_agent_chat(
@@ -2600,6 +2654,7 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("mention", "handle_agent_mention")
             g.command("chat", "handle_agent_chat")
             g.command("resolve-thread", "handle_agent_thread_resolution")
+            g.command("report-issue", "issue_report")
         with CommandGroup(self, "test", "__main__#{}") as g:
             g.command("eval", "run_evals")
             g.command("extract-section", "extract_document_section")
@@ -2871,6 +2926,27 @@ class CliCommandsLoader(CLICommandsLoader):
                 type=str,
                 help="The APIView comment ID that triggered this request, recorded on any memories created for audit traceability. Automatically set when --fetch-comment-id is used.",
                 options_list=["--source-comment-id"],
+                default=None,
+            )
+        with ArgumentsContext(self, "agent report-issue") as ac:
+            ac.argument(
+                "description",
+                type=str,
+                help="The user's description of the problem.",
+                options_list=["--description"],
+            )
+            ac.argument(
+                "review_link",
+                type=str,
+                help="Optional URL to the APIView review the user is on.",
+                options_list=["--review-link"],
+                default=None,
+            )
+            ac.argument(
+                "comment_id",
+                type=str,
+                help="Optional APIView comment id. When provided, the server fetches the comment context (text, code snippet, language, element id, source) automatically.",
+                options_list=["--comment-id"],
                 default=None,
             )
         with ArgumentsContext(self, "db") as ac:

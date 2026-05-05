@@ -12,6 +12,7 @@ from apistubgentest.models import (
     ClassWithForwardRefBase,
     ClassWithIvarsAndCvars,
     FakeTypedDict,
+    FakeTypedDictOptional,
     FakeObject,
     GenericStack,
     PetEnumPy3MetaclassAlt,
@@ -114,15 +115,34 @@ class TestClassParsing:
         actuals = _render_lines(tokens)
         expected = [
             "class FakeTypedDict(TypedDict):",
-            'key "age": int',
-            'key "name": str',
-            'key "union": Union[bool, FakeObject, PetEnumPy3MetaclassAlt]',
+            'age: int',
+            'name: str',
+            'union: Union[bool, FakeObject, PetEnumPy3MetaclassAlt]',
         ]
         _check_all(actuals, expected, obj)
         metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
         metadata = _count_review_line_metadata(tokens, metadata)
         assert metadata["RelatedToLine"] == 2
         assert metadata["IsContextEndLine"] == 1
+
+    def test_typed_dict_optional_class(self):
+        obj = FakeTypedDictOptional
+        class_node = ClassNode(
+            name=obj.__name__,
+            namespace=obj.__name__,
+            parent_node=None,
+            obj=obj,
+            pkg_root_namespace=self.pkg_namespace,
+            apiview=MockApiView,
+        )
+        tokens = _tokenize(class_node)
+        actuals = _render_lines(tokens)
+        expected = [
+            "class FakeTypedDictOptional(TypedDict):",
+            'age: int',
+            'name: str',
+        ]
+        _check_all(actuals, expected, obj)
 
     def test_object(self):
         obj = FakeObject

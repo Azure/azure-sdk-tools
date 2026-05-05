@@ -7,7 +7,7 @@ class KeyNode(NodeEntityBase):
     def __init__(self, namespace, parent_node, name, type_data):
         super().__init__(namespace, parent_node, type_data)
         self.type = get_qualified_name(type_data, namespace)
-        self.name = f'"{name}"'
+        self.name = name
         # Generate ID using name found by inspect
         self.namespace_id = self.generate_id()
         self.display_name = f"{self.name}: {self.type}"
@@ -32,7 +32,6 @@ class KeyNode(NodeEntityBase):
         """
         line = review_lines.create_review_line(is_handwritten=self.is_handwritten)
         line.add_line_marker(self.namespace_id)
-        line.add_text(text="key")
         line.add_text(text=self.name, has_suffix_space=False)
         line.add_punctuation(":")
         line.add_type(self.type, apiview=self.apiview, has_suffix_space=False)

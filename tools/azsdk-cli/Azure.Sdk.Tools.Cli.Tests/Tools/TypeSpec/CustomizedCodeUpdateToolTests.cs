@@ -119,8 +119,6 @@ public class CustomizedCodeUpdateToolAutoTests
 
         var typeSpecHelper = new Mock<ITypeSpecHelper>();
         typeSpecHelper.Setup(t => t.IsValidTypeSpecProjectPath(It.IsAny<string>())).Returns(true);
-        typeSpecHelper.Setup(t => t.GetSpecRepoRootPath(It.IsAny<string>()))
-            .Returns<string>(path => string.IsNullOrEmpty(path) ? string.Empty : path);
         configureTypeSpecHelper?.Invoke(typeSpecHelper);
 
         var svc = languageService ?? new ConfigurableLanguageService();
@@ -1168,17 +1166,10 @@ public class CustomizedCodeUpdateToolAutoTests
         Assert.That(buildCalls, Is.EqualTo(1), "Should build exactly once after regen");
     }
 
-    [Test]
-    public async Task Regeneration_UsesResolvedSpecRepoRoot()
+    public async Task Regeneration_PassesTspProjectPathAsLocalSpecRepo()
     {
-        // Verify that UpdateGenerationAsync receives the repo root resolved by GetSpecRepoRootPath,
-        // not the raw tspProjectPath. This ensures nested specification/... paths are unwrapped.
-        var pkg = CreateTempDir();
-        var specRepoRoot = CreateTempDir();
-        // Simulate a tspProjectPath nested inside specification/some-service/...
-        var tspDir = Path.Combine(specRepoRoot, "specification", "some-service", "some-project");
-        Directory.CreateDirectory(tspDir);
-
+        // Verify that UpdateGenerationAsync receives tspProjectPath (absolute) as localSpecRepoPath.
+        // tsp-client syncCommand expects the TypeSpec project directory, not the repo root.
         string? capturedLocalSpecRepo = null;
         var tsp = new Mock<ITspClientHelper>();
         tsp.Setup(t => t.UpdateGenerationAsync(
@@ -1191,25 +1182,23 @@ public class CustomizedCodeUpdateToolAutoTests
                 (_, _, _, localSpec, _) => capturedLocalSpecRepo = localSpec)
             .ReturnsAsync(new TspToolResponse { IsSuccessful = true, TypeSpecProject = "/pkg" });
 
-        var (tool, _) = CreateTool(
-            tspHelper: tsp.Object,
-            configureTypeSpecHelper: t =>
-                t.Setup(h => h.GetSpecRepoRootPath(It.IsAny<string>()))
-                 .Returns(specRepoRoot));
+        var (tool, _) = CreateTool(tspHelper: tsp.Object);
+
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
 
         await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
 
-        Assert.That(capturedLocalSpecRepo, Is.EqualTo(specRepoRoot),
-            "Should pass the resolved spec repo root, not the nested project path");
+        var expectedLocalSpec = Path.GetFullPath(tspDir);
+        Assert.That(capturedLocalSpecRepo, Is.EqualTo(expectedLocalSpec),
+            "Should pass the local TypeSpec project path as localSpecRepoPath");
     }
 
     [Test]
-    public async Task Java_RegenAfterPatches_UsesResolvedSpecRepoRoot()
+    public async Task Java_RegenAfterPatches_PassesTspProjectPathAsLocalSpecRepo()
     {
-        // Verify that the Java post-patch regeneration path also uses the resolved repo root.
-        var specRepoRoot = CreateTempDir();
-        var tspDir = Path.Combine(specRepoRoot, "specification", "some-service", "some-project");
-        Directory.CreateDirectory(tspDir);
+        // Verify that the Java post-patch regeneration path also uses the local TypeSpec project path.
+        var tspDir = CreateTempDir();
 
         string? capturedLocalSpecRepo = null;
         var captureOnCall = 2; // Java regen is the 2nd UpdateGenerationAsync call
@@ -1239,17 +1228,15 @@ public class CustomizedCodeUpdateToolAutoTests
 
         var (tool, _) = CreateTool(
             languageService: svc,
-            tspHelper: tsp.Object,
-            configureTypeSpecHelper: t =>
-                t.Setup(h => h.GetSpecRepoRootPath(It.IsAny<string>()))
-                 .Returns(specRepoRoot));
+            tspHelper: tsp.Object);
 
         var pkg = CreateTempDir();
         await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
 
+        var expectedLocalSpec = Path.GetFullPath(tspDir);
         Assert.That(callCount, Is.GreaterThanOrEqualTo(2), "Should call UpdateGenerationAsync at least twice for Java");
-        Assert.That(capturedLocalSpecRepo, Is.EqualTo(specRepoRoot),
-            "Java post-patch regen should also receive the resolved spec repo root");
+        Assert.That(capturedLocalSpecRepo, Is.EqualTo(expectedLocalSpec),
+            "Java post-patch regen should also receive the local TypeSpec project path");
     }
 
     // ========================================================================
@@ -1461,7 +1448,7 @@ internal class MockTspHelper : ITspClientHelper
         => Task.FromResult(new TspToolResponse { IsSuccessful = _updateSuccess, TypeSpecProject = tspLocationDirectory, ResponseError = _updateError });
 
     public Task<TspToolResponse> InitializeGenerationAsync(string workingDirectory, string tspConfigPath, string[]? additionalArgs = null, CancellationToken ct = default)
-        => Task.FromResult(new TspToolResponse { IsSuccessful = true, TypeSpecProject = workingDirectory });
+        => Task.FromResult(new TspToolResponse { IsSuccessful = _updateSuccess, TypeSpecProject = workingDirectory, ResponseError = _updateError });
 }
 
 /// <summary>

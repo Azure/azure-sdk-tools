@@ -33,6 +33,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
     private const string CustomizedCodeUpdateToolName = "azsdk_customized_code_update";
     private const int CommandTimeoutInMinutes = 30;
+    private const string MissingTypeSpecProjectPathMessage = "TypeSpec project path is missing; cannot run regeneration.";
 
     // Classification categories returned by the classifier
     private const string ClassificationTspApplicable = "TSP_APPLICABLE";
@@ -348,8 +349,15 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         if (tspFixSucceeded > 0)
         {
             logger.LogDebug("Regenerating {packagePath}", packagePath);
-            var specRepoPath = ResolveSpecRepoPath(tspProjectPath);
-            var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: specRepoPath, isCli: false, ct: ct);
+
+            if (!TryResolveLocalSpecProjectPath(tspProjectPath, MissingTypeSpecProjectPathMessage, out var localSpecProjectPath, out var errorResponse))
+            {
+                return errorResponse!;
+            }
+
+            logger.LogDebug("Using local spec project for regeneration: {localSpecProjectPath}", localSpecProjectPath);
+
+            var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: localSpecProjectPath, isCli: false, ct: ct);
             if (!regenResult.IsSuccessful)
             {
                 logger.LogWarning("Regeneration failed: {Error}", regenResult.ResponseError);
@@ -515,8 +523,15 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         if (languageService.Language == SdkLanguage.Java)
         {
             logger.LogInformation("Regenerating code after patches (Java)...");
-            var specRepoPath = ResolveSpecRepoPath(tspProjectPath);
-            var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: specRepoPath, isCli: false, ct: ct);
+
+            if (!TryResolveLocalSpecProjectPath(tspProjectPath, MissingTypeSpecProjectPathMessage, out var localSpecProjectPath, out var errorResponse))
+            {
+                return errorResponse!;
+            }
+
+            logger.LogDebug("Using local spec project for Java regeneration: {localSpecProjectPath}", localSpecProjectPath);
+
+            var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: localSpecProjectPath, isCli: false, ct: ct);
             if (!regenResult.IsSuccessful)
             {
                 logger.LogWarning("Regeneration failed: {Error}", regenResult.ResponseError);
@@ -598,6 +613,35 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         return await GetLanguageServiceAsync(packagePath, ct);
     }
 
+    private bool TryResolveLocalSpecProjectPath(
+        string? tspProjectPath,
+        string missingPathMessage,
+        out string? localSpecProjectPath,
+        out CustomizedCodeUpdateResponse? errorResponse)
+    {
+        localSpecProjectPath = null;
+        errorResponse = null;
+
+        if (string.IsNullOrWhiteSpace(tspProjectPath))
+        {
+            logger.LogError("{ErrorMessage}", missingPathMessage);
+            errorResponse = CreateInvalidInputResponse(missingPathMessage);
+            return false;
+        }
+
+        localSpecProjectPath = Path.GetFullPath(tspProjectPath);
+        return true;
+    }
+
+    private static CustomizedCodeUpdateResponse CreateInvalidInputResponse(string message) => new()
+    {
+        Success = false,
+        ResponseError = message,
+        Message = message,
+        ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
+        BuildResult = message
+    };
+
     /// <summary>
     /// Builds a formatted context string for the patch agent, combining the original request,
     /// classifier analysis, and build errors into labeled markdown sections.
@@ -669,37 +713,6 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         }
 
         logger.LogInformation("dev-tool customization apply completed successfully.");
-    }
-
-    /// <summary>
-    /// Resolves the spec repo root path from a TypeSpec project path using
-    /// <see cref="ITypeSpecHelper.GetSpecRepoRootPath"/>, so that <c>tsp-client update</c>
-    /// receives the repository root rather than a nested <c>specification/…</c> subdirectory.
-    /// Returns <see langword="null"/> if <paramref name="tspProjectPath"/> is blank or resolution fails,
-    /// causing <c>tsp-client</c> to fall back to the remote repo recorded in <c>tsp-location.yaml</c>.
-    /// </summary>
-    private string? ResolveSpecRepoPath(string? tspProjectPath)
-    {
-        if (string.IsNullOrWhiteSpace(tspProjectPath))
-        {
-            return null;
-        }
-
-        try
-        {
-            var resolved = typeSpecHelper.GetSpecRepoRootPath(tspProjectPath);
-            if (!string.IsNullOrEmpty(resolved))
-            {
-                logger.LogDebug("Resolved spec repo root via TypeSpecHelper: {SpecRepoPath}", resolved);
-                return resolved;
-            }
-            return null;
-        }
-        catch (Exception ex)
-        {
-            logger.LogDebug(ex, "Could not resolve spec repo root, will use remote repo from tsp-location.yaml");
-            return null;
-        }
     }
 
     /// <summary>

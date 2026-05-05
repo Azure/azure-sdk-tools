@@ -177,7 +177,7 @@ class TestApiView:
         # skip conditional optional dependencies
         assert not self._dependency_installed("qsharp")
         # assert package name is correct
-        assert apiview.package_name == "apiview-stub-generator-test"
+        assert apiview.package_name == "apiview_stub_generator_test"
 
     @mark.parametrize("pkg_path", SETUP_PATHS, ids=SETUP_IDS)
     def test_setup_py_line_ids(self, pkg_path):

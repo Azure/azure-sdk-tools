@@ -194,6 +194,10 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         {
             packageInfo = await languageService.GetPackageInfo(packagePath, ct);
         }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Failed to resolve package info for {PackagePath}", packagePath);
@@ -208,6 +212,8 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             return response;
         }
 
+        try
+        {
         List<FeedbackItem> feedbackItems = [];
         FeedbackClassificationResponse response;
         try
@@ -585,6 +591,23 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             AppliedPatches = patches,
             NextSteps = manualInterventions,
         });
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Unexpected error during customized code update.");
+            return CreateResponse(new CustomizedCodeUpdateResponse
+            {
+                Success = false,
+                ResponseError = $"Unexpected error: {ex.Message}",
+                Message = $"Unexpected error: {ex.Message}",
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError,
+                BuildResult = ex.Message
+            });
+        }
     }
 
     /// <summary>

@@ -156,7 +156,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 }
 
                 var buildDefinitionId = package?.PipelineDefinitionUrl?.Split('=')?.LastOrDefault();
-                logger.LogInformation("Package {packageName} is ready for release in {language}.", packageName, language);
+                if (releaseReadiness.IsPackageReady)
+                {
+                    logger.LogInformation("Package {packageName} is ready for release in {language}.", packageName, language);
+                }
                 logger.LogInformation("Release pipeline: {pipelineUrl}", package?.PipelineDefinitionUrl);
                 logger.LogInformation("Triggering release pipeline for package {packageName} in {language}...", packageName, language);
 
@@ -168,11 +171,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     // Java pipelines require release_<safeName>=true to select a package (azure-sdk-for-java#48465).
                     if (SdkLanguageHelpers.GetSdkLanguage(language) == SdkLanguage.Java)
                     {
-                        var safeName = GetJavaSafeName(packageName);
-                        if (!string.IsNullOrEmpty(safeName))
+                        // Prefer the canonical package name from the work item over the user-supplied input.
+                        var canonicalPackageName = !string.IsNullOrWhiteSpace(package?.PackageName) ? package!.PackageName : packageName;
+                        var safeName = GetJavaSafeName(canonicalPackageName);
+                        if (string.IsNullOrEmpty(safeName))
                         {
-                            templateParams[$"release_{safeName}"] = "true";
+                            response.ReleaseStatusDetails = $"Cannot derive a Java release pipeline parameter from package name '{canonicalPackageName}'. Expected a name with at least one alphanumeric character.";
+                            response.ReleasePipelineStatus = "Failed";
+                            logger.LogError("{details}", response.ReleaseStatusDetails);
+                            return response;
                         }
+                        templateParams[$"release_{safeName}"] = "true";
                     }
 
                     logger.LogInformation(

@@ -90,5 +90,109 @@ namespace Azure.Sdk.Tools.SnippetGenerator.Tests
                 Directory.Delete(targetPath, true);
             }
         }
+
+        [Test]
+        public void OnExecuteAsync_ThrowsWhenBasePathDoesNotExist()
+        {
+            var program = new Program
+            {
+                BasePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString()),
+                TargetPath = Path.GetTempPath()
+            };
+
+            Assert.ThrowsAsync<DirectoryNotFoundException>(async () => await program.OnExecuteAsync());
+        }
+
+        [Test]
+        public void OnExecuteAsync_ThrowsWhenTargetPathDoesNotExist()
+        {
+            var basePath = Directory.CreateDirectory(
+                Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString())).FullName;
+
+            try
+            {
+                var program = new Program
+                {
+                    BasePath = basePath,
+                    TargetPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString())
+                };
+
+                Assert.ThrowsAsync<DirectoryNotFoundException>(program.OnExecuteAsync);
+            }
+            finally
+            {
+                Directory.Delete(basePath, recursive: true);
+            }
+        }
+
+        [Test]
+        public async Task OnExecuteAsync_TargetPathDefaultsToBasePathWhenNull()
+        {
+            var basePath = Directory.CreateDirectory(
+                Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString())).FullName;
+
+            try
+            {
+                var program = new Program
+                {
+                    BasePath = basePath,
+                    TargetPath = null
+                };
+
+                // Should not throw the directory-not-found exception since target falls back to BasePath.
+                await program.OnExecuteAsync();
+            }
+            finally
+            {
+                Directory.Delete(basePath, recursive: true);
+            }
+        }
+
+        [Test]
+        public async Task OnExecuteAsync_ProcessesEachSubdirectoryWhenBaseDirectoryIsSdk()
+        {
+            var root = Directory.CreateDirectory(
+                Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString())).FullName;
+            var sdkDir = Directory.CreateDirectory(Path.Combine(root, "sdk")).FullName;
+            Directory.CreateDirectory(Path.Combine(sdkDir, "serviceA"));
+            Directory.CreateDirectory(Path.Combine(sdkDir, "serviceB"));
+
+            try
+            {
+                var program = new Program
+                {
+                    BasePath = sdkDir,
+                    TargetPath = sdkDir
+                };
+
+                await program.OnExecuteAsync();
+            }
+            finally
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
+
+        [Test]
+        public async Task OnExecuteAsync_ProcessesSingleDirectoryWhenBaseDirectoryIsNotSdk()
+        {
+            var basePath = Directory.CreateDirectory(
+                Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString(), "notSdk")).FullName;
+
+            try
+            {
+                var program = new Program
+                {
+                    BasePath = basePath,
+                    TargetPath = basePath
+                };
+
+                await program.OnExecuteAsync();
+            }
+            finally
+            {
+                Directory.Delete(Directory.GetParent(basePath)!.FullName, recursive: true);
+            }
+        }
     }
 }

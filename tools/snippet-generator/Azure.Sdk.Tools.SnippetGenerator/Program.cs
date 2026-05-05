@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
@@ -41,10 +41,7 @@ namespace Azure.Sdk.Tools.SnippetGenerator
                 var tasks = new List<Task<IEnumerable<string>>>();
                 foreach (var sdkDir in Directory.GetDirectories(BasePath))
                 {
-                    var targetDir = TargetPath != null
-                        ? Path.Combine(targetPath, new DirectoryInfo(sdkDir).Name)
-                        : sdkDir;
-                    tasks.Add(new DirectoryProcessor(sdkDir, targetDir).ProcessAsync());
+                    tasks.Add(new DirectoryProcessor(sdkDir, targetPath).ProcessAsync());
                 }
 
                 await Task.WhenAll(tasks);

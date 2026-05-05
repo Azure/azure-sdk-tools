@@ -61,9 +61,36 @@ namespace APIView
 
         public static bool IsCollapsibleSectionSSupported(string language) => _collapsibleLanguages.Contains(language);
 
+        /// <summary>
+        /// Normalizes Text-kind token values by replacing embedded newline characters with spaces.
+        /// Called immediately after deserialization so all downstream consumers see clean data.
+        /// </summary>
+        public void SanitizeTokenValues()
+        {
+            if (ReviewLines == null || ReviewLines.Count == 0)
+                return;
+            SanitizeLines(ReviewLines);
+
+            static void SanitizeLines(List<ReviewLine> lines)
+            {
+                foreach (var line in lines)
+                {
+                    foreach (var token in line.Tokens)
+                    {
+                        if (token.Kind == TokenKind.Text && !string.IsNullOrEmpty(token.Value)
+                            && token.Value.IndexOfAny(['\r', '\n']) >= 0)
+                            token.Value = token.Value.Replace("\r\n", " ").Replace('\r', ' ').Replace('\n', ' ');
+                    }
+                    if (line.Children != null && line.Children.Count > 0)
+                        SanitizeLines(line.Children);
+                }
+            }
+        }
+
         public static async Task<CodeFile> DeserializeAsync(Stream stream, bool hasSections = false)
         {
             var codeFile = await JsonSerializer.DeserializeAsync<CodeFile>(stream, _serializerOptions);
+            codeFile.SanitizeTokenValues();
 
             if (hasSections == false && codeFile.LeafSections == null && IsCollapsibleSectionSSupported(codeFile.Language))
                 hasSections = true;

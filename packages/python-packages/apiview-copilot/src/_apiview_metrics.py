@@ -684,16 +684,18 @@ def build_duplicate_lineid_reports(
         revisions_container.query_items(query=query, parameters=params, enable_cross_partition_query=True)
     )
 
-    # Sort once and pre-bucket by month to avoid re-scanning the full list each iteration
-    all_revisions.sort(key=lambda r: r.get("CreatedOn", ""))
-    bucketed: dict[str, list[dict]] = {}
-    for start, end in month_ranges:
-        m_start_iso = to_iso8601(start.isoformat())
-        m_end_iso = to_iso8601(end.isoformat(), end_of_day=True)
-        label = f"{start.year}-{start.month:02d}"
-        bucketed[label] = [
-            rev for rev in all_revisions if m_start_iso <= rev.get("CreatedOn", "") <= m_end_iso
-        ]
+    # Bucket revisions by month in a single pass (O(revisions + months))
+    bucketed: dict[str, list[dict]] = {f"{start.year}-{start.month:02d}": [] for start, _ in month_ranges}
+    month_bounds = [
+        (to_iso8601(start.isoformat()), to_iso8601(end.isoformat(), end_of_day=True), f"{start.year}-{start.month:02d}")
+        for start, end in month_ranges
+    ]
+    for rev in all_revisions:
+        created_on = rev.get("CreatedOn", "")
+        for m_start_iso, m_end_iso, label in month_bounds:
+            if m_start_iso <= created_on <= m_end_iso:
+                bucketed[label].append(rev)
+                break
 
     omit_lower = {lang.lower() for lang in OMIT_LANGUAGES}
 

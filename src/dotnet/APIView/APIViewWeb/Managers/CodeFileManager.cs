@@ -333,7 +333,7 @@ namespace APIViewWeb.Managers
             return HasDuplicateLineIdsRecursive(codeFile.ReviewLines, lineIds);
         }
 
-        private static bool HasDuplicateLineIdsRecursive(List<ReviewLine> lines, HashSet<string> lineIds)
+        private static bool HasDuplicateLineIdsRecursive(IEnumerable<ReviewLine> lines, HashSet<string> lineIds)
         {
             foreach (var line in lines)
             {

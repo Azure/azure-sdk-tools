@@ -260,11 +260,7 @@ namespace APIViewWeb.LeanControllers
                 }
 
                 // Self-heal HasDuplicateLineIds for older revisions that were never evaluated
-                if (activeAPIRevision.HasDuplicateLineIds == null)
-                {
-                    activeAPIRevision.HasDuplicateLineIds = CodeFileManager.HasDuplicateLineIds(activeRevisionReviewCodeFile);
-                    await _apiRevisionsManager.UpdateAPIRevisionAsync(activeAPIRevision);
-                }
+                await _apiRevisionsManager.SelfHealHasDuplicateLineIdsAsync(activeAPIRevision, activeRevisionReviewCodeFile);
 
                 IEnumerable<CommentItemModel> allCommentsFromDb = await _commentsManager.GetCommentsAsync(reviewId, commentType: CommentType.APIRevision);
                 List<CommentItemModel> diagnosticComments = await _commentsManager.SyncDiagnosticCommentsAsync(

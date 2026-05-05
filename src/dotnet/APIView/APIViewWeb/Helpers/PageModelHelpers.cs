@@ -4,6 +4,7 @@ using System.Linq;
 using System.Security.Claims;
 using APIView.Diff;
 using APIView;
+using APIViewWeb.Extensions;
 using APIViewWeb.Managers;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
@@ -301,11 +302,7 @@ namespace APIViewWeb.Helpers
             var activeRevisionReviewCodeFile = activeRevisionRenderableCodeFile.CodeFile;
 
             // Self-heal HasDuplicateLineIds for older revisions that were never evaluated
-            if (activeRevision.HasDuplicateLineIds == null)
-            {
-                activeRevision.HasDuplicateLineIds = CodeFileManager.HasDuplicateLineIds(activeRevisionReviewCodeFile);
-                await reviewRevisionsManager.UpdateAPIRevisionAsync(activeRevision);
-            }
+            await reviewRevisionsManager.SelfHealHasDuplicateLineIdsAsync(activeRevision, activeRevisionReviewCodeFile);
 
             var fileDiagnostics = activeRevisionReviewCodeFile.Diagnostics ?? Array.Empty<CodeDiagnostic>();
             var activeRevisionHtmlLines = activeRevisionRenderableCodeFile.Render(showDocumentation: showDocumentation);

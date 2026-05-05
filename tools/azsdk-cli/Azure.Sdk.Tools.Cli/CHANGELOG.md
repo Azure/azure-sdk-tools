@@ -8,6 +8,8 @@
 
 ### Bugs Fixed
 
+- `azsdk_release_sdk` now passes a `release_<safeName>=true` template parameter when triggering Java release pipelines so per-package selection works (azure-sdk-for-java#48465). Previously, manually queued Java releases failed fast because no package was selected. (#14832)
+
 ### Other Changes
 
 ## 0.6.10 (2026-04-27)

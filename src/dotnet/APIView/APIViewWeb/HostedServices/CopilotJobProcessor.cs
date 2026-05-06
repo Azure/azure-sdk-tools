@@ -128,22 +128,19 @@ namespace APIViewWeb.HostedServices
 
                     var commentText = new StringBuilder();
                     commentText.AppendLine(comment.Comment);
-                    commentText.AppendLine();
-                    commentText.AppendLine();
                     if (!String.IsNullOrEmpty(comment.Suggestion))
                     {
+                        commentText.AppendLine();
                         commentText.AppendLine($"Suggestion : `{comment.Suggestion}`");
-                        commentText.AppendLine();
-                        commentText.AppendLine();
                     }
 
                     if (comment.GuidelineIds.Count > 0)
                     {
+                        commentText.AppendLine();
                         commentText.AppendLine("**Guidelines**");
                         foreach (string guidelineId in comment.GuidelineIds)
                         {
-                            commentText.AppendLine();
-                            commentText.AppendLine($"https://azure.github.io/azure-sdk/{guidelineId}");
+                            commentText.AppendLine($"- https://azure.github.io/azure-sdk/{guidelineId}");
                         }
                     }
 

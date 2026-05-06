@@ -18,6 +18,9 @@ parameters:
     - RepoName: azure-docs-sdk-node
       RepoOwner: MicrosoftDocs
       AllowlistPath: docsms-allowlist/js-allowlist.txt
+    - RepoName: azure-docs-sdk-cpp
+      RepoOwner: MicrosoftDocs
+      AllowlistPath: docsms-allowlist/cpp-allowlist.txt
 
 - name: TargetBranch
   type: string

@@ -1,0 +1,72 @@
+name: azure-typespec-author-eval
+description: Evaluation suite for azure-typespec-author.
+version: "1.0"
+type: capability               # capability | regression
+
+# Root-level environment
+environment: azsdk-mcp
+
+# Execution configuration
+config:
+  runs: 1                      # Trials per stimulus
+  timeout: 1800                # Seconds per trial
+  model: claude-opus-4.6    #gpt-4o #claude-sonnet-4.6 # Model for agent execution
+  executor: copilot-sdk        # Which executor to use
+
+# Test cases
+stimuli:
+- name: 001001-version-spread-property
+  prompt: I added `...Azure.ResourceManager.ManagedServiceIdentityProperty;` which updates all my existing API versions and introduces a breaking change. I want to introduce the properties of the spread model '...ManagedServiceIdentityProperty' in API version 2025-05-04-preview only.
+  environment:
+    files:
+    - src: ../fixtures/001-share-version-new-feature/employee.tsp
+      dest: employee.tsp
+    - src: ../fixtures/001-share-version-new-feature/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/001-share-version-new-feature/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
+      dest: tspconfig.yaml
+    - src: ../fixtures/001-share-version-new-feature/package.json
+      dest: package.json
+    - src: ../fixtures/001-share-version-new-feature/readme.md
+      dest: readme.md
+  graders:
+  - type: tool-calls
+    config:
+      required:
+        - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+        - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+        - azure-typespec-author
+  - type: file-matches
+    config:
+      path: main.tsp
+      pattern: 2025-05-04-preview
+  - type: file-matches
+    config:
+      path: employee.tsp
+      pattern: "\\.\\.\\.ManagedServiceIdentityProperty;"
+  - type: file-matches
+    config:
+      path: employee.tsp
+      pattern: "@@added\\(Employee\\.identity, (Microsoft\\.Widget\\.)?Versions\\.(v2025_05_04_preview|`2025-05-04-preview`)\\);"
+  - type: prompt
+    config:
+      prompt: Verify changes are scoped to this task only, with no unrelated edits beyond introducing preview-only identity via versioning.
+      model: claude-opus-4.6
+      scoring: scale_1_5
+      threshold: 1.0
+  constraints:
+    max_turns: 10
+    max_tokens: 50000
+scoring:
+  weights:
+    file-matches: 3
+    tool-calls: 1
+    skill-invocation: 1
+    prompt: 1
+  threshold: 1.0

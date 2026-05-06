@@ -183,6 +183,26 @@ avc agent resolve-thread -c <COMMENTS_JSON_FILE> [--remote]
 
 ---
 
+### `avc agent report-issue`
+
+File a GitHub issue from an APIView "Report Issue" interaction. The LLM determines whether the report is about the APIView UI/service, APIView Copilot (the AI reviewer), or a language-specific parser; the server then derives the title prefix (`[APIView]`, `[AVC]`, or `[{Language} APIView]`) and labels.
+
+```bash
+avc agent report-issue --description "<text>" \
+    [--review-link <URL>] [--language <LANG>] \
+    [--comment-id <COMMENT_ID>] [--remote]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--description` | Required. The user's free-form description of the problem. |
+| `--review-link` | Optional URL to the APIView review the user is on. |
+| `--language` | Optional language hint (e.g. `python`, `C#`). |
+| `--comment-id` | Optional APIView comment id. When provided, the server fetches the comment text, code snippet, language, element id, and source automatically. |
+| `--remote` | Send to the deployed `/report-issue` endpoint instead of running locally. |
+
+---
+
 ## `avc kb` — Knowledge Base
 
 ### `avc kb search`
@@ -388,6 +408,30 @@ avc report quality-trends [--end-date 2026-04-17] [--months 6] [--languages Pyth
 | `--exclude-human` | Exclude human comments from the chart |
 | `--neutral` | Include neutral AI comments as a separate bucket |
 | `--environment` | `production` (default) or `staging` |
+
+---
+
+### `avc report apiview-metrics`
+
+Generate APIView platform metrics over a calendar-month lookback window. Produces a combined report with two metric buckets:
+
+- **versions** — Percentage of revisions that have a valid `PackageVersion`, broken out by language and revision type (Automatic, Manual, PullRequest).
+- **compliance** — Cross-language metadata compliance (whether revisions include `CrossLanguagePackageId`).
+
+```bash
+avc report apiview-metrics [--end-date 2026-04-28] [--months 6] [--languages Python Java] [--chart] [--summary] [--environment production|staging]
+```
+
+| Option | Description |
+|--------|-------------|
+| `-e/--end-date` | Inclusive query end date; defaults to today |
+| `--months` | Number of calendar months to look back from the end date (default 6) |
+| `--languages` | Languages to include; defaults to Python, C#, Java, JavaScript, and Go |
+| `--chart` | Generate PNG trend charts saved to `output/charts/` |
+| `--summary` | Print human-readable summary tables to stderr |
+| `--environment` | `production` (default) or `staging` |
+
+Outputs JSON to stdout with top-level `versions` and `compliance` keys containing per-language monthly data points. With `--summary`, compact terminal tables are also printed to stderr.
 
 ---
 

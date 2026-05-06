@@ -2,25 +2,39 @@
 
 ## Overview
 
-The github-team-user-store is an internal only tool. The tool will recursively get the list of teams/users, that includes the Azure/azure-sdk-write and all of the teams within that hierarchy, and store the results as a json string in Azure blob storage. The purpose of this is to enable team usage in CODEOWNERS by allowing the CodeOwnersParser to pull the list of users when it encounters a non-user, or team, entry. The reason why this code isn't directly in the CodeOwnersParser is because it requires a specific, fine-grained Personal Access Token (PAT) in order to be able to get the users for teams which isn't something that's readily available or prudent to be added to all of the places where CodeOwnersParser is used.
+The github-team-user-store is an internal only tool. The tool traverses the Azure/azure-sdk-write team hierarchy through the Open Source Portal (OSP), gets the member lists for each team, and writes the resulting cache files locally. The purpose of this is to enable team usage in CODEOWNERS by allowing the CodeOwnersParser to pull the list of users when it encounters a non-user, or team, entry. The reason this code is not directly in the CodeOwnersParser is because it requires Open Source API access that is not readily available or prudent to add to every consumer.
 
 ### github-team-user-store processing
 
-The tool uses creates a Dictionary<string, List`<string`>> where the key is the team name and the value is list of users, specifically the user Logins. The Logins are what's used by GitHub in @mentions, assignments etc. The specific details about the API calls can be found in code.
+The tool creates:
+- `azure-sdk-write-teams-blob`: a `List<KeyValuePair<string, List<string>>>` encoded as JSON where the key is the team name and the value is the list of user logins
+- `user-org-visibility-blob`: a `Dictionary<string, bool>` encoded as JSON for the `azure-sdk-write` users, where the value is `true` when the user's Azure org membership is public
+- `repository-labels-blob`: a `Dictionary<string, HashSet<string>>` encoded as JSON keyed by full repository name
+
+OSP supplies the team hierarchy, team members, public Azure org membership, and repository labels. Cache generation no longer depends on GitHub.
+
+The tool writes these files to the directory provided by `--outputDirectory`. A separate step can upload those files.
 
 ### Tool requirements
 
-The tool requires two things:
+The tool requires one thing:
 
-1. A GitHub PAT from a user that has organization access in the GITHUB_TOKEN environment variable. This requires a GitHub fine-grained token with Organization->Membership read-only permission. A bot account won't work here, this needs to be created by a user with permissions for the org. Note: Nothing is edited here, only read.
+1. An Azure credential that can call the Open Source API endpoints used for team children, team members, public memberships, and repository labels. The tool uses Azure Identity to acquire that token.
 
-2. The SAS token with write permissions for the azure-sdk-write-teams container in the azuresdkartifacts storage account in the AZURE_SDK_TEAM_USER_STORE_SAS environment variable.
+### Command line
 
-Both the PAT and the SAS token are in the **azuresdkartifacts azure-sdk-write-teams variables** variable group to be used by the pipeline which will run this on, at least, a daily basis.
+```powershell
+dotnet run -- --outputDirectory "<cache-output-dir>" --repositoryListFile "<path-to-repositories.txt>"
+```
+
+This writes the following files to `<cache-output-dir>`:
+- `azure-sdk-write-teams-blob`
+- `user-org-visibility-blob`
+- `repository-labels-blob`
 
 ### Using the store data
 
-The json blob is read anonymously. The json blob is created from the dictionary but, because the serializer doesn't handle Dictionary<string, List`<string`>>, the dictionary is converted to a List<KeyValuePair<string, List`<string`>>>. This means that anything wanting to use this data needs to convert it back to a dictionary which is easily done with the following C# code.
+The team/user json blob is created from the dictionary but, because the serializer does not handle `Dictionary<string, List<string>>` in the shape expected by existing consumers, the dictionary is converted to a `List<KeyValuePair<string, List<string>>>`. Anything reading this data needs to convert it back to a dictionary, which can be done with the following C# code.
 
 ```Csharp
     var list = JsonSerializer.Deserialize<List<KeyValuePair<string, List<string>>>>(rawJson);
@@ -28,4 +42,5 @@ The json blob is read anonymously. The json blob is created from the dictionary 
 ```
 
 ### The pipeline where this will run
-This will run as part of the [pipeline-owners-extracton](https://dev.azure.com/azure-sdk/internal/_build?definitionId=5112&_a=summary) pipeline.
+This will run as part of the [automation - pipeline-owners-extraction
+](https://dev.azure.com/azure-sdk/internal/_build?definitionId=5112&_a=summary) pipeline. The tool generates local cache files, and the pipeline publishes that directory as an artifact so a separate step can upload the files.

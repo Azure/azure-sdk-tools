@@ -462,6 +462,15 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                     result: "noop"));
         }
 
+        public virtual Task<PackageOperationResponse> DetectSdkBreakingChangeAsync(string packagePath, CancellationToken ct)
+        {
+            return Task.FromResult(
+                PackageOperationResponse.CreateSuccess(
+                    "SDK Breaking Change Detection not implemented for this language.",
+                    nextSteps: ["Manually detect the sdk breaking changes."],
+                    result: "noop"));
+        }
+
         /// <summary>
         /// Updates the version for a specified package.
         /// This method performs two steps:

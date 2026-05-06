@@ -6,6 +6,10 @@ parameters:
 - name: PythonVersion
   type: string
   default: '3.10'
+- name: SkillBranch
+  displayName: Branch containing the azure-typespec-author skill code to evaluate (leave empty to use the branch this pipeline was triggered from)
+  type: string
+  default: ''
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -30,6 +34,25 @@ extends:
             steps:
               - checkout: self
                 fetchDepth: 0
+
+              # Optionally check out a specific branch that contains the
+              # azure-typespec-author skill code to evaluate. When the
+              # SkillBranch parameter is empty we keep the branch that
+              # triggered the pipeline.
+              - script: |
+                  set -e
+                  BRANCH="${{ parameters.SkillBranch }}"
+                  if [ -z "$BRANCH" ]; then
+                    echo "SkillBranch parameter not provided; using the source branch checked out by the pipeline."
+                    git rev-parse --abbrev-ref HEAD
+                    git rev-parse HEAD
+                    exit 0
+                  fi
+                  echo "Checking out skill branch: $BRANCH"
+                  git fetch origin "$BRANCH"
+                  git checkout "$BRANCH"
+                  git rev-parse HEAD
+                displayName: Checkout skill branch
 
               # Install Go and build/start the QA bot backend
               - script: |

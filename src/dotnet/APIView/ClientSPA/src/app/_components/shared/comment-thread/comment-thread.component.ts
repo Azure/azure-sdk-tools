@@ -300,7 +300,7 @@ export class CommentThreadComponent {
       ? this.associatedCodeLine.rowOfTokens.map(token => token.value).join('')
       : '';
     if (!codeSnippet) {
-      codeSnippet = this.codePanelRowData?.comments[0]?.elementId || '';
+      codeSnippet = comment?.elementId || '';
     }
 
     const language = this.reviewContextService.getLanguage() || '';
@@ -314,7 +314,7 @@ export class CommentThreadComponent {
       commentText: commentText,
       codeSnippet: codeSnippet,
       language: language,
-      elementId: this.codePanelRowData?.comments[0]?.elementId || '',
+      elementId: comment?.elementId || '',
       commentSource: source
     };
     this.showReportIssueDialog = true;

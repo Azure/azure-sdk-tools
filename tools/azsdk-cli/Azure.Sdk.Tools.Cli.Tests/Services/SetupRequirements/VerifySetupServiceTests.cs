@@ -99,6 +99,7 @@ internal class VerifySetupServiceTests
                     { "golangci-lint", "golangci-lint 1.55.0" },
                     { "goimports", "goimports" },
                     { "generator", "generator 0.4.3" },
+                    { "rustup", "rustup 1.27.0" },
                     { "core.longpaths", "true" }
                 };
                 foreach (var kvp in successfulCommands)

@@ -5,7 +5,9 @@ These skills are consumed by GitHub Copilot (CLI, VS Code, and Coding Agent) whe
 with TypeSpec API specifications and Azure SDK generation.
 
 Shared skills (those distributed to other Azure SDK repositories) are identified by
-`distribution: shared` in their SKILL.md frontmatter metadata block.
+`distribution: shared` in their SKILL.md frontmatter metadata block and use the
+`azsdk-common-` directory prefix. This prefix enables the `sync-.github.yml` pipeline
+to match and distribute them to all subscribed language SDK repos.
 
 ---
 
@@ -15,11 +17,11 @@ Shared skills (those distributed to other Azure SDK repositories) are identified
 
 | Skill | Triggers | Description |
 | ----- | -------- | ----------- |
-| [generate-sdk-locally](generate-sdk-locally/SKILL.md) | "generate SDK locally", "build SDK", "run SDK tests" | Generate, build, and test Azure SDKs locally from TypeSpec |
-| [prepare-release-plan](prepare-release-plan/SKILL.md) | "create release plan", "link SDK PR to plan" | Create and manage release plan work items |
-| [apiview-feedback-resolution](apiview-feedback-resolution/SKILL.md) | "APIView comments", "resolve API review feedback" | Retrieve and resolve APIView review feedback |
-| [pipeline-troubleshooting](pipeline-troubleshooting/SKILL.md) | "pipeline failed", "build failure", "CI check failing" | Diagnose and resolve SDK CI and generation pipeline failures |
-| [sdk-release](sdk-release/SKILL.md) | "release SDK", "trigger release pipeline" | Check release readiness and trigger SDK releases |
+| [azsdk-common-generate-sdk-locally](azsdk-common-generate-sdk-locally/SKILL.md) | "generate SDK locally", "build SDK", "run SDK tests" | Generate, build, and test Azure SDKs locally from TypeSpec |
+| [azsdk-common-prepare-release-plan](azsdk-common-prepare-release-plan/SKILL.md) | "create release plan", "link SDK PR to plan" | Create and manage release plan work items |
+| [azsdk-common-apiview-feedback-resolution](azsdk-common-apiview-feedback-resolution/SKILL.md) | "APIView comments", "resolve API review feedback" | Retrieve and resolve APIView review feedback |
+| [azsdk-common-pipeline-troubleshooting](azsdk-common-pipeline-troubleshooting/SKILL.md) | "pipeline failed", "build failure", "CI check failing" | Diagnose and resolve SDK CI and generation pipeline failures |
+| [azsdk-common-sdk-release](azsdk-common-sdk-release/SKILL.md) | "release SDK", "trigger release pipeline" | Check release readiness and trigger SDK releases |
 
 ### Development & Meta Skills
 

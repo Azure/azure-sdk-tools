@@ -4,6 +4,11 @@ trigger: none
 pr: none
 
 parameters:
+  - name: AuditCodeowners
+    displayName: 'Audit CODEOWNERS'
+    type: boolean
+    default: false
+
   - name: CodeownerTargetRepos
     type: object
     default:
@@ -31,25 +36,54 @@ stages:
       Project: internal
       DotNetDevOpsFeed: "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json"
       OutputPath: '$(Agent.BuildDirectory)/pipelineOwners.json'
-      RepoLabelUri: "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/repository-labels-blob"
-      TeamUserUri: "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob"
-      UserOrgUri: "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/user-org-visibility-blob"
+      CacheOutputDirectory: '$(Build.ArtifactStagingDirectory)/github-team-user-store-cache'
       RepoListFile: "$(Build.SourcesDirectory)/tools/github/data/repositories.txt"
 
     steps:
       - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
       - task: AzureCLI@2
-        displayName: 'Fetch and store team/user data'
+        displayName: 'Generate cache files'
+        inputs:
+          azureSubscription: 'opensource-api-connection'
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            New-Item -ItemType Directory -Force -Path "$(CacheOutputDirectory)" | Out-Null
+            dotnet run -- --outputDirectory "$(CacheOutputDirectory)" -rlFile "$(RepoListFile)"
+          workingDirectory: tools/github-team-user-store/GitHubTeamUserStore/GitHubTeamUserStore
+
+      - task: AzureCLI@2
+        displayName: 'Upload cache files to storage'
         inputs:
           azureSubscription: 'Azure SDK Artifacts'
           scriptType: pscore
           scriptLocation: inlineScript
           inlineScript: |
-            dotnet run -rUri "$(RepoLabelUri)" -tUri "$(TeamUserUri)" -uUri "$(UserOrgUri)" -rlFile "$(RepoListFile)"
-          workingDirectory: tools/github-team-user-store/GitHubTeamUserStore/GitHubTeamUserStore
-        env:
-          GITHUB_TOKEN: $(azuresdk-github-pat)
+            az storage blob upload-batch `
+              --account-name azuresdkartifacts `
+              --source "$(CacheOutputDirectory)" `
+              --destination 'azure-sdk-write-teams' `
+              --auth-mode login `
+              --overwrite true
+
+      - publish: $(CacheOutputDirectory)
+        displayName: Publish cache files artifact
+        artifact: github-team-user-store-cache
+        condition: succeededOrFailed()
+
+      - ${{ if or(parameters.AuditCodeowners, eq(variables['Build.Reason'], 'Schedule')) }}:
+        - template: /eng/common/pipelines/templates/steps/install-azsdk-cli.yml
+
+        - task: AzureCLI@2
+          displayName: Audit CODEOWNERS
+          inputs:
+            azureSubscription: 'opensource-api-connection'
+            scriptType: pscore
+            scriptLocation: inlineScript
+            inlineScript: |
+              & $env:AZSDK config codeowners audit --fix
+            workingDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli
 
       - task: DotNetCoreCLI@2
         displayName: 'Install Pipeline Owners Extractor'

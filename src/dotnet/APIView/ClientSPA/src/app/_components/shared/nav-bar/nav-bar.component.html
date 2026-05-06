@@ -33,15 +33,6 @@
                     </ul>
                 </li>
 
-<!-- Report Issue Dialog (General mode from ? menu) -->
-<app-report-issue-dialog
-    [(visible)]="showReportIssueDialog"
-    mode="general"
-    [reviewLink]="currentReviewLink"
-    (issueSubmit)="onReportIssueSubmit($event)"
-    (cancel)="showReportIssueDialog = false">
-</app-report-issue-dialog>
-
                 <!-- Notifications icon with badge -->
                 <li *ngIf="isLoggedIn" class="nav-item">
                     <a class="nav-link nav-icon position-relative" (click)="notificationsSidePanel = !notificationsSidePanel" aria-label="Notifications" data-clarity-region="notifications-button">
@@ -119,6 +110,15 @@
         </div>
     </div>
 </nav>
+
+<!-- Report Issue Dialog (General mode from ? menu) -->
+<app-report-issue-dialog
+    [(visible)]="showReportIssueDialog"
+    mode="general"
+    [reviewLink]="currentReviewLink"
+    (issueSubmit)="onReportIssueSubmit($event)"
+    (cancel)="showReportIssueDialog = false">
+</app-report-issue-dialog>
 
 <p-drawer [(visible)]="notificationsSidePanel!" position="right" [modal]="true" [showCloseIcon]="false" styleClass="notifications-sidebar">
     <ng-template pTemplate="header">

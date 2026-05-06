@@ -69,6 +69,10 @@ export class AppComponent  implements OnInit{
     window.location.reload();
   }
 
+  isHttpDetail(detail: unknown): boolean {
+    return typeof detail === 'string' && detail.startsWith('http');
+  }
+
   handleRealTimeAIReviewUpdates() {
     this.signalRService.onAIReviewUpdates().pipe(takeUntil(this.destroy$)).subscribe({
       next: (aiReviewUpdate: AIReviewJobCompletedDto) => {

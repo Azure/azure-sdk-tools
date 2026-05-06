@@ -120,32 +120,3 @@ textarea.form-control {
     resize: vertical;
     min-height: 80px;
 }
-
-::ng-deep .report-issue-toast {
-    .issue-link {
-        color: var(--link-color);
-        text-decoration: none;
-        font-weight: 500;
-        font-size: 0.9rem;
-
-        &:hover {
-            text-decoration: underline;
-        }
-    }
-}
-
-.success-confirmation {
-    .confirmation-icon {
-        font-size: 3rem;
-    }
-
-    .btn-outline-primary {
-        border-color: var(--primary-color);
-        color: var(--primary-color);
-
-        &:hover {
-            background-color: var(--primary-color);
-            color: var(--primary-btn-color);
-        }
-    }
-}

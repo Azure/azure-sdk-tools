@@ -32,7 +32,8 @@ export interface ReportIssueData {
         CommonModule,
         FormsModule,
         DialogModule
-    ]
+    ],
+    providers: [MessageService]
 })
 export class ReportIssueDialogComponent implements OnChanges {
   @Input() visible: boolean = false;
@@ -49,6 +50,9 @@ export class ReportIssueDialogComponent implements OnChanges {
 
   description: string = '';
   submitting: boolean = false;
+  // Set to true while we are programmatically closing the dialog after a
+  // successful submit so the resulting onHide does not also emit a 'cancel'.
+  private suppressCancelOnHide: boolean = false;
 
   constructor(private messageService: MessageService, private agentService: AgentService) {}
 
@@ -98,6 +102,7 @@ export class ReportIssueDialogComponent implements OnChanges {
             data.commentContext = this.commentContext ?? undefined;
           }
           this.issueSubmit.emit(data);
+          this.suppressCancelOnHide = true;
           this.closeDialog();
 
           this.messageService.add({
@@ -129,6 +134,10 @@ export class ReportIssueDialogComponent implements OnChanges {
   }
 
   onHide(): void {
+    if (this.suppressCancelOnHide) {
+      this.suppressCancelOnHide = false;
+      return;
+    }
     this.cancel.emit();
     this.closeDialog();
   }

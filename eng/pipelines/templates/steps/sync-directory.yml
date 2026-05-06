@@ -160,10 +160,14 @@ steps:
         foreach ($filePattern in $filePatterns) {
           Write-Host "Copying files with pattern: $filePattern"
 
+          $patternDir = Split-Path $filePattern -Parent
+          $destPath = if ($patternDir) { Join-Path $repoPath $patternDir } else { $repoPath }
+          New-Item -ItemType Directory -Force -ErrorAction Ignore -Path $destPath
+
           Remove-Item -v -r -ErrorAction Ignore "${repoPath}/${filePattern}"
           Copy-Item -v -r `
             "$(System.DefaultWorkingDirectory)/$(Build.Repository.Name)/${{ parameters.DirectoryToSync }}/${filePattern}" `
-            $repoPath
+            $destPath
         }
         Get-ChildItem -r $repoPath
       displayName: Copy ${{ parameters.DirectoryToSync }} from azure-sdk-tools to ${{ repo }}

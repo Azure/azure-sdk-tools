@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using ApiView;
+using APIView;
 using APIView.Model.V2;
 using APIViewWeb;
 using APIViewWeb.Helpers;
@@ -44,7 +44,7 @@ public class CommentsTokenAuthControllerTests
         // Arrange
         string apiRevisionId = "revision123";
         APIRevisionListItemModel mockRevision = CreateMockAPIRevision(apiRevisionId);
-        RenderedCodeFile mockCodeFile = new(new ApiView.CodeFile());
+        RenderedCodeFile mockCodeFile = new(new APIView.CodeFile());
         List<CommentItemModel> mockComments = new();
         List<ApiViewAgentComment> expectedComments = new();
 

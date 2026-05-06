@@ -960,7 +960,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Fact]
         public void TestSetRecordingOptionsValidTlsCert()
         {
-            var certValue = TestHelpers.GetValueFromCertificateFile("test_public-key-only_pem").Replace(Environment.NewLine, "");
+            var certValue = TestHelpers.GetValueFromCertificateFile("test_public-key-only_pem").Replace("\r", "").Replace("\n", "");
             var inputObj = string.Format("{{\"Transport\": {{\"TLSValidationCert\": \"{0}\"}}}}", certValue);
             var testRecordingHandler = new RecordingHandler(Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString()));
             var inputBody = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(inputObj, SerializerOptions);
@@ -971,9 +971,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Fact]
         public void TestSetRecordingOptionsMultipleCertOptions()
         {
-            var certValue = TestHelpers.GetValueFromCertificateFile("test_public-key-only_pem").Replace(Environment.NewLine, "");
-            var pemKey = TestHelpers.GetValueFromCertificateFile("test_pem_key").Replace(Environment.NewLine, "");
-            var pemValue = TestHelpers.GetValueFromCertificateFile("test_pem_value").Replace(Environment.NewLine, "");
+            var certValue = TestHelpers.GetValueFromCertificateFile("test_public-key-only_pem").Replace("\r", "").Replace("\n", "");
+            var pemKey = TestHelpers.GetValueFromCertificateFile("test_pem_key").Replace("\r", "").Replace("\n", "");
+            var pemValue = TestHelpers.GetValueFromCertificateFile("test_pem_value").Replace("\r", "").Replace("\n", "");
             var inputObj = string.Format("{{\"Transport\": {{\"TLSValidationCert\": \"{0}\", \"Certificates\": [ {{ \"PemValue\": \"{1}\", \"PemKey\": \"{2}\" }}]}}}}", certValue, pemValue, pemKey);
             var testRecordingHandler = new RecordingHandler(Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString()));
             var inputBody = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(inputObj, SerializerOptions);
@@ -987,8 +987,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [InlineData("{{\"Transport\": {{\"Certificates\": []}}}}")]
         public void TestSetRecordingOptionsValidTransportSessionLevel(string body)
         {
-            var pemKey = TestHelpers.GetValueFromCertificateFile("test_pem_key").Replace(Environment.NewLine, "");
-            var pemValue = TestHelpers.GetValueFromCertificateFile("test_pem_value").Replace(Environment.NewLine, "");
+            var pemKey = TestHelpers.GetValueFromCertificateFile("test_pem_key").Replace("\r", "").Replace("\n", "");
+            var pemValue = TestHelpers.GetValueFromCertificateFile("test_pem_value").Replace("\r", "").Replace("\n", "");
             var inputObj = string.Format(body, pemValue, pemKey);
             var inputBody = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(inputObj, SerializerOptions);
 
@@ -1002,8 +1002,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [InlineData("{{\"Transport\": {{\"Certificates\": []}}}}")]
         public async Task TestSetRecordingOptionsValidTransportRecordingLevel(string body)
         {
-            var pemKey = TestHelpers.GetValueFromCertificateFile("test_pem_key").Replace(Environment.NewLine, "");
-            var pemValue = TestHelpers.GetValueFromCertificateFile("test_pem_value").Replace(Environment.NewLine, "");
+            var pemKey = TestHelpers.GetValueFromCertificateFile("test_pem_key").Replace("\r", "").Replace("\n", "");
+            var pemValue = TestHelpers.GetValueFromCertificateFile("test_pem_value").Replace("\r", "").Replace("\n", "");
             var testRecordingHandler = new RecordingHandler(Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString()));
             var inputObj = string.Format(body, pemValue, pemKey);
             var inputBody = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(inputObj, SerializerOptions);
@@ -1022,8 +1022,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemKey\": \"{1}\" }}]}}}}")]
         public void TestSetRecordingOptionsInValidTransportSessionLevel(string body)
         {
-            var pemKey = TestHelpers.GetValueFromCertificateFile("test_pem_key").Replace(Environment.NewLine, "");
-            var pemValue = TestHelpers.GetValueFromCertificateFile("test_pem_value").Replace(Environment.NewLine, "");
+            var pemKey = TestHelpers.GetValueFromCertificateFile("test_pem_key").Replace("\r", "").Replace("\n", "");
+            var pemValue = TestHelpers.GetValueFromCertificateFile("test_pem_value").Replace("\r", "").Replace("\n", "");
             var testRecordingHandler = new RecordingHandler(Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString()));
             var inputObj = string.Format(body, pemValue, pemKey);
             var inputBody = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(inputObj, SerializerOptions);
@@ -1041,8 +1041,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [InlineData("{{\"Transport\": {{\"Certificates\": [ {{ \"PemKey\": \"{1}\" }}]}}}}")]
         public async Task TestSetRecordingOptionsInvalidTransportRecordingLevel(string body)
         {
-            var pemKey = TestHelpers.GetValueFromCertificateFile("test_pem_key").Replace(Environment.NewLine, "");
-            var pemValue = TestHelpers.GetValueFromCertificateFile("test_pem_value").Replace(Environment.NewLine, "");
+            var pemKey = TestHelpers.GetValueFromCertificateFile("test_pem_key").Replace("\r", "").Replace("\n", "");
+            var pemValue = TestHelpers.GetValueFromCertificateFile("test_pem_value").Replace("\r", "").Replace("\n", "");
             var testRecordingHandler = new RecordingHandler(Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString()));
             var inputObj = string.Format(body, pemValue, pemKey);
             var inputBody = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(inputObj, SerializerOptions);
@@ -1061,9 +1061,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Fact]
         public void TestSetRecordingOptionsTransportWithTLSCert()
         {
-            var certValue = TestHelpers.GetValueFromCertificateFile("test_public-key-only_pem").Replace(Environment.NewLine, "");
-            var pemKey = TestHelpers.GetValueFromCertificateFile("test_pem_key").Replace(Environment.NewLine, "");
-            var pemValue = TestHelpers.GetValueFromCertificateFile("test_pem_value").Replace(Environment.NewLine, "");
+            var certValue = TestHelpers.GetValueFromCertificateFile("test_public-key-only_pem").Replace("\r", "").Replace("\n", "");
+            var pemKey = TestHelpers.GetValueFromCertificateFile("test_pem_key").Replace("\r", "").Replace("\n", "");
+            var pemValue = TestHelpers.GetValueFromCertificateFile("test_pem_value").Replace("\r", "").Replace("\n", "");
             var inputObj = string.Format("{{\"Transport\": {{\"TLSValidationCert\": \"{0}\", \"TLSValidationCertHost\":\"azure.blobs.windows.net\", \"Certificates\": [ {{ \"PemValue\": \"{1}\", \"PemKey\": \"{2}\" }}]}}}}", certValue, pemValue, pemKey);
 
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
@@ -1075,9 +1075,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Fact]
         public void TestSetRecordingOptionsInValidTransportWithTLSCert()
         {
-            var certValue = TestHelpers.GetValueFromCertificateFile("test_public-key-only_pem").Replace(Environment.NewLine, "");
-            var pemKey = TestHelpers.GetValueFromCertificateFile("test_pem_key").Replace(Environment.NewLine, "");
-            var pemValue = TestHelpers.GetValueFromCertificateFile("test_pem_value").Replace(Environment.NewLine, "");
+            var certValue = TestHelpers.GetValueFromCertificateFile("test_public-key-only_pem").Replace("\r", "").Replace("\n", "");
+            var pemKey = TestHelpers.GetValueFromCertificateFile("test_pem_key").Replace("\r", "").Replace("\n", "");
+            var pemValue = TestHelpers.GetValueFromCertificateFile("test_pem_value").Replace("\r", "").Replace("\n", "");
             var inputObj = string.Format("{{\"Transport\": {{\"TLSValidationCert\": \"hello-there\", \"Certificates\": [ {{ \"PemValue\": \"{0}\", \"PemKey\": \"{1}\" }}]}}}}", pemValue, pemKey);
 
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());

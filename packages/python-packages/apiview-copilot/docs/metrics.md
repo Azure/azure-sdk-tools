@@ -154,13 +154,24 @@ List memories stored in the knowledge base, with optional filters:
 avc report memory -l python
 ```
 
-### Analyze Comments
+### Architect Comments
 
-Analyze AI comment quality for a review or set of comments:
+Retrieve human architect review comments for a date range. By default, only threads whose first comment falls within the date window are included — replies to older threads are excluded even if the reply itself was created during the window.
 
 ```bash
-avc report analyze-comments --review-id <REVIEW_ID>
+avc report architect-comments -s 2026-01-01 -e 2026-01-31 [-l python] [--all-commenters] [--include-replies] [--environment staging] [--format yaml]
 ```
+
+### APIView Platform Metrics
+
+Track versioned-revision coverage and cross-language compliance over a calendar-month lookback window. Outputs JSON to stdout; use `--summary` to also print human-readable tables to stderr.
+
+```bash
+avc report apiview-metrics [--months 6] [--end-date 2026-04-30] [--languages Python Java] [--chart] [--summary]
+```
+
+- **versions** — Percentage of revisions with a valid `PackageVersion`, broken out by language and revision type (Automatic, Manual, PullRequest).
+- **compliance** — Percentage of reviews whose latest revision includes `CrossLanguagePackageId`.
 
 ## OpenTelemetry Metrics
 

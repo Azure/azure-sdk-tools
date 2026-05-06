@@ -6,6 +6,10 @@ parameters:
 - name: PythonVersion
   type: string
   default: '3.10'
+- name: SkillBranch
+  displayName: Branch containing the azure-typespec-author skill source (SKILL.md + references/) to evaluate. Leave empty to use the branch this pipeline was triggered from.
+  type: string
+  default: ''
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -30,6 +34,31 @@ extends:
             steps:
               - checkout: self
                 fetchDepth: 0
+
+              # Optionally overlay the azure-typespec-author skill source
+              # (SKILL.md + references/) from a different branch so we can
+              # evaluate skill changes that live on another branch while
+              # keeping the evaluate/ directory and pipeline config from
+              # the branch this pipeline was triggered from.
+              - script: |
+                  set -e
+                  BRANCH="${{ parameters.SkillBranch }}"
+                  if [ -z "$BRANCH" ]; then
+                    echo "SkillBranch parameter not provided; using the source branch checked out by the pipeline."
+                    git rev-parse --abbrev-ref HEAD
+                    git rev-parse HEAD
+                    exit 0
+                  fi
+                  echo "Overlaying azure-typespec-author skill source from branch: $BRANCH"
+                  git fetch origin "$BRANCH"
+                  rm -rf .github/skills/azure-typespec-author/SKILL.md \
+                         .github/skills/azure-typespec-author/references
+                  git checkout "origin/$BRANCH" -- \
+                    .github/skills/azure-typespec-author/SKILL.md \
+                    .github/skills/azure-typespec-author/references
+                  echo "Skill source overlaid from origin/$BRANCH ($(git rev-parse origin/$BRANCH))"
+                  ls -R .github/skills/azure-typespec-author
+                displayName: Checkout skill branch
 
               # Install Go and build/start the QA bot backend
               - script: |

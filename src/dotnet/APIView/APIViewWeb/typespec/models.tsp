@@ -225,6 +225,21 @@ model ApiViewAgentComment {
     ThreadId?: string;
 }
 
+/** A user returned by a reviewer/admin endpoint */
+model ReviewerInfo {
+    /** GitHub username */
+    name: string;
+    /** The user's role (e.g. "Architect", "DeputyArchitect", "admin") */
+    role: string;
+}
+
+/** Response envelope for the get-approvers-for-language endpoint */
+model ApproversForLanguageResponse {
+    /** The language these approvers are scoped to */
+    language: string;
+    /** List of approvers with their language-scoped role */
+    approvers: ReviewerInfo[];
+}
 
 /**
  * Bad request error response

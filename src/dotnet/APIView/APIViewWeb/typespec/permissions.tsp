@@ -5,24 +5,8 @@ using TypeSpec.Http;
 
 namespace APIView;
 
-/** A user returned by a reviewer/admin endpoint */
-model ReviewerInfo {
-    /** GitHub username */
-    name: string;
-    /** The user's role (e.g. "Architect", "DeputyArchitect", "admin") */
-    role: string;
-}
-
-/** Response envelope for the get-approvers-for-language endpoint */
-model ApproversForLanguageResponse {
-    /** The language these approvers are scoped to */
-    language: string;
-    /** List of approvers with their language-scoped role */
-    approvers: ReviewerInfo[];
-}
-
 /**
- * Permissions endpoints accessible via Azure AD token or cookie authentication.
+ * Permissions endpoints accessible via Azure AD token.
  * These endpoints are intended for use by agents and MCP clients via Bearer token.
  */
 @route("/api/permissions")

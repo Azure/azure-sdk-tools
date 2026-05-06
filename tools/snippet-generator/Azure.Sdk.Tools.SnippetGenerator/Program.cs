@@ -26,12 +26,12 @@ namespace Azure.Sdk.Tools.SnippetGenerator
             var targetPath = TargetPath ?? BasePath;
             var baseDirectory = new DirectoryInfo(BasePath).Name;
             
-            if( Directory.Exists(BasePath) == false)
+            if (Directory.Exists(BasePath) == false)
             {
                 throw new DirectoryNotFoundException($"The specified base path '{BasePath}' does not exist.");
             }
 
-            if( Directory.Exists(targetPath) == false)
+            if (Directory.Exists(targetPath) == false)
             {
                 throw new DirectoryNotFoundException($"The specified target path '{targetPath}' does not exist.");
             }

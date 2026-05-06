@@ -56,7 +56,7 @@ def _get_endpoint() -> str:
     return endpoint
 
 
-def _get_credential():
+async def _get_credential():
     """Return Cosmos DB key from Key Vault if available, otherwise token credential.
 
     Workaround: Cosmos DB data-plane RBAC does not yet support AI Foundry
@@ -68,18 +68,14 @@ def _get_credential():
         kv_endpoint = cfg("KEYVAULT_ENDPOINT", "")
         if kv_endpoint:
             try:
-
-                async def _fetch_key() -> str:
-                    client = KeyVaultSecretClient(
-                        vault_url=kv_endpoint, credential=get_credential()
-                    )
-                    try:
-                        secret = await client.get_secret("AZURE-COSMOSDB-KEY")
-                        return secret.value or ""
-                    finally:
-                        await client.close()
-
-                key = asyncio.get_event_loop().run_until_complete(_fetch_key())
+                client = KeyVaultSecretClient(
+                    vault_url=kv_endpoint, credential=get_credential()
+                )
+                try:
+                    secret = await client.get_secret("AZURE-COSMOSDB-KEY")
+                    key = secret.value or ""
+                finally:
+                    await client.close()
             except Exception:
                 logger.warning(
                     "Failed to fetch AZURE-COSMOSDB-KEY from Key Vault",
@@ -100,7 +96,7 @@ async def _get_client() -> CosmosClient:
         if _client is None:
             _client = CosmosClient(
                 url=_get_endpoint(),
-                credential=_get_credential(),
+                credential=await _get_credential(),
                 retry_total=int(
                     cfg("AZURE_COSMOSDB_RETRY_TOTAL", str(_DEFAULT_RETRY_TOTAL))
                 ),

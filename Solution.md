@@ -48,19 +48,19 @@ Represents the latest review state for one reviewer on one version.
 
 The same `ReviewerState` record is reused for initial request, re-request, submit, and cancel operations.
 
-| Field | Notes |
-|---|---|
-| `Id` | Unique reviewer state ID |
-| `VersionId` | Target version |
-| `ReviewerId` | Reviewer this state applies to |
-| `RequestedBy` | User or service account that most recently requested review |
-| `RequestedOn` | Timestamp of the most recent request; used for audit and notification, not for comment grouping |
-| `Status` | `Open`, `Submitted`, `Canceled` |
-| `SubmissionDecision` | Latest submitted `Approve` or `Feedback` |
-| `ContentHash` | SHA-256 hash of the approved revision's API surface, captured only for `Approve` |
-| `SubmittedOn` | Timestamp of the latest submission; used as the start of the next review window |
-| `CanceledOn` | Optional timestamp when the reviewer state was last canceled |
-| `ChangeHistory` | Ordered lifecycle history for this reviewer state |
+| Field | IsConvenienceProperty | Notes |
+|---|---|---|
+| `Id` | No | Unique reviewer state ID |
+| `VersionId` | No | Target version |
+| `ReviewerId` | No | Reviewer this state applies to |
+| `RequestedBy` | Yes | User or service account that most recently requested review |
+| `RequestedOn` | Yes | Timestamp of the most recent request; used for audit and notification, not for comment grouping |
+| `Status` | No | `Open`, `Submitted`, `Canceled` |
+| `SubmissionDecision` | Yes | Latest submitted `Approve` or `Feedback` |
+| `ContentHash` | No | SHA-256 hash of the approved revision's API surface, captured only for `Approve` |
+| `SubmittedOn` | Yes | Timestamp of the latest submission; used as the start of the next review window |
+| `CanceledOn` | No | Optional timestamp when the reviewer state was last canceled |
+| `ChangeHistory` | No | Ordered lifecycle history for this reviewer state |
 
 ### Change History Shape
 

@@ -70,4 +70,3 @@ scoring:
     skill-invocation: 1
     prompt: 1
   threshold: 1.0
-

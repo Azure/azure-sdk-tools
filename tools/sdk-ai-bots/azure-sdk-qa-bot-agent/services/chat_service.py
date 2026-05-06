@@ -23,7 +23,7 @@ from models.chat import (
     Role,
 )
 from models.conversation import ConversationMessage
-from models.knowledge import Reference
+from models.knowledge import DocumentContext, Reference
 from services.conversation_service import ConversationService
 from tools import TOOL_REGISTRY
 from skills.tenant_skills import get_skill_to_tenant_map
@@ -384,11 +384,15 @@ class ChatService:
             output_text, tool_references
         )
 
-        # Build full_context from search tool results when requested
+        # Build full_context from search tool results when requested.
+        # Keys use "document_" prefix for compatibility with the eval pipeline.
         full_context = None
         if req.with_full_context and tool_references:
             full_context = json.dumps(
-                [r.model_dump(mode="json") for r in tool_references]
+                [
+                    DocumentContext.from_reference(r).model_dump(mode="json")
+                    for r in tool_references
+                ]
             )
 
         resp = ChatResponse(

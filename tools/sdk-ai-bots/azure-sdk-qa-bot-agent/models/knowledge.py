@@ -6,7 +6,6 @@ from dataclasses import dataclass, field
 from collections.abc import Callable
 from pydantic import BaseModel, Field, field_validator
 
-
 # ---------------------------------------------------------------------------
 # Knowledge source definition
 # ---------------------------------------------------------------------------
@@ -122,3 +121,23 @@ class SearchKnowledgeBaseResult(BaseModel):
     """Output of the search_knowledge_base tool call."""
 
     results: list[Reference] = []
+
+
+class DocumentContext(BaseModel):
+    """A knowledge document in the eval-pipeline format (document_* keys)."""
+
+    document_title: str = ""
+    document_link: str = ""
+    document_source: str = ""
+    document_content: str = ""
+    score: float = 0.0
+
+    @staticmethod
+    def from_reference(ref: Reference) -> "DocumentContext":
+        return DocumentContext(
+            document_title=ref.title,
+            document_link=ref.link,
+            document_source=ref.source,
+            document_content=ref.content,
+            score=ref.score,
+        )

@@ -104,15 +104,12 @@ extends:
                 displayName: Install Copilot SDK
 
               # Run evaluations
+              # The vally config (.vally.yaml) lives in the skill's evaluate/
+              # directory; cd there so vally discovers evals/*.eval.yaml.
               - script: |
-                  cd .github/skills
-                  mkdir -p .vally/results
-                  areas=$(ls -d */ 2>/dev/null | xargs -I{} basename {} | grep -v '^results$' | paste -sd, -)
-                  if [ -n "$areas" ]; then
-                    vally eval --tag "priority=p0" --tag "area=${areas}" --output-dir ".vally/results"
-                  else
-                    echo "No skills found — skipping"
-                  fi
+                  cd .github/skills/azure-typespec-author/evaluate
+                  mkdir -p results
+                  vally eval --suite all --output-dir results
                 displayName: Run evaluations
                 continueOnError: true
                 env:
@@ -121,9 +118,10 @@ extends:
             templateContext:
               outputs:
                 - output: pipelineArtifact
-                  path: $(Build.SourcesDirectory)/.github/skills/.vally/results
+                  path: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/results
                   artifact: eval-results-$(Build.BuildId)
                   displayName: Upload eval results
                   condition: always()
+
 
 

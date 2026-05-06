@@ -9,7 +9,7 @@ parameters:
 - name: SkillBranch
   displayName: Branch containing the azure-typespec-author skill code to evaluate (leave empty to use the branch this pipeline was triggered from)
   type: string
-  default: ''
+  default: 'remove-task-type-classification'
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml

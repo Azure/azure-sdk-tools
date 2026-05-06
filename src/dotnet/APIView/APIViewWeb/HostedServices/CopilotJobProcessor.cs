@@ -134,11 +134,11 @@ namespace APIViewWeb.HostedServices
                         commentText.AppendLine($"Suggestion : `{comment.Suggestion}`");
                     }
 
-                    if (comment.GuidelineIds.Count > 0)
+                    if (commentModel.GuidelineIds.Count > 0)
                     {
                         commentText.AppendLine();
                         commentText.AppendLine("**Guidelines**");
-                        foreach (string guidelineId in comment.GuidelineIds)
+                        foreach (string guidelineId in commentModel.GuidelineIds)
                         {
                             commentText.AppendLine($"- https://azure.github.io/azure-sdk/{guidelineId}");
                         }

@@ -71,4 +71,3 @@ scoring:
     tool-calls: 1
     skill-invocation: 1
   threshold: 1.0
-

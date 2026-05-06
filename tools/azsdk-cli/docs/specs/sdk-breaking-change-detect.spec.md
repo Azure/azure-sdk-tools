@@ -283,7 +283,7 @@ The result is JSON-formatted.
 
 ```bash
 # Example usage
-azsdk package detect --sdk-repo-path <sdk-repo-path> --language go --tsp-config-path C:/dev/azure-rest-api-specs/specification/storage/Storage.Management/tspconfig.yaml --generate-sdk false
+azsdk package detect --package-path <sdk-package-path> --language go --tsp-config-path C:/dev/azure-rest-api-specs/specification/storage/Storage.Management/tspconfig.yaml --generate-sdk false
 ```
 
 ### Scenarios for Using the Tool
@@ -372,13 +372,13 @@ _Direct command-line interface usage showing exact commands, options, and expect
 **Command:**
 
 ```bash
-azsdk package detect --sdk-package-path <sdk-package-path> --language <language> --tsp-config-path <path-to-tsp-config-file> --generate-sdk <Ture/False>
+azsdk package detect --package-path <sdk-package-path> --language <language> --tsp-config-path <path-to-tsp-config-file> --generate-sdk <Ture/False>
 
 ```
 
 **Options:**
 
-- `--sdk-repo-path <value>`: (Required) The SDK repo root path
+- `--package-path <value>`: (Required) The SDK package path
 - `--language <value>`: (Required) The SDK language
 - `--tsp-config-path`: (Optional) Path to the 'tspconfig.yaml' configuration file, it can be a local path or remote HTTPS URL
 - `--generate-sdk`: (Optional) indicate whether need to generate sdk. default is False
@@ -396,9 +396,9 @@ azsdk package detect --sdk-package-path <sdk-package-path> --language <language>
 
 ```text
 
-✗ Error: Missing required option --changelog
+✗ Error: Missing required option --package-path
   
-Usage: azsdk package detect --changelog <sdk-change-log> --language <language> --tsp-config-path <path-to-tsp-config-file>
+Usage: azsdk package detect --package-path <sdk-package-path> --language <language> --tsp-config-path <path-to-tsp-config-file>
 ```
 
 ---

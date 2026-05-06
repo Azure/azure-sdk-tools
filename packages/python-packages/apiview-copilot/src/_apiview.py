@@ -1324,9 +1324,9 @@ def get_comment_with_context(comment_id: str, environment: str = "production") -
     Returns:
         A dict containing:
         - comment: The full comment object from the database (the anchor comment)
-        - thread_comments: List of comments sharing the same ThreadId, in
-          chronological order (always includes the anchor comment; falls back
-          to ``[comment]`` when the thread has no other replies)
+        - thread_comments: List of non-deleted comments sharing the same
+          ThreadId, in chronological order. Deleted comments, including the
+          anchor comment, may be excluded from this list.
         - language: The pretty language name (e.g., "Python")
         - package_name: The package name from the review
         - code: The API code from the revision (if available)

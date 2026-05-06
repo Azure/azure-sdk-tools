@@ -75,4 +75,3 @@ scoring:
     prompt: 1
     file-matches: 4
   threshold: 1.0
-

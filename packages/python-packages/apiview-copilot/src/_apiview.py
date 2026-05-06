@@ -790,6 +790,7 @@ def _get_implicit_bad_comments(
         AND (NOT IS_DEFINED(c.IsResolved) OR c.IsResolved = false)
         AND (NOT IS_DEFINED(c.Upvotes) OR ARRAY_LENGTH(c.Upvotes) = 0)
         AND (NOT IS_DEFINED(c.Downvotes) OR ARRAY_LENGTH(c.Downvotes) = 0)
+        AND (NOT IS_DEFINED(c.Feedback) OR ARRAY_LENGTH(c.Feedback) = 0)
     """
 
     comments = list(

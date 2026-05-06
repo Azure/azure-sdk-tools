@@ -30,7 +30,7 @@ Unless the user says otherwise, always apply these defaults:
 
 The `--include-implicit` flag also returns **implicit bad** comments: AI comments on approved revisions that were never upvoted, downvoted, or resolved. The inference is that the reviewer ignored them and approved anyway, suggesting they were unhelpful.
 
-Implicit bad is included **by default**. It has a weaker signal than explicit feedback because there is no reason or confirmation — just silence. Only omit `--include-implicit` if the user explicitly asks to exclude them (e.g., "only explicit feedback", "exclude implicit bad").
+This skill always passes `--include-implicit` (the CLI flag defaults to off, but the skill includes it for completeness). It has a weaker signal than explicit feedback because there is no reason or confirmation — just silence. Only omit `--include-implicit` if the user explicitly asks to exclude them (e.g., "only explicit feedback", "exclude implicit bad").
 
 The output will contain items with `"FeedbackTypes": ["implicit_bad"]`.
 

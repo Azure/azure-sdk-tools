@@ -45,6 +45,22 @@ APIView.sln
 └── docs/                 Documentation (you are here)
 ```
 
+### Namespaces in the `APIView/` Core Library
+
+The `APIView/` project uses two root namespaces to separate modern shared code from the deprecated flat-token pipeline:
+
+| Namespace | Purpose | Key Types |
+|---|---|---|
+| `APIView` | Shared core models, utilities, analysis, and diff | `CodeFile`, `CodeFileToken`, `CodeFileTokenKind`, `NavigationItem`, `CodeDiagnostic`, `CodeLine`, `CompilationFactory`, `DependencyInfo`, `SymbolExtensions` |
+| `APIView.Model.V2` | Modern tree-token model | `ReviewLine`, `ReviewToken`, `TokenKind` |
+| `APIView.Diff` | Diff algorithm | `Diff`, `InlineDiff`, `InlineDiffLine`, `DiffLineKind` |
+| `APIView.Analysis` | SDK analysis adapters | `Analyzer`, `SdkAnalyzerAdapter` |
+| `APIView.TreeToken` | Tree-token structured model | `StructuredToken`, `TokenTreeModel` |
+| `APIView.Identity` | Auth helpers | `ClaimConstants`, `TestUser` |
+| `APIViewLegacy` | **Deprecated** flat-token rendering and legacy C# parser | `CodeFileRenderer`, `CodeFileHtmlRenderer`, `CodeFileTokensBuilder`, `CodeFileBuilder`, `CodeFileBuilderSymbolSorter` |
+
+> **Rule:** New code should use the `APIView` namespace (or a sub-namespace). Only flat-token rendering and the legacy C# parser belong in `APIViewLegacy`.
+
 ---
 
 ## 3. Data Model Hierarchy
@@ -162,7 +178,7 @@ A separate set of controllers use **token authentication** (`RequireTokenAuthent
 
 ## 5. Frontend Architecture (ClientSPA — Angular)
 
-**Stack:** Angular 20 · PrimeNG 20 · Bootstrap 5.3 · SignalR · Monaco Editor · RxJS · Vite
+**Stack:** Angular 20 · PrimeNG 20 · Bootstrap 5.3 · SignalR · Monaco Editor · RxJS · Vitest · esbuild
 
 The Angular SPA is the **primary UI**. It is built separately (`npm run build`) and output to `APIViewWeb/wwwroot/spa/`. The ASP.NET backend serves it as static files and acts purely as an API host.
 
@@ -233,6 +249,8 @@ APIView's core abstraction is a **language-agnostic token model**. Every languag
 | **Flat (legacy)** | `CodeFileToken[]` — linear stream with `Newline` tokens as line separators | Deprecated; auto-converted on read |
 | **Tree (modern)** | `ReviewLine[]` — hierarchical lines with `ReviewToken[]` per line and `Children[]` for nesting | Active; all modern parsers emit this |
 
+> For a full list of which languages use which format and the migration path, see [legacy.md](legacy.md).
+
 ### b. Key Fields on CodeFile
 
 ```
@@ -259,7 +277,7 @@ Modern (`ReviewToken.Kind`): `Text`, `Punctuation`, `Keyword`, `TypeName`, `Memb
 
 ### e. Content Hashing
 
-Each CodeFile gets a **SHA-256 hash** of its API surface (excluding package version, documentation, and `SkipDiff` regions). This enables O(1) comparison between revisions — if the hash matches, the API surface is identical, and approval can be carried forward without downloading the blob.
+Each CodeFile gets a **SHA-256 hash** of its API surface (excluding package version, documentation, and `SkipDiff` regions). This enables O(1) comparison between revisions. See [release-approval.md](release-approval.md#5-automatic-approval-carry-forward) for how content hashing drives automatic approval carry-forward.
 
 ---
 
@@ -267,7 +285,7 @@ Each CodeFile gets a **SHA-256 hash** of its API surface (excluding package vers
 
 1. Two `CodeFile` blobs are loaded (active revision vs. selected diff revision).
 2. `ReviewLine` trees are flattened to comparable line sequences.
-3. **Myers' O(ND) diff algorithm** (`APIView/DIff/Diff.cs`) computes the minimal edit script.
+3. **Myers' O(ND) diff algorithm** (`APIView/Diff/Diff.cs`) computes the minimal edit script.
 4. Each line is tagged as `Added`, `Removed`, or `Unchanged`.
 5. The frontend renders additions/removals inline with configurable context lines.
 6. Section headings with diffs are pre-computed by `LinesWithDiffBackgroundHostedService` so the nav tree can highlight changed areas.
@@ -276,14 +294,9 @@ Each CodeFile gets a **SHA-256 hash** of its API surface (excluding package vers
 
 ## 8. Approval & Release Flow
 
-### a. Manual Approval
-A reviewer clicks **Approve** in the UI → `ToggleAPIRevisionApprovalAsync` toggles the approval state, updates the `Approvers` HashSet, records in `ChangeHistory`, and broadcasts via SignalR.
+APIView supports manual approval by reviewers, automatic carry-forward of approvals when the API surface is unchanged between revisions, and release tagging when a release pipeline marks a revision as shipped.
 
-### b. Automatic Carry-Forward
-When a new revision is created and its **content hash matches** an already-approved revision, approval is copied automatically. The change history records `"Approval copied from revision {id}"`.
-
-### c. Release Tagging
-When a release pipeline calls `/autoreview/upload` or `/autoreview/create` with `setReleaseTag=true`, the matching revision gets `IsReleased = true` and `ReleasedOn = DateTime.UtcNow`. The UI shows it as **"Shipped"**.
+For the complete approval workflow — including prerequisites, toggle flow, carry-forward mechanics, release gating endpoints, and HTTP response codes — see [release-approval.md](release-approval.md). For the user-facing approval process and who can approve, see [user-guide.md](user-guide.md#api-approvals).
 
 ---
 
@@ -310,6 +323,8 @@ Parsers live in various locations across the `azure-sdk-tools` repo.
 ---
 
 ## 10. Core Workflows
+
+> For a higher-level explanation of when revisions are created, when approvals are required, and how release enforcement works, see [ci-integration.md](ci-integration.md).
 
 There are three ways API revisions reach APIView: **CI Automatic** (the persistent review created on merges to `main`), **CI Pull Request** (the ephemeral revision created for PR review), and **Manual** (a user uploads a file through the web UI). The first two are automated; they share the same build step that produces the artifact but diverge in how that artifact reaches the server.
 
@@ -485,8 +500,9 @@ Each language repo follows a similar pattern: `ci.yml` → archetype stage → j
 |---|---|
 | Solution | `APIView.sln` |
 | Core models | `APIView/Model/CodeFile.cs`, `APIView/Model/V2/ReviewLine.cs`, `APIView/Model/V2/ReviewToken.cs` |
-| Diff algorithm | `APIView/DIff/Diff.cs` |
-| C# parser | `APIView/Languages/CodeFileBuilder.cs` |
+| Diff algorithm | `APIView/Diff/Diff.cs` |
+| Roslyn utilities | `APIView/Languages/CompilationFactory.cs`, `DependencyInfo.cs`, `SymbolExtensions.cs` |
+| Legacy C# parser | `APIView/Languages/CodeFileBuilder.cs` (`APIViewLegacy` namespace) |
 | Web app entry | `APIViewWeb/Program.cs`, `APIViewWeb/Startup.cs` |
 | REST controllers | `APIViewWeb/LeanControllers/` |
 | Business logic | `APIViewWeb/Managers/` |

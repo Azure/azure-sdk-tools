@@ -1,0 +1,27 @@
+{
+    "name": "azure-sdk-plugins",
+    "metadata": {
+        "description": "A collection of plugins, agents, and skills for Azure SDK development.",
+        "version": "1.0.0",
+        "pluginRoot": "./plugins"
+    },
+    "owner": {
+        "name": "Azure SDK Team",
+        "email": "azsdk@microsoft.com"
+    },
+    "plugins": [
+        {
+            "name": "azure-sdk-tools",
+            "description": "Azure SDK Tools plugin - for Azure SDK development including generation, build, test, release planning, and pipeline management.",
+            "version": "1.0.0",
+            "strict": true,
+            "keywords": [
+                "azure",
+                "sdk",
+                "mcp",
+                "azure-sdk"
+            ],
+            "source": "./azure-sdk-tools"
+        }
+    ]
+}

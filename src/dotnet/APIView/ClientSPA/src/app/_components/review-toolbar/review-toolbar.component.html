@@ -1,6 +1,6 @@
 <div class="review-toolbar d-flex align-items-center gap-3 ps-2 pe-2" style="padding-top: 2px; padding-bottom: 2px;">
     <!-- Diff Revision Dropdown -->
-    <span *ngIf="diffApiRevisionsMenu.length > 0" class="d-flex align-items-center">
+    <span *ngIf="(apiRevisions?.length ?? 0) > 1" class="d-flex align-items-center">
         <label class="small fw-semibold me-2 toolbar-label" for="diff-api-revision-select">Diff :</label>
         <p-select
             [options]="diffApiRevisionsMenu"

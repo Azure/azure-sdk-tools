@@ -1,0 +1,32 @@
+{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "report_issue_result",
+    "strict": true,
+    "schema": {
+      "type": "object",
+      "properties": {
+        "category": {
+          "type": "string",
+          "enum": ["apiview", "avc", "parser"],
+          "description": "The kind of issue: 'apiview' for an APIView UI/service problem; 'avc' for an APIView Copilot (AI reviewer) problem; 'parser' for a language-specific APIView parser problem."
+        },
+        "language": {
+          "type": ["string", "null"],
+          "description": "Programming language affected. Required when category is 'parser' (e.g. 'python', 'C#'); null when category is 'apiview' or 'avc'."
+        },
+        "title": {
+          "type": "string",
+          "description": "A concise GitHub issue title in sentence case, up to ~14 words, no trailing punctuation. Do NOT include any prefix such as [APIView], [AVC], or [Python APIView]; the server prepends one based on category and language."
+        },
+        "body": {
+          "type": "string",
+          "description": "The full GitHub issue body in Markdown, with the sections specified in the system prompt (Summary / Context / Details / Suggested Next Steps), ending with '---\\n*Reported via APIView*'."
+        }
+      },
+      "required": ["category", "language", "title", "body"],
+      "additionalProperties": false
+    }
+  }
+}
+

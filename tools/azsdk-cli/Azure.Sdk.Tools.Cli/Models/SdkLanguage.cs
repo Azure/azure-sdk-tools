@@ -48,6 +48,10 @@ public static class SdkLanguageHelpers
         {"azure-sdk-for-cpp", SdkLanguage.Cpp }
     }.ToImmutableDictionary();
 
+    // Create inverse mapping of language -> repo
+    private static readonly ImmutableDictionary<SdkLanguage, string> LanguageToRepoMap =
+        RepoToLanguageMap.ToImmutableDictionary(pair => pair.Value, pair => pair.Key);
+
     public static async Task<SdkLanguage> GetLanguageForRepoPathAsync(IGitHelper gitHelper, string pathInRepo, CancellationToken ct = default)
     {
         string repoName = await gitHelper.GetRepoNameAsync(pathInRepo, ct);
@@ -70,6 +74,11 @@ public static class SdkLanguageHelpers
             return language;
         }
         return SdkLanguage.Unknown;
+    }
+
+    public static string? GetRepoName(SdkLanguage language)
+    {
+        return LanguageToRepoMap.TryGetValue(language, out var repoName) ? repoName : null;
     }
 
     public static SdkLanguage GetSdkLanguage(string language)

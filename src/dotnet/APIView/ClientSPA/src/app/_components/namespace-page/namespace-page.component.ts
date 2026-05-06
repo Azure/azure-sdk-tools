@@ -56,7 +56,7 @@ export class NamespacePageComponent implements OnInit, OnDestroy {
   
   projectId: string | null = null;
   projectName: string | null = null;
-  relatedReviewsByLanguage: { [language: string]: RelatedReviewItem } = {};
+  relatedReviews: RelatedReviewItem[] = [];
   namespaceInfo: ProjectNamespaceInfo | null = null;
   
   tableRows: NamespaceTableRow[] = [];
@@ -142,7 +142,7 @@ export class NamespacePageComponent implements OnInit, OnDestroy {
         next: (response: RelatedReviewsResponse) => {
           this.projectId = response.projectId;
           this.projectName = response.projectName;
-          this.relatedReviewsByLanguage = response.reviews;
+          this.relatedReviews = response.reviews ?? [];
           
           if (this.projectId) {
             this.loadNamespaceInfo();
@@ -209,21 +209,26 @@ export class NamespacePageComponent implements OnInit, OnDestroy {
     }
     
     for (const lang of Object.keys(this.namespaceInfo.currentNamespaceStatus)) {
-      const review = this.relatedReviewsByLanguage[lang] ?? null;
-      const namespaceEntry = this.namespaceInfo.currentNamespaceStatus[lang];
-      
+      const entries = this.namespaceInfo.currentNamespaceStatus[lang];
       const canApprove = this.canUserApprove(lang);
-      
-      this.tableRows.push({
-        language: lang,
-        namespace: namespaceEntry.namespace || '',
-        status: namespaceEntry.status,
-        notes: namespaceEntry.notes || '',
-        decidedBy: namespaceEntry.decidedBy || '',
-        review,
-        latestRevisionId: null,
-        canApprove
-      });
+
+      for (const namespaceEntry of entries) {
+        // Match the review by language + packageName so multi-package languages each link to the right review.
+        const review = this.relatedReviews.find(
+          r => r.language?.toLowerCase() === lang?.toLowerCase() && r.packageName?.toLowerCase() === namespaceEntry.packageName?.toLowerCase()
+        ) ?? this.relatedReviews.find(r => r.language?.toLowerCase() === lang?.toLowerCase()) ?? null;
+
+        this.tableRows.push({
+          language: lang,
+          namespace: namespaceEntry.namespace || '',
+          status: namespaceEntry.status,
+          notes: namespaceEntry.notes || '',
+          decidedBy: namespaceEntry.decidedBy || '',
+          review,
+          latestRevisionId: null,
+          canApprove
+        });
+      }
     }
     
     this.tableRows.sort((a, b) => a.language.localeCompare(b.language));
@@ -237,22 +242,26 @@ export class NamespacePageComponent implements OnInit, OnDestroy {
     if (rowsWithReviews.length === 0) {
       return;
     }
-    
-    // Fetch latest revision for each review in parallel
-    const requests = rowsWithReviews.map(row => 
+
+    // Deduplicate by review ID — each review is only fetched once even if multiple rows link to it.
+    const uniqueRows = rowsWithReviews.filter(
+      (row, index, arr) => arr.findIndex(r => r.review!.id === row.review!.id) === index
+    );
+
+    // Fetch latest revision for each unique review in parallel.
+    const requests = uniqueRows.map(row =>
       this.apiRevisionsService.getLatestAPIRevision(row.review!.id).pipe(
-        map(revision => ({ language: row.language, revisionId: revision?.id || null })),
-        catchError(() => of({ language: row.language, revisionId: null }))
+        map(revision => ({ reviewId: row.review!.id, revisionId: revision?.id || null })),
+        catchError(() => of({ reviewId: row.review!.id, revisionId: null }))
       )
     );
-    
+
     forkJoin(requests)
       .pipe(takeUntil(this.destroy$))
       .subscribe(results => {
         for (const result of results) {
-          console.log(`[Namespace] latestRevisionId for lang="${result.language}": ${result.revisionId}`);
-          const row = this.tableRows.find(r => r.language === result.language);
-          if (row) {
+          // Update all rows that link to this review.
+          for (const row of this.tableRows.filter(r => r.review?.id === result.reviewId)) {
             row.latestRevisionId = result.revisionId;
           }
         }
@@ -337,7 +346,7 @@ export class NamespacePageComponent implements OnInit, OnDestroy {
   approveNamespace(row: NamespaceTableRow): void {
     if (!this.projectId) return;
     
-    this.projectsService.updateNamespaceStatus(this.projectId, row.language, NamespaceDecisionStatus.Approved, row.notes ?? '')
+    this.projectsService.updateNamespaceStatus(this.projectId, row.language, row.namespace, NamespaceDecisionStatus.Approved, row.notes ?? '')
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
@@ -375,7 +384,7 @@ export class NamespacePageComponent implements OnInit, OnDestroy {
     }
     
     const row = this.feedbackTargetRow;
-    this.projectsService.updateNamespaceStatus(this.projectId, row.language, NamespaceDecisionStatus.Rejected, this.feedbackNotes)
+    this.projectsService.updateNamespaceStatus(this.projectId, row.language, row.namespace, NamespaceDecisionStatus.Rejected, this.feedbackNotes)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {

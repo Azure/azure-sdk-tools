@@ -5,7 +5,6 @@ using System.IO.Compression;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
-using ApiView;
 using APIView;
 using APIView.Identity;
 using APIView.Model;
@@ -323,6 +322,74 @@ public class APIRevisionsManagerTests
             Times.Never);
     }
 
+    [Fact]
+    public async Task UpdateAPIRevisionAsync_SkipsRevision_WhenOriginalIsEmpty()
+    {
+        APIRevisionListItemModel revision = CreateTestRevision();
+
+        _mockOriginalsRepository
+            .Setup(x => x.GetOriginalAsync(revision.Files[0].FileId))
+            .ReturnsAsync(new MemoryStream()); // empty stream
+
+        await _manager.UpdateAPIRevisionAsync(revision, _testLanguageService, false);
+
+        // GetCodeFileAsync should never be called because we skip on empty original
+        Assert.Null(_testLanguageService.CapturedCrossLanguageMetadataJson);
+        _mockAPIRevisionsRepository.Verify(
+            x => x.UpsertAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task GetAPIRevisionAsync_TriggersPipeline_WhenIsReviewGenByPipelineIsTrue()
+    {
+        const string revisionId = "pipeline-revision-id";
+        const string reviewId = "pipeline-review-id";
+
+        var revision = new APIRevisionListItemModel
+        {
+            Id = revisionId,
+            ReviewId = reviewId,
+            Language = "Python",
+            Files = new List<APICodeFileModel>
+            {
+                new() { FileId = "file-id", FileName = "azure_test-1.0.0-py3-none-any.whl", HasOriginal = true, VersionString = "1.0.0", Language = "Python" }
+            }
+        };
+
+        var review = new ReviewListItemModel { Id = reviewId, Language = "Python" };
+
+        _testLanguageService.IsReviewGenByPipeline = true;
+        try
+        {
+            _mockAPIRevisionsRepository
+                .Setup(r => r.GetAPIRevisionAsync(revisionId))
+                .ReturnsAsync(revision);
+            _mockReviewsRepository
+                .Setup(r => r.GetReviewAsync(reviewId))
+                .ReturnsAsync(review);
+            _mockOriginalsRepository
+                .Setup(x => x.GetContainerUrl())
+                .Returns("https://test.blob.core.windows.net/originals");
+            _mockDevopsArtifactRepository
+                .Setup(x => x.RunPipeline(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(Task.CompletedTask);
+
+            await _manager.GetAPIRevisionAsync(revisionId);
+
+            _mockDevopsArtifactRepository.Verify(
+                x => x.RunPipeline(
+                    It.Is<string>(s => s.Contains("Python")),
+                    It.IsAny<string>(),
+                    It.IsAny<string>()),
+                Times.Once);
+        }
+        finally
+        {
+            _testLanguageService.IsReviewGenByPipeline = false;
+        }
+    }
+
     #region APIVersionId Tests
 
     [Fact]
@@ -382,7 +449,7 @@ public class APIRevisionsManagerTests
 
     private void SetupMocksForUpdate(string revisionId, string fileId, CodeFile existingCodeFile, CodeFile newCodeFile)
     {
-        MemoryStream originalStream = new();
+        MemoryStream originalStream = new(new byte[] { 0x50, 0x4B, 0x03, 0x04 }); // non-empty placeholder
 
         _mockOriginalsRepository
             .Setup(x => x.GetOriginalAsync(fileId))
@@ -564,14 +631,14 @@ public class APIRevisionsManagerTests
                 Documentation = "Test documentation",
                 Type = "client"
             },
-            Languages = new Dictionary<string, LanguageConfig>
+            Languages = new Dictionary<string, List<LanguageConfig>>
             {
-                ["python"] = new LanguageConfig
+                ["python"] = [new LanguageConfig
                 {
                     EmitterName = "@azure-tools/typespec-python",
                     PackageName = "azure-ai-textanalytics",
                     Namespace = "azure.ai.textanalytics"
-                }
+                }]
             },
             SourceConfigPath = "specification/ai/Azure.AI.TextAnalytics/tspconfig.yaml"
         };

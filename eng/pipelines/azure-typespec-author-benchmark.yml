@@ -85,17 +85,22 @@ extends:
                   version: '8.x'
 
               # Install Node.js, Vally CLI, and Copilot SDK
-              # Use the internal Azure Artifacts npm mirror because the 1ES
-              # managed pool blocks direct egress to registry.npmjs.org.
+              # Use the internal Azure Artifacts npm mirror (with auth) because
+              # the 1ES managed pool blocks direct egress to registry.npmjs.org.
               - task: NodeTool@0
                 displayName: Use Node.js 22
                 inputs:
                   versionSpec: '22.x'
 
-              - script: npm install --global @microsoft/vally-cli --registry https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-tools/npm/registry/
+              - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
+                parameters:
+                  npmrcPath: $(Build.SourcesDirectory)/.npmrc
+                  registryUrl: https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-tools/npm/registry/
+
+              - script: npm install --global @microsoft/vally-cli --userconfig $(Build.SourcesDirectory)/.npmrc
                 displayName: Install Vally CLI
 
-              - script: npm install --global @github/copilot-sdk --registry https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-tools/npm/registry/
+              - script: npm install --global @github/copilot-sdk --userconfig $(Build.SourcesDirectory)/.npmrc
                 displayName: Install Copilot SDK
 
               # Run evaluations
@@ -120,4 +125,5 @@ extends:
                   artifact: eval-results-$(Build.BuildId)
                   displayName: Upload eval results
                   condition: always()
+
 

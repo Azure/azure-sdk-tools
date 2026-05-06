@@ -823,27 +823,29 @@ namespace APIViewWeb.Managers
                     foreach (var review in reviews)
                     {
                         var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(review.Id);
-                        foreach (var revision in revisions)
+                        foreach (var revision in revisions.Where(r => !r.IsDeleted))
                         {
-                            if (
-                                revision.Files.First().HasOriginal &&
-                                LanguageServiceHelpers.GetLanguageService(revision.Language, _languageServices)?.CanUpdate(revision.Files.First().VersionString) == true)
+                            APICodeFileModel firstFile = revision.Files.First();
+                            if (!firstFile.HasOriginal || LanguageServiceHelpers.GetLanguageService(revision.Language, _languageServices)
+                                    ?.CanUpdate(firstFile.VersionString) != true)
                             {
-                                var requestTelemetry = new RequestTelemetry { Name = $"Updating {review.Language} Review with id: {review.Id}"  };
-                                var operation = _telemetryClient.StartOperation(requestTelemetry);
-                                try
-                                {
-                                    await Task.Delay(100);
-                                    await _apiRevisionsManager.UpdateAPIRevisionAsync(revision, languageService, verifyUpgradabilityOnly);
-                                }
-                                catch (Exception e)
-                                {
-                                    _telemetryClient.TrackException(e);
-                                }
-                                finally
-                                {
-                                    _telemetryClient.StopOperation(operation);
-                                }
+                                continue;
+                            }
+
+                            var requestTelemetry = new RequestTelemetry { Name = $"Updating {review.Language} Review with id: {review.Id}"  };
+                            var operation = _telemetryClient.StartOperation(requestTelemetry);
+                            try
+                            {
+                                await Task.Delay(100);
+                                await _apiRevisionsManager.UpdateAPIRevisionAsync(revision, languageService, verifyUpgradabilityOnly);
+                            }
+                            catch (Exception e)
+                            {
+                                _telemetryClient.TrackException(e);
+                            }
+                            finally
+                            {
+                                _telemetryClient.StopOperation(operation);
                             }
                         }
                     }
@@ -962,7 +964,7 @@ namespace APIViewWeb.Managers
                     try
                     {
                         var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(review.Id);
-                        foreach (var revision in revisions)
+                        foreach (var revision in revisions.Where(r => !r.IsDeleted))
                         {
                             foreach (var file in revision.Files)
                             {

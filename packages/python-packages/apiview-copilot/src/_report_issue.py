@@ -82,6 +82,23 @@ def _format_comment_context_for_prompt(ctx: Optional[dict]) -> str:
         value = ctx.get(key)
         if value:
             parts.append(f"{label}: {value}")
+    thread = ctx.get("thread_comments") or []
+    # Only render a transcript when there is more than the anchor comment;
+    # the single-comment case is already covered by the "Comment" line above.
+    if len(thread) > 1:
+        transcript_lines: list[str] = []
+        for entry in thread:
+            author = entry.get("created_by") or "unknown"
+            created_on = entry.get("created_on") or ""
+            text = (entry.get("comment_text") or "").strip()
+            if not text:
+                continue
+            header = f"@{author}"
+            if created_on:
+                header = f"{header} ({created_on})"
+            transcript_lines.append(f"{header}: {text}")
+        if transcript_lines:
+            parts.append("Thread:\n" + "\n".join(transcript_lines))
     return "\n".join(parts)
 
 
@@ -127,6 +144,17 @@ def _lookup_comment_context(comment_id: str) -> Optional[dict]:
     if not ctx:
         return None
     comment_obj = ctx.get("comment") or {}
+    thread_raw = ctx.get("thread_comments") or []
+    thread_comments = [
+        {
+            "id": entry.get("id"),
+            "comment_text": entry.get("CommentText"),
+            "comment_source": entry.get("CommentSource"),
+            "created_by": entry.get("CreatedBy"),
+            "created_on": entry.get("CreatedOn"),
+        }
+        for entry in thread_raw
+    ]
     return {
         "comment_text": comment_obj.get("CommentText"),
         "comment_source": comment_obj.get("CommentSource"),
@@ -135,6 +163,7 @@ def _lookup_comment_context(comment_id: str) -> Optional[dict]:
         "element_id": comment_obj.get("ElementId"),
         "review_id": comment_obj.get("ReviewId"),
         "revision_id": comment_obj.get("APIRevisionId"),
+        "thread_comments": thread_comments,
     }
 
 

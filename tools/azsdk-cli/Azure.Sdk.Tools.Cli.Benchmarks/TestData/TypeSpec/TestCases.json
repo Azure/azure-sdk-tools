@@ -135,7 +135,8 @@
                 "version-model-property-required/main.tsp"
             ],
             "verifyPlan": [
-                "1. The `email` property in EmployeeProperties should have `@madeRequired(Versions.v2025_05_04_preview)` decorator added."
+                "1. The `email` property in EmployeeProperties should have `@madeRequired(Versions.v2025_05_04_preview)` decorator added.",
+                "2. The employee.tsp should have code 'email: string' ."
             ]
         },
         {

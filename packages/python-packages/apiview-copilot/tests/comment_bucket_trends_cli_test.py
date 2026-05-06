@@ -38,26 +38,29 @@ def test_report_comment_bucket_trends_generates_chart(monkeypatch):
         include_human,
         include_neutral,
         environment,
+        **_kwargs,
     ):
-        observed["build"] = {
-            "languages": languages,
-            "months": months,
-            "end_date": end_date,
-            "include_human": include_human,
-            "include_neutral": include_neutral,
-            "environment": environment,
-        }
+        if "build" not in observed:
+            observed["build"] = {
+                "languages": languages,
+                "months": months,
+                "end_date": end_date,
+                "include_human": include_human,
+                "include_neutral": include_neutral,
+                "environment": environment,
+            }
         return {"Python": []}
 
-    def fake_generate_chart(reports, output_path, include_human, include_neutral, raw, environment):
-        observed["chart"] = {
-            "reports": reports,
-            "output_path": output_path,
-            "include_human": include_human,
-            "include_neutral": include_neutral,
-            "raw": raw,
-            "environment": environment,
-        }
+    def fake_generate_chart(reports, output_path, include_human, include_neutral, raw, environment, **_kwargs):
+        if "chart" not in observed:
+            observed["chart"] = {
+                "reports": reports,
+                "output_path": output_path,
+                "include_human": include_human,
+                "include_neutral": include_neutral,
+                "raw": raw,
+                "environment": environment,
+            }
         return output_path
 
     def fake_print_report(reports, output_path, include_human, include_neutral, environment):
@@ -108,6 +111,7 @@ def test_report_comment_bucket_trends_can_exclude_human_comments(monkeypatch):
         include_human,
         include_neutral,
         environment,
+        **_kwargs,
     ):
         _ = (languages, months, end_date, include_neutral, environment)
         observed["include_human"] = include_human
@@ -133,6 +137,7 @@ def test_report_comment_bucket_trends_normalizes_language_aliases(monkeypatch):
         include_human,
         include_neutral,
         environment,
+        **_kwargs,
     ):
         _ = (months, end_date, include_human, include_neutral, environment)
         observed["languages"] = languages

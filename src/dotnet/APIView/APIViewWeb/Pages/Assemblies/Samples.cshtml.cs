@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using ApiView;
 using APIView;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
@@ -198,7 +197,7 @@ namespace APIViewWeb.Pages.Assemblies
 
                 var line = new CodeLine(html: lineContent, id : ActiveSampleRevision.FileId + "-line-" + (i+1-skipped).ToString() , crossLangId : "", lineClass : "");
                 comments.TryGetThreadForLine(ActiveSampleRevision.FileId + "-line-" + (i+1-skipped).ToString(), out var thread);
-                lines[i] = new CodeLineModel(APIView.DIff.DiffLineKind.Unchanged, line, thread, cd, i+1-skipped, new int[0]);
+                lines[i] = new CodeLineModel(APIView.Diff.DiffLineKind.Unchanged, line, thread, cd, i+1-skipped, new int[0]);
             }
 
             // Removes excess lines added that cause errors

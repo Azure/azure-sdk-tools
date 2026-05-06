@@ -16,7 +16,7 @@ parameters:
   - name: areas
     displayName: 'Skill areas to eval (comma-separated, e.g. sensei,skill-authoring)'
     type: string
-    default: ''
+    default: ' '
 
 variables:
   - group: 'AzSDK_Eval_Variable_group'
@@ -42,8 +42,9 @@ jobs:
         displayName: 'Install Copilot SDK'
 
       - script: |
-          if [ -n "${{ parameters.areas }}" ]; then
-            areas="${{ parameters.areas }}"
+          input_areas=$(echo "${{ parameters.areas }}" | xargs)
+          if [ -n "$input_areas" ]; then
+            areas="$input_areas"
           elif [ "${{ parameters.runAll }}" = "True" ]; then
             areas=""
           else

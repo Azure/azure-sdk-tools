@@ -55,11 +55,10 @@ The same `ReviewerState` record is reused for initial request, re-request, submi
 | `ReviewerId` | No | Reviewer this state applies to |
 | `RequestedBy` | Yes | User or service account that most recently requested review |
 | `RequestedOn` | Yes | Timestamp of the most recent request; used for audit and notification, not for comment grouping |
-| `Status` | No | `Open`, `Submitted`, `Canceled` |
+| `Status` | No | `AwaitingArchitect`, `AwaitingServiceTeam`, `Canceled` |
 | `SubmissionDecision` | Yes | Latest submitted `Approve` or `Feedback` |
 | `ContentHash` | No | SHA-256 hash of the approved revision's API surface, captured only for `Approve` |
 | `SubmittedOn` | Yes | Timestamp of the latest submission; used as the start of the next review window |
-| `CanceledOn` | No | Optional timestamp when the reviewer state was last canceled |
 | `ChangeHistory` | No | Ordered lifecycle history for this reviewer state |
 
 ### Change History Shape
@@ -80,37 +79,35 @@ Each entry includes:
 
 Add one container:
 
-- `ReviewerStates` (partition key `/VersionId`)
+- `ReviewerStates` (partition key `/ReviewId`)
 
 ## API Surface Changes
 
 ### Endpoints
 
-#### `POST /versions/{versionId}/reviewers` (Existing Endpoint)
+#### `POST /api/review/{reviewId}/version/{versionId}/reviewers`
 
-This is an existing API endpoint used for adding or updating reviewers on a version.
-
-In this proposal, we modify this existing add-reviewer endpoint to also drive `ReviewerState` lifecycle behavior:
+In this proposal, the same endpoint that drives the add-reviewer behavior will also drive `ReviewerState` lifecycle behavior:
 
 - The endpoint handles both first-time assignment and re-request using the same `ReviewerState` record.
 - Initial assignment (reviewer not currently assigned):
    - Add reviewer membership.
    - Create `ReviewerState` if missing.
-   - Set `Status = Open`, update `RequestedBy` and `RequestedOn`, append `Requested` in `ChangeHistory`, and notify reviewer.
-- Re-request (reviewer already assigned and existing `ReviewerState.Status = Submitted`):
+   - Set `Status = AwaitingArchitect`, update `RequestedBy` and `RequestedOn`, append `Requested` in `ChangeHistory`, and notify reviewer.
+- Re-request (reviewer already assigned and existing `ReviewerState.Status = AwaitingServiceTeam`):
    - Reuse that same existing `ReviewerState` (the previously submitted record).
-   - Set `Status = Open`, update `RequestedBy` and `RequestedOn`, append another `Requested` in `ChangeHistory`, and notify reviewer.
+   - Set `Status = AwaitingArchitect`, update `RequestedBy` and `RequestedOn`, append another `Requested` in `ChangeHistory`, and notify reviewer.
 
 ##### Reviewer Removal Lifecycle
 
 When a reviewer is removed from a review:
 
-- Reuse the same `ReviewerState`, append `Canceled` in `ChangeHistory`, set `Status = Canceled`, and set `CanceledOn`.
+- Reuse the same `ReviewerState`, append `Canceled` in `ChangeHistory`, and set `Status = Canceled`.
 - Retain the reviewer state record for audit trail; do not delete it.
 - Removing a reviewer affects who is currently requested, but does not automatically invalidate that reviewer's latest submitted decision.
-- If the reviewer is re-added later, reuse the same `ReviewerState`, set `Status = Open`, update `RequestedBy` and `RequestedOn`, and record another `Requested` entry.
+- If the reviewer is re-added later, reuse the same `ReviewerState`, set `Status = AwaitingArchitect`, update `RequestedBy` and `RequestedOn`, and record another `Requested` entry.
 
-#### `POST /versions/{versionId}/submit-review`
+#### `POST /api/review/{reviewId}/version/{versionId}/submit-review`
 
 Input:
 
@@ -136,7 +133,7 @@ Behavior:
    - This includes existing severity behavior (for example, unresolved `MUST FIX`/`SHOULD FIX` block `Approve` while `SUGGESTION`/`QUESTION` do not).
    - See [Open Scenarios](#open-scenarios) for the related edge case of a `MUST FIX` comment added after an `Approve` has already been submitted.
 5. Submit the reviewer state:
-   - Set `SubmissionDecision`, `SubmittedOn`, and `Status = Submitted`.
+   - Set `SubmissionDecision`, `SubmittedOn`, and `Status = AwaitingServiceTeam`.
    - Append a `Submitted` entry to `ChangeHistory` with `SubmissionMessage` and `CommentIds`.
 6. Apply decision side effects:
    - `Approve`: read the `ContentHash` from `APICodeFileModel` on the specified revision (`revisionId`) and persist it on the reviewer state. This records the API surface fingerprint at approval time so the system can later determine whether a new revision has the same API surface and can auto-inherit approval, without downloading blobs.
@@ -171,7 +168,7 @@ Copilot grouping semantics are defined in [Copilot Review Behavior](#copilot-rev
 Copilot review is a first-class review flow, not a special case of human review submission.
 
 - Copilot review is triggered by the `Request Copilot Review` button.
-- `Request Copilot Review` creates or reopens the Copilot `ReviewerState` for the current `VersionId`, sets `Status = Open`, updates `RequestedBy` and `RequestedOn`, and records `Requested` in `ChangeHistory`.
+- `Request Copilot Review` creates or reopens the Copilot `ReviewerState` for the current `VersionId`, sets `Status = AwaitingArchitect`, updates `RequestedBy` and `RequestedOn`, and records `Requested` in `ChangeHistory`.
 - When the Copilot review run completes, the system submits that same `ReviewerState`: `Status` transitions to `Submitted`, submit fields are updated, and `Submitted` is recorded in `ChangeHistory`.
 - Copilot comment grouping is evaluated within the active Copilot review window on the same `VersionId`.
 - Window start is the previous `ReviewerState.SubmittedOn` (or version creation time if never submitted) and window end is the current submission time.
@@ -185,7 +182,7 @@ Copilot review is a first-class review flow, not a special case of human review 
 Notifications are triggered only by explicit review workflow actions.
 
 - Submit-review notification (human and Copilot):
-   - Trigger: `POST /versions/{versionId}/submit-review`.
+   - Trigger: `POST /api/review/{reviewId}/version/{versionId}/submit-review`.
    - Recipients: service team and subscribers only.
    - Delivery: one batch email per submit.
    - Payload includes:
@@ -198,7 +195,7 @@ Notifications are triggered only by explicit review workflow actions.
    - For `Approve`, the current approved email template is sufficient, with the optional submit-review message included when present.
 
 - Reviewer-request notification:
-   - Trigger: `POST /versions/{versionId}/reviewers` for initial assignment or re-request.
+   - Trigger: `POST /api/review/{reviewId}/version/{versionId}/reviewers` for initial assignment or re-request.
    - Recipients: requested reviewers.
    - Template: same email template for initial assignment and re-request.
    - Exception: in the no-reviewer-state submit fallback path, creating the implicit reviewer state does not send a reviewer-request notification.
@@ -215,21 +212,21 @@ Notifications are triggered only by explicit review workflow actions.
   - Decision: `Feedback` or `Approve`
   - Optional comment field (used in notification email)
 - Adding a reviewer uses the existing dropdown and click flow (unchanged).
-- The `Re-Request Review` arrow is shown only when that reviewer's current `Status = Submitted`, matching GitHub behavior.
-- Clicking the arrow reuses the same `ReviewerState`, records `Requested` in `ChangeHistory`, updates `RequestedBy` and `RequestedOn`, sets `Status = Open`, opens a new review window for that reviewer, and sends a notification.
-- While `Status = Open`, the arrow is not shown for that reviewer.
+- The `Re-Request Review` arrow is shown only when that reviewer's current `Status = AwaitingServiceTeam`, matching GitHub behavior.
+- Clicking the arrow reuses the same `ReviewerState`, records `Requested` in `ChangeHistory`, updates `RequestedBy` and `RequestedOn`, sets `Status = AwaitingArchitect`, opens a new review window for that reviewer, and sends a notification.
+- While `Status = AwaitingArchitect`, the arrow is not shown for that reviewer.
 - After the reviewer submits again and `Status` returns to `Submitted`, the arrow is shown again.
 
 ## Testing Checklist
 
-1. Add reviewer (initial assignment): reviewer membership is created, `ReviewerState` is `Open`, `Requested` is appended to `ChangeHistory`, and reviewer notification is sent.
-2. Re-request reviewer (requires existing `ReviewerState.Status = Submitted`): that same existing `ReviewerState` is reused, `Status` becomes `Open`, `RequestedBy` and `RequestedOn` are updated, another `Requested` is appended, and reviewer notification is sent.
+1. Add reviewer (initial assignment): reviewer membership is created, `ReviewerState` is `AwaitingArchitect`, `Requested` is appended to `ChangeHistory`, and reviewer notification is sent.
+2. Re-request reviewer (requires existing `ReviewerState.Status = AwaitingServiceTeam`): that same existing `ReviewerState` is reused, `Status` becomes `AwaitingArchitect`, `RequestedBy` and `RequestedOn` are updated, another `Requested` is appended, and reviewer notification is sent.
 3. Submit with no existing reviewer state (human fallback): submitter is auto-added as reviewer, `ReviewerState` is created, `Requested` is recorded, and submit succeeds without sending reviewer-request notification.
-4. Reviewer removal: same `ReviewerState` is reused, `Status = Canceled`, `CanceledOn` is set, and `Canceled` is appended in `ChangeHistory`.
-5. Reviewer re-added after cancel: same `ReviewerState` is reopened (`Status = Open`) and another `Requested` history entry is added.
+4. Reviewer removal: same `ReviewerState` is reused, `Status = Canceled`, and `Canceled` is appended in `ChangeHistory`.
+5. Reviewer re-added after cancel: same `ReviewerState` is reopened (`Status = AwaitingArchitect`) and another `Requested` history entry is added.
 6. Submit (`Feedback`) with no grouped comments and empty `submissionMessage` is rejected.
 7. Submit (`Approve`) with no grouped comments and empty `submissionMessage` is accepted.
-8. Submit appends a `Submitted` history entry with `SubmissionMessage` and `CommentIds`, and updates top-level `SubmissionDecision`, `SubmittedOn`, and `Status = Submitted`.
+8. Submit appends a `Submitted` history entry with `SubmissionMessage` and `CommentIds`, and updates top-level `SubmissionDecision`, `SubmittedOn`, and `Status = AwaitingServiceTeam`.
 9. `Approve` submit persists `ContentHash` from the specified `revisionId`.
 9.1. `Feedback` submit succeeds without `revisionId`; if provided, `revisionId` is ignored for decision-state updates.
 10. First submit uses version creation time as comment window start; later submits use previous `SubmittedOn`.
@@ -245,7 +242,7 @@ Notifications are triggered only by explicit review workflow actions.
 20. Copilot request creates or reopens only Copilot `ReviewerState`; Copilot submit updates that same state.
 21. Copilot comment grouping stays isolated to Copilot submissions and is never bundled with human submissions.
 22. Copilot submissions do not affect version approval-state computation.
-23. UI rule: `Re-Request Review` arrow is shown only when current `Status = Submitted`, and is hidden while `Status = Open`.
+23. UI rule: `Re-Request Review` arrow is shown only when current `Status = AwaitingServiceTeam`, and is hidden while `Status = AwaitingArchitect`.
 
 ---
 

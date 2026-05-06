@@ -43,8 +43,8 @@ extends:
                   testPrefix: onboarding
                 python:
                   testPrefix: python
-                apiview:
-                  testPrefix: apiview
+                apispec:
+                  testPrefix: apispec
             steps:
               - template: /eng/pipelines/templates/steps/use-python-version.yml
                 parameters:

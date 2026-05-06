@@ -9,3 +9,4 @@ exceptions: |
   8. DO NOT question RequestContent/RequestContext overloads on protocol methods.
   9. DO NOT suggest adding a 'Create' prefix to model factory methods or replacing them with a builder pattern.
   10. DO NOT suggest renaming or refactoring serialization methods such as JsonModelCreateCore, or suggest consolidating serialization logic across models. These are accepted generated patterns.
+  11. DO NOT suggest hiding or removing Equals(object) overrides on extensible enum structs. These overrides are part of the accepted struct equality pattern.

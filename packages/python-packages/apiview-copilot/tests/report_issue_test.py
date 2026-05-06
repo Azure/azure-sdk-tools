@@ -123,6 +123,23 @@ class TestFormatCommentContextForPrompt:
         assert "@alice (2026-05-01T00:00:00Z): first" in text
         assert "@bob (2026-05-02T00:00:00Z): second" in text
 
+    def test_escape_mentions_wraps_authors_in_backticks(self):
+        text = _format_comment_context_for_prompt(
+            {
+                "comment_text": "first",
+                "thread_comments": [
+                    {"comment_text": "first", "created_by": "alice", "created_on": "2026-05-01T00:00:00Z"},
+                    {"comment_text": "second", "created_by": "bob", "created_on": "2026-05-02T00:00:00Z"},
+                ],
+            },
+            escape_mentions=True,
+        )
+        assert "`@alice` (2026-05-01T00:00:00Z): first" in text
+        assert "`@bob` (2026-05-02T00:00:00Z): second" in text
+        # No bare @author tokens that GitHub would turn into mentions.
+        assert "@alice" not in text.replace("`@alice`", "")
+        assert "@bob" not in text.replace("`@bob`", "")
+
 
 class TestBuildFallbackTitleSnippet:
     def test_short(self):

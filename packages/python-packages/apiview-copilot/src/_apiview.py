@@ -1365,6 +1365,8 @@ def get_comment_with_context(comment_id: str, environment: str = "production") -
 
         # Fetch sibling comments in the same thread (chronological order) so
         # callers can render the full conversation, not just the anchor comment.
+        # Filter out tombstoned (IsDeleted) entries server-side so we only
+        # transfer / sort live comments.
         thread_comments: list[dict] = [comment]
         if thread_id:
             thread_query = """
@@ -1372,6 +1374,7 @@ def get_comment_with_context(comment_id: str, environment: str = "production") -
                        c.IsResolved, c.IsDeleted, c.ThreadId
                 FROM c
                 WHERE c.ThreadId = @thread_id
+                  AND (NOT IS_DEFINED(c.IsDeleted) OR c.IsDeleted = false)
                 ORDER BY c.CreatedOn ASC
             """
             try:
@@ -1382,10 +1385,7 @@ def get_comment_with_context(comment_id: str, environment: str = "production") -
                         enable_cross_partition_query=True,
                     )
                 )
-                # Drop tombstoned comments; keep order from the query.
-                thread_comments = [c for c in thread_results if not c.get("IsDeleted")]
-                if not thread_comments:
-                    thread_comments = [comment]
+                thread_comments = thread_results or [comment]
             except Exception as e:
                 print(f"Warning: Could not fetch thread siblings for {thread_id}: {e}")
                 thread_comments = [comment]

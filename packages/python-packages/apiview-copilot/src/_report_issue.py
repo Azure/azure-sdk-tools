@@ -67,8 +67,14 @@ def _build_labels(category: str, language: Optional[str]) -> list[str]:
     return ["APIView"]
 
 
-def _format_comment_context_for_prompt(ctx: Optional[dict]) -> str:
-    """Render the optional comment context as plain text for the LLM."""
+def _format_comment_context_for_prompt(ctx: Optional[dict], *, escape_mentions: bool = False) -> str:
+    """Render the optional comment context as plain text.
+
+    When ``escape_mentions`` is True (use this for content that will be
+    posted to GitHub, e.g. the deterministic fallback issue body), author
+    names in the rendered thread transcript are wrapped so they cannot
+    trigger GitHub ``@mention`` notifications.
+    """
     if not ctx:
         return ""
     parts: list[str] = []
@@ -93,7 +99,11 @@ def _format_comment_context_for_prompt(ctx: Optional[dict]) -> str:
             text = (entry.get("comment_text") or "").strip()
             if not text:
                 continue
-            header = f"@{author}"
+            # In the GitHub issue body we wrap the author in backticks so
+            # the literal ``@author`` text does not turn into a real mention
+            # / notification. The LLM prompt keeps the bare ``@author``
+            # form so the model can still see authorship clearly.
+            header = f"`@{author}`" if escape_mentions else f"@{author}"
             if created_on:
                 header = f"{header} ({created_on})"
             transcript_lines.append(f"{header}: {text}")
@@ -108,7 +118,7 @@ def _build_fallback_body(description: str, review_link: Optional[str], comment_c
     if review_link:
         sections.append(f"## Review Link\n\n{review_link}")
     sections.append(f"## Description\n\n{description}")
-    ctx_text = _format_comment_context_for_prompt(comment_context)
+    ctx_text = _format_comment_context_for_prompt(comment_context, escape_mentions=True)
     if ctx_text:
         sections.append("## Comment Context\n\n" + ctx_text)
     sections.append("---\n*Reported via APIView*")

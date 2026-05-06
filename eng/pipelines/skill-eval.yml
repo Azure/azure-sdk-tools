@@ -35,8 +35,11 @@ jobs:
         inputs:
           versionSpec: '22.x'
 
-      - script: npm install -g @microsoft/vally-cli @github/copilot-sdk
-        displayName: 'Install Vally CLI and Copilot SDK'
+      - script: npm install -g @microsoft/vally-cli@0.2.0
+        displayName: 'Install Vally CLI'
+
+      - script: npm install -g @github/copilot-sdk
+        displayName: 'Install Copilot SDK'
 
       - script: |
           if [ -n "${{ parameters.areas }}" ]; then

@@ -113,6 +113,24 @@ extends:
                 inputs:
                   version: '8.x'
 
+              # Authenticate to NuGet so the azsdk-cli MCP server can restore
+              # packages from the internal Azure Artifacts feed (the 1ES pool
+              # blocks direct egress to nuget.org).
+              - task: NuGetAuthenticate@1
+                displayName: Authenticate NuGet
+
+              # Pre-build the azsdk-cli (the MCP server). vally launches it
+              # via `dotnet run` (defaults to Debug, no -c flag), but doing
+              # the restore + build here surfaces any failure as a clear
+              # pipeline error instead of a silent MCP server startup
+              # failure during evaluations.
+              - script: |
+                  set -e
+                  dotnet restore tools/azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj
+                  dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj \
+                    --no-restore --nologo
+                displayName: Build azsdk-cli (MCP server)
+
               # Install Node.js, Vally CLI, and Copilot SDK.
               # Use the internal Azure Artifacts npm mirror (with auth) because
               # the 1ES managed pool blocks direct egress to registry.npmjs.org.
@@ -131,6 +149,44 @@ extends:
 
               - script: npm install --global @github/copilot-sdk --userconfig $(Build.SourcesDirectory)/.npmrc
                 displayName: Install Copilot SDK
+
+              # Pre-install TypeSpec compiler globally from the internal npm
+              # mirror so `azsdk_run_typespec_validation` (and any direct
+              # `npx tsp`/`npm install` the agent attempts) succeeds without
+              # network access to registry.npmjs.org.
+              - script: |
+                  set -e
+                  npm install --global @typespec/compiler --userconfig $(Build.SourcesDirectory)/.npmrc
+                  echo "tsp version:"
+                  tsp --version || true
+                displayName: Install TypeSpec compiler
+
+              # Smoke test: spin up the MCP server and verify it advertises the
+              # tools the eval graders require. Fails fast if the MCP server
+              # can't start or doesn't expose the expected tools.
+              - script: |
+                  set -e
+                  cd $(Build.SourcesDirectory)/tools/azsdk-cli/Azure.Sdk.Tools.Cli
+                  REQ='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"smoke","version":"1.0"}}}
+                  {"jsonrpc":"2.0","method":"notifications/initialized"}
+                  {"jsonrpc":"2.0","id":2,"method":"tools/list"}'
+                  echo "Starting MCP server smoke test..."
+                  printf '%s\n' "$REQ" | timeout 60 dotnet run --no-build -- start > /tmp/mcp-smoke.log 2>&1 || true
+                  echo "--- MCP smoke output (head) ---"
+                  head -200 /tmp/mcp-smoke.log || true
+                  echo "--- Tools advertised ---"
+                  if grep -q 'azsdk_typespec_generate_authoring_plan' /tmp/mcp-smoke.log \
+                     && grep -q 'azsdk_run_typespec_validation' /tmp/mcp-smoke.log; then
+                    echo "OK: required MCP tools are advertised"
+                  else
+                    echo "ERROR: MCP server did not advertise the required tools"
+                    exit 1
+                  fi
+                displayName: MCP server smoke test
+                env:
+                  AZSDKTOOLS_AGENT_TESTING: "true"
+                  AZSDKTOOLS_COLLECT_TELEMETRY: "false"
+                  AZURE_SDK_KB_ENDPOINT: "http://localhost:8088"
 
               # Run evaluations
               # The vally config (.vally.yaml) lives in the skill's evaluate/

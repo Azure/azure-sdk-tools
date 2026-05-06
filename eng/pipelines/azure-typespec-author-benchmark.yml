@@ -10,7 +10,7 @@ parameters:
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
   parameters:
-    Use1ESOfficial: false
+    Use1ESOfficial: true
     stages:
       - stage: EvalTypeSpecAuthor
         displayName: Azure TypeSpec Author Skill Evaluation
@@ -120,3 +120,4 @@ extends:
                   artifact: eval-results-$(Build.BuildId)
                   displayName: Upload eval results
                   condition: always()
+

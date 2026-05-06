@@ -2,109 +2,121 @@
 trigger: none
 pr: none
 
-variables:
-  - template: /eng/pipelines/templates/variables/globals.yml
-  - template: /eng/pipelines/templates/variables/image.yml
-  - group: Azure SDK QA Bot Dev Variables
-  - group: AzSDK_Eval_Variable_group
+parameters:
+- name: PythonVersion
+  type: string
+  default: '3.10'
 
-stages:
-  - stage: EvalTypeSpecAuthor
-    displayName: Azure TypeSpec Author Skill Evaluation
-    jobs:
-      - job: RunEvals
-        displayName: Run Vally Evaluations
-        timeoutInMinutes: 120
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    Use1ESOfficial: false
+    stages:
+      - stage: EvalTypeSpecAuthor
+        displayName: Azure TypeSpec Author Skill Evaluation
+        variables:
+          - template: /eng/pipelines/templates/variables/globals.yml
+          - template: /eng/pipelines/templates/variables/image.yml
+          - group: Azure SDK QA Bot Dev Variables
+          - group: AzSDK_Eval_Variable_group
         pool:
           name: $(LINUXPOOL)
-          demands: ImageOverride -equals $(LINUXVMIMAGE)
-        steps:
-          - checkout: self
-            fetchDepth: 0
+          image: $(LINUXVMIMAGE)
+          os: linux
+        jobs:
+          - job: RunEvals
+            displayName: Run Vally Evaluations
+            timeoutInMinutes: 120
+            steps:
+              - checkout: self
+                fetchDepth: 0
 
-          # Install Go and build/start the QA bot backend
-          - script: |
-              echo "Downloading Go 1.24.0..."
-              curl -LO https://go.dev/dl/go1.24.0.linux-amd64.tar.gz
-              echo "Removing existing Go installation..."
-              sudo rm -rf /usr/local/go
-              echo "Extracting Go 1.24.0..."
-              sudo tar -C /usr/local -xzf go1.24.0.linux-amd64.tar.gz
-              echo "Setting environment variables..."
-              echo "##vso[task.setvariable variable=GOROOT]/usr/local/go"
-              echo "##vso[task.prependpath]/usr/local/go/bin"
-            displayName: Install Go
+              # Install Go and build/start the QA bot backend
+              - script: |
+                  echo "Downloading Go 1.24.0..."
+                  curl -LO https://go.dev/dl/go1.24.0.linux-amd64.tar.gz
+                  echo "Removing existing Go installation..."
+                  sudo rm -rf /usr/local/go
+                  echo "Extracting Go 1.24.0..."
+                  sudo tar -C /usr/local -xzf go1.24.0.linux-amd64.tar.gz
+                  echo "Setting environment variables..."
+                  echo "##vso[task.setvariable variable=GOROOT]/usr/local/go"
+                  echo "##vso[task.prependpath]/usr/local/go/bin"
+                displayName: Install Go
 
-          - script: go version
-            displayName: Check Go version
+              - script: go version
+                displayName: Check Go version
 
-          - task: AzureCLI@2
-            displayName: Start QA bot backend service
-            inputs:
-              azureSubscription: 'azuresdkqabot-dev'
-              scriptType: bash
-              scriptLocation: inlineScript
-              workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
-              inlineScript: |
-                export GOPROXY=https://proxy.golang.org,direct
-                go build -o qa-bot-service
-                chmod +x qa-bot-service
-                nohup ./qa-bot-service > qa-bot-service.log 2>&1 &
-                SERVICE_PID=$!
-                echo "Service started with PID: $SERVICE_PID"
-                sleep 20
-                echo "=== Service log ==="
-                cat qa-bot-service.log || true
-                echo "==================="
-                if ! kill -0 $SERVICE_PID 2>/dev/null; then
-                  echo "ERROR: Service process has exited unexpectedly"
-                  exit 1
-                fi
-                if ! lsof -ti:8088 > /dev/null 2>&1; then
-                  echo "ERROR: No process listening on port 8088"
-                  exit 1
-                fi
-                echo "Service is running on port 8088"
-            env:
-              SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-              AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
+              - task: AzureCLI@2
+                displayName: Start QA bot backend service
+                inputs:
+                  azureSubscription: 'azuresdkqabot-dev'
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
+                  inlineScript: |
+                    export GOPROXY=https://proxy.golang.org,direct
+                    go build -o qa-bot-service
+                    chmod +x qa-bot-service
+                    nohup ./qa-bot-service > qa-bot-service.log 2>&1 &
+                    SERVICE_PID=$!
+                    echo "Service started with PID: $SERVICE_PID"
+                    sleep 20
+                    echo "=== Service log ==="
+                    cat qa-bot-service.log || true
+                    echo "==================="
+                    if ! kill -0 $SERVICE_PID 2>/dev/null; then
+                      echo "ERROR: Service process has exited unexpectedly"
+                      exit 1
+                    fi
+                    if ! lsof -ti:8088 > /dev/null 2>&1; then
+                      echo "ERROR: No process listening on port 8088"
+                      exit 1
+                    fi
+                    echo "Service is running on port 8088"
+                env:
+                  SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+                  AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
 
-          # Install .NET SDK for azsdk-cli MCP server
-          - task: UseDotNet@2
-            displayName: Install .NET 8.0 SDK
-            inputs:
-              version: '8.x'
+              # Install .NET SDK for azsdk-cli MCP server
+              - task: UseDotNet@2
+                displayName: Install .NET 8.0 SDK
+                inputs:
+                  version: '8.x'
 
-          # Install Node.js, Vally CLI, and Copilot SDK
-          - task: NodeTool@0
-            displayName: Use Node.js 22
-            inputs:
-              versionSpec: '22.x'
+              # Install Node.js, Vally CLI, and Copilot SDK
+              # Use the internal Azure Artifacts npm mirror because the 1ES
+              # managed pool blocks direct egress to registry.npmjs.org.
+              - task: NodeTool@0
+                displayName: Use Node.js 22
+                inputs:
+                  versionSpec: '22.x'
 
-          - script: npm install -g @microsoft/vally-cli
-            displayName: Install Vally CLI
+              - script: npm install --global @microsoft/vally-cli --registry https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-tools/npm/registry/
+                displayName: Install Vally CLI
 
-          - script: npm install -g @github/copilot-sdk
-            displayName: Install Copilot SDK
+              - script: npm install --global @github/copilot-sdk --registry https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-tools/npm/registry/
+                displayName: Install Copilot SDK
 
-          # Run evaluations
-          - script: |
-              cd .github/skills
-              mkdir -p .vally/results
-              areas=$(ls -d */ 2>/dev/null | xargs -I{} basename {} | grep -v '^results$' | paste -sd, -)
-              if [ -n "$areas" ]; then
-                vally eval --tag "priority=p0" --tag "area=${areas}" --output-dir ".vally/results"
-              else
-                echo "No skills found — skipping"
-              fi
-            displayName: Run evaluations
-            continueOnError: true
-            env:
-              GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+              # Run evaluations
+              - script: |
+                  cd .github/skills
+                  mkdir -p .vally/results
+                  areas=$(ls -d */ 2>/dev/null | xargs -I{} basename {} | grep -v '^results$' | paste -sd, -)
+                  if [ -n "$areas" ]; then
+                    vally eval --tag "priority=p0" --tag "area=${areas}" --output-dir ".vally/results"
+                  else
+                    echo "No skills found — skipping"
+                  fi
+                displayName: Run evaluations
+                continueOnError: true
+                env:
+                  GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
 
-          - task: PublishPipelineArtifact@1
-            displayName: Upload eval results
-            condition: always()
-            inputs:
-              targetPath: $(Build.SourcesDirectory)/.github/skills/.vally/results
-              artifactName: eval-results-$(Build.BuildId)
+            templateContext:
+              outputs:
+                - output: pipelineArtifact
+                  path: $(Build.SourcesDirectory)/.github/skills/.vally/results
+                  artifact: eval-results-$(Build.BuildId)
+                  displayName: Upload eval results
+                  condition: always()

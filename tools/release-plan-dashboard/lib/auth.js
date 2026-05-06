@@ -79,8 +79,12 @@ async function mintGitHubAppToken() {
  * Returns an object with user identity claims, or null if not authenticated.
  */
 function parseEasyAuthPrincipal(req) {
-  // In local dev, use mock identity from env vars
+  // In local dev, use mock identity from env vars (blocked in production)
   if (process.env.DEV_AUTH_USER) {
+    if (process.env.NODE_ENV === "production") {
+      console.error("FATAL: DEV_AUTH_USER is set in production. This is a security misconfiguration.");
+      process.exit(1);
+    }
     return {
       login: process.env.DEV_AUTH_USER,
       name: process.env.DEV_AUTH_NAME || process.env.DEV_AUTH_USER,

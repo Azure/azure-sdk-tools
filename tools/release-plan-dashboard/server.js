@@ -50,6 +50,11 @@ app.get("/health", (req, res) => {
   res.json({ status: "healthy", uptime: process.uptime() });
 });
 
+// ── Validate Easy Auth environment in production ──────────────
+if (process.env.NODE_ENV === "production" && !process.env.WEBSITE_AUTH_ENABLED) {
+  console.warn("WARNING: WEBSITE_AUTH_ENABLED is not set. Ensure Azure App Service Authentication is configured to prevent header spoofing.");
+}
+
 // ── Authentication middleware (Azure Easy Auth) ───────────────
 // Azure App Service handles login/redirect at the platform level.
 // This middleware fails closed: if no identity headers are present, return 401.

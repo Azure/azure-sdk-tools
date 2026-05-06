@@ -1,4 +1,4 @@
-import { describe, test, expect, vi, beforeAll, afterAll, beforeEach, afterEach } from "vitest";
+import { describe, test, expect, vi, beforeAll, afterAll } from "vitest";
 
 // ── Server integration tests ──────────────────────────────────
 // Tests the Express app's middleware and routes without external deps.
@@ -11,32 +11,14 @@ process.env.GITHUB_APP_NUMERIC_ID = "12345";
 process.env.GITHUB_INSTALL_OWNER = "TestOrg";
 process.env.RELEASE_PLAN_DASHBOARD_PM_USERS = "pmuser@microsoft.com,pmuser2@microsoft.com";
 
-// Mock the auth module to avoid real Key Vault / GitHub calls
-vi.mock("../lib/auth.js", () => ({
-  mintGitHubAppToken: vi.fn().mockResolvedValue("mock-token"),
-  parseEasyAuthPrincipal: vi.fn((req) => {
-    // Simulate Easy Auth by checking for the header
-    const principal = req.headers["x-ms-client-principal"];
-    if (!principal) return null;
-    try {
-      const decoded = JSON.parse(Buffer.from(principal, "base64").toString("utf8"));
-      const claims = decoded.claims || [];
-      const findClaim = (...types) => {
-        for (const typ of types) {
-          const claim = claims.find(c => c.typ === typ);
-          if (claim && claim.val) return claim.val;
-        }
-        return null;
-      };
-      const login = findClaim("preferred_username") || req.headers["x-ms-client-principal-name"] || null;
-      const name = findClaim("name") || login;
-      const objectId = findClaim("http://schemas.microsoft.com/identity/claims/objectidentifier") || req.headers["x-ms-client-principal-id"] || null;
-      if (!login) return null;
-      return { login, name, objectId };
-    } catch { return null; }
-  }),
-  escapeHtml: (str) => String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"),
-}));
+// Mock only mintGitHubAppToken (network call); use real parseEasyAuthPrincipal
+vi.mock("../lib/auth.js", async () => {
+  const actual = await vi.importActual("../lib/auth.js");
+  return {
+    ...actual,
+    mintGitHubAppToken: vi.fn().mockResolvedValue("mock-token"),
+  };
+});
 
 // Mock the routes/api to avoid real DevOps calls
 vi.mock("../routes/api.js", async () => {

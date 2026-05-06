@@ -80,7 +80,8 @@ A single-page web dashboard for viewing Azure SDK Release Plan work items from A
 
 ### Security
 - Azure App Service Easy Auth with Microsoft Entra ID
-- Platform-level authentication — unauthenticated requests never reach the app
+- Platform-level authentication when App Service is configured with "Require authentication" (unauthenticated requests are intercepted before reaching the app)
+- Server-side fail-closed check — returns 401 if identity headers are absent, even if Easy Auth is misconfigured
 - Rate limiting: 30 requests/minute per user on `/api/*` endpoints
 - Input validation with allowlist-based WIQL query parameters
 - Error responses sanitized (no stack traces in production)

@@ -6,13 +6,7 @@ trigger:
     include:
       - .github/skills/**
 
-pr:
-  branches:
-    include:
-      - main
-  paths:
-    include:
-      - .github/skills/**
+pr: none
 
 variables:
   - group: 'AzSDK_Eval_Variable_group'
@@ -41,15 +35,25 @@ stages:
             displayName: 'Install Copilot SDK'
 
           - script: |
-              cd .github/skills
-              mkdir -p .vally/results
-              areas=$(ls -d */ 2>/dev/null | xargs -I{} basename {} | grep -v '^results$' | paste -sd, -)
-              if [ -n "$areas" ]; then
-                vally eval --tag "priority=p0" --tag "area=${areas}" --output-dir ".vally/results"
+              changed=$(git diff --name-only HEAD~1 HEAD -- .github/skills/ \
+                | grep -oP '\.github/skills/\K[^/]+' \
+                | sort -u \
+                | grep -v '^results$' \
+                | grep -v '^\.' \
+                | paste -sd, -)
+              if [ -z "$changed" ]; then
+                echo "No skill changes detected — will skip evals"
               else
-                echo "No skills found — skipping"
+                echo "Changed skills: $changed"
               fi
+              echo "##vso[task.setvariable variable=CHANGED_AREAS]$changed"
+            displayName: 'Detect changed skills'
+
+          - script: |
+              cd .github/skills
+              vally eval --tag "priority=p0" --tag "area=$(CHANGED_AREAS)" --output-dir ".vally/results"
             displayName: 'Run evaluations'
+            condition: and(succeeded(), ne(variables['CHANGED_AREAS'], ''))
             continueOnError: true
             env:
               GITHUB_TOKEN: $(azuresdk-copilot-github-pat)

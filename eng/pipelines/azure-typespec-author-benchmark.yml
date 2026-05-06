@@ -1,127 +1,247 @@
-# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
-trigger: none
+# NOTE: Please refer to https://aka.ms/azsdk/
+engsys/ci-yaml before editing this file.
+trig
+ger: none
 pr: none
 
 parameters:
-- name: PythonVersion
+- name: Pytho
+nVersion
   type: string
   default: '3.10'
 
-extends:
-  template: /eng/pipelines/templates/stages/1es-redirect.yml
+ex
+tends:
+  template: /eng/pipelines/templates/s
+tages/1es-redirect.yml
   parameters:
-    Use1ESOfficial: true
+    Use1
+ESOfficial: true
     stages:
-      - stage: EvalTypeSpecAuthor
-        displayName: Azure TypeSpec Author Skill Evaluation
-        variables:
-          - template: /eng/pipelines/templates/variables/globals.yml
-          - template: /eng/pipelines/templates/variables/image.yml
-          - group: Azure SDK QA Bot Dev Variables
-          - group: AzSDK_Eval_Variable_group
+      - stage: E
+valTypeSpecAuthor
+        displayName: Azure 
+TypeSpec Author Skill Evaluation
+        vari
+ables:
+          - template: /eng/pipelines/t
+emplates/variables/globals.yml
+          - te
+mplate: /eng/pipelines/templates/variables/im
+age.yml
+          - group: Azure SDK QA Bot D
+ev Variables
+          - group: AzSDK_Eval_Va
+riable_group
         pool:
-          name: $(LINUXPOOL)
+          name: $(
+LINUXPOOL)
           image: $(LINUXVMIMAGE)
-          os: linux
+ 
+         os: linux
         jobs:
-          - job: RunEvals
-            displayName: Run Vally Evaluations
-            timeoutInMinutes: 120
+          - 
+job: RunEvals
+            displayName: Run Va
+lly Evaluations
+            timeoutInMinutes:
+ 120
             steps:
-              - checkout: self
+              - check
+out: self
                 fetchDepth: 0
 
-              # Install Go and build/start the QA bot backend
+    
+          # Install Go and build/start the QA
+ bot backend
               - script: |
-                  echo "Downloading Go 1.24.0..."
-                  curl -LO https://go.dev/dl/go1.24.0.linux-amd64.tar.gz
-                  echo "Removing existing Go installation..."
-                  sudo rm -rf /usr/local/go
-                  echo "Extracting Go 1.24.0..."
-                  sudo tar -C /usr/local -xzf go1.24.0.linux-amd64.tar.gz
-                  echo "Setting environment variables..."
-                  echo "##vso[task.setvariable variable=GOROOT]/usr/local/go"
-                  echo "##vso[task.prependpath]/usr/local/go/bin"
-                displayName: Install Go
+      
+            echo "Downloading Go 1.24.0..."
+ 
+                 curl -LO https://go.dev/dl/g
+o1.24.0.linux-amd64.tar.gz
+                  
+echo "Removing existing Go installation..."
+ 
+                 sudo rm -rf /usr/local/go
+  
+                echo "Extracting Go 1.24.0...
+"
+                  sudo tar -C /usr/local -x
+zf go1.24.0.linux-amd64.tar.gz
+              
+    echo "Setting environment variables..."
+ 
+                 echo "##vso[task.setvariable
+ variable=GOROOT]/usr/local/go"
+             
+     echo "##vso[task.prependpath]/usr/local/
+go/bin"
+                displayName: Install 
+Go
 
               - script: go version
-                displayName: Check Go version
+      
+          displayName: Check Go version
 
-              - task: AzureCLI@2
-                displayName: Start QA bot backend service
-                inputs:
-                  azureSubscription: 'azuresdkqabot-dev'
-                  scriptType: bash
-                  scriptLocation: inlineScript
-                  workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
-                  inlineScript: |
-                    export GOPROXY=https://proxy.golang.org,direct
-                    go build -o qa-bot-service
-                    chmod +x qa-bot-service
-                    nohup ./qa-bot-service > qa-bot-service.log 2>&1 &
-                    SERVICE_PID=$!
-                    echo "Service started with PID: $SERVICE_PID"
-                    sleep 20
-                    echo "=== Service log ==="
-                    cat qa-bot-service.log || true
-                    echo "==================="
-                    if ! kill -0 $SERVICE_PID 2>/dev/null; then
-                      echo "ERROR: Service process has exited unexpectedly"
+    
+          - task: AzureCLI@2
+                
+displayName: Start QA bot backend service
+   
+             inputs:
+                  azureS
+ubscription: 'azuresdkqabot-dev'
+            
+      scriptType: bash
+                  scri
+ptLocation: inlineScript
+                  wo
+rkingDirectory: $(Build.SourcesDirectory)/too
+ls/sdk-ai-bots/azure-sdk-qa-bot-backend
+     
+             inlineScript: |
+                
+    export GOPROXY=https://proxy.golang.org,d
+irect
+                    go build -o qa-bot-
+service
+                    chmod +x qa-bot-s
+ervice
+                    nohup ./qa-bot-ser
+vice > qa-bot-service.log 2>&1 &
+            
+        SERVICE_PID=$!
+                    ec
+ho "Service started with PID: $SERVICE_PID"
+ 
+                   sleep 20
+                 
+   echo "=== Service log ==="
+               
+     cat qa-bot-service.log || true
+         
+           echo "==================="
+       
+             if ! kill -0 $SERVICE_PID 2>/dev
+/null; then
+                      echo "ERROR
+: Service process has exited unexpectedly"
+  
+                    exit 1
+                  
+  fi
+                    if ! lsof -ti:8088 >
+ /dev/null 2>&1; then
+                      e
+cho "ERROR: No process listening on port 8088
+"
                       exit 1
-                    fi
-                    if ! lsof -ti:8088 > /dev/null 2>&1; then
-                      echo "ERROR: No process listening on port 8088"
-                      exit 1
-                    fi
-                    echo "Service is running on port 8088"
+              
+      fi
+                    echo "Service is
+ running on port 8088"
                 env:
-                  SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-                  AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
+ 
+                 SYSTEM_ACCESSTOKEN: $(System
+.AccessToken)
+                  AZURE_APPCONF
+IG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
 
-              # Install .NET SDK for azsdk-cli MCP server
+   
+           # Install .NET SDK for azsdk-cli M
+CP server
               - task: UseDotNet@2
-                displayName: Install .NET 8.0 SDK
+ 
+               displayName: Install .NET 8.0 
+SDK
                 inputs:
-                  version: '8.x'
+                 
+ version: '8.x'
 
-              # Install Node.js, Vally CLI, and Copilot SDK
-              # Use the internal Azure Artifacts npm mirror (with auth) because
-              # the 1ES managed pool blocks direct egress to registry.npmjs.org.
+              # Install Node
+.js, Vally CLI, and Copilot SDK
+             
+ # Use the internal Azure Artifacts npm mirro
+r (with auth) because
+              # the 1ES
+ managed pool blocks direct egress to registr
+y.npmjs.org.
               - task: NodeTool@0
+
                 displayName: Use Node.js 22
+
                 inputs:
-                  versionSpec: '22.x'
+                  ver
+sionSpec: '22.x'
 
-              - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
-                parameters:
-                  npmrcPath: $(Build.SourcesDirectory)/.npmrc
-                  registryUrl: https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-tools/npm/registry/
+              - template: /
+eng/common/pipelines/templates/steps/create-a
+uthenticated-npmrc.yml
+                parame
+ters:
+                  npmrcPath: $(Build.So
+urcesDirectory)/.npmrc
+                  regi
+stryUrl: https://pkgs.dev.azure.com/azure-sdk
+/public/_packaging/azure-sdk-tools/npm/regist
+ry/
 
-              - script: npm install --global @microsoft/vally-cli --userconfig $(Build.SourcesDirectory)/.npmrc
-                displayName: Install Vally CLI
+              - script: npm install --gl
+obal @microsoft/vally-cli --userconfig $(Buil
+d.SourcesDirectory)/.npmrc
+                di
+splayName: Install Vally CLI
 
-              - script: npm install --global @github/copilot-sdk --userconfig $(Build.SourcesDirectory)/.npmrc
-                displayName: Install Copilot SDK
+              -
+ script: npm install --global @github/copilot
+-sdk --userconfig $(Build.SourcesDirectory)/.
+npmrc
+                displayName: Install Co
+pilot SDK
 
               # Run evaluations
-              # The vally config (.vally.yaml) lives in the skill's evaluate/
-              # directory; cd there so vally discovers evals/*.eval.yaml.
+  
+            # The vally config (.vally.yaml) 
+lives in the skill's evaluate/
+              
+# directory; cd there so vally discovers eval
+s/*.eval.yaml.
               - script: |
-                  cd .github/skills/azure-typespec-author/evaluate
-                  mkdir -p results
-                  vally eval --suite all --output-dir results
-                displayName: Run evaluations
-                continueOnError: true
+    
+              cd .github/skills/azure-typespe
+c-author/evaluate
+                  mkdir -p 
+results
+                  vally eval --suite 
+all --output-dir results
+                disp
+layName: Run evaluations
+                cont
+inueOnError: true
                 env:
-                  GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+      
+            GITHUB_TOKEN: $(azuresdk-copilot-
+github-pat)
 
             templateContext:
-              outputs:
-                - output: pipelineArtifact
-                  path: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/results
-                  artifact: eval-results-$(Build.BuildId)
-                  displayName: Upload eval results
+   
+           outputs:
+                - output:
+ pipelineArtifact
+                  path: $(B
+uild.SourcesDirectory)/.github/skills/azure-t
+ypespec-author/evaluate/results
+             
+     artifact: eval-results-$(Build.BuildId)
+
+                  displayName: Upload eval re
+sults
                   condition: always()
+
+
+
+
 
 
 

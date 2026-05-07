@@ -56,6 +56,15 @@ Each skill lives in `<name>/` and contains:
 | ---- | ------- | ------- |
 | [**vally**](https://literate-engine-r3wnl4v.pages.github.io/) | Run skill evals, grade trajectories | `npm install -g @microsoft/vally-cli` |
 
+### Linting Evals
+
+```bash
+cd .github/skills
+
+# Lint all eval files
+vally lint .
+```
+
 ### Running Evals
 
 ```bash

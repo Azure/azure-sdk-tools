@@ -28,22 +28,22 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from agent_framework import Agent
-from agent_framework_azure_ai import AzureAIClient
-from azure.identity.aio import DefaultAzureCredential
+from agent_framework.foundry import FoundryChatClient
 
 import config.app_config as app_config
 from config.app_config import get as cfg
 from tools.azsdk_mcp_tools import create_azsdk_mcp_tool
+from utils.azure_credential import get_credential
 
 
 @pytest_asyncio.fixture(scope="module")
 async def ai_client():
-    """Initialise App Configuration and return an AzureAIClient."""
+    """Initialise App Configuration and return a FoundryChatClient."""
     await app_config.init()
-    return AzureAIClient(
+    return FoundryChatClient(
         project_endpoint=cfg("AI_FOUNDRY_PROJECT_ENDPOINT"),
-        model_deployment_name=cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL"),
-        credential=DefaultAzureCredential(),
+        model=cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL"),
+        credential=get_credential(),
     )
 
 

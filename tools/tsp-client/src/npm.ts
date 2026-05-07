@@ -1,7 +1,44 @@
 import { writeFile } from "node:fs/promises";
-import { spawn } from "node:child_process";
+import { spawn, execFile } from "node:child_process";
 import { joinPaths } from "@typespec/compiler";
 import { Logger } from "./log.js";
+
+/**
+ * Queries the npm registry for a published package's devDependencies.
+ * Returns the parsed JSON object, or undefined if the query fails.
+ */
+export async function npmViewPackageDevDependencies(
+  packageName: string,
+  version: string,
+): Promise<Record<string, any> | undefined> {
+  const spec = `${packageName}@${version}`;
+  Logger.debug(`Running npm view ${spec} --json`);
+
+  return new Promise((resolve) => {
+    execFile(
+      "npm",
+      ["view", spec, "devDependencies", "--json"],
+      { shell: true, timeout: 30_000 },
+      (error, stdout) => {
+        if (error) {
+          Logger.warn(`npm view ${spec} failed: ${error.message}`);
+          resolve(undefined);
+          return;
+        }
+        try {
+          const result = JSON.parse(stdout);
+          Logger.debug(
+            `\`npm view ${spec} devDependencies --json\` result: \n${JSON.stringify(result, null, 2)}`,
+          );
+          resolve(result);
+        } catch (parseError: any) {
+          Logger.warn(`Failed to parse npm view output for ${spec}: ${parseError.message}`);
+          resolve(undefined);
+        }
+      },
+    );
+  });
+}
 
 export async function createPackageJson(rootPath: string, deps: Set<string>): Promise<void> {
   const dependencies: Record<string, string> = {};

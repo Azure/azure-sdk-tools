@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import base64
+import enum
 import hashlib
 import logging
 import os
@@ -29,13 +30,93 @@ from src._settings import SettingsManager
 logger = logging.getLogger(__name__)
 
 
+class LanguageLabel(str, enum.Enum):
+    """Canonical GitHub labels for the languages APIView supports.
+
+    Inherits from ``str`` so values can be used directly anywhere a
+    label string is expected (e.g. when calling the GitHub API).
+    """
+
+    PYTHON = "Python"
+    DOTNET = ".NET"
+    CPP = "C++"
+    C99 = "C99"
+    JAVA = "Java"
+    SWIFT = "Swift"
+    JAVASCRIPT = "javascript"
+    GO = "Go"
+    RUST = "Rust"
+
+
 class GithubManager:
     """
     Encapsulates GitHub authentication and common operations (create issues, comments, labels).
     Uses GitHub App authentication only.
     """
 
+    # Mapping of normalized language string -> canonical ``LanguageLabel``.
+    # Shared by every flow that opens issues against ``azure-sdk-tools``
+    # (manual report, mention parser workflow, etc.) so labels stay
+    # consistent across entry points.
+    LANGUAGE_LABELS: dict[str, LanguageLabel] = {
+        "python": LanguageLabel.PYTHON,
+        "py": LanguageLabel.PYTHON,
+        "c#": LanguageLabel.DOTNET,
+        "csharp": LanguageLabel.DOTNET,
+        "dotnet": LanguageLabel.DOTNET,
+        ".net": LanguageLabel.DOTNET,
+        "c++": LanguageLabel.CPP,
+        "cpp": LanguageLabel.CPP,
+        "c99": LanguageLabel.C99,
+        "java": LanguageLabel.JAVA,
+        "android": LanguageLabel.JAVA,
+        "swift": LanguageLabel.SWIFT,
+        "javascript": LanguageLabel.JAVASCRIPT,
+        "js": LanguageLabel.JAVASCRIPT,
+        "go": LanguageLabel.GO,
+        "golang": LanguageLabel.GO,
+        "rust": LanguageLabel.RUST,
+    }
+
     _instance: "GithubManager" = None
+
+    @staticmethod
+    def resolve_owner(production_owner: str = "Azure", staging_owner: Optional[str] = None) -> str:
+        """Return the GitHub owner to file issues against based on ``ENVIRONMENT_NAME``.
+
+        Production traffic targets ``production_owner`` (default
+        ``Azure``); every other environment (local, staging, preview)
+        targets the staging owner so test runs do not pollute the real
+        repo. 
+        """
+        if os.getenv("ENVIRONMENT_NAME") == "production":
+            return production_owner
+        return staging_owner or os.getenv("APIVIEW_STAGING_REPO_OWNER") or "tjprescott"
+
+    @classmethod
+    def language_label(cls, language: Optional[str]) -> Optional[LanguageLabel]:
+        """Return the canonical ``LanguageLabel`` for a language string, or ``None``."""
+        if not language:
+            return None
+        return cls.LANGUAGE_LABELS.get(language.strip().lower())
+
+    @classmethod
+    def build_issue_labels(
+        cls,
+        base_labels: Iterable[str],
+        language: Optional[str] = None,
+    ) -> list[str]:
+        """Build a labels list for an issue, appending the language label when known.
+
+        ``base_labels`` is preserved in order; the language label is
+        appended only if ``language`` resolves to a known label and is
+        not already present.
+        """
+        labels = list(base_labels)
+        lang_label = cls.language_label(language)
+        if lang_label and lang_label.value not in labels:
+            labels.append(lang_label.value)
+        return labels
 
     @classmethod
     def get_instance(cls, force_new: bool = False) -> "GithubManager":

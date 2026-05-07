@@ -183,6 +183,26 @@ avc agent resolve-thread -c <COMMENTS_JSON_FILE> [--remote]
 
 ---
 
+### `avc agent report-issue`
+
+File a GitHub issue from an APIView "Report Issue" interaction. The LLM determines whether the report is about the APIView UI/service, APIView Copilot (the AI reviewer), or a language-specific parser; the server then derives the title prefix (`[APIView]`, `[AVC]`, or `[{Language} APIView]`) and labels.
+
+```bash
+avc agent report-issue --description "<text>" \
+    [--review-link <URL>] [--language <LANG>] \
+    [--comment-id <COMMENT_ID>] [--remote]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--description` | Required. The user's free-form description of the problem. |
+| `--review-link` | Optional URL to the APIView review the user is on. |
+| `--language` | Optional language hint (e.g. `python`, `C#`). |
+| `--comment-id` | Optional APIView comment id. When provided, the server fetches the comment text, code snippet, language, element id, and source automatically. |
+| `--remote` | Send to the deployed `/report-issue` endpoint instead of running locally. |
+
+---
+
 ## `avc kb` — Knowledge Base
 
 ### `avc kb search`
@@ -391,6 +411,30 @@ avc report quality-trends [--end-date 2026-04-17] [--months 6] [--languages Pyth
 
 ---
 
+### `avc report apiview-metrics`
+
+Generate APIView platform metrics over a calendar-month lookback window. Produces a combined report with two metric buckets:
+
+- **versions** — Percentage of revisions that have a valid `PackageVersion`, broken out by language and revision type (Automatic, Manual, PullRequest).
+- **compliance** — Cross-language metadata compliance (whether revisions include `CrossLanguagePackageId`).
+
+```bash
+avc report apiview-metrics [--end-date 2026-04-28] [--months 6] [--languages Python Java] [--chart] [--summary] [--environment production|staging]
+```
+
+| Option | Description |
+|--------|-------------|
+| `-e/--end-date` | Inclusive query end date; defaults to today |
+| `--months` | Number of calendar months to look back from the end date (default 6) |
+| `--languages` | Languages to include; defaults to Python, C#, Java, JavaScript, and Go |
+| `--chart` | Generate PNG trend charts saved to `output/charts/` |
+| `--summary` | Print human-readable summary tables to stderr |
+| `--environment` | `production` (default) or `staging` |
+
+Outputs JSON to stdout with top-level `versions` and `compliance` keys containing per-language monthly data points. With `--summary`, compact terminal tables are also printed to stderr.
+
+---
+
 ### `avc report active-reviews`
 
 Query active APIView reviews in a date range.
@@ -428,12 +472,12 @@ avc report memory -s 2026-01-01 -e 2026-01-31 [-l python] [--format json|yaml]
 
 ---
 
-### `avc report analyze-comments`
+### `avc report architect-comments`
 
-Analyze human reviewer comment themes for a language and date range using an LLM.
+Retrieve human architect review comments for a date range. Returns comments from language board approvers, excluding Diagnostic and AI-generated comments. If `--language` is omitted, returns results for all languages. By default, only the first comment in each thread is returned (replies are excluded), and only threads whose first comment falls within the date window are included — replies to older threads are excluded even if the reply itself was created during the window. Use `--include-replies` to also include reply comments.
 
 ```bash
-avc report analyze-comments -l python -s 2026-01-01 -e 2026-01-31 [--environment staging]
+avc report architect-comments -s 2026-01-01 -e 2026-01-31 [-l python] [--all-commenters] [--include-replies] [--environment staging] [--format yaml]
 ```
 
 ---

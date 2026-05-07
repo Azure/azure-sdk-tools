@@ -87,6 +87,8 @@ _APIVIEW_COMMENT_SELECT_FIELDS = [
     "Downvotes",
     "CommentType",
     "CommentSource",
+    "ThreadId",
+    "Severity",
 ]
 APIVIEW_COMMENT_SELECT_FIELDS = [f"c.{field}" for field in _APIVIEW_COMMENT_SELECT_FIELDS]
 
@@ -461,16 +463,133 @@ def get_comments_in_date_range(
     return list(result)
 
 
+def get_thread_start_dates(
+    comments: list[dict],
+    environment: str = "production",
+) -> dict[str, str]:
+    """
+    Given comments (e.g. from get_comments_in_date_range), determines when each
+    comment thread was first created by querying for the MIN(CreatedOn) across all
+    comments sharing the same thread.
+
+    Threading logic:
+      - Comments with a ThreadId are grouped by ThreadId.
+      - Comments without a ThreadId are treated as standalone threads keyed by ElementId.
+      - Diagnostic comments (CommentSource == 'Diagnostic') are ignored.
+
+    For each unique ThreadId or ElementId, queries Cosmos for all matching
+    comments and computes the earliest CreatedOn in Python
+    (not just those in the original date window).
+    ThreadId is globally unique, so no ReviewId filter is needed for threaded comments.
+    For threadless comments keyed by ElementId, queries are scoped to the same ReviewId.
+
+    Returns:
+        dict mapping ThreadId (or ElementId for threadless comments) to the earliest
+        CreatedOn ISO-8601 string for that thread.
+    """
+    # Collect unique thread keys and their ReviewIds
+    # Key: (review_id, thread_key_type, thread_key_value)
+    thread_ids: set[str] = set()
+    element_ids_by_review: dict[str, set[str]] = {}  # review_id -> set of element_ids
+
+    for c in comments:
+        if c.get("CommentSource") == "Diagnostic":
+            continue
+        thread_id = c.get("ThreadId")
+        review_id = c.get("ReviewId")
+        if not review_id:
+            continue
+        if thread_id:
+            thread_ids.add(thread_id)
+        else:
+            element_id = c.get("ElementId")
+            if element_id:
+                element_ids_by_review.setdefault(review_id, set()).add(element_id)
+
+    if not thread_ids and not element_ids_by_review:
+        return {}
+
+    comments_client = get_apiview_cosmos_client(container_name="Comments", environment=environment)
+    result: dict[str, str] = {}
+
+    # Query CreatedOn per ThreadId for all threaded comments, then find min in Python
+    if thread_ids:
+        thread_id_list = list(thread_ids)
+        query = (
+            "SELECT c.ThreadId, c.CreatedOn "
+            "FROM c "
+            "WHERE ARRAY_CONTAINS(@thread_ids, c.ThreadId) "
+            "AND c.CommentSource != 'Diagnostic' "
+            "AND (NOT IS_DEFINED(c.IsDeleted) OR c.IsDeleted = false) "
+        )
+        rows = comments_client.query_items(
+            query=query,
+            parameters=[{"name": "@thread_ids", "value": thread_id_list}],
+            enable_cross_partition_query=True,
+        )
+        for row in rows:
+            key = row.get("ThreadId")
+            created = row.get("CreatedOn")
+            if key and created:
+                if key not in result or created < result[key]:
+                    result[key] = created
+
+    # Query CreatedOn per ElementId for threadless comments, then find min in Python
+    for review_id, elem_ids in element_ids_by_review.items():
+        elem_id_list = list(elem_ids)
+        query = (
+            "SELECT c.ElementId, c.CreatedOn "
+            "FROM c "
+            "WHERE c.ReviewId = @review_id "
+            "AND (NOT IS_DEFINED(c.ThreadId) OR c.ThreadId = null) "
+            "AND ARRAY_CONTAINS(@element_ids, c.ElementId) "
+            "AND c.CommentSource != 'Diagnostic' "
+            "AND (NOT IS_DEFINED(c.IsDeleted) OR c.IsDeleted = false) "
+        )
+        rows = comments_client.query_items(
+            query=query,
+            parameters=[
+                {"name": "@review_id", "value": review_id},
+                {"name": "@element_ids", "value": elem_id_list},
+            ],
+            enable_cross_partition_query=True,
+        )
+        for row in rows:
+            key = row.get("ElementId")
+            created = row.get("CreatedOn")
+            if key and created:
+                if key not in result or created < result[key]:
+                    result[key] = created
+
+    return result
+
+
 def get_approvers(*, language: str = None, environment: str = "production") -> set[str]:
     """
-    Retrieves the set of profile ids for approvers based on ApprovedLanguages.
-    If language is specified, returns profile ids where ApprovedLanguages contains the language.
-    If no language is specified, returns all profile ids with non-empty ApprovedLanguages.
+    Retrieves the set of architect and deputy-architect members from the Permissions container.
+    If language is specified (pretty name, e.g. "Java"), returns members from groups whose
+    roles include that language with role "Architect" or "Deputy Architect".
+    If no language is specified, returns all members from all architect/deputy-architect groups.
     """
-    profiles_client = get_apiview_cosmos_client(container_name="Profiles", environment=environment, db_name="APIView")
-    query = "SELECT c.id, c.Preferences FROM c"
-    parameters = []
-    result = profiles_client.query_items(
+    permissions_client = get_apiview_cosmos_client(container_name="Permissions", environment=environment)
+
+    if language:
+        query = (
+            "SELECT c.members FROM c "
+            "JOIN r IN c.roles "
+            "WHERE r.role IN ('Architect', 'Deputy Architect', 'DeputyArchitect') "
+            "AND LOWER(r.language) = @language"
+        )
+        parameters = [{"name": "@language", "value": language.lower()}]
+    else:
+        query = (
+            "SELECT c.members FROM c "
+            "JOIN r IN c.roles "
+            "WHERE r.role IN ('Architect', 'Deputy Architect', 'DeputyArchitect')"
+        )
+        parameters = []
+
+    result = permissions_client.query_items(
         query=query,
         parameters=parameters,
         enable_cross_partition_query=True,
@@ -478,15 +597,8 @@ def get_approvers(*, language: str = None, environment: str = "production") -> s
 
     approver_ids = set()
     for item in result:
-        preferences = item.get("Preferences", {})
-        approved_languages = preferences.get("ApprovedLanguages", [])
-        if not approved_languages:
-            continue
-        if language:
-            if language in approved_languages:
-                approver_ids.add(item.get("id"))
-        else:
-            approver_ids.add(item.get("id"))
+        members = item.get("members", [])
+        approver_ids.update(members)
 
     return approver_ids
 
@@ -708,6 +820,96 @@ def get_created_revisions(
         return {"by_language": {}, "totals_by_type": {}, "total": 0}
 
     return _tally_revisions(revisions, exclude_languages=exclude_languages)
+
+
+def get_cross_language_compliance(
+    start_date: str,
+    end_date: str,
+    *,
+    environment: str = "production",
+    exclude_languages: Optional[list] = None,
+) -> dict:
+    """Check cross-language metadata compliance for the latest revision of each review.
+
+    Queries the APIRevisions container for non-deleted revisions created within the
+    date window, groups by ReviewId, picks the latest revision per review, and checks
+    whether ``Files[0].CrossLanguagePackageId`` is populated (which is set from
+    ``CrossLanguageMetadata`` on the CodeFile when present).
+
+    Args:
+        start_date: Inclusive start date (YYYY-MM-DD) — filters revisions by CreatedOn.
+        end_date: Inclusive end date (YYYY-MM-DD).
+        environment: 'production' or 'staging'.
+        exclude_languages: Pretty language names to exclude.
+
+    Returns:
+        A dict with:
+            - by_language: {language: {"compliant": int, "non_compliant": int, "total": int, "pct": float}}
+            - totals: {"compliant": int, "non_compliant": int, "total": int, "pct": float}
+    """
+    exclude_set = {lang.lower() for lang in (exclude_languages or [])}
+    omit_lower = {"c++", "c", "typespec", "swagger", "xml"}
+
+    start_iso = to_iso8601(start_date)
+    end_iso = to_iso8601(end_date, end_of_day=True)
+
+    revisions_container = get_apiview_cosmos_client(container_name="APIRevisions", environment=environment)
+
+    # Query the latest non-deleted revision per review that was created in the window.
+    # We fetch the CrossLanguagePackageId from Files[0] which is populated from
+    # CrossLanguageMetadata when the parser provides it.
+    query = (
+        "SELECT c.ReviewId, c.Language, c.APIRevisionType, "
+        "c.Files[0].CrossLanguagePackageId AS CrossLanguagePackageId, c.CreatedOn "
+        "FROM c "
+        "WHERE (NOT IS_DEFINED(c.IsDeleted) OR c.IsDeleted = false) "
+        "AND c.CreatedOn >= @start AND c.CreatedOn <= @end"
+    )
+    params = [
+        {"name": "@start", "value": start_iso},
+        {"name": "@end", "value": end_iso},
+    ]
+
+    all_revisions = list(
+        revisions_container.query_items(query=query, parameters=params, enable_cross_partition_query=True)
+    )
+
+    # Group by ReviewId and keep only the latest revision per review
+    latest_by_review: dict[str, dict] = {}
+    for rev in all_revisions:
+        review_id = rev.get("ReviewId")
+        if not review_id:
+            continue
+        existing = latest_by_review.get(review_id)
+        if existing is None or rev.get("CreatedOn", "") > existing.get("CreatedOn", ""):
+            latest_by_review[review_id] = rev
+
+    by_language: dict[str, dict] = {}
+    totals = {"compliant": 0, "non_compliant": 0, "total": 0}
+
+    for rev in latest_by_review.values():
+        lang = get_language_pretty_name(rev.get("Language", "Unknown"))
+        if lang.lower() in exclude_set or lang.lower() in omit_lower:
+            continue
+
+        has_metadata = bool(rev.get("CrossLanguagePackageId"))
+
+        entry = by_language.setdefault(lang, {"compliant": 0, "non_compliant": 0, "total": 0})
+        entry["total"] += 1
+        totals["total"] += 1
+        if has_metadata:
+            entry["compliant"] += 1
+            totals["compliant"] += 1
+        else:
+            entry["non_compliant"] += 1
+            totals["non_compliant"] += 1
+
+    # Compute percentages
+    for entry in by_language.values():
+        entry["pct"] = round((entry["compliant"] / entry["total"]) * 100, 2) if entry["total"] else 0.0
+    totals["pct"] = round((totals["compliant"] / totals["total"]) * 100, 2) if totals["total"] else 0.0
+
+    return {"by_language": by_language, "totals": totals}
 
 
 # Application Insights resource coordinates for querying APIView page views.

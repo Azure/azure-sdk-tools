@@ -89,4 +89,4 @@ steps:
       continueOnError: true
       workingDirectory: ${{ parameters.WorkingDirectory }}/${{ repo.key }}
       env:
-        GH_TOKEN: $(azuresdk-github-pat)
+        GH_TOKEN: ${{ parameters.GH_TOKEN }}

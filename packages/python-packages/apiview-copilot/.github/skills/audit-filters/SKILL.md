@@ -64,7 +64,7 @@ Run both commands sequentially in the **same foreground terminal**. Use a **120-
 ### Step 1a: Pull feedback
 
 ```powershell
-New-Item -ItemType Directory -Path output -Force | Out-Null; if (Test-Path output/feedback_output.json) { Remove-Item output/feedback_output.json }; python cli.py report feedback -s <start_date> -e <end_date> -l <language> --exclude good | Out-File -Encoding UTF8 output/feedback_output.json
+New-Item -ItemType Directory -Path output -Force | Out-Null; if (Test-Path output/feedback_output.json) { Remove-Item output/feedback_output.json }; python cli.py report feedback -s <start_date> -e <end_date> -l <language> --exclude good --include-implicit | Out-File -Encoding UTF8 output/feedback_output.json
 ```
 
 ### Step 1b: Pull memories

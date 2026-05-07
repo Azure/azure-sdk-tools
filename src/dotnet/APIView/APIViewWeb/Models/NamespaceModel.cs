@@ -30,11 +30,6 @@ public class ProjectNamespaceInfo
             return null;
         }
 
-        // if (string.IsNullOrWhiteSpace(namespaceValue))
-        // {
-        //     return entries.Count == 1 ? entries[0] : null;
-        // }
-
         return entries?.FirstOrDefault(entry =>
             entry != null &&
             string.Equals(entry.Namespace, namespaceValue, StringComparison.OrdinalIgnoreCase));

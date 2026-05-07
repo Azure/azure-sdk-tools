@@ -1,6 +1,6 @@
 /**
  * Simple in-memory sliding-window rate limiter middleware.
- * Tracks request counts per session within a time window.
+ * Tracks request counts per authenticated user within a time window.
  */
 function createRateLimiter({ windowMs = 60 * 1000, maxRequests = 30 } = {}) {
   const hits = new Map(); // key -> [timestamps]
@@ -17,7 +17,8 @@ function createRateLimiter({ windowMs = 60 * 1000, maxRequests = 30 } = {}) {
   cleanupInterval.unref();
 
   return function rateLimiter(req, res, next) {
-    const key = (req.session && req.session.user && req.session.user.login) || req.ip || "anon";
+    // Use authenticated user identity (set by requireAuth middleware) rather than raw headers
+    const key = (req.user && (req.user.objectId || req.user.login)) || req.ip || "anon";
     const now = Date.now();
     const timestamps = (hits.get(key) || []).filter(t => now - t < windowMs);
 

@@ -3,7 +3,7 @@ import { createRateLimiter } from "../lib/rate-limit.js";
 
 function mockReq(user, ip) {
   return {
-    session: user ? { user: { login: user } } : {},
+    user: user ? { login: user, objectId: `obj-${user}` } : null,
     ip: ip || "127.0.0.1",
   };
 }

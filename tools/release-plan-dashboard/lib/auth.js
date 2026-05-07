@@ -72,29 +72,63 @@ async function mintGitHubAppToken() {
   }
 }
 
-// ── Org membership check (custom — not handled by passport) ──
-const FETCH_TIMEOUT_MS = 30000;
-const ORGS_PER_PAGE = 100;
+// ── Azure Easy Auth identity parsing ──────────────────────────
 
-/** Checks if the user is a public member of any of the specified GitHub organizations. */
-async function isMemberOfAnyOrg(token, username, orgs) {
-  const lowerOrgs = orgs.map(org => org.toLowerCase());
-  let page = 1;
-  while (true) {
-    const res = await fetch(`https://api.github.com/users/${username}/orgs?per_page=${ORGS_PER_PAGE}&page=${page}`, {
-      headers: { Authorization: `Bearer ${token}`, Accept: "application/json", "User-Agent": "release-plan-dashboard" },
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-    });
-    const body = res.ok ? await res.json() : [];
-    console.log(`Org check page ${page}: status=${res.status}, count=${Array.isArray(body) ? body.length : 0}`);
-    if (res.status !== 200 || !Array.isArray(body) || !body.length) break;
-    for (const org of body) {
-      if (lowerOrgs.includes((org.login || "").toLowerCase())) return true;
+/**
+ * Parses the Azure App Service Easy Auth X-MS-CLIENT-PRINCIPAL header.
+ * Returns an object with user identity claims, or null if not authenticated.
+ */
+function parseEasyAuthPrincipal(req) {
+  // In local dev, use mock identity from env vars (blocked in production)
+  if (process.env.DEV_AUTH_USER) {
+    if (process.env.NODE_ENV === "production") {
+      console.error("FATAL: DEV_AUTH_USER is set in production. This is a security misconfiguration.");
+      process.exit(1);
     }
-    if (body.length < ORGS_PER_PAGE) break;
-    page++;
+    return {
+      login: process.env.DEV_AUTH_USER,
+      name: process.env.DEV_AUTH_NAME || process.env.DEV_AUTH_USER,
+      objectId: process.env.DEV_AUTH_OBJECT_ID || "dev-object-id",
+    };
   }
-  return false;
+
+  const principalHeader = req.headers["x-ms-client-principal"];
+  if (!principalHeader) return null;
+
+  try {
+    const decoded = JSON.parse(Buffer.from(principalHeader, "base64").toString("utf8"));
+    const claims = decoded.claims || [];
+
+    const findClaim = (...types) => {
+      for (const typ of types) {
+        const claim = claims.find(c => c.typ === typ);
+        if (claim && claim.val) return claim.val;
+      }
+      return null;
+    };
+
+    const login = findClaim(
+      "preferred_username",
+      "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn",
+      "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
+    ) || req.headers["x-ms-client-principal-name"] || null;
+
+    const name = findClaim(
+      "name",
+      "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name",
+    ) || login;
+
+    const objectId = findClaim(
+      "http://schemas.microsoft.com/identity/claims/objectidentifier",
+      "oid",
+    ) || req.headers["x-ms-client-principal-id"] || null;
+
+    if (!login) return null;
+
+    return { login, name, objectId };
+  } catch {
+    return null;
+  }
 }
 
 /** Escapes HTML special characters to prevent XSS in server-rendered content. */
@@ -102,18 +136,8 @@ function escapeHtml(str) {
   return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-/** Returns the application base URL, using localhost for dev and configured URL for production. */
-function getBaseUrl(req) {
-  const host = req.hostname || req.get("host") || "";
-  if (host === "localhost" || host === "127.0.0.1") {
-    return `http://${req.get("host")}`;
-  }
-  return process.env.REDIRECT_URL || "https://releaseplan-dashboard.azurewebsites.net";
-}
-
 export {
   mintGitHubAppToken,
-  isMemberOfAnyOrg,
+  parseEasyAuthPrincipal,
   escapeHtml,
-  getBaseUrl,
 };

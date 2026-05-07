@@ -9,19 +9,16 @@ process.env.KEYVAULT_NAME = "test-vault";
 process.env.KEYVAULT_KEY_NAME = "test-key";
 process.env.GITHUB_APP_NUMERIC_ID = "12345";
 process.env.GITHUB_INSTALL_OWNER = "TestOrg";
-process.env.GITHUB_APP_CLIENT_ID = "test-client-id";
-process.env.GITHUB_APP_CLIENT_SECRET = "test-client-secret";
-process.env.DEVOPS_RELEASE_PLAN_PAT = "test-pat";
-process.env.SESSION_SECRET = "test-session-secret";
-process.env.RELEASE_PLAN_DASHBOARD_PM_USERS = "pmuser1,pmuser2";
+process.env.RELEASE_PLAN_DASHBOARD_PM_USERS = "pmuser@microsoft.com,pmuser2@microsoft.com";
 
-// Mock the auth module to avoid real Key Vault / GitHub calls
-vi.mock("../lib/auth.js", () => ({
-  mintGitHubAppToken: vi.fn().mockResolvedValue("mock-token"),
-  isMemberOfAnyOrg: vi.fn().mockResolvedValue(true),
-  escapeHtml: (str) => String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"),
-  getBaseUrl: () => "http://localhost:3000",
-}));
+// Mock only mintGitHubAppToken (network call); use real parseEasyAuthPrincipal
+vi.mock("../lib/auth.js", async () => {
+  const actual = await vi.importActual("../lib/auth.js");
+  return {
+    ...actual,
+    mintGitHubAppToken: vi.fn().mockResolvedValue("mock-token"),
+  };
+});
 
 // Mock the routes/api to avoid real DevOps calls
 vi.mock("../routes/api.js", async () => {
@@ -42,23 +39,18 @@ const __dirname = dirname(__filename);
 
 let app, server;
 
+function makePrincipalHeader(claims) {
+  return Buffer.from(JSON.stringify({ claims })).toString("base64");
+}
+
 beforeAll(async () => {
-  // Require server.js — it calls app.listen internally, so we need to intercept
-  // Instead, manually construct the app in a test-friendly way
-  // Actually, server.js calls process.exit and app.listen. Let's require and test key middleware.
-  // We'll build a mini-app replicating server.js structure for testability.
   const { default: express } = await import("express");
-  const { default: session } = await import("express-session");
-  const { escapeHtml, getBaseUrl } = await import("../lib/auth.js");
+  const { parseEasyAuthPrincipal } = await import("../lib/auth.js");
   const { createRateLimiter } = await import("../lib/rate-limit.js");
   const { default: apiRoutes } = await import("../routes/api.js");
 
   app = express();
   app.set("trust proxy", 1);
-  app.use(session({
-    secret: "test-secret", resave: false, saveUninitialized: false,
-    cookie: { secure: false, httpOnly: true, sameSite: "lax" },
-  }));
   app.use(express.json());
 
   // Health (unauthenticated)
@@ -68,28 +60,28 @@ beforeAll(async () => {
   app.get("/favicon.ico", (_req, res) => res.status(204).end());
 
   // Auth middleware
+  const PUBLIC_ROUTES = ["/health", "/favicon.ico", "/auth/logout"];
   app.use((req, res, next) => {
-    if (["/auth/github", "/auth/github/callback", "/auth/logout", "/login", "/health", "/favicon.ico"].includes(req.path)) return next();
-    if (req.session && req.session.user) return next();
-    if (req.session) req.session.returnTo = req.originalUrl;
-    res.redirect("/login");
-  });
-
-  app.get("/login", (req, res) => {
-    if (req.session && req.session.user) return res.redirect("/");
-    res.status(200).send("Login page");
+    if (PUBLIC_ROUTES.includes(req.path)) return next();
+    const principal = parseEasyAuthPrincipal(req);
+    if (!principal) {
+      return res.status(401).json({ error: "Authentication required. Please sign in via your organization." });
+    }
+    req.user = principal;
+    next();
   });
 
   app.get("/auth/me", (req, res) => {
-    const user = req.session && req.session.user ? { ...req.session.user } : null;
-    if (user) {
+    const user = req.user;
+    let responseUser = user ? { login: user.login, name: user.name, avatar: "" } : null;
+    if (responseUser) {
       const pmList = (process.env.RELEASE_PLAN_DASHBOARD_PM_USERS || "").split(",").map(u => u.trim().toLowerCase()).filter(Boolean);
-      user.isPM = pmList.includes((user.login || "").toLowerCase());
+      responseUser.isPM = pmList.includes((user.login || "").toLowerCase());
     }
-    res.json(user);
+    res.json(responseUser);
   });
 
-  app.get("/auth/logout", (req, res) => { req.session.destroy(() => res.redirect("/login")); });
+  app.get("/auth/logout", (_req, res) => res.redirect("/.auth/logout?post_logout_redirect_uri=/"));
 
   // Rate limiter
   const apiRateLimiter = createRateLimiter({ windowMs: 60000, maxRequests: 5 });
@@ -110,7 +102,7 @@ function getPort() {
   return server.address().port;
 }
 
-function request(method, path, { headers = {}, body, followRedirects = false } = {}) {
+function request(method, path, { headers = {}, body } = {}) {
   return new Promise((resolve, reject) => {
     const url = new URL(path, `http://localhost:${getPort()}`);
     const options = {
@@ -133,12 +125,18 @@ function request(method, path, { headers = {}, body, followRedirects = false } =
   });
 }
 
-// Helper to make an authenticated request by setting session cookie
-let sessionCookie = null;
-
-async function authenticatedRequest(method, path, options = {}) {
-  const hdrs = { ...(options.headers || {}) };
-  if (sessionCookie) hdrs["Cookie"] = sessionCookie;
+function authenticatedRequest(method, path, options = {}) {
+  const principalHeader = makePrincipalHeader([
+    { typ: "preferred_username", val: "testuser@microsoft.com" },
+    { typ: "name", val: "Test User" },
+    { typ: "http://schemas.microsoft.com/identity/claims/objectidentifier", val: "obj-123" },
+  ]);
+  const hdrs = {
+    "x-ms-client-principal": principalHeader,
+    "x-ms-client-principal-name": "testuser@microsoft.com",
+    "x-ms-client-principal-id": "obj-123",
+    ...(options.headers || {}),
+  };
   return request(method, path, { ...options, headers: hdrs });
 }
 
@@ -161,71 +159,74 @@ describe("server integration", () => {
   });
 
   describe("authentication middleware", () => {
-    test("unauthenticated request to / redirects to /login", async () => {
+    test("unauthenticated request to / returns 401", async () => {
       const res = await request("GET", "/");
-      expect(res.status).toBe(302);
-      expect(res.headers.location).toBe("/login");
+      expect(res.status).toBe(401);
     });
 
-    test("unauthenticated request to /api/* redirects to /login", async () => {
+    test("unauthenticated request to /api/* returns 401", async () => {
       const res = await request("GET", "/api/release-plans");
-      expect(res.status).toBe(302);
-      expect(res.headers.location).toBe("/login");
+      expect(res.status).toBe(401);
     });
 
-    test("GET /login returns 200", async () => {
-      const res = await request("GET", "/login");
+    test("authenticated request to /api/* succeeds", async () => {
+      const res = await authenticatedRequest("GET", "/api/release-plans");
       expect(res.status).toBe(200);
     });
   });
 
   describe("auth/me endpoint", () => {
-    test("returns null when not authenticated", async () => {
+    test("returns user info when authenticated", async () => {
+      const res = await authenticatedRequest("GET", "/auth/me");
+      expect(res.status).toBe(200);
+      const body = JSON.parse(res.body);
+      expect(body.login).toBe("testuser@microsoft.com");
+      expect(body.name).toBe("Test User");
+      expect(body.isPM).toBe(false);
+    });
+
+    test("returns isPM true for PM users", async () => {
+      const principalHeader = makePrincipalHeader([
+        { typ: "preferred_username", val: "pmuser@microsoft.com" },
+        { typ: "name", val: "PM User" },
+      ]);
+      const res = await request("GET", "/auth/me", {
+        headers: {
+          "x-ms-client-principal": principalHeader,
+          "x-ms-client-principal-name": "pmuser@microsoft.com",
+        },
+      });
+      expect(res.status).toBe(200);
+      const body = JSON.parse(res.body);
+      expect(body.isPM).toBe(true);
+    });
+
+    test("returns 401 when not authenticated", async () => {
       const res = await request("GET", "/auth/me");
-      // /auth/me is not in the bypass list, so it redirects
+      expect(res.status).toBe(401);
+    });
+  });
+
+  describe("auth/logout endpoint", () => {
+    test("redirects to Azure Easy Auth logout", async () => {
+      const res = await request("GET", "/auth/logout");
       expect(res.status).toBe(302);
+      expect(res.headers.location).toBe("/.auth/logout?post_logout_redirect_uri=/");
     });
   });
 
   describe("PM user detection", () => {
     test("identifies PM users from RELEASE_PLAN_DASHBOARD_PM_USERS env var", () => {
       const pmList = (process.env.RELEASE_PLAN_DASHBOARD_PM_USERS || "").split(",").map(u => u.trim().toLowerCase()).filter(Boolean);
-      expect(pmList).toContain("pmuser1");
-      expect(pmList).toContain("pmuser2");
-      expect(pmList).not.toContain("regularuser");
+      expect(pmList).toContain("pmuser@microsoft.com");
+      expect(pmList).toContain("pmuser2@microsoft.com");
+      expect(pmList).not.toContain("regularuser@microsoft.com");
     });
 
     test("PM check is case-insensitive", () => {
       const pmList = (process.env.RELEASE_PLAN_DASHBOARD_PM_USERS || "").split(",").map(u => u.trim().toLowerCase()).filter(Boolean);
-      expect(pmList.includes("pmuser1")).toBe(true);
-      expect(pmList.includes("PMUSER1".toLowerCase())).toBe(true);
-    });
-  });
-
-  describe("open redirect prevention", () => {
-    // This tests the sanitization logic used in the OAuth callback
-    function safeRedirect(returnTo) {
-      return (returnTo.startsWith("/") && !returnTo.startsWith("//")) ? returnTo : "/";
-    }
-
-    test("allows normal relative paths", () => {
-      expect(safeRedirect("/")).toBe("/");
-      expect(safeRedirect("/api/release-plans")).toBe("/api/release-plans");
-      expect(safeRedirect("/some/deep/path?q=1")).toBe("/some/deep/path?q=1");
-    });
-
-    test("blocks protocol-relative URLs (open redirect)", () => {
-      expect(safeRedirect("//evil.com")).toBe("/");
-      expect(safeRedirect("//evil.com/path")).toBe("/");
-    });
-
-    test("blocks absolute URLs", () => {
-      expect(safeRedirect("https://evil.com")).toBe("/");
-      expect(safeRedirect("http://evil.com/foo")).toBe("/");
-    });
-
-    test("blocks empty string", () => {
-      expect(safeRedirect("")).toBe("/");
+      expect(pmList.includes("pmuser@microsoft.com")).toBe(true);
+      expect(pmList.includes("PMUSER@MICROSOFT.COM".toLowerCase())).toBe(true);
     });
   });
 });

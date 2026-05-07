@@ -23,51 +23,51 @@ stimuli:
     max_tokens: 5000
   environment:
     files:
-    - src: ../fixtures/001006-version-add-preview-after-stable\employee.tsp
+    - src: ../fixtures/001006-version-add-preview-after-stable/employee.tsp
       dest: employee.tsp
-    - src: ../fixtures/001006-version-add-preview-after-stable\main.tsp
+    - src: ../fixtures/001006-version-add-preview-after-stable/main.tsp
       dest: main.tsp
-    - src: ../fixtures/001006-version-add-preview-after-stable\shared.tsp
+    - src: ../fixtures/001006-version-add-preview-after-stable/shared.tsp
       dest: shared.tsp
-    - src: ../fixtures/001006-version-add-preview-after-stable\tspconfig.yaml
+    - src: ../fixtures/001006-version-add-preview-after-stable/tspconfig.yaml
       dest: tspconfig.yaml
-    - src: ../fixtures/001006-version-add-preview-after-stable\package.json
+    - src: ../fixtures/001006-version-add-preview-after-stable/package.json
       dest: package.json
-    - src: ../fixtures/001006-version-add-preview-after-stable\examples\2021-10-01\Employees_CreateOrUpdate_MaximumSet_Gen.json
+    - src: ../fixtures/001006-version-add-preview-after-stable/examples/2021-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
       dest: examples/2021-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
-    - src: ../fixtures/001006-version-add-preview-after-stable\examples\2021-10-01\Employees_Delete_MaximumSet_Gen.json
+    - src: ../fixtures/001006-version-add-preview-after-stable/examples/2021-10-01/Employees_Delete_MaximumSet_Gen.json
       dest: examples/2021-10-01/Employees_Delete_MaximumSet_Gen.json
-    - src: ../fixtures/001006-version-add-preview-after-stable\examples\2021-10-01\Employees_Get_MaximumSet_Gen.json
+    - src: ../fixtures/001006-version-add-preview-after-stable/examples/2021-10-01/Employees_Get_MaximumSet_Gen.json
       dest: examples/2021-10-01/Employees_Get_MaximumSet_Gen.json
-    - src: ../fixtures/001006-version-add-preview-after-stable\examples\2021-10-01\Employees_ListByResourceGroup_MaximumSet_Gen.json
+    - src: ../fixtures/001006-version-add-preview-after-stable/examples/2021-10-01/Employees_ListByResourceGroup_MaximumSet_Gen.json
       dest: examples/2021-10-01/Employees_ListByResourceGroup_MaximumSet_Gen.json
-    - src: ../fixtures/001006-version-add-preview-after-stable\examples\2021-10-01\Employees_ListBySubscription_MaximumSet_Gen.json
+    - src: ../fixtures/001006-version-add-preview-after-stable/examples/2021-10-01/Employees_ListBySubscription_MaximumSet_Gen.json
       dest: examples/2021-10-01/Employees_ListBySubscription_MaximumSet_Gen.json
-    - src: ../fixtures/001006-version-add-preview-after-stable\examples\2021-10-01\Employees_Update_MaximumSet_Gen.json
+    - src: ../fixtures/001006-version-add-preview-after-stable/examples/2021-10-01/Employees_Update_MaximumSet_Gen.json
       dest: examples/2021-10-01/Employees_Update_MaximumSet_Gen.json
-    - src: ../fixtures/001006-version-add-preview-after-stable\examples\2021-10-01\Operations_List_MaximumSet_Gen.json
+    - src: ../fixtures/001006-version-add-preview-after-stable/examples/2021-10-01/Operations_List_MaximumSet_Gen.json
       dest: examples/2021-10-01/Operations_List_MaximumSet_Gen.json
-    - src: ../fixtures/001006-version-add-preview-after-stable\examples\2021-10-01\Operations_List_MinimumSet_Gen.json
+    - src: ../fixtures/001006-version-add-preview-after-stable/examples/2021-10-01/Operations_List_MinimumSet_Gen.json
       dest: examples/2021-10-01/Operations_List_MinimumSet_Gen.json
-    - src: ../fixtures/001006-version-add-preview-after-stable\examples\2024-10-01\Employees_CreateOrUpdate_MaximumSet_Gen.json
+    - src: ../fixtures/001006-version-add-preview-after-stable/examples/2024-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
       dest: examples/2024-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
-    - src: ../fixtures/001006-version-add-preview-after-stable\examples\2024-10-01\Employees_Delete_MaximumSet_Gen.json
+    - src: ../fixtures/001006-version-add-preview-after-stable/examples/2024-10-01/Employees_Delete_MaximumSet_Gen.json
       dest: examples/2024-10-01/Employees_Delete_MaximumSet_Gen.json
-    - src: ../fixtures/001006-version-add-preview-after-stable\examples\2024-10-01\Employees_Get_MaximumSet_Gen.json
+    - src: ../fixtures/001006-version-add-preview-after-stable/examples/2024-10-01/Employees_Get_MaximumSet_Gen.json
       dest: examples/2024-10-01/Employees_Get_MaximumSet_Gen.json
-    - src: ../fixtures/001006-version-add-preview-after-stable\examples\2024-10-01\Employees_ListByResourceGroup_MaximumSet_Gen.json
+    - src: ../fixtures/001006-version-add-preview-after-stable/examples/2024-10-01/Employees_ListByResourceGroup_MaximumSet_Gen.json
       dest: examples/2024-10-01/Employees_ListByResourceGroup_MaximumSet_Gen.json
-    - src: ../fixtures/001006-version-add-preview-after-stable\examples\2024-10-01\Employees_ListByResourceGroup_MinimumSet_Gen.json
+    - src: ../fixtures/001006-version-add-preview-after-stable/examples/2024-10-01/Employees_ListByResourceGroup_MinimumSet_Gen.json
       dest: examples/2024-10-01/Employees_ListByResourceGroup_MinimumSet_Gen.json
-    - src: ../fixtures/001006-version-add-preview-after-stable\examples\2024-10-01\Employees_ListBySubscription_MaximumSet_Gen.json
+    - src: ../fixtures/001006-version-add-preview-after-stable/examples/2024-10-01/Employees_ListBySubscription_MaximumSet_Gen.json
       dest: examples/2024-10-01/Employees_ListBySubscription_MaximumSet_Gen.json
-    - src: ../fixtures/001006-version-add-preview-after-stable\examples\2024-10-01\Employees_ListBySubscription_MinimumSet_Gen.json
+    - src: ../fixtures/001006-version-add-preview-after-stable/examples/2024-10-01/Employees_ListBySubscription_MinimumSet_Gen.json
       dest: examples/2024-10-01/Employees_ListBySubscription_MinimumSet_Gen.json
-    - src: ../fixtures/001006-version-add-preview-after-stable\examples\2024-10-01\Employees_Update_MaximumSet_Gen.json
+    - src: ../fixtures/001006-version-add-preview-after-stable/examples/2024-10-01/Employees_Update_MaximumSet_Gen.json
       dest: examples/2024-10-01/Employees_Update_MaximumSet_Gen.json
-    - src: ../fixtures/001006-version-add-preview-after-stable\examples\2024-10-01\Operations_List_MaximumSet_Gen.json
+    - src: ../fixtures/001006-version-add-preview-after-stable/examples/2024-10-01/Operations_List_MaximumSet_Gen.json
       dest: examples/2024-10-01/Operations_List_MaximumSet_Gen.json
-    - src: ../fixtures/001006-version-add-preview-after-stable\examples\2024-10-01\Operations_List_MinimumSet_Gen.json
+    - src: ../fixtures/001006-version-add-preview-after-stable/examples/2024-10-01/Operations_List_MinimumSet_Gen.json
       dest: examples/2024-10-01/Operations_List_MinimumSet_Gen.json
   graders:
   - type: tool-calls

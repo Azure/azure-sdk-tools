@@ -369,6 +369,35 @@ Same flags and rollback behavior as `db link`.
 
 ---
 
+### `avc db ingest-guidelines`
+
+Sync guidelines and examples from the [azure-sdk](https://github.com/Azure/azure-sdk) repository into the knowledge base. Detects changes via git commit comparison, parses markdown files, extracts guidelines and examples via LLM, and writes to Cosmos DB.
+
+```bash
+# Incremental sync (only changed files since last sync)
+avc db ingest-guidelines
+
+# Dry-run: preview changes without writing to the database
+avc db ingest-guidelines --dry-run
+
+# Full resync (ignore last synced SHA)
+avc db ingest-guidelines --force
+
+# Sync between specific commits
+avc db ingest-guidelines --base-sha abc123 --target-sha def456
+```
+
+| Option | Description |
+|--------|-------------|
+| `-d/--dry-run` | Preview changes without modifying the database |
+| `-f/--force` | Ignore the last synced SHA; perform a full resync |
+| `-b/--base-sha` | Override the baseline commit SHA |
+| `-t/--target-sha` | Override the target commit SHA |
+
+See [kb.md](./kb.md#guideline-ingestion) for details on the ingestion pipeline.
+
+---
+
 ## `avc report` — Reporting and Analytics
 
 ### `avc report metrics`

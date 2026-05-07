@@ -209,6 +209,7 @@ class Guideline(BaseModel):
 
     def model_dump_db(self, **kwargs) -> dict:
         """Return a dict with guideline IDs converted to database-safe format."""
+        kwargs.setdefault("mode", "json")
         data = self.model_dump(**kwargs)
         data["id"] = guideline_id_to_db(data["id"])
         data["related_guidelines"] = [guideline_id_to_db(x) for x in data.get("related_guidelines", [])]
@@ -278,6 +279,7 @@ class Example(BaseModel):
 
     def model_dump_db(self, **kwargs) -> dict:
         """Return a dict with guideline IDs converted to database-safe format."""
+        kwargs.setdefault("mode", "json")
         data = self.model_dump(**kwargs)
         data["guideline_ids"] = [guideline_id_to_db(x) for x in data.get("guideline_ids", [])]
         return data
@@ -330,6 +332,7 @@ class Memory(BaseModel):
 
     def model_dump_db(self, **kwargs) -> dict:
         """Return a dict with guideline IDs converted to database-safe format."""
+        kwargs.setdefault("mode", "json")
         data = self.model_dump(**kwargs)
         data["related_guidelines"] = [guideline_id_to_db(x) for x in data.get("related_guidelines", [])]
         return data

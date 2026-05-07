@@ -1660,6 +1660,7 @@ def db_purge(containers: Optional[list[str]] = None, run_indexer: bool = False):
 def db_ingest_guidelines(
     dry_run: bool = False,
     force: bool = False,
+    details: bool = False,
     base_sha: Optional[str] = None,
     target_sha: Optional[str] = None,
 ):
@@ -1675,6 +1676,7 @@ def db_ingest_guidelines(
     result = ingestor.sync_guidelines(
         dry_run=dry_run,
         force=force,
+        details=details,
         base_sha=base_sha,
         target_sha=target_sha,
     )
@@ -1690,20 +1692,47 @@ def db_ingest_guidelines(
         f"{len(result.guidelines_unchanged)} unchanged"
     )
 
+    if result.total_examples:
+        print(
+            f"Examples: {GREEN}{len(result.examples_created)} to create{RESET}, "
+            f"{BLUE}{len(result.examples_updated)} to update{RESET}, "
+            f"{Fore.RED}{len(result.examples_deleted)} to delete{RESET}, "
+            f"{len(result.examples_unchanged)} unchanged"
+        )
+
+    if result.total_memories:
+        print(
+            f"Memories: {len(result.memories_absorbed)} to absorb, "
+            f"{len(result.memories_retained)} to retain"
+        )
+
     if result.errors:
         print(f"{Fore.RED}Errors ({len(result.errors)}):{RESET}")
         for err in result.errors:
             print(f"  ! {err}")
         print()
 
-    # Return counts only (not full lists) for CLI output
-    return {
+    # Return counts and optional details for CLI output
+    output = {
         "guidelines_created": len(result.guidelines_created),
         "guidelines_updated": len(result.guidelines_updated),
         "guidelines_deleted": len(result.guidelines_deleted),
         "guidelines_unchanged": len(result.guidelines_unchanged),
+        "examples_created": len(result.examples_created),
+        "examples_updated": len(result.examples_updated),
+        "examples_deleted": len(result.examples_deleted),
+        "examples_unchanged": len(result.examples_unchanged),
+        "memories_absorbed": len(result.memories_absorbed),
+        "memories_retained": len(result.memories_retained),
         "errors": len(result.errors),
     }
+
+    if details and result.details:
+        from dataclasses import asdict
+
+        output["details"] = [asdict(d) for d in result.details]
+
+    return output
 
 
 def get_apiview_comments(revision_id: str, environment: str = "production") -> dict:
@@ -3114,6 +3143,12 @@ class CliCommandsLoader(CLICommandsLoader):
                 type=str,
                 help="The target commit SHA to sync to. If not provided, uses the latest commit on main.",
                 options_list=["--target-sha", "-t"],
+            )
+            ac.argument(
+                "details",
+                action="store_true",
+                help="Include before/after content for each changed guideline and example in the output.",
+                options_list=["--details"],
             )
         with ArgumentsContext(self, "apiview") as ac:
             ac.argument(

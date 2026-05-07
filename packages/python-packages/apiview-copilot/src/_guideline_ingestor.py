@@ -138,6 +138,17 @@ class ParsedExample:
 
 
 @dataclass
+class SyncDetail:
+    """Before/after detail for a single changed item."""
+
+    id: str
+    kind: str  # "guideline" or "example"
+    action: str  # "created", "updated", or "deleted"
+    before: Optional[str]
+    after: Optional[str]
+
+
+@dataclass
 class SyncResult:
     """Result of a guideline sync operation."""
 
@@ -152,6 +163,7 @@ class SyncResult:
     memories_absorbed: list[str] = field(default_factory=list)
     memories_retained: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
+    details: list[SyncDetail] = field(default_factory=list)
 
     @property
     def total_guidelines(self) -> int:
@@ -547,6 +559,7 @@ class GuidelineIngestor:
         *,
         dry_run: bool = False,
         force: bool = False,
+        details: bool = False,
         base_sha: Optional[str] = None,
         target_sha: Optional[str] = None,
     ) -> SyncResult:
@@ -610,9 +623,9 @@ class GuidelineIngestor:
 
         # For incremental sync, we need to parse BOTH base and target to find actual differences
         if is_incremental:
-            return self._sync_incremental(files_to_process, last_sha, current_sha, dry_run, result)
+            return self._sync_incremental(files_to_process, last_sha, current_sha, dry_run, details, result)
         else:
-            return self._sync_full(files_to_process, current_sha, dry_run, result)
+            return self._sync_full(files_to_process, current_sha, dry_run, details, result)
 
     def _parse_files_at_sha(
         self, files: List[str], commit_sha: str, label: str
@@ -647,6 +660,7 @@ class GuidelineIngestor:
         base_sha: str,
         target_sha: str,
         dry_run: bool,
+        details: bool,
         result: SyncResult,
     ) -> SyncResult:
         """Perform incremental sync by comparing guidelines between two SHAs."""
@@ -705,6 +719,9 @@ class GuidelineIngestor:
                 # New guideline
                 result.guidelines_created.append(gid)
                 print(f"  Created: {gid}")
+                if details:
+                    after_content = enriched.get("content", target_map[gid][0].text) if enriched else target_map[gid][0].text
+                    result.details.append(SyncDetail(id=gid, kind="guideline", action="created", before=None, after=after_content))
                 if not dry_run:
                     self._upsert_guideline(target_map[gid][0], target_map[gid][1], target_sha, enriched=enriched)
 
@@ -712,6 +729,8 @@ class GuidelineIngestor:
                 # Deleted guideline
                 result.guidelines_deleted.append(gid)
                 print(f"  Deleted: {gid}")
+                if details:
+                    result.details.append(SyncDetail(id=gid, kind="guideline", action="deleted", before=base_map[gid][0].text, after=None))
                 if not dry_run:
                     try:
                         self._db.guidelines.delete(gid, run_indexer=False)
@@ -728,6 +747,9 @@ class GuidelineIngestor:
                 else:
                     result.guidelines_updated.append(gid)
                     print(f"  Updated: {gid}")
+                    if details:
+                        after_content = enriched.get("content", target_map[gid][0].text) if enriched else target_map[gid][0].text
+                        result.details.append(SyncDetail(id=gid, kind="guideline", action="updated", before=base_map[gid][0].text, after=after_content))
                     # Verify guideline exists in database
                     try:
                         existing = self._db.guidelines.get(gid)
@@ -744,7 +766,7 @@ class GuidelineIngestor:
 
         # Sync examples
         if all_examples:
-            self._sync_examples(all_examples, target_sha, changed_guideline_ids, dry_run, result)
+            self._sync_examples(all_examples, target_sha, changed_guideline_ids, dry_run, details, result)
 
         # Reconcile memories for changed guidelines
         changed_set = set(result.guidelines_created) | set(result.guidelines_updated)
@@ -761,6 +783,7 @@ class GuidelineIngestor:
         files_to_process: List[str],
         target_sha: str,
         dry_run: bool,
+        details: bool,
         result: SyncResult,
     ) -> SyncResult:
         """Perform full sync by comparing target SHA against database."""
@@ -830,12 +853,18 @@ class GuidelineIngestor:
 
                 # Content changed - update
                 result.guidelines_updated.append(parsed.id)
+                if details:
+                    after_content = enriched.get("content", parsed.text) if enriched else parsed.text
+                    result.details.append(SyncDetail(id=parsed.id, kind="guideline", action="updated", before=existing.get("content", ""), after=after_content))
                 if not dry_run:
                     self._upsert_guideline(parsed, new_hash, target_sha, existing, enriched)
 
             except Exception:
                 # Guideline doesn't exist - create
                 result.guidelines_created.append(parsed.id)
+                if details:
+                    after_content = enriched.get("content", parsed.text) if enriched else parsed.text
+                    result.details.append(SyncDetail(id=parsed.id, kind="guideline", action="created", before=None, after=after_content))
                 if not dry_run:
                     self._upsert_guideline(parsed, new_hash, target_sha, enriched=enriched)
 
@@ -849,6 +878,12 @@ class GuidelineIngestor:
 
                 for item in existing_items:
                     if item["id"] not in seen_guideline_ids:
+                        if details:
+                            try:
+                                full_item = self._db.guidelines.get(item["id"])
+                                result.details.append(SyncDetail(id=item["id"], kind="guideline", action="deleted", before=full_item.get("content", ""), after=None))
+                            except Exception:
+                                result.details.append(SyncDetail(id=item["id"], kind="guideline", action="deleted", before=None, after=None))
                         if not dry_run:
                             self._db.guidelines.delete(item["id"], run_indexer=False)
                         result.guidelines_deleted.append(item["id"])
@@ -864,7 +899,7 @@ class GuidelineIngestor:
 
         # Step 4: Sync examples
         if all_examples:
-            self._sync_examples(all_examples, target_sha, seen_guideline_ids, dry_run, result)
+            self._sync_examples(all_examples, target_sha, seen_guideline_ids, dry_run, details, result)
 
         # Step 5: Reconcile memories for changed guidelines
         changed_set = set(result.guidelines_created) | set(result.guidelines_updated)
@@ -1020,6 +1055,7 @@ class GuidelineIngestor:
         commit_sha: str,
         guideline_ids_to_process: set[str],
         dry_run: bool,
+        details: bool,
         result: SyncResult,
     ) -> None:
         """
@@ -1065,10 +1101,14 @@ class GuidelineIngestor:
                     continue
 
                 result.examples_updated.append(parsed_ex.id)
+                if details:
+                    result.details.append(SyncDetail(id=parsed_ex.id, kind="example", action="updated", before=existing.get("content", ""), after=parsed_ex.content))
                 if not dry_run:
                     self._upsert_example(parsed_ex, new_hash, commit_sha, existing)
             except Exception:
                 result.examples_created.append(parsed_ex.id)
+                if details:
+                    result.details.append(SyncDetail(id=parsed_ex.id, kind="example", action="created", before=None, after=parsed_ex.content))
                 if not dry_run:
                     self._upsert_example(parsed_ex, new_hash, commit_sha)
 
@@ -1081,6 +1121,12 @@ class GuidelineIngestor:
                 for ex_id in old_example_ids:
                     if ex_id not in seen_example_ids:
                         result.examples_deleted.append(ex_id)
+                        if details:
+                            try:
+                                ex_item = self._db.examples.get(ex_id)
+                                result.details.append(SyncDetail(id=ex_id, kind="example", action="deleted", before=ex_item.get("content", ""), after=None))
+                            except Exception:
+                                result.details.append(SyncDetail(id=ex_id, kind="example", action="deleted", before=None, after=None))
                         if not dry_run:
                             try:
                                 self._db.examples.delete(ex_id, run_indexer=False)

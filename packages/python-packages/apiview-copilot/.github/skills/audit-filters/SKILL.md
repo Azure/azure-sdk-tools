@@ -64,7 +64,7 @@ Run both commands sequentially in the **same foreground terminal**. Use a **120-
 ### Step 1a: Pull feedback
 
 ```powershell
-New-Item -ItemType Directory -Path output -Force | Out-Null; if (Test-Path output/feedback_output.json) { Remove-Item output/feedback_output.json }; python cli.py report feedback -s <start_date> -e <end_date> -l <language> --exclude good | Out-File -Encoding UTF8 output/feedback_output.json
+New-Item -ItemType Directory -Path output -Force | Out-Null; if (Test-Path output/feedback_output.json) { Remove-Item output/feedback_output.json }; python cli.py report feedback -s <start_date> -e <end_date> -l <language> --exclude good --include-implicit | Out-File -Encoding UTF8 output/feedback_output.json
 ```
 
 ### Step 1b: Pull memories
@@ -106,8 +106,16 @@ Based on the analysis, propose specific new lines to add to `metadata/{lang}/fil
 1. Follow the existing format: `  N. DO NOT <description>`
 2. Be numbered sequentially after the last existing rule
 3. **Not duplicate an existing rule** — Before proposing a rule, compare it against every existing rule in the current `filter.yaml`. If an existing rule already covers the same behavior (even with different wording), do NOT propose it again. Explain in the analysis that the theme was already covered and cite the existing rule number.
-4. Be supported by at least 2 feedback items or 1 memory with `is_exception: true`
-5. Be phrased as a clear, actionable instruction the LLM can follow
+4. Be phrased as a clear, actionable instruction the LLM can follow
+
+### Signal Strength
+
+When presenting recommendations, clearly label each with its signal strength:
+
+- **Strong signal**: 2+ explicit feedback items (downvotes with reasons) or 1 memory with `is_exception: true`
+- **Low signal**: Only 1 explicit feedback item, or only implicit bad comments (no explicit downvote/reason)
+
+Do NOT automatically exclude low-signal items. Present ALL actionable patterns to the user with their signal strength clearly marked, and let the user (or reviewer) decide whether to include them in the PR.
 
 Present the recommendations in a numbered list, each with:
 - The proposed rule text

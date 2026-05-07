@@ -12,7 +12,7 @@ import logging
 from enum import Enum
 from typing import Annotated
 
-from config.tenant_config import get_tenant_config
+from config.tenant_config import TenantID, get_tenant_config
 from models.knowledge import Reference, SearchKnowledgeBaseResult
 from tools import tool
 from utils.azure_ai_search import get_search_client
@@ -117,7 +117,7 @@ class KnowledgeTools:
         """
         # Fall back to tenant-configured sources when none are specified
         if not sources:
-            config = get_tenant_config(tenant_id)
+            config = get_tenant_config(TenantID(tenant_id))
             sources = [src.name for src in config.sources] if config else []
 
         search_client = get_search_client()
@@ -232,7 +232,7 @@ def _resolve_source_filters(
     Each source gets a base ``context_id`` filter.  Tenant-level overrides
     and the service-type clause are layered on with ``and``.
     """
-    tenant_config = get_tenant_config(tenant_id)
+    tenant_config = get_tenant_config(TenantID(tenant_id))
     source_filter_overrides = tenant_config.source_filter if tenant_config else {}
 
     valid_service_types = {t.value for t in ServiceType}
@@ -253,9 +253,11 @@ def _resolve_source_filters(
     return source_filters
 
 
-def _truncate_content(content: str | None) -> str | None:
+def _truncate_content(content: str | None) -> str:
     """Truncate content to _MAX_CONTENT_CHARS_PER_RESULT to control context size."""
-    if not content or len(content) <= _MAX_CONTENT_CHARS_PER_RESULT:
+    if not content:
+        return ""
+    if len(content) <= _MAX_CONTENT_CHARS_PER_RESULT:
         return content
     return content[:_MAX_CONTENT_CHARS_PER_RESULT] + "\n... [truncated]"
 

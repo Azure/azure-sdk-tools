@@ -120,7 +120,7 @@ class ConversationService:
         mapping_item = ConversationMappingItem(
             id=customer_conversation_id,
             customer_conversation_id=customer_conversation_id,
-            conversation_type=conversation_type_value,
+            conversation_type=conversation_type,
             mapping_key=mapping_key,
             agent_conversation_id=agent_conversation_id,
         )
@@ -175,7 +175,7 @@ class ConversationService:
             "AND c.sender_role = 'user' "
             "AND c.sender_id != @user_id"
         )
-        parameters = [
+        parameters: list[dict[str, object]] = [
             {"name": "@partition", "value": partition_key},
             {"name": "@user_id", "value": user_id},
         ]
@@ -207,7 +207,7 @@ class ConversationService:
             "AND c.document_type = @dtype "
             "ORDER BY c.created_at ASC"
         )
-        parameters = [
+        parameters: list[dict[str, object]] = [
             {"name": "@pk", "value": partition_key},
             {"name": "@dtype", "value": ConversationDocumentType.message.value},
         ]
@@ -242,7 +242,7 @@ class ConversationService:
             "AND c.document_type = @dtype "
             "ORDER BY c.created_at ASC"
         )
-        parameters = [
+        parameters: list[dict[str, object]] = [
             {"name": "@pk", "value": partition_key},
             {"name": "@dtype", "value": ConversationDocumentType.message.value},
         ]

@@ -74,9 +74,13 @@ class FeedbackService:
         if existing_data:
             wb = load_workbook(filename=BytesIO(existing_data))
             ws = wb[_SHEET_NAME] if _SHEET_NAME in wb.sheetnames else wb.active
+            if ws is None:
+                ws = wb.create_sheet(_SHEET_NAME)
         else:
             wb = Workbook()
             ws = wb.active
+            if ws is None:
+                ws = wb.create_sheet(_SHEET_NAME)
             ws.title = _SHEET_NAME
             ws.append(_HEADERS)
 

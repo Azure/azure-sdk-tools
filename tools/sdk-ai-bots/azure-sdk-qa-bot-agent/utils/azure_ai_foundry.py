@@ -11,7 +11,7 @@ import re
 from agent_framework import TruncationStrategy
 from agent_framework.foundry import FoundryChatClient
 from azure.ai.projects.aio import AIProjectClient
-from openai import AsyncAzureOpenAI
+from openai import AsyncAzureOpenAI, AsyncOpenAI
 from opentelemetry.sdk.trace import SpanProcessor
 
 from config.app_config import get as cfg
@@ -25,7 +25,7 @@ COMPACTION_TARGET_TOKENS = 80000
 
 _agent_client: FoundryChatClient | None = None
 _project_client: AIProjectClient | None = None
-_openai_client = None
+_openai_client: AsyncOpenAI | None = None
 _embedding_client: AsyncAzureOpenAI | None = None
 
 
@@ -49,15 +49,20 @@ def get_project_client() -> AIProjectClient:
     """Return the shared AIProjectClient (created once on first call)."""
     global _project_client
     if _project_client is None:
+        endpoint = cfg("AI_FOUNDRY_PROJECT_ENDPOINT")
+        if not endpoint:
+            raise RuntimeError(
+                "AI_FOUNDRY_PROJECT_ENDPOINT is required in App Configuration."
+            )
         _project_client = AIProjectClient(
-            endpoint=cfg("AI_FOUNDRY_PROJECT_ENDPOINT"),
+            endpoint=endpoint,
             credential=get_credential(),
             allow_preview=True,
         )
     return _project_client
 
 
-def get_openai_client():
+def get_openai_client() -> AsyncOpenAI:
     """Return the shared OpenAI client (created once on first call)."""
     global _openai_client
     if _openai_client is None:
@@ -219,7 +224,6 @@ async def close_clients() -> None:
         await _openai_client.close()
         _openai_client = None
     if _agent_client is not None:
-        await _agent_client.close()
         _agent_client = None
     if _project_client is not None:
         await _project_client.close()

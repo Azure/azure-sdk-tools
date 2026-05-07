@@ -72,7 +72,7 @@ _SKILL_DESCRIPTIONS: dict[TenantID, str] = {
 
 def _build_skill_content(tenant_id: TenantID) -> str:
     """Build skill content combining tenant_id, knowledge sources, and guideline."""
-    config = get_tenant_config(tenant_id.value)
+    config = get_tenant_config(tenant_id)
     if config is None:
         return ""
 
@@ -88,7 +88,7 @@ def _build_skill_content(tenant_id: TenantID) -> str:
             parts.append(f"- {src.name}: {src.description}")
 
     # Full guideline
-    guideline = load_tenant_qa_guideline(tenant_id.value)
+    guideline = load_tenant_qa_guideline(tenant_id)
     if guideline:
         parts.append(f"\n[skill_guideline]\n{guideline}")
 

@@ -561,11 +561,7 @@ _PROMPTS_DIR = Path(__file__).resolve().parent.parent / "prompts"
 
 def get_tenant_config(tenant_id: TenantID) -> TenantConfig | None:
     """Return the config for *tenant_id*, or ``None`` if unknown."""
-    try:
-        tid = TenantID(tenant_id)
-    except ValueError:
-        return None
-    return _TENANT_CONFIG_MAP.get(tid)
+    return _TENANT_CONFIG_MAP.get(tenant_id)
 
 
 def get_all_tenant_ids() -> list[str]:

@@ -39,9 +39,8 @@ def get_memory_update_delay() -> int:
 
     Local env var overrides App Config for flexibility during development.
     """
-    return int(
-        os.environ.get("MEMORY_UPDATE_DELAY") or cfg("MEMORY_UPDATE_DELAY", "300")
-    )
+    env_value = os.environ.get("MEMORY_UPDATE_DELAY")
+    return int(env_value) if env_value else int(cfg("MEMORY_UPDATE_DELAY", "300"))
 
 
 def sanitize_scope(raw: str) -> str:

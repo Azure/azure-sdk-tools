@@ -22,6 +22,7 @@ from azure.search.documents.knowledgebases.aio import KnowledgeBaseRetrievalClie
 from azure.search.documents.knowledgebases.models import (
     KnowledgeBaseRetrievalRequest,
     KnowledgeRetrievalSemanticIntent,
+    KnowledgeSourceParams,
     SearchIndexKnowledgeSourceParams,
 )
 from azure.search.documents.models import (
@@ -49,9 +50,9 @@ class SearchClient:
     def __init__(self) -> None:
         self._endpoint = (cfg("AI_SEARCH_BASE_URL", "") or "").rstrip("/")
         self._index = cfg("AI_SEARCH_INDEX", "")
-        self._knowledge_base_name = cfg("AI_SEARCH_KNOWLEDGE_BASE")
-        self._knowledge_source_name = cfg("AI_SEARCH_KNOWLEDGE_SOURCE")
-        self._top_k = int(cfg("AI_SEARCH_TOPK"))
+        self._knowledge_base_name = cfg("AI_SEARCH_KNOWLEDGE_BASE", "")
+        self._knowledge_source_name = cfg("AI_SEARCH_KNOWLEDGE_SOURCE", "")
+        self._top_k = int(cfg("AI_SEARCH_TOPK", "5"))
         self._credential = get_credential()
         self._kb_client = KnowledgeBaseRetrievalClient(
             self._endpoint,
@@ -87,7 +88,7 @@ class SearchClient:
         # so the KB client performs one retrieval pass instead of N.
         combined_filter = " or ".join(f"({f})" for f in source_filters.values() if f)
 
-        kb_params = [
+        kb_params: list[KnowledgeSourceParams] = [
             SearchIndexKnowledgeSourceParams(
                 knowledge_source_name=self._knowledge_source_name,
                 include_references=True,
@@ -295,8 +296,10 @@ class SearchClient:
         await self._kb_client.close()
         await self._search_client.close()
         close_method = getattr(self._credential, "close", None)
-        if callable(close_method):
-            await close_method()
+        if close_method is not None:
+            result = close_method()
+            if result is not None:
+                await result
 
 
 def _escape_odata(value: str) -> str:

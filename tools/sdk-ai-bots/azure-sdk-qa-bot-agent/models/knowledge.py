@@ -89,7 +89,11 @@ class KnowledgeChunk(BaseModel):
     @field_validator("rerank_score", mode="before")
     @classmethod
     def _coerce_rerank_score(cls, v: object) -> float:
-        return float(v) if v is not None else 0.0
+        if v is None:
+            return 0.0
+        if isinstance(v, (int, float)):
+            return float(v)
+        return float(str(v))
 
 
 class KnowledgeResult(BaseModel):

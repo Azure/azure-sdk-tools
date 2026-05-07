@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import logging
 import os
+from typing import overload
 
 from azure.appconfiguration.aio import AzureAppConfigurationClient
 
@@ -35,9 +36,7 @@ async def init() -> None:
 
     endpoint = os.environ.get("AZURE_APPCONFIG_ENDPOINT")
     if not endpoint:
-        raise RuntimeError(
-            "AZURE_APPCONFIG_ENDPOINT environment variable is required."
-        )
+        raise RuntimeError("AZURE_APPCONFIG_ENDPOINT environment variable is required.")
 
     _logger.info("Loading settings from App Configuration: %s", endpoint)
     credential = get_credential()
@@ -51,6 +50,14 @@ async def init() -> None:
 
     _settings = config
     _logger.info("Loaded %d settings from App Configuration", len(_settings))
+
+
+@overload
+def get(key: str, default: str) -> str: ...
+
+
+@overload
+def get(key: str, default: None = None) -> str | None: ...
 
 
 def get(key: str, default: str | None = None) -> str | None:

@@ -9,12 +9,14 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Sequence
+from typing import Sequence, cast
 
 from config.app_config import get as cfg
 from models.chat import Message
 from models.conversation import ConversationMessageItem, Role
 from models.intention import IntentionRequest, IntentionResponse
+from openai.types.chat import ChatCompletionMessageParam
+from openai.types.shared_params.reasoning_effort import ReasoningEffort
 from services.conversation_service import ConversationService
 from utils.azure_ai_foundry import get_project_client
 
@@ -103,37 +105,25 @@ class IntentionService:
             openai_client = project_client.get_openai_client()
 
             model = _cfg_or_default("AI_FOUNDRY_AGENT_COMPLETION_MODEL", "gpt-4o-mini")
-            reasoning_effort = _cfg_or_default(
-                "AI_FOUNDRY_INTENTION_REASONING_EFFORT",
-                "low",
+            reasoning_effort = cast(
+                ReasoningEffort,
+                _cfg_or_default("AI_FOUNDRY_INTENTION_REASONING_EFFORT", "low"),
             )
 
-            messages: list[dict] = [
-                Message(role=Role.System, content=self._classify_prompt).model_dump(
-                    exclude_none=True
-                ),
+            messages: list[ChatCompletionMessageParam] = [
+                {"role": "system", "content": self._classify_prompt},
             ]
 
             # Include conversation history when available
             if history:
                 for item in history:
-                    role = (
-                        Role.Assistant
-                        if item.sender_role in (Role.Assistant, Role.System)
-                        else Role.User
-                    )
-                    messages.append(
-                        Message(role=role, content=item.content).model_dump(
-                            exclude_none=True
-                        )
-                    )
+                    if item.sender_role in (Role.Assistant, Role.System):
+                        messages.append({"role": "assistant", "content": item.content})
+                    else:
+                        messages.append({"role": "user", "content": item.content})
 
             # Append current message (may not be saved yet)
-            messages.append(
-                Message(role=Role.User, content=req.message.content).model_dump(
-                    exclude_none=True
-                )
-            )
+            messages.append({"role": "user", "content": req.message.content})
 
             response = await openai_client.chat.completions.create(
                 model=model,

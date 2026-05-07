@@ -23,7 +23,7 @@ from models.chat import (
     Role,
 )
 from models.conversation import ConversationMessage
-from models.knowledge import DocumentContext, Reference
+from models.knowledge import DocumentContext, Reference, SearchKnowledgeBaseResult
 from services.conversation_service import ConversationService
 from tools import TOOL_REGISTRY
 from skills.tenant_skills import get_skill_to_tenant_map
@@ -42,6 +42,7 @@ from openai.types.responses import (
 )
 from openai.types.responses.response_input_item_param import ResponseInputItemParam
 from config.tenant_config import TenantID
+from typing import Any, cast
 
 logger = logging.getLogger(__name__)
 
@@ -75,20 +76,26 @@ class ChatService:
         if is_new:
             tenant_system_msg = self._build_tenant_system_message(req.tenant_id)
             conversation_items.append(
-                ConversationItem(
-                    role=Role.System,
-                    content=tenant_system_msg,
-                ).model_dump(mode="json", exclude_none=True)
+                cast(
+                    ResponseInputItemParam,
+                    ConversationItem(
+                        role=Role.System,
+                        content=tenant_system_msg,
+                    ).model_dump(mode="json", exclude_none=True),
+                )
             )
 
         memory_scope = self._resolve_memory_scope(req)
         if memory_scope:
             memory_scope_msg = self._build_memory_scope_message(memory_scope)
             conversation_items.append(
-                ConversationItem(
-                    role=Role.System,
-                    content=memory_scope_msg,
-                ).model_dump(mode="json", exclude_none=True)
+                cast(
+                    ResponseInputItemParam,
+                    ConversationItem(
+                        role=Role.System,
+                        content=memory_scope_msg,
+                    ).model_dump(mode="json", exclude_none=True),
+                )
             )
             logger.info(
                 "Memory scope injected into conversation: scope=%s, conversation=%s",
@@ -102,12 +109,15 @@ class ChatService:
             )
 
         conversation_items.append(
-            ConversationItem(
-                role=req.message.role,
-                content=preprocess_message(req.message.content),
-                user_id=req.message.user_id,
-                user_name=req.message.user_name,
-            ).model_dump(mode="json", exclude_none=True)
+            cast(
+                ResponseInputItemParam,
+                ConversationItem(
+                    role=req.message.role,
+                    content=preprocess_message(req.message.content),
+                    user_id=req.message.user_id,
+                    user_name=req.message.user_name,
+                ).model_dump(mode="json", exclude_none=True),
+            )
         )
 
         # Process additional info (images, links, text) from the frontend.
@@ -262,7 +272,7 @@ class ChatService:
             "Using agent: name=%s, version=%s, status=%s",
             agent.name,
             agent.version,
-            agent.status,
+            getattr(agent, "status", None),
         )
         return agent
 
@@ -360,7 +370,9 @@ class ChatService:
         """Map hosted-agent response to `ChatResponse`."""
         tool_results = self._extract_tool_results(response.output)
         search = tool_results.get("search_knowledge_base")
-        tool_references = search.results if search else []
+        tool_references = (
+            search.results if isinstance(search, SearchKnowledgeBaseResult) else []
+        )
         tenant = self._extract_routed_tenant(response.output)
 
         output_text = response.output_text or ""
@@ -527,9 +539,10 @@ class ChatService:
         for item in items:
             if not isinstance(item, ResponseOutputMessage):
                 continue
-            call_id = item.model_extra.get("call_id", None)
-            output = item.model_extra.get("output", None)
-            tool_name = call_id_to_name.get(call_id, "")
+            extras = item.model_extra or {}
+            call_id = extras.get("call_id") or ""
+            output = extras.get("output", None)
+            tool_name = call_id_to_name.get(call_id, "") if call_id else ""
             if not tool_name or not output:
                 continue
 

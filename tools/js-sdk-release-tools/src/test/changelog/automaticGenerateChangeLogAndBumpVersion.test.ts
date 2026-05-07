@@ -211,8 +211,9 @@ describe('generateChangelogAndBumpVersion beta version test', () => {
     );
 
     vi.resetModules();
-    const { generateChangelogAndBumpVersion } =
-      await import('../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js');
+    const { generateChangelogAndBumpVersion } = await import(
+      '../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js'
+    );
 
     const changelog = await generateChangelogAndBumpVersion('arm-testservice', {
       apiVersion: '2023-05-01-preview',
@@ -298,8 +299,9 @@ describe('generateChangelogAndBumpVersion beta version test', () => {
     );
 
     vi.resetModules();
-    const { generateChangelogAndBumpVersion } =
-      await import('../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js');
+    const { generateChangelogAndBumpVersion } = await import(
+      '../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js'
+    );
 
     const changelog = await generateChangelogAndBumpVersion('arm-testservice', {
       apiVersion: '2023-05-01-preview',
@@ -383,8 +385,9 @@ describe('generateChangelogAndBumpVersion beta version test', () => {
     );
 
     vi.resetModules();
-    const { generateChangelogAndBumpVersion } =
-      await import('../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js');
+    const { generateChangelogAndBumpVersion } = await import(
+      '../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js'
+    );
 
     const changelog = await generateChangelogAndBumpVersion('arm-testservice', {
       apiVersion: undefined,

@@ -42,8 +42,19 @@ class MentionWorkflow(ABC):
 
     def run(self):
         self.plan = self.create_plan()
-        self.results = self.execute_plan(self.plan)
+        self.results = self.check_for_duplicates(self.plan)
+        if self.results is None:
+            self.results = self.execute_plan(self.plan)
         return self.summarize(self.results)
+
+    def check_for_duplicates(self, plan: dict):
+        """Check whether the plan would create a duplicate.
+
+        Returns a result dict if a duplicate was found (short-circuiting
+        ``execute_plan``), or ``None`` to proceed with execution.
+        Subclasses override this to implement workflow-specific dedup logic.
+        """
+        return None
 
     def create_plan(self):
         if not self.prompty_filename:

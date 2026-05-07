@@ -6,8 +6,8 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
-using ApiView;
-using APIView.DIff;
+using APIView;
+using APIView.Diff;
 using APIView.Model;
 using APIViewWeb.Helpers;
 using APIViewWeb.Hubs;
@@ -40,6 +40,7 @@ namespace APIViewWeb.Managers
         private readonly ICosmosCommentsRepository _commentsRepository;
         private readonly TelemetryClient _telemetryClient;
         private readonly IProjectsManager _projectsManager;
+        private readonly IAPIVersionsManager _apiVersionsManager;
         private readonly HashSet<string> _upgradeDisabledLangs = new HashSet<string>();
 
         public APIRevisionsManager(
@@ -57,6 +58,7 @@ namespace APIViewWeb.Managers
             ICosmosCommentsRepository commentsRepository,
             TelemetryClient telemetryClient,
             IProjectsManager projectsManager,
+            IAPIVersionsManager apiVersionsManager,
             IConfiguration configuration)
         {
             _reviewsRepository = reviewsRepository;
@@ -73,6 +75,7 @@ namespace APIViewWeb.Managers
             _commentsRepository = commentsRepository;
             _telemetryClient = telemetryClient;
             _projectsManager = projectsManager;
+            _apiVersionsManager = apiVersionsManager;
             var backgroundTaskDisabledLangs = configuration["ReviewUpdateDisabledLanguages"];
             if(!string.IsNullOrEmpty(backgroundTaskDisabledLangs))
             {
@@ -193,20 +196,21 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
-        /// GetNewAPIRevisionAsync
+        /// CreateAPIRevisionAsync
         /// </summary>
+        /// <param name="apiRevisionType"></param>
         /// <param name="reviewId"></param>
         /// <param name="packageName"></param>
         /// <param name="language"></param>
         /// <param name="label"></param>
         /// <param name="prNumber"></param>
         /// <param name="createdBy"></param>
-        /// <param name="apiRevisionType"></param>
         /// <param name="sourceBranch"></param>
+        /// <param name="packageVersion"></param>
         /// <returns></returns>
-        public APIRevisionListItemModel GetNewAPIRevisionAsync(APIRevisionType apiRevisionType,
+        public async Task<APIRevisionListItemModel> CreateAPIRevisionAsync(APIRevisionType apiRevisionType,
             string reviewId = null, string packageName = null, string language = null,
-            string label = null, int? prNumber = null, string createdBy= ApiViewConstants.AzureSdkBotName, string sourceBranch = null)
+            string label = null, int? prNumber = null, string createdBy= ApiViewConstants.AzureSdkBotName, string sourceBranch = null, string packageVersion = null)
         {
             var apiRevision = new APIRevisionListItemModel()
             {
@@ -227,6 +231,12 @@ namespace APIViewWeb.Managers
             if (!string.IsNullOrEmpty(reviewId))
             {
                 apiRevision.ReviewId = reviewId;
+            }
+
+            if (!string.IsNullOrEmpty(packageVersion) && !string.IsNullOrEmpty(reviewId))
+            {
+                APIVersionModel versionModel = await _apiVersionsManager.GetOrCreateVersionAsync(reviewId, packageVersion, prNumber, sourceBranch);
+                apiRevision.APIVersionId = versionModel.Id;
             }
 
             if (!string.IsNullOrEmpty(packageName))
@@ -633,13 +643,13 @@ namespace APIViewWeb.Managers
             CodeFile preParsedCodeFile = null,
             MemoryStream preParsedMemoryStream = null)
         {
-            var apiRevision = GetNewAPIRevisionAsync(
+            var apiRevision = await CreateAPIRevisionAsync(apiRevisionType: apiRevisionType,
                 reviewId: review.Id,
-                apiRevisionType: apiRevisionType,
                 packageName: review.PackageName,
                 language: review.Language,
+                label: label, 
                 createdBy: user.GetGitHubLogin(),
-                label: label);
+                packageVersion: preParsedCodeFile?.PackageVersion);
 
             APICodeFileModel codeFileModel;
             if (preParsedCodeFile != null && preParsedMemoryStream != null)
@@ -994,6 +1004,12 @@ namespace APIViewWeb.Managers
                 try
                 {
                     var fileOriginal = await _originalsRepository.GetOriginalAsync(file.FileId);
+                    if (fileOriginal.CanSeek && fileOriginal.Length == 0)
+                    {
+                        _telemetryClient.TrackTrace($"Skipping update of {revision.Language} revision with id {revision.Id}: original file is empty.");
+                        continue;
+                    }
+
                     if (string.IsNullOrEmpty(file.FileName))
                     {
                         _telemetryClient.TrackTrace($"Revision does not have original file name to update API revision. Revision Id: {revision.Id}");
@@ -1324,15 +1340,16 @@ namespace APIViewWeb.Managers
         public async Task<APIRevisionListItemModel> CreateAPIRevisionAsync(string userName, string reviewId, APIRevisionType apiRevisionType, string label,
             MemoryStream memoryStream, CodeFile codeFile, string originalName = null, int? prNumber = null, string sourceBranch = null)
         {
-
-            var apiRevision = GetNewAPIRevisionAsync(
+            var apiRevision = await CreateAPIRevisionAsync(
                 reviewId: reviewId,
                 apiRevisionType: apiRevisionType,
                 packageName: codeFile.PackageName,
                 language: codeFile.Language,
                 createdBy: userName,
                 prNumber: prNumber,
-                label: label);
+                sourceBranch: sourceBranch,
+                label: label,
+                packageVersion: codeFile.PackageVersion);
 
             var apiRevisionCodeFile = await _codeFileManager.CreateReviewCodeFileModel(apiRevisionId: apiRevision.Id, memoryStream: memoryStream, codeFile: codeFile);
             apiRevision.Files.Add(apiRevisionCodeFile);
@@ -1522,8 +1539,29 @@ namespace APIViewWeb.Managers
             var languageService = LanguageServiceHelpers.GetLanguageService(codeFileDetails.Language, _languageServices);
             if (languageService != null && languageService.CanUpdate(codeFileDetails.VersionString))
             {
-                await UpdateAPIRevisionAsync(revisionModel, languageService, false);
-                revisionModel = await _apiRevisionsRepository.GetAPIRevisionAsync(revisionModel.Id);
+                if (languageService.IsReviewGenByPipeline)
+                {
+                    // For pipeline-based languages (e.g. Python), trigger the external pipeline
+                    // instead of running the parser locally.
+                    if (codeFileDetails.HasOriginal && !string.IsNullOrEmpty(codeFileDetails.FileName))
+                    {
+                        try
+                        {
+                            var review = await _reviewsRepository.GetReviewAsync(revisionModel.ReviewId);
+                            await GenerateAPIRevisionInExternalResource(review, revisionModel.Id, codeFileDetails.FileId, codeFileDetails.FileName, revisionModel.Language);
+                        }
+                        catch (Exception ex)
+                        {
+                            _telemetryClient.TrackTrace($"Failed to trigger pipeline upgrade for {revisionModel.Language} revision with id {revisionModel.Id}");
+                            _telemetryClient.TrackException(ex);
+                        }
+                    }
+                }
+                else
+                {
+                    await UpdateAPIRevisionAsync(revisionModel, languageService, false);
+                    revisionModel = await _apiRevisionsRepository.GetAPIRevisionAsync(revisionModel.Id);
+                }
             }
             else if (languageService != null && languageService.CanConvert(codeFileDetails.VersionString) &&  codeFileDetails.ParserStyle == ParserStyle.Flat)
             {
@@ -1703,6 +1741,10 @@ namespace APIViewWeb.Managers
                 {
                     case CommentSeverity.MustFix:
                         score.UnresolvedMustFixCount++;
+                        if (comment.CommentSource == CommentSource.Diagnostic)
+                        {
+                            score.UnresolvedMustFixDiagnostics++;
+                        }
                         break;
                     case CommentSeverity.ShouldFix:
                         score.UnresolvedShouldFixCount++;

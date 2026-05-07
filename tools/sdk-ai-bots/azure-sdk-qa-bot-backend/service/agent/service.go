@@ -381,55 +381,92 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) []openai.Cha
 
 	// process additional info(image, link)
 	if len(req.AdditionalInfos) > 0 {
-		for _, info := range req.AdditionalInfos {
+		// Parallel process link content fetching
+		type linkResult struct {
+			link    string
+			content string
+		}
+		type linkRequest struct {
+			index int
+			info  model.AdditionalInfo
+		}
+		var linkInfos []linkRequest
+		for i, info := range req.AdditionalInfos {
 			if info.Type == model.AdditionalInfoType_Link {
-				content := info.Content
 				info.Link = preprocessService.PreprocessHTMLContent(info.Link)
+				req.AdditionalInfos[i] = info
+				linkInfos = append(linkInfos, linkRequest{i, info})
+			}
+		}
 
-				// Check if this is a pipeline link and analyze it
-				if utils.IsPipelineLink(info.Link) {
-					log.Printf("Detected Azure DevOps pipeline link: %s", utils.SanitizeForLog(info.Link))
-					analysisText, err := utils.AnalyzePipeline(info.Link, "", true) // Use agent analysis
-					if err != nil {
-						log.Printf("Failed to analyze pipeline: %s", utils.SanitizeForLog(err.Error()))
-						// Fall back to regular link processing
-					} else {
-						// Use the pipeline analysis as content
-						content = analysisText
-						log.Printf("Pipeline analysis completed successfully, result: %s", utils.SanitizeForLog(content))
+		linkResults := make(map[int]linkResult)
+		if len(linkInfos) > 0 {
+			var mu sync.Mutex
+			var wg sync.WaitGroup
+			const maxConcurrentLinkFetches = 5
+			sem := make(chan struct{}, maxConcurrentLinkFetches)
+			for _, li := range linkInfos {
+				wg.Add(1)
+				sem <- struct{}{}
+				go func(idx int, info model.AdditionalInfo) {
+					defer wg.Done()
+					defer func() { <-sem }()
+					content := info.Content
+
+					if utils.IsPipelineLink(info.Link) {
+						log.Printf("Detected Azure DevOps pipeline link: %s", utils.SanitizeForLog(info.Link))
+						analysisText, err := utils.AnalyzePipeline(info.Link, "", true)
+						if err != nil {
+							log.Printf("Failed to analyze pipeline: %s", utils.SanitizeForLog(err.Error()))
+						} else {
+							content = analysisText
+							log.Printf("Pipeline analysis completed successfully, result: %s", utils.SanitizeForLog(content))
+						}
+					} else if utils.IsGitHubCheckLink(info.Link) {
+						log.Printf("Detected GitHub check link: %s", info.Link)
+						checkContent, err := utils.GetGitHubClient().FetchCheckLogs(info.Link)
+						if err != nil {
+							log.Printf("Failed to fetch GitHub check logs: %v", err)
+						} else {
+							content = checkContent
+							log.Printf("GitHub check logs fetched successfully, result: %s", utils.SanitizeForLog(content))
+						}
+					} else if utils.IsGitHubPRLink(info.Link) {
+						log.Printf("Detected GitHub PR link: %s", info.Link)
+						prContent, err := utils.GetGitHubClient().FetchPRChecks(info.Link)
+						if err != nil {
+							log.Printf("Failed to fetch GitHub PR checks: %v", err)
+						} else {
+							content = prContent
+							log.Printf("GitHub PR checks fetched successfully, result: %s", utils.SanitizeForLog(content))
+						}
 					}
-				} else if utils.IsGitHubCheckLink(info.Link) {
-					// Fetch GitHub check logs so the LLM has actual error details
-					// before intention recognition and knowledge retrieval.
-					log.Printf("Detected GitHub check link: %s", info.Link)
-					checkContent, err := utils.GetGitHubClient().FetchCheckLogs(info.Link)
-					if err != nil {
-						log.Printf("Failed to fetch GitHub check logs: %v", err)
-					} else {
-						content = checkContent
-						log.Printf("GitHub check logs fetched successfully, result: %s", utils.SanitizeForLog(content))
-					}
-				} else if utils.IsGitHubPRLink(info.Link) {
-					// Fetch GitHub PR check runs so the LLM can see CI failures.
-					log.Printf("Detected GitHub PR link: %s", info.Link)
-					prContent, err := utils.GetGitHubClient().FetchPRChecks(info.Link)
-					if err != nil {
-						log.Printf("Failed to fetch GitHub PR checks: %v", err)
-					} else {
-						content = prContent
-						log.Printf("GitHub PR checks fetched successfully, result: %s", utils.SanitizeForLog(content))
-					}
+
+					mu.Lock()
+					linkResults[idx] = linkResult{link: info.Link, content: content}
+					mu.Unlock()
+				}(li.index, li.info)
+			}
+			wg.Wait()
+		}
+
+		for i, info := range req.AdditionalInfos {
+			if info.Type == model.AdditionalInfoType_Link {
+				lr, ok := linkResults[i]
+				if !ok {
+					log.Printf("No link result found for index %d, skipping", i)
+					continue
 				}
-
+				content := lr.content
 				if len(content) > config.AppConfig.AOAI_CHAT_MAX_TOKENS {
 					log.Printf("Link content is too long, truncating to %d characters", config.AppConfig.AOAI_CHAT_MAX_TOKENS)
 					content = content[:config.AppConfig.AOAI_CHAT_MAX_TOKENS]
 				}
 				var msg openai.ChatCompletionMessageParamUnion
 				if strings.Contains(content, "graph.microsoft.com") {
-					msg = openai.UserMessage(fmt.Sprintf("Image URL: %s\nImage Content: %s", info.Link, content))
+					msg = openai.UserMessage(fmt.Sprintf("Image URL: %s\nImage Content: %s", lr.link, content))
 				} else {
-					msg = openai.UserMessage(fmt.Sprintf("Link URL: %s\nLink Content: %s", info.Link, content))
+					msg = openai.UserMessage(fmt.Sprintf("Link URL: %s\nLink Content: %s", lr.link, content))
 				}
 				llmMessages = append(llmMessages, msg)
 			} else if info.Type == model.AdditionalInfoType_Image {

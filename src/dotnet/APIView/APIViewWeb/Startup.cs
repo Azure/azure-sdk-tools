@@ -131,11 +131,13 @@ namespace APIViewWeb
             services.AddSingleton<ICosmosUserProfileRepository, CosmosUserProfileRepository>();
             services.AddSingleton<ICosmosPermissionsRepository, CosmosPermissionsRepository>();
             services.AddSingleton<ICosmosProjectRepository, CosmosProjectRepository>();
+            services.AddSingleton<ICosmosVersionsRepository, CosmosVersionsRepository>();
             services.AddSingleton<IDevopsArtifactRepository, DevopsArtifactRepository>();
 
             services.AddSingleton<IDiagnosticCommentService, DiagnosticCommentService>();
             services.AddSingleton<IReviewManager, ReviewManager>();
             services.AddSingleton<IAPIRevisionsManager, APIRevisionsManager>();
+            services.AddSingleton<IAPIVersionsManager, APIVersionsManager>();
             services.AddSingleton<IProjectsManager, ProjectsManager>();
             services.AddSingleton<INamespaceManager, NamespaceManager>();
             services.AddSingleton<IReviewSearch, ReviewSearch>();

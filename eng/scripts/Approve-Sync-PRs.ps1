@@ -317,7 +317,7 @@ function getPRState($pr, [int]$MaxRetries = 3, [int]$RetryDelaySeconds = 5) {
   $prFields = "number,url,state,headRefOid,mergeable,mergeStateStatus,reviews"
   for ($i = 0; $i -lt $MaxRetries; $i++) {
     $result = gh pr view $pr.Number -R $pr.Repo --json $prFields | ConvertFrom-Json
-    if ($result.mergeStateStatus -ne "UNKNOWN") {
+    if ($result.state -eq "MERGED" -or $result.mergeStateStatus -ne "UNKNOWN") {
       return $result
     }
     Write-Host "PR merge state is UNKNOWN, retrying in $RetryDelaySeconds seconds... ($($i + 1)/$MaxRetries)"

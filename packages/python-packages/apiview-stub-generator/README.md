@@ -84,9 +84,9 @@ pip install tox
 tox run -e pytest -c .
 ```
 
-#### apistubgentest
+#### apiview-stub-generator-test
 
-The `apistubgentest` package under `packages/python-packages` is used as the source code for testing the `apiview-stub-generator` tool. Classes/functions/etc. in the `apistubgentest` may need to be updated/added to test any new features/bug fixes to the `apiview-stub-generator` tool.
+The `apiview-stub-generator-test` package under `packages/python-packages` is used as the source code for testing the `apiview-stub-generator` tool. Classes/functions/etc. in the `apiview-stub-generator-test` may need to be updated/added to test any new features/bug fixes to the `apiview-stub-generator` tool.
 
 ### Upload token file to API review portal
 1. Go to ``https://apiview.dev``

@@ -1,5 +1,5 @@
-using APIView.DIff;
-using ApiView;
+using APIView.Diff;
+using APIView;
 using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Models;
@@ -20,8 +20,8 @@ namespace APIViewWeb.Managers.Interfaces
         public Task<IEnumerable<APIRevisionListItemModel>> GetCrossLanguageAPIRevisionsAsync(string crossLanguageId, string language, APIRevisionType apiRevisionType = APIRevisionType.All);
         public Task<APIRevisionListItemModel> GetAPIRevisionAsync(ClaimsPrincipal user, string apiRevisionId);
         public Task<APIRevisionListItemModel> GetAPIRevisionAsync(string apiRevisionId);
-        public APIRevisionListItemModel GetNewAPIRevisionAsync(APIRevisionType apiRevisionType, string reviewId = null, string packageName = null, string language = null,
-            string label = null, int? prNumber = null, string createdBy = ApiViewConstants.AzureSdkBotName, string sourceBranch = null);
+        public Task<APIRevisionListItemModel> CreateAPIRevisionAsync(APIRevisionType apiRevisionType, string reviewId = null, string packageName = null, string language = null,
+            string label = null, int? prNumber = null, string createdBy = ApiViewConstants.AzureSdkBotName, string sourceBranch = null, string packageVersion = null);
         public Task<(bool updateReview, APIRevisionListItemModel apiRevision)> ToggleAPIRevisionApprovalAsync(ClaimsPrincipal user, string id, string revisionId = null, APIRevisionListItemModel apiRevision = null, string notes = "", string approver = "");
         public Task CarryForwardRevisionDataAsync(APIRevisionListItemModel targetRevision, APIRevisionListItemModel sourceRevision);
         public Task<APIRevisionListItemModel> AddAPIRevisionAsync(ClaimsPrincipal user, string reviewId, APIRevisionType apiRevisionType, string name, string label, Stream fileStream, string language = "", bool awaitComputeDiff = false);

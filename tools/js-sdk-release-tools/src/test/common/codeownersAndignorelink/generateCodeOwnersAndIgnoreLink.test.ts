@@ -5,6 +5,7 @@ import * as fsModule from "fs";
 import * as pathModule from "path";
 import shellModule from "shelljs";
 import * as codeOwnersModule from "../../../common/codeOwnersAndIgnoreLink/codeOwnersAndIgnoreLinkGenerator.js";
+import { RunMode } from "../../../common/types.js";
 
 // Create module mocks
 vi.mock("../../../common/npmUtils.js");
@@ -158,6 +159,94 @@ describe("generateCodeOwnersAndIgnoreLinkForPackage", () => {
             mockIgnoreLinksPath,
             expectedIgnoreLinksContent,
         );
+    });
+
+    test("should add %mgmt-review-needed in CODEOWNERS for first beta release in release mode with mgmt package", async () => {
+        const mgmtPackageFolderPath = "sdk/containerservice/arm-containerservicefleet";
+        vi.mocked(npmUtilsModule.tryGetNpmView).mockResolvedValue(undefined);
+
+        await codeOwnersModule.tryGenerateCodeOwnersAndIgnoreLinkForPackage(
+            mgmtPackageFolderPath,
+            mockPackageName,
+            RunMode.Release,
+        );
+
+        expect(fsModule.writeFileSync).toHaveBeenCalledTimes(2);
+
+        const newContentBeforeConfig = `# PRLabel: %Mgmt %mgmt-review-needed\n${mgmtPackageFolderPath}/ @qiaozha @MaryGao @JialinHuang803\n`;
+        const configSectionIndex = mockCODEOWNERSContent.indexOf(
+            "###########\n# Config\n###########",
+        );
+        const expectedCODEOWNERSContent =
+            mockCODEOWNERSContent.slice(0, configSectionIndex) +
+            newContentBeforeConfig +
+            "\n" +
+            mockCODEOWNERSContent.slice(configSectionIndex);
+
+        expect(fsModule.writeFileSync).toHaveBeenNthCalledWith(
+            1,
+            mockCodeOwnersPath,
+            expectedCODEOWNERSContent,
+        );
+    });
+
+    test("should update existing CODEOWNERS entry to add %mgmt-review-needed for non-first-beta mgmt release", async () => {
+        const mgmtPackageFolderPath = "sdk/containerservice/arm-containerservicefleet";
+        // Package already exists in npm (non-first-beta)
+        vi.mocked(npmUtilsModule.tryGetNpmView).mockResolvedValue({ version: "1.0.0" });
+
+        // Existing CODEOWNERS has only %Mgmt for this package (paths in CODEOWNERS have leading slash)
+        const existingCodeownersContent = mockCODEOWNERSContent.replace(
+            "###########\n# Config\n###########",
+            `# PRLabel: %Mgmt\n/${mgmtPackageFolderPath}/ @qiaozha @MaryGao @JialinHuang803\n\n###########\n# Config\n###########`,
+        );
+
+        vi.mocked(fsModule.readFileSync).mockImplementation((filePath) => {
+            if (filePath === mockCodeOwnersPath) return existingCodeownersContent;
+            if (filePath === mockIgnoreLinksPath) return mockIgnoreLinksContent;
+            return "";
+        });
+
+        await codeOwnersModule.tryGenerateCodeOwnersAndIgnoreLinkForPackage(
+            mgmtPackageFolderPath,
+            mockPackageName,
+            RunMode.Release,
+        );
+
+        // Only CODEOWNERS should be written (no ignore-links for non-first-beta)
+        expect(fsModule.writeFileSync).toHaveBeenCalledTimes(1);
+        const expectedContent = existingCodeownersContent.replace(
+            `# PRLabel: %Mgmt\n/${mgmtPackageFolderPath}/`,
+            `# PRLabel: %Mgmt %mgmt-review-needed\n/${mgmtPackageFolderPath}/`,
+        );
+        expect(fsModule.writeFileSync).toHaveBeenCalledWith(
+            mockCodeOwnersPath,
+            expectedContent,
+        );
+    });
+
+    test("should not update CODEOWNERS if %mgmt-review-needed already present for non-first-beta mgmt release", async () => {
+        const mgmtPackageFolderPath = "sdk/containerservice/arm-containerservicefleet";
+        vi.mocked(npmUtilsModule.tryGetNpmView).mockResolvedValue({ version: "1.0.0" });
+
+        const existingCodeownersContent = mockCODEOWNERSContent.replace(
+            "###########\n# Config\n###########",
+            `# PRLabel: %Mgmt %mgmt-review-needed\n/${mgmtPackageFolderPath}/ @qiaozha @MaryGao @JialinHuang803\n\n###########\n# Config\n###########`,
+        );
+
+        vi.mocked(fsModule.readFileSync).mockImplementation((filePath) => {
+            if (filePath === mockCodeOwnersPath) return existingCodeownersContent;
+            if (filePath === mockIgnoreLinksPath) return mockIgnoreLinksContent;
+            return "";
+        });
+
+        await codeOwnersModule.tryGenerateCodeOwnersAndIgnoreLinkForPackage(
+            mgmtPackageFolderPath,
+            mockPackageName,
+            RunMode.Release,
+        );
+
+        expect(fsModule.writeFileSync).not.toHaveBeenCalled();
     });
 
     test("should not add duplicate entry to CODEOWNERS if entry already exists", async () => {

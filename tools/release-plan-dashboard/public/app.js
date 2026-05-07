@@ -579,7 +579,7 @@
     }
 
     function sortByReleasePlanId(a, b) {
-      return (b.releasePlanId || 0) - (a.releasePlanId || 0);
+      return (a.releasePlanId || 0) - (b.releasePlanId || 0);
     }
 
     const sortFn = getSortOrder() === 'id' ? sortByReleasePlanId : sortByReleaseMonth;

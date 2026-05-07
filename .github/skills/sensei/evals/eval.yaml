@@ -15,27 +15,6 @@ config:
   executor: copilot-sdk
 
 stimuli:
-  - name: sensei-basic-001
-    prompt: |
-      Review this skill frontmatter for compliance:
-
-      ---
-      name: example-skill
-      description: A skill for doing things
-      ---
-
-      Check if it meets vally requirements and suggest improvements.
-    graders:
-      - type: output-contains
-        config:
-          substring: "missing fields"
-      - type: output-contains
-        config:
-          substring: "improvements"
-      - type: output-contains
-        config:
-          substring: "requirements"
-
   - name: basic-trigger
     prompt: "Run sensei on the api-validation skill to improve its frontmatter compliance"
     graders:

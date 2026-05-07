@@ -14,65 +14,80 @@ config:
   model: claude-opus-4.6
   executor: copilot-sdk
 
+scoring:
+  threshold: 0.8
+
 stimuli:
   - name: trigger-run-sensei-on-my-skill
     prompt: "run sensei on my skill"
     graders:
-      - type: exit-success
-        config: {}
+      - type: skill-invocation
+        config:
+          required: ["sensei"]
   - name: trigger-improve-skill-frontmatter-compliance
     prompt: "improve skill frontmatter compliance"
     graders:
-      - type: exit-success
-        config: {}
+      - type: skill-invocation
+        config:
+          required: ["sensei"]
   - name: trigger-fix-frontmatter-for-azure-deploy
     prompt: "fix frontmatter for azure-deploy"
     graders:
-      - type: exit-success
-        config: {}
+      - type: skill-invocation
+        config:
+          required: ["sensei"]
   - name: trigger-score-my-skill
     prompt: "score my skill"
     graders:
-      - type: exit-success
-        config: {}
+      - type: skill-invocation
+        config:
+          required: ["sensei"]
   - name: trigger-sensei-help
     prompt: "sensei help"
     graders:
-      - type: exit-success
-        config: {}
+      - type: skill-invocation
+        config:
+          required: ["sensei"]
   - name: trigger-check-skill-tokens
     prompt: "check skill tokens"
     graders:
-      - type: exit-success
-        config: {}
+      - type: skill-invocation
+        config:
+          required: ["sensei"]
   - name: trigger-frontmatter-audit-on-all-skills
     prompt: "frontmatter audit on all skills"
     graders:
-      - type: exit-success
-        config: {}
+      - type: skill-invocation
+        config:
+          required: ["sensei"]
 
   - name: anti-trigger-deploy-my-azure-function
     prompt: "deploy my Azure Function"
     graders:
-      - type: exit-success
-        config: {}
+      - type: skill-invocation
+        config:
+          disallowed: ["sensei"]
   - name: anti-trigger-fix-my-pipeline-build-error
     prompt: "fix my pipeline build error"
     graders:
-      - type: exit-success
-        config: {}
+      - type: skill-invocation
+        config:
+          disallowed: ["sensei"]
   - name: anti-trigger-create-a-new-typespec-definition
     prompt: "create a new TypeSpec definition"
     graders:
-      - type: exit-success
-        config: {}
+      - type: skill-invocation
+        config:
+          disallowed: ["sensei"]
   - name: anti-trigger-how-do-i-release-an-sdk-package
     prompt: "how do I release an SDK package"
     graders:
-      - type: exit-success
-        config: {}
+      - type: skill-invocation
+        config:
+          disallowed: ["sensei"]
   - name: anti-trigger-configure-azure-storage-geo-redundancy
     prompt: "configure Azure Storage geo-redundancy"
     graders:
-      - type: exit-success
-        config: {}
+      - type: skill-invocation
+        config:
+          disallowed: ["sensei"]

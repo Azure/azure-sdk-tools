@@ -207,8 +207,7 @@ extends:
                   cd .github/skills/azure-typespec-author/evaluate
                   mkdir -p results-2
                   vally eval --eval-spec eval.yaml --output-dir results-2 --workers 3 --verbose
-                displayName: Run evaluations
-                continueOnError: true
+                displayName: Run all evaluations
                 env:
                   GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
 

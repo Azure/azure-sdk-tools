@@ -116,7 +116,7 @@ export const tryFindRestClientPath = async (
   const pattern = unixify(path.join(packageRoot, clientPattern));
   const clientFiles = await glob(pattern);
   if (clientFiles.length !== 1) {
-    logger.warn(`Failed to find extactly one REST client in pattern '${pattern}', got '${clientFiles}'.`);
+    logger.warn(`Failed to find exactly one REST client in pattern '${pattern}', got '${clientFiles}'.`);
     return undefined;
   }
   const filePath = clientFiles[0];

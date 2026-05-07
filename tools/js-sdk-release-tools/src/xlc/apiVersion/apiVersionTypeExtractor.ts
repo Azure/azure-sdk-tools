@@ -16,7 +16,7 @@ export const getApiVersionType: IApiVersionTypeExtractor = async (packageRoot: s
     case SDKType.RestLevelClient:
       return await rlcApi.getApiVersionType(packageRoot);
     default:
-      logger.warn(`Unsupported SDK type ${sdkType} to get detact api version`);
+      logger.warn(`Unsupported SDK type ${sdkType} to get detect api version`);
       return ApiVersionType.None;
   }
 };

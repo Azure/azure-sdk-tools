@@ -29,7 +29,3 @@ environments:
         command: dotnet
         args: ["run", "--project", "../../tools/azsdk-cli/Azure.Sdk.Tools.Mock"]
         timeout: "60s"
-
-suites:
-  nightly:
-    filter: { priority: [p0, p1] }

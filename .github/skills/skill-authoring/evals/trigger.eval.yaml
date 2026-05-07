@@ -6,7 +6,7 @@ environment: azsdk-mcp-mock
 
 tags:
   area: skill-authoring
-  priority: p0
+  type: ci-gate
 
 config:
   runs: 1

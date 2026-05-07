@@ -6,7 +6,7 @@ environment: azsdk-mcp-mock
 
 tags:
   area: sensei
-  priority: p0
+  type: ci-gate
 
 config:
   runs: 1

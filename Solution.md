@@ -31,7 +31,7 @@ Mimic GitHub submit-review behavior so that:
 - Notifications can be sent as a batch at submit time.
 - Current reviewer intent can be distinguished from historical comments.
 - Service teams can explicitly trigger another review request after addressing feedback.
-- Overall approval state is derived from each reviewer's latest submitted decision for the version.
+- Overall approval state is derived from each human reviewer's latest submitted decision for the version (Copilot is advisory and non-voting).
 
 ## Prerequisite
 
@@ -231,22 +231,22 @@ Notifications are triggered only by explicit review workflow actions.
 1. Add reviewer (initial assignment): reviewer membership is created, `ReviewerState` is `AwaitingArchitect`, `Requested` is appended to `ChangeHistory`, and reviewer notification is sent.
 2. Re-request reviewer (requires existing `ReviewerState.Status = AwaitingServiceTeam`): that same existing `ReviewerState` is reused, `Status` becomes `AwaitingArchitect`, `RequestedBy` and `RequestedOn` are updated, another `Requested` is appended, and reviewer notification is sent.
 3. Submit with no existing reviewer state (human fallback): submitter is auto-added as reviewer, `ReviewerState` is created, `Requested` is recorded, and submit succeeds without sending reviewer-request notification.
-4. Reviewer removal: same `ReviewerState` is reused, `Status = Canceled`, and `Canceled` is appended in `ChangeHistory`.
-5. Reviewer re-added after cancel: same `ReviewerState` is reopened (`Status = AwaitingArchitect`) and another `Requested` history entry is added.
-6. Submit (`Feedback`) with no grouped comments and empty `submissionMessage` is rejected.
-7. Submit (`Approve`) with no grouped comments and empty `submissionMessage` is accepted.
-8. Submit appends a `Submitted` history entry with `SubmissionMessage` and `CommentIds`, and updates top-level `SubmissionDecision`, `SubmittedOn`, and `Status = AwaitingServiceTeam`.
-9. `Approve` submit persists `ContentHash` from the specified `revisionId`.
-9.1. `Feedback` submit succeeds without `revisionId`; if provided, `revisionId` is ignored for decision-state updates.
-10. First submit uses version creation time as comment window start; later submits use previous `SubmittedOn`.
-11. Re-request does not change comment window boundary; grouping remains based on previous `SubmittedOn`, not `RequestedOn`.
-12. Comment grouping isolation by reviewer: comments from reviewer A are never grouped into reviewer B submission.
-13. Comment grouping isolation by version: comments from version A are never grouped into version B submission.
-14. Submit-review sends exactly one batch email containing reviewer, decision, version, message, and grouped comments/links.
-15. Live comment creation does not send batch submit-review notifications.
-16. Approval-state recomputation precedence (human reviewers): any human `Feedback` decision keeps version not approved even when human `Approve` exists.
-17. Version is approved only when at least one current human `Approve` exists and no current human `Feedback` exists.
-18. Removing a reviewer does not automatically invalidate that reviewer’s previously submitted decision.
+4. Reviewer removal before submit (`Status = AwaitingArchitect`): same `ReviewerState` is reused, `Status = Canceled`, and `Canceled` is appended in `ChangeHistory`.
+5. Reviewer removal after submit (`Status = AwaitingServiceTeam`): reviewer is removed from the current request set, cannot be canceled, and prior submitted decision remains on record.
+6. Reviewer re-added after cancel: same `ReviewerState` is reopened (`Status = AwaitingArchitect`) and another `Requested` history entry is added.
+7. Submit (`Feedback`) with no grouped comments and empty `submissionMessage` is rejected.
+8. Submit (`Approve`) with no grouped comments and empty `submissionMessage` is accepted.
+9. Submit appends a `Submitted` history entry with `SubmissionMessage` and `CommentIds`, and updates top-level `SubmissionDecision`, `SubmittedOn`, and `Status = AwaitingServiceTeam`.
+10. `Approve` submit persists `ContentHash` from the specified `revisionId`.
+10.1. `Feedback` submit succeeds without `revisionId`; if provided, `revisionId` is ignored for decision-state updates.
+11. First submit uses version creation time as comment window start; later submits use previous `SubmittedOn`.
+12. Re-request does not change comment window boundary; grouping remains based on previous `SubmittedOn`, not `RequestedOn`.
+13. Comment grouping isolation by reviewer: comments from reviewer A are never grouped into reviewer B submission.
+14. Comment grouping isolation by version: comments from version A are never grouped into version B submission.
+15. Submit-review sends exactly one batch email containing reviewer, decision, version, message, and grouped comments/links.
+16. Live comment creation does not send batch submit-review notifications.
+17. Approval-state recomputation precedence (human reviewers): any human `Feedback` decision keeps version not approved even when human `Approve` exists.
+18. Version is approved only when at least one current human `Approve` exists and no current human `Feedback` exists.
 19. Existing unresolved-comment approval gating remains unchanged (blocking cases still block `Approve`).
 20. Copilot request creates or reopens only Copilot `ReviewerState`; Copilot submit updates that same state.
 21. Copilot comment grouping stays isolated to Copilot submissions and is never bundled with human submissions.

@@ -873,7 +873,8 @@ namespace Azure.Sdk.Tools.Cli.Services
                  { "ConfigPath", $"{typespecProjectRoot}/tspconfig.yaml" },
                  { "SdkReleaseType", sdkReleaseType },
                  { "CreatePullRequest", "true" },
-                 { "ReleasePlanWorkItemId", $"{workItemId}"}
+                 { "ReleasePlanWorkItemId", $"{workItemId}"},
+                 { "TriggerSource", "sdk-release" }
             };
 
             if (!string.IsNullOrEmpty(apiVersion))

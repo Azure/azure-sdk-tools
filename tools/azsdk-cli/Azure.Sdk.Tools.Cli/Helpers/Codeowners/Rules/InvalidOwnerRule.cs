@@ -3,23 +3,29 @@
 
 using Azure.Sdk.Tools.Cli.Models.Codeowners;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.CodeownersUtils.Caches;
+using Azure.Sdk.Tools.CodeownersUtils.Constants;
+using Azure.Sdk.Tools.CodeownersUtils.Utils;
 
 namespace Azure.Sdk.Tools.Cli.Helpers.Codeowners.Rules;
 
 /// <summary>
-/// AUD-OWN-001: Detect individual Owner work items that fail GitHub validation
-/// (not in Azure or Microsoft orgs, no write access to azure-sdk-for-net).
+/// AUD-OWN-001: Detect individual Owner work items that fail cached owner validation
+/// using cached azure-sdk-write membership and cached Azure public org visibility.
 /// Fix: Set "Invalid Since" field to current date/time on newly invalid owners.
 ///       Clear "Invalid Since" field on owners that have become valid again.
 /// Safety threshold: throws if >5 newly invalid owners detected with --fix unless --force.
 /// </summary>
 public class InvalidOwnerRule(
-    ICodeownersValidatorHelper validatorHelper,
+    ITeamUserCache teamUserCache,
+    UserOrgVisibilityCache userOrgVisibilityCache,
+    ICacheValidator cacheValidator,
     IDevOpsService devOpsService,
     ILogger<InvalidOwnerRule> logger
 ) : IAuditRule
 {
     private const int SafetyThreshold = 5;
+    private const string AzureSdkWriteTeam = "Azure/azure-sdk-write";
     public const string DoNothingDetail = "Do nothing";
     public const string SetInvalidDetail = "Set Invalid";
     public const string ClearInvalidDetail = "Clear Invalid";
@@ -27,7 +33,7 @@ public class InvalidOwnerRule(
 
     public int Priority => 10;
     public string RuleId => "AUD-OWN-001";
-    public string Description => "Individual owner fails GitHub validation";
+    public string Description => "Individual owner fails cached owner validation";
     public bool CanFix => true;
 
     public async Task<List<AuditViolation>> Evaluate(AuditContext context, CancellationToken ct)
@@ -36,6 +42,29 @@ public class InvalidOwnerRule(
         var individualOwners = context.WorkItemData.Owners.Values
             .Where(o => !o.IsGitHubTeam)
             .ToList();
+
+        if (individualOwners.Count == 0)
+        {
+            return violations;
+        }
+
+        await EnsureOwnerCachesAreFresh(ct);
+
+        var writeUsers = teamUserCache
+            .GetUsersForTeam(AzureSdkWriteTeam)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (writeUsers.Count == 0)
+        {
+            throw new InvalidOperationException(
+                $"TeamUserCache did not contain any users for '{AzureSdkWriteTeam}'. Refusing to validate owners from an empty cache.");
+        }
+
+        var azureOrgVisibility = userOrgVisibilityCache.UserOrgVisibilityDict;
+        if (azureOrgVisibility.Count == 0)
+        {
+            throw new InvalidOperationException(
+                "UserOrgVisibilityCache was empty. Refusing to validate owners from an empty cache.");
+        }
 
         int count = 0;
         foreach (var owner in individualOwners)
@@ -48,39 +77,34 @@ public class InvalidOwnerRule(
                 owner.GitHubAlias,
                 owner.WorkItemId
             );
-            var result = await validatorHelper.ValidateCodeOwnerAsync(owner.GitHubAlias, ct: ct);
+            var hasWritePermission = writeUsers.Contains(owner.GitHubAlias);
+            var hasAzureOrgEntry = azureOrgVisibility.TryGetValue(owner.GitHubAlias, out var isInAzureOrg);
 
-            // If the validator returns an error status for a NotFoundException, treat as invalid
-            if (result.Status == "Error" && result.Message.Contains("not found", StringComparison.OrdinalIgnoreCase))
-            {
-                violations.Add(new AuditViolation
-                {
-                    RuleId = RuleId,
-                    Description = $"Owner '{owner.GitHubAlias}' ({owner.WorkItemId}): GitHub user not found",
-                    WorkItemId = owner.WorkItemId,
-                    Detail = owner.InvalidSince.HasValue ? DoNothingDetail : SetInvalidDetail, // If user not found, only set Invalid Since if not already set
-                });
-                continue;
-            }
-
-            // Rate limit or other transient errors: propagate as exception to fail the audit
-            if (result.Status == "Error")
+            if (hasWritePermission && !hasAzureOrgEntry)
             {
                 throw new InvalidOperationException(
-                    $"Validation error for owner '{owner.GitHubAlias}' ({owner.WorkItemId}): {result.Message}");
+                    $"Owner '{owner.GitHubAlias}' ({owner.WorkItemId}) was present in TeamUserCache but missing from UserOrgVisibilityCache.");
             }
 
-            if (!result.IsValidCodeOwner)
+            if (!hasWritePermission && hasAzureOrgEntry)
             {
-                var orgs = string.Join(", ", result.Organizations.Select(kv => $"{kv.Key}={kv.Value}"));
-                var description = $"Owner '{owner.GitHubAlias}' ({owner.WorkItemId}): not a valid code owner (Organizations: {orgs}, HasWritePermission: {result.HasWritePermission})";
+                throw new InvalidOperationException(
+                    $"Owner '{owner.GitHubAlias}' ({owner.WorkItemId}) was present in UserOrgVisibilityCache but missing from TeamUserCache.");
+            }
+
+            var isValidCodeOwner = hasWritePermission && isInAzureOrg;
+
+            if (!isValidCodeOwner)
+            {
+                var orgs = $"Azure={isInAzureOrg}";
+                var description = $"Owner '{owner.GitHubAlias}' ({owner.WorkItemId}): not a valid code owner (Organizations: {orgs}, HasWritePermission: {hasWritePermission})";
 
                 logger.LogWarning(
                     "Owner '{alias}' ({WorkItemId}): not a valid code owner (Organizations: {orgs}, HasWritePermission: {hasWritePermission})",
                     owner.GitHubAlias,
                     owner.WorkItemId,
                     orgs,
-                    result.HasWritePermission
+                    hasWritePermission
                 );
 
                 violations.Add(new AuditViolation
@@ -173,5 +197,12 @@ public class InvalidOwnerRule(
             ["Custom.InvalidSince"] = ""
         }, ct);
         return new AuditFixResult { RuleId = RuleId, Description = desc, Success = true };
+    }
+
+    private async Task EnsureOwnerCachesAreFresh(CancellationToken ct)
+    {
+        DateTime minimumLastModifiedUtc = DateTime.UtcNow.Subtract(AuditRuleCacheSettings.CacheMaxAge);
+        await cacheValidator.ThrowIfCacheOlderThan(DefaultStorageConstants.TeamUserBlobUri, minimumLastModifiedUtc, ct);
+        await cacheValidator.ThrowIfCacheOlderThan(DefaultStorageConstants.UserOrgVisibilityBlobStorageURI, minimumLastModifiedUtc, ct);
     }
 }

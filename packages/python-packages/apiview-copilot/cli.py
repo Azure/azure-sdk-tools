@@ -36,19 +36,37 @@ from src._apiview import (
 from src._apiview import get_active_reviews as _get_active_reviews
 from src._apiview import get_ai_comment_feedback as _get_ai_comment_feedback
 from src._apiview import (
+    _APIVIEW_COMMENT_SELECT_FIELDS,
     get_apiview_cosmos_client,
     get_approvers,
     get_comment_with_context,
     get_comments_in_date_range,
     get_created_revisions,
     get_opened_revisions,
+    get_thread_start_dates,
     resolve_package,
 )
 from src._apiview_reviewer import SUPPORTED_LANGUAGES, ApiViewReview
 from src._database_manager import ContainerNames, DatabaseManager
 from src._garbage_collector import GarbageCollector
+from src._apiview_metrics import (
+    DEFAULT_OUTPUT_PATH as DEFAULT_VERSION_TRENDS_OUTPUT_PATH,
+)
+from src._apiview_metrics import (
+    DEFAULT_COMPLIANCE_OUTPUT_PATH,
+)
+from src._apiview_metrics import (
+    build_compliance_reports,
+    build_version_reports,
+    generate_compliance_chart,
+    generate_version_chart,
+    print_compliance_report,
+    print_version_report,
+)
 from src._comment_bucket_trends import (
     DEFAULT_OUTPUT_PATH as DEFAULT_COMMENT_BUCKET_OUTPUT_PATH,
+    DEFAULT_GENERIC_OUTPUT_PATH,
+    DEFAULT_GUIDELINE_OUTPUT_PATH,
 )
 from src._comment_bucket_trends import (
     build_language_comment_bucket_reports,
@@ -59,10 +77,11 @@ from src._mention import handle_mention_request
 from src._metrics import get_metrics_report
 from src._models import APIViewComment
 from src._prompt_runner import run_prompt
+from src._report_issue import handle_report_issue_request
 from src._search_manager import SearchManager
 from src._settings import SettingsManager
 from src._thread_resolution import handle_thread_resolution_request
-from src._utils import get_language_pretty_name
+from src._utils import get_language_pretty_name, to_iso8601
 from src.agent._agent import get_readonly_agent, get_readwrite_agent, invoke_agent
 
 colorama.init(autoreset=True)
@@ -980,6 +999,59 @@ def review_summarize(language: str, target: str, base: str = None, remote: bool 
             )
 
         print(summary)
+
+
+def issue_report(
+    description: str,
+    review_link: str = None,
+    language: str = None,
+    comment_id: str = None,
+    remote: bool = False,
+):
+    """
+    File a GitHub issue from an APIView "Report Issue" interaction.
+
+    Calls the same shared core (``handle_report_issue_request``) whether
+    run locally or via ``--remote``, so both paths produce identical
+    issues. The LLM determines whether the issue is an APIView UI
+    problem or a parser problem; the server then derives the title
+    prefix and labels.
+    """
+    if remote:
+        settings = SettingsManager()
+        base_url = settings.get("WEBAPP_ENDPOINT")
+        api_endpoint = f"{base_url}/report-issue"
+        payload = {"description": description}
+        if review_link:
+            payload["reviewLink"] = review_link
+        if language:
+            payload["language"] = language
+        if comment_id:
+            payload["commentId"] = comment_id
+        try:
+            resp = requests.post(api_endpoint, json=payload, headers=_build_auth_header(), timeout=60)
+        except requests.RequestException as e:
+            raise CLIError(f"Failed to call /report-issue: {e}") from e
+        content_type = resp.headers.get("Content-Type", "")
+        if "application/json" in content_type:
+            try:
+                data = resp.json()
+            except ValueError:
+                data = resp.text
+        else:
+            data = resp.text
+        if resp.status_code == 200:
+            print(json.dumps(data, indent=2) if isinstance(data, (dict, list)) else data)
+        else:
+            raise CLIError(f"/report-issue failed: {resp.status_code} - {data}")
+    else:
+        result = handle_report_issue_request(
+            description=description,
+            review_link=review_link,
+            language=language,
+            comment_id=comment_id,
+        )
+        print(json.dumps(result, indent=2))
 
 
 def handle_agent_chat(
@@ -1924,6 +1996,102 @@ def report_comment_bucket_trends(
         environment=environment,
     )
 
+    # Generate breakout charts for generic vs guideline-backed AI comments (no human)
+    generic_reports = build_language_comment_bucket_reports(
+        languages=normalized_languages,
+        months=months,
+        end_date=parsed_end_date,
+        include_human=False,
+        include_neutral=neutral,
+        generic_filter=True,
+        environment=environment,
+    )
+    generate_comment_bucket_chart(
+        generic_reports,
+        output_path=DEFAULT_GENERIC_OUTPUT_PATH,
+        include_human=False,
+        include_neutral=neutral,
+        raw=False,
+        environment=environment,
+        title_prefix="Generic AI Comments by Language",
+    )
+
+    guideline_reports = build_language_comment_bucket_reports(
+        languages=normalized_languages,
+        months=months,
+        end_date=parsed_end_date,
+        include_human=False,
+        include_neutral=neutral,
+        generic_filter=False,
+        environment=environment,
+    )
+    generate_comment_bucket_chart(
+        guideline_reports,
+        output_path=DEFAULT_GUIDELINE_OUTPUT_PATH,
+        include_human=False,
+        include_neutral=neutral,
+        raw=False,
+        environment=environment,
+        title_prefix="Guideline AI Comments by Language",
+    )
+
+
+def report_apiview_metrics(
+    months: int = 6,
+    languages: Optional[list[str]] = None,
+    environment: str = "production",
+    end_date: Optional[str] = None,
+    chart: bool = False,
+    summary: bool = False,
+) -> None:
+    """Generate APIView platform metrics (versioned-revision tracking and cross-language compliance)."""
+    parsed_end_date = None
+    if end_date:
+        try:
+            parsed_end_date = date.fromisoformat(end_date)
+        except ValueError as exc:
+            raise CLIError("Invalid --end-date value. Use YYYY-MM-DD format.") from exc
+
+    normalized_languages = None
+    if languages:
+        normalized_languages = [resolve_language(language)[1] for language in languages]
+
+    version_reports = build_version_reports(
+        languages=normalized_languages,
+        months=months,
+        end_date=parsed_end_date,
+        environment=environment,
+    )
+
+    compliance_reports = build_compliance_reports(
+        languages=normalized_languages,
+        months=months,
+        end_date=parsed_end_date,
+        environment=environment,
+    )
+
+    version_chart_path = None
+    compliance_chart_path = None
+    if chart:
+        version_chart_path = generate_version_chart(
+            version_reports,
+            output_path=DEFAULT_VERSION_TRENDS_OUTPUT_PATH,
+            environment=environment,
+        )
+        compliance_chart_path = generate_compliance_chart(
+            compliance_reports,
+            output_path=DEFAULT_COMPLIANCE_OUTPUT_PATH,
+            environment=environment,
+        )
+
+    output = {"versions": version_reports, "compliance": compliance_reports}
+    sys.stdout.buffer.write(json.dumps(output, indent=2, ensure_ascii=False, default=str).encode("utf-8"))
+    sys.stdout.buffer.write(b"\n")
+
+    if summary:
+        print_version_report(version_reports, version_chart_path, environment=environment, file=sys.stderr)
+        print_compliance_report(compliance_reports, compliance_chart_path, environment=environment, file=sys.stderr)
+
 
 def grant_permissions(assignee_id: str = None):
     """
@@ -2176,45 +2344,139 @@ def resolve_language_to_canonical(lang: str) -> str:
     return resolve_language(lang)[0]
 
 
-def analyze_comments(language: str, start_date: str, end_date: str, environment: str = "production"):
+def get_architect_comments(
+    start_date: str,
+    end_date: str,
+    language: Optional[str] = None,
+    environment: str = "production",
+    output_format: str = "json",
+    all_commenters: bool = False,
+    include_replies: bool = False,
+):
     """
-    Analyze APIView comments by language and date window, output count, unique authors, and theme analysis via Prompty.
+    Retrieve human architect review comments for a date range.
+    Returns comments from language board approvers, excluding Diagnostic and AI-generated comments.
+    If --language is omitted, returns results for all languages.
+    If --all-commenters is set, includes comments from all users (not just approvers).
+    By default, only the first comment in each thread (which has a Severity) is returned.
+    Use --include-replies to also include reply comments.
     """
-    filtered = get_comments_in_date_range(start_date, end_date, environment=environment)
+    raw_comments = get_comments_in_date_range(start_date, end_date, environment=environment)
+    filtered = [c for c in raw_comments if c.get("CommentSource") != "AIGenerated"]
 
-    allowed_commenters = get_approvers(language=resolve_language(language)[1])
+    allowed_commenters = None
+    if not all_commenters:
+        if language:
+            pretty_language = resolve_language(language)[1]
+            allowed_commenters = get_approvers(language=pretty_language, environment=environment)
+        else:
+            allowed_commenters = get_approvers(environment=environment)
 
-    reviews_container = get_apiview_cosmos_client(container_name="Reviews", environment=environment)
+    # Look up the language for each comment's review
+    review_lang_map: dict[str, str] = {}
     review_ids = set(c.get("ReviewId") for c in filtered if c.get("ReviewId"))
     if review_ids:
+        reviews_container = get_apiview_cosmos_client(container_name="Reviews", environment=environment)
         params = []
         clauses = []
         for i, rid in enumerate(review_ids):
             param_name = f"@id_{i}"
             clauses.append(f"c.id = {param_name}")
             params.append({"name": param_name, "value": rid})
-        query = f"SELECT c.id, c.Language FROM c WHERE ({' OR '.join(clauses)})"
+        review_query = f"SELECT c.id, c.Language FROM c WHERE ({' OR '.join(clauses)})"
         review_results = list(
-            reviews_container.query_items(query=query, parameters=params, enable_cross_partition_query=True)
+            reviews_container.query_items(
+                query=review_query, parameters=params, enable_cross_partition_query=True
+            )
         )
-        review_lang_map = {r["id"]: r.get("Language", "").lower() for r in review_results}
+        review_lang_map = {r["id"]: get_language_pretty_name(r.get("Language", "")) for r in review_results}
+
+    # Filter by language if specified
+    if language:
+        target_language = resolve_language(language)[1].lower()
+        filtered = [c for c in filtered if review_lang_map.get(c.get("ReviewId"), "").lower() == target_language]
+
+    # Compute ISO bounds and true thread start dates (via Cosmos) for both branches.
+    start_iso = to_iso8601(start_date)
+    end_iso = to_iso8601(end_date, end_of_day=True)
+    thread_starts = get_thread_start_dates(filtered, environment=environment)
+    started_in_window = {
+        key for key, min_created in thread_starts.items() if start_iso <= min_created <= end_iso
+    }
+
+    # By default, exclude replies — keep only the thread-starting comment for threads
+    # that actually *started* in the date window (not merely replied to).
+    if not include_replies:
+        # Keep only comments belonging to threads that started in the window
+        filtered = [
+            c
+            for c in filtered
+            if (c.get("ThreadId") or c.get("ElementId")) in started_in_window
+        ]
+
+        # Keep only the first (earliest) comment per thread
+        seen_threads = {}
+        for c in filtered:
+            thread_key = c.get("ThreadId") or c.get("ElementId")
+            if thread_key is None:
+                # No ThreadId or ElementId — treat as standalone
+                seen_threads[c.get("id")] = c
+            elif thread_key not in seen_threads:
+                seen_threads[thread_key] = c
+            else:
+                existing = seen_threads[thread_key]
+                if existing.get("CreatedOn", "") > c.get("CreatedOn", ""):
+                    seen_threads[thread_key] = c
+        filtered = list(seen_threads.values())
+
+        # When filtering to approvers, exclude threads whose starter is not an approver.
+        if allowed_commenters is not None:
+            filtered = [c for c in filtered if c.get("CreatedBy") in allowed_commenters]
     else:
-        review_lang_map = {}
+        # When including replies, identify threads started by an approver and include
+        # *all* comments in those threads (not just approver-authored ones).
+        # First, restrict to threads that actually started in the date window.
+        filtered = [
+            c
+            for c in filtered
+            if (c.get("ThreadId") or c.get("ElementId")) in started_in_window
+        ]
 
-    language = resolve_language(language)[1].lower()
-    comments = [APIViewComment(**c) for c in filtered if review_lang_map.get(c.get("ReviewId", ""), "") == language]
+        if allowed_commenters is not None:
+            # Find who authored the earliest comment per thread
+            thread_starters: dict[str, str] = {}
+            thread_earliest_in_window: dict[str, str] = {}
+            for c in filtered:
+                thread_key = c.get("ThreadId") or c.get("ElementId")
+                if thread_key is None:
+                    continue
+                created = c.get("CreatedOn", "")
+                if thread_key not in thread_earliest_in_window or created < thread_earliest_in_window[thread_key]:
+                    thread_earliest_in_window[thread_key] = created
+                    thread_starters[thread_key] = c.get("CreatedBy", "")
 
-    if allowed_commenters:
-        comments = [c for c in comments if c.created_by in allowed_commenters]
+            approver_threads = {
+                k for k, author in thread_starters.items() if author in allowed_commenters
+            }
+            filtered = [
+                c
+                for c in filtered
+                if (c.get("ThreadId") or c.get("ElementId")) in approver_threads
+            ]
 
-    comment_texts = [comment.comment_text for comment in comments if comment.comment_text]
+    comments = [APIViewComment(**c) for c in filtered]
 
-    theme_output = run_prompt(folder="other", filename="analyze_comment_themes", inputs={"comments": comment_texts})
-    print(theme_output)
-
-    print(f"Comment count: {len(comment_texts)}")
-    created_by_set = {comment.created_by for comment in comments if comment.created_by}
-    print(f"Unique CreatedBy values ({len(created_by_set)}): {sorted(created_by_set)}")
+    results = [
+        {
+            **{k: v for k, v in comment.model_dump(by_alias=True, mode="json").items() if k in _APIVIEW_COMMENT_SELECT_FIELDS},
+            "Language": review_lang_map.get(comment.review_id, ""),
+        }
+        for comment in comments
+    ]
+    if output_format == "yaml":
+        print(yaml.dump(results, default_flow_style=False, allow_unicode=True, sort_keys=False))
+    else:
+        print(json.dumps(results, indent=2))
 
 
 def _build_auth_header():
@@ -2274,7 +2536,7 @@ def _claims_is_writer(claims: dict) -> bool:
     return ("Write" in token_roles) or ("App.Write" in token_roles)
 
 
-def audit_feedback(
+def get_feedback(
     start_date: str,
     end_date: str,
     language: Optional[str] = None,
@@ -2299,7 +2561,7 @@ def audit_feedback(
         print(json.dumps(results, indent=2))
 
 
-def audit_memory(
+def get_memories(
     start_date: str,
     end_date: str,
     language: Optional[str] = None,
@@ -2392,6 +2654,7 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("mention", "handle_agent_mention")
             g.command("chat", "handle_agent_chat")
             g.command("resolve-thread", "handle_agent_thread_resolution")
+            g.command("report-issue", "issue_report")
         with CommandGroup(self, "test", "__main__#{}") as g:
             g.command("eval", "run_evals")
             g.command("extract-section", "extract_document_section")
@@ -2418,9 +2681,10 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("metrics", "report_metrics")
             g.command("quality-trends", "report_comment_bucket_trends")
             g.command("active-reviews", "get_active_reviews")
-            g.command("feedback", "audit_feedback")
-            g.command("memory", "audit_memory")
-            g.command("analyze-comments", "analyze_comments")
+            g.command("feedback", "get_feedback")
+            g.command("memory", "get_memories")
+            g.command("architect-comments", "get_architect_comments")
+            g.command("apiview-metrics", "report_apiview_metrics")
         return OrderedDict(self.command_table)
 
     # ARGUMENT REGISTRATION
@@ -2664,6 +2928,27 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--source-comment-id"],
                 default=None,
             )
+        with ArgumentsContext(self, "agent report-issue") as ac:
+            ac.argument(
+                "description",
+                type=str,
+                help="The user's description of the problem.",
+                options_list=["--description"],
+            )
+            ac.argument(
+                "review_link",
+                type=str,
+                help="Optional URL to the APIView review the user is on.",
+                options_list=["--review-link"],
+                default=None,
+            )
+            ac.argument(
+                "comment_id",
+                type=str,
+                help="Optional APIView comment id. When provided, the server fetches the comment context (text, code snippet, language, element id, source) automatically.",
+                options_list=["--comment-id"],
+                default=None,
+            )
         with ArgumentsContext(self, "db") as ac:
             ac.argument(
                 "container_name",
@@ -2901,6 +3186,41 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--neutral"],
                 help="Include neutral AI comments as a separate bucket.",
             )
+        with ArgumentsContext(self, "report apiview-metrics") as ac:
+            ac.argument(
+                "months",
+                type=int,
+                options_list=["--months"],
+                default=6,
+                help="Number of calendar months to look back from the end date. Defaults to 6.",
+            )
+            ac.argument(
+                "end_date",
+                type=str,
+                options_list=["--end-date", "-e"],
+                default=None,
+                help="Inclusive query end date in YYYY-MM-DD format. Defaults to today.",
+            )
+            ac.argument(
+                "languages",
+                type=str,
+                nargs="+",
+                options_list=["--languages"],
+                default=None,
+                help="Languages to include. Defaults to Python, C#, Java, JavaScript, and Go.",
+            )
+            ac.argument(
+                "chart",
+                action="store_true",
+                options_list=["--chart"],
+                help="Generate a PNG trend chart and save to output/charts/.",
+            )
+            ac.argument(
+                "summary",
+                action="store_true",
+                options_list=["--summary"],
+                help="Print human-readable summary tables to stderr after the JSON output.",
+            )
         with ArgumentsContext(self, "ops check") as ac:
             ac.argument(
                 "include_auth",
@@ -2954,6 +3274,29 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--format", "-f"],
                 default="json",
                 choices=["json", "yaml"],
+            )
+        with ArgumentsContext(self, "report architect-comments") as ac:
+            ac.argument(
+                "output_format",
+                type=str,
+                help="Output format. Defaults to 'json'.",
+                options_list=["--format", "-f"],
+                default="json",
+                choices=["json", "yaml"],
+            )
+            ac.argument(
+                "all_commenters",
+                action="store_true",
+                help="Include comments from all users, not just language board approvers.",
+                options_list=["--all-commenters"],
+                default=False,
+            )
+            ac.argument(
+                "include_replies",
+                action="store_true",
+                help="Include reply comments. By default, only the first comment in each thread is returned.",
+                options_list=["--include-replies"],
+                default=False,
             )
         super(CliCommandsLoader, self).load_arguments(command)
 

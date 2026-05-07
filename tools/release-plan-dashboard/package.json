@@ -1,0 +1,26 @@
+{
+  "name": "release-plan-dashboard",
+  "version": "1.0.0-dev.1",
+  "description": "Dashboard for Azure DevOps Release Plan work items",
+  "type": "module",
+  "main": "server.js",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@azure/identity": "^4.5.0",
+    "@azure/keyvault-keys": "^4.9.0",
+    "@octokit/rest": "^22.0.1",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "passport": "^0.7.0",
+    "passport-github2": "^0.1.12"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
+  }
+}

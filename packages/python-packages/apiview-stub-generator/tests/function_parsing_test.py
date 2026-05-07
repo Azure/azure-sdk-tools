@@ -5,7 +5,7 @@
 # --------------------------------------------------------------------------
 
 from apistub.nodes import FunctionNode
-from apistubgentest import (
+from apiview_stub_generator_test import (
     Python2TypeHintClient,
     Python3TypeHintClient,
     DocstringTypeHintClient,

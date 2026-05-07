@@ -208,6 +208,8 @@ extends:
                   mkdir -p results-2
                   vally eval --eval-spec eval.yaml --output-dir results-2 --workers 3 --verbose
                 displayName: Run all evaluations
+                continueOnError: true
+                condition: succeededOrFailed()
                 env:
                   GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
 

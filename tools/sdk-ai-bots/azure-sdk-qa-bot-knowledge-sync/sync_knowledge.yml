@@ -85,7 +85,7 @@ extends:
               - checkout: internal-wiki
                 displayName: 'Checkout internal wiki repository'
 
-              - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+              - template: /eng/common/pipelines/templates/steps/login-to-github.yml@self
                 parameters:
                   ScriptDirectory: $(Agent.BuildDirectory)/s/azure-sdk-tools/eng/common/scripts
 

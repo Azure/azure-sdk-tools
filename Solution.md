@@ -69,6 +69,7 @@ This reuses/extends the existing APIView `ChangeHistory` model already used in t
 Each entry includes:
 
 - `ChangeAction`: `Requested`, `Submitted`, `Canceled`
+- `Status`: the status of the `ReviewerState` after this transition (`AwaitingArchitect`, `AwaitingServiceTeam`, `Canceled`)
 - `ChangedBy`: the user or service responsible for the transition — the requester for `Requested`, the reviewer for `Submitted`, and the user who removed the reviewer for `Canceled`
 - `ChangedOn`
 - `SubmissionMessage` (present on `Submitted` entries only)
@@ -102,9 +103,13 @@ In this proposal, the same endpoint that drives the add-reviewer behavior will a
 
 When a reviewer is removed from a review:
 
-- Reuse the same `ReviewerState`, append `Canceled` in `ChangeHistory`, and set `Status = Canceled`.
+- If `Status = AwaitingArchitect` (reviewer has not yet submitted):
+  - Reuse the same `ReviewerState`, append `Canceled` in `ChangeHistory`, and set `Status = Canceled`.
+  - The reviewer request is canceled and the reviewer is removed from the current request set.
+- If `Status = AwaitingServiceTeam` (reviewer has already submitted):
+  - The reviewer cannot be canceled. The submitted decision remains on record for audit and approval-state purposes.
+  - To request review again from this reviewer, use the re-request flow (which reopens the same `ReviewerState` with `Status = AwaitingArchitect`).
 - Retain the reviewer state record for audit trail; do not delete it.
-- Removing a reviewer affects who is currently requested, but does not automatically invalidate that reviewer's latest submitted decision.
 - If the reviewer is re-added later, reuse the same `ReviewerState`, set `Status = AwaitingArchitect`, update `RequestedBy` and `RequestedOn`, and record another `Requested` entry.
 
 #### `POST /api/review/{reviewId}/version/{versionId}/submit-review`
@@ -137,14 +142,13 @@ Behavior:
    - Append a `Submitted` entry to `ChangeHistory` with `SubmissionMessage` and `CommentIds`.
 6. Apply decision side effects:
    - `Approve`: read the `ContentHash` from `APICodeFileModel` on the specified revision (`revisionId`) and persist it on the reviewer state. This records the API surface fingerprint at approval time so the system can later determine whether a new revision has the same API surface and can auto-inherit approval, without downloading blobs.
-   - Recompute version approval state on the server from each reviewer's current submitted decision for the version, then persist the result to the `APIVersionModel` record:
+   - Recompute version approval state on the server from each human reviewer's current submitted decision for the version, then persist the result to the `APIVersionModel` record:
       - Precedence rule: `Feedback` supersedes `Approve`.
-      - A version is `Not Approved` if any reviewer's current submitted decision for the version is `Feedback`.
-      - A version is `Approved` only if there is at least one reviewer whose current submitted decision for the version is `Approve` and there is no `Feedback` for the version.
+      - A version is `Not Approved` if any human reviewer's current submitted decision for the version is `Feedback`.
+      - A version is `Approved` only if there is at least one human reviewer whose current submitted decision for the version is `Approve` and there is no human `Feedback` for the version.
       - Reviewer assignment state does not by itself change approval state.
-      - Removing a reviewer affects the current requested-reviewer set, but does not automatically invalidate that reviewer's previously submitted approval.
       - If there are no `Approve` submissions for the version, the version is `Not Approved`.
-      - Copilot submissions are excluded from approval-state calculation.
+      - Copilot submissions are stored as `Feedback` for audit/history purposes, but are non-voting and excluded from approval-state calculation.
 7. Trigger one batch notification to the service team containing message and inline comments from the current review window.
 
 ## Comment Grouping Rules
@@ -159,6 +163,11 @@ Comments are eligible if:
 - `CreatedOn < current submit time`
 - Not a diagnostic or system-generated comment, and not a Copilot-authored comment when grouping a human reviewer's submission
 
+A comment is considered Copilot-authored only when both are true:
+
+- `CreatedBy == "azure-sdk"`
+- Comment type is AI-generated
+
 The window is always "since the last time this reviewer submitted on this version" — `RequestedOn` is not used as the window boundary.
 
 Copilot grouping semantics are defined in [Copilot Review Behavior](#copilot-review-behavior).
@@ -169,10 +178,10 @@ Copilot review is a first-class review flow, not a special case of human review 
 
 - Copilot review is triggered by the `Request Copilot Review` button.
 - `Request Copilot Review` creates or reopens the Copilot `ReviewerState` for the current `VersionId`, sets `Status = AwaitingArchitect`, updates `RequestedBy` and `RequestedOn`, and records `Requested` in `ChangeHistory`.
-- When the Copilot review run completes, the system submits that same `ReviewerState`: `Status` transitions to `Submitted`, submit fields are updated, and `Submitted` is recorded in `ChangeHistory`.
+- When the Copilot review run completes, the system submits that same `ReviewerState`: `Status` transitions to `AwaitingServiceTeam`, submit fields are updated, and `Submitted` is recorded in `ChangeHistory`.
 - Copilot comment grouping is evaluated within the active Copilot review window on the same `VersionId`.
 - Window start is the previous `ReviewerState.SubmittedOn` (or version creation time if never submitted) and window end is the current submission time.
-- Eligible comments must be Copilot-authored, match `VersionId`, fall within the window, and exclude diagnostic or system-generated comments.
+- Eligible comments must satisfy all of the following: `CreatedBy == "azure-sdk"`, comment type is AI-generated, match `VersionId`, and fall within the window.
 - Copilot comments must never be bundled with a human reviewer's submission.
 - For Copilot submissions, `SubmissionDecision` is stored as `Feedback`.
 - Copilot submissions are advisory only: they do not approve a version and do not affect approval state.
@@ -215,7 +224,7 @@ Notifications are triggered only by explicit review workflow actions.
 - The `Re-Request Review` arrow is shown only when that reviewer's current `Status = AwaitingServiceTeam`, matching GitHub behavior.
 - Clicking the arrow reuses the same `ReviewerState`, records `Requested` in `ChangeHistory`, updates `RequestedBy` and `RequestedOn`, sets `Status = AwaitingArchitect`, opens a new review window for that reviewer, and sends a notification.
 - While `Status = AwaitingArchitect`, the arrow is not shown for that reviewer.
-- After the reviewer submits again and `Status` returns to `Submitted`, the arrow is shown again.
+- After the reviewer submits again and `Status` returns to `AwaitingServiceTeam`, the arrow is shown again.
 
 ## Testing Checklist
 
@@ -235,8 +244,8 @@ Notifications are triggered only by explicit review workflow actions.
 13. Comment grouping isolation by version: comments from version A are never grouped into version B submission.
 14. Submit-review sends exactly one batch email containing reviewer, decision, version, message, and grouped comments/links.
 15. Live comment creation does not send batch submit-review notifications.
-16. Approval-state recomputation precedence: any `Feedback` decision keeps version not approved even when `Approve` exists.
-17. Version is approved only when at least one current `Approve` exists and no current `Feedback` exists.
+16. Approval-state recomputation precedence (human reviewers): any human `Feedback` decision keeps version not approved even when human `Approve` exists.
+17. Version is approved only when at least one current human `Approve` exists and no current human `Feedback` exists.
 18. Removing a reviewer does not automatically invalidate that reviewer’s previously submitted decision.
 19. Existing unresolved-comment approval gating remains unchanged (blocking cases still block `Approve`).
 20. Copilot request creates or reopens only Copilot `ReviewerState`; Copilot submit updates that same state.

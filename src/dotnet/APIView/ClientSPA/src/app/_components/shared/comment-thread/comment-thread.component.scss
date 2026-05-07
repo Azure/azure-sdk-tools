@@ -176,10 +176,6 @@
 
     .rendered-comment-content {
         overflow-wrap: anywhere;
-        // Reset container to `normal` so newlines between block elements (e.g. `</p>\n<p>`,
-        // `</p>\n<ul>`) collapse instead of rendering as visible blank lines (#15421).
-        // Apply `pre-line` only to inline-content blocks so user-typed single newlines
-        // inside a paragraph/list-item are still preserved (#15251).
         white-space: normal;
         p, li, td, th, blockquote { white-space: pre-line; }
         pre { max-width: 100%; white-space: pre-wrap; background-color: var(--editor-bg-color); border: 1px solid var(--border-color); border-radius: 5px;

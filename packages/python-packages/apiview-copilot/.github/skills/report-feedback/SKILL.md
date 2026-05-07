@@ -28,7 +28,9 @@ Unless the user says otherwise, always apply these defaults:
 
 ## Implicit Bad Comments
 
-The `--include-implicit` flag also returns **implicit bad** comments: AI comments on approved revisions that were never upvoted, downvoted, or resolved. The inference is that the reviewer ignored them and approved anyway, suggesting they were unhelpful.
+The `--include-implicit` flag also returns **implicit bad** comments: AI comments on approved revisions that were never upvoted, downvoted, resolved, and have no Feedback entries. The inference is that the reviewer ignored them and approved anyway, suggesting they were unhelpful.
+
+> **Date semantics differ**: Explicit feedback is filtered by feedback submission time (`Feedback[].SubmittedOn` / `ChangeHistory[].ChangedOn`), but implicit bad is filtered by comment creation time (`CreatedOn`). A comment created in January with no interaction will appear in January's implicit bad results, not March's.
 
 This skill always passes `--include-implicit` (the CLI flag defaults to off, but the skill includes it for completeness). It has a weaker signal than explicit feedback because there is no reason or confirmation — just silence. Only omit `--include-implicit` if the user explicitly asks to exclude them (e.g., "only explicit feedback", "exclude implicit bad").
 
@@ -109,7 +111,7 @@ python cli.py report feedback -s 2025-03-01 -e 2025-03-31 --include-implicit --e
 ## Gotchas
 
 - **Output can be large**: Redirect to file and use `read_file` rather than relying on terminal output.
-- **Date range filters by feedback submission time**: Not by when the comment was created. A comment created in January but downvoted in March will appear in March's feedback report.
+- **Date range semantics are mixed**: Explicit feedback filters by feedback submission time (a comment created in January but downvoted in March appears in March). Implicit bad filters by comment creation time (a comment created in January with no interaction appears in January).
 - **Use `python cli.py` not `.\avc`**: The `avc.bat` script may resolve to system Python.
 - **Do NOT use `2>&1`**: Merges stderr into stdout, corrupting JSON. Only redirect stdout.
 - **Do NOT use `>`**: Produces UTF-16 in PowerShell 5.1. Use `| Out-File -Encoding UTF8`.

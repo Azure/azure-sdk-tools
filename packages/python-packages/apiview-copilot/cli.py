@@ -2548,8 +2548,10 @@ def get_feedback(
     """
     Retrieve AI comment feedback from APIView between start_date and end_date.
     If --language is omitted, returns feedback for all languages.
-    Use --include-implicit to also return implicit bad comments (unresolved, unvoted
-    AI comments on approved revisions).
+    Use --include-implicit to also return implicit bad comments: AI comments created
+    in the date range that are on approved revisions with no votes, no Feedback entries,
+    no resolution, and not deleted. Note that the date range filters by comment creation
+    time for implicit bad (vs. feedback submission time for explicit feedback).
     """
     results = _get_ai_comment_feedback(
         language=language,
@@ -3267,7 +3269,7 @@ class CliCommandsLoader(CLICommandsLoader):
             ac.argument(
                 "include_implicit",
                 action="store_true",
-                help="Include implicit bad comments (unresolved, unvoted AI comments on approved revisions).",
+                help="Include implicit bad comments (AI comments created in date range on approved revisions with no votes, no feedback, and no resolution).",
                 options_list=["--include-implicit"],
                 default=False,
             )

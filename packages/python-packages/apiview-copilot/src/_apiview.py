@@ -619,9 +619,9 @@ def get_ai_comment_feedback(
     - For deletions: checks ChangeHistory[].ChangedOn where ChangeAction='Deleted'
 
     When include_implicit is True, also returns "implicit bad" comments: AI comments created
-    in the date range that are on approved revisions but have no votes, no resolution, and
-    aren't deleted. These are inferred as unhelpful because the reviewer approved without
-    interacting with the comment.
+    in the date range that are on approved revisions but have no votes, no resolution, no
+    Feedback entries, and aren't deleted. These are inferred as unhelpful because the reviewer
+    approved without interacting with the comment.
 
     Note: Upvotes/Downvotes lists don't have timestamps, so comments with only
     upvotes/downvotes (and no Feedback entries or deletion events in the date range)
@@ -766,7 +766,8 @@ def _get_implicit_bad_comments(
 ) -> list[dict]:
     """
     Retrieves implicit bad comments: AI-generated comments created in the date range
-    that are on approved revisions but have no votes, no resolution, and aren't deleted.
+    that are on approved revisions but have no votes, no resolution, no Feedback entries,
+    and aren't deleted.
 
     These are inferred as unhelpful because the reviewer approved the revision without
     interacting with the comment.

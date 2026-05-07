@@ -1004,6 +1004,12 @@ namespace APIViewWeb.Managers
                 try
                 {
                     var fileOriginal = await _originalsRepository.GetOriginalAsync(file.FileId);
+                    if (fileOriginal.CanSeek && fileOriginal.Length == 0)
+                    {
+                        _telemetryClient.TrackTrace($"Skipping update of {revision.Language} revision with id {revision.Id}: original file is empty.");
+                        continue;
+                    }
+
                     if (string.IsNullOrEmpty(file.FileName))
                     {
                         _telemetryClient.TrackTrace($"Revision does not have original file name to update API revision. Revision Id: {revision.Id}");
@@ -1533,8 +1539,29 @@ namespace APIViewWeb.Managers
             var languageService = LanguageServiceHelpers.GetLanguageService(codeFileDetails.Language, _languageServices);
             if (languageService != null && languageService.CanUpdate(codeFileDetails.VersionString))
             {
-                await UpdateAPIRevisionAsync(revisionModel, languageService, false);
-                revisionModel = await _apiRevisionsRepository.GetAPIRevisionAsync(revisionModel.Id);
+                if (languageService.IsReviewGenByPipeline)
+                {
+                    // For pipeline-based languages (e.g. Python), trigger the external pipeline
+                    // instead of running the parser locally.
+                    if (codeFileDetails.HasOriginal && !string.IsNullOrEmpty(codeFileDetails.FileName))
+                    {
+                        try
+                        {
+                            var review = await _reviewsRepository.GetReviewAsync(revisionModel.ReviewId);
+                            await GenerateAPIRevisionInExternalResource(review, revisionModel.Id, codeFileDetails.FileId, codeFileDetails.FileName, revisionModel.Language);
+                        }
+                        catch (Exception ex)
+                        {
+                            _telemetryClient.TrackTrace($"Failed to trigger pipeline upgrade for {revisionModel.Language} revision with id {revisionModel.Id}");
+                            _telemetryClient.TrackException(ex);
+                        }
+                    }
+                }
+                else
+                {
+                    await UpdateAPIRevisionAsync(revisionModel, languageService, false);
+                    revisionModel = await _apiRevisionsRepository.GetAPIRevisionAsync(revisionModel.Id);
+                }
             }
             else if (languageService != null && languageService.CanConvert(codeFileDetails.VersionString) &&  codeFileDetails.ParserStyle == ParserStyle.Flat)
             {

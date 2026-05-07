@@ -1,6 +1,6 @@
 # Release History
 
-## 0.6.12 (Unreleased)
+## 0.6.13 (Unreleased)
 
 ### Features Added
 
@@ -8,7 +8,17 @@
 
 ### Bugs Fixed
 
+- `azsdk_release_sdk` now passes a `release_<safeName>=true` template parameter when triggering Java release pipelines so per-package selection works (azure-sdk-for-java#48465). Previously, manually queued Java releases failed fast because no package was selected. (#14832)
+
 ### Other Changes
+
+- Set `TriggerSource` when running SDK generation so PRs open as ready for review.
+
+## 0.6.12 (2026-05-04)
+
+### Other Changes
+
+- Resolve npm exec binaries directly from node_modules for NpmOptions when `.npmrc` is in user context
 
 ## 0.6.11 (2026-05-01)
 
@@ -30,6 +40,7 @@
 
 ### Features Added
 
+- Added Rust language support for `setup`, `generate`, `build`, and `pack` tools.
 - Added `azsdk_get_kpi_attestation_status` MCP tool to check KPI attestation status for a release plan given product ID and lifecycle.
 - Added CODEOWNERS Audit command (CLI only) that brings data model to a valid state.
 - Added optional package version argument for `azsdk release-plan update-release-status` CLI.

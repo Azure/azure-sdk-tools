@@ -202,6 +202,15 @@ extends:
                 continueOnError: true
                 env:
                   GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+              
+              - script: |
+                  cd .github/skills/azure-typespec-author/evaluate
+                  mkdir -p results-2
+                  vally eval --eval-spec eval.yaml --output-dir results-2 --workers 3 --verbose
+                displayName: Run evaluations
+                continueOnError: true
+                env:
+                  GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
 
             templateContext:
               outputs:
@@ -209,4 +218,9 @@ extends:
                   path: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/results
                   artifact: eval-results-$(Build.BuildId)
                   displayName: Upload eval results
+                  condition: always()
+                - output: pipelineArtifact
+                  path: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/results-2
+                  artifact: eval-results2-$(Build.BuildId)
+                  displayName: Upload eval results 2
                   condition: always()

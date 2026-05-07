@@ -8,10 +8,10 @@ environment: azsdk-mcp
 
 # Execution configuration
 config:
-  runs: 1                      # Trials per stimulus
-  timeout: "1800s"                # Seconds per trial
-  model: claude-opus-4.6    #gpt-4o #claude-sonnet-4.6 # Model for agent execution
-  executor: copilot-sdk        # Which executor to use
+  runs: 1                        # Trials per stimulus
+  timeout: "660s"                # Seconds per trial
+  model: claude-opus-4.6         #gpt-4o #claude-sonnet-4.6 # Model for agent execution
+  executor: copilot-sdk          # Which executor to use
 
 # Test cases
 stimuli:
@@ -74,6 +74,7 @@ stimuli:
     config:
       required:
         - edit
+        - web_fetch
         - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: skill-invocation
     config:

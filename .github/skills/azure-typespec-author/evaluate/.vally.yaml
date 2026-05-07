@@ -16,7 +16,7 @@ environments:
         args: ["run", "--project", "../../../../tools/azsdk-cli/Azure.Sdk.Tools.Cli", "--", "start"]
         timeout: "10m"
         env:
-          AZSDKTOOLS_AGENT_TESTING: "true"
+          AZSDKTOOLS_AGENT_TESTING: "false"
           AZSDKTOOLS_COLLECT_TELEMETRY: "false"
           AZURE_SDK_KB_ENDPOINT: "http://localhost:8088"
   azsdk-mcp-remote-kb:

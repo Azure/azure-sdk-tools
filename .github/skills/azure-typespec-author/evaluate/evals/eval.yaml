@@ -13,7 +13,7 @@ environment: azsdk-mcp
 # Execution configuration
 config:
   runs: 1
-  timeout: 1800
+  timeout: 1200
   model: claude-opus-4.6
   executor: copilot-sdk
 # Cases are intentionally sorted by case id.

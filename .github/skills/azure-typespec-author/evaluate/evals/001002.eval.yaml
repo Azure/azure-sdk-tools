@@ -1,0 +1,77 @@
+name: azure-typespec-author-eval
+description: Evaluation suite for azure-typespec-author.
+version: "1.0"
+type: capability               # capability | regression
+
+# Root-level environment
+environment: azsdk-mcp
+
+# Execution configuration
+config:
+  runs: 1                      # Trials per stimulus
+  timeout: 1800                # Seconds per trial
+  model: claude-opus-4.6    #gpt-4o #claude-sonnet-4.6 # Model for agent execution
+  executor: copilot-sdk        # Which executor to use
+
+# Test cases
+stimuli:
+- name: 001002-version-default-value
+  prompt: |
+    add a default value `21` for property age in model EmployeeProperties only for the new api version 2025-11-01
+  constraints:
+    max_turns: 10
+    max_tokens: 5000
+  environment:
+    files:
+    - src: ../fixtures/001002-version-default-value/employee.tsp
+      dest: employee.tsp
+    - src: ../fixtures/001002-version-default-value/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/001002-version-default-value/package.json
+      dest: package.json
+    - src: ../fixtures/001002-version-default-value/readme.md
+      dest: readme.md
+    - src: ../fixtures/001002-version-default-value/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/001002-version-default-value/tspconfig.yaml
+      dest: tspconfig.yaml
+  graders:
+  - type: tool-calls
+    config:
+      required:
+        - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+        - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+        - azure-typespec-author
+  - type: file-matches
+    config:
+      path: employee.tsp
+      pattern: '@removed\(Versions\.v2025_11_01\)'
+  - type: file-matches
+    config:
+      path: employee.tsp
+      pattern: '@renamedFrom\(Versions\.v2025_11_01, "age"\)'
+  - type: file-matches
+    config:
+      path: employee.tsp
+      pattern: '@added\(Versions\.v2025_11_01\)'
+  - type: file-matches
+    config:
+      path: employee.tsp
+      pattern: 'age\?: int32 = 21;'
+  - type: prompt
+    config:
+      scoring: scale_1_5
+      threshold: 1.0
+      prompt: 'Verify change scope and quality only: add a default value of 21 for the `age` property in `EmployeeProperties` that only applies to the 2025-11-01 API version. The old age renamed and removed for the new version.'
+      model: claude-opus-4.6
+scoring:
+  weights:
+    tool-calls: 1
+    skill-invocation: 1
+    prompt: 1
+    file-matches: 4
+  threshold: 1.0

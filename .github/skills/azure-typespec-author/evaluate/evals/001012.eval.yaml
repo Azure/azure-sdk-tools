@@ -1,0 +1,82 @@
+name: azure-typespec-author-eval
+description: Evaluation suite for azure-typespec-author.
+version: "1.0"
+type: capability               # capability | regression
+
+# Root-level environment
+environment: azsdk-mcp
+
+# Execution configuration
+config:
+  runs: 1                      # Trials per stimulus
+  timeout: 1800                # Seconds per trial
+  model: claude-opus-4.6    #gpt-4o #claude-sonnet-4.6 # Model for agent execution
+  executor: copilot-sdk        # Which executor to use
+
+# Test cases
+stimuli:
+- prompt: |
+    In the Widget project, change the return type of the `exportData` operation from `ExportResult` to `DetailedExportResult` with additional optional properties `format` (string) and `exportedAt` (utcDateTime) only for version `2025-05-04-preview`.
+  name: 001012-version-operation-return-type-changed
+  constraints:
+    max_turns: 10
+    max_tokens: 5000
+  environment:
+    files:
+    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+      dest: Microsoft.Widget/Widget/employee.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+      dest: Microsoft.Widget/Widget/main.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: Microsoft.Widget/Widget/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+      dest: Microsoft.Widget/Widget/readme.md
+    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+      dest: Microsoft.Widget/Widget/shared.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+      dest: Microsoft.Widget/Widget/tspconfig.yaml
+    - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+      dest: Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+    - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+      dest: Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+  graders:
+  - type: tool-calls
+    config:
+      required:
+        - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+        - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+        - azure-typespec-author
+  - type: file-matches
+    config:
+      path: Microsoft.Widget/Widget/main.tsp
+      pattern: v2025_05_04_preview
+  - type: file-matches
+    config:
+      path: Microsoft.Widget/Widget/employee.tsp
+      pattern: 'model DetailedExportResult'
+  - type: file-matches
+    config:
+      path: Microsoft.Widget/Widget/employee.tsp
+      pattern: 'format\?: string;'
+  - type: file-matches
+    config:
+      path: Microsoft.Widget/Widget/employee.tsp
+      pattern: 'exportedAt\?: utcDateTime;'
+  - type: file-matches
+    config:
+      path: Microsoft.Widget/Widget/employee.tsp
+      pattern: '@returnTypeChangedFrom\(Versions\.v2025_05_04_preview, ExportResult\)'
+  - type: file-matches
+    config:
+      path: Microsoft.Widget/Widget/employee.tsp
+      pattern: 'exportData is ArmResourceActionSync<Employee, void, DetailedExportResult>;'
+scoring:
+  weights:
+    file-matches: 6
+    tool-calls: 1
+    skill-invocation: 1
+  threshold: 1.0

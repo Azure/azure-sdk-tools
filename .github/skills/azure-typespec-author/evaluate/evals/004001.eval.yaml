@@ -1,0 +1,69 @@
+name: azure-typespec-author-eval
+description: Evaluation suite for azure-typespec-author.
+version: "1.0"
+type: capability               # capability | regression
+
+# Root-level environment
+environment: azsdk-mcp
+
+# Execution configuration
+config:
+  runs: 1                      # Trials per stimulus
+  timeout: 1800                # Seconds per trial
+  model: claude-opus-4.6    #gpt-4o #claude-sonnet-4.6 # Model for agent execution
+  executor: copilot-sdk        # Which executor to use
+
+# Test cases
+stimuli:
+- prompt: |
+    use authoring plan to add minLength decorator to set the minLength 1 for resource name parameter of Employee resource
+  name: 004001-decorate-mgmt-resource-name-parameter
+  constraints:
+    max_turns: 10
+    max_tokens: 5000
+  environment:
+    files:
+    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+      dest: employee.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+      dest: readme.md
+    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+      dest: tspconfig.yaml
+    - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+      dest: stable/2021-11-01/widget.json
+    - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+      dest: preview/2024-10-01-preview/widget.json
+  graders:
+  - type: tool-calls
+    config:
+      required:
+        - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+        - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+        - azure-typespec-author
+  - type: file-matches
+    config:
+      path: '*.tsp'
+      pattern: '@@minLength\(Employee\.name,\s*1\)'
+  - type: prompt
+    config:
+      scoring: scale_1_5
+      threshold: 1.0
+      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
+      model: claude-opus-4.6
+scoring:
+  weights:
+    tool-calls: 1
+    skill-invocation: 1
+    prompt: 1
+    file-matches: 2
+  threshold: 1.0

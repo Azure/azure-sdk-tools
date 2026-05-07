@@ -1,5 +1,11 @@
 # Release History
 
+## 0.3.7 (2026-04-30)
+
+### Bugs fixed
+
+Prefix all test deployed resource groups with SSS3PT_ which was causing resource cleanup issues
+
 ## 0.3.6 (2025-12-04)
 
 ### Breaking Changes

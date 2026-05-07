@@ -282,6 +282,7 @@ class TenantConfig:
     """
 
     display_name: str = ""
+    skill_name: str = ""
     scope: str = ""
     topics: list[str] = field(default_factory=list)
     exclusions: list[str] = field(default_factory=list)
@@ -346,6 +347,7 @@ _AZURE_TYPESPEC_AUTHORING_SOURCES = _sources(
 _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
     TenantID.PYTHON_CHANNEL_QA_BOT: TenantConfig(
         display_name="Python SDK",
+        skill_name="python-sdk",
         scope="Python SDK generation, validation, testing, release, and pipeline/CI/CD issues.",
         topics=[
             "Python SDK generation and validation errors",
@@ -370,6 +372,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
     ),
     TenantID.DOTNET_CHANNEL_QA_BOT: TenantConfig(
         display_name=".NET (C#) SDK",
+        skill_name="dotnet-sdk",
         scope=".NET SDK generation, validation, testing, release, and pipeline/CI/CD issues.",
         topics=[
             ".NET/C# SDK generation and validation errors",
@@ -392,6 +395,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
     ),
     TenantID.GOLANG_CHANNEL_QA_BOT: TenantConfig(
         display_name="Go SDK",
+        skill_name="go-sdk",
         scope="Go SDK generation, validation, testing, release, and pipeline/CI/CD issues.",
         topics=[
             "Go SDK generation and validation errors",
@@ -414,6 +418,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
     ),
     TenantID.JAVA_CHANNEL_QA_BOT: TenantConfig(
         display_name="Java SDK",
+        skill_name="java-sdk",
         scope="Java SDK generation, validation, testing, release, and pipeline/CI/CD issues.",
         topics=[
             "Java SDK generation and validation errors",
@@ -438,6 +443,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
     ),
     TenantID.JAVASCRIPT_CHANNEL_QA_BOT: TenantConfig(
         display_name="JavaScript SDK",
+        skill_name="javascript-sdk",
         scope="JavaScript/TypeScript SDK generation, validation, testing, release, and pipeline/CI/CD issues.",
         topics=[
             "JavaScript/TypeScript SDK generation and validation errors",
@@ -461,6 +467,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
     ),
     TenantID.TYPESPEC_CHANNEL_QA_BOT: TenantConfig(
         display_name="TypeSpec",
+        skill_name="typespec",
         scope="TypeSpec authoring, TypeSpec validation, and Azure API design.",
         topics=[
             "TypeSpec syntax, decorators, models, operations usage",
@@ -480,6 +487,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
     ),
     TenantID.AZURE_SDK_ONBOARDING: TenantConfig(
         display_name="Azure SDK Onboarding",
+        skill_name="sdk-onboarding",
         scope="Azure API specification & SDK onboarding process, SDK lifecycle, Azure MCP, and retirement processes.",
         topics=[
             "Prerequisites and setup for onboarding Azure API or SDK",
@@ -495,6 +503,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
     ),
     TenantID.AZURE_TYPESPEC_AUTHORING: TenantConfig(
         display_name="Azure TypeSpec Authoring",
+        skill_name="typespec-authoring",
         scope="Advanced TypeSpec authoring for ARM and data-plane API design.",
         topics=[
             "TypeSpec language, syntax, decorators, Azure patterns",
@@ -506,6 +515,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
     ),
     TenantID.API_SPEC_REVIEW_BOT: TenantConfig(
         display_name="API Spec Review",
+        skill_name="api-spec-review",
         scope="Azure REST API specification PR review process and failing checks (not API design questions).",
         topics=[
             "Specification PR review process in azure-rest-api-specs and azure-rest-api-specs-pr repositories",
@@ -534,6 +544,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
     ),
     TenantID.GENERAL_QA_BOT: TenantConfig(
         display_name="General",
+        skill_name="general-azure-sdk",
         scope="Questions that don't clearly fit any single domain above. General specialist with all knowledge sources.",
         qa_guideline_file="tenants/general.md",
         enable_routing=True,
@@ -560,6 +571,17 @@ def get_tenant_config(tenant_id: TenantID) -> TenantConfig | None:
 def get_all_tenant_ids() -> list[str]:
     """Return all registered tenant ID strings."""
     return [t.value for t in _TENANT_CONFIG_MAP]
+
+
+def get_tenant_skill_map() -> dict[TenantID, str]:
+    """Return a mapping from TenantID to skill name (kebab-case).
+
+    Derived from the ``skill_name`` field in each TenantConfig.
+    Only includes tenants that have a skill_name configured.
+    """
+    return {
+        tid: cfg.skill_name for tid, cfg in _TENANT_CONFIG_MAP.items() if cfg.skill_name
+    }
 
 
 def get_tenant_sources_display(tenant_id: TenantID) -> list[dict[str, str]]:

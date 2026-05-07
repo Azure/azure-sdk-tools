@@ -44,6 +44,7 @@ async def create_azsdk_mcp_tool() -> MCPStdioTool:
         env=env,
         load_prompts=False,
         allowed_tools=allowed_tools,
+        parse_tool_results=truncating_mcp_parser,
         description=(
             "Azure SDK MCP server tools for Azure Pipelines analysis. "
             "Use this tool to analyze pipeline failures, get pipeline status, "

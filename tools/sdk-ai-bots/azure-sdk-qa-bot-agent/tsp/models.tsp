@@ -10,6 +10,8 @@ namespace AzureSdkQaBot;
 
 @doc("Message roles in the conversation")
 union Role {
+  string,
+  
   @doc("User message")
   User: "user",
 

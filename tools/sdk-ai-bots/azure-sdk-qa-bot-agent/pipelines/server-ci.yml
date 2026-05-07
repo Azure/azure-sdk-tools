@@ -82,7 +82,6 @@ extends:
                     skills/
                 displayName: 'Type Check (pyright)'
                 workingDirectory: $(workingDirectory)
-                continueOnError: true
 
               - bash: |
                   set -euo pipefail

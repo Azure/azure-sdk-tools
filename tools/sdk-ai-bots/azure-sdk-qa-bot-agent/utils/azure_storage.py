@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 
 from azure.storage.blob.aio import BlobServiceClient
-
+from azure.core.exceptions import ResourceNotFoundError
 from config.app_config import get as cfg
 from utils.azure_credential import get_credential
 
@@ -39,10 +39,8 @@ async def download_blob(container: str, blob_name: str) -> bytes | None:
         stream = await blob_client.download_blob()
         data = await stream.readall()
         return data if data else None
-    except Exception:
-        logger.warning(
-            "Failed to download blob %s/%s", container, blob_name, exc_info=True
-        )
+    except ResourceNotFoundError:
+        logger.info("Blob not found: %s/%s", container, blob_name)
         return None
 
 

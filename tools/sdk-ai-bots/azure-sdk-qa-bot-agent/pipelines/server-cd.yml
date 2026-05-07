@@ -188,7 +188,7 @@ extends:
                     echo "App URL: https://$APP_URL"
 
                     # Acquire Entra ID token for EasyAuth
-                    ACCESS_TOKEN=$(az account get-access-token --resource api://azure-sdk-qa-bot-dev --query accessToken -o tsv)
+                    ACCESS_TOKEN=$(az account get-access-token --resource "$(EASYAUTH_AUDIENCE)" --query accessToken -o tsv)
 
                     echo "Waiting for health..."; sleep 25
                     HTTP_STATUS=$(curl -s -o /dev/null -w '%{http_code}' \

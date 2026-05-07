@@ -16,24 +16,14 @@ from agent_framework import Skill
 from config.tenant_config import (
     TenantID,
     get_tenant_config,
+    get_tenant_skill_map,
     load_tenant_qa_guideline,
 )
 
 logger = logging.getLogger(__name__)
 
-# Map tenant IDs to skill names (kebab-case)
-_TENANT_SKILL_MAP: dict[TenantID, str] = {
-    TenantID.API_SPEC_REVIEW_BOT: "api-spec-review",
-    TenantID.AZURE_SDK_ONBOARDING: "sdk-onboarding",
-    TenantID.AZURE_TYPESPEC_AUTHORING: "typespec-authoring",
-    TenantID.TYPESPEC_CHANNEL_QA_BOT: "typespec",
-    TenantID.PYTHON_CHANNEL_QA_BOT: "python-sdk",
-    TenantID.DOTNET_CHANNEL_QA_BOT: "dotnet-sdk",
-    TenantID.JAVA_CHANNEL_QA_BOT: "java-sdk",
-    TenantID.JAVASCRIPT_CHANNEL_QA_BOT: "javascript-sdk",
-    TenantID.GOLANG_CHANNEL_QA_BOT: "go-sdk",
-    TenantID.GENERAL_QA_BOT: "general-azure-sdk",
-}
+# Derive skill name mapping from centralized tenant config
+_TENANT_SKILL_MAP: dict[TenantID, str] = get_tenant_skill_map()
 
 # Short descriptions for system-prompt advertisement
 _SKILL_DESCRIPTIONS: dict[TenantID, str] = {

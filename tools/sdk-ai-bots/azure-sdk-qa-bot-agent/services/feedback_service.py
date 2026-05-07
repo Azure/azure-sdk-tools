@@ -85,7 +85,7 @@ class FeedbackService:
             now.isoformat(),
             req.tenant_id,
             "",  # Messages column is not used in the current workflow
-            req.reaction,
+            req.reaction.value,
             req.comment or "",
             json.dumps(req.reasons, ensure_ascii=False),
             req.link or "",

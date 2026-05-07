@@ -42,11 +42,9 @@ Each skill lives in `<name>/` and contains:
 ├── SKILL.md           # Skill definition: YAML frontmatter + steps + related skills
 ├── references/        # Detailed reference docs (offloaded to keep SKILL.md under 500 tokens)
 │   └── *.md
-├── eval.yaml          # Evaluation config (graders, timeouts, model)
-├── tasks/             # Eval task definitions (4-5 per skill)
-│   └── *.yaml
-└── fixtures/          # Domain-specific test fixtures
-    └── <files>
+└── evals/             # Evaluation definitions
+    ├── eval.yaml          # Capability evals (graders, stimuli, tool-call checks)
+    └── trigger.eval.yaml  # Trigger & anti-trigger evals (skill-invocation checks)
 ```
 
 
@@ -56,28 +54,33 @@ Each skill lives in `<name>/` and contains:
 
 | Tool | Purpose | Install |
 | ---- | ------- | ------- |
-| [**waza**](https://microsoft.github.io/waza/getting-started/) | Scaffold skills, run evals, check compliance | `go install github.com/microsoft/waza/cmd/waza@latest` |
+| [**vally**](https://literate-engine-r3wnl4v.pages.github.io/) | Run skill evals, grade trajectories | `npm install -g @microsoft/vally-cli` |
 
-### Testing Skills
+### Running Evals
 
 ```bash
 cd .github/skills
 
-# Check all skills
-waza check
+# Run all ci-gate evals
+vally eval --tag "type=ci-gate"
 
-# Run evals
-waza run --discover
+# Run evals for a specific skill
+vally eval --tag area="skill-authoring"
+
+# Run with output directory for logs
+vally eval --tag area="sensei" --output-dir ./results
 ```
+
+The [skill-eval pipeline](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8165&_a=summary) runs ci-gate evals automatically after PRs are merged. It can also be triggered manually from the same page.
 
 ---
 
 ## Project Configuration
 
-- **`.waza.yaml`** — Default engine (`copilot-sdk`) and model (`claude-sonnet-4.6`) for evals
-- **`.gitignore`** — Excludes waza output directories and temp files
+- **`.vally.yaml`** — Eval paths, environments (MCP server configs), and result output
+- **`.gitignore`** — Excludes eval output directories and temp files
 
 ## Further Reading
 
 - [agentskills.io spec](https://agentskills.io) — Skill frontmatter specification
-- [waza docs](https://microsoft.github.io/waza/getting-started/) — Scaffold, check, and eval skills
+- [vally docs](https://literate-engine-r3wnl4v.pages.github.io/) — Eval runner and graders

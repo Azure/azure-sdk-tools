@@ -69,7 +69,7 @@ jobs:
 
       - script: |
           cd .github/skills
-          vally eval --tag "type=ci-gate" $(EVAL_ARGS) --output-dir ".vally/results"
+          vally eval --tag "type=ci-gate" $(EVAL_ARGS) --workers 2 --output-dir ".vally/results"
         displayName: 'Run evaluations'
         condition: and(succeeded(), ne(variables['EVAL_ARGS'], 'SKIP'))
         continueOnError: true

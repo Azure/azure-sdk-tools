@@ -35,6 +35,8 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/004002-decorate-length-constrains-on-array-item/tspconfig.yaml
       dest: tspconfig.yaml
+    commands:
+    - npm install
   graders:
   - type: tool-calls
     config:

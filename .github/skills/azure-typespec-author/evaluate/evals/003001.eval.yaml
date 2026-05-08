@@ -35,6 +35,8 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/003-long-running-operation-share/tspconfig.yaml
       dest: tspconfig.yaml
+    commands:
+    - npm install
   graders:
   - type: tool-calls
     config:

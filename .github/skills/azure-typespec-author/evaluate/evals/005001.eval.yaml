@@ -33,6 +33,8 @@ stimuli:
       dest: main.tsp
     - src: ../fixtures/005001-warning-suppress-warning/stubs.tsp
       dest: stubs.tsp
+    commands:
+    - npm install
   graders:
   - type: tool-calls
     config:

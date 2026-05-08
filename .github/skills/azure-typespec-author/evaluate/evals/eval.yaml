@@ -37,6 +37,8 @@ stimuli:
       dest: package.json
     - src: ../fixtures/001-share-version-new-feature/readme.md
       dest: readme.md
+    commands:
+    - npm install
   graders:
   - type: tool-calls
     config:
@@ -82,6 +84,8 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/001002-version-default-value/tspconfig.yaml
       dest: tspconfig.yaml
+    commands:
+    - npm install
   graders:
   - type: tool-calls
     config:
@@ -131,6 +135,8 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
       dest: tspconfig.yaml
+    commands:
+    - npm install
   graders:
   - type: tool-calls
     config:
@@ -176,6 +182,8 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
       dest: tspconfig.yaml
+    commands:
+    - npm install
   graders:
   - type: tool-calls
     config:
@@ -251,6 +259,8 @@ stimuli:
       dest: examples/2021-10-01/Operations_List_MaximumSet_Gen.json
     - src: ../fixtures/001005-version-add-preview-after-preview/examples/2021-10-01/Operations_List_MinimumSet_Gen.json
       dest: examples/2021-10-01/Operations_List_MinimumSet_Gen.json
+    commands:
+    - npm install
   graders:
   - type: tool-calls
     config:
@@ -345,6 +355,8 @@ stimuli:
       dest: examples/2024-10-01/Operations_List_MaximumSet_Gen.json
     - src: ../fixtures/001006-version-add-preview-after-stable/examples/2024-10-01/Operations_List_MinimumSet_Gen.json
       dest: examples/2024-10-01/Operations_List_MinimumSet_Gen.json
+    commands:
+    - npm install
   graders:
   - type: tool-calls
     config:
@@ -431,6 +443,8 @@ stimuli:
       dest: examples/2024-10-01-preview/Operations_List_MaximumSet_Gen.json
     - src: ../fixtures/001007-version-add-stable-after-preview/examples/2024-10-01-preview/Operations_List_MinimumSet_Gen.json
       dest: examples/2024-10-01-preview/Operations_List_MinimumSet_Gen.json
+    commands:
+    - npm install
   graders:
   - type: tool-calls
     config:
@@ -527,6 +541,8 @@ stimuli:
       dest: examples/2024-10-01/Operations_List_MaximumSet_Gen.json
     - src: ../fixtures/001008-version-add-stable-after-stable/examples/2024-10-01/Operations_List_MinimumSet_Gen.json
       dest: examples/2024-10-01/Operations_List_MinimumSet_Gen.json
+    commands:
+    - npm install
   graders:
   - type: tool-calls
     config:
@@ -577,6 +593,8 @@ stimuli:
       dest: Microsoft.Widget/Widget/shared.tsp
     - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
       dest: Microsoft.Widget/Widget/tspconfig.yaml
+    commands:
+    - npm install --prefix Microsoft.Widget/Widget
   graders:
   - type: tool-calls
     config:
@@ -621,6 +639,8 @@ stimuli:
       dest: Microsoft.Widget/Widget/shared.tsp
     - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
       dest: Microsoft.Widget/Widget/tspconfig.yaml
+    commands:
+    - npm install --prefix Microsoft.Widget/Widget
   graders:
   - type: tool-calls
     config:
@@ -663,6 +683,8 @@ stimuli:
       dest: Microsoft.Widget/Widget/stable/2021-11-01/widget.json
     - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
       dest: Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+    commands:
+    - npm install --prefix Microsoft.Widget/Widget
   graders:
   - type: tool-calls
     config:
@@ -702,6 +724,8 @@ stimuli:
       dest: Microsoft.Widget/Widget/shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: Microsoft.Widget/Widget/tspconfig.yaml
+    commands:
+    - npm install --prefix Microsoft.Widget/Widget
   graders:
   - type: tool-calls
     config:
@@ -753,6 +777,8 @@ stimuli:
       dest: Microsoft.Widget/Widget/shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: Microsoft.Widget/Widget/tspconfig.yaml
+    commands:
+    - npm install --prefix Microsoft.Widget/Widget
   graders:
   - type: tool-calls
     config:
@@ -798,6 +824,8 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
+    commands:
+    - npm install
   graders:
   - type: tool-calls
     config:
@@ -843,6 +871,8 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
+    commands:
+    - npm install
   graders:
   - type: tool-calls
     config:
@@ -882,6 +912,8 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
+    commands:
+    - npm install
   graders:
   - type: tool-calls
     config:
@@ -915,6 +947,8 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
+    commands:
+    - npm install
   graders:
   - type: tool-calls
     config:
@@ -962,6 +996,8 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
+    commands:
+    - npm install
   graders:
   - type: tool-calls
     config:
@@ -1023,6 +1059,8 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
+    commands:
+    - npm install
   graders:
   - type: tool-calls
     config:
@@ -1120,6 +1158,8 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
+    commands:
+    - npm install
   graders:
   - type: tool-calls
     config:
@@ -1201,6 +1241,8 @@ stimuli:
       dest: stable/2021-11-01/widget.json
     - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
       dest: preview/2024-10-01-preview/widget.json
+    commands:
+    - npm install
   graders:
   - type: tool-calls
     config:
@@ -1231,6 +1273,8 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
+    commands:
+    - npm install
   graders:
   - type: tool-calls
     config:
@@ -1268,6 +1312,8 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/002010-arm-action-sync-operation/tspconfig.yaml
       dest: tspconfig.yaml
+    commands:
+    - npm install
   graders:
   - type: tool-calls
     config:
@@ -1309,6 +1355,8 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/003-long-running-operation-share/tspconfig.yaml
       dest: tspconfig.yaml
+    commands:
+    - npm install
   graders:
   - type: tool-calls
     config:
@@ -1350,6 +1398,8 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
+    commands:
+    - npm install
   graders:
   - type: tool-calls
     config:
@@ -1403,6 +1453,8 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
+    commands:
+    - npm install
   graders:
   - type: tool-calls
     config:
@@ -1446,6 +1498,8 @@ stimuli:
       dest: stable/2021-11-01/widget.json
     - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
       dest: preview/2024-10-01-preview/widget.json
+    commands:
+    - npm install
   graders:
   - type: tool-calls
     config:
@@ -1507,6 +1561,8 @@ stimuli:
       dest: VpnSiteLinkConnection.tsp
     - src: ../fixtures/004003-delete-and-restore-operationId-decorator/tspconfig.yaml
       dest: tspconfig.yaml
+    commands:
+    - npm install
   graders:
   - type: tool-calls
     config:
@@ -1558,6 +1614,8 @@ stimuli:
       dest: main.tsp
     - src: ../fixtures/005001-warning-suppress-warning/stubs.tsp
       dest: stubs.tsp
+    commands:
+    - npm install
   graders:
   - type: tool-calls
     config:

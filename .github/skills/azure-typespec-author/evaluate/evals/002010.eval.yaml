@@ -35,6 +35,8 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/002010-arm-action-sync-operation/tspconfig.yaml
       dest: tspconfig.yaml
+    commands:
+    - npm install
   graders:
   - type: tool-calls
     config:

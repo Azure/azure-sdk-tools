@@ -49,11 +49,17 @@ _Describe the problem you're solving and why it's important._
 
 ### Current State
 
-Service teams and SDK teams spend significant manual effort detecting SDK breaking changes and mitigate them. It causes a lot time and also it is not be able to correctly detect all the breaking changes.
+Service teams and SDK teams spend significant manual effort detecting SDK breaking changes and mitigate them. This process is time-consuming and still fails to reliably identify all breaking changes, leading to some being missed or incorrectly resolved. As a result, overall SDK quality is degraded.
 
 ### Why This Matters
 
-[Why should we invest time in solving this? What's the impact if we don't? Consider how users will have to switch between using the agent and the old way of doing things.]
+**Impact on service API merge and SDK release experience**
+- Identifying and mitigating SDK breaking changes is a significant challenge for service and Azure SDK teams. Manual analysis of SDK changes to detect breaking changes and develop consistent mitigations requires substantial effort and expertise.
+
+**Cost of Not Solving This:**
+- **Increased SDK or Spec Review Effort**: Service and Azure SDK teams spend significant time manually identifying breaking changes and developing mitigations.
+- **Incorrect Breaking Change Detection**: Without automated detection, teams may miss breaking changes entirely or misclassify them, resulting in incomplete or incorrect mitigations.
+- **Delayed API Spec Merge and SDK Release**: The time spent identifying and resolving breaking changes manually delays both API specification merges and SDK releases, impacting customer delivery timelines.
 
 ---
 
@@ -68,11 +74,12 @@ What are we trying to achieve with this design?
 
 ## Design Proposal
 
-_Provide a detailed explanation of your proposed solution._
-
 ### Overview
 
-[High-level description of the approach]
+This design covers the complete breaking change detection workflow and its core components:
+- SDK change detector
+- ChangelogOrRevapi-to-breaking-change pattern mapping
+- SDK breaking change classifier
 
 ### Detailed Design
 
@@ -292,13 +299,16 @@ azsdk package detect --package-path <sdk-package-path> --language go --tsp-confi
 
 #### Scenario 1: Detect and resolve breaking change local
 
-Detect and Resolve Breaking change in Local Spec repo or SDK repo
+Detect and resolve breaking changes in a local spec or SDK repository.
 
-Prompt: detect and resolve breaking changes for service webpubsub
+**Prerequisite:**
+The local SDK repository and development environment are set up.
+
+**Prompt:** Detect and resolve breaking changes for service webpubsub
 
 Flow:
 
-1. Agent invoke `azsdk_package_generate_code` to generate sdk code locally
+1. Agent invoke `azsdk_package_generate_code` to generate sdk code locally if the SDK is not generated.
 2. Agent invoke `azsdk_package_detect_breaking_change` to detect and classify breaking changes
 3. Agent list all the SDK breaking changes one-by-one:
     e.g. SDK breaking changes:
@@ -315,7 +325,7 @@ Flow:
 flowchart TD
     A[Generate SDK]
     B[Detect SDK Breaking Changes azsdk_package_detect_breaking_change]
-    C[Github Action Label 'XX-SDK breakingchange' label]
+    C[Github Action Label 'BreakingChange-XXX-Sdk' label]
     D[PR owner Ask Copilot to Resolve Breaking Changes]
     E[Copilot Calls azsdk_customized_code_update]
     F[SDK Breaking Change Resolved]
@@ -337,20 +347,19 @@ flowchart TD
 ```
 
 1. Agent invoke `azsdk_package_detect_breaking_change` to detect and classify breaking changes
-2. User (PR owner) check the breaking changes, and choose breaking changes to resolve.
+2. Github Action will label 'BreakingChange-XXX-Sdk' to indicate which language SDK has breaking changes.
+3. User (PR owner) check the breaking changes, and choose breaking changes to resolve.
    Use prompt: @copilot resolve breaking changes: XXXXXXX
-3. Agent invoke `azsdk_customized_code_update` to mitigate breaking changes.
+4. Agent invoke `azsdk_customized_code_update` to mitigate breaking changes.
 
 ## Agent Prompts
-
-_Natural language prompts that users can provide to the AI agent (GitHub Copilot) to execute this tool or workflow. Include both simple and complex scenarios._
 
 ### [Detect breaking change for Go SDK]
 
 **Prompt:**
 
 ```text
-detect the breaking changes for Go SDK
+detect the breaking changes for Go SDK of Webpubsub service
 ```
 
 **Expected Agent Activity:**
@@ -360,12 +369,26 @@ detect the breaking changes for Go SDK
 3. identify breaking changes and classify the breaking changes to different category
 
 **Expect output**
+```json
+{
+    "hasBreakingChange": true,
+    "language": "GO",
+    "breakingchanges": [
+        {
+            "breakingchange": "model `ResourceInfo` is renamed to `Resource`",
+            "category": "Conversion-need to be resolve"
+        },
+        {
+            "breakingchange": "Type of property `Prop` has been changed from `string` to `int32`",
+            "category": "typespec change"
+        }
+    ]
+}
+```
 
 ---
 
 ## CLI Commands
-
-_Direct command-line interface usage showing exact commands, options, and expected outputs._
 
 ### Package detect breaking change
 
@@ -379,7 +402,7 @@ azsdk package detect --package-path <sdk-package-path> --language <language> --t
 **Options:**
 
 - `--package-path <value>`: (Required) The SDK package path
-- `--language <value>`: (Required) The SDK language
+- `--language <value>`: (optional) The SDK language
 - `--tsp-config-path`: (Optional) Path to the 'tspconfig.yaml' configuration file, it can be a local path or remote HTTPS URL
 - `--generate-sdk`: (Optional) indicate whether need to generate sdk. default is False
 

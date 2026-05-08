@@ -11,7 +11,7 @@ steps:
 
   - template: /eng/pipelines/templates/steps/use-python-version.yml
     parameters:
-      versionSpec: '3.9'
+      versionSpec: '3.10'
 
   - pwsh: |
       git clone https://github.com/$(REPO) $(CLONE_LOCATION) --depth 1
@@ -23,10 +23,23 @@ steps:
       rootFolder: $(CLONE_LOCATION)
 
   - pwsh: |
-      python -m pip install -r dev_requirements.txt
-      python -m pip install .
+      $ErrorActionPreference = 'Stop'
+      $PSNativeCommandUseErrorActionPreference = $true
+      python -m pip install uv==0.11.6
+
+      $scriptsDir = python -c "import sysconfig; print(sysconfig.get_path('scripts'))"
+      $env:PATH = "$scriptsDir$([System.IO.Path]::PathSeparator)$env:PATH"
+      Write-Host "##vso[task.prependpath]$scriptsDir"
+    displayName: 'Install uv'
+
+  - pwsh: |
+      $ErrorActionPreference = 'Stop'
+      $PSNativeCommandUseErrorActionPreference = $true
+      uv pip install --system -r eng/ci_tools.txt
+      uv pip install --system -r sdk/tables/azure-data-tables/dev_requirements.txt
+      uv pip install --system sdk/tables/azure-data-tables/
     displayName: 'Install requirements and package'
-    workingDirectory: $(CLONE_LOCATION)/sdk/tables/azure-data-tables/
+    workingDirectory: $(CLONE_LOCATION)
 
   - pwsh: |
       pytest .

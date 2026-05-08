@@ -43,6 +43,7 @@ steps:
       PushArgs: -f
       WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo.key }}
       ScriptDirectory: ${{ parameters.ToolsRepoPath }}/eng/common/scripts
+      AuthToken: ''
       ${{ if ne(repo.value.branch, '') }}:
         BaseBranchName: ${{ repo.value.branch }}
       ${{ if eq(repo.value.branch, '') }}:

@@ -24,8 +24,6 @@ stages:
         name: $(Pool)
         demands: ImageOverride -equals $(Image)
 
-        # we are ok with default image on each
-
       steps:
         - template: pipelines/proxy-solution-integration-tests.yml
 

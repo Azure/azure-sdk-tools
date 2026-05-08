@@ -15,7 +15,7 @@ from ._test_util import _check, _tokenize, _render_lines, MockApiView, _count_re
 
 class TestModuleParsing:
 
-    pkg_namespace = "apistubgentest"
+    pkg_namespace = "apiview_stub_generator_test"
 
     # Validates that there are no repeat defintion IDs and that each line has only one definition ID.
     def _validate_line_ids(self, review_lines):
@@ -47,18 +47,18 @@ class TestModuleParsing:
         lines = _render_lines(tokens)
         assert lines[2].lstrip() == "@overload"
         actual1 = lines[3]
-        expected1 = "def apistubgentest.another_func(*, b: str) -> bool: ..."
+        expected1 = "def apiview_stub_generator_test.another_func(*, b: str) -> bool: ..."
         _check(actual1, expected1, obj)
 
         assert lines[6].lstrip() == "@overload"
         actual2 = lines[7]
-        expected2 = "def apistubgentest.another_func(*, b: int) -> bool: ..."
+        expected2 = "def apiview_stub_generator_test.another_func(*, b: int) -> bool: ..."
         _check(actual2, expected2, obj)
 
         assert lines[10].lstrip() == "@overload"
         actual4 = lines[11:17]
         expected4 = [
-            "def apistubgentest.module_func(",
+            "def apiview_stub_generator_test.module_func(",
             "    a: int, ",
             "    *, ",
             "    b: str, ",
@@ -70,7 +70,7 @@ class TestModuleParsing:
         assert lines[19].lstrip() == "@overload"
         actual5 = lines[20:26]
         expected5 = [
-            "def apistubgentest.module_func(",
+            "def apiview_stub_generator_test.module_func(",
             "    a: int, ",
             "    *, ",
             "    b: int, ",

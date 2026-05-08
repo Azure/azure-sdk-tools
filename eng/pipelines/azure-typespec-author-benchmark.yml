@@ -185,10 +185,28 @@ extends:
                   AZSDKTOOLS_COLLECT_TELEMETRY: "false"
                   AZURE_SDK_KB_ENDPOINT: "http://localhost:8088"
 
+              # Install dependencies for every fixture project right before
+              # evaluations, so all fixture workspaces are ready for execution.
+              - script: |
+                  set -e
+                  FIXTURES_DIR="$(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures"
+                  if [ ! -d "$FIXTURES_DIR" ]; then
+                    echo "No fixtures directory found at $FIXTURES_DIR; skipping fixture npm installs."
+                    exit 0
+                  fi
+
+                  find "$FIXTURES_DIR" -type f -name package.json -not -path '*/node_modules/*' -print0 |
+                  while IFS= read -r -d '' package_json; do
+                    project_dir="$(dirname "$package_json")"
+                    echo "Running npm install in $project_dir"
+                    npm install --userconfig $(Build.SourcesDirectory)/.npmrc --prefix "$project_dir"
+                  done
+                displayName: Install fixture project dependencies
+
               # Run evaluations
               # The vally config (.vally.yaml) lives in the skill's evaluate/
               # directory; cd there so vally discovers evals/*.eval.yaml.
-              # Vally requires 	imeout to be a duration string (e.g. "30m"),
+              # Vally requires `timeout` to be a duration string (e.g. "30m"),
               # but the source eval files use bare integer seconds. Rewrite
               # at runtime so the source stays untouched.
               - script: |

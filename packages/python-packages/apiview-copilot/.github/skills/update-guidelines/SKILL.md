@@ -33,7 +33,7 @@ Always pass `--environment <env>` to the CLI commands.
 
 The user may optionally specify one or more languages to narrow the ingestion scope. If languages are specified, only guideline files for those languages (plus cross-language "general" guidelines) are processed.
 
-Pass `--language <lang1> --language <lang2>` (or `-l <lang1> -l <lang2>`) to the CLI commands. Valid language names: `python`, `java`, `dotnet`, `typescript`, `golang`, `cpp`, `rust`, `ios`, `android`, `clang`. Case-insensitive aliases like `C#`, `Go`, `Swift` are also accepted.
+Pass `--language <lang1> <lang2>` (or `-l <lang1> <lang2>`) to the CLI commands. Valid language names: `python`, `java`, `dotnet`, `typescript`, `golang`, `cpp`, `rust`, `ios`, `android`, `clang`. Case-insensitive aliases like `C#`, `Go`, `Swift` are also accepted.
 
 If the user does not mention specific languages, omit the flag to process all languages.
 
@@ -128,7 +128,7 @@ Then go to **Phase 2: Dry Run**.
 **Always run a dry-run first.** Use a **300-second timeout** (the command can be slow due to LLM enrichment).
 
 ```powershell
-python cli.py db ingest-guidelines --environment <ENV> --base-sha <BASE_SHA> --target-sha <TARGET_SHA> --details [--language <LANG1> --language <LANG2>]
+python cli.py db ingest-guidelines --environment <ENV> --base-sha <BASE_SHA> --target-sha <TARGET_SHA> --details [--language <LANG1> <LANG2>]
 ```
 
 Include `--language` flags only if the user specified languages to filter.
@@ -161,7 +161,7 @@ Ask: "Ready to apply these changes to **{environment}**?"
 Only after the user confirms the dry-run results, run the actual ingestion:
 
 ```powershell
-python cli.py db ingest-guidelines --environment <ENV> --base-sha <BASE_SHA> --target-sha <TARGET_SHA> --apply [--language <LANG1> --language <LANG2>]
+python cli.py db ingest-guidelines --environment <ENV> --base-sha <BASE_SHA> --target-sha <TARGET_SHA> --apply [--language <LANG1> <LANG2>]
 ```
 
 Use a **300-second timeout**. Include the same `--language` flags used in the dry run.

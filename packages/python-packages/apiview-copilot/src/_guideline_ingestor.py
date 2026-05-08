@@ -118,7 +118,7 @@ ICON_REPLACE = ""
 class ParsedGuideline:
     """Represents a guideline parsed from markdown (intermediate format)."""
 
-    id: str
+    id: Optional[str]
     text: str
     language: Optional[str]
     source_file_path: str
@@ -1000,18 +1000,33 @@ class GuidelineIngestor:
                 old_example_ids = existing.get("related_examples", [])
                 for ex_id in old_example_ids:
                     if ex_id not in seen_example_ids:
-                        result.examples_deleted.append(ex_id)
-                        if details:
-                            try:
-                                ex_item = self._db.examples.get(ex_id)
-                                result.details.append(SyncDetail(id=ex_id, kind="example", action="deleted", before=ex_item.get("content", ""), after=None))
-                            except Exception:
-                                result.details.append(SyncDetail(id=ex_id, kind="example", action="deleted", before=None, after=None))
                         if not dry_run:
                             try:
-                                self._db.examples.delete(ex_id, run_indexer=False)
+                                ex_item = self._db.examples.get(ex_id)
+                                # Remove this guideline from the example's guideline_ids
+                                ex_guideline_ids = ex_item.get("guideline_ids", [])
+                                if gid in ex_guideline_ids:
+                                    ex_guideline_ids.remove(gid)
+                                # Only delete if fully orphaned
+                                if not ex_guideline_ids and not ex_item.get("memory_ids", []):
+                                    result.examples_deleted.append(ex_id)
+                                    if details:
+                                        result.details.append(SyncDetail(id=ex_id, kind="example", action="deleted", before=ex_item.get("content", ""), after=None))
+                                    self._db.examples.delete(ex_id, run_indexer=False)
+                                else:
+                                    # Just update the example to remove this guideline link
+                                    self._db.examples.client.upsert_item(ex_item)
                             except Exception:
                                 pass
+                        else:
+                            # In dry-run, report as potential deletion
+                            result.examples_deleted.append(ex_id)
+                            if details:
+                                try:
+                                    ex_item = self._db.examples.get(ex_id)
+                                    result.details.append(SyncDetail(id=ex_id, kind="example", action="deleted", before=ex_item.get("content", ""), after=None))
+                                except Exception:
+                                    result.details.append(SyncDetail(id=ex_id, kind="example", action="deleted", before=None, after=None))
             except Exception:
                 pass
 

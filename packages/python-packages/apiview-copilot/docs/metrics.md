@@ -172,6 +172,7 @@ avc report apiview-metrics [--months 6] [--end-date 2026-04-30] [--languages Pyt
 
 - **versions** — Percentage of revisions with a valid `PackageVersion`, broken out by language and revision type (Automatic, Manual, PullRequest).
 - **compliance** — Percentage of reviews whose latest revision includes `CrossLanguagePackageId`.
+- **duplicate_line_ids** — Percentage of evaluated reviews whose latest revision does NOT have `HasDuplicateLineIds=true`. Revisions where the field is missing are tracked as "unknown" and excluded from the percentage calculation.
 
 ## OpenTelemetry Metrics
 

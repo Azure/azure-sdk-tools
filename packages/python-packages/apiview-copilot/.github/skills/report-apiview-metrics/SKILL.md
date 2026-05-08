@@ -1,6 +1,6 @@
 ---
 name: report-apiview-metrics
-description: "Run APIView platform metrics (versioned revisions and cross-language compliance). Use for: apiview metrics, platform metrics, version coverage, versioned revisions, cross-language compliance, compliance metrics, PackageVersion coverage, CrossLanguagePackageId, apiview-metrics, parser compliance."
+description: "Run APIView platform metrics (versioned revisions, cross-language compliance, and duplicate line ID compliance). Use for: apiview metrics, platform metrics, version coverage, versioned revisions, cross-language compliance, compliance metrics, PackageVersion coverage, CrossLanguagePackageId, apiview-metrics, parser compliance, duplicate line IDs, HasDuplicateLineIds."
 argument-hint: "Optional: --months N, --end-date YYYY-MM-DD, --languages Python Java, --chart, --summary"
 ---
 
@@ -9,19 +9,21 @@ argument-hint: "Optional: --months N, --end-date YYYY-MM-DD, --languages Python 
 ## When to Use
 - Monitoring progress toward 100% versioned revisions across languages
 - Checking cross-language metadata compliance (CrossLanguagePackageId)
+- Checking duplicate line ID compliance (HasDuplicateLineIds)
 - Generating trend charts for APIView platform health
 - Reviewing parser compliance over time
 
 ## What It Produces
 
-A combined report with two metric buckets:
+A combined report with three metric buckets:
 
 | Bucket | What it measures |
-|--------|-----------------|
+|--------|------------------|
 | **versions** | % of revisions with a valid `PackageVersion`, broken out by language and revision type (Automatic, Manual, PullRequest) |
 | **compliance** | % of reviews whose latest revision includes `CrossLanguagePackageId` (from `CrossLanguageMetadata`) |
+| **duplicate_line_ids** | % of evaluated reviews whose latest revision does NOT have `HasDuplicateLineIds=true`. Revisions missing the field are tracked as "unknown" and excluded from the percentage. |
 
-Output is JSON with top-level `"versions"` and `"compliance"` keys. With `--summary`, human-readable tables are printed to stderr.
+Output is JSON with top-level `"versions"`, `"compliance"`, and `"duplicate_line_ids"` keys. With `--summary`, human-readable tables are printed to stderr.
 
 ## Defaults
 
@@ -44,6 +46,7 @@ New-Item -ItemType Directory -Path output -Force | Out-Null; New-Item -ItemType 
 After the command completes, **read the output file** with `read_file` to get the JSON results. Then use `view_image` to display charts at:
 - `output/charts/apiview_version_trends.png`
 - `output/charts/cross_language_compliance.png`
+- `output/charts/duplicate_line_ids.png`
 
 ### Examples
 
@@ -72,7 +75,8 @@ python cli.py report apiview-metrics --chart --environment staging
 After reading the output file:
 1. Summarize the version-coverage trends (highlight languages below 100%)
 2. Summarize the compliance trends (highlight languages below 100%)
-3. Show the chart images with `view_image`
+3. Summarize the duplicate line ID compliance trends (highlight languages below 100%)
+4. Show the chart images with `view_image`
 
 ### Step 3: Answer Follow-up Questions
 

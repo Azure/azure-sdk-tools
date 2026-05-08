@@ -23,6 +23,7 @@ DEFAULT_LANGUAGES = ["Python", "C#", "Java", "JavaScript", "Go"]
 DEFAULT_MONTHS = 6
 DEFAULT_OUTPUT_PATH = Path("output/charts/apiview_version_trends.png")
 DEFAULT_COMPLIANCE_OUTPUT_PATH = Path("output/charts/cross_language_compliance.png")
+DEFAULT_DUPLICATE_LINEIDS_OUTPUT_PATH = Path("output/charts/duplicate_line_ids.png")
 OMIT_LANGUAGES = ["c++", "c", "typespec", "swagger", "xml"]
 
 
@@ -612,6 +613,244 @@ def print_compliance_report(
                 f"{pr['total']:>10}",
                 f"{item['pct']:>10.1f}",
                 f"{item['total']:>10}",
+            ]
+            print("  ".join(values), file=file)
+
+    if output_path and output_path.exists():
+        print(f"\nSaved chart: {output_path}", file=file)
+    else:
+        print("\nChart was not generated.", file=file)
+
+
+# ---------------------------------------------------------------------------
+# Duplicate Line ID metrics
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class MonthlyDuplicateLineIdPoint:
+    """Monthly duplicate line ID compliance data for a single language."""
+
+    label: str
+    start_date: str
+    end_date: str
+    clean: int = 0
+    has_duplicates: int = 0
+    unknown: int = 0
+    total: int = 0
+    clean_pct: float = 0.0
+
+
+def build_duplicate_lineid_reports(
+    languages: Optional[list[str]] = None,
+    months: int = DEFAULT_MONTHS,
+    end_date: Optional[date] = None,
+    *,
+    environment: str = PRODUCTION_ENVIRONMENT,
+) -> dict[str, list[dict]]:
+    """Build per-language duplicate line ID compliance reports.
+
+    For each month, groups revisions by ReviewId, picks the latest revision per review,
+    and checks whether ``HasDuplicateLineIds`` is set to true.
+
+    Returns:
+        A dict mapping language name to a list of monthly data-point dicts.
+    """
+    selected_languages = languages or DEFAULT_LANGUAGES
+    month_ranges = get_last_n_month_ranges(months=months, end_date=end_date)
+    if not month_ranges:
+        return {lang: [] for lang in selected_languages}
+
+    full_start = month_ranges[0][0]
+    full_end = month_ranges[-1][1]
+
+    start_iso = to_iso8601(full_start.isoformat())
+    end_iso = to_iso8601(full_end.isoformat(), end_of_day=True)
+
+    revisions_container = get_apiview_cosmos_client(container_name="APIRevisions", environment=environment)
+
+    query = (
+        "SELECT c.ReviewId, c.Language, c.HasDuplicateLineIds, c.CreatedOn "
+        "FROM c "
+        "WHERE (NOT IS_DEFINED(c.IsDeleted) OR c.IsDeleted = false) "
+        "AND c.CreatedOn >= @start AND c.CreatedOn <= @end"
+    )
+    params = [
+        {"name": "@start", "value": start_iso},
+        {"name": "@end", "value": end_iso},
+    ]
+
+    all_revisions = list(
+        revisions_container.query_items(query=query, parameters=params, enable_cross_partition_query=True)
+    )
+
+    # Bucket revisions by month in a single pass O(revisions)
+    bucketed: dict[str, list[dict]] = {f"{start.year}-{start.month:02d}": [] for start, _ in month_ranges}
+    for rev in all_revisions:
+        created_on = rev.get("CreatedOn", "")
+        label = created_on[:7]  # "YYYY-MM" slice from ISO8601
+        if label in bucketed:
+            bucketed[label].append(rev)
+
+    omit_lower = {lang.lower() for lang in OMIT_LANGUAGES}
+
+    reports: dict[str, list[dict]] = {lang: [] for lang in selected_languages}
+    for start, end in month_ranges:
+        label = f"{start.year}-{start.month:02d}"
+
+        month_revisions = bucketed[label]
+
+        # Group by ReviewId and keep only the latest revision per review
+        latest_by_review: dict[str, dict] = {}
+        for rev in month_revisions:
+            review_id = rev.get("ReviewId")
+            if not review_id:
+                continue
+            existing = latest_by_review.get(review_id)
+            if existing is None or rev.get("CreatedOn", "") > existing.get("CreatedOn", ""):
+                latest_by_review[review_id] = rev
+
+        # Compute per language
+        by_language: dict[str, dict] = {}
+        for rev in latest_by_review.values():
+            lang = get_language_pretty_name(rev.get("Language", "Unknown"))
+            if lang.lower() in omit_lower:
+                continue
+            entry = by_language.setdefault(lang, {"clean": 0, "has_duplicates": 0, "unknown": 0, "total": 0})
+            entry["total"] += 1
+            has_dup = rev.get("HasDuplicateLineIds")
+            if has_dup is None:
+                entry["unknown"] += 1
+            elif has_dup:
+                entry["has_duplicates"] += 1
+            else:
+                entry["clean"] += 1
+
+        for entry in by_language.values():
+            evaluated = entry["clean"] + entry["has_duplicates"]
+            entry["clean_pct"] = round((entry["clean"] / evaluated) * 100, 2) if evaluated else 0.0
+
+        for language in selected_languages:
+            entry = by_language.get(
+                language, {"clean": 0, "has_duplicates": 0, "unknown": 0, "total": 0, "clean_pct": 0.0}
+            )
+            point = MonthlyDuplicateLineIdPoint(
+                label=label,
+                start_date=start.isoformat(),
+                end_date=end.isoformat(),
+                clean=entry["clean"],
+                has_duplicates=entry["has_duplicates"],
+                unknown=entry["unknown"],
+                total=entry["total"],
+                clean_pct=entry["clean_pct"],
+            )
+            reports[language].append(asdict(point))
+
+    return reports
+
+
+def generate_duplicate_lineid_chart(
+    reports: dict[str, list[dict]],
+    output_path: Path = DEFAULT_DUPLICATE_LINEIDS_OUTPUT_PATH,
+    *,
+    environment: str = PRODUCTION_ENVIRONMENT,
+) -> Optional[Path]:
+    """Render a PNG chart showing duplicate line ID compliance percentage trends per language."""
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    try:
+        import matplotlib.pyplot as plt
+    except ImportError:
+        print("matplotlib is not installed; skipping chart generation.")
+        return None
+
+    languages = list(reports.keys())
+    month_count = len(next(iter(reports.values()), [])) if reports else 0
+    if month_count == 0:
+        return None
+
+    cols = 2 if len(languages) > 1 else 1
+    rows = max(1, math.ceil(len(languages) / cols))
+
+    figure, axes = plt.subplots(rows, cols, figsize=(8 * cols, 5 * rows), sharey=True)
+    if not isinstance(axes, (list, tuple)):
+        try:
+            axes = axes.flatten()
+        except AttributeError:
+            axes = [axes]
+    else:
+        axes = list(axes)
+
+    for index, language in enumerate(languages):
+        axis = axes[index]
+        report = reports[language]
+        labels = [item["label"] for item in report]
+        x_positions = list(range(len(labels)))
+        pcts = [item["clean_pct"] for item in report]
+
+        _bars = axis.bar(x_positions, pcts, color="#2196F3", width=0.6)
+
+        # Annotate each bar with count
+        for bar_pos, item in zip(x_positions, report):
+            evaluated = item["clean"] + item["has_duplicates"]
+            if evaluated > 0:
+                axis.annotate(
+                    f"{item['clean']}/{evaluated}",
+                    (bar_pos, item["clean_pct"]),
+                    textcoords="offset points",
+                    xytext=(0, 4),
+                    ha="center",
+                    fontsize=7,
+                )
+
+        axis.axhline(y=100, color="gray", linestyle=":", linewidth=1.0, alpha=0.5)
+        axis.set_title(language)
+        axis.set_xticks(x_positions, labels, rotation=45, ha="right")
+        axis.set_ylim(0, 115)
+        axis.grid(True, axis="y", linestyle="--", alpha=0.4)
+
+    for index in range(len(languages), len(axes)):
+        figure.delaxes(axes[index])
+
+    environment_label = (environment or PRODUCTION_ENVIRONMENT).strip().lower()
+    figure.suptitle(
+        f"No-Duplicate Line ID Compliance %\nLast {month_count} Calendar Months (APIView {environment_label})",
+        fontsize=14,
+        y=0.985,
+    )
+    figure.supxlabel("Month")
+    figure.supylabel("% Reviews Without Duplicate Line IDs")
+    plt.tight_layout(rect=(0.02, 0.03, 1, 0.90))
+    figure.savefig(output_path, dpi=150)
+    plt.close(figure)
+    return output_path
+
+
+def print_duplicate_lineid_report(
+    reports: dict[str, list[dict]],
+    output_path: Optional[Path],
+    *,
+    environment: str = PRODUCTION_ENVIRONMENT,
+    file=None,
+) -> None:
+    """Print a compact terminal summary of duplicate line ID compliance."""
+    environment_label = (environment or PRODUCTION_ENVIRONMENT).strip().lower()
+    print(f"No-duplicate line ID compliance % by month (APIView {environment_label})", file=file)
+
+    for language, report in reports.items():
+        print(f"\n{language}", file=file)
+        header = ["Month", "Clean", "Has Dupes", "Unknown", "Total", "Clean %"]
+        print("  ".join(f"{col:>14}" for col in header), file=file)
+        print("  ".join(["----------"] * len(header)), file=file)
+
+        for item in report:
+            values = [
+                f"{item['label']:>14}",
+                f"{item['clean']:>14}",
+                f"{item['has_duplicates']:>14}",
+                f"{item['unknown']:>14}",
+                f"{item['total']:>14}",
+                f"{item['clean_pct']:>14.1f}",
             ]
             print("  ".join(values), file=file)
 

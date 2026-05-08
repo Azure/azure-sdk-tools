@@ -93,7 +93,7 @@ Invoked via `avc` (or `python cli.py`):
 - `avc report active-reviews` — Query active reviews for a language and date range.
 - `avc report feedback` / `avc report memory` — Audit feedback and memories.
 - `avc report architect-comments` — Retrieve human architect review comments for a language and date range.
-- `avc report apiview-metrics` — Track APIView platform metrics (versioned revision coverage and cross-language compliance).
+- `avc report apiview-metrics` — Track APIView platform metrics (versioned revision coverage, cross-language compliance, and duplicate line ID compliance).
 - `avc ops deploy` — Deploy to Azure App Service.
 - `avc ops check` — Health check the deployed service.
 - `avc ops grant` / `avc ops revoke` — Manage Azure RBAC permissions.

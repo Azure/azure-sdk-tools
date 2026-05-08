@@ -318,5 +318,38 @@ namespace APIViewWeb.Managers
             file.CrossLanguagePackageId = codeFile.CrossLanguageMetadata != null ? codeFile.CrossLanguageMetadata.CrossLanguagePackageId : codeFile.CrossLanguagePackageId;
             file.ParserStyle = (codeFile.ReviewLines.Count > 0) ? ParserStyle.Tree : ParserStyle.Flat;
         }
+
+        /// <summary>
+        /// Checks whether a CodeFile contains duplicate LineId values across its ReviewLines.
+        /// </summary>
+        /// <param name="codeFile">The CodeFile to check.</param>
+        /// <returns>True if duplicate LineId values are found; otherwise false.</returns>
+        public static bool HasDuplicateLineIds(CodeFile codeFile)
+        {
+            if (codeFile?.ReviewLines == null || codeFile.ReviewLines.Count == 0)
+                return false;
+
+            var lineIds = new HashSet<string>(StringComparer.Ordinal);
+            return HasDuplicateLineIdsRecursive(codeFile.ReviewLines, lineIds);
+        }
+
+        private static bool HasDuplicateLineIdsRecursive(IEnumerable<ReviewLine> lines, HashSet<string> lineIds)
+        {
+            foreach (var line in lines)
+            {
+                if (!string.IsNullOrEmpty(line.LineId))
+                {
+                    if (!lineIds.Add(line.LineId))
+                        return true;
+                }
+
+                if (line.Children != null && line.Children.Count > 0)
+                {
+                    if (HasDuplicateLineIdsRecursive(line.Children, lineIds))
+                        return true;
+                }
+            }
+            return false;
+        }
     }
 }

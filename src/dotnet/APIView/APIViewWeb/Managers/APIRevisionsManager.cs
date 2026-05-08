@@ -657,6 +657,7 @@ namespace APIViewWeb.Managers
                 // Reuse pre-parsed code file to avoid duplicate parsing
                 codeFileModel = await _codeFileManager.CreateReviewCodeFileModel(apiRevision.Id, preParsedMemoryStream, preParsedCodeFile);
                 codeFileModel.FileName = name;
+                apiRevision.HasDuplicateLineIds = CodeFileManager.HasDuplicateLineIds(preParsedCodeFile);
             }
             else
             {
@@ -682,16 +683,21 @@ namespace APIViewWeb.Managers
             else
             {
                 CodeFile codeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(apiRevision.Id, codeFileModel.FileId);
-                if (codeFile?.Diagnostics != null && codeFile.Diagnostics.Length > 0)
+                if (codeFile != null)
                 {
-                    DiagnosticSyncResult diagnosticResult = await _diagnosticCommentService.SyncDiagnosticCommentsAsync(
-                        review.Id,
-                        apiRevision.Id,
-                        null, // No existing hash for new revisions
-                        codeFile.Diagnostics,
-                        []);
+                    apiRevision.HasDuplicateLineIds = CodeFileManager.HasDuplicateLineIds(codeFile);
+
+                    if (codeFile.Diagnostics != null && codeFile.Diagnostics.Length > 0)
+                    {
+                        DiagnosticSyncResult diagnosticResult = await _diagnosticCommentService.SyncDiagnosticCommentsAsync(
+                            review.Id,
+                            apiRevision.Id,
+                            null, // No existing hash for new revisions
+                            codeFile.Diagnostics,
+                            []);
                     
-                    apiRevision.DiagnosticsHash = diagnosticResult.DiagnosticsHash;
+                        apiRevision.DiagnosticsHash = diagnosticResult.DiagnosticsHash;
+                    }
                 }
             }
 
@@ -911,6 +917,7 @@ namespace APIViewWeb.Managers
                         file.PackageVersion = codeFile.PackageVersion;
                         file.ParserStyle = codeFile.ReviewLines.Count > 0 ? ParserStyle.Tree : ParserStyle.Flat;
                         file.ContentHash = await _codeFileManager.ComputeAPIContentHashAsync(codeFile);
+                        apiRevision.HasDuplicateLineIds = CodeFileManager.HasDuplicateLineIds(codeFile);
                         await _reviewsRepository.UpsertReviewAsync(review);
                         await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
 
@@ -1035,6 +1042,7 @@ namespace APIViewWeb.Managers
                             file.ParserStyle = ParserStyle.Tree;
                         }
                         file.ContentHash = await _codeFileManager.ComputeAPIContentHashAsync(codeFile);
+                        revision.HasDuplicateLineIds = CodeFileManager.HasDuplicateLineIds(codeFile);
                         await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
                         _telemetryClient.TrackTrace($"Successfully Updated {revision.Language} revision with id {revision.Id}");
                     }
@@ -1358,6 +1366,8 @@ namespace APIViewWeb.Managers
                 apiRevisionCodeFile.FileName = originalName;
             }
 
+            apiRevision.HasDuplicateLineIds = CodeFileManager.HasDuplicateLineIds(codeFile);
+
             DiagnosticSyncResult diagnosticResult = await _diagnosticCommentService.SyncDiagnosticCommentsAsync(
                 reviewId,
                 apiRevision.Id,
@@ -1577,6 +1587,7 @@ namespace APIViewWeb.Managers
                         codeFileDetails.ParserStyle = ParserStyle.Tree;
                         codeFileDetails.IsConvertedTokenModel = true;
                         codeFileDetails.ContentHash = await _codeFileManager.ComputeAPIContentHashAsync(codeFile);
+                        revisionModel.HasDuplicateLineIds = CodeFileManager.HasDuplicateLineIds(codeFile);
                         await _apiRevisionsRepository.UpsertAPIRevisionAsync(revisionModel);
                     }                    
                 }

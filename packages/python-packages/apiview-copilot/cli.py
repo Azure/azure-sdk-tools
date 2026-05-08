@@ -50,17 +50,17 @@ from src._apiview_reviewer import SUPPORTED_LANGUAGES, ApiViewReview
 from src._database_manager import ContainerNames, DatabaseManager
 from src._garbage_collector import GarbageCollector
 from src._apiview_metrics import (
-    DEFAULT_OUTPUT_PATH as DEFAULT_VERSION_TRENDS_OUTPUT_PATH,
-)
-from src._apiview_metrics import (
     DEFAULT_COMPLIANCE_OUTPUT_PATH,
-)
-from src._apiview_metrics import (
+    DEFAULT_DUPLICATE_LINEIDS_OUTPUT_PATH,
+    DEFAULT_OUTPUT_PATH as DEFAULT_VERSION_TRENDS_OUTPUT_PATH,
     build_compliance_reports,
+    build_duplicate_lineid_reports,
     build_version_reports,
     generate_compliance_chart,
+    generate_duplicate_lineid_chart,
     generate_version_chart,
     print_compliance_report,
+    print_duplicate_lineid_report,
     print_version_report,
 )
 from src._comment_bucket_trends import (
@@ -2044,7 +2044,7 @@ def report_apiview_metrics(
     chart: bool = False,
     summary: bool = False,
 ) -> None:
-    """Generate APIView platform metrics (versioned-revision tracking and cross-language compliance)."""
+    """Generate APIView platform metrics (versioned-revision tracking, cross-language compliance, and duplicate line ID compliance)."""
     parsed_end_date = None
     if end_date:
         try:
@@ -2070,8 +2070,16 @@ def report_apiview_metrics(
         environment=environment,
     )
 
+    duplicate_lineid_reports = build_duplicate_lineid_reports(
+        languages=normalized_languages,
+        months=months,
+        end_date=parsed_end_date,
+        environment=environment,
+    )
+
     version_chart_path = None
     compliance_chart_path = None
+    duplicate_lineid_chart_path = None
     if chart:
         version_chart_path = generate_version_chart(
             version_reports,
@@ -2083,14 +2091,20 @@ def report_apiview_metrics(
             output_path=DEFAULT_COMPLIANCE_OUTPUT_PATH,
             environment=environment,
         )
+        duplicate_lineid_chart_path = generate_duplicate_lineid_chart(
+            duplicate_lineid_reports,
+            output_path=DEFAULT_DUPLICATE_LINEIDS_OUTPUT_PATH,
+            environment=environment,
+        )
 
-    output = {"versions": version_reports, "compliance": compliance_reports}
+    output = {"versions": version_reports, "compliance": compliance_reports, "duplicate_line_ids": duplicate_lineid_reports}
     sys.stdout.buffer.write(json.dumps(output, indent=2, ensure_ascii=False, default=str).encode("utf-8"))
     sys.stdout.buffer.write(b"\n")
 
     if summary:
         print_version_report(version_reports, version_chart_path, environment=environment, file=sys.stderr)
         print_compliance_report(compliance_reports, compliance_chart_path, environment=environment, file=sys.stderr)
+        print_duplicate_lineid_report(duplicate_lineid_reports, duplicate_lineid_chart_path, environment=environment, file=sys.stderr)
 
 
 def grant_permissions(assignee_id: str = None):

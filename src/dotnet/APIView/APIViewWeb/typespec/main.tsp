@@ -5,6 +5,7 @@ import "./autoreview.tsp";
 import "./apirevisions.tsp";
 import "./comments.tsp";
 import "./reviews.tsp";
+import "./permissions.tsp";
 
 using TypeSpec.Http;
 

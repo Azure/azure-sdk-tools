@@ -13,7 +13,7 @@ environment: azsdk-mcp
 # Execution configuration
 config:
   runs: 1
-  timeout: 1200
+  timeout: 1200s
   model: claude-opus-4.6
   executor: copilot-sdk
 # Cases are intentionally sorted by case id.
@@ -1510,7 +1510,8 @@ stimuli:
   graders:
   - type: tool-calls
     config:
-      required: edit
+      required: 
+      - edit
   - type: file-not-matches
     config:
       path: BgpConnection.tsp

@@ -1674,7 +1674,7 @@ def db_ingest_guidelines(
     from src._guideline_ingestor import GuidelineIngestor
 
     os.environ["ENVIRONMENT_NAME"] = environment
-    ingestor = GuidelineIngestor.get_instance()
+    ingestor = GuidelineIngestor.get_instance(force_new=True)
     result = ingestor.sync_guidelines(
         dry_run=dry_run,
         details=details,

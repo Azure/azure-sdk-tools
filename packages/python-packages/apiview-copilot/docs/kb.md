@@ -142,7 +142,7 @@ Guidelines and examples can be ingested automatically from the [azure-sdk](https
 
 ### How It Works
 
-1. **Change detection** — The ingestor compares the current HEAD of the azure-sdk repo against the last synced commit SHA (stored in Azure App Configuration as `guidelines:last_synced_commit_sha`). Only changed markdown files in `docs/` are processed.
+1. **Change detection** — The ingestor compares two explicit commit SHAs (`--base-sha` and `--target-sha`) of the azure-sdk repo. Only changed markdown files in `docs/` between those commits are processed. The last synced SHA is stored in Azure App Configuration as `guidelines:last_synced_commit_sha` for reference.
 2. **Markdown parsing** — Each file is rendered to HTML via `markdown-it`, then parsed with BeautifulSoup to extract guidelines identified by Jekyll requirement tags (`{% include requirement/MUST id="..." %}`, etc.). Tags are replaced with readable text (e.g., `DO`, `YOU SHOULD NOT`).
 3. **Content hashing** — Each guideline's text is normalized (whitespace, line endings) and hashed with SHA-256. This enables efficient change detection without full text comparison.
 4. **LLM enrichment** — Guidelines are batched (10 per batch) and sent to an LLM to extract structured titles, enriched content, and good/bad code examples.
@@ -152,8 +152,7 @@ Guidelines and examples can be ingested automatically from the [azure-sdk](https
 
 ### Sync Modes
 
-- **Incremental sync** (default) — Only processes files changed between the base and target commits. Fast but may miss deletions in unchanged files.
-- **Full sync** (omit `--base-sha`) — If no base SHA is provided and no last-synced SHA exists in App Configuration, all guideline files are processed regardless of history. Use periodically to catch drift.
+- **Incremental sync** — Processes files changed between the base and target commits. Both `--base-sha` and `--target-sha` are required, and `base_sha` must be an ancestor of `target_sha`.
 - **Language-scoped sync** (`--language`) — Restricts processing to guideline files belonging to specific languages, plus the `general/` folder. Useful for testing or targeted updates.
 
 ### Content Tracking Fields

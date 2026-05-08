@@ -284,35 +284,6 @@ class GuidelineIngestor:
 
         return changed_files
 
-    def get_all_guideline_files(self, commit_sha: str = "main") -> list[str]:
-        """
-        Get all guideline markdown files in the docs/ folder.
-
-        Used for initial full sync or when --force is specified.
-        Only returns files that match FILES_TO_PARSE.
-
-        Args:
-            commit_sha: The commit SHA or branch to fetch files from. Defaults to 'main'.
-        """
-        url = f"https://api.github.com/repos/{AZURE_SDK_OWNER}/{AZURE_SDK_REPO}/git/trees/{commit_sha}?recursive=1"
-        resp = self._client.get(url)
-        resp.raise_for_status()
-        tree = resp.json().get("tree", [])
-
-        files = []
-        for item in tree:
-            if (
-                item["type"] == "blob"
-                and item["path"].startswith(GUIDELINES_PATH_PREFIX)
-                and item["path"].endswith(".md")
-            ):
-                # Check if the filename (without path) is in our list of files to parse
-                base_name = item["path"].split("/")[-1]
-                if base_name in FILES_TO_PARSE:
-                    files.append(item["path"])
-
-        return files
-
     @staticmethod
     def _file_matches_language_folders(file_path: str, allowed_folders: set) -> bool:
         """Return True if *file_path* belongs to one of the *allowed_folders* under ``docs/``."""
@@ -595,19 +566,31 @@ class GuidelineIngestor:
         last_sha = base_sha
         print(f"Base SHA: {last_sha}")
 
-        # Determine which files to process
-        is_incremental = last_sha != current_sha
-        if is_incremental:
-            print(f"Comparing commits: {last_sha[:8]}...{current_sha[:8]}")
-            files_to_process = self.get_changed_files(last_sha, current_sha)
-            print(f"Incremental sync: {len(files_to_process)} files changed")
-            if files_to_process:
-                for f in files_to_process:
-                    print(f"  Changed: {f}")
-        else:
-            print(f"Fetching all guideline files from SHA: {current_sha[:8]}")
-            files_to_process = self.get_all_guideline_files(current_sha)
-            print(f"Full sync: {len(files_to_process)} files to process")
+        # Validate SHA relationship
+        if last_sha == current_sha:
+            raise ValueError(f"base_sha and target_sha are identical ({current_sha[:8]}). Nothing to sync.")
+
+        # Verify base is an ancestor of target using the compare API
+        compare_url = f"https://api.github.com/repos/{AZURE_SDK_OWNER}/{AZURE_SDK_REPO}/compare/{last_sha}...{current_sha}"
+        compare_resp = self._client.get(compare_url)
+        compare_resp.raise_for_status()
+        compare_data = compare_resp.json()
+        compare_status = compare_data.get("status")
+        if compare_status == "behind":
+            raise ValueError(
+                f"base_sha ({last_sha[:8]}) is ahead of target_sha ({current_sha[:8]}). "
+                "base_sha must be an ancestor of target_sha."
+            )
+        if compare_status == "identical":
+            raise ValueError(f"base_sha and target_sha resolve to identical trees. Nothing to sync.")
+
+        # Determine which files changed
+        print(f"Comparing commits: {last_sha[:8]}...{current_sha[:8]}")
+        files_to_process = self.get_changed_files(last_sha, current_sha)
+        print(f"Incremental sync: {len(files_to_process)} files changed")
+        if files_to_process:
+            for f in files_to_process:
+                print(f"  Changed: {f}")
 
         # Apply language filter if specified
         if languages:
@@ -632,11 +615,7 @@ class GuidelineIngestor:
                 self.set_last_synced_commit_sha(current_sha)
             return result
 
-        # For incremental sync, we need to parse BOTH base and target to find actual differences
-        if is_incremental:
-            return self._sync_incremental(files_to_process, last_sha, current_sha, dry_run, details, result)
-        else:
-            return self._sync_full(files_to_process, current_sha, dry_run, details, result)
+        return self._sync_incremental(files_to_process, last_sha, current_sha, dry_run, details, result)
 
     def _parse_files_at_sha(
         self, files: List[str], commit_sha: str, label: str
@@ -651,11 +630,15 @@ class GuidelineIngestor:
                 content = self.fetch_file_content(file_path, commit_sha)
                 parsed = self.parse_markdown_file(file_path, content)
                 all_guidelines.extend(parsed)
+            except httpx.HTTPStatusError as e:
+                # File might not exist at this SHA (e.g., newly added file checked against base)
+                if e.response.status_code == 404:
+                    continue
+                logger.error("Error fetching %s at %s: %s", file_path, commit_sha[:8], e)
+                errors.append(f"parse {file_path}: {e}")
             except Exception as e:
-                # File might not exist at this SHA (e.g., newly added file)
-                if "404" not in str(e):
-                    logger.error("Error parsing %s at %s: %s", file_path, commit_sha[:8], e)
-                    errors.append(f"parse {file_path}: {e}")
+                logger.error("Error parsing %s at %s: %s", file_path, commit_sha[:8], e)
+                errors.append(f"parse {file_path}: {e}")
 
         # Filter out guidelines without valid IDs
         all_guidelines = [g for g in all_guidelines if g.id]
@@ -775,144 +758,12 @@ class GuidelineIngestor:
             print("Running search indexer...")
             SearchManager.run_indexers(["guidelines"])
 
-        # Sync examples
-        if all_examples:
-            self._sync_examples(all_examples, target_sha, changed_guideline_ids, dry_run, details, result)
+        # Sync examples (include deleted guideline IDs so their examples get cleaned up)
+        example_sync_ids = changed_guideline_ids | set(result.guidelines_deleted)
+        if all_examples or result.guidelines_deleted:
+            self._sync_examples(all_examples, target_sha, example_sync_ids, dry_run, details, result)
 
         # Reconcile memories for changed guidelines
-        changed_set = set(result.guidelines_created) | set(result.guidelines_updated)
-        self._reconcile_memories(changed_set, enriched_map, dry_run, result)
-
-        # Update the last synced SHA
-        if not dry_run:
-            self.set_last_synced_commit_sha(target_sha)
-
-        return result
-
-    def _sync_full(
-        self,
-        files_to_process: List[str],
-        target_sha: str,
-        dry_run: bool,
-        details: bool,
-        result: SyncResult,
-    ) -> SyncResult:
-        """Perform full sync by comparing target SHA against database."""
-        # Step 1: Preprocess all files and collect raw guidelines
-        print(f"\nPreprocessing {len(files_to_process)} files...")
-        all_parsed_guidelines: List[ParsedGuideline] = []
-
-        for file_path in files_to_process:
-            try:
-                print(f"  Processing: {file_path}")
-                content = self.fetch_file_content(file_path, target_sha)
-                parsed = self.parse_markdown_file(file_path, content)
-                all_parsed_guidelines.extend(parsed)
-            except Exception as e:
-                logger.error("Error preprocessing %s: %s", file_path, e)
-                result.errors.append(f"preprocess {file_path}: {e}")
-
-        print(f"Extracted {len(all_parsed_guidelines)} raw guidelines from {len(files_to_process)} files")
-
-        # Validate and deduplicate
-        malformed_ids = self.check_id_format(all_parsed_guidelines)
-        if malformed_ids:
-            print(f"Warning: Found {len(malformed_ids)} malformed IDs: {malformed_ids[:5]}...")
-
-        # Filter out guidelines without valid IDs
-        all_parsed_guidelines = [g for g in all_parsed_guidelines if g.id]
-
-        duplicates_result = self.filter_duplicates(all_parsed_guidelines)
-        good_guidelines = duplicates_result["good"]
-        bad_guidelines = duplicates_result["bad"]
-
-        if bad_guidelines:
-            print(f"Warning: Filtered out {len(bad_guidelines)} duplicate guidelines with conflicting content")
-
-        print(f"After validation: {len(good_guidelines)} valid guidelines\n")
-
-        # Step 2: Use LLM to enrich guidelines with examples
-        enriched_map: Dict[str, dict] = {}
-        all_examples: List[ParsedExample] = []
-        enriched_list, all_examples = self._parse_guidelines_with_llm(good_guidelines, result)
-        for item in enriched_list:
-            enriched_map[item["id"]] = item
-
-        # Step 3: Sync to database
-        print("Syncing to database...")
-        seen_guideline_ids: set[str] = set()
-        files_with_guidelines: set[str] = set()
-
-        for parsed in good_guidelines:
-            seen_guideline_ids.add(parsed.id)
-            files_with_guidelines.add(parsed.source_file_path)
-
-            # Compute hash of the new content
-            new_hash = self.compute_content_hash(parsed.text)
-
-            # Get LLM enrichment if available
-            enriched = enriched_map.get(parsed.id)
-
-            # Check if guideline exists and compare hash
-            try:
-                existing = self._db.guidelines.get(parsed.id)
-                existing_hash = existing.get("content_hash")
-
-                if existing_hash == new_hash:
-                    result.guidelines_unchanged.append(parsed.id)
-                    continue
-
-                # Content changed - update
-                result.guidelines_updated.append(parsed.id)
-                if details:
-                    after_content = enriched.get("content", parsed.text) if enriched else parsed.text
-                    result.details.append(SyncDetail(id=parsed.id, kind="guideline", action="updated", before=existing.get("content", ""), after=after_content))
-                if not dry_run:
-                    self._upsert_guideline(parsed, new_hash, target_sha, existing, enriched)
-
-            except Exception:
-                # Guideline doesn't exist - create
-                result.guidelines_created.append(parsed.id)
-                if details:
-                    after_content = enriched.get("content", parsed.text) if enriched else parsed.text
-                    result.details.append(SyncDetail(id=parsed.id, kind="guideline", action="created", before=None, after=after_content))
-                if not dry_run:
-                    self._upsert_guideline(parsed, new_hash, target_sha, enriched=enriched)
-
-        # Handle deletions: find guidelines that were in processed files but are no longer present
-        for file_path in files_with_guidelines:
-            try:
-                query = f"SELECT c.id FROM c WHERE c.source_file_path = '{file_path}' AND (NOT IS_DEFINED(c.isDeleted) OR c.isDeleted = false)"
-                existing_items = list(
-                    self._db.guidelines.client.query_items(query=query, enable_cross_partition_query=True)
-                )
-
-                for item in existing_items:
-                    if item["id"] not in seen_guideline_ids:
-                        if details:
-                            try:
-                                full_item = self._db.guidelines.get(item["id"])
-                                result.details.append(SyncDetail(id=item["id"], kind="guideline", action="deleted", before=full_item.get("content", ""), after=None))
-                            except Exception:
-                                result.details.append(SyncDetail(id=item["id"], kind="guideline", action="deleted", before=None, after=None))
-                        if not dry_run:
-                            self._db.guidelines.delete(item["id"], run_indexer=False)
-                        result.guidelines_deleted.append(item["id"])
-
-            except Exception as e:
-                logger.error("Error handling deletions for %s: %s", file_path, e)
-                result.errors.append(f"deletion check {file_path}: {e}")
-
-        # Run indexer once at the end (if not dry run)
-        if not dry_run and (result.guidelines_created or result.guidelines_updated or result.guidelines_deleted):
-            print("Running search indexer...")
-            SearchManager.run_indexers(["guidelines"])
-
-        # Step 4: Sync examples
-        if all_examples:
-            self._sync_examples(all_examples, target_sha, seen_guideline_ids, dry_run, details, result)
-
-        # Step 5: Reconcile memories for changed guidelines
         changed_set = set(result.guidelines_created) | set(result.guidelines_updated)
         self._reconcile_memories(changed_set, enriched_map, dry_run, result)
 
@@ -1148,9 +999,12 @@ class GuidelineIngestor:
 
         # Update guideline related_examples fields
         if not dry_run:
-            for gid, ex_ids in guideline_example_map.items():
+            for gid in guideline_ids_to_process:
+                ex_ids = guideline_example_map.get(gid, [])
                 try:
                     existing = self._db.guidelines.get(gid)
+                    if existing.get("related_examples", []) == ex_ids:
+                        continue
                     existing["related_examples"] = ex_ids
                     guideline = Guideline(**{k: v for k, v in existing.items() if k != "kind" and k != "isDeleted"})
                     self._db.guidelines.upsert(gid, data=guideline, run_indexer=False)

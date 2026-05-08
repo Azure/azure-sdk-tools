@@ -39,8 +39,6 @@ stimuli:
       dest: Microsoft.Widget/Widget/stable/2021-11-01/widget.json
     - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
       dest: Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
-    commands:
-    - npm install
   graders:
   - type: tool-calls
     config:

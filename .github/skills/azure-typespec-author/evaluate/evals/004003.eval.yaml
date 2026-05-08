@@ -47,8 +47,6 @@ stimuli:
       dest: VpnSiteLinkConnection.tsp
     - src: ../fixtures/004003-delete-and-restore-operationId-decorator/tspconfig.yaml
       dest: tspconfig.yaml
-    commands:
-    - npm install
   graders:
   - type: tool-calls
     config:

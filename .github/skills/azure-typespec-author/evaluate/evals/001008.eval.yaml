@@ -75,8 +75,6 @@ stimuli:
       dest: examples/2024-10-01/Operations_List_MaximumSet_Gen.json
     - src: ../fixtures/001008-version-add-stable-after-stable/examples/2024-10-01/Operations_List_MinimumSet_Gen.json
       dest: examples/2024-10-01/Operations_List_MinimumSet_Gen.json
-    commands:
-    - npm install
   graders:
   - type: tool-calls
     config:

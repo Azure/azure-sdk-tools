@@ -35,8 +35,6 @@ stimuli:
       dest: Microsoft.Widget/Widget/shared.tsp
     - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
       dest: Microsoft.Widget/Widget/tspconfig.yaml
-    commands:
-    - npm install
   graders:
   - type: tool-calls
     config:

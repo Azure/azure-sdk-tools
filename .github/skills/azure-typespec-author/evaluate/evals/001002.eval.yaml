@@ -35,8 +35,6 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/001002-version-default-value/tspconfig.yaml
       dest: tspconfig.yaml
-    commands:
-    - npm install
   graders:
   - type: tool-calls
     config:

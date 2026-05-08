@@ -31,8 +31,6 @@ stimuli:
       dest: package.json
     - src: ../fixtures/001-share-version-new-feature/readme.md
       dest: readme.md
-    commands:
-    - npm install
   graders:
   - type: tool-calls
     config:

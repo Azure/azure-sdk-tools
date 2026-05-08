@@ -45,8 +45,6 @@
 
 ## Background / Problem Statement
 
-_Describe the problem you're solving and why it's important._
-
 ### Current State
 
 Service teams and SDK teams spend significant manual effort detecting SDK breaking changes and mitigate them. This process is time-consuming and still fails to reliably identify all breaking changes, leading to some being missed or incorrectly resolved. As a result, overall SDK quality is degraded.

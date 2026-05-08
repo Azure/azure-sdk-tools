@@ -375,21 +375,21 @@ Sync guidelines and examples from the [azure-sdk](https://github.com/Azure/azure
 
 ```bash
 # Preview changes (dry-run, the default)
-avc db ingest-guidelines -e staging -b <BASE_SHA> -t <TARGET_SHA>
+avc db ingest-guidelines --environment staging -b <BASE_SHA> -t <TARGET_SHA>
 
 # Preview with before/after content
-avc db ingest-guidelines -e staging -b abc123 -t def456 --details
+avc db ingest-guidelines --environment staging -b abc123 -t def456 --details
 
 # Apply changes to the database
-avc db ingest-guidelines -e staging -b <BASE_SHA> -t <TARGET_SHA> --apply
+avc db ingest-guidelines --environment staging -b <BASE_SHA> -t <TARGET_SHA> --apply
 
 # Only sync specific languages
-avc db ingest-guidelines -e staging -b abc123 -t def456 --language python java --apply
+avc db ingest-guidelines --environment staging -b abc123 -t def456 --language python java --apply
 ```
 
 | Option | Description |
 |--------|-------------|
-| `-e/--environment` | **Required.** The APIView environment to update (`staging` or `production`) |
+| `--environment` | **Required.** The APIView environment to update (`staging` or `production`) |
 | `-b/--base-sha` | **Required.** The baseline commit SHA to compare against |
 | `-t/--target-sha` | **Required.** The target commit SHA to sync to |
 | `--apply` | Apply changes to the database. Without this flag, runs in dry-run mode |

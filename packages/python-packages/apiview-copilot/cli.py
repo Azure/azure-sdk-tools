@@ -1474,31 +1474,7 @@ def _get_container(db, item_type: str):
 
 def _cascade_unlink(db, item: dict, item_type: str):
     """Remove back-links from all related items. Soft-delete orphaned examples."""
-    item_id = item["id"]
-
-    for source_field, target_type, target_field in _RELATION_MAP.get(item_type, []):
-        target_container = _get_container(db, target_type)
-
-        for target_id in item.get(source_field, []):
-            try:
-                raw_target = target_container.get(target_id)
-                refs = raw_target.get(target_field, [])
-                if item_id in refs:
-                    refs.remove(item_id)
-
-                # Check if the target is now orphaned and should be deleted
-                if (
-                    target_type == "example"
-                    and not raw_target.get("memory_ids", [])
-                    and not raw_target.get("guideline_ids", [])
-                ):
-                    target_container.delete(target_id, run_indexer=False)
-                    print(f"  Soft-deleted orphaned example {target_id}")
-                else:
-                    target_container.client.upsert_item(raw_target)
-                    print(f"  Unlinked {target_type} {target_id}")
-            except Exception as e:
-                print(f"  Warning: failed to clean {target_type} {target_id}: {e}")
+    db.cascade_unlink(item, item_type)
 
 
 def _try_run_indexers(containers: list[tuple[str, object]]):
@@ -3154,7 +3130,7 @@ class CliCommandsLoader(CLICommandsLoader):
                 "environment",
                 type=str,
                 help="The APIView environment to update (required).",
-                options_list=["--environment", "-e"],
+                options_list=["--environment"],
                 required=True,
                 choices=["production", "staging"],
             )

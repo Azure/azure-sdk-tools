@@ -583,6 +583,11 @@ class GuidelineIngestor:
             )
         if compare_status == "identical":
             raise ValueError("base_sha and target_sha resolve to identical trees. Nothing to sync.")
+        if compare_status == "diverged":
+            raise ValueError(
+                f"base_sha ({last_sha[:8]}) and target_sha ({current_sha[:8]}) have diverged. "
+                "base_sha must be a direct ancestor of target_sha."
+            )
 
         # Determine which files changed
         print(f"Comparing commits: {last_sha[:8]}...{current_sha[:8]}")
@@ -644,6 +649,19 @@ class GuidelineIngestor:
         all_guidelines = [g for g in all_guidelines if g.id]
         duplicates_result = self.filter_duplicates(all_guidelines)
         good_guidelines = duplicates_result["good"]
+        bad_guidelines = duplicates_result["bad"]
+
+        if bad_guidelines:
+            bad_ids = set(g.id for g in bad_guidelines)
+            errors.append(
+                f"Conflicting duplicate IDs (skipped, not deleted): {sorted(bad_ids)}"
+            )
+            # Include one copy of each conflicting ID so it's not treated as a deletion
+            seen_bad = set()
+            for g in bad_guidelines:
+                if g.id not in seen_bad:
+                    good_guidelines.append(g)
+                    seen_bad.add(g.id)
 
         print(f"  Found {len(good_guidelines)} valid guidelines")
         return good_guidelines, errors
@@ -727,6 +745,8 @@ class GuidelineIngestor:
                     result.details.append(SyncDetail(id=gid, kind="guideline", action="deleted", before=base_map[gid][0].text, after=None))
                 if not dry_run:
                     try:
+                        item = self._db.guidelines.get(gid)
+                        self._db.cascade_unlink(item, "guideline")
                         self._db.guidelines.delete(gid, run_indexer=False)
                     except Exception:
                         pass  # Might not exist in DB
@@ -761,7 +781,7 @@ class GuidelineIngestor:
 
         # Sync examples (include deleted guideline IDs so their examples get cleaned up)
         example_sync_ids = changed_guideline_ids | set(result.guidelines_deleted)
-        if all_examples or result.guidelines_deleted:
+        if example_sync_ids:
             self._sync_examples(all_examples, target_sha, example_sync_ids, dry_run, details, result)
 
         # Reconcile memories for changed guidelines

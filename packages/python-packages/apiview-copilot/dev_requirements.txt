@@ -10,12 +10,14 @@ azure-identity==1.21.0
 azure-keyvault-keys==4.11.0
 azure-keyvault-secrets==4.10.0
 azure-search-documents==11.5.2
+beautifulsoup4==4.13.4
 black==25.1.0
 colorama==0.4.6
 fastapi==0.121.2
 httpx==0.28.1
 knack==0.12.0
 matplotlib==3.10.0
+markdown-it-py==3.0.0
 openai==2.4.0
 python-dotenv==1.0.1
 pydantic==2.10.6
@@ -42,7 +44,5 @@ azure-mgmt-keyvault==12.0.0
 azure-mgmt-resource>=22.0.0,<23.0.0
 azure-mgmt-search==9.1.0
 azure-mgmt-web==8.0.0
-beautifulsoup4==4.13.4
-markdown-it-py==3.0.0
 pylint==3.3.7
 PyYAML==6.0.2

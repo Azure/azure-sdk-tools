@@ -194,7 +194,7 @@ extends:
               - script: |
                   cd .github/skills/azure-typespec-author/evaluate
                   mkdir -p results-2
-                  vally eval --eval-spec eval.yaml --output-dir results-2 --workers 3 --verbose
+                  vally eval --eval-spec evals/eval.yaml --output-dir results-2 --workers 3 --verbose
                 displayName: Run all evaluations
                 continueOnError: true
                 condition: succeededOrFailed()

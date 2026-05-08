@@ -7,8 +7,6 @@ process.env.KEYVAULT_NAME = "test-vault";
 process.env.KEYVAULT_KEY_NAME = "test-key";
 process.env.GITHUB_APP_NUMERIC_ID = "12345";
 process.env.GITHUB_INSTALL_OWNER = "TestOrg";
-process.env.GITHUB_APP_CLIENT_ID = "test-client-id";
-process.env.GITHUB_APP_CLIENT_SECRET = "test-client-secret";
 process.env.DEVOPS_RELEASE_PLAN_PAT = "test-pat";
 
 // Mock external API calls
@@ -42,18 +40,16 @@ vi.mock("../lib/github-api.js", () => ({
 
 import express from "express";
 import http from "node:http";
-import session from "express-session";
 
 let app, server;
 
 beforeAll(async () => {
   app = express();
-  app.use(session({ secret: "test", resave: false, saveUninitialized: false }));
   app.use(express.json());
 
-  // Inject a fake authenticated session
+  // Simulate authenticated user (in production, requireAuth sets req.user)
   app.use((req, res, next) => {
-    req.session.user = { login: "testuser" };
+    req.user = { login: "testuser@microsoft.com", name: "Test User", objectId: "obj-123" };
     next();
   });
 

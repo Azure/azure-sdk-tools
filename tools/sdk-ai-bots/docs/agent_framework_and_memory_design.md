@@ -112,10 +112,17 @@ This gives us the simplicity of Foundry for per-user context while retaining ful
 
 #### 2.3.1 Memory Types
 
+AI Foundry Memory Store provides two built-in types of long-term memory (see [Foundry Memory — Memory Types](https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/what-is-memory?tabs=conversational-agent#memory-types)):
+
+- **User profile memory** — Information and preferences *about the user* (e.g., preferred name, SDK language, working patterns). These are considered "static" with respect to a conversation because they don't depend on the current chat context. They are retrieved **once at the start of each session**.
+- **Chat summary memory** — A distilled summary of each topic covered in prior chat sessions. These allow users to continue conversations or reference earlier sessions without repeating context. They are retrieved **every turn** using the current input messages as search items.
+
+In addition to the two Foundry-managed types, we maintain a third type — **expert episodes** — in a self-hosted Cosmos DB store for structured knowledge that requires custom schema and vector search.
+
 | Memory Type | Store | Scope | Description |
 | --- | --- | --- | --- |
 | **User profile** (static) | AI Foundry Memory Store | Per user (`user_{user_id}`) | Personal preferences, SDK/language, project context. Fetched once per session via `search_memories` with no query items. |
-| **User contextual** | AI Foundry Memory Store | Per user (`user_{user_id}`) | Conversation-relevant memories retrieved every turn using input messages as search items. Incremental via `previous_search_id`. |
+| **User contextual** (chat summary) | AI Foundry Memory Store | Per user (`user_{user_id}`) | Conversation-relevant memories retrieved every turn using input messages as search items. Incremental via `previous_search_id`. |
 | **Expert episodes** (tenant) | Cosmos DB `experience-episodes` | Per tenant (`tenant_id` partition key) | Structured problem-solution pairs extracted from expert-resolved threads. Retrieved via cosine vector similarity search against the user's current question. |
 
 #### 2.3.2 Key Components

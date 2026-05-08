@@ -99,7 +99,6 @@ SHOULD_NOT_PATTERN = r'{% include requirement/SHOULDNOT\s*id=\\?"[a-zA-Z0-9_-]+\
 SHOULD_NOT_REPLACE = "YOU SHOULD NOT"
 
 # Include patterns
-INCLUDE_PATTERN = r"{%\s*(include|include_relative)\s*([^\s%}]+)\s*%}"
 INCLUDE_NOTE_PATTERN = r'{% include note.html content=\\?"([^\\]+)\\?" %}'
 INCLUDE_NOTE_REPLACE = r"**NOTE:** \1"
 INCLUDE_DRAFT_PATTERN = r'{% include draft.html content=\\?"([^\\]+)\\?" %}'
@@ -429,7 +428,7 @@ class GuidelineIngestor:
 
             elif item.name in ["ol", "ul"]:
                 # Handle list items (common location for requirement IDs)
-                list_items = item.find_all("li")
+                list_items = item.find_all("li", recursive=False)
                 for li in list_items:
                     item_text, guideline_id = self._split_tags(li, file_path)
                     item_text = self._add_links(item_text, li)
@@ -765,8 +764,13 @@ class GuidelineIngestor:
 
         # Run indexer once at the end (if not dry run)
         if not dry_run and (result.guidelines_created or result.guidelines_updated or result.guidelines_deleted):
-            print("Running search indexer...")
-            SearchManager.run_indexers(["guidelines"])
+            indexers = ["guidelines"]
+            # cascade_unlink during deletion may modify memories (removing back-links),
+            # so reindex memories too when guidelines were deleted.
+            if result.guidelines_deleted:
+                indexers.append("memories")
+            print(f"Running search indexer(s): {', '.join(indexers)}...")
+            SearchManager.run_indexers(indexers)
 
         # Sync examples (include deleted guideline IDs so their examples get cleaned up)
         example_sync_ids = changed_guideline_ids | set(result.guidelines_deleted)

@@ -1443,35 +1443,6 @@ def db_delete(container_name: str, id: str):
         print(f"Error deleting item: {e}")
 
 
-# Mapping: (source_type) -> list of (field_on_source, target_type, field_on_target)
-_RELATION_MAP = {
-    "guideline": [
-        ("related_memories", "memory", "related_guidelines"),
-        ("related_examples", "example", "guideline_ids"),
-        ("related_guidelines", "guideline", "related_guidelines"),
-    ],
-    "memory": [
-        ("related_guidelines", "guideline", "related_memories"),
-        ("related_examples", "example", "memory_ids"),
-        ("related_memories", "memory", "related_memories"),
-    ],
-    "example": [
-        ("guideline_ids", "guideline", "related_examples"),
-        ("memory_ids", "memory", "related_examples"),
-    ],
-}
-
-_TYPE_CONTAINERS = {
-    "guideline": "guidelines",
-    "memory": "memories",
-    "example": "examples",
-}
-
-
-def _get_container(db, item_type: str):
-    return getattr(db, _TYPE_CONTAINERS[item_type])
-
-
 def _cascade_unlink(db, item: dict, item_type: str):
     """Remove back-links from all related items. Soft-delete orphaned examples."""
     db.cascade_unlink(item, item_type)

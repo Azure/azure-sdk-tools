@@ -57,6 +57,11 @@ extends:
               workingDirectory: $(System.DefaultWorkingDirectory)/tools/js-sdk-release-tools
 
             - script: |
+                npm run format:check
+              displayName: 'Prettier format check'
+              workingDirectory: $(System.DefaultWorkingDirectory)/tools/js-sdk-release-tools
+
+            - script: |
                 npm run build
               displayName: 'npm run build'
               workingDirectory: $(System.DefaultWorkingDirectory)/tools/js-sdk-release-tools
@@ -77,5 +82,5 @@ extends:
 
             - template: /eng/common/pipelines/templates/steps/publish-1es-artifact.yml
               parameters:
-                ArtifactName: drop
-                ArtifactPath: $(Build.ArtifactStagingDirectory)
+                  ArtifactName: drop
+                  ArtifactPath: $(Build.ArtifactStagingDirectory)

@@ -78,7 +78,7 @@ What are we trying to achieve with this design?
 
 This design covers the complete breaking change detection workflow and its core components:
 - SDK change detector
-- ChangelogOrRevapi-to-breaking-change pattern mapping
+- ChangelogOrRevapi-breakingChange pattern
 - SDK breaking change classifier
 
 ### Detailed Design

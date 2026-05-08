@@ -137,8 +137,6 @@ namespace APIViewWeb.HostedServices
                     if (commentModel.GuidelineIds.Count > 0)
                     {
                         commentText.AppendLine();
-                        commentText.AppendLine("&nbsp;");
-                        commentText.AppendLine();
                         commentText.AppendLine("**Guidelines**");
                         foreach (string guidelineId in commentModel.GuidelineIds)
                         {

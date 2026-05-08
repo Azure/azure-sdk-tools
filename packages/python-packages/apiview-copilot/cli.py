@@ -2543,10 +2543,15 @@ def get_feedback(
     exclude: Optional[list[str]] = None,
     environment: str = "production",
     output_format: str = "json",
+    include_implicit: bool = False,
 ):
     """
     Retrieve AI comment feedback from APIView between start_date and end_date.
     If --language is omitted, returns feedback for all languages.
+    Use --include-implicit to also return implicit bad comments: AI comments created
+    in the date range that are on approved revisions with no votes, no Feedback entries,
+    no resolution, and not deleted. Note that the date range filters by comment creation
+    time for implicit bad (vs. feedback submission time for explicit feedback).
     """
     results = _get_ai_comment_feedback(
         language=language,
@@ -2554,6 +2559,7 @@ def get_feedback(
         end_date=end_date,
         exclude=exclude,
         environment=environment,
+        include_implicit=include_implicit,
     )
     if output_format == "yaml":
         print(yaml.dump(results, default_flow_style=False, allow_unicode=True, sort_keys=False))
@@ -3248,9 +3254,9 @@ class CliCommandsLoader(CLICommandsLoader):
                 "exclude",
                 type=str,
                 nargs="*",
-                help="Feedback types to exclude. Can be 'good', 'bad', or 'delete'.",
+                help="Feedback types to exclude. Can be 'good', 'bad', 'delete', or 'implicit_bad'.",
                 options_list=["--exclude"],
-                choices=["good", "bad", "delete"],
+                choices=["good", "bad", "delete", "implicit_bad"],
             )
             ac.argument(
                 "output_format",
@@ -3259,6 +3265,13 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--format", "-f"],
                 default="json",
                 choices=["json", "yaml"],
+            )
+            ac.argument(
+                "include_implicit",
+                action="store_true",
+                help="Include implicit bad comments (AI comments created in date range on approved revisions with no votes, no feedback, and no resolution).",
+                options_list=["--include-implicit"],
+                default=False,
             )
         with ArgumentsContext(self, "report memory") as ac:
             ac.argument(

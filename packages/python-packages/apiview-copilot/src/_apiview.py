@@ -5,9 +5,11 @@
 # --------------------------------------------------------------------------
 
 import asyncio
+import logging
 import re
 import sys
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from typing import Optional
 
 import httpx
@@ -85,6 +87,8 @@ _APIVIEW_COMMENT_SELECT_FIELDS = [
     "Downvotes",
     "CommentType",
     "CommentSource",
+    "ThreadId",
+    "Severity",
 ]
 APIVIEW_COMMENT_SELECT_FIELDS = [f"c.{field}" for field in _APIVIEW_COMMENT_SELECT_FIELDS]
 
@@ -459,16 +463,133 @@ def get_comments_in_date_range(
     return list(result)
 
 
+def get_thread_start_dates(
+    comments: list[dict],
+    environment: str = "production",
+) -> dict[str, str]:
+    """
+    Given comments (e.g. from get_comments_in_date_range), determines when each
+    comment thread was first created by querying for the MIN(CreatedOn) across all
+    comments sharing the same thread.
+
+    Threading logic:
+      - Comments with a ThreadId are grouped by ThreadId.
+      - Comments without a ThreadId are treated as standalone threads keyed by ElementId.
+      - Diagnostic comments (CommentSource == 'Diagnostic') are ignored.
+
+    For each unique ThreadId or ElementId, queries Cosmos for all matching
+    comments and computes the earliest CreatedOn in Python
+    (not just those in the original date window).
+    ThreadId is globally unique, so no ReviewId filter is needed for threaded comments.
+    For threadless comments keyed by ElementId, queries are scoped to the same ReviewId.
+
+    Returns:
+        dict mapping ThreadId (or ElementId for threadless comments) to the earliest
+        CreatedOn ISO-8601 string for that thread.
+    """
+    # Collect unique thread keys and their ReviewIds
+    # Key: (review_id, thread_key_type, thread_key_value)
+    thread_ids: set[str] = set()
+    element_ids_by_review: dict[str, set[str]] = {}  # review_id -> set of element_ids
+
+    for c in comments:
+        if c.get("CommentSource") == "Diagnostic":
+            continue
+        thread_id = c.get("ThreadId")
+        review_id = c.get("ReviewId")
+        if not review_id:
+            continue
+        if thread_id:
+            thread_ids.add(thread_id)
+        else:
+            element_id = c.get("ElementId")
+            if element_id:
+                element_ids_by_review.setdefault(review_id, set()).add(element_id)
+
+    if not thread_ids and not element_ids_by_review:
+        return {}
+
+    comments_client = get_apiview_cosmos_client(container_name="Comments", environment=environment)
+    result: dict[str, str] = {}
+
+    # Query CreatedOn per ThreadId for all threaded comments, then find min in Python
+    if thread_ids:
+        thread_id_list = list(thread_ids)
+        query = (
+            "SELECT c.ThreadId, c.CreatedOn "
+            "FROM c "
+            "WHERE ARRAY_CONTAINS(@thread_ids, c.ThreadId) "
+            "AND c.CommentSource != 'Diagnostic' "
+            "AND (NOT IS_DEFINED(c.IsDeleted) OR c.IsDeleted = false) "
+        )
+        rows = comments_client.query_items(
+            query=query,
+            parameters=[{"name": "@thread_ids", "value": thread_id_list}],
+            enable_cross_partition_query=True,
+        )
+        for row in rows:
+            key = row.get("ThreadId")
+            created = row.get("CreatedOn")
+            if key and created:
+                if key not in result or created < result[key]:
+                    result[key] = created
+
+    # Query CreatedOn per ElementId for threadless comments, then find min in Python
+    for review_id, elem_ids in element_ids_by_review.items():
+        elem_id_list = list(elem_ids)
+        query = (
+            "SELECT c.ElementId, c.CreatedOn "
+            "FROM c "
+            "WHERE c.ReviewId = @review_id "
+            "AND (NOT IS_DEFINED(c.ThreadId) OR c.ThreadId = null) "
+            "AND ARRAY_CONTAINS(@element_ids, c.ElementId) "
+            "AND c.CommentSource != 'Diagnostic' "
+            "AND (NOT IS_DEFINED(c.IsDeleted) OR c.IsDeleted = false) "
+        )
+        rows = comments_client.query_items(
+            query=query,
+            parameters=[
+                {"name": "@review_id", "value": review_id},
+                {"name": "@element_ids", "value": elem_id_list},
+            ],
+            enable_cross_partition_query=True,
+        )
+        for row in rows:
+            key = row.get("ElementId")
+            created = row.get("CreatedOn")
+            if key and created:
+                if key not in result or created < result[key]:
+                    result[key] = created
+
+    return result
+
+
 def get_approvers(*, language: str = None, environment: str = "production") -> set[str]:
     """
-    Retrieves the set of profile ids for approvers based on ApprovedLanguages.
-    If language is specified, returns profile ids where ApprovedLanguages contains the language.
-    If no language is specified, returns all profile ids with non-empty ApprovedLanguages.
+    Retrieves the set of architect and deputy-architect members from the Permissions container.
+    If language is specified (pretty name, e.g. "Java"), returns members from groups whose
+    roles include that language with role "Architect" or "Deputy Architect".
+    If no language is specified, returns all members from all architect/deputy-architect groups.
     """
-    profiles_client = get_apiview_cosmos_client(container_name="Profiles", environment=environment, db_name="APIView")
-    query = "SELECT c.id, c.Preferences FROM c"
-    parameters = []
-    result = profiles_client.query_items(
+    permissions_client = get_apiview_cosmos_client(container_name="Permissions", environment=environment)
+
+    if language:
+        query = (
+            "SELECT c.members FROM c "
+            "JOIN r IN c.roles "
+            "WHERE r.role IN ('Architect', 'Deputy Architect', 'DeputyArchitect') "
+            "AND LOWER(r.language) = @language"
+        )
+        parameters = [{"name": "@language", "value": language.lower()}]
+    else:
+        query = (
+            "SELECT c.members FROM c "
+            "JOIN r IN c.roles "
+            "WHERE r.role IN ('Architect', 'Deputy Architect', 'DeputyArchitect')"
+        )
+        parameters = []
+
+    result = permissions_client.query_items(
         query=query,
         parameters=parameters,
         enable_cross_partition_query=True,
@@ -476,15 +597,8 @@ def get_approvers(*, language: str = None, environment: str = "production") -> s
 
     approver_ids = set()
     for item in result:
-        preferences = item.get("Preferences", {})
-        approved_languages = preferences.get("ApprovedLanguages", [])
-        if not approved_languages:
-            continue
-        if language:
-            if language in approved_languages:
-                approver_ids.add(item.get("id"))
-        else:
-            approver_ids.add(item.get("id"))
+        members = item.get("members", [])
+        approver_ids.update(members)
 
     return approver_ids
 
@@ -495,6 +609,7 @@ def get_ai_comment_feedback(
     end_date: str,
     exclude: Optional[list[str]] = None,
     environment: str = "production",
+    include_implicit: bool = False,
 ) -> list[dict]:
     """
     Retrieves AI-generated comments that received feedback within the specified date range.
@@ -502,6 +617,11 @@ def get_ai_comment_feedback(
     The date range filters by when feedback was submitted:
     - For detailed feedback: checks Feedback[].SubmittedOn
     - For deletions: checks ChangeHistory[].ChangedOn where ChangeAction='Deleted'
+
+    When include_implicit is True, also returns "implicit bad" comments: AI comments created
+    in the date range that are on approved revisions but have no votes, no resolution, no
+    Feedback entries, and aren't deleted. These are inferred as unhelpful because the reviewer
+    approved without interacting with the comment.
 
     Note: Upvotes/Downvotes lists don't have timestamps, so comments with only
     upvotes/downvotes (and no Feedback entries or deletion events in the date range)
@@ -511,8 +631,10 @@ def get_ai_comment_feedback(
         language: Language to filter by (e.g., 'python', 'java'). If None, returns all languages.
         start_date: Start date in YYYY-MM-DD format (filters by feedback submission time)
         end_date: End date in YYYY-MM-DD format (filters by feedback submission time)
-        exclude: List of feedback types to exclude. Can include 'good', 'bad', 'delete'.
+        exclude: List of feedback types to exclude. Can include 'good', 'bad', 'delete', 'implicit_bad'.
         environment: The APIView environment ('production' or 'staging')
+        include_implicit: If True, also include implicit bad comments (unresolved, unvoted AI comments
+            on approved revisions created in the date range).
 
     Returns:
         List of dicts containing comment info and feedback, preserving database field names
@@ -621,7 +743,484 @@ def get_ai_comment_feedback(
         comment["FeedbackTypes"] = feedback_types
         result.append(comment)
 
+    # If include_implicit is requested, also fetch implicit bad comments
+    if include_implicit and "implicit_bad" not in exclude:
+        implicit_comments = _get_implicit_bad_comments(
+            start_date=start_date,
+            end_date=end_date,
+            language=language,
+            environment=environment,
+            review_lang_map=review_lang_map,
+        )
+        result.extend(implicit_comments)
+
     return result
+
+
+def _get_implicit_bad_comments(
+    start_date: str,
+    end_date: str,
+    language: Optional[str],
+    environment: str,
+    review_lang_map: dict,
+) -> list[dict]:
+    """
+    Retrieves implicit bad comments: AI-generated comments created in the date range
+    that are on approved revisions but have no votes, no resolution, no Feedback entries,
+    and aren't deleted.
+
+    These are inferred as unhelpful because the reviewer approved the revision without
+    interacting with the comment.
+    """
+    start_iso = to_iso8601(start_date)
+    end_iso = to_iso8601(end_date, end_of_day=True)
+
+    # Query for AI comments created in the date range that have no interaction
+    comments_client = get_apiview_cosmos_client(container_name="Comments", environment=environment)
+    query = """
+        SELECT c.id, c.ReviewId, c.APIRevisionId, c.ElementId, c.ThreadId,
+               c.CommentText, c.CorrelationId, c.ChangeHistory, c.IsResolved,
+               c.Upvotes, c.Downvotes, c.TaggedUsers, c.CommentType, c.Severity,
+               c.CommentSource, c.ResolutionLocked, c.CreatedBy, c.CreatedOn,
+               c.IsDeleted, c.IsGeneric, c.GuidelineIds, c.MemoryIds,
+               c.ConfidenceScore, c.Feedback
+        FROM c
+        WHERE c.CommentSource = 'AIGenerated'
+        AND c.CreatedOn >= @start_date AND c.CreatedOn <= @end_date
+        AND (NOT IS_DEFINED(c.IsDeleted) OR c.IsDeleted = false)
+        AND (NOT IS_DEFINED(c.IsResolved) OR c.IsResolved = false)
+        AND (NOT IS_DEFINED(c.Upvotes) OR ARRAY_LENGTH(c.Upvotes) = 0)
+        AND (NOT IS_DEFINED(c.Downvotes) OR ARRAY_LENGTH(c.Downvotes) = 0)
+        AND (NOT IS_DEFINED(c.Feedback) OR ARRAY_LENGTH(c.Feedback) = 0)
+    """
+
+    comments = list(
+        comments_client.query_items(
+            query=query,
+            parameters=[
+                {"name": "@start_date", "value": start_iso},
+                {"name": "@end_date", "value": end_iso},
+            ],
+            enable_cross_partition_query=True,
+        )
+    )
+
+    if not comments:
+        return []
+
+    # Collect revision IDs to check approval status
+    revision_ids = set(c.get("APIRevisionId") for c in comments if c.get("APIRevisionId"))
+    review_ids = set(c.get("ReviewId") for c in comments if c.get("ReviewId"))
+
+    # Fetch revision metadata to determine approval status
+    revisions_container = get_apiview_cosmos_client(container_name="APIRevisions", environment=environment)
+    approved_revision_ids = set()
+
+    if revision_ids:
+        rev_params = []
+        rev_clauses = []
+        for i, rev_id in enumerate(revision_ids):
+            param_name = f"@rev_{i}"
+            rev_clauses.append(f"c.id = {param_name}")
+            rev_params.append({"name": param_name, "value": rev_id})
+
+        rev_query = f"SELECT c.id, c.ChangeHistory FROM c WHERE ({' OR '.join(rev_clauses)})"
+        rev_results = list(
+            revisions_container.query_items(
+                query=rev_query, parameters=rev_params, enable_cross_partition_query=True
+            )
+        )
+
+        for rev in rev_results:
+            change_history = rev.get("ChangeHistory", [])
+            if change_history and isinstance(change_history, list):
+                for change in change_history:
+                    if change.get("ChangeAction") == "Approved":
+                        approved_revision_ids.add(rev["id"])
+                        break
+
+    if not approved_revision_ids:
+        return []
+
+    # Fetch language info for any new review IDs not already in review_lang_map
+    new_review_ids = review_ids - set(review_lang_map.keys())
+    if new_review_ids:
+        reviews_container = get_apiview_cosmos_client(container_name="Reviews", environment=environment)
+        params = []
+        clauses = []
+        for i, rid in enumerate(new_review_ids):
+            param_name = f"@id_{i}"
+            clauses.append(f"c.id = {param_name}")
+            params.append({"name": param_name, "value": rid})
+
+        review_query = f"SELECT c.id, c.Language FROM c WHERE ({' OR '.join(clauses)})"
+        review_results = list(
+            reviews_container.query_items(query=review_query, parameters=params, enable_cross_partition_query=True)
+        )
+        for r in review_results:
+            review_lang_map[r["id"]] = get_language_pretty_name(r.get("Language", ""))
+
+    target_language = get_language_pretty_name(language).lower() if language else None
+
+    # Filter to comments on approved revisions, matching language
+    result = []
+    for comment in comments:
+        rev_id = comment.get("APIRevisionId")
+        if rev_id not in approved_revision_ids:
+            continue
+
+        review_id = comment.get("ReviewId", "")
+        comment_language = review_lang_map.get(review_id, "").lower()
+        if target_language and comment_language != target_language:
+            continue
+
+        comment["Language"] = review_lang_map.get(review_id, "")
+        comment["FeedbackTypes"] = ["implicit_bad"]
+        result.append(comment)
+
+    return result
+
+
+# Valid APIRevisionType string values stored in Cosmos DB (C# JsonStringEnumConverter).
+_KNOWN_REVISION_TYPES = {"Manual", "Automatic", "PullRequest"}
+
+
+def _tally_revisions(
+    revisions: list,
+    exclude_languages: Optional[list] = None,
+) -> dict:
+    """Tallies revision counts by language and revision type.
+
+    Args:
+        revisions: List of revision dicts, each with at least ``Language`` and ``APIRevisionType``.
+        exclude_languages: Pretty language names to exclude (e.g. ["Java", "Go"]).
+
+    Returns:
+        A dict with ``by_language``, ``totals_by_type``, and ``total``.
+    """
+    exclude_set = {l.lower() for l in (exclude_languages or [])}
+
+    by_language: dict[str, dict[str, int]] = {}
+    totals_by_type: dict[str, int] = {}
+    total = 0
+
+    for rev in revisions:
+        lang = get_language_pretty_name(rev.get("Language", "Unknown"))
+        if lang.lower() in exclude_set:
+            continue
+
+        raw_type = rev.get("APIRevisionType", "Unknown")
+        type_name = raw_type if raw_type in _KNOWN_REVISION_TYPES else "Unknown"
+
+        by_language.setdefault(lang, {})
+        by_language[lang][type_name] = by_language[lang].get(type_name, 0) + 1
+        totals_by_type[type_name] = totals_by_type.get(type_name, 0) + 1
+        total += 1
+
+    return {"by_language": by_language, "totals_by_type": totals_by_type, "total": total}
+
+
+def get_created_revisions(
+    start_date: str,
+    end_date: str,
+    *,
+    environment: str = "production",
+    exclude_languages: Optional[list] = None,
+) -> dict:
+    """
+    Counts APIRevisions created in the given date window, broken out by language and revision type.
+
+    Args:
+        start_date: Start date (YYYY-MM-DD).
+        end_date: End date (YYYY-MM-DD).
+        environment: 'production' or 'staging'.
+        exclude_languages: Pretty language names to exclude (e.g. ["Java", "Go"]).
+
+    Returns:
+        A dict with:
+            - by_language: {language: {type_name: count, ...}, ...}
+            - totals_by_type: {type_name: count, ...}
+            - total: int
+    """
+    start_iso = to_iso8601(start_date)
+    end_iso = to_iso8601(end_date, end_of_day=True)
+
+    revisions_container = get_apiview_cosmos_client(container_name="APIRevisions", environment=environment)
+
+    query = (
+        "SELECT c.ReviewId, c.APIRevisionType, c.Language "
+        "FROM c "
+        "WHERE c.CreatedOn >= @start AND c.CreatedOn <= @end"
+    )
+    params = [
+        {"name": "@start", "value": start_iso},
+        {"name": "@end", "value": end_iso},
+    ]
+
+    revisions = list(revisions_container.query_items(query=query, parameters=params, enable_cross_partition_query=True))
+
+    if not revisions:
+        return {"by_language": {}, "totals_by_type": {}, "total": 0}
+
+    return _tally_revisions(revisions, exclude_languages=exclude_languages)
+
+
+def get_cross_language_compliance(
+    start_date: str,
+    end_date: str,
+    *,
+    environment: str = "production",
+    exclude_languages: Optional[list] = None,
+) -> dict:
+    """Check cross-language metadata compliance for the latest revision of each review.
+
+    Queries the APIRevisions container for non-deleted revisions created within the
+    date window, groups by ReviewId, picks the latest revision per review, and checks
+    whether ``Files[0].CrossLanguagePackageId`` is populated (which is set from
+    ``CrossLanguageMetadata`` on the CodeFile when present).
+
+    Args:
+        start_date: Inclusive start date (YYYY-MM-DD) — filters revisions by CreatedOn.
+        end_date: Inclusive end date (YYYY-MM-DD).
+        environment: 'production' or 'staging'.
+        exclude_languages: Pretty language names to exclude.
+
+    Returns:
+        A dict with:
+            - by_language: {language: {"compliant": int, "non_compliant": int, "total": int, "pct": float}}
+            - totals: {"compliant": int, "non_compliant": int, "total": int, "pct": float}
+    """
+    exclude_set = {lang.lower() for lang in (exclude_languages or [])}
+    omit_lower = {"c++", "c", "typespec", "swagger", "xml"}
+
+    start_iso = to_iso8601(start_date)
+    end_iso = to_iso8601(end_date, end_of_day=True)
+
+    revisions_container = get_apiview_cosmos_client(container_name="APIRevisions", environment=environment)
+
+    # Query the latest non-deleted revision per review that was created in the window.
+    # We fetch the CrossLanguagePackageId from Files[0] which is populated from
+    # CrossLanguageMetadata when the parser provides it.
+    query = (
+        "SELECT c.ReviewId, c.Language, c.APIRevisionType, "
+        "c.Files[0].CrossLanguagePackageId AS CrossLanguagePackageId, c.CreatedOn "
+        "FROM c "
+        "WHERE (NOT IS_DEFINED(c.IsDeleted) OR c.IsDeleted = false) "
+        "AND c.CreatedOn >= @start AND c.CreatedOn <= @end"
+    )
+    params = [
+        {"name": "@start", "value": start_iso},
+        {"name": "@end", "value": end_iso},
+    ]
+
+    all_revisions = list(
+        revisions_container.query_items(query=query, parameters=params, enable_cross_partition_query=True)
+    )
+
+    # Group by ReviewId and keep only the latest revision per review
+    latest_by_review: dict[str, dict] = {}
+    for rev in all_revisions:
+        review_id = rev.get("ReviewId")
+        if not review_id:
+            continue
+        existing = latest_by_review.get(review_id)
+        if existing is None or rev.get("CreatedOn", "") > existing.get("CreatedOn", ""):
+            latest_by_review[review_id] = rev
+
+    by_language: dict[str, dict] = {}
+    totals = {"compliant": 0, "non_compliant": 0, "total": 0}
+
+    for rev in latest_by_review.values():
+        lang = get_language_pretty_name(rev.get("Language", "Unknown"))
+        if lang.lower() in exclude_set or lang.lower() in omit_lower:
+            continue
+
+        has_metadata = bool(rev.get("CrossLanguagePackageId"))
+
+        entry = by_language.setdefault(lang, {"compliant": 0, "non_compliant": 0, "total": 0})
+        entry["total"] += 1
+        totals["total"] += 1
+        if has_metadata:
+            entry["compliant"] += 1
+            totals["compliant"] += 1
+        else:
+            entry["non_compliant"] += 1
+            totals["non_compliant"] += 1
+
+    # Compute percentages
+    for entry in by_language.values():
+        entry["pct"] = round((entry["compliant"] / entry["total"]) * 100, 2) if entry["total"] else 0.0
+    totals["pct"] = round((totals["compliant"] / totals["total"]) * 100, 2) if totals["total"] else 0.0
+
+    return {"by_language": by_language, "totals": totals}
+
+
+# Application Insights resource coordinates for querying APIView page views.
+_APPINSIGHTS_SUBSCRIPTION_ID = "a18897a6-7e44-457d-9260-f2854c0aca42"
+_APPINSIGHTS_RESOURCE_IDS = {
+    "production": (
+        f"/subscriptions/{_APPINSIGHTS_SUBSCRIPTION_ID}"
+        f"/resourceGroups/apiview"
+        f"/providers/microsoft.insights/components/APIView"
+    ),
+    "staging": (
+        f"/subscriptions/{_APPINSIGHTS_SUBSCRIPTION_ID}"
+        f"/resourceGroups/apiviewstagingrg"
+        f"/providers/microsoft.insights/components/apiviewstaging"
+    ),
+}
+
+logger = logging.getLogger(__name__)
+
+
+def _query_viewed_revision_ids(start_date: str, end_date: str, *, environment: str = "production") -> set:
+    """
+    Query Application Insights for distinct API revision IDs that were actually
+    opened by users in the given date window.
+
+    Extracts the ``activeApiRevisionId`` and ``diffApiRevisionId`` query-string
+    parameters from SPA page-view URLs of the form::
+
+        https://spa.apiview.dev/review/{reviewId}?activeApiRevisionId={id}&diffApiRevisionId={id}
+
+    Args:
+        start_date: Start date (YYYY-MM-DD).
+        end_date: End date (YYYY-MM-DD).
+        environment: 'production' or 'staging'.
+
+    Returns:
+        A set of revision ID strings.
+    """
+    resource_id = _APPINSIGHTS_RESOURCE_IDS.get(environment)
+    if not resource_id:
+        raise ValueError(
+            f"Unrecognized environment: {environment}. "
+            f"Valid options are: {', '.join(_APPINSIGHTS_RESOURCE_IDS.keys())}."
+        )
+
+    from azure.monitor.query import LogsQueryClient, LogsQueryStatus
+
+    credential = get_credential()
+
+    kql = (
+        "let active_views = requests\n"
+        '| where url has "/api/reviews/" and url has "activeApiRevisionId"\n'
+        '| extend RevisionId = extract(@"activeApiRevisionId=([^&]+)", 1, url)\n'
+        "| where isnotempty(RevisionId)\n"
+        "| distinct RevisionId;\n"
+        "let diff_views = requests\n"
+        '| where url has "/api/reviews/" and url has "diffApiRevisionId"\n'
+        '| extend RevisionId = extract(@"diffApiRevisionId=([^&]+)", 1, url)\n'
+        "| where isnotempty(RevisionId)\n"
+        "| distinct RevisionId;\n"
+        "union active_views, diff_views\n"
+        "| distinct RevisionId"
+    )
+
+    start_dt = datetime.strptime(start_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+    end_dt = datetime.strptime(end_date, "%Y-%m-%d").replace(hour=23, minute=59, second=59, tzinfo=timezone.utc)
+
+    client = LogsQueryClient(credential)
+    response = client.query_resource(
+        resource_id=resource_id,
+        query=kql,
+        timespan=(start_dt, end_dt),
+    )
+
+    viewed_revision_ids = set()
+    if response.status == LogsQueryStatus.SUCCESS:
+        for table in response.tables:
+            for row in table.rows:
+                if row and row[0]:
+                    viewed_revision_ids.add(row[0])
+    elif response.status == LogsQueryStatus.PARTIAL:
+        logger.warning("Partial results from Application Insights: %s", response.partial_error)
+        for table in response.partial_data:
+            for row in table.rows:
+                if row and row[0]:
+                    viewed_revision_ids.add(row[0])
+    else:
+        raise RuntimeError(f"Application Insights query failed: {response}")
+
+    return viewed_revision_ids
+
+
+def get_opened_revisions(
+    start_date: str,
+    end_date: str,
+    *,
+    environment: str = "production",
+    exclude_languages: Optional[list] = None,
+    created_in_window: bool = False,
+) -> dict:
+    """
+    Counts APIRevisions that were actually opened/viewed in APIView in the given date window,
+    broken out by language and revision type.
+
+    First queries Application Insights for distinct revision IDs that had page views,
+    then enriches with revision metadata from Cosmos DB.
+
+    Args:
+        start_date: Start date (YYYY-MM-DD).
+        end_date: End date (YYYY-MM-DD).
+        environment: 'production' or 'staging'.
+        exclude_languages: Pretty language names to exclude (e.g. ["Java", "Go"]).
+        created_in_window: If True, only include revisions created within the date window.
+            If False (default), include all revisions for viewed reviews regardless of creation date.
+
+    Returns:
+        A dict with:
+            - by_language: {language: {type_name: count, ...}, ...}
+            - totals_by_type: {type_name: count, ...}
+            - total: int
+    """
+    start_iso = to_iso8601(start_date)
+    end_iso = to_iso8601(end_date, end_of_day=True)
+
+    # Step 1: Get revision IDs that were actually opened from App Insights
+    viewed_revision_ids = _query_viewed_revision_ids(start_date, end_date, environment=environment)
+    if not viewed_revision_ids:
+        return {"by_language": {}, "totals_by_type": {}, "total": 0}
+
+    # Step 2: Query APIRevisions by their IDs
+    revisions_container = get_apiview_cosmos_client(container_name="APIRevisions", environment=environment)
+
+    viewed_list = list(viewed_revision_ids)
+    batch_size = 200
+    revisions = []
+
+    for i in range(0, len(viewed_list), batch_size):
+        batch = viewed_list[i : i + batch_size]
+        params = []
+        clauses = []
+        for j, rid in enumerate(batch):
+            pname = f"@rid_{j}"
+            clauses.append(f"c.id = {pname}")
+            params.append({"name": pname, "value": rid})
+
+        date_filter = ""
+        if created_in_window:
+            params.append({"name": "@start", "value": start_iso})
+            params.append({"name": "@end", "value": end_iso})
+            date_filter = "WHERE c.CreatedOn >= @start AND c.CreatedOn <= @end AND "
+        else:
+            date_filter = "WHERE "
+
+        query = (
+            "SELECT c.ReviewId, c.APIRevisionType, c.Language "
+            "FROM c "
+            f"{date_filter}"
+            f"({' OR '.join(clauses)})"
+        )
+
+        revisions.extend(
+            list(revisions_container.query_items(query=query, parameters=params, enable_cross_partition_query=True))
+        )
+
+    if not revisions:
+        return {"by_language": {}, "totals_by_type": {}, "total": 0}
+
+    return _tally_revisions(revisions, exclude_languages=exclude_languages)
 
 
 def resolve_package(
@@ -867,7 +1466,10 @@ def get_comment_with_context(comment_id: str, environment: str = "production") -
 
     Returns:
         A dict containing:
-        - comment: The full comment object from the database
+        - comment: The full comment object from the database (the anchor comment)
+        - thread_comments: List of non-deleted comments sharing the same
+          ThreadId, in chronological order. Deleted comments, including the
+          anchor comment, may be excluded from this list.
         - language: The pretty language name (e.g., "Python")
         - package_name: The package name from the review
         - code: The API code from the revision (if available)
@@ -902,6 +1504,34 @@ def get_comment_with_context(comment_id: str, environment: str = "production") -
         comment = results[0]
         review_id = comment.get("ReviewId")
         revision_id = comment.get("APIRevisionId")
+        thread_id = comment.get("ThreadId")
+
+        # Fetch sibling comments in the same thread (chronological order) so
+        # callers can render the full conversation, not just the anchor comment.
+        # Filter out tombstoned (IsDeleted) entries server-side so we only
+        # transfer / sort live comments.
+        thread_comments: list[dict] = [comment]
+        if thread_id:
+            thread_query = """
+                SELECT c.id, c.CommentText, c.CommentSource, c.CreatedBy, c.CreatedOn,
+                       c.IsResolved, c.IsDeleted, c.ThreadId
+                FROM c
+                WHERE c.ThreadId = @thread_id
+                  AND (NOT IS_DEFINED(c.IsDeleted) OR c.IsDeleted = false)
+                ORDER BY c.CreatedOn ASC
+            """
+            try:
+                thread_results = list(
+                    comments_container.query_items(
+                        query=thread_query,
+                        parameters=[{"name": "@thread_id", "value": thread_id}],
+                        enable_cross_partition_query=True,
+                    )
+                )
+                thread_comments = thread_results or [comment]
+            except Exception as e:
+                print(f"Warning: Could not fetch thread siblings for {thread_id}: {e}")
+                thread_comments = [comment]
 
         # Get language and package name from Reviews container
         language = None
@@ -969,6 +1599,7 @@ def get_comment_with_context(comment_id: str, environment: str = "production") -
 
         return {
             "comment": comment,
+            "thread_comments": thread_comments,
             "language": language,
             "package_name": package_name,
             "code": code,

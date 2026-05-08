@@ -39,7 +39,7 @@ Every AI-generated comment is assigned to exactly one mutually exclusive quality
 | `downvoted` (`bad`) | Has ≥1 downvote (trumps upvotes) | Reviewer explicitly disagreed |
 | `upvoted` (`good`) | Has ≥1 upvote and no downvotes | Reviewer explicitly agreed |
 | `implicit_good` | `IsResolved = true`, no votes | Comment resolved without explicit feedback — likely acted on |
-| `implicit_bad` | In an **approved** revision, not resolved, no votes | Comment was ignored after approval — likely not useful |
+| `implicit_bad` | In an **approved** revision, not resolved, no votes, no feedback | Comment was ignored after approval — likely not useful |
 | `neutral` | In an **unapproved** revision, not resolved, no votes | No signal yet (review still in progress) |
 
 The sum of all six buckets equals `total_ai_comment_count`.
@@ -154,13 +154,24 @@ List memories stored in the knowledge base, with optional filters:
 avc report memory -l python
 ```
 
-### Analyze Comments
+### Architect Comments
 
-Analyze AI comment quality for a review or set of comments:
+Retrieve human architect review comments for a date range. By default, only threads whose first comment falls within the date window are included — replies to older threads are excluded even if the reply itself was created during the window.
 
 ```bash
-avc report analyze-comments --review-id <REVIEW_ID>
+avc report architect-comments -s 2026-01-01 -e 2026-01-31 [-l python] [--all-commenters] [--include-replies] [--environment staging] [--format yaml]
 ```
+
+### APIView Platform Metrics
+
+Track versioned-revision coverage and cross-language compliance over a calendar-month lookback window. Outputs JSON to stdout; use `--summary` to also print human-readable tables to stderr.
+
+```bash
+avc report apiview-metrics [--months 6] [--end-date 2026-04-30] [--languages Python Java] [--chart] [--summary]
+```
+
+- **versions** — Percentage of revisions with a valid `PackageVersion`, broken out by language and revision type (Automatic, Manual, PullRequest).
+- **compliance** — Percentage of reviews whose latest revision includes `CrossLanguagePackageId`.
 
 ## OpenTelemetry Metrics
 

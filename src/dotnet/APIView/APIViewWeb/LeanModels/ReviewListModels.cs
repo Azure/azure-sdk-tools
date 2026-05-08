@@ -142,7 +142,7 @@ namespace APIViewWeb.LeanModels
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string PackageVersion
         {
-            get => this.Files.First().PackageVersion;
+            get => this.Files?.FirstOrDefault()?.PackageVersion;
         }
         public List<APIRevisionChangeHistoryModel> ChangeHistory { get; set; } = new List<APIRevisionChangeHistoryModel>();
         public APIRevisionType APIRevisionType { get; set; }

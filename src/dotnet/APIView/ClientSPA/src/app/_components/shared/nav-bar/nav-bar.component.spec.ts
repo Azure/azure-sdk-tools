@@ -16,6 +16,7 @@ import { EffectivePermissions, GlobalRole, GlobalRoleAssignment } from 'src/app/
 import { UserProfile } from 'src/app/_models/userProfile';
 import { UserPreferenceModel } from 'src/app/_models/userPreferenceModel';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
+import { MessageService } from 'primeng/api';
 
 import { createMockSignalRService, createMockNotificationsService, createMockWorkerService } from 'src/test-helpers/mock-services';
 
@@ -130,7 +131,8 @@ describe('NavBarComponent', () => {
         { provide: AuthService, useValue: mockAuthService },
         { provide: UserProfileService, useValue: mockUserProfileService },
         { provide: NotificationsService, useValue: mockNotificationsService },
-        { provide: ConfigService, useValue: mockConfigService }
+        { provide: ConfigService, useValue: mockConfigService },
+        MessageService
       ]
     });
     fixture = TestBed.createComponent(NavBarComponent);

@@ -18,6 +18,7 @@ import { of, Subject } from 'rxjs';
 import { vi } from 'vitest';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { createMockSignalRService, createMockNotificationsService, createMockWorkerService } from 'src/test-helpers/mock-services';
+import { MessageService } from 'primeng/api';
 
 describe('ReviewPageLayoutComponent', () => {
   let component: ReviewPageLayoutComponent;
@@ -61,6 +62,7 @@ describe('ReviewPageLayoutComponent', () => {
         provideHttpClientTesting(),
         { provide: NotificationsService, useValue: mockNotificationsService },
         { provide: SignalRService, useValue: mockSignalRService },
+        MessageService,
         {
           provide: ActivatedRoute,
           useValue: {

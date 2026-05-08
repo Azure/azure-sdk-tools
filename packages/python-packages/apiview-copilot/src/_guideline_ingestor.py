@@ -36,6 +36,7 @@ from bs4 import BeautifulSoup
 
 MARKDOWN_IT = markdown_it.MarkdownIt()
 
+from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from src._database_manager import DatabaseManager
 from src._models import Example, ExampleType, Guideline, Memory
 from src._prompt_runner import run_prompt
@@ -49,9 +50,6 @@ logger = logging.getLogger(__name__)
 AZURE_SDK_OWNER = "Azure"
 AZURE_SDK_REPO = "azure-sdk"
 GUIDELINES_PATH_PREFIX = "docs/"
-
-# App Configuration key for tracking sync state
-LAST_SYNCED_COMMIT_SHA_KEY = "guidelines:last_synced_commit_sha"
 
 # Batch size for LLM parsing (matches original archagent-ai process)
 LLM_BATCH_SIZE = 10
@@ -245,32 +243,22 @@ class GuidelineIngestor:
     # Git/GitHub Operations
     # ========================================================================
 
-    def get_last_synced_commit_sha(self) -> Optional[str]:
-        """Get the last synced commit SHA from App Configuration."""
-        return self._settings.get(LAST_SYNCED_COMMIT_SHA_KEY)
-
-    def set_last_synced_commit_sha(self, sha: str) -> None:
-        """Update the last synced commit SHA in App Configuration."""
-        self._settings.set(LAST_SYNCED_COMMIT_SHA_KEY, sha)
-
-    def get_current_head_sha(self, branch: str = "main") -> str:
-        """Get the current HEAD commit SHA from the azure-sdk repository."""
-        url = f"https://api.github.com/repos/{AZURE_SDK_OWNER}/{AZURE_SDK_REPO}/commits/{branch}"
-        resp = self._client.get(url)
-        resp.raise_for_status()
-        return resp.json()["sha"]
-
-    def get_changed_files(self, base_sha: str, head_sha: str) -> list[str]:
+    def get_changed_files(self, base_sha: str, head_sha: str, compare_data: Optional[dict] = None) -> list[str]:
         """
         Get list of changed markdown files in the docs/ folder between two commits.
 
         Uses GitHub's compare API to efficiently determine which files changed.
         Only returns files that match FILES_TO_PARSE.
+
+        If *compare_data* is provided (already-fetched compare API response), the
+        API call is skipped.
         """
-        url = f"https://api.github.com/repos/{AZURE_SDK_OWNER}/{AZURE_SDK_REPO}/compare/{base_sha}...{head_sha}"
-        resp = self._client.get(url)
-        resp.raise_for_status()
-        data = resp.json()
+        if compare_data is None:
+            url = f"https://api.github.com/repos/{AZURE_SDK_OWNER}/{AZURE_SDK_REPO}/compare/{base_sha}...{head_sha}"
+            resp = self._client.get(url)
+            resp.raise_for_status()
+            compare_data = resp.json()
+        data = compare_data
 
         changed_files = []
         for file_info in data.get("files", []):
@@ -589,9 +577,9 @@ class GuidelineIngestor:
                 "base_sha must be a direct ancestor of target_sha."
             )
 
-        # Determine which files changed
+        # Determine which files changed (reuse compare_data from validation above)
         print(f"Comparing commits: {last_sha[:8]}...{current_sha[:8]}")
-        files_to_process = self.get_changed_files(last_sha, current_sha)
+        files_to_process = self.get_changed_files(last_sha, current_sha, compare_data=compare_data)
         print(f"Incremental sync: {len(files_to_process)} files changed")
         if files_to_process:
             for f in files_to_process:
@@ -616,8 +604,6 @@ class GuidelineIngestor:
 
         if not files_to_process:
             print("No files to process")
-            if not dry_run:
-                self.set_last_synced_commit_sha(current_sha)
             return result
 
         return self._sync_incremental(files_to_process, last_sha, current_sha, dry_run, details, result)
@@ -748,8 +734,11 @@ class GuidelineIngestor:
                         item = self._db.guidelines.get(gid)
                         self._db.cascade_unlink(item, "guideline")
                         self._db.guidelines.delete(gid, run_indexer=False)
-                    except Exception:
+                    except CosmosResourceNotFoundError:
                         pass  # Might not exist in DB
+                    except Exception as exc:
+                        logger.error("Failed to delete guideline %s: %s", gid, exc)
+                        result.errors.append(f"Failed to delete guideline {gid}: {exc}")
 
             else:
                 # Exists in both - compare hashes
@@ -787,10 +776,6 @@ class GuidelineIngestor:
         # Reconcile memories for changed guidelines
         changed_set = set(result.guidelines_created) | set(result.guidelines_updated)
         self._reconcile_memories(changed_set, enriched_map, dry_run, result)
-
-        # Update the last synced SHA
-        if not dry_run:
-            self.set_last_synced_commit_sha(target_sha)
 
         return result
 

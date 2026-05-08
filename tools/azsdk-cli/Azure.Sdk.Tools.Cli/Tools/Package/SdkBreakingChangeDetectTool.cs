@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Azure.Sdk.Tools.Cli.Commands;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
@@ -18,6 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private readonly ISpecGenSdkConfigHelper _specGenSdkConfigHelper;
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
 
+        private readonly ICopilotAgentRunner copilotAgentRunner;
         // Command names
         private const string DetectSdkBreakingChangeCommandName = "detect-breaking-change";
         private const string DetectSdkBreakingChangToolName = "azsdk_package_detect_breaking_change";
@@ -53,9 +55,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             IGitHelper gitHelper,
             ILogger<SdkBreakingChangeDetectTool> logger,
             IEnumerable<LanguageService> languageServices,
-            ISpecGenSdkConfigHelper specGenSdkConfigHelper) : base(languageServices, gitHelper, logger)
+            ISpecGenSdkConfigHelper specGenSdkConfigHelper,
+            ICopilotAgentRunner copilotAgentRunner) : base(languageServices, gitHelper, logger)
         {
             _specGenSdkConfigHelper = specGenSdkConfigHelper;
+            this.copilotAgentRunner = copilotAgentRunner;
         }
 
         protected override Command GetCommand() =>
@@ -92,7 +96,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             {
                 if (string.IsNullOrEmpty(packagePath) || !Directory.Exists(packagePath))
                 {
-                    return SdkBreakingChangeDetectResponse.CreateFailure($"The directory for the local sdk does not provide or exist at the specified path: {packagePath}. Prompt user to clone the matched SDK repository users want to generate SDK against.");
+                    return new SdkBreakingChangeDetectResponse
+                    {
+                        ResponseError = $"The directory for the local sdk does not provide or exist at the specified path: {packagePath}. Prompt user to clone the matched SDK repository users want to generate SDK against."
+                    }; 
                 }
                 LanguageService languageService;
                 if (!string.IsNullOrEmpty(language))
@@ -105,13 +112,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 }
                 if (languageService == null)
                 {
-                    return SdkBreakingChangeDetectResponse.CreateFailure("Tooling error: unable to determine language service for the specified package path.", nextSteps: ["Create an issue at the https://github.com/Azure/azure-sdk-tools/issues/new", "contact the Azure SDK team for assistance."]);
+                    return new SdkBreakingChangeDetectResponse
+                    {
+                        ResponseError = "Tooling error: unable to determine language service for the specified package path.",
+                    };
                 }
                 // Discover the repository root
                 var sdkRepoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
                 if (sdkRepoRoot == null)
                 {
-                    return SdkBreakingChangeDetectResponse.CreateFailure("Unable to find git repository root from the provided package path.");
+                    return new SdkBreakingChangeDetectResponse
+                    {
+                        ResponseError = "Unable to find git repository root from the provided package path."
+                    };
                 }
                 var packageInfo = await languageService.GetPackageInfo(packagePath, ct);
                 if (packageInfo?.SdkType == SdkType.Management)
@@ -147,7 +160,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                                     }
                                     else
                                     {
-                                        return PackageOperationResponse.CreateSuccess("No breaking changes are detected in the SDK based on the changelog content.", packageInfo);
+                                        return new SdkBreakingChangeDetectResponse
+                                        {
+                                            ResponseError = "No breaking changes are detected in the SDK based on the changelog content."
+                                        };
 
                                     }
                                 }
@@ -166,13 +182,48 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             catch (Exception ex)
             {
                 logger.LogError(ex, "An error occurred while detecting SDK breaking changes.");
-                return PackageOperationResponse.CreateFailure($"An error occurred while detecting SDK breaking changes: {ex.Message}");
+                return new SdkBreakingChangeDetectResponse
+                {
+                    ResponseError = $"An error occurred while detecting SDK breaking changes: {ex.Message}"
+                };
             }
         }
 
-        private async Task<SdkBreakingChangeDetectResponse> ClassifySDKBreakingChanges(string sdkchange, CancellationToken cancellationToken)
+        private async Task<SdkBreakingChangeDetectResponse> ClassifySDKBreakingChanges(string sdkchange, CancellationToken ct)
         {
-            return await Task.FromResult(SdkBreakingChangeDetectResponse.CreateSuccess("Breaking change classification is not implemented yet.", result: sdkchange));
+            var sdkBreakingPattern = "";
+            var agent = new CopilotAgent<SdkBreakingChangeDetectResponse>
+            {
+                Instructions = BuildClassifyInstructions(sdkchange, sdkBreakingPattern),
+                Model = "claude-opus-4.5"
+            };
+            var result = await copilotAgentRunner.RunAsync(agent, ct);
+            //logger.LogInformation("copilot agent completed. hasBreakingChange: {hasBreakingChanges}, Breaking Changes: {breakingChanges}", result.HasBreakingChanges, string.Join("\n", result.BreakingChanges));
+            // For demonstration purposes, we'll just return a response indicating no breaking changes were found
+            return result;
+        }
+
+        private string BuildClassifyInstructions(string sdkchange, string sdkchangeToBreakingPattern)
+        {
+            return $"""
+        # TypeSpec SDK Breaking Change Classifier
+
+        You are an expert agent specializing in detecting breaking changes in TypeSpec API specifications that impact SDK generation across multiple programming languages (Java, .NET, Python, JavaScript/TypeScript, Go).
+
+        ## Your task
+        Analyze sdk changes. If the planned TypeSpec changes match any of these known SDK breaking change patterns, include SDK IMPACT warnings in the solution with language-specific client.tsp mitigations.
+
+        **SDK Breaking Change Patterns Reference**
+
+        {sdkchangeToBreakingPattern}
+
+        **SDK changes to analyze:**
+        {sdkchange}
+
+        **Output format:**
+        Your response should be a JSON object with the following structure:
+        
+        """;
         }
     }
 

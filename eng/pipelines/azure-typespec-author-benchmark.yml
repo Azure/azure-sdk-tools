@@ -193,18 +193,7 @@ extends:
               # at runtime so the source stays untouched.
               - script: |
                   cd .github/skills/azure-typespec-author/evaluate
-                  mkdir -p results-2
-                  vally eval --eval-spec evals/eval.yaml --output-dir results-2 --workers 3 --verbose
-                displayName: Run all evaluations
-                continueOnError: true
-                condition: succeededOrFailed()
-                env:
-                  GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
-
-              - script: |
-                  cd .github/skills/azure-typespec-author/evaluate
-                  mkdir -p results/versioning
-                  vally eval --suite versioning --output-dir results/versioning --verbose
+                  vally eval --suite versioning --output-dir results --verbose
                 displayName: Run suite - versioning
                 continueOnError: true
                 condition: succeededOrFailed()
@@ -213,8 +202,7 @@ extends:
 
               - script: |
                   cd .github/skills/azure-typespec-author/evaluate
-                  mkdir -p results/armtemplate
-                  vally eval --suite armtemplate --output-dir results/armtemplate --verbose
+                  vally eval --suite armtemplate --output-dir results --verbose
                 displayName: Run suite - armtemplate
                 continueOnError: true
                 condition: succeededOrFailed()
@@ -223,8 +211,7 @@ extends:
 
               - script: |
                   cd .github/skills/azure-typespec-author/evaluate
-                  mkdir -p results/longrunningoperation
-                  vally eval --suite longrunningoperation --output-dir results/longrunningoperation --verbose
+                  vally eval --suite longrunningoperation --output-dir results --verbose
                 displayName: Run suite - longrunningoperation
                 continueOnError: true
                 condition: succeededOrFailed()
@@ -233,8 +220,7 @@ extends:
 
               - script: |
                   cd .github/skills/azure-typespec-author/evaluate
-                  mkdir -p results/decorators
-                  vally eval --suite decorators --output-dir results/decorators --verbose
+                  vally eval --suite decorators --output-dir results --verbose
                 displayName: Run suite - decorators
                 continueOnError: true
                 condition: succeededOrFailed()
@@ -243,8 +229,7 @@ extends:
 
               - script: |
                   cd .github/skills/azure-typespec-author/evaluate
-                  mkdir -p results/warning
-                  vally eval --suite warning --output-dir results/warning --verbose
+                  vally eval --suite warning --output-dir results --verbose
                 displayName: Run suite - warning
                 continueOnError: true
                 condition: succeededOrFailed()
@@ -257,9 +242,4 @@ extends:
                   path: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/results
                   artifact: eval-results-$(Build.BuildId)
                   displayName: Upload eval results
-                  condition: always()
-                - output: pipelineArtifact
-                  path: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/results-2
-                  artifact: eval-results2-$(Build.BuildId)
-                  displayName: Upload eval results 2
                   condition: always()

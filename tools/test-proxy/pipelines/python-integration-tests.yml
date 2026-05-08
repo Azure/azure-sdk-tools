@@ -35,11 +35,11 @@ steps:
   - pwsh: |
       $ErrorActionPreference = 'Stop'
       $PSNativeCommandUseErrorActionPreference = $true
-      uv pip install --system -r eng/ci_tools.txt
-      uv pip install --system -r sdk/tables/azure-data-tables/dev_requirements.txt
-      uv pip install --system sdk/tables/azure-data-tables/
+      uv pip install --system pytest pytest-cov pytest-asyncio
+      uv pip install --system -r dev_requirements.txt
+      uv pip install --system .
     displayName: 'Install requirements and package'
-    workingDirectory: $(CLONE_LOCATION)
+    workingDirectory: $(CLONE_LOCATION)/sdk/tables/azure-data-tables
 
   - pwsh: |
       pytest .

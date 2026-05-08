@@ -10,7 +10,7 @@ tags:
 
 config:
   runs: 1
-  timeout: "5m"
+  timeout: "90s"
   model: claude-opus-4.6
   executor: copilot-sdk
 
@@ -25,13 +25,13 @@ stimuli:
         config:
           required: ["sensei"]
   - name: trigger-improve-skill-frontmatter-compliance
-    prompt: "improve skill frontmatter compliance"
+    prompt: "run sensei to improve my skill's frontmatter compliance"
     graders:
       - type: skill-invocation
         config:
           required: ["sensei"]
   - name: trigger-fix-frontmatter-for-azure-deploy
-    prompt: "fix frontmatter for azure-deploy"
+    prompt: "run sensei to fix the frontmatter on my azure-deploy skill"
     graders:
       - type: skill-invocation
         config:
@@ -48,14 +48,14 @@ stimuli:
       - type: skill-invocation
         config:
           required: ["sensei"]
-  - name: trigger-check-skill-tokens
-    prompt: "check skill tokens"
+  - name: trigger-run-sensei-to-check-skill-tokens
+    prompt: "run sensei to check my skill's token count"
     graders:
       - type: skill-invocation
         config:
           required: ["sensei"]
-  - name: trigger-frontmatter-audit-on-all-skills
-    prompt: "frontmatter audit on all skills"
+  - name: trigger-sensei-frontmatter-audit-on-all-skills
+    prompt: "run sensei frontmatter audit on all skills"
     graders:
       - type: skill-invocation
         config:

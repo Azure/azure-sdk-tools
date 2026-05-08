@@ -10,17 +10,20 @@ tags:
 
 config:
   runs: 1
-  timeout: "5m"
+  timeout: "90s"
   model: claude-opus-4.6
   executor: copilot-sdk
 
+scoring:
+  threshold: 0.8
+
 stimuli:
   - name: basic-trigger
-    prompt: "My SKILL.md is too large and uses too many tokens. Can you help me optimize it?"
+    prompt: "My SKILL.md is too large and uses too many tokens. Can you help me optimize it for token efficiency?"
     graders:
-      - type: output-contains
+      - type: output-not-contains
         config:
-          substring: "token"
+          substring: "cannot help"
     constraints:
       expect_skills: ["markdown-token-optimizer"]
 

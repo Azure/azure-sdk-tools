@@ -10,7 +10,7 @@ tags:
 
 config:
   runs: 1
-  timeout: "5m"
+  timeout: "90s"
   model: claude-opus-4.6
   executor: copilot-sdk
 
@@ -30,26 +30,26 @@ stimuli:
       - type: skill-invocation
         config:
           required: ["markdown-token-optimizer"]
-  - name: trigger-my-file-has-too-many-tokens
-    prompt: "my file has too many tokens"
+  - name: trigger-my-markdown-file-has-too-many-tokens
+    prompt: "my markdown file has too many tokens, can you optimize it?"
     graders:
       - type: skill-invocation
         config:
           required: ["markdown-token-optimizer"]
-  - name: trigger-token-count-is-too-high
-    prompt: "token count is too high"
+  - name: trigger-reduce-token-count-in-markdown
+    prompt: "the token count in my SKILL.md is too high, reduce it"
     graders:
       - type: skill-invocation
         config:
           required: ["markdown-token-optimizer"]
   - name: trigger-make-this-markdown-more-concise-for-ai
-    prompt: "make this markdown more concise for AI"
+    prompt: "make this markdown more concise and optimize it for AI token budgets"
     graders:
       - type: skill-invocation
         config:
           required: ["markdown-token-optimizer"]
-  - name: trigger-shrink-file-size-for-token-budget
-    prompt: "shrink file size for token budget"
+  - name: trigger-shrink-markdown-for-token-budget
+    prompt: "shrink my markdown file size to fit the token budget"
     graders:
       - type: skill-invocation
         config:

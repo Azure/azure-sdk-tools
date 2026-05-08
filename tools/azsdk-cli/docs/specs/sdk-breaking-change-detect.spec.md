@@ -1,8 +1,8 @@
-# Spec: [Stage Number and Name] - [Tool Name]
+# Spec: [SDK Breaking Change Detecting] - [SDK Breaking Change Detector Tool]
 
 ## Table of Contents
 
-- [Spec: \[Stage Number and Name\] - \[Tool Name\]](#spec-stage-number-and-name---tool-name)
+- [Spec: \[SDK Breaking Change Detecting\] - \[SDK Breaking Change Detector Tool\]](#spec-sdk-breaking-change-detecting---sdk-breaking-change-detector-tool)
   - [Table of Contents](#table-of-contents)
   - [Definitions](#definitions)
   - [Background / Problem Statement](#background--problem-statement)

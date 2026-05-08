@@ -1658,11 +1658,11 @@ def db_purge(containers: Optional[list[str]] = None, run_indexer: bool = False):
 
 
 def db_ingest_guidelines(
-    dry_run: bool = False,
+    base_sha: str,
+    target_sha: str,
+    environment: str,
+    dry_run: bool = True,
     details: bool = False,
-    base_sha: Optional[str] = None,
-    target_sha: Optional[str] = None,
-    environment: str = "staging",
     languages: Optional[List[str]] = None,
 ):
     """
@@ -1673,6 +1673,7 @@ def db_ingest_guidelines(
     """
     from src._guideline_ingestor import GuidelineIngestor
 
+    os.environ["ENVIRONMENT_NAME"] = environment
     ingestor = GuidelineIngestor.get_instance()
     result = ingestor.sync_guidelines(
         dry_run=dry_run,
@@ -3130,14 +3131,16 @@ class CliCommandsLoader(CLICommandsLoader):
             ac.argument(
                 "base_sha",
                 type=str,
-                help="The baseline commit SHA to compare against. If not provided, uses the last synced SHA from AppConfig.",
+                help="The baseline commit SHA to compare against.",
                 options_list=["--base-sha", "-b"],
+                required=True,
             )
             ac.argument(
                 "target_sha",
                 type=str,
-                help="The target commit SHA to sync to. If not provided, uses the latest commit on main.",
+                help="The target commit SHA to sync to.",
                 options_list=["--target-sha", "-t"],
+                required=True,
             )
             ac.argument(
                 "details",
@@ -3148,9 +3151,9 @@ class CliCommandsLoader(CLICommandsLoader):
             ac.argument(
                 "environment",
                 type=str,
-                help="The APIView environment to update. Defaults to 'staging'.",
-                options_list=["--environment"],
-                default="staging",
+                help="The APIView environment to update (required).",
+                options_list=["--environment", "-e"],
+                required=True,
                 choices=["production", "staging"],
             )
             ac.argument(

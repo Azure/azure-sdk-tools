@@ -374,29 +374,26 @@ Same flags and rollback behavior as `db link`.
 Sync guidelines and examples from the [azure-sdk](https://github.com/Azure/azure-sdk) repository into the knowledge base. Detects changes via git commit comparison, parses markdown files, extracts guidelines and examples via LLM, and writes to Cosmos DB.
 
 ```bash
-# Incremental sync (only changed files since last sync)
-avc db ingest-guidelines
+# Incremental sync (only changed files between two commits)
+avc db ingest-guidelines -e staging -b <BASE_SHA> -t <TARGET_SHA>
 
 # Dry-run: preview changes without writing to the database
-avc db ingest-guidelines --dry-run
-
-# Sync between specific commits
-avc db ingest-guidelines --base-sha abc123 --target-sha def456
+avc db ingest-guidelines -e staging -b <BASE_SHA> -t <TARGET_SHA> --dry-run
 
 # Only sync specific languages
-avc db ingest-guidelines --language python java
+avc db ingest-guidelines -e staging -b abc123 -t def456 --language python java
 
 # Include before/after content in output
-avc db ingest-guidelines --dry-run --details
+avc db ingest-guidelines -e staging -b abc123 -t def456 --dry-run --details
 ```
 
 | Option | Description |
 |--------|-------------|
+| `-e/--environment` | **Required.** The APIView environment to update (`staging` or `production`) |
+| `-b/--base-sha` | **Required.** The baseline commit SHA to compare against |
+| `-t/--target-sha` | **Required.** The target commit SHA to sync to |
 | `-d/--dry-run` | Preview changes without modifying the database |
-| `-b/--base-sha` | Override the baseline commit SHA |
-| `-t/--target-sha` | Override the target commit SHA |
 | `--details` | Include before/after content for each changed guideline and example in the output |
-| `--environment` | The APIView environment to update (`staging` or `production`; default: `staging`) |
 | `-l/--language` | Limit ingestion to specific languages (e.g., `python java dotnet`). If omitted, all languages are processed |
 
 See [kb.md](./kb.md#guideline-ingestion) for details on the ingestion pipeline.

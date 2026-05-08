@@ -59,16 +59,6 @@ def get_prompt_path(*, folder: str, filename: str) -> str:
     return prompt_path
 
 
-def guideline_id_to_db(id: str) -> str:
-    """Convert a guideline ID from web format (foo.html#bar) to DB-safe format (foo=html=bar)."""
-    return id.replace(".html#", "=html=")
-
-
-def guideline_id_to_web(id: str) -> str:
-    """Convert a guideline ID from DB-safe format (foo=html=bar) to web format (foo.html#bar)."""
-    return id.replace("=html=", ".html#")
-
-
 def to_epoch_seconds(date_str: str, *, end_of_day: bool = False) -> int:
     """
     Convert a date string to epoch seconds (UTC).

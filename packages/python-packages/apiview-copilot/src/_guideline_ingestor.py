@@ -401,7 +401,7 @@ class GuidelineIngestor:
             index = text.find(link.text)
             if index == -1:
                 continue
-            text = f"{text[:index]}{link.text} ({link['href']}) {text[len(link.text) + 1 + index:]}"
+            text = f"{text[:index]}{link.text} ({link['href']}){text[index + len(link.text):]}"
         return text
 
     @staticmethod
@@ -517,7 +517,7 @@ class GuidelineIngestor:
         Returns a list of malformed ids.
         """
         malformed = []
-        pattern = re.compile(r"^[A-Za-z0-9_=\\-]{1,1024}$")
+        pattern = re.compile(r"^[A-Za-z0-9_=-]{1,1024}$")
         for item in items:
             if not item.id:
                 malformed.append(f"(missing id for text: {item.text[:50]}...)")
@@ -571,8 +571,8 @@ class GuidelineIngestor:
         *,
         dry_run: bool = False,
         details: bool = False,
-        base_sha: Optional[str] = None,
-        target_sha: Optional[str] = None,
+        base_sha: str,
+        target_sha: str,
         languages: Optional[List[str]] = None,
     ) -> SyncResult:
         """
@@ -581,8 +581,8 @@ class GuidelineIngestor:
         Args:
             dry_run: If True, report changes without writing to the database.
             details: If True, include before/after content for each changed item.
-            base_sha: If provided, use this SHA as the baseline instead of the last synced SHA from AppConfig.
-            target_sha: If provided, use this SHA as the target instead of the latest on main.
+            base_sha: The baseline commit SHA to compare against.
+            target_sha: The target commit SHA to sync to.
             languages: If provided, only process guideline files for these languages (canonical names).
 
         Returns:
@@ -590,29 +590,13 @@ class GuidelineIngestor:
         """
         result = SyncResult()
 
-        # Get target SHA (use provided value or fetch current HEAD)
-        if target_sha:
-            current_sha = target_sha
-            print(f"Using provided target SHA: {current_sha}")
-        else:
-            print("Fetching current HEAD SHA from main branch...")
-            current_sha = self.get_current_head_sha()
-            print(f"Current HEAD SHA: {current_sha}")
-
-        # Get base SHA (use provided value, or AppConfig value)
-        if base_sha:
-            last_sha = base_sha
-            print(f"Using provided base SHA: {last_sha}")
-        else:
-            print("Fetching last synced SHA from App Configuration...")
-            last_sha = self.get_last_synced_commit_sha()
-            if last_sha:
-                print(f"Last synced SHA from AppConfig: {last_sha}")
-            else:
-                print("No previous sync found in AppConfig - will perform full sync")
+        current_sha = target_sha
+        print(f"Target SHA: {current_sha}")
+        last_sha = base_sha
+        print(f"Base SHA: {last_sha}")
 
         # Determine which files to process
-        is_incremental = last_sha and last_sha != current_sha
+        is_incremental = last_sha != current_sha
         if is_incremental:
             print(f"Comparing commits: {last_sha[:8]}...{current_sha[:8]}")
             files_to_process = self.get_changed_files(last_sha, current_sha)
@@ -670,7 +654,7 @@ class GuidelineIngestor:
             except Exception as e:
                 # File might not exist at this SHA (e.g., newly added file)
                 if "404" not in str(e):
-                    logger.error(f"Error parsing {file_path} at {commit_sha[:8]}: {e}")
+                    logger.error("Error parsing %s at %s: %s", file_path, commit_sha[:8], e)
                     errors.append(f"parse {file_path}: {e}")
 
         # Filter out guidelines without valid IDs
@@ -782,7 +766,7 @@ class GuidelineIngestor:
                         existing = self._db.guidelines.get(gid)
                         print(f"    Found in DB: {existing.get('id')} - {existing.get('title', '(no title)')[:60]}")
                     except Exception:
-                        print(f"    WARNING: Not found in database - will be created")
+                        print("    WARNING: Not found in database - will be created")
                     if not dry_run:
                         self._upsert_guideline(target_map[gid][0], target_hash, target_sha, enriched=enriched)
 
@@ -825,7 +809,7 @@ class GuidelineIngestor:
                 parsed = self.parse_markdown_file(file_path, content)
                 all_parsed_guidelines.extend(parsed)
             except Exception as e:
-                logger.error(f"Error preprocessing {file_path}: {e}")
+                logger.error("Error preprocessing %s: %s", file_path, e)
                 result.errors.append(f"preprocess {file_path}: {e}")
 
         print(f"Extracted {len(all_parsed_guidelines)} raw guidelines from {len(files_to_process)} files")
@@ -916,7 +900,7 @@ class GuidelineIngestor:
                         result.guidelines_deleted.append(item["id"])
 
             except Exception as e:
-                logger.error(f"Error handling deletions for {file_path}: {e}")
+                logger.error("Error handling deletions for %s: %s", file_path, e)
                 result.errors.append(f"deletion check {file_path}: {e}")
 
         # Run indexer once at the end (if not dry run)
@@ -1068,7 +1052,7 @@ class GuidelineIngestor:
                       f"{sum(len(i.get('related_examples', [])) for i in items)} examples")
 
             except Exception as e:
-                logger.error(f"LLM parsing failed for batch {batch_idx + 1}: {e}")
+                logger.error("LLM parsing failed for batch %d: %s", batch_idx + 1, e)
                 result.errors.append(f"LLM batch {batch_idx + 1}: {e}")
                 # Fall through — guidelines without LLM enrichment will use raw data
 
@@ -1171,7 +1155,7 @@ class GuidelineIngestor:
                     guideline = Guideline(**{k: v for k, v in existing.items() if k != "kind" and k != "isDeleted"})
                     self._db.guidelines.upsert(gid, data=guideline, run_indexer=False)
                 except Exception as e:
-                    logger.error(f"Failed to update related_examples for {gid}: {e}")
+                    logger.error("Failed to update related_examples for %s: %s", gid, e)
 
         # Run examples indexer
         if not dry_run and (result.examples_created or result.examples_updated or result.examples_deleted):
@@ -1265,7 +1249,7 @@ class GuidelineIngestor:
                     if not mem.get("isDeleted", False):
                         memories.append(mem)
                 except Exception:
-                    logger.warning(f"Memory {mid} referenced by guideline {gid} not found, skipping")
+                    logger.warning("Memory %s referenced by guideline %s not found, skipping", mid, gid)
 
             if not memories:
                 continue
@@ -1299,7 +1283,7 @@ class GuidelineIngestor:
                 absorbed_ids = set(parsed_result.get("absorbed_memory_ids", []))
                 reasoning = parsed_result.get("reasoning", {})
             except Exception as e:
-                logger.error(f"Memory reconciliation failed for guideline {gid}: {e}")
+                logger.error("Memory reconciliation failed for guideline %s: %s", gid, e)
                 result.errors.append(f"reconcile memories for {gid}: {e}")
                 # On failure, retain all memories
                 for m in memories:
@@ -1379,7 +1363,7 @@ class GuidelineIngestor:
                     e = Example(**cleaned_ex)
                     self._db.examples.upsert(ex_id, data=e, run_indexer=False)
             except Exception as e:
-                logger.warning(f"Failed to clean example {ex_id} cross-link for memory {mid}: {e}")
+                logger.warning("Failed to clean example %s cross-link for memory %s: %s", ex_id, mid, e)
         memory["related_examples"] = []
 
         # 4. Clean up memory-to-memory cross-links
@@ -1395,7 +1379,7 @@ class GuidelineIngestor:
                     s = Memory(**cleaned_sib)
                     self._db.memories.upsert(sibling_mid, data=s, run_indexer=False)
             except Exception as e:
-                logger.warning(f"Failed to clean sibling memory {sibling_mid} cross-link for {mid}: {e}")
+                logger.warning("Failed to clean sibling memory %s cross-link for %s: %s", sibling_mid, mid, e)
 
         # 5. Check if memory is orphaned (no remaining relationships)
         is_orphaned = (

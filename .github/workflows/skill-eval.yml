@@ -9,23 +9,123 @@ on:
     paths:
       - '.github/skills/**'
   workflow_dispatch:
+    inputs:
+      runAll:
+        description: 'Run all skill evals (ignore change detection)'
+        type: boolean
+        default: false
+      areas:
+        description: 'Skill areas to eval (comma-separated, e.g. sensei,skill-authoring)'
+        type: string
+        default: ''
 
 permissions:
   contents: read
 
 jobs:
-  check-skills:
-    name: Skill Compliance Check (Vally lint)
+  lint:
+    name: Lint Skill Evals
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v4
         with:
           node-version: '22'
 
       - name: Install Vally CLI
         run: npm install -g @microsoft/vally-cli@0.4.0
 
-      - name: Lint skills
-        run: vally lint .
+      - name: Lint evals
+        run: |
+          cd .github/skills
+          vally lint .
+
+  eval:
+    name: Run Skill Evaluations
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: AzureSDKEngKeyVault
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Vally CLI
+        run: npm install -g @microsoft/vally-cli@0.4.0
+
+      - name: Install Copilot SDK
+        run: npm install -g @github/copilot-sdk
+
+      - uses: azure/login@v3
+        with:
+          client-id: 5786d1fb-187e-4ca9-9a81-ab89ea278986
+          tenant-id: 72f988bf-86f1-41af-91ab-2d7cd011db47
+          subscription-id: a18897a6-7e44-457d-9260-f2854c0aca42
+
+      - uses: ./eng/common/actions/login-to-github
+        with:
+          token-owners: Azure
+
+      - name: Detect changed skills
+        id: detect
+        run: |
+          input_areas="${{ inputs.areas }}"
+          if [ -n "$input_areas" ]; then
+            areas="$input_areas"
+          elif [ "${{ inputs.runAll }}" = "true" ]; then
+            areas=$(find .github/skills -name "eval.yaml" -path "*/evals/*" \
+              | sed 's|.github/skills/\([^/]*\)/.*|\1|' \
+              | sort -u \
+              | paste -sd, -)
+          else
+            areas=$(git diff --name-only HEAD~1 HEAD -- .github/skills/ \
+              | grep -oP '\.github/skills/\K[^/]+(?=/)' \
+              | sort -u \
+              | grep -v '^\.' \
+              | paste -sd, -)
+          fi
+
+          if [ -n "$areas" ]; then
+            echo "Evaluating areas: $areas"
+            echo "areas=$areas" >> $GITHUB_OUTPUT
+            echo "skip=false" >> $GITHUB_OUTPUT
+          else
+            echo "No skill changes detected — skipping evals"
+            echo "skip=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run evaluations
+        if: steps.detect.outputs.skip != 'true'
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ env.GH_TOKEN }}
+        run: |
+          cd .github/skills
+          areas="${{ steps.detect.outputs.areas }}"
+          exit_code=0
+          IFS=',' read -ra AREA_LIST <<< "$areas"
+          for area in "${AREA_LIST[@]}"; do
+            echo ""
+            echo "=========================================="
+            echo "Running evals for: $area"
+            echo "=========================================="
+            vally eval --tag "type=ci-gate" --tag "area=$area" --output-dir ".vally/results" || exit_code=1
+          done
+          exit $exit_code
+
+      - name: Upload eval results
+        if: always() && steps.detect.outputs.skip != 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: eval-results-${{ github.run_id }}
+          path: .github/skills/.vally/results
+          retention-days: 30

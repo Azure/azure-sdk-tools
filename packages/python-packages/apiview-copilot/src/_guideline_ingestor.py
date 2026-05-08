@@ -661,6 +661,9 @@ class GuidelineIngestor:
         result: SyncResult,
     ) -> SyncResult:
         """Perform incremental sync by comparing guidelines between two SHAs."""
+        prefix = "[DRY RUN] Would create" if dry_run else "Created"
+        update_prefix = "[DRY RUN] Would update" if dry_run else "Updated"
+        delete_prefix = "[DRY RUN] Would delete" if dry_run else "Deleted"
         # Parse guidelines from both base and target SHAs
         base_guidelines, base_errors = self._parse_files_at_sha(files_to_process, base_sha, "base")
         target_guidelines, target_errors = self._parse_files_at_sha(files_to_process, target_sha, "target")
@@ -715,7 +718,7 @@ class GuidelineIngestor:
             if in_target and not in_base:
                 # New guideline
                 result.guidelines_created.append(gid)
-                print(f"  Created: {gid}")
+                print(f"  {prefix}: {gid}")
                 if details:
                     after_content = enriched.get("content", target_map[gid][0].text) if enriched else target_map[gid][0].text
                     result.details.append(SyncDetail(id=gid, kind="guideline", action="created", before=None, after=after_content))
@@ -725,7 +728,7 @@ class GuidelineIngestor:
             elif in_base and not in_target:
                 # Deleted guideline
                 result.guidelines_deleted.append(gid)
-                print(f"  Deleted: {gid}")
+                print(f"  {delete_prefix}: {gid}")
                 if details:
                     result.details.append(SyncDetail(id=gid, kind="guideline", action="deleted", before=base_map[gid][0].text, after=None))
                 if not dry_run:
@@ -748,7 +751,7 @@ class GuidelineIngestor:
                     result.guidelines_unchanged.append(gid)
                 else:
                     result.guidelines_updated.append(gid)
-                    print(f"  Updated: {gid}")
+                    print(f"  {update_prefix}: {gid}")
                     if details:
                         after_content = enriched.get("content", target_map[gid][0].text) if enriched else target_map[gid][0].text
                         result.details.append(SyncDetail(id=gid, kind="guideline", action="updated", before=base_map[gid][0].text, after=after_content))
@@ -772,8 +775,12 @@ class GuidelineIngestor:
             print(f"Running search indexer(s): {', '.join(indexers)}...")
             SearchManager.run_indexers(indexers)
 
-        # Sync examples (include deleted guideline IDs so their examples get cleaned up)
-        example_sync_ids = changed_guideline_ids | set(result.guidelines_deleted)
+        # Sync examples — only include guidelines whose LLM parse succeeded
+        # (present in enriched_map) plus deleted guidelines. If a batch failed,
+        # its guideline IDs won't be in enriched_map, so we won't accidentally
+        # delete their existing examples due to missing seen_example_ids.
+        successfully_parsed_ids = set(enriched_map.keys())
+        example_sync_ids = successfully_parsed_ids | set(result.guidelines_deleted)
         if example_sync_ids:
             self._sync_examples(all_examples, target_sha, example_sync_ids, dry_run, details, result)
 
@@ -955,9 +962,11 @@ class GuidelineIngestor:
                 continue
             seen_example_ids.add(parsed_ex.id)
 
-            # Track guideline -> example relationships
+            # Track guideline -> example relationships (deduplicate per guideline)
             for gid in parsed_ex.guideline_ids:
-                guideline_example_map.setdefault(gid, []).append(parsed_ex.id)
+                gid_list = guideline_example_map.setdefault(gid, [])
+                if parsed_ex.id not in gid_list:
+                    gid_list.append(parsed_ex.id)
 
             new_hash = self.compute_content_hash(parsed_ex.content)
 
@@ -974,7 +983,7 @@ class GuidelineIngestor:
                     result.details.append(SyncDetail(id=parsed_ex.id, kind="example", action="updated", before=existing.get("content", ""), after=parsed_ex.content))
                 if not dry_run:
                     self._upsert_example(parsed_ex, new_hash, commit_sha, existing)
-            except Exception:
+            except CosmosResourceNotFoundError:
                 result.examples_created.append(parsed_ex.id)
                 if details:
                     result.details.append(SyncDetail(id=parsed_ex.id, kind="example", action="created", before=None, after=parsed_ex.content))
@@ -1256,6 +1265,7 @@ class GuidelineIngestor:
                     self._db.memories.upsert(sibling_mid, data=s, run_indexer=False)
             except Exception as e:
                 logger.warning("Failed to clean sibling memory %s cross-link for %s: %s", sibling_mid, mid, e)
+        memory["related_memories"] = []
 
         # 5. Check if memory is orphaned (no remaining relationships)
         is_orphaned = (

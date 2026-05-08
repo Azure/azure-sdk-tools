@@ -1,5 +1,12 @@
 # Release History
 
+## 0.9.7 (2026-05-08)
+
+### Bug Fixes
+
+* Fix reference link for `static_typespec_migration_docs` to return correct per-document URLs instead of a hardcoded FAQ page
+
+
 ## 0.9.6 (2026-05-06)
 
 ### Other Changes

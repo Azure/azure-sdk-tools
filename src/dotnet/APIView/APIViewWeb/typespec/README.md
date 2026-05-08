@@ -58,8 +58,8 @@ APIs for retrieving comments on API revisions:
 ## Files
 
 - `main.tsp` - Main TypeSpec entry point with service definition
-- `models.tsp` - All models, enums, and error responses (grouped by namespace)
-- `operations.tsp` - All API operations (grouped by namespace: `AutoReviewLegacy`, `AutoReview`, `APIRevisions`, `Comments`, `Reviews`)
+- `models.tsp` - Common models, enums, and error responses
+- `operations.tsp` - All API operations (AutoReview, Reviews, APIRevisions, Permissions)
 - `tspconfig.yaml` - TypeSpec compiler configuration
 - `package.json` - NPM package configuration
 

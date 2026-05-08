@@ -128,18 +128,18 @@ namespace AutoReview {
  * API Revisions endpoints
  * These endpoints require Azure AD token authentication via Bearer token.
  */
-@route("/api/apirevisions")
+@route("/api/v1/revisions")
 @useAuth(BearerAuth)
 namespace APIRevisions {
     /**
      * Get the outline for an API revision
-     * @param apiRevisionId The API revision ID to get the outline for
+     * @param revisionId The API revision ID to get the outline for
      * @returns Revision outline text
      */
     @get
-    @route("/{apiRevisionId}/outline")
-    op GetOutlineRevision(
-        @path apiRevisionId: string
+    @route("/{revisionId}/outline")
+    op GetRevisionOutline(
+        @path revisionId: string
     ): {
         @statusCode statusCode: 200;
         @body outline: string;
@@ -147,19 +147,15 @@ namespace APIRevisions {
 
     /**
      * Generate review text or CodeFile for an API revision
-     * @param apiRevisionId The specific API revision ID (required when there is no selectionType)
-     * @param reviewId The review ID (required when using selectionType)
-     * @param selectionType How to select the API revision
+     * @param revisionId The specific API revision ID (required when there is no selectionType)
      * @param contentReturnType The content return type. Default is text, but CodeFile can also be selected
-     * @returns Plain text representation or CodeFile object of the API review
+     * @returns Plain text representation or JSON CodeFile object of the API revision
      */
     @get
-    @route("/getRevisionContent")
-    op GetAPIRevisionContent(
-        @query apiRevisionId?: string,
-        @query reviewId?: string,
-        @query selectionType?: APIRevisionSelectionType = APIRevisionSelectionType.Undefined,
-        @query contentReturnType?: APIRevisionContentReturnType = APIRevisionContentReturnType.Text
+    @route("/{revisionId}")
+    op GetRevisionContent(
+        @path revisionId: string,
+        @query contentReturnType?: RevisionContentReturnType = RevisionContentReturnType.Text
     ): {
         @statusCode statusCode: 200;
         @body content: string | CodeFileResponse;
@@ -190,7 +186,7 @@ namespace Comments {
         @query apiRevisionId: string
     ): {
         @statusCode statusCode: 200;
-        @body comments: ApiViewAgentComment[];
+        @body comments: ApiViewComment[];
     } | UnauthorizedErrorResponse | NotFoundErrorResponse | InternalServerErrorResponse;
 }
 
@@ -213,8 +209,8 @@ namespace Reviews {
      * 
      * @param packageQuery Package name query (e.g., "Azure.Storage.Blobs"). Requires language.
      * @param language Programming language (e.g., "C#", "Python"). Requires packageQuery.
-     * @param version Optional package version. If not specified, resolves to latest revision.
-     * @param link APIView URL (e.g., "https://spa.apiview.dev/review/{id}?activeApiRevisionId={revId}")
+     * @param version Optional package version.
+     * @param selectionType Optional selector for common revision scenarios
      * @returns Resolved IDs for use in subsequent API calls.
      */
     @get
@@ -223,13 +219,50 @@ namespace Reviews {
         @query packageQuery?: string,
         @query language?: string,
         @query version?: string,
-        @query link?: string
+        @query selectionType?: RevisionSelectionType = RevisionSelectionType.Undefined,
     ): {
         @statusCode statusCode: 200;
         @body result: RevisionResolveResult;
     } | BadRequestErrorResponse | NotFoundErrorResponse | InternalServerErrorResponse;
 
     /**
+     * Look up APIView revision associated with a pull request.
+     *
+     * @param prNumber The GitHub pull request number.
+     * @param repoName The GitHub repository (e.g., "Azure/azure-sdk-for-python").
+     * @returns Resolved revision results for each package in the PR, or 204 if none found.
+     */
+    @get
+    @route("/resolve-pr")
+    op resolvePullRequest(
+        @query prNumber: int32,
+        @query repoName: string,
+    ): {
+        @statusCode statusCode: 200;
+        @body results: RevisionResolveResult[];
+    } | {
+        @statusCode statusCode: 204;
+    } | InternalServerErrorResponse;
+
+    /**
+     * Check the approval status of a specific revision.
+     * Returns approval state, list of approvers, change history, and
+     * gate checks (e.g., copilot review, must-fix comments).
+     *
+     * @param revisionId The API revision ID.
+     * @returns Approval status, approvers, history, and gate results.
+     */
+    @get
+    @route("/{revisionId}/approval-status")
+    op getApprovalStatus(
+        @path revisionId: string
+    ): {
+        @statusCode statusCode: 200;
+        @body result: ApprovalStatusResponse;
+    } | BadRequestErrorResponse | NotFoundErrorResponse | InternalServerErrorResponse;
+
+    /**
+     * TODO: What is this for???
      * Get full metadata for a review and revision.
      * Requires a revisionId (obtained from the /resolve endpoint).
      * 
@@ -237,13 +270,65 @@ namespace Reviews {
      * @returns Full review and revision metadata.
      */
     @get
-    @route("/metadata")
+    @route("/{revisionId}/metadata")
     op getMetadata(
-        @query revisionId: string
+        @path revisionId: string
     ): {
         @statusCode statusCode: 200;
+        // TODO: It is strange that ReviewMetadata contains metadata for one specific revision and it's parent review.
         @body metadata: ReviewMetadata;
     } | BadRequestErrorResponse | NotFoundErrorResponse | InternalServerErrorResponse;
+
+    /**
+     * Retrieve visible comments for a revision.
+     *
+     * @param revisionId The API revision ID to get comments for.
+     * @returns List of comments for the revision.
+     */
+    @get
+    @route("/{revisionId}/comments")
+    op getComments(
+        @path revisionId: string
+    ): {
+        @statusCode statusCode: 200;
+        @body comments: ApiViewComment[];
+    } | UnauthorizedErrorResponse | NotFoundErrorResponse | InternalServerErrorResponse;
+}
+
+/**
+ * Reviews endpoints (v1)
+ * These endpoints require Azure AD token authentication via Bearer token.
+ */
+@route("/api/v1/reviews")
+@useAuth(BearerAuth)
+namespace ReviewsV1 {
+    /**
+     * TODO: Is this really necessary? 
+     * List and search reviews (packages).
+     * Returns a paginated list of reviews matching the specified filters.
+     * (#15407)
+     *
+     * @param language Filter by programming language (e.g., "Python", "C#").
+     * @param packageName Filter by package name (substring match).
+     * @param isApproved Filter by approval status.
+     * @param isClosed Filter by closed status.
+     * @param noOfItemsRead Continuation offset — number of items already read. Default 0.
+     * @param pageSize Number of items per page (max 200). Default 50.
+     * @returns Paginated list of matching reviews.
+     */
+    @get
+    @route("/list")
+    op listReviews(
+        @query language?: string,
+        @query packageName?: string,
+        @query isApproved?: boolean,
+        @query isClosed?: boolean,
+        @query noOfItemsRead?: int32 = 0,
+        @query pageSize?: int32 = 50
+    ): {
+        @statusCode statusCode: 200;
+        @body result: ReviewListResponse;
+    } | BadRequestErrorResponse | InternalServerErrorResponse;
 
     /**
      * Start an automated API review job via the AVC (API View Copilot) service.
@@ -278,4 +363,29 @@ namespace Reviews {
         @statusCode statusCode: 200;
         @body result: CopilotReviewJobResponse;
     } | BadRequestErrorResponse | InternalServerErrorResponse;
+}
+
+/**
+ * Permissions endpoints for querying approvers and admins.
+ * These endpoints require Azure AD token authentication via Bearer token.
+ */
+@route("/api/v1/permissions")
+@useAuth(BearerAuth)
+namespace Permissions {
+    /**
+     * Get the list of approvers or admins by language.
+     * Pass a programming language (e.g., "Python", "C#", "Java") to get the
+     * approvers for that language. Pass "apiview" for APIView administrators.
+     *
+     * @param language The programming language, or "apiview" for admins.
+     * @returns List of users with their roles for the requested scope.
+     */
+    @get
+    @route("/{language}")
+    op getApprovers(
+        @path language: string
+    ): {
+        @statusCode statusCode: 200;
+        @body members: RoleMember[];
+    } | BadRequestErrorResponse | NotFoundErrorResponse | InternalServerErrorResponse;
 }

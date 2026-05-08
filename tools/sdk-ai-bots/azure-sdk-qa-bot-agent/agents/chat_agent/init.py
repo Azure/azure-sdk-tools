@@ -147,7 +147,7 @@ async def main() -> None:
 
     # Init Skills
     skills = create_tenant_skills()
-    skills_provider = SkillsProvider(skills)
+    skills_provider = SkillsProvider(skills=skills)
 
     reasoning_effort = cfg("AI_FOUNDRY_AGENT_REASONING_EFFORT")
     agent = Agent(

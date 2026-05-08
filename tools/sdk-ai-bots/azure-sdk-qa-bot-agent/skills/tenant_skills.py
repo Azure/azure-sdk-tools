@@ -95,18 +95,6 @@ def _build_skill_content(tenant_id: TenantID) -> str:
     return "\n".join(parts)
 
 
-class TenantSkill(Skill):
-    """A Skill backed by tenant-specific content."""
-
-    def __init__(self, *, name: str, description: str, skill_content: str) -> None:
-        super().__init__(name=name, description=description)
-        self._content = skill_content
-
-    @property
-    def content(self) -> str:
-        return self._content
-
-
 def create_tenant_skills() -> list[Skill]:
     """Create a Skill for each tenant in the configuration."""
     skills: list[Skill] = []
@@ -117,10 +105,10 @@ def create_tenant_skills() -> list[Skill]:
             logger.warning("Skipping skill %s: no content", skill_name)
             continue
         skills.append(
-            TenantSkill(
+            Skill(
                 name=skill_name,
                 description=description,
-                skill_content=content,
+                content=content,
             )
         )
         logger.info("Created skill: %s (tenant=%s)", skill_name, tenant_id.value)

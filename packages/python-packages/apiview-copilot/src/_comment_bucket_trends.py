@@ -21,6 +21,7 @@ from src._apiview import (
     ActiveRevisionMetadata,
     get_apiview_cosmos_client,
     get_comments_in_date_range,
+    get_thread_start_dates,
     get_version_type,
 )
 from src._metrics import METRICS_COMMENT_FIELDS, _build_metrics_segment
@@ -30,6 +31,8 @@ PRODUCTION_ENVIRONMENT = "production"
 DEFAULT_LANGUAGES = ["Python", "C#", "Java", "JavaScript"]
 DEFAULT_MONTHS = 6
 DEFAULT_OUTPUT_PATH = Path("output/charts/comment_bucket_trends.png")
+DEFAULT_GENERIC_OUTPUT_PATH = Path("output/charts/comment_bucket_trends_generic.png")
+DEFAULT_GUIDELINE_OUTPUT_PATH = Path("output/charts/comment_bucket_trends_guideline.png")
 QUERY_BATCH_SIZE = 100
 OMIT_LANGUAGES = ["c++", "c", "typespec", "swagger", "xml"]
 
@@ -45,7 +48,7 @@ class MonthlyCommentBucketPoint:
     good_count: int
     implicit_good_count: int
     neutral_count: int
-    human_comment_count: int
+    human_count: int
     implicit_bad_count: int
     bad_count: int
     deleted_count: int
@@ -102,6 +105,7 @@ def _build_language_comment_bucket_point(
     *,
     include_human: bool,
     include_neutral: bool,
+    thread_start_index: Optional[dict] = None,
 ) -> MonthlyCommentBucketPoint:
     """Build one monthly bucket point using current metrics logic plus optional buckets."""
     filtered_reviews = [review for review in reviews if review.language.lower() == language.lower()]
@@ -111,6 +115,7 @@ def _build_language_comment_bucket_point(
         reviews=filtered_reviews,
         comments=raw_comments,
         language=language,
+        thread_start_index=thread_start_index,
     )
 
     good_count = segment.upvoted_ai_comment_count or 0
@@ -122,7 +127,13 @@ def _build_language_comment_bucket_point(
     deleted_count = segment.deleted_ai_comment_count or 0
 
     total_included = (
-        good_count + implicit_good_count + neutral_count + human_count + implicit_bad_count + bad_count + deleted_count
+        good_count
+        + implicit_good_count
+        + neutral_count
+        + human_count
+        + implicit_bad_count
+        + bad_count
+        + deleted_count
     )
 
     good_percentage = _to_percentage(good_count, total_included)
@@ -142,7 +153,7 @@ def _build_language_comment_bucket_point(
         good_count=good_count,
         implicit_good_count=implicit_good_count,
         neutral_count=neutral_count,
-        human_comment_count=human_count,
+        human_count=human_count,
         implicit_bad_count=implicit_bad_count,
         bad_count=bad_count,
         deleted_count=deleted_count,
@@ -164,9 +175,16 @@ def build_language_comment_bucket_reports(
     *,
     include_human: bool = False,
     include_neutral: bool = False,
+    generic_filter: Optional[bool] = None,
     environment: str = PRODUCTION_ENVIRONMENT,
 ) -> dict[str, list[dict]]:
-    """Build per-language bucket reports for the requested month lookback window."""
+    """Build per-language bucket reports for the requested month lookback window.
+
+    Args:
+        generic_filter: When True, only AI comments with IsGeneric=True are included.
+            When False, only AI comments with IsGeneric=False (guideline-backed).
+            When None (default), all AI comments are included.
+    """
     selected_languages = languages or DEFAULT_LANGUAGES
     reports = {language: [] for language in selected_languages}
     month_ranges = get_last_n_month_ranges(months=months, end_date=end_date)
@@ -177,8 +195,6 @@ def build_language_comment_bucket_reports(
     full_end = month_ranges[-1][1]
 
     select_fields = list(METRICS_COMMENT_FIELDS)
-    if "CreatedOn" not in select_fields:
-        select_fields.append("CreatedOn")
 
     non_diag = get_comments_in_date_range(
         full_start.isoformat(),
@@ -222,11 +238,22 @@ def build_language_comment_bucket_reports(
             id_parameter_prefix="rev_id",
         )
 
+    thread_start_index = get_thread_start_dates(non_diag, environment=environment)
+
+    # Apply generic filter: keep non-AI comments as-is, filter AI comments by IsGeneric
+    if generic_filter is not None:
+        filtered_comments = [
+            c for c in non_diag
+            if c.get("CommentSource") != "AIGenerated" or bool(c.get("IsGeneric")) == generic_filter
+        ]
+    else:
+        filtered_comments = non_diag
+
     for start_date, end_date in month_ranges:
         reviews, month_comments = _build_month_metadata(
             start_date,
             end_date,
-            non_diag,
+            filtered_comments,
             review_results,
             revision_results,
         )
@@ -245,6 +272,7 @@ def build_language_comment_bucket_reports(
                         month_comments,
                         include_human=include_human,
                         include_neutral=include_neutral,
+                        thread_start_index=thread_start_index,
                     )
                 )
             )
@@ -299,11 +327,12 @@ def _build_month_metadata(
     month_comments = [
         comment for comment in all_raw_comments if start_iso <= (comment.get("CreatedOn") or "") <= end_iso
     ]
-    non_diag = [comment for comment in month_comments if comment.get("CommentSource") != "Diagnostic"]
 
     review_to_revisions: dict[str, set[str]] = {}
     active_revision_ids: set[str] = set()
-    for comment in non_diag:
+    for comment in month_comments:
+        if comment.get("CommentSource") == "Diagnostic":
+            continue
         review_id = comment.get("ReviewId")
         revision_id = comment.get("APIRevisionId")
         if review_id and revision_id:
@@ -399,10 +428,10 @@ def _build_chart_rows(
             {"key": "good_count", "label": "Confirmed Good", "color": "darkgreen"},
             {"key": "implicit_good_count", "label": "Implicit Good", "color": "lightgreen"},
         ]
+        if include_human:
+            rows.append({"key": "human_count", "label": "Human", "color": "lightblue"})
         if include_neutral:
             rows.append({"key": "neutral_count", "label": "Neutral", "color": "lightgray"})
-        if include_human:
-            rows.append({"key": "human_comment_count", "label": "Human Comment", "color": "lightblue"})
         rows.extend(
             [
                 {"key": "implicit_bad_count", "label": "Implicit Bad", "color": "lightcoral"},
@@ -415,10 +444,10 @@ def _build_chart_rows(
             {"key": "good_percentage", "label": "Confirmed Good", "color": "darkgreen"},
             {"key": "implicit_good_percentage", "label": "Implicit Good", "color": "lightgreen"},
         ]
+        if include_human:
+            rows.append({"key": "human_percentage", "label": "Human", "color": "lightblue"})
         if include_neutral:
             rows.append({"key": "neutral_percentage", "label": "Neutral", "color": "lightgray"})
-        if include_human:
-            rows.append({"key": "human_percentage", "label": "Human Comment", "color": "lightblue"})
         rows.extend(
             [
                 {"key": "implicit_bad_percentage", "label": "Implicit Bad", "color": "lightcoral"},
@@ -441,6 +470,7 @@ def generate_comment_bucket_chart(
     include_neutral: bool = False,
     raw: bool = False,
     environment: str = PRODUCTION_ENVIRONMENT,
+    title_prefix: str = "Comment Buckets by Language",
 ) -> Optional[Path]:
     """Render one PNG containing a bucket subplot per language."""
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -546,7 +576,7 @@ def generate_comment_bucket_chart(
     environment_label = (environment or PRODUCTION_ENVIRONMENT).strip().lower()
 
     figure.suptitle(
-        f"Comment Buckets by Language{title_suffix} ({format_label})\nLast {month_count} Calendar Months (APIView {environment_label})",
+        f"{title_prefix}{title_suffix} ({format_label})\nLast {month_count} Calendar Months (APIView {environment_label})",
         fontsize=14,
         y=0.985,
     )
@@ -556,6 +586,7 @@ def generate_comment_bucket_chart(
     figure.savefig(output_path, dpi=150)
     plt.close(figure)
     return output_path
+
 
 
 def print_comment_bucket_report(
@@ -574,11 +605,10 @@ def print_comment_bucket_report(
     for language, report in reports.items():
         print(f"\n{language}")
         header = ["Month", "Good", "Impl+", "Impl-", "Bad", "Del", "Boundary"]
-        if include_neutral:
-            header.insert(3, "Neutral")
         if include_human:
-            human_index = 4 if include_neutral else 3
-            header.insert(human_index, "Human")
+            header.insert(2, "Human")
+        if include_neutral:
+            header.insert(3 if include_human else 2, "Neutral")
         print("  ".join(f"{column:>8}" for column in header))
         print("  ".join(["--------"] * len(header)))
 
@@ -586,12 +616,12 @@ def print_comment_bucket_report(
             values = [
                 f"{item['label']:>8}",
                 f"{item['good_percentage']:>8.1f}",
-                f"{item['implicit_good_percentage']:>8.1f}",
             ]
-            if include_neutral:
-                values.append(f"{item['neutral_percentage']:>8.1f}")
             if include_human:
                 values.append(f"{item['human_percentage']:>8.1f}")
+            if include_neutral:
+                values.append(f"{item['neutral_percentage']:>8.1f}")
+            values.append(f"{item['implicit_good_percentage']:>8.1f}")
             values.extend(
                 [
                     f"{item['implicit_bad_percentage']:>8.1f}",
@@ -686,4 +716,43 @@ def main() -> None:
         include_human=include_human,
         include_neutral=args.neutral,
         environment=args.environment,
+    )
+
+    # Generate breakout charts for generic vs guideline-backed AI comments (no human)
+    generic_reports = build_language_comment_bucket_reports(
+        languages=args.languages,
+        months=args.months,
+        end_date=args.end_date,
+        include_human=False,
+        include_neutral=args.neutral,
+        generic_filter=True,
+        environment=args.environment,
+    )
+    generate_comment_bucket_chart(
+        generic_reports,
+        output_path=DEFAULT_GENERIC_OUTPUT_PATH,
+        include_human=False,
+        include_neutral=args.neutral,
+        raw=raw,
+        environment=args.environment,
+        title_prefix="Generic AI Comments by Language",
+    )
+
+    guideline_reports = build_language_comment_bucket_reports(
+        languages=args.languages,
+        months=args.months,
+        end_date=args.end_date,
+        include_human=False,
+        include_neutral=args.neutral,
+        generic_filter=False,
+        environment=args.environment,
+    )
+    generate_comment_bucket_chart(
+        guideline_reports,
+        output_path=DEFAULT_GUIDELINE_OUTPUT_PATH,
+        include_human=False,
+        include_neutral=args.neutral,
+        raw=raw,
+        environment=args.environment,
+        title_prefix="Guideline AI Comments by Language",
     )

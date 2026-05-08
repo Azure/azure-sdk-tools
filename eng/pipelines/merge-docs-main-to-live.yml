@@ -18,6 +18,9 @@ parameters:
     - RepoName: azure-docs-sdk-node
       RepoOwner: MicrosoftDocs
       AllowlistPath: docsms-allowlist/js-allowlist.txt
+    - RepoName: azure-docs-sdk-cpp
+      RepoOwner: MicrosoftDocs
+      AllowlistPath: docsms-allowlist/cpp-allowlist.txt
 
 - name: TargetBranch
   type: string
@@ -45,13 +48,18 @@ jobs:
           Paths:
           - /*
 
+      - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+        parameters:
+          TokenOwners:
+            - ${{ repo.RepoOwner }}
+
       - task: Powershell@2
         inputs:
           pwsh: true
           filePath: eng/scripts/create-tag-for-current-branch.ps1
           arguments:
             -ReleaseTag "live_release-$(Get-Date -Format 'yyyy-MM-dd').$(Build.BuildId)"
-            -GithubUrl "https://$(azuresdk-github-pat)@github.com/${{repo.RepoOwner}}/${{repo.RepoName}}.git" `
+            -GithubUrl "https://x-access-token:$(GH_TOKEN)@github.com/${{repo.RepoOwner}}/${{repo.RepoName}}.git" `
             -WhatIf:$${{ parameters.WhatIfPreference }}
           workingDirectory: $(DocRepoLocation)
         displayName: Create tag for base branch
@@ -99,3 +107,4 @@ jobs:
           WhatIfPreference: ${{ parameters.WhatIfPreference }}
           CommitMsg: "Merge main to live $(Get-Date -Format 'yyyy-MM-dd')"
           PushArgs: -f
+          AuthToken: $(GH_TOKEN)

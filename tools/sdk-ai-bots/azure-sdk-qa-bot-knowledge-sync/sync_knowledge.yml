@@ -85,6 +85,10 @@ extends:
               - checkout: internal-wiki
                 displayName: 'Checkout internal wiki repository'
 
+              - template: /eng/common/pipelines/templates/steps/login-to-github.yml@self
+                parameters:
+                  ScriptDirectory: $(Agent.BuildDirectory)/s/azure-sdk-tools/eng/common/scripts
+
               - task: AzureCLI@2
                 inputs:
                   azureSubscription: $(SERVICE_CONNECTION)
@@ -123,8 +127,8 @@ extends:
                   AZURE_SDK_DOCS_PATH: "$(Agent.BuildDirectory)/s/azure-sdk-docs-eng.ms"
                   AZURE_SDK_WIKI_PATH: "$(Agent.BuildDirectory)/s/internal.wiki"
 
-                  # GitHub PAT for private repo access
-                  AZURE_SDK_GITHUB_PAT: $(azuresdk-github-pat)
+                  # GitHub App token for private repo access
+                  AZURE_SDK_GITHUB_PAT: $(GH_TOKEN)
 
                   # Set working directory for temporary files
                   TMPDIR: $(Agent.TempDirectory)

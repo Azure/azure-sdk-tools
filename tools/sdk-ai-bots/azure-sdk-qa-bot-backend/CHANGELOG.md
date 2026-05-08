@@ -4,7 +4,7 @@
 
 ### Bug Fixes
 
-* Fix reference link for `static_typespec_migration_docs` to return correct per-document URLs instead of a hardcoded FAQ page
+* Fix reference link for `static_typespec_migration_docs`: return empty string for blob-sourced documents (identified by `.md` title suffix), and fall back to the default FAQ page otherwise
 
 
 ## 0.9.6 (2026-05-06)

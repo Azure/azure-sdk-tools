@@ -193,18 +193,6 @@ extends:
               # at runtime so the source stays untouched.
               - script: |
                   cd .github/skills/azure-typespec-author/evaluate
-                  mkdir -p results
-                  for f in evals/*.eval.yaml; do
-                    sed -i -E 's/^([[:space:]]*timeout:[[:space:]]+)([0-9]+)([[:space:]]*(#.*)?)$/\1"\2s"\3/' "$f"
-                  done
-                  vally eval --suite all --output-dir results --verbose
-                displayName: Run evaluations
-                continueOnError: true
-                env:
-                  GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
-              
-              - script: |
-                  cd .github/skills/azure-typespec-author/evaluate
                   mkdir -p results-2
                   vally eval --eval-spec eval.yaml --output-dir results-2 --workers 3 --verbose
                 displayName: Run all evaluations
@@ -213,6 +201,19 @@ extends:
                 env:
                   GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
 
+              - script: |
+                  cd .github/skills/azure-typespec-author/evaluate
+                  mkdir -p results
+                  for f in evals/*.eval.yaml; do
+                    sed -i -E 's/^([[:space:]]*timeout:[[:space:]]+)([0-9]+)([[:space:]]*(#.*)?)$/\1"\2s"\3/' "$f"
+                  done
+                  vally eval --suite all --output-dir results --verbose
+                displayName: Run evaluations
+                continueOnError: true
+                condition: succeededOrFailed()
+                env:
+                  GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+              
             templateContext:
               outputs:
                 - output: pipelineArtifact

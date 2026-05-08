@@ -95,6 +95,4 @@ extends:
                   ACR_NAME: $(ACR_NAME)
                   ACR_RESOURCE_GROUP: $(ACR_RESOURCE_GROUP)
                   AI_FOUNDRY_PROJECT_RESOURCE_ID: $(AI_FOUNDRY_PROJECT_RESOURCE_ID)
-                  GITHUB_TOKEN: $(GITHUB_TOKEN)
-                  ADO_MCP_AUTH_TOKEN: $(ADO_MCP_AUTH_TOKEN)
                   SYSTEM_ACCESSTOKEN: $(System.AccessToken)

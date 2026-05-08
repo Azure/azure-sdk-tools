@@ -111,6 +111,7 @@ A changelog-breakingchange pattern guide (e.g. https://github.com/Azure/azure-sd
 
 ```mermaid
 flowchart TD
+    Entry[<b>Entry Point</b><br/>Breaking change detect request]
     A[Detect SDK Changes]
     B{Has Breaking Change?}
     C[Copilot agent Classify Breaking Changes]
@@ -126,7 +127,9 @@ flowchart TD
         C
     end
 
+    Entry --> A
     A --> B
+    A --> |generate| F
     B -- Yes --> C
     C --> |generate| D
     B -- No --> D

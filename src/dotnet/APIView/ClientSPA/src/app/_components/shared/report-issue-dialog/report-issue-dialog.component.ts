@@ -32,8 +32,7 @@ export interface ReportIssueData {
         CommonModule,
         FormsModule,
         DialogModule
-    ],
-    providers: [MessageService]
+    ]
 })
 export class ReportIssueDialogComponent implements OnChanges {
   @Input() visible: boolean = false;

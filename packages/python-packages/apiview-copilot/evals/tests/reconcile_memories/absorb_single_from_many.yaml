@@ -1,0 +1,28 @@
+testcase: absorb_single_from_many
+guideline: |
+  {
+    "id": "python_design=html=python-client-constructor",
+    "title": "Accept endpoint and credential in constructor",
+    "content": "DO accept an endpoint URL as the first positional parameter and a credential object as the second positional parameter in the client constructor. The credential must support the TokenCredential protocol. Connection strings may be accepted as an alternative via a from_connection_string class method. Do not accept connection strings in the main constructor."
+  }
+memories: |
+  [
+    {
+      "id": "mem-050",
+      "title": "Connection strings via class method only",
+      "content": "Review note: Connection strings should not be accepted in __init__. Use from_connection_string() instead."
+    },
+    {
+      "id": "mem-051",
+      "title": "Credential must support both sync and async",
+      "content": "Architecture board: The credential parameter should support both TokenCredential and AsyncTokenCredential. For sync clients, accept TokenCredential; for async clients, accept AsyncTokenCredential."
+    },
+    {
+      "id": "mem-052",
+      "title": "Endpoint validation should check URL scheme",
+      "content": "From security review: The client constructor should validate that the endpoint URL uses HTTPS scheme. Raise ValueError for HTTP endpoints unless an explicit allow_insecure flag is passed."
+    }
+  ]
+response:
+  action: mem-050
+  rationale: mem-050 restates the connection string requirement already in the guideline. mem-051 adds detail about async credential support not in the guideline. mem-052 adds a security validation requirement not covered by the guideline.

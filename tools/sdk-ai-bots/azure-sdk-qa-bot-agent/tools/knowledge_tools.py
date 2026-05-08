@@ -66,6 +66,9 @@ class KnowledgeTools:
             "query 'how to version a spread property'. "
             "2) **Solution-oriented query** — the doc topic, guide name, or "
             "root-cause process. Think: 'what doc would solve this?' "
+            "Example: if user asks about ArmResourceActionSync + x-ms-pageable, "
+            "query 2 should be 'ARM list operation templates' (the solution doc), "
+            "NOT 'how to emit x-ms-pageable from action' (the desired output). "
             "3) Optionally, a broader topic query for context. "
             "Example — user asks 'teammate cannot approve my PR in azure-rest-api-specs': "
             "  BAD:  ['conditionally approve pull request azure-rest-api-specs "
@@ -80,6 +83,11 @@ class KnowledgeTools:
             "List of knowledge source **names** to search. "
             "Pick from the sources exposed by the active skill or tenant context. "
             "Example: ['typespec_docs', 'azure_api_guidelines']. "
+            "GUIDANCE: When seeking prescriptive guidance (the right pattern/template to use), "
+            "prioritize authoritative sources (e.g., 'typespec_azure_docs', 'azure_resource_manager_rpc') "
+            "OVER historical Q&A sources (e.g., 'static_typespec_qa'). "
+            "Q&A sources often discuss workarounds and edge cases; for template selection, "
+            "start with the official docs. "
             "If not provided, all sources configured for the tenant will be used.",
         ] = None,
         tenant_id: Annotated[
@@ -102,9 +110,12 @@ class KnowledgeTools:
             str,
             "Search strategy to use. "
             "'quick' — vector search only, fast, good for straightforward "
-            "factual lookups. "
+            "factual lookups (e.g., 'What template emits x-ms-pageable?'). "
+            "Use 'quick' by default. "
             "'deep' — runs both agentic and vector search in parallel, "
-            "better for complex or multi-faceted questions. "
+            "better for complex questions that need cross-referencing multiple topics "
+            "(e.g., 'How do I use SDK versioning with spread properties AND deprecation policies?'). "
+            "Use 'deep' only when the question genuinely spans multiple unrelated concepts. "
             "Default: 'quick'.",
         ] = "quick",
     ) -> SearchKnowledgeBaseResult:

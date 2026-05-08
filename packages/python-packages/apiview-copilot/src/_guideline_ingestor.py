@@ -488,7 +488,7 @@ class GuidelineIngestor:
         Returns a list of malformed ids.
         """
         malformed = []
-        pattern = re.compile(r"^[A-Za-z0-9_=-]{1,1024}$")
+        pattern = re.compile(r"^[A-Za-z0-9_=\-]{1,1024}$")
         for item in items:
             if not item.id:
                 malformed.append(f"(missing id for text: {item.text[:50]}...)")
@@ -582,7 +582,7 @@ class GuidelineIngestor:
                 "base_sha must be an ancestor of target_sha."
             )
         if compare_status == "identical":
-            raise ValueError(f"base_sha and target_sha resolve to identical trees. Nothing to sync.")
+            raise ValueError("base_sha and target_sha resolve to identical trees. Nothing to sync.")
 
         # Determine which files changed
         print(f"Comparing commits: {last_sha[:8]}...{current_sha[:8]}")
@@ -749,9 +749,10 @@ class GuidelineIngestor:
                         existing = self._db.guidelines.get(gid)
                         print(f"    Found in DB: {existing.get('id')} - {existing.get('title', '(no title)')[:60]}")
                     except Exception:
+                        existing = None
                         print("    WARNING: Not found in database - will be created")
                     if not dry_run:
-                        self._upsert_guideline(target_map[gid][0], target_hash, target_sha, enriched=enriched)
+                        self._upsert_guideline(target_map[gid][0], target_hash, target_sha, existing, enriched=enriched)
 
         # Run indexer once at the end (if not dry run)
         if not dry_run and (result.guidelines_created or result.guidelines_updated or result.guidelines_deleted):
@@ -934,9 +935,6 @@ class GuidelineIngestor:
             dry_run: If True, report changes without modifying the database.
             result: SyncResult to record outcomes.
         """
-        if not examples:
-            return
-
         print(f"\nSyncing {len(examples)} examples...")
         seen_example_ids: set[str] = set()
 

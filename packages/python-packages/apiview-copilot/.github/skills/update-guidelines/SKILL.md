@@ -128,7 +128,7 @@ Then go to **Phase 2: Dry Run**.
 **Always run a dry-run first.** Use a **300-second timeout** (the command can be slow due to LLM enrichment).
 
 ```powershell
-python cli.py db ingest-guidelines --environment <ENV> --base-sha <BASE_SHA> --target-sha <TARGET_SHA> --dry-run --details [--language <LANG1> --language <LANG2>]
+python cli.py db ingest-guidelines --environment <ENV> --base-sha <BASE_SHA> --target-sha <TARGET_SHA> --details [--language <LANG1> --language <LANG2>]
 ```
 
 Include `--language` flags only if the user specified languages to filter.
@@ -161,7 +161,7 @@ Ask: "Ready to apply these changes to **{environment}**?"
 Only after the user confirms the dry-run results, run the actual ingestion:
 
 ```powershell
-python cli.py db ingest-guidelines --environment <ENV> --base-sha <BASE_SHA> --target-sha <TARGET_SHA> [--language <LANG1> --language <LANG2>]
+python cli.py db ingest-guidelines --environment <ENV> --base-sha <BASE_SHA> --target-sha <TARGET_SHA> --apply [--language <LANG1> --language <LANG2>]
 ```
 
 Use a **300-second timeout**. Include the same `--language` flags used in the dry run.

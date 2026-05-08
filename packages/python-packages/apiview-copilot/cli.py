@@ -1661,7 +1661,7 @@ def db_ingest_guidelines(
     base_sha: str,
     target_sha: str,
     environment: str,
-    dry_run: bool = True,
+    apply: bool = False,
     details: bool = False,
     languages: Optional[List[str]] = None,
 ):
@@ -1669,12 +1669,14 @@ def db_ingest_guidelines(
     Ingest guidelines from the azure-sdk repository into the knowledge base.
 
     Detects changes using git commit comparison and only updates guidelines
-    where content has actually changed.
+    where content has actually changed. Runs in dry-run mode by default;
+    pass --apply to execute.
     """
     from src._guideline_ingestor import GuidelineIngestor
 
     os.environ["ENVIRONMENT_NAME"] = environment
     ingestor = GuidelineIngestor.get_instance(force_new=True)
+    dry_run = not apply
     result = ingestor.sync_guidelines(
         dry_run=dry_run,
         details=details,
@@ -1685,7 +1687,8 @@ def db_ingest_guidelines(
 
     # Print detailed results
     if dry_run:
-        print(f"{BOLD}[DRY RUN] No changes were made to the database.{RESET}\n")
+        print(f"{BOLD}[DRY RUN] No changes were made to the database.{RESET}")
+        print(f"Run with {BOLD}--apply{RESET} to execute.\n")
 
     print(
         f"Guidelines: {GREEN}{len(result.guidelines_created)} to create{RESET}, "
@@ -3123,10 +3126,9 @@ class CliCommandsLoader(CLICommandsLoader):
             )
         with ArgumentsContext(self, "db ingest-guidelines") as ac:
             ac.argument(
-                "dry_run",
+                "apply",
                 action="store_true",
-                help="Report what would be changed without actually modifying the database.",
-                options_list=["--dry-run", "-d"],
+                help="Apply changes to the database. Without this flag, runs in dry-run mode.",
             )
             ac.argument(
                 "base_sha",

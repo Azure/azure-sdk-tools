@@ -153,7 +153,8 @@ Guidelines and examples can be ingested automatically from the [azure-sdk](https
 ### Sync Modes
 
 - **Incremental sync** (default) — Only processes files changed between the base and target commits. Fast but may miss deletions in unchanged files.
-- **Full sync** (`--force`) — Processes all guideline files regardless of the last synced SHA. Use periodically to catch drift.
+- **Full sync** (omit `--base-sha`) — If no base SHA is provided and no last-synced SHA exists in App Configuration, all guideline files are processed regardless of history. Use periodically to catch drift.
+- **Language-scoped sync** (`--language`) — Restricts processing to guideline files belonging to specific languages, plus the `general/` folder. Useful for testing or targeted updates.
 
 ### Content Tracking Fields
 

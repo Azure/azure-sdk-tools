@@ -313,6 +313,18 @@ class GuidelineIngestor:
 
         return files
 
+    @staticmethod
+    def _file_matches_language_folders(file_path: str, allowed_folders: set) -> bool:
+        """Return True if *file_path* belongs to one of the *allowed_folders* under ``docs/``."""
+        parts = file_path.replace("\\", "/").split("/")
+        try:
+            docs_idx = parts.index("docs")
+            if docs_idx + 1 < len(parts):
+                return parts[docs_idx + 1] in allowed_folders
+        except ValueError:
+            pass
+        return False
+
     def fetch_file_content(self, file_path: str, commit_sha: str) -> str:
         """Fetch the raw content of a file at a specific commit."""
         url = f"https://raw.githubusercontent.com/{AZURE_SDK_OWNER}/{AZURE_SDK_REPO}/{commit_sha}/{file_path}"
@@ -558,19 +570,20 @@ class GuidelineIngestor:
         self,
         *,
         dry_run: bool = False,
-        force: bool = False,
         details: bool = False,
         base_sha: Optional[str] = None,
         target_sha: Optional[str] = None,
+        languages: Optional[List[str]] = None,
     ) -> SyncResult:
         """
         Synchronize guidelines from the azure-sdk repository to Cosmos DB.
 
         Args:
             dry_run: If True, report changes without writing to the database.
-            force: If True, ignore the last synced SHA and process all files.
+            details: If True, include before/after content for each changed item.
             base_sha: If provided, use this SHA as the baseline instead of the last synced SHA from AppConfig.
             target_sha: If provided, use this SHA as the target instead of the latest on main.
+            languages: If provided, only process guideline files for these languages (canonical names).
 
         Returns:
             SyncResult with details of what was created, updated, deleted, or unchanged.
@@ -586,11 +599,8 @@ class GuidelineIngestor:
             current_sha = self.get_current_head_sha()
             print(f"Current HEAD SHA: {current_sha}")
 
-        # Get base SHA (use provided value, or AppConfig value unless force is True)
-        if force:
-            last_sha = None
-            print("Force flag set - will perform full sync (ignoring base SHA)")
-        elif base_sha:
+        # Get base SHA (use provided value, or AppConfig value)
+        if base_sha:
             last_sha = base_sha
             print(f"Using provided base SHA: {last_sha}")
         else:
@@ -614,6 +624,23 @@ class GuidelineIngestor:
             print(f"Fetching all guideline files from SHA: {current_sha[:8]}")
             files_to_process = self.get_all_guideline_files(current_sha)
             print(f"Full sync: {len(files_to_process)} files to process")
+
+        # Apply language filter if specified
+        if languages:
+            # Build the set of allowed folder names from LANGUAGE_FOLDER_MAP
+            allowed_folders = set()
+            for folder, lang in LANGUAGE_FOLDER_MAP.items():
+                if lang in languages:
+                    allowed_folders.add(folder)
+            # Also include "general" since language-agnostic guidelines apply to all
+            allowed_folders.add("general")
+
+            before_count = len(files_to_process)
+            files_to_process = [
+                f for f in files_to_process
+                if self._file_matches_language_folders(f, allowed_folders)
+            ]
+            print(f"Language filter ({', '.join(languages)}): {before_count} -> {len(files_to_process)} files")
 
         if not files_to_process:
             print("No files to process")

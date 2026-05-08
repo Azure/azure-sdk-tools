@@ -380,19 +380,24 @@ avc db ingest-guidelines
 # Dry-run: preview changes without writing to the database
 avc db ingest-guidelines --dry-run
 
-# Full resync (ignore last synced SHA)
-avc db ingest-guidelines --force
-
 # Sync between specific commits
 avc db ingest-guidelines --base-sha abc123 --target-sha def456
+
+# Only sync specific languages
+avc db ingest-guidelines --language python java
+
+# Include before/after content in output
+avc db ingest-guidelines --dry-run --details
 ```
 
 | Option | Description |
 |--------|-------------|
 | `-d/--dry-run` | Preview changes without modifying the database |
-| `-f/--force` | Ignore the last synced SHA; perform a full resync |
 | `-b/--base-sha` | Override the baseline commit SHA |
 | `-t/--target-sha` | Override the target commit SHA |
+| `--details` | Include before/after content for each changed guideline and example in the output |
+| `--environment` | The APIView environment to update (`staging` or `production`; default: `staging`) |
+| `-l/--language` | Limit ingestion to specific languages (e.g., `python java dotnet`). If omitted, all languages are processed |
 
 See [kb.md](./kb.md#guideline-ingestion) for details on the ingestion pipeline.
 

@@ -1659,10 +1659,11 @@ def db_purge(containers: Optional[list[str]] = None, run_indexer: bool = False):
 
 def db_ingest_guidelines(
     dry_run: bool = False,
-    force: bool = False,
     details: bool = False,
     base_sha: Optional[str] = None,
     target_sha: Optional[str] = None,
+    environment: str = "staging",
+    languages: Optional[List[str]] = None,
 ):
     """
     Ingest guidelines from the azure-sdk repository into the knowledge base.
@@ -1675,10 +1676,10 @@ def db_ingest_guidelines(
     ingestor = GuidelineIngestor.get_instance()
     result = ingestor.sync_guidelines(
         dry_run=dry_run,
-        force=force,
         details=details,
         base_sha=base_sha,
         target_sha=target_sha,
+        languages=languages,
     )
 
     # Print detailed results
@@ -3127,12 +3128,6 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--dry-run", "-d"],
             )
             ac.argument(
-                "force",
-                action="store_true",
-                help="Ignore the last synced commit SHA and process all guideline files (full resync).",
-                options_list=["--force", "-f"],
-            )
-            ac.argument(
                 "base_sha",
                 type=str,
                 help="The baseline commit SHA to compare against. If not provided, uses the last synced SHA from AppConfig.",
@@ -3149,6 +3144,21 @@ class CliCommandsLoader(CLICommandsLoader):
                 action="store_true",
                 help="Include before/after content for each changed guideline and example in the output.",
                 options_list=["--details"],
+            )
+            ac.argument(
+                "environment",
+                type=str,
+                help="The APIView environment to update. Defaults to 'staging'.",
+                options_list=["--environment"],
+                default="staging",
+                choices=["production", "staging"],
+            )
+            ac.argument(
+                "languages",
+                type=resolve_language_to_canonical,
+                nargs="*",
+                help="Limit ingestion to these languages (e.g. python java dotnet). If omitted, all languages are processed.",
+                options_list=["--language", "-l"],
             )
         with ArgumentsContext(self, "apiview") as ac:
             ac.argument(

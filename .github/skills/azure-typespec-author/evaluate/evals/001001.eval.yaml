@@ -62,7 +62,7 @@ stimuli:
       threshold: 1.0
   constraints:
     max_turns: 5
-    max_tokens: 50000
+    max_tokens: 100000
 scoring:
   weights:
     file-matches: 3

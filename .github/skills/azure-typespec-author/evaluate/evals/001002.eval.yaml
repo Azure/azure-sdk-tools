@@ -20,7 +20,7 @@ stimuli:
     add a default value `21` for property age in model EmployeeProperties only for the new api version 2025-11-01
   constraints:
     max_turns: 6
-    max_tokens: 5000
+    max_tokens: 100000
   environment:
     files:
     - src: ../fixtures/001002-version-default-value/employee.tsp

@@ -20,7 +20,7 @@ stimuli:
   name: 001010-version-model-property-removed
   constraints:
     max_turns: 6
-    max_tokens: 5000
+    max_tokens: 100000
   environment:
     files:
     - src: ../fixtures/001-share-version-new-feature/employee.tsp

@@ -1,23 +1,21 @@
 name: azure-typespec-author-eval
-description: Evaluation suite for azure-typespec-author.
+description: Evaluation suite for azure-typespec-author - warning suppression cases (005001).
 version: "1.0"
-type: capability               # capability | regression
+type: capability
 
-# Root-level environment
 environment: azsdk-mcp
 
-# Execution configuration
 config:
-  runs: 1                        # Trials per stimulus
-  timeout: "660s"                # Seconds per trial
-  model: claude-opus-4.6         #gpt-4o #claude-sonnet-4.6 # Model for agent execution
-  executor: copilot-sdk          # Which executor to use
+  runs: 1
+  timeout: "660s"
+  model: claude-opus-4.6
+  executor: copilot-sdk
+  workers: 1
 
-# Test cases
 stimuli:
-- prompt: |
+- name: 005001-warning-suppress-warning
+  prompt: |
     Add suppressions for the warnings produced by "tsp compile .", and set the justification to "FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details".
-  name: 005001-warning-suppress-warning
   constraints:
     max_turns: 10
     max_tokens: 100000
@@ -51,9 +49,3 @@ stimuli:
     config:
       path: models.tsp
       pattern: 'FIXME: Update justification, follow aka\.ms/tsp/conversion-fix for details'
-scoring:
-  weights:
-    tool-calls: 1
-    skill-invocation: 1
-    file-matches: 2
-  threshold: 1.0

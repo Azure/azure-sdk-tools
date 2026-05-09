@@ -20,7 +20,7 @@ stimuli:
   name: 004003-delete-and-restore-operationId-decorator
   constraints:
     max_turns: 10
-    max_tokens: 5000
+    max_tokens: 100000
   environment:
     files:
     - src: ../fixtures/004003-delete-and-restore-operationId-decorator/BastionHost.tsp

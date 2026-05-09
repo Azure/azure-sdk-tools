@@ -20,7 +20,7 @@ stimuli:
   name: 002004-ARM-define-extension-resource
   constraints:
     max_turns: 6
-    max_tokens: 5000
+    max_tokens: 100000
   environment:
     files:
     - src: ../fixtures/002004-ARM-define-extension-resource/badgeAssignment.tsp

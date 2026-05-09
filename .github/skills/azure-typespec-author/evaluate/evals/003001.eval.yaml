@@ -20,7 +20,7 @@ stimuli:
   name: 003001-arm-action-lro
   constraints:
     max_turns: 10
-    max_tokens: 5000
+    max_tokens: 100000
   environment:
     files:
     - src: ../fixtures/003-long-running-operation-share/employee.tsp

@@ -1,23 +1,67 @@
 name: azure-typespec-author-eval
-description: Evaluation suite for azure-typespec-author.
+description: Evaluation suite for azure-typespec-author - long-running operation cases (003001-003002).
 version: "1.0"
-type: capability               # capability | regression
+type: capability
 
-# Root-level environment
 environment: azsdk-mcp
 
-# Execution configuration
 config:
-  runs: 1                        # Trials per stimulus
-  timeout: "660s"                # Seconds per trial
-  model: claude-opus-4.6         #gpt-4o #claude-sonnet-4.6 # Model for agent execution
-  executor: copilot-sdk          # Which executor to use
+  runs: 1
+  timeout: "660s"
+  model: claude-opus-4.6
+  executor: copilot-sdk
+  workers: 2
 
-# Test cases
 stimuli:
-- prompt: |
+- name: 003001-arm-action-lro
+  prompt: |
+    Add a move async operation to move employee, operation's request is MoveRequest, response is MoveResponse
+  constraints:
+    max_turns: 10
+    max_tokens: 100000
+  environment:
+    files:
+    - src: ../fixtures/003-long-running-operation-share/employee.tsp
+      dest: employee.tsp
+    - src: ../fixtures/003-long-running-operation-share/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/003-long-running-operation-share/package.json
+      dest: package.json
+    - src: ../fixtures/003-long-running-operation-share/readme.md
+      dest: readme.md
+    - src: ../fixtures/003-long-running-operation-share/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/003-long-running-operation-share/tspconfig.yaml
+      dest: tspconfig.yaml
+  graders:
+  - type: tool-calls
+    config:
+      required:
+        - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+        - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+        - azure-typespec-author
+  - type: file-matches
+    config:
+      path: employee.tsp
+      pattern: 'move\s+is\s+ArmResourceActionAsync\s*<\s*Employee\s*,\s*MoveRequest\s*,\s*MoveResponse\s*,\s*LroHeaders\s*='
+  - type: file-matches
+    config:
+      path: employee.tsp
+      pattern: 'ArmCombinedLroHeaders\s*<\s*FinalResult\s*=\s*MoveResponse\s*>'
+  - type: prompt
+    config:
+      scoring: scale_1_5
+      threshold: 1.0
+      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
+      model: claude-opus-4.6
+
+- name: 003002-arm-modify-response
+  prompt: |
     Modify the LRO createOrUpdate PUT operation in interface Employees so that it returns Azure-AsyncOperation header but NOT Retry-After header in the 201 response. The operation currently uses ArmResourceCreateOrReplaceAsync<Employee> template.
-  name: 003002-arm-modify-response
   constraints:
     max_turns: 10
     max_tokens: 100000
@@ -46,7 +90,6 @@ stimuli:
         - edit
         - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
-  # VP1: ArmAsyncOperationHeader with FinalResult = Employee (alias or inline)
   - type: skill-invocation
     config:
       required:
@@ -55,12 +98,10 @@ stimuli:
     config:
       path: employee.tsp
       pattern: 'ArmAsyncOperationHeader<FinalResult\s*=\s*Employee>'
-  # VP2: createOrUpdate uses ArmResourceCreateOrReplaceAsync with custom LroHeaders
   - type: file-matches
     config:
       path: employee.tsp
       pattern: 'createOrUpdate is ArmResourceCreateOrReplaceAsync<'
-  # VP3: Other operations unchanged
   - type: file-matches
     config:
       path: employee.tsp
@@ -75,10 +116,3 @@ stimuli:
       threshold: 1.0
       prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
       model: claude-opus-4.6
-scoring:
-  weights:
-    tool-calls: 1
-    skill-invocation: 1
-    prompt: 1
-    file-matches: 5
-  threshold: 1.0

@@ -20,7 +20,7 @@ stimuli:
   name: 004002-decorate-length-constrains-on-array-item
   constraints:
     max_turns: 10
-    max_tokens: 5000
+    max_tokens: 100000
   environment:
     files:
     - src: ../fixtures/004002-decorate-length-constrains-on-array-item/employee.tsp

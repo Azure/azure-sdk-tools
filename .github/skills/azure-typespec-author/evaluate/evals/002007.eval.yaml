@@ -20,7 +20,7 @@ stimuli:
   name: 002007-ARM-define-custom-action
   constraints:
     max_turns: 6
-    max_tokens: 5000
+    max_tokens: 100000
   environment:
     files:
       - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp

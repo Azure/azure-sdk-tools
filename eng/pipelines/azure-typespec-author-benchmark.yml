@@ -85,6 +85,7 @@ extends:
                   workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
                   inlineScript: |
                     export GOPROXY=https://proxy.golang.org,direct
+                    : > qa-bot-service.log
                     go build -o qa-bot-service
                     chmod +x qa-bot-service
                     nohup ./qa-bot-service > qa-bot-service.log 2>&1 &
@@ -247,4 +248,10 @@ extends:
                   path: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/results
                   artifact: eval-results-$(Build.BuildId)
                   displayName: Upload eval results
+                  condition: always()
+
+                - output: pipelineArtifact
+                  path: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/qa-bot-service.log
+                  artifact: qa-bot-service-log
+                  displayName: Upload QA bot backend log
                   condition: always()

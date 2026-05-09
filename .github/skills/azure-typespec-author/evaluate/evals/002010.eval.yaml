@@ -19,7 +19,7 @@ stimuli:
     In the Widget project, add a sync operation exportData for employee resource.
   name: 002010-arm-action-sync-operation
   constraints:
-    max_turns: 10
+    max_turns: 6
     max_tokens: 5000
   environment:
     files:

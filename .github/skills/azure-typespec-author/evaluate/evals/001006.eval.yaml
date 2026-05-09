@@ -19,7 +19,7 @@ stimuli:
     Add a new preview version `2025-05-04-preview` to my service widget resource manager. Carry over all the features from the latest stable version
   name: 001006-version-add-preview-after-stable
   constraints:
-    max_turns: 10
+    max_turns: 6
     max_tokens: 5000
   environment:
     files:

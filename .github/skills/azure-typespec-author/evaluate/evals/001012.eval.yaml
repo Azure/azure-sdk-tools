@@ -19,7 +19,7 @@ stimuli:
     In the Widget project, change the return type of the `exportData` operation from `ExportResult` to `DetailedExportResult` with additional optional properties `format` (string) and `exportedAt` (utcDateTime) only for version `2025-05-04-preview`.
   name: 001012-version-operation-return-type-changed
   constraints:
-    max_turns: 10
+    max_turns: 6
     max_tokens: 5000
   environment:
     files:

@@ -19,7 +19,7 @@ stimuli:
     I want to add a new stable version `2025-01-01`. Exclude `workLocation` property and `WorkLocation` model. Carry other features.
   name: 001007-version-add-stable-after-preview
   constraints:
-    max_turns: 10
+    max_turns: 6
     max_tokens: 5000
   environment:
     files:

@@ -61,7 +61,7 @@ stimuli:
       scoring: scale_1_5
       threshold: 1.0
   constraints:
-    max_turns: 10
+    max_turns: 5
     max_tokens: 50000
 scoring:
   weights:

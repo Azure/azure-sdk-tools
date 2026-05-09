@@ -21,7 +21,7 @@ stimuli:
 - name: 001001-version-spread-property
   prompt: I added `...Azure.ResourceManager.ManagedServiceIdentityProperty;` which updates all my existing API versions and introduces a breaking change. I want to introduce the properties of the spread model '...ManagedServiceIdentityProperty' in API version 2025-05-04-preview only.
   constraints:
-    max_turns: 10
+    max_turns: 5
     max_tokens: 50000
   environment:
     files:
@@ -66,7 +66,7 @@ stimuli:
   prompt: |
     add a default value `21` for property age in model EmployeeProperties only for a new api version 2025-11-01
   constraints:
-    max_turns: 10
+    max_turns: 6
     max_tokens: 5000
   environment:
     files:
@@ -115,7 +115,7 @@ stimuli:
   prompt: |
     change the property age of EmployeeProperties from required to optional for api version 2025-05-04-preview
   constraints:
-    max_turns: 10
+    max_turns: 6
     max_tokens: 5000
   environment:
     files:
@@ -160,7 +160,7 @@ stimuli:
   prompt: |
     change the visibility of property 'provisioningState' from Lifecycle.Read to Lifecycle.Read and Lifecycle.Create in version 2025-05-04-preview only
   constraints:
-    max_turns: 10
+    max_turns: 6
     max_tokens: 5000
   environment:
     files:
@@ -201,7 +201,7 @@ stimuli:
   prompt: |
     Add a new preview version `2025-05-04-preview` to my service widget resource manager. Exclude Feature: `age` property with default value 21. Carry other features.
   constraints:
-    max_turns: 10
+    max_turns: 6
     max_tokens: 5000
   environment:
     files:
@@ -295,7 +295,7 @@ stimuli:
   prompt: |
     Add a new preview version `2025-05-04-preview` to my service widget resource manager. Carry over all the features from the latest stable version
   constraints:
-    max_turns: 10
+    max_turns: 6
     max_tokens: 5000
   environment:
     files:
@@ -375,7 +375,7 @@ stimuli:
   prompt: |
     I want to add a new stable version `2025-01-01`. Exclude `workLocation` property and `WorkLocation` model. Carry other features.
   constraints:
-    max_turns: 10
+    max_turns: 6
     max_tokens: 5000
   environment:
     files:
@@ -471,7 +471,7 @@ stimuli:
   prompt: |
     Add a new stable version `2025-01-01` to my service. Carry over changes.
   constraints:
-    max_turns: 10
+    max_turns: 6
     max_tokens: 5000
   environment:
     files:
@@ -561,7 +561,7 @@ stimuli:
   prompt: |
     In the Widget project, make the `email` property required in EmployeeProperties only for version `2025-05-04-preview`.
   constraints:
-    max_turns: 10
+    max_turns: 6
     max_tokens: 5000
   environment:
     files:
@@ -605,7 +605,7 @@ stimuli:
   prompt: |
     In the Widget project, remove the `department` property from EmployeeProperties only for version `2025-05-04-preview`.
   constraints:
-    max_turns: 10
+    max_turns: 6
     max_tokens: 5000
   environment:
     files:
@@ -643,7 +643,7 @@ stimuli:
   prompt: |
     In the Widget project, rename the `age` property to `employeeAge` in EmployeeProperties only for version `2025-05-04-preview`.
   constraints:
-    max_turns: 10
+    max_turns: 6
     max_tokens: 5000
   environment:
     files:
@@ -686,7 +686,7 @@ stimuli:
   prompt: |
     In the Widget project, change the return type of the `exportData` operation from `ExportResult` to `DetailedExportResult` with additional optional properties `format` (string) and `exportedAt` (utcDateTime) only for version `2025-05-04-preview`.
   constraints:
-    max_turns: 10
+    max_turns: 6
     max_tokens: 5000
   environment:
     files:
@@ -737,7 +737,7 @@ stimuli:
   prompt: |
     In the Widget project, change the type of the `statusCode` property from `string` to `int32` in EmployeeProperties only for version `2025-05-04-preview`.
   constraints:
-    max_turns: 10
+    max_turns: 6
     max_tokens: 5000
   environment:
     files:
@@ -782,7 +782,7 @@ stimuli:
   prompt: |
     change resource Employee to be an extension resource
   constraints:
-    max_turns: 10
+    max_turns: 6
     max_tokens: 5000
   environment:
     files:
@@ -827,7 +827,7 @@ stimuli:
   prompt: |
     add an extension resource named asset
   constraints:
-    max_turns: 10
+    max_turns: 6
     max_tokens: 5000
   environment:
     files:
@@ -866,7 +866,7 @@ stimuli:
   prompt: |
     Define a PATCH operation for Employees. It is to update properties of an employee. Ensure the definition meets TypeSpec Azure guidelines.
   constraints:
-    max_turns: 10
+    max_turns: 6
     max_tokens: 5000
   environment:
     files:
@@ -897,7 +897,7 @@ stimuli:
   prompt: |
     Define a "badge assignment" extension resource. It should be an extension resource that can be attached to an employee. Ensure the definition meets TypeSpec Azure guidelines.
   constraints:
-    max_turns: 10
+    max_turns: 6
     max_tokens: 5000
   environment:
     files:
@@ -948,7 +948,7 @@ stimuli:
   prompt: |
     Define a Azure resource "Employee" under the namespace "Microsoft.Widget" using TypeSpec. Properties: age (int32, optional), city (string, optional), profile (bytes, optional), provisioningState (enum incorporating ResourceProvisioningState, optional, read-only). Ensure the definition meets TypeSpec Azure design guidelines.
   constraints:
-    max_turns: 10
+    max_turns: 6
     max_tokens: 5000
   environment:
     files:
@@ -1007,7 +1007,7 @@ stimuli:
   prompt: |
     Create a new "AddressResource" child resource under the parent resource "Employee". Address properties: street 1(optional), street 2(optional), city(optional), state(optional), postal code(optional), country(optional), and a read-only provisioningState(optional). Ensure the definition meets TypeSpec Azure design guidelines.
   constraints:
-    max_turns: 10
+    max_turns: 6
     max_tokens: 5000
   environment:
     files:
@@ -1104,7 +1104,7 @@ stimuli:
   prompt: |
     Add an additional POST action called "/notify" to the standard operations of Employee. Request body: message content (string) and priority (enum with values Low, Medium, High). Response body: notification identifier (string) and status (string). Ensure the definition meets TypeSpec Azure design guidelines.
   constraints:
-    max_turns: 10
+    max_turns: 6
     max_tokens: 5000
   environment:
     files:
@@ -1181,7 +1181,7 @@ stimuli:
   prompt: |
     add top and skip query parameters to the ListBySubscription operation in interface Employees
   constraints:
-    max_turns: 10
+    max_turns: 6
     max_tokens: 5000
   environment:
     files:
@@ -1215,7 +1215,7 @@ stimuli:
   prompt: |
     In the Widget project, add a patch operation to an existing ARM resource named 'Employee'
   constraints:
-    max_turns: 10
+    max_turns: 6
     max_tokens: 5000
   environment:
     files:
@@ -1252,7 +1252,7 @@ stimuli:
   prompt: |
     In the Widget project, add a sync operation exportData for employee resource.
   constraints:
-    max_turns: 10
+    max_turns: 6
     max_tokens: 5000
   environment:
     files:

@@ -19,7 +19,7 @@ stimuli:
     Create a new "AddressResource" child resource under the parent resource "Employee". Address properties: street 1(optional), street 2(optional), city(optional), state(optional), postal code(optional), country(optional), and a read-only provisioningState(optional). Ensure the definition meets TypeSpec Azure design guidelines.
   name: 002006-ARM-define-child-resource
   constraints:
-    max_turns: 10
+    max_turns: 6
     max_tokens: 5000
   environment:
     files:

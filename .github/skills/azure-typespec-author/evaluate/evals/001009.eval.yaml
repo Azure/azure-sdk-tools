@@ -19,7 +19,7 @@ stimuli:
     In the Widget project, make the `email` property required in EmployeeProperties only for version `2025-05-04-preview`.
   name: 001009-version-model-property-required
   constraints:
-    max_turns: 10
+    max_turns: 6
     max_tokens: 5000
   environment:
     files:

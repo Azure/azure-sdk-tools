@@ -19,7 +19,7 @@ stimuli:
     Add a new stable version `2025-01-01` to my service. Carry over changes.
   name: 001008-version-add-stable-after-stable
   constraints:
-    max_turns: 10
+    max_turns: 6
     max_tokens: 5000
   environment:
     files:

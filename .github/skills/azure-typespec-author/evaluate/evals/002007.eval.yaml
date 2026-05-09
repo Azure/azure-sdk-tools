@@ -19,7 +19,7 @@ stimuli:
     Add an additional POST action called "/notify" to the standard operations of Employee. Request body: message content (string) and priority (enum with values Low, Medium, High). Response body: notification identifier (string) and status (string). Ensure the definition meets TypeSpec Azure design guidelines.
   name: 002007-ARM-define-custom-action
   constraints:
-    max_turns: 10
+    max_turns: 6
     max_tokens: 5000
   environment:
     files:

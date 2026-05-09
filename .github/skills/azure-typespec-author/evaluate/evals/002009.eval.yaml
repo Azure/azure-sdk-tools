@@ -19,7 +19,7 @@ stimuli:
     In the Widget project, add a patch operation to an existing ARM resource named 'Employee'
   name: 002009-arm-add-patch-operation-to-resource
   constraints:
-    max_turns: 10
+    max_turns: 6
     max_tokens: 5000
   environment:
     files:

@@ -19,7 +19,7 @@ stimuli:
     In the Widget project, change the type of the `statusCode` property from `string` to `int32` in EmployeeProperties only for version `2025-05-04-preview`.
   name: 001013-version-model-property-type-changed
   constraints:
-    max_turns: 10
+    max_turns: 6
     max_tokens: 5000
   environment:
     files:

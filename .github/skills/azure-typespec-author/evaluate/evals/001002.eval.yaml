@@ -19,7 +19,7 @@ stimuli:
   prompt: |
     add a default value `21` for property age in model EmployeeProperties only for the new api version 2025-11-01
   constraints:
-    max_turns: 10
+    max_turns: 6
     max_tokens: 5000
   environment:
     files:

@@ -201,7 +201,7 @@ extends:
                   cd .github/skills/azure-typespec-author/evaluate
                   vally eval --eval-spec suites/versioning.eval.yaml --output-dir results --verbose
                 displayName: Run suite - versioning
-                timeoutInMinutes: 40
+                timeoutInMinutes: 30
                 continueOnError: true
                 condition: always()
                 env:
@@ -211,7 +211,7 @@ extends:
                   cd .github/skills/azure-typespec-author/evaluate
                   vally eval --eval-spec suites/armtemplate.eval.yaml --output-dir results --verbose
                 displayName: Run suite - armtemplate
-                timeoutInMinutes: 40
+                timeoutInMinutes: 30
                 continueOnError: true
                 condition: always()
                 env:

@@ -27,8 +27,10 @@ stimuli:
       dest: employee.tsp
     - src: ../fixtures/001002-version-default-value/main.tsp
       dest: main.tsp
-    - src: ../fixtures/001002-version-default-value/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/001002-version-default-value/readme.md
       dest: readme.md
     - src: ../fixtures/001002-version-default-value/shared.tsp

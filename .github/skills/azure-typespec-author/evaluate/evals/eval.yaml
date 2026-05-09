@@ -33,8 +33,10 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
       dest: tspconfig.yaml
-    - src: ../fixtures/001-share-version-new-feature/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/001-share-version-new-feature/readme.md
       dest: readme.md
   graders:
@@ -74,8 +76,10 @@ stimuli:
       dest: employee.tsp
     - src: ../fixtures/001002-version-default-value/main.tsp
       dest: main.tsp
-    - src: ../fixtures/001002-version-default-value/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/001002-version-default-value/readme.md
       dest: readme.md
     - src: ../fixtures/001002-version-default-value/shared.tsp
@@ -123,8 +127,10 @@ stimuli:
       dest: employee.tsp
     - src: ../fixtures/001-share-version-new-feature/main.tsp
       dest: main.tsp
-    - src: ../fixtures/001-share-version-new-feature/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/001-share-version-new-feature/readme.md
       dest: readme.md
     - src: ../fixtures/001-share-version-new-feature/shared.tsp
@@ -168,8 +174,10 @@ stimuli:
       dest: employee.tsp
     - src: ../fixtures/001-share-version-new-feature/main.tsp
       dest: main.tsp
-    - src: ../fixtures/001-share-version-new-feature/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/001-share-version-new-feature/readme.md
       dest: readme.md
     - src: ../fixtures/001-share-version-new-feature/shared.tsp
@@ -213,8 +221,10 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/001005-version-add-preview-after-preview/tspconfig.yaml
       dest: tspconfig.yaml
-    - src: ../fixtures/001005-version-add-preview-after-preview/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/001005-version-add-preview-after-preview/examples/2024-10-01-preview/Employees_CreateOrUpdate_MaximumSet_Gen.json
       dest: examples/2024-10-01-preview/Employees_CreateOrUpdate_MaximumSet_Gen.json
     - src: ../fixtures/001005-version-add-preview-after-preview/examples/2024-10-01-preview/Employees_Delete_MaximumSet_Gen.json
@@ -307,8 +317,10 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/001006-version-add-preview-after-stable/tspconfig.yaml
       dest: tspconfig.yaml
-    - src: ../fixtures/001006-version-add-preview-after-stable/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/001006-version-add-preview-after-stable/examples/2021-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
       dest: examples/2021-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
     - src: ../fixtures/001006-version-add-preview-after-stable/examples/2021-10-01/Employees_Delete_MaximumSet_Gen.json
@@ -387,8 +399,10 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/001007-version-add-stable-after-preview/tspconfig.yaml
       dest: tspconfig.yaml
-    - src: ../fixtures/001007-version-add-stable-after-preview/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/001007-version-add-stable-after-preview/readme.md
       dest: readme.md
     - src: ../fixtures/001007-version-add-stable-after-preview/examples/2021-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
@@ -483,8 +497,10 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/001008-version-add-stable-after-stable/tspconfig.yaml
       dest: tspconfig.yaml
-    - src: ../fixtures/001008-version-add-stable-after-stable/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/001008-version-add-stable-after-stable/readme.md
       dest: readme.md
     - src: ../fixtures/001008-version-add-stable-after-stable/examples/2021-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
@@ -569,8 +585,10 @@ stimuli:
       dest: Microsoft.Widget/Widget/employee.tsp
     - src: ../fixtures/001-share-version-new-feature/main.tsp
       dest: Microsoft.Widget/Widget/main.tsp
-    - src: ../fixtures/001-share-version-new-feature/package.json
-      dest: Microsoft.Widget/Widget/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/001-share-version-new-feature/readme.md
       dest: Microsoft.Widget/Widget/readme.md
     - src: ../fixtures/001-share-version-new-feature/shared.tsp
@@ -613,8 +631,10 @@ stimuli:
       dest: Microsoft.Widget/Widget/employee.tsp
     - src: ../fixtures/001-share-version-new-feature/main.tsp
       dest: Microsoft.Widget/Widget/main.tsp
-    - src: ../fixtures/001-share-version-new-feature/package.json
-      dest: Microsoft.Widget/Widget/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/001-share-version-new-feature/readme.md
       dest: Microsoft.Widget/Widget/readme.md
     - src: ../fixtures/001-share-version-new-feature/shared.tsp
@@ -652,7 +672,9 @@ stimuli:
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
       dest: Microsoft.Widget/Widget/main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: Microsoft.Widget/Widget/package.json
+      dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: Microsoft.Widget/Widget/readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -695,7 +717,9 @@ stimuli:
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
       dest: Microsoft.Widget/Widget/main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: Microsoft.Widget/Widget/package.json
+      dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: Microsoft.Widget/Widget/readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -746,7 +770,9 @@ stimuli:
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
       dest: Microsoft.Widget/Widget/main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: Microsoft.Widget/Widget/package.json
+      dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: Microsoft.Widget/Widget/readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -792,6 +818,8 @@ stimuli:
       dest: main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -837,6 +865,8 @@ stimuli:
       dest: main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -876,6 +906,8 @@ stimuli:
       dest: main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -909,6 +941,8 @@ stimuli:
       dest: main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -956,6 +990,8 @@ stimuli:
       dest: main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -1017,6 +1053,8 @@ stimuli:
       dest: main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -1114,6 +1152,8 @@ stimuli:
       dest: main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -1191,6 +1231,8 @@ stimuli:
       dest: main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -1260,8 +1302,10 @@ stimuli:
       dest: employee.tsp
     - src: ../fixtures/002010-arm-action-sync-operation/main.tsp
       dest: main.tsp
-    - src: ../fixtures/002010-arm-action-sync-operation/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/002010-arm-action-sync-operation/readme.md
       dest: readme.md
     - src: ../fixtures/002010-arm-action-sync-operation/shared.tsp
@@ -1301,8 +1345,10 @@ stimuli:
       dest: employee.tsp
     - src: ../fixtures/003-long-running-operation-share/main.tsp
       dest: main.tsp
-    - src: ../fixtures/003-long-running-operation-share/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/003-long-running-operation-share/readme.md
       dest: readme.md
     - src: ../fixtures/003-long-running-operation-share/shared.tsp
@@ -1344,6 +1390,8 @@ stimuli:
       dest: main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -1397,6 +1445,8 @@ stimuli:
       dest: main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -1438,6 +1488,8 @@ stimuli:
       dest: main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
@@ -1497,8 +1549,10 @@ stimuli:
       dest: NetworkInterface.tsp
     - src: ../fixtures/004003-delete-and-restore-operationId-decorator/P2SVpnGateway.tsp
       dest: P2SVpnGateway.tsp
-    - src: ../fixtures/004003-delete-and-restore-operationId-decorator/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/004003-delete-and-restore-operationId-decorator/Route.tsp
       dest: Route.tsp
     - src: ../fixtures/004003-delete-and-restore-operationId-decorator/VpnServerConfigurationPolicyGroup.tsp
@@ -1550,8 +1604,10 @@ stimuli:
     files:
     - src: ../fixtures/005001-warning-suppress-warning/models.tsp
       dest: models.tsp
-    - src: ../fixtures/005001-warning-suppress-warning/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/005001-warning-suppress-warning/tspconfig.yaml
       dest: tspconfig.yaml
     - src: ../fixtures/005001-warning-suppress-warning/main.tsp

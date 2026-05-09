@@ -27,6 +27,8 @@ stimuli:
       dest: main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -71,8 +73,10 @@ stimuli:
       dest: employee.tsp
     - src: ../fixtures/004002-decorate-length-constrains-on-array-item/main.tsp
       dest: main.tsp
-    - src: ../fixtures/004002-decorate-length-constrains-on-array-item/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/004002-decorate-length-constrains-on-array-item/readme.md
       dest: readme.md
     - src: ../fixtures/004002-decorate-length-constrains-on-array-item/shared.tsp
@@ -135,8 +139,10 @@ stimuli:
       dest: NetworkInterface.tsp
     - src: ../fixtures/004003-delete-and-restore-operationId-decorator/P2SVpnGateway.tsp
       dest: P2SVpnGateway.tsp
-    - src: ../fixtures/004003-delete-and-restore-operationId-decorator/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/004003-delete-and-restore-operationId-decorator/Route.tsp
       dest: Route.tsp
     - src: ../fixtures/004003-delete-and-restore-operationId-decorator/VpnServerConfigurationPolicyGroup.tsp

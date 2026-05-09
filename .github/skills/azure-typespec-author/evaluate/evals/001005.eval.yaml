@@ -31,8 +31,10 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/001005-version-add-preview-after-preview/tspconfig.yaml
       dest: tspconfig.yaml
-    - src: ../fixtures/001005-version-add-preview-after-preview/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/001005-version-add-preview-after-preview/examples/2024-10-01-preview/Employees_CreateOrUpdate_MaximumSet_Gen.json
       dest: examples/2024-10-01-preview/Employees_CreateOrUpdate_MaximumSet_Gen.json
     - src: ../fixtures/001005-version-add-preview-after-preview/examples/2024-10-01-preview/Employees_Delete_MaximumSet_Gen.json

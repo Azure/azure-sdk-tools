@@ -27,8 +27,10 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
       dest: tspconfig.yaml
-    - src: ../fixtures/001-share-version-new-feature/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/001-share-version-new-feature/readme.md
       dest: readme.md
   graders:

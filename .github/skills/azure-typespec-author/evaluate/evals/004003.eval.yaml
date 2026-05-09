@@ -37,8 +37,10 @@ stimuli:
       dest: NetworkInterface.tsp
     - src: ../fixtures/004003-delete-and-restore-operationId-decorator/P2SVpnGateway.tsp
       dest: P2SVpnGateway.tsp
-    - src: ../fixtures/004003-delete-and-restore-operationId-decorator/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/004003-delete-and-restore-operationId-decorator/Route.tsp
       dest: Route.tsp
     - src: ../fixtures/004003-delete-and-restore-operationId-decorator/VpnServerConfigurationPolicyGroup.tsp

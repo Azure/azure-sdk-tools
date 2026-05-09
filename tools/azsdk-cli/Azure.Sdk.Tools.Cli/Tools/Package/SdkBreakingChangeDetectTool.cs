@@ -3,11 +3,13 @@ using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
+using Azure.Sdk.Tools.Cli.Prompts.Templates;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using ModelContextProtocol.Server;
@@ -26,16 +28,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
         private const string SdkChangeJsonFileName = "SDKCHANGE.json";
         // detect command options
-        private readonly Option<string> localSdkRepoPathOpt = new("--sdk-repo-path", "-r")
-        {
-            Description = "Absolute path to the local azure-sdk-for-{language} repository",
-            Required = true,
-        };
+        //private readonly Option<string> localSdkRepoPathOpt = new("--sdk-repo-path", "-r")
+        //{
+        //    Description = "Absolute path to the local azure-sdk-for-{language} repository",
+        //    Required = true,
+        //};
 
         private readonly Option<string> languageOpt = new("--language", "-l")
         {
             Description = "Language of the SDK, e.g. 'net' for .NET, 'java' for Java, 'js' for JavaScript/TypeScript, 'python' for Python, 'go' for Go",
-            Required = true,
+            Required = false,
         };
 
         private readonly Option<string> tspConfigPathOpt = new("--tsp-config-path", "-t")
@@ -65,13 +67,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         protected override Command GetCommand() =>
             new McpCommand(DetectSdkBreakingChangeCommandName, "Detects breaking changes in the SDK.", DetectSdkBreakingChangToolName)
             {
-                localSdkRepoPathOpt, SharedOptions.PackagePath, languageOpt, tspConfigPathOpt, generateSDKOpt,
+                SharedOptions.PackagePath, languageOpt, tspConfigPathOpt, generateSDKOpt,
             };
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
             var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
-            var localRepoPath = parseResult.GetValue(localSdkRepoPathOpt);
+            //var localRepoPath = parseResult.GetValue(localSdkRepoPathOpt);
             var language = parseResult.GetValue(languageOpt);
             var tspConfigPath = parseResult.GetValue(tspConfigPathOpt);
             var generateSDK = parseResult.GetValue(generateSDKOpt);
@@ -84,22 +86,25 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         public async Task<SdkBreakingChangeDetectResponse> DetectSDKBreakingChangesAsync(
             [Description("The absolute path to the package directory..")]
             string packagePath,
-            [Description("Language of the SDK, e.g. 'net' for .NET, 'java' for Java, 'js' for JavaScript/TypeScript, 'python' for Python, 'go' for Go. REQUIRED.")]
-            string language,
+            [Description("Language of the SDK, e.g. 'net' for .NET, 'java' for Java, 'js' for JavaScript/TypeScript, 'python' for Python, 'go' for Go. Optional if running inside a local cloned azure-sdk-for-{language} repository.")]
+            string? language = null,
             [Description("Path to the 'tspconfig.yaml' file. Can be a local file path or a remote HTTPS URL. Optional if running inside a local cloned azure-sdk-for-{language} repository, for example, inside 'azure-sdk-for-net' repository.")]
-            string? tspConfigPath,
+            string? tspConfigPath = null,
             [Description("Whether to generate SDK code before performing breaking change detection. If not specified, the tool will only compare the existing SDK.")]
-            bool generateSDK,
+            bool generateSDK = false,
             CancellationToken ct = default)
         {
             try
             {
+                logger.LogInformation("Parameters: packagePath={PackagePath}, language={Language}, tspConfigPath={TspConfigPath}, generateSDK={GenerateSDK}",
+                    packagePath, language ?? "null", tspConfigPath ?? "null", generateSDK);
+
                 if (string.IsNullOrEmpty(packagePath) || !Directory.Exists(packagePath))
                 {
                     return new SdkBreakingChangeDetectResponse
                     {
                         ResponseError = $"The directory for the local sdk does not provide or exist at the specified path: {packagePath}. Prompt user to clone the matched SDK repository users want to generate SDK against."
-                    }; 
+                    };
                 }
                 LanguageService languageService;
                 if (!string.IsNullOrEmpty(language))
@@ -139,24 +144,44 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                         var scriptParameters = new Dictionary<string, string>
                         {
                             { "SdkRepoPath", sdkRepoRoot },
-                            { "PackagePath", packagePath }
+                            { "PackagePath", packagePath },
+                            {"OutputJsonFile", Path.Combine(packagePath, SdkChangeJsonFileName) }
                         };
 
                         // Create and execute process options for the update-changelog-content script
                         var processOptions = _specGenSdkConfigHelper.CreateProcessOptions(configContentType, configValue, sdkRepoRoot, packagePath, scriptParameters);
                         if (processOptions != null)
                         {
-                            logger.LogInformation("Executing changelog update script: {Script}, with parameters: {Parameters}", processOptions.Command, processOptions.WorkingDirectory);
                             var changelogResponse = await _specGenSdkConfigHelper.ExecuteProcessAsync(processOptions, ct, packageInfo, "Changelog content is updated.", ["Review the changelog for accuracy and completeness", "Update metadata for the package"]);
-                            if (changelogResponse != null && (changelogResponse.ResponseErrors == null || changelogResponse.ResponseErrors.Count > 0))
+
+                            // Fixed condition: proceed when there are NO errors (Count == 0 or null)
+                            if (changelogResponse != null && (changelogResponse.ResponseErrors == null || changelogResponse.ResponseErrors.Count == 0))
                             {
-                                var fileStream = File.OpenRead(Path.Combine(packagePath, SdkChangeJsonFileName));
+                                var sdkChangeFilePath = Path.Combine(packagePath, SdkChangeJsonFileName);
+
+                                if (!File.Exists(sdkChangeFilePath))
+                                {
+                                    logger.LogWarning("SDK change file not found at: {FilePath}", sdkChangeFilePath);
+                                    return new SdkBreakingChangeDetectResponse
+                                    {
+                                        ResponseError = $"SDK change file not found: {sdkChangeFilePath}"
+                                    };
+                                }
+
+                                // Read and deserialize the JSON file with proper disposal
+                                using var fileStream = File.OpenRead(sdkChangeFilePath);
                                 var sdkchanges = await JsonSerializer.DeserializeAsync<SdkChange>(fileStream, cancellationToken: ct);
+
                                 if (sdkchanges != null)
                                 {
                                     if (sdkchanges.HasBreakingChange)
                                     {
-                                        return await ClassifySDKBreakingChanges(sdkchanges.ChangelogMD, ct);
+                                        return new SdkBreakingChangeDetectResponse
+                                        {
+                                            HasBreakingChanges = true,
+                                            BreakingChanges = await ClassifySDKBreakingChanges(sdkchanges.ChangelogMD, sdkRepoRoot, languageService, ct),
+                                            Language = languageService.Language,
+                                        };
                                     }
                                     else
                                     {
@@ -164,13 +189,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                                         {
                                             ResponseError = "No breaking changes are detected in the SDK based on the changelog content."
                                         };
-
                                     }
                                 }
                                 else
                                 {
                                     logger.LogWarning("Failed to deserialize the changelog update script output. Falling back to default logic to detect SDK breaking changes.");
                                 }
+                            }
+                            else
+                            {
+                                logger.LogWarning("Changelog update script execution failed or returned errors.");
                             }
                         }
                     }
@@ -189,41 +217,57 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
         }
 
-        private async Task<SdkBreakingChangeDetectResponse> ClassifySDKBreakingChanges(string sdkchange, CancellationToken ct)
+        private async Task<SdkBreakingChange[]> ClassifySDKBreakingChanges(string sdkchange, string sdkRepoRoot, LanguageService languageService, CancellationToken ct)
         {
-            var sdkBreakingPattern = "";
-            var agent = new CopilotAgent<SdkBreakingChangeDetectResponse>
+            var sdkBreakingPattern = await languageService.GetSDKBreakingPattern(sdkRepoRoot, ct);
+            var agent = new CopilotAgent<string>
             {
-                Instructions = BuildClassifyInstructions(sdkchange, sdkBreakingPattern),
+                Instructions = BuildClassifyInstructions(sdkchange, sdkBreakingPattern, SdkLanguageHelpers.ToWorkItemString(languageService.Language)),
                 Model = "claude-opus-4.5"
             };
             var result = await copilotAgentRunner.RunAsync(agent, ct);
+            var breakings = ParseClassifyResult(result);
             //logger.LogInformation("copilot agent completed. hasBreakingChange: {hasBreakingChanges}, Breaking Changes: {breakingChanges}", result.HasBreakingChanges, string.Join("\n", result.BreakingChanges));
             // For demonstration purposes, we'll just return a response indicating no breaking changes were found
-            return result;
+            return breakings;
         }
 
-        private string BuildClassifyInstructions(string sdkchange, string sdkchangeToBreakingPattern)
+        private string BuildClassifyInstructions(string sdkchange, string sdkchangeToBreakingPattern, string language)
         {
-            return $"""
-        # TypeSpec SDK Breaking Change Classifier
+            var template = new SdkBreakingChangeClassificationTemplate(sdkchangeToBreakingPattern, sdkchange, language);
+            return template.BuildPrompt();
+        }
 
-        You are an expert agent specializing in detecting breaking changes in TypeSpec API specifications that impact SDK generation across multiple programming languages (Java, .NET, Python, JavaScript/TypeScript, Go).
+        private SdkBreakingChange[] ParseClassifyResult(string result)
+        {
+            try
+            {
+                // Updated regex to capture the full breaking change line (everything until newline)
+                // Changed from \S+ to [^\n]+ to capture the entire line including spaces
+                Regex ResultBlockRex = new(
+                    @"\[(?<id>[^\]]+)\]\s*\n\s*breaking:\s*(?<breaking>[^\n]+)\s*\n\s*category:\s*(?<category>[^\n]+)",
+                    RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.Singleline);
+                var sdkBreakingChanges = new List<SdkBreakingChange>();
+                foreach (Match match in ResultBlockRex.Matches(result))
+                {
+                    var id = match.Groups["id"].Value.Trim();
+                    var breaking = match.Groups["breaking"].Value.Trim();
+                    var category = match.Groups["category"].Value.Trim();
 
-        ## Your task
-        Analyze sdk changes. If the planned TypeSpec changes match any of these known SDK breaking change patterns, include SDK IMPACT warnings in the solution with language-specific client.tsp mitigations.
-
-        **SDK Breaking Change Patterns Reference**
-
-        {sdkchangeToBreakingPattern}
-
-        **SDK changes to analyze:**
-        {sdkchange}
-
-        **Output format:**
-        Your response should be a JSON object with the following structure:
-        
-        """;
+                    SdkBreakingChange breakingChange = new SdkBreakingChange
+                    {
+                        BreakingChange = breaking,
+                        Category = category,
+                    };
+                    sdkBreakingChanges.Add(breakingChange);
+                }
+                return sdkBreakingChanges.ToArray();
+            }
+            catch (JsonException ex)
+            {
+                logger.LogError(ex, "JSON parsing error while parsing agent response");
+                return Array.Empty<SdkBreakingChange>();
+            }
         }
     }
 
@@ -235,5 +279,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         [JsonPropertyName("hasBreakingChange")]
         [Required]
         public bool HasBreakingChange { get; set; }
+    }
+
+    public class SdkBreakingChange
+    {
+        [JsonPropertyName("breakingchange")]
+        [Required]
+        public string BreakingChange { get; set; }
+        [JsonPropertyName("category")]
+        [Required]
+        public string Category { get; set; }
     }
 }

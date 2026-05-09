@@ -30,6 +30,7 @@ public partial class PythonLanguageService : LanguageService
         "samples", "swagger", "stress", "docs", "doc", "local", "scripts", "images", ".tox", "build"
     };
 
+    protected override string SDKBreakingPatternFilePath => "doc/dev/mgmt/sdk-breaking-changes-guide.md";
     /// <summary>
     /// Updates version.py (_version.py) and the development status classifier in setup.py or pyproject.toml.
     /// </summary>

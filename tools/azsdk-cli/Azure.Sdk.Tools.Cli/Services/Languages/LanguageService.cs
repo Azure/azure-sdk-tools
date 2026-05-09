@@ -19,6 +19,28 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         protected readonly IChangelogHelper changelogHelper;
 
         /// <summary>
+        /// Gets the relative path from the SDK repository root to the breaking change pattern file.
+        /// This file contains language-specific patterns that define what constitutes a breaking change
+        /// in the SDK based on TypeSpec/OpenAPI changes. The patterns are used by the breaking change
+        /// detection tool to classify changes and provide mitigation guidance.
+        /// </summary>
+        /// <remarks>
+        /// Override this property in language-specific service implementations to specify the location
+        /// of the breaking change pattern file for that language. For example:
+        /// - .NET: "eng/common/breaking-change-patterns/dotnet-patterns.md"
+        /// - Java: "eng/common/breaking-change-patterns/java-patterns.md"
+        /// - Python: "eng/common/breaking-change-patterns/python-patterns.md"
+        /// - JavaScript: "eng/common/breaking-change-patterns/js-patterns.md"
+        /// - Go: "eng/common/breaking-change-patterns/go-patterns.md"
+        /// 
+        /// The file content is read by <see cref="GetChangeToBreakingPattern"/> and used in
+        /// <see cref="DetectSdkBreakingChangeAsync"/> for analyzing SDK changes.
+        /// 
+        /// Returns an empty string by default if not overridden.
+        /// </remarks>
+        protected virtual string SDKBreakingPatternFilePath => "";
+
+        /// <summary>
         /// Protected parameterless constructor for test mocking purposes.
         /// </summary>
         protected LanguageService()
@@ -470,6 +492,70 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                         ResponseError = "SDK Breaking Change Detection is not implemented for this language.",
                         NextSteps = ["Manually detect the sdk breaking changes."],
                 });
+        }
+
+        /// <summary>
+        /// Retrieves the breaking change pattern content for the current language.
+        /// </summary>
+        /// <param name="sdkRepoRoot">The root directory of the SDK repository.</param>
+        /// <param name="ct">Cancellation token for the operation.</param>
+        /// <returns>
+        /// The content of the breaking change pattern file if it exists, or an empty string if:
+        /// - <see cref="SDKBreakingPatternFilePath"/> is not overridden (returns empty string)
+        /// - The pattern file does not exist at the specified path
+        /// - An error occurs while reading the file
+        /// </returns>
+        /// <remarks>
+        /// <para>
+        /// This method constructs the full file path by combining <paramref name="sdkRepoRoot"/> 
+        /// with <see cref="SDKBreakingPatternFilePath"/>. The pattern file contains language-specific
+        /// rules that define what TypeSpec/API changes constitute breaking changes in the generated SDK.
+        /// </para>
+        /// <para>
+        /// The returned content is typically used by AI agents or classification tools to analyze
+        /// SDK changes and provide mitigation guidance. The pattern content should describe:
+        /// - What API changes are considered breaking for the specific language
+        /// - How these changes impact client code
+        /// - Recommended mitigation strategies (e.g., client.tsp customizations)
+        /// </para>
+        /// <para>
+        /// See <see cref="DetectSdkBreakingChangeAsync"/> and the SdkBreakingChangeDetectTool
+        /// for usage examples where this pattern content is used in AI-powered classification.
+        /// </para>
+        /// </remarks>
+        /// <example>
+        /// Example usage in a language service:
+        /// <code>
+        /// protected override string SDKBreakingPatternFilePath => "eng/common/breaking-change-patterns/dotnet-patterns.md";
+        /// 
+        /// var pattern = await GetSDKBreakingPattern(repoRoot, ct);
+        /// // pattern contains the markdown content describing .NET-specific breaking changes
+        /// </code>
+        /// </example>
+        public virtual Task<string> GetSDKBreakingPattern(string sdkRepoRoot, CancellationToken ct)
+        {
+            if (string.IsNullOrEmpty(SDKBreakingPatternFilePath))
+            {
+                return Task.FromResult(string.Empty);
+            }
+            try
+            {
+                var patternFilePath = Path.Combine(sdkRepoRoot, SDKBreakingPatternFilePath);
+                if (File.Exists(patternFilePath))
+                {
+                    return Task.FromResult(File.ReadAllText(patternFilePath));
+                }
+                else
+                {
+                    logger.LogWarning("SDK breaking change pattern file not found at expected path: {PatternFilePath}", patternFilePath);
+                    return Task.FromResult(string.Empty);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error reading SDK breaking change pattern file for language {Language}", Language);
+                return Task.FromResult(string.Empty);
+            }
         }
 
         /// <summary>

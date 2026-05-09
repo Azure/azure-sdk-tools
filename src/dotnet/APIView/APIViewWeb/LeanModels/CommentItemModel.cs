@@ -25,6 +25,7 @@ namespace APIViewWeb.LeanModels
     {
         UserGenerated,
         AIGenerated,
+        [Obsolete("Diagnostic comments are no longer supported. This value exists only for deserializing legacy CosmosDB documents while migration happens.")]
         Diagnostic
     }
 

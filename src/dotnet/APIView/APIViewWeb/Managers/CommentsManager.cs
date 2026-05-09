@@ -32,7 +32,6 @@ namespace APIViewWeb.Managers
     public class CommentsManager : ICommentsManager
     {
         private readonly IAPIRevisionsManager _apiRevisionsManager;
-        private readonly IDiagnosticCommentService _diagnosticCommentService;
         private readonly IAuthorizationService _authorizationService;
         private readonly ICosmosCommentsRepository _commentsRepository;
         private readonly ICosmosReviewRepository _reviewRepository;
@@ -52,7 +51,6 @@ namespace APIViewWeb.Managers
         public HashSet<GithubUser> TaggableUsers;
 
         public CommentsManager(IAPIRevisionsManager apiRevisionsManager,
-            IDiagnosticCommentService diagnosticCommentService,
             IAuthorizationService authorizationService,
             ICosmosCommentsRepository commentsRepository,
             ICosmosReviewRepository reviewRepository,
@@ -69,7 +67,6 @@ namespace APIViewWeb.Managers
             ILogger<CommentsManager> logger)
         {
             _apiRevisionsManager = apiRevisionsManager;
-            _diagnosticCommentService = diagnosticCommentService;
             _authorizationService = authorizationService;
             _commentsRepository = commentsRepository;
             _reviewRepository = reviewRepository;
@@ -116,15 +113,9 @@ namespace APIViewWeb.Managers
             TaggableUsers = new HashSet<GithubUser>(TaggableUsers.OrderBy(g => g.Login));
         }
         
-        public async Task<IEnumerable<CommentItemModel>> GetCommentsAsync(string reviewId, bool isDeleted = false, CommentType? commentType = null, bool excludeDiagnostics = false)
+        public async Task<IEnumerable<CommentItemModel>> GetCommentsAsync(string reviewId, bool isDeleted = false, CommentType? commentType = null)
         {
             IEnumerable<CommentItemModel> comments = await _commentsRepository.GetCommentsAsync(reviewId, isDeleted, commentType);
-            
-            if (excludeDiagnostics)
-            {
-                comments = comments.Where(c => c.CommentSource != CommentSource.Diagnostic);
-            }
-
             // Self-heal: normalize any non-UTC timestamps and persist corrections.
             // Legacy data may contain DateTime.Now (local time) values mixed with
             // DateTime.UtcNow values, causing incorrect sort order on the server.
@@ -251,11 +242,6 @@ namespace APIViewWeb.Managers
         public async Task<CommentItemModel> UpdateCommentSeverityAsync(ClaimsPrincipal user, string reviewId, string commentId, CommentSeverity? severity)
         {
             CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
-
-            if (comment.CommentSource == CommentSource.Diagnostic)
-            {
-                throw new InvalidOperationException("Diagnostic comments cannot have their severity changed.");
-            }
 
             await AssertOwnerAsync(user, comment);
             
@@ -481,10 +467,6 @@ namespace APIViewWeb.Managers
         /// <returns></returns>
         public async Task SoftDeleteCommentAsync(ClaimsPrincipal user, CommentItemModel comment)
         {
-            if (comment.CommentSource == CommentSource.Diagnostic)
-            {
-                throw new InvalidOperationException("Diagnostic comments cannot be deleted.");
-            }
             await AssertOwnerAsync(user, comment);
             var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(comment.ChangeHistory, CommentChangeAction.Deleted, user.GetGitHubLogin());
             comment.ChangeHistory = changeUpdate.ChangeHistory;
@@ -507,11 +489,6 @@ namespace APIViewWeb.Managers
         {
             IEnumerable<CommentItemModel> comments = await _commentsRepository.GetCommentsAsync(reviewId, lineId);
             comments = comments.Where(c => c.ThreadId == threadId);
-
-            if (comments.Any(c => c.CommentSource == CommentSource.Diagnostic))
-            {
-                throw new InvalidOperationException("Diagnostic comments cannot be resolved.");
-            }
 
             foreach (var comment in comments)
             {
@@ -626,16 +603,10 @@ namespace APIViewWeb.Managers
                 switch (request.Disposition)
                 {
                     case ConversationDisposition.Delete:
-                        if (comment.CommentSource != CommentSource.Diagnostic)
-                        {
-                            await SoftDeleteCommentAsync(user, reviewId, commentId);
-                        }
+                        await SoftDeleteCommentAsync(user, reviewId, commentId);
                         break;
                     case ConversationDisposition.Resolve:
-                        if (comment.CommentSource != CommentSource.Diagnostic)
-                        {
-                            await ResolveConversation(user, reviewId, comment.ElementId, comment.ThreadId);
-                        }
+                        await ResolveConversation(user, reviewId, comment.ElementId, comment.ThreadId);
                         break;
                     case ConversationDisposition.KeepOpen:
                     default:
@@ -649,20 +620,12 @@ namespace APIViewWeb.Managers
         public async Task ToggleUpvoteAsync(ClaimsPrincipal user, string reviewId, string commentId)
         {
             CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
-            if (comment.CommentSource == CommentSource.Diagnostic)
-            {
-                throw new InvalidOperationException("Diagnostic comments cannot be voted on.");
-            }
             await ToggleVoteAsync(user, comment, FeedbackVote.Up);
         }
 
         public async Task ToggleDownvoteAsync(ClaimsPrincipal user, string reviewId, string commentId)
         {
             CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
-            if (comment.CommentSource == CommentSource.Diagnostic)
-            {
-                throw new InvalidOperationException("Diagnostic comments cannot be voted on.");
-            }
             await ToggleVoteAsync(user, comment, FeedbackVote.Down);
         }
 
@@ -938,12 +901,6 @@ namespace APIViewWeb.Managers
         private async Task SetVoteAsync(ClaimsPrincipal user, string reviewId, string commentId, FeedbackVote voteType)
         {
             CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
-
-            if (comment.CommentSource == CommentSource.Diagnostic)
-            {
-                return;
-            }
-
             string userName = user.GetGitHubLogin();
             bool voteChanged = false;
 
@@ -988,36 +945,5 @@ namespace APIViewWeb.Managers
             }
         }
 
-        /// <summary>
-        /// Synchronizes diagnostic comments for an API revision based on the current set of diagnostics.
-        /// Creates new comments for new diagnostics, resolves comments for removed diagnostics,
-        /// and updates existing comments when severity or help link changes.
-        /// Uses hash-based caching to skip synchronization when diagnostics haven't changed.
-        /// </summary>
-        /// <param name="apiRevision">The API revision to sync diagnostics for.</param>
-        /// <param name="diagnostics">The current set of diagnostics from the code file.</param>
-        /// <param name="existingComments">Pre-fetched comments to avoid additional database calls. </param>
-        /// <returns>A list of diagnostic comments for the API revision after synchronization.</returns>
-        public async Task<List<CommentItemModel>> SyncDiagnosticCommentsAsync(
-            APIRevisionListItemModel apiRevision,
-            CodeDiagnostic[] diagnostics,
-            IEnumerable<CommentItemModel> existingComments)
-        {
-            DiagnosticSyncResult result = await _diagnosticCommentService.SyncDiagnosticCommentsAsync(
-                apiRevision.ReviewId,
-                apiRevision.Id,
-                apiRevision.DiagnosticsHash,
-                diagnostics,
-                existingComments);
-
-            // Update the revision's hash if sync occurred
-            if (result.WasSynced)
-            {
-                apiRevision.DiagnosticsHash = result.DiagnosticsHash;
-                await _apiRevisionsManager.UpdateAPIRevisionAsync(apiRevision);
-            }
-
-            return result.Comments;
-        }
     }
 }

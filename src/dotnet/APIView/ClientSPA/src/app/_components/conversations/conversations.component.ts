@@ -6,7 +6,7 @@ import { TimelineModule } from 'primeng/timeline';
 import { CommentThreadComponent } from '../shared/comment-thread/comment-thread.component';
 import { LastUpdatedOnPipe } from 'src/app/_pipes/last-updated-on.pipe';
 import { CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePanelModels';
-import { CommentItemModel, CommentType, CommentSource, CommentSeverity } from 'src/app/_models/commentItemModel';
+import { CommentItemModel, CommentSeverity, CommentType, CommentSource } from 'src/app/_models/commentItemModel';
 import { APIRevision } from 'src/app/_models/revision';
 import { getTypeClass } from 'src/app/_helpers/common-helpers';
 import { getVisibleComments } from 'src/app/_helpers/comment-visibility.helper';
@@ -47,15 +47,8 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
   @Output() numberOfActiveThreadsEmitter : EventEmitter<number> = new EventEmitter<number>();
   @Output() dismissSidebarAndNavigateEmitter : EventEmitter<{revisionId: string, elementId: string}> = new EventEmitter<{revisionId: string, elementId: string}>();
 
-  private readonly MAX_DIAGNOSTICS_DISPLAY = 250;
-
   commentThreads: Map<string, CodePanelRowData[]> = new Map<string, CodePanelRowData[]>();
   numberOfActiveThreads: number = 0;
-  // Flag to indicate if diagnostics were truncated due to limit
-  diagnosticsTruncated: boolean = false;
-  totalDiagnosticsInRevision: number = 0;
-  hiddenUnresolvedDiagnosticsCount: number = 0;
-  hiddenResolvedDiagnosticsCount: number = 0;
 
   apiRevisionsWithComments: APIRevision[] = [];
 
@@ -69,7 +62,7 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
   filterStatus: 'all' | 'active' | 'resolved' = 'active';
   // Use string keys matching the JSON-serialized enum values from the C# backend
   filterSeverities: Set<string> = new Set();
-  filterKinds: Set<'human' | 'ai' | 'diagnostic'> = new Set();
+  filterKinds: Set<'human' | 'ai'> = new Set();
 
   // Severity options for template iteration
   readonly severityOptions = [
@@ -138,7 +131,7 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
       this.commentsLoaded = true;
     }
 
-    // Recalculate when active revision changes (diagnostic comments are filtered by revision)
+    // Recalculate when active revision changes
     if (changes['activeApiRevisionId'] && this.apiRevisionsLoaded && this.commentsLoaded) {
       this.createCommentThreads();
       return;
@@ -153,45 +146,13 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
     if (this.apiRevisions.length > 0 && this.comments.length > 0) {
       this.commentThreads = new Map<string, CodePanelRowData[]>();
       this.numberOfActiveThreads = 0;
-      this.diagnosticsTruncated = false;
       this.hasAnyUnknownThreads = false;
       this.showUnknownSeverityFilter = false;
-      this.hiddenUnresolvedDiagnosticsCount = 0;
-      this.hiddenResolvedDiagnosticsCount = 0;
-      this.totalDiagnosticsInRevision = 0;
 
       // Use shared visibility logic — single source of truth for which comments are relevant
-      const { allVisibleComments, diagnosticCommentsForRevision } = getVisibleComments(this.comments, this.activeApiRevisionId);
+      const { allVisibleComments } = getVisibleComments(this.comments, this.activeApiRevisionId);
 
-      this.totalDiagnosticsInRevision = diagnosticCommentsForRevision.length;
-
-      // Sort priority: 1) MustFix unresolved, 2) other unresolved, 3) resolved (secondary: severity desc)
-      const getTier = (c: CommentItemModel) => {
-        if ((CommentSeverityHelper.getSeverityEnumValue(c.severity) ?? -1) >= CommentSeverity.MustFix && !c.isResolved) return 0;
-        if (!c.isResolved) return 1;
-        return 2;
-      };
-      const sortedDiagnostics = [...diagnosticCommentsForRevision].sort((a, b) => {
-        const tierDiff = getTier(a) - getTier(b);
-        if (tierDiff !== 0) return tierDiff;
-        return (CommentSeverityHelper.getSeverityEnumValue(b.severity) ?? -1) - (CommentSeverityHelper.getSeverityEnumValue(a.severity) ?? -1);
-      });
-
-      // Always show all MustFix unresolved; fill remaining slots up to MAX_DIAGNOSTICS_DISPLAY
-      const mustFixUnresolvedCount = diagnosticCommentsForRevision.filter(
-        c => (CommentSeverityHelper.getSeverityEnumValue(c.severity) ?? -1) >= CommentSeverity.MustFix && !c.isResolved
-      ).length;
-      const displayLimit = Math.max(this.MAX_DIAGNOSTICS_DISPLAY, mustFixUnresolvedCount);
-
-      const limitedDiagnostics = sortedDiagnostics.slice(0, displayLimit);
-      const hiddenDiagnostics = sortedDiagnostics.slice(displayLimit);
-      this.hiddenUnresolvedDiagnosticsCount = hiddenDiagnostics.filter(c => !c.isResolved).length;
-      this.hiddenResolvedDiagnosticsCount = hiddenDiagnostics.filter(c => c.isResolved).length;
-      this.diagnosticsTruncated = hiddenDiagnostics.length > 0;
-      const filteredComments = [
-        ...allVisibleComments.filter(c => c.commentSource !== CommentSource.Diagnostic),
-        ...limitedDiagnostics
-      ];
+      const filteredComments = allVisibleComments;
 
       // Count ALL visible unresolved threads for the badge — this must match what
       // the quality score counts so the numbers stay consistent across the UI.
@@ -590,8 +551,7 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
     return true;
   }
 
-  getThreadKind(comment: CommentItemModel): 'human' | 'ai' | 'diagnostic' {
-    if (comment.commentSource === CommentSource.Diagnostic) return 'diagnostic';
+  getThreadKind(comment: CommentItemModel): 'human' | 'ai' {
     if (comment.commentSource === CommentSource.AIGenerated || comment.createdBy === 'azure-sdk') return 'ai';
     return 'human';
   }
@@ -613,7 +573,7 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
     this.changeDetectorRef.markForCheck();
   }
 
-  toggleKindFilter(kind: 'human' | 'ai' | 'diagnostic') {
+  toggleKindFilter(kind: 'human' | 'ai') {
     if (this.filterKinds.has(kind)) {
       this.filterKinds.delete(kind);
     } else {

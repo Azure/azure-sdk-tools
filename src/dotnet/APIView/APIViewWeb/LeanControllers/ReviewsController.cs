@@ -259,21 +259,8 @@ namespace APIViewWeb.LeanControllers
                     return new LeanJsonResult("Content generation in progress", StatusCodes.Status202Accepted, languageServices.ReviewGenerationPipelineUrl);
                 }
 
-                IEnumerable<CommentItemModel> allCommentsFromDb = await _commentsManager.GetCommentsAsync(reviewId, commentType: CommentType.APIRevision);
-                List<CommentItemModel> diagnosticComments = await _commentsManager.SyncDiagnosticCommentsAsync(
-                    activeAPIRevision,
-                    activeRevisionReviewCodeFile.Diagnostics,
-                    allCommentsFromDb);
-
-                // After sync, build the full comment set from non-diagnostic DB comments + freshly synced diagnostics,
-                // then apply the shared visibility filter (same rules as Conversations panel & quality score).
-                var allCommentsWithSyncedDiagnostics = allCommentsFromDb
-                    .Where(c => c.CommentSource != CommentSource.Diagnostic)
-                    .Concat(diagnosticComments);
-                List<CommentItemModel> visibleComments = CommentVisibilityHelper.GetVisibleComments(allCommentsWithSyncedDiagnostics, activeApiRevisionId);
-
-                // Code panel additionally excludes resolved comments from non-active revisions
-                List<CommentItemModel> filteredComments = visibleComments.Where(c => !c.IsResolved || c.APIRevisionId == activeApiRevisionId).ToList();
+                IEnumerable<CommentItemModel> comments = await _commentsManager.GetCommentsAsync(reviewId, commentType: CommentType.APIRevision);
+                List<CommentItemModel> filteredComments = comments.Where(c => !c.IsResolved || c.APIRevisionId == activeApiRevisionId).ToList();
                 var codePanelRawData = new CodePanelRawData()
                 {
                     activeRevisionCodeFile = activeRevisionReviewCodeFile,

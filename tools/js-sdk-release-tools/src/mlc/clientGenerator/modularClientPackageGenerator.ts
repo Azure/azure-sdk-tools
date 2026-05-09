@@ -1,4 +1,4 @@
-import { ModularClientPackageOptions, NpmPackageInfo, PackageResult } from '../../common/types.js';
+import { ModularClientPackageOptions, NpmPackageInfo, PackageResult, RunMode } from '../../common/types.js';
 import { buildPackage, createArtifact, tryBuildSamples } from '../../common/rushUtils.js';
 import { initPackageResult, updateChangelogResult, updateNpmPackageResult } from '../../common/packageResultUtils.js';
 import { posix } from 'node:path';
@@ -8,6 +8,7 @@ import { generateTypeScriptCodeFromTypeSpec } from './utils/typeSpecUtils.js';
 import {
   getGeneratedPackageDirectory,
   specifyApiVersionToGenerateSDKByTypeSpec,
+  enableGenerateSampleInTspConfig,
   cleanUpPackageDirectory,
 } from '../../common/utils.js';
 import { getNpmPackageInfo } from '../../common/npmUtils.js';
@@ -39,6 +40,9 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
     await cleanUpPackageDirectory(packageDirectory, options.runMode);
     if (options.apiVersion) {
       specifyApiVersionToGenerateSDKByTypeSpec(options.typeSpecDirectory, options.apiVersion);
+    }
+    if (options.runMode === RunMode.SpecPullRequest) {
+      enableGenerateSampleInTspConfig(options.typeSpecDirectory);
     }
     await generateTypeScriptCodeFromTypeSpec(options, originalNpmPackageInfo?.version, packageDirectory);
 

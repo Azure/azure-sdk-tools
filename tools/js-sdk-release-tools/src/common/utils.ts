@@ -432,6 +432,34 @@ export function specifyApiVersionToGenerateSDKByTypeSpec(typeSpecDirectory: stri
   logger.info(`Use api-version: ${apiVersion} to generate SDK.`);
 }
 
+export function enableGenerateSampleInTspConfig(typeSpecDirectory: string) {
+  const tspConfigPath = path.join(typeSpecDirectory, 'tspconfig.yaml');
+  if (!fs.existsSync(tspConfigPath)) {
+    throw new Error(`Failed to find tspconfig.yaml in ${typeSpecDirectory}.`);
+  }
+
+  const tspConfigContent = fs.readFileSync(tspConfigPath, 'utf8');
+
+  let tspConfig;
+  try {
+    tspConfig = yamlLoad(tspConfigContent);
+  } catch (error) {
+    throw new Error(`Failed to parse tspconfig.yaml: ${error}`);
+  }
+
+  const emitterOptions = tspConfig.options?.[emitterName];
+  if (!emitterOptions) {
+    throw new Error(`Failed to find ${emitterName} options in tspconfig.yaml.`);
+  }
+
+  if (emitterOptions['generate-sample'] !== true) {
+    emitterOptions['generate-sample'] = true;
+    const updatedTspConfigContent = dump(tspConfig);
+    fs.writeFileSync(tspConfigPath, updatedTspConfigContent, 'utf8');
+    logger.info(`Set generate-sample: true in tspconfig.yaml.`);
+  }
+}
+
 // Get the spec repo where the project is defined to set into tsp-location.yaml
 export function generateRepoDataInTspLocation(repoUrl: string) {
   return repoUrl.replace('https://github.com/', '');

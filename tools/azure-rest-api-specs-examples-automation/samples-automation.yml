@@ -37,7 +37,7 @@ jobs:
   - template: /eng/common/pipelines/templates/steps/login-to-github.yml
     parameters:
       TokenOwners:
-        - azure-sdk
+        - Azure
 
   - script: |
       ./automation/main.sh --build-id=$(Build.BuildId) --github-token=$(GH_TOKEN) --release-in-days=10 --skip-processed=true --persist-data=true --merge-pull-request=true

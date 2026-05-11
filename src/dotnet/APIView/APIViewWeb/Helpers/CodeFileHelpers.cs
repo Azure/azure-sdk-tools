@@ -53,6 +53,11 @@ namespace APIViewWeb.Helpers
                 }
             }
 
+            // Pre-index diagnostics by TargetId once for O(1) lookups in AddDiagnosticRow
+            var diagnosticsByTargetId = (codeFile.Diagnostics ?? [])
+                .GroupBy(d => d.TargetId)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
             int idx = 0;
             string nodeHashId = "";
             Dictionary<string, string> relatedLineMap = new Dictionary<string, string>();
@@ -60,7 +65,8 @@ namespace APIViewWeb.Helpers
             {
                 if (reviewLine.IsDocumentation) continue;
                 nodeHashId = await BuildAPITree(codePanelData: codePanelData, codePanelRawData: codePanelRawData, reviewLine: reviewLine,
-                    parentNodeIdHashed: rootNodeId, nodePositionAtLevel: idx, prevNodeHashId: nodeHashId, relatedLineMap: relatedLineMap);
+                    parentNodeIdHashed: rootNodeId, nodePositionAtLevel: idx, prevNodeHashId: nodeHashId, relatedLineMap: relatedLineMap,
+                    diagnosticsByTargetId: diagnosticsByTargetId);
                 idx++;
             }
 
@@ -140,7 +146,7 @@ namespace APIViewWeb.Helpers
         }
 
         private static async Task<string> BuildAPITree(CodePanelData codePanelData, CodePanelRawData codePanelRawData, ReviewLine reviewLine, string parentNodeIdHashed, int nodePositionAtLevel,
-            string prevNodeHashId, Dictionary<string, string> relatedLineMap, int indent = 1)
+            string prevNodeHashId, Dictionary<string, string> relatedLineMap, Dictionary<string, List<CodeDiagnostic>> diagnosticsByTargetId = null, int indent = 1)
         {
             //Create hashed node ID for current review line(node)
             var nodeIdHashed = reviewLine.GetTokenNodeIdHash(parentNodeIdHashed, nodePositionAtLevel);
@@ -156,7 +162,7 @@ namespace APIViewWeb.Helpers
             }
 
             // Build current code line node
-            BuildNodeTokens(codePanelData, codePanelRawData, reviewLine, nodeIdHashed, indent);
+            BuildNodeTokens(codePanelData, codePanelRawData, reviewLine, nodeIdHashed, indent, diagnosticsByTargetId);
 
             //Create navigation node for current line
             var navTreeNode = CreateNavigationNode(reviewLine, nodeIdHashed);
@@ -173,7 +179,8 @@ namespace APIViewWeb.Helpers
                 if (childLine.IsDocumentation) continue;
 
                 childNodeHashId = await BuildAPITree(codePanelData: codePanelData, codePanelRawData: codePanelRawData, reviewLine: childLine,
-                    parentNodeIdHashed: nodeIdHashed, nodePositionAtLevel: idx, prevNodeHashId: childNodeHashId, relatedLineMap: relatedLineMap, indent: indent + 1);
+                    parentNodeIdHashed: nodeIdHashed, nodePositionAtLevel: idx, prevNodeHashId: childNodeHashId, relatedLineMap: relatedLineMap,
+                    diagnosticsByTargetId: diagnosticsByTargetId, indent: indent + 1);
                 idx++;
             };
 
@@ -251,7 +258,8 @@ namespace APIViewWeb.Helpers
             return navTreeNode;
         }
 
-        private static void BuildNodeTokens(CodePanelData codePanelData, CodePanelRawData codePanelRawData, ReviewLine reviewLine, string nodeIdHashed, int indent)
+        private static void BuildNodeTokens(CodePanelData codePanelData, CodePanelRawData codePanelRawData, ReviewLine reviewLine, string nodeIdHashed, int indent,
+            Dictionary<string, List<CodeDiagnostic>> diagnosticsByTargetId = null)
         {
             // Generate code line row
             var codePanelRow = GetCodePanelRowData(codePanelData, reviewLine, nodeIdHashed, indent);
@@ -291,7 +299,7 @@ namespace APIViewWeb.Helpers
             //Add code line and comment to code panel data
             InsertCodePanelRowData(codePanelData: codePanelData, rowData: codePanelRow, nodeIdHashed: nodeIdHashed, codePanelRawData: codePanelRawData, commentsForRow: commentsForRow);
 
-            AddDiagnosticRow(codePanelData: codePanelData, codeFile: codePanelRawData.activeRevisionCodeFile, nodeId: reviewLine.LineId, nodeIdHashed: nodeIdHashed);
+            AddDiagnosticRow(codePanelData: codePanelData, nodeId: reviewLine.LineId, nodeIdHashed: nodeIdHashed, diagnosticsByTargetId: diagnosticsByTargetId);
         }
 
         private static CodePanelRowData GetCodePanelRowData(CodePanelData codePanelData, ReviewLine reviewLine, string nodeIdHashed, int indent)
@@ -454,12 +462,13 @@ namespace APIViewWeb.Helpers
             }
         }
 
-        private static void AddDiagnosticRow(CodePanelData codePanelData, CodeFile codeFile, string nodeId, string nodeIdHashed)
+        private static void AddDiagnosticRow(CodePanelData codePanelData, string nodeId, string nodeIdHashed,
+            Dictionary<string, List<CodeDiagnostic>> diagnosticsByTargetId = null)
         {
-            if (codeFile.Diagnostics == null || codeFile.Diagnostics.Length == 0)
+            if (diagnosticsByTargetId == null || string.IsNullOrEmpty(nodeId)
+                || !diagnosticsByTargetId.TryGetValue(nodeId, out var diagnostics))
                 return;
 
-            var diagnostics = codeFile.Diagnostics.Where(d => d.TargetId == nodeId);
             foreach (var diagnostic in diagnostics)
             {
                 var rowData = new CodePanelRowData()

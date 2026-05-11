@@ -13,8 +13,8 @@ export interface VisibleCommentsResult {
 }
 
 /**
- * Single source of truth for determining which comments are "visible" for a given
- * active API revision. Used by the Conversations panel, badge counts, and quality score.
+ * Single source of truth for determining which comments are "visible".
+ * Used by the Conversations panel, badge counts, and quality score.
  *
  * Rules:
  *  1. User comments (not AI-generated): always visible regardless of revision.
@@ -23,8 +23,7 @@ export interface VisibleCommentsResult {
  * No display caps are applied here — consumers can apply those on top of the returned result.
  */
 export function getVisibleComments(
-  comments: CommentItemModel[],
-  activeApiRevisionId?: string | null
+  comments: CommentItemModel[]
 ): VisibleCommentsResult {
   // Only include comments for API revisions, not sample revisions
   const apiRevisionComments = comments.filter(comment =>

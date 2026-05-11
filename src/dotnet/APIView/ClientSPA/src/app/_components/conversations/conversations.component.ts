@@ -150,7 +150,7 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
       this.showUnknownSeverityFilter = false;
 
       // Use shared visibility logic — single source of truth for which comments are relevant
-      const { allVisibleComments } = getVisibleComments(this.comments, this.activeApiRevisionId);
+      const { allVisibleComments } = getVisibleComments(this.comments);
 
       const filteredComments = allVisibleComments;
 

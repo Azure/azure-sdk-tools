@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import socket
 import sys
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
@@ -73,7 +74,12 @@ async def test_web_fetch_parses_html() -> None:
 
     fake_resp = _make_response(url, html, "text/html; charset=utf-8")
 
-    with patch("tools.web_tools.httpx.AsyncClient") as MockClient:
+    with patch("tools.web_tools.httpx.AsyncClient") as MockClient, patch(
+        "tools.web_tools.socket.getaddrinfo",
+        return_value=[
+            (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("104.16.0.1", 0)),
+        ],
+    ):
         instance = AsyncMock()
         instance.get.return_value = fake_resp
         instance.__aenter__ = AsyncMock(return_value=instance)
@@ -96,7 +102,12 @@ async def test_web_fetch_marks_llms_txt() -> None:
 
     fake_resp = _make_response(url, body, "text/plain; charset=utf-8")
 
-    with patch("tools.web_tools.httpx.AsyncClient") as MockClient:
+    with patch("tools.web_tools.httpx.AsyncClient") as MockClient, patch(
+        "tools.web_tools.socket.getaddrinfo",
+        return_value=[
+            (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("104.16.0.1", 0)),
+        ],
+    ):
         instance = AsyncMock()
         instance.get.return_value = fake_resp
         instance.__aenter__ = AsyncMock(return_value=instance)
@@ -114,7 +125,12 @@ async def test_web_fetch_returns_error_on_http_forbidden() -> None:
     url = "https://www.npmjs.com/package/@azure-tools/typespec-azure-core"
     fake_resp = _make_response(url, "Forbidden", "text/html", status=403)
 
-    with patch("tools.web_tools.httpx.AsyncClient") as MockClient:
+    with patch("tools.web_tools.httpx.AsyncClient") as MockClient, patch(
+        "tools.web_tools.socket.getaddrinfo",
+        return_value=[
+            (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("104.16.0.1", 0)),
+        ],
+    ):
         instance = AsyncMock()
         instance.get.return_value = fake_resp
         instance.__aenter__ = AsyncMock(return_value=instance)

@@ -9,6 +9,7 @@ from __future__ import annotations
 import ipaddress
 import logging
 import re
+import socket
 from html.parser import HTMLParser
 from typing import Annotated
 from urllib.parse import urlparse
@@ -103,11 +104,29 @@ def _is_public_url(url: str) -> bool:
 
     try:
         ip = ipaddress.ip_address(hostname)
-        if ip.is_private or ip.is_loopback or ip.is_link_local:
+        # Only globally routable IPs are allowed.
+        if not ip.is_global:
             return False
     except ValueError:
-        # Non-IP hostnames are allowed.
-        pass
+        # Resolve hostnames and reject if *any* address is non-public.
+        try:
+            addrinfos = socket.getaddrinfo(hostname, None, type=socket.SOCK_STREAM)
+        except socket.gaierror:
+            return False
+
+        if not addrinfos:
+            return False
+
+        for family, _, _, _, sockaddr in addrinfos:
+            if family == socket.AF_INET:
+                resolved_ip = ipaddress.ip_address(sockaddr[0])
+            elif family == socket.AF_INET6:
+                resolved_ip = ipaddress.ip_address(sockaddr[0])
+            else:
+                continue
+
+            if not resolved_ip.is_global:
+                return False
 
     return True
 

@@ -30,10 +30,23 @@ def _make_response(
 
 
 def test_is_public_url_blocks_private_hosts() -> None:
-    assert _is_public_url("https://typespec.io/docs/llms.txt") is True
+    with patch("tools.web_tools.socket.getaddrinfo") as mock_getaddrinfo:
+        mock_getaddrinfo.return_value = [
+            (2, 1, 6, "", ("93.184.216.34", 0)),
+        ]
+        assert _is_public_url("https://typespec.io/docs/llms.txt") is True
+
     assert _is_public_url("http://localhost:8000") is False
     assert _is_public_url("http://127.0.0.1:8080") is False
     assert _is_public_url("ftp://typespec.io/docs/llms.txt") is False
+
+
+def test_is_public_url_blocks_hostname_resolving_to_private_ip() -> None:
+    with patch("tools.web_tools.socket.getaddrinfo") as mock_getaddrinfo:
+        mock_getaddrinfo.return_value = [
+            (2, 1, 6, "", ("169.254.169.254", 0)),
+        ]
+        assert _is_public_url("https://example.com/path") is False
 
 
 def test_html_text_extractor_strips_tags() -> None:

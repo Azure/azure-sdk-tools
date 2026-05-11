@@ -28,6 +28,7 @@ const defaultCodeLineProps = {
 const defaultCommentProps = {
   crossLanguageId: '',
   correlationId: '',
+  apiVersionId: '12.0.0',
   isResolved: false,
   upvotes: [],
   downvotes: [],
@@ -116,6 +117,7 @@ function createComment(overrides: {
     id: overrides.id,
     reviewId: overrides.reviewId ?? 'test-review-id',
     apiRevisionId: overrides.apiRevisionId ?? 'revision-1',
+    apiVersionId: '12.0.0',
     elementId: overrides.elementId,
     sectionClass: overrides.sectionClass ?? '',
     commentText: overrides.commentText,

@@ -33,7 +33,7 @@ from utils.text_util import preprocess_message
 from utils.azure_memory_store import sanitize_scope
 from azure.ai.projects.aio import AIProjectClient
 from azure.ai.projects.models import AgentVersionDetails
-from openai import AsyncOpenAI
+from openai import AsyncOpenAI, NotFoundError
 from openai.types.responses import Response as OpenAIResponse
 from openai.types.responses import (
     ResponseFunctionToolCall,
@@ -294,7 +294,7 @@ class ChatService:
             try:
                 await openai_client.conversations.retrieve(stored_conversation_id)
                 return stored_conversation_id, False
-            except Exception:
+            except NotFoundError:
                 logger.info(
                     "Stored conversation %s no longer exists, creating new one",
                     stored_conversation_id,

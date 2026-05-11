@@ -114,6 +114,7 @@ async def lifespan(application: FastAPI):
         for task in pending_tasks:
             task.cancel()
         await asyncio.gather(*pending_tasks, return_exceptions=True)
+    await _chat_service.shutdown()
     await close_clients()
     await close_cosmos_client()
     await close_storage_client()

@@ -28,7 +28,7 @@
                     </div>
                 </ng-template>
             </ng-container>
-            <ng-container *ngIf="!canApproveForReviewLanguage && activeAPIRevision && activeAPIRevision!.approvers.length > 0">
+            <ng-container *ngIf="userProfile?.permissions && !canApproveForReviewLanguage && activeAPIRevision && activeAPIRevision!.approvers.length > 0">
                 <div class="d-grid gap-2">
                     <button class="btn btn-approved-pill" type="button" disabled aria-label="API revision approved">
                         <i class="bi bi-check-circle-fill me-2"></i>Approved
@@ -44,7 +44,7 @@
         </div>
         <div class="text-center py-2" *ngIf="review?.language !== 'TypeSpec' && review?.language !== 'Swagger'">
             <ng-container *ngIf="reviewIsApproved; else reviewIsNotApproved">
-                <ng-container *ngIf="!canApproveForReviewLanguage">
+                <ng-container *ngIf="userProfile?.permissions && !canApproveForReviewLanguage">
                     <div class="d-grid gap-2 mb-1">
                         <button class="btn btn-approved-pill" type="button" disabled aria-label="First release approved">
                             <i class="bi bi-check-circle-fill me-2"></i>First Release Approved

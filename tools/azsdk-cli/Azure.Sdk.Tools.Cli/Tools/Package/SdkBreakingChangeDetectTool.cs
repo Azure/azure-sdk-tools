@@ -28,15 +28,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
         private const string SdkChangeJsonFileName = "SDKCHANGE.json";
         // detect command options
-        //private readonly Option<string> localSdkRepoPathOpt = new("--sdk-repo-path", "-r")
-        //{
-        //    Description = "Absolute path to the local azure-sdk-for-{language} repository",
-        //    Required = true,
-        //};
 
         private readonly Option<string> languageOpt = new("--language", "-l")
         {
-            Description = "Language of the SDK, e.g. 'net' for .NET, 'java' for Java, 'js' for JavaScript/TypeScript, 'python' for Python, 'go' for Go",
+            Description = "Language of the SDK, e.g. 'dotnetnet' for .NET, 'java' for Java, 'js or javascript' for JavaScript/TypeScript, 'python' for Python, 'go' for Go",
             Required = false,
         };
 
@@ -48,11 +43,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
         private readonly Option<bool> generateSDKOpt = new("--generate-sdk", "-g")
         {
-            Description = "Whether to generate SDK code for the new API version before performing breaking change detection. If not specified, the tool will only compare the old and new API versions without generating SDK code.",
+            Description = "Regenerate SDK code before detecting breaking changes. If omitted, analyzes existing SDK artifacts in the package path.",
             Required = false,
             DefaultValueFactory = _ => false,
         };
-
         public SdkBreakingChangeDetectTool(
             IGitHelper gitHelper,
             ILogger<SdkBreakingChangeDetectTool> logger,
@@ -73,7 +67,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
             var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
-            //var localRepoPath = parseResult.GetValue(localSdkRepoPathOpt);
             var language = parseResult.GetValue(languageOpt);
             var tspConfigPath = parseResult.GetValue(tspConfigPathOpt);
             var generateSDK = parseResult.GetValue(generateSDKOpt);
@@ -86,11 +79,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         public async Task<SdkBreakingChangeDetectResponse> DetectSDKBreakingChangesAsync(
             [Description("The absolute path to the package directory..")]
             string packagePath,
-            [Description("Language of the SDK, e.g. 'net' for .NET, 'java' for Java, 'js' for JavaScript/TypeScript, 'python' for Python, 'go' for Go. Optional if running inside a local cloned azure-sdk-for-{language} repository.")]
+            [Description("Language of the SDK, e.g. 'dotnet' for .NET, 'java' for Java, 'js or javascript' for JavaScript/TypeScript, 'python' for Python, 'go' for Go. Optional if running inside a local cloned azure-sdk-for-{language} repository.")]
             string? language = null,
             [Description("Path to the 'tspconfig.yaml' file. Can be a local file path or a remote HTTPS URL. Optional if running inside a local cloned azure-sdk-for-{language} repository, for example, inside 'azure-sdk-for-net' repository.")]
             string? tspConfigPath = null,
-            [Description("Whether to generate SDK code before performing breaking change detection. If not specified, the tool will only compare the existing SDK.")]
+            [Description("Regenerate SDK code before detecting breaking changes. If omitted, analyzes existing SDK artifacts in the package path.")]
             bool generateSDK = false,
             CancellationToken ct = default)
         {
@@ -144,7 +137,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     var (configContentType, configValue) = await _specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.GetSDKChanges, ct);
                     if (configContentType != SpecGenSdkConfigContentType.Unknown && !string.IsNullOrEmpty(configValue))
                     {
-                        logger.LogInformation("Found valid configuration for updating changelog content. Executing configured script...");
+                        logger.LogInformation("Found valid configuration for getting sdk changes. Executing configured script...");
 
                         // Prepare script parameters
                         var scriptParameters = new Dictionary<string, string>
@@ -154,14 +147,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                             {"OutputJsonFile", Path.Combine(packagePath, SdkChangeJsonFileName) }
                         };
 
-                        // Create and execute process options for the update-changelog-content script
+                        // Create and execute process options for the get-sdk-changes script
                         var processOptions = _specGenSdkConfigHelper.CreateProcessOptions(configContentType, configValue, sdkRepoRoot, packagePath, scriptParameters);
                         if (processOptions != null)
                         {
-                            var changelogResponse = await _specGenSdkConfigHelper.ExecuteProcessAsync(processOptions, ct, packageInfo, "Changelog content is updated.", ["Review the changelog for accuracy and completeness", "Update metadata for the package"]);
+                            var sdkChangeResponse = await _specGenSdkConfigHelper.ExecuteProcessAsync(processOptions, ct, packageInfo, "SDK changes are retrieved.");
 
                             // Fixed condition: proceed when there are NO errors (Count == 0 or null)
-                            if (changelogResponse != null && (changelogResponse.ResponseErrors == null || changelogResponse.ResponseErrors.Count == 0))
+                            if (sdkChangeResponse != null && (sdkChangeResponse.ResponseErrors == null || sdkChangeResponse.ResponseErrors.Count == 0))
                             {
                                 var sdkChangeFilePath = Path.Combine(packagePath, SdkChangeJsonFileName);
 
@@ -197,18 +190,30 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                                     {
                                         return new SdkBreakingChangeDetectResponse
                                         {
-                                            ResponseError = "No breaking changes are detected in the SDK based on the changelog content."
+                                            HasBreakingChanges = false,
+                                            BreakingChanges = [],
+                                            Language = languageService.Language,
                                         };
                                     }
                                 }
                                 else
                                 {
-                                    logger.LogWarning("Failed to deserialize the changelog update script output. Falling back to default logic to detect SDK breaking changes.");
+                                    logger.LogError("Failed to deserialize the SDK change script output. Falling back to default logic to detect SDK breaking changes.");
+                                    return new SdkBreakingChangeDetectResponse
+                                    {
+                                        ResponseError = "Failed to deserialize the SDK change script output. Falling back to default logic to detect SDK breaking changes.",
+                                        Language = languageService.Language,
+                                    };
                                 }
                             }
                             else
                             {
-                                logger.LogWarning("Changelog update script execution failed or returned errors.");
+                                logger.LogError("SDK change script execution failed or returned errors.");
+                                return new SdkBreakingChangeDetectResponse
+                                {
+                                    ResponseError = $"SDK change script execution failed or returned errors: {string.Join("; ", sdkChangeResponse?.ResponseErrors ?? new List<string> { "Unknown error" })}",
+                                    Language = languageService.Language,
+                                };
                             }
                         }
                     }
@@ -237,8 +242,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             };
             var result = await copilotAgentRunner.RunAsync(agent, ct);
             var breakings = ParseClassifyResult(result);
-            //logger.LogInformation("copilot agent completed. hasBreakingChange: {hasBreakingChanges}, Breaking Changes: {breakingChanges}", result.HasBreakingChanges, string.Join("\n", result.BreakingChanges));
-            // For demonstration purposes, we'll just return a response indicating no breaking changes were found
+
             return breakings;
         }
 

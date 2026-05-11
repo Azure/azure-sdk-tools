@@ -87,7 +87,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
                 string blobPrefix = $"{repository}/{day:yyyy/MM/dd}/".ToLower();
 
                 AsyncPageable<BlobItem> blobs = this.runsContainerClient.GetBlobsAsync(prefix: blobPrefix, cancellationToken: cancellationToken);
-                
+
                 await foreach (BlobItem blob in blobs)
                 {
                     blobNames.Add(blob.Name);
@@ -311,11 +311,11 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
             }
             catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Conflict)
             {
-                this.logger.LogInformation("Ignoring existing blob exception for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, runName, runId, attempt);
+                this.logger.LogInformation("Ignoring existing blob exception for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, workflowName, runId, attempt);
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, "Error processing repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, runName, runId, attempt);
+                this.logger.LogError(ex, "Error processing repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, workflowName, runId, attempt);
                 throw;
             }
         }
@@ -337,13 +337,21 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
                 string blobPath = $"{repository}/{run.RunStartedAt:yyyy/MM/dd}/{runId}-{attempt}.jsonl".ToLower();
                 BlobClient blobClient = this.logsContainerClient.GetBlobClient(blobPath);
 
-                if (await blobClient.ExistsAsync())
+                try
                 {
-                    this.logger.LogInformation("Skipping existing log for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, runName, runId, attempt);
-                    return;
+                    var properties = await blobClient.GetPropertiesAsync();
+                    if (properties.Value.ContentLength > 0)
+                    {
+                        this.logger.LogInformation("Skipping existing log for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, workflowName, runId, attempt);
+                        return;
+                    }
+                }
+                catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.NotFound)
+                {
+                    // Blob doesn't exist yet, proceed to create it
                 }
 
-                this.logger.LogInformation("Processing log for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, runName, runId, attempt);
+                this.logger.LogInformation("Processing log for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, workflowName, runId, attempt);
 
                 using ZipArchive archive = await GetLogsAsync(client, run);
 
@@ -363,117 +371,159 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
                     })
                     .ToDictionary(x => string.IsNullOrEmpty(x.ParentName) ? x.RecordName : $"{x.ParentName}/{x.Index}", x => x.Entry);
 
-                await using Stream blobStream = await blobClient.OpenWriteAsync(overwrite: true, new BlobOpenWriteOptions());
-                await using StreamWriter blobWriter = new(blobStream);
+                // Use explicit disposal control to avoid committing empty blobs on exceptions
+                // OpenWriteAsync stages blocks and commits them when the stream is disposed
+                // We only want to commit if processing completes successfully
+                Stream? blobStream = null;
+                StreamWriter? blobWriter = null;
+                bool commitBlob = false;
 
                 long characterCount = 0;
                 int lineCount = 0;
 
-                foreach (var job in jobs)
+                try
                 {
-                    // Retries may not run all jobs and skipped jobs will not have logs
-                    // The jobs still appear in the API response, but their runnerName is empty
-                    bool isRetrySkipped = string.IsNullOrEmpty(job.RunnerName) && attempt > 1;
+                    blobStream = await blobClient.OpenWriteAsync(overwrite: true, new BlobOpenWriteOptions());
+                    blobWriter = new StreamWriter(blobStream, leaveOpen: false);
 
-                    if (!logEntries.TryGetValue(job.Name, out ZipArchiveEntry jobEntry))
+                    foreach (var job in jobs)
                     {
-                        if (!isRetrySkipped)
+                        // Retries may not run all jobs and skipped jobs will not have logs
+                        // The jobs still appear in the API response, but their runnerName is empty
+                        bool isRetrySkipped = string.IsNullOrEmpty(job.RunnerName) && attempt > 1;
+
+                        if (!logEntries.TryGetValue(job.Name, out ZipArchiveEntry jobEntry))
                         {
-                            // All jobs in the first attempt or with runner names should have logs
-                            this.logger.LogWarning("Missing log entry for job {JobName}", job.Name);
+                            if (!isRetrySkipped)
+                            {
+                                // All jobs in the first attempt or with runner names should have logs
+                                this.logger.LogWarning("Missing log entry for job {JobName}", job.Name);
+                            }
+
+                            continue;
                         }
 
-                        continue;
-                    }
+                        IList<LogLine> logLines = ReadLogLines(jobEntry, step: 0, job.StartedAt);
 
-                    IList<LogLine> logLines = ReadLogLines(jobEntry, step: 0, job.StartedAt);
+                        IList<LogLine> stepLines = job.Steps
+                            .Where(x => x.Conclusion != WorkflowJobConclusion.Skipped)
+                            .OrderBy(x => x.Number)
+                            .SelectMany(step => logEntries.TryGetValue($"{job.Name}/{step.Number}", out var logEntry)
+                                ? ReadLogLines(logEntry, step.Number, step.StartedAt ?? job.StartedAt)
+                                : [])
+                            .ToArray();
 
-                    IList<LogLine> stepLines = job.Steps
-                        .Where(x => x.Conclusion != WorkflowJobConclusion.Skipped)
-                        .OrderBy(x => x.Number)
-                        .SelectMany(step => ReadLogLines(logEntries[$"{job.Name}/{step.Number}"], step.Number, step.StartedAt ?? job.StartedAt))
-                        .ToArray();
+                        UpdateStepLines(logLines, stepLines);
 
-                    UpdateStepLines(logLines, stepLines);
-
-
-                    foreach (LogLine logLine in logLines)
-                    {
-                        characterCount += logLine.Message.Length;
-                        lineCount += 1;
-
-                        await blobWriter.WriteLineAsync(JsonConvert.SerializeObject(new
+                        foreach (LogLine logLine in logLines)
                         {
-                            Repository = repository,
-                            WorkflowId = workflowId,
-                            WorkflowName = workflowName,
-                            RunId = runId,
-                            RunAttempt = attempt,
-                            JobId = job.Id,
-                            StepNumber = logLine.Step,
-                            LineNumber = logLine.Number,
-                            logLine.Message.Length,
-                            Timestamp = logLine.Timestamp.ToString(TimeFormat),
-                            logLine.Message,
-                            EtlIngestDate = DateTime.UtcNow.ToString(TimeFormat),
-                        }, jsonSettings));
-                    }
-                }
+                            characterCount += logLine.Message.Length;
+                            lineCount += 1;
 
-                this.logger.LogInformation("Processed {CharacterCount} characters and {LineCount} lines for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", characterCount, lineCount, repository, runName, runId, attempt);
+                            await blobWriter.WriteLineAsync(JsonConvert.SerializeObject(new
+                            {
+                                Repository = repository,
+                                WorkflowId = workflowId,
+                                WorkflowName = workflowName,
+                                RunId = runId,
+                                RunAttempt = attempt,
+                                JobId = job.Id,
+                                StepNumber = logLine.Step,
+                                LineNumber = logLine.Number,
+                                logLine.Message.Length,
+                                Timestamp = logLine.Timestamp.ToString(TimeFormat),
+                                logLine.Message,
+                                EtlIngestDate = DateTime.UtcNow.ToString(TimeFormat),
+                            }, jsonSettings));
+                        }
+                    }
+
+                    // If we get here, processing succeeded - mark blob for commit
+                    commitBlob = true;
+                    this.logger.LogInformation("Processed {CharacterCount} characters and {LineCount} lines for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", characterCount, lineCount, repository, workflowName, runId, attempt);
+                }
+                finally
+                {
+                    // Only commit (dispose) the blob if processing completed successfully
+                    // If there was an exception, abandon the upload - staged blocks will expire
+                    if (commitBlob && blobWriter != null)
+                    {
+                        await blobWriter.DisposeAsync();
+                    }
+                    // On exception, don't dispose - the staged blocks remain uncommitted and will expire after 7 days
+                }
             }
             catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Conflict)
             {
-                this.logger.LogInformation("Ignoring existing blob exception for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, runName, runId, attempt);
+                this.logger.LogInformation("Ignoring existing blob exception for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, workflowName, runId, attempt);
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, "Error processing repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, runName, runId, attempt);
+                this.logger.LogError(ex, "Error processing repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, workflowName, runId, attempt);
                 throw;
             }
         }
 
         private static bool UpdateStepLines(IList<LogLine> jobLines, IList<LogLine> stepLines)
         {
-            // For each line in the step, remove the corresponding line from the job
             if (stepLines.Count == 0)
             {
                 return true;
             }
 
-            // seek to the first line in the job that is after the first line in the step
-            for (int jobIndex = 0; jobIndex < jobLines.Count - stepLines.Count + 1; jobIndex++)
+            // Group step lines by step number and process each group independently.
+            // This allows for gaps in stepLines when some steps have no log entry in the archive.
+            var stepGroups = stepLines
+                .GroupBy(x => x.Step)
+                .OrderBy(g => g.Key)
+                .Select(g => g.ToList())
+                .ToList();
+
+            int searchStart = 0;
+            bool allFound = true;
+
+            foreach (var group in stepGroups)
             {
-                var isMatch = true;
+                bool found = false;
 
-                for (var stepIndex = 0; isMatch && stepIndex < stepLines.Count; stepIndex++)
+                for (int jobIndex = searchStart; jobIndex <= jobLines.Count - group.Count; jobIndex++)
                 {
-                    var stepLine = stepLines[stepIndex];
-                    var jobLine = jobLines[jobIndex + stepIndex];
+                    bool isMatch = true;
 
-                    if (jobLine.Message != stepLine.Message)
+                    for (int stepIndex = 0; isMatch && stepIndex < group.Count; stepIndex++)
                     {
-                        isMatch = false;
+                        if (jobLines[jobIndex + stepIndex].Message != group[stepIndex].Message)
+                        {
+                            isMatch = false;
+                        }
+                    }
+
+                    if (isMatch)
+                    {
+                        // Replace the step number and timestamp with the values from the step log
+                        for (int stepIndex = 0; stepIndex < group.Count; stepIndex++)
+                        {
+                            var stepLine = group[stepIndex];
+                            var jobLine = jobLines[jobIndex + stepIndex];
+
+                            jobLine.Step = stepLine.Step;
+                            jobLine.Number = stepLine.Number;
+                            jobLine.Timestamp = stepLine.Timestamp;
+                        }
+
+                        searchStart = jobIndex + group.Count;
+                        found = true;
+                        break;
                     }
                 }
 
-                if (isMatch)
+                if (!found)
                 {
-                    // Replace the step number and timestamp with the values from the step log
-                    for (var stepIndex = 0; stepIndex < stepLines.Count; stepIndex++)
-                    {
-                        var stepLine = stepLines[stepIndex];
-                        var jobLine = jobLines[jobIndex + stepIndex];
-
-                        jobLine.Step = stepLine.Step;
-                        jobLine.Number = stepLine.Number;
-                        jobLine.Timestamp = stepLine.Timestamp;
-                    }
-                    return true;
+                    allFound = false;
                 }
             }
 
-            return false;
+            return allFound;
         }
 
         private static List<LogLine> ReadLogLines(ZipArchiveEntry entry, int step, DateTimeOffset logStartTime)

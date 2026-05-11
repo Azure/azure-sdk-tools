@@ -81,22 +81,12 @@ _JWT_CLOCK_SKEW_SECS = 10
 _JWT_EXPIRY_SECS = 600
 # Fallback token lifetime when GitHub doesn't return expires_at.
 _DEFAULT_TOKEN_LIFETIME_HOURS = 1
-# Background token refresh interval (seconds).
-_DEFAULT_REFRESH_INTERVAL_SECS = 30
 # MCP request timeout (seconds) — GitHub MCP may take time for large repos.
 _MCP_REQUEST_TIMEOUT_SECS = 60
 
-# Keep strong references to background tasks so they are not garbage collected.
-_background_refresh_tasks: list[asyncio.Task] = []
-
 
 class _GitHubTokenManager:
-    """Thread-safe, auto-refreshing GitHub installation token manager.
-
-    Provides fresh auth headers to ``MCPStreamableHTTPTool`` via a
-    ``header_provider`` callback.  Token refresh happens proactively in a
-    background task so that MCP calls never block on token acquisition.
-    """
+    """Thread-safe GitHub installation token manager with JIT refresh."""
 
     def __init__(self, token: str, expires_at: datetime | None) -> None:
         self._token = token
@@ -107,8 +97,10 @@ class _GitHubTokenManager:
     def is_static(self) -> bool:
         return self._expires_at is None
 
-    def get_headers(self, _kwargs: dict | None = None) -> dict[str, str]:
+    async def get_headers(self, _kwargs: dict | None = None) -> dict[str, str]:
         """Return current auth + toolset headers (called per-request)."""
+        if self._needs_refresh():
+            await self._refresh_once()
         return {
             **_GITHUB_MCP_HEADERS,
             "Authorization": f"Bearer {self._token}",
@@ -132,23 +124,6 @@ class _GitHubTokenManager:
                 "GitHub token refreshed, expires at %s",
                 new_expires_at.isoformat(),
             )
-
-    def start_background_refresh(
-        self, interval_seconds: int = _DEFAULT_REFRESH_INTERVAL_SECS
-    ) -> None:
-        """Start a background task that proactively refreshes the token."""
-
-        async def _loop() -> None:
-            while True:
-                try:
-                    await self._refresh_once()
-                except Exception as ex:
-                    logger.exception("GitHub token background refresh failed: %s", ex)
-                await asyncio.sleep(interval_seconds)
-
-        task = asyncio.get_running_loop().create_task(_loop())
-        _background_refresh_tasks.append(task)
-        logger.info("Started GitHub token background refresh loop")
 
 
 async def _validate_mcp_endpoint(token: str) -> bool:
@@ -351,8 +326,8 @@ async def create_github_mcp_tool() -> MCPStreamableHTTPTool:
     Supports two authentication modes (checked in order):
 
     1. **Environment token** — ``GITHUB_TOKEN`` env var (e.g. a PAT).
-    2. **GitHub App JWT via Key Vault** — mints short-lived installation
-       tokens with proactive background refresh.
+     2. **GitHub App JWT via Key Vault** — mints short-lived installation
+         tokens with just-in-time refresh before expiry.
 
     Config keys (from App Configuration / ``.env``):
 
@@ -378,7 +353,7 @@ async def create_github_mcp_tool() -> MCPStreamableHTTPTool:
     # through ``call_tool`` and would otherwise lack the Authorization
     # header, causing a 401.
     async def _inject_auth(request: httpx.Request) -> None:  # noqa: RUF029
-        for key, value in token_mgr.get_headers().items():
+        for key, value in (await token_mgr.get_headers()).items():
             request.headers[key] = value
 
     http_client = httpx.AsyncClient(
@@ -413,6 +388,5 @@ async def create_github_mcp_tool() -> MCPStreamableHTTPTool:
             cfg("GITHUB_APP_INSTALLATION_OWNER", _DEFAULT_INSTALLATION_OWNER),
             expires_at.isoformat() if expires_at else "unknown",
         )
-        token_mgr.start_background_refresh()
 
     return mcp_tool

@@ -191,7 +191,7 @@ async def close_cosmos_client() -> None:
     _message_container = None
     _episode_container = None
     if _client is not None:
-        await _client.close()
+        await _client.__aexit__(None, None, None)
         _client = None
 
 

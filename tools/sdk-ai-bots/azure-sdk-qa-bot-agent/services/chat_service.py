@@ -43,6 +43,7 @@ from openai.types.responses import (
 from openai.types.responses.response_input_item_param import ResponseInputItemParam
 from config.tenant_config import TenantID
 from typing import Any, cast
+from utils.background_tasks import BackgroundTaskTracker
 
 logger = logging.getLogger(__name__)
 
@@ -61,22 +62,6 @@ class ChatService:
 
     def __init__(self) -> None:
         self._conversation_service = ConversationService()
-        self._background_tasks: set[asyncio.Task] = set()
-
-    def _track_background_task(self, task: asyncio.Task) -> None:
-        """Keep strong refs for internal fire-and-forget tasks."""
-        self._background_tasks.add(task)
-        task.add_done_callback(self._background_tasks.discard)
-
-    async def shutdown(self) -> None:
-        """Cancel and await any in-flight background tasks."""
-        pending_tasks = [task for task in self._background_tasks if not task.done()]
-        if not pending_tasks:
-            return
-        logger.info("Cancelling %d ChatService background task(s)", len(pending_tasks))
-        for task in pending_tasks:
-            task.cancel()
-        await asyncio.gather(*pending_tasks, return_exceptions=True)
 
     async def chat(self, req: ChatRequest) -> ChatResponse:
         """Process one chat turn and return API response shape."""
@@ -185,7 +170,7 @@ class ChatService:
             )
 
         chat_response = self._postprocess(req, response, agent_conversation_id)
-        self._track_background_task(
+        BackgroundTaskTracker.instance().track(
             asyncio.create_task(
                 self._save_bot_answer_to_conversation(
                     req, response.id, chat_response.answer

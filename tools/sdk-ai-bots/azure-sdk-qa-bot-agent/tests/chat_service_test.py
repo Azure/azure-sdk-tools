@@ -21,14 +21,18 @@ def test_chat_service_resolves_memory_scope() -> None:
     # user_id present → user_{user_id}
     with_user_id = ChatRequest(
         tenant_id="azure_sdk_qa_bot",
-        message=ChatMessage(role="user", content="hello", user_id="29:orgid:abc-def-123"),
+        message=ChatMessage(
+            role="user", content="hello", user_id="29:orgid:abc-def-123"
+        ),
     )
     assert service._resolve_memory_scope(with_user_id) == "user_29orgidabc-def-123"
 
     # user_id present even when extra fields are set
     with_both = ChatRequest(
         tenant_id="azure_sdk_qa_bot",
-        message=ChatMessage(role="user", content="hello", user_id="29:orgid:abc-def-123"),
+        message=ChatMessage(
+            role="user", content="hello", user_id="29:orgid:abc-def-123"
+        ),
     )
     assert service._resolve_memory_scope(with_both) == "user_29orgidabc-def-123"
 
@@ -46,7 +50,10 @@ def test_chat_service_resolves_memory_scope() -> None:
     )
     assert service._resolve_memory_scope(scope_but_no_user) is None
 
-    assert service._build_memory_scope_message("my-scope") == "[memory_scope] value=my-scope"
+    assert (
+        service._build_memory_scope_message("my-scope")
+        == "[memory_scope] value=my-scope"
+    )
 
 
 def test_chat_service_returns_none_when_user_id_empty() -> None:

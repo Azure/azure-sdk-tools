@@ -135,7 +135,14 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A <see cref="CustomizedCodeUpdateResponse"/> indicating the outcome.</returns>
     [McpServerTool(Name = CustomizedCodeUpdateToolName), Description("Applies patches to customization files based on build errors, regenerates code if needed (Java), builds, and returns success/failure with build result.")]
-    public Task<CustomizedCodeUpdateResponse> UpdateAsync(string packagePath, string tspProjectPath, string customizationRequest, CancellationToken ct = default)
+    public Task<CustomizedCodeUpdateResponse> UpdateAsync(
+        [Description("Absolute path to the SDK package directory. REQUIRED. Example: 'path/to/azure-sdk-for-java/sdk/healthdataaiservices/azure-health-deidentification'.")]
+        string packagePath,
+        [Description("Absolute path to the local TypeSpec project directory (containing main.tsp/client.tsp) where customizations will be applied. REQUIRED. Example: 'path/to/azure-rest-api-specs/specification/healthdataaiservices/HealthDataAIServices.DeidServices'.")]
+        string tspProjectPath,
+        [Description("Description of the requested customization to apply to the TypeSpec or SDK code. Can also be an APIView URL for feedback-driven customizations. REQUIRED.")]
+        string customizationRequest,
+        CancellationToken ct = default)
         => RunUpdateAsync(packagePath, tspProjectPath, customizationRequest, ct);
 
     /// <summary>

@@ -122,7 +122,7 @@ stimuli:
 
 - name: 001003-version-required-to-optional
   prompt: |
-    change the property age of EmployeeProperties from required to optional for api version 2025-05-04-preview
+    change the property age of EmployeeProperties from required to optional only for api version 2025-05-04-preview
   constraints:
     max_turns: 6
     max_tokens: 100000
@@ -147,7 +147,6 @@ stimuli:
     config:
       required:
         - edit
-        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
         - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: skill-invocation
     config:

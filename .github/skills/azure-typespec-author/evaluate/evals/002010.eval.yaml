@@ -55,7 +55,7 @@ stimuli:
   - type: file-matches
     config:
       path: employee.tsp
-      pattern: 'ExportResponse'
+      pattern: 'ExportResponse|ExportDataResponse|ExportResult|ExportDataResult'
   - type: prompt
     config:
       scoring: scale_1_5

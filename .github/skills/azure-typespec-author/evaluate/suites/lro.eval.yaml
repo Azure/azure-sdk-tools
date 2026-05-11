@@ -15,7 +15,7 @@ config:
 stimuli:
 - name: 003001-arm-action-lro
   prompt: |
-    Add a move async operation to move employee, operation's request is MoveRequest, response is MoveResponse
+    Add a post async operation to move employee, operation's request is MoveRequest, response is MoveResponse.
   constraints:
     max_turns: 10
     max_tokens: 100000

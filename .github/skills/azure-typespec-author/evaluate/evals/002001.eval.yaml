@@ -16,7 +16,7 @@ config:
 # Test cases
 stimuli:
 - prompt: |
-    change resource Employee to be an extension resource
+    change resource Employee to be an extension resource. Ensure the definition meets TypeSpec Azure guidelines.
   name: 002001-ARM-change-resource-type
   constraints:
     max_turns: 6

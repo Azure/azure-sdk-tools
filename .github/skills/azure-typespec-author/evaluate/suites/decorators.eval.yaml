@@ -63,7 +63,7 @@ stimuli:
 
 - name: 004002-decorate-length-constrains-on-array-item
   prompt: |
-    I have a property `assets: string[]` in EmployeeProperties. Add @minLength(3) @maxLength(10) constraints for any item of the assets array.
+    I have a property `assets: string[]` in EmployeeProperties. Add @minLength(3) @maxLength(10) constraints for any item of the assets array. Ensure the definition meets TypeSpec Azure guidelines.
   constraints:
     max_turns: 10
     max_tokens: 100000

@@ -16,7 +16,7 @@ config:
 # Test cases
 stimuli:
 - prompt: |
-    add top and skip query parameters to the ListBySubscription operation in interface Employees
+    add top and skip query parameters to the ListBySubscription operation in interface Employees. Ensure the definition meets TypeSpec Azure guidelines.
   name: 002008-ARM-add-parameters
   constraints:
     max_turns: 6

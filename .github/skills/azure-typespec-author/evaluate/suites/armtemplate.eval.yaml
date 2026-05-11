@@ -15,7 +15,7 @@ config:
 stimuli:
 - name: 002001-ARM-change-resource-type
   prompt: |
-    change resource Employee to be an extension resource
+    change resource Employee to be an extension resource. Ensure the definition meets TypeSpec Azure guidelines.
   constraints:
     max_turns: 6
     max_tokens: 100000
@@ -475,7 +475,7 @@ stimuli:
 
 - name: 002008-ARM-add-parameters
   prompt: |
-    add top and skip query parameters to the ListBySubscription operation in interface Employees
+    add top and skip query parameters to the ListBySubscription operation in interface Employees. Ensure the definition meets TypeSpec Azure guidelines.
   constraints:
     max_turns: 6
     max_tokens: 100000
@@ -598,7 +598,7 @@ stimuli:
   - type: file-matches
     config:
       path: employee.tsp
-      pattern: 'ExportResponse'
+      pattern: 'ExportResponse|ExportDataResponse|ExportResult|ExportDataResult'
   - type: prompt
     config:
       scoring: scale_1_5

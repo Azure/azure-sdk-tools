@@ -28,6 +28,13 @@
                     </div>
                 </ng-template>
             </ng-container>
+            <ng-container *ngIf="!canApproveForReviewLanguage && activeAPIRevision && activeAPIRevision!.approvers.length > 0">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-approved-pill" type="button" disabled aria-label="API revision approved">
+                        <i class="bi bi-check-circle-fill me-2"></i>Approved
+                    </button>
+                </div>
+            </ng-container>
             <span *ngIf="activeAPIRevision && activeAPIRevision!.approvers.length > 0; else noAPIRevisionApprovers" class="small text-muted mt-1">
                 Approved by: <a *ngFor="let approver of activeAPIRevision!.approvers" href="{{webAppUrl}}Assemblies/Profile/{{approver}}">{{approver}},&nbsp;</a>
             </span>
@@ -37,6 +44,13 @@
         </div>
         <div class="text-center py-2" *ngIf="review?.language !== 'TypeSpec' && review?.language !== 'Swagger'">
             <ng-container *ngIf="reviewIsApproved; else reviewIsNotApproved">
+                <ng-container *ngIf="!canApproveForReviewLanguage">
+                    <div class="d-grid gap-2 mb-1">
+                        <button class="btn btn-approved-pill" type="button" disabled aria-label="First release approved">
+                            <i class="bi bi-check-circle-fill me-2"></i>First Release Approved
+                        </button>
+                    </div>
+                </ng-container>
                 <span class="small text-muted mt-1" id="first-release-approval-message">Approved for first release by: <a href="{{webAppUrl}}Assemblies/Profile/{{reviewApprover}}">{{reviewApprover}}</a></span>
             </ng-container>
             <ng-template #reviewIsNotApproved>

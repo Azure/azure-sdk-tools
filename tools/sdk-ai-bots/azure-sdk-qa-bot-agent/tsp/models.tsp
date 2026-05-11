@@ -134,6 +134,9 @@ model ChatResponse {
   @doc("The full context used to generate the answer")
   full_context?: string;
 
+  @doc("Whether the agent produced a non-empty answer")
+  has_result: boolean;
+
   @doc("The tenant ID the question is routed to")
   route_tenant?: string;
 }

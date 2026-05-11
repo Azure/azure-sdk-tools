@@ -291,7 +291,7 @@ The result is JSON-formatted.
 
 ```bash
 # Example usage
-azsdk package detect --package-path <sdk-package-path> --language go --tsp-config-path C:/dev/azure-rest-api-specs/specification/storage/Storage.Management/tspconfig.yaml --generate-sdk false
+azsdk package detect-breaking-change --package-path <sdk-package-path> --language go --tsp-config-path C:/dev/azure-rest-api-specs/specification/storage/Storage.Management/tspconfig.yaml --generate-sdk false
 ```
 
 ### Scenarios for Using the Tool
@@ -396,7 +396,7 @@ detect the breaking changes for Go SDK of Webpubsub service
 **Command:**
 
 ```bash
-azsdk package detect --package-path <sdk-package-path> --language <language> --tsp-config-path <path-to-tsp-config-file> --generate-sdk <Ture/False>
+azsdk package detect-breaking-change --package-path <sdk-package-path> --language <language> --tsp-config-path <path-to-tsp-config-file> --generate-sdk <Ture/False>
 
 ```
 
@@ -422,7 +422,7 @@ azsdk package detect --package-path <sdk-package-path> --language <language> --t
 
 ✗ Error: Missing required option --package-path
   
-Usage: azsdk package detect --package-path <sdk-package-path> --language <language> --tsp-config-path <path-to-tsp-config-file>
+Usage: azsdk package detect-breaking-change --package-path <sdk-package-path> --language <language> --tsp-config-path <path-to-tsp-config-file>
 ```
 
 ---

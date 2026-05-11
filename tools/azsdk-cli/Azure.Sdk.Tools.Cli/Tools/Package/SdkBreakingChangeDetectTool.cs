@@ -106,6 +106,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                         ResponseError = $"The directory for the local sdk does not provide or exist at the specified path: {packagePath}. Prompt user to clone the matched SDK repository users want to generate SDK against."
                     };
                 }
+
+                if (generateSDK && !string.IsNullOrEmpty(tspConfigPath))
+                {
+                    logger.LogInformation("SDK code generation is enabled. Executing SDK generation before breaking change detection...");
+                    // TODO: Implement SDK generation logic here
+                }
                 LanguageService languageService;
                 if (!string.IsNullOrEmpty(language))
                 {
@@ -171,6 +177,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                                 // Read and deserialize the JSON file with proper disposal
                                 using var fileStream = File.OpenRead(sdkChangeFilePath);
                                 var sdkchanges = await JsonSerializer.DeserializeAsync<SdkChange>(fileStream, cancellationToken: ct);
+
+                                // clean up the SDK change file after reading
+                                fileStream.Close();
+                                File.Delete(sdkChangeFilePath);
 
                                 if (sdkchanges != null)
                                 {

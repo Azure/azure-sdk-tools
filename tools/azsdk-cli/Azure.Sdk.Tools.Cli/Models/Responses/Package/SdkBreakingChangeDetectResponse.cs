@@ -15,13 +15,20 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
             sb.AppendLine();
             sb.AppendLine($"Language: {Language}");
             sb.AppendLine();
-            sb.AppendLine("**Breaking Changes:**");
-            foreach (var change in BreakingChanges)
+            if (BreakingChanges == null || BreakingChanges.Length == 0)
             {
-                sb.AppendLine($"- Change: {change.BreakingChange}");
-                sb.AppendLine($"  Category: {change.Category}");
-                sb.AppendLine();
+                sb.AppendLine("No breaking changes detected.");
+            } else
+            {
+                sb.AppendLine("**Breaking Changes:**");
+                foreach (var change in BreakingChanges)
+                {
+                    sb.AppendLine($"- Change: {change.BreakingChange}");
+                    sb.AppendLine($"  Category: {change.Category}");
+                    sb.AppendLine();
+                }
             }
+
             return sb.ToString();
         }
     }

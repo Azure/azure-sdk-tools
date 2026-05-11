@@ -29,8 +29,6 @@ from agent_framework import SkillsProvider
 from agent_framework import ToolResultCompactionStrategy
 from agent_framework_foundry_hosting import ResponsesHostServer
 from opentelemetry import trace as otel_trace
-from opentelemetry._logs import get_logger_provider
-from opentelemetry.sdk._logs import LoggingHandler
 
 import config.app_config as app_config
 from config.app_config import get as cfg
@@ -69,18 +67,10 @@ async def main() -> None:
     """Start the hosted Chat Agent as an HTTP server."""
     await app_config.init()
 
-    # Init LoggerProvider
-    try:
-        otel_log_handler = LoggingHandler(
-            level=logging.INFO,
-            logger_provider=get_logger_provider(),
-        )
-        logging.getLogger().addHandler(otel_log_handler)
-        logger.info(
-            "OTel logging bridge attached - Python logs will export to Application Insights"
-        )
-    except Exception as exc:
-        logger.warning("Failed to attach OTel logging bridge: %s", exc)
+    # NOTE: Do NOT attach a manual OTel LoggingHandler here.
+    # ResponsesHostServer already calls configure_azure_monitor() which
+    # auto-instruments the root logger.  Adding a second handler causes
+    # every log to appear twice in Application Insights.
 
     agent_client = get_agent_client()
     # Limit tool-call loop iterations to prevent infinite loops.

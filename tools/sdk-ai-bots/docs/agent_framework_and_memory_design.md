@@ -119,6 +119,11 @@ AI Foundry Memory Store provides two built-in types of long-term memory (see [Fo
 
 In addition to the two Foundry-managed types, we maintain a third type — **expert episodes** — in a self-hosted Cosmos DB store for structured knowledge that requires custom schema and vector search.
 
+The two memory categories differ in their **data source**:
+
+- **User memory** (profile + chat summary) is derived from **the user's messages and the agent's responses**. Every time a user interacts with the bot, the exchange is used to build and update that user's memory. It captures what this specific user cares about and what they've discussed with the bot.
+- **Expert episodes** are derived from **the full conversation thread including all participants**. They are only extracted when a human expert (someone other than the original poster or the bot) replies in the thread. The value comes from expert reasoning, so the entire multi-party thread is sent for episode extraction.
+
 | Memory Type | Store | Scope | Description |
 | --- | --- | --- | --- |
 | **User profile** (static) | AI Foundry Memory Store | Per user (`user_{user_id}`) | Personal preferences, SDK/language, project context. Fetched once per session via `search_memories` with no query items. |

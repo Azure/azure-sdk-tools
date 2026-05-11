@@ -410,6 +410,7 @@ class ChatService:
         resp = ChatResponse(
             id=response.id,
             answer=answer,
+            has_result=bool(answer.strip()),
             references=references if references else None,
             full_context=full_context,
             agent_conversation_id=agent_conversation_id,

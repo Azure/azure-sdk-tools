@@ -84,6 +84,7 @@ class ChatResponse(BaseModel):
 
     id: str
     answer: str
+    has_result: bool
     references: list[Reference] | None = None
     full_context: str | None = None
     route_tenant: TenantID | None = None

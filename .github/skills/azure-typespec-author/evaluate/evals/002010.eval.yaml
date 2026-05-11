@@ -27,7 +27,7 @@ stimuli:
       dest: employee.tsp
     - src: ../fixtures/002010-arm-action-sync-operation/main.tsp
       dest: main.tsp
-     - src: ../fixtures/Microsoft.Widget/Widget/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
     - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
       dest: package-lock.json

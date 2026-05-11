@@ -28,9 +28,9 @@ stimuli:
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
       dest: Microsoft.Widget/Widget/main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
+      dest: Microsoft.Widget/Widget/package.json
     - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
+      dest: Microsoft.Widget/Widget/package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: Microsoft.Widget/Widget/readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp

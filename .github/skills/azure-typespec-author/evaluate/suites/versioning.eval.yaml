@@ -625,9 +625,9 @@ stimuli:
     - src: ../fixtures/001-share-version-new-feature/main.tsp
       dest: Microsoft.Widget/Widget/main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
+      dest: Microsoft.Widget/Widget/package.json
     - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
+      dest: Microsoft.Widget/Widget/package-lock.json
     - src: ../fixtures/001-share-version-new-feature/readme.md
       dest: Microsoft.Widget/Widget/readme.md
     - src: ../fixtures/001-share-version-new-feature/shared.tsp
@@ -676,9 +676,9 @@ stimuli:
     - src: ../fixtures/001-share-version-new-feature/main.tsp
       dest: Microsoft.Widget/Widget/main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
+      dest: Microsoft.Widget/Widget/package.json
     - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
+      dest: Microsoft.Widget/Widget/package-lock.json
     - src: ../fixtures/001-share-version-new-feature/readme.md
       dest: Microsoft.Widget/Widget/readme.md
     - src: ../fixtures/001-share-version-new-feature/shared.tsp
@@ -721,9 +721,9 @@ stimuli:
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
       dest: Microsoft.Widget/Widget/main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
+      dest: Microsoft.Widget/Widget/package.json
     - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
+      dest: Microsoft.Widget/Widget/package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: Microsoft.Widget/Widget/readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -771,9 +771,9 @@ stimuli:
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
       dest: Microsoft.Widget/Widget/main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
+      dest: Microsoft.Widget/Widget/package.json
     - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
+      dest: Microsoft.Widget/Widget/package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: Microsoft.Widget/Widget/readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -833,9 +833,9 @@ stimuli:
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
       dest: Microsoft.Widget/Widget/main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
+      dest: Microsoft.Widget/Widget/package.json
     - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
+      dest: Microsoft.Widget/Widget/package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: Microsoft.Widget/Widget/readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -875,3 +875,14 @@ stimuli:
       threshold: 1.0
       prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
       model: claude-opus-4.6
+
+scoring:
+  weights:
+    tool-calls: 1
+    skill-invocation: 1
+    prompt: 1
+    file-matches: 1
+    file-not-matches: 1
+    file-exists: 1
+    file-not-exists: 1
+  threshold: 1.0

@@ -30,7 +30,7 @@ extends:
         jobs:
           - job: RunEvals
             displayName: Run Vally Evaluations
-            timeoutInMinutes: 120
+            timeoutInMinutes: 160
             steps:
               - checkout: self
                 fetchDepth: 0
@@ -201,7 +201,7 @@ extends:
                   cd .github/skills/azure-typespec-author/evaluate
                   vally eval --eval-spec suites/versioning.eval.yaml --output-dir results --verbose
                 displayName: Run suite - versioning
-                timeoutInMinutes: 30
+                timeoutInMinutes: 50
                 continueOnError: true
                 condition: always()
                 env:
@@ -211,7 +211,7 @@ extends:
                   cd .github/skills/azure-typespec-author/evaluate
                   vally eval --eval-spec suites/armtemplate.eval.yaml --output-dir results --verbose
                 displayName: Run suite - armtemplate
-                timeoutInMinutes: 30
+                timeoutInMinutes: 40
                 continueOnError: true
                 condition: always()
                 env:
@@ -221,7 +221,7 @@ extends:
                   cd .github/skills/azure-typespec-author/evaluate
                   vally eval --eval-spec suites/lro.eval.yaml --output-dir results --verbose
                 displayName: Run suite - longrunningoperation
-                timeoutInMinutes: 20
+                timeoutInMinutes: 25
                 continueOnError: true
                 condition: always()
                 env:
@@ -231,7 +231,7 @@ extends:
                   cd .github/skills/azure-typespec-author/evaluate
                   vally eval --eval-spec suites/decorators.eval.yaml --output-dir results --verbose
                 displayName: Run suite - decorators
-                timeoutInMinutes: 20
+                timeoutInMinutes: 15
                 continueOnError: true
                 condition: always()
                 env:
@@ -241,7 +241,7 @@ extends:
                   cd .github/skills/azure-typespec-author/evaluate
                   vally eval --eval-spec suites/warning.eval.yaml --output-dir results --verbose
                 displayName: Run suite - warning
-                timeoutInMinutes: 10
+                timeoutInMinutes: 15
                 continueOnError: true
                 condition: always()
                 env:

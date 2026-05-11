@@ -10,7 +10,7 @@ config:
   timeout: "660s"
   model: claude-opus-4.6
   executor: copilot-sdk
-  workers: 2
+  workers: 3
 
 stimuli:
 - name: 004001-decorate-mgmt-resource-name-parameter
@@ -208,3 +208,12 @@ stimuli:
     config:
       path: ExpressRouteProviderPort.tsp
       pattern: '@operationId\("ExpressRouteProviderPortsLocation_List"\)'
+
+scoring:
+  weights:
+    tool-calls: 1
+    skill-invocation: 1
+    prompt: 1
+    file-matches: 1
+    file-not-matches: 1
+  threshold: 1.0

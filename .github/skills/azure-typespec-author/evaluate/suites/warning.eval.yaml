@@ -51,3 +51,10 @@ stimuli:
     config:
       path: models.tsp
       pattern: 'FIXME: Update justification, follow aka\.ms/tsp/conversion-fix for details'
+
+scoring:
+  weights:
+    tool-calls: 1
+    skill-invocation: 1
+    file-matches: 1
+  threshold: 1.0

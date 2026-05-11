@@ -120,3 +120,11 @@ stimuli:
       threshold: 1.0
       prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
       model: claude-opus-4.6
+
+scoring:
+  weights:
+    tool-calls: 1
+    skill-invocation: 1
+    prompt: 1
+    file-matches: 1
+  threshold: 1.0

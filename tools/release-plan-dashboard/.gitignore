@@ -1,0 +1,6 @@
+node_modules/
+.env
+deploy.zip
+
+# Override repo-root .gitignore which excludes lib/ (Python convention)
+!lib/

@@ -28,6 +28,8 @@ internal static class TelemetryConstants
         public const string DebugTag = "IsDebugEnvironment";
         public const string SkillName = "SkillName";
         public const string SessionId = "SessionId";
+        public const string PromptCategory = "PromptCategory";
+        public const string PromptDetails = "PromptDetails";
 
         // Custom Properties that get promoted to tags
         public const string Language = "language";

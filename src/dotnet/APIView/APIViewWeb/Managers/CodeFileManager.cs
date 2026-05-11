@@ -7,7 +7,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using ApiView;
+using APIView;
 using APIView.Model.V2;
 using APIViewWeb.Helpers;
 using APIViewWeb.Managers.Interfaces;
@@ -194,6 +194,7 @@ namespace APIViewWeb.Managers
                 memoryStream,
                 runAnalysis);
             }
+            codeFile?.SanitizeTokenValues();
             return codeFile;
         }
 
@@ -217,6 +218,7 @@ namespace APIViewWeb.Managers
                 memoryStream.Position = 0;
                 await _originalsRepository.UploadOriginalAsync(reviewCodeFileModel.FileId, memoryStream);
             }
+            
             await _codeFileRepository.UpsertCodeFileAsync(apiRevisionId, reviewCodeFileModel.FileId, codeFile);
             reviewCodeFileModel.ContentHash = await ComputeAPIContentHashAsync(codeFile);
             return reviewCodeFileModel;

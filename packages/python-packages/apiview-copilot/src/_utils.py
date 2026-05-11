@@ -20,16 +20,22 @@ def get_language_pretty_name(language: str) -> str:
     """
     language_pretty_names = {
         "android": "Android",
+        "c++": "C++",
         "cpp": "C++",
+        "c#": "C#",
+        ".net": "C#",
         "dotnet": "C#",
         "golang": "Go",
+        "go": "Go",
         "ios": "Swift",
+        "swift": "Swift",
         "java": "Java",
+        "javascript": "JavaScript",
         "python": "Python",
         "rust": "Rust",
         "typescript": "JavaScript",
     }
-    pretty_name = language_pretty_names.get(language, language.capitalize())
+    pretty_name = language_pretty_names.get(language.lower(), language.capitalize())
     return pretty_name
 
 
@@ -95,10 +101,13 @@ def to_epoch_seconds(date_str: str, *, end_of_day: bool = False) -> int:
 
 
 def guideline_id_to_db(gid: str) -> str:
-    """Convert a guideline ID from web format to database-safe format.
+    """Convert a guideline ID or guideline URL to database-safe format.
 
     Example: ``python_design.html#naming`` -> ``python_design=html=naming``
     """
+    prefix = "https://azure.github.io/azure-sdk/"
+    if gid.startswith(prefix):
+        gid = gid[len(prefix):]
     return gid.replace(".html#", "=html=")
 
 

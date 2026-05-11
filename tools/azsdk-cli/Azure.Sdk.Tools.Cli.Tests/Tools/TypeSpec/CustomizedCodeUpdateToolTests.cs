@@ -1,3 +1,4 @@
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -34,7 +35,8 @@ public class CustomizedCodeUpdateToolAutoTests
         Action<Mock<IGitHelper>>? configureGit = null,
         Action<Mock<IFeedbackClassifierService>>? configureClassifier = null,
         Action<Mock<ITypeSpecCustomizationService>>? configureTspCustomization = null,
-        ITspClientHelper? tspHelper = null)
+        ITspClientHelper? tspHelper = null,
+        INpxHelper? npxHelper = null)
     {
         var gitHelper = new Mock<IGitHelper>();
         gitHelper.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-java");
@@ -128,7 +130,8 @@ public class CustomizedCodeUpdateToolAutoTests
             feedbackService.Object,
             classifierService.Object,
             typeSpecCustomization.Object,
-            typeSpecHelper.Object);
+            typeSpecHelper.Object,
+            npxHelper ?? new Mock<INpxHelper>().Object);
 
         return (tool, new ToolMocks(gitHelper, feedbackService, classifierService, typeSpecCustomization, typeSpecHelper));
     }
@@ -272,6 +275,65 @@ public class CustomizedCodeUpdateToolAutoTests
 
         Assert.That(result.Success, Is.False);
         Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput));
+    }
+
+    [Test]
+    public async Task Classification_CopilotCliNotFound_ReturnsCopilotError()
+    {
+        var innerEx = new InvalidOperationException(
+            "Copilot CLI not found at 'runtimes/win-x64/native/copilot.exe'. Ensure the SDK NuGet package was restored correctly.");
+        var copilotEx = new CopilotCliUnavailableException(
+            "The GitHub Copilot CLI could not be found or failed to start.", innerEx);
+
+        var (tool, _) = CreateTool(configureClassifier: c =>
+            c.Setup(x => x.ClassifyItemsAsync(
+                    It.IsAny<List<FeedbackItem>>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<int?>(),
+                    It.IsAny<CancellationToken>()))
+                .ThrowsAsync(copilotEx));
+
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError));
+        Assert.That(result.Message, Does.Contain("Copilot CLI"));
+    }
+
+    [Test]
+    public async Task Classification_UnexpectedException_SurfacesActualError()
+    {
+        var unexpectedEx = new HttpRequestException("Network timeout connecting to AI service");
+
+        var (tool, _) = CreateTool(configureClassifier: c =>
+            c.Setup(x => x.ClassifyItemsAsync(
+                    It.IsAny<List<FeedbackItem>>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<int?>(),
+                    It.IsAny<CancellationToken>()))
+                .ThrowsAsync(unexpectedEx));
+
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError));
+        Assert.That(result.Message, Does.Contain("Network timeout"));
     }
 
     [Test]
@@ -1126,6 +1188,135 @@ public class CustomizedCodeUpdateToolAutoTests
 
         Assert.That(capturedLocalSpecRepo, Is.EqualTo(tspDir),
             "Should pass the tspProjectPath as localSpecRepoPath");
+    }
+
+    // ========================================================================
+    // JavaScript-specific: customization apply after regeneration
+    // ========================================================================
+
+    [Test]
+    public async Task JavaScript_CustomizationApply_CalledAfterRegen()
+    {
+        var npxHelperMock = new Mock<INpxHelper>();
+        npxHelperMock.Setup(p => p.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult { ExitCode = 0 });
+
+        var svc = new ConfigurableLanguageService(
+            language: SdkLanguage.JavaScript,
+            hasCustomizations: true);
+
+        var (tool, _) = CreateTool(
+            languageService: svc,
+            npxHelper: npxHelperMock.Object,
+            configureGit: g => g.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-js"));
+
+        var pkg = CreateTempDir();
+        Directory.CreateDirectory(Path.Combine(pkg, "src"));
+        var tspDir = CreateTempDir();
+
+        await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
+
+        npxHelperMock.Verify(p => p.Run(
+            It.Is<NpxOptions>(o =>
+                o.Args.Contains("dev-tool") &&
+                o.Args.Contains("customization") &&
+                o.Args.Contains("apply")),
+            It.IsAny<CancellationToken>()), Times.AtLeastOnce,
+            "Should run 'npx dev-tool customization apply' for JavaScript packages with customizations");
+    }
+
+    [Test]
+    public async Task JavaScript_NoCustomizations_SkipsCustomizationApply()
+    {
+        var npxHelperMock = new Mock<INpxHelper>();
+        npxHelperMock.Setup(p => p.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult { ExitCode = 0 });
+
+        var svc = new ConfigurableLanguageService(
+            language: SdkLanguage.JavaScript,
+            hasCustomizations: false);
+
+        var (tool, _) = CreateTool(
+            languageService: svc,
+            npxHelper: npxHelperMock.Object,
+            configureGit: g => g.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-js"));
+
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
+
+        npxHelperMock.Verify(p => p.Run(
+            It.Is<NpxOptions>(o =>
+                o.Args.Contains("dev-tool") &&
+                o.Args.Contains("customization") &&
+                o.Args.Contains("apply")),
+            It.IsAny<CancellationToken>()), Times.Never,
+            "Should NOT run 'npx dev-tool customization apply' when no customizations exist");
+    }
+
+    [Test]
+    public async Task JavaScript_BuildFailsAfterCustomizationApply_FallsThroughToPatching()
+    {
+        var buildCalls = 0;
+        var npxHelperMock = new Mock<INpxHelper>();
+        npxHelperMock.Setup(p => p.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult { ExitCode = 0 });
+
+        var svc = new ConfigurableLanguageService(
+            language: SdkLanguage.JavaScript,
+            hasCustomizations: true,
+            isCustomizedCodeUpdateSupported: true,
+            buildFunc: () =>
+            {
+                buildCalls++;
+                // First build fails (after regen + customization apply), second succeeds (after patches)
+                return buildCalls <= 1
+                    ? (false, "error TS2345: Argument of type 'string' is not assignable", null)
+                    : (true, null, null);
+            },
+            patchesFunc: () => [new AppliedPatch("src/client.ts", "Fixed type mismatch", 1)]);
+
+        var (tool, _) = CreateTool(
+            languageService: svc,
+            npxHelper: npxHelperMock.Object,
+            configureGit: g => g.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-js"));
+
+        var pkg = CreateTempDir();
+        Directory.CreateDirectory(Path.Combine(pkg, "src"));
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.AppliedPatches, Has.Count.EqualTo(1));
+        Assert.That(result.Message, Does.Contain("Build passed after code customization patches."));
+    }
+
+    [Test]
+    public async Task NonJavaScript_SkipsCustomizationApply()
+    {
+        var npxHelperMock = new Mock<INpxHelper>();
+        npxHelperMock.Setup(p => p.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult { ExitCode = 0 });
+
+        var svc = new ConfigurableLanguageService(
+            language: SdkLanguage.Java,
+            hasCustomizations: true);
+
+        var (tool, _) = CreateTool(languageService: svc, npxHelper: npxHelperMock.Object);
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
+
+        npxHelperMock.Verify(p => p.Run(
+            It.Is<NpxOptions>(o =>
+                o.Args.Contains("dev-tool") &&
+                o.Args.Contains("customization") &&
+                o.Args.Contains("apply")),
+            It.IsAny<CancellationToken>()), Times.Never,
+            "Should NOT run 'npx dev-tool customization apply' for non-JavaScript languages");
     }
 
     // ========================================================================

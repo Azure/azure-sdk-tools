@@ -4,22 +4,22 @@
  * license information.
  */
 
-import winston from "winston";
+import winston from 'winston';
 
 const pipeline = winston.format((info, opts) => {
-    info.level = `[${info.level.toUpperCase()}]`;
-    return info;
+  info.level = `[${info.level.toUpperCase()}]`;
+  return info;
 });
 
 export const logger = winston.createLogger({
-    level: "info",
-    format: winston.format.combine(winston.format.json(), pipeline()),
+  level: 'info',
+  format: winston.format.combine(winston.format.json(), pipeline()),
 });
 
-if (process.env.NODE_ENV !== "production") {
-    logger.add(
-        new winston.transports.Console({
-            format: winston.format.simple(),
-        })
-    );
+if (process.env.NODE_ENV !== 'production') {
+  logger.add(
+    new winston.transports.Console({
+      format: winston.format.simple(),
+    })
+  );
 }

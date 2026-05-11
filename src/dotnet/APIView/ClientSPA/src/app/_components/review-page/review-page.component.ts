@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { MenuItem, TreeNode } from 'primeng/api';
@@ -35,7 +35,8 @@ import { PermissionsService } from 'src/app/_services/permissions/permissions.se
     selector: 'app-review-page',
     templateUrl: './review-page.component.html',
     styleUrls: ['./review-page.component.scss'],
-    standalone: false
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ReviewPageComponent implements OnInit, OnDestroy {
   @ViewChild(CodePanelComponent) codePanelComponent!: CodePanelComponent;
@@ -92,7 +93,10 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
 
   codePanelData: CodePanelData | null = null;
   codePanelRowData: CodePanelRowData[] = [];
+  loadingStatus: 'loading' | 'completed' | 'failed' = 'loading';
   crossLanguageRowData: CrossLanguageContentDto[] = [];
+
+  private codePanelIsLoading: boolean = true;
   apiRevisionPageSize = 200;
   lastNodeIdUnhashedDiscarded = '';
 
@@ -104,11 +108,22 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
 
   sideMenu: MenuItem[] | undefined;
 
+  get hasReleasedApprovedGARevision(): boolean {
+    return this.apiRevisions.some(rev =>
+      rev.id !== this.activeAPIRevision?.id &&
+      rev.isApproved &&
+      rev.isReleased &&
+      !!rev.packageVersion &&
+      !rev.packageVersion.includes('-')
+    );
+  }
+
   constructor(private route: ActivatedRoute, private router: Router, private apiRevisionsService: APIRevisionsService,
-    private reviewsService: ReviewsService, private workerService: WorkerService, private changeDetectorRef: ChangeDetectorRef,
+    private reviewsService: ReviewsService, private workerService: WorkerService,
     private userProfileService: UserProfileService, private commentsService: CommentsService, private signalRService: SignalRService,
     private samplesRevisionService: SamplesRevisionService, private titleService: Title, private notificationsService: NotificationsService,
-    private reviewContextService: ReviewContextService, private permissionsService: PermissionsService) { }
+    private reviewContextService: ReviewContextService, private permissionsService: PermissionsService,
+    private cdr: ChangeDetectorRef) { }
 
   ngOnInit() {
     this.reviewId = this.route.snapshot.paramMap.get(REVIEW_ID_ROUTE_PARAM);
@@ -129,6 +144,7 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
         if (this.userProfile?.preferences.hideLineNumbers) {
           this.showLineNumbers = false;
         }
+        this.cdr.markForCheck();
       });
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
       const navigationState = this.router.currentNavigation()?.extras.state;
@@ -153,14 +169,13 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
         icon: 'bi bi-arrow-left-right',
         tooltip: 'Cross Language',
         command: () => {
-          if (this.getLoadingStatus() === 'completed') {
+          if (this.loadingStatus === 'completed') {
             this.crosslanguageRevisionSidePanel = !this.crosslanguageRevisionSidePanel;
           }
         }
       });
     }
     this.sideMenu = menu;
-    this.changeDetectorRef.detectChanges();
   }
 
   updateStateBasedOnQueryParams(params: Params) {
@@ -188,9 +203,11 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
     this.scrollToNodeId = params[SCROLL_TO_NODE_QUERY_PARAM];
     this.reviewPageNavigation = [];
     this.codePanelRowData = [];
+    this.codePanelIsLoading = true;
     this.codePanelData = null;
     this.comments = [];
     this.loadFailed = false;
+    this.updateLoadingStatus();
 
     // Clear the conversations badge immediately — the count will be inaccurate
     // until the code panel finishes loading and diagnostics are synced.
@@ -209,7 +226,7 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
       ? 'Processing diagnostics...'
       : undefined;
 
-    this.changeDetectorRef.detectChanges();
+    this.cdr.markForCheck();
     this.workerService.startWorker().then(() => {
       this.registerWorkerEventHandler();
       this.loadReviewContent(this.reviewId!, this.activeApiRevisionId, this.diffApiRevisionId);
@@ -243,6 +260,8 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
         this.workerService.terminateWorker();
         this.loadComments();
       }
+
+      this.cdr.markForCheck();
     });
   }
 
@@ -258,12 +277,16 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
             this.loadFailedMessage = "API-Revision Content Not Found. The";
             this.loadFailedMessage += (diffApiRevisionId) ? " active and/or diff API-Revision(s)" : " active API-Revision";
             this.loadFailedMessage += " may have been deleted.";
+            this.updateLoadingStatus();
+            this.cdr.markForCheck();
             return;
           } else if (response.status == 202) {
             const location = response.headers.get('location');
             this.loadFailed = true;
             this.loadFailedMessage = `API-Revision content is being generated at <a href="${location}">${location}</a></br>`
             this.loadFailedMessage += "Please refresh this page after few minutes to see generated API review.";
+            this.updateLoadingStatus();
+            this.cdr.markForCheck();
             return;
           }
           else {
@@ -281,6 +304,8 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
         },
         error: (error: any) => {
           this.loadFailed = true;
+          this.updateLoadingStatus();
+          this.cdr.markForCheck();
         }
       });
   }
@@ -290,6 +315,7 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$)).subscribe({
         next: (review: Review) => {
           this.review = review;
+          this.cdr.markForCheck();
           this.updateLoadingStateBasedOnReviewDeletionStatus();
           this.updatePageTitle();
           if (review.language) {
@@ -299,6 +325,8 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
         error: (error) => {
           this.loadFailed = true;
           this.loadFailedMessage = "Failed to load review. Please refresh the page or try again later.";
+          this.updateLoadingStatus();
+          this.cdr.markForCheck();
         }
       });
   }
@@ -330,6 +358,7 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
         takeUntil(this.destroyLoadAPIRevision$),
         concatMap((response: any) => {
           this.apiRevisions = response.result;
+          this.cdr.markForCheck();
           if (this.apiRevisions.length > 0) {
             this.language = this.apiRevisions[0].language;
             this.languageSafeName = getLanguageCssSafeName(this.language);
@@ -383,6 +412,7 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$)).subscribe({
         next: (comments: CommentItemModel[]) => {
           this.comments = comments;
+          this.cdr.markForCheck();
           CommentRelationHelper.calculateRelatedComments(this.comments);
           this.processEmbeddedComments();
         }
@@ -422,7 +452,6 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
         });
       }
     });
-    this.changeDetectorRef.detectChanges();
   }
 
   loadLatestSampleRevision(reviewId: string) {
@@ -439,6 +468,7 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$)).subscribe({
         next: (result) => {
           this.samplesRevisionCount = result.pagination?.totalCount ?? 0;
+          this.cdr.markForCheck();
         }
       });
   }
@@ -504,13 +534,17 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       this.codePanelComponent.scrollToNode(undefined, elementId);
     }, 100);
+    this.cdr.markForCheck();
   }
 
   handlePageOptionsEmitter(showPageOptions: boolean) {
     this.userProfile!.preferences.hideReviewPageOptions = !showPageOptions;
+    this.showPageOptions = showPageOptions;
+    this.cdr.markForCheck();
     this.userProfileService.updateUserPrefernece(this.userProfile!.preferences).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.updateRightPanelSize();
+        this.cdr.markForCheck();
       }
     });
   }
@@ -532,6 +566,7 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
         else {
           this.codePanelComponent?.removeRowTypeFromScroller(CodePanelRowDatatype.CommentThread);
         }
+        this.cdr.markForCheck();
       }
     });
   }
@@ -546,6 +581,7 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
         } else {
           this.codePanelComponent?.removeDiagnosticCommentThreads();
         }
+        this.cdr.markForCheck();
       }
     });
   }
@@ -561,6 +597,7 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
         else {
           this.codePanelComponent?.removeRowTypeFromScroller(CodePanelRowDatatype.Documentation);
         }
+        this.cdr.markForCheck();
       }
     });
   }
@@ -570,6 +607,7 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
     this.userProfileService.updateUserPrefernece(this.userProfile!.preferences).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.updateLeftPanelSize();
+        this.cdr.markForCheck();
       }
     });
   }
@@ -603,25 +641,18 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
   }
 
   handleSplitterResizeEnd(event: any) {
-    if (event.sizes[0] > 5) {
-      this.userProfile!.preferences.hideLeftNavigation = false;
-    } else {
-      this.userProfile!.preferences.hideLeftNavigation = true;
-      this.updateLeftPanelSize();
-    }
+    this.panelSizes = [...event.sizes];
 
-    if (event.sizes[2] > 5) {
-      this.userProfile!.preferences.hideReviewPageOptions = false;
-    } else {
-      this.userProfile!.preferences.hideReviewPageOptions = true;
-      this.updateRightPanelSize();
-    }
+    const hideLeft = event.sizes[0] <= 5;
+    const hideRight = event.sizes[2] <= 5;
+    this.userProfile!.preferences.hideLeftNavigation = hideLeft;
+    this.userProfile!.preferences.hideReviewPageOptions = hideRight;
+    this.showLeftNavigation = !hideLeft;
+    this.showPageOptions = !hideRight;
+
     this.userProfileService.updateUserPrefernece(this.userProfile!.preferences).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
-        this.showLeftNavigation = !this.userProfile!.preferences.hideLeftNavigation;
-        this.showPageOptions = !this.userProfile!.preferences.hideReviewPageOptions;
-
-        // need this to trigger change detection
+        // Create a new reference so Angular propagates the updated preferences to child inputs.
         const userProfile: UserProfile = {
           userName: this.userProfile!.userName,
           email: this.userProfile!.email,
@@ -630,6 +661,7 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
           permissions: this.userProfile!.permissions
         };
         this.userProfile = userProfile;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -639,6 +671,7 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
     userPreferenceModel!.hideLineNumbers = !state;
     this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe(() => {
       this.showLineNumbers = !userPreferenceModel!.hideLineNumbers;
+      this.cdr.markForCheck();
     });
   }
 
@@ -658,6 +691,7 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
           this.activeAPIRevision = apiRevision;
           const activeAPIRevisionIndex = this.apiRevisions.findIndex(x => x.id === this.activeAPIRevision!.id);
           this.apiRevisions[activeAPIRevisionIndex] = this.activeAPIRevision!;
+          this.cdr.markForCheck();
         }
       });
     }
@@ -668,6 +702,7 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
       this.reviewsService.toggleReviewApproval(this.reviewId!, this.activeApiRevisionId!, true).pipe(take(1)).subscribe({
         next: (review: Review) => {
           this.review = review;
+          this.cdr.markForCheck();
         }
       });
     }
@@ -678,6 +713,7 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
       this.reviewsService.requestNamespaceReview(this.reviewId!, this.activeApiRevisionId!).pipe(take(1)).subscribe({
         next: (review: Review) => {
           this.review = review;
+          this.cdr.markForCheck();
           // Reset loading state in the options component on success
           if (this.reviewPageOptionsComponent) {
             this.reviewPageOptionsComponent.resetNamespaceReviewLoadingState();
@@ -749,9 +785,15 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
     this.hasActiveConversation = value;
   }
 
+  handleCodePanelIsLoadingChanged(isLoading: boolean) {
+    this.codePanelIsLoading = isLoading;
+    this.updateLoadingStatus();
+  }
+
   handleCodeLineSearchInfoEmitter(value: CodeLineSearchInfo) {
     setTimeout(() => {
       this.codeLineSearchInfo = (value) ? new CodeLineSearchInfo(value.currentMatch, value.totalMatchCount) : undefined;
+      this.cdr.markForCheck();
     }, 0);
   }
 
@@ -762,6 +804,7 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
       return;
     }
     this.numberOfActiveConversation = value;
+    this.cdr.markForCheck();
   }
 
   handleScrollToNodeEmitter(value: string) {
@@ -785,6 +828,7 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
       next: (updatedReview: Review) => {
         if (updatedReview.id === this.reviewId) {
           this.review = updatedReview;
+          this.cdr.markForCheck();
         }
       }
     });
@@ -802,6 +846,7 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
           if (updatedAPIRevision.id === this.activeApiRevisionId) {
             this.activeAPIRevision = updatedAPIRevision;
           }
+          this.cdr.markForCheck();
         }
       }
     });
@@ -822,15 +867,17 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
         });
         cldto.push(response)
         this.crossLanguageRowData = cldto;
+        this.cdr.markForCheck();
       });
   }
 
-  getLoadingStatus(): 'loading' | 'completed' | 'failed' {
-    if (this.codePanelComponent?.isLoading) {
-      return 'loading';
-    }
-    else {
-      return (this.loadFailed) ? 'failed' : 'completed';
+  private updateLoadingStatus() {
+    if (this.loadFailed) {
+      this.loadingStatus = 'failed';
+    } else if (this.codePanelIsLoading) {
+      this.loadingStatus = 'loading';
+    } else {
+      this.loadingStatus = 'completed';
     }
   }
 
@@ -857,6 +904,7 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
     if (this.review?.isDeleted) {
       this.loadFailed = true;
       this.loadFailedMessage = "Review has been deleted.";
+      this.updateLoadingStatus();
       return true;
     }
     return false;

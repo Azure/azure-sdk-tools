@@ -24,6 +24,7 @@ public class AccessConfig
 
             configData.ApplicationAccessConfig =
                 JsonSerializer.Deserialize<ApplicationAccessConfig>(contents) ?? new ApplicationAccessConfig();
+            configData.ApplicationAccessConfig.ResolveIdentityParameters();
             configData.ApplicationAccessConfig.Render();
 
             // Keep an unrendered version of config values so we can retain templating
@@ -60,7 +61,7 @@ public class AccessConfig
         foreach (var config in Configs)
         {
             sb.AppendLine("---");
-            sb.AppendLine($"AppDisplayName -> {config.ApplicationAccessConfig.AppDisplayName}");
+            sb.AppendLine($"IdentityName -> {config.ApplicationAccessConfig.IdentityName}");
             if (config.ApplicationAccessConfig.FederatedIdentityCredentials != null)
             {
                 sb.AppendLine("FederatedIdentityCredentials ->");

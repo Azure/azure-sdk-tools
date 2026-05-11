@@ -7,7 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace ApiView
+namespace APIViewLegacy
 {
     public class CodeFileRenderer
     {

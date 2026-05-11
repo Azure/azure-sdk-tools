@@ -18,6 +18,12 @@ namespace APIViewWeb.LeanModels
         public int UnresolvedMustFixCount { get; set; }
 
         /// <summary>
+        /// Number of unresolved MustFix comments that are diagnostics.
+        /// This is a temporary addition so diagnostics do not block approvals.
+        /// </summary>
+        public int UnresolvedMustFixDiagnostics { get; set; }
+
+        /// <summary>
         /// Number of unresolved ShouldFix comments.
         /// </summary>
         public int UnresolvedShouldFixCount { get; set; }

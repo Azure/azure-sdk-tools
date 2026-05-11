@@ -47,6 +47,109 @@ def create_issue(
     )
 
 
+def check_for_duplicate_issue(
+    client: GithubManager,
+    *,
+    plan: dict,
+    owner: str,
+    repo: str,
+    workflow_tag: str,
+    source_tag: str = "APIView Copilot",
+    dedup_prompt_file: str,
+    dedup_inputs: dict,
+) -> dict | None:
+    """Check whether a planned issue is a duplicate of an existing one.
+
+    Returns a no-op result dict if a duplicate was found, or ``None`` to
+    indicate that no duplicate exists and the caller should proceed with
+    creation.
+
+    Args:
+        client: GithubManager instance
+        plan: Dict with 'title' and 'body' for the planned issue
+        owner: Repository owner
+        repo: Repository name
+        workflow_tag: Tag identifying workflow type (e.g., "parser-issue")
+        source_tag: Tag identifying the source (default: "APIView Copilot")
+        dedup_prompt_file: Filename of deduplication prompty file (in mention folder)
+        dedup_inputs: Dict of inputs for the deduplication prompt (without issue_context)
+
+    Returns:
+        Dict with action/url/title/body/created_at if duplicate found, or ``None``.
+    """
+    issue_context = f"{plan.get('title')}\n\n{plan.get('body')}"
+    full_dedup_inputs = {
+        **dedup_inputs,
+        "issue_context": issue_context,
+    }
+
+    recent_issues = _fetch_recent_issues(client, owner, repo, workflow_tag, source_tag)
+    dedup_result = _check_for_duplicate(plan, recent_issues, dedup_prompt_file, full_dedup_inputs)
+
+    if dedup_result["action"] == "no-op":
+        issue_number = dedup_result["issue"]
+        for issue in recent_issues:
+            if issue["number"] == issue_number:
+                return {
+                    "action": "no-op",
+                    "url": issue["html_url"],
+                    "title": issue["title"],
+                    "body": issue.get("body", ""),
+                    "created_at": issue["created_at"],
+                }
+        raise ValueError(f"Issue number {issue_number} from deduplication prompt not found in recent issues.")
+
+    return None
+
+
+def create_and_submit_issue(
+    client: GithubManager,
+    *,
+    plan: dict,
+    owner: str,
+    repo: str,
+    workflow_tag: str,
+    source_tag: str = "APIView Copilot",
+    base_labels: list[str] | None = None,
+    language: str | None = None,
+) -> dict:
+    """Create a GitHub issue from a plan (assumes dedup already passed).
+
+    Args:
+        client: GithubManager instance
+        plan: Dict with 'title' and 'body'
+        owner: Repository owner
+        repo: Repository name
+        workflow_tag: Tag identifying workflow type
+        source_tag: Tag identifying the source (default: "APIView Copilot")
+        base_labels: Optional base labels to apply
+        language: Optional language; resolved against
+            ``GithubManager.LANGUAGE_LABELS`` and appended when known.
+
+    Returns:
+        Dict with action/url/title/body/created_at for the created issue.
+    """
+    labels = GithubManager.build_issue_labels(base_labels or [], language)
+
+    issue = create_issue(
+        client,
+        owner=owner,
+        repo=repo,
+        title=plan.get("title"),
+        body=plan.get("body"),
+        workflow_tag=workflow_tag,
+        source_tag=source_tag,
+        labels=labels,
+    )
+    return {
+        "action": "create",
+        "url": issue["html_url"],
+        "title": issue["title"],
+        "body": issue["body"],
+        "created_at": issue["created_at"],
+    }
+
+
 def execute_workflow(
     client: GithubManager,
     *,
@@ -59,7 +162,6 @@ def execute_workflow(
     dedup_inputs: dict,
     base_labels: list[str] | None = None,
     language: str | None = None,
-    language_labels: dict[str, str] | None = None,
 ) -> dict:
     """
     Execute complete GitHub issue workflow: fetch, deduplicate, and create if needed.
@@ -74,8 +176,8 @@ def execute_workflow(
         dedup_prompt_file: Filename of deduplication prompty file (in mention folder)
         dedup_inputs: Dict of inputs for the deduplication prompt (without issue_context)
         base_labels: Optional base labels to apply
-        language: Optional language for language-specific labeling
-        language_labels: Optional mapping of language names to GitHub labels
+        language: Optional language; resolved against
+            ``GithubManager.LANGUAGE_LABELS`` and appended when known.
 
     Returns:
         Dict with keys:
@@ -93,11 +195,7 @@ def execute_workflow(
     }
 
     # Build labels with language support if provided
-    labels = _build_labels_with_language(
-        base_labels or [],
-        language,
-        language_labels or {},
-    )
+    labels = GithubManager.build_issue_labels(base_labels or [], language)
 
     # Fetch recent issues
     recent_issues = _fetch_recent_issues(client, owner, repo, workflow_tag, source_tag)
@@ -196,26 +294,3 @@ def _format_issues_for_dedup(issues: list[dict], max_body_length: int = 500) -> 
 def _inject_metadata(body: str, workflow_tag: str, source_tag: str) -> str:
     """Inject workflow metadata into issue body."""
     return f"""<!-- workflow: {workflow_tag} source: {source_tag} -->\n\n{body}"""
-
-
-def _build_labels_with_language(
-    base_labels: list[str], language: str | None, language_labels: dict[str, str]
-) -> list[str]:
-    """
-    Build labels including language-specific label when available.
-
-    Args:
-        base_labels: Base labels to include
-        language: Programming language name (optional)
-        language_labels: Mapping of normalized language names to GitHub labels
-
-    Returns:
-        List of labels including language label if found
-    """
-    labels = base_labels.copy()
-    if language:
-        normalized_language = language.strip().lower()
-        language_label = language_labels.get(normalized_language)
-        if language_label:
-            labels.append(language_label)
-    return labels

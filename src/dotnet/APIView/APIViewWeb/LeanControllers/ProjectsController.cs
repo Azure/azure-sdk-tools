@@ -67,7 +67,7 @@ namespace APIViewWeb.LeanControllers
 
             if (project.Reviews is { Count: > 0 })
             {
-                var reviews = await _reviewsRepository.GetReviewsAsync(project.Reviews.Values);
+                var reviews = await _reviewsRepository.GetReviewsAsync(project.Reviews.Values.SelectMany(v => v));
                 relatedReviews = reviews
                     .Where(r => r is { IsDeleted: false })
                     .OrderBy(r => r.Language)
@@ -114,7 +114,7 @@ namespace APIViewWeb.LeanControllers
 
             if (project.Reviews is { Count: > 0 })
             {
-                var reviews = await _reviewsRepository.GetReviewsAsync(project.Reviews.Values);
+                var reviews = await _reviewsRepository.GetReviewsAsync(project.Reviews.Values.SelectMany(v => v));
                 response.Reviews = reviews
                     .Where(r => r is { IsDeleted: false })
                     .OrderBy(r => r.Language == "TypeSpec" ? 0 : 1)
@@ -150,13 +150,18 @@ namespace APIViewWeb.LeanControllers
                 return new LeanJsonResult(new { status = (string)null }, StatusCodes.Status200OK);
             }
 
-            string languageKey = project.Reviews
-                .FirstOrDefault(kvp => string.Equals(kvp.Value, reviewId, StringComparison.OrdinalIgnoreCase))
-                .Key;
+            if (project.NamespaceInfo?.CurrentNamespaceStatus == null ||
+                !project.NamespaceInfo.CurrentNamespaceStatus.TryGetValue(review.Language, out var nsEntries) ||
+                nsEntries.Count == 0)
+            {
+                return new LeanJsonResult(new { status = (string)null }, StatusCodes.Status200OK);
+            }
 
-            if (languageKey == null ||
-                project.NamespaceInfo?.CurrentNamespaceStatus == null ||
-                !project.NamespaceInfo.CurrentNamespaceStatus.TryGetValue(languageKey, out NamespaceDecisionEntry entry))
+            NamespaceDecisionEntry entry = nsEntries.Count == 1
+                ? nsEntries[0]
+                : nsEntries.FirstOrDefault(e => string.Equals(e.PackageName, review.PackageName, StringComparison.OrdinalIgnoreCase));
+
+            if (entry == null)
             {
                 return new LeanJsonResult(new { status = (string)null }, StatusCodes.Status200OK);
             }
@@ -195,7 +200,7 @@ namespace APIViewWeb.LeanControllers
                 return BadRequest(new { message = "Request body is required." });
             }
 
-            var result = await _namespaceManager.UpdateNamespaceStatusAsync(projectId, language, request.Status, request.Notes, User);
+            var result = await _namespaceManager.UpdateNamespaceStatusAsync(projectId, language, request.Namespace, request.Status, request.Notes, User);
             if (!result.IsSuccess)
             {
                 return result.Error!.Value switch
@@ -218,6 +223,7 @@ namespace APIViewWeb.LeanControllers
 
     public class UpdateNamespaceStatusRequest
     {
+        public string Namespace { get; set; }
         public NamespaceDecisionStatus Status { get; set; }
         public string Notes { get; set; }
     }

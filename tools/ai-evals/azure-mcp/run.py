@@ -2,6 +2,7 @@ import os
 import asyncio
 import pathlib
 import json
+import argparse
 from typing import Any
 
 # set before azure.ai.evaluation import to make PF output less noisy
@@ -68,9 +69,16 @@ client = AzureOpenAI(
     ),
 )
 
-server_params = StdioServerParameters(
-    command="npx", args=["-y", "@azure/mcp@latest", "server", "start"], env=None
-)
+def get_server_params() -> StdioServerParameters:
+    npmrc_path = os.getenv("npm_config_userconfig") or os.getenv("NPM_CONFIG_USERCONFIG")
+    env = None
+    if npmrc_path:
+        env = os.environ.copy()
+        env["npm_config_userconfig"] = npmrc_path
+
+    return StdioServerParameters(
+        command="npx", args=["-y", "@azure/mcp@latest", "server", "start"], env=env
+    )
 
 
 def reshape_tools(
@@ -105,7 +113,7 @@ def reshape_tool_definitions(
 async def call_mcp_tool(
     tool_call: chat.ChatCompletionMessageToolCall, function_args: dict[str, Any]
 ) -> CallToolResult:
-    async with stdio_client(server_params) as (read, write):
+    async with stdio_client(get_server_params()) as (read, write):
         async with ClientSession(read, write) as session:
             await session.initialize()
             await session.list_tools()
@@ -224,7 +232,7 @@ def evaluate_azure_mcp(query: str, expected_tool_calls: list):
 
 
 async def get_tools() -> list[dict[str, Any]]:
-    async with stdio_client(server_params) as (read, write):
+    async with stdio_client(get_server_params()) as (read, write):
         async with ClientSession(read, write) as session:
             await session.initialize()
 
@@ -244,6 +252,13 @@ async def get_tools() -> list[dict[str, Any]]:
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--npmrc-path")
+    args = parser.parse_args()
+
+    if args.npmrc_path:
+        os.environ["npm_config_userconfig"] = args.npmrc_path
+
     azure_ai_project: AzureAIProject = {
         "subscription_id": os.environ["AZURE_SUBSCRIPTION_ID"],
         "resource_group_name": os.environ["AZURE_FOUNDRY_RESOURCE_GROUP"],

@@ -414,5 +414,19 @@
         "knowledge_match": 0.8928571428571429,
         "knowledge_match_result": "pass",
         "overall_score": 8.892857142857142
+    },
+    {
+        "average_score": 8.30713467035306,
+        "total_evals": 8,
+        "similarity_pass_rate": 8,
+        "similarity_fail_rate": 0,
+        "groundedness_pass_rate": 6,
+        "groundedness_fail_rate": 0,
+        "response_completeness_pass_rate": 8,
+        "response_completeness_fail_rate": 0,
+        "reference_match_pass_rate": 4,
+        "reference_match_fail_rate": 4,
+        "knowledge_match_pass_rate": 7,
+        "knowledge_match_fail_rate": 1
     }
 ]

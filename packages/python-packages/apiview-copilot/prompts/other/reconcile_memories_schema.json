@@ -1,0 +1,24 @@
+{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "reconcile_memories_result",
+    "strict": true,
+    "schema": {
+      "type": "object",
+      "properties": {
+        "absorbed_memory_ids": {
+          "type": "array",
+          "description": "IDs of memories whose information is now fully captured by the updated guideline.",
+          "items": { "type": "string" }
+        },
+        "reasoning": {
+          "type": "object",
+          "description": "For each memory ID, a brief explanation of why it was absorbed or retained.",
+          "additionalProperties": { "type": "string" }
+        }
+      },
+      "required": ["absorbed_memory_ids", "reasoning"],
+      "additionalProperties": false
+    }
+  }
+}

@@ -1466,7 +1466,10 @@ def get_comment_with_context(comment_id: str, environment: str = "production") -
 
     Returns:
         A dict containing:
-        - comment: The full comment object from the database
+        - comment: The full comment object from the database (the anchor comment)
+        - thread_comments: List of non-deleted comments sharing the same
+          ThreadId, in chronological order. Deleted comments, including the
+          anchor comment, may be excluded from this list.
         - language: The pretty language name (e.g., "Python")
         - package_name: The package name from the review
         - code: The API code from the revision (if available)
@@ -1501,6 +1504,34 @@ def get_comment_with_context(comment_id: str, environment: str = "production") -
         comment = results[0]
         review_id = comment.get("ReviewId")
         revision_id = comment.get("APIRevisionId")
+        thread_id = comment.get("ThreadId")
+
+        # Fetch sibling comments in the same thread (chronological order) so
+        # callers can render the full conversation, not just the anchor comment.
+        # Filter out tombstoned (IsDeleted) entries server-side so we only
+        # transfer / sort live comments.
+        thread_comments: list[dict] = [comment]
+        if thread_id:
+            thread_query = """
+                SELECT c.id, c.CommentText, c.CommentSource, c.CreatedBy, c.CreatedOn,
+                       c.IsResolved, c.IsDeleted, c.ThreadId
+                FROM c
+                WHERE c.ThreadId = @thread_id
+                  AND (NOT IS_DEFINED(c.IsDeleted) OR c.IsDeleted = false)
+                ORDER BY c.CreatedOn ASC
+            """
+            try:
+                thread_results = list(
+                    comments_container.query_items(
+                        query=thread_query,
+                        parameters=[{"name": "@thread_id", "value": thread_id}],
+                        enable_cross_partition_query=True,
+                    )
+                )
+                thread_comments = thread_results or [comment]
+            except Exception as e:
+                print(f"Warning: Could not fetch thread siblings for {thread_id}: {e}")
+                thread_comments = [comment]
 
         # Get language and package name from Reviews container
         language = None
@@ -1568,6 +1599,7 @@ def get_comment_with_context(comment_id: str, environment: str = "production") -
 
         return {
             "comment": comment,
+            "thread_comments": thread_comments,
             "language": language,
             "package_name": package_name,
             "code": code,

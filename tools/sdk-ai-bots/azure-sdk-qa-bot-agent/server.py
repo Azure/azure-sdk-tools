@@ -91,6 +91,14 @@ _configure_logging()
 logger = logging.getLogger(__name__)
 configure_metrics()
 
+_background_tasks: set[asyncio.Task] = set()
+
+
+def _track_background_task(task: asyncio.Task) -> None:
+    """Keep a strong reference to background tasks until completion."""
+    _background_tasks.add(task)
+    task.add_done_callback(_background_tasks.discard)
+
 
 @asynccontextmanager
 async def lifespan(application: FastAPI):
@@ -100,6 +108,12 @@ async def lifespan(application: FastAPI):
     yield
     # Cleanup SDK clients on shutdown
     logger.info("Backend server shutting down")
+    pending_tasks = [task for task in _background_tasks if not task.done()]
+    if pending_tasks:
+        logger.info("Cancelling %d background task(s)", len(pending_tasks))
+        for task in pending_tasks:
+            task.cancel()
+        await asyncio.gather(*pending_tasks, return_exceptions=True)
     await close_clients()
     await close_cosmos_client()
     await close_storage_client()
@@ -212,7 +226,7 @@ async def save_conversation(req: ConversationMessage):
     )
     await _conversation_service.save_conversation(req)
     # Fire-and-forget background task to feed the thread to tenant memory
-    asyncio.create_task(_update_thread_memory(req))
+    _track_background_task(asyncio.create_task(_update_thread_memory(req)))
     return SaveConversationMessageResponse()
 
 

@@ -115,6 +115,28 @@ public class ProjectsManager : IProjectsManager
         return project;
     }
 
+    public async Task<ReviewListItemModel> GetAssociatedReviewForProjectAsync(Project project, string language, string namespaceValue)
+    {
+        List<string> reviewIds = project?.GetAssociatedReviewIds(language) ?? [];
+        if (reviewIds.Count == 0)
+        {
+            return null;
+        }
+
+        var reviews = (await _reviewsRepository.GetReviewsAsync(reviewIds))
+            ?.Where(r => r != null && !r.IsDeleted)
+            .ToList() ?? [];
+
+        var packageName = project.GetCurrentPackageName(language, namespaceValue);
+        if (string.IsNullOrWhiteSpace(packageName))
+        {
+            return reviews.FirstOrDefault();
+        }
+
+        return reviews.FirstOrDefault(r => string.Equals(r.PackageName, packageName, StringComparison.OrdinalIgnoreCase))
+            ?? reviews.FirstOrDefault();
+    }
+
     private async Task<Project> CreateProjectFromMetadataAsync(string userName, TypeSpecMetadata metadata, ReviewListItemModel typeSpecReview)
     {
         Dictionary<string, List<PackageInfo>> packagesDict = BuildPackagesDict(metadata);

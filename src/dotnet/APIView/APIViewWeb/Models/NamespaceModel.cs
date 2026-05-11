@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json.Serialization;
 
 namespace APIViewWeb.Models;
@@ -20,6 +21,19 @@ public class ProjectNamespaceInfo
     public Dictionary<string, List<NamespaceDecisionEntry>> NamespaceHistory { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     // Maps language name to the list of current active namespace decisions — one entry per (language, packageName) pair.
     public Dictionary<string, List<NamespaceDecisionEntry>> CurrentNamespaceStatus { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
+    public NamespaceDecisionEntry GetCurrentEntry(string language, string namespaceValue)
+    {
+        if (CurrentNamespaceStatus == null ||
+            !CurrentNamespaceStatus.TryGetValue(language, out var entries))
+        {
+            return null;
+        }
+
+        return entries?.FirstOrDefault(entry =>
+            entry != null &&
+            string.Equals(entry.Namespace, namespaceValue, StringComparison.OrdinalIgnoreCase));
+    }
 }
 
 public class NamespaceDecisionEntry

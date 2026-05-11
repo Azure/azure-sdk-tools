@@ -8,4 +8,5 @@ public interface IProjectsManager
 {
     Task<Project> UpsertProjectFromMetadataAsync(string userName, TypeSpecMetadata metadata, ReviewListItemModel typeSpecReview);
     Task<Project> TryLinkReviewToProjectAsync(string userName, ReviewListItemModel review);
+    Task<ReviewListItemModel> GetAssociatedReviewForProjectAsync(Project project, string language, string namespaceValue);
 }

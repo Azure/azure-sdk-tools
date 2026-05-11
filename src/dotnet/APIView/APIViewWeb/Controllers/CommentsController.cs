@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using APIViewWeb.Hubs;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
+using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

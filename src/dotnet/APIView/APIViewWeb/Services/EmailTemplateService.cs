@@ -73,7 +73,8 @@ namespace APIViewWeb.Services
             return templateKey switch
             {
                 EmailTemplateKey.NamespaceReviewRequest => "NamespaceReviewRequestEmail.cshtml",
-                EmailTemplateKey.NamespaceReviewApproved => "NamespaceReviewApprovedEmail.cshtml",
+                EmailTemplateKey.NamespaceReviewApproved => "NamespaceApprovedEmail.cshtml",
+                EmailTemplateKey.NamespaceRejected => "NamespaceRejectedEmail.cshtml",
                 EmailTemplateKey.ReviewerAssigned => "ReviewerAssignedEmail.cshtml",
                 EmailTemplateKey.CommentTag => "CommentTagEmail.cshtml",
                 EmailTemplateKey.SubscriberComment => "SubscriberCommentEmail.cshtml",

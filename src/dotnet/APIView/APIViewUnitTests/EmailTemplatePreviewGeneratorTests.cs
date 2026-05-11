@@ -87,12 +87,30 @@ namespace APIViewUnitTests
                 ),
                 (
                     EmailTemplateKey.NamespaceReviewApproved,
-                    NamespaceReviewApprovedEmailModel.Create(
-                        review.PackageName,
-                        reviewUrl,
-                        languageReviews,
-                        endpoint),
-                    "namespace-review-approved.html"
+                    NamespaceApprovedEmailModel.Create(
+                        "azure-sample-service",
+                        "Azure Sample Service",
+                        "Python",
+                        "azure.sample.service",
+                        "alex-approver",
+                        DateTime.UtcNow,
+                        $"{endpoint}/Assemblies/Review/review-python-001?view=namespace",
+                        $"{endpoint}/Assemblies/Review/review-python-001"),
+                    "namespace-approved.html"
+                ),
+                (
+                    EmailTemplateKey.NamespaceRejected,
+                    NamespaceRejectedEmailModel.Create(
+                        "azure-sample-service",
+                        "Azure Sample Service",
+                        "Python",
+                        "azure.sample.service.v2",
+                        "alex-approver",
+                        DateTime.UtcNow,
+                        "Namespace collides with an existing package and does not follow service naming guidance.",
+                        $"{endpoint}/Assemblies/Review/review-python-001?view=namespace",
+                        $"{endpoint}/Assemblies/Review/review-python-001"),
+                    "namespace-review-rejected.html"
                 ),
                 (
                     EmailTemplateKey.ReviewerAssigned,
@@ -171,7 +189,8 @@ namespace APIViewUnitTests
             return key switch
             {
                 EmailTemplateKey.NamespaceReviewRequest => await renderer.RenderAsync(key, (NamespaceReviewRequestEmailModel)model),
-                EmailTemplateKey.NamespaceReviewApproved => await renderer.RenderAsync(key, (NamespaceReviewApprovedEmailModel)model),
+                EmailTemplateKey.NamespaceReviewApproved => await renderer.RenderAsync(key, (NamespaceApprovedEmailModel)model),
+                EmailTemplateKey.NamespaceRejected => await renderer.RenderAsync(key, (NamespaceRejectedEmailModel)model),
                 EmailTemplateKey.ReviewerAssigned => await renderer.RenderAsync(key, (ReviewerAssignedEmailModel)model),
                 EmailTemplateKey.CommentTag => await renderer.RenderAsync(key, (CommentTagEmailModel)model),
                 EmailTemplateKey.SubscriberComment => await renderer.RenderAsync(key, (SubscriberCommentEmailModel)model),

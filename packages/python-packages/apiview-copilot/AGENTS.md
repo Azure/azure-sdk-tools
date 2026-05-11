@@ -22,6 +22,7 @@ AI-powered automated reviewer for Azure SDK API surface reviews. Ingests APIView
   - `_apiview_metrics.py` — APIView platform metrics (versioned-revision tracking and cross-language compliance over time).
   - `_comment_grouper.py` — Groups similar comments with correlation IDs.
   - `_diff.py` — Generates numbered diffs between base and target API views.
+  - `_guideline_ingestor.py` — Ingests guidelines from the azure-sdk repo: markdown parsing, LLM enrichment, content hashing, example extraction, memory reconciliation, and Cosmos DB sync.
   - `_mention.py` — Handles @mention feedback processing.
   - `_thread_resolution.py` — Handles thread resolution requests.
   - `_auth.py` — FastAPI authentication dependencies with role-based access control.

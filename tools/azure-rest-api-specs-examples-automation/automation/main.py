@@ -376,7 +376,7 @@ def main():
         "--language",
         type=str,
         required=False,
-        help='Process SDK for specific language. Currently supports "java" and "go".',
+        help='Process SDK for specific language. Currently supports "java", "go", "js", "dotnet", "python".',
     )
     parser.add_argument(
         "--persist-data",

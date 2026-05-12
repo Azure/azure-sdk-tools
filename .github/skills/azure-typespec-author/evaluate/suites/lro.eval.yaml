@@ -21,20 +21,20 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
-    - src: ../fixtures/003-long-running-operation-share/employee.tsp
-      dest: employee.tsp
-    - src: ../fixtures/003-long-running-operation-share/main.tsp
-      dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
-    - src: ../fixtures/003-long-running-operation-share/readme.md
-      dest: readme.md
-    - src: ../fixtures/003-long-running-operation-share/shared.tsp
-      dest: shared.tsp
-    - src: ../fixtures/003-long-running-operation-share/tspconfig.yaml
-      dest: tspconfig.yaml
+      - src: ../fixtures/003-long-running-operation-share/employee.tsp
+        dest: employee.tsp
+      - src: ../fixtures/003-long-running-operation-share/main.tsp
+        dest: main.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: package.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: package-lock.json
+      - src: ../fixtures/003-long-running-operation-share/readme.md
+        dest: readme.md
+      - src: ../fixtures/003-long-running-operation-share/shared.tsp
+        dest: shared.tsp
+      - src: ../fixtures/003-long-running-operation-share/tspconfig.yaml
+        dest: tspconfig.yaml
   graders:
   - type: tool-calls
     config:
@@ -46,20 +46,6 @@ stimuli:
     config:
       required:
         - azure-typespec-author
-  - type: file-matches
-    config:
-      path: employee.tsp
-      pattern: 'move\s+is\s+ArmResourceActionAsync\s*<\s*Employee\s*,\s*MoveRequest\s*,\s*MoveResponse\s*,\s*LroHeaders\s*='
-  - type: file-matches
-    config:
-      path: employee.tsp
-      pattern: 'ArmCombinedLroHeaders\s*<\s*FinalResult\s*=\s*MoveResponse\s*>'
-  - type: prompt
-    config:
-      scoring: scale_1_5
-      threshold: 1.0
-      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
-      model: claude-opus-4.6
 
 - name: 003002-arm-modify-response
   prompt: |
@@ -69,24 +55,24 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
-    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
-      dest: employee.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
-      dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
-    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
-      dest: readme.md
-    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
-      dest: shared.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
-      dest: tspconfig.yaml
-    - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
-      dest: stable/2021-11-01/widget.json
-    - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
-      dest: preview/2024-10-01-preview/widget.json
+      - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+        dest: employee.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+        dest: main.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: package.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: package-lock.json
+      - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+        dest: readme.md
+      - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+        dest: shared.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+        dest: tspconfig.yaml
+      - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+        dest: stable/2021-11-01/widget.json
+      - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+        dest: preview/2024-10-01-preview/widget.json
   graders:
   - type: tool-calls
     config:
@@ -98,33 +84,9 @@ stimuli:
     config:
       required:
         - azure-typespec-author
-  - type: file-matches
-    config:
-      path: employee.tsp
-      pattern: 'ArmAsyncOperationHeader<FinalResult\s*=\s*Employee>'
-  - type: file-matches
-    config:
-      path: employee.tsp
-      pattern: 'createOrUpdate is ArmResourceCreateOrReplaceAsync<'
-  - type: file-matches
-    config:
-      path: employee.tsp
-      pattern: 'update is ArmResourcePatchSync<Employee'
-  - type: file-matches
-    config:
-      path: employee.tsp
-      pattern: 'delete is ArmResourceDeleteWithoutOkAsync<Employee>'
-  - type: prompt
-    config:
-      scoring: scale_1_5
-      threshold: 1.0
-      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
-      model: claude-opus-4.6
 
 scoring:
   weights:
     tool-calls: 1
     skill-invocation: 1
-    prompt: 1
-    file-matches: 1
   threshold: 1.0

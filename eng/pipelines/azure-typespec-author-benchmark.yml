@@ -28,8 +28,241 @@ extends:
           image: $(LINUXVMIMAGE)
           os: linux
         jobs:
-          - job: RunEvals
-            displayName: Run Vally Evaluations
+          - job: RunEvalsForCodeQuality
+            displayName: Run Vally Evaluations for Code Quality
+            timeoutInMinutes: 165
+            steps:
+              - checkout: self
+                fetchDepth: 0
+
+              # Optionally overlay the azure-typespec-author skill source
+              # (SKILL.md + references/) from a different branch so we can
+              # evaluate skill changes that live on another branch while
+              # keeping the evaluate/ directory and pipeline config from
+              # the branch this pipeline was triggered from.
+              - script: |
+                  set -e
+                  BRANCH="${{ parameters.SkillBranch }}"
+                  if [ -z "$BRANCH" ]; then
+                    echo "SkillBranch parameter not provided; using the source branch checked out by the pipeline."
+                    git rev-parse --abbrev-ref HEAD
+                    git rev-parse HEAD
+                    exit 0
+                  fi
+                  echo "Overlaying azure-typespec-author skill source from branch: $BRANCH"
+                  git fetch origin "$BRANCH"
+                  rm -rf .github/skills/azure-typespec-author/SKILL.md \
+                         .github/skills/azure-typespec-author/references
+                  git checkout "origin/$BRANCH" -- \
+                    .github/skills/azure-typespec-author/SKILL.md \
+                    .github/skills/azure-typespec-author/references
+                  echo "Skill source overlaid from origin/$BRANCH ($(git rev-parse origin/$BRANCH))"
+                  ls -R .github/skills/azure-typespec-author
+                displayName: Checkout skill branch
+
+              # Install Go and build/start the QA bot backend
+              - script: |
+                  echo "Downloading Go 1.24.0..."
+                  curl -LO https://go.dev/dl/go1.24.0.linux-amd64.tar.gz
+                  echo "Removing existing Go installation..."
+                  sudo rm -rf /usr/local/go
+                  echo "Extracting Go 1.24.0..."
+                  sudo tar -C /usr/local -xzf go1.24.0.linux-amd64.tar.gz
+                  echo "Setting environment variables..."
+                  echo "##vso[task.setvariable variable=GOROOT]/usr/local/go"
+                  echo "##vso[task.prependpath]/usr/local/go/bin"
+                displayName: Install Go
+
+              - script: go version
+                displayName: Check Go version
+
+              - task: AzureCLI@2
+                displayName: Start QA bot backend service
+                inputs:
+                  azureSubscription: 'azuresdkqabot-dev'
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
+                  inlineScript: |
+                    export GOPROXY=https://proxy.golang.org,direct
+                    : > qa-bot-service.log
+                    go build -o qa-bot-service
+                    chmod +x qa-bot-service
+                    nohup ./qa-bot-service > qa-bot-service.log 2>&1 &
+                    SERVICE_PID=$!
+                    echo "Service started with PID: $SERVICE_PID"
+                    sleep 20
+                    echo "=== Service log ==="
+                    cat qa-bot-service.log || true
+                    echo "==================="
+                    if ! kill -0 $SERVICE_PID 2>/dev/null; then
+                      echo "ERROR: Service process has exited unexpectedly"
+                      exit 1
+                    fi
+                    if ! lsof -ti:8088 > /dev/null 2>&1; then
+                      echo "ERROR: No process listening on port 8088"
+                      exit 1
+                    fi
+                    echo "Service is running on port 8088"
+                env:
+                  SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+                  AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
+
+              # Install .NET SDK for azsdk-cli MCP server.
+              # Use the version pinned in global.json so the build/restore works.
+              - task: UseDotNet@2
+                displayName: Install .NET SDK (global.json)
+                inputs:
+                  useGlobalJson: true
+                  workingDirectory: $(Build.SourcesDirectory)
+              - task: UseDotNet@2
+                displayName: Install .NET 8.0 SDK
+                inputs:
+                  version: '8.x'
+
+              # Authenticate to NuGet so the azsdk-cli MCP server can restore
+              # packages from the internal Azure Artifacts feed (the 1ES pool
+              # blocks direct egress to nuget.org).
+              - task: NuGetAuthenticate@1
+                displayName: Authenticate NuGet
+
+              # Pre-build the azsdk-cli (the MCP server). vally launches it
+              # via `dotnet run` (defaults to Debug, no -c flag), but doing
+              # the restore + build here surfaces any failure as a clear
+              # pipeline error instead of a silent MCP server startup
+              # failure during evaluations.
+              - script: |
+                  set -e
+                  dotnet restore tools/azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj
+                  dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj \
+                    --no-restore --nologo
+                displayName: Build azsdk-cli (MCP server)
+
+              # Install Node.js, Vally CLI, and Copilot SDK.
+              # Use the internal Azure Artifacts npm mirror (with auth) because
+              # the 1ES managed pool blocks direct egress to registry.npmjs.org.
+              - task: NodeTool@0
+                displayName: Use Node.js 22
+                inputs:
+                  versionSpec: '22.x'
+
+              - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
+                parameters:
+                  npmrcPath: $(Build.SourcesDirectory)/.npmrc
+                  registryUrl: https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-tools/npm/registry/
+
+              - script: npm install --global @microsoft/vally-cli@0.4.0 --userconfig $(Build.SourcesDirectory)/.npmrc
+                displayName: Install Vally CLI
+
+              - script: npm install --global @github/copilot-sdk --userconfig $(Build.SourcesDirectory)/.npmrc
+                displayName: Install Copilot SDK
+
+              # Pre-install TypeSpec compiler globally from the internal npm
+              # mirror so `azsdk_run_typespec_validation` (and any direct
+              # `npx tsp`/`npm install` the agent attempts) succeeds without
+              # network access to registry.npmjs.org.
+              - script: |
+                  set -e
+                  npm install --global @typespec/compiler --userconfig $(Build.SourcesDirectory)/.npmrc
+                  echo "tsp version:"
+                  tsp --version || true
+                displayName: Install TypeSpec compiler
+
+              # Smoke test (informational only): try to start MCP server and
+              # capture any startup errors. We don't fail the pipeline here
+              # because reliably driving an MCP stdio JSON-RPC handshake from
+              # a shell is fragile; vally/copilot-sdk drives the protocol
+              # properly during the eval step.
+              - script: |
+                  cd $(Build.SourcesDirectory)/tools/azsdk-cli/Azure.Sdk.Tools.Cli
+                  echo "--- CLI commands ---"
+                  dotnet run --no-build -- --help 2>&1 | head -40 || true
+                  echo "--- list registered MCP tools ---"
+                  dotnet run --no-build -- list 2>&1 | head -200 || true
+                displayName: MCP server smoke test (informational)
+                continueOnError: true
+                env:
+                  AZSDKTOOLS_AGENT_TESTING: "true"
+                  AZSDKTOOLS_COLLECT_TELEMETRY: "false"
+                  AZURE_SDK_KB_ENDPOINT: "http://localhost:8088"
+
+              # Run evaluations
+              # The local/default Vally config (.vally.yaml) is kept stable for
+              # developers and still points named suites at per-case files under
+              # evaluate/evals/.
+              # Each suite has an explicit timeout to prevent one suite from
+              # blocking all others. If a suite times out, continueOnError ensures
+              # we still attempt the next suite.
+              # Pipeline-only parallelism is handled separately here by invoking
+              # the combined files under evaluate/suites/ directly with
+              # --eval-spec. This avoids changing local teammate workflows while
+              # still enabling intra-suite workers in CI.
+              - script: |
+                  cd .github/skills/azure-typespec-author/evaluate
+                  vally eval --eval-spec suites/versioning-forced.eval.yaml --output-dir results --verbose
+                displayName: Run force invokation suite - versioning
+                timeoutInMinutes: 50
+                continueOnError: true
+                condition: always()
+                env:
+                  GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+
+              - script: |
+                  cd .github/skills/azure-typespec-author/evaluate
+                  vally eval --eval-spec suites/armtemplate-forced.eval.yaml --output-dir results --verbose
+                displayName: Run force invokation suite - armtemplate
+                timeoutInMinutes: 40
+                continueOnError: true
+                condition: always()
+                env:
+                  GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+
+              - script: |
+                  cd .github/skills/azure-typespec-author/evaluate
+                  vally eval --eval-spec suites/lro-forced.eval.yaml --output-dir results --verbose
+                displayName: Run force invokation suite - longrunningoperation
+                timeoutInMinutes: 25
+                continueOnError: true
+                condition: always()
+                env:
+                  GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+
+              - script: |
+                  cd .github/skills/azure-typespec-author/evaluate
+                  vally eval --eval-spec suites/decorators-forced.eval.yaml --output-dir results --verbose
+                displayName: Run force invokation suite - decorators
+                timeoutInMinutes: 15
+                continueOnError: true
+                condition: always()
+                env:
+                  GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+
+              - script: |
+                  cd .github/skills/azure-typespec-author/evaluate
+                  vally eval --eval-spec suites/warning-forced.eval.yaml --output-dir results --verbose
+                displayName: Run force invokation suite - warning
+                timeoutInMinutes: 20
+                continueOnError: true
+                condition: always()
+                env:
+                  GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+
+            templateContext:
+              outputs:
+                - output: pipelineArtifact
+                  path: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/results
+                  artifact: eval-results-code-quality-$(Build.BuildId)
+                  displayName: Upload eval results
+                  condition: always()
+
+                - output: pipelineArtifact
+                  path: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/qa-bot-service.log
+                  artifact: qa-bot-service-log-code-quality
+                  displayName: Upload QA bot backend log
+                  condition: always()
+
+          - job: RunEvalsForSkillInvokation
+            displayName: Run Vally Evaluations for Skill Invokation
             timeoutInMinutes: 165
             steps:
               - checkout: self
@@ -251,12 +484,12 @@ extends:
               outputs:
                 - output: pipelineArtifact
                   path: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/results
-                  artifact: eval-results-$(Build.BuildId)
+                  artifact: eval-results-skill-invocation-$(Build.BuildId)
                   displayName: Upload eval results
                   condition: always()
 
                 - output: pipelineArtifact
                   path: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/qa-bot-service.log
-                  artifact: qa-bot-service-log
+                  artifact: qa-bot-service-log-skill-invocation
                   displayName: Upload QA bot backend log
                   condition: always()

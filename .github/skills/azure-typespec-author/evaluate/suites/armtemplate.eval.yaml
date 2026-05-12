@@ -21,24 +21,24 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
-    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
-      dest: employee.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
-      dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
-    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
-      dest: readme.md
-    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
-      dest: shared.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
-      dest: tspconfig.yaml
-    - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
-      dest: stable/2021-11-01/widget.json
-    - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
-      dest: preview/2024-10-01-preview/widget.json
+      - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+        dest: employee.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+        dest: main.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: package.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: package-lock.json
+      - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+        dest: readme.md
+      - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+        dest: shared.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+        dest: tspconfig.yaml
+      - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+        dest: stable/2021-11-01/widget.json
+      - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+        dest: preview/2024-10-01-preview/widget.json
   graders:
   - type: tool-calls
     config:
@@ -50,24 +50,6 @@ stimuli:
     config:
       required:
         - azure-typespec-author
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: ExtensionResource<
-  - type: file-not-matches
-    config:
-      path: '*.tsp'
-      pattern: TrackedResource<
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: Extension\.Read<|Extension\.CreateOrReplaceAsync<|Extension\.CustomPatch(Sync|Async)<|Extension\.DeleteWithoutOkAsync<|Extension\.ListByTarget<
-  - type: prompt
-    config:
-      scoring: scale_1_5
-      threshold: 1.0
-      prompt: 'The original separate list-by-resource-group and list-by-subscription operations should be consolidated into a single list operation using the extension list template. A scope-parameterized interface should be defined to allow the extension resource to be scoped to any parent resource.'
-      model: claude-opus-4.6
 
 - name: 002002-ARM-define-extension-resource
   prompt: |
@@ -102,18 +84,6 @@ stimuli:
     config:
       required:
         - azure-typespec-author
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: model Asset is ExtensionResource<AssetProperties>
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: interface Assets|interface AssetOps
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: provisioningState
 
 - name: 002003-ARM-define-full-update-operation
   prompt: |
@@ -123,20 +93,20 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
-    - src: ../fixtures/002003-ARM-define-full-update-operation/employee.tsp
-      dest: employee.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
-      dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
-    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
-      dest: readme.md
-    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
-      dest: shared.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
-      dest: tspconfig.yaml
+      - src: ../fixtures/002003-ARM-define-full-update-operation/employee.tsp
+        dest: employee.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+        dest: main.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: package.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: package-lock.json
+      - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+        dest: readme.md
+      - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+        dest: shared.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+        dest: tspconfig.yaml
   graders:
   - type: tool-calls
     config:
@@ -148,10 +118,6 @@ stimuli:
     config:
       required:
         - azure-typespec-author
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: 'update\s+is\s+ArmCustomPatchSync\s*<'
 
 - name: 002004-ARM-define-extension-resource
   prompt: |
@@ -161,22 +127,22 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
-    - src: ../fixtures/002004-ARM-define-extension-resource/badgeAssignment.tsp
-      dest: badgeAssignment.tsp
-    - src: ../fixtures/002004-ARM-define-extension-resource/employee.tsp
-      dest: employee.tsp
-    - src: ../fixtures/002004-ARM-define-extension-resource/main.tsp
-      dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
-    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
-      dest: readme.md
-    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
-      dest: shared.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
-      dest: tspconfig.yaml
+      - src: ../fixtures/002004-ARM-define-extension-resource/badgeAssignment.tsp
+        dest: badgeAssignment.tsp
+      - src: ../fixtures/002004-ARM-define-extension-resource/employee.tsp
+        dest: employee.tsp
+      - src: ../fixtures/002004-ARM-define-extension-resource/main.tsp
+        dest: main.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: package.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: package-lock.json
+      - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+        dest: readme.md
+      - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+        dest: shared.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+        dest: tspconfig.yaml
   graders:
   - type: tool-calls
     config:
@@ -188,28 +154,6 @@ stimuli:
     config:
       required:
         - azure-typespec-author
-  - type: file-matches
-    config:
-      path: badgeAssignment.tsp
-      pattern: model BadgeAssignment is ExtensionResource<BadgeAssignmentProperties>
-  - type: file-matches
-    config:
-      path: badgeAssignment.tsp
-      pattern: '@visibility\(Lifecycle\.Read\)'
-  - type: file-matches
-    config:
-      path: badgeAssignment.tsp
-      pattern: Extension\.Read<|Extension\.CreateOrReplaceAsync<|Extension\.CustomPatch(Sync|Async)<|Extension\.DeleteWithoutOkAsync<
-  - type: file-matches
-    config:
-      path: badgeAssignment.tsp
-      pattern: Extension\.ListByTarget<
-  - type: prompt
-    config:
-      scoring: scale_1_5
-      threshold: 1.0
-      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
-      model: claude-opus-4.6
 
 - name: 002005-ARM-define-the-resource
   prompt: |
@@ -219,18 +163,18 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
-    - src: ../fixtures/002005-ARM-define-the-resource/main.tsp
-      dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
-    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
-      dest: readme.md
-    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
-      dest: shared.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
-      dest: tspconfig.yaml
+      - src: ../fixtures/002005-ARM-define-the-resource/main.tsp
+        dest: main.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: package.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: package-lock.json
+      - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+        dest: readme.md
+      - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+        dest: shared.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+        dest: tspconfig.yaml
   graders:
   - type: tool-calls
     config:
@@ -242,40 +186,6 @@ stimuli:
     config:
       required:
         - azure-typespec-author
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: model Employee is TrackedResource<EmployeeProperties>
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: 'age\?: int32'
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: '@visibility\(Lifecycle\.Read\)'
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: ResourceProvisioningState
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: ArmResourceCreateOrReplaceAsync<Employee>|ArmResourceCreateOrUpdateAsync<Employee>
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: ArmResourceListByParent<Employee>
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: ArmListBySubscription<Employee>
-  - type: prompt
-    config:
-      scoring: scale_1_5
-      threshold: 1.0
-      prompt: 'Verify all five aspects: (1) Employee resource definition is written into a TSP file; (2) Employee model uses TrackedResource<EmployeeProperties> under Microsoft.Widget namespace; (3) EmployeeProperties includes age, city, profile, and a read-only provisioningState; (4) ProvisioningState is a union type incorporating standard ARM ResourceProvisioningState; (5) Employees interface includes full CRUD operations (get, create, update, delete) plus listByResourceGroup and listBySubscription.'
-      model: claude-opus-4.6
 
 - name: 002006-ARM-define-child-resource
   prompt: |
@@ -314,76 +224,6 @@ stimuli:
     config:
       required:
         - azure-typespec-author
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: '@parentResource\(Employee\)'
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: 'model AddressResource is ProxyResource<AddressProperties>|model AddressResource is ProxyResource<AddressResourceProperties>'
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: interface Addresses|interface AddressResource
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: 'model AddressProperties|model AddressResourceProperties'
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: 'street1\?: string;'
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: 'street2\?: string;'
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: 'city\?: string;'
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: 'state\?: string;'
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: 'postalCode\?: string;'
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: 'country\?: string;'
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: '@visibility\(Lifecycle\.Read\)'
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: 'provisioningState\?: ProvisioningState;'
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: ArmResourceRead<AddressResource>
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: ArmResourceCreateOrReplaceAsync<AddressResource>|ArmResourceCreateOrReplaceSync<AddressResource>
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: ArmResourceDeleteWithoutOkAsync<AddressResource>|ArmResourceDeleteSync<AddressResource>
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: ArmResourceListByParent<AddressResource>
-  - type: prompt
-    config:
-      scoring: scale_1_5
-      threshold: 1.0
-      prompt: 'The Addresses interface should include standard CRUD operations (get, create, update, delete) and a list-by-parent operation.'
-      model: claude-opus-4.6
 
 - name: 002007-ARM-define-custom-action
   prompt: |
@@ -422,56 +262,6 @@ stimuli:
     config:
       required:
         - azure-typespec-author
-  - type: file-matches
-    config:
-      path: 'employee.tsp'
-      pattern: union.*Priority|enum.*Priority
-  - type: file-matches
-    config:
-      path: 'employee.tsp'
-      pattern: 'Low|"Low"'
-  - type: file-matches
-    config:
-      path: 'employee.tsp'
-      pattern: 'Medium|"Medium"'
-  - type: file-matches
-    config:
-      path: 'employee.tsp'
-      pattern: 'High|"High"'
-  - type: file-matches
-    config:
-      path: 'employee.tsp'
-      pattern: model.*Notify.*Request|model.*Notification.*Request
-  - type: file-matches
-    config:
-      path: 'employee.tsp'
-      pattern: 'message.*:\s*string|content.*:\s*string'
-  - type: file-matches
-    config:
-      path: 'employee.tsp'
-      pattern: 'priority.*:\s*.*Priority'
-  - type: file-matches
-    config:
-      path: 'employee.tsp'
-      pattern: model.*Notify.*Response|model.*Notification.*Response
-  - type: file-matches
-    config:
-      path: 'employee.tsp'
-      pattern: 'notificationId.*:\s*string|identifier.*:\s*string'
-  - type: file-matches
-    config:
-      path: 'employee.tsp'
-      pattern: 'status.*:\s*string'
-  - type: file-matches
-    config:
-      path: 'employee.tsp'
-      pattern: 'notify is ArmResourceActionSync<|notify is ArmResourceActionAsync<|notify is ArmResourceAction<'
-  - type: prompt
-    config:
-      scoring: scale_1_5
-      threshold: 1.0
-      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
-      model: claude-opus-4.6
 
 - name: 002008-ARM-add-parameters
   prompt: |
@@ -509,10 +299,6 @@ stimuli:
     config:
       required:
         - azure-typespec-author
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: 'listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*\{\s*\.\.\.TopQueryParameter;\s*\.\.\.SkipQueryParameter;\s*\}\s*>|listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*Parameters\s*=\s*ArmTopParameter\s*&\s*ArmSkipParameter\s*>|model\s+EmployeeListBySubscriptionParameters\s+is\s+Azure\.Core\.StandardListQueryParameters\s*;[\s\S]*?listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*EmployeeListBySubscriptionParameters\s*>'
 
 - name: 002009-arm-add-patch-operation-to-resource
   prompt: |
@@ -522,20 +308,20 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
-    - src: ../fixtures/002009-arm-add-patch-operation-to-resource/employee.tsp
-      dest: employee.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
-      dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
-    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
-      dest: readme.md
-    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
-      dest: shared.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
-      dest: tspconfig.yaml
+      - src: ../fixtures/002009-arm-add-patch-operation-to-resource/employee.tsp
+        dest: employee.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+        dest: main.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: package.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: package-lock.json
+      - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+        dest: readme.md
+      - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+        dest: shared.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+        dest: tspconfig.yaml
   graders:
   - type: tool-calls
     config:
@@ -547,17 +333,6 @@ stimuli:
     config:
       required:
         - azure-typespec-author
-  - type: file-matches
-    config:
-      path: employee.tsp
-      pattern: 'update\s+is\s+ArmCustomPatchSync\s*<'
-  - type: prompt
-    config:
-      scoring: scale_1_5
-      threshold: 1.0
-      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
-      model: claude-opus-4.6
-
 - name: 002010-arm-action-sync-operation
   prompt: |
     In the Widget project, add a sync operation exportData for employee resource.
@@ -566,20 +341,20 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
-    - src: ../fixtures/002010-arm-action-sync-operation/employee.tsp
-      dest: employee.tsp
-    - src: ../fixtures/002010-arm-action-sync-operation/main.tsp
-      dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
-    - src: ../fixtures/002010-arm-action-sync-operation/readme.md
-      dest: readme.md
-    - src: ../fixtures/002010-arm-action-sync-operation/shared.tsp
-      dest: shared.tsp
-    - src: ../fixtures/002010-arm-action-sync-operation/tspconfig.yaml
-      dest: tspconfig.yaml
+      - src: ../fixtures/002010-arm-action-sync-operation/employee.tsp
+        dest: employee.tsp
+      - src: ../fixtures/002010-arm-action-sync-operation/main.tsp
+        dest: main.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: package.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: package-lock.json
+      - src: ../fixtures/002010-arm-action-sync-operation/readme.md
+        dest: readme.md
+      - src: ../fixtures/002010-arm-action-sync-operation/shared.tsp
+        dest: shared.tsp
+      - src: ../fixtures/002010-arm-action-sync-operation/tspconfig.yaml
+        dest: tspconfig.yaml
   graders:
   - type: tool-calls
     config:
@@ -591,26 +366,9 @@ stimuli:
     config:
       required:
         - azure-typespec-author
-  - type: file-matches
-    config:
-      path: employee.tsp
-      pattern: 'exportData\s+is\s+ArmResourceActionSync'
-  - type: file-matches
-    config:
-      path: employee.tsp
-      pattern: 'ExportResponse|ExportDataResponse|ExportResult|ExportDataResult'
-  - type: prompt
-    config:
-      scoring: scale_1_5
-      threshold: 1.0
-      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
-      model: claude-opus-4.6
 
 scoring:
   weights:
     tool-calls: 1
     skill-invocation: 1
-    prompt: 1
-    file-matches: 1
-    file-not-matches: 1
   threshold: 1.0

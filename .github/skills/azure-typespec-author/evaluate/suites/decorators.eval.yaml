@@ -21,24 +21,24 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
-    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
-      dest: employee.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
-      dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
-    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
-      dest: readme.md
-    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
-      dest: shared.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
-      dest: tspconfig.yaml
-    - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
-      dest: stable/2021-11-01/widget.json
-    - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
-      dest: preview/2024-10-01-preview/widget.json
+      - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+        dest: employee.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+        dest: main.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: package.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: package-lock.json
+      - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+        dest: readme.md
+      - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+        dest: shared.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+        dest: tspconfig.yaml
+      - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+        dest: stable/2021-11-01/widget.json
+      - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+        dest: preview/2024-10-01-preview/widget.json
   graders:
   - type: tool-calls
     config:
@@ -50,16 +50,6 @@ stimuli:
     config:
       required:
         - azure-typespec-author
-  - type: file-matches
-    config:
-      path: '*.tsp'
-      pattern: '@@minLength\(Employee\.name,\s*1\)'
-  - type: prompt
-    config:
-      scoring: scale_1_5
-      threshold: 1.0
-      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
-      model: claude-opus-4.6
 
 - name: 004002-decorate-length-constrains-on-array-item
   prompt: |
@@ -69,20 +59,20 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
-    - src: ../fixtures/004002-decorate-length-constrains-on-array-item/employee.tsp
-      dest: employee.tsp
-    - src: ../fixtures/004002-decorate-length-constrains-on-array-item/main.tsp
-      dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
-    - src: ../fixtures/004002-decorate-length-constrains-on-array-item/readme.md
-      dest: readme.md
-    - src: ../fixtures/004002-decorate-length-constrains-on-array-item/shared.tsp
-      dest: shared.tsp
-    - src: ../fixtures/004002-decorate-length-constrains-on-array-item/tspconfig.yaml
-      dest: tspconfig.yaml
+      - src: ../fixtures/004002-decorate-length-constrains-on-array-item/employee.tsp
+        dest: employee.tsp
+      - src: ../fixtures/004002-decorate-length-constrains-on-array-item/main.tsp
+        dest: main.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: package.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: package-lock.json
+      - src: ../fixtures/004002-decorate-length-constrains-on-array-item/readme.md
+        dest: readme.md
+      - src: ../fixtures/004002-decorate-length-constrains-on-array-item/shared.tsp
+        dest: shared.tsp
+      - src: ../fixtures/004002-decorate-length-constrains-on-array-item/tspconfig.yaml
+        dest: tspconfig.yaml
   graders:
   - type: tool-calls
     config:
@@ -94,28 +84,6 @@ stimuli:
     config:
       required:
         - azure-typespec-author
-  - type: file-matches
-    config:
-      path: employee.tsp
-      pattern: 'scalar.*extends string'
-  - type: file-matches
-    config:
-      path: employee.tsp
-      pattern: '@minLength\(3\)'
-  - type: file-matches
-    config:
-      path: employee.tsp
-      pattern: '@maxLength\(10\)'
-  - type: file-not-matches
-    config:
-      path: employee.tsp
-      pattern: 'assets:\s*string\[\]'
-  - type: prompt
-    config:
-      scoring: scale_1_5
-      threshold: 1.0
-      prompt: 'Verify asset use the custom scalar type with minLength and maxLength constraints instead of plain string.'
-      model: claude-opus-4.6
 
 - name: 004003-delete-and-restore-operationId-decorator
   prompt: |
@@ -125,32 +93,32 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
-    - src: ../fixtures/004003-delete-and-restore-operationId-decorator/BastionHost.tsp
-      dest: BastionHost.tsp
-    - src: ../fixtures/004003-delete-and-restore-operationId-decorator/BgpConnection.tsp
-      dest: BgpConnection.tsp
-    - src: ../fixtures/004003-delete-and-restore-operationId-decorator/ExpressRouteGateway.tsp
-      dest: ExpressRouteGateway.tsp
-    - src: ../fixtures/004003-delete-and-restore-operationId-decorator/ExpressRoutePort.tsp
-      dest: ExpressRoutePort.tsp
-    - src: ../fixtures/004003-delete-and-restore-operationId-decorator/ExpressRouteProviderPort.tsp
-      dest: ExpressRouteProviderPort.tsp
-    - src: ../fixtures/004003-delete-and-restore-operationId-decorator/NetworkInterface.tsp
-      dest: NetworkInterface.tsp
-    - src: ../fixtures/004003-delete-and-restore-operationId-decorator/P2SVpnGateway.tsp
-      dest: P2SVpnGateway.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
-    - src: ../fixtures/004003-delete-and-restore-operationId-decorator/Route.tsp
-      dest: Route.tsp
-    - src: ../fixtures/004003-delete-and-restore-operationId-decorator/VpnServerConfigurationPolicyGroup.tsp
-      dest: VpnServerConfigurationPolicyGroup.tsp
-    - src: ../fixtures/004003-delete-and-restore-operationId-decorator/VpnSiteLinkConnection.tsp
-      dest: VpnSiteLinkConnection.tsp
-    - src: ../fixtures/004003-delete-and-restore-operationId-decorator/tspconfig.yaml
-      dest: tspconfig.yaml
+      - src: ../fixtures/004003-delete-and-restore-operationId-decorator/BastionHost.tsp
+        dest: BastionHost.tsp
+      - src: ../fixtures/004003-delete-and-restore-operationId-decorator/BgpConnection.tsp
+        dest: BgpConnection.tsp
+      - src: ../fixtures/004003-delete-and-restore-operationId-decorator/ExpressRouteGateway.tsp
+        dest: ExpressRouteGateway.tsp
+      - src: ../fixtures/004003-delete-and-restore-operationId-decorator/ExpressRoutePort.tsp
+        dest: ExpressRoutePort.tsp
+      - src: ../fixtures/004003-delete-and-restore-operationId-decorator/ExpressRouteProviderPort.tsp
+        dest: ExpressRouteProviderPort.tsp
+      - src: ../fixtures/004003-delete-and-restore-operationId-decorator/NetworkInterface.tsp
+        dest: NetworkInterface.tsp
+      - src: ../fixtures/004003-delete-and-restore-operationId-decorator/P2SVpnGateway.tsp
+        dest: P2SVpnGateway.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: package.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: package-lock.json
+      - src: ../fixtures/004003-delete-and-restore-operationId-decorator/Route.tsp
+        dest: Route.tsp
+      - src: ../fixtures/004003-delete-and-restore-operationId-decorator/VpnServerConfigurationPolicyGroup.tsp
+        dest: VpnServerConfigurationPolicyGroup.tsp
+      - src: ../fixtures/004003-delete-and-restore-operationId-decorator/VpnSiteLinkConnection.tsp
+        dest: VpnSiteLinkConnection.tsp
+      - src: ../fixtures/004003-delete-and-restore-operationId-decorator/tspconfig.yaml
+        dest: tspconfig.yaml
   graders:
   - type: tool-calls
     config:
@@ -160,60 +128,9 @@ stimuli:
     config:
       required:
         - azure-typespec-author
-  - type: file-not-matches
-    config:
-      path: BgpConnection.tsp
-      pattern: '@operationId\('
-  - type: file-not-matches
-    config:
-      path: NetworkInterface.tsp
-      pattern: '@operationId\('
-  - type: file-not-matches
-    config:
-      path: ExpressRouteGateway.tsp
-      pattern: '@operationId\('
-  - type: file-not-matches
-    config:
-      path: ExpressRoutePort.tsp
-      pattern: '@operationId\('
-  - type: file-not-matches
-    config:
-      path: P2SVpnGateway.tsp
-      pattern: '@operationId\('
-  - type: file-not-matches
-    config:
-      path: VpnServerConfigurationPolicyGroup.tsp
-      pattern: '@operationId\('
-  - type: file-not-matches
-    config:
-      path: VpnSiteLinkConnection.tsp
-      pattern: '@operationId\('
-  - type: file-matches
-    config:
-      path: BastionHost.tsp
-      pattern: '@operationId\("PutBastionShareableLink"\)'
-  - type: file-matches
-    config:
-      path: BastionHost.tsp
-      pattern: '@operationId\("GetActiveSessions"\)'
-  - type: file-matches
-    config:
-      path: ExpressRouteProviderPort.tsp
-      pattern: '@operationId\("ExpressRouteProviderPort"\)'
-  - type: file-matches
-    config:
-      path: BastionHost.tsp
-      pattern: '#suppress.*no-openapi|#suppress.*operationId'
-  - type: file-not-matches
-    config:
-      path: ExpressRouteProviderPort.tsp
-      pattern: '@operationId\("ExpressRouteProviderPortsLocation_List"\)'
 
 scoring:
   weights:
     tool-calls: 1
     skill-invocation: 1
-    prompt: 1
-    file-matches: 1
-    file-not-matches: 1
   threshold: 1.0

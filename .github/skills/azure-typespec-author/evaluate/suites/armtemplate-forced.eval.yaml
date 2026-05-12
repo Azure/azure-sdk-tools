@@ -1,0 +1,628 @@
+name: azure-typespec-author-eval-forced
+description: Evaluation suite for azure-typespec-author - armtemplate cases with forced skill invocation and code quality graders.
+version: "1.0"
+type: capability
+
+environment: azsdk-mcp
+
+config:
+  runs: 1
+  timeout: "660s"
+  model: claude-opus-4.6
+  executor: copilot-sdk
+  workers: 3
+
+stimuli:
+- name: 002001-ARM-change-resource-type
+  prompt: |
+    @azure-typespec-author change resource Employee to be an extension resource. Ensure the definition meets TypeSpec Azure guidelines.
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+  environment:
+    files:
+    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+      dest: employee.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
+    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+      dest: readme.md
+    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+      dest: tspconfig.yaml
+    - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+      dest: stable/2021-11-01/widget.json
+    - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+      dest: preview/2024-10-01-preview/widget.json
+  graders:
+  - type: tool-calls
+    config:
+      required:
+      - edit
+      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+      - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+      - azure-typespec-author
+  - type: file-matches
+    config:
+      path: '*.tsp'
+      pattern: ExtensionResource<
+  - type: file-not-matches
+    config:
+      path: '*.tsp'
+      pattern: TrackedResource<
+  - type: file-matches
+    config:
+      path: '*.tsp'
+      pattern: Extension\.Read<|Extension\.CreateOrReplaceAsync<|Extension\.CustomPatch(Sync|Async)<|Extension\.DeleteWithoutOkAsync<|Extension\.ListByTarget<
+  - type: prompt
+    config:
+      scoring: scale_1_5
+      threshold: 1.0
+      prompt: 'The original separate list-by-resource-group and list-by-subscription operations should be consolidated into a single list operation using the extension list template. A scope-parameterized
+        interface should be defined to allow the extension resource to be scoped to any parent resource.'
+      model: claude-opus-4.6
+
+- name: 002002-ARM-define-extension-resource
+  prompt: |
+    @azure-typespec-author add an extension resource named asset
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+  environment:
+    files:
+    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+      dest: employee.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
+    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+      dest: readme.md
+    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+      dest: tspconfig.yaml
+  graders:
+  - type: tool-calls
+    config:
+      required:
+      - edit
+      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+      - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+      - azure-typespec-author
+  - type: file-matches
+    config:
+      path: '*.tsp'
+      pattern: model Asset is ExtensionResource<AssetProperties>
+  - type: file-matches
+    config:
+      path: '*.tsp'
+      pattern: interface Assets|interface AssetOps
+  - type: file-matches
+    config:
+      path: '*.tsp'
+      pattern: provisioningState
+
+- name: 002003-ARM-define-full-update-operation
+  prompt: |
+    @azure-typespec-author Define a PATCH operation for Employees. It is to update properties of an employee. Ensure the definition meets TypeSpec Azure guidelines.
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+  environment:
+    files:
+    - src: ../fixtures/002003-ARM-define-full-update-operation/employee.tsp
+      dest: employee.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
+    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+      dest: readme.md
+    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+      dest: tspconfig.yaml
+  graders:
+  - type: tool-calls
+    config:
+      required:
+      - edit
+      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+      - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+      - azure-typespec-author
+  - type: file-matches
+    config:
+      path: '*.tsp'
+      pattern: 'update\s+is\s+ArmCustomPatchSync\s*<'
+
+- name: 002004-ARM-define-extension-resource
+  prompt: |
+    @azure-typespec-author Define a "badge assignment" extension resource. It should be an extension resource that can be attached to an employee. Ensure the definition meets TypeSpec Azure design guidelines.
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+  environment:
+    files:
+    - src: ../fixtures/002004-ARM-define-extension-resource/badgeAssignment.tsp
+      dest: badgeAssignment.tsp
+    - src: ../fixtures/002004-ARM-define-extension-resource/employee.tsp
+      dest: employee.tsp
+    - src: ../fixtures/002004-ARM-define-extension-resource/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
+    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+      dest: readme.md
+    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+      dest: tspconfig.yaml
+  graders:
+  - type: tool-calls
+    config:
+      required:
+      - edit
+      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+      - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+      - azure-typespec-author
+  - type: file-matches
+    config:
+      path: badgeAssignment.tsp
+      pattern: model BadgeAssignment is ExtensionResource<BadgeAssignmentProperties>
+  - type: file-matches
+    config:
+      path: badgeAssignment.tsp
+      pattern: '@visibility\(Lifecycle\.Read\)'
+  - type: file-matches
+    config:
+      path: badgeAssignment.tsp
+      pattern: Extension\.Read<|Extension\.CreateOrReplaceAsync<|Extension\.CustomPatch(Sync|Async)<|Extension\.DeleteWithoutOkAsync<
+  - type: file-matches
+    config:
+      path: badgeAssignment.tsp
+      pattern: Extension\.ListByTarget<
+  - type: prompt
+    config:
+      scoring: scale_1_5
+      threshold: 1.0
+      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
+      model: claude-opus-4.6
+
+- name: 002005-ARM-define-the-resource
+  prompt: |
+    @azure-typespec-author Define a Azure resource "Employee" under the namespace "Microsoft.Widget" using TypeSpec. Properties: age (int32, optional), city (string, optional), profile (bytes, optional), provisioningState (enum incorporating ResourceProvisioningState, optional, read-only). Ensure the definition meets TypeSpec Azure design guidelines.
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+  environment:
+    files:
+    - src: ../fixtures/002005-ARM-define-the-resource/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
+    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+      dest: readme.md
+    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+      dest: tspconfig.yaml
+  graders:
+  - type: tool-calls
+    config:
+      required:
+      - edit
+      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+      - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+      - azure-typespec-author
+  - type: file-matches
+    config:
+      path: '*.tsp'
+      pattern: model Employee is TrackedResource<EmployeeProperties>
+  # Point 3: EmployeeProperties has age, city, profile, and read-only provisioningState
+  - type: file-matches
+    config:
+      path: '*.tsp'
+      pattern: 'age\?: int32'
+  - type: file-matches
+    config:
+      path: '*.tsp'
+      pattern: '@visibility\(Lifecycle\.Read\)'
+  # Point 4: ProvisioningState union includes standard ARM states
+  - type: file-matches
+    config:
+      path: '*.tsp'
+      pattern: ResourceProvisioningState
+  # Point 5: CRUD + listByResourceGroup + listBySubscription
+  - type: file-matches
+    config:
+      path: '*.tsp'
+      pattern: ArmResourceCreateOrReplaceAsync<Employee>|ArmResourceCreateOrUpdateAsync<Employee>
+  - type: file-matches
+    config:
+      path: '*.tsp'
+      pattern: ArmResourceListByParent<Employee>
+  - type: file-matches
+    config:
+      path: '*.tsp'
+      pattern: ArmListBySubscription<Employee>
+  - type: prompt
+    config:
+      scoring: scale_1_5
+      threshold: 1.0
+      prompt: 'Verify all five aspects: (1) Employee resource definition is written into a TSP file; (2) Employee model uses TrackedResource<EmployeeProperties> under Microsoft.Widget namespace; (3) EmployeeProperties
+        includes age, city, profile, and a read-only provisioningState; (4) ProvisioningState is a union type incorporating standard ARM ResourceProvisioningState; (5) Employees interface includes full
+        CRUD operations (get, create, update, delete) plus listByResourceGroup and listBySubscription.'
+      model: claude-opus-4.6
+
+- name: 002006-ARM-define-child-resource
+  prompt: |
+    @azure-typespec-author Create a new "AddressResource" child resource under the parent resource "Employee". Address properties: street 1(optional), street 2(optional), city(optional), state(optional), postal code(optional), country(optional), and a read-only provisioningState(optional). Ensure the definition meets TypeSpec Azure design guidelines.
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+  environment:
+    files:
+    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+      dest: employee.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
+    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+      dest: readme.md
+    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+      dest: tspconfig.yaml
+    - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+      dest: stable/2021-11-01/widget.json
+    - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+      dest: preview/2024-10-01-preview/widget.json
+  graders:
+  - type: tool-calls
+    config:
+      required:
+      - edit
+      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+      - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+      - azure-typespec-author
+  - type: file-matches
+    config:
+      path: '*.tsp'
+      pattern: '@parentResource\(Employee\)'
+  - type: file-matches
+    config:
+      path: '*.tsp'
+      pattern: 'model AddressResource is ProxyResource<AddressProperties>|model AddressResource is ProxyResource<AddressResourceProperties>'
+  - type: file-matches
+    config:
+      path: '*.tsp'
+      pattern: interface Addresses|interface AddressResource
+  - type: file-matches
+    config:
+      path: '*.tsp'
+      pattern: 'model AddressProperties|model AddressResourceProperties'
+  - type: file-matches
+    config:
+      path: '*.tsp'
+      pattern: 'street1\?: string;'
+  - type: file-matches
+    config:
+      path: '*.tsp'
+      pattern: 'street2\?: string;'
+  - type: file-matches
+    config:
+      path: '*.tsp'
+      pattern: 'city\?: string;'
+  - type: file-matches
+    config:
+      path: '*.tsp'
+      pattern: 'state\?: string;'
+  - type: file-matches
+    config:
+      path: '*.tsp'
+      pattern: 'postalCode\?: string;'
+  - type: file-matches
+    config:
+      path: '*.tsp'
+      pattern: 'country\?: string;'
+  - type: file-matches
+    config:
+      path: '*.tsp'
+      pattern: '@visibility\(Lifecycle\.Read\)'
+  - type: file-matches
+    config:
+      path: '*.tsp'
+      pattern: 'provisioningState\?: ProvisioningState;'
+  # Addresses interface CRUD + list-by-parent
+  - type: file-matches
+    config:
+      path: '*.tsp'
+      pattern: ArmResourceRead<AddressResource>
+  - type: file-matches
+    config:
+      path: '*.tsp'
+      pattern: ArmResourceCreateOrReplaceAsync<AddressResource>|ArmResourceCreateOrReplaceSync<AddressResource>
+  - type: file-matches
+    config:
+      path: '*.tsp'
+      pattern: ArmResourceDeleteWithoutOkAsync<AddressResource>|ArmResourceDeleteSync<AddressResource>
+  - type: file-matches
+    config:
+      path: '*.tsp'
+      pattern: ArmResourceListByParent<AddressResource>
+  - type: prompt
+    config:
+      scoring: scale_1_5
+      threshold: 1.0
+      prompt: 'The Addresses interface should include standard CRUD operations (get, create, update, delete) and a list-by-parent operation.'
+      model: claude-opus-4.6
+
+- name: 002007-ARM-define-custom-action
+  prompt: |
+    @azure-typespec-author Add an additional POST action called "/notify" to the standard operations of Employee. Request body: message content (string) and priority (enum with values Low, Medium, High). Response body: notification identifier (string) and status (string). Ensure the definition meets TypeSpec Azure design guidelines.
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+  environment:
+    files:
+    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+      dest: employee.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
+    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+      dest: readme.md
+    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+      dest: tspconfig.yaml
+    - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+      dest: stable/2021-11-01/widget.json
+    - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+      dest: preview/2024-10-01-preview/widget.json
+  graders:
+  - type: tool-calls
+    config:
+      required:
+      - edit
+      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+      - azure-sdk-mcp-azsdk_run_typespec_validation
+  # VP1: Extensible enum for notification priority levels (Low, Medium, High)
+  - type: skill-invocation
+    config:
+      required:
+      - azure-typespec-author
+  - type: file-matches
+    config:
+      path: 'employee.tsp'
+      pattern: union.*Priority|enum.*Priority
+  - type: file-matches
+    config:
+      path: 'employee.tsp'
+      pattern: 'Low|"Low"'
+  - type: file-matches
+    config:
+      path: 'employee.tsp'
+      pattern: 'Medium|"Medium"'
+  - type: file-matches
+    config:
+      path: 'employee.tsp'
+      pattern: 'High|"High"'
+  # VP2: Request model with message content (string) and priority fields
+  - type: file-matches
+    config:
+      path: 'employee.tsp'
+      pattern: model.*Notify.*Request|model.*Notification.*Request
+  - type: file-matches
+    config:
+      path: 'employee.tsp'
+      pattern: 'message.*:\s*string|content.*:\s*string'
+  - type: file-matches
+    config:
+      path: 'employee.tsp'
+      pattern: 'priority.*:\s*.*Priority'
+  # VP3: Response model with notification identifier (string) and status (string)
+  - type: file-matches
+    config:
+      path: 'employee.tsp'
+      pattern: model.*Notify.*Response|model.*Notification.*Response
+  - type: file-matches
+    config:
+      path: 'employee.tsp'
+      pattern: 'notificationId.*:\s*string|identifier.*:\s*string'
+  - type: file-matches
+    config:
+      path: 'employee.tsp'
+      pattern: 'status.*:\s*string'
+  # VP4: Synchronous notify action on Employees interface
+  - type: file-matches
+    config:
+      path: 'employee.tsp'
+      pattern: 'notify is ArmResourceActionSync<|notify is ArmResourceActionAsync<|notify is ArmResourceAction<'
+  - type: prompt
+    config:
+      scoring: scale_1_5
+      threshold: 1.0
+      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
+      model: claude-opus-4.6
+
+- name: 002008-ARM-add-parameters
+  prompt: |
+    @azure-typespec-author add top and skip query parameters to the ListBySubscription operation in interface Employees. Ensure the definition meets TypeSpec Azure guidelines.
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+  environment:
+    files:
+    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+      dest: employee.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
+    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+      dest: readme.md
+    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+      dest: tspconfig.yaml
+    - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+      dest: stable/2021-11-01/widget.json
+    - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+      dest: preview/2024-10-01-preview/widget.json
+  graders:
+  - type: tool-calls
+    config:
+      required:
+      - edit
+      - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+      - azure-typespec-author
+  - type: file-matches
+    config:
+      path: '*.tsp'
+      pattern: 'listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*\{\s*\.\.\.TopQueryParameter;\s*\.\.\.SkipQueryParameter;\s*\}\s*>|listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*Parameters\s*=\s*ArmTopParameter\s*&\s*ArmSkipParameter\s*>|model\s+EmployeeListBySubscriptionParameters\s+is\s+Azure\.Core\.StandardListQueryParameters\s*;[\s\S]*?listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*EmployeeListBySubscriptionParameters\s*>'
+
+- name: 002009-arm-add-patch-operation-to-resource
+  prompt: |
+    @azure-typespec-author In the Widget project, add a patch operation to an existing ARM resource named 'Employee'
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+  environment:
+    files:
+    - src: ../fixtures/002009-arm-add-patch-operation-to-resource/employee.tsp
+      dest: employee.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
+    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+      dest: readme.md
+    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+      dest: tspconfig.yaml
+  graders:
+  - type: tool-calls
+    config:
+      required:
+      - edit
+      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+      - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+      - azure-typespec-author
+  - type: file-matches
+    config:
+      path: employee.tsp
+      pattern: 'update\s+is\s+ArmCustomPatchSync\s*<'
+  - type: prompt
+    config:
+      scoring: scale_1_5
+      threshold: 1.0
+      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
+      model: claude-opus-4.6
+
+- name: 002010-arm-action-sync-operation
+  prompt: |
+    @azure-typespec-author In the Widget project, add a sync operation exportData for employee resource.
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+  environment:
+    files:
+    - src: ../fixtures/002010-arm-action-sync-operation/employee.tsp
+      dest: employee.tsp
+    - src: ../fixtures/002010-arm-action-sync-operation/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
+    - src: ../fixtures/002010-arm-action-sync-operation/readme.md
+      dest: readme.md
+    - src: ../fixtures/002010-arm-action-sync-operation/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/002010-arm-action-sync-operation/tspconfig.yaml
+      dest: tspconfig.yaml
+  graders:
+  - type: tool-calls
+    config:
+      required:
+      - edit
+      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+      - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+      - azure-typespec-author
+  - type: file-matches
+    config:
+      path: employee.tsp
+      pattern: 'exportData\s+is\s+ArmResourceActionSync'
+  - type: file-matches
+    config:
+      path: employee.tsp
+      pattern: 'ExportResponse|ExportDataResponse|ExportResult|ExportDataResult'
+  - type: prompt
+    config:
+      scoring: scale_1_5
+      threshold: 1.0
+      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
+      model: claude-opus-4.6
+scoring:
+  weights:
+    tool-calls: 1
+    skill-invocation: 1
+    file-matches: 3
+    file-not-matches: 2
+    file-exists: 1
+    file-not-exists: 1
+    prompt: 1
+  threshold: 1.0

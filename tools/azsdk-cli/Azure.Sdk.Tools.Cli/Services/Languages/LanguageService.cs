@@ -399,6 +399,20 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         }
 
         /// <summary>
+        /// Performs language-specific pre-generation steps (e.g., pre-building plugins).
+        /// Called before tools run code generation.
+        /// The default implementation is a no-op. Override in language-specific subclasses as needed.
+        /// As of now, only the .NET language service overrides this to pre-build its generator plugin.
+        /// Implementations should warn and continue on failure rather than throwing.
+        /// </summary>
+        /// <param name="repoRoot">Absolute path to the SDK repository root.</param>
+        /// <param name="ct">Cancellation token.</param>
+        public virtual Task PreGenerateAsync(string repoRoot, CancellationToken ct)
+        {
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
         /// Performs language-specific validation (build, compile, tests, lint, type-check, etc.).
         /// </summary>
         /// <param name="packagePath">Path to the package directory containing generated code.</param>

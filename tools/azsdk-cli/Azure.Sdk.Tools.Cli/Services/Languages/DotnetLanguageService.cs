@@ -49,6 +49,49 @@ public sealed partial class DotnetLanguageService: LanguageService
     public override SdkLanguage Language { get; } = SdkLanguage.DotNet;
     public override bool IsCustomizedCodeUpdateSupported => true;
 
+    private const string PluginRelativePath = "eng/packages/plugins/client/Client.Plugin";
+    private static readonly TimeSpan PluginBuildTimeout = TimeSpan.FromMinutes(5);
+
+    /// <summary>
+    /// Pre-builds the .NET emitter plugin so that pre-compiled DLLs are available in dist/
+    /// before tsp-client runs. This prevents GeneratorHandler from attempting to build the
+    /// plugin .csproj from a copied location where relative paths are broken.
+    /// </summary>
+    public override async Task PreGenerateAsync(string repoRoot, CancellationToken ct)
+    {
+        var pluginDir = Path.Combine(repoRoot, PluginRelativePath);
+        if (!Directory.Exists(pluginDir))
+        {
+            logger.LogWarning("Plugin directory not found at {PluginDir}, skipping pre-build", pluginDir);
+            return;
+        }
+
+        logger.LogInformation("Pre-building .NET plugin at {PluginDir}", pluginDir);
+        var options = new ProcessOptions(
+            DotNetCommand, ["build"],
+            workingDirectory: pluginDir,
+            timeout: PluginBuildTimeout);
+
+        try
+        {
+            var result = await processHelper.Run(options, ct);
+            if (result.ExitCode != 0)
+            {
+                logger.LogWarning(
+                    "Plugin pre-build failed (exit code {ExitCode}). Continuing — GeneratorHandler may attempt its own build.\n{Output}",
+                    result.ExitCode, result.Output);
+            }
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Plugin pre-build failed. Continuing — GeneratorHandler may attempt its own build.");
+        }
+    }
+
     // .NET packages have their main csproj in a src/ subdirectory
     protected override string[] PackageManifestPatterns => ["*.csproj"];
 

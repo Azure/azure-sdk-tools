@@ -3,6 +3,7 @@
 using Moq;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec;
+using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.Package;
 
@@ -58,7 +59,8 @@ public class SdkGenerationToolTests
             _mockGitHelper.Object,
             _logger,
             _mockTspClientHelper.Object,
-            Mock.Of<IRawOutputHelper>()
+            Mock.Of<IRawOutputHelper>(),
+            Array.Empty<LanguageService>()
         );
     }
 

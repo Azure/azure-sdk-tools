@@ -217,6 +217,7 @@ stimuli:
     config:
       path: ExpressRouteProviderPort.tsp
       pattern: '@operationId\("ExpressRouteProviderPortsLocation_List"\)'
+
 scoring:
   weights:
     tool-calls: 1

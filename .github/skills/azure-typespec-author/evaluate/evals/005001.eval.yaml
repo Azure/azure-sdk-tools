@@ -19,8 +19,8 @@ stimuli:
     Add suppressions for the warnings produced by "tsp compile .", and set the justification to "FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details".
   name: 005001-warning-suppress-warning
   constraints:
-    max_turns: 10
-    max_tokens: 100000
+    max_turns: 6
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/005001-warning-suppress-warning/models.tsp

@@ -2,20 +2,23 @@ name: azure-typespec-author-eval-forced
 description: Evaluation suite for azure-typespec-author - warning cases with forced skill invocation and code quality graders.
 version: "1.0"
 type: capability
+
 environment: azsdk-mcp
+
 config:
   runs: 1
-  timeout: "660s"
+  timeout: "1200s"
   model: claude-opus-4.6
   executor: copilot-sdk
   workers: 1
+
 stimuli:
 - name: 005001-warning-suppress-warning
   prompt: |
     @azure-typespec-author Add suppressions for the warnings produced by "tsp compile .", and set the justification to "FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details".
   constraints:
-    max_turns: 10
-    max_tokens: 100000
+    max_turns: 6
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/005001-warning-suppress-warning/models.tsp

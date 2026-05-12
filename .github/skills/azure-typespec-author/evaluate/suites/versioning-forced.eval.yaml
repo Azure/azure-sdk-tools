@@ -876,6 +876,7 @@ stimuli:
       threshold: 1.0
       prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
       model: claude-opus-4.6
+
 scoring:
   weights:
     tool-calls: 1

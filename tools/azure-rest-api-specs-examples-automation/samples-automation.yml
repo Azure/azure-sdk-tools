@@ -6,7 +6,7 @@ variables:
 - template: ../../eng/pipelines/templates/variables/globals.yml
 - template: ../../eng/pipelines/templates/variables/image.yml
 - name: GoVersion
-  value: '1.23.0'
+  value: '1.25.0'
 - name: NodeVersion
   value: '24.x'
 

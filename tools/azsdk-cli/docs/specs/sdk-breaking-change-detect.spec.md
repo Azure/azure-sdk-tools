@@ -20,8 +20,9 @@
       - [Component 4: Breaking change Result](#component-4-breaking-change-result)
     - [User Experience](#user-experience)
     - [Scenarios for Using the Tool](#scenarios-for-using-the-tool)
-      - [Scenario 1: Detect and resolve breaking change local](#scenario-1-detect-and-resolve-breaking-change-local)
-      - [Scenario 2: SDK breaking change resolve in Spec PR and Code PR](#scenario-2-sdk-breaking-change-resolve-in-spec-pr-and-code-pr)
+      - [Scenario 1: Detect and resolve SDK breaking change local](#scenario-1-detect-and-resolve-sdk-breaking-change-local)
+      - [Scenario 2: Spec PR automation pipeline and SDK breaking change resolve](#scenario-2-spec-pr-automation-pipeline-and-sdk-breaking-change-resolve)
+      - [Scenario 3: When release SDK, Resolve SDK breaking changes in SDK repo PR](#scenario-3-when-release-sdk-resolve-sdk-breaking-changes-in-sdk-repo-pr)
   - [Agent Prompts](#agent-prompts)
     - [\[Detect breaking change for Go SDK\]](#detect-breaking-change-for-go-sdk)
   - [CLI Commands](#cli-commands)
@@ -49,6 +50,8 @@
 
 Service teams and SDK teams spend significant manual effort detecting SDK breaking changes and mitigate them. This process is time-consuming and still fails to reliably identify all breaking changes, leading to some being missed or incorrectly resolved. As a result, overall SDK quality is degraded.
 
+Reviewing and resolving SDK breaking changes is a required step for Spec PR merges. Because detecting and resolving SDK breaking changes is complex and time-consuming, the Spec PR merge lifecycle is extended, which delays both Spec merges and follow-up SDK release processes.
+
 ### Why This Matters
 
 **Impact on service API merge and SDK release experience**
@@ -69,6 +72,7 @@ What are we trying to achieve with this design?
 
 - [ ] detect and classify breaking changes according to the SDK breaking changes policy for each language, and identify which breaking change is resolvable.
 - [ ] align with the breaking change policy for each language
+- [ ] integrate SDK breaking change detection into Spec PR and SDK PR workflows.
 
 ## Design Proposal
 
@@ -291,16 +295,16 @@ The result is JSON-formatted.
 
 ```bash
 # Example usage
-azsdk package detect-breaking-change --package-path <sdk-package-path> --language go --tsp-config-path C:/dev/azure-rest-api-specs/specification/storage/Storage.Management/tspconfig.yaml --generate-sdk false
+azsdk package detect-breaking-change --package-path <sdk-package-path> --language go --tsp-config-path <tsp-config-yaml-file-path> --generate-sdk false
 ```
 
 ### Scenarios for Using the Tool
 
 **NOTE:** Following are two E2E scenario which 'azsdk_package_detect_breaking_change' tool will **take part in.**
 
-#### Scenario 1: Detect and resolve breaking change local
+#### Scenario 1: Detect and resolve SDK breaking change local
 
-Detect and resolve breaking changes in a local spec or SDK repository.
+Detect and resolve breaking changes in a local spec repository.
 
 **Prerequisite:**
 The local SDK repository and development environment are set up.
@@ -317,10 +321,14 @@ Flow:
             2. Type of property `Prop` has been changed from `string` to `int32`, breaking Go SDK
 4. Agent invoke `azsdk_customized_code_update` to mitigate breaking changes.
 
-#### Scenario 2: SDK breaking change resolve in Spec PR and Code PR
+#### Scenario 2: Spec PR automation pipeline and SDK breaking change resolve
 
-prompt: @copilot resolve SDK breaking changes
 Flow:
+The end-to-end flow contains two stages:
+- SDK Validation Automation stage
+- Copilot Breaking Change Resolution stage
+
+SDK breaking change detection is one step in the SDK Validation Automation pipeline.
 
 ```mermaid
 flowchart TD
@@ -330,6 +338,18 @@ flowchart TD
     D[PR owner Ask Copilot to Resolve Breaking Changes]
     E[Copilot Calls azsdk_customized_code_update]
     F[SDK Breaking Change Resolved]
+    subgraph Automation["SDK Validation Automation"]
+      A
+      B
+      C
+      G
+    end
+
+    subgraph Copilot["Copilot resolving Breaking change"]
+      D
+      E
+      F
+    end
 
     A --> B
     B --> C
@@ -345,13 +365,46 @@ flowchart TD
     %% styling
     class G breaking;
     classDef breaking fill:#fff3cd,stroke:#f0ad4e,stroke-width:1.5px;
+    
+    %% 1. Copilot: remove rectangle
+    style Copilot fill:transparent,stroke:#999,stroke-width:0.5px
+
+    
+    %% 2. Automation: simulate bottom border
+    style Automation fill:transparent,stroke:#999,stroke-width:0.5px
+
+
 ```
 
-1. Agent invoke `azsdk_package_detect_breaking_change` to detect and classify breaking changes
-2. Github Action will label 'BreakingChange-XXX-Sdk' to indicate which language SDK has breaking changes.
-3. User (PR owner) check the breaking changes, and choose breaking changes to resolve.
-   Use prompt: @copilot resolve breaking changes: XXXXXXX
-4. Agent invoke `azsdk_customized_code_update` to mitigate breaking changes.
+1. The SDK validation pipeline runs the SDK generation tool command 'azsdk package generate'.
+2. The SDK validation pipeline runs the SDK Breaking Change Detector tool command 'azsdk package detect-breaking-change' (defined in this document) to detect and classify breaking changes.
+3. GitHub Actions adds the 'BreakingChange-XXX-Sdk' label to indicate which language SDK has breaking changes and displays the detected breaking changes.
+4. The PR owner reviews the detected breaking changes and selects which ones to resolve.
+    Use prompt: @copilot resolve breaking changes: XXXXXXX
+5. Copilot invokes 'azsdk_customized_code_update' to mitigate the selected breaking changes.
+   
+    When resolving breaking changes requires TypeSpec customization (updating client.tsp), a customization PR is filed against the source branch of the Spec PR. The PR owner reviews and merges the customization PR. After it is merged, the original Spec PR is refreshed to include the customization.
+
+    **Open question:**
+    
+    If resolving breaking changes requires SDK code customization (updating SDK source code), should we file an SDK PR to refresh the SDK code now, or defer the SDK code customization to a later SDK release?
+
+#### Scenario 3: When release SDK, Resolve SDK breaking changes in SDK repo PR
+
+SDK owner comment: @copilot detect and resolve breaking changes
+
+**Expected Agent Activity:**
+
+1. Copilot Agent invoke `azsdk_package_detect_breaking_change` to detect and classify breaking changes
+2. Copilot Agent list all the SDK breaking changes one-by-one:
+    e.g. SDK breaking changes:
+            1. model `ResourceInfo` is renamed to `Resource`, break Go and Java SDK
+            2. Type of property `Prop` has been changed from `string` to `int32`, breaking Go SDK
+3. Copilot Agent invoke `azsdk_customized_code_update` to mitigate breaking changes.
+
+When resolving breaking changes requires TypeSpec updates, a Spec PR is filed in the spec repository. The SDK PR is refreshed only after that Spec PR is merged, and the SDK breaking changes are then resolved.
+
+After SDK breaking change detection and resolution are enabled in Spec PR workflows, overall TypeSpec quality improves, and cases that require TypeSpec updates to resolve breaking changes become rare.
 
 ## Agent Prompts
 

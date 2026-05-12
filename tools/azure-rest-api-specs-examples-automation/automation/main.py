@@ -23,7 +23,7 @@ csv_database: CsvDatabase
 
 start_time_secs: float
 
-timeout_secs: float = 40 * 60  # 40 minutes
+timeout_secs: float = 50 * 60  # 50 minutes
 
 clean_tmp_dir: bool = True
 tmp_folder: str = "tmp"

@@ -9,7 +9,7 @@ trigger:
       - main
   paths:
     include:
-      - tools/sdk-ai-bots/azure-sdk-qa-bot-agent/
+      - tools/sdk-ai-bots/azure-sdk-qa-bot-agent/**/*.py
 
 pr:
   branches:
@@ -17,7 +17,7 @@ pr:
       - main
   paths:
     include:
-      - tools/sdk-ai-bots/azure-sdk-qa-bot-agent/
+      - tools/sdk-ai-bots/azure-sdk-qa-bot-agent/**/*.py
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
   parameters:

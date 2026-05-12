@@ -438,7 +438,13 @@
                         "Should_Reply": {
                           "type": "If",
                           "expression": {
-                            "and": [
+                            "or": [
+                              {
+                                "equals": [
+                                  "@item()?['replyToMessageId']",
+                                  "@item()?['messageId']"
+                                ]
+                              },
                               {
                                 "equals": [
                                   "@body('Check_Intention')['should_respond']",

@@ -7,7 +7,7 @@ environment: azsdk-mcp
 
 config:
   runs: 1
-  timeout: "1200s"
+  timeout: "1500s"
   model: claude-opus-4.6
   executor: copilot-sdk
   workers: 1

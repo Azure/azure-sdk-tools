@@ -30,7 +30,7 @@ extends:
         jobs:
           - job: RunEvalsForCodeQuality
             displayName: Run Vally Evaluations for Code Quality
-            timeoutInMinutes: 165
+            timeoutInMinutes: 170
             steps:
               - checkout: self
                 fetchDepth: 0
@@ -85,15 +85,16 @@ extends:
                   workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
                   inlineScript: |
                     export GOPROXY=https://proxy.golang.org,direct
-                    : > qa-bot-service.log
+                    LOG_DIR=$(Build.StagingDirectory)/qa-bot-log
+                    mkdir -p "$LOG_DIR"
                     go build -o qa-bot-service
                     chmod +x qa-bot-service
-                    nohup ./qa-bot-service > qa-bot-service.log 2>&1 &
+                    nohup ./qa-bot-service > "$LOG_DIR/qa-bot-service.log" 2>&1 &
                     SERVICE_PID=$!
                     echo "Service started with PID: $SERVICE_PID"
                     sleep 20
                     echo "=== Service log ==="
-                    cat qa-bot-service.log || true
+                    cat "$LOG_DIR/qa-bot-service.log" || true
                     echo "==================="
                     if ! kill -0 $SERVICE_PID 2>/dev/null; then
                       echo "ERROR: Service process has exited unexpectedly"
@@ -241,7 +242,7 @@ extends:
                   cd .github/skills/azure-typespec-author/evaluate
                   vally eval --eval-spec suites/warning-forced.eval.yaml --output-dir results --verbose
                 displayName: Run force invokation suite - warning
-                timeoutInMinutes: 20
+                timeoutInMinutes: 25
                 continueOnError: true
                 condition: always()
                 env:
@@ -256,14 +257,14 @@ extends:
                   condition: always()
 
                 - output: pipelineArtifact
-                  path: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/qa-bot-service.log
+                  path: $(Build.StagingDirectory)/qa-bot-log
                   artifact: qa-bot-service-log-code-quality
                   displayName: Upload QA bot backend log
                   condition: always()
 
           - job: RunEvalsForSkillInvokation
             displayName: Run Vally Evaluations for Skill Invokation
-            timeoutInMinutes: 165
+            timeoutInMinutes: 170
             dependsOn: RunEvalsForCodeQuality
             steps:
               - checkout: self
@@ -319,15 +320,16 @@ extends:
                   workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
                   inlineScript: |
                     export GOPROXY=https://proxy.golang.org,direct
-                    : > qa-bot-service.log
+                    LOG_DIR=$(Build.StagingDirectory)/qa-bot-log
+                    mkdir -p "$LOG_DIR"
                     go build -o qa-bot-service
                     chmod +x qa-bot-service
-                    nohup ./qa-bot-service > qa-bot-service.log 2>&1 &
+                    nohup ./qa-bot-service > "$LOG_DIR/qa-bot-service.log" 2>&1 &
                     SERVICE_PID=$!
                     echo "Service started with PID: $SERVICE_PID"
                     sleep 20
                     echo "=== Service log ==="
-                    cat qa-bot-service.log || true
+                    cat "$LOG_DIR/qa-bot-service.log" || true
                     echo "==================="
                     if ! kill -0 $SERVICE_PID 2>/dev/null; then
                       echo "ERROR: Service process has exited unexpectedly"
@@ -475,7 +477,7 @@ extends:
                   cd .github/skills/azure-typespec-author/evaluate
                   vally eval --eval-spec suites/warning.eval.yaml --output-dir results --verbose
                 displayName: Run suite - warning
-                timeoutInMinutes: 20
+                timeoutInMinutes: 25
                 continueOnError: true
                 condition: always()
                 env:
@@ -490,7 +492,7 @@ extends:
                   condition: always()
 
                 - output: pipelineArtifact
-                  path: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/qa-bot-service.log
+                  path: $(Build.StagingDirectory)/qa-bot-log
                   artifact: qa-bot-service-log-skill-invocation
                   displayName: Upload QA bot backend log
                   condition: always()

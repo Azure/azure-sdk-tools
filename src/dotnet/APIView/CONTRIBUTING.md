@@ -119,8 +119,6 @@ Start the backend by opening `APIViewWeb` in Visual Studio and pressing **F5**.
 |---------|--------|-------|
 | `ApiViewUnitTests` | Active | Backend logic and functionality |
 | Angular .spec.ts files | Active | Run with `ng test` |
-| `APIViewIntegrationTests` | Obsolete | Required Cosmos/Storage emulators |
-| `APIViewUITests` | Obsolete | Selenium-based; replaced by Angular test suite |
 
 <br>
 

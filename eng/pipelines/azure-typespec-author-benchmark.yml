@@ -30,7 +30,7 @@ extends:
         jobs:
           - job: RunEvals
             displayName: Run Vally Evaluations
-            timeoutInMinutes: 160
+            timeoutInMinutes: 165
             steps:
               - checkout: self
                 fetchDepth: 0
@@ -241,7 +241,7 @@ extends:
                   cd .github/skills/azure-typespec-author/evaluate
                   vally eval --eval-spec suites/warning.eval.yaml --output-dir results --verbose
                 displayName: Run suite - warning
-                timeoutInMinutes: 15
+                timeoutInMinutes: 20
                 continueOnError: true
                 condition: always()
                 env:

@@ -17,12 +17,12 @@ pr:
 variables:
   - template: /eng/pipelines/templates/variables/image.yml
   - name: NodeVersion
-    value: '22.x'
+    value: "22.x"
   - name: ProjectPath
-    value: 'tools/release-plan-dashboard'
+    value: "tools/release-plan-dashboard"
 
 jobs:
-  - job: 'Build'
+  - job: "Build"
 
     pool:
       name: $(LINUXPOOL)
@@ -32,8 +32,8 @@ jobs:
     steps:
       - task: NodeTool@0
         inputs:
-          versionSpec: '$(NodeVersion)'
-        displayName: 'Use NodeJS $(NodeVersion)'
+          versionSpec: "$(NodeVersion)"
+        displayName: "Use NodeJS $(NodeVersion)"
 
       - script: |
           npm install

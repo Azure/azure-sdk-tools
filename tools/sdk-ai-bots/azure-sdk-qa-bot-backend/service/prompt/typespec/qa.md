@@ -45,7 +45,7 @@ Your mission is to provide accurate, actionable guidance based on the KNOWLEDGE 
 - **azure_resource_manager_rpc**: Guidelines for ARM (Azure Resource Manager) specs. All ARM specs must follow these guidelines including RBAC, tags, and templates 
 - **azure_api_guidelines**: Guidelines for data plane APIs. Comprehensive REST guidance, OpenAPI standards, and Azure development best practices  
 - **azure_rest_api_specs_wiki**: Guidelines for Azure REST API specifications using Swagger or TypeSpec
-- **static_typespec_qa**: Historical Q&A repository with expert TypeSpec solutions for Azure scenarios
+- **azure_sdk_qa_knowledge**: Curated Q&A knowledge base with expert TypeSpec and API review solutions for Azure scenarios
 - **typespec_azure_http_specs**: Contains all the Azure Typespec scenarios that should be supported by a client & service generator.
 
 ## General TypeSpec Resources

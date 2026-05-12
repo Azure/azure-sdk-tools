@@ -1,0 +1,239 @@
+[
+    {
+        "testcase": "Missing APIs in default tag error for typespec conversion PR",
+        "expected": {
+            "answer": "Part of the typespec conversion is replacing the existing swagger with a generated swagger.  The generated swagger is still used for some purposes, and Avocado protects the ability to process it. The generated swagger needs to be equivalent, but not necessarily identical.  Generally these issues reflected in the swagger will also show up in breaking change checks, which will have to be resolved (or suppressed if they are false positives)",
+            "references": [
+                {
+                    "title": "Known Issues",
+                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-Avocado"
+                },
+                {
+                    "title": "Missing APIs in default tag error for typespec conversion PR | answer",
+                    "link": ""
+                },
+                {
+                    "title": "Looking for someone to suppress CI failures https://github.com/Azure/azure-rest-api-specs/pull/36221 | answer",
+                    "link": ""
+                }
+            ]
+        },
+        "actual": {
+            "answer": "There is no direct way to suppress the 'missing APIs in default tag' (Avocado) check only for a TypeSpec conversion PR. The Avocado check is designed to ensure that the generated Swagger (OpenAPI) from your TypeSpec is equivalent to the previous version, as the generated Swagger is still used for validation and downstream tooling. Any differences, including missing APIs, will be flagged—even if your PR only contains TypeSpec conversion and no manual OpenAPI changes.\n\nIf the missing APIs are intentional (for example, you are intentionally removing deprecated APIs as part of the migration), you must follow the standard breaking change process and request approval from the breaking change board. If the differences are false positives or due to known tool limitations, you may request a temporary suppression by adding the 'Approved-Avocado' label to your PR, but this requires coordination with the Avocado/tooling team and is not a self-service option.\n\nIn summary, you cannot suppress this check yourself for a single PR. You must:\n- Ensure your TypeSpec-generated Swagger is equivalent to the previous version, or\n- Work with the breaking change board or Avocado team for approval if the differences are intentional or false positives.\n\nFor more details, see the Avocado known issues and suppression process documentation.",
+            "references": [
+                {
+                    "title": "Known Issues",
+                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-Avocado"
+                },
+                {
+                    "title": "Missing APIs in default tag error for typespec conversion PR | answer",
+                    "link": ""
+                },
+                {
+                    "title": "Suppress validation failures on a PR",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+                }
+            ]
+        },
+        "similarity": 4.0,
+        "gpt_similarity": 4.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "The RESPONSE is fully supported by the CONTEXT, covers all essential details, and does not introduce unsupported information or omit critical points.",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 4.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 4,
+        "response_completeness_reason": "The response is mostly complete, covering the main points about Avocado checks, equivalence, breaking change process, and suppression, but misses minor details about equivalence not requiring identity and explicit replacement of Swagger.",
+        "reference_match": 0.6666666666666666,
+        "reference_match_result": "fail",
+        "knowledge_match": 0.8275862068965517,
+        "knowledge_match_result": "pass",
+        "overall_score": 7.494252873563219
+    },
+    {
+        "testcase": "CI Failure – Swagger LintDiff",
+        "expected": {
+            "answer": "if you are fixing bugs already in main, this is expected.  lintdiff needs to run on your spec both before and after your PR, and if before is crashing, the PR to fix it will still crash.",
+            "references": [
+                {
+                    "title": "CI Failure – Swagger LintDiff | question",
+                    "link": ""
+                }
+            ]
+        },
+        "actual": {
+            "answer": "This error is expected when you are fixing bugs that already exist in the main branch. The Swagger LintDiff check works by running on your spec both before and after your PR. If the 'before' state (main branch) is already broken (for example, missing input files or invalid configuration), then your PR to fix it will still show the same error because LintDiff cannot run the comparison. \n\nTo resolve this, ensure that the main branch is fixed first so that LintDiff can successfully run on both the base and your PR branch. Once the main branch is healthy, your PR should pass the LintDiff check if your changes are correct. This is not a configuration bug in your PR, but a limitation of how LintDiff operates when the baseline is already failing.",
+            "references": [
+                {
+                    "title": "CI Failure – Swagger LintDiff",
+                    "link": ""
+                }
+            ]
+        },
+        "similarity": 4.0,
+        "gpt_similarity": 4.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": "NaN",
+        "gpt_groundedness": "NaN",
+        "groundedness_reason": "",
+        "groundedness_result": "unknown",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 5.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 4,
+        "response_completeness_reason": "The response contains all the necessary and relevant information from the ground truth, with some additional helpful context, and does not miss any key statements.",
+        "reference_match": 0.0,
+        "reference_match_result": "fail",
+        "knowledge_match": 0.9259259259259259,
+        "knowledge_match_result": "pass",
+        "overall_score": "NaN"
+    },
+    {
+        "testcase": "PR gateway pipelines not starting/waiting for long time",
+        "expected": {
+            "answer": "Looks like a permissions issue.  The PR author needs to make their membership in Azure public, not private.  And also join the Azure SDK Partners group.\nhttps://aka.ms/azsdk/access\nhttps://github.com/orgs/Azure/people?query=AbhishekSinha-AEP",
+            "references": [
+                {
+                    "title": "PR gateway pipelines not starting/waiting for long time | answer",
+                    "link": ""
+                }
+            ]
+        },
+        "actual": {
+            "answer": "This issue is most likely caused by a permissions problem with the PR author. For the Azure REST API specs pipelines (including SDK Validation Status and Swagger PrettierCheck) to run and report status, the PR author must:\n\n1. Make their membership in the Azure GitHub organization public (not private).\n2. Join the Azure SDK Partners group to get the necessary permissions.\n\nYou can verify and update your membership visibility here: https://github.com/orgs/Azure/people?query=AbhishekSinha-AEP\n\nAnd request access or check your status here: https://aka.ms/azsdk/access\n\nOnce these steps are completed, the required pipelines should start and report status, unblocking your PR merge. If you have already done this and the issue persists, please allow some time for permissions to propagate, or try closing and reopening the PR after updating your membership.",
+            "references": [
+                {
+                    "title": "PR gateway pipelines not starting/waiting for long time | answer",
+                    "link": ""
+                },
+                {
+                    "title": "SDK-Validation.md | How to Re-evaluate `SDK Validation Status` Check",
+                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/SDK-Validation"
+                }
+            ]
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "The RESPONSE is fully grounded in the CONTEXT, accurately restating the cause and solution, and does not introduce unsupported details or omit critical information.",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 5.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 4,
+        "response_completeness_reason": "The response contains all necessary and relevant information from the ground truth, with no missing statements or claims.",
+        "reference_match": 1.0,
+        "reference_match_result": "pass",
+        "knowledge_match": 0.8461538461538461,
+        "knowledge_match_result": "pass",
+        "overall_score": 8.846153846153847
+    },
+    {
+        "testcase": "RPaaSMaster branch requirement for Ring 0 services",
+        "expected": {
+            "answer": "Based on the available knowledge context, syncing API specs between the public 'main' branch and the private 'RPaaSMaster' branch is the responsibility of the spec owner. There is no strict requirement in the referenced documentation that all resource providers (including ring 0 services like Microsoft.Compute) must have their specs present in RPaaSMaster if they have received an explicit exemption from RPaaS onboarding. The documentation and FAQ state that if your service is not onboarded to RPaaS (and has an exception), you do not need to merge your specs into RPaaSMaster. The presence or absence of Microsoft.Compute in RPaaSMaster does not dictate requirements for other RPs; each spec owner is responsible for their own onboarding and branch sync according to their onboarding status and exemptions. If your ring 0 service has an approved exception, you can continue to manage your specs in 'main' and do not need to merge into RPaaSMaster unless instructed otherwise by the ARM or EngSys team.",
+            "references": [
+                {
+                    "title": "PR in azure-rest-api-specs-pr/main branch isnt merged to RPSaasMaster | answer",
+                    "link": ""
+                },
+                {
+                    "title": "API-Spec-Review-FAQ.md",
+                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/API-Spec-Review-FAQ"
+                }
+            ]
+        },
+        "actual": {
+            "answer": "If your service has received an explicit exception from onboarding to RPaaS, you are not required to merge your API spec into the RPaaSMaster branch before merging to the main branch in the public repository. The requirement to sync specs between main and RPaaSMaster is generally for services that are onboarded to RPaaS. Since you are a ring 0 service with an onboarding exception, and as you observed with Microsoft.Compute (another ring 0 RP not present in RPaaSMaster), you are exempt from this requirement. You should follow the standard process for main branch PRs and ensure you comply with any other guidance provided for ring 0 services.",
+            "references": [
+                {
+                    "title": "PR in azure-rest-api-specs-pr/main branch isnt merged to RPSaasMaster | answer",
+                    "link": ""
+                },
+                {
+                    "title": "API-Spec-Review-FAQ.md",
+                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/API-Spec-Review-FAQ"
+                }
+            ]
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": "NaN",
+        "gpt_groundedness": "NaN",
+        "groundedness_reason": "NaN",
+        "groundedness_result": "NaN",
+        "groundedness_threshold": "NaN",
+        "response_completeness": 4.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 4,
+        "response_completeness_reason": "The response is mostly complete, covering the main requirements and exemptions, but misses minor details about spec owner responsibility and conditional instructions from ARM/EngSys.",
+        "reference_match": 1.0,
+        "reference_match_result": "pass",
+        "knowledge_match": 0.7777777777777778,
+        "knowledge_match_result": "fail",
+        "overall_score": "NaN"
+    },
+    {
+        "testcase": "Looking for someone to suppress CI failures https://github.com/Azure/azure-rest-api-specs/pull/36221",
+        "expected": {
+            "answer": "Based on the information provided and the knowledge context, the Avocado CI failure in your PR (https://github.com/Azure/azure-rest-api-specs/pull/36221) is expected because the Compute service currently has multiple API versions in its default tag, which violates the Uniform Versioning Principle. The Avocado check (MULTIPLE_API_VERSION) was recently made a blocking error to enforce this policy.\nTo temporarily suppress this failure and unblock your PR, you can add the Approved-Avocado label to your PR. However, this is only a one-time suppression and should be done if:\nThere is an ongoing discussion and plan to resolve the uniform versioning issue for Compute.\nYou or your team are aware that this is a temporary measure and are working towards compliance.\nImportant: Regular use of this suppression is discouraged. The long-term solution is to restructure your API versions so all components under Compute adopt a uniform versioning scheme, or split into independent services as outlined in the Uniform Versioning Violation Guide.\nIf you are not aware of any ongoing discussion or plan for resolution, you should reach out to azversioning@service.microsoft.com for guidance.",
+            "references": [
+                {
+                    "title": "Looking for someone to suppress CI failures https://github.com/Azure/azure-rest-api-specs/pull/36221 | question",
+                    "link": ""
+                }
+            ]
+        },
+        "actual": {
+            "answer": "You do not need to suppress CI failures for your PR to a feature branch, as no checks are required at this stage. However, when you attempt to merge to the main branch, you may encounter a blocking error due to the Avocado check, specifically the MULTIPLE_API_VERSION rule. This rule was changed from a warning to an error as of 7/1/2025 and is a blocker for TypeSpec conversion, which is a critical Azure-wide initiative.\n\nTo address this, you should:\n1. Review the guidance on handling multiple API versions and uniform versioning violations: https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-Avocado#multiple_api_version\n2. If your PR is blocked due to this error, consult the Uniform Versioning Violation Guide for resolution steps.\n3. If you believe your service requires a one-time suppression, contact azversioning@service.microsoft.com for approval.\n\nSuppression is not recommended as a permanent solution. The preferred approach is to resolve the versioning issue according to the guidelines. Only request a one-time suppression if you have a valid justification and cannot resolve the issue immediately.",
+            "references": [
+                {
+                    "title": "Looking for someone to suppress CI failures https://github.com/Azure/azure-rest-api-specs/pull/36221 | answer",
+                    "link": ""
+                }
+            ]
+        },
+        "similarity": 4.0,
+        "gpt_similarity": 4.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "The RESPONSE is fully supported by the CONTEXT, includes all essential details, and does not add unsupported information or omit critical points.",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 4.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 4,
+        "response_completeness_reason": "The response is mostly complete, covering the main points about the error, suppression, and long-term resolution, but omits some specific details and context found in the ground truth.",
+        "reference_match": 0.0,
+        "reference_match_result": "fail",
+        "knowledge_match": 0.8333333333333334,
+        "knowledge_match_result": "pass",
+        "overall_score": 6.833333333333333
+    },
+    {
+        "average_score": 7.724580017683467,
+        "total_evals": 5,
+        "similarity_pass_rate": 5,
+        "similarity_fail_rate": 0,
+        "groundedness_pass_rate": 3,
+        "groundedness_fail_rate": 0,
+        "response_completeness_pass_rate": 5,
+        "response_completeness_fail_rate": 0,
+        "knowledge_match_pass_rate": 4,
+        "knowledge_match_fail_rate": 1,
+        "reference_match_pass_rate": 2,
+        "reference_match_fail_rate": 3
+    }
+]

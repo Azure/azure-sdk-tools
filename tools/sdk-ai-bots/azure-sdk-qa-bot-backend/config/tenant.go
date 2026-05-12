@@ -18,7 +18,7 @@ var typespecSources = []model.Source{
 	model.Source_AzureResourceManagerRPC,
 	model.Source_AzureAPIGuidelines,
 	model.Source_TypeSpecAzure,
-	model.Source_TypeSpecQA,
+	model.Source_AzureSDKQAKnowledge,
 	model.Source_TypeSpecAzureHttpSpecs,
 	model.Source_TypeSpec,
 	model.Source_AzureRestAPISpec,
@@ -32,7 +32,7 @@ var azureTypespecAuthoringSources = []model.Source{
 	model.Source_AzureAPIGuidelines,
 	model.Source_AzureResourceManagerRPC,
 	model.Source_TypeSpecAzure,
-	model.Source_TypeSpecQA,
+	model.Source_AzureSDKQAKnowledge,
 	model.Source_TypeSpecAzureHttpSpecs,
 	model.Source_TypeSpec,
 	model.Source_AzureRestAPISpec,
@@ -44,7 +44,6 @@ var azureTypespecAuthoringSources = []model.Source{
 
 var SourceTopK = map[model.Source]int{
 	model.Source_TypeSpecMigration:              3,
-	model.Source_TypeSpecQA:                     3,
 	model.Source_StaticTypeSpecToSwaggerMapping: 3,
 	model.Source_AzureOpenapiDiffDocs:           3,
 }
@@ -144,7 +143,8 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 		PromptTemplate: "typespec/qa.md",
 		Sources:        append(typespecSources, model.Source_AzureSDKDocsEng),
 		SourceFilter: map[model.Source]string{
-			model.Source_AzureSDKDocsEng: "search.ismatch('design*', 'title')",
+			model.Source_AzureSDKDocsEng:     "search.ismatch('design*', 'title')",
+			model.Source_AzureSDKQAKnowledge: "search.ismatch('typespec*', 'title')",
 		},
 		IntentionPromptTemplate: "typespec/intention.md",
 		AgenticSearchPrompt:     "typespec/agentic_search.md",
@@ -157,8 +157,11 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 		IntentionPromptTemplate: "azure_sdk_onboarding/intention.md",
 	},
 	model.TenantID_AzureTypespecAuthoring: {
-		PromptTemplate:          "azure_typespec_authoring/qa.md",
-		Sources:                 azureTypespecAuthoringSources,
+		PromptTemplate: "azure_typespec_authoring/qa.md",
+		Sources:        azureTypespecAuthoringSources,
+		SourceFilter: map[model.Source]string{
+			model.Source_AzureSDKQAKnowledge: "search.ismatch('typespec*', 'title')",
+		},
 		IntentionPromptTemplate: "azure_typespec_authoring/intention.md",
 		AgenticSearchPrompt:     "azure_typespec_authoring/agentic_search.md",
 	},
@@ -170,9 +173,10 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 	},
 	model.TenantID_APISpecReviewBot: {
 		PromptTemplate: "api_spec_review/qa.md",
-		Sources:        []model.Source{model.Source_StaticAzureDocs, model.Source_APISpecViewQA, model.Source_AzureRestAPISpec, model.Source_AzureRestAPISpecDocs, model.Source_AzureOpenapiDiffDocs, model.Source_AzureSDKDocsEng},
+		Sources:        []model.Source{model.Source_StaticAzureDocs, model.Source_AzureSDKQAKnowledge, model.Source_AzureRestAPISpec, model.Source_AzureRestAPISpecDocs, model.Source_AzureOpenapiDiffDocs, model.Source_AzureSDKDocsEng},
 		SourceFilter: map[model.Source]string{
-			model.Source_AzureSDKDocsEng: "search.ismatch('design*', 'title')",
+			model.Source_AzureSDKDocsEng:     "search.ismatch('design*', 'title')",
+			model.Source_AzureSDKQAKnowledge: "search.ismatch('api-spec-review*', 'title')",
 		},
 		IntentionPromptTemplate: "api_spec_review/intention.md",
 		AgenticSearchPrompt:     "api_spec_review/agentic_search.md",

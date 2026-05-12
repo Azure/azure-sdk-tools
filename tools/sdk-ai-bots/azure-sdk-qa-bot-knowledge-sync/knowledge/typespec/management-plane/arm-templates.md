@@ -20,7 +20,53 @@ model MyResourceProperties {
 }
 ```
 
+This is enforced by the `@azure-tools/typespec-azure-resource-manager/arm-no-record` linting rule. `{}` (empty object type) is also invalid in ARM TypeSpec specs.
+
+**If you truly need an arbitrary key/value dictionary**, you must get architecture/review board approval first. Then explicitly suppress the rule with justification:
+
+```typespec
+#suppress "@azure-tools/typespec-azure-resource-manager/arm-no-record" "Approved free-form metadata bag"
+metadata?: Record<string>;
+```
+
+This should be rare — arbitrary dictionaries are strongly discouraged in ARM.
+
+**Important: If this is actually resource tags**, do NOT redefine them. Use the built-in ARM tags support already included in `TrackedResource`:
+
+```typespec
+model MyResource is TrackedResource<MyProperties> {
+  ...ResourceNameParameter<MyResource>;
+  // tags are already included — do not add Record<string> tags property
+}
+```
+
+Or use `...Foundations.ArmTagsProperty` explicitly. ARM tags already use `Record<string>` internally and are exempt from the `arm-no-record` rule.
+
 This guidance applies to ARM (management plane) only.
+
+## ARM PUT LRO patterns: do NOT model 202 on PUT for new services
+
+Per ARM RPC guidelines, the required pattern for ARM resource PUT is: return `201` for create and `200` for update. If the operation is long-running, use `x-ms-long-running-operation: true` and include the appropriate LRO headers (`Azure-AsyncOperation` and/or `Location`).
+
+**Returning `202` for PUT is explicitly deprecated and not supported for new resource types.** This is an old model. For greenfield services (starting Jan 2025), `Azure-AsyncOperation` is required per the RPC contract.
+
+If the service returns an `Azure-AsyncOperation` polling header on the `200` response, it is OK to model it — but only if the operation is actually long-running. The standard ARM TypeSpec templates already handle this correctly: `200` and `201` responses with the resource body, and LRO headers on the create response.
+
+**Choosing between `ArmResourceCreateOrUpdateAsync` vs `ArmResourceCreateOrReplaceAsync`:**
+- `ArmResourceCreateOrUpdateAsync`: 201 response contains `Azure-AsyncOperation` LRO header. Use when final-state polling should use `azure-async-operation`.
+- `ArmResourceCreateOrReplaceAsync`: 201 response contains `Location` LRO header. Use when final-state polling should use `location`.
+
+```typespec
+@armResourceOperations
+interface ManagedClusters {
+  // Produces 200/201 + x-ms-long-running-operation and final-state-via azure-async-operation.
+  createOrUpdate is ArmResourceCreateOrReplaceAsync<ManagedCluster>;
+}
+```
+
+If you truly must keep 202-on-PUT behavior (brownfield), you should discuss with ARM/API review because it conflicts with the current ARM contract guidance for PUT. The guidance is to fix the service to return `200/201` for PUT (even when async) and rely on LRO headers + provisioningState.
+
+Use standard ARM templates so the LRO metadata is consistent (headers + `x-ms-long-running-operation` + `final-state-via`). Do not invent one-off patterns unless absolutely necessary.
 
 ## Use @useFinalStateVia to control LRO final-state resolution in ARM PUT operations
 
@@ -237,3 +283,13 @@ interface MyResources {
 ```
 
 The advantage to using transformations is that, as the model versions, the PATCH model will also version automatically, whereas if you use a completely bespoke patch model, you will need to remember to make appropriate versioning changes there as well as in the resource model.
+
+## ArmResourcePatchAsync with discriminated resource types
+
+When using `ArmResourcePatchAsync` (or `ArmResourcePatchSync`) with a resource that has a discriminator, OAV may fail with `OBJECT_MISSING_REQUIRED_PROPERTY_DEFINITION`. This is because the discriminator is typically a required property on the resource, but PATCH requests should not require all properties.
+
+The general guidance is that **PATCH requests over discriminated types should require the discriminator property**. This may result in some LintDiff violations (e.g., `PatchBodyParametersSchema`), but that is expected and those violations can be suppressed. This is especially true if, as most services, your PATCH operation would need the discriminator value on the wire to determine how to apply the PATCH request to the existing resource.
+
+Most services need the discriminator value on the wire in the PATCH request body to know which subtype-specific logic to apply. Without it, the service cannot determine the resource variant and cannot correctly process partial updates. Making the discriminator required in the PATCH schema avoids the `OBJECT_MISSING_REQUIRED_PROPERTY_DEFINITION` OAV error and correctly communicates the API contract.
+
+The LintDiff `PatchBodyParametersSchema` rule may flag the required discriminator as a violation. This is a known false positive in this specific scenario. You can request the `Approved-LintDiff` label to suppress it for the PR, or add a permanent suppression via the AutoRest suppression mechanism.

@@ -821,6 +821,186 @@ public class ChangelogHelperTests
 
     #endregion
 
+    #region Python Language Support Tests
+
+    [Test]
+    public void ParseChangelog_WithPythonBetaVersions_ParsesCorrectly()
+    {
+        // Arrange
+        var changelogContent = """
+            # Release History
+
+            ## 1.0.0b2 (Unreleased)
+
+            ### Features Added
+
+            - Added feature B
+
+            ## 1.0.0b1 (2024-12-01)
+
+            ### Features Added
+
+            - Initial beta release
+            """;
+        var changelogPath = CreateChangelog(changelogContent);
+
+        // Act
+        var result = _changelogHelper.ParseChangelog(changelogPath, "python");
+
+        // Assert
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.Entries, Has.Count.EqualTo(2));
+        Assert.That(result.Entries[0].Version, Is.EqualTo("1.0.0b2"));
+        Assert.That(result.Entries[0].ReleaseStatus, Is.EqualTo("(Unreleased)"));
+        Assert.That(result.Entries[1].Version, Is.EqualTo("1.0.0b1"));
+        Assert.That(result.Entries[1].ReleaseStatus, Is.EqualTo("(2024-12-01)"));
+    }
+
+    [Test]
+    public void ParseChangelog_WithPythonBetaVersions_ParsesIncorrectlyWithoutLanguageHint()
+    {
+        // Arrange - same content but no language hint
+        var changelogContent = """
+            # Release History
+
+            ## 1.0.0b1 (2024-12-01)
+
+            ### Features Added
+
+            - Initial beta release
+            """;
+        var changelogPath = CreateChangelog(changelogContent);
+
+        // Act - without language hint, the default regex partially matches "1.0.0" (ignoring "b1")
+        var result = _changelogHelper.ParseChangelog(changelogPath);
+
+        // Assert - demonstrates why the language hint is needed for Python
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.Entries, Has.Count.EqualTo(1));
+        Assert.That(result.Entries[0].Version, Is.EqualTo("1.0.0")); // Wrong! Should be "1.0.0b1"
+    }
+
+    [Test]
+    public void ParseChangelog_WithPythonPostRelease_ParsesCorrectly()
+    {
+        // Arrange
+        var changelogContent = """
+            # Release History
+
+            ## 1.0.0.post1 (2025-02-15)
+
+            ### Bug Fixes
+
+            - Fixed packaging issue
+            """;
+        var changelogPath = CreateChangelog(changelogContent);
+
+        // Act
+        var result = _changelogHelper.ParseChangelog(changelogPath, "python");
+
+        // Assert
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.Entries, Has.Count.EqualTo(1));
+        Assert.That(result.Entries[0].Version, Is.EqualTo("1.0.0.post1"));
+        Assert.That(result.Entries[0].ReleaseStatus, Is.EqualTo("(2025-02-15)"));
+    }
+
+    [Test]
+    public async Task GetReleaseStatus_WithPythonBetaVersion_ReturnsStatus()
+    {
+        // Arrange
+        var changelogContent = """
+            # Release History
+
+            ## 1.0.0b1 (2024-12-01)
+
+            ### Features Added
+
+            - Initial beta release
+            """;
+        var changelogPath = CreateChangelog(changelogContent);
+
+        // Act
+        var status = await _changelogHelper.GetReleaseStatus(changelogPath, CancellationToken.None, "python");
+
+        // Assert
+        Assert.That(status, Is.EqualTo("2024-12-01"));
+    }
+
+    [Test]
+    public void UpdateReleaseDate_WithPythonBetaVersion_UpdatesCorrectly()
+    {
+        // Arrange
+        var changelogContent = """
+            # Release History
+
+            ## 1.0.0b1 (Unreleased)
+
+            ### Features Added
+
+            - Initial beta release
+            """;
+        var changelogPath = CreateChangelog(changelogContent);
+
+        // Act
+        var result = _changelogHelper.UpdateReleaseDate(changelogPath, "1.0.0b1", "2025-03-15", "python");
+
+        // Assert
+        Assert.That(result.Success, Is.True);
+        var updatedContent = File.ReadAllText(changelogPath);
+        Assert.That(updatedContent, Does.Contain("## 1.0.0b1 (2025-03-15)"));
+    }
+
+    [Test]
+    public void ParseChangelog_WithPythonAlphaVersion_ParsesCorrectly()
+    {
+        // Arrange
+        var changelogContent = """
+            # Release History
+
+            ## 1.0.0a20201208001 (2020-12-08)
+
+            ### Features Added
+
+            - Alpha CI build
+            """;
+        var changelogPath = CreateChangelog(changelogContent);
+
+        // Act
+        var result = _changelogHelper.ParseChangelog(changelogPath, "python");
+
+        // Assert
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.Entries, Has.Count.EqualTo(1));
+        Assert.That(result.Entries[0].Version, Is.EqualTo("1.0.0a20201208001"));
+    }
+
+    [Test]
+    public void ParseChangelog_WithStandardSemver_StillWorksWithPythonLanguage()
+    {
+        // Arrange - standard semver should still work with python hint
+        var changelogContent = """
+            # Release History
+
+            ## 1.0.0 (2025-01-15)
+
+            ### Features Added
+
+            - GA release
+            """;
+        var changelogPath = CreateChangelog(changelogContent);
+
+        // Act
+        var result = _changelogHelper.ParseChangelog(changelogPath, "python");
+
+        // Assert
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.Entries, Has.Count.EqualTo(1));
+        Assert.That(result.Entries[0].Version, Is.EqualTo("1.0.0"));
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private string CreateChangelog(string content)

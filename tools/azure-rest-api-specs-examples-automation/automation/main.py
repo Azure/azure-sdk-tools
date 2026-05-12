@@ -198,7 +198,9 @@ def process_release(operation: OperationConfiguration, sdk: SdkConfiguration, re
             subprocess.check_call(cmd, cwd=example_repo_path)
 
             # git push
-            remote_uri = "https://x-access-token:" + github_token + "@" + operation.sdk_examples_repository[len("https://") :]
+            remote_uri = (
+                "https://x-access-token:" + github_token + "@" + operation.sdk_examples_repository[len("https://") :]
+            )
             cmd = ["git", "push", remote_uri, branch]
             # do not print this as it contains token
             # logging.info('Command line: ' + ' '.join(cmd))

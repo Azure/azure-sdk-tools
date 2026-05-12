@@ -20,6 +20,7 @@
     "@azure/storage-blob": "^12.21.0",
     "@microsoft/microsoft-graph-types": "^2.40.0",
     "botframework-schema": "^4.17.0-blobs1",
+    "fast-xml-builder": "^1.2.0",
     "js-yaml": "^4.1.1",
     "openai": "^5.10.2",
     "uuid": "^14.0.0",

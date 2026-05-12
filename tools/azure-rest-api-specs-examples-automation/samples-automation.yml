@@ -7,6 +7,8 @@ variables:
 - template: ../../eng/pipelines/templates/variables/image.yml
 - name: GoVersion
   value: '1.23.0'
+- name: NodeVersion
+  value: '24.x'
 
 jobs:
 - job: Automation
@@ -18,6 +20,11 @@ jobs:
     os: linux
 
   steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: $(NodeVersion)
+    displayName: 'Install Node.js'
+
   - task: GoTool@0
     inputs:
       version: $(GoVersion)

@@ -10,7 +10,7 @@ variables:
 
 jobs:
 - job: Automation
-  timeoutInMinutes: 360
+  timeoutInMinutes: 120
 
   pool:
     name: $(LINUXPOOL)

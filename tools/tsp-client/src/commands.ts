@@ -7,6 +7,7 @@ import {
   resolvePath,
 } from "@typespec/compiler";
 import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } from "./git.js";
+import { tryFetchFileFromGitHub, tryFetchSpecFromGitHub } from "./githubFetch.js";
 import {
   createTempDirectory,
   getEmitterFromRepoConfig,
@@ -235,12 +236,21 @@ export async function initCommand(argv: any) {
     const resolvedConfigUrl = resolveTspConfigUrl(tspConfigPath);
     const cloneDir = await makeSparseSpecDir(repoRoot);
     Logger.debug(`Created temporary sparse-checkout directory ${cloneDir}`);
-    Logger.debug(`Cloning repo to ${cloneDir}`);
-    await cloneRepo(outputDir, cloneDir, `https://github.com/${resolvedConfigUrl.repo}.git`);
-    await sparseCheckout(cloneDir);
     tspConfigPath = joinPaths(resolvedConfigUrl.path, "tspconfig.yaml");
-    await addSpecFiles(cloneDir, tspConfigPath);
-    await checkoutCommit(cloneDir, resolvedConfigUrl.commit);
+    const tspConfigDest = joinPaths(cloneDir, tspConfigPath);
+    const fetchedFromGitHub = await tryFetchFileFromGitHub({
+      repo: resolvedConfigUrl.repo,
+      commit: resolvedConfigUrl.commit,
+      path: tspConfigPath,
+      destFile: tspConfigDest,
+    });
+    if (!fetchedFromGitHub) {
+      Logger.debug(`Cloning repo to ${cloneDir}`);
+      await cloneRepo(outputDir, cloneDir, `https://github.com/${resolvedConfigUrl.repo}.git`);
+      await sparseCheckout(cloneDir);
+      await addSpecFiles(cloneDir, tspConfigPath);
+      await checkoutCommit(cloneDir, resolvedConfigUrl.commit);
+    }
 
     tspLocationData.directory = resolvedConfigUrl.path;
     tspLocationData.commit = resolvedConfigUrl.commit;
@@ -369,15 +379,24 @@ export async function syncCommand(argv: any) {
   } else {
     const cloneDir = await makeSparseSpecDir(repoRoot);
     Logger.debug(`Created temporary sparse-checkout directory ${cloneDir}`);
-    Logger.debug(`Cloning repo to ${cloneDir}`);
-    await cloneRepo(tempRoot, cloneDir, `https://github.com/${tspLocation.repo}.git`);
-    await sparseCheckout(cloneDir);
-    await addSpecFiles(cloneDir, tspLocation.directory);
-    for (const dir of tspLocation.additionalDirectories ?? []) {
-      Logger.info(`Processing additional directory: ${dir}`);
-      await addSpecFiles(cloneDir, dir);
+    const fetchedFromGitHub = await tryFetchSpecFromGitHub({
+      repo: tspLocation.repo,
+      commit: tspLocation.commit,
+      directory: tspLocation.directory,
+      additionalDirectories: tspLocation.additionalDirectories,
+      destRoot: cloneDir,
+    });
+    if (!fetchedFromGitHub) {
+      Logger.debug(`Cloning repo to ${cloneDir}`);
+      await cloneRepo(tempRoot, cloneDir, `https://github.com/${tspLocation.repo}.git`);
+      await sparseCheckout(cloneDir);
+      await addSpecFiles(cloneDir, tspLocation.directory);
+      for (const dir of tspLocation.additionalDirectories ?? []) {
+        Logger.info(`Processing additional directory: ${dir}`);
+        await addSpecFiles(cloneDir, dir);
+      }
+      await checkoutCommit(cloneDir, tspLocation.commit);
     }
-    await checkoutCommit(cloneDir, tspLocation.commit);
     const clonedTspProject = joinPaths(cloneDir, tspLocation.directory);
     try {
       // Check if the cloned TypeSpec project exists

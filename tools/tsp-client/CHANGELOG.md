@@ -1,5 +1,9 @@
 # Release
 
+## Unreleased
+
+- `init` and `sync` now fetch TypeSpec files directly from GitHub by default, using the `gh` CLI when available or the GitHub REST API + `raw.githubusercontent.com`. The `GITHUB_TOKEN` (preferred) and `GH_TOKEN` environment variables are used for authentication when set. The previous `git` sparse-clone path is automatically used as a fallback if any GitHub request fails.
+
 ## 2026-04-30 - 0.33.1
 
 - Added support for passing flags to underlying npm commands using the `--npm-args` flag with the `generate-config-files` and `generate-lock-file` commands.

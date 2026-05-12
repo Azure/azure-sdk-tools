@@ -44,3 +44,13 @@ jobs:
           npm test
         workingDirectory: $(ProjectPath)
         displayName: "Run tests"
+
+      - script: |
+          npm run lint
+        workingDirectory: $(ProjectPath)
+        displayName: "Run lint check"
+
+      - script: |
+          npm run format:check
+        workingDirectory: $(ProjectPath)
+        displayName: "Run prettier format check"

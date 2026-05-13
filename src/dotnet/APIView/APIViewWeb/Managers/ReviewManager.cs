@@ -8,6 +8,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using APIView;
@@ -666,7 +667,7 @@ namespace APIViewWeb.Managers
                     throw new HttpRequestException($"Copilot service returned {(int)response.StatusCode}: {responseString}", null, response.StatusCode);
                 }
 
-                AIReviewJobStartedResponseModel jobStartedResponse = System.Text.Json.JsonSerializer.Deserialize<AIReviewJobStartedResponseModel>(responseString);
+                AIReviewJobStartedResponseModel jobStartedResponse = JsonSerializer.Deserialize<AIReviewJobStartedResponseModel>(responseString);
                 
                 _logger.LogInformation("AVC review job started successfully. JobId: {JobId}", jobStartedResponse.JobId);
                 return jobStartedResponse;

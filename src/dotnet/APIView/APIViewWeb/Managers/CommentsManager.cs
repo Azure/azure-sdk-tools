@@ -318,7 +318,7 @@ namespace APIViewWeb.Managers
                     HttpMethod.Post, agentMentionEndPoint, mentionRequest);
                 clientResponse.EnsureSuccessStatusCode();
                 string clientResponseContent = await clientResponse.Content.ReadAsStringAsync();
-                AgentChatResponse agentChatResponse = System.Text.Json.JsonSerializer.Deserialize<AgentChatResponse>(clientResponseContent);
+                AgentChatResponse agentChatResponse = JsonSerializer.Deserialize<AgentChatResponse>(clientResponseContent);
                 if (agentChatResponse != null)
                 {
                     await AddAgentComment(comment, agentChatResponse.Response);

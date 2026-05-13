@@ -29,6 +29,8 @@ stimuli:
       dest: package.json
     - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
       dest: package-lock.json
+    - src: ../fixtures/Microsoft.Widget/Widget/node_modules
+      dest: node_modules
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -86,6 +88,8 @@ stimuli:
       dest: package.json
     - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
       dest: package-lock.json
+    - src: ../fixtures/Microsoft.Widget/Widget/node_modules
+      dest: node_modules
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -132,6 +136,8 @@ stimuli:
       dest: package.json
     - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
       dest: package-lock.json
+    - src: ../fixtures/Microsoft.Widget/Widget/node_modules
+      dest: node_modules
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -172,6 +178,8 @@ stimuli:
       dest: package.json
     - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
       dest: package-lock.json
+    - src: ../fixtures/Microsoft.Widget/Widget/node_modules
+      dest: node_modules
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -226,6 +234,8 @@ stimuli:
       dest: package.json
     - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
       dest: package-lock.json
+    - src: ../fixtures/Microsoft.Widget/Widget/node_modules
+      dest: node_modules
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -299,6 +309,8 @@ stimuli:
       dest: package.json
     - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
       dest: package-lock.json
+    - src: ../fixtures/Microsoft.Widget/Widget/node_modules
+      dest: node_modules
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -408,6 +420,8 @@ stimuli:
       dest: package.json
     - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
       dest: package-lock.json
+    - src: ../fixtures/Microsoft.Widget/Widget/node_modules
+      dest: node_modules
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -500,6 +514,8 @@ stimuli:
       dest: package.json
     - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
       dest: package-lock.json
+    - src: ../fixtures/Microsoft.Widget/Widget/node_modules
+      dest: node_modules
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -541,6 +557,8 @@ stimuli:
       dest: package.json
     - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
       dest: package-lock.json
+    - src: ../fixtures/Microsoft.Widget/Widget/node_modules
+      dest: node_modules
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -585,6 +603,8 @@ stimuli:
       dest: package.json
     - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
       dest: package-lock.json
+    - src: ../fixtures/Microsoft.Widget/Widget/node_modules
+      dest: node_modules
     - src: ../fixtures/002010-arm-action-sync-operation/readme.md
       dest: readme.md
     - src: ../fixtures/002010-arm-action-sync-operation/shared.tsp

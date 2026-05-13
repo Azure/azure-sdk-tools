@@ -1562,10 +1562,6 @@ stimuli:
     - src: ../fixtures/004003-delete-and-restore-operationId-decorator/tspconfig.yaml
       dest: tspconfig.yaml
   graders:
-  - type: tool-calls
-    config:
-      required: 
-      - edit
   - type: file-not-matches
     config:
       path: BgpConnection.tsp

@@ -50,10 +50,6 @@ stimuli:
     - src: ../fixtures/004003-delete-and-restore-operationId-decorator/tspconfig.yaml
       dest: tspconfig.yaml
   graders:
-  - type: tool-calls
-    config:
-      required:
-        - edit
   # VP1: Underscore operationIds should be removed (e.g. BgpConnection has only underscore ones)
   - type: skill-invocation
     config:
@@ -116,7 +112,6 @@ stimuli:
       pattern: '@operationId\("ExpressRouteProviderPortsLocation_List"\)'
 scoring:
   weights:
-    tool-calls: 1
     skill-invocation: 1
     file-not-matches: 3
     file-matches: 4

@@ -27,6 +27,8 @@ stimuli:
       dest: package.json
     - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
       dest: package-lock.json
+    - src: ../fixtures/Microsoft.Widget/Widget/node_modules
+      dest: node_modules
     - src: ../fixtures/005001-warning-suppress-warning/tspconfig.yaml
       dest: tspconfig.yaml
     - src: ../fixtures/005001-warning-suppress-warning/main.tsp

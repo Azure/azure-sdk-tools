@@ -369,6 +369,37 @@ Same flags and rollback behavior as `db link`.
 
 ---
 
+### `avc db ingest-guidelines`
+
+Sync guidelines and examples from the [azure-sdk](https://github.com/Azure/azure-sdk) repository into the knowledge base. Detects changes via git commit comparison, parses markdown files, extracts guidelines and examples via LLM, and writes to Cosmos DB.
+
+```bash
+# Preview changes (dry-run, the default)
+avc db ingest-guidelines --environment staging -b <BASE_SHA> -t <TARGET_SHA>
+
+# Preview with before/after content
+avc db ingest-guidelines --environment staging -b abc123 -t def456 --details
+
+# Apply changes to the database
+avc db ingest-guidelines --environment staging -b <BASE_SHA> -t <TARGET_SHA> --apply
+
+# Only sync specific languages
+avc db ingest-guidelines --environment staging -b abc123 -t def456 --language python java --apply
+```
+
+| Option | Description |
+|--------|-------------|
+| `--environment` | **Required.** The APIView environment to update (`staging` or `production`) |
+| `-b/--base-sha` | **Required.** The baseline commit SHA to compare against |
+| `-t/--target-sha` | **Required.** The target commit SHA to sync to |
+| `--apply` | Apply changes to the database. Without this flag, runs in dry-run mode |
+| `--details` | Include before/after content for each changed guideline and example in the output |
+| `-l/--language` | Limit ingestion to specific languages (e.g., `python java dotnet`). If omitted, all languages are processed |
+
+See [kb.md](./kb.md#guideline-ingestion) for details on the ingestion pipeline.
+
+---
+
 ## `avc report` — Reporting and Analytics
 
 ### `avc report metrics`

@@ -1,0 +1,28 @@
+testcase: mixed_absorb_and_retain
+guideline: |
+  {
+    "id": "python_design=html=python-client-options",
+    "title": "Accept keyword-only arguments for optional parameters",
+    "content": "DO use keyword-only arguments for optional parameters. All optional parameters must be passed as keyword arguments using the **kwargs pattern. Do not use positional arguments for optional parameters. This enables adding new parameters in future versions without breaking existing callers."
+  }
+memories: |
+  [
+    {
+      "id": "mem-020",
+      "title": "Use keyword-only args for optional params",
+      "content": "Feedback: Optional parameters should always be keyword-only. Do not accept them positionally."
+    },
+    {
+      "id": "mem-021",
+      "title": "Default values for keyword args must be documented",
+      "content": "From review: When using keyword-only arguments, all default values must be documented in the docstring using Sphinx format. This is especially important for boolean flags."
+    },
+    {
+      "id": "mem-022",
+      "title": "Future compatibility with kwargs",
+      "content": "Architecture board note: Using **kwargs enables forward compatibility so new optional parameters can be added without breaking callers."
+    }
+  ]
+response:
+  action: mem-020,mem-022
+  rationale: mem-020 restates the guideline's requirement for keyword-only optional parameters. mem-022 restates the forward compatibility rationale already in the guideline. mem-021 adds a documentation requirement not covered by the guideline and should be retained.

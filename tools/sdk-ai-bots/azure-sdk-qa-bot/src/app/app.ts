@@ -78,17 +78,6 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
     { meta }
   );
 
-  const conversations = await conversationHandler.getConversationMessages(context.activity.conversation.id, meta);
-
-  const messages: Message[] = [];
-  conversations.map((msg) => {
-    const question: Message = msg.prompt ? { content: msg.prompt.textWithoutMention, role: 'user' } : undefined;
-    if (question) messages.push(question);
-    const answer: Message =
-      msg.reply ? { role: 'assistant', content: msg.reply.answer } : undefined;
-    if (answer) messages.push(answer);
-  });
-
   const parsed = parseConversationId(context.activity.conversation.id);
   const postLink = parsed.postId ? generateLink(context, parsed.postId) : undefined;
 
@@ -97,7 +86,6 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
       const goodFeedback: FeedbackRequestPayload = {
         channel_id: channelId,
         tenant_id: ragTenantId,
-        messages,
         reaction: 'good',
         comment: feedbackComment,
         reasons: selectedReasons,
@@ -111,7 +99,6 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
       const badFeedback: FeedbackRequestPayload = {
         channel_id: channelId,
         tenant_id: ragTenantId,
-        messages,
         reaction: 'bad',
         comment: feedbackComment,
         reasons: selectedReasons,

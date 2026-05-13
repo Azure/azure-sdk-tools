@@ -19,6 +19,7 @@ sys.modules.setdefault("azure.cosmos.exceptions", MagicMock())
 sys.modules.setdefault("azure.search.documents.indexes", MagicMock())
 
 from cli import _cascade_unlink
+from src._database_manager import DatabaseManager
 
 
 class FakeContainer:
@@ -69,6 +70,9 @@ class FakeDB:
     @property
     def memories(self):
         return self._memories
+
+    def cascade_unlink(self, item, item_type, *, run_indexer=False):
+        DatabaseManager.cascade_unlink(self, item, item_type, run_indexer=run_indexer)
 
 
 # ---------------------------------------------------------------------------

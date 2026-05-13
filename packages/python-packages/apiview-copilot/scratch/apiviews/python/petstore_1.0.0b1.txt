@@ -1,0 +1,160 @@
+# Package is parsed using apiview-stub-generator(version:0.3.18), Python version: 3.11.4
+
+
+namespace azure.petstore
+	
+	class azure.petstore.ApiVersion(str, Enum):
+		V1_0_0_BETA_1 = "1.0.0-beta.1"
+		
+		
+	class azure.petstore.Pet:
+		property id: Optional[int]    # Read-only
+		property name: Optional[str]    # Read-only
+		property species: Optional[str]    # Read-only
+		property breed: Optional[str]    # Read-only
+		property status: Optional[str]    # Read-only
+		property tags: Optional[Dict[str, str]]    # Read-only
+		
+		def __init__(
+			    self, 
+			    name: str, 
+			    species: str, 
+			    breed: Optional[str] = None, 
+			    status: Optional[str] = None, 
+			    tags: Optional[Dict[str, str]] = None
+			) -> None
+		
+		
+	class azure.petstore.PetProperties:
+		property breed: Optional[str]    # Read-only
+		property created_on: Optional[datetime]    # Read-only
+		property id: Optional[int]    # Read-only
+		property name: Optional[str]    # Read-only
+		property species: Optional[str]    # Read-only
+		property status: Optional[str]    # Read-only
+		property tags: Optional[Dict[str, str]]    # Read-only
+		property updated_on: Optional[datetime]    # Read-only
+		
+		
+	class azure.petstore.Order:
+		property id: Optional[int]    # Read-only
+		property pet_id: Optional[int]    # Read-only
+		property quantity: Optional[int]    # Read-only
+		property status: Optional[str]    # Read-only
+		property placed_on: Optional[datetime]    # Read-only
+		property complete: Optional[bool]    # Read-only
+		
+		def __init__(
+			    self, 
+			    pet_id: int, 
+			    quantity: int = 1, 
+			    status: Optional[str] = None
+			) -> None
+		
+		
+	class azure.petstore.PetStatus(str, Enum):
+		available = "available"
+		pending = "pending"
+		sold = "sold"
+		
+		
+	class azure.petstore.PetClient(PetstoreClientBase): implements ContextManager 
+		property store_url: str    # Read-only
+		
+		def __init__(
+			    self, 
+			    store_url: str, 
+			    credential: TokenCredential, 
+			    *, 
+			    api_version: Union[ApiVersion, str] = ..., 
+			    **kwargs: Any
+			) -> None
+		
+		@distributed_trace
+		def create_pet(
+			    self, 
+			    pet: Pet, 
+			    **kwargs: Any
+			) -> Pet
+		
+		@distributed_trace
+		def get_pet(
+			    self, 
+			    name: str, 
+			    **kwargs: Any
+			) -> Pet
+		
+		@distributed_trace
+		def list_pets(
+			    self, 
+			    **kwargs: Any
+			) -> ItemPaged[PetProperties]
+		
+		@distributed_trace
+		def update_pet(
+			    self, 
+			    name: str, 
+			    *, 
+			    species: Optional[str] = ..., 
+			    breed: Optional[str] = ..., 
+			    status: Optional[str] = ..., 
+			    tags: Optional[Dict[str, str]] = ..., 
+			    **kwargs: Any
+			) -> Pet
+		
+		@distributed_trace
+		def begin_delete_pet(
+			    self, 
+			    name: str, 
+			    **kwargs: Any
+			) -> LROPoller[DeletedPet]
+		
+		def close(self) -> None
+		
+		
+	class azure.petstore.OrderClient(PetstoreClientBase): implements ContextManager 
+		property store_url: str    # Read-only
+		
+		def __init__(
+			    self, 
+			    store_url: str, 
+			    credential: TokenCredential, 
+			    *, 
+			    api_version: Union[ApiVersion, str] = ..., 
+			    **kwargs: Any
+			) -> None
+		
+		@distributed_trace
+		def place_order(
+			    self, 
+			    order: Order, 
+			    **kwargs: Any
+			) -> Order
+		
+		@distributed_trace
+		def get_order(
+			    self, 
+			    name: str, 
+			    **kwargs: Any
+			) -> Order
+		
+		@distributed_trace
+		def begin_delete_order(
+			    self, 
+			    name: str, 
+			    **kwargs: Any
+			) -> LROPoller[None]
+		
+		@distributed_trace
+		def list_orders(
+			    self, 
+			    **kwargs: Any
+			) -> ItemPaged[Order]
+		
+		@distributed_trace
+		def get_inventory(
+			    self, 
+			    **kwargs: Any
+			) -> Dict[str, int]
+		
+		def close(self) -> None

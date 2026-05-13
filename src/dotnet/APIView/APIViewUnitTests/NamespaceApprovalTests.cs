@@ -105,12 +105,10 @@ namespace APIViewUnitTests
                 mockLanguageServices.Object,
                 _telemetryClient,
                 mockCodeFileManager.Object,
-                _mockConfiguration.Object,
-                mockHttpClientFactory.Object,
+                new CopilotHttpService(_mockConfiguration.Object, mockHttpClientFactory.Object, mockCopilotAuth.Object),
                 mockPollingJobQueueManager.Object,
                 _mockNotificationManager.Object,
                 _mockPullRequestsRepository.Object,
-                mockCopilotAuth.Object,
                 _mockLogger.Object);
 
             _testTimestamp = DateTime.UtcNow;
@@ -529,12 +527,10 @@ namespace APIViewUnitTests
                 mockLanguageServices.Object,
                 _telemetryClient,
                 mockCodeFileManager.Object,
-                _mockConfiguration.Object,
-                mockHttpClientFactory.Object,
+                new CopilotHttpService(_mockConfiguration.Object, mockHttpClientFactory.Object, mockCopilotAuth.Object),
                 mockPollingJobQueueManager.Object,
                 _mockNotificationManager.Object,
                 _mockPullRequestsRepository.Object,
-                mockCopilotAuth.Object,
                 _mockLogger.Object);
 
             var reviewId = "feature-disabled-test";

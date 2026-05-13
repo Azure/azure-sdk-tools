@@ -104,12 +104,10 @@ namespace APIViewUnitTests
                 mockLanguageServices,
                 _telemetryClient,
                 _mockCodeFileManager.Object,
-                _mockConfiguration.Object,
-                _mockHttpClientFactory.Object,
+                new CopilotHttpService(_mockConfiguration.Object, _mockHttpClientFactory.Object, _mockCopilotAuth.Object),
                 _mockPollingJobQueueManager.Object,
                 _mockNotificationManager.Object,
                 _mockPullRequestsRepository.Object,
-                _mockCopilotAuth.Object,
                 _mockManagerLogger.Object);
 
             // Create controller that uses the real ReviewManager

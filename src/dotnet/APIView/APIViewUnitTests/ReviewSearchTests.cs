@@ -44,9 +44,10 @@ public class ReviewSearchTests
         package = new ReviewSearch(
             _mockReviewManager.Object,
             _mockApiRevisionsManager.Object,
-            _mockCopilotAuthService.Object,
-            _mockHttpClientFactory.Object,
-            _mockConfiguration.Object,
+            new CopilotHttpService(
+                _mockConfiguration.Object,
+                _mockHttpClientFactory.Object,
+                _mockCopilotAuthService.Object),
             _mockLogger.Object);
     }
 

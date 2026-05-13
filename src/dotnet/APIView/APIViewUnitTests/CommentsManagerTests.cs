@@ -130,13 +130,11 @@ public class CommentsManagerTests
             notificationManagerMock.Object,
             codeFileRepoMock.Object,
             hubContextMock.Object,
-            httpClientFactoryMock.Object,
+            new CopilotHttpService(configMock.Object, httpClientFactoryMock.Object, copilotAuthService.Object),
             userProfileCache,
-            configMock.Object,
             orgOptionsMock.Object,
             backgroundTaskQueueMock.Object,
             permissionsManagerMock.Object,
-            copilotAuthService.Object,
             logger.Object
         );
     }
@@ -1205,13 +1203,11 @@ public class CommentsManagerTests
             notificationManagerMock.Object,
             codeFileRepoMock.Object,
             hubContextMock.Object,
-            httpClientFactoryMock.Object,
+            new CopilotHttpService(configMock.Object, httpClientFactoryMock.Object, copilotAuthServiceMock.Object),
             userProfileCache,
-            configMock.Object,
             orgOptionsMock.Object,
             backgroundTaskQueueMock.Object,
             permissionsManagerMock.Object,
-            copilotAuthServiceMock.Object,
             logger.Object
         );
 
@@ -1278,13 +1274,11 @@ public class CommentsManagerTests
             new Mock<INotificationManager>().Object,
             new Mock<IBlobCodeFileRepository>().Object,
             hubContextMock.Object,
-            new Mock<IHttpClientFactory>().Object,
+            new CopilotHttpService(configMock.Object, new Mock<IHttpClientFactory>().Object, new Mock<ICopilotAuthenticationService>().Object),
             userProfileCache,
-            configMock.Object,
             orgOptionsMock.Object,
             backgroundTaskQueueMock.Object,
             new Mock<IPermissionsManager>().Object,
-            new Mock<ICopilotAuthenticationService>().Object,
             new Mock<ILogger<CommentsManager>>().Object
         );
 
@@ -1345,13 +1339,11 @@ public class CommentsManagerTests
             new Mock<INotificationManager>().Object,
             new Mock<IBlobCodeFileRepository>().Object,
             hubContextMock.Object,
-            new Mock<IHttpClientFactory>().Object,
+            new CopilotHttpService(configMock.Object, new Mock<IHttpClientFactory>().Object, new Mock<ICopilotAuthenticationService>().Object),
             userProfileCache,
-            configMock.Object,
             orgOptionsMock.Object,
             backgroundTaskQueueMock.Object,
             new Mock<IPermissionsManager>().Object,
-            new Mock<ICopilotAuthenticationService>().Object,
             new Mock<ILogger<CommentsManager>>().Object
         );
 
@@ -1459,13 +1451,11 @@ public class CommentsManagerTests
             new Mock<INotificationManager>().Object,
             codeFileRepoMock.Object,
             hubContextMock.Object,
-            httpClientFactoryMock.Object,
+            new CopilotHttpService(configMock.Object, httpClientFactoryMock.Object, copilotAuthServiceMock.Object),
             userProfileCache,
-            configMock.Object,
             orgOptionsMock.Object,
             backgroundTaskQueueMock.Object,
             new Mock<IPermissionsManager>().Object,
-            copilotAuthServiceMock.Object,
             new Mock<ILogger<CommentsManager>>().Object
         );
 
@@ -1581,13 +1571,11 @@ public class CommentsManagerTests
             new Mock<INotificationManager>().Object,
             codeFileRepoMock.Object,
             hubContextMock.Object,
-            httpClientFactoryMock.Object,
+            new CopilotHttpService(configMock.Object, httpClientFactoryMock.Object, copilotAuthServiceMock.Object),
             userProfileCache,
-            configMock.Object,
             orgOptionsMock.Object,
             backgroundTaskQueueMock.Object,
             new Mock<IPermissionsManager>().Object,
-            copilotAuthServiceMock.Object,
             new Mock<ILogger<CommentsManager>>().Object
         );
 
@@ -1787,13 +1775,11 @@ public class CommentsManagerTests
             new Mock<INotificationManager>().Object,
             codeFileRepoMock.Object,
             hubContextMock.Object,
-            httpClientFactoryMock.Object,
+            new CopilotHttpService(configMock.Object, httpClientFactoryMock.Object, copilotAuthServiceMock.Object),
             userProfileCache,
-            configMock.Object,
             orgOptionsMock.Object,
             backgroundTaskQueueMock.Object,
             new Mock<IPermissionsManager>().Object,
-            copilotAuthServiceMock.Object,
             new Mock<ILogger<CommentsManager>>().Object
         );
 
@@ -1932,13 +1918,11 @@ public class CommentsManagerTests
             new Mock<INotificationManager>().Object,
             codeFileRepoMock.Object,
             hubContextMock.Object,
-            httpClientFactoryMock.Object,
+            new CopilotHttpService(configMock.Object, httpClientFactoryMock.Object, copilotAuthServiceMock.Object),
             userProfileCache,
-            configMock.Object,
             orgOptionsMock.Object,
             backgroundTaskQueueMock.Object,
             new Mock<IPermissionsManager>().Object,
-            copilotAuthServiceMock.Object,
             new Mock<ILogger<CommentsManager>>().Object
         );
 

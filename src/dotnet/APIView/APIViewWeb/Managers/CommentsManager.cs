@@ -23,7 +23,6 @@ using APIViewWeb.Repositories;
 using APIViewWeb.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -37,13 +36,11 @@ namespace APIViewWeb.Managers
         private readonly ICosmosCommentsRepository _commentsRepository;
         private readonly ICosmosReviewRepository _reviewRepository;
         private readonly INotificationManager _notificationManager;
-        private readonly IConfiguration _configuration;
         private readonly IBlobCodeFileRepository _codeFileRepository;
         private readonly IHubContext<SignalRHub> _signalRHubContext;
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ICopilotHttpService _copilotHttp;
         private readonly ILogger<CommentsManager> _logger;
         private readonly IBackgroundTaskQueue _backgroundTaskQueue;
-        private readonly ICopilotAuthenticationService _copilotAuthService;
         private readonly IPermissionsManager _permissionsManager;
 
         public readonly UserProfileCache _userProfileCache;
@@ -59,13 +56,11 @@ namespace APIViewWeb.Managers
             INotificationManager notificationManager,
             IBlobCodeFileRepository codeFileRepository,
             IHubContext<SignalRHub> signalRHubContext,
-            IHttpClientFactory httpClientFactory,
+            ICopilotHttpService copilotHttp,
             UserProfileCache userProfileCache,
-            IConfiguration configuration,
             IOptions<OrganizationOptions> options,
             IBackgroundTaskQueue backgroundTaskQueue,
             IPermissionsManager permissionsManager,
-            ICopilotAuthenticationService copilotAuthService,
             ILogger<CommentsManager> logger)
         {
             _apiRevisionsManager = apiRevisionsManager;
@@ -76,12 +71,10 @@ namespace APIViewWeb.Managers
             _notificationManager = notificationManager;
             _codeFileRepository = codeFileRepository;
             _signalRHubContext = signalRHubContext;
-            _httpClientFactory = httpClientFactory;
+            _copilotHttp = copilotHttp;
             _userProfileCache = userProfileCache;
-            _configuration = configuration;
             _Options = options.Value;
             _backgroundTaskQueue = backgroundTaskQueue;
-            _copilotAuthService = copilotAuthService;
             _permissionsManager = permissionsManager;
             _logger = logger;
 
@@ -320,22 +313,12 @@ namespace APIViewWeb.Managers
                     SourceCommentId = comment.Id
                 };
 
-                string agentMentionEndPoint = $"{_configuration["CopilotServiceEndpoint"]}/api-review/mention";
-                var request = new HttpRequestMessage(HttpMethod.Post, agentMentionEndPoint)
-                {
-                    Content = new StringContent(
-                        System.Text.Json.JsonSerializer.Serialize(mentionRequest),
-                        Encoding.UTF8,
-                        "application/json")
-                };
-
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await _copilotAuthService.GetAccessTokenAsync(cancellationToken));
-
-                var client = _httpClientFactory.CreateClient();
-                var clientResponse = await client.SendAsync(request);
+                string agentMentionEndPoint = $"api-review/mention";
+                using HttpResponseMessage clientResponse = await _copilotHttp.SendAsync(
+                    HttpMethod.Post, agentMentionEndPoint, mentionRequest);
                 clientResponse.EnsureSuccessStatusCode();
                 string clientResponseContent = await clientResponse.Content.ReadAsStringAsync();
-                AgentChatResponse agentChatResponse = JsonSerializer.Deserialize<AgentChatResponse>(clientResponseContent);
+                AgentChatResponse agentChatResponse = System.Text.Json.JsonSerializer.Deserialize<AgentChatResponse>(clientResponseContent);
                 if (agentChatResponse != null)
                 {
                     await AddAgentComment(comment, agentChatResponse.Response);
@@ -767,19 +750,8 @@ namespace APIViewWeb.Managers
                     SourceCommentId = comment.Id
                 };
 
-                string agentMentionEndPoint = $"{_configuration["CopilotServiceEndpoint"]}/api-review/mention";
-                var request = new HttpRequestMessage(HttpMethod.Post, agentMentionEndPoint)
-                {
-                    Content = new StringContent(
-                        JsonSerializer.Serialize(mentionRequest),
-                        Encoding.UTF8,
-                        "application/json")
-                };
-
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await _copilotAuthService.GetAccessTokenAsync(cancellationToken));
-
-                var client = _httpClientFactory.CreateClient();
-                var clientResponse = await client.SendAsync(request, cancellationToken);
+                using HttpResponseMessage clientResponse = await _copilotHttp.SendAsync(
+                    HttpMethod.Post, "api-review/mention", mentionRequest, cancellationToken);
                 clientResponse.EnsureSuccessStatusCode();
 
                 _logger.LogInformation("Feedback sent to Copilot for AI comment {CommentId} in review {ReviewId}", comment.Id, comment.ReviewId);

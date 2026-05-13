@@ -3,16 +3,12 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.Text.Json;
 using System.Threading.Tasks;
 using System.Web;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Services;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb.Managers;
@@ -22,25 +18,18 @@ public class ReviewSearch : IReviewSearch
     private readonly IAPIRevisionsManager _apiRevisionsManager;
     private readonly ILogger<ReviewSearch> _logger;
     private readonly IReviewManager _reviewManager;
-    private readonly ICopilotAuthenticationService _copilotAuthService;
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly string _copilotEndpoint;
+    private readonly ICopilotHttpService _copilotHttp;
 
     public ReviewSearch(
         IReviewManager reviewManager,
         IAPIRevisionsManager apiRevisionsManager,
-        ICopilotAuthenticationService copilotAuthService,
-        IHttpClientFactory httpClientFactory,
-        IConfiguration configuration,
+        ICopilotHttpService copilotHttp,
         ILogger<ReviewSearch> logger)
     {
         _reviewManager = reviewManager;
         _apiRevisionsManager = apiRevisionsManager;
-        _copilotAuthService = copilotAuthService;
-        _httpClientFactory = httpClientFactory;
+        _copilotHttp = copilotHttp;
         _logger = logger;
-
-        _copilotEndpoint = configuration["CopilotServiceEndpoint"];
     }
 
     public async Task<ResolvePackageResponse> ResolvePackageQuery(
@@ -61,19 +50,17 @@ public class ReviewSearch : IReviewSearch
         ReviewListItemModel review = await _reviewManager.GetReviewAsync(language, packageQuery, null);
         if (review == null)
         {
-            var client = _httpClientFactory.CreateClient();
-
-            using var request = new HttpRequestMessage(HttpMethod.Post, $"{_copilotEndpoint}/api-review/resolve-package");
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await _copilotAuthService.GetAccessTokenAsync());
-            request.Content = JsonContent.Create(new { packageQuery, language });
-
-            var response = await client.SendAsync(request);
+            using HttpResponseMessage response = await _copilotHttp.SendAsync(
+                HttpMethod.Post,
+                "api-review/resolve-package",
+                new { packageQuery, language });
             if (!response.IsSuccessStatusCode)
             {
                 return null;
             }
 
-            return await response.Content.ReadFromJsonAsync<ResolvePackageResponse>();
+            string responseBody = await response.Content.ReadAsStringAsync();
+            return System.Text.Json.JsonSerializer.Deserialize<ResolvePackageResponse>(responseBody);
         }
 
 

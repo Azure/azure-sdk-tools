@@ -172,12 +172,10 @@ public class ReviewManagerDeleteTests
             mocks.LanguageServices,
             mocks.TelemetryClient,
             mocks.CodeFileManager.Object,
-            mocks.Configuration.Object,
-            mocks.HttpClientFactory.Object,
+            new CopilotHttpService(mocks.Configuration.Object, mocks.HttpClientFactory.Object, mocks.CopilotAuth.Object),
             mocks.PollingJobQueueManager.Object,
             mocks.NotificationManager.Object,
             mocks.PullRequestsRepository.Object,
-            mocks.CopilotAuth.Object,
             mocks.Logger.Object
         );
         return (reviewManager, mocks);

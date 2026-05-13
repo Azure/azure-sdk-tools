@@ -64,11 +64,12 @@ namespace APIViewUnitTests
             _mockSignalRHubContext.Setup(x => x.Clients.All).Returns(mockClientProxy.Object);
 
             _processor = new CopilotJobProcessor(
-                _mockConfiguration.Object,
-                _mockHttpClientFactory.Object,
+                new CopilotHttpService(
+                    _mockConfiguration.Object,
+                    _mockHttpClientFactory.Object,
+                    _mockCopilotAuth.Object),
                 _mockApiRevisionsManager.Object,
                 _mockCommentsRepository.Object,
-                _mockCopilotAuth.Object,
                 _mockSignalRHubContext.Object,
                 _mockLogger.Object);
         }

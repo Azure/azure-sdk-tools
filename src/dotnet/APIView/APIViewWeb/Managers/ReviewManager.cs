@@ -6,10 +6,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using APIView;
@@ -25,7 +23,6 @@ using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb.Managers
@@ -43,12 +40,10 @@ namespace APIViewWeb.Managers
         private readonly IEnumerable<LanguageService> _languageServices;
         private readonly TelemetryClient _telemetryClient;
         private readonly ICodeFileManager _codeFileManager;
-        private readonly IConfiguration _configuration;
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ICopilotHttpService _copilotHttp;
         private readonly IPollingJobQueueManager _pollingJobQueueManager;
         private readonly INotificationManager _notificationManager;
         private readonly ICosmosPullRequestsRepository _pullRequestsRepository;
-        private readonly ICopilotAuthenticationService _copilotAuthService;
         private readonly ILogger<ReviewManager> _logger;
 
         public ReviewManager (
@@ -63,12 +58,10 @@ namespace APIViewWeb.Managers
             IEnumerable<LanguageService> languageServices,
             TelemetryClient telemetryClient, 
             ICodeFileManager codeFileManager,
-            IConfiguration configuration, 
-            IHttpClientFactory httpClientFactory, 
+            ICopilotHttpService copilotHttp,
             IPollingJobQueueManager pollingJobQueueManager,
             INotificationManager notificationManager,
             ICosmosPullRequestsRepository pullRequestsRepository,
-            ICopilotAuthenticationService copilotAuthService,
             ILogger<ReviewManager> logger)
         {
             _authorizationService = authorizationService;
@@ -82,12 +75,10 @@ namespace APIViewWeb.Managers
             _languageServices = languageServices;
             _telemetryClient = telemetryClient;
             _codeFileManager = codeFileManager;
-            _configuration = configuration;
-            _httpClientFactory = httpClientFactory;
+            _copilotHttp = copilotHttp;
             _pollingJobQueueManager = pollingJobQueueManager;
             _notificationManager = notificationManager;
             _pullRequestsRepository = pullRequestsRepository;
-            _copilotAuthService = copilotAuthService;
             _logger = logger;
         }
 
@@ -570,10 +561,6 @@ namespace APIViewWeb.Managers
                 diagnostics = AgentHelpers.BuildDiagnosticsForAgent(activeCodeFile.CodeFile.Diagnostics.ToList(), activeCodeFile);
             }
 
-            var copilotEndpoint = _configuration["CopilotServiceEndpoint"];
-            var startUrl = $"{copilotEndpoint}/api-review/start";
-            var client = _httpClientFactory.CreateClient();
-            
             var payload = new Dictionary<string, object>
             {
                 { "language", LanguageServiceHelpers.GetLanguageAliasForCopilotService(activeApiRevision.Language, activeCodeFile.CodeFile.LanguageVariant) },
@@ -595,19 +582,10 @@ namespace APIViewWeb.Managers
             try {
                 _logger.LogInformation("Starting Copilot job for ReviewId: {ReviewId}, APIRevisionId: {APIRevisionId}, Language: {Language}", 
                     reviewId, activeApiRevision.Id, activeApiRevision.Language);
-                
 
-                var request = new HttpRequestMessage(HttpMethod.Post, startUrl)
-                {
-                    Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")
-                };
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await _copilotAuthService.GetAccessTokenAsync());
-                
-                var response = await client.SendAsync(request);
-                response.EnsureSuccessStatusCode();
-                var responseString = await response.Content.ReadAsStringAsync();
-                var jobStartedResponse = JsonSerializer.Deserialize<AIReviewJobStartedResponseModel>(responseString);
-                
+                var jobStartedResponse = await _copilotHttp.PostAsync<AIReviewJobStartedResponseModel>(
+                    "api-review/start", payload);
+
                 _logger.LogInformation("Copilot job started successfully. JobId: {JobId}, ReviewId: {ReviewId}, APIRevisionId: {APIRevisionId}", 
                     jobStartedResponse.JobId, reviewId, activeApiRevision.Id);
                 
@@ -656,10 +634,6 @@ namespace APIViewWeb.Managers
 
             language = LanguageServiceHelpers.GetLanguageAliasForCopilotService(language);
 
-            string copilotEndpoint = _configuration["CopilotServiceEndpoint"];
-            string startUrl = $"{copilotEndpoint}/api-review/start";
-            HttpClient client = _httpClientFactory.CreateClient();
-
             var payload = new Dictionary<string, object> { { "target", strippedTarget }, { "language", language } };
 
             if (!string.IsNullOrEmpty(request.Base))
@@ -682,13 +656,8 @@ namespace APIViewWeb.Managers
             {
                 _logger.LogInformation("Starting AVC review job via API. Language: {Language}", language);
 
-                using var httpRequest = new HttpRequestMessage(HttpMethod.Post, startUrl)
-                {
-                    Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")
-                };
-                httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await _copilotAuthService.GetAccessTokenAsync());
-
-                using HttpResponseMessage response = await client.SendAsync(httpRequest);
+                using HttpResponseMessage response = await _copilotHttp.SendAsync(
+                    HttpMethod.Post, "api-review/start", payload);
                 string responseString = await response.Content.ReadAsStringAsync();
 
                 if (!response.IsSuccessStatusCode)
@@ -697,7 +666,7 @@ namespace APIViewWeb.Managers
                     throw new HttpRequestException($"Copilot service returned {(int)response.StatusCode}: {responseString}", null, response.StatusCode);
                 }
 
-                AIReviewJobStartedResponseModel jobStartedResponse = JsonSerializer.Deserialize<AIReviewJobStartedResponseModel>(responseString);
+                AIReviewJobStartedResponseModel jobStartedResponse = System.Text.Json.JsonSerializer.Deserialize<AIReviewJobStartedResponseModel>(responseString);
                 
                 _logger.LogInformation("AVC review job started successfully. JobId: {JobId}", jobStartedResponse.JobId);
                 return jobStartedResponse;
@@ -719,21 +688,10 @@ namespace APIViewWeb.Managers
                 throw new ArgumentException("Job ID is required.", nameof(jobId));
             }
 
-            string copilotEndpoint = _configuration["CopilotServiceEndpoint"];
-            string pollUrl = $"{copilotEndpoint}/api-review/{jobId}";
-            HttpClient client = _httpClientFactory.CreateClient();
-
             try
             {
                 _logger.LogInformation("Polling AVC review job status. JobId: {JobId}", jobId);
-
-                using var request = new HttpRequestMessage(HttpMethod.Get, pollUrl);
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await _copilotAuthService.GetAccessTokenAsync());
-
-                HttpResponseMessage response = await client.SendAsync(request);
-                response.EnsureSuccessStatusCode();
-                string responseString = await response.Content.ReadAsStringAsync();
-                return JsonSerializer.Deserialize<AIReviewJobPolledResponseModel>(responseString);
+                return await _copilotHttp.GetAsync<AIReviewJobPolledResponseModel>($"api-review/{jobId}");
             }
             catch (Exception e)
             {

@@ -2212,12 +2212,14 @@
     if (effectInitialized) return;
     effectInitialized = true;
     Alpine.effect(() => {
-      // Access reactive properties to register dependency
-      const _search = store().filters.search;
-      const _plane = store().filters.plane;
-      const _month = store().filters.month;
-      const _prLang = store().filters.prLang;
-      const _prStatus = store().filters.prStatus;
+      // Access reactive properties to register Alpine dependency tracking
+      void [
+        store().filters.search,
+        store().filters.plane,
+        store().filters.month,
+        store().filters.prLang,
+        store().filters.prStatus,
+      ];
       // Skip re-render if plans not loaded yet
       if (!getPlans().length) return;
       // Debounce render to avoid excessive re-renders
@@ -2338,7 +2340,6 @@
 
     const now = new Date();
     const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
     const endOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0); // last day of next month
     const twoMonthsAgo = new Date();
     twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
@@ -2659,7 +2660,6 @@
     const displayName = pr.packageName
       ? `${esc(pr.packageName)}`
       : `${esc(pr.repo)}#${esc(pr.prNumber)}`;
-    const wiUrl = `https://dev.azure.com/azure-sdk/Release/_workitems/edit/${pr.planId}`;
     return `
     <div class="pr-card" data-pr-url="${esc(pr.prUrl)}">
       <div class="pr-card-summary">

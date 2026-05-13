@@ -66,7 +66,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private readonly Option<int> workItemIdOpt = new("--workitem-id")
         {
             Description = "SDK release plan work item id",
-            Required = false,
+            Required = true,
         };
 
         private readonly Option<int> pipelineRunIdOpt = new("--pipeline-run")
@@ -109,8 +109,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 generateSdkCommandName => await RunGenerateSdkAsync(commandParser.GetValue(typeSpecProjectPathOpt),
                                         commandParser.GetValue(sdkReleaseTypeOpt),
                                         commandParser.GetValue(languageOpt),
-                                        commandParser.GetValue(pullRequestNumberOpt),
                                         commandParser.GetValue(workItemIdOpt),
+                                        commandParser.GetValue(pullRequestNumberOpt),                                        
                                         commandParser.GetValue(apiVersionOpt),
                                         ct),
                 getSdkPullRequestCommandName => await GetSDKPullRequestDetails(commandParser.GetValue(languageOpt), workItemId: commandParser.GetValue(workItemIdOpt), buildId: commandParser.GetValue(pipelineRunIdOpt), ct: ct),
@@ -178,8 +178,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        [McpServerTool(Name = RunGenerateSdkToolName), Description("Generate SDK from a TypeSpec project using pipeline.")]
-        public async Task<ReleaseWorkflowResponse> RunGenerateSdkAsync(string typespecProjectRoot, string sdkReleaseType, string language, int pullRequestNumber = 0, int workItemId = 0, string apiVersion = "", CancellationToken ct = default)
+        [McpServerTool(Name = RunGenerateSdkToolName), Description("Generate SDK from a TypeSpec project using pipeline. Release plan work item ID is required to run SDK generation.")]
+        public async Task<ReleaseWorkflowResponse> RunGenerateSdkAsync(string typespecProjectRoot, string sdkReleaseType, string language, int workItemId, int pullRequestNumber = 0, string apiVersion = "", CancellationToken ct = default)
         {
             try
             {
@@ -188,6 +188,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     Status = "Success",
                     ResponseErrors = []
                 };
+
+                if (workItemId == 0)
+                {
+                    response.ResponseErrors.Add("Release plan work item ID is required to run SDK generation.");
+                    response.Status = "Failed";
+                    response.NextSteps = ["Create a release plan work item if you don't have one or get existing release plan work item and re-run SDK generation."];
+                    return response;
+                }
                 language = inputSanitizer.SanitizeLanguage(language);
                 logger.LogInformation(
                     "Generating SDK for TypeSpec project: {TypespecProjectRoot}, API Version: {ApiVersion}, SDK Release Type: {SdkReleaseType}, Language: {Language}, Pull Request Number: {PullRequestNumber}, Work Item ID: {WorkItemId}",

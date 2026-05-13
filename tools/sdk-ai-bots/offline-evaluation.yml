@@ -65,7 +65,7 @@ extends:
                     export AZURE_TENANT_ID=$tenantId
                     nohup python server.py </dev/null >/dev/null 2>&1 &
                     sleep 20
-                    lsof -ti:8080
+                    lsof -ti:8089
                 env:
                   SYSTEM_ACCESSTOKEN: $(System.AccessToken)
                   AZURESUBSCRIPTION_SERVICE_CONNECTION_ID: $(AZURESUBSCRIPTION_SERVICE_CONNECTION_ID)

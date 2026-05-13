@@ -28,6 +28,6 @@ COPY tools/sdk-ai-bots/azure-sdk-qa-bot-agent/skills/ ./skills/
 COPY tools/sdk-ai-bots/azure-sdk-qa-bot-agent/server.py .
 COPY tools/sdk-ai-bots/azure-sdk-qa-bot-agent/_version.py .
 
-EXPOSE 8080
+EXPOSE 8089
 
-CMD ["python3", "-u", "-m", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["python3", "-u", "-m", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8089"]

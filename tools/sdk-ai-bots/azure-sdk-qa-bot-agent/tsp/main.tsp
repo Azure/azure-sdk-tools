@@ -12,7 +12,7 @@ using TypeSpec.Versioning;
 @service({
   title: "Azure SDK QA Bot Agent Service",
 })
-@server("http://localhost:8080", "Local development server")
+@server("http://localhost:8089", "Local development server")
 @versioned(Versions)
 namespace AzureSdkQaBot;
 

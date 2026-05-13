@@ -236,7 +236,7 @@ class EvalsRunner:
         api_url = (
             f"{bot_service_endpoint}/completion"
             if bot_service_endpoint is not None
-            else "http://localhost:8080/completion"
+            else "http://localhost:8089/completion"
         )
         start_time = time.time()
         tenant_id = None

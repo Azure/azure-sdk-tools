@@ -68,7 +68,7 @@ python scripts/dev/mock_teams_chat.py --user-id "alice_123" --user-name "Alice"
 python scripts/dev/mock_teams_chat.py --local --tenant azure_sdk_onboarding
 
 # Specify a custom server URL
-python scripts/dev/mock_teams_chat.py --server http://my-server:8080
+python scripts/dev/mock_teams_chat.py --server http://my-server:8089
 ```
 
 ### Flags
@@ -76,7 +76,7 @@ python scripts/dev/mock_teams_chat.py --server http://my-server:8080
 | Flag | Default | Description |
 |------|---------|-------------|
 | `--local` | `False` | Send to local agent (port 8088) instead of server |
-| `--server` | `http://localhost:8080` | Server URL (`8088` if `--local`) |
+| `--server` | `http://localhost:8089` | Server URL (`8089` if `--local`) |
 | `--user-id` | `mock-user-001` | Simulated Teams user ID |
 | `--user-name` | `MockUser` | Display name |
 | `--tenant` | `azure_sdk_qa_bot` | Tenant ID (from predefined list) |

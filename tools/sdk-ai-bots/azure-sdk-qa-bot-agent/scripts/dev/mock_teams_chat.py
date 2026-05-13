@@ -5,7 +5,7 @@ Usage:
     python scripts/mock_teams_chat.py --local
     python scripts/mock_teams_chat.py --local --user-id "29:orgid:abc-123" --user-name "Alice"
     python scripts/mock_teams_chat.py --user-id "29:orgid:abc-123" --user-name "Alice" --tenant azure_sdk_qa_bot
-    python scripts/mock_teams_chat.py --server http://localhost:8080 --conversation-id my-conv-1
+    python scripts/mock_teams_chat.py --server http://localhost:8089 --conversation-id my-conv-1
 
 Starts an interactive chat loop. Type messages and see agent responses.
 Type 'quit' or 'exit' to stop, '/new' to start a new conversation,
@@ -79,19 +79,41 @@ def _print_banner(args):
 
 
 async def main():
-    parser = argparse.ArgumentParser(description="Mock Teams chat client for the agent server.")
-    parser.add_argument("--local", action="store_true", help="Call local agent directly (port 8088) instead of server")
-    parser.add_argument("--server", default=None, help="Server/agent base URL (default: auto based on --local)")
+    parser = argparse.ArgumentParser(
+        description="Mock Teams chat client for the agent server."
+    )
+    parser.add_argument(
+        "--local",
+        action="store_true",
+        help="Call local agent directly (port 8088) instead of server",
+    )
+    parser.add_argument(
+        "--server",
+        default=None,
+        help="Server/agent base URL (default: auto based on --local)",
+    )
     parser.add_argument("--user-id", default="mock-user-001", help="Teams user ID")
-    parser.add_argument("--user-name", default="MockUser", help="Teams user display name")
-    parser.add_argument("--tenant", default="azure_sdk_qa_bot", choices=TENANTS, help="Tenant ID")
-    parser.add_argument("--conversation-id", default=None, help="Conversation ID (auto-generated if omitted)")
-    parser.add_argument("--conversation-type", default="teams_channel", help="Conversation type")
-    parser.add_argument("--full-context", action="store_true", help="Request full context in response")
+    parser.add_argument(
+        "--user-name", default="MockUser", help="Teams user display name"
+    )
+    parser.add_argument(
+        "--tenant", default="azure_sdk_qa_bot", choices=TENANTS, help="Tenant ID"
+    )
+    parser.add_argument(
+        "--conversation-id",
+        default=None,
+        help="Conversation ID (auto-generated if omitted)",
+    )
+    parser.add_argument(
+        "--conversation-type", default="teams_channel", help="Conversation type"
+    )
+    parser.add_argument(
+        "--full-context", action="store_true", help="Request full context in response"
+    )
     args = parser.parse_args()
 
     if args.server is None:
-        args.server = "http://localhost:8088" if args.local else "http://localhost:8080"
+        args.server = "http://localhost:8088" if args.local else "http://localhost:8089"
 
     if not args.conversation_id:
         args.conversation_id = f"mock-conv-{uuid.uuid4().hex[:8]}"
@@ -246,8 +268,16 @@ async def _send_local(client: httpx.AsyncClient, args, user_input: str):
     """Send Responses protocol request directly to the local agent."""
     memory_scope = _resolve_memory_scope(args.user_id)
     input_messages = [
-        {"type": "message", "role": "system", "content": f"[tenant_context] original_tenant_id={args.tenant}"},
-        {"type": "message", "role": "system", "content": f"[memory_scope] value={memory_scope}"},
+        {
+            "type": "message",
+            "role": "system",
+            "content": f"[tenant_context] original_tenant_id={args.tenant}",
+        },
+        {
+            "type": "message",
+            "role": "system",
+            "content": f"[memory_scope] value={memory_scope}",
+        },
         {"type": "message", "role": "user", "content": user_input},
     ]
 

@@ -87,7 +87,7 @@ This project has two separate components that are run and debugged differently:
 | Component | Description | Entrypoint | Port | Debug Method |
 |-----------|-------------|------------|------|--------------|
 | **Agent** | The AI chat agent (Microsoft Agent Framework, Responses protocol) | `agents/chat_agent/init.py` | 8088 | F5 with AI Toolkit Agent Inspector |
-| **Server** | The backend API that the Teams App communicates with (FastAPI) | `server.py` | 8080 | Standard Python debugging |
+| **Server** | The backend API that the Teams App communicates with (FastAPI) | `server.py` | 8089 | Standard Python debugging |
 
 ### Debugging the Agent (F5 with AI Toolkit)
 
@@ -104,14 +104,14 @@ This launches the agent via `agentdev run` on `http://localhost:8088/` with `deb
 
 ### Debugging the Server
 
-1. Use this instruction to let your copilot set up local debugging with the AI Toolkit: `Help me configure the azure-sdk-qa-bot-agent/server.py to work with VS Code Python debugging. 1) Add a debug configuration in launch.json to launch the FastAPI server with uvicorn and debugpy. 2) The server should be launched on http://localhost:8080/`
+1. Use this instruction to let your copilot set up local debugging with the AI Toolkit: `Help me configure the azure-sdk-qa-bot-agent/server.py to work with VS Code Python debugging. 1) Add a debug configuration in launch.json to launch the FastAPI server with uvicorn and debugpy. 2) The server should be launched on http://localhost:8089/`
 ```json
 {
     "name": "Debug Backend Server",
     "type": "debugpy",
     "request": "launch",
     "module": "uvicorn",
-    "args": ["server:app", "--host", "0.0.0.0", "--port", "8080"],
+    "args": ["server:app", "--host", "0.0.0.0", "--port", "8089"],
     "cwd": "${workspaceFolder}"
 }
 ```

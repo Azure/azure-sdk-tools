@@ -1,7 +1,7 @@
 ### You need to install REST Client extension for your vscode, to run this test
 
 ### Local test - chat
-POST http://localhost:8080/agent/chat HTTP/1.1
+POST http://localhost:8089/agent/chat HTTP/1.1
 Content-type: application/json; charset=utf-8
 
 {
@@ -17,7 +17,7 @@ Content-type: application/json; charset=utf-8
 }
 
 ### Local test - feedback
-POST http://localhost:8080/agent/feedback HTTP/1.1
+POST http://localhost:8089/agent/feedback HTTP/1.1
 Content-type: application/json; charset=utf-8
 
 {
@@ -29,7 +29,7 @@ Content-type: application/json; charset=utf-8
 }
 
 ### Local test - intention
-POST http://localhost:8080/message/intention HTTP/1.1
+POST http://localhost:8089/message/intention HTTP/1.1
 Content-type: application/json; charset=utf-8
 
 {

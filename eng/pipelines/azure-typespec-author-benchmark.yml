@@ -60,6 +60,26 @@ extends:
                   ls -R .github/skills/azure-typespec-author
                 displayName: Checkout skill branch
 
+              # Copy package.json and package-lock.json from the spec repo
+              # into the fixture's Widget project so evaluations use the
+              # latest dependency versions from azure-rest-api-specs.
+              - script: |
+                  set -e
+                  FIXTURE_DIR=".github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget"
+                  SPEC_REPO="https://github.com/Azure/azure-rest-api-specs.git"
+                  TEMP_DIR=$(mktemp -d)
+                  echo "Sparse-cloning spec repo to fetch package.json and package-lock.json..."
+                  git clone --depth 1 --filter=blob:none --sparse "$SPEC_REPO" "$TEMP_DIR"
+                  cd "$TEMP_DIR"
+                  git sparse-checkout set --no-cone package.json package-lock.json
+                  cd -
+                  echo "Copying package.json and package-lock.json to fixture..."
+                  cp "$TEMP_DIR/package.json" "$FIXTURE_DIR/package.json"
+                  cp "$TEMP_DIR/package-lock.json" "$FIXTURE_DIR/package-lock.json"
+                  rm -rf "$TEMP_DIR"
+                  echo "Done. Fixture now uses spec repo's package files."
+                displayName: Copy spec repo package files to fixture
+
               # Install Go and build/start the QA bot backend
               - script: |
                   echo "Downloading Go 1.24.0..."
@@ -294,6 +314,26 @@ extends:
                   echo "Skill source overlaid from origin/$BRANCH ($(git rev-parse origin/$BRANCH))"
                   ls -R .github/skills/azure-typespec-author
                 displayName: Checkout skill branch
+
+              # Copy package.json and package-lock.json from the spec repo
+              # into the fixture's Widget project so evaluations use the
+              # latest dependency versions from azure-rest-api-specs.
+              - script: |
+                  set -e
+                  FIXTURE_DIR=".github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget"
+                  SPEC_REPO="https://github.com/Azure/azure-rest-api-specs.git"
+                  TEMP_DIR=$(mktemp -d)
+                  echo "Sparse-cloning spec repo to fetch package.json and package-lock.json..."
+                  git clone --depth 1 --filter=blob:none --sparse "$SPEC_REPO" "$TEMP_DIR"
+                  cd "$TEMP_DIR"
+                  git sparse-checkout set --no-cone package.json package-lock.json
+                  cd -
+                  echo "Copying package.json and package-lock.json to fixture..."
+                  cp "$TEMP_DIR/package.json" "$FIXTURE_DIR/package.json"
+                  cp "$TEMP_DIR/package-lock.json" "$FIXTURE_DIR/package-lock.json"
+                  rm -rf "$TEMP_DIR"
+                  echo "Done. Fixture now uses spec repo's package files."
+                displayName: Copy spec repo package files to fixture
 
               # Install Go and build/start the QA bot backend
               - script: |

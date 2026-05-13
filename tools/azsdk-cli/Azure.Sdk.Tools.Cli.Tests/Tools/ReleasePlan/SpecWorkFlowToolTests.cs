@@ -218,7 +218,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 typespecProjectRoot: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
                 apiVersion: "2023-01-01",
                 sdkReleaseType: "beta",
-                language: "Java"
+                language: "Java",
+                workItemId: 456
             );
             Assert.That(result.ToString(), Does.Contain("Azure DevOps pipeline https://dev.azure.com/azure-sdk/internal/_build/results?buildId=100 has been initiated to generate the SDK. Build ID is 100"));
         }
@@ -247,7 +248,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 apiVersion: "2023-01-01",
                 sdkReleaseType: "beta",
                 language: "Java",
-                pullRequestNumber: 123
+                workItemId: 456,
+                pullRequestNumber: 123                
             );
             Assert.That(result.ToString(), Does.Contain("Azure DevOps pipeline https://dev.azure.com/azure-sdk/internal/_build/results?buildId=100 has been initiated to generate the SDK. Build ID is 100"));
         }
@@ -392,7 +394,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 typespecProjectRoot: "InvalidPath/specification/testcontoso/Contoso.Management",
                 apiVersion: "2023-01-01",
                 sdkReleaseType: "beta",
-                language: "Java"
+                language: "Java",
+                workItemId: 456
             );
             Assert.That(result.TypeSpecProject, Is.EqualTo(""));
             Assert.That(result.Language, Is.EqualTo(SdkLanguage.Java));

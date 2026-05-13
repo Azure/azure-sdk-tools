@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
+
 namespace APIViewWeb.LeanControllers
 {
     public class AgentController : BaseApiController
@@ -21,12 +22,6 @@ namespace APIViewWeb.LeanControllers
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ICopilotAuthenticationService _copilotAuthService;
 
-        private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-        };
-
         public AgentController(
             ILogger<AgentController> logger,
             IConfiguration configuration,
@@ -35,6 +30,11 @@ namespace APIViewWeb.LeanControllers
         {
             _logger = logger;
             _copilotEndpoint = configuration["CopilotServiceEndpoint"];
+            if (string.IsNullOrEmpty(_copilotEndpoint))
+            {
+                throw new InvalidOperationException(
+                    "CopilotServiceEndpoint is not configured. Set it in app configuration before starting the app.");
+            }
             _httpClientFactory = httpClientFactory;
             _copilotAuthService = copilotAuthService;
         }
@@ -52,19 +52,13 @@ namespace APIViewWeb.LeanControllers
                 return BadRequest("description is required");
             }
 
-            if (string.IsNullOrEmpty(_copilotEndpoint))
-            {
-                _logger.LogError("CopilotServiceEndpoint is not configured.");
-                return StatusCode(StatusCodes.Status502BadGateway, "Issue reporting is not available.");
-            }
-
             string targetUrl = $"{_copilotEndpoint}/report-issue";
             HttpClient client = _httpClientFactory.CreateClient();
 
             using HttpRequestMessage outbound = new(HttpMethod.Post, targetUrl)
             {
                 Content = new StringContent(
-                    JsonSerializer.Serialize(request, _jsonOptions),
+                    JsonSerializer.Serialize(request),
                     Encoding.UTF8,
                     "application/json")
             };
@@ -82,27 +76,29 @@ namespace APIViewWeb.LeanControllers
                 return StatusCode(StatusCodes.Status502BadGateway, "Failed to reach issue reporting service.");
             }
 
-            string responseBody = await response.Content.ReadAsStringAsync();
+            using (response)
+            {
+                string responseBody = await response.Content.ReadAsStringAsync();
 
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogWarning(
-                    "Copilot report-issue returned {Status}: {Body}",
-                    (int)response.StatusCode,
-                    responseBody);
-                return StatusCode(StatusCodes.Status502BadGateway, "Failed to file issue.");
-            }
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning(
+                        "Copilot report-issue returned {Status}: {Body}",
+                        (int)response.StatusCode,
+                        responseBody);
+                    return StatusCode(StatusCodes.Status502BadGateway, "Failed to file issue.");
+                }
 
-            try
-            {
-                ReportIssueResponse parsed = JsonSerializer.Deserialize<ReportIssueResponse>(
-                    responseBody, _jsonOptions);
-                return new LeanJsonResult(parsed, StatusCodes.Status200OK);
-            }
-            catch (JsonException ex)
-            {
-                _logger.LogError(ex, "Failed to parse copilot report-issue response: {Body}", responseBody);
-                return StatusCode(StatusCodes.Status502BadGateway, "Invalid response from issue reporting service.");
+                try
+                {
+                    ReportIssueResponse parsed = JsonSerializer.Deserialize<ReportIssueResponse>(responseBody);
+                    return new LeanJsonResult(parsed, StatusCodes.Status200OK);
+                }
+                catch (JsonException ex)
+                {
+                    _logger.LogError(ex, "Failed to parse copilot report-issue response: {Body}", responseBody);
+                    return StatusCode(StatusCodes.Status502BadGateway, "Invalid response from issue reporting service.");
+                }
             }
         }
     }

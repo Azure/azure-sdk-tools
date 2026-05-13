@@ -41,9 +41,9 @@ jobs:
         displayName: "Install npm packages"
 
       - script: |
-          npm test
+          npm run test:ci
         workingDirectory: $(ProjectPath)
-        displayName: "Run tests"
+        displayName: "Run tests with coverage"
 
       - script: |
           npm run lint

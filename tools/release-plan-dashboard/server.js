@@ -172,10 +172,16 @@ async function start() {
   }, CACHE_TTL_MS);
 }
 
-start().catch((err) => {
-  console.error("Fatal startup error:", err);
-  process.exit(1);
-});
+const isEntryPoint =
+  process.argv[1] &&
+  fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
+
+if (isEntryPoint) {
+  start().catch((err) => {
+    console.error("Fatal startup error:", err);
+    process.exit(1);
+  });
+}
 /* v8 ignore stop */
 
 export { createApp, validateEnvVars };

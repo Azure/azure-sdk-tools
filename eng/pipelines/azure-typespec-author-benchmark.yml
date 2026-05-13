@@ -60,31 +60,6 @@ extends:
                   ls -R .github/skills/azure-typespec-author
                 displayName: Checkout skill branch
 
-              # Copy package.json and package-lock.json from the spec repo
-              # into the fixture's Widget project so evaluations use the
-              # latest dependency versions from azure-rest-api-specs.
-              - script: |
-                  set -e
-                  FIXTURE_DIR=".github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget"
-                  SPEC_REPO="https://github.com/Azure/azure-rest-api-specs.git"
-                  TEMP_DIR=$(mktemp -d)
-                  echo "Sparse-cloning spec repo to fetch package.json and package-lock.json..."
-                  git clone --depth 1 --filter=blob:none --sparse "$SPEC_REPO" "$TEMP_DIR"
-                  cd "$TEMP_DIR"
-                  git sparse-checkout set --no-cone package.json package-lock.json
-                  cd -
-                  echo "Copying package.json and package-lock.json to fixture..."
-                  cp "$TEMP_DIR/package.json" "$FIXTURE_DIR/package.json"
-                  cp "$TEMP_DIR/package-lock.json" "$FIXTURE_DIR/package-lock.json"
-                  rm -rf "$TEMP_DIR"
-                  echo "Done. Fixture now uses spec repo's package files."
-                  echo "Installing node_modules in fixture directory..."
-                  cd "$FIXTURE_DIR"
-                  npm ci --userconfig $(Build.SourcesDirectory)/.npmrc
-                  echo "node_modules installed successfully"
-                  ls node_modules | head -20
-                displayName: Copy spec repo packages and install node_modules
-
               # Install Go and build/start the QA bot backend
               - script: |
                   echo "Downloading Go 1.24.0..."
@@ -194,7 +169,6 @@ extends:
                   tsp --version || true
                 displayName: Install TypeSpec compiler
 
-
               # Smoke test (informational only): try to start MCP server and
               # capture any startup errors. We don't fail the pipeline here
               # because reliably driving an MCP stdio JSON-RPC handshake from
@@ -212,6 +186,31 @@ extends:
                   AZSDKTOOLS_AGENT_TESTING: "true"
                   AZSDKTOOLS_COLLECT_TELEMETRY: "false"
                   AZURE_SDK_KB_ENDPOINT: "http://localhost:8088"
+
+              # Copy package.json and package-lock.json from the spec repo
+              # into the fixture's Widget project so evaluations use the
+              # latest dependency versions from azure-rest-api-specs.
+              - script: |
+                  set -e
+                  FIXTURE_DIR=".github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget"
+                  SPEC_REPO="https://github.com/Azure/azure-rest-api-specs.git"
+                  TEMP_DIR=$(mktemp -d)
+                  echo "Sparse-cloning spec repo to fetch package.json and package-lock.json..."
+                  git clone --depth 1 --filter=blob:none --sparse "$SPEC_REPO" "$TEMP_DIR"
+                  cd "$TEMP_DIR"
+                  git sparse-checkout set --no-cone package.json package-lock.json
+                  cd -
+                  echo "Copying package.json and package-lock.json to fixture..."
+                  cp "$TEMP_DIR/package.json" "$FIXTURE_DIR/package.json"
+                  cp "$TEMP_DIR/package-lock.json" "$FIXTURE_DIR/package-lock.json"
+                  rm -rf "$TEMP_DIR"
+                  echo "Done. Fixture now uses spec repo's package files."
+                  echo "Installing node_modules in fixture directory..."
+                  cd "$FIXTURE_DIR"
+                  npm ci --userconfig $(Build.SourcesDirectory)/.npmrc
+                  echo "node_modules installed successfully"
+                  ls node_modules | head -20
+                displayName: Copy spec repo packages and install node_modules
 
               # Run evaluations
               # The local/default Vally config (.vally.yaml) is kept stable for
@@ -321,31 +320,6 @@ extends:
                   ls -R .github/skills/azure-typespec-author
                 displayName: Checkout skill branch
 
-              # Copy package.json and package-lock.json from the spec repo
-              # into the fixture's Widget project so evaluations use the
-              # latest dependency versions from azure-rest-api-specs.
-              - script: |
-                  set -e
-                  FIXTURE_DIR=".github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget"
-                  SPEC_REPO="https://github.com/Azure/azure-rest-api-specs.git"
-                  TEMP_DIR=$(mktemp -d)
-                  echo "Sparse-cloning spec repo to fetch package.json and package-lock.json..."
-                  git clone --depth 1 --filter=blob:none --sparse "$SPEC_REPO" "$TEMP_DIR"
-                  cd "$TEMP_DIR"
-                  git sparse-checkout set --no-cone package.json package-lock.json
-                  cd -
-                  echo "Copying package.json and package-lock.json to fixture..."
-                  cp "$TEMP_DIR/package.json" "$FIXTURE_DIR/package.json"
-                  cp "$TEMP_DIR/package-lock.json" "$FIXTURE_DIR/package-lock.json"
-                  rm -rf "$TEMP_DIR"
-                  echo "Done. Fixture now uses spec repo's package files."
-                  echo "Installing node_modules in fixture directory..."
-                  cd "$FIXTURE_DIR"
-                  npm ci --userconfig $(Build.SourcesDirectory)/.npmrc
-                  echo "node_modules installed successfully"
-                  ls node_modules | head -20
-                displayName: Copy spec repo packages and install node_modules
-
               # Install Go and build/start the QA bot backend
               - script: |
                   echo "Downloading Go 1.24.0..."
@@ -455,7 +429,6 @@ extends:
                   tsp --version || true
                 displayName: Install TypeSpec compiler
 
-
               # Smoke test (informational only): try to start MCP server and
               # capture any startup errors. We don't fail the pipeline here
               # because reliably driving an MCP stdio JSON-RPC handshake from
@@ -473,6 +446,31 @@ extends:
                   AZSDKTOOLS_AGENT_TESTING: "true"
                   AZSDKTOOLS_COLLECT_TELEMETRY: "false"
                   AZURE_SDK_KB_ENDPOINT: "http://localhost:8088"
+
+              # Copy package.json and package-lock.json from the spec repo
+              # into the fixture's Widget project so evaluations use the
+              # latest dependency versions from azure-rest-api-specs.
+              - script: |
+                  set -e
+                  FIXTURE_DIR=".github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget"
+                  SPEC_REPO="https://github.com/Azure/azure-rest-api-specs.git"
+                  TEMP_DIR=$(mktemp -d)
+                  echo "Sparse-cloning spec repo to fetch package.json and package-lock.json..."
+                  git clone --depth 1 --filter=blob:none --sparse "$SPEC_REPO" "$TEMP_DIR"
+                  cd "$TEMP_DIR"
+                  git sparse-checkout set --no-cone package.json package-lock.json
+                  cd -
+                  echo "Copying package.json and package-lock.json to fixture..."
+                  cp "$TEMP_DIR/package.json" "$FIXTURE_DIR/package.json"
+                  cp "$TEMP_DIR/package-lock.json" "$FIXTURE_DIR/package-lock.json"
+                  rm -rf "$TEMP_DIR"
+                  echo "Done. Fixture now uses spec repo's package files."
+                  echo "Installing node_modules in fixture directory..."
+                  cd "$FIXTURE_DIR"
+                  npm ci --userconfig $(Build.SourcesDirectory)/.npmrc
+                  echo "node_modules installed successfully"
+                  ls node_modules | head -20
+                displayName: Copy spec repo packages and install node_modules
 
               # Run evaluations
               # The local/default Vally config (.vally.yaml) is kept stable for

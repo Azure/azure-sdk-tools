@@ -4,8 +4,25 @@
 # license information.
 # --------------------------------------------------------------------------
 
-from apistub import ApiView
+import json
+import shutil
+import subprocess
+import tempfile
+from pathlib import Path
 from typing import List
+
+from apistub import ApiView
+
+# Path to Export-APIViewMarkdown.ps1, resolved relative to this file so it
+# works both locally and in CI without any configuration.
+#   tests/_test_util.py
+#     → tests/
+#       → apiview-stub-generator/
+#         → python-packages/
+#           → packages/
+#             → <repo root>/eng/common/scripts/
+_REPO_ROOT = Path(__file__).resolve().parents[4]
+_EXPORT_SCRIPT = _REPO_ROOT / "eng" / "common" / "scripts" / "Export-APIViewMarkdown.ps1"
 
 
 def _tokenize(node):
@@ -64,3 +81,54 @@ def _count_review_line_metadata(tokens, metadata):
             _count_review_line_metadata(token["Children"], metadata)
 
     return metadata
+
+
+def render_api_view_markdown(apiview) -> str:
+    """Serialize *apiview* to a temp JSON file, run Export-APIViewMarkdown.ps1 via
+    ``pwsh``, and return the resulting markdown string.
+
+    Skips (via ``pytest.skip``) when:
+    * ``pwsh`` is not on PATH (CI agents that lack PowerShell Core)
+    * the Export-APIViewMarkdown.ps1 script cannot be found
+
+    This intentionally delegates all rendering logic to the PS1 script so that
+    the tests stay in sync automatically when the script changes.
+    """
+    import pytest  # local import – only needed for tests
+
+    if not shutil.which("pwsh"):
+        pytest.skip("pwsh not available – skipping api.md comparison")
+
+    if not _EXPORT_SCRIPT.exists():
+        pytest.skip(f"Export-APIViewMarkdown.ps1 not found at {_EXPORT_SCRIPT}")
+
+    from apistub._stub_generator import APIViewEncoder  # noqa: PLC0415
+
+    with tempfile.TemporaryDirectory() as tmp:
+        json_path = Path(tmp) / "tokens.json"
+        md_path = Path(tmp) / "api.md"
+
+        json_path.write_text(APIViewEncoder().encode(apiview), encoding="utf-8")
+
+        result = subprocess.run(
+            [
+                "pwsh",
+                "-NoProfile",
+                "-NonInteractive",
+                "-File",
+                str(_EXPORT_SCRIPT),
+                "-TokenJsonPath",
+                str(json_path),
+                "-OutputPath",
+                str(md_path),
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            raise RuntimeError(
+                f"Export-APIViewMarkdown.ps1 failed (exit {result.returncode}):\n"
+                f"{result.stderr or result.stdout}"
+            )
+
+        return md_path.read_text(encoding="utf-8")

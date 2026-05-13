@@ -113,12 +113,24 @@ func (p *Pkg) Index() {
 func (p *Pkg) indexFile(f *ast.File) {
 	// map import aliases to full import paths e.g. "shared" => "github.com/Azure/azure-sdk-for-go/sdk/azcore/internal/shared"
 	imports := map[string]string{}
+	modulePathReplacement := ""
+	if versionReg.MatchString(p.modulePath) {
+		// the module has a major version suffix. we need to remove that from the
+		// sub-package's path. the reason being that we index packages without the
+		// major version suffix (see module.go@NewModule) to avoid noise in the
+		// diff across major versions. so, if we don't also remove it here, we will
+		// fail to look up cross package references (e.g. type aliases)
+		modulePathReplacement = path.Dir(p.modulePath)
+	}
 	for _, imp := range f.Imports {
-		p := strings.Trim(imp.Path.Value, `"`)
+		pkgPath := strings.Trim(imp.Path.Value, `"`)
+		if modulePathReplacement != "" {
+			pkgPath = strings.ReplaceAll(pkgPath, p.modulePath, modulePathReplacement)
+		}
 		if imp.Name != nil {
-			imports[imp.Name.String()] = p
+			imports[imp.Name.String()] = pkgPath
 		} else {
-			imports[filepath.Base(p)] = p
+			imports[filepath.Base(pkgPath)] = pkgPath
 		}
 	}
 

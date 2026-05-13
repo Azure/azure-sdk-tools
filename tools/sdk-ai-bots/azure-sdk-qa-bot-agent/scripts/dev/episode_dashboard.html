@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Episode Dashboard — Azure SDK QA Bot</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f0f2f5;
+            color: #24292f;
+            line-height: 1.5;
+        }
+        .header {
+            background: linear-gradient(135deg, #0078d4, #106ebe);
+            color: white;
+            padding: 14px 24px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header h1 { font-size: 18px; font-weight: 600; }
+        .header .subtitle { font-size: 12px; opacity: 0.85; }
+
+        .controls {
+            padding: 12px 24px;
+            border-bottom: 1px solid #d0d7de;
+            background: #fafbfc;
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+        .field { display: flex; flex-direction: column; gap: 3px; }
+        .field label {
+            font-size: 10px; font-weight: 600; color: #57606a;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .field select, .field input {
+            padding: 6px 10px; border: 1px solid #d0d7de; border-radius: 6px;
+            font-size: 13px; outline: none; min-width: 520px;
+        }
+        .field select:focus, .field input:focus {
+            border-color: #0078d4;
+            box-shadow: 0 0 0 3px rgba(0,120,212,0.12);
+        }
+        .btn {
+            padding: 6px 16px; background: #0078d4; color: white; border: none;
+            border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer;
+        }
+        .btn:hover { background: #106ebe; }
+        .btn:disabled { background: #8a8a8a; cursor: not-allowed; }
+
+        .stats {
+            padding: 8px 24px; background: #f6f8fa; border-bottom: 1px solid #d0d7de;
+            font-size: 12px; color: #57606a; display: flex; gap: 20px;
+        }
+        .stats .stat { display: flex; gap: 4px; align-items: center; }
+        .stats .stat-value { font-weight: 600; color: #24292f; }
+
+        .episodes {
+            padding: 16px 24px;
+            display: flex; flex-direction: column; gap: 12px;
+            padding-bottom: 60px;
+        }
+
+        .episode-card {
+            background: white; border: 1px solid #d0d7de; border-radius: 10px;
+            overflow: hidden;
+        }
+        .episode-card:hover { border-color: #0078d4; }
+        .episode-head {
+            padding: 10px 16px; background: #f6f8fa; border-bottom: 1px solid #d0d7de;
+            display: flex; justify-content: space-between; align-items: center;
+            cursor: pointer; user-select: none;
+        }
+        .episode-head:hover { background: #eef1f4; }
+        .episode-head .title { font-size: 14px; font-weight: 600; flex: 1; }
+        .episode-head .meta {
+            font-size: 11px; color: #57606a; display: flex; gap: 12px; align-items: center;
+        }
+        .badge {
+            display: inline-block; padding: 1px 8px; border-radius: 12px;
+            font-size: 11px; font-weight: 600;
+        }
+        .badge-tenant { background: #ddf4ff; color: #0969da; }
+        .badge-confidence { background: #dafbe1; color: #1a7f37; }
+        .badge-confidence.low { background: #fff8c5; color: #9a6700; }
+
+        .episode-body {
+            display: none; padding: 14px 16px;
+        }
+        .episode-body.open { display: block; }
+
+        .section { margin-bottom: 12px; }
+        .section-label {
+            font-size: 11px; font-weight: 600; color: #57606a;
+            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;
+        }
+        .section-content { font-size: 13px; line-height: 1.6; }
+        .section-content ul { padding-left: 20px; }
+        .section-content li { margin-bottom: 2px; }
+        .section-content ol { padding-left: 20px; }
+        .section-content ol li { margin-bottom: 2px; }
+        .thread-link {
+            font-size: 11px; color: #57606a; font-family: monospace;
+            word-break: break-all;
+        }
+
+        .empty-state {
+            text-align: center; padding: 40px 16px; color: #57606a;
+        }
+        .empty-state .icon { font-size: 32px; margin-bottom: 8px; }
+        .empty-state p { font-size: 14px; }
+
+        .loading-state {
+            text-align: center; padding: 30px; color: #0078d4; font-size: 14px;
+        }
+        .loading-state::after {
+            content: ''; display: inline-block; width: 16px; height: 16px;
+            border: 2px solid #0078d4; border-top-color: transparent;
+            border-radius: 50%; animation: spin 0.8s linear infinite;
+            margin-left: 8px; vertical-align: middle;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .error-state {
+            background: #ffebe9; border: 1px solid #ff8182; border-radius: 8px;
+            padding: 12px 16px; color: #cf222e; font-size: 13px; margin: 16px 24px;
+        }
+
+        .status-bar {
+            background: #f6f8fa; border-top: 1px solid #d0d7de;
+            padding: 5px 24px; font-size: 11px; color: #57606a;
+            position: fixed; bottom: 0; left: 0; right: 0;
+            display: flex; justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>&#x1f9e0; Episode Dashboard</h1>
+        <div class="subtitle">Azure SDK QA Bot &mdash; Expert experience episodes from Cosmos DB</div>
+    </div>
+
+    <div class="controls">
+        <div class="field">
+            <label>Tenant</label>
+            <select id="tenantFilter">
+                <option value="">All tenants</option>
+            </select>
+        </div>
+        <div class="field">
+            <label>Conversation ID (substring)</label>
+            <input type="text" id="threadFilter" placeholder="e.g. 19:0351f5f9404446e4b4fd4eaf2c27448d@thread.skype;messageid=1769582562684"
+                   onkeydown="if(event.key==='Enter')loadEpisodes()">
+        </div>
+        <button class="btn" id="loadBtn" onclick="loadEpisodes()">Load</button>
+    </div>
+
+    <div class="stats" id="statsBar" style="display:none">
+        <div class="stat">Episodes: <span class="stat-value" id="statCount">0</span></div>
+        <div class="stat">Tenant: <span class="stat-value" id="statTenant">all</span></div>
+    </div>
+
+    <div class="episodes" id="episodeList">
+        <div class="empty-state">
+            <div class="icon">&#x1f4a1;</div>
+            <p>Select filters and click <strong>Load</strong> to browse episodes</p>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <span id="statusText">Connecting&hellip;</span>
+        <span id="lastLoad">&mdash;</span>
+    </div>
+
+    <script>
+    (function () {
+        'use strict';
+
+        let cfg = {};
+
+        function esc(s) {
+            if (!s) return '';
+            var d = document.createElement('div');
+            d.textContent = s;
+            return d.innerHTML;
+        }
+        function setStatus(msg, isError) {
+            var el = document.getElementById('statusText');
+            el.textContent = msg;
+            el.style.color = isError ? '#cf222e' : '#57606a';
+        }
+
+        async function init() {
+            try {
+                var res = await fetch('/api/config');
+                cfg = await res.json();
+                var sel = document.getElementById('tenantFilter');
+                (cfg.tenants || []).forEach(function (t) {
+                    var opt = document.createElement('option');
+                    opt.value = t.id;
+                    opt.textContent = t.label + ' (' + t.id + ')';
+                    sel.appendChild(opt);
+                });
+                setStatus('Ready');
+            } catch (e) {
+                setStatus('Error loading config: ' + e.message, true);
+            }
+        }
+
+        async function loadEpisodes() {
+            var tenant = document.getElementById('tenantFilter').value;
+            var thread = document.getElementById('threadFilter').value.trim();
+            var btn = document.getElementById('loadBtn');
+            var list = document.getElementById('episodeList');
+
+            btn.disabled = true;
+            btn.textContent = 'Loading\u2026';
+            list.innerHTML = '<div class="loading-state">Loading episodes</div>';
+            setStatus('Loading episodes\u2026');
+
+            try {
+                var url = '/api/episodes?';
+                if (tenant) url += 'tenant_id=' + encodeURIComponent(tenant) + '&';
+                if (thread) url += 'thread_id=' + encodeURIComponent(thread) + '&';
+
+                var res = await fetch(url);
+                var data = await res.json();
+
+                if (data.error) {
+                    list.innerHTML = '<div class="error-state">\u26a0\ufe0f ' + esc(data.error) + '</div>';
+                    setStatus('Error', true);
+                    return;
+                }
+
+                var episodes = data.episodes || [];
+                document.getElementById('statsBar').style.display = 'flex';
+                document.getElementById('statCount').textContent = episodes.length;
+                document.getElementById('statTenant').textContent = tenant || 'all';
+
+                if (episodes.length === 0) {
+                    list.innerHTML =
+                        '<div class="empty-state"><div class="icon">&#x1f4ed;</div>' +
+                        '<p>No episodes found</p></div>';
+                    setStatus('Loaded \u2014 0 episodes');
+                    return;
+                }
+
+                var html = '';
+                for (var i = 0; i < episodes.length; i++) {
+                    html += renderEpisode(episodes[i], i);
+                }
+                list.innerHTML = html;
+                setStatus('Loaded \u2014 ' + episodes.length + ' episodes');
+                document.getElementById('lastLoad').textContent = new Date().toLocaleTimeString();
+            } catch (e) {
+                list.innerHTML = '<div class="error-state">\u26a0\ufe0f ' + esc(e.message) + '</div>';
+                setStatus('Error: ' + e.message, true);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Load';
+            }
+        }
+
+        function renderEpisode(ep, idx) {
+            var conf = (ep.confidence || 0);
+            var confClass = conf >= 0.7 ? '' : ' low';
+            var symptoms = (ep.symptoms || []).map(function(s) { return '<li>' + esc(s) + '</li>'; }).join('');
+            var chain = (ep.reasoning_chain || []).map(function(s, i) { return '<li>' + esc(s) + '</li>'; }).join('');
+
+            return '' +
+                '<div class="episode-card">' +
+                '  <div class="episode-head" onclick="toggleEpisode(' + idx + ')">' +
+                '    <div class="title">' + esc(ep.trigger) + '</div>' +
+                '    <div class="meta">' +
+                '      <span class="badge badge-tenant">' + esc(ep.tenant_id) + '</span>' +
+                '      <span class="badge badge-confidence' + confClass + '">' + (conf * 100).toFixed(0) + '%</span>' +
+                '    </div>' +
+                '  </div>' +
+                '  <div class="episode-body" id="ep-body-' + idx + '">' +
+                '    <div class="section">' +
+                '      <div class="section-label">Symptoms</div>' +
+                '      <div class="section-content"><ul>' + (symptoms || '<li><em>none</em></li>') + '</ul></div>' +
+                '    </div>' +
+                '    <div class="section">' +
+                '      <div class="section-label">Reasoning Chain</div>' +
+                '      <div class="section-content"><ol>' + chain + '</ol></div>' +
+                '    </div>' +
+                '    <div class="section">' +
+                '      <div class="section-label">Resolution</div>' +
+                '      <div class="section-content">' + esc(ep.resolution) + '</div>' +
+                '    </div>' +
+                '    <div class="section">' +
+                '      <div class="section-label">Key Insight</div>' +
+                '      <div class="section-content"><strong>' + esc(ep.key_insight) + '</strong></div>' +
+                '    </div>' +
+                '    <div class="section">' +
+                '      <div class="section-label">Metadata</div>' +
+                '      <div class="section-content thread-link">' +
+                '        Thread: ' + esc(ep.source_thread_id || '—') +
+                '        &nbsp;&middot;&nbsp; Messages: ' + (ep.message_count || '—') +
+                '        &nbsp;&middot;&nbsp; Created: ' + esc(ep.created_at || '—') +
+                '      </div>' +
+                '    </div>' +
+                '  </div>' +
+                '</div>';
+        }
+
+        function toggleEpisode(idx) {
+            var body = document.getElementById('ep-body-' + idx);
+            if (body) body.classList.toggle('open');
+        }
+
+        window.loadEpisodes = loadEpisodes;
+        window.toggleEpisode = toggleEpisode;
+
+        init();
+    })();
+    </script>
+</body>
+</html>

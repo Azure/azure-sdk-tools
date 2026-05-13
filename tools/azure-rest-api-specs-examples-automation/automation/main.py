@@ -23,7 +23,7 @@ csv_database: CsvDatabase
 
 start_time_secs: float
 
-timeout_secs: float = 45 * 60 * 60  # 45 minutes
+timeout_secs: float = 50 * 60  # 50 minutes
 
 clean_tmp_dir: bool = True
 tmp_folder: str = "tmp"
@@ -198,7 +198,9 @@ def process_release(operation: OperationConfiguration, sdk: SdkConfiguration, re
             subprocess.check_call(cmd, cwd=example_repo_path)
 
             # git push
-            remote_uri = "https://" + github_token + "@" + operation.sdk_examples_repository[len("https://") :]
+            remote_uri = (
+                "https://x-access-token:" + github_token + "@" + operation.sdk_examples_repository[len("https://") :]
+            )
             cmd = ["git", "push", remote_uri, branch]
             # do not print this as it contains token
             # logging.info('Command line: ' + ' '.join(cmd))
@@ -376,7 +378,7 @@ def main():
         "--language",
         type=str,
         required=False,
-        help='Process SDK for specific language. Currently supports "java" and "go".',
+        help='Process SDK for specific language. Currently supports "java", "go", "js", "dotnet", "python".',
     )
     parser.add_argument(
         "--persist-data",

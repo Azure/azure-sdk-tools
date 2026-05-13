@@ -110,6 +110,14 @@ func (p *Pkg) Index() {
 	}
 }
 
+// returns p.modulePath minus any major version suffix
+func (p *Pkg) unversionedModulePath() string {
+	if versionReg.MatchString(p.modulePath) {
+		return path.Dir(p.modulePath)
+	}
+	return p.modulePath
+}
+
 func (p *Pkg) indexFile(f *ast.File) {
 	// map import aliases to full import paths e.g. "shared" => "github.com/Azure/azure-sdk-for-go/sdk/azcore/internal/shared"
 	imports := map[string]string{}
@@ -187,7 +195,7 @@ func (p *Pkg) indexFile(f *ast.File) {
 				if ident, ok := t.X.(*ast.Ident); ok {
 					if impPath, ok := imports[ident.Name]; ok {
 						// alias in the same module could use type navigator directly
-						if _, _, found := strings.Cut(impPath, p.modulePath); found && !strings.Contains(impPath, "internal") {
+						if _, _, found := strings.Cut(impPath, p.unversionedModulePath()); found && !strings.Contains(impPath, "internal") {
 							expr := p.getText(t.Pos(), t.End())
 							p.c.addSimpleType(*p, x.Name.Name, p.Name(), expr, imports)
 						}
@@ -306,8 +314,8 @@ func (pkg Pkg) addTypeNavigator(oriVal string, imports map[string]string) string
 			// find exact import path of a type
 			if impPath, ok := imports[splits[0]]; ok {
 				// judge if import path is in the module
-				if _, after, found := strings.Cut(impPath, pkg.modulePath); found {
-					return fmt.Sprintf("<%s.%s>%s", path.Base(pkg.modulePath)+after, splits[1], oriVal)
+				if _, after, found := strings.Cut(impPath, pkg.unversionedModulePath()); found {
+					return fmt.Sprintf("<%s.%s>%s", path.Base(pkg.unversionedModulePath())+after, splits[1], oriVal)
 				}
 			}
 			return oriVal
@@ -345,7 +353,7 @@ func (a *TypeAlias) Resolve(def typeDef) error {
 	level := CodeDiagnosticLevelInfo
 	originalName := a.QualifiedName
 	// if the definition is in the same module as the alias, strip the module path from the diagnostic message
-	if _, after, found := strings.Cut(a.QualifiedName, a.Package.modulePath); found {
+	if _, after, found := strings.Cut(a.QualifiedName, a.Package.unversionedModulePath()); found {
 		// after is e.g. "/internal/log.Event" or ".StatusType"
 		originalName = after[1:]
 	} else {

@@ -137,7 +137,7 @@ public class LanguageServiceVersionUpdateTests
         var packagePath = _tempDirectory.DirectoryPath;
         _languageService.SetPackageInfoResult(CreateTestPackageInfo(packageVersion: TestVersion));
         _mockChangelogHelper.Setup(x => x.GetChangelogPath(packagePath)).Returns(TestChangelogPath);
-        _mockChangelogHelper.Setup(x => x.ParseChangelog(TestChangelogPath))
+        _mockChangelogHelper.Setup(x => x.ParseChangelog(TestChangelogPath, It.IsAny<string?>()))
             .Returns((ChangelogData?)null);
 
         // Act
@@ -155,7 +155,7 @@ public class LanguageServiceVersionUpdateTests
         var packagePath = _tempDirectory.DirectoryPath;
         _languageService.SetPackageInfoResult(CreateTestPackageInfo(packageVersion: TestVersion));
         _mockChangelogHelper.Setup(x => x.GetChangelogPath(packagePath)).Returns(TestChangelogPath);
-        _mockChangelogHelper.Setup(x => x.ParseChangelog(TestChangelogPath))
+        _mockChangelogHelper.Setup(x => x.ParseChangelog(TestChangelogPath, It.IsAny<string?>()))
             .Returns(CreateTestChangelogData(entries: []));
 
         // Act
@@ -173,17 +173,17 @@ public class LanguageServiceVersionUpdateTests
         var packagePath = _tempDirectory.DirectoryPath;
         _languageService.SetPackageInfoResult(CreateTestPackageInfo(packageVersion: TestVersion));
         _mockChangelogHelper.Setup(x => x.GetChangelogPath(packagePath)).Returns(TestChangelogPath);
-        _mockChangelogHelper.Setup(x => x.ParseChangelog(TestChangelogPath))
+        _mockChangelogHelper.Setup(x => x.ParseChangelog(TestChangelogPath, It.IsAny<string?>()))
             .Returns(CreateTestChangelogData(entryVersion: TestVersion));
-        _mockChangelogHelper.Setup(x => x.UpdateReleaseDate(TestChangelogPath, TestVersion, TestReleaseDate))
+        _mockChangelogHelper.Setup(x => x.UpdateReleaseDate(TestChangelogPath, TestVersion, TestReleaseDate, It.IsAny<string?>()))
             .Returns(ChangelogUpdateResult.CreateSuccess("Updated"));
 
         // Act
         await _languageService.UpdateVersionAsync(packagePath, "beta", TestVersion, TestReleaseDate, CancellationToken.None);
 
         // Assert
-        _mockChangelogHelper.Verify(x => x.UpdateReleaseDate(TestChangelogPath, TestVersion, TestReleaseDate), Times.Once);
-        _mockChangelogHelper.Verify(x => x.UpdateLatestEntryTitle(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()), Times.Never);
+        _mockChangelogHelper.Verify(x => x.UpdateReleaseDate(TestChangelogPath, TestVersion, TestReleaseDate, It.IsAny<string?>()), Times.Once);
+        _mockChangelogHelper.Verify(x => x.UpdateLatestEntryTitle(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<string?>()), Times.Never);
     }
 
     [Test]
@@ -193,17 +193,17 @@ public class LanguageServiceVersionUpdateTests
         var packagePath = _tempDirectory.DirectoryPath;
         _languageService.SetPackageInfoResult(CreateTestPackageInfo(packageVersion: TestVersion));
         _mockChangelogHelper.Setup(x => x.GetChangelogPath(packagePath)).Returns(TestChangelogPath);
-        _mockChangelogHelper.Setup(x => x.ParseChangelog(TestChangelogPath))
+        _mockChangelogHelper.Setup(x => x.ParseChangelog(TestChangelogPath, It.IsAny<string?>()))
             .Returns(CreateTestChangelogData(entryVersion: "1.0.0-beta.1"));
-        _mockChangelogHelper.Setup(x => x.UpdateLatestEntryTitle(TestChangelogPath, TestVersion, TestReleaseDate))
+        _mockChangelogHelper.Setup(x => x.UpdateLatestEntryTitle(TestChangelogPath, TestVersion, TestReleaseDate, It.IsAny<string?>()))
             .Returns(ChangelogUpdateResult.CreateSuccess("Updated latest entry title"));
 
         // Act
         await _languageService.UpdateVersionAsync(packagePath, "stable", TestVersion, TestReleaseDate, CancellationToken.None);
 
         // Assert
-        _mockChangelogHelper.Verify(x => x.UpdateLatestEntryTitle(TestChangelogPath, TestVersion, TestReleaseDate), Times.Once);
-        _mockChangelogHelper.Verify(x => x.UpdateReleaseDate(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _mockChangelogHelper.Verify(x => x.UpdateLatestEntryTitle(TestChangelogPath, TestVersion, TestReleaseDate, It.IsAny<string?>()), Times.Once);
+        _mockChangelogHelper.Verify(x => x.UpdateReleaseDate(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()), Times.Never);
     }
 
     [Test]
@@ -213,9 +213,9 @@ public class LanguageServiceVersionUpdateTests
         var packagePath = _tempDirectory.DirectoryPath;
         _languageService.SetPackageInfoResult(CreateTestPackageInfo(packageVersion: TestVersion));
         _mockChangelogHelper.Setup(x => x.GetChangelogPath(packagePath)).Returns(TestChangelogPath);
-        _mockChangelogHelper.Setup(x => x.ParseChangelog(TestChangelogPath))
+        _mockChangelogHelper.Setup(x => x.ParseChangelog(TestChangelogPath, It.IsAny<string?>()))
             .Returns(CreateTestChangelogData(entryVersion: TestVersion));
-        _mockChangelogHelper.Setup(x => x.UpdateReleaseDate(TestChangelogPath, TestVersion, TestReleaseDate))
+        _mockChangelogHelper.Setup(x => x.UpdateReleaseDate(TestChangelogPath, TestVersion, TestReleaseDate, It.IsAny<string?>()))
             .Returns(ChangelogUpdateResult.CreateFailure("Failed to update changelog"));
 
         // Act
@@ -233,9 +233,9 @@ public class LanguageServiceVersionUpdateTests
         var packagePath = _tempDirectory.DirectoryPath;
         _languageService.SetPackageInfoResult(CreateTestPackageInfo(packageVersion: TestVersion));
         _mockChangelogHelper.Setup(x => x.GetChangelogPath(packagePath)).Returns(TestChangelogPath);
-        _mockChangelogHelper.Setup(x => x.ParseChangelog(TestChangelogPath))
+        _mockChangelogHelper.Setup(x => x.ParseChangelog(TestChangelogPath, It.IsAny<string?>()))
             .Returns(CreateTestChangelogData(entryVersion: TestVersion));
-        _mockChangelogHelper.Setup(x => x.UpdateReleaseDate(TestChangelogPath, TestVersion, TestReleaseDate))
+        _mockChangelogHelper.Setup(x => x.UpdateReleaseDate(TestChangelogPath, TestVersion, TestReleaseDate, It.IsAny<string?>()))
             .Returns(ChangelogUpdateResult.CreateSuccess("Updated"));
 
         // The base LanguageService.UpdatePackageVersionInFilesAsync returns partial success
@@ -259,9 +259,9 @@ public class LanguageServiceVersionUpdateTests
         var packagePath = _tempDirectory.DirectoryPath;
         _languageService.SetPackageInfoResult(CreateTestPackageInfo(packageVersion: TestVersion));
         _mockChangelogHelper.Setup(x => x.GetChangelogPath(packagePath)).Returns(TestChangelogPath);
-        _mockChangelogHelper.Setup(x => x.ParseChangelog(TestChangelogPath))
+        _mockChangelogHelper.Setup(x => x.ParseChangelog(TestChangelogPath, It.IsAny<string?>()))
             .Returns(CreateTestChangelogData(entryVersion: TestVersion));
-        _mockChangelogHelper.Setup(x => x.UpdateReleaseDate(TestChangelogPath, TestVersion, TestReleaseDate))
+        _mockChangelogHelper.Setup(x => x.UpdateReleaseDate(TestChangelogPath, TestVersion, TestReleaseDate, It.IsAny<string?>()))
             .Returns(ChangelogUpdateResult.CreateSuccess("Updated"));
 
         // Configure the service to return full success from UpdatePackageVersionInFilesAsync
@@ -283,9 +283,9 @@ public class LanguageServiceVersionUpdateTests
         var packagePath = _tempDirectory.DirectoryPath;
         _languageService.SetPackageInfoResult(CreateTestPackageInfo(packageVersion: TestVersion));
         _mockChangelogHelper.Setup(x => x.GetChangelogPath(packagePath)).Returns(TestChangelogPath);
-        _mockChangelogHelper.Setup(x => x.ParseChangelog(TestChangelogPath))
+        _mockChangelogHelper.Setup(x => x.ParseChangelog(TestChangelogPath, It.IsAny<string?>()))
             .Returns(CreateTestChangelogData(entryVersion: TestVersion));
-        _mockChangelogHelper.Setup(x => x.UpdateReleaseDate(TestChangelogPath, TestVersion, TestReleaseDate))
+        _mockChangelogHelper.Setup(x => x.UpdateReleaseDate(TestChangelogPath, TestVersion, TestReleaseDate, It.IsAny<string?>()))
             .Returns(ChangelogUpdateResult.CreateSuccess("Updated"));
 
         // Configure the service to return failure from UpdatePackageVersionInFilesAsync
@@ -311,16 +311,16 @@ public class LanguageServiceVersionUpdateTests
         var providedVersion = "2.0.0";
         _languageService.SetPackageInfoResult(CreateTestPackageInfo(packageVersion: "1.0.0")); // Different from provided
         _mockChangelogHelper.Setup(x => x.GetChangelogPath(packagePath)).Returns(TestChangelogPath);
-        _mockChangelogHelper.Setup(x => x.ParseChangelog(TestChangelogPath))
+        _mockChangelogHelper.Setup(x => x.ParseChangelog(TestChangelogPath, It.IsAny<string?>()))
             .Returns(CreateTestChangelogData(entryVersion: providedVersion));
-        _mockChangelogHelper.Setup(x => x.UpdateReleaseDate(TestChangelogPath, providedVersion, TestReleaseDate))
+        _mockChangelogHelper.Setup(x => x.UpdateReleaseDate(TestChangelogPath, providedVersion, TestReleaseDate, It.IsAny<string?>()))
             .Returns(ChangelogUpdateResult.CreateSuccess("Updated"));
 
         // Act
         var result = await _languageService.UpdateVersionAsync(packagePath, "stable", providedVersion, TestReleaseDate, CancellationToken.None);
 
         // Assert
-        _mockChangelogHelper.Verify(x => x.UpdateReleaseDate(TestChangelogPath, providedVersion, TestReleaseDate), Times.Once);
+        _mockChangelogHelper.Verify(x => x.UpdateReleaseDate(TestChangelogPath, providedVersion, TestReleaseDate, It.IsAny<string?>()), Times.Once);
     }
 
     [Test]
@@ -331,16 +331,16 @@ public class LanguageServiceVersionUpdateTests
         var packageVersion = "1.5.0";
         _languageService.SetPackageInfoResult(CreateTestPackageInfo(packageVersion: packageVersion));
         _mockChangelogHelper.Setup(x => x.GetChangelogPath(packagePath)).Returns(TestChangelogPath);
-        _mockChangelogHelper.Setup(x => x.ParseChangelog(TestChangelogPath))
+        _mockChangelogHelper.Setup(x => x.ParseChangelog(TestChangelogPath, It.IsAny<string?>()))
             .Returns(CreateTestChangelogData(entryVersion: packageVersion));
-        _mockChangelogHelper.Setup(x => x.UpdateReleaseDate(TestChangelogPath, packageVersion, TestReleaseDate))
+        _mockChangelogHelper.Setup(x => x.UpdateReleaseDate(TestChangelogPath, packageVersion, TestReleaseDate, It.IsAny<string?>()))
             .Returns(ChangelogUpdateResult.CreateSuccess("Updated"));
 
         // Act
         var result = await _languageService.UpdateVersionAsync(packagePath, "beta", null, TestReleaseDate, CancellationToken.None);
 
         // Assert
-        _mockChangelogHelper.Verify(x => x.UpdateReleaseDate(TestChangelogPath, packageVersion, TestReleaseDate), Times.Once);
+        _mockChangelogHelper.Verify(x => x.UpdateReleaseDate(TestChangelogPath, packageVersion, TestReleaseDate, It.IsAny<string?>()), Times.Once);
     }
 
     #endregion

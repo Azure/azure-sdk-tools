@@ -9,7 +9,7 @@ trigger:
       - main
   paths:
     include:
-      - tools/sdk-ai-bots/azure-sdk-qa-bot-backend/
+      - tools/sdk-ai-bots/azure-sdk-qa-bot-agent/**/*.py
 
 pr:
   branches:
@@ -17,7 +17,7 @@ pr:
       - main
   paths:
     include:
-      - tools/sdk-ai-bots/azure-sdk-qa-bot-backend/
+      - tools/sdk-ai-bots/azure-sdk-qa-bot-agent/**/*.py
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
   parameters:
@@ -34,6 +34,17 @@ extends:
         jobs:
           - job: 'evaluation'
             displayName: 'evaluation'
+            strategy:
+              maxParallel: 2
+              matrix:
+                typespec:
+                  testPrefix: typespec
+                onboarding:
+                  testPrefix: onboarding
+                python:
+                  testPrefix: python
+                apispec:
+                  testPrefix: apispec
             steps:
               - template: /eng/pipelines/templates/steps/use-python-version.yml
                 parameters:
@@ -41,53 +52,42 @@ extends:
               - script: |
                   python --version
                 displayName: 'check python'
-              - script: |
-                  echo "Downloading Go 1.24.0..."
-                  curl -LO https://go.dev/dl/go1.24.0.linux-amd64.tar.gz
-
-                  echo "Removing existing Go installation..."
-                  sudo rm -rf /usr/local/go
-
-                  echo "Extracting Go 1.24.0..."
-                  sudo tar -C /usr/local -xzf go1.24.0.linux-amd64.tar.gz
-
-                  echo "Setting environment variables..."
-                  echo "##vso[task.setvariable variable=GOROOT]/usr/local/go"
-                  echo "##vso[task.prependpath]/usr/local/go/bin"
-                displayName: 'install go'
-              - script: |
-                  go version
-                displayName: 'check go'
               - task: AzureCLI@2
-                displayName: 'start backend AI agent service'
+                displayName: 'start agent server'
                 inputs:
                   azureSubscription: 'azuresdkqabot-dev'
+                  addSpnToEnvironment: true
                   scriptType: bash
                   scriptLocation: inlineScript
-                  workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
+                  workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-agent
                   inlineScript: |
-                    export GOPROXY=https://proxy.golang.org,direct
-                    go build -o qa-bot-service
-                    chmod +x qa-bot-service
-                    nohup ./qa-bot-service </dev/null >/dev/null 2>&1 &
+                    pip install --pre -r requirements.txt
+                    export AZURE_CLIENT_ID=$servicePrincipalId
+                    export AZURE_TENANT_ID=$tenantId
+                    nohup python server.py </dev/null >/dev/null 2>&1 &
                     sleep 20
-                    lsof -ti:8088
+                    lsof -ti:8089
                 env:
                   SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+                  AZURESUBSCRIPTION_SERVICE_CONNECTION_ID: $(AZURESUBSCRIPTION_SERVICE_CONNECTION_ID)
                   AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
               - script: |
                   pip install -r requirements.txt
                 displayName: 'install requirements'
                 workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
               - task: AzureCLI@2
-                displayName: 'Run Evals'
+                displayName: 'Run Evals ($(testPrefix))'
                 inputs:
                   azureSubscription: 'azuresdkqabot-dev'
                   scriptType: bash
                   scriptLocation: inlineScript
                   workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
                   inlineScript: |
-                    python evals_run.py --evaluation_name_prefix $(Build.BuildId) --evaluators "similarity,groundedness,response_completeness,reference_match,knowledge_match" --cache_result full
+                    python evals_run.py \
+                      --evaluation_name_prefix $(Build.BuildId) \
+                      --prefix "$(testPrefix)" \
+                      --evaluators "similarity,groundedness,response_completeness,reference_match,knowledge_match" \
+                      --cache_result full
                 env:
                   SYSTEM_ACCESSTOKEN: $(System.AccessToken)
                   AZURE_AI_PROJECT_ENDPOINT: $(AZURE_AI_PROJECT_ENDPOINT)
@@ -105,6 +105,6 @@ extends:
               outputs:
                 - output: pipelineArtifact
                   path: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/cache
-                  artifact: evaluation-results
-                  displayName: Publish Evaluation Results Artifact
+                  artifact: evaluation-results-$(testPrefix)
+                  displayName: Publish Evaluation Results Artifact ($(testPrefix))
                   condition: always()

@@ -1,6 +1,6 @@
 import { spawn } from "child_process";
-import { mkdir, writeFile } from "fs/promises";
-import { dirname } from "path";
+import { mkdir, readdir, rm, writeFile } from "fs/promises";
+import { dirname, join as joinFsPath } from "path";
 import { Logger } from "./log.js";
 
 /**
@@ -66,7 +66,20 @@ interface SpawnResult {
   stderr: string;
 }
 
+/**
+ * Test-only hook for stubbing out the `gh` subprocess. Pass `undefined` to
+ * restore the real spawn-based runner.
+ */
+export type GhRunner = (args: string[]) => Promise<SpawnResult>;
+let ghRunnerOverride: GhRunner | undefined;
+export function _setGhRunnerForTests(runner: GhRunner | undefined): void {
+  ghRunnerOverride = runner;
+}
+
 async function runGh(args: string[]): Promise<SpawnResult> {
+  if (ghRunnerOverride) {
+    return ghRunnerOverride(args);
+  }
   return new Promise((resolve, reject) => {
     const proc = spawn("gh", args, { shell: process.platform === "win32" });
     const stdoutChunks: Buffer[] = [];
@@ -423,6 +436,10 @@ function joinPosix(...parts: string[]): string {
  * Best-effort fetch of a spec directory (and any additional directories) from
  * GitHub. Returns `true` on success and `false` on any error (logged at debug
  * level) so callers can transparently fall back to a git sparse clone.
+ *
+ * Strategy order: gh CLI (if available) → REST API → return false. On any
+ * failure, partial writes under `destRoot` are removed so a subsequent
+ * `git clone` into the same directory works cleanly.
  */
 export async function tryFetchSpecFromGitHub(args: {
   repo: string;
@@ -431,11 +448,7 @@ export async function tryFetchSpecFromGitHub(args: {
   additionalDirectories?: string[];
   destRoot: string;
 }): Promise<boolean> {
-  try {
-    const opts = await resolveGitHubFetchOptions();
-    Logger.debug(
-      `Attempting GitHub-based spec fetch: ${args.repo}@${args.commit} via ${describeStrategy(opts)}`,
-    );
+  const doFetch = async (opts: GitHubFetchOptions) => {
     await downloadDirectoryFromGitHub({
       repo: args.repo,
       commit: args.commit,
@@ -453,38 +466,112 @@ export async function tryFetchSpecFromGitHub(args: {
         opts,
       });
     }
-    return true;
-  } catch (err) {
-    Logger.debug(
-      `GitHub-based spec fetch failed; falling back to git sparse clone: ${(err as Error).message}`,
-    );
-    return false;
-  }
+  };
+  return runWithFallback({
+    label: `spec fetch ${args.repo}@${args.commit}:${args.directory}`,
+    cleanupRoot: args.destRoot,
+    work: doFetch,
+  });
 }
 
 /**
  * Best-effort fetch of a single file from GitHub. Returns `true` on success
  * and `false` on any error (logged at debug level).
+ *
+ * Strategy order matches {@link tryFetchSpecFromGitHub}. When `destRoot` is
+ * provided, partial writes under it are removed on failure so a subsequent
+ * `git clone` into the same directory works cleanly.
  */
 export async function tryFetchFileFromGitHub(args: {
   repo: string;
   commit: string;
   path: string;
   destFile: string;
+  destRoot?: string;
 }): Promise<boolean> {
+  const doFetch = async (opts: GitHubFetchOptions) => {
+    await downloadFileFromGitHub({
+      repo: args.repo,
+      commit: args.commit,
+      path: args.path,
+      destFile: args.destFile,
+      opts,
+    });
+  };
+  return runWithFallback({
+    label: `file fetch ${args.repo}@${args.commit}:${args.path}`,
+    cleanupRoot: args.destRoot,
+    work: doFetch,
+  });
+}
+
+/**
+ * Runs `work` with the resolved primary strategy. If the primary strategy is
+ * the `gh` CLI and it fails, retries once via the REST API path before giving
+ * up. Empties `cleanupRoot` between attempts and on final failure to keep the
+ * destination directory in a clean state for the git fallback.
+ */
+async function runWithFallback(args: {
+  label: string;
+  cleanupRoot?: string;
+  work: (opts: GitHubFetchOptions) => Promise<void>;
+}): Promise<boolean> {
+  const primary = await resolveGitHubFetchOptions();
+  Logger.debug(`Attempting GitHub-based ${args.label} via ${describeStrategy(primary)}`);
   try {
-    const opts = await resolveGitHubFetchOptions();
-    Logger.debug(
-      `Attempting GitHub-based file fetch: ${args.repo}@${args.commit}:${args.path} via ${describeStrategy(opts)}`,
-    );
-    await downloadFileFromGitHub({ ...args, opts });
+    await args.work(primary);
     return true;
-  } catch (err) {
+  } catch (primaryErr) {
     Logger.debug(
-      `GitHub-based file fetch failed; falling back to git sparse clone: ${(err as Error).message}`,
+      `GitHub-based ${args.label} via ${describeStrategy(primary)} failed: ${
+        (primaryErr as Error).message
+      }`,
     );
+    if (primary.useGhCli) {
+      // gh CLI may be installed but unauthenticated, rate-limited, or otherwise
+      // failing for transient reasons. Try the REST API path before giving up.
+      if (args.cleanupRoot) {
+        await emptyDirectoryContents(args.cleanupRoot);
+      }
+      const fallback: GitHubFetchOptions = {
+        useGhCli: false,
+        token: primary.token ?? getGitHubToken(),
+      };
+      Logger.debug(`Retrying ${args.label} via ${describeStrategy(fallback)}`);
+      try {
+        await args.work(fallback);
+        return true;
+      } catch (fallbackErr) {
+        Logger.debug(
+          `GitHub-based ${args.label} via ${describeStrategy(fallback)} failed: ${
+            (fallbackErr as Error).message
+          }`,
+        );
+      }
+    }
+    if (args.cleanupRoot) {
+      await emptyDirectoryContents(args.cleanupRoot);
+    }
+    Logger.debug(`Falling back to git sparse clone for ${args.label}`);
     return false;
   }
+}
+
+/**
+ * Removes every entry inside `dir` while leaving `dir` itself in place. Used
+ * to roll back partial GitHub-fetch writes so a subsequent `git clone` into
+ * the same directory does not complain about a non-empty target.
+ */
+async function emptyDirectoryContents(dir: string): Promise<void> {
+  let entries: string[];
+  try {
+    entries = await readdir(dir);
+  } catch {
+    return;
+  }
+  await Promise.all(
+    entries.map((entry) => rm(joinFsPath(dir, entry), { recursive: true, force: true })),
+  );
 }
 
 function describeStrategy(opts: GitHubFetchOptions): string {

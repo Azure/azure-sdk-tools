@@ -243,6 +243,7 @@ export async function initCommand(argv: any) {
       commit: resolvedConfigUrl.commit,
       path: tspConfigPath,
       destFile: tspConfigDest,
+      destRoot: cloneDir,
     });
     if (!fetchedFromGitHub) {
       Logger.debug(`Cloning repo to ${cloneDir}`);

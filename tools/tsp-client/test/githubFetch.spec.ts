@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   _setGhCliAvailableForTests,
+  _setGhRunnerForTests,
   buildRawUrl,
   buildTreeApiUrl,
   getGitHubToken,
@@ -9,7 +10,7 @@ import {
   tryFetchFileFromGitHub,
   tryFetchSpecFromGitHub,
 } from "../src/githubFetch.js";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -43,6 +44,7 @@ function restoreTokens(): void {
 afterEach(() => {
   globalThis.fetch = ORIGINAL_FETCH;
   _setGhCliAvailableForTests(undefined);
+  _setGhRunnerForTests(undefined);
   restoreTokens();
 });
 
@@ -376,6 +378,157 @@ describe("authenticated fetch", () => {
       });
       expect(ok).toBe(true);
       expect(observedAuth).toBe("Bearer ghp_primary");
+    } finally {
+      await rm(tmp, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("destination cleanup on failure", () => {
+  beforeEach(() => {
+    unsetTokens();
+    _setGhCliAvailableForTests(false);
+  });
+
+  it("empties destRoot when a spec fetch fails partway through", async () => {
+    const tmp = await mkdtemp(join(tmpdir(), "tspc-gh-"));
+    try {
+      const fetchMock = vi.fn(async (input: any) => {
+        const url = String(input);
+        if (url.endsWith("/commits/abc")) {
+          return makeJsonResponse({ commit: { tree: { sha: "rootTreeSha" } } });
+        }
+        if (url.endsWith("/git/trees/rootTreeSha")) {
+          return makeJsonResponse({
+            sha: "rootTreeSha",
+            truncated: false,
+            tree: [{ path: "specification", type: "tree", sha: "specTreeSha" }],
+          });
+        }
+        if (url.endsWith("/git/trees/specTreeSha")) {
+          return makeJsonResponse({
+            sha: "specTreeSha",
+            truncated: false,
+            tree: [{ path: "contoso", type: "tree", sha: "contosoTreeSha" }],
+          });
+        }
+        if (url.endsWith("/git/trees/contosoTreeSha?recursive=1")) {
+          return makeJsonResponse({
+            sha: "contosoTreeSha",
+            truncated: false,
+            tree: [
+              { path: "main.tsp", type: "blob", sha: "b1", size: 11 },
+              { path: "models/foo.tsp", type: "blob", sha: "b2", size: 12 },
+            ],
+          });
+        }
+        if (url.includes("raw.githubusercontent.com") && url.endsWith("/main.tsp")) {
+          return makeBufferResponse("partial-write");
+        }
+        // fail the second download to simulate a partial failure
+        if (url.includes("raw.githubusercontent.com") && url.endsWith("/models/foo.tsp")) {
+          return makeBufferResponse("server error", 500);
+        }
+        throw new Error(`Unexpected fetch URL: ${url}`);
+      });
+      globalThis.fetch = fetchMock as any;
+
+      const ok = await tryFetchSpecFromGitHub({
+        repo: "Azure/azure-rest-api-specs",
+        commit: "abc",
+        directory: "specification/contoso",
+        destRoot: tmp,
+      });
+      expect(ok).toBe(false);
+      // destRoot must be empty so the git clone fallback can write into it cleanly.
+      const remaining = await readdir(tmp);
+      expect(remaining).toEqual([]);
+    } finally {
+      await rm(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it("empties destRoot when a single-file fetch fails", async () => {
+    const tmp = await mkdtemp(join(tmpdir(), "tspc-gh-"));
+    try {
+      globalThis.fetch = vi.fn(async () => makeBufferResponse("not found", 404)) as any;
+      const ok = await tryFetchFileFromGitHub({
+        repo: "Azure/azure-rest-api-specs",
+        commit: "abc",
+        path: "specification/missing/tspconfig.yaml",
+        destFile: join(tmp, "specification/missing/tspconfig.yaml"),
+        destRoot: tmp,
+      });
+      expect(ok).toBe(false);
+      const remaining = await readdir(tmp);
+      expect(remaining).toEqual([]);
+    } finally {
+      await rm(tmp, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("gh CLI -> REST API fallback", () => {
+  beforeEach(() => {
+    unsetTokens();
+    _setGhCliAvailableForTests(true);
+  });
+
+  it("retries via REST when the gh CLI strategy fails", async () => {
+    // Make every gh subprocess invocation fail (simulates `gh` installed but
+    // unauthenticated, network blocked, etc.).
+    _setGhRunnerForTests(async () => ({
+      code: 1,
+      stdout: Buffer.alloc(0),
+      stderr: "gh: not authenticated",
+    }));
+
+    let restCalls = 0;
+    globalThis.fetch = vi.fn(async (input: any) => {
+      restCalls++;
+      const url = String(input);
+      if (url.endsWith("/commits/abc")) {
+        return makeJsonResponse({ commit: { tree: { sha: "rootTreeSha" } } });
+      }
+      if (url.endsWith("/git/trees/rootTreeSha")) {
+        return makeJsonResponse({
+          sha: "rootTreeSha",
+          truncated: false,
+          tree: [{ path: "specification", type: "tree", sha: "specTreeSha" }],
+        });
+      }
+      if (url.endsWith("/git/trees/specTreeSha")) {
+        return makeJsonResponse({
+          sha: "specTreeSha",
+          truncated: false,
+          tree: [{ path: "contoso", type: "tree", sha: "contosoTreeSha" }],
+        });
+      }
+      if (url.endsWith("/git/trees/contosoTreeSha?recursive=1")) {
+        return makeJsonResponse({
+          sha: "contosoTreeSha",
+          truncated: false,
+          tree: [{ path: "main.tsp", type: "blob", sha: "b1", size: 11 }],
+        });
+      }
+      if (url.includes("raw.githubusercontent.com") && url.endsWith("/main.tsp")) {
+        return makeBufferResponse("rest contents");
+      }
+      throw new Error(`Unexpected fetch URL: ${url}`);
+    }) as any;
+
+    const tmp = await mkdtemp(join(tmpdir(), "tspc-gh-"));
+    try {
+      const ok = await tryFetchSpecFromGitHub({
+        repo: "Azure/azure-rest-api-specs",
+        commit: "abc",
+        directory: "specification/contoso",
+        destRoot: tmp,
+      });
+      expect(ok).toBe(true);
+      expect(restCalls).toBeGreaterThan(0);
+      const main = await readFile(join(tmp, "specification/contoso/main.tsp"), "utf-8");
+      expect(main).toBe("rest contents");
     } finally {
       await rm(tmp, { recursive: true, force: true });
     }

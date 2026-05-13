@@ -2,45 +2,183 @@ trigger:
   branches:
     include:
       - main
+      - feature/*
+      - release/*
+      - hotfix/*
   paths:
     include:
-      - tools/release-plan-dashboard/
-
+      - tools/release-plan-dashboard
 pr:
   branches:
     include:
       - main
+      - feature/*
+      - release/*
+      - hotfix/*
   paths:
     include:
-      - tools/release-plan-dashboard/
+      - tools/release-plan-dashboard
 
 variables:
   - template: /eng/pipelines/templates/variables/image.yml
   - name: NodeVersion
-    value: '22.x'
+    value: "22.x"
   - name: ProjectPath
-    value: 'tools/release-plan-dashboard'
+    value: "tools/release-plan-dashboard"
 
-jobs:
-  - job: 'Build'
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    GenerateBaselines: true
+    stages:
+      - stage: "Build"
+        displayName: "Build and Test"
 
-    pool:
-      name: $(LINUXPOOL)
-      image: $(LINUXVMIMAGE)
-      os: linux
+        variables:
+          - ${{ if ne(variables['System.TeamProject'], 'internal') }}:
+              - name: CollectCoverage
+                value: false
+          - ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+              - name: CollectCoverage
+                value: true
+          - template: /eng/pipelines/templates/variables/image.yml
 
-    steps:
-      - task: NodeTool@0
-        inputs:
-          versionSpec: '$(NodeVersion)'
-        displayName: 'Use NodeJS $(NodeVersion)'
+        jobs:
+          - job: "Build and test"
 
-      - script: |
-          npm install
-        workingDirectory: $(ProjectPath)
-        displayName: "Install npm packages"
+            pool:
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
 
-      - script: |
-          npm test
-        workingDirectory: $(ProjectPath)
-        displayName: "Run tests"
+            templateContext:
+              sdl:
+                componentgovernance:
+                  enabled: true # Enable CG only on the build job
+
+            steps:
+              - task: NodeTool@0
+                inputs:
+                  versionSpec: "$(NodeVersion)"
+                displayName: "Use NodeJS $(NodeVersion)"
+
+              - script: |
+                  npm ci
+                workingDirectory: $(ProjectPath)
+                displayName: "Install npm packages for testing"
+
+              - script: |
+                  npm test
+                workingDirectory: $(ProjectPath)
+                displayName: "Run tests"
+
+              - script: |
+                  npm run lint
+                workingDirectory: $(ProjectPath)
+                displayName: "Run lint check"
+
+              - script: |
+                  npm run format:check
+                workingDirectory: $(ProjectPath)
+                displayName: "Run prettier format check"
+
+              - script: |
+                  npm ci --omit=dev
+                workingDirectory: $(ProjectPath)
+                displayName: "Install npm packages"
+
+              - task: ArchiveFiles@2
+                displayName: "Create deployable zip package"
+                inputs:
+                  rootFolderOrFile: "$(ProjectPath)"
+                  includeRootFolder: false
+                  archiveType: "zip"
+                  archiveFile: "$(Build.ArtifactStagingDirectory)/release-plan.zip"
+                  replaceExistingArchive: true
+
+              - template: /eng/common/pipelines/templates/steps/publish-1es-artifact.yml
+                parameters:
+                  ArtifactName: "release-plan"
+                  ArtifactPath: "$(Build.ArtifactStagingDirectory)"
+
+      - ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+          - stage: Staging_Publish
+            displayName: Pre-Prod
+            dependsOn: Build
+            condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'), or(ne(variables['Build.Reason'], 'Manual'), eq(variables['runAsCI'], 'true')))
+
+            jobs:
+              - job: Publish_to_Staging
+                templateContext:
+                  type: releaseJob
+                  isProduction: false
+                  inputs:
+                    - input: pipelineArtifact
+                      artifactName: release-plan
+                      targetPath: "$(Pipeline.Workspace)/release-plan"
+                displayName: Publish to Staging
+                pool:
+                  name: azsdk-pool
+                  image: ubuntu-24.04
+                  os: linux
+
+                steps:
+                  - task: AzureRmWebAppDeployment@4
+                    displayName: "Deploy Azure App Service"
+                    inputs:
+                      azureSubscription: "APIview staging resource group"
+                      appType: "webApp"
+                      WebAppName: "azsdk-releaseplan-dashboard-staging"
+                      ResourceGroupName: ReleasePlan-Dashboard
+                      packageForLinux: "$(Pipeline.Workspace)/release-plan/**/release-plan.zip"
+                      ScriptType: "Inline Script"
+                      InlineScript: |
+                        @echo off
+                        echo starting npm server
+                        call npm start
+                      enableCustomDeployment: true
+                      DeploymentType: zipDeploy
+
+      - ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+          - stage: Production_Publish
+            displayName: Prod
+            dependsOn: Staging_Publish
+            condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'), or(ne(variables['Build.Reason'], 'Manual'), eq(variables['runAsCI'], 'true')))
+
+            jobs:
+              - deployment: Publish_to_Prod
+                displayName: Publish to Prod
+                environment: "package-publish"
+                templateContext:
+                  type: releaseJob
+                  isProduction: true
+                  inputs:
+                    - input: pipelineArtifact
+                      artifactName: release-plan
+                      targetPath: "$(Pipeline.Workspace)/release-plan"
+                pool:
+                  name: azsdk-pool
+                  image: ubuntu-24.04
+                  os: linux
+
+                strategy:
+                  runOnce:
+                    deploy:
+                      steps:
+                        - task: AzureRmWebAppDeployment@4
+                          displayName: "Deploy Azure App Service"
+                          inputs:
+                            azureSubscription: "APIView prod deployment"
+                            appType: "webApp"
+                            WebAppName: "azsdk-releaseplan-dashboard"
+                            deployToSlotOrASE: true
+                            ResourceGroupName: ReleasePlan-Dashboard
+                            SlotName: staging
+                            ScriptType: "Inline Script"
+                            packageForLinux: $(Pipeline.Workspace)/release-plan/**/*.zip
+                            InlineScript: |
+                              @echo off
+                              echo starting npm server
+                              call npm start
+                            enableCustomDeployment: true
+                            DeploymentType: zipDeploy

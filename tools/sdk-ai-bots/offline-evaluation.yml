@@ -35,6 +35,7 @@ extends:
           - job: 'evaluation'
             displayName: 'evaluation'
             strategy:
+              maxParallel: 2
               matrix:
                 typespec:
                   testPrefix: typespec

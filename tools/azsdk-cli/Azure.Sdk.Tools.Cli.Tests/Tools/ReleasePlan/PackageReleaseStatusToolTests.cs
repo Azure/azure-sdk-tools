@@ -750,6 +750,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.ResponseError, Is.Null);
             Assert.That(result.Message, Does.Contain("999"));
             Assert.That(result.Message, Does.Contain("azure-test-package"));
+            Assert.That(result.Message, Does.Contain("python"));
 
             // Verify it searched by package name but did NOT update any work item
             mockDevOpsService.Verify(

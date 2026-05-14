@@ -193,24 +193,17 @@ extends:
               - script: |
                   set -e
                   FIXTURE_DIR=".github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget"
-                  SPEC_REPO="https://github.com/Azure/azure-rest-api-specs.git"
-                  TEMP_DIR=$(mktemp -d)
-                  echo "Sparse-cloning spec repo to fetch package.json and package-lock.json..."
-                  git clone --depth 1 --filter=blob:none --sparse "$SPEC_REPO" "$TEMP_DIR"
-                  cd "$TEMP_DIR"
-                  git sparse-checkout set --no-cone package.json package-lock.json
-                  cd -
-                  echo "Copying package.json and package-lock.json to fixture..."
-                  cp "$TEMP_DIR/package.json" "$FIXTURE_DIR/package.json"
-                  cp "$TEMP_DIR/package-lock.json" "$FIXTURE_DIR/package-lock.json"
-                  rm -rf "$TEMP_DIR"
+                  SPEC_REPO_RAW="https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main"
+                  echo "Downloading package.json and package-lock.json from spec repo..."
+                  curl -fSL "$SPEC_REPO_RAW/package.json" -o "$FIXTURE_DIR/package.json"
+                  curl -fSL "$SPEC_REPO_RAW/package-lock.json" -o "$FIXTURE_DIR/package-lock.json"
                   echo "Done. Fixture now uses spec repo's package files."
                   echo "Installing node_modules in fixture directory..."
                   cd "$FIXTURE_DIR"
                   npm ci --userconfig $(Build.SourcesDirectory)/.npmrc
                   echo "node_modules installed successfully"
                   ls node_modules | head -20
-                displayName: Copy spec repo packages and install node_modules
+                displayName: Download spec repo packages and install node_modules
 
               # Run evaluations
               # The local/default Vally config (.vally.yaml) is kept stable for
@@ -453,24 +446,17 @@ extends:
               - script: |
                   set -e
                   FIXTURE_DIR=".github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget"
-                  SPEC_REPO="https://github.com/Azure/azure-rest-api-specs.git"
-                  TEMP_DIR=$(mktemp -d)
-                  echo "Sparse-cloning spec repo to fetch package.json and package-lock.json..."
-                  git clone --depth 1 --filter=blob:none --sparse "$SPEC_REPO" "$TEMP_DIR"
-                  cd "$TEMP_DIR"
-                  git sparse-checkout set --no-cone package.json package-lock.json
-                  cd -
-                  echo "Copying package.json and package-lock.json to fixture..."
-                  cp "$TEMP_DIR/package.json" "$FIXTURE_DIR/package.json"
-                  cp "$TEMP_DIR/package-lock.json" "$FIXTURE_DIR/package-lock.json"
-                  rm -rf "$TEMP_DIR"
+                  SPEC_REPO_RAW="https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main"
+                  echo "Downloading package.json and package-lock.json from spec repo..."
+                  curl -fSL "$SPEC_REPO_RAW/package.json" -o "$FIXTURE_DIR/package.json"
+                  curl -fSL "$SPEC_REPO_RAW/package-lock.json" -o "$FIXTURE_DIR/package-lock.json"
                   echo "Done. Fixture now uses spec repo's package files."
                   echo "Installing node_modules in fixture directory..."
                   cd "$FIXTURE_DIR"
                   npm ci --userconfig $(Build.SourcesDirectory)/.npmrc
                   echo "node_modules installed successfully"
                   ls node_modules | head -20
-                displayName: Copy spec repo packages and install node_modules
+                displayName: Download spec repo packages and install node_modules
 
               # Run evaluations
               # The local/default Vally config (.vally.yaml) is kept stable for

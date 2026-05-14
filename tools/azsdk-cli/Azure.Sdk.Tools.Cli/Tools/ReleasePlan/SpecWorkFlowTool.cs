@@ -193,7 +193,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 {
                     response.ResponseErrors.Add("Release plan work item ID is required to run SDK generation.");
                     response.Status = "Failed";
-                    response.NextSteps = ["Create a release plan work item if you don't have one or get existing release plan work item and re-run SDK generation."];
+                    response.NextSteps = ["Create a release plan if you don't have one or get existing release plan  and re-run SDK generation."];
                     return response;
                 }
                 language = inputSanitizer.SanitizeLanguage(language);

@@ -54,7 +54,11 @@ stimuli:
   - type: file-matches
     config:
       path: '*.tsp'
-      pattern: 'listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*\{\s*\.\.\.TopQueryParameter;\s*\.\.\.SkipQueryParameter;\s*\}\s*>|listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*Parameters\s*=\s*ArmTopParameter\s*&\s*ArmSkipParameter\s*>|model\s+EmployeeListBySubscriptionParameters\s+is\s+Azure\.Core\.StandardListQueryParameters\s*;[\s\S]*?listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*EmployeeListBySubscriptionParameters\s*>'
+      pattern: 'listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*\{\s*\.\.\.TopQueryParameter;\s*\.\.\.SkipQueryParameter;\s*\}\s*>|model\s+\w+\s+(is|extends)\s+(Azure\.Core\.)?StandardListQueryParameters\s*;[\s\S]*?listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*\w+\s*>'
+  - type: file-not-matches
+    config:
+      path: '*.tsp'
+      pattern: '@query\("\$top"\)|@query\("\$skip"\)'
 scoring:
   weights:
     tool-calls: 1

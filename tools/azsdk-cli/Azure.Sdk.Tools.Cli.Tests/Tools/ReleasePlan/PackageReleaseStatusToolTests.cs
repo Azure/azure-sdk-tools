@@ -719,7 +719,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
-        public async Task UpdatePackageReleaseStatus_WithReleasePlanId_NotInResults_FallsBackToDefaultSelection()
+        public async Task UpdatePackageReleaseStatus_WithReleasePlanId_NotInResults_ReturnsMessage()
         {
             // Arrange
             var releasePlan = new ReleasePlanWorkItem
@@ -742,23 +742,22 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 .Setup(x => x.GetReleasePlansForPackageAsync("azure-test-package", "python", It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<ReleasePlanWorkItem> { releasePlan });
 
-            mockDevOpsService
-                .Setup(x => x.UpdateWorkItemAsync(11111, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 11111 });
-
             // Act - provide release plan ID 999 that doesn't match any result
             var result = await packageReleaseStatusTool.UpdatePackageReleaseStatus(
                 "azure-test-package", "python", "Released", null, 999, CancellationToken.None);
 
-            // Assert - falls back to default selection (first plan)
+            // Assert - returns message, does not update any work item
             Assert.That(result.ResponseError, Is.Null);
-            Assert.That(result.ReleaseStatus, Is.EqualTo("Released"));
-            Assert.That(result.ReleasePlanId, Is.EqualTo(100));
+            Assert.That(result.Message, Does.Contain("999"));
+            Assert.That(result.Message, Does.Contain("azure-test-package"));
 
-            // Verify it searched by package name
+            // Verify it searched by package name but did NOT update any work item
             mockDevOpsService.Verify(
                 x => x.GetReleasePlansForPackageAsync("azure-test-package", "python", It.IsAny<bool>(), It.IsAny<CancellationToken>()),
                 Times.Once);
+            mockDevOpsService.Verify(
+                x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()),
+                Times.Never);
         }
 
         [Test]

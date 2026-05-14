@@ -135,8 +135,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
                     else
                     {
-                        logger.LogInformation("Release plan with ID {releasePlanId} not found among in-progress release plans for package {packageName}. Falling back to default selection.", releasePlanId, packageName);
-                        releasePlan = SelectReleasePlan(releasePlans, packageName);
+                        response.Message = $"Release plan with ID '{releasePlanId}' not found among in-progress release plans for package '{packageName}' in language '{language}'.";
+                        return response;
                     }
                 }
                 else

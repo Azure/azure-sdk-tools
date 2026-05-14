@@ -34,7 +34,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         private readonly Option<int> releasePlanIdOpt = new("--release-plan-id")
         {
-            Description = "Optional release plan ID. If provided, the release status will be updated in this release plan instead of searching by package name.",
+            Description = "Optional release plan ID. If provided, it is used as an additional filter when searching by package name to select the correct release plan.",
             Required = false,
         };
 
@@ -112,55 +112,36 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return response;
                 }
 
-                ReleasePlanWorkItem? releasePlan = null;
-
-                // If release plan ID is provided, try to find the release plan by ID first
-                if (releasePlanId > 0)
+                logger.LogInformation("Searching for in-progress release plans with package {packageName} for {language}", packageName, language);
+                bool isAgentTesting = bool.TryParse(Environment.GetEnvironmentVariable("AZSDKTOOLS_AGENT_TESTING"), out var result) && result;
+                // Find all release plans in "In Progress" status with the given package name
+                var releasePlans = await devOpsService.GetReleasePlansForPackageAsync(packageName, language, isAgentTesting, ct);
+                if (releasePlans.Count == 0)
                 {
-                    logger.LogInformation("Searching for release plan with ID {releasePlanId}", releasePlanId);
-                    try
-                    {
-                        releasePlan = await devOpsService.GetReleasePlanAsync(releasePlanId, ct);
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.LogInformation(ex, "Failed to find release plan with ID {releasePlanId}. Falling back to package name search.", releasePlanId);
-                    }
+                    response.Message = $"No in-progress release plans found for package '{packageName}' in language '{language}'.";
+                    return response;
                 }
 
-                // If release plan not found by ID, search by package name
-                if (releasePlan == null)
-                {
-                    logger.LogInformation("Searching for in-progress release plans with package {packageName} for {language}", packageName, language);
-                    bool isAgentTesting = bool.TryParse(Environment.GetEnvironmentVariable("AZSDKTOOLS_AGENT_TESTING"), out var result) && result;
-                    // Find all release plans in "In Progress" status with the given package name
-                    var releasePlans = await devOpsService.GetReleasePlansForPackageAsync(packageName, language, isAgentTesting, ct);
-                    if (releasePlans.Count == 0)
-                    {
-                        response.Message = $"No in-progress release plans found for package '{packageName}' in language '{language}'.";
-                        return response;
-                    }
+                ReleasePlanWorkItem releasePlan;
 
-                    // If there are multiple release plans, prioritize the one with a merged pull request for the package
-                    releasePlan = releasePlans[0];
-                    if (releasePlans.Count > 1)
+                // If release plan ID is provided, use it to select the matching release plan from the results
+                if (releasePlanId > 0)
+                {
+                    var matchingPlan = releasePlans.FirstOrDefault(rp => rp.ReleasePlanId == releasePlanId);
+                    if (matchingPlan != null)
                     {
-                        logger.LogInformation("Multiple active release plans are found for '{packageName}' in language '{language}'", packageName, language);
-                        var releasePlanWithPrMerged = releasePlans.FirstOrDefault(rp => rp.SDKInfo.Any(s => s.PackageName.Equals(packageName) && s.PullRequestStatus.Equals("Merged")));
-                        if (releasePlanWithPrMerged != null)
-                        {
-                            logger.LogInformation("Selected first release plan {releasePlanId} with pull request as merged.", releasePlanWithPrMerged.ReleasePlanId);
-                            releasePlan = releasePlanWithPrMerged;
-                        }
-                        else
-                        {
-                            logger.LogInformation("No release plan with merged pull request status found. Defaulting to first release plan {releasePlanId}.", releasePlan.ReleasePlanId);
-                        }
+                        logger.LogInformation("Found release plan {releasePlanId} matching the provided ID for package {packageName}.", releasePlanId, packageName);
+                        releasePlan = matchingPlan;
                     }
                     else
                     {
-                        logger.LogInformation("Found release plan work item {workItemId} for package {packageName} in language {language}", releasePlan.WorkItemId, packageName, language);
+                        logger.LogInformation("Release plan with ID {releasePlanId} not found among in-progress release plans for package {packageName}. Falling back to default selection.", releasePlanId, packageName);
+                        releasePlan = SelectReleasePlan(releasePlans, packageName);
                     }
+                }
+                else
+                {
+                    releasePlan = SelectReleasePlan(releasePlans, packageName);
                 }
 
                 response.ReleasePlanId = releasePlan.ReleasePlanId;
@@ -189,6 +170,30 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 logger.LogError(ex, "Failed to update release status for package {packageName}", packageName);
                 return new ReleaseStatusUpdateResponse { PackageName = packageName, ResponseError = $"Failed to update release status: {ex.Message}" };
             }
+        }
+
+        private ReleasePlanWorkItem SelectReleasePlan(List<ReleasePlanWorkItem> releasePlans, string packageName)
+        {
+            var releasePlan = releasePlans[0];
+            if (releasePlans.Count > 1)
+            {
+                logger.LogInformation("Multiple active release plans are found for '{packageName}'", packageName);
+                var releasePlanWithPrMerged = releasePlans.FirstOrDefault(rp => rp.SDKInfo.Any(s => s.PackageName.Equals(packageName) && s.PullRequestStatus.Equals("Merged")));
+                if (releasePlanWithPrMerged != null)
+                {
+                    logger.LogInformation("Selected first release plan {releasePlanId} with pull request as merged.", releasePlanWithPrMerged.ReleasePlanId);
+                    releasePlan = releasePlanWithPrMerged;
+                }
+                else
+                {
+                    logger.LogInformation("No release plan with merged pull request status found. Defaulting to first release plan {releasePlanId}.", releasePlan.ReleasePlanId);
+                }
+            }
+            else
+            {
+                logger.LogInformation("Found release plan work item {workItemId} for package {packageName}", releasePlan.WorkItemId, packageName);
+            }
+            return releasePlan;
         }
     }
 }

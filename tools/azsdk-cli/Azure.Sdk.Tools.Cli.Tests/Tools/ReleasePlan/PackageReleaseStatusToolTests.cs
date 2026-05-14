@@ -656,12 +656,28 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
-        public async Task UpdatePackageReleaseStatus_WithReleasePlanId_UsesProvidedReleasePlan()
+        public async Task UpdatePackageReleaseStatus_WithReleasePlanId_SelectsMatchingPlanFromPackageSearch()
         {
             // Arrange
-            var releasePlan = new ReleasePlanWorkItem
+            var releasePlan1 = new ReleasePlanWorkItem
             {
-                WorkItemId = 12345,
+                WorkItemId = 11111,
+                ReleasePlanId = 100,
+                SDKInfo = new List<SDKInfo>
+                {
+                    new SDKInfo
+                    {
+                        Language = "python",
+                        PackageName = "azure-test-package",
+                        PullRequestStatus = "InProgress"
+                    }
+                },
+                APISpecProjectPath = "specification/test/project1"
+            };
+
+            var releasePlan2 = new ReleasePlanWorkItem
+            {
+                WorkItemId = 22222,
                 ReleasePlanId = 200,
                 SDKInfo = new List<SDKInfo>
                 {
@@ -672,18 +688,18 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                         PullRequestStatus = "Merged"
                     }
                 },
-                APISpecProjectPath = "specification/test/project"
+                APISpecProjectPath = "specification/test/project2"
             };
 
             mockDevOpsService
-                .Setup(x => x.GetReleasePlanAsync(200, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(releasePlan);
+                .Setup(x => x.GetReleasePlansForPackageAsync("azure-test-package", "python", It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<ReleasePlanWorkItem> { releasePlan1, releasePlan2 });
 
             mockDevOpsService
-                .Setup(x => x.UpdateWorkItemAsync(12345, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 12345 });
+                .Setup(x => x.UpdateWorkItemAsync(22222, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 22222 });
 
-            // Act
+            // Act - provide release plan ID 200 to select the second plan
             var result = await packageReleaseStatusTool.UpdatePackageReleaseStatus(
                 "azure-test-package", "python", "Released", null, 200, CancellationToken.None);
 
@@ -692,23 +708,24 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.ReleaseStatus, Is.EqualTo("Released"));
             Assert.That(result.ReleasePlanId, Is.EqualTo(200));
 
-            // Verify it used GetReleasePlanAsync with the ID instead of searching by package name
+            // Verify it always searched by package name first
             mockDevOpsService.Verify(
-                x => x.GetReleasePlanAsync(200, It.IsAny<CancellationToken>()),
+                x => x.GetReleasePlansForPackageAsync("azure-test-package", "python", It.IsAny<bool>(), It.IsAny<CancellationToken>()),
                 Times.Once);
+            // Verify the correct plan was updated
             mockDevOpsService.Verify(
-                x => x.GetReleasePlansForPackageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()),
-                Times.Never);
+                x => x.UpdateWorkItemAsync(22222, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()),
+                Times.Once);
         }
 
         [Test]
-        public async Task UpdatePackageReleaseStatus_WithReleasePlanId_NotFound_FallsBackToPackageSearch()
+        public async Task UpdatePackageReleaseStatus_WithReleasePlanId_NotInResults_FallsBackToDefaultSelection()
         {
             // Arrange
             var releasePlan = new ReleasePlanWorkItem
             {
-                WorkItemId = 99999,
-                ReleasePlanId = 300,
+                WorkItemId = 11111,
+                ReleasePlanId = 100,
                 SDKInfo = new List<SDKInfo>
                 {
                     new SDKInfo
@@ -722,29 +739,23 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             };
 
             mockDevOpsService
-                .Setup(x => x.GetReleasePlanAsync(999, It.IsAny<CancellationToken>()))
-                .ThrowsAsync(new Exception("Release plan not found"));
-
-            mockDevOpsService
                 .Setup(x => x.GetReleasePlansForPackageAsync("azure-test-package", "python", It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<ReleasePlanWorkItem> { releasePlan });
 
             mockDevOpsService
-                .Setup(x => x.UpdateWorkItemAsync(99999, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 99999 });
+                .Setup(x => x.UpdateWorkItemAsync(11111, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 11111 });
 
-            // Act
+            // Act - provide release plan ID 999 that doesn't match any result
             var result = await packageReleaseStatusTool.UpdatePackageReleaseStatus(
                 "azure-test-package", "python", "Released", null, 999, CancellationToken.None);
 
-            // Assert
+            // Assert - falls back to default selection (first plan)
             Assert.That(result.ResponseError, Is.Null);
             Assert.That(result.ReleaseStatus, Is.EqualTo("Released"));
+            Assert.That(result.ReleasePlanId, Is.EqualTo(100));
 
-            // Verify it fell back to package name search
-            mockDevOpsService.Verify(
-                x => x.GetReleasePlanAsync(999, It.IsAny<CancellationToken>()),
-                Times.Once);
+            // Verify it searched by package name
             mockDevOpsService.Verify(
                 x => x.GetReleasePlansForPackageAsync("azure-test-package", "python", It.IsAny<bool>(), It.IsAny<CancellationToken>()),
                 Times.Once);

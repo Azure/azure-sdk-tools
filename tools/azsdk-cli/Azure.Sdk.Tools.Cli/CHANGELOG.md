@@ -4,7 +4,7 @@
 
 ### Features Added
 
-- Added optional `--release-plan-id` parameter to `update-release-status` CLI command. When provided, the release status is updated directly in the specified release plan without searching by package name. Falls back to package name search if the release plan is not found.
+- Added optional `--release-plan-id` parameter to `update-release-status` CLI command. When provided, it is used as an additional filter on top of the package name search to select the correct release plan. Falls back to default selection if the specified release plan ID is not found among matching plans.
 
 ### Breaking Changes
 

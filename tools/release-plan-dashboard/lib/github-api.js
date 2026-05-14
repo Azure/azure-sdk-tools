@@ -7,13 +7,15 @@ import { Octokit } from "@octokit/rest";
 const GITHUB_API_TIMEOUT_MS = 30000;
 const API_PAGE_SIZE = 100;
 const APIVIEW_URL_REGEX = /https:\/\/(?:spa\.)?apiview\.dev\/[^\s)\]"<>]+/;
-const GITHUB_PR_URL_REGEX = /^https?:\/\/(www\.)?github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/;
+const GITHUB_PR_URL_REGEX =
+  /^https?:\/\/(www\.)?github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/;
 const TSPCONFIG_MARKERS = ["tspconfig.yaml", "main.tsp", "client.tsp"];
 // Check run conclusions that are considered non-failures
 const PASSING_CONCLUSIONS = ["success", "skipped", "neutral", "cancelled"];
 
 function getOctokit(token) {
-  const auth = token || process.env.GITHUB_PAT_RELEASE_PLAN || process.env.GH_TOKEN;
+  const auth =
+    token || process.env.GITHUB_PAT_RELEASE_PLAN || process.env.GH_TOKEN;
   if (!auth) return null;
   return new Octokit({
     auth,
@@ -23,7 +25,6 @@ function getOctokit(token) {
     throttle: { enabled: false },
   });
 }
-
 
 /** Parses a GitHub PR URL into { owner, repo, number } or null if invalid. */
 function parseGitHubPrUrl(url) {
@@ -51,7 +52,11 @@ async function getGitHubPrStatus(prUrl) {
   const octokit = getOctokit();
   if (!octokit) return null;
   try {
-    const { data } = await octokit.pulls.get({ owner: pr.owner, repo: pr.repo, pull_number: Number(pr.number) });
+    const { data } = await octokit.pulls.get({
+      owner: pr.owner,
+      repo: pr.repo,
+      pull_number: Number(pr.number),
+    });
     return _extractPrStatus(data);
   } catch (err) {
     console.warn(`GitHub PR status error ${prUrl}:`, err.message);
@@ -66,8 +71,16 @@ async function getGitHubPrDetails(prUrl) {
   if (!octokit) return null;
   try {
     const [{ data: prData }, { data: reviews }] = await Promise.all([
-      octokit.pulls.get({ owner: pr.owner, repo: pr.repo, pull_number: Number(pr.number) }),
-      octokit.pulls.listReviews({ owner: pr.owner, repo: pr.repo, pull_number: Number(pr.number) }),
+      octokit.pulls.get({
+        owner: pr.owner,
+        repo: pr.repo,
+        pull_number: Number(pr.number),
+      }),
+      octokit.pulls.listReviews({
+        owner: pr.owner,
+        repo: pr.repo,
+        pull_number: Number(pr.number),
+      }),
     ]);
     if (!prData) return null;
     return _buildPrDetailsResult(prData, reviews, pr, octokit);
@@ -80,8 +93,13 @@ async function getGitHubPrDetails(prUrl) {
 /** Extracts check run names that have failed (non-passing conclusions). */
 function extractFailedChecks(checkRuns) {
   return checkRuns
-    .filter(cr => cr.status === "completed" && cr.conclusion && !PASSING_CONCLUSIONS.includes(cr.conclusion))
-    .map(cr => cr.name);
+    .filter(
+      (cr) =>
+        cr.status === "completed" &&
+        cr.conclusion &&
+        !PASSING_CONCLUSIONS.includes(cr.conclusion),
+    )
+    .map((cr) => cr.name);
 }
 
 /** Extracts unique approver logins from PR review data. */
@@ -89,7 +107,8 @@ function extractApprovers(reviews) {
   const approvers = new Set();
   if (Array.isArray(reviews)) {
     for (const review of reviews) {
-      if (review.state === "APPROVED" && review.user) approvers.add(review.user.login);
+      if (review.state === "APPROVED" && review.user)
+        approvers.add(review.user.login);
     }
   }
   return [...approvers];
@@ -105,9 +124,16 @@ function extractCommentData(comments) {
   for (let i = comments.length - 1; i >= 0; i--) {
     const comment = comments[i];
     const login = (comment.user && comment.user.login) || "";
-    const isBot = login.includes("[bot]") || login.includes("bot") || (comment.user && comment.user.type === "Bot");
+    const isBot =
+      login.includes("[bot]") ||
+      login.includes("bot") ||
+      (comment.user && comment.user.type === "Bot");
     if (!isBot && comment.body) {
-      latestComment = { author: login, body: comment.body.substring(0, 300), createdAt: comment.created_at || "" };
+      latestComment = {
+        author: login,
+        body: comment.body.substring(0, 300),
+        createdAt: comment.created_at || "",
+      };
       break;
     }
   }
@@ -115,9 +141,16 @@ function extractCommentData(comments) {
   // Find APIView URL
   for (const comment of comments) {
     const body = comment.body || "";
-    if (body.includes("API Change Check") || body.includes("APIView") || body.includes("apiview")) {
+    if (
+      body.includes("API Change Check") ||
+      body.includes("APIView") ||
+      body.includes("apiview")
+    ) {
       const urlMatch = body.match(APIVIEW_URL_REGEX);
-      if (urlMatch) { apiViewUrl = urlMatch[0]; break; }
+      if (urlMatch) {
+        apiViewUrl = urlMatch[0];
+        break;
+      }
     }
   }
 
@@ -128,42 +161,69 @@ function extractCommentData(comments) {
 async function _buildPrDetailsResult(prData, reviews, pr, octokit) {
   const approvers = extractApprovers(reviews);
   const result = {
-    mergeable: prData.mergeable || false, mergeableState: prData.mergeable_state || "",
-    isApproved: approvers.length > 0, approvedBy: approvers, failedChecks: [], apiViewUrl: "",
-    title: prData.title || "", requestedReviewers: [], latestComment: null,
+    mergeable: prData.mergeable || false,
+    mergeableState: prData.mergeable_state || "",
+    isApproved: approvers.length > 0,
+    approvedBy: approvers,
+    failedChecks: [],
+    apiViewUrl: "",
+    title: prData.title || "",
+    requestedReviewers: [],
+    latestComment: null,
     updatedAt: prData.updated_at || "",
   };
   if (Array.isArray(prData.requested_reviewers)) {
-    result.requestedReviewers = prData.requested_reviewers.map(reviewer => reviewer.login).filter(Boolean);
+    result.requestedReviewers = prData.requested_reviewers
+      .map((reviewer) => reviewer.login)
+      .filter(Boolean);
   }
 
   const headSha = prData.head && prData.head.sha;
   if (headSha) {
     try {
-      const { data: checks } = await octokit.checks.listForRef({ owner: pr.owner, repo: pr.repo, ref: headSha, per_page: API_PAGE_SIZE });
+      const { data: checks } = await octokit.checks.listForRef({
+        owner: pr.owner,
+        repo: pr.repo,
+        ref: headSha,
+        per_page: API_PAGE_SIZE,
+      });
       if (checks && Array.isArray(checks.check_runs)) {
         result.failedChecks = extractFailedChecks(checks.check_runs);
       }
-    } catch { /* check runs may not be available for all repos */ }
+    } catch {
+      /* check runs may not be available for all repos */
+    }
   }
 
   try {
-    const { data: comments } = await octokit.issues.listComments({ owner: pr.owner, repo: pr.repo, issue_number: Number(pr.number), per_page: API_PAGE_SIZE });
+    const { data: comments } = await octokit.issues.listComments({
+      owner: pr.owner,
+      repo: pr.repo,
+      issue_number: Number(pr.number),
+      per_page: API_PAGE_SIZE,
+    });
     const commentData = extractCommentData(comments);
     result.latestComment = commentData.latestComment;
     result.apiViewUrl = commentData.apiViewUrl;
-  } catch (err) { console.warn("APIView comment fetch error:", err.message); }
+  } catch (err) {
+    console.warn("APIView comment fetch error:", err.message);
+  }
 
   return result;
 }
 
 /** Processes items in parallel with concurrency control and delay between batches. */
-async function throttledMap(items, fn, { concurrency = 10, delayMs = 50 } = {}) {
+async function throttledMap(
+  items,
+  fn,
+  { concurrency = 10, delayMs = 50 } = {},
+) {
   const results = [];
   for (let i = 0; i < items.length; i += concurrency) {
     const chunk = items.slice(i, i + concurrency);
-    results.push(...await Promise.all(chunk.map(fn)));
-    if (i + concurrency < items.length) await new Promise(r => setTimeout(r, delayMs));
+    results.push(...(await Promise.all(chunk.map(fn))));
+    if (i + concurrency < items.length)
+      await new Promise((r) => setTimeout(r, delayMs));
   }
   return results;
 }
@@ -172,10 +232,24 @@ async function throttledMap(items, fn, { concurrency = 10, delayMs = 50 } = {}) 
 async function batchFetchPrStatuses(urls) {
   const unique = [...new Set(urls.filter(Boolean))];
   const statusMap = new Map();
-  if (!unique.length || !(process.env.GITHUB_PAT_RELEASE_PLAN || process.env.GH_TOKEN)) return statusMap;
-  await throttledMap(unique, async (url) => {
-    try { statusMap.set(url, await getGitHubPrStatus(url)); } catch { statusMap.set(url, null); }
-  }, { concurrency: 10, delayMs: 50 });
+  if (
+    !unique.length ||
+    !(process.env.GITHUB_PAT_RELEASE_PLAN || process.env.GH_TOKEN)
+  )
+    return statusMap;
+  await throttledMap(
+    unique,
+    async (url) => {
+      try {
+        statusMap.set(url, await getGitHubPrStatus(url));
+        /* v8 ignore start — inner function catches all errors */
+      } catch {
+        statusMap.set(url, null);
+      }
+      /* v8 ignore stop */
+    },
+    { concurrency: 10, delayMs: 50 },
+  );
   return statusMap;
 }
 
@@ -183,10 +257,24 @@ async function batchFetchPrStatuses(urls) {
 async function batchFetchPrDetails(urls) {
   const unique = [...new Set(urls.filter(Boolean))];
   const detailsMap = new Map();
-  if (!unique.length || !(process.env.GITHUB_PAT_RELEASE_PLAN || process.env.GH_TOKEN)) return detailsMap;
-  await throttledMap(unique, async (url) => {
-    try { detailsMap.set(url, await getGitHubPrDetails(url)); } catch { detailsMap.set(url, null); }
-  }, { concurrency: 10, delayMs: 50 });
+  if (
+    !unique.length ||
+    !(process.env.GITHUB_PAT_RELEASE_PLAN || process.env.GH_TOKEN)
+  )
+    return detailsMap;
+  await throttledMap(
+    unique,
+    async (url) => {
+      try {
+        detailsMap.set(url, await getGitHubPrDetails(url));
+        /* v8 ignore start — inner function catches all errors */
+      } catch {
+        detailsMap.set(url, null);
+      }
+      /* v8 ignore stop */
+    },
+    { concurrency: 10, delayMs: 50 },
+  );
   return detailsMap;
 }
 
@@ -196,9 +284,16 @@ async function getGitHubPrFiles(prUrl) {
   const octokit = getOctokit();
   if (!octokit) return [];
   try {
-    const files = await octokit.paginate(octokit.pulls.listFiles, {
-      owner: pr.owner, repo: pr.repo, pull_number: Number(pr.number), per_page: 100,
-    }, response => response.data.map(f => f.filename));
+    const files = await octokit.paginate(
+      octokit.pulls.listFiles,
+      {
+        owner: pr.owner,
+        repo: pr.repo,
+        pull_number: Number(pr.number),
+        per_page: 100,
+      },
+      (response) => response.data.map((f) => f.filename),
+    );
     return files;
   } catch (err) {
     console.warn(`GitHub PR files error ${prUrl}:`, err.message);
@@ -210,14 +305,25 @@ async function getGitHubPrFiles(prUrl) {
 function deriveSpecProjectPath(files) {
   if (!files || !files.length) return "";
   for (const marker of TSPCONFIG_MARKERS) {
-    const match = files.find(f => f.endsWith("/" + marker) || f === marker);
-    if (match) { const idx = match.lastIndexOf("/"); return idx >= 0 ? match.substring(0, idx) : ""; }
+    const match = files.find((f) => f.endsWith("/" + marker) || f === marker);
+    if (match) {
+      const idx = match.lastIndexOf("/");
+      return idx >= 0 ? match.substring(0, idx) : "";
+    }
   }
-  const dirs = files.map(f => { const i = f.lastIndexOf("/"); return i >= 0 ? f.substring(0, i) : ""; }).filter(Boolean);
+  const dirs = files
+    .map((f) => {
+      const i = f.lastIndexOf("/");
+      return i >= 0 ? f.substring(0, i) : "";
+    })
+    .filter(Boolean);
   if (!dirs.length) return "";
   let common = dirs[0];
   for (let i = 1; i < dirs.length; i++) {
-    while (common && !dirs[i].startsWith(common)) { const idx = common.lastIndexOf("/"); common = idx >= 0 ? common.substring(0, idx) : ""; }
+    while (common && !dirs[i].startsWith(common)) {
+      const idx = common.lastIndexOf("/");
+      common = idx >= 0 ? common.substring(0, idx) : "";
+    }
     if (!common) break;
   }
   return common;
@@ -226,10 +332,25 @@ function deriveSpecProjectPath(files) {
 async function batchFetchSpecProjectPaths(urls) {
   const unique = [...new Set(urls.filter(Boolean))];
   const pathMap = new Map();
-  if (!unique.length || !(process.env.GITHUB_PAT_RELEASE_PLAN || process.env.GH_TOKEN)) return pathMap;
-  await throttledMap(unique, async (url) => {
-    try { const files = await getGitHubPrFiles(url); pathMap.set(url, deriveSpecProjectPath(files)); } catch { pathMap.set(url, ""); }
-  }, { concurrency: 10, delayMs: 50 });
+  if (
+    !unique.length ||
+    !(process.env.GITHUB_PAT_RELEASE_PLAN || process.env.GH_TOKEN)
+  )
+    return pathMap;
+  await throttledMap(
+    unique,
+    async (url) => {
+      try {
+        const files = await getGitHubPrFiles(url);
+        pathMap.set(url, deriveSpecProjectPath(files));
+        /* v8 ignore start — inner function catches all errors */
+      } catch {
+        pathMap.set(url, "");
+      }
+      /* v8 ignore stop */
+    },
+    { concurrency: 10, delayMs: 50 },
+  );
   return pathMap;
 }
 
@@ -244,9 +365,15 @@ async function getGitHubPrLabels(prUrl) {
   if (!octokit) return [];
   try {
     const { data } = await octokit.issues.listLabelsOnIssue({
-      owner: pr.owner, repo: pr.repo, issue_number: Number(pr.number), per_page: API_PAGE_SIZE,
+      owner: pr.owner,
+      repo: pr.repo,
+      issue_number: Number(pr.number),
+      per_page: API_PAGE_SIZE,
     });
-    return (data || []).map(label => ({ name: label.name, color: label.color || "" }));
+    return (data || []).map((label) => ({
+      name: label.name,
+      color: label.color || "",
+    }));
   } catch (err) {
     console.warn(`GitHub PR labels error ${prUrl}:`, err.message);
     return [];
@@ -261,14 +388,28 @@ async function getGitHubPrLabels(prUrl) {
 async function batchFetchSpecPrLabels(urls) {
   const unique = [...new Set(urls.filter(Boolean))];
   const labelMap = new Map();
-  if (!unique.length || !(process.env.GITHUB_PAT_RELEASE_PLAN || process.env.GH_TOKEN)) return labelMap;
-  await throttledMap(unique, async (url) => {
-    try {
-      const allLabels = await getGitHubPrLabels(url);
-      const matching = allLabels.filter(label => SPEC_LABEL_PATTERNS.some(re => re.test(label.name)));
-      labelMap.set(url, matching);
-    } catch { labelMap.set(url, []); }
-  }, { concurrency: 10, delayMs: 50 });
+  if (
+    !unique.length ||
+    !(process.env.GITHUB_PAT_RELEASE_PLAN || process.env.GH_TOKEN)
+  )
+    return labelMap;
+  await throttledMap(
+    unique,
+    async (url) => {
+      try {
+        const allLabels = await getGitHubPrLabels(url);
+        const matching = allLabels.filter((label) =>
+          SPEC_LABEL_PATTERNS.some((re) => re.test(label.name)),
+        );
+        labelMap.set(url, matching);
+        /* v8 ignore start — inner function catches all errors */
+      } catch {
+        labelMap.set(url, []);
+      }
+      /* v8 ignore stop */
+    },
+    { concurrency: 10, delayMs: 50 },
+  );
   return labelMap;
 }
 
@@ -281,6 +422,12 @@ export {
   batchFetchSpecProjectPaths,
   batchFetchSpecPrLabels,
   getGitHubPrLabels,
+  getGitHubPrFiles,
   throttledMap,
   _extractPrStatus,
+  getOctokit,
+  extractFailedChecks,
+  extractApprovers,
+  extractCommentData,
+  deriveSpecProjectPath,
 };

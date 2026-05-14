@@ -39,7 +39,6 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
         
             ## SAFETY GUIDELINES
             - Follow the Azure SDK breaking change policy and guidelines as defined in the provided SDK breaking change pattern document.
-            - Do not process or expose sensitive information (credentials, secrets, personal data)
             - Refuse requests involving sensitive data - ask for clarification if uncertain
             - Provide accurate, actionable classifications based on TypeSpec capabilities
             """;
@@ -84,16 +83,15 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
             ```
 
             **Rules:**
-            - The `[<item-id>]` header MUST match the exact ID from each feedback item
-            - category must be exactly one of: TSP_APPLICABLE, CODE_CUSTOMIZATION, SUCCESS, or REQUIRES_MANUAL_INTERVENTION
+            - The `[<item-id>]` header refers to the SDK breaking change type
+            - category must be exactly one of: emitter change, conversion-by design, conversion-need resolve, spec change, unknown
             - Reason must clearly state which condition triggered the classification
-            - For TSP_APPLICABLE: mention which TypeSpec decorator(s) can address the feedback
-            - For CODE_CUSTOMIZATION: explain what code changes are needed with specific repair instructions in the Reason
-            - For REQUIRES_MANUAL_INTERVENTION: explain why no TypeSpec decorator or automated patch applies
-            - For SUCCESS: explain why the feedback is non-actionable or already resolved
+            - For emitter change: the SDK breaking change is caused by a change in the code emitter that generates the client code
+            - For conversion-by design: the SDK breaking change is caused by conversion swagger to typespec and it does not need resolve, such as common types.
+            - For conversion-need resolve: the SDK breaking change is caused by conversion swagger to typespec and need resolve
+            - For spec change: the SDK breaking change is caused by a change in the service spec (swagger/typespec)
+            - For unknown: the root cause of the SDK breaking change cannot be determined by the provided information
             - Do NOT include Next Action or step-by-step guidance (that is handled separately)
-            - Output ALL items — every single item ID must appear in your response
-            - Do NOT add any text before or after the classification blocks
             """;
         }
 

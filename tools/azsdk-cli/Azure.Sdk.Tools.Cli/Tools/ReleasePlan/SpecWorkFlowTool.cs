@@ -108,9 +108,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 generateSdkCommandName => await RunGenerateSdkAsync(commandParser.GetValue(typeSpecProjectPathOpt),
                                         commandParser.GetValue(sdkReleaseTypeOpt),
-                                        commandParser.GetValue(languageOpt),
-                                        commandParser.GetValue(workItemIdOpt),
-                                        commandParser.GetValue(pullRequestNumberOpt),                                        
+                                        commandParser.GetValue(languageOpt),                                        
+                                        commandParser.GetValue(pullRequestNumberOpt),
+                                        commandParser.GetValue(workItemIdOpt),                                     
                                         commandParser.GetValue(apiVersionOpt),
                                         ct),
                 getSdkPullRequestCommandName => await GetSDKPullRequestDetails(commandParser.GetValue(languageOpt), workItemId: commandParser.GetValue(workItemIdOpt), buildId: commandParser.GetValue(pipelineRunIdOpt), ct: ct),
@@ -179,7 +179,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         }
 
         [McpServerTool(Name = RunGenerateSdkToolName), Description("Generate SDK from a TypeSpec project using pipeline. Release plan work item ID is required to run SDK generation.")]
-        public async Task<ReleaseWorkflowResponse> RunGenerateSdkAsync(string typespecProjectRoot, string sdkReleaseType, string language, int workItemId, int pullRequestNumber = 0, string apiVersion = "", CancellationToken ct = default)
+        public async Task<ReleaseWorkflowResponse> RunGenerateSdkAsync(string typespecProjectRoot, string sdkReleaseType, string language, int pullRequestNumber = 0, int workItemId = 0, string apiVersion = "", CancellationToken ct = default)
         {
             try
             {

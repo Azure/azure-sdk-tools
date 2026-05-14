@@ -898,7 +898,7 @@ stimuli:
     config:
       scoring: scale_1_5
       threshold: 1.0
-      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
+      prompt: 'Verify change scope and quality. Preview-after-preview convention requires renaming the old preview to the new one. Only penalize truly unrelated edits.'
       model: claude-opus-4.6
 
 scoring:

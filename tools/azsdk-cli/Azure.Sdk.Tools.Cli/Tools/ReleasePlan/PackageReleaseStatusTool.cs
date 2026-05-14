@@ -124,7 +124,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
                     catch (Exception ex)
                     {
-                        logger.LogWarning(ex, "Failed to find release plan with ID {releasePlanId}. Falling back to package name search.", releasePlanId);
+                        logger.LogInformation(ex, "Failed to find release plan with ID {releasePlanId}. Falling back to package name search.", releasePlanId);
                     }
                 }
 

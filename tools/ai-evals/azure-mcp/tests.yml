@@ -14,6 +14,8 @@ extends:
           - template: /eng/pipelines/templates/variables/image.yml
         jobs:
           - job: 'Build'
+            variables:
+              npmrcPath: $(Agent.TempDirectory)/azure-mcp/.npmrc
 
             pool:
               name: $(LINUXPOOL)
@@ -21,6 +23,12 @@ extends:
               os: linux
 
             steps:
+              - task: PipAuthenticate@1
+                displayName: 'Pip Authenticate to feed'
+                inputs:
+                  artifactFeeds: 'public/azure-sdk-for-python'
+                  onlyAddExtraIndex: false
+
               - template: /eng/pipelines/templates/steps/use-python-version.yml
                 parameters:
                   versionSpec: '${{ parameters.PythonVersion }}'
@@ -35,6 +43,10 @@ extends:
                 displayName: 'Install Test Requirements'
                 workingDirectory: $(Build.SourcesDirectory)/tools/ai-evals/azure-mcp
 
+              - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
+                parameters:
+                  npmrcPath: $(npmrcPath)
+
               - task: AzureCLI@2
                 displayName: Run Evals (AzureCLI@2)
                 inputs:
@@ -48,7 +60,7 @@ extends:
                     # Verify the context
                     az account show --query '{subscription:name,tenant:tenantId}'
 
-                    python tools/ai-evals/azure-mcp/run.py
+                    python tools/ai-evals/azure-mcp/run.py --npmrc-path "$(npmrcPath)"
 
                     exit $?
                 env:

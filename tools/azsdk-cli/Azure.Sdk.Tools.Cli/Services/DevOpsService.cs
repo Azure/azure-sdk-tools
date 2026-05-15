@@ -317,9 +317,6 @@ namespace Azure.Sdk.Tools.Cli.Services
                 IsManagementPlane = workItem.Fields.TryGetValue("Custom.MgmtScope", out value) ? value?.ToString() == "Yes" : false,
                 IsDataPlane = workItem.Fields.TryGetValue("Custom.DataScope", out value) ? value?.ToString() == "Yes" : false,
                 ReleasePlanId = workItem.Fields.TryGetValue("Custom.ReleasePlanID", out value) ? int.Parse(value?.ToString() ?? "0") : 0,
-                ReleasePlanLink = workItem.Fields.TryGetValue("Custom.ReleasePlanID", out value) && int.TryParse(value?.ToString(), out var rpId) && rpId > 0
-                    ? $"{ReleasePlanWorkItem.DashboardBaseUrl}{rpId}"
-                    : string.Empty,
                 SDKReleaseType = workItem.Fields.TryGetValue("Custom.SDKtypetobereleased", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 IsCreatedByAgent = workItem.Fields.TryGetValue("Custom.IsCreatedByAgent", out value) && "Copilot".Equals(value?.ToString()),
                 ReleasePlanSubmittedByEmail = workItem.Fields.TryGetValue("Custom.ReleasePlanSubmittedby", out value) ? value?.ToString() ?? string.Empty : string.Empty,
@@ -332,6 +329,10 @@ namespace Azure.Sdk.Tools.Cli.Services
                 ProductLifecycle = workItem.Fields.TryGetValue("Custom.ProductLifecycle", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 Owner = workItem.Fields.TryGetValue("Custom.PrimaryPM", out value) ? value?.ToString() ?? string.Empty : string.Empty,
             };
+
+            releasePlan.ReleasePlanLink = releasePlan.ReleasePlanId > 0
+                ? $"{ReleasePlanWorkItem.DashboardBaseUrl}{releasePlan.ReleasePlanId}"
+                : string.Empty;
 
             foreach (var lang in SUPPORTED_SDK_LANGUAGES)
             {

@@ -912,12 +912,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         releasePlan.ReleasePlanId = releasePlanId;
                     }
 
-                    if (workItem.Fields.TryGetValue("Custom.ReleasePlanLink", out value) && value is string releasePlanLink)
-                    {
-                        releasePlan.ReleasePlanLink = releasePlan.ReleasePlanId > 0
-                            ? $"{ReleasePlanDashboardBaseUrl}{releasePlan.ReleasePlanId}"
-                            : string.Empty;
-                    }
+                    releasePlan.ReleasePlanLink = releasePlan.ReleasePlanId > 0
+                        ? $"{ReleasePlanDashboardBaseUrl}{releasePlan.ReleasePlanId}"
+                        : string.Empty;
 
                     return new ReleasePlanResponse
                     {

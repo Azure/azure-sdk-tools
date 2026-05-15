@@ -24,7 +24,7 @@ async def service() -> IntentionService:
     return IntentionService()
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(loop_scope="module")
 async def test_technical_question_should_respond(service: IntentionService) -> None:
     """Standard technical question should be classified as should_respond=true."""
     req = IntentionRequest(
@@ -37,7 +37,7 @@ async def test_technical_question_should_respond(service: IntentionService) -> N
     assert resp.should_respond is True
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(loop_scope="module")
 async def test_casual_message_should_not_respond(service: IntentionService) -> None:
     """Casual greeting should be classified as should_respond=false."""
     req = IntentionRequest(
@@ -50,7 +50,7 @@ async def test_casual_message_should_not_respond(service: IntentionService) -> N
     assert resp.should_respond is False
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(loop_scope="module")
 async def test_pr_review_request_should_respond(service: IntentionService) -> None:
     """PR review request with breaking change labels should be classified as should_respond=true."""
     req = IntentionRequest(
@@ -74,7 +74,7 @@ async def test_pr_review_request_should_respond(service: IntentionService) -> No
     assert resp.should_respond is True
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(loop_scope="module")
 async def test_pr_help_review_should_respond(service: IntentionService) -> None:
     """PR help review request should be classified as should_respond=true."""
     req = IntentionRequest(

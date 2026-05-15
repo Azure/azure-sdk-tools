@@ -34,7 +34,9 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
         [FieldName("Custom.APISpecDefinitionType")]
         public string SpecType {  get; set; } = string.Empty;
 
-        public string ReleasePlanLink { get; set; } = string.Empty;
+        public string ReleasePlanLink => ReleasePlanId > 0
+            ? $"{DashboardBaseUrl}{ReleasePlanId}"
+            : string.Empty;
 
         public bool IsTestReleasePlan { get; set; } = false;
 

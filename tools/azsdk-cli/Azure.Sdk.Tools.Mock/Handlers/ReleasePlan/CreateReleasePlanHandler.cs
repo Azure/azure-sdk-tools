@@ -39,7 +39,6 @@ public class CreateReleasePlanHandler : IMockToolHandler
             Owner = "testuser@microsoft.com",
             SDKReleaseMonth = arguments?.GetValueOrDefault("targetReleaseMonthYear")?.ToString() ?? "06/2026",
             ReleasePlanId = 50001,
-            ReleasePlanLink = "https://dev.azure.com/azure-sdk/Release/_workitems/edit/35000",
             IsDataPlane = true,
             SpecType = "TypeSpec",
             ActiveSpecPullRequest = arguments?.GetValueOrDefault("specPullRequestUrl")?.ToString()

@@ -330,10 +330,6 @@ namespace Azure.Sdk.Tools.Cli.Services
                 Owner = workItem.Fields.TryGetValue("Custom.PrimaryPM", out value) ? value?.ToString() ?? string.Empty : string.Empty,
             };
 
-            releasePlan.ReleasePlanLink = releasePlan.ReleasePlanId > 0
-                ? $"{ReleasePlanWorkItem.DashboardBaseUrl}{releasePlan.ReleasePlanId}"
-                : string.Empty;
-
             foreach (var lang in SUPPORTED_SDK_LANGUAGES)
             {
                 var sdkGenPipelineUrl = workItem.Fields.TryGetValue($"Custom.SDKGenerationPipelineFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty;

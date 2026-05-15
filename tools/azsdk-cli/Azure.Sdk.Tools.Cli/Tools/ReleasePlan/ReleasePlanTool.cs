@@ -63,8 +63,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private const string AbandonReleasePlanToolName = "azsdk_abandon_release_plan";
         private const string GetKPIAttestationStatusToolName = "azsdk_get_kpi_attestation_status";
 
-        private const string ReleasePlanDashboardBaseUrl = ReleasePlanWorkItem.DashboardBaseUrl;
-
         // Options
         private readonly Option<int> releasePlanNumberOpt = new("--release-plan-id", "--release-plan")
         {
@@ -912,10 +910,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         releasePlan.ReleasePlanId = releasePlanId;
                     }
 
-                    releasePlan.ReleasePlanLink = releasePlan.ReleasePlanId > 0
-                        ? $"{ReleasePlanDashboardBaseUrl}{releasePlan.ReleasePlanId}"
-                        : string.Empty;
-
                     return new ReleasePlanResponse
                     {
                         Message = "Release plan is being created",
@@ -1419,7 +1413,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
             var linksBuilder = new StringBuilder(header);
             linksBuilder.AppendLine();
-            linksBuilder.AppendLine($"- Release Plan: {ReleasePlanDashboardBaseUrl}{releasePlan.ReleasePlanId}");
+            linksBuilder.AppendLine($"- Release Plan: {releasePlan.ReleasePlanLink}");
             linksBuilder.AppendLine($"- Work Item Link: {releasePlan.WorkItemHtmlUrl}");
             linksBuilder.AppendLine($"- Spec Pull Request: {releasePlan.ActiveSpecPullRequest}");
             linksBuilder.Append($"- Spec API version: {releasePlan.SpecAPIVersion}");
@@ -1486,7 +1480,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 var releaseOwnerName = releasePlan.Owner;
                 var plane = releasePlan.IsManagementPlane ? "Management Plane" : "Data Plane";
-                var releasePlanLink = $"{ReleasePlanDashboardBaseUrl}{releasePlan.ReleasePlanId}";
+                var releasePlanLink = releasePlan.ReleasePlanLink;
                 var releasePlanDate = releasePlan.SDKReleaseMonth;
 
                 // Identify SDKs not yet released (skip Go for Data Plane and skip excluded languages)

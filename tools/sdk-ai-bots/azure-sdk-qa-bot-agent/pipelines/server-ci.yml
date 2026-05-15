@@ -83,24 +83,33 @@ extends:
                 displayName: 'Type Check (pyright)'
                 workingDirectory: $(workingDirectory)
 
-              - bash: |
-                  set -euo pipefail
-                  echo "Running unit tests..."
-                  python -m pytest tests/ \
-                    --ignore=tests/azsdk_mcp_tools_test.py \
-                    --ignore=tests/github_tools_test.py \
-                    --ignore=tests/knowledge_tools_test.py \
-                    --cov=config \
-                    --cov=services \
-                    --cov=tools \
-                    --cov=utils \
-                    --cov-report=term-missing \
-                    --cov-report=xml:$(workingDirectory)/coverage.xml \
-                    -v \
-                    --tb=short \
-                    --junitxml=$(workingDirectory)/test-results.xml
+              - task: AzureCLI@2
                 displayName: 'Run Unit Tests'
-                workingDirectory: $(workingDirectory)
+                inputs:
+                  azureSubscription: 'azuresdkqabot-dev'
+                  addSpnToEnvironment: true
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  workingDirectory: $(workingDirectory)
+                  inlineScript: |
+                    set -euo pipefail
+                    export AZURE_CLIENT_ID=$servicePrincipalId
+                    export AZURE_TENANT_ID=$tenantId
+                    echo "Running unit tests..."
+                    python -m pytest tests/ \
+                      --cov=config \
+                      --cov=services \
+                      --cov=tools \
+                      --cov=utils \
+                      --cov-report=term-missing \
+                      --cov-report=xml:$(workingDirectory)/coverage.xml \
+                      -v \
+                      --tb=short \
+                      --junitxml=$(workingDirectory)/test-results.xml
+                env:
+                  SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+                  AZURESUBSCRIPTION_SERVICE_CONNECTION_ID: $(AZURESUBSCRIPTION_SERVICE_CONNECTION_ID)
+                  AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
 
               - task: PublishTestResults@2
                 displayName: 'Publish Test Results'

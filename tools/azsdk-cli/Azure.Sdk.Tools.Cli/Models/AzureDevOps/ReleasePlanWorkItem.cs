@@ -7,6 +7,8 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
 {
     public class ReleasePlanWorkItem : WorkItemBase
     {
+        public const string DashboardBaseUrl = "https://azsdk-releaseplan-dashboard-hveph5aqhhcfhtgu.westus-01.azurewebsites.net/?releaseplan=";
+
         [FieldName("Custom.ServiceTreeID")]
         public string ServiceTreeId { get; set; } = string.Empty;
 

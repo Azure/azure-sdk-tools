@@ -63,7 +63,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private const string AbandonReleasePlanToolName = "azsdk_abandon_release_plan";
         private const string GetKPIAttestationStatusToolName = "azsdk_get_kpi_attestation_status";
 
-        private const string ReleasePlanDashboardBaseUrl = "https://azsdk-releaseplan-dashboard-hveph5aqhhcfhtgu.westus-01.azurewebsites.net/?releaseplan=";
+        private const string ReleasePlanDashboardBaseUrl = ReleasePlanWorkItem.DashboardBaseUrl;
 
         // Options
         private readonly Option<int> releasePlanNumberOpt = new("--release-plan-id", "--release-plan")
@@ -914,7 +914,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                     if (workItem.Fields.TryGetValue("Custom.ReleasePlanLink", out value) && value is string releasePlanLink)
                     {
-                        releasePlan.ReleasePlanLink = releasePlanLink;
+                        releasePlan.ReleasePlanLink = releasePlan.ReleasePlanId > 0
+                            ? $"{ReleasePlanDashboardBaseUrl}{releasePlan.ReleasePlanId}"
+                            : string.Empty;
                     }
 
                     return new ReleasePlanResponse

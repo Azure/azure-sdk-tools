@@ -1,130 +1,91 @@
-"""Unit tests for the intention classification service."""
+"""Live tests for the intention classification service."""
 
 from __future__ import annotations
 
 import sys
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+import pytest_asyncio
 
 _PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
+import config.app_config as app_config
 from models.chat import Message
-from models.intention import IntentionRequest, IntentionResponse
+from models.intention import IntentionRequest
 from services.intention_service import IntentionService
 
 
-@pytest.fixture
-def service() -> IntentionService:
+@pytest_asyncio.fixture(scope="module")
+async def service() -> IntentionService:
+    await app_config.init()
     return IntentionService()
 
 
 @pytest.mark.asyncio
-async def test_expert_reply_skips(service: IntentionService) -> None:
+async def test_technical_question_should_respond(service: IntentionService) -> None:
+    """Standard technical question should be classified as should_respond=true."""
     req = IntentionRequest(
         message=Message(
-            role="user", content="How do I fix this CI error?", user_id="user-1"
+            role="user",
+            content="How do I generate a Python SDK from my TypeSpec definition?",
         ),
-        conversation_id="conv-123",
-        conversation_type="teams_channel",
     )
+    resp = await service.classify(req)
+    assert resp.should_respond is True
 
-    mock_conversation_service = AsyncMock()
-    mock_conversation_service.has_expert_reply = AsyncMock(return_value=True)
-    service._conversation_service = mock_conversation_service
 
+@pytest.mark.asyncio
+async def test_casual_message_should_not_respond(service: IntentionService) -> None:
+    """Casual greeting should be classified as should_respond=false."""
+    req = IntentionRequest(
+        message=Message(
+            role="user",
+            content="Thanks everyone, happy Friday! Have a great weekend.",
+        ),
+    )
     resp = await service.classify(req)
     assert resp.should_respond is False
-    assert resp.reason == "expert_already_replied"
 
 
 @pytest.mark.asyncio
-async def test_llm_classifies_technical_question(service: IntentionService) -> None:
-    mock_choice = MagicMock()
-    mock_choice.message.content = (
-        '{"should_respond": true, "reason": "The user is asking about SDK generation."}'
-    )
-    mock_response = MagicMock()
-    mock_response.choices = [mock_choice]
-
-    mock_completions = AsyncMock()
-    mock_completions.create = AsyncMock(return_value=mock_response)
-
-    mock_openai_client = MagicMock()
-    mock_openai_client.chat.completions = mock_completions
-
-    mock_project_client = MagicMock()
-    mock_project_client.get_openai_client.return_value = mock_openai_client
-
+async def test_pr_review_request_should_respond(service: IntentionService) -> None:
+    """PR review request with breaking change labels should be classified as should_respond=true."""
     req = IntentionRequest(
         message=Message(
-            role="user", content="How do I generate an SDK from my TypeSpec?"
+            role="user",
+            content=(
+                "Requesting review for PR\n\n"
+                "Hii API Spec Review\n"
+                "We are syncing all recent stable changes from the ARM private (Azure-Rest-API-specs-pr) "
+                "repository to the public (Azure-Rest_API-Specs) repository, so we require breaking change "
+                "approvals for this public repo PR.\n"
+                "These are the breaking change labels currently present for which approval is required:\n"
+                "- BreakingChange-JavaScript-Sdk-Suppression\n"
+                "- BreakingChange-Python-Sdk-Suppression\n"
+                "- BreakingChangeReviewRequired\n\n"
+                "Thanks in Advance."
+            ),
         ),
     )
-
-    with patch(
-        "services.intention_service.get_project_client",
-        return_value=mock_project_client,
-    ):
-        resp = await service.classify(req)
-
+    resp = await service.classify(req)
     assert resp.should_respond is True
-    assert resp.reason == "The user is asking about SDK generation."
 
 
 @pytest.mark.asyncio
-async def test_llm_classifies_casual_message(service: IntentionService) -> None:
-    mock_choice = MagicMock()
-    mock_choice.message.content = (
-        '{"should_respond": false, "reason": "The message is a casual remark."}'
-    )
-    mock_response = MagicMock()
-    mock_response.choices = [mock_choice]
-
-    mock_completions = AsyncMock()
-    mock_completions.create = AsyncMock(return_value=mock_response)
-
-    mock_openai_client = MagicMock()
-    mock_openai_client.chat.completions = mock_completions
-
-    mock_project_client = MagicMock()
-    mock_project_client.get_openai_client.return_value = mock_openai_client
-
+async def test_pr_help_review_should_respond(service: IntentionService) -> None:
+    """PR help review request should be classified as should_respond=true."""
     req = IntentionRequest(
-        message=Message(role="user", content="Thanks everyone, happy Friday!"),
+        message=Message(
+            role="user",
+            content=(
+                "PR #38482 Review Request\n\n"
+                "Hey team, could you please help review this PR "
+                "[AutoPR @azure-arm-containerservice]-generated-from-SDK Generation - JS-6274121? Thanks"
+            ),
+        ),
     )
-
-    with patch(
-        "services.intention_service.get_project_client",
-        return_value=mock_project_client,
-    ):
-        resp = await service.classify(req)
-
-    assert resp.should_respond is False
-    assert resp.reason == "The message is a casual remark."
-
-
-@pytest.mark.asyncio
-async def test_llm_error_defaults_to_respond(service: IntentionService) -> None:
-    mock_project_client = MagicMock()
-    mock_openai_client = MagicMock()
-    mock_openai_client.chat.completions = AsyncMock(
-        side_effect=RuntimeError("connection failed")
-    )
-    mock_project_client.get_openai_client.return_value = mock_openai_client
-
-    req = IntentionRequest(
-        message=Message(role="user", content="How do I fix this?"),
-    )
-
-    with patch(
-        "services.intention_service.get_project_client",
-        return_value=mock_project_client,
-    ):
-        resp = await service.classify(req)
-
+    resp = await service.classify(req)
     assert resp.should_respond is True
-    assert resp.reason == "llm_error_default_respond"

@@ -63,6 +63,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private const string AbandonReleasePlanToolName = "azsdk_abandon_release_plan";
         private const string GetKPIAttestationStatusToolName = "azsdk_get_kpi_attestation_status";
 
+        private const string ReleasePlanDashboardBaseUrl = "https://azsdk-releaseplan-dashboard-hveph5aqhhcfhtgu.westus-01.azurewebsites.net/?releaseplan=";
+
         // Options
         private readonly Option<int> releasePlanNumberOpt = new("--release-plan-id", "--release-plan")
         {
@@ -1418,7 +1420,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
             var linksBuilder = new StringBuilder(header);
             linksBuilder.AppendLine();
-            linksBuilder.AppendLine($"- Release Plan: {releasePlan.ReleasePlanLink}");
+            linksBuilder.AppendLine($"- Release Plan: {ReleasePlanDashboardBaseUrl}{releasePlan.ReleasePlanId}");
             linksBuilder.AppendLine($"- Work Item Link: {releasePlan.WorkItemHtmlUrl}");
             linksBuilder.AppendLine($"- Spec Pull Request: {releasePlan.ActiveSpecPullRequest}");
             linksBuilder.Append($"- Spec API version: {releasePlan.SpecAPIVersion}");
@@ -1485,7 +1487,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 var releaseOwnerName = releasePlan.Owner;
                 var plane = releasePlan.IsManagementPlane ? "Management Plane" : "Data Plane";
-                var releasePlanLink = releasePlan.ReleasePlanLink;
+                var releasePlanLink = $"{ReleasePlanDashboardBaseUrl}{releasePlan.ReleasePlanId}";
                 var releasePlanDate = releasePlan.SDKReleaseMonth;
 
                 // Identify SDKs not yet released (skip Go for Data Plane and skip excluded languages)

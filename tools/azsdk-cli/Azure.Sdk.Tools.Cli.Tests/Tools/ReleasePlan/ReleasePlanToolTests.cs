@@ -602,6 +602,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 IsManagementPlane = true,
                 IsDataPlane = false,
                 SDKReleaseMonth = "January 2026",
+                ReleasePlanId = 200,
                 ReleasePlanLink = "https://example.com/releaseplan/200",
                 SDKInfo =
                 [
@@ -649,6 +650,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 IsManagementPlane = true,
                 IsDataPlane = false,
                 SDKReleaseMonth = "January 2026",
+                ReleasePlanId = 201,
                 ReleasePlanLink = "https://example.com/releaseplan/201",
                 SDKInfo =
                 [
@@ -696,6 +698,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 IsDataPlane = true,
                 IsManagementPlane = false,
                 SDKReleaseMonth = "January 2026",
+                ReleasePlanId = 202,
                 ReleasePlanLink = "https://example.com/releaseplan/202",
                 SDKInfo =
                 [
@@ -742,6 +745,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 IsManagementPlane = true,
                 IsDataPlane = false,
                 SDKReleaseMonth = "January 2026",
+                ReleasePlanId = 203,
                 ReleasePlanLink = "https://example.com/releaseplan/203",
                 SDKInfo =
                 [

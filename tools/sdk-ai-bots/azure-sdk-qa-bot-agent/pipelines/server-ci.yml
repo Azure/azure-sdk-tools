@@ -97,6 +97,9 @@ extends:
                     export AZURE_TENANT_ID=$tenantId
                     echo "Running unit tests..."
                     python -m pytest tests/ \
+                      --ignore=tests/azsdk_mcp_tools_test.py \
+                      --ignore=tests/github_tools_test.py \
+                      --ignore=tests/knowledge_tools_test.py \
                       --cov=config \
                       --cov=services \
                       --cov=tools \

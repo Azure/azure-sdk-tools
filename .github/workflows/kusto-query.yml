@@ -1,0 +1,102 @@
+name: Kusto Query
+
+on:
+  workflow_call:
+    inputs:
+      cluster:
+        description: 'Kusto cluster URL (e.g., https://mycluster.kusto.windows.net)'
+        required: true
+        type: string
+      database:
+        description: 'Kusto database name'
+        required: true
+        type: string
+      query:
+        description: 'KQL query to execute'
+        required: true
+        type: string
+      user_principal:
+        description: 'User principal (service principal or user ID) with access to Kusto'
+        required: true
+        type: string
+      output_format:
+        description: 'Output format: json, csv, or tsv'
+        required: false
+        default: 'json'
+        type: string
+      azure_subscription:
+        description: 'Azure subscription name for authentication'
+        required: false
+        default: 'Azure SDK Engineering System'
+        type: string
+    secrets:
+      KUSTO_CLIENT_ID:
+        description: 'Service principal client ID'
+        required: false
+      KUSTO_CLIENT_SECRET:
+        description: 'Service principal client secret'
+        required: false
+      KUSTO_TENANT_ID:
+        description: 'Azure tenant ID'
+        required: false
+    outputs:
+      query_result:
+        description: 'Query result as JSON string'
+        value: ${{ jobs.kusto-query.outputs.result }}
+      result_file:
+        description: 'Path to output file with query results'
+        value: ${{ jobs.kusto-query.outputs.file }}
+
+jobs:
+  kusto-query:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    outputs:
+      result: ${{ steps.query.outputs.result }}
+      file: ${{ steps.query.outputs.file }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install azure-kusto-data azure-identity
+
+      - name: Azure Login (if using service principal)
+        if: ${{ secrets.KUSTO_CLIENT_ID != '' && secrets.KUSTO_CLIENT_SECRET != '' }}
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.KUSTO_CLIENT_ID }}
+          client-secret: ${{ secrets.KUSTO_CLIENT_SECRET }}
+          tenant-id: ${{ secrets.KUSTO_TENANT_ID }}
+          allow-no-subscriptions: true
+
+      - name: Execute Kusto Query
+        id: query
+        run: |
+          python eng/scripts/kusto-query-executor.py \
+            --cluster "${{ inputs.cluster }}" \
+            --database "${{ inputs.database }}" \
+            --query "${{ inputs.query }}" \
+            --output-format "${{ inputs.output_format }}" \
+            --github-output "$GITHUB_OUTPUT"
+        env:
+          KUSTO_CLIENT_ID: ${{ secrets.KUSTO_CLIENT_ID }}
+          KUSTO_CLIENT_SECRET: ${{ secrets.KUSTO_CLIENT_SECRET }}
+          KUSTO_TENANT_ID: ${{ secrets.KUSTO_TENANT_ID }}
+
+      - name: Upload query results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: kusto-query-results
+          path: kusto-query-result.txt
+          retention-days: 30

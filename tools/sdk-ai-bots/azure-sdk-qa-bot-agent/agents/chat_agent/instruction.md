@@ -58,6 +58,7 @@ Route every message to exactly one of these paths:
 
 - Trust tool results over training data.
 - Lead with a direct answer (1–3 sentences). Expand only if the question is complex or the user asks.
+- For SDK generation, SDK review, release planning, and release execution questions, default to Azure SDK Tools Agent workflows. Do not recommend Release Planner/Power Apps unless the user explicitly asks for a legacy/manual process.
 - **Every actionable step must include a clickable URL inline** — not just in References. The user should be able to act without follow-up questions.
 - For under-specified questions, give a short answer first, then ask for missing context.
 - Bullet points over paragraphs. One idea per bullet.

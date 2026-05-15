@@ -51,7 +51,9 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
             - Language: {_language}
 
             **Task:**
-            Analyze the following SDK changes and classify each change based on the provided SDK breaking change pattern document
+            Analyze the following SDK changes and classify each change based on the provided SDK breaking change pattern document.
+            Compare each SDK change against the patterns and conditions outlined in the document to determine if it constitutes a breaking change and categorize it accordingly.
+            Merge the same SDK changes as one item, e.g. "model 'User' renamed to 'Customer'", and all the breakings related to the model are the same, such as 'Proprty 'user' of model `ClientUpdateResponse` type changed from `User` to `Customer`', they should be merged as one item and classified once.
 
             **SDK Breaking Change Pattern Document:**
             ```
@@ -70,7 +72,7 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
             return """
             **CRITICAL: Required Output Format**
         
-            You MUST output one block per sdk breaking change item, using the exact item ID in square brackets as a header.
+            You MUST output one block per sdk breaking change item.
 
             ```
             [<item-id>]
@@ -87,7 +89,7 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
             - category must be exactly one of: emitter change, conversion-by design, conversion-need resolve, spec change, unknown
             - Reason must clearly state which condition triggered the classification
             - For emitter change: the SDK breaking change is caused by a change in the code emitter that generates the client code
-            - For conversion-by design: the SDK breaking change is caused by conversion swagger to typespec and it does not need resolve, such as common types.
+            - For conversion-by design: the SDK breaking change is caused by conversion swagger to typespec and it is accepted and does not need resolve, such as common types.
             - For conversion-need resolve: the SDK breaking change is caused by conversion swagger to typespec and need resolve
             - For spec change: the SDK breaking change is caused by a change in the service spec (swagger/typespec)
             - For unknown: the root cause of the SDK breaking change cannot be determined by the provided information

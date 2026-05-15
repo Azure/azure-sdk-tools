@@ -149,7 +149,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 }
                 else
                 {
-                    result = await Util.RunAsync(_executablePath, testParams, WorkingDirectory);
+                    result = await Util.RunAsync(_executablePath, testParams, WorkingDirectory, trackStatistics: true);
                 }
             }
             else
@@ -170,7 +170,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 OperationsPerSecond = opsPerSecond,
                 StandardOutput = result.StandardOutput,
                 StandardError = result.StandardError,
-                PackageVersions = packageVersions
+                PackageVersions = packageVersions,
+                AverageCpu = result.AverageCpu,
+                AverageMemory = result.AverageMemory,
             };
         }
 

@@ -531,7 +531,7 @@ class MemoryContextProvider(ContextProvider):
         user_text = MemoryContextProvider._format_section(
             user_memories,
             "## User memories",
-            "Use these personal memories when they are relevant to the current question.",
+            "These memories represent the user's context only. For answer style and format, always follow system instructions.",
         )
         episode_text = MemoryContextProvider._format_episodes(episodes or [])
 

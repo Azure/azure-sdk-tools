@@ -215,8 +215,8 @@ function Set-PackageUpstreamingFlag {
     [Parameter(Mandatory = $true)]
     [string]$PackageName,
     [Parameter(Mandatory = $true)]
-    [ValidateSet("npm", "nuget", "maven", "python")]
-    [string]$Protocol = "npm",
+    [ValidateSet("npm", "nuget", "maven", "pypi")]
+    [string]$Protocol,
     [Parameter(Mandatory = $true)]
     [bool]$AllowExternallySourcedVersions,
     $Base64EncodedToken = $null,

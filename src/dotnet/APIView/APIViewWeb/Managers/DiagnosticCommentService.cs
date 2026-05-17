@@ -26,7 +26,8 @@ public class DiagnosticCommentService : IDiagnosticCommentService
         string apiRevisionId,
         string currentDiagnosticsHash,
         CodeDiagnostic[] diagnostics,
-        IEnumerable<CommentItemModel> existingComments)
+        IEnumerable<CommentItemModel> existingComments,
+        string apiVersionId)
     {
         diagnostics ??= [];
 
@@ -110,6 +111,7 @@ public class DiagnosticCommentService : IDiagnosticCommentService
                 Id = commentId,
                 ReviewId = reviewId,
                 APIRevisionId = apiRevisionId,
+                APIVersionId = apiVersionId,
                 ElementId = diagnostic.TargetId,
                 ThreadId = threadId,
                 CommentText = newCommentText,

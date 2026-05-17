@@ -17,6 +17,7 @@ import { Review } from 'src/app/_models/review';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
+import { MessageService } from 'primeng/api';
 
 const UNKNOWN_SEVERITY_KEY = 'unknown';
 
@@ -111,7 +112,7 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
     return true;
   }
 
-  constructor(private commentsService: CommentsService, private signalRService: SignalRService, private changeDetectorRef: ChangeDetectorRef) { }
+  constructor(private commentsService: CommentsService, private signalRService: SignalRService, private changeDetectorRef: ChangeDetectorRef, private messageService: MessageService) { }
 
   ngOnInit() {
     this.handleRealTimeCommentUpdates();
@@ -370,7 +371,14 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
     else {
       const isNewThread = commentUpdates.isReply === false;
       const resolutionLocked = commentUpdates.allowAnyOneToResolve !== undefined ? !commentUpdates.allowAnyOneToResolve : false;
-      this.commentsService.createComment(this.review?.id!, commentUpdates.revisionId!, commentUpdates.elementId!, commentUpdates.commentText!, CommentType.APIRevision, resolutionLocked, commentUpdates.severity, commentUpdates.threadId)
+      if (!commentUpdates.apiVersionId) {
+        const detail = isNewThread
+          ? 'This revision has no package version — comment cannot be created.'
+          : "This thread's revision has no package version — reply cannot be added.";
+        this.messageService.add({ severity: 'warn', icon: 'bi bi-exclamation-triangle', summary: 'Cannot add comment', detail, key: 'bc', life: 8000 });
+        return;
+      }
+      this.commentsService.createComment(this.review?.id!, commentUpdates.revisionId!, commentUpdates.elementId!, commentUpdates.commentText!, CommentType.APIRevision, commentUpdates.apiVersionId, resolutionLocked, commentUpdates.severity, commentUpdates.threadId)
         .pipe(take(1)).subscribe({
             next: (response: CommentItemModel) => {
               commentUpdates.comment = response;

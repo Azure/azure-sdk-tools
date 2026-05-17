@@ -34,4 +34,5 @@ export interface CommentUpdatesDto {
     feedback?: AICommentFeedback;
     threadId?: string;
     isReply?: boolean;
+    apiVersionId: string;
 }

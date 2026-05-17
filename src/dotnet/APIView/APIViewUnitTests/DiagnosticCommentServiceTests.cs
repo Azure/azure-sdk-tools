@@ -43,7 +43,8 @@ public class DiagnosticCommentServiceTests
             "rev1",
             null,
             diagnostics,
-            new List<CommentItemModel>());
+            new List<CommentItemModel>(),
+            "v1.0.0");
 
         Assert.True(result.WasSynced);
         Assert.Equal(2, result.Comments.Count);
@@ -53,6 +54,7 @@ public class DiagnosticCommentServiceTests
             Assert.Equal(CommentSource.Diagnostic, c.CommentSource);
             Assert.Equal("review1", c.ReviewId);
             Assert.Equal("rev1", c.APIRevisionId);
+            Assert.Equal("v1.0.0", c.APIVersionId);
             Assert.StartsWith("diag-rev1-", c.Id);
             Assert.False(c.IsResolved);
         });
@@ -73,7 +75,8 @@ public class DiagnosticCommentServiceTests
             "rev1",
             null,
             diagnostics,
-            new List<CommentItemModel>());
+            new List<CommentItemModel>(),
+            null);
 
         string establishedHash = firstResult.DiagnosticsHash;
 
@@ -92,7 +95,8 @@ public class DiagnosticCommentServiceTests
             "rev1",
             establishedHash,
             diagnostics,
-            new List<CommentItemModel> { existingComment });
+            new List<CommentItemModel> { existingComment }, 
+            null);
 
         Assert.False(secondResult.WasSynced);
         Assert.Single(secondResult.Comments);
@@ -125,7 +129,8 @@ public class DiagnosticCommentServiceTests
             "rev1",
             "old-hash",
             [],
-            new List<CommentItemModel> { existingDiagnosticComment });
+            new List<CommentItemModel> { existingDiagnosticComment }, 
+            null);
 
         Assert.True(result.WasSynced);
         Assert.Empty(result.Comments);
@@ -149,7 +154,8 @@ public class DiagnosticCommentServiceTests
             "rev1",
             null,
             diagnostics,
-            new List<CommentItemModel>());
+            new List<CommentItemModel>(),
+            null);
 
         string createdCommentId = firstResult.Comments[0].Id;
         commentsRepoMock.Invocations.Clear();
@@ -177,7 +183,8 @@ public class DiagnosticCommentServiceTests
             "rev1",
             "old-hash",
             diagnostics,
-            new List<CommentItemModel> { botResolvedComment });
+            new List<CommentItemModel> { botResolvedComment },
+            null);
 
         Assert.True(result.WasSynced);
         Assert.Single(result.Comments);
@@ -201,7 +208,8 @@ public class DiagnosticCommentServiceTests
             "rev1",
             null,
             diagnostics,
-            new List<CommentItemModel>());
+            new List<CommentItemModel>(),
+            null);
 
         string createdCommentId = firstResult.Comments[0].Id;
         commentsRepoMock.Invocations.Clear();
@@ -223,7 +231,8 @@ public class DiagnosticCommentServiceTests
             "rev1",
             "old-hash",
             diagnostics,
-            new List<CommentItemModel> { userResolvedComment });
+            new List<CommentItemModel> { userResolvedComment },
+            null);
 
         Assert.True(result.WasSynced);
         Assert.Single(result.Comments);
@@ -249,7 +258,8 @@ public class DiagnosticCommentServiceTests
             "rev1",
             null,
             diagnosticsWarning,
-            new List<CommentItemModel>());
+            new List<CommentItemModel>(),
+            null);
 
         string createdCommentId = firstResult.Comments[0].Id;
 
@@ -281,7 +291,8 @@ public class DiagnosticCommentServiceTests
             "rev1",
             "old-hash",
             diagnosticsFatal,
-            new List<CommentItemModel> { existingComment });
+            new List<CommentItemModel> { existingComment },
+            null);
 
         Assert.True(result.WasSynced);
         Assert.Single(result.Comments);
@@ -312,7 +323,8 @@ public class DiagnosticCommentServiceTests
             "rev1",
             null,
             diagnostics,
-            new List<CommentItemModel>());
+            new List<CommentItemModel>(),
+            null);
 
         Assert.Equal(4, upsertedComments.Count);
         Assert.Equal(CommentSeverity.MustFix, upsertedComments.First(c => c.ElementId == "t1").Severity);
@@ -331,7 +343,8 @@ public class DiagnosticCommentServiceTests
             "rev1",
             null,
             null,
-            new List<CommentItemModel>());
+            new List<CommentItemModel>(),
+            null);
 
         Assert.True(result.WasSynced);
         Assert.Empty(result.Comments);
@@ -353,7 +366,8 @@ public class DiagnosticCommentServiceTests
             "rev1",
             null,
             diagnostics,
-            new List<CommentItemModel>());
+            new List<CommentItemModel>(),
+            null);
 
         Assert.True(result.WasSynced);
         Assert.NotNull(result.DiagnosticsHash);
@@ -375,7 +389,8 @@ public class DiagnosticCommentServiceTests
             "rev1",
             null,
             diagnostics,
-            new List<CommentItemModel>());
+            new List<CommentItemModel>(),
+            null);
 
         string firstSyncCommentId = firstResult.Comments[0].Id;
         commentsRepoMock.Invocations.Clear();
@@ -397,7 +412,8 @@ public class DiagnosticCommentServiceTests
             "rev1",
             "different-hash", // Different hash to force sync
             diagnostics,
-            new List<CommentItemModel> { existingComment });
+            new List<CommentItemModel> { existingComment },
+            null);
 
         Assert.Single(secondResult.Comments);
         Assert.Equal(firstSyncCommentId, secondResult.Comments[0].Id);
@@ -419,10 +435,10 @@ public class DiagnosticCommentServiceTests
             .Returns(Task.CompletedTask);
 
         await service.SyncDiagnosticCommentsAsync(
-            "review1", "rev1", null, diagnosticsRev1, new List<CommentItemModel>());
+            "review1", "rev1", null, diagnosticsRev1, new List<CommentItemModel>(), null);
 
         await service.SyncDiagnosticCommentsAsync(
-            "review1", "rev2", null, diagnosticsRev2, new List<CommentItemModel>());
+            "review1", "rev2", null, diagnosticsRev2, new List<CommentItemModel>(), null);
 
         Assert.Equal(2, upsertedComments.Count);
         Assert.NotEqual(upsertedComments[0].Id, upsertedComments[1].Id); // different comments (different targets)
@@ -450,7 +466,8 @@ public class DiagnosticCommentServiceTests
             "rev1",
             null,
             diagnostics,
-            new List<CommentItemModel>());
+            new List<CommentItemModel>(),
+            null);
 
         Assert.NotNull(createdComment);
         Assert.Contains("Diagnostic with help link", createdComment.CommentText);
@@ -483,7 +500,8 @@ public class DiagnosticCommentServiceTests
             "rev1",
             null,
             diagnosticsOldLink,
-            new List<CommentItemModel>());
+            new List<CommentItemModel>(),
+            null);
 
         Assert.Contains("[Details](https://old-docs.com/help)", originalCommentText);
 
@@ -517,7 +535,8 @@ public class DiagnosticCommentServiceTests
             "rev1",
             "old-hash",
             diagnosticsNewLink,
-            new List<CommentItemModel> { existingComment });
+            new List<CommentItemModel> { existingComment },
+            null);
 
         Assert.Single(result.Comments);
         Assert.NotNull(updatedComment);

@@ -22,6 +22,7 @@ export class CommentItemModel {
     id: string = '';
     reviewId: string = '';
     apiRevisionId: string = '';
+    apiVersionId: string = '';
     elementId: string = '';
     threadId: string = '';
     sectionClass: string = '';

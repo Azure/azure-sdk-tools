@@ -90,7 +90,7 @@ test.describe('Comments - Create New Comment', () => {
     const reviewPage = new ReviewPage(page);
     const getCapturedRequest = await setupCommentCreationCapture(page);
 
-    await reviewPage.goto('test-review-id');
+    await reviewPage.goto('test-review-id', 'revision-1');
     await reviewPage.waitForReviewLoaded();
     await page.waitForSelector('.code-line', { timeout: 10000 });
 
@@ -197,7 +197,7 @@ test.describe('Comments - Reply to Comment', () => {
     const reviewPage = new ReviewPage(page);
     const getCapturedRequest = await setupCommentCreationCapture(page);
 
-    await reviewPage.goto('test-review-id');
+    await reviewPage.goto('test-review-id', 'revision-1');
     await reviewPage.waitForReviewLoaded();
 
     const commentThread = await waitForCommentThread(page);

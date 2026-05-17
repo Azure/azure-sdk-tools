@@ -99,6 +99,7 @@
                     [instanceLocation]='"conversations"'
                     [userProfile]="userProfile"
                     [reviewId]="review?.id || ''"
+                    [apiVersionId]="apiRevision.apiVersionId"
                     [elementId]="commentThread!.comments[0].elementId"
                     (navigateToElementEmitter)="navigateToElement(apiRevision.id, $event)"
                     (saveCommentActionEmitter)="handleSaveCommentActionEmitter($event)"

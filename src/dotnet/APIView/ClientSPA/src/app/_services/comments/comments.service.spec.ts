@@ -3,6 +3,7 @@ import { initializeTestBed } from '../../../test-setup';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { CommentsService } from './comments.service';
+import { CommentType } from 'src/app/_models/commentItemModel';
 import { ConfigService } from '../config/config.service';
 
 describe('CommentsService', () => {
@@ -56,5 +57,24 @@ describe('CommentsService', () => {
     expect(req.request.withCredentials).toBe(true);
     expect(req.request.headers.has('Content-Type')).toBe(false);
     req.flush({}); // Mock response
+  });
+
+  describe('createComment', () => {
+    it('should always include apiVersionId in form data', () => {
+      service.createComment('review1', 'revision1', 'elem1', 'text', CommentType.APIRevision, 'v1.0.0').subscribe();
+
+      const req = httpMock.expectOne(`${configService.apiUrl}comments`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body.get('apiVersionId')).toBe('v1.0.0');
+      req.flush({});
+    });
+
+    it('should include empty string for apiVersionId when not provided', () => {
+      service.createComment('review1', 'revision1', 'elem1', 'text', CommentType.APIRevision, '').subscribe();
+
+      const req = httpMock.expectOne(`${configService.apiUrl}comments`);
+      expect(req.request.body.get('apiVersionId')).toBe('');
+      req.flush({});
+    });
   });
 });

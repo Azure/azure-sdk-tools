@@ -115,6 +115,7 @@ namespace APIViewWeb.HostedServices
                         CreatedOn = DateTime.UtcNow,
                         ReviewId = jobInfo.APIRevision.ReviewId,
                         APIRevisionId = jobInfo.APIRevision.Id,
+                        APIVersionId = jobInfo.APIRevision.APIVersionId,
                         ElementId = codeLine.lineId ?? (comment.Source == SummarySource ? CodeFileHelpers.FirstRowElementId : null),
                         IsGeneric = comment.IsGeneric,
                         CorrelationId = comment.CorrelationId,

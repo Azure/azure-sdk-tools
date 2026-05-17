@@ -373,6 +373,7 @@ namespace APIViewWeb.Managers
             {
                 ReviewId = comment.ReviewId,
                 APIRevisionId = comment.APIRevisionId,
+                APIVersionId = comment.APIVersionId,
                 SampleRevisionId = comment.SampleRevisionId,
                 ElementId = comment.ElementId,
                 CommentText = response,
@@ -604,6 +605,7 @@ namespace APIViewWeb.Managers
                     {
                         ReviewId = reviewId,
                         APIRevisionId = comment.APIRevisionId,
+                        APIVersionId = comment.APIVersionId,
                         SampleRevisionId = comment.SampleRevisionId,
                         ElementId = comment.ElementId,
                         CommentText = request.CommentReply,
@@ -1008,7 +1010,8 @@ namespace APIViewWeb.Managers
                 apiRevision.Id,
                 apiRevision.DiagnosticsHash,
                 diagnostics,
-                existingComments);
+                existingComments,
+                apiRevision.APIVersionId);
 
             // Update the revision's hash if sync occurred
             if (result.WasSynced)

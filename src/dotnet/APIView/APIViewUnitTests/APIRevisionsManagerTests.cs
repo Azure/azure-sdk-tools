@@ -415,7 +415,7 @@ public class APIRevisionsManagerTests
             .ReturnsAsync(new APICodeFileModel { FileId = "file-id", FileName = "test.json" });
 
         _mockDiagnosticCommentService
-            .Setup(m => m.SyncDiagnosticCommentsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CodeDiagnostic[]>(), It.IsAny<IEnumerable<CommentItemModel>>()))
+            .Setup(m => m.SyncDiagnosticCommentsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CodeDiagnostic[]>(), It.IsAny<IEnumerable<CommentItemModel>>(), It.IsAny<string>()))
             .ReturnsAsync(new DiagnosticSyncResult { DiagnosticsHash = "hash" });
 
         _mockAPIRevisionsRepository
@@ -1941,7 +1941,7 @@ public class APIRevisionsManagerTests
         _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
             .ReturnsAsync(new List<CommentItemModel>());
         _mockDiagnosticCommentService.Setup(x => x.SyncDiagnosticCommentsAsync(
-            revision.ReviewId, revision.Id, revision.DiagnosticsHash, diagnostics, It.IsAny<IEnumerable<CommentItemModel>>()))
+            revision.ReviewId, revision.Id, revision.DiagnosticsHash, diagnostics, It.IsAny<IEnumerable<CommentItemModel>>(), It.IsAny<string>()))
             .ReturnsAsync(syncResult);
 
         var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
@@ -1950,7 +1950,7 @@ public class APIRevisionsManagerTests
         Assert.Equal(90, result.Score); // 100 - 10
         Assert.Equal(1, result.UnresolvedShouldFixCount);
         _mockDiagnosticCommentService.Verify(x => x.SyncDiagnosticCommentsAsync(
-            revision.ReviewId, revision.Id, null, diagnostics, It.IsAny<IEnumerable<CommentItemModel>>()), Times.Once);
+            revision.ReviewId, revision.Id, null, diagnostics, It.IsAny<IEnumerable<CommentItemModel>>(), It.IsAny<string>()), Times.Once);
         _mockAPIRevisionsRepository.Verify(x => x.UpsertAPIRevisionAsync(It.Is<APIRevisionListItemModel>(r => r.DiagnosticsHash == "new-hash")), Times.Once);
     }
 
@@ -2339,7 +2339,7 @@ public class APIRevisionsManagerTests
         _mockDiagnosticCommentService
             .Setup(d => d.SyncDiagnosticCommentsAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<CodeDiagnostic[]>(), It.IsAny<List<CommentItemModel>>()))
+                It.IsAny<CodeDiagnostic[]>(), It.IsAny<List<CommentItemModel>>(), It.IsAny<string>()))
             .ReturnsAsync(new DiagnosticSyncResult());
 
         _mockAPIRevisionsRepository
@@ -2393,7 +2393,7 @@ public class APIRevisionsManagerTests
         _mockDiagnosticCommentService
             .Setup(d => d.SyncDiagnosticCommentsAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<CodeDiagnostic[]>(), It.IsAny<List<CommentItemModel>>()))
+                It.IsAny<CodeDiagnostic[]>(), It.IsAny<List<CommentItemModel>>(), It.IsAny<string>()))
             .ReturnsAsync(new DiagnosticSyncResult());
 
         _mockAPIRevisionsRepository

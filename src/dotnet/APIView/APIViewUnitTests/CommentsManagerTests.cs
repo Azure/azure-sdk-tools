@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using APIView;
 using APIViewWeb;
 using APIViewWeb.DTOs;
+using APIViewWeb.Helpers;
 using APIViewWeb.Hubs;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
@@ -2755,5 +2756,125 @@ public class CommentsManagerTests
     }
 
     #endregion
+
+    #region APIVersionId Tests
+
+    [Fact]
+    public async Task AddCommentAsync_WithAPIVersionId_PersistsAPIVersionId()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+
+        CommentItemModel comment = new()
+        {
+            ReviewId = "review1",
+            APIRevisionId = "rev1",
+            APIVersionId = "version-abc",
+            ElementId = "element1",
+            CommentType = CommentType.APIRevision,
+            CommentText = "Comment with version",
+            ChangeHistory = [],
+            Upvotes = [],
+            Downvotes = []
+        };
+
+        commentsRepoMock.Setup(r => r.GetCommentsAsync("review1", "element1"))
+            .ReturnsAsync(new List<CommentItemModel>());
+
+        CommentItemModel capturedComment = null;
+        commentsRepoMock.Setup(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()))
+            .Callback<CommentItemModel>(c => capturedComment = c)
+            .Returns(Task.CompletedTask);
+
+        await manager.AddCommentAsync(user, comment);
+
+        Assert.Equal("version-abc", capturedComment?.APIVersionId);
+    }
+
+    [Fact]
+    public async Task ResolveBatchConversationAsync_WithReply_InheritsAPIVersionIdFromRootComment()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+
+        CommentItemModel comment = new()
+        {
+            ReviewId = "review1",
+            Id = "comment1",
+            ElementId = "element1",
+            APIRevisionId = "rev1",
+            APIVersionId = "version-xyz",
+            CommentType = CommentType.APIRevision,
+            Severity = CommentSeverity.ShouldFix,
+            ThreadId = "thread-1",
+            Upvotes = [],
+            Downvotes = []
+        };
+
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment);
+        // GetCommentsAsync is called twice: once for the resolve check in CommentsBatchOperationAsync
+        // and once by IsThreadResolvedAsync inside AddCommentAsync for the reply.
+        commentsRepoMock.Setup(r => r.GetCommentsAsync("review1", "element1"))
+            .ReturnsAsync(new List<CommentItemModel> { comment });
+
+        CommentItemModel capturedReply = null;
+        commentsRepoMock.Setup(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()))
+            .Callback<CommentItemModel>(c => { if (c.CommentText == "My reply") capturedReply = c; })
+            .Returns(Task.CompletedTask);
+
+        BatchConversationRequest request = new()
+        {
+            CommentIds = new List<string> { "comment1" },
+            CommentReply = "My reply",
+            Severity = CommentSeverity.ShouldFix,
+            Disposition = ConversationDisposition.KeepOpen
+        };
+
+        await manager.CommentsBatchOperationAsync(user, "review1", request);
+
+        Assert.NotNull(capturedReply);
+        Assert.Equal("version-xyz", capturedReply.APIVersionId);
+    }
+
+    [Fact]
+    public async Task RequestAgentReply_AgentComment_InheritsAPIVersionIdFromParentComment()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock,
+            out Mock<IHubContext<SignalRHub>> hubContextMock, out _);
+        ClaimsPrincipal user = CreateUser("architect1");
+
+        CommentItemModel parentComment = new()
+        {
+            ReviewId = "review1",
+            APIRevisionId = "rev1",
+            APIVersionId = "version-parent",
+            ElementId = "element1",
+            ThreadId = "thread-1",
+            CommentText = "Human comment",
+            CommentType = CommentType.APIRevision,
+            ChangeHistory = [],
+            Upvotes = [],
+            Downvotes = []
+        };
+
+        commentsRepoMock.Setup(r => r.GetCommentsAsync("review1", "element1"))
+            .ReturnsAsync(new List<CommentItemModel> { parentComment });
+
+        CommentItemModel capturedAgentComment = null;
+        commentsRepoMock.Setup(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()))
+            .Callback<CommentItemModel>(c => { if (c.CreatedBy == ApiViewConstants.AzureSdkBotName) capturedAgentComment = c; })
+            .Returns(Task.CompletedTask);
+
+        hubContextMock.Setup(h => h.Clients.All.SendCoreAsync(It.IsAny<string>(), It.IsAny<object[]>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        await manager.RequestAgentReply(user, parentComment, "rev1");
+
+        Assert.NotNull(capturedAgentComment);
+        Assert.Equal("version-parent", capturedAgentComment.APIVersionId);
+    }
+
+    #endregion
 }
+
 

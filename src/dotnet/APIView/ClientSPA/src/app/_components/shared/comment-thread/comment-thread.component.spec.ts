@@ -669,6 +669,32 @@ describe('CommentThreadComponent', () => {
       expect(emittedDto!.isReply).toBe(false);
     });
 
+    it('should include apiVersionId in emitted DTO when @Input is set', () => {
+      component.apiVersionId = 'v2026-01-01';
+      component.codePanelRowData!.comments = [];
+      component.codePanelRowData!.nodeId = 'node-1';
+      component.codePanelRowData!.showReplyTextBox = true;
+
+      makeEditorReturn('<p>Comment text</p>');
+      component.saveCommentAction(buildReplyEvent());
+
+      expect(emittedDto).toBeDefined();
+      expect(emittedDto!.apiVersionId).toBe('v2026-01-01');
+    });
+
+    it('should emit empty string apiVersionId when @Input is not set', () => {
+      component.apiVersionId = '';
+      component.codePanelRowData!.comments = [];
+      component.codePanelRowData!.nodeId = 'node-1';
+      component.codePanelRowData!.showReplyTextBox = true;
+
+      makeEditorReturn('<p>Comment text</p>');
+      component.saveCommentAction(buildReplyEvent());
+
+      expect(emittedDto).toBeDefined();
+      expect(emittedDto!.apiVersionId).toBe('');
+    });
+
     it('should force severity to null when replying to an existing thread', () => {
       const existingComment = new CommentItemModel();
       existingComment.id = 'c1';

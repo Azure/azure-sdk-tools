@@ -689,7 +689,8 @@ namespace APIViewWeb.Managers
                         apiRevision.Id,
                         null, // No existing hash for new revisions
                         codeFile.Diagnostics,
-                        []);
+                        [],
+                        apiRevision.APIVersionId);
                     
                     apiRevision.DiagnosticsHash = diagnosticResult.DiagnosticsHash;
                 }
@@ -1363,7 +1364,8 @@ namespace APIViewWeb.Managers
                 apiRevision.Id,
                 null, 
                 codeFile.Diagnostics,
-                []);
+                [],
+                apiRevision.APIVersionId);
             
             apiRevision.DiagnosticsHash = diagnosticResult.DiagnosticsHash;
 
@@ -1651,7 +1653,8 @@ namespace APIViewWeb.Managers
                     apiRevisionId,
                     revision.DiagnosticsHash,
                     codeFile.CodeFile.Diagnostics,
-                    allComments);
+                    allComments,
+                    revision.APIVersionId);
 
                 if (diagnosticResult.WasSynced)
                 {

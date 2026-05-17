@@ -179,10 +179,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                                 {
                                     if (sdkchanges.HasBreakingChange)
                                     {
+                                        var tspProjectPath = tspConfigPath != null ? await gitHelper.DiscoverRepoRootAsync(tspConfigPath, ct) : null;
                                         return new SdkBreakingChangeDetectResponse
                                         {
                                             HasBreakingChanges = true,
-                                            BreakingChanges = await ClassifySDKBreakingChanges(sdkchanges.ChangelogMD, sdkRepoRoot, languageService, ct),
+                                            BreakingChanges = await ClassifySDKBreakingChanges(sdkchanges.ChangelogMD, sdkRepoRoot, languageService, tspProjectPath, ct),
                                             Language = languageService.Language,
                                         };
                                     }
@@ -232,12 +233,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
         }
 
-        private async Task<SdkBreakingChange[]> ClassifySDKBreakingChanges(string sdkchange, string sdkRepoRoot, LanguageService languageService, CancellationToken ct)
+        private async Task<SdkBreakingChange[]> ClassifySDKBreakingChanges(string sdkchange, string sdkRepoRoot, LanguageService languageService, string? tspProjectPath, CancellationToken ct)
         {
             var sdkBreakingPattern = await languageService.GetSDKBreakingPattern(sdkRepoRoot, ct);
             var agent = new CopilotAgent<string>
             {
-                Instructions = BuildClassifyInstructions(sdkchange, sdkBreakingPattern, SdkLanguageHelpers.ToWorkItemString(languageService.Language)),
+                Instructions = BuildClassifyInstructions(sdkchange, sdkBreakingPattern, SdkLanguageHelpers.ToWorkItemString(languageService.Language), tspProjectPath),
                 Model = "claude-opus-4.5"
             };
             var result = await copilotAgentRunner.RunAsync(agent, ct);
@@ -246,9 +247,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return breakings;
         }
 
-        private string BuildClassifyInstructions(string sdkchange, string sdkchangeToBreakingPattern, string language)
+        private string BuildClassifyInstructions(string sdkchange, string sdkchangeToBreakingPattern, string language, string tspProjectPath)
         {
-            var template = new SdkBreakingChangeClassificationTemplate(sdkchangeToBreakingPattern, sdkchange, language);
+            var template = new SdkBreakingChangeClassificationTemplate(sdkchangeToBreakingPattern, sdkchange, language, tspProjectPath);
             return template.BuildPrompt();
         }
 

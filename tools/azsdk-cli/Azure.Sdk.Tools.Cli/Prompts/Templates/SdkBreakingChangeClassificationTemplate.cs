@@ -11,12 +11,14 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
         private readonly string _sdkBreakingPatternContent;
         private readonly string _sdkChanges;
         private readonly string _language;
+        private readonly string _tspProjectPath;
 
-        public SdkBreakingChangeClassificationTemplate(string sdkBreakingPatternContent, string sdkChanges, string language)
+        public SdkBreakingChangeClassificationTemplate(string sdkBreakingPatternContent, string sdkChanges, string language, string tspProjectPath)
         {
             _sdkBreakingPatternContent = sdkBreakingPatternContent;
             _sdkChanges = sdkChanges;
             _language = language;
+            _tspProjectPath = tspProjectPath;
         }
 
         public override string BuildPrompt()
@@ -69,7 +71,12 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
 
         private string BuildOutputRequirements()
         {
-            return """
+            var breakingReferenceInstruction = "";
+            if (_tspProjectPath != null)
+            {
+               breakingReferenceInstruction = $"- Use the typespec item in the SDK breaking change, such as model, operation. You may read the definitions in the typespec code in directory `{_tspProjectPath}` as reference when you define the sdk breaking change.";
+            }
+            return $"""
             **CRITICAL: Required Output Format**
         
             You MUST output one block per sdk breaking change item.
@@ -86,6 +93,7 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates
 
             **Rules:**
             - The `[<item-id>]` header refers to the SDK breaking change type
+            {breakingReferenceInstruction}
             - category must be exactly one of: emitter change, conversion-by design, conversion-need resolve, spec change, unknown
             - Reason must clearly state which condition triggered the classification
             - For emitter change: the SDK breaking change is caused by a change in the code emitter that generates the client code

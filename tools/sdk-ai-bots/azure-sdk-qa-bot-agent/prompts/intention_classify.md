@@ -11,6 +11,7 @@ The bot SHOULD respond when the message is:
 - A direct ask that expects an answer
 - A follow-up to the bot's previous reply, even if it is not phrased as a question
 - A clarification, confirmation, correction, or extra context that continues the current technical thread
+- A review request for a PR or spec in the bot's domain, even if it @-mentions specific people or teams
 
 The bot should NOT respond when the message is:
 

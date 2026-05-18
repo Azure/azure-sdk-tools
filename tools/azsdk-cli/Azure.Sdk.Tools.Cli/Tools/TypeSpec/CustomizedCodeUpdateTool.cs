@@ -188,7 +188,32 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         string? apiViewUrl = IsApiViewUrl(customizationRequest) ? customizationRequest : null;
 
         var languageService = await ResolveLanguageServiceAsync(packagePath, apiViewUrl, ct);
+        PackageInfo? packageInfo = null;
 
+        try
+        {
+            packageInfo = await languageService.GetPackageInfo(packagePath, ct);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to resolve package info for {PackagePath}", packagePath);
+        }
+
+        CustomizedCodeUpdateResponse CreateResponse(CustomizedCodeUpdateResponse response)
+        {
+            response.PackageName ??= packageInfo?.PackageName;
+            response.Language = packageInfo?.Language ?? languageService.Language;
+            response.PackageType = packageInfo?.SdkType ?? SdkType.Unknown;
+            response.TypeSpecProject ??= packageInfo?.SpecProjectPath ?? tspProjectPath;
+            return response;
+        }
+
+        try
+        {
         List<FeedbackItem> feedbackItems = [];
         FeedbackClassificationResponse response;
         try
@@ -205,38 +230,38 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         catch (CopilotCliUnavailableException ex)
         {
             logger.LogError(ex, "GitHub Copilot CLI is not available.");
-            return new CustomizedCodeUpdateResponse
+            return CreateResponse(new CustomizedCodeUpdateResponse
             {
                 Success = false,
                 ResponseError = ex.Message,
                 Message = ex.Message,
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError,
                 BuildResult = ex.Message
-            };
+            });
         }
         catch (ArgumentException ex)
         {
             logger.LogError(ex, "Invalid input for feedback classification.");
-            return new CustomizedCodeUpdateResponse
+            return CreateResponse(new CustomizedCodeUpdateResponse
             {
                 Success = false,
                 ResponseError = ex.Message,
                 Message = ex.Message,
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
                 BuildResult = ex.Message
-            };
+            });
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Feedback classification failed unexpectedly.");
-            return new CustomizedCodeUpdateResponse
+            return CreateResponse(new CustomizedCodeUpdateResponse
             {
                 Success = false,
                 ResponseError = $"Feedback classification failed: {ex.Message}",
                 Message = $"Feedback classification failed: {ex.Message}",
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError,
                 BuildResult = $"Feedback classification failed: {ex.Message}"
-            };
+            });
         }
         var feedbackDictionary = feedbackItems.ToDictionary(i => i.Id, i => i);
 
@@ -249,14 +274,14 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
         if (response.Classifications == null || response.Classifications.Count == 0)
         {
-            return new CustomizedCodeUpdateResponse
+            return CreateResponse(new CustomizedCodeUpdateResponse
             {
                 Success = false,
                 ResponseError = "Feedback could not be classified.",
                 Message = "Feedback could not be classified.",
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
                 BuildResult = "Feedback could not be classified."
-            };
+            });
         }
 
         var tspFixFailed = 0;
@@ -325,23 +350,23 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         // Nothing was classified as tsp applicable and at least some feedback requires manual intervention
         if (tspApplicable == 0 && codeCustomizations == 0 && manualChanges > 0)
         {
-            return new CustomizedCodeUpdateResponse
+            return CreateResponse(new CustomizedCodeUpdateResponse
             {
                 Success = false,
                 Message = "The requested changes require manual intervention and cannot be applied via TypeSpec customizations.",
                 NextSteps = manualInterventions,
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.ManualInterventionRequired
-            };
+            });
         }
 
         // Everything was classified as success
         if (tspApplicable == 0 && codeCustomizations == 0 && noChanges > 0)
         {
-            return new CustomizedCodeUpdateResponse
+            return CreateResponse(new CustomizedCodeUpdateResponse
             {
                 Success = true,
                 Message = "No changes needed — the requested customizations are already in place."
-            };
+            });
         }
 
         // ── Regen + Build if TSP fixes were applied ──
@@ -371,7 +396,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 if (buildSucceeded && codeCustomizations == 0)
                 {
                     logger.LogInformation("Build passed after TypeSpec customizations.");
-                    return new CustomizedCodeUpdateResponse
+                    return CreateResponse(new CustomizedCodeUpdateResponse
                     {
                         Success = manualInterventions.Count == 0,
                         Message = manualInterventions.Count == 0
@@ -380,7 +405,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                         TypeSpecChangesSummary = changesMade,
                         NextSteps = manualInterventions,
                         ErrorCode = manualInterventions.Count > 0 ? CustomizedCodeUpdateResponse.KnownErrorCodes.ManualInterventionRequired : null,
-                    };
+                    });
                 }
 
                 // Enrich remaining items with build error context for the second classifier pass
@@ -437,7 +462,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         if (buildSucceeded && codeCustomizations == 0)
         {
             logger.LogInformation("Build passed after TypeSpec customizations.");
-            return new CustomizedCodeUpdateResponse
+            return CreateResponse(new CustomizedCodeUpdateResponse
             {
                 Success = manualInterventions.Count == 0,
                 Message = manualInterventions.Count == 0
@@ -446,21 +471,21 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 TypeSpecChangesSummary = changesMade,
                 NextSteps = manualInterventions,
                 ErrorCode = manualInterventions.Count > 0 ? CustomizedCodeUpdateResponse.KnownErrorCodes.ManualInterventionRequired : null,
-            };
+            });
         }
 
         // Step 2: If the build failed or CODE_CUSTOMIZATION items still need patching, start customized code update process
 
         if (!languageService.IsCustomizedCodeUpdateSupported)
         {
-            return new CustomizedCodeUpdateResponse
+            return CreateResponse(new CustomizedCodeUpdateResponse
             {
                 Success = false,
                 ResponseError = "Language service does not support customized code updates.",
                 Message = "Language service does not support customized code updates.",
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.NoLanguageService,
                 BuildResult = "No language service available for this package type."
-            };
+            });
         }
 
         // Step 3: Check for customization files to repair
@@ -468,7 +493,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         if (customizationRoot == null)
         {
             logger.LogInformation("Build failed but no customization files found.");
-            return new CustomizedCodeUpdateResponse
+            return CreateResponse(new CustomizedCodeUpdateResponse
             {
                 Success = false,
                 ResponseError = string.IsNullOrWhiteSpace(buildError)
@@ -477,7 +502,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 Message = "Build failed but no customization files found to repair.",
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.BuildNoCustomizationsFailed,
                 BuildResult = buildError
-            };
+            });
         }
 
         // Step 4: Apply patches based on build errors
@@ -498,7 +523,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         if (patches.Count == 0)
         {
             logger.LogInformation("No patches applied.");
-            return new CustomizedCodeUpdateResponse
+            return CreateResponse(new CustomizedCodeUpdateResponse
             {
                 Success = false,
                 ResponseError = string.IsNullOrWhiteSpace(buildError)
@@ -507,7 +532,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 Message = "No patches could be applied - automated repair found nothing to fix.",
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.PatchesFailed,
                 BuildResult = buildError
-            };
+            });
         }
 
         // Step 5: Regenerate if Java (only Java needs regen after patching customization files)
@@ -518,7 +543,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             if (!regenResult.IsSuccessful)
             {
                 logger.LogWarning("Regeneration failed: {Error}", regenResult.ResponseError);
-                return new CustomizedCodeUpdateResponse
+                return CreateResponse(new CustomizedCodeUpdateResponse
                 {
                     Success = false,
                     ResponseError = $"Regeneration failed after patches: {regenResult.ResponseError}",
@@ -527,7 +552,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     BuildResult = regenResult.ResponseError,
                     TypeSpecChangesSummary = changesMade,
                     AppliedPatches = patches
-                };
+                });
             }
         }
 
@@ -538,7 +563,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         if (finalBuildSuccess)
         {
             logger.LogInformation("Build passed after code customization patches.");
-            return new CustomizedCodeUpdateResponse
+            return CreateResponse(new CustomizedCodeUpdateResponse
             {
                 Success = manualInterventions.Count == 0,
                 Message = manualInterventions.Count == 0
@@ -548,12 +573,12 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 AppliedPatches = patches,
                 NextSteps = manualInterventions,
                 ErrorCode = manualInterventions.Count > 0 ? CustomizedCodeUpdateResponse.KnownErrorCodes.ManualInterventionRequired : null,
-            };
+            });
         }
 
         // Build still failing after patches
         logger.LogInformation("Build still failing after code customization patches.");
-        return new CustomizedCodeUpdateResponse
+        return CreateResponse(new CustomizedCodeUpdateResponse
         {
             Success = false,
             ResponseError = string.IsNullOrWhiteSpace(finalBuildError)
@@ -565,7 +590,24 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             TypeSpecChangesSummary = changesMade,
             AppliedPatches = patches,
             NextSteps = manualInterventions,
-        };
+        });
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Unexpected error during customized code update.");
+            return CreateResponse(new CustomizedCodeUpdateResponse
+            {
+                Success = false,
+                ResponseError = $"Unexpected error: {ex.Message}",
+                Message = $"Unexpected error: {ex.Message}",
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError,
+                BuildResult = ex.Message
+            });
+        }
     }
 
     /// <summary>

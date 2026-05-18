@@ -22,7 +22,7 @@ public static class VersionNormalizationHelper
         var semVer = new AzureEngSemanticVersion(versionIdentifier, language);
 
         // Non-semver version strings are handled by language/shape:
-        //   • Python: PEP 440 qualifiers (.dev, .post) are unparseable by the semver regex → Preview.
+        //   • Python: PEP 440 qualifiers (e.g. .dev) that are unparseable by the regex → Preview.
         //   • Any language: bare positive integers (e.g. Azure Key Vault "6", "7") → Stable.
         //   • Everything else falls back to Preview.
         if (!semVer.IsSemVerFormat)

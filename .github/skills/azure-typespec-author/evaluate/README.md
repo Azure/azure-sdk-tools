@@ -4,7 +4,7 @@ This directory contains [Vally](https://aka.ms/vally) evaluation cases for the `
 
 ## Prerequisites
 
-- [Vally CLI](https://literate-engine-r3wnl4v.pages.github.io/get-started/) installed globally: `npm install -g @microsoft/vally-cli`
+- [Vally CLI](https://aka.ms/vally) installed globally: `npm install -g @microsoft/vally-cli`
 - The `azsdk-cli` MCP server built: `dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Cli`
 - An API key for the model configured (e.g., Anthropic or OpenAI key via environment variable)
 

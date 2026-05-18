@@ -62,7 +62,7 @@ public partial class GoLanguageService : LanguageService
 
     #endregion
 
-    protected override string SDKBreakingPatternFilePath => "documentation/development/breaking-changes/sdk-breaking-changes-guide.md";
+    protected override string SDKBreakingPatternFilePath => "documentation/development/breaking-changes/sdk-breaking-changes-guide-migration.md";
     public override async Task<PackageCheckResponse> AnalyzeDependencies(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         var results = new List<ProcessResult>();

@@ -4,11 +4,14 @@
 
 ### Features Added
 
+- Added optional `--release-plan-id` parameter to `update-release-status` CLI command. When provided, it is used as an additional filter on top of the package name search to select the correct release plan. Returns a message if the specified release plan ID is not found among matching plans.
+
 ### Breaking Changes
 
 ### Bugs Fixed
 
 - `azsdk_release_sdk` now passes a `release_<safeName>=true` template parameter when triggering Java release pipelines so per-package selection works (azure-sdk-for-java#48465). Previously, manually queued Java releases failed fast because no package was selected. (#14832)
+- Removed the check requiring Java package names to include group name in `groupName:packageName` format when updating release status.
 
 ### Other Changes
 

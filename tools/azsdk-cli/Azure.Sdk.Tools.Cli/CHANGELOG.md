@@ -1,12 +1,11 @@
 # Release History
 
-## 0.6.13 (Unreleased)
+## 0.6.13 (2026-05-18)
 
 ### Features Added
 
 - Added optional `--release-plan-id` parameter to `update-release-status` CLI command. When provided, it is used as an additional filter on top of the package name search to select the correct release plan. Returns a message if the specified release plan ID is not found among matching plans.
-
-### Breaking Changes
+- Get release plan returns the link to new release planner dashboard https://aka.ms/azsdk/releaseplan-dashboard
 
 ### Bugs Fixed
 

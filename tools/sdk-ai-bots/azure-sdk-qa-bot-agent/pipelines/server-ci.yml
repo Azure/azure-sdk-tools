@@ -93,8 +93,8 @@ extends:
                   workingDirectory: $(workingDirectory)
                   inlineScript: |
                     set -euo pipefail
-                    export AZURE_CLIENT_ID=$servicePrincipalId
-                    export AZURE_TENANT_ID=$tenantId
+                    export AZURESUBSCRIPTION_CLIENT_ID=$servicePrincipalId
+                    export AZURESUBSCRIPTION_TENANT_ID=$tenantId
                     echo "Running unit tests..."
                     python -m pytest tests/ \
                       --ignore=tests/azsdk_mcp_tools_test.py \

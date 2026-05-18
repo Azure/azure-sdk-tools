@@ -1,4 +1,4 @@
-"""Live tests for the intention classification service."""
+"""Unit tests for the intention classification service."""
 
 from __future__ import annotations
 

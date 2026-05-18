@@ -1230,36 +1230,14 @@ main {
   font-size: 0.75rem;
   font-weight: 600;
   border-radius: 4px;
-  border: none;
+  border: 1px solid #ffc107;
   cursor: pointer;
   transition: filter 0.15s;
+  background: #fff8e1;
+  color: #bf360c;
 }
 .lang-action-btn:hover {
   filter: brightness(0.9);
-}
-.action-btn-generate {
-  background: var(--azure-light);
-  color: var(--azure-dark);
-}
-.action-btn-fix {
-  background: #fff4ce;
-  color: #8a6d3b;
-}
-.action-btn-release {
-  background: var(--green-bg);
-  color: var(--green);
-}
-.action-btn-merge {
-  background: #e6f7ff;
-  color: #0078d4;
-}
-.action-btn-link {
-  background: #fff0f0;
-  color: #c41e3a;
-}
-.action-btn-ready {
-  background: #fff8e1;
-  color: #7b6000;
 }
 
 /* Feed link icons */

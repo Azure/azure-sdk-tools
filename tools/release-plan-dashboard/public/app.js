@@ -977,7 +977,7 @@
     const labels = {
       [ACTION_TYPES.GENERATE]: "⚡ Generate SDK",
       [ACTION_TYPES.FIX_CHECKS]: "🔧 Fix Checks",
-      [ACTION_TYPES.RELEASE]: "🚀 Release",
+      [ACTION_TYPES.RELEASE]: "🚀 Release SDK",
       [ACTION_TYPES.MERGE]: "✅ Merge PR",
       [ACTION_TYPES.LINK_PR]: "🔗 Link PR",
       [ACTION_TYPES.MARK_READY]: "📋 Mark Ready",

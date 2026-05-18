@@ -45,11 +45,18 @@
 
 - Added Rust language support for `setup`, `generate`, `build`, and `pack` tools.
 - Added `azsdk_get_kpi_attestation_status` MCP tool to check KPI attestation status for a release plan given product ID and lifecycle.
+
+### Breaking Changes
+
+- `azsdk package validate` with check type `All` raises an error when `--fix` is True. Run a specific check type (for example, `Cspell`, `Snippets`, or `Format`) with `--fix` instead.
+
+### Bugs Fixed
 - Added CODEOWNERS Audit command (CLI only) that brings data model to a valid state.
 - Added optional package version argument for `azsdk release-plan update-release-status` CLI.
 
 ### Other Changes
 
+- `azsdk package validate` with check type `All` now runs read-only checks in parallel, significantly reducing wait time on large packages. Potentially-mutating checks (`Snippets`, `Format`) are serialized after the read-only phase to avoid file-write races.
 - Surface APIView link in `azsdk_release_sdk` when APIView approval is missing
 
 ### Bugs Fixed

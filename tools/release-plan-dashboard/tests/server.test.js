@@ -1,131 +1,90 @@
 import { describe, test, expect, vi, beforeAll, afterAll } from "vitest";
 
 // ── Server integration tests ──────────────────────────────────
-// Tests the Express app's middleware and routes without external deps.
-// We set required env vars and mock external calls.
+// Tests the Express app by importing createApp/validateEnvVars from server.js.
+// We set required env vars and mock external calls so server.js gets real coverage.
 
-// Set all required env vars before importing server modules
-process.env.KEYVAULT_NAME = "test-vault";
-process.env.KEYVAULT_KEY_NAME = "test-key";
-process.env.GITHUB_APP_NUMERIC_ID = "12345";
-process.env.GITHUB_INSTALL_OWNER = "TestOrg";
-process.env.GITHUB_APP_CLIENT_ID = "test-client-id";
-process.env.GITHUB_APP_CLIENT_SECRET = "test-client-secret";
-process.env.DEVOPS_RELEASE_PLAN_PAT = "test-pat";
-process.env.SESSION_SECRET = "test-session-secret";
-process.env.RELEASE_PLAN_DASHBOARD_PM_USERS = "pmuser1,pmuser2";
+// vi.hoisted runs before vi.mock and imports — env vars must be set here
+// because server.js reads them at module level AND calls start() as a side effect.
+vi.hoisted(() => {
+  process.env.KEYVAULT_NAME = "test-vault";
+  process.env.KEYVAULT_KEY_NAME = "test-key";
+  process.env.GITHUB_APP_NUMERIC_ID = "12345";
+  process.env.GITHUB_INSTALL_OWNER = "TestOrg";
+  process.env.RELEASE_PLAN_DASHBOARD_PM_USERS =
+    "pmuser@microsoft.com,pmuser2@microsoft.com";
+  // Use port 0 so the side-effect start() server binds to a random port
+  process.env.PORT = "0";
+});
 
-// Mock the auth module to avoid real Key Vault / GitHub calls
-vi.mock("../lib/auth.js", () => ({
-  mintGitHubAppToken: vi.fn().mockResolvedValue("mock-token"),
-  isMemberOfAnyOrg: vi.fn().mockResolvedValue(true),
-  escapeHtml: (str) => String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"),
-  getBaseUrl: () => "http://localhost:3000",
-}));
+// Mock only mintGitHubAppToken (network call); keep real parseEasyAuthPrincipal
+vi.mock("../lib/auth.js", async () => {
+  const actual = await vi.importActual("../lib/auth.js");
+  return {
+    ...actual,
+    mintGitHubAppToken: vi.fn().mockResolvedValue("mock-token"),
+  };
+});
 
 // Mock the routes/api to avoid real DevOps calls
 vi.mock("../routes/api.js", async () => {
   const { default: express } = await import("express");
   const router = express.Router();
-  router.get("/api/release-plans", (req, res) => res.json({ plans: [], fetchedAt: null }));
+  router.get("/api/release-plans", (req, res) =>
+    res.json({ plans: [], fetchedAt: null }),
+  );
   router.refreshReleasePlansCache = vi.fn().mockResolvedValue(undefined);
   return { default: router };
 });
 
 import http from "node:http";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { dirname } from "node:path";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import { createApp, validateEnvVars } from "../server.js";
 
 let app, server;
 
+function makePrincipalHeader(claims) {
+  return Buffer.from(JSON.stringify({ claims })).toString("base64");
+}
+
 beforeAll(async () => {
-  // Require server.js — it calls app.listen internally, so we need to intercept
-  // Instead, manually construct the app in a test-friendly way
-  // Actually, server.js calls process.exit and app.listen. Let's require and test key middleware.
-  // We'll build a mini-app replicating server.js structure for testability.
-  const { default: express } = await import("express");
-  const { default: session } = await import("express-session");
-  const { escapeHtml, getBaseUrl } = await import("../lib/auth.js");
-  const { createRateLimiter } = await import("../lib/rate-limit.js");
-  const { default: apiRoutes } = await import("../routes/api.js");
-
-  app = express();
-  app.set("trust proxy", 1);
-  app.use(session({
-    secret: "test-secret", resave: false, saveUninitialized: false,
-    cookie: { secure: false, httpOnly: true, sameSite: "lax" },
-  }));
-  app.use(express.json());
-
-  // Health (unauthenticated)
-  app.get("/health", (req, res) => res.json({ status: "healthy", uptime: process.uptime() }));
-
-  // Favicon
-  app.get("/favicon.ico", (_req, res) => res.status(204).end());
-
-  // Auth middleware
-  app.use((req, res, next) => {
-    if (["/auth/github", "/auth/github/callback", "/auth/logout", "/login", "/health", "/favicon.ico"].includes(req.path)) return next();
-    if (req.session && req.session.user) return next();
-    if (req.session) req.session.returnTo = req.originalUrl;
-    res.redirect("/login");
+  app = createApp();
+  await new Promise((resolve) => {
+    server = app.listen(0, resolve);
   });
-
-  app.get("/login", (req, res) => {
-    if (req.session && req.session.user) return res.redirect("/");
-    res.status(200).send("Login page");
-  });
-
-  app.get("/auth/me", (req, res) => {
-    const user = req.session && req.session.user ? { ...req.session.user } : null;
-    if (user) {
-      const pmList = (process.env.RELEASE_PLAN_DASHBOARD_PM_USERS || "").split(",").map(u => u.trim().toLowerCase()).filter(Boolean);
-      user.isPM = pmList.includes((user.login || "").toLowerCase());
-    }
-    res.json(user);
-  });
-
-  app.get("/auth/logout", (req, res) => { req.session.destroy(() => res.redirect("/login")); });
-
-  // Rate limiter
-  const apiRateLimiter = createRateLimiter({ windowMs: 60000, maxRequests: 5 });
-  app.use("/api", apiRateLimiter);
-  app.use(apiRoutes);
-
-  // Static files
-  app.use(express.static(path.join(__dirname, "../public")));
-
-  await new Promise((resolve) => { server = app.listen(0, resolve); });
 });
 
 afterAll(async () => {
-  await new Promise((resolve) => { server.close(resolve); });
+  await new Promise((resolve) => {
+    server.close(resolve);
+  });
 });
 
 function getPort() {
   return server.address().port;
 }
 
-function request(method, path, { headers = {}, body, followRedirects = false } = {}) {
+function request(method, urlPath, { headers = {}, body } = {}) {
   return new Promise((resolve, reject) => {
-    const url = new URL(path, `http://localhost:${getPort()}`);
+    const url = new URL(urlPath, `http://localhost:${getPort()}`);
     const options = {
-      hostname: "localhost", port: getPort(), path: url.pathname + url.search,
-      method, headers: { ...headers },
+      hostname: "localhost",
+      port: getPort(),
+      path: url.pathname + url.search,
+      method,
+      headers: { ...headers },
     };
     if (body) {
       const data = typeof body === "string" ? body : JSON.stringify(body);
-      options.headers["Content-Type"] = options.headers["Content-Type"] || "application/json";
+      options.headers["Content-Type"] =
+        options.headers["Content-Type"] || "application/json";
       options.headers["Content-Length"] = Buffer.byteLength(data);
     }
     const req = http.request(options, (res) => {
       let data = "";
       res.on("data", (c) => (data += c));
-      res.on("end", () => resolve({ status: res.statusCode, headers: res.headers, body: data }));
+      res.on("end", () =>
+        resolve({ status: res.statusCode, headers: res.headers, body: data }),
+      );
     });
     req.on("error", reject);
     if (body) req.write(typeof body === "string" ? body : JSON.stringify(body));
@@ -133,14 +92,71 @@ function request(method, path, { headers = {}, body, followRedirects = false } =
   });
 }
 
-// Helper to make an authenticated request by setting session cookie
-let sessionCookie = null;
-
-async function authenticatedRequest(method, path, options = {}) {
-  const hdrs = { ...(options.headers || {}) };
-  if (sessionCookie) hdrs["Cookie"] = sessionCookie;
-  return request(method, path, { ...options, headers: hdrs });
+function authenticatedRequest(method, urlPath, options = {}) {
+  const principalHeader = makePrincipalHeader([
+    { typ: "preferred_username", val: "testuser@microsoft.com" },
+    { typ: "name", val: "Test User" },
+    {
+      typ: "http://schemas.microsoft.com/identity/claims/objectidentifier",
+      val: "obj-123",
+    },
+  ]);
+  const hdrs = {
+    "x-ms-client-principal": principalHeader,
+    "x-ms-client-principal-name": "testuser@microsoft.com",
+    "x-ms-client-principal-id": "obj-123",
+    ...(options.headers || {}),
+  };
+  return request(method, urlPath, { ...options, headers: hdrs });
 }
+
+describe("validateEnvVars", () => {
+  test("returns missing vars when env vars are unset", () => {
+    const saved = {};
+    const keys = [
+      "KEYVAULT_NAME",
+      "KEYVAULT_KEY_NAME",
+      "GITHUB_APP_NUMERIC_ID",
+      "GITHUB_INSTALL_OWNER",
+    ];
+    for (const key of keys) {
+      saved[key] = process.env[key];
+      delete process.env[key];
+    }
+    try {
+      const missing = validateEnvVars();
+      expect(missing).toEqual(keys);
+    } finally {
+      for (const key of keys) {
+        process.env[key] = saved[key];
+      }
+    }
+  });
+
+  test("returns empty array when all env vars are set", () => {
+    const missing = validateEnvVars();
+    expect(missing).toEqual([]);
+  });
+
+  test("returns only the missing vars", () => {
+    const saved = process.env.KEYVAULT_NAME;
+    delete process.env.KEYVAULT_NAME;
+    try {
+      const missing = validateEnvVars();
+      expect(missing).toEqual(["KEYVAULT_NAME"]);
+    } finally {
+      process.env.KEYVAULT_NAME = saved;
+    }
+  });
+});
+
+describe("createApp", () => {
+  test("returns an Express app with listen method", () => {
+    const testApp = createApp();
+    expect(typeof testApp.listen).toBe("function");
+    expect(typeof testApp.use).toBe("function");
+  });
+});
 
 describe("server integration", () => {
   describe("health endpoint", () => {
@@ -161,71 +177,76 @@ describe("server integration", () => {
   });
 
   describe("authentication middleware", () => {
-    test("unauthenticated request to / redirects to /login", async () => {
+    test("unauthenticated request to / returns 401", async () => {
       const res = await request("GET", "/");
-      expect(res.status).toBe(302);
-      expect(res.headers.location).toBe("/login");
+      expect(res.status).toBe(401);
     });
 
-    test("unauthenticated request to /api/* redirects to /login", async () => {
+    test("unauthenticated request to /api/* returns 401", async () => {
       const res = await request("GET", "/api/release-plans");
-      expect(res.status).toBe(302);
-      expect(res.headers.location).toBe("/login");
+      expect(res.status).toBe(401);
     });
 
-    test("GET /login returns 200", async () => {
-      const res = await request("GET", "/login");
+    test("authenticated request to /api/* succeeds", async () => {
+      const res = await authenticatedRequest("GET", "/api/release-plans");
       expect(res.status).toBe(200);
     });
   });
 
   describe("auth/me endpoint", () => {
-    test("returns null when not authenticated", async () => {
+    test("returns user info when authenticated", async () => {
+      const res = await authenticatedRequest("GET", "/auth/me");
+      expect(res.status).toBe(200);
+      const body = JSON.parse(res.body);
+      expect(body.login).toBe("testuser@microsoft.com");
+      expect(body.name).toBe("Test User");
+      expect(body.isPM).toBe(false);
+    });
+
+    test("returns isPM true for PM users", async () => {
+      const principalHeader = makePrincipalHeader([
+        { typ: "preferred_username", val: "pmuser@microsoft.com" },
+        { typ: "name", val: "PM User" },
+      ]);
+      const res = await request("GET", "/auth/me", {
+        headers: {
+          "x-ms-client-principal": principalHeader,
+          "x-ms-client-principal-name": "pmuser@microsoft.com",
+        },
+      });
+      expect(res.status).toBe(200);
+      const body = JSON.parse(res.body);
+      expect(body.isPM).toBe(true);
+    });
+
+    test("returns 401 when not authenticated", async () => {
       const res = await request("GET", "/auth/me");
-      // /auth/me is not in the bypass list, so it redirects
+      expect(res.status).toBe(401);
+    });
+  });
+
+  describe("auth/logout endpoint", () => {
+    test("redirects to Azure Easy Auth logout", async () => {
+      const res = await request("GET", "/auth/logout");
       expect(res.status).toBe(302);
+      expect(res.headers.location).toBe(
+        "/.auth/logout?post_logout_redirect_uri=/",
+      );
     });
   });
 
-  describe("PM user detection", () => {
-    test("identifies PM users from RELEASE_PLAN_DASHBOARD_PM_USERS env var", () => {
-      const pmList = (process.env.RELEASE_PLAN_DASHBOARD_PM_USERS || "").split(",").map(u => u.trim().toLowerCase()).filter(Boolean);
-      expect(pmList).toContain("pmuser1");
-      expect(pmList).toContain("pmuser2");
-      expect(pmList).not.toContain("regularuser");
-    });
-
-    test("PM check is case-insensitive", () => {
-      const pmList = (process.env.RELEASE_PLAN_DASHBOARD_PM_USERS || "").split(",").map(u => u.trim().toLowerCase()).filter(Boolean);
-      expect(pmList.includes("pmuser1")).toBe(true);
-      expect(pmList.includes("PMUSER1".toLowerCase())).toBe(true);
-    });
-  });
-
-  describe("open redirect prevention", () => {
-    // This tests the sanitization logic used in the OAuth callback
-    function safeRedirect(returnTo) {
-      return (returnTo.startsWith("/") && !returnTo.startsWith("//")) ? returnTo : "/";
-    }
-
-    test("allows normal relative paths", () => {
-      expect(safeRedirect("/")).toBe("/");
-      expect(safeRedirect("/api/release-plans")).toBe("/api/release-plans");
-      expect(safeRedirect("/some/deep/path?q=1")).toBe("/some/deep/path?q=1");
-    });
-
-    test("blocks protocol-relative URLs (open redirect)", () => {
-      expect(safeRedirect("//evil.com")).toBe("/");
-      expect(safeRedirect("//evil.com/path")).toBe("/");
-    });
-
-    test("blocks absolute URLs", () => {
-      expect(safeRedirect("https://evil.com")).toBe("/");
-      expect(safeRedirect("http://evil.com/foo")).toBe("/");
-    });
-
-    test("blocks empty string", () => {
-      expect(safeRedirect("")).toBe("/");
+  describe("rate limiting", () => {
+    test("returns 429 after exceeding rate limit on /api paths", async () => {
+      // The real createRateLimiter uses 30 req/min — send 31 requests
+      const results = [];
+      for (let i = 0; i < 31; i++) {
+        results.push(await authenticatedRequest("GET", "/api/release-plans"));
+      }
+      const last = results[results.length - 1];
+      expect(last.status).toBe(429);
+      const body = JSON.parse(last.body);
+      expect(body.error).toMatch(/too many requests/i);
+      expect(last.headers["retry-after"]).toBeDefined();
     });
   });
 });

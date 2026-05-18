@@ -42,6 +42,8 @@ stages:
     steps:
       - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
+      - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+
       - task: AzureCLI@2
         displayName: 'Generate cache files'
         inputs:
@@ -199,3 +201,4 @@ stages:
                 Updating CODEOWNERS
 
                 This was run in $(System.CollectionUri)$(System.TeamProject)/_build/results?buildId=$(Build.BuildId)
+              AuthToken: ''

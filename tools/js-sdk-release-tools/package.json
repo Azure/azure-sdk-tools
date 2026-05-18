@@ -13,7 +13,9 @@
     "copy-files": "copyfiles -f src/common/ciYamlTemplates/*.template.yml dist/common/ciYamlTemplates/",
     "prepack": "npm run build",
     "test": "vitest --run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "bin": {
     "changelog-tool": "./dist/changelogToolCli.js",
@@ -61,6 +63,7 @@
     "@types/string-template": "^1.0.6",
     "@types/unixify": "^1.0.2",
     "@typespec/compiler": "^1.0.0",
+    "prettier": "^3.8.3",
     "rimraf": "^6.0.1",
     "tsx": "^4.19.3",
     "typescript": "5.8.2",

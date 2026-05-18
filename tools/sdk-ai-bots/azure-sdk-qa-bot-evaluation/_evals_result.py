@@ -87,6 +87,8 @@ class EvalsResult:
 
             row_result: dict[str, Any] = {}
             row_result["testcase"] = row["inputs.testcase"]
+            if "inputs.response_id" in row:
+                row_result["response_id"] = row["inputs.response_id"]
             row_result["expected"] = {
                 "answer": row["inputs.ground_truth"],
                 "references": row["inputs.expected_references"],

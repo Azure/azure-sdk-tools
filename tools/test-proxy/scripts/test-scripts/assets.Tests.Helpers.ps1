@@ -20,7 +20,7 @@ Function Get-CloneUrl {
   Param([string] $AssetsRepo)
   $gitToken = $env:GIT_TOKEN
   if (-not ([string]::IsNullOrWhitespace($gitToken))) {
-    return "https://$($gitToken)@github.com/$($AssetsRepo)"
+    return "https://x-access-token:$($gitToken)@github.com/$($AssetsRepo)"
   }
   else {
     return "https://github.com/$($AssetsRepo)"

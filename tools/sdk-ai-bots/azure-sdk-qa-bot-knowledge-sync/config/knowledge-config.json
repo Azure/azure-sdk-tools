@@ -645,6 +645,23 @@
           }
         }
       ]
+    },
+    {
+      "repository": {
+        "url": "https://github.com/Azure/azure-sdk-tools.git",
+        "branch": "main",
+        "authType": "public"
+      },
+      "paths": [
+        {
+          "description": "TypeSpec client customization and authoring knowledge base",
+          "path": "/eng/common/knowledge",
+          "folder": "azure_sdk_customization_docs",
+          "metadata": {
+            "scope": "branded"
+          }
+        }
+      ]
     }
   ]
 }

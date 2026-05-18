@@ -17,6 +17,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         public Task<string> DiscoverRepoRootAsync(string pathInRepo, CancellationToken ct);
         public Task<string> GetRepoNameAsync(string pathInRepo, CancellationToken ct);
         public Task<List<string>> GetChangedFilesAsync(string repoRoot, string targetCommitish, string? sourceCommitish, string? diffPath, string diffFilterType, CancellationToken ct);
+        public Task<List<string>> GetDiffAsync(string repoRoot, string? diffPath, string? targetBranch, CancellationToken ct);
     }
 
     public class GitHelper(IGitHubService gitHubService, IGitCommandHelper gitCommandHelper, ILogger<GitHelper> logger) : IGitHelper
@@ -285,6 +286,45 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 "--name-only",
                 $"--diff-filter={diffFilterType}"
             });
+
+            if (!string.IsNullOrEmpty(diffPath))
+            {
+                args.Add("--");
+                args.Add(diffPath);
+            }
+
+            var options = new GitOptions([.. args], repoRoot, logOutputStream: false);
+            var result = await gitCommandHelper.Run(options, ct);
+
+            if (result.ExitCode != 0)
+            {
+                throw new InvalidOperationException($"git diff failed: {result.Output}");
+            }
+
+            return result.Stdout
+                .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+                .Select(line => line.Trim())
+                .Where(line => !string.IsNullOrEmpty(line))
+                .ToList();
+        }
+
+        public async Task<List<string>> GetDiffAsync(
+            string repoRoot,
+            string? diffPath,
+            string? targetBranch,
+            CancellationToken ct)
+        {
+            var args = new List<string>
+            {
+                "-c", "core.quotepath=off",
+                "-c", "i18n.logoutputencoding=utf-8",
+                "diff",
+            };
+
+            if (!string.IsNullOrEmpty(targetBranch))
+            {
+                args.Add($"{targetBranch}");
+            }
 
             if (!string.IsNullOrEmpty(diffPath))
             {

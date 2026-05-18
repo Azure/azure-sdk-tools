@@ -9,7 +9,9 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
 	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/storage"
 )
 
 type PromptParser interface {
@@ -148,36 +150,65 @@ func processIncludes(prompt string, templatePath string) (string, error) {
 	re := regexp.MustCompile(`{{include "([^"]+)"}}`)
 	matches := re.FindAllStringSubmatch(prompt, -1)
 
+	currentParentPath := templatePath
+
 	for _, match := range matches {
 		includePath := match[1]
-		// Resolve relative path from the current template file
-		absIncludePath := filepath.Join(filepath.Dir(templatePath), includePath)
 
-		// Security check: ensure the path is within the prompt directory
-		moduleRoot, err := findModuleRoot()
-		if err != nil {
-			return "", err
-		}
-		promptDir := filepath.Join(moduleRoot, "service", "prompt")
-		absPromptDir, err := filepath.Abs(promptDir)
-		if err != nil {
-			return "", err
-		}
-		absIncludePath, err = filepath.Abs(absIncludePath)
-		if err != nil {
-			return "", err
-		}
-		if !strings.HasPrefix(absIncludePath, absPromptDir) {
-			return "", fmt.Errorf("include path is outside of allowed directory: %s", includePath)
-		}
+		//check if it is blob
+		blobRex := regexp.MustCompile(`blob:([^"]+)`)
+		blobMatchs := blobRex.FindAllStringSubmatch(includePath, -1)
 
-		content, err := os.ReadFile(absIncludePath)
-		if err != nil {
-			return "", fmt.Errorf("failed to read include file %s: %w", includePath, err)
+		var content []byte
+		var err error
+		if blobMatchs != nil {
+			// blob: URL detected
+			storageService, err := storage.NewStorageService()
+			if err != nil {
+				return "failed to create storage service: %w", err
+			}
+
+			//parse out the blob container and filename from url
+			if len(blobMatchs) > 0 && len(blobMatchs[0]) > 1 {
+				blobName := blobMatchs[0][1]
+				content, err = storageService.DownloadBlob(config.AppConfig.STORAGE_KNOWLEDGE_CONTAINER, blobName)
+				if err != nil {
+					return "failed to download the blob", err
+				}
+			} else {
+				return "No blob path found", err
+			}
+		} else {
+			// file system path
+			// Resolve relative path from the current template file
+			absIncludePath := filepath.Join(filepath.Dir(templatePath), includePath)
+			// Security check: ensure the path is within the prompt directory
+			moduleRoot, err := findModuleRoot()
+			if err != nil {
+				return "", err
+			}
+			promptDir := filepath.Join(moduleRoot, "service", "prompt")
+			absPromptDir, err := filepath.Abs(promptDir)
+			if err != nil {
+				return "", err
+			}
+			absIncludePath, err = filepath.Abs(absIncludePath)
+			if err != nil {
+				return "", err
+			}
+			if !strings.HasPrefix(absIncludePath, absPromptDir) {
+				return "", fmt.Errorf("include path is outside of allowed directory: %s", includePath)
+			}
+
+			content, err = os.ReadFile(absIncludePath)
+			if err != nil {
+				return "", fmt.Errorf("failed to read include file %s: %w", includePath, err)
+			}
+			currentParentPath = absIncludePath
 		}
 
 		// Recursively process includes in the content
-		includedContent, err := processIncludes(string(content), absIncludePath)
+		includedContent, err := processIncludes(string(content), currentParentPath)
 		if err != nil {
 			return "", err
 		}

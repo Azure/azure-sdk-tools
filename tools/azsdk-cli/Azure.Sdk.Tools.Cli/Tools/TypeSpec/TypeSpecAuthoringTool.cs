@@ -23,6 +23,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         private readonly IAzureSdkKnowledgeBaseService _azureSdkKnowledgeBaseService;
         private readonly ILogger<TypeSpecAuthoringTool> _logger;
         private readonly ITypeSpecHelper _typeSpecHelper;
+        private readonly IGitHelper _gitHelper;
         /* the maximum number of characters allowed in a reference snippet */
         private const int MaxReferenceContentLength = 500;
         private const string TypeSpecAuthoringToolCommandName = "generate-authoring-plan";
@@ -45,14 +46,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             Required = false,
         };
 
+        private readonly Option<string> _targetBranchOption = new("--target-branch")
+        {
+            Description = "The target branch to compare the TypeSpec project with, default is main",
+            Required = false,
+        };
+
         public TypeSpecAuthoringTool(
             IAzureSdkKnowledgeBaseService azureSdkKnowledgeBaseService,
             ILogger<TypeSpecAuthoringTool> logger,
-            ITypeSpecHelper typeSpecHelper)
+            ITypeSpecHelper typeSpecHelper,
+            IGitHelper gitHelper)
         {
             _azureSdkKnowledgeBaseService = azureSdkKnowledgeBaseService ?? throw new ArgumentNullException(nameof(azureSdkKnowledgeBaseService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _typeSpecHelper = typeSpecHelper ?? throw new ArgumentNullException(nameof(typeSpecHelper));
+            _gitHelper = gitHelper ?? throw new ArgumentNullException(nameof(gitHelper));
         }
 
         protected override Command GetCommand()
@@ -62,6 +71,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 _requestOption,
                 _additionalInformationOption,
                 _typeSpecProjectPathOption,
+                _targetBranchOption,
             };
 
             return command;
@@ -72,6 +82,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             var request = parseResult.GetValue(_requestOption);
             var additionalInformation = parseResult.GetValue(_additionalInformationOption);
             var typespecProjectRootPath = parseResult.GetValue(_typeSpecProjectPathOption);
+            var targetBranch = parseResult.GetValue(_targetBranchOption) ?? "origin/main";
 
             if (string.IsNullOrWhiteSpace(request))
             {
@@ -87,6 +98,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                   request,
                   additionalInformation,
                   typespecProjectRootPath,
+                  targetBranch,
                   ct: ct
                 );
 
@@ -119,6 +131,7 @@ This tool applies to all tasks involving **TypeSpec**:
   - **Add** a preview or **add** a stable API version.
 - Resolving TypeSpec-related issues
 Pass in a `request` to get an AI-generated response with references.
+If the planned changes may cause SDK breaking changes, the response includes SDK IMPACT warnings with language-specific mitigations.
 Returns an answer with supporting references and documentation links
 ")]
         public async Task<TypeSpecAuthoringResponse> GenerateTypeSpecAuthoringPlan(
@@ -128,6 +141,8 @@ Returns an answer with supporting references and documentation links
             string additionalInformation = null,
             [Description("The root path of the TypeSpec project")]
             string typeSpecProjectRootPath = null,
+            [Description("The target branch to compare the TypeSpec project with, default is main")]
+            string targetBranch = "origin/main",
             CancellationToken ct = default)
         {
             var typespecProject = _typeSpecHelper.GetTypeSpecProjectRelativePath(typeSpecProjectRootPath);
@@ -164,6 +179,26 @@ Returns an answer with supporting references and documentation links
                         Type = AdditionalInfoType.Text,
                         Content = additionalInformation
                     });
+                }
+                if (!string.IsNullOrWhiteSpace(typeSpecProjectRootPath) && _typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectRootPath))
+                {
+                    try
+                    {
+                        var repoRoot = _typeSpecHelper.GetSpecRepoRootPath(typeSpecProjectRootPath);
+                        var typespecDiff = await _gitHelper.GetDiffAsync(repoRoot, typeSpecProjectRootPath, targetBranch, ct);
+                        if (typespecDiff != null && typespecDiff.Any())
+                        {
+                            completionRequest.AdditionalInfos.Add(new AdditionalInfo
+                            {
+                                Type = AdditionalInfoType.Text,
+                                Content = $"TypeSpec project diff from main branch:\n{string.Join('\n', typespecDiff)}"
+                            });
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error Getting TypeSpec project diff");
+                    }
                 }
 
                 // Call the service

@@ -81,6 +81,16 @@ public class VersionNormalizationTests
         Assert.Equal(expectedKind, kind);
     }
 
+    [Theory]
+    [InlineData("1.0.0.post1", "1.0.0", VersionKind.Stable)]
+    [InlineData("2.5.0.post2", "2.5.0", VersionKind.Stable)]
+    public void NormalizeVersion_PythonPostRelease_IsStable(string input, string expectedId, VersionKind expectedKind)
+    {
+        var (id, kind) = VersionNormalizationHelper.NormalizeVersion(input, language: "Python");
+        Assert.Equal(expectedId, id);
+        Assert.Equal(expectedKind, kind);
+    }
+
     [Fact]
     public void NormalizeVersion_UppercaseLabel_IsLowercased()
     {

@@ -66,10 +66,16 @@ function hasGitHubToken() {
 
 /** Fetches all active release plans from Azure DevOps, enriches with GitHub data. */
 async function fetchAllReleasePlans() {
+  const environment = (process.env.ENVIRONMENT || "production").toLowerCase();
+  const tagCondition =
+    environment === "test"
+      ? "AND [System.Tags] CONTAINS 'Release Planner App Test'"
+      : "AND [System.Tags] NOT CONTAINS 'Release Planner App Test'";
+
   const wiqlQuery = `SELECT [System.Id] FROM WorkItems
     WHERE [System.TeamProject] = 'Release'
       AND [System.WorkItemType] = 'Release Plan'
-      AND [System.Tags] NOT CONTAINS 'Release Planner App Test'
+      ${tagCondition}
       AND (
         [System.State] IN ('In Progress','Not Started','New')
         OR ([System.State] = 'Finished' AND [System.ChangedDate] >= @Today - 60)

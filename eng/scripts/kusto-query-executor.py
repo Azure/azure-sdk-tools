@@ -10,7 +10,7 @@ Environment Variables:
     KUSTO_CLIENT_ID: Service principal client ID (optional)
     KUSTO_CLIENT_SECRET: Service principal client secret (optional)
     KUSTO_TENANT_ID: Azure tenant ID (optional)
-    If not set, uses DefaultAzureCredential for authentication.
+    If not set, uses Azure CLI authentication, then managed identity as fallback.
 """
 
 import argparse
@@ -23,7 +23,29 @@ from pathlib import Path
 
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoServiceError
+from azure.identity import DefaultAzureCredential
 import re
+
+
+def _get_primary_result_table(response):
+    """
+    Return the primary result table for legacy and V2 Kusto SDK responses.
+    """
+    if hasattr(response, 'primary_table') and response.primary_table is not None:
+        return response.primary_table
+
+    if hasattr(response, 'primary_results') and response.primary_results:
+        return response.primary_results[0]
+
+    if hasattr(response, 'tables') and response.tables:
+        for table in response.tables:
+            table_kind = str(getattr(table, 'table_kind', ''))
+            table_name = str(getattr(table, 'table_name', ''))
+            if table_kind == 'PrimaryResult' or table_name == 'PrimaryResult':
+                return table
+        return response.tables[0]
+
+    raise ValueError('Kusto response does not contain a result table')
 
 
 def is_query_safe(query):
@@ -94,7 +116,8 @@ def get_credentials(cluster):
     Build a KustoConnectionStringBuilder for authentication.
     
     Uses service principal credentials from environment variables if available,
-    otherwise falls back to managed service identity authentication.
+    otherwise attempts Azure CLI authentication (for local dev / GitHub Actions
+    with azure/login), then falls back to managed identity authentication.
     
     Args:
         cluster: Kusto cluster URL
@@ -107,10 +130,24 @@ def get_credentials(cluster):
     tenant_id = os.getenv('KUSTO_TENANT_ID')
 
     if client_id and client_secret and tenant_id:
+        print("Authentication mode: service principal secret")
         return KustoConnectionStringBuilder.with_aad_application_key_authentication(
             cluster, client_id, client_secret, tenant_id
         )
-    else:
+
+    try:
+        # Works with GitHub Actions OIDC via azure/login and local developer auth.
+        credential = DefaultAzureCredential()
+        print("Authentication mode: DefaultAzureCredential")
+        return KustoConnectionStringBuilder.with_azure_token_credential(cluster, credential)
+    except Exception:
+        pass
+
+    try:
+        print("Authentication mode: Azure CLI")
+        return KustoConnectionStringBuilder.with_az_cli_authentication(cluster)
+    except Exception:
+        print("Authentication mode: managed identity (fallback)")
         return KustoConnectionStringBuilder.with_aad_managed_service_identity_authentication(cluster)
 
 
@@ -139,13 +176,23 @@ def execute_kusto_query(cluster, database, query):
     kcsb = get_credentials(cluster)
     client = KustoClient(kcsb)
     response = client.execute(database, query)
+    result_table = _get_primary_result_table(response)
     
     # Convert response to list of dictionaries
     results = []
-    for row in response.primary_table.rows:
+    columns = getattr(result_table, 'columns', [])
+    rows = getattr(result_table, 'rows', [])
+
+    for row in rows:
+        if isinstance(row, dict):
+            results.append(row)
+            continue
+
         row_dict = {}
-        for i, col in enumerate(response.primary_table.columns):
-            row_dict[col.name] = row[i]
+        values = list(row)
+        for i, col in enumerate(columns):
+            col_name = getattr(col, 'name', str(i))
+            row_dict[col_name] = values[i] if i < len(values) else None
         results.append(row_dict)
     
     return results

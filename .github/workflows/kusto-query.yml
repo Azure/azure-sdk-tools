@@ -1,6 +1,30 @@
 name: Kusto Query
 
 on:
+  workflow_dispatch:
+    inputs:
+      cluster:
+        description: 'Kusto cluster URL (e.g., https://mycluster.kusto.windows.net)'
+        required: true
+        type: string
+      database:
+        description: 'Kusto database name'
+        required: true
+        type: string
+      query:
+        description: 'KQL query to execute'
+        required: true
+        type: string
+      output_format:
+        description: 'Output format: json, csv, or tsv'
+        required: false
+        default: 'json'
+        type: string
+      azure_subscription:
+        description: 'Azure subscription name for authentication'
+        required: false
+        default: 'Azure SDK Engineering System'
+        type: string
   workflow_call:
     inputs:
       cluster:
@@ -15,10 +39,6 @@ on:
         description: 'KQL query to execute'
         required: true
         type: string
-      user_principal:
-        description: 'User principal (service principal or user ID) with access to Kusto'
-        required: true
-        type: string
       output_format:
         description: 'Output format: json, csv, or tsv'
         required: false
@@ -29,16 +49,6 @@ on:
         required: false
         default: 'Azure SDK Engineering System'
         type: string
-    secrets:
-      KUSTO_CLIENT_ID:
-        description: 'Service principal client ID'
-        required: false
-      KUSTO_CLIENT_SECRET:
-        description: 'Service principal client secret'
-        required: false
-      KUSTO_TENANT_ID:
-        description: 'Azure tenant ID'
-        required: false
     outputs:
       query_result:
         description: 'Query result as JSON string'
@@ -46,6 +56,10 @@ on:
       result_file:
         description: 'Path to output file with query results'
         value: ${{ jobs.kusto-query.outputs.file }}
+
+env:
+  KUSTO_CLIENT_ID: 9681d576-b509-4814-ac8b-c08ad5633e2e
+  KUSTO_TENANT_ID: 72f988bf-86f1-41af-91ab-2d7cd011db47
 
 jobs:
   kusto-query:
@@ -61,22 +75,23 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.11.9'
 
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install azure-kusto-data azure-identity
+          pip install azure-kusto-data==4.6.3 azure-identity==1.17.1
 
-      - name: Azure Login (if using service principal)
-        if: ${{ secrets.KUSTO_CLIENT_ID != '' && secrets.KUSTO_CLIENT_SECRET != '' }}
+      - name: Run destructive query safety tests
+        run: pytest eng/scripts/python/kusto-query-executor/test_kusto_query_executor.py -v
+
+      - name: Azure Login with OIDC
         uses: azure/login@v1
         with:
-          client-id: ${{ secrets.KUSTO_CLIENT_ID }}
-          client-secret: ${{ secrets.KUSTO_CLIENT_SECRET }}
-          tenant-id: ${{ secrets.KUSTO_TENANT_ID }}
+          client-id: ${{ env.KUSTO_CLIENT_ID }}
+          tenant-id: ${{ env.KUSTO_TENANT_ID }}
           allow-no-subscriptions: true
 
       - name: Execute Kusto Query
@@ -89,9 +104,8 @@ jobs:
             --output-format "${{ inputs.output_format }}" \
             --github-output "$GITHUB_OUTPUT"
         env:
-          KUSTO_CLIENT_ID: ${{ secrets.KUSTO_CLIENT_ID }}
-          KUSTO_CLIENT_SECRET: ${{ secrets.KUSTO_CLIENT_SECRET }}
-          KUSTO_TENANT_ID: ${{ secrets.KUSTO_TENANT_ID }}
+          KUSTO_CLIENT_ID: ${{ env.KUSTO_CLIENT_ID }}
+          KUSTO_TENANT_ID: ${{ env.KUSTO_TENANT_ID }}
 
       - name: Upload query results
         uses: actions/upload-artifact@v4

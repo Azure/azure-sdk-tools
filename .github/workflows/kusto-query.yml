@@ -58,7 +58,7 @@ on:
         value: ${{ jobs.kusto-query.outputs.file }}
 
 env:
-  KUSTO_CLIENT_ID: 9681d576-b509-4814-ac8b-c08ad5633e2e
+  KUSTO_CLIENT_ID: 743af79e-ad6b-4e59-a3f5-fc4996ffe1d8
   KUSTO_TENANT_ID: 72f988bf-86f1-41af-91ab-2d7cd011db47
 
 jobs:

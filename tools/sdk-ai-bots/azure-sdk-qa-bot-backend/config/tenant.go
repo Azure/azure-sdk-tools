@@ -130,6 +130,7 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 			model.Source_AzureSDKDocsEng,
 			model.Source_TypeSpecAzure,
 			model.Source_AzureRestAPISpec,
+			model.Source_AzureSDKToolsDocs,
 		},
 		SourceFilter: map[model.Source]string{
 			model.Source_AzureSDKGuidelines: "search.ismatch('typescript_*', 'title')",

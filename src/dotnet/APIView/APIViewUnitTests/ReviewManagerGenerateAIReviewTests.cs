@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using APIView;
@@ -17,7 +16,6 @@ using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -125,7 +123,7 @@ public class ReviewManagerGenerateAIReviewTests
             mocks.LanguageServices,
             mocks.TelemetryClient,
             mocks.CodeFileManager.Object,
-            new CopilotHttpService(mocks.Configuration.Object, mocks.HttpClientFactory.Object, mocks.CopilotAuth.Object),
+            mocks.CopilotHttp.Object,
             mocks.PollingJobQueueManager.Object,
             mocks.NotificationManager.Object,
             mocks.PullRequestsRepository.Object,
@@ -166,12 +164,10 @@ public class ReviewManagerGenerateAIReviewTests
         public Mock<IHubContext<SignalRHub>> SignalRHubContext { get; } = new();
         public TelemetryClient TelemetryClient { get; } = new(new TelemetryConfiguration());
         public Mock<ICodeFileManager> CodeFileManager { get; } = new();
-        public Mock<IConfiguration> Configuration { get; } = new();
-        public Mock<IHttpClientFactory> HttpClientFactory { get; } = new();
+        public Mock<ICopilotHttpService> CopilotHttp { get; } = new();
         public Mock<IPollingJobQueueManager> PollingJobQueueManager { get; } = new();
         public Mock<INotificationManager> NotificationManager { get; } = new();
         public Mock<ICosmosPullRequestsRepository> PullRequestsRepository { get; } = new();
-        public Mock<ICopilotAuthenticationService> CopilotAuth { get; } = new();
         public Mock<ILogger<ReviewManager>> Logger { get; } = new();
         public IEnumerable<LanguageService> LanguageServices { get; } = new List<LanguageService>();
     }

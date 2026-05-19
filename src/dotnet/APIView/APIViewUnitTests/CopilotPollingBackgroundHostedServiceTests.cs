@@ -4,10 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
-using System.Text;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using APIViewWeb.Helpers;
@@ -19,10 +16,8 @@ using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using APIViewWeb.Services;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Moq.Protected;
 using Xunit;
 
 namespace APIViewUnitTests
@@ -32,12 +27,8 @@ namespace APIViewUnitTests
         private readonly Mock<IAPIRevisionsManager> _mockApiRevisionsManager;
         private readonly Mock<ICosmosCommentsRepository> _mockCommentsRepository;
         private readonly Mock<IHubContext<SignalRHub>> _mockSignalRHubContext;
-        private readonly Mock<ICopilotAuthenticationService> _mockCopilotAuth;
         private readonly Mock<ILogger<CopilotJobProcessor>> _mockLogger;
-        private readonly Mock<HttpMessageHandler> _mockHttpMessageHandler;
-        private readonly Mock<IConfiguration> _mockConfiguration;
-        private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
-        private readonly HttpClient _httpClient;
+        private readonly Mock<ICopilotHttpService> _mockCopilotHttp;
         private readonly CopilotJobProcessor _processor;
 
         public CopilotPollingBackgroundHostedServiceTests()
@@ -45,29 +36,15 @@ namespace APIViewUnitTests
             _mockApiRevisionsManager = new Mock<IAPIRevisionsManager>();
             _mockCommentsRepository = new Mock<ICosmosCommentsRepository>();
             _mockSignalRHubContext = new Mock<IHubContext<SignalRHub>>();
-            _mockCopilotAuth = new Mock<ICopilotAuthenticationService>();   
             _mockLogger = new Mock<ILogger<CopilotJobProcessor>>();
-            _mockHttpMessageHandler = new Mock<HttpMessageHandler>();
-
-            _mockConfiguration = new Mock<IConfiguration>();
-            _mockConfiguration.Setup(x => x["CopilotServiceEndpoint"])
-                .Returns("https://test-copilot-endpoint.com");
-
-            _mockHttpClientFactory = new Mock<IHttpClientFactory>();
-            _httpClient = new HttpClient(_mockHttpMessageHandler.Object);
-            _mockHttpClientFactory
-                .Setup(f => f.CreateClient(It.IsAny<string>()))
-                .Returns(_httpClient);
+            _mockCopilotHttp = new Mock<ICopilotHttpService>();
 
             // Setup SignalR mock
             var mockClientProxy = new Mock<IClientProxy>();
             _mockSignalRHubContext.Setup(x => x.Clients.All).Returns(mockClientProxy.Object);
 
             _processor = new CopilotJobProcessor(
-                new CopilotHttpService(
-                    _mockConfiguration.Object,
-                    _mockHttpClientFactory.Object,
-                    _mockCopilotAuth.Object),
+                _mockCopilotHttp.Object,
                 _mockApiRevisionsManager.Object,
                 _mockCommentsRepository.Object,
                 _mockSignalRHubContext.Object,
@@ -259,9 +236,10 @@ namespace APIViewUnitTests
         {
             AIReviewJobInfoModel jobInfo = CreateTestJobInfo();
 
-            _mockHttpMessageHandler.Protected()
-                .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(),
-                    ItExpr.IsAny<CancellationToken>())
+            _mockCopilotHttp
+                .Setup(x => x.GetAsync<AIReviewJobPolledResponseModel>(
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>()))
                 .ThrowsAsync(new HttpRequestException("Network error"));
 
             var exception = await Assert.ThrowsAsync<HttpRequestException>(() => _processor.ProcessJobAsync(jobInfo));
@@ -315,17 +293,11 @@ namespace APIViewUnitTests
 
         private void SetupHttpClientForSuccessfulPolling(AIReviewJobPolledResponseModel pollResponse)
         {
-            string jsonResponse = JsonSerializer.Serialize(pollResponse);
-            var httpResponseMessage = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(jsonResponse, Encoding.UTF8, "application/json")
-            };
-
-            _mockHttpMessageHandler.Protected()
-                .Setup<Task<HttpResponseMessage>>("SendAsync",
-                    ItExpr.IsAny<HttpRequestMessage>(),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(httpResponseMessage);
+            _mockCopilotHttp
+                .Setup(x => x.GetAsync<AIReviewJobPolledResponseModel>(
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(pollResponse);
         }
 
         private void VerifySignalRCalled()

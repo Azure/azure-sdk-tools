@@ -86,7 +86,7 @@ jobs:
           pip install pytest==7.4.0
 
       - name: Run destructive query safety tests
-        run: pytest eng/scripts/python/kusto-query-executor/test_kusto_query_executor.py -v
+        run: pytest eng/scripts/python/kusto-query-executor/kusto-query-executor-tests.py -v
 
       - name: Azure Login with OIDC
         uses: azure/login@v1
@@ -98,7 +98,7 @@ jobs:
       - name: Execute Kusto Query
         id: query
         run: |
-          python eng/scripts/kusto-query-executor.py \
+          python eng/scripts/python/kusto-query-executor/kusto-query-executor.py \
             --cluster "${{ inputs.cluster }}" \
             --database "${{ inputs.database }}" \
             --query "${{ inputs.query }}" \

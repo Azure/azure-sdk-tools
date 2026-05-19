@@ -97,9 +97,9 @@ def is_query_safe(query):
                 f"Only read-only queries (SELECT, etc.) are permitted."
             )
     
-    # Ensure query starts with a read-only operation
-    # Allow: SELECT, LET, DATATABLE, bare table names, and bracketed references
-    if not re.match(r'^\s*(select|let|datatable|print)', query_upper):
+    # Ensure query starts with a read-only operation.
+    # The query was normalized to uppercase, so allowed keywords must match uppercase.
+    if not re.match(r'^\s*(SELECT|LET|DATATABLE|PRINT)', query_upper):
         # Allow bare table references (identifiers, qualified names, bracketed names)
         # Examples: MyTable | ..., [external] | ..., database.table | ..., [db].table | ...
         if not re.match(r'^\s*(?:\w+|`[^`]+`|\[[^\]]+\])(?:\s*\||$)', query_upper):
@@ -183,18 +183,38 @@ def execute_kusto_query(cluster, database, query):
     columns = getattr(result_table, 'columns', [])
     rows = getattr(result_table, 'rows', [])
 
+    column_names = []
+    for i, col in enumerate(columns):
+        name = (
+            getattr(col, 'column_name', None)
+            or getattr(col, 'name', None)
+            or (col.get('ColumnName') if isinstance(col, dict) else None)
+            or str(i)
+        )
+        column_names.append(name)
+
     for row in rows:
         if isinstance(row, dict):
             results.append(row)
             continue
 
+        # KustoResultRow in newer SDK versions exposes to_dict()
+        to_dict = getattr(row, 'to_dict', None)
+        if callable(to_dict):
+            row_dict = to_dict()
+            if isinstance(row_dict, dict) and row_dict and not all(
+                isinstance(k, int) or (isinstance(k, str) and k.isdigit())
+                for k in row_dict.keys()
+            ):
+                results.append(row_dict)
+                continue
+
         row_dict = {}
         values = list(row)
-        for i, col in enumerate(columns):
-            col_name = getattr(col, 'name', str(i))
+        for i, col_name in enumerate(column_names):
             row_dict[col_name] = values[i] if i < len(values) else None
         results.append(row_dict)
-    
+
     return results
 
 

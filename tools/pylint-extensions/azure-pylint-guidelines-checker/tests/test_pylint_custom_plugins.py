@@ -4665,3 +4665,74 @@ class TestNoCrossPackagePrivateImport(pylint.testutils.CheckerTestCase):
         importfrom_node = setup.body[10]
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
+
+
+class TestCheckMissingDependency(pylint.testutils.CheckerTestCase):
+    """Test that imported third-party packages are declared in setup.py."""
+
+    CHECKER_CLASS = checker.CheckMissingDependency
+
+    def test_acceptable_deps_in_setup(self):
+        """Imports that are declared in setup.py should not be flagged."""
+        filepath = os.path.join(
+            TEST_FOLDER,
+            "test_files",
+            "missing_dep_test_pkg",
+            "acceptable.py",
+        )
+        node = astroid.MANAGER.ast_from_file(filepath)
+        with self.assertNoMessages():
+            for child in node.body:
+                if isinstance(child, astroid.node_classes.Import):
+                    self.checker.visit_import(child)
+                elif isinstance(child, astroid.node_classes.ImportFrom):
+                    self.checker.visit_importfrom(child)
+
+    def test_violation_missing_dep(self):
+        """Imports of known 3rd party packages not in setup.py should be flagged."""
+        filepath = os.path.join(
+            TEST_FOLDER,
+            "test_files",
+            "missing_dep_violation_pkg",
+            "violation.py",
+        )
+        node = astroid.MANAGER.ast_from_file(filepath)
+
+        # typing_extensions import (body index 1 after the copyright comment block)
+        import_nodes = [
+            child
+            for child in node.body
+            if isinstance(
+                child, (astroid.node_classes.Import, astroid.node_classes.ImportFrom)
+            )
+        ]
+
+        # First import: `import typing_extensions`
+        typing_ext_node = import_nodes[0]
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="missing-dependency-in-setup",
+                line=typing_ext_node.lineno,
+                node=typing_ext_node,
+                args="typing_extensions",
+                col_offset=typing_ext_node.col_offset,
+                end_line=typing_ext_node.end_lineno,
+                end_col_offset=typing_ext_node.end_col_offset,
+            ),
+        ):
+            self.checker.visit_import(typing_ext_node)
+
+        # Second import: `from aiohttp import ClientSession`
+        aiohttp_node = import_nodes[1]
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="missing-dependency-in-setup",
+                line=aiohttp_node.lineno,
+                node=aiohttp_node,
+                args="aiohttp",
+                col_offset=aiohttp_node.col_offset,
+                end_line=aiohttp_node.end_lineno,
+                end_col_offset=aiohttp_node.end_col_offset,
+            ),
+        ):
+            self.checker.visit_importfrom(aiohttp_node)

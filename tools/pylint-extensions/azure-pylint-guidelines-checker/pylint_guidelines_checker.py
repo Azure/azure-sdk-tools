@@ -4,7 +4,7 @@
 # ------------------------------------
 
 """
-Pylint custom checkers for SDK guidelines: C4717 - C4776
+Pylint custom checkers for SDK guidelines: C4717 - C4777
 """
 
 import os
@@ -3728,6 +3728,115 @@ class NoCrossPackagePrivateImport(BaseChecker):
             )
 
 
+class CheckMissingDependency(BaseChecker):
+    """Rule to check that imported third-party packages are declared in setup.py.
+    Starts with a hardcoded list of known third-party packages and checks that
+    they are listed as install_requires in the nearest setup.py.
+    """
+
+    name = "check-missing-dependency"
+    priority = -1
+    msgs = {
+        "C4777": (
+            'Package "%s" is imported but not found in setup.py install_requires.'
+            " Ensure the dependency is declared in setup.py. See details:"
+            " https://azure.github.io/azure-sdk/python_design.html",
+            "missing-dependency-in-setup",
+            "Imported third-party package is not declared in setup.py.",
+        ),
+    }
+
+    # Known third-party packages to check. Extend this list as needed.
+    _KNOWN_THIRD_PARTY = {
+        "typing_extensions",
+        "requests",
+        "aiohttp",
+    }
+
+    # Map import names to setup.py package names when they differ
+    _IMPORT_TO_PACKAGE = {
+        "typing_extensions": "typing-extensions",
+    }
+
+    def __init__(self, linter=None):
+        super(CheckMissingDependency, self).__init__(linter)
+        self._setup_deps_cache = {}
+
+    def _find_setup_py(self, filepath):
+        """Walk up from filepath to find the nearest setup.py."""
+        directory = os.path.dirname(os.path.abspath(filepath))
+        while directory != os.path.dirname(directory):  # stop at root
+            setup_path = os.path.join(directory, "setup.py")
+            if os.path.isfile(setup_path):
+                return setup_path
+            directory = os.path.dirname(directory)
+        return None
+
+    def _parse_setup_deps(self, setup_path):
+        """Parse install_requires from setup.py using simple text matching."""
+        if setup_path in self._setup_deps_cache:
+            return self._setup_deps_cache[setup_path]
+
+        deps = set()
+        try:
+            with open(setup_path, "r") as f:
+                content = f.read()
+            # Simple regex to find package names in install_requires
+            import re
+            # Match strings inside install_requires list
+            match = re.search(r"install_requires\s*=\s*\[([^\]]*)\]", content, re.DOTALL)
+            if match:
+                requires_text = match.group(1)
+                # Extract package names from quoted strings
+                for pkg_match in re.finditer(r'["\']([a-zA-Z0-9_-]+)', requires_text):
+                    deps.add(pkg_match.group(1).lower().replace("-", "_"))
+        except Exception:
+            pass
+
+        self._setup_deps_cache[setup_path] = deps
+        return deps
+
+    def visit_importfrom(self, node):
+        """Check 'from package import ...' style imports."""
+        if node.modname is None:
+            return
+        top_level = node.modname.split(".")[0]
+        self._check_import(top_level, node)
+
+    def visit_import(self, node):
+        """Check 'import package' style imports."""
+        for name, _ in node.names:
+            top_level = name.split(".")[0]
+            self._check_import(top_level, node)
+
+    def _check_import(self, package_name, node):
+        """Check if a known third-party package is declared in setup.py."""
+        if package_name not in self._KNOWN_THIRD_PARTY:
+            return
+
+        try:
+            filepath = node.root().file
+        except AttributeError:
+            return
+
+        setup_path = self._find_setup_py(filepath)
+        if setup_path is None:
+            return
+
+        deps = self._parse_setup_deps(setup_path)
+        # Check both the import name and the package name variant
+        setup_name = self._IMPORT_TO_PACKAGE.get(package_name, package_name)
+        normalized = setup_name.lower().replace("-", "_")
+
+        if normalized not in deps and package_name not in deps:
+            self.add_message(
+                msgid="missing-dependency-in-setup",
+                args=package_name,
+                node=node,
+                confidence=None,
+            )
+
+
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
     linter.register_checker(ClientsDoNotUseStaticMethods(linter))
@@ -3783,3 +3892,4 @@ def register(linter):
     linter.register_checker(DoNotStoreSecretsInTestVariables(linter))
     linter.register_checker(DoNotUseLoggingDirectly(linter))
     linter.register_checker(NoCrossPackagePrivateImport(linter))
+    linter.register_checker(CheckMissingDependency(linter))

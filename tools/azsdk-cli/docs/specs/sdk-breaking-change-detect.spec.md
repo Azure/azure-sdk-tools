@@ -35,7 +35,7 @@
 - **TypeSpec**: A language for describing cloud service APIs and generating other API description languages, client and service code, documentation, and other assets. TypeSpec provides highly extensible core language primitives that can describe API shapes common among REST, OpenAPI, GraphQL, gRPC, and other protocols. See [TypeSpec official documentation](https://typespec.io)
 
 - **SDK Breaking change**: A change between SDK versions that modifies public API surface area or behavior in a way that can break existing customer code. In this spec, SDK breaking changes may be introduced by spec changes, emitter changes, or APIView conversion differences.
-- **Breaking change category**: classify breaking changes to different category according to the root cause. Current categories: 
+- **SDK Breaking change category**: classify SDK breaking changes to different category according to the root cause. Current categories: 
   - emitter change
   - conversion-by design
   - conversion-need resolve
@@ -59,8 +59,8 @@ Reviewing and resolving SDK breaking changes is a required step for Spec PR merg
 
 **Cost of Not Solving This:**
 - **Increased SDK or Spec Review Effort**: Service and Azure SDK teams spend significant time manually identifying breaking changes and developing mitigations.
-- **Incorrect Breaking Change Detection**: Without automated detection, teams may miss breaking changes entirely or misclassify them, resulting in incomplete or incorrect mitigations.
-- **Delayed API Spec Merge and SDK Release**: The time spent identifying and resolving breaking changes manually delays both API specification merges and SDK releases, impacting customer delivery timelines.
+- **Incorrect SDK Breaking Change Detection**: Without automated detection, teams may miss SDK breaking changes entirely or misclassify them, resulting in incomplete or incorrect mitigations.
+- **Delayed API Spec Merge and SDK Release**: The time spent identifying and resolving SDK breaking changes manually delays both API specification merges and SDK releases, impacting customer delivery timelines.
 
 ---
 
@@ -70,15 +70,15 @@ Reviewing and resolving SDK breaking changes is a required step for Spec PR merg
 
 What are we trying to achieve with this design?
 
-- [ ] detect and classify breaking changes according to the SDK breaking changes policy for each language, and identify which breaking change is resolvable.
-- [ ] align with the breaking change policy for each language
+- [ ] detect and classify SDK breaking changes according to the SDK breaking changes policy for each language, and identify which breaking change is resolvable.
+- [ ] align with the SDK breaking change policy for each language
 - [ ] integrate SDK breaking change detection into Spec PR and SDK PR workflows.
 
 ## Design Proposal
 
 ### Overview
 
-This design covers the complete breaking change detection workflow and its core components:
+This design covers the complete SDK breaking change detection workflow and its core components:
 - SDK change detector
 - ChangelogOrRevapi-breakingChange pattern
 - SDK breaking change classifier
@@ -174,7 +174,7 @@ e.g.
 
 #### Component 2: ChangelogOrRevapi-breakingChange pattern
 
-This document describe which changelog/revapi will cause breaking changes and also provide the root cause of the breaking changes.
+This document describe which changelog/revapi will cause SDK breaking changes and also provide the root cause of the SDK breaking changes.
 
 Each pattern will contain four parts:
 
@@ -258,7 +258,7 @@ changelog or Revapi
 
 #### Component 4: Breaking change Result
 
-The result of the `azsdk_package_detect_breaking_change` tool. It provides an overall assessment of whether the package introduces breaking changes, along with details for each breaking change (breakingchange and category) if any are detected.
+The result of the `azsdk_package_detect_breaking_change` tool. It provides an overall assessment of whether the package introduces SDK breaking changes, along with details for each breaking change (breakingchange and category) if any are detected.
 The result is JSON-formatted.
 
 **No Breaking change**
@@ -300,7 +300,7 @@ azsdk package detect-breaking-change --package-path <sdk-package-path> --languag
 
 ### Scenarios for Using the Tool
 
-**NOTE:** Following are two E2E scenario which 'azsdk_package_detect_breaking_change' tool will **take part in.**
+**NOTE:** Following are thres E2E scenario which 'azsdk_package_detect_breaking_change' tool will **take part in.**
 
 #### Scenario 1: Detect and resolve SDK breaking change local
 
@@ -383,7 +383,7 @@ flowchart TD
     Use prompt: @copilot resolve breaking changes: XXXXXXX
 5. Copilot invokes 'azsdk_customized_code_update' to mitigate the selected breaking changes.
    
-    When resolving breaking changes requires TypeSpec customization (updating client.tsp), a customization PR is filed against the source branch of the Spec PR. The PR owner reviews and merges the customization PR. After it is merged, the original Spec PR is refreshed to include the customization.
+    When resolving SDK breaking changes requires TypeSpec customization (updating client.tsp), a customization PR is filed against the source branch of the Spec PR. The PR owner reviews and merges the customization PR. After it is merged, the original Spec PR is refreshed to include the customization.
 
     **Open question:**
     
@@ -402,7 +402,7 @@ SDK owner comment: @copilot detect and resolve breaking changes
             2. Type of property `Prop` has been changed from `string` to `int32`, breaking Go SDK
 3. Copilot Agent invoke `azsdk_customized_code_update` to mitigate breaking changes.
 
-When resolving breaking changes requires TypeSpec updates, a Spec PR is filed in the spec repository. The SDK PR is refreshed only after that Spec PR is merged, and the SDK breaking changes are then resolved.
+When resolving SDK breaking changes requires TypeSpec updates, a Spec PR is filed in the spec repository. The SDK PR is refreshed only after that Spec PR is merged, and the SDK breaking changes are then resolved.
 
 After SDK breaking change detection and resolution are enabled in Spec PR workflows, overall TypeSpec quality improves, and cases that require TypeSpec updates to resolve breaking changes become rare.
 

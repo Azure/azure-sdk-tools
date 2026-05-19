@@ -16,11 +16,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     [McpServerToolType, Description("This type contains the tools to generate SDK code locally.")]
     public class SdkGenerationTool(
         IGitHelper gitHelper,
-        ILogger<SdkGenerationTool> logger,
+        ILogger<SdkGenerationTool> sdkGenLogger,
         ITspClientHelper tspClientHelper,
         IRawOutputHelper outputHelper,
         IEnumerable<LanguageService> languageServices
-    ) : LanguageMcpTool(languageServices, gitHelper, logger)
+    ) : LanguageMcpTool(languageServices, gitHelper, sdkGenLogger)
     {
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
 

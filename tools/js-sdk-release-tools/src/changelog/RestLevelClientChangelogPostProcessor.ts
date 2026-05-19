@@ -54,11 +54,11 @@ export class RestLevelClientChangelogPostProcessor {
 
   private findCompatibleNodeContext(
     inputContext: NodeContext,
-    contextMapToFind: Map<string, NodeContext>,
+    contextMapToFind: Map<string, NodeContext>
   ): NodeContext | undefined {
     for (const [_, foundContext] of contextMapToFind) {
-      const isCompatibleFromInputToFound = inputContext.node.getType().isAssignableTo(foundContext.node.getType())
-      const isCompatibleFromFoundToInput = foundContext.node.getType().isAssignableTo(inputContext.node.getType())
+      const isCompatibleFromInputToFound = inputContext.node.getType().isAssignableTo(foundContext.node.getType());
+      const isCompatibleFromFoundToInput = foundContext.node.getType().isAssignableTo(inputContext.node.getType());
       if (isCompatibleFromInputToFound && isCompatibleFromFoundToInput) return foundContext;
     }
     return undefined;
@@ -70,10 +70,7 @@ export class RestLevelClientChangelogPostProcessor {
     item: ChangelogItem
   ) {
     if (!inputContext) return;
-    const foundContext = this.findCompatibleNodeContext(
-      inputContext,
-      nodeContextMapToFind,
-    );
+    const foundContext = this.findCompatibleNodeContext(inputContext, nodeContextMapToFind);
     if (foundContext) {
       inputContext.used = true;
       foundContext.used = true;
@@ -111,7 +108,7 @@ export class RestLevelClientChangelogPostProcessor {
       // item.oldName exists
       const inputContext = this.getBaselineNodeContext(item.oldName);
       if (!inputContext) return;
-      this.tryIgnoreInlineTypeInChangelogItem(inputContext, this.message.current,  item);
+      this.tryIgnoreInlineTypeInChangelogItem(inputContext, this.message.current, item);
       return;
     });
   }

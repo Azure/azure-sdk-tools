@@ -1,0 +1,132 @@
+# CI pipeline for the Azure SDK QA Bot Agent Server.
+# Runs linting and unit tests on PRs that touch the bot agent code.
+
+name: CI - Azure SDK QA Bot Agent Server
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - tools/sdk-ai-bots/azure-sdk-qa-bot-agent
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - tools/sdk-ai-bots/azure-sdk-qa-bot-agent
+
+variables:
+  - template: /eng/pipelines/templates/variables/globals.yml
+  - template: /eng/pipelines/templates/variables/image.yml
+  - name: workingDirectory
+    value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-agent'
+  - name: pythonVersion
+    value: '3.12'
+  - name: PythonIndexUrl
+    value: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/'
+
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    Use1ESOfficial: true
+    stages:
+      - stage: CI
+        displayName: 'Lint & Test'
+        jobs:
+          - job: LintAndTest
+            displayName: 'Lint & Unit Tests'
+            pool:
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
+            steps:
+              - checkout: self
+                displayName: 'Checkout repository'
+
+              - task: UsePythonVersion@0
+                displayName: 'Use Python $(pythonVersion)'
+                inputs:
+                  versionSpec: $(pythonVersion)
+
+              - task: PipAuthenticate@1
+                displayName: 'Authenticate pip to Azure Artifacts'
+                inputs:
+                  artifactFeeds: 'public/azure-sdk-for-python'
+
+              - bash: |
+                  set -euo pipefail
+                  python -m pip install --upgrade pip
+                  python -m pip install keyring artifacts-keyring --retries 5 --timeout 60
+
+                  python -m pip config set global.index-url "$PIP_INDEX_URL"
+
+                  pip install -r requirements.txt --retries 5 --timeout 60
+                  pip install pytest pytest-asyncio pytest-cov pyright --retries 5 --timeout 60
+                displayName: 'Install dependencies'
+                workingDirectory: $(workingDirectory)
+
+              - bash: |
+                  set -euo pipefail
+                  echo "Running pyright type check..."
+                  pyright --pythonversion $(pythonVersion) \
+                    server.py \
+                    config/ \
+                    models/ \
+                    services/ \
+                    tools/ \
+                    utils/ \
+                    skills/
+                displayName: 'Type Check (pyright)'
+                workingDirectory: $(workingDirectory)
+
+              - task: AzureCLI@2
+                displayName: 'Run Unit Tests'
+                inputs:
+                  azureSubscription: 'azuresdkqabot-dev'
+                  addSpnToEnvironment: true
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  workingDirectory: $(workingDirectory)
+                  inlineScript: |
+                    set -euo pipefail
+                    export AZURESUBSCRIPTION_CLIENT_ID=$servicePrincipalId
+                    export AZURESUBSCRIPTION_TENANT_ID=$tenantId
+                    echo "Running unit tests..."
+                    python -m pytest tests/ \
+                      --ignore=tests/azsdk_mcp_tools_test.py \
+                      --ignore=tests/github_tools_test.py \
+                      --ignore=tests/knowledge_tools_test.py \
+                      --cov=config \
+                      --cov=services \
+                      --cov=tools \
+                      --cov=utils \
+                      --cov-report=term-missing \
+                      --cov-report=xml:$(workingDirectory)/coverage.xml \
+                      -v \
+                      --tb=short \
+                      --junitxml=$(workingDirectory)/test-results.xml
+                env:
+                  SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+                  AZURESUBSCRIPTION_SERVICE_CONNECTION_ID: $(AZURESUBSCRIPTION_SERVICE_CONNECTION_ID)
+                  AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
+
+              - task: PublishTestResults@2
+                displayName: 'Publish Test Results'
+                condition: always()
+                inputs:
+                  testResultsFormat: 'JUnit'
+                  testResultsFiles: '$(workingDirectory)/test-results.xml'
+                  testRunTitle: 'QA Bot Agent Unit Tests'
+                  failTaskOnFailedTests: true
+
+              - task: PublishCodeCoverageResults@2
+                displayName: 'Publish Code Coverage'
+                condition: always()
+                inputs:
+                  codeCoverageTool: 'Cobertura'
+                  summaryFileLocation: '$(workingDirectory)/coverage.xml'
+                  failIfCoverageEmpty: false

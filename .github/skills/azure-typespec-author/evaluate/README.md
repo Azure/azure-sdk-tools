@@ -4,7 +4,7 @@ This directory contains [Vally](https://vally.dev) evaluation cases for the `azu
 
 ## Prerequisites
 
-- [Vally CLI](https://vally.dev/docs/getting-started) installed globally: `npm install -g vally`
+- [Vally CLI](https://vally.dev/docs/getting-started) 
 - The `azsdk-cli` MCP server built: `dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Cli`
 - An API key for the model configured (e.g., Anthropic or OpenAI key via environment variable)
 

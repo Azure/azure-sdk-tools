@@ -318,7 +318,6 @@ def main():
             f.write(output_content)
         
         print(f"Results written to: {args.output_file}")
-        print(output_content)
         
         # Set GitHub Actions outputs if requested
         if args.github_output:

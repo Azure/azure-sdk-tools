@@ -1,0 +1,142 @@
+name: Network Isolation Resolver Agent
+
+on:
+  push:
+    branches:
+      - NetworkIsolationResolverAgent
+  workflow_dispatch:
+    inputs:
+      cluster:
+        description: 'Kusto cluster URL'
+        required: false
+        default: 'https://oneespipelinesprod.westus3.kusto.windows.net/'
+        type: string
+      database:
+        description: 'Kusto database name'
+        required: false
+        default: 'oneespipelinetemplatesprod'
+        type: string
+      query:
+        description: 'Optional KQL query override. NET_ISO_RESOLVER_QUERY secret is used by default.'
+        required: false
+        default: ''
+      devops_org:
+        description: 'Azure DevOps organization (used for the dummy API call)'
+        required: false
+        default: 'azure-sdk'
+        type: string
+
+jobs:
+  kusto:
+    name: Run Kusto query
+    uses: ./.github/workflows/execute-kusto-query.yml
+    permissions:
+      id-token: write
+      contents: read
+    with:
+      cluster: ${{ inputs.cluster || 'https://oneespipelinesprod.westus3.kusto.windows.net/' }}
+      database: ${{ inputs.database || 'oneespipelinetemplatesprod' }}
+      query: ${{ inputs.query || '' }}
+      output_format: json
+    secrets:
+      kusto_query: ${{ secrets.NET_ISO_RESOLVER_QUERY }}
+
+  resolve:
+    name: Resolve and call DevOps
+    needs: kusto
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Resolve DevOps pipeline entry points
+        id: resolve
+        shell: pwsh
+        env:
+          QUERY_RESULT: ${{ needs.kusto.outputs.query_result }}
+          ADO_ORG: ${{ inputs.devops_org || 'azure-sdk' }}
+          AZURE_DEVOPS_PAT: ${{ secrets.AZURE_DEVOPS_PAT }}
+        run: |
+          Set-StrictMode -Version 4
+          $ErrorActionPreference = 'Stop'
+
+          . ./eng/common/scripts/Invoke-DevOpsAPI.ps1
+
+          if ([string]::IsNullOrWhiteSpace($env:QUERY_RESULT)) {
+            throw "Kusto query returned no result."
+          }
+
+          if ([string]::IsNullOrWhiteSpace($env:AZURE_DEVOPS_PAT)) {
+            throw "AZURE_DEVOPS_PAT secret is required to query Azure DevOps."
+          }
+
+          $env:QUERY_RESULT | Set-Content -Path kusto-query-result.json
+          $rows = Get-Content -Path kusto-query-result.json -Raw | ConvertFrom-Json
+          if ($null -eq $rows) {
+            $rows = @()
+          }
+          elseif ($rows -isnot [array]) {
+            $rows = @($rows)
+          }
+
+          "row_count=$($rows.Count)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Kusto returned $($rows.Count) row(s)."
+
+          $token = Get-Base64EncodedToken $env:AZURE_DEVOPS_PAT
+          $headers = Get-DevOpsApiHeaders -Base64EncodedToken $token
+          $enriched = @()
+
+          foreach ($row in $rows) {
+            $project = $row.ProjectName
+            $buildId = $row.BuildId
+            $definitionId = $row.PipelineDefinitionId
+
+            if ([string]::IsNullOrWhiteSpace($project) -or [string]::IsNullOrWhiteSpace($buildId) -or [string]::IsNullOrWhiteSpace($definitionId)) {
+              Write-Warning "Skipping row because ProjectName, BuildId, or PipelineDefinitionId is missing."
+              continue
+            }
+
+            $buildUri = "https://dev.azure.com/$env:ADO_ORG/$project/_apis/build/builds/$buildId`?api-version=7.1"
+            $definitionUri = "https://dev.azure.com/$env:ADO_ORG/$project/_apis/build/definitions/$definitionId`?api-version=7.1"
+
+            Write-Host "Fetching build $buildId and definition $definitionId from project '$project'."
+            $build = Invoke-RestMethod -Method GET -Uri $buildUri -Headers $headers -MaximumRetryCount 3 -RetryIntervalSec 5
+            $definition = Invoke-RestMethod -Method GET -Uri $definitionUri -Headers $headers -MaximumRetryCount 3 -RetryIntervalSec 5
+
+            if ($build.sourceBranch -ne "refs/heads/main" -and $build.sourceBranch -ne "main") {
+              Write-Host "Skipping build $buildId because sourceBranch is '$($build.sourceBranch)', not main."
+              continue
+            }
+
+            $enriched += [ordered]@{
+              ProjectName = $project
+              BuildId = $buildId
+              PipelineDefinitionId = $definitionId
+              TaskName = $row.TaskName
+              JobName = $row.JobName
+              RepositoryId = $row.RepositoryId
+              RepositoryName = $definition.repository.name
+              SourceBranch = $build.sourceBranch
+              SourceVersion = $build.sourceVersion
+              PipelineName = $definition.name
+              PipelinePath = $definition.path
+              YamlFilename = $definition.process.yamlFilename
+              BuildUrl = $build._links.web.href
+            }
+          }
+
+          $enriched | ConvertTo-Json -Depth 20 | Set-Content -Path devops-pipeline-entrypoints.json
+          "resolved_count=$($enriched.Count)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Resolved $($enriched.Count) pipeline entry point(s)."
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: network-isolation-resolver-output
+          path: |
+            devops-pipeline-entrypoints.json
+          retention-days: 14
+          if-no-files-found: ignore

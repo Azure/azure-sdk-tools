@@ -36,8 +36,9 @@ on:
         required: true
         type: string
       query:
-        description: 'KQL query to execute'
-        required: true
+        description: 'KQL query to execute. Optional, will override kusto_query secret if both are provided.'
+        required: false
+        default: ''
         type: string
       output_format:
         description: 'Output format: json, csv, or tsv'
@@ -49,6 +50,10 @@ on:
         required: false
         default: 'Azure SDK Engineering System'
         type: string
+    secrets:
+      kusto_query:
+        description: 'KQL query to execute from a secret'
+        required: false
     outputs:
       query_result:
         description: 'Query result as JSON string'
@@ -97,21 +102,22 @@ jobs:
 
       - name: Execute Kusto Query
         id: query
-        run: |
-          python eng/scripts/python/kusto-query-executor/kusto-query-executor.py \
-            --cluster "${{ inputs.cluster }}" \
-            --database "${{ inputs.database }}" \
-            --query "${{ inputs.query }}" \
-            --output-format "${{ inputs.output_format }}" \
-            --github-output "$GITHUB_OUTPUT"
         env:
           KUSTO_CLIENT_ID: ${{ env.KUSTO_CLIENT_ID }}
           KUSTO_TENANT_ID: ${{ env.KUSTO_TENANT_ID }}
+          KUSTO_QUERY_INPUT: ${{ inputs.query }}
+          KUSTO_QUERY_SECRET: ${{ secrets.kusto_query }}
+        run: |
+          query="${KUSTO_QUERY_SECRET:-$KUSTO_QUERY_INPUT}"
 
-      - name: Upload query results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: kusto-query-results
-          path: kusto-query-result.txt
-          retention-days: 30
+          if [ -z "$query" ]; then
+            echo "A Kusto query must be provided by input or kusto_query secret." >&2
+            exit 1
+          fi
+
+          python eng/scripts/python/kusto-query-executor/kusto-query-executor.py \
+            --cluster "${{ inputs.cluster }}" \
+            --database "${{ inputs.database }}" \
+            --query "$query" \
+            --output-format "${{ inputs.output_format }}" \
+            --github-output "$GITHUB_OUTPUT"

@@ -83,6 +83,7 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install azure-kusto-data==4.6.3 azure-identity==1.17.1
+          pip install pytest==7.4.0
 
       - name: Run destructive query safety tests
         run: pytest eng/scripts/python/kusto-query-executor/test_kusto_query_executor.py -v

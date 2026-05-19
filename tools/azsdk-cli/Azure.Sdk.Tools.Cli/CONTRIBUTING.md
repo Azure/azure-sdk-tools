@@ -185,7 +185,7 @@ When adding a service:
 
 [Models/](./Models) holds:
 
-- **Response types** — `CommandResponse` (abstract base, owns exit code + error handling) and subclasses such as `DefaultCommandResponse`, `ObjectCommandResponse<T>`, `APIViewResponse`, `ValidationResponse`, `UpgradeResponse`, `FeedbackClassificationResponse`.
+- **Response types** — `CommandResponse` (abstract base, owns exit code + error handling) and subclasses such as `DefaultCommandResponse`, `ObjectCommandResponse`, `APIViewResponse`, `ValidationResponse`, `UpgradeResponse`, `FeedbackClassificationResponse` (all under `Models/Responses/`).
 - **Domain DTOs** — `PackageInfo`, `PullRequestDetails`, `ParsedSdkPullRequest`, and per-area folders (`AzureDevOps/`, `APIView/`, TypeSpec models).
 - **Enums** — `SdkLanguage`, `SdkType`.
 - **Value types** — `NormalizedPath` for cross-platform path handling.

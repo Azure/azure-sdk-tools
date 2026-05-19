@@ -164,7 +164,7 @@ extends:
               # network access to registry.npmjs.org.
               - script: |
                   set -e
-                  npm install --global @typespec/compiler --userconfig $(Build.SourcesDirectory)/.npmrc
+                  npm install --global @typespec/compiler
                   echo "tsp version:"
                   tsp --version || true
                 displayName: Install TypeSpec compiler
@@ -216,9 +216,32 @@ extends:
               # the combined files under evaluate/suites/ directly with
               # --eval-spec. This avoids changing local teammate workflows while
               # still enabling intra-suite workers in CI.
+              # Each step captures the vally exit code and on failure parses the
+              # most recent results.jsonl to report which stimuli/graders failed.
               - script: |
                   cd .github/skills/azure-typespec-author/evaluate
                   vally eval --eval-spec suites/versioning-forced.eval.yaml --output-dir results --verbose
+                  EXIT_CODE=$?
+                  if [ $EXIT_CODE -ne 0 ]; then
+                    echo "##vso[task.logissue type=error]Suite versioning-forced failed (exit code $EXIT_CODE)"
+                    LATEST=$(find results -name 'results.jsonl' -type f -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
+                    if [ -n "$LATEST" ]; then
+                      python3 << EOF
+                  import json, sys
+                  with open("$LATEST") as f:
+                      for line in f:
+                          r = json.loads(line)
+                          name = r.get("stimulus", {}).get("name", "unknown")
+                          graders = r.get("graderResults", [])
+                          failed = [g for g in graders if not g.get("pass", False)]
+                          if failed:
+                              print(f"[FAILED] {name}")
+                              for g in failed:
+                                  print(f'  - {g.get("graderType", "?")}: {g.get("reason", "no reason")}')
+                  EOF
+                    fi
+                    exit $EXIT_CODE
+                  fi
                 displayName: Run force invokation suite - versioning
                 timeoutInMinutes: 50
                 continueOnError: true
@@ -229,6 +252,27 @@ extends:
               - script: |
                   cd .github/skills/azure-typespec-author/evaluate
                   vally eval --eval-spec suites/armtemplate-forced.eval.yaml --output-dir results --verbose
+                  EXIT_CODE=$?
+                  if [ $EXIT_CODE -ne 0 ]; then
+                    echo "##vso[task.logissue type=error]Suite armtemplate-forced failed (exit code $EXIT_CODE)"
+                    LATEST=$(find results -name 'results.jsonl' -type f -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
+                    if [ -n "$LATEST" ]; then
+                      python3 << EOF
+                  import json, sys
+                  with open("$LATEST") as f:
+                      for line in f:
+                          r = json.loads(line)
+                          name = r.get("stimulus", {}).get("name", "unknown")
+                          graders = r.get("graderResults", [])
+                          failed = [g for g in graders if not g.get("pass", False)]
+                          if failed:
+                              print(f"[FAILED] {name}")
+                              for g in failed:
+                                  print(f'  - {g.get("graderType", "?")}: {g.get("reason", "no reason")}')
+                  EOF
+                    fi
+                    exit $EXIT_CODE
+                  fi
                 displayName: Run force invokation suite - armtemplate
                 timeoutInMinutes: 40
                 continueOnError: true
@@ -239,6 +283,27 @@ extends:
               - script: |
                   cd .github/skills/azure-typespec-author/evaluate
                   vally eval --eval-spec suites/lro-forced.eval.yaml --output-dir results --verbose
+                  EXIT_CODE=$?
+                  if [ $EXIT_CODE -ne 0 ]; then
+                    echo "##vso[task.logissue type=error]Suite lro-forced failed (exit code $EXIT_CODE)"
+                    LATEST=$(find results -name 'results.jsonl' -type f -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
+                    if [ -n "$LATEST" ]; then
+                      python3 << EOF
+                  import json, sys
+                  with open("$LATEST") as f:
+                      for line in f:
+                          r = json.loads(line)
+                          name = r.get("stimulus", {}).get("name", "unknown")
+                          graders = r.get("graderResults", [])
+                          failed = [g for g in graders if not g.get("pass", False)]
+                          if failed:
+                              print(f"[FAILED] {name}")
+                              for g in failed:
+                                  print(f'  - {g.get("graderType", "?")}: {g.get("reason", "no reason")}')
+                  EOF
+                    fi
+                    exit $EXIT_CODE
+                  fi
                 displayName: Run force invokation suite - longrunningoperation
                 timeoutInMinutes: 25
                 continueOnError: true
@@ -249,6 +314,27 @@ extends:
               - script: |
                   cd .github/skills/azure-typespec-author/evaluate
                   vally eval --eval-spec suites/decorators-forced.eval.yaml --output-dir results --verbose
+                  EXIT_CODE=$?
+                  if [ $EXIT_CODE -ne 0 ]; then
+                    echo "##vso[task.logissue type=error]Suite decorators-forced failed (exit code $EXIT_CODE)"
+                    LATEST=$(find results -name 'results.jsonl' -type f -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
+                    if [ -n "$LATEST" ]; then
+                      python3 << EOF
+                  import json, sys
+                  with open("$LATEST") as f:
+                      for line in f:
+                          r = json.loads(line)
+                          name = r.get("stimulus", {}).get("name", "unknown")
+                          graders = r.get("graderResults", [])
+                          failed = [g for g in graders if not g.get("pass", False)]
+                          if failed:
+                              print(f"[FAILED] {name}")
+                              for g in failed:
+                                  print(f'  - {g.get("graderType", "?")}: {g.get("reason", "no reason")}')
+                  EOF
+                    fi
+                    exit $EXIT_CODE
+                  fi
                 displayName: Run force invokation suite - decorators
                 timeoutInMinutes: 15
                 continueOnError: true
@@ -259,6 +345,27 @@ extends:
               - script: |
                   cd .github/skills/azure-typespec-author/evaluate
                   vally eval --eval-spec suites/warning-forced.eval.yaml --output-dir results --verbose
+                  EXIT_CODE=$?
+                  if [ $EXIT_CODE -ne 0 ]; then
+                    echo "##vso[task.logissue type=error]Suite warning-forced failed (exit code $EXIT_CODE)"
+                    LATEST=$(find results -name 'results.jsonl' -type f -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
+                    if [ -n "$LATEST" ]; then
+                      python3 << EOF
+                  import json, sys
+                  with open("$LATEST") as f:
+                      for line in f:
+                          r = json.loads(line)
+                          name = r.get("stimulus", {}).get("name", "unknown")
+                          graders = r.get("graderResults", [])
+                          failed = [g for g in graders if not g.get("pass", False)]
+                          if failed:
+                              print(f"[FAILED] {name}")
+                              for g in failed:
+                                  print(f'  - {g.get("graderType", "?")}: {g.get("reason", "no reason")}')
+                  EOF
+                    fi
+                    exit $EXIT_CODE
+                  fi
                 displayName: Run force invokation suite - warning
                 timeoutInMinutes: 25
                 continueOnError: true
@@ -417,7 +524,7 @@ extends:
               # network access to registry.npmjs.org.
               - script: |
                   set -e
-                  npm install --global @typespec/compiler --userconfig $(Build.SourcesDirectory)/.npmrc
+                  npm install --global @typespec/compiler
                   echo "tsp version:"
                   tsp --version || true
                 displayName: Install TypeSpec compiler
@@ -469,9 +576,32 @@ extends:
               # the combined files under evaluate/suites/ directly with
               # --eval-spec. This avoids changing local teammate workflows while
               # still enabling intra-suite workers in CI.
+              # Each step captures the vally exit code and on failure parses the
+              # most recent results.jsonl to report which stimuli/graders failed.
               - script: |
                   cd .github/skills/azure-typespec-author/evaluate
                   vally eval --eval-spec suites/versioning.eval.yaml --output-dir results --verbose
+                  EXIT_CODE=$?
+                  if [ $EXIT_CODE -ne 0 ]; then
+                    echo "##vso[task.logissue type=error]Suite versioning failed (exit code $EXIT_CODE)"
+                    LATEST=$(find results -name 'results.jsonl' -type f -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
+                    if [ -n "$LATEST" ]; then
+                      python3 << EOF
+                  import json, sys
+                  with open("$LATEST") as f:
+                      for line in f:
+                          r = json.loads(line)
+                          name = r.get("stimulus", {}).get("name", "unknown")
+                          graders = r.get("graderResults", [])
+                          failed = [g for g in graders if not g.get("pass", False)]
+                          if failed:
+                              print(f"[FAILED] {name}")
+                              for g in failed:
+                                  print(f'  - {g.get("graderType", "?")}: {g.get("reason", "no reason")}')
+                  EOF
+                    fi
+                    exit $EXIT_CODE
+                  fi
                 displayName: Run suite - versioning
                 timeoutInMinutes: 50
                 continueOnError: true
@@ -482,6 +612,27 @@ extends:
               - script: |
                   cd .github/skills/azure-typespec-author/evaluate
                   vally eval --eval-spec suites/armtemplate.eval.yaml --output-dir results --verbose
+                  EXIT_CODE=$?
+                  if [ $EXIT_CODE -ne 0 ]; then
+                    echo "##vso[task.logissue type=error]Suite armtemplate failed (exit code $EXIT_CODE)"
+                    LATEST=$(find results -name 'results.jsonl' -type f -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
+                    if [ -n "$LATEST" ]; then
+                      python3 << EOF
+                  import json, sys
+                  with open("$LATEST") as f:
+                      for line in f:
+                          r = json.loads(line)
+                          name = r.get("stimulus", {}).get("name", "unknown")
+                          graders = r.get("graderResults", [])
+                          failed = [g for g in graders if not g.get("pass", False)]
+                          if failed:
+                              print(f"[FAILED] {name}")
+                              for g in failed:
+                                  print(f'  - {g.get("graderType", "?")}: {g.get("reason", "no reason")}')
+                  EOF
+                    fi
+                    exit $EXIT_CODE
+                  fi
                 displayName: Run suite - armtemplate
                 timeoutInMinutes: 40
                 continueOnError: true
@@ -492,6 +643,27 @@ extends:
               - script: |
                   cd .github/skills/azure-typespec-author/evaluate
                   vally eval --eval-spec suites/lro.eval.yaml --output-dir results --verbose
+                  EXIT_CODE=$?
+                  if [ $EXIT_CODE -ne 0 ]; then
+                    echo "##vso[task.logissue type=error]Suite lro failed (exit code $EXIT_CODE)"
+                    LATEST=$(find results -name 'results.jsonl' -type f -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
+                    if [ -n "$LATEST" ]; then
+                      python3 << EOF
+                  import json, sys
+                  with open("$LATEST") as f:
+                      for line in f:
+                          r = json.loads(line)
+                          name = r.get("stimulus", {}).get("name", "unknown")
+                          graders = r.get("graderResults", [])
+                          failed = [g for g in graders if not g.get("pass", False)]
+                          if failed:
+                              print(f"[FAILED] {name}")
+                              for g in failed:
+                                  print(f'  - {g.get("graderType", "?")}: {g.get("reason", "no reason")}')
+                  EOF
+                    fi
+                    exit $EXIT_CODE
+                  fi
                 displayName: Run suite - longrunningoperation
                 timeoutInMinutes: 25
                 continueOnError: true
@@ -502,6 +674,27 @@ extends:
               - script: |
                   cd .github/skills/azure-typespec-author/evaluate
                   vally eval --eval-spec suites/decorators.eval.yaml --output-dir results --verbose
+                  EXIT_CODE=$?
+                  if [ $EXIT_CODE -ne 0 ]; then
+                    echo "##vso[task.logissue type=error]Suite decorators failed (exit code $EXIT_CODE)"
+                    LATEST=$(find results -name 'results.jsonl' -type f -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
+                    if [ -n "$LATEST" ]; then
+                      python3 << EOF
+                  import json, sys
+                  with open("$LATEST") as f:
+                      for line in f:
+                          r = json.loads(line)
+                          name = r.get("stimulus", {}).get("name", "unknown")
+                          graders = r.get("graderResults", [])
+                          failed = [g for g in graders if not g.get("pass", False)]
+                          if failed:
+                              print(f"[FAILED] {name}")
+                              for g in failed:
+                                  print(f'  - {g.get("graderType", "?")}: {g.get("reason", "no reason")}')
+                  EOF
+                    fi
+                    exit $EXIT_CODE
+                  fi
                 displayName: Run suite - decorators
                 timeoutInMinutes: 15
                 continueOnError: true
@@ -512,6 +705,27 @@ extends:
               - script: |
                   cd .github/skills/azure-typespec-author/evaluate
                   vally eval --eval-spec suites/warning.eval.yaml --output-dir results --verbose
+                  EXIT_CODE=$?
+                  if [ $EXIT_CODE -ne 0 ]; then
+                    echo "##vso[task.logissue type=error]Suite warning failed (exit code $EXIT_CODE)"
+                    LATEST=$(find results -name 'results.jsonl' -type f -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
+                    if [ -n "$LATEST" ]; then
+                      python3 << EOF
+                  import json, sys
+                  with open("$LATEST") as f:
+                      for line in f:
+                          r = json.loads(line)
+                          name = r.get("stimulus", {}).get("name", "unknown")
+                          graders = r.get("graderResults", [])
+                          failed = [g for g in graders if not g.get("pass", False)]
+                          if failed:
+                              print(f"[FAILED] {name}")
+                              for g in failed:
+                                  print(f'  - {g.get("graderType", "?")}: {g.get("reason", "no reason")}')
+                  EOF
+                    fi
+                    exit $EXIT_CODE
+                  fi
                 displayName: Run suite - warning
                 timeoutInMinutes: 25
                 continueOnError: true

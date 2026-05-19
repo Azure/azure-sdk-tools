@@ -44,7 +44,7 @@ The MCP server lives under `tools/azsdk-cli/` alongside its sibling projects:
 | [Azure.Sdk.Tools.Cli.Analyzer/](../Azure.Sdk.Tools.Cli.Analyzer) | Roslyn analyzers enforcing project conventions. |
 | [Azure.Sdk.Tools.Cli.Benchmarks/](../Azure.Sdk.Tools.Cli.Benchmarks) | Performance benchmarks. |
 | [Azure.Sdk.Tools.Cli.Evaluations/](../Azure.Sdk.Tools.Cli.Evaluations) | LLM-evaluation harness for tools. |
-| [Azure.Sdk.Tools.Mock/](../Azure.Sdk.Tools.Mock) | Mock services used in tests. |
+| [Azure.Sdk.Tools.Mock/](../Azure.Sdk.Tools.Mock) | A mock MCP server that exposes the same tools as the real CLI but returns canned responses. Used for benchmarking, evaluation, and integration testing. |
 | [docs/](../docs) | Author-facing guides (new-tool, mcp-tools, per-language, etc.). |
 
 ## Project Structure
@@ -98,7 +98,7 @@ Tools are organized by domain under [Tools/](./Tools):
 
 | Folder | What it does | Example tools |
 | --- | --- | --- |
-| [Core/](./Tools/Core) | Base classes: `MCPTool`, `MCPToolBase`, `MCPMultiCommandTool`. | (no end-user tools) |
+| [Core/](./Tools/Core) | Base classes (`MCPToolBase`, `MCPTool`, `MCPMultiCommandTool`, `MCPNoCommandTool`, `InstrumentedTool`) plus a few cross-cutting tools. | `UpgradeTool`, `TelemetryIngestionTool` |
 | [APIView/](./Tools/APIView) | Create, fetch, and comment on API reviews. | `APIViewReviewTool` |
 | [Config/](./Tools/Config) | Maintain repo-wide config such as CODEOWNERS and GitHub labels. | `CodeownersTool`, `GitHubLabelsTool` |
 | [EngSys/](./Tools/EngSys) | Engineering-system utilities (log triage, package introspection, test analysis). | `LogAnalysisTool`, `PackageInfoTool`, `TestAnalysisTool` |
@@ -168,11 +168,13 @@ Services are **DI-registered, long-lived** classes that encapsulate access to an
 | `IAPIViewService` | `APIViewService` | APIView review API (high-level operations). |
 | `IAPIViewHttpService` | `APIViewHttpService` | APIView HTTP transport. |
 | `IAPIViewAuthenticationService` | `APIViewAuthenticationService` | APIView authentication. |
-| `IAPIViewFeedbackService` | `APIViewFeedbackService` | APIView feedback submission. |
+| `IAPIViewFeedbackService` | `APIViewFeedbackService` | APIView feedback / customization helpers. |
 | `IAzureSdkKnowledgeBaseService` | `AzureSdkKnowledgeBaseService` | Azure SDK knowledge-base HTTP service (MSAL-protected). |
 | `IUpgradeService` | `UpgradeService` | GitHub Releases API (self-update / version check). |
 | `IFeedbackClassifierService` | `FeedbackClassifierService` | Azure OpenAI for LLM-based feedback classification. |
 | `IUserPromptProcessor` | `UserPromptProcessor` | Interactive user-prompt processing. |
+| `IVerifySetupService` | `VerifySetupService` | Local environment / prerequisite verification (used by `Tools/Verify`). |
+| `ITypeSpecCustomizationService` | `TypeSpecCustomizationService` | TypeSpec customization automation (used by `Tools/TypeSpec`). |
 | `LanguageService` (abstract) | `DotnetLanguageService`, `PythonLanguageService`, `JavaLanguageService`, `GoLanguageService`, `JavaScriptLanguageService`, `RustLanguageService` | Language-specific SDK CLIs: `dotnet`, `python`/`pip`, `mvn`, `go`, `npm`, `cargo`. Selected per-package by detecting the language. See [`docs/per-language.md`](../docs/per-language.md). |
 
 When adding a service:
@@ -221,7 +223,7 @@ dotnet run --project Azure.Sdk.Tools.Cli -- example hello-world foobar
 dotnet run --project Azure.Sdk.Tools.Cli -- start
 ```
 
-To use your local build with VS Code / Copilot, point `.vscode/mcp.json` at this project (the repo already ships such a config — see the [README](./README.md#1-mcp-server-mode)).
+To use your local build with VS Code / Copilot, point your `.vscode/mcp.json` at this project. The file is gitignored and can be generated/updated by running [`eng/common/mcp/azure-sdk-mcp.ps1 -UpdateVsCodeConfig`](../../../eng/common/mcp/azure-sdk-mcp.ps1) (see the [README](./README.md#1-mcp-server-mode) for the full setup).
 
 Tests live in [`Azure.Sdk.Tools.Cli.Tests`](../Azure.Sdk.Tools.Cli.Tests), mirroring the source layout (`Tools/`, `Services/`, `Helpers/`, etc.). When adding a tool, add a corresponding test class. Set `AZSDKTOOLS_AGENT_TESTING=true` to enable test-mode behavior in tools that call out to external services.
 
@@ -241,7 +243,7 @@ A condensed checklist (see [`docs/new-tool.md`](../docs/new-tool.md) for the ful
 
 ## Coding Conventions
 
-- **Language version**: C# 12, nullable enabled, file-scoped namespaces where practical.
+- **Language version**: C# 12 (default for `net8.0`), nullable enabled.
 - **Async**: prefer `async`/`await`; all tool handlers return `Task<CommandResponse>`.
 - **Logging**: use `ILogger<T>` via DI; never `Console.WriteLine` from production code paths (the MCP stdio channel must remain pure JSON-RPC — that's why `McpLogging` exists).
 - **Process invocation**: go through the wrappers in `Helpers/Process/` rather than calling `System.Diagnostics.Process` directly. See [`docs/process-calling.md`](../docs/process-calling.md).

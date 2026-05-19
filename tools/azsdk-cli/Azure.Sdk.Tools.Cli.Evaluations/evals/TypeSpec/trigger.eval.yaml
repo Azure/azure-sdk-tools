@@ -1,0 +1,187 @@
+name: azsdk-mcp-tool-invocation-eval
+description: |
+  Verify that prompts correctly invoke the expected Azure SDK MCP tools.
+  Each stimulus is a single user prompt that should trigger a specific tool.
+version: "1.0"
+type: capability
+
+environment: azsdk-mcp
+
+config:
+  runs: 5
+  timeout: 120
+  executor: copilot-sdk
+  model: claude-opus-4.6
+
+tags: 
+  priority: p0
+
+stimuli:
+
+  # ==== azsdk_convert_swagger_to_typespec triggers ====
+  - name: invoke-azsdk-convert-swagger-to-typespec-1
+    prompt: "Convert my swagger to TypeSpec"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_convert_swagger_to_typespec"
+  - name: invoke-azsdk-convert-swagger-to-typespec-2
+    prompt: "Migrate my API from swagger to TypeSpec"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_convert_swagger_to_typespec"
+
+  # ==== azsdk_customized_code_update triggers ====
+  - name: invoke-azsdk-customized-code-update-1
+    prompt: "Update customized code with patches to fix build errors"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_customized_code_update"
+  - name: invoke-azsdk-customized-code-update-2
+    prompt: "Apply customized code patches and rebuild to fix errors"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_customized_code_update"
+
+  # ==== azsdk_get_modified_typespec_projects triggers ====
+  - name: invoke-azsdk-get-modified-typespec-projects-1
+    prompt: "What TypeSpec projects were modified in my branch?"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_get_modified_typespec_projects"
+  - name: invoke-azsdk-get-modified-typespec-projects-2
+    prompt: "List the changed TypeSpec projects"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_get_modified_typespec_projects"
+
+  # ==== azsdk_run_typespec_validation triggers ====
+  - name: invoke-azsdk-run-typespec-validation-1
+    prompt: "Run TypeSpec validation on my project"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_run_typespec_validation"
+  - name: invoke-azsdk-run-typespec-validation-2
+    prompt: "Run TypeSpec configuration validation for my project root path"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_run_typespec_validation"
+
+  # ==== azsdk_typespec_check_project_in_public_repo triggers ====
+  - name: invoke-azsdk-typespec-check-project-in-public-repo-1
+    prompt: "Check if my TypeSpec project is in the public repo"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_typespec_check_project_in_public_repo"
+  - name: invoke-azsdk-typespec-check-project-in-public-repo-2
+    prompt: "Check if my TypeSpec project is in the public spec repo"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_typespec_check_project_in_public_repo"
+
+  # ==== azsdk_typespec_delegate_apiview_feedback triggers ====
+  - name: invoke-azsdk-typespec-delegate-apiview-feedback-1
+    prompt: "Delegate the APIView feedback to Copilot for resolution"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_typespec_delegate_apiview_feedback"
+  - name: invoke-azsdk-typespec-delegate-apiview-feedback-2
+    prompt: "Address the APIView comments by creating a GitHub issue and assigning Copilot"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_typespec_delegate_apiview_feedback"
+  - name: invoke-azsdk-typespec-delegate-apiview-feedback-3
+    prompt: "Resolve the APIView reviewer feedback from this URL"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_typespec_delegate_apiview_feedback"
+  - name: invoke-azsdk-typespec-delegate-apiview-feedback-4
+    prompt: >
+      Help me fix these comments: https://spa.apiview.dev/review/c375391d5ab9419f83e3bdsfas9asdfadf2e?activeApiRevisionId=fc2a4adfasdfasdagae3w3hhtd
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_typespec_delegate_apiview_feedback"
+  - name: invoke-azsdk-typespec-delegate-apiview-feedback-5
+    prompt: >
+      Fix this feedback: https://spa.apiview.dev/review/c375391d5ab9419f83e3bdsfas9asdfadf2e?activeApiRevisionId=fc2a4adfasdfasdagae3w3hhtd
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_typespec_delegate_apiview_feedback"
+  - name: invoke-azsdk-typespec-delegate-apiview-feedback-6
+    prompt: >
+      Create an issue and assign to copilot to fix this: https://spa.apiview.dev/review/adfaset5391d5ab9419f83e3bds9asdfadf2e?activeApiRevisionId=adf34adfasadastasdagae3w3hhtd
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_typespec_delegate_apiview_feedback"
+
+  # ==== azsdk_typespec_generate_authoring_plan triggers ====
+  - name: invoke-azsdk-typespec-generate-authoring-plan-1
+    prompt: >
+      Generate a solution to add a new resource 'asset' for service widget with TypeSpec.
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_typespec_generate_authoring_plan"
+  - name: invoke-azsdk-typespec-generate-authoring-plan-2
+    prompt: "Generate a solution to add a new api version for service widget with TypeSpec."
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_typespec_generate_authoring_plan"
+  - name: invoke-azsdk-typespec-generate-authoring-plan-3
+    prompt: >
+      Generate a solution to set a default value `21` for property `age` in model EmployeeProperties from a api version say 2025-11-01 with TypeSpec.
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_typespec_generate_authoring_plan"
+
+  # ==== azsdk_typespec_init_project triggers ====
+  - name: invoke-azsdk-typespec-init-project-1
+    prompt: "Initialize a new TypeSpec project"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_typespec_init_project"
+  - name: invoke-azsdk-typespec-init-project-2
+    prompt: "Initialize a new TypeSpec project for my service"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_typespec_init_project"

@@ -1,0 +1,314 @@
+name: azsdk-mcp-tool-invocation-eval
+description: |
+  Verify that prompts correctly invoke the expected Azure SDK MCP tools.
+  Each stimulus is a single user prompt that should trigger a specific tool.
+version: "1.0"
+type: capability
+
+environment: azsdk-mcp
+
+tags: 
+  priority: p0
+
+config:
+  runs: 5
+  timeout: 120
+  executor: copilot-sdk
+  model: claude-opus-4.6
+
+stimuli:
+
+  # ==== azsdk_abandon_release_plan triggers ====
+  - name: invoke-azsdk-abandon-release-plan-1
+    prompt: "Abandon the release plan for work item 12345"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_abandon_release_plan"
+  - name: invoke-azsdk-abandon-release-plan-2
+    prompt: "Cancel and abandon my release plan for work item 12345"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_abandon_release_plan"
+  - name: invoke-azsdk-abandon-release-plan-3
+    prompt: "Mark the release plan for work item 12345 as abandoned"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_abandon_release_plan"
+  - name: invoke-azsdk-abandon-release-plan-4
+    prompt: "Abandon my release plan for work item 12345"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_abandon_release_plan"
+  - name: invoke-azsdk-abandon-release-plan-5
+    prompt: "Cancel the release plan for my service for work item 12345"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_abandon_release_plan"
+
+  # ==== azsdk_check_api_spec_ready_for_sdk triggers ====
+  - name: invoke-azsdk-check-api-spec-ready-for-sdk-1
+    prompt: "Check if my API spec is ready to generate SDK"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_check_api_spec_ready_for_sdk"
+  - name: invoke-azsdk-check-api-spec-ready-for-sdk-2
+    prompt: "Is my TypeSpec ready for SDK generation?"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_check_api_spec_ready_for_sdk"
+
+  # ==== azsdk_create_release_plan triggers ====
+  - name: invoke-azsdk-create-release-plan-1
+    prompt: "Create a release plan for my service"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_create_release_plan"
+  - name: invoke-azsdk-create-release-plan-2
+    prompt: "Create a release plan for Contoso Widget Manager service"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_create_release_plan"
+
+  # ==== azsdk_get_release_plan triggers ====
+  - name: invoke-azsdk-get-release-plan-1
+    prompt: "Get the release plan for work item 12345"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_get_release_plan"
+  - name: invoke-azsdk-get-release-plan-2
+    prompt: "Show me the release plan details"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_get_release_plan"
+
+  # ==== azsdk_get_release_plan_for_spec_pr triggers ====
+  - name: invoke-azsdk-get-release-plan-for-spec-pr-1
+    prompt: "Get the release plan for my spec PR"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_get_release_plan_for_spec_pr"
+  - name: invoke-azsdk-get-release-plan-for-spec-pr-2
+    prompt: "What release plan is associated with this spec pull request?"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_get_release_plan_for_spec_pr"
+
+  # ==== azsdk_get_sdk_pull_request_link triggers ====
+  - name: invoke-azsdk-get-sdk-pull-request-link-1
+    prompt: "Get the SDK pull request link from the generation pipeline"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_get_sdk_pull_request_link"
+  - name: invoke-azsdk-get-sdk-pull-request-link-2
+    prompt: "Where is the PR created by SDK generation?"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_get_sdk_pull_request_link"
+
+  # ==== azsdk_get_service_details_by_typespec_path triggers ====
+  - name: invoke-azsdk-get-service-details-by-typespec-path-1
+    prompt: "Get the service tree details for my TypeSpec project path"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_get_service_details_by_typespec_path"
+  - name: invoke-azsdk-get-service-details-by-typespec-path-2
+    prompt: "Look up the service and product details using the TypeSpec project path"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_get_service_details_by_typespec_path"
+  - name: invoke-azsdk-get-service-details-by-typespec-path-3
+    prompt: "What service tree ID and product info is associated with this TypeSpec path?"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_get_service_details_by_typespec_path"
+  - name: invoke-azsdk-get-service-details-by-typespec-path-4
+    prompt: "Find product details for my typespec project"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_get_service_details_by_typespec_path"
+  - name: invoke-azsdk-get-service-details-by-typespec-path-5
+    prompt: "What service does this TypeSpec project belong to?"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_get_service_details_by_typespec_path"
+  - name: invoke-azsdk-get-service-details-by-typespec-path-6
+    prompt: >
+      Get service and service tree product details for a product using TypeSpec project path
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_get_service_details_by_typespec_path"
+
+  # ==== azsdk_link_namespace_approval_issue triggers ====
+  - name: invoke-azsdk-link-namespace-approval-issue-1
+    prompt: "Link namespace approval issue to release plan"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_link_namespace_approval_issue"
+  - name: invoke-azsdk-link-namespace-approval-issue-2
+    prompt: "Associate the namespace approval with my release plan"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_link_namespace_approval_issue"
+
+  # ==== azsdk_link_sdk_pull_request_to_release_plan triggers ====
+  - name: invoke-azsdk-link-sdk-pull-request-to-release-plan-1
+    prompt: "Link my SDK pull request to the release plan"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_link_sdk_pull_request_to_release_plan"
+  - name: invoke-azsdk-link-sdk-pull-request-to-release-plan-2
+    prompt: "Link SDK pull request #5678 to release plan 12345"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_link_sdk_pull_request_to_release_plan"
+
+  # ==== azsdk_run_generate_sdk triggers ====
+  - name: invoke-azsdk-run-generate-sdk-1
+    prompt: "Generate SDK from my TypeSpec project using the pipeline"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_run_generate_sdk"
+  - name: invoke-azsdk-run-generate-sdk-2
+    prompt: "Generate SDK for my TypeSpec project using the pipeline"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_run_generate_sdk"
+
+  # ==== azsdk_update_api_spec_pull_request_in_release_plan triggers ====
+  - name: invoke-azsdk-update-api-spec-pull-request-in-release-plan-1
+    prompt: "Update the TypeSpec PR URL in the release plan"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_update_api_spec_pull_request_in_release_plan"
+  - name: invoke-azsdk-update-api-spec-pull-request-in-release-plan-2
+    prompt: "Update the TypeSpec pull request URL in my release plan"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_update_api_spec_pull_request_in_release_plan"
+
+  # ==== azsdk_update_language_exclusion_justification triggers ====
+  - name: invoke-azsdk-update-language-exclusion-justification-1
+    prompt: "Update the language exclusion justification"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_update_language_exclusion_justification"
+  - name: invoke-azsdk-update-language-exclusion-justification-2
+    prompt: "Explain why Python is excluded from this release"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_update_language_exclusion_justification"
+
+  # ==== azsdk_update_release_plan triggers ====
+  - name: invoke-azsdk-update-release-plan-1
+    prompt: "Update the release plan with my TypeSpec project path and API version"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_update_release_plan"
+  - name: invoke-azsdk-update-release-plan-2
+    prompt: "Update the spec PR URL and SDK release type in my release plan"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_update_release_plan"
+  - name: invoke-azsdk-update-release-plan-3
+    prompt: "Update the existing release plan for my service"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_update_release_plan"
+  - name: invoke-azsdk-update-release-plan-4
+    prompt: "Update my release plan"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_update_release_plan"
+  - name: invoke-azsdk-update-release-plan-5
+    prompt: "Update TypeSpec project in release plan"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_update_release_plan"
+
+  # ==== azsdk_update_sdk_details_in_release_plan triggers ====
+  - name: invoke-azsdk-update-sdk-details-in-release-plan-1
+    prompt: "Update SDK details in the release plan"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_update_sdk_details_in_release_plan"
+  - name: invoke-azsdk-update-sdk-details-in-release-plan-2
+    prompt: "Change the SDK package name in the release plan"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_update_sdk_details_in_release_plan"

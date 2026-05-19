@@ -1,0 +1,28 @@
+# Vally configuration for Azure SDK CLI MCP tool evaluations
+# See: https://vally.dev/reference/vally-config
+
+paths:
+  evals: evals/
+  results: results/
+  evalFilenames: ["*.eval.yaml", "eval.yaml"]
+
+environments:
+  azsdk-mcp:
+    mcpServers:
+      azure-sdk-mcp:
+        type: stdio
+        command: dotnet
+        args: ["run", "--project", "../Azure.Sdk.Tools.Cli", "--", "start"]
+        timeout: 30000
+        env:
+          AZSDKTOOLS_AGENT_TESTING: "false"
+          AZSDKTOOLS_COLLECT_TELEMETRY: "false"
+
+# p0: Gate CI, p1: Nightly, p2: Exploratory/Only local
+suites:
+  ci-gate:
+    filter: { priority: [p0] }
+  nightly:
+    filter: { priority: [p0, p1] }
+  local:
+    filter: { priority: [p0, p1, p2] }

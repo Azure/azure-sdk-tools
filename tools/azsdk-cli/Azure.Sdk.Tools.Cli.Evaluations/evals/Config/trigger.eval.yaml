@@ -1,0 +1,51 @@
+name: azsdk-mcp-tool-invocation-eval
+description: |
+  Verify that prompts correctly invoke the expected Azure SDK MCP tools.
+  Each stimulus is a single user prompt that should trigger a specific tool.
+version: "1.0"
+type: capability
+
+environment: azsdk-mcp
+
+config:
+  runs: 5
+  timeout: 120
+  executor: copilot-sdk
+  model: claude-opus-4.6
+
+tags: 
+  priority: p0
+
+stimuli:
+
+  # ==== azsdk_check_service_label triggers ====
+  - name: invoke-azsdk-check-service-label-1
+    prompt: "Check if a service label exists for my service"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_check_service_label"
+  - name: invoke-azsdk-check-service-label-2
+    prompt: "Does the service label for Contoso already exist?"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_check_service_label"
+
+  # ==== azsdk_create_service_label triggers ====
+  - name: invoke-azsdk-create-service-label-1
+    prompt: "Create a new service label for my service"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_create_service_label"
+  - name: invoke-azsdk-create-service-label-2
+    prompt: "Add a service label for Contoso Widget Manager"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_create_service_label"

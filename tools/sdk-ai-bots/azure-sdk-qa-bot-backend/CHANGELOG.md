@@ -1,5 +1,11 @@
 # Release History
 
+## 0.9.7 (2026-05-08)
+
+### Features Added
+
+* Add `azure_sdk_tools_docs` as a new knowledge source for Azure SDK Tools documentation
+
 ## 0.9.6 (2026-05-06)
 
 ### Other Changes

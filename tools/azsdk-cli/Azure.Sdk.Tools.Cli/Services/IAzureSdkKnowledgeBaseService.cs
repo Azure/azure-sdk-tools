@@ -1,4 +1,5 @@
 using Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion;
+using Azure.Sdk.Tools.Cli.Models.AzureSDKKnowledgeAICompletion;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -18,6 +19,10 @@ namespace Azure.Sdk.Tools.Cli.Services
         /// <exception cref="InvalidOperationException">Thrown when the API returns an error or the request fails.</exception>
         /// <exception cref="OperationCanceledException">Thrown when the operation is cancelled via <paramref name="cancellationToken"/>.</exception>
         Task<CompletionResponse> SendCompletionRequestAsync(
+            CompletionRequest request,
+            CancellationToken cancellationToken = default);
+
+        Task<ContextSearchResponse> SendContextRequestAsync(
             CompletionRequest request,
             CancellationToken cancellationToken = default);
     }

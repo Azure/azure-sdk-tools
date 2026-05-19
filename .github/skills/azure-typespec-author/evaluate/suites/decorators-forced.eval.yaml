@@ -29,8 +29,6 @@ stimuli:
       dest: package.json
     - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
       dest: package-lock.json
-    - src: ../fixtures/Microsoft.Widget/Widget/node_modules
-      dest: node_modules
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -41,6 +39,8 @@ stimuli:
       dest: stable/2021-11-01/widget.json
     - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
       dest: preview/2024-10-01-preview/widget.json
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -79,14 +79,14 @@ stimuli:
       dest: package.json
     - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
       dest: package-lock.json
-    - src: ../fixtures/Microsoft.Widget/Widget/node_modules
-      dest: node_modules
     - src: ../fixtures/004002-decorate-length-constrains-on-array-item/readme.md
       dest: readme.md
     - src: ../fixtures/004002-decorate-length-constrains-on-array-item/shared.tsp
       dest: shared.tsp
     - src: ../fixtures/004002-decorate-length-constrains-on-array-item/tspconfig.yaml
       dest: tspconfig.yaml
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -148,8 +148,6 @@ stimuli:
       dest: package.json
     - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
       dest: package-lock.json
-    - src: ../fixtures/Microsoft.Widget/Widget/node_modules
-      dest: node_modules
     - src: ../fixtures/004003-delete-and-restore-operationId-decorator/Route.tsp
       dest: Route.tsp
     - src: ../fixtures/004003-delete-and-restore-operationId-decorator/VpnServerConfigurationPolicyGroup.tsp
@@ -158,6 +156,8 @@ stimuli:
       dest: VpnSiteLinkConnection.tsp
     - src: ../fixtures/004003-delete-and-restore-operationId-decorator/tspconfig.yaml
       dest: tspconfig.yaml
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   # VP1: Underscore operationIds should be removed (e.g. BgpConnection has only underscore ones)
   - type: skill-invocation

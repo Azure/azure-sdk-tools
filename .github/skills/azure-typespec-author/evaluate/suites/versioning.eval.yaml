@@ -33,10 +33,10 @@ stimuli:
         dest: package.json
       - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
         dest: package-lock.json
-      - src: ../fixtures/Microsoft.Widget/Widget/node_modules
-        dest: node_modules
       - src: ../fixtures/001-share-version-new-feature/readme.md
         dest: readme.md
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -65,14 +65,14 @@ stimuli:
         dest: package.json
       - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
         dest: package-lock.json
-      - src: ../fixtures/Microsoft.Widget/Widget/node_modules
-        dest: node_modules
       - src: ../fixtures/001002-version-default-value/readme.md
         dest: readme.md
       - src: ../fixtures/001002-version-default-value/shared.tsp
         dest: shared.tsp
       - src: ../fixtures/001002-version-default-value/tspconfig.yaml
         dest: tspconfig.yaml
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -101,14 +101,14 @@ stimuli:
         dest: package.json
       - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
         dest: package-lock.json
-      - src: ../fixtures/Microsoft.Widget/Widget/node_modules
-        dest: node_modules
       - src: ../fixtures/001-share-version-new-feature/readme.md
         dest: readme.md
       - src: ../fixtures/001-share-version-new-feature/shared.tsp
         dest: shared.tsp
       - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
         dest: tspconfig.yaml
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -136,14 +136,14 @@ stimuli:
         dest: package.json
       - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
         dest: package-lock.json
-      - src: ../fixtures/Microsoft.Widget/Widget/node_modules
-        dest: node_modules
       - src: ../fixtures/001-share-version-new-feature/readme.md
         dest: readme.md
       - src: ../fixtures/001-share-version-new-feature/shared.tsp
         dest: shared.tsp
       - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
         dest: tspconfig.yaml
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -176,8 +176,6 @@ stimuli:
         dest: package.json
       - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
         dest: package-lock.json
-      - src: ../fixtures/Microsoft.Widget/Widget/node_modules
-        dest: node_modules
       - src: ../fixtures/001005-version-add-preview-after-preview/examples/2024-10-01-preview/Employees_CreateOrUpdate_MaximumSet_Gen.json
         dest: examples/2024-10-01-preview/Employees_CreateOrUpdate_MaximumSet_Gen.json
       - src: ../fixtures/001005-version-add-preview-after-preview/examples/2024-10-01-preview/Employees_Delete_MaximumSet_Gen.json
@@ -214,6 +212,8 @@ stimuli:
         dest: examples/2021-10-01/Operations_List_MaximumSet_Gen.json
       - src: ../fixtures/001005-version-add-preview-after-preview/examples/2021-10-01/Operations_List_MinimumSet_Gen.json
         dest: examples/2021-10-01/Operations_List_MinimumSet_Gen.json
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -246,8 +246,6 @@ stimuli:
         dest: package.json
       - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
         dest: package-lock.json
-      - src: ../fixtures/Microsoft.Widget/Widget/node_modules
-        dest: node_modules
       - src: ../fixtures/001006-version-add-preview-after-stable/examples/2021-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
         dest: examples/2021-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
       - src: ../fixtures/001006-version-add-preview-after-stable/examples/2021-10-01/Employees_Delete_MaximumSet_Gen.json
@@ -284,6 +282,8 @@ stimuli:
         dest: examples/2024-10-01/Operations_List_MaximumSet_Gen.json
       - src: ../fixtures/001006-version-add-preview-after-stable/examples/2024-10-01/Operations_List_MinimumSet_Gen.json
         dest: examples/2024-10-01/Operations_List_MinimumSet_Gen.json
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -316,8 +316,6 @@ stimuli:
         dest: package.json
       - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
         dest: package-lock.json
-      - src: ../fixtures/Microsoft.Widget/Widget/node_modules
-        dest: node_modules
       - src: ../fixtures/001007-version-add-stable-after-preview/readme.md
         dest: readme.md
       - src: ../fixtures/001007-version-add-stable-after-preview/examples/2021-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
@@ -360,6 +358,8 @@ stimuli:
         dest: examples/2024-10-01-preview/Operations_List_MaximumSet_Gen.json
       - src: ../fixtures/001007-version-add-stable-after-preview/examples/2024-10-01-preview/Operations_List_MinimumSet_Gen.json
         dest: examples/2024-10-01-preview/Operations_List_MinimumSet_Gen.json
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -392,8 +392,6 @@ stimuli:
         dest: package.json
       - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
         dest: package-lock.json
-      - src: ../fixtures/Microsoft.Widget/Widget/node_modules
-        dest: node_modules
       - src: ../fixtures/001008-version-add-stable-after-stable/readme.md
         dest: readme.md
       - src: ../fixtures/001008-version-add-stable-after-stable/examples/2021-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
@@ -436,6 +434,8 @@ stimuli:
         dest: examples/2024-10-01/Operations_List_MaximumSet_Gen.json
       - src: ../fixtures/001008-version-add-stable-after-stable/examples/2024-10-01/Operations_List_MinimumSet_Gen.json
         dest: examples/2024-10-01/Operations_List_MinimumSet_Gen.json
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -472,6 +472,8 @@ stimuli:
         dest: Microsoft.Widget/Widget/shared.tsp
       - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
         dest: Microsoft.Widget/Widget/tspconfig.yaml
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -507,6 +509,8 @@ stimuli:
         dest: Microsoft.Widget/Widget/shared.tsp
       - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
         dest: Microsoft.Widget/Widget/tspconfig.yaml
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -546,6 +550,8 @@ stimuli:
         dest: Microsoft.Widget/Widget/stable/2021-11-01/widget.json
       - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
         dest: Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -584,6 +590,8 @@ stimuli:
         dest: Microsoft.Widget/Widget/stable/2021-11-01/widget.json
       - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
         dest: Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -624,6 +632,8 @@ stimuli:
         dest: Microsoft.Widget/Widget/stable/2021-11-01/widget.json
       - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
         dest: Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:

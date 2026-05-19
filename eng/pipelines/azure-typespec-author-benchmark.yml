@@ -164,7 +164,7 @@ extends:
               # network access to registry.npmjs.org.
               - script: |
                   set -e
-                  npm install --global @typespec/compiler
+                  npm install --global @typespec/compiler --userconfig $(Build.SourcesDirectory)/.npmrc
                   echo "tsp version:"
                   tsp --version || true
                 displayName: Install TypeSpec compiler
@@ -248,6 +248,7 @@ extends:
                 condition: always()
                 env:
                   GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+                  FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
 
               - script: |
                   cd .github/skills/azure-typespec-author/evaluate
@@ -279,6 +280,7 @@ extends:
                 condition: always()
                 env:
                   GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+                  FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
 
               - script: |
                   cd .github/skills/azure-typespec-author/evaluate
@@ -310,6 +312,7 @@ extends:
                 condition: always()
                 env:
                   GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+                  FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
 
               - script: |
                   cd .github/skills/azure-typespec-author/evaluate
@@ -341,6 +344,7 @@ extends:
                 condition: always()
                 env:
                   GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+                  FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
 
               - script: |
                   cd .github/skills/azure-typespec-author/evaluate
@@ -372,6 +376,7 @@ extends:
                 condition: always()
                 env:
                   GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+                  FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
 
             templateContext:
               outputs:
@@ -524,7 +529,7 @@ extends:
               # network access to registry.npmjs.org.
               - script: |
                   set -e
-                  npm install --global @typespec/compiler
+                  npm install --global @typespec/compiler --userconfig $(Build.SourcesDirectory)/.npmrc
                   echo "tsp version:"
                   tsp --version || true
                 displayName: Install TypeSpec compiler
@@ -608,6 +613,7 @@ extends:
                 condition: always()
                 env:
                   GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+                  FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
 
               - script: |
                   cd .github/skills/azure-typespec-author/evaluate
@@ -639,6 +645,7 @@ extends:
                 condition: always()
                 env:
                   GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+                  FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
 
               - script: |
                   cd .github/skills/azure-typespec-author/evaluate
@@ -670,6 +677,7 @@ extends:
                 condition: always()
                 env:
                   GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+                  FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
 
               - script: |
                   cd .github/skills/azure-typespec-author/evaluate
@@ -701,6 +709,7 @@ extends:
                 condition: always()
                 env:
                   GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+                  FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
 
               - script: |
                   cd .github/skills/azure-typespec-author/evaluate
@@ -732,6 +741,7 @@ extends:
                 condition: always()
                 env:
                   GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+                  FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
 
             templateContext:
               outputs:

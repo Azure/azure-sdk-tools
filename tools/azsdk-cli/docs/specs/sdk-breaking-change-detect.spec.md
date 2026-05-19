@@ -17,7 +17,7 @@
       - [Component 1: SDK change detector](#component-1-sdk-change-detector)
       - [Component 2: ChangelogOrRevapi-breakingChange pattern](#component-2-changelogorrevapi-breakingchange-pattern)
       - [Component 3: SDK Breaking change classifier](#component-3-sdk-breaking-change-classifier)
-      - [Component 4: Breaking change Result](#component-4-breaking-change-result)
+      - [Component 4: SDK Breaking change Result](#component-4-sdk-breaking-change-result)
     - [User Experience](#user-experience)
     - [Scenarios for Using the Tool](#scenarios-for-using-the-tool)
       - [Scenario 1: Detect and resolve SDK breaking change local](#scenario-1-detect-and-resolve-sdk-breaking-change-local)
@@ -48,7 +48,7 @@
 
 ### Current State
 
-Service teams and SDK teams spend significant manual effort detecting SDK breaking changes and mitigate them. This process is time-consuming and still fails to reliably identify all breaking changes, leading to some being missed or incorrectly resolved. As a result, overall SDK quality is degraded.
+Service teams and SDK teams spend significant manual effort detecting SDK breaking changes and mitigate them. This process is time-consuming and still fails to reliably identify all SDK breaking changes, leading to some being missed or incorrectly resolved. As a result, overall SDK quality is degraded.
 
 Reviewing and resolving SDK breaking changes is a required step for Spec PR merges. Because detecting and resolving SDK breaking changes is complex and time-consuming, the Spec PR merge lifecycle is extended, which delays both Spec merges and follow-up SDK release processes.
 
@@ -58,7 +58,7 @@ Reviewing and resolving SDK breaking changes is a required step for Spec PR merg
 - Identifying and mitigating SDK breaking changes is a significant challenge for service and Azure SDK teams. Manual analysis of SDK changes to detect breaking changes and develop consistent mitigations requires substantial effort and expertise.
 
 **Cost of Not Solving This:**
-- **Increased SDK or Spec Review Effort**: Service and Azure SDK teams spend significant time manually identifying breaking changes and developing mitigations.
+- **Increased SDK or Spec Review Effort**: Service and Azure SDK teams spend significant time manually identifying SDK breaking changes and developing mitigations.
 - **Incorrect SDK Breaking Change Detection**: Without automated detection, teams may miss SDK breaking changes entirely or misclassify them, resulting in incomplete or incorrect mitigations.
 - **Delayed API Spec Merge and SDK Release**: The time spent identifying and resolving SDK breaking changes manually delays both API specification merges and SDK releases, impacting customer delivery timelines.
 
@@ -88,7 +88,7 @@ This design covers the complete SDK breaking change detection workflow and its c
 **prerequist**:
 The SDK has been generated and built successfully.
 
-A changelog-breakingchange pattern guide (e.g. https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/mgmt/sdk-breaking-changes-guide.md) will service as the foundation for teach copilot agent to detect and classify breaking changes for a SDK. The existing TypeSpec code and the configuration will help agent to classify the breaking changes.
+A changelog-breakingchange pattern guide (e.g. https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/mgmt/sdk-breaking-changes-guide.md) will service as the foundation for teach copilot agent to detect and classify SDK breaking changes for a SDK. The existing TypeSpec code and the configuration will help agent to classify the SDK breaking changes.
 
 **Output Format**
 
@@ -113,11 +113,11 @@ A changelog-breakingchange pattern guide (e.g. https://github.com/Azure/azure-sd
 
 ```mermaid
 flowchart TD
-    Entry[<b>Entry Point</b><br/>Breaking change detect request]
+    Entry[<b>Entry Point</b><br/>SDK Breaking change detect request]
     A[Detect SDK Changes]
     B{Has Breaking Change?}
-    C[Copilot agent Classify Breaking Changes]
-    D[Breaking Change Result]
+    C[Copilot agent Classify SDK Breaking Changes]
+    D[SDK Breaking Change Result]
     E[SDK changelogOrRevapi-breakingChange pattern]
     F[SDK changelog/ Revapi]
     subgraph SDK Change Detector
@@ -224,11 +224,11 @@ Use client customization to restore the original names from the removal entries:
 
 #### Component 3: SDK Breaking change classifier
 
-Copilot Agent refer changelogOrRevapi-breakingchange pattern guide to analyze and classify the breaking changes.
+Copilot Agent refer changelogOrRevapi-breakingchange pattern guide to analyze and classify the SDK breaking changes.
 
-Parse out the actually breaking changes and classify them into different category
+Parse out the actually SDK breaking changes and classify them into different category
 
-**Breaking change category**
+**SDK Breaking change category**
   - emitter change : e.g modeler4 build-in handle logic(e.g merge enum as one)
   - conversion-by design : e.g. the common model
   - conversion-need resolve
@@ -256,9 +256,9 @@ changelog or Revapi
 
 ```
 
-#### Component 4: Breaking change Result
+#### Component 4: SDK Breaking change Result
 
-The result of the `azsdk_package_detect_breaking_change` tool. It provides an overall assessment of whether the package introduces SDK breaking changes, along with details for each breaking change (breakingchange and category) if any are detected.
+The result of the `azsdk_package_detect_breaking_change` tool. It provides an overall assessment of whether the package introduces SDK breaking changes, along with details for each breaking change (breaking-change and category) if any are detected.
 The result is JSON-formatted.
 
 **No Breaking change**
@@ -304,12 +304,12 @@ azsdk package detect-breaking-change --package-path <sdk-package-path> --languag
 
 #### Scenario 1: Detect and resolve SDK breaking change local
 
-Detect and resolve breaking changes in a local spec repository.
+Detect and resolve SDK breaking changes in a local spec repository.
 
 **Prerequisite:**
 The local SDK repository and development environment are set up.
 
-**Prompt:** Detect and resolve breaking changes for service webpubsub
+**Prompt:** Detect and resolve SDK breaking changes for service webpubsub
 
 Flow:
 

@@ -1,0 +1,31 @@
+paths:
+  evals:
+    - skill-authoring/evals/
+    - azsdk-common-pipeline-troubleshooting/evals/
+    - markdown-token-optimizer/evals/
+    - sensei/evals/
+    - azsdk-common-generate-sdk-locally/evals/
+    - azsdk-common-sdk-release/evals/
+    - azsdk-common-apiview-feedback-resolution/evals/
+    - azsdk-common-prepare-release-plan/evals/
+  results: results/
+  evalFilenames: ["eval.yaml", "*.eval.yaml"]
+
+environments:
+  azsdk-mcp:
+    mcpServers:
+      azure-sdk-mcp:
+        type: stdio
+        command: dotnet
+        args: ["run", "--project", "../../tools/azsdk-cli/Azure.Sdk.Tools.Cli", "--", "start"]
+        timeout: "60s"
+        env:
+          AZSDKTOOLS_AGENT_TESTING: "true"
+          AZSDKTOOLS_COLLECT_TELEMETRY: "false"
+  azsdk-mcp-mock:
+    mcpServers:
+      azure-sdk-mcp:
+        type: stdio
+        command: dotnet
+        args: ["run", "--project", "../../tools/azsdk-cli/Azure.Sdk.Tools.Mock"]
+        timeout: "60s"

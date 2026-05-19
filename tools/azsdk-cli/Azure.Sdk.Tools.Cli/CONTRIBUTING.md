@@ -168,10 +168,10 @@ Services are **DI-registered, long-lived** classes that encapsulate access to an
 | `IAPIViewService` | `APIViewService` | APIView review API (high-level operations). |
 | `IAPIViewHttpService` | `APIViewHttpService` | APIView HTTP transport. |
 | `IAPIViewAuthenticationService` | `APIViewAuthenticationService` | APIView authentication. |
+| `IAPIViewFeedbackService` | `APIViewFeedbackService` | APIView feedback submission. |
 | `IAzureSdkKnowledgeBaseService` | `AzureSdkKnowledgeBaseService` | Azure SDK knowledge-base HTTP service (MSAL-protected). |
 | `IUpgradeService` | `UpgradeService` | GitHub Releases API (self-update / version check). |
 | `IFeedbackClassifierService` | `FeedbackClassifierService` | Azure OpenAI for LLM-based feedback classification. |
-| `ICopilotAgentRunner` | `CopilotAgentRunner` | GitHub Copilot Agent SDK. |
 | `IUserPromptProcessor` | `UserPromptProcessor` | Interactive user-prompt processing. |
 | `LanguageService` (abstract) | `DotnetLanguageService`, `PythonLanguageService`, `JavaLanguageService`, `GoLanguageService`, `JavaScriptLanguageService`, `RustLanguageService` | Language-specific SDK CLIs: `dotnet`, `python`/`pip`, `mvn`, `go`, `npm`, `cargo`. Selected per-package by detecting the language. See [`docs/per-language.md`](../docs/per-language.md). |
 

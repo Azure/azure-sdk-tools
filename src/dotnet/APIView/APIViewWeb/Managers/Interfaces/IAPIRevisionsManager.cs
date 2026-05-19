@@ -1,5 +1,5 @@
-using APIView.DIff;
-using ApiView;
+using APIView.Diff;
+using APIView;
 using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Models;

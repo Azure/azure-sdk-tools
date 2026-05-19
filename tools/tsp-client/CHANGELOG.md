@@ -1,5 +1,10 @@
 # Release
 
+## 2026-04-30 - 0.33.1
+
+- Added support for passing flags to underlying npm commands using the `--npm-args` flag with the `generate-config-files` and `generate-lock-file` commands.
+- Add more logging when using `use-npm-pinning` flag in the `generate-config-files` command.
+
 ## 2026-04-29 - 0.33.0
 
 - Add support for a `use-npm-pinning` flag to the `generate-config-files` command to use dependency information from npm for emitter-package.json version pinning. **NOTE: emitter-package.json creation will fail if the command is called with an unpublished version of the emitter.**

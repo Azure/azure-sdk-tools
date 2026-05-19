@@ -72,6 +72,11 @@
             color: var(--base-text-color);
             border-color: var(--border-color);
 
+            &::placeholder {
+                color: var(--text-muted-color);
+                opacity: 1;
+            }
+
             &:focus {
                 border-color: var(--primary-color);
                 box-shadow: 0 0 0 1px var(--primary-color);

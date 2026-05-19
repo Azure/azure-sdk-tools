@@ -1,0 +1,18 @@
+testcase: retain_exception_memory
+guideline: |
+  {
+    "id": "python_design=html=python-client-namespace",
+    "title": "Use azure.* namespace for all client libraries",
+    "content": "DO place all client library code under the 'azure' top-level namespace. The package structure must be azure.<group>.<service>. For example, azure.storage.blob or azure.identity."
+  }
+memories: |
+  [
+    {
+      "id": "mem-030",
+      "title": "Exception: azure-core uses azure.core namespace",
+      "content": "Exception from architecture board: The azure-core library is exempt from the three-level namespace requirement. It uses azure.core directly instead of azure.<group>.<service>."
+    }
+  ]
+response:
+  action: NONE
+  rationale: The memory documents a specific exception to the guideline that the guideline itself does not mention. Removing it would lose important context about azure-core's exemption.

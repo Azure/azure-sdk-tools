@@ -49,6 +49,20 @@ from src._apiview import (
 from src._apiview_reviewer import SUPPORTED_LANGUAGES, ApiViewReview
 from src._database_manager import ContainerNames, DatabaseManager
 from src._garbage_collector import GarbageCollector
+from src._apiview_metrics import (
+    DEFAULT_OUTPUT_PATH as DEFAULT_VERSION_TRENDS_OUTPUT_PATH,
+)
+from src._apiview_metrics import (
+    DEFAULT_COMPLIANCE_OUTPUT_PATH,
+)
+from src._apiview_metrics import (
+    build_compliance_reports,
+    build_version_reports,
+    generate_compliance_chart,
+    generate_version_chart,
+    print_compliance_report,
+    print_version_report,
+)
 from src._comment_bucket_trends import (
     DEFAULT_OUTPUT_PATH as DEFAULT_COMMENT_BUCKET_OUTPUT_PATH,
     DEFAULT_GENERIC_OUTPUT_PATH,
@@ -63,6 +77,7 @@ from src._mention import handle_mention_request
 from src._metrics import get_metrics_report
 from src._models import APIViewComment
 from src._prompt_runner import run_prompt
+from src._report_issue import handle_report_issue_request
 from src._search_manager import SearchManager
 from src._settings import SettingsManager
 from src._thread_resolution import handle_thread_resolution_request
@@ -986,6 +1001,59 @@ def review_summarize(language: str, target: str, base: str = None, remote: bool 
         print(summary)
 
 
+def issue_report(
+    description: str,
+    review_link: str = None,
+    language: str = None,
+    comment_id: str = None,
+    remote: bool = False,
+):
+    """
+    File a GitHub issue from an APIView "Report Issue" interaction.
+
+    Calls the same shared core (``handle_report_issue_request``) whether
+    run locally or via ``--remote``, so both paths produce identical
+    issues. The LLM determines whether the issue is an APIView UI
+    problem or a parser problem; the server then derives the title
+    prefix and labels.
+    """
+    if remote:
+        settings = SettingsManager()
+        base_url = settings.get("WEBAPP_ENDPOINT")
+        api_endpoint = f"{base_url}/report-issue"
+        payload = {"description": description}
+        if review_link:
+            payload["reviewLink"] = review_link
+        if language:
+            payload["language"] = language
+        if comment_id:
+            payload["commentId"] = comment_id
+        try:
+            resp = requests.post(api_endpoint, json=payload, headers=_build_auth_header(), timeout=60)
+        except requests.RequestException as e:
+            raise CLIError(f"Failed to call /report-issue: {e}") from e
+        content_type = resp.headers.get("Content-Type", "")
+        if "application/json" in content_type:
+            try:
+                data = resp.json()
+            except ValueError:
+                data = resp.text
+        else:
+            data = resp.text
+        if resp.status_code == 200:
+            print(json.dumps(data, indent=2) if isinstance(data, (dict, list)) else data)
+        else:
+            raise CLIError(f"/report-issue failed: {resp.status_code} - {data}")
+    else:
+        result = handle_report_issue_request(
+            description=description,
+            review_link=review_link,
+            language=language,
+            comment_id=comment_id,
+        )
+        print(json.dumps(result, indent=2))
+
+
 def handle_agent_chat(
     thread_id: Optional[str] = None, remote: bool = False, quiet: bool = False, readonly: bool = False
 ):
@@ -1375,62 +1443,9 @@ def db_delete(container_name: str, id: str):
         print(f"Error deleting item: {e}")
 
 
-# Mapping: (source_type) -> list of (field_on_source, target_type, field_on_target)
-_RELATION_MAP = {
-    "guideline": [
-        ("related_memories", "memory", "related_guidelines"),
-        ("related_examples", "example", "guideline_ids"),
-        ("related_guidelines", "guideline", "related_guidelines"),
-    ],
-    "memory": [
-        ("related_guidelines", "guideline", "related_memories"),
-        ("related_examples", "example", "memory_ids"),
-        ("related_memories", "memory", "related_memories"),
-    ],
-    "example": [
-        ("guideline_ids", "guideline", "related_examples"),
-        ("memory_ids", "memory", "related_examples"),
-    ],
-}
-
-_TYPE_CONTAINERS = {
-    "guideline": "guidelines",
-    "memory": "memories",
-    "example": "examples",
-}
-
-
-def _get_container(db, item_type: str):
-    return getattr(db, _TYPE_CONTAINERS[item_type])
-
-
 def _cascade_unlink(db, item: dict, item_type: str):
     """Remove back-links from all related items. Soft-delete orphaned examples."""
-    item_id = item["id"]
-
-    for source_field, target_type, target_field in _RELATION_MAP.get(item_type, []):
-        target_container = _get_container(db, target_type)
-
-        for target_id in item.get(source_field, []):
-            try:
-                raw_target = target_container.get(target_id)
-                refs = raw_target.get(target_field, [])
-                if item_id in refs:
-                    refs.remove(item_id)
-
-                # Check if the target is now orphaned and should be deleted
-                if (
-                    target_type == "example"
-                    and not raw_target.get("memory_ids", [])
-                    and not raw_target.get("guideline_ids", [])
-                ):
-                    target_container.delete(target_id, run_indexer=False)
-                    print(f"  Soft-deleted orphaned example {target_id}")
-                else:
-                    target_container.client.upsert_item(raw_target)
-                    print(f"  Unlinked {target_type} {target_id}")
-            except Exception as e:
-                print(f"  Warning: failed to clean {target_type} {target_id}: {e}")
+    db.cascade_unlink(item, item_type)
 
 
 def _try_run_indexers(containers: list[tuple[str, object]]):
@@ -1587,6 +1602,89 @@ def db_purge(containers: Optional[list[str]] = None, run_indexer: bool = False):
                 print(f"No soft-deleted items to purge from container {container_name}.")
         except Exception as e:
             print(f"Error purging container: {e}")
+
+
+def db_ingest_guidelines(
+    base_sha: str,
+    target_sha: str,
+    environment: str,
+    apply: bool = False,
+    details: bool = False,
+    languages: Optional[List[str]] = None,
+):
+    """
+    Ingest guidelines from the azure-sdk repository into the knowledge base.
+
+    Detects changes using git commit comparison and only updates guidelines
+    where content has actually changed. Runs in dry-run mode by default;
+    pass --apply to execute.
+    """
+    from src._guideline_ingestor import GuidelineIngestor
+
+    os.environ["ENVIRONMENT_NAME"] = environment
+    ingestor = GuidelineIngestor.get_instance(force_new=True)
+    dry_run = not apply
+    result = ingestor.sync_guidelines(
+        dry_run=dry_run,
+        details=details,
+        base_sha=base_sha,
+        target_sha=target_sha,
+        languages=languages,
+    )
+
+    # Print detailed results
+    if dry_run:
+        print(f"{BOLD}[DRY RUN] No changes were made to the database.{RESET}")
+        print(f"Run with {BOLD}--apply{RESET} to execute.\n")
+
+    print(
+        f"Guidelines: {GREEN}{len(result.guidelines_created)} to create{RESET}, "
+        f"{BLUE}{len(result.guidelines_updated)} to update{RESET}, "
+        f"{Fore.RED}{len(result.guidelines_deleted)} to delete{RESET}, "
+        f"{len(result.guidelines_unchanged)} unchanged"
+    )
+
+    if result.total_examples:
+        print(
+            f"Examples: {GREEN}{len(result.examples_created)} to create{RESET}, "
+            f"{BLUE}{len(result.examples_updated)} to update{RESET}, "
+            f"{Fore.RED}{len(result.examples_deleted)} to delete{RESET}, "
+            f"{len(result.examples_unchanged)} unchanged"
+        )
+
+    if result.total_memories:
+        print(
+            f"Memories: {len(result.memories_absorbed)} to absorb, "
+            f"{len(result.memories_retained)} to retain"
+        )
+
+    if result.errors:
+        print(f"{Fore.RED}Errors ({len(result.errors)}):{RESET}")
+        for err in result.errors:
+            print(f"  ! {err}")
+        print()
+
+    # Return counts and optional details for CLI output
+    output = {
+        "guidelines_created": len(result.guidelines_created),
+        "guidelines_updated": len(result.guidelines_updated),
+        "guidelines_deleted": len(result.guidelines_deleted),
+        "guidelines_unchanged": len(result.guidelines_unchanged),
+        "examples_created": len(result.examples_created),
+        "examples_updated": len(result.examples_updated),
+        "examples_deleted": len(result.examples_deleted),
+        "examples_unchanged": len(result.examples_unchanged),
+        "memories_absorbed": len(result.memories_absorbed),
+        "memories_retained": len(result.memories_retained),
+        "errors": len(result.errors),
+    }
+
+    if details and result.details:
+        from dataclasses import asdict
+
+        output["details"] = [asdict(d) for d in result.details]
+
+    return output
 
 
 def get_apiview_comments(revision_id: str, environment: str = "production") -> dict:
@@ -1966,6 +2064,63 @@ def report_comment_bucket_trends(
         environment=environment,
         title_prefix="Guideline AI Comments by Language",
     )
+
+
+def report_apiview_metrics(
+    months: int = 6,
+    languages: Optional[list[str]] = None,
+    environment: str = "production",
+    end_date: Optional[str] = None,
+    chart: bool = False,
+    summary: bool = False,
+) -> None:
+    """Generate APIView platform metrics (versioned-revision tracking and cross-language compliance)."""
+    parsed_end_date = None
+    if end_date:
+        try:
+            parsed_end_date = date.fromisoformat(end_date)
+        except ValueError as exc:
+            raise CLIError("Invalid --end-date value. Use YYYY-MM-DD format.") from exc
+
+    normalized_languages = None
+    if languages:
+        normalized_languages = [resolve_language(language)[1] for language in languages]
+
+    version_reports = build_version_reports(
+        languages=normalized_languages,
+        months=months,
+        end_date=parsed_end_date,
+        environment=environment,
+    )
+
+    compliance_reports = build_compliance_reports(
+        languages=normalized_languages,
+        months=months,
+        end_date=parsed_end_date,
+        environment=environment,
+    )
+
+    version_chart_path = None
+    compliance_chart_path = None
+    if chart:
+        version_chart_path = generate_version_chart(
+            version_reports,
+            output_path=DEFAULT_VERSION_TRENDS_OUTPUT_PATH,
+            environment=environment,
+        )
+        compliance_chart_path = generate_compliance_chart(
+            compliance_reports,
+            output_path=DEFAULT_COMPLIANCE_OUTPUT_PATH,
+            environment=environment,
+        )
+
+    output = {"versions": version_reports, "compliance": compliance_reports}
+    sys.stdout.buffer.write(json.dumps(output, indent=2, ensure_ascii=False, default=str).encode("utf-8"))
+    sys.stdout.buffer.write(b"\n")
+
+    if summary:
+        print_version_report(version_reports, version_chart_path, environment=environment, file=sys.stderr)
+        print_compliance_report(compliance_reports, compliance_chart_path, environment=environment, file=sys.stderr)
 
 
 def grant_permissions(assignee_id: str = None):
@@ -2418,10 +2573,15 @@ def get_feedback(
     exclude: Optional[list[str]] = None,
     environment: str = "production",
     output_format: str = "json",
+    include_implicit: bool = False,
 ):
     """
     Retrieve AI comment feedback from APIView between start_date and end_date.
     If --language is omitted, returns feedback for all languages.
+    Use --include-implicit to also return implicit bad comments: AI comments created
+    in the date range that are on approved revisions with no votes, no Feedback entries,
+    no resolution, and not deleted. Note that the date range filters by comment creation
+    time for implicit bad (vs. feedback submission time for explicit feedback).
     """
     results = _get_ai_comment_feedback(
         language=language,
@@ -2429,6 +2589,7 @@ def get_feedback(
         end_date=end_date,
         exclude=exclude,
         environment=environment,
+        include_implicit=include_implicit,
     )
     if output_format == "yaml":
         print(yaml.dump(results, default_flow_style=False, allow_unicode=True, sort_keys=False))
@@ -2529,6 +2690,7 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("mention", "handle_agent_mention")
             g.command("chat", "handle_agent_chat")
             g.command("resolve-thread", "handle_agent_thread_resolution")
+            g.command("report-issue", "issue_report")
         with CommandGroup(self, "test", "__main__#{}") as g:
             g.command("eval", "run_evals")
             g.command("extract-section", "extract_document_section")
@@ -2551,6 +2713,7 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("purge", "db_purge")
             g.command("link", "db_link")
             g.command("unlink", "db_unlink")
+            g.command("ingest-guidelines", "db_ingest_guidelines")
         with CommandGroup(self, "report", "__main__#{}") as g:
             g.command("metrics", "report_metrics")
             g.command("quality-trends", "report_comment_bucket_trends")
@@ -2558,6 +2721,7 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("feedback", "get_feedback")
             g.command("memory", "get_memories")
             g.command("architect-comments", "get_architect_comments")
+            g.command("apiview-metrics", "report_apiview_metrics")
         return OrderedDict(self.command_table)
 
     # ARGUMENT REGISTRATION
@@ -2801,6 +2965,27 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--source-comment-id"],
                 default=None,
             )
+        with ArgumentsContext(self, "agent report-issue") as ac:
+            ac.argument(
+                "description",
+                type=str,
+                help="The user's description of the problem.",
+                options_list=["--description"],
+            )
+            ac.argument(
+                "review_link",
+                type=str,
+                help="Optional URL to the APIView review the user is on.",
+                options_list=["--review-link"],
+                default=None,
+            )
+            ac.argument(
+                "comment_id",
+                type=str,
+                help="Optional APIView comment id. When provided, the server fetches the comment context (text, code snippet, language, element id, source) automatically.",
+                options_list=["--comment-id"],
+                default=None,
+            )
         with ArgumentsContext(self, "db") as ac:
             ac.argument(
                 "container_name",
@@ -2885,6 +3070,47 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="Whether to run the search indexer before purging.",
                 options_list=["--run-indexer"],
                 action="store_true",
+            )
+        with ArgumentsContext(self, "db ingest-guidelines") as ac:
+            ac.argument(
+                "apply",
+                action="store_true",
+                help="Apply changes to the database. Without this flag, runs in dry-run mode.",
+            )
+            ac.argument(
+                "base_sha",
+                type=str,
+                help="The baseline commit SHA to compare against.",
+                options_list=["--base-sha", "-b"],
+                required=True,
+            )
+            ac.argument(
+                "target_sha",
+                type=str,
+                help="The target commit SHA to sync to.",
+                options_list=["--target-sha", "-t"],
+                required=True,
+            )
+            ac.argument(
+                "details",
+                action="store_true",
+                help="Include before/after content for each changed guideline and example in the output.",
+                options_list=["--details"],
+            )
+            ac.argument(
+                "environment",
+                type=str,
+                help="The APIView environment to update (required).",
+                options_list=["--environment"],
+                required=True,
+                choices=["production", "staging"],
+            )
+            ac.argument(
+                "languages",
+                type=resolve_language_to_canonical,
+                nargs="*",
+                help="Limit ingestion to these languages (e.g. python java dotnet). If omitted, all languages are processed.",
+                options_list=["--language", "-l"],
             )
         with ArgumentsContext(self, "apiview") as ac:
             ac.argument(
@@ -3038,6 +3264,41 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--neutral"],
                 help="Include neutral AI comments as a separate bucket.",
             )
+        with ArgumentsContext(self, "report apiview-metrics") as ac:
+            ac.argument(
+                "months",
+                type=int,
+                options_list=["--months"],
+                default=6,
+                help="Number of calendar months to look back from the end date. Defaults to 6.",
+            )
+            ac.argument(
+                "end_date",
+                type=str,
+                options_list=["--end-date", "-e"],
+                default=None,
+                help="Inclusive query end date in YYYY-MM-DD format. Defaults to today.",
+            )
+            ac.argument(
+                "languages",
+                type=str,
+                nargs="+",
+                options_list=["--languages"],
+                default=None,
+                help="Languages to include. Defaults to Python, C#, Java, JavaScript, and Go.",
+            )
+            ac.argument(
+                "chart",
+                action="store_true",
+                options_list=["--chart"],
+                help="Generate a PNG trend chart and save to output/charts/.",
+            )
+            ac.argument(
+                "summary",
+                action="store_true",
+                options_list=["--summary"],
+                help="Print human-readable summary tables to stderr after the JSON output.",
+            )
         with ArgumentsContext(self, "ops check") as ac:
             ac.argument(
                 "include_auth",
@@ -3065,9 +3326,9 @@ class CliCommandsLoader(CLICommandsLoader):
                 "exclude",
                 type=str,
                 nargs="*",
-                help="Feedback types to exclude. Can be 'good', 'bad', or 'delete'.",
+                help="Feedback types to exclude. Can be 'good', 'bad', 'delete', or 'implicit_bad'.",
                 options_list=["--exclude"],
-                choices=["good", "bad", "delete"],
+                choices=["good", "bad", "delete", "implicit_bad"],
             )
             ac.argument(
                 "output_format",
@@ -3076,6 +3337,13 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--format", "-f"],
                 default="json",
                 choices=["json", "yaml"],
+            )
+            ac.argument(
+                "include_implicit",
+                action="store_true",
+                help="Include implicit bad comments (AI comments created in date range on approved revisions with no votes, no feedback, and no resolution).",
+                options_list=["--include-implicit"],
+                default=False,
             )
         with ArgumentsContext(self, "report memory") as ac:
             ac.argument(

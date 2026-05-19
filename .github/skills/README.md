@@ -6,8 +6,8 @@ with TypeSpec API specifications and Azure SDK generation.
 
 Shared skills (those distributed to other Azure SDK repositories) are identified by
 `distribution: shared` in their SKILL.md frontmatter metadata block and use the
-`azsdk-common-` directory prefix. This prefix enables the `sync-.github.yml` pipeline
-to match and distribute them to all subscribed language SDK repos.
+`azsdk-common-` directory prefix. This prefix enables the `sync-.github-skills.yml`
+pipeline to match and distribute them to all subscribed language SDK repos.
 
 ---
 

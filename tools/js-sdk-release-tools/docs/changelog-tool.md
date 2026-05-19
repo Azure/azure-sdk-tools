@@ -1,9 +1,9 @@
-
 # Overview - How Changelog Tool Works
 
-*Note: changelog tool only supports hlc now.*
+_Note: changelog tool only supports hlc now._
 
 In order to compute this changelog, we do the following steps:
+
 1. Input the package path.
 2. Get the package name and download the latest release from NPM.
 3. If not found it in NPM, it's first release and generate changelog for first release. If found it, check whether package in npm is track2 whem releasing mgmt sdk.
@@ -12,25 +12,27 @@ In order to compute this changelog, we do the following steps:
 6. Changelog Tool compares extracted information and generates the changelog.
 
 ## Convert the TypeScript Block in api.md to AST And Extract Useful information from the AST
+
 The data structure of the extracted information:
+
 ```typescript
 export class TSExportedMetaData {
-    public typeAlias = {};
-    public operationInterface = {};
-    public modelInterface = {};
-    public enums = {};
-    public classes = {};
+  public typeAlias = {};
+  public operationInterface = {};
+  public modelInterface = {};
+  public enums = {};
+  public classes = {};
 }
 ```
+
 This is an example of the extracted information:
+
 ```json
 {
   "typeAlias": {
     "AttachedDatabaseConfiguration": {
       "type": {
-        "inherits": [
-          "ProxyResource"
-        ],
+        "inherits": ["ProxyResource"],
         "typeLiteralDeclarations": [
           {
             "properties": [
@@ -42,7 +44,7 @@ This is an example of the extracted information:
                 "isStatic": false,
                 "start": 290,
                 "end": 308
-              }              
+              }
             ],
             "methods": [],
             "intersectionDeclarations": [],
@@ -67,7 +69,9 @@ This is an example of the extracted information:
 ```
 
 ## Compare Extracted Information And Generate the Changelog
+
 we have a set of rules that we apply for each entry in the diff. Currently template rules are:
+
 ```
 ## Features
 

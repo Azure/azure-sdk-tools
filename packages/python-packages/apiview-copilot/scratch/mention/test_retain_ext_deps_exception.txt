@@ -1,0 +1,25 @@
+{
+  "language": "python",
+  "package_name": "azure.identity",
+  "code": "from azure.identity import DefaultAzureCredential\nimport cryptography",
+  "comments": [
+        {
+            "lineNo": 2,
+            "createdBy": "azure-sdk",
+            "createdOn": "2026-03-15T14:00:00-07:00",
+            "commentText": "External dependency `cryptography` requires approval.\n\nSee: https://azure.github.io/azure-sdk/python_design.html#python-dependencies-external"
+        },
+        {
+            "lineNo": 2,
+            "createdBy": "identitydev",
+            "createdOn": "2026-03-15T14:15:00-07:00",
+            "commentText": "The cryptography library is needed for MSAL token cache encryption. We have Architecture Board approval."
+        },
+        {
+            "lineNo": 2,
+            "createdBy": "tjprescott",
+            "createdOn": "2026-03-15T14:30:00-07:00",
+            "commentText": "@azure-sdk azure-identity is a special case — cryptography is approved specifically for MSAL token cache encryption in the identity library only. This exception does not apply to other libraries. Please remember this."
+        }
+    ]
+}

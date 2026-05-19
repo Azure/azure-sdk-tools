@@ -183,6 +183,26 @@ avc agent resolve-thread -c <COMMENTS_JSON_FILE> [--remote]
 
 ---
 
+### `avc agent report-issue`
+
+File a GitHub issue from an APIView "Report Issue" interaction. The LLM determines whether the report is about the APIView UI/service, APIView Copilot (the AI reviewer), or a language-specific parser; the server then derives the title prefix (`[APIView]`, `[AVC]`, or `[{Language} APIView]`) and labels.
+
+```bash
+avc agent report-issue --description "<text>" \
+    [--review-link <URL>] [--language <LANG>] \
+    [--comment-id <COMMENT_ID>] [--remote]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--description` | Required. The user's free-form description of the problem. |
+| `--review-link` | Optional URL to the APIView review the user is on. |
+| `--language` | Optional language hint (e.g. `python`, `C#`). |
+| `--comment-id` | Optional APIView comment id. When provided, the server fetches the comment text, code snippet, language, element id, and source automatically. |
+| `--remote` | Send to the deployed `/report-issue` endpoint instead of running locally. |
+
+---
+
 ## `avc kb` — Knowledge Base
 
 ### `avc kb search`
@@ -349,6 +369,37 @@ Same flags and rollback behavior as `db link`.
 
 ---
 
+### `avc db ingest-guidelines`
+
+Sync guidelines and examples from the [azure-sdk](https://github.com/Azure/azure-sdk) repository into the knowledge base. Detects changes via git commit comparison, parses markdown files, extracts guidelines and examples via LLM, and writes to Cosmos DB.
+
+```bash
+# Preview changes (dry-run, the default)
+avc db ingest-guidelines --environment staging -b <BASE_SHA> -t <TARGET_SHA>
+
+# Preview with before/after content
+avc db ingest-guidelines --environment staging -b abc123 -t def456 --details
+
+# Apply changes to the database
+avc db ingest-guidelines --environment staging -b <BASE_SHA> -t <TARGET_SHA> --apply
+
+# Only sync specific languages
+avc db ingest-guidelines --environment staging -b abc123 -t def456 --language python java --apply
+```
+
+| Option | Description |
+|--------|-------------|
+| `--environment` | **Required.** The APIView environment to update (`staging` or `production`) |
+| `-b/--base-sha` | **Required.** The baseline commit SHA to compare against |
+| `-t/--target-sha` | **Required.** The target commit SHA to sync to |
+| `--apply` | Apply changes to the database. Without this flag, runs in dry-run mode |
+| `--details` | Include before/after content for each changed guideline and example in the output |
+| `-l/--language` | Limit ingestion to specific languages (e.g., `python java dotnet`). If omitted, all languages are processed |
+
+See [kb.md](./kb.md#guideline-ingestion) for details on the ingestion pipeline.
+
+---
+
 ## `avc report` — Reporting and Analytics
 
 ### `avc report metrics`
@@ -388,6 +439,30 @@ avc report quality-trends [--end-date 2026-04-17] [--months 6] [--languages Pyth
 | `--exclude-human` | Exclude human comments from the chart |
 | `--neutral` | Include neutral AI comments as a separate bucket |
 | `--environment` | `production` (default) or `staging` |
+
+---
+
+### `avc report apiview-metrics`
+
+Generate APIView platform metrics over a calendar-month lookback window. Produces a combined report with two metric buckets:
+
+- **versions** — Percentage of revisions that have a valid `PackageVersion`, broken out by language and revision type (Automatic, Manual, PullRequest).
+- **compliance** — Cross-language metadata compliance (whether revisions include `CrossLanguagePackageId`).
+
+```bash
+avc report apiview-metrics [--end-date 2026-04-28] [--months 6] [--languages Python Java] [--chart] [--summary] [--environment production|staging]
+```
+
+| Option | Description |
+|--------|-------------|
+| `-e/--end-date` | Inclusive query end date; defaults to today |
+| `--months` | Number of calendar months to look back from the end date (default 6) |
+| `--languages` | Languages to include; defaults to Python, C#, Java, JavaScript, and Go |
+| `--chart` | Generate PNG trend charts saved to `output/charts/` |
+| `--summary` | Print human-readable summary tables to stderr |
+| `--environment` | `production` (default) or `staging` |
+
+Outputs JSON to stdout with top-level `versions` and `compliance` keys containing per-language monthly data points. With `--summary`, compact terminal tables are also printed to stderr.
 
 ---
 

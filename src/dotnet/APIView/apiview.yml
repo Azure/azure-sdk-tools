@@ -73,18 +73,6 @@ extends:
             value: '1.22.1'
           - name: NugetSecurityAnalysisWarningLevel
             value: 'none'
-          - name: AzuriteConnectionString
-            value: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1"
-          - name: CosmosEmulatorConnectionString
-            value: "AccountEndpoint=https://localhost:8081/;AccountKey=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
-          - name: TestingDataContainer
-            value: "https://apiviewuitest.blob.core.windows.net/testingdata"
-          - ${{ if ne(variables['System.TeamProject'], 'internal') }}:
-            - name: CollectCoverage
-              value: false
-          - ${{ if eq(variables['System.TeamProject'], 'internal') }}:
-            - name: CollectCoverage
-              value: true
           - template: /eng/pipelines/templates/variables/image.yml
 
         jobs:
@@ -243,25 +231,6 @@ extends:
                   path: '$(Build.SourcesDirectory)/src/dotnet/APIView/ClientSPA/ui-tests/playwright-report'
                   artifact: 'ClientSPA Playwright Test Report'
 
-              #- template: /eng/common/pipelines/templates/steps/cosmos-emulator.yml
-              #  parameters:
-              #    StartParameters: '/noexplorer /noui /enablepreview /disableratelimiting /enableaadauthentication /partitioncount=50 /consistency=Strong'
-
-              #- script: |
-              #    npm install -g azurite
-              #  displayName: 'Install Azurite'
-
-              #- task: Powershell@2
-              #  inputs:
-              #    workingDirectory: $(Agent.TempDirectory)
-              #    filePath: $(Build.SourcesDirectory)/eng/scripts/Start-LocalHostApp.ps1
-              #    arguments: >
-              #      -Process "azurite.cmd"
-              #      -ArgumentList "--silent"
-              #      -Port "10000"
-              #    pwsh: true
-              #  displayName: 'Start Azurite'
-
               - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
               - pwsh: |
@@ -287,59 +256,6 @@ extends:
                  go test ./... -v
                 workingDirectory: $(GoParserPackagePath)
                 displayName: 'Test Go parser'
-
-              #- task: Palmmedia.reportgenerator.reportgenerator-build-release-task.reportgenerator@4
-              #  condition: and(succeededOrFailed(), eq(variables['CollectCoverage'], 'true'))
-              #  displayName: Generate Code Coverage Reports
-              #  inputs:
-              #    reports: $(Build.SourcesDirectory)\src\dotnet\APIView\APIViewUnitTests\**\coverage.cobertura.xml
-              #    targetdir: $(Build.ArtifactStagingDirectory)\coverage
-              #    reporttypes: Cobertura
-              #    filefilters: +$(Build.SourcesDirectory)\src\dotnet\APIView\**
-              #    verbosity: Verbose
-
-              #- task: PublishCodeCoverageResults@2
-              #  condition: and(succeededOrFailed(), eq(variables['CollectCoverage'], 'true'))
-              #  displayName: Publish Code Coverage Reports
-              #  inputs:
-              #    summaryFileLocation: $(Build.ArtifactStagingDirectory)\coverage\Cobertura.xml
-
-
-              #- script: |
-              #    npm ci
-              #  workingDirectory: $(WebClientProjectDirectory)
-              #  displayName: "Install Client Dependencies"
-
-              #- script: |
-              #    npx playwright install --with-deps
-              #  workingDirectory: $(WebClientProjectDirectory)
-              #  displayName: "Install Playwright Browsers"
-
-              #- script: |
-              #    npx playwright test --project=unit-tests
-              #  workingDirectory: $(WebClientProjectDirectory)
-              #  displayName: "Run Client-Side Unit Tests"
-
-              #- task: 1ES.PublishPipelineArtifact@1
-              #  inputs:
-              #    path: '$(Build.SourcesDirectory)\src\dotnet\APIView\APIViewWeb\Client\playwright-report'
-              #    artifact: 'Client-Side Unit Test Reports'
-
-              #- ${{ if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal')) }}:
-              #  - template: /eng/pipelines/templates/steps/apiview-ui-tests.yml
-              #    parameters:
-              #      NodeVersion: $(NodeVersion)
-              #      WebClientProjectDirectory: $(WebClientProjectDirectory)
-              #      AzuriteConnectionString: $(AzuriteConnectionString)
-              #      CosmosEmulatorConnectionString: $(CosmosEmulatorConnectionString)
-
-              #  - task: PublishTestResults@2
-              #    condition: succeededOrFailed()
-              #    inputs:
-              #      testResultsFiles: '**/*.trx'
-              #      testRunTitle: 'Tests against Windows .NET'
-              #      testResultsFormat: 'VSTest'
-              #      mergeTestResults: true
 
       - ${{ if eq(variables['System.TeamProject'], 'internal') }}:
         - stage: Staging_Publish

@@ -107,7 +107,7 @@ namespace APIViewUnitTests
 
             // Assert — quotes are encoded so the attacker cannot break out of href
             html.Should().Contain("&quot;"); // embedded quotes are encoded
-            html.Should().Contain("<a target=\"_blank\" href=\""); // structure preserved
+            html.Should().Contain("<a target=\"_blank\" rel=\"noopener noreferrer\" href=\""); // structure preserved
             html.Should().NotContain("\" onmouseover="); // raw breakout attempt is neutralized
         }
 
@@ -171,6 +171,37 @@ namespace APIViewUnitTests
             // Assert — angle brackets in Value are encoded
             html.Should().Contain("&lt;string&gt;");
             html.Should().NotContain("<string>");
+        }
+
+        /// <summary>
+        /// Verifies that external links include rel="noopener noreferrer" to prevent reverse tabnabbing.
+        /// </summary>
+        [Fact]
+        public void RenderToken_ExternalLink_HasNoopenerNoreferrer()
+        {
+            var tokens = new[]
+            {
+                new CodeFileToken("https://learn.microsoft.com/dotnet", CodeFileTokenKind.ExternalLinkStart),
+                new CodeFileToken("Documentation", CodeFileTokenKind.Text),
+                new CodeFileToken(null, CodeFileTokenKind.ExternalLinkEnd),
+                new CodeFileToken("\n", CodeFileTokenKind.Newline)
+            };
+
+            var codeFile = new CodeFile
+            {
+                Tokens = tokens,
+                Language = "Json",
+                Name = "tabnab-test"
+            };
+
+            // Act
+            var result = CodeFileHtmlRenderer.Normal.Render(codeFile);
+            var html = result.CodeLines.First().DisplayString;
+
+            // Assert
+            html.Should().Contain("rel=\"noopener noreferrer\"");
+            html.Should().Contain("target=\"_blank\"");
+            html.Should().Contain("href=\"https://learn.microsoft.com/dotnet\"");
         }
     }
 }

@@ -202,7 +202,7 @@ namespace APIViewLegacy
                         break;
 
                     case CodeFileTokenKind.ExternalLinkStart:
-                        stringBuilder.Append("<a target=\"_blank\" href=\"").Append(HttpUtility.HtmlAttributeEncode(token.Value)).Append("\">");
+                        stringBuilder.Append("<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"").Append(HttpUtility.HtmlAttributeEncode(token.Value)).Append("\">");
                         break;
 
                     case CodeFileTokenKind.ExternalLinkEnd:

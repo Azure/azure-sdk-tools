@@ -425,7 +425,6 @@ extends:
           - job: RunEvalsForSkillInvokation
             displayName: Run Vally Evaluations for Skill Invokation
             timeoutInMinutes: 170
-            dependsOn: RunEvalsForCodeQuality
             steps:
               - checkout: self
                 fetchDepth: 0

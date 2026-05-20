@@ -20,30 +20,16 @@ on:
         description: 'Optional KQL query override. NET_ISO_RESOLVER_QUERY secret is used by default.'
         required: false
         default: ''
+        type: string
       devops_org:
-        description: 'Azure DevOps organization (used for the dummy API call)'
+        description: 'Azure DevOps organization'
         required: false
         default: 'azure-sdk'
         type: string
 
 jobs:
-  kusto:
-    name: Run Kusto query
-    uses: ./.github/workflows/execute-kusto-query.yml
-    permissions:
-      id-token: write
-      contents: read
-    with:
-      cluster: ${{ inputs.cluster || 'https://oneespipelinesprod.westus3.kusto.windows.net/' }}
-      database: ${{ inputs.database || 'oneespipelinetemplatesprod' }}
-      query: ${{ inputs.query || '' }}
-      output_format: json
-    secrets:
-      kusto_query: ${{ secrets.NET_ISO_RESOLVER_QUERY }}
-
   resolve:
-    name: Resolve and call DevOps
-    needs: kusto
+    name: Run Kusto query and resolve DevOps
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -51,6 +37,47 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11.9'
+
+      - name: Install Kusto query dependencies
+        run: |
+          pip install --upgrade pip
+          pip install azure-kusto-data==4.6.3 azure-identity==1.17.1
+          pip install pytest==7.4.0
+
+      - name: Run destructive query safety tests
+        run: pytest eng/scripts/python/kusto-query-executor/kusto-query-executor-tests.py -v
+
+      - name: Azure Login with OIDC for Kusto
+        uses: azure/login@v1
+        with:
+          client-id: 743af79e-ad6b-4e59-a3f5-fc4996ffe1d8
+          tenant-id: 72f988bf-86f1-41af-91ab-2d7cd011db47
+          allow-no-subscriptions: true
+
+      - name: Execute Kusto query
+        shell: bash
+        env:
+          KUSTO_QUERY_INPUT: ${{ inputs.query || '' }}
+          KUSTO_QUERY_SECRET: ${{ secrets.NET_ISO_RESOLVER_QUERY }}
+        run: |
+          query="${KUSTO_QUERY_SECRET:-$KUSTO_QUERY_INPUT}"
+
+          if [ -z "$query" ]; then
+            echo "A Kusto query must be provided by input or NET_ISO_RESOLVER_QUERY secret." >&2
+            exit 1
+          fi
+
+          python eng/scripts/python/kusto-query-executor/kusto-query-executor.py \
+            --cluster "${{ inputs.cluster || 'https://oneespipelinesprod.westus3.kusto.windows.net/' }}" \
+            --database "${{ inputs.database || 'oneespipelinetemplatesprod' }}" \
+            --query "$query" \
+            --output-format json \
+            --output-file kusto-query-result.json
 
       - name: Azure Login with OIDC for DevOps
         uses: azure/login@v1
@@ -63,7 +90,6 @@ jobs:
         id: resolve
         shell: pwsh
         env:
-          QUERY_RESULT: ${{ needs.kusto.outputs.query_result }}
           ADO_ORG: ${{ inputs.devops_org || 'azure-sdk' }}
         run: |
           Set-StrictMode -Version 4
@@ -71,11 +97,10 @@ jobs:
 
           . ./eng/common/scripts/Invoke-DevOpsAPI.ps1
 
-          if ([string]::IsNullOrWhiteSpace($env:QUERY_RESULT)) {
-            throw "Kusto query returned no result."
+          if (-not (Test-Path -Path kusto-query-result.json)) {
+            throw "Kusto query did not create kusto-query-result.json. Check the Execute Kusto query step logs."
           }
 
-          $env:QUERY_RESULT | Set-Content -Path kusto-query-result.json
           $rows = Get-Content -Path kusto-query-result.json -Raw | ConvertFrom-Json
           if ($null -eq $rows) {
             $rows = @()
@@ -138,7 +163,12 @@ jobs:
             }
           }
 
-          $enriched | ConvertTo-Json -Depth 20 | Set-Content -Path devops-pipeline-entrypoints.json
+          if ($enriched.Count -eq 0) {
+            "[]" | Set-Content -Path devops-pipeline-entrypoints.json
+          }
+          else {
+            $enriched | ConvertTo-Json -Depth 20 | Set-Content -Path devops-pipeline-entrypoints.json
+          }
           "resolved_count=$($enriched.Count)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           Write-Host "Resolved $($enriched.Count) pipeline entry point(s)."
 

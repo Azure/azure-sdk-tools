@@ -84,6 +84,7 @@ internal class VerifySetupServiceTests
                     { "tsp-client", "0.24.1" },
                     { "tsp", "1.0.1" },
                     { "pwsh", "PowerShell 7.2.0" },
+                    { "Get-InstalledModule", "Version Name\n------- ----\n12.5.0  Az" },
                     { "gh", "gh version 2.30.0" },
                     { "python", "Python 3.9.0" },
                     { "pip", "pip 24.0" },
@@ -219,7 +220,45 @@ internal class VerifySetupServiceTests
     }
 
     [Test]
-    public async Task VerifySetup_ReturnsInstructions_WhenRequirementFails()
+    public async Task VerifySetup_Fails_WhenAzurePowerShellNotInstalled()
+    {
+        // Azure PowerShell (Az) not installed: pwsh exits 0 but returns empty output
+        mockProcessHelper
+            .Setup(x => x.Run(
+                It.Is<ProcessOptions>(opt => opt.Args.Any(a => a.Contains("Get-InstalledModule"))),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult
+            {
+                ExitCode = 0,
+                OutputDetails = new List<(StdioLevel, string)> { (StdioLevel.StandardOutput, "") }
+            });
+        RecreateService();
+
+        var result = await verifySetupService.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.DotNet }, "/test/path/dotnet");
+
+        Assert.That(result.Results, Is.Not.Null.And.Not.Empty);
+        var azPsResult = result.Results!.FirstOrDefault(r => r.Requirement.Contains("Azure PowerShell"));
+        Assert.That(azPsResult, Is.Not.Null);
+        Assert.That(azPsResult!.IsAutoInstallable, Is.True);
+        Assert.That(azPsResult.Instructions, Is.Not.Empty);
+    }
+
+    [Test]
+    public async Task VerifySetup_SkipsAzurePowerShell_WhenPowerShellDependencyFails()
+    {
+        SetupFailedProcessMock("pwsh", 1, "pwsh: command not found");
+        RecreateService();
+
+        var result = await verifySetupService.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.DotNet }, "/test/path/dotnet");
+
+        Assert.That(result.Results, Is.Not.Null.And.Not.Empty);
+        var azPsResult = result.Results!.FirstOrDefault(r => r.Requirement.Contains("Azure PowerShell"));
+        Assert.That(azPsResult, Is.Not.Null);
+        Assert.That(azPsResult!.RequirementStatusDetails, Does.Contain("Skipped"));
+        Assert.That(azPsResult.RequirementStatusDetails, Does.Contain("PowerShell"));
+    }
+
+
     {
         SetupFailedProcessMock("node", 1, "node: command not found");
         RecreateService();

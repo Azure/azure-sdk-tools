@@ -128,7 +128,7 @@ extends:
                     inputs:
                       azureSubscription: "APIview staging resource group"
                       appType: "webApp"
-                      WebAppName: "azsdk-releaseplan-dashboard-staging"
+                      WebAppName: "releaseplan-dashboard-test"
                       ResourceGroupName: ReleasePlan-Dashboard
                       packageForLinux: "$(Pipeline.Workspace)/release-plan/**/release-plan.zip"
                       ScriptType: "Inline Script"

@@ -8,10 +8,10 @@ environment: azsdk-mcp
 
 # Execution configuration
 config:
-  runs: 1                      # Trials per stimulus
-  timeout: "1800s"                # Seconds per trial
-  model: claude-opus-4.6    #gpt-4o #claude-sonnet-4.6 # Model for agent execution
-  executor: copilot-sdk        # Which executor to use
+  runs: 1                        # Trials per stimulus
+  timeout: "660s"                # Seconds per trial
+  model: claude-opus-4.6         #gpt-4o #claude-sonnet-4.6 # Model for agent execution
+  executor: copilot-sdk          # Which executor to use
 
 # Test cases
 stimuli:
@@ -27,8 +27,10 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
       dest: tspconfig.yaml
-    - src: ../fixtures/001-share-version-new-feature/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/001-share-version-new-feature/readme.md
       dest: readme.md
   graders:
@@ -61,8 +63,8 @@ stimuli:
       scoring: scale_1_5
       threshold: 1.0
   constraints:
-    max_turns: 10
-    max_tokens: 50000
+    max_turns: 5
+    max_tokens: 100000
 scoring:
   weights:
     file-matches: 3

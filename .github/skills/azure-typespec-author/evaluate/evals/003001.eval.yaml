@@ -8,27 +8,29 @@ environment: azsdk-mcp
 
 # Execution configuration
 config:
-  runs: 1                      # Trials per stimulus
-  timeout: "1800s"                # Seconds per trial
-  model: claude-opus-4.6    #gpt-4o #claude-sonnet-4.6 # Model for agent execution
-  executor: copilot-sdk        # Which executor to use
+  runs: 1                        # Trials per stimulus
+  timeout: "660s"                # Seconds per trial
+  model: claude-opus-4.6         #gpt-4o #claude-sonnet-4.6 # Model for agent execution
+  executor: copilot-sdk          # Which executor to use
 
 # Test cases
 stimuli:
 - prompt: |
-    Add a move async operation to move employee, operation's request is MoveRequest, response is MoveResponse
+    Add a post async operation to move employee, operation's request is MoveRequest, response is MoveResponse.
   name: 003001-arm-action-lro
   constraints:
     max_turns: 10
-    max_tokens: 5000
+    max_tokens: 100000
   environment:
     files:
     - src: ../fixtures/003-long-running-operation-share/employee.tsp
       dest: employee.tsp
     - src: ../fixtures/003-long-running-operation-share/main.tsp
       dest: main.tsp
-    - src: ../fixtures/003-long-running-operation-share/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/003-long-running-operation-share/readme.md
       dest: readme.md
     - src: ../fixtures/003-long-running-operation-share/shared.tsp

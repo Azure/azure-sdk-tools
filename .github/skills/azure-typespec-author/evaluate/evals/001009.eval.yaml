@@ -8,10 +8,10 @@ environment: azsdk-mcp
 
 # Execution configuration
 config:
-  runs: 1                      # Trials per stimulus
-  timeout: "1800s"                # Seconds per trial
-  model: claude-opus-4.6    #gpt-4o #claude-sonnet-4.6 # Model for agent execution
-  executor: copilot-sdk        # Which executor to use
+  runs: 1                        # Trials per stimulus
+  timeout: "660s"                # Seconds per trial
+  model: claude-opus-4.6         #gpt-4o #claude-sonnet-4.6 # Model for agent execution
+  executor: copilot-sdk          # Which executor to use
 
 # Test cases
 stimuli:
@@ -19,16 +19,18 @@ stimuli:
     In the Widget project, make the `email` property required in EmployeeProperties only for version `2025-05-04-preview`.
   name: 001009-version-model-property-required
   constraints:
-    max_turns: 10
-    max_tokens: 5000
+    max_turns: 6
+    max_tokens: 100000
   environment:
     files:
     - src: ../fixtures/001-share-version-new-feature/employee.tsp
       dest: Microsoft.Widget/Widget/employee.tsp
     - src: ../fixtures/001-share-version-new-feature/main.tsp
       dest: Microsoft.Widget/Widget/main.tsp
-    - src: ../fixtures/001-share-version-new-feature/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: Microsoft.Widget/Widget/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: Microsoft.Widget/Widget/package-lock.json
     - src: ../fixtures/001-share-version-new-feature/readme.md
       dest: Microsoft.Widget/Widget/readme.md
     - src: ../fixtures/001-share-version-new-feature/shared.tsp

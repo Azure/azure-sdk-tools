@@ -1,7 +1,10 @@
 ---
-description: Resolve network isolation pipeline entry points and verify the agent can read the resolver output.
+description: Resolve network isolation issues
 timeout-minutes: 60
 on:
+  push:
+    branches:
+      - NetworkIsolationResolverAgent
   workflow_dispatch:
     inputs:
       cluster:

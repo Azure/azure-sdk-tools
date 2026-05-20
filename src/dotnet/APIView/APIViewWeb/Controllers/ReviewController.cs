@@ -3,11 +3,13 @@
 
 using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 
 namespace APIViewWeb.Controllers
 {
+    [Authorize("RequireTokenAuthentication")]
     public class ReviewController : Controller
     {
         private readonly IReviewManager _reviewManager;
@@ -20,7 +22,7 @@ namespace APIViewWeb.Controllers
             _apiRevisionManager = apiRevisionManager;
         }
 
-        [HttpGet]
+        [HttpPost]
         public async Task<ActionResult> UpdateApiReview(string repoName, string artifactPath, string buildId, string project = "internal", string metadataFile = null)
         {
             await _apiRevisionManager.UpdateAPIRevisionCodeFileAsync(repoName, buildId, artifactPath, project, metadataFile);

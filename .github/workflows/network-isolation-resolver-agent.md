@@ -1,7 +1,10 @@
 ---
-description: Resolve network isolation pipeline entry points and verify the agent can read the resolver output.
+description: Resolve network isolation issues
 timeout-minutes: 60
 on:
+  push:
+    branches:
+      - NetworkIsolationResolverAgent
   workflow_dispatch:
     inputs:
       cluster:
@@ -27,12 +30,42 @@ on:
 permissions:
   id-token: write
   contents: read
+  issues: read
+  pull-requests: read
+network:
+  allowed:
+    - defaults
+    - dev.azure.com
+    - visualstudio.com
+    - login.microsoftonline.com
+    - azure.com
+tools:
+  github:
+    toolsets: [repos, issues, pull_requests, search]
+    min-integrity: approved
+    allowed-repos:
+      - azure/*
+    github-token: ${{ secrets.GH_AW_GITHUB_MCP_SERVER_TOKEN }}
 strict: false
 safe-outputs:
+  create-pull-request:
+    github-token: ${{ secrets.GH_AW_GITHUB_TOKEN }}
+    allowed-repos:
+      - azure/*
+    title-prefix: "[CFS] "
+    reviewers:
+      - chidozieononiwu
+    draft: false
+    max: 10
+    base-branch: main
+    preserve-branch-name: true
+    protected-files: fallback-to-issue
   noop:
 steps:
   - name: Checkout repository
     uses: actions/checkout@v4
+    with:
+      persist-credentials: false
 
   - name: Set up Python
     uses: actions/setup-python@v5
@@ -148,6 +181,7 @@ steps:
           PipelineDefinitionId = $definitionId
           TaskName = $row.TaskName
           JobName = $row.JobName
+          DomainName = $row.DomainName
           RepositoryId = $row.RepositoryId
           RepositoryName = $definition.repository.name
           SourceBranch = $build.sourceBranch
@@ -172,20 +206,68 @@ steps:
 
 # Network Isolation Resolver Agent
 
-You are an AI agent that verifies the network isolation resolver output from the setup steps that ran before you.
+You are an AI agent that fixes network isolation issues found by the resolver setup steps that ran before you.
 
 ## Starting Context
 
-Start by reading `devops-pipeline-entrypoints.json`. Treat that file as the authoritative output from the resolver setup steps.
+Start by reading `devops-pipeline-entrypoints.json`. Treat that file as the authoritative list of work items. Each item may contain:
 
-## Behavior
+- `ProjectName`
+- `BuildId`
+- `PipelineDefinitionId`
+- `TaskName`
+- `JobName`
+- `DomainName`
+- `RepositoryId`
+- `RepositoryName`
+- `SourceBranch`
+- `SourceVersion`
+- `PipelineName`
+- `PipelinePath`
+- `YamlFilename`
+- `BuildUrl`
 
-1. Read `devops-pipeline-entrypoints.json`.
-2. If the file is missing or unreadable, call `noop` with a concise explanation.
-3. Otherwise, call `noop` confirming the agent can read the resolver output and include the number of pipeline entry points found.
+If the file is missing, unreadable, malformed, or empty, call `noop` with a concise explanation and stop.
 
-## Scope
+## Required Workflow
 
-- Do not modify repository files.
-- Do not trigger Azure DevOps pipelines or GitHub workflows yet.
-- Only validate that the agentic side can read the resolver output.
+Process entries strictly one at a time. Fully finish the current entry before starting the next entry. Keep each target repository checkout in a separate directory under `/tmp/network-isolation-repos` so context from different entries cannot mix.
+
+For each entry:
+
+1. Validate that `ProjectName`, `BuildId`, `PipelineDefinitionId`, `JobName`, `RepositoryName` or `RepositoryId`, and `YamlFilename` are present. If required data is missing, record the skipped entry in your final summary and continue to the next entry.
+2. Determine the target GitHub repository from `RepositoryName`. If `RepositoryName` is already in `owner/repo` format, use it as-is. If it is only a repository name, use `Azure/<RepositoryName>`. Use `RepositoryId` only as supporting identity when inspecting Azure DevOps metadata.
+3. Locate the pipeline entry point using `YamlFilename`. Start investigation from that YAML file and follow templates, extends, jobs, stages, and included pipeline files until you identify the job corresponding to `JobName`.
+4. Before making a change, search the target GitHub repository for recent pull requests with `CFS` or `network isolation` in the title. Use those examples only as implementation guidance so the fix follows the repository's established remediation pattern.
+5. Diagnose why the job is failing network isolation. Use `DomainName`, `TaskName`, the located pipeline code, nearby allowlist/network-isolation patterns in the checked-out repository, and relevant prior PR examples.
+6. Code the smallest targeted fix in the target repository. Preserve the repository's existing pipeline style and avoid unrelated formatting or refactors.
+7. Prepare a branch name for only that entry. Use a branch name that starts with `network-isolation-cfs-` and includes the pipeline definition ID and the build ID.
+8. Do not run `git push`, `gh auth login`, or `gh pr create`. Branch push and pull request creation must happen through the `create_pull_request` safe-output tool.
+9. Request a pull request against the target repository's `main` branch using the `create_pull_request` safe-output tool. Include the target repository in the tool call's `repo` field using `owner/repo` format. The pull request title must include `CFS`. The pull request body must include:
+  - the network isolation domain being fixed,
+  - the affected job name,
+  - the pipeline entry point YAML path,
+  - the pipeline run URL,
+  - a short explanation of the change.
+10. Reviewer assignment for `chidozieononiwu` is configured on the pull request safe output. If reviewer assignment fails, include that limitation in your final summary.
+11. Clear your working context for the completed entry before moving to the next one.
+
+## Azure DevOps Guidance
+
+The setup steps already resolved Azure DevOps pipeline metadata into `devops-pipeline-entrypoints.json`. Do not make additional Azure DevOps calls unless the entry is missing required metadata that can only be recovered from Azure DevOps.
+
+Use the Azure DevOps organization from the workflow input when needed; the default is `azure-sdk`.
+
+## Output
+
+When all entries are processed and no pull requests were requested, call `noop` once with a concise final summary. Include:
+
+- total entries read,
+- entries fixed,
+- pull request URLs created,
+- entries skipped and why,
+- entries attempted but not completed and why.
+
+Do not call `noop` after calling `create_pull_request`; safe-output pull request creation is the final action for those entries.
+
+Do not process entries concurrently. Do not reuse a checkout, branch, or diagnosis from one entry for another entry.

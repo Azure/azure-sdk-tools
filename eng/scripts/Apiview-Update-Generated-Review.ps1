@@ -2,8 +2,6 @@
 param (
   [Parameter(Mandatory = $true)]
   [string]$BuildId,
-  [Parameter(Mandatory = $true)]
-  [string]$ApiviewResourceId,
   [string]$RepoName = "azure/azure-sdk-tools",
   [string]$ArtifactName = "apiview",
   [string]$MetadataFileName = "",
@@ -26,10 +24,10 @@ param (
 ####################################################################################################################
 
 # Acquire Entra ID token for APIView app registration
-$tokenResponse = Get-AzAccessToken -ResourceUrl "api://$ApiviewResourceId"
+$tokenResponse = Get-AzAccessToken -ResourceUrl "api://apiview"
 $token = $tokenResponse.Token
 if (-not $token) {
-    Write-Error "Failed to acquire access token for APIView (resource: api://$ApiviewResourceId)"
+    Write-Error "Failed to acquire access token for APIView (resource: api://apiview)"
     exit 1
 }
 

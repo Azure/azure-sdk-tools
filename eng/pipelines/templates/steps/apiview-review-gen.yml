@@ -5,9 +5,6 @@ parameters:
   - name: APIViewURL
     type: string
     default: ''
-  - name: APIViewResourceId
-    type: string
-    default: ''
   - name: StorageContainerUrl
     type: string
     default: ''
@@ -51,6 +48,5 @@ steps:
     ScriptArguments: >
       -BuildId $(Build.BuildId)
       -ApiviewUpdateUrl "${{ parameters.APIViewURL}}/review/UpdateApiReview"
-      -ApiviewResourceId "${{ parameters.APIViewResourceId }}"
     azurePowerShellVersion: latestVersion
     pwsh: true

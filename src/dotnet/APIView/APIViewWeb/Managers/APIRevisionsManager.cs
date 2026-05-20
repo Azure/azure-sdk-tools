@@ -235,7 +235,12 @@ namespace APIViewWeb.Managers
 
             if (!string.IsNullOrEmpty(packageVersion) && !string.IsNullOrEmpty(reviewId))
             {
-                APIVersionModel versionModel = await _apiVersionsManager.GetOrCreateVersionAsync(reviewId, packageVersion, language, prNumber, sourceBranch);
+                APIVersionModel versionModel = await _apiVersionsManager.GetOrCreateVersionAsync(
+                    reviewId,
+                    packageVersion,
+                    language: language,
+                    pullRequestNo: prNumber,
+                    sourceBranch: sourceBranch);
                 apiRevision.APIVersionId = versionModel.Id;
             }
 

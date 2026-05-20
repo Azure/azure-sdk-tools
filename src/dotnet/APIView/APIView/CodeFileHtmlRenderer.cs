@@ -121,7 +121,7 @@ namespace APIViewLegacy
 
         private string EscapeHTML(string word)
         {
-            return word.Replace("<", "&lt;").Replace(">", "&gt;");
+            return word.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;");
         }
     }
 }

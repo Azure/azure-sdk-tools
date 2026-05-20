@@ -40,7 +40,7 @@ namespace APIViewLegacy
             bool isHiddenApiToken = false;
             bool isDeprecatedToken = false;
             bool isSkipDiffRange = false;
-            bool isValidExternalLink = false;
+            bool? externalLinkOpen = null;
             Stack<SectionType> nodesInProcess = new Stack<SectionType>();
             int lineNumber = 0;
             (int Count, int Curr) tableColumnCount = (0, 0);
@@ -207,17 +207,25 @@ namespace APIViewLegacy
                             (linkUri.Scheme == Uri.UriSchemeHttps || linkUri.Scheme == Uri.UriSchemeHttp))
                         {
                             stringBuilder.Append("<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"").Append(HttpUtility.HtmlAttributeEncode(token.Value)).Append("\">");
-                            isValidExternalLink = true;
+                            externalLinkOpen = true;
                         }
                         else
                         {
                             stringBuilder.Append("<span>");
-                            isValidExternalLink = false;
+                            externalLinkOpen = false;
                         }
                         break;
 
                     case CodeFileTokenKind.ExternalLinkEnd:
-                        stringBuilder.Append(isValidExternalLink ? "</a>" : "</span>");
+                        if (externalLinkOpen == true)
+                        {
+                            stringBuilder.Append("</a>");
+                        }
+                        else if (externalLinkOpen == false)
+                        {
+                            stringBuilder.Append("</span>");
+                        }
+                        externalLinkOpen = null;
                         break;
 
                     default:

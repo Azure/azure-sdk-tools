@@ -174,6 +174,40 @@ namespace APIViewUnitTests
         }
 
         /// <summary>
+        /// Verifies that ampersands are encoded for all token kinds that use EscapeHTML,
+        /// preventing entity-based HTML injection (e.g., &amp;lt;img onerror=...&amp;gt;).
+        /// </summary>
+        [Theory]
+        [InlineData(CodeFileTokenKind.Text)]
+        [InlineData(CodeFileTokenKind.Punctuation)]
+        [InlineData(CodeFileTokenKind.Keyword)]
+        public void RenderToken_EntityBasedInjection_IsEncoded(CodeFileTokenKind kind)
+        {
+            // Arrange — value contains pre-encoded HTML entities that a browser would decode
+            var maliciousValue = "&lt;img onerror=alert(1)&gt;";
+            var tokens = new[]
+            {
+                new CodeFileToken(maliciousValue, kind),
+                new CodeFileToken("\n", CodeFileTokenKind.Newline)
+            };
+
+            var codeFile = new CodeFile
+            {
+                Tokens = tokens,
+                Language = "Json",
+                Name = "entity-injection-test"
+            };
+
+            // Act
+            var result = CodeFileHtmlRenderer.Normal.Render(codeFile);
+            var html = result.CodeLines.First().DisplayString;
+
+            // Assert — the ampersand is encoded so entities are displayed literally, not interpreted
+            html.Should().Contain("&amp;lt;");
+            html.Should().NotContain("&lt;img"); // must not pass through as decodable entity
+        }
+
+        /// <summary>
         /// Verifies that external links include rel="noopener noreferrer" to prevent reverse tabnabbing.
         /// </summary>
         [Fact]

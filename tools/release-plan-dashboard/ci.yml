@@ -32,7 +32,6 @@ extends:
     GenerateBaselines: true
     stages:
       - stage: Build
-        displayName: "Build and Test"
 
         variables:
           - ${{ if ne(variables['System.TeamProject'], 'internal') }}:

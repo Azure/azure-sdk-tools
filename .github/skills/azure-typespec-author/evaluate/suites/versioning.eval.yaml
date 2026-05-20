@@ -1,0 +1,652 @@
+name: azure-typespec-author-eval
+description: Evaluation suite for azure-typespec-author - versioning cases (001001-001013).
+version: "1.0"
+type: capability
+
+environment: azsdk-mcp
+
+config:
+  runs: 1
+  timeout: "660s"
+  model: claude-opus-4.6
+  executor: copilot-sdk
+  workers: 3
+
+stimuli:
+- name: 001001-version-spread-property
+  prompt: |
+    I added `...Azure.ResourceManager.ManagedServiceIdentityProperty;` which updates all my existing API versions and introduces a breaking change. I want to introduce the properties of the spread model '...ManagedServiceIdentityProperty' in API version 2025-05-04-preview only.
+  constraints:
+    max_turns: 5
+    max_tokens: 100000
+  environment:
+    files:
+      - src: ../fixtures/001-share-version-new-feature/employee.tsp
+        dest: employee.tsp
+      - src: ../fixtures/001-share-version-new-feature/main.tsp
+        dest: main.tsp
+      - src: ../fixtures/001-share-version-new-feature/shared.tsp
+        dest: shared.tsp
+      - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
+        dest: tspconfig.yaml
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: package.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: package-lock.json
+      - src: ../fixtures/001-share-version-new-feature/readme.md
+        dest: readme.md
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
+  graders:
+  - type: tool-calls
+    config:
+      required:
+        - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+        - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+        - azure-typespec-author
+
+- name: 001002-version-default-value
+  prompt: |
+    add a default value `21` for property age in model EmployeeProperties only for the new api version 2025-11-01
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+  environment:
+    files:
+      - src: ../fixtures/001002-version-default-value/employee.tsp
+        dest: employee.tsp
+      - src: ../fixtures/001002-version-default-value/main.tsp
+        dest: main.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: package.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: package-lock.json
+      - src: ../fixtures/001002-version-default-value/readme.md
+        dest: readme.md
+      - src: ../fixtures/001002-version-default-value/shared.tsp
+        dest: shared.tsp
+      - src: ../fixtures/001002-version-default-value/tspconfig.yaml
+        dest: tspconfig.yaml
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
+  graders:
+  - type: tool-calls
+    config:
+      required:
+        - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+        - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+        - azure-typespec-author
+
+- name: 001003-version-required-to-optional
+  prompt: |
+    change the property age of EmployeeProperties from required to optional only for api version 2025-05-04-preview
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+  environment:
+    files:
+      - src: ../fixtures/001-share-version-new-feature/employee.tsp
+        dest: employee.tsp
+      - src: ../fixtures/001-share-version-new-feature/main.tsp
+        dest: main.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: package.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: package-lock.json
+      - src: ../fixtures/001-share-version-new-feature/readme.md
+        dest: readme.md
+      - src: ../fixtures/001-share-version-new-feature/shared.tsp
+        dest: shared.tsp
+      - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
+        dest: tspconfig.yaml
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
+  graders:
+  - type: tool-calls
+    config:
+      required:
+        - edit
+        - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+        - azure-typespec-author
+
+- name: 001004-version-property-decorator
+  prompt: |
+    change the visibility of property 'provisioningState' from Lifecycle.Read to Lifecycle.Read and Lifecycle.Create in version 2025-05-04-preview only
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+  environment:
+    files:
+      - src: ../fixtures/001-share-version-new-feature/employee.tsp
+        dest: employee.tsp
+      - src: ../fixtures/001-share-version-new-feature/main.tsp
+        dest: main.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: package.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: package-lock.json
+      - src: ../fixtures/001-share-version-new-feature/readme.md
+        dest: readme.md
+      - src: ../fixtures/001-share-version-new-feature/shared.tsp
+        dest: shared.tsp
+      - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
+        dest: tspconfig.yaml
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
+  graders:
+  - type: tool-calls
+    config:
+      required:
+        - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+        - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+        - azure-typespec-author
+
+- name: 001005-version-add-preview-after-preview
+  prompt: |
+    Add a new preview version `2025-05-04-preview` to my service widget resource manager. Exclude Feature: `age` property with default value 21. Carry other features.
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+  environment:
+    files:
+      - src: ../fixtures/001005-version-add-preview-after-preview/employee.tsp
+        dest: employee.tsp
+      - src: ../fixtures/001005-version-add-preview-after-preview/main.tsp
+        dest: main.tsp
+      - src: ../fixtures/001005-version-add-preview-after-preview/shared.tsp
+        dest: shared.tsp
+      - src: ../fixtures/001005-version-add-preview-after-preview/tspconfig.yaml
+        dest: tspconfig.yaml
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: package.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: package-lock.json
+      - src: ../fixtures/001005-version-add-preview-after-preview/examples/2024-10-01-preview/Employees_CreateOrUpdate_MaximumSet_Gen.json
+        dest: examples/2024-10-01-preview/Employees_CreateOrUpdate_MaximumSet_Gen.json
+      - src: ../fixtures/001005-version-add-preview-after-preview/examples/2024-10-01-preview/Employees_Delete_MaximumSet_Gen.json
+        dest: examples/2024-10-01-preview/Employees_Delete_MaximumSet_Gen.json
+      - src: ../fixtures/001005-version-add-preview-after-preview/examples/2024-10-01-preview/Employees_Get_MaximumSet_Gen.json
+        dest: examples/2024-10-01-preview/Employees_Get_MaximumSet_Gen.json
+      - src: ../fixtures/001005-version-add-preview-after-preview/examples/2024-10-01-preview/Employees_ListByResourceGroup_MaximumSet_Gen.json
+        dest: examples/2024-10-01-preview/Employees_ListByResourceGroup_MaximumSet_Gen.json
+      - src: ../fixtures/001005-version-add-preview-after-preview/examples/2024-10-01-preview/Employees_ListBySubscription_MaximumSet_Gen.json
+        dest: examples/2024-10-01-preview/Employees_ListBySubscription_MaximumSet_Gen.json
+      - src: ../fixtures/001005-version-add-preview-after-preview/examples/2024-10-01-preview/Employees_Update_MaximumSet_Gen.json
+        dest: examples/2024-10-01-preview/Employees_Update_MaximumSet_Gen.json
+      - src: ../fixtures/001005-version-add-preview-after-preview/examples/2024-10-01-preview/Operations_List_MaximumSet_Gen.json
+        dest: examples/2024-10-01-preview/Operations_List_MaximumSet_Gen.json
+      - src: ../fixtures/001005-version-add-preview-after-preview/examples/2024-10-01-preview/Operations_List_MinimumSet_Gen.json
+        dest: examples/2024-10-01-preview/Operations_List_MinimumSet_Gen.json
+      - src: ../fixtures/001005-version-add-preview-after-preview/examples/2021-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
+      - src: ../fixtures/001005-version-add-preview-after-preview/examples/2021-10-01/Employees_Delete_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Employees_Delete_MaximumSet_Gen.json
+      - src: ../fixtures/001005-version-add-preview-after-preview/examples/2021-10-01/Employees_Get_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Employees_Get_MaximumSet_Gen.json
+      - src: ../fixtures/001005-version-add-preview-after-preview/examples/2021-10-01/Employees_ListByResourceGroup_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Employees_ListByResourceGroup_MaximumSet_Gen.json
+      - src: ../fixtures/001005-version-add-preview-after-preview/examples/2021-10-01/Employees_ListByResourceGroup_MinimumSet_Gen.json
+        dest: examples/2021-10-01/Employees_ListByResourceGroup_MinimumSet_Gen.json
+      - src: ../fixtures/001005-version-add-preview-after-preview/examples/2021-10-01/Employees_ListBySubscription_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Employees_ListBySubscription_MaximumSet_Gen.json
+      - src: ../fixtures/001005-version-add-preview-after-preview/examples/2021-10-01/Employees_ListBySubscription_MinimumSet_Gen.json
+        dest: examples/2021-10-01/Employees_ListBySubscription_MinimumSet_Gen.json
+      - src: ../fixtures/001005-version-add-preview-after-preview/examples/2021-10-01/Employees_Update_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Employees_Update_MaximumSet_Gen.json
+      - src: ../fixtures/001005-version-add-preview-after-preview/examples/2021-10-01/Operations_List_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Operations_List_MaximumSet_Gen.json
+      - src: ../fixtures/001005-version-add-preview-after-preview/examples/2021-10-01/Operations_List_MinimumSet_Gen.json
+        dest: examples/2021-10-01/Operations_List_MinimumSet_Gen.json
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
+  graders:
+  - type: tool-calls
+    config:
+      required:
+        - edit
+        - web_fetch
+        - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+        - azure-typespec-author
+
+- name: 001006-version-add-preview-after-stable
+  prompt: |
+    Add a new preview version `2025-05-04-preview` to my service widget resource manager. Carry over all the features from the latest stable version
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+  environment:
+    files:
+      - src: ../fixtures/001006-version-add-preview-after-stable/employee.tsp
+        dest: employee.tsp
+      - src: ../fixtures/001006-version-add-preview-after-stable/main.tsp
+        dest: main.tsp
+      - src: ../fixtures/001006-version-add-preview-after-stable/shared.tsp
+        dest: shared.tsp
+      - src: ../fixtures/001006-version-add-preview-after-stable/tspconfig.yaml
+        dest: tspconfig.yaml
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: package.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: package-lock.json
+      - src: ../fixtures/001006-version-add-preview-after-stable/examples/2021-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
+      - src: ../fixtures/001006-version-add-preview-after-stable/examples/2021-10-01/Employees_Delete_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Employees_Delete_MaximumSet_Gen.json
+      - src: ../fixtures/001006-version-add-preview-after-stable/examples/2021-10-01/Employees_Get_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Employees_Get_MaximumSet_Gen.json
+      - src: ../fixtures/001006-version-add-preview-after-stable/examples/2021-10-01/Employees_ListByResourceGroup_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Employees_ListByResourceGroup_MaximumSet_Gen.json
+      - src: ../fixtures/001006-version-add-preview-after-stable/examples/2021-10-01/Employees_ListBySubscription_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Employees_ListBySubscription_MaximumSet_Gen.json
+      - src: ../fixtures/001006-version-add-preview-after-stable/examples/2021-10-01/Employees_Update_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Employees_Update_MaximumSet_Gen.json
+      - src: ../fixtures/001006-version-add-preview-after-stable/examples/2021-10-01/Operations_List_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Operations_List_MaximumSet_Gen.json
+      - src: ../fixtures/001006-version-add-preview-after-stable/examples/2021-10-01/Operations_List_MinimumSet_Gen.json
+        dest: examples/2021-10-01/Operations_List_MinimumSet_Gen.json
+      - src: ../fixtures/001006-version-add-preview-after-stable/examples/2024-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
+        dest: examples/2024-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
+      - src: ../fixtures/001006-version-add-preview-after-stable/examples/2024-10-01/Employees_Delete_MaximumSet_Gen.json
+        dest: examples/2024-10-01/Employees_Delete_MaximumSet_Gen.json
+      - src: ../fixtures/001006-version-add-preview-after-stable/examples/2024-10-01/Employees_Get_MaximumSet_Gen.json
+        dest: examples/2024-10-01/Employees_Get_MaximumSet_Gen.json
+      - src: ../fixtures/001006-version-add-preview-after-stable/examples/2024-10-01/Employees_ListByResourceGroup_MaximumSet_Gen.json
+        dest: examples/2024-10-01/Employees_ListByResourceGroup_MaximumSet_Gen.json
+      - src: ../fixtures/001006-version-add-preview-after-stable/examples/2024-10-01/Employees_ListByResourceGroup_MinimumSet_Gen.json
+        dest: examples/2024-10-01/Employees_ListByResourceGroup_MinimumSet_Gen.json
+      - src: ../fixtures/001006-version-add-preview-after-stable/examples/2024-10-01/Employees_ListBySubscription_MaximumSet_Gen.json
+        dest: examples/2024-10-01/Employees_ListBySubscription_MaximumSet_Gen.json
+      - src: ../fixtures/001006-version-add-preview-after-stable/examples/2024-10-01/Employees_ListBySubscription_MinimumSet_Gen.json
+        dest: examples/2024-10-01/Employees_ListBySubscription_MinimumSet_Gen.json
+      - src: ../fixtures/001006-version-add-preview-after-stable/examples/2024-10-01/Employees_Update_MaximumSet_Gen.json
+        dest: examples/2024-10-01/Employees_Update_MaximumSet_Gen.json
+      - src: ../fixtures/001006-version-add-preview-after-stable/examples/2024-10-01/Operations_List_MaximumSet_Gen.json
+        dest: examples/2024-10-01/Operations_List_MaximumSet_Gen.json
+      - src: ../fixtures/001006-version-add-preview-after-stable/examples/2024-10-01/Operations_List_MinimumSet_Gen.json
+        dest: examples/2024-10-01/Operations_List_MinimumSet_Gen.json
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
+  graders:
+  - type: tool-calls
+    config:
+      required:
+        - edit
+        - web_fetch
+        - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+        - azure-typespec-author
+
+- name: 001007-version-add-stable-after-preview
+  prompt: |
+    I want to add a new stable version `2025-01-01`. Exclude `workLocation` property and `WorkLocation` model. Carry other features.
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+  environment:
+    files:
+      - src: ../fixtures/001007-version-add-stable-after-preview/employee.tsp
+        dest: employee.tsp
+      - src: ../fixtures/001007-version-add-stable-after-preview/main.tsp
+        dest: main.tsp
+      - src: ../fixtures/001007-version-add-stable-after-preview/shared.tsp
+        dest: shared.tsp
+      - src: ../fixtures/001007-version-add-stable-after-preview/tspconfig.yaml
+        dest: tspconfig.yaml
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: package.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: package-lock.json
+      - src: ../fixtures/001007-version-add-stable-after-preview/readme.md
+        dest: readme.md
+      - src: ../fixtures/001007-version-add-stable-after-preview/examples/2021-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
+      - src: ../fixtures/001007-version-add-stable-after-preview/examples/2021-10-01/Employees_Delete_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Employees_Delete_MaximumSet_Gen.json
+      - src: ../fixtures/001007-version-add-stable-after-preview/examples/2021-10-01/Employees_Get_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Employees_Get_MaximumSet_Gen.json
+      - src: ../fixtures/001007-version-add-stable-after-preview/examples/2021-10-01/Employees_ListByResourceGroup_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Employees_ListByResourceGroup_MaximumSet_Gen.json
+      - src: ../fixtures/001007-version-add-stable-after-preview/examples/2021-10-01/Employees_ListByResourceGroup_MinimumSet_Gen.json
+        dest: examples/2021-10-01/Employees_ListByResourceGroup_MinimumSet_Gen.json
+      - src: ../fixtures/001007-version-add-stable-after-preview/examples/2021-10-01/Employees_ListBySubscription_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Employees_ListBySubscription_MaximumSet_Gen.json
+      - src: ../fixtures/001007-version-add-stable-after-preview/examples/2021-10-01/Employees_ListBySubscription_MinimumSet_Gen.json
+        dest: examples/2021-10-01/Employees_ListBySubscription_MinimumSet_Gen.json
+      - src: ../fixtures/001007-version-add-stable-after-preview/examples/2021-10-01/Employees_Update_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Employees_Update_MaximumSet_Gen.json
+      - src: ../fixtures/001007-version-add-stable-after-preview/examples/2021-10-01/Operations_List_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Operations_List_MaximumSet_Gen.json
+      - src: ../fixtures/001007-version-add-stable-after-preview/examples/2021-10-01/Operations_List_MinimumSet_Gen.json
+        dest: examples/2021-10-01/Operations_List_MinimumSet_Gen.json
+      - src: ../fixtures/001007-version-add-stable-after-preview/examples/2024-10-01-preview/Employees_CreateOrUpdate_MaximumSet_Gen.json
+        dest: examples/2024-10-01-preview/Employees_CreateOrUpdate_MaximumSet_Gen.json
+      - src: ../fixtures/001007-version-add-stable-after-preview/examples/2024-10-01-preview/Employees_Delete_MaximumSet_Gen.json
+        dest: examples/2024-10-01-preview/Employees_Delete_MaximumSet_Gen.json
+      - src: ../fixtures/001007-version-add-stable-after-preview/examples/2024-10-01-preview/Employees_Get_MaximumSet_Gen.json
+        dest: examples/2024-10-01-preview/Employees_Get_MaximumSet_Gen.json
+      - src: ../fixtures/001007-version-add-stable-after-preview/examples/2024-10-01-preview/Employees_ListByResourceGroup_MaximumSet_Gen.json
+        dest: examples/2024-10-01-preview/Employees_ListByResourceGroup_MaximumSet_Gen.json
+      - src: ../fixtures/001007-version-add-stable-after-preview/examples/2024-10-01-preview/Employees_ListByResourceGroup_MinimumSet_Gen.json
+        dest: examples/2024-10-01-preview/Employees_ListByResourceGroup_MinimumSet_Gen.json
+      - src: ../fixtures/001007-version-add-stable-after-preview/examples/2024-10-01-preview/Employees_ListBySubscription_MaximumSet_Gen.json
+        dest: examples/2024-10-01-preview/Employees_ListBySubscription_MaximumSet_Gen.json
+      - src: ../fixtures/001007-version-add-stable-after-preview/examples/2024-10-01-preview/Employees_ListBySubscription_MinimumSet_Gen.json
+        dest: examples/2024-10-01-preview/Employees_ListBySubscription_MinimumSet_Gen.json
+      - src: ../fixtures/001007-version-add-stable-after-preview/examples/2024-10-01-preview/Employees_Update_MaximumSet_Gen.json
+        dest: examples/2024-10-01-preview/Employees_Update_MaximumSet_Gen.json
+      - src: ../fixtures/001007-version-add-stable-after-preview/examples/2024-10-01-preview/Operations_List_MaximumSet_Gen.json
+        dest: examples/2024-10-01-preview/Operations_List_MaximumSet_Gen.json
+      - src: ../fixtures/001007-version-add-stable-after-preview/examples/2024-10-01-preview/Operations_List_MinimumSet_Gen.json
+        dest: examples/2024-10-01-preview/Operations_List_MinimumSet_Gen.json
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
+  graders:
+  - type: tool-calls
+    config:
+      required:
+        - edit
+        - web_fetch
+        - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+        - azure-typespec-author
+
+- name: 001008-version-add-stable-after-stable
+  prompt: |
+    Add a new stable version `2025-01-01` to my service. Carry over changes.
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+  environment:
+    files:
+      - src: ../fixtures/001008-version-add-stable-after-stable/employee.tsp
+        dest: employee.tsp
+      - src: ../fixtures/001008-version-add-stable-after-stable/main.tsp
+        dest: main.tsp
+      - src: ../fixtures/001008-version-add-stable-after-stable/shared.tsp
+        dest: shared.tsp
+      - src: ../fixtures/001008-version-add-stable-after-stable/tspconfig.yaml
+        dest: tspconfig.yaml
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: package.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: package-lock.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/readme.md
+        dest: readme.md
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2021-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2021-10-01/Employees_Delete_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Employees_Delete_MaximumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2021-10-01/Employees_Get_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Employees_Get_MaximumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2021-10-01/Employees_ListByResourceGroup_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Employees_ListByResourceGroup_MaximumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2021-10-01/Employees_ListByResourceGroup_MinimumSet_Gen.json
+        dest: examples/2021-10-01/Employees_ListByResourceGroup_MinimumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2021-10-01/Employees_ListBySubscription_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Employees_ListBySubscription_MaximumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2021-10-01/Employees_ListBySubscription_MinimumSet_Gen.json
+        dest: examples/2021-10-01/Employees_ListBySubscription_MinimumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2021-10-01/Employees_Update_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Employees_Update_MaximumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2021-10-01/Operations_List_MaximumSet_Gen.json
+        dest: examples/2021-10-01/Operations_List_MaximumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2021-10-01/Operations_List_MinimumSet_Gen.json
+        dest: examples/2021-10-01/Operations_List_MinimumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2024-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
+        dest: examples/2024-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2024-10-01/Employees_Delete_MaximumSet_Gen.json
+        dest: examples/2024-10-01/Employees_Delete_MaximumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2024-10-01/Employees_Get_MaximumSet_Gen.json
+        dest: examples/2024-10-01/Employees_Get_MaximumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2024-10-01/Employees_ListByResourceGroup_MaximumSet_Gen.json
+        dest: examples/2024-10-01/Employees_ListByResourceGroup_MaximumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2024-10-01/Employees_ListByResourceGroup_MinimumSet_Gen.json
+        dest: examples/2024-10-01/Employees_ListByResourceGroup_MinimumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2024-10-01/Employees_ListBySubscription_MaximumSet_Gen.json
+        dest: examples/2024-10-01/Employees_ListBySubscription_MaximumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2024-10-01/Employees_ListBySubscription_MinimumSet_Gen.json
+        dest: examples/2024-10-01/Employees_ListBySubscription_MinimumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2024-10-01/Employees_Update_MaximumSet_Gen.json
+        dest: examples/2024-10-01/Employees_Update_MaximumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2024-10-01/Operations_List_MaximumSet_Gen.json
+        dest: examples/2024-10-01/Operations_List_MaximumSet_Gen.json
+      - src: ../fixtures/001008-version-add-stable-after-stable/examples/2024-10-01/Operations_List_MinimumSet_Gen.json
+        dest: examples/2024-10-01/Operations_List_MinimumSet_Gen.json
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
+  graders:
+  - type: tool-calls
+    config:
+      required:
+        - edit
+        - web_fetch
+        - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+        - azure-typespec-author
+
+- name: 001009-version-model-property-required
+  prompt: |
+    In the Widget project, make the `email` property required in EmployeeProperties only for version `2025-05-04-preview`.
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+  environment:
+    files:
+      - src: ../fixtures/001-share-version-new-feature/employee.tsp
+        dest: Microsoft.Widget/Widget/employee.tsp
+      - src: ../fixtures/001-share-version-new-feature/main.tsp
+        dest: Microsoft.Widget/Widget/main.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: Microsoft.Widget/Widget/package.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: Microsoft.Widget/Widget/package-lock.json
+      - src: ../fixtures/Microsoft.Widget/Widget/node_modules
+        dest: Microsoft.Widget/Widget/node_modules
+      - src: ../fixtures/001-share-version-new-feature/readme.md
+        dest: Microsoft.Widget/Widget/readme.md
+      - src: ../fixtures/001-share-version-new-feature/shared.tsp
+        dest: Microsoft.Widget/Widget/shared.tsp
+      - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
+        dest: Microsoft.Widget/Widget/tspconfig.yaml
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
+  graders:
+  - type: tool-calls
+    config:
+      required:
+        - edit
+        - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+        - azure-typespec-author
+
+- name: 001010-version-model-property-removed
+  prompt: |
+    In the Widget project, remove the `department` property from EmployeeProperties only for version `2025-05-04-preview`.
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+  environment:
+    files:
+      - src: ../fixtures/001-share-version-new-feature/employee.tsp
+        dest: Microsoft.Widget/Widget/employee.tsp
+      - src: ../fixtures/001-share-version-new-feature/main.tsp
+        dest: Microsoft.Widget/Widget/main.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: Microsoft.Widget/Widget/package.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: Microsoft.Widget/Widget/package-lock.json
+      - src: ../fixtures/Microsoft.Widget/Widget/node_modules
+        dest: Microsoft.Widget/Widget/node_modules
+      - src: ../fixtures/001-share-version-new-feature/readme.md
+        dest: Microsoft.Widget/Widget/readme.md
+      - src: ../fixtures/001-share-version-new-feature/shared.tsp
+        dest: Microsoft.Widget/Widget/shared.tsp
+      - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
+        dest: Microsoft.Widget/Widget/tspconfig.yaml
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
+  graders:
+  - type: tool-calls
+    config:
+      required:
+        - edit
+        - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+        - azure-typespec-author
+
+- name: 001011-version-model-property-renamed
+  prompt: |
+    In the Widget project, rename the `age` property to `employeeAge` in EmployeeProperties only for version `2025-05-04-preview`.
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+  environment:
+    files:
+      - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+        dest: Microsoft.Widget/Widget/employee.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+        dest: Microsoft.Widget/Widget/main.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: Microsoft.Widget/Widget/package.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: Microsoft.Widget/Widget/package-lock.json
+      - src: ../fixtures/Microsoft.Widget/Widget/node_modules
+        dest: Microsoft.Widget/Widget/node_modules
+      - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+        dest: Microsoft.Widget/Widget/readme.md
+      - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+        dest: Microsoft.Widget/Widget/shared.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+        dest: Microsoft.Widget/Widget/tspconfig.yaml
+      - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+        dest: Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+      - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+        dest: Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
+  graders:
+  - type: tool-calls
+    config:
+      required:
+        - edit
+        - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+        - azure-typespec-author
+- name: 001012-version-operation-return-type-changed
+  prompt: |
+    In the Widget project, change the return type of the `exportData` operation from `ExportResult` to `DetailedExportResult` with additional optional properties `format` (string) and `exportedAt` (utcDateTime) only for version `2025-05-04-preview`.
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+  environment:
+    files:
+      - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+        dest: Microsoft.Widget/Widget/employee.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+        dest: Microsoft.Widget/Widget/main.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: Microsoft.Widget/Widget/package.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: Microsoft.Widget/Widget/package-lock.json
+      - src: ../fixtures/Microsoft.Widget/Widget/node_modules
+        dest: Microsoft.Widget/Widget/node_modules
+      - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+        dest: Microsoft.Widget/Widget/readme.md
+      - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+        dest: Microsoft.Widget/Widget/shared.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+        dest: Microsoft.Widget/Widget/tspconfig.yaml
+      - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+        dest: Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+      - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+        dest: Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
+  graders:
+  - type: tool-calls
+    config:
+      required:
+        - edit
+        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+        - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+        - azure-typespec-author
+
+- name: 001013-version-model-property-type-changed
+  prompt: |
+    In the Widget project, change the type of the `statusCode` property from `string` to `int32` in EmployeeProperties only for version `2025-05-04-preview`.
+  constraints:
+    max_turns: 6
+    max_tokens: 100000
+  environment:
+    files:
+      - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+        dest: Microsoft.Widget/Widget/employee.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+        dest: Microsoft.Widget/Widget/main.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: Microsoft.Widget/Widget/package.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: Microsoft.Widget/Widget/package-lock.json
+      - src: ../fixtures/Microsoft.Widget/Widget/node_modules
+        dest: Microsoft.Widget/Widget/node_modules
+      - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+        dest: Microsoft.Widget/Widget/readme.md
+      - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+        dest: Microsoft.Widget/Widget/shared.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+        dest: Microsoft.Widget/Widget/tspconfig.yaml
+      - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+        dest: Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+      - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+        dest: Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
+  graders:
+  - type: tool-calls
+    config:
+      required:
+        - edit
+        - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+        - azure-typespec-author
+
+scoring:
+  weights:
+    tool-calls: 1
+    skill-invocation: 1
+  threshold: 1.0

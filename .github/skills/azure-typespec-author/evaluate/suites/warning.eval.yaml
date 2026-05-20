@@ -1,23 +1,21 @@
 name: azure-typespec-author-eval
-description: Evaluation suite for azure-typespec-author.
+description: Evaluation suite for azure-typespec-author - warning suppression cases (005001).
 version: "1.0"
-type: capability               # capability | regression
+type: capability
 
-# Root-level environment
 environment: azsdk-mcp
 
-# Execution configuration
 config:
-  runs: 1                        # Trials per stimulus
-  timeout: "660s"                # Seconds per trial
-  model: claude-opus-4.6         #gpt-4o #claude-sonnet-4.6 # Model for agent execution
-  executor: copilot-sdk          # Which executor to use
-
-# Test cases
+  runs: 1
+  timeout: "1500s"
+  model: claude-opus-4.6
+  executor: copilot-sdk
+  workers: 1
+  
 stimuli:
-- prompt: |
+- name: 005001-warning-suppress-warning
+  prompt: |
     Add suppressions for the warnings produced by "tsp compile .", and set the justification to "FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details".
-  name: 005001-warning-suppress-warning
   constraints:
     max_turns: 6
     max_tokens: 1000000
@@ -35,27 +33,20 @@ stimuli:
       dest: main.tsp
     - src: ../fixtures/005001-warning-suppress-warning/stubs.tsp
       dest: stubs.tsp
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
       required:
-        - edit
-        - azure-sdk-mcp-azsdk_run_typespec_validation
+      - edit
+      - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: skill-invocation
     config:
       required:
-        - azure-typespec-author
-  - type: file-matches
-    config:
-      path: models.tsp
-      pattern: '#suppress'
-  - type: file-matches
-    config:
-      path: models.tsp
-      pattern: 'FIXME: Update justification, follow aka\.ms/tsp/conversion-fix for details'
+      - azure-typespec-author
 scoring:
   weights:
     tool-calls: 1
     skill-invocation: 1
-    file-matches: 2
   threshold: 1.0

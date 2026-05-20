@@ -1,23 +1,21 @@
-name: azure-typespec-author-eval
-description: Evaluation suite for azure-typespec-author.
+name: azure-typespec-author-eval-forced
+description: Evaluation suite for azure-typespec-author - warning cases with forced skill invocation and code quality graders.
 version: "1.0"
-type: capability               # capability | regression
+type: capability
 
-# Root-level environment
 environment: azsdk-mcp
 
-# Execution configuration
 config:
-  runs: 1                        # Trials per stimulus
-  timeout: "660s"                # Seconds per trial
-  model: claude-opus-4.6         #gpt-4o #claude-sonnet-4.6 # Model for agent execution
-  executor: copilot-sdk          # Which executor to use
+  runs: 1
+  timeout: "1500s"
+  model: claude-opus-4.6
+  executor: copilot-sdk
+  workers: 1
 
-# Test cases
 stimuli:
-- prompt: |
-    Add suppressions for the warnings produced by "tsp compile .", and set the justification to "FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details".
-  name: 005001-warning-suppress-warning
+- name: 005001-warning-suppress-warning
+  prompt: |
+    @azure-typespec-author Add suppressions for the warnings produced by "tsp compile .", and set the justification to "FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details".
   constraints:
     max_turns: 6
     max_tokens: 1000000
@@ -35,16 +33,18 @@ stimuli:
       dest: main.tsp
     - src: ../fixtures/005001-warning-suppress-warning/stubs.tsp
       dest: stubs.tsp
+    commands:
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
       required:
-        - edit
-        - azure-sdk-mcp-azsdk_run_typespec_validation
+      - edit
+      - azure-sdk-mcp-azsdk_run_typespec_validation
   - type: skill-invocation
     config:
       required:
-        - azure-typespec-author
+      - azure-typespec-author
   - type: file-matches
     config:
       path: models.tsp
@@ -57,5 +57,5 @@ scoring:
   weights:
     tool-calls: 1
     skill-invocation: 1
-    file-matches: 2
+    file-matches: 3
   threshold: 1.0

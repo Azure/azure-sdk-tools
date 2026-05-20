@@ -16,7 +16,7 @@
         {
             "name": "001002-version-default-value",
             "description": "version-default-value",
-            "prompt": "add a default value `21` for property age in model EmployeeProperties from a api version say 2025-11-01",
+            "prompt": "add a default value `21` for property age in model EmployeeProperties only for the new api version 2025-11-01",
             "testfiles": [
                 "001002-version-default-value/main.tsp",
                 "001002-version-default-value/readme.md"
@@ -29,7 +29,7 @@
         {
             "name": "001003-version-required-to-optional",
             "description": "version-required-to-optional",
-            "prompt": "change the property age of EmployeeProperties from required to optional for new api version 2025-05-04-preview",
+            "prompt": "change the property age of EmployeeProperties from required to optional only for api version 2025-05-04-preview",
             "testfiles": [
                 "001003-version-required-to-optional/main.tsp",
                 "001003-version-required-to-optional/readme.md"
@@ -54,7 +54,7 @@
         {
             "name": "001005-version-add-preview-after-preview",
             "description": "version-add-preview-after-preview",
-            "prompt": "Add a new preview version `2025-05-04-preview` to my service widget resource manager. Exclude Feature: `age` property with default value 21** (replaced old `age` property, which was renamed to `oldAge` and removed), remove old preview",
+            "prompt": "Add a new preview version `2025-05-04-preview` to my service widget resource manager. Exclude Feature: `age` property with default value 21. Carry other features. ",
             "testfiles": [
                 "001005-version-add-preview-after-preview/employee.tsp",
                 "001005-version-add-preview-after-preview/main.tsp",
@@ -328,7 +328,7 @@
         {
             "name": "003002-arm-action-lro",
             "description": "arm-action-lro",
-            "prompt": "Add a move async operation to move employee, operation's request is MoveRequest, response is MoveResponse",
+            "prompt": "Add a post async operation to move employee, operation's request is MoveRequest, response is MoveResponse",
             "testfiles": [
                 "003002-arm-action-lro/employee.tsp"
             ],

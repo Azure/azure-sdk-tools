@@ -1,0 +1,93 @@
+name: sensei-trigger-eval
+description: Trigger and anti-trigger tests for the sensei skill
+type: capability
+
+environment: azsdk-mcp-mock
+
+tags:
+  area: sensei
+  type: ci-gate
+
+config:
+  runs: 1
+  timeout: "90s"
+  model: claude-opus-4.6
+  executor: copilot-sdk
+
+scoring:
+  threshold: 0.8
+
+stimuli:
+  - name: trigger-run-sensei-on-my-skill
+    prompt: "run sensei on my skill"
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["sensei"]
+  - name: trigger-improve-skill-frontmatter-compliance
+    prompt: "run sensei to improve my skill's frontmatter compliance"
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["sensei"]
+  - name: trigger-fix-frontmatter-for-azure-deploy
+    prompt: "run sensei to fix the frontmatter on my azure-deploy skill"
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["sensei"]
+  - name: trigger-score-my-skill
+    prompt: "score my skill"
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["sensei"]
+  - name: trigger-sensei-help
+    prompt: "sensei help"
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["sensei"]
+  - name: trigger-run-sensei-to-check-skill-tokens
+    prompt: "run sensei to check my skill's token count"
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["sensei"]
+  - name: trigger-sensei-frontmatter-audit-on-all-skills
+    prompt: "run sensei frontmatter audit on all skills"
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["sensei"]
+
+  - name: anti-trigger-deploy-my-azure-function
+    prompt: "deploy my Azure Function"
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["sensei"]
+  - name: anti-trigger-fix-my-pipeline-build-error
+    prompt: "fix my pipeline build error"
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["sensei"]
+  - name: anti-trigger-create-a-new-typespec-definition
+    prompt: "create a new TypeSpec definition"
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["sensei"]
+  - name: anti-trigger-how-do-i-release-an-sdk-package
+    prompt: "how do I release an SDK package"
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["sensei"]
+  - name: anti-trigger-configure-azure-storage-geo-redundancy
+    prompt: "configure Azure Storage geo-redundancy"
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["sensei"]

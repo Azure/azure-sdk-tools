@@ -223,8 +223,3 @@ sensei: improve {skill-name} frontmatter
 - [LOOP.md](references/LOOP.md) - Ralph loop workflow details
 - [EXAMPLES.md](references/EXAMPLES.md) - Before/after examples
 - [TOKEN-INTEGRATION.md](references/TOKEN-INTEGRATION.md) - Token budget integration
-
-## Related Skills
-
-- [markdown-token-optimizer](/.github/skills/markdown-token-optimizer) - Token analysis and optimization
-- [skill-authoring](/.github/skills/skill-authoring) - Skill writing guidelines

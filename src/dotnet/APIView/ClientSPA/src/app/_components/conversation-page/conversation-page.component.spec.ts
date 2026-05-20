@@ -35,6 +35,7 @@ import {
   createMockWorkerService,
   setupMatchMediaMock 
 } from 'src/test-helpers/mock-services';
+import { MessageService } from 'primeng/api';
 
 describe('ConversationPageComponent', () => {
   let component: ConversationPageComponent;
@@ -71,6 +72,7 @@ describe('ConversationPageComponent', () => {
         { provide: SignalRService, useValue: mockSignalRService },
         { provide: NotificationsService, useValue: mockNotificationsService },
         { provide: WorkerService, useValue: mockWorkerService },
+        MessageService,
         {
           provide: ActivatedRoute,
           useValue: {

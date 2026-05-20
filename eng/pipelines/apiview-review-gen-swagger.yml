@@ -37,6 +37,7 @@ jobs:
     parameters:
       Reviews: $(Reviews)
       APIViewURL: $(APIViewURL)
+      APIViewResourceId: $(APIViewResourceId)
       StorageContainerUrl: $(StorageContainerUrl)
       ApiviewGenScript: './Create-Apiview-Token-Swagger.ps1'
       ParserPath: $(SwaggerParserInstallPath)/SwaggerApiParser

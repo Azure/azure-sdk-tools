@@ -7,6 +7,8 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
 {
     public class ReleasePlanWorkItem : WorkItemBase
     {
+        public const string DashboardBaseUrl = "https://azsdk-releaseplan-dashboard-hveph5aqhhcfhtgu.westus-01.azurewebsites.net/?releaseplan=";
+
         [FieldName("Custom.ServiceTreeID")]
         public string ServiceTreeId { get; set; } = string.Empty;
 
@@ -32,7 +34,9 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
         [FieldName("Custom.APISpecDefinitionType")]
         public string SpecType {  get; set; } = string.Empty;
 
-        public string ReleasePlanLink { get; set; } = string.Empty;
+        public string ReleasePlanLink => ReleasePlanId > 0
+            ? $"{DashboardBaseUrl}{ReleasePlanId}"
+            : string.Empty;
 
         public bool IsTestReleasePlan { get; set; } = false;
 
@@ -61,6 +65,12 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
 
         [FieldName("Custom.ApiSpecProjectPath")]
         public string APISpecProjectPath { get; set; } = string.Empty;
+
+        [FieldName("Custom.AttestationStatus")]
+        public string AttestationStatus { get; set; } = string.Empty;
+
+        [FieldName("Custom.ProductLifecycle")]
+        public string ProductLifecycle { get; set; } = string.Empty;
 
         public override Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument GetPatchDocument()
         {

@@ -5,6 +5,7 @@ using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tools.Core;
@@ -31,6 +32,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             Required = true,
         };
 
+        private readonly Option<int> releasePlanIdOpt = new("--release-plan-id")
+        {
+            Description = "Optional release plan ID. If provided, it is used as an additional filter when searching by package name to select the correct release plan.",
+            Required = false,
+        };
+
         private readonly Option<string> languageOpt = new("--language", "-l")
         {
             Description = "SDK language (e.g., .NET, Java, JavaScript, Python, Go)",
@@ -44,10 +51,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             DefaultValueFactory = _ => "Released"
         };
 
+        private readonly Option<string?> packageVersionOpt = new("--package-version")
+        {
+            Description = "SDK package version being released",
+            Required = false,
+        };
+
         protected override Command GetCommand() =>
             new McpCommand(updateReleaseStatusCommandName, "Update package release status in the release plan")
             {
-                packageNameOpt, languageOpt, releaseStatusOpt
+                packageNameOpt, languageOpt, releaseStatusOpt, packageVersionOpt, releasePlanIdOpt
             };
 
 
@@ -61,7 +74,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     var packageName = commandParser.GetValue(packageNameOpt);
                     var language = commandParser.GetValue(languageOpt);
                     var releaseStatus = commandParser.GetValue(releaseStatusOpt);
-                    return await UpdatePackageReleaseStatus(packageName, language, releaseStatus, ct);
+                    var packageVersion = commandParser.GetValue(packageVersionOpt);
+                    var releasePlanId = commandParser.GetValue(releasePlanIdOpt);
+                    return await UpdatePackageReleaseStatus(packageName, language, releaseStatus, packageVersion, releasePlanId, ct);
 
                 default:
                     logger.LogError("Unknown command: {command}", command);
@@ -69,7 +84,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        public async Task<ReleaseStatusUpdateResponse> UpdatePackageReleaseStatus(string packageName, string language, string releaseStatus, CancellationToken ct)
+        public async Task<ReleaseStatusUpdateResponse> UpdatePackageReleaseStatus(string packageName, string language, string releaseStatus, string? packageVersion, int releasePlanId = 0, CancellationToken ct = default)
         {
             try
             {
@@ -87,7 +102,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 {
                     PackageName = packageName,
                     Language = SdkLanguageHelpers.GetSdkLanguage(language),
-                    ReleaseStatus = releaseStatus
+                    ReleaseStatus = releaseStatus,
+                    PackageVersion = packageVersion
                 };
 
                 if (!ReleasePlanTool.SUPPORTED_LANGUAGES.Contains(language.ToLower()))
@@ -95,7 +111,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     response.Message = $"Language '{language}' is not supported. Supported languages: {string.Join(", ", ReleasePlanTool.SUPPORTED_LANGUAGES)}";
                     return response;
                 }
-                
+
                 logger.LogInformation("Searching for in-progress release plans with package {packageName} for {language}", packageName, language);
                 bool isAgentTesting = bool.TryParse(Environment.GetEnvironmentVariable("AZSDKTOOLS_AGENT_TESTING"), out var result) && result;
                 // Find all release plans in "In Progress" status with the given package name
@@ -106,25 +122,26 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return response;
                 }
 
-                // If there are multiple release plans, prioritize the one with a merged pull request for the package
-                var releasePlan = releasePlans[0];
-                if (releasePlans.Count > 1)
+                ReleasePlanWorkItem releasePlan;
+
+                // If release plan ID is provided, use it to select the matching release plan from the results
+                if (releasePlanId > 0)
                 {
-                    logger.LogInformation("Multiple active release plans are found for '{packageName}' in language '{language}'", packageName, language);
-                    var releasePlanWithPrMerged = releasePlans.FirstOrDefault(rp => rp.SDKInfo.Any(s => s.PackageName.Equals(packageName) && s.PullRequestStatus.Equals("Merged")));
-                    if (releasePlanWithPrMerged != null)
+                    var matchingPlan = releasePlans.FirstOrDefault(rp => rp.ReleasePlanId == releasePlanId);
+                    if (matchingPlan != null)
                     {
-                        logger.LogInformation("Selected first release plan {releasePlanId} with pull request as merged.", releasePlanWithPrMerged.ReleasePlanId);
-                        releasePlan = releasePlanWithPrMerged;
+                        logger.LogInformation("Found release plan {releasePlanId} matching the provided ID for package {packageName}.", releasePlanId, packageName);
+                        releasePlan = matchingPlan;
                     }
                     else
                     {
-                        logger.LogInformation("No release plan with merged pull request status found. Defaulting to first release plan {releasePlanId}.", releasePlan.ReleasePlanId);
+                        response.Message = $"Release plan with ID '{releasePlanId}' not found among in-progress release plans for package '{packageName}' in language '{language}'.";
+                        return response;
                     }
                 }
                 else
                 {
-                    logger.LogInformation("Found release plan work item {workItemId} for package {packageName} in language {language}", releasePlan.WorkItemId, packageName, language);
+                    releasePlan = SelectReleasePlan(releasePlans, packageName);
                 }
 
                 response.ReleasePlanId = releasePlan.ReleasePlanId;
@@ -132,10 +149,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 logger.LogInformation("Updating release status for package {packageName} in release plan work item {workItemId}", packageName, releasePlan.WorkItemId);
 
                 // Update the release status for the specific language
+                var languageId = DevOpsService.MapLanguageToId(language);
                 var fieldsToUpdate = new Dictionary<string, string>
                 {
-                    { $"Custom.ReleaseStatusFor{DevOpsService.MapLanguageToId(language)}", releaseStatus }
+                    { $"Custom.ReleaseStatusFor{languageId}", releaseStatus }
                 };
+
+                if (!string.IsNullOrWhiteSpace(packageVersion))
+                {
+                    fieldsToUpdate[$"Custom.ReleasedVersionFor{languageId}"] = packageVersion;
+                }
 
                 await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, fieldsToUpdate, ct);
                 logger.LogInformation("Successfully updated release status for package {packageName} in release plan {workItemId}", packageName, releasePlan.WorkItemId);
@@ -147,6 +170,30 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 logger.LogError(ex, "Failed to update release status for package {packageName}", packageName);
                 return new ReleaseStatusUpdateResponse { PackageName = packageName, ResponseError = $"Failed to update release status: {ex.Message}" };
             }
+        }
+
+        private ReleasePlanWorkItem SelectReleasePlan(List<ReleasePlanWorkItem> releasePlans, string packageName)
+        {
+            var releasePlan = releasePlans[0];
+            if (releasePlans.Count > 1)
+            {
+                logger.LogInformation("Multiple active release plans are found for '{packageName}'", packageName);
+                var releasePlanWithPrMerged = releasePlans.FirstOrDefault(rp => rp.SDKInfo.Any(s => s.PackageName.Equals(packageName) && s.PullRequestStatus.Equals("Merged")));
+                if (releasePlanWithPrMerged != null)
+                {
+                    logger.LogInformation("Selected first release plan {releasePlanId} with pull request as merged.", releasePlanWithPrMerged.ReleasePlanId);
+                    releasePlan = releasePlanWithPrMerged;
+                }
+                else
+                {
+                    logger.LogInformation("No release plan with merged pull request status found. Defaulting to first release plan {releasePlanId}.", releasePlan.ReleasePlanId);
+                }
+            }
+            else
+            {
+                logger.LogInformation("Found release plan work item {workItemId} for package {packageName}", releasePlan.WorkItemId, packageName);
+            }
+            return releasePlan;
         }
     }
 }

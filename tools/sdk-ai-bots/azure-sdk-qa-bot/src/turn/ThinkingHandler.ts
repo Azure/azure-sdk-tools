@@ -3,7 +3,7 @@ import { getTurnContextLogMeta } from '../logging/utils.js';
 import { ConversationHandler, ConversationMessage, Prompt, RAGReply } from '../input/ConversationHandler.js';
 import { createContactCard } from '../cards/components/contact.js';
 import { contactCardVersion } from '../config/config.js';
-import { TenantConfigManager } from '../config/tenant.js';
+import { TenantConfigManager, KnownTenants } from '../config/tenant.js';
 import { CompletionResponsePayload, isCompletionResponsePayload, RagApiError } from '../backend/rag.js';
 import { logger } from '../logging/logger.js';
 import { setTimeout } from 'node:timers/promises';
@@ -12,6 +12,12 @@ import { sendActivityWithRetry, updateActivityWithRetry } from '../activityUtils
 export class ThinkingHandler {
   private readonly thinkEmojis = ['⏳', '🤔', '💭', '🧠', '🤩', '🧐', '🚨', '🤭'];
   private readonly defaultThinkingMessage = '⏳Thinking';
+  private readonly aiGeneratedEntity = {
+    type: 'https://schema.org/Message',
+    '@type': 'Message',
+    '@context': 'https://schema.org',
+    additionalType: ['AIGeneratedContent'],
+  };
   private readonly maxRetryTimesForFinish = 5;
   private readonly maxRetryTimesForThinking = 1800;
   private readonly maxCancelTimeout = 1000; // unit in milliseconds
@@ -60,14 +66,26 @@ export class ThinkingHandler {
   }
 
   // separate this method from cancelTimer to make sure complete message is always shown
-  public async stop(replyStartTime: Date, reply: CompletionResponsePayload | RagApiError, currentPrompt: Prompt) {
+  public async stop(replyStartTime: Date, reply: CompletionResponsePayload | RagApiError, currentPrompt: Prompt, currentChannelTenant?: string) {
     const { answer, isError } = this.generateAnswer(reply);
     const routeTenant = isCompletionResponsePayload(reply) ? reply.route_tenant : undefined;
-    const formattedAnswer = await this.formatAnswer(answer, isError, routeTenant);
+    const responseId = isCompletionResponsePayload(reply) ? reply.id : undefined;
+    const formattedAnswer = await this.formatAnswer(answer, isError, routeTenant, currentChannelTenant);
+    const entity: Record<string, unknown> = {
+      ...this.aiGeneratedEntity,
+    };
+    if (responseId) {
+      entity.usageInfo = {
+        '@type': 'CreativeWork',
+        name: 'Internal Tracking',
+        description: `Response ID: ${responseId}`,
+      };
+    }
     const updated: Partial<TurnContext> = {
       type: 'message',
       id: this.resourceId,
       text: formattedAnswer,
+      entities: [entity],
       conversation: this.context.activity.conversation,
     } as any;
 
@@ -102,7 +120,7 @@ export class ThinkingHandler {
    * Format the answer with conditional footer based on route_tenant.
    * For error responses, returns the answer as-is without footer.
    */
-  private async formatAnswer(answer: string, isError: boolean, routeTenant?: string): Promise<string> {
+  private async formatAnswer(answer: string, isError: boolean, routeTenant?: string, currentChannelTenant?: string): Promise<string> {
     // For error responses, return plain text without footer
     if (isError) {
       return answer;
@@ -112,7 +130,6 @@ export class ThinkingHandler {
 
     if (routeTenant) {
       try {
-        // Get channel info (name and url) from tenant ID
         const tenant = this.tenantConfigManager.getTenant(routeTenant);
         if (!tenant) {
           logger.warn(`Tenant not found for route_tenant: ${routeTenant}`, { meta: this.meta });
@@ -125,6 +142,13 @@ export class ThinkingHandler {
       } catch (error) {
         logger.error(`Failed to get tenant info for route_tenant: ${routeTenant}`, { error: error.message, meta: this.meta });
       }
+    }
+
+    // Show TypeSpec skill promo when the effective tenant is the TypeSpec channel (or the default channel for backward compatibility)
+    const effectiveTenant = routeTenant ?? currentChannelTenant;
+    if (effectiveTenant === KnownTenants.TypeSpec || effectiveTenant === KnownTenants.Default) {
+      const typeSpecSkillPromo = `🚀 **Try the Azure TypeSpec Author skill** to write API specifications in TypeSpec! Check out the Quick Start and samples [here](https://azure.github.io/typespec-azure/docs/getstarted/typespec-authoring-skill/).`;
+      footer = `${footer}\n\n${typeSpecSkillPromo}`;
     }
 
     return `${answer}\n\n---\n\n${footer}`;
@@ -169,12 +193,13 @@ export class ThinkingHandler {
 
   private addReferencesToReply(ragReply: CompletionResponsePayload): string {
     let reply = ragReply.answer;
-    if (ragReply.references.length === 0) return reply;
+    if (ragReply.references === null || ragReply.references === undefined || ragReply.references.length === 0) return reply;
 
     // remove duplicate references
     const referencesMap = new Map<string, Map<string, string>>();
     ragReply.references?.forEach((ref) => {
-      const map = referencesMap.get(ref.source) ?? new Map<string, string>();
+      const normalizedSource = (ref.source || '').trim();
+      const map = referencesMap.get(normalizedSource) ?? new Map<string, string>();
       let url = undefined;
       try {
         url = new URL(ref.link);
@@ -183,7 +208,7 @@ export class ThinkingHandler {
         return;
       }
       map.set(url.href, ref.title);
-      referencesMap.set(ref.source, map);
+      referencesMap.set(normalizedSource, map);
     });
 
     const prettierSource = (source: string) => {
@@ -194,9 +219,10 @@ export class ThinkingHandler {
     };
     reply += '\n\n**References**\n';
     referencesMap.forEach((links, source) => {
-      const sourceName = prettierSource(source);
+      const sourceName = source ? prettierSource(source) : '';
       links.forEach((title, link) => {
-        reply += `- [${title} | ${sourceName}](${link})\n`;
+        const referenceLabel = sourceName ? `${title} | ${sourceName}` : title;
+        reply += `- [${referenceLabel}](${link})\n`;
       });
     });
     return reply;

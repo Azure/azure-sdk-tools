@@ -33,7 +33,10 @@ Duration: 1ms
 
         Assert.That(outputHelper.Outputs.Count(), Is.EqualTo(1));
         Assert.That(outputHelper.Outputs.First().Stream, Is.EqualTo(OutputHelper.StreamType.Stdout));
-        Assert.That(outputHelper.Outputs.Last().Output, Is.EqualTo(expected));
+        // Normalize line endings before comparison. The repo .gitattributes enforces LF in source
+        // files, so verbatim string literals contain \n, but production code uses Environment.NewLine
+        // which is \r\n on Windows.
+        Assert.That(outputHelper.Outputs.Last().Output.ReplaceLineEndings("\n"), Is.EqualTo(expected.ReplaceLineEndings("\n")));
     }
 
     [Test]

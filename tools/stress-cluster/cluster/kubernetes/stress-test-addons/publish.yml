@@ -38,3 +38,4 @@ extends:
                   PRBranchName: "stress/addons-helm-update"
                   CommitMsg: "[stress] Updating helm chart index.yaml file for new stress-test-addons release"
                   PRTitle: "[stress] Updating helm chart index.yaml file for new stress-test-addons release"
+                  AuthToken: ''

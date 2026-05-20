@@ -187,6 +187,27 @@ def _merge_comments(testcase: str, response: str, comments: str, context: str):
     return {"actual": result}
 
 
+def _reconcile_memories(testcase: str, response: str, guideline: str, memories: str):
+    prompty_path = Path(__file__).parent.parent / "prompts" / "other" / "reconcile_memories.prompty"
+    question = json.dumps({"guideline": json.loads(guideline), "memories": json.loads(memories)})
+    prompty_kwargs = {
+        "testcase": testcase,
+        "response": response,
+        "question": question,
+    }
+    result = _execute_prompt_template(prompty_path, inputs=prompty_kwargs)
+    result_data = json.loads(result) if isinstance(result, str) else result
+    absorbed = sorted(result_data.get("absorbed_memory_ids", []))
+    reasoning = result_data.get("reasoning", {})
+    all_memory_ids = [m["id"] for m in json.loads(memories)]
+    rationale_parts = [reasoning.get(mid, "") for mid in all_memory_ids if reasoning.get(mid)]
+    transformed = {
+        "action": ",".join(absorbed) if absorbed else "NONE",
+        "rationale": "; ".join(rationale_parts),
+    }
+    return {"actual": json.dumps(transformed)}
+
+
 def _generate_correlation_ids(testcase: str, response: str, language: str, content: str):
     prompty_path = Path(__file__).parent.parent / "prompts" / "api_review" / "generate_correlation_ids.prompty"
     prompty_kwargs = {
@@ -208,6 +229,33 @@ def _generate_correlation_ids(testcase: str, response: str, language: str, conte
     action_str = ",".join(str(tuple(g)) for g, _ in pairs)
     themes = "; ".join(t for _, t in pairs)
     transformed = {"action": action_str, "rationale": themes}
+    return {"actual": json.dumps(transformed)}
+
+
+def _consolidate_memories(testcase: str, response: str, parent_type: str, parent_title: str, memories: str):
+    prompty_path = Path(__file__).parent.parent / "prompts" / "other" / "consolidate_memories.prompty"
+    prompty_kwargs = {
+        "testcase": testcase,
+        "response": response,
+        "parent_type": parent_type,
+        "parent_title": parent_title,
+        "memories": memories,
+    }
+    result = _execute_prompt_template(prompty_path, inputs=prompty_kwargs)
+    # Transform: normalize merge groups to canonical "action" string for PromptEvaluator.
+    # Each group becomes a sorted tuple of memory IDs; groups are sorted and joined by ";".
+    result_data = json.loads(result) if isinstance(result, str) else result
+    groups = result_data.get("groups", [])
+    group_strs = []
+    reason_parts = []
+    for group in groups:
+        ids = sorted(group.get("memory_ids", []))
+        group_strs.append("(" + ",".join(ids) + ")")
+        reason_parts.append(group.get("reason", ""))
+    group_strs.sort()
+    action_str = ";".join(group_strs)
+    rationale = " ".join(reason_parts)
+    transformed = {"action": action_str, "rationale": rationale}
     return {"actual": json.dumps(transformed)}
 
 
@@ -424,6 +472,8 @@ class PromptEvaluator(BaseEvaluator):
             "filter_generic_comment": _filter_generic_comment,
             "judge_comment_confidence": _judge_comment_confidence,
             "generate_correlation_ids": _generate_correlation_ids,
+            "consolidate_memories": _consolidate_memories,
+            "reconcile_memories": _reconcile_memories,
         }
 
         workflow_name = self.config.name

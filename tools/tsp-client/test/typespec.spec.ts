@@ -7,8 +7,8 @@ import {
 } from "../src/typespec.js";
 import { joinPaths, resolvePath } from "@typespec/compiler";
 
-describe("Check diagnostic reporting", function () {
-  it.skip("Check diagnostic format", async function () {
+describe("Check diagnostic reporting", () => {
+  it.skip("Check diagnostic format", async () => {
     const mainFile = await discoverEntrypointFile(
       resolvePath(process.cwd(), "test", "examples", "specification", "diagnostics"),
     );
@@ -37,7 +37,7 @@ describe("Check diagnostic reporting", function () {
     }
   });
 
-  it("Check discoverEntrypointFile()", async function () {
+  it("Check discoverEntrypointFile()", async () => {
     let entrypointFile = await discoverEntrypointFile(
       joinPaths(process.cwd(), "test", "examples", "specification", "convert"),
       "Catalog.tsp",
@@ -58,9 +58,23 @@ describe("Check diagnostic reporting", function () {
       ),
     );
     assert.equal(entrypointFile, "client.tsp");
+    // Verify that entrypoint files specified with a forward-slash path in a
+    // sub-directory are found, even on Windows where readdir returns paths
+    // with back-slash separators.
+    entrypointFile = await discoverEntrypointFile(
+      joinPaths(process.cwd(), "test", "examples", "specification", "convert"),
+      "batch/batch-client.tsp",
+    );
+    assert.equal(entrypointFile, "batch/batch-client.tsp");
+    // Same file, specified with a back-slash separator.
+    entrypointFile = await discoverEntrypointFile(
+      joinPaths(process.cwd(), "test", "examples", "specification", "convert"),
+      "batch\\batch-client.tsp",
+    );
+    assert.equal(entrypointFile, "batch/batch-client.tsp");
   });
 
-  it("Check discoverEntrypointFile() with unexpected entrypoint name", async function () {
+  it("Check discoverEntrypointFile() with unexpected entrypoint name", async () => {
     try {
       await discoverEntrypointFile(
         joinPaths(process.cwd(), "test", "examples", "specification", "unexpected-entrypoint-name"),
@@ -70,8 +84,8 @@ describe("Check diagnostic reporting", function () {
     }
   });
 
-  describe("tryParseEmitterOptionAsObject", function () {
-    it("returns object for JSON object string", function () {
+  describe("tryParseEmitterOptionAsObject", () => {
+    it("returns object for JSON object string", () => {
       const str = `{"name":"@azure/eventgrid-namespaces-2","version":"1.0.3"}`;
       const result = tryParseEmitterOptionAsObject(str);
 
@@ -82,7 +96,7 @@ describe("Check diagnostic reporting", function () {
       });
     });
 
-    it("returns string for string 'true'", function () {
+    it("returns string for string 'true'", () => {
       const str = "true";
       const result = tryParseEmitterOptionAsObject(str);
 
@@ -90,7 +104,7 @@ describe("Check diagnostic reporting", function () {
       assert.strictEqual(result, "true");
     });
 
-    it("returns string for string 'null'", function () {
+    it("returns string for string 'null'", () => {
       const str = "null";
       const result = tryParseEmitterOptionAsObject(str);
 
@@ -98,7 +112,7 @@ describe("Check diagnostic reporting", function () {
       assert.strictEqual(result, "null");
     });
 
-    it("returns string for string '[]'", function () {
+    it("returns string for string '[]'", () => {
       const str = "[]";
       const result = tryParseEmitterOptionAsObject(str);
 
@@ -106,7 +120,7 @@ describe("Check diagnostic reporting", function () {
       assert.strictEqual(result, "[]");
     });
 
-    it("returns string for a normal string", function () {
+    it("returns string for a normal string", () => {
       const str = "azure";
       const result = tryParseEmitterOptionAsObject(str);
 
@@ -114,7 +128,7 @@ describe("Check diagnostic reporting", function () {
       assert.strictEqual(result, "azure");
     });
 
-    it("returns string for a path string", function () {
+    it("returns string for a path string", () => {
       const str = "sdk/some/path/src/generated";
       const result = tryParseEmitterOptionAsObject(str);
 

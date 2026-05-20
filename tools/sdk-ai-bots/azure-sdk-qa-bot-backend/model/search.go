@@ -293,7 +293,11 @@ func GetIndexLink(chunk Index) string {
 		path = TrimFileFormat(path)
 		return "https://github.com/microsoft/typespec/tree/main/packages/http-specs/specs/" + path + ".tsp"
 	case Source_TypeSpecMigration:
-		// link to the migration faq page
+		// Documents indexed from blob storage (custom knowledge files) have .md titles
+		// and no corresponding public URL. Other documents fall back to the default FAQ page.
+		if strings.HasSuffix(chunk.Title, ".md") || strings.HasSuffix(chunk.Title, ".mdx") {
+			return ""
+		}
 		return "https://azure.github.io/typespec-azure/docs/migrate-swagger/faq/breakingchange"
 	case Source_AzureSDKForGo:
 		return "https://github.com/Azure/azure-sdk-for-go/blob/main/documentation/" + path
@@ -326,6 +330,9 @@ func GetIndexLink(chunk Index) string {
 	case Source_AzureOpenapiDiffDocs:
 		// Handle documents from openapi-diff/docs
 		return "https://github.com/Azure/openapi-diff/blob/main/" + path
+	case Source_AzureSDKToolsDocs:
+		// Handle documents from azure-sdk-tools repository
+		return "https://github.com/Azure/azure-sdk-tools/blob/main/" + path
 	case Source_TypeSpecAzureResourceManagerLib:
 		path = TrimFileFormat(path)
 		return "https://github.com/Azure/typespec-azure/blob/main/packages/typespec-azure-resource-manager/lib/" + path + ".tsp"

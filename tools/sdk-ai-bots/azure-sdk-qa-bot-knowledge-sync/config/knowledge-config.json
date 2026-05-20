@@ -660,6 +660,15 @@
           "metadata": {
             "scope": "branded"
           }
+        },
+        {
+          "description": "Documentation for Azure SDK Tools",
+          "path": "/tools/js-sdk-release-tools/docs/automation-pipeline.md",
+          "folder": "azure_sdk_tools_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
         }
       ]
     }

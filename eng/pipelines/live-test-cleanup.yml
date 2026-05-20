@@ -14,9 +14,6 @@ parameters:
   - name: Subscriptions
     type: object
     default:
-      - DisplayName: AzureCloud TME - Resource Cleanup
-        ServiceConnection: azure-sdk-tests-public
-        AdditionalParameters: "-DeleteNonCompliantGroups -DeleteArmDeployments"
       - DisplayName: AzureCloud - Resource Cleanup
         ServiceConnection: azure-sdk-tests
         AdditionalParameters: "-DeleteNonCompliantGroups -DeleteArmDeployments"
@@ -42,6 +39,12 @@ parameters:
         ServiceConnection: azure-sdk-tests-cosmos
         SubscriptionConfigurations:
           - $(sub-config-cosmos-azure-cloud-test-resources)
+      - DisplayName: GithubCopilotForAzureTestingSubscription
+        ServiceConnection: GithubCopilotForAzure-Testing
+        AdditionalParameters: "-DeleteNonCompliantGroups -DeleteArmDeployments"
+      - DisplayName: AzureCloud TME - Resource Cleanup
+        ServiceConnection: azure-sdk-tests-public
+        AdditionalParameters: "-DeleteNonCompliantGroups -DeleteArmDeployments"
       # - DisplayName: AzureCloud Storage NET - Resource Cleanup
       #   SubscriptionConfigurations:
       #     - $(sub-config-storage-test-resources-net)

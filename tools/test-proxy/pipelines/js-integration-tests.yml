@@ -12,8 +12,8 @@ steps:
 
   - task: NodeTool@0
     inputs:
-      versionSpec: "20.x"
-    displayName: "Use Node 20.x"
+      versionSpec: "22.x"
+    displayName: "Use Node 22.x"
 
   - pwsh: |
       git clone https://github.com/${{ parameters.REPO }} ${{ parameters.CLONE_LOCATION }} --depth 1 --branch main

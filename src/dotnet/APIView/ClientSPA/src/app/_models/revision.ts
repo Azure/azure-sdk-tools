@@ -32,6 +32,7 @@ export class APIRevision {
   releasedOn: string
   isDeleted: boolean
   approvers: string[]
+  apiVersionId?: string | null
 
   constructor() {
     this.id = ''
@@ -57,6 +58,7 @@ export class APIRevision {
     this.releasedOn = '',
     this.isDeleted = false,
     this.approvers = []
+    this.apiVersionId = null
   }
 }
 

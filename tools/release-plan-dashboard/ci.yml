@@ -31,7 +31,7 @@ extends:
   parameters:
     GenerateBaselines: true
     stages:
-      - stage: "Build"
+      - stage: Build
         displayName: "Build and Test"
 
         variables:

@@ -9,6 +9,15 @@ using System.Threading.Tasks;
 
 namespace APIViewWeb.Controllers
 {
+    public class UpdateApiReviewRequest
+    {
+        public string RepoName { get; set; }
+        public string ArtifactPath { get; set; }
+        public string BuildId { get; set; }
+        public string Project { get; set; } = "internal";
+        public string MetadataFile { get; set; }
+    }
+
     [Authorize("RequireTokenAuthentication")]
     public class ReviewController : Controller
     {
@@ -23,9 +32,9 @@ namespace APIViewWeb.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> UpdateApiReview(string repoName, string artifactPath, string buildId, string project = "internal", string metadataFile = null)
+        public async Task<ActionResult> UpdateApiReview([FromBody] UpdateApiReviewRequest request)
         {
-            await _apiRevisionManager.UpdateAPIRevisionCodeFileAsync(repoName, buildId, artifactPath, project, metadataFile);
+            await _apiRevisionManager.UpdateAPIRevisionCodeFileAsync(request.RepoName, request.BuildId, request.ArtifactPath, request.Project, request.MetadataFile);
             return Ok();
         }
 

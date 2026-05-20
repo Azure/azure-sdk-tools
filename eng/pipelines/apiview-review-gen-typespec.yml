@@ -70,6 +70,5 @@ jobs:
         -BuildId $(Build.BuildId)
         -MetadataFileName "typespec-metadata.json"
         -ApiviewUpdateUrl "$(APIViewURL)/review/UpdateApiReview"
-        -ApiviewResourceId "$(APIViewResourceId)"
       azurePowerShellVersion: latestVersion
       pwsh: true

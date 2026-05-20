@@ -51,6 +51,5 @@ jobs:
     parameters:
       Reviews: $(Reviews)
       APIViewURL: $(APIViewURL)
-      APIViewResourceId: $(APIViewResourceId)
       StorageContainerUrl: $(StorageContainerUrl)
       ApiviewGenScript: './Create-Apiview-Token-Javascript.ps1'

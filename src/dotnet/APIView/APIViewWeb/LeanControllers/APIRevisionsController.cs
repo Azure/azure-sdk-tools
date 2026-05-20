@@ -1,9 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text.Json;
 using System.Threading.Tasks;
 using APIViewWeb.Extensions;
 using APIViewWeb.Helpers;
@@ -16,7 +13,6 @@ using APIViewWeb.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb.LeanControllers
@@ -28,23 +24,19 @@ namespace APIViewWeb.LeanControllers
         private readonly IReviewManager _reviewManager;
         private readonly INotificationManager _notificationManager;
         private readonly IHubContext<SignalRHub> _signalRHubContext;
-        private readonly string _copilotEndpoint;
-        private readonly IHttpClientFactory _httpClientFactory;
-        private readonly ICopilotAuthenticationService _copilotAuthService;
+        private readonly ICopilotHttpService _copilotHttp;
 
         public APIRevisionsController(ILogger<APIRevisionsController> logger,
             IReviewManager reviewManager, IPullRequestManager pullRequestManager,
-            IAPIRevisionsManager apiRevisionsManager, INotificationManager notificationManager, IConfiguration configuration,
-            IHubContext<SignalRHub> signalRHub, IHttpClientFactory httpClientFactory, ICopilotAuthenticationService copilotAuthService)
+            IAPIRevisionsManager apiRevisionsManager, INotificationManager notificationManager,
+            IHubContext<SignalRHub> signalRHub, ICopilotHttpService copilotHttp)
         {
             _logger = logger;
             _apiRevisionsManager = apiRevisionsManager;
             _reviewManager = reviewManager;
             _notificationManager = notificationManager;
             _signalRHubContext = signalRHub;
-            _copilotEndpoint = configuration["CopilotServiceEndpoint"];
-            _httpClientFactory = httpClientFactory;
-            _copilotAuthService = copilotAuthService;
+            _copilotHttp = copilotHttp;
         }
 
         /// <summary>
@@ -100,16 +92,8 @@ namespace APIViewWeb.LeanControllers
                     if (apiRevision != null && apiRevision.CopilotReviewInProgress)
                     {
                         // If Copilot review is in progress let verify that this is not due to a dropped background job
-                        var pollUrl = $"{_copilotEndpoint}/api-review/{apiRevision.CopilotReviewJobId}";
-                        var client = _httpClientFactory.CreateClient();
-                        
-                        var request = new HttpRequestMessage(HttpMethod.Get, pollUrl);
-                        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await _copilotAuthService.GetAccessTokenAsync());
-                        
-                        HttpResponseMessage response = await client.SendAsync(request);
-                        response.EnsureSuccessStatusCode();
-                        var pollResponseString = await response.Content.ReadAsStringAsync();
-                        var pollResponse = JsonSerializer.Deserialize<AIReviewJobPolledResponseModel>(pollResponseString);
+                        var pollResponse = await _copilotHttp.GetAsync<AIReviewJobPolledResponseModel>(
+                            $"api-review/{apiRevision.CopilotReviewJobId}");
                         if (pollResponse.Status != "InProgress")
                         {
                             apiRevision.CopilotReviewInProgress = false;

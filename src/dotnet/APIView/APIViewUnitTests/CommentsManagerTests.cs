@@ -19,11 +19,9 @@ using APIViewWeb.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
-using Moq.Protected;
 using Xunit;
 
 namespace APIViewUnitTests;
@@ -54,9 +52,6 @@ public class CommentsManagerTests
         mockClientProxy.Setup(p => p.SendCoreAsync(It.IsAny<string>(), It.IsAny<object[]>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        Mock<IConfiguration> configMock = new();
-        configMock.Setup(c => c["CopilotServiceEndpoint"]).Returns("https://dummy.api/endpoint");
-
         Mock<IOptions<OrganizationOptions>> orgOptionsMock = new();
         orgOptionsMock.Setup(o => o.Value)
             .Returns(new OrganizationOptions { RequiredOrganization = [] });
@@ -82,7 +77,6 @@ public class CommentsManagerTests
 
         Mock<IAuthorizationService> authServiceMock = new();
         Mock<INotificationManager> notificationManagerMock = new();
-        Mock<IHttpClientFactory> httpClientFactoryMock = new();
         Mock<ILogger<CommentsManager>> logger = new();
         Mock<IPermissionsManager> permissionsManagerMock = new();
         permissionsManagerMock.Setup(p => p.GetEffectivePermissionsAsync("architect1")).ReturnsAsync(
@@ -91,32 +85,12 @@ public class CommentsManagerTests
                 Roles = [new GlobalRoleAssignment() { Role = GlobalRole.Admin }]
             });
 
-        Mock<HttpMessageHandler> handlerMock = new();
-        handlerMock
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK, Content = new StringContent("{}")
-            });
-
         Mock<IBackgroundTaskQueue> backgroundTaskQueueMock = new();
-        Mock<ICopilotAuthenticationService> copilotAuthService = new();
-        copilotAuthService.Setup(c => c.GetAccessTokenAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync("test-token");
         backgroundTaskQueueMock.Setup(q => q.QueueBackgroundWorkItem(It.IsAny<Func<CancellationToken, Task>>()))
             .Callback<Func<CancellationToken, Task>>(workItem =>
             {
                 _ = workItem.Invoke(CancellationToken.None);
             });
-
-        HttpClient httpClient = new(handlerMock.Object);
-        httpClientFactoryMock
-            .Setup(f => f.CreateClient(It.IsAny<string>()))
-            .Returns(httpClient);
 
         authServiceMock.Setup(a => a.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<object>(), It.IsAny<IEnumerable<IAuthorizationRequirement>>()))
             .ReturnsAsync(AuthorizationResult.Success());
@@ -130,15 +104,29 @@ public class CommentsManagerTests
             notificationManagerMock.Object,
             codeFileRepoMock.Object,
             hubContextMock.Object,
-            httpClientFactoryMock.Object,
+            CreateCopilotHttpServiceMock().Object,
             userProfileCache,
-            configMock.Object,
             orgOptionsMock.Object,
             backgroundTaskQueueMock.Object,
             permissionsManagerMock.Object,
-            copilotAuthService.Object,
             logger.Object
         );
+    }
+
+    private static Mock<ICopilotHttpService> CreateCopilotHttpServiceMock()
+    {
+        Mock<ICopilotHttpService> mock = new();
+        mock.Setup(s => s.SendAsync(
+                It.IsAny<HttpMethod>(),
+                It.IsAny<string>(),
+                It.IsAny<object>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() => new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent("{}")
+            });
+        return mock;
     }
 
     private ClaimsPrincipal CreateUser(string githubLogin)
@@ -1123,7 +1111,6 @@ public class CommentsManagerTests
         var hubContextMock = new Mock<IHubContext<SignalRHub>>();
         var apiRevisionsManagerMock = new Mock<IAPIRevisionsManager>();
         var backgroundTaskQueueMock = new Mock<IBackgroundTaskQueue>();
-        var copilotAuthServiceMock = new Mock<ICopilotAuthenticationService>();
 
         var mockClients = new Mock<IHubClients>();
         var mockClientProxy = new Mock<IClientProxy>();
@@ -1131,9 +1118,6 @@ public class CommentsManagerTests
         mockClients.Setup(c => c.All).Returns(mockClientProxy.Object);
         mockClientProxy.Setup(p => p.SendCoreAsync(It.IsAny<string>(), It.IsAny<object[]>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-
-        Mock<IConfiguration> configMock = new();
-        configMock.Setup(c => c["CopilotServiceEndpoint"]).Returns("https://dummy.api/endpoint");
 
         Mock<IOptions<OrganizationOptions>> orgOptionsMock = new();
         orgOptionsMock.Setup(o => o.Value)
@@ -1160,30 +1144,8 @@ public class CommentsManagerTests
 
         Mock<IAuthorizationService> authServiceMock = new();
         Mock<INotificationManager> notificationManagerMock = new();
-        Mock<IHttpClientFactory> httpClientFactoryMock = new();
         Mock<IPermissionsManager> permissionsManagerMock = new();
         Mock<ILogger<CommentsManager>> logger = new();
-
-        Mock<HttpMessageHandler> handlerMock = new();
-        handlerMock
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent("{}")
-            });
-
-        copilotAuthServiceMock.Setup(c => c.GetAccessTokenAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync("test-token");
-
-        HttpClient httpClient = new(handlerMock.Object);
-        httpClientFactoryMock
-            .Setup(f => f.CreateClient(It.IsAny<string>()))
-            .Returns(httpClient);
 
         bool backgroundTaskQueued = false;
         backgroundTaskQueueMock.Setup(q => q.QueueBackgroundWorkItem(It.IsAny<Func<CancellationToken, Task>>()))
@@ -1205,13 +1167,11 @@ public class CommentsManagerTests
             notificationManagerMock.Object,
             codeFileRepoMock.Object,
             hubContextMock.Object,
-            httpClientFactoryMock.Object,
+            CreateCopilotHttpServiceMock().Object,
             userProfileCache,
-            configMock.Object,
             orgOptionsMock.Object,
             backgroundTaskQueueMock.Object,
             permissionsManagerMock.Object,
-            copilotAuthServiceMock.Object,
             logger.Object
         );
 
@@ -1256,7 +1216,6 @@ public class CommentsManagerTests
         hubContextMock.Setup(h => h.Clients).Returns(mockClients.Object);
         mockClients.Setup(c => c.All).Returns(mockClientProxy.Object);
 
-        Mock<IConfiguration> configMock = new();
         Mock<IOptions<OrganizationOptions>> orgOptionsMock = new();
         orgOptionsMock.Setup(o => o.Value).Returns(new OrganizationOptions { RequiredOrganization = [] });
 
@@ -1278,13 +1237,11 @@ public class CommentsManagerTests
             new Mock<INotificationManager>().Object,
             new Mock<IBlobCodeFileRepository>().Object,
             hubContextMock.Object,
-            new Mock<IHttpClientFactory>().Object,
+            CreateCopilotHttpServiceMock().Object,
             userProfileCache,
-            configMock.Object,
             orgOptionsMock.Object,
             backgroundTaskQueueMock.Object,
             new Mock<IPermissionsManager>().Object,
-            new Mock<ICopilotAuthenticationService>().Object,
             new Mock<ILogger<CommentsManager>>().Object
         );
 
@@ -1323,7 +1280,6 @@ public class CommentsManagerTests
         hubContextMock.Setup(h => h.Clients).Returns(mockClients.Object);
         mockClients.Setup(c => c.All).Returns(mockClientProxy.Object);
 
-        Mock<IConfiguration> configMock = new();
         Mock<IOptions<OrganizationOptions>> orgOptionsMock = new();
         orgOptionsMock.Setup(o => o.Value).Returns(new OrganizationOptions { RequiredOrganization = [] });
 
@@ -1345,13 +1301,11 @@ public class CommentsManagerTests
             new Mock<INotificationManager>().Object,
             new Mock<IBlobCodeFileRepository>().Object,
             hubContextMock.Object,
-            new Mock<IHttpClientFactory>().Object,
+            CreateCopilotHttpServiceMock().Object,
             userProfileCache,
-            configMock.Object,
             orgOptionsMock.Object,
             backgroundTaskQueueMock.Object,
             new Mock<IPermissionsManager>().Object,
-            new Mock<ICopilotAuthenticationService>().Object,
             new Mock<ILogger<CommentsManager>>().Object
         );
 
@@ -1385,7 +1339,6 @@ public class CommentsManagerTests
         var hubContextMock = new Mock<IHubContext<SignalRHub>>();
         var apiRevisionsManagerMock = new Mock<IAPIRevisionsManager>();
         var backgroundTaskQueueMock = new Mock<IBackgroundTaskQueue>();
-        var copilotAuthServiceMock = new Mock<ICopilotAuthenticationService>();
 
         var mockClients = new Mock<IHubClients>();
         var mockClientProxy = new Mock<IClientProxy>();
@@ -1393,9 +1346,6 @@ public class CommentsManagerTests
         mockClients.Setup(c => c.All).Returns(mockClientProxy.Object);
         mockClientProxy.Setup(p => p.SendCoreAsync(It.IsAny<string>(), It.IsAny<object[]>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-
-        Mock<IConfiguration> configMock = new();
-        configMock.Setup(c => c["CopilotServiceEndpoint"]).Returns("https://dummy.api/endpoint");
 
         Mock<IOptions<OrganizationOptions>> orgOptionsMock = new();
         orgOptionsMock.Setup(o => o.Value)
@@ -1420,28 +1370,6 @@ public class CommentsManagerTests
             userProfileCacheLoggerMock.Object
         );
 
-        Mock<IHttpClientFactory> httpClientFactoryMock = new();
-        Mock<HttpMessageHandler> handlerMock = new();
-        handlerMock
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent("{}")
-            });
-
-        copilotAuthServiceMock.Setup(c => c.GetAccessTokenAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync("test-token");
-
-        HttpClient httpClient = new(handlerMock.Object);
-        httpClientFactoryMock
-            .Setup(f => f.CreateClient(It.IsAny<string>()))
-            .Returns(httpClient);
-
         bool backgroundTaskQueued = false;
         backgroundTaskQueueMock.Setup(q => q.QueueBackgroundWorkItem(It.IsAny<Func<CancellationToken, Task>>()))
             .Callback<Func<CancellationToken, Task>>(workItem =>
@@ -1459,13 +1387,11 @@ public class CommentsManagerTests
             new Mock<INotificationManager>().Object,
             codeFileRepoMock.Object,
             hubContextMock.Object,
-            httpClientFactoryMock.Object,
+            CreateCopilotHttpServiceMock().Object,
             userProfileCache,
-            configMock.Object,
             orgOptionsMock.Object,
             backgroundTaskQueueMock.Object,
             new Mock<IPermissionsManager>().Object,
-            copilotAuthServiceMock.Object,
             new Mock<ILogger<CommentsManager>>().Object
         );
 
@@ -1507,7 +1433,6 @@ public class CommentsManagerTests
         var hubContextMock = new Mock<IHubContext<SignalRHub>>();
         var apiRevisionsManagerMock = new Mock<IAPIRevisionsManager>();
         var backgroundTaskQueueMock = new Mock<IBackgroundTaskQueue>();
-        var copilotAuthServiceMock = new Mock<ICopilotAuthenticationService>();
 
         var mockClients = new Mock<IHubClients>();
         var mockClientProxy = new Mock<IClientProxy>();
@@ -1515,9 +1440,6 @@ public class CommentsManagerTests
         mockClients.Setup(c => c.All).Returns(mockClientProxy.Object);
         mockClientProxy.Setup(p => p.SendCoreAsync(It.IsAny<string>(), It.IsAny<object[]>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-
-        Mock<IConfiguration> configMock = new();
-        configMock.Setup(c => c["CopilotServiceEndpoint"]).Returns("https://dummy.api/endpoint");
 
         Mock<IOptions<OrganizationOptions>> orgOptionsMock = new();
         orgOptionsMock.Setup(o => o.Value)
@@ -1542,28 +1464,6 @@ public class CommentsManagerTests
             userProfileCacheLoggerMock.Object
         );
 
-        Mock<IHttpClientFactory> httpClientFactoryMock = new();
-        Mock<HttpMessageHandler> handlerMock = new();
-        handlerMock
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent("{}")
-            });
-
-        copilotAuthServiceMock.Setup(c => c.GetAccessTokenAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync("test-token");
-
-        HttpClient httpClient = new(handlerMock.Object);
-        httpClientFactoryMock
-            .Setup(f => f.CreateClient(It.IsAny<string>()))
-            .Returns(httpClient);
-
         int notificationCount = 0;
         backgroundTaskQueueMock.Setup(q => q.QueueBackgroundWorkItem(It.IsAny<Func<CancellationToken, Task>>()))
             .Callback<Func<CancellationToken, Task>>(workItem =>
@@ -1581,13 +1481,11 @@ public class CommentsManagerTests
             new Mock<INotificationManager>().Object,
             codeFileRepoMock.Object,
             hubContextMock.Object,
-            httpClientFactoryMock.Object,
+            CreateCopilotHttpServiceMock().Object,
             userProfileCache,
-            configMock.Object,
             orgOptionsMock.Object,
             backgroundTaskQueueMock.Object,
             new Mock<IPermissionsManager>().Object,
-            copilotAuthServiceMock.Object,
             new Mock<ILogger<CommentsManager>>().Object
         );
 
@@ -1713,7 +1611,6 @@ public class CommentsManagerTests
         var hubContextMock = new Mock<IHubContext<SignalRHub>>();
         var apiRevisionsManagerMock = new Mock<IAPIRevisionsManager>();
         var backgroundTaskQueueMock = new Mock<IBackgroundTaskQueue>();
-        var copilotAuthServiceMock = new Mock<ICopilotAuthenticationService>();
 
         var mockClients = new Mock<IHubClients>();
         var mockClientProxy = new Mock<IClientProxy>();
@@ -1721,9 +1618,6 @@ public class CommentsManagerTests
         mockClients.Setup(c => c.All).Returns(mockClientProxy.Object);
         mockClientProxy.Setup(p => p.SendCoreAsync(It.IsAny<string>(), It.IsAny<object[]>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-
-        Mock<IConfiguration> configMock = new();
-        configMock.Setup(c => c["CopilotServiceEndpoint"]).Returns("https://dummy.api/endpoint");
 
         Mock<IOptions<OrganizationOptions>> orgOptionsMock = new();
         orgOptionsMock.Setup(o => o.Value)
@@ -1748,28 +1642,6 @@ public class CommentsManagerTests
             userProfileCacheLoggerMock.Object
         );
 
-        Mock<IHttpClientFactory> httpClientFactoryMock = new();
-        Mock<HttpMessageHandler> handlerMock = new();
-        handlerMock
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent("{}")
-            });
-
-        copilotAuthServiceMock.Setup(c => c.GetAccessTokenAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync("test-token");
-
-        HttpClient httpClient = new(handlerMock.Object);
-        httpClientFactoryMock
-            .Setup(f => f.CreateClient(It.IsAny<string>()))
-            .Returns(httpClient);
-
         int notificationCount = 0;
         backgroundTaskQueueMock.Setup(q => q.QueueBackgroundWorkItem(It.IsAny<Func<CancellationToken, Task>>()))
             .Callback<Func<CancellationToken, Task>>(workItem =>
@@ -1787,13 +1659,11 @@ public class CommentsManagerTests
             new Mock<INotificationManager>().Object,
             codeFileRepoMock.Object,
             hubContextMock.Object,
-            httpClientFactoryMock.Object,
+            CreateCopilotHttpServiceMock().Object,
             userProfileCache,
-            configMock.Object,
             orgOptionsMock.Object,
             backgroundTaskQueueMock.Object,
             new Mock<IPermissionsManager>().Object,
-            copilotAuthServiceMock.Object,
             new Mock<ILogger<CommentsManager>>().Object
         );
 
@@ -1858,7 +1728,6 @@ public class CommentsManagerTests
         var hubContextMock = new Mock<IHubContext<SignalRHub>>();
         var apiRevisionsManagerMock = new Mock<IAPIRevisionsManager>();
         var backgroundTaskQueueMock = new Mock<IBackgroundTaskQueue>();
-        var copilotAuthServiceMock = new Mock<ICopilotAuthenticationService>();
 
         var mockClients = new Mock<IHubClients>();
         var mockClientProxy = new Mock<IClientProxy>();
@@ -1866,9 +1735,6 @@ public class CommentsManagerTests
         mockClients.Setup(c => c.All).Returns(mockClientProxy.Object);
         mockClientProxy.Setup(p => p.SendCoreAsync(It.IsAny<string>(), It.IsAny<object[]>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-
-        Mock<IConfiguration> configMock = new();
-        configMock.Setup(c => c["CopilotServiceEndpoint"]).Returns("https://dummy.api/endpoint");
 
         Mock<IOptions<OrganizationOptions>> orgOptionsMock = new();
         orgOptionsMock.Setup(o => o.Value)
@@ -1893,28 +1759,6 @@ public class CommentsManagerTests
             userProfileCacheLoggerMock.Object
         );
 
-        Mock<IHttpClientFactory> httpClientFactoryMock = new();
-        Mock<HttpMessageHandler> handlerMock = new();
-        handlerMock
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent("{}")
-            });
-
-        copilotAuthServiceMock.Setup(c => c.GetAccessTokenAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync("test-token");
-
-        HttpClient httpClient = new(handlerMock.Object);
-        httpClientFactoryMock
-            .Setup(f => f.CreateClient(It.IsAny<string>()))
-            .Returns(httpClient);
-
         int notificationCount = 0;
         backgroundTaskQueueMock.Setup(q => q.QueueBackgroundWorkItem(It.IsAny<Func<CancellationToken, Task>>()))
             .Callback<Func<CancellationToken, Task>>(workItem =>
@@ -1932,13 +1776,11 @@ public class CommentsManagerTests
             new Mock<INotificationManager>().Object,
             codeFileRepoMock.Object,
             hubContextMock.Object,
-            httpClientFactoryMock.Object,
+            CreateCopilotHttpServiceMock().Object,
             userProfileCache,
-            configMock.Object,
             orgOptionsMock.Object,
             backgroundTaskQueueMock.Object,
             new Mock<IPermissionsManager>().Object,
-            copilotAuthServiceMock.Object,
             new Mock<ILogger<CommentsManager>>().Object
         );
 

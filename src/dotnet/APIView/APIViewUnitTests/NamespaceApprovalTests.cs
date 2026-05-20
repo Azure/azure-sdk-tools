@@ -21,7 +21,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Extensibility;
-using System.Net.Http;
 using APIViewWeb.Services;
 using Moq;
 using Xunit;
@@ -86,9 +85,8 @@ namespace APIViewUnitTests
             var mockSignalRHubContext = new Mock<IHubContext<SignalRHub>>();
             var mockLanguageServices = new Mock<IEnumerable<LanguageService>>();
             var mockCodeFileManager = new Mock<ICodeFileManager>();
-            var mockHttpClientFactory = new Mock<IHttpClientFactory>();
+            var mockCopilotHttp = new Mock<ICopilotHttpService>();
             var mockPollingJobQueueManager = new Mock<IPollingJobQueueManager>();
-            var mockCopilotAuth = new Mock<ICopilotAuthenticationService>();
 
             // Initialize ReviewManager with required dependencies
             // SignalR hub is mocked for testing but notifications are handled separately
@@ -105,12 +103,10 @@ namespace APIViewUnitTests
                 mockLanguageServices.Object,
                 _telemetryClient,
                 mockCodeFileManager.Object,
-                _mockConfiguration.Object,
-                mockHttpClientFactory.Object,
+                mockCopilotHttp.Object,
                 mockPollingJobQueueManager.Object,
                 _mockNotificationManager.Object,
                 _mockPullRequestsRepository.Object,
-                mockCopilotAuth.Object,
                 _mockLogger.Object);
 
             _testTimestamp = DateTime.UtcNow;
@@ -513,9 +509,8 @@ namespace APIViewUnitTests
             var mockSignalRHubContext = new Mock<IHubContext<SignalRHub>>();
             var mockLanguageServices = new Mock<IEnumerable<LanguageService>>();
             var mockCodeFileManager = new Mock<ICodeFileManager>();
-            var mockHttpClientFactory = new Mock<IHttpClientFactory>();
+            var mockCopilotHttp = new Mock<ICopilotHttpService>();
             var mockPollingJobQueueManager = new Mock<IPollingJobQueueManager>();
-            var mockCopilotAuth = new Mock<ICopilotAuthenticationService>();
 
             var disabledReviewManager = new ReviewManager(
                 _mockAuthorizationService.Object,
@@ -529,12 +524,10 @@ namespace APIViewUnitTests
                 mockLanguageServices.Object,
                 _telemetryClient,
                 mockCodeFileManager.Object,
-                _mockConfiguration.Object,
-                mockHttpClientFactory.Object,
+                mockCopilotHttp.Object,
                 mockPollingJobQueueManager.Object,
                 _mockNotificationManager.Object,
                 _mockPullRequestsRepository.Object,
-                mockCopilotAuth.Object,
                 _mockLogger.Object);
 
             var reviewId = "feature-disabled-test";

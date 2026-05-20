@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using APIView.Identity;
@@ -49,9 +48,8 @@ namespace APIViewUnitTests
         private readonly Mock<INotificationManager> _mockNotificationManager;
         private readonly Mock<IAuthorizationService> _mockAuthorizationService;
         private readonly Mock<ICodeFileManager> _mockCodeFileManager;
-        private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
+        private readonly Mock<ICopilotHttpService> _mockCopilotHttp;
         private readonly Mock<IPollingJobQueueManager> _mockPollingJobQueueManager;
-        private readonly Mock<ICopilotAuthenticationService> _mockCopilotAuth;
         private readonly TelemetryClient _telemetryClient;
         private readonly ReviewsController _controller;
         private readonly ReviewManager _reviewManager;
@@ -74,9 +72,8 @@ namespace APIViewUnitTests
             _mockNotificationManager = new Mock<INotificationManager>();
             _mockAuthorizationService = new Mock<IAuthorizationService>();
             _mockCodeFileManager = new Mock<ICodeFileManager>();
-            _mockHttpClientFactory = new Mock<IHttpClientFactory>();
+            _mockCopilotHttp = new Mock<ICopilotHttpService>();
             _mockPollingJobQueueManager = new Mock<IPollingJobQueueManager>();
-            _mockCopilotAuth = new Mock<ICopilotAuthenticationService>();
 
             _telemetryClient = new TelemetryClient(new TelemetryConfiguration());
 
@@ -104,12 +101,10 @@ namespace APIViewUnitTests
                 mockLanguageServices,
                 _telemetryClient,
                 _mockCodeFileManager.Object,
-                _mockConfiguration.Object,
-                _mockHttpClientFactory.Object,
+                _mockCopilotHttp.Object,
                 _mockPollingJobQueueManager.Object,
                 _mockNotificationManager.Object,
                 _mockPullRequestsRepository.Object,
-                _mockCopilotAuth.Object,
                 _mockManagerLogger.Object);
 
             // Create controller that uses the real ReviewManager

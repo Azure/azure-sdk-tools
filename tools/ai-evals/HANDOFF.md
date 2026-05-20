@@ -15,128 +15,124 @@ That test suite is what "eval" means here. It has gone through **two generations
 
 | Piece | What it is | Where it lives |
 |---|---|---|
-| **azsdk-cli MCP server** | The set of tools the agent can call (create release plan, update APIView, …) | `azure-sdk-tools/tools/azsdk-cli/` |
-| **Skills** | `SKILL.md` files that teach Copilot *how* to use those tools for a given task | `azure-sdk-tools/.github/skills/` |
-| **Eval system** | The harness that tests whether the skills + MCP tools actually work | Multiple homes — see below |
+| **azsdk-cli MCP server** | The set of tools the agent can call (create release plan, update APIView, validate TypeSpec, …) | `tools/azsdk-cli/Azure.Sdk.Tools.Cli/` |
+| **Skills** | `SKILL.md` files that teach Copilot *how* to use those tools for a given task | `.github/skills/` |
+| **Eval system** | The harness that tests whether the skills + MCP tools actually work | Spread across several folders — see table below |
 
 **Important:** skills *use* the MCP server, so when we evaluate skills we are transitively evaluating the MCP server. They are not two separate test efforts.
 
----
+### Where the eval system actually lives today
 
-## 2.5 Background primer — what *are* MCP and Skills?
+There is no single "evals folder" — the work is split across the framework migration. Concrete paths:
 
-If you've never touched either of these, read this section. Otherwise skim.
-
-### 2.5.1 MCP (Model Context Protocol)
-
-**One-line definition:** MCP is a standard protocol that lets an AI model talk to external **tools** (functions it can call) and **resources** (data it can read) — like USB-C for LLMs.
-
-**The problem it solves:** Before MCP, every LLM platform (Copilot, Claude Desktop, ChatGPT, etc.) had its own bespoke way of registering custom tools. If you wrote a "create a release plan" function, you'd implement it three different ways for three different agents. MCP standardises this.
-
-**How it works conceptually:**
-
-```
-┌────────────┐   MCP (JSON-RPC over stdio/HTTP)   ┌──────────────────┐
-│ LLM client │ ◄──────────────────────────────────► │ MCP server       │
-│ (Copilot)  │   "list tools"                       │ (your code)      │
-│            │   "call tool X with args {...}"      │  ── tool: foo()  │
-│            │   "read resource Y"                  │  ── tool: bar()  │
-└────────────┘                                      └──────────────────┘
-```
-
-- **MCP server:** a process *you* write (any language). It exposes:
-  - **Tools** — functions the model can call (with typed parameters + description).
-  - **Resources** — read-only data the model can pull in (files, DB rows, etc.).
-  - **Prompts** — reusable prompt templates.
-- **MCP client:** the LLM-facing app (Copilot CLI, Claude Desktop, VS Code, etc.). It launches the server, asks "what tools do you have?", and calls them on the model's behalf.
-- **Transport:** usually stdio (server runs as a child process) or HTTP.
-
-**The agent loop with MCP:**
-
-```
-1. User: "Create a release plan for package X"
-2. LLM gets the list of MCP tools and their descriptions
-3. LLM decides: "I should call create_release_plan(package='X')"
-4. MCP client invokes the tool on the MCP server
-5. MCP server runs the actual code, returns a result
-6. LLM reads the result and produces the next message / next tool call
-7. Loop until done
-```
-
-**In our world:**
-- `azsdk-cli` is an MCP server (written in C#) exposing all the tools the Azure SDK release-engineer agent needs: create release plan, validate TypeSpec, post APIView comments, etc.
-- `Azure.Sdk.Tools.Mock` is a *separate* MCP server we use in evals. Same protocol, but it returns canned/no-op responses instead of calling real APIs.
-
-**Where to learn more:** [modelcontextprotocol.io](https://modelcontextprotocol.io) — the official spec + tutorials.
+| Path | What it is | Generation |
+|---|---|---|
+| `tools/azsdk-cli/Azure.Sdk.Tools.Cli.Evaluations/` | The in-house **C# NUnit** harness — scenarios, tool-mock dispatch, HTML reporter, model config. The Gen-1 system. | Gen 1 |
+| `tools/azsdk-cli/Azure.Sdk.Tools.Cli.Benchmarks/` | The longer end-to-end benchmark scenarios (sparse-checkout real repos, walk a full workflow). | Gen 1.5 — **to be deleted** |
+| `tools/azsdk-cli/Azure.Sdk.Tools.Mock/` | Standalone **mock MCP server**. Returns pre-registered responses keyed on inputs; falls through to `Success` when no match. Used by both old and new evals to avoid real API calls. | Cross-gen |
+| `.github/skills/<skill-name>/evaluate/` | Per-skill **Vally** setup (`.vally.yaml`, `evals/`, `fixtures/`, `README.md`). Currently only `azure-typespec-author` has one, set up by the Shanghai team. | Gen 2 |
+| `tools/ai-evals/azure-mcp/` | **Separate, Python-based** evals for the *azure-mcp* project (not our azsdk-cli). Tool-call accuracy. Independent effort — listed for completeness so you don't confuse it with ours. | Unrelated |
+| `eng/common/pipelines/templates/steps/ai-evals-*.yml` (synced to all `azure-sdk-for-*` repos) | The CI plumbing that runs Gen-1 evals on copilot-instruction changes. | Gen 1 |
+| Azure DevOps pipeline **definition 8165** | The (currently disabled) Vally CI pipeline from PR #15376. | Gen 2 |
 
 ---
 
-### 2.5.2 Skills (a.k.a. SKILL.md files)
+## 2.5 Background primer — MCP and Skills, as they exist in *this* repo
 
-**One-line definition:** A **skill** is a markdown file (`SKILL.md`) that tells an LLM "when the user asks you to do *task X*, here is exactly how to do it" — step-by-step instructions, which MCP tools to call, in what order, with what arguments.
+This is a domain-specific primer. We assume you know what an LLM and a CLI are; we *don't* assume you've seen MCP or skills before. For the general protocol/spec, see [modelcontextprotocol.io](https://modelcontextprotocol.io).
 
-**The problem they solve:** Even with great MCP tools, an LLM left to its own devices may pick the wrong tool, call them in the wrong order, miss a required step, or hallucinate parameters. A skill is a **procedural recipe** that constrains the model to the proven-correct workflow.
+### 2.5.1 The azsdk-cli MCP server
 
-**Anatomy of a skill (simplified):**
+**What it is, in our repo:** `Azure.Sdk.Tools.Cli` is a C# command-line tool that *also* speaks the Model Context Protocol. When launched by an MCP client (Copilot CLI, VS Code, Claude Desktop, …), it exposes a catalogue of **tools** the model can call to perform Azure-SDK release-engineering tasks. Same binary, two front-ends: human CLI commands, and MCP tools.
+
+**The catalogue (representative — not exhaustive):**
+
+| Area | Example MCP tools | What they do |
+|---|---|---|
+| Release plan | `azsdk_release_plan_create`, `azsdk_release_plan_get`, `azsdk_release_plan_update`, `azsdk_link_sdk_pull_request_to_release_plan` | Talk to Azure DevOps to create / read / update the release-plan work item for a given SDK package. |
+| APIView | `azsdk_apiview_get_comments`, `azsdk_apiview_request_copilot_review`, `azsdk_apiview_get_copilot_review` | Read review feedback and request copilot reviews against APIView. |
+| TypeSpec | `azsdk_run_typespec_validation`, `azsdk_get_modified_typespec_projects`, `azsdk_typespec_init_project` | Validate TypeSpec specs and bootstrap projects. |
+| SDK generation | `azsdk_package_generate_code`, `azsdk_package_build_code`, `azsdk_package_run_tests`, `azsdk_release_sdk` | Run the per-language generate / build / test / release pipeline locally. |
+| Engsys / CODEOWNERS | `azsdk_engsys_codeowner_*` | Manage codeowners and labels. |
+
+The **auto-generated** catalogue lives at `tools/azsdk-cli/Azure.Sdk.Tools.Cli/docs/mcp-tools.md` (regenerated on each release by the pipeline added in #13108).
+
+**How it runs:**
+
+```
+Copilot CLI / VS Code (MCP client)
+        │  spawns child process, JSON-RPC over stdio
+        ▼
+Azure.Sdk.Tools.Cli  (--mcp-server mode)
+        │  each tool = one C# class under Tools/* implementing MCPNoCommandTool / InstrumentedTool
+        ▼
+Azure DevOps · APIView · GitHub · TypeSpec compiler · npm · dotnet · …
+```
+
+**The mock variant — `Azure.Sdk.Tools.Mock`:** a *separate* MCP server in the same repo (`tools/azsdk-cli/Azure.Sdk.Tools.Mock/`). It exposes the same tool names but returns pre-registered canned responses keyed on input arguments, and falls through to a generic `Success` when nothing matches. Evals point Copilot at this mock instead of the real `azsdk-cli` so a test run doesn't actually create release plans, post APIView comments, or hit Azure DevOps.
+
+**Why this matters for evals:** the eval system's whole job is to verify that, given some user prompt, the model picks the *correct* tool from this catalogue, with the *correct* arguments, in the *correct* order. Bad tool descriptions, overlapping descriptions, or skill drift all show up here.
+
+---
+
+### 2.5.2 Skills, as we use them
+
+**What a skill is, in this repo:** a `SKILL.md` file under `.github/skills/<skill-name>/` that tells Copilot "when the user wants to do *X*, follow these exact steps using these exact azsdk-cli MCP tools." It is markdown with YAML frontmatter. No compilation, no separate runtime.
+
+**The skills we ship today** (live at [`.github/skills/`](https://github.com/Azure/azure-sdk-tools/tree/main/.github/skills)):
+
+| Skill | What workflow it owns |
+|---|---|
+| `azsdk-common-prepare-release-plan` | Create / update an Azure SDK release plan work item end-to-end. |
+| `azsdk-common-generate-sdk-locally` | Generate, build, and test an SDK from a TypeSpec spec on the developer's machine. |
+| `azsdk-common-sdk-release` | Check readiness and trigger the release pipeline. |
+| `azsdk-common-apiview-feedback-resolution` | Read APIView comments and propose code fixes. |
+| `azsdk-common-pipeline-troubleshooting` | Diagnose a failing Azure SDK CI pipeline. |
+| `azure-typespec-author` | Author / modify Azure TypeSpec specs (the Shanghai team's skill — has its own Vally eval setup). |
+| `skill-authoring`, `sensei`, `markdown-token-optimizer` | Meta-skills for writing and maintaining the skills themselves. |
+
+**What's inside a SKILL.md (real shape, abbreviated):**
 
 ```markdown
 ---
-name: prepare-release-plan
+name: azsdk-common-prepare-release-plan
 description: |
-  Use this when the user wants to start a new Azure SDK release.
-  Triggers: "prepare a release", "create release plan", ...
+  **UTILITY SKILL**. USE FOR: "create release plan", "update release plan", "link SDK PR to plan", ...
+  DO NOT USE FOR: SDK code generation, pipeline troubleshooting, API review feedback.
+  INVOKES: azure-sdk-mcp:azsdk_create_release_plan, azure-sdk-mcp:azsdk_get_release_plan,
+           azure-sdk-mcp:azsdk_link_sdk_pull_request_to_release_plan.
 ---
 
 # Prepare Release Plan
 
 ## When to use
-- User mentions starting a release for a specific package
-- A spec PR exists or is about to be created
-
+…
 ## Steps
-1. Call `azsdk_release_plan_get` with the work item ID to check if a plan exists.
-2. If none exists, call `azsdk_release_plan_create` with:
-   - `packageName`: ...
-   - `language`: must be one of [java, python, js, net, go]
-   - ...
-3. Confirm with the user before calling `azsdk_release_plan_update`.
-
-## Common mistakes
-- Don't skip step 1 — it avoids duplicate plans.
-- Language values are case-sensitive.
+1. Check whether a plan exists with `azsdk_get_release_plan`.
+2. If none, call `azsdk_create_release_plan` with: packageName, language (case-sensitive: java|python|js|net|go), …
+3. Confirm with the user, then `azsdk_update_release_plan`.
 ```
 
-**Key properties:**
-- **Discoverable:** the agent host (Copilot) scans a folder, reads the YAML frontmatter (`description`, triggers), and decides at runtime which skill is relevant.
-- **Composable:** skills can reference other skills.
-- **Versioned with the code:** they live in `.github/skills/` in the same repo as the MCP server they call, so changes ship together.
-- **Plain English:** skill authors are often non-developers (PMs, release engineers) writing in markdown — no compilation step.
+Notice the frontmatter explicitly lists **`INVOKES:`** with the MCP tool names — that's the contract between skill and MCP server, and it's what evals assert against.
 
-**The Skill ↔ MCP relationship:**
+**How Copilot picks a skill:** at runtime the agent host scans `.github/skills/`, reads the `description` block (the `USE FOR` / `DO NOT USE FOR` / `INVOKES` lines), and decides which skill (if any) applies to the user's request. Skills are discoverable, composable (one skill can reference another), and versioned in the same repo as the MCP server they call — so a tool rename and a skill update ship in the same PR.
+
+**Skill ↔ MCP tool relationship:**
 
 ```
-   User intent
-       │
-       ▼
-   ┌────────────────────────┐
-   │  Skill (SKILL.md)      │   ← "how to perform task X"
-   │   ├── when to invoke   │
-   │   └── recipe / steps   │
-   └───────────┬────────────┘
-               │ calls
-               ▼
-   ┌────────────────────────┐
-   │  MCP tools             │   ← "what we can actually do"
-   │  (azsdk-cli MCP server)│
-   └────────────────────────┘
+   User: "Start a release for @azure/foo"
+         │
+         ▼
+   .github/skills/azsdk-common-prepare-release-plan/SKILL.md     ← recipe
+         │  step 1 → azsdk_get_release_plan
+         │  step 2 → azsdk_create_release_plan
+         ▼
+   azsdk-cli MCP server  (real)   ─or─   Azure.Sdk.Tools.Mock  (in evals)
 ```
 
-A useful analogy: **MCP tools are the API; skills are the instruction manual.** You can have great tools and still get bad outcomes if the instructions are unclear — which is exactly why evals exist.
+**Analogy:** the MCP tools are the API; the skill is the instruction manual. You can have perfect tools and still get bad outcomes if the manual is wrong — which is exactly why evals exist and why most of them are *skill-level*, not tool-level.
 
-**In our world:**
-- Skills live at [`azure-sdk-tools/.github/skills/`](https://github.com/Azure/azure-sdk-tools/tree/main/.github/skills).
-- Each skill is one workflow the SDK release agent is expected to handle correctly.
-- When evals "test a skill", they simulate a user prompt that should trigger that skill, then check whether the agent followed the recipe correctly (right tools, right order, right args, sensible final answer).
+**In eval terms:** "testing a skill" means feeding Copilot a prompt that should trigger that skill, letting it run against the mock MCP server, and grading whether the resulting trajectory matches the recipe (right tools, right order, right arguments, sensible final answer).
 
 ---
 
@@ -174,7 +170,7 @@ This is what every generation of our eval system is trying to measure — they j
 - **HTML report** generated per run.
 - **NUnit parallelism (level 5)** to keep wall time down while staying gentle on token quotas.
 
-**CI integration:** A new pipeline (`eng/common/pipelines/ai-evals-tests.yml`) triggered when `.github/copilot-instructions*.md` changed, fanned out to every `azure-sdk-for-*` repo via the eng/common sync.
+**CI integration:** Pipeline templates under `eng/common/pipelines/templates/steps/` triggered when `.github/copilot-instructions*.md` changed, fanned out to every `azure-sdk-for-*` repo via the eng/common sync.
 
 **Status:** **Working, in production, but slated for replacement.**
 
@@ -253,7 +249,7 @@ A chronological tour of `jeo02`'s eval-relevant PRs. Each block is the **load-be
 | [#12890 — Simplify Eval scenarios](https://github.com/Azure/azure-sdk-tools/pull/12890) | Refactor: less boilerplate per scenario. |
 | [#12893 — verify prompts eval fix](https://github.com/Azure/azure-sdk-tools/pull/12893) | Fixed the "verify" scenario; demonstrates the typical "scenario flakes → patch grader/prompt" debugging loop. |
 | [#12951 — Pipeline status check context + fix warning evals](https://github.com/Azure/azure-sdk-tools/pull/12951) | Wired eval pass/fail into the PR status check surface. |
-| [#12995 — Azsdk cli eval tests pipeline](https://github.com/Azure/azure-sdk-tools/pull/12995) | Added `eng/common/pipelines/ai-evals-tests.yml`. **Triggered on changes to `copilot-instructions*.md` files, fanned out to every `azure-sdk-for-*` repo via the eng/common sync.** This is the "Gen-1 pipeline" everyone refers to. |
+| [#12995 — Azsdk cli eval tests pipeline](https://github.com/Azure/azure-sdk-tools/pull/12995) | Added the AI-evals pipeline templates under `eng/common/pipelines/templates/steps/`. **Triggered on changes to `copilot-instructions*.md` files, fanned out to every `azure-sdk-for-*` repo via the eng/common sync.** This is the "Gen-1 pipeline" everyone refers to. |
 | [#13019 — Conditional testing](https://github.com/Azure/azure-sdk-tools/pull/13019) | Skip evals not affected by the changed files — keeps CI fast. |
 | [#13025 — Change last pipeline failure status as warning](https://github.com/Azure/azure-sdk-tools/pull/13025) | Soft-fail behavior for known-flaky steps. |
 | [#13142 — Generalize eval pipeline and switch endpoint](https://github.com/Azure/azure-sdk-tools/pull/13142) | Pulled hard-coded model endpoints out of the pipeline so it can target different envs. |
@@ -365,8 +361,8 @@ Concretely:
 3. PR **#15376** — read the description and the disabled pipeline config. This is *the* migration artifact.
 4. A real example: [`.github/skills/azure-typespec-author/evaluate`](https://github.com/Azure/azure-sdk-tools/tree/main/.github/skills/azure-typespec-author/evaluate) — Shanghai's working Vally setup.
 5. PR **#15183** — the smaller, optional follow-up migration.
-6. Old world (only if needed): `tools/azsdk-cli/Azure.Sdk.Tools.Cli.Evaluations/` to understand what we're replacing.
-7. The mock: `tools/azsdk-cli/Azure.Sdk.Tools.Mock`.
+6. Old world (only if needed): `tools/azsdk-cli/Azure.Sdk.Tools.Cli.Evaluations/` and `tools/azsdk-cli/Azure.Sdk.Tools.Cli.Benchmarks/` to understand what we're replacing.
+7. The mock: `tools/azsdk-cli/Azure.Sdk.Tools.Mock/`.
 
 ---
 

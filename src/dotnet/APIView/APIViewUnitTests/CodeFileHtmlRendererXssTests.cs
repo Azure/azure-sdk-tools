@@ -105,9 +105,9 @@ namespace APIViewUnitTests
             var result = CodeFileHtmlRenderer.Normal.Render(codeFile);
             var html = result.CodeLines.First().DisplayString;
 
-            // Assert — quotes are encoded so the attacker cannot break out of href
-            html.Should().Contain("&quot;"); // embedded quotes are encoded
-            html.Should().Contain("<a target=\"_blank\" rel=\"noopener noreferrer\" href=\""); // structure preserved
+            // Assert — dangerous URL is not rendered as a link at all
+            html.Should().NotContain("<a "); // no anchor tag for invalid URL
+            html.Should().Contain("<span>"); // rendered as plain text wrapper
             html.Should().NotContain("\" onmouseover="); // raw breakout attempt is neutralized
         }
 
@@ -202,6 +202,41 @@ namespace APIViewUnitTests
             html.Should().Contain("rel=\"noopener noreferrer\"");
             html.Should().Contain("target=\"_blank\"");
             html.Should().Contain("href=\"https://learn.microsoft.com/dotnet\"");
+        }
+
+        /// <summary>
+        /// Verifies that javascript: scheme URLs are not rendered as clickable links.
+        /// </summary>
+        [Theory]
+        [InlineData("javascript:alert(document.cookie)")]
+        [InlineData("data:text/html,<script>alert(1)</script>")]
+        [InlineData("vbscript:MsgBox(1)")]
+        public void RenderToken_ExternalLink_DangerousScheme_RendersAsPlainText(string dangerousUrl)
+        {
+            var tokens = new[]
+            {
+                new CodeFileToken(dangerousUrl, CodeFileTokenKind.ExternalLinkStart),
+                new CodeFileToken("click me", CodeFileTokenKind.Text),
+                new CodeFileToken(null, CodeFileTokenKind.ExternalLinkEnd),
+                new CodeFileToken("\n", CodeFileTokenKind.Newline)
+            };
+
+            var codeFile = new CodeFile
+            {
+                Tokens = tokens,
+                Language = "Json",
+                Name = "scheme-test"
+            };
+
+            // Act
+            var result = CodeFileHtmlRenderer.Normal.Render(codeFile);
+            var html = result.CodeLines.First().DisplayString;
+
+            // Assert — no anchor tag, just a span wrapper
+            html.Should().NotContain("<a ");
+            html.Should().Contain("<span>");
+            html.Should().Contain("click me");
+            html.Should().NotContain(dangerousUrl);
         }
     }
 }

@@ -893,6 +893,13 @@ namespace APIViewWeb.Managers
                 if (review != null)
                 {
                     var apiRevision = await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId: apiRevisionId);
+                    if (apiRevision != null && apiRevision.ReviewId != reviewId)
+                    {
+                        _telemetryClient.TrackTrace(
+                            $"Skipping artifact entry: revision {apiRevisionId} does not belong to review {reviewId} (actual review: {apiRevision.ReviewId}). BuildId={buildId}",
+                            Microsoft.ApplicationInsights.DataContracts.SeverityLevel.Warning);
+                        continue;
+                    }
                     if (apiRevision != null)
                     {
                         if (codeFile.CrossLanguageMetadata == null)

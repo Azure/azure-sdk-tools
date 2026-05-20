@@ -231,13 +231,15 @@ extends:
                   with open("$LATEST") as f:
                       for line in f:
                           r = json.loads(line)
-                          name = r.get("stimulus", {}).get("name", "unknown")
-                          graders = r.get("graderResults", [])
-                          failed = [g for g in graders if not g.get("pass", False)]
+                          name = r.get("stimulus", {}).get("name", "")
+                          if not name:
+                              continue
+                          graders = r.get("gradeResult", {}).get("details", [])
+                          failed = [g for g in graders if not g.get("passed", False)]
                           if failed:
                               print(f"[FAILED] {name}")
                               for g in failed:
-                                  print(f'  - {g.get("graderType", "?")}: {g.get("reason", "no reason")}')
+                                  print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
                   EOF
                     fi
                     exit $EXIT_CODE
@@ -263,13 +265,15 @@ extends:
                   with open("$LATEST") as f:
                       for line in f:
                           r = json.loads(line)
-                          name = r.get("stimulus", {}).get("name", "unknown")
-                          graders = r.get("graderResults", [])
-                          failed = [g for g in graders if not g.get("pass", False)]
+                          name = r.get("stimulus", {}).get("name", "")
+                          if not name:
+                              continue
+                          graders = r.get("gradeResult", {}).get("details", [])
+                          failed = [g for g in graders if not g.get("passed", False)]
                           if failed:
                               print(f"[FAILED] {name}")
                               for g in failed:
-                                  print(f'  - {g.get("graderType", "?")}: {g.get("reason", "no reason")}')
+                                  print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
                   EOF
                     fi
                     exit $EXIT_CODE
@@ -295,13 +299,15 @@ extends:
                   with open("$LATEST") as f:
                       for line in f:
                           r = json.loads(line)
-                          name = r.get("stimulus", {}).get("name", "unknown")
-                          graders = r.get("graderResults", [])
-                          failed = [g for g in graders if not g.get("pass", False)]
+                          name = r.get("stimulus", {}).get("name", "")
+                          if not name:
+                              continue
+                          graders = r.get("gradeResult", {}).get("details", [])
+                          failed = [g for g in graders if not g.get("passed", False)]
                           if failed:
                               print(f"[FAILED] {name}")
                               for g in failed:
-                                  print(f'  - {g.get("graderType", "?")}: {g.get("reason", "no reason")}')
+                                  print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
                   EOF
                     fi
                     exit $EXIT_CODE
@@ -327,13 +333,15 @@ extends:
                   with open("$LATEST") as f:
                       for line in f:
                           r = json.loads(line)
-                          name = r.get("stimulus", {}).get("name", "unknown")
-                          graders = r.get("graderResults", [])
-                          failed = [g for g in graders if not g.get("pass", False)]
+                          name = r.get("stimulus", {}).get("name", "")
+                          if not name:
+                              continue
+                          graders = r.get("gradeResult", {}).get("details", [])
+                          failed = [g for g in graders if not g.get("passed", False)]
                           if failed:
                               print(f"[FAILED] {name}")
                               for g in failed:
-                                  print(f'  - {g.get("graderType", "?")}: {g.get("reason", "no reason")}')
+                                  print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
                   EOF
                     fi
                     exit $EXIT_CODE
@@ -359,13 +367,15 @@ extends:
                   with open("$LATEST") as f:
                       for line in f:
                           r = json.loads(line)
-                          name = r.get("stimulus", {}).get("name", "unknown")
-                          graders = r.get("graderResults", [])
-                          failed = [g for g in graders if not g.get("pass", False)]
+                          name = r.get("stimulus", {}).get("name", "")
+                          if not name:
+                              continue
+                          graders = r.get("gradeResult", {}).get("details", [])
+                          failed = [g for g in graders if not g.get("passed", False)]
                           if failed:
                               print(f"[FAILED] {name}")
                               for g in failed:
-                                  print(f'  - {g.get("graderType", "?")}: {g.get("reason", "no reason")}')
+                                  print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
                   EOF
                     fi
                     exit $EXIT_CODE
@@ -596,13 +606,15 @@ extends:
                   with open("$LATEST") as f:
                       for line in f:
                           r = json.loads(line)
-                          name = r.get("stimulus", {}).get("name", "unknown")
-                          graders = r.get("graderResults", [])
-                          failed = [g for g in graders if not g.get("pass", False)]
+                          name = r.get("stimulus", {}).get("name", "")
+                          if not name:
+                              continue
+                          graders = r.get("gradeResult", {}).get("details", [])
+                          failed = [g for g in graders if not g.get("passed", False)]
                           if failed:
                               print(f"[FAILED] {name}")
                               for g in failed:
-                                  print(f'  - {g.get("graderType", "?")}: {g.get("reason", "no reason")}')
+                                  print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
                   EOF
                     fi
                     exit $EXIT_CODE
@@ -628,13 +640,15 @@ extends:
                   with open("$LATEST") as f:
                       for line in f:
                           r = json.loads(line)
-                          name = r.get("stimulus", {}).get("name", "unknown")
-                          graders = r.get("graderResults", [])
-                          failed = [g for g in graders if not g.get("pass", False)]
+                          name = r.get("stimulus", {}).get("name", "")
+                          if not name:
+                              continue
+                          graders = r.get("gradeResult", {}).get("details", [])
+                          failed = [g for g in graders if not g.get("passed", False)]
                           if failed:
                               print(f"[FAILED] {name}")
                               for g in failed:
-                                  print(f'  - {g.get("graderType", "?")}: {g.get("reason", "no reason")}')
+                                  print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
                   EOF
                     fi
                     exit $EXIT_CODE
@@ -660,13 +674,15 @@ extends:
                   with open("$LATEST") as f:
                       for line in f:
                           r = json.loads(line)
-                          name = r.get("stimulus", {}).get("name", "unknown")
-                          graders = r.get("graderResults", [])
-                          failed = [g for g in graders if not g.get("pass", False)]
+                          name = r.get("stimulus", {}).get("name", "")
+                          if not name:
+                              continue
+                          graders = r.get("gradeResult", {}).get("details", [])
+                          failed = [g for g in graders if not g.get("passed", False)]
                           if failed:
                               print(f"[FAILED] {name}")
                               for g in failed:
-                                  print(f'  - {g.get("graderType", "?")}: {g.get("reason", "no reason")}')
+                                  print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
                   EOF
                     fi
                     exit $EXIT_CODE
@@ -692,13 +708,15 @@ extends:
                   with open("$LATEST") as f:
                       for line in f:
                           r = json.loads(line)
-                          name = r.get("stimulus", {}).get("name", "unknown")
-                          graders = r.get("graderResults", [])
-                          failed = [g for g in graders if not g.get("pass", False)]
+                          name = r.get("stimulus", {}).get("name", "")
+                          if not name:
+                              continue
+                          graders = r.get("gradeResult", {}).get("details", [])
+                          failed = [g for g in graders if not g.get("passed", False)]
                           if failed:
                               print(f"[FAILED] {name}")
                               for g in failed:
-                                  print(f'  - {g.get("graderType", "?")}: {g.get("reason", "no reason")}')
+                                  print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
                   EOF
                     fi
                     exit $EXIT_CODE
@@ -724,13 +742,15 @@ extends:
                   with open("$LATEST") as f:
                       for line in f:
                           r = json.loads(line)
-                          name = r.get("stimulus", {}).get("name", "unknown")
-                          graders = r.get("graderResults", [])
-                          failed = [g for g in graders if not g.get("pass", False)]
+                          name = r.get("stimulus", {}).get("name", "")
+                          if not name:
+                              continue
+                          graders = r.get("gradeResult", {}).get("details", [])
+                          failed = [g for g in graders if not g.get("passed", False)]
                           if failed:
                               print(f"[FAILED] {name}")
                               for g in failed:
-                                  print(f'  - {g.get("graderType", "?")}: {g.get("reason", "no reason")}')
+                                  print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
                   EOF
                     fi
                     exit $EXIT_CODE

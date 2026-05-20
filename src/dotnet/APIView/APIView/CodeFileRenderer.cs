@@ -6,6 +6,7 @@ using APIView.Model;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Web;
 
 namespace APIViewLegacy
 {
@@ -201,7 +202,7 @@ namespace APIViewLegacy
                         break;
 
                     case CodeFileTokenKind.ExternalLinkStart:
-                        stringBuilder.Append($"<a target=\"_blank\" href=\"{token.Value}\">");
+                        stringBuilder.Append("<a target=\"_blank\" href=\"").Append(HttpUtility.HtmlAttributeEncode(token.Value)).Append("\">");
                         break;
 
                     case CodeFileTokenKind.ExternalLinkEnd:

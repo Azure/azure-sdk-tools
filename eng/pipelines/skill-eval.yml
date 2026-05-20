@@ -18,67 +18,78 @@ parameters:
     type: string
     default: ' '
 
-variables:
-  - group: 'AzSDK_Eval_Variable_group'
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    Use1ESOfficial: true
+    stages:
+      - stage: Evaluate
+        displayName: 'Vally Eval'
+        variables:
+          - template: /eng/pipelines/templates/variables/globals.yml
+          - template: /eng/pipelines/templates/variables/image.yml
+          - group: 'AzSDK_Eval_Variable_group'
+        pool:
+          name: $(LINUXPOOL)
+          image: $(LINUXVMIMAGE)
+          os: linux
+        jobs:
+          - job: Evaluate
+            displayName: 'Vally Eval'
+            steps:
+              - checkout: self
+                fetchDepth: 2
 
-jobs:
-  - job: Evaluate
-    displayName: 'Vally Eval'
-    pool:
-      vmImage: 'ubuntu-latest'
-    steps:
-      - checkout: self
-        fetchDepth: 2
+              - task: NodeTool@0
+                displayName: 'Use Node.js 22'
+                inputs:
+                  versionSpec: '22.x'
 
-      - task: NodeTool@0
-        displayName: 'Use Node.js 22'
-        inputs:
-          versionSpec: '22.x'
+              - script: npm install -g @microsoft/vally-cli@0.4.0
+                displayName: 'Install Vally CLI'
 
-      - script: npm install -g @microsoft/vally-cli@0.4.0
-        displayName: 'Install Vally CLI'
+              - script: npm install -g @github/copilot-sdk
+                displayName: 'Install Copilot SDK'
 
-      - script: npm install -g @github/copilot-sdk
-        displayName: 'Install Copilot SDK'
+              - script: |
+                  input_areas=$(echo "${{ parameters.areas }}" | xargs)
+                  if [ -n "$input_areas" ]; then
+                    areas="$input_areas"
+                  elif [ "${{ parameters.runAll }}" = "True" ]; then
+                    areas=""
+                  else
+                    areas=$(git diff --name-only HEAD~1 HEAD -- .github/skills/ \
+                      | grep -oP '\.github/skills/\K[^/]+(?=/)' \
+                      | sort -u \
+                      | grep -v '^\.' \
+                      | paste -sd, -)
+                  fi
 
-      - script: |
-          input_areas=$(echo "${{ parameters.areas }}" | xargs)
-          if [ -n "$input_areas" ]; then
-            areas="$input_areas"
-          elif [ "${{ parameters.runAll }}" = "True" ]; then
-            areas=""
-          else
-            areas=$(git diff --name-only HEAD~1 HEAD -- .github/skills/ \
-              | grep -oP '\.github/skills/\K[^/]+(?=/)' \
-              | sort -u \
-              | grep -v '^\.' \
-              | paste -sd, -)
-          fi
+                  if [ -n "$areas" ]; then
+                    echo "Evaluating areas: $areas"
+                    echo "##vso[task.setvariable variable=EVAL_ARGS]--tag area=$areas"
+                  elif [ "${{ parameters.runAll }}" = "True" ]; then
+                    echo "Evaluating all skills"
+                    echo "##vso[task.setvariable variable=EVAL_ARGS] "
+                  else
+                    echo "No skill changes detected — skipping evals"
+                    echo "##vso[task.setvariable variable=EVAL_ARGS]SKIP"
+                  fi
+                displayName: 'Detect changed skills'
 
-          if [ -n "$areas" ]; then
-            echo "Evaluating areas: $areas"
-            echo "##vso[task.setvariable variable=EVAL_ARGS]--tag area=$areas"
-          elif [ "${{ parameters.runAll }}" = "True" ]; then
-            echo "Evaluating all skills"
-            echo "##vso[task.setvariable variable=EVAL_ARGS] "
-          else
-            echo "No skill changes detected — skipping evals"
-            echo "##vso[task.setvariable variable=EVAL_ARGS]SKIP"
-          fi
-        displayName: 'Detect changed skills'
+              - script: |
+                  cd .github/skills
+                  vally eval --tag "type=ci-gate" $(EVAL_ARGS) --output-dir ".vally/results"
+                displayName: 'Run evaluations'
+                condition: and(succeeded(), ne(variables['EVAL_ARGS'], 'SKIP'))
+                continueOnError: true
+                env:
+                  GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
 
-      - script: |
-          cd .github/skills
-          vally eval --tag "type=ci-gate" $(EVAL_ARGS) --output-dir ".vally/results"
-        displayName: 'Run evaluations'
-        condition: and(succeeded(), ne(variables['EVAL_ARGS'], 'SKIP'))
-        continueOnError: true
-        env:
-          GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
-
-      - task: PublishPipelineArtifact@1
-        displayName: 'Upload eval results'
-        condition: and(always(), ne(variables['EVAL_ARGS'], 'SKIP'))
-        inputs:
-          targetPath: '.github/skills/.vally/results'
-          artifactName: 'eval-results-$(Build.BuildId)'
+            templateContext:
+              outputs:
+                - output: pipelineArtifact
+                  path: '.github/skills/.vally/results'
+                  artifact: 'eval-results-$(Build.BuildId)'
+                  displayName: 'Upload eval results'
+                  condition: and(always(), ne(variables['EVAL_ARGS'], 'SKIP'))

@@ -705,6 +705,10 @@
     return store().filters.month;
   }
 
+  function getSortOrder() {
+    return store().filters.sort || "month";
+  }
+
   function render(plans) {
     detectDuplicates(plans);
     const planeFilter = getGlobalPlaneFilter();
@@ -735,6 +739,16 @@
       );
     }
 
+    function sortByReleasePlanId(a, b) {
+      const idA = String(a.releasePlanId || "");
+      const idB = String(b.releasePlanId || "");
+      // Descending order so newest (highest) IDs appear first
+      return idB.localeCompare(idA, undefined, { numeric: true });
+    }
+
+    const sortFn =
+      getSortOrder() === "id" ? sortByReleasePlanId : sortByReleaseMonth;
+
     function splitByState(arr) {
       const partial = [];
       const inProgress = [];
@@ -753,14 +767,14 @@
         }
       }
 
-      inProgress.sort(sortByReleaseMonth);
-      partial.sort(sortByReleaseMonth);
-      newItems.sort(sortByReleaseMonth);
+      inProgress.sort(sortFn);
+      partial.sort(sortFn);
+      newItems.sort(sortFn);
 
       // When filtering/searching, show all finished plans that match;
       // otherwise limit to this/last month, max 20
       if (isFiltering) {
-        finished.sort(sortByReleaseMonth);
+        finished.sort(sortFn);
         return { inProgress, partial, newItems, finished };
       }
       const now = new Date();
@@ -773,7 +787,7 @@
         const rm = (p.releaseMonth || "").toLowerCase();
         return rm.includes(thisMonthKey) || rm.includes(lastMonthKey);
       });
-      recentFinished.sort(sortByReleaseMonth);
+      recentFinished.sort(sortFn);
       const cappedFinished = recentFinished.slice(0, FINISHED_DISPLAY_LIMIT);
 
       return { inProgress, partial, newItems, finished: cappedFinished };
@@ -2217,6 +2231,7 @@
         store().filters.search,
         store().filters.plane,
         store().filters.month,
+        store().filters.sort,
         store().filters.prLang,
         store().filters.prStatus,
       ];

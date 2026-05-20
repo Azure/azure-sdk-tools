@@ -91,7 +91,8 @@ header h1 {
   width: 280px;
 }
 .global-plane-filter,
-.global-month-filter {
+.global-month-filter,
+.global-sort-order {
   padding: 5px 10px;
   border: 1px solid #d2d0ce;
   border-radius: var(--radius);

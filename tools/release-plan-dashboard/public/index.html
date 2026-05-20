@@ -38,6 +38,7 @@
             search: "",
             plane: "",
             month: "",
+            sort: "month",
             prLang: "",
             prStatus: "",
           },
@@ -201,6 +202,15 @@
         x-model="$store.app.filters.month"
       >
         <option value="">All Months</option>
+      </select>
+      <select
+        id="global-sort-order"
+        class="global-sort-order"
+        x-model="$store.app.filters.sort"
+        x-show="$store.app.activeTab === 'tab-release-plans'"
+      >
+        <option value="month">Sort by: SDK Release Month</option>
+        <option value="id">Sort by: Release Plan ID</option>
       </select>
     </div>
 

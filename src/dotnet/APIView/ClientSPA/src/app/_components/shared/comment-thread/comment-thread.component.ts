@@ -142,9 +142,6 @@ export class CommentThreadComponent {
     }
 
     const firstComment = this.codePanelRowData.comments[0];
-    if (this.isDiagnostic(firstComment)) {
-      return false;
-    }
     return firstComment.createdBy === this.userProfile?.userName ||
            this.permissionsService.isAdmin(this.userProfile?.permissions) ||
            (firstComment.createdBy === 'azure-sdk' && this.permissionsService.isApproverFor(this.userProfile?.permissions, this.reviewContextService.getLanguage()));
@@ -944,19 +941,15 @@ export class CommentThreadComponent {
     return comment.commentSource === CommentSource.AIGenerated;
   }
 
-  isDiagnostic(comment: CommentItemModel): boolean {
-    return comment.commentSource === CommentSource.Diagnostic;
-  }
-
   isSystemGenerated(comment: CommentItemModel): boolean {
-    return this.isAIGenerated(comment) || this.isDiagnostic(comment);
+    return this.isAIGenerated(comment);
   }
   canDeleteComment(comment: CommentItemModel): boolean {
-    return !this.isDiagnostic(comment);
+    return true;
   }
 
   get canResolveThread(): boolean {
-    return !(this.codePanelRowData?.comments || []).some(c => this.isDiagnostic(c));
+    return true;
   }
 
   hasAIInfo(comment: CommentItemModel): boolean {

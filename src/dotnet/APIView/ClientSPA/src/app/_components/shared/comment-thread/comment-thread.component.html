@@ -48,9 +48,7 @@
                 </div>
             </div>
             <div *ngIf="!canEditSeverity">
-                <span [ngClass]="getSeverityBadgeClass(codePanelRowData!.comments[0].severity)" class="severity-badge px-2 py-1 rounded text-xs"
-                      [pTooltip]="isDiagnostic(codePanelRowData!.comments[0]) ? 'Diagnostic comments are generated from the source code. Their severity can only be changed by modifying the diagnostics in the source code.' : ''"
-                      tooltipPosition="top">
+                <span [ngClass]="getSeverityBadgeClass(codePanelRowData!.comments[0].severity)" class="severity-badge px-2 py-1 rounded text-xs">
                     {{ getSeverityLabel(codePanelRowData!.comments[0].severity) }}
                 </span>
             </div>
@@ -86,10 +84,6 @@
                               class="ai-badge-custom ms-2">
                             AI-generated
                         </span>
-                        <!-- Diagnostic Badge -->
-                        <span *ngIf="isDiagnostic(comment)" class="diagnostic-badge-custom ms-2">
-                            <i class="bi bi-exclamation-triangle-fill me-1"></i>Diagnostic
-                        </span>
                     </div>
                 </ng-template>
                 <div *ngIf="!comment.isInEditMode" [innerHTML]="(comment.commentText | markdownToHtml | async)" class="pe-5 rendered-comment-content">
@@ -121,13 +115,13 @@
                             </a>
                         </ng-template>
                     </p-menu>
-                    <button *ngIf="!isDiagnostic(comment)" [attr.data-btn-id]="comment.id" (click)="toggleUpVoteAction($event)" class="p-panel-header-icon p-link">
+                    <button [attr.data-btn-id]="comment.id" (click)="toggleUpVoteAction($event)" class="p-panel-header-icon p-link">
                         <span *ngIf="comment.upvotes.length > 0; else noUpVotes" class="bi bi-hand-thumbs-up-fill emoji-active" pTooltip="{{comment.upvotes.join(', ')}}" tooltipPosition="bottom">{{comment.upvotes.length}}</span>
                         <ng-template #noUpVotes>
                             <span class="bi bi-hand-thumbs-up"></span>
                         </ng-template>
                     </button>
-                    <button *ngIf="comment.createdBy == 'azure-sdk' && !isDiagnostic(comment)" [attr.data-btn-id]="comment.id" (click)="toggleDownVoteAction($event)" class="p-panel-header-icon p-link">
+                    <button *ngIf="comment.createdBy == 'azure-sdk'" [attr.data-btn-id]="comment.id" (click)="toggleDownVoteAction($event)" class="p-panel-header-icon p-link">
                         <span *ngIf="comment.downvotes.length > 0; else noDownVotes" class="bi bi-hand-thumbs-down-fill emoji-active" pTooltip="{{comment.downvotes.join(', ')}}" tooltipPosition="bottom">{{comment.downvotes.length}}</span>
                         <ng-template #noDownVotes>
                             <span class="bi bi-hand-thumbs-down"></span>

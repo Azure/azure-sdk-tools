@@ -525,6 +525,7 @@ public class APIRevisionsManagerTests
             .ReturnsAsync(new APIRevisionListItemModel
             {
                 Id = TestApiRevisionId,
+                ReviewId = TestReviewId,
                 Language = "Python",
                 Files = new List<APICodeFileModel> { new() { FileId = TestFileId, FileName = TestFileName } }
             });
@@ -663,6 +664,7 @@ public class APIRevisionsManagerTests
             .ReturnsAsync(new APIRevisionListItemModel
             {
                 Id = apiRevisionId,
+                ReviewId = reviewId,
                 Language = ApiViewConstants.TypeSpecLanguage,
                 Files = new List<APICodeFileModel> { new() { FileId = fileId, FileName = TestFileName } }
             });
@@ -709,6 +711,7 @@ public class APIRevisionsManagerTests
             .ReturnsAsync(new APIRevisionListItemModel
             {
                 Id = TestApiRevisionId,
+                ReviewId = TestReviewId,
                 Language = "Python",
                 Files = new List<APICodeFileModel> { new() { FileId = TestFileId, FileName = TestFileName } }
             });

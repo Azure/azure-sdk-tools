@@ -231,15 +231,19 @@ extends:
                   with open("$LATEST") as f:
                       for line in f:
                           r = json.loads(line)
-                          name = r.get("stimulus", {}).get("name", "")
+                          name = r.get("gradeResult", {}).get("stimulusName", "")
                           if not name:
                               continue
-                          graders = r.get("gradeResult", {}).get("details", [])
-                          failed = [g for g in graders if not g.get("passed", False)]
-                          if failed:
-                              print(f"[FAILED] {name}")
-                              for g in failed:
+                          grade = r.get("gradeResult", {})
+                          score = grade.get("score", 1)
+                          if not isinstance(score, (int, float)) or score >= 1.0:
+                              continue
+                          print(f"[FAILED] {name} (score: {score})")
+                          for g in grade.get("details", []):
+                              if not g.get("passed", True):
                                   print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
+                              elif isinstance(g.get("score"), (int, float)) and g.get("score") < 1.0:
+                                  print(f'  - {g.get("name", "?")} (score: {g.get("score")}): {g.get("evidence", "")}')
                   EOF
                     fi
                     exit $EXIT_CODE
@@ -265,15 +269,19 @@ extends:
                   with open("$LATEST") as f:
                       for line in f:
                           r = json.loads(line)
-                          name = r.get("stimulus", {}).get("name", "")
+                          name = r.get("gradeResult", {}).get("stimulusName", "")
                           if not name:
                               continue
-                          graders = r.get("gradeResult", {}).get("details", [])
-                          failed = [g for g in graders if not g.get("passed", False)]
-                          if failed:
-                              print(f"[FAILED] {name}")
-                              for g in failed:
+                          grade = r.get("gradeResult", {})
+                          score = grade.get("score", 1)
+                          if not isinstance(score, (int, float)) or score >= 1.0:
+                              continue
+                          print(f"[FAILED] {name} (score: {score})")
+                          for g in grade.get("details", []):
+                              if not g.get("passed", True):
                                   print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
+                              elif isinstance(g.get("score"), (int, float)) and g.get("score") < 1.0:
+                                  print(f'  - {g.get("name", "?")} (score: {g.get("score")}): {g.get("evidence", "")}')
                   EOF
                     fi
                     exit $EXIT_CODE
@@ -299,15 +307,19 @@ extends:
                   with open("$LATEST") as f:
                       for line in f:
                           r = json.loads(line)
-                          name = r.get("stimulus", {}).get("name", "")
+                          name = r.get("gradeResult", {}).get("stimulusName", "")
                           if not name:
                               continue
-                          graders = r.get("gradeResult", {}).get("details", [])
-                          failed = [g for g in graders if not g.get("passed", False)]
-                          if failed:
-                              print(f"[FAILED] {name}")
-                              for g in failed:
+                          grade = r.get("gradeResult", {})
+                          score = grade.get("score", 1)
+                          if not isinstance(score, (int, float)) or score >= 1.0:
+                              continue
+                          print(f"[FAILED] {name} (score: {score})")
+                          for g in grade.get("details", []):
+                              if not g.get("passed", True):
                                   print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
+                              elif isinstance(g.get("score"), (int, float)) and g.get("score") < 1.0:
+                                  print(f'  - {g.get("name", "?")} (score: {g.get("score")}): {g.get("evidence", "")}')
                   EOF
                     fi
                     exit $EXIT_CODE
@@ -333,15 +345,19 @@ extends:
                   with open("$LATEST") as f:
                       for line in f:
                           r = json.loads(line)
-                          name = r.get("stimulus", {}).get("name", "")
+                          name = r.get("gradeResult", {}).get("stimulusName", "")
                           if not name:
                               continue
-                          graders = r.get("gradeResult", {}).get("details", [])
-                          failed = [g for g in graders if not g.get("passed", False)]
-                          if failed:
-                              print(f"[FAILED] {name}")
-                              for g in failed:
+                          grade = r.get("gradeResult", {})
+                          score = grade.get("score", 1)
+                          if not isinstance(score, (int, float)) or score >= 1.0:
+                              continue
+                          print(f"[FAILED] {name} (score: {score})")
+                          for g in grade.get("details", []):
+                              if not g.get("passed", True):
                                   print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
+                              elif isinstance(g.get("score"), (int, float)) and g.get("score") < 1.0:
+                                  print(f'  - {g.get("name", "?")} (score: {g.get("score")}): {g.get("evidence", "")}')
                   EOF
                     fi
                     exit $EXIT_CODE
@@ -367,15 +383,19 @@ extends:
                   with open("$LATEST") as f:
                       for line in f:
                           r = json.loads(line)
-                          name = r.get("stimulus", {}).get("name", "")
+                          name = r.get("gradeResult", {}).get("stimulusName", "")
                           if not name:
                               continue
-                          graders = r.get("gradeResult", {}).get("details", [])
-                          failed = [g for g in graders if not g.get("passed", False)]
-                          if failed:
-                              print(f"[FAILED] {name}")
-                              for g in failed:
+                          grade = r.get("gradeResult", {})
+                          score = grade.get("score", 1)
+                          if not isinstance(score, (int, float)) or score >= 1.0:
+                              continue
+                          print(f"[FAILED] {name} (score: {score})")
+                          for g in grade.get("details", []):
+                              if not g.get("passed", True):
                                   print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
+                              elif isinstance(g.get("score"), (int, float)) and g.get("score") < 1.0:
+                                  print(f'  - {g.get("name", "?")} (score: {g.get("score")}): {g.get("evidence", "")}')
                   EOF
                     fi
                     exit $EXIT_CODE
@@ -606,15 +626,19 @@ extends:
                   with open("$LATEST") as f:
                       for line in f:
                           r = json.loads(line)
-                          name = r.get("stimulus", {}).get("name", "")
+                          name = r.get("gradeResult", {}).get("stimulusName", "")
                           if not name:
                               continue
-                          graders = r.get("gradeResult", {}).get("details", [])
-                          failed = [g for g in graders if not g.get("passed", False)]
-                          if failed:
-                              print(f"[FAILED] {name}")
-                              for g in failed:
+                          grade = r.get("gradeResult", {})
+                          score = grade.get("score", 1)
+                          if not isinstance(score, (int, float)) or score >= 1.0:
+                              continue
+                          print(f"[FAILED] {name} (score: {score})")
+                          for g in grade.get("details", []):
+                              if not g.get("passed", True):
                                   print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
+                              elif isinstance(g.get("score"), (int, float)) and g.get("score") < 1.0:
+                                  print(f'  - {g.get("name", "?")} (score: {g.get("score")}): {g.get("evidence", "")}')
                   EOF
                     fi
                     exit $EXIT_CODE
@@ -640,15 +664,19 @@ extends:
                   with open("$LATEST") as f:
                       for line in f:
                           r = json.loads(line)
-                          name = r.get("stimulus", {}).get("name", "")
+                          name = r.get("gradeResult", {}).get("stimulusName", "")
                           if not name:
                               continue
-                          graders = r.get("gradeResult", {}).get("details", [])
-                          failed = [g for g in graders if not g.get("passed", False)]
-                          if failed:
-                              print(f"[FAILED] {name}")
-                              for g in failed:
+                          grade = r.get("gradeResult", {})
+                          score = grade.get("score", 1)
+                          if not isinstance(score, (int, float)) or score >= 1.0:
+                              continue
+                          print(f"[FAILED] {name} (score: {score})")
+                          for g in grade.get("details", []):
+                              if not g.get("passed", True):
                                   print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
+                              elif isinstance(g.get("score"), (int, float)) and g.get("score") < 1.0:
+                                  print(f'  - {g.get("name", "?")} (score: {g.get("score")}): {g.get("evidence", "")}')
                   EOF
                     fi
                     exit $EXIT_CODE
@@ -674,15 +702,19 @@ extends:
                   with open("$LATEST") as f:
                       for line in f:
                           r = json.loads(line)
-                          name = r.get("stimulus", {}).get("name", "")
+                          name = r.get("gradeResult", {}).get("stimulusName", "")
                           if not name:
                               continue
-                          graders = r.get("gradeResult", {}).get("details", [])
-                          failed = [g for g in graders if not g.get("passed", False)]
-                          if failed:
-                              print(f"[FAILED] {name}")
-                              for g in failed:
+                          grade = r.get("gradeResult", {})
+                          score = grade.get("score", 1)
+                          if not isinstance(score, (int, float)) or score >= 1.0:
+                              continue
+                          print(f"[FAILED] {name} (score: {score})")
+                          for g in grade.get("details", []):
+                              if not g.get("passed", True):
                                   print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
+                              elif isinstance(g.get("score"), (int, float)) and g.get("score") < 1.0:
+                                  print(f'  - {g.get("name", "?")} (score: {g.get("score")}): {g.get("evidence", "")}')
                   EOF
                     fi
                     exit $EXIT_CODE
@@ -708,15 +740,19 @@ extends:
                   with open("$LATEST") as f:
                       for line in f:
                           r = json.loads(line)
-                          name = r.get("stimulus", {}).get("name", "")
+                          name = r.get("gradeResult", {}).get("stimulusName", "")
                           if not name:
                               continue
-                          graders = r.get("gradeResult", {}).get("details", [])
-                          failed = [g for g in graders if not g.get("passed", False)]
-                          if failed:
-                              print(f"[FAILED] {name}")
-                              for g in failed:
+                          grade = r.get("gradeResult", {})
+                          score = grade.get("score", 1)
+                          if not isinstance(score, (int, float)) or score >= 1.0:
+                              continue
+                          print(f"[FAILED] {name} (score: {score})")
+                          for g in grade.get("details", []):
+                              if not g.get("passed", True):
                                   print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
+                              elif isinstance(g.get("score"), (int, float)) and g.get("score") < 1.0:
+                                  print(f'  - {g.get("name", "?")} (score: {g.get("score")}): {g.get("evidence", "")}')
                   EOF
                     fi
                     exit $EXIT_CODE
@@ -742,15 +778,19 @@ extends:
                   with open("$LATEST") as f:
                       for line in f:
                           r = json.loads(line)
-                          name = r.get("stimulus", {}).get("name", "")
+                          name = r.get("gradeResult", {}).get("stimulusName", "")
                           if not name:
                               continue
-                          graders = r.get("gradeResult", {}).get("details", [])
-                          failed = [g for g in graders if not g.get("passed", False)]
-                          if failed:
-                              print(f"[FAILED] {name}")
-                              for g in failed:
+                          grade = r.get("gradeResult", {})
+                          score = grade.get("score", 1)
+                          if not isinstance(score, (int, float)) or score >= 1.0:
+                              continue
+                          print(f"[FAILED] {name} (score: {score})")
+                          for g in grade.get("details", []):
+                              if not g.get("passed", True):
                                   print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
+                              elif isinstance(g.get("score"), (int, float)) and g.get("score") < 1.0:
+                                  print(f'  - {g.get("name", "?")} (score: {g.get("score")}): {g.get("evidence", "")}')
                   EOF
                     fi
                     exit $EXIT_CODE

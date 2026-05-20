@@ -46,10 +46,18 @@ jobs:
     needs: kusto
     runs-on: ubuntu-latest
     permissions:
+      id-token: write
       contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Azure Login with OIDC for DevOps
+        uses: azure/login@v1
+        with:
+          client-id: c277c2aa-5326-4d16-90de-98feeca69cbc
+          tenant-id: 72f988bf-86f1-41af-91ab-2d7cd011db47
+          allow-no-subscriptions: true
 
       - name: Resolve DevOps pipeline entry points
         id: resolve
@@ -57,7 +65,6 @@ jobs:
         env:
           QUERY_RESULT: ${{ needs.kusto.outputs.query_result }}
           ADO_ORG: ${{ inputs.devops_org || 'azure-sdk' }}
-          AZURE_DEVOPS_PAT: ${{ secrets.AZURE_DEVOPS_PAT }}
         run: |
           Set-StrictMode -Version 4
           $ErrorActionPreference = 'Stop'
@@ -66,10 +73,6 @@ jobs:
 
           if ([string]::IsNullOrWhiteSpace($env:QUERY_RESULT)) {
             throw "Kusto query returned no result."
-          }
-
-          if ([string]::IsNullOrWhiteSpace($env:AZURE_DEVOPS_PAT)) {
-            throw "AZURE_DEVOPS_PAT secret is required to query Azure DevOps."
           }
 
           $env:QUERY_RESULT | Set-Content -Path kusto-query-result.json
@@ -84,8 +87,16 @@ jobs:
           "row_count=$($rows.Count)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           Write-Host "Kusto returned $($rows.Count) row(s)."
 
-          $token = Get-Base64EncodedToken $env:AZURE_DEVOPS_PAT
-          $headers = Get-DevOpsApiHeaders -Base64EncodedToken $token
+          $bearerToken = az account get-access-token `
+            --resource "499b84ac-1321-427f-aa17-267ca6975798" `
+            --query "accessToken" `
+            --output tsv
+
+          if ([string]::IsNullOrWhiteSpace($bearerToken)) {
+            throw "Unable to get Azure DevOps bearer token."
+          }
+
+          $headers = Get-DevOpsApiHeaders -BearerToken $bearerToken
           $enriched = @()
 
           foreach ($row in $rows) {

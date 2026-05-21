@@ -63,13 +63,5 @@ namespace APIViewWeb.Controllers
             await _apiRevisionManager.UpdateAPIRevisionCodeFileAsync(request.RepoName, request.BuildId, request.ArtifactName, request.Project, request.MetadataFile);
             return Ok();
         }
-
-        [Authorize("RequireTokenOrCookieAuthentication")]
-        [HttpPost]
-        public async Task<ActionResult> ApprovePackageName(string id)
-        {
-            await _reviewManager.ApproveReviewAsync(user: User, reviewId: id);
-            return RedirectToPage("/Assemblies/Review",  new { id = id });
-        }
     }
 }

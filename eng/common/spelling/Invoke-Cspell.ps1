@@ -8,7 +8,8 @@ Invokes cspell using dependencies defined in adjacent ./package*.json
 Maps to cspell command (e.g. `lint`, `trace`, etc.). Default is `lint`
 
 .PARAMETER FileList
-List of file paths to be scanned. This is piped into cspell via stdin.
+List of file paths to be scanned. Written to a temp file and passed to cspell
+via the --file-list argument.
 
 .PARAMETER CSpellConfigPath
 Location of cspell.json file to use when scanning. Defaults to
@@ -58,6 +59,8 @@ param(
 begin {
   Set-StrictMode -Version 3.0
 
+  . (Join-Path $PSScriptRoot .. scripts logging.ps1)
+
   if (!(Get-Command npm -ErrorAction SilentlyContinue)) {
     LogError "Could not locate npm. Install NodeJS (includes npm) https://nodejs.org/en/download/"
     exit 1
@@ -82,27 +85,40 @@ begin {
     Copy-Item "$PSScriptRoot/package-lock.json" $PackageInstallCache
   }
 
-
   $filesToCheck = @()
  }
 process {
   $filesToCheck += $FileList
  }
 end {
+  Write-Verbose "Files to check:"
+  foreach ($file in $filesToCheck) {
+    Write-Verbose "  $file"
+  }
+
   npm --prefix $PackageInstallCache ci | Write-Host
 
-  $command = "npm --prefix $PackageInstallCache exec --no -- cspell $JobType --config $CSpellConfigPath --no-must-find-files --root $SpellCheckRoot --file-list stdin"
-  Write-Host $command
-  $cspellOutput = $filesToCheck | npm --prefix $PackageInstallCache `
-    exec  `
-    --no `
-    '--' `
-    cspell `
-    $JobType `
-    --config $CSpellConfigPath `
-    --no-must-find-files `
-    --root $SpellCheckRoot `
-    --file-list stdin
+  $fileListPath = $null
+  try {
+    $fileListPath = (New-TemporaryFile).FullName
+    $filesToCheck | Out-File -FilePath $fileListPath -Encoding utf8
+
+    $cspellArgs = @(
+      '--prefix', $PackageInstallCache,
+      'exec', '--no', '--',
+      'cspell', $JobType,
+      '--config', $CSpellConfigPath,
+      '--no-must-find-files',
+      '--root', $SpellCheckRoot,
+      '--file-list', $fileListPath
+    )
+    Write-Host "npm $cspellArgs"
+    $cspellOutput = npm @cspellArgs
+  } finally {
+    if ($fileListPath) {
+      Remove-Item -Path $fileListPath -Force -ErrorAction SilentlyContinue
+    }
+  }
 
   if (!$LeavePackageInstallCache) {
     Write-Host "Cleaning up package install cache at $PackageInstallCache"

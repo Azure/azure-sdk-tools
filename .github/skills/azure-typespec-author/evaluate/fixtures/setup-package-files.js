@@ -7,7 +7,7 @@ const REPO_URL = 'https://github.com/Azure/azure-rest-api-specs.git';
 const FILES = ['package.json', 'package-lock.json'];
 const DEST = process.argv[2]
   ? path.resolve(process.cwd(), process.argv[2])
-  : path.resolve(__dirname, 'fixtures', 'Microsoft.Widget', 'Widget');
+  : path.resolve(__dirname, 'Microsoft.Widget', 'Widget');
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'specs-'));
 try {

@@ -79,7 +79,6 @@ extends:
                 workingDirectory: $(ProjectPath)
                 displayName: "Run prettier format check"
 
-
               - task: ArchiveFiles@2
                 displayName: "Create deployable zip package"
                 inputs:

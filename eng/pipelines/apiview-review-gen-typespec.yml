@@ -59,16 +59,13 @@ jobs:
       pathtoPublish: '$(Build.ArtifactStagingDirectory)'
       artifactName: 'apiview'
 
-  - task: AzurePowerShell@5
+  - task: Powershell@2
     displayName: 'Send Request to APIView to Update Token files'
     condition: succeededOrFailed()
     inputs:
-      azureSubscription: 'Azure SDK Engineering System'
-      ScriptType: 'FilePath'
-      ScriptPath: $(Build.SourcesDirectory)/eng/scripts/Apiview-Update-Generated-Review.ps1
-      ScriptArguments: >
+      pwsh: true
+      filePath: $(Build.SourcesDirectory)/eng/scripts/Apiview-Update-Generated-Review.ps1
+      arguments: >
         -BuildId $(Build.BuildId)
         -MetadataFileName "typespec-metadata.json"
         -ApiviewUpdateUrl "$(APIViewURL)/review/UpdateApiReview"
-      azurePowerShellVersion: latestVersion
-      pwsh: true

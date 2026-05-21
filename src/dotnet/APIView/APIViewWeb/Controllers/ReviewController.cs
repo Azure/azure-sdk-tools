@@ -31,6 +31,21 @@ namespace APIViewWeb.Controllers
             _apiRevisionManager = apiRevisionManager;
         }
 
+        [AllowAnonymous]
+        [HttpGet]
+        public async Task<ActionResult> UpdateApiReview(string repoName, string artifactPath, string buildId, string project = "internal", string metadataFile = null)
+        {
+            if (string.IsNullOrWhiteSpace(repoName) ||
+                string.IsNullOrWhiteSpace(buildId) ||
+                string.IsNullOrWhiteSpace(artifactPath))
+            {
+                return BadRequest("RepoName, BuildId, and ArtifactPath are required.");
+            }
+
+            await _apiRevisionManager.UpdateAPIRevisionCodeFileAsync(repoName, buildId, artifactPath, project, metadataFile);
+            return Ok();
+        }
+
         [HttpPost]
         public async Task<ActionResult> UpdateApiReview([FromBody] UpdateApiReviewRequest request)
         {

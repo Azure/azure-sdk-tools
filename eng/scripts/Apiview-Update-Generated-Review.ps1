@@ -15,76 +15,25 @@ param (
 # uploads into APIView. This offline step abstracts and protects APIView server resources so caller doesn't have to
 # know about APIView server. Pipline will publish an artifact 'apiview' before this script is called
 
-# Script will send an authenticated POST request to APIView with build ID, artifact name and repo name.
-# Requires AzurePowerShell@5 context for Get-AzAccessToken.
-# Sample request:
-# POST https://apiview.dev/review/UpdateApiReview
-# Body: { "repoName": "azure/azure-sdk-tools", "buildId": "1742433", "artifactName": "apiview" }
+# Script will send a request to APIView with build ID, artifact name and repo name as params.
+# Sample request is as follows:
+# https://apistaging.test.dev/review/UpdateApiReview?repoName=azure/azure-sdk-tools&buildId=1742433&artifact=apiview
 
 ####################################################################################################################
 
-# Acquire Entra ID token for APIView app registration
-try {
-    $tokenResponse = Get-AzAccessToken -ResourceUrl "api://apiview" -ErrorAction Stop
-    $token = $tokenResponse.Token
-    if (-not $token) {
-        Write-Error "Failed to acquire access token for APIView (resource: api://apiview)"
-        exit 1
-    }
-}
-catch {
-    Write-Error "Failed to acquire access token for APIView (resource: api://apiview): $($_.Exception.Message)"
-    exit 1
-}
-
-$body = @{
-    repoName     = $RepoName
-    artifactName = $ArtifactName
-    buildId      = $BuildId
-    project      = "internal"
-}
+$uri = $ApiviewUpdateUrl + "?artifact=" + $ArtifactName + "&buildId=" + $BuildId + "&repoName=" + $repoName
 if ($MetadataFileName) {
-    $body.metadataFile = $MetadataFileName
+    $encodedMetadataFileName = [Uri]::EscapeDataString($MetadataFileName)
+    $uri = $uri + "&metadataFile=" + $encodedMetadataFileName
 }
-
-$headers = @{
-    Authorization  = "Bearer $token"
-    "Content-Type" = "application/json"
-}
-
-$jsonBody = $body | ConvertTo-Json -Compress
-Write-Host "Request URL: $ApiviewUpdateUrl"
-Write-Host "Request body: $jsonBody"
+Write-Host "Request URI: $($uri)"
 try
 {
-    $Response = Invoke-WebRequest -Method 'POST' -Uri $ApiviewUpdateUrl -Headers $headers -Body $jsonBody -MaximumRetryCount 3
+    $Response = Invoke-WebRequest -Method 'GET' $uri -MaximumRetryCount 3
     Write-Host "Response status : $($Response.StatusCode)"
 }
 catch
 {
-    Write-Host "Error - Exception message: $($_.Exception.Message)"
-
-    if ($_.Exception.Response)
-    {
-        Write-Host "Error - HTTP status: $([int]$_.Exception.Response.StatusCode)"
-
-        $responseContent = $null
-        try
-        {
-            $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
-            $responseContent = $reader.ReadToEnd()
-            $reader.Dispose()
-        }
-        catch
-        {
-            Write-Host "Error - Failed to read response body: $($_.Exception.Message)"
-        }
-
-        if ($responseContent)
-        {
-            Write-Host "Error - Response body: $responseContent"
-        }
-    }
-
+    Write-Host "Error $StatusCode - Exception details: $($_.Exception.Response)"
     exit 1
 }

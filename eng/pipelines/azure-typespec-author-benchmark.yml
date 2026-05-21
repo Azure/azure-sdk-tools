@@ -10,6 +10,22 @@ parameters:
   displayName: Branch containing the azure-typespec-author skill source (SKILL.md + references/) to evaluate. Leave empty to use the branch this pipeline was triggered from.
   type: string
   default: ''
+- name: ForcedSuites
+  type: object
+  default:
+    - { name: versioning, file: versioning-forced.eval.yaml, timeout: 50 }
+    - { name: armtemplate, file: armtemplate-forced.eval.yaml, timeout: 40 }
+    - { name: longrunningoperation, file: lro-forced.eval.yaml, timeout: 25 }
+    - { name: decorators, file: decorators-forced.eval.yaml, timeout: 15 }
+    - { name: warning, file: warning-forced.eval.yaml, timeout: 25 }
+- name: SkillInvocationSuites
+  type: object
+  default:
+    - { name: versioning, file: versioning.eval.yaml, timeout: 50 }
+    - { name: armtemplate, file: armtemplate.eval.yaml, timeout: 40 }
+    - { name: longrunningoperation, file: lro.eval.yaml, timeout: 25 }
+    - { name: decorators, file: decorators.eval.yaml, timeout: 15 }
+    - { name: warning, file: warning.eval.yaml, timeout: 25 }
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -35,378 +51,50 @@ extends:
               - checkout: self
                 fetchDepth: 0
 
-              # Optionally overlay the azure-typespec-author skill source
-              # (SKILL.md + references/) from a different branch so we can
-              # evaluate skill changes that live on another branch while
-              # keeping the evaluate/ directory and pipeline config from
-              # the branch this pipeline was triggered from.
-              - script: |
-                  set -e
-                  BRANCH="${{ parameters.SkillBranch }}"
-                  if [ -z "$BRANCH" ]; then
-                    echo "SkillBranch parameter not provided; using the source branch checked out by the pipeline."
-                    git rev-parse --abbrev-ref HEAD
-                    git rev-parse HEAD
-                    exit 0
-                  fi
-                  echo "Overlaying azure-typespec-author skill source from branch: $BRANCH"
-                  git fetch origin "$BRANCH"
-                  rm -rf .github/skills/azure-typespec-author/SKILL.md \
-                         .github/skills/azure-typespec-author/references
-                  git checkout "origin/$BRANCH" -- \
-                    .github/skills/azure-typespec-author/SKILL.md \
-                    .github/skills/azure-typespec-author/references
-                  echo "Skill source overlaid from origin/$BRANCH ($(git rev-parse origin/$BRANCH))"
-                  ls -R .github/skills/azure-typespec-author
-                displayName: Checkout skill branch
-
-              # Install Go and build/start the QA bot backend
-              - script: |
-                  echo "Downloading Go 1.24.0..."
-                  curl -LO https://go.dev/dl/go1.24.0.linux-amd64.tar.gz
-                  echo "Removing existing Go installation..."
-                  sudo rm -rf /usr/local/go
-                  echo "Extracting Go 1.24.0..."
-                  sudo tar -C /usr/local -xzf go1.24.0.linux-amd64.tar.gz
-                  echo "Setting environment variables..."
-                  echo "##vso[task.setvariable variable=GOROOT]/usr/local/go"
-                  echo "##vso[task.prependpath]/usr/local/go/bin"
-                displayName: Install Go
-
-              - script: go version
-                displayName: Check Go version
-
-              - task: AzureCLI@2
-                displayName: Start QA bot backend service
-                inputs:
-                  azureSubscription: 'azuresdkqabot-dev'
-                  scriptType: bash
-                  scriptLocation: inlineScript
-                  workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
-                  inlineScript: |
-                    export GOPROXY=https://proxy.golang.org,direct
-                    LOG_DIR=$(Build.StagingDirectory)/qa-bot-log
-                    mkdir -p "$LOG_DIR"
-                    go build -o qa-bot-service
-                    chmod +x qa-bot-service
-                    nohup ./qa-bot-service > "$LOG_DIR/qa-bot-service.log" 2>&1 &
-                    SERVICE_PID=$!
-                    echo "Service started with PID: $SERVICE_PID"
-                    sleep 20
-                    echo "=== Service log ==="
-                    cat "$LOG_DIR/qa-bot-service.log" || true
-                    echo "==================="
-                    if ! kill -0 $SERVICE_PID 2>/dev/null; then
-                      echo "ERROR: Service process has exited unexpectedly"
-                      exit 1
-                    fi
-                    if ! lsof -ti:8088 > /dev/null 2>&1; then
-                      echo "ERROR: No process listening on port 8088"
-                      exit 1
-                    fi
-                    echo "Service is running on port 8088"
-                env:
-                  SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-                  AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
-
-              # Install .NET SDK for azsdk-cli MCP server.
-              # Use the version pinned in global.json so the build/restore works.
-              - task: UseDotNet@2
-                displayName: Install .NET SDK (global.json)
-                inputs:
-                  useGlobalJson: true
-                  workingDirectory: $(Build.SourcesDirectory)
-              - task: UseDotNet@2
-                displayName: Install .NET 8.0 SDK
-                inputs:
-                  version: '8.x'
-
-              # Authenticate to NuGet so the azsdk-cli MCP server can restore
-              # packages from the internal Azure Artifacts feed (the 1ES pool
-              # blocks direct egress to nuget.org).
-              - task: NuGetAuthenticate@1
-                displayName: Authenticate NuGet
-
-              # Pre-build the azsdk-cli (the MCP server). vally launches it
-              # via `dotnet run` (defaults to Debug, no -c flag), but doing
-              # the restore + build here surfaces any failure as a clear
-              # pipeline error instead of a silent MCP server startup
-              # failure during evaluations.
-              - script: |
-                  set -e
-                  dotnet restore tools/azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj
-                  dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj \
-                    --no-restore --nologo
-                displayName: Build azsdk-cli (MCP server)
-
-              # Install Node.js, Vally CLI, and Copilot SDK.
-              # Use the internal Azure Artifacts npm mirror (with auth) because
-              # the 1ES managed pool blocks direct egress to registry.npmjs.org.
-              - task: NodeTool@0
-                displayName: Use Node.js 22
-                inputs:
-                  versionSpec: '22.x'
-
-              - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
+              - template: /eng/pipelines/templates/steps/typespec-author-eval-setup.yml
                 parameters:
-                  npmrcPath: $(Build.SourcesDirectory)/.npmrc
-                  registryUrl: https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-tools/npm/registry/
+                  SkillBranch: ${{ parameters.SkillBranch }}
 
-              - script: npm install --global @microsoft/vally-cli@0.4.0 --userconfig $(Build.SourcesDirectory)/.npmrc
-                displayName: Install Vally CLI
-
-              - script: npm install --global @github/copilot-sdk --userconfig $(Build.SourcesDirectory)/.npmrc
-                displayName: Install Copilot SDK
-
-              # Pre-install TypeSpec compiler globally from the internal npm
-              # mirror so `azsdk_run_typespec_validation` (and any direct
-              # `npx tsp`/`npm install` the agent attempts) succeeds without
-              # network access to registry.npmjs.org.
-              - script: |
-                  set -e
-                  npm install --global @typespec/compiler --userconfig $(Build.SourcesDirectory)/.npmrc
-                  echo "tsp version:"
-                  tsp --version || true
-                displayName: Install TypeSpec compiler
-
-              # Smoke test (informational only): try to start MCP server and
-              # capture any startup errors. We don't fail the pipeline here
-              # because reliably driving an MCP stdio JSON-RPC handshake from
-              # a shell is fragile; vally/copilot-sdk drives the protocol
-              # properly during the eval step.
-              - script: |
-                  cd $(Build.SourcesDirectory)/tools/azsdk-cli/Azure.Sdk.Tools.Cli
-                  echo "--- CLI commands ---"
-                  dotnet run --no-build -- --help 2>&1 | head -40 || true
-                  echo "--- list registered MCP tools ---"
-                  dotnet run --no-build -- list 2>&1 | head -200 || true
-                displayName: MCP server smoke test (informational)
-                continueOnError: true
-                env:
-                  AZSDKTOOLS_AGENT_TESTING: "true"
-                  AZSDKTOOLS_COLLECT_TELEMETRY: "false"
-                  AZURE_SDK_KB_ENDPOINT: "http://localhost:8088"
-
-              # Copy package.json and package-lock.json from the spec repo
-              # into the fixture's Widget project so evaluations use the
-              # latest dependency versions from azure-rest-api-specs.
-              - script: |
-                  set -e
-                  FIXTURE_DIR=".github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget"
-                  SPEC_REPO_RAW="https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main"
-                  echo "Downloading package.json and package-lock.json from spec repo..."
-                  curl -fSL "$SPEC_REPO_RAW/package.json" -o "$FIXTURE_DIR/package.json"
-                  curl -fSL "$SPEC_REPO_RAW/package-lock.json" -o "$FIXTURE_DIR/package-lock.json"
-                  echo "Done. Fixture now uses spec repo's package files."
-                  echo "Installing node_modules in fixture directory..."
-                  cd "$FIXTURE_DIR"
-                  npm ci --userconfig $(Build.SourcesDirectory)/.npmrc
-                  echo "node_modules installed successfully"
-                  ls node_modules | head -20
-                displayName: Download spec repo packages and install node_modules
-
-              # Run evaluations
-              # The local/default Vally config (.vally.yaml) is kept stable for
-              # developers and still points named suites at per-case files under
-              # evaluate/evals/.
-              # Each suite has an explicit timeout to prevent one suite from
-              # blocking all others. If a suite times out, continueOnError ensures
-              # we still attempt the next suite.
-              # Pipeline-only parallelism is handled separately here by invoking
-              # the combined files under evaluate/suites/ directly with
-              # --eval-spec. This avoids changing local teammate workflows while
-              # still enabling intra-suite workers in CI.
-              # Each step captures the vally exit code and on failure parses the
-              # most recent results.jsonl to report which stimuli/graders failed.
-              - script: |
-                  cd .github/skills/azure-typespec-author/evaluate
-                  vally eval --eval-spec suites/versioning-forced.eval.yaml --output-dir results --verbose
-                  EXIT_CODE=$?
-                  if [ $EXIT_CODE -ne 0 ]; then
-                    echo "##vso[task.logissue type=error]Suite versioning-forced failed (exit code $EXIT_CODE)"
-                    LATEST=$(find results -name 'results.jsonl' -type f -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
-                    if [ -n "$LATEST" ]; then
-                      python3 << EOF
-                  import json, sys
-                  with open("$LATEST") as f:
-                      for line in f:
-                          r = json.loads(line)
-                          name = r.get("gradeResult", {}).get("stimulusName", "")
-                          if not name:
-                              continue
-                          grade = r.get("gradeResult", {})
-                          score = grade.get("score", 1)
-                          if not isinstance(score, (int, float)) or score >= 1.0:
-                              continue
-                          print(f"[FAILED] {name} (score: {score})")
-                          for g in grade.get("details", []):
-                              if not g.get("passed", True):
-                                  print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
-                              elif isinstance(g.get("score"), (int, float)) and g.get("score") < 1.0:
-                                  print(f'  - {g.get("name", "?")} (score: {g.get("score")}): {g.get("evidence", "")}')
-                  EOF
+              # Run evaluations — each suite gets its own step with timeout
+              # and continueOnError so failures don't block subsequent suites.
+              - ${{ each suite in parameters.ForcedSuites }}:
+                - script: |
+                    cd .github/skills/azure-typespec-author/evaluate
+                    vally eval --eval-spec suites/${{ suite.file }} --output-dir results --verbose
+                    EXIT_CODE=$?
+                    if [ $EXIT_CODE -ne 0 ]; then
+                      echo "##vso[task.logissue type=error]Suite ${{ suite.name }}-forced failed (exit code $EXIT_CODE)"
+                      LATEST=$(find results -name 'results.jsonl' -type f -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
+                      if [ -n "$LATEST" ]; then
+                        python3 << EOF
+                    import json, sys
+                    with open("$LATEST") as f:
+                        for line in f:
+                            r = json.loads(line)
+                            name = r.get("gradeResult", {}).get("stimulusName", "")
+                            if not name:
+                                continue
+                            grade = r.get("gradeResult", {})
+                            score = grade.get("score", 1)
+                            if not isinstance(score, (int, float)) or score >= 1.0:
+                                continue
+                            print(f"[FAILED] {name} (score: {score})")
+                            for g in grade.get("details", []):
+                                if not g.get("passed", True):
+                                    print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
+                                elif isinstance(g.get("score"), (int, float)) and g.get("score") < 1.0:
+                                    print(f'  - {g.get("name", "?")} (score: {g.get("score")}): {g.get("evidence", "")}')
+                    EOF
+                      fi
+                      exit $EXIT_CODE
                     fi
-                    exit $EXIT_CODE
-                  fi
-                displayName: Run force invokation suite - versioning
-                timeoutInMinutes: 50
-                continueOnError: true
-                condition: always()
-                env:
-                  GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
-                  FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
-
-              - script: |
-                  cd .github/skills/azure-typespec-author/evaluate
-                  vally eval --eval-spec suites/armtemplate-forced.eval.yaml --output-dir results --verbose
-                  EXIT_CODE=$?
-                  if [ $EXIT_CODE -ne 0 ]; then
-                    echo "##vso[task.logissue type=error]Suite armtemplate-forced failed (exit code $EXIT_CODE)"
-                    LATEST=$(find results -name 'results.jsonl' -type f -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
-                    if [ -n "$LATEST" ]; then
-                      python3 << EOF
-                  import json, sys
-                  with open("$LATEST") as f:
-                      for line in f:
-                          r = json.loads(line)
-                          name = r.get("gradeResult", {}).get("stimulusName", "")
-                          if not name:
-                              continue
-                          grade = r.get("gradeResult", {})
-                          score = grade.get("score", 1)
-                          if not isinstance(score, (int, float)) or score >= 1.0:
-                              continue
-                          print(f"[FAILED] {name} (score: {score})")
-                          for g in grade.get("details", []):
-                              if not g.get("passed", True):
-                                  print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
-                              elif isinstance(g.get("score"), (int, float)) and g.get("score") < 1.0:
-                                  print(f'  - {g.get("name", "?")} (score: {g.get("score")}): {g.get("evidence", "")}')
-                  EOF
-                    fi
-                    exit $EXIT_CODE
-                  fi
-                displayName: Run force invokation suite - armtemplate
-                timeoutInMinutes: 40
-                continueOnError: true
-                condition: always()
-                env:
-                  GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
-                  FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
-
-              - script: |
-                  cd .github/skills/azure-typespec-author/evaluate
-                  vally eval --eval-spec suites/lro-forced.eval.yaml --output-dir results --verbose
-                  EXIT_CODE=$?
-                  if [ $EXIT_CODE -ne 0 ]; then
-                    echo "##vso[task.logissue type=error]Suite lro-forced failed (exit code $EXIT_CODE)"
-                    LATEST=$(find results -name 'results.jsonl' -type f -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
-                    if [ -n "$LATEST" ]; then
-                      python3 << EOF
-                  import json, sys
-                  with open("$LATEST") as f:
-                      for line in f:
-                          r = json.loads(line)
-                          name = r.get("gradeResult", {}).get("stimulusName", "")
-                          if not name:
-                              continue
-                          grade = r.get("gradeResult", {})
-                          score = grade.get("score", 1)
-                          if not isinstance(score, (int, float)) or score >= 1.0:
-                              continue
-                          print(f"[FAILED] {name} (score: {score})")
-                          for g in grade.get("details", []):
-                              if not g.get("passed", True):
-                                  print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
-                              elif isinstance(g.get("score"), (int, float)) and g.get("score") < 1.0:
-                                  print(f'  - {g.get("name", "?")} (score: {g.get("score")}): {g.get("evidence", "")}')
-                  EOF
-                    fi
-                    exit $EXIT_CODE
-                  fi
-                displayName: Run force invokation suite - longrunningoperation
-                timeoutInMinutes: 25
-                continueOnError: true
-                condition: always()
-                env:
-                  GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
-                  FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
-
-              - script: |
-                  cd .github/skills/azure-typespec-author/evaluate
-                  vally eval --eval-spec suites/decorators-forced.eval.yaml --output-dir results --verbose
-                  EXIT_CODE=$?
-                  if [ $EXIT_CODE -ne 0 ]; then
-                    echo "##vso[task.logissue type=error]Suite decorators-forced failed (exit code $EXIT_CODE)"
-                    LATEST=$(find results -name 'results.jsonl' -type f -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
-                    if [ -n "$LATEST" ]; then
-                      python3 << EOF
-                  import json, sys
-                  with open("$LATEST") as f:
-                      for line in f:
-                          r = json.loads(line)
-                          name = r.get("gradeResult", {}).get("stimulusName", "")
-                          if not name:
-                              continue
-                          grade = r.get("gradeResult", {})
-                          score = grade.get("score", 1)
-                          if not isinstance(score, (int, float)) or score >= 1.0:
-                              continue
-                          print(f"[FAILED] {name} (score: {score})")
-                          for g in grade.get("details", []):
-                              if not g.get("passed", True):
-                                  print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
-                              elif isinstance(g.get("score"), (int, float)) and g.get("score") < 1.0:
-                                  print(f'  - {g.get("name", "?")} (score: {g.get("score")}): {g.get("evidence", "")}')
-                  EOF
-                    fi
-                    exit $EXIT_CODE
-                  fi
-                displayName: Run force invokation suite - decorators
-                timeoutInMinutes: 15
-                continueOnError: true
-                condition: always()
-                env:
-                  GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
-                  FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
-
-              - script: |
-                  cd .github/skills/azure-typespec-author/evaluate
-                  vally eval --eval-spec suites/warning-forced.eval.yaml --output-dir results --verbose
-                  EXIT_CODE=$?
-                  if [ $EXIT_CODE -ne 0 ]; then
-                    echo "##vso[task.logissue type=error]Suite warning-forced failed (exit code $EXIT_CODE)"
-                    LATEST=$(find results -name 'results.jsonl' -type f -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
-                    if [ -n "$LATEST" ]; then
-                      python3 << EOF
-                  import json, sys
-                  with open("$LATEST") as f:
-                      for line in f:
-                          r = json.loads(line)
-                          name = r.get("gradeResult", {}).get("stimulusName", "")
-                          if not name:
-                              continue
-                          grade = r.get("gradeResult", {})
-                          score = grade.get("score", 1)
-                          if not isinstance(score, (int, float)) or score >= 1.0:
-                              continue
-                          print(f"[FAILED] {name} (score: {score})")
-                          for g in grade.get("details", []):
-                              if not g.get("passed", True):
-                                  print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
-                              elif isinstance(g.get("score"), (int, float)) and g.get("score") < 1.0:
-                                  print(f'  - {g.get("name", "?")} (score: {g.get("score")}): {g.get("evidence", "")}')
-                  EOF
-                    fi
-                    exit $EXIT_CODE
-                  fi
-                displayName: Run force invokation suite - warning
-                timeoutInMinutes: 25
-                continueOnError: true
-                condition: always()
-                env:
-                  GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
-                  FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
+                  displayName: Run force invokation suite - ${{ suite.name }}
+                  timeoutInMinutes: ${{ suite.timeout }}
+                  continueOnError: true
+                  condition: always()
+                  env:
+                    GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+                    FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
 
             templateContext:
               outputs:
@@ -429,378 +117,50 @@ extends:
               - checkout: self
                 fetchDepth: 0
 
-              # Optionally overlay the azure-typespec-author skill source
-              # (SKILL.md + references/) from a different branch so we can
-              # evaluate skill changes that live on another branch while
-              # keeping the evaluate/ directory and pipeline config from
-              # the branch this pipeline was triggered from.
-              - script: |
-                  set -e
-                  BRANCH="${{ parameters.SkillBranch }}"
-                  if [ -z "$BRANCH" ]; then
-                    echo "SkillBranch parameter not provided; using the source branch checked out by the pipeline."
-                    git rev-parse --abbrev-ref HEAD
-                    git rev-parse HEAD
-                    exit 0
-                  fi
-                  echo "Overlaying azure-typespec-author skill source from branch: $BRANCH"
-                  git fetch origin "$BRANCH"
-                  rm -rf .github/skills/azure-typespec-author/SKILL.md \
-                         .github/skills/azure-typespec-author/references
-                  git checkout "origin/$BRANCH" -- \
-                    .github/skills/azure-typespec-author/SKILL.md \
-                    .github/skills/azure-typespec-author/references
-                  echo "Skill source overlaid from origin/$BRANCH ($(git rev-parse origin/$BRANCH))"
-                  ls -R .github/skills/azure-typespec-author
-                displayName: Checkout skill branch
-
-              # Install Go and build/start the QA bot backend
-              - script: |
-                  echo "Downloading Go 1.24.0..."
-                  curl -LO https://go.dev/dl/go1.24.0.linux-amd64.tar.gz
-                  echo "Removing existing Go installation..."
-                  sudo rm -rf /usr/local/go
-                  echo "Extracting Go 1.24.0..."
-                  sudo tar -C /usr/local -xzf go1.24.0.linux-amd64.tar.gz
-                  echo "Setting environment variables..."
-                  echo "##vso[task.setvariable variable=GOROOT]/usr/local/go"
-                  echo "##vso[task.prependpath]/usr/local/go/bin"
-                displayName: Install Go
-
-              - script: go version
-                displayName: Check Go version
-
-              - task: AzureCLI@2
-                displayName: Start QA bot backend service
-                inputs:
-                  azureSubscription: 'azuresdkqabot-dev'
-                  scriptType: bash
-                  scriptLocation: inlineScript
-                  workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
-                  inlineScript: |
-                    export GOPROXY=https://proxy.golang.org,direct
-                    LOG_DIR=$(Build.StagingDirectory)/qa-bot-log
-                    mkdir -p "$LOG_DIR"
-                    go build -o qa-bot-service
-                    chmod +x qa-bot-service
-                    nohup ./qa-bot-service > "$LOG_DIR/qa-bot-service.log" 2>&1 &
-                    SERVICE_PID=$!
-                    echo "Service started with PID: $SERVICE_PID"
-                    sleep 20
-                    echo "=== Service log ==="
-                    cat "$LOG_DIR/qa-bot-service.log" || true
-                    echo "==================="
-                    if ! kill -0 $SERVICE_PID 2>/dev/null; then
-                      echo "ERROR: Service process has exited unexpectedly"
-                      exit 1
-                    fi
-                    if ! lsof -ti:8088 > /dev/null 2>&1; then
-                      echo "ERROR: No process listening on port 8088"
-                      exit 1
-                    fi
-                    echo "Service is running on port 8088"
-                env:
-                  SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-                  AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
-
-              # Install .NET SDK for azsdk-cli MCP server.
-              # Use the version pinned in global.json so the build/restore works.
-              - task: UseDotNet@2
-                displayName: Install .NET SDK (global.json)
-                inputs:
-                  useGlobalJson: true
-                  workingDirectory: $(Build.SourcesDirectory)
-              - task: UseDotNet@2
-                displayName: Install .NET 8.0 SDK
-                inputs:
-                  version: '8.x'
-
-              # Authenticate to NuGet so the azsdk-cli MCP server can restore
-              # packages from the internal Azure Artifacts feed (the 1ES pool
-              # blocks direct egress to nuget.org).
-              - task: NuGetAuthenticate@1
-                displayName: Authenticate NuGet
-
-              # Pre-build the azsdk-cli (the MCP server). vally launches it
-              # via `dotnet run` (defaults to Debug, no -c flag), but doing
-              # the restore + build here surfaces any failure as a clear
-              # pipeline error instead of a silent MCP server startup
-              # failure during evaluations.
-              - script: |
-                  set -e
-                  dotnet restore tools/azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj
-                  dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj \
-                    --no-restore --nologo
-                displayName: Build azsdk-cli (MCP server)
-
-              # Install Node.js, Vally CLI, and Copilot SDK.
-              # Use the internal Azure Artifacts npm mirror (with auth) because
-              # the 1ES managed pool blocks direct egress to registry.npmjs.org.
-              - task: NodeTool@0
-                displayName: Use Node.js 22
-                inputs:
-                  versionSpec: '22.x'
-
-              - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
+              - template: /eng/pipelines/templates/steps/typespec-author-eval-setup.yml
                 parameters:
-                  npmrcPath: $(Build.SourcesDirectory)/.npmrc
-                  registryUrl: https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-tools/npm/registry/
+                  SkillBranch: ${{ parameters.SkillBranch }}
 
-              - script: npm install --global @microsoft/vally-cli@0.4.0 --userconfig $(Build.SourcesDirectory)/.npmrc
-                displayName: Install Vally CLI
-
-              - script: npm install --global @github/copilot-sdk --userconfig $(Build.SourcesDirectory)/.npmrc
-                displayName: Install Copilot SDK
-
-              # Pre-install TypeSpec compiler globally from the internal npm
-              # mirror so `azsdk_run_typespec_validation` (and any direct
-              # `npx tsp`/`npm install` the agent attempts) succeeds without
-              # network access to registry.npmjs.org.
-              - script: |
-                  set -e
-                  npm install --global @typespec/compiler --userconfig $(Build.SourcesDirectory)/.npmrc
-                  echo "tsp version:"
-                  tsp --version || true
-                displayName: Install TypeSpec compiler
-
-              # Smoke test (informational only): try to start MCP server and
-              # capture any startup errors. We don't fail the pipeline here
-              # because reliably driving an MCP stdio JSON-RPC handshake from
-              # a shell is fragile; vally/copilot-sdk drives the protocol
-              # properly during the eval step.
-              - script: |
-                  cd $(Build.SourcesDirectory)/tools/azsdk-cli/Azure.Sdk.Tools.Cli
-                  echo "--- CLI commands ---"
-                  dotnet run --no-build -- --help 2>&1 | head -40 || true
-                  echo "--- list registered MCP tools ---"
-                  dotnet run --no-build -- list 2>&1 | head -200 || true
-                displayName: MCP server smoke test (informational)
-                continueOnError: true
-                env:
-                  AZSDKTOOLS_AGENT_TESTING: "true"
-                  AZSDKTOOLS_COLLECT_TELEMETRY: "false"
-                  AZURE_SDK_KB_ENDPOINT: "http://localhost:8088"
-
-              # Copy package.json and package-lock.json from the spec repo
-              # into the fixture's Widget project so evaluations use the
-              # latest dependency versions from azure-rest-api-specs.
-              - script: |
-                  set -e
-                  FIXTURE_DIR=".github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget"
-                  SPEC_REPO_RAW="https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main"
-                  echo "Downloading package.json and package-lock.json from spec repo..."
-                  curl -fSL "$SPEC_REPO_RAW/package.json" -o "$FIXTURE_DIR/package.json"
-                  curl -fSL "$SPEC_REPO_RAW/package-lock.json" -o "$FIXTURE_DIR/package-lock.json"
-                  echo "Done. Fixture now uses spec repo's package files."
-                  echo "Installing node_modules in fixture directory..."
-                  cd "$FIXTURE_DIR"
-                  npm ci --userconfig $(Build.SourcesDirectory)/.npmrc
-                  echo "node_modules installed successfully"
-                  ls node_modules | head -20
-                displayName: Download spec repo packages and install node_modules
-
-              # Run evaluations
-              # The local/default Vally config (.vally.yaml) is kept stable for
-              # developers and still points named suites at per-case files under
-              # evaluate/evals/.
-              # Each suite has an explicit timeout to prevent one suite from
-              # blocking all others. If a suite times out, continueOnError ensures
-              # we still attempt the next suite.
-              # Pipeline-only parallelism is handled separately here by invoking
-              # the combined files under evaluate/suites/ directly with
-              # --eval-spec. This avoids changing local teammate workflows while
-              # still enabling intra-suite workers in CI.
-              # Each step captures the vally exit code and on failure parses the
-              # most recent results.jsonl to report which stimuli/graders failed.
-              - script: |
-                  cd .github/skills/azure-typespec-author/evaluate
-                  vally eval --eval-spec suites/versioning.eval.yaml --output-dir results --verbose
-                  EXIT_CODE=$?
-                  if [ $EXIT_CODE -ne 0 ]; then
-                    echo "##vso[task.logissue type=error]Suite versioning failed (exit code $EXIT_CODE)"
-                    LATEST=$(find results -name 'results.jsonl' -type f -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
-                    if [ -n "$LATEST" ]; then
-                      python3 << EOF
-                  import json, sys
-                  with open("$LATEST") as f:
-                      for line in f:
-                          r = json.loads(line)
-                          name = r.get("gradeResult", {}).get("stimulusName", "")
-                          if not name:
-                              continue
-                          grade = r.get("gradeResult", {})
-                          score = grade.get("score", 1)
-                          if not isinstance(score, (int, float)) or score >= 1.0:
-                              continue
-                          print(f"[FAILED] {name} (score: {score})")
-                          for g in grade.get("details", []):
-                              if not g.get("passed", True):
-                                  print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
-                              elif isinstance(g.get("score"), (int, float)) and g.get("score") < 1.0:
-                                  print(f'  - {g.get("name", "?")} (score: {g.get("score")}): {g.get("evidence", "")}')
-                  EOF
+              # Run evaluations — each suite gets its own step with timeout
+              # and continueOnError so failures don't block subsequent suites.
+              - ${{ each suite in parameters.SkillInvocationSuites }}:
+                - script: |
+                    cd .github/skills/azure-typespec-author/evaluate
+                    vally eval --eval-spec suites/${{ suite.file }} --output-dir results --verbose
+                    EXIT_CODE=$?
+                    if [ $EXIT_CODE -ne 0 ]; then
+                      echo "##vso[task.logissue type=error]Suite ${{ suite.name }} failed (exit code $EXIT_CODE)"
+                      LATEST=$(find results -name 'results.jsonl' -type f -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
+                      if [ -n "$LATEST" ]; then
+                        python3 << EOF
+                    import json, sys
+                    with open("$LATEST") as f:
+                        for line in f:
+                            r = json.loads(line)
+                            name = r.get("gradeResult", {}).get("stimulusName", "")
+                            if not name:
+                                continue
+                            grade = r.get("gradeResult", {})
+                            score = grade.get("score", 1)
+                            if not isinstance(score, (int, float)) or score >= 1.0:
+                                continue
+                            print(f"[FAILED] {name} (score: {score})")
+                            for g in grade.get("details", []):
+                                if not g.get("passed", True):
+                                    print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
+                                elif isinstance(g.get("score"), (int, float)) and g.get("score") < 1.0:
+                                    print(f'  - {g.get("name", "?")} (score: {g.get("score")}): {g.get("evidence", "")}')
+                    EOF
+                      fi
+                      exit $EXIT_CODE
                     fi
-                    exit $EXIT_CODE
-                  fi
-                displayName: Run suite - versioning
-                timeoutInMinutes: 50
-                continueOnError: true
-                condition: always()
-                env:
-                  GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
-                  FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
-
-              - script: |
-                  cd .github/skills/azure-typespec-author/evaluate
-                  vally eval --eval-spec suites/armtemplate.eval.yaml --output-dir results --verbose
-                  EXIT_CODE=$?
-                  if [ $EXIT_CODE -ne 0 ]; then
-                    echo "##vso[task.logissue type=error]Suite armtemplate failed (exit code $EXIT_CODE)"
-                    LATEST=$(find results -name 'results.jsonl' -type f -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
-                    if [ -n "$LATEST" ]; then
-                      python3 << EOF
-                  import json, sys
-                  with open("$LATEST") as f:
-                      for line in f:
-                          r = json.loads(line)
-                          name = r.get("gradeResult", {}).get("stimulusName", "")
-                          if not name:
-                              continue
-                          grade = r.get("gradeResult", {})
-                          score = grade.get("score", 1)
-                          if not isinstance(score, (int, float)) or score >= 1.0:
-                              continue
-                          print(f"[FAILED] {name} (score: {score})")
-                          for g in grade.get("details", []):
-                              if not g.get("passed", True):
-                                  print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
-                              elif isinstance(g.get("score"), (int, float)) and g.get("score") < 1.0:
-                                  print(f'  - {g.get("name", "?")} (score: {g.get("score")}): {g.get("evidence", "")}')
-                  EOF
-                    fi
-                    exit $EXIT_CODE
-                  fi
-                displayName: Run suite - armtemplate
-                timeoutInMinutes: 40
-                continueOnError: true
-                condition: always()
-                env:
-                  GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
-                  FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
-
-              - script: |
-                  cd .github/skills/azure-typespec-author/evaluate
-                  vally eval --eval-spec suites/lro.eval.yaml --output-dir results --verbose
-                  EXIT_CODE=$?
-                  if [ $EXIT_CODE -ne 0 ]; then
-                    echo "##vso[task.logissue type=error]Suite lro failed (exit code $EXIT_CODE)"
-                    LATEST=$(find results -name 'results.jsonl' -type f -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
-                    if [ -n "$LATEST" ]; then
-                      python3 << EOF
-                  import json, sys
-                  with open("$LATEST") as f:
-                      for line in f:
-                          r = json.loads(line)
-                          name = r.get("gradeResult", {}).get("stimulusName", "")
-                          if not name:
-                              continue
-                          grade = r.get("gradeResult", {})
-                          score = grade.get("score", 1)
-                          if not isinstance(score, (int, float)) or score >= 1.0:
-                              continue
-                          print(f"[FAILED] {name} (score: {score})")
-                          for g in grade.get("details", []):
-                              if not g.get("passed", True):
-                                  print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
-                              elif isinstance(g.get("score"), (int, float)) and g.get("score") < 1.0:
-                                  print(f'  - {g.get("name", "?")} (score: {g.get("score")}): {g.get("evidence", "")}')
-                  EOF
-                    fi
-                    exit $EXIT_CODE
-                  fi
-                displayName: Run suite - longrunningoperation
-                timeoutInMinutes: 25
-                continueOnError: true
-                condition: always()
-                env:
-                  GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
-                  FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
-
-              - script: |
-                  cd .github/skills/azure-typespec-author/evaluate
-                  vally eval --eval-spec suites/decorators.eval.yaml --output-dir results --verbose
-                  EXIT_CODE=$?
-                  if [ $EXIT_CODE -ne 0 ]; then
-                    echo "##vso[task.logissue type=error]Suite decorators failed (exit code $EXIT_CODE)"
-                    LATEST=$(find results -name 'results.jsonl' -type f -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
-                    if [ -n "$LATEST" ]; then
-                      python3 << EOF
-                  import json, sys
-                  with open("$LATEST") as f:
-                      for line in f:
-                          r = json.loads(line)
-                          name = r.get("gradeResult", {}).get("stimulusName", "")
-                          if not name:
-                              continue
-                          grade = r.get("gradeResult", {})
-                          score = grade.get("score", 1)
-                          if not isinstance(score, (int, float)) or score >= 1.0:
-                              continue
-                          print(f"[FAILED] {name} (score: {score})")
-                          for g in grade.get("details", []):
-                              if not g.get("passed", True):
-                                  print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
-                              elif isinstance(g.get("score"), (int, float)) and g.get("score") < 1.0:
-                                  print(f'  - {g.get("name", "?")} (score: {g.get("score")}): {g.get("evidence", "")}')
-                  EOF
-                    fi
-                    exit $EXIT_CODE
-                  fi
-                displayName: Run suite - decorators
-                timeoutInMinutes: 15
-                continueOnError: true
-                condition: always()
-                env:
-                  GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
-                  FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
-
-              - script: |
-                  cd .github/skills/azure-typespec-author/evaluate
-                  vally eval --eval-spec suites/warning.eval.yaml --output-dir results --verbose
-                  EXIT_CODE=$?
-                  if [ $EXIT_CODE -ne 0 ]; then
-                    echo "##vso[task.logissue type=error]Suite warning failed (exit code $EXIT_CODE)"
-                    LATEST=$(find results -name 'results.jsonl' -type f -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
-                    if [ -n "$LATEST" ]; then
-                      python3 << EOF
-                  import json, sys
-                  with open("$LATEST") as f:
-                      for line in f:
-                          r = json.loads(line)
-                          name = r.get("gradeResult", {}).get("stimulusName", "")
-                          if not name:
-                              continue
-                          grade = r.get("gradeResult", {})
-                          score = grade.get("score", 1)
-                          if not isinstance(score, (int, float)) or score >= 1.0:
-                              continue
-                          print(f"[FAILED] {name} (score: {score})")
-                          for g in grade.get("details", []):
-                              if not g.get("passed", True):
-                                  print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
-                              elif isinstance(g.get("score"), (int, float)) and g.get("score") < 1.0:
-                                  print(f'  - {g.get("name", "?")} (score: {g.get("score")}): {g.get("evidence", "")}')
-                  EOF
-                    fi
-                    exit $EXIT_CODE
-                  fi
-                displayName: Run suite - warning
-                timeoutInMinutes: 25
-                continueOnError: true
-                condition: always()
-                env:
-                  GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
-                  FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
+                  displayName: Run suite - ${{ suite.name }}
+                  timeoutInMinutes: ${{ suite.timeout }}
+                  continueOnError: true
+                  condition: always()
+                  env:
+                    GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+                    FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
 
             templateContext:
               outputs:

@@ -31,10 +31,6 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/001005-version-add-preview-after-preview/tspconfig.yaml
       dest: tspconfig.yaml
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
     - src: ../fixtures/001005-version-add-preview-after-preview/examples/2024-10-01-preview/Employees_CreateOrUpdate_MaximumSet_Gen.json
       dest: examples/2024-10-01-preview/Employees_CreateOrUpdate_MaximumSet_Gen.json
     - src: ../fixtures/001005-version-add-preview-after-preview/examples/2024-10-01-preview/Employees_Delete_MaximumSet_Gen.json
@@ -71,6 +67,10 @@ stimuli:
       dest: examples/2021-10-01/Operations_List_MaximumSet_Gen.json
     - src: ../fixtures/001005-version-add-preview-after-preview/examples/2021-10-01/Operations_List_MinimumSet_Gen.json
       dest: examples/2021-10-01/Operations_List_MinimumSet_Gen.json
+    commands:
+      - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
+      - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:

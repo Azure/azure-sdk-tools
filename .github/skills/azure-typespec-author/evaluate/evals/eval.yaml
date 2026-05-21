@@ -33,12 +33,12 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
       dest: tspconfig.yaml
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
     - src: ../fixtures/001-share-version-new-feature/readme.md
       dest: readme.md
+  commands:
+    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
+    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
+    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -76,16 +76,16 @@ stimuli:
       dest: employee.tsp
     - src: ../fixtures/001002-version-default-value/main.tsp
       dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
     - src: ../fixtures/001002-version-default-value/readme.md
       dest: readme.md
     - src: ../fixtures/001002-version-default-value/shared.tsp
       dest: shared.tsp
     - src: ../fixtures/001002-version-default-value/tspconfig.yaml
       dest: tspconfig.yaml
+  commands:
+    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
+    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
+    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -127,16 +127,16 @@ stimuli:
       dest: employee.tsp
     - src: ../fixtures/001-share-version-new-feature/main.tsp
       dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
     - src: ../fixtures/001-share-version-new-feature/readme.md
       dest: readme.md
     - src: ../fixtures/001-share-version-new-feature/shared.tsp
       dest: shared.tsp
     - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
       dest: tspconfig.yaml
+  commands:
+    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
+    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
+    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -174,16 +174,16 @@ stimuli:
       dest: employee.tsp
     - src: ../fixtures/001-share-version-new-feature/main.tsp
       dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
     - src: ../fixtures/001-share-version-new-feature/readme.md
       dest: readme.md
     - src: ../fixtures/001-share-version-new-feature/shared.tsp
       dest: shared.tsp
     - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
       dest: tspconfig.yaml
+  commands:
+    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
+    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
+    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -221,10 +221,6 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/001005-version-add-preview-after-preview/tspconfig.yaml
       dest: tspconfig.yaml
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
     - src: ../fixtures/001005-version-add-preview-after-preview/examples/2024-10-01-preview/Employees_CreateOrUpdate_MaximumSet_Gen.json
       dest: examples/2024-10-01-preview/Employees_CreateOrUpdate_MaximumSet_Gen.json
     - src: ../fixtures/001005-version-add-preview-after-preview/examples/2024-10-01-preview/Employees_Delete_MaximumSet_Gen.json
@@ -261,6 +257,10 @@ stimuli:
       dest: examples/2021-10-01/Operations_List_MaximumSet_Gen.json
     - src: ../fixtures/001005-version-add-preview-after-preview/examples/2021-10-01/Operations_List_MinimumSet_Gen.json
       dest: examples/2021-10-01/Operations_List_MinimumSet_Gen.json
+  commands:
+    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
+    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
+    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -317,10 +317,6 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/001006-version-add-preview-after-stable/tspconfig.yaml
       dest: tspconfig.yaml
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
     - src: ../fixtures/001006-version-add-preview-after-stable/examples/2021-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
       dest: examples/2021-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
     - src: ../fixtures/001006-version-add-preview-after-stable/examples/2021-10-01/Employees_Delete_MaximumSet_Gen.json
@@ -357,6 +353,10 @@ stimuli:
       dest: examples/2024-10-01/Operations_List_MaximumSet_Gen.json
     - src: ../fixtures/001006-version-add-preview-after-stable/examples/2024-10-01/Operations_List_MinimumSet_Gen.json
       dest: examples/2024-10-01/Operations_List_MinimumSet_Gen.json
+  commands:
+    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
+    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
+    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -399,10 +399,6 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/001007-version-add-stable-after-preview/tspconfig.yaml
       dest: tspconfig.yaml
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
     - src: ../fixtures/001007-version-add-stable-after-preview/readme.md
       dest: readme.md
     - src: ../fixtures/001007-version-add-stable-after-preview/examples/2021-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
@@ -445,6 +441,10 @@ stimuli:
       dest: examples/2024-10-01-preview/Operations_List_MaximumSet_Gen.json
     - src: ../fixtures/001007-version-add-stable-after-preview/examples/2024-10-01-preview/Operations_List_MinimumSet_Gen.json
       dest: examples/2024-10-01-preview/Operations_List_MinimumSet_Gen.json
+  commands:
+    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
+    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
+    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -497,10 +497,6 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/001008-version-add-stable-after-stable/tspconfig.yaml
       dest: tspconfig.yaml
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
     - src: ../fixtures/001008-version-add-stable-after-stable/readme.md
       dest: readme.md
     - src: ../fixtures/001008-version-add-stable-after-stable/examples/2021-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
@@ -543,6 +539,10 @@ stimuli:
       dest: examples/2024-10-01/Operations_List_MaximumSet_Gen.json
     - src: ../fixtures/001008-version-add-stable-after-stable/examples/2024-10-01/Operations_List_MinimumSet_Gen.json
       dest: examples/2024-10-01/Operations_List_MinimumSet_Gen.json
+  commands:
+    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
+    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
+    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -585,16 +585,16 @@ stimuli:
       dest: Microsoft.Widget/Widget/employee.tsp
     - src: ../fixtures/001-share-version-new-feature/main.tsp
       dest: Microsoft.Widget/Widget/main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
     - src: ../fixtures/001-share-version-new-feature/readme.md
       dest: Microsoft.Widget/Widget/readme.md
     - src: ../fixtures/001-share-version-new-feature/shared.tsp
       dest: Microsoft.Widget/Widget/shared.tsp
     - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
       dest: Microsoft.Widget/Widget/tspconfig.yaml
+  commands:
+    - curl -sfLo Microsoft.Widget/Widget/package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
+    - curl -sfLo Microsoft.Widget/Widget/package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
+    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -631,16 +631,16 @@ stimuli:
       dest: Microsoft.Widget/Widget/employee.tsp
     - src: ../fixtures/001-share-version-new-feature/main.tsp
       dest: Microsoft.Widget/Widget/main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
     - src: ../fixtures/001-share-version-new-feature/readme.md
       dest: Microsoft.Widget/Widget/readme.md
     - src: ../fixtures/001-share-version-new-feature/shared.tsp
       dest: Microsoft.Widget/Widget/shared.tsp
     - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
       dest: Microsoft.Widget/Widget/tspconfig.yaml
+  commands:
+    - curl -sfLo Microsoft.Widget/Widget/package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
+    - curl -sfLo Microsoft.Widget/Widget/package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
+    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -671,10 +671,6 @@ stimuli:
       dest: Microsoft.Widget/Widget/employee.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
       dest: Microsoft.Widget/Widget/main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: Microsoft.Widget/Widget/readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -685,6 +681,10 @@ stimuli:
       dest: Microsoft.Widget/Widget/stable/2021-11-01/widget.json
     - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
       dest: Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+  commands:
+    - curl -sfLo Microsoft.Widget/Widget/package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
+    - curl -sfLo Microsoft.Widget/Widget/package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
+    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -715,16 +715,16 @@ stimuli:
       dest: Microsoft.Widget/Widget/employee.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
       dest: Microsoft.Widget/Widget/main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: Microsoft.Widget/Widget/readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
       dest: Microsoft.Widget/Widget/shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: Microsoft.Widget/Widget/tspconfig.yaml
+  commands:
+    - curl -sfLo Microsoft.Widget/Widget/package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
+    - curl -sfLo Microsoft.Widget/Widget/package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
+    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -768,16 +768,16 @@ stimuli:
       dest: Microsoft.Widget/Widget/employee.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
       dest: Microsoft.Widget/Widget/main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: Microsoft.Widget/Widget/readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
       dest: Microsoft.Widget/Widget/shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: Microsoft.Widget/Widget/tspconfig.yaml
+  commands:
+    - curl -sfLo Microsoft.Widget/Widget/package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
+    - curl -sfLo Microsoft.Widget/Widget/package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
+    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -814,16 +814,16 @@ stimuli:
       dest: employee.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
       dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
+  commands:
+    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
+    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
+    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -861,16 +861,16 @@ stimuli:
       dest: employee.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
       dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
+  commands:
+    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
+    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
+    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -902,16 +902,16 @@ stimuli:
       dest: employee.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
       dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
+  commands:
+    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
+    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
+    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -937,16 +937,16 @@ stimuli:
       dest: employee.tsp
     - src: ../fixtures/002004-ARM-define-extension-resource/main.tsp
       dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
+  commands:
+    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
+    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
+    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -986,16 +986,16 @@ stimuli:
     files:
     - src: ../fixtures/002005-ARM-define-the-resource/main.tsp
       dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
+  commands:
+    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
+    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
+    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -1049,16 +1049,16 @@ stimuli:
       dest: employee.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
       dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
+  commands:
+    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
+    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
+    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -1148,16 +1148,16 @@ stimuli:
       dest: employee.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
       dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
+  commands:
+    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
+    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
+    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -1227,10 +1227,6 @@ stimuli:
       dest: employee.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
       dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -1241,6 +1237,10 @@ stimuli:
       dest: stable/2021-11-01/widget.json
     - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
       dest: preview/2024-10-01-preview/widget.json
+  commands:
+    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
+    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
+    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -1263,14 +1263,16 @@ stimuli:
       dest: employee.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
       dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
+  commands:
+    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
+    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
+    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -1300,16 +1302,16 @@ stimuli:
       dest: employee.tsp
     - src: ../fixtures/002010-arm-action-sync-operation/main.tsp
       dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
     - src: ../fixtures/002010-arm-action-sync-operation/readme.md
       dest: readme.md
     - src: ../fixtures/002010-arm-action-sync-operation/shared.tsp
       dest: shared.tsp
     - src: ../fixtures/002010-arm-action-sync-operation/tspconfig.yaml
       dest: tspconfig.yaml
+  commands:
+    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
+    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
+    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -1343,16 +1345,16 @@ stimuli:
       dest: employee.tsp
     - src: ../fixtures/003-long-running-operation-share/main.tsp
       dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
     - src: ../fixtures/003-long-running-operation-share/readme.md
       dest: readme.md
     - src: ../fixtures/003-long-running-operation-share/shared.tsp
       dest: shared.tsp
     - src: ../fixtures/003-long-running-operation-share/tspconfig.yaml
       dest: tspconfig.yaml
+  commands:
+    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
+    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
+    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -1386,16 +1388,16 @@ stimuli:
       dest: employee.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
       dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
+  commands:
+    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
+    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
+    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -1441,16 +1443,16 @@ stimuli:
       dest: employee.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
       dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
+  commands:
+    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
+    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
+    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -1484,10 +1486,6 @@ stimuli:
       dest: employee.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
       dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
@@ -1496,6 +1494,10 @@ stimuli:
       dest: stable/2021-11-01/widget.json
     - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
       dest: preview/2024-10-01-preview/widget.json
+  commands:
+    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
+    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
+    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -1547,10 +1549,6 @@ stimuli:
       dest: NetworkInterface.tsp
     - src: ../fixtures/004003-delete-and-restore-operationId-decorator/P2SVpnGateway.tsp
       dest: P2SVpnGateway.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
     - src: ../fixtures/004003-delete-and-restore-operationId-decorator/Route.tsp
       dest: Route.tsp
     - src: ../fixtures/004003-delete-and-restore-operationId-decorator/VpnServerConfigurationPolicyGroup.tsp
@@ -1559,6 +1557,10 @@ stimuli:
       dest: VpnSiteLinkConnection.tsp
     - src: ../fixtures/004003-delete-and-restore-operationId-decorator/tspconfig.yaml
       dest: tspconfig.yaml
+  commands:
+    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
+    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
+    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: file-not-matches
     config:
@@ -1598,16 +1600,16 @@ stimuli:
     files:
     - src: ../fixtures/005001-warning-suppress-warning/models.tsp
       dest: models.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
     - src: ../fixtures/005001-warning-suppress-warning/tspconfig.yaml
       dest: tspconfig.yaml
     - src: ../fixtures/005001-warning-suppress-warning/main.tsp
       dest: main.tsp
     - src: ../fixtures/005001-warning-suppress-warning/stubs.tsp
       dest: stubs.tsp
+  commands:
+    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
+    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
+    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:

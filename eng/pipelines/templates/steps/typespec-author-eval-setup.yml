@@ -1,0 +1,152 @@
+# Shared setup steps for azure-typespec-author evaluation jobs.
+# Installs Go, starts QA bot backend, installs .NET/Node/Vally/TypeSpec,
+# builds azsdk-cli, and downloads spec repo packages.
+
+parameters:
+  - name: SkillBranch
+    type: string
+    default: ''
+
+steps:
+  # Optionally overlay the azure-typespec-author skill source from a different branch.
+  - script: |
+      set -e
+      BRANCH="${{ parameters.SkillBranch }}"
+      if [ -z "$BRANCH" ]; then
+        echo "SkillBranch parameter not provided; using the source branch checked out by the pipeline."
+        git rev-parse --abbrev-ref HEAD
+        git rev-parse HEAD
+        exit 0
+      fi
+      echo "Overlaying azure-typespec-author skill source from branch: $BRANCH"
+      git fetch origin "$BRANCH"
+      rm -rf .github/skills/azure-typespec-author/SKILL.md \
+             .github/skills/azure-typespec-author/references
+      git checkout "origin/$BRANCH" -- \
+        .github/skills/azure-typespec-author/SKILL.md \
+        .github/skills/azure-typespec-author/references
+      echo "Skill source overlaid from origin/$BRANCH ($(git rev-parse origin/$BRANCH))"
+      ls -R .github/skills/azure-typespec-author
+    displayName: Checkout skill branch
+
+  # Install Go and build/start the QA bot backend
+  - script: |
+      echo "Downloading Go 1.24.0..."
+      curl -LO https://go.dev/dl/go1.24.0.linux-amd64.tar.gz
+      sudo rm -rf /usr/local/go
+      sudo tar -C /usr/local -xzf go1.24.0.linux-amd64.tar.gz
+      echo "##vso[task.setvariable variable=GOROOT]/usr/local/go"
+      echo "##vso[task.prependpath]/usr/local/go/bin"
+    displayName: Install Go
+
+  - script: go version
+    displayName: Check Go version
+
+  - task: AzureCLI@2
+    displayName: Start QA bot backend service
+    inputs:
+      azureSubscription: 'azuresdkqabot-dev'
+      scriptType: bash
+      scriptLocation: inlineScript
+      workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
+      inlineScript: |
+        export GOPROXY=https://proxy.golang.org,direct
+        LOG_DIR=$(Build.StagingDirectory)/qa-bot-log
+        mkdir -p "$LOG_DIR"
+        go build -o qa-bot-service
+        chmod +x qa-bot-service
+        nohup ./qa-bot-service > "$LOG_DIR/qa-bot-service.log" 2>&1 &
+        SERVICE_PID=$!
+        echo "Service started with PID: $SERVICE_PID"
+        sleep 20
+        echo "=== Service log ==="
+        cat "$LOG_DIR/qa-bot-service.log" || true
+        echo "==================="
+        if ! kill -0 $SERVICE_PID 2>/dev/null; then
+          echo "ERROR: Service process has exited unexpectedly"
+          exit 1
+        fi
+        if ! lsof -ti:8088 > /dev/null 2>&1; then
+          echo "ERROR: No process listening on port 8088"
+          exit 1
+        fi
+        echo "Service is running on port 8088"
+    env:
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+      AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
+
+  # Install .NET SDK
+  - task: UseDotNet@2
+    displayName: Install .NET SDK (global.json)
+    inputs:
+      useGlobalJson: true
+      workingDirectory: $(Build.SourcesDirectory)
+  - task: UseDotNet@2
+    displayName: Install .NET 8.0 SDK
+    inputs:
+      version: '8.x'
+
+  - task: NuGetAuthenticate@1
+    displayName: Authenticate NuGet
+
+  # Pre-build the azsdk-cli MCP server
+  - script: |
+      set -e
+      dotnet restore tools/azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj
+      dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj \
+        --no-restore --nologo
+    displayName: Build azsdk-cli (MCP server)
+
+  # Install Node.js, Vally CLI, and Copilot SDK
+  - task: NodeTool@0
+    displayName: Use Node.js 22
+    inputs:
+      versionSpec: '22.x'
+
+  - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
+    parameters:
+      npmrcPath: $(Build.SourcesDirectory)/.npmrc
+      registryUrl: https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-tools/npm/registry/
+
+  - script: npm install --global @microsoft/vally-cli@0.4.0 --userconfig $(Build.SourcesDirectory)/.npmrc
+    displayName: Install Vally CLI
+
+  - script: npm install --global @github/copilot-sdk --userconfig $(Build.SourcesDirectory)/.npmrc
+    displayName: Install Copilot SDK
+
+  - script: |
+      set -e
+      npm install --global @typespec/compiler --userconfig $(Build.SourcesDirectory)/.npmrc
+      echo "tsp version:"
+      tsp --version || true
+    displayName: Install TypeSpec compiler
+
+  # MCP server smoke test (informational only)
+  - script: |
+      cd $(Build.SourcesDirectory)/tools/azsdk-cli/Azure.Sdk.Tools.Cli
+      echo "--- CLI commands ---"
+      dotnet run --no-build -- --help 2>&1 | head -40 || true
+      echo "--- list registered MCP tools ---"
+      dotnet run --no-build -- list 2>&1 | head -200 || true
+    displayName: MCP server smoke test (informational)
+    continueOnError: true
+    env:
+      AZSDKTOOLS_AGENT_TESTING: "true"
+      AZSDKTOOLS_COLLECT_TELEMETRY: "false"
+      AZURE_SDK_KB_ENDPOINT: "http://localhost:8088"
+
+  # Download spec repo packages and install node_modules
+  - script: |
+      set -e
+      FIXTURE_DIR=".github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget"
+      SPEC_REPO_RAW="https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main"
+      echo "Downloading package.json and package-lock.json from spec repo..."
+      curl -fSL "$SPEC_REPO_RAW/package.json" -o "$FIXTURE_DIR/package.json"
+      curl -fSL "$SPEC_REPO_RAW/package-lock.json" -o "$FIXTURE_DIR/package-lock.json"
+      echo "Done. Fixture now uses spec repo's package files."
+      echo "Installing node_modules in fixture directory..."
+      cd "$FIXTURE_DIR"
+      npm ci --userconfig $(Build.SourcesDirectory)/.npmrc
+      echo "node_modules installed successfully"
+      ls node_modules | head -20
+    displayName: Download spec repo packages and install node_modules

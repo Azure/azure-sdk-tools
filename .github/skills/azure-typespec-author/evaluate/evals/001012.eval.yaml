@@ -27,10 +27,6 @@ stimuli:
       dest: Microsoft.Widget/Widget/employee.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
       dest: Microsoft.Widget/Widget/main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: Microsoft.Widget/Widget/package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: Microsoft.Widget/Widget/package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: Microsoft.Widget/Widget/readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -41,6 +37,10 @@ stimuli:
       dest: Microsoft.Widget/Widget/stable/2021-11-01/widget.json
     - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
       dest: Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+    commands:
+      - curl -sfLo Microsoft.Widget/Widget/package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
+      - curl -sfLo Microsoft.Widget/Widget/package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:

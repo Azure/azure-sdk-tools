@@ -27,16 +27,16 @@ stimuli:
       dest: employee.tsp
     - src: ../fixtures/003-long-running-operation-share/main.tsp
       dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
     - src: ../fixtures/003-long-running-operation-share/readme.md
       dest: readme.md
     - src: ../fixtures/003-long-running-operation-share/shared.tsp
       dest: shared.tsp
     - src: ../fixtures/003-long-running-operation-share/tspconfig.yaml
       dest: tspconfig.yaml
+    commands:
+      - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
+      - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
+      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:

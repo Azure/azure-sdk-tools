@@ -58,6 +58,15 @@ header h1 {
   font-size: 1.25rem;
   font-weight: 600;
 }
+.test-env-banner {
+  background: #fff4ce;
+  border: 1px solid #f0c800;
+  border-radius: var(--radius);
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  color: #6b5900;
+  margin-top: 4px;
+}
 .header-right {
   display: flex;
   align-items: center;

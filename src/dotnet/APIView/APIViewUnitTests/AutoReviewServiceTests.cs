@@ -677,7 +677,7 @@ namespace APIViewUnitTests
                 .ReturnsAsync(review);
             _mockApiRevisionsManager.Setup(m => m.GetAPIRevisionsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>()))
                 .ReturnsAsync(new List<APIRevisionListItemModel> { previousBuild });
-            _mockApiVersionsManager.Setup(m => m.GetOrCreateVersionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()))
+            _mockApiVersionsManager.Setup(m => m.GetOrCreateVersionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()))
                 .ReturnsAsync(versionModel);
             _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType?>(), It.IsAny<bool>()))
                 .ReturnsAsync(new List<CommentItemModel>());
@@ -729,7 +729,7 @@ namespace APIViewUnitTests
                 .ReturnsAsync(review);
             _mockApiRevisionsManager.Setup(m => m.GetAPIRevisionsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>()))
                 .ReturnsAsync(new List<APIRevisionListItemModel> { previousBuild });
-            _mockApiVersionsManager.Setup(m => m.GetOrCreateVersionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()))
+            _mockApiVersionsManager.Setup(m => m.GetOrCreateVersionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()))
                 .ReturnsAsync(versionModel);
             _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType?>(), It.IsAny<bool>()))
                 .ReturnsAsync(new List<CommentItemModel>());
@@ -798,7 +798,7 @@ namespace APIViewUnitTests
                 .ReturnsAsync(review);
             _mockApiRevisionsManager.Setup(m => m.GetAPIRevisionsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>()))
                 .ReturnsAsync(new List<APIRevisionListItemModel> { existingRevision });
-            _mockApiVersionsManager.Setup(m => m.GetOrCreateVersionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()))
+            _mockApiVersionsManager.Setup(m => m.GetOrCreateVersionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()))
                 .ReturnsAsync(versionModel);
             _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType?>(), It.IsAny<bool>()))
                 .ReturnsAsync(new List<CommentItemModel>());
@@ -866,7 +866,7 @@ namespace APIViewUnitTests
                 .ReturnsAsync(review);
             _mockApiRevisionsManager.Setup(m => m.GetAPIRevisionsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>()))
                 .ReturnsAsync(new List<APIRevisionListItemModel> { revisionV1, revisionV2 });
-            _mockApiVersionsManager.Setup(m => m.GetOrCreateVersionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()))
+            _mockApiVersionsManager.Setup(m => m.GetOrCreateVersionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()))
                 .ReturnsAsync(versionV1);
             _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType?>(), It.IsAny<bool>()))
                 .ReturnsAsync(new List<CommentItemModel>());
@@ -945,7 +945,7 @@ namespace APIViewUnitTests
                 .ReturnsAsync(review);
             _mockApiRevisionsManager.Setup(m => m.GetAPIRevisionsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>()))
                 .ReturnsAsync(new List<APIRevisionListItemModel> { b3V2, b2V1, b1V1 });
-            _mockApiVersionsManager.Setup(m => m.GetOrCreateVersionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()))
+            _mockApiVersionsManager.Setup(m => m.GetOrCreateVersionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()))
                 .ReturnsAsync(v2BetaVersionModel);
             _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType?>(), It.IsAny<bool>()))
                 .ReturnsAsync(new List<CommentItemModel>());

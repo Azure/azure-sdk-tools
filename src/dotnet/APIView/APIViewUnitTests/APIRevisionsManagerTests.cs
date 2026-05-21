@@ -580,6 +580,38 @@ public class APIRevisionsManagerTests
         Assert.Null(result.CrossLanguageMetadata);
     }
 
+    [Fact]
+    public async Task UpdateAPIRevisionCodeFileAsync_WhenRevisionBelongsToDifferentReview_SkipsUpdate()
+    {
+        MemoryStream zipStream = await CreateZipArchiveWithCodeFile(TestReviewId, TestApiRevisionId, TestFileId, CreatePipelineCodeFile(null));
+
+        _mockDevopsArtifactRepository
+            .Setup(x => x.DownloadPackageArtifact(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), null,
+                It.IsAny<string>(), "zip"))
+            .ReturnsAsync(zipStream);
+
+        _mockReviewsRepository
+            .Setup(x => x.GetReviewAsync(TestReviewId))
+            .ReturnsAsync(new ReviewListItemModel { Id = TestReviewId, Language = "Python" });
+
+        _mockAPIRevisionsRepository
+            .Setup(x => x.GetAPIRevisionAsync(TestApiRevisionId))
+            .ReturnsAsync(new APIRevisionListItemModel
+            {
+                Id = TestApiRevisionId,
+                ReviewId = "different-review-id",
+                Language = "Python",
+                Files = new List<APICodeFileModel> { new() { FileId = TestFileId, FileName = TestFileName } }
+            });
+
+        await _manager.UpdateAPIRevisionCodeFileAsync("test-repo", "12345", "apiview", "internal");
+
+        _mockCodeFileRepository.Verify(x => x.GetCodeFileFromStorageAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _mockCodeFileRepository.Verify(x => x.UpsertCodeFileAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CodeFile>()), Times.Never);
+        _mockAPIRevisionsRepository.Verify(x => x.UpsertAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()), Times.Never);
+        _mockReviewsRepository.Verify(x => x.UpsertReviewAsync(It.IsAny<ReviewListItemModel>()), Times.Never);
+    }
+
     private async Task<MemoryStream> CreateZipArchiveWithCodeFile(string reviewId, string apiRevisionId, string fileId,
         CodeFile codeFile)
     {

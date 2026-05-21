@@ -902,7 +902,17 @@ namespace APIViewWeb.Managers
                     {
                         _telemetryClient.TrackTrace(
                             $"Skipping artifact entry: revision {apiRevisionId} does not belong to review {reviewId} (actual review: {apiRevision.ReviewId}). BuildId={buildId}",
-                            Microsoft.ApplicationInsights.DataContracts.SeverityLevel.Warning);
+                            Microsoft.ApplicationInsights.DataContracts.SeverityLevel.Warning,
+                            new Dictionary<string, string>
+                            {
+                                { "RepoName", repoName ?? string.Empty },
+                                { "Project", project ?? string.Empty },
+                                { "BuildId", buildId ?? string.Empty },
+                                { "ReviewId", reviewId ?? string.Empty },
+                                { "APIRevisionId", apiRevisionId ?? string.Empty },
+                                { "ActualReviewId", apiRevision.ReviewId ?? string.Empty },
+                                { "ArtifactEntryPath", reviewFilePath ?? string.Empty }
+                            });
                         continue;
                     }
                     if (apiRevision != null)

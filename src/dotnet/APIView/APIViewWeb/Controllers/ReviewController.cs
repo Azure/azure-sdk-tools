@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,21 +20,18 @@ namespace APIViewWeb.Controllers
 
     public class ReviewController : Controller
     {
-        private readonly IReviewManager _reviewManager;
         private readonly IAPIRevisionsManager _apiRevisionManager;
 
-        public ReviewController(IReviewManager reviewManager,
-            IAPIRevisionsManager apiRevisionManager )
+        public ReviewController(IAPIRevisionsManager apiRevisionManager)
         {
-            _reviewManager = reviewManager;
             _apiRevisionManager = apiRevisionManager;
         }
 
         [AllowAnonymous]
         [HttpGet]
-        public async Task<ActionResult> UpdateApiReview(string repoName, string artifactPath, string buildId, string project = "internal", string metadataFile = null)
+        public async Task<ActionResult> UpdateApiReview(string repoName, [FromQuery(Name = "artifactPath")] string artifactName, string buildId, string project = "internal", string metadataFile = null)
         {
-            await _apiRevisionManager.UpdateAPIRevisionCodeFileAsync(repoName, buildId, artifactPath, project, metadataFile);
+            await _apiRevisionManager.UpdateAPIRevisionCodeFileAsync(repoName, buildId, artifactName, project, metadataFile);
             return Ok();
         }
 
@@ -60,7 +56,9 @@ namespace APIViewWeb.Controllers
                 return BadRequest("BuildId must be numeric.");
             }
 
-            await _apiRevisionManager.UpdateAPIRevisionCodeFileAsync(request.RepoName, request.BuildId, request.ArtifactName, request.Project, request.MetadataFile);
+            string project = string.IsNullOrWhiteSpace(request.Project) ? "internal" : request.Project.Trim();
+
+            await _apiRevisionManager.UpdateAPIRevisionCodeFileAsync(request.RepoName, request.BuildId, request.ArtifactName, project, request.MetadataFile);
             return Ok();
         }
     }

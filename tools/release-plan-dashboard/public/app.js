@@ -2898,5 +2898,19 @@
   };
 
   // ── Init ────────────────────────────────────────────────────
+  // Fetch environment config and apply test-instance indicators
+  fetch("/api/config")
+    .then((r) => r.json())
+    .then((cfg) => {
+      if (cfg.environment === "test") {
+        const banner = document.getElementById("test-env-banner");
+        if (banner) banner.style.display = "";
+        const shortLink = document.getElementById("short-link");
+        if (shortLink) shortLink.style.display = "none";
+        document.title = "[TEST] " + document.title;
+      }
+    })
+    .catch(() => {});
+
   fetchPlans();
 })();

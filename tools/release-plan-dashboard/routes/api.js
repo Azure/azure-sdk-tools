@@ -288,6 +288,11 @@ async function getCachedReleasePlans() {
 
 // ── Route handlers ────────────────────────────────────────────
 
+router.get("/api/config", (_req, res) => {
+  const environment = (process.env.ENVIRONMENT || "production").toLowerCase();
+  res.json({ environment });
+});
+
 router.get("/api/release-plans", async (req, res) => {
   try {
     const filterPlanId = req.query.releasePlan || req.query.releaseplan || "";

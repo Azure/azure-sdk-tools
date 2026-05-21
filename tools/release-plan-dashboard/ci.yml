@@ -48,7 +48,7 @@ extends:
             displayName: Build
 
             variables:
-              emitterNpmrcPath: $(Agent.TempDirectory)/${{ parameters.EmitterPackagePath }}/.npmrc
+              emitterNpmrcPath: $(Agent.TempDirectory)/.npmrc
             pool:
               name: $(LINUXPOOL)
               image: $(LINUXVMIMAGE)

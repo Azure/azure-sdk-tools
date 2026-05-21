@@ -73,7 +73,7 @@ extends:
                 workingDirectory: $(ProjectPath)
                 displayName: "Install npm packages for testing"
                 env:
-                  npm_config_userconfig: $(emitterNpmrcPath)
+                  npm_config_userconfig: $(npmrcPath)
 
               - script: |
                   npm run test:ci
@@ -95,7 +95,7 @@ extends:
                 workingDirectory: $(ProjectPath)
                 displayName: "Install npm packages"
                 env:
-                  npm_config_userconfig: $(emitterNpmrcPath)
+                  npm_config_userconfig: $(npmrcPath)
 
               - task: ArchiveFiles@2
                 displayName: "Create deployable zip package"

@@ -116,7 +116,7 @@ extends:
           - stage: Staging_Publish
             displayName: Pre-Prod
             dependsOn: Build
-            condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'), or(ne(variables['Build.Reason'], 'Manual'), eq(variables['runAsCI'], 'true')))
+            condition: and(succeeded(), eq(variables['Build.SourceBranchName'], 'main'), ne(variables['Build.Reason'], 'PullRequest'), or(ne(variables['Build.Reason'], 'Manual'), eq(variables['runAsCI'], 'true')))
 
             jobs:
               - job: Publish_to_Staging
@@ -154,7 +154,7 @@ extends:
           - stage: Production_Publish
             displayName: Prod
             dependsOn: Staging_Publish
-            condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'), or(ne(variables['Build.Reason'], 'Manual'), eq(variables['runAsCI'], 'true')))
+            condition: and(succeeded(), eq(variables['Build.SourceBranchName'], 'main'), ne(variables['Build.Reason'], 'PullRequest'), or(ne(variables['Build.Reason'], 'Manual'), eq(variables['runAsCI'], 'true')))
 
             jobs:
               - deployment: Publish_to_Prod

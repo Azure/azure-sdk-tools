@@ -2,9 +2,6 @@ trigger:
   branches:
     include:
       - main
-      - feature/*
-      - release/*
-      - hotfix/*
   paths:
     include:
       - tools/release-plan-dashboard
@@ -12,9 +9,6 @@ pr:
   branches:
     include:
       - main
-      - feature/*
-      - release/*
-      - hotfix/*
   paths:
     include:
       - tools/release-plan-dashboard
@@ -92,11 +86,9 @@ extends:
                 displayName: "Run prettier format check"
 
               - script: |
-                  npm ci --omit=dev
+                  rm -rf node_modules
                 workingDirectory: $(ProjectPath)
-                displayName: "Install npm packages"
-                env:
-                  npm_config_userconfig: $(npmrcPath)
+                displayName: "Remove node_modules before packaging"
 
               - task: ArchiveFiles@2
                 displayName: "Create deployable zip package"
@@ -129,8 +121,8 @@ extends:
                       targetPath: "$(Pipeline.Workspace)/release-plan"
                 displayName: Publish to Staging
                 pool:
-                  name: azsdk-pool
-                  image: ubuntu-24.04
+                  name: $(LINUXPOOL)
+                  image: $(LINUXVMIMAGE)
                   os: linux
 
                 steps:
@@ -142,11 +134,6 @@ extends:
                       WebAppName: "releaseplan-dashboard-test"
                       ResourceGroupName: ReleasePlan-Dashboard
                       packageForLinux: "$(Pipeline.Workspace)/release-plan/**/release-plan.zip"
-                      ScriptType: "Inline Script"
-                      InlineScript: |
-                        @echo off
-                        echo starting npm server
-                        call npm start
                       enableCustomDeployment: true
                       DeploymentType: zipDeploy
 
@@ -168,8 +155,8 @@ extends:
                       artifactName: release-plan
                       targetPath: "$(Pipeline.Workspace)/release-plan"
                 pool:
-                  name: azsdk-pool
-                  image: ubuntu-24.04
+                  name: $(LINUXPOOL)
+                  image: $(LINUXVMIMAGE)
                   os: linux
 
                 strategy:
@@ -182,14 +169,7 @@ extends:
                             azureSubscription: "Azure SDK Engineering System"
                             appType: "webApp"
                             WebAppName: "azsdk-releaseplan-dashboard"
-                            deployToSlotOrASE: true
                             ResourceGroupName: ReleasePlan-Dashboard
-                            SlotName: staging
-                            ScriptType: "Inline Script"
                             packageForLinux: $(Pipeline.Workspace)/release-plan/**/*.zip
-                            InlineScript: |
-                              @echo off
-                              echo starting npm server
-                              call npm start
                             enableCustomDeployment: true
                             DeploymentType: zipDeploy

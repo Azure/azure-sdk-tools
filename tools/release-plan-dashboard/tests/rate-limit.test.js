@@ -1,4 +1,4 @@
-import { describe, test, expect, vi, beforeEach } from "vitest";
+import { describe, test, expect, vi } from "vitest";
 import { createRateLimiter } from "../lib/rate-limit.js";
 
 function mockReq(user, ip) {
@@ -13,9 +13,18 @@ function mockRes() {
     _status: null,
     _json: null,
     _headers: {},
-    status(code) { res._status = code; return res; },
-    json(data) { res._json = data; return res; },
-    set(key, val) { res._headers[key] = val; return res; },
+    status(code) {
+      res._status = code;
+      return res;
+    },
+    json(data) {
+      res._json = data;
+      return res;
+    },
+    set(key, val) {
+      res._headers[key] = val;
+      return res;
+    },
   };
   return res;
 }
@@ -30,7 +39,9 @@ describe("rate-limit module", () => {
     const req = mockReq("testuser");
     const res = mockRes();
     let called = false;
-    const next = () => { called = true; };
+    const next = () => {
+      called = true;
+    };
 
     limiter(req, res, next);
     expect(called).toBe(true);
@@ -128,5 +139,60 @@ describe("rate-limit module", () => {
     const next = vi.fn();
     limiter(req, mockRes(), next);
     expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  test("cleanup interval removes expired entries", () => {
+    vi.useFakeTimers();
+    const limiter = createRateLimiter({ windowMs: 1000, maxRequests: 5 });
+    const req = mockReq("cleanupuser");
+    const next = vi.fn();
+
+    // Make a request at t=0
+    limiter(req, mockRes(), next);
+    expect(next).toHaveBeenCalledTimes(1);
+
+    // Advance to t=1500 — first entry is now expired
+    vi.advanceTimersByTime(1500);
+
+    // Make another request at t=1500 — this is within current window
+    limiter(req, mockRes(), next);
+    expect(next).toHaveBeenCalledTimes(2);
+
+    // Advance to t=2000 — cleanup fires (windowMs*2 = 2000)
+    // At cleanup: t=0 entry is expired (2000-0=2000 > 1000), t=1500 is valid (2000-1500=500 < 1000)
+    // This exercises the else branch (line 14): valid.length > 0 → hits.set(key, valid)
+    vi.advanceTimersByTime(500);
+
+    // The t=1500 entry should still count
+    // Make requests to fill up — we have 1 valid entry, so 4 more should work
+    for (let i = 0; i < 4; i++) {
+      limiter(req, mockRes(), next);
+    }
+    expect(next).toHaveBeenCalledTimes(6);
+
+    // 5th should be blocked (1 existing + 4 new = 5 = maxRequests)
+    limiter(req, mockRes(), next);
+    expect(next).toHaveBeenCalledTimes(6);
+
+    vi.useRealTimers();
+  });
+
+  test("cleanup interval deletes fully expired entries", () => {
+    vi.useFakeTimers();
+    const limiter = createRateLimiter({ windowMs: 100, maxRequests: 1 });
+    const req = mockReq("expireuser");
+    const next = vi.fn();
+
+    limiter(req, mockRes(), next);
+    expect(next).toHaveBeenCalledTimes(1);
+
+    // Advance past cleanup interval (200ms) — all entries expired
+    vi.advanceTimersByTime(200);
+
+    // Should be allowed (expired entries cleaned)
+    limiter(req, mockRes(), next);
+    expect(next).toHaveBeenCalledTimes(2);
+
+    vi.useRealTimers();
   });
 });

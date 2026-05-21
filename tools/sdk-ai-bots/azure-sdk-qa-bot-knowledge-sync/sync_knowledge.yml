@@ -69,6 +69,8 @@ extends:
               - template: /eng/pipelines/templates/variables/globals.yml@self
               - name: workingDirectory
                 value: '$(System.DefaultWorkingDirectory)/knowledge_sources'
+              - name: npmrcPath
+                value: '$(Agent.BuildDirectory)/azure-sdk-qa-bot-knowledge-sync/.npmrc'
 
             pool:
               name: $(LINUXPOOL)
@@ -107,15 +109,23 @@ extends:
                 inputs:
                   versionSpec: '20.x'
 
+              - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml@self
+                parameters:
+                  npmrcPath: $(npmrcPath)
+
               - script: |
                   npm ci
                 displayName: 'Install dependencies'
                 workingDirectory: $(Agent.BuildDirectory)/s/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync
+                env:
+                  npm_config_userconfig: $(npmrcPath)
 
               - script: |
                   npm run build
                 displayName: 'Build TypeScript project'
                 workingDirectory: $(Agent.BuildDirectory)/s/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync
+                env:
+                  npm_config_userconfig: $(npmrcPath)
 
               - script: |
                   npm run start

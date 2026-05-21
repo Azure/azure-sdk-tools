@@ -9,7 +9,7 @@ function createRateLimiter({ windowMs = 60 * 1000, maxRequests = 30 } = {}) {
   const cleanupInterval = setInterval(() => {
     const now = Date.now();
     for (const [key, timestamps] of hits) {
-      const valid = timestamps.filter(t => now - t < windowMs);
+      const valid = timestamps.filter((t) => now - t < windowMs);
       if (valid.length === 0) hits.delete(key);
       else hits.set(key, valid);
     }
@@ -18,14 +18,17 @@ function createRateLimiter({ windowMs = 60 * 1000, maxRequests = 30 } = {}) {
 
   return function rateLimiter(req, res, next) {
     // Use authenticated user identity (set by requireAuth middleware) rather than raw headers
-    const key = (req.user && (req.user.objectId || req.user.login)) || req.ip || "anon";
+    const key =
+      (req.user && (req.user.objectId || req.user.login)) || req.ip || "anon";
     const now = Date.now();
-    const timestamps = (hits.get(key) || []).filter(t => now - t < windowMs);
+    const timestamps = (hits.get(key) || []).filter((t) => now - t < windowMs);
 
     if (timestamps.length >= maxRequests) {
       const retryAfter = Math.ceil((timestamps[0] + windowMs - now) / 1000);
       res.set("Retry-After", String(retryAfter));
-      return res.status(429).json({ error: "Too many requests. Please try again later." });
+      return res
+        .status(429)
+        .json({ error: "Too many requests. Please try again later." });
     }
 
     timestamps.push(now);

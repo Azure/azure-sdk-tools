@@ -32,8 +32,8 @@ _SKILL_DESCRIPTIONS: dict[TenantID, str] = {
         "Avocado, breaking changes, merge process in azure-rest-api-specs repos."
     ),
     TenantID.AZURE_SDK_ONBOARDING: (
-        "Azure SDK onboarding process: service onboarding phases, release planner, "
-        "SDK lifecycle, permissions, AzSDK agent usage."
+        "Azure SDK onboarding process: service onboarding phases, SDK lifecycle, "
+        "permissions, Azure SDK Tools Agent usage, and legacy Release Planner guidance."
     ),
     TenantID.AZURE_TYPESPEC_AUTHORING: (
         "Advanced TypeSpec authoring: ARM and data-plane API design, Azure Templates, "

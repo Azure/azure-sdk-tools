@@ -2,14 +2,28 @@ import { describe, test, expect } from "vitest";
 
 // Test DevOps API utility functions that don't require network
 import {
-  LANGUAGES, LANGUAGE_DISPLAY, LANGUAGE_PACKAGE_WI,
-  extractChildIds, getField, mapReleasePlan, isKnownPackage, isGAVersion,
+  LANGUAGES,
+  LANGUAGE_DISPLAY,
+  LANGUAGE_PACKAGE_WI,
+  extractChildIds,
+  getField,
+  mapReleasePlan,
+  isKnownPackage,
+  isGAVersion,
+  stripEmail,
+  extractSpecPrUrls,
 } from "../lib/devops-api.js";
 
 describe("devops-api module", () => {
   describe("constants", () => {
     test("LANGUAGES has all 5 SDK languages", () => {
-      expect(LANGUAGES).toEqual(["Dotnet", "JavaScript", "Python", "Java", "Go"]);
+      expect(LANGUAGES).toEqual([
+        "Dotnet",
+        "JavaScript",
+        "Python",
+        "Java",
+        "Go",
+      ]);
     });
 
     test("LANGUAGE_DISPLAY maps internal names to display names", () => {
@@ -30,8 +44,14 @@ describe("devops-api module", () => {
     test("extracts child IDs from hierarchy relations", () => {
       const wi = {
         relations: [
-          { rel: "System.LinkTypes.Hierarchy-Forward", url: "https://dev.azure.com/_apis/wit/workItems/123" },
-          { rel: "System.LinkTypes.Hierarchy-Forward", url: "https://dev.azure.com/_apis/wit/workItems/456" },
+          {
+            rel: "System.LinkTypes.Hierarchy-Forward",
+            url: "https://dev.azure.com/_apis/wit/workItems/123",
+          },
+          {
+            rel: "System.LinkTypes.Hierarchy-Forward",
+            url: "https://dev.azure.com/_apis/wit/workItems/456",
+          },
         ],
       };
       expect(extractChildIds(wi)).toEqual([123, 456]);
@@ -40,8 +60,14 @@ describe("devops-api module", () => {
     test("ignores non-hierarchy relations", () => {
       const wi = {
         relations: [
-          { rel: "System.LinkTypes.Related", url: "https://dev.azure.com/_apis/wit/workItems/789" },
-          { rel: "System.LinkTypes.Hierarchy-Reverse", url: "https://dev.azure.com/_apis/wit/workItems/101" },
+          {
+            rel: "System.LinkTypes.Related",
+            url: "https://dev.azure.com/_apis/wit/workItems/789",
+          },
+          {
+            rel: "System.LinkTypes.Hierarchy-Reverse",
+            url: "https://dev.azure.com/_apis/wit/workItems/101",
+          },
         ],
       };
       expect(extractChildIds(wi)).toEqual([]);
@@ -65,7 +91,9 @@ describe("devops-api module", () => {
 
   describe("getField", () => {
     test("returns field value from work item", () => {
-      const wi = { fields: { "System.Title": "My Title", "Custom.Foo": "bar" } };
+      const wi = {
+        fields: { "System.Title": "My Title", "Custom.Foo": "bar" },
+      };
       expect(getField(wi, "System.Title")).toBe("My Title");
       expect(getField(wi, "Custom.Foo")).toBe("bar");
     });
@@ -125,7 +153,8 @@ describe("devops-api module", () => {
       };
       for (const lang of LANGUAGES) {
         fields[`Custom.${lang}PackageName`] = `pkg-${lang}`;
-        fields[`Custom.SDKPullRequestFor${lang}`] = `https://github.com/Azure/azure-sdk-for-${lang.toLowerCase()}/pull/1`;
+        fields[`Custom.SDKPullRequestFor${lang}`] =
+          `https://github.com/Azure/azure-sdk-for-${lang.toLowerCase()}/pull/1`;
         fields[`Custom.SDKPullRequestStatusFor${lang}`] = "Active";
         fields[`Custom.ReleaseStatusFor${lang}`] = "Unreleased";
         fields[`Custom.ReleaseExclusionStatusFor${lang}`] = "";
@@ -148,12 +177,15 @@ describe("devops-api module", () => {
         fields: {
           "System.Title": "URL Test",
           "System.State": "New",
-          "Custom.SDKPullRequestForDotnet": "https://github.com/Azure/azure-sdk-for-net/pull/123///",
+          "Custom.SDKPullRequestForDotnet":
+            "https://github.com/Azure/azure-sdk-for-net/pull/123///",
         },
         relations: [],
       };
       const result = mapReleasePlan(wi, {});
-      expect(result.languages[".NET"].sdkPrUrl).toBe("https://github.com/Azure/azure-sdk-for-net/pull/123");
+      expect(result.languages[".NET"].sdkPrUrl).toBe(
+        "https://github.com/Azure/azure-sdk-for-net/pull/123",
+      );
     });
 
     test("maps API spec from child work items", () => {
@@ -161,7 +193,10 @@ describe("devops-api module", () => {
         id: 400,
         fields: { "System.Title": "With Spec", "System.State": "New" },
         relations: [
-          { rel: "System.LinkTypes.Hierarchy-Forward", url: "https://dev.azure.com/_apis/wit/workItems/401" },
+          {
+            rel: "System.LinkTypes.Hierarchy-Forward",
+            url: "https://dev.azure.com/_apis/wit/workItems/401",
+          },
         ],
       };
       const apiSpecMap = {
@@ -169,16 +204,19 @@ describe("devops-api module", () => {
           id: 401,
           fields: {
             "System.WorkItemType": "API Spec",
-            "Custom.ActiveSpecPullRequestUrl": "https://github.com/Azure/azure-rest-api-specs/pull/50",
+            "Custom.ActiveSpecPullRequestUrl":
+              "https://github.com/Azure/azure-rest-api-specs/pull/50",
             "Custom.APISpecversion": "2024-01-01",
             "Custom.APISpecDefinitionType": "TypeSpec",
-            "Custom.RESTAPIReviews": '',
+            "Custom.RESTAPIReviews": "",
           },
         },
       };
       const result = mapReleasePlan(wi, apiSpecMap);
       expect(result.apiSpec).not.toBeNull();
-      expect(result.apiSpec.specPrUrl).toBe("https://github.com/Azure/azure-rest-api-specs/pull/50");
+      expect(result.apiSpec.specPrUrl).toBe(
+        "https://github.com/Azure/azure-rest-api-specs/pull/50",
+      );
       expect(result.apiSpec.apiVersion).toBe("2024-01-01");
       expect(result.apiSpec.definitionType).toBe("TypeSpec");
     });
@@ -199,7 +237,9 @@ describe("devops-api module", () => {
         fields: {
           "System.Title": "Email Test",
           "System.State": "New",
-          "System.CreatedBy": { displayName: "John Doe <john.doe@microsoft.com>" },
+          "System.CreatedBy": {
+            displayName: "John Doe <john.doe@microsoft.com>",
+          },
         },
         relations: [],
       };
@@ -220,6 +260,73 @@ describe("devops-api module", () => {
       expect(result.releaseMonth).toBe("");
       expect(result.apiSpec).toBeNull();
       expect(result.languages).toBeDefined();
+    });
+
+    test("handles createdBy as non-object (string)", () => {
+      const wi = {
+        id: 701,
+        fields: {
+          "System.Title": "String CreatedBy",
+          "System.CreatedBy": "plain-string@example.com",
+        },
+        relations: [],
+      };
+      const result = mapReleasePlan(wi, {});
+      expect(result.createdBy).toBe("");
+    });
+
+    test("handles submittedBy with uniqueName fallback", () => {
+      const wi = {
+        id: 702,
+        fields: {
+          "System.Title": "UniqueName Fallback",
+          "Custom.ReleasePlanSubmittedby": {
+            uniqueName: "jane@microsoft.com",
+          },
+        },
+        relations: [],
+      };
+      const result = mapReleasePlan(wi, {});
+      expect(result.submittedBy).toBe("jane@microsoft.com");
+    });
+
+    test("handles submittedBy as plain string", () => {
+      const wi = {
+        id: 703,
+        fields: {
+          "System.Title": "String SubmittedBy",
+          "Custom.ReleasePlanSubmittedby": "submitted-user",
+        },
+        relations: [],
+      };
+      const result = mapReleasePlan(wi, {});
+      expect(result.submittedBy).toBe("submitted-user");
+    });
+
+    test("extracts specPrUrl from RESTAPIReviews when ActiveSpecPullRequestUrl is empty", () => {
+      const wi = {
+        id: 704,
+        fields: { "System.Title": "Reviews Fallback" },
+        relations: [
+          {
+            rel: "System.LinkTypes.Hierarchy-Forward",
+            url: "https://dev.azure.com/_apis/wit/workItems/705",
+          },
+        ],
+      };
+      const specChild = {
+        id: 705,
+        fields: {
+          "System.WorkItemType": "API Spec",
+          "Custom.ActiveSpecPullRequestUrl": "",
+          "Custom.RESTAPIReviews":
+            '<a href="https://github.com/Azure/azure-rest-api-specs/pull/77">PR</a>',
+        },
+      };
+      const result = mapReleasePlan(wi, { 705: specChild });
+      expect(result.apiSpec.specPrUrl).toBe(
+        "https://github.com/Azure/azure-rest-api-specs/pull/77",
+      );
     });
   });
 
@@ -284,6 +391,67 @@ describe("devops-api module", () => {
       expect(isGAVersion("")).toBe(false);
       expect(isGAVersion(null)).toBe(false);
       expect(isGAVersion(undefined)).toBe(false);
+    });
+  });
+
+  describe("stripEmail", () => {
+    test("returns empty string for empty input", () => {
+      expect(stripEmail("")).toBe("");
+    });
+
+    test("returns empty string for null input", () => {
+      expect(stripEmail(null)).toBe("");
+    });
+
+    test("strips email in angle brackets from display name", () => {
+      expect(stripEmail("John Doe <john@example.com>")).toBe("John Doe");
+    });
+
+    test("splits email-only input at @ and replaces dots/underscores with spaces", () => {
+      expect(stripEmail("john.doe@microsoft.com")).toBe("john doe");
+    });
+
+    test("returns plain name unchanged", () => {
+      expect(stripEmail("Plain Name")).toBe("Plain Name");
+    });
+  });
+
+  describe("extractSpecPrUrls", () => {
+    test("extracts GitHub PR URLs from HTML href attributes", () => {
+      const html =
+        '<a href="https://github.com/Azure/azure-rest-api-specs/pull/123">PR 123</a> <a href="https://github.com/Azure/azure-rest-api-specs/pull/456">PR 456</a>';
+      expect(extractSpecPrUrls(html)).toEqual([
+        "https://github.com/Azure/azure-rest-api-specs/pull/123",
+        "https://github.com/Azure/azure-rest-api-specs/pull/456",
+      ]);
+    });
+
+    test("ignores non-GitHub URLs", () => {
+      const html =
+        '<a href="https://example.com/page">Link</a> <a href="https://github.com/Azure/azure-rest-api-specs/pull/99">PR</a>';
+      expect(extractSpecPrUrls(html)).toEqual([
+        "https://github.com/Azure/azure-rest-api-specs/pull/99",
+      ]);
+    });
+
+    test("deduplicates PR URLs", () => {
+      const html =
+        '<a href="https://github.com/Azure/azure-rest-api-specs/pull/10">PR</a> <a href="https://github.com/Azure/azure-rest-api-specs/pull/10">PR again</a>';
+      expect(extractSpecPrUrls(html)).toEqual([
+        "https://github.com/Azure/azure-rest-api-specs/pull/10",
+      ]);
+    });
+
+    test("returns empty array for empty string", () => {
+      expect(extractSpecPrUrls("")).toEqual([]);
+    });
+
+    test("strips trailing slashes from URLs", () => {
+      const html =
+        '<a href="https://github.com/Azure/azure-rest-api-specs/pull/55/">PR</a>';
+      expect(extractSpecPrUrls(html)).toEqual([
+        "https://github.com/Azure/azure-rest-api-specs/pull/55",
+      ]);
     });
   });
 });

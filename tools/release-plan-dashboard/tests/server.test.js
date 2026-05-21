@@ -1,17 +1,23 @@
 import { describe, test, expect, vi, beforeAll, afterAll } from "vitest";
 
 // ── Server integration tests ──────────────────────────────────
-// Tests the Express app's middleware and routes without external deps.
-// We set required env vars and mock external calls.
+// Tests the Express app by importing createApp/validateEnvVars from server.js.
+// We set required env vars and mock external calls so server.js gets real coverage.
 
-// Set all required env vars before importing server modules
-process.env.KEYVAULT_NAME = "test-vault";
-process.env.KEYVAULT_KEY_NAME = "test-key";
-process.env.GITHUB_APP_NUMERIC_ID = "12345";
-process.env.GITHUB_INSTALL_OWNER = "TestOrg";
-process.env.RELEASE_PLAN_DASHBOARD_PM_USERS = "pmuser@microsoft.com,pmuser2@microsoft.com";
+// vi.hoisted runs before vi.mock and imports — env vars must be set here
+// because server.js reads them at module level AND calls start() as a side effect.
+vi.hoisted(() => {
+  process.env.KEYVAULT_NAME = "test-vault";
+  process.env.KEYVAULT_KEY_NAME = "test-key";
+  process.env.GITHUB_APP_NUMERIC_ID = "12345";
+  process.env.GITHUB_INSTALL_OWNER = "TestOrg";
+  process.env.RELEASE_PLAN_DASHBOARD_PM_USERS =
+    "pmuser@microsoft.com,pmuser2@microsoft.com";
+  // Use port 0 so the side-effect start() server binds to a random port
+  process.env.PORT = "0";
+});
 
-// Mock only mintGitHubAppToken (network call); use real parseEasyAuthPrincipal
+// Mock only mintGitHubAppToken (network call); keep real parseEasyAuthPrincipal
 vi.mock("../lib/auth.js", async () => {
   const actual = await vi.importActual("../lib/auth.js");
   return {
@@ -24,18 +30,15 @@ vi.mock("../lib/auth.js", async () => {
 vi.mock("../routes/api.js", async () => {
   const { default: express } = await import("express");
   const router = express.Router();
-  router.get("/api/release-plans", (req, res) => res.json({ plans: [], fetchedAt: null }));
+  router.get("/api/release-plans", (req, res) =>
+    res.json({ plans: [], fetchedAt: null }),
+  );
   router.refreshReleasePlansCache = vi.fn().mockResolvedValue(undefined);
   return { default: router };
 });
 
 import http from "node:http";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { dirname } from "node:path";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import { createApp, validateEnvVars } from "../server.js";
 
 let app, server;
 
@@ -44,80 +47,44 @@ function makePrincipalHeader(claims) {
 }
 
 beforeAll(async () => {
-  const { default: express } = await import("express");
-  const { parseEasyAuthPrincipal } = await import("../lib/auth.js");
-  const { createRateLimiter } = await import("../lib/rate-limit.js");
-  const { default: apiRoutes } = await import("../routes/api.js");
-
-  app = express();
-  app.set("trust proxy", 1);
-  app.use(express.json());
-
-  // Health (unauthenticated)
-  app.get("/health", (req, res) => res.json({ status: "healthy", uptime: process.uptime() }));
-
-  // Favicon
-  app.get("/favicon.ico", (_req, res) => res.status(204).end());
-
-  // Auth middleware
-  const PUBLIC_ROUTES = ["/health", "/favicon.ico", "/auth/logout"];
-  app.use((req, res, next) => {
-    if (PUBLIC_ROUTES.includes(req.path)) return next();
-    const principal = parseEasyAuthPrincipal(req);
-    if (!principal) {
-      return res.status(401).json({ error: "Authentication required. Please sign in via your organization." });
-    }
-    req.user = principal;
-    next();
+  app = createApp();
+  await new Promise((resolve) => {
+    server = app.listen(0, resolve);
   });
-
-  app.get("/auth/me", (req, res) => {
-    const user = req.user;
-    let responseUser = user ? { login: user.login, name: user.name, avatar: "" } : null;
-    if (responseUser) {
-      const pmList = (process.env.RELEASE_PLAN_DASHBOARD_PM_USERS || "").split(",").map(u => u.trim().toLowerCase()).filter(Boolean);
-      responseUser.isPM = pmList.includes((user.login || "").toLowerCase());
-    }
-    res.json(responseUser);
-  });
-
-  app.get("/auth/logout", (_req, res) => res.redirect("/.auth/logout?post_logout_redirect_uri=/"));
-
-  // Rate limiter
-  const apiRateLimiter = createRateLimiter({ windowMs: 60000, maxRequests: 5 });
-  app.use("/api", apiRateLimiter);
-  app.use(apiRoutes);
-
-  // Static files
-  app.use(express.static(path.join(__dirname, "../public")));
-
-  await new Promise((resolve) => { server = app.listen(0, resolve); });
 });
 
 afterAll(async () => {
-  await new Promise((resolve) => { server.close(resolve); });
+  await new Promise((resolve) => {
+    server.close(resolve);
+  });
 });
 
 function getPort() {
   return server.address().port;
 }
 
-function request(method, path, { headers = {}, body } = {}) {
+function request(method, urlPath, { headers = {}, body } = {}) {
   return new Promise((resolve, reject) => {
-    const url = new URL(path, `http://localhost:${getPort()}`);
+    const url = new URL(urlPath, `http://localhost:${getPort()}`);
     const options = {
-      hostname: "localhost", port: getPort(), path: url.pathname + url.search,
-      method, headers: { ...headers },
+      hostname: "localhost",
+      port: getPort(),
+      path: url.pathname + url.search,
+      method,
+      headers: { ...headers },
     };
     if (body) {
       const data = typeof body === "string" ? body : JSON.stringify(body);
-      options.headers["Content-Type"] = options.headers["Content-Type"] || "application/json";
+      options.headers["Content-Type"] =
+        options.headers["Content-Type"] || "application/json";
       options.headers["Content-Length"] = Buffer.byteLength(data);
     }
     const req = http.request(options, (res) => {
       let data = "";
       res.on("data", (c) => (data += c));
-      res.on("end", () => resolve({ status: res.statusCode, headers: res.headers, body: data }));
+      res.on("end", () =>
+        resolve({ status: res.statusCode, headers: res.headers, body: data }),
+      );
     });
     req.on("error", reject);
     if (body) req.write(typeof body === "string" ? body : JSON.stringify(body));
@@ -125,11 +92,14 @@ function request(method, path, { headers = {}, body } = {}) {
   });
 }
 
-function authenticatedRequest(method, path, options = {}) {
+function authenticatedRequest(method, urlPath, options = {}) {
   const principalHeader = makePrincipalHeader([
     { typ: "preferred_username", val: "testuser@microsoft.com" },
     { typ: "name", val: "Test User" },
-    { typ: "http://schemas.microsoft.com/identity/claims/objectidentifier", val: "obj-123" },
+    {
+      typ: "http://schemas.microsoft.com/identity/claims/objectidentifier",
+      val: "obj-123",
+    },
   ]);
   const hdrs = {
     "x-ms-client-principal": principalHeader,
@@ -137,8 +107,56 @@ function authenticatedRequest(method, path, options = {}) {
     "x-ms-client-principal-id": "obj-123",
     ...(options.headers || {}),
   };
-  return request(method, path, { ...options, headers: hdrs });
+  return request(method, urlPath, { ...options, headers: hdrs });
 }
+
+describe("validateEnvVars", () => {
+  test("returns missing vars when env vars are unset", () => {
+    const saved = {};
+    const keys = [
+      "KEYVAULT_NAME",
+      "KEYVAULT_KEY_NAME",
+      "GITHUB_APP_NUMERIC_ID",
+      "GITHUB_INSTALL_OWNER",
+    ];
+    for (const key of keys) {
+      saved[key] = process.env[key];
+      delete process.env[key];
+    }
+    try {
+      const missing = validateEnvVars();
+      expect(missing).toEqual(keys);
+    } finally {
+      for (const key of keys) {
+        process.env[key] = saved[key];
+      }
+    }
+  });
+
+  test("returns empty array when all env vars are set", () => {
+    const missing = validateEnvVars();
+    expect(missing).toEqual([]);
+  });
+
+  test("returns only the missing vars", () => {
+    const saved = process.env.KEYVAULT_NAME;
+    delete process.env.KEYVAULT_NAME;
+    try {
+      const missing = validateEnvVars();
+      expect(missing).toEqual(["KEYVAULT_NAME"]);
+    } finally {
+      process.env.KEYVAULT_NAME = saved;
+    }
+  });
+});
+
+describe("createApp", () => {
+  test("returns an Express app with listen method", () => {
+    const testApp = createApp();
+    expect(typeof testApp.listen).toBe("function");
+    expect(typeof testApp.use).toBe("function");
+  });
+});
 
 describe("server integration", () => {
   describe("health endpoint", () => {
@@ -211,22 +229,24 @@ describe("server integration", () => {
     test("redirects to Azure Easy Auth logout", async () => {
       const res = await request("GET", "/auth/logout");
       expect(res.status).toBe(302);
-      expect(res.headers.location).toBe("/.auth/logout?post_logout_redirect_uri=/");
+      expect(res.headers.location).toBe(
+        "/.auth/logout?post_logout_redirect_uri=/",
+      );
     });
   });
 
-  describe("PM user detection", () => {
-    test("identifies PM users from RELEASE_PLAN_DASHBOARD_PM_USERS env var", () => {
-      const pmList = (process.env.RELEASE_PLAN_DASHBOARD_PM_USERS || "").split(",").map(u => u.trim().toLowerCase()).filter(Boolean);
-      expect(pmList).toContain("pmuser@microsoft.com");
-      expect(pmList).toContain("pmuser2@microsoft.com");
-      expect(pmList).not.toContain("regularuser@microsoft.com");
-    });
-
-    test("PM check is case-insensitive", () => {
-      const pmList = (process.env.RELEASE_PLAN_DASHBOARD_PM_USERS || "").split(",").map(u => u.trim().toLowerCase()).filter(Boolean);
-      expect(pmList.includes("pmuser@microsoft.com")).toBe(true);
-      expect(pmList.includes("PMUSER@MICROSOFT.COM".toLowerCase())).toBe(true);
+  describe("rate limiting", () => {
+    test("returns 429 after exceeding rate limit on /api paths", async () => {
+      // The real createRateLimiter uses 30 req/min — send 31 requests
+      const results = [];
+      for (let i = 0; i < 31; i++) {
+        results.push(await authenticatedRequest("GET", "/api/release-plans"));
+      }
+      const last = results[results.length - 1];
+      expect(last.status).toBe(429);
+      const body = JSON.parse(last.body);
+      expect(body.error).toMatch(/too many requests/i);
+      expect(last.headers["retry-after"]).toBeDefined();
     });
   });
 });

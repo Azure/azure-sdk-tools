@@ -602,7 +602,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 IsManagementPlane = true,
                 IsDataPlane = false,
                 SDKReleaseMonth = "January 2026",
-                ReleasePlanLink = "https://example.com/releaseplan/200",
+                ReleasePlanId = 200,
                 SDKInfo =
                 [
                     new SDKInfo { Language = "Java", ReleaseStatus = "", ReleaseExclusionStatus = "Not applicable" },
@@ -649,7 +649,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 IsManagementPlane = true,
                 IsDataPlane = false,
                 SDKReleaseMonth = "January 2026",
-                ReleasePlanLink = "https://example.com/releaseplan/201",
+                ReleasePlanId = 201,
                 SDKInfo =
                 [
                     new SDKInfo { Language = "Java", ReleaseStatus = "", ReleaseExclusionStatus = "Not applicable" },
@@ -696,7 +696,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 IsDataPlane = true,
                 IsManagementPlane = false,
                 SDKReleaseMonth = "January 2026",
-                ReleasePlanLink = "https://example.com/releaseplan/202",
+                ReleasePlanId = 202,
                 SDKInfo =
                 [
                     new SDKInfo { Language = "Java", ReleaseStatus = "", ReleaseExclusionStatus = "Not applicable" },
@@ -742,7 +742,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 IsManagementPlane = true,
                 IsDataPlane = false,
                 SDKReleaseMonth = "January 2026",
-                ReleasePlanLink = "https://example.com/releaseplan/203",
+                ReleasePlanId = 203,
                 SDKInfo =
                 [
                     new SDKInfo { Language = "Java", ReleaseStatus = "", ReleaseExclusionStatus = "Not applicable" },

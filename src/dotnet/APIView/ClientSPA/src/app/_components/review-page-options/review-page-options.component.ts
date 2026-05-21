@@ -63,6 +63,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
   @Input() diffAPIRevision : APIRevision | undefined = undefined;
   @Input() hasReleasedApprovedGARevision : boolean = false;
   @Input() hasActiveConversation : boolean = false;
+  @Input() hasFatalDiagnostics : boolean = false;
   @Input() hasHiddenAPIs : boolean = false;
   @Input() hasHiddenAPIThatIsDiff : boolean = false;
   @Input() codeLineSearchInfo : CodeLineSearchInfo | undefined = undefined;
@@ -105,6 +106,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
   apiRevisionApprovalBtnLabel: string = '';
   showAPIRevisionApprovalModal: boolean = false;
   overrideActiveConversationforApproval : boolean = false;
+  overrideFatalDiagnosticsforApproval : boolean = false;
 
   get canApproveForReviewLanguage(): boolean {
     if (!this.userProfile?.permissions || !this.review?.language) {
@@ -683,7 +685,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
       return;
     }
 
-    if (!this.activeAPIRevisionIsApprovedByCurrentUser && this.hasActiveConversation) {
+    if (!this.activeAPIRevisionIsApprovedByCurrentUser && (this.hasActiveConversation || this.hasFatalDiagnostics)) {
       this.showAPIRevisionApprovalModal = true;
     } else {
       this.toggleAPIRevisionApproval();

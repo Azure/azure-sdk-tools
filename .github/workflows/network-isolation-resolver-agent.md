@@ -40,6 +40,7 @@ network:
     - login.microsoftonline.com
     - azure.com
 tools:
+  bash: [":*"]
   github:
     toolsets: [repos, issues, pull_requests, search]
     min-integrity: approved
@@ -48,18 +49,6 @@ tools:
     github-token: ${{ secrets.GH_AW_GITHUB_MCP_SERVER_TOKEN }}
 strict: false
 safe-outputs:
-  create-pull-request:
-    github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
-    allowed-repos:
-      - azure/*
-    title-prefix: "[CFS] "
-    reviewers:
-      - chidozieononiwu
-    draft: false
-    max: 10
-    base-branch: main
-    preserve-branch-name: true
-    protected-files: fallback-to-issue
   noop:
 steps:
   - name: Checkout repository
@@ -202,6 +191,156 @@ steps:
 
       "resolved_count=$($enriched.Count)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
       Write-Host "Resolved $($enriched.Count) pipeline entry point(s)."
+
+  - name: Stage pull request guidance
+    shell: pwsh
+    run: |
+      Set-StrictMode -Version 4
+      $ErrorActionPreference = 'Stop'
+
+      $sourcePath = ".github/workflows/network-isolation-pr-guidance.json"
+      $workingPath = "network-isolation-pr-guidance.json"
+
+      if (-not (Test-Path -Path $sourcePath)) {
+        "{}" | Set-Content -Path $workingPath
+        Write-Host "No pull request guidance file found at $sourcePath. Wrote empty guidance to $workingPath."
+        return
+      }
+
+      $guidance = Get-Content -Path $sourcePath -Raw | ConvertFrom-Json -Depth 20
+      $guidance | ConvertTo-Json -Depth 20 | Set-Content -Path $workingPath
+      Write-Host "Staged pull request guidance from $sourcePath to $workingPath."
+post-steps:
+  - name: Azure Login for GitHub App token
+    if: always()
+    uses: azure/login@v1
+    with:
+      client-id: 5786d1fb-187e-4ca9-9a81-ab89ea278986
+      tenant-id: 72f988bf-86f1-41af-91ab-2d7cd011db47
+      subscription-id: a18897a6-7e44-457d-9260-f2854c0aca42
+
+  - name: Login to GitHub as Azure SDK automation
+    if: always()
+    uses: ./eng/common/actions/login-to-github
+    with:
+      token-owners: Azure
+
+  - name: Push remediation branches and create pull requests
+    if: always()
+    shell: pwsh
+    env:
+      REVIEWER: chidozieononiwu
+    run: |
+      Set-StrictMode -Version 4
+      $ErrorActionPreference = 'Stop'
+
+      function Invoke-CheckedNativeCommand {
+        param(
+          [Parameter(Mandatory = $true)]
+          [string] $Command,
+
+          [Parameter(ValueFromRemainingArguments = $true)]
+          [string[]] $Arguments
+        )
+
+        & $Command @Arguments
+        if ($LASTEXITCODE -ne 0) {
+          throw "Command failed with exit code ${LASTEXITCODE}: $Command $($Arguments -join ' ')"
+        }
+      }
+
+      $manifestPath = "/tmp/network-isolation-remediations/remediations.json"
+      if (-not (Test-Path -Path $manifestPath)) {
+        Write-Host "No remediation manifest found at $manifestPath. Nothing to push."
+        return
+      }
+
+      if ([string]::IsNullOrWhiteSpace($env:GH_TOKEN)) {
+        throw "GH_TOKEN is empty. The login-to-github post-step did not mint an Azure GitHub App token."
+      }
+
+      $remediations = Get-Content -Path $manifestPath -Raw | ConvertFrom-Json
+      if ($null -eq $remediations) {
+        Write-Host "Remediation manifest is empty. Nothing to push."
+        return
+      }
+      elseif ($remediations -isnot [array]) {
+        $remediations = @($remediations)
+      }
+
+      foreach ($remediation in $remediations) {
+        $repo = [string]$remediation.repo
+        $branch = [string]$remediation.branch
+        $workingDirectory = [string]$remediation.workingDirectory
+        $title = [string]$remediation.title
+        $body = [string]$remediation.body
+
+        if ($repo -notmatch '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$') {
+          throw "Invalid repo value '$repo' in remediation manifest. Expected owner/repo."
+        }
+        if ($branch -notmatch '^[A-Za-z0-9._/-]+$') {
+          throw "Invalid branch value '$branch' in remediation manifest."
+        }
+        if ([string]::IsNullOrWhiteSpace($workingDirectory) -or -not (Test-Path -Path $workingDirectory)) {
+          throw "Working directory '$workingDirectory' does not exist for $repo."
+        }
+        if ([string]::IsNullOrWhiteSpace($title) -or [string]::IsNullOrWhiteSpace($body)) {
+          throw "Remediation for $repo/$branch must include title and body."
+        }
+
+        Push-Location $workingDirectory
+        try {
+          $currentBranch = git branch --show-current
+          if ($LASTEXITCODE -ne 0) {
+            throw "Failed to determine the current branch in $workingDirectory."
+          }
+          if ($currentBranch -ne $branch) {
+            Invoke-CheckedNativeCommand git checkout $branch
+          }
+
+          $serverUrl = "https://x-access-token:$env:GH_TOKEN@github.com/$repo.git"
+          Invoke-CheckedNativeCommand git remote set-url origin $serverUrl
+          Invoke-CheckedNativeCommand git push --set-upstream origin $branch
+
+          $existingPr = gh pr list --repo $repo --head $branch --state open --json url --jq '.[0].url'
+          if ($LASTEXITCODE -ne 0) {
+            throw "Failed to list existing pull requests for ${repo}:${branch}."
+          }
+          if ([string]::IsNullOrWhiteSpace($existingPr)) {
+            $bodyPath = Join-Path $env:RUNNER_TEMP ("network-isolation-pr-{0}.md" -f ([Guid]::NewGuid().ToString('N')))
+            Set-Content -Path $bodyPath -Value $body
+            $prUrl = gh pr create --repo $repo --base main --head $branch --title $title --body-file $bodyPath
+            if ($LASTEXITCODE -ne 0) {
+              throw "Failed to create pull request for ${repo}:${branch}."
+            }
+          }
+          else {
+            $prUrl = $existingPr
+            Write-Host "Open pull request already exists for ${repo}:${branch}: $prUrl"
+          }
+
+          try {
+            & gh pr edit $prUrl --add-reviewer $env:REVIEWER
+            if ($LASTEXITCODE -ne 0) {
+              Write-Warning "Pull request was created, but reviewer assignment failed for $env:REVIEWER."
+            }
+          }
+          catch {
+            Write-Warning "Pull request was created, but reviewer assignment failed for $env:REVIEWER. $($_.Exception.Message)"
+          }
+
+          Write-Host "Created or updated pull request for ${repo}:${branch}: $prUrl"
+        }
+        finally {
+          Pop-Location
+        }
+      }
+
+  - name: Delete pull request guidance working copy
+    if: always()
+    shell: pwsh
+    run: |
+      Remove-Item -Path network-isolation-pr-guidance.json -Force -ErrorAction SilentlyContinue
 ---
 
 # Network Isolation Resolver Agent
@@ -229,6 +368,27 @@ Start by reading `devops-pipeline-entrypoints.json`. Treat that file as the auth
 
 If the file is missing, unreadable, malformed, or empty, call `noop` with a concise explanation and stop.
 
+Also read `network-isolation-pr-guidance.json` if it exists. It is a JSON object keyed by domain name. Each domain entry may contain one or more examples with `repo` or `repository`, optional `repositoryId`, and `pullRequests`, `pullRequestNumbers`, or `prs` containing pull request numbers. If an example only has `repositoryId`, use it when it matches the current entry's `RepositoryId`, and look up the pull requests in the target GitHub repository determined from the current entry. Use this file only as lookup guidance for prior examples; do not treat it as a work item source.
+
+Example guidance input:
+
+```json
+{
+  "registry.npmjs.org": [
+    {
+      "RepositoryId": "Azure/autorest.go",
+      "pullRequests": [1234, 5678]
+    }
+  ],
+  "pypi.org": [
+    {
+      "RepositoryId": "00000000-0000-0000-0000-000000000000",
+      "PullRequests": [2468]
+    }
+  ]
+}
+```
+
 ## Required Workflow
 
 Process entries strictly one at a time. Fully finish the current entry before starting the next entry. Keep each target repository checkout in a separate directory under `/tmp/network-isolation-repos` so context from different entries cannot mix.
@@ -238,18 +398,18 @@ For each entry:
 1. Validate that `ProjectName`, `BuildId`, `PipelineDefinitionId`, `JobName`, `RepositoryName` or `RepositoryId`, and `YamlFilename` are present. If required data is missing, record the skipped entry in your final summary and continue to the next entry.
 2. Determine the target GitHub repository from `RepositoryName`. If `RepositoryName` is already in `owner/repo` format, use it as-is. If it is only a repository name, use `Azure/<RepositoryName>`. Use `RepositoryId` only as supporting identity when inspecting Azure DevOps metadata.
 3. Locate the pipeline entry point using `YamlFilename`. Start investigation from that YAML file and follow templates, extends, jobs, stages, and included pipeline files until you identify the job corresponding to `JobName`.
-4. Before making a change, search the target GitHub repository for recent pull requests with `CFS` or `network isolation` in the title. Use those examples only as implementation guidance so the fix follows the repository's established remediation pattern.
+4. Before making a change, look up prior pull request examples only from `network-isolation-pr-guidance.json` for the entry's `DomainName`. Match the domain key exactly first, then case-insensitively if needed. For each matching example, use the specified repository and pull request numbers to inspect those pull requests. If the example specifies only `RepositoryId`, use it only when it matches the current entry's `RepositoryId`, and inspect the specified pull request numbers in the current target GitHub repository. Do not perform broad repository searches for examples. If no guidance exists for the domain, continue without prior PR examples and include that in your final summary.
 5. Diagnose why the job is failing network isolation. Use `DomainName`, `TaskName`, the located pipeline code, nearby allowlist/network-isolation patterns in the checked-out repository, and relevant prior PR examples.
 6. Code the smallest targeted fix in the target repository. Preserve the repository's existing pipeline style and avoid unrelated formatting or refactors.
-7. Prepare a branch name for only that entry. Use a branch name that starts with `network-isolation-cfs-` and includes the pipeline definition ID and the build ID.
-8. Do not run `git push`, `gh auth login`, or `gh pr create`. Branch push and pull request creation must happen through the `create_pull_request` safe-output tool.
-9. Request a pull request against the target repository's `main` branch using the `create_pull_request` safe-output tool. Include the target repository in the tool call's `repo` field using `owner/repo` format. The pull request title must include `CFS`. The pull request body must include:
+7. Create a new branch in the local target repository checkout for only that entry. Use a branch name that starts with `network-isolation-cfs-` and includes the pipeline definition ID and the build ID.
+8. Commit the fix locally on that branch. Do not run `git push`, `gh auth login`, `gh pr create`, or any GitHub write operation. GitHub Actions post-steps will push the branch, create the pull request, and request the reviewer.
+9. Append a remediation object to `/tmp/network-isolation-remediations/remediations.json`. Create the directory and file if needed. The file must be a JSON array. Each object must include `repo`, `workingDirectory`, `branch`, `title`, and `body`. Use `repo` in `owner/repo` format, set `workingDirectory` to the local checkout path containing the committed branch, and make the pull request title include `CFS`. The pull request body must include:
   - the network isolation domain being fixed,
   - the affected job name,
   - the pipeline entry point YAML path,
   - the pipeline run URL,
   - a short explanation of the change.
-10. Reviewer assignment for `chidozieononiwu` is configured on the pull request safe output. If reviewer assignment fails, include that limitation in your final summary.
+10. Reviewer assignment for `chidozieononiwu` is handled by GitHub Actions post-steps. If you know reviewer assignment is likely to fail, include that limitation in your final summary.
 11. Clear your working context for the completed entry before moving to the next one.
 
 ## Azure DevOps Guidance
@@ -260,14 +420,16 @@ Use the Azure DevOps organization from the workflow input when needed; the defau
 
 ## Output
 
-When all entries are processed and no pull requests were requested, call `noop` once with a concise final summary. Include:
+When all entries are processed, call `noop` once with a concise final summary. Include:
 
 - total entries read,
-- entries fixed,
-- pull request URLs created,
+- entries with local committed remediations staged for GitHub Actions,
+- target repositories and branches staged,
 - entries skipped and why,
 - entries attempted but not completed and why.
 
-Do not call `noop` after calling `create_pull_request`; safe-output pull request creation is the final action for those entries.
+Do not create pull requests yourself. GitHub Actions post-steps consume `/tmp/network-isolation-remediations/remediations.json` after the agent exits and handle push, pull request creation, and reviewer assignment.
+
+The post-steps use the repository's `login-to-github` action to mint an Azure GitHub App token for pull request creation after logging in with the AzureSDKEngKeyVault federated identity. Do not use `GH_AW_GITHUB_TOKEN` for pull request creation.
 
 Do not process entries concurrently. Do not reuse a checkout, branch, or diagnosis from one entry for another entry.

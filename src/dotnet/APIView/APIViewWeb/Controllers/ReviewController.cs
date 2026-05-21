@@ -34,6 +34,18 @@ namespace APIViewWeb.Controllers
         [HttpPost]
         public async Task<ActionResult> UpdateApiReview([FromBody] UpdateApiReviewRequest request)
         {
+            if (request == null)
+            {
+                return BadRequest("Request body is required.");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.RepoName) ||
+                string.IsNullOrWhiteSpace(request.BuildId) ||
+                string.IsNullOrWhiteSpace(request.ArtifactPath))
+            {
+                return BadRequest("RepoName, BuildId, and ArtifactPath are required.");
+            }
+
             await _apiRevisionManager.UpdateAPIRevisionCodeFileAsync(request.RepoName, request.BuildId, request.ArtifactPath, request.Project, request.MetadataFile);
             return Ok();
         }

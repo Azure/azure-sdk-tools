@@ -24,10 +24,16 @@ param (
 ####################################################################################################################
 
 # Acquire Entra ID token for APIView app registration
-$tokenResponse = Get-AzAccessToken -ResourceUrl "api://apiview"
-$token = $tokenResponse.Token
-if (-not $token) {
-    Write-Error "Failed to acquire access token for APIView (resource: api://apiview)"
+try {
+    $tokenResponse = Get-AzAccessToken -ResourceUrl "api://apiview" -ErrorAction Stop
+    $token = $tokenResponse.Token
+    if (-not $token) {
+        Write-Error "Failed to acquire access token for APIView (resource: api://apiview)"
+        exit 1
+    }
+}
+catch {
+    Write-Error "Failed to acquire access token for APIView (resource: api://apiview): $($_.Exception.Message)"
     exit 1
 }
 
@@ -56,6 +62,29 @@ try
 }
 catch
 {
-    Write-Host "Error - Exception details: $($_.Exception.Response)"
+    Write-Host "Error - Exception message: $($_.Exception.Message)"
+
+    if ($_.Exception.Response)
+    {
+        Write-Host "Error - HTTP status: $([int]$_.Exception.Response.StatusCode)"
+
+        $responseContent = $null
+        try
+        {
+            $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
+            $responseContent = $reader.ReadToEnd()
+            $reader.Dispose()
+        }
+        catch
+        {
+            Write-Host "Error - Failed to read response body: $($_.Exception.Message)"
+        }
+
+        if ($responseContent)
+        {
+            Write-Host "Error - Response body: $responseContent"
+        }
+    }
+
     exit 1
 }

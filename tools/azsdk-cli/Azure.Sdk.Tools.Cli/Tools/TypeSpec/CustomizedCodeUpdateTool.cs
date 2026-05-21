@@ -348,6 +348,8 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         if (tspFixSucceeded > 0)
         {
             logger.LogDebug("Regenerating {packagePath}", packagePath);
+            var repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
+            await languageService.PreGenerateAsync(repoRoot, ct);
             var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: tspProjectPath, isCli: false, ct: ct);
             if (!regenResult.IsSuccessful)
             {

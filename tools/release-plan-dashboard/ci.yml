@@ -45,6 +45,7 @@ extends:
 
         jobs:
           - job: Build_Test
+            displayName: Build
 
             pool:
               name: $(LINUXPOOL)

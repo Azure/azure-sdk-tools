@@ -190,10 +190,23 @@ public class DotnetErrorDrivenPatchTemplate(
         **DO NOT** try to fix these cascading errors individually (e.g., by removing method calls,
         rewriting method bodies, or adding new members). Just rename the class declaration and the file.
 
-        ### 7. IGNORE ANALYZER RULES
-        Ignore analyzer warnings and errors with codes like `AZC0007`, `SA1517`, or any `AZC*`/`SA*`
-        prefixed codes. These are style/design analyzers, not compilation errors. Do NOT add constructors,
-        reformat code, or make any changes to satisfy analyzer rules.
+        ### 7. DO NOT FIX STYLE ANALYZER RULES (SA*)
+        Style analyzer warnings and errors with codes prefixed `SA*` (e.g., `SA1517`) are code style rules,
+        not compilation errors. Do NOT attempt to fix them here — they require manual intervention.
+        Leave them for manual review; the error message itself is explanatory enough for a developer to act on.
+
+        ### 8. HANDLE AZURE SDK ANALYZER RULES (AZC*) CAREFULLY
+        Azure SDK analyzer errors (codes prefixed `AZC*`) are NOT style rules — they enforce SDK design guidelines.
+        - **If the error is in custom/handwritten code** (NOT in a Generated folder): do NOT fix it automatically.
+          The developer should update their custom code to align with Azure SDK guidelines, but that is their
+          responsibility — not something to patch here.
+        - **AZC0012, AZC0030, AZC0034, AZC0035**: These are naming/type rules that should have been resolved
+          via TypeSpec decorators earlier in the pipeline. If they still appear here, do NOT attempt to fix them
+          in customization code. They require TypeSpec decorator changes (@@clientName, @@usage) that must be
+          applied upstream. Leave them for manual intervention.
+        - **All other AZC codes** (AZC0002-AZC0021, AZC0100+, AZC0150): These are SDK design guidelines
+          (convenience methods, parameter patterns, subclient factories). Do NOT add constructors, methods, or
+          restructure code to satisfy them — they require intentional API design decisions.
 
         """;
     }

@@ -4,6 +4,8 @@
 
 ### Features Added
 
+- Added pre-build step for the .NET plugin during SDK generation
+
 ### Breaking Changes
 
 ### Bugs Fixed

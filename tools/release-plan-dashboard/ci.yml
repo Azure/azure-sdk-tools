@@ -29,12 +29,6 @@ extends:
         displayName: BuildTest
 
         variables:
-          - ${{ if ne(variables['System.TeamProject'], 'internal') }}:
-              - name: CollectCoverage
-                value: false
-          - ${{ if eq(variables['System.TeamProject'], 'internal') }}:
-              - name: CollectCoverage
-                value: true
           - template: /eng/pipelines/templates/variables/image.yml
 
         jobs:

@@ -5,7 +5,6 @@ using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.CopilotAgents.Tools;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Prompts.Templates;
 using Microsoft.Extensions.AI;
 
 namespace Azure.Sdk.Tools.Cli.Services.TypeSpec;
@@ -40,9 +39,10 @@ public class TypeSpecCustomizationService : ITypeSpecCustomizationService
     private readonly ILogger<TypeSpecCustomizationService> logger;
     private readonly ICopilotAgentRunner copilotAgentRunner;
     private readonly INpxHelper npxHelper;
-    private readonly TokenUsageHelper tokenUsageHelper;
     private readonly ITypeSpecHelper typeSpecHelper;
+    private readonly IAzureSdkKnowledgeBaseService azureSdkKnowledgeBaseService;
     private readonly IGitHelper gitHelper;
+    private readonly ILoggerFactory loggerFactory;
 
     public TypeSpecCustomizationService(
         ILogger<TypeSpecCustomizationService> logger,
@@ -50,14 +50,17 @@ public class TypeSpecCustomizationService : ITypeSpecCustomizationService
         INpxHelper npxHelper,
         TokenUsageHelper tokenUsageHelper,
         ITypeSpecHelper typeSpecHelper,
-        IGitHelper gitHelper)
+        IAzureSdkKnowledgeBaseService azureSdkKnowledgeBaseService,
+        IGitHelper gitHelper,
+        ILoggerFactory loggerFactory)
     {
         this.logger = logger;
         this.copilotAgentRunner = copilotAgentRunner;
         this.npxHelper = npxHelper;
-        this.tokenUsageHelper = tokenUsageHelper;
         this.typeSpecHelper = typeSpecHelper;
+        this.azureSdkKnowledgeBaseService = azureSdkKnowledgeBaseService;
         this.gitHelper = gitHelper;
+        this.loggerFactory = loggerFactory;
     }
 
     /// <inheritdoc />
@@ -80,36 +83,39 @@ public class TypeSpecCustomizationService : ITypeSpecCustomizationService
                 $"Invalid TypeSpec project path: {typespecProjectPath}. Directory must exist and contain tspconfig.yaml.",
                 nameof(typespecProjectPath));
         }
+        
+        var instructions = $"""
+            You are applying TypeSpec client customizations to a client.tsp file.
 
-        // Find reference doc path if not provided
-        if (string.IsNullOrEmpty(referenceDocPath))
-        {
-            referenceDocPath = await FindReferenceDocAsync(typespecProjectPath, ct) ?? throw new FileNotFoundException(
-                    "Could not find customizing-client-tsp.md reference document. Please provide the reference doc path.");
-        }
+            **TypeSpec Project Path:** {typespecProjectPath}
 
-        if (!File.Exists(referenceDocPath))
-        {
-            throw new FileNotFoundException(
-                $"Reference document not found: {referenceDocPath}", referenceDocPath);
-        }
+            **Working Directory for Tools:**
+            All file operations use RELATIVE paths from the TypeSpec project directory above.
+            - To read client.tsp, use: ReadFile("client.tsp")
+            - To read main.tsp, use: ReadFile("main.tsp")
+            - To read files in subdirectories, use: ReadFile("connections/models.tsp")
+            - Do NOT use absolute paths or paths relative to the repository root
+            - The WriteFile and CompileTypeSpec tools also use relative paths from this directory
 
-        logger.LogInformation("Using reference doc: {RefDoc}", referenceDocPath);
+            **Your Tasks:**
+            step 1: Understand the customization request: {customizationRequest}, and read the relevant '.tsp' code from the project to understand the context.
+            step 2: invoke `azsdk_typespec_generate_authoring_plan` with:
 
-        // Read the reference doc content
-        var referenceDocContent = await File.ReadAllTextAsync(referenceDocPath, ct);
-
-        // Build the prompt template
-        var template = new TypeSpecCustomizationTemplate(
-            customizationRequest: customizationRequest,
-            typespecProjectPath: typespecProjectPath,
-            referenceDocContent: referenceDocContent);
-
-        var instructions = template.BuildPrompt();
-        logger.LogDebug("Generated prompt with {Length} characters", instructions.Length);
-
+            | Parameter                 | Value                                                                                                                                                                       |
+            | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+            | `request`                 |  {customizationRequest} (verbatim)|
+            | `additionalInformation`   | All content gathered from Steps 1 (analysis, relevant `.tsp` code read from the project) |
+            | `typeSpecProjectRootPath` | {typespecProjectPath}|
+            step 3: apply the solution return from step 2
+            """;
         // Create the tools using shared tool factories
         var tools = CreateTools(typespecProjectPath);
+
+        logger.LogDebug("Created {ToolCount} tools for CopilotAgent", tools.Count);
+        foreach (var tool in tools)
+        {
+            logger.LogDebug("  - Tool registered with name: '{ToolName}'", tool.Name);
+        }
 
         // Create and run the copilot agent
         var agent = new CopilotAgent<TypeSpecCustomizationServiceResult>
@@ -135,11 +141,19 @@ public class TypeSpecCustomizationService : ITypeSpecCustomizationService
     /// </summary>
     private List<AIFunction> CreateTools(string typespecProjectPath)
     {
+        // Create an instance of TypeSpecAuthoringTool with required dependencies
+        var authoringToolLogger = loggerFactory.CreateLogger<Tools.TypeSpec.TypeSpecAuthoringTool>();
+        var typeSpecAuthoringToolInstance = new Tools.TypeSpec.TypeSpecAuthoringTool(
+            azureSdkKnowledgeBaseService,
+            authoringToolLogger,
+            typeSpecHelper);
+
         return
         [
             FileTools.CreateReadFileTool(typespecProjectPath, description: "Read the contents of a file from the TypeSpec project directory"),
             FileTools.CreateWriteFileTool(typespecProjectPath, "Write content to a file in the TypeSpec project directory"),
-            TypeSpecTools.CreateCompileTypeSpecTool(typespecProjectPath, npxHelper)
+            TypeSpecTools.CreateCompileTypeSpecTool(typespecProjectPath, npxHelper),
+            TypeSpecTools.CreateTypeSpecAuthoringTool(typeSpecAuthoringToolInstance)
         ];
     }
 

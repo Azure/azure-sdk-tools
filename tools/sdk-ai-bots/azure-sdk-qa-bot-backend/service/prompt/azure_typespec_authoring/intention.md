@@ -41,8 +41,11 @@ The question must be classified into one of these categories:
   - how to implement x-ms-pageable in typespec?
   - how to implement allOf in typespec?
 
-- **SDK Generation**: Question about how to generate SDK based on TypeSpec, such as:
-  - How to generate dotnet SDK?
+- **Typespec Customization**:  Questions about how to customize typespec for client SDKs
+  - how to rename model AuthorizeCopyRequest to AuthorizeCopyRequestOptions for SDKs
+  - how to rename model AuthorizeCopyRequest to AuthorizeCopyRequestOptions for java SDK
+  - how to change operation parameter order from (context.Context, string, string, string, *ClientListReplicaSKUsOptions) to (string, string, string, *ClientListReplicaSKUsOptions, context.Context) for SDKs
+  - how to change property age type from int to string for SDKs
 
 - **TypeSpec Validation**: Questions about TypeSpec validation(CI) errors, such as: 
   - Why is my TypeSpec CI failing? -> Why is my TypeSpec validation failing?

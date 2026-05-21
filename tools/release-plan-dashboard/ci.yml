@@ -67,8 +67,8 @@ extends:
 
               - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
                 parameters:
-                   npmrcPath: $(npmrcPath)
-               
+                  npmrcPath: $(npmrcPath)
+
               - script: |
                   npm ci
                 workingDirectory: $(ProjectPath)

@@ -39,7 +39,7 @@ Every AI-generated comment is assigned to exactly one mutually exclusive quality
 | `downvoted` (`bad`) | Has ≥1 downvote (trumps upvotes) | Reviewer explicitly disagreed |
 | `upvoted` (`good`) | Has ≥1 upvote and no downvotes | Reviewer explicitly agreed |
 | `implicit_good` | `IsResolved = true`, no votes | Comment resolved without explicit feedback — likely acted on |
-| `implicit_bad` | In an **approved** revision, not resolved, no votes | Comment was ignored after approval — likely not useful |
+| `implicit_bad` | In an **approved** revision, not resolved, no votes, no feedback | Comment was ignored after approval — likely not useful |
 | `neutral` | In an **unapproved** revision, not resolved, no votes | No signal yet (review still in progress) |
 
 The sum of all six buckets equals `total_ai_comment_count`.

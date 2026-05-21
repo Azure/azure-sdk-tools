@@ -69,7 +69,7 @@ extends:
                 displayName: "Install npm packages for testing"
 
               - script: |
-                  npm test
+                  npm run test:ci
                 workingDirectory: $(ProjectPath)
                 displayName: "Run tests"
 

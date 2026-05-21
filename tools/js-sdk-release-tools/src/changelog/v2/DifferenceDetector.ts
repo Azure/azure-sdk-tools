@@ -74,34 +74,34 @@ export class DifferenceDetector {
 
   private postprocess() {
     this.result?.functions.forEach((v, k) => {
-      if (this.shouldIgnoreFunctionBreakingChange(v, k)) this.result?.functions.delete(k);      
+      if (this.shouldIgnoreFunctionBreakingChange(v, k)) this.result?.functions.delete(k);
     });
-    
+
     this.result?.classes.forEach((v, k) => {
       if (this.hasIgnoreTargetNames(v)) this.result?.classes.delete(k);
     });
 
     this.result?.typeAliases.forEach((v, k) => {
-      if(this.shouldIgnoreTypeAliasBreakingChange(v, k)) this.result?.typeAliases.delete(k);
+      if (this.shouldIgnoreTypeAliasBreakingChange(v, k)) this.result?.typeAliases.delete(k);
     });
 
     this.result?.interfaces.forEach((v, k) => {
-      if(this.shouldIgnoreInterfaceBreakingChange(v, k)) this.result?.interfaces.delete(k);
-      if(this.hasIgnoreTargetNames(v)) this.result?.interfaces.delete(k);
+      if (this.shouldIgnoreInterfaceBreakingChange(v, k)) this.result?.interfaces.delete(k);
+      if (this.hasIgnoreTargetNames(v)) this.result?.interfaces.delete(k);
     });
-    
+
     // Handle generic interfaces - filter to only Added/Removed changes
     this.result?.interfaces.forEach((v, k) => {
       if (this.hasTypeParameters(k, SyntaxKind.InterfaceDeclaration)) {
         logger.warn(`Generic interface '${k}' breaking change detection is limited to Added/Removed changes only.`);
         // For generic interfaces, only keep Added/Removed diff pairs
-        const filteredDiffPairs = v.filter(pair => 
-          pair.reasons === DiffReasons.Added || pair.reasons === DiffReasons.Removed
+        const filteredDiffPairs = v.filter(
+          (pair) => pair.reasons === DiffReasons.Added || pair.reasons === DiffReasons.Removed
         );
         this.result?.interfaces.set(k, filteredDiffPairs);
       }
     });
-    
+
     if (this.currentApiViewOptions.sdkType !== SDKType.RestLevelClient) return;
 
     // use Routes specific detection
@@ -110,40 +110,36 @@ export class DifferenceDetector {
     this.result?.interfaces.set('Routes', routesDiffPairs);
   }
 
-  private shouldIgnoreInterfaceBreakingChange(v: DiffPair[], k: string): boolean {    
-     // TODO: Create a new PR to ignore all 'any' cases for breaking change detection
+  private shouldIgnoreInterfaceBreakingChange(v: DiffPair[], k: string): boolean {
+    // TODO: Create a new PR to ignore all 'any' cases for breaking change detection
 
-    if(k.endsWith('NextOptionalParams')) {
+    if (k.endsWith('NextOptionalParams')) {
       // Ignore NextOptionalParams as they are not breaking changes
       return true;
     }
 
-    if (k.endsWith('Result') && v.some(pair => pair.reasons === DiffReasons.Removed)) {
+    if (k.endsWith('Result') && v.some((pair) => pair.reasons === DiffReasons.Removed)) {
       return true;
     }
 
-    if (k.endsWith('Headers') && v.some(pair => pair.reasons === DiffReasons.Removed)) {
+    if (k.endsWith('Headers') && v.some((pair) => pair.reasons === DiffReasons.Removed)) {
       return true;
     }
     return false;
   }
 
   private shouldIgnoreTypeAliasBreakingChange(v: DiffPair[], k: string): boolean {
-    return k.endsWith('Response') && v.some(pair => pair.reasons === DiffReasons.Removed)
+    return k.endsWith('Response') && v.some((pair) => pair.reasons === DiffReasons.Removed);
   }
 
   private shouldIgnoreFunctionBreakingChange(v: DiffPair[], k: string): boolean {
-    return k === 'getContinuationToken' && v.some(pair => pair.reasons === DiffReasons.Removed);
+    return k === 'getContinuationToken' && v.some((pair) => pair.reasons === DiffReasons.Removed);
   }
 
   private hasIgnoreTargetNames(v: DiffPair[]): boolean {
-     // Check if any pair has a target name that should be ignored only when removed
-    const ignoreTargets = [
-      "resumeFrom",
-      "$host",
-      "endpoint"
-    ];
-    return v.some(pair => {
+    // Check if any pair has a target name that should be ignored only when removed
+    const ignoreTargets = ['resumeFrom', '$host', 'endpoint'];
+    return v.some((pair) => {
       const name = pair.target?.name || pair.source?.name;
       return name && ignoreTargets.includes(name) && pair.reasons === DiffReasons.Removed;
     });
@@ -181,8 +177,7 @@ export class DifferenceDetector {
 
       const iface = statement.asKindOrThrow(SyntaxKind.InterfaceDeclaration);
       const members = iface.getMembers();
-      const isOperationsGroup =
-        members.length > 0 && members.every((m) => isPropertyMethod(m.getSymbolOrThrow()));
+      const isOperationsGroup = members.length > 0 && members.every((m) => isPropertyMethod(m.getSymbolOrThrow()));
 
       if (!isOperationsGroup) {
         outputFile.addStatements(statement.getText().trim());

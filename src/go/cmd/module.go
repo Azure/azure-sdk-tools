@@ -78,7 +78,17 @@ func NewModule(dir string) (*Module, error) {
 		Packages: map[string]*Pkg{},
 	}
 
-	baseImportPath := path.Dir(m.ModFile.Module.Mod.Path) + "/"
+	// baseImportPath contains the module identity *minus* the module's root package.
+	// e.g. for module github.com/foo/bar the value will be github.com/foo/
+	// the package name is concatenated to this value after its creation.
+	var baseImportPath string
+	if versionReg.MatchString(m.ModFile.Module.Mod.Path) {
+		// we need to strip off the version suffix AND the package name
+		baseImportPath = path.Dir(path.Dir(m.ModFile.Module.Mod.Path))
+	} else {
+		baseImportPath = path.Dir(m.ModFile.Module.Mod.Path)
+	}
+	baseImportPath += "/"
 	if baseImportPath == "./" {
 		// this is a relative path in the tests, so remove this prefix.
 		// if not, then the package name added below won't match the imported packages.

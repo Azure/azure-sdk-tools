@@ -533,7 +533,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 var gitToken = Environment.GetEnvironmentVariable(GIT_TOKEN_ENV_VAR);
                 if (!string.IsNullOrWhiteSpace(gitToken))
                 {
-                    httpUrl = $"https://{gitToken}@github.com/{assetsRepo}";
+                    httpUrl = $"https://x-access-token:{gitToken}@github.com/{assetsRepo}";
                 }
             }
 

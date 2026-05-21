@@ -137,7 +137,7 @@ extends:
                   - task: AzureRmWebAppDeployment@4
                     displayName: "Deploy Azure App Service"
                     inputs:
-                      azureSubscription: "APIview staging resource group"
+                      azureSubscription: "Azure SDK Engineering System"
                       appType: "webApp"
                       WebAppName: "releaseplan-dashboard-test"
                       ResourceGroupName: ReleasePlan-Dashboard
@@ -179,7 +179,7 @@ extends:
                         - task: AzureRmWebAppDeployment@4
                           displayName: "Deploy Azure App Service"
                           inputs:
-                            azureSubscription: "APIView prod deployment"
+                            azureSubscription: "Azure SDK Engineering System"
                             appType: "webApp"
                             WebAppName: "azsdk-releaseplan-dashboard"
                             deployToSlotOrASE: true

@@ -35,6 +35,7 @@ extends:
         displayName: BuildTest
 
         variables:
+          npmrcPath: $(Agent.TempDirectory)/.npmrc
           - ${{ if ne(variables['System.TeamProject'], 'internal') }}:
               - name: CollectCoverage
                 value: false
@@ -63,10 +64,16 @@ extends:
                   versionSpec: "$(NodeVersion)"
                 displayName: "Use NodeJS $(NodeVersion)"
 
+              - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
+                parameters:
+                   npmrcPath: $(npmrcPath)
+               
               - script: |
                   npm ci
                 workingDirectory: $(ProjectPath)
                 displayName: "Install npm packages for testing"
+                env:
+                  npm_config_userconfig: $(emitterNpmrcPath)
 
               - script: |
                   npm run test:ci
@@ -87,6 +94,8 @@ extends:
                   npm ci --omit=dev
                 workingDirectory: $(ProjectPath)
                 displayName: "Install npm packages"
+                env:
+                  npm_config_userconfig: $(emitterNpmrcPath)
 
               - task: ArchiveFiles@2
                 displayName: "Create deployable zip package"

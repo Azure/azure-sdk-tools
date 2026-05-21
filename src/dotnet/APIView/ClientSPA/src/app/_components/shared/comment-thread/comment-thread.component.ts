@@ -251,13 +251,13 @@ export class CommentThreadComponent {
         { label: 'Edit', icon: 'pi pi-pencil', command: (event) => this.showEditEditor(event) },
         { label: 'Delete', icon: 'pi pi-trash', command: (event) => this.deleteComment(event) }
       ]});
-    } else if (comment && this.permissionsService.isAdmin(this.userProfile?.permissions) && this.canDeleteComment(comment)) {
+    } else if (comment && this.permissionsService.isAdmin(this.userProfile?.permissions)) {
       // Admins can delete any comment but not edit others' comments
       menu.push({ separator: true });
       menu.push({ items: [
         { label: 'Delete', icon: 'pi pi-trash', command: (event) => this.deleteComment(event) }
       ]});
-    } else if (comment && comment.createdBy == "azure-sdk" && this.permissionsService.isApproverFor(this.userProfile?.permissions, this.reviewContextService.getLanguage()) && this.canDeleteComment(comment)) {
+    } else if (comment && comment.createdBy == "azure-sdk" && this.permissionsService.isApproverFor(this.userProfile?.permissions, this.reviewContextService.getLanguage())) {
       menu.push({ separator: true });
       menu.push({ items: [
         { label: 'Delete', icon: 'pi pi-trash', command: (event) => this.deleteComment(event) }
@@ -943,13 +943,6 @@ export class CommentThreadComponent {
 
   isSystemGenerated(comment: CommentItemModel): boolean {
     return this.isAIGenerated(comment);
-  }
-  canDeleteComment(comment: CommentItemModel): boolean {
-    return true;
-  }
-
-  get canResolveThread(): boolean {
-    return true;
   }
 
   hasAIInfo(comment: CommentItemModel): boolean {

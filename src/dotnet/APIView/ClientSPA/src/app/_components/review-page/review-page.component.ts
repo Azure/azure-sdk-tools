@@ -66,6 +66,7 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
   scrollToNodeIdHashed: Subject<string> = new Subject<string>();
   scrollToNodeId: string | undefined = undefined;
   showLineNumbers: boolean = true;
+  hasFatalDiagnostics: boolean = false;
   hasActiveConversation: boolean = false;
   codeLineSearchInfo: CodeLineSearchInfo | undefined;
   numberOfActiveConversation: number = 0;
@@ -240,6 +241,7 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
 
       if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelRowData) {
         this.codePanelRowData = data.payload as CodePanelRowData[];
+        this.checkForFatalDiagnostics();
       }
 
       if (data.directive === ReviewPageWorkerMessageDirective.SetHasHiddenAPIFlag) {
@@ -873,6 +875,16 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
     } else {
       this.loadingStatus = 'completed';
     }
+  }
+
+  checkForFatalDiagnostics() {
+    for (const rowData of this.codePanelRowData) {
+      if (rowData.diagnostics && rowData.diagnostics.level === 'fatal') {
+        this.hasFatalDiagnostics = true;
+        return;
+      }
+    }
+    this.hasFatalDiagnostics = false;
   }
 
   updateLoadingStateBasedOnReviewDeletionStatus(): boolean {

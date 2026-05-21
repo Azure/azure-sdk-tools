@@ -273,11 +273,18 @@
                 <label class="ms-2 mb-0">Override</label>
             </div>
         </li>
+        <li class="list-group-item" *ngIf="hasFatalDiagnostics">
+            <p class="mb-0">This API has fatal diagnostics.</p>
+            <div class="d-flex align-items-center mt-2">
+                <p-toggleswitch [(ngModel)]="overrideFatalDiagnosticsforApproval"/>
+                <label class="ms-2 mb-0">Override</label>
+            </div>
+        </li>
       </ul>
       <div class="d-grid gap-2 mt-2">
         <button class="btn btn-success" type="button"
             (click)="toggleAPIRevisionApproval()"
-            [disabled]="(hasActiveConversation && !overrideActiveConversationforApproval)">Confirm</button>
+            [disabled]="(hasActiveConversation && !overrideActiveConversationforApproval) || (hasFatalDiagnostics && !overrideFatalDiagnosticsforApproval)">Confirm</button>
       </div>
     </p-dialog>
 </ng-container>

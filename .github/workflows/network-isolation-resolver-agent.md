@@ -49,7 +49,7 @@ tools:
 strict: false
 safe-outputs:
   create-pull-request:
-    github-token: ${{ secrets.GH_AW_GITHUB_TOKEN }}
+    github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
     allowed-repos:
       - azure/*
     title-prefix: "[CFS] "

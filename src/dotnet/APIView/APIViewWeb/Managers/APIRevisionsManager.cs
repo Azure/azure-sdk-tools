@@ -866,13 +866,13 @@ namespace APIViewWeb.Managers
         /// </summary>
         /// <param name="repoName"></param>
         /// <param name="buildId"></param>
-        /// <param name="artifact"></param>
+        /// <param name="artifactName"></param>
         /// <param name="project"></param>
         /// <param name="metadataFileName">Optional TypeSpec metadata file name (e.g., "typespec-metadata.json").</param>
         /// <returns></returns>
-        public async Task UpdateAPIRevisionCodeFileAsync(string repoName, string buildId, string artifact, string project, string metadataFileName = null)
+        public async Task UpdateAPIRevisionCodeFileAsync(string repoName, string buildId, string artifactName, string project, string metadataFileName = null)
         {
-            var stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifact, filePath: null, project: project, format: "zip");
+            var stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifactName, filePath: null, project: project, format: "zip");
             var archive = new ZipArchive(stream);
 
             foreach (var entry in archive.Entries)

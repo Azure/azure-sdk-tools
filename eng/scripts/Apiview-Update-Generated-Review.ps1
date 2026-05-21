@@ -19,7 +19,7 @@ param (
 # Requires AzurePowerShell@5 context for Get-AzAccessToken.
 # Sample request:
 # POST https://apiview.dev/review/UpdateApiReview
-# Body: { "repoName": "azure/azure-sdk-tools", "buildId": "1742433", "artifactPath": "apiview" }
+# Body: { "repoName": "azure/azure-sdk-tools", "buildId": "1742433", "artifactName": "apiview" }
 
 ####################################################################################################################
 
@@ -39,7 +39,7 @@ catch {
 
 $body = @{
     repoName     = $RepoName
-    artifactPath = $ArtifactName
+    artifactName = $ArtifactName
     buildId      = $BuildId
     project      = "internal"
 }

@@ -12,7 +12,7 @@ namespace APIViewWeb.Controllers
     public class UpdateApiReviewRequest
     {
         public string RepoName { get; set; }
-        public string ArtifactPath { get; set; }
+        public string ArtifactName { get; set; }
         public string BuildId { get; set; }
         public string Project { get; set; } = "internal";
         public string MetadataFile { get; set; }
@@ -41,12 +41,12 @@ namespace APIViewWeb.Controllers
 
             if (string.IsNullOrWhiteSpace(request.RepoName) ||
                 string.IsNullOrWhiteSpace(request.BuildId) ||
-                string.IsNullOrWhiteSpace(request.ArtifactPath))
+                string.IsNullOrWhiteSpace(request.ArtifactName))
             {
-                return BadRequest("RepoName, BuildId, and ArtifactPath are required.");
+                return BadRequest("RepoName, BuildId, and ArtifactName are required.");
             }
 
-            await _apiRevisionManager.UpdateAPIRevisionCodeFileAsync(request.RepoName, request.BuildId, request.ArtifactPath, request.Project, request.MetadataFile);
+            await _apiRevisionManager.UpdateAPIRevisionCodeFileAsync(request.RepoName, request.BuildId, request.ArtifactName, request.Project, request.MetadataFile);
             return Ok();
         }
 

@@ -5,8 +5,7 @@ license: MIT
 metadata:
   author: Microsoft
   version: "1.0.0"
-compatibility:
-  platforms: "copilot-chat"
+compatibility: "copilot-chat"
 ---
 
 # Skill Authoring Guide

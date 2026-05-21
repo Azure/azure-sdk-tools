@@ -5,8 +5,7 @@ metadata:
   version: "0.1.0"
   distribution: shared
 description: "Deploy test resources and run Azure SDK tests in live, record, or playback mode. WHEN: \"run live tests\", \"run recorded tests\", \"deploy test resources\", \"record tests\", \"run tests in record mode\", \"clean up test resources\", \"run tests against live resources\". DO NOT USE FOR: writing new tests, authoring Bicep templates, playback-only test runs without resource deployment. INVOKES: azure-sdk-mcp:azsdk_package_run_tests."
-compatibility:
-  requires: "azure-sdk-mcp server, Azure PowerShell (Az module), local azure-sdk-for-{language} clone"
+compatibility: "azure-sdk-mcp server, Azure PowerShell (Az module), local azure-sdk-for-{language} clone"
 ---
 
 # Live and Recorded Tests

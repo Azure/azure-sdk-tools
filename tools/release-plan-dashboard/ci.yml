@@ -129,7 +129,7 @@ extends:
                   - task: AzureRmWebAppDeployment@4
                     displayName: "Deploy Azure App Service"
                     inputs:
-                      azureSubscription: "Azure SDK Engineering System"
+                      azureSubscription: "Release Plan Dashboard"
                       appType: "webApp"
                       WebAppName: "releaseplan-dashboard-test"
                       ResourceGroupName: ReleasePlan-Dashboard
@@ -166,7 +166,7 @@ extends:
                         - task: AzureRmWebAppDeployment@4
                           displayName: "Deploy Azure App Service"
                           inputs:
-                            azureSubscription: "Azure SDK Engineering System"
+                            azureSubscription: "Release Plan Dashboard"
                             appType: "webApp"
                             WebAppName: "azsdk-releaseplan-dashboard"
                             ResourceGroupName: ReleasePlan-Dashboard

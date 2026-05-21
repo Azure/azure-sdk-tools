@@ -85,10 +85,6 @@ extends:
                 workingDirectory: $(ProjectPath)
                 displayName: "Run prettier format check"
 
-              - script: |
-                  rm -rf node_modules
-                workingDirectory: $(ProjectPath)
-                displayName: "Remove node_modules before packaging"
 
               - task: ArchiveFiles@2
                 displayName: "Create deployable zip package"

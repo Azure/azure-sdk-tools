@@ -105,7 +105,16 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
         private static async Task<string[]> ReadAllLinesSharedAsync(string path)
         {
-            using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, PosixLikeShare);
+            // Open with FileOptions.Asynchronous so ReadLineAsync uses true async I/O
+            // rather than dispatching sync reads to the thread pool.
+            var opts = new FileStreamOptions
+            {
+                Mode = FileMode.Open,
+                Access = FileAccess.Read,
+                Share = PosixLikeShare,
+                Options = FileOptions.Asynchronous,
+            };
+            using var fs = new FileStream(path, opts);
             using var sr = new StreamReader(fs, Encoding.UTF8);
             var lines = new List<string>();
             string line;

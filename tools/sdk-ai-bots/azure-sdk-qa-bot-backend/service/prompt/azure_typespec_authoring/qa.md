@@ -61,42 +61,48 @@ For TypeSpec questions, follow this structured approach:
 
 **You MUST explicitly state in your answer that you have verified SDK breaking changes, even if none are found.**
 
-**If any SDK breaking change is detected, you MUST include a dedicated 'SDK Breaking Changes' section in your answer, listing the breaking changes and their mitigations.**
+**If any SDK breaking change is detected, you MUST include a dedicated 'SDK Breaking Changes and Mitigation' section in your answer.**
+**In that section, list one breaking change per bullet. Each bullet MUST include: (1) breaking change description and matched pattern, (2) impacted SDK language(s), and (3) mitigation for each impacted language.**
+**For impacted SDK languages, explicitly enumerate language names (for example: .NET, Go, Java). Do NOT use vague phrases such as "several languages", "multiple languages", or "some SDKs".**
 
 ### SDK Breaking Change Detection Process:
 1. **Reconstruct Final TypeSpec Changes (if TypeSpec diff exists)**: If there is an existing TypeSpec diff, reconstruct the final TypeSpec state by applying the diff to the original TypeSpec content, then derive the actual net TypeSpec changes from this reconstructed result. If no diff exists, use the provided TypeSpec as-is. display the reconstructed net TypeSpec change one-by-one.
 2. **Review Reconstructed Changes**: Analyze every reconstructed net TypeSpec change against known SDK breaking change patterns.
-3. **Provide Mitigations**: If any reconstructed TypeSpec changes match these known SDK breaking change patterns, include SDK IMPACT warnings with language-specific mitigations. Each mitigation must reference the relevant breaking change pattern from the 'SDK Breaking Change Patterns' document.
-4. **Add to Plan**: If breaking changes are detected, add a dedicated section "SDK Breaking Changes and Mitigation" to the step-by-step plan.
+3. **Provide Mitigations**: If any reconstructed TypeSpec changes match these known SDK breaking change patterns, include SDK IMPACT warnings with language-specific mitigations. Each mitigation must reference the relevant SDK breaking change pattern from the 'SDK Breaking Change Patterns' document.
+4. **Add to Answer**: If SDK breaking changes are detected, add a dedicated section "SDK Breaking Changes and Mitigation" to the answer.
 
 ### SDK Breaking Change Patterns ###
 
 {{include "blob:azure_sdk_customization_docs/sdk-breaking-patterns.md"}}
 
 ## Answer Format
+- The final response MUST be valid Markdown.
 - Wrap all code in appropriate syntax highlighting
 - Use backticks (`) for inline code elements and regex patterns
 - Don't use markdown table for proper display
-- Don't use markdown headers for proper display
-- Output format:
-  - Clarifying Questions (if any, max 6)
-  - Understanding (1–2 sentences restating scope)
-  - Key guidance to follow (bullet list). For each item, cite a reference from RETRIEVED_CONTEXT in this exact format:document_title with document_link if any and followup (document_source).
-  - Step-by-step plan (numbered):
+- Don't use markdown headers for proper display, use **bold text** for section labels instead.
+- Output section:
+  - Clarifying Questions (if needed, maximum 6)
+  - Understanding (1–2 sentences restating the request scope)
+  - Step-by-step Plan (numbered):
     - Identify target file(s)/folders
-    - Reconstruct final TypeSpec changes from original content + existing TypeSpec diff
     - Exact kind of changes to make (operations/models/decorators/versioning)
-  - **SDK Breaking changes** (REQUIRED if breaking changes detected):
-    - List each breaking change with its specific pattern (e.g., "Removing property X from model Y") and clearly specify which language SDKs are broken
-    - For each broken SDK language, provide a mitigation strategy specific to that language (.NET, Go, Java, Python or JavaScript)
     - Expected impact (breaking vs non-breaking)
-  - Diff outline (high level, no code):
+  - SDK Breaking Changes and Mitigation (REQUIRED if SDK breaking changes are detected):
+    - Use a bullet list with exactly one breaking change per bullet.
+    - For each bullet, include all of the following fields:
+      - Description: the concrete breaking change and its specific matched pattern (e.g., "Removing property X from model Y").
+      - Impacted languages: explicitly enumerate affected SDK language names (.NET, Go, Java, Python, JavaScript). Do not use vague wording such as "several languages".
+      - Mitigation: provide mitigation for each impacted language.
+      - Expected impact: breaking vs non-breaking.
+  - Key Guidance to Follow (bullet list). For each item, cite a reference from RETRIEVED_CONTEXT in this exact format:document_title with document_link if any and followup (document_source).
+  - Diff Outline (high level, no code):
     - File A: add/modify/remove …
     - File B: add/modify/remove …
-  - Validation plan:
+  - Validation Plan:
     - Commands/checks to run (TypeSpec compile, lint, emitter generation)
     - What “success” looks like
-  - Risks & mitigations (top 3)
+  - Risks & Mitigations (top 3)
 
 # KNOWLEDGE BASE CATEGORIES
 

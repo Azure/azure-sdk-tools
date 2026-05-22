@@ -38,6 +38,17 @@ environments:
           AZSDKTOOLS_AGENT_TESTING: "false"
           AZSDKTOOLS_COLLECT_TELEMETRY: "false"
 
+  # Mock MCP environment for skill-invocation / trigger tests.
+  # Uses Azure.Sdk.Tools.Mock to avoid spinning up the real azure-sdk-mcp
+  # server when we only care about whether the skill is invoked.
+  azsdk-mcp-mock:
+    mcpServers:
+      azure-sdk-mcp:
+        type: stdio
+        command: dotnet
+        args: ["run", "--project", "../../../../tools/azsdk-cli/Azure.Sdk.Tools.Mock"]
+        timeout: "60s"
+
 suites:
   versioning:
     evals:
@@ -84,5 +95,8 @@ suites:
   warning:
     evals:
       - "evals/005001.eval.yaml"
+  trigger:
+    evals:
+      - "evals/trigger.eval.yaml"
   all:
     evals: ["evals/*.eval.yaml"]

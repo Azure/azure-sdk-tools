@@ -13,19 +13,19 @@ parameters:
 - name: ForcedSuites
   type: object
   default:
-    - { name: versioning, file: versioning-forced.eval.yaml, timeout: 50 }
-    - { name: armtemplate, file: armtemplate-forced.eval.yaml, timeout: 40 }
-    - { name: longrunningoperation, file: lro-forced.eval.yaml, timeout: 25 }
-    - { name: decorators, file: decorators-forced.eval.yaml, timeout: 15 }
-    - { name: warning, file: warning-forced.eval.yaml, timeout: 25 }
-- name: SkillInvocationSuites
-  type: object
-  default:
     - { name: versioning, file: versioning.eval.yaml, timeout: 50 }
     - { name: armtemplate, file: armtemplate.eval.yaml, timeout: 40 }
     - { name: longrunningoperation, file: lro.eval.yaml, timeout: 25 }
     - { name: decorators, file: decorators.eval.yaml, timeout: 15 }
     - { name: warning, file: warning.eval.yaml, timeout: 25 }
+- name: SkillInvocationSuites
+  type: object
+  default:
+    - { name: versioning, file: versioning-trigger.eval.yaml, timeout: 50 }
+    - { name: armtemplate, file: armtemplate-trigger.eval.yaml, timeout: 40 }
+    - { name: longrunningoperation, file: lro-trigger.eval.yaml, timeout: 25 }
+    - { name: decorators, file: decorators-trigger.eval.yaml, timeout: 15 }
+    - { name: warning, file: warning-trigger.eval.yaml, timeout: 25 }
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml

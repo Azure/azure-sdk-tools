@@ -9,7 +9,7 @@
  *
  * Destination directory:
  *   - With CLI arg:   resolved against the current working directory.
- *   - Without arg:    `<this-script-dir>/Microsoft.Widget`
+ *   - Without arg:    `<this-script-dir>/../fixtures/Microsoft.Widget/Widget`
  *
  * Invoke from an eval `commands:` entry (script copied into workDir via
  * environment.files), e.g.:
@@ -28,7 +28,7 @@ const FILES = ['package.json', 'package-lock.json'];
 
 const DEST = process.argv[2]
     ? path.resolve(process.cwd(), process.argv[2])
-    : path.resolve(__dirname, 'Microsoft.Widget', 'Widget');
+    : path.resolve(__dirname, '..', 'fixtures', 'Microsoft.Widget', 'Widget');
 
 function run(cmd, args, opts = {}) {
     console.log(`> ${cmd} ${args.join(' ')}`);
@@ -66,7 +66,3 @@ try {
 } finally {
     fs.rmSync(tmp, { recursive: true, force: true, maxRetries: 5 });
 }
-
-// const NPM_INSTALL_CWD = path.resolve(__dirname, 'Microsoft.Widget', 'Widget');
-// const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-// run(npmCmd, ['install'], { cwd: NPM_INSTALL_CWD });

@@ -51,7 +51,7 @@ extends:
               - checkout: self
                 fetchDepth: 0
 
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-setup.yml
+              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-setup.yml
                 parameters:
                   SkillBranch: ${{ parameters.SkillBranch }}
 
@@ -117,7 +117,7 @@ extends:
               - checkout: self
                 fetchDepth: 0
 
-              - template: /eng/pipelines/templates/steps/typespec-author-eval-setup.yml
+              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-setup.yml
                 parameters:
                   SkillBranch: ${{ parameters.SkillBranch }}
 

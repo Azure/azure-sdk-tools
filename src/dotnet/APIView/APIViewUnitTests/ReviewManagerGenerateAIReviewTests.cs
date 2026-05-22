@@ -143,7 +143,7 @@ public class ReviewManagerGenerateAIReviewTests
         mocks.ApiRevisionsManager.Setup(m => m.GetAPIRevisionAsync(It.IsAny<string>()))
             .ReturnsAsync(activeApiRevision);
 
-        mocks.CommentManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), false, CommentType.APIRevision, It.IsAny<bool>()))
+        mocks.CommentManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), false, CommentType.APIRevision))
             .ReturnsAsync(new List<CommentItemModel>());
 
         mocks.CodeFileRepository.Setup(r => r.GetCodeFileAsync(It.IsAny<APIRevisionListItemModel>(), false))

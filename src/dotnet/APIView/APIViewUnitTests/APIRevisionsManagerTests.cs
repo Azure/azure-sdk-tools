@@ -74,7 +74,6 @@ public class APIRevisionsManagerTests
 {
     private readonly APIRevisionsManager _manager;
     private readonly Mock<ICosmosAPIRevisionsRepository> _mockAPIRevisionsRepository;
-    private readonly Mock<IDiagnosticCommentService> _mockDiagnosticCommentService;
     private readonly Mock<IAuthorizationService> _mockAuthorizationService;
     private readonly Mock<ICodeFileManager> _mockCodeFileManager;
     private readonly Mock<IBlobCodeFileRepository> _mockCodeFileRepository;
@@ -95,7 +94,6 @@ public class APIRevisionsManagerTests
         _mockReviewsRepository = new Mock<ICosmosReviewRepository>();
         _mockCodeFileRepository = new Mock<IBlobCodeFileRepository>();
         _mockAPIRevisionsRepository = new Mock<ICosmosAPIRevisionsRepository>();
-        _mockDiagnosticCommentService = new Mock<IDiagnosticCommentService>();
         _mockOriginalsRepository = new Mock<IBlobOriginalsRepository>();
         _mockAuthorizationService = new Mock<IAuthorizationService>();
         _mockHubContext = new Mock<IHubContext<SignalRHub>>();
@@ -121,7 +119,6 @@ public class APIRevisionsManagerTests
             _mockAuthorizationService.Object,
             _mockReviewsRepository.Object,
             _mockAPIRevisionsRepository.Object,
-            _mockDiagnosticCommentService.Object,
             _mockHubContext.Object,
             languageServices,
             _mockDevopsArtifactRepository.Object,
@@ -413,10 +410,6 @@ public class APIRevisionsManagerTests
         _mockCodeFileManager
             .Setup(m => m.CreateReviewCodeFileModel(It.IsAny<string>(), It.IsAny<MemoryStream>(), It.IsAny<CodeFile>()))
             .ReturnsAsync(new APICodeFileModel { FileId = "file-id", FileName = "test.json" });
-
-        _mockDiagnosticCommentService
-            .Setup(m => m.SyncDiagnosticCommentsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CodeDiagnostic[]>(), It.IsAny<IEnumerable<CommentItemModel>>()))
-            .ReturnsAsync(new DiagnosticSyncResult { DiagnosticsHash = "hash" });
 
         _mockAPIRevisionsRepository
             .Setup(m => m.UpsertAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()))
@@ -1520,26 +1513,6 @@ public class APIRevisionsManagerTests
 
         Assert.Equal(80, result.Score); // 100 - 20
         Assert.Equal(1, result.UnresolvedMustFixCount);
-        Assert.Equal(0, result.UnresolvedMustFixDiagnostics);
-    }
-
-    [Fact]
-    public async Task GetReviewQualityScoreAsync_DiagnosticMustFix_DoesNotIncrementNonDiagnosticMustFixCount()
-    {
-        var revision = CreateRevisionForQualityTest();
-        var comments = new List<CommentItemModel>
-        {
-            CreateComment(CommentSeverity.MustFix, source: CommentSource.Diagnostic)
-        };
-        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
-        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
-            .ReturnsAsync(comments);
-
-        var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
-
-        Assert.Equal(80, result.Score);
-        Assert.Equal(1, result.UnresolvedMustFixCount);
-        Assert.Equal(1, result.UnresolvedMustFixDiagnostics);
     }
 
     [Fact]
@@ -1724,24 +1697,6 @@ public class APIRevisionsManagerTests
     }
 
     [Fact]
-    public async Task GetReviewQualityScoreAsync_DiagnosticComments_FullPenalty()
-    {
-        var revision = CreateRevisionForQualityTest();
-        var comments = new List<CommentItemModel>
-        {
-            CreateComment(CommentSeverity.ShouldFix, source: CommentSource.Diagnostic)
-        };
-        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
-        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
-            .ReturnsAsync(comments);
-
-        var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
-
-        // Diagnostic comments are not AI-generated, so full penalty applies
-        Assert.Equal(90, result.Score);
-    }
-
-    [Fact]
     public async Task GetReviewQualityScoreAsync_InvalidRevisionId_ThrowsArgumentException()
     {
         _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync("bad-id")).ReturnsAsync((APIRevisionListItemModel)null);
@@ -1910,48 +1865,6 @@ public class APIRevisionsManagerTests
         Assert.Equal(1, result.UnresolvedMustFixCount);
         Assert.Equal(1, result.UnresolvedShouldFixCount);
         Assert.Equal(2, result.TotalUnresolvedCount);
-    }
-
-    [Fact]
-    public async Task GetReviewQualityScoreAsync_SyncsDiagnosticsBeforeScoring()
-    {
-        var revision = CreateRevisionForQualityTest();
-        revision.DiagnosticsHash = null;
-        var diagnostics = new[] { new CodeDiagnostic { TargetId = "elem-1", Text = "Missing docs", Level = CodeDiagnosticLevel.Warning } };
-        var codeFile = new CodeFile
-        {
-            Name = "test",
-            Language = "Python",
-            PackageName = "test-package",
-            PackageVersion = "1.0.0",
-            Diagnostics = diagnostics
-        };
-        var renderedCodeFile = new RenderedCodeFile(codeFile);
-
-        var syncedComment = CreateComment(CommentSeverity.ShouldFix, source: CommentSource.Diagnostic);
-        var syncResult = new DiagnosticSyncResult
-        {
-            Comments = new List<CommentItemModel> { syncedComment },
-            DiagnosticsHash = "new-hash",
-            WasSynced = true
-        };
-
-        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
-        _mockCodeFileRepository.Setup(x => x.GetCodeFileAsync(revision, false)).ReturnsAsync(renderedCodeFile);
-        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
-            .ReturnsAsync(new List<CommentItemModel>());
-        _mockDiagnosticCommentService.Setup(x => x.SyncDiagnosticCommentsAsync(
-            revision.ReviewId, revision.Id, revision.DiagnosticsHash, diagnostics, It.IsAny<IEnumerable<CommentItemModel>>()))
-            .ReturnsAsync(syncResult);
-
-        var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
-
-        // Synced diagnostic (ShouldFix) should be scored
-        Assert.Equal(90, result.Score); // 100 - 10
-        Assert.Equal(1, result.UnresolvedShouldFixCount);
-        _mockDiagnosticCommentService.Verify(x => x.SyncDiagnosticCommentsAsync(
-            revision.ReviewId, revision.Id, null, diagnostics, It.IsAny<IEnumerable<CommentItemModel>>()), Times.Once);
-        _mockAPIRevisionsRepository.Verify(x => x.UpsertAPIRevisionAsync(It.Is<APIRevisionListItemModel>(r => r.DiagnosticsHash == "new-hash")), Times.Once);
     }
 
     [Fact]
@@ -2336,12 +2249,6 @@ public class APIRevisionsManagerTests
             .Setup(m => m.CreateReviewCodeFileModel(It.IsAny<string>(), preParsedMemoryStream, preParsedCodeFile))
             .ReturnsAsync(codeFileModel);
 
-        _mockDiagnosticCommentService
-            .Setup(d => d.SyncDiagnosticCommentsAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<CodeDiagnostic[]>(), It.IsAny<List<CommentItemModel>>()))
-            .ReturnsAsync(new DiagnosticSyncResult());
-
         _mockAPIRevisionsRepository
             .Setup(x => x.UpsertAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()))
             .Returns(Task.CompletedTask);
@@ -2389,12 +2296,6 @@ public class APIRevisionsManagerTests
         _mockCodeFileRepository
             .Setup(m => m.GetCodeFileFromStorageAsync(It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(codeFile);
-
-        _mockDiagnosticCommentService
-            .Setup(d => d.SyncDiagnosticCommentsAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<CodeDiagnostic[]>(), It.IsAny<List<CommentItemModel>>()))
-            .ReturnsAsync(new DiagnosticSyncResult());
 
         _mockAPIRevisionsRepository
             .Setup(x => x.UpsertAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()))

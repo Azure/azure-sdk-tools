@@ -230,6 +230,7 @@ post-steps:
     shell: pwsh
     env:
       REVIEWER: chidozieononiwu
+      ASSIGNEE: chidozieononiwu
     run: |
       Set-StrictMode -Version 4
       $ErrorActionPreference = 'Stop'
@@ -351,6 +352,16 @@ post-steps:
               Write-Warning "Pull request was created, but reviewer assignment failed for $env:REVIEWER. $($_.Exception.Message)"
             }
 
+            try {
+              & gh pr edit $prUrl --add-assignee $env:ASSIGNEE
+              if ($LASTEXITCODE -ne 0) {
+                Write-Warning "Pull request was created, but assignee assignment failed for $env:ASSIGNEE."
+              }
+            }
+            catch {
+              Write-Warning "Pull request was created, but assignee assignment failed for $env:ASSIGNEE. $($_.Exception.Message)"
+            }
+
             Write-Host "Created or updated pull request for ${repo}:${branch}: $prUrl"
           }
           finally {
@@ -422,12 +433,6 @@ Example guidance input:
       "RepositoryId": "Azure/autorest.go",
       "pullRequests": [1234, 5678]
     }
-  ],
-  "pypi.org": [
-    {
-      "RepositoryId": "00000000-0000-0000-0000-000000000000",
-      "PullRequests": [2468]
-    }
   ]
 }
 ```
@@ -444,6 +449,7 @@ For each entry:
 4. Before making a change, look up prior pull request examples only from `network-isolation-pr-guidance.json` for the entry's `DomainName`. Match the domain key exactly first, then case-insensitively if needed. For each matching example, use the specified repository and pull request numbers to inspect those pull requests. If the example specifies only `RepositoryId`, use it only when it matches the current entry's `RepositoryId`, and inspect the specified pull request numbers in the current target GitHub repository. Do not perform broad repository searches for examples. If no guidance exists for the domain, continue without prior PR examples and include that in your final summary.
 5. Diagnose why the job is failing network isolation. Use `DomainName`, `TaskName`, the located pipeline code, nearby allowlist/network-isolation patterns in the checked-out repository, and relevant prior PR examples.
 6. Code the smallest targeted fix in the target repository. Preserve the repository's existing pipeline style and avoid unrelated formatting or refactors.
+  - Do not resolve the issue by setting `networkIsolationPolicy: Permissive`, changing an existing policy to `Permissive`, disabling network isolation, or otherwise bypassing enforcement. A permissive policy is not an acceptable remediation. Find and implement the narrow allowlist, endpoint, service connection, feed, or pipeline configuration change that preserves network isolation.
 7. Create a new branch in the local target repository checkout for only that entry. Use a branch name that starts with `network-isolation-cfs-` and includes the pipeline definition ID and the build ID.
 8. Commit the fix locally on that branch. Do not run `git push`, `gh auth login`, `gh pr create`, or any GitHub write operation. GitHub Actions post-steps will push the branch, create the pull request, and request the reviewer.
 9. Append a remediation object to `/tmp/network-isolation-remediations/remediations.json`. Create the directory and file if needed. The file must be a JSON array. Each object must include `repo`, `workingDirectory`, `branch`, `title`, and `body`. Use `repo` in `owner/repo` format, set `workingDirectory` to the local checkout path containing the committed branch, and make the pull request title include `CFS`. The pull request body must include:
@@ -452,7 +458,7 @@ For each entry:
   - the pipeline entry point YAML path,
   - the pipeline run URL,
   - a short explanation of the change.
-10. Reviewer assignment for `chidozieononiwu` is handled by GitHub Actions post-steps. If you know reviewer assignment is likely to fail, include that limitation in your final summary.
+10. Reviewer and assignee assignment for `chidozieononiwu` is handled by GitHub Actions post-steps. If you know either assignment is likely to fail, include that limitation in your final summary.
 11. Clear your working context for the completed entry before moving to the next one.
 
 ## Azure DevOps Guidance
@@ -474,5 +480,7 @@ When all entries are processed, call `noop` once with a concise final summary. I
 Do not create pull requests yourself. GitHub Actions post-steps consume `/tmp/network-isolation-remediations/remediations.json` after the agent exits and handle push, pull request creation, and reviewer assignment.
 
 The post-steps use the repository's `login-to-github` action to mint an Azure GitHub App token for pull request creation after logging in with the AzureSDKEngKeyVault federated identity. Do not use `GH_AW_GITHUB_TOKEN` for pull request creation.
+
+Never use `networkIsolationPolicy: Permissive` as the remediation. Treat permissive mode, disabling network isolation, or weakening the enforcement policy as an invalid fix unless the user explicitly requests that bypass in a future run.
 
 Do not process entries concurrently. Do not reuse a checkout, branch, or diagnosis from one entry for another entry.

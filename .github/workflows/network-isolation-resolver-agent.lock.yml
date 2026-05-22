@@ -1,4 +1,4 @@
-# gh-aw-metadata: {"schema_version":"v3","frontmatter_hash":"3969bbe58f1673f3da1f56f3bf9d573c90b9e8b43998946dd19b78a1d1ca9415","compiler_version":"v0.72.1","agent_id":"copilot"}
+# gh-aw-metadata: {"schema_version":"v3","frontmatter_hash":"baebc1f98920c56a265f5f9b4851f02f09a7a445e3e94b14b2a4905d7ecbaec9","compiler_version":"v0.72.1","agent_id":"copilot"}
 # gh-aw-manifest: {"version":1,"secrets":["COPILOT_GITHUB_TOKEN","GH_AW_GITHUB_MCP_SERVER_TOKEN","GH_AW_GITHUB_TOKEN","GITHUB_TOKEN","NET_ISO_RESOLVER_QUERY"],"actions":[{"repo":"actions/checkout","sha":"34e114876b0b11c390a56381ad16ebd13914f8d5","version":"34e114876b0b11c390a56381ad16ebd13914f8d5"},{"repo":"actions/checkout","sha":"de0fac2e4500dabe0009e67214ff5f5447ce83dd","version":"v6.0.2"},{"repo":"actions/download-artifact","sha":"3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c","version":"v8.0.1"},{"repo":"actions/github-script","sha":"3a2844b7e9c422d3c10d287c895573f7108da1b3","version":"v9.0.0"},{"repo":"actions/setup-node","sha":"48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e","version":"v6.4.0"},{"repo":"actions/setup-python","sha":"a26af69be951a213d495a4c3e4e4022e16d87065","version":"a26af69be951a213d495a4c3e4e4022e16d87065"},{"repo":"actions/upload-artifact","sha":"043fb46d1a93c77aae656e7c1c64a875d1fc6a0a","version":"v7.0.1"},{"repo":"azure/login","sha":"cb79c773a3cfa27f31f25eb3f677781210c9ce3d","version":"cb79c773a3cfa27f31f25eb3f677781210c9ce3d"},{"repo":"github/gh-aw-actions/setup","sha":"bc56a0cad2f450c562810785ef38649c04db812a","version":"v0.72.1"}],"containers":[{"image":"ghcr.io/github/gh-aw-firewall/agent:0.25.41"},{"image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.25.41"},{"image":"ghcr.io/github/gh-aw-firewall/squid:0.25.41"},{"image":"ghcr.io/github/gh-aw-mcpg:v0.3.6","digest":"sha256:2bb8eef86006a4c5963c55616a9c51c32f27bfdecb023b8aa6f91f6718d9171c","pinned_image":"ghcr.io/github/gh-aw-mcpg:v0.3.6@sha256:2bb8eef86006a4c5963c55616a9c51c32f27bfdecb023b8aa6f91f6718d9171c"},{"image":"ghcr.io/github/github-mcp-server:v1.0.3","digest":"sha256:2ac27ef03461ef2b877031b838a7d1fd7f12b12d4ace7796d8cad91446d55959","pinned_image":"ghcr.io/github/github-mcp-server:v1.0.3@sha256:2ac27ef03461ef2b877031b838a7d1fd7f12b12d4ace7796d8cad91446d55959"},{"image":"node:lts-alpine","digest":"sha256:d1b3b4da11eefd5941e7f0b9cf17783fc99d9c6fc34884a665f40a06dbdfc94f","pinned_image":"node:lts-alpine@sha256:d1b3b4da11eefd5941e7f0b9cf17783fc99d9c6fc34884a665f40a06dbdfc94f"}]}
 #    ___                   _   _      
 #   / _ \                 | | (_)     
@@ -210,23 +210,23 @@ jobs:
         run: |
           bash "${RUNNER_TEMP}/gh-aw/actions/create_prompt_first.sh"
           {
-          cat << 'GH_AW_PROMPT_f1f1001c429f9836_EOF'
+          cat << 'GH_AW_PROMPT_b097a1332ef87090_EOF'
           <system>
-          GH_AW_PROMPT_f1f1001c429f9836_EOF
+          GH_AW_PROMPT_b097a1332ef87090_EOF
           cat "${RUNNER_TEMP}/gh-aw/prompts/xpia.md"
           cat "${RUNNER_TEMP}/gh-aw/prompts/temp_folder_prompt.md"
           cat "${RUNNER_TEMP}/gh-aw/prompts/markdown.md"
           cat "${RUNNER_TEMP}/gh-aw/prompts/safe_outputs_prompt.md"
-          cat << 'GH_AW_PROMPT_f1f1001c429f9836_EOF'
+          cat << 'GH_AW_PROMPT_b097a1332ef87090_EOF'
           <safe-output-tools>
           Tools: create_issue, missing_tool, missing_data, noop
-          GH_AW_PROMPT_f1f1001c429f9836_EOF
+          GH_AW_PROMPT_b097a1332ef87090_EOF
           cat "${RUNNER_TEMP}/gh-aw/prompts/safe_outputs_auto_create_issue.md"
-          cat << 'GH_AW_PROMPT_f1f1001c429f9836_EOF'
+          cat << 'GH_AW_PROMPT_b097a1332ef87090_EOF'
           </safe-output-tools>
-          GH_AW_PROMPT_f1f1001c429f9836_EOF
+          GH_AW_PROMPT_b097a1332ef87090_EOF
           cat "${RUNNER_TEMP}/gh-aw/prompts/mcp_cli_tools_prompt.md"
-          cat << 'GH_AW_PROMPT_f1f1001c429f9836_EOF'
+          cat << 'GH_AW_PROMPT_b097a1332ef87090_EOF'
           <github-context>
           The following GitHub context information is available for this workflow:
           {{#if __GH_AW_GITHUB_ACTOR__ }}
@@ -255,12 +255,12 @@ jobs:
           {{/if}}
           </github-context>
           
-          GH_AW_PROMPT_f1f1001c429f9836_EOF
+          GH_AW_PROMPT_b097a1332ef87090_EOF
           cat "${RUNNER_TEMP}/gh-aw/prompts/github_mcp_tools_with_safeoutputs_prompt.md"
-          cat << 'GH_AW_PROMPT_f1f1001c429f9836_EOF'
+          cat << 'GH_AW_PROMPT_b097a1332ef87090_EOF'
           </system>
           {{#runtime-import .github/workflows/network-isolation-resolver-agent.md}}
-          GH_AW_PROMPT_f1f1001c429f9836_EOF
+          GH_AW_PROMPT_b097a1332ef87090_EOF
           } > "$GH_AW_PROMPT"
       - name: Interpolate variables and render templates
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
@@ -607,9 +607,9 @@ jobs:
           mkdir -p "${RUNNER_TEMP}/gh-aw/safeoutputs"
           mkdir -p /tmp/gh-aw/safeoutputs
           mkdir -p /tmp/gh-aw/mcp-logs/safeoutputs
-          cat > "${RUNNER_TEMP}/gh-aw/safeoutputs/config.json" << 'GH_AW_SAFE_OUTPUTS_CONFIG_5832b6f2f57648e4_EOF'
+          cat > "${RUNNER_TEMP}/gh-aw/safeoutputs/config.json" << 'GH_AW_SAFE_OUTPUTS_CONFIG_a6d5f0e215eaa80c_EOF'
           {"create_issue":{"labels":["network-isolation-resolver-agent"],"max":1,"title_prefix":"[network-isolation-resolver-agent]"},"create_report_incomplete_issue":{},"missing_data":{},"missing_tool":{},"noop":{"max":1,"report-as-issue":"true"},"report_incomplete":{}}
-          GH_AW_SAFE_OUTPUTS_CONFIG_5832b6f2f57648e4_EOF
+          GH_AW_SAFE_OUTPUTS_CONFIG_a6d5f0e215eaa80c_EOF
       - name: Generate Safe Outputs Tools
         env:
           GH_AW_TOOLS_META_JSON: |
@@ -807,7 +807,7 @@ jobs:
           
           mkdir -p /home/runner/.copilot
           GH_AW_NODE=$(which node 2>/dev/null || command -v node 2>/dev/null || echo node)
-          cat << GH_AW_MCP_CONFIG_7d2a389fe7106853_EOF | "$GH_AW_NODE" "${RUNNER_TEMP}/gh-aw/actions/start_mcp_gateway.cjs"
+          cat << GH_AW_MCP_CONFIG_b6f9747804a81a54_EOF | "$GH_AW_NODE" "${RUNNER_TEMP}/gh-aw/actions/start_mcp_gateway.cjs"
           {
             "mcpServers": {
               "github": {
@@ -853,7 +853,7 @@ jobs:
               "payloadDir": "${MCP_GATEWAY_PAYLOAD_DIR}"
             }
           }
-          GH_AW_MCP_CONFIG_7d2a389fe7106853_EOF
+          GH_AW_MCP_CONFIG_b6f9747804a81a54_EOF
       - name: Mount MCP servers as CLIs
         id: mount-mcp-clis
         continue-on-error: true
@@ -1065,10 +1065,11 @@ jobs:
         with:
           token-owners: Azure
       - env:
+          ASSIGNEE: chidozieononiwu
           REVIEWER: chidozieononiwu
         if: always()
         name: Push remediation branches and create pull requests
-        run: "Set-StrictMode -Version 4\n$ErrorActionPreference = 'Stop'\n\nfunction Invoke-CheckedNativeCommand {\n  param(\n    [Parameter(Mandatory = $true)]\n    [string] $Command,\n\n    [Parameter(ValueFromRemainingArguments = $true)]\n    [string[]] $Arguments\n  )\n\n  & $Command @Arguments\n  if ($LASTEXITCODE -ne 0) {\n    throw \"Command failed with exit code ${LASTEXITCODE}: $Command\"\n  }\n}\n\n$manifestPath = \"/tmp/network-isolation-remediations/remediations.json\"\nif (-not (Test-Path -Path $manifestPath)) {\n  Write-Host \"No remediation manifest found at $manifestPath. Nothing to push.\"\n  return\n}\n\nif ([string]::IsNullOrWhiteSpace($env:GH_TOKEN)) {\n  throw \"GH_TOKEN is empty. The login-to-github post-step did not mint an Azure GitHub App token.\"\n}\n\n$remediations = Get-Content -Path $manifestPath -Raw | ConvertFrom-Json\nif ($null -eq $remediations) {\n  Write-Host \"Remediation manifest is empty. Nothing to push.\"\n  return\n}\nelseif ($remediations -isnot [array]) {\n  $remediations = @($remediations)\n}\n\n$askPassPath = Join-Path $env:RUNNER_TEMP (\"network-isolation-git-askpass-{0}.sh\" -f ([Guid]::NewGuid().ToString('N')))\n$tokenFilePath = Join-Path $env:RUNNER_TEMP (\"network-isolation-git-token-{0}.txt\" -f ([Guid]::NewGuid().ToString('N')))\nSet-Content -Path $tokenFilePath -Value $env:GH_TOKEN -NoNewline\nSet-Content -Path $askPassPath -Value @'\n#!/bin/sh\ncase \"$1\" in\n  *Username*) printf '%s\\n' 'x-access-token' ;;\n  *) cat \"$GIT_ASKPASS_TOKEN_FILE\" ;;\nesac\n'@\nInvoke-CheckedNativeCommand chmod 600 $tokenFilePath\nInvoke-CheckedNativeCommand chmod 700 $askPassPath\n\n$previousGitAskPass = $env:GIT_ASKPASS\n$previousGitAskPassTokenFile = $env:GIT_ASKPASS_TOKEN_FILE\n$previousGitTerminalPrompt = $env:GIT_TERMINAL_PROMPT\n\n$env:GIT_ASKPASS = $askPassPath\n$env:GIT_ASKPASS_TOKEN_FILE = $tokenFilePath\n$env:GIT_TERMINAL_PROMPT = '0'\n\ntry {\n  foreach ($remediation in $remediations) {\n    $repo = [string]$remediation.repo\n    $branch = [string]$remediation.branch\n    $workingDirectory = [string]$remediation.workingDirectory\n    $title = [string]$remediation.title\n    $body = [string]$remediation.body\n\n    if ($repo -notmatch '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$') {\n      throw \"Invalid repo value '$repo' in remediation manifest. Expected owner/repo.\"\n    }\n    if ($branch -notmatch '^[A-Za-z0-9._/-]+$') {\n      throw \"Invalid branch value '$branch' in remediation manifest.\"\n    }\n    if ([string]::IsNullOrWhiteSpace($workingDirectory) -or -not (Test-Path -Path $workingDirectory)) {\n      throw \"Working directory '$workingDirectory' does not exist for $repo.\"\n    }\n    if ([string]::IsNullOrWhiteSpace($title) -or [string]::IsNullOrWhiteSpace($body)) {\n      throw \"Remediation for $repo/$branch must include title and body.\"\n    }\n\n    Push-Location $workingDirectory\n    try {\n      $currentBranch = git branch --show-current\n      if ($LASTEXITCODE -ne 0) {\n        throw \"Failed to determine the current branch in $workingDirectory.\"\n      }\n      if ($currentBranch -ne $branch) {\n        Invoke-CheckedNativeCommand git checkout $branch\n      }\n\n      $serverUrl = \"https://github.com/$repo.git\"\n      Invoke-CheckedNativeCommand git remote set-url origin $serverUrl\n      Invoke-CheckedNativeCommand git push --set-upstream origin $branch\n\n      $existingPr = gh pr list --repo $repo --head $branch --state open --json url --jq '.[0].url'\n      if ($LASTEXITCODE -ne 0) {\n        throw \"Failed to list existing pull requests for ${repo}:${branch}.\"\n      }\n      if ([string]::IsNullOrWhiteSpace($existingPr)) {\n        $bodyPath = Join-Path $env:RUNNER_TEMP (\"network-isolation-pr-{0}.md\" -f ([Guid]::NewGuid().ToString('N')))\n        Set-Content -Path $bodyPath -Value $body\n        $prUrl = gh pr create --repo $repo --base main --head $branch --title $title --body-file $bodyPath\n        if ($LASTEXITCODE -ne 0) {\n          throw \"Failed to create pull request for ${repo}:${branch}.\"\n        }\n      }\n      else {\n        $prUrl = $existingPr\n        Write-Host \"Open pull request already exists for ${repo}:${branch}: $prUrl\"\n      }\n\n      try {\n        & gh pr edit $prUrl --add-reviewer $env:REVIEWER\n        if ($LASTEXITCODE -ne 0) {\n          Write-Warning \"Pull request was created, but reviewer assignment failed for $env:REVIEWER.\"\n        }\n      }\n      catch {\n        Write-Warning \"Pull request was created, but reviewer assignment failed for $env:REVIEWER. $($_.Exception.Message)\"\n      }\n\n      Write-Host \"Created or updated pull request for ${repo}:${branch}: $prUrl\"\n    }\n    finally {\n      Pop-Location\n    }\n  }\n}\nfinally {\n  $env:GIT_ASKPASS = $previousGitAskPass\n  $env:GIT_ASKPASS_TOKEN_FILE = $previousGitAskPassTokenFile\n  $env:GIT_TERMINAL_PROMPT = $previousGitTerminalPrompt\n  Remove-Item -Path $askPassPath,$tokenFilePath -Force -ErrorAction SilentlyContinue\n}\n\nforeach ($remediation in $remediations) {\n  $workingDirectory = [string]$remediation.workingDirectory\n  $repo = [string]$remediation.repo\n  if (-not [string]::IsNullOrWhiteSpace($workingDirectory) -and (Test-Path -Path $workingDirectory) -and $repo -match '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$') {\n    Push-Location $workingDirectory\n    try {\n      git remote set-url origin \"https://github.com/$repo.git\" 2>$null\n    }\n    finally {\n      Pop-Location\n    }\n  }\n}\n"
+        run: "Set-StrictMode -Version 4\n$ErrorActionPreference = 'Stop'\n\nfunction Invoke-CheckedNativeCommand {\n  param(\n    [Parameter(Mandatory = $true)]\n    [string] $Command,\n\n    [Parameter(ValueFromRemainingArguments = $true)]\n    [string[]] $Arguments\n  )\n\n  & $Command @Arguments\n  if ($LASTEXITCODE -ne 0) {\n    throw \"Command failed with exit code ${LASTEXITCODE}: $Command\"\n  }\n}\n\n$manifestPath = \"/tmp/network-isolation-remediations/remediations.json\"\nif (-not (Test-Path -Path $manifestPath)) {\n  Write-Host \"No remediation manifest found at $manifestPath. Nothing to push.\"\n  return\n}\n\nif ([string]::IsNullOrWhiteSpace($env:GH_TOKEN)) {\n  throw \"GH_TOKEN is empty. The login-to-github post-step did not mint an Azure GitHub App token.\"\n}\n\n$remediations = Get-Content -Path $manifestPath -Raw | ConvertFrom-Json\nif ($null -eq $remediations) {\n  Write-Host \"Remediation manifest is empty. Nothing to push.\"\n  return\n}\nelseif ($remediations -isnot [array]) {\n  $remediations = @($remediations)\n}\n\n$askPassPath = Join-Path $env:RUNNER_TEMP (\"network-isolation-git-askpass-{0}.sh\" -f ([Guid]::NewGuid().ToString('N')))\n$tokenFilePath = Join-Path $env:RUNNER_TEMP (\"network-isolation-git-token-{0}.txt\" -f ([Guid]::NewGuid().ToString('N')))\nSet-Content -Path $tokenFilePath -Value $env:GH_TOKEN -NoNewline\nSet-Content -Path $askPassPath -Value @'\n#!/bin/sh\ncase \"$1\" in\n  *Username*) printf '%s\\n' 'x-access-token' ;;\n  *) cat \"$GIT_ASKPASS_TOKEN_FILE\" ;;\nesac\n'@\nInvoke-CheckedNativeCommand chmod 600 $tokenFilePath\nInvoke-CheckedNativeCommand chmod 700 $askPassPath\n\n$previousGitAskPass = $env:GIT_ASKPASS\n$previousGitAskPassTokenFile = $env:GIT_ASKPASS_TOKEN_FILE\n$previousGitTerminalPrompt = $env:GIT_TERMINAL_PROMPT\n\n$env:GIT_ASKPASS = $askPassPath\n$env:GIT_ASKPASS_TOKEN_FILE = $tokenFilePath\n$env:GIT_TERMINAL_PROMPT = '0'\n\ntry {\n  foreach ($remediation in $remediations) {\n    $repo = [string]$remediation.repo\n    $branch = [string]$remediation.branch\n    $workingDirectory = [string]$remediation.workingDirectory\n    $title = [string]$remediation.title\n    $body = [string]$remediation.body\n\n    if ($repo -notmatch '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$') {\n      throw \"Invalid repo value '$repo' in remediation manifest. Expected owner/repo.\"\n    }\n    if ($branch -notmatch '^[A-Za-z0-9._/-]+$') {\n      throw \"Invalid branch value '$branch' in remediation manifest.\"\n    }\n    if ([string]::IsNullOrWhiteSpace($workingDirectory) -or -not (Test-Path -Path $workingDirectory)) {\n      throw \"Working directory '$workingDirectory' does not exist for $repo.\"\n    }\n    if ([string]::IsNullOrWhiteSpace($title) -or [string]::IsNullOrWhiteSpace($body)) {\n      throw \"Remediation for $repo/$branch must include title and body.\"\n    }\n\n    Push-Location $workingDirectory\n    try {\n      $currentBranch = git branch --show-current\n      if ($LASTEXITCODE -ne 0) {\n        throw \"Failed to determine the current branch in $workingDirectory.\"\n      }\n      if ($currentBranch -ne $branch) {\n        Invoke-CheckedNativeCommand git checkout $branch\n      }\n\n      $serverUrl = \"https://github.com/$repo.git\"\n      Invoke-CheckedNativeCommand git remote set-url origin $serverUrl\n      Invoke-CheckedNativeCommand git push --set-upstream origin $branch\n\n      $existingPr = gh pr list --repo $repo --head $branch --state open --json url --jq '.[0].url'\n      if ($LASTEXITCODE -ne 0) {\n        throw \"Failed to list existing pull requests for ${repo}:${branch}.\"\n      }\n      if ([string]::IsNullOrWhiteSpace($existingPr)) {\n        $bodyPath = Join-Path $env:RUNNER_TEMP (\"network-isolation-pr-{0}.md\" -f ([Guid]::NewGuid().ToString('N')))\n        Set-Content -Path $bodyPath -Value $body\n        $prUrl = gh pr create --repo $repo --base main --head $branch --title $title --body-file $bodyPath\n        if ($LASTEXITCODE -ne 0) {\n          throw \"Failed to create pull request for ${repo}:${branch}.\"\n        }\n      }\n      else {\n        $prUrl = $existingPr\n        Write-Host \"Open pull request already exists for ${repo}:${branch}: $prUrl\"\n      }\n\n      try {\n        & gh pr edit $prUrl --add-reviewer $env:REVIEWER\n        if ($LASTEXITCODE -ne 0) {\n          Write-Warning \"Pull request was created, but reviewer assignment failed for $env:REVIEWER.\"\n        }\n      }\n      catch {\n        Write-Warning \"Pull request was created, but reviewer assignment failed for $env:REVIEWER. $($_.Exception.Message)\"\n      }\n\n      try {\n        & gh pr edit $prUrl --add-assignee $env:ASSIGNEE\n        if ($LASTEXITCODE -ne 0) {\n          Write-Warning \"Pull request was created, but assignee assignment failed for $env:ASSIGNEE.\"\n        }\n      }\n      catch {\n        Write-Warning \"Pull request was created, but assignee assignment failed for $env:ASSIGNEE. $($_.Exception.Message)\"\n      }\n\n      Write-Host \"Created or updated pull request for ${repo}:${branch}: $prUrl\"\n    }\n    finally {\n      Pop-Location\n    }\n  }\n}\nfinally {\n  $env:GIT_ASKPASS = $previousGitAskPass\n  $env:GIT_ASKPASS_TOKEN_FILE = $previousGitAskPassTokenFile\n  $env:GIT_TERMINAL_PROMPT = $previousGitTerminalPrompt\n  Remove-Item -Path $askPassPath,$tokenFilePath -Force -ErrorAction SilentlyContinue\n}\n\nforeach ($remediation in $remediations) {\n  $workingDirectory = [string]$remediation.workingDirectory\n  $repo = [string]$remediation.repo\n  if (-not [string]::IsNullOrWhiteSpace($workingDirectory) -and (Test-Path -Path $workingDirectory) -and $repo -match '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$') {\n    Push-Location $workingDirectory\n    try {\n      git remote set-url origin \"https://github.com/$repo.git\" 2>$null\n    }\n    finally {\n      Pop-Location\n    }\n  }\n}\n"
         shell: pwsh
       - if: always()
         name: Delete pull request guidance working copy

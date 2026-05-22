@@ -11,29 +11,58 @@ param (
 ####################################################################################################################
 
 # This script is called by tools - generate-<Language>-apireview pipelines to send a request to APIView server to
-# to notify that generated code file is ready and published. APIView server pulls this code file from artifact and 
+# to notify that generated code file is ready and published. APIView server pulls this code file from artifact and
 # uploads into APIView. This offline step abstracts and protects APIView server resources so caller doesn't have to
 # know about APIView server. Pipline will publish an artifact 'apiview' before this script is called
 
-# Script will send a request to APIView with build ID, artifact name and repo name as params.
-# Sample request is as follows:
-# https://apistaging.test.dev/review/UpdateApiReview?repoName=azure/azure-sdk-tools&buildId=1742433&artifact=apiview
+# Script will send an authenticated POST request to APIView with build ID, artifact name and repo name.
+# Requires an AzurePowerShell@5 context with a service connection authorized for APIView so that
+# `Get-AzAccessToken -ResourceUrl api://apiview` can mint a bearer token.
+# Sample request:
+# POST https://apiview.dev/review/UpdateApiReview
+# Body: { "repoName": "azure/azure-sdk-tools", "buildId": "1742433", "artifactName": "apiview" }
 
 ####################################################################################################################
 
-$uri = $ApiviewUpdateUrl + "?artifact=" + $ArtifactName + "&buildId=" + $BuildId + "&repoName=" + $repoName
-if ($MetadataFileName) {
-    $encodedMetadataFileName = [Uri]::EscapeDataString($MetadataFileName)
-    $uri = $uri + "&metadataFile=" + $encodedMetadataFileName
+# Acquire Entra ID bearer token for APIView (resource = api://apiview)
+try {
+    $tokenResponse = Get-AzAccessToken -ResourceUrl "api://apiview" -ErrorAction Stop
 }
-Write-Host "Request URI: $($uri)"
+catch {
+    Write-Error "Failed to acquire access token for APIView (resource: api://apiview): $($_.Exception.Message)"
+    exit 1
+}
+$token = $tokenResponse.Token
+if (-not $token) {
+    Write-Error "Failed to acquire access token for APIView (resource: api://apiview)"
+    exit 1
+}
+
+$body = @{
+    repoName     = $RepoName
+    artifactName = $ArtifactName
+    buildId      = $BuildId
+    project      = "internal"
+}
+if ($MetadataFileName) {
+    $body.metadataFile = $MetadataFileName
+}
+
+$headers = @{
+    Authorization  = "Bearer $token"
+    "Content-Type" = "application/json"
+}
+
+$jsonBody = $body | ConvertTo-Json -Compress
+Write-Host "Request URL: $ApiviewUpdateUrl"
+Write-Host "Request body: $jsonBody"
 try
 {
-    $Response = Invoke-WebRequest -Method 'GET' $uri -MaximumRetryCount 3
+    $Response = Invoke-WebRequest -Method 'POST' -Uri $ApiviewUpdateUrl -Headers $headers -Body $jsonBody -MaximumRetryCount 3
     Write-Host "Response status : $($Response.StatusCode)"
 }
 catch
 {
-    Write-Host "Error $StatusCode - Exception details: $($_.Exception.Response)"
+    Write-Host "Error - Exception details: $($_.Exception.Response)"
     exit 1
 }

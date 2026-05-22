@@ -10,22 +10,62 @@ parameters:
   displayName: Branch containing the azure-typespec-author skill source (SKILL.md + references/) to evaluate. Leave empty to use the branch this pipeline was triggered from.
   type: string
   default: ''
+- name: RunForcedVersioning
+  displayName: '[Forced] Run versioning suite'
+  type: boolean
+  default: true
+- name: RunForcedArmtemplate
+  displayName: '[Forced] Run armtemplate suite'
+  type: boolean
+  default: true
+- name: RunForcedLro
+  displayName: '[Forced] Run longrunningoperation suite'
+  type: boolean
+  default: true
+- name: RunForcedDecorators
+  displayName: '[Forced] Run decorators suite'
+  type: boolean
+  default: true
+- name: RunForcedWarning
+  displayName: '[Forced] Run warning suite'
+  type: boolean
+  default: true
+- name: RunTriggerVersioning
+  displayName: '[Trigger] Run versioning suite'
+  type: boolean
+  default: true
+- name: RunTriggerArmtemplate
+  displayName: '[Trigger] Run armtemplate suite'
+  type: boolean
+  default: true
+- name: RunTriggerLro
+  displayName: '[Trigger] Run longrunningoperation suite'
+  type: boolean
+  default: true
+- name: RunTriggerDecorators
+  displayName: '[Trigger] Run decorators suite'
+  type: boolean
+  default: true
+- name: RunTriggerWarning
+  displayName: '[Trigger] Run warning suite'
+  type: boolean
+  default: true
 - name: ForcedSuites
   type: object
   default:
-    - { name: versioning, file: versioning.eval.yaml, timeout: 50 }
-    - { name: armtemplate, file: armtemplate.eval.yaml, timeout: 40 }
-    - { name: longrunningoperation, file: lro.eval.yaml, timeout: 25 }
-    - { name: decorators, file: decorators.eval.yaml, timeout: 15 }
-    - { name: warning, file: warning.eval.yaml, timeout: 25 }
+    - { name: versioning, file: versioning.eval.yaml, timeout: 50, param: RunForcedVersioning }
+    - { name: armtemplate, file: armtemplate.eval.yaml, timeout: 40, param: RunForcedArmtemplate }
+    - { name: longrunningoperation, file: lro.eval.yaml, timeout: 25, param: RunForcedLro }
+    - { name: decorators, file: decorators.eval.yaml, timeout: 15, param: RunForcedDecorators }
+    - { name: warning, file: warning.eval.yaml, timeout: 25, param: RunForcedWarning }
 - name: SkillInvocationSuites
   type: object
   default:
-    - { name: versioning, file: versioning-trigger.eval.yaml, timeout: 50 }
-    - { name: armtemplate, file: armtemplate-trigger.eval.yaml, timeout: 40 }
-    - { name: longrunningoperation, file: lro-trigger.eval.yaml, timeout: 25 }
-    - { name: decorators, file: decorators-trigger.eval.yaml, timeout: 15 }
-    - { name: warning, file: warning-trigger.eval.yaml, timeout: 25 }
+    - { name: versioning, file: versioning-trigger.eval.yaml, timeout: 50, param: RunTriggerVersioning }
+    - { name: armtemplate, file: armtemplate-trigger.eval.yaml, timeout: 40, param: RunTriggerArmtemplate }
+    - { name: longrunningoperation, file: lro-trigger.eval.yaml, timeout: 25, param: RunTriggerLro }
+    - { name: decorators, file: decorators-trigger.eval.yaml, timeout: 15, param: RunTriggerDecorators }
+    - { name: warning, file: warning-trigger.eval.yaml, timeout: 25, param: RunTriggerWarning }
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -58,43 +98,16 @@ extends:
               # Run evaluations — each suite gets its own step with timeout
               # and continueOnError so failures don't block subsequent suites.
               - ${{ each suite in parameters.ForcedSuites }}:
-                - script: |
-                    cd .github/skills/azure-typespec-author/evaluate
-                    vally eval --eval-spec suites/${{ suite.file }} --output-dir results --verbose
-                    EXIT_CODE=$?
-                    if [ $EXIT_CODE -ne 0 ]; then
-                      echo "##vso[task.logissue type=error]Suite ${{ suite.name }}-forced failed (exit code $EXIT_CODE)"
-                      LATEST=$(find results -name 'results.jsonl' -type f -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
-                      if [ -n "$LATEST" ]; then
-                        python3 << EOF
-                    import json, sys
-                    with open("$LATEST") as f:
-                        for line in f:
-                            r = json.loads(line)
-                            name = r.get("gradeResult", {}).get("stimulusName", "")
-                            if not name:
-                                continue
-                            grade = r.get("gradeResult", {})
-                            score = grade.get("score", 1)
-                            if not isinstance(score, (int, float)) or score >= 1.0:
-                                continue
-                            print(f"[FAILED] {name} (score: {score})")
-                            for g in grade.get("details", []):
-                                if not g.get("passed", True):
-                                    print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
-                                elif isinstance(g.get("score"), (int, float)) and g.get("score") < 1.0:
-                                    print(f'  - {g.get("name", "?")} (score: {g.get("score")}): {g.get("evidence", "")}')
-                    EOF
-                      fi
-                      exit $EXIT_CODE
-                    fi
-                  displayName: Run force invokation suite - ${{ suite.name }}
-                  timeoutInMinutes: ${{ suite.timeout }}
-                  continueOnError: true
-                  condition: always()
-                  env:
-                    GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
-                    FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
+                - ${{ if eq(parameters[suite.param], true) }}:
+                  - script: |
+                      bash .github/skills/azure-typespec-author/evaluate/scripts/run-eval-suite.sh "${{ suite.file }}" "${{ suite.name }}-forced"
+                    displayName: Run force invokation suite - ${{ suite.name }}
+                    timeoutInMinutes: ${{ suite.timeout }}
+                    continueOnError: true
+                    condition: always()
+                    env:
+                      GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+                      FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
 
             templateContext:
               outputs:
@@ -120,47 +133,21 @@ extends:
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-setup.yml
                 parameters:
                   SkillBranch: ${{ parameters.SkillBranch }}
+                  StartQaBotBackend: false
 
               # Run evaluations — each suite gets its own step with timeout
               # and continueOnError so failures don't block subsequent suites.
               - ${{ each suite in parameters.SkillInvocationSuites }}:
-                - script: |
-                    cd .github/skills/azure-typespec-author/evaluate
-                    vally eval --eval-spec suites/${{ suite.file }} --output-dir results --verbose
-                    EXIT_CODE=$?
-                    if [ $EXIT_CODE -ne 0 ]; then
-                      echo "##vso[task.logissue type=error]Suite ${{ suite.name }} failed (exit code $EXIT_CODE)"
-                      LATEST=$(find results -name 'results.jsonl' -type f -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
-                      if [ -n "$LATEST" ]; then
-                        python3 << EOF
-                    import json, sys
-                    with open("$LATEST") as f:
-                        for line in f:
-                            r = json.loads(line)
-                            name = r.get("gradeResult", {}).get("stimulusName", "")
-                            if not name:
-                                continue
-                            grade = r.get("gradeResult", {})
-                            score = grade.get("score", 1)
-                            if not isinstance(score, (int, float)) or score >= 1.0:
-                                continue
-                            print(f"[FAILED] {name} (score: {score})")
-                            for g in grade.get("details", []):
-                                if not g.get("passed", True):
-                                    print(f'  - {g.get("name", "?")}: {g.get("evidence", "no evidence")}')
-                                elif isinstance(g.get("score"), (int, float)) and g.get("score") < 1.0:
-                                    print(f'  - {g.get("name", "?")} (score: {g.get("score")}): {g.get("evidence", "")}')
-                    EOF
-                      fi
-                      exit $EXIT_CODE
-                    fi
-                  displayName: Run suite - ${{ suite.name }}
-                  timeoutInMinutes: ${{ suite.timeout }}
-                  continueOnError: true
-                  condition: always()
-                  env:
-                    GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
-                    FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
+                - ${{ if eq(parameters[suite.param], true) }}:
+                  - script: |
+                      bash .github/skills/azure-typespec-author/evaluate/scripts/run-eval-suite.sh "${{ suite.file }}" "${{ suite.name }}"
+                    displayName: Run suite - ${{ suite.name }}
+                    timeoutInMinutes: ${{ suite.timeout }}
+                    continueOnError: true
+                    condition: always()
+                    env:
+                      GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+                      FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
 
             templateContext:
               outputs:

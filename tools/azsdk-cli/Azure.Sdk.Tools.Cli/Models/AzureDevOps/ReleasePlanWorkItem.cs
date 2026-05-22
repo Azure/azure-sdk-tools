@@ -72,6 +72,9 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
         [FieldName("Custom.ProductLifecycle")]
         public string ProductLifecycle { get; set; } = string.Empty;
 
+        [FieldName("Custom.ReleasePlanType")]
+        public string ReleasePlanType { get; set; } = string.Empty;
+
         public override Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument GetPatchDocument()
         {
             var jsonDocument = base.GetPatchDocument();

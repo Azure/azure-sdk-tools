@@ -5,8 +5,16 @@
 ### Features Added
 
 - Added pre-build step for the .NET plugin during SDK generation
+- Added `apiReleaseType` required parameter to `CreateReleasePlan` (options: Private Preview, Public Preview, GA) to set `Custom.ReleasePlanType` in ADO work items.
+- Spec PR validation against release type: Private Preview requires `azure-rest-api-specs-pr`; Public Preview/GA requires `azure-rest-api-specs`.
+- SDK release type now defaults automatically (beta for preview, stable for GA) when not provided.
+- Duplicate release plan check now considers API release type, allowing separate plans for different release stages.
+- Release plan title format updated to include release type (e.g., "Private Preview release plan for Contoso.Management").
 
 ### Breaking Changes
+
+- Removed `userEmail` parameter from `CreateReleasePlan`; email is resolved automatically.
+- `sdkReleaseType` parameter in `CreateReleasePlan` is now optional (was required).
 
 ### Bugs Fixed
 

@@ -848,13 +848,13 @@ namespace APIViewWeb.Managers
         /// </summary>
         /// <param name="repoName"></param>
         /// <param name="buildId"></param>
-        /// <param name="artifact"></param>
+        /// <param name="artifactName"></param>
         /// <param name="project"></param>
         /// <param name="metadataFileName">Optional TypeSpec metadata file name (e.g., "typespec-metadata.json").</param>
         /// <returns></returns>
-        public async Task UpdateAPIRevisionCodeFileAsync(string repoName, string buildId, string artifact, string project, string metadataFileName = null)
+        public async Task UpdateAPIRevisionCodeFileAsync(string repoName, string buildId, string artifactName, string project, string metadataFileName = null)
         {
-            var stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifact, filePath: null, project: project, format: "zip");
+            var stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifactName, filePath: null, project: project, format: "zip");
             var archive = new ZipArchive(stream);
 
             foreach (var entry in archive.Entries)
@@ -880,6 +880,23 @@ namespace APIViewWeb.Managers
                 if (review != null)
                 {
                     var apiRevision = await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId: apiRevisionId);
+                    if (apiRevision != null && apiRevision.ReviewId != reviewId)
+                    {
+                        _telemetryClient.TrackTrace(
+                            $"Skipping artifact entry: revision {apiRevisionId} does not belong to review {reviewId} (actual review: {apiRevision.ReviewId}). BuildId={buildId}",
+                            Microsoft.ApplicationInsights.DataContracts.SeverityLevel.Warning,
+                            new Dictionary<string, string>
+                            {
+                                { "RepoName", repoName ?? string.Empty },
+                                { "Project", project ?? string.Empty },
+                                { "BuildId", buildId ?? string.Empty },
+                                { "ReviewId", reviewId ?? string.Empty },
+                                { "APIRevisionId", apiRevisionId ?? string.Empty },
+                                { "ActualReviewId", apiRevision.ReviewId ?? string.Empty },
+                                { "ArtifactEntryPath", reviewFilePath ?? string.Empty }
+                            });
+                        continue;
+                    }
                     if (apiRevision != null)
                     {
                         if (codeFile.CrossLanguageMetadata == null)

@@ -24,18 +24,22 @@ param (
 
 ####################################################################################################################
 
-# Acquire Entra ID bearer token for APIView (resource = api://apiview)
+# Acquire Entra ID bearer token for APIView (resource = api://apiview).
+# Az.Accounts 5.x returns Token as a SecureString by default; unwrap it explicitly so it
+# doesn't serialize as "System.Security.SecureString" in the Authorization header.
 try {
-    $tokenResponse = Get-AzAccessToken -ResourceUrl "api://apiview" -ErrorAction Stop
+    $tokenResponse = Get-AzAccessToken -ResourceUrl "api://apiview" -AsSecureString -ErrorAction Stop
 }
 catch {
-    Write-Error "Failed to acquire access token for APIView (resource: api://apiview): $($_.Exception.Message)"
-    exit 1
+    throw "Failed to acquire access token for APIView (resource: api://apiview): $($_.Exception.Message)"
 }
-$token = $tokenResponse.Token
+$secureToken = $tokenResponse.Token
+if (-not $secureToken) {
+    throw "Failed to acquire access token for APIView (resource: api://apiview)"
+}
+$token = [System.Net.NetworkCredential]::new('', $secureToken).Password
 if (-not $token) {
-    Write-Error "Failed to acquire access token for APIView (resource: api://apiview)"
-    exit 1
+    throw "Acquired access token for APIView was empty after unwrap"
 }
 
 $body = @{
@@ -64,5 +68,5 @@ try
 catch
 {
     Write-Host "Error - Exception details: $($_.Exception.Response)"
-    exit 1
+    throw
 }

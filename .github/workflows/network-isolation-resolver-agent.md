@@ -245,7 +245,7 @@ post-steps:
 
         & $Command @Arguments
         if ($LASTEXITCODE -ne 0) {
-          throw "Command failed with exit code ${LASTEXITCODE}: $Command $($Arguments -join ' ')"
+          throw "Command failed with exit code ${LASTEXITCODE}: $Command"
         }
       }
 
@@ -268,71 +268,114 @@ post-steps:
         $remediations = @($remediations)
       }
 
-      foreach ($remediation in $remediations) {
-        $repo = [string]$remediation.repo
-        $branch = [string]$remediation.branch
-        $workingDirectory = [string]$remediation.workingDirectory
-        $title = [string]$remediation.title
-        $body = [string]$remediation.body
+      $askPassPath = Join-Path $env:RUNNER_TEMP ("network-isolation-git-askpass-{0}.sh" -f ([Guid]::NewGuid().ToString('N')))
+      $tokenFilePath = Join-Path $env:RUNNER_TEMP ("network-isolation-git-token-{0}.txt" -f ([Guid]::NewGuid().ToString('N')))
+      Set-Content -Path $tokenFilePath -Value $env:GH_TOKEN -NoNewline
+      Set-Content -Path $askPassPath -Value @'
+      #!/bin/sh
+      case "$1" in
+        *Username*) printf '%s\n' 'x-access-token' ;;
+        *) cat "$GIT_ASKPASS_TOKEN_FILE" ;;
+      esac
+      '@
+      Invoke-CheckedNativeCommand chmod 600 $tokenFilePath
+      Invoke-CheckedNativeCommand chmod 700 $askPassPath
 
-        if ($repo -notmatch '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$') {
-          throw "Invalid repo value '$repo' in remediation manifest. Expected owner/repo."
-        }
-        if ($branch -notmatch '^[A-Za-z0-9._/-]+$') {
-          throw "Invalid branch value '$branch' in remediation manifest."
-        }
-        if ([string]::IsNullOrWhiteSpace($workingDirectory) -or -not (Test-Path -Path $workingDirectory)) {
-          throw "Working directory '$workingDirectory' does not exist for $repo."
-        }
-        if ([string]::IsNullOrWhiteSpace($title) -or [string]::IsNullOrWhiteSpace($body)) {
-          throw "Remediation for $repo/$branch must include title and body."
-        }
+      $previousGitAskPass = $env:GIT_ASKPASS
+      $previousGitAskPassTokenFile = $env:GIT_ASKPASS_TOKEN_FILE
+      $previousGitTerminalPrompt = $env:GIT_TERMINAL_PROMPT
 
-        Push-Location $workingDirectory
-        try {
-          $currentBranch = git branch --show-current
-          if ($LASTEXITCODE -ne 0) {
-            throw "Failed to determine the current branch in $workingDirectory."
-          }
-          if ($currentBranch -ne $branch) {
-            Invoke-CheckedNativeCommand git checkout $branch
-          }
+      $env:GIT_ASKPASS = $askPassPath
+      $env:GIT_ASKPASS_TOKEN_FILE = $tokenFilePath
+      $env:GIT_TERMINAL_PROMPT = '0'
 
-          $serverUrl = "https://x-access-token:$env:GH_TOKEN@github.com/$repo.git"
-          Invoke-CheckedNativeCommand git remote set-url origin $serverUrl
-          Invoke-CheckedNativeCommand git push --set-upstream origin $branch
+      try {
+        foreach ($remediation in $remediations) {
+          $repo = [string]$remediation.repo
+          $branch = [string]$remediation.branch
+          $workingDirectory = [string]$remediation.workingDirectory
+          $title = [string]$remediation.title
+          $body = [string]$remediation.body
 
-          $existingPr = gh pr list --repo $repo --head $branch --state open --json url --jq '.[0].url'
-          if ($LASTEXITCODE -ne 0) {
-            throw "Failed to list existing pull requests for ${repo}:${branch}."
+          if ($repo -notmatch '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$') {
+            throw "Invalid repo value '$repo' in remediation manifest. Expected owner/repo."
           }
-          if ([string]::IsNullOrWhiteSpace($existingPr)) {
-            $bodyPath = Join-Path $env:RUNNER_TEMP ("network-isolation-pr-{0}.md" -f ([Guid]::NewGuid().ToString('N')))
-            Set-Content -Path $bodyPath -Value $body
-            $prUrl = gh pr create --repo $repo --base main --head $branch --title $title --body-file $bodyPath
-            if ($LASTEXITCODE -ne 0) {
-              throw "Failed to create pull request for ${repo}:${branch}."
-            }
+          if ($branch -notmatch '^[A-Za-z0-9._/-]+$') {
+            throw "Invalid branch value '$branch' in remediation manifest."
           }
-          else {
-            $prUrl = $existingPr
-            Write-Host "Open pull request already exists for ${repo}:${branch}: $prUrl"
+          if ([string]::IsNullOrWhiteSpace($workingDirectory) -or -not (Test-Path -Path $workingDirectory)) {
+            throw "Working directory '$workingDirectory' does not exist for $repo."
+          }
+          if ([string]::IsNullOrWhiteSpace($title) -or [string]::IsNullOrWhiteSpace($body)) {
+            throw "Remediation for $repo/$branch must include title and body."
           }
 
+          Push-Location $workingDirectory
           try {
-            & gh pr edit $prUrl --add-reviewer $env:REVIEWER
+            $currentBranch = git branch --show-current
             if ($LASTEXITCODE -ne 0) {
-              Write-Warning "Pull request was created, but reviewer assignment failed for $env:REVIEWER."
+              throw "Failed to determine the current branch in $workingDirectory."
             }
-          }
-          catch {
-            Write-Warning "Pull request was created, but reviewer assignment failed for $env:REVIEWER. $($_.Exception.Message)"
-          }
+            if ($currentBranch -ne $branch) {
+              Invoke-CheckedNativeCommand git checkout $branch
+            }
 
-          Write-Host "Created or updated pull request for ${repo}:${branch}: $prUrl"
+            $serverUrl = "https://github.com/$repo.git"
+            Invoke-CheckedNativeCommand git remote set-url origin $serverUrl
+            Invoke-CheckedNativeCommand git push --set-upstream origin $branch
+
+            $existingPr = gh pr list --repo $repo --head $branch --state open --json url --jq '.[0].url'
+            if ($LASTEXITCODE -ne 0) {
+              throw "Failed to list existing pull requests for ${repo}:${branch}."
+            }
+            if ([string]::IsNullOrWhiteSpace($existingPr)) {
+              $bodyPath = Join-Path $env:RUNNER_TEMP ("network-isolation-pr-{0}.md" -f ([Guid]::NewGuid().ToString('N')))
+              Set-Content -Path $bodyPath -Value $body
+              $prUrl = gh pr create --repo $repo --base main --head $branch --title $title --body-file $bodyPath
+              if ($LASTEXITCODE -ne 0) {
+                throw "Failed to create pull request for ${repo}:${branch}."
+              }
+            }
+            else {
+              $prUrl = $existingPr
+              Write-Host "Open pull request already exists for ${repo}:${branch}: $prUrl"
+            }
+
+            try {
+              & gh pr edit $prUrl --add-reviewer $env:REVIEWER
+              if ($LASTEXITCODE -ne 0) {
+                Write-Warning "Pull request was created, but reviewer assignment failed for $env:REVIEWER."
+              }
+            }
+            catch {
+              Write-Warning "Pull request was created, but reviewer assignment failed for $env:REVIEWER. $($_.Exception.Message)"
+            }
+
+            Write-Host "Created or updated pull request for ${repo}:${branch}: $prUrl"
+          }
+          finally {
+            Pop-Location
+          }
         }
-        finally {
-          Pop-Location
+      }
+      finally {
+        $env:GIT_ASKPASS = $previousGitAskPass
+        $env:GIT_ASKPASS_TOKEN_FILE = $previousGitAskPassTokenFile
+        $env:GIT_TERMINAL_PROMPT = $previousGitTerminalPrompt
+        Remove-Item -Path $askPassPath,$tokenFilePath -Force -ErrorAction SilentlyContinue
+      }
+
+      foreach ($remediation in $remediations) {
+        $workingDirectory = [string]$remediation.workingDirectory
+        $repo = [string]$remediation.repo
+        if (-not [string]::IsNullOrWhiteSpace($workingDirectory) -and (Test-Path -Path $workingDirectory) -and $repo -match '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$') {
+          Push-Location $workingDirectory
+          try {
+            git remote set-url origin "https://github.com/$repo.git" 2>$null
+          }
+          finally {
+            Pop-Location
+          }
         }
       }
 

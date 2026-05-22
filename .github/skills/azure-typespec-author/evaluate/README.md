@@ -7,11 +7,21 @@ This directory contains [Vally](https://aka.ms/vally) evaluation cases for the `
 - [Vally CLI](https://aka.ms/vally) installed globally: `npm install -g @microsoft/vally-cli`
 - The `azsdk-cli` MCP server built: `dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Cli`
 - An API key for the model configured (e.g., Anthropic or OpenAI key via environment variable)
-- Run `setup-package-files.js` to download spec repo package files:
-  ```bash
-  node fixtures/setup-package-files.js
-  ```
-  This clones `package.json` and `package-lock.json` from [azure-rest-api-specs](https://github.com/Azure/azure-rest-api-specs) into `fixtures/Microsoft.Widget/Widget/` by default. You can optionally pass a custom destination path as the first argument.
+
+## Environment Setup
+
+Run the setup script to download spec repo package files, run `npm install`, and configure `FIXTURE_NODE_MODULES`:
+
+```powershell
+.\scripts\setup-environment.ps1
+```
+
+This script:
+1. Clones `package.json` and `package-lock.json` from [azure-rest-api-specs](https://github.com/Azure/azure-rest-api-specs) into `fixtures/Microsoft.Widget/Widget/`.
+2. Runs `npm install` in that directory.
+3. Sets `FIXTURE_NODE_MODULES` to the `node_modules` path for symlink usage.
+
+Without `FIXTURE_NODE_MODULES`, the agent will run `npm install` each time (slow but functional).
 
 ## Running Evaluations
 

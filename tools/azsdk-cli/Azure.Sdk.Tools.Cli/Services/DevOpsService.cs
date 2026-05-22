@@ -331,6 +331,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 APISpecProjectPath = workItem.Fields.TryGetValue("Custom.ApiSpecProjectPath", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 AttestationStatus = workItem.Fields.TryGetValue("Custom.AttestationStatus", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 ProductLifecycle = workItem.Fields.TryGetValue("Custom.ProductLifecycle", out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                ReleasePlanType = workItem.Fields.TryGetValue("Custom.ReleasePlanType", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 Owner = workItem.Fields.TryGetValue("Custom.PrimaryPM", out value) ? value?.ToString() ?? string.Empty : string.Empty,
             };
 
@@ -468,13 +469,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             try
             {
                 // Create release plan work item
-                var titleLabel = releasePlan.ReleasePlanType switch
-                {
-                    "APEX Private Preview" => "Private Preview",
-                    "APEX Public Preview" => "Public Preview",
-                    "GA" => "GA",
-                    _ => ""
-                };
+                var titleLabel = releasePlan.ApiReleaseType.ToDisplayLabel();
                 var releasePlanTypeLabel = string.IsNullOrEmpty(titleLabel) ? "" : $"{titleLabel} ";
                 var releasePlanTitle = $"{releasePlanTypeLabel}release plan for {releasePlan.ProductName ?? releasePlan.ProductTreeId}";
                 logger.LogInformation("Creating release plan with title: {releasePlanTitle}", releasePlanTitle);

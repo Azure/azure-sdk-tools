@@ -231,7 +231,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             DefaultValueFactory = _ => false,
         };
 
-        private const string sdkBotEmail = "azuresdk@microsoft.com";
         private const string sdkApexEmail = "azsdkapex@microsoft.com";
         private static readonly string DEFAULT_BRANCH = "main";
         private static readonly string PUBLIC_SPECS_REPO = "azure-rest-api-specs";
@@ -619,10 +618,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 logger.LogInformation("Found release plan work item {WorkItemId} to update", releasePlan.WorkItemId);
 
                 // Validate spec PR against release type if both are available
-                var releasePlanType = releasePlan.ReleasePlanType;
-                if (!string.IsNullOrEmpty(specPullRequestUrl) && !string.IsNullOrEmpty(releasePlanType))
+                if (!string.IsNullOrEmpty(specPullRequestUrl) && releasePlan.ApiReleaseType != ApiReleaseType.Unknown)
                 {
-                    ValidateSpecPullRequestForReleaseType(specPullRequestUrl, releasePlanType);
+                    ValidateSpecPullRequestForReleaseType(specPullRequestUrl, releasePlan.ApiReleaseType);
                 }
 
                 // Update release plan fields
@@ -714,39 +712,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        private static bool IsPrivateSpecPullRequest(string specPullRequestUrl)
+        private static void ValidateSpecPullRequestForReleaseType(string specPullRequestUrl, ApiReleaseType apiReleaseType)
         {
-            return specPullRequestUrl.Contains("azure-rest-api-specs-pr", StringComparison.OrdinalIgnoreCase);
-        }
-
-        private static void ValidateSpecPullRequestForReleaseType(string specPullRequestUrl, string apiReleaseType)
-        {
-            if (string.IsNullOrEmpty(specPullRequestUrl) || string.IsNullOrEmpty(apiReleaseType))
+            var error = apiReleaseType.ValidateSpecPullRequest(specPullRequestUrl);
+            if (error != null)
             {
-                return;
-            }
-
-            var isPrivateSpec = IsPrivateSpecPullRequest(specPullRequestUrl);
-
-            if (apiReleaseType == "APEX Private Preview" && !isPrivateSpec)
-            {
-                throw new Exception("A spec pull request in azure-rest-api-specs (public) cannot be linked to a Private Preview release plan. Use a spec PR from azure-rest-api-specs-pr for Private Preview, or choose Public Preview or GA release type for a public spec PR.");
-            }
-
-            if ((apiReleaseType == "APEX Public Preview" || apiReleaseType == "GA") && isPrivateSpec)
-            {
-                throw new Exception("A spec pull request in azure-rest-api-specs-pr (private) cannot be linked to a Public Preview or GA release plan. Use a spec PR from azure-rest-api-specs for Public Preview or GA, or choose Private Preview release type for a private spec PR.");
+                throw new Exception(error);
             }
         }
 
-        private static readonly Dictionary<string, string> ApiReleaseTypeMappings = new(StringComparer.OrdinalIgnoreCase)
-        {
-            { "private preview", "APEX Private Preview" },
-            { "public preview", "APEX Public Preview" },
-            { "ga", "GA" }
-        };
-
-        private async Task ValidateCreateReleasePlanInputAsync(string typeSpecProjectPath, string serviceTreeId, string productTreeId, string specPullRequestUrl, string sdkReleaseType, CancellationToken ct)
+        private async Task ValidateCreateReleasePlanInputAsync(string typeSpecProjectPath, string serviceTreeId, string productTreeId, string specPullRequestUrl, string sdkReleaseType, ApiReleaseType apiReleaseType, CancellationToken ct)
         {
             if (!string.IsNullOrEmpty(specPullRequestUrl))
             {
@@ -765,7 +740,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
 
             // Skip filesystem validation for URLs since GetSpecRepoRootPath expects local paths
-            if (!typeSpecHelper.IsUrl(typeSpecProjectPath))
+            // For Private Preview, allow private spec repos
+            if (!typeSpecHelper.IsUrl(typeSpecProjectPath) && apiReleaseType != ApiReleaseType.PrivatePreview)
             {
                 var repoRoot = typeSpecHelper.GetSpecRepoRootPath(typeSpecProjectPath);
 
@@ -776,6 +752,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         SDK generation and release require the API specs pull request to be in the public azure-rest-api-specs repository.
                         Please create a pull request in the public Azure/azure-rest-api-specs repository to move your specs changes to public.
                         A release plan cannot be created for SDK generation using a pull request in a private repository.
+                        Use Private Preview API release type if you are working with a private spec repository.
                         """);
                 }
             }
@@ -797,7 +774,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             try
             {
                 // Validate and map API release type
-                if (!ApiReleaseTypeMappings.TryGetValue(apiReleaseType?.Trim() ?? "", out var mappedApiReleaseType))
+                if (!ApiReleaseTypeExtensions.TryParseFromUserInput(apiReleaseType, out var parsedApiReleaseType))
                 {
                     return new ReleasePlanResponse { ResponseError = $"Invalid API release type '{apiReleaseType}'. Supported values are: Private Preview, Public Preview, GA" };
                 }
@@ -805,7 +782,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 // Default SDK release type based on API release type if not provided
                 if (string.IsNullOrEmpty(sdkReleaseType))
                 {
-                    sdkReleaseType = mappedApiReleaseType == "GA" ? "stable" : "beta";
+                    sdkReleaseType = parsedApiReleaseType.GetDefaultSdkReleaseType();
                 }
                 else
                 {
@@ -821,10 +798,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
                 }
 
-                await ValidateCreateReleasePlanInputAsync(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, sdkReleaseType, ct);
+                await ValidateCreateReleasePlanInputAsync(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, sdkReleaseType, parsedApiReleaseType, ct);
 
                 // Validate spec PR against release type
-                ValidateSpecPullRequestForReleaseType(specPullRequestUrl, mappedApiReleaseType);
+                ValidateSpecPullRequestForReleaseType(specPullRequestUrl, parsedApiReleaseType);
 
                 // Handle both URLs and local paths for TypeSpec projects
                 bool isValidTypeSpec;
@@ -898,8 +875,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         }
                     }
 
-                    logger.LogInformation("Checking for existing release plans for product: {productTreeId} with API release type: {apiReleaseType}", productTreeId, mappedApiReleaseType);
-                    var existingReleasePlans = await devOpsService.GetReleasePlansForProductAsync(productTreeId, sdkReleaseType, isTestReleasePlan, mappedApiReleaseType, ct);
+                    logger.LogInformation("Checking for existing release plans for product: {productTreeId} with API release type: {apiReleaseType}", productTreeId, parsedApiReleaseType.ToDisplayLabel());
+                    var existingReleasePlans = await devOpsService.GetReleasePlansForProductAsync(productTreeId, sdkReleaseType, isTestReleasePlan, parsedApiReleaseType.ToAdoFieldValue(), ct);
                     if (existingReleasePlans.Any())
                     {
                         return new ReleasePlanResponse
@@ -916,11 +893,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 logger.LogInformation("Attempting to retrieve current user email.");
 
                 var userEmail = await userHelper.GetUserEmail(ct);
-                if (userEmail == sdkBotEmail)
-                {
-                    throw new InvalidOperationException("Cannot create release plan using SDK bot email. Please provide a valid user email address.");
-                }
-
                 logger.LogInformation("User email for release plan submission: {userEmail}", userEmail);
 
                 var productDisplayName = Path.GetFileName(specProject);
@@ -939,7 +911,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     ReleasePlanSubmittedByEmail = userEmail,
                     APISpecProjectPath = specProject,
                     ProductName = productDisplayName,
-                    ReleasePlanType = mappedApiReleaseType
+                    ApiReleaseType = parsedApiReleaseType
                 };
                 var workItem = await devOpsService.CreateReleasePlanWorkItemAsync(releasePlan, ct);
                 if (workItem == null)
@@ -1633,9 +1605,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
 
                 // Validate spec PR against release type
-                if (releasePlan != null && !string.IsNullOrEmpty(releasePlan.ReleasePlanType))
+                if (releasePlan != null && releasePlan.ApiReleaseType != ApiReleaseType.Unknown)
                 {
-                    ValidateSpecPullRequestForReleaseType(specPullRequestUrl, releasePlan.ReleasePlanType);
+                    ValidateSpecPullRequestForReleaseType(specPullRequestUrl, releasePlan.ApiReleaseType);
                 }
 
                 // Update the spec pull request in the release plan

@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using Azure.Sdk.Tools.Cli.Attributes;
+using Azure.Sdk.Tools.Cli.Models;
 using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
 
 namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
@@ -74,6 +75,12 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
 
         [FieldName("Custom.ReleasePlanType")]
         public string ReleasePlanType { get; set; } = string.Empty;
+
+        public ApiReleaseType ApiReleaseType
+        {
+            get => ApiReleaseTypeExtensions.FromAdoFieldValue(ReleasePlanType);
+            set => ReleasePlanType = value.ToAdoFieldValue();
+        }
 
         public override Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument GetPatchDocument()
         {

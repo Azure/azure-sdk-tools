@@ -910,11 +910,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         releasePlan.ReleasePlanId = releasePlanId;
                     }
 
-                    if (workItem.Fields.TryGetValue("Custom.ReleasePlanLink", out value) && value is string releasePlanLink)
-                    {
-                        releasePlan.ReleasePlanLink = releasePlanLink;
-                    }
-
                     return new ReleasePlanResponse
                     {
                         Message = "Release plan is being created",

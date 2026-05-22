@@ -167,6 +167,63 @@ class DatabaseManager:
 
         return field_a, field_b, changed
 
+    def cascade_unlink(self, item: dict, item_type: str, *, run_indexer: bool = False):
+        """Remove back-links from all related items. Soft-delete orphaned examples.
+
+        For each relationship field on the item, removes the item's ID from the
+        corresponding field on the target item. If the target is an example that
+        becomes fully orphaned (no guideline_ids and no memory_ids), it is
+        soft-deleted.
+
+        Args:
+            item: The raw DB record being deleted.
+            item_type: One of 'guideline', 'memory', 'example'.
+            run_indexer: Whether to trigger search indexers after unlinking.
+        """
+        import logging
+
+        logger = logging.getLogger(__name__)
+        item_id = item["id"]
+        containers = {
+            "guideline": self.guidelines,
+            "memory": self.memories,
+            "example": self.examples,
+        }
+
+        # Find all relationships where this item_type is the source
+        for (src_type, tgt_type), (src_field, tgt_field) in RELATIONSHIP_FIELDS.items():
+            if src_type != item_type:
+                continue
+            target_container = containers[tgt_type]
+
+            for target_id in item.get(src_field, []):
+                try:
+                    raw_target = target_container.get(target_id)
+                    refs = raw_target.get(tgt_field, [])
+                    if item_id in refs:
+                        refs.remove(item_id)
+
+                    # Check if the target is now orphaned and should be deleted
+                    if (
+                        tgt_type == "example"
+                        and not raw_target.get("memory_ids", [])
+                        and not raw_target.get("guideline_ids", [])
+                    ):
+                        target_container.delete(target_id, run_indexer=False)
+                        logger.info("Soft-deleted orphaned example %s", target_id)
+                    else:
+                        target_container.client.upsert_item(raw_target)
+                        logger.info("Unlinked %s %s", tgt_type, target_id)
+                except Exception as e:
+                    logger.warning("Failed to clean %s %s: %s", tgt_type, target_id, e)
+
+        if run_indexer:
+            for container in containers.values():
+                try:
+                    container.run_indexer()
+                except Exception:
+                    pass
+
     def link_and_save(self, type_a: str, id_a: str, type_b: str, id_b: str, *, run_indexer: bool = True):
         """Fetch two KB items, link them bidirectionally, and save with rollback.
 

@@ -13,6 +13,7 @@ from collections import deque
 from typing import Dict, List, Optional
 
 from azure.search.documents import SearchClient, SearchItemPaged
+
 from azure.search.documents.indexes import SearchIndexerClient
 from azure.search.documents.models import (
     QueryAnswerResult,

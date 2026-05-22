@@ -4,13 +4,13 @@ Run all sub-steps in order after applying changes.
 
 | Sub-step | Action                          | When                       |
 | -------- | ------------------------------- | -------------------------- |
-| 5.1      | `azsdk_run_typespec_validation` | Always                     |
+| 5.1      | `azure-sdk-mcp:azsdk_run_typespec_validation` | Always                     |
 | 5.2      | `tsp compile .`                 | Always                     |
 | 5.3      | Example verification            | API version evolution only |
 
 ### 5.1: TypeSpec Validation
 
-Invoke `azsdk_run_typespec_validation` with the project root. On failure → fix → re-run. Limit to 3 retry attempts; if still failing after 3 retries, stop and report the remaining errors to the user.
+Invoke `azure-sdk-mcp:azsdk_run_typespec_validation` with the project root. On failure → fix → re-run. Limit to 3 retry attempts; if still failing after 3 retries, stop and report the remaining errors to the user.
 
 ### 5.2: Compile
 

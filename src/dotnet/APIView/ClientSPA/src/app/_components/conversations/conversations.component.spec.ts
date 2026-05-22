@@ -656,6 +656,33 @@ describe('ConversationComponent', () => {
 
       expect(component.comments[0].severity).toBe(CommentSeverity.Question);
     });
+
+    it('should reapply the active severity filter when a comment severity changes (#14990)', () => {
+      // Build a thread whose first comment severity is "mustFix"; it should match the
+      // active "mustfix" filter chip.
+      const sharedComment = { id: 'comment-1', severity: 'mustFix' } as CommentItemModel;
+      component.comments = [sharedComment];
+
+      const thread: any = {
+        isResolvedCommentThread: false,
+        comments: [sharedComment],
+      };
+      component.commentThreads = new Map();
+      component.commentThreads.set('rev-1', [thread]);
+      component.apiRevisionsWithComments = [{ id: 'rev-1' } as APIRevision];
+
+      component.filterStatus = 'all';
+      component.filterSeverities = new Set(['mustfix']);
+      component.filterKinds.clear();
+      component.applyFilters();
+      expect(component.filteredThreadCount).toBe(1);
+
+      // Simulate a severity change to a value not in the active filter set.
+      commentsService.notifySeverityChanged('comment-1', CommentSeverity.Suggestion);
+
+      // The thread should now be filtered out without requiring the user to toggle filters.
+      expect(component.filteredThreadCount).toBe(0);
+    });
   });
 
   describe('Filter pipeline (applyFilters / threadMatchesFilters)', () => {

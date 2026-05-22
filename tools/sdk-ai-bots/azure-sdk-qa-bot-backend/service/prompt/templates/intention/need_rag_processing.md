@@ -10,5 +10,9 @@ Determine whether the user's message requires RAG (Retrieval Augmented Generatio
 **Return `true` for:**
 - Technical questions that ask for help, guidance, or best practices
 - Permission-related questions
-- PR review request or approval process questions
+- Questions *about* the PR review or approval process (e.g., "How do I get my PR approved?")
 - All other cases not explicitly listed above
+
+**Important distinction for PR reviews:**
+- Asking *for* a review (e.g., "Please review my PR") → return `false` (this is a request/announcement, not a question)
+- Asking *about* the review process (e.g., "What are the steps to get a PR approved?") → return `true` (this is a technical question)

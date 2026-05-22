@@ -1,0 +1,107 @@
+{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "guideline_parsing_result",
+    "strict": true,
+    "schema": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "description": "Array of parsed guideline objects, one per input guideline.",
+          "items": {
+            "$ref": "#/$defs/Guideline"
+          }
+        }
+      },
+      "required": ["items"],
+      "additionalProperties": false,
+      "$defs": {
+        "Example": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique identifier for the example in format: {guideline_id}-example-{N}."
+            },
+            "title": {
+              "type": "string",
+              "description": "Short descriptive title of the example."
+            },
+            "content": {
+              "type": "string",
+              "description": "Code snippet demonstrating the example."
+            },
+            "example_type": {
+              "type": "string",
+              "description": "Whether this example is 'good' or 'bad'.",
+              "enum": ["good", "bad"]
+            },
+            "language": {
+              "type": "string",
+              "description": "Programming language of this example (e.g., 'python')."
+            },
+            "service": {
+              "type": ["string", "null"],
+              "description": "If this example is specific to a service (e.g., 'azure-functions')."
+            },
+            "is_exception": {
+              "type": "boolean",
+              "description": "Indicates if this example provides an exception to the guidelines rather than an amplification."
+            },
+            "tags": {
+              "type": "array",
+              "description": "Tags associated with the example.",
+              "items": { "type": "string" }
+            },
+            "guideline_ids": {
+              "type": "array",
+              "description": "List of guideline IDs to which this example applies.",
+              "items": { "type": "string" }
+            }
+          },
+          "required": ["id", "title", "content", "example_type", "language", "service", "is_exception", "tags", "guideline_ids"],
+          "additionalProperties": false
+        },
+        "Guideline": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique identifier for the guideline (must match the input id exactly)."
+            },
+            "title": {
+              "type": "string",
+              "description": "Short descriptive title summarizing the guideline."
+            },
+            "content": {
+              "type": "string",
+              "description": "Full text of the guideline with code blocks removed."
+            },
+            "language": {
+              "type": ["string", "null"],
+              "description": "If this guideline is specific to a language (e.g., 'python')."
+            },
+            "tags": {
+              "type": "array",
+              "description": "List of tags that classify the guideline.",
+              "items": { "type": "string" }
+            },
+            "related_guidelines": {
+              "type": "array",
+              "description": "List of guideline IDs that are related to this guideline.",
+              "items": { "type": "string" }
+            },
+            "related_examples": {
+              "type": "array",
+              "description": "Array of example objects extracted from this guideline.",
+              "items": { "$ref": "#/$defs/Example" }
+            }
+          },
+          "required": ["id", "title", "content", "language", "tags", "related_guidelines", "related_examples"],
+          "additionalProperties": false
+        }
+      }
+    }
+  }
+}

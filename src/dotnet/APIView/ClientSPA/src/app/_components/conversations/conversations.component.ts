@@ -120,6 +120,10 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
       const comment = this.comments.find(c => c.id === commentId);
       if (comment) {
         comment.severity = newSeverity;
+        // Severity affects which threads match the active severity filter and whether the
+        // Unknown chip is relevant, so reapply filters to keep the displayed list in sync.
+        this.updateUnknownSeverityFilterVisibility();
+        this.applyFilters();
         this.changeDetectorRef.markForCheck();
       }
     });

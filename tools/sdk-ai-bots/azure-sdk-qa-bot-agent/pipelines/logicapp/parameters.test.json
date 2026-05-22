@@ -1,0 +1,71 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "logicAppName": {
+      "value": "azuresdkqabot-test-logicapp"
+    },
+    "teamsGroupId": {
+      "value": "39910aef-85da-4e30-b5e3-35f04ef38648"
+    },
+    "teamsChannelIds": {
+      "value": [
+        "19:26a1bcfaf04440b98c43acb74792d645@thread.tacv2",
+        "19:bf4a5612ed5b4877ad05ac7671161714@thread.tacv2",
+        "19:9bc9df5434b24fa5888307acc7ae826d@thread.tacv2",
+        "19:b1b597aa3a4d4470aaa3e5f2e0eff48c@thread.tacv2",
+        "19:7c0ef487fa6e4e2ab8a925fd3a18efe3@thread.tacv2",
+        "19:c964d1d38e144874870e6da77f533f0a@thread.tacv2",
+        "19:8551c70d67864a04b843151a256e109a@thread.tacv2",
+        "19:603d15bc0fd248ff82a8326da7322a4d@thread.tacv2",
+        "19:526b3e64435144c8aa3a127587085580@thread.tacv2",
+        "19:rMhMrxg7UjfwZmVoSeVvWvNQIfT_G6ds8napsytWqzw1@thread.tacv2"
+      ]
+    },
+    "serverBaseUrl": {
+      "value": "https://azuresdkqabot-test-serv-agent-dydweeaxaah6g3b4.westus2-01.azurewebsites.net"
+    },
+    "serverAudience": {
+      "value": "674414e1-152b-41ac-b0d2-763535edea6c"
+    },
+    "serverIdentityResourceId": {
+      "value": "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.ManagedIdentity/userAssignedIdentities/azuresdkqabot-identity"
+    },
+    "botBaseUrl": {
+      "value": "https://azsdkqabottest.azurewebsites.net"
+    },
+    "botAudience": {
+      "value": "d05d0376-47f5-4326-b8ca-91deabbe3b5a"
+    },
+    "botIdentityResourceId": {
+      "value": "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-test/providers/Microsoft.ManagedIdentity/userAssignedIdentities/azsdkqabottest"
+    },
+    "functionAppResourceId": {
+      "value": "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Web/sites/azuresdkqabot-dev-function"
+    },
+    "blobStorageAccountName": {
+      "value": "azuresdkqabotstorage"
+    },
+    "blobConnectionName": {
+      "value": "azureblob"
+    },
+    "blobConnectionResourceId": {
+      "value": "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Web/connections/azureblob"
+    },
+    "blobIdentityResourceId": {
+      "value": "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.ManagedIdentity/userAssignedIdentities/azuresdkqabot-identity"
+    },
+    "teamsConnectionResourceId": {
+      "value": "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Web/connections/teams"
+    },
+    "integrationAccountResourceId": {
+      "value": "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Logic/integrationAccounts/azuresdkqabot-dev-ia"
+    },
+    "userAssignedIdentities": {
+      "value": {
+        "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-test/providers/Microsoft.ManagedIdentity/userAssignedIdentities/azsdkqabottest": {},
+        "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.ManagedIdentity/userAssignedIdentities/azuresdkqabot-identity": {}
+      }
+    }
+  }
+}

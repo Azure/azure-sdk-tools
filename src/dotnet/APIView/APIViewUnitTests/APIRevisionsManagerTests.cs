@@ -107,7 +107,7 @@ public class APIRevisionsManagerTests
         _mockProjectsManager = new Mock<IProjectsManager>();
         _mockApiVersionsManager = new Mock<IAPIVersionsManager>();
         _mockApiVersionsManager
-            .Setup(m => m.GetOrCreateVersionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()))
+            .Setup(m => m.GetOrCreateVersionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()))
             .ReturnsAsync(new APIVersionModel { Id = "default-version-id" });
 
         TelemetryConfiguration telemetryConfiguration = new();
@@ -407,7 +407,7 @@ public class APIRevisionsManagerTests
         };
 
         _mockApiVersionsManager
-            .Setup(m => m.GetOrCreateVersionAsync(reviewId, "1.0.0", It.IsAny<int?>(), It.IsAny<string>()))
+            .Setup(m => m.GetOrCreateVersionAsync(reviewId, "1.0.0", It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()))
             .ReturnsAsync(new APIVersionModel { Id = expectedVersionId });
 
         _mockCodeFileManager

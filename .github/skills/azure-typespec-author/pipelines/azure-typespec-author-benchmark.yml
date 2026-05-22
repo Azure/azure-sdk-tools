@@ -10,62 +10,6 @@ parameters:
   displayName: Branch containing the azure-typespec-author skill source (SKILL.md + references/) to evaluate. Leave empty to use the branch this pipeline was triggered from.
   type: string
   default: ''
-- name: RunForcedVersioning
-  displayName: '[Forced] Run versioning suite'
-  type: boolean
-  default: true
-- name: RunForcedArmtemplate
-  displayName: '[Forced] Run armtemplate suite'
-  type: boolean
-  default: true
-- name: RunForcedLro
-  displayName: '[Forced] Run longrunningoperation suite'
-  type: boolean
-  default: true
-- name: RunForcedDecorators
-  displayName: '[Forced] Run decorators suite'
-  type: boolean
-  default: true
-- name: RunForcedWarning
-  displayName: '[Forced] Run warning suite'
-  type: boolean
-  default: true
-- name: RunTriggerVersioning
-  displayName: '[Trigger] Run versioning suite'
-  type: boolean
-  default: true
-- name: RunTriggerArmtemplate
-  displayName: '[Trigger] Run armtemplate suite'
-  type: boolean
-  default: true
-- name: RunTriggerLro
-  displayName: '[Trigger] Run longrunningoperation suite'
-  type: boolean
-  default: true
-- name: RunTriggerDecorators
-  displayName: '[Trigger] Run decorators suite'
-  type: boolean
-  default: true
-- name: RunTriggerWarning
-  displayName: '[Trigger] Run warning suite'
-  type: boolean
-  default: true
-- name: ForcedSuites
-  type: object
-  default:
-    - { name: versioning, file: versioning.eval.yaml, timeout: 50, param: RunForcedVersioning }
-    - { name: armtemplate, file: armtemplate.eval.yaml, timeout: 40, param: RunForcedArmtemplate }
-    - { name: longrunningoperation, file: lro.eval.yaml, timeout: 25, param: RunForcedLro }
-    - { name: decorators, file: decorators.eval.yaml, timeout: 15, param: RunForcedDecorators }
-    - { name: warning, file: warning.eval.yaml, timeout: 25, param: RunForcedWarning }
-- name: SkillInvocationSuites
-  type: object
-  default:
-    - { name: versioning, file: versioning-trigger.eval.yaml, timeout: 50, param: RunTriggerVersioning }
-    - { name: armtemplate, file: armtemplate-trigger.eval.yaml, timeout: 40, param: RunTriggerArmtemplate }
-    - { name: longrunningoperation, file: lro-trigger.eval.yaml, timeout: 25, param: RunTriggerLro }
-    - { name: decorators, file: decorators-trigger.eval.yaml, timeout: 15, param: RunTriggerDecorators }
-    - { name: warning, file: warning-trigger.eval.yaml, timeout: 25, param: RunTriggerWarning }
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -97,17 +41,36 @@ extends:
 
               # Run evaluations — each suite gets its own step with timeout
               # and continueOnError so failures don't block subsequent suites.
-              - ${{ each suite in parameters.ForcedSuites }}:
-                - ${{ if eq(parameters[suite.param], true) }}:
-                  - script: |
-                      bash .github/skills/azure-typespec-author/evaluate/scripts/run-eval-suite.sh "${{ suite.file }}" "${{ suite.name }}-forced"
-                    displayName: Run force invokation suite - ${{ suite.name }}
-                    timeoutInMinutes: ${{ suite.timeout }}
-                    continueOnError: true
-                    condition: always()
-                    env:
-                      GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
-                      FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
+              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+                parameters:
+                  EvalFile: versioning.eval.yaml
+                  SuiteName: versioning-forced
+                  DisplayName: Run force invokation suite - versioning
+                  TimeoutMinutes: 50
+              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+                parameters:
+                  EvalFile: armtemplate.eval.yaml
+                  SuiteName: armtemplate-forced
+                  DisplayName: Run force invokation suite - armtemplate
+                  TimeoutMinutes: 40
+              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+                parameters:
+                  EvalFile: lro.eval.yaml
+                  SuiteName: longrunningoperation-forced
+                  DisplayName: Run force invokation suite - longrunningoperation
+                  TimeoutMinutes: 25
+              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+                parameters:
+                  EvalFile: decorators.eval.yaml
+                  SuiteName: decorators-forced
+                  DisplayName: Run force invokation suite - decorators
+                  TimeoutMinutes: 15
+              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+                parameters:
+                  EvalFile: warning.eval.yaml
+                  SuiteName: warning-forced
+                  DisplayName: Run force invokation suite - warning
+                  TimeoutMinutes: 25
 
             templateContext:
               outputs:
@@ -137,17 +100,36 @@ extends:
 
               # Run evaluations — each suite gets its own step with timeout
               # and continueOnError so failures don't block subsequent suites.
-              - ${{ each suite in parameters.SkillInvocationSuites }}:
-                - ${{ if eq(parameters[suite.param], true) }}:
-                  - script: |
-                      bash .github/skills/azure-typespec-author/evaluate/scripts/run-eval-suite.sh "${{ suite.file }}" "${{ suite.name }}"
-                    displayName: Run suite - ${{ suite.name }}
-                    timeoutInMinutes: ${{ suite.timeout }}
-                    continueOnError: true
-                    condition: always()
-                    env:
-                      GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
-                      FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
+              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+                parameters:
+                  EvalFile: versioning-trigger.eval.yaml
+                  SuiteName: versioning
+                  DisplayName: Run suite - versioning
+                  TimeoutMinutes: 50
+              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+                parameters:
+                  EvalFile: armtemplate-trigger.eval.yaml
+                  SuiteName: armtemplate
+                  DisplayName: Run suite - armtemplate
+                  TimeoutMinutes: 40
+              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+                parameters:
+                  EvalFile: lro-trigger.eval.yaml
+                  SuiteName: longrunningoperation
+                  DisplayName: Run suite - longrunningoperation
+                  TimeoutMinutes: 25
+              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+                parameters:
+                  EvalFile: decorators-trigger.eval.yaml
+                  SuiteName: decorators
+                  DisplayName: Run suite - decorators
+                  TimeoutMinutes: 15
+              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+                parameters:
+                  EvalFile: warning-trigger.eval.yaml
+                  SuiteName: warning
+                  DisplayName: Run suite - warning
+                  TimeoutMinutes: 25
 
             templateContext:
               outputs:
@@ -155,10 +137,4 @@ extends:
                   path: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/results
                   artifact: eval-results-skill-invocation-$(Build.BuildId)
                   displayName: Upload eval results
-                  condition: always()
-
-                - output: pipelineArtifact
-                  path: $(Build.StagingDirectory)/qa-bot-log
-                  artifact: qa-bot-service-log-skill-invocation
-                  displayName: Upload QA bot backend log
                   condition: always()

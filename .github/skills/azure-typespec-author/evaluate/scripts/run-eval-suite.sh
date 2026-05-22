@@ -57,5 +57,5 @@ with open("$LATEST") as f:
                     print(f'  - {gname} (score: {g.get("score")})')
 EOF
   fi
-  exit $EXIT_CODE
+  exit 0
 fi

@@ -1,0 +1,20 @@
+parameters:
+  - name: EvalFile
+    type: string
+  - name: SuiteName
+    type: string
+  - name: DisplayName
+    type: string
+  - name: TimeoutMinutes
+    type: number
+
+steps:
+  - script: |
+      bash .github/skills/azure-typespec-author/evaluate/scripts/run-eval-suite.sh "${{ parameters.EvalFile }}" "${{ parameters.SuiteName }}"
+    displayName: ${{ parameters.DisplayName }}
+    timeoutInMinutes: ${{ parameters.TimeoutMinutes }}
+    continueOnError: true
+    condition: always()
+    env:
+      GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+      FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules

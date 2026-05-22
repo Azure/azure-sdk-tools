@@ -27,14 +27,6 @@ namespace APIViewWeb.Controllers
             _apiRevisionManager = apiRevisionManager;
         }
 
-        [AllowAnonymous]
-        [HttpGet]
-        public async Task<ActionResult> UpdateApiReview(string repoName, [FromQuery(Name = "artifactPath")] string artifactName, string buildId, string project = "internal", string metadataFile = null)
-        {
-            await _apiRevisionManager.UpdateAPIRevisionCodeFileAsync(repoName, buildId, artifactName, project, metadataFile);
-            return Ok();
-        }
-
         [Authorize("RequireTokenAuthentication")]
         [HttpPost]
         public async Task<ActionResult> UpdateApiReview([FromBody] UpdateApiReviewRequest request)

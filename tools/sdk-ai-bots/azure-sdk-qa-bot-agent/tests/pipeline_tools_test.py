@@ -170,7 +170,8 @@ class TestResolveToken:
             mock_credential.get_token.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_non_jwt_raises(self) -> None:
+    async def test_non_jwt_uses_fallback_ttl(self) -> None:
+        """A non-JWT token should still be returned (with fallback TTL)."""
         with patch(
             "utils.ado_token.get_secret",
             new_callable=AsyncMock,
@@ -178,8 +179,8 @@ class TestResolveToken:
         ):
             from utils.ado_token import resolve_token
 
-            with pytest.raises(RuntimeError, match="does not look like"):
-                await resolve_token()
+            token = await resolve_token()
+            assert token == "not-a-jwt"
 
     @pytest.mark.asyncio
     async def test_cache_reuse(self) -> None:

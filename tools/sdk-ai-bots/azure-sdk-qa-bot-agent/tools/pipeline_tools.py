@@ -24,7 +24,7 @@ from typing import Annotated
 from urllib.parse import parse_qs, urlparse
 
 import httpx
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from tools import tool
 from utils.ado_token import resolve_token
@@ -58,7 +58,7 @@ class PipelineAnalysisResult(BaseModel):
     pipeline_url: str = ""
     status: str = ""
     result: str = ""
-    failed_tasks: list[FailedTask] = []
+    failed_tasks: list[FailedTask] = Field(default_factory=list)
     error: str | None = None
     notes: str = ""
 
@@ -225,7 +225,7 @@ class PipelineTools:
         hint = (project or project_from_link or "").strip() or None
         try:
             token = await resolve_token()
-        except RuntimeError as e:
+        except Exception as e:
             return PipelineAnalysisResult(
                 success=False, build_id=build_id, project=hint or "", error=str(e)
             )

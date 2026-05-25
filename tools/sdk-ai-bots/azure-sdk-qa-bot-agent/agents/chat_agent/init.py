@@ -35,7 +35,6 @@ from config.app_config import get as cfg
 from tools.knowledge_tools import KnowledgeTools
 from tools.web_tools import WebTools
 from tools.ado_mcp_tools import create_ado_mcp_tool
-from tools.azsdk_mcp_tools import create_azsdk_mcp_tool
 from tools.github_mcp_tools import create_github_mcp_tool
 from tools.pipeline_tools import PipelineTools
 from skills.tenant_skills import create_tenant_skills

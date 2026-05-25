@@ -77,14 +77,8 @@ async def resolve_token() -> str:
 
         value = await get_secret(TOKEN_SECRET_NAME)
         token = (value or "").strip()
-        source: str
         if token:
-            if not token.startswith("eyJ"):
-                raise RuntimeError(
-                    f"ADO token secret '{TOKEN_SECRET_NAME}' does not look like "
-                    "an AAD bearer token (JWT). PATs are not supported."
-                )
-            source = f"KV '{TOKEN_SECRET_NAME}'"
+            pass
         else:
             logger.info(
                 "KV secret '%s' is empty; minting ADO token via agent identity",
@@ -93,7 +87,6 @@ async def resolve_token() -> str:
             credential = get_credential()
             access_token = await credential.get_token(ADO_RESOURCE_SCOPE)
             token = access_token.token
-            source = "agent identity"
 
         # Compute the refresh deadline from the JWT exp claim.
         exp_unix = _jwt_exp_seconds(token)
@@ -101,16 +94,14 @@ async def resolve_token() -> str:
             seconds_until_exp = exp_unix - int(time.time())
             ttl = max(seconds_until_exp - _TOKEN_REFRESH_BUFFER_SECS, 0)
             logger.debug(
-                "ADO token loaded from %s, exp in %ds, refresh in %ds",
-                source,
+                "ADO token loaded, exp in %ds, refresh in %ds",
                 seconds_until_exp,
                 ttl,
             )
         else:
             ttl = _TOKEN_FALLBACK_TTL_SECS
             logger.debug(
-                "ADO token loaded from %s; no parseable exp, using %ds TTL",
-                source,
+                "ADO token loaded; no parseable exp, using %ds TTL",
                 ttl,
             )
 

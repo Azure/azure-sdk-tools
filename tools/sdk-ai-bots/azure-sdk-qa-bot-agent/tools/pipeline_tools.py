@@ -19,12 +19,7 @@ MCP token-manager pattern):
 
 from __future__ import annotations
 
-import asyncio
-import base64
-import binascii
-import json
 import logging
-import time
 from typing import Annotated
 from urllib.parse import parse_qs, urlparse
 
@@ -32,31 +27,18 @@ import httpx
 from pydantic import BaseModel
 
 from tools import tool
-from utils.azure_credential import get_credential
-from utils.azure_keyvault import get_secret
+from utils.ado_token import resolve_token
 
 logger = logging.getLogger(__name__)
 
 _ADO_BASE_URL = "https://dev.azure.com/azure-sdk"
 _PUBLIC_PROJECT = "public"
 _INTERNAL_PROJECT = "internal"
-_TOKEN_SECRET_NAME = "ado-token"
-# AAD resource ID for Azure DevOps; used when minting a token via the
-# agent identity as a fallback when no KV secret is present.
-_ADO_RESOURCE_SCOPE = "499b84ac-1321-427f-aa17-267ca6975798/.default"
-# Refresh the token this many seconds before its JWT ``exp`` claim.
-_TOKEN_REFRESH_BUFFER_SECS = 5 * 60
-# Fallback cache TTL when the token has no parseable ``exp`` claim.
-_TOKEN_FALLBACK_TTL_SECS = 5 * 60
 _API_VERSION = "7.1"
 
 _HTTP_TIMEOUT_SECONDS = 30.0
 _MAX_LOG_TAIL_CHARS = 4000
 _MAX_TOTAL_LOG_CHARS = 32000
-
-# Cached (token, refresh_after_monotonic).
-_token_cache: tuple[str, float] | None = None
-_token_cache_lock = asyncio.Lock()
 
 
 class FailedTask(BaseModel):
@@ -79,95 +61,6 @@ class PipelineAnalysisResult(BaseModel):
     failed_tasks: list[FailedTask] = []
     error: str | None = None
     notes: str = ""
-
-
-def _jwt_exp_seconds(token: str) -> int | None:
-    """Return the ``exp`` claim (Unix seconds) from a JWT, or ``None``."""
-    parts = token.split(".")
-    if len(parts) < 2:
-        return None
-    payload_b64 = parts[1]
-    # base64url decode with padding tolerance.
-    padding = "=" * (-len(payload_b64) % 4)
-    try:
-        payload_bytes = base64.urlsafe_b64decode(payload_b64 + padding)
-        payload = json.loads(payload_bytes)
-    except (binascii.Error, ValueError, UnicodeDecodeError):
-        return None
-    exp = payload.get("exp")
-    return int(exp) if isinstance(exp, (int, float)) else None
-
-
-async def _resolve_token() -> str:
-    """Return an ADO AAD bearer token, refreshed JIT.
-
-    Resolution order:
-      1. Key Vault secret ``ado-token`` (populated by an out-of-band
-         job, used while the Foundry agent identity is not an ADO org
-         member).
-      2. The agent identity itself via :func:`get_credential` — taken
-         when the KV secret is absent or empty. Switch to this path by
-         simply deleting the secret once ADO accepts the agent identity.
-
-    The cached token is reused until ``exp - _TOKEN_REFRESH_BUFFER_SECS``
-    (mirroring the GitHub MCP token-manager pattern). When the JWT has
-    no parseable ``exp``, falls back to a short fixed TTL so we still
-    pick up rotations.
-    """
-    global _token_cache
-    now = time.monotonic()
-    if _token_cache is not None and _token_cache[1] > now:
-        return _token_cache[0]
-
-    async with _token_cache_lock:
-        # Double-checked: another coroutine may have just refreshed.
-        if _token_cache is not None and _token_cache[1] > now:
-            return _token_cache[0]
-
-        value = await get_secret(_TOKEN_SECRET_NAME)
-        token = (value or "").strip()
-        source: str
-        if token:
-            if not token.startswith("eyJ"):
-                raise RuntimeError(
-                    f"ADO token secret '{_TOKEN_SECRET_NAME}' does not look like "
-                    "an AAD bearer token (JWT). PATs are not supported by this tool."
-                )
-            source = f"KV '{_TOKEN_SECRET_NAME}'"
-        else:
-            # Fall back to the agent identity. Works once ADO accepts the
-            # Foundry agent identity as an org member; otherwise the call
-            # below succeeds but ADO API requests will return 203/401.
-            logger.info(
-                "KV secret '%s' is empty; minting ADO token via agent identity",
-                _TOKEN_SECRET_NAME,
-            )
-            credential = get_credential()
-            access_token = await credential.get_token(_ADO_RESOURCE_SCOPE)
-            token = access_token.token
-            source = "agent identity"
-
-        # Compute the refresh deadline from the JWT exp claim.
-        exp_unix = _jwt_exp_seconds(token)
-        if exp_unix is not None:
-            seconds_until_exp = exp_unix - int(time.time())
-            ttl = max(seconds_until_exp - _TOKEN_REFRESH_BUFFER_SECS, 0)
-            logger.debug(
-                "ADO token loaded from %s, exp in %ds, refresh in %ds",
-                source,
-                seconds_until_exp,
-                ttl,
-            )
-        else:
-            ttl = _TOKEN_FALLBACK_TTL_SECS
-            logger.debug(
-                "ADO token loaded from %s; no parseable exp, using %ds TTL",
-                source,
-                ttl,
-            )
-
-        _token_cache = (token, now + ttl)
-        return token
 
 
 def _build_auth_header(token: str) -> dict[str, str]:
@@ -331,7 +224,7 @@ class PipelineTools:
 
         hint = (project or project_from_link or "").strip() or None
         try:
-            token = await _resolve_token()
+            token = await resolve_token()
         except RuntimeError as e:
             return PipelineAnalysisResult(
                 success=False, build_id=build_id, project=hint or "", error=str(e)

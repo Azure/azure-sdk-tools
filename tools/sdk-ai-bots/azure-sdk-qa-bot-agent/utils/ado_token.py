@@ -85,6 +85,11 @@ async def resolve_token() -> str:
             )
             credential = get_credential()
             scope = cfg("ADO_RESOURCE_SCOPE")
+            if not scope:
+                raise RuntimeError(
+                    "ADO_RESOURCE_SCOPE is not configured. "
+                    "Set it in Azure App Configuration."
+                )
             access_token = await credential.get_token(scope)
             token = access_token.token
 

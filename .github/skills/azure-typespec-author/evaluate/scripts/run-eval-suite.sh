@@ -12,8 +12,8 @@ EVAL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 cd "$EVAL_DIR"
 
-vally eval --eval-spec "suites/$EVAL_FILE" --output-dir results --verbose || true
-EXIT_CODE=${PIPESTATUS[0]:-$?}
+EXIT_CODE=0
+vally eval --eval-spec "suites/$EVAL_FILE" --output-dir results --verbose || EXIT_CODE=$?
 
 if [ $EXIT_CODE -ne 0 ]; then
   echo "##vso[task.logissue type=error]Suite $SUITE_NAME failed (exit code $EXIT_CODE)"

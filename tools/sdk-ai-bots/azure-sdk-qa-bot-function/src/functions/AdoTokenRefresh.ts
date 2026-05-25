@@ -43,8 +43,8 @@ async function refreshAdoToken(_timer: Timer, context: InvocationContext): Promi
     context.log("Secret '%s' updated in Key Vault", SECRET_NAME);
 }
 
-// Run every 40 minutes so the token (~1 hour validity) stays fresh.
+// Run every 6 hours so the token (~24 hour validity) stays fresh.
 app.timer("adoTokenRefresh", {
-    schedule: "0 */40 * * * *",
+    schedule: "0 0 */6 * * *",
     handler: refreshAdoToken,
 });

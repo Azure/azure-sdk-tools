@@ -35,10 +35,6 @@ stimuli:
         dest: shared.tsp
       - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
         dest: tspconfig.yaml
-      - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
-        dest: stable/2021-11-01/widget.json
-      - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
-        dest: preview/2024-10-01-preview/widget.json
     commands:
       - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
@@ -219,10 +215,6 @@ stimuli:
         dest: shared.tsp
       - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
         dest: tspconfig.yaml
-      - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
-        dest: stable/2021-11-01/widget.json
-      - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
-        dest: preview/2024-10-01-preview/widget.json
     commands:
       - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
@@ -259,10 +251,6 @@ stimuli:
         dest: shared.tsp
       - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
         dest: tspconfig.yaml
-      - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
-        dest: stable/2021-11-01/widget.json
-      - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
-        dest: preview/2024-10-01-preview/widget.json
     commands:
       - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
@@ -299,10 +287,6 @@ stimuli:
         dest: shared.tsp
       - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
         dest: tspconfig.yaml
-      - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
-        dest: stable/2021-11-01/widget.json
-      - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
-        dest: preview/2024-10-01-preview/widget.json
     commands:
       - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:

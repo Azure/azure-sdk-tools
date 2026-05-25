@@ -8,3 +8,4 @@ exceptions: |
   7. DO NOT recommend annotating parameters to express nullability expectations.
   8. DO NOT suggest changing the return type of WithResponse methods that return Response<BinaryData>. These methods intentionally expose raw content and should not be changed to return a typed model.
   9. DO NOT suggest adding alternative serialization methods (e.g., a toJson returning String) to models that already use the JsonWriter-based toJson pattern.
+  10. DO NOT suggest adding @Generated annotation to varargs overloads or constructors solely for consistency with their List-based counterparts. The presence of @Generated must reflect actual generation status, not overload symmetry.

@@ -25,6 +25,10 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
                 {
                     sb.AppendLine($"- Change: {change.BreakingChange}");
                     sb.AppendLine($"  Category: {change.Category}");
+                    if (!string.IsNullOrEmpty(change.Resolution))
+                    {
+                        sb.AppendLine($"  Resolution: {change.Resolution}");
+                    }
                     sb.AppendLine();
                 }
             }

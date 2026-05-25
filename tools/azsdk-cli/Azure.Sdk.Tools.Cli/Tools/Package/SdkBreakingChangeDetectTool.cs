@@ -19,6 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     public class SdkBreakingChangeDetectTool : LanguageMcpTool
     {
         private readonly ISpecGenSdkConfigHelper _specGenSdkConfigHelper;
+        private readonly ITspClientHelper _tspClientHelper;
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
 
         private readonly ICopilotAgentRunner copilotAgentRunner;
@@ -52,9 +53,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             ILogger<SdkBreakingChangeDetectTool> logger,
             IEnumerable<LanguageService> languageServices,
             ISpecGenSdkConfigHelper specGenSdkConfigHelper,
+            ITspClientHelper tspClientHelper,
             ICopilotAgentRunner copilotAgentRunner) : base(languageServices, gitHelper, logger)
         {
             _specGenSdkConfigHelper = specGenSdkConfigHelper;
+            _tspClientHelper = tspClientHelper;
             this.copilotAgentRunner = copilotAgentRunner;
         }
 
@@ -103,7 +106,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 if (generateSDK && !string.IsNullOrEmpty(tspConfigPath))
                 {
                     logger.LogInformation("SDK code generation is enabled. Executing SDK generation before breaking change detection...");
-                    // TODO: Implement SDK generation logic here
+                    var regenResult = await _tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: tspConfigPath, isCli: false, ct: ct);
+                    if (!regenResult.IsSuccessful)
+                    {
+                        logger.LogWarning("Regeneration failed: {Error}", regenResult.ResponseError);
+                        return new SdkBreakingChangeDetectResponse
+                        {
+                            ResponseError = $"SDK regeneration failed: {regenResult.ResponseError}. Cannot proceed to detect breaking changes without successful SDK generation."
+                        };
+                    }
                 }
                 LanguageService languageService;
                 if (!string.IsNullOrEmpty(language))
@@ -260,7 +271,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 // Updated regex to capture the full breaking change line (everything until newline)
                 // Changed from \S+ to [^\n]+ to capture the entire line including spaces
                 Regex ResultBlockRex = new(
-                    @"\[(?<id>[^\]]+)\]\s*\n\s*breaking:\s*(?<breaking>[^\n]+)\s*\n\s*category:\s*(?<category>[^\n]+)",
+                    @"\[(?<id>[^\]]+)\]\s*\n\s*breaking:\s*(?<breaking>[^\n]+)\s*\n\s*category:\s*(?<category>[^\n]+)\s*\n\s*resolution:\s*(?<resolution>[^\n]*)",
                     RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.Singleline);
                 var sdkBreakingChanges = new List<SdkBreakingChange>();
                 foreach (Match match in ResultBlockRex.Matches(result))
@@ -268,11 +279,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     var id = match.Groups["id"].Value.Trim();
                     var breaking = match.Groups["breaking"].Value.Trim();
                     var category = match.Groups["category"].Value.Trim();
+                    var resolution = match.Groups["resolution"].Value.Trim();
 
                     SdkBreakingChange breakingChange = new SdkBreakingChange
                     {
                         BreakingChange = breaking,
                         Category = category,
+                        Resolution = resolution
                     };
                     sdkBreakingChanges.Add(breakingChange);
                 }
@@ -304,5 +317,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         [JsonPropertyName("category")]
         [Required]
         public string Category { get; set; }
+        [JsonPropertyName("resolution")]
+        public string? Resolution { get; set; }
     }
 }

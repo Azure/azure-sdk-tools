@@ -1,29 +1,28 @@
 #!/usr/bin/env bash
-# run-eval-suite.sh — Run a single Vally evaluation suite and report failures.
-# Usage: run-eval-suite.sh <eval-file> <suite-name>
+# report-eval-results.sh — Report failures from the latest Vally evaluation results.
+# Usage: report-eval-results.sh <suite-name>
 
 set -euo pipefail
 
-EVAL_FILE="${1:?Usage: run-eval-suite.sh <eval-file> <suite-name>}"
-SUITE_NAME="${2:?Usage: run-eval-suite.sh <eval-file> <suite-name>}"
+SUITE_NAME="${1:?Usage: report-eval-results.sh <suite-name>}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 EVAL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 cd "$EVAL_DIR"
 
-EXIT_CODE=0
-vally eval --eval-spec "suites/$EVAL_FILE" --output-dir results --verbose || EXIT_CODE=$?
+LATEST=$(find results -name 'results.jsonl' -type f -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2)
+if [ -z "$LATEST" ]; then
+  echo "##vso[task.logissue type=warning]No results found for suite $SUITE_NAME"
+  exit 0
+fi
 
-if [ $EXIT_CODE -ne 0 ]; then
-  echo "##vso[task.logissue type=error]Suite $SUITE_NAME failed (exit code $EXIT_CODE)"
-  LATEST=$(find results -name 'results.jsonl' -type f -printf '%T@ %p\n' | sort -rn | head -1 | cut -d' ' -f2)
-  if [ -n "$LATEST" ]; then
-    python3 << EOF
+python3 << EOF
 import json, sys
 
 REPORT_GRADERS = {"tool-calls", "skill-invocation"}
 
+failed_count = 0
 with open("$LATEST") as f:
     for line in f:
         r = json.loads(line)
@@ -34,6 +33,7 @@ with open("$LATEST") as f:
         score = grade.get("score", 1)
         if not isinstance(score, (int, float)) or score >= 1.0:
             continue
+        failed_count += 1
         print(f"[FAILED] {name} (score: {score})")
         for g in grade.get("details", []):
             gname = g.get("name", "?")
@@ -55,7 +55,9 @@ with open("$LATEST") as f:
                     print(f'  - {gname} (score: {g.get("score")}): {evidence}')
                 else:
                     print(f'  - {gname} (score: {g.get("score")})')
+
+if failed_count > 0:
+    print(f"\n##vso[task.logissue type=error]Suite $SUITE_NAME: {failed_count} stimulus/stimuli failed")
+else:
+    print(f"Suite $SUITE_NAME: all stimuli passed")
 EOF
-  fi
-  exit 0
-fi

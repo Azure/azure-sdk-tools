@@ -10,7 +10,8 @@ parameters:
 
 steps:
   - script: |
-      bash .github/skills/azure-typespec-author/evaluate/scripts/run-eval-suite.sh "${{ parameters.EvalFile }}" "${{ parameters.SuiteName }}"
+      cd "$(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate"
+      vally eval --eval-spec "suites/${{ parameters.EvalFile }}" --output-dir results --verbose
     displayName: ${{ parameters.DisplayName }}
     timeoutInMinutes: ${{ parameters.TimeoutMinutes }}
     continueOnError: true
@@ -18,3 +19,9 @@ steps:
     env:
       GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
       FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules
+
+  - script: |
+      bash .github/skills/azure-typespec-author/evaluate/scripts/report-eval-results.sh "${{ parameters.SuiteName }}"
+    displayName: Report results - ${{ parameters.SuiteName }}
+    continueOnError: true
+    condition: always()

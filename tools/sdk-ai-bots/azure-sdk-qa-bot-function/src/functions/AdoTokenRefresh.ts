@@ -2,7 +2,6 @@ import { app, InvocationContext, Timer } from "@azure/functions";
 import { DefaultAzureCredential, ManagedIdentityCredential } from "@azure/identity";
 import { SecretClient } from "@azure/keyvault-secrets";
 
-const ADO_RESOURCE_SCOPE = "499b84ac-1321-427f-aa17-267ca6975798/.default";
 const SECRET_NAME = "ado-token";
 
 /**
@@ -31,7 +30,7 @@ async function refreshAdoToken(_timer: Timer, context: InvocationContext): Promi
         : new DefaultAzureCredential();
 
     context.log("Requesting ADO token via managed identity...");
-    const tokenResponse = await credential.getToken(ADO_RESOURCE_SCOPE);
+    const tokenResponse = await credential.getToken(process.env.ADO_RESOURCE_SCOPE);
     if (!tokenResponse?.token) {
         context.error("Failed to obtain ADO token — empty response");
         throw new Error("ADO token acquisition returned no token");

@@ -23,6 +23,8 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
+    - src: ../fixtures/instructions/copilot-instructions.md
+      dest: .github/copilot-instructions.md
     - src: ../fixtures/001006-version-add-preview-after-stable/employee.tsp
       dest: employee.tsp
     - src: ../fixtures/001006-version-add-preview-after-stable/main.tsp

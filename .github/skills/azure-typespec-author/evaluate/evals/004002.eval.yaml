@@ -23,6 +23,8 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
+    - src: ../fixtures/instructions/copilot-instructions.md
+      dest: .github/copilot-instructions.md
     - src: ../fixtures/004002-decorate-length-constrains-on-array-item/employee.tsp
       dest: employee.tsp
     - src: ../fixtures/004002-decorate-length-constrains-on-array-item/main.tsp

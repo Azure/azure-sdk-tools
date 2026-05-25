@@ -23,6 +23,8 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
+    - src: ../fixtures/instructions/copilot-instructions.md
+      dest: .github/copilot-instructions.md
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
       dest: Microsoft.Widget/Widget/employee.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp

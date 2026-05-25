@@ -23,6 +23,8 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
+    - src: ../fixtures/instructions/copilot-instructions.md
+      dest: .github/copilot-instructions.md
     - src: ../fixtures/004003-delete-and-restore-operationId-decorator/BastionHost.tsp
       dest: BastionHost.tsp
     - src: ../fixtures/004003-delete-and-restore-operationId-decorator/BgpConnection.tsp

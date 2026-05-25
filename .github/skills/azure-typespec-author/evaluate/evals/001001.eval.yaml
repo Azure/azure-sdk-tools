@@ -19,6 +19,8 @@ stimuli:
   prompt: I added `...Azure.ResourceManager.ManagedServiceIdentityProperty;` which updates all my existing API versions and introduces a breaking change. I want to introduce the properties of the spread model '...ManagedServiceIdentityProperty' in API version 2025-05-04-preview only.
   environment:
     files:
+    - src: ../fixtures/instructions/copilot-instructions.md
+      dest: .github/copilot-instructions.md
     - src: ../fixtures/001-share-version-new-feature/employee.tsp
       dest: employee.tsp
     - src: ../fixtures/001-share-version-new-feature/main.tsp

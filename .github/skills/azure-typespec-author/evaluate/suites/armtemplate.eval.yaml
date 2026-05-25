@@ -21,6 +21,8 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
+    - src: ../fixtures/instructions/copilot-instructions.md
+      dest: .github/copilot-instructions.md
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
       dest: employee.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
@@ -72,6 +74,8 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
+    - src: ../fixtures/instructions/copilot-instructions.md
+      dest: .github/copilot-instructions.md
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
       dest: employee.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
@@ -116,6 +120,8 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
+    - src: ../fixtures/instructions/copilot-instructions.md
+      dest: .github/copilot-instructions.md
     - src: ../fixtures/002003-ARM-define-full-update-operation/employee.tsp
       dest: employee.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
@@ -152,6 +158,8 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
+    - src: ../fixtures/instructions/copilot-instructions.md
+      dest: .github/copilot-instructions.md
     - src: ../fixtures/002004-ARM-define-extension-resource/badgeAssignment.tsp
       dest: badgeAssignment.tsp
     - src: ../fixtures/002004-ARM-define-extension-resource/employee.tsp
@@ -208,6 +216,8 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
+    - src: ../fixtures/instructions/copilot-instructions.md
+      dest: .github/copilot-instructions.md
     - src: ../fixtures/002005-ARM-define-the-resource/main.tsp
       dest: main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
@@ -277,6 +287,8 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
+    - src: ../fixtures/instructions/copilot-instructions.md
+      dest: .github/copilot-instructions.md
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
       dest: employee.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
@@ -380,6 +392,8 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
+    - src: ../fixtures/instructions/copilot-instructions.md
+      dest: .github/copilot-instructions.md
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
       dest: employee.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
@@ -466,6 +480,8 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
+    - src: ../fixtures/instructions/copilot-instructions.md
+      dest: .github/copilot-instructions.md
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
       dest: employee.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
@@ -505,6 +521,8 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
+    - src: ../fixtures/instructions/copilot-instructions.md
+      dest: .github/copilot-instructions.md
     - src: ../fixtures/002009-arm-add-patch-operation-to-resource/employee.tsp
       dest: employee.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
@@ -547,6 +565,8 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
+    - src: ../fixtures/instructions/copilot-instructions.md
+      dest: .github/copilot-instructions.md
     - src: ../fixtures/002010-arm-action-sync-operation/employee.tsp
       dest: employee.tsp
     - src: ../fixtures/002010-arm-action-sync-operation/main.tsp

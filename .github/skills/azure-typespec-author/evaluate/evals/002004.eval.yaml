@@ -23,6 +23,8 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
+    - src: ../fixtures/instructions/copilot-instructions.md
+      dest: .github/copilot-instructions.md
     - src: ../fixtures/002004-ARM-define-extension-resource/badgeAssignment.tsp
       dest: badgeAssignment.tsp
     - src: ../fixtures/002004-ARM-define-extension-resource/employee.tsp

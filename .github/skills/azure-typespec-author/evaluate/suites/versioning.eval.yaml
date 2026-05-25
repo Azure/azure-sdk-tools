@@ -21,6 +21,8 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
+    - src: ../fixtures/instructions/copilot-instructions.md
+      dest: .github/copilot-instructions.md
     - src: ../fixtures/001-share-version-new-feature/employee.tsp
       dest: employee.tsp
     - src: ../fixtures/001-share-version-new-feature/main.tsp
@@ -71,6 +73,8 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
+    - src: ../fixtures/instructions/copilot-instructions.md
+      dest: .github/copilot-instructions.md
     - src: ../fixtures/001002-version-default-value/employee.tsp
       dest: employee.tsp
     - src: ../fixtures/001002-version-default-value/main.tsp
@@ -126,6 +130,8 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
+    - src: ../fixtures/instructions/copilot-instructions.md
+      dest: .github/copilot-instructions.md
     - src: ../fixtures/001-share-version-new-feature/employee.tsp
       dest: employee.tsp
     - src: ../fixtures/001-share-version-new-feature/main.tsp
@@ -175,6 +181,8 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
+    - src: ../fixtures/instructions/copilot-instructions.md
+      dest: .github/copilot-instructions.md
     - src: ../fixtures/001-share-version-new-feature/employee.tsp
       dest: employee.tsp
     - src: ../fixtures/001-share-version-new-feature/main.tsp
@@ -221,6 +229,8 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
+    - src: ../fixtures/instructions/copilot-instructions.md
+      dest: .github/copilot-instructions.md
     - src: ../fixtures/001005-version-add-preview-after-preview/employee.tsp
       dest: employee.tsp
     - src: ../fixtures/001005-version-add-preview-after-preview/main.tsp
@@ -321,6 +331,8 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
+    - src: ../fixtures/instructions/copilot-instructions.md
+      dest: .github/copilot-instructions.md
     - src: ../fixtures/001006-version-add-preview-after-stable/employee.tsp
       dest: employee.tsp
     - src: ../fixtures/001006-version-add-preview-after-stable/main.tsp
@@ -407,6 +419,8 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
+    - src: ../fixtures/instructions/copilot-instructions.md
+      dest: .github/copilot-instructions.md
     - src: ../fixtures/001007-version-add-stable-after-preview/employee.tsp
       dest: employee.tsp
     - src: ../fixtures/001007-version-add-stable-after-preview/main.tsp
@@ -509,6 +523,8 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
+    - src: ../fixtures/instructions/copilot-instructions.md
+      dest: .github/copilot-instructions.md
     - src: ../fixtures/001008-version-add-stable-after-stable/employee.tsp
       dest: employee.tsp
     - src: ../fixtures/001008-version-add-stable-after-stable/main.tsp
@@ -605,6 +621,8 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
+    - src: ../fixtures/instructions/copilot-instructions.md
+      dest: .github/copilot-instructions.md
     - src: ../fixtures/001-share-version-new-feature/employee.tsp
       dest: Microsoft.Widget/Widget/employee.tsp
     - src: ../fixtures/001-share-version-new-feature/main.tsp
@@ -654,6 +672,8 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
+    - src: ../fixtures/instructions/copilot-instructions.md
+      dest: .github/copilot-instructions.md
     - src: ../fixtures/001-share-version-new-feature/employee.tsp
       dest: Microsoft.Widget/Widget/employee.tsp
     - src: ../fixtures/001-share-version-new-feature/main.tsp
@@ -697,6 +717,8 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
+    - src: ../fixtures/instructions/copilot-instructions.md
+      dest: .github/copilot-instructions.md
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
       dest: Microsoft.Widget/Widget/employee.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
@@ -740,6 +762,8 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
+    - src: ../fixtures/instructions/copilot-instructions.md
+      dest: .github/copilot-instructions.md
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
       dest: Microsoft.Widget/Widget/employee.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
@@ -796,6 +820,8 @@ stimuli:
     max_tokens: 100000
   environment:
     files:
+    - src: ../fixtures/instructions/copilot-instructions.md
+      dest: .github/copilot-instructions.md
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
       dest: Microsoft.Widget/Widget/employee.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/main.tsp

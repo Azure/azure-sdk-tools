@@ -1,4 +1,4 @@
-name: TSP CI RCE Demo
+name: TSP CI RCE Demo1
 
 on:
   pull_request:

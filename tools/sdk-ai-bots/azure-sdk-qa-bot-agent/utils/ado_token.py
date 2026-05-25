@@ -19,6 +19,7 @@ import json
 import logging
 import time
 
+from config.app_config import get as cfg
 from utils.azure_credential import get_credential
 from utils.azure_keyvault import get_secret
 
@@ -26,8 +27,6 @@ logger = logging.getLogger(__name__)
 
 # Key Vault secret holding the ADO bearer token.
 TOKEN_SECRET_NAME = "ado-token"
-# AAD resource ID for Azure DevOps.
-ADO_RESOURCE_SCOPE = "499b84ac-1321-427f-aa17-267ca6975798/.default"
 # Refresh the token this many seconds before its JWT ``exp`` claim.
 _TOKEN_REFRESH_BUFFER_SECS = 5 * 60
 # Fallback cache TTL when the token has no parseable ``exp`` claim.
@@ -85,7 +84,8 @@ async def resolve_token() -> str:
                 TOKEN_SECRET_NAME,
             )
             credential = get_credential()
-            access_token = await credential.get_token(ADO_RESOURCE_SCOPE)
+            scope = cfg("ADO_RESOURCE_SCOPE")
+            access_token = await credential.get_token(scope)
             token = access_token.token
 
         # Compute the refresh deadline from the JWT exp claim.

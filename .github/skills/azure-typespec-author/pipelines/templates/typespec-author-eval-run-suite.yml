@@ -10,6 +10,8 @@ parameters:
 
 steps:
   - script: |
+      export AZURE_REST_API_SPECS_NODE_MODULES="$(Pipeline.Workspace)/azure-rest-api-specs/node_modules"
+      export PATH="$AZURE_REST_API_SPECS_NODE_MODULES/.bin:$PATH"
       bash .github/skills/azure-typespec-author/evaluate/scripts/run-eval-suite.sh "${{ parameters.EvalFile }}" "${{ parameters.SuiteName }}"
     displayName: ${{ parameters.DisplayName }}
     timeoutInMinutes: ${{ parameters.TimeoutMinutes }}
@@ -17,4 +19,3 @@ steps:
     condition: always()
     env:
       GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
-      FIXTURE_NODE_MODULES: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget/Widget/node_modules

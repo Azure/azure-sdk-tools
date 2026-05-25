@@ -2,6 +2,14 @@
 trigger: none
 pr: none
 
+resources:
+  repositories:
+    - repository: azure-rest-api-specs
+      type: github
+      endpoint: Azure
+      name: Azure/azure-rest-api-specs
+      ref: main
+
 parameters:
 - name: PythonVersion
   type: string
@@ -33,6 +41,10 @@ extends:
             timeoutInMinutes: 170
             steps:
               - checkout: self
+                path: s
+                fetchDepth: 0
+              - checkout: azure-rest-api-specs
+                path: azure-rest-api-specs
                 fetchDepth: 0
 
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-setup.yml
@@ -91,6 +103,10 @@ extends:
             timeoutInMinutes: 170
             steps:
               - checkout: self
+                path: s
+                fetchDepth: 0
+              - checkout: azure-rest-api-specs
+                path: azure-rest-api-specs
                 fetchDepth: 0
 
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-setup.yml

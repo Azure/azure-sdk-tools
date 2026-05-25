@@ -22,6 +22,10 @@ stimuli:
     max_turns: 6
     max_tokens: 100000
   environment:
+    git:
+      type: worktree
+      source: ../../../../../../azure-rest-api-specs
+      ref: main
     files:
     - src: ../fixtures/001-share-version-new-feature/employee.tsp
       dest: Microsoft.Widget/Widget/employee.tsp
@@ -33,10 +37,6 @@ stimuli:
       dest: Microsoft.Widget/Widget/shared.tsp
     - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
       dest: Microsoft.Widget/Widget/tspconfig.yaml
-    commands:
-      - curl -sfLo Microsoft.Widget/Widget/package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
-      - curl -sfLo Microsoft.Widget/Widget/package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
-      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:

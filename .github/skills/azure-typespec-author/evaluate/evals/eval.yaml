@@ -24,6 +24,10 @@ stimuli:
     max_turns: 5
     max_tokens: 1000000
   environment:
+    git:
+      type: worktree
+      source: ../../../../../../azure-rest-api-specs
+      ref: main
     files:
     - src: ../fixtures/001-share-version-new-feature/employee.tsp
       dest: employee.tsp
@@ -35,10 +39,6 @@ stimuli:
       dest: tspconfig.yaml
     - src: ../fixtures/001-share-version-new-feature/readme.md
       dest: readme.md
-  commands:
-    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
-    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
-    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -71,6 +71,10 @@ stimuli:
     max_turns: 6
     max_tokens: 100000
   environment:
+    git:
+      type: worktree
+      source: ../../../../../../azure-rest-api-specs
+      ref: main
     files:
     - src: ../fixtures/001002-version-default-value/employee.tsp
       dest: employee.tsp
@@ -82,10 +86,6 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/001002-version-default-value/tspconfig.yaml
       dest: tspconfig.yaml
-  commands:
-    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
-    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
-    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -122,6 +122,10 @@ stimuli:
     max_turns: 6
     max_tokens: 100000
   environment:
+    git:
+      type: worktree
+      source: ../../../../../../azure-rest-api-specs
+      ref: main
     files:
     - src: ../fixtures/001-share-version-new-feature/employee.tsp
       dest: employee.tsp
@@ -133,10 +137,6 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
       dest: tspconfig.yaml
-  commands:
-    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
-    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
-    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -169,6 +169,10 @@ stimuli:
     max_turns: 6
     max_tokens: 100000
   environment:
+    git:
+      type: worktree
+      source: ../../../../../../azure-rest-api-specs
+      ref: main
     files:
     - src: ../fixtures/001-share-version-new-feature/employee.tsp
       dest: employee.tsp
@@ -180,10 +184,6 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
       dest: tspconfig.yaml
-  commands:
-    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
-    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
-    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -212,6 +212,10 @@ stimuli:
     max_turns: 6
     max_tokens: 100000
   environment:
+    git:
+      type: worktree
+      source: ../../../../../../azure-rest-api-specs
+      ref: main
     files:
     - src: ../fixtures/001005-version-add-preview-after-preview/employee.tsp
       dest: employee.tsp
@@ -257,10 +261,6 @@ stimuli:
       dest: examples/2021-10-01/Operations_List_MaximumSet_Gen.json
     - src: ../fixtures/001005-version-add-preview-after-preview/examples/2021-10-01/Operations_List_MinimumSet_Gen.json
       dest: examples/2021-10-01/Operations_List_MinimumSet_Gen.json
-  commands:
-    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
-    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
-    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -308,6 +308,10 @@ stimuli:
     max_turns: 6
     max_tokens: 100000
   environment:
+    git:
+      type: worktree
+      source: ../../../../../../azure-rest-api-specs
+      ref: main
     files:
     - src: ../fixtures/001006-version-add-preview-after-stable/employee.tsp
       dest: employee.tsp
@@ -353,10 +357,6 @@ stimuli:
       dest: examples/2024-10-01/Operations_List_MaximumSet_Gen.json
     - src: ../fixtures/001006-version-add-preview-after-stable/examples/2024-10-01/Operations_List_MinimumSet_Gen.json
       dest: examples/2024-10-01/Operations_List_MinimumSet_Gen.json
-  commands:
-    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
-    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
-    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -390,6 +390,10 @@ stimuli:
     max_turns: 6
     max_tokens: 100000
   environment:
+    git:
+      type: worktree
+      source: ../../../../../../azure-rest-api-specs
+      ref: main
     files:
     - src: ../fixtures/001007-version-add-stable-after-preview/employee.tsp
       dest: employee.tsp
@@ -441,10 +445,6 @@ stimuli:
       dest: examples/2024-10-01-preview/Operations_List_MaximumSet_Gen.json
     - src: ../fixtures/001007-version-add-stable-after-preview/examples/2024-10-01-preview/Operations_List_MinimumSet_Gen.json
       dest: examples/2024-10-01-preview/Operations_List_MinimumSet_Gen.json
-  commands:
-    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
-    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
-    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -488,6 +488,10 @@ stimuli:
     max_turns: 6
     max_tokens: 100000
   environment:
+    git:
+      type: worktree
+      source: ../../../../../../azure-rest-api-specs
+      ref: main
     files:
     - src: ../fixtures/001008-version-add-stable-after-stable/employee.tsp
       dest: employee.tsp
@@ -539,10 +543,6 @@ stimuli:
       dest: examples/2024-10-01/Operations_List_MaximumSet_Gen.json
     - src: ../fixtures/001008-version-add-stable-after-stable/examples/2024-10-01/Operations_List_MinimumSet_Gen.json
       dest: examples/2024-10-01/Operations_List_MinimumSet_Gen.json
-  commands:
-    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
-    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
-    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -580,6 +580,10 @@ stimuli:
     max_turns: 6
     max_tokens: 100000
   environment:
+    git:
+      type: worktree
+      source: ../../../../../../azure-rest-api-specs
+      ref: main
     files:
     - src: ../fixtures/001-share-version-new-feature/employee.tsp
       dest: Microsoft.Widget/Widget/employee.tsp
@@ -591,10 +595,6 @@ stimuli:
       dest: Microsoft.Widget/Widget/shared.tsp
     - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
       dest: Microsoft.Widget/Widget/tspconfig.yaml
-  commands:
-    - curl -sfLo Microsoft.Widget/Widget/package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
-    - curl -sfLo Microsoft.Widget/Widget/package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
-    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -626,6 +626,10 @@ stimuli:
     max_turns: 6
     max_tokens: 100000
   environment:
+    git:
+      type: worktree
+      source: ../../../../../../azure-rest-api-specs
+      ref: main
     files:
     - src: ../fixtures/001-share-version-new-feature/employee.tsp
       dest: Microsoft.Widget/Widget/employee.tsp
@@ -637,10 +641,6 @@ stimuli:
       dest: Microsoft.Widget/Widget/shared.tsp
     - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
       dest: Microsoft.Widget/Widget/tspconfig.yaml
-  commands:
-    - curl -sfLo Microsoft.Widget/Widget/package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
-    - curl -sfLo Microsoft.Widget/Widget/package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
-    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -666,6 +666,10 @@ stimuli:
     max_turns: 6
     max_tokens: 100000
   environment:
+    git:
+      type: worktree
+      source: ../../../../../../azure-rest-api-specs
+      ref: main
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
       dest: Microsoft.Widget/Widget/employee.tsp
@@ -681,10 +685,6 @@ stimuli:
       dest: Microsoft.Widget/Widget/stable/2021-11-01/widget.json
     - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
       dest: Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
-  commands:
-    - curl -sfLo Microsoft.Widget/Widget/package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
-    - curl -sfLo Microsoft.Widget/Widget/package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
-    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -710,6 +710,10 @@ stimuli:
     max_turns: 6
     max_tokens: 100000
   environment:
+    git:
+      type: worktree
+      source: ../../../../../../azure-rest-api-specs
+      ref: main
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
       dest: Microsoft.Widget/Widget/employee.tsp
@@ -721,10 +725,6 @@ stimuli:
       dest: Microsoft.Widget/Widget/shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: Microsoft.Widget/Widget/tspconfig.yaml
-  commands:
-    - curl -sfLo Microsoft.Widget/Widget/package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
-    - curl -sfLo Microsoft.Widget/Widget/package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
-    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -763,6 +763,10 @@ stimuli:
     max_turns: 6
     max_tokens: 100000
   environment:
+    git:
+      type: worktree
+      source: ../../../../../../azure-rest-api-specs
+      ref: main
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
       dest: Microsoft.Widget/Widget/employee.tsp
@@ -774,10 +778,6 @@ stimuli:
       dest: Microsoft.Widget/Widget/shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: Microsoft.Widget/Widget/tspconfig.yaml
-  commands:
-    - curl -sfLo Microsoft.Widget/Widget/package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
-    - curl -sfLo Microsoft.Widget/Widget/package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
-    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -809,6 +809,10 @@ stimuli:
     max_turns: 6
     max_tokens: 100000
   environment:
+    git:
+      type: worktree
+      source: ../../../../../../azure-rest-api-specs
+      ref: main
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
       dest: employee.tsp
@@ -820,10 +824,6 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
-  commands:
-    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
-    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
-    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -856,6 +856,10 @@ stimuli:
     max_turns: 6
     max_tokens: 100000
   environment:
+    git:
+      type: worktree
+      source: ../../../../../../azure-rest-api-specs
+      ref: main
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
       dest: employee.tsp
@@ -867,10 +871,6 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
-  commands:
-    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
-    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
-    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -897,6 +897,10 @@ stimuli:
     max_turns: 6
     max_tokens: 100000
   environment:
+    git:
+      type: worktree
+      source: ../../../../../../azure-rest-api-specs
+      ref: main
     files:
     - src: ../fixtures/002003-ARM-define-full-update-operation/employee.tsp
       dest: employee.tsp
@@ -908,10 +912,6 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
-  commands:
-    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
-    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
-    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -930,6 +930,10 @@ stimuli:
     max_turns: 6
     max_tokens: 100000
   environment:
+    git:
+      type: worktree
+      source: ../../../../../../azure-rest-api-specs
+      ref: main
     files:
     - src: ../fixtures/002004-ARM-define-extension-resource/badgeAssignment.tsp
       dest: badgeAssignment.tsp
@@ -943,10 +947,6 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
-  commands:
-    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
-    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
-    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -983,6 +983,10 @@ stimuli:
     max_turns: 6
     max_tokens: 100000
   environment:
+    git:
+      type: worktree
+      source: ../../../../../../azure-rest-api-specs
+      ref: main
     files:
     - src: ../fixtures/002005-ARM-define-the-resource/main.tsp
       dest: main.tsp
@@ -992,10 +996,6 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
-  commands:
-    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
-    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
-    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -1044,6 +1044,10 @@ stimuli:
     max_turns: 6
     max_tokens: 100000
   environment:
+    git:
+      type: worktree
+      source: ../../../../../../azure-rest-api-specs
+      ref: main
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
       dest: employee.tsp
@@ -1055,10 +1059,6 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
-  commands:
-    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
-    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
-    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -1143,6 +1143,10 @@ stimuli:
     max_turns: 6
     max_tokens: 100000
   environment:
+    git:
+      type: worktree
+      source: ../../../../../../azure-rest-api-specs
+      ref: main
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
       dest: employee.tsp
@@ -1154,10 +1158,6 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
-  commands:
-    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
-    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
-    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -1222,6 +1222,10 @@ stimuli:
     max_turns: 6
     max_tokens: 100000
   environment:
+    git:
+      type: worktree
+      source: ../../../../../../azure-rest-api-specs
+      ref: main
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
       dest: employee.tsp
@@ -1237,10 +1241,6 @@ stimuli:
       dest: stable/2021-11-01/widget.json
     - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
       dest: preview/2024-10-01-preview/widget.json
-  commands:
-    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
-    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
-    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -1258,6 +1258,10 @@ stimuli:
     max_turns: 6
     max_tokens: 100000
   environment:
+    git:
+      type: worktree
+      source: ../../../../../../azure-rest-api-specs
+      ref: main
     files:
     - src: ../fixtures/002009-arm-add-patch-operation-to-resource/employee.tsp
       dest: employee.tsp
@@ -1269,10 +1273,6 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
-  commands:
-    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
-    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
-    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -1297,6 +1297,10 @@ stimuli:
     max_turns: 6
     max_tokens: 100000
   environment:
+    git:
+      type: worktree
+      source: ../../../../../../azure-rest-api-specs
+      ref: main
     files:
     - src: ../fixtures/002010-arm-action-sync-operation/employee.tsp
       dest: employee.tsp
@@ -1308,10 +1312,6 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/002010-arm-action-sync-operation/tspconfig.yaml
       dest: tspconfig.yaml
-  commands:
-    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
-    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
-    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -1340,6 +1340,10 @@ stimuli:
     max_turns: 10
     max_tokens: 100000
   environment:
+    git:
+      type: worktree
+      source: ../../../../../../azure-rest-api-specs
+      ref: main
     files:
     - src: ../fixtures/003-long-running-operation-share/employee.tsp
       dest: employee.tsp
@@ -1351,10 +1355,6 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/003-long-running-operation-share/tspconfig.yaml
       dest: tspconfig.yaml
-  commands:
-    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
-    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
-    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -1383,6 +1383,10 @@ stimuli:
     max_turns: 10
     max_tokens: 100000
   environment:
+    git:
+      type: worktree
+      source: ../../../../../../azure-rest-api-specs
+      ref: main
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
       dest: employee.tsp
@@ -1394,10 +1398,6 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
-  commands:
-    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
-    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
-    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -1438,6 +1438,10 @@ stimuli:
     max_turns: 10
     max_tokens: 100000
   environment:
+    git:
+      type: worktree
+      source: ../../../../../../azure-rest-api-specs
+      ref: main
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
       dest: employee.tsp
@@ -1449,10 +1453,6 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
-  commands:
-    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
-    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
-    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -1481,6 +1481,10 @@ stimuli:
     max_turns: 10
     max_tokens: 100000
   environment:
+    git:
+      type: worktree
+      source: ../../../../../../azure-rest-api-specs
+      ref: main
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
       dest: employee.tsp
@@ -1494,10 +1498,6 @@ stimuli:
       dest: stable/2021-11-01/widget.json
     - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
       dest: preview/2024-10-01-preview/widget.json
-  commands:
-    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
-    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
-    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:
@@ -1534,6 +1534,10 @@ stimuli:
     max_turns: 10
     max_tokens: 100000
   environment:
+    git:
+      type: worktree
+      source: ../../../../../../azure-rest-api-specs
+      ref: main
     files:
     - src: ../fixtures/004003-delete-and-restore-operationId-decorator/BastionHost.tsp
       dest: BastionHost.tsp
@@ -1557,10 +1561,6 @@ stimuli:
       dest: VpnSiteLinkConnection.tsp
     - src: ../fixtures/004003-delete-and-restore-operationId-decorator/tspconfig.yaml
       dest: tspconfig.yaml
-  commands:
-    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
-    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
-    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: file-not-matches
     config:
@@ -1597,6 +1597,10 @@ stimuli:
     max_turns: 10
     max_tokens: 100000
   environment:
+    git:
+      type: worktree
+      source: ../../../../../../azure-rest-api-specs
+      ref: main
     files:
     - src: ../fixtures/005001-warning-suppress-warning/models.tsp
       dest: models.tsp
@@ -1606,10 +1610,6 @@ stimuli:
       dest: main.tsp
     - src: ../fixtures/005001-warning-suppress-warning/stubs.tsp
       dest: stubs.tsp
-  commands:
-    - curl -sfLo package.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package.json
-    - curl -sfLo package-lock.json https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/package-lock.json
-    - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   - type: tool-calls
     config:

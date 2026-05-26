@@ -365,6 +365,9 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             logger.LogDebug("Using local spec project for regeneration: {localSpecProjectPath}", localSpecProjectPath);
 
             var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: localSpecProjectPath, isCli: false, ct: ct);
+            var repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
+            await languageService.PreGenerateAsync(repoRoot, ct);
+            var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: tspProjectPath, isCli: false, ct: ct);
             if (!regenResult.IsSuccessful)
             {
                 logger.LogWarning("Regeneration failed: {Error}", regenResult.ResponseError);

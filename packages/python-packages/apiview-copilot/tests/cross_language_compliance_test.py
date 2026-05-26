@@ -18,12 +18,12 @@ from src._apiview import get_cross_language_compliance
 from src._apiview_metrics import build_compliance_reports
 
 
-def _make_revision(review_id, language, cross_lang_id=None, created_on="2026-04-15T00:00:00Z"):
+def _make_revision(review_id, language, cross_lang_id=None, created_on="2026-04-15T00:00:00Z", revision_type="Automatic"):
     """Helper to create a fake revision dict."""
     return {
         "ReviewId": review_id,
         "Language": language,
-        "APIRevisionType": "Automatic",
+        "APIRevisionType": revision_type,
         "CrossLanguagePackageId": cross_lang_id,
         "CreatedOn": created_on,
     }
@@ -147,8 +147,8 @@ class TestBuildComplianceReports:
         container = MagicMock()
         container.query_items.return_value = [
             _make_revision("r1", "Python", "azure-core", created_on="2026-03-15T00:00:00Z"),
-            _make_revision("r2", "Python", None, created_on="2026-03-20T00:00:00Z"),
-            _make_revision("r3", "Python", "azure-storage", created_on="2026-04-10T00:00:00Z"),
+            _make_revision("r2", "Python", None, created_on="2026-03-20T00:00:00Z", revision_type="Manual"),
+            _make_revision("r3", "Python", "azure-storage", created_on="2026-04-10T00:00:00Z", revision_type="PullRequest"),
         ]
         mock_cosmos.return_value = container
 
@@ -162,13 +162,19 @@ class TestBuildComplianceReports:
         assert len(reports["Python"]) == 2
         assert reports["Python"][0]["label"] == "2026-03"
         assert reports["Python"][1]["label"] == "2026-04"
-        # March: r1 compliant, r2 non-compliant
+        # March: r1 compliant (Automatic), r2 non-compliant (Manual)
         assert reports["Python"][0]["compliant"] == 1
         assert reports["Python"][0]["non_compliant"] == 1
         assert reports["Python"][0]["total"] == 2
-        # April: r3 compliant
+        assert reports["Python"][0]["Automatic"]["compliant"] == 1
+        assert reports["Python"][0]["Automatic"]["total"] == 1
+        assert reports["Python"][0]["Manual"]["non_compliant"] == 1
+        assert reports["Python"][0]["Manual"]["total"] == 1
+        # April: r3 compliant (PullRequest)
         assert reports["Python"][1]["compliant"] == 1
         assert reports["Python"][1]["total"] == 1
+        assert reports["Python"][1]["PullRequest"]["compliant"] == 1
+        assert reports["Python"][1]["PullRequest"]["total"] == 1
 
     @patch("src._apiview_metrics.get_apiview_cosmos_client")
     def test_missing_language_defaults_to_zero(self, mock_cosmos):
@@ -185,3 +191,6 @@ class TestBuildComplianceReports:
         assert reports["Go"][0]["compliant"] == 0
         assert reports["Go"][0]["total"] == 0
         assert reports["Go"][0]["pct"] == 0.0
+        assert reports["Go"][0]["Automatic"]["total"] == 0
+        assert reports["Go"][0]["Manual"]["total"] == 0
+        assert reports["Go"][0]["PullRequest"]["total"] == 0

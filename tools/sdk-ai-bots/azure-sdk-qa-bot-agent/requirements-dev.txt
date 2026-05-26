@@ -1,0 +1,4 @@
+-r requirements.txt
+debugpy
+# Agent development CLI tool (preview)
+agent-dev-cli==0.0.1b260316

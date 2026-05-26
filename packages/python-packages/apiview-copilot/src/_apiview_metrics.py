@@ -320,12 +320,25 @@ def print_version_report(
 
 
 @dataclass
+class ComplianceTypeBucket:
+    """Compliance counts for a single revision type within a monthly point."""
+
+    total: int = 0
+    compliant: int = 0
+    non_compliant: int = 0
+    pct: float = 0.0
+
+
+@dataclass
 class MonthlyCompliancePoint:
     """Monthly cross-language compliance data for a single language."""
 
     label: str
     start_date: str
     end_date: str
+    Automatic: ComplianceTypeBucket
+    Manual: ComplianceTypeBucket
+    PullRequest: ComplianceTypeBucket
     compliant: int = 0
     non_compliant: int = 0
     total: int = 0
@@ -401,29 +414,63 @@ def build_compliance_reports(
             if existing is None or rev.get("CreatedOn", "") > existing.get("CreatedOn", ""):
                 latest_by_review[review_id] = rev
 
-        # Compute compliance per language
+        # Compute compliance per language, bucketed by revision type
         by_language: dict[str, dict] = {}
         for rev in latest_by_review.values():
             lang = get_language_pretty_name(rev.get("Language", "Unknown"))
             if lang.lower() in omit_lower:
                 continue
+            raw_type = rev.get("APIRevisionType", "Unknown")
+            type_name = raw_type if raw_type in _KNOWN_REVISION_TYPES else None
             has_metadata = bool(rev.get("CrossLanguagePackageId"))
-            entry = by_language.setdefault(lang, {"compliant": 0, "non_compliant": 0, "total": 0})
+
+            entry = by_language.setdefault(
+                lang,
+                {
+                    "compliant": 0,
+                    "non_compliant": 0,
+                    "total": 0,
+                    "buckets": {t: {"compliant": 0, "non_compliant": 0, "total": 0} for t in _KNOWN_REVISION_TYPES},
+                },
+            )
             entry["total"] += 1
             if has_metadata:
                 entry["compliant"] += 1
             else:
                 entry["non_compliant"] += 1
 
+            if type_name:
+                bucket = entry["buckets"][type_name]
+                bucket["total"] += 1
+                if has_metadata:
+                    bucket["compliant"] += 1
+                else:
+                    bucket["non_compliant"] += 1
+
         for entry in by_language.values():
-            entry["pct"] = round((entry["compliant"] / entry["total"]) * 100, 2) if entry["total"] else 0.0
+            entry["pct"] = _pct(entry["compliant"], entry["total"])
+            for bucket in entry["buckets"].values():
+                bucket["pct"] = _pct(bucket["compliant"], bucket["total"])
 
         for language in selected_languages:
-            entry = by_language.get(language, {"compliant": 0, "non_compliant": 0, "total": 0, "pct": 0.0})
+            entry = by_language.get(
+                language,
+                {
+                    "compliant": 0,
+                    "non_compliant": 0,
+                    "total": 0,
+                    "pct": 0.0,
+                    "buckets": {t: {"compliant": 0, "non_compliant": 0, "total": 0, "pct": 0.0} for t in _KNOWN_REVISION_TYPES},
+                },
+            )
+            buckets = entry["buckets"]
             point = MonthlyCompliancePoint(
                 label=label,
                 start_date=start.isoformat(),
                 end_date=end.isoformat(),
+                Automatic=ComplianceTypeBucket(**buckets["Automatic"]),
+                Manual=ComplianceTypeBucket(**buckets["Manual"]),
+                PullRequest=ComplianceTypeBucket(**buckets["PullRequest"]),
                 compliant=entry["compliant"],
                 non_compliant=entry["non_compliant"],
                 total=entry["total"],
@@ -440,7 +487,7 @@ def generate_compliance_chart(
     *,
     environment: str = PRODUCTION_ENVIRONMENT,
 ) -> Optional[Path]:
-    """Render a PNG chart showing cross-language compliance percentage trends per language."""
+    """Render a PNG chart showing cross-language compliance percentage trends per language, broken out by revision type."""
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     try:
@@ -466,45 +513,69 @@ def generate_compliance_chart(
     else:
         axes = list(axes)
 
+    type_colors = {"Automatic": "#2196F3", "Manual": "#FF9800", "PullRequest": "#4CAF50"}
+    type_names = list(type_colors.keys())
+    bar_width = 0.25
+    legend_handles = None
+    legend_labels = None
+
     for index, language in enumerate(languages):
         axis = axes[index]
         report = reports[language]
         labels = [item["label"] for item in report]
         x_positions = list(range(len(labels)))
-        pcts = [item["pct"] for item in report]
 
-        _bars = axis.bar(x_positions, pcts, color="#4CAF50", width=0.6)
+        for bar_index, type_name in enumerate(type_names):
+            color = type_colors[type_name]
+            offsets = [x + bar_index * bar_width for x in x_positions]
+            values = [item[type_name]["pct"] for item in report]
+            _bars = axis.bar(offsets, values, bar_width, color=color, label=type_name)
 
-        # Annotate each bar with count
-        for bar_pos, item in zip(x_positions, report):
-            if item["total"] > 0:
-                axis.annotate(
-                    f"{item['compliant']}/{item['total']}",
-                    (bar_pos, item["pct"]),
-                    textcoords="offset points",
-                    xytext=(0, 4),
-                    ha="center",
-                    fontsize=7,
-                )
+            # Annotate each bar with count
+            for bar_pos, item in zip(offsets, report):
+                bucket = item[type_name]
+                if bucket["total"] > 0:
+                    axis.annotate(
+                        f"{bucket['compliant']}/{bucket['total']}",
+                        (bar_pos, bucket["pct"]),
+                        textcoords="offset points",
+                        xytext=(0, 4),
+                        ha="center",
+                        fontsize=6,
+                    )
 
         axis.axhline(y=100, color="gray", linestyle=":", linewidth=1.0, alpha=0.5)
         axis.set_title(language)
-        axis.set_xticks(x_positions, labels, rotation=45, ha="right")
+        # Center x-ticks on the middle bar
+        axis.set_xticks([x + bar_width for x in x_positions], labels, rotation=45, ha="right")
         axis.set_ylim(0, 115)
         axis.grid(True, axis="y", linestyle="--", alpha=0.4)
+
+        if legend_handles is None:
+            legend_handles, legend_labels = axis.get_legend_handles_labels()
 
     for index in range(len(languages), len(axes)):
         figure.delaxes(axes[index])
 
+    if legend_handles and legend_labels:
+        figure.legend(
+            legend_handles,
+            legend_labels,
+            loc="upper center",
+            bbox_to_anchor=(0.5, 0.935),
+            ncol=min(5, len(legend_labels)),
+            frameon=False,
+        )
+
     environment_label = (environment or PRODUCTION_ENVIRONMENT).strip().lower()
     figure.suptitle(
-        f"Cross-Language Metadata Compliance %\nLast {month_count} Calendar Months (APIView {environment_label})",
+        f"Cross-Language Metadata Compliance % by Type\nLast {month_count} Calendar Months (APIView {environment_label})",
         fontsize=14,
         y=0.985,
     )
     figure.supxlabel("Month")
     figure.supylabel("% Reviews with CrossLanguageMetadata")
-    plt.tight_layout(rect=(0.02, 0.03, 1, 0.90))
+    plt.tight_layout(rect=(0.02, 0.03, 1, 0.80))
     figure.savefig(output_path, dpi=150)
     plt.close(figure)
     return output_path
@@ -523,17 +594,24 @@ def print_compliance_report(
 
     for language, report in reports.items():
         print(f"\n{language}", file=file)
-        header = ["Month", "Compliant", "Non-Compliant", "Total", "Compliance %"]
-        print("  ".join(f"{col:>14}" for col in header), file=file)
+        header = ["Month", "Auto %", "Auto N", "Manual %", "Manual N", "PR %", "PR N", "Overall %", "Total N"]
+        print("  ".join(f"{col:>10}" for col in header), file=file)
         print("  ".join(["----------"] * len(header)), file=file)
 
         for item in report:
+            auto = item["Automatic"]
+            manual = item["Manual"]
+            pr = item["PullRequest"]
             values = [
-                f"{item['label']:>14}",
-                f"{item['compliant']:>14}",
-                f"{item['non_compliant']:>14}",
-                f"{item['total']:>14}",
-                f"{item['pct']:>14.1f}",
+                f"{item['label']:>10}",
+                f"{auto['pct']:>10.1f}",
+                f"{auto['total']:>10}",
+                f"{manual['pct']:>10.1f}",
+                f"{manual['total']:>10}",
+                f"{pr['pct']:>10.1f}",
+                f"{pr['total']:>10}",
+                f"{item['pct']:>10.1f}",
+                f"{item['total']:>10}",
             ]
             print("  ".join(values), file=file)
 

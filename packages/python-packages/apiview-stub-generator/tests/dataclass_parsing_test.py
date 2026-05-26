@@ -6,7 +6,7 @@
 
 import pytest
 from apistub.nodes import DataClassNode
-from apistubgentest.models import (
+from apiview_stub_generator_test.models import (
     DataClassSimple,
     DataClassWithFields,
     DataClassDynamic,
@@ -19,7 +19,7 @@ from ._test_util import _check, _tokenize, _merge_lines, _render_lines, MockApiV
 
 class TestDataClassParsing:
 
-    pkg_namespace = "apistubgentest.models._dataclasses"
+    pkg_namespace = "apiview_stub_generator_test.models._dataclasses"
 
     def test_dataclass_simple(self):
         obj = DataClassSimple

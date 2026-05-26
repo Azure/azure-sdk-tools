@@ -316,7 +316,6 @@ namespace Azure.Sdk.Tools.Cli.Services
                 SDKReleaseMonth = workItem.Fields.TryGetValue("Custom.SDKReleasemonth", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 IsManagementPlane = workItem.Fields.TryGetValue("Custom.MgmtScope", out value) ? value?.ToString() == "Yes" : false,
                 IsDataPlane = workItem.Fields.TryGetValue("Custom.DataScope", out value) ? value?.ToString() == "Yes" : false,
-                ReleasePlanLink = workItem.Fields.TryGetValue("Custom.ReleasePlanLink", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 ReleasePlanId = workItem.Fields.TryGetValue("Custom.ReleasePlanID", out value) ? int.Parse(value?.ToString() ?? "0") : 0,
                 SDKReleaseType = workItem.Fields.TryGetValue("Custom.SDKtypetobereleased", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 IsCreatedByAgent = workItem.Fields.TryGetValue("Custom.IsCreatedByAgent", out value) && "Copilot".Equals(value?.ToString()),
@@ -873,7 +872,8 @@ namespace Azure.Sdk.Tools.Cli.Services
                  { "ConfigPath", $"{typespecProjectRoot}/tspconfig.yaml" },
                  { "SdkReleaseType", sdkReleaseType },
                  { "CreatePullRequest", "true" },
-                 { "ReleasePlanWorkItemId", $"{workItemId}"}
+                 { "ReleasePlanWorkItemId", $"{workItemId}"},
+                 { "TriggerSource", "sdk-release" }
             };
 
             if (!string.IsNullOrEmpty(apiVersion))

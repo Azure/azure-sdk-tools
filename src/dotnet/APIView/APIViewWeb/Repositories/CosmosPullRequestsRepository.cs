@@ -34,8 +34,11 @@ namespace APIViewWeb
             var queryDefinition = new QueryDefinition(queryBuilder.ToString())
                 .WithParameter("@pullRequestNumber", pullRequestNumber)
                 .WithParameter("@repoName", repoName)
-                .WithParameter("@packageName", packageName)
-                .WithParameter("@language", language);
+                .WithParameter("@packageName", packageName);
+            if (language != null)
+            {
+                queryDefinition.WithParameter("@language", language);
+            }
 
             var requests = await GetPullRequestFromQueryAsync(queryDefinition);
             return requests.Count > 0 ? requests[0] : null;
@@ -70,8 +73,11 @@ namespace APIViewWeb
             }
 
             var queryDefinition = new QueryDefinition(queryBuilder.ToString())
-                .WithParameter("@reviewId", reviewId)
-                .WithParameter("@apiRevisionId", apiRevisionId);
+                .WithParameter("@reviewId", reviewId);
+            if (!string.IsNullOrEmpty(apiRevisionId))
+            {
+                queryDefinition.WithParameter("@apiRevisionId", apiRevisionId);
+            }
 
             return await GetPullRequestFromQueryAsync(queryDefinition);
         }

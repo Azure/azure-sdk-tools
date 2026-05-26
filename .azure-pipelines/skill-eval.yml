@@ -1,0 +1,109 @@
+name: Skill Evaluations (Vally lint)
+
+# Runs `vally lint` against .github/skills on PRs that touch skill content.
+# Replaces .github/workflows/skill-eval.yml so the job runs on the 1ES VM
+# template and installs @microsoft/vally-cli from an authenticated DevOps
+# npm feed instead of `npm install -g` from public npm.
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - .github/skills/*
+      - .azure-pipelines/skill-eval.yml
+      - eng/skill-eval/*
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - .github/skills/*
+      - .azure-pipelines/skill-eval.yml
+      - eng/skill-eval/*
+
+resources:
+  repositories:
+    - repository: 1ESPipelineTemplates
+      type: git
+      name: 1ESPipelineTemplates/1ESPipelineTemplates
+      ref: refs/tags/release
+
+extends:
+  template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
+  parameters:
+    settings:
+      skipBuildTagsForGitHubPullRequests: true
+      networkIsolationPolicy: Permissive
+    sdl:
+      createAdoIssuesForJustificationsForDisablement: false
+      sourceAnalysisPool:
+        name: azsdk-pool
+        image: windows-2022
+        os: windows
+      eslint:
+        enabled: false
+        justificationForDisabling: 'Not a TypeScript project; only consumes vally-cli to lint markdown skills.'
+      codeql:
+        compiled:
+          enabled: false
+          justificationForDisabling: 'No compiled code; lint-only pipeline.'
+      componentgovernance:
+        enabled: false
+        justificationForDisabling: 'Single npm dep pinned via package-lock.json; covered by main build.'
+      psscriptanalyzer:
+        compiled: true
+        break: true
+      policy: M365
+
+    stages:
+      - stage: SkillEval
+        displayName: 'Skill Evaluations'
+        jobs:
+          - job: VallyLint
+            displayName: 'Vally lint (.github/skills)'
+
+            variables:
+              - template: /eng/pipelines/templates/variables/image.yml@self
+              - template: /eng/pipelines/templates/variables/globals.yml@self
+              - name: workingDirectory
+                value: '$(System.DefaultWorkingDirectory)/eng/skill-eval'
+              - name: npmrcPath
+                value: '$(Agent.BuildDirectory)/.npmrc'
+
+            pool:
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
+
+            steps:
+              - checkout: self
+                displayName: 'Checkout azure-sdk-tools'
+
+              - task: NodeTool@0
+                displayName: 'Setup Node.js 22'
+                inputs:
+                  versionSpec: '22.x'
+
+              # TODO(ray): confirm this template uses the right service connection /
+              # federated identity for the new DevOps npm feed that hosts
+              # @microsoft/vally-cli. May need an explicit `serviceConnection` /
+              # `feedName` parameter depending on Ray's feed setup.
+              - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml@self
+                parameters:
+                  npmrcPath: $(npmrcPath)
+
+              - script: |
+                  npm ci
+                displayName: 'Install @microsoft/vally-cli from DevOps feed'
+                workingDirectory: $(workingDirectory)
+                env:
+                  npm_config_userconfig: $(npmrcPath)
+
+              - script: |
+                  npx --no-install vally lint $(System.DefaultWorkingDirectory)
+                displayName: 'Run vally lint'
+                workingDirectory: $(workingDirectory)

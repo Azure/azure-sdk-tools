@@ -15,6 +15,7 @@
     "@azure/data-tables": "^13.3.1",
     "@azure/functions": "^4.0.0",
     "@azure/identity": "^4.5.0",
+    "@azure/keyvault-secrets": "^4.11.2",
     "@azure/openai": "^1.0.0-beta.12",
     "@azure/search-documents": "^12.1.0",
     "@azure/storage-blob": "^12.21.0",

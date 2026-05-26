@@ -37,7 +37,7 @@ namespace APIViewWeb
                 .WithParameter("@packageName", packageName);
             if (language != null)
             {
-                queryDefinition.WithParameter("@language", language);
+                queryDefinition = queryDefinition.WithParameter("@language", language);
             }
 
             var requests = await GetPullRequestFromQueryAsync(queryDefinition);
@@ -76,7 +76,7 @@ namespace APIViewWeb
                 .WithParameter("@reviewId", reviewId);
             if (!string.IsNullOrEmpty(apiRevisionId))
             {
-                queryDefinition.WithParameter("@apiRevisionId", apiRevisionId);
+                queryDefinition = queryDefinition.WithParameter("@apiRevisionId", apiRevisionId);
             }
 
             return await GetPullRequestFromQueryAsync(queryDefinition);

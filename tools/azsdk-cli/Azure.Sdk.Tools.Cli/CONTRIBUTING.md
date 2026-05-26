@@ -21,6 +21,7 @@ It is targeted at **new contributors** to the MCP server. For end-user installat
 - [Adding a New Tool](#adding-a-new-tool)
 - [Coding Conventions](#coding-conventions)
 - [Submitting a Pull Request](#submitting-a-pull-request)
+- [Releasing a New Version](#releasing-a-new-version)
 
 ---
 
@@ -258,5 +259,27 @@ A condensed checklist (see [`docs/new-tool.md`](../docs/new-tool.md) for the ful
 3. Update [CHANGELOG.md](./CHANGELOG.md) with a one-line entry for user-visible changes.
 4. Open a PR against `Azure/azure-sdk-tools:main`; the CI pipeline (`tools/azsdk-cli/ci.yml`) runs build + tests across platforms.
 5. Tag a code owner from the `Tools` area for review.
+
+## Releasing a New Version
+
+Releases are published to [GitHub Releases](https://github.com/Azure/azure-sdk-tools/releases) by the CI pipeline ([`ci.yml`](../ci.yml)), which runs automatically on every merge to `main`. The releaser does three things:
+
+### 1. Update the changelog and merge
+
+In [`CHANGELOG.md`](./CHANGELOG.md), rename the current `## <version> (Unreleased)` heading to `## <version> (<YYYY-MM-DD>)` and fill in any missing user-visible entries under `Features Added` / `Breaking Changes` / `Bugs Fixed` / `Other Changes`. Open a PR with this change and get it merged to `main`.
+
+CI's `VerifyChangelog: true` flag in `ci.yml` will fail the build if the version in [`Azure.Sdk.Tools.Cli.csproj`](./Azure.Sdk.Tools.Cli.csproj) doesn't have a matching dated heading.
+
+### 2. Approve the release stage
+
+Merging triggers the [CI pipeline](https://dev.azure.com/azure-sdk/internal/_build?definitionId=7684). Once it reaches the release stage, click **Approve** on the run. Approval is required from an Azure SDK team member &mdash; ping a code owner if needed.
+
+### 3. Approve the auto-generated increment PR
+
+After the release completes, the pipeline automatically opens a PR titled **`Increment version for tools/azsdk-cli/Azure.Sdk.Tools.Cli releases`** that bumps `<VersionPrefix>` in the csproj to the next version. Approve and merge it.
+
+### Verify
+
+A new tag and release (e.g., `0.6.14`) appear on the [releases page](https://github.com/Azure/azure-sdk-tools/releases) once the release stage finishes.
 
 Thanks for contributing!

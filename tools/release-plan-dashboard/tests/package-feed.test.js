@@ -456,6 +456,7 @@ describe("closed PR action logic", () => {
     const prSt = (l.sdkPrGitHubStatus || l.prStatus || "").toLowerCase();
     const relSt = (l.releaseStatus || "").toLowerCase();
     const hasPr = !!l.sdkPrUrl;
+    const isReleased = relSt === "released" || relSt === "completed";
     const isMerged = prSt.includes("merged") || prSt === "completed";
     const isDraft = prSt === "draft";
     const isOpen = prSt === "open" || isDraft;
@@ -470,11 +471,12 @@ describe("closed PR action logic", () => {
       l.prDetails.mergeable &&
       l.prDetails.mergeableState === "clean";
 
+    if (isReleased) return null;
     if (!hasPr) return "generate";
     if (isClosed && !isMerged) return "link-pr";
-    if (isDraft && !relSt.includes("released")) return "mark-ready";
+    if (isDraft) return "mark-ready";
     if (isOpen && hasFailedChecks) return "fix-checks";
-    if (isMerged && !relSt.includes("released")) return "release";
+    if (isMerged) return "release";
     if (isOpen && isApproved && isMergeable) return "merge";
     return null;
   }
@@ -528,6 +530,15 @@ describe("closed PR action logic", () => {
     expect(action).toBe("generate");
   });
 
+  test("returns null when release status is released and SDK PR is missing", () => {
+    const action = determineAction({
+      sdkPrUrl: "",
+      prStatus: "",
+      releaseStatus: "Released",
+    });
+    expect(action).toBeNull();
+  });
+
   test("returns fix-checks when open with failed checks", () => {
     const action = determineAction({
       sdkPrUrl: "https://github.com/Azure/azure-sdk-for-go/pull/123",
@@ -560,6 +571,16 @@ describe("closed PR action logic", () => {
       sdkPrUrl: "https://github.com/Azure/azure-sdk-for-go/pull/123",
       sdkPrGitHubStatus: "merged",
       prStatus: "",
+      releaseStatus: "Released",
+    });
+    expect(action).toBeNull();
+  });
+
+  test("returns null when closed and already released", () => {
+    const action = determineAction({
+      sdkPrUrl: "https://github.com/Azure/azure-sdk-for-go/pull/123",
+      sdkPrGitHubStatus: "closed",
+      prStatus: "closed",
       releaseStatus: "Released",
     });
     expect(action).toBeNull();
@@ -605,6 +626,15 @@ describe("closed PR action logic", () => {
       releaseStatus: "Released",
     });
     expect(action).toBeNull();
+  });
+
+  test("does not treat Unreleased as released when SDK PR is missing", () => {
+    const action = determineAction({
+      sdkPrUrl: "",
+      prStatus: "",
+      releaseStatus: "Unreleased",
+    });
+    expect(action).toBe("generate");
   });
 });
 

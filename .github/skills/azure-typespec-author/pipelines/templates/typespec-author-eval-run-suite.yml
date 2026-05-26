@@ -7,11 +7,19 @@ parameters:
     type: string
   - name: TimeoutMinutes
     type: number
+  - name: LoadSkills
+    type: boolean
+    default: true
 
 steps:
   - script: |
       cd "$(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate"
-      vally eval --eval-spec "suites/${{ parameters.EvalFile }}" --output-dir results --verbose
+      SKILL_ARG=""
+      if [ "${{ parameters.LoadSkills }}" = "False" ]; then
+        mkdir -p /tmp/no-skills
+        SKILL_ARG="--skill-dir /tmp/no-skills"
+      fi
+      vally eval --eval-spec "suites/${{ parameters.EvalFile }}" --output-dir results --verbose $SKILL_ARG
     displayName: ${{ parameters.DisplayName }}
     timeoutInMinutes: ${{ parameters.TimeoutMinutes }}
     continueOnError: true

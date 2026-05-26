@@ -1,0 +1,89 @@
+# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+# This pipeline runs evaluations WITHOUT loading the azure-typespec-author skill,
+# testing the agent's baseline capability with only MCP tools.
+trigger: none
+pr: none
+
+parameters:
+- name: PythonVersion
+  type: string
+  default: '3.10'
+
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    Use1ESOfficial: true
+    stages:
+      - stage: EvalPureAgentWithoutSkill
+        displayName: Evaluate on pure agent without skill
+        variables:
+          - template: /eng/pipelines/templates/variables/globals.yml
+          - template: /eng/pipelines/templates/variables/image.yml
+          - group: Azure SDK QA Bot Dev Variables
+          - group: AzSDK_Eval_Variable_group
+        pool:
+          name: $(LINUXPOOL)
+          image: $(LINUXVMIMAGE)
+          os: linux
+        jobs:
+          - job: RunEvalsNoSkill
+            displayName: Evaluate on pure agent without skill
+            timeoutInMinutes: 170
+            steps:
+              - checkout: self
+                fetchDepth: 0
+
+              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-setup.yml
+                parameters:
+                  SkillBranch: ''
+
+              # Run evaluations on pure agent without skill
+              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+                parameters:
+                  EvalFile: versioning.eval.yaml
+                  SuiteName: versioning-no-skill
+                  DisplayName: Pure agent - versioning
+                  TimeoutMinutes: 50
+                  LoadSkills: false
+              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+                parameters:
+                  EvalFile: armtemplate.eval.yaml
+                  SuiteName: armtemplate-no-skill
+                  DisplayName: Pure agent - armtemplate
+                  TimeoutMinutes: 40
+                  LoadSkills: false
+              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+                parameters:
+                  EvalFile: lro.eval.yaml
+                  SuiteName: longrunningoperation-no-skill
+                  DisplayName: Pure agent - longrunningoperation
+                  TimeoutMinutes: 25
+                  LoadSkills: false
+              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+                parameters:
+                  EvalFile: decorators.eval.yaml
+                  SuiteName: decorators-no-skill
+                  DisplayName: Pure agent - decorators
+                  TimeoutMinutes: 15
+                  LoadSkills: false
+              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+                parameters:
+                  EvalFile: warning.eval.yaml
+                  SuiteName: warning-no-skill
+                  DisplayName: Pure agent - warning
+                  TimeoutMinutes: 25
+                  LoadSkills: false
+
+            templateContext:
+              outputs:
+                - output: pipelineArtifact
+                  path: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/results
+                  artifact: eval-results-no-skill-$(Build.BuildId)
+                  displayName: Upload eval results
+                  condition: always()
+
+                - output: pipelineArtifact
+                  path: $(Build.StagingDirectory)/qa-bot-log
+                  artifact: qa-bot-service-log-no-skill
+                  displayName: Upload QA bot backend log
+                  condition: always()

@@ -41,10 +41,6 @@ stimuli:
       required:
       - edit
       - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
-    config:
-      required:
-      - azure-typespec-author
   - type: file-matches
     config:
       path: models.tsp
@@ -56,6 +52,5 @@ stimuli:
 scoring:
   weights:
     tool-calls: 1
-    skill-invocation: 1
     file-matches: 3
   threshold: 1.0

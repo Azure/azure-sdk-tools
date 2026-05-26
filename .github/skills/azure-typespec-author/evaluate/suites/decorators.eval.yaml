@@ -44,10 +44,6 @@ stimuli:
       - edit
       - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
       - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
-    config:
-      required:
-      - azure-typespec-author
   - type: file-matches
     config:
       path: '*.tsp'
@@ -90,10 +86,6 @@ stimuli:
       - edit
       - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
       - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
-    config:
-      required:
-      - azure-typespec-author
   - type: file-matches
     config:
       path: employee.tsp
@@ -156,10 +148,6 @@ stimuli:
       - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:
   # VP1: Underscore operationIds should be removed (e.g. BgpConnection has only underscore ones)
-  - type: skill-invocation
-    config:
-      required:
-      - azure-typespec-author
   - type: file-not-matches
     config:
       path: BgpConnection.tsp
@@ -219,7 +207,6 @@ stimuli:
 scoring:
   weights:
     tool-calls: 1
-    skill-invocation: 1
     file-matches: 3
     file-not-matches: 2
     prompt: 1

@@ -45,10 +45,6 @@ stimuli:
       - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
       - azure-sdk-mcp-azsdk_run_typespec_validation
   # VP1: Accept either inline ArmCombinedLroHeaders or alias-based EmployeeMoveLroHeaders usage.
-  - type: skill-invocation
-    config:
-      required:
-      - azure-typespec-author
   - type: file-matches
     config:
       path: employee.tsp
@@ -96,10 +92,6 @@ stimuli:
       - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
       - azure-sdk-mcp-azsdk_run_typespec_validation
   # VP1: ArmAsyncOperationHeader with FinalResult = Employee (alias or inline)
-  - type: skill-invocation
-    config:
-      required:
-      - azure-typespec-author
   - type: file-matches
     config:
       path: employee.tsp
@@ -128,7 +120,6 @@ stimuli:
 scoring:
   weights:
     tool-calls: 1
-    skill-invocation: 1
     file-matches: 3
     prompt: 1
   threshold: 1.0

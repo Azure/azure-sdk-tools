@@ -44,10 +44,6 @@ stimuli:
       - edit
       - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
       - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
-    config:
-      required:
-      - azure-typespec-author
   - type: file-matches
     config:
       path: '*.tsp'
@@ -99,10 +95,6 @@ stimuli:
       - edit
       - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
       - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
-    config:
-      required:
-      - azure-typespec-author
   - type: file-matches
     config:
       path: '*.tsp'
@@ -147,10 +139,6 @@ stimuli:
       - edit
       - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
       - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
-    config:
-      required:
-      - azure-typespec-author
   - type: file-matches
     config:
       path: '*.tsp'
@@ -189,10 +177,6 @@ stimuli:
       - edit
       - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
       - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
-    config:
-      required:
-      - azure-typespec-author
   - type: file-matches
     config:
       path: badgeAssignment.tsp
@@ -245,10 +229,6 @@ stimuli:
       - edit
       - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
       - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
-    config:
-      required:
-      - azure-typespec-author
   - type: file-matches
     config:
       path: '*.tsp'
@@ -320,10 +300,6 @@ stimuli:
       - edit
       - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
       - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
-    config:
-      required:
-      - azure-typespec-author
   - type: file-matches
     config:
       path: '*.tsp'
@@ -428,10 +404,6 @@ stimuli:
       - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
       - azure-sdk-mcp-azsdk_run_typespec_validation
   # VP1: Extensible enum for notification priority levels (Low, Medium, High)
-  - type: skill-invocation
-    config:
-      required:
-      - azure-typespec-author
   - type: file-matches
     config:
       path: 'employee.tsp'
@@ -516,10 +488,6 @@ stimuli:
       required:
       - edit
       - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
-    config:
-      required:
-      - azure-typespec-author
   - type: file-matches
     config:
       path: '*.tsp'
@@ -560,10 +528,6 @@ stimuli:
       - edit
       - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
       - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
-    config:
-      required:
-      - azure-typespec-author
   - type: file-matches
     config:
       path: employee.tsp
@@ -606,10 +570,6 @@ stimuli:
       - edit
       - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
       - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
-    config:
-      required:
-      - azure-typespec-author
   - type: file-matches
     config:
       path: employee.tsp
@@ -628,7 +588,6 @@ stimuli:
 scoring:
   weights:
     tool-calls: 1
-    skill-invocation: 1
     file-matches: 3
     file-not-matches: 2
     prompt: 1

@@ -44,10 +44,6 @@ stimuli:
       - edit
       - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
       - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
-    config:
-      required:
-      - azure-typespec-author
   - type: file-matches
     config:
       path: main.tsp
@@ -98,10 +94,6 @@ stimuli:
       - edit
       - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
       - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
-    config:
-      required:
-      - azure-typespec-author
   - type: file-matches
     config:
       path: employee.tsp
@@ -156,10 +148,6 @@ stimuli:
       required:
       - edit
       - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
-    config:
-      required:
-      - azure-typespec-author
   - type: file-matches
     config:
       path: main.tsp
@@ -210,10 +198,6 @@ stimuli:
       - edit
       - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
       - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
-    config:
-      required:
-      - azure-typespec-author
   - type: file-matches
     config:
       path: employee.tsp
@@ -294,10 +278,6 @@ stimuli:
       - edit
       - web_fetch
       - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
-    config:
-      required:
-      - azure-typespec-author
   - type: file-exists
     config:
       path: examples/2025-05-04-preview/Employees_Get_MaximumSet_Gen.json
@@ -398,10 +378,6 @@ stimuli:
       - edit
       - web_fetch
       - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
-    config:
-      required:
-      - azure-typespec-author
   - type: file-exists
     config:
       path: examples/2025-05-04-preview/Employees_Get_MaximumSet_Gen.json
@@ -494,10 +470,6 @@ stimuli:
       - edit
       - web_fetch
       - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
-    config:
-      required:
-      - azure-typespec-author
   - type: file-exists
     config:
       path: examples/2025-01-01/Employees_Get_MaximumSet_Gen.json
@@ -600,10 +572,6 @@ stimuli:
       - edit
       - web_fetch
       - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
-    config:
-      required:
-      - azure-typespec-author
   - type: file-exists
     config:
       path: examples/2024-10-01/Employees_Get_MaximumSet_Gen.json
@@ -659,10 +627,6 @@ stimuli:
       required:
       - edit
       - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
-    config:
-      required:
-      - azure-typespec-author
   - type: file-matches
     config:
       path: Microsoft.Widget/Widget/main.tsp
@@ -712,10 +676,6 @@ stimuli:
       required:
       - edit
       - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
-    config:
-      required:
-      - azure-typespec-author
   - type: file-matches
     config:
       path: Microsoft.Widget/Widget/main.tsp
@@ -759,10 +719,6 @@ stimuli:
       required:
       - edit
       - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
-    config:
-      required:
-      - azure-typespec-author
   - type: file-matches
     config:
       path: Microsoft.Widget/Widget/main.tsp
@@ -807,10 +763,6 @@ stimuli:
       - edit
       - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
       - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
-    config:
-      required:
-      - azure-typespec-author
   - type: file-matches
     config:
       path: Microsoft.Widget/Widget/main.tsp
@@ -866,10 +818,6 @@ stimuli:
       required:
       - edit
       - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
-    config:
-      required:
-      - azure-typespec-author
   - type: file-matches
     config:
       path: Microsoft.Widget/Widget/main.tsp
@@ -892,7 +840,6 @@ stimuli:
 scoring:
   weights:
     tool-calls: 1
-    skill-invocation: 1
     file-matches: 3
     file-not-matches: 2
     file-exists: 1

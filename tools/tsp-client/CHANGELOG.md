@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- `init` and `sync` now fetch TypeSpec files directly from GitHub by default, using the `gh` CLI when available or the GitHub REST API + `raw.githubusercontent.com`. The `GITHUB_TOKEN` (preferred) and `GH_TOKEN` environment variables are used for authentication when set. The previous `git` sparse-clone path is automatically used as a fallback if any GitHub request fails.
+- `init` and `sync` can now fetch TypeSpec files directly from GitHub when the `TSP_CLIENT_USE_GITHUB_FETCH=1` environment variable is set, using the `gh` CLI when available or the GitHub REST API + `raw.githubusercontent.com`. The `GITHUB_TOKEN` (preferred) and `GH_TOKEN` environment variables are used for authentication when set. The previous `git` sparse-clone path is automatically used as a fallback if any GitHub request fails or if the env var is not set.
 
 ## 2026-04-30 - 0.33.1
 

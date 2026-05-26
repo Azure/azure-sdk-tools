@@ -16,6 +16,17 @@ export interface GitHubFetchOptions {
 }
 
 /**
+ * Returns `true` when the `TSP_CLIENT_USE_GITHUB_FETCH` environment variable
+ * is set to a truthy value (`1`, `true`, `yes`). When unset or falsy, the
+ * GitHub-based fetch path is skipped entirely and the caller falls straight
+ * through to the git sparse-clone path.
+ */
+export function isGitHubFetchEnabled(): boolean {
+  const value = process.env["TSP_CLIENT_USE_GITHUB_FETCH"];
+  return !!value && ["1", "true", "yes"].includes(value.toLowerCase());
+}
+
+/**
  * Returns the GitHub token from the environment, preferring `GITHUB_TOKEN`
  * over `GH_TOKEN` (the variables `gh` itself recognises).
  */
@@ -448,6 +459,9 @@ export async function tryFetchSpecFromGitHub(args: {
   additionalDirectories?: string[];
   destRoot: string;
 }): Promise<boolean> {
+  if (!isGitHubFetchEnabled()) {
+    return false;
+  }
   const doFetch = async (opts: GitHubFetchOptions) => {
     await downloadDirectoryFromGitHub({
       repo: args.repo,
@@ -489,6 +503,9 @@ export async function tryFetchFileFromGitHub(args: {
   destFile: string;
   destRoot?: string;
 }): Promise<boolean> {
+  if (!isGitHubFetchEnabled()) {
+    return false;
+  }
   const doFetch = async (opts: GitHubFetchOptions) => {
     await downloadFileFromGitHub({
       repo: args.repo,

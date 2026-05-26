@@ -5,6 +5,7 @@ import {
   buildRawUrl,
   buildTreeApiUrl,
   getGitHubToken,
+  isGitHubFetchEnabled,
   listTree,
   resolveGitHubFetchOptions,
   tryFetchFileFromGitHub,
@@ -17,6 +18,7 @@ import { join } from "node:path";
 const ORIGINAL_FETCH = globalThis.fetch;
 const ORIGINAL_GH_TOKEN = process.env["GH_TOKEN"];
 const ORIGINAL_GITHUB_TOKEN = process.env["GITHUB_TOKEN"];
+const ORIGINAL_USE_GITHUB_FETCH = process.env["TSP_CLIENT_USE_GITHUB_FETCH"];
 
 function makeJsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -41,11 +43,21 @@ function restoreTokens(): void {
   else process.env["GH_TOKEN"] = ORIGINAL_GH_TOKEN;
 }
 
+function restoreUseGitHubFetch(): void {
+  if (ORIGINAL_USE_GITHUB_FETCH === undefined) delete process.env["TSP_CLIENT_USE_GITHUB_FETCH"];
+  else process.env["TSP_CLIENT_USE_GITHUB_FETCH"] = ORIGINAL_USE_GITHUB_FETCH;
+}
+
+function enableGitHubFetch(): void {
+  process.env["TSP_CLIENT_USE_GITHUB_FETCH"] = "1";
+}
+
 afterEach(() => {
   globalThis.fetch = ORIGINAL_FETCH;
   _setGhCliAvailableForTests(undefined);
   _setGhRunnerForTests(undefined);
   restoreTokens();
+  restoreUseGitHubFetch();
 });
 
 describe("getGitHubToken", () => {
@@ -64,6 +76,52 @@ describe("getGitHubToken", () => {
 
   it("returns undefined when no token env var is set", () => {
     expect(getGitHubToken()).toBeUndefined();
+  });
+});
+
+describe("isGitHubFetchEnabled", () => {
+  it("returns true when TSP_CLIENT_USE_GITHUB_FETCH is 1", () => {
+    process.env["TSP_CLIENT_USE_GITHUB_FETCH"] = "1";
+    expect(isGitHubFetchEnabled()).toBe(true);
+  });
+
+  it("returns true when TSP_CLIENT_USE_GITHUB_FETCH is true (case-insensitive)", () => {
+    process.env["TSP_CLIENT_USE_GITHUB_FETCH"] = "True";
+    expect(isGitHubFetchEnabled()).toBe(true);
+  });
+
+  it("returns true when TSP_CLIENT_USE_GITHUB_FETCH is yes", () => {
+    process.env["TSP_CLIENT_USE_GITHUB_FETCH"] = "yes";
+    expect(isGitHubFetchEnabled()).toBe(true);
+  });
+
+  it("returns false when TSP_CLIENT_USE_GITHUB_FETCH is unset", () => {
+    delete process.env["TSP_CLIENT_USE_GITHUB_FETCH"];
+    expect(isGitHubFetchEnabled()).toBe(false);
+  });
+
+  it("returns false when TSP_CLIENT_USE_GITHUB_FETCH is empty", () => {
+    process.env["TSP_CLIENT_USE_GITHUB_FETCH"] = "";
+    expect(isGitHubFetchEnabled()).toBe(false);
+  });
+
+  it("returns false when TSP_CLIENT_USE_GITHUB_FETCH is 0", () => {
+    process.env["TSP_CLIENT_USE_GITHUB_FETCH"] = "0";
+    expect(isGitHubFetchEnabled()).toBe(false);
+  });
+
+  it("tryFetchSpecFromGitHub returns false immediately when disabled", async () => {
+    delete process.env["TSP_CLIENT_USE_GITHUB_FETCH"];
+    const fetchMock = vi.fn();
+    globalThis.fetch = fetchMock as any;
+    const ok = await tryFetchSpecFromGitHub({
+      repo: "Azure/azure-rest-api-specs",
+      commit: "abc",
+      directory: "specification/contoso",
+      destRoot: "C:/tmp/should-not-be-used",
+    });
+    expect(ok).toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
 
@@ -230,6 +288,7 @@ describe("listTree (REST path)", () => {
 describe("tryFetchSpecFromGitHub", () => {
   beforeEach(() => {
     unsetTokens();
+    enableGitHubFetch();
     _setGhCliAvailableForTests(false);
   });
 
@@ -307,6 +366,7 @@ describe("tryFetchSpecFromGitHub", () => {
 describe("tryFetchFileFromGitHub", () => {
   beforeEach(() => {
     unsetTokens();
+    enableGitHubFetch();
     _setGhCliAvailableForTests(false);
   });
 
@@ -351,6 +411,7 @@ describe("tryFetchFileFromGitHub", () => {
 describe("authenticated fetch", () => {
   beforeEach(() => {
     unsetTokens();
+    enableGitHubFetch();
     _setGhCliAvailableForTests(false);
   });
 
@@ -387,6 +448,7 @@ describe("authenticated fetch", () => {
 describe("destination cleanup on failure", () => {
   beforeEach(() => {
     unsetTokens();
+    enableGitHubFetch();
     _setGhCliAvailableForTests(false);
   });
 
@@ -471,6 +533,7 @@ describe("destination cleanup on failure", () => {
 describe("gh CLI -> REST API fallback", () => {
   beforeEach(() => {
     unsetTokens();
+    enableGitHubFetch();
     _setGhCliAvailableForTests(true);
   });
 

@@ -16,7 +16,7 @@ config:
 # Test cases
 stimuli:
 - prompt: |
-    In the Widget project, remove the `department` property from EmployeeProperties only for version `2025-05-04-preview`.
+    In the TypeSpec project at `./Microsoft.Widget/Widget/`, remove the `department` property from EmployeeProperties only for version `2025-05-04-preview`.
   name: 001010-version-model-property-removed
   constraints:
     max_turns: 6

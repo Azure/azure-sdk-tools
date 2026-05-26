@@ -16,7 +16,7 @@ config:
 # Test cases
 stimuli:
 - prompt: |
-    In the Widget project, change the type of the `statusCode` property from `string` to `int32` in EmployeeProperties only for version `2025-05-04-preview`.
+    In the TypeSpec project at `./Microsoft.Widget/Widget/`, change the type of the `statusCode` property from `string` to `int32` in EmployeeProperties only for version `2025-05-04-preview`.
   name: 001013-version-model-property-type-changed
   constraints:
     max_turns: 6

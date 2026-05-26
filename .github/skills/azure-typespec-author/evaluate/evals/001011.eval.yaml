@@ -16,7 +16,7 @@ config:
 # Test cases
 stimuli:
 - prompt: |
-    In the Widget project, rename the `age` property to `employeeAge` in EmployeeProperties only for version `2025-05-04-preview`.
+    In the TypeSpec project at `./Microsoft.Widget/Widget/`, rename the `age` property to `employeeAge` in EmployeeProperties only for version `2025-05-04-preview`.
   name: 001011-version-model-property-renamed
   constraints:
     max_turns: 6

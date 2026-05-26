@@ -599,7 +599,7 @@ stimuli:
 
 - name: 001009-version-model-property-required
   prompt: |
-    @azure-typespec-author In the Widget project, make the `email` property required in EmployeeProperties only for version `2025-05-04-preview`.
+    @azure-typespec-author In the TypeSpec project at `./Microsoft.Widget/Widget/`, make the `email` property required in EmployeeProperties only for version `2025-05-04-preview`.
   constraints:
     max_turns: 6
     max_tokens: 100000
@@ -648,7 +648,7 @@ stimuli:
 
 - name: 001010-version-model-property-removed
   prompt: |
-    @azure-typespec-author In the Widget project, remove the `department` property from EmployeeProperties only for version `2025-05-04-preview`.
+    @azure-typespec-author In the TypeSpec project at `./Microsoft.Widget/Widget/`, remove the `department` property from EmployeeProperties only for version `2025-05-04-preview`.
   constraints:
     max_turns: 6
     max_tokens: 100000
@@ -691,7 +691,7 @@ stimuli:
 
 - name: 001011-version-model-property-renamed
   prompt: |
-    @azure-typespec-author In the Widget project, rename the `age` property to `employeeAge` in EmployeeProperties only for version `2025-05-04-preview`.
+    @azure-typespec-author In the TypeSpec project at `./Microsoft.Widget/Widget/`, rename the `age` property to `employeeAge` in EmployeeProperties only for version `2025-05-04-preview`.
   constraints:
     max_turns: 6
     max_tokens: 100000
@@ -734,7 +734,7 @@ stimuli:
 
 - name: 001012-version-operation-return-type-changed
   prompt: |
-    @azure-typespec-author In the Widget project, change the return type of the `exportData` operation from `ExportResult` to `DetailedExportResult` with additional optional properties `format` (string) and `exportedAt` (utcDateTime) only for version `2025-05-04-preview`.
+    @azure-typespec-author In the TypeSpec project at `./Microsoft.Widget/Widget/`, change the return type of the `exportData` operation from `ExportResult` to `DetailedExportResult` with additional optional properties `format` (string) and `exportedAt` (utcDateTime) only for version `2025-05-04-preview`.
   constraints:
     max_turns: 6
     max_tokens: 100000
@@ -790,7 +790,7 @@ stimuli:
 
 - name: 001013-version-model-property-type-changed
   prompt: |
-    @azure-typespec-author In the Widget project, change the type of the `statusCode` property from `string` to `int32` in EmployeeProperties only for version `2025-05-04-preview`.
+    @azure-typespec-author In the TypeSpec project at `./Microsoft.Widget/Widget/`, change the type of the `statusCode` property from `string` to `int32` in EmployeeProperties only for version `2025-05-04-preview`.
   constraints:
     max_turns: 6
     max_tokens: 100000

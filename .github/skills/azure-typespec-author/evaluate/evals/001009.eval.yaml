@@ -16,7 +16,7 @@ config:
 # Test cases
 stimuli:
 - prompt: |
-    In the Widget project, make the `email` property required in EmployeeProperties only for version `2025-05-04-preview`.
+    In the TypeSpec project at `./Microsoft.Widget/Widget/`, make the `email` property required in EmployeeProperties only for version `2025-05-04-preview`.
   name: 001009-version-model-property-required
   constraints:
     max_turns: 6

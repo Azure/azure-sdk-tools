@@ -575,7 +575,7 @@ stimuli:
       model: claude-opus-4.6
 - name: 001009-version-model-property-required
   prompt: |
-    In the Widget project, make the `email` property required in EmployeeProperties only for version `2025-05-04-preview`.
+    In the TypeSpec project at `./Microsoft.Widget/Widget/`, make the `email` property required in EmployeeProperties only for version `2025-05-04-preview`.
   constraints:
     max_turns: 6
     max_tokens: 100000
@@ -621,7 +621,7 @@ stimuli:
       model: claude-opus-4.6
 - name: 001010-version-model-property-removed
   prompt: |
-    In the Widget project, remove the `department` property from EmployeeProperties only for version `2025-05-04-preview`.
+    In the TypeSpec project at `./Microsoft.Widget/Widget/`, remove the `department` property from EmployeeProperties only for version `2025-05-04-preview`.
   constraints:
     max_turns: 6
     max_tokens: 100000
@@ -661,7 +661,7 @@ stimuli:
       pattern: 'department\?: string;'
 - name: 001011-version-model-property-renamed
   prompt: |
-    In the Widget project, rename the `age` property to `employeeAge` in EmployeeProperties only for version `2025-05-04-preview`.
+    In the TypeSpec project at `./Microsoft.Widget/Widget/`, rename the `age` property to `employeeAge` in EmployeeProperties only for version `2025-05-04-preview`.
   constraints:
     max_turns: 6
     max_tokens: 100000
@@ -705,7 +705,7 @@ stimuli:
       pattern: 'employeeAge\?: int32;'
 - name: 001012-version-operation-return-type-changed
   prompt: |
-    In the Widget project, change the return type of the `exportData` operation from `ExportResult` to `DetailedExportResult` with additional optional properties `format` (string) and `exportedAt` (utcDateTime) only for version `2025-05-04-preview`.
+    In the TypeSpec project at `./Microsoft.Widget/Widget/`, change the return type of the `exportData` operation from `ExportResult` to `DetailedExportResult` with additional optional properties `format` (string) and `exportedAt` (utcDateTime) only for version `2025-05-04-preview`.
   constraints:
     max_turns: 6
     max_tokens: 100000
@@ -758,7 +758,7 @@ stimuli:
       pattern: exportData is ArmResourceActionSync<Employee, void, DetailedExportResult>;
 - name: 001013-version-model-property-type-changed
   prompt: |
-    In the Widget project, change the type of the `statusCode` property from `string` to `int32` in EmployeeProperties only for version `2025-05-04-preview`.
+    In the TypeSpec project at `./Microsoft.Widget/Widget/`, change the type of the `statusCode` property from `string` to `int32` in EmployeeProperties only for version `2025-05-04-preview`.
   constraints:
     max_turns: 6
     max_tokens: 100000
@@ -1253,7 +1253,7 @@ stimuli:
       pattern: listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*\{\s*\.\.\.TopQueryParameter;\s*\.\.\.SkipQueryParameter;\s*\}\s*>|listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*Parameters\s*=\s*ArmTopParameter\s*&\s*ArmSkipParameter\s*>|model\s+EmployeeListBySubscriptionParameters\s+is\s+Azure\.Core\.StandardListQueryParameters\s*;[\s\S]*?listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*EmployeeListBySubscriptionParameters\s*>
 - name: 002009-arm-add-patch-operation-to-resource
   prompt: |
-    In the Widget project, add a patch operation to an existing ARM resource named 'Employee'
+    In the TypeSpec project in the current directory, add a patch operation to an existing ARM resource named 'Employee'
   constraints:
     max_turns: 6
     max_tokens: 100000
@@ -1292,7 +1292,7 @@ stimuli:
       model: claude-opus-4.6
 - name: 002010-arm-action-sync-operation
   prompt: |
-    In the Widget project, add a sync operation exportData for employee resource.
+    In the TypeSpec project in the current directory, add a sync operation exportData for employee resource.
   constraints:
     max_turns: 6
     max_tokens: 100000

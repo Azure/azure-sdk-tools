@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - NetworkIsolationResolverAgent
+  schedule:
+    - cron: "0 8 * * *"
   workflow_dispatch:
     inputs:
       cluster:

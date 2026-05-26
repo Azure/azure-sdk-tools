@@ -452,6 +452,8 @@ For each entry:
 5. Diagnose why the job is failing network isolation. Use `DomainName`, `TaskName`, the located pipeline code, nearby allowlist/network-isolation patterns in the checked-out repository, and relevant prior PR examples.
 6. Code the smallest targeted fix in the target repository. Preserve the repository's existing pipeline style and avoid unrelated formatting or refactors.
   - Do not resolve the issue by setting `networkIsolationPolicy: Permissive`, changing an existing policy to `Permissive`, disabling network isolation, or otherwise bypassing enforcement. A permissive policy is not an acceptable remediation. Find and implement the narrow allowlist, endpoint, service connection, feed, or pipeline configuration change that preserves network isolation.
+  - Do not remediate by adding or changing `allowedConnections` domain exceptions (including `registry.npmjs.org`).
+  - If the only possible change is an exception or bypass, do not commit a remediation for that entry. Record the entry as attempted but not completed, with a blocker explanation.
 7. Create a new branch in the local target repository checkout for only that entry. Use a branch name that starts with `network-isolation-cfs-` and includes the pipeline definition ID and the build ID.
 8. Commit the fix locally on that branch. Do not run `git push`, `gh auth login`, `gh pr create`, or any GitHub write operation. GitHub Actions post-steps will push the branch, create the pull request, and request the reviewer.
 9. Append a remediation object to `/tmp/network-isolation-remediations/remediations.json`. Create the directory and file if needed. The file must be a JSON array. Each object must include `repo`, `workingDirectory`, `branch`, `title`, and `body`. Use `repo` in `owner/repo` format, set `workingDirectory` to the local checkout path containing the committed branch, and make the pull request title include `CFS`. The pull request body must include:
@@ -483,6 +485,11 @@ Do not create pull requests yourself. GitHub Actions post-steps consume `/tmp/ne
 
 The post-steps use the repository's `login-to-github` action to mint an Azure GitHub App token for pull request creation after logging in with the AzureSDKEngKeyVault federated identity. Do not use `GH_AW_GITHUB_TOKEN` for pull request creation.
 
-Never use `networkIsolationPolicy: Permissive` as the remediation. Treat permissive mode, disabling network isolation, or weakening the enforcement policy as an invalid fix unless the user explicitly requests that bypass in a future run.
+Never use exception-style remediations. The following are always invalid fixes:
+
+- `networkIsolationPolicy: Permissive`
+- ad-hoc `allowedConnections` domain exceptions (including `registry.npmjs.org`)
+
+Before committing any remediation, self-check the staged diff and reject the change if any invalid fix pattern is present.
 
 Do not process entries concurrently. Do not reuse a checkout, branch, or diagnosis from one entry for another entry.

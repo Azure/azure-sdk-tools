@@ -59,7 +59,6 @@ SRC_AZURE_OPENAPI_DIFF_DOCS = "azure_openapi_diff_docs"
 
 # -- SDK language docs --
 SRC_AZURE_SDK_FOR_PYTHON_DOCS = "azure_sdk_for_python_docs"
-SRC_AZURE_SDK_FOR_PYTHON_WIKI = "azure_sdk_for_python_wiki"
 SRC_AZURE_SDK_FOR_NET_DOCS = "azure_sdk_for_net_docs"
 SRC_AZURE_SDK_FOR_GO_DOCS = "azure_sdk_for_go_docs"
 SRC_AZURE_SDK_FOR_JAVA_DOCS = "azure_sdk_for_java_docs"
@@ -172,12 +171,6 @@ _register(
         name=SRC_AZURE_SDK_FOR_PYTHON_DOCS,
         description="Azure SDK for Python documentation covering installation, usage patterns, and API reference.",
         base_url="https://github.com/Azure/azure-sdk-for-python/blob/main/doc/",
-    ),
-    KnowledgeSource(
-        name=SRC_AZURE_SDK_FOR_PYTHON_WIKI,
-        description="Azure SDK for Python wiki with guides, troubleshooting, and development best practices.",
-        base_url="https://github.com/Azure/azure-sdk-for-python/wiki/",
-        trim_format=True,
     ),
     KnowledgeSource(
         name=SRC_AZURE_SDK_FOR_NET_DOCS,
@@ -356,7 +349,6 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         ],
         sources=_sources(
             SRC_AZURE_SDK_FOR_PYTHON_DOCS,
-            SRC_AZURE_SDK_FOR_PYTHON_WIKI,
             SRC_AZURE_SDK_GUIDELINES,
             SRC_AZURE_SDK_DOCS_ENG,
             SRC_AZURE_SDK_INTERNAL_WIKI,

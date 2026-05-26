@@ -22,7 +22,7 @@ stimuli:
   prompt: I added `...Azure.ResourceManager.ManagedServiceIdentityProperty;` which updates all my existing API versions and introduces a breaking change. I want to introduce the properties of the spread model '...ManagedServiceIdentityProperty' in API version 2025-05-04-preview only.
   constraints:
     max_turns: 5
-    max_tokens: 10000000
+    max_tokens: 50000
   environment:
     files:
     - src: ../fixtures/001-share-version-new-feature/employee.tsp

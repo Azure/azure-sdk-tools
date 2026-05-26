@@ -266,9 +266,9 @@ Releases are published to [GitHub Releases](https://github.com/Azure/azure-sdk-t
 
 ### 1. Update the changelog and merge
 
-In [`CHANGELOG.md`](./CHANGELOG.md), rename the current `## <version> (Unreleased)` heading to `## <version> (<YYYY-MM-DD>)` and fill in any missing user-visible entries under `Features Added` / `Breaking Changes` / `Bugs Fixed` / `Other Changes`. Open a PR with this change and get it merged to `main`.
+In [`CHANGELOG.md`](./CHANGELOG.md), rename the current `## <version> (Unreleased)` heading to `## <version> (<YYYY-MM-DD>)` (format `yyyy-MM-dd`). Add user-visible entries under `Features Added` / `Breaking Changes` / `Bugs Fixed` / `Other Changes`, and remove any empty sections. Open a PR with this change and get it merged to `main`.
 
-CI's `VerifyChangelog: true` flag in `ci.yml` will fail the build if the version in [`Azure.Sdk.Tools.Cli.csproj`](./Azure.Sdk.Tools.Cli.csproj) doesn't have a matching dated heading.
+CI's `VerifyChangelog: true` flag in `ci.yml` verifies the package version in [`Azure.Sdk.Tools.Cli.csproj`](./Azure.Sdk.Tools.Cli.csproj) has a matching changelog entry; the release stage will fail if the entry is still `(Unreleased)`, the date isn't the latest in the file, or any sections are empty.
 
 ### 2. Approve the release stage
 

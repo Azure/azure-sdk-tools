@@ -1233,8 +1233,8 @@ main {
   border: 1px solid #ffc107;
   cursor: pointer;
   transition: filter 0.15s;
-  background: #fff8e1;
-  color: #bf360c;
+  background: #fff3cd;
+  color: #856404;
 }
 .lang-action-btn:hover {
   filter: brightness(0.9);

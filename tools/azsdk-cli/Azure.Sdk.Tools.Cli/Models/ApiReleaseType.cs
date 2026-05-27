@@ -33,11 +33,11 @@ public static class ApiReleaseTypeExtensions
         {
             result = ApiReleaseType.PrivatePreview;
         }
-        if (trimmed.Equals("Public Preview", StringComparison.OrdinalIgnoreCase))
+        else if (trimmed.Equals("Public Preview", StringComparison.OrdinalIgnoreCase))
         {
             result = ApiReleaseType.PublicPreview;
         }
-        if (trimmed.Equals("GA", StringComparison.OrdinalIgnoreCase))
+        else if (trimmed.Equals("GA", StringComparison.OrdinalIgnoreCase))
         {
             result = ApiReleaseType.GA;
         }

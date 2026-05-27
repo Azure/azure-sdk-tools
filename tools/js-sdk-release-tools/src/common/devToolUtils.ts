@@ -46,22 +46,31 @@ export async function lintFix(packageDirectory: string) {
       packageJson.devDependencies = packageJson.devDependencies ?? {};
       packageJson.devDependencies['eslint'] = '^8.0.0';
       fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, '  '), { encoding: 'utf-8' });
+      logger.info(`Re-running pnpm install to install newly added eslint devDependency.`);
       await runCommand('pnpm', ['install', '--no-frozen-lockfile'], options, true, 300, true);
+      logger.info(`pnpm install completed after adding eslint.`);
+    } else {
+      logger.info(`eslint found in devDependencies: ${packageJson.devDependencies.eslint}`);
     }
 
     // Ensure workspace packages used by the eslint config (e.g. @azure/eslint-plugin-azure-sdk)
     // are built before invoking eslint, since pnpm install does not build workspace packages.
     // Run from the process cwd (monorepo root) so pnpm can resolve the workspace filter.
+    logger.info(`Building @azure/eslint-plugin-azure-sdk to ensure its dist files are available.`);
     await runCommand('pnpm', ['build', '--filter', '@azure/eslint-plugin-azure-sdk'], runCommandOptions, true, 300, true);
+    logger.info(`@azure/eslint-plugin-azure-sdk build step completed.`);
 
     // Build the list of paths to lint; conditionally include test and samples-dev if they exist.
     const lintPaths = ['package.json', 'api-extractor.json', 'src'];
     if (fs.existsSync(path.join(packageDirectory, 'test'))) {
       lintPaths.push('test');
+      logger.info(`'test' directory found, including in lint paths.`);
     }
     if (fs.existsSync(path.join(packageDirectory, 'samples-dev'))) {
       lintPaths.push('samples-dev');
+      logger.info(`'samples-dev' directory found, including in lint paths.`);
     }
+    logger.info(`Lint paths: ${lintPaths.join(', ')}`);
 
     await runCommand(
       'npm',

@@ -272,7 +272,7 @@ CI's `VerifyChangelog: true` flag in `ci.yml` verifies the package version in [`
 
 ### 2. Approve the release stage
 
-Merging triggers the [CI pipeline](https://dev.azure.com/azure-sdk/internal/_build?definitionId=7684). Once it reaches the release stage, click **Approve** on the run. Approval is required from an Azure SDK team member &mdash; ping a code owner if needed.
+CI pipeline [CI pipeline](https://dev.azure.com/azure-sdk/internal/_build?definitionId=7684) is automatically run after each change to Azure SDK Tools MCP server is merged. Once it reaches the release stage, click **Approve** on the run. Approval is required from an Azure SDK team member. 
 
 ### 3. Approve the auto-generated increment PR
 

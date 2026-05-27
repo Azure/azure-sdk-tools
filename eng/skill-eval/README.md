@@ -1,6 +1,6 @@
 # skill-eval (CI-only npm project)
 
-This folder exists solely to give the [Skill Evaluations pipeline](../../.azure-pipelines/skill-eval.yml) a tiny `package.json` it can `npm ci` against, so `@microsoft/vally-cli` is restored from the authenticated DevOps npm feed instead of installed globally from public npm.
+This folder exists solely to give the [Skill Evaluations GitHub Actions workflow](../../.github/workflows/skill-eval.yml) a tiny `package.json` it can `npm ci` against, so `@microsoft/vally-cli` is restored from the authenticated DevOps npm feed instead of installed globally from public npm.
 
 - Do not add runtime code here.
 - The only dependency should be `@microsoft/vally-cli`, pinned to the version CI should validate skills with.

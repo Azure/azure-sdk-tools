@@ -16,10 +16,6 @@
 - Removed `userEmail` parameter from `CreateReleasePlan`; email is resolved automatically.
 - `sdkReleaseType` parameter in `CreateReleasePlan` is now optional (was required).
 
-### Bugs Fixed
-
-### Other Changes
-
 ## 0.6.13 (2026-05-18)
 
 ### Features Added

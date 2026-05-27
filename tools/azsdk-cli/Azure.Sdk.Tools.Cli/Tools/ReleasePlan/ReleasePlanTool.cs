@@ -47,6 +47,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private const string getServiceDetailsCommandName = "get-service-details";
         private const string abandonReleasePlanCommandName = "abandon";
         private const string getKpiAttestationStatusCommandName = "get-kpi-attestation";
+        private const string updateReleasePlanMonthCommandName = "update-month";
 
         // MCP Tool Names
         private const string GetReleasePlanForSpecPrToolName = "azsdk_get_release_plan_for_spec_pr";
@@ -62,6 +63,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private const string GetServiceDetailsToolName = "azsdk_get_service_details_by_typespec_path";
         private const string AbandonReleasePlanToolName = "azsdk_abandon_release_plan";
         private const string GetKPIAttestationStatusToolName = "azsdk_get_kpi_attestation_status";
+        private const string UpdateReleasePlanMonthToolName = "azsdk_update_release_plan_month";
 
         // Options
         private readonly Option<int> releasePlanNumberOpt = new("--release-plan-id", "--release-plan")
@@ -296,6 +298,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 optionalServiceTreeIdOpt,
                 optionalProductTreeIdOpt,
             },
+            new McpCommand(updateReleasePlanMonthCommandName, "Update the SDK release target month on an existing release plan", UpdateReleasePlanMonthToolName) { workItemIdOpt, targetReleaseOpt, },
         ];
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
@@ -365,6 +368,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         specPullRequestUrl: commandParser.GetValue(optionalPullRequestOpt),
                         serviceTreeId: commandParser.GetValue(optionalServiceTreeIdOpt),
                         productTreeId: commandParser.GetValue(optionalProductTreeIdOpt),
+                        ct: ct
+                    );
+
+                case updateReleasePlanMonthCommandName:
+                    return await UpdateReleasePlanMonth(
+                        workItemId: commandParser.GetValue(workItemIdOpt),
+                        targetReleaseMonthYear: commandParser.GetValue(targetReleaseOpt),
                         ct: ct
                     );
 
@@ -1642,6 +1652,49 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 {
                     ResponseError = $"Failed to update TypeSpec pull request URL in release plan: {ex.Message}",
                 };
+            }
+        }
+
+        [McpServerTool(Name = UpdateReleasePlanMonthToolName), Description("Update the SDK release target month on an existing release plan.")]
+        public async Task<ReleasePlanResponse> UpdateReleasePlanMonth(int workItemId, string targetReleaseMonthYear, CancellationToken ct = default)
+        {
+            try
+            {
+                if (workItemId <= 0)
+                {
+                    return new ReleasePlanResponse { ResponseError = "A valid work item ID must be provided." };
+                }
+
+                if (string.IsNullOrWhiteSpace(targetReleaseMonthYear))
+                {
+                    return new ReleasePlanResponse { ResponseError = "SDK release target month is required." };
+                }
+
+                var releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(workItemId, ct);
+                if (releasePlan == null)
+                {
+                    return new ReleasePlanResponse { ResponseError = $"No release plan found for work item {workItemId}." };
+                }
+
+                var fieldsToUpdate = new Dictionary<string, string>
+                {
+                    { "Custom.SDKReleasemonth", targetReleaseMonthYear },
+                };
+
+                await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, fieldsToUpdate, ct);
+                logger.LogInformation("Updated SDK release target month to {targetReleaseMonthYear} for work item {WorkItemId}", targetReleaseMonthYear, releasePlan.WorkItemId);
+
+                releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(releasePlan.WorkItemId, ct);
+                return new ReleasePlanResponse
+                {
+                    ReleasePlanDetails = releasePlan,
+                    Message = $"Successfully updated SDK release target month to {targetReleaseMonthYear} for release plan {releasePlan?.WorkItemId}."
+                };
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to update SDK release target month for work item {WorkItemId}", workItemId);
+                return new ReleasePlanResponse { ResponseError = $"Failed to update SDK release target month: {ex.Message}" };
             }
         }
 

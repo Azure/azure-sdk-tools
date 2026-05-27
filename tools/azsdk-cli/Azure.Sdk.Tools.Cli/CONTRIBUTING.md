@@ -262,7 +262,7 @@ A condensed checklist (see [`docs/new-tool.md`](../docs/new-tool.md) for the ful
 
 ## Releasing a New Version
 
-Releases are published to [GitHub Releases](https://github.com/Azure/azure-sdk-tools/releases) by the CI pipeline ([`ci.yml`](../ci.yml)), which runs automatically on every merge to `main`. The releaser does three things:
+Releases are published to [GitHub Releases](https://github.com/Azure/azure-sdk-tools/releases) by the CI pipeline ([`ci.yml`](../ci.yml)), which runs automatically on every merge to `main`. The release driver needs to  do three things:
 
 ### 1. Update the changelog and merge
 

@@ -36,53 +36,45 @@ export async function lintFix(packageDirectory: string) {
   const options = { ...runCommandOptions, cwd };
 
   try {
-    // Ensure eslint is a dev dependency so `npm exec -- eslint` resolves it from local node_modules.
-    // Mgmt packages set lint/lint:fix to "echo skipped", so we run eslint directly instead of
-    // going through `npm run lint:fix` (which would be a no-op for those packages).
     const packageJsonPath = path.join(packageDirectory, 'package.json');
     const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, { encoding: 'utf-8' }));
-    if (!packageJson.devDependencies?.eslint) {
-      logger.info(`eslint not found in devDependencies, adding it.`);
-      packageJson.devDependencies = packageJson.devDependencies ?? {};
-      packageJson.devDependencies['eslint'] = '^8.0.0';
-      fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, '  '), { encoding: 'utf-8' });
-      logger.info(`Re-running pnpm install to install newly added eslint devDependency.`);
-      await runCommand('pnpm', ['install', '--no-frozen-lockfile'], options, true, 300, true);
-      logger.info(`pnpm install completed after adding eslint.`);
+    const lintFixScript: string = packageJson.scripts?.['lint:fix'] ?? '';
+
+    if (lintFixScript.trimStart().startsWith('echo')) {
+      // lint:fix is a no-op for this package (e.g. mgmt packages set it to "echo skipped").
+      // Run eslint directly via `pnpm exec` so that pnpm resolves the binary from the
+      // workspace-hoisted node_modules/.bin without mutating package.json.
+
+      // Ensure @azure/eslint-plugin-azure-sdk is built first; pnpm install only symlinks it.
+      logger.info(`Building @azure/eslint-plugin-azure-sdk to ensure its dist files are available.`);
+      await runCommand('pnpm', ['build', '--filter', '@azure/eslint-plugin-azure-sdk'], runCommandOptions, true, 300, true);
+      logger.info(`@azure/eslint-plugin-azure-sdk build step completed.`);
+
+      // Lint only TypeScript source directories; exclude JSON files to avoid a crash in the
+      // ts-package-json-repo rule of @azure/eslint-plugin-azure-sdk under ESLint 9.
+      const lintPaths = ['src'];
+      if (fs.existsSync(path.join(packageDirectory, 'test'))) {
+        lintPaths.push('test');
+        logger.info(`'test' directory found, including in lint paths.`);
+      }
+      if (fs.existsSync(path.join(packageDirectory, 'samples-dev'))) {
+        lintPaths.push('samples-dev');
+        logger.info(`'samples-dev' directory found, including in lint paths.`);
+      }
+      logger.info(`Lint paths: ${lintPaths.join(', ')}`);
+
+      await runCommand(
+        'pnpm',
+        ['exec', 'eslint', ...lintPaths, '--fix', '--fix-type', '[problem,suggestion]'],
+        options,
+        true,
+        3600,
+        true
+      );
     } else {
-      logger.info(`eslint found in devDependencies: ${packageJson.devDependencies.eslint}`);
+      logger.info(`lint:fix script found ('${lintFixScript}'), running 'npm run lint:fix'.`);
+      await runCommand('npm', ['run', 'lint:fix'], options, true, 300, true);
     }
-
-    // Ensure workspace packages used by the eslint config (e.g. @azure/eslint-plugin-azure-sdk)
-    // are built before invoking eslint, since pnpm install does not build workspace packages.
-    // Run from the process cwd (monorepo root) so pnpm can resolve the workspace filter.
-    logger.info(`Building @azure/eslint-plugin-azure-sdk to ensure its dist files are available.`);
-    await runCommand('pnpm', ['build', '--filter', '@azure/eslint-plugin-azure-sdk'], runCommandOptions, true, 300, true);
-    logger.info(`@azure/eslint-plugin-azure-sdk build step completed.`);
-
-    // Build the list of paths to lint; conditionally include test and samples-dev if they exist.
-    // Note: we lint only TypeScript source directories (not package.json/api-extractor.json) to
-    // avoid compatibility issues between ESLint 9 and certain @azure/eslint-plugin-azure-sdk rules
-    // (e.g. ts-package-json-repo) that crash when processing JSON files.
-    const lintPaths = ['src'];
-    if (fs.existsSync(path.join(packageDirectory, 'test'))) {
-      lintPaths.push('test');
-      logger.info(`'test' directory found, including in lint paths.`);
-    }
-    if (fs.existsSync(path.join(packageDirectory, 'samples-dev'))) {
-      lintPaths.push('samples-dev');
-      logger.info(`'samples-dev' directory found, including in lint paths.`);
-    }
-    logger.info(`Lint paths: ${lintPaths.join(', ')}`);
-
-    await runCommand(
-      'npm',
-      ['exec', '--', 'eslint', ...lintPaths, '--fix', '--fix-type', '[problem,suggestion]'],
-      options,
-      true,
-      3600,
-      true
-    );
     logger.info(`Fix the automatically repairable lint errors successfully.`);
   } catch (error) {
     logger.warn(`Failed to fix lint errors due to: ${(error as Error)?.stack ?? error}`);

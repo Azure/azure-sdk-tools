@@ -49,6 +49,11 @@ export async function lintFix(packageDirectory: string) {
       await runCommand('pnpm', ['install', '--no-frozen-lockfile'], options, true, 300, true);
     }
 
+    // Ensure workspace packages used by the eslint config (e.g. @azure/eslint-plugin-azure-sdk)
+    // are built before invoking eslint, since pnpm install does not build workspace packages.
+    // Run from the process cwd (monorepo root) so pnpm can resolve the workspace filter.
+    await runCommand('pnpm', ['build', '--filter', '@azure/eslint-plugin-azure-sdk'], runCommandOptions, true, 300, true);
+
     // Build the list of paths to lint; conditionally include test and samples-dev if they exist.
     const lintPaths = ['package.json', 'api-extractor.json', 'src'];
     if (fs.existsSync(path.join(packageDirectory, 'test'))) {

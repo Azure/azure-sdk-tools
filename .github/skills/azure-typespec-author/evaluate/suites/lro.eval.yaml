@@ -57,7 +57,7 @@ stimuli:
     config:
       scoring: scale_1_5
       threshold: 1.0
-      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
+      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent. Do not penalize for pre-existing project configuration issues such as swagger generation failures unrelated to the agent changes.'
       model: claude-opus-4.6
 
 - name: 003002-arm-modify-response

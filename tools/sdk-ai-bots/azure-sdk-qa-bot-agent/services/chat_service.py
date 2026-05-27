@@ -354,7 +354,10 @@ class ChatService:
         return "\n".join(parts)
 
     def _resolve_memory_scope(self, req: ChatRequest) -> str | None:
-        """Derive user memory scope from user_id. Returns None if no user_id."""
+        """Derive user memory scope from user_id. Returns None if disabled or no user_id."""
+        if cfg("ENABLE_USER_MEMORY_SEARCH", "true").lower() != "true":
+            logger.info("User memory search disabled by config")
+            return None
         user_id = getattr(req.message, "user_id", None)
         if user_id and user_id.strip():
             scope = sanitize_scope(f"user_{user_id.strip()}")

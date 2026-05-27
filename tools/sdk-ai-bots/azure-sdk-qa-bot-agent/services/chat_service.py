@@ -134,7 +134,7 @@ class ChatService:
         # Streaming is broken for hosted agents — text is lost entirely.
         # See https://github.com/Azure/azure-sdk-for-python/issues/45282
         # and https://github.com/Azure/azure-sdk-for-python/issues/46015
-        response: OpenAIResponse = await openai_client.responses.create(
+        raw_response = await openai_client.responses.with_raw_response.create(
             input=conversation_items,
             conversation=agent_conversation_id,
             store=True,
@@ -142,6 +142,18 @@ class ChatService:
             extra_body={
                 "agent_reference": agent_ref,
             },
+        )
+        response: OpenAIResponse = raw_response.parse()
+
+        # Extract AI Foundry trace ID from x-request-id header.
+        # The header may contain duplicated values separated by comma.
+        x_request_id = raw_response.headers.get("x-request-id", "")
+        trace_id = x_request_id.split(",")[0].strip() if x_request_id else None
+        logger.info(
+            "Agent trace: trace_id=%s, response_id=%s, conversation=%s",
+            trace_id,
+            response.id,
+            agent_conversation_id,
         )
 
         # Poll if response completed with empty text (Foundry persistence delay).
@@ -170,6 +182,7 @@ class ChatService:
             )
 
         chat_response = self._postprocess(req, response, agent_conversation_id)
+        chat_response.trace_id = trace_id
         BackgroundTaskTracker.instance().track(
             asyncio.create_task(
                 self._save_bot_answer_to_conversation(

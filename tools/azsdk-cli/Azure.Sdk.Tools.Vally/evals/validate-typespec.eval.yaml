@@ -1,0 +1,37 @@
+name: azsdk-mcp-tool-scenarios
+description: |
+  Validate-typespec: the agent should run TypeSpec validation when asked to
+  validate a TypeSpec project.
+version: "1.0"
+type: capability
+
+environment: azsdk-mcp
+
+config:
+  runs: 1
+  timeout: 30m
+  model: claude-opus-4.6
+  executor: copilot-sdk
+
+stimuli:
+  - name: validate-typespec
+    # Ported from deleted ValidateTypespecScenario (#15697).
+    # The original allowed `azsdk_typespec_check_project_in_public_repo` and
+    # `azsdk_verify_setup` as optional tool calls. Vally's current grader has
+    # no `optional` concept — extra calls are not penalised by `required:`.
+    prompt: |
+      Validate my typespec project. It is already confirmed we are in a public repository.
+      The path to my typespec is specification/contosowidgetmanager/Contoso.WidgetManager/main.tsp.
+    constraints:
+      max_turns: 8
+      max_tokens: 8000
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - azure-sdk-mcp-azsdk_run_typespec_validation
+
+scoring:
+  weights:
+    tool-calls: 1
+  threshold: 1.0

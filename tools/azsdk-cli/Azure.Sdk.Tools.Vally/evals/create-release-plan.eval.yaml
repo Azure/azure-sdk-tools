@@ -1,0 +1,45 @@
+name: azsdk-mcp-tool-scenarios
+description: |
+  Create-release-plan: the agent should call azsdk_create_release_plan with
+  the supplied service-tree / product-tree / spec PR context.
+version: "1.0"
+type: capability
+
+environment: azsdk-mcp
+
+config:
+  runs: 1
+  timeout: 30m
+  model: claude-opus-4.6
+  executor: copilot-sdk
+
+stimuli:
+  - name: create-release-plan
+    # Ported from deleted CreateReleasePlanScenario (#15697).
+    # Original also asserted exact tool arguments (serviceTreeId, productTreeId,
+    # specApiVersion, specPullRequestUrl, sdkReleaseType, typeSpecProjectPath).
+    # Vally's built-in tool-calls grader checks tool *name* only; argument
+    # assertions would need a custom grader under Graders/.
+    prompt: |
+      Create a release plan for the Contoso Widget Manager, no need to get it afterwards only create.
+      My setup has already been verified, do not run azsdk_verify_setup. Here is all the context you need:
+      TypeSpec project located at "specification/contosowidgetmanager/Contoso.WidgetManager".
+      Use service tree ID "a7f2b8e4-9c1d-4a3e-b6f9-2d8e5a7c3b1f",
+      product tree ID "f1a8c5d2-6e4b-4f7a-9c2d-8b5e1f3a6c9e",
+      target release timeline "December 2025",
+      API version "2022-11-01-preview",
+      SDK release type "beta",
+      and link it to the spec pull request "https://github.com/Azure/azure-rest-api-specs/pull/38387".
+    constraints:
+      max_turns: 8
+      max_tokens: 8000
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - azure-sdk-mcp-azsdk_create_release_plan
+
+scoring:
+  weights:
+    tool-calls: 1
+  threshold: 1.0

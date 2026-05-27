@@ -1,0 +1,38 @@
+name: azsdk-mcp-tool-scenarios
+description: |
+  TypeSpec generation workflow step 2: the agent should check whether the
+  project is in the public repo as part of the validation step.
+version: "1.0"
+type: capability
+
+environment: azsdk-mcp
+
+config:
+  runs: 1
+  timeout: 30m
+  model: claude-opus-4.6
+  executor: copilot-sdk
+
+stimuli:
+  - name: typespec-generation-step02-validation
+    # Ported from deleted TypespecGenerationStep02Scenario (#15697).
+    # The original benchmark replaced a mid-conversation JSON trace with a
+    # standalone prompt; same intent preserved here.
+    prompt: |
+      I'm working on the TypeSpec generation workflow. I need to validate my TypeSpec project
+      as part of step 2. Please check if my TypeSpec project is in the public repo.
+      The project is at specification/contosowidgetmanager/Contoso.WidgetManager.
+      My setup has already been verified, do not run azsdk_verify_setup.
+    constraints:
+      max_turns: 5
+      max_tokens: 5000
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - azure-sdk-mcp-azsdk_typespec_check_project_in_public_repo
+
+scoring:
+  weights:
+    tool-calls: 1
+  threshold: 1.0

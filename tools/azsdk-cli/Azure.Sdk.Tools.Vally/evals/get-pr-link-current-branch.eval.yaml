@@ -1,0 +1,36 @@
+name: azsdk-mcp-tool-scenarios
+description: |
+  Get-pr-link-current-branch: the agent should call
+  azsdk_get_pull_request_link_for_current_branch when asked about the
+  status of the spec PR on the current branch.
+version: "1.0"
+type: capability
+
+environment: azsdk-mcp
+
+config:
+  runs: 1
+  timeout: 30m
+  model: claude-opus-4.6
+  executor: copilot-sdk
+
+stimuli:
+  - name: get-pr-link-current-branch
+    # Ported from deleted GetPrLinkCurrentBranchScenario (#15697).
+    prompt: |
+      What's the status of the spec PR in my current branch? Only check the status once.
+      My setup has already been verified, do not run azsdk_verify_setup.
+      The repository root is the relative path ./azure-rest-api-specs.
+    constraints:
+      max_turns: 5
+      max_tokens: 5000
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - azure-sdk-mcp-azsdk_get_pull_request_link_for_current_branch
+
+scoring:
+  weights:
+    tool-calls: 1
+  threshold: 1.0

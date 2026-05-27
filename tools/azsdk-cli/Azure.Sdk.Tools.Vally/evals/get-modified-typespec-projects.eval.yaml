@@ -1,0 +1,51 @@
+name: azsdk-mcp-tool-scenarios
+description: |
+  Get-modified-typespec-projects: the agent should call
+  azsdk_get_modified_typespec_projects to list TypeSpec projects modified
+  in the current branch.
+version: "1.0"
+type: capability
+
+environment: azsdk-mcp
+
+config:
+  runs: 1
+  timeout: 30m
+  model: claude-opus-4.6
+  executor: copilot-sdk
+
+stimuli:
+  - name: get-modified-typespec-projects
+    # Ported from deleted GetModifiedTypespecProjectsScenario (#15697).
+    #
+    # TODO: the original scenario had a SetupAsync hook that sparse-checked
+    # out Azure/azure-rest-api-specs, modified
+    # specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml,
+    # and committed the change so `git merge-base HEAD main` had a divergence
+    # point to report. Vally's `environment.files` only seeds files — it does
+    # not init a git repo or run commands. To exercise the tool's underlying
+    # git logic this eval needs either:
+    #   1. A new Vally environment hook that runs setup commands, OR
+    #   2. A pre-built fixture committed under fixtures/ that is itself a git
+    #      repo (committed as a tarball / unpacked at setup), OR
+    #   3. A custom .NET grader under Graders/ that drives the tool with a
+    #      fabricated workspace.
+    # For now this eval only verifies the tool *name* is selected — the
+    # actual diff result is not asserted.
+    prompt: |
+      List the TypeSpec projects modified in my current branch compared to main.
+      My setup has already been verified, do not run azsdk_verify_setup.
+      The repository root is the relative path ./azure-rest-api-specs.
+    constraints:
+      max_turns: 5
+      max_tokens: 5000
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - azure-sdk-mcp-azsdk_get_modified_typespec_projects
+
+scoring:
+  weights:
+    tool-calls: 1
+  threshold: 1.0

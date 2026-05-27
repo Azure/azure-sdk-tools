@@ -1,0 +1,36 @@
+name: azsdk-mcp-tool-scenarios
+description: |
+  Check-sdk-generation-status: the agent should call azsdk_get_pipeline_status
+  to check the SDK generation pipeline status.
+version: "1.0"
+type: capability
+
+environment: azsdk-mcp
+
+config:
+  runs: 1
+  timeout: 30m
+  model: claude-opus-4.6
+  executor: copilot-sdk
+
+stimuli:
+  - name: check-sdk-generation-status
+    # Ported from deleted CheckSdkGenerationStatusScenario (#15697).
+    # Original also asserted buildId=5513110 was passed to the tool.
+    # Argument assertions require a custom grader (not yet built).
+    prompt: |
+      Check the SDK generation pipeline status for build ID 5513110.
+      My setup has already been verified, do not run azsdk_verify_setup.
+    constraints:
+      max_turns: 5
+      max_tokens: 5000
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - azure-sdk-mcp-azsdk_get_pipeline_status
+
+scoring:
+  weights:
+    tool-calls: 1
+  threshold: 1.0

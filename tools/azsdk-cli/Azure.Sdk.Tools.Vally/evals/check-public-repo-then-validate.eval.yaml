@@ -1,0 +1,39 @@
+name: azsdk-mcp-tool-scenarios
+description: |
+  Validate-then-check-public-repo: the agent should run TypeSpec validation,
+  then check if the project is in the public repo.
+version: "1.0"
+type: capability
+
+environment: azsdk-mcp
+
+config:
+  runs: 1
+  timeout: 30m
+  model: claude-opus-4.6
+  executor: copilot-sdk
+
+stimuli:
+  - name: validate-then-check-public-repo
+    # Ported from deleted CheckPublicRepoThenValidateScenario (#15697).
+    # Original also asserted ordering (validate before check) and forbade
+    # azsdk_verify_setup. Vally's tool-calls grader currently checks presence
+    # only, not order, and has no `forbidden` field — captured via prompt.
+    prompt: |
+      Run TypeSpec validation, then check if the project is in the public repo.
+      Project path: specification/contosowidgetmanager/Contoso.WidgetManager.
+      My setup has already been verified, do not run azsdk_verify_setup.
+    constraints:
+      max_turns: 8
+      max_tokens: 8000
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - azure-sdk-mcp-azsdk_run_typespec_validation
+            - azure-sdk-mcp-azsdk_typespec_check_project_in_public_repo
+
+scoring:
+  weights:
+    tool-calls: 1
+  threshold: 1.0

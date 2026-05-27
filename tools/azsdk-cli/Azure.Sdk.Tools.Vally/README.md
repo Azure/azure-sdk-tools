@@ -79,17 +79,43 @@ Run a single eval:
 
 ## Recovery checklist (from deleted benchmark)
 
-Tracked in [#15124](https://github.com/Azure/azure-sdk-tools/issues/15124):
+Tracked in [#15124](https://github.com/Azure/azure-sdk-tools/issues/15124).
+All 9 deleted scenarios have been ported as Vally `tool-calls` evals (presence
+checks). Items marked with **(stub)** have known gaps documented inline in the
+eval file:
 
-- [x] `check-public-repo` (reference scenario)
-- [ ] `check-public-repo-then-validate`
-- [ ] `validate-typespec`
-- [ ] `typespec-generation-step02`
-- [ ] `get-modified-typespec-projects`
-- [ ] `add-arm-resource`
-- [ ] `create-release-plan`
-- [ ] `link-namespace-approval-issue`
-- [ ] `get-pr-link-current-branch`
-- [ ] `check-sdk-generation-status`
+- [x] `check-public-repo`
+- [x] `check-public-repo-then-validate`
+- [x] `validate-typespec`
+- [x] `typespec-generation-step02`
+- [x] `get-modified-typespec-projects` **(stub — needs git-repo fixture / setup hook)**
+- [x] `add-arm-resource` **(stub — needs fixtures + `npx tsp compile` post-check)**
+- [x] `create-release-plan`
+- [x] `link-namespace-approval-issue`
+- [x] `get-pr-link-current-branch`
+- [x] `check-sdk-generation-status`
+
+### Known gaps vs. the original benchmark
+
+The current `tool-calls` grader only checks tool *names*. The deleted
+benchmark's `ToolCallValidator` additionally asserted:
+
+1. **Argument values** (e.g. `serviceTreeId`, `buildId`, `typeSpecProjectPath`).
+2. **Forbidden tools** (e.g. "must NOT call `azsdk_verify_setup`").
+3. **Call order** (e.g. validate before check-public-repo).
+4. **Optional tools** (calls that are allowed but not required).
+
+Recovering 1–4 requires either upstream grader support in
+`@microsoft/vally-cli` or a custom .NET grader under `Graders/`. Until then
+those constraints are captured in prompt text and inline `TODO:` comments.
+
+### Follow-ups
+
 - [ ] Port `Evaluate_PromptToToolMatch` + `Evaluate_ToolDescriptionSimilarity`
-      from `Azure.Sdk.Tools.Cli.Evaluations` (uses Copilot-SDK evaluator today).
+      from `Azure.Sdk.Tools.Cli.Evaluations` (still uses Copilot-SDK evaluator).
+- [ ] File upstream issue against `@microsoft/vally-cli` to add `forbidden`,
+      `optional`, argument-matching, and ordering to the built-in `tool-calls`
+      grader (or accept that those gaps need custom graders).
+- [ ] Wire a `vally eval` CI job (current `.github/workflows/skill-eval.yml`
+      runs `vally lint` only). See [#15126](https://github.com/Azure/azure-sdk-tools/issues/15126)
+      and [#15127](https://github.com/Azure/azure-sdk-tools/issues/15127).

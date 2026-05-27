@@ -26,5 +26,20 @@ suites:
   typespec:
     evals:
       - "evals/check-public-repo.eval.yaml"
+      - "evals/check-public-repo-then-validate.eval.yaml"
+      - "evals/validate-typespec.eval.yaml"
+      - "evals/typespec-generation-step02.eval.yaml"
+      - "evals/get-modified-typespec-projects.eval.yaml"
+      - "evals/add-arm-resource.eval.yaml"
+  release-plan:
+    evals:
+      - "evals/create-release-plan.eval.yaml"
+      - "evals/link-namespace-approval-issue.eval.yaml"
+  github:
+    evals:
+      - "evals/get-pr-link-current-branch.eval.yaml"
+  pipeline:
+    evals:
+      - "evals/check-sdk-generation-status.eval.yaml"
   all:
     evals: ["evals/*.eval.yaml"]

@@ -1,0 +1,30 @@
+# Vally configuration for Azure SDK Tools MCP tool / scenario evaluations.
+# See: https://vally.dev/reference/vally-config
+#
+# These are scenario evals (does the agent invoke the right MCP tool(s) for a
+# given prompt?) and are intentionally separate from the per-skill evals under
+# .github/skills/. See README.md for context.
+
+paths:
+  evals: [evals/]
+  evalFilenames: ["*.eval.yaml"]
+  results: results/
+
+environments:
+  azsdk-mcp:
+    mcpServers:
+      azure-sdk-mcp:
+        type: stdio
+        command: dotnet
+        args: ["run", "--project", "../Azure.Sdk.Tools.Cli", "--", "start"]
+        timeout: 300000
+        env:
+          AZSDKTOOLS_AGENT_TESTING: "false"
+          AZSDKTOOLS_COLLECT_TELEMETRY: "false"
+
+suites:
+  typespec:
+    evals:
+      - "evals/check-public-repo.eval.yaml"
+  all:
+    evals: ["evals/*.eval.yaml"]

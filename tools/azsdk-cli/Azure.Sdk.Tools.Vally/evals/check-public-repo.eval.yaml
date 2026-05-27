@@ -1,0 +1,46 @@
+name: azsdk-mcp-tool-scenarios
+description: |
+  Tool-scenario evaluation suite for the azsdk MCP server. Verifies the
+  agent invokes the right MCP tools for given prompts, independent of any
+  specific skill.
+version: "1.0"
+type: capability
+
+environment: azsdk-mcp
+
+config:
+  runs: 1
+  timeout: 30m
+  model: claude-opus-4.6
+  executor: copilot-sdk
+
+# Test cases
+stimuli:
+  - name: check-public-repo
+    # Migrated from the deleted Azure.Sdk.Tools.Cli.Benchmarks CheckPublicRepoScenario
+    # (see PR #15697 for deletion, PR #14507 for the original benchmark form).
+    # Validates that the agent invokes `azsdk_typespec_check_project_in_public_repo`
+    # when asked whether a TypeSpec project is in the public repo, and that it
+    # does NOT call `azsdk_verify_setup` after being told setup is verified.
+    prompt: |
+      Check if my TypeSpec project is in the public repo.
+      My setup has already been verified, do not run azsdk_verify_setup.
+      Project root: specification/contosowidgetmanager/Contoso.WidgetManager.
+    constraints:
+      max_turns: 5
+      max_tokens: 5000
+    # NOTE: the deleted benchmark also asserted that `azsdk_verify_setup`
+    # was NOT called (the prompt explicitly tells the agent skip it). The
+    # current `tool-calls` grader does not support a `forbidden` list, so we
+    # rely on the prompt for now. Revisit once Vally supports negative
+    # tool-call assertions, or add a custom grader under `Graders/`.
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - azure-sdk-mcp-azsdk_typespec_check_project_in_public_repo
+
+scoring:
+  weights:
+    tool-calls: 1
+  threshold: 1.0

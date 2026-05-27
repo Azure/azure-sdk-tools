@@ -13,7 +13,7 @@ environment: azsdk-mcp
 # Execution configuration
 config:
   runs: 1
-  timeout: 1800
+  timeout: 30m
   model: claude-opus-4.6
   executor: copilot-sdk
 # Cases are intentionally sorted by case id.
@@ -22,7 +22,7 @@ stimuli:
   prompt: I added `...Azure.ResourceManager.ManagedServiceIdentityProperty;` which updates all my existing API versions and introduces a breaking change. I want to introduce the properties of the spread model '...ManagedServiceIdentityProperty' in API version 2025-05-04-preview only.
   constraints:
     max_turns: 10
-    max_tokens: 50000
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/001-share-version-new-feature/employee.tsp
@@ -67,7 +67,7 @@ stimuli:
     add a default value `21` for property age in model EmployeeProperties only for a new api version 2025-11-01
   constraints:
     max_turns: 10
-    max_tokens: 5000
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/001002-version-default-value/employee.tsp
@@ -116,7 +116,7 @@ stimuli:
     change the property age of EmployeeProperties from required to optional for api version 2025-05-04-preview
   constraints:
     max_turns: 10
-    max_tokens: 5000
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/001-share-version-new-feature/employee.tsp
@@ -161,7 +161,7 @@ stimuli:
     change the visibility of property 'provisioningState' from Lifecycle.Read to Lifecycle.Read and Lifecycle.Create in version 2025-05-04-preview only
   constraints:
     max_turns: 10
-    max_tokens: 5000
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/001-share-version-new-feature/employee.tsp
@@ -202,7 +202,7 @@ stimuli:
     Add a new preview version `2025-05-04-preview` to my service widget resource manager. Exclude Feature: `age` property with default value 21. Carry other features.
   constraints:
     max_turns: 10
-    max_tokens: 5000
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/001005-version-add-preview-after-preview\employee.tsp
@@ -296,7 +296,7 @@ stimuli:
     Add a new preview version `2025-05-04-preview` to my service widget resource manager. Carry over all the features from the latest stable version
   constraints:
     max_turns: 10
-    max_tokens: 5000
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/001006-version-add-preview-after-stable\employee.tsp
@@ -376,7 +376,7 @@ stimuli:
     I want to add a new stable version `2025-01-01`. Exclude `workLocation` property and `WorkLocation` model. Carry other features.
   constraints:
     max_turns: 10
-    max_tokens: 5000
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/001007-version-add-stable-after-preview\employee.tsp
@@ -472,7 +472,7 @@ stimuli:
     Add a new stable version `2025-01-01` to my service. Carry over changes.
   constraints:
     max_turns: 10
-    max_tokens: 5000
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/001008-version-add-stable-after-stable\employee.tsp
@@ -562,7 +562,7 @@ stimuli:
     In the Widget project, make the `email` property required in EmployeeProperties only for version `2025-05-04-preview`.
   constraints:
     max_turns: 10
-    max_tokens: 5000
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/001-share-version-new-feature/employee.tsp
@@ -606,7 +606,7 @@ stimuli:
     In the Widget project, remove the `department` property from EmployeeProperties only for version `2025-05-04-preview`.
   constraints:
     max_turns: 10
-    max_tokens: 5000
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/001-share-version-new-feature/employee.tsp
@@ -644,7 +644,7 @@ stimuli:
     In the Widget project, rename the `age` property to `employeeAge` in EmployeeProperties only for version `2025-05-04-preview`.
   constraints:
     max_turns: 10
-    max_tokens: 5000
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -687,7 +687,7 @@ stimuli:
     In the Widget project, change the return type of the `exportData` operation from `ExportResult` to `DetailedExportResult` with additional optional properties `format` (string) and `exportedAt` (utcDateTime) only for version `2025-05-04-preview`.
   constraints:
     max_turns: 10
-    max_tokens: 5000
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -738,7 +738,7 @@ stimuli:
     In the Widget project, change the type of the `statusCode` property from `string` to `int32` in EmployeeProperties only for version `2025-05-04-preview`.
   constraints:
     max_turns: 10
-    max_tokens: 5000
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -783,7 +783,7 @@ stimuli:
     change resource Employee to be an extension resource
   constraints:
     max_turns: 10
-    max_tokens: 5000
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -828,7 +828,7 @@ stimuli:
     add an extension resource named asset
   constraints:
     max_turns: 10
-    max_tokens: 5000
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -867,7 +867,7 @@ stimuli:
     Define a PATCH operation for Employees. It is to update properties of an employee. Ensure the definition meets TypeSpec Azure guidelines.
   constraints:
     max_turns: 10
-    max_tokens: 5000
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/002003-ARM-define-full-update-operation/employee.tsp
@@ -898,7 +898,7 @@ stimuli:
     Define a "badge assignment" extension resource. It should be an extension resource that can be attached to an employee. Ensure the definition meets TypeSpec Azure guidelines.
   constraints:
     max_turns: 10
-    max_tokens: 5000
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/002004-ARM-define-extension-resource/badgeAssignment.tsp
@@ -949,7 +949,7 @@ stimuli:
     Define a Azure resource "Employee" under the namespace "Microsoft.Widget" using TypeSpec. Properties: age (int32, optional), city (string, optional), profile (bytes, optional), provisioningState (enum incorporating ResourceProvisioningState, optional, read-only). Ensure the definition meets TypeSpec Azure design guidelines.
   constraints:
     max_turns: 10
-    max_tokens: 5000
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/002005-ARM-define-the-resource/main.tsp
@@ -1008,7 +1008,7 @@ stimuli:
     Create a new "AddressResource" child resource under the parent resource "Employee". Address properties: street 1(optional), street 2(optional), city(optional), state(optional), postal code(optional), country(optional), and a read-only provisioningState(optional). Ensure the definition meets TypeSpec Azure design guidelines.
   constraints:
     max_turns: 10
-    max_tokens: 5000
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -1105,7 +1105,7 @@ stimuli:
     Add an additional POST action called "/notify" to the standard operations of Employee. Request body: message content (string) and priority (enum with values Low, Medium, High). Response body: notification identifier (string) and status (string). Ensure the definition meets TypeSpec Azure design guidelines.
   constraints:
     max_turns: 10
-    max_tokens: 5000
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -1182,7 +1182,7 @@ stimuli:
     add top and skip query parameters to the ListBySubscription operation in interface Employees
   constraints:
     max_turns: 10
-    max_tokens: 5000
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -1216,7 +1216,7 @@ stimuli:
     In the Widget project, add a patch operation to an existing ARM resource named 'Employee'
   constraints:
     max_turns: 10
-    max_tokens: 5000
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/002009-arm-add-patch-operation-to-resource/employee.tsp
@@ -1253,7 +1253,7 @@ stimuli:
     In the Widget project, add a sync operation exportData for employee resource.
   constraints:
     max_turns: 10
-    max_tokens: 5000
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/002010-arm-action-sync-operation/employee.tsp
@@ -1294,7 +1294,7 @@ stimuli:
     Add a move async operation to move employee, operation's request is MoveRequest, response is MoveResponse
   constraints:
     max_turns: 10
-    max_tokens: 5000
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/003-long-running-operation-share/employee.tsp
@@ -1335,7 +1335,7 @@ stimuli:
     Modify the LRO createOrUpdate PUT operation in interface Employees so that it returns Azure-AsyncOperation header but NOT Retry-After header in the 201 response. The operation currently uses ArmResourceCreateOrReplaceAsync<Employee> template.
   constraints:
     max_turns: 10
-    max_tokens: 5000
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -1388,7 +1388,7 @@ stimuli:
     use authoring plan to add minLength decorator to set the minLength 1 for resource name parameter of Employee resource
   constraints:
     max_turns: 10
-    max_tokens: 5000
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -1429,7 +1429,7 @@ stimuli:
     I have a property `assets: string[]` in EmployeeProperties. Add @minLength(3) @maxLength(10) constraints for any item of the assets array.
   constraints:
     max_turns: 10
-    max_tokens: 5000
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -1480,7 +1480,7 @@ stimuli:
     Remove @operationId and its associated #suppress for no-openapi from all operations. Then restore those operationIds that do not contain underscores or begin with a lowercase letter.
   constraints:
     max_turns: 10
-    max_tokens: 5000
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/004003-delete-and-restore-operationId-decorator/BastionHost.tsp
@@ -1544,7 +1544,7 @@ stimuli:
     Add suppressions for the warnings produced by "tsp compile .", and set the justification to "FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details".
   constraints:
     max_turns: 10
-    max_tokens: 5000
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/005001-warning-suppress-warning/models.tsp

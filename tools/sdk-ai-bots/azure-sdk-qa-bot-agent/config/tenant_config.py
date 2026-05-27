@@ -594,7 +594,10 @@ def load_tenant_qa_guideline(tenant_id: TenantID) -> str:
     guideline_path = _PROMPTS_DIR / config.qa_guideline_file
     if not guideline_path.exists():
         return ""
-    return guideline_path.read_text(encoding="utf-8").strip()
+    content = guideline_path.read_text(encoding="utf-8").strip()
+    # Substitute dynamic parameters
+    content = content.replace("{{tenant_id}}", tenant_id.value)
+    return content
 
 
 def get_tenant_scope_description(tenant_id: TenantID) -> str:

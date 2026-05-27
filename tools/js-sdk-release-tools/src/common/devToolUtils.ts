@@ -47,7 +47,14 @@ export async function lintFix(packageDirectory: string) {
 
       // Ensure @azure/eslint-plugin-azure-sdk is built first; pnpm install only symlinks it.
       logger.info(`Building @azure/eslint-plugin-azure-sdk to ensure its dist files are available.`);
-      await runCommand('pnpm', ['build', '--filter', '@azure/eslint-plugin-azure-sdk'], runCommandOptions, true, 300, true);
+      await runCommand(
+        'pnpm',
+        ['build', '--filter', '@azure/eslint-plugin-azure-sdk'],
+        runCommandOptions,
+        true,
+        300,
+        true
+      );
       logger.info(`@azure/eslint-plugin-azure-sdk build step completed.`);
 
       // Lint only TypeScript source directories; exclude JSON files to avoid a crash in the

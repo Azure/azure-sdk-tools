@@ -92,7 +92,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<ReleasePlanWorkItem> GetReleasePlanAsync(int releasePlanId, CancellationToken ct);
         public Task<ReleasePlanWorkItem> GetReleasePlanForWorkItemAsync(int workItemId, CancellationToken ct);
         public Task<ReleasePlanWorkItem> GetReleasePlanAsync(string pullRequestUrl, CancellationToken ct);
-        public Task<List<ReleasePlanWorkItem>> GetReleasePlansForProductAsync(string productTreeId, string sdkReleaseType, bool isTestReleasePlan = false, CancellationToken ct = default);
+        public Task<List<ReleasePlanWorkItem>> GetReleasePlansForProductAsync(string productTreeId, string sdkReleaseType, bool isTestReleasePlan = false, string apiReleaseType = "", CancellationToken ct = default);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansForPackageAsync(string packageName, string language, bool isTestReleasePlan = false, CancellationToken ct = default);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansByProductAndLifecycleAsync(string productTreeId, string productLifecycle, bool isTestReleasePlan = false, CancellationToken ct = default);
         public Task<WorkItem> CreateReleasePlanWorkItemAsync(ReleasePlanWorkItem releasePlan, CancellationToken ct);
@@ -198,7 +198,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             return await MapWorkItemToReleasePlanAsync(releasePlanWorkItems[0], ct);
         }
 
-        public async Task<List<ReleasePlanWorkItem>> GetReleasePlansForProductAsync(string productTreeId, string sdkReleaseType, bool isTestReleasePlan = false, CancellationToken ct = default)
+        public async Task<List<ReleasePlanWorkItem>> GetReleasePlansForProductAsync(string productTreeId, string sdkReleaseType, bool isTestReleasePlan = false, string apiReleaseType = "", CancellationToken ct = default)
         {
             try
             {
@@ -206,6 +206,10 @@ namespace Azure.Sdk.Tools.Cli.Services
                 query += $" AND [System.Tags] {(isTestReleasePlan ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
                 query += $" AND [Custom.ProductServiceTreeID] = '{productTreeId}'";
                 query += $" AND [Custom.SDKtypetobereleased] = '{sdkReleaseType}'";
+                if (!string.IsNullOrEmpty(apiReleaseType))
+                {
+                    query += $" AND [Custom.ReleasePlanType] = '{apiReleaseType}'";
+                }
                 query += " AND [System.WorkItemType] = 'Release Plan'";
                 query += " AND [System.State] IN ('New','Not Started','In Progress')";
                 var releasePlanWorkItems = await FetchWorkItemsAsync(query, ct);
@@ -327,6 +331,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 APISpecProjectPath = workItem.Fields.TryGetValue("Custom.ApiSpecProjectPath", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 AttestationStatus = workItem.Fields.TryGetValue("Custom.AttestationStatus", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 ProductLifecycle = workItem.Fields.TryGetValue("Custom.ProductLifecycle", out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                ReleasePlanType = workItem.Fields.TryGetValue("Custom.ReleasePlanType", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 Owner = workItem.Fields.TryGetValue("Custom.PrimaryPM", out value) ? value?.ToString() ?? string.Empty : string.Empty,
             };
 
@@ -464,7 +469,9 @@ namespace Azure.Sdk.Tools.Cli.Services
             try
             {
                 // Create release plan work item
-                var releasePlanTitle = $"Release plan for {releasePlan.ProductName ?? releasePlan.ProductTreeId}";
+                var titleLabel = releasePlan.ApiReleaseType.ToDisplayLabel();
+                var releasePlanTypeLabel = string.IsNullOrEmpty(titleLabel) ? "" : $"{titleLabel} ";
+                var releasePlanTitle = $"{releasePlanTypeLabel}release plan for {releasePlan.ProductName ?? releasePlan.ProductTreeId}";
                 logger.LogInformation("Creating release plan with title: {releasePlanTitle}", releasePlanTitle);
                 var releasePlanWorkItem = await CreateWorkItemAsync(releasePlan, "Release Plan", releasePlanTitle, ct: ct);
                 releasePlanWorkItemId = releasePlanWorkItem?.Id ?? 0;

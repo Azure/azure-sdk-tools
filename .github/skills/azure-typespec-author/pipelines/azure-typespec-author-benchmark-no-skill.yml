@@ -40,35 +40,35 @@ extends:
               # Run evaluations on pure agent without skill
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
                 parameters:
-                  EvalFile: versioning.eval.yaml
+                  EvalFile: versioning-no-skill.eval.yaml
                   SuiteName: versioning-no-skill
                   DisplayName: Pure agent - versioning
                   TimeoutMinutes: 50
                   LoadSkills: false
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
                 parameters:
-                  EvalFile: armtemplate.eval.yaml
+                  EvalFile: armtemplate-no-skill.eval.yaml
                   SuiteName: armtemplate-no-skill
                   DisplayName: Pure agent - armtemplate
                   TimeoutMinutes: 40
                   LoadSkills: false
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
                 parameters:
-                  EvalFile: lro.eval.yaml
+                  EvalFile: lro-no-skill.eval.yaml
                   SuiteName: longrunningoperation-no-skill
                   DisplayName: Pure agent - longrunningoperation
                   TimeoutMinutes: 25
                   LoadSkills: false
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
                 parameters:
-                  EvalFile: decorators.eval.yaml
+                  EvalFile: decorators-no-skill.eval.yaml
                   SuiteName: decorators-no-skill
                   DisplayName: Pure agent - decorators
                   TimeoutMinutes: 15
                   LoadSkills: false
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
                 parameters:
-                  EvalFile: warning.eval.yaml
+                  EvalFile: warning-no-skill.eval.yaml
                   SuiteName: warning-no-skill
                   DisplayName: Pure agent - warning
                   TimeoutMinutes: 25

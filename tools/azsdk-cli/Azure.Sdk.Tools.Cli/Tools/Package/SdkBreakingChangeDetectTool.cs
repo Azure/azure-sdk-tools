@@ -80,11 +80,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
         [McpServerTool(Name = DetectSdkBreakingChangToolName), Description("Detects breaking changes in the SDK.")]
         public async Task<SdkBreakingChangeDetectResponse> DetectSDKBreakingChangesAsync(
-            [Description("The absolute path to the package directory..")]
+            [Description("The absolute path to the package directory. REQUIRED. Example: 'path/to/azure-sdk-for-go/sdk/resourcemanager/webpubsub/armwebpubsub'")]
             string packagePath,
             [Description("Language of the SDK, e.g. 'dotnet' for .NET, 'java' for Java, 'js or javascript' for JavaScript/TypeScript, 'python' for Python, 'go' for Go. Optional if running inside a local cloned azure-sdk-for-{language} repository.")]
             string? language = null,
-            [Description("Path to the 'tspconfig.yaml' file. Can be a local file path or a remote HTTPS URL. Optional if running inside a local cloned azure-sdk-for-{language} repository, for example, inside 'azure-sdk-for-net' repository.")]
+            [Description("Path to the 'tspconfig.yaml' file. It is a local file path. Optional.")]
             string? tspConfigPath = null,
             [Description("Regenerate SDK code before detecting breaking changes. If omitted, analyzes existing SDK artifacts in the package path.")]
             bool generateSDK = false,

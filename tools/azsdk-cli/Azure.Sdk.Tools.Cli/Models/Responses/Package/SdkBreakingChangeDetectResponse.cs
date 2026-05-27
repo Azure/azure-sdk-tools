@@ -1,12 +1,15 @@
 using System.Text;
+using System.Text.Json.Serialization;
 using Azure.Sdk.Tools.Cli.Tools.Package;
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
 {
     public class SdkBreakingChangeDetectResponse: PackageResponseBase
     {
+        [JsonPropertyName("breakingChanges")]
         public SdkBreakingChange[] BreakingChanges { get; set; }
-        public bool HasBreakingChanges;
+        [JsonPropertyName("hasBreakingChanges")]
+        public bool HasBreakingChanges { get; set; }
 
         protected override string Format()
         {

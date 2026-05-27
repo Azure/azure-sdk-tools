@@ -61,7 +61,10 @@ export async function lintFix(packageDirectory: string) {
     logger.info(`@azure/eslint-plugin-azure-sdk build step completed.`);
 
     // Build the list of paths to lint; conditionally include test and samples-dev if they exist.
-    const lintPaths = ['package.json', 'api-extractor.json', 'src'];
+    // Note: we lint only TypeScript source directories (not package.json/api-extractor.json) to
+    // avoid compatibility issues between ESLint 9 and certain @azure/eslint-plugin-azure-sdk rules
+    // (e.g. ts-package-json-repo) that crash when processing JSON files.
+    const lintPaths = ['src'];
     if (fs.existsSync(path.join(packageDirectory, 'test'))) {
       lintPaths.push('test');
       logger.info(`'test' directory found, including in lint paths.`);

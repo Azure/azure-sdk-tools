@@ -3,8 +3,6 @@ description: Evaluation suite for azure-typespec-author - warning cases with for
 version: "1.0"
 type: capability
 
-environment: azsdk-mcp
-
 config:
   runs: 1
   timeout: "1500s"

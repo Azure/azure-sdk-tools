@@ -47,7 +47,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private const string getServiceDetailsCommandName = "get-service-details";
         private const string abandonReleasePlanCommandName = "abandon";
         private const string getKpiAttestationStatusCommandName = "get-kpi-attestation";
-        private const string updateReleasePlanMonthCommandName = "update-month";
+        private const string updateReleasePlanMonthCommandName = "update-release-target";
 
         // MCP Tool Names
         private const string GetReleasePlanForSpecPrToolName = "azsdk_get_release_plan_for_spec_pr";
@@ -63,7 +63,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private const string GetServiceDetailsToolName = "azsdk_get_service_details_by_typespec_path";
         private const string AbandonReleasePlanToolName = "azsdk_abandon_release_plan";
         private const string GetKPIAttestationStatusToolName = "azsdk_get_kpi_attestation_status";
-        private const string UpdateReleasePlanMonthToolName = "azsdk_update_release_plan_month";
+        private const string UpdateReleasePlanMonthToolName = "azsdk_update_release_plan_target";
 
         // Options
         private readonly Option<int> releasePlanNumberOpt = new("--release-plan-id", "--release-plan")
@@ -372,7 +372,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     );
 
                 case updateReleasePlanMonthCommandName:
-                    return await UpdateReleasePlanMonth(
+                    return await UpdateReleasePlanTarget(
                         workItemId: commandParser.GetValue(workItemIdOpt),
                         targetReleaseMonthYear: commandParser.GetValue(targetReleaseOpt),
                         ct: ct
@@ -1656,7 +1656,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         }
 
         [McpServerTool(Name = UpdateReleasePlanMonthToolName), Description("Update the SDK release target month on an existing release plan.")]
-        public async Task<ReleasePlanResponse> UpdateReleasePlanMonth(int workItemId, string targetReleaseMonthYear, CancellationToken ct = default)
+        public async Task<ReleasePlanResponse> UpdateReleasePlanTarget(int workItemId, string targetReleaseMonthYear, CancellationToken ct = default)
         {
             try
             {

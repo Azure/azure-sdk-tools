@@ -6,12 +6,12 @@ using Azure.Sdk.Tools.Cli.Models;
 namespace Azure.Sdk.Tools.Mock.Handlers.ReleasePlan;
 
 /// <summary>
-/// Mock handler for azsdk_update_release_plan_month.
+/// Mock handler for azsdk_update_release_plan_target.
 /// Switches on workItem ID — returns an updated response for "35000", default otherwise.
 /// </summary>
 public class UpdateReleasePlanMonthHandler : IMockToolHandler
 {
-    public string ToolName => "azsdk_update_release_plan_month";
+    public string ToolName => "azsdk_update_release_plan_target";
 
     public CommandResponse Handle(Dictionary<string, object?>? arguments)
     {

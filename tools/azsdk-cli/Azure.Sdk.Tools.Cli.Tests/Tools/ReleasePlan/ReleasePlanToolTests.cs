@@ -1202,7 +1202,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [Test]
         public async Task Test_UpdateReleasePlanMonth_with_valid_inputs()
         {
-            var result = await releasePlanTool.UpdateReleasePlanMonth(workItemId: 100, targetReleaseMonthYear: "January 2026");
+            var result = await releasePlanTool.UpdateReleasePlanTarget(workItemId: 100, targetReleaseMonthYear: "January 2026");
 
             Assert.IsNull(result.ResponseError, $"Unexpected error: {result.ResponseError}");
             Assert.That(result.Message, Does.Contain("Successfully updated SDK release target month to January 2026"));
@@ -1211,7 +1211,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [Test]
         public async Task Test_UpdateReleasePlanMonth_with_invalid_work_item_id()
         {
-            var result = await releasePlanTool.UpdateReleasePlanMonth(workItemId: 0, targetReleaseMonthYear: "January 2026");
+            var result = await releasePlanTool.UpdateReleasePlanTarget(workItemId: 0, targetReleaseMonthYear: "January 2026");
 
             Assert.IsNotNull(result.ResponseError);
             Assert.That(result.ResponseError, Does.Contain("valid work item ID"));
@@ -1220,7 +1220,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [Test]
         public async Task Test_UpdateReleasePlanMonth_with_empty_target_month()
         {
-            var result = await releasePlanTool.UpdateReleasePlanMonth(workItemId: 100, targetReleaseMonthYear: "");
+            var result = await releasePlanTool.UpdateReleasePlanTarget(workItemId: 100, targetReleaseMonthYear: "");
 
             Assert.IsNotNull(result.ResponseError);
             Assert.That(result.ResponseError, Does.Contain("target month is required"));
@@ -1238,7 +1238,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper,
                 gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>());
 
-            var result = await tool.UpdateReleasePlanMonth(workItemId: 999, targetReleaseMonthYear: "January 2026");
+            var result = await tool.UpdateReleasePlanTarget(workItemId: 999, targetReleaseMonthYear: "January 2026");
 
             Assert.IsNotNull(result.ResponseError);
             Assert.That(result.ResponseError, Does.Contain("No release plan found"));

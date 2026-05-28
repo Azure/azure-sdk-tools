@@ -133,9 +133,9 @@
     { "toolName": "azsdk_update_release_plan", "prompt": "Update the spec PR URL and SDK release type in my release plan", "category": "all" },
     { "toolName": "azsdk_update_release_plan", "prompt": "Update the existing release plan for my service", "category": "all" },
 
-    { "toolName": "azsdk_update_release_plan_month", "prompt": "Update the SDK release target month for work item 12345 to January 2026", "category": "all" },
-    { "toolName": "azsdk_update_release_plan_month", "prompt": "Change the target release month on my release plan", "category": "all" },
-    { "toolName": "azsdk_update_release_plan_month", "prompt": "Set the SDK release month on release plan 35000 to March 2026", "category": "all" },
+    { "toolName": "azsdk_update_release_plan_target", "prompt": "Update the SDK release target month for work item 12345 to January 2026", "category": "all" },
+    { "toolName": "azsdk_update_release_plan_target", "prompt": "Change the target release month on my release plan", "category": "all" },
+    { "toolName": "azsdk_update_release_plan_target", "prompt": "Set the SDK release month on release plan 35000 to March 2026", "category": "all" },
 
     { "toolName": "azsdk_package_translate_samples", "prompt": "Translate the sample code from the Python package to the Java package", "category": "all" },
     { "toolName": "azsdk_package_translate_samples", "prompt": "Convert samples from the source package to the target language package", "category": "all" },

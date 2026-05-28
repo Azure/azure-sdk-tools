@@ -248,7 +248,7 @@ The `EpisodeDocument` extends this with storage fields: `id`, `tenant_id`, `sour
 
 ![Feedback interaction diagram](images/feedback_interact_diagram.png)
 
-## 2.6 API Design
+### 2.6 API Design
 
 See the [TypeSpec definitions](../azure-sdk-qa-bot-agent/tsp).
 

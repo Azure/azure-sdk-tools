@@ -123,7 +123,7 @@ Then filter by conversation id:
 
 ```kql
 AppServiceConsoleLogs
-| where ResultDescription contains "19:906c1efbbec54dc8949ac736633e6bdf@thread.skype;messageid=1770672641211"
+| where ResultDescription contains "conversation id"
 ```
 
 ![Frontend search by conversation id](images/search_logs_by_conversation_id.png)

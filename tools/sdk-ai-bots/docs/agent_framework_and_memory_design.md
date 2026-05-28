@@ -1,6 +1,6 @@
 # Agent Framework and Memory Design
 
-## 1 Overview
+## 1 Background
 
 We are building a new agent service (`azure-sdk-qa-bot-agent`) based on the Azure AI Foundry Agent framework to replace the existing Go backend (`azure-sdk-qa-bot-backend`) built on a custom RAG framework. The motivations for this migration are:
 
@@ -74,43 +74,98 @@ This gives us the simplicity of Foundry for per-user context while retaining ful
 
 ## 2 Design
 
-### 2.1 Overview
+### 2.1 Architecture
 
 ![Architecture diagram](images/architecture_diagram.png)
 
-#### 2.1.1 Q&A Workflow
+The system consists of two deployable services and a set of offline pipelines:
 
-**Before:**
+| Component | Description |
+| --- | --- |
+| **Backend Server** (`azure-sdk-qa-bot-agent/server.py`) | A FastAPI service that the Teams App communicates with. Handles chat requests by calling the hosted Chat Agent via the Azure AI Foundry SDK, manages conversations, feedback, and memory episode extraction. |
+| **Chat Agent** (`azure-sdk-qa-bot-agent/agents/chat_agent/`) | A hosted container agent deployed to Microsoft Foundry. Binds a model, instructions, tools, skills, and memory context providers into a single `Agent` instance, exposed via the Responses protocol. |
+| **Knowledge Sync** (`azure-sdk-qa-bot-knowledge-sync/`) | An Azure Function that syncs documents from sources daily, detects changes, updates Azure Storage, and triggers Azure AI Search reindexing. |
 
-![Q&A workflow — before](images/qa_workflow_before.png)
+### 2.2 Agent Design
 
-**After:**
+The Chat Agent is the core intelligence of the system. It is built on the `agent_framework` library and deployed as a Foundry hosted agent.
 
-![Q&A workflow — after](images/qa_workflow_after.png)
+#### 2.2.1 Agent Configuration
 
-#### 2.1.2 Feedback Workflow
+The agent is configured with the following components:
 
-**Before:**
+| Component | Purpose |
+| --- | --- |
+| **Instruction** | System prompt defining the agent's role, behavior, and response format. |
+| **Tools** | `KnowledgeTools.search_knowledge_base` (AI Search), `WebTools.web_fetch`, `PipelineTools.azsdk_analyze_pipeline`, `web_search` (Bing grounding), ADO MCP tool, GitHub MCP tool. |
+| **Skills** | Tenant-specific skills auto-generated from tenant config. Each tenant becomes a `Skill` with a description (for routing) and content (QA guideline + knowledge source names). The agent self-routes to the correct tenant. |
+| **Context Providers** | `SkillsProvider` (injects active skill context), `MemoryContextProvider` (injects user + expert memories), `CompactionProvider` (compacts tool-call history to manage context size). |
 
-![Feedback workflow — before](images/feedback_workflow_before.png)
+#### 2.2.2 Tools
 
-**After:**
+Tools are capabilities the agent can invoke during reasoning:
 
-![Feedback workflow — after](images/feedback_workflow_after.png)
+| Tool | Type | Description |
+| --- | --- | --- |
+| `search_knowledge_base` | `FunctionTool` | Queries Azure AI Search with multiple queries using a mixed strategy (quick vector search or deep agentic search). Automatically expands results by header hierarchy to return full section context. |
+| `web_fetch` | `FunctionTool` | Fetches and extracts content from a given URL. |
+| `azsdk_analyze_pipeline` | `FunctionTool` | Analyzes Azure SDK CI pipeline runs to diagnose failures. |
+| `web_search` | Built-in | Bing web search for grounding with real-time information. |
+| ADO MCP | MCP Server | Azure DevOps integration for work item queries. |
+| GitHub MCP | MCP Server | GitHub integration for issue/PR lookup. |
 
-### 2.2 Interaction Design
+#### 2.2.3 Skills
 
-#### 2.2.1 Q&A
+Each tenant (Teams channel) is mapped to a `Skill` that bundles:
 
-![Q&A interaction diagram](images/qa_interact_diagram.png)
+- A **description** (~100 tokens) advertised in the system prompt for the agent to match incoming questions.
+- A **QA guideline** (`azure-sdk-qa-bot-agent/prompts/tenants/*.md`) defining the bot's role, scope, and response style for that channel.
+- **Knowledge sources** so the agent passes the correct sources to `search_knowledge_base`.
 
-#### 2.2.2 Feedback
+Supported tenants include: TypeSpec Discussion, Azure SDK Onboarding, Azure TypeSpec Authoring, API Spec Review, Python SDK, .NET SDK, and more.
 
-![Feedback interaction diagram](images/feedback_interact_diagram.png)
+### 2.3 Knowledge Base
 
-### 2.3 Memory Design
+#### 2.3.1 Data Sources
 
-#### 2.3.1 Memory Types
+Imported knowledge sources include:
+
+- TypeSpec related documents
+- Azure Specs Docs
+- API Guidelines
+- RPC guidelines
+- ......
+
+An Azure Function syncs all documents from sources daily. The function detects changed and deleted files and updates them in Azure Storage. It then automatically triggers Azure AI Search to reindex the index for adopting the changed documents.
+
+#### 2.3.2 Data Preprocessing & Indexing
+
+All knowledge is converted to markdown format for consistency.
+
+**Chunking** — Content is split into blocks for two reasons:
+
+1. **Token limit** — Embedding models have token limits (e.g., OpenAI `text-embedding-ada-002` has an 8191 token input limit).
+2. **Semantic clarity** — Long content with many topics produces vectors that cannot represent the content meaning clearly, affecting retrieval performance.
+
+An Azure AI Search Indexer automatically splits markdown files into chunks using **Markdown** parsing mode with **H3** header depth.
+
+#### 2.3.3 Knowledge Retrieval (search_knowledge_base)
+
+The `search_knowledge_base` tool supports two search modes:
+
+- **Quick** — Vector search only. Fast, good for straightforward factual lookups.
+- **Deep** — Agentic search + vector search in parallel. The LLM breaks a complex query into smaller focused subqueries for better coverage. Each subquery is semantically reranked. Better for complex or multi-faceted questions.
+
+Both modes use:
+
+- **Proper Noun Replacement** — Abbreviations in queries are replaced with proper nouns via configuration (e.g., ARM → Azure Resource Management, TCGC → typespec-client-generator-core) to improve search performance.
+- **Vector + Keyword Search** — Queries Azure AI Search with both keyword and vectorized queries.
+- **Semantic Reranking** — A semantic configuration ranks results by title, content, and keyword fields.
+- **Context Expansion** — High-scoring chunks are expanded to their full document section via the header hierarchy, giving the agent richer context.
+
+### 2.4 Memory Design
+
+#### 2.4.1 Memory Types
 
 AI Foundry Memory Store provides two built-in types of long-term memory (see [Foundry Memory — Memory Types](https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/what-is-memory?tabs=conversational-agent#memory-types)):
 
@@ -130,7 +185,7 @@ The two memory categories differ in their **data source**:
 | **User contextual** (chat summary) | AI Foundry Memory Store | Per user (`user_{user_id}`) | Conversation-relevant memories retrieved every turn using input messages as search items. Incremental via `previous_search_id`. |
 | **Expert episodes** (tenant) | Cosmos DB `experience-episodes` | Per tenant (`tenant_id` partition key) | Structured problem-solution pairs extracted from expert-resolved threads. Retrieved via cosine vector similarity search against the user's current question. |
 
-#### 2.3.2 Key Components
+#### 2.4.2 Key Components
 
 | Component | Purpose |
 | --- | --- |
@@ -139,7 +194,7 @@ The two memory categories differ in their **data source**:
 | `services/thread_memory_service.py` | `ThreadMemoryService` — extracts episodes from expert-resolved threads and stores in Cosmos DB. |
 | `prompts/episode_extraction.md` | LLM prompt for structured episode extraction. |
 
-#### 2.3.3 Memory Lifecycle
+#### 2.4.3 Memory Lifecycle
 
 ##### Write Path — User Memory
 
@@ -164,7 +219,7 @@ When a conversation message is saved via `/conversation/save`, `ThreadMemoryServ
 4. **Search expert episodes** — Generates an embedding of the latest user message and performs a Cosmos DB `VectorDistance` query within the tenant partition. Results are filtered by a similarity threshold (default 0.80, top-k default 2).
 5. **Inject context** — Formats all memories into a system message with `## User memories` and `## Expert experience` sections and injects it into the agent context.
 
-#### 2.3.4 Episode Schema
+#### 2.4.4 Episode Schema
 
 Episodes stored in Cosmos DB follow a structured schema (`models/episode.py`):
 
@@ -179,7 +234,21 @@ Episodes stored in Cosmos DB follow a structured schema (`models/episode.py`):
 
 The `EpisodeDocument` extends this with storage fields: `id`, `tenant_id`, `source_thread_id`, `message_count`, `embedding`, and timestamps.
 
-### 2.4 API Design
+### 2.5 Workflows & Interaction Design
+
+#### 2.5.1 Q&A
+
+![Q&A workflow — after](images/qa_workflow_after.png)
+
+![Q&A interaction diagram](images/qa_interact_diagram.png)
+
+#### 2.5.2 Feedback
+
+![Feedback workflow — after](images/feedback_workflow_after.png)
+
+![Feedback interaction diagram](images/feedback_interact_diagram.png)
+
+## 2.6 API Design
 
 See the [TypeSpec definitions](../azure-sdk-qa-bot-agent/tsp).
 

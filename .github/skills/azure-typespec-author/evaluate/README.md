@@ -10,16 +10,22 @@ This directory contains [Vally](https://aka.ms/vally) evaluation cases for the `
 
 ## Environment Setup
 
-Run the setup script to download spec repo package files, run `npm install`, and configure `FIXTURE_NODE_MODULES`:
+Run the setup script to download spec repo package files, run `npm ci`, and configure `FIXTURE_NODE_MODULES`:
 
 ```powershell
-.\scripts\setup-environment.ps1
+# PowerShell
+node scripts/setup-environment.js | Invoke-Expression
+```
+
+```bash
+# Bash / Zsh
+eval $(node scripts/setup-environment.js)
 ```
 
 This script:
 1. Clones `package.json` and `package-lock.json` from [azure-rest-api-specs](https://github.com/Azure/azure-rest-api-specs) into `fixtures/Microsoft.Widget/Widget/`.
-2. Runs `npm install` in that directory.
-3. Sets `FIXTURE_NODE_MODULES` to the `node_modules` path for symlink usage.
+2. Runs `npm ci` in that directory.
+3. Outputs the shell command to set `FIXTURE_NODE_MODULES` for symlink usage.
 
 Without `FIXTURE_NODE_MODULES`, the agent will run `npm install` each time (slow but functional).
 

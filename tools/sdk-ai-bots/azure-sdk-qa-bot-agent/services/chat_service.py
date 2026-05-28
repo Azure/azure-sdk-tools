@@ -122,8 +122,10 @@ class ChatService:
         )
 
         # Process additional info (images, links, text) from the frontend.
-        image_items = await self._build_image_items(req.additional_infos or [])
-        conversation_items.extend(image_items)
+        additional_items = await self._build_additional_info_items(
+            req.additional_infos or []
+        )
+        conversation_items.extend(additional_items)
 
         agent_ref: dict = {
             "name": agent.name,
@@ -326,34 +328,59 @@ class ChatService:
         return new_id, True
 
     @staticmethod
-    async def _build_image_items(
+    async def _build_additional_info_items(
         infos: list[AdditionalInfo],
     ) -> list[ResponseInputItemParam]:
-        """Convert image additional_infos into Responses API input items."""
+        """Convert additional_infos into Responses API input items.
+
+        Handles both text and image types:
+        - **Text**: injected as a user message so the LLM sees project context
+          (e.g. TypeSpec project state, intake analysis, .tsp code snippets).
+        - **Image**: fetched and converted to data-URI input_image items.
+        """
         items: list[ResponseInputItemParam] = []
         for info in infos:
-            if info.type != AdditionalInfoType.Image or not info.link:
-                continue
-            try:
-                data_uri = await get_image_data_uri(info.link)
-            except Exception:
-                logger.warning(
-                    "Failed to fetch Teams image: %s", info.link, exc_info=True
+            if info.type == AdditionalInfoType.Text and info.content:
+                content = info.content
+                max_chars = int(cfg("AOAI_CHAT_MAX_TOKENS", "100000"))
+                if len(content) > max_chars:
+                    logger.warning(
+                        "Text additional_info is large (%d chars, limit %d)",
+                        len(content),
+                        max_chars,
+                    )
+                items.append(
+                    cast(
+                        ResponseInputItemParam,
+                        ConversationItem(
+                            role=Role.User,
+                            content=info.content,
+                        ).model_dump(mode="json", exclude_none=True),
+                    )
                 )
-                continue
-            items.append(
-                {
-                    "type": "message",
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "input_image",
-                            "image_url": data_uri,
-                            "detail": "auto",
-                        },
-                    ],
-                }
-            )
+            elif info.type == AdditionalInfoType.Image and info.link:
+                try:
+                    data_uri = await get_image_data_uri(info.link)
+                except Exception:
+                    logger.warning(
+                        "Failed to fetch Teams image: %s",
+                        info.link,
+                        exc_info=True,
+                    )
+                    continue
+                items.append(
+                    {
+                        "type": "message",
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "input_image",
+                                "image_url": data_uri,
+                                "detail": "auto",
+                            },
+                        ],
+                    }
+                )
         return items
 
     def _build_tenant_system_message(self, tenant_id: TenantID) -> str:

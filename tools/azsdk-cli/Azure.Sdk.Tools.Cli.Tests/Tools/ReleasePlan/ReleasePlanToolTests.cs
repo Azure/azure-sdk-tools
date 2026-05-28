@@ -1197,6 +1197,54 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.IsNotNull(result.TypeSpecProject);
         }
 
+        // ======================== UpdateReleasePlanTarget Tests ========================
+
+        [Test]
+        public async Task Test_UpdateReleasePlanTarget_with_valid_inputs()
+        {
+            var result = await releasePlanTool.UpdateReleasePlanTarget(workItemId: 100, targetReleaseMonthYear: "January 2026");
+
+            Assert.IsNull(result.ResponseError, $"Unexpected error: {result.ResponseError}");
+            Assert.That(result.Message, Does.Contain("Successfully updated SDK release target month to January 2026"));
+        }
+
+        [Test]
+        public async Task Test_UpdateReleasePlanTarget_with_invalid_work_item_id()
+        {
+            var result = await releasePlanTool.UpdateReleasePlanTarget(workItemId: 0, targetReleaseMonthYear: "January 2026");
+
+            Assert.IsNotNull(result.ResponseError);
+            Assert.That(result.ResponseError, Does.Contain("valid work item ID"));
+        }
+
+        [Test]
+        public async Task Test_UpdateReleasePlanTarget_with_empty_target_month()
+        {
+            var result = await releasePlanTool.UpdateReleasePlanTarget(workItemId: 100, targetReleaseMonthYear: "");
+
+            Assert.IsNotNull(result.ResponseError);
+            Assert.That(result.ResponseError, Does.Contain("target month is required"));
+        }
+
+        [Test]
+        public async Task Test_UpdateReleasePlanTarget_when_release_plan_not_found()
+        {
+            var mockDevOps = new Mock<IDevOpsService>();
+            mockDevOps
+                .Setup(s => s.GetReleasePlanForWorkItemAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((ReleasePlanWorkItem?)null!);
+
+            var tool = new ReleasePlanTool(
+                mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper,
+                gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>());
+
+            var result = await tool.UpdateReleasePlanTarget(workItemId: 999, targetReleaseMonthYear: "January 2026");
+
+            Assert.IsNotNull(result.ResponseError);
+            Assert.That(result.ResponseError, Does.Contain("No release plan found"));
+            mockDevOps.Verify(s => s.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
         // ======================== RunTypeSpecMetadataEmitterAsync Tests ========================
 
         [Test]

@@ -29,7 +29,9 @@ function Get-ContainedPath {
 
     $normalizedRoot = $rootFullPath.TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
     $comparison = [System.StringComparison]::OrdinalIgnoreCase
-    if ($fullPath -ne $normalizedRoot -and -not $fullPath.StartsWith($normalizedRoot + [System.IO.Path]::DirectorySeparatorChar, $comparison)) {
+    $isExactMatch = $fullPath.Equals($normalizedRoot, $comparison)
+    $isChildPath = $fullPath.StartsWith($normalizedRoot + [System.IO.Path]::DirectorySeparatorChar, $comparison)
+    if (-not $isExactMatch -and -not $isChildPath) {
         throw "Path traversal detected. Resolved path '$fullPath' escapes root '$normalizedRoot'."
     }
 

@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -58,7 +59,7 @@ namespace APIViewWeb
                 return false;
             }
 
-            var invalidChars = Path.GetInvalidFileNameChars();
+            var invalidChars = new HashSet<char>(Path.GetInvalidFileNameChars()) { ':', '/', '\\' };
             safeFileName = new string(safeFileName.Select(ch => invalidChars.Contains(ch) ? '_' : ch).ToArray());
 
             if (safeFileName == "." || safeFileName == "..")

@@ -849,7 +849,7 @@ stimuli:
       threshold: 1
       prompt: The original separate list-by-resource-group and list-by-subscription operations should be consolidated into a single list operation using the extension list template. A scope-parameterized interface should be defined to allow the extension resource to be scoped to any parent resource.
       model: claude-opus-4.6
-- name: 002002-ARM-define-extension-resource
+- name: 002002-ARM-define-extension-resource-add
   prompt: |
     add an extension resource named asset
   constraints:
@@ -923,7 +923,7 @@ stimuli:
     config:
       path: '*.tsp'
       pattern: update\s+is\s+ArmCustomPatchSync\s*<\s*Employee\s*,\s*Azure\.ResourceManager\.Foundations\.ResourceUpdateModel\s*<\s*Employee\s*,\s*EmployeeProperties\s*>\s*>\s*;
-- name: 002004-ARM-define-extension-resource
+- name: 002004-ARM-define-extension-resource-fromProxyResource
   prompt: |
     Define a "badge assignment" extension resource. It should be an extension resource that can be attached to an employee. Ensure the definition meets TypeSpec Azure guidelines.
   constraints:

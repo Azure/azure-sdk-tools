@@ -64,7 +64,7 @@ stimuli:
         interface should be defined to allow the extension resource to be scoped to any parent resource.'
       model: claude-opus-4.6
 
-- name: 002002-ARM-define-extension-resource
+- name: 002002-ARM-define-extension-resource-add
   prompt: |
     @azure-typespec-author add an extension resource named asset
   constraints:
@@ -144,7 +144,7 @@ stimuli:
       path: '*.tsp'
       pattern: 'update\s+is\s+ArmCustomPatchSync\s*<'
 
-- name: 002004-ARM-define-extension-resource
+- name: 002004-ARM-define-extension-resource-fromProxyResource
   prompt: |
     @azure-typespec-author Define a "badge assignment" extension resource. It should be an extension resource that can be attached to an employee. Ensure the definition meets TypeSpec Azure design guidelines.
   constraints:

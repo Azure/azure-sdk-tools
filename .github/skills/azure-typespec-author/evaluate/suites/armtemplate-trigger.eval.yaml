@@ -49,7 +49,7 @@ stimuli:
       required:
         - azure-typespec-author
 
-- name: 002002-ARM-define-extension-resource
+- name: 002002-ARM-define-extension-resource-add
   prompt: |
     add an extension resource named asset
   constraints:
@@ -121,7 +121,7 @@ stimuli:
       required:
         - azure-typespec-author
 
-- name: 002004-ARM-define-extension-resource
+- name: 002004-ARM-define-extension-resource-fromProxyResource
   prompt: |
     Define a "badge assignment" extension resource. It should be an extension resource that can be attached to an employee. Ensure the definition meets TypeSpec Azure design guidelines.
   constraints:

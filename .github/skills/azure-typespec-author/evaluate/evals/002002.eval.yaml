@@ -17,7 +17,7 @@ config:
 stimuli:
 - prompt: |
     add an extension resource named asset
-  name: 002002-ARM-define-extension-resource
+  name: 002002-ARM-define-extension-resource-add
   constraints:
     max_turns: 6
     max_tokens: 100000

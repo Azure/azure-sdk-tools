@@ -102,7 +102,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             try
             {
                 // Find the typespec project directory
-                if (Path.GetFileName(typeSpecProjectPath).Equals(TypeSpecProject.TSPCONFIG_FILENAME, StringComparison.OrdinalIgnoreCase))
+                if (!string.IsNullOrEmpty(typeSpecProjectPath) && Path.GetFileName(typeSpecProjectPath).Equals(TypeSpecProject.TSPCONFIG_FILENAME, StringComparison.OrdinalIgnoreCase))
                 {
                     typeSpecProjectPath = Path.GetDirectoryName(typeSpecProjectPath) ?? string.Empty;
                 }
@@ -255,12 +255,17 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
         public string GetTypeSpecProjectRelativePath(string typeSpecProjectPath)
         {
+            if (string.IsNullOrEmpty(typeSpecProjectPath))
+            {
+                return string.Empty;
+            }
+
             if (Path.GetFileName(typeSpecProjectPath).Equals(TypeSpecProject.TSPCONFIG_FILENAME, StringComparison.OrdinalIgnoreCase))
             {
                 typeSpecProjectPath = Path.GetDirectoryName(typeSpecProjectPath) ?? string.Empty;
             }
 
-            if (string.IsNullOrEmpty(typeSpecProjectPath) || !IsValidTypeSpecProjectPath(typeSpecProjectPath))
+            if (!IsValidTypeSpecProjectPath(typeSpecProjectPath))
             {
                 return string.Empty;
             }

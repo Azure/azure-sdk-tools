@@ -71,7 +71,7 @@ try {
 // npm ci from creating eng/tools and .github/shared sub-packages.
 const pkgPath = path.join(DEST, 'package.json');
 const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-for (const section of ['dependencies', 'devDependencies']) {
+for (const section of ['dependencies', 'devDependencies', 'optionalDependencies']) {
     if (!pkg[section]) continue;
     for (const [name, version] of Object.entries(pkg[section])) {
         if (version.startsWith('file:')) {
@@ -81,3 +81,41 @@ for (const section of ['dependencies', 'devDependencies']) {
 }
 if (pkg.workspaces) delete pkg.workspaces;
 fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
+console.log('stripped file: references from package.json');
+
+// Also strip file: references from package-lock.json so npm ci does not
+// attempt to resolve local workspace links.
+const lockPath = path.join(DEST, 'package-lock.json');
+const lock = JSON.parse(fs.readFileSync(lockPath, 'utf8'));
+for (const section of ['dependencies', 'packages']) {
+    if (!lock[section]) continue;
+    for (const [key, val] of Object.entries(lock[section])) {
+        if (typeof val === 'object' && val !== null) {
+            const ver = val.version || val.resolved || '';
+            if (typeof ver === 'string' && ver.startsWith('file:')) {
+                delete lock[section][key];
+                continue;
+            }
+            if (val.link === true) {
+                delete lock[section][key];
+                continue;
+            }
+        } else if (typeof val === 'string' && val.startsWith('file:')) {
+            delete lock[section][key];
+        }
+    }
+}
+if (lock.packages && lock.packages['']) {
+    const rootPkg = lock.packages[''];
+    delete rootPkg.workspaces;
+    for (const depKey of ['dependencies', 'devDependencies', 'optionalDependencies']) {
+        if (!rootPkg[depKey]) continue;
+        for (const [name, ver] of Object.entries(rootPkg[depKey])) {
+            if (typeof ver === 'string' && ver.startsWith('file:')) {
+                delete rootPkg[depKey][name];
+            }
+        }
+    }
+}
+fs.writeFileSync(lockPath, JSON.stringify(lock, null, 2) + '\n');
+console.log('stripped file: references from package-lock.json');

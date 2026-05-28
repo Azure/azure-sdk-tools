@@ -28,7 +28,7 @@ function Get-ContainedPath {
     $fullPath = [System.IO.Path]::GetFullPath($combinedPath)
 
     $normalizedRoot = $rootFullPath.TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
-    $comparison = [System.StringComparison]::OrdinalIgnoreCase
+    $comparison = if ($IsWindows) { [System.StringComparison]::OrdinalIgnoreCase } else { [System.StringComparison]::Ordinal }
     $isExactMatch = $fullPath.Equals($normalizedRoot, $comparison)
     $isChildPath = $fullPath.StartsWith($normalizedRoot + [System.IO.Path]::DirectorySeparatorChar, $comparison)
     if (-not $isExactMatch -and -not $isChildPath) {

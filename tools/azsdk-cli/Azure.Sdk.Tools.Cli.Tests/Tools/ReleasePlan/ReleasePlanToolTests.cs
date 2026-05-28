@@ -1197,10 +1197,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.IsNotNull(result.TypeSpecProject);
         }
 
-        // ======================== UpdateReleasePlanMonth Tests ========================
+        // ======================== UpdateReleasePlanTarget Tests ========================
 
         [Test]
-        public async Task Test_UpdateReleasePlanMonth_with_valid_inputs()
+        public async Task Test_UpdateReleasePlanTarget_with_valid_inputs()
         {
             var result = await releasePlanTool.UpdateReleasePlanTarget(workItemId: 100, targetReleaseMonthYear: "January 2026");
 
@@ -1209,7 +1209,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
-        public async Task Test_UpdateReleasePlanMonth_with_invalid_work_item_id()
+        public async Task Test_UpdateReleasePlanTarget_with_invalid_work_item_id()
         {
             var result = await releasePlanTool.UpdateReleasePlanTarget(workItemId: 0, targetReleaseMonthYear: "January 2026");
 
@@ -1218,7 +1218,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
-        public async Task Test_UpdateReleasePlanMonth_with_empty_target_month()
+        public async Task Test_UpdateReleasePlanTarget_with_empty_target_month()
         {
             var result = await releasePlanTool.UpdateReleasePlanTarget(workItemId: 100, targetReleaseMonthYear: "");
 
@@ -1227,7 +1227,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
-        public async Task Test_UpdateReleasePlanMonth_when_release_plan_not_found()
+        public async Task Test_UpdateReleasePlanTarget_when_release_plan_not_found()
         {
             var mockDevOps = new Mock<IDevOpsService>();
             mockDevOps

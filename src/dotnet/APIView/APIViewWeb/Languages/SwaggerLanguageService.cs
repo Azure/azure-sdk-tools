@@ -3,8 +3,10 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using APIView;
+using APIViewWeb.Models;
 using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.Configuration;
 
@@ -41,6 +43,31 @@ namespace APIViewWeb
         public override bool CanUpdate(string versionString)
         {
             return false;
+        }
+
+        public override bool GeneratePipelineRunParams(APIRevisionGenerationPipelineParamModel param)
+        {
+            if (param == null || string.IsNullOrWhiteSpace(param.FileName))
+            {
+                return false;
+            }
+
+            var safeFileName = Path.GetFileName(param.FileName);
+            if (string.IsNullOrWhiteSpace(safeFileName))
+            {
+                return false;
+            }
+
+            var invalidChars = Path.GetInvalidFileNameChars();
+            safeFileName = new string(safeFileName.Select(ch => invalidChars.Contains(ch) ? '_' : ch).ToArray());
+
+            if (safeFileName == "." || safeFileName == "..")
+            {
+                return false;
+            }
+
+            param.FileName = safeFileName;
+            return true;
         }
     }
 }

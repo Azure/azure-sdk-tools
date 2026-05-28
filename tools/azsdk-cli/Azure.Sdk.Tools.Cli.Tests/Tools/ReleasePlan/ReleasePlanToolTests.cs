@@ -993,6 +993,33 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
+        public async Task Test_UpdateReleasePlan_with_tspconfig_path_success()
+        {
+            var relativeConfigPath = "TypeSpecTestData/specification/testcontoso/Contoso.Management/tspconfig.yaml";
+            var absoluteConfigPath = Path.GetFullPath(relativeConfigPath);
+
+            var relativeResult = await releasePlanTool.UpdateReleasePlan(
+                typeSpecProjectPath: relativeConfigPath,
+                sdkReleaseType: "beta",
+                specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446",
+                workItemId: 100);
+
+            var absoluteResult = await releasePlanTool.UpdateReleasePlan(
+                typeSpecProjectPath: absoluteConfigPath,
+                sdkReleaseType: "beta",
+                specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446",
+                workItemId: 100);
+
+            Assert.Multiple(() =>
+            {
+                Assert.IsNull(relativeResult.ResponseError, $"Unexpected error for relative tspconfig path: {relativeResult.ResponseError}");
+                Assert.IsNull(absoluteResult.ResponseError, $"Unexpected error for absolute tspconfig path: {absoluteResult.ResponseError}");
+                Assert.That(relativeResult.TypeSpecProject, Is.EqualTo("specification/testcontoso/Contoso.Management"));
+                Assert.That(absoluteResult.TypeSpecProject, Is.EqualTo("specification/testcontoso/Contoso.Management"));
+            });
+        }
+
+        [Test]
         public async Task Test_UpdateReleasePlan_with_invalid_service_tree_id()
         {
             var result = await releasePlanTool.UpdateReleasePlan(

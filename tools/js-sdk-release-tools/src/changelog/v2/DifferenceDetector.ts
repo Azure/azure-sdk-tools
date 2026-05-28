@@ -2,6 +2,7 @@ import {
   AssignDirection,
   AstContext,
   createAstContext,
+  DiffLocation,
   DiffPair,
   DiffReasons,
   patchClass,
@@ -78,7 +79,10 @@ export class DifferenceDetector {
     });
 
     this.result?.classes.forEach((v, k) => {
-      if (this.hasIgnoreTargetNames(v)) this.result?.classes.delete(k);
+      let filtered = this.filterIgnoreTargetNames(v);
+      filtered = this.filterClassPropertiesMovedToInternals(filtered, k);
+      if (filtered.length === 0) this.result?.classes.delete(k);
+      else this.result?.classes.set(k, filtered);
     });
 
     this.result?.typeAliases.forEach((v, k) => {
@@ -142,6 +146,66 @@ export class DifferenceDetector {
     return v.some((pair) => {
       const name = pair.target?.name || pair.source?.name;
       return name && ignoreTargets.includes(name) && pair.reasons === DiffReasons.Removed;
+    });
+  }
+
+  // Returns only the diff pairs that are NOT for ignored target names.
+  // This allows real breaking changes in the same class to still be detected.
+  private filterIgnoreTargetNames(v: DiffPair[]): DiffPair[] {
+    const ignoreTargets = ['resumeFrom', '$host', 'endpoint'];
+    return v.filter((pair) => {
+      const name = pair.target?.name || pair.source?.name;
+      return !(name && ignoreTargets.includes(name) && pair.reasons === DiffReasons.Removed);
+    });
+  }
+
+  // Filters out class property removals that are "by design" in HLC -> Modular migration.
+  // A removed property is considered non-breaking when it is still accessible via constructor
+  // signatures in the Modular client, either as:
+  //   1. The constructor parameter name itself (e.g. subscriptionId)
+  //   2. A property on the constructor parameter type (e.g. options?: XxxOptionalParams
+  //      exposing apiVersion, cloudSetting, etc.)
+  private filterClassPropertiesMovedToInternals(v: DiffPair[], className: string): DiffPair[] {
+    const isHlcToModular =
+      this.baselineApiViewOptions.sdkType === SDKType.HighLevelClient &&
+      this.currentApiViewOptions.sdkType === SDKType.ModularClient;
+    if (!isHlcToModular) return v;
+
+    const currentClass = this.context!.current.getClass(className);
+    if (!currentClass) return v;
+
+    const knownNames = new Set<string>();
+
+    // Constructor parameters — ts-morph's getMembers() filters out bodyless
+    // ConstructorDeclaration nodes (API-view declarations have signature-only constructors),
+    // so iterate compilerNode.members directly.
+    // For each parameter we collect:
+    //   a) the parameter name itself (e.g. subscriptionId → filtered directly)
+    //   b) all property names of the parameter's type (e.g. options?: OptionalParams
+    //      → apiVersion, cloudSetting, … are accessible, so removing them from the
+    //      class is not breaking)
+    const checker = currentClass.getSourceFile().getProject().getProgram().compilerObject.getTypeChecker();
+    for (const rawMember of (currentClass.compilerNode as ts.ClassDeclaration).members) {
+      if (rawMember.kind !== ts.SyntaxKind.Constructor) continue;
+      const ctor = rawMember as ts.ConstructorDeclaration;
+      for (const param of ctor.parameters) {
+        if (ts.isIdentifier(param.name)) {
+          knownNames.add(param.name.text);
+          // Strip undefined from optional params (T | undefined → T) before property lookup
+          const paramType = checker.getNonNullableType(checker.getTypeAtLocation(param));
+          for (const prop of checker.getPropertiesOfType(paramType)) {
+            knownNames.add(prop.name);
+          }
+        }
+      }
+    }
+
+    if (knownNames.size === 0) return v;
+
+    return v.filter((pair) => {
+      if (pair.location !== DiffLocation.Property || (pair.reasons & DiffReasons.Removed) === 0) return true;
+      const name = pair.target?.name;
+      return !name || !knownNames.has(name);
     });
   }
 

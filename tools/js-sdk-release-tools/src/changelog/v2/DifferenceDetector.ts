@@ -33,6 +33,7 @@ export interface DetectResult {
   typeAliases: Map<string, DiffPair[]>;
   functions: Map<string, DiffPair[]>;
   enums: Map<string, DiffPair[]>;
+  constructorOrderChangedClasses: Set<string>;
 }
 
 export interface DetectContext {
@@ -106,6 +107,8 @@ export class DifferenceDetector {
       }
     });
 
+    this.detectConstructorParamOrderChanges();
+
     if (this.currentApiViewOptions.sdkType !== SDKType.RestLevelClient) return;
 
     // use Routes specific detection
@@ -155,7 +158,7 @@ export class DifferenceDetector {
     const ignoreTargets = ['resumeFrom', '$host', 'endpoint'];
     return v.filter((pair) => {
       const name = pair.target?.name || pair.source?.name;
-      return !(name && ignoreTargets.includes(name) && pair.reasons === DiffReasons.Removed);
+      return !(name && ignoreTargets.includes(name) && (pair.reasons & DiffReasons.Removed) > 0);
     });
   }
 
@@ -175,14 +178,13 @@ export class DifferenceDetector {
     if (!currentClass) return v;
 
     const knownNames = new Set<string>();
-
     // Constructor parameters — ts-morph's getMembers() filters out bodyless
     // ConstructorDeclaration nodes (API-view declarations have signature-only constructors),
     // so iterate compilerNode.members directly.
     // For each parameter we collect:
-    //   a) the parameter name itself (e.g. subscriptionId → filtered directly)
+    //   a) the parameter name itself (e.g. subscriptionId -> filtered directly)
     //   b) all property names of the parameter's type (e.g. options?: OptionalParams
-    //      → apiVersion, cloudSetting, … are accessible, so removing them from the
+    //      -> apiVersion, cloudSetting, ... are accessible, so removing them from the
     //      class is not breaking)
     const checker = currentClass.getSourceFile().getProject().getProgram().compilerObject.getTypeChecker();
     for (const rawMember of (currentClass.compilerNode as ts.ClassDeclaration).members) {
@@ -191,7 +193,7 @@ export class DifferenceDetector {
       for (const param of ctor.parameters) {
         if (ts.isIdentifier(param.name)) {
           knownNames.add(param.name.text);
-          // Strip undefined from optional params (T | undefined → T) before property lookup
+          // Strip undefined from optional params (T | undefined -> T) before property lookup
           const paramType = checker.getNonNullableType(checker.getTypeAtLocation(param));
           for (const prop of checker.getPropertiesOfType(paramType)) {
             knownNames.add(prop.name);
@@ -207,6 +209,54 @@ export class DifferenceDetector {
       const name = pair.target?.name;
       return !name || !knownNames.has(name);
     });
+  }
+
+  // Detects constructor parameter ORDER changes for classes present in both baseline and current.
+  // TypeScript's structural type system is blind to same-type parameter reordering
+  // (e.g. (a: string, b: string) -> (b: string, a: string)), so we compare parameter
+  // names positionally for each matching constructor overload.
+  private detectConstructorParamOrderChanges(): void {
+    if (!this.result) return;
+    for (const baselineClass of this.context!.baseline.getClasses()) {
+      const className = baselineClass.getName();
+      if (!className) continue;
+      const currentClass = this.context!.current.getClass(className);
+      if (!currentClass) continue;
+      const baselineCtors = (baselineClass.compilerNode as ts.ClassDeclaration).members
+        .filter((m) => m.kind === ts.SyntaxKind.Constructor)
+        .map((m) => m as ts.ConstructorDeclaration);
+      const currentCtors = (currentClass.compilerNode as ts.ClassDeclaration).members
+        .filter((m) => m.kind === ts.SyntaxKind.Constructor)
+        .map((m) => m as ts.ConstructorDeclaration);
+      if (this.hasConstructorParamOrderChange(baselineCtors, currentCtors)) {
+        this.result.constructorOrderChangedClasses.add(className);
+      }
+    }
+  }
+
+  // Returns true if any baseline constructor has its parameter names reordered
+  // (same set of names, different positional order) in a matching current constructor.
+  private hasConstructorParamOrderChange(
+    baselineCtors: ts.ConstructorDeclaration[],
+    currentCtors: ts.ConstructorDeclaration[]
+  ): boolean {
+    for (const baseCtor of baselineCtors) {
+      const baseParamNames = baseCtor.parameters
+        .filter((p) => ts.isIdentifier(p.name))
+        .map((p) => (p.name as ts.Identifier).text);
+      const matchingCurrentCtors = currentCtors.filter((c) => c.parameters.length === baseCtor.parameters.length);
+      for (const currCtor of matchingCurrentCtors) {
+        const currParamNames = currCtor.parameters
+          .filter((p) => ts.isIdentifier(p.name))
+          .map((p) => (p.name as ts.Identifier).text);
+        const sameNames =
+          baseParamNames.length === currParamNames.length &&
+          [...baseParamNames].sort().join(',') === [...currParamNames].sort().join(',');
+        const differentOrder = baseParamNames.join(',') !== currParamNames.join(',');
+        if (sameNames && differentOrder) return true;
+      }
+    }
+    return false;
   }
 
   // Returns the target name for a baseline operations-group interface.
@@ -409,6 +459,7 @@ export class DifferenceDetector {
       typeAliases: typeAliasDiffPairs,
       functions: functionDiffPairs,
       enums: enumDiffPairs,
+      constructorOrderChangedClasses: new Set(),
     };
   }
 }

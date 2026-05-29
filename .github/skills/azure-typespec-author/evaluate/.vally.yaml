@@ -95,8 +95,5 @@ suites:
   warning:
     evals:
       - "evals/005001.eval.yaml"
-  trigger:
-    evals:
-      - "evals/trigger.eval.yaml"
   all:
     evals: ["evals/*.eval.yaml"]

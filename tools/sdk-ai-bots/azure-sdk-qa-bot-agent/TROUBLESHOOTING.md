@@ -26,18 +26,39 @@ When an incident happens, use this order:
 
 ### Teams and App Services
 
-| Environment | Server App Service | Frontend App Service | Logic App (Auto Reply) | Teams Channel |
-|---|---|---|---|---|
-| **Dev** | [azuresdkqabot-dev-server](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Web/sites/azuresdkqabot-dev-server/appServices) | [azsdkqabotdev](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Web/sites/azsdkqabotdev/appServices) | [azuresdkqabot-dev-logicapp](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Logic/workflows/azuresdkqabot-dev-logicapp/logicApp) | [Azure SDK QA Bot](https://teams.microsoft.com/l/team/19%3A3iefzURPmxhDZJJTtwePbdO1EdI5T0hfK9UFK_59Sbk1%40thread.tacv2/conversations?groupId=7ccc31f0-b371-450b-a73c-48f5a31a9b96&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47) |
-| **Preview** | [azuresdkqabot-test-server](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-test/providers/Microsoft.Web/sites/azuresdkqabot-test-server/appServices) | [azsdkqabottest](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-test/providers/Microsoft.Web/sites/azsdkqabottest/appServices) | [azuresdkqabot-test-logicapp](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-test/providers/Microsoft.Logic/workflows/azuresdkqabot-test-logicapp/logicApp) | [Azure SDK Q&A Bot Testing](https://teams.microsoft.com/l/team/19%3ArMhMrxg7UjfwZmVoSeVvWvNQIfT_G6ds8napsytWqzw1%40thread.tacv2/conversations?groupId=39910aef-85da-4e30-b5e3-35f04ef38648&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47) |
-| **Production** | [azuresdkqabot-server](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.Web/sites/azuresdkqabot-server/appServices) | [azsdkqabot](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.Web/sites/azsdkqabot/appServices) | [azuresdkqabot-logicapp](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.Logic/workflows/azuresdkqabot-logicapp/logicApp) | [Azure SDK](https://teams.microsoft.com/l/team/19%3Af6d52ac6465c40ea80dc86b8be3825aa%40thread.skype/conversations?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47) |
+| Environment | Resource Group | Server App Service | Frontend App Service | Logic App (Auto Reply) | Teams Channel |
+|---|---|---|---|---|---|
+| **Dev** | `azure-sdk-qa-bot-dev` | `azuresdkqabot-dev-server` | `azsdkqabotdev` | `azuresdkqabot-dev-logicapp` | Azure SDK QA Bot |
+| **Preview** | `azure-sdk-qa-bot-test` | `azuresdkqabot-test-server` | `azsdkqabottest` | `azuresdkqabot-test-logicapp` | Azure SDK Q&A Bot Testing |
+| **Production** | `azure-sdk-qa-bot` | `azuresdkqabot-server` | `azsdkqabot` | `azuresdkqabot-logicapp` | Azure SDK |
+
+To find these resources:
+
+1. Go to the [Azure Portal](https://portal.azure.com) and sign in with your Microsoft account.
+2. Navigate to the **Azure SDK Engineering System** subscription.
+3. Open the resource group for the target environment (see table above).
+4. Select the App Service or Logic App resource by name.
+
+To find the Teams channels, search for the channel name in Microsoft Teams.
 
 ### Agent Tracing Resources
 
-| Environment | Foundry Agent Playground | Application Insights |
-|---|---|---|
-| **Dev** | [Foundry Agent Playground](https://ai.azure.com/nextgen/r/oYiXpn5ERX2SYPKFTArKQg,azure-sdk-qa-bot-dev,,azuresdkqabot-dev-ai-resource,azuresdkqabot-ai/build/agents/azure-sdk-chat-agent/build) | [azuresdkqabot-dev-agent](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Insights/components/azuresdkqabot-dev-agent/overview) |
-| **Test and Prod** | [Foundry Agent Playground](https://ai.azure.com/nextgen/r/oYiXpn5ERX2SYPKFTArKQg,azure-sdk-qa-bot,,azuresdkqabot-ai-resource,azuresdkqabot-ai/build/agents/azure-sdk-chat-agent/build) | [azuresdkqabot-agent](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.Insights/components/azuresdkqabot-agent/overview) |
+| Environment | Resource Group | Foundry Project | Application Insights |
+|---|---|---|---|
+| **Dev** | `azure-sdk-qa-bot-dev` | `azuresdkqabot-ai` | `azuresdkqabot-dev-agent` |
+| **Test and Prod** | `azure-sdk-qa-bot` | `azuresdkqabot-ai` | `azuresdkqabot-agent` |
+
+To access the Foundry Agent Playground:
+
+1. Go to [Azure AI Foundry](https://ai.azure.com) and sign in.
+2. Open the Foundry project for the target environment (see table above).
+3. Navigate to **Agents** > **azure-sdk-chat-agent** to view the agent playground.
+
+To access Application Insights:
+
+1. Go to the [Azure Portal](https://portal.azure.com).
+2. Navigate to the resource group for the target environment.
+3. Open the Application Insights resource by name (see table above).
 
 ## 3. Common Incidents
 

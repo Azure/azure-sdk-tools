@@ -139,13 +139,19 @@ The main endpoint for querying the bot is `/agent/chat`. See [tests/api_test.res
 
 ### Remote Endpoints
 
-| Environment | App Service |
-|---|---|
-| **Dev** | [azuresdkqabot-dev-server](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Web/sites/azuresdkqabot-dev-server/appServices) |
-| **Preview** | [azuresdkqabot-test-server](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-test/providers/Microsoft.Web/sites/azuresdkqabot-test-server/appServices) |
-| **Prod** | [azuresdkqabot-server](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.Web/sites/azuresdkqabot-server/appServices) |
+| Environment | Resource Group | App Service Name |
+|---|---|---|
+| **Dev** | `azure-sdk-qa-bot-dev` | `azuresdkqabot-dev-server` |
+| **Preview** | `azure-sdk-qa-bot-test` | `azuresdkqabot-test-server` |
+| **Prod** | `azure-sdk-qa-bot` | `azuresdkqabot-server` |
 
-The endpoint URL is the **Default domain** field in the App Service overview.
+To find the App Service in the Azure Portal:
+
+1. Go to the [Azure Portal](https://portal.azure.com) and sign in with your Microsoft account.
+2. Navigate to the **Azure SDK Engineering System** subscription.
+3. Open the resource group for the target environment (see table above).
+4. Select the App Service resource.
+5. The endpoint URL is the **Default domain** field in the App Service overview.
 
 ### Access Tokens
 

@@ -181,10 +181,19 @@ export class DifferenceDetector {
     // so iterate compilerNode.members directly.
     // For each parameter we collect:
     //   a) the parameter name itself (e.g. subscriptionId → filtered directly)
-    //   b) all property names of the parameter's type (e.g. options?: OptionalParams
-    //      → apiVersion, cloudSetting, … are accessible, so removing them from the
-    //      class is not breaking)
+    //   b) all property names of the parameter's type, but ONLY for "option bag" types
+    //      declared in the current project's own source files.
+    //      Primitives (string, number, …) and library/external types (TokenCredential, etc.)
+    //      are skipped to avoid polluting knownNames with built-in members like
+    //      `length`, `toString`, `getToken`, which could hide real breaking changes.
     const checker = currentClass.getSourceFile().getProject().getProgram().compilerObject.getTypeChecker();
+    const projectFileNames = new Set(
+      currentClass
+        .getSourceFile()
+        .getProject()
+        .getSourceFiles()
+        .map((sf) => sf.compilerNode.fileName)
+    );
     for (const rawMember of (currentClass.compilerNode as ts.ClassDeclaration).members) {
       if (rawMember.kind !== ts.SyntaxKind.Constructor) continue;
       const ctor = rawMember as ts.ConstructorDeclaration;
@@ -193,8 +202,13 @@ export class DifferenceDetector {
           knownNames.add(param.name.text);
           // Strip undefined from optional params (T | undefined → T) before property lookup
           const paramType = checker.getNonNullableType(checker.getTypeAtLocation(param));
-          for (const prop of checker.getPropertiesOfType(paramType)) {
-            knownNames.add(prop.name);
+          // Only expand properties for types declared in this project's source files
+          // (i.e., user-defined option bags like XxxOptionalParams).  Primitives and
+          // external library types (from lib.d.ts / node_modules) are excluded.
+          if (this.isProjectLocalType(paramType, checker, projectFileNames)) {
+            for (const prop of checker.getPropertiesOfType(paramType)) {
+              knownNames.add(prop.name);
+            }
           }
         }
       }
@@ -207,6 +221,26 @@ export class DifferenceDetector {
       const name = pair.target?.name;
       return !name || !knownNames.has(name);
     });
+  }
+
+  // Returns true only for types whose symbol is declared in the project's own source files
+  // (i.e., user-defined option-bag interfaces such as XxxOptionalParams).
+  // Primitives (string, number, boolean, …) have no symbol; external library types
+  // (TokenCredential, PagedAsyncIterableIterator, …) are declared in node_modules or
+  // lib.d.ts — none of those match the project file set, so they are excluded.
+  private isProjectLocalType(type: ts.Type, checker: ts.TypeChecker, projectFileNames: Set<string>): boolean {
+    // Union types: treat as a local option-bag if ALL non-undefined constituent types are local.
+    // This handles the common pattern `XxxOptionalParams | undefined`.
+    if (type.isUnion()) {
+      return type.types
+        .filter((t) => !(t.flags & ts.TypeFlags.Undefined))
+        .every((t) => this.isProjectLocalType(t, checker, projectFileNames));
+    }
+    const symbol = type.getSymbol() ?? (type as ts.Type & { aliasSymbol?: ts.Symbol }).aliasSymbol;
+    if (!symbol) return false;
+    const decls = symbol.getDeclarations();
+    if (!decls || decls.length === 0) return false;
+    return decls.some((d) => projectFileNames.has(d.getSourceFile().fileName));
   }
 
   // Returns the target name for a baseline operations-group interface.

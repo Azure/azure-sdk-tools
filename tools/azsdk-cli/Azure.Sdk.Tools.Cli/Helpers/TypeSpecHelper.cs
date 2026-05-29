@@ -176,28 +176,44 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 }
 
                 var packages = new List<PackageInfo>();
-
                 if (languagesObj is Dictionary<object, object> languages)
                 {
                     foreach (var lang in languages)
                     {
                         var languageName = lang.Key?.ToString() ?? string.Empty;
                         var packageName = string.Empty;
-
-                        if (lang.Value is Dictionary<object, object> langProps)
+                        var groupName = string.Empty;
+                        if (lang.Value is Dictionary<object, object> langDict)
                         {
-                            if (langProps.TryGetValue("packageName", out var pkgName))
+                            if (langDict.TryGetValue("packageName", out var pkgName))
                             {
                                 packageName = pkgName?.ToString() ?? string.Empty;
                             }
                         }
+                        else if (lang.Value is ICollection<object> langList && langList.FirstOrDefault() is Dictionary<object, object> langDictTemp)
+                        {
+                            if (langDictTemp.TryGetValue("packageName", out var pkgName))
+                            {
+                                packageName = pkgName?.ToString() ?? string.Empty;
+                            }
+                        }
+
                         languageName = languageName.Contains("csharp") ? ".NET" : languageName;
+                        var language = SdkLanguageHelpers.GetSdkLanguage(languageName);
                         if (!string.IsNullOrEmpty(packageName))
                         {
+                            if (language == SdkLanguage.Java && packageName.Contains(':'))
+                            {
+                                var parts = packageName.Split(':');
+                                groupName = parts[0];
+                                packageName = parts[1];
+                            }
+
                             packages.Add(new PackageInfo
                             {
-                                Language = SdkLanguageHelpers.GetSdkLanguage(languageName),
-                                PackageName = packageName
+                                Language = language,
+                                PackageName = packageName,
+                                Group = groupName
                             });
                         }
                     }

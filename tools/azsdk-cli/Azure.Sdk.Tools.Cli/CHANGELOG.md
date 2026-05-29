@@ -1,14 +1,10 @@
 # Release History
 
-## 0.6.15 (Unreleased)
-
-### Features Added
-
-### Breaking Changes
+## 0.6.15 (2026-05-29)
 
 ### Bugs Fixed
 
-### Other Changes
+- Fixed Update SDK details MCP tool to process the package names from tspconfig.yaml
 
 ## 0.6.14 (2026-05-27)
 

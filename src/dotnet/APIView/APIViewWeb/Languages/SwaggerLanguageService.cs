@@ -15,6 +15,12 @@ namespace APIViewWeb
 {
     public class SwaggerLanguageService : LanguageProcessor
     {
+        private static readonly string[] WindowsReservedNames = {
+            "CON", "PRN", "AUX", "NUL",
+            "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+            "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
+        };
+
         private readonly string _reviewGenerationPipelineUrl;
         public override string Name { get; } = "Swagger";
 
@@ -61,7 +67,15 @@ namespace APIViewWeb
 
             safeFileName = new string(safeFileName.Select(ch => Regex.IsMatch(ch.ToString(), "[A-Za-z0-9._-]") ? ch : '_').ToArray());
 
-            if (safeFileName == "." || safeFileName == "..")
+            safeFileName = safeFileName.TrimEnd('. ');
+
+            if (string.IsNullOrEmpty(safeFileName) || safeFileName == "." || safeFileName == "..")
+            {
+                return false;
+            }
+
+            var nameWithoutExt = Path.GetFileNameWithoutExtension(safeFileName).ToUpperInvariant();
+            if (WindowsReservedNames.Contains(nameWithoutExt))
             {
                 return false;
             }

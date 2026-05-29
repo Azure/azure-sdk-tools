@@ -57,6 +57,40 @@ namespace APIViewUnitTests
 
             Assert.True(languageService.GeneratePipelineRunParams(invalidCharParam));
             Assert.Equal("swagger_review.ps1", invalidCharParam.FileName);
+
+            // Windows reserved device names must be rejected
+            var reservedNameParam = new APIRevisionGenerationPipelineParamModel
+            {
+                FileName = "CON.txt"
+            };
+            Assert.False(languageService.GeneratePipelineRunParams(reservedNameParam));
+
+            var reservedNameNulParam = new APIRevisionGenerationPipelineParamModel
+            {
+                FileName = "NUL.swagger"
+            };
+            Assert.False(languageService.GeneratePipelineRunParams(reservedNameNulParam));
+
+            var reservedNameLptParam = new APIRevisionGenerationPipelineParamModel
+            {
+                FileName = "LPT1"
+            };
+            Assert.False(languageService.GeneratePipelineRunParams(reservedNameLptParam));
+
+            // Trailing dots must be stripped (invalid on Windows)
+            var trailingDotParam = new APIRevisionGenerationPipelineParamModel
+            {
+                FileName = "swagger.review."
+            };
+            Assert.True(languageService.GeneratePipelineRunParams(trailingDotParam));
+            Assert.Equal("swagger.review", trailingDotParam.FileName);
+
+            // A filename that becomes empty after trimming trailing dots
+            var allDotsParam = new APIRevisionGenerationPipelineParamModel
+            {
+                FileName = "..."
+            };
+            Assert.False(languageService.GeneratePipelineRunParams(allDotsParam));
         }
     }
 }

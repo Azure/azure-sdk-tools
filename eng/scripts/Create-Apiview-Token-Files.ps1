@@ -44,13 +44,24 @@ function Get-SafeFileName {
         [string]$FileName
     )
 
+    $reservedNames = @('CON','PRN','AUX','NUL',
+        'COM1','COM2','COM3','COM4','COM5','COM6','COM7','COM8','COM9',
+        'LPT1','LPT2','LPT3','LPT4','LPT5','LPT6','LPT7','LPT8','LPT9')
+
     $baseName = [System.IO.Path]::GetFileName($FileName)
     if ([string]::IsNullOrWhiteSpace($baseName)) {
         return $null
     }
 
-    $safeName = -join ($baseName.ToCharArray() | ForEach-Object { if ($_ -match '[A-Za-z0-9._-]') { $_ } else { '_' } })
-    if ($safeName -eq '.' -or $safeName -eq '..') {
+    $safeName = -join ($baseName.ToCharArray() | ForEach-Object { if ($_ -cmatch '[A-Za-z0-9._-]') { $_ } else { '_' } })
+    $safeName = $safeName.TrimEnd('. ')
+
+    if ([string]::IsNullOrEmpty($safeName) -or $safeName -eq '.' -or $safeName -eq '..') {
+        return $null
+    }
+
+    $nameWithoutExt = [System.IO.Path]::GetFileNameWithoutExtension($safeName).ToUpperInvariant()
+    if ($reservedNames -contains $nameWithoutExt) {
         return $null
     }
 

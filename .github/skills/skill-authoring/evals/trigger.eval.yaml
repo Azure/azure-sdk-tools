@@ -1,0 +1,98 @@
+name: skill-authoring-trigger-eval
+description: Trigger and anti-trigger tests for the skill-authoring skill
+type: capability
+
+environment: azsdk-mcp-mock
+
+tags:
+  area: skill-authoring
+  type: ci-gate
+
+config:
+  runs: 1
+  timeout: "90s"
+  model: claude-opus-4.6
+  executor: copilot-sdk
+
+scoring:
+  threshold: 0.8
+
+stimuli:
+  # Should trigger
+  - name: trigger-create-a-new-skill
+    prompt: "create a new skill"
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["skill-authoring"]
+
+  - name: trigger-write-a-skill-for-api-review
+    prompt: "write a skill for API review"
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["skill-authoring"]
+
+  - name: trigger-what-is-the-skill-md-format
+    prompt: "what is the SKILL.md format"
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["skill-authoring"]
+
+  - name: trigger-skill-template-structure
+    prompt: "skill template structure"
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["skill-authoring"]
+
+  - name: trigger-review-my-skill-pr-for-compliance
+    prompt: "review my skill PR for compliance"
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["skill-authoring"]
+
+  - name: trigger-skill-best-practices-and-token-budgets
+    prompt: "skill best practices and token budgets"
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["skill-authoring"]
+
+  # Should NOT trigger
+  - name: anti-trigger-deploy-my-azure-function
+    prompt: "deploy my Azure Function"
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["skill-authoring"]
+
+  - name: anti-trigger-fix-my-pipeline-build-error
+    prompt: "fix my pipeline build error"
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["skill-authoring"]
+
+  - name: anti-trigger-authenticate-with-azure-ad
+    prompt: "authenticate with Azure AD"
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["skill-authoring"]
+
+  - name: anti-trigger-how-do-i-release-an-sdk-package
+    prompt: "how do I release an SDK package"
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["skill-authoring"]
+
+  - name: anti-trigger-configure-azure-storage-geo-redundancy
+    prompt: "configure Azure Storage geo-redundancy"
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["skill-authoring"]

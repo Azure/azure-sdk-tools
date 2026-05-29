@@ -23,16 +23,19 @@ public interface IChangelogHelper
     /// Parses a changelog file into structured entries.
     /// </summary>
     /// <param name="changelogPath">Path to the CHANGELOG.md file.</param>
+    /// <param name="language">Optional language hint (e.g., "python") to select the appropriate version regex.</param>
     /// <returns>Parsed changelog data, or null if parsing fails.</returns>
-    ChangelogData? ParseChangelog(string changelogPath);
+    ChangelogData? ParseChangelog(string changelogPath, string? language = null);
 
     /// <summary>
     /// Extracts the release status (date or "Unreleased") from the first version entry in CHANGELOG.md.
     /// Format: ## [version] ([date]) or ## [version] (Unreleased)
     /// </summary>
     /// <param name="changelogPath">Absolute path to the CHANGELOG.md file.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <param name="language">Optional language hint (e.g., "python") to select the appropriate version regex.</param>
     /// <returns>The release status string (e.g., "2022-04-26" or "Unreleased"), or empty string if not found.</returns>
-    Task<string> GetReleaseStatus(string changelogPath, CancellationToken ct);
+    Task<string> GetReleaseStatus(string changelogPath, CancellationToken ct, string? language = null);
 
     /// <summary>
     /// Updates the release status (date) for a specific version entry.
@@ -40,8 +43,9 @@ public interface IChangelogHelper
     /// <param name="changelogPath">Path to the CHANGELOG.md file.</param>
     /// <param name="version">The version to update.</param>
     /// <param name="releaseDate">The release date in yyyy-MM-dd format.</param>
+    /// <param name="language">Optional language hint (e.g., "python") to select the appropriate version regex.</param>
     /// <returns>Result indicating success or failure with details.</returns>
-    ChangelogUpdateResult UpdateReleaseDate(string changelogPath, string version, string releaseDate);
+    ChangelogUpdateResult UpdateReleaseDate(string changelogPath, string version, string releaseDate, string? language = null);
 
     /// <summary>
     /// Updates the latest (first) changelog entry title with a new version and optionally a new release date.
@@ -51,8 +55,9 @@ public interface IChangelogHelper
     /// <param name="changelogPath">Path to the CHANGELOG.md file.</param>
     /// <param name="version">The new version string to set in the latest entry title.</param>
     /// <param name="releaseDate">Optional release date in yyyy-MM-dd format. If null/empty, the existing release status is preserved.</param>
+    /// <param name="language">Optional language hint (e.g., "python") to select the appropriate version regex.</param>
     /// <returns>Result indicating success or failure with details.</returns>
-    ChangelogUpdateResult UpdateLatestEntryTitle(string changelogPath, string version, string? releaseDate);
+    ChangelogUpdateResult UpdateLatestEntryTitle(string changelogPath, string version, string? releaseDate, string? language = null);
 }
 
 /// <summary>
@@ -146,11 +151,26 @@ public partial class ChangelogHelper : IChangelogHelper
     // SemVer pattern: major.minor.patch[-prerelease][+build]
     private const string SemVerPattern = @"(?<major>0|[1-9]\d*)\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)(?:-(?<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?";
 
+    // Python SemVer pattern: major.minor.patch[-?prerelease][.postrelease][+buildmetadata]
+    // Matches PEP 440 versions like 1.0.0b1, 1.0.0a1, 1.0.0rc1, 1.0.0.post1
+    // Mirrors SemVerPattern structure: same major/minor/patch and buildmetadata groups,
+    // differs only in optional presep, PEP 440 prerelease format, and additional postrelease group.
+    private const string PythonSemVerPattern = @"(?<major>0|[1-9]\d*)\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)(?:-?(?<prerelease>[a-zA-Z]+(?:\.?[0-9]{1,8}(?:\.?\d{1,3})?)?))?(?:[.\-_]?(?<postrelease>[Pp][Oo][Ss][Tt](?:\.?\d{1,8})?))?(?:\+(?<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?";
+
     // Release title pattern: ## VERSION (STATUS) where VERSION is semver and STATUS is date or "Unreleased"
     // Compiled once at class level for performance
     private static readonly Regex ReleaseTitleRegex = new(
         $@"^(?<headerLevel>#+)\s+v?(?<version>{SemVerPattern})(\s+(?<releaseStatus>\(.+\)))?",
         RegexOptions.Compiled);
+
+    private static readonly Regex PythonReleaseTitleRegex = new(
+        $@"^(?<headerLevel>#+)\s+v?(?<version>{PythonSemVerPattern})(\s+(?<releaseStatus>\(.+\)))?",
+        RegexOptions.Compiled);
+
+    private static Regex GetReleaseTitleRegex(string? language) =>
+        string.Equals(language, "python", StringComparison.OrdinalIgnoreCase)
+            ? PythonReleaseTitleRegex
+            : ReleaseTitleRegex;
 
     public ChangelogHelper(ILogger<ChangelogHelper> logger)
     {
@@ -170,7 +190,7 @@ public partial class ChangelogHelper : IChangelogHelper
     }
 
     /// <inheritdoc/>
-    public ChangelogData? ParseChangelog(string changelogPath)
+    public ChangelogData? ParseChangelog(string changelogPath, string? language = null)
     {
         if (!File.Exists(changelogPath))
         {
@@ -181,7 +201,7 @@ public partial class ChangelogHelper : IChangelogHelper
         try
         {
             var lines = File.ReadAllLines(changelogPath);
-            return ParseChangelogContent(lines);
+            return ParseChangelogContent(lines, language);
         }
         catch (Exception ex)
         {
@@ -191,17 +211,18 @@ public partial class ChangelogHelper : IChangelogHelper
     }
 
     /// <inheritdoc/>
-    public async Task<string> GetReleaseStatus(string changelogPath, CancellationToken ct)
+    public async Task<string> GetReleaseStatus(string changelogPath, CancellationToken ct, string? language = null)
     {
         if (!File.Exists(changelogPath))
         {
             return string.Empty;
         }
 
+        var regex = GetReleaseTitleRegex(language);
         await foreach (var line in File.ReadLinesAsync(changelogPath, ct))
         {
-            // Match lines like: ## 1.0.3-beta.20 (2022-04-26), ### 1.0.0 (Unreleased), ## v1.0.0 (...)
-            var match = ReleaseTitleRegex.Match(line);
+            // Match lines like: ## 1.0.3-beta.20 (2022-04-26), ### 1.0.0 (Unreleased), ## v1.0.0 (...), ## 1.0.0b1 (...)
+            var match = regex.Match(line);
             if (!match.Success)
             {
                 continue;
@@ -220,7 +241,7 @@ public partial class ChangelogHelper : IChangelogHelper
     }
 
     /// <inheritdoc/>
-    public ChangelogUpdateResult UpdateReleaseDate(string changelogPath, string version, string releaseDate)
+    public ChangelogUpdateResult UpdateReleaseDate(string changelogPath, string version, string releaseDate, string? language = null)
     {
         if (!File.Exists(changelogPath))
         {
@@ -233,7 +254,7 @@ public partial class ChangelogHelper : IChangelogHelper
             return ChangelogUpdateResult.CreateFailure($"Invalid release date format: {releaseDate}. Expected format: {DateFormat}");
         }
 
-        var data = ParseChangelog(changelogPath);
+        var data = ParseChangelog(changelogPath, language);
         if (data == null)
         {
             return ChangelogUpdateResult.CreateFailure("Failed to parse changelog file.");
@@ -276,7 +297,7 @@ public partial class ChangelogHelper : IChangelogHelper
     }
 
     /// <inheritdoc/>
-    public ChangelogUpdateResult UpdateLatestEntryTitle(string changelogPath, string version, string? releaseDate)
+    public ChangelogUpdateResult UpdateLatestEntryTitle(string changelogPath, string version, string? releaseDate, string? language = null)
     {
         if (!File.Exists(changelogPath))
         {
@@ -294,7 +315,7 @@ public partial class ChangelogHelper : IChangelogHelper
             parsedDate = dt;
         }
 
-        var data = ParseChangelog(changelogPath);
+        var data = ParseChangelog(changelogPath, language);
         if (data == null)
         {
             return ChangelogUpdateResult.CreateFailure("Failed to parse changelog file.");
@@ -357,11 +378,12 @@ public partial class ChangelogHelper : IChangelogHelper
         }
     }
 
-    private ChangelogData ParseChangelogContent(string[] lines)
+    private ChangelogData ParseChangelogContent(string[] lines, string? language = null)
     {
         var entries = new List<ChangelogEntry>();
         var headerLines = new List<string>();
         ChangelogEntry? currentEntry = null;
+        var regex = GetReleaseTitleRegex(language);
 
         // Determine the initial ATX header level from the first line
         var initialAtxHeader = "#";
@@ -376,7 +398,7 @@ public partial class ChangelogHelper : IChangelogHelper
 
         foreach (var line in lines)
         {
-            var match = ReleaseTitleRegex.Match(line);
+            var match = regex.Match(line);
             if (match.Success)
             {
                 // Found a version entry

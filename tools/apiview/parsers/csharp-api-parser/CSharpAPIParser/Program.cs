@@ -3,7 +3,7 @@ using System.IO.Compression;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
-using ApiView;
+using APIView;
 using APIView.Model.V2;
 using NuGet.Common;
 using NuGet.Packaging;

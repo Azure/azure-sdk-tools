@@ -1,0 +1,21 @@
+agent-framework-foundry-hosting==1.0.0a260429
+azure-ai-projects>=2.1.0
+azure-search-documents==11.7.0b2
+azure-appconfiguration>=1.8.0
+azure-cosmos>=4.9.0,<4.16.0b1
+azure-identity==1.26.0b2
+azure-keyvault-keys>=4.11.0
+azure-keyvault-secrets>=4.9.0
+azure-storage-blob==12.30.0b1
+et-xmlfile>=2.0.0
+openpyxl==3.1.5
+python-dotenv>=1.2.2
+pyyaml>=6.0.3
+httpx[http2]>=0.27.0,<1.0.dev1
+agent-framework-core==1.2.2
+agent-framework-foundry==1.2.2
+mcp>=1.0.0
+# Backend server
+fastapi
+uvicorn[standard]
+azure-monitor-opentelemetry

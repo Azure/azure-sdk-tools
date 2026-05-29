@@ -29,7 +29,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
                 devOpsService,
                 mockApiViewService.Object,
                 logger,
-                new InputSanitizer());
+                new InputSanitizer(),
+                new Mock<IEnvironmentHelper>().Object);
         }
 
         [Test]
@@ -138,6 +139,50 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
 
             Assert.That(result, Is.Not.Null);
             Assert.That(result.ReleaseStatusDetails, Does.Contain("https://apiview.dev"));
+        }
+
+        [Test]
+        public async Task TestRunReleaseForJavaPassesPackageNameTemplateParam()
+        {
+            var packageName = "azure-storage-blob";
+            var language = "Java";
+            var result = await sdkReleaseTool.ReleasePackageAsync(packageName, language);
+
+            Assert.That(result, Is.Not.Null);
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Language, Is.EqualTo(SdkLanguage.Java));
+                Assert.That(result.ReleaseStatusDetails, Does.Contain("Release pipeline triggered successfully"));
+                Assert.That(devOpsService.LastRunPipelineTemplateParams, Is.Not.Null);
+                Assert.That(devOpsService.LastRunPipelineTemplateParams!, Does.ContainKey("release_azurestorageblob"));
+                Assert.That(devOpsService.LastRunPipelineTemplateParams!["release_azurestorageblob"], Is.EqualTo("true"));
+            });
+        }
+
+        [Test]
+        public async Task TestRunReleaseForNonJavaDoesNotPassPackageNameTemplateParam()
+        {
+            var packageName = "azure-template";
+            var language = "Python";
+            var result = await sdkReleaseTool.ReleasePackageAsync(packageName, language);
+
+            Assert.That(result, Is.Not.Null);
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ReleaseStatusDetails, Does.Contain("Release pipeline triggered successfully"));
+                Assert.That(devOpsService.LastRunPipelineTemplateParams, Is.Not.Null);
+                Assert.That(devOpsService.LastRunPipelineTemplateParams!, Is.Empty);
+            });
+        }
+
+        [TestCase("azure-storage-blob", "azurestorageblob")]
+        [TestCase("azure-sdk-template", "azuresdktemplate")]
+        [TestCase("Azure-Storage-Blob", "azurestorageblob")]
+        [TestCase("azure_core", "azurecore")]
+        [TestCase("", "")]
+        public void TestGetJavaSafeName(string packageName, string expected)
+        {
+            Assert.That(SdkReleaseTool.GetJavaSafeName(packageName), Is.EqualTo(expected));
         }
     }
 }

@@ -1,0 +1,33 @@
+{
+  "name": "release-plan-dashboard",
+  "version": "1.0.0-dev.1",
+  "description": "Dashboard for Azure DevOps Release Plan work items",
+  "type": "module",
+  "main": "server.js",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "check": "npm run test:ci && npm run lint && npm run format:check",
+    "start": "node server.js",
+    "test": "vitest run",
+    "test:ci": "vitest run --coverage",
+    "lint": "eslint .",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check"
+  },
+  "dependencies": {
+    "@azure/identity": "^4.5.0",
+    "@azure/keyvault-keys": "^4.9.0",
+    "@octokit/rest": "^22.0.1",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.0",
+    "@vitest/coverage-v8": "^3.2.4",
+    "eslint": "^10.0.0",
+    "globals": "^17.0.0",
+    "prettier": "3.8.3",
+    "vitest": "^3.2.4"
+  }
+}

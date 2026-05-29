@@ -35,6 +35,22 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             Assert.That(result, Is.False);
         }
 
+        [Test]
+        public void Verify_IsValidTypeSpecProject_with_tspconfig_path()
+        {
+            var configPath = "TypeSpecTestData/specification/testcontoso/Contoso.Management/tspconfig.yaml";
+            Assert.That(typeSpecHelper.IsValidTypeSpecProjectPath(configPath), Is.True);
+            Assert.That(typeSpecHelper.IsValidTypeSpecProjectPath(Path.GetFullPath(configPath)), Is.True);
+        }
+
+        [Test]
+        public void Test_GetTypeSpecProjectRelativePath_strips_tspconfig_filename()
+        {
+            var configPath = "TypeSpecTestData/specification/testcontoso/Contoso.Management/tspconfig.yaml";
+            var result = typeSpecHelper.GetTypeSpecProjectRelativePath(configPath);
+            Assert.That(result, Is.EqualTo("specification/testcontoso/Contoso.Management"));
+        }
+
         [TestCase("https://github.com/Azure/azure-rest-api-specs/blob/main/specification/dell/Dell.Storage.Management")]
         [TestCase("https://github.com/Azure/azure-rest-api-specs/blob/feature-branch/specification/contoso/Contoso.Management")]
         [TestCase("https://github.com/myorg/azure-rest-api-specs/blob/main/specification/test/Test.Service")]

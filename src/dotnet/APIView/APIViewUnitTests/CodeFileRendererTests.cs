@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
-using ApiView;
+using APIView;
 using APIViewWeb.Models;
 using Xunit;
 

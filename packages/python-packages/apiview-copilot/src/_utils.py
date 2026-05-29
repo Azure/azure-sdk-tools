@@ -20,16 +20,22 @@ def get_language_pretty_name(language: str) -> str:
     """
     language_pretty_names = {
         "android": "Android",
+        "c++": "C++",
         "cpp": "C++",
+        "c#": "C#",
+        ".net": "C#",
         "dotnet": "C#",
         "golang": "Go",
+        "go": "Go",
         "ios": "Swift",
+        "swift": "Swift",
         "java": "Java",
+        "javascript": "JavaScript",
         "python": "Python",
         "rust": "Rust",
         "typescript": "JavaScript",
     }
-    pretty_name = language_pretty_names.get(language, language.capitalize())
+    pretty_name = language_pretty_names.get(language.lower(), language.capitalize())
     return pretty_name
 
 

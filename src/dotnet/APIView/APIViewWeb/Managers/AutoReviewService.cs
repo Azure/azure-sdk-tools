@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using ApiView;
+using APIView;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
@@ -71,7 +71,7 @@ public class AutoReviewService : IAutoReviewService
                 APIVersionModel incomingVersionModel = null;
                 if (!string.IsNullOrEmpty(codeFile.PackageVersion))
                 {
-                    incomingVersionModel = await _apiVersionsManager.GetOrCreateVersionAsync(review.Id, codeFile.PackageVersion);
+                    incomingVersionModel = await _apiVersionsManager.GetOrCreateVersionAsync(review.Id, codeFile.PackageVersion, codeFile.Language);
                 }
 
                 // Scope to automatic revisions for the same logical version as the incoming upload.

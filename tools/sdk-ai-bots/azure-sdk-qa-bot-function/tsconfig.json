@@ -9,5 +9,6 @@
     "strict": false,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true
-  }
+  },
+  "exclude": ["scripts"]
 }

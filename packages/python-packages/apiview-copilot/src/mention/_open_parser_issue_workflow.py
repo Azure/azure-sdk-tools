@@ -4,8 +4,6 @@
 # license information.
 # --------------------------------------------------------------------------
 
-import os
-
 from dotenv import load_dotenv
 from src._github_manager import GithubManager
 
@@ -14,37 +12,13 @@ from ._github_issue_helpers import check_for_duplicate_issue, create_and_submit_
 
 load_dotenv(override=True)
 
-
 class OpenParserIssueWorkflow(MentionWorkflow):
     prompty_filename = "parse_conversation_to_github_issue.prompty"
     summarize_prompt_file = "summarize_github_actions.prompty"
     deduplication_prompt_file = "deduplicate_parser_issue.prompty"
 
-    LANGUAGE_LABELS = {
-        "python": "Python",
-        "py": "Python",
-        "c#": ".NET",
-        "csharp": ".NET",
-        "dotnet": ".NET",
-        ".net": ".NET",
-        "c++": "C++",
-        "cpp": "C++",
-        "c99": "C99",
-        "java": "Java",
-        "android": "Java",
-        "swift": "Swift",
-        "javascript": "javascript",
-        "js": "javascript",
-        "go": "Go",
-        "golang": "Go",
-        "rust": "Rust",
-    }
-
     def _get_client_and_owner(self):
-        client = GithubManager.get_instance()
-        environment = os.getenv("ENVIRONMENT_NAME")
-        owner = "Azure" if environment == "production" else "tjprescott"
-        return client, owner
+        return GithubManager.get_instance(), GithubManager.resolve_owner()
 
     def check_for_duplicates(self, plan: dict):
         """Check for duplicate parser issues."""
@@ -76,5 +50,4 @@ class OpenParserIssueWorkflow(MentionWorkflow):
             source_tag="APIView Copilot",
             base_labels=["APIView"],
             language=self.language,
-            language_labels=self.LANGUAGE_LABELS,
         )

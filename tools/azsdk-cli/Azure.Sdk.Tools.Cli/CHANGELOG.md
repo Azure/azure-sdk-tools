@@ -1,12 +1,58 @@
 # Release History
 
-## 0.6.11 (Unreleased)
+## 0.6.15 (Unreleased)
+
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
+## 0.6.14 (2026-05-27)
+
+### Features Added
+
+- Added pre-build step for the .NET plugin during SDK generation
+- Added `apiReleaseType` required parameter to `CreateReleasePlan` (options: Private Preview, Public Preview, GA) to set `Custom.ReleasePlanType` in ADO work items.
+- Spec PR validation against release type: Private Preview requires `azure-rest-api-specs-pr`; Public Preview/GA requires `azure-rest-api-specs`.
+- SDK release type now defaults automatically (beta for preview, stable for GA) when not provided.
+- Duplicate release plan check now considers API release type, allowing separate plans for different release stages.
+- Release plan title format updated to include release type (e.g., "Private Preview release plan for Contoso.Management").
+
+### Breaking Changes
+
+- Removed `userEmail` parameter from `CreateReleasePlan`; email is resolved automatically.
+- `sdkReleaseType` parameter in `CreateReleasePlan` is now optional (was required).
+
+## 0.6.13 (2026-05-18)
+
+### Features Added
+
+- Added optional `--release-plan-id` parameter to `update-release-status` CLI command. When provided, it is used as an additional filter on top of the package name search to select the correct release plan. Returns a message if the specified release plan ID is not found among matching plans.
+- Get release plan returns the link to new release planner dashboard https://aka.ms/azsdk/releaseplan-dashboard
+
+### Bugs Fixed
+
+- `azsdk_release_sdk` now passes a `release_<safeName>=true` template parameter when triggering Java release pipelines so per-package selection works (azure-sdk-for-java#48465). Previously, manually queued Java releases failed fast because no package was selected. (#14832)
+- Removed the check requiring Java package names to include group name in `groupName:packageName` format when updating release status.
+
+### Other Changes
+
+- Set `TriggerSource` when running SDK generation so PRs open as ready for review.
+
+## 0.6.12 (2026-05-04)
+
+### Other Changes
+
+- Resolve npm exec binaries directly from node_modules for NpmOptions when `.npmrc` is in user context
+
+## 0.6.11 (2026-05-01)
 
 ### Features Added
 
 - Added `AZSDK_COPILOT_CLI_PATH` environment variable to provide a custom path to the Copilot CLI executable (`copilot`/`copilot.exe`) for the GitHub Copilot SDK when the bundled binary is unavailable in standalone builds.
-
-### Breaking Changes
 
 ### Bugs Fixed
 
@@ -16,11 +62,13 @@
 ### Other Changes
 
 - Bumped `GitHub.Copilot.SDK` from 0.1.32 to 0.2.2.
+- Audit reads data from the cache to reduce GitHub API use
 
 ## 0.6.10 (2026-04-27)
 
 ### Features Added
 
+- Added Rust language support for `setup`, `generate`, `build`, and `pack` tools.
 - Added `azsdk_get_kpi_attestation_status` MCP tool to check KPI attestation status for a release plan given product ID and lifecycle.
 - Added CODEOWNERS Audit command (CLI only) that brings data model to a valid state.
 - Added optional package version argument for `azsdk release-plan update-release-status` CLI.

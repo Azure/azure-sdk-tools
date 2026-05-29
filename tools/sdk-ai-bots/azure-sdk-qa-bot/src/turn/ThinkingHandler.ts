@@ -69,16 +69,16 @@ export class ThinkingHandler {
   public async stop(replyStartTime: Date, reply: CompletionResponsePayload | RagApiError, currentPrompt: Prompt, currentChannelTenant?: string) {
     const { answer, isError } = this.generateAnswer(reply);
     const routeTenant = isCompletionResponsePayload(reply) ? reply.route_tenant : undefined;
-    const responseId = isCompletionResponsePayload(reply) ? reply.id : undefined;
+    const traceId = isCompletionResponsePayload(reply) ? reply.trace_id : undefined;
     const formattedAnswer = await this.formatAnswer(answer, isError, routeTenant, currentChannelTenant);
     const entity: Record<string, unknown> = {
       ...this.aiGeneratedEntity,
     };
-    if (responseId) {
+    if (traceId) {
       entity.usageInfo = {
         '@type': 'CreativeWork',
         name: 'Internal Tracking',
-        description: `Response ID: ${responseId}`,
+        description: `Trace ID: ${traceId}`,
       };
     }
     const updated: Partial<TurnContext> = {

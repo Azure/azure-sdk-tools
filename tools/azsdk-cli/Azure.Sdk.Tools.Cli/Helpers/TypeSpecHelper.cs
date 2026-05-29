@@ -102,7 +102,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             try
             {
                 // Find the typespec project directory
-                if (typeSpecProjectPath.EndsWith(TypeSpecProject.TSPCONFIG_FILENAME))
+                if (!string.IsNullOrEmpty(typeSpecProjectPath) && Path.GetFileName(typeSpecProjectPath).Equals(TypeSpecProject.TSPCONFIG_FILENAME, StringComparison.OrdinalIgnoreCase))
                 {
                     typeSpecProjectPath = Path.GetDirectoryName(typeSpecProjectPath) ?? string.Empty;
                 }
@@ -176,28 +176,44 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 }
 
                 var packages = new List<PackageInfo>();
-
                 if (languagesObj is Dictionary<object, object> languages)
                 {
                     foreach (var lang in languages)
                     {
                         var languageName = lang.Key?.ToString() ?? string.Empty;
                         var packageName = string.Empty;
-
-                        if (lang.Value is Dictionary<object, object> langProps)
+                        var groupName = string.Empty;
+                        if (lang.Value is Dictionary<object, object> langDict)
                         {
-                            if (langProps.TryGetValue("packageName", out var pkgName))
+                            if (langDict.TryGetValue("packageName", out var pkgName))
                             {
                                 packageName = pkgName?.ToString() ?? string.Empty;
                             }
                         }
+                        else if (lang.Value is ICollection<object> langList && langList.FirstOrDefault() is Dictionary<object, object> langDictTemp)
+                        {
+                            if (langDictTemp.TryGetValue("packageName", out var pkgName))
+                            {
+                                packageName = pkgName?.ToString() ?? string.Empty;
+                            }
+                        }
+
                         languageName = languageName.Contains("csharp") ? ".NET" : languageName;
+                        var language = SdkLanguageHelpers.GetSdkLanguage(languageName);
                         if (!string.IsNullOrEmpty(packageName))
                         {
+                            if (language == SdkLanguage.Java && packageName.Contains(':'))
+                            {
+                                var parts = packageName.Split(':');
+                                groupName = parts[0];
+                                packageName = parts[1];
+                            }
+
                             packages.Add(new PackageInfo
                             {
-                                Language = SdkLanguageHelpers.GetSdkLanguage(languageName),
-                                PackageName = packageName
+                                Language = language,
+                                PackageName = packageName,
+                                Group = groupName
                             });
                         }
                     }
@@ -255,12 +271,22 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
         public string GetTypeSpecProjectRelativePath(string typeSpecProjectPath)
         {
-            if (string.IsNullOrEmpty(typeSpecProjectPath) || !IsValidTypeSpecProjectPath(typeSpecProjectPath))
+            if (string.IsNullOrEmpty(typeSpecProjectPath))
             {
                 return string.Empty;
             }
 
-            int specIndex = typeSpecProjectPath.IndexOf("specification");
+            if (Path.GetFileName(typeSpecProjectPath).Equals(TypeSpecProject.TSPCONFIG_FILENAME, StringComparison.OrdinalIgnoreCase))
+            {
+                typeSpecProjectPath = Path.GetDirectoryName(typeSpecProjectPath) ?? string.Empty;
+            }
+
+            if (!IsValidTypeSpecProjectPath(typeSpecProjectPath))
+            {
+                return string.Empty;
+            }
+
+            int specIndex = typeSpecProjectPath.IndexOf("specification", StringComparison.OrdinalIgnoreCase);
             return specIndex >= 0 ? typeSpecProjectPath[specIndex..].Replace("\\", "/") : string.Empty;
         }
 

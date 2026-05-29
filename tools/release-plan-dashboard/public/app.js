@@ -705,6 +705,10 @@
     return store().filters.month;
   }
 
+  function getSortOrder() {
+    return store().filters.sort || "month";
+  }
+
   function render(plans) {
     detectDuplicates(plans);
     const planeFilter = getGlobalPlaneFilter();
@@ -735,6 +739,16 @@
       );
     }
 
+    function sortByReleasePlanId(a, b) {
+      const idA = String(a.releasePlanId || "");
+      const idB = String(b.releasePlanId || "");
+      // Descending order so newest (highest) IDs appear first
+      return idB.localeCompare(idA, undefined, { numeric: true });
+    }
+
+    const sortFn =
+      getSortOrder() === "id" ? sortByReleasePlanId : sortByReleaseMonth;
+
     function splitByState(arr) {
       const partial = [];
       const inProgress = [];
@@ -753,14 +767,14 @@
         }
       }
 
-      inProgress.sort(sortByReleaseMonth);
-      partial.sort(sortByReleaseMonth);
-      newItems.sort(sortByReleaseMonth);
+      inProgress.sort(sortFn);
+      partial.sort(sortFn);
+      newItems.sort(sortFn);
 
       // When filtering/searching, show all finished plans that match;
       // otherwise limit to this/last month, max 20
       if (isFiltering) {
-        finished.sort(sortByReleaseMonth);
+        finished.sort(sortFn);
         return { inProgress, partial, newItems, finished };
       }
       const now = new Date();
@@ -773,7 +787,7 @@
         const rm = (p.releaseMonth || "").toLowerCase();
         return rm.includes(thisMonthKey) || rm.includes(lastMonthKey);
       });
-      recentFinished.sort(sortByReleaseMonth);
+      recentFinished.sort(sortFn);
       const cappedFinished = recentFinished.slice(0, FINISHED_DISPLAY_LIMIT);
 
       return { inProgress, partial, newItems, finished: cappedFinished };
@@ -977,7 +991,7 @@
     const labels = {
       [ACTION_TYPES.GENERATE]: "⚡ Generate SDK",
       [ACTION_TYPES.FIX_CHECKS]: "🔧 Fix Checks",
-      [ACTION_TYPES.RELEASE]: "🚀 Release",
+      [ACTION_TYPES.RELEASE]: "🚀 Release SDK",
       [ACTION_TYPES.MERGE]: "✅ Merge PR",
       [ACTION_TYPES.LINK_PR]: "🔗 Link PR",
       [ACTION_TYPES.MARK_READY]: "📋 Mark Ready",
@@ -1652,6 +1666,7 @@
               ).toLowerCase();
               const relSt = (l.releaseStatus || "").toLowerCase();
               const hasPr = !!l.sdkPrUrl;
+              const isReleased = relSt === "released" || relSt === "completed";
               const isMerged = prSt.includes("merged") || prSt === "completed";
               const isDraft = prSt === "draft";
               const isOpen = prSt === "open" || isDraft;
@@ -1666,15 +1681,17 @@
                 l.prDetails.mergeable &&
                 l.prDetails.mergeableState === "clean";
 
-              if (!hasPr) {
+              if (isReleased) {
+                actionCell = "";
+              } else if (!hasPr) {
                 actionCell = langActionBtn(ACTION_TYPES.GENERATE, lang, p, l);
               } else if (isClosed && !isMerged) {
                 actionCell = langActionBtn(ACTION_TYPES.LINK_PR, lang, p, l);
-              } else if (isDraft && !relSt.includes("released")) {
+              } else if (isDraft) {
                 actionCell = langActionBtn(ACTION_TYPES.MARK_READY, lang, p, l);
               } else if (isOpen && hasFailedChecks) {
                 actionCell = langActionBtn(ACTION_TYPES.FIX_CHECKS, lang, p, l);
-              } else if (isMerged && !relSt.includes("released")) {
+              } else if (isMerged) {
                 actionCell = langActionBtn(ACTION_TYPES.RELEASE, lang, p, l);
               } else if (isOpen && isApproved && isMergeable) {
                 actionCell = langActionBtn(ACTION_TYPES.MERGE, lang, p, l);
@@ -2217,6 +2234,7 @@
         store().filters.search,
         store().filters.plane,
         store().filters.month,
+        store().filters.sort,
         store().filters.prLang,
         store().filters.prStatus,
       ];
@@ -2883,5 +2901,19 @@
   };
 
   // ── Init ────────────────────────────────────────────────────
+  // Fetch environment config and apply test-instance indicators
+  fetch("/api/config")
+    .then((r) => r.json())
+    .then((cfg) => {
+      if (cfg.environment === "test") {
+        const banner = document.getElementById("test-env-banner");
+        if (banner) banner.style.display = "";
+        const shortLink = document.getElementById("short-link");
+        if (shortLink) shortLink.style.display = "none";
+        document.title = "[TEST] " + document.title;
+      }
+    })
+    .catch(() => {});
+
   fetchPlans();
 })();

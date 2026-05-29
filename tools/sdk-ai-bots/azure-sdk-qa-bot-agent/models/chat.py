@@ -89,3 +89,4 @@ class ChatResponse(BaseModel):
     full_context: str | None = None
     route_tenant: TenantID | None = None
     agent_conversation_id: str | None = None
+    trace_id: str | None = None

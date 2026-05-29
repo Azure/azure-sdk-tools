@@ -1,14 +1,38 @@
 # Release History
 
-## 0.6.13 (Unreleased)
+## 0.6.15 (2026-05-29)
+
+### Bugs Fixed
+
+- Fixed the Update SDK Details MCP tool to read package names from the TypeSpec metadata emitter output (typespec-metadata.yaml).
+
+## 0.6.14 (2026-05-27)
 
 ### Features Added
 
+- Added pre-build step for the .NET plugin during SDK generation
+- Added `apiReleaseType` required parameter to `CreateReleasePlan` (options: Private Preview, Public Preview, GA) to set `Custom.ReleasePlanType` in ADO work items.
+- Spec PR validation against release type: Private Preview requires `azure-rest-api-specs-pr`; Public Preview/GA requires `azure-rest-api-specs`.
+- SDK release type now defaults automatically (beta for preview, stable for GA) when not provided.
+- Duplicate release plan check now considers API release type, allowing separate plans for different release stages.
+- Release plan title format updated to include release type (e.g., "Private Preview release plan for Contoso.Management").
+
 ### Breaking Changes
+
+- Removed `userEmail` parameter from `CreateReleasePlan`; email is resolved automatically.
+- `sdkReleaseType` parameter in `CreateReleasePlan` is now optional (was required).
+
+## 0.6.13 (2026-05-18)
+
+### Features Added
+
+- Added optional `--release-plan-id` parameter to `update-release-status` CLI command. When provided, it is used as an additional filter on top of the package name search to select the correct release plan. Returns a message if the specified release plan ID is not found among matching plans.
+- Get release plan returns the link to new release planner dashboard https://aka.ms/azsdk/releaseplan-dashboard
 
 ### Bugs Fixed
 
 - `azsdk_release_sdk` now passes a `release_<safeName>=true` template parameter when triggering Java release pipelines so per-package selection works (azure-sdk-for-java#48465). Previously, manually queued Java releases failed fast because no package was selected. (#14832)
+- Removed the check requiring Java package names to include group name in `groupName:packageName` format when updating release status.
 
 ### Other Changes
 

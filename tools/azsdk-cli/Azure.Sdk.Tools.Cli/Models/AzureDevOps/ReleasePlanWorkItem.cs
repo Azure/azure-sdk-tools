@@ -1,12 +1,15 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using Azure.Sdk.Tools.Cli.Attributes;
+using Azure.Sdk.Tools.Cli.Models;
 using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
 
 namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
 {
     public class ReleasePlanWorkItem : WorkItemBase
     {
+        public const string DashboardBaseUrl = "https://azsdk-releaseplan-dashboard-hveph5aqhhcfhtgu.westus-01.azurewebsites.net/?releaseplan=";
+
         [FieldName("Custom.ServiceTreeID")]
         public string ServiceTreeId { get; set; } = string.Empty;
 
@@ -32,7 +35,9 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
         [FieldName("Custom.APISpecDefinitionType")]
         public string SpecType {  get; set; } = string.Empty;
 
-        public string ReleasePlanLink { get; set; } = string.Empty;
+        public string ReleasePlanLink => ReleasePlanId > 0
+            ? $"{DashboardBaseUrl}{ReleasePlanId}"
+            : string.Empty;
 
         public bool IsTestReleasePlan { get; set; } = false;
 
@@ -67,6 +72,15 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
 
         [FieldName("Custom.ProductLifecycle")]
         public string ProductLifecycle { get; set; } = string.Empty;
+
+        [FieldName("Custom.ReleasePlanType")]
+        public string ReleasePlanType { get; set; } = string.Empty;
+
+        public ApiReleaseType ApiReleaseType
+        {
+            get => ApiReleaseTypeExtensions.FromAdoFieldValue(ReleasePlanType);
+            set => ReleasePlanType = value.ToAdoFieldValue();
+        }
 
         public override Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument GetPatchDocument()
         {

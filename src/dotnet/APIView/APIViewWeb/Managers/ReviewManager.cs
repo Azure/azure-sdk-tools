@@ -395,23 +395,6 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
-        /// ApproveReviewAsync
-        /// </summary>
-        /// <param name="user"></param>
-        /// <param name="reviewId"></param>
-        /// <param name="notes"></param>
-        /// <returns></returns>
-        public async Task ApproveReviewAsync(ClaimsPrincipal user, string reviewId, string notes = "")
-        {
-            ReviewListItemModel review = await _reviewsRepository.GetReviewAsync(reviewId);
-            if (review.IsApproved)
-            {
-                return;
-            }
-            await ToggleReviewApproval(user, review);
-        }
-
-        /// <summary>
         /// Request namespace review for TypeSpec and mark related SDK language reviews as namespace approval requested
         /// </summary>
         /// <param name="user"></param>

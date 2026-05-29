@@ -90,11 +90,25 @@ Key advantages:
 
 **Wins:** No dependency on APIView backend or UI. Can easily include more files (like Java POM.xml or dependencies) in the diff than just API text.
 
-**Losses:** Lose the ability to quickly compare a version against any other version. Lose the ability to see the version approval history of a package because now each package will logically be represented by a bunch of unconnected closed PRs.
+**Losses:** Lose the ability to quickly compare a version against any other version. Lose the ability to see the version approval history of a package because now each package will logically be represented by a bunch of unconnected closed PRs. Requires a deliberate step to generate the review PR, unlike APIView where everything happens automatically.
 
 ---
 
-### 2. Commenting and Discussion
+### 2. `API.md` Freshness Enforcement
+- `API.md` must be checked into the repository and kept up to date with every PR that changes the public API surface.
+- CI will regenerate `API.md` from source and compare it against the committed version. If they differ, the check fails.
+- This ensures `API.md` is always accurate at any given commit and avoids drift between the code and the declared API surface.
+- The CI check should provide an easy remediation path: ideally, a mechanism to push the corrected `API.md` as a commit directly to the PR branch (for example, via a bot comment with a "fix this" action or a pipeline that auto-commits the regenerated file on request).
+
+**Outcome:** `API.md` is a reliable, always-current representation of the package's public API at every commit.
+
+**Wins:** Eliminates stale API artifacts. Ensures review PRs always reflect actual code. Enables hash-based approval validation at any point in history.
+
+**Losses:** Requires teams to regenerate `API.md` locally or rely on the auto-fix mechanism.
+
+---
+
+### 3. Commenting and Discussion
 - Completely leverages native GitHub PR review features:
   - Inline comments
   - Threaded discussions
@@ -115,7 +129,7 @@ Key advantages:
 
 ---
 
-### 3. Architect Review Model
+### 4. Architect Review Model
 - Architects are assigned as required reviewers on PRs. This can be done automatically via CODEOWNERS.
 - Architect feedback is expressed via:
   - Comments
@@ -132,7 +146,7 @@ Key advantages:
 
 ---
 
-### 4. Approval and Gating
+### 5. Approval and Gating
 
 Approval shifts from APIView to GitHub but CI enforcement remains largely the same.
 
@@ -149,6 +163,12 @@ Approval shifts from APIView to GitHub but CI enforcement remains largely the sa
 - This aligns with current engineering-system ownership: the schema is flexible, already managed by existing pipelines, and operationally maintained today.
 - A GitHub trigger will update the Package Work Item when PR approvals are granted, revoked, or become stale.
 - There is a potential problem here. If you open two reviews, one comparing your change to the last GA and one comparing your change to the last beta, an approval on either could approve the API hash for both. This can be mitigated by marking the beta-baseline PR as Draft and ensuring Draft approvals do not update the Package Work Item approval fields.
+
+**Initial Releases (New Packages):**
+- Initial releases (typically betas) require approval of the namespace.
+- In this model, initial reviews appear as all-green (all-addition) PRs since the package has no prior API surface.
+- The "initial approval" is simply the PR approval on this all-addition review.
+- The base branch for an initial release is a clone of main with `api.md` removed, rather than attempting to find a commit with no trace of the unreleased package (which may be difficult if the package has been in development on main).
 
 **CI Enforcement:**
 - The SDK release pipelines will validate that gated releases are approved for release. They will do this by computing the hash of the API surface area and consulting the index for an approval.
@@ -256,7 +276,9 @@ As of May 2026, the [GitHub Copilot code review agent](https://docs.github.com/e
 
 At this time, we can provide basic guidance by using `api.instructions.md` in `.github/instructions` with `applyTo: "**/api.md"`, subject to the 4,000-character and 1,000-line limits. While we would provide the initial content for these files, they would ultimately be owned and maintained by the language teams.
 
-Ultimately, we want language-team-authored skills to be used intelligently by the code review agent to produce higher-quality API feedback.
+Additionally, we can develop richer skills and custom agents to aid in API review that are usable today via the GitHub Copilot VS Code extension or the GitHub Copilot CLI. These surfaces fully support skills, custom instructions without length limits, and MCP tooling. However, using them requires the architect to drop down into the IDE or CLI rather than reviewing directly on github.com. This is a viable interim path for delivering higher-quality AI-assisted feedback while GitHub's native code review agent catches up. When the code review agent eventually gains skill support, these same skills should be directly leverageable without rewriting them.
+
+Ultimately, we want language-team-authored skills to be used intelligently by the code review agent to produce higher-quality API feedback directly on github.com.
 
 Because GitHub support for code review customization is so limited, this is deferred to future work.
 

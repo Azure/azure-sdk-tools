@@ -92,6 +92,9 @@ if ($reviews -ne $null)
         $sourcePath = $StorageBaseUrl + "/" + $r.FileID
         Write-Host "Copying $($sourcePath)"
         azcopy cp "$sourcePath" "$sourceFilePath" --recursive=true
+        if ($LASTEXITCODE -ne 0) {
+            throw "azcopy cp failed with exit code $LASTEXITCODE for source '$sourcePath'"
+        }
 
         #Create staging path for review and revision ID
         $CodeFileDirectory = Join-Path -Path $StagingPath $r.ReviewID | Join-Path -ChildPath $r.RevisionID

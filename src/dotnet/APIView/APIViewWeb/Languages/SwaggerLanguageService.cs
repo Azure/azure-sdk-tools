@@ -67,7 +67,7 @@ namespace APIViewWeb
 
             safeFileName = new string(safeFileName.Select(ch => Regex.IsMatch(ch.ToString(), "[A-Za-z0-9._-]") ? ch : '_').ToArray());
 
-            safeFileName = safeFileName.TrimEnd('. ');
+            safeFileName = safeFileName.TrimEnd('.', ' ');
 
             if (string.IsNullOrEmpty(safeFileName) || safeFileName == "." || safeFileName == "..")
             {

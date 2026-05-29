@@ -993,6 +993,33 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
+        public async Task Test_UpdateReleasePlan_with_tspconfig_path_success()
+        {
+            var relativeConfigPath = "TypeSpecTestData/specification/testcontoso/Contoso.Management/tspconfig.yaml";
+            var absoluteConfigPath = Path.GetFullPath(relativeConfigPath);
+
+            var relativeResult = await releasePlanTool.UpdateReleasePlan(
+                typeSpecProjectPath: relativeConfigPath,
+                sdkReleaseType: "beta",
+                specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446",
+                workItemId: 100);
+
+            var absoluteResult = await releasePlanTool.UpdateReleasePlan(
+                typeSpecProjectPath: absoluteConfigPath,
+                sdkReleaseType: "beta",
+                specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446",
+                workItemId: 100);
+
+            Assert.Multiple(() =>
+            {
+                Assert.IsNull(relativeResult.ResponseError, $"Unexpected error for relative tspconfig path: {relativeResult.ResponseError}");
+                Assert.IsNull(absoluteResult.ResponseError, $"Unexpected error for absolute tspconfig path: {absoluteResult.ResponseError}");
+                Assert.That(relativeResult.TypeSpecProject, Is.EqualTo("specification/testcontoso/Contoso.Management"));
+                Assert.That(absoluteResult.TypeSpecProject, Is.EqualTo("specification/testcontoso/Contoso.Management"));
+            });
+        }
+
+        [Test]
         public async Task Test_UpdateReleasePlan_with_invalid_service_tree_id()
         {
             var result = await releasePlanTool.UpdateReleasePlan(
@@ -1195,6 +1222,54 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.IsNull(result.ResponseError, $"Unexpected error: {result.ResponseError}");
             Assert.That(result.Message, Does.Contain("Successfully updated release plan"));
             Assert.IsNotNull(result.TypeSpecProject);
+        }
+
+        // ======================== UpdateReleasePlanTarget Tests ========================
+
+        [Test]
+        public async Task Test_UpdateReleasePlanTarget_with_valid_inputs()
+        {
+            var result = await releasePlanTool.UpdateReleasePlanTarget(workItemId: 100, targetReleaseMonthYear: "January 2026");
+
+            Assert.IsNull(result.ResponseError, $"Unexpected error: {result.ResponseError}");
+            Assert.That(result.Message, Does.Contain("Successfully updated SDK release target month to January 2026"));
+        }
+
+        [Test]
+        public async Task Test_UpdateReleasePlanTarget_with_invalid_work_item_id()
+        {
+            var result = await releasePlanTool.UpdateReleasePlanTarget(workItemId: 0, targetReleaseMonthYear: "January 2026");
+
+            Assert.IsNotNull(result.ResponseError);
+            Assert.That(result.ResponseError, Does.Contain("valid work item ID"));
+        }
+
+        [Test]
+        public async Task Test_UpdateReleasePlanTarget_with_empty_target_month()
+        {
+            var result = await releasePlanTool.UpdateReleasePlanTarget(workItemId: 100, targetReleaseMonthYear: "");
+
+            Assert.IsNotNull(result.ResponseError);
+            Assert.That(result.ResponseError, Does.Contain("target month is required"));
+        }
+
+        [Test]
+        public async Task Test_UpdateReleasePlanTarget_when_release_plan_not_found()
+        {
+            var mockDevOps = new Mock<IDevOpsService>();
+            mockDevOps
+                .Setup(s => s.GetReleasePlanForWorkItemAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((ReleasePlanWorkItem?)null!);
+
+            var tool = new ReleasePlanTool(
+                mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper,
+                gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>());
+
+            var result = await tool.UpdateReleasePlanTarget(workItemId: 999, targetReleaseMonthYear: "January 2026");
+
+            Assert.IsNotNull(result.ResponseError);
+            Assert.That(result.ResponseError, Does.Contain("No release plan found"));
+            mockDevOps.Verify(s => s.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         // ======================== RunTypeSpecMetadataEmitterAsync Tests ========================

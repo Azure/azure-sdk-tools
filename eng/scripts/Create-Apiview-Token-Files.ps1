@@ -38,6 +38,25 @@ function Get-ContainedPath {
     return $fullPath
 }
 
+function Get-SafeFileName {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$FileName
+    )
+
+    $baseName = [System.IO.Path]::GetFileName($FileName)
+    if ([string]::IsNullOrWhiteSpace($baseName)) {
+        return $null
+    }
+
+    $safeName = -join ($baseName.ToCharArray() | ForEach-Object { if ($_ -match '[A-Za-z0-9._-]') { $_ } else { '_' } })
+    if ($safeName -eq '.' -or $safeName -eq '..') {
+        return $null
+    }
+
+    return $safeName
+}
+
 Write-Host "Review Details Json: $($ReviewDetailsJson)"
 $reviews = ConvertFrom-Json $ReviewDetailsJson
 Write-Host $reviews
@@ -53,8 +72,8 @@ if ($reviews -ne $null)
         $codeDir = New-Item -Path $pkgWorkingDir -ItemType Directory -Force
         $codeDirPath = [System.IO.Path]::GetFullPath($codeDir.FullName)
 
-        $safeFileName = [System.IO.Path]::GetFileName($r.FileName)
-        if ([string]::IsNullOrWhiteSpace($safeFileName) -or $safeFileName -eq "." -or $safeFileName -eq "..") {
+        $safeFileName = Get-SafeFileName -FileName $r.FileName
+        if ([string]::IsNullOrWhiteSpace($safeFileName)) {
             throw "Invalid file name '$($r.FileName)' in review generation payload."
         }
 

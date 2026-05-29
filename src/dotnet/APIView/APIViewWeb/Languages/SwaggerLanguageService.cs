@@ -2,9 +2,9 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using APIView;
 using APIViewWeb.Models;
@@ -59,8 +59,7 @@ namespace APIViewWeb
                 return false;
             }
 
-            var invalidChars = new HashSet<char>(Path.GetInvalidFileNameChars()) { ':', '/', '\\' };
-            safeFileName = new string(safeFileName.Select(ch => invalidChars.Contains(ch) ? '_' : ch).ToArray());
+            safeFileName = new string(safeFileName.Select(ch => Regex.IsMatch(ch.ToString(), "[A-Za-z0-9._-]") ? ch : '_').ToArray());
 
             if (safeFileName == "." || safeFileName == "..")
             {

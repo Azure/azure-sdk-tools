@@ -23,18 +23,18 @@ stimuli:
     max_tokens: 1000000
   environment:
     files:
-    - src: ../fixtures/005001-warning-suppress-warning/models.tsp
-      dest: models.tsp
-    - src: ../fixtures/005001-warning-suppress-warning/tspconfig.yaml
-      dest: tspconfig.yaml
     - src: ../fixtures/005001-warning-suppress-warning/main.tsp
       dest: main.tsp
-    - src: ../fixtures/005001-warning-suppress-warning/stubs.tsp
-      dest: stubs.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
+    - src: ../fixtures/005001-warning-suppress-warning/models.tsp
+      dest: models.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
       dest: package-lock.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: package.json
+    - src: ../fixtures/005001-warning-suppress-warning/stubs.tsp
+      dest: stubs.tsp
+    - src: ../fixtures/005001-warning-suppress-warning/tspconfig.yaml
+      dest: tspconfig.yaml
     commands:
       - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:

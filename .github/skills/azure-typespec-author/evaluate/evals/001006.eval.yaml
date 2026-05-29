@@ -27,6 +27,10 @@ stimuli:
       dest: employee.tsp
     - src: ../fixtures/001006-version-add-preview-after-stable/main.tsp
       dest: main.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: package.json
     - src: ../fixtures/001006-version-add-preview-after-stable/shared.tsp
       dest: shared.tsp
     - src: ../fixtures/001006-version-add-preview-after-stable/tspconfig.yaml
@@ -67,10 +71,6 @@ stimuli:
       dest: examples/2024-10-01/Operations_List_MaximumSet_Gen.json
     - src: ../fixtures/001006-version-add-preview-after-stable/examples/2024-10-01/Operations_List_MinimumSet_Gen.json
       dest: examples/2024-10-01/Operations_List_MinimumSet_Gen.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
     commands:
       - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
   graders:

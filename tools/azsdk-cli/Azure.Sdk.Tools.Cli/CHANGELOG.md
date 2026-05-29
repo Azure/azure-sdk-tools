@@ -4,7 +4,7 @@
 
 ### Bugs Fixed
 
-- Fixed Update SDK details MCP tool to process the package names from tspconfig.yaml
+- Fixed the Update SDK Details MCP tool to read package names from the TypeSpec metadata emitter output (typespec-metadata.yaml).
 
 ## 0.6.14 (2026-05-27)
 

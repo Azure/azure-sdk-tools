@@ -1,14 +1,10 @@
 # Release History
 
-## 0.6.15 (Unreleased)
-
-### Features Added
-
-### Breaking Changes
+## 0.6.15 (2026-05-29)
 
 ### Bugs Fixed
 
-### Other Changes
+- Fixed the Update SDK Details MCP tool to read package names from the TypeSpec metadata emitter output (typespec-metadata.yaml).
 
 ## 0.6.14 (2026-05-27)
 

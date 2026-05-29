@@ -36,6 +36,7 @@ extends:
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-setup.yml
                 parameters:
                   SkillBranch: ''
+                  StartQaBotBackend: false
 
               # Run evaluations on pure agent without skill
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml

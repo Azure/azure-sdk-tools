@@ -158,7 +158,7 @@ stimuli:
 
 - name: 001005-version-add-preview-after-preview
   prompt: |
-    Add a new preview version `2025-05-04-preview` to my service widget resource manager. Exclude Feature: `age` property with default value 21. Carry other features.
+    Add a new preview version `2025-05-04-preview` to my service widget resource manager. Exclude Feature: the default value from the 'age' property. Carry other features.
   constraints:
     max_turns: 6
     max_tokens: 100000

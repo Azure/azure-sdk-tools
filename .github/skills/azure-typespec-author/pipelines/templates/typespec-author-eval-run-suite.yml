@@ -10,6 +10,9 @@ parameters:
   - name: LoadSkills
     type: boolean
     default: true
+  - name: Tag
+    type: string
+    default: ''
 
 steps:
   - script: |
@@ -19,7 +22,11 @@ steps:
         mkdir -p /tmp/no-skills
         SKILL_ARG="--skill-dir /tmp/no-skills"
       fi
-      vally eval --eval-spec "suites/${{ parameters.EvalFile }}" --output-dir results --verbose $SKILL_ARG
+      TAG_ARG=""
+      if [ -n "${{ parameters.Tag }}" ]; then
+        TAG_ARG="--tag ${{ parameters.Tag }}"
+      fi
+      vally eval --eval-spec "suites/${{ parameters.EvalFile }}" --output-dir results --verbose $SKILL_ARG $TAG_ARG
     displayName: ${{ parameters.DisplayName }}
     timeoutInMinutes: ${{ parameters.TimeoutMinutes }}
     continueOnError: true

@@ -41,39 +41,44 @@ extends:
               # Run evaluations on pure agent without skill
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
                 parameters:
-                  EvalFile: versioning-no-skill.eval.yaml
+                  EvalFile: no-skill.eval.yaml
                   SuiteName: versioning-no-skill
                   DisplayName: Pure agent - versioning
                   TimeoutMinutes: 50
                   LoadSkills: false
+                  Tag: suite=versioning
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
                 parameters:
-                  EvalFile: armtemplate-no-skill.eval.yaml
+                  EvalFile: no-skill.eval.yaml
                   SuiteName: armtemplate-no-skill
                   DisplayName: Pure agent - armtemplate
                   TimeoutMinutes: 40
                   LoadSkills: false
+                  Tag: suite=armtemplate
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
                 parameters:
-                  EvalFile: lro-no-skill.eval.yaml
+                  EvalFile: no-skill.eval.yaml
                   SuiteName: longrunningoperation-no-skill
                   DisplayName: Pure agent - longrunningoperation
                   TimeoutMinutes: 25
                   LoadSkills: false
+                  Tag: suite=lro
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
                 parameters:
-                  EvalFile: decorators-no-skill.eval.yaml
+                  EvalFile: no-skill.eval.yaml
                   SuiteName: decorators-no-skill
                   DisplayName: Pure agent - decorators
                   TimeoutMinutes: 15
                   LoadSkills: false
+                  Tag: suite=decorators
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
                 parameters:
-                  EvalFile: warning-no-skill.eval.yaml
+                  EvalFile: no-skill.eval.yaml
                   SuiteName: warning-no-skill
                   DisplayName: Pure agent - warning
                   TimeoutMinutes: 25
                   LoadSkills: false
+                  Tag: suite=warning
 
             templateContext:
               outputs:

@@ -19,7 +19,7 @@ from pathlib import Path
 
 from models.conversation import ConversationMessage, ConversationMessageItem, Role
 from models.episode import Episode, EpisodeDocument
-from utils.azure_ai_foundry import get_embedding_client, get_openai_client
+from utils.azure_ai_foundry import get_embedding_client, get_project_client
 from utils.azure_cosmosdb import save_episode
 from config.app_config import get as cfg
 
@@ -140,7 +140,7 @@ class ThreadMemoryService:
             self._episode_prompt = _EPISODE_PROMPT_PATH.read_text(encoding="utf-8")
 
         model = cfg("MEMORY_AGENT_MODEL", "gpt-4.1")
-        openai_client = get_openai_client()
+        openai_client = get_project_client().get_openai_client()
 
         try:
             response = await openai_client.chat.completions.create(

@@ -27,6 +27,10 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
       dest: tspconfig.yaml
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/001-share-version-new-feature/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
@@ -66,7 +70,7 @@ stimuli:
       threshold: 1.0
   constraints:
     max_turns: 5
-    max_tokens: 100000
+    max_tokens: 50000
 scoring:
   weights:
     file-matches: 3

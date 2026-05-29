@@ -991,7 +991,7 @@
     const labels = {
       [ACTION_TYPES.GENERATE]: "⚡ Generate SDK",
       [ACTION_TYPES.FIX_CHECKS]: "🔧 Fix Checks",
-      [ACTION_TYPES.RELEASE]: "🚀 Release",
+      [ACTION_TYPES.RELEASE]: "🚀 Release SDK",
       [ACTION_TYPES.MERGE]: "✅ Merge PR",
       [ACTION_TYPES.LINK_PR]: "🔗 Link PR",
       [ACTION_TYPES.MARK_READY]: "📋 Mark Ready",
@@ -1666,6 +1666,7 @@
               ).toLowerCase();
               const relSt = (l.releaseStatus || "").toLowerCase();
               const hasPr = !!l.sdkPrUrl;
+              const isReleased = relSt === "released" || relSt === "completed";
               const isMerged = prSt.includes("merged") || prSt === "completed";
               const isDraft = prSt === "draft";
               const isOpen = prSt === "open" || isDraft;
@@ -1680,15 +1681,17 @@
                 l.prDetails.mergeable &&
                 l.prDetails.mergeableState === "clean";
 
-              if (!hasPr) {
+              if (isReleased) {
+                actionCell = "";
+              } else if (!hasPr) {
                 actionCell = langActionBtn(ACTION_TYPES.GENERATE, lang, p, l);
               } else if (isClosed && !isMerged) {
                 actionCell = langActionBtn(ACTION_TYPES.LINK_PR, lang, p, l);
-              } else if (isDraft && !relSt.includes("released")) {
+              } else if (isDraft) {
                 actionCell = langActionBtn(ACTION_TYPES.MARK_READY, lang, p, l);
               } else if (isOpen && hasFailedChecks) {
                 actionCell = langActionBtn(ACTION_TYPES.FIX_CHECKS, lang, p, l);
-              } else if (isMerged && !relSt.includes("released")) {
+              } else if (isMerged) {
                 actionCell = langActionBtn(ACTION_TYPES.RELEASE, lang, p, l);
               } else if (isOpen && isApproved && isMergeable) {
                 actionCell = langActionBtn(ACTION_TYPES.MERGE, lang, p, l);

@@ -21,6 +21,7 @@ It is targeted at **new contributors** to the MCP server. For end-user installat
 - [Adding a New Tool](#adding-a-new-tool)
 - [Coding Conventions](#coding-conventions)
 - [Submitting a Pull Request](#submitting-a-pull-request)
+- [Releasing a New Version](#releasing-a-new-version)
 
 ---
 
@@ -258,5 +259,27 @@ A condensed checklist (see [`docs/new-tool.md`](../docs/new-tool.md) for the ful
 3. Update [CHANGELOG.md](./CHANGELOG.md) with a one-line entry for user-visible changes.
 4. Open a PR against `Azure/azure-sdk-tools:main`; the CI pipeline (`tools/azsdk-cli/ci.yml`) runs build + tests across platforms.
 5. Tag a code owner from the `Tools` area for review.
+
+## Releasing a New Version
+
+Releases are published to [GitHub Releases](https://github.com/Azure/azure-sdk-tools/releases) by the CI pipeline ([`ci.yml`](../ci.yml)), which runs automatically on every merge to `main`. The release driver needs to  do three things:
+
+### 1. Update the changelog and merge
+
+In [`CHANGELOG.md`](./CHANGELOG.md), rename the current `## <version> (Unreleased)` heading to `## <version> (<YYYY-MM-DD>)` (format `yyyy-MM-dd`). Add user-visible entries under `Features Added` / `Breaking Changes` / `Bugs Fixed` / `Other Changes`, and remove any empty sections. Open a PR with this change and get it merged to `main`.
+
+CI's `VerifyChangelog: true` flag in `ci.yml` verifies the package version in [`Azure.Sdk.Tools.Cli.csproj`](./Azure.Sdk.Tools.Cli.csproj) has a matching changelog entry; the release stage will fail if the entry is still `(Unreleased)`, the date isn't the latest in the file, or any sections are empty.
+
+### 2. Approve the release stage
+
+CI pipeline [CI pipeline](https://dev.azure.com/azure-sdk/internal/_build?definitionId=7684) is automatically run after each change to Azure SDK Tools MCP server is merged. Once it reaches the release stage, click **Approve** on the run. Approval is required from an Azure SDK team member. 
+
+### 3. Approve the auto-generated increment PR
+
+After the release completes, the pipeline automatically opens a PR titled **`Increment version for tools/azsdk-cli/Azure.Sdk.Tools.Cli releases`** that bumps `<VersionPrefix>` in the csproj to the next version. Approve and merge it.
+
+### Verify
+
+A new tag and release (e.g., `0.6.14`) appear on the [releases page](https://github.com/Azure/azure-sdk-tools/releases) once the release stage finishes.
 
 Thanks for contributing!

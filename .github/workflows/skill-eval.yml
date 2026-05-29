@@ -5,9 +5,13 @@ on:
     branches: [main]
     paths:
       - '.github/skills/**'
+      - 'eng/skill-eval/**'
+      - '.github/workflows/skill-eval.yml'
   pull_request:
     paths:
       - '.github/skills/**'
+      - 'eng/skill-eval/**'
+      - '.github/workflows/skill-eval.yml'
   workflow_dispatch:
 
 permissions:
@@ -23,9 +27,12 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: eng/skill-eval/package-lock.json
 
-      - name: Install Vally CLI
-        run: npm install -g @microsoft/vally-cli@0.5.0
+      - name: Install Vally CLI (pinned via lockfile)
+        working-directory: eng/skill-eval
+        run: npm ci
 
       - name: Lint skills
-        run: vally lint .
+        run: ./eng/skill-eval/node_modules/.bin/vally lint .

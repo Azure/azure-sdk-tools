@@ -62,7 +62,7 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
                 } 
                 else if (value is null && Nullable.GetUnderlyingType(prop.PropertyType) == typeof(DateTime))
                 {
-                    value = "";
+                    value = string.Empty;
                 }
 
                 jsonDocument.Add(new JsonPatchOperation

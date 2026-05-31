@@ -1,0 +1,47 @@
+name: azsdk-typespec-generate-authoring-plan-tool-eval
+description: |
+  Verify that prompts correctly invoke the expected Azure SDK MCP tools.
+  Each stimulus is a single user prompt that should trigger a specific tool.
+version: "1.0"
+type: capability
+
+environment: azsdk-mcp
+
+config:
+  runs: 1
+  timeout: 120s
+  executor: copilot-sdk
+  model: claude-opus-4.6
+
+tags: 
+  priority: p0
+
+stimuli:
+  - name: change-enum-to-extensible
+    environments:
+      commands:
+        - git clone --no-checkout https://github.com/Azure/azure-rest-api-specs.git
+        - cd azure-rest-api-specs
+        - git sparse-checkout init --cone
+        - git sparse-checkout set specification/webpubsub/resource-manager/Microsoft.SignalRService/SignalRService
+        - git checkout main
+    prompt: >
+       invoke azure-sdk-mcp-azsdk_typespec_generate_authoring_plan mcp tool with parameter:
+       request -  convert enum CreatedByType to extensible enum
+       ```
+       enum CreatedByType {
+        User: "User",
+        Application: "Application",
+        ManagedIdentity: "ManagedIdentity",
+        Key: "Key",
+       }
+       ```
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_typespec_generate_authoring_plan"
+      - type: prompt
+        config:
+          prompt: |
+            SDK Breaking change is detected

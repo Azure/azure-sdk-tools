@@ -1,0 +1,64 @@
+name: azsdk-typespec-generate-authoring-plan-tool-eval
+description: |
+  Verify that prompts correctly invoke the expected Azure SDK MCP tools.
+  Each stimulus is a single user prompt that should trigger a specific tool.
+version: "1.0"
+type: capability
+
+environment: azsdk-mcp
+
+config:
+  runs: 1
+  timeout: 120s
+  executor: copilot-sdk
+  model: claude-opus-4.6
+
+tags: 
+  priority: p0
+
+stimuli:
+  # ==== azsdk_typespec_generate_authoring_plan triggers ====
+  - name: invoke-azsdk-typespec-generate-authoring-plan-1
+    prompt: >
+      invoke azure-sdk-mcp-azsdk_typespec_generate_authoring_plan mcp tool to Generate a solution to add a new resource 'asset' for service widget with TypeSpec.
+      with parameter typeSpecProjectRootPath C:\dev\azure-rest-api-specs\specification\webpubsub\resource-manager\Microsoft.SignalRService
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_typespec_generate_authoring_plan"
+  - name: invoke-azsdk-typespec-generate-authoring-plan-2
+    prompt: "invoke azure-sdk-mcp-azsdk_typespec_generate_authoring_plan mcp tool to Generate a solution to add a new api version for service widget with TypeSpec."
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_typespec_generate_authoring_plan"
+      - type: output-not-contains
+        config:
+          substring: "SDK Breaking changes"
+  - name: invoke-azsdk-typespec-generate-authoring-plan-3
+    prompt: >
+      invoke azure-sdk-mcp-azsdk_typespec_generate_authoring_plan mcp tool to Generate a solution to set a default value `21` for property `age` in model EmployeeProperties from a api version say 2025-11-01 with TypeSpec.
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_typespec_generate_authoring_plan"
+  - name: change-enum-to-extensible
+    prompt: >
+       invoke azure-sdk-mcp-azsdk_typespec_generate_authoring_plan mcp tool to Generate a solution to convert enum contentType to extensible enum
+       ```
+       enum contentType {
+        "start",
+        "onBoarding"
+       }
+       ```
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_typespec_generate_authoring_plan"
+      - type: output-contains
+        config:
+          substring: "SDK Breaking changes"

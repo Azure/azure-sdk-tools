@@ -1,0 +1,33 @@
+name: azsdk-typespec-generate-authoring-plan-tool-eval
+description: |
+  Verify that prompts correctly invoke the expected Azure SDK MCP tools.
+  Each stimulus is a single user prompt that should trigger a specific tool.
+version: "1.0"
+type: capability
+
+environment: azsdk-mcp
+
+config:
+  runs: 1
+  timeout: 120s
+  executor: copilot-sdk
+  model: claude-opus-4.6
+
+tags: 
+  priority: p0
+
+stimuli:
+  # ==== azsdk_typespec_generate_authoring_plan triggers ====
+  - name: add-new-resource
+    prompt: >
+      invoke azure-sdk-mcp-azsdk_typespec_generate_authoring_plan mcp tool with parameter:
+       request -  add a new resource 'asset' for service widget with TypeSpec.
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_typespec_generate_authoring_plan"
+      - type: prompt
+        config:
+          prompt: |
+            No SDK Breaking change is detected

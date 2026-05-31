@@ -1,0 +1,585 @@
+# Evaluate configuration for Azure SDK Typespec Author MCP tool evaluations
+# See: https://literate-engine-r3wnl4v.pages.github.io/reference/eval-spec/
+# Keep this combined file synchronized with evals/*.eval.yaml single-case specs.
+# Preserve ordering for readability: stimulus uses name first; grader uses type before config.
+name: azsdk_typespec_generate_authoring_plan-tool-eval
+description: Combined evaluation suite for azsdk_typespec_generate_authoring_plan tool (all 29 cases).
+version: "1.0"
+type: capability
+
+# Root-level environment
+environment: azsdk-mcp
+
+# Execution configuration
+config:
+  runs: 1
+  timeout: 1800s
+  model: claude-opus-4.6
+  executor: copilot-sdk
+# Cases are intentionally sorted by case id.
+stimuli:
+- name: 001001-version-spread-property
+  prompt: |
+    invoke azure-sdk-mcp-azsdk_typespec_generate_authoring_plan mcp tool
+    I added `...Azure.ResourceManager.ManagedServiceIdentityProperty;` which updates all my existing API versions and introduces a breaking change. I want to introduce the properties of the spread model '...ManagedServiceIdentityProperty' in API version 2025-05-04-preview only.
+
+  constraints:
+    max_turns: 10
+    max_tokens: 50000
+  environment:
+    files:
+    - src: ../fixtures/001-share-version-new-feature/employee.tsp
+      dest: employee.tsp
+    - src: ../fixtures/001-share-version-new-feature/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/001-share-version-new-feature/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
+      dest: tspconfig.yaml
+    - src: ../fixtures/001-share-version-new-feature/package.json
+      dest: package.json
+    - src: ../fixtures/001-share-version-new-feature/readme.md
+      dest: readme.md
+  graders:
+  - type: tool-calls
+    config:
+      required:
+      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+- name: 001002-version-default-value
+  prompt: |
+    invoke azure-sdk-mcp-azsdk_typespec_generate_authoring_plan mcp tool 
+    add a default value `21` for property age in model EmployeeProperties only for a new api version 2025-11-01
+  constraints:
+    max_turns: 10
+    max_tokens: 5000
+  environment:
+    files:
+    - src: ../fixtures/001002-version-default-value/employee.tsp
+      dest: employee.tsp
+    - src: ../fixtures/001002-version-default-value/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/001002-version-default-value/package.json
+      dest: package.json
+    - src: ../fixtures/001002-version-default-value/readme.md
+      dest: readme.md
+    - src: ../fixtures/001002-version-default-value/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/001002-version-default-value/tspconfig.yaml
+      dest: tspconfig.yaml
+  graders:
+  - type: tool-calls
+    config:
+      required:
+      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+- name: 001003-version-required-to-optional
+  prompt: |
+    invoke azure-sdk-mcp-azsdk_typespec_generate_authoring_plan mcp tool
+    change the property age of EmployeeProperties from required to optional for api version 2025-05-04-preview
+  constraints:
+    max_turns: 10
+    max_tokens: 5000
+  environment:
+    files:
+    - src: ../fixtures/001-share-version-new-feature/employee.tsp
+      dest: employee.tsp
+    - src: ../fixtures/001-share-version-new-feature/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/001-share-version-new-feature/package.json
+      dest: package.json
+    - src: ../fixtures/001-share-version-new-feature/readme.md
+      dest: readme.md
+    - src: ../fixtures/001-share-version-new-feature/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
+      dest: tspconfig.yaml
+  graders:
+  - type: tool-calls
+    config:
+      required:
+      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+- name: 001004-version-property-decorator
+  prompt: |
+    invoke azure-sdk-mcp-azsdk_typespec_generate_authoring_plan mcp tool
+    change the visibility of property 'provisioningState' from Lifecycle.Read to Lifecycle.Read and Lifecycle.Create in version 2025-05-04-preview only
+  constraints:
+    max_turns: 10
+    max_tokens: 5000
+  environment:
+    files:
+    - src: ../fixtures/001-share-version-new-feature/employee.tsp
+      dest: employee.tsp
+    - src: ../fixtures/001-share-version-new-feature/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/001-share-version-new-feature/package.json
+      dest: package.json
+    - src: ../fixtures/001-share-version-new-feature/readme.md
+      dest: readme.md
+    - src: ../fixtures/001-share-version-new-feature/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
+      dest: tspconfig.yaml
+  graders:
+  - type: tool-calls
+    config:
+      required:
+      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+- name: 001011-version-model-property-renamed
+  prompt: |
+    invoke azure-sdk-mcp-azsdk_typespec_generate_authoring_plan mcp tool 
+    In the Widget project, rename the `age` property to `employeeAge` in EmployeeProperties only for version `2025-05-04-preview`.
+  constraints:
+    max_turns: 10
+    max_tokens: 5000
+  environment:
+    files:
+    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+      dest: Microsoft.Widget/Widget/employee.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+      dest: Microsoft.Widget/Widget/main.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: Microsoft.Widget/Widget/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+      dest: Microsoft.Widget/Widget/readme.md
+    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+      dest: Microsoft.Widget/Widget/shared.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+      dest: Microsoft.Widget/Widget/tspconfig.yaml
+    - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+      dest: Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+    - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+      dest: Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+  graders:
+  - type: tool-calls
+    config:
+      required:
+      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+- name: 001012-version-operation-return-type-changed
+  prompt: |
+    invoke azure-sdk-mcp-azsdk_typespec_generate_authoring_plan mcp tool 
+    In the Widget project, change the return type of the `exportData` operation from `ExportResult` to `DetailedExportResult` with additional optional properties `format` (string) and `exportedAt` (utcDateTime) only for version `2025-05-04-preview`.
+  constraints:
+    max_turns: 10
+    max_tokens: 5000
+  environment:
+    files:
+    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+      dest: Microsoft.Widget/Widget/employee.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+      dest: Microsoft.Widget/Widget/main.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: Microsoft.Widget/Widget/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+      dest: Microsoft.Widget/Widget/readme.md
+    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+      dest: Microsoft.Widget/Widget/shared.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+      dest: Microsoft.Widget/Widget/tspconfig.yaml
+  graders:
+  - type: tool-calls
+    config:
+      required:
+      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+- name: 001013-version-model-property-type-changed
+  prompt: |
+    invoke azure-sdk-mcp-azsdk_typespec_generate_authoring_plan mcp tool 
+    In the Widget project, change the type of the `statusCode` property from `string` to `int32` in EmployeeProperties only for version `2025-05-04-preview`.
+  constraints:
+    max_turns: 10
+    max_tokens: 5000
+  environment:
+    files:
+    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+      dest: Microsoft.Widget/Widget/employee.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+      dest: Microsoft.Widget/Widget/main.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: Microsoft.Widget/Widget/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+      dest: Microsoft.Widget/Widget/readme.md
+    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+      dest: Microsoft.Widget/Widget/shared.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+      dest: Microsoft.Widget/Widget/tspconfig.yaml
+  graders:
+  - type: tool-calls
+    config:
+      required:
+      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+- name: 002001-ARM-change-resource-type
+  prompt: |
+    invoke azure-sdk-mcp-azsdk_typespec_generate_authoring_plan mcp tool
+    change resource Employee to be an extension resource
+  constraints:
+    max_turns: 10
+    max_tokens: 5000
+  environment:
+    files:
+    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+      dest: employee.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+      dest: readme.md
+    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+      dest: tspconfig.yaml
+  graders:
+  - type: tool-calls
+    config:
+      required:
+      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+- name: 002002-ARM-define-extension-resource
+  prompt: |
+    invoke azure-sdk-mcp-azsdk_typespec_generate_authoring_plan mcp tool 
+    add an extension resource named asset
+  constraints:
+    max_turns: 10
+    max_tokens: 5000
+  environment:
+    files:
+    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+      dest: employee.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+      dest: readme.md
+    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+      dest: tspconfig.yaml
+  graders:
+  - type: tool-calls
+    config:
+      required:
+      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+- name: 002003-ARM-define-full-update-operation
+  prompt: |
+    invoke azure-sdk-mcp-azsdk_typespec_generate_authoring_plan mcp tool 
+    Define a PATCH operation for Employees. It is to update properties of an employee. Ensure the definition meets TypeSpec Azure guidelines.
+  constraints:
+    max_turns: 10
+    max_tokens: 5000
+  environment:
+    files:
+    - src: ../fixtures/002003-ARM-define-full-update-operation/employee.tsp
+      dest: employee.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+      dest: readme.md
+    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+      dest: tspconfig.yaml
+  graders:
+  - type: tool-calls
+    config:
+      required:
+      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+- name: 002004-ARM-define-extension-resource
+  prompt: |
+    invoke azure-sdk-mcp-azsdk_typespec_generate_authoring_plan mcp tool 
+    Define a "badge assignment" extension resource. It should be an extension resource that can be attached to an employee. Ensure the definition meets TypeSpec Azure guidelines.
+  constraints:
+    max_turns: 10
+    max_tokens: 5000
+  environment:
+    files:
+    - src: ../fixtures/002004-ARM-define-extension-resource/badgeAssignment.tsp
+      dest: badgeAssignment.tsp
+    - src: ../fixtures/002004-ARM-define-extension-resource/employee.tsp
+      dest: employee.tsp
+    - src: ../fixtures/002004-ARM-define-extension-resource/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+      dest: readme.md
+    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+      dest: tspconfig.yaml
+  graders:
+  - type: tool-calls
+    config:
+      required:
+      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+- name: 002005-ARM-define-the-resource
+  prompt: |
+    invoke azure-sdk-mcp-azsdk_typespec_generate_authoring_plan mcp tool 
+    Define a Azure resource "Employee" under the namespace "Microsoft.Widget" using TypeSpec. Properties: age (int32, optional), city (string, optional), profile (bytes, optional), provisioningState (enum incorporating ResourceProvisioningState, optional, read-only). Ensure the definition meets TypeSpec Azure design guidelines.
+  constraints:
+    max_turns: 10
+    max_tokens: 5000
+  environment:
+    files:
+    - src: ../fixtures/002005-ARM-define-the-resource/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+      dest: readme.md
+    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+      dest: tspconfig.yaml
+  graders:
+  - type: tool-calls
+    config:
+      required:
+      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+- name: 002006-ARM-define-child-resource
+  prompt: |
+    invoke azure-sdk-mcp-azsdk_typespec_generate_authoring_plan mcp tool 
+    Create a new "AddressResource" child resource under the parent resource "Employee". Address properties: street 1(optional), street 2(optional), city(optional), state(optional), postal code(optional), country(optional), and a read-only provisioningState(optional). Ensure the definition meets TypeSpec Azure design guidelines.
+  constraints:
+    max_turns: 10
+    max_tokens: 5000
+  environment:
+    files:
+    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+      dest: employee.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+      dest: readme.md
+    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+      dest: tspconfig.yaml
+  graders:
+  - type: tool-calls
+    config:
+      required:
+      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+- name: 002007-ARM-define-custom-action
+  prompt: |
+    invoke azure-sdk-mcp-azsdk_typespec_generate_authoring_plan mcp tool 
+    Add an additional POST action called "/notify" to the standard operations of Employee. Request body: message content (string) and priority (enum with values Low, Medium, High). Response body: notification identifier (string) and status (string). Ensure the definition meets TypeSpec Azure design guidelines.
+  constraints:
+    max_turns: 10
+    max_tokens: 5000
+  environment:
+    files:
+    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+      dest: employee.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+      dest: readme.md
+    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+      dest: tspconfig.yaml
+  graders:
+  - type: tool-calls
+    config:
+      required:
+      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+- name: 002008-ARM-add-parameters
+  prompt: |
+    invoke azure-sdk-mcp-azsdk_typespec_generate_authoring_plan mcp tool 
+    add top and skip query parameters to the ListBySubscription operation in interface Employees
+  constraints:
+    max_turns: 10
+    max_tokens: 5000
+  environment:
+    files:
+    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+      dest: employee.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+      dest: readme.md
+    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+      dest: tspconfig.yaml
+    - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+      dest: stable/2021-11-01/widget.json
+    - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+      dest: preview/2024-10-01-preview/widget.json
+  graders:
+  - type: tool-calls
+    config:
+      required:
+      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+- name: 002009-arm-add-patch-operation-to-resource
+  prompt: |
+    invoke azure-sdk-mcp-azsdk_typespec_generate_authoring_plan mcp tool 
+    In the Widget project, add a patch operation to an existing ARM resource named 'Employee'
+  constraints:
+    max_turns: 10
+    max_tokens: 5000
+  environment:
+    files:
+    - src: ../fixtures/002009-arm-add-patch-operation-to-resource/employee.tsp
+      dest: employee.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+      dest: readme.md
+    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+      dest: tspconfig.yaml
+  graders:
+  - type: tool-calls
+    config:
+      required:
+      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+- name: 002010-arm-action-sync-operation
+  prompt: |
+    invoke azure-sdk-mcp-azsdk_typespec_generate_authoring_plan mcp tool 
+    In the Widget project, add a sync operation exportData for employee resource.
+  constraints:
+    max_turns: 10
+    max_tokens: 5000
+  environment:
+    files:
+    - src: ../fixtures/002010-arm-action-sync-operation/employee.tsp
+      dest: employee.tsp
+    - src: ../fixtures/002010-arm-action-sync-operation/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/002010-arm-action-sync-operation/package.json
+      dest: package.json
+    - src: ../fixtures/002010-arm-action-sync-operation/readme.md
+      dest: readme.md
+    - src: ../fixtures/002010-arm-action-sync-operation/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/002010-arm-action-sync-operation/tspconfig.yaml
+      dest: tspconfig.yaml
+  graders:
+  - type: tool-calls
+    config:
+      required:
+      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+- name: 003001-arm-action-lro
+  prompt: |
+    invoke azure-sdk-mcp-azsdk_typespec_generate_authoring_plan mcp tool 
+    Add a move async operation to move employee, operation's request is MoveRequest, response is MoveResponse
+  constraints:
+    max_turns: 10
+    max_tokens: 5000
+  environment:
+    files:
+    - src: ../fixtures/003-long-running-operation-share/employee.tsp
+      dest: employee.tsp
+    - src: ../fixtures/003-long-running-operation-share/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/003-long-running-operation-share/package.json
+      dest: package.json
+    - src: ../fixtures/003-long-running-operation-share/readme.md
+      dest: readme.md
+    - src: ../fixtures/003-long-running-operation-share/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/003-long-running-operation-share/tspconfig.yaml
+      dest: tspconfig.yaml
+  graders:
+  - type: tool-calls
+    config:
+      required:
+      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+- name: 003002-arm-modify-response
+  prompt: |
+    invoke azure-sdk-mcp-azsdk_typespec_generate_authoring_plan mcp tool 
+    Modify the LRO createOrUpdate PUT operation in interface Employees so that it returns Azure-AsyncOperation header but NOT Retry-After header in the 201 response. The operation currently uses ArmResourceCreateOrReplaceAsync<Employee> template.
+  constraints:
+    max_turns: 10
+    max_tokens: 5000
+  environment:
+    files:
+    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+      dest: employee.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+      dest: readme.md
+    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+      dest: tspconfig.yaml
+  graders:
+  - type: tool-calls
+    config:
+      required:
+      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+- name: 004001-decorate-mgmt-resource-name-parameter
+  prompt: |
+    invoke azure-sdk-mcp-azsdk_typespec_generate_authoring_plan mcp tool 
+    use authoring plan to add minLength decorator to set the minLength 1 for resource name parameter of Employee resource
+  constraints:
+    max_turns: 10
+    max_tokens: 5000
+  environment:
+    files:
+    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+      dest: employee.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+      dest: readme.md
+    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+      dest: tspconfig.yaml
+  graders:
+  - type: tool-calls
+    config:
+      required:
+      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+- name: 004002-decorate-length-constrains-on-array-item
+  prompt: |
+    invoke azure-sdk-mcp-azsdk_typespec_generate_authoring_plan mcp tool 
+    I have a property `assets: string[]` in EmployeeProperties. Add @minLength(3) @maxLength(10) constraints for any item of the assets array.
+  constraints:
+    max_turns: 10
+    max_tokens: 5000
+  environment:
+    files:
+    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+      dest: employee.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+      dest: main.tsp
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
+      dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+      dest: readme.md
+    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+      dest: tspconfig.yaml
+    - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+      dest: stable/2021-11-01/widget.json
+    - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+      dest: preview/2024-10-01-preview/widget.json
+  graders:
+  - type: tool-calls
+    config:
+      required:
+      - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+scoring:
+  weights:
+    file-matches: 1
+    file-not-matches: 1
+    file-exists: 1
+    file-not-exists: 1
+    tool-calls: 1
+  threshold: 1.0

@@ -51,7 +51,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 .ReturnsAsync((string path, CancellationToken _) => path.Contains("specification") ? path.Substring(0, path.IndexOf("specification")) : path);
             gitHelper = gitHelperMock.Object;
 
-            typeSpecHelper = new TypeSpecHelper(gitHelper);
+            var processHelper = new ProcessHelper(new TestLogger<ProcessHelper>(), Mock.Of<IRawOutputHelper>());
+            typeSpecHelper = new TypeSpecHelper(gitHelper, processHelper);
 
             releasePlanTool = new ReleasePlanTool(
                 devOpsService,

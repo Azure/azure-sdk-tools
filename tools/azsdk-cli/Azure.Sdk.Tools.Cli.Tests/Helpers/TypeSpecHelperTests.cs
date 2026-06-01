@@ -21,7 +21,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             gitHubService = new Mock<IGitHubService>();
             var gitCommandHelper = new GitCommandHelper(NullLogger<GitCommandHelper>.Instance, Mock.Of<IRawOutputHelper>());
             gitHelper = new GitHelper(gitHubService.Object, gitCommandHelper, logger);
-            typeSpecHelper = new TypeSpecHelper(gitHelper);
+            var processHelper = new ProcessHelper(new TestLogger<ProcessHelper>(), Mock.Of<IRawOutputHelper>());
+            typeSpecHelper = new TypeSpecHelper(gitHelper, processHelper);
         }
 
         [Test]
@@ -127,7 +128,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         public async Task Test_IsRepoPathForSpecRepo(Uri repo)
         {
             var gitHelper = CreateGitHelper(repo);
-            var helper = new TypeSpecHelper(gitHelper);
+            var processHelper = new ProcessHelper(new TestLogger<ProcessHelper>(), Mock.Of<IRawOutputHelper>());
+            var helper = new TypeSpecHelper(gitHelper, processHelper);
             Assert.That(await helper.IsRepoPathForSpecRepoAsync("unused because of mock"), "is a specs repo (public or private)");
         }
 
@@ -139,7 +141,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         [Test]
         public async Task Test_IsRepoPathForPublicSpecRepo(Uri repo)
         {
-            var helper = new TypeSpecHelper(CreateGitHelper(repo));
+            var processHelper = new ProcessHelper(new TestLogger<ProcessHelper>(), Mock.Of<IRawOutputHelper>());
+            var helper = new TypeSpecHelper(CreateGitHelper(repo), processHelper);
             Assert.That(!await helper.IsRepoPathForPublicSpecRepoAsync("unused because of the mock"), "not the public specs repo");
         }
 

@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
@@ -72,11 +73,13 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         [GeneratedRegex(@"^https://github\.com/[^/]+/azure-rest-api-specs/(blob|tree)/[^/]+/specification/.+$", RegexOptions.IgnoreCase)]
         private static partial Regex GitHubSpecUrlRegex();
 
-        private IGitHelper _gitHelper;
+        private readonly IGitHelper _gitHelper;
+        private readonly IProcessHelper _processHelper;
 
-        public TypeSpecHelper(IGitHelper gitHelper)
+        public TypeSpecHelper(IGitHelper gitHelper, IProcessHelper processHelper)
         {
             _gitHelper = gitHelper;
+            _processHelper = processHelper;
         }
 
         public bool IsUrl(string path)
@@ -96,6 +99,12 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return typeSpecObject?.IsManagementPlane ?? false;
         }
 
+        private bool IsTypeParserExecutablePresent(string repoRoot)
+        {
+            var tspExecutable = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "tsp.cmd" : "tsp";
+            return File.Exists(Path.Combine(repoRoot, "node_modules", ".bin", tspExecutable));
+        }
+
         /// <inheritdoc/>
         public async Task<TypeSpecProject?> ParseTypeSpecProjectAsync(string typeSpecProjectPath, INpxHelper npxHelper, ILogger logger, CancellationToken ct)
         {
@@ -111,6 +120,21 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 {
                     logger.LogWarning("Invalid TypeSpec project path: {typeSpecProjectPath}. Skipping metadata emitter.", typeSpecProjectPath);
                     return null;
+                }
+
+                var repoRoot = GetSpecRepoRootPath(typeSpecProjectPath);
+                if (string.IsNullOrEmpty(repoRoot))
+                {
+                    logger.LogWarning("Could not determine repo root for path: {typeSpecProjectPath}. Skipping metadata emitter.", typeSpecProjectPath);
+                    return null;
+                }
+
+                if (!IsTypeParserExecutablePresent(repoRoot))
+                {
+                    logger.LogInformation("TypeSpec compiler not found in {typeSpecProjectPath}. Installing dependencies...", typeSpecProjectPath);
+                    var processOptions = new ProcessOptions("npm", ["ci"], workingDirectory: repoRoot);
+                    await _processHelper.Run(processOptions, ct);
+                    logger.LogInformation("npm ci completed.");
                 }
 
                 var project = TypeSpecProject.ParseTypeSpecConfig(typeSpecProjectPath);

@@ -29,28 +29,9 @@ extends:
           - template: /eng/pipelines/templates/variables/image.yml
 
         jobs:
-          - job: DownloadPackages
-            displayName: Download Packages from Partner Drops
-            pool:
-              name: $(WINDOWSPOOL)
-              image: $(WINDOWSVMIMAGE)
-              os: windows
-
-            templateContext:
-              outputs:
-                - output: pipelineArtifact
-                  displayName: Publish to packages artifact
-                  condition: succeededOrFailed()
-                  artifactName: packages
-                  targetPath: ${{ parameters.ArtifactsPath }}
-
-            steps:
-              - checkout: none
-
           - template: /eng/pipelines/templates/jobs/nuget-publish.yml
             parameters:
               ArtifactName: 'packages'
-              DependsOn: DownloadPackages
               Feed: ${{ parameters.Feed }}
               ShouldSign: ${{ parameters.ShouldSign }}
               ShouldPublish: ${{ parameters.ShouldPublish }}

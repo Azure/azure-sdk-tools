@@ -101,6 +101,45 @@ class TestFormatCommentContextForPrompt:
     def test_none(self):
         assert _format_comment_context_for_prompt(None) == ""
 
+    def test_single_comment_thread_does_not_emit_transcript(self):
+        text = _format_comment_context_for_prompt({
+            "comment_text": "lone comment",
+            "thread_comments": [
+                {"comment_text": "lone comment", "created_by": "alice", "created_on": "2026-05-01T00:00:00Z"},
+            ],
+        })
+        assert "Thread:" not in text
+        assert "Comment: lone comment" in text
+
+    def test_multi_comment_thread_emits_transcript(self):
+        text = _format_comment_context_for_prompt({
+            "comment_text": "first",
+            "thread_comments": [
+                {"comment_text": "first", "created_by": "alice", "created_on": "2026-05-01T00:00:00Z"},
+                {"comment_text": "second", "created_by": "bob", "created_on": "2026-05-02T00:00:00Z"},
+            ],
+        })
+        assert "Thread:" in text
+        assert "@alice (2026-05-01T00:00:00Z): first" in text
+        assert "@bob (2026-05-02T00:00:00Z): second" in text
+
+    def test_escape_mentions_wraps_authors_in_backticks(self):
+        text = _format_comment_context_for_prompt(
+            {
+                "comment_text": "first",
+                "thread_comments": [
+                    {"comment_text": "first", "created_by": "alice", "created_on": "2026-05-01T00:00:00Z"},
+                    {"comment_text": "second", "created_by": "bob", "created_on": "2026-05-02T00:00:00Z"},
+                ],
+            },
+            escape_mentions=True,
+        )
+        assert "`@alice` (2026-05-01T00:00:00Z): first" in text
+        assert "`@bob` (2026-05-02T00:00:00Z): second" in text
+        # No bare @author tokens that GitHub would turn into mentions.
+        assert "@alice" not in text.replace("`@alice`", "")
+        assert "@bob" not in text.replace("`@bob`", "")
+
 
 class TestBuildFallbackTitleSnippet:
     def test_short(self):
@@ -280,6 +319,22 @@ class TestLookupCommentContext:
                 "ReviewId": "r-1",
                 "APIRevisionId": "rev-2",
             },
+            "thread_comments": [
+                {
+                    "id": "c1",
+                    "CommentText": "remove async",
+                    "CommentSource": "copilot",
+                    "CreatedBy": "azure-sdk",
+                    "CreatedOn": "2026-05-01T00:00:00Z",
+                },
+                {
+                    "id": "c2",
+                    "CommentText": "actually it should stay async",
+                    "CommentSource": "UserGenerated",
+                    "CreatedBy": "alice",
+                    "CreatedOn": "2026-05-02T00:00:00Z",
+                },
+            ],
             "code": "async def upload_blob(self, name: str, data: bytes) -> None: ...",
             "language": "Python",
             "package_name": "azure-storage-blob",
@@ -293,6 +348,22 @@ class TestLookupCommentContext:
             "element_id": "AsyncBlobClient.upload_blob",
             "review_id": "r-1",
             "revision_id": "rev-2",
+            "thread_comments": [
+                {
+                    "id": "c1",
+                    "comment_text": "remove async",
+                    "comment_source": "copilot",
+                    "created_by": "azure-sdk",
+                    "created_on": "2026-05-01T00:00:00Z",
+                },
+                {
+                    "id": "c2",
+                    "comment_text": "actually it should stay async",
+                    "comment_source": "UserGenerated",
+                    "created_by": "alice",
+                    "created_on": "2026-05-02T00:00:00Z",
+                },
+            ],
         }
 
     @patch("src._report_issue.os.getenv")

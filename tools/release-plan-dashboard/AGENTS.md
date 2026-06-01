@@ -38,6 +38,7 @@ tests/                 # Vitest test suites (9 files, 161+ tests)
 ## Coding Conventions
 
 ### ESM Modules
+
 - Use `import`/`export` — NO `require()` or `module.exports`
 - Node built-ins use `node:` prefix: `import crypto from "node:crypto"`
 - Local imports include `.js` extension: `import { foo } from "./lib/bar.js"`
@@ -49,28 +50,33 @@ tests/                 # Vitest test suites (9 files, 161+ tests)
   ```
 
 ### HTTP Requests
+
 - **Azure DevOps:** Use `fetch()` with Bearer token from `DefaultAzureCredential`
 - **GitHub API:** Use `@octokit/rest` (Octokit class) — NOT raw fetch or node:https
 - **Timeouts:** Always set timeouts on outbound requests (30s default)
 
 ### Security
+
 - Session cookie uses `sameSite: "lax"` for CSRF protection (no custom CSRF middleware)
 - Never store user OAuth tokens in session — only store `{ login, name, avatar }`
 - Escape all user-provided data in HTML output with `esc()` helper (client-side)
 - Validate/sanitize inputs; use allowlist-based WIQL parameter validation
 
 ### Error Handling
+
 - Server startup: fail fast with clear error messages for missing env vars
 - API routes: catch errors, log them, return sanitized error responses (no stack traces)
 - GitHub/DevOps API failures: log warnings, resolve with null (don't crash the server)
 
 ### Caching
+
 - Release plans: 1 hour TTL, refreshed via setInterval
 - PR details: 15 min TTL, fetched on-demand
 - PR statuses: 1 hour TTL, fetched during plan enrichment
 - Max 5000 entries per cache Map (LRU eviction)
 
 ### Testing
+
 - Test framework: **Vitest** (`npm test`)
 - Test files: `tests/*.test.js`
 - Mock external dependencies (Azure Identity, fetch, Octokit)
@@ -81,6 +87,7 @@ tests/                 # Vitest test suites (9 files, 161+ tests)
   ```
 
 ### Frontend (public/app.js)
+
 - Vanilla JS SPA with Alpine.js for reactive UI controls (tabs, filters, stats, modal)
 - Card rendering uses imperative innerHTML with `esc()` XSS helper
 - All click handlers use document-level event delegation (no per-card listener binding)
@@ -90,19 +97,20 @@ tests/                 # Vitest test suites (9 files, 161+ tests)
 - CSS variables defined in `:root` — always define before referencing
 
 ### Variable Naming
+
 - Use descriptive names: `workItem` not `wi`, `fields` not `f`, `response` not `res` (in non-Express contexts)
 - Abbreviations allowed: `pr`, `url`, `id`, `auth`, `config`
 
 ## Environment Variables (Required)
 
-| Variable | Purpose |
-|---|---|
-| `KEYVAULT_NAME` | Azure Key Vault name |
-| `KEYVAULT_KEY_NAME` | Signing key name |
-| `GITHUB_APP_NUMERIC_ID` | GitHub App ID |
-| `GITHUB_INSTALL_OWNER` | GitHub org for App installation |
-| `GITHUB_APP_CLIENT_ID` | OAuth client ID |
-| `GITHUB_APP_CLIENT_SECRET` | OAuth client secret |
+| Variable                   | Purpose                         |
+| -------------------------- | ------------------------------- |
+| `KEYVAULT_NAME`            | Azure Key Vault name            |
+| `KEYVAULT_KEY_NAME`        | Signing key name                |
+| `GITHUB_APP_NUMERIC_ID`    | GitHub App ID                   |
+| `GITHUB_INSTALL_OWNER`     | GitHub org for App installation |
+| `GITHUB_APP_CLIENT_ID`     | OAuth client ID                 |
+| `GITHUB_APP_CLIENT_SECRET` | OAuth client secret             |
 
 ## Key Design Decisions
 
@@ -117,11 +125,13 @@ tests/                 # Vitest test suites (9 files, 161+ tests)
 ## Common Tasks
 
 ### Adding a new API field from DevOps
+
 1. Add field name to `RELEASE_PLAN_FIELDS` array in `lib/devops-api.js`
 2. Map it in `mapReleasePlan()` function
 3. Use it in `public/app.js` rendering
 
 ### Adding a new action button
+
 1. Add action type determination logic in `public/app.js` (around line 1388)
 2. Add label in `langActionBtn` labels object
 3. Add CSS class in `langActionBtn` classes object
@@ -130,6 +140,7 @@ tests/                 # Vitest test suites (9 files, 161+ tests)
 6. Add test in `tests/package-feed.test.js`
 
 ### Running locally
+
 ```bash
 cp .env.example .env  # Fill in values
 npm install

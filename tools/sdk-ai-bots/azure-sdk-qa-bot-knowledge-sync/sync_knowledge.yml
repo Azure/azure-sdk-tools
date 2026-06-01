@@ -69,6 +69,8 @@ extends:
               - template: /eng/pipelines/templates/variables/globals.yml@self
               - name: workingDirectory
                 value: '$(System.DefaultWorkingDirectory)/knowledge_sources'
+              - name: npmrcPath
+                value: '$(Agent.BuildDirectory)/azure-sdk-qa-bot-knowledge-sync/.npmrc'
 
             pool:
               name: $(LINUXPOOL)
@@ -84,6 +86,10 @@ extends:
 
               - checkout: internal-wiki
                 displayName: 'Checkout internal wiki repository'
+
+              - template: /eng/common/pipelines/templates/steps/login-to-github.yml@self
+                parameters:
+                  ScriptDirectory: $(Agent.BuildDirectory)/s/azure-sdk-tools/eng/common/scripts
 
               - task: AzureCLI@2
                 inputs:
@@ -103,15 +109,23 @@ extends:
                 inputs:
                   versionSpec: '20.x'
 
+              - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml@self
+                parameters:
+                  npmrcPath: $(npmrcPath)
+
               - script: |
                   npm ci
                 displayName: 'Install dependencies'
                 workingDirectory: $(Agent.BuildDirectory)/s/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync
+                env:
+                  npm_config_userconfig: $(npmrcPath)
 
               - script: |
                   npm run build
                 displayName: 'Build TypeScript project'
                 workingDirectory: $(Agent.BuildDirectory)/s/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync
+                env:
+                  npm_config_userconfig: $(npmrcPath)
 
               - script: |
                   npm run start
@@ -123,8 +137,8 @@ extends:
                   AZURE_SDK_DOCS_PATH: "$(Agent.BuildDirectory)/s/azure-sdk-docs-eng.ms"
                   AZURE_SDK_WIKI_PATH: "$(Agent.BuildDirectory)/s/internal.wiki"
 
-                  # GitHub PAT for private repo access
-                  AZURE_SDK_GITHUB_PAT: $(azuresdk-github-pat)
+                  # GitHub App token for private repo access
+                  AZURE_SDK_GITHUB_PAT: $(GH_TOKEN)
 
                   # Set working directory for temporary files
                   TMPDIR: $(Agent.TempDirectory)

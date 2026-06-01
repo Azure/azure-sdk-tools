@@ -53,9 +53,9 @@ A single-page web dashboard for viewing Azure SDK Release Plan work items from A
 ## Architecture
 
 ```
-├── server.js              # Express entry point: env validation, session, OAuth, middleware
+├── server.js              # Express entry point: env validation, Easy Auth middleware
 ├── lib/
-│   ├── auth.js            # GitHub App JWT minting (via Azure Key Vault), OAuth helpers
+│   ├── auth.js            # GitHub App JWT minting (via Azure Key Vault), Easy Auth parsing
 │   ├── cache.js           # Shared cache state and TTL constants
 │   ├── devops-api.js      # Azure DevOps WIQL queries and work item mapping
 │   ├── github-api.js      # GitHub API: PR status, details, batch fetching with retry
@@ -72,16 +72,18 @@ A single-page web dashboard for viewing Azure SDK Release Plan work items from A
 ```
 
 ### Data Flow
+
 1. **Startup:** Server validates env vars → mints GitHub App token via Key Vault → fetches release plans from ADO → caches data
 2. **Serving:** `/api/release-plans` returns cached data; `/api/pr-details` fetches GitHub PR details on demand
 3. **Token refresh:** GitHub App token re-minted every 50 minutes
 4. **Cache refresh:** Release plans re-fetched every hour (server-side); client auto-refreshes every hour
-5. **Authentication:** GitHub OAuth with org membership check (Microsoft or Azure)
+5. **Authentication:** Azure App Service built-in authentication (Microsoft Entra ID)
 
 ### Security
-- GitHub OAuth with org membership gating
-- CSRF protection via origin/referer validation
-- Session cookies with `httpOnly`, `secure`, `sameSite: lax`
+
+- Azure App Service Easy Auth with Microsoft Entra ID
+- Platform-level authentication when App Service is configured with "Require authentication" (unauthenticated requests are intercepted before reaching the app)
+- Server-side fail-closed check — returns 401 if identity headers are absent, even if Easy Auth is misconfigured
 - Rate limiting: 30 requests/minute per user on `/api/*` endpoints
 - Input validation with allowlist-based WIQL query parameters
 - Error responses sanitized (no stack traces in production)
@@ -90,27 +92,27 @@ A single-page web dashboard for viewing Azure SDK Release Plan work items from A
 
 - [Node.js](https://nodejs.org/) 22 or later
 - A Managed Identity (or service principal) with read access to work items in the `azure-sdk` Azure DevOps organization
-- A GitHub App configured for OAuth and token signing
+- A GitHub App configured for token signing
 - Azure Key Vault access for GitHub App JWT signing
+- Azure App Service with built-in authentication configured (Microsoft Entra ID provider)
 
 ## Environment Variables
 
 All environment variables required by the application:
 
-| Variable | Description | Required |
-|---|---|---|
-| `KEYVAULT_NAME` | Azure Key Vault name for GitHub App JWT signing | **Yes** |
-| `KEYVAULT_KEY_NAME` | Key name in the vault used for signing | **Yes** |
-| `GITHUB_APP_NUMERIC_ID` | GitHub App ID (numeric) for token minting | **Yes** |
-| `GITHUB_INSTALL_OWNER` | GitHub organization where the App is installed | **Yes** |
-| `GITHUB_APP_CLIENT_ID` | GitHub OAuth App client ID | **Yes** |
-| `GITHUB_APP_CLIENT_SECRET` | GitHub OAuth App client secret | **Yes** |
-| `GITHUB_PAT_RELEASE_PLAN` | GitHub PAT for PR enrichment (fallback if App token fails) | No |
-| `SESSION_SECRET` | Express session secret (random generated if not set) | No |
-| `NODE_ENV` | Set to `production` for secure cookies | No |
-| `REDIRECT_URL` | OAuth redirect base URL (defaults to `https://releaseplan-dashboard.azurewebsites.net`) | No |
-| `RELEASE_PLAN_DASHBOARD_PM_USERS` | Comma-separated GitHub logins with PM view access | No |
-| `PORT` | HTTP port to listen on (default: 3000) | No |
+| Variable                          | Description                                                | Required |
+| --------------------------------- | ---------------------------------------------------------- | -------- |
+| `KEYVAULT_NAME`                   | Azure Key Vault name for GitHub App JWT signing            | **Yes**  |
+| `KEYVAULT_KEY_NAME`               | Key name in the vault used for signing                     | **Yes**  |
+| `GITHUB_APP_NUMERIC_ID`           | GitHub App ID (numeric) for token minting                  | **Yes**  |
+| `GITHUB_INSTALL_OWNER`            | GitHub organization where the App is installed             | **Yes**  |
+| `GITHUB_PAT_RELEASE_PLAN`         | GitHub PAT for PR enrichment (fallback if App token fails) | No       |
+| `NODE_ENV`                        | Set to `production` for production deployments             | No       |
+| `RELEASE_PLAN_DASHBOARD_PM_USERS` | Comma-separated Microsoft Entra emails with PM view access | No       |
+| `PORT`                            | HTTP port to listen on (default: 3000)                     | No       |
+| `DEV_AUTH_USER`                   | Mock user email for local development (bypasses Easy Auth) | No       |
+| `DEV_AUTH_NAME`                   | Mock user display name for local development               | No       |
+| `DEV_AUTH_OBJECT_ID`              | Mock user object ID for local development                  | No       |
 
 The server will **exit with an error** if any required variable is missing.
 
@@ -140,13 +142,14 @@ The server will **exit with an error** if any required variable is missing.
 ## Testing
 
 The project uses [Vitest](https://vitest.dev/) for unit testing with 161+ test cases covering:
+
 - Cache eviction and TTL logic
 - Rate limiter (sliding window)
 - Authentication helpers
 - Azure DevOps API (WIQL queries, work item mapping, released version fields)
 - GitHub API (PR status extraction, batch fetching, check run classification)
 - API route handlers (caching, enrichment, error handling)
-- Server integration (middleware, OAuth flow, static serving)
+- Server integration (middleware, Easy Auth, static serving)
 - Package feed URL generation (NuGet, PyPI, npm, Maven, Go)
 - Action determination logic (generate, link-pr, fix-checks, release, merge)
 
@@ -168,26 +171,37 @@ npx vitest run --testPathPattern="github"
 
 ### Test Files
 
-| File | Coverage |
-|---|---|
-| `tests/cache.test.js` | Cache state, eviction, TTL |
-| `tests/rate-limit.test.js` | Sliding window rate limiter |
-| `tests/auth.test.js` | Token minting, OAuth, org check |
-| `tests/devops-api.test.js` | WIQL queries, work item mapping |
-| `tests/github-api.test.js` | PR status, details, retry logic |
-| `tests/github-api-extended.test.js` | PR status extraction, batch operations |
-| `tests/api-routes.test.js` | API route handlers, cache refresh |
-| `tests/server.test.js` | Express middleware, OAuth, static files |
-| `tests/package-feed.test.js` | Feed URLs, version display, actions |
+| File                                | Coverage                                    |
+| ----------------------------------- | ------------------------------------------- |
+| `tests/cache.test.js`               | Cache state, eviction, TTL                  |
+| `tests/rate-limit.test.js`          | Sliding window rate limiter                 |
+| `tests/auth.test.js`                | Token minting, Easy Auth parsing            |
+| `tests/devops-api.test.js`          | WIQL queries, work item mapping             |
+| `tests/github-api.test.js`          | PR status, details, retry logic             |
+| `tests/github-api-extended.test.js` | PR status extraction, batch operations      |
+| `tests/api-routes.test.js`          | API route handlers, cache refresh           |
+| `tests/server.test.js`              | Express middleware, Easy Auth, static files |
+| `tests/package-feed.test.js`        | Feed URLs, version display, actions         |
 
 ## Authentication
 
-GitHub OAuth authentication is **required**. Users must be public members of the **Microsoft** or **Azure** GitHub organization.
+Authentication is handled by **Azure App Service built-in authentication** (Easy Auth) with **Microsoft Entra ID** as the identity provider. The app never handles login flows directly — Azure App Service intercepts unauthenticated requests and redirects users to the Microsoft Entra login page.
 
-To set up a GitHub OAuth App:
-1. Go to GitHub → Settings → Developer settings → OAuth Apps → New OAuth App
-2. Set the Authorization callback URL to `https://<your-domain>/auth/github/callback`
-3. Use the generated Client ID and Client Secret as environment variables
+### Setup
+
+1. In the Azure Portal, navigate to your App Service → Authentication
+2. Add Microsoft Entra ID as an identity provider
+3. Configure the tenant and allowed audiences
+4. Set "Restrict access" to "Require authentication"
+
+### Local Development
+
+For local development without Azure App Service, set the `DEV_AUTH_USER` environment variable to simulate an authenticated user:
+
+```bash
+DEV_AUTH_USER=yourname@microsoft.com
+DEV_AUTH_NAME="Your Name"
+```
 
 ## Deployment
 
@@ -211,9 +225,9 @@ To set up a GitHub OAuth App:
 
 ## URL Parameters
 
-| Parameter | Description | Example |
-|---|---|---|
-| `releasePlan` | Show a single release plan by ID | `?releasePlan=2171` |
-| `filter` | Pre-fill the search box with a keyword | `?filter=storage` |
+| Parameter     | Description                            | Example             |
+| ------------- | -------------------------------------- | ------------------- |
+| `releasePlan` | Show a single release plan by ID       | `?releasePlan=2171` |
+| `filter`      | Pre-fill the search box with a keyword | `?filter=storage`   |
 
 Both can be combined: `?releasePlan=2171&filter=storage`

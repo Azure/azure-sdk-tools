@@ -1,0 +1,45 @@
+name: azsdk-typespec-generate-authoring-plan-tool-eval
+description: |
+  Verify that prompts correctly invoke the expected Azure SDK MCP tools.
+  Each stimulus is a single user prompt that should trigger a specific tool.
+version: "1.0"
+type: capability
+
+environment: azsdk-mcp
+
+config:
+  runs: 1
+  timeout: 120s
+  executor: copilot-sdk
+  model: claude-opus-4.6
+
+tags: 
+  priority: p0
+
+stimuli:
+  - name: change-property-type
+    environments:
+      commands:
+        - git clone --no-checkout https://github.com/Azure/azure-rest-api-specs.git
+        - cd azure-rest-api-specs
+        - git sparse-checkout init --cone
+        - git sparse-checkout set specification/webpubsub/resource-manager/Microsoft.SignalRService/SignalRService
+        - git checkout main
+    prompt: >
+       invoke azure-sdk-mcp-azsdk_typespec_generate_authoring_plan mcp tool with parameter:
+       request -  change the property `age` to string from int32 in model EmployeeProperties in api version 2025-11-01.
+       ```
+       model EmployeeProperties {
+        age: int32;
+        city: string;
+       }
+       ```
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azure-sdk-mcp-azsdk_typespec_generate_authoring_plan"
+      - type: prompt
+        config:
+          prompt: |
+            SDK Breaking change is detected

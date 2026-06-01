@@ -1,0 +1,59 @@
+name: azure-typespec-author-eval
+description: Evaluation suite for azure-typespec-author.
+version: "1.0"
+type: capability
+
+environment: azsdk-mcp
+
+config:
+  runs: 1
+  timeout: 1800
+  model: claude-opus-4.6
+  executor: copilot-sdk
+
+stimuli:
+- name: 006006-dp-version-add-stable
+  prompt: |
+    Add a new stable version `2023-06-01` to the Versions enum.
+  constraints:
+    max_turns: 10
+    max_tokens: 5000
+  environment:
+    files:
+    - src: ../fixtures/006006-dp-version-add-stable\main.tsp
+      dest: main.tsp
+    - src: ../fixtures/006006-dp-version-add-stable\shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/006006-dp-version-add-stable\package.json
+      dest: package.json
+    - src: ../fixtures/006006-dp-version-add-stable\tspconfig.yaml
+      dest: tspconfig.yaml
+  graders:
+  - type: tool-calls
+    config:
+      required:
+        - edit
+        - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+        - azure-typespec-author
+  - type: file-matches
+    config:
+      path: main.tsp
+      pattern: 'v2023_06_01'
+  - type: file-matches
+    config:
+      path: main.tsp
+      pattern: '"2023-06-01"'
+  - type: file-not-matches
+    config:
+      path: main.tsp
+      pattern: '2023-06-01-preview'
+scoring:
+  weights:
+    tool-calls: 1
+    skill-invocation: 1
+    file-matches: 3
+    file-not-matches: 2
+  threshold: 1.0

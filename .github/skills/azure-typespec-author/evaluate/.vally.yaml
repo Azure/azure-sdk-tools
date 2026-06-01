@@ -43,5 +43,7 @@ suites:
     evals: ["evals/004001.eval.yaml","evals/004002.eval.yaml","evals/004003.eval.yaml"]
   warning:
     evals: ["evals/005001.eval.yaml"]
+  dataplane:
+    evals: ["evals/006001.eval.yaml","evals/006002.eval.yaml","evals/006003.eval.yaml","evals/006004.eval.yaml","evals/006005.eval.yaml","evals/006006.eval.yaml","evals/006007.eval.yaml","evals/006008.eval.yaml","evals/006009.eval.yaml"]
   all:
     evals: ["evals/*.eval.yaml"]

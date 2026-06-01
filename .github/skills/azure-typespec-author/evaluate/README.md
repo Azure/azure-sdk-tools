@@ -44,6 +44,7 @@ Test suites are defined in `.vally.yaml` under the `suites` key. Available suite
 | `longrunningoperation` | Long-running operation cases (003xxx) |
 | `decorators` | Decorator cases (004xxx) |
 | `warning` | Warning cases (005xxx) |
+| `dataplane` | Data-plane cases (006xxx) |
 | `all` | Every eval case |
 
 Run a suite by name:

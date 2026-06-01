@@ -1,0 +1,65 @@
+name: azure-typespec-author-eval
+description: Evaluation suite for azure-typespec-author.
+version: "1.0"
+type: capability
+
+environment: azsdk-mcp
+
+config:
+  runs: 1
+  timeout: 1800
+  model: claude-opus-4.6
+  executor: copilot-sdk
+
+stimuli:
+- name: 006007-dp-version-property-added
+  prompt: |
+    Add a new optional `description` property of type `string` to the WidgetSuite model only for version `2023-06-01-preview`. Also add this new version to the Versions enum.
+  constraints:
+    max_turns: 10
+    max_tokens: 5000
+  environment:
+    files:
+    - src: ../fixtures/006007-dp-version-property-added\main.tsp
+      dest: main.tsp
+    - src: ../fixtures/006007-dp-version-property-added\shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/006007-dp-version-property-added\package.json
+      dest: package.json
+    - src: ../fixtures/006007-dp-version-property-added\tspconfig.yaml
+      dest: tspconfig.yaml
+  graders:
+  - type: tool-calls
+    config:
+      required:
+        - edit
+        - azure-sdk-mcp-azsdk_run_typespec_validation
+  - type: skill-invocation
+    config:
+      required:
+        - azure-typespec-author
+  - type: file-matches
+    config:
+      path: main.tsp
+      pattern: 'v2023_06_01_Preview'
+  - type: file-matches
+    config:
+      path: main.tsp
+      pattern: '@added\(Versions\.v2023_06_01_Preview\)'
+  - type: file-matches
+    config:
+      path: main.tsp
+      pattern: 'description\?\: string'
+  - type: prompt
+    config:
+      prompt: The description property should be added to WidgetSuite with @added(Versions.v2023_06_01_Preview) decorator. A new version v2023_06_01_Preview should be added to the Versions enum.
+      model: claude-opus-4.6
+      scoring: scale_1_5
+      threshold: 1.0
+scoring:
+  weights:
+    tool-calls: 1
+    skill-invocation: 1
+    file-matches: 3
+    prompt: 2
+  threshold: 1.0

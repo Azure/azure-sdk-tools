@@ -94,6 +94,7 @@ eval file:
 - [x] `link-namespace-approval-issue`
 - [x] `get-pr-link-current-branch`
 - [x] `check-sdk-generation-status`
+- [x] `rename-client-property` **(stub — needs `expected-diff` grader + sparse-clone of `azure-rest-api-specs`)**
 
 ### Known gaps vs. the original benchmark
 
@@ -111,6 +112,12 @@ those constraints are captured in prompt text and inline `TODO:` comments.
 
 ### Follow-ups
 
+- [ ] Port the data-driven `AuthoringScenario` suite (29 TypeSpec versioning /
+      ARM / data-plane authoring cases from `TestData/TypeSpec/TestCases.json`).
+      Tracked in [#15767](https://github.com/Azure/azure-sdk-tools/issues/15767).
+      Blocked on: an AI-rubric grader, a `tsp compile` post-check grader, and a
+      fixture-copy setup hook (each case ships its own `.tsp` files + examples
+      and expects the agent to call the `azure-typespec-author` skill).
 - [ ] Port `Evaluate_PromptToToolMatch` + `Evaluate_ToolDescriptionSimilarity`
       from `Azure.Sdk.Tools.Cli.Evaluations` (still uses Copilot-SDK evaluator).
 - [ ] File upstream issue against `@microsoft/vally-cli` to add `forbidden`,

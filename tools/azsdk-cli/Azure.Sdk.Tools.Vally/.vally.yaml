@@ -31,6 +31,7 @@ suites:
       - "evals/typespec-generation-step02.eval.yaml"
       - "evals/get-modified-typespec-projects.eval.yaml"
       - "evals/add-arm-resource.eval.yaml"
+      - "evals/rename-client-property.eval.yaml"
   release-plan:
     evals:
       - "evals/create-release-plan.eval.yaml"

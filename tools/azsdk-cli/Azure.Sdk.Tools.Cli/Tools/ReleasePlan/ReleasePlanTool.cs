@@ -1011,6 +1011,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 var requiredLanguages = releasePlan.IsManagementPlane ? languagesforMgmtplane : languagesforDataplane;
 
+                // Validate SDK language name
+                if (SdkInfos.Any(sdk => !requiredLanguages.Contains(sdk.Language, StringComparer.OrdinalIgnoreCase)))
+                {
+                    return new DefaultCommandResponse { ResponseError = $"Unsupported SDK language found. Supported languages are: {string.Join(", ", requiredLanguages)}" };
+                }
+
                 // Validate SDK Package names
                 var languagePrefixMap = new Dictionary<string, string>
                 (StringComparer.OrdinalIgnoreCase)

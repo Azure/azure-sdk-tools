@@ -125,16 +125,27 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 var repoRoot = GetSpecRepoRootPath(typeSpecProjectPath);
                 if (string.IsNullOrEmpty(repoRoot))
                 {
-                    logger.LogWarning("Could not determine repo root for path: {typeSpecProjectPath}. Skipping metadata emitter.", typeSpecProjectPath);
-                    return null;
+                    logger.LogWarning("Could not determine repo root for path: {typeSpecProjectPath}. Continuing without automatic dependency install.", typeSpecProjectPath);
                 }
-
-                if (!IsTypeParserExecutablePresent(repoRoot))
+                else if (!IsTypeParserExecutablePresent(repoRoot))
                 {
-                    logger.LogInformation("TypeSpec compiler not found in {typeSpecProjectPath}. Installing dependencies...", typeSpecProjectPath);
-                    var processOptions = new ProcessOptions("npm", ["ci"], workingDirectory: repoRoot);
-                    await _processHelper.Run(processOptions, ct);
-                    logger.LogInformation("npm ci completed.");
+                    var packageLockPath = Path.Combine(repoRoot, "package-lock.json");
+                    if (!File.Exists(packageLockPath))
+                    {
+                        logger.LogWarning("TypeSpec compiler not found and {packageLockPath} does not exist. Skipping npm ci.", packageLockPath);
+                    }
+                    else
+                    {
+                        logger.LogInformation("TypeSpec compiler not found in {repoRoot}. Installing dependencies...", repoRoot);
+                        var processOptions = new ProcessOptions("npm", ["ci"], workingDirectory: repoRoot, timeout: TimeSpan.FromMinutes(15));
+                        var npmResult = await _processHelper.Run(processOptions, ct);
+                        if (npmResult.ExitCode != 0)
+                        {
+                            logger.LogWarning("npm ci failed with exit code {ExitCode}. Output: {Output}", npmResult.ExitCode, npmResult.Output);
+                            return null;
+                        }
+                        logger.LogInformation("npm ci completed.");
+                    }
                 }
 
                 var project = TypeSpecProject.ParseTypeSpecConfig(typeSpecProjectPath);

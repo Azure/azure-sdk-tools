@@ -47,26 +47,6 @@ extends:
             steps:
               - checkout: none
 
-              - task: AzurePowerShell@5
-                displayName: 'Copy from azuresdkpartnerdrops'
-                condition: and(succeeded(), ne(variables['SkipCopyFromPartnerDrops'], 'true'))
-                inputs:
-                  azureSubscription: 'azuresdkpartnerdrops - Storage Partner Drops'
-                  ScriptType: 'InlineScript'
-                  azurePowerShellVersion: LatestVersion
-                  pwsh: true
-                  Inline: |
-                    echo "azcopy copy '${{ parameters.PartnerDropsBlobBase }}/${{ parameters.PartnerDropsBlobSourceSuffix }}/*' '${{ parameters.ArtifactsPath }}' --recursive=true"
-                    azcopy copy '${{ parameters.PartnerDropsBlobBase }}/${{ parameters.PartnerDropsBlobSourceSuffix }}/*' '${{ parameters.ArtifactsPath }}' --recursive=true
-                    $copiedFiles = (dir '${{ parameters.ArtifactsPath }}' -r | % { $_.FullName })
-                    echo "Copied files: $copiedFiles"
-                    if (!$copiedFiles) {
-                      echo "Failed to copy any files from '${{ parameters.PartnerDropsBlobBase }}/${{ parameters.PartnerDropsBlobSourceSuffix }}/*' please double check they exist"
-                      exit 1
-                    }
-                env:
-                  AZCOPY_AUTO_LOGIN_TYPE: 'PSCRED'
-
           - template: /eng/pipelines/templates/jobs/nuget-publish.yml
             parameters:
               ArtifactName: 'packages'

@@ -18,6 +18,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         private MockDevOpsService mockDevOpsService;
         private Mock<IGitHubService> mockGitHubService;
         private Mock<ITypeSpecHelper> mockTypeSpecHelper;
+        private Mock<IReleasePlanTool> mockReleasePlanTool;
         private ILogger<SpecWorkflowTool> logger;
         private SpecWorkflowTool specWorkflowTool;
         private IInputSanitizer inputSanitizer;
@@ -28,6 +29,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOpsService = new MockDevOpsService();
             mockGitHubService = new Mock<IGitHubService>();
             mockTypeSpecHelper = new Mock<ITypeSpecHelper>();
+            mockReleasePlanTool = new Mock<IReleasePlanTool>();
             logger = new TestLogger<SpecWorkflowTool>();
             inputSanitizer = new InputSanitizer();
 
@@ -35,11 +37,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 .ReturnsAsync(true);
             mockTypeSpecHelper.Setup(x => x.IsTypeSpecProjectForMgmtPlane(It.IsAny<string>()))
                 .Returns(true);
+            mockReleasePlanTool.Setup(x => x.UpdateSDKDetailsInReleasePlan(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new DefaultCommandResponse { Message = "Updated SDK details in release plan." });
 
             specWorkflowTool = new SpecWorkflowTool(
                 mockGitHubService.Object,
                 mockDevOpsService,
                 mockTypeSpecHelper.Object,
+                mockReleasePlanTool.Object,
                 logger,
                 inputSanitizer
             );
@@ -61,6 +66,17 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             };
 
             mockDevOpsService.ConfiguredReleasePlanForWorkItem = releasePlan;
+            mockDevOpsService.ConfiguredRunSDKGenerationPipeline = new Build()
+            {
+                Id = 100,
+                Status = BuildStatus.InProgress,
+            };
+            mockReleasePlanTool.Setup(x => x.UpdateSDKDetailsInReleasePlan(456, "valid/path", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(() =>
+                {
+                    releasePlan.SDKInfo[0].PackageName = "azure-test";
+                    return new DefaultCommandResponse { Message = "Updated SDK details in release plan." };
+                });
 
             var result = await specWorkflowTool.RunGenerateSdkAsync(
                 typespecProjectRoot: "valid/path",
@@ -71,7 +87,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 workItemId: 456
             );
 
-            Assert.That(result.ToString(), Does.Contain("does not have a package name specified for python"));
+            Assert.That(result.Status, Is.EqualTo("Success"));
+            Assert.That(result.ToString(), Does.Contain("Auto-updating SDK details based on TypeSpec project config."));
+            Assert.That(result.ToString(), Does.Contain("has been initiated to generate the SDK"));
         }
 
         [Test]

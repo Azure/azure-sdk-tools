@@ -31,7 +31,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         IInputSanitizer inputSanitizer,
         HttpClient httpClient,
         INpxHelper npxHelper
-    ) : MCPMultiCommandTool
+    ) : MCPMultiCommandTool, IReleasePlanTool
     {
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.ReleasePlan];
 

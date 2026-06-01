@@ -20,6 +20,7 @@ using Azure.Sdk.Tools.Cli.Services.SetupRequirements;
 using Azure.Sdk.Tools.Cli.Services.TypeSpec;
 using Azure.Sdk.Tools.Cli.Services.Upgrade;
 using Azure.Sdk.Tools.Cli.Telemetry;
+using Azure.Sdk.Tools.Cli.Tools.ReleasePlan;
 using Azure.Sdk.Tools.CodeownersUtils.Caches;
 using Azure.Sdk.Tools.CodeownersUtils.Utils;
 
@@ -41,6 +42,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IGitHubService, GitHubService>();
             services.AddSingleton<IAzureSdkKnowledgeBaseService, AzureSdkKnowledgeBaseService>();
             services.AddSingleton<IUpgradeService, UpgradeService>();
+            services.AddTransient<IReleasePlanTool, ReleasePlanTool>();
 
             // APIView Services
             services.AddSingleton<IAPIViewAuthenticationService, APIViewAuthenticationService>();

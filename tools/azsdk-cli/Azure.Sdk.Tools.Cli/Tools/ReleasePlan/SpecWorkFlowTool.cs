@@ -18,6 +18,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
     public class SpecWorkflowTool(IGitHubService githubService,
         IDevOpsService devopsService,
         ITypeSpecHelper typespecHelper,
+        IReleasePlanTool releasePlanTool,
         ILogger<SpecWorkflowTool> logger,
         IInputSanitizer inputSanitizer
     ) : MCPMultiCommandTool
@@ -237,6 +238,23 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 if (workItemId > 0)
                 {
                     var readiness = await IsSdkDetailsPresentInReleasePlanAsync(workItemId, language, ct);
+                    if (!readiness.Status.Equals("Success") && readiness.ResponseErrors.Any(error =>
+                        error.Contains("does not have a package name specified", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        response.Details.Add($"SDK package name is missing in release plan work item {workItemId}. Auto-updating SDK details based on TypeSpec project config.");
+                        var updateSdkDetails = await releasePlanTool.UpdateSDKDetailsInReleasePlan(workItemId, typespecProjectRoot, ct);
+                        if (!string.IsNullOrWhiteSpace(updateSdkDetails.ResponseError))
+                        {
+                            response.ResponseErrors.Add(updateSdkDetails.ResponseError);
+                            response.Status = "Failed";
+                        }
+                        else
+                        {
+                            response.Details.Add("SDK details were auto-updated in the release plan.");
+                            readiness = await IsSdkDetailsPresentInReleasePlanAsync(workItemId, language, ct);
+                        }
+                    }
+
                     if (!readiness.Status.Equals("Success"))
                     {
                         response.ResponseErrors.AddRange(readiness.ResponseErrors);

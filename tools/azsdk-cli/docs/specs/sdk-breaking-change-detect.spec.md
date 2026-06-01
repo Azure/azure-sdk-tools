@@ -174,7 +174,7 @@ SDK package
 
 **Output**:
 
-- change log or repapi
+- change log or repapi: the string of sdk changes markdown. (see following sdk change markdown schema)
 - 'hasBreakingChange': true/false
 
 e.g.
@@ -184,6 +184,77 @@ e.g.
     "changes": "<change log or repapi markdown>",
     "hasBreakingChange": true
 }
+```
+
+**🔔 Note:**
+
+**Sdk change markdown schema:**
+
+```markdown
+### Breaking Changes
+
+<list of breaking changes with bullet>
+
+### Features Added
+
+<list of features added with bullet>
+```
+
+e.g.
+
+```markdown
+### Breaking Changes
+
+- Function `*Client.BeginCreateOrUpdate` parameter(s) have been changed from `(ctx context.Context, resourceGroupName string, resourceName string, parameters ResourceInfo, options *ClientBeginCreateOrUpdateOptions)` to `(ctx context.Context, resourceGroupName string, resourceName string, parameters Resource, options *ClientBeginCreateOrUpdateOptions)`
+- Function `*Client.BeginUpdate` parameter(s) have been changed from `(ctx context.Context, resourceGroupName string, resourceName string, parameters ResourceInfo, options *ClientBeginUpdateOptions)` to `(ctx context.Context, resourceGroupName string, resourceName string, parameters Resource, options *ClientBeginUpdateOptions)`
+- Function `*HubsClient.BeginCreateOrUpdate` parameter(s) have been changed from `(ctx context.Context, hubName string, resourceGroupName string, resourceName string, parameters Hub, options *HubsClientBeginCreateOrUpdateOptions)` to `(ctx context.Context, resourceGroupName string, resourceName string, hubName string, parameters Hub, options *HubsClientBeginCreateOrUpdateOptions)`
+- Function `*HubsClient.BeginDelete` parameter(s) have been changed from `(ctx context.Context, hubName string, resourceGroupName string, resourceName string, options *HubsClientBeginDeleteOptions)` to `(ctx context.Context, resourceGroupName string, resourceName string, hubName string, options *HubsClientBeginDeleteOptions)`
+- Function `*HubsClient.Get` parameter(s) have been changed from `(ctx context.Context, hubName string, resourceGroupName string, resourceName string, options *HubsClientGetOptions)` to `(ctx context.Context, resourceGroupName string, resourceName string, hubName string, options *HubsClientGetOptions)`
+- Function `*PrivateEndpointConnectionsClient.BeginDelete` parameter(s) have been changed from `(ctx context.Context, privateEndpointConnectionName string, resourceGroupName string, resourceName string, options *PrivateEndpointConnectionsClientBeginDeleteOptions)` to `(ctx context.Context, resourceGroupName string, resourceName string, privateEndpointConnectionName string, options *PrivateEndpointConnectionsClientBeginDeleteOptions)`
+- Function `*PrivateEndpointConnectionsClient.Get` parameter(s) have been changed from `(ctx context.Context, privateEndpointConnectionName string, resourceGroupName string, resourceName string, options *PrivateEndpointConnectionsClientGetOptions)` to `(ctx context.Context, resourceGroupName string, resourceName string, privateEndpointConnectionName string, options *PrivateEndpointConnectionsClientGetOptions)`
+- Function `*PrivateEndpointConnectionsClient.Update` parameter(s) have been changed from `(ctx context.Context, privateEndpointConnectionName string, resourceGroupName string, resourceName string, parameters PrivateEndpointConnection, options *PrivateEndpointConnectionsClientUpdateOptions)` to `(ctx context.Context, resourceGroupName string, resourceName string, privateEndpointConnectionName string, parameters PrivateEndpointConnection, options *PrivateEndpointConnectionsClientUpdateOptions)`
+- Function `*SharedPrivateLinkResourcesClient.BeginCreateOrUpdate` parameter(s) have been changed from `(ctx context.Context, sharedPrivateLinkResourceName string, resourceGroupName string, resourceName string, parameters SharedPrivateLinkResource, options *SharedPrivateLinkResourcesClientBeginCreateOrUpdateOptions)` to `(ctx context.Context, resourceGroupName string, resourceName string, sharedPrivateLinkResourceName string, parameters SharedPrivateLinkResource, options *SharedPrivateLinkResourcesClientBeginCreateOrUpdateOptions)`
+- Function `*SharedPrivateLinkResourcesClient.BeginDelete` parameter(s) have been changed from `(ctx context.Context, sharedPrivateLinkResourceName string, resourceGroupName string, resourceName string, options *SharedPrivateLinkResourcesClientBeginDeleteOptions)` to `(ctx context.Context, resourceGroupName string, resourceName string, sharedPrivateLinkResourceName string, options *SharedPrivateLinkResourcesClientBeginDeleteOptions)`
+- Function `*SharedPrivateLinkResourcesClient.Get` parameter(s) have been changed from `(ctx context.Context, sharedPrivateLinkResourceName string, resourceGroupName string, resourceName string, options *SharedPrivateLinkResourcesClientGetOptions)` to `(ctx context.Context, resourceGroupName string, resourceName string, sharedPrivateLinkResourceName string, options *SharedPrivateLinkResourcesClientGetOptions)`
+- Struct `ResourceInfo` has been removed
+- Struct `ResourceInfoList` has been removed
+- Field `ResourceInfo` of struct `ClientCreateOrUpdateResponse` has been removed
+- Field `ResourceInfo` of struct `ClientGetResponse` has been removed
+- Field `ResourceInfoList` of struct `ClientListByResourceGroupResponse` has been removed
+- Field `ResourceInfoList` of struct `ClientListBySubscriptionResponse` has been removed
+- Field `ResourceInfo` of struct `ClientUpdateResponse` has been removed
+
+### Features Added
+
+- New enum type `ClientConnectionCountRuleDiscriminator` with values `ClientConnectionCountRuleDiscriminatorThrottleByJwtCustomClaimRule`, `ClientConnectionCountRuleDiscriminatorThrottleByJwtSignatureRule`, `ClientConnectionCountRuleDiscriminatorThrottleByUserIDRule`
+- New enum type `ClientTrafficControlRuleDiscriminator` with values `ClientTrafficControlRuleDiscriminatorTrafficThrottleByJwtCustomClaimRule`, `ClientTrafficControlRuleDiscriminatorTrafficThrottleByJwtSignatureRule`, `ClientTrafficControlRuleDiscriminatorTrafficThrottleByUserIDRule`
+- New enum type `GroupPresenceEventName` with values `GroupPresenceEventNameJoined`, `GroupPresenceEventNameLeft`
+- New function `*ClientConnectionCountRule.GetClientConnectionCountRule() *ClientConnectionCountRule`
+- New function `*ClientTrafficControlRule.GetClientTrafficControlRule() *ClientTrafficControlRule`
+- New function `*ThrottleByJwtCustomClaimRule.GetClientConnectionCountRule() *ClientConnectionCountRule`
+- New function `*ThrottleByJwtSignatureRule.GetClientConnectionCountRule() *ClientConnectionCountRule`
+- New function `*ThrottleByUserIDRule.GetClientConnectionCountRule() *ClientConnectionCountRule`
+- New function `*TrafficThrottleByJwtCustomClaimRule.GetClientTrafficControlRule() *ClientTrafficControlRule`
+- New function `*TrafficThrottleByJwtSignatureRule.GetClientTrafficControlRule() *ClientTrafficControlRule`
+- New function `*TrafficThrottleByUserIDRule.GetClientTrafficControlRule() *ClientTrafficControlRule`
+- New struct `ApplicationFirewallSettings`
+- New struct `GroupPresenceEventFilters`
+- New struct `Resource`
+- New struct `ResourceList`
+- New struct `ThrottleByJwtCustomClaimRule`
+- New struct `ThrottleByJwtSignatureRule`
+- New struct `ThrottleByUserIDRule`
+- New struct `TrafficThrottleByJwtCustomClaimRule`
+- New struct `TrafficThrottleByJwtSignatureRule`
+- New struct `TrafficThrottleByUserIDRule`
+- New anonymous field `Resource` in struct `ClientCreateOrUpdateResponse`
+- New anonymous field `Resource` in struct `ClientGetResponse`
+- New anonymous field `ResourceList` in struct `ClientListByResourceGroupResponse`
+- New anonymous field `ResourceList` in struct `ClientListBySubscriptionResponse`
+- New anonymous field `Resource` in struct `ClientUpdateResponse`
+- New field `GroupPresenceEvents` in struct `EventHandler`
+- New field `ApplicationFirewall` in struct `Properties`
+- New field `Fqdns` in struct `SharedPrivateLinkResourceProperties`
 ```
 
 #### Component 2: ChangelogOrRevapi-breakingChange pattern
@@ -315,7 +386,7 @@ azsdk package detect-breaking-change --package-path <sdk-package-path> --languag
 
 ### Scenarios for Using the Tool
 
-**NOTE:** Following are thres E2E scenario which 'azsdk_package_detect_breaking_change' tool will **take part in.**
+**🔔 NOTE:** Following are three E2E scenario which 'azsdk_package_detect_breaking_change' tool will **take part in.**
 
 #### Scenario 1: Detect and resolve SDK breaking change local
 
@@ -329,12 +400,13 @@ The local SDK repository and development environment are set up.
 Flow:
 
 1. Agent invoke `azsdk_package_generate_code` to generate sdk code locally if the SDK is not generated.
-2. Agent invoke `azsdk_package_detect_breaking_change` to detect and classify breaking changes
-3. Agent list all the SDK breaking changes one-by-one:
+2. Agent invoke `azsdk_package_build_code` to build sdk
+3. Agent invoke `azsdk_package_detect_breaking_change` to detect and classify breaking changes
+4. Agent list all the SDK breaking changes one-by-one:
     e.g. SDK breaking changes:
             1. model `ResourceInfo` is renamed to `Resource`, break Go and Java SDK
             2. Type of property `Prop` has been changed from `string` to `int32`, breaking Go SDK
-4. Agent invoke `azsdk_customized_code_update` to mitigate breaking changes.
+5. Agent invoke `azsdk_customized_code_update` to mitigate breaking changes.
 
 #### Scenario 2: Spec PR automation pipeline and SDK breaking change resolve
 
@@ -349,6 +421,7 @@ SDK breaking change detection is one step in the SDK Validation Automation pipel
 ```mermaid
 flowchart TD
     A[Generate SDK]
+    H[Build SDK]
     B[Detect SDK Breaking Changes azsdk_package_detect_breaking_change]
     C[Github Action Label 'BreakingChange-XXX-Sdk' label]
     D[PR owner Ask Copilot to Resolve Breaking Changes]
@@ -356,6 +429,7 @@ flowchart TD
     F[SDK Breaking Change Resolved]
     subgraph Automation["SDK Validation Automation"]
       A
+      H
       B
       C
       G
@@ -367,7 +441,8 @@ flowchart TD
       F
     end
 
-    A --> B
+    A --> H
+    H --> B
     B --> C
     C --> D
     D --> E
@@ -393,11 +468,12 @@ flowchart TD
 ```
 
 1. The SDK validation pipeline runs the SDK generation tool command 'azsdk package generate'.
-2. The SDK validation pipeline runs the SDK Breaking Change Detector tool command 'azsdk package detect-breaking-change' (defined in this document) to detect and classify breaking changes.
-3. GitHub Actions adds the 'BreakingChange-XXX-Sdk' label to indicate which language SDK has breaking changes and displays the detected breaking changes.
-4. The PR owner reviews the detected breaking changes and selects which ones to resolve.
+2. The SDK validation pipeline runs the SDK build tool command 'azsdk package build'.
+3. The SDK validation pipeline runs the SDK Breaking Change Detector tool command 'azsdk package detect-breaking-change' (defined in this document) to detect and classify breaking changes.
+4. GitHub Actions adds the 'BreakingChange-XXX-Sdk' label to indicate which language SDK has breaking changes and displays the detected breaking changes.
+5. The PR owner reviews the detected breaking changes and selects which ones to resolve.
     Use prompt: @copilot resolve breaking changes: XXXXXXX
-5. Copilot invokes 'azsdk_customized_code_update' to mitigate the selected breaking changes.
+6. Copilot invokes 'azsdk_customized_code_update' to mitigate the selected breaking changes.
 
     When resolving SDK breaking changes requires TypeSpec customization (updating client.tsp), a customization PR is filed against the source branch of the Spec PR. The PR owner reviews and merges the customization PR. After it is merged, the original Spec PR is refreshed to include the customization.
 

@@ -1,6 +1,6 @@
 # Release History
 
-## 0.6.16 (Unreleased)
+## 0.6.16 (2026-06-01)
 
 ### Bugs Fixed
 

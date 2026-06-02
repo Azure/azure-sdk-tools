@@ -132,7 +132,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     var packageLockPath = Path.Combine(repoRoot, "package-lock.json");
                     if (!File.Exists(packageLockPath))
                     {
-                        logger.LogWarning("TypeSpec compiler not found and {packageLockPath} does not exist. Skipping npm ci.", packageLockPath);
+                        logger.LogWarning("TypeSpec compiler not found in node-modules and {packageLockPath} does not exist. Skipping npm ci.", packageLockPath);
                     }
                     else
                     {

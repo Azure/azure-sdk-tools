@@ -5,6 +5,11 @@ description: |
 version: "1.0"
 type: capability
 
+
+tags:
+  tier: unit
+  area: release-plan
+
 environment: azsdk-mcp
 
 config:
@@ -34,3 +39,4 @@ scoring:
   weights:
     tool-calls: 1
   threshold: 1.0
+

@@ -13,7 +13,9 @@ config:
   executor: copilot-sdk
   model: claude-opus-4.6
 
-tags: 
+tags:
+  tier: unit
+  area: engsys
   priority: p0
 
 stimuli:
@@ -40,3 +42,4 @@ stimuli:
         config:
           required:
             - name: "azsdk_verify_setup"
+

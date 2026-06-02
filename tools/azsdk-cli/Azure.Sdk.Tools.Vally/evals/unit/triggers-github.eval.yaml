@@ -7,7 +7,9 @@ type: capability
 
 environment: azsdk-mcp
 
-tags: 
+tags:
+  tier: unit
+  area: github
   priority: p0
 
 config:
@@ -74,3 +76,4 @@ stimuli:
         config:
           required:
             - name: "azsdk_get_pull_request_link_for_current_branch"
+

@@ -1,0 +1,83 @@
+name: azsdk-mcp-tool-scenarios
+description: |
+  Live end-to-end demo for the release-planner flow.
+
+  Drives the *real* azsdk-cli MCP server against real DevOps APIs, inside a
+  real git worktree of azure-rest-api-specs. The MCP server runs with
+  AZSDKTOOLS_AGENT_TESTING=true (set globally in .vally.yaml), so work items
+  route to the DevOps test area path and are safe to leave around / re-run.
+
+  Demonstrates Vally's environment.git fixture hook + live MCP + Copilot SDK
+  executor + real DevOps in one shot.
+
+  Prerequisite: a clone of Azure/azure-rest-api-specs at the path referenced
+  by environment.git.source below. Locally, use the Run-LiveEvals.ps1
+  wrapper at the package root — it primes a per-user cache via
+  evals/setup/ensure-specs-clone.ps1 (auto-refresh every 24h) and points
+  this source path at it. CI should clone the repo as a pipeline checkout
+  step instead.
+
+version: "1.0"
+type: capability
+
+# Tagged "tier: e2e" so a future PR-gate run can skip live evals if needed.
+tags:
+  tier: e2e
+  area: release-plan
+
+environment: azsdk-mcp
+
+config:
+  runs: 1
+  timeout: 30m
+  model: gpt-5.4
+  executor: copilot-sdk
+
+stimuli:
+  - name: release-planner-e2e
+    environment:
+      # Source is the per-user cache populated by Run-LiveEvals.ps1
+      # (idempotent shallow+sparse clone, auto-refresh every 24h).
+      # NOTE: hardcoded absolute path — Vally does not currently expand
+      # ${USERPROFILE} / env vars in env.git.source. Adjust per machine
+      # or replace with a CI-provided path. See upstream issue:
+      # https://github.com/microsoft/vally/issues (TODO: file env-var expansion)
+      git:
+        type: worktree
+        source: C:/Users/gaoh/.vally-cache/azure-rest-api-specs
+        ref: main
+    prompt: |
+      I'm in a checkout of azure-rest-api-specs. Walk through a release plan
+      for the Contoso Widget Manager end-to-end:
+
+        1. Create a release plan using:
+             - TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
+             - service tree ID: "a7f2b8e4-9c1d-4a3e-b6f9-2d8e5a7c3b1f"
+             - product tree ID: "f1a8c5d2-6e4b-4f7a-9c2d-8b5e1f3a6c9e"
+             - target release timeline: "December 2026"
+             - API version: "2022-11-01-preview"
+             - SDK release type: "beta"
+             - spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38387"
+
+        2. Fetch the release plan you just created back from DevOps to confirm
+           it was saved.
+
+      My setup has already been verified, do not run azsdk_verify_setup.
+    constraints:
+      max_turns: 10
+      max_tokens: 10000
+    # TODO: assert ordering create -> get — blocked on https://github.com/Azure/azure-sdk-tools/issues/15832 (Vally tool-calls grader needs sequence:).
+    # TODO: assert serviceTreeId / productTreeId / typeSpecProjectPath args — blocked on https://github.com/Azure/azure-sdk-tools/issues/15833 (Vally tool-calls grader needs generic args matcher).
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_create_release_plan
+            - azsdk_get_release_plan
+          disallowed:
+            - azsdk_verify_setup
+
+scoring:
+  weights:
+    tool-calls: 1
+  threshold: 1.0

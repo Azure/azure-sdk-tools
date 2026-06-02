@@ -1,10 +1,15 @@
 name: azsdk-mcp-tool-scenarios
 description: |
-  Tool-scenario evaluation suite for the azsdk MCP server. Verifies the
-  agent invokes the right MCP tools for given prompts, independent of any
-  specific skill.
+  Get-pr-link-current-branch: the agent should call
+  azsdk_get_pull_request_link_for_current_branch when asked about the
+  status of the spec PR on the current branch.
 version: "1.0"
 type: capability
+
+
+tags:
+  tier: unit
+  area: github
 
 environment: azsdk-mcp
 
@@ -15,11 +20,11 @@ config:
   executor: copilot-sdk
 
 stimuli:
-  - name: check-public-repo
+  - name: get-pr-link-current-branch
     prompt: |
-      Check if my TypeSpec project is in the public repo.
+      What's the status of the spec PR in my current branch? Only check the status once.
       My setup has already been verified, do not run azsdk_verify_setup.
-      Project root: specification/contosowidgetmanager/Contoso.WidgetManager.
+      The repository root is the relative path ./azure-rest-api-specs.
     constraints:
       max_turns: 5
       max_tokens: 5000
@@ -27,7 +32,7 @@ stimuli:
       - type: tool-calls
         config:
           required:
-            - azsdk_typespec_check_project_in_public_repo
+            - azsdk_get_pull_request_link_for_current_branch
           disallowed:
             - azsdk_verify_setup
 
@@ -35,3 +40,4 @@ scoring:
   weights:
     tool-calls: 1
   threshold: 1.0
+

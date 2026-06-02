@@ -1,9 +1,15 @@
 name: azsdk-mcp-tool-scenarios
 description: |
-  Check-sdk-generation-status: the agent should call azsdk_get_pipeline_status
-  to check the SDK generation pipeline status.
+  Tool-scenario evaluation suite for the azsdk MCP server. Verifies the
+  agent invokes the right MCP tools for given prompts, independent of any
+  specific skill.
 version: "1.0"
 type: capability
+
+
+tags:
+  tier: unit
+  area: typespec
 
 environment: azsdk-mcp
 
@@ -14,19 +20,19 @@ config:
   executor: copilot-sdk
 
 stimuli:
-  - name: check-sdk-generation-status
+  - name: check-public-repo
     prompt: |
-      Check the SDK generation pipeline status for build ID 5513110.
+      Check if my TypeSpec project is in the public repo.
       My setup has already been verified, do not run azsdk_verify_setup.
+      Project root: specification/contosowidgetmanager/Contoso.WidgetManager.
     constraints:
       max_turns: 5
       max_tokens: 5000
-    # TODO: assert buildId=5513110 — blocked on https://github.com/Azure/azure-sdk-tools/issues/15833 (Vally tool-calls grader needs generic args matcher).
     graders:
       - type: tool-calls
         config:
           required:
-            - azsdk_get_pipeline_status
+            - azsdk_typespec_check_project_in_public_repo
           disallowed:
             - azsdk_verify_setup
 
@@ -34,3 +40,4 @@ scoring:
   weights:
     tool-calls: 1
   threshold: 1.0
+

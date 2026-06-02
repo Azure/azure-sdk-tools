@@ -7,7 +7,9 @@ type: capability
 
 environment: azsdk-mcp
 
-tags: 
+tags:
+  tier: unit
+  area: release-plan
   priority: p0
 
 config:
@@ -312,3 +314,4 @@ stimuli:
         config:
           required:
             - name: "azsdk_update_sdk_details_in_release_plan"
+

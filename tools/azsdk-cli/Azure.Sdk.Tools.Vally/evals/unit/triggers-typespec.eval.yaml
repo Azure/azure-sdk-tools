@@ -13,7 +13,9 @@ config:
   executor: copilot-sdk
   model: claude-opus-4.6
 
-tags: 
+tags:
+  tier: unit
+  area: typespec
   priority: p0
 
 stimuli:
@@ -185,3 +187,4 @@ stimuli:
         config:
           required:
             - name: "azsdk_typespec_init_project"
+

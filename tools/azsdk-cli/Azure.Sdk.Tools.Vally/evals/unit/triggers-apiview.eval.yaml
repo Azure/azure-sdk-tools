@@ -13,7 +13,9 @@ config:
   executor: copilot-sdk
   model: claude-opus-4.6
 
-tags: 
+tags:
+  tier: unit
+  area: apiview
   priority: p0
 
 stimuli:
@@ -110,3 +112,4 @@ stimuli:
         config:
           required:
             - name: "azsdk_apiview_request_copilot_review"
+

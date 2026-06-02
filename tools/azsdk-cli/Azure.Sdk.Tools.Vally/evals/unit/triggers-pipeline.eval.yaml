@@ -7,7 +7,9 @@ type: capability
 
 environment: azsdk-mcp
 
-tags: 
+tags:
+  tier: unit
+  area: pipeline
   priority: p0
 
 config:
@@ -72,3 +74,4 @@ stimuli:
         config:
           required:
             - name: "azsdk_get_pipeline_status"
+

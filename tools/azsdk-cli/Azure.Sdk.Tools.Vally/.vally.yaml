@@ -26,35 +26,51 @@ environments:
           AZSDKTOOLS_COLLECT_TELEMETRY: "false"
 
 # Suites group evals for selective execution.
-# - scenarios/* = multi-step workflow evals (this PR)
-# - triggers/*  = per-tool single-prompt invocation evals (ported from PR #15183)
+#
+# Folder layout mirrors the standard test pyramid:
+#   evals/unit/         — single-tool, hermetic, fast (incl. per-tool triggers)
+#   evals/integration/  — multi-tool chains, still hermetic
+#   evals/e2e/          — live MCP + real git env + skills loaded (slow)
+#
+# Folder = tier (cost / cadence). Tags inside each YAML carry the feature
+# area (release-plan, typespec, pipeline, github, …) so cross-cuts are
+# selected via `filter:` below or `vally eval --tag area=<name>`.
 suites:
-  # Scenario suites (multi-step workflows)
-  typespec:
+  # ---- by tier ----
+  unit:
+    description: Hermetic single-tool evals (incl. per-tool trigger coverage). Fast; safe for PR gate.
+    evals: ["evals/unit/*.eval.yaml"]
+  integration:
+    description: Multi-tool chained evals; hermetic. Still suitable for PR gate.
+    evals: ["evals/integration/*.eval.yaml"]
+  e2e:
+    description: Live end-to-end against real MCP + real azure-rest-api-specs clone. Use Run-LiveEvals.ps1.
+    evals: ["evals/e2e/*.eval.yaml"]
+
+  # ---- composite suites ----
+  pr-gate:
+    description: Fast tiers only (unit + integration). Target for CI PR check.
     evals:
-      - "evals/scenarios/check-public-repo.eval.yaml"
-      - "evals/scenarios/check-public-repo-then-validate.eval.yaml"
-      - "evals/scenarios/validate-typespec.eval.yaml"
-      - "evals/scenarios/typespec-generation-step02.eval.yaml"
-      - "evals/scenarios/get-modified-typespec-projects.eval.yaml"
-      - "evals/scenarios/add-arm-resource.eval.yaml"
-      - "evals/scenarios/rename-client-property.eval.yaml"
+      - "evals/unit/*.eval.yaml"
+      - "evals/integration/*.eval.yaml"
+  nightly:
+    description: All tiers including live e2e.
+    evals: ["evals/**/*.eval.yaml"]
+
+  # ---- by feature area (tag-filtered) ----
   release-plan:
-    evals:
-      - "evals/scenarios/create-release-plan.eval.yaml"
-      - "evals/scenarios/link-namespace-approval-issue.eval.yaml"
-  github:
-    evals:
-      - "evals/scenarios/get-pr-link-current-branch.eval.yaml"
+    description: All evals tagged area=release-plan.
+    filter: { area: release-plan }
+    evals: ["evals/**/*.eval.yaml"]
+  typespec:
+    description: All evals tagged area=typespec.
+    filter: { area: typespec }
+    evals: ["evals/**/*.eval.yaml"]
   pipeline:
-    evals:
-      - "evals/scenarios/check-sdk-generation-status.eval.yaml"
-  scenarios:
-    evals: ["evals/scenarios/*.eval.yaml"]
-
-  # Trigger suite (per-tool prompt → tool invocation coverage)
-  triggers:
-    evals: ["evals/triggers/*.eval.yaml"]
-
-  all:
+    description: All evals tagged area=pipeline.
+    filter: { area: pipeline }
+    evals: ["evals/**/*.eval.yaml"]
+  github:
+    description: All evals tagged area=github.
+    filter: { area: github }
     evals: ["evals/**/*.eval.yaml"]

@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script:
     1. Runs `azsdk list` to get all registered MCP tool names from the server.
-    2. Parses all *.eval.yaml files under the triggers/ directory.
+    2. Parses all `triggers-*.eval.yaml` files under the unit/ directory.
     3. Reports any eval tool references that don't exist on the server,
        and any server tools that are missing eval coverage.
 
@@ -13,8 +13,8 @@
     Path to the Azure.Sdk.Tools.Cli project. Defaults to ../Azure.Sdk.Tools.Cli relative to this script.
 
 .PARAMETER EvalPath
-    Path to the triggers/ directory containing *.eval.yaml files.
-    Defaults to ../evals/triggers relative to this script.
+    Path to the directory containing `triggers-*.eval.yaml` files.
+    Defaults to ../evals/unit relative to this script.
 
 .PARAMETER SkipBuild
     If set, passes --no-build to dotnet run (requires a prior build).
@@ -37,7 +37,7 @@ if (-not $ProjectPath) {
     $ProjectPath = Join-Path $cliParent "Azure.Sdk.Tools.Cli"
 }
 if (-not $EvalPath) {
-    $EvalPath = Join-Path $vallyRoot "evals/triggers"
+    $EvalPath = Join-Path $vallyRoot "evals/unit"
 }
 
 if (-not (Test-Path $ProjectPath)) {
@@ -101,11 +101,11 @@ if ($serverTools.Count -eq 0) {
 
 Write-Host "Found $($serverTools.Count) tools registered on the MCP server ($($excludedTools.Count) excluded).`n" -ForegroundColor Green
 
-# Step 2: Parse all *.eval.yaml files in the triggers directory for tool name references
-$evalFiles = Get-ChildItem -Path $EvalPath -Filter "*.eval.yaml"
+# Step 2: Parse all triggers-*.eval.yaml files in the unit directory for tool name references
+$evalFiles = Get-ChildItem -Path $EvalPath -Filter "triggers-*.eval.yaml"
 
 if ($evalFiles.Count -eq 0) {
-    Write-Error "No *.eval.yaml files found in: $EvalPath"
+    Write-Error "No triggers-*.eval.yaml files found in: $EvalPath"
     return 1
 }
 

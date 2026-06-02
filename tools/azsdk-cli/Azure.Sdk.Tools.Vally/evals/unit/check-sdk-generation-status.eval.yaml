@@ -1,10 +1,14 @@
 name: azsdk-mcp-tool-scenarios
 description: |
-  Get-pr-link-current-branch: the agent should call
-  azsdk_get_pull_request_link_for_current_branch when asked about the
-  status of the spec PR on the current branch.
+  Check-sdk-generation-status: the agent should call azsdk_get_pipeline_status
+  to check the SDK generation pipeline status.
 version: "1.0"
 type: capability
+
+
+tags:
+  tier: unit
+  area: pipeline
 
 environment: azsdk-mcp
 
@@ -15,19 +19,19 @@ config:
   executor: copilot-sdk
 
 stimuli:
-  - name: get-pr-link-current-branch
+  - name: check-sdk-generation-status
     prompt: |
-      What's the status of the spec PR in my current branch? Only check the status once.
+      Check the SDK generation pipeline status for build ID 5513110.
       My setup has already been verified, do not run azsdk_verify_setup.
-      The repository root is the relative path ./azure-rest-api-specs.
     constraints:
       max_turns: 5
       max_tokens: 5000
+    # TODO: assert buildId=5513110 — blocked on https://github.com/Azure/azure-sdk-tools/issues/15833 (Vally tool-calls grader needs generic args matcher).
     graders:
       - type: tool-calls
         config:
           required:
-            - azsdk_get_pull_request_link_for_current_branch
+            - azsdk_get_pipeline_status
           disallowed:
             - azsdk_verify_setup
 
@@ -35,3 +39,4 @@ scoring:
   weights:
     tool-calls: 1
   threshold: 1.0
+

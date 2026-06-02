@@ -50,9 +50,9 @@ async def init_configuration() -> None:
     logger.info("Loading configuration from Azure App Configuration...")
 
     credential = ChainedTokenCredential(
-        ManagedIdentityCredential(),
-        AzureCliCredential(),
         WorkloadIdentityCredential(),
+        AzureCliCredential(),
+        ManagedIdentityCredential(),
     )
 
     client = AzureAppConfigurationClient(endpoint, credential=credential)

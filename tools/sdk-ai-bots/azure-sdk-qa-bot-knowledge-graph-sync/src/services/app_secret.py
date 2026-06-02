@@ -29,9 +29,9 @@ async def init_secrets() -> None:
     logger.info("Loading secrets from Azure Key Vault...")
 
     credential = ChainedTokenCredential(
-        ManagedIdentityCredential(),
-        AzureCliCredential(),
         WorkloadIdentityCredential(),
+        AzureCliCredential(),
+        ManagedIdentityCredential(),
     )
 
     client = SecretClient(vault_url=endpoint, credential=credential)

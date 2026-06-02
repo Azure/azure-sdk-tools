@@ -1009,11 +1009,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return new DefaultCommandResponse { ResponseError = $"No release plan found with work item ID {releasePlanWorkItemId}" };
                 }
 
-                var supportedLanguages = releasePlan.IsManagementPlane ? languagesforMgmtplane : languagesforDataplane;
+                var requiredLanguages = releasePlan.IsManagementPlane ? languagesforMgmtplane : languagesforDataplane;
+
                 // Validate SDK language name
-                if (SdkInfos.Any(sdk => !supportedLanguages.Contains(sdk.Language, StringComparer.OrdinalIgnoreCase)))
+                if (SdkInfos.Any(sdk => !requiredLanguages.Contains(sdk.Language, StringComparer.OrdinalIgnoreCase)))
                 {
-                    return $"Unsupported SDK language found. Supported languages are: {string.Join(", ", supportedLanguages)}";
+                    return new DefaultCommandResponse { ResponseError = $"Unsupported SDK language found. Supported languages are: {string.Join(", ", requiredLanguages)}" };
                 }
 
                 // Validate SDK Package names
@@ -1053,11 +1054,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
 
                 // Check if any language is excluded
-                var excludedLanguages = supportedLanguages.Except(SdkInfos.Select(sdk => sdk.Language), StringComparer.OrdinalIgnoreCase);
+                var excludedLanguages = requiredLanguages.Except(SdkInfos.Select(sdk => sdk.Language), StringComparer.OrdinalIgnoreCase);
                 if (excludedLanguages.Any())
                 {
                     logger.LogDebug("Languages excluded in release plan. Work Item: {releasePlanWorkItemId}, languages: {excludedLanguages}", releasePlanWorkItemId, string.Join(", ", excludedLanguages));
-                    sb.AppendLine($"Important: The following languages were excluded in the release plan. SDK must be released for all languages. [{string.Join(", ", supportedLanguages)}]");
+                    sb.AppendLine($"Important: The following languages were excluded in the release plan. SDK must be released for all languages. [{string.Join(", ", requiredLanguages)}]");
                     sb.AppendLine("Explanation is required for any language exclusion. Please provide a justification for each excluded language.");
 
                     // Mark excluded language as 'Requested' in the release plan work item.
@@ -1715,15 +1716,25 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     };
                 }
 
+                var isValidTypeSpec = typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectPath);
+                if (!isValidTypeSpec)
+                {
+                    return new ProductInfoResponse
+                    {
+                        ResponseError = $"Invalid TypeSpec project path. tspconfig.yaml is not found in the path {typeSpecProjectPath}.",
+                        TypeSpecProject = typeSpecProjectPath
+                    };
+                }
+                var specRelativePath = typeSpecHelper.GetTypeSpecProjectRelativePath(typeSpecProjectPath);
                 // Get product info from DevOps service
-                var productInfo = await devOpsService.GetProductInfoByTypeSpecProjectPathAsync(typeSpecProjectPath, ct);
+                var productInfo = await devOpsService.GetProductInfoByTypeSpecProjectPathAsync(specRelativePath, ct);
 
                 if (productInfo == null)
                 {
                     return new ProductInfoResponse
                     {
-                        Message = $"No release plan found for TypeSpec project path: {typeSpecProjectPath}",
-                        TypeSpecProject = typeSpecProjectPath
+                        Message = $"No release plan found for TypeSpec project path: {specRelativePath}",
+                        TypeSpecProject = specRelativePath
                     };
                 }
 
@@ -1731,7 +1742,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 {
                     ProductInfo = productInfo,
                     Message = "Successfully retrieved product information.",
-                    TypeSpecProject = typeSpecProjectPath
+                    TypeSpecProject = specRelativePath
                 };
             }
             catch (Exception ex)

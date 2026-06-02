@@ -1,0 +1,74 @@
+name: azsdk-mcp-tool-invocation-eval
+description: |
+  Verify that prompts correctly invoke the expected Azure SDK MCP tools.
+  Each stimulus is a single user prompt that should trigger a specific tool.
+version: "1.0"
+type: capability
+
+environment: azsdk-mcp
+
+tags: 
+  priority: p0
+
+config:
+  runs: 5
+  timeout: 120
+  executor: copilot-sdk
+  model: claude-opus-4.6
+
+stimuli:
+
+  # ==== azsdk_analyze_pipeline triggers ====
+  - name: invoke-azsdk-analyze-pipeline-1
+    prompt: "Analyze my pipeline run"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_analyze_pipeline"
+  - name: invoke-azsdk-analyze-pipeline-2
+    prompt: "What happened in this pipeline build?"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_analyze_pipeline"
+
+  # ==== azsdk_get_pipeline_llm_artifacts triggers ====
+  - name: invoke-azsdk-get-pipeline-llm-artifacts-1
+    prompt: "Get the LLM artifacts from my pipeline"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_get_pipeline_llm_artifacts"
+  - name: invoke-azsdk-get-pipeline-llm-artifacts-2
+    prompt: "Download the analysis artifacts from the pipeline run"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_get_pipeline_llm_artifacts"
+
+  # ==== azsdk_get_pipeline_status triggers ====
+  - name: invoke-azsdk-get-pipeline-status-1
+    prompt: "Check the status of my Azure pipeline build 12345678"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_get_pipeline_status"
+  - name: invoke-azsdk-get-pipeline-status-2
+    prompt: "Get the pipeline build status for run 9876543"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_get_pipeline_status"
+  - name: invoke-azsdk-get-pipeline-status-3
+    prompt: "Get the pipeline build status for my CI run"
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_get_pipeline_status"

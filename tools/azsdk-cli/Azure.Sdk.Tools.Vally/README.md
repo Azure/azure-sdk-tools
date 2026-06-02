@@ -13,10 +13,10 @@ different folders. A full end-to-end gate runs *both*.
 |---|---|---|
 | **Question** | Given a user prompt, does the agent invoke the right MCP tool(s) with the right shape? | Given a user prompt, does the agent route to the right skill and follow its instructions? |
 | **Catches** | Tool name / description / parameter regressions; multi-tool ordering; tool-catalog conflicts | Skill frontmatter / `description` / instruction regressions; skill-routing collisions |
-| **Path** | [`tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/*.eval.yaml`](evals/) | [`.github/skills/<skill-name>/evals/*.eval.yaml`](../../../.github/skills/) (and `evaluate/evals/` for capability suites) |
+| **Path** | [`tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/`](evals/) (`scenarios/` + `triggers/`) | [`.github/skills/<skill-name>/evals/*.eval.yaml`](../../../.github/skills/) (and `evaluate/evals/` for capability suites) |
 | **Loaded subject** | Production MCP server (`Azure.Sdk.Tools.Cli`) over stdio — real tools, real network calls | Skill's `SKILL.md` + frontmatter; the agent picks tools itself |
 | **Primary grader** | `tool-calls` — checks the recorded trajectory for required tool names | Trigger / routing graders + per-skill rubric |
-| **Run command** | `vally eval --eval-spec evals/<name>.eval.yaml` *from this directory* | `vally eval --skill-dir .github/skills/<skill-name>` *from repo root* |
+| **Run command** | `vally eval --eval-spec evals/scenarios/<name>.eval.yaml` *from this directory* | `vally eval --skill-dir .github/skills/<skill-name>` *from repo root* |
 | **CI status** | Not wired yet (see follow-ups) | `vally lint` runs in [.github/workflows/skill-eval.yml](../../../.github/workflows/skill-eval.yml); full `eval` job pending |
 | **Cost profile** | Higher — each run spins up the MCP server, real LLM turns (~5–15), real tool calls | Variable — trigger evals are cheap; capability evals (e.g. `azure-typespec-author`) are expensive |
 
@@ -40,21 +40,41 @@ conditional branches, recovery), both matter independently.
 
 ### Scenarios checked in today
 
-**Tool-scenario evals (this project)** — 11 scenarios under [`evals/`](evals/):
+**Tool-scenario evals (this project)** — split into two suites under [`evals/`](evals/):
+
+#### `evals/scenarios/` — multi-step workflow evals (11)
 
 | Scenario | Shape |
 |---|---|
-| [`check-public-repo`](evals/check-public-repo.eval.yaml) | Single-tool: is a TypeSpec project published in `azure-rest-api-specs`? |
-| [`check-public-repo-then-validate`](evals/check-public-repo-then-validate.eval.yaml) | Multi-tool, ordered: validate then check |
-| [`validate-typespec`](evals/validate-typespec.eval.yaml) | Single-tool: run `tsp` linter/validation |
-| [`typespec-generation-step02`](evals/typespec-generation-step02.eval.yaml) | Step in the spec-PR generation flow |
-| [`get-modified-typespec-projects`](evals/get-modified-typespec-projects.eval.yaml) | Git-aware tool against current branch |
-| [`add-arm-resource`](evals/add-arm-resource.eval.yaml) | Calls `azsdk_typespec_generate_authoring_plan` for an ARM resource |
-| [`create-release-plan`](evals/create-release-plan.eval.yaml) | Single-tool: create a release-plan work item |
-| [`link-namespace-approval-issue`](evals/link-namespace-approval-issue.eval.yaml) | Link an existing approval issue to a release plan |
-| [`get-pr-link-current-branch`](evals/get-pr-link-current-branch.eval.yaml) | Resolve the PR for the active git branch |
-| [`check-sdk-generation-status`](evals/check-sdk-generation-status.eval.yaml) | Pipeline status lookup |
-| [`rename-client-property`](evals/rename-client-property.eval.yaml) | Stub — needs `expected-diff` grader |
+| [`check-public-repo`](evals/scenarios/check-public-repo.eval.yaml) | Single-tool: is a TypeSpec project published in `azure-rest-api-specs`? |
+| [`check-public-repo-then-validate`](evals/scenarios/check-public-repo-then-validate.eval.yaml) | Multi-tool, ordered: validate then check |
+| [`validate-typespec`](evals/scenarios/validate-typespec.eval.yaml) | Single-tool: run `tsp` linter/validation |
+| [`typespec-generation-step02`](evals/scenarios/typespec-generation-step02.eval.yaml) | Step in the spec-PR generation flow |
+| [`get-modified-typespec-projects`](evals/scenarios/get-modified-typespec-projects.eval.yaml) | Git-aware tool against current branch |
+| [`add-arm-resource`](evals/scenarios/add-arm-resource.eval.yaml) | Calls `azsdk_typespec_generate_authoring_plan` for an ARM resource |
+| [`create-release-plan`](evals/scenarios/create-release-plan.eval.yaml) | Single-tool: create a release-plan work item |
+| [`link-namespace-approval-issue`](evals/scenarios/link-namespace-approval-issue.eval.yaml) | Link an existing approval issue to a release plan |
+| [`get-pr-link-current-branch`](evals/scenarios/get-pr-link-current-branch.eval.yaml) | Resolve the PR for the active git branch |
+| [`check-sdk-generation-status`](evals/scenarios/check-sdk-generation-status.eval.yaml) | Pipeline status lookup |
+| [`rename-client-property`](evals/scenarios/rename-client-property.eval.yaml) | Stub — needs `expected-diff` grader |
+
+#### `evals/triggers/` — per-tool prompt → tool invocation coverage (ported from [#15183](https://github.com/Azure/azure-sdk-tools/pull/15183))
+
+One YAML per tool category; each stimulus is a single prompt expected to invoke a single MCP tool. Used to catch tool-rename / description-drift regressions.
+
+| File | Tools covered |
+|---|---|
+| [`apiview.eval.yaml`](evals/triggers/apiview.eval.yaml) | `azsdk_apiview_*` |
+| [`config.eval.yaml`](evals/triggers/config.eval.yaml) | `azsdk_check_service_label`, `azsdk_create_service_label` |
+| [`engsys.eval.yaml`](evals/triggers/engsys.eval.yaml) | `azsdk_analyze_log_file`, failed-test tools, codeowner-cache |
+| [`github.eval.yaml`](evals/triggers/github.eval.yaml) | `azsdk_create_pull_request`, `azsdk_get_pull_request*`, `azsdk_get_github_user_details` |
+| [`package.eval.yaml`](evals/triggers/package.eval.yaml) | `azsdk_package_*`, `azsdk_release_sdk` |
+| [`pipeline.eval.yaml`](evals/triggers/pipeline.eval.yaml) | `azsdk_analyze_pipeline`, `azsdk_get_pipeline_*` |
+| [`releaseplan.eval.yaml`](evals/triggers/releaseplan.eval.yaml) | `azsdk_*_release_plan*`, `azsdk_run_generate_sdk`, `azsdk_link_*` |
+| [`typespec.eval.yaml`](evals/triggers/typespec.eval.yaml) | `azsdk_typespec_*`, `azsdk_convert_swagger_to_typespec`, `azsdk_customized_code_update`, `azsdk_run_typespec_validation` |
+| [`verify.eval.yaml`](evals/triggers/verify.eval.yaml) | `azsdk_verify_setup` |
+
+The companion [`scripts/Validate-EvalTools.ps1`](scripts/Validate-EvalTools.ps1) cross-checks that every tool referenced in `evals/triggers/` exists on the running MCP server, and every server tool has at least one trigger.
 
 **Skill evals (already in repo, *not* part of this PR)** — for reference:
 

@@ -22,25 +22,36 @@ environments:
           AZSDKTOOLS_AGENT_TESTING: "false"
           AZSDKTOOLS_COLLECT_TELEMETRY: "false"
 
+# Suites group evals for selective execution.
+# - scenarios/* = multi-step workflow evals (this PR)
+# - triggers/*  = per-tool single-prompt invocation evals (ported from PR #15183)
 suites:
+  # Scenario suites (multi-step workflows)
   typespec:
     evals:
-      - "evals/check-public-repo.eval.yaml"
-      - "evals/check-public-repo-then-validate.eval.yaml"
-      - "evals/validate-typespec.eval.yaml"
-      - "evals/typespec-generation-step02.eval.yaml"
-      - "evals/get-modified-typespec-projects.eval.yaml"
-      - "evals/add-arm-resource.eval.yaml"
-      - "evals/rename-client-property.eval.yaml"
+      - "evals/scenarios/check-public-repo.eval.yaml"
+      - "evals/scenarios/check-public-repo-then-validate.eval.yaml"
+      - "evals/scenarios/validate-typespec.eval.yaml"
+      - "evals/scenarios/typespec-generation-step02.eval.yaml"
+      - "evals/scenarios/get-modified-typespec-projects.eval.yaml"
+      - "evals/scenarios/add-arm-resource.eval.yaml"
+      - "evals/scenarios/rename-client-property.eval.yaml"
   release-plan:
     evals:
-      - "evals/create-release-plan.eval.yaml"
-      - "evals/link-namespace-approval-issue.eval.yaml"
+      - "evals/scenarios/create-release-plan.eval.yaml"
+      - "evals/scenarios/link-namespace-approval-issue.eval.yaml"
   github:
     evals:
-      - "evals/get-pr-link-current-branch.eval.yaml"
+      - "evals/scenarios/get-pr-link-current-branch.eval.yaml"
   pipeline:
     evals:
-      - "evals/check-sdk-generation-status.eval.yaml"
+      - "evals/scenarios/check-sdk-generation-status.eval.yaml"
+  scenarios:
+    evals: ["evals/scenarios/*.eval.yaml"]
+
+  # Trigger suite (per-tool prompt → tool invocation coverage)
+  triggers:
+    evals: ["evals/triggers/*.eval.yaml"]
+
   all:
-    evals: ["evals/*.eval.yaml"]
+    evals: ["evals/**/*.eval.yaml"]

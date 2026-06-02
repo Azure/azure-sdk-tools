@@ -1710,15 +1710,25 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     };
                 }
 
+                var isValidTypeSpec = typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectPath);
+                if (!isValidTypeSpec)
+                {
+                    return new ProductInfoResponse
+                    {
+                        ResponseError = $"Invalid TypeSpec project path. tspconfig.yaml is not found in the path {typeSpecProjectPath}.",
+                        TypeSpecProject = typeSpecProjectPath
+                    };
+                }
+                var specRelativePath = typeSpecHelper.GetTypeSpecProjectRelativePath(typeSpecProjectPath);
                 // Get product info from DevOps service
-                var productInfo = await devOpsService.GetProductInfoByTypeSpecProjectPathAsync(typeSpecProjectPath, ct);
+                var productInfo = await devOpsService.GetProductInfoByTypeSpecProjectPathAsync(specRelativePath, ct);
 
                 if (productInfo == null)
                 {
                     return new ProductInfoResponse
                     {
-                        Message = $"No release plan found for TypeSpec project path: {typeSpecProjectPath}",
-                        TypeSpecProject = typeSpecProjectPath
+                        Message = $"No release plan found for TypeSpec project path: {specRelativePath}",
+                        TypeSpecProject = specRelativePath
                     };
                 }
 
@@ -1726,7 +1736,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 {
                     ProductInfo = productInfo,
                     Message = "Successfully retrieved product information.",
-                    TypeSpecProject = typeSpecProjectPath
+                    TypeSpecProject = specRelativePath
                 };
             }
             catch (Exception ex)

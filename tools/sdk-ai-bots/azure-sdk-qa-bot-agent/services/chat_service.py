@@ -54,6 +54,19 @@ POLL_RETRY_DELAY_SECS = 3.0
 COMPACT_THRESHOLD = 100000
 """Token count at which conversation history is compacted."""
 
+# -- Bot identity constants -----------------------------------------------
+BOT_SENDER_ID = "azure-sdk-qa-bot"
+BOT_SENDER_NAME = "Azure SDK Q&A Bot"
+
+# -- Fallback error message when agent returns empty text -----------------
+EMPTY_RESPONSE_MESSAGE = (
+    "Sorry, something went wrong and I couldn't generate a response. "
+    "Please send your message again to retry."
+)
+
+# -- Stream event types ---------------------------------------------------
+STREAM_EVENT_RESPONSE_COMPLETED = "response.completed"
+
 _CITATION_RE = re.compile(r"[^\w\s]*cite[^\w\s]*turn\d+\S*")
 
 
@@ -133,23 +146,30 @@ class ChatService:
             "type": AgentReferenceType.agent_reference.value,
         }
 
-        # Streaming is broken for hosted agents — text is lost entirely.
-        # See https://github.com/Azure/azure-sdk-for-python/issues/45282
-        # and https://github.com/Azure/azure-sdk-for-python/issues/46015
-        raw_response = await openai_client.responses.with_raw_response.create(
+        stream = await openai_client.responses.create(
             input=conversation_items,
             conversation=agent_conversation_id,
             store=True,
-            stream=False,
+            stream=True,
             extra_body={
                 "agent_reference": agent_ref,
             },
         )
-        response: OpenAIResponse = raw_response.parse()
+
+        response: OpenAIResponse | None = None
+        async for event in stream:
+            logger.info("Stream event: type=%s, content=%s", event.type, event)
+            if event.type == STREAM_EVENT_RESPONSE_COMPLETED:
+                response = event.response
+
+        if response is None:
+            raise RuntimeError("Agent stream ended without a response.completed event")
 
         # Extract AI Foundry trace ID from x-request-id header.
         # The header may contain duplicated values separated by comma.
-        x_request_id = raw_response.headers.get("x-request-id", "")
+        x_request_id = ""
+        if hasattr(stream, "response") and stream.response:
+            x_request_id = stream.response.headers.get("x-request-id", "")
         trace_id = x_request_id.split(",")[0].strip() if x_request_id else None
         logger.info(
             "Agent trace: trace_id=%s, response_id=%s, conversation=%s",
@@ -255,8 +275,8 @@ class ChatService:
             id=f"bot-{response_id}",
             tenant_id=req.tenant_id.value,
             sender_role=Role.System,
-            sender_id="azure-sdk-qa-bot",
-            sender_name="Azure SDK Q&A Bot",
+            sender_id=BOT_SENDER_ID,
+            sender_name=BOT_SENDER_NAME,
             content=content,
             created_at=datetime.now(timezone.utc),
             conversation_id=req.conversation_id,
@@ -423,10 +443,7 @@ class ChatService:
 
         output_text = response.output_text or ""
         if not output_text:
-            output_text = (
-                "Sorry, something went wrong and I couldn't generate a response. "
-                "Please send your message again to retry."
-            )
+            output_text = EMPTY_RESPONSE_MESSAGE
             logger.error(
                 "Empty output_text for response %s (status=%s), returning error message",
                 response.id,

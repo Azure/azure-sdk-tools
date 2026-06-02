@@ -245,17 +245,23 @@ class KnowledgeGraphService:
         if not await self._ensure_loaded():
             return None
 
+        # ``_ensure_loaded`` guarantees both are populated when it returns
+        # True, but pyright can't see that across the async boundary.
+        config = self._config
+        dfs = self._dfs
+        assert config is not None and dfs is not None
+
         # Imported lazily so the bot can boot when graphrag is unavailable.
         from graphrag.api import drift_search as graphrag_drift_search
 
         try:
             response, context = await graphrag_drift_search(
-                config=self._config,
-                entities=self._dfs["entities"],
-                communities=self._dfs["communities"],
-                community_reports=self._dfs["community_reports"],
-                text_units=self._dfs["text_units"],
-                relationships=self._dfs["relationships"],
+                config=config,
+                entities=dfs["entities"],
+                communities=dfs["communities"],
+                community_reports=dfs["community_reports"],
+                text_units=dfs["text_units"],
+                relationships=dfs["relationships"],
                 community_level=self._community_level,
                 response_type=self._response_type,
                 query=query,
@@ -311,7 +317,7 @@ class KnowledgeGraphService:
             return []
 
         matched_units = text_units_df[
-            text_units_df["human_readable_id"].isin(normalised_ids)
+            text_units_df["human_readable_id"].isin(list(normalised_ids))
         ]
         if matched_units.empty:
             return []
@@ -325,8 +331,11 @@ class KnowledgeGraphService:
         seen_docs: set[str] = set()
         # Sort by chunk size descending so the most informative chunk wins
         # when multiple chunks from the same doc are cited.
+        # Note: a list comprehension keeps pyright happy where
+        # ``matched_units["text"].str.len()`` confuses the pandas type stubs
+        # into thinking the column is an ndarray.
         sorted_units = matched_units.assign(
-            _len=matched_units["text"].astype(str).str.len()
+            _len=[len(str(v)) for v in matched_units["text"]]
         ).sort_values("_len", ascending=False)
 
         for _, row in sorted_units.iterrows():

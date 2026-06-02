@@ -1,7 +1,7 @@
 parameters:
 - name: PythonVersion
   type: string
-  default: '3.10'
+  default: '3.12'
 
 schedules:
   - cron: "0 1 * * 1"  # Runs every Monday at 01:00 UTC

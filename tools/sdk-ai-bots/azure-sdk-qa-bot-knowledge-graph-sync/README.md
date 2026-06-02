@@ -154,6 +154,13 @@ tests/
 - **Managed Identity auth**: Uses Azure Managed Identity for both Azure OpenAI and AI Search (no API keys in config).
 - **12 entity types**: Decorator, Pattern, Tool, Service, API, ErrorCode, Guideline, Library, Operation, Model, Configuration, Protocol
 
+## Pipelines
+
+| File | Purpose |
+|------|---------|
+| `ci.yml` | Build + tests on every PR and on `main` (path-scoped to this project). |
+| `sync_knowledge_graph.yml` | Daily scheduled run (03:00 UTC) on an internal 1ES agent — checks out the internal docs/wiki repos, installs the project, runs `sync-knowledge-graph`, publishes the new parquet snapshot to blob storage, and POSTs the bot agent's `/admin/graphrag/reload` endpoint. Mirrors `azure-sdk-qa-bot-knowledge-sync/sync_knowledge.yml`. |
+
 ## Relationship to Other Projects
 
 - **[azure-sdk-qa-bot-agent](../azure-sdk-qa-bot-agent/)** — The QA bot that queries the knowledge base at runtime using GraphRAG's query API (local/global/drift/basic search).

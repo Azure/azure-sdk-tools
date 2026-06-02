@@ -1,0 +1,85 @@
+name: skill-eval-authoring-trigger-eval
+description: Trigger and anti-trigger tests for the skill-eval-authoring skill
+type: capability
+
+environment: azsdk-mcp-mock
+
+tags:
+  area: skill-eval-authoring
+  type: ci-gate
+  tier: unit
+
+config:
+  runs: 1
+  timeout: "60s"
+  model: claude-opus-4.6
+  executor: copilot-sdk
+
+scoring:
+  threshold: 0.8
+
+stimuli:
+  # ----- POSITIVE TRIGGERS -----
+  - name: trigger-write-an-eval
+    prompt: "write an eval for my new skill"
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["skill-eval-authoring"]
+
+  - name: trigger-add-capability-test
+    prompt: "add a capability test to my skill's evals folder"
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["skill-eval-authoring"]
+
+  - name: trigger-fix-vacuous-output-contains
+    prompt: "my eval only uses output-contains, can you harden it"
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["skill-eval-authoring"]
+
+  - name: trigger-add-trigger-tests
+    prompt: "add trigger and anti-trigger tests for my skill"
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["skill-eval-authoring"]
+
+  - name: trigger-review-eval-yaml
+    prompt: "review my eval.yaml and tell me what's missing"
+    graders:
+      - type: skill-invocation
+        config:
+          required: ["skill-eval-authoring"]
+
+  # ----- ANTI-TRIGGERS -----
+  - name: anti-trigger-run-vally-cli
+    prompt: "run vally eval against my changes"
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["skill-eval-authoring"]
+
+  - name: anti-trigger-write-skill-md
+    prompt: "write a SKILL.md for my new skill"
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["skill-eval-authoring"]
+
+  - name: anti-trigger-debug-failing-trajectory
+    prompt: "debug why this eval trajectory failed at turn 3"
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["skill-eval-authoring"]
+
+  - name: anti-trigger-release-package
+    prompt: "release the azure-mgmt-compute Python package"
+    graders:
+      - type: skill-invocation
+        config:
+          disallowed: ["skill-eval-authoring"]

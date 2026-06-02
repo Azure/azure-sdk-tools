@@ -1,6 +1,7 @@
 paths:
   evals:
     - skill-authoring/evals/
+    - skill-eval-authoring/evals/
     - azsdk-common-pipeline-troubleshooting/evals/
     - markdown-token-optimizer/evals/
     - sensei/evals/

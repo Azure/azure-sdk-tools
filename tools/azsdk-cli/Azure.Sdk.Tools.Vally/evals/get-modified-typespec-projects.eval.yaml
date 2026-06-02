@@ -43,7 +43,7 @@ stimuli:
       - type: tool-calls
         config:
           required:
-            - azure-sdk-mcp-azsdk_get_modified_typespec_projects
+            - azsdk_get_modified_typespec_projects
 
 scoring:
   weights:

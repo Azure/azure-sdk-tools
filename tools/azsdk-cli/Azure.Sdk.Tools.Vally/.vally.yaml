@@ -17,7 +17,7 @@ environments:
         type: stdio
         command: dotnet
         args: ["run", "--project", "../Azure.Sdk.Tools.Cli", "--", "start"]
-        timeout: 300000
+        timeout: "5m"
         env:
           AZSDKTOOLS_AGENT_TESTING: "false"
           AZSDKTOOLS_COLLECT_TELEMETRY: "false"

@@ -29,7 +29,7 @@ stimuli:
       - type: tool-calls
         config:
           required:
-            - azure-sdk-mcp-azsdk_run_typespec_validation
+            - azsdk_run_typespec_validation
 
 scoring:
   weights:

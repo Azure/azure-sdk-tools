@@ -37,7 +37,7 @@ stimuli:
       - type: tool-calls
         config:
           required:
-            - azure-sdk-mcp-azsdk_create_release_plan
+            - azsdk_create_release_plan
 
 scoring:
   weights:

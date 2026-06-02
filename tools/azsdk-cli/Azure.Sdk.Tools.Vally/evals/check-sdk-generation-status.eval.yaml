@@ -28,7 +28,7 @@ stimuli:
       - type: tool-calls
         config:
           required:
-            - azure-sdk-mcp-azsdk_get_pipeline_status
+            - azsdk_get_pipeline_status
 
 scoring:
   weights:

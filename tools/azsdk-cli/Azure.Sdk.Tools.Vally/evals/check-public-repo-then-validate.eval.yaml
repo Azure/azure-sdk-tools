@@ -30,8 +30,8 @@ stimuli:
       - type: tool-calls
         config:
           required:
-            - azure-sdk-mcp-azsdk_run_typespec_validation
-            - azure-sdk-mcp-azsdk_typespec_check_project_in_public_repo
+            - azsdk_run_typespec_validation
+            - azsdk_typespec_check_project_in_public_repo
 
 scoring:
   weights:

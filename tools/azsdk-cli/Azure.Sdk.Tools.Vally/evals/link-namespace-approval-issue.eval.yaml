@@ -29,7 +29,7 @@ stimuli:
       - type: tool-calls
         config:
           required:
-            - azure-sdk-mcp-azsdk_link_namespace_approval_issue
+            - azsdk_link_namespace_approval_issue
 
 scoring:
   weights:

@@ -28,7 +28,7 @@ stimuli:
       - type: tool-calls
         config:
           required:
-            - azure-sdk-mcp-azsdk_get_pull_request_link_for_current_branch
+            - azsdk_get_pull_request_link_for_current_branch
 
 scoring:
   weights:

@@ -10,14 +10,11 @@ environment: azsdk-mcp
 config:
   runs: 1
   timeout: 30m
-  model: claude-opus-4.6
+  model: gpt-5.4
   executor: copilot-sdk
 
 stimuli:
   - name: check-sdk-generation-status
-    # Ported from deleted CheckSdkGenerationStatusScenario (#15697).
-    # Original also asserted buildId=5513110 was passed to the tool.
-    # Argument assertions require a custom grader (not yet built).
     prompt: |
       Check the SDK generation pipeline status for build ID 5513110.
       My setup has already been verified, do not run azsdk_verify_setup.

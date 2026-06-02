@@ -10,14 +10,11 @@ environment: azsdk-mcp
 config:
   runs: 1
   timeout: 30m
-  model: claude-opus-4.6
+  model: gpt-5.4
   executor: copilot-sdk
 
 stimuli:
   - name: typespec-generation-step02-validation
-    # Ported from deleted TypespecGenerationStep02Scenario (#15697).
-    # The original benchmark replaced a mid-conversation JSON trace with a
-    # standalone prompt; same intent preserved here.
     prompt: |
       I'm working on the TypeSpec generation workflow. I need to validate my TypeSpec project
       as part of step 2. Please check if my TypeSpec project is in the public repo.

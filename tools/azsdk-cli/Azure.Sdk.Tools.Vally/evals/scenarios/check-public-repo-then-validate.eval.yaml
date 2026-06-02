@@ -10,15 +10,11 @@ environment: azsdk-mcp
 config:
   runs: 1
   timeout: 30m
-  model: claude-opus-4.6
+  model: gpt-5.4
   executor: copilot-sdk
 
 stimuli:
   - name: validate-then-check-public-repo
-    # Ported from deleted CheckPublicRepoThenValidateScenario (#15697).
-    # Original also asserted ordering (validate before check) and forbade
-    # azsdk_verify_setup. Vally's tool-calls grader currently checks presence
-    # only, not order, and has no `forbidden` field — captured via prompt.
     prompt: |
       Run TypeSpec validation, then check if the project is in the public repo.
       Project path: specification/contosowidgetmanager/Contoso.WidgetManager.

@@ -11,12 +11,11 @@ environment: azsdk-mcp
 config:
   runs: 1
   timeout: 30m
-  model: claude-opus-4.6
+  model: gpt-5.4
   executor: copilot-sdk
 
 stimuli:
   - name: get-pr-link-current-branch
-    # Ported from deleted GetPrLinkCurrentBranchScenario (#15697).
     prompt: |
       What's the status of the spec PR in my current branch? Only check the status once.
       My setup has already been verified, do not run azsdk_verify_setup.

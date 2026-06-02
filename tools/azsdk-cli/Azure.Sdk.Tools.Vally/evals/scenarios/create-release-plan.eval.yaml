@@ -10,16 +10,11 @@ environment: azsdk-mcp
 config:
   runs: 1
   timeout: 30m
-  model: claude-opus-4.6
+  model: gpt-5.4
   executor: copilot-sdk
 
 stimuli:
   - name: create-release-plan
-    # Ported from deleted CreateReleasePlanScenario (#15697).
-    # Original also asserted exact tool arguments (serviceTreeId, productTreeId,
-    # specApiVersion, specPullRequestUrl, sdkReleaseType, typeSpecProjectPath).
-    # Vally's built-in tool-calls grader checks tool *name* only; argument
-    # assertions would need a custom grader under Graders/.
     prompt: |
       Create a release plan for the Contoso Widget Manager, no need to get it afterwards only create.
       My setup has already been verified, do not run azsdk_verify_setup. Here is all the context you need:

@@ -10,15 +10,11 @@ environment: azsdk-mcp
 config:
   runs: 1
   timeout: 30m
-  model: claude-opus-4.6
+  model: gpt-5.4
   executor: copilot-sdk
 
 stimuli:
   - name: validate-typespec
-    # Ported from deleted ValidateTypespecScenario (#15697).
-    # The original allowed `azsdk_typespec_check_project_in_public_repo` and
-    # `azsdk_verify_setup` as optional tool calls. Vally's current grader has
-    # no `optional` concept — extra calls are not penalised by `required:`.
     prompt: |
       Validate my typespec project. It is already confirmed we are in a public repository.
       The path to my typespec is specification/contosowidgetmanager/Contoso.WidgetManager/main.tsp.

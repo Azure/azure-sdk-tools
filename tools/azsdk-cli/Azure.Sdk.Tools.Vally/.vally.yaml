@@ -19,7 +19,10 @@ environments:
         args: ["run", "--project", "../Azure.Sdk.Tools.Cli", "--", "start"]
         timeout: "5m"
         env:
-          AZSDKTOOLS_AGENT_TESTING: "false"
+          # Test mode: tools that would create real ADO work items / external
+          # resources (e.g. azsdk_create_release_plan) short-circuit into a
+          # test variant so evals are safe to re-run.
+          AZSDKTOOLS_AGENT_TESTING: "true"
           AZSDKTOOLS_COLLECT_TELEMETRY: "false"
 
 # Suites group evals for selective execution.

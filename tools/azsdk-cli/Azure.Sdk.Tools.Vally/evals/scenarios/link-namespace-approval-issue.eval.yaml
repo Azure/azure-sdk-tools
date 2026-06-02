@@ -10,15 +10,11 @@ environment: azsdk-mcp
 config:
   runs: 1
   timeout: 30m
-  model: claude-opus-4.6
+  model: gpt-5.4
   executor: copilot-sdk
 
 stimuli:
   - name: link-namespace-approval-issue
-    # Ported from deleted LinkNamespaceApprovalIssueScenario (#15697).
-    # Original also asserted releasePlanWorkItemId=12345 and
-    # namespaceApprovalIssue=https://github.com/Azure/azure-sdk/issues/1234.
-    # Argument assertions require a custom grader (not yet built).
     prompt: |
       Link namespace approval issue https://github.com/Azure/azure-sdk/issues/1234 to release plan 12345.
       My setup has already been verified, do not run azsdk_verify_setup.

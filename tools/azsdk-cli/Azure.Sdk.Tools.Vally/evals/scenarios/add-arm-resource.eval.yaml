@@ -11,31 +11,11 @@ environment: azsdk-mcp
 config:
   runs: 1
   timeout: 30m
-  model: claude-opus-4.6
+  model: gpt-5.4
   executor: copilot-sdk
 
 stimuli:
   - name: add-arm-resource
-    # Ported (stub) from deleted AddArmResourceScenario (#15697).
-    #
-    # TODO: this scenario is heavier than the others — the original asserted:
-    #   - main.tsp still exists and imports the new asset.tsp
-    #   - asset.tsp contains an ARM resource model with @armResourceOperations,
-    #     interface Assets, ArmResourceRead/CreateOrReplace/Update/Delete,
-    #     listByResourceGroup, listBySubscription
-    #   - `npx tsp compile` succeeds against the modified project
-    # To port faithfully we need:
-    #   1. Fixtures under fixtures/add-arm-resource/ that mirror
-    #      specification/widget/resource-manager/Microsoft.Widget/Widget
-    #      (the Microsoft.Widget fixture already exists under
-    #      .github/skills/azure-typespec-author/evaluate/fixtures/Microsoft.Widget
-    #      and could be reused / symlinked).
-    #   2. A Vally environment hook (or custom grader) that runs
-    #      `npm ci` + `npx tsp compile` after the agent finishes.
-    #   3. file-matches graders for the asset.tsp content patterns.
-    # For now this eval only checks that the agent makes at least one edit
-    # and invokes the authoring-plan tool — it does NOT verify the produced
-    # TypeSpec compiles.
     prompt: |
       In the specification/widget/resource-manager/Microsoft.Widget/Widget project,
       add an ARM resource named 'Asset' with CRUD operations.

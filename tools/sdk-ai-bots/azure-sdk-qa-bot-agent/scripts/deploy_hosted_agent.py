@@ -34,6 +34,7 @@ if str(_PROJECT_DIR) not in sys.path:
 from azure.ai.projects import AIProjectClient
 from azure.ai.projects.models import (
     AgentProtocol,
+    ContainerConfiguration,
     HostedAgentDefinition,
     ProtocolVersionRecord,
 )
@@ -270,14 +271,14 @@ def main() -> None:
         agent = project.agents.create_version(
             agent_name=image_name,
             definition=HostedAgentDefinition(
-                container_protocol_versions=[
+                cpu="2",
+                memory="4Gi",
+                container_configuration=ContainerConfiguration(image=image),
+                protocol_versions=[
                     ProtocolVersionRecord(
                         protocol=AgentProtocol.RESPONSES, version="1.0.0"
                     )
                 ],
-                cpu="2",
-                memory="4Gi",
-                image=image,
                 environment_variables=env_vars,
             ),
             metadata={"enableVnextExperience": "true"},

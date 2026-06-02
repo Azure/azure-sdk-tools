@@ -1,32 +1,54 @@
-# Azure SDK QA Bot Agent
+# Azure SDK Chat Agent
 
-The Azure SDK QA Bot Agent helps developers with Azure SDK questions. This project is a migration of the [azure-sdk-qa-bot-backend](../azure-sdk-qa-bot-backend/) from Go to Python, built on the [Microsoft Agent Framework](https://learn.microsoft.com/en-us/agent-framework/overview/agent-framework-overview) with Azure AI Foundry. It leverages Azure AI Search for knowledge retrieval and Foundry Memory for conversation context.
+The Azure SDK Chat Agent helps developers with Azure SDK questions. This project is a migration of the [azure-sdk-qa-bot-backend](../azure-sdk-qa-bot-backend/) from Go to Python, built on the [Microsoft Agent Framework](https://learn.microsoft.com/en-us/agent-framework/overview/agent-framework-overview) with Azure AI Foundry. It leverages Azure AI Search for knowledge retrieval and Foundry Memory for conversation context.
 
 > **Note:** This project is currently in draft / active development.
 
-## Prerequisites
+## Project Structure
+
+```
+azure-sdk-qa-bot-agent/
+├── agents/          # Agent definition, instructions, and tool implementations
+├── config/          # Configuration (Azure App Configuration integration)
+├── services/        # Core business logic (chat, conversation, feedback)
+├── utils/           # Azure service clients (AI Foundry, AI Search, Cosmos DB, Storage, Memory)
+├── models/          # Data models
+├── pipelines/       # CI/CD pipeline definitions
+├── tests/           # Test files
+├── server.py        # Backend API entrypoint (FastAPI)
+└── TROUBLESHOOTING.md
+```
+
+The project has two independently runnable components:
+
+| Component | Description | Entrypoint | Port |
+|-----------|-------------|------------|------|
+| **Agent** | AI chat agent (Microsoft Agent Framework, Responses protocol) | `agents/chat_agent/init.py` | 8088 |
+| **Server** | Backend API that the Teams App communicates with (FastAPI) | `server.py` | 8089 |
+
+## Getting Started
+
+### Prerequisites
 
 - Python 3.10 or higher
 - Azure CLI installed and authenticated (`az login`)
-- Azure subscription with access to the following services:
+- Azure subscription with access to:
   - Azure App Configuration
   - Azure AI Search
   - Azure Storage
   - Azure OpenAI / Azure AI Foundry
-  - Microsoft Foundry Project (with a chat model deployed, e.g. `gpt-5.4`)
+  - Microsoft Foundry Project
 
-## Installation and Setup
+### Required Azure Roles
 
-### Grant Resource Permissions
-
-Ensure your Azure identity has the following roles:
+Ensure your Azure identity has:
 
 - App Configuration Data Reader
 - Storage Blob Data Contributor
 - Azure AI User (on the Foundry Project)
 - Cosmos DB Built-in Data Contributor
 
-### Project Setup
+### Setup
 
 1. Navigate to the project:
 
@@ -58,21 +80,18 @@ Ensure your Azure identity has the following roles:
 
    This installs all production dependencies plus development tools (`debugpy`, `agent-dev-cli`). CI/CD pipelines and Docker images use `requirements.txt` (production only).
 
-4. Create a `.env` file in the project root with the App Configuration endpoint:
+4. Create a `.env` file in the project root:
 
    ```dotenv
    AZURE_APPCONFIG_ENDPOINT=https://azuresdkqabot-dev-config.azconfig.io
    ```
 
-   To test the GitHub MCP tool locally, add a [GitHub personal access token](https://github.com/settings/tokens):
+   Optional variables:
 
-   ```dotenv
-   GITHUB_TOKEN=ghp_your_token_here
-   ```
-
-   Without this, the agent uses GitHub App JWT authentication via Key Vault, which is only available in production.
-
-   Optionally, set `MEMORY_UPDATE_DELAY=0` to process memory updates immediately during local development (default is 300 seconds).
+   | Variable | Purpose | Default |
+   |----------|---------|---------|
+   | `GITHUB_TOKEN` | [GitHub PAT](https://github.com/settings/tokens) for local GitHub MCP tool testing. Without it, the agent uses GitHub App JWT via Key Vault (production only). | — |
+   | `MEMORY_UPDATE_DELAY` | Seconds before processing memory updates. Set to `0` for immediate updates during development. | `300` |
 
 5. Log in to Azure:
 
@@ -80,14 +99,7 @@ Ensure your Azure identity has the following roles:
    az login  # select the Azure SDK Engineering System subscription
    ```
 
-## Running Locally
-
-This project has two separate components that are run and debugged differently:
-
-| Component | Description | Entrypoint | Port | Debug Method |
-|-----------|-------------|------------|------|--------------|
-| **Agent** | The AI chat agent (Microsoft Agent Framework, Responses protocol) | `agents/chat_agent/init.py` | 8088 | F5 with AI Toolkit Agent Inspector |
-| **Server** | The backend API that the Teams App communicates with (FastAPI) | `server.py` | 8089 | Standard Python debugging |
+## Running and Debugging Locally
 
 ### Debugging the Agent (F5 with AI Toolkit)
 
@@ -100,28 +112,63 @@ Use this to develop and test the AI agent itself (prompt tuning, tool integratio
 
 This launches the agent via `agentdev run` on `http://localhost:8088/` with `debugpy` attached, and opens the AI Toolkit Agent Inspector for interactive testing.
 
-![alt text](images/agent_playground.png)
+![Agent Playground](images/agent_playground.png)
 
 ### Debugging the Server
 
-1. Use this instruction to let your copilot set up local debugging with the AI Toolkit: `Help me configure the azure-sdk-qa-bot-agent/server.py to work with VS Code Python debugging. 1) Add a debug configuration in launch.json to launch the FastAPI server with uvicorn and debugpy. 2) The server should be launched on http://localhost:8089/`
-```json
-{
-    "name": "Debug Backend Server",
-    "type": "debugpy",
-    "request": "launch",
-    "module": "uvicorn",
-    "args": ["server:app", "--host", "0.0.0.0", "--port", "8089"],
-    "cwd": "${workspaceFolder}"
-}
-```
+1. Add a launch configuration for the FastAPI server:
+
+   ```json
+   {
+       "name": "Debug Backend Server",
+       "type": "debugpy",
+       "request": "launch",
+       "module": "uvicorn",
+       "args": ["server:app", "--host", "0.0.0.0", "--port", "8089"],
+       "cwd": "${workspaceFolder}"
+   }
+   ```
+
 2. Press **F5** to start debugging the server.
-3. Install REST Client extension
+3. Install the [REST Client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client) extension.
 4. Run tests under `tests/api_test.rest` to verify the server is working.
+
+## Testing Remote Endpoints
+
+The main endpoint for querying the bot is `/agent/chat`. See [tests/api_test.rest](tests/api_test.rest) for example requests.
+
+### Remote Endpoints
+
+| Environment | Resource Group | App Service Name |
+|---|---|---|
+| **Dev** | `azure-sdk-qa-bot-dev` | `azuresdkqabot-dev-server` |
+| **Preview** | `azure-sdk-qa-bot-test` | `azuresdkqabot-test-server` |
+| **Prod** | `azure-sdk-qa-bot` | `azuresdkqabot-server` |
+
+To find the App Service in the Azure Portal:
+
+1. Go to the [Azure Portal](https://portal.azure.com) and sign in with your Microsoft account.
+2. Navigate to the **Azure SDK Engineering System** subscription.
+3. Open the resource group for the target environment (see table above).
+4. Select the App Service resource.
+5. The endpoint URL is the **Default domain** field in the App Service overview.
+
+### Access Tokens
+
+```bash
+# Dev
+az account get-access-token --resource api://azure-sdk-qa-bot-dev
+
+# Preview
+az account get-access-token --resource api://azure-sdk-qa-bot-test
+
+# Prod
+az account get-access-token --resource api://azure-sdk-qa-bot
+```
 
 ## Deployment
 
-The project has three independently deployable components, each with its own CD pipeline. All pipelines are manually triggered and parameterized by environment (`dev` / `prod`).
+The project has three independently deployable components, each with its own CD pipeline. All pipelines are manually triggered and parameterized by environment.
 
 ### Agent Deploy
 
@@ -169,79 +216,9 @@ Runs linting (pyright) and unit tests on PRs that touch the bot agent code.
 - **Pipeline**: [server-ci.yml](pipelines/server-ci.yml) | [View in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8156)
 - **Triggers**: PRs to `main` touching `tools/sdk-ai-bots/azure-sdk-qa-bot-agent`
 
-## Tracing & Debugging a Response
+## Troubleshooting
 
-When the bot replies in Teams, you can trace the full request lifecycle from response ID down to detailed logs according to the environment.
-
-**Deployed Environments**
-
-| Environment | Agent Playground | Application Insights |
-|-------------|-----------------|---------------------|
-| **Dev** | [Foundry Agent Playground](https://ai.azure.com/nextgen/r/oYiXpn5ERX2SYPKFTArKQg,azure-sdk-qa-bot-dev,,azuresdkqabot-dev-ai-resource,azuresdkqabot-ai/build/agents/azure-sdk-chat-agent/build) | [azuresdkqabot-dev-agent](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Insights/components/azuresdkqabot-dev-agent/overview) |
-| **Test & Prod** | [Foundry Agent Playground](https://ai.azure.com/nextgen/r/oYiXpn5ERX2SYPKFTArKQg,azure-sdk-qa-bot,,azuresdkqabot-ai-resource,azuresdkqabot-ai/build/agents/azure-sdk-chat-agent/build) | [azuresdkqabot-agent](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.Insights/components/azuresdkqabot-agent/overview) |
-
-### 1. Find the Response ID
-
-Hover over the **sensitivity label** ("Confidential - Internal Use Only") on the bot's reply in Teams. The tooltip shows the **Response ID** (e.g. `caresp_005283a1231d4f8400Gkdhcn4jKwqSgwUzexr5wtwGJ3enyyLx`).
-
-![Find the Response ID from the sensitivity label tooltip](images/tracing_step1_response_id.png)
-
-### 2. Filter by Response ID in Foundry Traces
-
-Open the agent's **Traces** tab in Foundry portal. Paste the Response ID into the search box. This shows the matching conversation with Trace ID, duration, token usage, and status.
-
-> **Note:** The Foundry Traces tab only shows traces for the currently selected agent version. If you don't know which version handled the request, skip to **Step 4** and search directly in Application Insights — it contains traces across all versions.
-
-![Filter by Response ID in the Foundry Traces tab](images/tracing_step2_foundry_traces.png)
-
-### 3. View Agent Processing Steps
-
-Click the **Trace ID** link to open the trace detail view. This shows the full span tree for the request — the top-level `HostedAgents-*` span and its children (Chat, Execute Tool, etc.) with timing and token counts.
-
-![Trace detail view showing the span tree](images/tracing_step3_span_tree.png)
-
-### 4. Investigate Detailed Logs in Application Insights
-
-To see the complete Python-level logs, copy the **Trace ID** from step 2 and query the Application Insights **Investigate/** blade:
-
-![Application Insights search results](images/tracing_step4_app_insights_logs.png)
-
-Click the trace, it returns all log records for that request — credential acquisition, agent session loading, conversation retrieval, tool calls, and any custom log messages — in chronological order.
-
-You can also click **View timeline** to see the span timeline view, which shows the same `HostedAgents-*` → Chat → Execute Tool hierarchy as the Foundry Traces detail (Step 3).
-![Application Insights timeline view](images/tracing_step4_app_insights_timeline.png)
-
-## GraphRAG Admin Endpoints
-
-When `KNOWLEDGE_TOOL_MODE=graph`, the bot serves graph-augmented answers from parquet artefacts produced by the [knowledge-graph-sync](../azure-sdk-qa-bot-knowledge-graph-sync/README.md) job. Two HTTP endpoints let the sync job hand off a freshly-built snapshot without restarting the bot:
-
-| Endpoint | Description |
-|----------|-------------|
-| `GET /admin/graphrag/status` | Returns the currently-loaded build metadata (manifest, row counts, source). |
-| `POST /admin/graphrag/reload` | Atomically reloads parquets from blob; in-flight DRIFT queries keep their snapshot. |
-
-Both endpoints require `X-Admin-Token: <GRAPHRAG_ADMIN_TOKEN>`. If the token is not configured the endpoints respond `503 Service Unavailable` — never authorise unauthenticated reloads.
-
-The sync job posts to `/admin/graphrag/reload` after publishing a new snapshot to blob (see the sync project's `PUBLISH_GRAPHRAG_OUTPUT` workflow). A failed POST is logged and ignored — the bot will still pick up the new build on its next cold start by reading `<container>/<prefix>/latest.json`.
-
-Relevant env vars:
-
-| Variable | Description |
-|----------|-------------|
-| `KNOWLEDGE_TOOL_MODE` | `vector` (default) or `graph`. |
-| `GRAPHRAG_OUTPUT_BLOB_CONTAINER` | Blob container that holds parquets + `latest.json` at its root. |
-| `GRAPHRAG_ADMIN_TOKEN` | Shared secret required by the admin endpoints. |
-
-## Project Structure
-
-- `agents/` - Agent definition, instructions, and tool implementations
-- `config/` - Configuration (Azure App Configuration integration)
-- `services/` - Core business logic (chat, conversation, feedback)
-- `utils/` - Azure service clients (AI Foundry, AI Search, Cosmos DB, Storage, Memory)
-- `models/` - Data models
-- `pipelines/` - Pipeline definitions
-- `tests/` - Test files
-- `server.py` - Backend entrypoint
+For incident response, agent tracing, and server log analysis, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
 ## Contributing
 

@@ -1,10 +1,16 @@
 # Release History
 
-## 0.6.16 (2026-06-01)
+## 0.6.17 (2026-06-02)
 
 ### Bugs Fixed
 
 - Fixed issues in the MCP tool to lookup service details using TypeSpec project path.
+
+## 0.6.16 (2026-06-01)
+
+### Bugs Fixed
+
+- Fixed DevOps work item creation for empty DateTime fields (#15795)
 
 ## 0.6.15 (2026-05-29)
 

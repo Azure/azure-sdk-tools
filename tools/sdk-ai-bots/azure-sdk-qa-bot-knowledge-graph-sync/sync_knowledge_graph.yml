@@ -116,6 +116,15 @@ extends:
                   pip --version
                 displayName: 'Show Python version'
 
+              # 1ES agents don't have outbound access to public PyPI; route
+              # pip through the internal mirror feed. PipAuthenticate sets
+              # PIP_INDEX_URL for the rest of the job.
+              - task: PipAuthenticate@1
+                displayName: 'Pip Authenticate to internal feed'
+                inputs:
+                  artifactFeeds: 'public/azure-sdk-for-python'
+                  onlyAddExtraIndex: false
+
               - script: |
                   pip install -e .
                 displayName: 'Install Python dependencies'

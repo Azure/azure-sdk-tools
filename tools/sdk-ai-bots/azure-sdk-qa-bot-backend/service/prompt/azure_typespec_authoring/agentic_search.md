@@ -15,7 +15,7 @@ Analyze the question and identify its category, then generate focused sub-querie
 - **Versioning**: Questions about API versioning, adding properties, avoiding breaking changes
 - **ARM Template**: Questions about ARM resource templates and patterns
 - **TypeSpec Migration**: Questions about converting OpenAPI/Swagger to TypeSpec
-- **SDK Generation**: Questions about generating SDKs from TypeSpec
+- **Typespec Customization**:  Questions about how to customize typespec for client SDKs
 - **SDK/Spec Onboarding**: Questions about codebase permission, onboarding services, API design, SDK development, or release processes
 - **TypeSpec Validation**: Questions about TypeSpec validation(CI) errors. **For search performance, you need to rewrite TypeSpec CI failures into TypeSpec Validation failures**
 

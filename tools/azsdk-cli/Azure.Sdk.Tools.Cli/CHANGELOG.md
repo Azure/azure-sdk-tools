@@ -1,14 +1,10 @@
 # Release History
 
-## 0.6.16 (Unreleased)
-
-### Features Added
-
-### Breaking Changes
+## 0.6.16 (2026-06-01)
 
 ### Bugs Fixed
 
-### Other Changes
+- Fixed DevOps work item creation for empty DateTime fields (#15795)
 
 ## 0.6.15 (2026-05-29)
 

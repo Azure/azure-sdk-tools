@@ -23,6 +23,9 @@ stimuli:
     constraints:
       max_turns: 5
       max_tokens: 5000
+    # TODO: seed a git worktree (environment.git) at specification/ai/Face and
+    # add a `file-matches` grader on models.common.tsp to verify the
+    # @clientName("uri", "csharp") → @clientName("imageUri", "csharp") rename.
     graders:
       - type: tool-calls
         config:

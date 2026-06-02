@@ -22,12 +22,15 @@ stimuli:
     constraints:
       max_turns: 8
       max_tokens: 8000
+    # TODO: assert ordering (validate before check) — blocked on https://github.com/Azure/azure-sdk-tools/issues/15832 (Vally tool-calls grader needs sequence:).
     graders:
       - type: tool-calls
         config:
           required:
             - azsdk_run_typespec_validation
             - azsdk_typespec_check_project_in_public_repo
+          disallowed:
+            - azsdk_verify_setup
 
 scoring:
   weights:

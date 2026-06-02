@@ -28,11 +28,14 @@ stimuli:
     constraints:
       max_turns: 8
       max_tokens: 8000
+    # TODO: assert serviceTreeId / productTreeId / specApiVersion / specPullRequestUrl / sdkReleaseType / typeSpecProjectPath — blocked on https://github.com/Azure/azure-sdk-tools/issues/15833 (Vally tool-calls grader needs generic args matcher).
     graders:
       - type: tool-calls
         config:
           required:
             - azsdk_create_release_plan
+          disallowed:
+            - azsdk_verify_setup
 
 scoring:
   weights:

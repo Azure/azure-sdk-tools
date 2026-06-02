@@ -22,6 +22,9 @@ stimuli:
     constraints:
       max_turns: 20
       max_tokens: 50000
+    # TODO: seed a fixture (environment.files or git) for the Microsoft.Widget
+    # project, add `file-exists` + `file-contains` graders on the produced
+    # asset.tsp, and a `run-command` grader to verify `npx tsp compile`.
     graders:
       - type: tool-calls
         config:

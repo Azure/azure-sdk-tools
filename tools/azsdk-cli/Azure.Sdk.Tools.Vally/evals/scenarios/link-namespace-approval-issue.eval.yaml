@@ -21,11 +21,14 @@ stimuli:
     constraints:
       max_turns: 5
       max_tokens: 5000
+    # TODO: assert releasePlanWorkItemId=12345 and namespaceApprovalIssue URL — blocked on https://github.com/Azure/azure-sdk-tools/issues/15833 (Vally tool-calls grader needs generic args matcher).
     graders:
       - type: tool-calls
         config:
           required:
             - azsdk_link_namespace_approval_issue
+          disallowed:
+            - azsdk_verify_setup
 
 scoring:
   weights:

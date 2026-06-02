@@ -28,6 +28,8 @@ stimuli:
         config:
           required:
             - azsdk_typespec_check_project_in_public_repo
+          disallowed:
+            - azsdk_verify_setup
 
 scoring:
   weights:

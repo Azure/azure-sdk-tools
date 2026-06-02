@@ -23,11 +23,15 @@ stimuli:
     constraints:
       max_turns: 5
       max_tokens: 5000
+    # TODO: seed a git worktree fixture (environment.git) with a modified
+    # tspconfig.yaml so the tool actually has a diff to report.
     graders:
       - type: tool-calls
         config:
           required:
             - azsdk_get_modified_typespec_projects
+          disallowed:
+            - azsdk_verify_setup
 
 scoring:
   weights:

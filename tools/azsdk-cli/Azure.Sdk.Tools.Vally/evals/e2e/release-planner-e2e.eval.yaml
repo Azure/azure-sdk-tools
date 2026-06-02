@@ -11,11 +11,10 @@ description: |
   executor + real DevOps in one shot.
 
   Prerequisite: a clone of Azure/azure-rest-api-specs at the path referenced
-  by environment.git.source below. Locally, use the Run-LiveEvals.ps1
-  wrapper at the package root — it primes a per-user cache via
-  evals/setup/ensure-specs-clone.ps1 (auto-refresh every 24h) and points
-  this source path at it. CI should clone the repo as a pipeline checkout
-  step instead.
+  by environment.git.source below. Locally, run
+  evals/setup/ensure-specs-clone.ps1 to prime a per-user cache
+  (auto-refresh every 24h) at the path this source points at. CI should
+  clone the repo as a pipeline checkout step instead.
 
 version: "1.0"
 type: capability
@@ -36,7 +35,7 @@ config:
 stimuli:
   - name: release-planner-e2e
     environment:
-      # Source is the per-user cache populated by Run-LiveEvals.ps1
+      # Source is the per-user cache populated by evals/setup/ensure-specs-clone.ps1
       # (idempotent shallow+sparse clone, auto-refresh every 24h).
       # NOTE: hardcoded absolute path — Vally does not currently expand
       # ${USERPROFILE} / env vars in env.git.source. Adjust per machine

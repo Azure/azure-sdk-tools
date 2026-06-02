@@ -4,7 +4,7 @@
   exists and is reasonably fresh.
 
 .DESCRIPTION
-  Used as a pre-run step by the Vally live-eval wrapper (Run-LiveEvals.ps1).
+  Run this before invoking the e2e suite (vally eval --suite e2e).
   Maintains a cache clone that Vally's `environment.git.source` points at,
   so individual eval YAMLs don't need a pre-existing checkout.
 

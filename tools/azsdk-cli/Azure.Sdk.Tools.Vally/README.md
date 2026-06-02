@@ -80,7 +80,7 @@ Still hermetic (no `environment.git`), but the agent must invoke 2+ MCP tools in
 
 #### `evals/e2e/` — live end-to-end (1)
 
-Drives the real MCP server inside a real `azure-rest-api-specs` worktree. Slow; run via [`Run-LiveEvals.ps1`](Run-LiveEvals.ps1) (auto-primes a per-user cache via [`evals/setup/ensure-specs-clone.ps1`](evals/setup/ensure-specs-clone.ps1)).
+Drives the real MCP server inside a real `azure-rest-api-specs` worktree. Slow; prime a per-user clone first via [`evals/setup/ensure-specs-clone.ps1`](evals/setup/ensure-specs-clone.ps1) (auto-refreshes every 24h).
 
 | Scenario | Area | Shape |
 |---|---|---|
@@ -111,7 +111,6 @@ tracks the migration in
 ```
 Azure.Sdk.Tools.Vally/
 ├── .vally.yaml                # Vally config (environments + suites)
-├── Run-LiveEvals.ps1          # Wrapper for the e2e tier (primes spec-repo cache)
 ├── evals/
 │   ├── unit/                  # tier 1: single-tool, hermetic, fast
 │   ├── integration/           # tier 2: multi-tool chains, hermetic
@@ -165,13 +164,12 @@ Run a single eval:
 & $vally eval --eval-spec evals/unit/check-public-repo.eval.yaml
 ```
 
-Run the live e2e tier (auto-primes a per-user clone of
-`azure-rest-api-specs`; refreshes every 24h):
+Run the live e2e tier (first, prime a per-user clone of
+`azure-rest-api-specs`; the helper refreshes it every 24h):
 
 ```powershell
-./Run-LiveEvals.ps1                              # default: release-planner-e2e
-./Run-LiveEvals.ps1 -VallyVerbose                # with verbose output
-./Run-LiveEvals.ps1 -EvalSpecs evals/e2e/foo.eval.yaml,evals/e2e/bar.eval.yaml
+./evals/setup/ensure-specs-clone.ps1
+& $vally eval --suite e2e
 ```
 
 ## Adding a new scenario

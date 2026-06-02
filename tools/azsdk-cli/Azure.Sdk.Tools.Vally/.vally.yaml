@@ -44,7 +44,7 @@ suites:
     description: Multi-tool chained evals; hermetic. Still suitable for PR gate.
     evals: ["evals/integration/*.eval.yaml"]
   e2e:
-    description: Live end-to-end against real MCP + real azure-rest-api-specs clone. Use Run-LiveEvals.ps1.
+    description: Live end-to-end against real MCP + real azure-rest-api-specs clone. Prime the clone first with evals/setup/ensure-specs-clone.ps1.
     evals: ["evals/e2e/*.eval.yaml"]
 
   # ---- composite suites ----

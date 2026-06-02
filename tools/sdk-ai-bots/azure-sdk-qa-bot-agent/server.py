@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 
 load_dotenv(override=False)
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Header, HTTPException, Request
 from models.chat import ChatRequest, ChatResponse
 from models.conversation import ConversationMessage, SaveConversationMessageResponse
 from models.feedback import FeedbackRequest, FeedbackResponse
@@ -231,6 +231,73 @@ async def _update_thread_memory(message: ConversationMessage) -> None:
             message.id,
             exc_info=True,
         )
+
+
+# --------------------------------------------------------------------------- #
+# GraphRAG admin endpoints
+# --------------------------------------------------------------------------- #
+# These let the knowledge-graph-sync project tell the bot "I've just
+# published a fresh build — please reload from blob" without restarting
+# the pod. See utils/knowledge_graph.py for the atomic swap mechanics.
+#
+# Auth: a shared secret header (``X-Admin-Token``) is checked against the
+# ``GRAPHRAG_ADMIN_TOKEN`` value loaded from App Configuration.
+# The sync job reads the same secret and includes it in the POST.
+
+
+def _verify_admin_token(token: str | None) -> None:
+    """Raise 401/503 if the supplied admin token doesn't match the
+    configured ``GRAPHRAG_ADMIN_TOKEN``.
+
+    Treats an empty configured secret as "endpoint disabled" (returns
+    503) — never authorise unauthenticated reloads even by accident.
+    """
+    expected = app_config.get("GRAPHRAG_ADMIN_TOKEN", "")
+    if not expected:
+        raise HTTPException(
+            status_code=503,
+            detail="GraphRAG admin endpoint disabled (GRAPHRAG_ADMIN_TOKEN not configured)",
+        )
+    if not token or token != expected:
+        raise HTTPException(status_code=401, detail="invalid admin token")
+
+
+@app.post("/admin/graphrag/reload")
+async def admin_graphrag_reload(
+    x_admin_token: str | None = Header(default=None, alias="X-Admin-Token"),
+):
+    """Atomically reload the GraphRAG parquets from the configured blob source.
+
+    In-flight DRIFT queries keep their captured DataFrame snapshot and
+    finish against the old data; subsequent queries see the new data.
+    On failure the prior build remains active.
+    """
+    _verify_admin_token(x_admin_token)
+    from utils.knowledge_graph import get_knowledge_graph_service
+
+    service = get_knowledge_graph_service()
+    if not service.enabled:
+        raise HTTPException(
+            status_code=409, detail="GraphRAG service is disabled (no source configured)"
+        )
+    try:
+        status = await service.reload()
+    except Exception as exc:
+        logger.exception("GraphRAG reload failed")
+        raise HTTPException(status_code=500, detail=f"reload failed: {exc}") from exc
+    logger.info("GraphRAG reload succeeded: %s", status.get("version"))
+    return status
+
+
+@app.get("/admin/graphrag/status")
+async def admin_graphrag_status(
+    x_admin_token: str | None = Header(default=None, alias="X-Admin-Token"),
+):
+    """Return the currently-loaded GraphRAG build metadata."""
+    _verify_admin_token(x_admin_token)
+    from utils.knowledge_graph import get_knowledge_graph_service
+
+    return get_knowledge_graph_service().get_status()
 
 
 if __name__ == "__main__":

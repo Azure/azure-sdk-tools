@@ -1,0 +1,62 @@
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-graph-sync/
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-graph-sync/
+
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    Use1ESOfficial: false
+    stages:
+      - stage: "AzureSDKQABot_KnowledgeGraphSync_CI"
+        jobs:
+          - job: "AzureSDKQABot_KnowledgeGraphSync_CI"
+            displayName: "Run Knowledge Graph Sync CI"
+
+            variables:
+              - template: /eng/pipelines/templates/variables/globals.yml
+              - template: /eng/pipelines/templates/variables/image.yml
+
+            pool:
+              name: "$(LINUXPOOL)"
+              image: "$(LINUXVMIMAGE)"
+              os: linux
+
+            steps:
+              - task: UsePythonVersion@0
+                displayName: "Use Python 3.11"
+                inputs:
+                  versionSpec: '3.11'
+
+              - script: |
+                  python --version
+                  pip --version
+                displayName: "Show Python version"
+
+              - script: |
+                  pip install -e ".[dev]"
+                displayName: "Install dependencies"
+                workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-graph-sync
+
+              - script: |
+                  python -m pytest tests/ --junitxml=pytest-report.xml -v
+                displayName: "Run Tests"
+                workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-graph-sync
+
+              - task: PublishTestResults@2
+                condition: succeededOrFailed()
+                inputs:
+                  testResultsFiles: 'tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-graph-sync/pytest-report.xml'
+                  testRunTitle: 'Knowledge Graph Sync tests'
+                displayName: 'Publish test results'

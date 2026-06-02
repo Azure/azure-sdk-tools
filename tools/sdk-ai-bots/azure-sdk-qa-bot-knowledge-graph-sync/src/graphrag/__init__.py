@@ -1,0 +1,1 @@
+"""GraphRAG indexing sub-package."""

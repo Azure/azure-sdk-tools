@@ -33,6 +33,7 @@ from opentelemetry import trace as otel_trace
 import config.app_config as app_config
 from config.app_config import get as cfg
 from tools.knowledge_tools import KnowledgeTools
+from tools.graph_knowledge_tools import GraphKnowledgeTools
 from tools.web_tools import WebTools
 from tools.ado_mcp_tools import create_ado_mcp_tool
 from tools.github_mcp_tools import create_github_mcp_tool
@@ -90,14 +91,37 @@ async def main() -> None:
 
     # Init Tools (synchronous / instant)
     knowledge_tools = KnowledgeTools()
+    graph_knowledge_tools = GraphKnowledgeTools()
     web_tools = WebTools()
     pipeline_tools = PipelineTools()
     web_search_tool = agent_client.get_web_search_tool(
         search_context_size="medium",
     )
 
+    # KNOWLEDGE_TOOL_MODE selects which knowledge-retrieval tool to expose
+    # to the agent. Accepted values (case-insensitive):
+    #   "vector" (default) — Azure AI Search-backed `search_knowledge_base`.
+    #   "graph"            — GraphRAG DRIFT-search `search_knowledge_graph`.
+    knowledge_tool_mode = cfg("KNOWLEDGE_TOOL_MODE", "vector").strip().lower()
+    if knowledge_tool_mode == "graph":
+        knowledge_tool_choice = graph_knowledge_tools.search_knowledge_graph
+    else:
+        if knowledge_tool_mode != "vector":
+            logger.warning(
+                "KNOWLEDGE_TOOL_MODE=%r is not recognised "
+                "(expected 'vector' or 'graph'); falling back to 'vector'.",
+                knowledge_tool_mode,
+            )
+            knowledge_tool_mode = "vector"
+        knowledge_tool_choice = knowledge_tools.search_knowledge_base
+    logger.info(
+        "Knowledge tool registration: mode=%s, tool=%s",
+        knowledge_tool_mode,
+        getattr(knowledge_tool_choice, "__name__", repr(knowledge_tool_choice)),
+    )
+
     tools = [
-        knowledge_tools.search_knowledge_base,
+        knowledge_tool_choice,
         web_tools.web_fetch,
         pipeline_tools.azsdk_analyze_pipeline,
         web_search_tool,

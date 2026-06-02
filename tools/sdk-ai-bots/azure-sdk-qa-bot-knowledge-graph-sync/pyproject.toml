@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "azure-sdk-qa-bot-knowledge-graph-sync"
+version = "1.0.0"
+description = "Knowledge graph sync pipeline for Azure SDK QA Bot — processes documentation and builds knowledge graph using GraphRAG"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "azure-identity>=1.20.0",
+    "azure-storage-blob>=12.20.0",
+    "azure-search-documents>=11.6.0",
+    "azure-appconfiguration>=1.6.0",
+    "azure-keyvault-secrets>=4.9.0",
+    "openai>=1.0.0",
+    "graphrag>=3.1.0",
+    "python-dotenv>=1.0.0",
+    "pyyaml>=6.0",
+    "wcmatch>=8.5",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+]
+
+[project.scripts]
+sync-knowledge-graph = "src.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+testpaths = ["tests"]
+asyncio_mode = "auto"

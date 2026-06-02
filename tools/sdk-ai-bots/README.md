@@ -48,6 +48,15 @@ A quality assurance system that continuously monitors and evaluates the performa
 
 A standalone TypeScript application that processes documentation from various repositories and maintains the knowledge base. It clones repositories, processes markdown files and TypeSpec Spector test files, uploads processed content to Azure Blob Storage, and updates the Azure AI Search index. This service maintains change detection for efficient processing and serves as the primary knowledge management component for the system.
 
+### 7. Knowledge Graph Sync (`azure-sdk-qa-bot-knowledge-graph-sync/`)
+
+A Python application that extends the knowledge sync pipeline with a knowledge graph layer built using [Microsoft GraphRAG](https://github.com/microsoft/graphrag). It performs the same documentation sync as the TypeScript service (ported to Python), then additionally:
+
+- Extracts entities (decorators, patterns, APIs, services, etc.) and relationships from documentation
+- Detects communities of related concepts via hierarchical clustering
+- Uploads the graph to Azure Cosmos DB for entity-aware retrieval at query time
+- Supports **incremental indexing** — only re-processes documents that changed in the current sync run
+
 ## Knowledge Sources
 
 The bot provides intelligent responses by searching through comprehensive knowledge bases including:
@@ -63,7 +72,7 @@ The bot provides intelligent responses by searching through comprehensive knowle
 
 - **Node.js**: Version 20+
 - **Go**: Version 1.23+ (for backend service)
-- **Python**: Version 3.10+ (for evaluation framework)
+- **Python**: Version 3.11+ (for knowledge graph sync and evaluation framework)
 - **Azure Subscription**: For deploying cloud resources
 - **Teams Toolkit**: For Teams app development and deployment
 
@@ -101,6 +110,14 @@ npm install
 npm start
 ```
 
+#### Knowledge Graph Sync (Python)
+
+```bash
+cd azure-sdk-qa-bot-knowledge-graph-sync
+pip install -e ".[dev]"
+sync-knowledge-graph
+```
+
 #### Shared Library
 
 ```bash
@@ -125,7 +142,7 @@ To run evaluations, see: [azure-sdk-qa-bot-evaluation/README.md](./azure-sdk-qa-
 
 ### Documentation Sources
 
-Add new documentation sources by updating the knowledge configuration. The Knowledge Sync Service uses `azure-sdk-qa-bot-knowledge-sync/config/knowledge-config.json`. See [Self-Serve Knowledge Sources Guide](docs/SELF_SERVE_ADD_KNOWLEDGE_SOURCES.md) for detailed instructions.
+Add new documentation sources by updating the knowledge configuration. Both the Knowledge Sync Service and Knowledge Graph Sync use `config/knowledge-config.json` in their respective directories. See [Self-Serve Knowledge Sources Guide](docs/SELF_SERVE_ADD_KNOWLEDGE_SOURCES.md) for detailed instructions.
 
 ### Environment Variables
 

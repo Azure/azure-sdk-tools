@@ -211,6 +211,27 @@ Click the trace, it returns all log records for that request — credential acqu
 You can also click **View timeline** to see the span timeline view, which shows the same `HostedAgents-*` → Chat → Execute Tool hierarchy as the Foundry Traces detail (Step 3).
 ![Application Insights timeline view](images/tracing_step4_app_insights_timeline.png)
 
+## GraphRAG Admin Endpoints
+
+When `KNOWLEDGE_TOOL_MODE=graph`, the bot serves graph-augmented answers from parquet artefacts produced by the [knowledge-graph-sync](../azure-sdk-qa-bot-knowledge-graph-sync/README.md) job. Two HTTP endpoints let the sync job hand off a freshly-built snapshot without restarting the bot:
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /admin/graphrag/status` | Returns the currently-loaded build metadata (manifest, row counts, source). |
+| `POST /admin/graphrag/reload` | Atomically reloads parquets from blob; in-flight DRIFT queries keep their snapshot. |
+
+Both endpoints require `X-Admin-Token: <GRAPHRAG_ADMIN_TOKEN>`. If the token is not configured the endpoints respond `503 Service Unavailable` — never authorise unauthenticated reloads.
+
+The sync job posts to `/admin/graphrag/reload` after publishing a new snapshot to blob (see the sync project's `PUBLISH_GRAPHRAG_OUTPUT` workflow). A failed POST is logged and ignored — the bot will still pick up the new build on its next cold start by reading `<container>/<prefix>/latest.json`.
+
+Relevant env vars:
+
+| Variable | Description |
+|----------|-------------|
+| `KNOWLEDGE_TOOL_MODE` | `vector` (default) or `graph`. |
+| `GRAPHRAG_OUTPUT_BLOB_CONTAINER` | Blob container that holds parquets + `latest.json` at its root. |
+| `GRAPHRAG_ADMIN_TOKEN` | Shared secret required by the admin endpoints. |
+
 ## Project Structure
 
 - `agents/` - Agent definition, instructions, and tool implementations

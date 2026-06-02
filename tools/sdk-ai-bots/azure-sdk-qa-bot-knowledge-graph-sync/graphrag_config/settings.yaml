@@ -1,0 +1,54 @@
+# GraphRAG Configuration — Azure SDK QA Bot Knowledge Graph
+# Only non-default settings are specified here.
+# See https://microsoft.github.io/graphrag/config/yaml/ for all options.
+
+completion_models:
+  default_completion_model:
+    model_provider: azure
+    model: gpt-5.4
+    auth_method: azure_managed_identity
+    api_base: ${AOAI_CHAT_COMPLETIONS_ENDPOINT}
+    api_version: "2024-12-01-preview"
+    cognitive_services_endpoint: https://cognitiveservices.azure.com/.default
+
+embedding_models:
+  default_embedding_model:
+    model_provider: azure
+    model: text-embedding-3-small
+    auth_method: azure_managed_identity
+    api_base: ${AOAI_CHAT_COMPLETIONS_ENDPOINT}
+    api_version: "2024-12-01-preview"
+    cognitive_services_endpoint: https://cognitiveservices.azure.com/.default
+    # Throttle to stay under Sweden Central S0 embedding limits (350 RPM / 350K TPM nominal,
+    # but bursts trigger 429s). Keep healthy headroom.
+    rate_limit:
+      type: sliding_window
+      period_in_seconds: 60
+      requests_per_period: 60
+      tokens_per_period: 100000
+    retry:
+      type: exponential_backoff
+      max_retries: 10
+      base_delay: 5.0
+      max_delay: 120.0
+      jitter: true
+
+input:
+  file_type: text
+  base_dir: "input"
+  file_pattern: ".*\\.md$$"
+
+vector_store:
+  type: azure_ai_search
+  url: ${AI_SEARCH_BASE_URL}
+  audience: "https://search.azure.com"
+  index_schema:
+    text_unit_text:
+      index_name: "azuresdkqabot-dev-search-index-text-units"
+      vector_size: 1536
+    entity_description:
+      index_name: "azuresdkqabot-dev-search-index-entities"
+      vector_size: 1536
+    community_full_content:
+      index_name: "azuresdkqabot-dev-search-index-communities"
+      vector_size: 1536

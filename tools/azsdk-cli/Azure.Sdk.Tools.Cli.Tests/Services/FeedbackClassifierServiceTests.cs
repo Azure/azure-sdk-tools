@@ -100,7 +100,10 @@ public class FeedbackClassifierServiceTests
     private static FeedbackItem CreateTestItem(string text, string? id = null)
     {
         var item = new FeedbackItem { Text = text };
-        if (id != null) item.Id = id;
+        if (id != null)
+        {
+            item.Id = id;
+        }
         return item;
     }
 
@@ -124,7 +127,8 @@ public class FeedbackClassifierServiceTests
     {
         var rawOutputHelper = Mock.Of<IRawOutputHelper>();
         var gitHelper = CreateRealGitHelper();
-        var typeSpecHelper = new TypeSpecHelper(gitHelper);
+        var processHelper = new ProcessHelper(new TestLogger<ProcessHelper>(), rawOutputHelper);
+        var typeSpecHelper = new TypeSpecHelper(gitHelper, processHelper);
 
         var copilotClient = new CopilotClient(new CopilotClientOptions
         {

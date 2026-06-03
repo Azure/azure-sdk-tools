@@ -44,10 +44,10 @@ describe('reportStatus', () => {
   let mockPackageData: PackageData;
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     
     const fixedDate = new Date('2022-01-01T00:00:00Z');
-    vi.spyOn(global, 'Date').mockImplementation(() => fixedDate);
+    vi.spyOn(global, 'Date').mockImplementation(function() { return fixedDate; });
 
     mockLogger = {
       log: vi.fn(),

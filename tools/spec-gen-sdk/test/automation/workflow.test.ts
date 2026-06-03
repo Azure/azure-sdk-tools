@@ -118,7 +118,7 @@ describe('workflow', () => {
       output: [],
     };
 
-    vi.mocked(CommentCaptureTransport).mockImplementation(() => mockCommentCaptureTransport);
+    vi.mocked(CommentCaptureTransport).mockImplementation(function() { return mockCommentCaptureTransport; });
 
     mockSdkAutoContext = {
       config: {

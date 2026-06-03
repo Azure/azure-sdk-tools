@@ -126,7 +126,7 @@ export class ThinkingHandler {
       return answer;
     }
 
-    let footer = `💡 If you have follow-up questions after my response, please @Azure SDK Q&A Bot to continue the conversation.`;
+    const footerParts: string[] = [];
 
     if (routeTenant) {
       try {
@@ -136,8 +136,7 @@ export class ThinkingHandler {
         } else {
           const displayName = tenant.channel_name || routeTenant;
           const channelLink = tenant.channel_link ? `[${displayName}](${tenant.channel_link})` : `${displayName}`;
-          const redirectText = `💬 Not resolved? Please re-post in the 👉 ${channelLink} channel where our domain experts can provide a deeper dive.`;
-          footer = `${redirectText}\n\n${footer}`;
+          footerParts.push(`💬 Not resolved? Please re-post in the 👉 ${channelLink} channel where our domain experts can provide a deeper dive.`);
         }
       } catch (error) {
         logger.error(`Failed to get tenant info for route_tenant: ${routeTenant}`, { error: error.message, meta: this.meta });
@@ -147,11 +146,14 @@ export class ThinkingHandler {
     // Show TypeSpec skill promo when the effective tenant is the TypeSpec channel (or the default channel for backward compatibility)
     const effectiveTenant = routeTenant ?? currentChannelTenant;
     if (effectiveTenant === KnownTenants.TypeSpec || effectiveTenant === KnownTenants.Default) {
-      const typeSpecSkillPromo = `🚀 **Try the Azure TypeSpec Author skill** to write API specifications in TypeSpec! Check out the Quick Start and samples [here](https://azure.github.io/typespec-azure/docs/getstarted/typespec-authoring-skill/).`;
-      footer = `${footer}\n\n${typeSpecSkillPromo}`;
+      footerParts.push(`🚀 **Try the Azure TypeSpec Author skill** to write API specifications in TypeSpec! Check out the Quick Start and samples [here](https://azure.github.io/typespec-azure/docs/getstarted/typespec-authoring-skill/).`);
     }
 
-    return `${answer}\n\n---\n\n${footer}`;
+    if (footerParts.length === 0) {
+      return answer;
+    }
+
+    return `${answer}\n\n---\n\n${footerParts.join('\n\n')}`;
   }
 
   private async startCore(resourceId: string) {

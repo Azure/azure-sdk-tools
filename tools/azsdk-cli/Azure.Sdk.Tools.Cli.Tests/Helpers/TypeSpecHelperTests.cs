@@ -21,7 +21,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             gitHubService = new Mock<IGitHubService>();
             var gitCommandHelper = new GitCommandHelper(NullLogger<GitCommandHelper>.Instance, Mock.Of<IRawOutputHelper>());
             gitHelper = new GitHelper(gitHubService.Object, gitCommandHelper, logger);
-            typeSpecHelper = new TypeSpecHelper(gitHelper);
+            var processHelper = new ProcessHelper(new TestLogger<ProcessHelper>(), Mock.Of<IRawOutputHelper>());
+            typeSpecHelper = new TypeSpecHelper(gitHelper, processHelper);
         }
 
         [Test]
@@ -33,6 +34,22 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             testCodeFilePath = "TypeSpecTestData/specification/testcontoso";
             result = typeSpecHelper.IsValidTypeSpecProjectPath(testCodeFilePath);
             Assert.That(result, Is.False);
+        }
+
+        [Test]
+        public void Verify_IsValidTypeSpecProject_with_tspconfig_path()
+        {
+            var configPath = "TypeSpecTestData/specification/testcontoso/Contoso.Management/tspconfig.yaml";
+            Assert.That(typeSpecHelper.IsValidTypeSpecProjectPath(configPath), Is.True);
+            Assert.That(typeSpecHelper.IsValidTypeSpecProjectPath(Path.GetFullPath(configPath)), Is.True);
+        }
+
+        [Test]
+        public void Test_GetTypeSpecProjectRelativePath_strips_tspconfig_filename()
+        {
+            var configPath = "TypeSpecTestData/specification/testcontoso/Contoso.Management/tspconfig.yaml";
+            var result = typeSpecHelper.GetTypeSpecProjectRelativePath(configPath);
+            Assert.That(result, Is.EqualTo("specification/testcontoso/Contoso.Management"));
         }
 
         [TestCase("https://github.com/Azure/azure-rest-api-specs/blob/main/specification/dell/Dell.Storage.Management")]
@@ -111,7 +128,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         public async Task Test_IsRepoPathForSpecRepo(Uri repo)
         {
             var gitHelper = CreateGitHelper(repo);
-            var helper = new TypeSpecHelper(gitHelper);
+            var processHelper = new ProcessHelper(new TestLogger<ProcessHelper>(), Mock.Of<IRawOutputHelper>());
+            var helper = new TypeSpecHelper(gitHelper, processHelper);
             Assert.That(await helper.IsRepoPathForSpecRepoAsync("unused because of mock"), "is a specs repo (public or private)");
         }
 
@@ -123,7 +141,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         [Test]
         public async Task Test_IsRepoPathForPublicSpecRepo(Uri repo)
         {
-            var helper = new TypeSpecHelper(CreateGitHelper(repo));
+            var processHelper = new ProcessHelper(new TestLogger<ProcessHelper>(), Mock.Of<IRawOutputHelper>());
+            var helper = new TypeSpecHelper(CreateGitHelper(repo), processHelper);
             Assert.That(!await helper.IsRepoPathForPublicSpecRepoAsync("unused because of the mock"), "not the public specs repo");
         }
 

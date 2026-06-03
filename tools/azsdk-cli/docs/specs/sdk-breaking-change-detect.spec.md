@@ -341,7 +341,7 @@ changelog
         {
             "breakingchange": "Property type changed from int to string",
             "category": "typespec change",
-            "mitigation": "Locate the model property and use `@@alternateType` to change the property type back to the constant string. ```tsp\n@@alternateType(ContainerRegistry.Prop, string, "go");```"
+            "mitigation": "Locate the model property and use `@@alternateType` to change the property type back to the constant string. ```tsp\n@@alternateType(ContainerRegistry.Prop, string, \"go\");```"
         }
     ]
 }

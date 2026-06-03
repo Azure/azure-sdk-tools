@@ -7,7 +7,8 @@
   - [Definitions](#definitions)
   - [Background / Problem Statement](#background--problem-statement)
     - [Current State](#current-state)
-      - [Manual SDK breaking change detection is time-consuming, error-prone and unreliable](#manual-sdk-breaking-change-detection-is-time-consuming-error-prone-and-unreliable)
+      - [Current SDK breaking change Review Challenge](#current-sdk-breaking-change-review-challenge)
+      - [Inefficient SDK breaking change mitigation workflow](#inefficient-sdk-breaking-change-mitigation-workflow)
       - [Delayed Spec PR merge and SDK release](#delayed-spec-pr-merge-and-sdk-release)
     - [Why This Matters](#why-this-matters)
   - [Goals and Exceptions/Limitations](#goals-and-exceptionslimitations)
@@ -51,24 +52,35 @@
 
 ### Current State
 
-#### Manual SDK breaking change detection is time-consuming, error-prone and unreliable
+#### Current SDK breaking change Review Challenge
 
-Service teams and SDK teams spend significant manual effort detecting and mitigating SDK breaking changes, yet the manual detecting process is time-consuming and remains unreliable — changes are often missed or incorrectly resolved, degrading overall SDK quality. The process is challenging for several reasons:
+The current SDK breaking change review process places a heavy burden on SDK owners. For every Spec PR, SDK reviewers are required to manually go through all SDK changes to detect SDK breaking changes and determine their root causes. In practice, this is difficult and time-consuming because the changelog output does not clearly explain what actual SDK breaking change is and why a breaking change happened.
 
-- **Complex SDK breaking change analysis**: Teams must run the changelog tool, then review each changelog item individually to identify SDK breaking changes and determine whether a SDK breaking change is caused by a TypeSpec change, an emitter change, typespec conversion, or another cause. This requires deep knowledge of both the SDK emitter and the language-specific SDK conventions for each target language.
-  
-  For example, this is changelog entry of GO SDK:
-  Function `*AccountsClient.BeginUpdate` parameter(s) have been changed from `(context.Context, string, AccountUpdateRequest, *AccountsClientBeginUpdateOptions)` to `(context.Context, string, AccountPatch, *AccountsClientBeginUpdateOptions)`
+- **Hard to detect SDK breaking change and its root cause**
+    SDK owners must manually analyze individual changelog entries and correlate multiple entries to identify SDK breaking changes and map them back to underlying TypeSpec changes, emitter behavior, or conversion differences. This requires deep cross-layer knowledge and often involves guesswork, making it difficult to quickly pinpoint both the actual SDK breaking change and its root cause.
 
-  From this entry alone, it is difficult to determine which interface and operation have the breaking change; accurate interpretation requires considering Go SDK language-specific convertion rules to identify that this maps to the LRO `Update` operation under the `Account` interface.
+    **Example 1:**
+    if one entry shows `struct A` was removed and another shows `struct B` was added, additional entries — such as an operation's parameter type changing from `A` to `B` — must be examined together to correctly conclude that model `A` was renamed to `B`. Without this correlated analysis, an SDK owner may incorrectly conclude that the breaking change is simply "model A was removed."
 
-- **Correlated changelog entries**: Multiple changelog entries must be correlated and analyzed together to correctly identify a single SDK breaking change, making detection both complex and error-prone.
-  
-  For example, if one entry shows `struct A` was removed and another shows `struct B` was added, additional entries — such as an operation's parameter type changing from `A` to `B` — must be examined together to correctly conclude that model `A` was renamed to `B`.
+    **Example 2:**
+    this is changelog entry of GO SDK: Function `*AccountsClient.BeginUpdate` parameter(s) have been changed from `(context.Context, string, AccountUpdateRequest, *AccountsClientBeginUpdateOptions)` to `(context.Context, string, AccountPatch, *AccountsClientBeginUpdateOptions)`
+    From this entry alone, it is difficult to determine which interface and operation have the breaking change; accurate interpretation requires considering Go SDK language-specific convertion rules to identify that this maps to the LRO `Update` operation under the `Account` interface. Without correctly detect the breaking target and root cause, SDK owner cannot conduct a mitigation to resolve the breaking change.
 
-- **Large volume of changelog items**: The number of changelog items can be substantial, particularly for TypeSpec projects recently migrated from Swagger. Service teams and SDK teams must spend significant time analyzing these changelogs to identify SDK breaking changes.
-  
-- **Difficult classification**: Accurate classification of an SDK breaking change is critical for determining the correct resolution — whether to accept, mitigate, or escalate it. However, classification is non-trivial: it requires understanding the TypeSpec project code, the project's migration status, and the nature of the change itself to determine whether it stems from a spec change, an emitter change, or a conversion difference.
+- **Time-consuming manual review process**
+    The current process requires reviewing each changelog item individually and correlating multiple entries to understand a single SDK breaking change. This significantly slows down PR review and increases the likelihood of missing or misinterpreting issues.
+
+#### Inefficient SDK breaking change mitigation workflow
+
+Today, SDK breaking change mitigation is not effectively integrated into the review process and is often deferred to later stages.
+
+- **Approval without actionable mitigation guidance**
+    In practice, SDK owners typically approve Spec PRs as long as the detected breaking changes are understood and considered “expected.” However, determining how to mitigate these breaking changes at review time requires significant additional effort. This makes it inefficient for reviewers to go beyond validation and proactively provide mitigation guidance during the review phase.
+
+- **Mitigation happens too late (during SDK release)**
+    Because mitigation is not addressed early, service teams often only tackle SDK breaking changes when they begin SDK generation and release workflows. At this point, resolving issues requires revisiting the TypeSpec definitions and reworking prior decisions.
+
+- **Back-and-forth across repos and stages**
+    This leads to repeated iteration between Spec/TypeSpec and SDK repos — updating TypeSpec, regenerating SDKs, and re-validating changes. The lack of early, guided mitigation results in a fragmented workflow and unnecessary back-and-forth across stages.
 
 #### Delayed Spec PR merge and SDK release
 
@@ -94,9 +106,10 @@ Reviewing and resolving SDK breaking changes is a required step for Spec PR merg
 
 What are we trying to achieve with this design?
 
-- [ ] detect and classify SDK breaking changes according to the SDK breaking changes policy for each language, and identify which breaking change is resolvable.
-- [ ] align with the SDK breaking change policy for each language
-- [ ] integrate SDK breaking change detection into Spec PR and SDK PR workflows.
+- [ ] Provide structured changelog analysis that correlates entries to detect actual SDK breaking changes and explains the root cause of each SDK breaking change by mapping it back to TypeSpec, emitter behavior, or conversion differences.
+- [ ] Generate actionable mitigation suggestions for each SDK breaking change, including concrete guidance on how to resolve it during the authoring phase and the Spec pr phase.
+- [ ] Enable early mitigation by shifting SDK breaking change detection and resolution into the Spec authoring and PR review process instead of deferring to SDK release.
+- [ ] Integrate SDK breaking change detection, analysis, and mitigation guidance into both Spec PR and SDK PR workflows to reduce manual effort and avoid late-stage rework.
 
 #### Language-Specific Limitations
 
@@ -138,11 +151,13 @@ A changelog-breakingchange pattern guide (e.g. https://github.com/Azure/azure-sd
     "breakingchanges": [
         {
             "breakingchange": "model `ResourceInfo` is renamed to `Resource`",
-            "category": "Conversion-need to be resolve"
+            "category": "Conversion-need to be resolve",
+            "mitigation": "Use client customization to rename ```tsp\n@@clientName(Resource, "ResourceInfo", "go");```"
         },
         {
-            "breakingchange": "Type of property `Prop` has been changed from `string` to `int32`",
-            "category": "typespec change"
+            "breakingchange": "Type of property `Prop` of model `ContainerRegistry` has been changed from `string` to `int32`",
+            "category": "typespec change",
+            "mitigation": "Use `@@alternateType` to change the property type back to the constant string. ```tsp\n@@alternateType(ContainerRegistry.Prop, string, "go");```"
         }
     ]
 }
@@ -158,7 +173,7 @@ flowchart TD
     C[Copilot agent detector SDK Breaking Changes and category them]
     D[SDK Breaking Change Result]
     E[SDK changelogOrRevapi-breakingChange pattern]
-    F[SDK changelog/ Revapi]
+    F[SDK changelog]
     subgraph SDK Change Analyzer
         A
     end
@@ -336,7 +351,7 @@ Use client customization to restore the original names from the removal entries:
 
 #### Component 3: SDK Breaking change detector
 
-Copilot Agent refer changelogOrRevapi-breakingchange pattern guide to detect the SDK breaking changes and category these SDK breaking changes.
+Copilot Agent refer changelog-breakingchange pattern guide to detect the SDK breaking changes, category these SDK breaking changes and mitigation suggestion if it can be mitigated by typespec customization.
 
 Parse out the actually SDK breaking changes and category them into different categories according to the SDK breaking change root cause.
 
@@ -359,10 +374,12 @@ changelog
         {
             "breakingchange": "model ResourceInfo is renamed to Resource",
             "category": "Conversion-need to be resolve",
+            "mitigation": "Use client customization to rename ```tsp\n@@clientName(Resource, "ResourceInfo", "go");```"
         },
         {
             "breakingchange": "Property type changed from int to string",
             "category": "typespec change",
+            "mitigation": "Locate the model property and use `@@alternateType` to change the property type back to the constant string. ```tsp\n@@alternateType(ContainerRegistry.Prop, string, "go");```"
         }
     ]
 }
@@ -374,7 +391,7 @@ changelog
 The result of the `azsdk_package_detect_breaking_change` tool. It provides an overall assessment of whether the package introduces SDK breaking changes, along with details for each breaking change (breaking-change and category) if any are detected.
 The result is JSON-formatted.
 
-**No Breaking change**
+**No Breaking change:**
 
 ```json
 {
@@ -383,7 +400,7 @@ The result is JSON-formatted.
 }
 ```
 
-**Has Breaking changes**
+**Has Breaking changes:**
 
 ```json
 {
@@ -392,11 +409,13 @@ The result is JSON-formatted.
     "breakingchanges": [
         {
             "breakingchange": "model `ResourceInfo` is renamed to `Resource`",
-            "category": "Conversion-need to be resolve"
+            "category": "Conversion-need to be resolve",
+            "mitigation": "Use client customization to rename ```tsp\n@@clientName(Resource, "ResourceInfo", "go");```"
         },
         {
             "breakingchange": "Type of property `Prop` has been changed from `string` to `int32`",
-            "category": "typespec change"
+            "category": "typespec change",
+            "mitigation": "Locate the model property and use `@@alternateType` to change the property type back to the constant string. ```tsp\n@@alternateType(ContainerRegistry.Prop, string, "go");```"
         }
     ]
 }
@@ -436,6 +455,8 @@ Flow:
 5. Agent invoke `azsdk_customized_code_update` to mitigate breaking changes.
 
 #### Scenario 2: Spec PR automation pipeline and SDK breaking change resolve
+
+Shif-left: Integrate SDK breaking change detection, analysis, and mitigation guidance into both Spec PR to reduce manual effort and avoid late-stage rework.
 
 Flow:
 The end-to-end flow contains two stages:
@@ -508,7 +529,7 @@ flowchart TD
 
     If resolving breaking changes requires SDK code customization (updating SDK source code), should we file an SDK PR to refresh the SDK code now, or defer the SDK code customization to a later SDK release?
 
-The PR owner submits the `client.tsp` changes made in step 6. After the spec PR is updated, the SDK validation pipeline is triggered again. This flow is repeated until no SDK breaking changes are reported, either because the breaking changes have been resolved or explicitly suppressed. The PR owner then adds the `BreakingChange-XXX-sdk-approved` label, and the spec PR is ready to merge.
+The PR owner merge the `client.tsp` changes made in step 6. After the spec PR is updated, the SDK validation pipeline is triggered again. This flow is repeated until no SDK breaking changes are reported, either because the breaking changes have been resolved or explicitly suppressed. The PR owner then adds the `BreakingChange-XXX-sdk-approved` label, and the spec PR is ready to merge.
 
 #### Scenario 3: When release SDK, Resolve SDK breaking changes in SDK repo PR
 

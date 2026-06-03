@@ -17,6 +17,7 @@ public static class CoreRequirements
         new TspRequirement(),
         new PowerShellRequirement(),
         new GitHubCliRequirement(),
+        new CopilotCliRequirement(),
         new LongPathsRequirement(),
         new PythonRequirement(),
         new PipRequirement()
@@ -145,6 +146,24 @@ public static class CoreRequirements
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {
             return ["Download and install from https://cli.github.com/"];
+        }
+    }
+
+    public class CopilotCliRequirement : Requirement
+    {
+        public override string Name => "GitHub Copilot CLI";
+        public override string[] CheckCommand => ["copilot", "--version"];
+        public override string? NotAutoInstallableReason => NotInstallableReasons.SystemTool;
+
+        public override string? Reason =>
+            "Required for SDK code customization, sample generation, and README generation workflows.";
+
+        public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
+        {
+            return [
+                "Install the GitHub Copilot CLI: https://docs.github.com/en/copilot/how-tos/copilot-cli/install-copilot-cli",
+                "Or set the AZSDK_COPILOT_CLI_PATH environment variable to the path of an existing Copilot CLI executable."
+            ];
         }
     }
 

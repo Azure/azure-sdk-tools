@@ -85,6 +85,7 @@ internal class VerifySetupServiceTests
                     { "tsp", "1.0.1" },
                     { "pwsh", "PowerShell 7.2.0" },
                     { "gh", "gh version 2.30.0" },
+                    { "copilot", "0.1.26" },
                     { "python", "Python 3.9.0" },
                     { "pip", "pip 24.0" },
                     { "java", "java 17.0.1" },
@@ -571,5 +572,18 @@ internal class VerifySetupServiceTests
 
         Assert.That(result.IsFixable, Is.False);
         Assert.That(result.HasBlockingFailures, Is.False);
+    }
+
+    [Test]
+    public async Task VerifySetup_Fails_WhenCopilotCliNotFound()
+    {
+        SetupFailedProcessMock("copilot", 1, "copilot: command not found");
+        RecreateService();
+
+        var result = await verifySetupService.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Python }, "/test/path/python");
+
+        Assert.That(result.Results, Is.Not.Null.And.Not.Empty);
+        Assert.That(result.Results!.Any(r => r.Requirement.Contains("Copilot")), Is.True);
+        Assert.That(result.ResponseError, Is.Null);
     }
 }

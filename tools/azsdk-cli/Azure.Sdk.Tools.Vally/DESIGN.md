@@ -16,44 +16,66 @@ in the right order, with the right arguments, and returns the right answer.
 
 ## 1. Layering
 
-### 1.1 How many layers, and why
+### 1.1 Three levels of testing
 
-Two layers, in one place. They are **not** two separate projects — they are
-two sub-folders under [`evals/`](./evals/) plus matching suites in
-[`.vally.yaml`](./.vally.yaml). Skill-only dispatch ("does prompt X route to
-skill Y?") is **not** a tier here — it lives next to the skill in
-`.github/skills/<skill>/evals/` (see §1.2).
+Aligned with the 2026-06 design review. Three named levels,
+differentiated by **what they exercise** and **what backend they hit**:
+
+| Level | Name | What it proves | Agent | MCP | Lives in |
+|---|---|---|---|---|---|
+| 0 | **Routing evals** | Prompt X routes to skill Y | live | none (no MCP server) | `.github/skills/<skill>/evals/` |
+| 1 | **Workflow scenarios (mock)** | Agent picks the right skills, calls the right tools in the right order with the right args, returns the right answer | live | **mock** | `evals/scenarios/` *(default)* |
+| 2 | **Live scenarios** | Same as level 1, but against the real backend — catches drift the mock can't see (TypeSpec ordering, real codegen output, real DevOps state) | live | **live** | `evals/scenarios/` + `tags: { live-safe: "true" }` |
+
+Plus a hermetic tool-shape layer that isn't agent-driven:
+
+| | Name | What it proves | Lives in |
+|---|---|---|---|
+| — | **Unit evals** | "Tool X exists and returns the right shape for these inputs." Cross-skill trigger tables. | `evals/unit/` |
+
+**Mock is the default. Live is the exception.** Both modes drive the
+same live agent (LLM), so **both incur agent token cost**; the mock
+itself is a deterministic C# stub with no LLM inside it. The cost delta
+between mock and live is on three other axes:
+
+1. **Wall time.** Real backends (DevOps, codegen pipelines, GitHub) add
+   seconds-to-minutes per tool call; the mock returns instantly.
+2. **Backend side effects + quota.** Live hits real ADO work items,
+   real pipeline runs, real PRs. Mock does none of that.
+3. **Agent turn count (indirect token cost).** Real tool responses are
+   larger and more variable, which expands per-turn input and provokes
+   more retry / polling turns. The headline 1.78M tokens on the live
+   release-planner-e2e run is mostly this effect, not the mock saving
+   tokens directly.
+
+Reviewer framing, paraphrased: *live MCP incurs significant token cost, so
+most testing — including release plan and SDK generation — should use
+mock; live is reserved for scenarios mock can't deterministically cover.*
+The "token cost" pointed at there is (3) above plus the wall-time fan-out,
+not a claim that the mock is free.
 
 ```
 evals/
-├── unit/            tier 1: cross-skill tool triggers + single-tool happy path
-├── scenarios/      tier 2: multi-tool agent flows (mock OR live, same YAML)
-├── setup/          shared fixture scripts (specs clone, etc.)
+├── unit/            tool-shape + cross-skill triggers (hermetic)
+├── scenarios/      level 1 by default; level 2 when tagged live-safe
+├── setup/          shared fixture scripts (repo clone, etc.)
 └── fixtures/       pinned SHAs + per-eval mocks
 ```
 
-| Tier | Folder | Agent? | What it proves | Wall time | Failure semantics |
-|---|---|---|---|---|---|
-| 1 unit | `evals/unit/` | none | "Tool X exists and returns the right shape for these inputs." Cross-skill trigger tables (tools used by ≥2 skills). | < 30s each | **required**, every PR |
-| 2 scenarios | `evals/scenarios/` | **live (gpt-5.x)** | "Agent picks the right skills, calls the right tools in the right order with the right args, and returns the right answer" for a multi-step ask. | depends on env (see below) | depends on env (see below) |
-
-**The key insight: scenarios are environment-agnostic.** A scenario YAML
+**Key property: scenarios are environment-agnostic.** A scenario YAML
 declares the prompt, expected skills, expected tool sequence, and graders
-— nothing about whether MCP is mock or live. The MCP backend is picked at
-run time:
+— nothing about whether MCP is mock or live. Same file, same graders;
+the MCP backend is picked at run time.
 
 | Run mode | MCP | Repos? | When | Coverage | Cost |
 |---|---|---|---|---|---|
-| `scenarios` + `azsdk-mcp-mock` | mock | none | **every PR** | every scenario | ~1m / scenario, ~0 tokens beyond agent |
-| `scenarios` + `azsdk-mcp-live` | live | shallow + sparse | **nightly** | scenarios tagged `live-safe` (curated subset) | 10-20m / scenario, ~2M tokens |
+| Level 1 (workflow / mock) | mock (deterministic stub, no LLM) | none | **every PR** | every scenario | agent tokens only; ~1m / scenario |
+| Level 2 (live) | live (real backends) | shallow + sparse | **nightly** | scenarios tagged `live-safe` (curated subset) | agent tokens + real backend latency + more turns from real responses; 10-20m / scenario, ~2M agent tokens observed |
 
-Same file, same graders — just a different environment binding. A scenario
-like `release-planner` runs on **mock** every PR (catches tool-sequence
-regressions cheaply) **and** on **live** nightly (catches real DevOps
-drift). When the live and mock results disagree, you have an exact bisect:
-the mock lied. That's also how mock coverage gaps surface automatically —
-every scenario that runs on mock forces the mock to grow handlers for the
-tools it exercises (see §4).
+When the live and mock results disagree, the mock lied — exact bisect.
+That's also how mock coverage gaps surface: every scenario that runs on
+mock forces the mock to grow handlers for the tools it exercises
+(see §4).
 
 ### 1.2 Relationship to `.github/skills/*/evals/` — split by ownership
 
@@ -123,7 +145,7 @@ graders:
 | New skill author understands the layout | needs to learn tag filtering | "evals go next to your SKILL.md, like other skills" |
 | Per-skill CI workflow unchanged | needs rewrite | ✓ |
 | Mock vs. live opt-in works for skill evals | ✓ | ✓ (env defined here, referenced from skill eval) |
-| Shanghai team adding cross-skill scenario | unclear (which tag?) | `evals/scenarios/` here |
+| New contributor adding cross-skill scenario | unclear (which tag?) | `evals/scenarios/` here |
 
 
 
@@ -145,16 +167,20 @@ scenarios stay opted out by default.
 ### 1.4 Decision tree for "where does my new eval go?"
 
 ```
-Does it test ONE skill's routing + tools + answer?
-└── yes → .github/skills/<skill>/evals/   (not this project)
+Does it only test that the right skill is picked (no tool calls)?
+└── yes → Level 0: .github/skills/<skill>/evals/   (not this project)
 
 Is it a single-tool shape test or a trigger table covering tools used by ≥2 skills?
 └── yes → evals/unit/
 
 Is it a multi-step / multi-tool agent flow?
 └── yes → evals/scenarios/
-        ├── default: runs against mock on every PR
-        └── add `tags: { live-safe: "true" }` to also run against live nightly
+        ├── Level 1 by default: runs against MOCK on every PR.
+        │   *Use this unless the mock can't faithfully cover the behavior.*
+        └── Level 2: add `tags: { live-safe: "true" }` to ALSO run nightly
+            against live MCP. Reserve for cases where the real backend's
+            behavior matters (TypeSpec ordering, real codegen output,
+            real DevOps state).
 ```
 
 ---
@@ -165,8 +191,8 @@ Is it a multi-step / multi-tool agent flow?
 
 - The skill evals (`.github/skills/**/evals/`) run via
   [`.github/workflows/skill-eval.yml`](../../../.github/workflows/skill-eval.yml).
-- The tool-scenario evals in this project: **run nowhere in CI**. Helen runs
-  them by hand. This is the gap [#15829](https://github.com/Azure/azure-sdk-tools/issues/15829)
+- The tool-scenario evals in this project: **run nowhere in CI**. They run
+  by hand today. This is the gap [#15829](https://github.com/Azure/azure-sdk-tools/issues/15829)
   closes.
 
 ### 2.2 Next (issue #15829)
@@ -426,10 +452,10 @@ Per run, Vally writes:
 Both produced today for the release-planner-e2e run; see
 [`vally-results/2026-06-03T03-06-41-076Z/`](./vally-results/2026-06-03T03-06-41-076Z/).
 
-The gap: `results.jsonl` is great for engineers but useless for Laurent or
-anyone wanting to *see* why a run failed (or what the agent actually did).
+The gap: `results.jsonl` is great for engineers but useless for non-engineer
+stakeholders who want to *see* why a run failed (or what the agent actually did).
 
-### 5.2 What Laurent / non-engineers actually want
+### 5.2 What non-engineer stakeholders actually want
 
 From the meeting: a way to slice/filter results across many runs ("how often
 does the release-planner skill fire in the last 30 nightlies?") and to drill
@@ -453,7 +479,7 @@ trajectory_url, eval_results_url
 file at `vally-results/history.csv` (committed to a separate `vally-history`
 branch or pushed to an Azure Storage container — TBD).
 
-This is the artifact Laurent gets — one file, pivot-table friendly.
+This is the artifact non-engineer stakeholders get — one file, pivot-table friendly.
 
 #### (b) Trajectory viewer — the "what did the agent actually do" layer
 
@@ -497,7 +523,130 @@ If/when upstream Vally adds native CSV / HTML output, drop the scripts.
 
 ---
 
-## 6. Open design questions
+## 6. Performance & cost controls
+
+### 6.1 Principle
+
+The framework must make expensive evals **fail loudly**, not silently bleed
+CI minutes and tokens. An author writing a new scenario should not have to
+know in advance how much it costs; the runner tells them, and refuses to
+keep running it if it crosses policy. Polishing individual scenarios is
+not a substitute for this — it doesn't scale to the next ten authors.
+
+The release-planner e2e run (17 min wall / 1.78M tokens / 41 turns) is the
+existence proof: nothing in the framework today would have stopped it
+landing as a "passing" scenario that quietly costs a full hour of CI per
+nightly trigger.
+
+### 6.2 Budgets and enforcement
+
+Every scenario carries a budget. The runner measures actual cost and
+enforces the budget in three bands:
+
+| Band | Trigger | Effect |
+|---|---|---|
+| Soft (warn) | actual ≥ 50% of budget | Logged + surfaced in `eval-results.md` |
+| Hard (fail) | actual > 100% of budget | Scenario marked **failed**, CI job fails |
+| Kill (abort) | actual > 200% of budget | Run aborted mid-flight, partial trajectory saved |
+
+Budgeted dimensions, in declining order of importance:
+
+1. **`maxTurns`** — single best proxy for cost; bounds the agent loop.
+2. **`maxWallSec`** — protects CI minutes regardless of where time goes.
+3. **`maxBillableTokens`** — input (uncached) + output. Cache hits don't
+   count, so the number tracks real $.
+4. **`maxToolCalls`** — catches exploration spirals.
+
+Defaults are set globally in `.vally.yaml`, overridable per scenario:
+
+```yaml
+# .vally.yaml
+defaults:
+  limits:
+    maxTurns: 20
+    maxWallSec: 120
+    maxBillableTokens: 100_000
+    maxToolCalls: 30
+```
+
+A scenario that *needs* more must opt in explicitly with a comment
+explaining why. The opt-in itself is reviewable in code:
+
+```yaml
+# evals/scenarios/release-planner.eval.yaml
+limits:
+  maxTurns: 60          # multi-step chain; see DESIGN §6.4
+  maxWallSec: 600       # waits on real ADO pipeline status
+  maxBillableTokens: 250_000
+```
+
+If the opt-in budget gets reviewed and rejected, the author's recourse
+is to **switch to mock**, not to widen the budget. This is the lever
+that pushes cost-blind scenarios off the live path.
+
+### 6.3 Tiered policy: PR vs nightly
+
+Budgets differ by tier. The PR gate is the strict one because it runs on
+every push; nightly can be looser because it runs once.
+
+| Tier | maxTurns | maxWallSec | maxBillableTokens | Opt-out |
+|---|---|---|---|---|
+| PR gate (unit + mock) | 20 | 120 | 100k | not allowed |
+| Nightly mock | 30 | 300 | 200k | reviewable |
+| Nightly live | 60 | 600 | 500k | reviewable, requires justification comment |
+
+A scenario that wants to exceed the PR-gate ceiling **must** drop down
+to nightly. The runner refuses to load over-budget scenarios into the
+PR-gate suite. No way to silently land a slow scenario.
+
+### 6.4 General guardrails (framework-level, not per-scenario)
+
+These apply to every scenario the runner executes. None require the
+scenario author to know about them.
+
+| # | Guardrail | Layer | What it prevents |
+|---|---|---|---|
+| G1 | **Hard turn / wall / token / tool-call caps** (§6.2) | runner | Runaway scenarios |
+| G2 | **Virtual clock**: executor intercepts `Start-Sleep` / `Wait-*` / `sleep` and fast-forwards | executor adapter | Wall-time waste on polling loops |
+| G3 | **Tool-result truncation** above N tokens with `…[truncated]` marker | executor adapter | Context blow-up from chatty tool responses |
+| G4 | **Narration / meta-tool suppression**: tools that only echo intent (`report_intent` etc.) stripped from the tool list the model sees | executor config | Doubled turn count from pure-narration calls |
+| G5 | **Polling tools default to terminal state under `AZSDKTOOLS_AGENT_TESTING=true`** (`*_get_*_status` returns `Succeeded` on first poll) | mock MCP policy | Any future polling tool inherits the fix |
+| G6 | **Cheaper judge model** — LLM-judge graders default to a smaller model than the agent | runner config | Judge tokens dominating output cost |
+| G7 | **CI concurrency cancel** — superseded PR runs killed immediately | CI workflow | Wasted compute on rapid pushes |
+| G8 | **Honest cost reporting** — `eval-results.md` splits cached vs billable input and wall time into LLM / tool / wait | results renderer | Headline-token illusions hiding real cost |
+| G9 | **Suite-level cost ceiling** — if any single scenario exceeds 25% of its suite's total budget, suite run fails with a "rebalance" error | runner | One scenario silently dominating the suite |
+
+G2, G3, G4, G6 also have the effect of making per-scenario budgets
+*achievable*. Without them, an honest scenario can blow past `maxTurns`
+just by being routed through a chatty executor.
+
+### 6.5 Where each guardrail lives
+
+| Guardrail | Owner |
+|---|---|
+| G1, G2, G3, G8, G9 | **Upstream Vally** — file as feature requests |
+| G4, G6 | Copilot SDK executor / `.vally.yaml` runner config in this repo |
+| G5 | `Azure.Sdk.Tools.Mock` in this repo |
+| G7 | `.github/workflows/skill-eval.yml` in this repo |
+
+The local guardrails (G4–G7) can land immediately. The upstream
+guardrails (G1–G3, G8, G9) are blocked on Vally; until they ship, we
+approximate G1 with a thin post-run check that reads `results.jsonl`
+and fails the CI step if any scenario exceeded its declared budget.
+
+### 6.6 Author-facing rule of thumb
+
+> **If the agent's loop talks to a real backend that takes more than a
+> few seconds to respond, mock it.** The runner will let you know when
+> you've crossed the line — you don't have to guess.
+
+The budget machinery exists so authors don't need to read this document
+to write a cheap eval. They write the scenario; the runner fails it if
+it costs too much; the CI message points them at the mock path.
+
+---
+
+## 7. Open design questions
 
 1. **Mock auto-generation.** Replace hand-written handlers with a single
    generic handler that synthesizes a response from each tool's JSON

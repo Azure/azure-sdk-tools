@@ -22,8 +22,8 @@ yet assert *skill choice + tool-call shape + ordering* in a single scenario.
 2. Evals are **reproducible**: same SHA, same inputs ⇒ same trajectory.
 3. Evals are **safe by default**: nothing destructive runs against live ADO /
    GitHub on a nightly schedule unless the author opted in.
-4. Evals are **portable**: a new contributor (Shanghai team, Laurent's reviewers)
-   can clone the repo and run any scenario without hand-editing paths.
+4. Evals are **portable**: a new contributor can clone the repo and run any
+   scenario without hand-editing paths.
 5. Evals are **observable**: results are exportable (CSV / JUnit / markdown)
    and consumable by non-engineers.
 
@@ -58,19 +58,36 @@ grader set is limited. Removing that limitation is the #1 ask from the meeting.
 - [microsoft/vally#453](https://github.com/microsoft/vally/issues/453) — `tool-calls` grader: support strict call ordering (`sequence:`).
 - [microsoft/vally#454](https://github.com/microsoft/vally/issues/454) — `tool-calls` grader: open `ToolMatch` for generic argument matching.
 
-### 4.2 Tiered evaluation taxonomy
+### 4.2 Three levels of evaluation
 
-Scenarios fall into two tiers. Trigger cadence and failure semantics follow
-from the tier, not from per-scenario configuration.
+Aligned with the 2026-06 design review. Three named levels;
+the folder a scenario lives in (and an opt-in tag for level 2) determines
+which one runs when.
 
-| Tier | Agent | MCP | Trigger | Failure semantics |
-|---|---|---|---|---|
-| unit (tool-only) | none | mock | per PR | required |
-| scenario (default) | live | mock | per PR | required |
-| scenario + live opt-in | live | live | nightly | advisory → required |
+| Level | Name | Agent | MCP | Trigger | Failure semantics |
+|---|---|---|---|---|---|
+| 0 | Routing evals (per-skill, prompt-to-skill matching) | live | none | per PR | required |
+| 1 | **Workflow scenarios** (mock MCP — default) | live | mock | per PR | required |
+| 2 | **Live scenarios** (live MCP — narrow opt-in) | live | live | nightly | advisory → required |
 
-Skill-only routing evals ("does prompt X route to skill Y?") are out of scope
-for this project; they live next to the skill.
+Plus a hermetic tool-shape layer that isn't agent-driven:
+
+| Layer | Name | Agent | MCP | Trigger | Failure semantics |
+|---|---|---|---|---|---|
+| — | Unit evals (tool-shape + cross-skill triggers) | none | mock | per PR | required |
+
+**Mock is the default; live is the exception.** Both modes drive the
+same live agent, so **both incur LLM token cost** — the mock MCP server
+itself is a deterministic stub with no LLM in it. The cost delta is
+backend latency + the larger / chattier responses live tools produce,
+which expand per-turn input and provoke more polling/retry turns.
+Level 2 is therefore reserved for scenarios the mock can't deterministically
+cover (e.g. TypeSpec ordering, real codegen output, real DevOps state).
+Most multi-step work — including release plan and SDK generation —
+stays at level 1.
+
+Level 0 lives next to its skill and is out of scope for this project's
+folder layout; this project owns the runner config it references.
 
 ### 4.3 Mock vs. live MCP — opt-in per eval
 
@@ -79,7 +96,9 @@ Tracked in [#15831](https://github.com/Azure/azure-sdk-tools/issues/15831).
 - Both a mock MCP server and the real MCP server must be selectable as the
   scenario's MCP environment.
 - **Default is mock.** Running against the live MCP server is per-scenario
-  opt-in.
+  opt-in and must be justified — live MCP carries real token + wall-time
+  cost (see [DESIGN.md §6](./DESIGN.md)), so it is reserved for behavior
+  the mock can't faithfully reproduce.
 - Scenarios touching **production** systems (e.g. shipping packages) must
   remain mock-only and must not be opt-in-able.
 
@@ -129,8 +148,9 @@ Initial e2e targets: `release-planner-e2e`, `create-release-plan`,
 ### 4.8 Result export
 
 - Native: `results.jsonl`, `eval-results.md`, JUnit XML (already supported).
-- **New**: CSV export for Laurent's projection use case. Either a Vally
-  feature request or a thin post-processor script that consumes `results.jsonl`.
+- **New**: CSV export for the cross-run projection / dashboard use case.
+  Either a Vally feature request or a thin post-processor script that
+  consumes `results.jsonl`.
 
 ### 4.9 Mock MCP tool coverage
 
@@ -157,7 +177,7 @@ Tracked in [#15829](https://github.com/Azure/azure-sdk-tools/issues/15829).
 
 ---
 
-## 6. Authoring requirements (so non-Helen humans can extend the suite)
+## 6. Authoring requirements (so new contributors can extend the suite)
 
 - The authoring pattern (graders, tiers, mock-vs-live decision) is documented
   outside this file and linked from the Vally project's README.

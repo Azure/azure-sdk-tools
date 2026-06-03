@@ -19,9 +19,7 @@
     - [Detailed Design](#detailed-design)
     - [Architecture Diagram](#architecture-diagram)
       - [Component 1: SDK change Analyzer](#component-1-sdk-change-analyzer)
-      - [Component 2: Changelog-breakingChange pattern](#component-2-changelog-breakingchange-pattern)
-      - [Component 3: SDK Breaking change detector](#component-3-sdk-breaking-change-detector)
-      - [Component 4: SDK Breaking change Result](#component-4-sdk-breaking-change-result)
+      - [Component 2: SDK Breaking change detector](#component-2-sdk-breaking-change-detector)
     - [User Experience](#user-experience)
     - [Scenarios for Using the Tool](#scenarios-for-using-the-tool)
       - [Scenario 1: Detect and resolve SDK breaking change local](#scenario-1-detect-and-resolve-sdk-breaking-change-local)
@@ -132,7 +130,6 @@ This tool will support Java, JavaScript, Python, and Go. The .NET SDK is not sup
 This design covers the complete SDK breaking change detection workflow and its core components:
 
 - SDK change analyzer
-- ChangelogOrRevapi-breakingChange pattern
 - SDK breaking change detector
 
 ### Detailed Design
@@ -144,6 +141,8 @@ A changelog-breakingchange pattern guide (e.g. https://github.com/Azure/azure-sd
 
 **Output Format:**
 
+The result is JSON-formatted.
+
 ```json
 {
     "hasBreakingChange": true,
@@ -152,12 +151,44 @@ A changelog-breakingchange pattern guide (e.g. https://github.com/Azure/azure-sd
         {
             "breakingchange": "model `ResourceInfo` is renamed to `Resource`",
             "category": "Conversion-need to be resolve",
-            "mitigation": "Use client customization to rename ```tsp\n@@clientName(Resource, "ResourceInfo", "go");```"
+            "mitigation": "Use client customization to rename ```tsp\n@@clientName(Resource, \"ResourceInfo\", \"go\");```"
         },
         {
             "breakingchange": "Type of property `Prop` of model `ContainerRegistry` has been changed from `string` to `int32`",
             "category": "typespec change",
-            "mitigation": "Use `@@alternateType` to change the property type back to the constant string. ```tsp\n@@alternateType(ContainerRegistry.Prop, string, "go");```"
+            "mitigation": "Use `@@alternateType` to change the property type back to the constant string. ```tsp\n@@alternateType(ContainerRegistry.Prop, string, \"go\");```"
+        }
+    ]
+}
+```
+
+The result of the `azsdk_package_detect_breaking_change` tool. It provides an overall assessment of whether the package introduces SDK breaking changes, along with details for each breaking change (breaking-change and category) if any are detected.
+
+**No Breaking change:**
+
+```json
+{
+    "hasBreakingChange": false,
+    "language": "java"
+}
+```
+
+**Has Breaking changes:**
+
+```json
+{
+    "hasBreakingChange": true,
+    "language": "java",
+    "breakingchanges": [
+        {
+            "breakingchange": "model `ResourceInfo` is renamed to `Resource`",
+            "category": "Conversion-need to be resolve",
+            "mitigation": "Use client customization to rename ```tsp\n@@clientName(Resource, \"ResourceInfo\", \"go\");```"
+        },
+        {
+            "breakingchange": "Type of property `Prop` has been changed from `string` to `int32`",
+            "category": "typespec change",
+            "mitigation": "Locate the model property and use `@@alternateType` to change the property type back to the constant string. ```tsp\n@@alternateType(ContainerRegistry.Prop, string, \"go\");```"
         }
     ]
 }
@@ -200,6 +231,9 @@ flowchart TD
 Compare the package against the latest GA release to get SDK changes. The output is a changelog (or Revapi report for Java) along with an overall assessment of whether the package introduces SDK breaking changes according to the language-specific breaking change policy.
 
 Each language SDK implements an SDK change generator(command or script) that compares the current package against the latest GA release. The SDK breaking change detection MCP tool invokes these per-language generator to retrieve the SDK changelog for further analysis.
+
+**🔔 Note:**
+Each language SDK already has a tool or script that generates changelogs. We only need to integrate these into our MCP tool as the SDK change analyzer and output SDK changelogs for downstream analysis.
 
 **Summary of the detection mechanism:**
 
@@ -247,17 +281,6 @@ e.g.
 ```markdown
 ### Breaking Changes
 
-- Function `*Client.BeginCreateOrUpdate` parameter(s) have been changed from `(ctx context.Context, resourceGroupName string, resourceName string, parameters ResourceInfo, options *ClientBeginCreateOrUpdateOptions)` to `(ctx context.Context, resourceGroupName string, resourceName string, parameters Resource, options *ClientBeginCreateOrUpdateOptions)`
-- Function `*Client.BeginUpdate` parameter(s) have been changed from `(ctx context.Context, resourceGroupName string, resourceName string, parameters ResourceInfo, options *ClientBeginUpdateOptions)` to `(ctx context.Context, resourceGroupName string, resourceName string, parameters Resource, options *ClientBeginUpdateOptions)`
-- Function `*HubsClient.BeginCreateOrUpdate` parameter(s) have been changed from `(ctx context.Context, hubName string, resourceGroupName string, resourceName string, parameters Hub, options *HubsClientBeginCreateOrUpdateOptions)` to `(ctx context.Context, resourceGroupName string, resourceName string, hubName string, parameters Hub, options *HubsClientBeginCreateOrUpdateOptions)`
-- Function `*HubsClient.BeginDelete` parameter(s) have been changed from `(ctx context.Context, hubName string, resourceGroupName string, resourceName string, options *HubsClientBeginDeleteOptions)` to `(ctx context.Context, resourceGroupName string, resourceName string, hubName string, options *HubsClientBeginDeleteOptions)`
-- Function `*HubsClient.Get` parameter(s) have been changed from `(ctx context.Context, hubName string, resourceGroupName string, resourceName string, options *HubsClientGetOptions)` to `(ctx context.Context, resourceGroupName string, resourceName string, hubName string, options *HubsClientGetOptions)`
-- Function `*PrivateEndpointConnectionsClient.BeginDelete` parameter(s) have been changed from `(ctx context.Context, privateEndpointConnectionName string, resourceGroupName string, resourceName string, options *PrivateEndpointConnectionsClientBeginDeleteOptions)` to `(ctx context.Context, resourceGroupName string, resourceName string, privateEndpointConnectionName string, options *PrivateEndpointConnectionsClientBeginDeleteOptions)`
-- Function `*PrivateEndpointConnectionsClient.Get` parameter(s) have been changed from `(ctx context.Context, privateEndpointConnectionName string, resourceGroupName string, resourceName string, options *PrivateEndpointConnectionsClientGetOptions)` to `(ctx context.Context, resourceGroupName string, resourceName string, privateEndpointConnectionName string, options *PrivateEndpointConnectionsClientGetOptions)`
-- Function `*PrivateEndpointConnectionsClient.Update` parameter(s) have been changed from `(ctx context.Context, privateEndpointConnectionName string, resourceGroupName string, resourceName string, parameters PrivateEndpointConnection, options *PrivateEndpointConnectionsClientUpdateOptions)` to `(ctx context.Context, resourceGroupName string, resourceName string, privateEndpointConnectionName string, parameters PrivateEndpointConnection, options *PrivateEndpointConnectionsClientUpdateOptions)`
-- Function `*SharedPrivateLinkResourcesClient.BeginCreateOrUpdate` parameter(s) have been changed from `(ctx context.Context, sharedPrivateLinkResourceName string, resourceGroupName string, resourceName string, parameters SharedPrivateLinkResource, options *SharedPrivateLinkResourcesClientBeginCreateOrUpdateOptions)` to `(ctx context.Context, resourceGroupName string, resourceName string, sharedPrivateLinkResourceName string, parameters SharedPrivateLinkResource, options *SharedPrivateLinkResourcesClientBeginCreateOrUpdateOptions)`
-- Function `*SharedPrivateLinkResourcesClient.BeginDelete` parameter(s) have been changed from `(ctx context.Context, sharedPrivateLinkResourceName string, resourceGroupName string, resourceName string, options *SharedPrivateLinkResourcesClientBeginDeleteOptions)` to `(ctx context.Context, resourceGroupName string, resourceName string, sharedPrivateLinkResourceName string, options *SharedPrivateLinkResourcesClientBeginDeleteOptions)`
-- Function `*SharedPrivateLinkResourcesClient.Get` parameter(s) have been changed from `(ctx context.Context, sharedPrivateLinkResourceName string, resourceGroupName string, resourceName string, options *SharedPrivateLinkResourcesClientGetOptions)` to `(ctx context.Context, resourceGroupName string, resourceName string, sharedPrivateLinkResourceName string, options *SharedPrivateLinkResourcesClientGetOptions)`
 - Struct `ResourceInfo` has been removed
 - Struct `ResourceInfoList` has been removed
 - Field `ResourceInfo` of struct `ClientCreateOrUpdateResponse` has been removed
@@ -265,20 +288,15 @@ e.g.
 - Field `ResourceInfoList` of struct `ClientListByResourceGroupResponse` has been removed
 - Field `ResourceInfoList` of struct `ClientListBySubscriptionResponse` has been removed
 - Field `ResourceInfo` of struct `ClientUpdateResponse` has been removed
+- Function `*Client.BeginCreateOrUpdate` parameter(s) have been changed from `(ctx context.Context, resourceGroupName string, resourceName string, parameters ResourceInfo, options *ClientBeginCreateOrUpdateOptions)` to `(ctx context.Context, resourceGroupName string, resourceName string, parameters Resource, options *ClientBeginCreateOrUpdateOptions)`
+- Function `*Client.BeginUpdate` parameter(s) have been changed from `(ctx context.Context, resourceGroupName string, resourceName string, parameters ResourceInfo, options *ClientBeginUpdateOptions)` to `(ctx context.Context, resourceGroupName string, resourceName string, parameters Resource, options *ClientBeginUpdateOptions)`
+- Function `*HubsClient.BeginCreateOrUpdate` parameter(s) have been changed from `(ctx context.Context, hubName string, resourceGroupName string, resourceName string, parameters Hub, options *HubsClientBeginCreateOrUpdateOptions)` to `(ctx context.Context, resourceGroupName string, resourceName string, hubName string, parameters Hub, options *HubsClientBeginCreateOrUpdateOptions)`
+- Function `*HubsClient.BeginDelete` parameter(s) have been changed from `(ctx context.Context, hubName string, resourceGroupName string, resourceName string, options *HubsClientBeginDeleteOptions)` to `(ctx context.Context, resourceGroupName string, resourceName string, hubName string, options *HubsClientBeginDeleteOptions)`
+- Function `*HubsClient.Get` parameter(s) have been changed from `(ctx context.Context, hubName string, resourceGroupName string, resourceName string, options *HubsClientGetOptions)` to `(ctx context.Context, resourceGroupName string, resourceName string, hubName string, options *HubsClientGetOptions)`
+... (additional breaking-change entries omitted)
 
 ### Features Added
 
-- New enum type `ClientConnectionCountRuleDiscriminator` with values `ClientConnectionCountRuleDiscriminatorThrottleByJwtCustomClaimRule`, `ClientConnectionCountRuleDiscriminatorThrottleByJwtSignatureRule`, `ClientConnectionCountRuleDiscriminatorThrottleByUserIDRule`
-- New enum type `ClientTrafficControlRuleDiscriminator` with values `ClientTrafficControlRuleDiscriminatorTrafficThrottleByJwtCustomClaimRule`, `ClientTrafficControlRuleDiscriminatorTrafficThrottleByJwtSignatureRule`, `ClientTrafficControlRuleDiscriminatorTrafficThrottleByUserIDRule`
-- New enum type `GroupPresenceEventName` with values `GroupPresenceEventNameJoined`, `GroupPresenceEventNameLeft`
-- New function `*ClientConnectionCountRule.GetClientConnectionCountRule() *ClientConnectionCountRule`
-- New function `*ClientTrafficControlRule.GetClientTrafficControlRule() *ClientTrafficControlRule`
-- New function `*ThrottleByJwtCustomClaimRule.GetClientConnectionCountRule() *ClientConnectionCountRule`
-- New function `*ThrottleByJwtSignatureRule.GetClientConnectionCountRule() *ClientConnectionCountRule`
-- New function `*ThrottleByUserIDRule.GetClientConnectionCountRule() *ClientConnectionCountRule`
-- New function `*TrafficThrottleByJwtCustomClaimRule.GetClientTrafficControlRule() *ClientTrafficControlRule`
-- New function `*TrafficThrottleByJwtSignatureRule.GetClientTrafficControlRule() *ClientTrafficControlRule`
-- New function `*TrafficThrottleByUserIDRule.GetClientTrafficControlRule() *ClientTrafficControlRule`
 - New struct `ApplicationFirewallSettings`
 - New struct `GroupPresenceEventFilters`
 - New struct `Resource`
@@ -289,19 +307,51 @@ e.g.
 - New struct `TrafficThrottleByJwtCustomClaimRule`
 - New struct `TrafficThrottleByJwtSignatureRule`
 - New struct `TrafficThrottleByUserIDRule`
-- New anonymous field `Resource` in struct `ClientCreateOrUpdateResponse`
-- New anonymous field `Resource` in struct `ClientGetResponse`
-- New anonymous field `ResourceList` in struct `ClientListByResourceGroupResponse`
-- New anonymous field `ResourceList` in struct `ClientListBySubscriptionResponse`
-- New anonymous field `Resource` in struct `ClientUpdateResponse`
-- New field `GroupPresenceEvents` in struct `EventHandler`
-- New field `ApplicationFirewall` in struct `Properties`
-- New field `Fqdns` in struct `SharedPrivateLinkResourceProperties`
+... (additional features-added entries omitted)
+
 ```
 
-#### Component 2: Changelog-breakingChange pattern
+#### Component 2: SDK Breaking change detector
+
+Copilot Agent refer `changelog-breakingchange pattern` document to detect the SDK breaking changes, category these SDK breaking changes and mitigation suggestion if it can be mitigated by typespec customization.
+
+Parse out the actually SDK breaking changes and category them into different categories according to the SDK breaking change root cause.
+
+**SDK Breaking change category:**
+
+- emitter change : e.g modeler4 build-in handle logic(e.g merge enum as one)
+- conversion-by design : e.g. the common model
+- conversion-need resolve
+- spec change
+- unknown
+
+**input**:
+changelog
+
+**output**:
+
+```json
+{
+    "breakingchanges": [
+        {
+            "breakingchange": "model ResourceInfo is renamed to Resource",
+            "category": "Conversion-need to be resolve",
+            "mitigation": "Use client customization to rename ```tsp\n@@clientName(Resource, "ResourceInfo", "go");```"
+        },
+        {
+            "breakingchange": "Property type changed from int to string",
+            "category": "typespec change",
+            "mitigation": "Locate the model property and use `@@alternateType` to change the property type back to the constant string. ```tsp\n@@alternateType(ContainerRegistry.Prop, string, "go");```"
+        }
+    ]
+}
+
+```
+
+**Changelog-breakingChange pattern document:**
 
 This document describe which changelog will cause SDK breaking changes and also provide the root cause of the SDK breaking changes.
+Each language SDK will develop their only changelog-breakingchange pattern document.
 
 Each pattern will contain four parts:
 
@@ -347,78 +397,6 @@ Use client customization to restore the original names from the removal entries:
 
 @@clientName(Minute.`0`, "ZERO", "python");
 @@clientName(Minute.`30`, "THIRTY", "python");
-```
-
-#### Component 3: SDK Breaking change detector
-
-Copilot Agent refer changelog-breakingchange pattern guide to detect the SDK breaking changes, category these SDK breaking changes and mitigation suggestion if it can be mitigated by typespec customization.
-
-Parse out the actually SDK breaking changes and category them into different categories according to the SDK breaking change root cause.
-
-**SDK Breaking change category:**
-
-- emitter change : e.g modeler4 build-in handle logic(e.g merge enum as one)
-- conversion-by design : e.g. the common model
-- conversion-need resolve
-- spec change
-- unknown
-
-**input**:
-changelog
-
-**output**:
-
-```json
-{
-    "breakingchanges": [
-        {
-            "breakingchange": "model ResourceInfo is renamed to Resource",
-            "category": "Conversion-need to be resolve",
-            "mitigation": "Use client customization to rename ```tsp\n@@clientName(Resource, "ResourceInfo", "go");```"
-        },
-        {
-            "breakingchange": "Property type changed from int to string",
-            "category": "typespec change",
-            "mitigation": "Locate the model property and use `@@alternateType` to change the property type back to the constant string. ```tsp\n@@alternateType(ContainerRegistry.Prop, string, "go");```"
-        }
-    ]
-}
-
-```
-
-#### Component 4: SDK Breaking change Result
-
-The result of the `azsdk_package_detect_breaking_change` tool. It provides an overall assessment of whether the package introduces SDK breaking changes, along with details for each breaking change (breaking-change and category) if any are detected.
-The result is JSON-formatted.
-
-**No Breaking change:**
-
-```json
-{
-    "hasBreakingChange": false,
-    "language": "java"
-}
-```
-
-**Has Breaking changes:**
-
-```json
-{
-    "hasBreakingChange": true,
-    "language": "java",
-    "breakingchanges": [
-        {
-            "breakingchange": "model `ResourceInfo` is renamed to `Resource`",
-            "category": "Conversion-need to be resolve",
-            "mitigation": "Use client customization to rename ```tsp\n@@clientName(Resource, "ResourceInfo", "go");```"
-        },
-        {
-            "breakingchange": "Type of property `Prop` has been changed from `string` to `int32`",
-            "category": "typespec change",
-            "mitigation": "Locate the model property and use `@@alternateType` to change the property type back to the constant string. ```tsp\n@@alternateType(ContainerRegistry.Prop, string, "go");```"
-        }
-    ]
-}
 ```
 
 ---

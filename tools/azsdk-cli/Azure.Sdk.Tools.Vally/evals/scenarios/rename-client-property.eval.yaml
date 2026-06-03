@@ -8,10 +8,9 @@ type: capability
 
 
 tags:
-  tier: integration
   area: typespec
 
-environment: azsdk-mcp
+environment: azsdk-mcp-mock
 
 config:
   runs: 1

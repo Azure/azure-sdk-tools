@@ -5,11 +5,11 @@ description: |
 version: "1.0"
 type: capability
 
-environment: azsdk-mcp
+environment: azsdk-mcp-mock
 
 config:
   runs: 5
-  timeout: 120
+  timeout: "120s"
   executor: copilot-sdk
   model: claude-opus-4.6
 

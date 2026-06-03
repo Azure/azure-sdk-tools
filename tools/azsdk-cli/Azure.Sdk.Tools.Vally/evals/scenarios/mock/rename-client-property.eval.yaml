@@ -1,0 +1,43 @@
+name: azsdk-mcp-tool-scenarios
+description: |
+  Rename-client-property: the agent should rename @clientName("uri", "csharp")
+  to @clientName("imageUri", "csharp") on the AddFaceFromUrlRequest.url
+  property in specification/ai/Face/models.common.tsp.
+version: "1.0"
+type: capability
+
+
+tags:
+  area: typespec
+
+environment: azsdk-mcp-mock
+
+config:
+  runs: 1
+  timeout: 30m
+  model: gpt-5.4
+  executor: copilot-sdk
+
+stimuli:
+  - name: rename-client-property
+    prompt: |
+      In the specification/ai/Face project, find the AddFaceFromUrlRequest model.
+      It has a property called 'url' that's been renamed to "uri" in c#.
+      Change that to imageUri for c#.
+    constraints:
+      max_turns: 5
+      max_tokens: 5000
+    # TODO: seed a git worktree (environment.git) at specification/ai/Face and
+    # add a `file-matches` grader on models.common.tsp to verify the
+    # @clientName("uri", "csharp") → @clientName("imageUri", "csharp") rename.
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - edit
+
+scoring:
+  weights:
+    tool-calls: 1
+  threshold: 1.0
+

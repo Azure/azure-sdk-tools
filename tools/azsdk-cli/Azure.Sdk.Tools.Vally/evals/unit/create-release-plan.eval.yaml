@@ -34,7 +34,7 @@ tags:
 
 # `environment: azsdk-mcp` refers to the named environment defined in
 # ../../.vally.yaml (configures the azsdk-cli MCP server + env vars).
-environment: azsdk-mcp
+environment: azsdk-mcp-mock
 
 config:
   runs: 1            # bump for flakiness sampling (e.g. runs: 5)

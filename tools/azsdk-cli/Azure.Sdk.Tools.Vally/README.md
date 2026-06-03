@@ -68,23 +68,22 @@ One prompt → one expected MCP tool. No `environment.git`, no fixtures. Fast; s
 
 The companion [`scripts/Validate-EvalTools.ps1`](scripts/Validate-EvalTools.ps1) cross-checks that every tool referenced in `evals/unit/triggers-*.eval.yaml` exists on the running MCP server, and every server tool has at least one trigger.
 
-#### `evals/integration/` — multi-tool chained evals (3)
+#### `evals/scenarios/` — multi-tool scenarios (4)
 
-Still hermetic (no `environment.git`), but the agent must invoke 2+ MCP tools in sequence.
+Multi-step prompts that exercise 2+ MCP tools end-to-end. Split into
+`mock/` (hermetic, runs on PR gate) and `live/` (real DevOps / GitHub /
+pipelines, runs nightly).
 
-| Scenario | Area | Shape |
-|---|---|---|
-| [`check-public-repo-then-validate`](evals/integration/check-public-repo-then-validate.eval.yaml) | typespec | Validate, then check public-repo presence |
-| [`typespec-generation-step02`](evals/integration/typespec-generation-step02.eval.yaml) | typespec | Step in the spec-PR generation flow |
-| [`rename-client-property`](evals/integration/rename-client-property.eval.yaml) | typespec | Stub — needs `expected-diff` grader + sparse clone |
+| Scenario | Area | Mode | Shape |
+|---|---|---|---|
+| [`check-public-repo-then-validate`](evals/scenarios/mock/check-public-repo-then-validate.eval.yaml) | typespec | mock | Validate, then check public-repo presence |
+| [`typespec-generation-step02`](evals/scenarios/mock/typespec-generation-step02.eval.yaml) | typespec | mock | Step in the spec-PR generation flow |
+| [`rename-client-property`](evals/scenarios/mock/rename-client-property.eval.yaml) | typespec | mock | Stub — needs `expected-diff` grader + sparse clone |
+| [`release-planner`](evals/scenarios/live/release-planner.eval.yaml) | release-plan | **live** | Create + re-fetch a release plan, kick off SDK gen, link PR back — real DevOps test-area writes |
 
-#### `evals/e2e/` — live end-to-end (1)
-
-Drives the real MCP server inside a real `azure-rest-api-specs` worktree. Slow; prime a per-user clone first via [`evals/setup/ensure-specs-clone.ps1`](evals/setup/ensure-specs-clone.ps1) (auto-refreshes every 24h).
-
-| Scenario | Area | Shape |
-|---|---|---|
-| [`release-planner-e2e`](evals/e2e/release-planner-e2e.eval.yaml) | release-plan | Create then re-fetch a release plan; real DevOps test-area writes |
+Live scenarios need a primed `azure-rest-api-specs` clone — run
+[`evals/setup/ensure-specs-clone.ps1`](evals/setup/ensure-specs-clone.ps1)
+(auto-refreshes every 24h) before invoking the `scenarios-live` / `nightly` suite.
 
 **Skill evals (already in repo, *not* part of this PR)** — for reference:
 
@@ -112,10 +111,12 @@ tracks the migration in
 Azure.Sdk.Tools.Vally/
 ├── .vally.yaml                # Vally config (environments + suites)
 ├── evals/
-│   ├── unit/                  # tier 1: single-tool, hermetic, fast
-│   ├── integration/           # tier 2: multi-tool chains, hermetic
-│   ├── e2e/                   # tier 3: live MCP + real azure-rest-api-specs
-│   └── setup/                 # helper scripts (e.g. ensure-specs-clone.ps1)
+│   ├── unit/                  # tool-shape + per-skill trigger evals, hermetic
+│   ├── scenarios/
+│   │   ├── mock/              # multi-tool scenarios, hermetic (PR gate)
+│   │   └── live/              # multi-tool scenarios, live MCP (nightly)
+│   ├── setup/                 # helper scripts (e.g. ensure-specs-clone.ps1)
+│   └── fixtures/              # (future) pinned SHAs + per-eval mocks
 ├── fixtures/                  # Per-scenario static input files (env.files)
 │   └── <scenario-name>/...
 ├── scripts/                   # Repo-side helpers (Validate-EvalTools.ps1, …)
@@ -123,9 +124,13 @@ Azure.Sdk.Tools.Vally/
     └── Azure.Sdk.Tools.Vally.csproj  # added when first custom grader lands
 ```
 
-Folder = test pyramid tier (cost / CI cadence). Feature **area** lives as a
-`tags:` entry inside each YAML so cross-cuts (e.g. “all release-plan evals”)
-select via [`.vally.yaml`](.vally.yaml) suite filters or `vally eval --tag`.
+Folder = tier (cost / CI cadence): `unit/` is hermetic + fast,
+`scenarios/mock/` is multi-tool hermetic, `scenarios/live/` is multi-tool
+against real services. Vally's suite filter is positive-match only, so the
+mock-vs-live split lives on disk rather than in tags. Feature **area** still
+lives as a `tags:` entry inside each YAML so cross-cuts (e.g. "all
+release-plan evals") select via [`.vally.yaml`](.vally.yaml) suite filters
+or `vally eval --tag`.
 
 ## Running locally
 
@@ -151,7 +156,7 @@ $vally = '../../../eng/skill-eval/node_modules/.bin/vally.cmd'
 
 # A single tier
 & $vally eval --suite unit
-& $vally eval --suite integration
+& $vally eval --suite scenarios-mock
 
 # By feature area (cross-cuts tiers via tag filter)
 & $vally eval --suite release-plan
@@ -164,27 +169,28 @@ Run a single eval:
 & $vally eval --eval-spec evals/unit/check-public-repo.eval.yaml
 ```
 
-Run the live e2e tier (first, prime a per-user clone of
+Run the live scenarios tier (first, prime a per-user clone of
 `azure-rest-api-specs`; the helper refreshes it every 24h):
 
 ```powershell
 ./evals/setup/ensure-specs-clone.ps1
-& $vally eval --suite e2e
+& $vally eval --suite scenarios-live
 ```
 
 ## Adding a new scenario
 
 1. **Pick a tier** — the folder you drop the YAML into:
    - `evals/unit/` — one prompt, one MCP tool, no environment hooks.
-   - `evals/integration/` — multi-tool flow, still hermetic.
-   - `evals/e2e/` — needs live MCP + a real git env / external service.
+   - `evals/scenarios/mock/` — multi-tool flow against `azsdk-mcp-mock`.
+     Hermetic; runs on PR gate.
+   - `evals/scenarios/live/` — needs real DevOps / GitHub / pipelines;
+     bind `environment: azsdk-mcp-live`. Nightly only.
 2. Pick a short, kebab-case name (e.g. `create-release-plan`).
 3. Create `evals/<tier>/<name>.eval.yaml`. Start from a sibling in the same
    tier as a template.
 4. **Tag it** so suite filters pick it up:
    ```yaml
    tags:
-     tier: unit          # or integration / e2e
      area: release-plan   # or typespec / pipeline / github / engsys / apiview / package
    ```
 5. If the scenario needs input files, add them under

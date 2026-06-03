@@ -32,12 +32,16 @@ description: |
 version: "1.0"
 type: capability
 
-# Tagged "tier: e2e" so a future PR-gate run can skip live evals if needed.
 tags:
-  tier: e2e
   area: release-plan
+metadata:
+  repos:
+    - name: Azure/azure-rest-api-specs
 
-environment: azsdk-mcp
+# Bound to the live env because the scenario asserts real DevOps writes
+# (test-area path) + real generation pipeline. Mock can't satisfy those
+# graders. Picked up by the `scenarios-live` / `nightly` suite via folder.
+environment: azsdk-mcp-live
 
 config:
   runs: 1

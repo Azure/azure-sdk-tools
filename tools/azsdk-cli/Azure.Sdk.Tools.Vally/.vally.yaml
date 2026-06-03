@@ -11,7 +11,28 @@ paths:
   results: results/
 
 environments:
-  azsdk-mcp:
+  # Default for unit + mock scenarios. Runs the dedicated Azure.Sdk.Tools.Mock
+  # MCP server — a separate process whose tool surface mirrors the real CLI
+  # but with deterministic in-memory responses.
+  #
+  # Relative `--project` paths are resolved by `dotnet` against the cwd of
+  # the vally invocation. Always run vally from this directory:
+  #   cd tools/azsdk-cli/Azure.Sdk.Tools.Vally && vally eval ...
+  # Same convention as .github/skills/.vally.yaml.
+  azsdk-mcp-mock:
+    mcpServers:
+      azure-sdk-mcp:
+        type: stdio
+        command: dotnet
+        args: ["run", "--project", "../Azure.Sdk.Tools.Mock"]
+        timeout: "60s"
+
+  # Live MCP — real Azure.Sdk.Tools.Cli against real DevOps (test area path),
+  # real GitHub, real pipelines. AZSDKTOOLS_AGENT_TESTING=true keeps the
+  # handful of write tools (e.g. create_release_plan) inside the test area.
+  # Bound only by scenarios under evals/scenarios/live/ and selected by the
+  # `scenarios-live` / `nightly` suites.
+  azsdk-mcp-live:
     mcpServers:
       azure-sdk-mcp:
         type: stdio
@@ -19,42 +40,44 @@ environments:
         args: ["run", "--project", "../Azure.Sdk.Tools.Cli", "--", "start"]
         timeout: "5m"
         env:
-          # Test mode: tools that would create real ADO work items / external
-          # resources (e.g. azsdk_create_release_plan) short-circuit into a
-          # test variant so evals are safe to re-run.
           AZSDKTOOLS_AGENT_TESTING: "true"
           AZSDKTOOLS_COLLECT_TELEMETRY: "false"
 
 # Suites group evals for selective execution.
 #
-# Folder layout mirrors the standard test pyramid:
-#   evals/unit/         — single-tool, hermetic, fast (incl. per-tool triggers)
-#   evals/integration/  — multi-tool chains, still hermetic
-#   evals/e2e/          — live MCP + real git env + skills loaded (slow)
-#
-# Folder = tier (cost / cadence). Tags inside each YAML carry the feature
-# area (release-plan, typespec, pipeline, github, …) so cross-cuts are
-# selected via `filter:` below or `vally eval --tag area=<name>`.
+# Layout maps directly to suites — no tag-based mock/live filtering. Vally's
+# suite filter is positive-match only (AND across keys, OR within values),
+# so subfolders are the cleanest way to split mock vs live. See
+# https://github.com/microsoft/vally suite-filter source.
 suites:
   # ---- by tier ----
   unit:
-    description: Hermetic single-tool evals (incl. per-tool trigger coverage). Fast; safe for PR gate.
+    description: |
+      Hermetic single-tool / trigger evals. No external I/O. Fast; the
+      foundation of the PR gate.
     evals: ["evals/unit/*.eval.yaml"]
-  integration:
-    description: Multi-tool chained evals; hermetic. Still suitable for PR gate.
-    evals: ["evals/integration/*.eval.yaml"]
-  e2e:
-    description: Live end-to-end against real MCP + real azure-rest-api-specs clone. Prime the clone first with evals/setup/ensure-specs-clone.ps1.
-    evals: ["evals/e2e/*.eval.yaml"]
+
+  scenarios-mock:
+    description: |
+      Multi-tool scenarios against the mock MCP environment. Hermetic; safe
+      for PR gate.
+    evals: ["evals/scenarios/mock/*.eval.yaml"]
+
+  scenarios-live:
+    description: |
+      Scenarios against live MCP — real DevOps / GitHub / pipelines. Slow;
+      nightly only. Prime any required clones first via
+      `evals/setup/ensure-specs-clone.ps1`.
+    evals: ["evals/scenarios/live/*.eval.yaml"]
 
   # ---- composite suites ----
   pr-gate:
-    description: Fast tiers only (unit + integration). Target for CI PR check.
+    description: Hermetic tiers only (unit + scenarios-mock). Target for CI PR check.
     evals:
       - "evals/unit/*.eval.yaml"
-      - "evals/integration/*.eval.yaml"
+      - "evals/scenarios/mock/*.eval.yaml"
   nightly:
-    description: All tiers including live e2e.
+    description: All tiers including live scenarios.
     evals: ["evals/**/*.eval.yaml"]
 
   # ---- by feature area (tag-filtered) ----

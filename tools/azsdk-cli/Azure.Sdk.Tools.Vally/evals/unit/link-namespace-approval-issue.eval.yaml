@@ -10,7 +10,7 @@ tags:
   tier: unit
   area: release-plan
 
-environment: azsdk-mcp
+environment: azsdk-mcp-mock
 
 config:
   runs: 1

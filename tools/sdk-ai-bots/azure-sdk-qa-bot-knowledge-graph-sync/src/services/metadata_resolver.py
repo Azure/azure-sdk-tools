@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 
-from wcmatch import fnmatch
+from wcmatch import glob
 
 from src.services.configuration_loader import Metadata, Override
 
@@ -75,8 +75,8 @@ class MetadataResolver:
         normalized_path = file_path.replace("\\", "/")
         normalized_pattern = pattern.replace("\\", "/")
 
-        return fnmatch.fnmatch(
+        return glob.globmatch(
             normalized_path,
             normalized_pattern,
-            flags=fnmatch.DOTMATCH | fnmatch.IGNORECASE | fnmatch.GLOBSTAR,
+            flags=glob.GLOBSTAR | glob.DOTGLOB | glob.IGNORECASE,
         )

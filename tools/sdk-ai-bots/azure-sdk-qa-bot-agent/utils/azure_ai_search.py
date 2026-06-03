@@ -100,9 +100,8 @@ class SearchClient:
         request = KnowledgeBaseRetrievalRequest(
             intents=[KnowledgeRetrievalSemanticIntent(search=query)],
             include_activity=True,
-            output_mode="extractiveData",
             knowledge_source_params=kb_params,
-            max_output_size=_KB_MAX_OUTPUT_SIZE,
+            max_output_size_in_tokens=_KB_MAX_OUTPUT_SIZE,
         )
 
         result = await self._kb_client.retrieve(

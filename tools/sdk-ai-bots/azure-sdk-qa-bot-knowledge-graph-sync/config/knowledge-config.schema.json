@@ -148,7 +148,7 @@
           }
         }
       },
-      "required": ["description", "folder", "metadata"],
+      "required": ["description", "folder"],
       "additionalProperties": false
     },
     "Metadata": {

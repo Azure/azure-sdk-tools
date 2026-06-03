@@ -31,5 +31,7 @@ sync-knowledge-graph = "src.main:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
+
+[tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"

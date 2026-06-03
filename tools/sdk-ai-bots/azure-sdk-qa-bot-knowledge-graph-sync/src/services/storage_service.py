@@ -56,13 +56,27 @@ class BlobService:
         content: str | bytes,
         metadata: dict[str, str] | None = None,
     ) -> None:
-        """Upload content to blob storage."""
+        """Upload content to blob storage.
+
+        The blob's Content-MD5 header is set explicitly so that
+        :meth:`has_content_changed` can later compare hashes via the
+        ``content_settings.content_md5`` field returned by
+        ``list_blobs``. Without this, the server stores no MD5 and every
+        unchanged document gets re-uploaded on the next sync.
+        """
         blob_client = self._container_client.get_blob_client(blob_path)
         data = content.encode("utf-8") if isinstance(content, str) else content
+        # Azure expects content_md5 as a bytearray of the raw digest, not
+        # base64-encoded — the service returns it on list_blobs in the
+        # same raw form.
+        content_md5 = bytearray(hashlib.md5(data).digest())
         blob_client.upload_blob(
             data,
             overwrite=True,
-            content_settings=ContentSettings(content_type=self._get_content_type(blob_path)),
+            content_settings=ContentSettings(
+                content_type=self._get_content_type(blob_path),
+                content_md5=content_md5,
+            ),
             metadata=metadata,
         )
         logger.info("Uploaded %s to blob storage", blob_path)
@@ -174,7 +188,11 @@ class BlobService:
         if existing.metadata and existing.metadata.get("IsDeleted") == "true":
             return True
 
-        existing_md5 = existing.properties.get("content_md5")
+        # The azure-storage-blob SDK returns BlobProperties objects from
+        # list_blobs() with the MD5 at .content_settings.content_md5 as a
+        # raw bytearray — NOT under a .properties dict like the JS SDK.
+        content_settings = getattr(existing, "content_settings", None)
+        existing_md5 = getattr(content_settings, "content_md5", None) if content_settings else None
         if not existing_md5:
             return True
 

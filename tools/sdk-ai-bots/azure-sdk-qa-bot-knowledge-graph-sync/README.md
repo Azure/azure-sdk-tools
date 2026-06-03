@@ -95,20 +95,31 @@ sync-knowledge-graph --full-graphrag --sources typespec_docs,azure_api_guideline
 
 ## Environment Variables
 
-| Variable | Description |
-|----------|-------------|
-| `AZURE_APP_CONFIG_ENDPOINT` | Azure App Configuration endpoint |
-| `STORAGE_ACCOUNT_NAME` | Azure Storage account name |
-| `STORAGE_KNOWLEDGE_CONTAINER` | Blob container for processed docs |
-| `AI_SEARCH_ENDPOINT` | Azure AI Search endpoint URL |
-| `AI_SEARCH_INDEX_TEXT_UNITS` | AI Search index for text unit embeddings |
-| `AI_SEARCH_INDEX_ENTITIES` | AI Search index for entity embeddings |
-| `AI_SEARCH_INDEX_COMMUNITIES` | AI Search index for community embeddings |
-| `AZURE_OPENAI_ENDPOINT` | Azure OpenAI endpoint (for LLM + embeddings) |
-| `SSH_PRIVATE_KEY` | Base64-encoded SSH private key (for private repos) |
-| `STORAGE_GRAPHRAG_OUTPUT_CONTAINER` | Destination container for parquet snapshots (e.g. `graphrag-output`). When unset, the post-indexing publish step degrades to a logged no-op. |
-| `BOT_AGENT_RELOAD_URL` | Bot agent reload endpoint (e.g. `https://<bot>/admin/graphrag/reload`) |
-| `BOT_AGENT_ADMIN_TOKEN` | Shared secret sent as `X-Admin-Token` to the bot reload endpoint |
+The pipeline reads its bootstrap endpoints from environment variables;
+everything else is pulled from Azure App Configuration and Azure Key Vault
+at startup (see `src/services/app_config.py` and `src/services/app_secret.py`).
+
+| Variable | Source | Description |
+|----------|--------|-------------|
+| `AZURE_APPCONFIG_ENDPOINT` | env | Azure App Configuration endpoint. All other config keys are loaded from here. |
+| `KEYVAULT_ENDPOINT` | App Config | Azure Key Vault endpoint. Loaded from App Config, then secrets are exported to env. |
+| `STORAGE_ACCOUNT_NAME` | App Config | Azure Storage account name. |
+| `STORAGE_KNOWLEDGE_CONTAINER` | App Config | Blob container for processed docs. |
+| `STORAGE_GRAPHRAG_OUTPUT_CONTAINER` | App Config | Destination container for parquet snapshots (e.g. `graphrag-output`). When unset, the post-indexing publish step degrades to a logged no-op. |
+| `AI_SEARCH_BASE_URL` | App Config | Azure AI Search endpoint URL — referenced as `${AI_SEARCH_BASE_URL}` by `graphrag_config/settings.yaml`. |
+| `AI_SEARCH_INDEX_TEXT_UNITS` | App Config | AI Search index for text unit embeddings. |
+| `AI_SEARCH_INDEX_ENTITIES` | App Config | AI Search index for entity embeddings. |
+| `AI_SEARCH_INDEX_COMMUNITIES` | App Config | AI Search index for community embeddings. |
+| `AI_SEARCH_API_KEY` | Key Vault (`AI-SEARCH-APIKEY`) | AI Search admin key. |
+| `AOAI_CHAT_COMPLETIONS_ENDPOINT` | App Config | Azure OpenAI endpoint (used by GraphRAG and `spector_processor`). |
+| `AOAI_CHAT_COMPLETIONS_API_KEY` | Key Vault (`AOAI-CHAT-COMPLETIONS-API-KEY`) | Azure OpenAI key for non-MI callers (`spector_processor`). |
+| `AOAI_CHAT_REASONING_MODEL` | App Config | Azure OpenAI deployment name used by `spector_processor`. |
+| `SSH_PRIVATE_KEY` | Key Vault (`SSH-PRIVATE-KEY`) | SSH private key (for private repos cloned over SSH). |
+| `AZURE_SDK_GITHUB_PAT` | env (CI) | GitHub App token for private repo access. |
+| `AZURE_SDK_DOCS_PATH` | env (CI) | Local path to the `azure-sdk-docs-eng.ms` clone (used when `authType: local`). |
+| `AZURE_SDK_WIKI_PATH` | env (CI) | Local path to the `internal.wiki` clone (used when `authType: local`). |
+| `BOT_AGENT_RELOAD_URL` | env (CI) | Bot agent reload endpoint (e.g. `https://<bot>/admin/graphrag/reload`). When unset, the publish step skips notification with a warning. |
+| `BOT_AGENT_ADMIN_TOKEN` | env (CI) | Shared secret sent as `X-Admin-Token` to the bot reload endpoint. |
 
 ## Testing
 

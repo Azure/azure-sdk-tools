@@ -36,7 +36,9 @@ embedding_models:
 input:
   file_type: text
   base_dir: "input"
-  file_pattern: ".*\\.md$$"
+  # Match both .md and .mdx — daily_sync._process_source_directory
+  # already harvests both extensions, so GraphRAG must index both too.
+  file_pattern: ".*\\.mdx?$$"
 
 vector_store:
   type: azure_ai_search

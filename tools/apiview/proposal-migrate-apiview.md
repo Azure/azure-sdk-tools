@@ -280,7 +280,11 @@ As of May 2026, the [GitHub Copilot code review agent](https://docs.github.com/e
 
 At this time, we can provide basic guidance by using `api.instructions.md` in `.github/instructions` with `applyTo: "**/api.md"`, subject to the 4,000-character and 1,000-line limits. While we would provide the initial content for these files, they would ultimately be owned and maintained by the language teams.
 
-Additionally, we can develop richer skills and custom agents to aid in API review that are usable today via the GitHub Copilot VS Code extension or the GitHub Copilot CLI. These surfaces fully support skills, custom instructions without length limits, and MCP tooling. However, using them requires the architect to drop down into the IDE or CLI rather than reviewing directly on github.com. This is a viable interim path for delivering higher-quality AI-assisted feedback while GitHub's native code review agent catches up. When the code review agent eventually gains skill support, these same skills should be directly leverageable without rewriting them.
+Additionally, we can develop richer skills and custom agents to aid in API review that are usable today via the GitHub Copilot VS Code extension or the GitHub Copilot CLI. These surfaces fully support skills, custom instructions without length limits, and MCP tooling.
+
+The official GitHub Pull Requests and Issues extension for VS Code also brings PR commenting directly into the IDE, with comments synchronized with github.com. Reviewers can read and respond from either surface without losing continuity. This is valuable because VS Code provides a richer agenting environment than github.com today, enabling more capable agentic review workflows than the current GitHub Copilot code review agent (which currently cannot review `API.md` files).
+
+Together, this creates a practical interim model: discussion can remain PR-centric and visible on github.com while deeper agent-assisted review can happen in the IDE where tool, skill, and MCP support is stronger. When the code review agent eventually gains skill support and parity, these same skills should be directly leverageable without rewriting them.
 
 Ultimately, we want language-team-authored skills to be used intelligently by the code review agent to produce higher-quality API feedback directly on github.com.
 

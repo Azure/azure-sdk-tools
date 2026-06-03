@@ -36,6 +36,7 @@ The `azure-typespec-author` skill **must** be invoked immediately in all modes (
 - **Always validate** — run every steps in [validation](references/validation.md) after every edit.
 - **Always cite references** — provide links that justify the approach.
 - **Follow the authoring plan exactly** — code changes in Step 4 MUST follow the authoring plan generated in Step 3. Do not deviate by referring to existing code patterns in the TypeSpec project; the authoring plan is the single source of truth for what to change.
+- **NEVER proceed with manual edits if an MCP tool call fails.** If `azsdk_typespec_generate_authoring_plan` or `azsdk_run_typespec_validation` fails (due to authentication errors, timeouts, or other issues), **stop and report the error to the user**. Do not attempt to author or validate TypeSpec changes without the tool — the authoring plan provides grounded guidance that cannot be reliably replicated manually.
 
 ## Workflow
 
@@ -88,3 +89,8 @@ Output all referenced document URLs from Step 3. This gives the user direct link
 - "Add a new preview API version 2026-01-01-preview for widget resource manager"
 - "Add an ARM resource named Asset with CRUD operations"
 - "Add a new property to the Widget model"
+
+## Troubleshooting
+
+- If `azsdk_typespec_generate_authoring_plan` fails with an authentication error, stop and ask the user to authenticate. Do not proceed with manual TypeSpec edits.
+- If a tool call times out, report the error and suggest retrying. Do not attempt to replicate the tool's behavior manually.

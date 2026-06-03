@@ -118,26 +118,11 @@ Use this pattern in any handler to test how your integration handles different s
 
 ## Keeping the Mock in Sync with the Live MCP Server
 
-The mock reuses the live CLI's tool definitions, so the *set* of advertised tools is always identical. What can drift is which tools have a hand-written `IMockToolHandler`. Tools without a handler fall back to the generic default response — fine for noise, but it hides routing / arg regressions when a scenario actually depends on that tool returning a realistic shape.
+The mock reuses the live CLI's tool definitions (`SharedOptions.ToolsList`), so the *set* of advertised tools is always identical. What can drift is which tools have a hand-written `IMockToolHandler`. Tools without a handler fall back to the generic `{"message":"Success"}` default — fine for routing tests but useless for scenarios that chain calls together (e.g. consume an ID returned by a previous tool).
 
-Run the inventory script to check parity:
+When you add or rename an MCP tool in `Azure.Sdk.Tools.Cli`, add a matching handler under `Handlers/<Domain>/`:
 
-```powershell
-pwsh eng/scripts/Get-McpToolInventory.ps1
-```
-
-It prints three buckets and exits non-zero on any drift:
-
-- **both** — live tool with a hand-written handler. No action.
-- **live-only** — live tool with no handler. Add one.
-- **mock-only** — handler for a tool that no longer exists. Delete or rename it.
-
-The same command is used locally and in CI.
-
-### Workflow when the script flags a gap
-
-1. Look up the live tool's response type. Tool method signatures live under `tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools/`. The return type is usually a typed `CommandResponse` in `Azure.Sdk.Tools.Cli.Models.Responses.*`.
-2. Add a new file under `Handlers/<Domain>/` (e.g., `Handlers/Pipeline/MyToolHandler.cs`).
+1. Look up the live tool's response type under `tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools/`. The return type is usually a typed `CommandResponse` in `Azure.Sdk.Tools.Cli.Models.Responses.*`.
+2. Create a new file under `Handlers/<Domain>/` (e.g., `Handlers/Pipeline/MyToolHandler.cs`).
 3. Implement `IMockToolHandler`. Set `ToolName` to the exact `[McpServerTool(Name = "…")]` value from the real tool.
 4. Return an instance of the same response type the real tool returns, populated with realistic sample data. For scenarios that need to exercise multiple branches, switch on `arguments` (see `HelloWorldHandler` above).
-5. Re-run the script to confirm the tool moved from **live-only** to **both**.

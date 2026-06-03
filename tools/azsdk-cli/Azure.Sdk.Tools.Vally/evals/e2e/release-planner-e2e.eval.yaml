@@ -1,11 +1,24 @@
 name: azsdk-mcp-tool-scenarios
 description: |
-  Live end-to-end demo for the release-planner flow.
+  Live end-to-end demo for the full release-planner -> generate-SDK flow.
 
   Drives the *real* azsdk-cli MCP server against real DevOps APIs, inside a
   real git worktree of azure-rest-api-specs. The MCP server runs with
   AZSDKTOOLS_AGENT_TESTING=true (set globally in .vally.yaml), so work items
   route to the DevOps test area path and are safe to leave around / re-run.
+
+  This scenario walks the agent through a multi-step chain that exercises
+  multiple skills back-to-back in a single conversation:
+
+    1. Release-plan skill   -> azsdk_create_release_plan, azsdk_get_release_plan
+    2. Generate-SDK skill   -> azsdk_run_generate_sdk
+    3. Release-plan skill   -> azsdk_link_sdk_pull_request_to_release_plan
+
+  The goal is to verify Vally end-to-end (live agent + live MCP + live DevOps)
+  can:
+    - route each turn to the correct skill,
+    - call the correct tool on that skill,
+    - and do so in the expected order across multiple steps.
 
   Demonstrates Vally's environment.git fixture hook + live MCP + Copilot SDK
   executor + real DevOps in one shot.
@@ -46,8 +59,10 @@ stimuli:
         source: C:/Users/gaoh/.vally-cache/azure-rest-api-specs
         ref: main
     prompt: |
-      I'm in a checkout of azure-rest-api-specs. Walk through a release plan
-      for the Contoso Widget Manager end-to-end:
+      I'm in a checkout of azure-rest-api-specs. Walk me through the full
+      release-plan + SDK-generation flow for the Contoso Widget Manager
+      end-to-end. Do every step below, in order, and use real tools (no
+      dry-run, no simulation):
 
         1. Create a release plan using:
              - TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
@@ -59,24 +74,74 @@ stimuli:
              - spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38387"
 
         2. Fetch the release plan you just created back from DevOps to confirm
-           it was saved.
+           it was saved, and tell me its work-item ID.
+
+        3. Kick off SDK generation for that same TypeSpec project via the
+           generation pipeline (Python SDK is fine). Use the work-item ID
+           from step 2.
+
+        4. Once the generation pipeline reports a pull request URL, link
+           that SDK pull request back to the release plan from step 2.
 
       My setup has already been verified, do not run azsdk_verify_setup.
     constraints:
-      max_turns: 10
-      max_tokens: 10000
-    # TODO: assert ordering create -> get — blocked on https://github.com/Azure/azure-sdk-tools/issues/15832 (Vally tool-calls grader needs sequence:).
-    # TODO: assert serviceTreeId / productTreeId / typeSpecProjectPath args — blocked on https://github.com/Azure/azure-sdk-tools/issues/15833 (Vally tool-calls grader needs generic args matcher).
+      max_turns: 20
+      max_tokens: 30000
+    # TODO: assert strict ordering create -> get -> generate -> link
+    #   — blocked on https://github.com/microsoft/vally/issues/453 (tool-calls grader sequence:).
+    # TODO: assert args (serviceTreeId / productTreeId / typeSpecProjectPath / workItemId)
+    #   — blocked on https://github.com/microsoft/vally/issues/454 (tool-calls grader generic args:).
+    # TODO: add `azsdk-common-generate-sdk-locally` (or the equivalent pipeline-
+    #   driven skill) to skill-invocation `required` once a skill that owns
+    #   `azsdk_run_generate_sdk` is registered. Today the only skill that
+    #   declares any of the tools in this scenario is azsdk-common-prepare-release-plan.
     graders:
+      # 1. Skill-routing check (FIRST — fast, deterministic, free): did the
+      #    agent dispatch to the right skill at all? If this fails, the
+      #    tool-calls grader below is meaningless.
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-prepare-release-plan
+      # 2. Tool-call check: given the right skill was loaded, did it call
+      #    the right MCP tools? Each tool here is owned by the skill above
+      #    except azsdk_run_generate_sdk (see TODO).
       - type: tool-calls
         config:
           required:
             - azsdk_create_release_plan
             - azsdk_get_release_plan
+            - azsdk_run_generate_sdk
+            - azsdk_link_sdk_pull_request_to_release_plan
           disallowed:
             - azsdk_verify_setup
+      # 3. Final-answer correctness (LLM-judged): the deterministic graders
+      #    above only verify the agent *did* the right things, not that it
+      #    *reported* them back to the user correctly. Tools can fire
+      #    successfully while the final message hallucinates IDs / URLs.
+      #    This grader uses gpt-5.4 as judge against a free-form rubric so
+      #    minor wording variants (`WI 29262`, `work-item #29262`) all pass.
+      - type: prompt
+        config:
+          model: gpt-5.4
+          rubric: |
+            Did the final assistant message clearly state BOTH of the
+            following, consistent with the tools that were actually called?
+
+              1. A numeric DevOps work-item ID for the release plan that was
+                 created (or confirmed). Any unambiguous format is fine
+                 (e.g. "work item 29262", "WI #29262", "/_workitems/edit/29262").
+
+              2. A GitHub pull request URL on
+                 github.com/Azure/azure-sdk-for-* that was linked back to
+                 that release plan.
+
+            Answer "pass" only if BOTH are present. Otherwise answer "fail"
+            and briefly say which one is missing.
 
 scoring:
   weights:
+    skill-invocation: 1
     tool-calls: 1
+    prompt: 1
   threshold: 1.0

@@ -166,11 +166,6 @@ export class DifferenceDetector {
   //   2. A property on the constructor parameter type (e.g. options?: XxxOptionalParams
   //      exposing apiVersion, cloudSetting, etc.)
   private filterClassPropertiesMovedToInternals(v: DiffPair[], className: string): DiffPair[] {
-    const isHlcToModular =
-      this.baselineApiViewOptions.sdkType === SDKType.HighLevelClient &&
-      this.currentApiViewOptions.sdkType === SDKType.ModularClient;
-    if (!isHlcToModular) return v;
-
     const currentClass = this.context!.current.getClass(className);
     if (!currentClass) return v;
 

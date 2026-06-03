@@ -20,6 +20,7 @@ import os
 import shutil
 from pathlib import Path
 
+from src.services.configuration_loader import ConfigurationLoader
 from src.services.storage_service import BlobService
 
 from graphrag.api.index import build_index
@@ -34,13 +35,23 @@ INPUT_DIR = GRAPHRAG_ROOT / "input"
 OUTPUT_DIR = GRAPHRAG_ROOT / "output"
 UPDATE_OUTPUT_DIR = GRAPHRAG_ROOT / "update_output"
 
-DEFAULT_SOURCES = [
-    "typespec_docs",
-    "typespec_azure_docs",
-    "azure_api_guidelines",
-    "azure_resource_manager_rpc",
-    "azure_rest_api_specs_wiki",
-]
+
+def _resolve_source_prefixes() -> list[str]:
+    """Return the source-folder prefixes to index from knowledge-config.json.
+
+    Mirrors how `daily_sync` derives blob paths: each `DocumentationSource.folder`
+    is the prefix used when uploading blobs (`source.folder/...`), so the full
+    rebuild downloads exactly the same set the doc sync produced.
+
+    Returns folders in config order, de-duplicated.
+    """
+    seen: set[str] = set()
+    folders: list[str] = []
+    for source in ConfigurationLoader.get_documentation_sources():
+        if source.folder and source.folder not in seen:
+            seen.add(source.folder)
+            folders.append(source.folder)
+    return folders
 
 
 async def run_graphrag_pipeline(
@@ -59,7 +70,7 @@ async def run_graphrag_pipeline(
     settings.yaml) and stores graph structure in parquet output files.
 
     Args:
-        sources: Source prefixes to index (None = defaults). Used in full mode.
+        sources: Source prefixes to index (None = derive from knowledge-config.json). Used in full mode.
         full: If True, re-index everything from scratch.
         changed_blob_paths: Blob paths that changed in the current sync.
         deleted_blob_paths: Blob paths that were deleted in the current sync.
@@ -123,7 +134,12 @@ async def _run_incremental_indexing(
 
 async def _run_full_indexing(sources: list[str] | None = None) -> None:
     """Full re-indexing: download all source blobs and rebuild the graph."""
-    src_list = sources or DEFAULT_SOURCES
+    src_list = sources or _resolve_source_prefixes()
+    if not src_list:
+        logger.warning(
+            "No source folders resolved from knowledge-config.json — skipping indexing"
+        )
+        return
 
     blob_service = BlobService()
     count = blob_service.download_all_blobs_to_dir(INPUT_DIR, source_prefixes=src_list)

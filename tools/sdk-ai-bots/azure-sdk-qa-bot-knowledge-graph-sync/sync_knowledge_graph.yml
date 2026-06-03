@@ -11,13 +11,6 @@ parameters:
     displayName: 'Full GraphRAG rebuild (skip incremental)'
     type: boolean
     default: false
-  # Optional: limit a full rebuild to a subset of sources.
-  # Comma-separated, e.g. "typespec_docs,azure_api_guidelines".
-  # Only used when fullGraphrag is true.
-  - name: sources
-    displayName: 'Sources (only used when fullGraphrag=true)'
-    type: string
-    default: ''
 
 schedules:
 - cron: "0 3 * * *"  # Daily at 3 AM UTC (1h after the doc sync at 02:00)
@@ -149,19 +142,15 @@ extends:
               - script: |
                   ARGS=""
                   if [ "$FULL_GRAPHRAG" = "True" ] || [ "$FULL_GRAPHRAG" = "true" ]; then
-                    ARGS="$ARGS --full-graphrag"
-                    if [ -n "$SOURCES_ARG" ]; then
-                      ARGS="$ARGS --sources $SOURCES_ARG"
-                    fi
+                    ARGS="--full-graphrag"
                   fi
                   echo "Running: sync-knowledge-graph $ARGS"
                   sync-knowledge-graph $ARGS
                 displayName: 'Execute knowledge graph sync'
                 workingDirectory: $(workingDirectory)
                 env:
-                  # Pipeline parameters surfaced as env vars for the bash wrapper.
+                  # Pipeline parameter surfaced as env var for the bash wrapper.
                   FULL_GRAPHRAG: ${{ parameters.fullGraphrag }}
-                  SOURCES_ARG: ${{ parameters.sources }}
 
                   # Azure App Configuration — everything else is sourced from here.
                   AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)

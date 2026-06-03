@@ -75,6 +75,23 @@ async def test_pr_review_request_should_respond(service: IntentionService) -> No
 
 
 @pytest.mark.asyncio(loop_scope="module")
+async def test_human_approval_request_should_not_respond(service: IntentionService) -> None:
+    """When the user explicitly asks a human to approve/confirm the bot's prior reply, the bot should not respond."""
+    req = IntentionRequest(
+        message=Message(
+            role="user",
+            content=(
+                "@Azure SDK Onboarding and E2E SDK can some human approve the above AI-generated response?\n\n"
+                "And can you please confirm whether we can get private Signed .NET SDK from PR against "
+                "Public Repo Main? We use private SDK for daily E2E test workflow before we rollout to Public."
+            ),
+        ),
+    )
+    resp = await service.classify(req)
+    assert resp.should_respond is False
+
+
+@pytest.mark.asyncio(loop_scope="module")
 async def test_pr_help_review_should_respond(service: IntentionService) -> None:
     """PR help review request should be classified as should_respond=true."""
     req = IntentionRequest(

@@ -433,11 +433,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     // Fall back to TypeSpec project path if spec PR lookup failed
                     if (releasePlan == null && !string.IsNullOrWhiteSpace(typeSpecProjectPath))
                     {
+                        if (typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectPath))
+                        {
+                            typeSpecProjectPath = typeSpecHelper.GetTypeSpecProjectRelativePath(typeSpecProjectPath);
+                        }
                         releasePlan = await devOpsService.GetReleasePlanByTypeSpecProjectPathAsync(typeSpecProjectPath, ct: ct);
                     }
                 }
                 else if (!string.IsNullOrWhiteSpace(typeSpecProjectPath))
                 {
+                    if (typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectPath))
+                    {
+                        typeSpecProjectPath = typeSpecHelper.GetTypeSpecProjectRelativePath(typeSpecProjectPath);
+                    }
                     releasePlan = await devOpsService.GetReleasePlanByTypeSpecProjectPathAsync(typeSpecProjectPath, ct: ct);
                 }
                 else

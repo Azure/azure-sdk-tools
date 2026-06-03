@@ -19,7 +19,7 @@
     "test": "vitest run"
   },
   "engines": {
-    "node": "^20.0.0 || ^22.0.0 || >=24.0.0"
+    "node": ">=22.0.0"
   },
   "repository": {
     "type": "git",

@@ -7,7 +7,7 @@ environment: azsdk-mcp
 
 config:
   runs: 1
-  timeout: 1800
+  timeout: "1800s"
   model: claude-opus-4.6
   executor: copilot-sdk
 
@@ -24,8 +24,10 @@ stimuli:
       dest: main.tsp
     - src: ../fixtures/006007-dp-version-property-added\shared.tsp
       dest: shared.tsp
-    - src: ../fixtures/006007-dp-version-property-added\package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/006007-dp-version-property-added\tspconfig.yaml
       dest: tspconfig.yaml
   graders:

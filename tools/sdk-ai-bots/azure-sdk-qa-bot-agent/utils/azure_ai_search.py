@@ -132,7 +132,7 @@ class SearchClient:
 
         vector_query = VectorizableTextQuery(
             text=query,
-            k=k,
+            k_nearest_neighbors=k,
             fields="text_vector",
         )
 

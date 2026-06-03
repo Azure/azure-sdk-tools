@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
@@ -72,11 +73,13 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         [GeneratedRegex(@"^https://github\.com/[^/]+/azure-rest-api-specs/(blob|tree)/[^/]+/specification/.+$", RegexOptions.IgnoreCase)]
         private static partial Regex GitHubSpecUrlRegex();
 
-        private IGitHelper _gitHelper;
+        private readonly IGitHelper _gitHelper;
+        private readonly IProcessHelper _processHelper;
 
-        public TypeSpecHelper(IGitHelper gitHelper)
+        public TypeSpecHelper(IGitHelper gitHelper, IProcessHelper processHelper)
         {
             _gitHelper = gitHelper;
+            _processHelper = processHelper;
         }
 
         public bool IsUrl(string path)
@@ -96,13 +99,19 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return typeSpecObject?.IsManagementPlane ?? false;
         }
 
+        private bool IsTypeParserExecutablePresent(string repoRoot)
+        {
+            var tspExecutable = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "tsp.cmd" : "tsp";
+            return File.Exists(Path.Combine(repoRoot, "node_modules", ".bin", tspExecutable));
+        }
+
         /// <inheritdoc/>
         public async Task<TypeSpecProject?> ParseTypeSpecProjectAsync(string typeSpecProjectPath, INpxHelper npxHelper, ILogger logger, CancellationToken ct)
         {
             try
             {
                 // Find the typespec project directory
-                if (typeSpecProjectPath.EndsWith(TypeSpecProject.TSPCONFIG_FILENAME))
+                if (!string.IsNullOrEmpty(typeSpecProjectPath) && Path.GetFileName(typeSpecProjectPath).Equals(TypeSpecProject.TSPCONFIG_FILENAME, StringComparison.OrdinalIgnoreCase))
                 {
                     typeSpecProjectPath = Path.GetDirectoryName(typeSpecProjectPath) ?? string.Empty;
                 }
@@ -111,6 +120,32 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 {
                     logger.LogWarning("Invalid TypeSpec project path: {typeSpecProjectPath}. Skipping metadata emitter.", typeSpecProjectPath);
                     return null;
+                }
+
+                var repoRoot = GetSpecRepoRootPath(typeSpecProjectPath);
+                if (string.IsNullOrEmpty(repoRoot))
+                {
+                    logger.LogWarning("Could not determine repo root for path: {typeSpecProjectPath}. Continuing without automatic dependency install.", typeSpecProjectPath);
+                }
+                else if (!IsTypeParserExecutablePresent(repoRoot))
+                {
+                    var packageLockPath = Path.Combine(repoRoot, "package-lock.json");
+                    if (!File.Exists(packageLockPath))
+                    {
+                        logger.LogWarning("TypeSpec compiler not found in node-modules and {packageLockPath} does not exist. Skipping npm ci.", packageLockPath);
+                    }
+                    else
+                    {
+                        logger.LogInformation("TypeSpec compiler not found in {repoRoot}. Installing dependencies...", repoRoot);
+                        var processOptions = new ProcessOptions("npm", ["ci"], workingDirectory: repoRoot, timeout: TimeSpan.FromMinutes(15));
+                        var npmResult = await _processHelper.Run(processOptions, ct);
+                        if (npmResult.ExitCode != 0)
+                        {
+                            logger.LogWarning("npm ci failed with exit code {ExitCode}. Output: {Output}", npmResult.ExitCode, npmResult.Output);
+                            return null;
+                        }
+                        logger.LogInformation("npm ci completed.");
+                    }
                 }
 
                 var project = TypeSpecProject.ParseTypeSpecConfig(typeSpecProjectPath);
@@ -176,28 +211,44 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 }
 
                 var packages = new List<PackageInfo>();
-
                 if (languagesObj is Dictionary<object, object> languages)
                 {
                     foreach (var lang in languages)
                     {
                         var languageName = lang.Key?.ToString() ?? string.Empty;
                         var packageName = string.Empty;
-
-                        if (lang.Value is Dictionary<object, object> langProps)
+                        var groupName = string.Empty;
+                        if (lang.Value is Dictionary<object, object> langDict)
                         {
-                            if (langProps.TryGetValue("packageName", out var pkgName))
+                            if (langDict.TryGetValue("packageName", out var pkgName))
                             {
                                 packageName = pkgName?.ToString() ?? string.Empty;
                             }
                         }
+                        else if (lang.Value is ICollection<object> langList && langList.FirstOrDefault() is Dictionary<object, object> langDictTemp)
+                        {
+                            if (langDictTemp.TryGetValue("packageName", out var pkgName))
+                            {
+                                packageName = pkgName?.ToString() ?? string.Empty;
+                            }
+                        }
+
                         languageName = languageName.Contains("csharp") ? ".NET" : languageName;
+                        var language = SdkLanguageHelpers.GetSdkLanguage(languageName);
                         if (!string.IsNullOrEmpty(packageName))
                         {
+                            if (language == SdkLanguage.Java && packageName.Contains(':'))
+                            {
+                                var parts = packageName.Split(':');
+                                groupName = parts[0];
+                                packageName = parts[1];
+                            }
+
                             packages.Add(new PackageInfo
                             {
-                                Language = SdkLanguageHelpers.GetSdkLanguage(languageName),
-                                PackageName = packageName
+                                Language = language,
+                                PackageName = packageName,
+                                Group = groupName
                             });
                         }
                     }
@@ -255,12 +306,22 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
         public string GetTypeSpecProjectRelativePath(string typeSpecProjectPath)
         {
-            if (string.IsNullOrEmpty(typeSpecProjectPath) || !IsValidTypeSpecProjectPath(typeSpecProjectPath))
+            if (string.IsNullOrEmpty(typeSpecProjectPath))
             {
                 return string.Empty;
             }
 
-            int specIndex = typeSpecProjectPath.IndexOf("specification");
+            if (Path.GetFileName(typeSpecProjectPath).Equals(TypeSpecProject.TSPCONFIG_FILENAME, StringComparison.OrdinalIgnoreCase))
+            {
+                typeSpecProjectPath = Path.GetDirectoryName(typeSpecProjectPath) ?? string.Empty;
+            }
+
+            if (!IsValidTypeSpecProjectPath(typeSpecProjectPath))
+            {
+                return string.Empty;
+            }
+
+            int specIndex = typeSpecProjectPath.IndexOf("specification", StringComparison.OrdinalIgnoreCase);
             return specIndex >= 0 ? typeSpecProjectPath[specIndex..].Replace("\\", "/") : string.Empty;
         }
 

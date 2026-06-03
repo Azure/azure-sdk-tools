@@ -182,6 +182,23 @@ function buildWorkItem(id, overrides = {}) {
 }
 
 describe("API routes", () => {
+  describe("GET /api/config", () => {
+    test("returns environment as production by default", async () => {
+      delete process.env.ENVIRONMENT;
+      const res = await httpRequest("GET", "/api/config");
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ environment: "production" });
+    });
+
+    test("returns environment as test when ENVIRONMENT=test", async () => {
+      process.env.ENVIRONMENT = "test";
+      const res = await httpRequest("GET", "/api/config");
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ environment: "test" });
+      delete process.env.ENVIRONMENT;
+    });
+  });
+
   describe("GET /api/release-plans", () => {
     test("returns plans structure (empty on first call)", async () => {
       const res = await httpRequest("GET", "/api/release-plans");

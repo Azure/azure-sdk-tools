@@ -11,9 +11,7 @@ Content-type: application/json; charset=utf-8
             "content": "hi",
             "user_id": "test_user_id",
             "user_name": "test_user_name"
-    },
-    "conversation_id": "test_conversation_id",
-    "conversation_type": "teams_channel"
+    }
 }
 
 ### Local test - feedback

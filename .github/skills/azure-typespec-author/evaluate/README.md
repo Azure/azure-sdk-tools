@@ -1,12 +1,34 @@
 # Azure TypeSpec Author Skill Evaluations
 
-This directory contains [Vally](https://vally.dev) evaluation cases for the `azure-typespec-author` skill.
+This directory contains [Vally](https://aka.ms/vally) evaluation cases for the `azure-typespec-author` skill.
 
 ## Prerequisites
 
-- [Vally CLI](https://vally.dev/docs/getting-started) installed globally: `npm install -g vally`
+- [Vally CLI](https://aka.ms/vally) installed globally: `npm install -g @microsoft/vally-cli`
 - The `azsdk-cli` MCP server built: `dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Cli`
 - An API key for the model configured (e.g., Anthropic or OpenAI key via environment variable)
+
+## Environment Setup
+
+Run the setup script to download spec repo package files, run `npm ci`, and configure `FIXTURE_NODE_MODULES`:
+
+```powershell
+# PowerShell
+node scripts/setup-environment.js | Invoke-Expression
+```
+
+```bash
+# Bash / Zsh
+eval $(node scripts/setup-environment.js)
+```
+
+This script:
+
+1. Clones `package.json` and `package-lock.json` from [azure-rest-api-specs](https://github.com/Azure/azure-rest-api-specs) into `fixtures/Microsoft.Widget/Widget/`.
+2. Runs `npm ci` in that directory.
+3. Outputs the shell command to set `FIXTURE_NODE_MODULES` for symlink usage.
+
+Without `FIXTURE_NODE_MODULES`, the agent will run `npm install` each time (slow but functional).
 
 ## Running Evaluations
 
@@ -36,22 +58,30 @@ vally eval --eval-spec evals/001001.eval.yaml --output-dir ./result-001001 --wor
 
 Test suites are defined in `.vally.yaml` under the `suites` key. Available suites:
 
-| Suite | Description |
-|---|---|
-| `versioning` | All versioning cases (001xxx) |
-| `version-evolution` | Version evolution subset |
-| `armtemplate` | ARM template cases (002xxx) |
+| Suite                  | Description                           |
+| ---------------------- | ------------------------------------- |
+| `versioning`           | All versioning cases (001xxx)         |
+| `version-evolution`    | Version evolution subset              |
+| `armtemplate`          | ARM template cases (002xxx)           |
 | `longrunningoperation` | Long-running operation cases (003xxx) |
-| `decorators` | Decorator cases (004xxx) |
-| `warning` | Warning cases (005xxx) |
-| `dataplane` | Data-plane cases (006xxx) |
-| `all` | Every eval case |
+| `decorators`           | Decorator cases (004xxx)              |
+| `warning`              | Warning cases (005xxx)                |
+| `dataplane`            | Data-plane cases (006xxx)             |
+| `all`                  | Every eval case                       |
 
 Run a suite by name:
 
 ```bash
 vally eval --suite versioning --output-dir versioning
 ```
+
+### Useful flags
+
+| Flag                           | Purpose                                                        |
+| ------------------------------ | -------------------------------------------------------------- |
+| `--keep-executor-session-logs` | Preserve agent session logs under `--output-dir` for debugging |
+| `--verbose`                    | Show full agent output during the run                          |
+| `--workers <n>`                | Run multiple stimuli in parallel (default: 5)                  |
 
 ### Parallel run the environment
 
@@ -87,6 +117,6 @@ evaluate/
 │   ├── 001-share-version-new-feature/
 │   ├── Microsoft.Widget/
 │   └── ...
-└── results/             # Eval run output
+├── results/             # Eval run output
 └── debug/               # Eval run workspace
 ```

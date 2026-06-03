@@ -8,6 +8,7 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec;
+using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
@@ -15,10 +16,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     [McpServerToolType, Description("This type contains the tools to generate SDK code locally.")]
     public class SdkGenerationTool(
         IGitHelper gitHelper,
-        ILogger<SdkGenerationTool> logger,
+        ILogger<SdkGenerationTool> sdkGenLogger,
         ITspClientHelper tspClientHelper,
-        IRawOutputHelper outputHelper
-    ) : MCPTool
+        IRawOutputHelper outputHelper,
+        IEnumerable<LanguageService> languageServices
+    ) : LanguageMcpTool(languageServices, gitHelper, sdkGenLogger)
     {
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
 
@@ -111,6 +113,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     logger.LogInformation("TypeSpec Project Path from tsp-location.yaml: {TypeSpecProjectPath}", typeSpecProjectPath);
 
                     reporter.NextStep($"Discovered SDK repo '{sdkRepoName}', starting code re-generation");
+
+                    // Pre-build language-specific plugins before generation
+                    var languageService = await GetLanguageServiceAsync(tspLocationPath, ct);
+                    if (languageService != null)
+                    {
+                        var sdkRepoRoot = await gitHelper.DiscoverRepoRootAsync(tspLocationPath, ct);
+                        await languageService.PreGenerateAsync(sdkRepoRoot, ct);
+                    }
 
                     // Run tsp-client update using the existing tsp-location.yaml
                     TspToolResponse tspResult;
@@ -205,6 +215,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             {
                 additionalArgs.Add("--emitter-options");
                 additionalArgs.Add(emitterOptions);
+            }
+
+            // Pre-build language-specific plugins before generation
+            var languageService = GetLanguageService(SdkLanguageHelpers.GetLanguageForRepo(sdkRepoName));
+            if (languageService != null)
+            {
+                await languageService.PreGenerateAsync(sdkRepoRoot, ct);
             }
 
             // Use the helper to initialize generation

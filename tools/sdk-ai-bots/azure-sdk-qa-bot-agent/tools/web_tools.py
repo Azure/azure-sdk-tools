@@ -26,6 +26,8 @@ _DEFAULT_MAX_CHARS = 4000
 _MAX_ALLOWED_CHARS = 12000
 _MAX_HEADINGS = 50
 _MIN_ALLOWED_CHARS = 1000
+_MAX_REDIRECTS = 5
+_REDIRECT_STATUS_CODES = frozenset({301, 302, 303, 307, 308})
 
 
 class _HtmlOutlineParser(HTMLParser):
@@ -131,6 +133,73 @@ def _is_public_url(url: str) -> bool:
     return True
 
 
+def _resolve_public_endpoint(url: str) -> tuple[str, int, str] | None:
+    """Resolve url's hostname to a single public IP and return (ip, port, hostname).
+
+    Returns None if the hostname cannot be resolved, or if **any** of the
+    resolved addresses is non-public. Returning a concrete IP lets the caller
+    bypass a second hostname resolution by httpx, closing the DNS rebinding
+    TOCTOU window between validation and connection.
+    """
+    parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https"}:
+        return None
+
+    hostname = (parsed.hostname or "").strip().lower()
+    if not hostname:
+        return None
+
+    default_port = 443 if parsed.scheme == "https" else 80
+    port = parsed.port or default_port
+
+    # If the hostname is already an IP literal, validate and use it directly.
+    try:
+        ip_literal = ipaddress.ip_address(hostname)
+    except ValueError:
+        ip_literal = None
+    if ip_literal is not None:
+        if not ip_literal.is_global:
+            return None
+        return (str(ip_literal), port, hostname)
+
+    try:
+        addrinfos = socket.getaddrinfo(hostname, port, type=socket.SOCK_STREAM)
+    except socket.gaierror:
+        return None
+    if not addrinfos:
+        return None
+
+    chosen: str | None = None
+    for family, _, _, _, sockaddr in addrinfos:
+        if family not in (socket.AF_INET, socket.AF_INET6):
+            continue
+        ip_str = sockaddr[0]
+        # Strip IPv6 zone id (e.g. "fe80::1%eth0") before validation.
+        if "%" in ip_str:
+            ip_str = ip_str.split("%", 1)[0]
+        try:
+            ip_obj = ipaddress.ip_address(ip_str)
+        except ValueError:
+            return None
+        if not ip_obj.is_global:
+            # If *any* resolved address is non-public, refuse the request.
+            return None
+        if chosen is None:
+            chosen = ip_str
+    if chosen is None:
+        return None
+    return (chosen, port, hostname)
+
+
+def _build_pinned_url(url: str, ip: str, port: int) -> str:
+    """Return ``url`` with its hostname replaced by ``ip`` (bracketed for IPv6)."""
+    parsed = urlparse(url)
+    ip_netloc = f"[{ip}]" if ":" in ip else ip
+    if parsed.port is not None or port not in (80, 443):
+        ip_netloc = f"{ip_netloc}:{port}"
+    return parsed._replace(netloc=ip_netloc).geturl()
+
+
 def _trim_excerpt(text: str, max_chars: int) -> str:
     cleaned = re.sub(r"\s+", " ", text).strip()
     return cleaned[:max_chars]
@@ -150,15 +219,76 @@ async def _fetch_async(url: str, max_chars: int) -> FetchWebpageResult:
         "Pragma": "no-cache",
     }
 
+    current_url = url
+    response = None
     try:
+        # Disable automatic redirect following so we can re-validate every hop.
         async with httpx.AsyncClient(
             headers=headers,
-            follow_redirects=True,
+            follow_redirects=False,
             timeout=httpx.Timeout(_DEFAULT_TIMEOUT_SECONDS),
             http2=True,
         ) as client:
-            response = await client.get(url)
-            final_url = str(response.url)
+            for hop in range(_MAX_REDIRECTS + 1):
+                # Re-validate the URL on every hop (initial request + each
+                # redirect target) to prevent SSRF via redirects.
+                if not _is_public_url(current_url):
+                    return FetchWebpageResult(
+                        success=False,
+                        url=url,
+                        resolved_url=current_url,
+                        status_code=None,
+                        content_type="",
+                        content_excerpt="",
+                        error="Redirect to non-public URL blocked.",
+                    )
+
+                # DNS-rebind mitigation: resolve once, validate, and connect to
+                # the validated IP directly so httpx does not re-resolve the
+                # hostname (which an attacker could rebind to an internal IP
+                # between our validation and the connection).
+                endpoint = _resolve_public_endpoint(current_url)
+                if endpoint is None:
+                    return FetchWebpageResult(
+                        success=False,
+                        url=url,
+                        resolved_url=current_url,
+                        status_code=None,
+                        content_type="",
+                        content_excerpt="",
+                        error="URL resolves to a non-public address.",
+                    )
+                ip, port, original_hostname = endpoint
+                pinned_url = _build_pinned_url(current_url, ip, port)
+                pinned_netloc = urlparse(current_url).netloc
+
+                response = await client.get(
+                    pinned_url,
+                    headers={"Host": pinned_netloc},
+                    extensions={"sni_hostname": original_hostname},
+                )
+
+                if response.status_code in _REDIRECT_STATUS_CODES:
+                    location = response.headers.get("location")
+                    if not location:
+                        break
+                    if hop >= _MAX_REDIRECTS:
+                        return FetchWebpageResult(
+                            success=False,
+                            url=url,
+                            resolved_url=current_url,
+                            status_code=response.status_code,
+                            content_type=response.headers.get("content-type", ""),
+                            content_excerpt="",
+                            error="Too many redirects.",
+                        )
+                    current_url = str(httpx.URL(current_url).join(location))
+                    continue
+
+                break
+
+            assert response is not None  # guaranteed by loop entry
+            final_url = current_url
             status_code = response.status_code
             content_type = response.headers.get("content-type", "")
 
@@ -183,7 +313,7 @@ async def _fetch_async(url: str, max_chars: int) -> FetchWebpageResult:
         return FetchWebpageResult(
             success=False,
             url=url,
-            resolved_url=url,
+            resolved_url=current_url,
             status_code=None,
             content_type="",
             content_excerpt="",

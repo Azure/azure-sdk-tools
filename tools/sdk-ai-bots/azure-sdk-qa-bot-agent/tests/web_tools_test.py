@@ -142,3 +142,146 @@ async def test_web_fetch_returns_error_on_http_forbidden() -> None:
     assert result.success is False
     assert result.status_code == 403
     assert result.error is not None
+
+
+@pytest.mark.asyncio
+async def test_web_fetch_blocks_redirect_to_internal_address() -> None:
+    """An attacker's public URL that 302s to an internal address must be blocked."""
+    initial_url = "https://attacker.example.com/redirect"
+    redirect_resp = httpx.Response(
+        status_code=302,
+        headers={"location": "http://169.254.169.254/metadata/instance"},
+        content=b"",
+        request=httpx.Request("GET", initial_url),
+    )
+
+    # First call resolves attacker.example.com to a public IP, then the
+    # follow-up validation of the redirect target must reject 169.254.169.254
+    # (a link-local IMDS address).
+    getaddrinfo_results = {
+        "attacker.example.com": [
+            (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("93.184.216.34", 0)),
+        ],
+    }
+
+    def fake_getaddrinfo(host, *args, **kwargs):
+        if host in getaddrinfo_results:
+            return getaddrinfo_results[host]
+        # Default: resolve to itself if it's an IP literal, otherwise raise.
+        try:
+            socket.inet_aton(host)
+            return [(socket.AF_INET, socket.SOCK_STREAM, 0, "", (host, 0))]
+        except OSError:
+            raise socket.gaierror(f"unknown host {host}")
+
+    with patch("tools.web_tools.httpx.AsyncClient") as MockClient, patch(
+        "tools.web_tools.socket.getaddrinfo", side_effect=fake_getaddrinfo
+    ):
+        instance = AsyncMock()
+        instance.get.return_value = redirect_resp
+        instance.__aenter__ = AsyncMock(return_value=instance)
+        instance.__aexit__ = AsyncMock(return_value=False)
+        MockClient.return_value = instance
+
+        result = await WebTools().web_fetch(url=initial_url)
+
+    assert result.success is False
+    assert result.error == "Redirect to non-public URL blocked."
+    assert "169.254.169.254" in result.resolved_url
+    # Internal response body must NOT be exposed to the caller.
+    assert result.content_excerpt == ""
+
+
+@pytest.mark.asyncio
+async def test_web_fetch_follows_redirect_to_public_url() -> None:
+    """Redirects between public URLs should be transparently followed."""
+    initial_url = "https://typespec.io/old"
+    final_url = "https://typespec.io/new"
+
+    redirect_resp = httpx.Response(
+        status_code=301,
+        headers={"location": final_url},
+        content=b"",
+        request=httpx.Request("GET", initial_url),
+    )
+    final_resp = _make_response(
+        final_url,
+        "<html><head><title>New</title></head><body><h1>Hi</h1></body></html>",
+        "text/html; charset=utf-8",
+    )
+
+    with patch("tools.web_tools.httpx.AsyncClient") as MockClient, patch(
+        "tools.web_tools.socket.getaddrinfo",
+        return_value=[
+            (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("104.16.0.1", 0)),
+        ],
+    ):
+        instance = AsyncMock()
+        instance.get.side_effect = [redirect_resp, final_resp]
+        instance.__aenter__ = AsyncMock(return_value=instance)
+        instance.__aexit__ = AsyncMock(return_value=False)
+        MockClient.return_value = instance
+
+        result = await WebTools().web_fetch(url=initial_url)
+
+    assert result.success is True
+    assert result.resolved_url == final_url
+    assert result.title == "New"
+
+
+@pytest.mark.asyncio
+async def test_web_fetch_blocks_redirect_loop_after_max_hops() -> None:
+    """A redirect chain longer than _MAX_REDIRECTS must terminate with an error."""
+    url = "https://typespec.io/loop"
+    loop_resp = httpx.Response(
+        status_code=302,
+        headers={"location": url},
+        content=b"",
+        request=httpx.Request("GET", url),
+    )
+
+    with patch("tools.web_tools.httpx.AsyncClient") as MockClient, patch(
+        "tools.web_tools.socket.getaddrinfo",
+        return_value=[
+            (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("104.16.0.1", 0)),
+        ],
+    ):
+        instance = AsyncMock()
+        instance.get.return_value = loop_resp
+        instance.__aenter__ = AsyncMock(return_value=instance)
+        instance.__aexit__ = AsyncMock(return_value=False)
+        MockClient.return_value = instance
+
+        result = await WebTools().web_fetch(url=url)
+
+    assert result.success is False
+    assert result.error == "Too many redirects."
+
+
+@pytest.mark.asyncio
+async def test_web_fetch_pins_connection_to_validated_ip() -> None:
+    """The HTTP request must go to the resolved IP, not the hostname, with the
+    original Host header and sni_hostname extension preserved. This closes the
+    DNS-rebinding TOCTOU window between validation and connection."""
+    url = "https://example.com/path"
+    fake_resp = _make_response(url, "<html></html>", "text/html; charset=utf-8")
+
+    with patch("tools.web_tools.httpx.AsyncClient") as MockClient, patch(
+        "tools.web_tools.socket.getaddrinfo",
+        return_value=[
+            (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("93.184.216.34", 0)),
+        ],
+    ):
+        instance = AsyncMock()
+        instance.get.return_value = fake_resp
+        instance.__aenter__ = AsyncMock(return_value=instance)
+        instance.__aexit__ = AsyncMock(return_value=False)
+        MockClient.return_value = instance
+
+        await WebTools().web_fetch(url=url)
+
+    call_args = instance.get.call_args
+    pinned_url = call_args.args[0]
+    assert pinned_url == "https://93.184.216.34/path"
+    assert call_args.kwargs["headers"] == {"Host": "example.com"}
+    assert call_args.kwargs["extensions"] == {"sni_hostname": "example.com"}

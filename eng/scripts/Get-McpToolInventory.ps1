@@ -1,51 +1,29 @@
 <#
 .SYNOPSIS
-    Inventory drift report between the live Azure.Sdk.Tools.Cli MCP server and
-    the Azure.Sdk.Tools.Mock handler set.
+    Verify the Azure.Sdk.Tools.Mock handler set matches the live
+    Azure.Sdk.Tools.Cli MCP tool list.
 
 .DESCRIPTION
-    Boots the live MCP server, captures its tool list, then enumerates the
-    IMockToolHandler implementations in Azure.Sdk.Tools.Mock and emits a diff:
+    Builds the CLI + Mock projects (incremental), queries the live tool list,
+    enumerates IMockToolHandler implementations, and prints three buckets:
 
-        live-only  - tool exists in the live server, no mock handler -> mock
-                     returns the generic default response (potential gap).
-        mock-only  - mock handler exists, tool no longer in live server
-                     (stale handler).
-        both       - tool exists on both sides.
+        both       - tool exists on both sides (no action).
+        live-only  - live tool with no mock handler (add one).
+        mock-only  - mock handler with no live tool (delete or rename).
 
-    Also collects the set of MCP tools referenced by mock-tier evals
-    (tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/{unit,integration,e2e}/*.eval.yaml)
-    so -CheckOnly can fail the build only when drift affects something an eval
-    actually relies on.
-
-.PARAMETER CheckOnly
-    Exit non-zero when there is drift on any tool referenced by a mock-tier eval.
-    Intended for CI: see https://github.com/Azure/azure-sdk-tools/issues/15829.
-
-.PARAMETER OutputJson
-    Optional path to write the diff as JSON for downstream tooling.
-
-.PARAMETER SkipBuild
-    Skip `dotnet build` for the CLI and Mock projects (assumes they are up to date).
+    Exits non-zero on any drift. Same command for local dev and CI.
 
 .EXAMPLE
     pwsh eng/scripts/Get-McpToolInventory.ps1
-
-.EXAMPLE
-    pwsh eng/scripts/Get-McpToolInventory.ps1 -CheckOnly
 #>
 [CmdletBinding()]
-param(
-    [switch]$CheckOnly,
-    [string]$OutputJson,
-    [switch]$SkipBuild
-)
+param()
 
 Set-StrictMode -Version 4
 $ErrorActionPreference = 'Stop'
 
-$repoRoot   = Resolve-Path (Join-Path $PSScriptRoot '../..')
-$cliProject = Join-Path $repoRoot 'tools/azsdk-cli/Azure.Sdk.Tools.Cli'
+$repoRoot    = Resolve-Path (Join-Path $PSScriptRoot '../..')
+$cliProject  = Join-Path $repoRoot 'tools/azsdk-cli/Azure.Sdk.Tools.Cli'
 $mockProject = Join-Path $repoRoot 'tools/azsdk-cli/Azure.Sdk.Tools.Mock'
 
 if (-not (Test-Path $cliProject))  { throw "CLI project not found: $cliProject" }
@@ -82,10 +60,7 @@ function Get-LiveMcpTools {
 function Get-MockHandlerToolNames {
     param([string]$MockProject)
 
-    # The README documents the handler contract as
-    #     public string ToolName => "azsdk_xxx";
-    # Parsing source is robust and avoids loading the assembly + all its
-    # dependencies into the PowerShell process.
+    # Parse `public string ToolName => "azsdk_xxx";` from handler source files.
     $pattern = [regex]'(?m)ToolName\s*=>\s*"([^"]+)"'
     $names = @()
     Get-ChildItem -LiteralPath (Join-Path $MockProject 'Handlers') -Recurse -Filter *.cs |
@@ -110,13 +85,11 @@ function Write-Section {
     }
 }
 
-if (-not $SkipBuild) {
-    Invoke-DotnetBuild -Project $cliProject
-    Invoke-DotnetBuild -Project $mockProject
-}
+Invoke-DotnetBuild -Project $cliProject
+Invoke-DotnetBuild -Project $mockProject
 
-$liveTools  = @(Get-LiveMcpTools         -CliProject  $cliProject)
-$mockTools  = @(Get-MockHandlerToolNames -MockProject $mockProject)
+$liveTools = @(Get-LiveMcpTools         -CliProject  $cliProject)
+$mockTools = @(Get-MockHandlerToolNames -MockProject $mockProject)
 
 $liveSet = [System.Collections.Generic.HashSet[string]]::new([string[]]$liveTools, [System.StringComparer]::OrdinalIgnoreCase)
 $mockSet = [System.Collections.Generic.HashSet[string]]::new([string[]]$mockTools, [System.StringComparer]::OrdinalIgnoreCase)
@@ -129,42 +102,21 @@ Write-Host "MCP tool inventory" -ForegroundColor White
 Write-Host "  live tools:    $($liveTools.Count)"
 Write-Host "  mock handlers: $($mockTools.Count)"
 
-Write-Section -Title 'both (live + mock handler)' -Items $both     -Color Green
+Write-Section -Title 'both (live + mock handler)'  -Items $both     -Color Green
 Write-Section -Title 'live-only (no mock handler)' -Items $liveOnly -Color Yellow
 Write-Section -Title 'mock-only (stale handler)'   -Items $mockOnly -Color Magenta
 
-if ($OutputJson) {
-    $payload = [ordered]@{
-        liveTools = $liveTools
-        mockTools = $mockTools
-        both      = $both
-        liveOnly  = $liveOnly
-        mockOnly  = $mockOnly
-    }
-    $payload | ConvertTo-Json -Depth 4 | Out-File -LiteralPath $OutputJson -Encoding utf8
-    Write-Host "Wrote $OutputJson" -ForegroundColor DarkGray
-}
-
-if ($CheckOnly) {
-    $fail = $false
+if ($liveOnly.Count -gt 0 -or $mockOnly.Count -gt 0) {
+    Write-Host ""
     if ($liveOnly.Count -gt 0) {
-        Write-Host ""
-        Write-Host "Drift detected: $($liveOnly.Count) live tool(s) have no mock handler." -ForegroundColor Red
-        Write-Host "Add a handler under tools/azsdk-cli/Azure.Sdk.Tools.Mock/Handlers/ for each tool above." -ForegroundColor Red
-        Write-Host "See tools/azsdk-cli/Azure.Sdk.Tools.Mock/README.md for the contract." -ForegroundColor Red
-        $fail = $true
+        Write-Host "Drift: $($liveOnly.Count) live tool(s) have no mock handler. Add one under tools/azsdk-cli/Azure.Sdk.Tools.Mock/Handlers/." -ForegroundColor Red
     }
     if ($mockOnly.Count -gt 0) {
-        Write-Host ""
-        Write-Host "Drift detected: $($mockOnly.Count) mock handler(s) target tools that no longer exist in the live MCP server." -ForegroundColor Red
-        Write-Host "Either delete the stale handler(s) or rename them to match the new live tool name." -ForegroundColor Red
-        $fail = $true
+        Write-Host "Drift: $($mockOnly.Count) mock handler(s) target tools that no longer exist. Delete or rename them." -ForegroundColor Red
     }
-    if ($fail) {
-        exit 1
-    }
-    Write-Host ""
-    Write-Host "OK - mock handler set matches the live MCP tool list." -ForegroundColor Green
+    Write-Host "See tools/azsdk-cli/Azure.Sdk.Tools.Mock/README.md for the contract." -ForegroundColor Red
+    exit 1
 }
 
-return
+Write-Host ""
+Write-Host "OK - mock handler set matches the live MCP tool list." -ForegroundColor Green

@@ -120,25 +120,19 @@ Use this pattern in any handler to test how your integration handles different s
 
 The mock reuses the live CLI's tool definitions, so the *set* of advertised tools is always identical. What can drift is which tools have a hand-written `IMockToolHandler`. Tools without a handler fall back to the generic default response — fine for noise, but it hides routing / arg regressions when a scenario actually depends on that tool returning a realistic shape.
 
-Use the inventory script to audit live-vs-mock parity:
+Run the inventory script to check parity:
 
 ```powershell
 pwsh eng/scripts/Get-McpToolInventory.ps1
 ```
 
-It produces three buckets:
+It prints three buckets and exits non-zero on any drift:
 
 - **both** — live tool with a hand-written handler. No action.
-- **live-only** — live tool that falls back to the default response. Add a handler.
-- **mock-only** — handler for a tool that no longer exists on the live server. Rename or delete the stale handler.
+- **live-only** — live tool with no handler. Add one.
+- **mock-only** — handler for a tool that no longer exists. Delete or rename it.
 
-CI runs the same script with `-CheckOnly`:
-
-```powershell
-pwsh eng/scripts/Get-McpToolInventory.ps1 -CheckOnly
-```
-
-`-CheckOnly` exits non-zero when either bucket is non-empty.
+The same command is used locally and in CI.
 
 ### Workflow when the script flags a gap
 
@@ -146,4 +140,4 @@ pwsh eng/scripts/Get-McpToolInventory.ps1 -CheckOnly
 2. Add a new file under `Handlers/<Domain>/` (e.g., `Handlers/Pipeline/MyToolHandler.cs`).
 3. Implement `IMockToolHandler`. Set `ToolName` to the exact `[McpServerTool(Name = "…")]` value from the real tool.
 4. Return an instance of the same response type the real tool returns, populated with realistic sample data. For scenarios that need to exercise multiple branches, switch on `arguments` (see `HelloWorldHandler` above).
-5. Re-run the inventory script to confirm the tool moved from **live-only** to **both**.
+5. Re-run the script to confirm the tool moved from **live-only** to **both**.

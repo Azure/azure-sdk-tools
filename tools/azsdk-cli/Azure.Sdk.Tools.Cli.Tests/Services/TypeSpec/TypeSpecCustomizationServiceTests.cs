@@ -74,7 +74,8 @@ internal class TypeSpecCustomizationServiceTests
             rawOutputHelper);
         var tokenUsageHelper = new TokenUsageHelper(rawOutputHelper);
         var gitHelper = CreateRealGitHelper();
-        var typeSpecHelper = new TypeSpecHelper(gitHelper);
+        var processHelper = new ProcessHelper(new TestLogger<ProcessHelper>(), rawOutputHelper);
+        var typeSpecHelper = new TypeSpecHelper(gitHelper, processHelper);
 
         // Create real CopilotClient - this will use GitHub credentials
         var copilotClient = new CopilotClient(new CopilotClientOptions
@@ -132,7 +133,8 @@ internal class TypeSpecCustomizationServiceTests
         var copilotAgentRunner = Mock.Of<ICopilotAgentRunner>();
         var npxHelper = Mock.Of<INpxHelper>();
         var tokenUsageHelper = new TokenUsageHelper(Mock.Of<IRawOutputHelper>());
-        var typeSpecHelper = new TypeSpecHelper(Mock.Of<IGitHelper>());
+        var processHelper = new ProcessHelper(new TestLogger<ProcessHelper>(), Mock.Of<IRawOutputHelper>());
+        var typeSpecHelper = new TypeSpecHelper(Mock.Of<IGitHelper>(), processHelper);
         var gitHelper = Mock.Of<IGitHelper>();
 
         var service = new TypeSpecCustomizationService(
@@ -159,7 +161,8 @@ internal class TypeSpecCustomizationServiceTests
         var npxHelper = Mock.Of<INpxHelper>();
         var tokenUsageHelper = new TokenUsageHelper(Mock.Of<IRawOutputHelper>());
         var gitHelper = CreateRealGitHelper();
-        var typeSpecHelper = new TypeSpecHelper(gitHelper);
+        var processHelper = new ProcessHelper(new TestLogger<ProcessHelper>(), Mock.Of<IRawOutputHelper>());
+        var typeSpecHelper = new TypeSpecHelper(gitHelper, processHelper);
 
         var service = new TypeSpecCustomizationService(
             logger,

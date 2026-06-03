@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -14,6 +15,11 @@ if _PROJECT_ROOT not in sys.path:
 
 import config.app_config as app_config
 from models.chat import Message
+from models.conversation import (
+    ConversationMessageItem,
+    ConversationType,
+    Role,
+)
 from models.intention import IntentionRequest
 from services.intention_service import IntentionService
 
@@ -72,6 +78,80 @@ async def test_pr_review_request_should_respond(service: IntentionService) -> No
     )
     resp = await service.classify(req)
     assert resp.should_respond is True
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_human_approval_request_should_not_respond(
+    service: IntentionService, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """When the user explicitly asks a human to approve/confirm the bot's prior reply, the bot should not respond.
+
+    Stubs conversation history so the LLM sees a prior bot/assistant message that
+    the current user message is escalating to a human.
+    """
+    user_id = "user-123"
+    conversation_id = "conv-abc"
+    conversation_type = ConversationType.teams_channel
+
+    prior_user_msg = ConversationMessageItem(
+        id="msg-1",
+        sender_role=Role.User,
+        sender_id=user_id,
+        sender_name="Asker",
+        content="How can I get a private signed .NET SDK from a PR against the public repo main?",
+        created_at=datetime.now(timezone.utc),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+        conversation_partition=f"channel:{conversation_id}",
+    )
+    prior_bot_reply = ConversationMessageItem(
+        id="msg-2",
+        sender_role=Role.Assistant,
+        sender_id="bot",
+        sender_name="Azure SDK QA Bot",
+        content=(
+            "Based on the docs, private signed .NET SDKs are produced by the internal "
+            "release pipeline rather than from public PRs. You typically need to use the "
+            "internal build outputs for E2E validation before public rollout."
+        ),
+        created_at=datetime.now(timezone.utc),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+        conversation_partition=f"channel:{conversation_id}",
+    )
+
+    async def fake_has_expert_reply(*_args, **_kwargs):
+        return False
+
+    async def fake_get_messages_by_conversation(*_args, **_kwargs):
+        return [prior_user_msg, prior_bot_reply]
+
+    monkeypatch.setattr(
+        service._conversation_service,
+        "has_expert_reply",
+        fake_has_expert_reply,
+    )
+    monkeypatch.setattr(
+        service._conversation_service,
+        "get_messages_by_conversation",
+        fake_get_messages_by_conversation,
+    )
+
+    req = IntentionRequest(
+        message=Message(
+            role=Role.User,
+            user_id=user_id,
+            content=(
+                "@Azure SDK Onboarding and E2E SDK can some human approve the above AI-generated response?\n\n"
+                "And can you please confirm whether we can get private Signed .NET SDK from PR against "
+                "Public Repo Main? We use private SDK for daily E2E test workflow before we rollout to Public."
+            ),
+        ),
+        conversation_id=conversation_id,
+        conversation_type=conversation_type,
+    )
+    resp = await service.classify(req)
+    assert resp.should_respond is False
 
 
 @pytest.mark.asyncio(loop_scope="module")

@@ -147,7 +147,27 @@ graders:
 | Mock vs. live opt-in works for skill evals | ✓ | ✓ (env defined here, referenced from skill eval) |
 | New contributor adding cross-skill scenario | unclear (which tag?) | `evals/scenarios/` here |
 
+#### Per-skill eval suite — current state & direction
 
+The per-skill suite at `.github/skills/<skill>/evals/` (triggered by
+[`skill-eval.yml`](../../../.github/workflows/skill-eval.yml)) predates
+this project. Captured here so the relationship is explicit.
+
+*Today.* Roughly a dozen skills have eval files; `azsdk-common-api-review`
+has none, `sensei` is missing `scoring.threshold` (passes vacuously), and
+two skills ship capability tests without a trigger file. Layout and env
+wiring are correct, but most capability stimuli are graded only by a
+single `output-contains` substring — they pass whether the agent called
+the right tool, the wrong tool, or just echoed the prompt. CI is green
+by construction.
+
+*Direction.* Raise the bar on what counts as a per-skill eval: adopt the
+four-layer pattern — `skill-invocation` + `tool-calls` + `output-matches`
+(structural regex, not single substrings) + optional `prompt` LLM-judge —
+as the required shape for every capability stimulus. A
+`skill-eval-authoring` skill packages the pattern, grader catalog, and
+anti-patterns so other Azure SDK teams adopt without re-learning the
+gotchas.
 
 ### 1.3 Folder → suite → trigger mapping
 

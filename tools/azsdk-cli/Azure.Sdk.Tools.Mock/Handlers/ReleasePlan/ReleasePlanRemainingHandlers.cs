@@ -4,6 +4,7 @@
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan;
+using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlanList;
 
 namespace Azure.Sdk.Tools.Mock.Handlers.ReleasePlan;
 
@@ -84,24 +85,30 @@ public class CheckApiSpecReadyForSdkHandler : IMockToolHandler
 public class GetKpiAttestationStatusHandler : IMockToolHandler
 {
     public string ToolName => "azsdk_get_kpi_attestation_status";
-    public CommandResponse Handle(Dictionary<string, object?>? arguments) =>
-        ReleasePlanMockResponses.Workflow("Attested", "All required KPIs attested for this release (mock)");
+    public CommandResponse Handle(Dictionary<string, object?>? arguments) => new ReleasePlanListResponse
+    {
+        ReleasePlanDetailsList = [ReleasePlanMockResponses.ContosoWorkItem()],
+        Message = "All required KPIs attested for this release (mock)."
+    };
 }
 
 /// <summary>Mock handler for azsdk_get_service_details_by_typespec_path.</summary>
 public class GetServiceDetailsByTypeSpecPathHandler : IMockToolHandler
 {
     public string ToolName => "azsdk_get_service_details_by_typespec_path";
-    public CommandResponse Handle(Dictionary<string, object?>? arguments)
+    public CommandResponse Handle(Dictionary<string, object?>? arguments) => new ProductInfoResponse
     {
-        var path = arguments?.GetValueOrDefault("typeSpecProjectPath")?.ToString()
-            ?? "specification/contosowidgetmanager/Contoso.WidgetManager";
-        return ReleasePlanMockResponses.Workflow(
-            "Found",
-            $"TypeSpec path: {path}",
-            "Service: Contoso.WidgetManager",
-            "ServiceTreeId: 00000000-0000-0000-0000-000000000099");
-    }
+        ProductInfo = new ProductInfo
+        {
+            ProductServiceTreeId = "00000000-0000-0000-0000-000000000099",
+            ServiceId = "00000000-0000-0000-0000-000000000042",
+            PackageDisplayName = "Azure SDK for Contoso WidgetManager",
+            ProductServiceTreeLink = "https://servicetree.example.com/products/00000000-0000-0000-0000-000000000099",
+            WorkItemId = 36000,
+            Title = "Contoso.WidgetManager"
+        },
+        Message = "Product details resolved from TypeSpec path (mock)."
+    };
 }
 
 /// <summary>Mock handler for azsdk_update_api_spec_pull_request_in_release_plan.</summary>
@@ -118,9 +125,9 @@ public class UpdateApiSpecPullRequestInReleasePlanHandler : IMockToolHandler
 public class UpdateLanguageExclusionJustificationHandler : IMockToolHandler
 {
     public string ToolName => "azsdk_update_language_exclusion_justification";
-    public CommandResponse Handle(Dictionary<string, object?>? arguments) =>
-        ReleasePlanMockResponses.Workflow(
-            "Updated",
-            "Language exclusion justification recorded (mock)");
+    public CommandResponse Handle(Dictionary<string, object?>? arguments) => new DefaultCommandResponse
+    {
+        Message = "Updated language exclusion justification in release plan (mock)."
+    };
 }
 

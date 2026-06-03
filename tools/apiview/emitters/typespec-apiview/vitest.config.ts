@@ -15,9 +15,6 @@ export default defineConfig({
     exclude: ['node_modules', 'dist/test', 'dist'],
     silent: false,
   },
-  esbuild: {
-    sourcemap: true,
-  },
   server: {
     watch: {
       ignored: [],

@@ -194,8 +194,12 @@ def _resolve_public_endpoint(url: str) -> tuple[str, int, str] | None:
 def _build_pinned_url(url: str, ip: str, port: int) -> str:
     """Return ``url`` with its hostname replaced by ``ip`` (bracketed for IPv6)."""
     parsed = urlparse(url)
-    ip_netloc = f"[{ip}]" if ":" in ip else ip
-    if parsed.port is not None or port not in (80, 443):
+    is_ipv6 = ipaddress.ip_address(ip).version == 6
+    ip_netloc = f"[{ip}]" if is_ipv6 else ip
+    # Preserve an explicitly-specified port; otherwise omit so httpx uses the
+    # scheme default. This keeps the pinned URL semantically identical to the
+    # original except for the host.
+    if parsed.port is not None:
         ip_netloc = f"{ip_netloc}:{port}"
     return parsed._replace(netloc=ip_netloc).geturl()
 
@@ -260,11 +264,11 @@ async def _fetch_async(url: str, max_chars: int) -> FetchWebpageResult:
                     )
                 ip, port, original_hostname = endpoint
                 pinned_url = _build_pinned_url(current_url, ip, port)
-                pinned_netloc = urlparse(current_url).netloc
+                original_netloc = urlparse(current_url).netloc
 
                 response = await client.get(
                     pinned_url,
-                    headers={"Host": pinned_netloc},
+                    headers={"Host": original_netloc},
                     extensions={"sni_hostname": original_hostname},
                 )
 

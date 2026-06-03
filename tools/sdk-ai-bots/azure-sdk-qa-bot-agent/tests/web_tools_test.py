@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ipaddress
 import socket
 import sys
 from pathlib import Path
@@ -167,12 +168,13 @@ async def test_web_fetch_blocks_redirect_to_internal_address() -> None:
     def fake_getaddrinfo(host, *args, **kwargs):
         if host in getaddrinfo_results:
             return getaddrinfo_results[host]
-        # Default: resolve to itself if it's an IP literal, otherwise raise.
+        # Default: resolve IP literals (v4/v6) to themselves, otherwise fail.
         try:
-            socket.inet_aton(host)
-            return [(socket.AF_INET, socket.SOCK_STREAM, 0, "", (host, 0))]
-        except OSError:
+            ip = ipaddress.ip_address(host)
+        except ValueError:
             raise socket.gaierror(f"unknown host {host}")
+        family = socket.AF_INET6 if ip.version == 6 else socket.AF_INET
+        return [(family, socket.SOCK_STREAM, 0, "", (str(ip), 0))]
 
     with patch("tools.web_tools.httpx.AsyncClient") as MockClient, patch(
         "tools.web_tools.socket.getaddrinfo", side_effect=fake_getaddrinfo

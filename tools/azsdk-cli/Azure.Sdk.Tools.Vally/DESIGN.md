@@ -388,56 +388,54 @@ today's release-planner scenario safe to re-run.
 
 ## 4. Mock MCP server status
 
-### 4.1 What's there today
+### 4.1 How it works
 
-[`Azure.Sdk.Tools.Mock`](../Azure.Sdk.Tools.Mock/) has handlers for **10 tools**:
+[`Azure.Sdk.Tools.Mock`](../Azure.Sdk.Tools.Mock/) reflects over
+`SharedOptions.ToolsList` at boot and registers a mock proxy for **every**
+tool the real `Azure.Sdk.Tools.Cli` advertises, preserving each tool's
+name, description, and input schema
+([`MockToolRegistrations.cs`](../Azure.Sdk.Tools.Mock/MockToolRegistrations.cs)).
+At call time the proxy looks up an
+[`IMockToolHandler`](../Azure.Sdk.Tools.Mock/Handlers/IMockToolHandler.cs)
+by tool name:
 
-| Tool | Handler |
-|---|---|
-| `azsdk_create_release_plan` | [`Handlers/ReleasePlan/CreateReleasePlanHandler.cs`](../Azure.Sdk.Tools.Mock/Handlers/ReleasePlan/CreateReleasePlanHandler.cs) |
-| `azsdk_get_release_plan` | [`GetReleasePlanHandler.cs`](../Azure.Sdk.Tools.Mock/Handlers/ReleasePlan/GetReleasePlanHandler.cs) |
-| `azsdk_update_sdk_details_in_release_plan` | [`UpdateSdkDetailsHandler.cs`](../Azure.Sdk.Tools.Mock/Handlers/ReleasePlan/UpdateSdkDetailsHandler.cs) |
-| `azsdk_update_release_plan` | [`UpdateReleasePlanTargetHandler.cs`](../Azure.Sdk.Tools.Mock/Handlers/ReleasePlan/UpdateReleasePlanTargetHandler.cs) |
-| `azsdk_run_generate_sdk` | [`RunGenerateSdkHandler.cs`](../Azure.Sdk.Tools.Mock/Handlers/ReleasePlan/RunGenerateSdkHandler.cs) |
-| `azsdk_link_sdk_pull_request_to_release_plan` | [`LinkSdkPrToReleasePlanHandler.cs`](../Azure.Sdk.Tools.Mock/Handlers/ReleasePlan/LinkSdkPrToReleasePlanHandler.cs) |
-| `azsdk_link_namespace_approval_issue` | [`LinkNamespaceApprovalHandler.cs`](../Azure.Sdk.Tools.Mock/Handlers/ReleasePlan/LinkNamespaceApprovalHandler.cs) |
-| `azsdk_get_sdk_pull_request_link` | [`GetSdkPullRequestLinkHandler.cs`](../Azure.Sdk.Tools.Mock/Handlers/ReleasePlan/GetSdkPullRequestLinkHandler.cs) |
-| `azsdk_get_pipeline_status` | [`GetPipelineStatusHandler.cs`](../Azure.Sdk.Tools.Mock/Handlers/Pipeline/GetPipelineStatusHandler.cs) |
-| `azsdk_release_sdk` | [`ReleaseSdkHandler.cs`](../Azure.Sdk.Tools.Mock/Handlers/Package/ReleaseSdkHandler.cs) |
+- **Custom handler exists** → scripted, type-correct response.
+- **No custom handler** → fallback `DefaultCommandResponse { Message = "Success" }`.
 
-Today's release-planner scenario used **15 distinct tools** when run live.
-So at minimum the mock is missing handlers for:
-`azsdk_get_release_plan_for_spec_pr`, `azsdk_run_typespec_validation`,
-`azsdk_check_api_spec_ready_for_sdk`, `azsdk_typespec_generate_authoring_plan`,
-plus other `azsdk_*` tools referenced by the `unit/` evals.
+### 4.2 Why PR [#15854](https://github.com/Azure/azure-sdk-tools/pull/15854)
 
-### 4.2 Is it up to date?
+Before #15854, only ~10 of 74 live tools had custom handlers. The other
+~63 returned the generic success payload, which **breaks chained
+scenarios** that need to thread a returned id into a follow-up call
+(e.g. `create_release_plan` → `update_sdk_details_in_release_plan`
+referencing the new `release_plan_id`). #15854 adds handlers for the
+remaining tools so every mock-tier scenario gets a chainable,
+type-correct response by default. Steady state: a new MCP tool ships
+with its handler.
 
-No — there's no mechanism to detect drift. The mock is a hand-authored
-allowlist; if `Azure.Sdk.Tools.Cli` adds a tool, no one knows the mock is
-missing it until an eval fails.
+### 4.3 No CI drift check needed
 
-### 4.3 How we keep it up to date
+The eval suite is the drift check.
 
-Three layers:
+- **Tool added upstream, no handler yet** → auto-registered via
+  reflection; falls back to the success default. A scenario that actually
+  asserts on its response will fail in the next eval run — that failure
+  *is* the signal to add a handler.
+- **Tool's response shape changes upstream** → scenarios asserting on the
+  changed field fail. Same signal, same fix.
+- **Tool no eval ever touches** → no scenario fails, because the gap is
+  invisible to the test surface. We deliberately don't pay to plug it.
 
-1. **Inventory diff check** (lightweight, lands first):
-   - New script `eng/scripts/Get-McpToolInventory.ps1` enumerates tools
-     advertised by both `Azure.Sdk.Tools.Cli` and `Azure.Sdk.Tools.Mock` over
-     stdio (both already expose `tools/list` via MCP).
-   - Writes `tools/azsdk-cli/Azure.Sdk.Tools.Mock/COVERAGE.md` (checked in)
-     with three columns: tool, live ✓, mock ✓.
-   - CI job `mock-coverage-check` runs the script and fails if `COVERAGE.md`
-     is stale (regenerate → `git diff --exit-code`).
-
-2. **Per-eval enforcement** (already free via the runner):
-   - Any eval with `environment: azsdk-mcp-mock` that calls a tool the mock
-     doesn't handle will fail at runtime ("tool not found"). This is the
-     functional backstop — once an eval references a missing tool, CI red.
+Since every PR runs `pr-gate` (unit + scenarios-mock) and a failing
+scenario fails the workflow, drift that matters surfaces immediately.
+A separate `mock-coverage` inventory job, `COVERAGE.md` snapshot, or
+scheduled diff script would be duplicate enforcement.
 
 ---
 
 ## 5. Results UX — beyond "pass / fail"
+
+Tracked by parent issue [#15861](https://github.com/Azure/azure-sdk-tools/issues/15861).
 
 ### 5.1 What we have today
 
@@ -449,73 +447,78 @@ Per run, Vally writes:
   scores, links to details).
 - JUnit XML (with `--junit`) — for CI test-results widgets.
 
-Both produced today for the release-planner-e2e run; see
-[`vally-results/2026-06-03T03-06-41-076Z/`](./vally-results/2026-06-03T03-06-41-076Z/).
+Two gaps: `results.jsonl` is a 300+ event JSON wall — usable by engineers
+with a `jq` reflex, useless for everyone else trying to debug a failure;
+and there's no way to slice across many runs ("how often did
+release-planner fire green in the last 30 nightlies?").
 
-The gap: `results.jsonl` is great for engineers but useless for non-engineer
-stakeholders who want to *see* why a run failed (or what the agent actually did).
+### 5.2 Two artifacts, ordered by where they pay off first
 
-### 5.2 What non-engineer stakeholders actually want
+#### (a) Trajectory HTML — local debug first, CI artifact second
 
-From the meeting: a way to slice/filter results across many runs ("how often
-does the release-planner skill fire in the last 30 nightlies?") and to drill
-into a single failing run without parsing JSON.
+Sub-issue [#15862](https://github.com/Azure/azure-sdk-tools/issues/15862).
 
-Two artifacts cover that:
+[`eng/scripts/Render-VallyTrajectory.ps1`](../../../eng/scripts/Render-VallyTrajectory.ps1)
+reads one `results.jsonl` and emits one **self-contained** HTML page per
+stimulus into a sibling `trajectories/` directory. No external assets, no
+network, opens via `file://`. Local loop: `vally eval` →
+`Render-VallyTrajectory.ps1` → open the HTML.
 
-#### (a) CSV export — the spreadsheet layer
+Page layout: header (totals), grader pills (✅/❌ with rubric on hover),
+stimulus, vertical event timeline with collapsible `tool_call` rows
+(args ↔ result), skill switches as section headers, footer with final
+assistant message + judge verdict + raw JSON link. Tool-result truncation
+mirrors the §6 policy so the viewer reflects what the agent actually saw.
 
-Thin post-processor: `eng/scripts/Export-VallyResultsCsv.ps1`. Reads
-`results.jsonl`, emits one row per stimulus with columns:
+This is the daily driver and lands first because it's usable the day it
+merges — no CI required.
 
-```
-timestamp, suite, scenario, tier, model, verdict, score,
-skill-invocation, tool-calls, prompt,
-skills_used, tool_call_count, turns, tokens, duration_s,
-trajectory_url, eval_results_url
-```
+#### (b) CSV export — cross-run analytics
 
-`trajectory_url` is a link to the rendered HTML (see (b) below). Append-only
-file at `vally-results/history.csv` (committed to a separate `vally-history`
-branch or pushed to an Azure Storage container — TBD).
+Sub-issue [#15863](https://github.com/Azure/azure-sdk-tools/issues/15863).
 
-This is the artifact non-engineer stakeholders get — one file, pivot-table friendly.
+[`eng/scripts/Export-VallyResultsCsv.ps1`](../../../eng/scripts/Export-VallyResultsCsv.ps1)
+reads one or more `results.jsonl`, appends one row per stimulus to
+`vally-results/history.csv`. Append-only; idempotent on
+`(run_id, scenario)`. Columns cover verdict, grader scores, skills used,
+turns, `tokens_billable` / `tokens_cached_read` (matching the §6.2
+`maxBillableTokens` definition), duration, and links back to the HTML +
+`eval-results.md`. Local runs produce the row but **do not push** to
+shared history — that's a CI concern.
 
-#### (b) Trajectory viewer — the "what did the agent actually do" layer
+Marginal value locally (one run = one row), real value across many runs
+in pivot tables / future dashboards.
 
-`results.jsonl` already contains the full event stream:
+#### (c) Hosting & CI wiring
 
-```
-skill → tool_call → tool_result → assistant_message → tool_call → ...
-```
+Sub-issue [#15866](https://github.com/Azure/azure-sdk-tools/issues/15866).
+Decision: **GitHub Actions artifacts** for trajectories, **orphan
+`vally-history` branch** for the CSV.
 
-We render it as a single static HTML page per stimulus:
+| Artifact | Where | Retention | Auth |
+|---|---|---|---|
+| `trajectories/*.html` | `actions/upload-artifact@v4`, per run | 90 days | GH login |
+| `results.jsonl` + `eval-results.md` | same artifact | 90 days | GH login |
+| `history.csv` | orphan `vally-history` branch, force-pushed by nightly only | indefinite | repo read |
 
-- Timeline view: vertical events with timestamps and durations.
-- Each tool_call collapsible: arguments + return value side-by-side.
-- Skill changes highlighted as section headers.
-- Final assistant message at the bottom with the grader rubric + judge verdict.
-- Graders shown as a pill row at the top (✅/❌ with hover for details).
+Picked because it's zero infra (no Azure Storage, no SAS, no public
+endpoint), the URL is one click from the Actions UI, and the
+`vally-history` branch is plain git history a dashboard can poll later.
+PR-gate uploads artifacts but skips the CSV append + history push —
+history is a nightly concern. Promote to Azure Storage static site only
+if the artifact-hop UX becomes a blocker.
 
-Implementation: `eng/scripts/Render-VallyTrajectory.ps1` (or a tiny Node
-script) that templates a single self-contained HTML. CI uploads the directory
-as an artifact; the CSV links into it.
+#### (d) Future: shared dashboard
 
-This is essentially what `agentviz` (referenced in
-`--keep-executor-session-logs`) does, but standalone — no extra tool to
-install.
-
-#### (c) Future: shared dashboard
-
-Once (a) and (b) are stable, the CSV can feed a Power BI / Kusto dashboard
+CSV in the `vally-history` branch can feed a Power BI / Kusto dashboard
 that lives outside this repo. Out of scope for v1.
 
 ### 5.3 Pipeline
 
 ```
-vally eval ──> results.jsonl ─┬─> Export-VallyResultsCsv.ps1 ──> history.csv ──> dashboard
+vally eval ──> results.jsonl ─┬─> Render-VallyTrajectory.ps1 ──> *.html ──> artifact
                               │
-                              └─> Render-VallyTrajectory.ps1 ──> *.html ──> artifact + link from csv
+                              └─> Export-VallyResultsCsv.ps1 ──> history.csv ──> vally-history branch ──> (future) dashboard
 ```
 
 Both scripts read `results.jsonl` only — no Vally-side changes required.
@@ -602,37 +605,29 @@ PR-gate suite. No way to silently land a slow scenario.
 ### 6.4 General guardrails (framework-level, not per-scenario)
 
 These apply to every scenario the runner executes. None require the
-scenario author to know about them.
+scenario author to know about them. Scoped to what we own in this repo —
+deeper runner-level controls (hard caps, virtual clock, tool-result
+truncation, cost-split reporting) need upstream Vally support and are
+out of scope here.
 
 | # | Guardrail | Layer | What it prevents |
 |---|---|---|---|
-| G1 | **Hard turn / wall / token / tool-call caps** (§6.2) | runner | Runaway scenarios |
-| G2 | **Virtual clock**: executor intercepts `Start-Sleep` / `Wait-*` / `sleep` and fast-forwards | executor adapter | Wall-time waste on polling loops |
-| G3 | **Tool-result truncation** above N tokens with `…[truncated]` marker | executor adapter | Context blow-up from chatty tool responses |
-| G4 | **Narration / meta-tool suppression**: tools that only echo intent (`report_intent` etc.) stripped from the tool list the model sees | executor config | Doubled turn count from pure-narration calls |
-| G5 | **Polling tools default to terminal state under `AZSDKTOOLS_AGENT_TESTING=true`** (`*_get_*_status` returns `Succeeded` on first poll) | mock MCP policy | Any future polling tool inherits the fix |
-| G6 | **Cheaper judge model** — LLM-judge graders default to a smaller model than the agent | runner config | Judge tokens dominating output cost |
-| G7 | **CI concurrency cancel** — superseded PR runs killed immediately | CI workflow | Wasted compute on rapid pushes |
-| G8 | **Honest cost reporting** — `eval-results.md` splits cached vs billable input and wall time into LLM / tool / wait | results renderer | Headline-token illusions hiding real cost |
-| G9 | **Suite-level cost ceiling** — if any single scenario exceeds 25% of its suite's total budget, suite run fails with a "rebalance" error | runner | One scenario silently dominating the suite |
-
-G2, G3, G4, G6 also have the effect of making per-scenario budgets
-*achievable*. Without them, an honest scenario can blow past `maxTurns`
-just by being routed through a chatty executor.
+| G1 | **Polling tools default to terminal state under `AZSDKTOOLS_AGENT_TESTING=true`** (`*_get_*_status` returns `Succeeded` on first poll) | mock MCP policy | Wall-time waste on polling loops; any future polling tool inherits the fix |
+| G2 | **Cheaper judge model** — LLM-judge graders default to a smaller model than the agent | runner config (`.vally.yaml`) | Judge tokens dominating output cost |
+| G3 | **CI concurrency cancel** — superseded PR runs killed immediately | CI workflow | Wasted compute on rapid pushes |
 
 ### 6.5 Where each guardrail lives
 
 | Guardrail | Owner |
 |---|---|
-| G1, G2, G3, G8, G9 | **Upstream Vally** — file as feature requests |
-| G4, G6 | Copilot SDK executor / `.vally.yaml` runner config in this repo |
-| G5 | `Azure.Sdk.Tools.Mock` in this repo |
-| G7 | `.github/workflows/skill-eval.yml` in this repo |
+| G1 | `Azure.Sdk.Tools.Mock` in this repo |
+| G2 | `.vally.yaml` runner config in this repo |
+| G3 | `.github/workflows/skill-eval.yml` in this repo |
 
-The local guardrails (G4–G7) can land immediately. The upstream
-guardrails (G1–G3, G8, G9) are blocked on Vally; until they ship, we
-approximate G1 with a thin post-run check that reads `results.jsonl`
-and fails the CI step if any scenario exceeded its declared budget.
+All three can land immediately — no upstream Vally dependency. Per-scenario
+budgets (§6.2) are enforced today via a thin post-run check that reads
+`results.jsonl` and fails the CI step if any scenario exceeded its
+declared limits.
 
 ### 6.6 Author-facing rule of thumb
 
@@ -643,46 +638,4 @@ and fails the CI step if any scenario exceeded its declared budget.
 The budget machinery exists so authors don't need to read this document
 to write a cheap eval. They write the scenario; the runner fails it if
 it costs too much; the CI message points them at the mock path.
-
----
-
-## 7. Open design questions
-
-1. **Mock auto-generation.** Replace hand-written handlers with a single
-   generic handler that synthesizes a response from each tool's JSON
-   schema.
-
-   **How.** `Azure.Sdk.Tools.Mock` starts up, calls the live MCP's
-   `tools/list` once at boot (or reads a checked-in snapshot of it), and
-   for every tool registers a fallback handler that:
-
-   1. Validates incoming args against `inputSchema`.
-   2. Walks `outputSchema` (or the `result` JSON Schema) and emits a
-      default-value tree: `string` → `"mock-<field>"`, `integer` → `0`,
-      `array` → `[]`, `object` → recurse, `$ref` → resolve. For ID-shaped
-      fields (e.g. `workItemId`), return a deterministic counter so
-      multi-step scenarios can chain (`create` returns `1538`, next
-      `get(1538)` returns the same shape).
-   3. Hand-written handlers in `Handlers/` still win when present — they
-      override the generated default for the few tools whose realistic
-      response shape matters (e.g. `azsdk_get_pipeline_status` needs
-      a believable build-status sequence).
-
-   **Trade-off.** Solves drift (any new tool gets a mock for free) but
-   default-value responses miss domain quirks (real pipeline status
-   transitions, real PR URLs). Mitigation: keep hand-written handlers
-   for the ≥5 tools whose responses scenarios actually assert on.
-
-   **Defer until.** §4 manual coverage gap is closed (so we know which
-   tools actually need realistic shapes vs. which can take defaults).
-2. **CSV storage.** Per-branch artifact (cheap, no infra), commit to a
-   `vally-history` branch (versioned, awkward), or push to Azure Storage
-   (best UX, needs infra). Default plan: artifact + Storage upload from
-   nightly only.
-3. **Cross-org repo cache in CI.** `actions/cache` keyed on the hash of
-   `metadata.repos` across live-safe scenarios is fine for
-   `azure-rest-api-specs`, but the pull from GitHub still costs ~30s on
-   cache miss. For 5 language repos + specs, cold-start could approach 3
-   min. Worth it vs. an Azure-hosted pre-baked image? Defer until we have
-   data.
 

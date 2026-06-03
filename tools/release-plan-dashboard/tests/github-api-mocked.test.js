@@ -7,7 +7,7 @@ process.env.GITHUB_APP_NUMERIC_ID = "12345";
 process.env.GITHUB_INSTALL_OWNER = "TestOrg";
 process.env.GH_TOKEN = "mock-token";
 
-const mockOctokit = {
+const mockOctokit = vi.hoisted(() => ({
   pulls: {
     get: vi.fn(),
     listReviews: vi.fn(),
@@ -21,10 +21,12 @@ const mockOctokit = {
     listLabelsOnIssue: vi.fn(),
   },
   paginate: vi.fn(),
-};
+}));
 
 vi.mock("@octokit/rest", () => ({
-  Octokit: vi.fn().mockImplementation(() => mockOctokit),
+  Octokit: vi.fn().mockImplementation(function () {
+    return mockOctokit;
+  }),
 }));
 
 const {

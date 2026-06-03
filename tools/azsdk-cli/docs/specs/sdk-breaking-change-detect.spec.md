@@ -7,17 +7,19 @@
   - [Definitions](#definitions)
   - [Background / Problem Statement](#background--problem-statement)
     - [Current State](#current-state)
+      - [Manual SDK breaking change detection is time-consuming, error-prone and unreliable](#manual-sdk-breaking-change-detection-is-time-consuming-error-prone-and-unreliable)
       - [Delayed Spec PR merge and SDK release](#delayed-spec-pr-merge-and-sdk-release)
     - [Why This Matters](#why-this-matters)
   - [Goals and Exceptions/Limitations](#goals-and-exceptionslimitations)
     - [Goals](#goals)
+      - [Language-Specific Limitations](#language-specific-limitations)
   - [Design Proposal](#design-proposal)
     - [Overview](#overview)
     - [Detailed Design](#detailed-design)
     - [Architecture Diagram](#architecture-diagram)
-      - [Component 1: SDK change detector](#component-1-sdk-change-detector)
-      - [Component 2: ChangelogOrRevapi-breakingChange pattern](#component-2-changelogorrevapi-breakingchange-pattern)
-      - [Component 3: SDK Breaking change classifier](#component-3-sdk-breaking-change-classifier)
+      - [Component 1: SDK change Analyzer](#component-1-sdk-change-analyzer)
+      - [Component 2: Changelog-breakingChange pattern](#component-2-changelog-breakingchange-pattern)
+      - [Component 3: SDK Breaking change detector](#component-3-sdk-breaking-change-detector)
       - [Component 4: SDK Breaking change Result](#component-4-sdk-breaking-change-result)
     - [User Experience](#user-experience)
     - [Scenarios for Using the Tool](#scenarios-for-using-the-tool)
@@ -49,11 +51,23 @@
 
 ### Current State
 
+#### Manual SDK breaking change detection is time-consuming, error-prone and unreliable
+
 Service teams and SDK teams spend significant manual effort detecting and mitigating SDK breaking changes, yet the manual detecting process is time-consuming and remains unreliable — changes are often missed or incorrectly resolved, degrading overall SDK quality. The process is challenging for several reasons:
 
 - **Complex SDK breaking change analysis**: Teams must run the changelog tool, then review each changelog item individually to identify SDK breaking changes and determine whether a SDK breaking change is caused by a TypeSpec change, an emitter change, typespec conversion, or another cause. This requires deep knowledge of both the SDK emitter and the language-specific SDK conventions for each target language.
-- **Correlated changelog entries**: Multiple changelog entries must be correlated and analyzed together to correctly identify a single SDK breaking change, making detection both complex and error-prone. For example, if one entry shows `struct A` was removed and another shows `struct B` was added, additional entries — such as an operation's parameter type changing from `A` to `B` — must be examined together to correctly conclude that model `A` was renamed to `B`.
-- **Large volume of changelog items**: The number of changelog items can be substantial, particularly for TypeSpec projects recently migrated from Swagger.
+  
+  For example, this is changelog entry of GO SDK:
+  Function `*AccountsClient.BeginUpdate` parameter(s) have been changed from `(context.Context, string, AccountUpdateRequest, *AccountsClientBeginUpdateOptions)` to `(context.Context, string, AccountPatch, *AccountsClientBeginUpdateOptions)`
+
+  From this entry alone, it is difficult to determine which interface and operation have the breaking change; accurate interpretation requires considering Go SDK language-specific convertion rules to identify that this maps to the LRO `Update` operation under the `Account` interface.
+
+- **Correlated changelog entries**: Multiple changelog entries must be correlated and analyzed together to correctly identify a single SDK breaking change, making detection both complex and error-prone.
+  
+  For example, if one entry shows `struct A` was removed and another shows `struct B` was added, additional entries — such as an operation's parameter type changing from `A` to `B` — must be examined together to correctly conclude that model `A` was renamed to `B`.
+
+- **Large volume of changelog items**: The number of changelog items can be substantial, particularly for TypeSpec projects recently migrated from Swagger. Service teams and SDK teams must spend significant time analyzing these changelogs to identify SDK breaking changes.
+  
 - **Difficult classification**: Accurate classification of an SDK breaking change is critical for determining the correct resolution — whether to accept, mitigate, or escalate it. However, classification is non-trivial: it requires understanding the TypeSpec project code, the project's migration status, and the nature of the change itself to determine whether it stems from a spec change, an emitter change, or a conversion difference.
 
 #### Delayed Spec PR merge and SDK release
@@ -84,15 +98,29 @@ What are we trying to achieve with this design?
 - [ ] align with the SDK breaking change policy for each language
 - [ ] integrate SDK breaking change detection into Spec PR and SDK PR workflows.
 
+#### Language-Specific Limitations
+
+This tool will support Java, JavaScript, Python, and Go. The .NET SDK is not supported.
+
+| Language   | supported |
+|------------|------------|
+| .NET       | No    |
+| Java       | Yes   |
+| JavaScript | Yes   |
+| Python     | Yes   |
+| Go         | Yes   |
+
+---
+
 ## Design Proposal
 
 ### Overview
 
 This design covers the complete SDK breaking change detection workflow and its core components:
 
-- SDK change detector
+- SDK change analyzer
 - ChangelogOrRevapi-breakingChange pattern
-- SDK breaking change classifier
+- SDK breaking change detector
 
 ### Detailed Design
 
@@ -125,16 +153,16 @@ A changelog-breakingchange pattern guide (e.g. https://github.com/Azure/azure-sd
 ```mermaid
 flowchart TD
     Entry[<b>Entry Point</b><br/>SDK Breaking change detect request]
-    A[Detect SDK Changes]
+    A[Analyze out SDK Changes]
     B{Has Breaking Change?}
-    C[Copilot agent Classify SDK Breaking Changes]
+    C[Copilot agent detector SDK Breaking Changes and category them]
     D[SDK Breaking Change Result]
     E[SDK changelogOrRevapi-breakingChange pattern]
     F[SDK changelog/ Revapi]
-    subgraph SDK Change Detector
+    subgraph SDK Change Analyzer
         A
     end
-    subgraph SDK Breaking Change Classifier
+    subgraph SDK Breaking Change Detctor
         E
         F
         C
@@ -152,9 +180,9 @@ flowchart TD
 
 ---
 
-#### Component 1: SDK change detector
+#### Component 1: SDK change Analyzer
 
-Compare the package against the latest GA release to detect SDK changes. The output is a changelog (or Revapi report for Java) along with an overall assessment of whether the package introduces SDK breaking changes according to the language-specific breaking change policy.
+Compare the package against the latest GA release to get SDK changes. The output is a changelog (or Revapi report for Java) along with an overall assessment of whether the package introduces SDK breaking changes according to the language-specific breaking change policy.
 
 Each language SDK implements an SDK change generator(command or script) that compares the current package against the latest GA release. The SDK breaking change detection MCP tool invokes these per-language generator to retrieve the SDK changelog for further analysis.
 
@@ -165,7 +193,6 @@ Each language SDK implements an SDK change generator(command or script) that com
 | **Go** | Custom Go AST diff (`exports`/`delta`/`report` packages) | Go exported symbols | GitHub release tag ZIP | Generated code |
 | **Java (CI)** | `revapi-maven-plugin` | Java public API | Maven Central GA release | Locally built JAR |
 | **Java (Sdk automation)** | `japicmp` (JarArchiveComparator) | JAR bytecode | Maven Central JAR | Locally built JAR |
-| **.NET** | `Microsoft.DotNet.ApiCompat` MSBuild target | .NET assemblies | NuGet cached baseline DLL | Built DLL |
 | **JS/TS** | API Extractor + `git diff` | `.api.md` review files | Git baseline | Generated review files |
 | **Python** | `jsondiff` + AST/`inspect` introspection | JSON API reports | PyPI stable package | Current code |
 
@@ -174,14 +201,14 @@ SDK package
 
 **Output**:
 
-- change log or repapi: the string of sdk changes markdown. (see following sdk change markdown schema)
+- change log: the string of sdk changes markdown. (see following sdk change markdown schema)
 - 'hasBreakingChange': true/false
 
 e.g.
 
 ```json
 {
-    "changes": "<change log or repapi markdown>",
+    "changes": "<change log markdown>",
     "hasBreakingChange": true
 }
 ```
@@ -257,13 +284,13 @@ e.g.
 - New field `Fqdns` in struct `SharedPrivateLinkResourceProperties`
 ```
 
-#### Component 2: ChangelogOrRevapi-breakingChange pattern
+#### Component 2: Changelog-breakingChange pattern
 
-This document describe which changelog/revapi will cause SDK breaking changes and also provide the root cause of the SDK breaking changes.
+This document describe which changelog will cause SDK breaking changes and also provide the root cause of the SDK breaking changes.
 
 Each pattern will contain four parts:
 
-- changelog/revapi pattern
+- changelog pattern
 - Spec pattern (optional)
 - Breaking
 - Reason
@@ -307,11 +334,11 @@ Use client customization to restore the original names from the removal entries:
 @@clientName(Minute.`30`, "THIRTY", "python");
 ```
 
-#### Component 3: SDK Breaking change classifier
+#### Component 3: SDK Breaking change detector
 
-Copilot Agent refer changelogOrRevapi-breakingchange pattern guide to analyze and classify the SDK breaking changes.
+Copilot Agent refer changelogOrRevapi-breakingchange pattern guide to detect the SDK breaking changes and category these SDK breaking changes.
 
-Parse out the actually SDK breaking changes and classify them into different categories according to the SDK breaking change root cause.
+Parse out the actually SDK breaking changes and category them into different categories according to the SDK breaking change root cause.
 
 **SDK Breaking change category:**
 
@@ -322,7 +349,7 @@ Parse out the actually SDK breaking changes and classify them into different cat
 - unknown
 
 **input**:
-changelog or Revapi
+changelog
 
 **output**:
 
@@ -423,7 +450,7 @@ flowchart TD
     A[Generate SDK]
     H[Build SDK]
     B[Detect SDK Breaking Changes azsdk_package_detect_breaking_change]
-    C[Github Action Label 'BreakingChange-XXX-Sdk' label]
+    C[GitHub Actions adds the 'BreakingChange-XXX-Sdk' label and comments with detected SDK breaking changes]
     D[PR owner Ask Copilot to Resolve Breaking Changes]
     E[Copilot Calls azsdk_customized_code_update]
     F[SDK Breaking Change Resolved]
@@ -448,7 +475,7 @@ flowchart TD
     D --> E
     E --> F
 
-    G@{ shape: doc, label: "Breaking Changes:<br/>• Model ResourceInfo renamed to Resource, Conversion-need to be resolve, breaking Java SDK<br/>• Property type changed from int to string, typespec change, break Java SDK" }
+    G@{ shape: doc, label: "Breaking Changes:<br/>• Model ResourceInfo renamed to Resource, Conversion-need to be resolve, breaking Go SDK<br/>• Property type changed from int to string, typespec change, break Go SDK" }
 
     B ---> |generate|G
     G ---> D
@@ -480,6 +507,8 @@ flowchart TD
     **Open question:**
 
     If resolving breaking changes requires SDK code customization (updating SDK source code), should we file an SDK PR to refresh the SDK code now, or defer the SDK code customization to a later SDK release?
+
+The PR owner submits the `client.tsp` changes made in step 6. After the spec PR is updated, the SDK validation pipeline is triggered again. This flow is repeated until no SDK breaking changes are reported, either because the breaking changes have been resolved or explicitly suppressed. The PR owner then adds the `BreakingChange-XXX-sdk-approved` label, and the spec PR is ready to merge.
 
 #### Scenario 3: When release SDK, Resolve SDK breaking changes in SDK repo PR
 
@@ -549,9 +578,9 @@ azsdk package detect-breaking-change --package-path <sdk-package-path> --languag
 **Options:**
 
 - `--package-path <value>`: (Required) The SDK package path
-- `--language <value>`: (optional) The SDK language
+- `--language <value>`: (optional) The SDK language. When `--package-path` does not refer to a directory in a locally cloned SDK repository, the language cannot be inferred from the path; in this case, provide this parameter explicitly.
 - `--tsp-config-path`: (Optional) Path to the 'tspconfig.yaml' configuration file, it can be a local path or remote HTTPS URL
-- `--generate-sdk`: (Optional) indicate whether need to generate sdk. default is False
+- `--generate-sdk`: (Optional) indicate whether need to generate sdk. default is False.
 
 **Expected Output:**
 

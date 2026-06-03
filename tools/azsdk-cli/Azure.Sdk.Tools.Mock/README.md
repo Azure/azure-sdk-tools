@@ -120,7 +120,7 @@ Use this pattern in any handler to test how your integration handles different s
 
 The mock reuses the live CLI's tool definitions, so the *set* of advertised tools is always identical. What can drift is which tools have a hand-written `IMockToolHandler`. Tools without a handler fall back to the generic default response — fine for noise, but it hides routing / arg regressions when a scenario actually depends on that tool returning a realistic shape.
 
-Use the inventory script to audit:
+Use the inventory script to audit live-vs-mock parity:
 
 ```powershell
 pwsh eng/scripts/Get-McpToolInventory.ps1
@@ -129,7 +129,7 @@ pwsh eng/scripts/Get-McpToolInventory.ps1
 It produces three buckets:
 
 - **both** — live tool with a hand-written handler. No action.
-- **live-only** — live tool that falls back to the default response. Add a handler if any eval depends on it.
+- **live-only** — live tool that falls back to the default response. Add a handler.
 - **mock-only** — handler for a tool that no longer exists on the live server. Rename or delete the stale handler.
 
 CI runs the same script with `-CheckOnly`:
@@ -138,10 +138,7 @@ CI runs the same script with `-CheckOnly`:
 pwsh eng/scripts/Get-McpToolInventory.ps1 -CheckOnly
 ```
 
-`-CheckOnly` exits non-zero when:
-
-1. There is a **mock-only** drift (stale handler that no longer maps to a live tool), or
-2. A tool referenced by a mock-tier eval (under `tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/`) has no handler.
+`-CheckOnly` exits non-zero when either bucket is non-empty.
 
 ### Workflow when the script flags a gap
 

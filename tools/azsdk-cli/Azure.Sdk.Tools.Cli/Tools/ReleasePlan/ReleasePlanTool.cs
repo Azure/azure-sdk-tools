@@ -417,6 +417,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 ReleasePlanWorkItem? releasePlan = null;
 
+                // Resolve absolute TypeSpec project path to repo-relative path before any lookup
+                if (!string.IsNullOrWhiteSpace(typeSpecProjectPath) && typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectPath))
+                {
+                    typeSpecProjectPath = typeSpecHelper.GetTypeSpecProjectRelativePath(typeSpecProjectPath);
+                }
+
                 if (workItemId != 0)
                 {
                     releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(workItemId, ct);
@@ -433,19 +439,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     // Fall back to TypeSpec project path if spec PR lookup failed
                     if (releasePlan == null && !string.IsNullOrWhiteSpace(typeSpecProjectPath))
                     {
-                        if (typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectPath))
-                        {
-                            typeSpecProjectPath = typeSpecHelper.GetTypeSpecProjectRelativePath(typeSpecProjectPath);
-                        }
                         releasePlan = await devOpsService.GetReleasePlanByTypeSpecProjectPathAsync(typeSpecProjectPath, ct: ct);
                     }
                 }
                 else if (!string.IsNullOrWhiteSpace(typeSpecProjectPath))
                 {
-                    if (typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectPath))
-                    {
-                        typeSpecProjectPath = typeSpecHelper.GetTypeSpecProjectRelativePath(typeSpecProjectPath);
-                    }
                     releasePlan = await devOpsService.GetReleasePlanByTypeSpecProjectPathAsync(typeSpecProjectPath, ct: ct);
                 }
                 else

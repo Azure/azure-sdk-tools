@@ -134,7 +134,7 @@ This design covers the complete SDK breaking change detection workflow and its c
 
 ### Detailed Design
 
-**prerequist**:
+**Prerequiste**:
 The SDK has been generated and built successfully.
 
 A changelog-breakingchange pattern guide (e.g. https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/mgmt/sdk-breaking-changes-guide.md) will service as the foundation for teach copilot agent to detect and classify SDK breaking changes for a SDK. The existing TypeSpec code and the configuration will help agent to classify the SDK breaking changes.

@@ -119,8 +119,8 @@ backend is picked at run time.
 
 | Run mode | MCP | Repos? | When | Coverage |
 |---|---|---|---|---|
-| Workflows — Mock | mock (stub, no LLM) | none | nightly + on demand | every scenario |
-| Workflows — Live | live (real backends) | shallow + sparse | weekly | scenarios tagged `live-safe` (curated subset) |
+| Workflows — Mock | mock (stub, no LLM) | azure-sdk-tools only | nightly + on demand | every scenario |
+| Workflows — Live | live (real backends) | azure-sdk-tools + shallow/sparse clones of the spec & language SDK repos each scenario declares | weekly | scenarios tagged `live-safe` (curated subset) |
 
 When live and mock results disagree, the mock is wrong — the divergence
 points straight at the missing or stale handler. Every scenario that

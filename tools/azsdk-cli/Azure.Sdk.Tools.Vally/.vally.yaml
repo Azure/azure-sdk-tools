@@ -55,27 +55,27 @@ suites:
     description: |
       Hermetic single-tool / trigger evals. No external I/O. Fast; the
       foundation of the PR gate.
-    evals: ["evals/unit/*.eval.yaml"]
+    evals: ["evals/tools/*.eval.yaml"]
 
   scenarios-mock:
     description: |
       Multi-tool scenarios against the mock MCP environment. Hermetic; safe
       for PR gate.
-    evals: ["evals/scenarios/mock/*.eval.yaml"]
+    evals: ["evals/workflow-scenarios/mock/*.eval.yaml"]
 
   scenarios-live:
     description: |
       Scenarios against live MCP — real DevOps / GitHub / pipelines. Slow;
       nightly only. Prime any required clones first via
       `evals/setup/ensure-specs-clone.ps1`.
-    evals: ["evals/scenarios/live/*.eval.yaml"]
+    evals: ["evals/workflow-scenarios/live/*.eval.yaml"]
 
   # ---- composite suites ----
   pr-gate:
     description: Hermetic tiers only (unit + scenarios-mock). Target for CI PR check.
     evals:
-      - "evals/unit/*.eval.yaml"
-      - "evals/scenarios/mock/*.eval.yaml"
+      - "evals/tools/*.eval.yaml"
+      - "evals/workflow-scenarios/mock/*.eval.yaml"
   nightly:
     description: All tiers including live scenarios.
     evals: ["evals/**/*.eval.yaml"]

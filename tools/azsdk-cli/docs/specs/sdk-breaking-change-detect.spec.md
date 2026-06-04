@@ -89,12 +89,11 @@ Reviewing and resolving SDK breaking changes is a required step for Spec PR merg
 **Impact on service API merge and SDK release experience:**
 
 - Identifying and mitigating SDK breaking changes is a significant challenge for service and Azure SDK teams. Manual analysis of SDK changes to detect breaking changes and develop consistent mitigations requires substantial effort and expertise.
+- Reducing the time required to review and resolve SDK breaking changes shortens the overall API merge and SDK release lifecycle.
 
-**Cost of Not Solving This:**
+**Impact on SDK breaking change mitigation workflow:**
 
-- **Increased SDK or Spec Review Effort**: Service and Azure SDK teams spend significant time manually identifying SDK breaking changes and developing mitigations.
-- **Incorrect SDK Breaking Change Detection**: Without automated detection, teams may miss SDK breaking changes entirely or misclassify them, resulting in incomplete or incorrect mitigations.
-- **Delayed API Spec Merge and SDK Release**: The time spent identifying and resolving SDK breaking changes manually delays both API specification merges and SDK releases, impacting customer delivery timelines.
+- By using this tool to detect actual SDK breaking changes, identify their root causes, and provide actionable mitigation plans, teams can address breaking changes earlier and avoid back-and-forth across repos and stages.
 
 ---
 
@@ -102,7 +101,7 @@ Reviewing and resolving SDK breaking changes is a required step for Spec PR merg
 
 ### Goals
 
-This tool detects breaks after SDK generation and build, and one major scenario is using it during the spec PR validation pipeline.
+This tool detects SDK breaks from SDK package after SDK generation and build, and one major scenario is using it during the spec PR validation pipeline.
 
 What are we trying to achieve with this design?
 
@@ -129,7 +128,7 @@ This tool will support Java, JavaScript, Python, and Go. The .NET SDK is not sup
 
 ### Overview
 
-This design covers the complete SDK breaking change detection workflow and its core components:
+This design covers the complete SDK breaking change detection workflow for an SDK package and its core components:
 
 - SDK change analyzer
 - SDK breaking change detector
@@ -139,7 +138,7 @@ This design covers the complete SDK breaking change detection workflow and its c
 **Prerequisite**:
 The SDK has been generated and built successfully.
 
-A sdkchange-breakingchange pattern guide (e.g. https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/mgmt/sdk-breaking-changes-guide.md) will service as the foundation for teach copilot agent to detect and classify SDK breaking changes for a SDK. The existing TypeSpec code and the configuration will help agent to classify the SDK breaking changes.
+A sdkChange-breakingchange pattern guide (e.g. https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/mgmt/sdk-breaking-changes-guide.md) will service as the foundation for teach copilot agent to detect and classify SDK breaking changes for a SDK. The existing TypeSpec code and the configuration will help agent to classify the SDK breaking changes.
 
 **Output Format:**
 
@@ -210,7 +209,7 @@ flowchart TD
     subgraph SDK Change Analyzer
         A
     end
-    subgraph SDK Breaking Change Detctor
+    subgraph SDK Breaking Change Detector
         E
         F
         C

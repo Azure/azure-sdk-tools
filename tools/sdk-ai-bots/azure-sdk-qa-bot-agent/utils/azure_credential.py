@@ -6,9 +6,11 @@ Builds a chained credential that supports:
 3. Azure CLI
 """
 
+import asyncio
 import logging
 import os
 
+from azure.core.credentials import AccessToken
 from azure.core.credentials_async import AsyncTokenCredential
 from azure.identity.aio import (
     AzureCliCredential,
@@ -19,6 +21,43 @@ from azure.identity.aio import (
 
 _logger = logging.getLogger(__name__)
 _credential: AsyncTokenCredential | None = None
+
+
+class _RetryCredential:
+    """Wraps a credential and retries ``get_token`` on transient failures."""
+
+    def __init__(
+        self, inner: AsyncTokenCredential, max_retries: int = 3, delay: float = 3.0
+    ):
+        self._inner = inner
+        self._max_retries = max_retries
+        self._delay = delay
+
+    async def get_token(self, *scopes, **kwargs) -> AccessToken:
+        for attempt in range(1, self._max_retries + 1):
+            try:
+                return await self._inner.get_token(*scopes, **kwargs)
+            except Exception as exc:
+                if attempt < self._max_retries:
+                    _logger.warning(
+                        "get_token attempt %d/%d failed (%s), retrying in %.0fs",
+                        attempt,
+                        self._max_retries,
+                        exc,
+                        self._delay,
+                    )
+                    await asyncio.sleep(self._delay)
+                else:
+                    raise
+
+    async def close(self) -> None:
+        await self._inner.close()
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *args):
+        await self.close()
 
 
 def _build_credential_chain() -> AsyncTokenCredential:
@@ -74,10 +113,15 @@ def _build_credential_chain() -> AsyncTokenCredential:
 
 
 def get_credential() -> AsyncTokenCredential:
-    """Return the shared async chained credential (created once on first call)."""
+    """Return the shared async chained credential (created once on first call).
+
+    Wraps the inner chain with retry logic so that transient failures
+    (e.g. managed-identity IMDS not ready during cold start) are retried
+    automatically on every ``get_token`` call.
+    """
     global _credential
     if _credential is None:
-        _credential = _build_credential_chain()
+        _credential = _RetryCredential(_build_credential_chain())
         _logger.info(
             "Credential created (client_id=%s)", os.environ.get("AZURE_CLIENT_ID")
         )

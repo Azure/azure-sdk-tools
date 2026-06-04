@@ -47,7 +47,7 @@ describe('reportStatus', () => {
     vi.resetAllMocks();
     
     const fixedDate = new Date('2022-01-01T00:00:00Z');
-    vi.spyOn(global, 'Date').mockImplementation(function() { return fixedDate; });
+    vi.spyOn(global, 'Date').mockImplementation(function () { return fixedDate; } as unknown as typeof Date);
 
     mockLogger = {
       log: vi.fn(),

@@ -15,8 +15,5 @@
     "@typespec/openapi3": "^1.0.0",
     "@typespec/rest": ">=0.80.0",
     "@typespec/versioning": ">=0.80.0"
-  },
-  "overrides": {
-    "fast-uri": "3.1.2"
   }
 }

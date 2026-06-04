@@ -34,6 +34,7 @@ from utils.azure_memory_store import sanitize_scope
 from azure.ai.projects.aio import AIProjectClient
 from azure.ai.projects.models import AgentVersionDetails
 from openai import AsyncOpenAI, NotFoundError
+from openai.types.conversations import Message as ConversationsMessage
 from openai.types.responses import Response as OpenAIResponse
 from openai.types.responses import (
     ResponseFunctionToolCall,
@@ -41,7 +42,6 @@ from openai.types.responses import (
     ResponseOutputMessage,
 )
 from openai.types.responses.response_input_item_param import ResponseInputItemParam
-from openai.types.responses.response_status import ResponseStatus
 from config.tenant_config import TenantID
 from typing import Any, cast
 from utils.background_tasks import BackgroundTaskTracker
@@ -152,8 +152,7 @@ class ChatService:
         #   - https://github.com/Azure/azure-sdk-for-python/issues/46092
         #   - https://github.com/microsoft/agent-framework/issues/5041
         #   - https://github.com/microsoft/agent-framework/issues/5023
-        failed_status: ResponseStatus = "failed"
-        if response.status == failed_status:
+        if response.status == "failed":
             logger.warning(
                 "Foundry conversation %s returned status=failed; rebuilding "
                 "from Cosmos plain-text history. response_id=%s error=%s",
@@ -386,22 +385,30 @@ class ChatService:
         broken_conversation_id: str,
         current_turn_items: list[ResponseInputItemParam],
     ) -> tuple[str, list[ResponseInputItemParam]]:
-        """Discard the corrupted Foundry conversation and reseed from Cosmos.
+        """Discard the corrupted Foundry conversation and reseed from its own
+        item history, dropping tool-call items so the new conversation starts
+        in a consistent state.
 
         Strategy:
-        1. Best-effort delete the broken Foundry conversation.
-        2. Create a fresh Foundry conversation and update the Cosmos mapping.
-        3. Rebuild input items: tenant + memory-scope system messages from the
-           current turn, then plain-text user/assistant turns from Cosmos
-           (excluding the in-flight user message), then the current turn's
-           user message and any image items.
-
-        Tool-call/result items are NOT replayed because Cosmos only stores
-        plain text. Semantic context is preserved; intermediate tool results
-        are not. This is an acceptable trade-off because the alternative is
-        a failed turn.
+        1. List items from the broken Foundry conversation BEFORE deleting it,
+           and keep only ``message`` items (user/assistant text and any
+           multimodal content). Tool-related items (``function_call``,
+           ``function_call_output``, ``mcp_call``, ``code_interpreter_call``,
+           etc.) are dropped — they are what caused the corruption and are
+           safe to omit because the assistant's final text already summarizes
+           their effect for the user.
+        2. Delete the broken conversation (best effort).
+        3. Create a fresh Foundry conversation and update the Cosmos mapping.
+        4. Compose the next-turn input as: system anchors from the current
+           turn + the filtered Foundry history + the current turn's live
+           inputs.
         """
-        # 1. Delete the broken conversation (best effort).
+        # 1. Pull surviving message items from the broken conversation first.
+        replay_items = await self._list_message_items(
+            openai_client, broken_conversation_id
+        )
+
+        # 2. Delete the broken conversation (best effort).
         try:
             await openai_client.conversations.delete(broken_conversation_id)
             logger.info(
@@ -414,8 +421,8 @@ class ChatService:
                 exc_info=True,
             )
 
-        # 2. Create a new conversation and update the Cosmos mapping so future
-        #    turns use the new id.
+        # 3. Create a new conversation and update the Cosmos mapping so future
+        #    turns use the new id
         new_conversation = await openai_client.conversations.create()
         new_conversation_id = new_conversation.id
         await self._conversation_service.save_agent_conversation_mapping(
@@ -429,11 +436,9 @@ class ChatService:
             broken_conversation_id,
         )
 
-        # 3. Split current_turn_items into system anchors vs. the live user
-        #    message + image inputs. System messages were built fresh this
-        #    turn (tenant context, memory scope) and must be re-applied to the
-        #    new conversation. The trailing user/image items are this turn's
-        #    actual input.
+        # 4. Split current_turn_items into system anchors vs. live user
+        #    inputs. System messages (tenant context, memory scope) were
+        #    rebuilt this turn and are not part of the historical replay.
         system_anchors: list[ResponseInputItemParam] = []
         live_inputs: list[ResponseInputItemParam] = []
         for item in current_turn_items:
@@ -441,9 +446,6 @@ class ChatService:
                 system_anchors.append(item)
             else:
                 live_inputs.append(item)
-
-        # Load past conversation as plain text from Cosmos.
-        replay_items = await self._build_replay_items_from_cosmos(req)
 
         rebuilt = [*system_anchors, *replay_items, *live_inputs]
         logger.info(
@@ -456,60 +458,39 @@ class ChatService:
         )
         return new_conversation_id, rebuilt
 
-    async def _build_replay_items_from_cosmos(
-        self, req: ChatRequest
+    @staticmethod
+    async def _list_message_items(
+        openai_client: AsyncOpenAI,
+        conversation_id: str,
     ) -> list[ResponseInputItemParam]:
-        """Load past user/bot turns from Cosmos and convert to Responses input.
-
-        Returns an empty list when the request lacks conversation identifiers
-        or the conversation has no stored messages. The in-flight user
-        message (matched by ``req.message.id`` when available) is excluded
-        so it isn't duplicated alongside ``live_inputs``.
+        """List items from a Foundry conversation, keeping only ``message``
+        entries. Returns an empty list if the API call fails — the new
+        conversation will simply start with no replayed history.
         """
-        if not req.conversation_id or not req.conversation_type:
-            return []
-
+        replay: list[ResponseInputItemParam] = []
         try:
-            messages = await self._conversation_service.get_messages_by_conversation(
-                req.conversation_id,
-                req.conversation_type,
-            )
+            # AsyncCursorPage is async-iterable and transparently pages.
+            async for item in openai_client.conversations.items.list(conversation_id):
+                # Keep only user/assistant messages; drop every tool-related
+                # variant of ConversationItem (ResponseFunctionToolCallItem,
+                # ResponseFunctionToolCallOutputItem, McpCall, LocalShellCall,
+                # ResponseCodeInterpreterToolCall, etc.).
+                if not isinstance(item, ConversationsMessage):
+                    continue
+                payload = item.model_dump(mode="json", exclude_none=True)
+                # The Responses input schema doesn't accept server-assigned
+                # fields like ``id`` / ``status`` on replayed items.
+                payload.pop("id", None)
+                payload.pop("status", None)
+                replay.append(cast(ResponseInputItemParam, payload))
         except Exception:
             logger.warning(
-                "Failed to load Cosmos history for conversation=%s; "
-                "reseeding without replay.",
-                req.conversation_id,
+                "Failed to list items from broken Foundry conversation %s; "
+                "reseeding with no replayed history.",
+                conversation_id,
                 exc_info=True,
             )
             return []
-
-        current_message_id = getattr(req.message, "id", None)
-        replay: list[ResponseInputItemParam] = []
-        for msg in messages:
-            if current_message_id and msg.id == current_message_id:
-                continue
-            content = (msg.content or "").strip()
-            if not content:
-                continue
-            # Bot answers are persisted with sender_role=Role.System
-            # (see _save_bot_answer_to_conversation). Map them back to
-            # assistant turns; everything else is treated as a user turn.
-            role = (
-                Role.Assistant
-                if msg.sender_role in (Role.System, Role.Assistant)
-                else Role.User
-            )
-            replay.append(
-                cast(
-                    ResponseInputItemParam,
-                    ConversationItem(
-                        role=role,
-                        content=content,
-                        user_id=getattr(msg, "sender_id", None),
-                        user_name=getattr(msg, "sender_name", None),
-                    ).model_dump(mode="json", exclude_none=True),
-                )
-            )
         return replay
 
     @staticmethod

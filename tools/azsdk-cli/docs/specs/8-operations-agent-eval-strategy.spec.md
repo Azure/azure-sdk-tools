@@ -96,6 +96,21 @@ Plus a hermetic tool-shape layer that isn't agent-driven:
 |---|---|---|
 | **Tools** | Tool X exists and returns the right shape for these inputs. Cross-skill trigger tables. | `evals/tools/` |
 
+#### Required graders by kind
+
+Mock and live workflow scenarios share the same scenario format but
+differ in which graders are *required* vs *optional*:
+
+| Kind | `tool-calls` | `skill-invocation` | response grader (`prompt` / LLM-judge) |
+|---|---|---|---|
+| **Workflows — Mock** | required | optional | not applicable — mock responses are stubbed, so a response grader has nothing meaningful to assert |
+| **Workflows — Live** | required | required | required — only live runs produce a real assistant answer worth grading |
+
+Rationale: the mock backend deterministically replays canned data, so
+"the agent said the right thing" reduces to "the agent called the right
+tools." Live runs are the only place a free-form response can drift, so
+that's where the response grader earns its cost.
+
 
 ### Folder layout
 
@@ -127,13 +142,12 @@ points straight at the missing or stale handler. Every scenario that
 runs on mock therefore drives the mock to grow handlers for the tools
 it exercises.
 
-### Where each eval lives — split by ownership
+### Where each eval lives
 
-
-| What it tests | Lives in | Owned by |
-|---|---|---|
-| **One skill** (does this skill route, call its tools, return a sensible answer) | `.github/skills/<skill>/evals/` | Skill author |
-| **Cross-skill / cross-tool** (multi-step chains, e2e flows, mock-server integration, anything that doesn't belong to one skill) | `tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/` | workflow owner team |
+| What it tests | Lives in |
+|---|---|
+| **One skill** (does this skill route, call its tools, return a sensible answer) | `.github/skills/<skill>/evals/` |
+| **Cross-skill / cross-tool** (multi-step chains, e2e flows, mock-server integration, anything that doesn't belong to one skill) | `tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/` |
 
 Skill evals stay next to `SKILL.md` — that's the convention skill
 authors expect, and it keeps everything about a skill in one folder.
@@ -180,10 +194,7 @@ Is it a multi-step / multi-tool agent flow?
 
 The suite runs on a schedule, not on every pull request. Agent runs
 talk to an LLM — they cost money and they flake in ways that have
-nothing to do with the code under review. Both are bad properties for a
-required check that blocks merges. We'd rather have a reliable
-green/red trend you can look at than a noisy gate everyone learns to
-ignore.
+nothing to do with the code under review.
 
 | When | What runs | Backend |
 |---|---|---|

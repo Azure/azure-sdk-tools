@@ -13,10 +13,10 @@ different folders. A full end-to-end gate runs *both*.
 |---|---|---|
 | **Question** | Given a user prompt, does the agent invoke the right MCP tool(s) with the right shape? | Given a user prompt, does the agent route to the right skill and follow its instructions? |
 | **Catches** | Tool name / description / parameter regressions; multi-tool ordering; tool-catalog conflicts | Skill frontmatter / `description` / instruction regressions; skill-routing collisions |
-| **Path** | [`tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/`](evals/) (`scenarios/` + `triggers/`) | [`.github/skills/<skill-name>/evals/*.eval.yaml`](../../../.github/skills/) (and `evaluate/evals/` for capability suites) |
+| **Path** | [`tools/azsdk-cli/Azure.Sdk.Tools.Vally/evals/`](evals/) (`tools/` + `workflow-scenarios/`) | [`.github/skills/<skill-name>/evals/*.eval.yaml`](../../../.github/skills/) (and `evaluate/evals/` for capability suites) |
 | **Loaded subject** | Production MCP server (`Azure.Sdk.Tools.Cli`) over stdio — real tools, real network calls | Skill's `SKILL.md` + frontmatter; the agent picks tools itself |
 | **Primary grader** | `tool-calls` — checks the recorded trajectory for required tool names | Trigger / routing graders + per-skill rubric |
-| **Run command** | `vally eval --eval-spec evals/unit/<name>.eval.yaml` *from this directory* | `vally eval --skill-dir .github/skills/<skill-name>` *from repo root* |
+| **Run command** | `vally eval --eval-spec evals/tools/<name>.eval.yaml` *from this directory* | `vally eval --skill-dir .github/skills/<skill-name>` *from repo root* |
 | **CI status** | Not wired yet (see follow-ups) | `vally lint` runs in [.github/workflows/skill-eval.yml](../../../.github/workflows/skill-eval.yml); full `eval` job pending |
 | **Cost profile** | Higher — each run spins up the MCP server, real LLM turns (~5–15), real tool calls | Variable — trigger evals are cheap; capability evals (e.g. `azure-typespec-author`) are expensive |
 
@@ -111,8 +111,8 @@ tracks the migration in
 Azure.Sdk.Tools.Vally/
 ├── .vally.yaml                # Vally config (environments + suites)
 ├── evals/
-│   ├── unit/                  # tool-shape + per-skill trigger evals, hermetic
-│   ├── scenarios/
+│   ├── tools/                  # tool-shape + per-skill trigger evals, hermetic
+│   ├── workflow-scenarios/
 │   │   ├── mock/              # multi-tool scenarios, hermetic (PR gate)
 │   │   └── live/              # multi-tool scenarios, live MCP (nightly)
 │   ├── setup/                 # helper scripts (e.g. ensure-specs-clone.ps1)
@@ -150,23 +150,34 @@ Run a suite (recommended):
 ```powershell
 cd tools/azsdk-cli/Azure.Sdk.Tools.Vally
 $vally = '../../../eng/skill-eval/node_modules/.bin/vally.cmd'
+$skills = '../../../.github/skills'
 
 # Fast tiers only — PR-gate candidate
-& $vally eval --suite pr-gate
+& $vally eval --suite pr-gate --skill-dir $skills
 
 # A single tier
-& $vally eval --suite unit
-& $vally eval --suite scenarios-mock
+& $vally eval --suite unit --skill-dir $skills
+& $vally eval --suite scenarios-mock --skill-dir $skills
 
 # By feature area (cross-cuts tiers via tag filter)
-& $vally eval --suite release-plan
-& $vally eval --suite typespec
+& $vally eval --suite release-plan --skill-dir $skills
+& $vally eval --suite typespec --skill-dir $skills
 ```
+
+> `--skill-dir` is **required** for workflow-scenario evals — without it,
+> the agent never loads the project skills and the `skill-invocation`
+> grader fails even when the tool calls are correct.
+>
+> Each agent boots its own MCP child process, so parallel workers compete
+> for stdio startup. Keep `--workers` at 1–2 for `scenarios-mock` / live
+> runs until we share a single Mock MCP server across workers — higher
+> concurrency triggers `MCP server 'azure-sdk-mcp' failed to load:
+> Connection closed` on most stimuli.
 
 Run a single eval:
 
 ```powershell
-& $vally eval --eval-spec evals/unit/check-public-repo.eval.yaml
+& $vally eval --eval-spec evals/tools/check-public-repo.eval.yaml --skill-dir $skills
 ```
 
 Run the live scenarios tier (first, prime a per-user clone of
@@ -174,17 +185,17 @@ Run the live scenarios tier (first, prime a per-user clone of
 
 ```powershell
 ./evals/setup/ensure-specs-clone.ps1
-& $vally eval --suite scenarios-live
+& $vally eval --suite scenarios-live --skill-dir $skills --workers 1
 ```
 
 ## Adding a new scenario
 
 1. **Pick a tier** — the folder you drop the YAML into:
-   - `evals/unit/` — one prompt, one MCP tool, no environment hooks.
-   - `evals/scenarios/mock/` — multi-tool flow against `azsdk-mcp-mock`.
-     Hermetic; runs on PR gate.
-   - `evals/scenarios/live/` — needs real DevOps / GitHub / pipelines;
-     bind `environment: azsdk-mcp-live`. Nightly only.
+   - `evals/tools/` — one prompt, one MCP tool, no environment hooks.
+   - `evals/workflow-scenarios/mock/` — multi-tool flow against
+     `azsdk-mcp-mock`. Hermetic; runs on PR gate.
+   - `evals/workflow-scenarios/live/` — needs real DevOps / GitHub /
+     pipelines; bind `environment: azsdk-mcp-live`. Nightly only.
 2. Pick a short, kebab-case name (e.g. `create-release-plan`).
 3. Create `evals/<tier>/<name>.eval.yaml`. Start from a sibling in the same
    tier as a template.

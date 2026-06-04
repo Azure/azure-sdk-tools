@@ -30,8 +30,8 @@ environments:
   # Live MCP — real Azure.Sdk.Tools.Cli against real DevOps (test area path),
   # real GitHub, real pipelines. AZSDKTOOLS_AGENT_TESTING=true keeps the
   # handful of write tools (e.g. create_release_plan) inside the test area.
-  # Bound only by scenarios under evals/scenarios/live/ and selected by the
-  # `scenarios-live` / `nightly` suites.
+  # Bound only by scenarios under evals/workflow-scenarios/live/ and selected
+  # by the `scenarios-live` / `nightly` suites.
   azsdk-mcp-live:
     mcpServers:
       azure-sdk-mcp:

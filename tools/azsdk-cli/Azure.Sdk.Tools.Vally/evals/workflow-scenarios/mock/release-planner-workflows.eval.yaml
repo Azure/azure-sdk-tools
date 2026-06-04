@@ -34,10 +34,26 @@ config:
 stimuli:
   # --- Scenario 1: Create release plan ---------------------------------
   - name: create-public-preview-release-plan
+    environment:
+      # Per-user cache populated by evals/setup/ensure-specs-clone.ps1
+      # (idempotent shallow+sparse clone, auto-refresh every 24h). Same
+      # source the live e2e uses — keeps the relative TypeSpec path
+      # resolvable on disk even though the MCP responses are mocked.
+      git:
+        type: worktree
+        source: C:/Users/gaoh/.vally-cache/azure-rest-api-specs
+        ref: main
     prompt: |
-      Create a public preview release plan for
-      specification.
-      Target release month: June 2026.
+      I'm in a checkout of azure-rest-api-specs. Create a public preview
+      release plan for the Contoso Widget Manager. Here is all the context
+      you need:
+        - TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
+        - service tree ID: "a7f2b8e4-9c1d-4a3e-b6f9-2d8e5a7c3b1f"
+        - product tree ID: "f1a8c5d2-6e4b-4f7a-9c2d-8b5e1f3a6c9e"
+        - target release timeline: "June 2026"
+        - API version: "2022-11-01-preview"
+        - SDK release type: "beta"
+        - spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38387"
       My setup has already been verified, do not run azsdk_verify_setup.
     constraints:
       max_turns: 6
@@ -57,10 +73,26 @@ stimuli:
 
   # --- End-to-end demo prompt: create + generate -----------------------
   - name: create-release-plan-and-generate-sdk
+    environment:
+      # Same per-user azure-rest-api-specs worktree as the create stimulus
+      # above so the agent sees a real on-disk spec repo.
+      git:
+        type: worktree
+        source: C:/Users/gaoh/.vally-cache/azure-rest-api-specs
+        ref: main
     prompt: |
-      Create a release plan and generate SDK for the TypeSpec project
-      specification
-      Target release month: June 2026, SDK release type beta.
+      I'm in a checkout of azure-rest-api-specs. Walk me through creating
+      a release plan and then generating SDK for the Contoso Widget Manager:
+        - TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
+        - API release type: "Public Preview"
+        - service tree ID: "a7f2b8e4-9c1d-4a3e-b6f9-2d8e5a7c3b1f"
+        - product tree ID: "f1a8c5d2-6e4b-4f7a-9c2d-8b5e1f3a6c9e"
+        - target release timeline: "June 2026"
+        - API version: "2022-11-01-preview"
+        - SDK release type: "beta"
+        - spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38387"
+      After the release plan is created, generate SDK for all languages
+      using the work-item ID from the created release plan.
       My setup has already been verified, do not run azsdk_verify_setup.
     constraints:
       max_turns: 12
@@ -84,8 +116,20 @@ stimuli:
 
   # --- Scenario 2: Generate SDK for an existing release plan -----------
   - name: generate-sdk-for-existing-release-plan
+    environment:
+      # Same per-user azure-rest-api-specs worktree as the create stimuli
+      # above so the agent can locate the TypeSpec project on disk while
+      # driving the release-planner flow.
+      git:
+        type: worktree
+        source: C:/Users/gaoh/.vally-cache/azure-rest-api-specs
+        ref: main
     prompt: |
-      Generate SDK for all languages for release plan 29262.
+      I'm in a checkout of azure-rest-api-specs. Using the release-planner
+      flow, generate SDK for all languages for the Contoso Widget Manager
+      release plan. Here is the context you need:
+        - release plan work item ID: "29262"
+        - TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
       My setup has already been verified, do not run azsdk_verify_setup.
     constraints:
       max_turns: 8
@@ -106,9 +150,17 @@ stimuli:
 
   # --- Scenario 3: Link a different spec PR to an existing release plan
   - name: link-different-spec-pr-to-release-plan
+    environment:
+      git:
+        type: worktree
+        source: C:/Users/gaoh/.vally-cache/azure-rest-api-specs
+        ref: main
     prompt: |
-      Update the API spec PR in release plan 29262 to
-      https://github.com/Azure/azure-rest-api-specs/pull/38500.
+      I'm in a checkout of azure-rest-api-specs. Using the release-planner
+      flow, update the API spec pull request on an existing Contoso Widget
+      Manager release plan. Here is the context you need:
+        - release plan work item ID: "29262"
+        - new spec pull request: "https://github.com/Azure/azure-rest-api-specs/pull/38500"
       My setup has already been verified, do not run azsdk_verify_setup.
     constraints:
       max_turns: 6
@@ -129,10 +181,19 @@ stimuli:
 
   # --- Scenario 4: Update SDK details (package names) ------------------
   - name: update-sdk-details-in-release-plan
+    environment:
+      git:
+        type: worktree
+        source: C:/Users/gaoh/.vally-cache/azure-rest-api-specs
+        ref: main
     prompt: |
-      Update SDK details / package names in release plan 29262 based on the
-      TypeSpec emitter configuration in tspconfig.yaml for
-      specification
+      I'm in a checkout of azure-rest-api-specs. Using the release-planner
+      flow, refresh the SDK package-name details on an existing Contoso
+      Widget Manager release plan from the on-disk TypeSpec emitter
+      configuration. Here is the context you need:
+        - release plan work item ID: "29262"
+        - TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
+        - tspconfig path: "specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml"
       My setup has already been verified, do not run azsdk_verify_setup.
     constraints:
       max_turns: 8

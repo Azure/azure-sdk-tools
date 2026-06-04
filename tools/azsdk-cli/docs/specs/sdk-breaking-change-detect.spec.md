@@ -407,7 +407,7 @@ Use client customization to restore the original names from the removal entries:
 
 ```bash
 # Example usage
-azsdk package detect-breaking-change --package-path <sdk-package-path> --language go --tsp-config-path <tsp-config-yaml-file-path> --generate-sdk false
+azsdk package detect-breaking-change --package-path <sdk-package-path> --tsp-config-path <tsp-config-yaml-file-path>
 ```
 
 ### Scenarios for Using the Tool
@@ -572,14 +572,13 @@ detect the breaking changes for Go SDK of Webpubsub service
 **Command:**
 
 ```bash
-azsdk package detect-breaking-change --package-path <sdk-package-path> --language <language> --tsp-config-path <path-to-tsp-config-file>
+azsdk package detect-breaking-change --package-path <sdk-package-path> --tsp-config-path <path-to-tsp-config-file>
 
 ```
 
 **Options:**
 
 - `--package-path <value>`: (Required) The SDK package path
-- `--language <value>`: (optional) The SDK language. When `--package-path` does not refer to a directory in a locally cloned SDK repository, the language cannot be inferred from the path; in this case, provide this parameter explicitly.
 - `--tsp-config-path`: (Optional) Path to the 'tspconfig.yaml' configuration file, it can be a local path or remote HTTPS URL
 
 **Expected Output:**

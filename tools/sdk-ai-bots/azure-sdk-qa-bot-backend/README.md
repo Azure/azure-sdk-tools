@@ -59,11 +59,19 @@ The main endpoint for querying the bot is `/completion`. [Here](test/api_test.re
 
 ### How to get remote endpoint?
 
-Choose the environment you want to test, the `Default domain` filed is the endpoint:
+| Environment | Resource Group | App Service Name |
+|---|---|---|
+| **Prod** | `azure-sdk-qa-bot` | `azuresdkqabot-server` |
+| **Preview** | `azure-sdk-qa-bot-test` | `azuresdkqabot-test-server` |
+| **Dev** | `azure-sdk-qa-bot-dev` | `azuresdkqabot-dev-server` |
 
-- Prod: [azuresdkqabot-server](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.Web/sites/azuresdkqabot-server/appServices)
-- Preview: [azuresdkqabot-test-server](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-test/providers/Microsoft.Web/sites/azuresdkqabot-test-server/appServices)
-- Dev: [azuresdkqabot-dev-server](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Web/sites/azuresdkqabot-dev-server/appServices)
+To find the endpoint:
+
+1. Go to the [Azure Portal](https://portal.azure.com) and sign in with your Microsoft account.
+2. Navigate to the **Azure SDK Engineering System** subscription.
+3. Open the resource group for the target environment (see table above).
+4. Select the App Service resource.
+5. The endpoint URL is the **Default domain** field in the App Service overview.
 
 ### How to get access token?
 

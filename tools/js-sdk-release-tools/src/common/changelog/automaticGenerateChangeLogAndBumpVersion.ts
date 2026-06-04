@@ -134,6 +134,9 @@ export async function generateChangelogAndBumpVersion(
         }
         const oldSDKType = getSDKType(npmPackageRoot);
         const newSDKType = getSDKType(packageFolderPath);
+        logger.info(`Detected SDK types — baseline (npm): '${oldSDKType}', current (local): '${newSDKType}'`);
+        logger.info(`  baseline api.md path: ${apiMdFileNPM} (exists: ${fs.existsSync(apiMdFileNPM)})`);
+        logger.info(`  current  api.md path: ${apiMdFileLocal} (exists: ${fs.existsSync(apiMdFileLocal)})`);
         const diffDetector = new DifferenceDetector(
           { path: apiMdFileNPM, sdkType: oldSDKType },
           { path: apiMdFileLocal, sdkType: newSDKType }

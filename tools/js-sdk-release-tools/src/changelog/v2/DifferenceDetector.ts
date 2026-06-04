@@ -166,10 +166,19 @@ export class DifferenceDetector {
   //   2. A property on the constructor parameter type (e.g. options?: XxxOptionalParams
   //      exposing apiVersion, cloudSetting, etc.)
   private filterClassPropertiesMovedToInternals(v: DiffPair[], className: string): DiffPair[] {
+    const baselineSdkType = this.baselineApiViewOptions.sdkType;
+    const currentSdkType = this.currentApiViewOptions.sdkType;
+    logger.info(
+      `[filterClassPropertiesMovedToInternals] class='${className}' baselineSdkType='${baselineSdkType}' currentSdkType='${currentSdkType}'`
+    );
     const isHlcToModular =
-      this.baselineApiViewOptions.sdkType === SDKType.HighLevelClient &&
-      this.currentApiViewOptions.sdkType === SDKType.ModularClient;
-    if (!isHlcToModular) return v;
+      baselineSdkType === SDKType.HighLevelClient && currentSdkType === SDKType.ModularClient;
+    if (!isHlcToModular) {
+      logger.warn(
+        `[filterClassPropertiesMovedToInternals] skipping filter for class='${className}': expected baseline=${SDKType.HighLevelClient}/current=${SDKType.ModularClient}, got baseline=${baselineSdkType}/current=${currentSdkType}`
+      );
+      return v;
+    }
 
     const currentClass = this.context!.current.getClass(className);
     if (!currentClass) return v;

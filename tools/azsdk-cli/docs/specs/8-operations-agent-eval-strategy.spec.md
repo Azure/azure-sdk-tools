@@ -8,6 +8,7 @@
 - [Design Proposal](#design-proposal)
 - [Agent Prompts](#agent-prompts)
 - [Success Criteria](#success-criteria)
+- [Open Questions](#open-questions)
 - [Implementation Plan](#implementation-plan)
 
 ---
@@ -86,8 +87,8 @@ prove); the last two say where each lives and what backend it needs.
 | Kind | What it proves | Agent | MCP | Lives in |
 |---|---|---|---|---|
 | **Skills** | A user prompt routes to the right skill. | live | none | `.github/skills/<skill>/evals/` |
-| **Workflows — Mock** | Agent picks the right skills, calls the right tools in the right order with the right args, returns the right answer. | live | **mock** | `evals/scenarios/` (default) |
-| **Workflows — Live** | Same as above, but against the real backend — catches drift the mock can't see (TypeSpec ordering, real codegen output, real DevOps state). | live | **live** | `evals/scenarios/` with `tags: { live-safe: "true" }` |
+| **Workflows — Mock** | Agent picks the right skills, calls the right tools in the right order with the right args, returns the right answer. | live | **mock** | `evals/workflow-scenarios/mock/` |
+| **Workflows — Live** | Same as above, but against the real backend — catches drift the mock can't see (TypeSpec ordering, real codegen output, real DevOps state). | live | **live** | `evals/workflow-scenarios/live/` |
 
 Plus a hermetic tool-shape layer that isn't agent-driven:
 
@@ -100,11 +101,11 @@ Plus a hermetic tool-shape layer that isn't agent-driven:
 
 ```
 evals/
-├── tools/             tool-shape + cross-skill triggers (hermetic)
-├── scenarios/
-│   ├── mock/          workflow scenarios run against the mock MCP
-│   └── live/          workflow scenarios run against the live MCP
-└── setup/             shared fixture scripts (repo clone, etc.)
+├── tools/                  tool-shape + cross-skill triggers (hermetic)
+├── workflow-scenarios/
+│   ├── mock/               workflow scenarios run against the mock MCP
+│   └── live/               workflow scenarios run against the live MCP
+└── setup/                  shared fixture scripts (repo clone, etc.)
 ```
 
 A scenario lives under `mock/` or `live/` based on which backend the
@@ -166,11 +167,13 @@ for a given input — no agent in the loop?
 
 Is it a multi-step / multi-tool agent flow?
 └── yes → Workflow scenario
-        ├── Default → evals/scenarios/mock/
+        ├── Default → evals/workflow-scenarios/mock/
         │   Runs against the mock MCP. Use this unless the mock can't
         │   faithfully cover the behavior.
-        └── Also need live coverage → add an evals/scenarios/live/ 
-            Reserve for cases where the real backend's behavior matters (TypeSpec ordering, real codegen output, real DevOps state).
+        └── Also need live coverage → add an evals/workflow-scenarios/live/
+            variant. Reserve for cases where the real backend's behavior
+            matters (TypeSpec ordering, real codegen output, real DevOps
+            state).
 ```
 
 ### CI
@@ -187,6 +190,23 @@ ignore.
 | Nightly | All workflow scenarios + the hermetic tool layer | mock |
 | Weekly | Workflow scenarios marked safe to run live | live (with safe-mode flag on writes) |
 | On demand | Any suite, any backend | author's choice |
+
+#### PR gate for essential workflows (open)
+
+A case for *narrow* PR gating: a small curated set of mock scenarios
+covering the workflows we have already promised to partner teams
+(release-planner today; more as they ship) could run on PRs that touch
+the agent, skills, or MCP tools — so we catch a regression in the
+workflows users actually rely on before merge, instead of the morning
+after.
+
+Unresolved trade-offs: which scenarios count as "essential"; how to
+keep the gate from flaking on LLM non-determinism (retries? loose
+thresholds? quorum across N runs?); whether the cost of the gated
+subset is acceptable for every PR; and which paths actually trigger it
+(agent-only? skills? MCP server? all of the above?).
+
+See [Open Questions](#open-questions).
 
 #### Pre-run setup for live scenarios
 
@@ -308,9 +328,9 @@ to think about, baked into the framework:
 ## Agent Prompts
 
 The list of prompts the agent is promised to support. Each lives as a
-stimulus in `evals/scenarios/mock/<workflow>.eval.yaml` (plus a `live/`
-counterpart where applicable). Adding a new prompt is one new entry in
-the matching file.
+stimulus in `evals/workflow-scenarios/mock/<workflow>.eval.yaml` (plus a
+`live/` counterpart where applicable). Adding a new prompt is one new
+entry in the matching file.
 
 ### Release-planner workflow
 
@@ -340,8 +360,8 @@ catch the agent creating a duplicate.
 | Rename a client property in a generated SDK | `rename-client-property.eval.yaml` | Customization skill + customize-code tool. |
 
 The live counterpart of release-planner lives at
-`evals/scenarios/live/release-planner.eval.yaml` and adds a prompt-grader
-that checks the real DevOps response.
+`evals/workflow-scenarios/live/release-planner.eval.yaml` and adds a
+prompt-grader that checks the real DevOps response.
 
 ---
 
@@ -363,5 +383,33 @@ that checks the real DevOps response.
   partner teams) to answer *"what does the agent currently support?"*
 
 ---
+
+## Open Questions
+
+### CI cadence and PR gating
+
+**Cadence.** Current proposal: nightly mock + weekly live + on-demand.
+Open: is nightly the right frequency for mock, or do we want it on
+every push to `main`? Is weekly enough for live, given live is the
+only thing that catches real-backend drift?
+
+**PR gate for essential workflows.** Should a curated subset of mock
+scenarios block merge on PRs that touch the agent, skills, or MCP
+tools? Specifically to answer:
+
+- *Which workflows are "essential"* — just release-planner today, or
+  a broader set? Who decides when a new workflow joins or leaves the
+  gated set?
+- *Which paths trigger the gate* — agent code, skill markdown, MCP
+  tool code, mock handlers, all of the above? Anything else?
+- *How do we tame flake* — retries on failure, quorum across N runs,
+  loose thresholds, or just accept some red and require a human
+  override? Hard requirement: a green PR must mean *the gated
+  scenarios passed*, not *we got lucky this run*.
+- *What's the cost ceiling* — the gated subset runs on every PR push
+  to a touched path; what's the per-PR token / wall-time budget we're
+  willing to spend before we move it back off the PR?
+
+We need owners' input on all four before turning the gate on.
 
 -

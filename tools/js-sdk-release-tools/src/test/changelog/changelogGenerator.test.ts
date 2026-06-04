@@ -1065,6 +1065,120 @@ export class DataProductClient {
       expect(items[0]).toBe('Class DataProductClient no longer has parameter analytics');
     });
 
+    test('Class Property Removed should still be detected when $host is ignored', async () => {
+      // Real HLC baseline: $host, apiVersion, subscriptionId? are class properties
+      // (they are also accessible via ResourceManagementClientOptionalParams).
+      // tagsOperations is the operation group that gets renamed to `tags` in Modular — the breaking change under test.
+      const baselineApiView = `
+\`\`\`ts
+// @public (undocumented)
+export class ResourceManagementClient {
+    constructor(credential: TokenCredential, subscriptionId: string, options?: ResourceManagementClientOptionalParams);
+    constructor(credential: TokenCredential, options?: ResourceManagementClientOptionalParams);
+    $host: string;
+    apiVersion: string;
+    subscriptionId?: string;
+    tagsOperations: TagsOperations;
+}
+
+// @public
+export interface ResourceManagementClientOptionalParams {
+    $host?: string;
+    apiVersion?: string;
+    endpoint?: string;
+}
+\`\`\`
+`;
+      // Minimal Modular structure sufficient for this test. Baseline properties are handled as follows:
+      //   $host       — filtered by ignoreTargets
+      //   apiVersion  — filtered because it is a property of ResourceManagementClientOptionalParams,
+      //                 the type of the `options` constructor parameter
+      //   subscriptionId — filtered because it is a direct constructor parameter (second overload)
+      //   tagsOperations — BREAKING: renamed to `tags`, must still be reported
+      const currentApiView = `
+\`\`\`ts
+// @public (undocumented)
+export class ResourceManagementClient {
+    constructor(credential: TokenCredential, options?: ResourceManagementClientOptionalParams);
+    constructor(credential: TokenCredential, subscriptionId: string, options?: ResourceManagementClientOptionalParams);
+    readonly tags: TagsOperations;
+}
+
+// @public
+export interface ResourceManagementClientOptionalParams extends ClientOptions {
+    apiVersion?: string;
+    cloudSetting?: AzureSupportedClouds;
+}
+\`\`\`
+`;
+      const changelogItems = await generateChangelogItems(
+        {
+          apiView: baselineApiView,
+          sdkType: SDKType.HighLevelClient,
+        },
+        {
+          apiView: currentApiView,
+          sdkType: SDKType.ModularClient,
+        }
+      );
+      const items = getItemsByCategory(changelogItems, ChangelogItemCategory.ClassPropertyRemoved);
+      expect(items).toHaveLength(1);
+      expect(items[0]).toBe('Class ResourceManagementClient no longer has parameter tagsOperations');
+    });
+
+    test('Class Property Removed that remains a constructor parameter is filtered regardless of SDK type', async () => {
+      // The HLC -> Modular guard was removed from filterClassPropertiesMovedToInternals,
+      // so properties that are still accessible via constructor signatures are filtered
+      // for ANY transition. This case uses Modular -> Modular to prove the filtering is
+      // no longer tied to the HLC -> Modular transition.
+      const baselineApiView = `
+\`\`\`ts
+// @public
+export class DataProductClient {
+    constructor(credential: TokenCredential, subscriptionId: string, options?: DataProductClientOptionalParams);
+    subscriptionId: string;
+    readonly dataProducts: DataProducts;
+    readonly analytics: Analytics;
+}
+
+// @public
+export interface DataProductClientOptionalParams extends ClientOptions {
+    apiVersion?: string;
+}
+\`\`\`
+`;
+      // subscriptionId — filtered because it is still a direct constructor parameter
+      // apiVersion     — not present as a property here, but exposed via the options bag
+      // analytics      — BREAKING: genuinely removed, must still be reported
+      const currentApiView = `
+\`\`\`ts
+// @public
+export class DataProductClient {
+    constructor(credential: TokenCredential, subscriptionId: string, options?: DataProductClientOptionalParams);
+    readonly dataProducts: DataProducts;
+}
+
+// @public
+export interface DataProductClientOptionalParams extends ClientOptions {
+    apiVersion?: string;
+}
+\`\`\`
+`;
+      const changelogItems = await generateChangelogItems(
+        {
+          apiView: baselineApiView,
+          sdkType: SDKType.ModularClient,
+        },
+        {
+          apiView: currentApiView,
+          sdkType: SDKType.ModularClient,
+        }
+      );
+      const items = getItemsByCategory(changelogItems, ChangelogItemCategory.ClassPropertyRemoved);
+      expect(items).toHaveLength(1);
+      expect(items[0]).toBe('Class DataProductClient no longer has parameter analytics');
+    });
+
     test('Class Property Optional To Required', async () => {
       const baselineApiView = `
 \`\`\`ts

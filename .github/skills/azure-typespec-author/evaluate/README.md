@@ -8,6 +8,27 @@ This directory contains [Vally](https://aka.ms/vally) evaluation cases for the `
 - The `azsdk-cli` MCP server built: `dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Cli`
 - An API key for the model configured (e.g., Anthropic or OpenAI key via environment variable)
 
+## Environment Setup
+
+Run the setup script to download spec repo package files, run `npm ci`, and configure `FIXTURE_NODE_MODULES`:
+
+```powershell
+# PowerShell
+node scripts/setup-environment.js | Invoke-Expression
+```
+
+```bash
+# Bash / Zsh
+eval $(node scripts/setup-environment.js)
+```
+
+This script:
+1. Clones `package.json` and `package-lock.json` from [azure-rest-api-specs](https://github.com/Azure/azure-rest-api-specs) into `fixtures/Microsoft.Widget/Widget/`.
+2. Runs `npm ci` in that directory.
+3. Outputs the shell command to set `FIXTURE_NODE_MODULES` for symlink usage.
+
+Without `FIXTURE_NODE_MODULES`, the agent will run `npm install` each time (slow but functional).
+
 ## Running Evaluations
 
 All commands below should be run from this directory (`evaluate/`).
@@ -52,6 +73,14 @@ Run a suite by name:
 vally eval --suite versioning --output-dir versioning
 ```
 
+### Useful flags
+
+| Flag | Purpose |
+|---|---|
+| `--keep-executor-session-logs` | Preserve agent session logs under `--output-dir` for debugging |
+| `--verbose` | Show full agent output during the run |
+| `--workers <n>` | Run multiple stimuli in parallel (default: 5) |
+
 ### Parallel run the environment
 
 By default evals use the `azsdk-mcp` environment (local KB at `http://localhost:8088`) one by one.
@@ -86,6 +115,6 @@ evaluate/
 │   ├── 001-share-version-new-feature/
 │   ├── Microsoft.Widget/
 │   └── ...
-└── results/             # Eval run output
+├── results/             # Eval run output
 └── debug/               # Eval run workspace
 ```

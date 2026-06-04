@@ -45,7 +45,7 @@ User ──upload──▶ APIView Server
                          ├─ Download original artifact
                          ├─ Run language parser
                          ├─ Publish JSON token file as build artifact
-                         └─ HTTP GET → /Review/UpdateApiReview?repoName=...&buildId=...&artifactPath=...
+                         └─ HTTP POST → /Review/UpdateApiReview
                                 │
                                 ▼
                          APIView Server
@@ -77,7 +77,7 @@ Background updates for sandboxed languages are batched in `ReviewManager.UpdateR
 |------|------|
 | [APIViewWeb/Managers/APIRevisionsManager.cs](../APIViewWeb/Managers/APIRevisionsManager.cs) | `GenerateAPIRevisionInExternalResource()` — builds pipeline params and triggers the run. `RunAPIRevisionGenerationPipeline()` — serializes params and calls `DevopsArtifactRepository.RunPipeline()`. `UpdateAPIRevisionCodeFileAsync()` — callback handler that downloads the artifact ZIP and updates the revision. |
 | [APIViewWeb/Repositories/DevopsArtifactRepository.cs](../APIViewWeb/Repositories/DevopsArtifactRepository.cs) | `RunPipeline()` — queues a build in Azure DevOps with the review parameters. |
-| [APIViewWeb/Controllers/ReviewController.cs](../APIViewWeb/Controllers/ReviewController.cs) | `UpdateApiReview` GET endpoint — the callback target that DevOps pipelines hit after generating the token file. |
+| [APIViewWeb/Controllers/ReviewController.cs](../APIViewWeb/Controllers/ReviewController.cs) | `UpdateApiReview` POST endpoint — the callback target that DevOps pipelines hit after generating the token file. |
 
 ### c. Placeholder & UI
 
@@ -117,8 +117,7 @@ These settings are read from the app configuration (e.g., `appsettings.json`, Ap
 1. **No failure reporting back to the UI.** If the DevOps pipeline fails, the review stays in the "being generated" state indefinitely. Users must manually check the pipeline.
 2. **Latency.** Review generation depends on DevOps pipeline queue time, which can be slow under high load.
 3. **10-minute batch delay.** Background regeneration inserts a hard-coded 10-minute sleep between batches, making large-scale upgrades slow.
-4. **Callback endpoint is unauthenticated GET.** `ReviewController.UpdateApiReview` accepts a GET request with query parameters and no visible authentication, relying on network-level controls.
-5. **Verify-upgradability mode is not supported.** The `UpdateReviewsInBackground` method explicitly skips sandboxed languages when running in `verifyUpgradabilityOnly` mode.
+4. **Verify-upgradability mode is not supported.** The `UpdateReviewsInBackground` method explicitly skips sandboxed languages when running in `verifyUpgradabilityOnly` mode.
 
 ## 7. Implications for Future Work
 

@@ -137,23 +137,6 @@
     },
     {
       "repository": {
-        "url": "https://github.com/Azure/azure-sdk-for-python.wiki.git",
-        "path": "azure-sdk-for-python.wiki",
-        "branch": "master",
-        "authType": "public"
-      },
-      "paths": [
-        {
-          "description": "Wiki documentation for Azure SDK for Python",
-          "folder": "azure_sdk_for_python_wiki",
-          "metadata": {
-            "scope": "branded"
-          }
-        }
-      ]
-    },
-    {
-      "repository": {
         "url": "https://github.com/microsoft/api-guidelines.git",
         "path": "api-guidelines",
         "branch": "vNext",

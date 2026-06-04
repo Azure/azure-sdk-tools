@@ -288,6 +288,11 @@ async function getCachedReleasePlans() {
 
 // ── Route handlers ────────────────────────────────────────────
 
+router.get("/api/config", (_req, res) => {
+  const environment = (process.env.ENVIRONMENT || "production").toLowerCase();
+  res.json({ environment });
+});
+
 router.get("/api/release-plans", async (req, res) => {
   try {
     const filterPlanId = req.query.releasePlan || req.query.releaseplan || "";
@@ -298,10 +303,15 @@ router.get("/api/release-plans", async (req, res) => {
           .status(400)
           .json({ error: "Invalid release plan ID format." });
       }
+      // Match by Custom.ReleasePlanID or by work item ID (numeric fallback)
+      const isNumeric = /^\d+$/.test(filterPlanId);
+      const condition = isNumeric
+        ? `AND ([Custom.ReleasePlanID] = '${filterPlanId}' OR [System.Id] = ${filterPlanId})`
+        : `AND [Custom.ReleasePlanID] = '${filterPlanId}'`;
       const wiqlQuery = `SELECT [System.Id] FROM WorkItems
         WHERE [System.TeamProject] = 'Release'
           AND [System.WorkItemType] = 'Release Plan'
-          AND [Custom.ReleasePlanID] = '${filterPlanId}'`;
+          ${condition}`;
       const ids = await runWiql(wiqlQuery);
       if (!ids.length)
         return res.json({

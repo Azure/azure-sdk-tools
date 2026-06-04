@@ -6,7 +6,7 @@
   },
   "description": "Microsoft Teams Toolkit AI Chat Bot Sample with Teams AI Library",
   "engines": {
-    "node": "18 || 20 || 22"
+    "node": "18 || 20 || 22 || 24"
   },
   "author": "Microsoft",
   "license": "MIT",
@@ -67,6 +67,6 @@
     "typescript": "^5.5.4",
     "vite": "^7.3.2",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^3.2.0"
+    "vitest": "^4.1.0"
   }
 }

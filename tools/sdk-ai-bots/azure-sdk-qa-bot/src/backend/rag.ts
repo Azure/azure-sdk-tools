@@ -78,6 +78,7 @@ export interface CompletionResponsePayload {
   Category?: string;
   ReasoningProgress?: string;
   route_tenant?: string;
+  trace_id?: string;
 }
 
 export function isCompletionResponsePayload(

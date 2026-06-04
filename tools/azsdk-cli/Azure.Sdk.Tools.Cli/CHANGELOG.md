@@ -1,16 +1,48 @@
 # Release History
 
-## 0.6.14 (Unreleased)
+## 0.6.18 (Unreleased)
 
 ### Features Added
-
-- Added pre-build step for the .NET plugin during SDK generation
 
 ### Breaking Changes
 
 ### Bugs Fixed
 
 ### Other Changes
+
+## 0.6.17 (2026-06-02)
+
+### Bugs Fixed
+
+- Fixed issues in the MCP tool to lookup service details using TypeSpec project path.
+
+## 0.6.16 (2026-06-01)
+
+### Bugs Fixed
+
+- Fixed DevOps work item creation for empty DateTime fields (#15795)
+
+## 0.6.15 (2026-05-29)
+
+### Bugs Fixed
+
+- Fixed the Update SDK Details MCP tool to read package names from the TypeSpec metadata emitter output (typespec-metadata.yaml).
+
+## 0.6.14 (2026-05-27)
+
+### Features Added
+
+- Added pre-build step for the .NET plugin during SDK generation
+- Added `apiReleaseType` required parameter to `CreateReleasePlan` (options: Private Preview, Public Preview, GA) to set `Custom.ReleasePlanType` in ADO work items.
+- Spec PR validation against release type: Private Preview requires `azure-rest-api-specs-pr`; Public Preview/GA requires `azure-rest-api-specs`.
+- SDK release type now defaults automatically (beta for preview, stable for GA) when not provided.
+- Duplicate release plan check now considers API release type, allowing separate plans for different release stages.
+- Release plan title format updated to include release type (e.g., "Private Preview release plan for Contoso.Management").
+
+### Breaking Changes
+
+- Removed `userEmail` parameter from `CreateReleasePlan`; email is resolved automatically.
+- `sdkReleaseType` parameter in `CreateReleasePlan` is now optional (was required).
 
 ## 0.6.13 (2026-05-18)
 

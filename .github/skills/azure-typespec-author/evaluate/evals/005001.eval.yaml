@@ -8,10 +8,10 @@ environment: azsdk-mcp
 
 # Execution configuration
 config:
-  runs: 1                      # Trials per stimulus
-  timeout: 1800                # Seconds per trial
-  model: claude-opus-4.6    #gpt-4o #claude-sonnet-4.6 # Model for agent execution
-  executor: copilot-sdk        # Which executor to use
+  runs: 1                        # Trials per stimulus
+  timeout: "660s"                # Seconds per trial
+  model: claude-opus-4.6         #gpt-4o #claude-sonnet-4.6 # Model for agent execution
+  executor: copilot-sdk          # Which executor to use
 
 # Test cases
 stimuli:
@@ -19,14 +19,16 @@ stimuli:
     Add suppressions for the warnings produced by "tsp compile .", and set the justification to "FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details".
   name: 005001-warning-suppress-warning
   constraints:
-    max_turns: 10
+    max_turns: 5
     max_tokens: 5000
   environment:
     files:
     - src: ../fixtures/005001-warning-suppress-warning/models.tsp
       dest: models.tsp
-    - src: ../fixtures/005001-warning-suppress-warning/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/005001-warning-suppress-warning/tspconfig.yaml
       dest: tspconfig.yaml
     - src: ../fixtures/005001-warning-suppress-warning/main.tsp

@@ -13,7 +13,7 @@ environment: azsdk-mcp
 # Execution configuration
 config:
   runs: 1
-  timeout: 1800
+  timeout: 1200s
   model: claude-opus-4.6
   executor: copilot-sdk
 # Cases are intentionally sorted by case id.
@@ -21,7 +21,7 @@ stimuli:
 - name: 001001-version-spread-property
   prompt: I added `...Azure.ResourceManager.ManagedServiceIdentityProperty;` which updates all my existing API versions and introduces a breaking change. I want to introduce the properties of the spread model '...ManagedServiceIdentityProperty' in API version 2025-05-04-preview only.
   constraints:
-    max_turns: 10
+    max_turns: 5
     max_tokens: 50000
   environment:
     files:
@@ -33,8 +33,10 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/001-share-version-new-feature/tspconfig.yaml
       dest: tspconfig.yaml
-    - src: ../fixtures/001-share-version-new-feature/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/001-share-version-new-feature/readme.md
       dest: readme.md
   graders:
@@ -66,16 +68,18 @@ stimuli:
   prompt: |
     add a default value `21` for property age in model EmployeeProperties only for a new api version 2025-11-01
   constraints:
-    max_turns: 10
-    max_tokens: 5000
+    max_turns: 5
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/001002-version-default-value/employee.tsp
       dest: employee.tsp
     - src: ../fixtures/001002-version-default-value/main.tsp
       dest: main.tsp
-    - src: ../fixtures/001002-version-default-value/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/001002-version-default-value/readme.md
       dest: readme.md
     - src: ../fixtures/001002-version-default-value/shared.tsp
@@ -115,16 +119,18 @@ stimuli:
   prompt: |
     change the property age of EmployeeProperties from required to optional for api version 2025-05-04-preview
   constraints:
-    max_turns: 10
-    max_tokens: 5000
+    max_turns: 5
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/001-share-version-new-feature/employee.tsp
       dest: employee.tsp
     - src: ../fixtures/001-share-version-new-feature/main.tsp
       dest: main.tsp
-    - src: ../fixtures/001-share-version-new-feature/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/001-share-version-new-feature/readme.md
       dest: readme.md
     - src: ../fixtures/001-share-version-new-feature/shared.tsp
@@ -160,16 +166,18 @@ stimuli:
   prompt: |
     change the visibility of property 'provisioningState' from Lifecycle.Read to Lifecycle.Read and Lifecycle.Create in version 2025-05-04-preview only
   constraints:
-    max_turns: 10
-    max_tokens: 5000
+    max_turns: 5
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/001-share-version-new-feature/employee.tsp
       dest: employee.tsp
     - src: ../fixtures/001-share-version-new-feature/main.tsp
       dest: main.tsp
-    - src: ../fixtures/001-share-version-new-feature/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/001-share-version-new-feature/readme.md
       dest: readme.md
     - src: ../fixtures/001-share-version-new-feature/shared.tsp
@@ -201,8 +209,8 @@ stimuli:
   prompt: |
     Add a new preview version `2025-05-04-preview` to my service widget resource manager. Exclude Feature: `age` property with default value 21. Carry other features.
   constraints:
-    max_turns: 10
-    max_tokens: 5000
+    max_turns: 5
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/001005-version-add-preview-after-preview\employee.tsp
@@ -213,8 +221,10 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/001005-version-add-preview-after-preview\tspconfig.yaml
       dest: tspconfig.yaml
-    - src: ../fixtures/001005-version-add-preview-after-preview\package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/001005-version-add-preview-after-preview\examples\2024-10-01-preview\Employees_CreateOrUpdate_MaximumSet_Gen.json
       dest: examples/2024-10-01-preview/Employees_CreateOrUpdate_MaximumSet_Gen.json
     - src: ../fixtures/001005-version-add-preview-after-preview\examples\2024-10-01-preview\Employees_Delete_MaximumSet_Gen.json
@@ -295,8 +305,8 @@ stimuli:
   prompt: |
     Add a new preview version `2025-05-04-preview` to my service widget resource manager. Carry over all the features from the latest stable version
   constraints:
-    max_turns: 10
-    max_tokens: 5000
+    max_turns: 5
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/001006-version-add-preview-after-stable\employee.tsp
@@ -307,8 +317,10 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/001006-version-add-preview-after-stable\tspconfig.yaml
       dest: tspconfig.yaml
-    - src: ../fixtures/001006-version-add-preview-after-stable\package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/001006-version-add-preview-after-stable\examples\2021-10-01\Employees_CreateOrUpdate_MaximumSet_Gen.json
       dest: examples/2021-10-01/Employees_CreateOrUpdate_MaximumSet_Gen.json
     - src: ../fixtures/001006-version-add-preview-after-stable\examples\2021-10-01\Employees_Delete_MaximumSet_Gen.json
@@ -375,8 +387,8 @@ stimuli:
   prompt: |
     I want to add a new stable version `2025-01-01`. Exclude `workLocation` property and `WorkLocation` model. Carry other features.
   constraints:
-    max_turns: 10
-    max_tokens: 5000
+    max_turns: 5
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/001007-version-add-stable-after-preview\employee.tsp
@@ -387,8 +399,10 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/001007-version-add-stable-after-preview\tspconfig.yaml
       dest: tspconfig.yaml
-    - src: ../fixtures/001007-version-add-stable-after-preview\package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/001007-version-add-stable-after-preview\readme.md
       dest: readme.md
     - src: ../fixtures/001007-version-add-stable-after-preview\examples\2021-10-01\Employees_CreateOrUpdate_MaximumSet_Gen.json
@@ -471,8 +485,8 @@ stimuli:
   prompt: |
     Add a new stable version `2025-01-01` to my service. Carry over changes.
   constraints:
-    max_turns: 10
-    max_tokens: 5000
+    max_turns: 5
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/001008-version-add-stable-after-stable\employee.tsp
@@ -483,8 +497,10 @@ stimuli:
       dest: shared.tsp
     - src: ../fixtures/001008-version-add-stable-after-stable\tspconfig.yaml
       dest: tspconfig.yaml
-    - src: ../fixtures/001008-version-add-stable-after-stable\package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/001008-version-add-stable-after-stable\readme.md
       dest: readme.md
     - src: ../fixtures/001008-version-add-stable-after-stable\examples\2021-10-01\Employees_CreateOrUpdate_MaximumSet_Gen.json
@@ -561,16 +577,18 @@ stimuli:
   prompt: |
     In the Widget project, make the `email` property required in EmployeeProperties only for version `2025-05-04-preview`.
   constraints:
-    max_turns: 10
-    max_tokens: 5000
+    max_turns: 5
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/001-share-version-new-feature/employee.tsp
       dest: Microsoft.Widget/Widget/employee.tsp
     - src: ../fixtures/001-share-version-new-feature/main.tsp
       dest: Microsoft.Widget/Widget/main.tsp
-    - src: ../fixtures/001-share-version-new-feature/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: Microsoft.Widget/Widget/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: Microsoft.Widget/Widget/package-lock.json
     - src: ../fixtures/001-share-version-new-feature/readme.md
       dest: Microsoft.Widget/Widget/readme.md
     - src: ../fixtures/001-share-version-new-feature/shared.tsp
@@ -605,16 +623,18 @@ stimuli:
   prompt: |
     In the Widget project, remove the `department` property from EmployeeProperties only for version `2025-05-04-preview`.
   constraints:
-    max_turns: 10
-    max_tokens: 5000
+    max_turns: 5
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/001-share-version-new-feature/employee.tsp
       dest: Microsoft.Widget/Widget/employee.tsp
     - src: ../fixtures/001-share-version-new-feature/main.tsp
       dest: Microsoft.Widget/Widget/main.tsp
-    - src: ../fixtures/001-share-version-new-feature/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: Microsoft.Widget/Widget/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: Microsoft.Widget/Widget/package-lock.json
     - src: ../fixtures/001-share-version-new-feature/readme.md
       dest: Microsoft.Widget/Widget/readme.md
     - src: ../fixtures/001-share-version-new-feature/shared.tsp
@@ -643,8 +663,8 @@ stimuli:
   prompt: |
     In the Widget project, rename the `age` property to `employeeAge` in EmployeeProperties only for version `2025-05-04-preview`.
   constraints:
-    max_turns: 10
-    max_tokens: 5000
+    max_turns: 5
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -653,6 +673,8 @@ stimuli:
       dest: Microsoft.Widget/Widget/main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: Microsoft.Widget/Widget/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: Microsoft.Widget/Widget/package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: Microsoft.Widget/Widget/readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -686,8 +708,8 @@ stimuli:
   prompt: |
     In the Widget project, change the return type of the `exportData` operation from `ExportResult` to `DetailedExportResult` with additional optional properties `format` (string) and `exportedAt` (utcDateTime) only for version `2025-05-04-preview`.
   constraints:
-    max_turns: 10
-    max_tokens: 5000
+    max_turns: 5
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -696,12 +718,18 @@ stimuli:
       dest: Microsoft.Widget/Widget/main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: Microsoft.Widget/Widget/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: Microsoft.Widget/Widget/package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: Microsoft.Widget/Widget/readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
       dest: Microsoft.Widget/Widget/shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: Microsoft.Widget/Widget/tspconfig.yaml
+    - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+      dest: Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+    - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+      dest: Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
   graders:
   - type: tool-calls
     config:
@@ -737,8 +765,8 @@ stimuli:
   prompt: |
     In the Widget project, change the type of the `statusCode` property from `string` to `int32` in EmployeeProperties only for version `2025-05-04-preview`.
   constraints:
-    max_turns: 10
-    max_tokens: 5000
+    max_turns: 5
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -747,12 +775,18 @@ stimuli:
       dest: Microsoft.Widget/Widget/main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: Microsoft.Widget/Widget/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: Microsoft.Widget/Widget/package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: Microsoft.Widget/Widget/readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
       dest: Microsoft.Widget/Widget/shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: Microsoft.Widget/Widget/tspconfig.yaml
+    - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+      dest: Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+    - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+      dest: Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
   graders:
   - type: tool-calls
     config:
@@ -782,8 +816,8 @@ stimuli:
   prompt: |
     change resource Employee to be an extension resource
   constraints:
-    max_turns: 10
-    max_tokens: 5000
+    max_turns: 5
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -792,12 +826,18 @@ stimuli:
       dest: main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
+    - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+      dest: stable/2021-11-01/widget.json
+    - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+      dest: preview/2024-10-01-preview/widget.json
   graders:
   - type: tool-calls
     config:
@@ -827,8 +867,8 @@ stimuli:
   prompt: |
     add an extension resource named asset
   constraints:
-    max_turns: 10
-    max_tokens: 5000
+    max_turns: 5
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -837,6 +877,8 @@ stimuli:
       dest: main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -866,8 +908,8 @@ stimuli:
   prompt: |
     Define a PATCH operation for Employees. It is to update properties of an employee. Ensure the definition meets TypeSpec Azure guidelines.
   constraints:
-    max_turns: 10
-    max_tokens: 5000
+    max_turns: 5
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/002003-ARM-define-full-update-operation/employee.tsp
@@ -876,6 +918,8 @@ stimuli:
       dest: main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -897,8 +941,8 @@ stimuli:
   prompt: |
     Define a "badge assignment" extension resource. It should be an extension resource that can be attached to an employee. Ensure the definition meets TypeSpec Azure guidelines.
   constraints:
-    max_turns: 10
-    max_tokens: 5000
+    max_turns: 5
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/002004-ARM-define-extension-resource/badgeAssignment.tsp
@@ -909,6 +953,8 @@ stimuli:
       dest: main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -948,14 +994,16 @@ stimuli:
   prompt: |
     Define a Azure resource "Employee" under the namespace "Microsoft.Widget" using TypeSpec. Properties: age (int32, optional), city (string, optional), profile (bytes, optional), provisioningState (enum incorporating ResourceProvisioningState, optional, read-only). Ensure the definition meets TypeSpec Azure design guidelines.
   constraints:
-    max_turns: 10
-    max_tokens: 5000
+    max_turns: 5
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/002005-ARM-define-the-resource/main.tsp
       dest: main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -1007,8 +1055,8 @@ stimuli:
   prompt: |
     Create a new "AddressResource" child resource under the parent resource "Employee". Address properties: street 1(optional), street 2(optional), city(optional), state(optional), postal code(optional), country(optional), and a read-only provisioningState(optional). Ensure the definition meets TypeSpec Azure design guidelines.
   constraints:
-    max_turns: 10
-    max_tokens: 5000
+    max_turns: 5
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -1017,12 +1065,18 @@ stimuli:
       dest: main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
+    - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+      dest: stable/2021-11-01/widget.json
+    - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+      dest: preview/2024-10-01-preview/widget.json
   graders:
   - type: tool-calls
     config:
@@ -1104,8 +1158,8 @@ stimuli:
   prompt: |
     Add an additional POST action called "/notify" to the standard operations of Employee. Request body: message content (string) and priority (enum with values Low, Medium, High). Response body: notification identifier (string) and status (string). Ensure the definition meets TypeSpec Azure design guidelines.
   constraints:
-    max_turns: 10
-    max_tokens: 5000
+    max_turns: 5
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -1114,12 +1168,18 @@ stimuli:
       dest: main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
+    - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+      dest: stable/2021-11-01/widget.json
+    - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+      dest: preview/2024-10-01-preview/widget.json
   graders:
   - type: tool-calls
     config:
@@ -1181,8 +1241,8 @@ stimuli:
   prompt: |
     add top and skip query parameters to the ListBySubscription operation in interface Employees
   constraints:
-    max_turns: 10
-    max_tokens: 5000
+    max_turns: 5
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -1191,6 +1251,8 @@ stimuli:
       dest: main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -1215,8 +1277,8 @@ stimuli:
   prompt: |
     In the Widget project, add a patch operation to an existing ARM resource named 'Employee'
   constraints:
-    max_turns: 10
-    max_tokens: 5000
+    max_turns: 5
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/002009-arm-add-patch-operation-to-resource/employee.tsp
@@ -1225,6 +1287,8 @@ stimuli:
       dest: main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
@@ -1252,16 +1316,18 @@ stimuli:
   prompt: |
     In the Widget project, add a sync operation exportData for employee resource.
   constraints:
-    max_turns: 10
-    max_tokens: 5000
+    max_turns: 5
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/002010-arm-action-sync-operation/employee.tsp
       dest: employee.tsp
     - src: ../fixtures/002010-arm-action-sync-operation/main.tsp
       dest: main.tsp
-    - src: ../fixtures/002010-arm-action-sync-operation/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/002010-arm-action-sync-operation/readme.md
       dest: readme.md
     - src: ../fixtures/002010-arm-action-sync-operation/shared.tsp
@@ -1293,16 +1359,18 @@ stimuli:
   prompt: |
     Add a move async operation to move employee, operation's request is MoveRequest, response is MoveResponse
   constraints:
-    max_turns: 10
-    max_tokens: 5000
+    max_turns: 5
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/003-long-running-operation-share/employee.tsp
       dest: employee.tsp
     - src: ../fixtures/003-long-running-operation-share/main.tsp
       dest: main.tsp
-    - src: ../fixtures/003-long-running-operation-share/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/003-long-running-operation-share/readme.md
       dest: readme.md
     - src: ../fixtures/003-long-running-operation-share/shared.tsp
@@ -1334,8 +1402,8 @@ stimuli:
   prompt: |
     Modify the LRO createOrUpdate PUT operation in interface Employees so that it returns Azure-AsyncOperation header but NOT Retry-After header in the 201 response. The operation currently uses ArmResourceCreateOrReplaceAsync<Employee> template.
   constraints:
-    max_turns: 10
-    max_tokens: 5000
+    max_turns: 5
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -1344,12 +1412,18 @@ stimuli:
       dest: main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
+    - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+      dest: stable/2021-11-01/widget.json
+    - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+      dest: preview/2024-10-01-preview/widget.json
   graders:
   - type: tool-calls
     config:
@@ -1387,8 +1461,8 @@ stimuli:
   prompt: |
     use authoring plan to add minLength decorator to set the minLength 1 for resource name parameter of Employee resource
   constraints:
-    max_turns: 10
-    max_tokens: 5000
+    max_turns: 5
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -1397,12 +1471,18 @@ stimuli:
       dest: main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/Microsoft.Widget/Widget/readme.md
       dest: readme.md
     - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
       dest: shared.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
       dest: tspconfig.yaml
+    - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+      dest: stable/2021-11-01/widget.json
+    - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+      dest: preview/2024-10-01-preview/widget.json
   graders:
   - type: tool-calls
     config:
@@ -1428,24 +1508,24 @@ stimuli:
   prompt: |
     I have a property `assets: string[]` in EmployeeProperties. Add @minLength(3) @maxLength(10) constraints for any item of the assets array.
   constraints:
-    max_turns: 10
-    max_tokens: 5000
+    max_turns: 5
+    max_tokens: 1000000
   environment:
     files:
-    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+    - src: ../fixtures/004002-decorate-length-constrains-on-array-item/employee.tsp
       dest: employee.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+    - src: ../fixtures/004002-decorate-length-constrains-on-array-item/main.tsp
       dest: main.tsp
     - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
+    - src: ../fixtures/004002-decorate-length-constrains-on-array-item/readme.md
       dest: readme.md
-    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+    - src: ../fixtures/004002-decorate-length-constrains-on-array-item/shared.tsp
+      dest: shared.tsp
+    - src: ../fixtures/004002-decorate-length-constrains-on-array-item/tspconfig.yaml
       dest: tspconfig.yaml
-    - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
-      dest: stable/2021-11-01/widget.json
-    - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
-      dest: preview/2024-10-01-preview/widget.json
   graders:
   - type: tool-calls
     config:
@@ -1479,8 +1559,8 @@ stimuli:
   prompt: |
     Remove @operationId and its associated #suppress for no-openapi from all operations. Then restore those operationIds that do not contain underscores or begin with a lowercase letter.
   constraints:
-    max_turns: 10
-    max_tokens: 5000
+    max_turns: 5
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/004003-delete-and-restore-operationId-decorator/BastionHost.tsp
@@ -1497,8 +1577,10 @@ stimuli:
       dest: NetworkInterface.tsp
     - src: ../fixtures/004003-delete-and-restore-operationId-decorator/P2SVpnGateway.tsp
       dest: P2SVpnGateway.tsp
-    - src: ../fixtures/004003-delete-and-restore-operationId-decorator/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/004003-delete-and-restore-operationId-decorator/Route.tsp
       dest: Route.tsp
     - src: ../fixtures/004003-delete-and-restore-operationId-decorator/VpnServerConfigurationPolicyGroup.tsp
@@ -1543,14 +1625,16 @@ stimuli:
   prompt: |
     Add suppressions for the warnings produced by "tsp compile .", and set the justification to "FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details".
   constraints:
-    max_turns: 10
-    max_tokens: 5000
+    max_turns: 5
+    max_tokens: 1000000
   environment:
     files:
     - src: ../fixtures/005001-warning-suppress-warning/models.tsp
       dest: models.tsp
-    - src: ../fixtures/005001-warning-suppress-warning/package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package.json
       dest: package.json
+    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+      dest: package-lock.json
     - src: ../fixtures/005001-warning-suppress-warning/tspconfig.yaml
       dest: tspconfig.yaml
     - src: ../fixtures/005001-warning-suppress-warning/main.tsp

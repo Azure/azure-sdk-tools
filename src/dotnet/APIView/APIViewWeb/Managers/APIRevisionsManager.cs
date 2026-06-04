@@ -30,7 +30,6 @@ namespace APIViewWeb.Managers
         private readonly ICosmosReviewRepository _reviewsRepository;
         private readonly IBlobCodeFileRepository _codeFileRepository;
         private readonly ICosmosAPIRevisionsRepository _apiRevisionsRepository;
-        private readonly IDiagnosticCommentService _diagnosticCommentService;
         private readonly IHubContext<SignalRHub> _signalRHubContext;
         private readonly IEnumerable<LanguageService> _languageServices;
         private readonly ICodeFileManager _codeFileManager;
@@ -47,7 +46,6 @@ namespace APIViewWeb.Managers
             IAuthorizationService authorizationService,
             ICosmosReviewRepository reviewsRepository,
             ICosmosAPIRevisionsRepository apiRevisionsRepository,
-            IDiagnosticCommentService diagnosticCommentService,
             IHubContext<SignalRHub> signalRHubContext,
             IEnumerable<LanguageService> languageServices,
             IDevopsArtifactRepository devopsArtifactRepository,
@@ -63,7 +61,6 @@ namespace APIViewWeb.Managers
         {
             _reviewsRepository = reviewsRepository;
             _apiRevisionsRepository = apiRevisionsRepository;
-            _diagnosticCommentService = diagnosticCommentService;
             _authorizationService = authorizationService;
             _signalRHubContext = signalRHubContext;
             _codeFileManager = codeFileManager;
@@ -684,21 +681,6 @@ namespace APIViewWeb.Managers
                 // Run offline review gen for review and reviewCodeFileModel
                 await GenerateAPIRevisionInExternalResource(review, apiRevision.Id, codeFileModel.FileId, name, language);
             }
-            else
-            {
-                CodeFile codeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(apiRevision.Id, codeFileModel.FileId);
-                if (codeFile?.Diagnostics != null && codeFile.Diagnostics.Length > 0)
-                {
-                    DiagnosticSyncResult diagnosticResult = await _diagnosticCommentService.SyncDiagnosticCommentsAsync(
-                        review.Id,
-                        apiRevision.Id,
-                        null, // No existing hash for new revisions
-                        codeFile.Diagnostics,
-                        []);
-                    
-                    apiRevision.DiagnosticsHash = diagnosticResult.DiagnosticsHash;
-                }
-            }
 
             // auto subscribe revision creation user
             await _notificationManager.SubscribeAsync(review, user);
@@ -866,13 +848,13 @@ namespace APIViewWeb.Managers
         /// </summary>
         /// <param name="repoName"></param>
         /// <param name="buildId"></param>
-        /// <param name="artifact"></param>
+        /// <param name="artifactName"></param>
         /// <param name="project"></param>
         /// <param name="metadataFileName">Optional TypeSpec metadata file name (e.g., "typespec-metadata.json").</param>
         /// <returns></returns>
-        public async Task UpdateAPIRevisionCodeFileAsync(string repoName, string buildId, string artifact, string project, string metadataFileName = null)
+        public async Task UpdateAPIRevisionCodeFileAsync(string repoName, string buildId, string artifactName, string project, string metadataFileName = null)
         {
-            var stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifact, filePath: null, project: project, format: "zip");
+            var stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifactName, filePath: null, project: project, format: "zip");
             var archive = new ZipArchive(stream);
 
             foreach (var entry in archive.Entries)
@@ -898,6 +880,23 @@ namespace APIViewWeb.Managers
                 if (review != null)
                 {
                     var apiRevision = await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId: apiRevisionId);
+                    if (apiRevision != null && apiRevision.ReviewId != reviewId)
+                    {
+                        _telemetryClient.TrackTrace(
+                            $"Skipping artifact entry: revision {apiRevisionId} does not belong to review {reviewId} (actual review: {apiRevision.ReviewId}). BuildId={buildId}",
+                            Microsoft.ApplicationInsights.DataContracts.SeverityLevel.Warning,
+                            new Dictionary<string, string>
+                            {
+                                { "RepoName", repoName ?? string.Empty },
+                                { "Project", project ?? string.Empty },
+                                { "BuildId", buildId ?? string.Empty },
+                                { "ReviewId", reviewId ?? string.Empty },
+                                { "APIRevisionId", apiRevisionId ?? string.Empty },
+                                { "ActualReviewId", apiRevision.ReviewId ?? string.Empty },
+                                { "ArtifactEntryPath", reviewFilePath ?? string.Empty }
+                            });
+                        continue;
+                    }
                     if (apiRevision != null)
                     {
                         if (codeFile.CrossLanguageMetadata == null)
@@ -1363,15 +1362,6 @@ namespace APIViewWeb.Managers
                 apiRevisionCodeFile.FileName = originalName;
             }
 
-            DiagnosticSyncResult diagnosticResult = await _diagnosticCommentService.SyncDiagnosticCommentsAsync(
-                reviewId,
-                apiRevision.Id,
-                null, 
-                codeFile.Diagnostics,
-                []);
-            
-            apiRevision.DiagnosticsHash = diagnosticResult.DiagnosticsHash;
-
             await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
             return apiRevision;
         }
@@ -1649,27 +1639,6 @@ namespace APIViewWeb.Managers
                 _telemetryClient.TrackTrace(
                     $"Quality score: normalized non-UTC timestamps for {commentsToNormalize.Count} comments in review {revision.ReviewId}.");
             }
-            if (codeFile != null && codeFile.CodeFile.Diagnostics != null && codeFile.CodeFile.Diagnostics.Length > 0)
-            {
-                var diagnosticResult = await _diagnosticCommentService.SyncDiagnosticCommentsAsync(
-                    revision.ReviewId,
-                    apiRevisionId,
-                    revision.DiagnosticsHash,
-                    codeFile.CodeFile.Diagnostics,
-                    allComments);
-
-                if (diagnosticResult.WasSynced)
-                {
-                    revision.DiagnosticsHash = diagnosticResult.DiagnosticsHash;
-                    await UpdateAPIRevisionAsync(revision);
-
-                    // Replace stale diagnostic comments with freshly synced ones
-                    allComments = allComments
-                        .Where(c => c.CommentSource != CommentSource.Diagnostic || c.APIRevisionId != apiRevisionId)
-                        .Concat(diagnosticResult.Comments)
-                        .ToList();
-                }
-            }
 
             // Apply the shared visibility filter so that only comments relevant to this
             // revision are considered. Same rules as the Conversations panel and code panel.
@@ -1746,10 +1715,6 @@ namespace APIViewWeb.Managers
                 {
                     case CommentSeverity.MustFix:
                         score.UnresolvedMustFixCount++;
-                        if (comment.CommentSource == CommentSource.Diagnostic)
-                        {
-                            score.UnresolvedMustFixDiagnostics++;
-                        }
                         break;
                     case CommentSeverity.ShouldFix:
                         score.UnresolvedShouldFixCount++;

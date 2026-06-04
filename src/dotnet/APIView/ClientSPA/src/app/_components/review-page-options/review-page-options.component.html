@@ -280,11 +280,6 @@
     [modal]="true" [(visible)]="showAPIRevisionApprovalModal"
     [style]="{ width: '40dvw' }">
     <ul class="list-group">
-        <li class="list-group-item" *ngIf="hasDiagnosticMustFixApprovalWarning">
-            <p class="mb-0 text-danger fw-bold">
-                This API has unresolved diagnostic "Must Fix" comments. Approval is currently allowed but will be blocked in a future update. Please address these issues in the code or parser.
-            </p>
-        </li>
         <li class="list-group-item" *ngIf="hasActiveConversation">
             <p class="mb-0">There are still active conversations. Would you like to review these first?</p>
             <div class="d-flex align-items-center mt-2">

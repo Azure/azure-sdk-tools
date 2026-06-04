@@ -161,8 +161,7 @@ public static class CoreRequirements
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {
             return [
-                "Install the GitHub Copilot CLI: https://docs.github.com/en/copilot/how-tos/copilot-cli/install-copilot-cli",
-                "Or set the AZSDK_COPILOT_CLI_PATH environment variable to the path of an existing Copilot CLI executable."
+                "Install the GitHub Copilot CLI: https://docs.github.com/en/copilot/how-tos/copilot-cli/install-copilot-cli"
             ];
         }
     }

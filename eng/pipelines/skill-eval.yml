@@ -70,7 +70,7 @@ jobs:
 
       - script: |
           cd .github/skills
-          "$(Build.SourcesDirectory)/eng/skill-eval/node_modules/.bin/vally" eval --tag "type=ci-gate" $(EVAL_ARGS) --output-dir ".vally/results"
+          npm exec --no --prefix "$(Build.SourcesDirectory)/eng/skill-eval" -- vally eval --tag "type=ci-gate" $(EVAL_ARGS) --output-dir ".vally/results"
         displayName: 'Run evaluations'
         condition: and(succeeded(), ne(variables['EVAL_ARGS'], 'SKIP'))
         continueOnError: true

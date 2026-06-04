@@ -149,7 +149,8 @@ Key advantages:
 ---
 
 ### 4. Architect Review Model
-- Architects are assigned as required reviewers on PRs. This can be done automatically via CODEOWNERS.
+- Architects are assigned as reviewers on API review PRs by the script that creates the PR.
+- Routine working PRs that update `API.md` to satisfy consistency checks should not automatically request architect review.
 - Architect feedback is expressed via:
   - Comments
   - GitHub review states:

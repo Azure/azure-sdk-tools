@@ -233,6 +233,47 @@ describe('reportStatus', () => {
       );
     });
 
+    it('should prefer breakingChangesLabel (plural) when both keys are set', () => {
+      mockWorkflowContext.swaggerToSdkConfig.packageOptions = {
+        breakingChangesLabel: 'BreakingChange-Plural',
+        breakingChangeLabel: 'BreakingChange-Singular',
+      } as any;
+
+      generateReport(mockWorkflowContext);
+
+      expect(writeTmpJsonFile).toHaveBeenCalledWith(
+        mockWorkflowContext,
+        'execution-report.json',
+        expect.objectContaining({
+          packages: expect.arrayContaining([
+            expect.objectContaining({
+              breakingChangeLabel: 'BreakingChange-Plural',
+            }),
+          ]),
+        })
+      );
+    });
+
+    it('should fall back to legacy breakingChangeLabel (singular) when plural is absent', () => {
+      mockWorkflowContext.swaggerToSdkConfig.packageOptions = {
+        breakingChangeLabel: 'BreakingChange-Singular',
+      } as any;
+
+      generateReport(mockWorkflowContext);
+
+      expect(writeTmpJsonFile).toHaveBeenCalledWith(
+        mockWorkflowContext,
+        'execution-report.json',
+        expect.objectContaining({
+          packages: expect.arrayContaining([
+            expect.objectContaining({
+              breakingChangeLabel: 'BreakingChange-Singular',
+            }),
+          ]),
+        })
+      );
+    });
+
     it('should write markdown file when pullNumber is provided', () => {
       vi.mocked(fs.existsSync).mockReturnValue(false);
 

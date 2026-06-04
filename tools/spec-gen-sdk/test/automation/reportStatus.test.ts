@@ -233,6 +233,70 @@ describe('reportStatus', () => {
       );
     });
 
+    it('should label build failure when status is warning and buildFailedLabel is configured', () => {
+      mockWorkflowContext.swaggerToSdkConfig.packageOptions.buildFailedLabel = 'auto-sdk-build-fix';
+      mockWorkflowContext.handledPackages = [
+        { ...mockPackageData, status: 'warning' as SDKAutomationState },
+      ];
+
+      generateReport(mockWorkflowContext);
+
+      expect(writeTmpJsonFile).toHaveBeenCalledWith(
+        mockWorkflowContext,
+        'execution-report.json',
+        expect.objectContaining({
+          packages: expect.arrayContaining([
+            expect.objectContaining({
+              buildFailedLabel: 'auto-sdk-build-fix',
+              shouldLabelBuildFailed: true,
+            }),
+          ]),
+        })
+      );
+    });
+
+    it('should not label build failure when buildFailedLabel is not configured', () => {
+      mockWorkflowContext.handledPackages = [
+        { ...mockPackageData, status: 'warning' as SDKAutomationState },
+      ];
+
+      generateReport(mockWorkflowContext);
+
+      expect(writeTmpJsonFile).toHaveBeenCalledWith(
+        mockWorkflowContext,
+        'execution-report.json',
+        expect.objectContaining({
+          packages: expect.arrayContaining([
+            expect.objectContaining({
+              buildFailedLabel: undefined,
+              shouldLabelBuildFailed: false,
+            }),
+          ]),
+        })
+      );
+    });
+
+    it('should not label build failure when status is not warning', () => {
+      mockWorkflowContext.swaggerToSdkConfig.packageOptions.buildFailedLabel = 'auto-sdk-build-fix';
+      mockWorkflowContext.handledPackages = [
+        { ...mockPackageData, status: 'succeeded' as SDKAutomationState },
+      ];
+
+      generateReport(mockWorkflowContext);
+
+      expect(writeTmpJsonFile).toHaveBeenCalledWith(
+        mockWorkflowContext,
+        'execution-report.json',
+        expect.objectContaining({
+          packages: expect.arrayContaining([
+            expect.objectContaining({
+              shouldLabelBuildFailed: false,
+            }),
+          ]),
+        })
+      );
+    });
+
     it('should write markdown file when pullNumber is provided', () => {
       vi.mocked(fs.existsSync).mockReturnValue(false);
 

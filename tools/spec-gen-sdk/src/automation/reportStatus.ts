@@ -41,6 +41,8 @@ export const generateReport = (context: WorkflowContext) => {
     if(pkg.hasBreakingChange && !pkg.isBetaMgmtSdk && !pkg.isDataPlane && !areBreakingChangeSuppressed) {
       shouldLabelBreakingChange = true;
     }
+    const buildFailedLabel = context.swaggerToSdkConfig.packageOptions.buildFailedLabel;
+    const shouldLabelBuildFailed = Boolean(buildFailedLabel) && pkg.status === 'warning';
     const packageReport: PackageReport = {
       serviceName: pkg.serviceName,
       packageName: pkg.name,
@@ -54,6 +56,8 @@ export const generateReport = (context: WorkflowContext) => {
       hasBreakingChange: pkg.hasBreakingChange,
       breakingChangeLabel: context.swaggerToSdkConfig.packageOptions.breakingChangesLabel,
       shouldLabelBreakingChange,
+      buildFailedLabel,
+      shouldLabelBuildFailed,
       areBreakingChangeSuppressed,
       presentBreakingChangeSuppressions: pkg.presentSuppressionLines,
       absentBreakingChangeSuppressions: pkg.absentSuppressionLines,

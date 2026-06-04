@@ -77,6 +77,12 @@
           "breakingChangeLabel": {
             "type": "string"
           },
+          "buildFailedLabel": {
+            "type": "string"
+          },
+          "shouldLabelBuildFailed": {
+            "type": "boolean"
+          },
           "areBreakingChangeSuppressed": {
             "type": "boolean"
           },

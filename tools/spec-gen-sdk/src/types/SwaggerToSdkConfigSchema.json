@@ -168,6 +168,12 @@
         "breakingChangeLabel": {
           // Label to be added in spec PR if breaking change is found
           "type": "string"
+        },
+        "buildFailedLabel": {
+          // Label to be added to a generated SDK pull request when generation
+          // succeeded but the build/package step failed (package result is "warning").
+          // Used to opt a release-planner SDK PR into automated build-failure repair.
+          "type": "string"
         }
       },
       "default": {}

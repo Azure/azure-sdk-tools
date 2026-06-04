@@ -106,9 +106,7 @@ differ in which graders are *required* vs *optional*:
 | **Workflows — Mock** | required | optional | not applicable — mock responses are stubbed, so a response grader has nothing meaningful to assert |
 | **Workflows — Live** | required | required | required — only live runs produce a real assistant answer worth grading |
 
-Rationale: the mock backend deterministically replays canned data, so
-"the agent said the right thing" reduces to "the agent called the right
-tools." Live runs are the only place a free-form response can drift, so
+Rationale: the mock backend deterministically replays canned data. Live runs are the only place a free-form response can drift, so
 that's where the response grader earns its cost.
 
 
@@ -127,10 +125,6 @@ A scenario lives under `mock/` or `live/` based on which backend the
 graders are written against, not based on the prompt. A prompt can
 have a `mock/` and a `live/` variant (release-planner does).
 
-**Scenarios are environment-agnostic.** A scenario file declares the
-prompt, expected skills, expected tool sequence, and graders — nothing
-about whether MCP is mock or live. Same file, same graders; the MCP
-backend is picked at run time.
 
 | Run mode | MCP | Repos? | When | Coverage |
 |---|---|---|---|---|
@@ -155,7 +149,7 @@ Existing skill eval files do not move.
 
 #### Skill eval suite — current state and direction
 
-The per-skill suite predates this project. Today roughly a dozen skills
+The skill suite predates this project. Today roughly a dozen skills
 have eval files; some are missing thresholds and pass without asserting
 anything, and most capability stimuli are graded only by a single
 substring check — they pass whether the agent called the right tool,
@@ -229,8 +223,7 @@ fails for the wrong reason and we learn nothing.
 
 **The setup step.** Each live scenario declares the repos (and
 optionally the commit) it needs. One setup step reads all live
-scenarios, takes the union, and makes sure each repo is present at the
-requested commit before any eval runs.
+scenarios, takes the union, and makes sure each repo is present before any eval runs.
 
 **Locally.** A single script. Run it once; it clones into a cache
 folder under your home directory and reuses the clone on subsequent
@@ -362,7 +355,7 @@ top of the workflow, not per prompt) and forbid the irrelevant
 `azsdk_create_release_plan` in the four "existing plan" prompts so we
 catch the agent creating a duplicate.
 
-### Other workflows in the first round
+### Other workflows
 
 | Workflow | File | Coverage |
 |---|---|---|

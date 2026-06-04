@@ -78,17 +78,17 @@ Key advantages:
 - Reviews must be diff-based because GitHub PRs are diff-based. That means new services will appear as all addition (all green) PRs.
 - `API.md` will be accurate for tagged release commits. The `API.md` for that package will match that of the package corresponding to the release tag.
 - The creation of PR is much more "heavy handed" than we currently have. To arbitrarily compare APIViews today you just select different dropdowns. This system will require creating branches and opening a PR. If you want to compare a proposed change against multiple versions (for example, last beta AND last GA) you'll need multiple PRs.
-- Baseline and target refs must be explicitly selected from tags/commits based on review intent (for example, last GA vs candidate, previous beta vs current beta).
+- The baseline must be explicitly selected as a release tag based on review intent (for example, last GA vs candidate, previous beta vs current beta).
 - Process:
   - Three branches are needed: a base branch, a synthetic review branch, and the working branch.
-    - The **working branch** is the branch containing the actual code changes the service team wants to release. They will make commits and changes to THIS branch, and the API changes will be calculated and synced to the synthetic review branch.
-    - The **base branch** is a synthetic branch created on demand from the selected baseline tag/commit. It must be a branch because you cannot open PRs against tags. The pipeline must regenerate `API.md` on this base branch using the same parser/toolchain version that will be used for the review branch.
+    - The **working branch** is the branch containing the actual code changes the service team wants to release. This may be `main`, a `release/<release name>` stabilization branch, a `feature/<feature name>` branch for beta releases, or a `hotfix/<hotfix name>` branch created from a release tag. The API changes will be calculated from this branch and synced to the synthetic review branch.
+    - The **base branch** is a synthetic branch created on demand from the selected baseline release tag. It must be a branch because you cannot open PRs against tags. The pipeline must regenerate `API.md` on this base branch using the same parser/toolchain version that will be used for the review branch.
     - The **review branch** is a synthetic branch that contains only the regenerated `API.md` (and possibly select other files, like samples) for the working branch, produced with the same parser/toolchain as the base branch. In this way we exclude code changes and restrict the PR to API changes while avoiding parser-version-only diffs. One benefit to using GitHub here is that we can expand what we include on this branch to include things like dependencies which are shoehorned into the current APIView token files. This would allow us to present those diffs more naturally than we do today (Note: this is out of scope for today but possible as a future enhancement).
-  - Review PR metadata must include a machine-readable pointer to the corresponding working PR (for example `Working-PR: <url>` in the PR body).
+  - Review PR metadata must include a machine-readable pointer to the corresponding working branch or PR (for example `Working-PR: <url>` in the PR body).
   - Copilot and automation should treat comments on the review PR as instructions to update the working PR branch, not the review branch.
   - The end-user flow remains PR-centric: a user can open the review PR and ask "address these comments"; tooling resolves the linked working PR and applies code changes there, then sync automation regenerates and updates `API.md` on the review branch.
   - If a working PR has multiple review PRs (for example GA baseline and beta baseline), each review PR must identify both the working PR and its baseline intent so automation can route and report updates deterministically.
-- The creation process will likely be initiated by a pipeline where you specify your working branch and baseline tag/commit, then open a specially tagged PR between the synthetic review and base branches. A second pipeline would likely be needed to sync changes from the working branch to the review branch and regenerate `API.md` with the same parser/toolchain version used for the base branch.
+- The creation process will likely be initiated by a pipeline where you specify your working branch and baseline release tag, then open a specially tagged PR between the synthetic review and base branches. A second pipeline would likely be needed to sync changes from the working branch to the review branch and regenerate `API.md` with the same parser/toolchain version used for the base branch.
 
 **Outcome:** PR becomes the canonical API review artifact.
 
@@ -162,12 +162,6 @@ Approval shifts from APIView to GitHub but CI enforcement remains largely the sa
 - This aligns with current engineering-system ownership: the schema is flexible, already managed by existing pipelines, and operationally maintained today.
 - A GitHub trigger will update the Package Work Item when PR approvals are granted, revoked, or become stale.
 - There is a potential problem here. If you open two reviews, one comparing your change to the last GA and one comparing your change to the last beta, an approval on either could approve the API hash for both. This can be mitigated by marking the beta-baseline PR as Draft and ensuring Draft approvals do not update the Package Work Item approval fields.
-
-**Initial Releases (New Packages):**
-- Initial releases (typically betas) require approval of the namespace.
-- In this model, initial reviews appear as all-green (all-addition) PRs since the package has no prior API surface.
-- The "initial approval" is simply the PR approval on this all-addition review.
-- The base branch for an initial release is a clone of main with `api.md` removed, rather than attempting to find a commit with no trace of the unreleased package (which may be difficult if the package has been in development on main).
 
 **CI Enforcement:**
 - The SDK release pipelines will validate that gated releases are approved for release. They will do this by computing the hash of the API surface area and consulting the index for an approval.

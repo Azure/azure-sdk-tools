@@ -158,9 +158,10 @@ class ChatService:
 
         response: OpenAIResponse | None = None
         async for event in stream:
-            logger.info("Stream event: type=%s, content=%s", event.type, event)
+            logger.debug("Stream event: type=%s, content=%s", event.type, event)
             if event.type == STREAM_EVENT_RESPONSE_COMPLETED:
                 response = event.response
+                break
 
         if response is None:
             raise RuntimeError("Agent stream ended without a response.completed event")

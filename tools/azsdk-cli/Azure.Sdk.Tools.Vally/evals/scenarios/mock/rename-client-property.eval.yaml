@@ -35,9 +35,14 @@ stimuli:
         config:
           required:
             - edit
+      - type: skill-invocation
+        config:
+          required:
+            - azure-typespec-author
 
 scoring:
   weights:
     tool-calls: 1
+    skill-invocation: 1
   threshold: 1.0
 

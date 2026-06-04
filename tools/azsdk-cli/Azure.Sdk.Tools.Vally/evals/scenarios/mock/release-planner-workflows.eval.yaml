@@ -1,0 +1,158 @@
+name: azsdk-mcp-tool-scenarios
+description: |
+  Mock-environment workflow scenarios derived from the release-planner
+  replacement test plan (#15835). Each stimulus mirrors one of the four
+  high-level scenarios that release-planner-dashboard must hand off to the
+  agent:
+
+    1. Create a release plan (private preview / public preview / GA)
+    2. Generate SDK for all languages in an existing release plan
+    3. Link a different spec PR to an existing release plan
+    4. Update SDK details (package names) in a release plan
+
+  Plus an end-to-end "create + generate" flow used as the headline demo
+  prompt.
+
+  Bound to the mock MCP — these graders only inspect skill routing and tool
+  selection, not real DevOps writes. The full live e2e flow lives in
+  evals/scenarios/live/release-planner.eval.yaml.
+
+version: "1.0"
+type: capability
+
+tags:
+  area: release-plan
+
+environment: azsdk-mcp-mock
+
+config:
+  runs: 1
+  timeout: 30m
+  model: gpt-5.4
+  executor: copilot-sdk
+
+stimuli:
+  # --- Scenario 1: Create release plan ---------------------------------
+  - name: create-public-preview-release-plan
+    prompt: |
+      Create a public preview release plan for
+      specification.
+      Target release month: June 2026.
+      My setup has already been verified, do not run azsdk_verify_setup.
+    constraints:
+      max_turns: 6
+      max_tokens: 8000
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-prepare-release-plan
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_get_release_plan
+            - azsdk_create_release_plan
+          disallowed:
+            - azsdk_verify_setup
+
+  # --- End-to-end demo prompt: create + generate -----------------------
+  - name: create-release-plan-and-generate-sdk
+    prompt: |
+      Create a release plan and generate SDK for the TypeSpec project
+      specification
+      Target release month: June 2026, SDK release type beta.
+      My setup has already been verified, do not run azsdk_verify_setup.
+    constraints:
+      max_turns: 12
+      max_tokens: 16000
+    # TODO: assert ordering create -> get -> generate -> update-details
+    #   — blocked on Vally tool-calls grader sequence: support.
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-prepare-release-plan
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_get_release_plan
+            - azsdk_create_release_plan
+            - azsdk_run_generate_sdk
+            - azsdk_update_sdk_details_in_release_plan
+          disallowed:
+            - azsdk_verify_setup
+
+  # --- Scenario 2: Generate SDK for an existing release plan -----------
+  - name: generate-sdk-for-existing-release-plan
+    prompt: |
+      Generate SDK for all languages for release plan 29262.
+      My setup has already been verified, do not run azsdk_verify_setup.
+    constraints:
+      max_turns: 8
+      max_tokens: 10000
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-prepare-release-plan
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_get_release_plan
+            - azsdk_run_generate_sdk
+          disallowed:
+            - azsdk_verify_setup
+            - azsdk_create_release_plan
+
+  # --- Scenario 3: Link a different spec PR to an existing release plan
+  - name: link-different-spec-pr-to-release-plan
+    prompt: |
+      Update the API spec PR in release plan 29262 to
+      https://github.com/Azure/azure-rest-api-specs/pull/38500.
+      My setup has already been verified, do not run azsdk_verify_setup.
+    constraints:
+      max_turns: 6
+      max_tokens: 8000
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-prepare-release-plan
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_get_release_plan
+            - azsdk_update_api_spec_pull_request_in_release_plan
+          disallowed:
+            - azsdk_verify_setup
+            - azsdk_create_release_plan
+
+  # --- Scenario 4: Update SDK details (package names) ------------------
+  - name: update-sdk-details-in-release-plan
+    prompt: |
+      Update SDK details / package names in release plan 29262 based on the
+      TypeSpec emitter configuration in tspconfig.yaml for
+      specification
+      My setup has already been verified, do not run azsdk_verify_setup.
+    constraints:
+      max_turns: 8
+      max_tokens: 10000
+    graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-prepare-release-plan
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_get_release_plan
+            - azsdk_update_sdk_details_in_release_plan
+          disallowed:
+            - azsdk_verify_setup
+            - azsdk_create_release_plan
+
+scoring:
+  weights:
+    skill-invocation: 1
+    tool-calls: 1
+  threshold: 1.0

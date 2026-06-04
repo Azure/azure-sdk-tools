@@ -35,9 +35,14 @@ stimuli:
             - azsdk_typespec_check_project_in_public_repo
           disallowed:
             - azsdk_verify_setup
+      - type: skill-invocation
+        config:
+          required:
+            - azure-typespec-author
 
 scoring:
   weights:
     tool-calls: 1
+    skill-invocation: 1
   threshold: 1.0
 

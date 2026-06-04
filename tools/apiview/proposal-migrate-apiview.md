@@ -100,30 +100,9 @@ Key advantages:
 
 ### 2. `API.md` Freshness Enforcement
 - `API.md` must be checked into the repository and kept up to date with every PR that changes the public API surface.
-- CI will regenerate `API.md` from source and compare it against the committed version. If they differ, the check fails.
+- A PR pipeline will regenerate `API.md` from source and compare it against the committed version. If they differ, the check fails. 
 - This ensures `API.md` is always accurate at any given commit and avoids drift between the code and the declared API surface.
-- The CI check should provide an easy remediation path: ideally, a mechanism to push the corrected `API.md` as a commit directly to the PR branch (for example, via a bot comment with a "fix this" action or a pipeline that auto-commits the regenerated file on request).
-
-#### PR workflow shape
-- Use two GitHub Actions, modeled after TypeSpec's `consistency.yml` and `commenter.yml` split.
-- The consistency workflow runs only on `pull_request` events.
-- It should detect the affected package(s) from the PR diff, then regenerate `API.md` for each package in a matrix job so multi-package PRs are handled deterministically.
-- For each package, the workflow should compare the generated `API.md` to the committed file in the branch.
-- If any package differs, the job fails and uploads the generated `API.md` plus a diff summary as an artifact.
-- A separate commenter workflow should run after the consistency workflow completes, read the artifact, and post or update a PR comment with the failure summary and a remediation action.
-- The remediation action should be a trusted path that commits the regenerated `API.md` back to the PR branch, so the reviewer can fix drift without manually copying files.
-- The commenter workflow should not rebuild the package or execute untrusted PR code; it should only consume the consistency workflow artifact and update the PR conversation.
-
-#### Python package generation
-- The Python implementation should reuse the existing package generation tooling already used for API review, then export the result into `API.md`.
-- This keeps the consistency check aligned with the same source-of-truth generator that produces review artifacts today.
-- If we later move the Python stack to generate `API.md` directly, the workflow contract stays the same: regenerate, compare, fail on drift, and offer a one-click fix path.
-
-**Outcome:** `API.md` is a reliable, always-current representation of the package's public API at every commit.
-
-**Wins:** Eliminates stale API artifacts. Ensures review PRs always reflect actual code. Enables hash-based approval validation at any point in history.
-
-**Losses:** Requires teams to regenerate `API.md` locally or rely on the auto-fix mechanism.
+- JS already has a check like this: https://github.com/Azure/azure-sdk-for-js/blob/192b39d441774b8f9bafe792253fc5ca0662d1f9/eng/pipelines/templates/steps/build.yml#L92
 
 ---
 
@@ -213,17 +192,19 @@ These are features in APIView that would not be migrated to this Github-centric 
 **Rationale:**
 - Diagnostics are tightly coupled to parser implementations
 - GitHub has no native equivalent of domain-specific, parser-aware inline diagnostics
-- The closest mechanisms (Check Runs API annotations, bot-posted review comments) require custom infrastructure per language
+- The most robust replacement is to move APIView-specific diagnostics into language-specific static analyzer frameworks
+- Static analyzer frameworks provide established suppression mechanisms, integrate naturally with CI, and can fail PRs directly when violations are not suppressed
 
 **Replacement:**
-- Affected language teams should migrate diagnostics to:
-  - Language-specific static analyzers (e.g., linters, analyzers)
-  - Executed as part of CI pipelines
-  - Optionally surfaced as PR annotations via the Check Runs API
+- Affected language teams should migrate diagnostics to language-specific static analyzers (e.g., linters, analyzers).
+- These analyzers should run as part of CI and can optionally surface violations as PR annotations via the Check Runs API.
+- As a Phase 1 alternative, since diagnostics are contained in the APIView token file and that token file is still generated, a pipeline could extract and surface those diagnostics in CI.
+- Token-file diagnostics could be made blocking, but that is not advisable unless the language team has a proper suppression mechanism.
 
 **Result:**
 - Diagnostics shift from review-time to CI-time validation
 - Each language team owns both the analyzer logic and the GitHub integration
+- Token-file diagnostic surfacing remains a transitional option, not the preferred long-term model
 
 ---
 
@@ -236,7 +217,7 @@ These are features in APIView that would not be migrated to this Github-centric 
 
 **Replacement:**
 - Blocking feedback is represented via “Request Changes” at review level
-- Non-blocking guidance remains as regular comments
+- Non-blocking guidance remains as either "Comment" or "Approval" depending on whether the architect wants a reply
 - Teams can adopt labeling/convention-based guidance in comment text, but this is advisory rather than enforced metadata
 
 **Result:**

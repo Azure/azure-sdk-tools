@@ -53,6 +53,21 @@ Pass the path to a specific eval file:
 vally eval --eval-spec evals/001001.eval.yaml --output-dir ./result-001001 --workspace ./debug-001001
 ```
 
+### Which file to use
+
+Use different entry files depending on your goal:
+
+| File | When to use | Example command |
+| --- | --- | --- |
+| `.vally.yaml` | Default local entry; run by suite name | `vally eval --suite versioning --output-dir ./result --workspace ./debug --verbose` |
+| `evals/eval.yaml` | Combined spec; run all main-mode stimuli from one file | `vally eval --eval-spec evals/eval.yaml --output-dir ./result --workspace ./debug --verbose` |
+| `evals/00xxxx.eval.yaml` | Debug one specific case file | `vally eval --eval-spec evals/003001.eval.yaml --output-dir ./result-003001 --workspace ./debug-003001 --verbose` |
+
+Notes:
+
+- `evals/*.eval.yaml` and `evals/eval.yaml` are separate entry paths; they are not automatically run together.
+- Prefer `--suite` for day-to-day runs because it keeps filtering and mode selection centralized in `.vally.yaml`.
+
 ### Run a named test suite
 
 Test suites are defined in `.vally.yaml` under the `suites` key. Available suites:

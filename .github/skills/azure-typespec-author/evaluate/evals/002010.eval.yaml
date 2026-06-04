@@ -15,59 +15,102 @@ config:
 
 # Test cases
 stimuli:
-- prompt: |
+- name: 002010-arm-action-sync-operation
+  tags:
+    - 'main'
+  prompt: |
     In the Widget project, add a sync operation exportData for employee resource.
-  name: 002010-arm-action-sync-operation
+    
+  environment: &shared_environment
+    files:
+      - src: ../fixtures/002010-arm-action-sync-operation/employee.tsp
+        dest: employee.tsp
+      - src: ../fixtures/002010-arm-action-sync-operation/main.tsp
+        dest: main.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: package-lock.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: package.json
+      - src: ../fixtures/002010-arm-action-sync-operation/readme.md
+        dest: readme.md
+      - src: ../fixtures/002010-arm-action-sync-operation/shared.tsp
+        dest: shared.tsp
+      - src: ../fixtures/002010-arm-action-sync-operation/tspconfig.yaml
+        dest: tspconfig.yaml
+    commands:
+      - 'node -e "const fs=require(''fs'');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync(''node_modules'')){fs.symlinkSync(t,''node_modules'',''junction'')}"'
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+        - 'azure-sdk-mcp-azsdk_typespec_generate_authoring_plan'
+        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
+  - type: 'skill-invocation'
+    config:
+      required:
+        - 'azure-typespec-author'
+  - type: 'file-matches'
+    config:
+      pattern: 'exportData\s+is\s+ArmResourceActionSync'
+      path: 'employee.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'ExportResponse|ExportDataResponse|ExportResult|ExportDataResult'
+      path: 'employee.tsp'
+  - type: 'prompt'
+    config:
+      threshold: 1
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
+      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
   constraints:
     max_turns: 6
     max_tokens: 100000
-  environment:
-    files:
-    - src: ../fixtures/002010-arm-action-sync-operation/employee.tsp
-      dest: employee.tsp
-    - src: ../fixtures/002010-arm-action-sync-operation/main.tsp
-      dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/002010-arm-action-sync-operation/readme.md
-      dest: readme.md
-    - src: ../fixtures/002010-arm-action-sync-operation/shared.tsp
-      dest: shared.tsp
-    - src: ../fixtures/002010-arm-action-sync-operation/tspconfig.yaml
-      dest: tspconfig.yaml
-    commands:
-      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
+- name: 002010-arm-action-sync-operation-trigger
+  tags:
+    - 'trigger'
+  prompt: |
+    In the Widget project, add a sync operation exportData for employee resource.
+    
+  environment: *shared_environment
   graders:
-  - type: tool-calls
+  - type: 'tool-calls'
     config:
       required:
-        - edit
-        - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
-        - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
+        - 'edit'
+        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
+  - type: 'skill-invocation'
     config:
       required:
-        - azure-typespec-author
-  - type: file-matches
+        - 'azure-typespec-author'
+  constraints:
+    max_turns: 5
+    max_tokens: 50000
+- name: 002010-arm-action-sync-operation-forced
+  tags:
+    - 'forced'
+  prompt: |
+    @azure-typespec-author In the Widget project, add a sync operation exportData for employee resource.
+    
+  environment: *shared_environment
+  graders:
+  - type: 'tool-calls'
     config:
-      path: employee.tsp
-      pattern: 'exportData\s+is\s+ArmResourceActionSync'
-  - type: file-matches
+      required:
+        - 'edit'
+        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
+  - type: 'skill-invocation'
     config:
-      path: employee.tsp
-      pattern: 'ExportResponse|ExportDataResponse|ExportResult|ExportDataResult'
-  - type: prompt
-    config:
-      scoring: scale_1_5
-      threshold: 1.0
-      prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
-      model: claude-opus-4.6
+      required:
+        - 'azure-typespec-author'
+  constraints:
+    max_turns: 5
+    max_tokens: 50000
 scoring:
   weights:
+    prompt: 1
     tool-calls: 1
     skill-invocation: 1
-    prompt: 1
     file-matches: 2
-  threshold: 1.0
+  threshold: 1

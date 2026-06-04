@@ -1,6 +1,10 @@
 parameters:
+  - name: Suite
+    type: string
+    default: ''
   - name: EvalFile
     type: string
+    default: ''
   - name: SuiteName
     type: string
   - name: DisplayName
@@ -26,7 +30,11 @@ steps:
       if [ -n "${{ parameters.Tag }}" ]; then
         TAG_ARG="--tag ${{ parameters.Tag }}"
       fi
-      vally eval --eval-spec "suites/${{ parameters.EvalFile }}" --output-dir results --verbose $SKILL_ARG $TAG_ARG
+      if [ -n "${{ parameters.Suite }}" ]; then
+        vally eval --suite "${{ parameters.Suite }}" --output-dir ./result --workspace ./debug --verbose $SKILL_ARG $TAG_ARG
+      else
+        vally eval --eval-spec "suites/${{ parameters.EvalFile }}" --output-dir results --verbose $SKILL_ARG $TAG_ARG
+      fi
     displayName: ${{ parameters.DisplayName }}
     timeoutInMinutes: ${{ parameters.TimeoutMinutes }}
     continueOnError: true

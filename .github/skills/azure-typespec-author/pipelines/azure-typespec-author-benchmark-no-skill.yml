@@ -1,6 +1,5 @@
 # NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
-# This pipeline runs evaluations WITHOUT loading the azure-typespec-author skill,
-# testing the agent's baseline capability with only MCP tools.
+# This pipeline runs forced, trigger, and no-skill groups in sequence using suite-based eval execution.
 trigger: none
 pr: none
 
@@ -15,7 +14,7 @@ extends:
     Use1ESOfficial: true
     stages:
       - stage: EvalPureAgentWithoutSkill
-        displayName: Evaluate on pure agent without skill
+        displayName: Evaluate forced, trigger, and no-skill suites
         variables:
           - template: /eng/pipelines/templates/variables/globals.yml
           - template: /eng/pipelines/templates/variables/image.yml
@@ -26,7 +25,134 @@ extends:
           image: $(LINUXVMIMAGE)
           os: linux
         jobs:
+          - job: RunEvalsForced
+            displayName: Evaluate forced suites
+            timeoutInMinutes: 170
+            steps:
+              - checkout: self
+                fetchDepth: 0
+
+              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-setup.yml
+                parameters:
+                  SkillBranch: ''
+
+              # Run forced evaluations across all five suites.
+              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+                parameters:
+                  Suite: versioning
+                  SuiteName: versioning-forced
+                  DisplayName: Forced - versioning
+                  TimeoutMinutes: 50
+                  Tag: forced
+              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+                parameters:
+                  Suite: armtemplate
+                  SuiteName: armtemplate-forced
+                  DisplayName: Forced - armtemplate
+                  TimeoutMinutes: 40
+                  Tag: forced
+              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+                parameters:
+                  Suite: longrunningoperation
+                  SuiteName: longrunningoperation-forced
+                  DisplayName: Forced - longrunningoperation
+                  TimeoutMinutes: 25
+                  Tag: forced
+              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+                parameters:
+                  Suite: decorators
+                  SuiteName: decorators-forced
+                  DisplayName: Forced - decorators
+                  TimeoutMinutes: 15
+                  Tag: forced
+              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+                parameters:
+                  Suite: warning
+                  SuiteName: warning-forced
+                  DisplayName: Forced - warning
+                  TimeoutMinutes: 25
+                  Tag: forced
+
+            templateContext:
+              outputs:
+                - output: pipelineArtifact
+                  path: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/results
+                  artifact: eval-results-forced-$(Build.BuildId)
+                  displayName: Upload eval results (forced)
+                  condition: always()
+
+                - output: pipelineArtifact
+                  path: $(Build.StagingDirectory)/qa-bot-log
+                  artifact: qa-bot-service-log-forced
+                  displayName: Upload QA bot backend log (forced)
+                  condition: always()
+
+          - job: RunEvalsTrigger
+            displayName: Evaluate trigger suites
+            dependsOn: RunEvalsForced
+            timeoutInMinutes: 170
+            steps:
+              - checkout: self
+                fetchDepth: 0
+
+              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-setup.yml
+                parameters:
+                  SkillBranch: ''
+                  StartQaBotBackend: false
+
+              # Run trigger evaluations across all five suites.
+              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+                parameters:
+                  Suite: versioning
+                  SuiteName: versioning-trigger
+                  DisplayName: Trigger - versioning
+                  TimeoutMinutes: 50
+                  Tag: trigger
+              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+                parameters:
+                  Suite: armtemplate
+                  SuiteName: armtemplate-trigger
+                  DisplayName: Trigger - armtemplate
+                  TimeoutMinutes: 40
+                  Tag: trigger
+              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+                parameters:
+                  Suite: longrunningoperation
+                  SuiteName: longrunningoperation-trigger
+                  DisplayName: Trigger - longrunningoperation
+                  TimeoutMinutes: 25
+                  Tag: trigger
+              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+                parameters:
+                  Suite: decorators
+                  SuiteName: decorators-trigger
+                  DisplayName: Trigger - decorators
+                  TimeoutMinutes: 15
+                  Tag: trigger
+              - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
+                parameters:
+                  Suite: warning
+                  SuiteName: warning-trigger
+                  DisplayName: Trigger - warning
+                  TimeoutMinutes: 25
+                  Tag: trigger
+
+            templateContext:
+              outputs:
+                - output: pipelineArtifact
+                  path: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate/results
+                  artifact: eval-results-trigger-$(Build.BuildId)
+                  displayName: Upload eval results (trigger)
+                  condition: always()
+
+                - output: pipelineArtifact
+                  path: $(Build.StagingDirectory)/qa-bot-log
+                  artifact: qa-bot-service-log-trigger
+                  displayName: Upload QA bot backend log (trigger)
+                  condition: always()
+
           - job: RunEvalsNoSkill
+            dependsOn: RunEvalsTrigger
             displayName: Evaluate on pure agent without skill
             timeoutInMinutes: 170
             steps:
@@ -38,47 +164,47 @@ extends:
                   SkillBranch: ''
                   StartQaBotBackend: false
 
-              # Run evaluations on pure agent without skill
+              # Run no-skill evaluations across all five suites.
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
                 parameters:
-                  EvalFile: no-skill.eval.yaml
+                  Suite: versioning
                   SuiteName: versioning-no-skill
                   DisplayName: Pure agent - versioning
                   TimeoutMinutes: 50
                   LoadSkills: false
-                  Tag: suite=versioning
+                  Tag: main
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
                 parameters:
-                  EvalFile: no-skill.eval.yaml
+                  Suite: armtemplate
                   SuiteName: armtemplate-no-skill
                   DisplayName: Pure agent - armtemplate
                   TimeoutMinutes: 40
                   LoadSkills: false
-                  Tag: suite=armtemplate
+                  Tag: main
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
                 parameters:
-                  EvalFile: no-skill.eval.yaml
+                  Suite: longrunningoperation
                   SuiteName: longrunningoperation-no-skill
                   DisplayName: Pure agent - longrunningoperation
                   TimeoutMinutes: 25
                   LoadSkills: false
-                  Tag: suite=lro
+                  Tag: main
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
                 parameters:
-                  EvalFile: no-skill.eval.yaml
+                  Suite: decorators
                   SuiteName: decorators-no-skill
                   DisplayName: Pure agent - decorators
                   TimeoutMinutes: 15
                   LoadSkills: false
-                  Tag: suite=decorators
+                  Tag: main
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
                 parameters:
-                  EvalFile: no-skill.eval.yaml
+                  Suite: warning
                   SuiteName: warning-no-skill
                   DisplayName: Pure agent - warning
                   TimeoutMinutes: 25
                   LoadSkills: false
-                  Tag: suite=warning
+                  Tag: main
 
             templateContext:
               outputs:

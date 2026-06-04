@@ -15,55 +15,98 @@ config:
 
 # Test cases
 stimuli:
-- prompt: |
+- name: 002008-ARM-add-parameters
+  tags:
+    - 'main'
+  prompt: |
     add top and skip query parameters to the ListBySubscription operation in interface Employees. Ensure the definition meets TypeSpec Azure guidelines.
-  name: 002008-ARM-add-parameters
+    
+  environment: &shared_environment
+    files:
+      - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+        dest: employee.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+        dest: main.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: package-lock.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: package.json
+      - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+        dest: readme.md
+      - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+        dest: shared.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+        dest: tspconfig.yaml
+      - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+        dest: preview/2024-10-01-preview/widget.json
+      - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+        dest: stable/2021-11-01/widget.json
+    commands:
+      - 'node -e "const fs=require(''fs'');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync(''node_modules'')){fs.symlinkSync(t,''node_modules'',''junction'')}"'
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
+  - type: 'skill-invocation'
+    config:
+      required:
+        - 'azure-typespec-author'
+  - type: 'file-matches'
+    config:
+      pattern: 'listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*\{\s*\.\.\.(Azure\.Core\.)?TopQueryParameter;\s*\.\.\.(Azure\.Core\.)?SkipQueryParameter;\s*\}\s*>|model\s+\w+\s+(is|extends)\s+(Azure\.Core\.)?StandardListQueryParameters\s*;[\s\S]*?listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*\w+\s*>'
+      path: '*.tsp'
+  - type: 'file-not-matches'
+    config:
+      pattern: '@query\("\$top"\)|@query\("\$skip"\)'
+      path: '*.tsp'
   constraints:
     max_turns: 6
     max_tokens: 100000
-  environment:
-    files:
-    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
-      dest: employee.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
-      dest: main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: package-lock.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
-      dest: readme.md
-    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
-      dest: shared.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
-      dest: tspconfig.yaml
-    - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
-      dest: preview/2024-10-01-preview/widget.json
-    - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
-      dest: stable/2021-11-01/widget.json
-    commands:
-      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
+- name: 002008-ARM-add-parameters-trigger
+  tags:
+    - 'trigger'
+  prompt: |
+    add top and skip query parameters to the ListBySubscription operation in interface Employees. Ensure the definition meets TypeSpec Azure guidelines.
+    
+  environment: *shared_environment
   graders:
-  - type: tool-calls
+  - type: 'tool-calls'
     config:
       required:
-        - edit
-        - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
+        - 'edit'
+        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
+  - type: 'skill-invocation'
     config:
       required:
-        - azure-typespec-author
-  - type: file-matches
+        - 'azure-typespec-author'
+  constraints:
+    max_turns: 5
+    max_tokens: 50000
+- name: 002008-ARM-add-parameters-forced
+  tags:
+    - 'forced'
+  prompt: |
+    @azure-typespec-author add top and skip query parameters to the ListBySubscription operation in interface Employees. Ensure the definition meets TypeSpec Azure guidelines.
+    
+  environment: *shared_environment
+  graders:
+  - type: 'tool-calls'
     config:
-      path: '*.tsp'
-      pattern: 'listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*\{\s*\.\.\.(Azure\.Core\.)?TopQueryParameter;\s*\.\.\.(Azure\.Core\.)?SkipQueryParameter;\s*\}\s*>|model\s+\w+\s+(is|extends)\s+(Azure\.Core\.)?StandardListQueryParameters\s*;[\s\S]*?listBySubscription\s+is\s+ArmListBySubscription\s*<\s*Employee\s*,\s*\w+\s*>'
-  - type: file-not-matches
+      required:
+        - 'edit'
+        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
+  - type: 'skill-invocation'
     config:
-      path: '*.tsp'
-      pattern: '@query\("\$top"\)|@query\("\$skip"\)'
+      required:
+        - 'azure-typespec-author'
+  constraints:
+    max_turns: 5
+    max_tokens: 50000
 scoring:
   weights:
     tool-calls: 1
     skill-invocation: 1
     file-matches: 1
-  threshold: 1.0
+  threshold: 1

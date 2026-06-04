@@ -15,66 +15,109 @@ config:
 
 # Test cases
 stimuli:
-- prompt: |
+- name: 001013-version-model-property-type-changed
+  tags:
+    - 'main'
+  prompt: |
     In the TypeSpec project at `./Microsoft.Widget/Widget/`, change the type of the `statusCode` property from `string` to `int32` in EmployeeProperties only for version `2025-05-04-preview`.
-  name: 001013-version-model-property-type-changed
+    
+  environment: &shared_environment
+    files:
+      - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
+        dest: Microsoft.Widget/Widget/employee.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
+        dest: Microsoft.Widget/Widget/main.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
+        dest: Microsoft.Widget/Widget/package-lock.json
+      - src: ../fixtures/Microsoft.Widget/Widget/package.json
+        dest: Microsoft.Widget/Widget/package.json
+      - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+        dest: Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
+      - src: ../fixtures/Microsoft.Widget/Widget/readme.md
+        dest: Microsoft.Widget/Widget/readme.md
+      - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
+        dest: Microsoft.Widget/Widget/shared.tsp
+      - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+        dest: Microsoft.Widget/Widget/stable/2021-11-01/widget.json
+      - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
+        dest: Microsoft.Widget/Widget/tspconfig.yaml
+    commands:
+      - 'node -e "const fs=require(''fs'');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync(''node_modules'')){fs.symlinkSync(t,''node_modules'',''junction'')}"'
+  graders:
+  - type: 'tool-calls'
+    config:
+      required:
+        - 'edit'
+        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
+  - type: 'skill-invocation'
+    config:
+      required:
+        - 'azure-typespec-author'
+  - type: 'file-matches'
+    config:
+      pattern: 'v2025_05_04_preview'
+      path: 'Microsoft.Widget/Widget/main.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: '@typeChangedFrom\(Versions\.v2025_05_04_preview, string\)'
+      path: 'Microsoft.Widget/Widget/employee.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: 'statusCode\?: int32;'
+      path: 'Microsoft.Widget/Widget/employee.tsp'
+  - type: 'prompt'
+    config:
+      threshold: 1
+      model: 'claude-opus-4.6'
+      scoring: 'scale_1_5'
+      prompt: 'Verify change scope and quality. Preview-after-preview convention requires renaming the old preview to the new one. Only penalize truly unrelated edits.'
   constraints:
     max_turns: 6
     max_tokens: 100000
-  environment:
-    files:
-    - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
-      dest: Microsoft.Widget/Widget/employee.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/main.tsp
-      dest: Microsoft.Widget/Widget/main.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/package-lock.json
-      dest: Microsoft.Widget/Widget/package-lock.json
-    - src: ../fixtures/Microsoft.Widget/Widget/package.json
-      dest: Microsoft.Widget/Widget/package.json
-    - src: ../fixtures/Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
-      dest: Microsoft.Widget/Widget/preview/2024-10-01-preview/widget.json
-    - src: ../fixtures/Microsoft.Widget/Widget/readme.md
-      dest: Microsoft.Widget/Widget/readme.md
-    - src: ../fixtures/Microsoft.Widget/Widget/shared.tsp
-      dest: Microsoft.Widget/Widget/shared.tsp
-    - src: ../fixtures/Microsoft.Widget/Widget/stable/2021-11-01/widget.json
-      dest: Microsoft.Widget/Widget/stable/2021-11-01/widget.json
-    - src: ../fixtures/Microsoft.Widget/Widget/tspconfig.yaml
-      dest: Microsoft.Widget/Widget/tspconfig.yaml
-    commands:
-      - node -e "const fs=require('fs');const t=process.env.FIXTURE_NODE_MODULES;if(t&&fs.existsSync(t)&&!fs.existsSync('node_modules')){fs.symlinkSync(t,'node_modules','junction')}"
+- name: 001013-version-model-property-type-changed-trigger
+  tags:
+    - 'trigger'
+  prompt: |
+    In the TypeSpec project at `./Microsoft.Widget/Widget/`, change the type of the `statusCode` property from `string` to `int32` in EmployeeProperties only for version `2025-05-04-preview`.
+    
+  environment: *shared_environment
   graders:
-  - type: tool-calls
+  - type: 'tool-calls'
     config:
       required:
-        - edit
-        - azure-sdk-mcp-azsdk_run_typespec_validation
-  - type: skill-invocation
+        - 'edit'
+        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
+  - type: 'skill-invocation'
     config:
       required:
-        - azure-typespec-author
-  - type: file-matches
+        - 'azure-typespec-author'
+  constraints:
+    max_turns: 5
+    max_tokens: 50000
+- name: 001013-version-model-property-type-changed-forced
+  tags:
+    - 'forced'
+  prompt: |
+    @azure-typespec-author In the TypeSpec project at `./Microsoft.Widget/Widget/`, change the type of the `statusCode` property from `string` to `int32` in EmployeeProperties only for version `2025-05-04-preview`.
+    
+  environment: *shared_environment
+  graders:
+  - type: 'tool-calls'
     config:
-      path: Microsoft.Widget/Widget/main.tsp
-      pattern: v2025_05_04_preview
-  - type: file-matches
+      required:
+        - 'edit'
+        - 'azure-sdk-mcp-azsdk_run_typespec_validation'
+  - type: 'skill-invocation'
     config:
-      path: Microsoft.Widget/Widget/employee.tsp
-      pattern: '@typeChangedFrom\(Versions\.v2025_05_04_preview, string\)'
-  - type: file-matches
-    config:
-      path: Microsoft.Widget/Widget/employee.tsp
-      pattern: 'statusCode\?: int32;'
-  - type: prompt
-    config:
-      scoring: scale_1_5
-      threshold: 1.0
-      prompt: 'Verify change scope and quality. Preview-after-preview convention requires renaming the old preview to the new one. Only penalize truly unrelated edits.'
-      model: claude-opus-4.6
+      required:
+        - 'azure-typespec-author'
+  constraints:
+    max_turns: 5
+    max_tokens: 50000
 scoring:
   weights:
     prompt: 1
-    file-matches: 3
     tool-calls: 1
     skill-invocation: 1
-  threshold: 1.0
+    file-matches: 3
+  threshold: 1

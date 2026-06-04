@@ -170,10 +170,26 @@ describe('reportStatus', () => {
     };
 
     const getWrittenExecutionReport = () => {
-      const call = vi.mocked(writeTmpJsonFile).mock.calls.find(([, fileName]) => fileName === 'execution-report.json');
+      const matchingCalls = vi.mocked(writeTmpJsonFile).mock.calls.filter(([, fileName]) => fileName === 'execution-report.json');
+      const call = matchingCalls.at(-1);
       expect(call).toBeDefined();
       return call![2] as WrittenExecutionReport;
     };
+
+    const createWorkflowContextWithPackageOptions = (
+      packageOptions: {
+        breakingChangeLabel?: string;
+        breakingChangesLabel?: string;
+      }
+    ) => ({
+      ...mockWorkflowContext,
+      swaggerToSdkConfig: {
+        ...mockWorkflowContext.swaggerToSdkConfig,
+        packageOptions: {
+          ...packageOptions,
+        },
+      },
+    } as WorkflowContext);
 
     it('should generate report successfully with valid context', () => {
       vi.mocked(fs.existsSync).mockReturnValue(false);
@@ -191,7 +207,9 @@ describe('reportStatus', () => {
     });
 
     it('should use breakingChangesLabel when only plural config key is provided', () => {
-      generateReport(mockWorkflowContext);
+      const workflowContext = createWorkflowContextWithPackageOptions({ breakingChangesLabel: 'breaking-change' });
+
+      generateReport(workflowContext);
 
       expect(getWrittenExecutionReport().packages[0]).toEqual(expect.objectContaining({
         breakingChangeLabel: 'breaking-change',
@@ -199,10 +217,9 @@ describe('reportStatus', () => {
     });
 
     it('should fall back to breakingChangeLabel when plural config key is not provided', () => {
-      mockWorkflowContext.swaggerToSdkConfig.packageOptions.breakingChangesLabel = undefined;
-      mockWorkflowContext.swaggerToSdkConfig.packageOptions.breakingChangeLabel = 'legacy-breaking-change';
+      const workflowContext = createWorkflowContextWithPackageOptions({ breakingChangeLabel: 'legacy-breaking-change' });
 
-      generateReport(mockWorkflowContext);
+      generateReport(workflowContext);
 
       expect(getWrittenExecutionReport().packages[0]).toEqual(expect.objectContaining({
         breakingChangeLabel: 'legacy-breaking-change',
@@ -210,10 +227,12 @@ describe('reportStatus', () => {
     });
 
     it('should prefer breakingChangesLabel when both config keys are provided', () => {
-      mockWorkflowContext.swaggerToSdkConfig.packageOptions.breakingChangesLabel = 'canonical-breaking-change';
-      mockWorkflowContext.swaggerToSdkConfig.packageOptions.breakingChangeLabel = 'legacy-breaking-change';
+      const workflowContext = createWorkflowContextWithPackageOptions({
+        breakingChangeLabel: 'legacy-breaking-change',
+        breakingChangesLabel: 'canonical-breaking-change',
+      });
 
-      generateReport(mockWorkflowContext);
+      generateReport(workflowContext);
 
       expect(getWrittenExecutionReport().packages[0]).toEqual(expect.objectContaining({
         breakingChangeLabel: 'canonical-breaking-change',

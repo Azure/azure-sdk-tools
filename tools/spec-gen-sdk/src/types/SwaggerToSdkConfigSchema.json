@@ -166,11 +166,13 @@
           "$ref": "#/definitions/RunOptions"
         },
         "breakingChangesLabel": {
-          // Canonical label to be added in spec PR if breaking change is found
+          // Canonical single label string to be added in spec PR if breaking change is found.
+          // Takes precedence over breakingChangeLabel when both are present.
           "type": "string"
         },
         "breakingChangeLabel": {
-          // Backward-compatible alias for breakingChangesLabel
+          // Backward-compatible alias for breakingChangesLabel.
+          // Ignored when breakingChangesLabel is also present.
           "type": "string"
         }
       },

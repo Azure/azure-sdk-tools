@@ -17,7 +17,8 @@ config:
 stimuli:
 - name: 001001-version-spread-property
   tags:
-    - 'main'
+    suite: 'versioning'
+    mode: 'main'
   prompt: 'I added `...Azure.ResourceManager.ManagedServiceIdentityProperty;` which updates all my existing API versions and introduces a breaking change. I want to introduce the properties of the spread model ''...ManagedServiceIdentityProperty'' in API version 2025-05-04-preview only.'
   environment: &shared_environment
     files:
@@ -71,7 +72,8 @@ stimuli:
     max_tokens: 50000
 - name: 001001-version-spread-property-trigger
   tags:
-    - 'trigger'
+    suite: 'versioning'
+    mode: 'trigger'
   prompt: 'I added `...Azure.ResourceManager.ManagedServiceIdentityProperty;` which updates all my existing API versions and introduces a breaking change. I want to introduce the properties of the spread model ''...ManagedServiceIdentityProperty'' in API version 2025-05-04-preview only.'
   environment: *shared_environment
   graders:
@@ -89,7 +91,8 @@ stimuli:
     max_tokens: 50000
 - name: 001001-version-spread-property-forced
   tags:
-    - 'forced'
+    suite: 'versioning'
+    mode: 'forced'
   prompt: '@azure-typespec-author I added `...Azure.ResourceManager.ManagedServiceIdentityProperty;` which updates all my existing API versions and introduces a breaking change. I want to introduce the properties of the spread model ''...ManagedServiceIdentityProperty'' in API version 2025-05-04-preview only.'
   environment: *shared_environment
   graders:

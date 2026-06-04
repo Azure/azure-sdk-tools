@@ -17,7 +17,8 @@ config:
 stimuli:
 - name: 001007-version-add-stable-after-preview
   tags:
-    - 'main'
+    suite: 'versioning'
+    mode: 'main'
   prompt: |
     I want to add a new stable version `2025-01-01`. Exclude `workLocation` property and `WorkLocation` model. Carry other features.
     
@@ -125,7 +126,8 @@ stimuli:
     max_tokens: 100000
 - name: 001007-version-add-stable-after-preview-trigger
   tags:
-    - 'trigger'
+    suite: 'versioning'
+    mode: 'trigger'
   prompt: |
     I want to add a new stable version `2025-01-01`. Exclude `workLocation` property and `WorkLocation` model. Carry other features.
     
@@ -145,7 +147,8 @@ stimuli:
     max_tokens: 50000
 - name: 001007-version-add-stable-after-preview-forced
   tags:
-    - 'forced'
+    suite: 'versioning'
+    mode: 'forced'
   prompt: |
     @azure-typespec-author I want to add a new stable version `2025-01-01`. Exclude `workLocation` property and `WorkLocation` model. Carry other features.
     

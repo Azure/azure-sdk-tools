@@ -17,7 +17,8 @@ config:
 stimuli:
 - name: 004001-decorate-mgmt-resource-name-parameter
   tags:
-    - 'main'
+    suite: 'decorators'
+    mode: 'main'
   prompt: |
     use authoring plan to add minLength decorator to set the minLength 1 for resource name parameter of Employee resource
     
@@ -69,7 +70,8 @@ stimuli:
     max_tokens: 100000
 - name: 004001-decorate-mgmt-resource-name-parameter-trigger
   tags:
-    - 'trigger'
+    suite: 'decorators'
+    mode: 'trigger'
   prompt: |
     use authoring plan to add minLength decorator to set the minLength 1 for resource name parameter of Employee resource
     
@@ -89,7 +91,8 @@ stimuli:
     max_tokens: 50000
 - name: 004001-decorate-mgmt-resource-name-parameter-forced
   tags:
-    - 'forced'
+    suite: 'decorators'
+    mode: 'forced'
   prompt: |
     @azure-typespec-author use authoring plan to add minLength decorator to set the minLength 1 for resource name parameter of Employee resource
     

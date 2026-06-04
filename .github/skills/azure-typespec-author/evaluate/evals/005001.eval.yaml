@@ -17,7 +17,8 @@ config:
 stimuli:
 - name: 005001-warning-suppress-warning
   tags:
-    - 'main'
+    suite: 'warning'
+    mode: 'main'
   prompt: |
     Add suppressions for the warnings produced by "tsp compile .", and set the justification to "FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details".
     
@@ -59,7 +60,8 @@ stimuli:
     max_tokens: 1000000
 - name: 005001-warning-suppress-warning-trigger
   tags:
-    - 'trigger'
+    suite: 'warning'
+    mode: 'trigger'
   prompt: |
     Add suppressions for the warnings produced by "tsp compile .", and set the justification to "FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details".
     
@@ -79,7 +81,8 @@ stimuli:
     max_tokens: 50000
 - name: 005001-warning-suppress-warning-forced
   tags:
-    - 'forced'
+    suite: 'warning'
+    mode: 'forced'
   prompt: |
     @azure-typespec-author Add suppressions for the warnings produced by "tsp compile .", and set the justification to "FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details".
     

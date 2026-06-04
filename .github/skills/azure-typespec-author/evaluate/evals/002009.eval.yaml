@@ -17,7 +17,8 @@ config:
 stimuli:
 - name: 002009-arm-add-patch-operation-to-resource
   tags:
-    - 'main'
+    suite: 'armtemplate'
+    mode: 'main'
   prompt: |
     In the Widget project, add a patch operation to an existing ARM resource named 'Employee'
     
@@ -65,7 +66,8 @@ stimuli:
     max_tokens: 100000
 - name: 002009-arm-add-patch-operation-to-resource-trigger
   tags:
-    - 'trigger'
+    suite: 'armtemplate'
+    mode: 'trigger'
   prompt: |
     In the Widget project, add a patch operation to an existing ARM resource named 'Employee'
     
@@ -85,7 +87,8 @@ stimuli:
     max_tokens: 50000
 - name: 002009-arm-add-patch-operation-to-resource-forced
   tags:
-    - 'forced'
+    suite: 'armtemplate'
+    mode: 'forced'
   prompt: |
     @azure-typespec-author In the Widget project, add a patch operation to an existing ARM resource named 'Employee'
     

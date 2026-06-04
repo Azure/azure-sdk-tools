@@ -17,7 +17,8 @@ config:
 stimuli:
 - name: 001003-version-required-to-optional
   tags:
-    - 'main'
+    suite: 'versioning'
+    mode: 'main'
   prompt: |
     change the property age of EmployeeProperties from required to optional only for api version 2025-05-04-preview
     
@@ -72,7 +73,8 @@ stimuli:
     max_tokens: 100000
 - name: 001003-version-required-to-optional-trigger
   tags:
-    - 'trigger'
+    suite: 'versioning'
+    mode: 'trigger'
   prompt: |
     change the property age of EmployeeProperties from required to optional only for api version 2025-05-04-preview
     
@@ -92,7 +94,8 @@ stimuli:
     max_tokens: 50000
 - name: 001003-version-required-to-optional-forced
   tags:
-    - 'forced'
+    suite: 'versioning'
+    mode: 'forced'
   prompt: |
     @azure-typespec-author change the property age of EmployeeProperties from required to optional only for api version 2025-05-04-preview
     

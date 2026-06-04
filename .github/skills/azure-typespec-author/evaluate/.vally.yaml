@@ -51,49 +51,65 @@ environments:
 
 suites:
   versioning:
-    evals:
-      - "evals/001001.eval.yaml"
-      - "evals/001002.eval.yaml"
-      - "evals/001003.eval.yaml"
-      - "evals/001004.eval.yaml"
-      - "evals/001005.eval.yaml"
-      - "evals/001006.eval.yaml"
-      - "evals/001007.eval.yaml"
-      - "evals/001008.eval.yaml"
-      - "evals/001009.eval.yaml"
-      - "evals/001010.eval.yaml"
-      - "evals/001011.eval.yaml"
-      - "evals/001012.eval.yaml"
-      - "evals/001013.eval.yaml"
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: versioning, mode: main }
   version-evolution:
     evals:
       - "evals/001005.eval.yaml"
       - "evals/001006.eval.yaml"
       - "evals/001007.eval.yaml"
       - "evals/001008.eval.yaml"
+    filter: { mode: main }
   armtemplate:
-    evals:
-      - "evals/002001.eval.yaml"
-      - "evals/002002.eval.yaml"
-      - "evals/002003.eval.yaml"
-      - "evals/002004.eval.yaml"
-      - "evals/002005.eval.yaml"
-      - "evals/002006.eval.yaml"
-      - "evals/002007.eval.yaml"
-      - "evals/002008.eval.yaml"
-      - "evals/002009.eval.yaml"
-      - "evals/002010.eval.yaml"
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: armtemplate, mode: main }
   longrunningoperation:
-    evals:
-      - "evals/003001.eval.yaml"
-      - "evals/003002.eval.yaml"
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: lro, mode: main }
   decorators:
-    evals:
-      - "evals/004001.eval.yaml"
-      - "evals/004002.eval.yaml"
-      - "evals/004003.eval.yaml"
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: decorators, mode: main }
   warning:
-    evals:
-      - "evals/005001.eval.yaml"
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: warning, mode: main }
+  versioning-forced:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: versioning, mode: forced }
+  armtemplate-forced:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: armtemplate, mode: forced }
+  longrunningoperation-forced:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: lro, mode: forced }
+  decorators-forced:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: decorators, mode: forced }
+  warning-forced:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: warning, mode: forced }
+  versioning-trigger:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: versioning, mode: trigger }
+  armtemplate-trigger:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: armtemplate, mode: trigger }
+  longrunningoperation-trigger:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: lro, mode: trigger }
+  decorators-trigger:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: decorators, mode: trigger }
+  warning-trigger:
+    evals: ["evals/*.eval.yaml"]
+    filter: { suite: warning, mode: trigger }
+  forced:
+    evals: ["evals/*.eval.yaml"]
+    filter: { mode: forced }
+  trigger:
+    evals: ["evals/*.eval.yaml"]
+    filter: { mode: trigger }
+  main:
+    evals: ["evals/*.eval.yaml"]
+    filter: { mode: main }
   all:
     evals: ["evals/*.eval.yaml"]

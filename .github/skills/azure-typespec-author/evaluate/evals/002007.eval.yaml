@@ -17,7 +17,8 @@ config:
 stimuli:
 - name: 002007-ARM-define-custom-action
   tags:
-    - 'main'
+    suite: 'armtemplate'
+    mode: 'main'
   prompt: |
     Add an additional POST action called "/notify" to the standard operations of Employee. Request body: message content (string) and priority (enum with values Low, Medium, High). Response body: notification identifier (string) and status (string). Ensure the definition meets TypeSpec Azure design guidelines.
     
@@ -109,7 +110,8 @@ stimuli:
     max_tokens: 100000
 - name: 002007-ARM-define-custom-action-trigger
   tags:
-    - 'trigger'
+    suite: 'armtemplate'
+    mode: 'trigger'
   prompt: |
     Add an additional POST action called "/notify" to the standard operations of Employee. Request body: message content (string) and priority (enum with values Low, Medium, High). Response body: notification identifier (string) and status (string). Ensure the definition meets TypeSpec Azure design guidelines.
     
@@ -129,7 +131,8 @@ stimuli:
     max_tokens: 50000
 - name: 002007-ARM-define-custom-action-forced
   tags:
-    - 'forced'
+    suite: 'armtemplate'
+    mode: 'forced'
   prompt: |
     @azure-typespec-author Add an additional POST action called "/notify" to the standard operations of Employee. Request body: message content (string) and priority (enum with values Low, Medium, High). Response body: notification identifier (string) and status (string). Ensure the definition meets TypeSpec Azure design guidelines.
     

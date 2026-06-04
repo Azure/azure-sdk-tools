@@ -17,7 +17,8 @@ config:
 stimuli:
 - name: 001002-version-default-value
   tags:
-    - 'main'
+    suite: 'versioning'
+    mode: 'main'
   prompt: |
     add a default value `21` for property age in model EmployeeProperties only for the new api version 2025-11-01
     
@@ -77,7 +78,8 @@ stimuli:
     max_tokens: 100000
 - name: 001002-version-default-value-trigger
   tags:
-    - 'trigger'
+    suite: 'versioning'
+    mode: 'trigger'
   prompt: |
     add a default value `21` for property age in model EmployeeProperties only for the new api version 2025-11-01
     
@@ -97,7 +99,8 @@ stimuli:
     max_tokens: 50000
 - name: 001002-version-default-value-forced
   tags:
-    - 'forced'
+    suite: 'versioning'
+    mode: 'forced'
   prompt: |
     @azure-typespec-author add a default value `21` for property age in model EmployeeProperties only for the new api version 2025-11-01
     

@@ -17,7 +17,8 @@ config:
 stimuli:
 - name: 001011-version-model-property-renamed
   tags:
-    - 'main'
+    suite: 'versioning'
+    mode: 'main'
   prompt: |
     In the TypeSpec project at `./Microsoft.Widget/Widget/`, rename the `age` property to `employeeAge` in EmployeeProperties only for version `2025-05-04-preview`.
     
@@ -70,7 +71,8 @@ stimuli:
     max_tokens: 100000
 - name: 001011-version-model-property-renamed-trigger
   tags:
-    - 'trigger'
+    suite: 'versioning'
+    mode: 'trigger'
   prompt: |
     In the TypeSpec project at `./Microsoft.Widget/Widget/`, rename the `age` property to `employeeAge` in EmployeeProperties only for version `2025-05-04-preview`.
     
@@ -90,7 +92,8 @@ stimuli:
     max_tokens: 50000
 - name: 001011-version-model-property-renamed-forced
   tags:
-    - 'forced'
+    suite: 'versioning'
+    mode: 'forced'
   prompt: |
     @azure-typespec-author In the TypeSpec project at `./Microsoft.Widget/Widget/`, rename the `age` property to `employeeAge` in EmployeeProperties only for version `2025-05-04-preview`.
     

@@ -17,7 +17,8 @@ config:
 stimuli:
 - name: 003002-arm-modify-response
   tags:
-    - 'main'
+    suite: 'lro'
+    mode: 'main'
   prompt: |
     Modify the LRO createOrUpdate PUT operation in interface Employees so that it returns Azure-AsyncOperation header but NOT Retry-After header in the 201 response. The operation currently uses ArmResourceCreateOrReplaceAsync<Employee> template.
     
@@ -81,7 +82,8 @@ stimuli:
     max_tokens: 100000
 - name: 003002-arm-modify-response-trigger
   tags:
-    - 'trigger'
+    suite: 'lro'
+    mode: 'trigger'
   prompt: |
     Modify the LRO createOrUpdate PUT operation in interface Employees so that it returns Azure-AsyncOperation header but NOT Retry-After header in the 201 response. The operation currently uses ArmResourceCreateOrReplaceAsync<Employee> template.
     
@@ -101,7 +103,8 @@ stimuli:
     max_tokens: 50000
 - name: 003002-arm-modify-response-forced
   tags:
-    - 'forced'
+    suite: 'lro'
+    mode: 'forced'
   prompt: |
     @azure-typespec-author Modify the LRO createOrUpdate PUT operation in interface Employees so that it returns Azure-AsyncOperation header but NOT Retry-After header in the 201 response. The operation currently uses ArmResourceCreateOrReplaceAsync<Employee> template.
     

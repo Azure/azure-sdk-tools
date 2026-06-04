@@ -17,7 +17,8 @@ config:
 stimuli:
 - name: 002005-ARM-define-the-resource
   tags:
-    - 'main'
+    suite: 'armtemplate'
+    mode: 'main'
   prompt: |
     Define a Azure resource "Employee" under the namespace "Microsoft.Widget" using TypeSpec. Properties: age (int32, optional), city (string, optional), profile (bytes, optional), provisioningState (enum incorporating ResourceProvisioningState, optional, read-only). Ensure the definition meets TypeSpec Azure design guidelines.
     
@@ -87,7 +88,8 @@ stimuli:
     max_tokens: 100000
 - name: 002005-ARM-define-the-resource-trigger
   tags:
-    - 'trigger'
+    suite: 'armtemplate'
+    mode: 'trigger'
   prompt: |
     Define a Azure resource "Employee" under the namespace "Microsoft.Widget" using TypeSpec. Properties: age (int32, optional), city (string, optional), profile (bytes, optional), provisioningState (enum incorporating ResourceProvisioningState, optional, read-only). Ensure the definition meets TypeSpec Azure design guidelines.
     
@@ -107,7 +109,8 @@ stimuli:
     max_tokens: 50000
 - name: 002005-ARM-define-the-resource-forced
   tags:
-    - 'forced'
+    suite: 'armtemplate'
+    mode: 'forced'
   prompt: |
     @azure-typespec-author Define a Azure resource "Employee" under the namespace "Microsoft.Widget" using TypeSpec. Properties: age (int32, optional), city (string, optional), profile (bytes, optional), provisioningState (enum incorporating ResourceProvisioningState, optional, read-only). Ensure the definition meets TypeSpec Azure design guidelines.
     

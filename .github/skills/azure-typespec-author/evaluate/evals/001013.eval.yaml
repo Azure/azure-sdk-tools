@@ -17,7 +17,8 @@ config:
 stimuli:
 - name: 001013-version-model-property-type-changed
   tags:
-    - 'main'
+    suite: 'versioning'
+    mode: 'main'
   prompt: |
     In the TypeSpec project at `./Microsoft.Widget/Widget/`, change the type of the `statusCode` property from `string` to `int32` in EmployeeProperties only for version `2025-05-04-preview`.
     
@@ -76,7 +77,8 @@ stimuli:
     max_tokens: 100000
 - name: 001013-version-model-property-type-changed-trigger
   tags:
-    - 'trigger'
+    suite: 'versioning'
+    mode: 'trigger'
   prompt: |
     In the TypeSpec project at `./Microsoft.Widget/Widget/`, change the type of the `statusCode` property from `string` to `int32` in EmployeeProperties only for version `2025-05-04-preview`.
     
@@ -96,7 +98,8 @@ stimuli:
     max_tokens: 50000
 - name: 001013-version-model-property-type-changed-forced
   tags:
-    - 'forced'
+    suite: 'versioning'
+    mode: 'forced'
   prompt: |
     @azure-typespec-author In the TypeSpec project at `./Microsoft.Widget/Widget/`, change the type of the `statusCode` property from `string` to `int32` in EmployeeProperties only for version `2025-05-04-preview`.
     

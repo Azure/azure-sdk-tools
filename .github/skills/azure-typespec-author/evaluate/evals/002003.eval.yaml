@@ -17,7 +17,8 @@ config:
 stimuli:
 - name: 002003-ARM-define-full-update-operation
   tags:
-    - 'main'
+    suite: 'armtemplate'
+    mode: 'main'
   prompt: |
     Define a PATCH operation for Employees. It is to update properties of an employee. Ensure the definition meets TypeSpec Azure guidelines.
     
@@ -59,7 +60,8 @@ stimuli:
     max_tokens: 100000
 - name: 002003-ARM-define-full-update-operation-trigger
   tags:
-    - 'trigger'
+    suite: 'armtemplate'
+    mode: 'trigger'
   prompt: |
     Define a PATCH operation for Employees. It is to update properties of an employee. Ensure the definition meets TypeSpec Azure guidelines.
     
@@ -79,7 +81,8 @@ stimuli:
     max_tokens: 50000
 - name: 002003-ARM-define-full-update-operation-forced
   tags:
-    - 'forced'
+    suite: 'armtemplate'
+    mode: 'forced'
   prompt: |
     @azure-typespec-author Define a PATCH operation for Employees. It is to update properties of an employee. Ensure the definition meets TypeSpec Azure guidelines.
     

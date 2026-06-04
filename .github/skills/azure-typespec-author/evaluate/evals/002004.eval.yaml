@@ -17,7 +17,8 @@ config:
 stimuli:
 - name: 002004-ARM-define-extension-resource-fromProxyResource
   tags:
-    - 'main'
+    suite: 'armtemplate'
+    mode: 'main'
   prompt: |
     Define a "badge assignment" extension resource. It should be an extension resource that can be attached to an employee. Ensure the definition meets TypeSpec Azure guidelines.
     
@@ -79,7 +80,8 @@ stimuli:
     max_tokens: 100000
 - name: 002004-ARM-define-extension-resource-fromProxyResource-trigger
   tags:
-    - 'trigger'
+    suite: 'armtemplate'
+    mode: 'trigger'
   prompt: |
     Define a "badge assignment" extension resource. It should be an extension resource that can be attached to an employee. Ensure the definition meets TypeSpec Azure guidelines.
     
@@ -99,7 +101,8 @@ stimuli:
     max_tokens: 50000
 - name: 002004-ARM-define-extension-resource-fromProxyResource-forced
   tags:
-    - 'forced'
+    suite: 'armtemplate'
+    mode: 'forced'
   prompt: |
     @azure-typespec-author Define a "badge assignment" extension resource. It should be an extension resource that can be attached to an employee. Ensure the definition meets TypeSpec Azure guidelines.
     

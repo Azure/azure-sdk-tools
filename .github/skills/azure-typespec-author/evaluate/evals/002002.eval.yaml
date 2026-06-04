@@ -17,7 +17,8 @@ config:
 stimuli:
 - name: 002002-ARM-define-extension-resource-add
   tags:
-    - 'main'
+    suite: 'armtemplate'
+    mode: 'main'
   prompt: |
     add an extension resource named asset
     
@@ -67,7 +68,8 @@ stimuli:
     max_tokens: 100000
 - name: 002002-ARM-define-extension-resource-add-trigger
   tags:
-    - 'trigger'
+    suite: 'armtemplate'
+    mode: 'trigger'
   prompt: |
     add an extension resource named asset
     
@@ -87,7 +89,8 @@ stimuli:
     max_tokens: 50000
 - name: 002002-ARM-define-extension-resource-add-forced
   tags:
-    - 'forced'
+    suite: 'armtemplate'
+    mode: 'forced'
   prompt: |
     @azure-typespec-author add an extension resource named asset
     

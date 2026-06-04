@@ -17,7 +17,8 @@ config:
 stimuli:
 - name: 001006-version-add-preview-after-stable
   tags:
-    - 'main'
+    suite: 'versioning'
+    mode: 'main'
   prompt: |
     Add a new preview version `2025-05-04-preview` to my service widget resource manager. Carry over all the features from the latest stable version
     
@@ -109,7 +110,8 @@ stimuli:
     max_tokens: 100000
 - name: 001006-version-add-preview-after-stable-trigger
   tags:
-    - 'trigger'
+    suite: 'versioning'
+    mode: 'trigger'
   prompt: |
     Add a new preview version `2025-05-04-preview` to my service widget resource manager. Carry over all the features from the latest stable version
     
@@ -129,7 +131,8 @@ stimuli:
     max_tokens: 50000
 - name: 001006-version-add-preview-after-stable-forced
   tags:
-    - 'forced'
+    suite: 'versioning'
+    mode: 'forced'
   prompt: |
     @azure-typespec-author Add a new preview version `2025-05-04-preview` to my service widget resource manager. Carry over all the features from the latest stable version
     

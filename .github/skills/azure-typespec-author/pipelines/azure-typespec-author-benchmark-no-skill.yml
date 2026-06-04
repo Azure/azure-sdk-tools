@@ -1,5 +1,6 @@
 # NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
-# This pipeline runs forced, trigger, and no-skill groups in sequence using suite-based eval execution.
+# This pipeline runs forced, trigger, and no-skill groups in sequence.
+# Each mode is split by suite to make error logs easier to query and triage.
 trigger: none
 pr: none
 
@@ -25,6 +26,7 @@ extends:
           image: $(LINUXVMIMAGE)
           os: linux
         jobs:
+          # Forced mode: run each suite separately so failures map to a narrow case set.
           - job: RunEvalsForced
             displayName: Evaluate forced suites
             timeoutInMinutes: 170
@@ -39,39 +41,34 @@ extends:
               # Run forced evaluations across all five suites.
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
                 parameters:
-                  Suite: versioning
+                  Suite: versioning-forced
                   SuiteName: versioning-forced
                   DisplayName: Forced - versioning
                   TimeoutMinutes: 50
-                  Tag: forced
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
                 parameters:
-                  Suite: armtemplate
+                  Suite: armtemplate-forced
                   SuiteName: armtemplate-forced
                   DisplayName: Forced - armtemplate
                   TimeoutMinutes: 40
-                  Tag: forced
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
                 parameters:
-                  Suite: longrunningoperation
+                  Suite: longrunningoperation-forced
                   SuiteName: longrunningoperation-forced
                   DisplayName: Forced - longrunningoperation
                   TimeoutMinutes: 25
-                  Tag: forced
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
                 parameters:
-                  Suite: decorators
+                  Suite: decorators-forced
                   SuiteName: decorators-forced
                   DisplayName: Forced - decorators
                   TimeoutMinutes: 15
-                  Tag: forced
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
                 parameters:
-                  Suite: warning
+                  Suite: warning-forced
                   SuiteName: warning-forced
                   DisplayName: Forced - warning
                   TimeoutMinutes: 25
-                  Tag: forced
 
             templateContext:
               outputs:
@@ -87,6 +84,7 @@ extends:
                   displayName: Upload QA bot backend log (forced)
                   condition: always()
 
+          # Trigger mode: keep suite-level isolation for quick failure localization.
           - job: RunEvalsTrigger
             displayName: Evaluate trigger suites
             dependsOn: RunEvalsForced
@@ -103,39 +101,34 @@ extends:
               # Run trigger evaluations across all five suites.
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
                 parameters:
-                  Suite: versioning
+                  Suite: versioning-trigger
                   SuiteName: versioning-trigger
                   DisplayName: Trigger - versioning
                   TimeoutMinutes: 50
-                  Tag: trigger
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
                 parameters:
-                  Suite: armtemplate
+                  Suite: armtemplate-trigger
                   SuiteName: armtemplate-trigger
                   DisplayName: Trigger - armtemplate
                   TimeoutMinutes: 40
-                  Tag: trigger
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
                 parameters:
-                  Suite: longrunningoperation
+                  Suite: longrunningoperation-trigger
                   SuiteName: longrunningoperation-trigger
                   DisplayName: Trigger - longrunningoperation
                   TimeoutMinutes: 25
-                  Tag: trigger
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
                 parameters:
-                  Suite: decorators
+                  Suite: decorators-trigger
                   SuiteName: decorators-trigger
                   DisplayName: Trigger - decorators
                   TimeoutMinutes: 15
-                  Tag: trigger
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
                 parameters:
-                  Suite: warning
+                  Suite: warning-trigger
                   SuiteName: warning-trigger
                   DisplayName: Trigger - warning
                   TimeoutMinutes: 25
-                  Tag: trigger
 
             templateContext:
               outputs:
@@ -151,6 +144,7 @@ extends:
                   displayName: Upload QA bot backend log (trigger)
                   condition: always()
 
+          # No-skill baseline: same suite split for apples-to-apples error investigation.
           - job: RunEvalsNoSkill
             dependsOn: RunEvalsTrigger
             displayName: Evaluate on pure agent without skill
@@ -172,7 +166,6 @@ extends:
                   DisplayName: Pure agent - versioning
                   TimeoutMinutes: 50
                   LoadSkills: false
-                  Tag: main
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
                 parameters:
                   Suite: armtemplate
@@ -180,7 +173,6 @@ extends:
                   DisplayName: Pure agent - armtemplate
                   TimeoutMinutes: 40
                   LoadSkills: false
-                  Tag: main
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
                 parameters:
                   Suite: longrunningoperation
@@ -188,7 +180,6 @@ extends:
                   DisplayName: Pure agent - longrunningoperation
                   TimeoutMinutes: 25
                   LoadSkills: false
-                  Tag: main
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
                 parameters:
                   Suite: decorators
@@ -196,7 +187,6 @@ extends:
                   DisplayName: Pure agent - decorators
                   TimeoutMinutes: 15
                   LoadSkills: false
-                  Tag: main
               - template: /.github/skills/azure-typespec-author/pipelines/templates/typespec-author-eval-run-suite.yml
                 parameters:
                   Suite: warning
@@ -204,7 +194,6 @@ extends:
                   DisplayName: Pure agent - warning
                   TimeoutMinutes: 25
                   LoadSkills: false
-                  Tag: main
 
             templateContext:
               outputs:

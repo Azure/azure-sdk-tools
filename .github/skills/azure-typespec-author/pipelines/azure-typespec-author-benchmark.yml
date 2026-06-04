@@ -1,4 +1,23 @@
 # NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+# Internal Usage Guide:
+# - Purpose: benchmark azure-typespec-author in two execution modes:
+#   1) forced mode (code-quality oriented), 2) trigger mode (skill-invocation oriented).
+# - Entry: run this pipeline manually (trigger/pr are disabled).
+# - Skill source:
+#   - SkillBranch empty: evaluate the current checked-out branch.
+#   - SkillBranch set: overlay SKILL.md + references from that branch before evaluation.
+#
+# Structure:
+# - Stage: EvalTypeSpecAuthor
+# - Job A: RunEvalsForCodeQuality   -> uses forced eval mode
+# - Job B: RunEvalsForSkillInvokation -> uses trigger eval mode
+# - Each job executes 5 domain suites (versioning, armtemplate, longrunningoperation,
+#   decorators, warning) as separate steps and uploads artifacts.
+#
+# Why split by suite:
+# - Faster fault isolation: failures are scoped to a small case group.
+# - Easier log querying and triage: each suite has a dedicated step name and timeout.
+# - Better resiliency: continueOnError at step level keeps later suites running.
 trigger: none
 pr: none
 
@@ -28,6 +47,8 @@ extends:
           image: $(LINUXVMIMAGE)
           os: linux
         jobs:
+          # Forced mode: each suite runs in an independent step to isolate failures
+          # and simplify error-log lookup by suite name.
           - job: RunEvalsForCodeQuality
             displayName: Run Vally Evaluations for Code Quality
             timeoutInMinutes: 170
@@ -91,6 +112,8 @@ extends:
                   displayName: Upload QA bot backend log
                   condition: always()
 
+          # Trigger mode: same suite split strategy for comparable diagnostics
+          # and easier cross-mode failure analysis.
           - job: RunEvalsForSkillInvokation
             displayName: Run Vally Evaluations for Skill Invokation
             timeoutInMinutes: 170

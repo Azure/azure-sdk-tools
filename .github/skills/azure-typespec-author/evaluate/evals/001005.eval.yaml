@@ -17,7 +17,8 @@ config:
 stimuli:
 - name: 001005-version-add-preview-after-preview
   tags:
-    - 'main'
+    suite: 'versioning'
+    mode: 'main'
   prompt: |
     Add a new preview version `2025-05-04-preview` to my service widget resource manager. Exclude Feature: the default value from the 'age' property. Carry other features.
     
@@ -123,7 +124,8 @@ stimuli:
     max_tokens: 100000
 - name: 001005-version-add-preview-after-preview-trigger
   tags:
-    - 'trigger'
+    suite: 'versioning'
+    mode: 'trigger'
   prompt: |
     Add a new preview version `2025-05-04-preview` to my service widget resource manager. Exclude Feature: the default value from the 'age' property. Carry other features.
     
@@ -143,7 +145,8 @@ stimuli:
     max_tokens: 50000
 - name: 001005-version-add-preview-after-preview-forced
   tags:
-    - 'forced'
+    suite: 'versioning'
+    mode: 'forced'
   prompt: |
     @azure-typespec-author Add a new preview version `2025-05-04-preview` to my service widget resource manager. Exclude Feature: the default value from the 'age' property. Carry other features.
     

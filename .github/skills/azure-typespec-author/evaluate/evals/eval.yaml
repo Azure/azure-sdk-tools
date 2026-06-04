@@ -21,6 +21,7 @@ stimuli:
 - name: 001001-version-spread-property
   tags:
     suite: versioning
+    mode: main
   prompt: I added `...Azure.ResourceManager.ManagedServiceIdentityProperty;` which updates all my existing API versions and introduces a breaking change. I want to introduce the properties of the spread model '...ManagedServiceIdentityProperty' in API version 2025-05-04-preview only.
   constraints:
     max_turns: 5
@@ -71,6 +72,7 @@ stimuli:
 - name: 001002-version-default-value
   tags:
     suite: versioning
+    mode: main
   prompt: |
     add a default value `21` for property age in model EmployeeProperties only for a new api version 2025-11-01
   constraints:
@@ -126,6 +128,7 @@ stimuli:
 - name: 001003-version-required-to-optional
   tags:
     suite: versioning
+    mode: main
   prompt: |
     change the property age of EmployeeProperties from required to optional for api version 2025-05-04-preview
   constraints:
@@ -177,6 +180,7 @@ stimuli:
 - name: 001004-version-property-decorator
   tags:
     suite: versioning
+    mode: main
   prompt: |
     change the visibility of property 'provisioningState' from Lifecycle.Read to Lifecycle.Read and Lifecycle.Create in version 2025-05-04-preview only
   constraints:
@@ -224,6 +228,7 @@ stimuli:
 - name: 001005-version-add-preview-after-preview
   tags:
     suite: versioning
+    mode: main
   prompt: |
     Add a new preview version `2025-05-04-preview` to my service widget resource manager. Exclude Feature: `age` property with default value 21. Carry other features.
   constraints:
@@ -324,6 +329,7 @@ stimuli:
 - name: 001006-version-add-preview-after-stable
   tags:
     suite: versioning
+    mode: main
   prompt: |
     Add a new preview version `2025-05-04-preview` to my service widget resource manager. Carry over all the features from the latest stable version
   constraints:
@@ -410,6 +416,7 @@ stimuli:
 - name: 001007-version-add-stable-after-preview
   tags:
     suite: versioning
+    mode: main
   prompt: |
     I want to add a new stable version `2025-01-01`. Exclude `workLocation` property and `WorkLocation` model. Carry other features.
   constraints:
@@ -512,6 +519,7 @@ stimuli:
 - name: 001008-version-add-stable-after-stable
   tags:
     suite: versioning
+    mode: main
   prompt: |
     Add a new stable version `2025-01-01` to my service. Carry over changes.
   constraints:
@@ -608,6 +616,7 @@ stimuli:
 - name: 001009-version-model-property-required
   tags:
     suite: versioning
+    mode: main
   prompt: |
     In the TypeSpec project at `./Microsoft.Widget/Widget/`, make the `email` property required in EmployeeProperties only for version `2025-05-04-preview`.
   constraints:
@@ -658,6 +667,7 @@ stimuli:
 - name: 001010-version-model-property-removed
   tags:
     suite: versioning
+    mode: main
   prompt: |
     In the TypeSpec project at `./Microsoft.Widget/Widget/`, remove the `department` property from EmployeeProperties only for version `2025-05-04-preview`.
   constraints:
@@ -702,6 +712,7 @@ stimuli:
 - name: 001011-version-model-property-renamed
   tags:
     suite: versioning
+    mode: main
   prompt: |
     In the TypeSpec project at `./Microsoft.Widget/Widget/`, rename the `age` property to `employeeAge` in EmployeeProperties only for version `2025-05-04-preview`.
   constraints:
@@ -750,6 +761,7 @@ stimuli:
 - name: 001012-version-operation-return-type-changed
   tags:
     suite: versioning
+    mode: main
   prompt: |
     In the TypeSpec project at `./Microsoft.Widget/Widget/`, change the return type of the `exportData` operation from `ExportResult` to `DetailedExportResult` with additional optional properties `format` (string) and `exportedAt` (utcDateTime) only for version `2025-05-04-preview`.
   constraints:
@@ -811,6 +823,7 @@ stimuli:
 - name: 001013-version-model-property-type-changed
   tags:
     suite: versioning
+    mode: main
   prompt: |
     In the TypeSpec project at `./Microsoft.Widget/Widget/`, change the type of the `statusCode` property from `string` to `int32` in EmployeeProperties only for version `2025-05-04-preview`.
   constraints:
@@ -865,6 +878,7 @@ stimuli:
 - name: 002001-ARM-change-resource-type
   tags:
     suite: armtemplate
+    mode: main
   prompt: |
     change resource Employee to be an extension resource
   constraints:
@@ -920,6 +934,7 @@ stimuli:
 - name: 002002-ARM-define-extension-resource-add
   tags:
     suite: armtemplate
+    mode: main
   prompt: |
     add an extension resource named asset
   constraints:
@@ -965,6 +980,7 @@ stimuli:
 - name: 002003-ARM-define-full-update-operation
   tags:
     suite: armtemplate
+    mode: main
   prompt: |
     Define a PATCH operation for Employees. It is to update properties of an employee. Ensure the definition meets TypeSpec Azure guidelines.
   constraints:
@@ -1002,6 +1018,7 @@ stimuli:
 - name: 002004-ARM-define-extension-resource-fromProxyResource
   tags:
     suite: armtemplate
+    mode: main
   prompt: |
     Define a "badge assignment" extension resource. It should be an extension resource that can be attached to an employee. Ensure the definition meets TypeSpec Azure guidelines.
   constraints:
@@ -1059,6 +1076,7 @@ stimuli:
 - name: 002005-ARM-define-the-resource
   tags:
     suite: armtemplate
+    mode: main
   prompt: |
     Define a Azure resource "Employee" under the namespace "Microsoft.Widget" using TypeSpec. Properties: age (int32, optional), city (string, optional), profile (bytes, optional), provisioningState (enum incorporating ResourceProvisioningState, optional, read-only). Ensure the definition meets TypeSpec Azure design guidelines.
   constraints:
@@ -1124,6 +1142,7 @@ stimuli:
 - name: 002006-ARM-define-child-resource
   tags:
     suite: armtemplate
+    mode: main
   prompt: |
     Create a new "AddressResource" child resource under the parent resource "Employee". Address properties: street 1(optional), street 2(optional), city(optional), state(optional), postal code(optional), country(optional), and a read-only provisioningState(optional). Ensure the definition meets TypeSpec Azure design guidelines.
   constraints:
@@ -1231,6 +1250,7 @@ stimuli:
 - name: 002007-ARM-define-custom-action
   tags:
     suite: armtemplate
+    mode: main
   prompt: |
     Add an additional POST action called "/notify" to the standard operations of Employee. Request body: message content (string) and priority (enum with values Low, Medium, High). Response body: notification identifier (string) and status (string). Ensure the definition meets TypeSpec Azure design guidelines.
   constraints:
@@ -1318,6 +1338,7 @@ stimuli:
 - name: 002008-ARM-add-parameters
   tags:
     suite: armtemplate
+    mode: main
   prompt: |
     add top and skip query parameters to the ListBySubscription operation in interface Employees
   constraints:
@@ -1358,6 +1379,7 @@ stimuli:
 - name: 002009-arm-add-patch-operation-to-resource
   tags:
     suite: armtemplate
+    mode: main
   prompt: |
     In the TypeSpec project in the current directory, add a patch operation to an existing ARM resource named 'Employee'
   constraints:
@@ -1401,6 +1423,7 @@ stimuli:
 - name: 002010-arm-action-sync-operation
   tags:
     suite: armtemplate
+    mode: main
   prompt: |
     In the TypeSpec project in the current directory, add a sync operation exportData for employee resource.
   constraints:
@@ -1448,6 +1471,7 @@ stimuli:
 - name: 003001-arm-action-lro
   tags:
     suite: lro
+    mode: main
   prompt: |
     Add a move async operation to move employee, operation's request is MoveRequest, response is MoveResponse
   constraints:
@@ -1495,6 +1519,7 @@ stimuli:
 - name: 003002-arm-modify-response
   tags:
     suite: lro
+    mode: main
   prompt: |
     Modify the LRO createOrUpdate PUT operation in interface Employees so that it returns Azure-AsyncOperation header but NOT Retry-After header in the 201 response. The operation currently uses ArmResourceCreateOrReplaceAsync<Employee> template.
   constraints:
@@ -1558,6 +1583,7 @@ stimuli:
 - name: 004001-decorate-mgmt-resource-name-parameter
   tags:
     suite: decorators
+    mode: main
   prompt: |
     use authoring plan to add minLength decorator to set the minLength 1 for resource name parameter of Employee resource
   constraints:
@@ -1609,6 +1635,7 @@ stimuli:
 - name: 004002-decorate-length-constrains-on-array-item
   tags:
     suite: decorators
+    mode: main
   prompt: |
     I have a property `assets: string[]` in EmployeeProperties. Add @minLength(3) @maxLength(10) constraints for any item of the assets array.
   constraints:
@@ -1668,6 +1695,7 @@ stimuli:
 - name: 004003-delete-and-restore-operationId-decorator
   tags:
     suite: decorators
+    mode: main
   prompt: |
     Remove @operationId and its associated #suppress for no-openapi from all operations. Then restore those operationIds that do not contain underscores or begin with a lowercase letter.
   constraints:
@@ -1735,6 +1763,7 @@ stimuli:
 - name: 005001-warning-suppress-warning
   tags:
     suite: warning
+    mode: main
   prompt: |
     Add suppressions for the warnings produced by "tsp compile .", and set the justification to "FIXME: Update justification, follow aka.ms/tsp/conversion-fix for details".
   constraints:

@@ -17,7 +17,8 @@ config:
 stimuli:
 - name: 001010-version-model-property-removed
   tags:
-    - 'main'
+    suite: 'versioning'
+    mode: 'main'
   prompt: |
     In the TypeSpec project at `./Microsoft.Widget/Widget/`, remove the `department` property from EmployeeProperties only for version `2025-05-04-preview`.
     
@@ -66,7 +67,8 @@ stimuli:
     max_tokens: 100000
 - name: 001010-version-model-property-removed-trigger
   tags:
-    - 'trigger'
+    suite: 'versioning'
+    mode: 'trigger'
   prompt: |
     In the TypeSpec project at `./Microsoft.Widget/Widget/`, remove the `department` property from EmployeeProperties only for version `2025-05-04-preview`.
     
@@ -86,7 +88,8 @@ stimuli:
     max_tokens: 50000
 - name: 001010-version-model-property-removed-forced
   tags:
-    - 'forced'
+    suite: 'versioning'
+    mode: 'forced'
   prompt: |
     @azure-typespec-author In the TypeSpec project at `./Microsoft.Widget/Widget/`, remove the `department` property from EmployeeProperties only for version `2025-05-04-preview`.
     

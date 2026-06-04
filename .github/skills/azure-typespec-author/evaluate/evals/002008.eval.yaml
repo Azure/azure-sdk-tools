@@ -17,7 +17,8 @@ config:
 stimuli:
 - name: 002008-ARM-add-parameters
   tags:
-    - 'main'
+    suite: 'armtemplate'
+    mode: 'main'
   prompt: |
     add top and skip query parameters to the ListBySubscription operation in interface Employees. Ensure the definition meets TypeSpec Azure guidelines.
     
@@ -66,7 +67,8 @@ stimuli:
     max_tokens: 100000
 - name: 002008-ARM-add-parameters-trigger
   tags:
-    - 'trigger'
+    suite: 'armtemplate'
+    mode: 'trigger'
   prompt: |
     add top and skip query parameters to the ListBySubscription operation in interface Employees. Ensure the definition meets TypeSpec Azure guidelines.
     
@@ -86,7 +88,8 @@ stimuli:
     max_tokens: 50000
 - name: 002008-ARM-add-parameters-forced
   tags:
-    - 'forced'
+    suite: 'armtemplate'
+    mode: 'forced'
   prompt: |
     @azure-typespec-author add top and skip query parameters to the ListBySubscription operation in interface Employees. Ensure the definition meets TypeSpec Azure guidelines.
     

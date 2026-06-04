@@ -17,7 +17,8 @@ config:
 stimuli:
 - name: 001012-version-operation-return-type-changed
   tags:
-    - 'main'
+    suite: 'versioning'
+    mode: 'main'
   prompt: |
     In the TypeSpec project at `./Microsoft.Widget/Widget/`, change the return type of the `exportData` operation from `ExportResult` to `DetailedExportResult` with additional optional properties `format` (string) and `exportedAt` (utcDateTime) only for version `2025-05-04-preview`.
     
@@ -83,7 +84,8 @@ stimuli:
     max_tokens: 100000
 - name: 001012-version-operation-return-type-changed-trigger
   tags:
-    - 'trigger'
+    suite: 'versioning'
+    mode: 'trigger'
   prompt: |
     In the TypeSpec project at `./Microsoft.Widget/Widget/`, change the return type of the `exportData` operation from `ExportResult` to `DetailedExportResult` with additional optional properties `format` (string) and `exportedAt` (utcDateTime) only for version `2025-05-04-preview`.
     
@@ -103,7 +105,8 @@ stimuli:
     max_tokens: 50000
 - name: 001012-version-operation-return-type-changed-forced
   tags:
-    - 'forced'
+    suite: 'versioning'
+    mode: 'forced'
   prompt: |
     @azure-typespec-author In the TypeSpec project at `./Microsoft.Widget/Widget/`, change the return type of the `exportData` operation from `ExportResult` to `DetailedExportResult` with additional optional properties `format` (string) and `exportedAt` (utcDateTime) only for version `2025-05-04-preview`.
     

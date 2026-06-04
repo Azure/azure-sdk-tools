@@ -17,7 +17,8 @@ config:
 stimuli:
 - name: 001004-version-property-decorator
   tags:
-    - 'main'
+    suite: 'versioning'
+    mode: 'main'
   prompt: |
     change the visibility of property 'provisioningState' from Lifecycle.Read to Lifecycle.Read and Lifecycle.Create in version 2025-05-04-preview only
     
@@ -69,7 +70,8 @@ stimuli:
     max_tokens: 100000
 - name: 001004-version-property-decorator-trigger
   tags:
-    - 'trigger'
+    suite: 'versioning'
+    mode: 'trigger'
   prompt: |
     change the visibility of property 'provisioningState' from Lifecycle.Read to Lifecycle.Read and Lifecycle.Create in version 2025-05-04-preview only
     
@@ -89,7 +91,8 @@ stimuli:
     max_tokens: 50000
 - name: 001004-version-property-decorator-forced
   tags:
-    - 'forced'
+    suite: 'versioning'
+    mode: 'forced'
   prompt: |
     @azure-typespec-author change the visibility of property 'provisioningState' from Lifecycle.Read to Lifecycle.Read and Lifecycle.Create in version 2025-05-04-preview only
     

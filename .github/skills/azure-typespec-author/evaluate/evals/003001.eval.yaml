@@ -17,7 +17,8 @@ config:
 stimuli:
 - name: 003001-arm-action-lro
   tags:
-    - 'main'
+    suite: 'lro'
+    mode: 'main'
   prompt: |
     Add a post async operation to move employee, operation's request is MoveRequest, response is MoveResponse.
     
@@ -69,7 +70,8 @@ stimuli:
     max_tokens: 100000
 - name: 003001-arm-action-lro-trigger
   tags:
-    - 'trigger'
+    suite: 'lro'
+    mode: 'trigger'
   prompt: |
     Add a post async operation to move employee, operation's request is MoveRequest, response is MoveResponse.
     
@@ -89,7 +91,8 @@ stimuli:
     max_tokens: 50000
 - name: 003001-arm-action-lro-forced
   tags:
-    - 'forced'
+    suite: 'lro'
+    mode: 'forced'
   prompt: |
     @azure-typespec-author Add a post async operation to move employee, operation's request is MoveRequest, response is MoveResponse.
     

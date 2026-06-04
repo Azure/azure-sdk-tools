@@ -70,13 +70,37 @@ Test suites are defined in `.vally.yaml` under the `suites` key. Available suite
 Run a suite by name:
 
 ```bash
-vally eval --suite versioning --output-dir versioning
+vally eval --suite versioning --output-dir ./result --workspace ./debug --verbose
 ```
 
-### Run with tag filtering (same as pipeline)
+### Suite modes (main / forced / trigger)
 
-The pipeline uses consolidated eval files with `--tag` to select subsets of cases.
-You can replicate this locally:
+Suites now support mode-specific names so pipelines can run each mode without using `--tag`:
+
+| Suite Name Example | Meaning |
+| --- | --- |
+| `versioning` | `suite=versioning, mode=main` |
+| `versioning-forced` | `suite=versioning, mode=forced` |
+| `versioning-trigger` | `suite=versioning, mode=trigger` |
+
+Examples:
+
+```bash
+# Main mode
+vally eval --suite longrunningoperation --output-dir ./result --workspace ./debug --verbose
+
+# Forced mode
+vally eval --suite longrunningoperation-forced --output-dir ./result --workspace ./debug --verbose
+
+# Trigger mode
+vally eval --suite longrunningoperation-trigger --output-dir ./result --workspace ./debug --verbose
+```
+
+`--suite` and `--tag` cannot be used together. Use one or the other.
+
+### Run with tag filtering (optional)
+
+Tag filtering is still useful for ad-hoc local runs:
 
 ```bash
 # Run forced mode (with MCP + skill) for versioning cases only
@@ -142,14 +166,17 @@ evaluate/
 
 ## Pipeline Architecture
 
-The CI uses 3 consolidated eval files (one per mode) with `--tag suite=<name>` to run
-each suite as a separate step with its own timeout:
+The CI runs in three mode groups (forced, trigger, no-skill), and each group is split into
+five suite steps. Splitting by suite makes error logs easier to query and helps isolate failures
+to a small case set.
+
+The benchmark-no-skill pipeline uses `--suite` directly (no `--tag` in suite mode):
 
 | Pipeline | Eval file | Mode |
 | -------- | --------- | ---- |
-| benchmark | `suites/forced.eval.yaml` | Forced skill + MCP + code quality |
-| benchmark | `suites/trigger.eval.yaml` | Skill invocation detection |
-| benchmark-no-skill | `suites/no-skill.eval.yaml` | Pure agent baseline |
+| benchmark-no-skill | `.vally.yaml` suites (`*-forced`) | Forced skill + MCP + code quality |
+| benchmark-no-skill | `.vally.yaml` suites (`*-trigger`) | Skill invocation detection |
+| benchmark-no-skill | `.vally.yaml` suites (`main`) | Pure agent baseline |
 
-Each stimulus has a `tags: { suite: versioning|armtemplate|lro|decorators|warning }` field
-that enables per-suite filtering via `--tag suite=<name>`.
+Each stimulus has dual tags: `suite` and `mode`, for example
+`{ suite: versioning, mode: forced }`.

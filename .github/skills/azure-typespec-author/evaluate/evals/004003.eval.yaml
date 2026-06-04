@@ -17,7 +17,8 @@ config:
 stimuli:
 - name: 004003-delete-and-restore-operationId-decorator
   tags:
-    - 'main'
+    suite: 'decorators'
+    mode: 'main'
   prompt: |
     Remove @operationId and its associated #suppress for no-openapi from all operations. Then restore those operationIds that do not contain underscores or begin with a lowercase letter.
     
@@ -113,7 +114,8 @@ stimuli:
     max_tokens: 100000
 - name: 004003-delete-and-restore-operationId-decorator-trigger
   tags:
-    - 'trigger'
+    suite: 'decorators'
+    mode: 'trigger'
   prompt: |
     Remove @operationId and its associated #suppress for no-openapi from all operations. Then restore those operationIds that do not contain underscores or begin with a lowercase letter.
     
@@ -133,7 +135,8 @@ stimuli:
     max_tokens: 50000
 - name: 004003-delete-and-restore-operationId-decorator-forced
   tags:
-    - 'forced'
+    suite: 'decorators'
+    mode: 'forced'
   prompt: |
     @azure-typespec-author Remove @operationId and its associated #suppress for no-openapi from all operations. Then restore those operationIds that do not contain underscores or begin with a lowercase letter.
     

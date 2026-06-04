@@ -31,7 +31,10 @@ steps:
         TAG_ARG="--tag ${{ parameters.Tag }}"
       fi
       if [ -n "${{ parameters.Suite }}" ]; then
-        vally eval --suite "${{ parameters.Suite }}" --output-dir ./result --workspace ./debug --verbose $SKILL_ARG $TAG_ARG
+        if [ -n "${{ parameters.Tag }}" ]; then
+          echo "Ignoring Tag parameter in suite mode to avoid unsupported --suite + --tag combination"
+        fi
+        vally eval --suite "${{ parameters.Suite }}" --output-dir ./result --workspace ./debug --verbose $SKILL_ARG
       else
         vally eval --eval-spec "suites/${{ parameters.EvalFile }}" --output-dir results --verbose $SKILL_ARG $TAG_ARG
       fi

@@ -385,44 +385,36 @@ class ChatService:
         broken_conversation_id: str,
         current_turn_items: list[ResponseInputItemParam],
     ) -> tuple[str, list[ResponseInputItemParam]]:
-        """Discard the corrupted Foundry conversation and reseed from its own
-        item history, dropping tool-call items so the new conversation starts
-        in a consistent state.
+        """Abandon the corrupted Foundry conversation and reseed a fresh one
+        from its own item history, dropping tool-call items so the new
+        conversation starts in a consistent state.
+
+        The broken conversation is intentionally NOT deleted — it is kept on
+        the server for tracing/debugging. We just stop pointing at it: the
+        Cosmos mapping is overwritten so future turns use the new id, and the
+        orphaned conversation can be cleaned up out-of-band later.
 
         Strategy:
-        1. List items from the broken Foundry conversation BEFORE deleting it,
-           and keep only ``message`` items (user/assistant text and any
-           multimodal content). Tool-related items (``function_call``,
-           ``function_call_output``, ``mcp_call``, ``code_interpreter_call``,
-           etc.) are dropped — they are what caused the corruption and are
-           safe to omit because the assistant's final text already summarizes
-           their effect for the user.
-        2. Delete the broken conversation (best effort).
-        3. Create a fresh Foundry conversation and update the Cosmos mapping.
-        4. Compose the next-turn input as: system anchors from the current
+        1. List items from the broken Foundry conversation and keep only
+           ``message`` items (user/assistant text and any multimodal content).
+           Tool-related items (``function_call``, ``function_call_output``,
+           ``mcp_call``, ``code_interpreter_call``, etc.) are dropped — they
+           are what caused the corruption and are safe to omit because the
+           assistant's final text already summarizes their effect.
+        2. Create a fresh Foundry conversation and update the Cosmos mapping
+           so future turns use the new id.
+        3. Compose the next-turn input as: system anchors from the current
            turn + the filtered Foundry history + the current turn's live
            inputs.
         """
-        # 1. Pull surviving message items from the broken conversation first.
+        # 1. Pull surviving message items from the broken conversation.
         replay_items = await self._list_message_items(
             openai_client, broken_conversation_id
         )
 
-        # 2. Delete the broken conversation (best effort).
-        try:
-            await openai_client.conversations.delete(broken_conversation_id)
-            logger.info(
-                "Deleted broken Foundry conversation: %s", broken_conversation_id
-            )
-        except Exception:
-            logger.warning(
-                "Failed to delete broken Foundry conversation %s; continuing.",
-                broken_conversation_id,
-                exc_info=True,
-            )
-
-        # 3. Create a new conversation and update the Cosmos mapping so future
-        #    turns use the new id
+        # 2. Create a new conversation and update the Cosmos mapping (upsert
+        #    replaces the prior mapping). The broken conversation is left in
+        #    place for tracing.
         new_conversation = await openai_client.conversations.create()
         new_conversation_id = new_conversation.id
         await self._conversation_service.save_agent_conversation_mapping(
@@ -431,12 +423,13 @@ class ChatService:
             agent_conversation_id=new_conversation_id,
         )
         logger.info(
-            "Created replacement Foundry conversation: %s (replaces %s)",
+            "Created replacement Foundry conversation: %s (replaces %s, "
+            "broken conversation preserved for tracing)",
             new_conversation_id,
             broken_conversation_id,
         )
 
-        # 4. Split current_turn_items into system anchors vs. live user
+        # 3. Split current_turn_items into system anchors vs. live user
         #    inputs. System messages (tenant context, memory scope) were
         #    rebuilt this turn and are not part of the historical replay.
         system_anchors: list[ResponseInputItemParam] = []

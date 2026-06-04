@@ -19,3 +19,4 @@ mcp>=1.0.0
 fastapi
 uvicorn[standard]
 azure-monitor-opentelemetry
+azure-monitor-query>=1.3.0

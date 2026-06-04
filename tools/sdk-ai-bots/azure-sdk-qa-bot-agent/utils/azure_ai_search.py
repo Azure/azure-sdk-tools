@@ -156,7 +156,6 @@ class SearchClient:
             search_text=query,
             filter=combined_filter or None,
             query_type=QueryType.SEMANTIC,
-            query_language="en-us",
             top=k,
             select=select_fields,
             vector_queries=[vector_query],

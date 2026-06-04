@@ -162,6 +162,19 @@ describe('reportStatus', () => {
   });
 
   describe('generateReport', () => {
+    type WrittenExecutionReport = {
+      packages: Array<{
+        breakingChangeLabel?: string;
+        shouldLabelBreakingChange?: boolean;
+      }>;
+    };
+
+    const getWrittenExecutionReport = () => {
+      const call = vi.mocked(writeTmpJsonFile).mock.calls.find(([, fileName]) => fileName === 'execution-report.json');
+      expect(call).toBeDefined();
+      return call![2] as WrittenExecutionReport;
+    };
+
     it('should generate report successfully with valid context', () => {
       vi.mocked(fs.existsSync).mockReturnValue(false);
 
@@ -175,6 +188,44 @@ describe('reportStatus', () => {
       expect(setSdkAutoStatus).toHaveBeenCalledWith(mockWorkflowContext, 'succeeded');
       expect(deleteTmpJsonFile).toHaveBeenCalledWith(mockWorkflowContext, 'execution-report.json');
       expect(writeTmpJsonFileMock.mock.calls[0][2]).toMatchSnapshot();
+    });
+
+    it('should use breakingChangesLabel when only plural config key is provided', () => {
+      generateReport(mockWorkflowContext);
+
+      expect(getWrittenExecutionReport().packages[0]).toEqual(expect.objectContaining({
+        breakingChangeLabel: 'breaking-change',
+      }));
+    });
+
+    it('should fall back to breakingChangeLabel when plural config key is not provided', () => {
+      mockWorkflowContext.swaggerToSdkConfig.packageOptions.breakingChangesLabel = undefined;
+      mockWorkflowContext.swaggerToSdkConfig.packageOptions.breakingChangeLabel = 'legacy-breaking-change';
+
+      generateReport(mockWorkflowContext);
+
+      expect(getWrittenExecutionReport().packages[0]).toEqual(expect.objectContaining({
+        breakingChangeLabel: 'legacy-breaking-change',
+      }));
+    });
+
+    it('should prefer breakingChangesLabel when both config keys are provided', () => {
+      mockWorkflowContext.swaggerToSdkConfig.packageOptions.breakingChangesLabel = 'canonical-breaking-change';
+      mockWorkflowContext.swaggerToSdkConfig.packageOptions.breakingChangeLabel = 'legacy-breaking-change';
+
+      generateReport(mockWorkflowContext);
+
+      expect(getWrittenExecutionReport().packages[0]).toEqual(expect.objectContaining({
+        breakingChangeLabel: 'canonical-breaking-change',
+      }));
+    });
+
+    it('should include shouldLabelBreakingChange in generated execution report', () => {
+      generateReport(mockWorkflowContext);
+
+      expect(getWrittenExecutionReport().packages[0]).toEqual(expect.objectContaining({
+        shouldLabelBreakingChange: false,
+      }));
     });
 
     it('should handle breaking changes correctly', () => {

@@ -165,8 +165,12 @@
           // Update version and release data.
           "$ref": "#/definitions/RunOptions"
         },
+        "breakingChangesLabel": {
+          // Canonical label to be added in spec PR if breaking change is found
+          "type": "string"
+        },
         "breakingChangeLabel": {
-          // Label to be added in spec PR if breaking change is found
+          // Backward-compatible alias for breakingChangesLabel
           "type": "string"
         }
       },

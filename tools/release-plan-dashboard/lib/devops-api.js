@@ -263,7 +263,7 @@ function mapReleasePlan(workItem, apiSpecMap) {
     createdBy: stripEmail(createdByName),
     releaseMonth: fields["Custom.SDKReleasemonth"] || "",
     releaseType: fields["Custom.SDKtypetobereleased"] || "",
-    releasePlanId: fields["Custom.ReleasePlanID"] || "",
+    releasePlanId: fields["Custom.ReleasePlanID"] || String(id),
     releasePlanLink: fields["Custom.ReleasePlanLink"] || "",
     submittedBy: submittedByName || createdByName,
     ownerPM: stripEmail(fields["Custom.PrimaryPM"] || ""),

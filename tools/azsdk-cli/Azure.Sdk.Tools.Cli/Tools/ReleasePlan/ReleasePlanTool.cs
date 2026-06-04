@@ -417,6 +417,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 ReleasePlanWorkItem? releasePlan = null;
 
+                // Resolve absolute TypeSpec project path to repo-relative path before any lookup
+                if (!string.IsNullOrWhiteSpace(typeSpecProjectPath) && typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectPath))
+                {
+                    typeSpecProjectPath = typeSpecHelper.GetTypeSpecProjectRelativePath(typeSpecProjectPath);
+                }
+
                 if (workItemId != 0)
                 {
                     releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(workItemId, ct);

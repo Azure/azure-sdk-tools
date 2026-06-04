@@ -20,6 +20,7 @@ The bot should NOT respond when the message is:
 - A rhetorical question or thinking-aloud comment
 - A message clearly directed at specific people instead of the bot or the ongoing bot exchange
 - A greeting or thank-you that doesn't need a bot answer
+- A request asking a human to approve, confirm, verify, or review the bot's own prior answer (e.g., "can some human approve the above AI-generated response"). This does not apply to ordinary PR or spec review requests.
 
 When prior conversation history is provided:
 
@@ -36,3 +37,5 @@ Example responses:
 {"should_respond": true, "reason": "The user is asking a technical question about TypeSpec SDK generation."}
 {"should_respond": true, "reason": "The message is a follow-up clarification to the bot's previous TypeSpec guidance."}
 {"should_respond": false, "reason": "The message is a casual thank-you that does not require a bot answer."}
+{"should_respond": false, "reason": "The user is explicitly asking a human to approve/confirm the bot's previous answer, so the bot should defer to a human."}
+{"should_respond": true, "reason": "The message is a PR review request in the bot's domain, which should still be classified as a response-worthy ask."}

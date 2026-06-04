@@ -106,20 +106,20 @@
     <h3>Step 2: Collect the following details</h3>
     <ol class="guide-list">
       <li><strong>Relative path</strong> to your TypeSpec project<br><em>e.g. <code>specification/contosowidgetmanager/Contoso.Management</code></em></li>
-      <li><strong>SDK release type:</strong> beta or stable</li>
+      <li><strong>API release type:</strong> Private Preview, Public Preview, or GA</li>
       <li><strong>API spec pull request</strong> (optional)</li>
-      <li><strong>Service Tree ID</strong> for your service <em>(optional*)</em></li>
-      <li><strong>Service Tree ID</strong> for your product <em>(optional*)</em></li>
+      <li><strong>Product's ID in Service Tree</strong> <em>(optional*)</em></li>
+      <li><strong>Service ID</strong> for the service linked to your product <em>(optional*)</em></li>
     </ol>
     <p style="font-size:.82rem;color:#605e5c;">* Service Tree IDs are only required if this is the first time creating a release plan for your TypeSpec project path. For subsequent plans, they will be auto-populated.</p>
     <h3>Step 3: Use this prompt</h3>
     <p>Copy and paste the following prompt into Copilot CLI or VS Code Copilot chat, filling in your details:</p>
     <pre class="guide-prompt"><code>Create a release plan for TypeSpec project with following details:
 - TypeSpec project path: &lt;specification/your-service/Your.Management&gt;
-- SDK release type: &lt;beta or stable&gt;
+- API release type: &lt;Private Preview, Public Preview, or GA&gt;
 - API spec PR: &lt;optional PR link&gt;
-- Service Tree ID (Service): &lt;optional, your-service-tree-id&gt;
-- Service Tree ID (Product): &lt;optional, your-product-tree-id&gt;</code></pre>
+- Product ID: &lt;optional, your-product-tree-id&gt;
+- Service ID: &lt;optional, your-service-tree-id&gt;</code></pre>
     <p style="font-size:.82rem;color:#605e5c;margin-top:12px;">📘 For more details, visit <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">Azure SDK Tools Agent documentation</a>.</p>`;
 
   // Set default modal content in store once Alpine is ready

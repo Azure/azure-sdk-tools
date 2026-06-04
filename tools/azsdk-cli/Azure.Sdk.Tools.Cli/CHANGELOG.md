@@ -1,5 +1,21 @@
 # Release History
 
+## 0.6.18 (Unreleased)
+
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
+## 0.6.17 (2026-06-02)
+
+### Bugs Fixed
+
+- Fixed issues in the MCP tool to lookup service details using TypeSpec project path.
+
 ## 0.6.16 (2026-06-01)
 
 ### Bugs Fixed

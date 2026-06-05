@@ -397,7 +397,11 @@ describe("github-api additional tests", () => {
     test("handles comment with null body in APIView search", () => {
       const comments = [
         { user: { login: "bot[bot]" }, body: null },
-        { user: { login: "alice", type: "User" }, body: "hello", created_at: "2024-01-01" },
+        {
+          user: { login: "alice", type: "User" },
+          body: "hello",
+          created_at: "2024-01-01",
+        },
       ];
       const result = githubApi.extractCommentData(comments);
       expect(result.apiViewUrl).toBe("");

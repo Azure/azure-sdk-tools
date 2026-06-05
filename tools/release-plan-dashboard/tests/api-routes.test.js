@@ -302,7 +302,7 @@ describe("API routes", () => {
     });
   });
 
-   describe("POST /api/refresh", () => {
+  describe("POST /api/refresh", () => {
     test("refreshes cache successfully", async () => {
       const res = await httpRequest("POST", "/api/refresh");
       expect(res.status).toBe(200);

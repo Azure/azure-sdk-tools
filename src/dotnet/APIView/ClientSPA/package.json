@@ -91,7 +91,7 @@
       "vitest": "^4.0.18"
     },
     "external-editor": {
-      "tmp": "^0.2.5"
+      "tmp": "^0.2.6"
     }
   },
   "optionalDependencies": {

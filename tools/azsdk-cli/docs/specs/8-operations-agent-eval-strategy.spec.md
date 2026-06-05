@@ -94,7 +94,7 @@ Plus a hermetic tool-shape layer that isn't agent-driven:
 
 | Kind | What it proves | Lives in |
 |---|---|---|
-| **Tools** | Tool X exists and returns the right shape for these inputs. Cross-skill trigger tables. | `evals/tools/` |
+| **Tools** |Each MCP tool is wired up, returns the expected response shape, and is reliably picked from a range of paraphrased user prompts (one tool per stimulus, no multi-step planning). | `evals/tools/` |
 
 #### Required graders by kind
 
@@ -114,7 +114,7 @@ that's where the response grader earns its cost.
 
 ```
 evals/
-├── tools/                  tool-shape + cross-skill triggers (hermetic)
+├── tools/                  one prompt → one tool
 ├── workflow-scenarios/
 │   ├── mock/               workflow scenarios run against the mock MCP
 │   └── live/               workflow scenarios run against the live MCP

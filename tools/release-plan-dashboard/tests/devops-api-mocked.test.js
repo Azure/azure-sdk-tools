@@ -7,7 +7,9 @@ process.env.GITHUB_INSTALL_OWNER = "TestOrg";
 
 vi.mock("@azure/identity", () => ({
   DefaultAzureCredential: vi.fn().mockImplementation(function () {
-    return { getToken: vi.fn().mockResolvedValue({ token: "mock-bearer-token" }) };
+    return {
+      getToken: vi.fn().mockResolvedValue({ token: "mock-bearer-token" }),
+    };
   }),
 }));
 
@@ -377,6 +379,35 @@ describe("fetchPackageWorkItems", () => {
       { pkg: "", lang: "Python" },
       { pkg: null, lang: "Java" },
     ]);
+    expect(result.size).toBe(0);
+  });
+
+  test("continues when WIQL returns no IDs for a batch", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation((url) => {
+        if (url.includes("wiql")) {
+          // Return empty workItems array
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            text: () => Promise.resolve(JSON.stringify({ workItems: [] })),
+            headers: new Headers(),
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          text: () => Promise.resolve(JSON.stringify({ value: [] })),
+          headers: new Headers(),
+        });
+      }),
+    );
+
+    const result = await fetchPackageWorkItems([
+      { pkg: "azure-core", lang: "Python" },
+    ]);
+    expect(result).toBeInstanceOf(Map);
     expect(result.size).toBe(0);
   });
 });

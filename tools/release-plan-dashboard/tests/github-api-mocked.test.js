@@ -178,6 +178,47 @@ describe("getGitHubPrDetails (mocked Octokit)", () => {
     expect(mockOctokit.checks.listForRef).not.toHaveBeenCalled();
   });
 
+  test("handles prData with missing optional fields (fallback branches)", async () => {
+    mockOctokit.pulls.get.mockResolvedValue({
+      data: {
+        // mergeable, mergeable_state, title, updated_at are all missing
+        state: "open",
+        draft: false,
+        head: null,
+      },
+    });
+    mockOctokit.pulls.listReviews.mockResolvedValue({ data: [] });
+    mockOctokit.issues.listComments.mockResolvedValue({ data: [] });
+
+    const result = await getGitHubPrDetails(VALID_PR_URL);
+    expect(result).not.toBeNull();
+    expect(result.mergeable).toBe(false);
+    expect(result.mergeableState).toBe("");
+    expect(result.title).toBe("");
+    expect(result.updatedAt).toBe("");
+    expect(result.requestedReviewers).toEqual([]);
+  });
+
+  test("handles checks.listForRef returning null data", async () => {
+    mockOctokit.pulls.get.mockResolvedValue({
+      data: {
+        mergeable: true,
+        mergeable_state: "clean",
+        title: "PR",
+        updated_at: "2024-06-01",
+        head: { sha: "abc123" },
+        requested_reviewers: [],
+      },
+    });
+    mockOctokit.pulls.listReviews.mockResolvedValue({ data: [] });
+    mockOctokit.checks.listForRef.mockResolvedValue({ data: null });
+    mockOctokit.issues.listComments.mockResolvedValue({ data: [] });
+
+    const result = await getGitHubPrDetails(VALID_PR_URL);
+    expect(result).not.toBeNull();
+    expect(result.failedChecks).toEqual([]);
+  });
+
   test("handles checks API error gracefully", async () => {
     mockOctokit.pulls.get.mockResolvedValue({
       data: {
@@ -244,12 +285,18 @@ describe("getGitHubPrDetails (mocked Octokit)", () => {
 });
 
 describe("getGitHubPrFiles (mocked Octokit)", () => {
-  test("returns file list from paginate", async () => {
-    mockOctokit.paginate.mockResolvedValue([
-      "src/file1.ts",
-      "src/file2.ts",
-      "tspconfig.yaml",
-    ]);
+  test("returns file list from paginate with callback invoked", async () => {
+    // Mock paginate to invoke the map function (3rd argument) like real paginate does
+    mockOctokit.paginate.mockImplementation(async (method, params, mapFn) => {
+      const fakeResponse = {
+        data: [
+          { filename: "src/file1.ts", status: "modified" },
+          { filename: "src/file2.ts", status: "added" },
+          { filename: "tspconfig.yaml", status: "added" },
+        ],
+      };
+      return mapFn(fakeResponse);
+    });
 
     const result = await getGitHubPrFiles(VALID_PR_URL);
     expect(result).toEqual(["src/file1.ts", "src/file2.ts", "tspconfig.yaml"]);
@@ -413,10 +460,15 @@ describe("batchFetchPrDetails (mocked Octokit)", () => {
 
 describe("batchFetchSpecProjectPaths (mocked Octokit)", () => {
   test("fetches files and derives TypeSpec project paths", async () => {
-    mockOctokit.paginate.mockResolvedValue([
-      "specification/compute/tspconfig.yaml",
-      "specification/compute/main.tsp",
-    ]);
+    mockOctokit.paginate.mockImplementation(async (method, params, mapFn) => {
+      const fakeResponse = {
+        data: [
+          { filename: "specification/compute/tspconfig.yaml" },
+          { filename: "specification/compute/main.tsp" },
+        ],
+      };
+      return mapFn(fakeResponse);
+    });
 
     const urls = ["https://github.com/Azure/azure-rest-api-specs/pull/10"];
     const result = await batchFetchSpecProjectPaths(urls);

@@ -65,12 +65,38 @@ describe("github-api additional tests", () => {
       const result = await githubApi.getGitHubPrStatus(null);
       expect(result).toBeNull();
     });
+
+    test("returns null when no token is available (valid URL)", async () => {
+      const savedPat = process.env.GITHUB_PAT_RELEASE_PLAN;
+      const savedGh = process.env.GH_TOKEN;
+      delete process.env.GITHUB_PAT_RELEASE_PLAN;
+      delete process.env.GH_TOKEN;
+      const result = await githubApi.getGitHubPrStatus(
+        "https://github.com/Azure/sdk/pull/1",
+      );
+      expect(result).toBeNull();
+      if (savedPat) process.env.GITHUB_PAT_RELEASE_PLAN = savedPat;
+      if (savedGh) process.env.GH_TOKEN = savedGh;
+    });
   });
 
   describe("getGitHubPrDetails with invalid URL", () => {
     test("returns null for invalid PR URL", async () => {
       const result = await githubApi.getGitHubPrDetails("not-a-url");
       expect(result).toBeNull();
+    });
+
+    test("returns null when no token is available (valid URL)", async () => {
+      const savedPat = process.env.GITHUB_PAT_RELEASE_PLAN;
+      const savedGh = process.env.GH_TOKEN;
+      delete process.env.GITHUB_PAT_RELEASE_PLAN;
+      delete process.env.GH_TOKEN;
+      const result = await githubApi.getGitHubPrDetails(
+        "https://github.com/Azure/sdk/pull/1",
+      );
+      expect(result).toBeNull();
+      if (savedPat) process.env.GITHUB_PAT_RELEASE_PLAN = savedPat;
+      if (savedGh) process.env.GH_TOKEN = savedGh;
     });
   });
 
@@ -368,6 +394,28 @@ describe("github-api additional tests", () => {
       expect(result.latestComment.body).toHaveLength(300);
     });
 
+    test("handles comment with null body in APIView search", () => {
+      const comments = [
+        { user: { login: "bot[bot]" }, body: null },
+        { user: { login: "alice", type: "User" }, body: "hello", created_at: "2024-01-01" },
+      ];
+      const result = githubApi.extractCommentData(comments);
+      expect(result.apiViewUrl).toBe("");
+      expect(result.latestComment.author).toBe("alice");
+    });
+
+    test("handles keyword present but no matching APIView URL", () => {
+      const comments = [
+        {
+          user: { login: "bot[bot]", type: "Bot" },
+          body: "API Change Check: no URL here, just text",
+          created_at: "2024-01-01",
+        },
+      ];
+      const result = githubApi.extractCommentData(comments);
+      expect(result.apiViewUrl).toBe("");
+    });
+
     test("handles comment with missing user login", () => {
       const comments = [
         { user: {}, body: "comment with no login", created_at: "2024-01-01" },
@@ -503,6 +551,36 @@ describe("github-api additional tests", () => {
       delete process.env.GH_TOKEN;
       const octokit = githubApi.getOctokit();
       expect(octokit).toBeNull();
+      if (savedPat) process.env.GITHUB_PAT_RELEASE_PLAN = savedPat;
+      if (savedGh) process.env.GH_TOKEN = savedGh;
+    });
+  });
+
+  describe("getGitHubPrFiles no-token guard", () => {
+    test("returns empty array when no token is available", async () => {
+      const savedPat = process.env.GITHUB_PAT_RELEASE_PLAN;
+      const savedGh = process.env.GH_TOKEN;
+      delete process.env.GITHUB_PAT_RELEASE_PLAN;
+      delete process.env.GH_TOKEN;
+      const result = await githubApi.getGitHubPrFiles(
+        "https://github.com/Azure/sdk/pull/1",
+      );
+      expect(result).toEqual([]);
+      if (savedPat) process.env.GITHUB_PAT_RELEASE_PLAN = savedPat;
+      if (savedGh) process.env.GH_TOKEN = savedGh;
+    });
+  });
+
+  describe("getGitHubPrLabels no-token guard", () => {
+    test("returns empty array when no token is available", async () => {
+      const savedPat = process.env.GITHUB_PAT_RELEASE_PLAN;
+      const savedGh = process.env.GH_TOKEN;
+      delete process.env.GITHUB_PAT_RELEASE_PLAN;
+      delete process.env.GH_TOKEN;
+      const result = await githubApi.getGitHubPrLabels(
+        "https://github.com/Azure/sdk/pull/1",
+      );
+      expect(result).toEqual([]);
       if (savedPat) process.env.GITHUB_PAT_RELEASE_PLAN = savedPat;
       if (savedGh) process.env.GH_TOKEN = savedGh;
     });

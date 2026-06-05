@@ -1,6 +1,7 @@
 # Shared setup steps for azure-typespec-author evaluation jobs.
-# Installs Go, starts QA bot backend, installs .NET/Node/Vally/TypeSpec,
-# builds azsdk-cli, and downloads spec repo packages.
+# Installs Go, starts QA bot backend, installs .NET/Node/TypeSpec,
+# installs Vally from eng/skill-eval lockfile, builds azsdk-cli,
+# and downloads spec repo packages.
 
 parameters:
   - name: SkillBranch
@@ -101,7 +102,9 @@ steps:
         --no-restore --nologo
     displayName: Build azsdk-cli (MCP server)
 
-  # Install Node.js, Vally CLI, and Copilot SDK
+  # Install Node.js and npm dependencies from the local lockfile.
+  # All CLI tools (vally, copilot-sdk, tsp) are pinned in pipelines/package.json
+  # and made available on PATH via prependpath so downstream steps can invoke them directly.
   - task: NodeTool@0
     displayName: Use Node.js 22
     inputs:
@@ -112,18 +115,13 @@ steps:
       npmrcPath: $(Build.SourcesDirectory)/.npmrc
       registryUrl: https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-tools/npm/registry/
 
-  - script: npm install --global @microsoft/vally-cli@0.4.0 --userconfig $(Build.SourcesDirectory)/.npmrc
-    displayName: Install Vally CLI
-
-  - script: npm install --global @github/copilot-sdk --userconfig $(Build.SourcesDirectory)/.npmrc
-    displayName: Install Copilot SDK
-
   - script: |
-      set -e
-      npm install --global @typespec/compiler --userconfig $(Build.SourcesDirectory)/.npmrc
+      npm ci --userconfig $(Build.SourcesDirectory)/.npmrc
+      echo "##vso[task.prependpath]$(Build.SourcesDirectory)/.github/skills/azure-typespec-author/pipelines/node_modules/.bin"
       echo "tsp version:"
       tsp --version || true
-    displayName: Install TypeSpec compiler
+    displayName: Install Vally CLI, Copilot SDK, TypeSpec compiler (pinned via lockfile)
+    workingDirectory: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/pipelines
 
   # Download spec repo packages and install node_modules
   - script: |

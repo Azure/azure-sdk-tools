@@ -20,7 +20,6 @@ parameters:
 
 steps:
   - script: |
-      cd "$(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate"
       SKILL_ARG=""
       if [ "${{ parameters.LoadSkills }}" = "False" ]; then
         mkdir -p /tmp/no-skills
@@ -39,6 +38,7 @@ steps:
         vally eval --eval-spec "suites/${{ parameters.EvalFile }}" --output-dir results --verbose $SKILL_ARG $TAG_ARG
       fi
     displayName: ${{ parameters.DisplayName }}
+    workingDirectory: $(Build.SourcesDirectory)/.github/skills/azure-typespec-author/evaluate
     timeoutInMinutes: ${{ parameters.TimeoutMinutes }}
     continueOnError: true
     condition: always()

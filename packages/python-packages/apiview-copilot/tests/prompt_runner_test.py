@@ -28,12 +28,7 @@ class TestRenderTemplate:
         assert result == "- a\n- b\n- c\n"
 
     def test_for_loop_matches_resolve_package_pattern(self):
-        template = (
-            "Available packages:\n"
-            "{% for pkg in available_packages %}\n"
-            "- {{pkg}}\n"
-            "{% endfor %}"
-        )
+        template = "Available packages:\n" "{% for pkg in available_packages %}\n" "- {{pkg}}\n" "{% endfor %}"
         result = _render_template(template, {"available_packages": ["azure-storage-blob", "azure-keyvault-secrets"]})
         assert "- azure-storage-blob" in result
         assert "- azure-keyvault-secrets" in result

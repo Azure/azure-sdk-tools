@@ -63,7 +63,7 @@ stimuli:
         source: C:/Users/gaoh/.vally-cache/azure-rest-api-specs
         ref: main
     prompt: |
-      I'm in a checkout of azure-rest-api-specs. Walk me through the full
+      Walk me through the full
       release-plan + SDK-generation flow for the Contoso Widget Manager
       end-to-end. Do every step below, in order, and use real tools (no
       dry-run, no simulation):

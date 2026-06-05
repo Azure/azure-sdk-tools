@@ -144,6 +144,19 @@ Prereqs:
   cd eng/skill-eval
   npm ci
   ```
+- **Build the MCP servers once** before running vally. `.vally.yaml`
+  launches the pre-built DLLs via `dotnet <dll>` to avoid the build-time
+  race that crashes parallel workers with `MCP error -32000: Connection
+  closed`. See [`primer-vally-mcp-race.html`](https://github.com/Azure/azure-sdk-tools/blob/main/doc/) (notebook) for the full write-up.
+
+  ```powershell
+  # From repo root — builds both Azure.Sdk.Tools.Mock and (transitively) Cli
+  dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Cli -c Debug
+  dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Mock -c Debug
+  ```
+
+  Rebuild after editing any tool source. Vally itself does **not** rebuild
+  the MCP server — it just spawns the existing DLL.
 
 Run a suite (recommended):
 
@@ -168,11 +181,12 @@ $skills = '../../../.github/skills'
 > the agent never loads the project skills and the `skill-invocation`
 > grader fails even when the tool calls are correct.
 >
-> Each agent boots its own MCP child process, so parallel workers compete
-> for stdio startup. Keep `--workers` at 1–2 for `scenarios-mock` / live
-> runs until we share a single Mock MCP server across workers — higher
-> concurrency triggers `MCP server 'azure-sdk-mcp' failed to load:
-> Connection closed` on most stimuli.
+> Each agent still boots its own MCP child process, but `.vally.yaml`
+> launches the **pre-built** `azsdk-mock.dll` / `azsdk.dll` via
+> `dotnet <dll>` (read-only memory-map, no MSBuild on the hot path), so
+> `--workers 6+` is safe for `scenarios-mock`. The old MSBuild boot race
+> is gone; the only remaining concurrency limit is rate limits on the
+> Copilot CLI subprocesses.
 
 Run a single eval:
 

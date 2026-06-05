@@ -11,33 +11,26 @@ paths:
   results: results/
 
 environments:
-  # Default for unit + mock scenarios. Runs the dedicated Azure.Sdk.Tools.Mock
-  # MCP server — a separate process whose tool surface mirrors the real CLI
-  # but with deterministic in-memory responses.
-  #
-  # Relative `--project` paths are resolved by `dotnet` against the cwd of
-  # the vally invocation. Always run vally from this directory:
-  #   cd tools/azsdk-cli/Azure.Sdk.Tools.Vally && vally eval ...
-  # Same convention as .github/skills/.vally.yaml.
+  # Launch the pre-built DLL via `dotnet <dll>`, NOT `dotnet run` — avoids the
+  # MSBuild boot race under parallel workers. See issue #15948.
+  # Run `dotnet build ../Azure.Sdk.Tools.Mock -c Debug` once before vally.
   azsdk-mcp-mock:
     mcpServers:
       azure-sdk-mcp:
         type: stdio
         command: dotnet
-        args: ["run", "--project", "../Azure.Sdk.Tools.Mock"]
-        timeout: "60s"
+        args: ["../../../artifacts/bin/Azure.Sdk.Tools.Mock/Debug/net8.0/azsdk-mock.dll"]
+        timeout: "30s"
 
-  # Live MCP — real Azure.Sdk.Tools.Cli against real DevOps (test area path),
-  # real GitHub, real pipelines. AZSDKTOOLS_AGENT_TESTING=true keeps the
-  # handful of write tools (e.g. create_release_plan) inside the test area.
-  # Bound only by scenarios under evals/workflow-scenarios/live/ and selected
-  # by the `scenarios-live` / `nightly` suites.
+  # Live MCP. AZSDKTOOLS_AGENT_TESTING=true keeps write tools inside the test
+  # area. Pre-built DLL pattern — see issue #15948.
+  # Run `dotnet build ../Azure.Sdk.Tools.Cli -c Debug` once before vally.
   azsdk-mcp-live:
     mcpServers:
       azure-sdk-mcp:
         type: stdio
         command: dotnet
-        args: ["run", "--project", "../Azure.Sdk.Tools.Cli", "--", "start"]
+        args: ["../../../artifacts/bin/Azure.Sdk.Tools.Cli/Debug/net8.0/azsdk.dll", "start"]
         timeout: "5m"
         env:
           AZSDKTOOLS_AGENT_TESTING: "true"

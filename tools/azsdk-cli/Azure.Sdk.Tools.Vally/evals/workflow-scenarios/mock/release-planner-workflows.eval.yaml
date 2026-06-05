@@ -44,7 +44,7 @@ stimuli:
         source: C:/Users/gaoh/.vally-cache/azure-rest-api-specs
         ref: main
     prompt: |
-      I'm in a checkout of azure-rest-api-specs. Create a public preview
+      Create a public preview
       release plan for the Contoso Widget Manager. Here is all the context
       you need:
         - TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
@@ -81,7 +81,7 @@ stimuli:
         source: C:/Users/gaoh/.vally-cache/azure-rest-api-specs
         ref: main
     prompt: |
-      I'm in a checkout of azure-rest-api-specs. Walk me through creating
+      Walk me through creating
       a release plan and then generating SDK for the Contoso Widget Manager:
         - TypeSpec project: "specification/contosowidgetmanager/Contoso.WidgetManager"
         - API release type: "Public Preview"
@@ -125,7 +125,7 @@ stimuli:
         source: C:/Users/gaoh/.vally-cache/azure-rest-api-specs
         ref: main
     prompt: |
-      I'm in a checkout of azure-rest-api-specs. Using the release-planner
+      Using the release-planner
       flow, generate SDK for all languages for the Contoso Widget Manager
       release plan. Here is the context you need:
         - release plan work item ID: "29262"
@@ -135,10 +135,6 @@ stimuli:
       max_turns: 8
       max_tokens: 10000
     graders:
-      - type: skill-invocation
-        config:
-          required:
-            - azsdk-common-prepare-release-plan
       - type: tool-calls
         config:
           required:
@@ -156,7 +152,7 @@ stimuli:
         source: C:/Users/gaoh/.vally-cache/azure-rest-api-specs
         ref: main
     prompt: |
-      I'm in a checkout of azure-rest-api-specs. Using the release-planner
+      Using the release-planner
       flow, update the API spec pull request on an existing Contoso Widget
       Manager release plan. Here is the context you need:
         - release plan work item ID: "29262"
@@ -187,7 +183,7 @@ stimuli:
         source: C:/Users/gaoh/.vally-cache/azure-rest-api-specs
         ref: main
     prompt: |
-      I'm in a checkout of azure-rest-api-specs. Using the release-planner
+      Using the release-planner
       flow, refresh the SDK package-name details on an existing Contoso
       Widget Manager release plan from the on-disk TypeSpec emitter
       configuration. Here is the context you need:

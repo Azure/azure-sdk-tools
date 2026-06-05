@@ -50,6 +50,8 @@ logger = logging.getLogger(__name__)
 # -- Polling constants for empty-response retry loop ----------------------
 POLL_MAX_RETRIES = 5
 POLL_RETRY_DELAY_SECS = 3.0
+STREAM_CREATE_MAX_RETRIES = 3
+STREAM_CREATE_RETRY_DELAY_SECS = 1.5
 
 COMPACT_THRESHOLD = 100000
 """Token count at which conversation history is compacted."""
@@ -146,14 +148,11 @@ class ChatService:
             "type": AgentReferenceType.agent_reference.value,
         }
 
-        stream = await openai_client.responses.create(
-            input=conversation_items,
-            conversation=agent_conversation_id,
-            store=True,
-            stream=True,
-            extra_body={
-                "agent_reference": agent_ref,
-            },
+        stream = await self._create_stream_with_retry(
+            openai_client=openai_client,
+            conversation_items=conversation_items,
+            agent_conversation_id=agent_conversation_id,
+            agent_ref=agent_ref,
         )
 
         response: OpenAIResponse | None = None
@@ -214,6 +213,46 @@ class ChatService:
             )
         )
         return chat_response
+
+    @staticmethod
+    async def _create_stream_with_retry(
+        openai_client: AsyncOpenAI,
+        conversation_items: list[ResponseInputItemParam],
+        agent_conversation_id: str,
+        agent_ref: dict[str, str],
+        max_retries: int = STREAM_CREATE_MAX_RETRIES,
+        retry_delay: float = STREAM_CREATE_RETRY_DELAY_SECS,
+    ):
+        """Create a responses stream with bounded retries for transient failures."""
+        last_error: Exception | None = None
+
+        for attempt in range(1, max_retries + 1):
+            try:
+                return await openai_client.responses.create(
+                    input=conversation_items,
+                    conversation=agent_conversation_id,
+                    store=True,
+                    stream=True,
+                    extra_body={
+                        "agent_reference": agent_ref,
+                    },
+                )
+            except Exception as ex:
+                last_error = ex
+                logger.warning(
+                    "Failed to create agent stream (attempt %d/%d): conversation=%s",
+                    attempt,
+                    max_retries,
+                    agent_conversation_id,
+                    exc_info=True,
+                )
+                if attempt >= max_retries:
+                    break
+                await asyncio.sleep(retry_delay * attempt)
+
+        raise RuntimeError(
+            f"Failed to create agent stream after {max_retries} attempts"
+        ) from last_error
 
     @staticmethod
     async def _poll_response_text(

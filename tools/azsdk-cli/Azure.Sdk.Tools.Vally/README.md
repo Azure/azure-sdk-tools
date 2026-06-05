@@ -132,31 +132,84 @@ lives as a `tags:` entry inside each YAML so cross-cuts (e.g. "all
 release-plan evals") select via [`.vally.yaml`](.vally.yaml) suite filters
 or `vally eval --tag`.
 
-## Running locally
+## Quickstart — run one scenario
 
-Prereqs:
+The fastest path from a fresh clone to a green eval. Swap the path after
+`-e` for any other `.eval.yaml` to try a different scenario.
 
-- Node 22+
-- .NET SDK matching the rest of the repo (see `global.json`)
-- `@microsoft/vally-cli` installed via the repo's pinned lockfile:
+### 1. One-time setup
 
-  ```powershell
-  cd eng/skill-eval
-  npm ci
-  ```
-- **Build the MCP servers once** before running vally. `.vally.yaml`
-  launches the pre-built DLLs via `dotnet <dll>` to avoid the build-time
-  race that crashes parallel workers with `MCP error -32000: Connection
-  closed`. See [`primer-vally-mcp-race.html`](https://github.com/Azure/azure-sdk-tools/blob/main/doc/) (notebook) for the full write-up.
+```powershell
+# From repo root
+cd eng/skill-eval; npm ci; cd ../..
+dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Cli  -c Debug
+dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Mock -c Debug
+```
 
-  ```powershell
-  # From repo root — builds both Azure.Sdk.Tools.Mock and (transitively) Cli
-  dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Cli -c Debug
-  dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Mock -c Debug
-  ```
+Rebuild the MCP servers any time you edit tool source. Vally does **not**
+rebuild them — it just spawns the existing DLL.
 
-  Rebuild after editing any tool source. Vally itself does **not** rebuild
-  the MCP server — it just spawns the existing DLL.
+### 2. Move into this project and stash the paths
+
+All commands below run from here:
+
+```powershell
+cd tools/azsdk-cli/Azure.Sdk.Tools.Vally
+$vally  = '../../../eng/skill-eval/node_modules/.bin/vally.cmd'
+$skills = '../../../.github/skills'
+```
+
+### 3. Run a scenario
+
+**One trigger eval** (~30 s, hermetic):
+
+```powershell
+& $vally eval -e evals/tools/create-release-plan.eval.yaml --skill-dir $skills
+```
+
+**The release-planner mock workflow** (~4 min, 5 stimuli, hermetic):
+
+```powershell
+& $vally eval -e evals/workflow-scenarios/mock/release-planner-workflows.eval.yaml --skill-dir $skills
+```
+
+**The release-planner live workflow** (~15 min, real DevOps writes to the
+test area; prime the spec clone once):
+
+```powershell
+./evals/setup/ensure-specs-clone.ps1
+& $vally eval -e evals/workflow-scenarios/live/release-planner.eval.yaml --skill-dir $skills --workers 1
+```
+
+### 4. Pick a different scenario
+
+```powershell
+# List everything you can pass to -e
+Get-ChildItem evals -Recurse -Filter *.eval.yaml | ForEach-Object FullName
+```
+
+Common swaps:
+
+| What you want | Replace `-e` value with |
+|---|---|
+| A different release-plan trigger | `evals/tools/link-namespace-approval-issue.eval.yaml` |
+| A TypeSpec workflow | `evals/workflow-scenarios/mock/check-public-repo-then-validate.eval.yaml` |
+| All triggers for one feature | drop `-e` and use `--suite typespec` (or `release-plan`, `github`, …) |
+| Everything hermetic | drop `-e` and use `--suite pr-gate` |
+
+### 5. Read the results
+
+- Live PASS/FAIL table prints to the terminal.
+- Full trajectories land in `results/<timestamp>/`. The most useful file
+  is `results.jsonl` — one line per stimulus run, with the prompt, every
+  tool call, and the final agent message.
+- Add `--output-dir vally-results/<your-tag>` if you want a stable path
+  to re-open later.
+
+## Running locally (advanced)
+
+Prereqs are the same as the [Quickstart](#quickstart--run-one-scenario)
+plus Node 22+ and a .NET SDK matching `global.json`.
 
 Run a suite (recommended):
 

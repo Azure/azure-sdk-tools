@@ -118,7 +118,9 @@ def test_report_comment_bucket_trends_can_exclude_human_comments(monkeypatch):
         return {"Python": []}
 
     monkeypatch.setattr(cli, "build_language_comment_bucket_reports", fake_build_language_comment_bucket_reports)
-    monkeypatch.setattr(cli, "generate_comment_bucket_chart", lambda *args, **kwargs: cli.DEFAULT_COMMENT_BUCKET_OUTPUT_PATH)
+    monkeypatch.setattr(
+        cli, "generate_comment_bucket_chart", lambda *args, **kwargs: cli.DEFAULT_COMMENT_BUCKET_OUTPUT_PATH
+    )
     monkeypatch.setattr(cli, "print_comment_bucket_report", lambda *args, **kwargs: None)
 
     cli.report_comment_bucket_trends(exclude_human=True)
@@ -144,7 +146,9 @@ def test_report_comment_bucket_trends_normalizes_language_aliases(monkeypatch):
         return {language: [] for language in languages}
 
     monkeypatch.setattr(cli, "build_language_comment_bucket_reports", fake_build_language_comment_bucket_reports)
-    monkeypatch.setattr(cli, "generate_comment_bucket_chart", lambda *args, **kwargs: cli.DEFAULT_COMMENT_BUCKET_OUTPUT_PATH)
+    monkeypatch.setattr(
+        cli, "generate_comment_bucket_chart", lambda *args, **kwargs: cli.DEFAULT_COMMENT_BUCKET_OUTPUT_PATH
+    )
     monkeypatch.setattr(cli, "print_comment_bucket_report", lambda *args, **kwargs: None)
 
     cli.report_comment_bucket_trends(languages=["csharp", "TypeScript", "go"])

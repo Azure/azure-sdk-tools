@@ -6,9 +6,9 @@ process.env.GITHUB_APP_NUMERIC_ID = "12345";
 process.env.GITHUB_INSTALL_OWNER = "TestOrg";
 
 vi.mock("@azure/identity", () => ({
-  DefaultAzureCredential: vi.fn().mockImplementation(() => ({
-    getToken: vi.fn().mockResolvedValue({ token: "mock-bearer-token" }),
-  })),
+  DefaultAzureCredential: vi.fn().mockImplementation(function () {
+    return { getToken: vi.fn().mockResolvedValue({ token: "mock-bearer-token" }) };
+  }),
 }));
 
 import {

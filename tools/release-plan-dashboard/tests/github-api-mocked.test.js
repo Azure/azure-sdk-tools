@@ -24,7 +24,9 @@ const mockOctokit = {
 };
 
 vi.mock("@octokit/rest", () => ({
-  Octokit: vi.fn().mockImplementation(() => mockOctokit),
+  Octokit: vi.fn().mockImplementation(function () {
+    return mockOctokit;
+  }),
 }));
 
 const {

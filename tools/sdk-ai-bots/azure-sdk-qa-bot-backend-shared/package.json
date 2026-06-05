@@ -14,7 +14,7 @@
     "@azure/cognitiveservices-computervision": "^8.2.0",
     "@azure/identity": "^4.10.0",
     "@octokit/rest": "^21.1.1",
-    "axios": "^1.15.2",
+    "axios": "^1.16.0",
     "express": "^5.2.0",
     "winston": "^3.17.0"
   },
@@ -27,5 +27,8 @@
     "vitest": "^4.1.0",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3"
+  },
+  "overrides": {
+    "uuid": "^11.1.1"
   }
 }

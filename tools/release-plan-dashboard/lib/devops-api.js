@@ -59,6 +59,7 @@ const RELEASE_PLAN_FIELDS = [
   "Custom.CreatedUsing",
   "Custom.ProductServiceTreeID",
   "Custom.ProductServiceTreeLink",
+  "Custom.NamespaceApprovalIssue",
 ];
 for (const lang of LANGUAGES) {
   RELEASE_PLAN_FIELDS.push(
@@ -279,6 +280,7 @@ function mapReleasePlan(workItem, apiSpecMap) {
     createdUsing: fields["Custom.CreatedUsing"] || "",
     productId: fields["Custom.ProductServiceTreeID"] || "",
     productServiceTreeLink: fields["Custom.ProductServiceTreeLink"] || "",
+    namespaceApprovalIssue: fields["Custom.NamespaceApprovalIssue"] || "",
     languages,
     apiSpec,
   };
@@ -335,6 +337,91 @@ async function fetchAzureSdkPackageList() {
   }
 }
 
+// ── Released package CSV helpers ──────────────────────────────
+
+const RELEASED_PACKAGE_CSV_URLS = {
+  ".NET":
+    "https://raw.githubusercontent.com/Azure/azure-sdk/main/_data/releases/latest/dotnet-packages.csv",
+  Go: "https://raw.githubusercontent.com/Azure/azure-sdk/main/_data/releases/latest/go-packages.csv",
+  JavaScript:
+    "https://raw.githubusercontent.com/Azure/azure-sdk/main/_data/releases/latest/js-packages.csv",
+  Java: "https://raw.githubusercontent.com/Azure/azure-sdk/main/_data/releases/latest/java-packages.csv",
+  Python:
+    "https://raw.githubusercontent.com/Azure/azure-sdk/main/_data/releases/latest/python-packages.csv",
+};
+
+/**
+ * Parses a simple CSV string (handles quoted fields) and returns rows as arrays.
+ * Only uses the first row as headers for mapping.
+ */
+function parseCsv(text) {
+  const rows = [];
+  const lines = text.split("\n");
+  for (const line of lines) {
+    if (!line.trim()) continue;
+    const fields = [];
+    let current = "";
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (ch === "," && !inQuotes) {
+        fields.push(current);
+        current = "";
+      } else {
+        current += ch;
+      }
+    }
+    fields.push(current);
+    rows.push(fields);
+  }
+  return rows;
+}
+
+/**
+ * Fetches released package CSVs for all languages and builds a lookup map.
+ * Returns Map<string, { versionGA: string }> keyed by lowercase "lang|packageName".
+ */
+async function fetchReleasedPackageCsvs() {
+  const result = new Map();
+  const entries = Object.entries(RELEASED_PACKAGE_CSV_URLS);
+  const responses = await Promise.all(
+    entries.map(async ([lang, url]) => {
+      try {
+        const response = await fetch(url, {
+          signal: AbortSignal.timeout(15000),
+        });
+        if (!response.ok) return { lang, text: "" };
+        return { lang, text: await response.text() };
+      } catch {
+        return { lang, text: "" };
+      }
+    }),
+  );
+  for (const { lang, text } of responses) {
+    if (!text) continue;
+    const rows = parseCsv(text);
+    if (rows.length < 2) continue;
+    const headers = rows[0].map((h) => h.trim().replace(/^\uFEFF/, ""));
+    const pkgIdx = headers.indexOf("Package");
+    const gaIdx = headers.indexOf("VersionGA");
+    if (pkgIdx === -1) continue;
+    for (let i = 1; i < rows.length; i++) {
+      const pkg = (rows[i][pkgIdx] || "").trim();
+      if (!pkg) continue;
+      const versionGA = gaIdx >= 0 ? (rows[i][gaIdx] || "").trim() : "";
+      result.set(`${lang}|${pkg}`.toLowerCase(), { versionGA });
+    }
+  }
+  return result;
+}
+
 function isKnownPackage(name, page) {
   return name && page && page.toLowerCase().includes(name.toLowerCase());
 }
@@ -370,6 +457,8 @@ export {
   mapReleasePlan,
   fetchPackageWorkItems,
   fetchAzureSdkPackageList,
+  fetchReleasedPackageCsvs,
+  parseCsv,
   isKnownPackage,
   isGAVersion,
   stripEmail,

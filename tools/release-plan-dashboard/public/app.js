@@ -67,7 +67,14 @@
       },
       prCount: "",
       user: { name: "", isPM: false },
-      filters: { search: "", plane: "", month: "", prLang: "", prStatus: "" },
+      filters: {
+        search: "",
+        plane: "",
+        month: "",
+        prLang: "",
+        prStatus: "",
+        tag: "",
+      },
       prFilterVisible: false,
     },
     {
@@ -724,6 +731,21 @@
         (p) =>
           (p.releaseMonth || "").toLowerCase() === monthFilter.toLowerCase(),
       );
+    const tagFilter = store().filters.tag;
+    if (tagFilter) {
+      filtered = filtered.filter((p) => {
+        const langs = p.languages || {};
+        if (tagFilter === "first-preview") {
+          return Object.values(langs).some(
+            (l) => l.isFirstPreview && l.packageName,
+          );
+        }
+        if (tagFilter === "first-ga") {
+          return Object.values(langs).some((l) => l.isFirstGA && l.packageName);
+        }
+        return true;
+      });
+    }
 
     const mgmt = filtered.filter((p) => classifyPlane(p) === "mgmt");
     const data = filtered.filter((p) => classifyPlane(p) === "data");
@@ -925,6 +947,22 @@
     const dupHTML = p._duplicateOf
       ? `<span class="badge badge-duplicate">⚠️ Duplicate of ${esc(String(p._duplicateOf))}</span>`
       : "";
+    // First Preview / First GA badge on the card title (not for private preview plans)
+    let releaseTagBadge = "";
+    if (!isPrivatePreviewPlan(p)) {
+      const langs = p.languages || {};
+      const hasFirstPreview = Object.values(langs).some(
+        (l) => l.isFirstPreview && l.packageName,
+      );
+      const hasFirstGA = Object.values(langs).some(
+        (l) => l.isFirstGA && l.packageName,
+      );
+      if (hasFirstPreview)
+        releaseTagBadge +=
+          '<span class="badge badge-first-preview">First Preview</span>';
+      if (hasFirstGA)
+        releaseTagBadge += '<span class="badge badge-first-ga">First GA</span>';
+    }
     const isExpanded = !!store().ui.expandedPlans[p.id];
     const summaryClass = isExpanded ? "card-summary expanded" : "card-summary";
     const detailsClass = isExpanded ? "card-details open" : "card-details";
@@ -933,7 +971,7 @@
       <div class="${summaryClass}"${isExpanded ? ' data-pr-loaded="1"' : ""}>
         <span class="card-chevron">&#9654;</span>
         <div class="card-title">
-          ${esc(p.title)} ${copilotBadge} ${sdkTypeBadge}
+          ${esc(p.title)} ${copilotBadge} ${sdkTypeBadge} ${releaseTagBadge}
         </div>
         <div class="card-meta">
           ${p.releaseMonth ? `<span>${esc(p.releaseMonth)}</span>` : ""}
@@ -1269,6 +1307,28 @@
       }
     }
 
+    // Namespace approval warning for management plane first-preview plans
+    {
+      const isMgmt = classifyPlane(p) === "mgmt";
+      const pLangs = p.languages || {};
+      const hasFirstPreviewPkg = Object.values(pLangs).some(
+        (l) => l.isFirstPreview && l.packageName,
+      );
+      if (isMgmt && hasFirstPreviewPkg && !p.namespaceApprovalIssue) {
+        const planId2 = p.releasePlanId || p.id;
+        actionContent += `<div class="action-item action-item-warning" style="margin-top:10px;">
+          <strong>⚠️ Missing namespace approval:</strong>
+          <p>This management plane release plan contains a first preview package but has no namespace approval issue linked.</p>
+          <ol>
+            <li>Get namespace approved by following the process at <a href="https://eng.ms/docs/products/azure-developer-experience/develop/namespace-review" target="_blank" rel="noopener">Namespace Review</a>.</li>
+            <li>Link the namespace approval issue to this release plan:<br>
+              <div class="action-prompt"><code>Link namespace approval issue &lt;url&gt; to the release plan ${esc(String(planId2))}</code></div>
+            </li>
+          </ol>
+        </div>`;
+      }
+    }
+
     if (!actionContent) return "";
 
     // Determine who action is required from
@@ -1316,6 +1376,18 @@
           p.submittedBy ? `Service Team (${p.submittedBy})` : "Service Team",
         );
       if (needsReviewTeam) actionFrom.push("SDK PR Reviewer");
+      // Namespace approval action is for service partner team
+      const isMgmtForAction = classifyPlane(p) === "mgmt";
+      const hasFirstPreviewForAction = Object.values(langs).some(
+        (l) => l.isFirstPreview && l.packageName,
+      );
+      if (
+        isMgmtForAction &&
+        hasFirstPreviewForAction &&
+        !p.namespaceApprovalIssue
+      ) {
+        actionFrom.push("Service Partner Team");
+      }
     }
     const actionFromHTML = actionFrom.length
       ? `<div class="action-from-label">Action required from: <strong>${esc(actionFrom.join(" & "))}</strong></div>`
@@ -1515,13 +1587,17 @@
     }
     if (specPath)
       html += `<div class="detail-row"><strong>Spec Project Path:</strong> ${esc(specPath)}</div>`;
-    // Work item link — always show using work item id
+    // Work item link — show as link for PMs, plain text for others
     {
-      const wiUrl = `https://dev.azure.com/azure-sdk/Release/_workitems/edit/${p.id}`;
       const label = p.releasePlanId
         ? `#${esc(String(p.releasePlanId))}`
         : `WI ${esc(String(p.id))}`;
-      html += `<div class="detail-row"><strong>Release Plan:</strong> <a href="${esc(wiUrl)}" target="_blank" rel="noopener">${label}</a> <span class="wi-warning">⚠️ Do not modify directly — use the <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">azsdk agent</a></span></div>`;
+      if (currentUserIsPM) {
+        const wiUrl = `https://dev.azure.com/azure-sdk/Release/_workitems/edit/${p.id}`;
+        html += `<div class="detail-row"><strong>Release Plan:</strong> <a href="${esc(wiUrl)}" target="_blank" rel="noopener">${label}</a> <span class="wi-warning">⚠️ Do not modify directly — use the <a href="https://aka.ms/azsdk/agent" target="_blank" rel="noopener">azsdk agent</a></span></div>`;
+      } else {
+        html += `<div class="detail-row"><strong>Release Plan:</strong> ${label}</div>`;
+      }
     }
     if (
       p.typeSpecPath &&
@@ -1587,13 +1663,18 @@
         const langs = p.languages || {};
         const langKeys = Object.keys(langs);
         if (langKeys.length) {
-          // Determine if any SDK PR exists to decide expanded vs collapsed
+          // Determine if any SDK PR exists or any package name is present to decide expanded vs collapsed
           const hasAnyPr = langKeys.some(
             (k) =>
               langs[k].sdkPrUrl && !isLangExcluded(langs[k].exclusionStatus),
           );
-          const sdkDisplay = hasAnyPr ? "" : "display:none;";
-          const sdkCaret = hasAnyPr ? "&#9660;" : "&#9654;";
+          const hasAnyPackageName = langKeys.some(
+            (k) =>
+              langs[k].packageName && !isLangExcluded(langs[k].exclusionStatus),
+          );
+          const shouldExpand = hasAnyPr || hasAnyPackageName;
+          const sdkDisplay = shouldExpand ? "" : "display:none;";
+          const sdkCaret = shouldExpand ? "&#9660;" : "&#9654;";
           html += `<div class="detail-group sdk-collapsible">
         <h4 class="sdk-toggle" style="cursor:pointer;user-select:none;">
           <span class="sdk-caret">${sdkCaret}</span> SDK Details
@@ -1622,17 +1703,22 @@
               ? l.releasedVersion || ""
               : l.pkgVersion || "";
 
-            // Package labels: namespace approval + new package + API review (version now in its own column)
+            // Package labels: first preview/GA + namespace approval + API review (version now in its own column)
             let pkgLabels = "";
-            if (l.isNewPackage) {
-              pkgLabels += '<span class="pr-label pr-label-new">New</span>';
-              if (
-                classifyPlane(p) !== "mgmt" &&
-                l.namespaceApproval &&
-                l.namespaceApproval.toLowerCase() !== "approved"
-              ) {
-                pkgLabels += `<span class="pr-label pr-label-ns-pending" title="Namespace: ${esc(l.namespaceApproval)}">${esc(l.namespaceApproval)}</span>`;
-              }
+            if (l.isFirstPreview) {
+              pkgLabels +=
+                '<span class="pr-label pr-label-first-preview">First Preview</span>';
+            } else if (l.isFirstGA) {
+              pkgLabels +=
+                '<span class="pr-label pr-label-first-ga">First GA</span>';
+            }
+            if (
+              l.isNewPackage &&
+              classifyPlane(p) !== "mgmt" &&
+              l.namespaceApproval &&
+              l.namespaceApproval.toLowerCase() !== "approved"
+            ) {
+              pkgLabels += `<span class="pr-label pr-label-ns-pending" title="Namespace: ${esc(l.namespaceApproval)}">${esc(l.namespaceApproval)}</span>`;
             }
             if (
               l.apiReviewStatus &&
@@ -2237,6 +2323,7 @@
         store().filters.sort,
         store().filters.prLang,
         store().filters.prStatus,
+        store().filters.tag,
       ];
       // Skip re-render if plans not loaded yet
       if (!getPlans().length) return;
@@ -2348,6 +2435,21 @@
         (p) =>
           (p.releaseMonth || "").toLowerCase() === monthFilter.toLowerCase(),
       );
+    const tagFilter = store().filters.tag;
+    if (tagFilter) {
+      filtered = filtered.filter((p) => {
+        const langs = p.languages || {};
+        if (tagFilter === "first-preview") {
+          return Object.values(langs).some(
+            (l) => l.isFirstPreview && l.packageName,
+          );
+        }
+        if (tagFilter === "first-ga") {
+          return Object.values(langs).some((l) => l.isFirstGA && l.packageName);
+        }
+        return true;
+      });
+    }
 
     const inactive = [];
     const tier1Missing = [];
@@ -2355,6 +2457,8 @@
     const approaching = [];
     const pastDue = [];
     const recentlyFinished = [];
+    const ppReady = [];
+    const nsMissing = [];
 
     const now = new Date();
     const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -2372,6 +2476,46 @@
           recentlyFinished.push(p);
         }
         continue;
+      }
+
+      // Ready to complete private preview — non-finished private preview with merged spec PR
+      if (isPrivatePreviewPlan(p)) {
+        const specStatus = (p.apiReadiness || "").toLowerCase();
+        if (specStatus === "completed" || specStatus === "merged") {
+          const planId = p.releasePlanId || p.id;
+          p._pmAction = `This private preview release plan has a merged API spec PR. It is ready to be marked as completed.
+          <div class="pm-action-steps">
+            <strong>To complete this release plan:</strong>
+            <ol>
+              <li>Clone an Azure SDK or <a href="https://github.com/Azure/azure-rest-api-specs" target="_blank" rel="noopener">azure-rest-api-specs</a> repo and open Copilot CLI or VS Code from the repo root.</li>
+              <li>Copy and run the following prompt:<br><code class="action-prompt-inline">Complete release plan ${esc(String(planId))}</code></li>
+            </ol>
+          </div>`;
+          ppReady.push(p);
+        }
+        continue; // Private preview plans skip other categories
+      }
+
+      // Missing namespace approval — mgmt plane with first preview packages and no namespace approval link
+      {
+        const isMgmt = classifyPlane(p) === "mgmt";
+        const langs = p.languages || {};
+        const hasFirstPreview = Object.values(langs).some(
+          (l) => l.isFirstPreview && l.packageName,
+        );
+        if (isMgmt && hasFirstPreview && !p.namespaceApprovalIssue) {
+          const planId = p.releasePlanId || p.id;
+          p._nsWarning = true;
+          p._nsAction = `This management plane release plan contains a first preview package but is missing a namespace approval issue link.
+          <div class="pm-action-steps">
+            <strong>Action required for service partner team:</strong>
+            <ol>
+              <li>Get namespace approved by following the process at <a href="https://eng.ms/docs/products/azure-developer-experience/develop/namespace-review" target="_blank" rel="noopener">Namespace Review</a>.</li>
+              <li>Once approved, link the namespace approval issue to this release plan using the prompt:<br><code class="action-prompt-inline">Link namespace approval issue &lt;url&gt; to the release plan ${esc(String(planId))}</code></li>
+            </ol>
+          </div>`;
+          nsMissing.push(p);
+        }
       }
 
       // Approaching SDK release target (current month or next month, not yet finished)
@@ -2438,6 +2582,26 @@
         parseReleaseMonth(a.releaseMonth) - parseReleaseMonth(b.releaseMonth),
     );
 
+    renderPMSection("list-pm-pp-ready", ppReady);
+    // Render nsMissing section with namespace-specific action
+    {
+      const el = document.getElementById("list-pm-ns-missing");
+      if (el) {
+        if (!nsMissing.length) {
+          el.innerHTML = '<div class="empty-msg">None found ✓</div>';
+        } else {
+          el.innerHTML = nsMissing
+            .map((p) => {
+              const saved = p._pmAction;
+              p._pmAction = p._nsAction;
+              const html = cardHTML(p, { showPmAction: true });
+              p._pmAction = saved;
+              return html;
+            })
+            .join("");
+        }
+      }
+    }
     renderPMSection("list-pm-approaching", approaching);
     renderPMSection("list-pm-pastdue", pastDue);
     renderPMSection("list-pm-inactive", inactive);
@@ -2447,6 +2611,8 @@
 
     // Update section counts
     const sections = [
+      { id: "section-pm-pp-ready", count: ppReady.length },
+      { id: "section-pm-ns-missing", count: nsMissing.length },
       { id: "section-pm-approaching", count: approaching.length },
       { id: "section-pm-pastdue", count: pastDue.length },
       { id: "section-pm-inactive", count: inactive.length },
@@ -2713,7 +2879,10 @@
     }
 
     const wiUrl = `https://dev.azure.com/azure-sdk/Release/_workitems/edit/${pr.planId}`;
-    html += `<div class="pr-detail-row"><strong>Release Plan:</strong> <a href="/?releasePlan=${esc(String(pr.releasePlanId))}">#${esc(String(pr.releasePlanId))}</a> — ${esc(pr.planTitle)} <a href="${esc(wiUrl)}" target="_blank" rel="noopener" style="font-size:.78rem;color:#605e5c;">(DevOps)</a></div>`;
+    const devOpsLink = currentUserIsPM
+      ? ` <a href="${esc(wiUrl)}" target="_blank" rel="noopener" style="font-size:.78rem;color:#605e5c;">(DevOps)</a>`
+      : "";
+    html += `<div class="pr-detail-row"><strong>Release Plan:</strong> <a href="/?releasePlan=${esc(String(pr.releasePlanId))}">#${esc(String(pr.releasePlanId))}</a> — ${esc(pr.planTitle)}${devOpsLink}</div>`;
     if (pr.releaseMonth)
       html += `<div class="pr-detail-row"><strong>Target Release:</strong> ${esc(pr.releaseMonth)}</div>`;
     if (pr.releaseStatus)

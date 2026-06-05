@@ -303,6 +303,29 @@ describe("devops-api module", () => {
       expect(result.submittedBy).toBe("submitted-user");
     });
 
+    test("handles submittedBy object with no displayName or uniqueName", () => {
+      const wi = {
+        id: 710,
+        fields: {
+          "System.Title": "Empty Object SubmittedBy",
+          "Custom.ReleasePlanSubmittedby": { id: "some-guid" },
+        },
+        relations: [],
+      };
+      const result = mapReleasePlan(wi, {});
+      expect(result.submittedBy).toBe("");
+    });
+
+    test("handles work item with no title field", () => {
+      const wi = {
+        id: 711,
+        fields: { "System.State": "New" },
+        relations: [],
+      };
+      const result = mapReleasePlan(wi, {});
+      expect(result.title).toBe("");
+    });
+
     test("extracts specPrUrl from RESTAPIReviews when ActiveSpecPullRequestUrl is empty", () => {
       const wi = {
         id: 704,

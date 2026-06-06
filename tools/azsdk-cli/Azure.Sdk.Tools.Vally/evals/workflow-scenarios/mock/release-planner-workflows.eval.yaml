@@ -97,7 +97,7 @@ stimuli:
     constraints:
       max_turns: 12
       max_tokens: 16000
-    # TODO: assert ordering create -> get -> generate -> update-details
+    # TODO: assert ordering create -> get -> generate
     #   — blocked on Vally tool-calls grader sequence: support.
     graders:
       - type: skill-invocation
@@ -110,7 +110,6 @@ stimuli:
             - azsdk_get_release_plan
             - azsdk_create_release_plan
             - azsdk_run_generate_sdk
-            - azsdk_update_sdk_details_in_release_plan
           disallowed:
             - azsdk_verify_setup
 

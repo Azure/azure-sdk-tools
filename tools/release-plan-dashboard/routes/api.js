@@ -29,9 +29,7 @@ import {
   getField,
   mapReleasePlan,
   fetchPackageWorkItems,
-  fetchAzureSdkPackageList,
   fetchReleasedPackageCsvs,
-  isKnownPackage,
   isGAVersion,
 } from "../lib/devops-api.js";
 
@@ -167,9 +165,8 @@ async function enrichPackageData(plans) {
         });
     }
   }
-  const [pkgMap, azureSdkPage, releasedCsvMap] = await Promise.all([
+  const [pkgMap, releasedCsvMap] = await Promise.all([
     fetchPackageWorkItems(pkgLangPairs),
-    fetchAzureSdkPackageList(),
     fetchReleasedPackageCsvs(),
   ]);
   for (const plan of plans) {
@@ -189,10 +186,6 @@ async function enrichPackageData(plans) {
             langData.apiReviewStatus = pkgData.apiReviewStatus;
         }
       }
-      langData.isNewPackage = !isKnownPackage(
-        langData.packageName,
-        azureSdkPage,
-      );
 
       // CSV-based first preview / first GA classification
       const csvKey = `${displayLang}|${langData.packageName}`.toLowerCase();

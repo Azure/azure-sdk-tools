@@ -327,16 +327,6 @@ async function fetchPackageWorkItems(pkgLangPairs) {
   return resultMap;
 }
 
-async function fetchAzureSdkPackageList() {
-  try {
-    const response = await fetch("https://azure.github.io/azure-sdk/");
-    if (!response.ok) return "";
-    return await response.text();
-  } catch {
-    return "";
-  }
-}
-
 // ── Released package CSV helpers ──────────────────────────────
 
 const RELEASED_PACKAGE_CSV_URLS = {
@@ -422,10 +412,6 @@ async function fetchReleasedPackageCsvs() {
   return result;
 }
 
-function isKnownPackage(name, page) {
-  return name && page && page.toLowerCase().includes(name.toLowerCase());
-}
-
 /** Checks if a version string represents a GA (non-preview) release. */
 function isGAVersion(version) {
   if (!version) return false;
@@ -456,10 +442,8 @@ export {
   getField,
   mapReleasePlan,
   fetchPackageWorkItems,
-  fetchAzureSdkPackageList,
   fetchReleasedPackageCsvs,
   parseCsv,
-  isKnownPackage,
   isGAVersion,
   stripEmail,
   extractSpecPrUrls,

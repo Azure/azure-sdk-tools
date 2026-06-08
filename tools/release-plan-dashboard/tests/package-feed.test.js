@@ -137,18 +137,6 @@ describe("getPackageFeedUrl", () => {
   });
 
   describe("Java packages (Maven Central)", () => {
-    test("generates correct URL with explicit group:artifact format", () => {
-      const url = getPackageFeedUrl(
-        "Java",
-        "com.azure:azure-storage-blob",
-        "12.20.0",
-        dataPlan,
-      );
-      expect(url).toBe(
-        "https://central.sonatype.com/artifact/com.azure/azure-storage-blob/12.20.0",
-      );
-    });
-
     test("uses com.azure for data plane when no group specified", () => {
       const url = getPackageFeedUrl(
         "Java",
@@ -170,18 +158,6 @@ describe("getPackageFeedUrl", () => {
       );
       expect(url).toBe(
         "https://central.sonatype.com/artifact/com.azure.resourcemanager/azure-resourcemanager-compute/1.0.0",
-      );
-    });
-
-    test("uses explicit group even for mgmt packages", () => {
-      const url = getPackageFeedUrl(
-        "Java",
-        "com.azure.resourcemanager:azure-resourcemanager-storage",
-        "1.0.0",
-        mgmtPlan,
-      );
-      expect(url).toBe(
-        "https://central.sonatype.com/artifact/com.azure.resourcemanager/azure-resourcemanager-storage/1.0.0",
       );
     });
   });

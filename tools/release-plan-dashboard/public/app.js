@@ -1713,7 +1713,7 @@
                 '<span class="pr-label pr-label-first-ga">First GA</span>';
             }
             if (
-              l.isNewPackage &&
+              l.isFirstPreview &&
               classifyPlane(p) !== "mgmt" &&
               l.namespaceApproval &&
               l.namespaceApproval.toLowerCase() !== "approved"

@@ -29,7 +29,6 @@ const mockDevopsRequest = vi
     return Promise.resolve({ workItems: [], value: [] });
   });
 const mockFetchPackageWorkItems = vi.fn().mockResolvedValue(new Map());
-const mockFetchAzureSdkPackageList = vi.fn().mockResolvedValue("");
 const mockFetchReleasedPackageCsvs = vi.fn().mockResolvedValue(new Map());
 const mockBatchFetchPrStatuses = vi.fn().mockResolvedValue(new Map());
 const mockBatchFetchPrDetails = vi.fn().mockResolvedValue(new Map());
@@ -45,8 +44,6 @@ vi.mock("../lib/devops-api.js", async () => {
     runWiql: (...args) => mockRunWiql(...args),
     fetchWorkItemsBatch: (...args) => mockFetchWorkItemsBatch(...args),
     fetchPackageWorkItems: (...args) => mockFetchPackageWorkItems(...args),
-    fetchAzureSdkPackageList: (...args) =>
-      mockFetchAzureSdkPackageList(...args),
     fetchReleasedPackageCsvs: (...args) =>
       mockFetchReleasedPackageCsvs(...args),
   };
@@ -112,7 +109,6 @@ beforeEach(() => {
       return Promise.resolve({ workItems: [], value: [] });
     });
   mockFetchPackageWorkItems.mockReset().mockResolvedValue(new Map());
-  mockFetchAzureSdkPackageList.mockReset().mockResolvedValue("");
   mockBatchFetchPrStatuses.mockReset().mockResolvedValue(new Map());
   mockBatchFetchPrDetails.mockReset().mockResolvedValue(new Map());
   mockBatchFetchSpecProjectPaths.mockReset().mockResolvedValue(new Map());
@@ -368,7 +364,6 @@ describe("API routes", () => {
       mockDevopsRequest.mockResolvedValueOnce({ value: [wi] });
       mockFetchWorkItemsBatch.mockResolvedValueOnce([]);
       mockFetchPackageWorkItems.mockResolvedValueOnce(new Map());
-      mockFetchAzureSdkPackageList.mockResolvedValueOnce("");
       mockBatchFetchPrStatuses.mockResolvedValue(new Map());
       mockBatchFetchSpecProjectPaths.mockResolvedValueOnce(new Map());
       mockBatchFetchSpecPrLabels.mockResolvedValueOnce(new Map());
@@ -386,7 +381,6 @@ describe("API routes", () => {
       mockDevopsRequest.mockResolvedValueOnce({ value: [wi] });
       mockFetchWorkItemsBatch.mockResolvedValueOnce([]);
       mockFetchPackageWorkItems.mockResolvedValueOnce(new Map());
-      mockFetchAzureSdkPackageList.mockResolvedValueOnce("");
       mockBatchFetchSpecProjectPaths.mockResolvedValueOnce(new Map());
       mockBatchFetchSpecPrLabels.mockResolvedValueOnce(new Map());
       const res = await httpRequest("POST", "/api/refresh-plan/202");
@@ -1037,7 +1031,6 @@ describe("API routes", () => {
         new Map([[specUrl, [{ name: "BreakingChange", color: "ff0000" }]]]),
       );
       mockFetchPackageWorkItems.mockResolvedValueOnce(new Map());
-      mockFetchAzureSdkPackageList.mockResolvedValueOnce("");
 
       const res = await httpRequest("POST", "/api/refresh-plan/500");
       expect(res.status).toBe(200);
@@ -1075,7 +1068,6 @@ describe("API routes", () => {
       mockBatchFetchSpecProjectPaths.mockResolvedValueOnce(new Map());
       mockBatchFetchSpecPrLabels.mockResolvedValueOnce(new Map());
       mockFetchPackageWorkItems.mockResolvedValueOnce(new Map());
-      mockFetchAzureSdkPackageList.mockResolvedValueOnce("");
 
       const res = await httpRequest("POST", "/api/refresh-plan/510");
       expect(res.status).toBe(200);
@@ -1102,7 +1094,6 @@ describe("API routes", () => {
         ],
       ]);
       mockFetchPackageWorkItems.mockResolvedValueOnce(pkgMap);
-      mockFetchAzureSdkPackageList.mockResolvedValueOnce("Azure.Storage.Blobs");
       mockBatchFetchPrStatuses.mockResolvedValue(new Map());
       mockBatchFetchSpecProjectPaths.mockResolvedValueOnce(new Map());
       mockBatchFetchSpecPrLabels.mockResolvedValueOnce(new Map());
@@ -1113,7 +1104,6 @@ describe("API routes", () => {
       expect(dotnet.pkgVersion).toBe("13.0.0");
       expect(dotnet.namespaceApproval).toBe("Approved");
       expect(dotnet.apiReviewStatus).toBe("Approved");
-      expect(dotnet.isNewPackage).toBe(false);
     });
 
     test("enrichSdkPrStatuses sets statuses on SDK PRs", async () => {
@@ -1122,7 +1112,6 @@ describe("API routes", () => {
       mockDevopsRequest.mockResolvedValueOnce({ value: [wi] });
       mockFetchWorkItemsBatch.mockResolvedValueOnce([]);
       mockFetchPackageWorkItems.mockResolvedValueOnce(new Map());
-      mockFetchAzureSdkPackageList.mockResolvedValueOnce("");
       mockBatchFetchSpecProjectPaths.mockResolvedValueOnce(new Map());
       mockBatchFetchSpecPrLabels.mockResolvedValueOnce(new Map());
       // First call for spec PRs (enrichSpecPrData), second for SDK PRs (enrichSdkPrStatuses)
@@ -1148,7 +1137,6 @@ describe("API routes", () => {
       mockDevopsRequest.mockResolvedValueOnce({ value: [wi] });
       mockFetchWorkItemsBatch.mockResolvedValueOnce([]);
       mockFetchPackageWorkItems.mockResolvedValueOnce(new Map());
-      mockFetchAzureSdkPackageList.mockResolvedValueOnce("");
 
       const res = await httpRequest("POST", "/api/refresh-plan/550");
       expect(res.status).toBe(200);
@@ -1166,7 +1154,6 @@ describe("API routes", () => {
       mockFetchPackageWorkItems.mockRejectedValueOnce(
         new Error("Package API error"),
       );
-      mockFetchAzureSdkPackageList.mockResolvedValueOnce("");
       mockBatchFetchPrStatuses.mockResolvedValue(new Map());
       mockBatchFetchSpecProjectPaths.mockResolvedValueOnce(new Map());
       mockBatchFetchSpecPrLabels.mockResolvedValueOnce(new Map());
@@ -1230,7 +1217,6 @@ describe("API routes", () => {
       mockBatchFetchSpecProjectPaths.mockResolvedValueOnce(new Map());
       mockBatchFetchSpecPrLabels.mockResolvedValueOnce(new Map());
       mockFetchPackageWorkItems.mockResolvedValueOnce(new Map());
-      mockFetchAzureSdkPackageList.mockResolvedValueOnce("");
 
       const res = await httpRequest("GET", "/api/release-plans");
       expect(res.status).toBe(200);
@@ -1251,7 +1237,6 @@ describe("API routes", () => {
       mockDevopsRequest.mockResolvedValueOnce({ value: [wi] });
       mockFetchWorkItemsBatch.mockResolvedValueOnce([]);
       mockFetchPackageWorkItems.mockResolvedValueOnce(new Map());
-      mockFetchAzureSdkPackageList.mockResolvedValueOnce("Azure.Storage.Blobs");
       // CSV map has the package but no GA version
       mockFetchReleasedPackageCsvs.mockResolvedValueOnce(
         new Map([[".net|azure.storage.blobs", { versionGA: "" }]]),
@@ -1277,7 +1262,6 @@ describe("API routes", () => {
       mockDevopsRequest.mockResolvedValueOnce({ value: [wi] });
       mockFetchWorkItemsBatch.mockResolvedValueOnce([]);
       mockFetchPackageWorkItems.mockResolvedValueOnce(new Map());
-      mockFetchAzureSdkPackageList.mockResolvedValueOnce("");
       // Empty CSV map — package not found
       mockFetchReleasedPackageCsvs.mockResolvedValueOnce(new Map());
       mockBatchFetchPrStatuses.mockResolvedValue(new Map());
@@ -1320,7 +1304,6 @@ describe("API routes", () => {
       mockBatchFetchSpecProjectPaths.mockResolvedValueOnce(new Map());
       mockBatchFetchSpecPrLabels.mockResolvedValueOnce(new Map());
       mockFetchPackageWorkItems.mockResolvedValueOnce(new Map());
-      mockFetchAzureSdkPackageList.mockResolvedValueOnce("");
 
       const res = await httpRequest("GET", "/api/release-plans");
       expect(res.status).toBe(200);

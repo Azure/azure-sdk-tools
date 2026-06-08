@@ -18,7 +18,6 @@ import {
   runWiql,
   fetchWorkItemsBatch,
   fetchPackageWorkItems,
-  fetchAzureSdkPackageList,
   fetchReleasedPackageCsvs,
   getAuthHeader,
 } from "../lib/devops-api.js";
@@ -437,41 +436,6 @@ describe("fetchPackageWorkItems", () => {
     ]);
     expect(result).toBeInstanceOf(Map);
     expect(result.size).toBe(0);
-  });
-});
-
-describe("fetchAzureSdkPackageList", () => {
-  test("success returns HTML text", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        text: () => Promise.resolve("<html>azure-core</html>"),
-      }),
-    );
-    const result = await fetchAzureSdkPackageList();
-    expect(result).toBe("<html>azure-core</html>");
-  });
-
-  test("non-OK response returns empty string", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
-        ok: false,
-        status: 500,
-      }),
-    );
-    const result = await fetchAzureSdkPackageList();
-    expect(result).toBe("");
-  });
-
-  test("fetch error returns empty string", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockRejectedValue(new Error("DNS resolution failed")),
-    );
-    const result = await fetchAzureSdkPackageList();
-    expect(result).toBe("");
   });
 });
 

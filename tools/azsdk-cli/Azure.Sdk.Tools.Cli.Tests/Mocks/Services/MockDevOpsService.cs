@@ -21,6 +21,21 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             throw new NotImplementedException();
         }
 
+        public Task<List<PackageWorkitemResponse>> FindPackageWorkItemsAsync(string packageName, string language, string packageVersionMajorMinor, CancellationToken ct = default)
+        {
+            return Task.FromResult(new List<PackageWorkitemResponse>
+            {
+                new()
+                {
+                    PackageName = packageName,
+                    Language = SdkLanguageHelpers.GetSdkLanguage(language),
+                    Version = packageVersionMajorMinor,
+                    WorkItemId = 12345,
+                    WorkItemUrl = "https://dev.azure.com/fake-org/fake-project/_workitems/edit/12345"
+                }
+            });
+        }
+
         Task<List<ReleasePlanWorkItem>> IDevOpsService.ListOverdueReleasePlansAsync(CancellationToken ct)
         {
             return Task.FromResult(new List<ReleasePlanWorkItem>());

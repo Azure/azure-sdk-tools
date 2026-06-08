@@ -24,44 +24,29 @@ _credential: AsyncTokenCredential | None = None
 
 
 class _RetryCredential:
-    """Wraps a credential and retries ``get_token`` with exponential backoff.
-
-    During container cold start the IMDS endpoint used by
-    ``ManagedIdentityCredential`` may not be reachable yet.  This wrapper
-    retries transient ``get_token`` failures so the container can pass
-    its readiness check once the identity becomes available.
-    """
+    """Wraps a credential and retries ``get_token`` on transient failures."""
 
     def __init__(
-        self,
-        inner: AsyncTokenCredential,
-        max_retries: int = 4,
-        initial_delay: float = 1.0,
-        backoff_factor: float = 2.0,
-        max_delay: float = 10.0,
+        self, inner: AsyncTokenCredential, max_retries: int = 3, delay: float = 3.0
     ):
         self._inner = inner
         self._max_retries = max_retries
-        self._initial_delay = initial_delay
-        self._backoff_factor = backoff_factor
-        self._max_delay = max_delay
+        self._delay = delay
 
     async def get_token(self, *scopes, **kwargs) -> AccessToken:
-        delay = self._initial_delay
         for attempt in range(1, self._max_retries + 1):
             try:
                 return await self._inner.get_token(*scopes, **kwargs)
             except Exception as exc:
                 if attempt < self._max_retries:
                     _logger.warning(
-                        "get_token attempt %d/%d failed (%s), retrying in %.1fs",
+                        "get_token attempt %d/%d failed (%s), retrying in %.0fs",
                         attempt,
                         self._max_retries,
                         exc,
-                        delay,
+                        self._delay,
                     )
-                    await asyncio.sleep(delay)
-                    delay = min(delay * self._backoff_factor, self._max_delay)
+                    await asyncio.sleep(self._delay)
                 else:
                     raise
 

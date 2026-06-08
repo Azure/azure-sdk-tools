@@ -333,6 +333,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 ProductLifecycle = workItem.Fields.TryGetValue("Custom.ProductLifecycle", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 ReleasePlanType = workItem.Fields.TryGetValue("Custom.ReleasePlanType", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 Owner = workItem.Fields.TryGetValue("Custom.PrimaryPM", out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                IsTestReleasePlan = workItem.Fields.TryGetValue("System.Tags", out value) && value is String tags && tags.Contains(RELEASE_PLANNER_APP_TEST)
             };
 
             foreach (var lang in SUPPORTED_SDK_LANGUAGES)

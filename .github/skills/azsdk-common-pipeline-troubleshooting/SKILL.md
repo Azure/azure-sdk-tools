@@ -10,6 +10,20 @@ compatibility: "azure-sdk-mcp server, Azure DevOps pipeline build ID"
 
 # Pipeline Troubleshooting
 
+This skill diagnoses and resolves failures in Azure SDK CI and generation pipelines by analyzing pipeline runs, reproducing issues locally, and applying targeted fixes for build, validation, or TypeSpec problems before verifying the rerun.
+
+## Triggers
+
+USE FOR: pipeline failed, build failure, CI check failing, SDK generation error, reproduce pipeline locally, debug SDK pipeline
+WHEN: "pipeline failed", "build failure", "CI check failing", "SDK generation error", "reproduce pipeline locally", "debug SDK pipeline"
+DO NOT USE FOR: local build issues without pipeline context, API design review, SDK publishing
+
+## Rules
+
+- Requires the `azure-sdk-mcp` server; without MCP, inspect logs in the Azure DevOps UI.
+- Start with the pipeline build ID and run pipeline analysis before attempting local reproduction.
+- Verify the local environment before running build or check commands to reproduce the failure.
+
 ## MCP Tools
 
 | Tool                       | Purpose                  |

@@ -10,7 +10,19 @@ compatibility: "azure-sdk-mcp server, API spec PR, or TypeSpec project path"
 
 # Prepare Release Plan
 
-> Do not display Azure DevOps work item URLs. Only provide Release Plan Link and ID.
+This skill creates and manages release plan work items for Azure SDK releases across languages, helping gather required release data, validate spec inputs, and link related approvals or SDK pull requests without exposing internal work item URLs.
+
+## Triggers
+
+USE FOR: create release plan, update release plan, link SDK PR to plan, namespace approval, check release plan status
+WHEN: "create release plan", "update release plan", "link SDK PR to plan", "namespace approval", "check release plan status"
+DO NOT USE FOR: SDK code generation, pipeline troubleshooting, API review feedback
+
+## Rules
+
+- Do not display Azure DevOps work item URLs; only provide the Release Plan Link and ID.
+- Require an API spec PR link or a TypeSpec project path before creating or updating a plan.
+- Validate that the spec PR repository matches the requested API release type before creation.
 
 ## MCP Tools
 

@@ -148,7 +148,7 @@ class ChatService:
             "type": AgentReferenceType.agent_reference.value,
         }
 
-        stream = await self._create_stream_with_retry(
+        stream = await self._invoke_agent_with_retry(
             openai_client=openai_client,
             conversation_items=conversation_items,
             agent_conversation_id=agent_conversation_id,
@@ -215,7 +215,7 @@ class ChatService:
         return chat_response
 
     @staticmethod
-    async def _create_stream_with_retry(
+    async def _invoke_agent_with_retry(
         openai_client: AsyncOpenAI,
         conversation_items: list[ResponseInputItemParam],
         agent_conversation_id: str,

@@ -4,7 +4,7 @@ license: MIT
 metadata:
   version: "1.0.0"
   distribution: shared
-description: "Analyze and resolve APIView review feedback on Azure SDK PRs. **UTILITY SKILL**. USE FOR: APIView comments, API review feedback, SDK API surface changes. DO NOT USE FOR: general code review, non-APIView feedback. INVOKES: azure-sdk-mcp:azsdk_apiview_get_comments, azure-sdk-mcp:azsdk_customized_code_update."
+description: "Analyze and resolve APIView review feedback on Azure SDK PRs. **UTILITY SKILL**. USE FOR: APIView comments, API review feedback, SDK API surface changes. DO NOT USE FOR: general code review, non-APIView feedback. INVOKES: azure-sdk-mcp:azsdk_apiview_get_comments, azure-sdk-mcp:azsdk_customized_code_update, azure-sdk-mcp:azsdk_typespec_delegate_apiview_feedback, azure-sdk-mcp:azsdk_run_typespec_validation, azure-sdk-mcp:azsdk_package_generate_code."
 compatibility: "azure-sdk-mcp server, SDK pull request with APIView review link"
 ---
 

@@ -20,7 +20,7 @@ DO NOT USE FOR: publishing to package registries, CI pipeline configuration, API
 
 ## Rules
 
-- Requires the `azure-sdk-mcp` server for the MCP workflow; without MCP, use `npx tsp-client` CLI.
+- Requires the `azure-sdk-mcp` server for the MCP workflow; without MCP, use `npm exec --prefix eng/common/tsp-client -- tsp-client` CLI.
 - Verify the target language repo and the correct TypeSpec configuration file before generation.
 - After generation or customization, run the check and test steps before updating metadata or finalizing changes.
 

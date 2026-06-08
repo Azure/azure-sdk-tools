@@ -784,7 +784,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        [McpServerTool(Name = CreateReleasePlanToolName), Description("Create Release Plan for a TypeSpec project, service, product. Service ID and product Id are required if a previous release plan is not found for the TypeSpec project.")]
+        [McpServerTool(Name = CreateReleasePlanToolName), Description("Create Release Plan for a TypeSpec project and API release type. API release types support Private Preview, Public Preview, and GA. Service ID and product Id are required if a previous release plan is not found for the TypeSpec project.")]
         public async Task<ReleasePlanResponse> CreateReleasePlan(string typeSpecProjectPath, string targetReleaseMonthYear, string apiReleaseType, string sdkReleaseType = "", string specPullRequestUrl = "", string serviceTreeId = "", string productTreeId = "", bool isTestReleasePlan = false, bool forceCreateReleasePlan = false, CancellationToken ct = default)
         {
             try

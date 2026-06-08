@@ -14,6 +14,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan
         public ReleasePlanWorkItem? ReleasePlanDetails { get; set; }
         [JsonPropertyName("message")]
         public string Message { get; set; } = string.Empty;
+        public string ReleasePlanLink => ReleasePlanDetails != null ? ReleasePlanDetails.ReleasePlanLink : string.Empty;
         protected override string Format()
         {
             var result = new StringBuilder();
@@ -24,6 +25,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan
                 result.AppendLine($"Status: {ReleasePlanDetails.Status}");
                 result.AppendLine($"Owner: {ReleasePlanDetails.Owner}");
                 result.AppendLine($"SDK Release Month: {ReleasePlanDetails.SDKReleaseMonth}");
+                result.AppendLine($"Release Plan Link: {ReleasePlanLink}");
             }
             else
             {

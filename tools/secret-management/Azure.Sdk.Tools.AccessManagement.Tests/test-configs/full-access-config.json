@@ -10,18 +10,6 @@
       "resourceGroup": "test-foobar-access-manager",
       "commonScope": "ref:refs/heads/main"
     },
-    "githubRepositorySecrets": [
-        {
-            "repositories": [
-                "testfoobaraccessmanager/azure-sdk-test-foobar"
-            ],
-            "secrets": {
-                "AZURE_SUBSCRIPTION_ID": "{{ subscriptionId }}",
-                "AZURE_TENANT_ID": "{{ tenantId }}",
-                "AZURE_CLIENT_ID": "{{ clientId }}"
-            }
-        }
-    ],
     "roleBasedAccessControls": [
         {
           "role": "Contributor",

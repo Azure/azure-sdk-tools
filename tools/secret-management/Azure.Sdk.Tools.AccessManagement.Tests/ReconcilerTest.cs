@@ -11,12 +11,10 @@ public class ReconcilerTest
     ManagedIdentityInfo TestIdentityInfo { get; set; } = default!;
     Mock<IManagedIdentityClient> ManagedIdentityClientMock { get; set; } = default!;
     Mock<IRbacClient> RbacClientMock { get; set; } = default!;
-    Mock<IGitHubClient> GitHubClientMock { get; set; } = default!;
 
     AccessConfig NoGitHubAccessConfig { get; set; } = default!;
     AccessConfig FederatedCredentialsOnlyConfig { get; set; } = default!;
     AccessConfig TemplateAccessConfig { get; set; } = default!;
-    AccessConfig GithubAccessConfig { get; set; } = default!;
     AccessConfig RbacOnlyConfig { get; set; } = default!;
     AccessConfig FullAccessConfig { get; set; } = default!;
     AccessConfig MultiAccessConfig { get; set; } = default!;
@@ -28,12 +26,10 @@ public class ReconcilerTest
         NoGitHubAccessConfig = new AccessConfig(Mock.Of<ILogger>(), new List<string>{"./test-configs/no-github-access-config.json"});
         FederatedCredentialsOnlyConfig = new AccessConfig(Mock.Of<ILogger>(), new List<string>{"./test-configs/federated-credentials-only-config.json"});
         TemplateAccessConfig = new AccessConfig(Mock.Of<ILogger>(), new List<string>{"./test-configs/access-config-template.json"});
-        GithubAccessConfig = new AccessConfig(Mock.Of<ILogger>(), new List<string>{"./test-configs/github-only-config.json"});
         RbacOnlyConfig = new AccessConfig(Mock.Of<ILogger>(), new List<string>{"./test-configs/rbac-only-config.json"});
         FullAccessConfig = new AccessConfig(Mock.Of<ILogger>(), new List<string>{"./test-configs/full-access-config.json"});
         MultiAccessConfig = new AccessConfig(Mock.Of<ILogger>(), new List<string>{
             "./test-configs/rbac-only-config.json",
-            "./test-configs/github-only-config.json",
             "./test-configs/federated-credentials-only-config.json",
         });
         TemplateMissingPropertyAccessConfig = new AccessConfig(Mock.Of<ILogger>(), new List<string>{
@@ -47,7 +43,6 @@ public class ReconcilerTest
     {
         ManagedIdentityClientMock = new Mock<IManagedIdentityClient>();
         RbacClientMock = new Mock<IRbacClient>();
-        GitHubClientMock = new Mock<IGitHubClient>();
 
         TestIdentityInfo = new ManagedIdentityInfo(
             ClientId: Guid.Parse("00000000-0000-0000-0000-000000000000"),
@@ -69,7 +64,7 @@ public class ReconcilerTest
     [Test]
     public async Task TestReconcileWithTemplateMissingProperties()
     {
-        var reconciler = new Reconciler(Mock.Of<ILogger>(), ManagedIdentityClientMock.Object, RbacClientMock.Object, GitHubClientMock.Object);
+        var reconciler = new Reconciler(Mock.Of<ILogger>(), ManagedIdentityClientMock.Object, RbacClientMock.Object);
         ManagedIdentityClientMock.Setup(c => c.GetManagedIdentity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(TestIdentityInfo);
         ManagedIdentityClientMock.Setup(c => c.ListFederatedIdentityCredentials(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
@@ -80,40 +75,9 @@ public class ReconcilerTest
     }
 
     [Test]
-    public async Task TestReconcileWithGithubSecrets()
-    {
-        var reconciler = new Reconciler(Mock.Of<ILogger>(), ManagedIdentityClientMock.Object, RbacClientMock.Object, GitHubClientMock.Object);
-
-        GitHubClientMock.Setup(c => c.SetRepositorySecret(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
-            .Returns(Task.CompletedTask);
-
-        await reconciler.ReconcileGithubRepositorySecrets(GithubAccessConfig.Configs.First().ApplicationAccessConfig, new ReconcileOptions());
-
-        var config = GithubAccessConfig.Configs.First().ApplicationAccessConfig;
-
-        foreach (var secret in config.GithubRepositorySecrets.First().Secrets)
-        {
-            GitHubClientMock.Verify(c => c.SetRepositorySecret(
-                "testfoobaraccessmanager", "azure-sdk-test-foobar", secret.Key, secret.Value), Times.Exactly(1));
-            GitHubClientMock.Verify(c => c.SetRepositorySecret(
-                "testfoobaraccessmanager-fork", "azure-sdk-test-foobar", secret.Key, secret.Value), Times.Exactly(1));
-        }
-
-        foreach (var secret in config.GithubRepositorySecrets.ElementAt(1).Secrets)
-        {
-            GitHubClientMock.Verify(c => c.SetRepositorySecret(
-                "microsoft-testfoobaraccessmanager", "azure-sdk-test-baz", secret.Key, secret.Value), Times.Exactly(1));
-        }
-
-        GitHubClientMock.Verify(c => c.SetRepositorySecret(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(9));
-    }
-
-    [Test]
     public async Task TestReconcileWithExistingIdentity()
     {
-        var reconciler = new Reconciler(Mock.Of<ILogger>(), ManagedIdentityClientMock.Object, RbacClientMock.Object, GitHubClientMock.Object);
+        var reconciler = new Reconciler(Mock.Of<ILogger>(), ManagedIdentityClientMock.Object, RbacClientMock.Object);
 
         ManagedIdentityClientMock.Setup(c => c.GetManagedIdentity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(TestIdentityInfo);
@@ -132,7 +96,7 @@ public class ReconcilerTest
     [Test]
     public async Task TestReconcileWithNewIdentity()
     {
-        var reconciler = new Reconciler(Mock.Of<ILogger>(), ManagedIdentityClientMock.Object, RbacClientMock.Object, GitHubClientMock.Object);
+        var reconciler = new Reconciler(Mock.Of<ILogger>(), ManagedIdentityClientMock.Object, RbacClientMock.Object);
 
         ManagedIdentityClientMock.Setup(c => c.GetManagedIdentity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync((ManagedIdentityInfo?)null);
@@ -153,7 +117,7 @@ public class ReconcilerTest
     [Test]
     public async Task TestReconcileWithEmptyFederatedIdentityCredentials()
     {
-        var reconciler = new Reconciler(Mock.Of<ILogger>(), ManagedIdentityClientMock.Object, RbacClientMock.Object, GitHubClientMock.Object);
+        var reconciler = new Reconciler(Mock.Of<ILogger>(), ManagedIdentityClientMock.Object, RbacClientMock.Object);
         var configApp = FederatedCredentialsOnlyConfig.Configs.First().ApplicationAccessConfig;
 
         ManagedIdentityClientMock.Setup(c => c.ListFederatedIdentityCredentials(
@@ -173,7 +137,7 @@ public class ReconcilerTest
     [Test]
     public async Task TestReconcileMergingFederatedIdentityCredentials()
     {
-        var reconciler = new Reconciler(Mock.Of<ILogger>(), ManagedIdentityClientMock.Object, RbacClientMock.Object, GitHubClientMock.Object);
+        var reconciler = new Reconciler(Mock.Of<ILogger>(), ManagedIdentityClientMock.Object, RbacClientMock.Object);
         var configApp = FederatedCredentialsOnlyConfig.Configs.First().ApplicationAccessConfig;
 
         var firstConfig = configApp.FederatedIdentityCredentials.First();
@@ -205,7 +169,7 @@ public class ReconcilerTest
     [Test]
     public async Task TestReconcileRoleBasedAccessControl()
     {
-        var reconciler = new Reconciler(Mock.Of<ILogger>(), ManagedIdentityClientMock.Object, RbacClientMock.Object, GitHubClientMock.Object);
+        var reconciler = new Reconciler(Mock.Of<ILogger>(), ManagedIdentityClientMock.Object, RbacClientMock.Object);
         var configApp = RbacOnlyConfig.Configs.First().ApplicationAccessConfig;
 
         await reconciler.ReconcileRoleBasedAccessControls(TestIdentityInfo.PrincipalId, configApp, new ReconcileOptions());
@@ -217,7 +181,7 @@ public class ReconcilerTest
     [Test]
     public async Task TestReconcileNoDeleteSkipsDeletion()
     {
-        var reconciler = new Reconciler(Mock.Of<ILogger>(), ManagedIdentityClientMock.Object, RbacClientMock.Object, GitHubClientMock.Object);
+        var reconciler = new Reconciler(Mock.Of<ILogger>(), ManagedIdentityClientMock.Object, RbacClientMock.Object);
         var configApp = FederatedCredentialsOnlyConfig.Configs.First().ApplicationAccessConfig;
 
         var firstConfig = configApp.FederatedIdentityCredentials.First();
@@ -250,7 +214,7 @@ public class ReconcilerTest
     [Test]
     public async Task TestReconcileDryRunSkipsWrites()
     {
-        var reconciler = new Reconciler(Mock.Of<ILogger>(), ManagedIdentityClientMock.Object, RbacClientMock.Object, GitHubClientMock.Object);
+        var reconciler = new Reconciler(Mock.Of<ILogger>(), ManagedIdentityClientMock.Object, RbacClientMock.Object);
 
         ManagedIdentityClientMock.Setup(c => c.GetManagedIdentity(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(TestIdentityInfo);
@@ -280,23 +244,19 @@ public class ReconcilerTest
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         RbacClientMock.Verify(c => c.CreateRoleAssignment(
             It.IsAny<Guid>(), It.IsAny<RoleBasedAccessControlsConfig>()), Times.Never);
-        GitHubClientMock.Verify(c => c.SetRepositorySecret(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 
     [Test]
-    [TestCase("FullAccessConfig", 1, 3, 1, 0, 3, 2)]
-    [TestCase("MultiAccessConfig", 3, 9, 2, 0, 2, 3)]
+    [TestCase("FullAccessConfig", 1, 0, 3, 2)]
+    [TestCase("MultiAccessConfig", 2, 0, 2, 3)]
     public async Task TestReconcileWithMultipleConfigs(
         string accessConfigName,
         int createIdentityCount,
-        int setRepositorySecretCount,
-        int setClientIdCount,
         int deleteFederatedIdentityCredentialCount,
         int createFederatedIdentityCredentialCount,
         int createRoleAssignmentCount
     ) {
-        var reconciler = new Reconciler(Mock.Of<ILogger>(), ManagedIdentityClientMock.Object, RbacClientMock.Object, GitHubClientMock.Object);
+        var reconciler = new Reconciler(Mock.Of<ILogger>(), ManagedIdentityClientMock.Object, RbacClientMock.Object);
         // Override ClientId to ensure we inject it into downstream properties and rendered template values
         TestIdentityInfo = new ManagedIdentityInfo(
             ClientId: Guid.Parse("11111111-1111-1111-1111-111111111111"),
@@ -321,10 +281,6 @@ public class ReconcilerTest
         ManagedIdentityClientMock.Setup(c => c.CreateManagedIdentity(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(TestIdentityInfo);
-        // GitHub mocks
-        GitHubClientMock.Setup(c => c.SetRepositorySecret(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
-            .Returns(Task.CompletedTask);
         // Federated Identity Credential mocks
         ManagedIdentityClientMock.Setup(c => c.ListFederatedIdentityCredentials(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
@@ -335,12 +291,6 @@ public class ReconcilerTest
         // Create managed identity
         ManagedIdentityClientMock.Verify(c => c.CreateManagedIdentity(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(createIdentityCount));
-
-        // Create repository secrets
-        GitHubClientMock.Verify(c => c.SetRepositorySecret(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(setRepositorySecretCount));
-        GitHubClientMock.Verify(c => c.SetRepositorySecret(
-            It.IsAny<string>(), It.IsAny<string>(), "AZURE_CLIENT_ID", TestIdentityInfo.ClientId.ToString()), Times.Exactly(setClientIdCount));
 
         // Federated identity credentials
         ManagedIdentityClientMock.Verify(c => c.DeleteFederatedIdentityCredential(

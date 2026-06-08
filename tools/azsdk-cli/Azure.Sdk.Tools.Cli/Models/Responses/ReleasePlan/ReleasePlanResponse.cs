@@ -14,6 +14,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan
         public ReleasePlanWorkItem? ReleasePlanDetails { get; set; }
         [JsonPropertyName("message")]
         public string Message { get; set; } = string.Empty;
+        [JsonPropertyName("release_plan_link")]
         public string ReleasePlanLink => ReleasePlanDetails != null ? ReleasePlanDetails.ReleasePlanLink : string.Empty;
         protected override string Format()
         {

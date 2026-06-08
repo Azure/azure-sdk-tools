@@ -112,11 +112,11 @@ What are we trying to achieve with this design?
 
 #### Language-Specific Limitations
 
-This tool will support Java, JavaScript, Python, and Go. The .NET SDK is not supported.
+This tool will support Java, JavaScript, Python, Go and .NET SDK.
 
 | Language   | supported |
 |------------|------------|
-| .NET       | No    |
+| .NET       | Yes   |
 | Java       | Yes   |
 | JavaScript | Yes   |
 | Python     | Yes   |
@@ -238,13 +238,21 @@ Each language SDK already has a tool or script that generates sdk changes. We on
 
 **Summary of the detection mechanism:**
 
-| Language | Tool | Compares | Old Source | New Source |
-|----------|------|----------|------------|-----------|
-| **Go** | Custom Go AST diff (`exports`/`delta`/`report` packages) | Go exported symbols | GitHub release tag ZIP | Generated code |
-| **Java (CI)** | `revapi-maven-plugin` | Java public API | Maven Central GA release | Locally built JAR |
-| **Java (Sdk automation)** | `japicmp` (JarArchiveComparator) | JAR bytecode | Maven Central JAR | Locally built JAR |
-| **JS/TS** | API Extractor + `git diff` | `.api.md` review files | Git baseline | Generated review files |
-| **Python** | `jsondiff` + AST/`inspect` introspection | JSON API reports | PyPI stable package | Current code |
+| Language | Tool | Compares | Old Source | New Source | management-plane or data-plane| limitation|
+|----------|------|----------|------------|-----------|--------|-----------|
+| **Go** | Custom Go AST diff (`exports`/`delta`/`report` packages) | Go exported symbols | GitHub release tag ZIP | Generated code | both | No |
+| **Java (CI)** | `revapi-maven-plugin` | Java public API | Maven Central GA release | Locally built JAR | both | No |
+| **Java (Sdk automation)** | `japicmp` (JarArchiveComparator) | JAR bytecode | Maven Central JAR | Locally built JAR | both | No |
+| **.NET** | `Microsoft.DotNet.ApiCompat` MSBuild target | .NET assemblies | NuGet cached baseline DLL | Built DLL | both | only report breaking changes |
+| **JS/TS** | API Extractor + `git diff` | `.api.md` review files | Git baseline | Generated review files | both | No |
+| **Python** | `jsondiff` + AST/`inspect` introspection | JSON API reports | PyPI stable package | Current code | both | Need twick a litter for data-plane |
+
+Each tool of language SDKs is suitable for both management-plane SDK and data-plane SDK.
+
+Limitation:
+
+- Net: Microsoft.DoNet.ApiCompat only report breaking changes, not all SDK changes.
+- Python: the tool need to be twicked a litter for data-plane
 
 **Input**:
 SDK package
@@ -436,7 +444,7 @@ Flow:
 
 #### Scenario 2: Spec PR automation pipeline and SDK breaking change resolve
 
-Shif-left: Integrate SDK breaking change detection, analysis, and mitigation guidance into both Spec PR to reduce manual effort and avoid late-stage rework.
+Shif-left: Integrate SDK breaking change detection, analysis, and mitigation guidance into Spec PR to reduce manual effort and avoid late-stage rework.
 
 Flow:
 The end-to-end flow contains two stages:
@@ -507,7 +515,9 @@ flowchart TD
 
     **Open question:**
 
-    If resolving breaking changes requires SDK code customization (updating SDK source code), should we file an SDK PR to refresh the SDK code now, or defer the SDK code customization to a later SDK release?
+    Q: If resolving breaking changes requires SDK code customization (updating SDK source code), should we file an SDK PR to refresh the SDK now, or defer SDK code customization to a later SDK release?
+
+    A: The main branch in the SDK repo must stay aligned with the released SDK, so we cannot refresh SDK code every time the Spec is updated. Therefore, in the Spec PR workflow, SDK code customization is deferred to a later SDK release. As a result, there is a **known limitation**: Spec PR workflows do not refresh SDK code, so if mitigation goes beyond the Spec PR (for example, SDK source changes), the current design cannot fully resolve it within the Spec PR flow. It resolves only breaking changes that can be handled through TypeSpec customization, and defers code-only mitigations and build failures caused by TypeSpec customization to the SDK PR workflow.
 
 The PR owner merge the `client.tsp` changes made in step 6. After the spec PR is updated, the SDK validation pipeline is triggered again. This flow is repeated until no SDK breaking changes are reported, either because the breaking changes have been resolved or explicitly suppressed. The PR owner then adds the `BreakingChange-XXX-sdk-approved` label, and the spec PR is ready to merge.
 

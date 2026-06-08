@@ -206,7 +206,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 if (releasePlan.ApiReleaseType == ApiReleaseType.PrivatePreview)
                 {
-                    response.ResponseErrors.Add($"Release plan with work item ID {workItemId} is in Private Preview stage. Important: SDK cannot be generated and released for private preview release plans and private preview release plan only requires to merge API spec PR. If required for validation purposes, you can generate the SDK locally only and only for SDK validation.");
+                    response.Details.Add($"Release plan with work item ID {workItemId} is in Private Preview stage. Important: SDK cannot be generated and released for private preview release plans and private preview release plan only requires to merge API spec PR. If required for validation purposes, you can generate the SDK locally only and only for SDK validation.");
                     response.Status = "Success";
                     return response;
                 }

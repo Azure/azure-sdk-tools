@@ -8,16 +8,16 @@
 #   states setup is verified).
 #
 # What this eval is NOT:
-#   - Not an end-to-end flow (see release-planner-e2e.eval.yaml for that).
+#   - Not an end-to-end flow (see
+#     evals/workflow-scenarios/live/release-planner.eval.yaml for that).
 #   - Does not validate argument values yet — see TODO below + #15833.
-#   - Does not need azure-rest-api-specs cloned; runs against the live MCP
-#     server in agent-testing mode (AZSDKTOOLS_AGENT_TESTING=true, set in
-#     ../../.vally.yaml).
+#   - Does not need azure-rest-api-specs cloned; runs against the mock MCP
+#     server (azsdk-mcp-mock environment) defined in ../../.vally.yaml.
 #
 # How to run locally:
 #   cd tools/azsdk-cli/Azure.Sdk.Tools.Vally
 #   ../../../eng/skill-eval/node_modules/.bin/vally.cmd eval \
-#     --eval-spec evals/unit/create-release-plan.eval.yaml --verbose
+#     --eval-spec evals/tools/create-release-plan.eval.yaml --verbose
 # =============================================================================
 
 name: azsdk-mcp-tool-scenarios

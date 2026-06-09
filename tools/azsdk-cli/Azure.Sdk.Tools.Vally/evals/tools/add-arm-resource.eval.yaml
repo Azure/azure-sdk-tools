@@ -34,6 +34,10 @@ stimuli:
       - type: tool-calls
         config:
           required:
+            # `edit` is the Copilot SDK executor's built-in file-edit tool
+            # (alongside `view` / `create`) — NOT an azsdk MCP tool. Requiring
+            # it asserts the agent actually wrote the resource .tsp, not just
+            # produced an authoring plan.
             - edit
             - azsdk_typespec_generate_authoring_plan
 

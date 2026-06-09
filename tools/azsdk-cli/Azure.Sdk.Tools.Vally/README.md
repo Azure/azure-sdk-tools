@@ -42,33 +42,33 @@ conditional branches, recovery), both matter independently.
 
 **Tool-scenario evals (this project)** — organised by the standard test pyramid under [`evals/`](evals/). The folder is the **cost tier** (and CI cadence); the feature **area** is a tag inside each YAML so cross-cuts work via `.vally.yaml` suite filters.
 
-#### `evals/unit/` — hermetic single-tool evals (18)
+#### `evals/tools/` — hermetic single-tool evals (18)
 
 One prompt → one expected MCP tool. No `environment.git`, no fixtures. Fast; safe to run on every PR. Includes the per-tool **trigger** coverage ported from [#15183](https://github.com/Azure/azure-sdk-tools/pull/15183) (`triggers-*.eval.yaml`).
 
 | Scenario | Area | Shape |
 |---|---|---|
-| [`check-public-repo`](evals/unit/check-public-repo.eval.yaml) | typespec | Is a TypeSpec project published in `azure-rest-api-specs`? |
-| [`validate-typespec`](evals/unit/validate-typespec.eval.yaml) | typespec | Run `tsp` linter/validation |
-| [`get-modified-typespec-projects`](evals/unit/get-modified-typespec-projects.eval.yaml) | typespec | Git-aware tool against current branch |
-| [`add-arm-resource`](evals/unit/add-arm-resource.eval.yaml) | typespec | Calls `azsdk_typespec_generate_authoring_plan` for an ARM resource |
-| [`create-release-plan`](evals/unit/create-release-plan.eval.yaml) | release-plan | Create a release-plan work item |
-| [`link-namespace-approval-issue`](evals/unit/link-namespace-approval-issue.eval.yaml) | release-plan | Link an existing approval issue to a release plan |
-| [`get-pr-link-current-branch`](evals/unit/get-pr-link-current-branch.eval.yaml) | github | Resolve the PR for the active git branch |
-| [`check-sdk-generation-status`](evals/unit/check-sdk-generation-status.eval.yaml) | pipeline | Pipeline status lookup |
-| [`triggers-apiview`](evals/unit/triggers-apiview.eval.yaml) | apiview | `azsdk_apiview_*` |
-| [`triggers-config`](evals/unit/triggers-config.eval.yaml) | engsys | `azsdk_check_service_label`, `azsdk_create_service_label` |
-| [`triggers-engsys`](evals/unit/triggers-engsys.eval.yaml) | engsys | `azsdk_analyze_log_file`, failed-test tools, codeowner-cache |
-| [`triggers-github`](evals/unit/triggers-github.eval.yaml) | github | `azsdk_create_pull_request`, `azsdk_get_pull_request*`, `azsdk_get_github_user_details` |
-| [`triggers-package`](evals/unit/triggers-package.eval.yaml) | package | `azsdk_package_*`, `azsdk_release_sdk` |
-| [`triggers-pipeline`](evals/unit/triggers-pipeline.eval.yaml) | pipeline | `azsdk_analyze_pipeline`, `azsdk_get_pipeline_*` |
-| [`triggers-releaseplan`](evals/unit/triggers-releaseplan.eval.yaml) | release-plan | `azsdk_*_release_plan*`, `azsdk_run_generate_sdk`, `azsdk_link_*` |
-| [`triggers-typespec`](evals/unit/triggers-typespec.eval.yaml) | typespec | `azsdk_typespec_*`, `azsdk_convert_swagger_to_typespec`, `azsdk_customized_code_update`, `azsdk_run_typespec_validation` |
-| [`triggers-verify`](evals/unit/triggers-verify.eval.yaml) | engsys | `azsdk_verify_setup` |
+| [`check-public-repo`](evals/tools/check-public-repo.eval.yaml) | typespec | Is a TypeSpec project published in `azure-rest-api-specs`? |
+| [`validate-typespec`](evals/tools/validate-typespec.eval.yaml) | typespec | Run `tsp` linter/validation |
+| [`get-modified-typespec-projects`](evals/tools/get-modified-typespec-projects.eval.yaml) | typespec | Git-aware tool against current branch |
+| [`add-arm-resource`](evals/tools/add-arm-resource.eval.yaml) | typespec | Calls `azsdk_typespec_generate_authoring_plan` for an ARM resource |
+| [`create-release-plan`](evals/tools/create-release-plan.eval.yaml) | release-plan | Create a release-plan work item |
+| [`link-namespace-approval-issue`](evals/tools/link-namespace-approval-issue.eval.yaml) | release-plan | Link an existing approval issue to a release plan |
+| [`get-pr-link-current-branch`](evals/tools/get-pr-link-current-branch.eval.yaml) | github | Resolve the PR for the active git branch |
+| [`check-sdk-generation-status`](evals/tools/check-sdk-generation-status.eval.yaml) | pipeline | Pipeline status lookup |
+| [`triggers-apiview`](evals/tools/triggers-apiview.eval.yaml) | apiview | `azsdk_apiview_*` |
+| [`triggers-config`](evals/tools/triggers-config.eval.yaml) | engsys | `azsdk_check_service_label`, `azsdk_create_service_label` |
+| [`triggers-engsys`](evals/tools/triggers-engsys.eval.yaml) | engsys | `azsdk_analyze_log_file`, failed-test tools, codeowner-cache |
+| [`triggers-github`](evals/tools/triggers-github.eval.yaml) | github | `azsdk_create_pull_request`, `azsdk_get_pull_request*`, `azsdk_get_github_user_details` |
+| [`triggers-package`](evals/tools/triggers-package.eval.yaml) | package | `azsdk_package_*`, `azsdk_release_sdk` |
+| [`triggers-pipeline`](evals/tools/triggers-pipeline.eval.yaml) | pipeline | `azsdk_analyze_pipeline`, `azsdk_get_pipeline_*` |
+| [`triggers-releaseplan`](evals/tools/triggers-releaseplan.eval.yaml) | release-plan | `azsdk_*_release_plan*`, `azsdk_run_generate_sdk`, `azsdk_link_*` |
+| [`triggers-typespec`](evals/tools/triggers-typespec.eval.yaml) | typespec | `azsdk_typespec_*`, `azsdk_convert_swagger_to_typespec`, `azsdk_customized_code_update`, `azsdk_run_typespec_validation` |
+| [`triggers-verify`](evals/tools/triggers-verify.eval.yaml) | engsys | `azsdk_verify_setup` |
 
-The companion [`scripts/Validate-EvalTools.ps1`](scripts/Validate-EvalTools.ps1) cross-checks that every tool referenced in `evals/unit/triggers-*.eval.yaml` exists on the running MCP server, and every server tool has at least one trigger.
+The companion [`scripts/Validate-EvalTools.ps1`](scripts/Validate-EvalTools.ps1) cross-checks that every tool referenced in `evals/tools/triggers-*.eval.yaml` exists on the running MCP server, and every server tool has at least one trigger.
 
-#### `evals/scenarios/` — multi-tool scenarios (4)
+#### `evals/workflow-scenarios/` — multi-tool scenarios (4)
 
 Multi-step prompts that exercise 2+ MCP tools end-to-end. Split into
 `mock/` (hermetic, runs on PR gate) and `live/` (real DevOps / GitHub /
@@ -76,10 +76,10 @@ pipelines, runs nightly).
 
 | Scenario | Area | Mode | Shape |
 |---|---|---|---|
-| [`check-public-repo-then-validate`](evals/scenarios/mock/check-public-repo-then-validate.eval.yaml) | typespec | mock | Validate, then check public-repo presence |
-| [`typespec-generation-step02`](evals/scenarios/mock/typespec-generation-step02.eval.yaml) | typespec | mock | Step in the spec-PR generation flow |
-| [`rename-client-property`](evals/scenarios/mock/rename-client-property.eval.yaml) | typespec | mock | Stub — needs `expected-diff` grader + sparse clone |
-| [`release-planner`](evals/scenarios/live/release-planner.eval.yaml) | release-plan | **live** | Create + re-fetch a release plan, kick off SDK gen, link PR back — real DevOps test-area writes |
+| [`check-public-repo-then-validate`](evals/workflow-scenarios/mock/check-public-repo-then-validate.eval.yaml) | typespec | mock | Validate, then check public-repo presence |
+| [`typespec-generation-step02`](evals/workflow-scenarios/mock/typespec-generation-step02.eval.yaml) | typespec | mock | Step in the spec-PR generation flow |
+| [`rename-client-property`](evals/workflow-scenarios/mock/rename-client-property.eval.yaml) | typespec | mock | Stub — needs `expected-diff` grader + sparse clone |
+| [`release-planner`](evals/workflow-scenarios/live/release-planner.eval.yaml) | release-plan | **live** | Create + re-fetch a release plan, kick off SDK gen, link PR back — real DevOps test-area writes |
 
 Live scenarios need a primed `azure-rest-api-specs` clone — run
 [`evals/setup/ensure-specs-clone.ps1`](evals/setup/ensure-specs-clone.ps1)
@@ -142,12 +142,14 @@ The fastest path from a fresh clone to a green eval. Swap the path after
 ```powershell
 # From repo root
 cd eng/skill-eval; npm ci; cd ../..
-dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Cli  -c Debug
-dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Mock -c Debug
+dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Cli  -c Debug -o artifacts/mcp/cli
+dotnet build tools/azsdk-cli/Azure.Sdk.Tools.Mock -c Debug -o artifacts/mcp/mock
 ```
 
 Rebuild the MCP servers any time you edit tool source. Vally does **not**
-rebuild them — it just spawns the existing DLL.
+rebuild them — it just spawns the existing DLL. `-o artifacts/mcp/{cli,mock}`
+pins the output path so `.vally.yaml` doesn't need to know the target
+framework moniker (avoids `Debug/net8.0/...` drift).
 
 ### 2. Move into this project and stash the paths
 

@@ -13,24 +13,25 @@ paths:
 environments:
   # Launch the pre-built DLL via `dotnet <dll>`, NOT `dotnet run` — avoids the
   # MSBuild boot race under parallel workers. See issue #15948.
-  # Run `dotnet build ../Azure.Sdk.Tools.Mock -c Debug` once before vally.
+  # Output path is TFM-agnostic via `dotnet build -o`. Run once before vally:
+  #   dotnet build ../Azure.Sdk.Tools.Mock -c Debug -o ../../../artifacts/mcp/mock
   azsdk-mcp-mock:
     mcpServers:
       azure-sdk-mcp:
         type: stdio
         command: dotnet
-        args: ["../../../artifacts/bin/Azure.Sdk.Tools.Mock/Debug/net8.0/azsdk-mock.dll"]
+        args: ["../../../artifacts/mcp/mock/azsdk-mock.dll"]
         timeout: "30s"
 
   # Live MCP. AZSDKTOOLS_AGENT_TESTING=true keeps write tools inside the test
-  # area. Pre-built DLL pattern — see issue #15948.
-  # Run `dotnet build ../Azure.Sdk.Tools.Cli -c Debug` once before vally.
+  # area. Pre-built DLL pattern — see issue #15948. Run once before vally:
+  #   dotnet build ../Azure.Sdk.Tools.Cli -c Debug -o ../../../artifacts/mcp/cli
   azsdk-mcp-live:
     mcpServers:
       azure-sdk-mcp:
         type: stdio
         command: dotnet
-        args: ["../../../artifacts/bin/Azure.Sdk.Tools.Cli/Debug/net8.0/azsdk.dll", "start"]
+        args: ["../../../artifacts/mcp/cli/azsdk.dll", "start"]
         timeout: "5m"
         env:
           AZSDKTOOLS_AGENT_TESTING: "true"

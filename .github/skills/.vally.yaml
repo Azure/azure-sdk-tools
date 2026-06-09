@@ -14,13 +14,16 @@ paths:
 environments:
   # Launch the pre-built DLLs via `dotnet <dll>`, NOT `dotnet run` — avoids the
   # MSBuild boot race under parallel workers. See issue #15948.
-  # CI builds the DLLs in the 'Build MCP servers' step of skill-eval.yml.
+  # The DLLs are emitted to a TFM-agnostic path via `dotnet build -o`. CI
+  # builds them in the 'Build MCP servers' step of skill-eval.yml; locally,
+  # run `dotnet build ../../tools/azsdk-cli/Azure.Sdk.Tools.Cli  -c Debug -o ../../artifacts/mcp/cli`
+  # (and `... .Mock ... -o ../../artifacts/mcp/mock`) from this directory.
   azsdk-mcp:
     mcpServers:
       azure-sdk-mcp:
         type: stdio
         command: dotnet
-        args: ["../../artifacts/bin/Azure.Sdk.Tools.Cli/Debug/net8.0/azsdk.dll", "start"]
+        args: ["../../artifacts/mcp/cli/azsdk.dll", "start"]
         timeout: "60s"
         env:
           AZSDKTOOLS_AGENT_TESTING: "true"
@@ -30,5 +33,5 @@ environments:
       azure-sdk-mcp:
         type: stdio
         command: dotnet
-        args: ["../../artifacts/bin/Azure.Sdk.Tools.Mock/Debug/net8.0/azsdk-mock.dll"]
+        args: ["../../artifacts/mcp/mock/azsdk-mock.dll"]
         timeout: "60s"

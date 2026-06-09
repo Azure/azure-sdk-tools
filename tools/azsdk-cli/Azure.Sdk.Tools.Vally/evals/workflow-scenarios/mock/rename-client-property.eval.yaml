@@ -34,6 +34,9 @@ stimuli:
       - type: tool-calls
         config:
           required:
+            # `edit` is the Copilot SDK executor's built-in file-edit tool
+            # (alongside `view` / `create`) — NOT an azsdk MCP tool. Requiring
+            # it asserts the agent actually performed the rename edit.
             - edit
       - type: skill-invocation
         config:

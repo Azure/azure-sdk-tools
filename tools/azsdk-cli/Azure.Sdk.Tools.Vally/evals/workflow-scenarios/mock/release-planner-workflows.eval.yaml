@@ -104,6 +104,13 @@ stimuli:
         config:
           required:
             - azsdk-common-prepare-release-plan
+          # The generate half of this flow uses azsdk_run_generate_sdk, which is
+          # a pipeline-driven release-planner tool, NOT a local TypeSpec build.
+          # azsdk-common-generate-sdk-locally over-matches on the word "generate"
+          # and pulls in the wrong (local clone -> emit -> build -> test) flow.
+          # See https://github.com/Azure/azure-sdk-tools/issues/15950.
+          disallowed:
+            - azsdk-common-generate-sdk-locally
       - type: tool-calls
         config:
           required:
@@ -116,9 +123,6 @@ stimuli:
   # --- Scenario 2: Generate SDK for an existing release plan -----------
   - name: generate-sdk-for-existing-release-plan
     environment:
-      # Same per-user azure-rest-api-specs worktree as the create stimuli
-      # above so the agent can locate the TypeSpec project on disk while
-      # driving the release-planner flow.
       git:
         type: worktree
         source: C:/Users/gaoh/.vally-cache/azure-rest-api-specs
@@ -134,6 +138,16 @@ stimuli:
       max_turns: 8
       max_tokens: 10000
     graders:
+      - type: skill-invocation
+        config:
+          required:
+            - azsdk-common-prepare-release-plan
+          # azsdk_run_generate_sdk is a release-planner pipeline tool, not a
+          # local TypeSpec build. azsdk-common-generate-sdk-locally over-matches
+          # on the word "generate" and pulls in the wrong workflow. See
+          # https://github.com/Azure/azure-sdk-tools/issues/15950.
+          disallowed:
+            - azsdk-common-generate-sdk-locally
       - type: tool-calls
         config:
           required:

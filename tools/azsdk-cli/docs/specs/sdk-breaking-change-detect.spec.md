@@ -519,6 +519,12 @@ flowchart TD
 
     A: The main branch in the SDK repo must stay aligned with the released SDK, so we cannot refresh SDK code every time the Spec is updated. Therefore, in the Spec PR workflow, SDK code customization is deferred to a later SDK release. As a result, there is a **known limitation**: Spec PR workflows do not refresh SDK code, so if mitigation goes beyond the Spec PR (for example, SDK source changes), the current design cannot fully resolve it within the Spec PR flow. It resolves only breaking changes that can be handled through TypeSpec customization, and defers code-only mitigations and build failures caused by TypeSpec customization to the SDK PR workflow.
 
+    **known limitation**
+    
+    The `azsdk_customized_code_update` tool only support local scenario. More broadly, azsdk-cli MCP tools (for example, `azsdk_package_generate_code` and `azsdk_customized_code_update`) currently support only local scenarios and do not support remote scenarios. Because of this limitation, Copilot cannot invoke these MCP tools directly in remote workflows.
+
+    **Solution**: We will support remote experiences at the workflow/skill layer, not within MCP tools. MCP tools should validate prerequisites and return clear next steps. Skills can explicitly orchestrate repository cloning with user awareness, then invoke MCP tools using local paths.
+
 The PR owner merge the `client.tsp` changes made in step 6. After the spec PR is updated, the SDK validation pipeline is triggered again. This flow is repeated until no SDK breaking changes are reported, either because the breaking changes have been resolved or explicitly suppressed. The PR owner then adds the `BreakingChange-XXX-sdk-approved` label, and the spec PR is ready to merge.
 
 #### Scenario 3: When release SDK, Resolve SDK breaking changes in SDK repo PR

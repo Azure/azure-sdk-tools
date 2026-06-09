@@ -14,7 +14,7 @@
 
 ### Features Added
 
-- Added the `azsdk_package_find_work_item` MCP tool and `package find-work-item` CLI command to find Azure DevOps package work item links by package name, package version, and language.
+- Added the `package find-work-item` CLI command to find Azure DevOps package work item IDs by package name, package version, and language.
 
 ### Other Changes
 

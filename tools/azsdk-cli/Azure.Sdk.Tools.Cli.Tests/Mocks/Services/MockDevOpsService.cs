@@ -36,6 +36,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             });
         }
 
+        public Task<List<int>> FindPackageWorkItemIdsAsync(string packageName, string language, string packageVersionMajorMinor, CancellationToken ct = default)
+        {
+            return Task.FromResult(new List<int> { 12345 });
+        }
+
         Task<List<ReleasePlanWorkItem>> IDevOpsService.ListOverdueReleasePlansAsync(CancellationToken ct)
         {
             return Task.FromResult(new List<ReleasePlanWorkItem>());

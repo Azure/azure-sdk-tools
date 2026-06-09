@@ -22,17 +22,10 @@ public class PackageWorkItemLookupToolTests
     }
 
     [Test]
-    public async Task FindPackageWorkItemReturnsBrowserLinkForSingularMatch()
+    public async Task FindPackageWorkItemReturnsIdForSingularMatch()
     {
-        devOpsService.Setup(service => service.FindPackageWorkItemsAsync("azure-storage-blob", "Python", "12.30", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
-                new PackageWorkitemResponse
-                {
-                    PackageName = "azure-storage-blob",
-                    WorkItemId = 31370,
-                    WorkItemUrl = "https://dev.azure.com/azure-sdk/Release/_apis/wit/workItems/31370"
-                }
-            ]);
+        devOpsService.Setup(service => service.FindPackageWorkItemIdsAsync("azure-storage-blob", "Python", "12.30", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([31370]);
 
         var result = await tool.FindPackageWorkItem("azure-storage-blob", "12.30", "Python", CancellationToken.None);
 
@@ -40,14 +33,13 @@ public class PackageWorkItemLookupToolTests
         {
             Assert.That(result.ExitCode, Is.EqualTo(0));
             Assert.That(result.WorkItemId, Is.EqualTo(31370));
-            Assert.That(result.WorkItemUrl, Is.EqualTo("https://dev.azure.com/azure-sdk/release/_workitems/edit/31370"));
         });
     }
 
     [Test]
     public async Task FindPackageWorkItemReturnsErrorWhenNoMatchExists()
     {
-        devOpsService.Setup(service => service.FindPackageWorkItemsAsync("azure-storage-blob", "Python", "12.30", It.IsAny<CancellationToken>()))
+        devOpsService.Setup(service => service.FindPackageWorkItemIdsAsync("azure-storage-blob", "Python", "12.30", It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
 
         var result = await tool.FindPackageWorkItem("azure-storage-blob", "12.30", "Python", CancellationToken.None);
@@ -62,11 +54,8 @@ public class PackageWorkItemLookupToolTests
     [Test]
     public async Task FindPackageWorkItemReturnsErrorWhenMultipleMatchesExist()
     {
-        devOpsService.Setup(service => service.FindPackageWorkItemsAsync("azure-storage-blob", "Python", "12.30", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
-                new PackageWorkitemResponse { WorkItemId = 1 },
-                new PackageWorkitemResponse { WorkItemId = 2 }
-            ]);
+        devOpsService.Setup(service => service.FindPackageWorkItemIdsAsync("azure-storage-blob", "Python", "12.30", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([1, 2]);
 
         var result = await tool.FindPackageWorkItem("azure-storage-blob", "12.30", "Python", CancellationToken.None);
 
@@ -74,7 +63,8 @@ public class PackageWorkItemLookupToolTests
         {
             Assert.That(result.ExitCode, Is.EqualTo(1));
             Assert.That(result.ResponseError, Does.Contain("Expected one package work item"));
-            Assert.That(result.NextSteps, Has.Count.EqualTo(2));
+            Assert.That(result.ResponseError, Does.Contain("1, 2"));
+            Assert.That(result.NextSteps, Is.Null);
         });
     }
 
@@ -84,15 +74,8 @@ public class PackageWorkItemLookupToolTests
     [TestCase("12", "12.0")]
     public async Task FindPackageWorkItemNormalizesPackageVersionBeforeLookup(string packageVersion, string expectedPackageVersionMajorMinor)
     {
-        devOpsService.Setup(service => service.FindPackageWorkItemsAsync("azure-storage-blob", "Python", expectedPackageVersionMajorMinor, It.IsAny<CancellationToken>()))
-            .ReturnsAsync([
-                new PackageWorkitemResponse
-                {
-                    PackageName = "azure-storage-blob",
-                    WorkItemId = 31370,
-                    WorkItemUrl = "https://dev.azure.com/azure-sdk/Release/_apis/wit/workItems/31370"
-                }
-            ]);
+        devOpsService.Setup(service => service.FindPackageWorkItemIdsAsync("azure-storage-blob", "Python", expectedPackageVersionMajorMinor, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([31370]);
 
         var result = await tool.FindPackageWorkItem("azure-storage-blob", packageVersion, "Python", CancellationToken.None);
 

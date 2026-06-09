@@ -4,22 +4,19 @@ using System.CommandLine;
 using System.ComponentModel;
 using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Commands;
-using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tools.Core;
-using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package;
 
-[McpServerToolType, Description("Find Azure DevOps package work items")]
+[Description("Find Azure DevOps package work items")]
 public class PackageWorkItemLookupTool(
     IDevOpsService devOpsService,
     ILogger<PackageWorkItemLookupTool> logger) : MCPTool
 {
     private const string FindWorkItemCommandName = "find-work-item";
-    private const string FindWorkItemToolName = "azsdk_package_find_work_item";
     private static readonly Regex PackageVersionRegex = new(@"^(?<major>\d+)(?:\.(?<minor>\d+)(?:\.\d+(?:[-+][0-9A-Za-z.-]+)?)?)?$", RegexOptions.Compiled);
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
@@ -43,7 +40,7 @@ public class PackageWorkItemLookupTool(
     };
 
     protected override Command GetCommand() =>
-        new McpCommand(FindWorkItemCommandName, "Find the Azure DevOps package work item link", FindWorkItemToolName)
+        new(FindWorkItemCommandName, "Find the Azure DevOps package work item ID")
         {
             packageNameOpt, packageVersionMajorMinorOpt, languageOpt
         };
@@ -56,7 +53,6 @@ public class PackageWorkItemLookupTool(
         return await FindPackageWorkItem(packageName, packageVersionMajorMinor, language, ct);
     }
 
-    [McpServerTool(Name = FindWorkItemToolName), Description("Finds the singular Azure DevOps Package work item matching package name, package major/minor version, and language, and returns its browser link.")]
     public async Task<PackageWorkItemLookupResponse> FindPackageWorkItem(string packageName, string packageVersionMajorMinor, string language, CancellationToken ct = default)
     {
         try
@@ -86,33 +82,26 @@ public class PackageWorkItemLookupTool(
                 return response;
             }
 
-            NormalizePackageVersion(packageVersionMajorMinor);
+            packageVersionMajorMinor = NormalizePackageVersion(packageVersionMajorMinor);
             response.PackageVersionMajorMinor = packageVersionMajorMinor;
 
-            logger.LogInformation("Finding package work item for package {packageName}, package version major/minor {packageVersionMajorMinor}, language {language}.", packageName, packageVersionMajorMinor, language);
-            var workItems = await devOpsService.FindPackageWorkItemsAsync(packageName, language, packageVersionMajorMinor, ct);
+            logger.LogDebug("Finding package work item for package {packageName}, package version major/minor {packageVersionMajorMinor}, language {language}.", packageName, packageVersionMajorMinor, language);
+            var workItemIds = await devOpsService.FindPackageWorkItemIdsAsync(packageName, language, packageVersionMajorMinor, ct);
 
-            if (workItems.Count == 0)
+            if (workItemIds.Count == 0)
             {
                 response.ResponseError = $"No package work item found for package '{packageName}', version '{packageVersionMajorMinor}', and language '{language}'.";
                 return response;
             }
 
-            if (workItems.Count > 1)
+            if (workItemIds.Count > 1)
             {
-                response.ResponseError = $"Expected one package work item for package '{packageName}', version '{packageVersionMajorMinor}', and language '{language}', but found {workItems.Count}.";
-                response.NextSteps = workItems.Select(workItem => new PackageWorkItemLookupResponse
-                {
-                    WorkItemId = workItem.WorkItemId,
-                    WorkItemUrl = workItem.WorkItemUrl
-                }.WorkItemUrl).ToList();
+                response.ResponseError = $"Expected one package work item for package '{packageName}', version '{packageVersionMajorMinor}', and language '{language}', but found {workItemIds.Count}: {string.Join(", ", workItemIds)}.";
                 return response;
             }
 
-            var match = workItems[0];
-            response.WorkItemId = match.WorkItemId;
-            response.WorkItemUrl = match.WorkItemUrl;
-            response.PackageName = match.PackageName ?? packageName;
+            response.WorkItemId = workItemIds[0];
+            response.PackageName = packageName;
             response.Language = language;
             return response;
         }

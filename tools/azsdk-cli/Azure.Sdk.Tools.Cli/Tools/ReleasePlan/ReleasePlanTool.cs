@@ -784,7 +784,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        [McpServerTool(Name = CreateReleasePlanToolName), Description("Create Release Plan for a TypeSpec project and API release type. API release types support Private Preview, Public Preview, and GA. Service ID and product Id are required if a previous release plan is not found for the TypeSpec project.")]
+        [McpServerTool(Name = CreateReleasePlanToolName), Description("Create Release Plan for a TypeSpec project and API release type. API release types support Private Preview, Public Preview, and GA. Service ID and product ID are optional and will be resolved from existing release plans when available.")]
         public async Task<ReleasePlanResponse> CreateReleasePlan(string typeSpecProjectPath, string targetReleaseMonthYear, string apiReleaseType, string sdkReleaseType = "", string specPullRequestUrl = "", string serviceTreeId = "", string productTreeId = "", bool isTestReleasePlan = false, bool forceCreateReleasePlan = false, CancellationToken ct = default)
         {
             try
@@ -859,17 +859,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         productTreeId = string.IsNullOrEmpty(productTreeId) ? productDetails?.ProductServiceTreeId ?? string.Empty : productTreeId;
                     }
 
-                    // Fail the request if service id and product id are still unknown
                     if (string.IsNullOrEmpty(serviceTreeId) || string.IsNullOrEmpty(productTreeId))
                     {
-                        logger.LogWarning("Service id and product id in service tree are unknown for TypeSpec project. Release plan cannot be created without these details.");
-                        return new ReleasePlanResponse
-                        {
-                            TypeSpecProject = specProject,
-                            PackageType = isMgmt ? SdkType.Management : SdkType.Dataplane,
-                            ResponseError = "Failed to identify product details using previous release plans for the TypeSpec project",
-                            NextSteps = ["Retry with valid service id and product id in service tree for the product/offer/feature"]
-                        };
+                        logger.LogInformation("Service and/or product ID could not be resolved from previous release plans for TypeSpec project {specProject}. Creating release plan without unresolved IDs.", specProject);
                     }
                 }
 
@@ -891,17 +883,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         }
                     }
 
-                    logger.LogInformation("Checking for existing release plans for product: {productTreeId} with API release type: {apiReleaseType}", productTreeId, parsedApiReleaseType.ToDisplayLabel());
-                    var existingReleasePlans = await devOpsService.GetReleasePlansForProductAsync(productTreeId, sdkReleaseType, isTestReleasePlan, parsedApiReleaseType.ToAdoFieldValue(), ct);
-                    if (existingReleasePlans.Any())
+                    if (!string.IsNullOrEmpty(productTreeId))
                     {
-                        return new ReleasePlanResponse
+                        logger.LogInformation("Checking for existing release plans for product: {productTreeId} with API release type: {apiReleaseType}", productTreeId, parsedApiReleaseType.ToDisplayLabel());
+                        var existingReleasePlans = await devOpsService.GetReleasePlansForProductAsync(productTreeId, sdkReleaseType, isTestReleasePlan, parsedApiReleaseType.ToAdoFieldValue(), ct);
+                        if (existingReleasePlans.Any())
                         {
-                            Message = $"An active release plan already exists for the product: {productTreeId}. "
-                            +  $"Release plan link(s): {string.Join("\n ", existingReleasePlans.Select(p => p.ReleasePlanLink))}",
-                            ReleasePlanDetails = existingReleasePlans[0],
-                            NextSteps = ["Prompt user to confirm whether to use existing release plan or force create a new release plan."]
-                        };
+                            return new ReleasePlanResponse
+                            {
+                                Message = $"An active release plan already exists for the product: {productTreeId}. "
+                                +  $"Release plan link(s): {string.Join("\n ", existingReleasePlans.Select(p => p.ReleasePlanLink))}",
+                                ReleasePlanDetails = existingReleasePlans[0],
+                                NextSteps = ["Prompt user to confirm whether to use existing release plan or force create a new release plan."]
+                            };
+                        }
                     }
                 }
 

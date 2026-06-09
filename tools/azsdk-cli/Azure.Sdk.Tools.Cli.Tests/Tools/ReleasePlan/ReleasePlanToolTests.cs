@@ -343,7 +343,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
-        public async Task Test_Create_releasePlan_without_spec_pr_and_without_ids_fails_when_not_derivable()
+        public async Task Test_Create_releasePlan_without_spec_pr_and_without_ids_succeeds_when_not_derivable()
         {
             // Use a URL TypeSpec path that has no previous release plans in mock
             var testCodeFilePath = "https://github.com/Azure/azure-rest-api-specs/blob/main/specification/unknownservice/Unknown.Service";
@@ -353,8 +353,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 "GA",
                 isTestReleasePlan: true);
             Assert.IsNotNull(releaseplan);
-            Assert.IsNotNull(releaseplan.ResponseError);
-            Assert.True(releaseplan.ResponseError.Contains("Failed to identify product details"));
+            Assert.IsNull(releaseplan.ResponseError, $"Unexpected error: {releaseplan.ResponseError}");
+            var releasePlanDetails = releaseplan.ReleasePlanDetails as ReleasePlanWorkItem;
+            Assert.IsNotNull(releasePlanDetails);
+            Assert.Greater(releasePlanDetails.WorkItemId, 0);
+            Assert.That(releasePlanDetails.ServiceTreeId, Is.Empty);
+            Assert.That(releasePlanDetails.ProductTreeId, Is.Empty);
         }
 
         [Test]

@@ -10,6 +10,7 @@
       - [Current SDK breaking change Review Challenge](#current-sdk-breaking-change-review-challenge)
       - [Inefficient SDK breaking change mitigation workflow](#inefficient-sdk-breaking-change-mitigation-workflow)
       - [Delayed Spec PR merge and SDK release](#delayed-spec-pr-merge-and-sdk-release)
+    - [Detect SDK breaking changes from TypeSpec is not 100% reliable](#detect-sdk-breaking-changes-from-typespec-is-not-100-reliable)
     - [Why This Matters](#why-this-matters)
   - [Goals and Exceptions/Limitations](#goals-and-exceptionslimitations)
     - [Goals](#goals)
@@ -29,6 +30,7 @@
     - [\[Detect breaking change for Go SDK\]](#detect-breaking-change-for-go-sdk)
   - [CLI Commands](#cli-commands)
     - [Package detect breaking change](#package-detect-breaking-change)
+  - [Open Question](#open-question)
 
 ---
 
@@ -84,6 +86,11 @@ Today, SDK breaking change mitigation is not effectively integrated into the rev
 
 Reviewing and resolving SDK breaking changes is a required step for Spec PR merges. Because detecting and resolving SDK breaking changes is complex and time-consuming, the Spec PR merge lifecycle is extended, which delays both Spec merges and follow-up SDK release processes.
 
+### Detect SDK breaking changes from TypeSpec is not 100% reliable
+
+Detecting SDK breaking changes directly from TypeSpec is helpful, but it is not fully reliable because a TypeSpec change only becomes an SDK breaking change after the API is generated and released. If the changed API has not been released yet, it is not a breaking change in the SDK sense, even if the generated SDK surface would differ from a previous build. In addition, the released SDK version is not a 1:1 mapping to the API version, so we cannot always determine which TypeSpec commit the GA SDK was based on and compare against the exact TypeSpec revision that produced the latest release to get the real TypeSpec change.
+In the spec authoring phase, we warn about potential SDK breaking changes, but we do not automatically force mitigation. It is the SDK owner's decision whether to mitigate the breaking change or accept it.
+
 ### Why This Matters
 
 **Impact on service API merge and SDK release experience:**
@@ -101,7 +108,7 @@ Reviewing and resolving SDK breaking changes is a required step for Spec PR merg
 
 ### Goals
 
-This tool detects SDK breaks from SDK package after SDK generation and build, and one major scenario is using it during the spec PR validation pipeline.
+**This tool detects SDK breaks from SDK package after SDK generation and build, and one major scenario is using it during the spec PR validation pipeline.**
 
 What are we trying to achieve with this design?
 
@@ -520,7 +527,7 @@ flowchart TD
     A: The main branch in the SDK repo must stay aligned with the released SDK, so we cannot refresh SDK code every time the Spec is updated. Therefore, in the Spec PR workflow, SDK code customization is deferred to a later SDK release. As a result, there is a **known limitation**: Spec PR workflows do not refresh SDK code, so if mitigation goes beyond the Spec PR (for example, SDK source changes), the current design cannot fully resolve it within the Spec PR flow. It resolves only breaking changes that can be handled through TypeSpec customization, and defers code-only mitigations and build failures caused by TypeSpec customization to the SDK PR workflow.
 
     **known limitation**
-    
+
     The `azsdk_customized_code_update` tool only support local scenario. More broadly, azsdk-cli MCP tools (for example, `azsdk_package_generate_code` and `azsdk_customized_code_update`) currently support only local scenarios and do not support remote scenarios. Because of this limitation, Copilot cannot invoke these MCP tools directly in remote workflows.
 
     **Solution**: We will support remote experiences at the workflow/skill layer, not within MCP tools. MCP tools should validate prerequisites and return clear next steps. Skills can explicitly orchestrate repository cloning with user awareness, then invoke MCP tools using local paths.
@@ -616,3 +623,7 @@ Usage: azsdk package detect-breaking-change --package-path <sdk-package-path> --
 ```
 
 ---
+
+## Open Question
+
+1. Should we implement the SDK breaking change detector as a separate MCP tool, or combine it with the resolve tool (`azsdk_typespec_customized_code_update`) into a single tool?

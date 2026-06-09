@@ -12,6 +12,10 @@
 
 ## 0.6.18 (2026-06-08)
 
+### Features Added
+
+- Added the `azsdk_package_find_work_item` MCP tool and `package find-work-item` CLI command to find Azure DevOps package work item links by package name, package version, and language.
+
 ### Other Changes
 
 - Updated the release plan response to include the link to release plan dashboard.

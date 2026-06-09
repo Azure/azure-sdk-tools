@@ -1321,7 +1321,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 throw new ArgumentException("Invalid data in one of the parameters.");
             }
 
-            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [System.WorkItemType] = 'Package' AND [Custom.Package] = '{packageName}' AND [Custom.PackageVersionMajorMinor] = '{packageVersionMajorMinor}' AND [Custom.Language] = '{language}'";
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [System.WorkItemType] = 'Package' AND [Custom.Package] = '{packageName}' AND [Custom.PackageVersionMajorMinor] = '{packageVersionMajorMinor}' AND [Custom.Language] = '{language}' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned') AND [System.Tags] NOT CONTAINS '{RELEASE_PLANNER_APP_TEST}'";
             logger.LogDebug("Executing package work item lookup query: {query}", query);
 
             var packageWorkItems = await FetchWorkItemsAsync(query, ct);

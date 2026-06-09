@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 using System.CommandLine;
 using System.ComponentModel;
+using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Models;
@@ -19,6 +20,7 @@ public class PackageWorkItemLookupTool(
 {
     private const string FindWorkItemCommandName = "find-work-item";
     private const string FindWorkItemToolName = "azsdk_package_find_work_item";
+    private static readonly Regex PackageVersionRegex = new(@"^(?<major>\d+)(?:\.(?<minor>\d+)(?:\.\d+(?:[-+][0-9A-Za-z.-]+)?)?)?$", RegexOptions.Compiled);
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
 
@@ -84,6 +86,9 @@ public class PackageWorkItemLookupTool(
                 return response;
             }
 
+            NormalizePackageVersion(packageVersionMajorMinor);
+            response.PackageVersionMajorMinor = packageVersionMajorMinor;
+
             logger.LogInformation("Finding package work item for package {packageName}, package version major/minor {packageVersionMajorMinor}, language {language}.", packageName, packageVersionMajorMinor, language);
             var workItems = await devOpsService.FindPackageWorkItemsAsync(packageName, language, packageVersionMajorMinor, ct);
 
@@ -96,13 +101,17 @@ public class PackageWorkItemLookupTool(
             if (workItems.Count > 1)
             {
                 response.ResponseError = $"Expected one package work item for package '{packageName}', version '{packageVersionMajorMinor}', and language '{language}', but found {workItems.Count}.";
-                response.NextSteps = workItems.Select(workItem => GetWorkItemHtmlUrl(workItem.WorkItemId, workItem.WorkItemUrl)).ToList();
+                response.NextSteps = workItems.Select(workItem => new PackageWorkItemLookupResponse
+                {
+                    WorkItemId = workItem.WorkItemId,
+                    WorkItemUrl = workItem.WorkItemUrl
+                }.WorkItemUrl).ToList();
                 return response;
             }
 
             var match = workItems[0];
             response.WorkItemId = match.WorkItemId;
-            response.WorkItemUrl = GetWorkItemHtmlUrl(match.WorkItemId, match.WorkItemUrl);
+            response.WorkItemUrl = match.WorkItemUrl;
             response.PackageName = match.PackageName ?? packageName;
             response.Language = language;
             return response;
@@ -120,13 +129,16 @@ public class PackageWorkItemLookupTool(
         }
     }
 
-    private static string GetWorkItemHtmlUrl(int workItemId, string workItemUrl)
+    private static string NormalizePackageVersion(string packageVersion)
     {
-        if (workItemId > 0)
+        var match = PackageVersionRegex.Match(packageVersion.Trim());
+        if (!match.Success)
         {
-            return $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}/_workitems/edit/{workItemId}";
+            throw new ArgumentException("Package version must be a major version, major.minor version, or full SemVer version.");
         }
 
-        return workItemUrl.Replace("_apis/wit/workItems", "_workitems/edit");
+        var major = match.Groups["major"].Value;
+        var minor = match.Groups["minor"].Success ? match.Groups["minor"].Value : "0";
+        return $"{major}.{minor}";
     }
 }

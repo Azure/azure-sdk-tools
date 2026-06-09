@@ -107,7 +107,6 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<bool> LinkNamespaceApprovalIssueAsync(int releasePlanWorkItemId, string url, CancellationToken ct);
         public Task<PackageWorkitemResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "", CancellationToken ct = default);
         public Task<List<int>> FindPackageWorkItemIdsAsync(string packageName, string language, string packageVersionMajorMinor, CancellationToken ct = default);
-        public Task<List<PackageWorkitemResponse>> FindPackageWorkItemsAsync(string packageName, string language, string packageVersionMajorMinor, CancellationToken ct = default);
         public Task<List<PackageWorkitemResponse>> ListPartialPackageWorkItemAsync(string packageName, string language, CancellationToken ct);
         public Task<Build> RunPipelineAsync(int pipelineDefinitionId, Dictionary<string, string> templateParams, string apiSpecBranchRef = "main", CancellationToken ct = default);
         public Task<Dictionary<string, List<string>>> GetPipelineLlmArtifacts(string project, int buildId, CancellationToken ct);
@@ -1326,21 +1325,6 @@ namespace Azure.Sdk.Tools.Cli.Services
                 return null;
             }
             return MapPackageWorkItemToModel(packageWorkItems[0]); // Return the first package work item
-        }
-
-        public async Task<List<PackageWorkitemResponse>> FindPackageWorkItemsAsync(string packageName, string language, string packageVersionMajorMinor, CancellationToken ct = default)
-        {
-            language = MapLanguageIdToName(language);
-            if (packageName.Contains(' ') || packageName.Contains('\'') || packageName.Contains('"') || language.Contains(' ') || language.Contains('\'') || language.Contains('"') || packageVersionMajorMinor.Contains(' ') || packageVersionMajorMinor.Contains('\'') || packageVersionMajorMinor.Contains('"'))
-            {
-                throw new ArgumentException("Invalid data in one of the parameters.");
-            }
-
-            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [System.WorkItemType] = 'Package' AND [Custom.Package] = '{packageName}' AND [Custom.PackageVersionMajorMinor] = '{packageVersionMajorMinor}' AND [Custom.Language] = '{language}' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned') AND [System.Tags] NOT CONTAINS '{RELEASE_PLANNER_APP_TEST}'";
-            logger.LogDebug("Executing package work item lookup query: {query}", query);
-
-            var packageWorkItems = await FetchWorkItemsAsync(query, ct);
-            return packageWorkItems.Select(workItem => MapPackageWorkItemToModel(workItem)).ToList();
         }
 
         public async Task<List<int>> FindPackageWorkItemIdsAsync(string packageName, string language, string packageVersionMajorMinor, CancellationToken ct = default)

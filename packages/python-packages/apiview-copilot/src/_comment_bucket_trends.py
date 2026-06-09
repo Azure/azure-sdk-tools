@@ -127,13 +127,7 @@ def _build_language_comment_bucket_point(
     deleted_count = segment.deleted_ai_comment_count or 0
 
     total_included = (
-        good_count
-        + implicit_good_count
-        + neutral_count
-        + human_count
-        + implicit_bad_count
-        + bad_count
-        + deleted_count
+        good_count + implicit_good_count + neutral_count + human_count + implicit_bad_count + bad_count + deleted_count
     )
 
     good_percentage = _to_percentage(good_count, total_included)
@@ -243,8 +237,7 @@ def build_language_comment_bucket_reports(
     # Apply generic filter: keep non-AI comments as-is, filter AI comments by IsGeneric
     if generic_filter is not None:
         filtered_comments = [
-            c for c in non_diag
-            if c.get("CommentSource") != "AIGenerated" or bool(c.get("IsGeneric")) == generic_filter
+            c for c in non_diag if c.get("CommentSource") != "AIGenerated" or bool(c.get("IsGeneric")) == generic_filter
         ]
     else:
         filtered_comments = non_diag
@@ -295,8 +288,7 @@ def _query_items_by_id_batches(
     for start_index in range(0, len(ordered_ids), batch_size):
         id_batch = ordered_ids[start_index : start_index + batch_size]
         params = [
-            {"name": f"@{id_parameter_prefix}_{index}", "value": item_id}
-            for index, item_id in enumerate(id_batch)
+            {"name": f"@{id_parameter_prefix}_{index}", "value": item_id} for index, item_id in enumerate(id_batch)
         ]
         clauses = [f"c.id = @{id_parameter_prefix}_{index}" for index in range(len(id_batch))]
         query = f"SELECT {select_clause} FROM c WHERE ({' OR '.join(clauses)})"
@@ -586,7 +578,6 @@ def generate_comment_bucket_chart(
     figure.savefig(output_path, dpi=150)
     plt.close(figure)
     return output_path
-
 
 
 def print_comment_bucket_report(

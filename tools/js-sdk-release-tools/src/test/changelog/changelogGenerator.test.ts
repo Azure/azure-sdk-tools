@@ -1126,6 +1126,59 @@ export interface ResourceManagementClientOptionalParams extends ClientOptions {
       expect(items[0]).toBe('Class ResourceManagementClient no longer has parameter tagsOperations');
     });
 
+    test('Class Property Removed that remains a constructor parameter is filtered regardless of SDK type', async () => {
+      // The HLC -> Modular guard was removed from filterClassPropertiesMovedToInternals,
+      // so properties that are still accessible via constructor signatures are filtered
+      // for ANY transition. This case uses Modular -> Modular to prove the filtering is
+      // no longer tied to the HLC -> Modular transition.
+      const baselineApiView = `
+\`\`\`ts
+// @public
+export class DataProductClient {
+    constructor(credential: TokenCredential, subscriptionId: string, options?: DataProductClientOptionalParams);
+    subscriptionId: string;
+    readonly dataProducts: DataProducts;
+    readonly analytics: Analytics;
+}
+
+// @public
+export interface DataProductClientOptionalParams extends ClientOptions {
+    apiVersion?: string;
+}
+\`\`\`
+`;
+      // subscriptionId — filtered because it is still a direct constructor parameter
+      // apiVersion     — not present as a property here, but exposed via the options bag
+      // analytics      — BREAKING: genuinely removed, must still be reported
+      const currentApiView = `
+\`\`\`ts
+// @public
+export class DataProductClient {
+    constructor(credential: TokenCredential, subscriptionId: string, options?: DataProductClientOptionalParams);
+    readonly dataProducts: DataProducts;
+}
+
+// @public
+export interface DataProductClientOptionalParams extends ClientOptions {
+    apiVersion?: string;
+}
+\`\`\`
+`;
+      const changelogItems = await generateChangelogItems(
+        {
+          apiView: baselineApiView,
+          sdkType: SDKType.ModularClient,
+        },
+        {
+          apiView: currentApiView,
+          sdkType: SDKType.ModularClient,
+        }
+      );
+      const items = getItemsByCategory(changelogItems, ChangelogItemCategory.ClassPropertyRemoved);
+      expect(items).toHaveLength(1);
+      expect(items[0]).toBe('Class DataProductClient no longer has parameter analytics');
+    });
+
     test('Class Property Optional To Required', async () => {
       const baselineApiView = `
 \`\`\`ts

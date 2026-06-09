@@ -7,6 +7,7 @@
 """
 Module for assigning Azure RBAC roles and permissions.
 """
+
 import sys
 from typing import List, Literal, Optional
 from uuid import uuid4

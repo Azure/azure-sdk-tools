@@ -29,7 +29,7 @@ const mockDevopsRequest = vi
     return Promise.resolve({ workItems: [], value: [] });
   });
 const mockFetchPackageWorkItems = vi.fn().mockResolvedValue(new Map());
-const mockFetchAzureSdkPackageList = vi.fn().mockResolvedValue("");
+const mockFetchReleasedPackageCsvs = vi.fn().mockResolvedValue(new Map());
 const mockBatchFetchPrStatuses = vi.fn().mockResolvedValue(new Map());
 const mockBatchFetchPrDetails = vi.fn().mockResolvedValue(new Map());
 const mockBatchFetchSpecProjectPaths = vi.fn().mockResolvedValue(new Map());
@@ -44,8 +44,8 @@ vi.mock("../lib/devops-api.js", async () => {
     runWiql: (...args) => mockRunWiql(...args),
     fetchWorkItemsBatch: (...args) => mockFetchWorkItemsBatch(...args),
     fetchPackageWorkItems: (...args) => mockFetchPackageWorkItems(...args),
-    fetchAzureSdkPackageList: (...args) =>
-      mockFetchAzureSdkPackageList(...args),
+    fetchReleasedPackageCsvs: (...args) =>
+      mockFetchReleasedPackageCsvs(...args),
   };
 });
 
@@ -109,7 +109,6 @@ beforeEach(() => {
       return Promise.resolve({ workItems: [], value: [] });
     });
   mockFetchPackageWorkItems.mockReset().mockResolvedValue(new Map());
-  mockFetchAzureSdkPackageList.mockReset().mockResolvedValue("");
   mockBatchFetchPrStatuses.mockReset().mockResolvedValue(new Map());
   mockBatchFetchPrDetails.mockReset().mockResolvedValue(new Map());
   mockBatchFetchSpecProjectPaths.mockReset().mockResolvedValue(new Map());
@@ -207,6 +206,28 @@ describe("API routes", () => {
       expect(res.body).toHaveProperty("fetchedAt");
     });
 
+    test("returns loading state when refreshing with no cached data", async () => {
+      cache.releasePlans.refreshing = true;
+      cache.releasePlans.data = null;
+      const res = await httpRequest("GET", "/api/release-plans");
+      expect(res.status).toBe(200);
+      expect(res.body.loading).toBe(true);
+      expect(res.body.plans).toEqual([]);
+      cache.releasePlans.refreshing = false;
+    });
+
+    test("returns stale data when refreshing with existing cache", async () => {
+      cache.releasePlans.data = {
+        plans: [{ id: 1, title: "Stale" }],
+        fetchedAt: "2024-01-01T00:00:00Z",
+      };
+      cache.releasePlans.refreshing = true;
+      const res = await httpRequest("GET", "/api/release-plans");
+      expect(res.status).toBe(200);
+      expect(res.body.plans[0].title).toBe("Stale");
+      cache.releasePlans.refreshing = false;
+    });
+
     test("returns notFound when filtering by non-existent plan ID", async () => {
       const res = await httpRequest(
         "GET",
@@ -295,6 +316,16 @@ describe("API routes", () => {
       expect(cache.prDetails.size).toBe(0);
       expect(cache.prStatuses.size).toBe(0);
     });
+
+    test("skips refresh when already refreshing (concurrent guard)", async () => {
+      cache.releasePlans.refreshing = true;
+      const res = await httpRequest("POST", "/api/refresh");
+      expect(res.status).toBe(200);
+      expect(res.body.ok).toBe(true);
+      // runWiql should NOT be called since refresh was skipped
+      expect(mockRunWiql).not.toHaveBeenCalled();
+      cache.releasePlans.refreshing = false;
+    });
   });
 
   describe("POST /api/refresh-plan/:id", () => {
@@ -309,6 +340,12 @@ describe("API routes", () => {
       expect(res.status).toBe(404);
     });
 
+    test("returns 404 when devopsRequest returns no value property", async () => {
+      mockDevopsRequest.mockResolvedValueOnce({});
+      const res = await httpRequest("POST", "/api/refresh-plan/88888");
+      expect(res.status).toBe(404);
+    });
+
     test("refreshes a single plan by work item ID", async () => {
       const wi = buildWorkItem(200);
       mockDevopsRequest.mockResolvedValueOnce({ value: [wi] });
@@ -318,6 +355,39 @@ describe("API routes", () => {
       expect(res.status).toBe(200);
       expect(res.body).toHaveProperty("plan");
       expect(res.body.plan.id).toBe(200);
+    });
+
+    test("handles plan with no changedDate (lastActivity fallback)", async () => {
+      const wi = buildWorkItem(201, {
+        fields: { "System.ChangedDate": "" },
+      });
+      mockDevopsRequest.mockResolvedValueOnce({ value: [wi] });
+      mockFetchWorkItemsBatch.mockResolvedValueOnce([]);
+      mockFetchPackageWorkItems.mockResolvedValueOnce(new Map());
+      mockBatchFetchPrStatuses.mockResolvedValue(new Map());
+      mockBatchFetchSpecProjectPaths.mockResolvedValueOnce(new Map());
+      mockBatchFetchSpecPrLabels.mockResolvedValueOnce(new Map());
+      const res = await httpRequest("POST", "/api/refresh-plan/201");
+      expect(res.status).toBe(200);
+      expect(res.body.plan.lastActivity).toBe("");
+    });
+
+    test("skips SDK PR status fetch when plan has no PR URLs", async () => {
+      const wi = buildWorkItem(202, {
+        fields: { "Custom.SDKPullRequestForDotnet": "" },
+      });
+      // Override so no language has an sdkPrUrl
+      wi.fields["Custom.SDKPullRequestForDotnet"] = "";
+      mockDevopsRequest.mockResolvedValueOnce({ value: [wi] });
+      mockFetchWorkItemsBatch.mockResolvedValueOnce([]);
+      mockFetchPackageWorkItems.mockResolvedValueOnce(new Map());
+      mockBatchFetchSpecProjectPaths.mockResolvedValueOnce(new Map());
+      mockBatchFetchSpecPrLabels.mockResolvedValueOnce(new Map());
+      const res = await httpRequest("POST", "/api/refresh-plan/202");
+      expect(res.status).toBe(200);
+      // batchFetchPrStatuses should NOT be called for SDK PRs (only spec)
+      // The spec call happens, but the SDK PR status call should be skipped
+      expect(res.body.plan.id).toBe(202);
     });
 
     test("updates existing plan in global cache", async () => {
@@ -384,6 +454,43 @@ describe("API routes", () => {
       expect(res.body.plan.apiSpec.specPrUrl).toContain("pull/50");
     });
 
+    test("filters non-API-Spec child work items", async () => {
+      const wi = buildWorkItem(410, {
+        relations: [
+          {
+            rel: "System.LinkTypes.Hierarchy-Forward",
+            url: "https://dev.azure.com/_apis/wit/workItems/411",
+          },
+          {
+            rel: "System.LinkTypes.Hierarchy-Forward",
+            url: "https://dev.azure.com/_apis/wit/workItems/412",
+          },
+        ],
+      });
+      const nonSpecChild = {
+        id: 411,
+        fields: { "System.WorkItemType": "Package" },
+      };
+      const specChild = {
+        id: 412,
+        fields: {
+          "System.WorkItemType": "API Spec",
+          "Custom.ActiveSpecPullRequestUrl":
+            "https://github.com/Azure/azure-rest-api-specs/pull/60",
+          "Custom.RESTAPIReviews": "",
+          "Custom.APISpecversion": "2024-02-01",
+          "Custom.APISpecDefinitionType": "OpenAPI",
+        },
+      };
+      mockDevopsRequest.mockResolvedValueOnce({ value: [wi] });
+      mockFetchWorkItemsBatch.mockResolvedValueOnce([nonSpecChild, specChild]);
+      const res = await httpRequest("POST", "/api/refresh-plan/410");
+      expect(res.status).toBe(200);
+      // Only the API Spec child should be used
+      expect(res.body.plan.apiSpec).not.toBeNull();
+      expect(res.body.plan.apiSpec.id).toBe(412);
+    });
+
     test("handles errors gracefully", async () => {
       mockDevopsRequest.mockRejectedValueOnce(new Error("DevOps error"));
       const res = await httpRequest("POST", "/api/refresh-plan/500");
@@ -402,6 +509,14 @@ describe("API routes", () => {
 
     test("returns empty statuses for empty urls", async () => {
       const res = await httpRequest("POST", "/api/pr-statuses", { urls: [] });
+      expect(res.status).toBe(200);
+      expect(res.body.statuses).toEqual({});
+    });
+
+    test("returns empty statuses when all urls are invalid", async () => {
+      const res = await httpRequest("POST", "/api/pr-statuses", {
+        urls: ["not-a-github-url", "https://example.com/page"],
+      });
       expect(res.status).toBe(200);
       expect(res.body.statuses).toEqual({});
     });
@@ -446,6 +561,12 @@ describe("API routes", () => {
       });
       expect(res.status).toBe(500);
     });
+
+    test("handles request with no body urls property", async () => {
+      const res = await httpRequest("POST", "/api/pr-statuses", {});
+      expect(res.status).toBe(200);
+      expect(res.body.statuses).toEqual({});
+    });
   });
 
   describe("POST /api/pr-details", () => {
@@ -457,6 +578,14 @@ describe("API routes", () => {
 
     test("returns empty details for empty urls", async () => {
       const res = await httpRequest("POST", "/api/pr-details", { urls: [] });
+      expect(res.status).toBe(200);
+      expect(res.body.details).toEqual({});
+    });
+
+    test("returns empty details when all urls are invalid", async () => {
+      const res = await httpRequest("POST", "/api/pr-details", {
+        urls: ["not-a-url", "http://example.com", 123],
+      });
       expect(res.status).toBe(200);
       expect(res.body.details).toEqual({});
     });
@@ -513,6 +642,70 @@ describe("API routes", () => {
       expect(res.body.details[url].prDetails).toBeNull();
     });
 
+    test("handles missing status in statusMap", async () => {
+      const url = "https://github.com/Azure/sdk/pull/13";
+      mockBatchFetchPrStatuses.mockResolvedValueOnce(new Map()); // status not in map
+      mockBatchFetchPrDetails.mockResolvedValueOnce(new Map([[url, null]]));
+      const res = await httpRequest("POST", "/api/pr-details", {
+        urls: [url],
+      });
+      expect(res.status).toBe(200);
+      expect(res.body.details[url].gitHubStatus).toBeNull();
+      expect(res.body.details[url].prDetails).toBeNull();
+      // status not cached when null
+      expect(cache.prStatuses.has(url)).toBe(false);
+    });
+
+    test("handles details with missing optional fields", async () => {
+      const url = "https://github.com/Azure/sdk/pull/14";
+      const mockDetails = {
+        mergeable: false,
+        mergeableState: "blocked",
+        isApproved: false,
+        approvedBy: [],
+        failedChecks: ["check1"],
+        // apiViewUrl, title, requestedReviewers, latestComment, updatedAt all missing
+      };
+      mockBatchFetchPrStatuses.mockResolvedValueOnce(new Map([[url, "draft"]]));
+      mockBatchFetchPrDetails.mockResolvedValueOnce(
+        new Map([[url, mockDetails]]),
+      );
+      const res = await httpRequest("POST", "/api/pr-details", {
+        urls: [url],
+      });
+      expect(res.status).toBe(200);
+      const entry = res.body.details[url];
+      expect(entry.gitHubStatus).toBe("draft");
+      expect(entry.prDetails.apiViewUrl).toBe("");
+      expect(entry.prDetails.title).toBe("");
+      expect(entry.prDetails.requestedReviewers).toEqual([]);
+      expect(entry.prDetails.latestComment).toBeNull();
+      expect(entry.prDetails.updatedAt).toBe("");
+    });
+
+    test("caches status separately when status is present", async () => {
+      const url = "https://github.com/Azure/sdk/pull/15";
+      cache.prDetails.delete(url);
+      cache.prStatuses.delete(url);
+      const mockDetails = {
+        mergeable: true,
+        mergeableState: "clean",
+        isApproved: false,
+        approvedBy: [],
+        failedChecks: [],
+      };
+      mockBatchFetchPrStatuses.mockResolvedValueOnce(new Map([[url, "open"]]));
+      mockBatchFetchPrDetails.mockResolvedValueOnce(
+        new Map([[url, mockDetails]]),
+      );
+      const res = await httpRequest("POST", "/api/pr-details", {
+        urls: [url],
+      });
+      expect(res.status).toBe(200);
+      expect(cache.prStatuses.has(url)).toBe(true);
+      expect(cache.prStatuses.get(url).data).toBe("open");
+    });
+
     test("handles errors gracefully", async () => {
       mockBatchFetchPrStatuses.mockRejectedValueOnce(new Error("API error"));
       const url = "https://github.com/Azure/sdk/pull/13";
@@ -520,6 +713,63 @@ describe("API routes", () => {
         urls: [url],
       });
       expect(res.status).toBe(500);
+    });
+
+    test("returns empty details when all urls are invalid (non-GitHub)", async () => {
+      const res = await httpRequest("POST", "/api/pr-details", {
+        urls: ["https://example.com/not-a-pr", "invalid-url"],
+      });
+      expect(res.status).toBe(200);
+      expect(res.body.details).toEqual({});
+    });
+
+    test("handles details with missing optional fields (fallback branches)", async () => {
+      const url = "https://github.com/Azure/sdk/pull/14";
+      // Details without apiViewUrl, title, requestedReviewers, latestComment, updatedAt
+      const incompleteDetails = {
+        mergeable: false,
+        mergeableState: "unknown",
+        isApproved: false,
+        approvedBy: [],
+        failedChecks: ["lint"],
+        // These are intentionally missing to exercise || fallbacks:
+        // apiViewUrl, title, requestedReviewers, latestComment, updatedAt
+      };
+      mockBatchFetchPrStatuses.mockResolvedValueOnce(new Map([[url, "draft"]]));
+      mockBatchFetchPrDetails.mockResolvedValueOnce(
+        new Map([[url, incompleteDetails]]),
+      );
+      const res = await httpRequest("POST", "/api/pr-details", {
+        urls: [url],
+      });
+      expect(res.status).toBe(200);
+      const detail = res.body.details[url];
+      expect(detail.gitHubStatus).toBe("draft");
+      expect(detail.prDetails.apiViewUrl).toBe("");
+      expect(detail.prDetails.title).toBe("");
+      expect(detail.prDetails.requestedReviewers).toEqual([]);
+      expect(detail.prDetails.latestComment).toBeNull();
+      expect(detail.prDetails.updatedAt).toBe("");
+    });
+
+    test("handles null status from statusMap (url not in map)", async () => {
+      const url = "https://github.com/Azure/sdk/pull/15";
+      // statusMap does NOT have this url → statusMap.get(url) is undefined → || null
+      mockBatchFetchPrStatuses.mockResolvedValueOnce(new Map());
+      mockBatchFetchPrDetails.mockResolvedValueOnce(new Map([[url, null]]));
+      const res = await httpRequest("POST", "/api/pr-details", {
+        urls: [url],
+      });
+      expect(res.status).toBe(200);
+      const detail = res.body.details[url];
+      expect(detail.gitHubStatus).toBeNull();
+      expect(detail.prDetails).toBeNull();
+    });
+
+    test("handles request with no body urls property", async () => {
+      const res = await httpRequest("POST", "/api/pr-details", {});
+      expect(res.status).toBe(200);
+      expect(res.body.details).toEqual({});
     });
   });
 
@@ -592,6 +842,139 @@ describe("API routes", () => {
       expect(res.body.previousPrs[".NET"]).not.toContain(currentPrUrl);
     });
 
+    test("deduplicates previous PR URLs", async () => {
+      const prUrl = "https://github.com/Azure/azure-sdk-for-net/pull/100";
+      cache.releasePlans.data = null;
+      mockDevopsRequest.mockResolvedValueOnce({
+        body: {
+          value: [
+            {
+              fields: {
+                "Custom.SDKPullRequestForDotnet": {
+                  oldValue: prUrl,
+                  newValue:
+                    "https://github.com/Azure/azure-sdk-for-net/pull/200",
+                },
+              },
+            },
+            {
+              fields: {
+                "Custom.SDKPullRequestForDotnet": {
+                  oldValue: prUrl,
+                  newValue:
+                    "https://github.com/Azure/azure-sdk-for-net/pull/300",
+                },
+              },
+            },
+          ],
+        },
+        headers: {},
+      });
+      const res = await httpRequest("GET", "/api/previous-sdk-prs/12345");
+      expect(res.status).toBe(200);
+      // Should only appear once despite being in two updates
+      const dotNetPrs = res.body.previousPrs[".NET"];
+      expect(dotNetPrs.filter((u) => u === prUrl)).toHaveLength(1);
+    });
+
+    test("handles updates with null fields and null oldValue", async () => {
+      cache.releasePlans.data = null;
+      mockDevopsRequest.mockResolvedValueOnce({
+        body: {
+          value: [
+            { fields: null },
+            {
+              fields: {
+                "Custom.SDKPullRequestForDotnet": {
+                  oldValue: null,
+                  newValue:
+                    "https://github.com/Azure/azure-sdk-for-net/pull/200",
+                },
+              },
+            },
+          ],
+        },
+        headers: {},
+      });
+      const res = await httpRequest("GET", "/api/previous-sdk-prs/12345");
+      expect(res.status).toBe(200);
+      // null oldValue should be treated as empty, not added
+      expect(res.body.previousPrs[".NET"]).toEqual([]);
+    });
+
+    test("handles cache with plan not found (no match for work item ID)", async () => {
+      cache.releasePlans.data = {
+        plans: [{ id: 99999, languages: { ".NET": { sdkPrUrl: "some-url" } } }],
+      };
+      const prUrl = "https://github.com/Azure/azure-sdk-for-net/pull/100";
+      mockDevopsRequest.mockResolvedValueOnce({
+        body: {
+          value: [
+            {
+              fields: {
+                "Custom.SDKPullRequestForDotnet": {
+                  oldValue: prUrl,
+                  newValue:
+                    "https://github.com/Azure/azure-sdk-for-net/pull/200",
+                },
+              },
+            },
+          ],
+        },
+        headers: {},
+      });
+      const res = await httpRequest("GET", "/api/previous-sdk-prs/12345");
+      expect(res.status).toBe(200);
+      // Plan not found → no filtering, oldVal stays in list
+      expect(res.body.previousPrs[".NET"]).toContain(prUrl);
+    });
+
+    test("handles plan with language having empty sdkPrUrl", async () => {
+      cache.releasePlans.data = {
+        plans: [
+          {
+            id: 12345,
+            languages: {
+              ".NET": { sdkPrUrl: "" },
+              JavaScript: { sdkPrUrl: "" },
+            },
+          },
+        ],
+      };
+      const prUrl = "https://github.com/Azure/azure-sdk-for-net/pull/100";
+      mockDevopsRequest.mockResolvedValueOnce({
+        body: {
+          value: [
+            {
+              fields: {
+                "Custom.SDKPullRequestForDotnet": {
+                  oldValue: prUrl,
+                  newValue:
+                    "https://github.com/Azure/azure-sdk-for-net/pull/200",
+                },
+              },
+            },
+          ],
+        },
+        headers: {},
+      });
+      const res = await httpRequest("GET", "/api/previous-sdk-prs/12345");
+      expect(res.status).toBe(200);
+      // sdkPrUrl is empty, so no filtering is applied
+      expect(res.body.previousPrs[".NET"]).toContain(prUrl);
+    });
+
+    test("handles devopsRequest returning no value property", async () => {
+      cache.releasePlans.data = null;
+      mockDevopsRequest.mockResolvedValueOnce({
+        body: {},
+        headers: {},
+      });
+      const res = await httpRequest("GET", "/api/previous-sdk-prs/12345");
+      expect(res.status).toBe(200);
+      expect(res.body.previousPrs[".NET"]).toEqual([]);
+    });
+
     test("handles continuation token pagination", async () => {
       mockDevopsRequest
         .mockResolvedValueOnce({
@@ -648,7 +1031,6 @@ describe("API routes", () => {
         new Map([[specUrl, [{ name: "BreakingChange", color: "ff0000" }]]]),
       );
       mockFetchPackageWorkItems.mockResolvedValueOnce(new Map());
-      mockFetchAzureSdkPackageList.mockResolvedValueOnce("");
 
       const res = await httpRequest("POST", "/api/refresh-plan/500");
       expect(res.status).toBe(200);
@@ -686,7 +1068,6 @@ describe("API routes", () => {
       mockBatchFetchSpecProjectPaths.mockResolvedValueOnce(new Map());
       mockBatchFetchSpecPrLabels.mockResolvedValueOnce(new Map());
       mockFetchPackageWorkItems.mockResolvedValueOnce(new Map());
-      mockFetchAzureSdkPackageList.mockResolvedValueOnce("");
 
       const res = await httpRequest("POST", "/api/refresh-plan/510");
       expect(res.status).toBe(200);
@@ -713,7 +1094,6 @@ describe("API routes", () => {
         ],
       ]);
       mockFetchPackageWorkItems.mockResolvedValueOnce(pkgMap);
-      mockFetchAzureSdkPackageList.mockResolvedValueOnce("Azure.Storage.Blobs");
       mockBatchFetchPrStatuses.mockResolvedValue(new Map());
       mockBatchFetchSpecProjectPaths.mockResolvedValueOnce(new Map());
       mockBatchFetchSpecPrLabels.mockResolvedValueOnce(new Map());
@@ -724,7 +1104,6 @@ describe("API routes", () => {
       expect(dotnet.pkgVersion).toBe("13.0.0");
       expect(dotnet.namespaceApproval).toBe("Approved");
       expect(dotnet.apiReviewStatus).toBe("Approved");
-      expect(dotnet.isNewPackage).toBe(false);
     });
 
     test("enrichSdkPrStatuses sets statuses on SDK PRs", async () => {
@@ -733,7 +1112,6 @@ describe("API routes", () => {
       mockDevopsRequest.mockResolvedValueOnce({ value: [wi] });
       mockFetchWorkItemsBatch.mockResolvedValueOnce([]);
       mockFetchPackageWorkItems.mockResolvedValueOnce(new Map());
-      mockFetchAzureSdkPackageList.mockResolvedValueOnce("");
       mockBatchFetchSpecProjectPaths.mockResolvedValueOnce(new Map());
       mockBatchFetchSpecPrLabels.mockResolvedValueOnce(new Map());
       // First call for spec PRs (enrichSpecPrData), second for SDK PRs (enrichSdkPrStatuses)
@@ -759,7 +1137,6 @@ describe("API routes", () => {
       mockDevopsRequest.mockResolvedValueOnce({ value: [wi] });
       mockFetchWorkItemsBatch.mockResolvedValueOnce([]);
       mockFetchPackageWorkItems.mockResolvedValueOnce(new Map());
-      mockFetchAzureSdkPackageList.mockResolvedValueOnce("");
 
       const res = await httpRequest("POST", "/api/refresh-plan/550");
       expect(res.status).toBe(200);
@@ -777,7 +1154,6 @@ describe("API routes", () => {
       mockFetchPackageWorkItems.mockRejectedValueOnce(
         new Error("Package API error"),
       );
-      mockFetchAzureSdkPackageList.mockResolvedValueOnce("");
       mockBatchFetchPrStatuses.mockResolvedValue(new Map());
       mockBatchFetchSpecProjectPaths.mockResolvedValueOnce(new Map());
       mockBatchFetchSpecPrLabels.mockResolvedValueOnce(new Map());
@@ -809,6 +1185,10 @@ describe("API routes", () => {
             rel: "System.LinkTypes.Hierarchy-Forward",
             url: "https://dev.azure.com/_apis/wit/workItems/901",
           },
+          {
+            rel: "System.LinkTypes.Hierarchy-Forward",
+            url: "https://dev.azure.com/_apis/wit/workItems/902",
+          },
         ],
       });
       const specChild = {
@@ -820,16 +1200,23 @@ describe("API routes", () => {
           "Custom.APISpecDefinitionType": "TypeSpec",
         },
       };
+      // Non-API-Spec child to exercise the false branch in buildApiSpecMap
+      const packageChild = {
+        id: 902,
+        fields: {
+          "System.WorkItemType": "Package",
+          "Custom.Package": "azure-core",
+        },
+      };
       // runWiql returns IDs → triggers fetchWorkItemsBatch → buildApiSpecMap
       mockRunWiql.mockResolvedValueOnce([900]);
       mockFetchWorkItemsBatch
         .mockResolvedValueOnce([wi]) // main work items
-        .mockResolvedValueOnce([specChild]); // child items (buildApiSpecMap)
+        .mockResolvedValueOnce([specChild, packageChild]); // child items (buildApiSpecMap)
       mockBatchFetchPrStatuses.mockResolvedValue(new Map());
       mockBatchFetchSpecProjectPaths.mockResolvedValueOnce(new Map());
       mockBatchFetchSpecPrLabels.mockResolvedValueOnce(new Map());
       mockFetchPackageWorkItems.mockResolvedValueOnce(new Map());
-      mockFetchAzureSdkPackageList.mockResolvedValueOnce("");
 
       const res = await httpRequest("GET", "/api/release-plans");
       expect(res.status).toBe(200);
@@ -837,6 +1224,55 @@ describe("API routes", () => {
       expect(res.body.plans[0].id).toBe(900);
       expect(res.body.plans[0].apiSpec).not.toBeNull();
       expect(res.body.plans[0].apiSpec.specPrUrl).toContain("pull/88");
+    });
+
+    test("enrichPackageData sets isFirstGA when CSV has no VersionGA and release type is stable", async () => {
+      const wi = buildWorkItem(541, {
+        dotnetPkg: "Azure.Storage.Blobs",
+        fields: {
+          "Custom.ReleaseStatusForDotnet": "In Progress",
+          "Custom.SDKtypetobereleased": "GA",
+        },
+      });
+      mockDevopsRequest.mockResolvedValueOnce({ value: [wi] });
+      mockFetchWorkItemsBatch.mockResolvedValueOnce([]);
+      mockFetchPackageWorkItems.mockResolvedValueOnce(new Map());
+      // CSV map has the package but no GA version
+      mockFetchReleasedPackageCsvs.mockResolvedValueOnce(
+        new Map([[".net|azure.storage.blobs", { versionGA: "" }]]),
+      );
+      mockBatchFetchPrStatuses.mockResolvedValue(new Map());
+      mockBatchFetchSpecProjectPaths.mockResolvedValueOnce(new Map());
+      mockBatchFetchSpecPrLabels.mockResolvedValueOnce(new Map());
+
+      const res = await httpRequest("POST", "/api/refresh-plan/541");
+      expect(res.status).toBe(200);
+      const dotnet = res.body.plan.languages[".NET"];
+      expect(dotnet.isFirstGA).toBe(true);
+      expect(dotnet.isFirstPreview).toBeUndefined();
+    });
+
+    test("enrichPackageData sets isFirstPreview when package not in CSV", async () => {
+      const wi = buildWorkItem(542, {
+        dotnetPkg: "Azure.Brand.New",
+        fields: {
+          "Custom.ReleaseStatusForDotnet": "In Progress",
+        },
+      });
+      mockDevopsRequest.mockResolvedValueOnce({ value: [wi] });
+      mockFetchWorkItemsBatch.mockResolvedValueOnce([]);
+      mockFetchPackageWorkItems.mockResolvedValueOnce(new Map());
+      // Empty CSV map — package not found
+      mockFetchReleasedPackageCsvs.mockResolvedValueOnce(new Map());
+      mockBatchFetchPrStatuses.mockResolvedValue(new Map());
+      mockBatchFetchSpecProjectPaths.mockResolvedValueOnce(new Map());
+      mockBatchFetchSpecPrLabels.mockResolvedValueOnce(new Map());
+
+      const res = await httpRequest("POST", "/api/refresh-plan/542");
+      expect(res.status).toBe(200);
+      const dotnet = res.body.plan.languages[".NET"];
+      expect(dotnet.isFirstPreview).toBe(true);
+      expect(dotnet.isFirstGA).toBeUndefined();
     });
 
     test("fetchAllReleasePlans filters out OpenAPI definition types", async () => {
@@ -868,7 +1304,6 @@ describe("API routes", () => {
       mockBatchFetchSpecProjectPaths.mockResolvedValueOnce(new Map());
       mockBatchFetchSpecPrLabels.mockResolvedValueOnce(new Map());
       mockFetchPackageWorkItems.mockResolvedValueOnce(new Map());
-      mockFetchAzureSdkPackageList.mockResolvedValueOnce("");
 
       const res = await httpRequest("GET", "/api/release-plans");
       expect(res.status).toBe(200);

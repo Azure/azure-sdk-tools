@@ -39,4 +39,20 @@ Describe "Get-GitHubInstallationId" -Tag "UnitTest", "login-to-github" {
 
         { Get-GitHubInstallationId -Jwt 'fake-jwt' -ApiBase 'https://api.github.com' -ApiVersion '2022-11-28' -InstallationTokenOwner 'Azure' } | Should -Throw "No installations found for 'Azure' on this App."
     }
+
+    It "throws when the matching installation has no id" {
+        Mock Invoke-RestMethod {
+            @(
+                @{
+                    id = $null
+                    account = @{ login = 'Azure' }
+                    target_type = 'Organization'
+                }
+            )
+        } -ParameterFilter {
+            $Method -eq 'Get' -and $Uri -eq 'https://api.github.com/app/installations'
+        }
+
+        { Get-GitHubInstallationId -Jwt 'fake-jwt' -ApiBase 'https://api.github.com' -ApiVersion '2022-11-28' -InstallationTokenOwner 'Azure' } | Should -Throw "No installations with a valid id found for 'Azure' on this App."
+    }
 }

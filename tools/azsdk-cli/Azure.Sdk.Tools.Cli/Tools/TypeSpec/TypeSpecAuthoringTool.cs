@@ -48,7 +48,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
         private readonly Option<string> _targetBranchOption = new("--target-branch")
         {
-            Description = "The target branch to compare the TypeSpec project with, default is main",
+            Description = "The target branch to compare the TypeSpec project with, default is origin/main",
             Required = false,
         };
 

@@ -66,7 +66,7 @@ Make minimal `.tsp` edits following the plan from Step 3. Confirm uncertainties 
 
 principles:
 
-  1. **MANDATORY:** Always check the plan output for an `SDK Breaking Changes` section. If any breaking changes are present, display a dedicated warning block titled `🚨 SDK Breaking Changes` and list each breaking change one-by-one as its own warning bullet under that heading. Do NOT skip this step, even if the impact seems minor.
+  1. **MANDATORY:** Always check the plan output if there is any `SDK Breaking Changes` detected. If any breaking changes are present, display a dedicated warning block titled `🚨 SDK Breaking Changes` and list each breaking change one-by-one as its own warning bullet under that heading. Do NOT skip this step, even if the impact seems minor.
   2. Confirm with user if any non-mitigation uncertainties remain.
   3. Make the minimal changes required in the relevant `.tsp` files for the requested TypeSpec change.
   4. **MANDATORY:** After the requested TypeSpec change has been applied, if the plan includes a mitigation for any SDK breaking change, explicitly ask the user whether they want that mitigation applied.

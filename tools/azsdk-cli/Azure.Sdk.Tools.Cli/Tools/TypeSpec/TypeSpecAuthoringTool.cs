@@ -185,13 +185,25 @@ Returns an answer with supporting references and documentation links
                     try
                     {
                         var repoRoot = _typeSpecHelper.GetSpecRepoRootPath(typeSpecProjectRootPath);
-                        var typespecDiff = await _gitHelper.GetDiffAsync(repoRoot, typeSpecProjectRootPath, targetBranch, ct);
+
+                        var relativeDiffPath = Path.GetRelativePath(repoRoot, typeSpecProjectRootPath)
+                            .Replace(Path.DirectorySeparatorChar, '/')
+                            .Replace(Path.AltDirectorySeparatorChar, '/');
+
+                        var typespecDiff = await _gitHelper.GetDiffAsync(repoRoot, relativeDiffPath, targetBranch, ct);
                         if (typespecDiff != null && typespecDiff.Any())
                         {
+                            const int maxDiffChars = 8000;
+                            var diffText = string.Join('\n', typespecDiff);
+                            if (diffText.Length > maxDiffChars)
+                            {
+                                diffText = diffText[..maxDiffChars] + "\n...<diff truncated>";
+                            }
+
                             completionRequest.AdditionalInfos.Add(new AdditionalInfo
                             {
                                 Type = AdditionalInfoType.Text,
-                                Content = $"TypeSpec project diff from main branch:\n{string.Join('\n', typespecDiff)}"
+                                Content = $"TypeSpec project diff from {targetBranch}:\n{diffText}"
                             });
                         }
                     }

@@ -20,8 +20,7 @@ namespace Azure.Sdk.Tools.Cli.Services
     public class AzureSdkKnowledgeBaseService : IAzureSdkKnowledgeBaseService
     {
         private IPublicClientApplication? _msalApp;
-        private AzurePipelinesCredential? _azurePipelinesCredential;
-        private AzureCliCredential? _azureCliCredential;
+        private TokenCredential? _tokenCredential;
 
         private readonly HttpClient _httpClient;
         private readonly ILogger<AzureSdkKnowledgeBaseService> _logger;
@@ -80,11 +79,15 @@ namespace Azure.Sdk.Tools.Cli.Services
                 var serviceConnectionID = Environment.GetEnvironmentVariable("AZURESUBSCRIPTION_SERVICE_CONNECTION_ID");
                 if (!string.IsNullOrEmpty(pipelinesClientID) && !string.IsNullOrEmpty(pipelinesTenantID) && !string.IsNullOrEmpty(serviceConnectionID))
                 {
-                    _azurePipelinesCredential = new AzurePipelinesCredential(pipelinesTenantID, pipelinesClientID, serviceConnectionID, systemAccessToken, null);
+                    _logger.LogInformation("Detected Azure DevOps pipeline environment with service connection. Initializing AzurePipelinesCredential for authentication.");
+                    _tokenCredential = new AzurePipelinesCredential(pipelinesTenantID, pipelinesClientID, serviceConnectionID, systemAccessToken, null);
                 }
             }
 
-            _azureCliCredential = new AzureCliCredential();
+            if (_tokenCredential == null)
+            {
+                _tokenCredential = new AzureCliCredential();
+            }
 
             if (!string.IsNullOrEmpty(_options.ClientId))
             {
@@ -239,35 +242,21 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         private async Task<string> RetrieveAiCompletionAccessTokenAsync(CancellationToken cancellationToken = default)
         {
-            if (_azurePipelinesCredential != null)
+            if (_tokenCredential != null)
             {
-                _logger.LogInformation("Using Azure Pipelines credential for authentication");
+                _logger.LogInformation("Using Azure credential for authentication");
                 try
                 {
                     var tokenRequestContext = new TokenRequestContext([$"{_options.ClientId}/.default"]);
-                    var token = await _azurePipelinesCredential.GetTokenAsync(tokenRequestContext, cancellationToken).ConfigureAwait(false);
+                    var token = await _tokenCredential.GetTokenAsync(tokenRequestContext, cancellationToken).ConfigureAwait(false);
                     return token.Token;
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Failed to acquire token using Azure Pipelines credential: {Message}", ex.Message);
+                    _logger.LogError(ex, "Failed to acquire token using credential: {Message}", ex.Message);
                 }
             }
 
-            if (_azureCliCredential != null)
-            {
-                _logger.LogInformation("Using Azure CLI credential for authentication");
-                try
-                {
-                    var tokenRequestContext = new TokenRequestContext([$"{_options.ClientId}/.default"]);
-                    var token = await _azureCliCredential.GetTokenAsync(tokenRequestContext, cancellationToken).ConfigureAwait(false);
-                    return token.Token;
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Failed to acquire token using Azure CLI credential: {Message}", ex.Message);
-                }
-            }
             if (_msalApp != null)
             {
                 if (scopes.Count == 0)

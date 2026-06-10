@@ -18,7 +18,6 @@ parameters:
   type: object
   default:
     - azure-sdk
-    - azure-sdk-for-android
     - azure-sdk-for-c
     - azure-sdk-for-cpp
     - azure-sdk-for-go

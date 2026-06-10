@@ -1167,7 +1167,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
-        public async Task Test_UpdateReleasePlan_finds_by_pr_url_when_work_item_and_path_not_found()
+        public async Task Test_UpdateReleasePlan_finds_by_pr_url_skipping_path_lookup()
         {
             var mockDevOps = new Mock<IDevOpsService>();
             var releasePlan = new ReleasePlanWorkItem

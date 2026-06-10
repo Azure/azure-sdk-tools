@@ -702,36 +702,37 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(releasePlan.WorkItemId, ct);
 
-                // Check API spec readiness if release plan has a spec PR
-                if (releasePlan != null)
+                if (releasePlan == null)
                 {
-                    var activeSpecPr = !string.IsNullOrEmpty(releasePlan.ActiveSpecPullRequest) ? releasePlan.ActiveSpecPullRequest : specPullRequestUrl;
-                    if (!string.IsNullOrEmpty(activeSpecPr))
-                    {
-                        var prNumber = ParsePullRequestNumberFromUrl(activeSpecPr);
-                        if (prNumber > 0)
-                        {
-                            var specReadiness = await CheckApiReadyForSDKGeneration(specProject, prNumber, releasePlan.WorkItemId, ct);
-                            if (specReadiness.Status == "Success")
-                            {
-                                await devOpsService.UpdateApiSpecStatusAsync(releasePlan.WorkItemId, "Approved", ct);
-                                releasePlan.IsSpecApproved = true;                                
-                            }
+                    return new ReleasePlanResponse { ResponseError = "Failed to retrieve updated release plan after update." };
+                }
 
-                            // For private preview release plans, mark as finished if spec PR is merged
-                            if (releasePlan.ApiReleaseType == ApiReleaseType.PrivatePreview)
+                // Check API spec readiness if release plan has a spec PR
+                var activeSpecPr = !string.IsNullOrEmpty(releasePlan.ActiveSpecPullRequest) ? releasePlan.ActiveSpecPullRequest : specPullRequestUrl;
+                if (!string.IsNullOrEmpty(activeSpecPr))
+                {
+                    var prNumber = ParsePullRequestNumberFromUrl(activeSpecPr);
+                    if (prNumber > 0)
+                    {
+                        var specReadiness = await CheckApiReadyForSDKGeneration(specProject, prNumber, releasePlan.WorkItemId, ct);
+                        if (specReadiness.Status == "Success")
+                        {
+                            releasePlan.IsSpecApproved = true;
+                        }
+
+                        // For private preview release plans, mark as finished if spec PR is merged
+                        if (releasePlan.ApiReleaseType == ApiReleaseType.PrivatePreview)
+                        {
+                            var isPrivateSpec = activeSpecPr.Contains(PRIVATE_SPECS_REPO, StringComparison.OrdinalIgnoreCase);
+                            var specRepoName = isPrivateSpec ? PRIVATE_SPECS_REPO : PUBLIC_SPECS_REPO;
+                            var specPr = await githubService.GetPullRequestAsync(REPO_OWNER, specRepoName, prNumber, ct);
+                            if (specPr?.Merged == true)
                             {
-                                var isPrivateSpec = activeSpecPr.Contains(PRIVATE_SPECS_REPO, StringComparison.OrdinalIgnoreCase);
-                                var specRepoName = isPrivateSpec ? PRIVATE_SPECS_REPO : PUBLIC_SPECS_REPO;
-                                var specPr = await githubService.GetPullRequestAsync(REPO_OWNER, specRepoName, prNumber, ct);
-                                if (specPr?.Merged == true)
-                                {
-                                    await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, new Dictionary<string, string>
-                                        {
-                                            { "System.State", "Finished" }
-                                        }, ct);
-                                    logger.LogInformation("Private preview release plan {WorkItemId} marked as Finished because spec PR is merged", releasePlan.WorkItemId);
-                                }
+                                await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, new Dictionary<string, string>
+                                    {
+                                        { "System.State", "Finished" }
+                                    }, ct);
+                                logger.LogInformation("Private preview release plan {WorkItemId} marked as Finished because spec PR is merged", releasePlan.WorkItemId);
                             }
                         }
                     }
@@ -739,7 +740,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 return new ReleasePlanResponse
                 {
-                    Message = $"Successfully updated release plan {releasePlan!.WorkItemId}.",
+                    Message = $"Successfully updated release plan {releasePlan.WorkItemId}.",
                     ReleasePlanDetails = releasePlan,
                     TypeSpecProject = specProject,
                     PackageType = isMgmt ? SdkType.Management : SdkType.Dataplane

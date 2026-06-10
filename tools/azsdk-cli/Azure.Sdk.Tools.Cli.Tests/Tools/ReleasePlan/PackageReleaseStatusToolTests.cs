@@ -1115,6 +1115,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.ReleaseStatus, Is.EqualTo("Released"));
             Assert.That(result.ReleasePlanFinished, Is.False);
             Assert.That(result.Message, Does.Contain("failed to auto-finish"));
+        }
+
+        [Test]
         public async Task UpdatePackageReleaseStatus_AlreadyReleasedPackage_ReturnsNoReleasePlansFound()
         {
             // Arrange - GetReleasePlansForPackageAsync now filters out released packages at query level,
@@ -1184,12 +1187,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 Times.Once);
         }
 
-        [TestCase("python", "Custom.ReleaseStatusForPython")]
-        [TestCase(".net", "Custom.ReleaseStatusForDotnet")]
-        [TestCase("javascript", "Custom.ReleaseStatusForJavaScript")]
-        [TestCase("java", "Custom.ReleaseStatusForJava")]
-        [TestCase("go", "Custom.ReleaseStatusForGo")]
-        public async Task UpdatePackageReleaseStatus_FiltersByCorrectReleaseStatusField_PerLanguage(string language, string expectedField)
+        [TestCase("python")]
+        [TestCase(".net")]
+        [TestCase("javascript")]
+        [TestCase("java")]
+        [TestCase("go")]
+        public async Task UpdatePackageReleaseStatus_FiltersByCorrectReleaseStatusField_PerLanguage(string language)
         {
             // Arrange - When GetReleasePlansForPackageAsync is called, it should use
             // the language-specific release status field in the filter query.

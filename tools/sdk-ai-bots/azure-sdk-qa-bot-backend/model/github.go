@@ -90,15 +90,43 @@ type GitHubCheckRunsListResponse struct {
 	CheckRuns  []GitHubCheckRunResponse `json:"check_runs"`
 }
 
+// GitHubUser represents a minimal GitHub user reference.
+type GitHubUser struct {
+	Login   string `json:"login"`
+	HTMLURL string `json:"html_url"`
+}
+
 // GitHubPRResponse represents a GitHub pull request API response.
 type GitHubPRResponse struct {
 	Number int    `json:"number"`
 	Title  string `json:"title"`
 	State  string `json:"state"`
+	Body   string `json:"body"`
 	Head   struct {
 		SHA string `json:"sha"`
 	} `json:"head"`
-	HTMLURL string `json:"html_url"`
+	Base struct {
+		Ref string `json:"ref"`
+	} `json:"base"`
+	HTMLURL        string `json:"html_url"`
+	MergeableState string `json:"mergeable_state"`
+	Labels         []struct {
+		Name string `json:"name"`
+	} `json:"labels"`
+	RequestedReviewers []GitHubUser `json:"requested_reviewers"`
+}
+
+// GitHubReview represents a single review on a pull request.
+type GitHubReview struct {
+	User  GitHubUser `json:"user"`
+	State string     `json:"state"`
+}
+
+// GitHubIssueComment represents a comment on an issue or pull request.
+type GitHubIssueComment struct {
+	Body    string     `json:"body"`
+	User    GitHubUser `json:"user"`
+	HTMLURL string     `json:"html_url"`
 }
 
 // =====================================================================

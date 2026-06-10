@@ -297,6 +297,36 @@ func (g *GitHubClient) fetchPR(owner, repo, prNumber string) (model.GitHubPRResp
 	return apiGetJSON[model.GitHubPRResponse](g, url)
 }
 
+// fetchPRReviews fetches the reviews submitted on a pull request.
+func (g *GitHubClient) fetchPRReviews(owner, repo, prNumber string) ([]model.GitHubReview, error) {
+	url := fmt.Sprintf("%s/repos/%s/%s/pulls/%s/reviews?per_page=%d", githubAPIBaseURL, owner, repo, prNumber, checkRunsPerPage)
+	log.Printf("Fetching GitHub PR reviews: %s", url)
+	return apiGetJSON[[]model.GitHubReview](g, url)
+}
+
+// fetchNextStepsComment returns the body of the "Next Steps to Merge" comment for a
+// spec-repo PR, or an empty string when not applicable or not found. The comment is only
+// posted by automation in the spec repos, so the call is skipped for other repos.
+func (g *GitHubClient) fetchNextStepsComment(owner, repo, prNumber string) string {
+	if !IsSpecRepo(owner, repo) {
+		return ""
+	}
+	url := fmt.Sprintf("%s/repos/%s/%s/issues/%s/comments?per_page=%d", githubAPIBaseURL, owner, repo, prNumber, checkRunsPerPage)
+	log.Printf("Fetching GitHub PR comments: %s", url)
+	comments, err := apiGetJSON[[]model.GitHubIssueComment](g, url)
+	if err != nil {
+		log.Printf("Failed to fetch PR comments: %v", err)
+		return ""
+	}
+	// Return the most recent comment that contains the marker.
+	for i := len(comments) - 1; i >= 0; i-- {
+		if strings.Contains(comments[i].Body, nextStepsMarker) {
+			return comments[i].Body
+		}
+	}
+	return ""
+}
+
 // fetchCommitCheckRuns fetches all check runs for a given commit SHA.
 func (g *GitHubClient) fetchCommitCheckRuns(owner, repo, sha string) (model.GitHubCheckRunsListResponse, error) {
 	url := fmt.Sprintf("%s/repos/%s/%s/commits/%s/check-runs?per_page=%d", githubAPIBaseURL, owner, repo, sha, checkRunsPerPage)
@@ -402,6 +432,76 @@ func (g *GitHubClient) downloadJobLogs(link *model.GitHubCheckLink) (string, err
 // =====================================================================
 
 // buildPRChecksSummary fetches all PR check runs and formats a summary of failed checks.
+// writePRReviewSummary appends review status, the responsible reviewer set, a conservative
+// merge-readiness verdict, and (for spec repos only) the "Next Steps to Merge" comment to
+// the PR summary. All fetches are best-effort: failures degrade gracefully rather than
+// aborting the overall summary.
+func (g *GitHubClient) writePRReviewSummary(sb *strings.Builder, prLink *model.GitHubPRLink, pr model.GitHubPRResponse, cls checkRunClassification) {
+	labelNames := make([]string, 0, len(pr.Labels))
+	for _, l := range pr.Labels {
+		labelNames = append(labelNames, l.Name)
+	}
+	_, blockingLabels := HasBlockingLabels(prLink.Owner, prLink.Repo, labelNames)
+
+	reviews, err := g.fetchPRReviews(prLink.Owner, prLink.Repo, prLink.PRNumber)
+	if err != nil {
+		log.Printf("Failed to fetch PR reviews: %v", err)
+	}
+	decision := LatestReviewDecision(reviews)
+	reviewers := BuildReviewerSet(pr.RequestedReviewers, reviews)
+	readiness := AssessMergeReadiness(len(cls.failed), cls.pending, decision, blockingLabels)
+
+	sb.WriteString("### Review Status\n")
+	if pr.Base.Ref != "" {
+		fmt.Fprintf(sb, "- **Target branch**: %s\n", pr.Base.Ref)
+	}
+	fmt.Fprintf(sb, "- **Review decision**: %s\n", decision)
+	if pr.MergeableState != "" {
+		fmt.Fprintf(sb, "- **Mergeable state**: %s\n", pr.MergeableState)
+	}
+	if len(blockingLabels) > 0 {
+		fmt.Fprintf(sb, "- **Blocking labels**: %s\n", strings.Join(blockingLabels, ", "))
+	}
+	sb.WriteString("\n")
+
+	sb.WriteString("### Reviewers\n")
+	if len(reviewers) == 0 {
+		sb.WriteString("- No reviewers requested yet.\n")
+	} else {
+		for _, r := range reviewers {
+			if r.HTMLURL != "" {
+				fmt.Fprintf(sb, "- [@%s](%s)\n", r.Login, r.HTMLURL)
+			} else {
+				fmt.Fprintf(sb, "- @%s\n", r.Login)
+			}
+		}
+	}
+	sb.WriteString("\n")
+
+	if readiness.Ready {
+		sb.WriteString("### Merge Readiness: likely ready for final review/approval\n")
+		sb.WriteString("No failing checks, pending checks, blocking labels, or requested changes were detected.\n\n")
+	} else {
+		sb.WriteString("### Merge Readiness: not ready\n")
+		sb.WriteString("Blockers:\n")
+		for _, reason := range readiness.Reasons {
+			fmt.Fprintf(sb, "- %s\n", reason)
+		}
+		sb.WriteString("\n")
+	}
+
+	if comment := g.fetchNextStepsComment(prLink.Owner, prLink.Repo, prLink.PRNumber); comment != "" {
+		const maxExcerpt = 4000
+		excerpt := comment
+		if len(excerpt) > maxExcerpt {
+			excerpt = excerpt[:maxExcerpt] + "\n...(truncated)"
+		}
+		sb.WriteString("### Next Steps to Merge (from PR comment)\n")
+		sb.WriteString(excerpt)
+		sb.WriteString("\n\n")
+	}
+}
+
 func (g *GitHubClient) buildPRChecksSummary(prLink *model.GitHubPRLink) (string, error) {
 	pr, err := g.fetchPR(prLink.Owner, prLink.Repo, prLink.PRNumber)
 	if err != nil {
@@ -424,6 +524,8 @@ func (g *GitHubClient) buildPRChecksSummary(prLink *model.GitHubPRLink) (string,
 
 	fmt.Fprintf(&sb, "### Checks Summary: %d total, %d failed, %d passed, %d skipped, %d pending\n\n",
 		checkRunsList.TotalCount, len(cls.failed), cls.passed, cls.skipped, cls.pending)
+
+	g.writePRReviewSummary(&sb, prLink, pr, cls)
 
 	if len(cls.failed) == 0 {
 		return sb.String(), nil
@@ -605,6 +707,136 @@ func classifyCheckRuns(checkRuns []model.GitHubCheckRunResponse) checkRunClassif
 		}
 	}
 	return c
+}
+
+// IsSpecRepo reports whether owner/repo is one of the Azure REST API spec repositories.
+// Spec-only behavior (the "Next Steps to Merge" comment and ARM/breaking-change labels)
+// is gated on this.
+func IsSpecRepo(owner, repo string) bool {
+	o := strings.ToLower(owner)
+	r := strings.ToLower(repo)
+	return o == "azure" && (r == "azure-rest-api-specs" || r == "azure-rest-api-specs-pr")
+}
+
+// nextStepsMarker identifies the automated spec-repo merge-guidance comment.
+const nextStepsMarker = "Next Steps to Merge"
+
+// specBlockingLabels are labels that block a spec PR from merging (normalized: lowercase,
+// spaces removed). Only applied for spec repos.
+var specBlockingLabels = map[string]bool{
+	"armreview":                    true,
+	"breakingchangereviewrequired": true,
+	"waitforarmfeedback":           true,
+}
+
+// commonBlockingLabels block merging in any repository.
+var commonBlockingLabels = map[string]bool{
+	"do-not-merge": true,
+	"donotmerge":   true,
+}
+
+// normalizeLabel lowercases a label and removes spaces for tolerant matching.
+func normalizeLabel(l string) string {
+	return strings.ReplaceAll(strings.ToLower(l), " ", "")
+}
+
+// HasBlockingLabels returns the labels on the PR that block merging, applying spec-only
+// labels only when owner/repo is a spec repo.
+func HasBlockingLabels(owner, repo string, labels []string) (bool, []string) {
+	spec := IsSpecRepo(owner, repo)
+	var blocking []string
+	for _, l := range labels {
+		key := normalizeLabel(l)
+		if commonBlockingLabels[key] || (spec && specBlockingLabels[key]) {
+			blocking = append(blocking, l)
+		}
+	}
+	return len(blocking) > 0, blocking
+}
+
+// BuildReviewerSet returns the deduplicated set of responsible reviewers for a PR: the
+// union of currently requested reviewers and users who have submitted a meaningful review
+// (approved, requested changes, or dismissed). A reviewer drops off requested_reviewers
+// once they submit a review, so the union is required to capture both.
+func BuildReviewerSet(requested []model.GitHubUser, reviews []model.GitHubReview) []model.GitHubUser {
+	seen := make(map[string]bool)
+	var out []model.GitHubUser
+	add := func(u model.GitHubUser) {
+		login := strings.ToLower(u.Login)
+		if login == "" || seen[login] {
+			return
+		}
+		seen[login] = true
+		out = append(out, u)
+	}
+	for _, u := range requested {
+		add(u)
+	}
+	for _, rv := range reviews {
+		switch strings.ToUpper(rv.State) {
+		case "APPROVED", "CHANGES_REQUESTED", "DISMISSED":
+			add(rv.User)
+		}
+	}
+	return out
+}
+
+// LatestReviewDecision aggregates per-user latest review state into an overall decision:
+// "changes_requested" if any reviewer's latest state requests changes, otherwise
+// "approved" if at least one approval exists, otherwise "review_required".
+// Reviews from the GitHub API are chronological, so the last state seen per user wins.
+func LatestReviewDecision(reviews []model.GitHubReview) string {
+	latest := make(map[string]string)
+	for _, rv := range reviews {
+		st := strings.ToUpper(rv.State)
+		if st == "APPROVED" || st == "CHANGES_REQUESTED" || st == "DISMISSED" {
+			latest[strings.ToLower(rv.User.Login)] = st
+		}
+	}
+	changes := false
+	approvals := 0
+	for _, st := range latest {
+		switch st {
+		case "CHANGES_REQUESTED":
+			changes = true
+		case "APPROVED":
+			approvals++
+		}
+	}
+	if changes {
+		return "changes_requested"
+	}
+	if approvals > 0 {
+		return "approved"
+	}
+	return "review_required"
+}
+
+// MergeReadiness describes whether a PR looks ready for final review/approval, and if not,
+// the blockers preventing it.
+type MergeReadiness struct {
+	Ready   bool
+	Reasons []string
+}
+
+// AssessMergeReadiness conservatively determines whether a PR is ready. It is ready only
+// when there are no failing checks, no pending checks, no requested changes, and no
+// blocking labels.
+func AssessMergeReadiness(failedChecks, pendingChecks int, decision string, blockingLabels []string) MergeReadiness {
+	var reasons []string
+	if failedChecks > 0 {
+		reasons = append(reasons, fmt.Sprintf("%d failing check(s)", failedChecks))
+	}
+	if pendingChecks > 0 {
+		reasons = append(reasons, fmt.Sprintf("%d pending check(s)", pendingChecks))
+	}
+	if decision == "changes_requested" {
+		reasons = append(reasons, "a reviewer requested changes")
+	}
+	if len(blockingLabels) > 0 {
+		reasons = append(reasons, "blocking label(s): "+strings.Join(blockingLabels, ", "))
+	}
+	return MergeReadiness{Ready: len(reasons) == 0, Reasons: reasons}
 }
 
 // partitionFailedChecks separates failed check runs into deduplicated GitHub Actions

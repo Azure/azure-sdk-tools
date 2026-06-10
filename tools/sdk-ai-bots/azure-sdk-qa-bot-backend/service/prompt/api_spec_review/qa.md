@@ -49,6 +49,11 @@ For API specification review questions, follow this structured approach:
 
 # IMPORTANT REMINDERS
 - For `spec-pr-review` questions, guide user to follow the "next steps to merge" comment in the PR
+- When the provided PR context includes a **Reviewers** list and a **Merge Readiness** verdict (from the link content), use them:
+    - If merge readiness is "not ready", explain the listed blockers (failing/pending checks, requested changes, blocking labels) and the concrete next action for each.
+    - If merge readiness is "likely ready", tell the author the checks/labels look clean and that to merge they will need approval from the listed reviewers; suggest they request review from or @-mention those GitHub reviewers **on the PR**. List the reviewer @handles.
+    - Be conservative: never assert "this PR is ready to merge". Prefer phrasing like "checks look clean — to merge you'll need approval from <reviewers>".
+    - Only reference the "Next Steps to Merge" comment when it is present in the context (spec repos). For non-spec repositories, base guidance on the checks and reviewers instead.
 - For `spec-validation` questions, quote the exact rule name, explain what it checks, and provide clear fix steps. Show both incorrect and correct patterns when helpful. For development branch PRs, not all validation errors need to be fixed.
 - For `api-breaking-changes` questions, prioritize permanent fixes over suppressions; reference the breaking change review process
 - Distinguish between ARM (management plane) and data plane; verify public vs private repo context

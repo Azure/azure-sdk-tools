@@ -229,17 +229,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         internal static bool IsReleasePlanComplete(ReleasePlanWorkItem releasePlan)
         {
-            var languagesToCheck = releasePlan.SDKInfo.AsEnumerable();
+            var requiredLanguages = releasePlan.IsManagementPlane
+                ? ReleasePlanTool.languagesforMgmtplane
+                : ReleasePlanTool.languagesforDataplane;
 
-            // Filter the language list for dataplane
-            if (releasePlan.IsDataPlane)
-            {
-                languagesToCheck = languagesToCheck.Where(info => ReleasePlanTool.languagesforDataplane.Contains(info.Language));
-            }
+            var sdkInfoByLanguage = releasePlan.SDKInfo.ToDictionary(i => i.Language, System.StringComparer.OrdinalIgnoreCase);
 
-            return languagesToCheck.All(info =>
-                string.Equals(info.ReleaseStatus, "Released", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(info.ReleaseExclusionStatus, "Approved", StringComparison.OrdinalIgnoreCase));
+            return requiredLanguages.All(lang =>
+                sdkInfoByLanguage.TryGetValue(lang, out var info)
+                && (string.Equals(info.ReleaseStatus, "Released", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(info.ReleaseExclusionStatus, "Approved", StringComparison.OrdinalIgnoreCase)));
         }
     }
 }

@@ -249,13 +249,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             "go"
         };
 
-        public static readonly HashSet<string> languagesforDataplane = [
-            ".NET","Java","Python","JavaScript"
-        ];
+        internal static readonly HashSet<string> languagesforDataplane = new(System.StringComparer.OrdinalIgnoreCase)
+        {
+            ".NET", "Java", "Python", "JavaScript"
+        };
 
-        public static readonly HashSet<string> languagesforMgmtplane = [
-           ".NET","Java","Python","JavaScript","Go"
-       ];
+        internal static readonly HashSet<string> languagesforMgmtplane = new(System.StringComparer.OrdinalIgnoreCase)
+        {
+            ".NET", "Java", "Python", "JavaScript", "Go"
+        };
 
         [GeneratedRegex("https:\\/\\/github.com\\/Azure\\/azure-sdk\\/issues\\/([0-9]+)")]
         private static partial Regex NameSpaceIssueUrlRegex();

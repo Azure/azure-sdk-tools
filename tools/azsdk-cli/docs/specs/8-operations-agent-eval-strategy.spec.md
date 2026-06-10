@@ -22,8 +22,13 @@
 - **Workflow scenario**: a user prompt that crosses multiple tools / skills
   end-to-end (e.g. *create release plan → generate SDK → link the SDK PR*).
 - **Stimulus**: one prompt + its expected behavior — the unit of an eval.
-- **Three graders per stimulus**: `skill-invocation` (right skill picked),
-  `tool-calls` (right tools / order / args), and `prompt` (right final answer).
+- **Graders per stimulus**: at minimum `skill-invocation` (right skill
+  picked), `tool-calls` (right tools / order / args), and `prompt` (right
+  final answer). Graders are composable, not a fixed set of three — a
+  stimulus that edits files adds `file-matches`, and a stimulus can weight
+  graders and set a pass threshold. The `azure-typespec-author` suite does
+  both (tool-calls + skill-invocation + several file-matches + a weighted
+  LLM-judge). The three named here are the baseline, not a ceiling.
 - **Mock MCP**: an in-memory fake of the Azure SDK MCP server — no network,
   no side effects. **Live MCP**: the real server hitting real DevOps / GitHub.
 
@@ -49,8 +54,14 @@ of re-demoing.
 
 ### Goals
 
-- [ ] **One file per workflow, three graders per prompt** — skill picked,
-      tools called, final answer.
+- [ ] **One file per workflow, graders per prompt** — skill picked, tools
+      called, final answer, plus structural checks (`file-matches`) where a
+      scenario edits files.
+- [ ] **Simple enough to reuse across repos** — the same runner, grader
+      catalog, and orchestration cover common skills/tools *and* repo-specific
+      skills and scenarios in the language SDK repos, not just
+      `azure-sdk-tools`. A language repo plugs in its own eval content; the
+      framework does not change.
 - [ ] **Mock MCP by default, live MCP only on opt-in** — no accidental writes
       to DevOps / GitHub; release / publish tools stay mock-only.
 - [ ] **Mock covers every tool the scenarios call**, with realistic responses.
@@ -79,6 +90,25 @@ of re-demoing.
 ## Design Proposal
 
 ### The three eval kinds
+
+At a glance, the eval taxonomy and where each kind lives:
+
+```mermaid
+flowchart TD
+    A[Eval] --> B["Skills<br/>routing only"]
+    A --> C["Workflows<br/>agent + tools"]
+    A --> D["Tools<br/>hermetic shape"]
+    C --> C1["Mock<br/>nightly"]
+    C --> C2["Live<br/>weekly"]
+    B --> B1[".github/skills/&lt;skill&gt;/evals/"]
+    C1 --> C1a["evals/workflow-scenarios/mock/"]
+    C2 --> C2a["evals/workflow-scenarios/live/"]
+    D --> D1["evals/tools/"]
+    classDef live fill:#e8f0fe,stroke:#4285f4;
+    classDef mock fill:#e6f4ea,stroke:#34a853;
+    class B,C2 live;
+    class C1,D mock;
+```
 
 We organize evals around what's actually being tested. No tier numbers —
 use the names. The first three columns are the same axis (what does this
@@ -147,6 +177,23 @@ Skill evals stay next to `SKILL.md` — that's the convention skill
 authors expect, and it keeps everything about a skill in one folder.
 Existing skill eval files do not move.
 
+**This layout is not specific to `azure-sdk-tools`.** It splits along two
+axes that every repo has:
+
+- **Common skills and tools** — the shared `.github/skills/` and the MCP
+  tools in `azsdk-cli`. Their evals live here, in `azure-sdk-tools`.
+- **Repo-specific skills and scenarios** — a language SDK repo's own
+  skills and workflows. Their evals live in *that* repo, under the same
+  `.github/skills/<skill>/evals/` and `evals/` conventions, and are
+  discovered and run by the same shared orchestration
+  ([How the suite executes](#how-the-suite-executes--orchestration)).
+
+The pipeline is configured once in the shared platform
+(`eng/eval-platform/pipelines/`, see
+[Cross-repo rollout](#cross-repo-rollout-and-the-shared-platform)) and
+referenced by each repo; a consuming repo does not author its own
+orchestration.
+
 #### Skill eval suite — current state and direction
 
 The skill suite predates this project. Today roughly a dozen skills
@@ -158,9 +205,13 @@ the wrong tool, or just echoed the prompt.
 *Direction.* Raise the bar on what counts as a per-skill eval: adopt
 the four-layer pattern — skill-invocation + tool-calls + structural
 output match + optional LLM-judge — as the required shape for every
-capability stimulus. A `skill-eval-authoring` skill packages the
-pattern, grader catalog, and anti-patterns so other Azure SDK teams
-adopt without re-learning the gotchas.
+capability stimulus. The `tool-calls` grader is mandatory, not optional:
+a capability stimulus must assert the agent picked the *right set of
+tools* (and, where order matters, the right order), so a stimulus can no
+longer pass by routing to the skill and then calling the wrong tool or
+no tool. A `skill-eval-authoring` skill packages the pattern, grader
+catalog, and anti-patterns so other Azure SDK teams adopt without
+re-learning the gotchas.
 
 ### Decision tree — where does my new eval go?
 
@@ -184,6 +235,107 @@ Is it a multi-step / multi-tool agent flow?
             state).
 ```
 
+```mermaid
+flowchart TD
+    Q1{"Only care the right<br/>skill is picked?"}
+    Q1 -- yes --> R1[".github/skills/&lt;skill&gt;/evals/"]
+    Q1 -- no --> Q2{"Check one MCP tool's<br/>shape, no agent?"}
+    Q2 -- yes --> R2["evals/tools/"]
+    Q2 -- no --> Q3{"Multi-step /<br/>multi-tool flow?"}
+    Q3 -- yes --> Q4{"Real-backend behavior<br/>matters?"}
+    Q4 -- "no (default)" --> R3["evals/workflow-scenarios/mock/"]
+    Q4 -- yes --> R4["add evals/workflow-scenarios/live/ variant"]
+```
+
+### Eval file format — examples
+
+Both kinds are native Vally `*.eval.yaml`. Below are minimal, real-shaped
+samples plus how to configure and run them.
+
+**Skill eval** (`.github/skills/<skill>/evals/<name>.eval.yaml`) — proves
+a prompt routes to the skill *and* calls the right tools. A
+file-producing skill (e.g. `azure-typespec-author`) adds `file-matches`
+and weights the graders:
+
+```yaml
+name: azure-typespec-author-eval
+type: capability
+environment: azsdk-mcp           # live agent, real MCP for this suite
+config:
+  runs: 1
+  timeout: "660s"
+  model: claude-opus-4.6
+  executor: copilot-sdk
+stimuli:
+  - name: add-preview-only-property
+    prompt: Introduce the spread-model properties in API version 2025-05-04-preview only.
+    environment:
+      files:                     # fixtures copied into the agent's workdir
+        - src: ../fixtures/001/main.tsp
+          dest: main.tsp
+    graders:
+      - type: skill-invocation
+        config: { required: [azure-typespec-author] }
+      - type: tool-calls         # mandatory: right tools got called
+        config:
+          required:
+            - azure-sdk-mcp-azsdk_typespec_generate_authoring_plan
+            - azure-sdk-mcp-azsdk_run_typespec_validation
+      - type: file-matches       # structural: edit landed where expected
+        config: { path: main.tsp, pattern: 2025-05-04-preview }
+      - type: prompt             # LLM-judge: no unrelated edits
+        config:
+          prompt: Verify changes are scoped to this task only.
+          model: claude-opus-4.6
+          scoring: scale_1_5
+          threshold: 1.0
+    constraints: { max_turns: 5, max_tokens: 50000 }
+scoring:
+  weights: { file-matches: 3, tool-calls: 1, skill-invocation: 1, prompt: 1 }
+  threshold: 1.0
+```
+
+**Workflow eval** (`evals/workflow-scenarios/mock/<workflow>.eval.yaml`) —
+a multi-tool chain; environment-agnostic, so the same file runs on mock
+or live (the backend is chosen at run time):
+
+```yaml
+name: release-planner
+type: capability
+config: { runs: 3, timeout: "300s", model: gpt-5.4, executor: copilot-sdk }
+stimuli:
+  - name: create-and-generate
+    prompt: Create a beta release plan for this TypeSpec spec and generate the SDK.
+    graders:
+      - type: skill-invocation
+        config: { required: [azsdk-common-prepare-release-plan] }
+      - type: tool-calls
+        config:
+          required:
+            - azsdk_get_release_plan
+            - azsdk_create_release_plan
+            - azsdk_run_generate_sdk
+          forbidden: [azsdk_verify_setup]
+    constraints: { max_turns: 30, max_tokens: 200000 }
+```
+
+**Configure and invoke.** A run needs a skill dir and (for workflows)
+an MCP environment. Locally:
+
+```bash
+# skill eval — uses the environment declared in the file
+vally eval -e .github/skills/azure-typespec-author/evaluate/evals/001001.eval.yaml \
+  --skill-dir .github/skills --runs 1
+
+# workflow eval against the mock MCP
+vally eval -e evals/workflow-scenarios/mock/release-planner.eval.yaml \
+  --skill-dir .github/skills --runs 3 --workers 2
+```
+
+In CI the shared orchestration discovers the files, picks the backend by
+folder (`mock/` vs `live/`), and passes the same flags per shard — the
+author writes only the YAML.
+
 ### CI
 
 The suite runs on a schedule, not on every pull request. Agent runs
@@ -196,6 +348,97 @@ nothing to do with the code under review.
 | Weekly | Workflow scenarios marked safe to run live | live (with safe-mode flag on writes) |
 | On demand | Any suite, any backend | author's choice |
 
+#### How the suite executes — orchestration
+
+The runner is two layers. **Repositories own evaluation intent** — the
+eval files, fixtures, prompts, and scenarios. A **shared orchestration
+layer** owns execution mechanics — discovery, change-detection,
+sharding, matrix fan-out, and result aggregation. Eval authors never
+touch the orchestration layer; they add a stimulus and the layer picks
+it up.
+
+The shared layer lives in `eng/eval-platform/` and is reused across
+repos (see [Cross-repo rollout](#cross-repo-rollout-and-the-shared-platform)).
+It is an orchestration and scaling layer, **not** an eval abstraction:
+it runs native Vally eval files as-is and does not wrap them in a new
+schema.
+
+End to end:
+
+```
+checkout → discover eval files → detect changed files → map to
+affected evals → plan shards → fan out matrix jobs → run Vally per
+shard → aggregate shard results → report
+```
+
+```mermaid
+flowchart LR
+    CO[Checkout] --> DI[Discover<br/>eval files]
+    DI --> CD[Detect<br/>changed files]
+    CD --> MAP[Map to<br/>affected evals]
+    MAP --> SP[Plan shards]
+    SP --> MX{Matrix<br/>fan-out}
+    MX --> S1[Shard 1<br/>Vally]
+    MX --> S2[Shard 2<br/>Vally]
+    MX --> S3[Shard N<br/>Vally]
+    S1 --> AG[Aggregate]
+    S2 --> AG
+    S3 --> AG
+    AG --> RP[Report<br/>md / junit / csv]
+```
+
+#### Discovery and change detection
+
+Discovery scans the repo for eval files (`evals/**/*.eval.yaml` and
+`.github/skills/**/evals/*.eval.yaml`) and records each one's kind,
+area, and the tools/skills it exercises.
+
+Change detection maps a PR's changed files to the evals they affect —
+changed skill markdown → that skill's evals; changed MCP tool or mock
+handler → the scenarios that call it. This drives `changed-only` runs
+so a PR pays for the evals it actually touches, not the whole suite.
+
+Run modes the layer supports:
+
+| Mode | Runs |
+|---|---|
+| `changed-only` | Only evals impacted by the diff (PR default once gating lands) |
+| `skills-only` | Skill-routing evals |
+| `scenarios-only` | Workflow scenarios |
+| `smoke` | A minimal curated subset |
+| `nightly-full` | Everything |
+
+#### Sharding and matrix fan-out
+
+A full suite run sequentially is too slow for anyone to wait on — a
+hundred-plus agent evals at ~20 s each is the better part of an hour.
+The layer splits the selected evals into **shards** — independent
+subsets that run in parallel as Azure DevOps matrix jobs — and merges
+their results at the end.
+
+Each shard is a slice of the eval-file list; the layer emits a shard
+manifest (`{ shardId, evalFiles[] }`) and a matrix entry per shard.
+Shards run independently, so a failure isolates to one shard and reruns
+are cheap.
+
+*Initial strategy: even file-count sharding* — e.g. 120 files / 6
+shards = 20 files each. Simple and predictable. Runtime-aware sharding
+(weight by historical wall time, token usage, or workflow depth) is a
+later enhancement and must not block rollout.
+
+Picking the shard count is a trade-off: more shards cut wall-clock time
+but consume more agents and add per-shard setup overhead; taken to the
+extreme of one eval per shard, scheduling and environment setup waste
+more than they save. Start moderate, tune from real timings.
+
+#### Shard result aggregation
+
+After the matrix completes, the layer merges every shard's
+`results.jsonl` into the single run output described under
+[Results](#results) — one `eval-results.md`, one `junit.xml`, one
+`history.csv` row — plus a coverage summary that flags skills with no
+eval and tools no green scenario exercises.
+
 #### PR gate for essential workflows (open)
 
 A case for *narrow* PR gating: a small curated set of mock scenarios
@@ -205,6 +448,14 @@ the agent, skills, or MCP tools — so we catch a regression in the
 workflows users actually rely on before merge, instead of the morning
 after.
 
+The gate need not be mock-only. For a workflow like TypeSpec authoring,
+the essential PR check is a mix: a few **typical benchmark cases run
+against the real MCP server** (the only way to catch real codegen /
+validation drift) plus **skill-invocation checks against the mock MCP
+server** (fast, deterministic routing coverage). The curated set per
+workflow decides which of its cases are real-MCP benchmarks and which
+are mock skill-invocation checks.
+
 Unresolved trade-offs: which scenarios count as "essential"; how to
 keep the gate from flaking on LLM non-determinism (retries? loose
 thresholds? quorum across N runs?); whether the cost of the gated
@@ -212,6 +463,36 @@ subset is acceptable for every PR; and which paths actually trigger it
 (agent-only? skills? MCP server? all of the above?).
 
 See [Open Questions](#open-questions).
+
+#### Skill publish gated by eval
+
+Skills are published from `main`; the eval suite is what makes that
+safe. The lifecycle:
+
+```
+skill change on a PR
+  → PR-level validation: a few benchmark cases for the touched skill,
+    skill-invocation against the mock MCP server
+  → merge to main
+  → nightly: run the full benchmark suite for that skill
+  → publish the skill only if the nightly run is green
+```
+
+```mermaid
+flowchart LR
+    PR["Skill change<br/>on a PR"] --> V["PR validation:<br/>few benchmarks +<br/>skill-invocation (mock)"]
+    V -- pass --> M[Merge to main]
+    M --> N["Nightly:<br/>full benchmark suite"]
+    N --> G{Green?}
+    G -- yes --> P[Publish skill]
+    G -- no --> H["Hold publish<br/>+ alert"]
+    classDef stop fill:#fce8e6,stroke:#ea4335;
+    class H stop;
+```
+
+This keeps the per-PR cost low (a curated subset, mostly mock) while the
+full benchmark set still gates the actual publish, so a skill never ships
+on the strength of a partial PR run.
 
 #### Pre-run setup for live scenarios
 
@@ -327,6 +608,73 @@ to think about, baked into the framework:
 - CI cancels superseded runs when a branch gets a new push.
 
 
+### Cross-repo rollout and the shared platform
+
+This eval strategy starts in `azure-sdk-tools` but the orchestration
+layer is meant to be reused, not forked. The split is the same
+everywhere: **a repository owns its evaluation content** (eval files,
+fixtures, prompts, scenario definitions) and **the shared framework
+owns execution mechanics** (discovery, sharding, matrix orchestration,
+validation, aggregation, reporting). Only the eval content differs per
+repo; the runner does not.
+
+The shared framework lives in `azure-sdk-tools/eng/eval-platform/`:
+
+```
+eng/eval-platform/
+├── pipelines/        ADO templates: discovery → shard → matrix → aggregate
+├── scripts/          discovery, change-detection, shard planning
+├── validators/       structural / coverage / reference checks
+└── reporting/        shard-result merge + summary generation
+```
+
+```mermaid
+flowchart TD
+    subgraph SHARED["Shared platform — eng/eval-platform/ (azure-sdk-tools)"]
+        ORCH["Orchestration:<br/>discover · shard · matrix · aggregate · report · validate"]
+    end
+    subgraph CONTENT["Repository-owned eval content"]
+        T["azure-sdk-tools<br/>common skills + tools"]
+        SPECS["azure-rest-api-specs"]
+        NET["azure-sdk-for-net"]
+        PY["azure-sdk-for-python"]
+        ETC["…java · js · go"]
+    end
+    T --> ORCH
+    SPECS --> ORCH
+    NET --> ORCH
+    PY --> ORCH
+    ETC --> ORCH
+    ORCH --> OUT["One run output:<br/>eval-results.md · junit.xml · history.csv"]
+```
+
+**Rollout.**
+
+- **Phase 1 — prove it here and in `azure-rest-api-specs`.** Validate
+  the orchestration architecture, the sharding approach, distributed
+  execution, the contributor workflow, and the reporting pipeline on
+  native Vally evals. Deliberately *out of scope* early: runtime-aware
+  balancing, runtime prediction, multi-engine support, and any custom
+  schema layer.
+- **Phase 2 — language SDK repos.** Reuse the same framework across
+  `azure-sdk-for-net`, `-python`, `-java`, `-js`, and `-go`. Each repo
+  brings its own eval content; the orchestration layer is unchanged.
+
+**Validation the shared layer runs on every repo's content**, beyond
+pass/fail:
+
+- *Structural* — YAML validity, duplicate stimulus IDs, malformed config.
+- *Coverage* — skills with no eval, tools no scenario exercises, orphaned scenarios.
+- *Reference* — fixtures, skills, and prompts a stimulus names actually exist.
+
+**Reusable stimuli and fixtures.** To avoid prompt duplication and
+fixture drift across repos, the framework can host shared prompts,
+contexts, fixtures, and mock responses under
+`eng/eval-platform/shared-stimuli/`. A repo references a shared
+stimulus instead of copying it. This is optional and additive — a repo
+can keep everything local.
+
+
 ---
 
 ## Agent Prompts
@@ -416,4 +764,20 @@ tools? Specifically to answer:
 
 We need owners' input on all four before turning the gate on.
 
--
+### Orchestration and cross-repo rollout
+
+**Shard count.** Even file-count sharding is the starting point. Open:
+what initial shard count balances wall-clock time against agent
+consumption and per-shard setup overhead for our actual suite size?
+When do we graduate to runtime-aware sharding, and what signal drives
+it (historical wall time, tokens, workflow depth)?
+
+**Shared-platform ownership.** The orchestration layer in
+`eng/eval-platform/` is shared across repos. Open: who owns it, who
+reviews changes to the matrix/sharding templates, and how do consuming
+repos pin or roll forward a version?
+
+**Phase-2 onboarding.** What's the minimum a language SDK repo must
+provide to plug into the shared framework — just `evals/**` plus a
+discovery entry point, or more? Do shared stimuli/fixtures live in
+`azure-sdk-tools` or get mirrored per repo?

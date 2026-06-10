@@ -113,9 +113,24 @@ async def lifespan(application: FastAPI):
                 return
             logger.info("Pre-warming GraphRAG knowledge base at startup")
             await service.reload()
-            logger.info("GraphRAG pre-warm complete")
+            status = service.get_status()
+            if not status.get("loaded"):
+                logger.error(
+                    "GraphRAG pre-warm did not fully load the engine: %s",
+                    status,
+                )
+            else:
+                logger.info(
+                    "GraphRAG pre-warm complete: %s",
+                    {k: status.get(k) for k in ("version", "row_counts")},
+                )
         except Exception:
-            logger.warning(
+            # Log at ERROR (not WARNING) so production alerting picks
+            # this up — a failed pre-warm previously left the service
+            # in a half-loaded state where every query silently returned
+            # an empty answer. The fix in reload() now rolls back, so
+            # a subsequent query will hit the lazy load path and retry.
+            logger.error(
                 "GraphRAG pre-warm failed; first query will trigger lazy load",
                 exc_info=True,
             )

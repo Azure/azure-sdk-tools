@@ -178,16 +178,25 @@ class KnowledgeGraphService:
 
     def get_status(self) -> dict[str, Any]:
         """Return a snapshot of the currently-loaded graph build."""
-        loaded = self._dfs is not None and self._config is not None
+        parquets_loaded = self._dfs is not None and self._config is not None
+        engine_ready = (
+            self._context_builder is not None and self._chat_model is not None
+        )
+        # "loaded" means fully usable — both parquets and the search
+        # engine components are ready. A partially-loaded state
+        # (parquets only) is exposed via the granular fields so
+        # /admin/graphrag/status can surface the half-loaded condition.
         status: dict[str, Any] = {
             "enabled": self._enabled,
-            "loaded": loaded,
+            "loaded": parquets_loaded and engine_ready,
+            "parquets_loaded": parquets_loaded,
+            "engine_ready": engine_ready,
             "source": self._describe_source(),
             "community_level": self._community_level,
         }
         if self._loaded_version is not None:
             status["version"] = dict(self._loaded_version)
-        if loaded and self._dfs is not None:
+        if parquets_loaded and self._dfs is not None:
             status["row_counts"] = {
                 name: int(len(df)) for name, df in self._dfs.items()
             }
@@ -201,11 +210,14 @@ class KnowledgeGraphService:
     async def reload(self) -> dict[str, Any]:
         """Atomically reload the graph from the configured source.
 
-        Builds new ``config`` + ``DataFrames`` into locals, then swaps
-        the service's references under ``_load_lock``. In-flight queries
-        keep their captured snapshot of ``self._dfs`` and complete
-        against the old data; subsequent queries see the new data.
-        Failures preserve the prior state (no partial swap).
+        On success: the new config + DataFrames + engine components are
+        live; in-flight queries that captured the old ``_context_builder``
+        complete against the old graph; subsequent queries see the new
+        graph. On failure: the prior state is restored exactly — so a
+        broken reload never leaves the service in a half-loaded state
+        (``_dfs`` set but ``_context_builder`` ``None``) that would
+        cause every subsequent ``drift_search`` to silently return an
+        empty answer.
         """
         if not self._enabled:
             raise RuntimeError(
@@ -213,13 +225,53 @@ class KnowledgeGraphService:
             )
 
         async with self._load_lock:
-            new_config = await asyncio.to_thread(self._load_config)
-            new_dfs, new_version = await self._load_parquets_with_manifest()
-            self._config = new_config
-            self._dfs = new_dfs
-            self._loaded_version = new_version
-            await self._preload_report_embeddings()
-            await asyncio.to_thread(self._build_search_engine)
+            # Snapshot the prior state so we can roll back any partial
+            # mutation if engine construction fails after the parquet
+            # swap. Without this, a failure in ``_build_search_engine``
+            # would leave ``_dfs``/``_config`` pointing at the new data
+            # while ``_context_builder`` stays ``None`` — every
+            # subsequent query would silently short-circuit at the
+            # ``_context_builder is None`` check in ``drift_search``.
+            prev_state = (
+                self._config,
+                self._dfs,
+                self._loaded_version,
+                self._report_embeddings_cache,
+                self._chat_model,
+                self._tokenizer,
+                self._context_builder,
+            )
+            try:
+                new_config = await asyncio.to_thread(self._load_config)
+                new_dfs, new_version = await self._load_parquets_with_manifest()
+                self._config = new_config
+                self._dfs = new_dfs
+                self._loaded_version = new_version
+                await self._preload_report_embeddings()
+                await asyncio.to_thread(self._build_search_engine)
+                if self._context_builder is None or self._chat_model is None:
+                    # Defensive: _build_search_engine returns silently
+                    # when config/dfs are missing; treat that as a hard
+                    # failure here since reload() promises a fully
+                    # constructed engine.
+                    raise RuntimeError(
+                        "GraphRAG engine build produced no context_builder/"
+                        "chat_model — refusing to swap to a half-built state"
+                    )
+            except Exception:
+                logger.exception(
+                    "GraphRAG reload failed; restoring previous service state"
+                )
+                (
+                    self._config,
+                    self._dfs,
+                    self._loaded_version,
+                    self._report_embeddings_cache,
+                    self._chat_model,
+                    self._tokenizer,
+                    self._context_builder,
+                ) = prev_state
+                raise
 
         logger.info(
             "KnowledgeGraphService reloaded: version=%s row_counts=%s",
@@ -253,11 +305,36 @@ class KnowledgeGraphService:
             disabled or the underlying search call fails.
         """
         if not self._enabled:
+            logger.debug(
+                "GraphRAG drift_search short-circuit: service is disabled"
+            )
             return None
         if not await self._ensure_loaded():
+            logger.warning(
+                "GraphRAG drift_search short-circuit: _ensure_loaded() returned False"
+            )
             return None
         if self._context_builder is None or self._chat_model is None:
-            logger.warning("GraphRAG search components not initialised")
+            # This is the half-loaded state — parquets are present but
+            # the search engine never finished constructing. Almost
+            # always caused by a failed reload() that didn't roll back
+            # (fixed) or a still-running cold-start. Re-trigger a
+            # lazy rebuild instead of silently returning empty.
+            logger.warning(
+                "GraphRAG drift_search: engine components missing "
+                "(context_builder=%s, chat_model=%s) — clearing state and "
+                "forcing a rebuild on the next request",
+                self._context_builder is not None,
+                self._chat_model is not None,
+            )
+            async with self._load_lock:
+                self._dfs = None
+                self._config = None
+                self._loaded_version = None
+                self._report_embeddings_cache = {}
+                self._chat_model = None
+                self._tokenizer = None
+                self._context_builder = None
             return None
 
         # Build a fresh DRIFTSearch per query. The expensive bits
@@ -408,7 +485,18 @@ class KnowledgeGraphService:
         return True
 
     def _load_config(self):
-        """Load the bot's GraphRAG settings.yaml."""
+        """Load the bot's GraphRAG settings.yaml.
+
+        GraphRAG's ``load_config`` calls
+        ``string.Template(text).substitute(os.environ)`` to resolve
+        ``${VAR}`` placeholders in the yaml — it reads strictly from
+        ``os.environ``. The bot's ``config.app_config.init()`` mirrors
+        every Azure App Configuration key into ``os.environ`` at
+        startup (with ``setdefault`` semantics so ``.env`` / real env
+        vars win), so by the time this runs the placeholders in
+        ``config/graphrag/settings.yaml`` resolve correctly without any
+        per-key whitelist here.
+        """
         from graphrag.config.load_config import load_config
 
         return load_config(_GRAPHRAG_CONFIG_ROOT)

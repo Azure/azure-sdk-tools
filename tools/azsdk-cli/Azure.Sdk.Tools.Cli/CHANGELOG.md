@@ -1,6 +1,6 @@
 # Release History
 
-## 0.6.18 (Unreleased)
+## 0.6.19 (Unreleased)
 
 ### Features Added
 
@@ -11,6 +11,13 @@
 ### Bugs Fixed
 
 ### Other Changes
+
+## 0.6.18 (2026-06-08)
+
+### Other Changes
+
+- Updated the release plan response to include the link to release plan dashboard.
+- Added release plan type check in SDK generation and inform the agent that SDK generation is not required for private preview. 
 
 ## 0.6.17 (2026-06-02)
 

@@ -58,19 +58,19 @@ vector_store:
       index_name: "azuresdkqabot-dev-search-index-communities"
       vector_size: 1536
 
-# DRIFT search latency tuning.
-# Field reference: https://microsoft.github.io/graphrag/config/yaml/#drift_search
+# Local Search latency tuning.
 #
-# Values chosen via param sweep on 2026-06-10 (config "D"): minimised
-# per-query latency (~57s avg, −30% vs k=5,folds=2 baseline) while
-# keeping answer correctness and a reasonable citation breadth
-# (~20 cites/query). See files/param_sweep_results.json for raw data
-# and files/sweep_excerpts.txt for the answer excerpts that informed
-# the choice.
-drift_search:
-  n_depth: 2                              # default 3
-  drift_k_followups: 3                    # default 20
-  primer_folds: 2                         # default 5
-  primer_llm_max_tokens: 4000             # default 12000
-  data_max_tokens: 4000                   # default 12000
-  concurrency: 16                         # default 32
+# Defaults yield ~21s/query end-to-end (single LLM call). We keep the
+# default ``max_context_tokens`` (12000) so the prompt has room for
+# both the entity neighbourhood AND the community summaries that give
+# Local Search its cross-document grounding — trimming it materially
+# (e.g. to 4000) triggers the "Reached token limit" fallback and drops
+# the community context entirely.
+#
+# top_k_entities / top_k_relationships are tightened from 10 → 5: the
+# 1-hop neighbourhood is still useful at this depth and we cut a small
+# amount of prompt-assembly work without hurting answer quality on the
+# bot's snapshot.
+local_search:
+  top_k_entities: 5         # default 10 — entities matched per query
+  top_k_relationships: 5    # default 10 — relationships per matched entity

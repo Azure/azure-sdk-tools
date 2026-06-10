@@ -1,15 +1,35 @@
 """Knowledge graph query service using Microsoft GraphRAG.
 
-Wraps :func:`graphrag.api.drift_search` against the indexes and graph
+Wraps GraphRAG's ``LocalSearch`` engine against the indexes and graph
 artefacts produced by the ``azure-sdk-qa-bot-knowledge-graph-sync``
-project.
+project. Exposes a single public method,
+:meth:`KnowledgeGraphService.local_search`, that returns a single-LLM
+graph-aware answer plus the source documents it cited.
+
+Why local search (and not DRIFT / global)
+-----------------------------------------
+The chat agent already has a fast vector-KB tool (Azure AI Search over
+text chunks). The graph tool is meant to *enhance* that — supplying
+entity-level grounding the vector index alone can't see — without
+adding tens of seconds of latency. Measured on the bot's snapshot:
+
+* ``local_search``: **~21s** per query (1 LLM call). Uses the graph
+  for entity matching + 1-hop relationship expansion + community-
+  membership + entity → text-unit back-references.
+* ``drift_search``: ~73s (primer + N×local + reduce LLM calls).
+* ``global_search``: ~110s (map over 3k+ community reports + reduce).
+
+DRIFT / global also add multi-hop / global-summary capabilities the
+chat agent doesn't need: the agent's own LLM does the cross-tool
+synthesis. Local search is the sweet spot — graph-aware grounding at
+single-vector-search latency.
 
 POC scope
 ---------
 Tenant filtering (``scope`` / ``service_type`` / ``source_folder``
 allow-lists) has been removed from this layer along with the
-``document_meta.parquet`` machinery. ``drift_search`` now exposes a
-minimal signature — ``drift_search(query)`` — and serves the same graph
+``document_meta.parquet`` machinery. ``local_search`` now exposes a
+minimal signature — ``local_search(query)`` — and serves the same graph
 to every caller. Per-tenant masking will be layered back on top once
 the blob-direct end-to-end pipeline is validated.
 
@@ -18,30 +38,23 @@ Data sources at query time
 GraphRAG splits its query-time inputs into two stores; this service
 reads from both because each contains a different *kind* of data:
 
-* **Azure AI Search** — *all vector data.* GraphRAG's ``drift_search``
-  calls ``get_embedding_store(config.vector_store, ...)`` internally,
-  so every entity/community embedding similarity lookup hits the AI
-  Search indexes configured in ``config/graphrag/settings.yaml``.
+* **Azure AI Search** — *all vector data.* ``LocalSearch``'s
+  ``MixedLocalContextBuilder`` calls
+  ``get_embedding_store(config.vector_store, ...)`` to look up the top
+  entity-description matches for the query.
 * **Parquet artefacts** — *graph structure only.* ``entities`` /
   ``communities`` / ``community_reports`` / ``text_units`` /
   ``relationships`` / ``documents`` parquets contain IDs, names,
   descriptions, edges, community hierarchy, and source text — but no
   vector columns. GraphRAG requires these DataFrames so it can resolve
-  embedding hits back to entities, traverse relationships, and pull
-  the actual report / chunk text for the LLM prompt.
+  embedding hits back to entities, traverse relationships, pull the
+  community reports the entities belong to, and recover the source
+  text units for the LLM prompt.
 
 The parquet artefacts are loaded once (lazily, on first query) from
 the Azure Blob container named by ``STORAGE_GRAPHRAG_OUTPUT_CONTAINER``;
 the bot then atomically swaps in a new build whenever the sync project
 calls ``POST /admin/graphrag/reload``.
-
-DRIFT (Dynamic Reasoning and Inference with Flexible Traversal) is
-GraphRAG's hybrid search mode: a community-level "primer" generates
-seed answers, then per-seed local searches expand context via graph
-traversal, and a reduce step combines them into the final response. It
-is heavier than local/global search but produces more comprehensive
-graph-aware answers — well suited for the bot agent's complex SDK /
-TypeSpec questions.
 """
 
 from __future__ import annotations
@@ -81,7 +94,7 @@ _REQUIRED_PARQUETS: tuple[str, ...] = (
 
 @dataclass(frozen=True)
 class GraphSourceRef:
-    """A source-document reference cited by a GraphRAG DRIFT search.
+    """A source-document reference cited by a GraphRAG local search.
 
     Attributes:
         title:   Human-readable document title (path with ``/`` separators).
@@ -107,7 +120,7 @@ _GRAPHRAG_CONFIG_ROOT = (
 
 
 class KnowledgeGraphService:
-    """Query service that delegates to GraphRAG's ``drift_search`` APIs.
+    """Query service that delegates to GraphRAG's ``LocalSearch`` engine.
 
     The service is a process-wide singleton (see
     ``get_knowledge_graph_service``). DataFrame loading is lazy on first
@@ -131,13 +144,12 @@ class KnowledgeGraphService:
         # Per-service community-report embedding cache. Populated by
         # ``_preload_report_embeddings()`` after every (re)load and
         # applied directly to the ``CommunityReport`` objects when
-        # building the search engine, so each ``drift_search`` call
+        # building the search engine, so each ``local_search`` call
         # avoids thousands of serial ``search_by_id`` round-trips to
         # AI Search.
         self._report_embeddings_cache: dict[str, list[float]] = {}
-        # Pre-built, immutable DRIFTSearch components. Constructed once
-        # per (re)load in ``_build_search_engine`` so per-query calls
-        # skip:
+        # Pre-built, immutable LocalSearch engine. Constructed once per
+        # (re)load in ``_build_search_engine`` so per-query calls skip:
         #   * ``read_indexer_entities`` / ``read_indexer_reports``
         #     (pandas merge + groupby on 24k entities × 6k communities)
         #   * ``read_indexer_text_units`` / ``read_indexer_relationships``
@@ -146,13 +158,10 @@ class KnowledgeGraphService:
         #   * LiteLLM client construction + tokenizer init
         #   * prompt file reads
         #
-        # Each ``drift_search`` call cheaply builds a fresh
-        # ``DRIFTSearch`` from these shared components — that instance
-        # owns its own mutable ``query_state``/primer/local_search, so
-        # concurrent queries never collide and no lock is required.
-        self._chat_model: Any = None
-        self._tokenizer: Any = None
-        self._context_builder: Any = None
+        # ``LocalSearch.search`` is stateless across calls (no
+        # per-engine mutable ``query_state``), so the same engine
+        # instance is shared by concurrent queries without locking.
+        self._search_engine: Any = None
         # Metadata for the currently-loaded build (manifest contents +
         # row counts). Populated on every successful load / reload so
         # ``GET /admin/graphrag/status`` can report what's serving traffic.
@@ -179,13 +188,11 @@ class KnowledgeGraphService:
     def get_status(self) -> dict[str, Any]:
         """Return a snapshot of the currently-loaded graph build."""
         parquets_loaded = self._dfs is not None and self._config is not None
-        engine_ready = (
-            self._context_builder is not None and self._chat_model is not None
-        )
+        engine_ready = self._search_engine is not None
         # "loaded" means fully usable — both parquets and the search
-        # engine components are ready. A partially-loaded state
-        # (parquets only) is exposed via the granular fields so
-        # /admin/graphrag/status can surface the half-loaded condition.
+        # engine are ready. A partially-loaded state (parquets only) is
+        # exposed via the granular fields so /admin/graphrag/status can
+        # surface the half-loaded condition.
         status: dict[str, Any] = {
             "enabled": self._enabled,
             "loaded": parquets_loaded and engine_ready,
@@ -210,13 +217,13 @@ class KnowledgeGraphService:
     async def reload(self) -> dict[str, Any]:
         """Atomically reload the graph from the configured source.
 
-        On success: the new config + DataFrames + engine components are
-        live; in-flight queries that captured the old ``_context_builder``
+        On success: the new config + DataFrames + search engine are
+        live; in-flight queries that captured the old ``_search_engine``
         complete against the old graph; subsequent queries see the new
         graph. On failure: the prior state is restored exactly — so a
         broken reload never leaves the service in a half-loaded state
-        (``_dfs`` set but ``_context_builder`` ``None``) that would
-        cause every subsequent ``drift_search`` to silently return an
+        (``_dfs`` set but ``_search_engine`` ``None``) that would
+        cause every subsequent ``local_search`` to silently return an
         empty answer.
         """
         if not self._enabled:
@@ -229,17 +236,15 @@ class KnowledgeGraphService:
             # mutation if engine construction fails after the parquet
             # swap. Without this, a failure in ``_build_search_engine``
             # would leave ``_dfs``/``_config`` pointing at the new data
-            # while ``_context_builder`` stays ``None`` — every
+            # while ``_search_engine`` stays ``None`` — every
             # subsequent query would silently short-circuit at the
-            # ``_context_builder is None`` check in ``drift_search``.
+            # ``_search_engine is None`` check in ``local_search``.
             prev_state = (
                 self._config,
                 self._dfs,
                 self._loaded_version,
                 self._report_embeddings_cache,
-                self._chat_model,
-                self._tokenizer,
-                self._context_builder,
+                self._search_engine,
             )
             try:
                 new_config = await asyncio.to_thread(self._load_config)
@@ -249,14 +254,14 @@ class KnowledgeGraphService:
                 self._loaded_version = new_version
                 await self._preload_report_embeddings()
                 await asyncio.to_thread(self._build_search_engine)
-                if self._context_builder is None or self._chat_model is None:
+                if self._search_engine is None:
                     # Defensive: _build_search_engine returns silently
                     # when config/dfs are missing; treat that as a hard
                     # failure here since reload() promises a fully
                     # constructed engine.
                     raise RuntimeError(
-                        "GraphRAG engine build produced no context_builder/"
-                        "chat_model — refusing to swap to a half-built state"
+                        "GraphRAG engine build produced no search_engine — "
+                        "refusing to swap to a half-built state"
                     )
             except Exception:
                 logger.exception(
@@ -267,9 +272,7 @@ class KnowledgeGraphService:
                     self._dfs,
                     self._loaded_version,
                     self._report_embeddings_cache,
-                    self._chat_model,
-                    self._tokenizer,
-                    self._context_builder,
+                    self._search_engine,
                 ) = prev_state
                 raise
 
@@ -284,16 +287,23 @@ class KnowledgeGraphService:
     # Public search API
     # ------------------------------------------------------------------ #
 
-    async def drift_search(
+    async def local_search(
         self, query: str
     ) -> tuple[str, list[GraphSourceRef]] | None:
-        """Run a GraphRAG DRIFT search and return the synthesised answer
+        """Run a GraphRAG Local Search and return the synthesised answer
         together with the source documents it cited.
 
-        DRIFT search combines a community-level primer (global-style)
-        with per-seed local searches that traverse the graph for
-        follow-up context, then reduces them into a single comprehensive
-        answer.
+        Local Search uses the graph for query-relevant grounding:
+        entity-description vector match → 1-hop relationship expansion
+        → community-report summaries for the matched entities →
+        entity → text-unit back-references for the source chunks. A
+        single LLM call then synthesises the answer over that context.
+
+        Single LLM call ⇒ ~20s latency. We deliberately do not use
+        DRIFT (multi-LLM, ~70s) or Global Search (fan-out over all
+        community reports, ~110s) — the chat agent's own LLM does the
+        cross-tool reasoning, so Local Search is the right level of
+        graph-aware grounding to feed it.
 
         Args:
             query: The user's question.
@@ -306,56 +316,39 @@ class KnowledgeGraphService:
         """
         if not self._enabled:
             logger.debug(
-                "GraphRAG drift_search short-circuit: service is disabled"
+                "GraphRAG local_search short-circuit: service is disabled"
             )
             return None
         if not await self._ensure_loaded():
             logger.warning(
-                "GraphRAG drift_search short-circuit: _ensure_loaded() returned False"
+                "GraphRAG local_search short-circuit: _ensure_loaded() returned False"
             )
             return None
-        if self._context_builder is None or self._chat_model is None:
+        if self._search_engine is None:
             # This is the half-loaded state — parquets are present but
             # the search engine never finished constructing. Almost
             # always caused by a failed reload() that didn't roll back
             # (fixed) or a still-running cold-start. Re-trigger a
             # lazy rebuild instead of silently returning empty.
             logger.warning(
-                "GraphRAG drift_search: engine components missing "
-                "(context_builder=%s, chat_model=%s) — clearing state and "
-                "forcing a rebuild on the next request",
-                self._context_builder is not None,
-                self._chat_model is not None,
+                "GraphRAG local_search: search engine missing — "
+                "clearing state and forcing a rebuild on the next request"
             )
             async with self._load_lock:
                 self._dfs = None
                 self._config = None
                 self._loaded_version = None
                 self._report_embeddings_cache = {}
-                self._chat_model = None
-                self._tokenizer = None
-                self._context_builder = None
+                self._search_engine = None
             return None
 
-        # Build a fresh DRIFTSearch per query. The expensive bits
-        # (context_builder dicts, LLM clients, tokenizer) are shared,
-        # but each DRIFTSearch owns its own mutable ``query_state`` +
-        # primer + local_search wrappers, so concurrent queries do not
-        # contend on a single mutable engine and no lock is needed.
-        # Cost of constructing a fresh engine is sub-millisecond.
-        from graphrag.query.structured_search.drift_search.search import (
-            DRIFTSearch,
-        )
-
-        engine = DRIFTSearch(
-            model=self._chat_model,
-            context_builder=self._context_builder,
-            tokenizer=self._tokenizer,
-        )
+        # ``LocalSearch.search`` is stateless across calls (no
+        # per-engine mutable ``query_state``), so the same engine
+        # instance is shared by concurrent queries without locking.
         try:
-            result = await engine.search(query=query)
+            result = await self._search_engine.search(query=query)
         except Exception:
-            logger.warning("GraphRAG drift_search failed", exc_info=True)
+            logger.warning("GraphRAG local_search failed", exc_info=True)
             return None
 
         answer = _coerce_response(result.response) or ""
@@ -369,14 +362,14 @@ class KnowledgeGraphService:
     def _extract_sources_from_context(
         self, context_data: Any
     ) -> list[GraphSourceRef]:
-        """Walk a DRIFT ``context_data`` payload and resolve cited
+        """Walk a search ``context_data`` payload and resolve cited
         text-unit short IDs back to their original source documents.
 
-        DRIFT context is a nested structure (``{sub_query: {table_name:
-        DataFrame}}``); we don't depend on its exact shape — we
-        recursively collect any DataFrame with both ``id`` and ``text``
-        columns and treat the ``id`` values as text-unit
-        ``human_readable_id``s (matches GraphRAG's ``TextUnit.short_id``).
+        ``LocalSearch`` returns a flat ``{table_name: DataFrame}`` dict;
+        we don't depend on its exact shape — we recursively collect any
+        DataFrame with both ``id`` and ``text`` columns and treat the
+        ``id`` values as text-unit ``human_readable_id``s (matches
+        GraphRAG's ``TextUnit.short_id``).
         """
         if self._dfs is None:
             return []
@@ -473,9 +466,7 @@ class KnowledgeGraphService:
                 self._dfs = None
                 self._loaded_version = None
                 self._report_embeddings_cache = {}
-                self._chat_model = None
-                self._tokenizer = None
-                self._context_builder = None
+                self._search_engine = None
                 return False
 
         logger.info(
@@ -619,12 +610,14 @@ class KnowledgeGraphService:
     async def _preload_report_embeddings(self) -> None:
         """Bulk-fetch every community-report embedding into memory.
 
-        ``DRIFTSearchContextBuilder`` requires each ``CommunityReport``
-        carry a ``full_content_embedding``. By default
-        ``read_indexer_report_embeddings`` issues one synchronous
-        ``search_by_id`` per report against the Azure AI Search
-        ``community_full_content`` index — for a 6k-report graph that
-        means thousands of serial round-trips per query (~7 minutes).
+        ``LocalSearch``'s context builder requires each
+        ``CommunityReport`` carry a ``full_content_embedding`` so it can
+        rank community summaries against the query embedding. By
+        default ``read_indexer_report_embeddings`` issues one
+        synchronous ``search_by_id`` per report against the Azure AI
+        Search ``community_full_content`` index — for a 6k-report graph
+        that means thousands of serial round-trips per query (~7
+        minutes).
 
         Instead we paginate the index *once* on (re)load and stash the
         embeddings in ``self._report_embeddings_cache``;
@@ -677,7 +670,7 @@ class KnowledgeGraphService:
         except Exception:
             logger.warning(
                 "Failed to preload community-report embeddings; "
-                "drift_search will fall back to per-query fetch (slow).",
+                "local_search will fall back to per-query fetch (slow).",
                 exc_info=True,
             )
             self._report_embeddings_cache = {}
@@ -693,10 +686,10 @@ class KnowledgeGraphService:
         )
 
     def _build_search_engine(self) -> None:
-        """Pre-build all reusable DRIFTSearch components once per load.
+        """Pre-build the LocalSearch engine once per load.
 
-        Mirrors ``graphrag.api.query.drift_search_streaming`` but moves
-        every reusable artefact out of the request path:
+        Mirrors ``graphrag.api.query.local_search`` but moves every
+        reusable artefact out of the request path:
 
         * Azure AI Search ``description_embedding_store`` (with
           ``connect()`` done once)
@@ -706,25 +699,21 @@ class KnowledgeGraphService:
           DataFrame to typed list conversion
         * Community-report embeddings (assigned from
           ``self._report_embeddings_cache``)
-        * Local search prompt + reduce prompt file reads
+        * Local search prompt file read
         * LiteLLM completion + embedding client + tokenizer init
-        * ``DRIFTSearchContextBuilder`` construction, which internally
-          builds ``LocalSearchMixedContext`` dicts indexed by id for
-          24k entities, 6k reports, 2k text units and 63k relationships
+        * ``MixedLocalContextBuilder`` construction, which internally
+          builds id-indexed lookup dicts for 24k entities, 6k reports,
+          2k text units and 63k relationships
 
-        We use ``get_drift_search_engine`` once as a convenient
-        constructor for these components, then steal its immutable
-        fields (``model``, ``context_builder``, ``tokenizer``). Each
-        per-query ``drift_search`` call then builds a fresh
-        ``DRIFTSearch`` from those shared components so that
-        per-query mutable state (``query_state``, primer, local_search)
-        is isolated — enabling lock-free concurrent queries.
+        ``LocalSearch.search`` is stateless across calls, so the
+        returned engine is safe to share across concurrent queries
+        without locking.
         """
         if self._config is None or self._dfs is None:
             return
 
         from graphrag.config.embeddings import entity_description_embedding
-        from graphrag.query.factory import get_drift_search_engine
+        from graphrag.query.factory import get_local_search_engine
         from graphrag.query.indexer_adapters import (
             read_indexer_entities,
             read_indexer_relationships,
@@ -754,7 +743,9 @@ class KnowledgeGraphService:
 
         # Apply pre-fetched embeddings to the report list. Replaces
         # graphrag's per-query read_indexer_report_embeddings, which
-        # would otherwise issue one search_by_id per report.
+        # would otherwise issue one search_by_id per report. Local
+        # Search uses the community summaries (and therefore relies on
+        # the same ``full_content_embedding`` field for prioritisation).
         cache = self._report_embeddings_cache
         if cache:
             hits = 0
@@ -784,33 +775,24 @@ class KnowledgeGraphService:
             )
             read_indexer_report_embeddings(reports, fallback_store)
 
-        local_prompt = load_search_prompt(config.drift_search.prompt)
-        reduce_prompt = load_search_prompt(config.drift_search.reduce_prompt)
+        local_prompt = load_search_prompt(config.local_search.prompt)
 
-        # ``get_drift_search_engine`` is a convenient way to construct
-        # the model + context_builder + tokenizer wiring without
-        # duplicating its setup here. We never call ``search()`` on
-        # this template instance; we just lift its immutable fields.
-        template = get_drift_search_engine(
+        self._search_engine = get_local_search_engine(
             config=config,
             reports=reports,
             text_units=text_units_,
             entities=entities_,
             relationships=relationships_,
+            covariates={},
             description_embedding_store=description_embedding_store,
-            local_system_prompt=local_prompt,
-            reduce_system_prompt=reduce_prompt,
             response_type=self._response_type,
+            system_prompt=local_prompt,
             callbacks=None,
         )
 
-        self._chat_model = template.model
-        self._context_builder = template.context_builder
-        self._tokenizer = template.tokenizer
-
         elapsed = time.monotonic() - start
         logger.info(
-            "Built DRIFT search components in %.2fs "
+            "Built LocalSearch engine in %.2fs "
             "(entities=%d, reports=%d, text_units=%d, relationships=%d)",
             elapsed,
             len(entities_),
@@ -830,13 +812,14 @@ def _coerce_response(response: object) -> str | None:
 
 
 def _collect_text_unit_short_ids(context_data: Any) -> set[str]:
-    """Recursively walk a DRIFT ``context_data`` payload and collect every
+    """Recursively walk a search ``context_data`` payload and collect every
     text-unit short id we can find.
 
-    DRIFT returns a nested dict (``{sub_query: {table: DataFrame}}``)
-    but the exact shape can vary across graphrag versions. We treat any
-    value that is a pandas DataFrame *and* has both ``id`` and ``text``
-    columns as a candidate "sources" table.
+    LocalSearch returns a flat ``{table_name: DataFrame}`` dict; DRIFT
+    returned a nested ``{sub_query: {table: DataFrame}}``. The exact
+    shape can vary across graphrag versions and search modes, so we
+    treat any value that is a pandas DataFrame *and* has both ``id``
+    and ``text`` columns as a candidate "sources" table.
     """
     import pandas as pd
 

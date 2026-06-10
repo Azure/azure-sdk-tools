@@ -312,7 +312,7 @@ async def admin_graphrag_reload(
 ):
     """Atomically reload the GraphRAG parquets from the configured blob source.
 
-    In-flight DRIFT queries keep their captured DataFrame snapshot and
+    In-flight Local Search queries keep their captured DataFrame snapshot and
     finish against the old data; subsequent queries see the new data.
     On failure the prior build remains active.
     """

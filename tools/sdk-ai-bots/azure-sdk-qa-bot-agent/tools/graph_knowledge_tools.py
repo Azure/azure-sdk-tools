@@ -1,4 +1,4 @@
-"""Graph-based answering tool (Microsoft GraphRAG / DRIFT search).
+"""Graph-based answering tool (Microsoft GraphRAG / Local Search).
 
 Exposes a single tool, :meth:`GraphKnowledgeTools.ask_knowledge_graph`,
 that asks the knowledge graph a natural-language question and returns
@@ -15,6 +15,16 @@ Conceptual contract — this is an **answering tool**, not a search tool:
   KB tool) or other tools (web search, GitHub, pipeline analysis,
   ...). The ``instruction.md`` "Answer synthesis" section documents
   the merge rules.
+
+Why Local Search (not DRIFT / global)
+-------------------------------------
+Local Search is GraphRAG's single-LLM, query-focused mode: entity
+description vector match → 1-hop relationship expansion → community
+summaries for matched entities → entity → text-unit back-references.
+On the bot's snapshot it returns in ~20s (vs ~73s for DRIFT, ~110s for
+global). The chat agent's own LLM does the cross-tool reasoning, so
+Local Search supplies the right level of graph-aware grounding without
+inflating per-turn latency.
 
 POC scope — tenant filtering (``scope`` / ``service_type`` / source
 folder allow-lists) has been removed; the shared graph is served to
@@ -41,7 +51,7 @@ _MAX_SNIPPET_CHARS = 1200
 
 
 class GraphKnowledgeTools:
-    """Knowledge graph answering tools backed by GraphRAG DRIFT search."""
+    """Knowledge graph answering tools backed by GraphRAG Local Search."""
 
     @tool
     async def ask_knowledge_graph(
@@ -50,22 +60,24 @@ class GraphKnowledgeTools:
         query: Annotated[
             str,
             "A single natural-language QUESTION to ASK the knowledge graph. "
-            "This is an answering tool: GraphRAG runs DRIFT search to "
-            "reason over communities of related entities and traverse "
-            "their relationships, then synthesises an expert answer. "
-            "Phrase the input as a QUESTION or a topic (not a keyword "
-            "list). Use this tool when the user's question benefits from "
-            "cross-document reasoning, summarisation, or 'explain how X "
-            "relates to Y' style answers. The call is expensive (multiple "
-            "LLM calls); send one focused question per turn.",
+            "This is an answering tool: GraphRAG runs Local Search to "
+            "match entities related to the query, traverse their 1-hop "
+            "relationships, and synthesise an expert answer grounded in "
+            "the community summaries and source text units the entities "
+            "belong to. Phrase the input as a QUESTION or a topic (not a "
+            "keyword list). Use this tool when the user's question "
+            "benefits from entity-centric or 'how does X relate to Y' "
+            "style reasoning across documents. One LLM call per query "
+            "(~20s); send one focused question per turn.",
         ],
     ) -> GraphAnswerResult:
         """Ask the knowledge graph and return a synthesised expert answer.
 
-        Runs Microsoft GraphRAG's DRIFT (Dynamic Reasoning and Inference
-        with Flexible Traversal) search for the supplied ``query``. The
-        resulting ``answer`` is a graph-aware synthesis; ``citations``
-        lists the source documents that grounded it.
+        Runs Microsoft GraphRAG's Local Search for the supplied
+        ``query``. The resulting ``answer`` is a graph-aware synthesis
+        (one LLM call over entity-, relationship-, community- and
+        text-unit context); ``citations`` lists the source documents
+        that grounded it.
 
         Returns an empty result (empty ``answer``, no citations) when
         the query is blank, the graph service is disabled, or the
@@ -78,13 +90,13 @@ class GraphKnowledgeTools:
 
         service = get_knowledge_graph_service()
 
-        logger.info("Running GraphRAG DRIFT search for query=%r", normalised_query)
+        logger.info("Running GraphRAG Local Search for query=%r", normalised_query)
 
         try:
-            outcome = await service.drift_search(normalised_query)
+            outcome = await service.local_search(normalised_query)
         except Exception as exc:
             logger.warning(
-                "GraphRAG drift_search failed for query=%r: %s",
+                "GraphRAG local_search failed for query=%r: %s",
                 normalised_query,
                 exc,
             )

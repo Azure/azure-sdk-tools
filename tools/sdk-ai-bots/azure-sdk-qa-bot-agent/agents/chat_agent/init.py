@@ -101,7 +101,7 @@ async def main() -> None:
     # Tool registration:
     #   * `search_knowledge_base` — Azure AI Search vector retrieval; returns
     #     verbatim chunks (Reference[]).
-    #   * `ask_knowledge_graph` — GraphRAG DRIFT-search synthesized answer
+    #   * `ask_knowledge_graph` — GraphRAG Local Search synthesized answer
     #     (GraphAnswerResult). Registered concurrently so the agent can call
     #     either or both per turn. The agent's "Answer synthesis" rules in
     #     instruction.md describe how to merge them.

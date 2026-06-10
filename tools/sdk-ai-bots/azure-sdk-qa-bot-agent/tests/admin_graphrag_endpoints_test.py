@@ -1,6 +1,6 @@
 """Unit tests for the GraphRAG admin endpoints (reload / status).
 
-These tests avoid touching real blob storage or running DRIFT by
+These tests avoid touching real blob storage or running Local Search by
 monkeypatching ``KnowledgeGraphService`` on the singleton instance with
 ``unittest.mock``. The goal is to lock down the HTTP contract:
 - 503 when ``GRAPHRAG_ADMIN_TOKEN`` is not configured

@@ -60,12 +60,17 @@ vector_store:
 
 # DRIFT search latency tuning.
 # Field reference: https://microsoft.github.io/graphrag/config/yaml/#drift_search
+#
+# Values chosen via param sweep on 2026-06-10 (config "D"): minimised
+# per-query latency (~57s avg, −30% vs k=5,folds=2 baseline) while
+# keeping answer correctness and a reasonable citation breadth
+# (~20 cites/query). See files/param_sweep_results.json for raw data
+# and files/sweep_excerpts.txt for the answer excerpts that informed
+# the choice.
 drift_search:
-  n_depth: 1                              # default 3 — drop iterative rounds
-  drift_k_followups: 5                    # default 20 — fewer follow-up local searches
-  primer_folds: 2                         # default 5 — cheaper primer ranking
-  primer_llm_max_tokens: 4000             # default 12000 — bound primer prompt/response
-  data_max_tokens: 4000                   # default 12000 — bound data prompt size
-  concurrency: 16                         # default 32 — leave headroom on AOAI TPM
-  local_search_top_k_mapped_entities: 10  # leave at default; expose for tuning
-  local_search_top_k_relationships: 10    # leave at default; expose for tuning
+  n_depth: 2                              # default 3
+  drift_k_followups: 3                    # default 20
+  primer_folds: 2                         # default 5
+  primer_llm_max_tokens: 4000             # default 12000
+  data_max_tokens: 4000                   # default 12000
+  concurrency: 16                         # default 32

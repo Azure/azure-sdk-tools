@@ -49,6 +49,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import tempfile
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -127,6 +128,31 @@ class KnowledgeGraphService:
 
         self._config = None  # graphrag GraphRagConfig
         self._dfs: "dict[str, pd.DataFrame] | None" = None
+        # Per-service community-report embedding cache. Populated by
+        # ``_preload_report_embeddings()`` after every (re)load and
+        # applied directly to the ``CommunityReport`` objects when
+        # building the search engine, so each ``drift_search`` call
+        # avoids thousands of serial ``search_by_id`` round-trips to
+        # AI Search.
+        self._report_embeddings_cache: dict[str, list[float]] = {}
+        # Pre-built, immutable DRIFTSearch components. Constructed once
+        # per (re)load in ``_build_search_engine`` so per-query calls
+        # skip:
+        #   * ``read_indexer_entities`` / ``read_indexer_reports``
+        #     (pandas merge + groupby on 24k entities × 6k communities)
+        #   * ``read_indexer_text_units`` / ``read_indexer_relationships``
+        #   * ``LocalSearchMixedContext`` dict construction (24k+6k+2k+63k items)
+        #   * Azure SearchClient creation + ``connect()``
+        #   * LiteLLM client construction + tokenizer init
+        #   * prompt file reads
+        #
+        # Each ``drift_search`` call cheaply builds a fresh
+        # ``DRIFTSearch`` from these shared components — that instance
+        # owns its own mutable ``query_state``/primer/local_search, so
+        # concurrent queries never collide and no lock is required.
+        self._chat_model: Any = None
+        self._tokenizer: Any = None
+        self._context_builder: Any = None
         # Metadata for the currently-loaded build (manifest contents +
         # row counts). Populated on every successful load / reload so
         # ``GET /admin/graphrag/status`` can report what's serving traffic.
@@ -192,6 +218,8 @@ class KnowledgeGraphService:
             self._config = new_config
             self._dfs = new_dfs
             self._loaded_version = new_version
+            await self._preload_report_embeddings()
+            await asyncio.to_thread(self._build_search_engine)
 
         logger.info(
             "KnowledgeGraphService reloaded: version=%s row_counts=%s",
@@ -228,31 +256,33 @@ class KnowledgeGraphService:
             return None
         if not await self._ensure_loaded():
             return None
+        if self._context_builder is None or self._chat_model is None:
+            logger.warning("GraphRAG search components not initialised")
+            return None
 
-        config = self._config
-        dfs = self._dfs
-        assert config is not None and dfs is not None
+        # Build a fresh DRIFTSearch per query. The expensive bits
+        # (context_builder dicts, LLM clients, tokenizer) are shared,
+        # but each DRIFTSearch owns its own mutable ``query_state`` +
+        # primer + local_search wrappers, so concurrent queries do not
+        # contend on a single mutable engine and no lock is needed.
+        # Cost of constructing a fresh engine is sub-millisecond.
+        from graphrag.query.structured_search.drift_search.search import (
+            DRIFTSearch,
+        )
 
-        from graphrag.api import drift_search as graphrag_drift_search
-
+        engine = DRIFTSearch(
+            model=self._chat_model,
+            context_builder=self._context_builder,
+            tokenizer=self._tokenizer,
+        )
         try:
-            response, context = await graphrag_drift_search(
-                config=config,
-                entities=dfs["entities"],
-                communities=dfs["communities"],
-                community_reports=dfs["community_reports"],
-                text_units=dfs["text_units"],
-                relationships=dfs["relationships"],
-                community_level=self._community_level,
-                response_type=self._response_type,
-                query=query,
-            )
+            result = await engine.search(query=query)
         except Exception:
             logger.warning("GraphRAG drift_search failed", exc_info=True)
             return None
 
-        answer = _coerce_response(response) or ""
-        sources = self._extract_sources_from_context(context)
+        answer = _coerce_response(result.response) or ""
+        sources = self._extract_sources_from_context(result.context_data)
         return answer, sources
 
     # ------------------------------------------------------------------ #
@@ -298,7 +328,10 @@ class KnowledgeGraphService:
         if matched_units.empty:
             return []
 
-        doc_index = documents_df.set_index("id")[["title"]]
+        doc_index = (
+            documents_df.drop_duplicates(subset=["id"])
+            .set_index("id")[["title"]]
+        )
 
         # Group text units by document so each citation carries a single
         # representative chunk excerpt (largest chunk wins).
@@ -315,7 +348,13 @@ class KnowledgeGraphService:
             seen_docs.add(doc_id)
 
             if doc_id in doc_index.index:
-                raw_title = str(doc_index.loc[doc_id, "title"] or "")
+                title_val = doc_index.loc[doc_id, "title"]
+                # ``.loc`` returns a Series when the index has duplicates;
+                # dedup above guards against that but be defensive in case
+                # any sneak through.
+                if hasattr(title_val, "iloc"):
+                    title_val = title_val.iloc[0] if len(title_val) else ""
+                raw_title = str(title_val or "")
             else:
                 raw_title = ""
             display_title, link = _doc_title_to_display(raw_title)
@@ -349,11 +388,17 @@ class KnowledgeGraphService:
                 self._dfs, self._loaded_version = (
                     await self._load_parquets_with_manifest()
                 )
+                await self._preload_report_embeddings()
+                await asyncio.to_thread(self._build_search_engine)
             except Exception:
                 logger.exception("Failed to initialise KnowledgeGraphService")
                 self._config = None
                 self._dfs = None
                 self._loaded_version = None
+                self._report_embeddings_cache = {}
+                self._chat_model = None
+                self._tokenizer = None
+                self._context_builder = None
                 return False
 
         logger.info(
@@ -478,6 +523,213 @@ class KnowledgeGraphService:
                 )
             dfs[name] = pd.read_parquet(file_path)
         return dfs
+
+    # ------------------------------------------------------------------ #
+    # Community-report embedding preload + monkey-patch
+    # ------------------------------------------------------------------ #
+
+    async def _preload_report_embeddings(self) -> None:
+        """Bulk-fetch every community-report embedding into memory.
+
+        ``DRIFTSearchContextBuilder`` requires each ``CommunityReport``
+        carry a ``full_content_embedding``. By default
+        ``read_indexer_report_embeddings`` issues one synchronous
+        ``search_by_id`` per report against the Azure AI Search
+        ``community_full_content`` index — for a 6k-report graph that
+        means thousands of serial round-trips per query (~7 minutes).
+
+        Instead we paginate the index *once* on (re)load and stash the
+        embeddings in ``self._report_embeddings_cache``;
+        ``_build_search_engine`` then applies them directly to the
+        ``CommunityReport`` list before constructing the engine, and
+        per-query calls never touch AI Search for embeddings.
+
+        Pagination uses Azure AI Search's ``search('*', top=N)`` which
+        the SDK transparently iterates across all pages. With ~6k
+        documents this completes in ~5-10 seconds.
+        """
+        if self._config is None:
+            return
+
+        try:
+            from graphrag.config.embeddings import (
+                community_full_content_embedding,
+            )
+            from graphrag.utils.api import get_embedding_store
+        except ImportError:
+            logger.warning(
+                "Could not import graphrag vector store factory; "
+                "community embedding preload disabled."
+            )
+            return
+
+        def _fetch_all() -> dict[str, list[float]]:
+            store = get_embedding_store(
+                config=self._config.vector_store,
+                embedding_name=community_full_content_embedding,
+            )
+            id_field = store.id_field
+            vector_field = store.vector_field
+            results = store.db_connection.search(
+                search_text="*",
+                select=[id_field, vector_field],
+                top=100000,
+            )
+            cache: dict[str, list[float]] = {}
+            for result in results:
+                doc_id = result.get(id_field)
+                vector = result.get(vector_field)
+                if doc_id and vector is not None:
+                    cache[str(doc_id)] = list(vector)
+            return cache
+
+        start = time.monotonic()
+        try:
+            cache = await asyncio.to_thread(_fetch_all)
+        except Exception:
+            logger.warning(
+                "Failed to preload community-report embeddings; "
+                "drift_search will fall back to per-query fetch (slow).",
+                exc_info=True,
+            )
+            self._report_embeddings_cache = {}
+            return
+
+        elapsed = time.monotonic() - start
+        self._report_embeddings_cache = cache
+        logger.info(
+            "Preloaded %d community-report embeddings in %.2fs "
+            "(eliminates per-query AI Search round-trips)",
+            len(cache),
+            elapsed,
+        )
+
+    def _build_search_engine(self) -> None:
+        """Pre-build all reusable DRIFTSearch components once per load.
+
+        Mirrors ``graphrag.api.query.drift_search_streaming`` but moves
+        every reusable artefact out of the request path:
+
+        * Azure AI Search ``description_embedding_store`` (with
+          ``connect()`` done once)
+        * ``read_indexer_entities`` / ``read_indexer_reports`` —
+          pandas merge + groupby on 24k entities × 6k communities
+        * ``read_indexer_text_units`` / ``read_indexer_relationships`` —
+          DataFrame to typed list conversion
+        * Community-report embeddings (assigned from
+          ``self._report_embeddings_cache``)
+        * Local search prompt + reduce prompt file reads
+        * LiteLLM completion + embedding client + tokenizer init
+        * ``DRIFTSearchContextBuilder`` construction, which internally
+          builds ``LocalSearchMixedContext`` dicts indexed by id for
+          24k entities, 6k reports, 2k text units and 63k relationships
+
+        We use ``get_drift_search_engine`` once as a convenient
+        constructor for these components, then steal its immutable
+        fields (``model``, ``context_builder``, ``tokenizer``). Each
+        per-query ``drift_search`` call then builds a fresh
+        ``DRIFTSearch`` from those shared components so that
+        per-query mutable state (``query_state``, primer, local_search)
+        is isolated — enabling lock-free concurrent queries.
+        """
+        if self._config is None or self._dfs is None:
+            return
+
+        from graphrag.config.embeddings import entity_description_embedding
+        from graphrag.query.factory import get_drift_search_engine
+        from graphrag.query.indexer_adapters import (
+            read_indexer_entities,
+            read_indexer_relationships,
+            read_indexer_reports,
+            read_indexer_text_units,
+        )
+        from graphrag.utils.api import get_embedding_store, load_search_prompt
+
+        config = self._config
+        dfs = self._dfs
+
+        start = time.monotonic()
+
+        description_embedding_store = get_embedding_store(
+            config=config.vector_store,
+            embedding_name=entity_description_embedding,
+        )
+
+        entities_ = read_indexer_entities(
+            dfs["entities"], dfs["communities"], self._community_level
+        )
+        reports = read_indexer_reports(
+            dfs["community_reports"], dfs["communities"], self._community_level
+        )
+        text_units_ = read_indexer_text_units(dfs["text_units"])
+        relationships_ = read_indexer_relationships(dfs["relationships"])
+
+        # Apply pre-fetched embeddings to the report list. Replaces
+        # graphrag's per-query read_indexer_report_embeddings, which
+        # would otherwise issue one search_by_id per report.
+        cache = self._report_embeddings_cache
+        if cache:
+            hits = 0
+            for report in reports:
+                vec = cache.get(str(report.id))
+                report.full_content_embedding = vec
+                if vec is not None:
+                    hits += 1
+            logger.info(
+                "Applied %d/%d community-report embeddings from cache",
+                hits,
+                len(reports),
+            )
+        else:
+            # Fall back to the original (slow) per-report lookup so the
+            # engine still functions when preload failed.
+            from graphrag.config.embeddings import (
+                community_full_content_embedding,
+            )
+            from graphrag.query.indexer_adapters import (
+                read_indexer_report_embeddings,
+            )
+
+            fallback_store = get_embedding_store(
+                config=config.vector_store,
+                embedding_name=community_full_content_embedding,
+            )
+            read_indexer_report_embeddings(reports, fallback_store)
+
+        local_prompt = load_search_prompt(config.drift_search.prompt)
+        reduce_prompt = load_search_prompt(config.drift_search.reduce_prompt)
+
+        # ``get_drift_search_engine`` is a convenient way to construct
+        # the model + context_builder + tokenizer wiring without
+        # duplicating its setup here. We never call ``search()`` on
+        # this template instance; we just lift its immutable fields.
+        template = get_drift_search_engine(
+            config=config,
+            reports=reports,
+            text_units=text_units_,
+            entities=entities_,
+            relationships=relationships_,
+            description_embedding_store=description_embedding_store,
+            local_system_prompt=local_prompt,
+            reduce_system_prompt=reduce_prompt,
+            response_type=self._response_type,
+            callbacks=None,
+        )
+
+        self._chat_model = template.model
+        self._context_builder = template.context_builder
+        self._tokenizer = template.tokenizer
+
+        elapsed = time.monotonic() - start
+        logger.info(
+            "Built DRIFT search components in %.2fs "
+            "(entities=%d, reports=%d, text_units=%d, relationships=%d)",
+            elapsed,
+            len(entities_),
+            len(reports),
+            len(text_units_),
+            len(relationships_),
+        )
 
 
 def _coerce_response(response: object) -> str | None:

@@ -6,6 +6,7 @@ and handles feedback through a local workflow.
 """
 
 import asyncio
+import contextlib
 import logging
 import sys
 import time
@@ -98,14 +99,42 @@ async def lifespan(application: FastAPI):
     """Startup / shutdown lifecycle for the FastAPI app."""
     logger.info("Backend server starting up")
     await app_config.init()
-    yield
-    # Cleanup SDK clients on shutdown
-    logger.info("Backend server shutting down")
-    await BackgroundTaskTracker.instance().shutdown()
-    await close_clients()
-    await close_cosmos_client()
-    await close_storage_client()
-    await close_credential()
+
+    # Pre-warm GraphRAG: download parquets + bulk-fetch community
+    # embeddings off the request path so the first user query doesn't
+    # pay a ~30-60s cold-load tax. Runs as a background task and
+    # tolerates failure (queries will fall back to lazy load).
+    async def _warm_graph():
+        try:
+            from utils.knowledge_graph import get_knowledge_graph_service
+
+            service = get_knowledge_graph_service()
+            if not service.enabled:
+                return
+            logger.info("Pre-warming GraphRAG knowledge base at startup")
+            await service.reload()
+            logger.info("GraphRAG pre-warm complete")
+        except Exception:
+            logger.warning(
+                "GraphRAG pre-warm failed; first query will trigger lazy load",
+                exc_info=True,
+            )
+
+    warm_task = asyncio.create_task(_warm_graph())
+
+    try:
+        yield
+    finally:
+        warm_task.cancel()
+        with contextlib.suppress(asyncio.CancelledError, Exception):
+            await warm_task
+        # Cleanup SDK clients on shutdown
+        logger.info("Backend server shutting down")
+        await BackgroundTaskTracker.instance().shutdown()
+        await close_clients()
+        await close_cosmos_client()
+        await close_storage_client()
+        await close_credential()
 
 
 app = FastAPI(title="Azure SDK QA Bot Backend", version=VERSION, lifespan=lifespan)

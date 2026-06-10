@@ -73,24 +73,36 @@ def test_chat_service_returns_none_when_user_id_empty() -> None:
     assert service._resolve_memory_scope(whitespace_id) is None
 
 
-def test_graph_citations_to_references_preserves_metadata() -> None:
-    """Graph citations should round-trip into Reference with source='graphrag'."""
-    from models.knowledge import GraphCitation
-    from services.chat_service import _graph_citations_to_references
+def test_graph_refs_to_references_preserves_metadata() -> None:
+    """Graph references should round-trip into Reference; ``source`` is
+    preserved from the GraphReference so KB-style attribution
+    (e.g. ``"typespec_docs"``) flows into the merged list, with the
+    legacy ``"graphrag"`` value retained as the safe default."""
+    from models.knowledge import GraphReference
+    from services.chat_service import _graph_refs_to_references
 
-    citations = [
-        GraphCitation(
+    graph_refs = [
+        GraphReference(
             title="Doc A",
             link="https://example.com/a",
             snippet="excerpt",
-        )
+        ),
+        GraphReference(
+            title="Doc B",
+            link="https://example.com/b",
+            snippet="excerpt-b",
+            source="typespec_docs",
+        ),
     ]
-    refs = _graph_citations_to_references(citations)
-    assert len(refs) == 1
+    refs = _graph_refs_to_references(graph_refs)
+    assert len(refs) == 2
     assert refs[0].title == "Doc A"
     assert refs[0].link == "https://example.com/a"
     assert refs[0].source == "graphrag"
     assert refs[0].content == "excerpt"
+    # Real KB source name must propagate through, not be overwritten.
+    assert refs[1].source == "typespec_docs"
+    assert refs[1].content == "excerpt-b"
 
 
 def test_merge_references_dedups_by_link_and_title() -> None:
@@ -125,3 +137,31 @@ def test_merge_references_empty_secondary_returns_primary_copy() -> None:
     assert merged == vector
     # Returned list is a copy, not the same object.
     assert merged is not vector
+
+
+def test_merge_references_keeps_graph_only_hits_without_link() -> None:
+    """Graph references without a URL must still survive the merge so the
+    bot's full_context payload (and the agent's reference enrichment
+    lookup) sees them alongside vector hits."""
+    from models.knowledge import Reference
+    from services.chat_service import _merge_references
+
+    vector = [
+        Reference(title="Doc A", source="ai_search", link="https://example.com/a", content="VEC"),
+    ]
+    graph = [
+        # Same doc surfaced by graph with no URL — link mismatch means it's
+        # treated as a different key. That's fine: both copies carry useful
+        # text and the agent's enrichment lookup matches on title too.
+        Reference(title="Doc B (no link)", source="graphrag", link="", content="GRAPH-B"),
+        # Same title but with link — different key, distinct entry kept.
+        Reference(title="Doc C", source="graphrag", link="", content="GRAPH-C"),
+    ]
+    merged = _merge_references(vector, graph)
+    titles = [r.title for r in merged]
+    assert "Doc A" in titles
+    assert "Doc B (no link)" in titles
+    assert "Doc C" in titles
+    # Graph entries preserved verbatim (source still 'graphrag').
+    graph_only = [r for r in merged if r.source == "graphrag"]
+    assert len(graph_only) == 2

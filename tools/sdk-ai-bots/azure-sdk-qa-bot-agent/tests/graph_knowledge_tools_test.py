@@ -16,7 +16,7 @@ if _PROJECT_ROOT not in sys.path:
 load_dotenv()
 
 import config.app_config as app_config
-from models.knowledge import GraphAnswerResult
+from models.knowledge import GraphSearchResult
 from tools.graph_knowledge_tools import GraphKnowledgeTools
 
 
@@ -35,12 +35,22 @@ async def _graph_tools() -> GraphKnowledgeTools:
 
 
 @pytest.mark.asyncio(loop_scope="module")
-async def test_ask_knowledge_graph(_graph_tools: GraphKnowledgeTools) -> None:
+async def test_search_knowledge_graph(_graph_tools: GraphKnowledgeTools) -> None:
     query = "What does the TypeSpec JSON Schema emitter do?"
 
-    result = await _graph_tools.ask_knowledge_graph(query=query)
+    result = await _graph_tools.search_knowledge_graph(query=query)
 
-    assert isinstance(result, GraphAnswerResult)
-    assert result.answer
+    assert isinstance(result, GraphSearchResult)
     assert result.query == query
-    assert len(result.citations) > 0
+    assert len(result.references) > 0
+    # Retrieval-only — each reference should carry a verbatim snippet.
+    assert any(ref.snippet for ref in result.references)
+    # Source attribution: every reference must report a real KB source
+    # (e.g. "typespec_docs"), not the generic "graphrag" fallback. The
+    # graph rebuilds source names from the knowledge blob container at
+    # load time — if this fails, the title→source preload regressed.
+    sources = {ref.source for ref in result.references if ref.source}
+    assert "graphrag" not in sources, (
+        f"References still attributed to bare 'graphrag': sources={sources}"
+    )
+    assert sources, "No source attribution returned for any graph reference"

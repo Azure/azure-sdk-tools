@@ -127,16 +127,26 @@ class SearchKnowledgeBaseResult(BaseModel):
     results: list[Reference] = []
 
 
-class GraphCitation(BaseModel):
-    """A single citation produced by the ask_knowledge_graph tool.
+class GraphReference(BaseModel):
+    """A single reference returned by the search_knowledge_graph tool.
 
-    Lighter than ``Reference`` — represents a source document referenced by
-    the synthesized graph answer rather than a verbatim retrieved chunk.
+    Lighter than ``Reference`` — graph hits are grounded via
+    entity-description matching and 1-hop relationship expansion rather
+    than text-chunk vector search, so we expose only the visible
+    citation fields (no score). The ``snippet`` carries one
+    representative text-unit chunk per source document so the agent
+    can ground its answer the same way it does for KB chunks. The
+    ``source`` mirrors :class:`KnowledgeChunk.source` and carries the
+    originating ``KnowledgeSource.name`` (e.g. ``"typespec_docs"``) so
+    the merged reference list looks consistent between KB and graph
+    hits; falls back to ``"graphrag"`` only when the document's source
+    folder cannot be recovered.
     """
 
     title: str
     link: str = ""
     snippet: str = ""
+    source: str = "graphrag"
 
     @field_validator("title", mode="after")
     @classmethod
@@ -144,16 +154,16 @@ class GraphCitation(BaseModel):
         return v.strip().rstrip("| ").strip()
 
 
-class GraphAnswerResult(BaseModel):
-    """Output of the ask_knowledge_graph tool call.
+class GraphSearchResult(BaseModel):
+    """Output of the search_knowledge_graph tool call.
 
-    Distinct shape from ``SearchKnowledgeBaseResult``: the graph tool is an
-    *answering* tool, not a search tool. ``answer`` carries the synthesized
-    expert answer; ``citations`` lists supporting source documents.
+    Mirrors ``SearchKnowledgeBaseResult`` in spirit: a flat list of
+    references plus the echoed query. The graph tool is a *retrieval*
+    tool — like the KB tool — and the chat agent's own LLM synthesises
+    the final answer over both sets of references.
     """
 
-    answer: str = ""
-    citations: list[GraphCitation] = []
+    references: list[GraphReference] = []
     query: str = ""
 
 

@@ -25,8 +25,8 @@ from models.chat import (
 from models.conversation import ConversationMessage
 from models.knowledge import (
     DocumentContext,
-    GraphAnswerResult,
-    GraphCitation,
+    GraphReference,
+    GraphSearchResult,
     Reference,
     SearchKnowledgeBaseResult,
 )
@@ -63,24 +63,28 @@ COMPACT_THRESHOLD = 100000
 _CITATION_RE = re.compile(r"[^\w\s]*cite[^\w\s]*turn\d+\S*")
 
 
-def _graph_citations_to_references(citations: list[GraphCitation]) -> list[Reference]:
-    """Convert ``ask_knowledge_graph`` citations to :class:`Reference` entries
-    so they can flow through the existing reference-merging / enrichment path.
+def _graph_refs_to_references(refs: list[GraphReference]) -> list[Reference]:
+    """Convert ``search_knowledge_graph`` references to :class:`Reference`
+    entries so they can flow through the existing reference-merging /
+    enrichment path.
 
-    ``source`` is set to ``"graphrag"`` so downstream renderers can tell the
-    origin apart from vector-index hits.
+    ``source`` is preserved from the graph reference (which carries the
+    originating ``KnowledgeSource.name`` whenever the bot was able to
+    recover it from the knowledge blob layout) so the merged list looks
+    consistent between KB and graph hits. Falls back to ``"graphrag"``
+    only when the underlying document's source folder is unknown.
     """
-    refs: list[Reference] = []
-    for c in citations:
-        refs.append(
+    out: list[Reference] = []
+    for r in refs:
+        out.append(
             Reference(
-                title=c.title,
-                source="graphrag",
-                link=c.link or "",
-                content=c.snippet or "",
+                title=r.title,
+                source=r.source or "graphrag",
+                link=r.link or "",
+                content=r.snippet or "",
             )
         )
-    return refs
+    return out
 
 
 def _merge_references(
@@ -440,15 +444,15 @@ class ChatService:
         vector_refs = (
             search.results if isinstance(search, SearchKnowledgeBaseResult) else []
         )
-        graph = tool_results.get("ask_knowledge_graph")
+        graph = tool_results.get("search_knowledge_graph")
         graph_refs = (
-            _graph_citations_to_references(graph.citations)
-            if isinstance(graph, GraphAnswerResult)
+            _graph_refs_to_references(graph.references)
+            if isinstance(graph, GraphSearchResult)
             else []
         )
         # Merge tool references for the agent's own reference-text enrichment
         # and the full_context payload. Dedup by (link, title) preserving
-        # vector hits first (primary-source evidence beats graph citations).
+        # vector hits first (primary-source evidence beats graph references).
         tool_references = _merge_references(vector_refs, graph_refs)
         if vector_refs and graph_refs:
             logger.info(

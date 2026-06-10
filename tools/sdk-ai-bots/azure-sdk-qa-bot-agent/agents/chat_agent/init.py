@@ -100,14 +100,16 @@ async def main() -> None:
 
     # Tool registration:
     #   * `search_knowledge_base` — Azure AI Search vector retrieval; returns
-    #     verbatim chunks (Reference[]).
-    #   * `ask_knowledge_graph` — GraphRAG Local Search synthesized answer
-    #     (GraphAnswerResult). Registered concurrently so the agent can call
-    #     either or both per turn. The agent's "Answer synthesis" rules in
-    #     instruction.md describe how to merge them.
+    #     verbatim text-chunk references.
+    #   * `search_knowledge_graph` — GraphRAG retrieval via Local Search
+    #     context builder; returns deduplicated source references grounded
+    #     by entity-description ANN + 1-hop graph expansion. No completion
+    #     LLM call. Output shape mirrors `search_knowledge_base` so the
+    #     agent's "Answer synthesis" rules in instruction.md describe how
+    #     to merge them.
     tools = [
         knowledge_tools.search_knowledge_base,
-        graph_knowledge_tools.ask_knowledge_graph,
+        graph_knowledge_tools.search_knowledge_graph,
         web_tools.web_fetch,
         pipeline_tools.azsdk_analyze_pipeline,
         web_search_tool,

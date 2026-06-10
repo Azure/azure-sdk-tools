@@ -1,60 +1,51 @@
-"""Knowledge graph query service using Microsoft GraphRAG.
+"""Knowledge graph retrieval service using Microsoft GraphRAG.
 
-Wraps GraphRAG's ``LocalSearch`` engine against the indexes and graph
-artefacts produced by the ``azure-sdk-qa-bot-knowledge-graph-sync``
-project. Exposes a single public method,
-:meth:`KnowledgeGraphService.local_search`, that returns a single-LLM
-graph-aware answer plus the source documents it cited.
+Wraps GraphRAG's Local Search **context builder** against the indexes
+and graph artefacts produced by the
+``azure-sdk-qa-bot-knowledge-graph-sync`` project. Exposes a single
+public method, :meth:`KnowledgeGraphService.search_graph`, that returns
+the graph-grounded source documents most relevant to a query —
+**without any completion LLM call**.
 
-Why local search (and not DRIFT / global)
------------------------------------------
-The chat agent already has a fast vector-KB tool (Azure AI Search over
-text chunks). The graph tool is meant to *enhance* that — supplying
-entity-level grounding the vector index alone can't see — without
-adding tens of seconds of latency. Measured on the bot's snapshot:
+Why retrieval-only (no LLM synthesis)
+-------------------------------------
+The chat agent already has a fast vector-KB tool
+(``search_knowledge_base``) returning verbatim chunks. We want the
+graph tool to be a complementary *retriever*, not an answerer:
 
-* ``local_search``: **~21s** per query (1 LLM call). Uses the graph
-  for entity matching + 1-hop relationship expansion + community-
-  membership + entity → text-unit back-references.
-* ``drift_search``: ~73s (primer + N×local + reduce LLM calls).
-* ``global_search``: ~110s (map over 3k+ community reports + reduce).
+* Same output shape: a flat list of ``{title, link, snippet}``
+  references, deduplicated by document.
+* No second LLM in the loop → no paraphrasing drift, no extra latency,
+  no token budget pressure on the agent's own LLM.
+* Different recall path: ``search_knowledge_base`` matches the query
+  embedding against text-chunk embeddings, while ``search_graph``
+  matches against entity-description embeddings and then traverses
+  1-hop relationships + community membership to surface the text units
+  the matched entities appear in. Two complementary candidate sets feed
+  the chat agent's own LLM, which does the final synthesis.
 
-DRIFT / global also add multi-hop / global-summary capabilities the
-chat agent doesn't need: the agent's own LLM does the cross-tool
-synthesis. Local search is the sweet spot — graph-aware grounding at
-single-vector-search latency.
-
-POC scope
----------
-Tenant filtering (``scope`` / ``service_type`` / ``source_folder``
-allow-lists) has been removed from this layer along with the
-``document_meta.parquet`` machinery. ``local_search`` now exposes a
-minimal signature — ``local_search(query)`` — and serves the same graph
-to every caller. Per-tenant masking will be layered back on top once
-the blob-direct end-to-end pipeline is validated.
+This service used to call GraphRAG's ``LocalSearch.search()`` (one LLM
+completion, ~20s per query). We dropped that step and now invoke only
+``context_builder.build_context()`` (≈ one embedding + one AI Search
+ANN + a few DataFrame joins, ~1-2s per query).
 
 Data sources at query time
 --------------------------
-GraphRAG splits its query-time inputs into two stores; this service
-reads from both because each contains a different *kind* of data:
+GraphRAG splits its query-time inputs into two stores:
 
-* **Azure AI Search** — *all vector data.* ``LocalSearch``'s
-  ``MixedLocalContextBuilder`` calls
-  ``get_embedding_store(config.vector_store, ...)`` to look up the top
-  entity-description matches for the query.
+* **Azure AI Search** — *all vector data.* The mixed context builder
+  embeds the query and runs an ANN search against the entity index.
 * **Parquet artefacts** — *graph structure only.* ``entities`` /
   ``communities`` / ``community_reports`` / ``text_units`` /
-  ``relationships`` / ``documents`` parquets contain IDs, names,
-  descriptions, edges, community hierarchy, and source text — but no
-  vector columns. GraphRAG requires these DataFrames so it can resolve
-  embedding hits back to entities, traverse relationships, pull the
-  community reports the entities belong to, and recover the source
-  text units for the LLM prompt.
+  ``relationships`` / ``documents`` parquets carry IDs, descriptions,
+  edges, community hierarchy, and source text — but no vectors. The
+  builder needs them to resolve entity hits back through the graph and
+  pull the text units (and their parent documents) we ultimately cite.
 
 The parquet artefacts are loaded once (lazily, on first query) from
 the Azure Blob container named by ``STORAGE_GRAPHRAG_OUTPUT_CONTAINER``;
-the bot then atomically swaps in a new build whenever the sync project
-calls ``POST /admin/graphrag/reload``.
+the bot atomically swaps in a new build whenever the sync project calls
+``POST /admin/graphrag/reload``.
 """
 
 from __future__ import annotations
@@ -68,7 +59,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from config.app_config import get as cfg
-from utils.azure_storage import download_blob
+from config.tenant_config import get_knowledge_source
+from utils.azure_storage import _get_blob_service_client, download_blob
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -76,7 +68,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 _DEFAULT_COMMUNITY_LEVEL = 2
-_DEFAULT_RESPONSE_TYPE = "multiple paragraphs"
 
 # Parquet artefacts produced by the GraphRAG indexing pipeline that we
 # need to drive query operations. ``documents`` is required so we can
@@ -102,9 +93,12 @@ class GraphSourceRef:
                  when no URL can be derived without tenant context.
         content: A representative excerpt of the source text used to
                  ground the LLM answer (typically one text_unit chunk).
-        source:  Short identifier for the originating data set; always
-                 ``"graphrag"`` for now since the graph does not preserve
-                 the per-document KnowledgeSource that produced it.
+        source:  Short identifier for the originating KnowledgeSource
+                 (e.g. ``"typespec_docs"``, matching what the KB tool
+                 attaches to a chunk from the same document). Falls
+                 back to ``"graphrag"`` only when the document's
+                 source folder cannot be recovered from the blob
+                 listing — see ``_preload_title_source_map``.
     """
 
     title: str
@@ -120,48 +114,74 @@ _GRAPHRAG_CONFIG_ROOT = (
 
 
 class KnowledgeGraphService:
-    """Query service that delegates to GraphRAG's ``LocalSearch`` engine.
+    """Graph-grounded *retrieval* service backed by GraphRAG's Local
+    Search context builder.
 
     The service is a process-wide singleton (see
     ``get_knowledge_graph_service``). DataFrame loading is lazy on first
     use and cached for the lifetime of the process; call ``reload()``
     (or restart the bot) to pick up newly-published parquet outputs.
+
+    Per query the service performs only the **context-building** half of
+    GraphRAG's Local Search pipeline — embed the query, do an ANN match
+    against the entity vector store, expand one hop through the graph,
+    and resolve back to text units. **No completion LLM call is made**;
+    the chat agent does final synthesis itself from the verbatim
+    snippets we return.
     """
 
     def __init__(self) -> None:
         self._community_level = int(
             cfg("GRAPH_COMMUNITY_LEVEL", str(_DEFAULT_COMMUNITY_LEVEL))
         )
-        self._response_type = cfg("GRAPH_RESPONSE_TYPE", _DEFAULT_RESPONSE_TYPE)
         # Blob container holding the parquet outputs. The sync project
         # writes versioned snapshots at
         # ``<container>/snapshots/<snapshot>/<name>.parquet`` and the
         # ``latest.json`` manifest pointer at the container root.
         self._blob_container = cfg("STORAGE_GRAPHRAG_OUTPUT_CONTAINER", "")
+        # Blob container holding the *source* markdown files the graph
+        # was built from. Used to recover each document's KB source
+        # attribution (see ``_preload_title_source_map``). The sync
+        # project lays out files as ``{source_folder}/{filename}``;
+        # graphrag's ``documents.parquet`` only keeps the filename, so
+        # we re-derive the parent folder by listing this container at
+        # (re)load time.
+        self._knowledge_container = cfg("STORAGE_KNOWLEDGE_CONTAINER", "")
 
         self._config = None  # graphrag GraphRagConfig
         self._dfs: "dict[str, pd.DataFrame] | None" = None
         # Per-service community-report embedding cache. Populated by
         # ``_preload_report_embeddings()`` after every (re)load and
         # applied directly to the ``CommunityReport`` objects when
-        # building the search engine, so each ``local_search`` call
+        # building the context builder, so each ``search_graph`` call
         # avoids thousands of serial ``search_by_id`` round-trips to
         # AI Search.
         self._report_embeddings_cache: dict[str, list[float]] = {}
-        # Pre-built, immutable LocalSearch engine. Constructed once per
-        # (re)load in ``_build_search_engine`` so per-query calls skip:
+        # Map of {graphrag-document-title → set of source folder names}.
+        # Populated by ``_preload_title_source_map`` after every
+        # (re)load by listing the knowledge blob container. Lets
+        # ``_extract_sources_from_context`` set ``GraphSourceRef.source``
+        # to the same identifier (e.g. ``typespec_docs``) that the KB
+        # tool would attach to a chunk from the same document, and lets
+        # us derive a proper documentation URL via
+        # ``KnowledgeSource.get_link``.
+        self._title_to_source: dict[str, set[str]] = {}
+        # Pre-built, immutable LocalSearch context builder + the params
+        # we want to drive each ``build_context`` call with (text_unit_
+        # prop, top_k_*, max_context_tokens, ...). Constructed once per
+        # (re)load in ``_build_context_builder`` so per-query calls skip:
         #   * ``read_indexer_entities`` / ``read_indexer_reports``
         #     (pandas merge + groupby on 24k entities × 6k communities)
         #   * ``read_indexer_text_units`` / ``read_indexer_relationships``
         #   * ``LocalSearchMixedContext`` dict construction (24k+6k+2k+63k items)
         #   * Azure SearchClient creation + ``connect()``
-        #   * LiteLLM client construction + tokenizer init
-        #   * prompt file reads
+        #   * LiteLLM embedding client + tokenizer init
         #
-        # ``LocalSearch.search`` is stateless across calls (no
-        # per-engine mutable ``query_state``), so the same engine
-        # instance is shared by concurrent queries without locking.
-        self._search_engine: Any = None
+        # ``build_context`` is stateless across calls — no per-builder
+        # mutable query state — so the same instance is shared by
+        # concurrent queries without locking.
+        self._context_builder: Any = None
+        self._context_params: dict[str, Any] = {}
         # Metadata for the currently-loaded build (manifest contents +
         # row counts). Populated on every successful load / reload so
         # ``GET /admin/graphrag/status`` can report what's serving traffic.
@@ -188,9 +208,9 @@ class KnowledgeGraphService:
     def get_status(self) -> dict[str, Any]:
         """Return a snapshot of the currently-loaded graph build."""
         parquets_loaded = self._dfs is not None and self._config is not None
-        engine_ready = self._search_engine is not None
-        # "loaded" means fully usable — both parquets and the search
-        # engine are ready. A partially-loaded state (parquets only) is
+        engine_ready = self._context_builder is not None
+        # "loaded" means fully usable — both parquets and the context
+        # builder are ready. A partially-loaded state (parquets only) is
         # exposed via the granular fields so /admin/graphrag/status can
         # surface the half-loaded condition.
         status: dict[str, Any] = {
@@ -217,14 +237,14 @@ class KnowledgeGraphService:
     async def reload(self) -> dict[str, Any]:
         """Atomically reload the graph from the configured source.
 
-        On success: the new config + DataFrames + search engine are
-        live; in-flight queries that captured the old ``_search_engine``
-        complete against the old graph; subsequent queries see the new
-        graph. On failure: the prior state is restored exactly — so a
-        broken reload never leaves the service in a half-loaded state
-        (``_dfs`` set but ``_search_engine`` ``None``) that would
-        cause every subsequent ``local_search`` to silently return an
-        empty answer.
+        On success: the new config + DataFrames + context builder are
+        live; in-flight queries that captured the old
+        ``_context_builder`` complete against the old graph; subsequent
+        queries see the new graph. On failure: the prior state is
+        restored exactly — so a broken reload never leaves the service
+        in a half-loaded state (``_dfs`` set but ``_context_builder``
+        ``None``) that would cause every subsequent ``search_graph`` to
+        silently return ``None``.
         """
         if not self._enabled:
             raise RuntimeError(
@@ -233,18 +253,20 @@ class KnowledgeGraphService:
 
         async with self._load_lock:
             # Snapshot the prior state so we can roll back any partial
-            # mutation if engine construction fails after the parquet
-            # swap. Without this, a failure in ``_build_search_engine``
+            # mutation if builder construction fails after the parquet
+            # swap. Without this, a failure in ``_build_context_builder``
             # would leave ``_dfs``/``_config`` pointing at the new data
-            # while ``_search_engine`` stays ``None`` — every
+            # while ``_context_builder`` stays ``None`` — every
             # subsequent query would silently short-circuit at the
-            # ``_search_engine is None`` check in ``local_search``.
+            # ``_context_builder is None`` check in ``search_graph``.
             prev_state = (
                 self._config,
                 self._dfs,
                 self._loaded_version,
                 self._report_embeddings_cache,
-                self._search_engine,
+                self._title_to_source,
+                self._context_builder,
+                self._context_params,
             )
             try:
                 new_config = await asyncio.to_thread(self._load_config)
@@ -253,14 +275,15 @@ class KnowledgeGraphService:
                 self._dfs = new_dfs
                 self._loaded_version = new_version
                 await self._preload_report_embeddings()
-                await asyncio.to_thread(self._build_search_engine)
-                if self._search_engine is None:
-                    # Defensive: _build_search_engine returns silently
+                await self._preload_title_source_map()
+                await asyncio.to_thread(self._build_context_builder)
+                if self._context_builder is None:
+                    # Defensive: _build_context_builder returns silently
                     # when config/dfs are missing; treat that as a hard
                     # failure here since reload() promises a fully
-                    # constructed engine.
+                    # constructed builder.
                     raise RuntimeError(
-                        "GraphRAG engine build produced no search_engine — "
+                        "GraphRAG context builder produced no instance — "
                         "refusing to swap to a half-built state"
                     )
             except Exception:
@@ -272,7 +295,9 @@ class KnowledgeGraphService:
                     self._dfs,
                     self._loaded_version,
                     self._report_embeddings_cache,
-                    self._search_engine,
+                    self._title_to_source,
+                    self._context_builder,
+                    self._context_params,
                 ) = prev_state
                 raise
 
@@ -287,51 +312,46 @@ class KnowledgeGraphService:
     # Public search API
     # ------------------------------------------------------------------ #
 
-    async def local_search(
-        self, query: str
-    ) -> tuple[str, list[GraphSourceRef]] | None:
-        """Run a GraphRAG Local Search and return the synthesised answer
-        together with the source documents it cited.
+    async def search_graph(self, query: str) -> list[GraphSourceRef] | None:
+        """Retrieve graph-grounded source snippets for a query.
 
-        Local Search uses the graph for query-relevant grounding:
-        entity-description vector match → 1-hop relationship expansion
-        → community-report summaries for the matched entities →
-        entity → text-unit back-references for the source chunks. A
-        single LLM call then synthesises the answer over that context.
-
-        Single LLM call ⇒ ~20s latency. We deliberately do not use
-        DRIFT (multi-LLM, ~70s) or Global Search (fan-out over all
-        community reports, ~110s) — the chat agent's own LLM does the
-        cross-tool reasoning, so Local Search is the right level of
-        graph-aware grounding to feed it.
+        Performs the **context-building** half of GraphRAG's Local
+        Search pipeline only: embed the query, ANN-match against the
+        entity vector store, expand one hop through the graph, pull the
+        community reports the matched entities belong to, and resolve
+        back to the source text units. **No completion LLM call is
+        made** — the chat agent gets verbatim snippets it can ground
+        its own answer on, the same way it consumes
+        ``search_knowledge_base`` results.
 
         Args:
             query: The user's question.
 
         Returns:
-            ``(answer, sources)`` on success, where ``sources`` is a
-            list of :class:`GraphSourceRef` objects (one per unique
-            cited document). Returns ``None`` when the service is
-            disabled or the underlying search call fails.
+            A list of :class:`GraphSourceRef` objects (one per unique
+            cited document, deduplicated). Returns ``None`` when the
+            service is disabled or the underlying context build fails.
+            Returns an empty list when the build succeeds but matches
+            no documents.
         """
         if not self._enabled:
             logger.debug(
-                "GraphRAG local_search short-circuit: service is disabled"
+                "GraphRAG search_graph short-circuit: service is disabled"
             )
             return None
         if not await self._ensure_loaded():
             logger.warning(
-                "GraphRAG local_search short-circuit: _ensure_loaded() returned False"
+                "GraphRAG search_graph short-circuit: _ensure_loaded() returned False"
             )
             return None
-        if self._search_engine is None:
-            # This is the half-loaded state — parquets are present but
-            # the search engine never finished constructing. Almost
-            # always caused by a failed reload() that didn't roll back
-            # (fixed) or a still-running cold-start. Re-trigger a
-            # lazy rebuild instead of silently returning empty.
+        if self._context_builder is None:
+            # Half-loaded state — parquets are present but the context
+            # builder never finished constructing. Almost always caused
+            # by a failed reload() that didn't roll back (fixed) or a
+            # still-running cold-start. Re-trigger a lazy rebuild
+            # instead of silently returning empty.
             logger.warning(
-                "GraphRAG local_search: search engine missing — "
+                "GraphRAG search_graph: context builder missing — "
                 "clearing state and forcing a rebuild on the next request"
             )
             async with self._load_lock:
@@ -339,37 +359,44 @@ class KnowledgeGraphService:
                 self._config = None
                 self._loaded_version = None
                 self._report_embeddings_cache = {}
-                self._search_engine = None
+                self._title_to_source = {}
+                self._context_builder = None
+                self._context_params = {}
             return None
 
-        # ``LocalSearch.search`` is stateless across calls (no
-        # per-engine mutable ``query_state``), so the same engine
-        # instance is shared by concurrent queries without locking.
+        # ``build_context`` is stateless across calls, so the same
+        # builder instance is shared by concurrent queries without
+        # locking. The builder makes one embedding call + one AI
+        # Search ANN request + several DataFrame joins — no completion
+        # LLM call.
         try:
-            result = await self._search_engine.search(query=query)
+            result = await asyncio.to_thread(
+                self._context_builder.build_context,
+                query=query,
+                **self._context_params,
+            )
         except Exception:
-            logger.warning("GraphRAG local_search failed", exc_info=True)
+            logger.warning("GraphRAG search_graph failed", exc_info=True)
             return None
 
-        answer = _coerce_response(result.response) or ""
-        sources = self._extract_sources_from_context(result.context_data)
-        return answer, sources
+        return self._extract_sources_from_context(result.context_records)
 
     # ------------------------------------------------------------------ #
     # Source-document extraction
     # ------------------------------------------------------------------ #
 
     def _extract_sources_from_context(
-        self, context_data: Any
+        self, context_records: Any
     ) -> list[GraphSourceRef]:
-        """Walk a search ``context_data`` payload and resolve cited
+        """Walk a ``context_records`` payload and resolve cited
         text-unit short IDs back to their original source documents.
 
-        ``LocalSearch`` returns a flat ``{table_name: DataFrame}`` dict;
-        we don't depend on its exact shape — we recursively collect any
-        DataFrame with both ``id`` and ``text`` columns and treat the
-        ``id`` values as text-unit ``human_readable_id``s (matches
-        GraphRAG's ``TextUnit.short_id``).
+        The LocalSearch mixed context builder returns a flat
+        ``{table_name: DataFrame}`` dict; we don't depend on its exact
+        shape — we recursively collect any DataFrame with both ``id``
+        and ``text`` columns and treat the ``id`` values as text-unit
+        ``human_readable_id``s (matches GraphRAG's
+        ``TextUnit.short_id``).
         """
         if self._dfs is None:
             return []
@@ -379,7 +406,7 @@ class KnowledgeGraphService:
         if text_units_df is None or documents_df is None:
             return []
 
-        short_ids = _collect_text_unit_short_ids(context_data)
+        short_ids = _collect_text_unit_short_ids(context_records)
         if not short_ids:
             return []
 
@@ -427,14 +454,27 @@ class KnowledgeGraphService:
                 raw_title = str(title_val or "")
             else:
                 raw_title = ""
-            display_title, link = _doc_title_to_display(raw_title)
+
+            source_name, knowledge_source = self._resolve_source_for_title(
+                raw_title
+            )
+            display_title, fallback_link = _doc_title_to_display(raw_title)
+            # Prefer the KnowledgeSource's URL resolver so the link is
+            # consistent with the KB tool's references — it knows about
+            # per-source quirks (trim_format, suffix, custom link_fn).
+            # Fall back to the raw path when the title's source is
+            # unknown or unregistered.
+            if knowledge_source is not None and raw_title:
+                link = knowledge_source.get_link(raw_title)
+            else:
+                link = fallback_link
 
             sources.append(
                 GraphSourceRef(
                     title=display_title or f"Document {doc_id[:12]}",
                     link=link,
                     content=str(row.get("text") or ""),
-                    source="graphrag",
+                    source=source_name,
                 )
             )
 
@@ -459,14 +499,17 @@ class KnowledgeGraphService:
                     await self._load_parquets_with_manifest()
                 )
                 await self._preload_report_embeddings()
-                await asyncio.to_thread(self._build_search_engine)
+                await self._preload_title_source_map()
+                await asyncio.to_thread(self._build_context_builder)
             except Exception:
                 logger.exception("Failed to initialise KnowledgeGraphService")
                 self._config = None
                 self._dfs = None
                 self._loaded_version = None
                 self._report_embeddings_cache = {}
-                self._search_engine = None
+                self._title_to_source = {}
+                self._context_builder = None
+                self._context_params = {}
                 return False
 
         logger.info(
@@ -604,13 +647,117 @@ class KnowledgeGraphService:
         return dfs
 
     # ------------------------------------------------------------------ #
+    # Title → source folder preload
+    # ------------------------------------------------------------------ #
+
+    async def _preload_title_source_map(self) -> None:
+        """Build the ``{document title → set of source folders}`` map.
+
+        GraphRAG's ``documents.parquet`` only stores the *basename* of
+        each indexed file as ``title`` — the parent folder is dropped
+        when ``MarkItDownFileReader.read_file`` writes the row. The
+        knowledge-sync project, however, uploads every source markdown
+        at ``{source_folder}/{filename}`` in the blob container named by
+        ``STORAGE_KNOWLEDGE_CONTAINER`` — and ``source_folder`` matches
+        exactly the ``KnowledgeSource.name`` constants the KB tool uses
+        (``typespec_docs``, ``azure_sdk_for_python_docs``, ...).
+
+        Listing every blob and recording the first path segment for
+        each basename therefore gives us a reverse lookup from a graph
+        document title to the KB ``source`` that produced it — so a
+        graph reference can be attributed the same way a KB chunk
+        reference would, and its link can be derived via
+        ``KnowledgeSource.get_link``.
+
+        The map is rebuilt on every (re)load (cheap — typically a few
+        thousand blobs, completes in <2s) so a newly-added KB source
+        starts attributing correctly on the next reload without an
+        agent restart.
+        """
+        if not self._knowledge_container:
+            logger.info(
+                "STORAGE_KNOWLEDGE_CONTAINER not configured — "
+                "graph references will fall back to source='graphrag'."
+            )
+            self._title_to_source = {}
+            return
+
+        start = time.monotonic()
+        title_to_sources: dict[str, set[str]] = {}
+
+        def _normalise(path: str) -> tuple[str, str] | None:
+            # Blob paths always use '/' as separator; defensive against
+            # accidental backslashes from a Windows-side uploader.
+            normalized = path.replace("\\", "/")
+            sep = normalized.find("/")
+            if sep <= 0 or sep == len(normalized) - 1:
+                return None
+            return normalized[:sep], normalized[sep + 1 :]
+
+        try:
+            client = _get_blob_service_client()
+            container = client.get_container_client(self._knowledge_container)
+            async for blob in container.list_blobs():
+                parsed = _normalise(blob.name)
+                if not parsed:
+                    continue
+                folder, basename = parsed
+                title_to_sources.setdefault(basename, set()).add(folder)
+        except Exception:
+            logger.exception(
+                "Failed to list blobs in %s; graph references will "
+                "fall back to source='graphrag'.",
+                self._knowledge_container,
+            )
+            self._title_to_source = {}
+            return
+
+        collisions = {k: v for k, v in title_to_sources.items() if len(v) > 1}
+        if collisions:
+            sample = [(k, sorted(v)) for k, v in list(collisions.items())[:5]]
+            logger.warning(
+                "Title→source collisions detected: %d titles map to >1 folder, "
+                "e.g. %s. Picking the first folder (alphabetical) for each.",
+                len(collisions),
+                sample,
+            )
+
+        self._title_to_source = title_to_sources
+        logger.info(
+            "Preloaded title→source map from %s in %.2fs "
+            "(%d unique titles, %d collisions)",
+            self._knowledge_container,
+            time.monotonic() - start,
+            len(title_to_sources),
+            len(collisions),
+        )
+
+    def _resolve_source_for_title(
+        self, raw_title: str
+    ) -> "tuple[str, Any]":
+        """Look up the KB source folder + KnowledgeSource for a title.
+
+        Returns ``(source_name, knowledge_source_or_None)``. When the
+        title is unknown or maps to a folder not registered as a
+        ``KnowledgeSource``, returns ``("graphrag", None)`` and the
+        caller falls back to the raw path display.
+        """
+        folders = self._title_to_source.get(raw_title)
+        if not folders:
+            return "graphrag", None
+        # Deterministic pick when a basename exists under multiple
+        # folders. Matches the warning in _preload_title_source_map.
+        source_name = sorted(folders)[0]
+        return source_name, get_knowledge_source(source_name)
+
+    # ------------------------------------------------------------------ #
     # Community-report embedding preload + monkey-patch
     # ------------------------------------------------------------------ #
 
     async def _preload_report_embeddings(self) -> None:
         """Bulk-fetch every community-report embedding into memory.
 
-        ``LocalSearch``'s context builder requires each
+        The LocalSearch context builder requires each
         ``CommunityReport`` carry a ``full_content_embedding`` so it can
         rank community summaries against the query embedding. By
         default ``read_indexer_report_embeddings`` issues one
@@ -621,8 +768,8 @@ class KnowledgeGraphService:
 
         Instead we paginate the index *once* on (re)load and stash the
         embeddings in ``self._report_embeddings_cache``;
-        ``_build_search_engine`` then applies them directly to the
-        ``CommunityReport`` list before constructing the engine, and
+        ``_build_context_builder`` then applies them directly to the
+        ``CommunityReport`` list before constructing the builder, and
         per-query calls never touch AI Search for embeddings.
 
         Pagination uses Azure AI Search's ``search('*', top=N)`` which
@@ -670,7 +817,7 @@ class KnowledgeGraphService:
         except Exception:
             logger.warning(
                 "Failed to preload community-report embeddings; "
-                "local_search will fall back to per-query fetch (slow).",
+                "search_graph will fall back to per-query fetch (slow).",
                 exc_info=True,
             )
             self._report_embeddings_cache = {}
@@ -685,29 +832,39 @@ class KnowledgeGraphService:
             elapsed,
         )
 
-    def _build_search_engine(self) -> None:
-        """Pre-build the LocalSearch engine once per load.
+    def _build_context_builder(self) -> None:
+        """Pre-build the LocalSearch context builder once per load.
 
-        Mirrors ``graphrag.api.query.local_search`` but moves every
-        reusable artefact out of the request path:
+        Mirrors ``graphrag.api.query.local_search`` *up to but not
+        including the LLM completion call*: we drive
+        ``LocalSearchMixedContext.build_context`` directly to get raw
+        graph-grounded snippets without paying the ~20s completion
+        cost. To avoid duplicating the factory's wiring of embedder,
+        tokenizer, vector store, search filters, etc. (which changes
+        across graphrag versions), we still call
+        ``get_local_search_engine`` and just keep its
+        ``context_builder`` + ``context_builder_params`` — the wrapper
+        ``LocalSearch`` instance and its ``chat_model`` are garbage-
+        collected immediately.
+
+        Moves every reusable artefact out of the request path:
 
         * Azure AI Search ``description_embedding_store`` (with
           ``connect()`` done once)
         * ``read_indexer_entities`` / ``read_indexer_reports`` —
           pandas merge + groupby on 24k entities × 6k communities
         * ``read_indexer_text_units`` / ``read_indexer_relationships`` —
-          DataFrame to typed list conversion
+          DataFrame → typed list conversion
         * Community-report embeddings (assigned from
           ``self._report_embeddings_cache``)
-        * Local search prompt file read
-        * LiteLLM completion + embedding client + tokenizer init
-        * ``MixedLocalContextBuilder`` construction, which internally
+        * LiteLLM embedding client + tokenizer init
+        * ``LocalSearchMixedContext`` construction, which internally
           builds id-indexed lookup dicts for 24k entities, 6k reports,
           2k text units and 63k relationships
 
-        ``LocalSearch.search`` is stateless across calls, so the
-        returned engine is safe to share across concurrent queries
-        without locking.
+        ``build_context`` is stateless across calls, so the resulting
+        builder is safe to share across concurrent queries without
+        locking.
         """
         if self._config is None or self._dfs is None:
             return
@@ -720,7 +877,7 @@ class KnowledgeGraphService:
             read_indexer_reports,
             read_indexer_text_units,
         )
-        from graphrag.utils.api import get_embedding_store, load_search_prompt
+        from graphrag.utils.api import get_embedding_store
 
         config = self._config
         dfs = self._dfs
@@ -743,9 +900,9 @@ class KnowledgeGraphService:
 
         # Apply pre-fetched embeddings to the report list. Replaces
         # graphrag's per-query read_indexer_report_embeddings, which
-        # would otherwise issue one search_by_id per report. Local
-        # Search uses the community summaries (and therefore relies on
-        # the same ``full_content_embedding`` field for prioritisation).
+        # would otherwise issue one search_by_id per report. The
+        # community context selector uses these embeddings to pick
+        # which reports to include in the prompt.
         cache = self._report_embeddings_cache
         if cache:
             hits = 0
@@ -761,7 +918,7 @@ class KnowledgeGraphService:
             )
         else:
             # Fall back to the original (slow) per-report lookup so the
-            # engine still functions when preload failed.
+            # builder still functions when preload failed.
             from graphrag.config.embeddings import (
                 community_full_content_embedding,
             )
@@ -775,9 +932,12 @@ class KnowledgeGraphService:
             )
             read_indexer_report_embeddings(reports, fallback_store)
 
-        local_prompt = load_search_prompt(config.local_search.prompt)
-
-        self._search_engine = get_local_search_engine(
+        # The factory wires up embedder + tokenizer + vector store +
+        # context-builder-params dict according to graphrag's current
+        # internal contract. We immediately discard the LocalSearch
+        # wrapper (and its chat_model — we never use the completion
+        # path) and keep only what build_context needs.
+        engine = get_local_search_engine(
             config=config,
             reports=reports,
             text_units=text_units_,
@@ -785,14 +945,16 @@ class KnowledgeGraphService:
             relationships=relationships_,
             covariates={},
             description_embedding_store=description_embedding_store,
-            response_type=self._response_type,
-            system_prompt=local_prompt,
+            response_type="multiple paragraphs",  # unused (no LLM call)
+            system_prompt=None,
             callbacks=None,
         )
+        self._context_builder = engine.context_builder
+        self._context_params = dict(engine.context_builder_params or {})
 
         elapsed = time.monotonic() - start
         logger.info(
-            "Built LocalSearch engine in %.2fs "
+            "Built LocalSearch context builder in %.2fs "
             "(entities=%d, reports=%d, text_units=%d, relationships=%d)",
             elapsed,
             len(entities_),
@@ -802,24 +964,15 @@ class KnowledgeGraphService:
         )
 
 
-def _coerce_response(response: object) -> str | None:
-    """Convert a GraphRAG response value to a string (or None when empty)."""
-    if response is None:
-        return None
-    if isinstance(response, str):
-        return response.strip() or None
-    return str(response).strip() or None
-
-
-def _collect_text_unit_short_ids(context_data: Any) -> set[str]:
-    """Recursively walk a search ``context_data`` payload and collect every
+def _collect_text_unit_short_ids(context_records: Any) -> set[str]:
+    """Recursively walk a ``context_records`` payload and collect every
     text-unit short id we can find.
 
-    LocalSearch returns a flat ``{table_name: DataFrame}`` dict; DRIFT
-    returned a nested ``{sub_query: {table: DataFrame}}``. The exact
-    shape can vary across graphrag versions and search modes, so we
-    treat any value that is a pandas DataFrame *and* has both ``id``
-    and ``text`` columns as a candidate "sources" table.
+    The LocalSearch mixed context builder returns a flat
+    ``{table_name: DataFrame}`` dict. The exact shape can vary across
+    graphrag versions, so we treat any value that is a pandas DataFrame
+    *and* has both ``id`` and ``text`` columns as a candidate
+    "sources" table.
     """
     import pandas as pd
 
@@ -844,7 +997,7 @@ def _collect_text_unit_short_ids(context_data: Any) -> set[str]:
                 visit(v)
             return
 
-    visit(context_data)
+    visit(context_records)
     return found
 
 

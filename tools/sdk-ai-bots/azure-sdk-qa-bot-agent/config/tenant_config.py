@@ -143,7 +143,7 @@ _register(
     KnowledgeSource(
         name=SRC_TYPESPEC_AZURE_PROVIDERHUB_DOCS,
         description="Documentation for Azure TypeSpec ProviderHub.",
-        base_url="https://github.com/Azure/typespec-azure-pr/blob/providerhub/doc/",
+        base_url="https://github.com/Azure/typespec-azure-pr/blob/providerhub/docs/",
     ),
     # -- Azure Guidelines & Standards --
     KnowledgeSource(

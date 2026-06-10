@@ -51,7 +51,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 .ReturnsAsync((string path, CancellationToken _) => path.Contains("specification") ? path.Substring(0, path.IndexOf("specification")) : path);
             gitHelper = gitHelperMock.Object;
 
-            typeSpecHelper = new TypeSpecHelper(gitHelper);
+            var processHelper = new ProcessHelper(new TestLogger<ProcessHelper>(), Mock.Of<IRawOutputHelper>());
+            typeSpecHelper = new TypeSpecHelper(gitHelper, processHelper);
 
             releasePlanTool = new ReleasePlanTool(
                 devOpsService,
@@ -410,6 +411,29 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>());
 
             var releaseplan = await tool.GetReleasePlan(typeSpecProjectPath: "specification/testcontoso/Contoso.Management");
+            Assert.IsNotNull(releaseplan);
+            Assert.IsNull(releaseplan.ResponseError);
+            Assert.IsNotNull(releaseplan.ReleasePlanDetails);
+            Assert.That(releaseplan.ReleasePlanDetails.WorkItemId, Is.EqualTo(777));
+        }
+
+        [Test]
+        public async Task Test_Get_Release_Plan_by_absolute_typespec_project_path()
+        {
+            var mockDevOps = new Mock<IDevOpsService>();
+            var expectedReleasePlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 777,
+                ReleasePlanId = 77,
+                IsDataPlane = true
+            };
+            mockDevOps.Setup(x => x.GetReleasePlanByTypeSpecProjectPathAsync("specification/testcontoso/Contoso.Management", It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(expectedReleasePlan);
+
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>());
+
+            var absolutePath = Path.GetFullPath("TypeSpecTestData/specification/testcontoso/Contoso.Management");
+            var releaseplan = await tool.GetReleasePlan(typeSpecProjectPath: absolutePath);
             Assert.IsNotNull(releaseplan);
             Assert.IsNull(releaseplan.ResponseError);
             Assert.IsNotNull(releaseplan.ReleasePlanDetails);
@@ -852,7 +876,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task Test_FindProduct_with_valid_typespec_path()
         {
             // Arrange
-            var typeSpecProjectPath = "specification/testcontoso/Contoso.Management";
+            var typeSpecProjectPath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
 
             // Act
             var result = await releasePlanTool.GetProductByTypeSpecPath(typeSpecProjectPath);
@@ -881,8 +905,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             // Assert
             Assert.IsNotNull(result);
             Assert.IsNull(result.ProductInfo);
-            Assert.IsNull(result.ResponseError);
-            Assert.That(result.Message, Does.Contain("No release plan found"));
+            Assert.That(result.ResponseError, Does.Contain("Invalid TypeSpec project path. tspconfig.yaml is not found in the path specification/nonexistent/Service."));
         }
 
         [Test]

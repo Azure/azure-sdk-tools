@@ -1,6 +1,6 @@
 # Release History
 
-## 0.6.16 (Unreleased)
+## 0.6.19 (Unreleased)
 
 ### Features Added
 
@@ -9,6 +9,25 @@
 ### Bugs Fixed
 
 ### Other Changes
+
+## 0.6.18 (2026-06-08)
+
+### Other Changes
+
+- Updated the release plan response to include the link to release plan dashboard.
+- Added release plan type check in SDK generation and inform the agent that SDK generation is not required for private preview. 
+
+## 0.6.17 (2026-06-02)
+
+### Bugs Fixed
+
+- Fixed issues in the MCP tool to lookup service details using TypeSpec project path.
+
+## 0.6.16 (2026-06-01)
+
+### Bugs Fixed
+
+- Fixed DevOps work item creation for empty DateTime fields (#15795)
 
 ## 0.6.15 (2026-05-29)
 

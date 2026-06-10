@@ -11,7 +11,7 @@ config:
   runs: 5
   timeout: "120s"
   executor: copilot-sdk
-  model: claude-opus-4.6
+  model: gpt-5.4
 
 tags:
   tier: unit
@@ -22,14 +22,14 @@ stimuli:
 
   # ==== azsdk_convert_swagger_to_typespec triggers ====
   - name: invoke-azsdk-convert-swagger-to-typespec-1
-    prompt: "Convert my swagger to TypeSpec"
+    prompt: "Convert my swagger to TypeSpec. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_convert_swagger_to_typespec"
   - name: invoke-azsdk-convert-swagger-to-typespec-2
-    prompt: "Migrate my API from swagger to TypeSpec"
+    prompt: "Migrate my API from swagger to TypeSpec. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
@@ -38,14 +38,14 @@ stimuli:
 
   # ==== azsdk_customized_code_update triggers ====
   - name: invoke-azsdk-customized-code-update-1
-    prompt: "Update customized code with patches to fix build errors"
+    prompt: "Update customized code with patches to fix build errors. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_customized_code_update"
   - name: invoke-azsdk-customized-code-update-2
-    prompt: "Apply customized code patches and rebuild to fix errors"
+    prompt: "Apply customized code patches and rebuild to fix errors. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
@@ -54,14 +54,14 @@ stimuli:
 
   # ==== azsdk_get_modified_typespec_projects triggers ====
   - name: invoke-azsdk-get-modified-typespec-projects-1
-    prompt: "What TypeSpec projects were modified in my branch?"
+    prompt: "What TypeSpec projects were modified in my branch? Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_get_modified_typespec_projects"
   - name: invoke-azsdk-get-modified-typespec-projects-2
-    prompt: "List the changed TypeSpec projects"
+    prompt: "List the changed TypeSpec projects. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
@@ -70,14 +70,14 @@ stimuli:
 
   # ==== azsdk_run_typespec_validation triggers ====
   - name: invoke-azsdk-run-typespec-validation-1
-    prompt: "Run TypeSpec validation on my project"
+    prompt: "Run TypeSpec validation on my project. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_run_typespec_validation"
   - name: invoke-azsdk-run-typespec-validation-2
-    prompt: "Run TypeSpec configuration validation for my project root path"
+    prompt: "Run TypeSpec configuration validation for my project root path. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
@@ -86,14 +86,14 @@ stimuli:
 
   # ==== azsdk_typespec_check_project_in_public_repo triggers ====
   - name: invoke-azsdk-typespec-check-project-in-public-repo-1
-    prompt: "Check if my TypeSpec project is in the public repo"
+    prompt: "Check if my TypeSpec project is in the public repo. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_typespec_check_project_in_public_repo"
   - name: invoke-azsdk-typespec-check-project-in-public-repo-2
-    prompt: "Check if my TypeSpec project is in the public spec repo"
+    prompt: "Check if my TypeSpec project is in the public spec repo. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
@@ -102,21 +102,21 @@ stimuli:
 
   # ==== azsdk_typespec_delegate_apiview_feedback triggers ====
   - name: invoke-azsdk-typespec-delegate-apiview-feedback-1
-    prompt: "Delegate the APIView feedback to Copilot for resolution"
+    prompt: "Delegate the APIView feedback to Copilot for resolution. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_typespec_delegate_apiview_feedback"
   - name: invoke-azsdk-typespec-delegate-apiview-feedback-2
-    prompt: "Address the APIView comments by creating a GitHub issue and assigning Copilot"
+    prompt: "Address the APIView comments by creating a GitHub issue and assigning Copilot. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_typespec_delegate_apiview_feedback"
   - name: invoke-azsdk-typespec-delegate-apiview-feedback-3
-    prompt: "Resolve the APIView reviewer feedback from this URL"
+    prompt: "Resolve the APIView reviewer feedback from this URL. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
@@ -157,7 +157,7 @@ stimuli:
           required:
             - name: "azsdk_typespec_generate_authoring_plan"
   - name: invoke-azsdk-typespec-generate-authoring-plan-2
-    prompt: "Generate a solution to add a new api version for service widget with TypeSpec."
+    prompt: "Generate a solution to add a new api version for service widget with TypeSpec. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
@@ -174,17 +174,63 @@ stimuli:
 
   # ==== azsdk_typespec_init_project triggers ====
   - name: invoke-azsdk-typespec-init-project-1
-    prompt: "Initialize a new TypeSpec project"
+    prompt: "Initialize a new TypeSpec project. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_typespec_init_project"
   - name: invoke-azsdk-typespec-init-project-2
-    prompt: "Initialize a new TypeSpec project for my service"
+    prompt: "Initialize a new TypeSpec project for my service. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_typespec_init_project"
+
+  # ==== full-context single-tool checks (ported from standalone scenario evals) ====
+  - name: check-public-repo
+    prompt: |
+      Check if my TypeSpec project is in the public repo.
+      My setup has already been verified, do not run azsdk_verify_setup.
+      Project root: specification/contosowidgetmanager/Contoso.WidgetManager.
+    constraints:
+      max_turns: 5
+      max_tokens: 5000
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_typespec_check_project_in_public_repo"
+          disallowed:
+            - name: "azsdk_verify_setup"
+  - name: validate-typespec
+    prompt: |
+      Validate my typespec project. It is already confirmed we are in a public repository.
+      The path to my typespec is specification/contosowidgetmanager/Contoso.WidgetManager/main.tsp.
+    constraints:
+      max_turns: 8
+      max_tokens: 8000
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_run_typespec_validation"
+  - name: get-modified-typespec-projects
+    prompt: |
+      List the TypeSpec projects modified in my current branch compared to main.
+      My setup has already been verified, do not run azsdk_verify_setup.
+      The repository root is the relative path ./azure-rest-api-specs.
+    constraints:
+      max_turns: 5
+      max_tokens: 5000
+    # TODO: seed a git worktree fixture (environment.git) with a modified
+    # tspconfig.yaml so the tool actually has a diff to report.
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_get_modified_typespec_projects"
+          disallowed:
+            - name: "azsdk_verify_setup"
 

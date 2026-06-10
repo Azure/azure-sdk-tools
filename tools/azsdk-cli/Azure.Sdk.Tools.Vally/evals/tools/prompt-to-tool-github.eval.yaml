@@ -16,13 +16,13 @@ config:
   runs: 5
   timeout: "120s"
   executor: copilot-sdk
-  model: claude-opus-4.6
+  model: gpt-5.4
 
 stimuli:
 
   # ==== azsdk_create_pull_request triggers ====
   - name: invoke-azsdk-create-pull-request-1
-    prompt: "Create a pull request for my changes"
+    prompt: "Create a pull request in the Azure/azure-rest-api-specs repo for my already-committed changes. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
@@ -31,14 +31,14 @@ stimuli:
 
   # ==== azsdk_get_github_user_details triggers ====
   - name: invoke-azsdk-get-github-user-details-1
-    prompt: "Get details for GitHub user octocat"
+    prompt: "Get details for GitHub user octocat. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_get_github_user_details"
   - name: invoke-azsdk-get-github-user-details-2
-    prompt: "Who is the GitHub user johndoe?"
+    prompt: "Who is the GitHub user johndoe? Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
@@ -47,14 +47,14 @@ stimuli:
 
   # ==== azsdk_get_pull_request triggers ====
   - name: invoke-azsdk-get-pull-request-1
-    prompt: "Get the details of my pull request"
+    prompt: "Get the details of pull request #1234 in the Azure/azure-rest-api-specs repo. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_get_pull_request"
   - name: invoke-azsdk-get-pull-request-2
-    prompt: "Show me the status and comments on PR #1234"
+    prompt: "Show me the status and comments on PR #1234 in the Azure/azure-rest-api-specs repo. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
@@ -63,17 +63,34 @@ stimuli:
 
   # ==== azsdk_get_pull_request_link_for_current_branch triggers ====
   - name: invoke-azsdk-get-pull-request-link-for-current-branch-1
-    prompt: "Get the PR link for my current branch"
+    prompt: "Get the PR link for my current branch. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_get_pull_request_link_for_current_branch"
   - name: invoke-azsdk-get-pull-request-link-for-current-branch-2
-    prompt: "What's the pull request URL for this branch?"
+    prompt: "What's the pull request URL for this branch? Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_get_pull_request_link_for_current_branch"
+
+  # ==== full-context single-tool checks (ported from standalone scenario evals) ====
+  - name: get-pr-link-current-branch
+    prompt: |
+      What's the status of the spec PR in my current branch? Only check the status once.
+      My setup has already been verified, do not run azsdk_verify_setup.
+      The repository root is the relative path ./azure-rest-api-specs.
+    constraints:
+      max_turns: 5
+      max_tokens: 5000
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_get_pull_request_link_for_current_branch"
+          disallowed:
+            - name: "azsdk_verify_setup"
 

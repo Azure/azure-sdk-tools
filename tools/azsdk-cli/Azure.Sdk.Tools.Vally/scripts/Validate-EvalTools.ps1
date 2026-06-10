@@ -1,11 +1,11 @@
 <#
 .SYNOPSIS
-    Validates that all tool names referenced in tool-trigger eval files exist in the MCP server.
+    Validates that all tool names referenced in prompt-to-tool eval files exist in the MCP server.
 
 .DESCRIPTION
     This script:
     1. Runs `azsdk list` to get all registered MCP tool names from the server.
-    2. Parses all `triggers-*.eval.yaml` files under the tools/ directory.
+    2. Parses all `prompt-to-tool-*.eval.yaml` files under the tools/ directory.
     3. Reports any eval tool references that don't exist on the server,
        and any server tools that are missing eval coverage.
 
@@ -13,7 +13,7 @@
     Path to the Azure.Sdk.Tools.Cli project. Defaults to ../Azure.Sdk.Tools.Cli relative to this script.
 
 .PARAMETER EvalPath
-    Path to the directory containing `triggers-*.eval.yaml` files.
+    Path to the directory containing `prompt-to-tool-*.eval.yaml` files.
     Defaults to ../evals/tools relative to this script.
 
 .PARAMETER SkipBuild
@@ -101,11 +101,11 @@ if ($serverTools.Count -eq 0) {
 
 Write-Host "Found $($serverTools.Count) tools registered on the MCP server ($($excludedTools.Count) excluded).`n" -ForegroundColor Green
 
-# Step 2: Parse all triggers-*.eval.yaml files in the tools directory for tool name references
-$evalFiles = Get-ChildItem -Path $EvalPath -Filter "triggers-*.eval.yaml"
+# Step 2: Parse all prompt-to-tool-*.eval.yaml files in the tools directory for tool name references
+$evalFiles = Get-ChildItem -Path $EvalPath -Filter "prompt-to-tool-*.eval.yaml"
 
 if ($evalFiles.Count -eq 0) {
-    Write-Error "No triggers-*.eval.yaml files found in: $EvalPath"
+    Write-Error "No prompt-to-tool-*.eval.yaml files found in: $EvalPath"
     exit 1
 }
 

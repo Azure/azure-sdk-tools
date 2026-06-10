@@ -11,7 +11,7 @@ config:
   runs: 5
   timeout: "120s"
   executor: copilot-sdk
-  model: claude-opus-4.6
+  model: gpt-5.4
 
 tags:
   tier: unit
@@ -22,14 +22,14 @@ stimuli:
 
   # ==== azsdk_check_service_label triggers ====
   - name: invoke-azsdk-check-service-label-1
-    prompt: "Check if a service label exists for my service"
+    prompt: "Check if a service label exists for my service. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_check_service_label"
   - name: invoke-azsdk-check-service-label-2
-    prompt: "Does the service label for Contoso already exist?"
+    prompt: "Does the service label for Contoso already exist? Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
@@ -38,14 +38,14 @@ stimuli:
 
   # ==== azsdk_create_service_label triggers ====
   - name: invoke-azsdk-create-service-label-1
-    prompt: "Create a new service label for my service"
+    prompt: "Create a new service label for my service. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_create_service_label"
   - name: invoke-azsdk-create-service-label-2
-    prompt: "Add a service label for Contoso Widget Manager"
+    prompt: "Add a service label for Contoso Widget Manager. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:

@@ -42,31 +42,24 @@ conditional branches, recovery), both matter independently.
 
 **Tool-scenario evals (this project)** — organised by the standard test pyramid under [`evals/`](evals/). The folder is the **cost tier** (and CI cadence); the feature **area** is a tag inside each YAML so cross-cuts work via `.vally.yaml` suite filters.
 
-#### `evals/tools/` — hermetic single-tool evals (18)
+#### `evals/tools/` — hermetic single-tool evals (10 files)
 
-One prompt → one expected MCP tool. No `environment.git`, no fixtures. Fast; safe to run on every PR. Includes the per-tool **trigger** coverage ported from [#15183](https://github.com/Azure/azure-sdk-tools/pull/15183) (`triggers-*.eval.yaml`).
+One prompt → one expected MCP tool. No `environment.git`, no fixtures. Fast; safe to run on every PR. The per-namespace `prompt-to-tool-*.eval.yaml` files group every prompt→tool check by tool namespace (trigger coverage ported from [#15183](https://github.com/Azure/azure-sdk-tools/pull/15183)); `add-arm-resource` is the one file-producing exception.
 
 | Scenario | Area | Shape |
 |---|---|---|
-| [`check-public-repo`](evals/tools/check-public-repo.eval.yaml) | typespec | Is a TypeSpec project published in `azure-rest-api-specs`? |
-| [`validate-typespec`](evals/tools/validate-typespec.eval.yaml) | typespec | Run `tsp` linter/validation |
-| [`get-modified-typespec-projects`](evals/tools/get-modified-typespec-projects.eval.yaml) | typespec | Git-aware tool against current branch |
-| [`add-arm-resource`](evals/tools/add-arm-resource.eval.yaml) | typespec | Calls `azsdk_typespec_generate_authoring_plan` for an ARM resource |
-| [`create-release-plan`](evals/tools/create-release-plan.eval.yaml) | release-plan | Create a release-plan work item |
-| [`link-namespace-approval-issue`](evals/tools/link-namespace-approval-issue.eval.yaml) | release-plan | Link an existing approval issue to a release plan |
-| [`get-pr-link-current-branch`](evals/tools/get-pr-link-current-branch.eval.yaml) | github | Resolve the PR for the active git branch |
-| [`check-sdk-generation-status`](evals/tools/check-sdk-generation-status.eval.yaml) | pipeline | Pipeline status lookup |
-| [`triggers-apiview`](evals/tools/triggers-apiview.eval.yaml) | apiview | `azsdk_apiview_*` |
-| [`triggers-config`](evals/tools/triggers-config.eval.yaml) | engsys | `azsdk_check_service_label`, `azsdk_create_service_label` |
-| [`triggers-engsys`](evals/tools/triggers-engsys.eval.yaml) | engsys | `azsdk_analyze_log_file`, failed-test tools, codeowner-cache |
-| [`triggers-github`](evals/tools/triggers-github.eval.yaml) | github | `azsdk_create_pull_request`, `azsdk_get_pull_request*`, `azsdk_get_github_user_details` |
-| [`triggers-package`](evals/tools/triggers-package.eval.yaml) | package | `azsdk_package_*`, `azsdk_release_sdk` |
-| [`triggers-pipeline`](evals/tools/triggers-pipeline.eval.yaml) | pipeline | `azsdk_analyze_pipeline`, `azsdk_get_pipeline_*` |
-| [`triggers-releaseplan`](evals/tools/triggers-releaseplan.eval.yaml) | release-plan | `azsdk_*_release_plan*`, `azsdk_run_generate_sdk`, `azsdk_link_*` |
-| [`triggers-typespec`](evals/tools/triggers-typespec.eval.yaml) | typespec | `azsdk_typespec_*`, `azsdk_convert_swagger_to_typespec`, `azsdk_customized_code_update`, `azsdk_run_typespec_validation` |
-| [`triggers-verify`](evals/tools/triggers-verify.eval.yaml) | engsys | `azsdk_verify_setup` |
+| [`add-arm-resource`](evals/tools/add-arm-resource.eval.yaml) | typespec | File-producing scenario — calls `azsdk_typespec_generate_authoring_plan` + `edit` for an ARM resource |
+| [`prompt-to-tool-apiview`](evals/tools/prompt-to-tool-apiview.eval.yaml) | apiview | `azsdk_apiview_*` |
+| [`prompt-to-tool-config`](evals/tools/prompt-to-tool-config.eval.yaml) | engsys | `azsdk_check_service_label`, `azsdk_create_service_label` |
+| [`prompt-to-tool-engsys`](evals/tools/prompt-to-tool-engsys.eval.yaml) | engsys | `azsdk_analyze_log_file`, failed-test tools, codeowner-cache |
+| [`prompt-to-tool-github`](evals/tools/prompt-to-tool-github.eval.yaml) | github | `azsdk_create_pull_request`, `azsdk_get_pull_request*`, `azsdk_get_github_user_details`, `azsdk_get_pull_request_link_for_current_branch` |
+| [`prompt-to-tool-package`](evals/tools/prompt-to-tool-package.eval.yaml) | package | `azsdk_package_*`, `azsdk_release_sdk` |
+| [`prompt-to-tool-pipeline`](evals/tools/prompt-to-tool-pipeline.eval.yaml) | pipeline | `azsdk_analyze_pipeline`, `azsdk_get_pipeline_*` |
+| [`prompt-to-tool-releaseplan`](evals/tools/prompt-to-tool-releaseplan.eval.yaml) | release-plan | `azsdk_*_release_plan*`, `azsdk_run_generate_sdk`, `azsdk_link_*` |
+| [`prompt-to-tool-typespec`](evals/tools/prompt-to-tool-typespec.eval.yaml) | typespec | `azsdk_typespec_*`, `azsdk_convert_swagger_to_typespec`, `azsdk_customized_code_update`, `azsdk_run_typespec_validation` |
+| [`prompt-to-tool-verify`](evals/tools/prompt-to-tool-verify.eval.yaml) | engsys | `azsdk_verify_setup` |
 
-The companion [`scripts/Validate-EvalTools.ps1`](scripts/Validate-EvalTools.ps1) cross-checks that every tool referenced in `evals/tools/triggers-*.eval.yaml` exists on the running MCP server, and every server tool has at least one trigger.
+The companion [`scripts/Validate-EvalTools.ps1`](scripts/Validate-EvalTools.ps1) cross-checks that every tool referenced in `evals/tools/prompt-to-tool-*.eval.yaml` exists on the running MCP server, and every server tool has at least one prompt-to-tool check.
 
 #### `evals/workflow-scenarios/` — multi-tool scenarios (4)
 

@@ -16,41 +16,41 @@ config:
   runs: 5
   timeout: "120s"
   executor: copilot-sdk
-  model: claude-opus-4.6
+  model: gpt-5.4
 
 stimuli:
 
   # ==== azsdk_abandon_release_plan triggers ====
   - name: invoke-azsdk-abandon-release-plan-1
-    prompt: "Abandon the release plan for work item 12345"
+    prompt: "Abandon the release plan for work item 12345. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_abandon_release_plan"
   - name: invoke-azsdk-abandon-release-plan-2
-    prompt: "Cancel and abandon my release plan for work item 12345"
+    prompt: "Cancel and abandon my release plan for work item 12345. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_abandon_release_plan"
   - name: invoke-azsdk-abandon-release-plan-3
-    prompt: "Mark the release plan for work item 12345 as abandoned"
+    prompt: "Mark the release plan for work item 12345 as abandoned. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_abandon_release_plan"
   - name: invoke-azsdk-abandon-release-plan-4
-    prompt: "Abandon my release plan for work item 12345"
+    prompt: "Abandon my release plan for work item 12345. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_abandon_release_plan"
   - name: invoke-azsdk-abandon-release-plan-5
-    prompt: "Cancel the release plan for my service for work item 12345"
+    prompt: "Cancel the release plan for my service for work item 12345. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
@@ -59,14 +59,14 @@ stimuli:
 
   # ==== azsdk_check_api_spec_ready_for_sdk triggers ====
   - name: invoke-azsdk-check-api-spec-ready-for-sdk-1
-    prompt: "Check if my API spec is ready to generate SDK"
+    prompt: "Check if my API spec is ready to generate SDK. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_check_api_spec_ready_for_sdk"
   - name: invoke-azsdk-check-api-spec-ready-for-sdk-2
-    prompt: "Is my TypeSpec ready for SDK generation?"
+    prompt: "Is my TypeSpec ready for SDK generation? Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
@@ -75,14 +75,14 @@ stimuli:
 
   # ==== azsdk_create_release_plan triggers ====
   - name: invoke-azsdk-create-release-plan-1
-    prompt: "Create a release plan for my service"
+    prompt: "Create a release plan for my service. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_create_release_plan"
   - name: invoke-azsdk-create-release-plan-2
-    prompt: "Create a release plan for Contoso Widget Manager service"
+    prompt: "Create a release plan for Contoso Widget Manager service. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
@@ -91,14 +91,14 @@ stimuli:
 
   # ==== azsdk_get_release_plan triggers ====
   - name: invoke-azsdk-get-release-plan-1
-    prompt: "Get the release plan for work item 12345"
+    prompt: "Get the release plan for work item 12345. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_get_release_plan"
   - name: invoke-azsdk-get-release-plan-2
-    prompt: "Show me the release plan details"
+    prompt: "Show me the release plan details. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
@@ -107,14 +107,14 @@ stimuli:
 
   # ==== azsdk_get_release_plan_for_spec_pr triggers ====
   - name: invoke-azsdk-get-release-plan-for-spec-pr-1
-    prompt: "Get the release plan for my spec PR"
+    prompt: "Get the release plan for my spec PR. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_get_release_plan_for_spec_pr"
   - name: invoke-azsdk-get-release-plan-for-spec-pr-2
-    prompt: "What release plan is associated with this spec pull request?"
+    prompt: "What release plan is associated with this spec pull request? Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
@@ -123,14 +123,14 @@ stimuli:
 
   # ==== azsdk_get_sdk_pull_request_link triggers ====
   - name: invoke-azsdk-get-sdk-pull-request-link-1
-    prompt: "Get the SDK pull request link from the generation pipeline"
+    prompt: "Get the SDK pull request link from the generation pipeline. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_get_sdk_pull_request_link"
   - name: invoke-azsdk-get-sdk-pull-request-link-2
-    prompt: "Where is the PR created by SDK generation?"
+    prompt: "Where is the PR created by SDK generation? Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
@@ -139,35 +139,35 @@ stimuli:
 
   # ==== azsdk_get_service_details_by_typespec_path triggers ====
   - name: invoke-azsdk-get-service-details-by-typespec-path-1
-    prompt: "Get the service tree details for my TypeSpec project path"
+    prompt: "Get the service tree details for my TypeSpec project path. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_get_service_details_by_typespec_path"
   - name: invoke-azsdk-get-service-details-by-typespec-path-2
-    prompt: "Look up the service and product details using the TypeSpec project path"
+    prompt: "Look up the service and product details using the TypeSpec project path. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_get_service_details_by_typespec_path"
   - name: invoke-azsdk-get-service-details-by-typespec-path-3
-    prompt: "What service tree ID and product info is associated with this TypeSpec path?"
+    prompt: "What service tree ID and product info is associated with this TypeSpec path? Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_get_service_details_by_typespec_path"
   - name: invoke-azsdk-get-service-details-by-typespec-path-4
-    prompt: "Find product details for my typespec project"
+    prompt: "Find product details for my typespec project. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_get_service_details_by_typespec_path"
   - name: invoke-azsdk-get-service-details-by-typespec-path-5
-    prompt: "What service does this TypeSpec project belong to?"
+    prompt: "What service does this TypeSpec project belong to? Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
@@ -184,14 +184,14 @@ stimuli:
 
   # ==== azsdk_link_namespace_approval_issue triggers ====
   - name: invoke-azsdk-link-namespace-approval-issue-1
-    prompt: "Link namespace approval issue to release plan"
+    prompt: "Link namespace approval issue to release plan. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_link_namespace_approval_issue"
   - name: invoke-azsdk-link-namespace-approval-issue-2
-    prompt: "Associate the namespace approval with my release plan"
+    prompt: "Associate the namespace approval with my release plan. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
@@ -200,14 +200,14 @@ stimuli:
 
   # ==== azsdk_link_sdk_pull_request_to_release_plan triggers ====
   - name: invoke-azsdk-link-sdk-pull-request-to-release-plan-1
-    prompt: "Link my SDK pull request to the release plan"
+    prompt: "Link my SDK pull request to the release plan. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_link_sdk_pull_request_to_release_plan"
   - name: invoke-azsdk-link-sdk-pull-request-to-release-plan-2
-    prompt: "Link SDK pull request #5678 to release plan 12345"
+    prompt: "Link SDK pull request #5678 to release plan 12345. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
@@ -216,14 +216,14 @@ stimuli:
 
   # ==== azsdk_run_generate_sdk triggers ====
   - name: invoke-azsdk-run-generate-sdk-1
-    prompt: "Generate SDK from my TypeSpec project using the pipeline"
+    prompt: "Generate SDK from my TypeSpec project using the pipeline. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_run_generate_sdk"
   - name: invoke-azsdk-run-generate-sdk-2
-    prompt: "Generate SDK for my TypeSpec project using the pipeline"
+    prompt: "Generate SDK for my TypeSpec project using the pipeline. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
@@ -232,14 +232,14 @@ stimuli:
 
   # ==== azsdk_update_api_spec_pull_request_in_release_plan triggers ====
   - name: invoke-azsdk-update-api-spec-pull-request-in-release-plan-1
-    prompt: "Update the TypeSpec PR URL in the release plan"
+    prompt: "Update the TypeSpec PR URL in the release plan. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_update_api_spec_pull_request_in_release_plan"
   - name: invoke-azsdk-update-api-spec-pull-request-in-release-plan-2
-    prompt: "Update the TypeSpec pull request URL in my release plan"
+    prompt: "Update the TypeSpec pull request URL in my release plan. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
@@ -248,14 +248,14 @@ stimuli:
 
   # ==== azsdk_update_language_exclusion_justification triggers ====
   - name: invoke-azsdk-update-language-exclusion-justification-1
-    prompt: "Update the language exclusion justification"
+    prompt: "Update the language exclusion justification. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_update_language_exclusion_justification"
   - name: invoke-azsdk-update-language-exclusion-justification-2
-    prompt: "Explain why Python is excluded from this release"
+    prompt: "Explain why Python is excluded from this release. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
@@ -264,35 +264,35 @@ stimuli:
 
   # ==== azsdk_update_release_plan triggers ====
   - name: invoke-azsdk-update-release-plan-1
-    prompt: "Update the release plan with my TypeSpec project path and API version"
+    prompt: "Update the release plan with my TypeSpec project path and API version. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_update_release_plan"
   - name: invoke-azsdk-update-release-plan-2
-    prompt: "Update the spec PR URL and SDK release type in my release plan"
+    prompt: "Update the spec PR URL and SDK release type in my release plan. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_update_release_plan"
   - name: invoke-azsdk-update-release-plan-3
-    prompt: "Update the existing release plan for my service"
+    prompt: "Update the existing release plan for my service. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_update_release_plan"
   - name: invoke-azsdk-update-release-plan-4
-    prompt: "Update my release plan"
+    prompt: "Update my release plan. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_update_release_plan"
   - name: invoke-azsdk-update-release-plan-5
-    prompt: "Update TypeSpec project in release plan"
+    prompt: "Update TypeSpec project in release plan. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
@@ -301,17 +301,56 @@ stimuli:
 
   # ==== azsdk_update_sdk_details_in_release_plan triggers ====
   - name: invoke-azsdk-update-sdk-details-in-release-plan-1
-    prompt: "Update SDK details in the release plan"
+    prompt: "Update SDK details in the release plan. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_update_sdk_details_in_release_plan"
   - name: invoke-azsdk-update-sdk-details-in-release-plan-2
-    prompt: "Change the SDK package name in the release plan"
+    prompt: "Change the SDK package name in the release plan. Use the available Azure SDK MCP tools instead of shell commands or a CLI."
     graders:
       - type: tool-calls
         config:
           required:
             - name: "azsdk_update_sdk_details_in_release_plan"
+
+  # ==== full-context single-tool checks (ported from standalone scenario evals) ====
+  - name: create-release-plan
+    prompt: |
+      Create a release plan for the Contoso Widget Manager, no need to get it afterwards only create.
+      My setup has already been verified, do not run azsdk_verify_setup. Here is all the context you need:
+      TypeSpec project located at "specification/contosowidgetmanager/Contoso.WidgetManager".
+      Use service tree ID "a7f2b8e4-9c1d-4a3e-b6f9-2d8e5a7c3b1f",
+      product tree ID "f1a8c5d2-6e4b-4f7a-9c2d-8b5e1f3a6c9e",
+      target release timeline "December 2025",
+      API version "2022-11-01-preview",
+      SDK release type "beta",
+      and link it to the spec pull request "https://github.com/Azure/azure-rest-api-specs/pull/38387".
+    constraints:
+      max_turns: 8
+      max_tokens: 8000
+    # TODO: assert serviceTreeId / productTreeId / specApiVersion / specPullRequestUrl / sdkReleaseType / typeSpecProjectPath — blocked on https://github.com/Azure/azure-sdk-tools/issues/15833 (Vally tool-calls grader needs generic args matcher).
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_create_release_plan"
+          disallowed:
+            - name: "azsdk_verify_setup"
+  - name: link-namespace-approval-issue
+    prompt: |
+      Link namespace approval issue https://github.com/Azure/azure-sdk/issues/1234 to release plan 12345.
+      My setup has already been verified, do not run azsdk_verify_setup.
+    constraints:
+      max_turns: 5
+      max_tokens: 5000
+    # TODO: assert releasePlanWorkItemId=12345 and namespaceApprovalIssue URL — blocked on https://github.com/Azure/azure-sdk-tools/issues/15833 (Vally tool-calls grader needs generic args matcher).
+    graders:
+      - type: tool-calls
+        config:
+          required:
+            - name: "azsdk_link_namespace_approval_issue"
+          disallowed:
+            - name: "azsdk_verify_setup"
 

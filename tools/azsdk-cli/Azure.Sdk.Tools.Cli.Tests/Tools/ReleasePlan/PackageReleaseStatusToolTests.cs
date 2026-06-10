@@ -1115,6 +1115,96 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.ReleaseStatus, Is.EqualTo("Released"));
             Assert.That(result.ReleasePlanFinished, Is.False);
             Assert.That(result.Message, Does.Contain("failed to auto-finish"));
+        public async Task UpdatePackageReleaseStatus_AlreadyReleasedPackage_ReturnsNoReleasePlansFound()
+        {
+            // Arrange - GetReleasePlansForPackageAsync now filters out released packages at query level,
+            // so it returns an empty list when all matching release plans already have "Released" status
+            mockDevOpsService
+                .Setup(x => x.GetReleasePlansForPackageAsync("azure-test-package", "python", It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<ReleasePlanWorkItem>());
+
+            // Act
+            var result = await packageReleaseStatusTool.UpdatePackageReleaseStatus("azure-test-package", "python", "Released", "2.0.0", 0, CancellationToken.None);
+
+            // Assert - The tool should report no in-progress release plans found
+            Assert.That(result.ResponseError, Is.Null);
+            Assert.That(result.Message, Does.Contain("No in-progress release plans found"));
+            Assert.That(result.Message, Does.Contain("azure-test-package"));
+            Assert.That(result.Message, Does.Contain("python"));
+
+            // Verify no work item update was attempted
+            mockDevOpsService.Verify(
+                x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()),
+                Times.Never);
+        }
+
+        [Test]
+        public async Task UpdatePackageReleaseStatus_OnlyNonReleasedPlansReturned_UpdatesCorrectPlan()
+        {
+            // Arrange - Simulate that GetReleasePlansForPackageAsync only returns plans where
+            // the package has NOT been released (the released ones are filtered out by the query)
+            var nonReleasedPlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 33333,
+                ReleasePlanId = 300,
+                SDKInfo = new List<SDKInfo>
+                {
+                    new SDKInfo
+                    {
+                        Language = "python",
+                        PackageName = "azure-test-package",
+                        PullRequestStatus = "Merged"
+                    }
+                },
+                APISpecProjectPath = "specification/test/project"
+            };
+
+            mockDevOpsService
+                .Setup(x => x.GetReleasePlansForPackageAsync("azure-test-package", "python", It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<ReleasePlanWorkItem> { nonReleasedPlan });
+
+            mockDevOpsService
+                .Setup(x => x.UpdateWorkItemAsync(33333, It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem { Id = 33333 });
+
+            // Act
+            var result = await packageReleaseStatusTool.UpdatePackageReleaseStatus("azure-test-package", "python", "Released", "1.0.0", 0, CancellationToken.None);
+
+            // Assert
+            Assert.That(result.ResponseError, Is.Null);
+            Assert.That(result.ReleaseStatus, Is.EqualTo("Released"));
+            Assert.That(result.ReleasePlanId, Is.EqualTo(300));
+            Assert.That(result.TypeSpecProject, Is.EqualTo("specification/test/project"));
+
+            // Verify the correct work item was updated
+            mockDevOpsService.Verify(
+                x => x.UpdateWorkItemAsync(33333, It.Is<Dictionary<string, string>>(d =>
+                    d.ContainsKey("Custom.ReleaseStatusForPython") && d["Custom.ReleaseStatusForPython"] == "Released"),
+                    It.IsAny<CancellationToken>()),
+                Times.Once);
+        }
+
+        [TestCase("python", "Custom.ReleaseStatusForPython")]
+        [TestCase(".net", "Custom.ReleaseStatusForDotnet")]
+        [TestCase("javascript", "Custom.ReleaseStatusForJavaScript")]
+        [TestCase("java", "Custom.ReleaseStatusForJava")]
+        [TestCase("go", "Custom.ReleaseStatusForGo")]
+        public async Task UpdatePackageReleaseStatus_FiltersByCorrectReleaseStatusField_PerLanguage(string language, string expectedField)
+        {
+            // Arrange - When GetReleasePlansForPackageAsync is called, it should use
+            // the language-specific release status field in the filter query.
+            // Here we verify the tool correctly passes language to the service method.
+            mockDevOpsService
+                .Setup(x => x.GetReleasePlansForPackageAsync("azure-test-package", language, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<ReleasePlanWorkItem>());
+
+            // Act
+            var result = await packageReleaseStatusTool.UpdatePackageReleaseStatus("azure-test-package", language, "Released", null, 0, CancellationToken.None);
+
+            // Assert - Verify the service was called with the correct language
+            mockDevOpsService.Verify(
+                x => x.GetReleasePlansForPackageAsync("azure-test-package", language, It.IsAny<bool>(), It.IsAny<CancellationToken>()),
+                Times.Once);
         }
     }
 }

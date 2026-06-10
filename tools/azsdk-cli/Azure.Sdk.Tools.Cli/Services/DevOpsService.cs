@@ -280,6 +280,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
                 query += $" AND [System.Tags] {(isTestReleasePlan ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
                 query += $" AND [Custom.{languageId}PackageName] = '{escapedPackageName}'";
+                query += $" AND [Custom.ReleaseStatusFor{languageId}] <> 'Released'";
                 query += " AND [System.WorkItemType] = 'Release Plan'";
                 query += " AND [System.State] = 'In Progress'";
                 var releasePlanWorkItems = await FetchWorkItemsAsync(query, ct);

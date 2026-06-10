@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Microsoft.TeamFoundation.Build.WebApi;
@@ -209,11 +210,154 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
         #endregion
 
+        #region GetReleasePlansForPackageAsync Tests
+
+        [TestCase("python", "Python")]
+        [TestCase(".net", "Dotnet")]
+        [TestCase("javascript", "JavaScript")]
+        [TestCase("java", "Java")]
+        [TestCase("go", "Go")]
+        public async Task GetReleasePlansForPackageAsync_QueryIncludesReleaseStatusFilter(string language, string expectedLanguageId)
+        {
+            // Arrange
+            var packageName = "azure-test-package";
+            var releasePlanWorkItem = CreateReleasePlanWorkItemForPackage(100, packageName, language);
+            _connection.AddWorkItemToQuery(releasePlanWorkItem);
+
+            // Act
+            await _devOpsService.GetReleasePlansForPackageAsync(packageName, language, false, CancellationToken.None);
+
+            // Assert - verify query includes the release status filter
+            var capturedQuery = _connection.LastCapturedQuery;
+            Assert.That(capturedQuery, Is.Not.Null, "Expected a WIQL query to be captured");
+            Assert.That(capturedQuery, Does.Contain($"[Custom.ReleaseStatusFor{expectedLanguageId}] <> 'Released'"),
+                $"Query should filter out already-released packages for language '{language}'");
+        }
+
+        [Test]
+        public async Task GetReleasePlansForPackageAsync_QueryIncludesPackageNameFilter()
+        {
+            // Arrange
+            var packageName = "azure-test-package";
+            var releasePlanWorkItem = CreateReleasePlanWorkItemForPackage(100, packageName, "python");
+            _connection.AddWorkItemToQuery(releasePlanWorkItem);
+
+            // Act
+            await _devOpsService.GetReleasePlansForPackageAsync(packageName, "python", false, CancellationToken.None);
+
+            // Assert
+            var capturedQuery = _connection.LastCapturedQuery;
+            Assert.That(capturedQuery, Does.Contain($"[Custom.PythonPackageName] = '{packageName}'"));
+        }
+
+        [Test]
+        public async Task GetReleasePlansForPackageAsync_QueryIncludesInProgressStateFilter()
+        {
+            // Arrange
+            var packageName = "azure-test-package";
+            var releasePlanWorkItem = CreateReleasePlanWorkItemForPackage(100, packageName, "python");
+            _connection.AddWorkItemToQuery(releasePlanWorkItem);
+
+            // Act
+            await _devOpsService.GetReleasePlansForPackageAsync(packageName, "python", false, CancellationToken.None);
+
+            // Assert
+            var capturedQuery = _connection.LastCapturedQuery;
+            Assert.That(capturedQuery, Does.Contain("[System.State] = 'In Progress'"));
+        }
+
+        [Test]
+        public async Task GetReleasePlansForPackageAsync_ReturnsEmptyList_WhenNoMatchingWorkItems()
+        {
+            // Arrange - no work items added to query results
+
+            // Act
+            var result = await _devOpsService.GetReleasePlansForPackageAsync("azure-test-package", "python", false, CancellationToken.None);
+
+            // Assert
+            Assert.That(result, Is.Empty);
+        }
+
+        [Test]
+        public async Task GetReleasePlansForPackageAsync_TestReleasePlan_QueryContainsTestTag()
+        {
+            // Arrange
+            var packageName = "azure-test-package";
+            var releasePlanWorkItem = CreateReleasePlanWorkItemForPackage(100, packageName, "python");
+            _connection.AddWorkItemToQuery(releasePlanWorkItem);
+
+            // Act
+            await _devOpsService.GetReleasePlansForPackageAsync(packageName, "python", isTestReleasePlan: true, CancellationToken.None);
+
+            // Assert
+            var capturedQuery = _connection.LastCapturedQuery;
+            Assert.That(capturedQuery, Does.Contain("[System.Tags] CONTAINS"));
+            Assert.That(capturedQuery, Does.Contain("Release Planner App Test"));
+        }
+
+        [Test]
+        public async Task GetReleasePlansForPackageAsync_NonTestReleasePlan_QueryExcludesTestTag()
+        {
+            // Arrange
+            var packageName = "azure-test-package";
+            var releasePlanWorkItem = CreateReleasePlanWorkItemForPackage(100, packageName, "python");
+            _connection.AddWorkItemToQuery(releasePlanWorkItem);
+
+            // Act
+            await _devOpsService.GetReleasePlansForPackageAsync(packageName, "python", isTestReleasePlan: false, CancellationToken.None);
+
+            // Assert
+            var capturedQuery = _connection.LastCapturedQuery;
+            Assert.That(capturedQuery, Does.Contain("[System.Tags] NOT CONTAINS"));
+            Assert.That(capturedQuery, Does.Contain("Release Planner App Test"));
+        }
+
+        [Test]
+        public async Task GetReleasePlansForPackageAsync_EscapesSingleQuoteInPackageName()
+        {
+            // Arrange
+            var packageName = "azure-test's-package";
+            var releasePlanWorkItem = CreateReleasePlanWorkItemForPackage(100, packageName, "python");
+            _connection.AddWorkItemToQuery(releasePlanWorkItem);
+
+            // Act
+            await _devOpsService.GetReleasePlansForPackageAsync(packageName, "python", false, CancellationToken.None);
+
+            // Assert
+            var capturedQuery = _connection.LastCapturedQuery;
+            Assert.That(capturedQuery, Does.Contain("azure-test''s-package"), "Single quotes should be escaped in WIQL query");
+        }
+
+        private WorkItem CreateReleasePlanWorkItemForPackage(int id, string packageName, string language)
+        {
+            var languageId = DevOpsService.MapLanguageToId(language);
+            var workItem = new WorkItem
+            {
+                Id = id,
+                Fields = new Dictionary<string, object>
+                {
+                    { "System.WorkItemType", "Release Plan" },
+                    { "System.State", "In Progress" },
+                    { "System.Title", $"Release Plan {id}" },
+                    { "System.TeamProject", "internal" },
+                    { "Custom.ReleasePlanID", id.ToString() },
+                    { $"Custom.{languageId}PackageName", packageName },
+                    { $"Custom.ReleaseStatusFor{languageId}", "" }
+                },
+                Relations = new List<WorkItemRelation>()
+            };
+            return workItem;
+        }
+
+        #endregion
+
         #region TestDevOpsConnection
 
         private class TestDevOpsConnection : IDevOpsConnection
         {
             private readonly TestWorkItemClient _workItemClient = new();
+
+            public string? LastCapturedQuery => _workItemClient.LastCapturedQuery;
 
             public BuildHttpClient GetBuildClient(CancellationToken ct = default)
             {
@@ -246,6 +390,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             private readonly List<WorkItem> _queryWorkItems = new();
             private readonly Dictionary<int, WorkItem> _workItems = new();
 
+            public string? LastCapturedQuery { get; private set; }
+
             public TestWorkItemClient() : base(new Uri("https://dev.azure.com/test"), null)
             {
             }
@@ -271,6 +417,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 object? userState = null,
                 CancellationToken cancellationToken = default)
             {
+                LastCapturedQuery = wiql?.Query;
                 var result = new WorkItemQueryResult
                 {
                     WorkItems = _queryWorkItems.Select(wi => new WorkItemReference { Id = wi.Id ?? 0 }).ToList()
@@ -286,6 +433,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 object? userState = null,
                 CancellationToken cancellationToken = default)
             {
+                LastCapturedQuery = wiql?.Query;
                 var result = new WorkItemQueryResult
                 {
                     WorkItems = _queryWorkItems.Select(wi => new WorkItemReference { Id = wi.Id ?? 0 }).ToList()

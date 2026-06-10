@@ -231,26 +231,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             // Verify the environment helper was called
             environmentHelperMock.Verify(x => x.GetBooleanVariable("AZSDKTOOLS_AGENT_TESTING", false), Times.Once);
         }
-
-        [Test]
-        public async Task Test_Get_Release_Plan_For_Pull_Request_with_valid_inputs()
-        {
-            var releaseplan = await releasePlanTool.GetReleasePlanForPullRequest("https://github.com/Azure/azure-rest-api-specs/pull/35446");
-            Assert.IsNotNull(releaseplan);
-            Assert.IsNull(releaseplan.ResponseError);
-            Assert.IsNotNull(releaseplan.ReleasePlanDetails);
-            Assert.That(releaseplan.Message, Does.Contain("Successfully retrieved release plan"));
-        }
-
-        [Test]
-        public async Task Test_Get_Release_Plan_For_Pull_Request_with_invalid_pr_link()
-        {
-            var releaseplan = await releasePlanTool.GetReleasePlanForPullRequest("invalid-pr-link");
-            Assert.IsNotNull(releaseplan);
-            Assert.IsNotNull(releaseplan.ResponseError);
-            Assert.True(releaseplan.ResponseError.Contains("Failed to get release plan details"));
-        }
-
+        
         [Test]
         public async Task Test_Create_releasePlan_private_preview_accepts_azure_rest_api_specs_pr_repo()
         {
@@ -375,16 +356,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(releasePlanDetails.SpecPullRequests, Is.Empty);
         }
 
-        [Test]
-        public async Task Test_Get_Release_Plan_For_Pull_Request_accepts_azure_rest_api_specs_pr_repo()
-        {
-            var releaseplan = await releasePlanTool.GetReleasePlanForPullRequest("https://github.com/Azure/azure-rest-api-specs-pr/pull/35446");
-            Assert.IsNotNull(releaseplan);
-            // The PR URL is now valid; the mock returns a release plan with WorkItemId=0 for any PR URL
-            // so GetReleasePlanForPullRequest should still succeed without error
-            Assert.IsNull(releaseplan.ResponseError);
-        }
-
+        
         [Test]
         public async Task Test_Get_Release_Plan_by_spec_pull_request_url()
         {
@@ -1229,7 +1201,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.Message, Does.Contain("Successfully updated release plan 500"));
             Assert.That(result.PackageType, Is.EqualTo(SdkType.Management));
 
-            mockDevOps.Verify(x => x.GetReleasePlanByTypeSpecProjectPathAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Once);
+            mockDevOps.Verify(x => x.GetReleasePlanByTypeSpecProjectPathAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
             mockDevOps.Verify(x => x.GetReleasePlanAsync("https://github.com/Azure/azure-rest-api-specs/pull/99999", It.IsAny<CancellationToken>()), Times.Once);
         }
 

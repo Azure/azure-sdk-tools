@@ -249,11 +249,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             "go"
         };
 
-        private readonly HashSet<string> languagesforDataplane = [
+        public static readonly HashSet<string> languagesforDataplane = [
             ".NET","Java","Python","JavaScript"
         ];
 
-        private readonly HashSet<string> languagesforMgmtplane = [
+        public static readonly HashSet<string> languagesforMgmtplane = [
            ".NET","Java","Python","JavaScript","Go"
        ];
 

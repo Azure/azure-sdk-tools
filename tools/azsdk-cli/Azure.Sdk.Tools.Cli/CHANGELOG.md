@@ -4,6 +4,8 @@
 
 ### Features Added
 
+- Release plan is automatically marked as "Finished" when all required language SDKs are either Released or have an Approved exclusion. Management plane checks all 5 languages; data plane checks .NET, Java, Python, and JavaScript only.
+
 ### Breaking Changes
 
 ### Bugs Fixed

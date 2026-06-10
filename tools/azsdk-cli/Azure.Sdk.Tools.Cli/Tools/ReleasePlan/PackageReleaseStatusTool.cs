@@ -163,6 +163,37 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, fieldsToUpdate, ct);
                 logger.LogInformation("Successfully updated release status for package {packageName} in release plan {workItemId}", packageName, releasePlan.WorkItemId);
                 response.ReleaseStatus = releaseStatus;
+
+                // Check if the release plan can be marked as Finished
+                if (string.Equals(releaseStatus, "Released", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Update in-memory SDKInfo to reflect the new status
+                    var currentLanguageName = DevOpsService.MapLanguageIdToName(languageId);
+                    var sdkInfo = releasePlan.SDKInfo.FirstOrDefault(s => string.Equals(s.Language, currentLanguageName, StringComparison.OrdinalIgnoreCase));
+                    if (sdkInfo != null)
+                    {
+                        sdkInfo.ReleaseStatus = releaseStatus;
+                    }
+
+                    if (IsReleasePlanComplete(releasePlan))
+                    {
+                        try
+                        {
+                            logger.LogInformation("All required languages are complete for release plan {workItemId}. Marking as Finished.", releasePlan.WorkItemId);
+                            await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, new Dictionary<string, string>
+                            {
+                                { "System.State", "Finished" }
+                            }, ct);
+                            response.ReleasePlanFinished = true;
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogWarning(ex, "Failed to mark release plan {workItemId} as Finished", releasePlan.WorkItemId);
+                            response.Message = "Release status updated successfully but failed to auto-finish the release plan.";
+                        }
+                    }
+                }
+
                 return response;
             }
             catch (Exception ex)
@@ -194,6 +225,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 logger.LogInformation("Found release plan work item {workItemId} for package {packageName}", releasePlan.WorkItemId, packageName);
             }
             return releasePlan;
+        }
+
+        internal static bool IsReleasePlanComplete(ReleasePlanWorkItem releasePlan)
+        {
+            var languagesToCheck = releasePlan.SDKInfo.AsEnumerable();
+
+            // Filter the language list for dataplane
+            if (releasePlan.IsDataPlane)
+            {
+                languagesToCheck = languagesToCheck.Where(info => ReleasePlanTool.languagesforDataplane.Contains(info.Language));
+            }
+
+            return languagesToCheck.All(info =>
+                string.Equals(info.ReleaseStatus, "Released", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(info.ReleaseExclusionStatus, "Approved", StringComparison.OrdinalIgnoreCase));
         }
     }
 }

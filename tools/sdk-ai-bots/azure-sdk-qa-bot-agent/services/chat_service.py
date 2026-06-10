@@ -23,7 +23,13 @@ from models.chat import (
     Role,
 )
 from models.conversation import ConversationMessage
-from models.knowledge import DocumentContext, Reference, SearchKnowledgeBaseResult
+from models.knowledge import (
+    DocumentContext,
+    GraphAnswerResult,
+    GraphCitation,
+    Reference,
+    SearchKnowledgeBaseResult,
+)
 from services.conversation_service import ConversationService
 from tools import TOOL_REGISTRY
 from skills.tenant_skills import get_skill_to_tenant_map
@@ -55,6 +61,48 @@ COMPACT_THRESHOLD = 100000
 """Token count at which conversation history is compacted."""
 
 _CITATION_RE = re.compile(r"[^\w\s]*cite[^\w\s]*turn\d+\S*")
+
+
+def _graph_citations_to_references(citations: list[GraphCitation]) -> list[Reference]:
+    """Convert ``ask_knowledge_graph`` citations to :class:`Reference` entries
+    so they can flow through the existing reference-merging / enrichment path.
+
+    ``source`` is set to ``"graphrag"`` so downstream renderers can tell the
+    origin apart from vector-index hits.
+    """
+    refs: list[Reference] = []
+    for c in citations:
+        refs.append(
+            Reference(
+                title=c.title,
+                source="graphrag",
+                link=c.link or "",
+                content=c.snippet or "",
+            )
+        )
+    return refs
+
+
+def _merge_references(
+    primary: list[Reference], secondary: list[Reference]
+) -> list[Reference]:
+    """Merge two reference lists, deduplicating by ``(link, title)``.
+
+    ``primary`` wins on conflicts — keep the vector hits first since they
+    carry verbatim chunk text (primary-source evidence), then append any
+    graph citations not already represented.
+    """
+    if not secondary:
+        return list(primary)
+    seen: set[tuple[str, str]] = set()
+    merged: list[Reference] = []
+    for ref in [*primary, *secondary]:
+        key = ((ref.link or "").strip(), (ref.title or "").strip())
+        if key in seen:
+            continue
+        seen.add(key)
+        merged.append(ref)
+    return merged
 
 
 class ChatService:
@@ -389,9 +437,28 @@ class ChatService:
         """Map hosted-agent response to `ChatResponse`."""
         tool_results = self._extract_tool_results(response.output)
         search = tool_results.get("search_knowledge_base")
-        tool_references = (
+        vector_refs = (
             search.results if isinstance(search, SearchKnowledgeBaseResult) else []
         )
+        graph = tool_results.get("ask_knowledge_graph")
+        graph_refs = (
+            _graph_citations_to_references(graph.citations)
+            if isinstance(graph, GraphAnswerResult)
+            else []
+        )
+        # Merge tool references for the agent's own reference-text enrichment
+        # and the full_context payload. Dedup by (link, title) preserving
+        # vector hits first (primary-source evidence beats graph citations).
+        tool_references = _merge_references(vector_refs, graph_refs)
+        if vector_refs and graph_refs:
+            logger.info(
+                "Both knowledge tools fired this turn: vector=%d, graph=%d, "
+                "merged_refs=%d",
+                len(vector_refs),
+                len(graph_refs),
+                len(tool_references),
+            )
+
         tenant = self._extract_routed_tenant(response.output)
 
         output_text = response.output_text or ""

@@ -127,6 +127,36 @@ class SearchKnowledgeBaseResult(BaseModel):
     results: list[Reference] = []
 
 
+class GraphCitation(BaseModel):
+    """A single citation produced by the ask_knowledge_graph tool.
+
+    Lighter than ``Reference`` — represents a source document referenced by
+    the synthesized graph answer rather than a verbatim retrieved chunk.
+    """
+
+    title: str
+    link: str = ""
+    snippet: str = ""
+
+    @field_validator("title", mode="after")
+    @classmethod
+    def _strip_trailing_pipes(cls, v: str) -> str:
+        return v.strip().rstrip("| ").strip()
+
+
+class GraphAnswerResult(BaseModel):
+    """Output of the ask_knowledge_graph tool call.
+
+    Distinct shape from ``SearchKnowledgeBaseResult``: the graph tool is an
+    *answering* tool, not a search tool. ``answer`` carries the synthesized
+    expert answer; ``citations`` lists supporting source documents.
+    """
+
+    answer: str = ""
+    citations: list[GraphCitation] = []
+    query: str = ""
+
+
 class DocumentContext(BaseModel):
     """A knowledge document in the eval-pipeline format (document_* keys)."""
 

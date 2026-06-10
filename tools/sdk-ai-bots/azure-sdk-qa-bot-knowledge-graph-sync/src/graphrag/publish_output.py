@@ -1,24 +1,24 @@
-"""Publish GraphRAG parquet outputs to blob storage + notify the bot.
+"""Publish a freshly-built GraphRAG snapshot to the bot.
 
-After ``run_graphrag_pipeline`` completes the parquets live in
-``graphrag_config/output/``. This module uploads them to a versioned
-prefix in blob storage (``<snapshot_id>/<name>.parquet`` at the
-container root) and then writes ``latest.json`` last, so a
-partially-published snapshot is never picked up by the bot.
+In the blob-direct architecture, ``build_index`` writes parquets to
+``STORAGE_GRAPHRAG_OUTPUT_CONTAINER/snapshots/<snapshot_id>/`` directly.
+This module therefore only needs to:
 
-After publishing it POSTs ``BOT_AGENT_RELOAD_URL`` with a shared-secret
-header (``X-Admin-Token: BOT_AGENT_ADMIN_TOKEN``) so the live bot
-swaps in the new build without restarting. The notify step is
-best-effort — if the bot is unreachable we log a warning and let the
-nightly process exit successfully (the bot will pick up the new build
-on its next cold start or on the next reload).
+1. Write ``latest.json`` to the container root pointing at the new
+   snapshot prefix. The manifest is written *last* (and is the bot's
+   sole source of truth), so partially-built snapshots are never picked
+   up.
+2. POST ``BOT_AGENT_RELOAD_URL`` with the shared-secret
+   (``X-Admin-Token: BOT_AGENT_ADMIN_TOKEN``) so the live bot swaps in
+   the new build without a restart. Best-effort — bot will pick the new
+   snapshot up on its next cold start otherwise.
 
-Publishing always runs after a successful indexing pass; the only
-required knob is the destination container. The remaining env vars are:
+Required env vars:
 
-* ``STORAGE_GRAPHRAG_OUTPUT_CONTAINER``    — destination container
-* ``BOT_AGENT_RELOAD_URL``                 — POST endpoint on the bot
-* ``BOT_AGENT_ADMIN_TOKEN``                — shared secret
+* ``STORAGE_GRAPHRAG_OUTPUT_CONTAINER``  — destination container (same
+  one the build wrote into).
+* ``BOT_AGENT_RELOAD_URL``  *(optional)* — POST endpoint on the bot.
+* ``BOT_AGENT_ADMIN_TOKEN`` *(optional)* — shared secret for the reload.
 """
 
 from __future__ import annotations
@@ -28,15 +28,17 @@ import datetime as _dt
 import json
 import logging
 import os
-import uuid
-from pathlib import Path
 from typing import Any
 
 from src.services.storage_service import BlobService
 
 logger = logging.getLogger(__name__)
 
-_PARQUET_FILES = (
+# Parquet artefacts the bot needs at query time. We do not validate
+# their presence here (the build pipeline owns that contract); we just
+# publish their names in the manifest so the bot knows which blobs to
+# fetch from the snapshot prefix.
+_PARQUET_FILES: tuple[str, ...] = (
     "entities.parquet",
     "communities.parquet",
     "community_reports.parquet",
@@ -45,83 +47,64 @@ _PARQUET_FILES = (
     "documents.parquet",
 )
 
-
-def _build_snapshot_id() -> str:
-    """Return a sortable, filesystem-safe timestamp for the snapshot prefix."""
-    ts = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H-%M-%SZ")
-    short = uuid.uuid4().hex[:6]
-    return f"{ts}-{short}"
+_MANIFEST_BLOB_NAME = "latest.json"
 
 
-async def publish_and_notify(output_dir: Path) -> dict[str, Any] | None:
-    """Publish parquets from ``output_dir`` and notify the bot agent.
+async def publish_and_notify(snapshot_id: str) -> dict[str, Any] | None:
+    """Write ``latest.json`` for ``snapshot_id`` and notify the bot.
 
-    Returns the manifest dict on success, or ``None`` when no destination
-    container is configured (so the step degrades to a logged no-op
-    rather than failing the sync).
+    Args:
+        snapshot_id: Snapshot identifier returned by
+            ``run_indexing.run_graphrag_pipeline``. The bot will resolve
+            the actual parquet location as
+            ``<container>/snapshots/<snapshot_id>/<name>.parquet``.
 
-    The function offloads sync SDK calls to ``asyncio.to_thread`` so it
-    doesn't block the event loop, but the underlying ``BlobService``
-    (and azure-storage-blob) remains synchronous, consistent with the
-    rest of the sync project.
+    Returns:
+        The manifest dict on success, or ``None`` if no destination
+        container is configured (degrades to a logged no-op so the sync
+        job doesn't fail in dev/local environments).
     """
     container = os.environ.get("STORAGE_GRAPHRAG_OUTPUT_CONTAINER")
     if not container:
         logger.warning(
-            "STORAGE_GRAPHRAG_OUTPUT_CONTAINER not set — skipping parquet publish"
+            "STORAGE_GRAPHRAG_OUTPUT_CONTAINER not set — skipping manifest publish"
         )
         return None
 
-    snapshot_id = _build_snapshot_id()
-    manifest = {
-        "prefix": snapshot_id,
+    # ``prefix`` must match the per-run base_dir used by run_indexing's
+    # output_storage override; keep them in sync.
+    snapshot_prefix = f"snapshots/{snapshot_id}"
+    manifest: dict[str, Any] = {
+        "prefix": snapshot_prefix,
         "built_at": _dt.datetime.now(_dt.timezone.utc).isoformat(),
         "build_id": snapshot_id,
         "files": list(_PARQUET_FILES),
     }
 
-    await asyncio.to_thread(_upload_snapshot, container, snapshot_id, output_dir, manifest)
+    await asyncio.to_thread(_write_manifest, container, manifest)
 
     reload_url = os.environ.get("BOT_AGENT_RELOAD_URL", "").strip()
     if reload_url:
         await _notify_bot(reload_url, os.environ.get("BOT_AGENT_ADMIN_TOKEN", ""))
     else:
         logger.info(
-            "BOT_AGENT_RELOAD_URL not set — bot will pick up the new snapshot "
-            "on its next reload / restart"
+            "BOT_AGENT_RELOAD_URL not set — bot will pick up snapshot %s on "
+            "its next reload / restart",
+            snapshot_id,
         )
 
     return manifest
 
 
-def _upload_snapshot(
-    container: str,
-    snapshot_id: str,
-    output_dir: Path,
-    manifest: dict[str, Any],
-) -> None:
-    """Upload all parquets + manifest (manifest LAST for atomicity)."""
+def _write_manifest(container: str, manifest: dict[str, Any]) -> None:
     storage = BlobService(container_name=container)
-
-    missing: list[str] = []
-    for name in _PARQUET_FILES:
-        src = output_dir / name
-        if not src.is_file():
-            missing.append(name)
-            continue
-        blob_name = f"{snapshot_id}/{name}"
-        logger.info("Uploading %s -> %s/%s", src, container, blob_name)
-        storage.put_blob(blob_name, src.read_bytes())
-
-    if missing:
-        raise FileNotFoundError(
-            f"GraphRAG output is incomplete; missing parquets: {missing}"
-        )
-
-    # Manifest written LAST — readers polling latest.json never see a
-    # half-uploaded snapshot.
-    logger.info("Publishing manifest %s/latest.json", container)
-    storage.put_blob("latest.json", json.dumps(manifest, indent=2))
+    logger.info(
+        "Publishing manifest %s/%s → prefix=%s",
+        container,
+        _MANIFEST_BLOB_NAME,
+        manifest["prefix"],
+    )
+    storage.put_blob(_MANIFEST_BLOB_NAME, json.dumps(manifest, indent=2))
 
 
 async def _notify_bot(reload_url: str, admin_token: str) -> None:
@@ -136,7 +119,6 @@ async def _notify_bot(reload_url: str, admin_token: str) -> None:
     try:
         import httpx  # type: ignore[import-not-found]
     except ImportError:
-        # Fallback to stdlib urllib so we don't add a hard runtime dep
         await asyncio.to_thread(_notify_bot_urllib, reload_url, admin_token)
         return
 

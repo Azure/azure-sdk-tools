@@ -28,11 +28,15 @@ async def init_secrets() -> None:
 
     logger.info("Loading secrets from Azure Key Vault...")
 
-    credential = ChainedTokenCredential(
-        WorkloadIdentityCredential(),
-        AzureCliCredential(),
-        ManagedIdentityCredential(),
-    )
+    credentials = []
+    for cls in (WorkloadIdentityCredential, AzureCliCredential, ManagedIdentityCredential):
+        try:
+            credentials.append(cls())
+        except Exception as e:  # noqa: BLE001
+            logger.debug("Skipping %s: %s", cls.__name__, e)
+    if not credentials:
+        raise RuntimeError("No Azure credentials available for Key Vault")
+    credential = ChainedTokenCredential(*credentials)
 
     client = SecretClient(vault_url=endpoint, credential=credential)
 

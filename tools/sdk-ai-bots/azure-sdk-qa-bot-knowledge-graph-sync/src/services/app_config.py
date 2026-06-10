@@ -49,11 +49,17 @@ async def init_configuration() -> None:
 
     logger.info("Loading configuration from Azure App Configuration...")
 
-    credential = ChainedTokenCredential(
-        WorkloadIdentityCredential(),
-        AzureCliCredential(),
-        ManagedIdentityCredential(),
-    )
+    # Build the chain; allow individual credentials to skip if not
+    # available in this environment (e.g., no workload identity locally).
+    credentials = []
+    for cls in (WorkloadIdentityCredential, AzureCliCredential, ManagedIdentityCredential):
+        try:
+            credentials.append(cls())
+        except Exception as e:  # noqa: BLE001
+            logger.debug("Skipping %s: %s", cls.__name__, e)
+    if not credentials:
+        raise RuntimeError("No Azure credentials available for App Configuration")
+    credential = ChainedTokenCredential(*credentials)
 
     client = AzureAppConfigurationClient(endpoint, credential=credential)
 

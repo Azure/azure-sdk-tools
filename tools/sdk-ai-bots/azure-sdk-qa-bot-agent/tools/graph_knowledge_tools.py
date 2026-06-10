@@ -1,25 +1,33 @@
-"""Graph-based knowledge retrieval tool (Microsoft GraphRAG / DRIFT search).
+"""Graph-based answering tool (Microsoft GraphRAG / DRIFT search).
 
-Exposes a single tool, :meth:`GraphKnowledgeTools.search_knowledge_graph`,
-that runs GraphRAG's DRIFT search against the knowledge graph built by the
-``azure-sdk-qa-bot-knowledge-graph-sync`` project. The vector similarity
-component of the search hits the configured Azure AI Search indexes; the
-graph structure (entities, relationships, community hierarchy, source text)
-is loaded from the parquet artefacts produced by the sync pipeline.
+Exposes a single tool, :meth:`GraphKnowledgeTools.ask_knowledge_graph`,
+that asks the knowledge graph a natural-language question and returns
+a *synthesized expert answer* together with the source documents the
+answer is grounded in.
 
-Returned references point to the **original source documents** cited by
-the DRIFT search (resolved via ``documents.parquet`` and ``text_units``),
-so the LLM can surface real document titles / paths in its answer rather
-than a synthetic "graph insight" stub.
+Conceptual contract — this is an **answering tool**, not a search tool:
+
+* Output type ``GraphAnswerResult { answer, citations[] }`` carries the
+  graph-aware synthesis. ``answer`` is the expert opinion,
+  ``citations`` list the source documents that grounded it.
+* The chat agent treats the answer as a narrative spine and may pair
+  it with verbatim chunks from ``search_knowledge_base`` (the vector
+  KB tool) or other tools (web search, GitHub, pipeline analysis,
+  ...). The ``instruction.md`` "Answer synthesis" section documents
+  the merge rules.
+
+POC scope — tenant filtering (``scope`` / ``service_type`` / source
+folder allow-lists) has been removed; the shared graph is served to
+every caller. Per-tenant masking will be layered back on top once the
+blob-direct end-to-end pipeline is validated.
 """
 
 from __future__ import annotations
 
-import asyncio
 import logging
 from typing import Annotated
 
-from models.knowledge import Reference, SearchKnowledgeBaseResult
+from models.knowledge import GraphAnswerResult, GraphCitation
 from tools import tool
 from utils.knowledge_graph import (
     GraphSourceRef,
@@ -28,129 +36,114 @@ from utils.knowledge_graph import (
 
 logger = logging.getLogger(__name__)
 
-# Truncate each chunk excerpt to keep prompt context bounded.
-_MAX_CONTENT_CHARS_PER_RESULT = 3000
-
-# DRIFT search is expensive — cap the number of parallel queries per call.
-_MAX_QUERIES = 2
+# Truncate each citation snippet to keep prompt context bounded.
+_MAX_SNIPPET_CHARS = 1200
 
 
 class GraphKnowledgeTools:
-    """Knowledge graph retrieval tools backed by GraphRAG DRIFT search."""
+    """Knowledge graph answering tools backed by GraphRAG DRIFT search."""
 
     @tool
-    async def search_knowledge_graph(
+    async def ask_knowledge_graph(
         self,
         *,
-        queries: Annotated[
-            list[str],
-            "One or two natural-language questions to ask the knowledge graph. "
-            "GraphRAG DRIFT search reasons over communities of related entities "
-            "and traverses their relationships, so phrase the query as a "
-            "QUESTION or a topic — not a keyword list. "
-            "Use this tool when the user's question requires connecting "
-            "concepts across multiple documents or summarising a topic area "
-            "(e.g., 'How does the TypeSpec ARM template relate to operationId "
-            "naming?' or 'Explain the relationship between LRO, polling, and "
-            "x-ms-long-running-operation'). "
-            "Each query is expensive (multiple LLM calls); prefer one focused "
-            "question, two only if they cover genuinely different facets.",
-        ],
-        tenant_id: Annotated[
+        query: Annotated[
             str,
-            "The active tenant ID for the current conversation. Currently "
-            "informational only — the underlying knowledge graph is global, "
-            "but the field is kept for parity with search_knowledge_base and "
-            "future per-tenant graphs.",
+            "A single natural-language QUESTION to ASK the knowledge graph. "
+            "This is an answering tool: GraphRAG runs DRIFT search to "
+            "reason over communities of related entities and traverse "
+            "their relationships, then synthesises an expert answer. "
+            "Phrase the input as a QUESTION or a topic (not a keyword "
+            "list). Use this tool when the user's question benefits from "
+            "cross-document reasoning, summarisation, or 'explain how X "
+            "relates to Y' style answers. The call is expensive (multiple "
+            "LLM calls); send one focused question per turn.",
         ],
-    ) -> SearchKnowledgeBaseResult:
-        """Search the GraphRAG knowledge graph and return the source
-        documents it cited.
+    ) -> GraphAnswerResult:
+        """Ask the knowledge graph and return a synthesised expert answer.
 
-        For each query, runs Microsoft GraphRAG's DRIFT (Dynamic Reasoning
-        and Inference with Flexible Traversal) search, then extracts the
-        text-unit citations from the resulting context payload and resolves
-        them back to their original source-document files via
-        ``documents.parquet``.
+        Runs Microsoft GraphRAG's DRIFT (Dynamic Reasoning and Inference
+        with Flexible Traversal) search for the supplied ``query``. The
+        resulting ``answer`` is a graph-aware synthesis; ``citations``
+        lists the source documents that grounded it.
 
-        Each resulting :class:`Reference` represents one cited source
-        document — title and link reflect the original file path, and
-        ``content`` is a representative chunk excerpt from that document.
+        Returns an empty result (empty ``answer``, no citations) when
+        the query is blank, the graph service is disabled, or the
+        search failed. The chat agent is responsible for falling back
+        to other tools in that case.
         """
+        normalised_query = (query or "").strip()
+        if not normalised_query:
+            return GraphAnswerResult(answer="", citations=[], query="")
+
         service = get_knowledge_graph_service()
 
-        capped = [q for q in queries[:_MAX_QUERIES] if q and q.strip()]
-        if not capped:
-            return SearchKnowledgeBaseResult(results=[])
+        logger.info("Running GraphRAG DRIFT search for query=%r", normalised_query)
 
-        logger.info(
-            "Running GraphRAG DRIFT search for tenant=%s, queries=%s",
-            tenant_id,
-            capped,
-        )
-
-        tasks = [service.drift_search(q) for q in capped]
-        outcomes = await asyncio.gather(*tasks, return_exceptions=True)
-
-        # Dedup across queries by document title so the LLM doesn't see the
-        # same document twice if both queries cited it.
-        merged: dict[str, Reference] = {}
-        for query, outcome in zip(capped, outcomes):
-            if isinstance(outcome, BaseException):
-                logger.warning(
-                    "GraphRAG drift_search failed for query=%r: %s",
-                    query,
-                    outcome,
-                )
-                continue
-            if outcome is None:
-                continue
-            answer, sources = outcome
-            if answer:
-                logger.info(
-                    "GraphRAG synthesised answer (query=%r) length=%d",
-                    query,
-                    len(answer),
-                )
-            for src in sources:
-                ref = _graph_source_to_reference(src)
-                # Keep the first occurrence (highest-ranked per query order).
-                merged.setdefault(ref.title or ref.link, ref)
-
-        refs = list(merged.values())
-
-        logger.info(
-            "=========Final Graph Search Result========= total=%d", len(refs)
-        )
-        for i, ref in enumerate(refs):
-            logger.info(
-                "Graph Result [%d] source=%s, title=%s, link=%s, content_len=%d",
-                i + 1,
-                ref.source,
-                ref.title,
-                ref.link,
-                len(ref.content or ""),
+        try:
+            outcome = await service.drift_search(normalised_query)
+        except Exception as exc:
+            logger.warning(
+                "GraphRAG drift_search failed for query=%r: %s",
+                normalised_query,
+                exc,
             )
-        logger.info("===================================== total=%d results", len(refs))
+            return GraphAnswerResult(answer="", citations=[], query=normalised_query)
 
-        return SearchKnowledgeBaseResult(results=refs)
+        if outcome is None:
+            return GraphAnswerResult(answer="", citations=[], query=normalised_query)
+
+        answer_text, sources = outcome
+        answer = answer_text.strip() if answer_text else ""
+        if answer:
+            logger.info(
+                "GraphRAG synthesised answer (query=%r) length=%d",
+                normalised_query,
+                len(answer),
+            )
+
+        merged_citations: dict[str, GraphCitation] = {}
+        for src in sources:
+            citation = _graph_source_to_citation(src)
+            # Dedupe by (title|link); keep first occurrence (highest-ranked).
+            merged_citations.setdefault(citation.title or citation.link, citation)
+
+        result = GraphAnswerResult(
+            answer=answer,
+            citations=list(merged_citations.values()),
+            query=normalised_query,
+        )
+
+        logger.info(
+            "=========GraphRAG Result========= answer_len=%d, citations=%d",
+            len(result.answer),
+            len(result.citations),
+        )
+        for i, citation in enumerate(result.citations):
+            logger.info(
+                "Graph Citation [%d] title=%s, link=%s",
+                i + 1,
+                citation.title,
+                citation.link,
+            )
+        logger.info("===================================== query=%r", normalised_query)
+
+        return result
 
 
-def _graph_source_to_reference(src: GraphSourceRef) -> Reference:
-    """Convert a :class:`GraphSourceRef` to the bot's :class:`Reference`."""
-    return Reference(
+def _graph_source_to_citation(src: GraphSourceRef) -> GraphCitation:
+    """Convert a :class:`GraphSourceRef` to the tool's :class:`GraphCitation`."""
+    return GraphCitation(
         title=src.title,
-        source=src.source,
         link=src.link,
-        content=_truncate_content(src.content),
-        score=0.0,
+        snippet=_truncate_snippet(src.content),
     )
 
 
-def _truncate_content(content: str | None) -> str:
-    """Truncate content to bound the prompt context size."""
+def _truncate_snippet(content: str | None) -> str:
+    """Truncate snippet to bound the prompt context size."""
     if not content:
         return ""
-    if len(content) <= _MAX_CONTENT_CHARS_PER_RESULT:
+    if len(content) <= _MAX_SNIPPET_CHARS:
         return content
-    return content[:_MAX_CONTENT_CHARS_PER_RESULT] + "\n... [truncated]"
+    return content[:_MAX_SNIPPET_CHARS] + "\n... [truncated]"

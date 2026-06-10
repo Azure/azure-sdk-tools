@@ -71,3 +71,57 @@ def test_chat_service_returns_none_when_user_id_empty() -> None:
         message=ChatMessage(role="user", content="hello", user_id="  "),
     )
     assert service._resolve_memory_scope(whitespace_id) is None
+
+
+def test_graph_citations_to_references_preserves_metadata() -> None:
+    """Graph citations should round-trip into Reference with source='graphrag'."""
+    from models.knowledge import GraphCitation
+    from services.chat_service import _graph_citations_to_references
+
+    citations = [
+        GraphCitation(
+            title="Doc A",
+            link="https://example.com/a",
+            snippet="excerpt",
+        )
+    ]
+    refs = _graph_citations_to_references(citations)
+    assert len(refs) == 1
+    assert refs[0].title == "Doc A"
+    assert refs[0].link == "https://example.com/a"
+    assert refs[0].source == "graphrag"
+    assert refs[0].content == "excerpt"
+
+
+def test_merge_references_dedups_by_link_and_title() -> None:
+    """Vector wins on conflicts (primary-source evidence first)."""
+    from models.knowledge import Reference
+    from services.chat_service import _merge_references
+
+    vector = [
+        Reference(title="Doc A", source="ai_search", link="https://example.com/a", content="VECTOR"),
+        Reference(title="Doc B", source="ai_search", link="https://example.com/b", content="VEC-B"),
+    ]
+    graph = [
+        Reference(title="Doc A", source="graphrag", link="https://example.com/a", content="GRAPH"),
+        Reference(title="Doc C", source="graphrag", link="https://example.com/c", content="GRAPH-C"),
+    ]
+
+    merged = _merge_references(vector, graph)
+    titles = [r.title for r in merged]
+    # Doc A deduped (vector wins), Doc B kept, Doc C appended.
+    assert titles == ["Doc A", "Doc B", "Doc C"]
+    # Vector copy survived.
+    assert merged[0].content == "VECTOR"
+    assert merged[0].source == "ai_search"
+
+
+def test_merge_references_empty_secondary_returns_primary_copy() -> None:
+    from models.knowledge import Reference
+    from services.chat_service import _merge_references
+
+    vector = [Reference(title="A", source="ai_search", link="l", content="c")]
+    merged = _merge_references(vector, [])
+    assert merged == vector
+    # Returned list is a copy, not the same object.
+    assert merged is not vector

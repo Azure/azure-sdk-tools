@@ -98,30 +98,16 @@ async def main() -> None:
         search_context_size="medium",
     )
 
-    # KNOWLEDGE_TOOL_MODE selects which knowledge-retrieval tool to expose
-    # to the agent. Accepted values (case-insensitive):
-    #   "vector" (default) — Azure AI Search-backed `search_knowledge_base`.
-    #   "graph"            — GraphRAG DRIFT-search `search_knowledge_graph`.
-    knowledge_tool_mode = cfg("KNOWLEDGE_TOOL_MODE", "vector").strip().lower()
-    if knowledge_tool_mode == "graph":
-        knowledge_tool_choice = graph_knowledge_tools.search_knowledge_graph
-    else:
-        if knowledge_tool_mode != "vector":
-            logger.warning(
-                "KNOWLEDGE_TOOL_MODE=%r is not recognised "
-                "(expected 'vector' or 'graph'); falling back to 'vector'.",
-                knowledge_tool_mode,
-            )
-            knowledge_tool_mode = "vector"
-        knowledge_tool_choice = knowledge_tools.search_knowledge_base
-    logger.info(
-        "Knowledge tool registration: mode=%s, tool=%s",
-        knowledge_tool_mode,
-        getattr(knowledge_tool_choice, "__name__", repr(knowledge_tool_choice)),
-    )
-
+    # Tool registration:
+    #   * `search_knowledge_base` — Azure AI Search vector retrieval; returns
+    #     verbatim chunks (Reference[]).
+    #   * `ask_knowledge_graph` — GraphRAG DRIFT-search synthesized answer
+    #     (GraphAnswerResult). Registered concurrently so the agent can call
+    #     either or both per turn. The agent's "Answer synthesis" rules in
+    #     instruction.md describe how to merge them.
     tools = [
-        knowledge_tool_choice,
+        knowledge_tools.search_knowledge_base,
+        graph_knowledge_tools.ask_knowledge_graph,
         web_tools.web_fetch,
         pipeline_tools.azsdk_analyze_pipeline,
         web_search_tool,

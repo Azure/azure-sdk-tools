@@ -1,0 +1,13 @@
+{
+  "prefix": "2026-06-02T06-47-23Z-449108",
+  "built_at": "2026-06-02T06:47:23.090218+00:00",
+  "build_id": "2026-06-02T06-47-23Z-449108",
+  "files": [
+    "entities.parquet",
+    "communities.parquet",
+    "community_reports.parquet",
+    "text_units.parquet",
+    "relationships.parquet",
+    "documents.parquet"
+  ]
+}

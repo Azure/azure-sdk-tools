@@ -7,10 +7,8 @@ using Azure.Core;
 using Azure.Identity;
 using Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion;
 using Azure.Sdk.Tools.Cli.Options;
-using Microsoft.Azure.Pipelines.WebApi;
 using Microsoft.Extensions.Options;
 using Microsoft.Identity.Client;
-using Octokit;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {

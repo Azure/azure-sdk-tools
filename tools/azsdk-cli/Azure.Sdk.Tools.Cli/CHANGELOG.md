@@ -4,6 +4,8 @@
 
 ### Features Added
 
+- Added the `package find-work-item` CLI command to find Azure DevOps package work item IDs by package name, package version, and language.
+
 ### Breaking Changes
 
 ### Bugs Fixed

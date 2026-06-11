@@ -338,7 +338,6 @@ _AZURE_TYPESPEC_AUTHORING_SOURCES = _sources(
     SRC_TYPESPEC_HTTP_SPECS,
     SRC_STATIC_AZURE_DOCS,
     SRC_TYPESPEC_AZURE_RESOURCE_MANAGER_LIB,
-    SRC_TYPESPEC_AZURE_PROVIDERHUB_DOCS,
 )
 
 # ---------------------------------------------------------------------------

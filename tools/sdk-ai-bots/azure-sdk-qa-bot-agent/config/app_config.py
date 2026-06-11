@@ -63,9 +63,11 @@ def get(key: str, default: None = None) -> str | None: ...
 def get(key: str, default: str | None = None) -> str | None:
     """Return a config value, falling back to *default*.
 
-    Raises if ``init()`` has not been called yet.
+    Raises if ``init()`` has not been called yet and no *default* is given.
     """
     if _settings is None:
+        if default is not None:
+            return default
         raise RuntimeError(
             "App Configuration not loaded. Call 'await app_config.init()' first."
         )

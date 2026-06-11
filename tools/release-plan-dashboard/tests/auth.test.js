@@ -17,15 +17,17 @@ const { mockSign, mockGetKey } = vi.hoisted(() => {
 
 // Mock Azure SDK modules used by mintGitHubAppToken via dynamic import
 vi.mock("@azure/identity", () => ({
-  DefaultAzureCredential: vi.fn().mockImplementation(() => ({})),
+  DefaultAzureCredential: vi.fn().mockImplementation(function () {
+    return {};
+  }),
 }));
 vi.mock("@azure/keyvault-keys", () => ({
-  KeyClient: vi.fn().mockImplementation(() => ({
-    getKey: mockGetKey,
-  })),
-  CryptographyClient: vi.fn().mockImplementation(() => ({
-    sign: mockSign,
-  })),
+  KeyClient: vi.fn().mockImplementation(function () {
+    return { getKey: mockGetKey };
+  }),
+  CryptographyClient: vi.fn().mockImplementation(function () {
+    return { sign: mockSign };
+  }),
 }));
 
 import {

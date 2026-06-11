@@ -4,9 +4,12 @@ Provides an MCP-based tool that connects to the Azure DevOps MCP server
 via stdio (``npx @azure-devops/mcp``).  Exposes pipeline definition
 lookup so the agent can help users find release / CI pipeline links.
 
-Authentication: acquires a bearer token for Azure DevOps via the shared
-Azure credential chain and injects it as ``ADO_MCP_AUTH_TOKEN`` so the
-MCP server (launched with ``-a env``) can authenticate API calls.
+Authentication: Azure DevOps does not accept Foundry agent identities
+as organization members, so the hosted agent cannot mint an ADO token
+directly. An out-of-band job (a UAMI that IS an org member) refreshes
+a usable ADO credential into Key Vault, and this module reads it from
+there and injects it as ``ADO_MCP_AUTH_TOKEN`` so the MCP server
+(launched with ``-a envvar``) can authenticate API calls.
 """
 
 from __future__ import annotations
@@ -14,26 +17,17 @@ from __future__ import annotations
 import logging
 import os
 
-from azure.core.credentials_async import AsyncTokenCredential
 from agent_framework import MCPStdioTool
 
 from config.app_config import get as cfg
 from tools import truncating_mcp_parser
-from utils.azure_credential import get_credential
+from utils.ado_token import resolve_token
 
 logger = logging.getLogger(__name__)
 
 _DEFAULT_ADO_ORG = "azure-sdk"
-# Environment variable read by the ADO MCP server in ``-a env`` auth mode.
+# Environment variable read by the ADO MCP server in ``-a envvar`` auth mode.
 _ADO_TOKEN_ENV = "ADO_MCP_AUTH_TOKEN"
-# Azure DevOps resource ID used as the OAuth2 scope for token acquisition.
-_ADO_SCOPE = "499b84ac-1321-427f-aa17-267ca6975798/.default"
-
-
-async def _get_ado_bearer_token(credential: AsyncTokenCredential) -> str:
-    """Acquire a bearer token for Azure DevOps using the shared credential."""
-    token = await credential.get_token(_ADO_SCOPE)
-    return token.token
 
 
 async def create_ado_mcp_tool() -> MCPStdioTool:
@@ -44,25 +38,33 @@ async def create_ado_mcp_tool() -> MCPStdioTool:
     org = cfg("ADO_ORG", _DEFAULT_ADO_ORG) or _DEFAULT_ADO_ORG
     env = {**os.environ}
 
-    # Acquire a bearer token and inject it for the MCP server's envvar auth mode.
-    if _ADO_TOKEN_ENV not in env:
-        try:
-            credential = get_credential()
-            env[_ADO_TOKEN_ENV] = await _get_ado_bearer_token(credential)
-            logger.info("ADO bearer token acquired via Azure credential chain")
-        except Exception:
-            logger.warning(
-                "Failed to acquire ADO bearer token via Azure credential; "
-                "the MCP server will start without ADO_MCP_AUTH_TOKEN",
-                exc_info=True,
-            )
+    # Pull the ADO credential via the shared resolver (KV-first, with
+    # JIT caching) and inject it for the MCP server's envvar auth mode.
+    try:
+        token = await resolve_token()
+        env[_ADO_TOKEN_ENV] = token
+    except Exception:
+        logger.warning(
+            "Failed to resolve ADO token; ADO MCP server will start " "without %s",
+            _ADO_TOKEN_ENV,
+            exc_info=True,
+        )
 
     logger.info("ADO MCP tool configured (org=%s)", org)
 
     return MCPStdioTool(
         name="ado-mcp-tools",
         command="npx",
-        args=["-y", "@azure-devops/mcp", org, "-d", "core", "pipelines", "-a", "env"],
+        args=[
+            "-y",
+            "@azure-devops/mcp",
+            org,
+            "-d",
+            "core",
+            "pipelines",
+            "-a",
+            "envvar",
+        ],
         env=env,
         load_prompts=False,
         parse_tool_results=truncating_mcp_parser,

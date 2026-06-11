@@ -21,7 +21,9 @@ from services.thread_memory_service import ThreadMemoryService
 
 
 def _make_message(
-    sender_id: str, sender_name: str, content: str,
+    sender_id: str,
+    sender_name: str,
+    content: str,
     sender_role: Role = Role.User,
 ) -> ConversationMessage:
     return ConversationMessage(
@@ -35,6 +37,7 @@ def _make_message(
         conversation_id="conv-001",
         conversation_type=ConversationType.teams_channel,
     )
+
 
 # ---------------------------------------------------------------------------
 # Fixtures: sample thread messages
@@ -203,16 +206,27 @@ class TestEpisodeModel:
 
 class TestQualityGate:
     def test_qualifies_expert_thread(self):
-        msg = _make_message("user_bob_expert", "Bob (Expert)", _EXPERT_THREAD[3]["content"])
+        msg = _make_message(
+            "user_bob_expert", "Bob (Expert)", _EXPERT_THREAD[3]["content"]
+        )
         assert ThreadMemoryService._qualifies_for_episode(msg, _EXPERT_THREAD) is True
 
     def test_rejects_short_thread(self):
-        msg = _make_message("bot_qa", "QA Bot", _SHORT_THREAD[-1]["content"], sender_role=Role.System)
+        msg = _make_message(
+            "bot_qa", "QA Bot", _SHORT_THREAD[-1]["content"], sender_role=Role.System
+        )
         assert ThreadMemoryService._qualifies_for_episode(msg, _SHORT_THREAD) is False
 
     def test_rejects_no_expert_thread(self):
-        msg = _make_message("bot_qa", "QA Bot", _NO_EXPERT_THREAD[-1]["content"], sender_role=Role.System)
-        assert ThreadMemoryService._qualifies_for_episode(msg, _NO_EXPERT_THREAD) is False
+        msg = _make_message(
+            "bot_qa",
+            "QA Bot",
+            _NO_EXPERT_THREAD[-1]["content"],
+            sender_role=Role.System,
+        )
+        assert (
+            ThreadMemoryService._qualifies_for_episode(msg, _NO_EXPERT_THREAD) is False
+        )
 
     def test_rejects_empty_thread(self):
         msg = _make_message("user_alice", "Alice", "test")
@@ -249,14 +263,16 @@ class TestThreadFormatting:
 
 class TestResponseParsing:
     def test_parse_valid_episode(self):
-        raw = json.dumps({
-            "trigger": "tsp-client fails",
-            "symptoms": ["error msg"],
-            "reasoning_chain": ["Check A", "Check B"],
-            "resolution": "Fix config",
-            "key_insight": "Config is key",
-            "confidence": 0.9,
-        })
+        raw = json.dumps(
+            {
+                "trigger": "tsp-client fails",
+                "symptoms": ["error msg"],
+                "reasoning_chain": ["Check A", "Check B"],
+                "resolution": "Fix config",
+                "key_insight": "Config is key",
+                "confidence": 0.9,
+            }
+        )
         result = ThreadMemoryService._parse_episode(raw)
         assert result is not None
         assert result.trigger == "tsp-client fails"
@@ -267,15 +283,17 @@ class TestResponseParsing:
         assert result is None
 
     def test_parse_wrapped_episode(self):
-        raw = json.dumps({
-            "episode": {
-                "trigger": "compile error",
-                "symptoms": [],
-                "reasoning_chain": ["step 1", "step 2"],
-                "resolution": "fix it",
-                "key_insight": "read docs",
+        raw = json.dumps(
+            {
+                "episode": {
+                    "trigger": "compile error",
+                    "symptoms": [],
+                    "reasoning_chain": ["step 1", "step 2"],
+                    "resolution": "fix it",
+                    "key_insight": "read docs",
+                }
             }
-        })
+        )
         result = ThreadMemoryService._parse_episode(raw)
         assert result is not None
         assert result.trigger == "compile error"
@@ -299,17 +317,19 @@ class TestExtractEpisode:
     @pytest.fixture
     def mock_openai_response(self):
         """A canned chat.completions response."""
-        episode_json = json.dumps({
-            "trigger": "tsp-client fails with emitter not found",
-            "symptoms": ["Error: emitter not found"],
-            "reasoning_chain": [
-                "Check if tspconfig.yaml exists",
-                "Verify emitter section includes Python emitter",
-            ],
-            "resolution": "Add @azure-tools/typespec-python emitter to tspconfig.yaml",
-            "key_insight": "Generation failures are usually config issues",
-            "confidence": 0.95,
-        })
+        episode_json = json.dumps(
+            {
+                "trigger": "tsp-client fails with emitter not found",
+                "symptoms": ["Error: emitter not found"],
+                "reasoning_chain": [
+                    "Check if tspconfig.yaml exists",
+                    "Verify emitter section includes Python emitter",
+                ],
+                "resolution": "Add @azure-tools/typespec-python emitter to tspconfig.yaml",
+                "key_insight": "Generation failures are usually config issues",
+                "confidence": 0.95,
+            }
+        )
         choice = SimpleNamespace(message=SimpleNamespace(content=episode_json))
         return SimpleNamespace(choices=[choice])
 
@@ -323,10 +343,15 @@ class TestExtractEpisode:
         svc = ThreadMemoryService()
 
         mock_openai = AsyncMock()
-        mock_openai.chat.completions.create = AsyncMock(return_value=mock_openai_response)
+        mock_openai.chat.completions.create = AsyncMock(
+            return_value=mock_openai_response
+        )
+        mock_project_client = SimpleNamespace(get_openai_client=lambda: mock_openai)
 
-        with patch("services.thread_memory_service.get_openai_client", return_value=mock_openai), \
-             patch("services.thread_memory_service.cfg", return_value="gpt-4.1"):
+        with patch(
+            "services.thread_memory_service.get_project_client",
+            return_value=mock_project_client,
+        ), patch("services.thread_memory_service.cfg", return_value="gpt-4.1"):
             formatted = svc._format_thread(_EXPERT_THREAD)
             episode = await svc._call_llm(formatted)
 
@@ -337,7 +362,9 @@ class TestExtractEpisode:
     @pytest.mark.asyncio
     async def test_qualifies_rejects_short_thread(self):
         svc = ThreadMemoryService()
-        msg = _make_message("bot_qa", "QA Bot", _SHORT_THREAD[-1]["content"], sender_role=Role.System)
+        msg = _make_message(
+            "bot_qa", "QA Bot", _SHORT_THREAD[-1]["content"], sender_role=Role.System
+        )
         assert not svc._qualifies_for_episode(msg, _SHORT_THREAD)
 
     @pytest.mark.asyncio
@@ -349,9 +376,12 @@ class TestExtractEpisode:
 
         mock_openai = AsyncMock()
         mock_openai.chat.completions.create = AsyncMock(return_value=null_response)
+        mock_project_client = SimpleNamespace(get_openai_client=lambda: mock_openai)
 
-        with patch("services.thread_memory_service.get_openai_client", return_value=mock_openai), \
-             patch("services.thread_memory_service.cfg", return_value="gpt-4.1"):
+        with patch(
+            "services.thread_memory_service.get_project_client",
+            return_value=mock_project_client,
+        ), patch("services.thread_memory_service.cfg", return_value="gpt-4.1"):
             formatted = svc._format_thread(_EXPERT_THREAD)
             episode = await svc._call_llm(formatted)
 

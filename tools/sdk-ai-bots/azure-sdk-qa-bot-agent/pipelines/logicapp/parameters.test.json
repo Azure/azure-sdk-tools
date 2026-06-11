@@ -41,7 +41,7 @@
       "value": "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-test/providers/Microsoft.ManagedIdentity/userAssignedIdentities/azsdkqabottest"
     },
     "functionAppResourceId": {
-      "value": "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Web/sites/azuresdkqabot-dev-function"
+      "value": "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.Web/sites/azuresdkqabot-function"
     },
     "blobStorageAccountName": {
       "value": "azuresdkqabotstorage"
@@ -50,16 +50,16 @@
       "value": "azureblob"
     },
     "blobConnectionResourceId": {
-      "value": "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Web/connections/azureblob"
+      "value": "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.Web/connections/azureblob"
     },
     "blobIdentityResourceId": {
       "value": "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.ManagedIdentity/userAssignedIdentities/azuresdkqabot-identity"
     },
     "teamsConnectionResourceId": {
-      "value": "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Web/connections/teams"
+      "value": "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.Web/connections/teams"
     },
     "integrationAccountResourceId": {
-      "value": "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Logic/integrationAccounts/azuresdkqabot-dev-ia"
+      "value": "/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.Logic/integrationAccounts/azuresdkqabot-ia"
     },
     "userAssignedIdentities": {
       "value": {

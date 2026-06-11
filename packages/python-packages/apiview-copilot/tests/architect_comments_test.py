@@ -10,10 +10,10 @@ import json
 
 import cli
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 class MockContainerClient:
     """Minimal mock for Cosmos container query_items."""
@@ -154,18 +154,26 @@ def test_include_replies_returns_non_approver_replies_in_approver_threads(monkey
     comments = [
         # Thread started by architect
         _make_comment(
-            "c1", thread_id="thread1", created_by="architect1",
-            created_on="2026-04-10T00:00:00Z", severity="ShouldFix",
+            "c1",
+            thread_id="thread1",
+            created_by="architect1",
+            created_on="2026-04-10T00:00:00Z",
+            severity="ShouldFix",
         ),
         # Reply from non-approver in same thread
         _make_comment(
-            "c2", thread_id="thread1", created_by="sdk_dev",
-            created_on="2026-04-10T01:00:00Z", severity=None,
+            "c2",
+            thread_id="thread1",
+            created_by="sdk_dev",
+            created_on="2026-04-10T01:00:00Z",
+            severity=None,
             comment_text="Got it, will fix.",
         ),
         # Thread started by non-approver — should be excluded
         _make_comment(
-            "c3", thread_id="thread2", created_by="sdk_dev",
+            "c3",
+            thread_id="thread2",
+            created_by="sdk_dev",
             created_on="2026-04-10T02:00:00Z",
         ),
     ]
@@ -178,7 +186,9 @@ def test_include_replies_returns_non_approver_replies_in_approver_threads(monkey
     )
 
     cli.get_architect_comments(
-        start_date="2026-04-01", end_date="2026-04-30", include_replies=True,
+        start_date="2026-04-01",
+        end_date="2026-04-30",
+        include_replies=True,
     )
     output = json.loads(capsys.readouterr().out)
 
@@ -203,8 +213,10 @@ def test_include_replies_without_approver_filter_returns_all(monkeypatch, capsys
     )
 
     cli.get_architect_comments(
-        start_date="2026-04-01", end_date="2026-04-30",
-        include_replies=True, all_commenters=True,
+        start_date="2026-04-01",
+        end_date="2026-04-30",
+        include_replies=True,
+        all_commenters=True,
     )
     output = json.loads(capsys.readouterr().out)
 
@@ -220,11 +232,15 @@ def test_default_keeps_only_first_comment_per_thread(monkeypatch, capsys):
     """Without include_replies, only the earliest comment per thread is returned."""
     comments = [
         _make_comment(
-            "c1", thread_id="thread1", created_by="architect1",
+            "c1",
+            thread_id="thread1",
+            created_by="architect1",
             created_on="2026-04-10T00:00:00Z",
         ),
         _make_comment(
-            "c2", thread_id="thread1", created_by="architect1",
+            "c2",
+            thread_id="thread1",
+            created_by="architect1",
             created_on="2026-04-10T01:00:00Z",
         ),
     ]
@@ -247,11 +263,15 @@ def test_default_excludes_threads_not_started_in_window(monkeypatch, capsys):
     """Threads that started before the date window should be excluded in default mode."""
     comments = [
         _make_comment(
-            "c1", thread_id="thread1", created_by="architect1",
+            "c1",
+            thread_id="thread1",
+            created_by="architect1",
             created_on="2026-04-10T00:00:00Z",
         ),
         _make_comment(
-            "c2", thread_id="thread_old", created_by="architect1",
+            "c2",
+            thread_id="thread_old",
+            created_by="architect1",
             created_on="2026-04-11T00:00:00Z",
         ),
     ]
@@ -304,12 +324,18 @@ def test_threadless_default_keeps_only_first_comment_per_element(monkeypatch, ca
     when comments have no ThreadId."""
     comments = [
         _make_comment(
-            "c1", thread_id=None, element_id="Ns.Class.method",
-            created_by="architect1", created_on="2026-04-10T00:00:00Z",
+            "c1",
+            thread_id=None,
+            element_id="Ns.Class.method",
+            created_by="architect1",
+            created_on="2026-04-10T00:00:00Z",
         ),
         _make_comment(
-            "c2", thread_id=None, element_id="Ns.Class.method",
-            created_by="architect1", created_on="2026-04-10T01:00:00Z",
+            "c2",
+            thread_id=None,
+            element_id="Ns.Class.method",
+            created_by="architect1",
+            created_on="2026-04-10T01:00:00Z",
         ),
     ]
     _patch_common(
@@ -332,12 +358,18 @@ def test_threadless_include_replies_returns_all_in_element_group(monkeypatch, ca
     """With include_replies, all comments sharing the same ElementId (no ThreadId) are returned."""
     comments = [
         _make_comment(
-            "c1", thread_id=None, element_id="Ns.Class.method",
-            created_by="architect1", created_on="2026-04-10T00:00:00Z",
+            "c1",
+            thread_id=None,
+            element_id="Ns.Class.method",
+            created_by="architect1",
+            created_on="2026-04-10T00:00:00Z",
         ),
         _make_comment(
-            "c2", thread_id=None, element_id="Ns.Class.method",
-            created_by="sdk_dev", created_on="2026-04-10T01:00:00Z",
+            "c2",
+            thread_id=None,
+            element_id="Ns.Class.method",
+            created_by="sdk_dev",
+            created_on="2026-04-10T01:00:00Z",
         ),
     ]
     _patch_common(
@@ -349,7 +381,9 @@ def test_threadless_include_replies_returns_all_in_element_group(monkeypatch, ca
     )
 
     cli.get_architect_comments(
-        start_date="2026-04-01", end_date="2026-04-30", include_replies=True,
+        start_date="2026-04-01",
+        end_date="2026-04-30",
+        include_replies=True,
     )
     output = json.loads(capsys.readouterr().out)
 
@@ -361,12 +395,18 @@ def test_threadless_window_filter_excludes_old_threads(monkeypatch, capsys):
     """Threadless comments whose ElementId thread started before the window are excluded."""
     comments = [
         _make_comment(
-            "c1", thread_id=None, element_id="Ns.Old.method",
-            created_by="architect1", created_on="2026-04-10T00:00:00Z",
+            "c1",
+            thread_id=None,
+            element_id="Ns.Old.method",
+            created_by="architect1",
+            created_on="2026-04-10T00:00:00Z",
         ),
         _make_comment(
-            "c2", thread_id=None, element_id="Ns.New.method",
-            created_by="architect1", created_on="2026-04-11T00:00:00Z",
+            "c2",
+            thread_id=None,
+            element_id="Ns.New.method",
+            created_by="architect1",
+            created_on="2026-04-11T00:00:00Z",
         ),
     ]
     _patch_common(
@@ -393,21 +433,33 @@ def test_mixed_threaded_and_threadless_comments(monkeypatch, capsys):
     comments = [
         # Threaded: two comments in thread1
         _make_comment(
-            "c1", thread_id="thread1", element_id="Ns.Class.a",
-            created_by="architect1", created_on="2026-04-10T00:00:00Z",
+            "c1",
+            thread_id="thread1",
+            element_id="Ns.Class.a",
+            created_by="architect1",
+            created_on="2026-04-10T00:00:00Z",
         ),
         _make_comment(
-            "c2", thread_id="thread1", element_id="Ns.Class.a",
-            created_by="architect1", created_on="2026-04-10T01:00:00Z",
+            "c2",
+            thread_id="thread1",
+            element_id="Ns.Class.a",
+            created_by="architect1",
+            created_on="2026-04-10T01:00:00Z",
         ),
         # Threadless: two comments on the same ElementId
         _make_comment(
-            "c3", thread_id=None, element_id="Ns.Class.b",
-            created_by="architect1", created_on="2026-04-11T00:00:00Z",
+            "c3",
+            thread_id=None,
+            element_id="Ns.Class.b",
+            created_by="architect1",
+            created_on="2026-04-11T00:00:00Z",
         ),
         _make_comment(
-            "c4", thread_id=None, element_id="Ns.Class.b",
-            created_by="architect1", created_on="2026-04-11T01:00:00Z",
+            "c4",
+            thread_id=None,
+            element_id="Ns.Class.b",
+            created_by="architect1",
+            created_on="2026-04-11T01:00:00Z",
         ),
     ]
     _patch_common(
@@ -434,17 +486,23 @@ def test_default_excludes_thread_started_by_non_approver(monkeypatch, capsys):
     comments = [
         # Thread started by non-approver
         _make_comment(
-            "c1", thread_id="thread1", created_by="sdk_dev",
+            "c1",
+            thread_id="thread1",
+            created_by="sdk_dev",
             created_on="2026-04-10T00:00:00Z",
         ),
         # Approver reply in the same thread
         _make_comment(
-            "c2", thread_id="thread1", created_by="architect1",
+            "c2",
+            thread_id="thread1",
+            created_by="architect1",
             created_on="2026-04-10T01:00:00Z",
         ),
         # Thread started by approver (should be kept)
         _make_comment(
-            "c3", thread_id="thread2", created_by="architect1",
+            "c3",
+            thread_id="thread2",
+            created_by="architect1",
             created_on="2026-04-11T00:00:00Z",
         ),
     ]
@@ -530,15 +588,21 @@ def test_include_replies_excludes_threads_not_started_in_window(monkeypatch, cap
     """With include_replies=True, threads that started before the window are excluded."""
     comments = [
         _make_comment(
-            "c1", thread_id="thread_new", created_by="architect1",
+            "c1",
+            thread_id="thread_new",
+            created_by="architect1",
             created_on="2026-04-10T00:00:00Z",
         ),
         _make_comment(
-            "c2", thread_id="thread_new", created_by="sdk_dev",
+            "c2",
+            thread_id="thread_new",
+            created_by="sdk_dev",
             created_on="2026-04-10T01:00:00Z",
         ),
         _make_comment(
-            "c3", thread_id="thread_old", created_by="architect1",
+            "c3",
+            thread_id="thread_old",
+            created_by="architect1",
             created_on="2026-04-11T00:00:00Z",
         ),
     ]
@@ -554,7 +618,9 @@ def test_include_replies_excludes_threads_not_started_in_window(monkeypatch, cap
     )
 
     cli.get_architect_comments(
-        start_date="2026-04-01", end_date="2026-04-30", include_replies=True,
+        start_date="2026-04-01",
+        end_date="2026-04-30",
+        include_replies=True,
     )
     output = json.loads(capsys.readouterr().out)
 
@@ -568,17 +634,26 @@ def test_include_replies_threadless_excludes_non_approver_starter(monkeypatch, c
     comments = [
         # ElementId group started by non-approver
         _make_comment(
-            "c1", thread_id=None, element_id="Ns.Class.a",
-            created_by="sdk_dev", created_on="2026-04-10T00:00:00Z",
+            "c1",
+            thread_id=None,
+            element_id="Ns.Class.a",
+            created_by="sdk_dev",
+            created_on="2026-04-10T00:00:00Z",
         ),
         _make_comment(
-            "c2", thread_id=None, element_id="Ns.Class.a",
-            created_by="architect1", created_on="2026-04-10T01:00:00Z",
+            "c2",
+            thread_id=None,
+            element_id="Ns.Class.a",
+            created_by="architect1",
+            created_on="2026-04-10T01:00:00Z",
         ),
         # ElementId group started by approver
         _make_comment(
-            "c3", thread_id=None, element_id="Ns.Class.b",
-            created_by="architect1", created_on="2026-04-11T00:00:00Z",
+            "c3",
+            thread_id=None,
+            element_id="Ns.Class.b",
+            created_by="architect1",
+            created_on="2026-04-11T00:00:00Z",
         ),
     ]
     _patch_common(
@@ -593,7 +668,9 @@ def test_include_replies_threadless_excludes_non_approver_starter(monkeypatch, c
     )
 
     cli.get_architect_comments(
-        start_date="2026-04-01", end_date="2026-04-30", include_replies=True,
+        start_date="2026-04-01",
+        end_date="2026-04-30",
+        include_replies=True,
     )
     output = json.loads(capsys.readouterr().out)
 
@@ -610,8 +687,11 @@ def test_comment_with_no_thread_id_and_no_element_id(monkeypatch, capsys):
     """A comment with neither ThreadId nor ElementId is treated as standalone."""
     comments = [
         _make_comment(
-            "c1", thread_id=None, element_id=None,
-            created_by="architect1", created_on="2026-04-10T00:00:00Z",
+            "c1",
+            thread_id=None,
+            element_id=None,
+            created_by="architect1",
+            created_on="2026-04-10T00:00:00Z",
         ),
     ]
     _patch_common(
@@ -634,11 +714,15 @@ def test_dedup_picks_earliest_regardless_of_input_order(monkeypatch, capsys):
     comments = [
         # Later comment appears first in list
         _make_comment(
-            "c2", thread_id="thread1", created_by="architect1",
+            "c2",
+            thread_id="thread1",
+            created_by="architect1",
             created_on="2026-04-10T01:00:00Z",
         ),
         _make_comment(
-            "c1", thread_id="thread1", created_by="architect1",
+            "c1",
+            thread_id="thread1",
+            created_by="architect1",
             created_on="2026-04-10T00:00:00Z",
         ),
     ]

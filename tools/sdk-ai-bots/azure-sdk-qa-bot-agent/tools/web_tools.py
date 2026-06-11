@@ -151,9 +151,13 @@ async def _fetch_async(url: str, max_chars: int) -> FetchWebpageResult:
     }
 
     try:
+        # Disable redirect following: _is_public_url only validates the URL we
+        # pass in, so allowing httpx to follow redirects would let an attacker
+        # bypass SSRF protection by pointing a public URL at an internal
+        # address (CWE-918).
         async with httpx.AsyncClient(
             headers=headers,
-            follow_redirects=True,
+            follow_redirects=False,
             timeout=httpx.Timeout(_DEFAULT_TIMEOUT_SECONDS),
             http2=True,
         ) as client:
@@ -161,6 +165,17 @@ async def _fetch_async(url: str, max_chars: int) -> FetchWebpageResult:
             final_url = str(response.url)
             status_code = response.status_code
             content_type = response.headers.get("content-type", "")
+
+            if 300 <= status_code < 400:
+                return FetchWebpageResult(
+                    success=False,
+                    url=url,
+                    resolved_url=final_url,
+                    status_code=status_code,
+                    content_type=content_type,
+                    content_excerpt="",
+                    error="Redirects are not followed; provide the final URL directly.",
+                )
 
             if status_code >= 400:
                 return FetchWebpageResult(

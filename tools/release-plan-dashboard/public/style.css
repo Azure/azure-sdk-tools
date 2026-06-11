@@ -58,6 +58,15 @@ header h1 {
   font-size: 1.25rem;
   font-weight: 600;
 }
+.test-env-banner {
+  background: #fff4ce;
+  border: 1px solid #f0c800;
+  border-radius: var(--radius);
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  color: #6b5900;
+  margin-top: 4px;
+}
 .header-right {
   display: flex;
   align-items: center;
@@ -91,7 +100,8 @@ header h1 {
   width: 280px;
 }
 .global-plane-filter,
-.global-month-filter {
+.global-month-filter,
+.global-sort-order {
   padding: 5px 10px;
   border: 1px solid #d2d0ce;
   border-radius: var(--radius);
@@ -673,6 +683,22 @@ main {
   color: var(--green);
   font-size: 0.72rem;
 }
+.badge-first-preview {
+  background: #d6eaf8;
+  color: #1a5276;
+  font-size: 0.72rem;
+}
+.badge-first-ga {
+  background: #d5f5e3;
+  color: #1e8449;
+  font-size: 0.72rem;
+}
+.global-tag-filter {
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  font-size: 0.85rem;
+}
 
 /* Badge */
 .step-badge {
@@ -1049,6 +1075,14 @@ main {
   background: #e8daef;
   color: #6c3483;
 }
+.pr-label-first-preview {
+  background: #d6eaf8;
+  color: #1a5276;
+}
+.pr-label-first-ga {
+  background: #d5f5e3;
+  color: #1e8449;
+}
 .pr-label-version {
   background: var(--gray-bg);
   color: #323130;
@@ -1230,36 +1264,14 @@ main {
   font-size: 0.75rem;
   font-weight: 600;
   border-radius: 4px;
-  border: none;
+  border: 1px solid #ffc107;
   cursor: pointer;
   transition: filter 0.15s;
+  background: #fff3cd;
+  color: #856404;
 }
 .lang-action-btn:hover {
   filter: brightness(0.9);
-}
-.action-btn-generate {
-  background: var(--azure-light);
-  color: var(--azure-dark);
-}
-.action-btn-fix {
-  background: #fff4ce;
-  color: #8a6d3b;
-}
-.action-btn-release {
-  background: var(--green-bg);
-  color: var(--green);
-}
-.action-btn-merge {
-  background: #e6f7ff;
-  color: #0078d4;
-}
-.action-btn-link {
-  background: #fff0f0;
-  color: #c41e3a;
-}
-.action-btn-ready {
-  background: #fff8e1;
-  color: #7b6000;
 }
 
 /* Feed link icons */

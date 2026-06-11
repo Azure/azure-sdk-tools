@@ -54,7 +54,7 @@ Each skill lives in `<name>/` and contains:
 
 | Tool | Purpose | Install |
 | ---- | ------- | ------- |
-| [**vally**](https://literate-engine-r3wnl4v.pages.github.io/) | Run skill evals, grade trajectories | `npm install -g @microsoft/vally-cli` |
+| [**vally**](https://microsoft.github.io/vally/) | Run skill evals, grade trajectories | `npm install -g @microsoft/vally-cli` |
 
 ### Linting Evals
 
@@ -92,4 +92,4 @@ The [skill-eval pipeline](https://dev.azure.com/azure-sdk/internal/_build?defini
 ## Further Reading
 
 - [agentskills.io spec](https://agentskills.io) — Skill frontmatter specification
-- [vally docs](https://literate-engine-r3wnl4v.pages.github.io/) — Eval runner and graders
+- [vally docs](https://microsoft.github.io/vally/) — Eval runner and graders

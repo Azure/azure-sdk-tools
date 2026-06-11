@@ -376,8 +376,8 @@ class DatabaseManager:
         # Track successful writes so we can undo them on failure.
         # - New items (examples, memory): rollback = soft-delete
         # - Existing items (guidelines): rollback = restore snapshot
-        saved_new_items = []       # (container, id) for new items to soft-delete
-        saved_guideline_ids = []   # DB-format IDs of guidelines we updated
+        saved_new_items = []  # (container, id) for new items to soft-delete
+        saved_guideline_ids = []  # DB-format IDs of guidelines we updated
 
         def _rollback(error_msg: str):
             """Best-effort undo of all successful writes."""
@@ -391,8 +391,10 @@ class DatabaseManager:
                     self.guidelines.client.upsert_item(guideline_snapshots[g_db_id])
                 except Exception as rb_err:
                     print(f"Rollback warning: failed to restore guideline {g_db_id}: {rb_err}")
-            print(f"Rolled back {len(saved_new_items)} new item(s) and "
-                  f"{len(saved_guideline_ids)} guideline update(s) after error: {error_msg}")
+            print(
+                f"Rolled back {len(saved_new_items)} new item(s) and "
+                f"{len(saved_guideline_ids)} guideline update(s) after error: {error_msg}"
+            )
 
         # 1. Examples (new items)
         for example in examples:

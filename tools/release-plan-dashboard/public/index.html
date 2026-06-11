@@ -38,8 +38,10 @@
             search: "",
             plane: "",
             month: "",
+            sort: "month",
             prLang: "",
             prStatus: "",
+            tag: "",
           },
           prFilterVisible: false,
 
@@ -101,8 +103,12 @@
     <header>
       <div class="header-left">
         <h1>Azure SDK Release Plan Dashboard</h1>
+        <div id="test-env-banner" class="test-env-banner" style="display: none">
+          ⚠️ This is a <strong>test instance</strong>. Data shown here is for
+          test release plans only and does not reflect actual release plans.
+        </div>
         <div class="header-meta">
-          <span class="short-link"
+          <span id="short-link" class="short-link"
             >Short link:
             <a href="https://aka.ms/azsdk/releaseplan-dashboard"
               >https://aka.ms/azsdk/releaseplan-dashboard</a
@@ -201,6 +207,24 @@
         x-model="$store.app.filters.month"
       >
         <option value="">All Months</option>
+      </select>
+      <select
+        id="global-tag-filter"
+        class="global-tag-filter"
+        x-model="$store.app.filters.tag"
+      >
+        <option value="">All Tags</option>
+        <option value="first-preview">First Preview</option>
+        <option value="first-ga">First GA</option>
+      </select>
+      <select
+        id="global-sort-order"
+        class="global-sort-order"
+        x-model="$store.app.filters.sort"
+        x-show="$store.app.activeTab === 'tab-release-plans'"
+      >
+        <option value="month">Sort by: SDK Release Month</option>
+        <option value="id">Sort by: Release Plan ID</option>
       </select>
     </div>
 
@@ -620,6 +644,22 @@
       </div>
 
       <div id="pm-content">
+        <section id="section-pm-pp-ready" class="plan-section">
+          <h3 class="section-header" data-target="list-pm-pp-ready">
+            <span class="caret">&#9660;</span> 🏁 Ready to Complete Private
+            Preview Release Plans <span class="section-count"></span>
+          </h3>
+          <div id="list-pm-pp-ready" class="plan-list"></div>
+        </section>
+
+        <section id="section-pm-ns-missing" class="plan-section">
+          <h3 class="section-header" data-target="list-pm-ns-missing">
+            <span class="caret">&#9660;</span> ⚠️ Missing Namespace Approval
+            <span class="section-count"></span>
+          </h3>
+          <div id="list-pm-ns-missing" class="plan-list"></div>
+        </section>
+
         <section id="section-pm-approaching" class="plan-section">
           <h3 class="section-header" data-target="list-pm-approaching">
             <span class="caret">&#9660;</span> 📅 Approaching SDK Release Target

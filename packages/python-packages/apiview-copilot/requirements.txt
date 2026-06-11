@@ -1,4 +1,4 @@
-aiohttp==3.13.3
+aiohttp==3.14.0
 azure-ai-agents==1.1.0
 azure-ai-inference==1.0.0b9
 azure-monitor-opentelemetry==1.6.7
@@ -10,7 +10,7 @@ azure-keyvault-keys==4.11.0
 azure-keyvault-secrets==4.10.0
 azure-search-documents==11.5.2
 beautifulsoup4==4.13.4
-black==25.1.0
+black==26.3.1
 colorama==0.4.6
 fastapi==0.121.2
 httpx==0.28.1
@@ -18,9 +18,9 @@ knack==0.12.0
 matplotlib==3.10.0
 markdown-it-py==3.0.0
 openai==2.4.0
-python-dotenv==1.0.1
+python-dotenv==1.2.2
 pydantic==2.10.6
 PyJWT==2.12.0
 pyyaml==6.0.2
-pytest==7.4.2
+pytest==9.0.3
 uvicorn[standard]==0.29.0

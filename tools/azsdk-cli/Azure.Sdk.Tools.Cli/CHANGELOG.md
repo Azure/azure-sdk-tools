@@ -1,5 +1,25 @@
 # Release History
 
+## 0.6.19 (Unreleased)
+
+### Features Added
+
+- Release plan is automatically marked as "Finished" when all required language SDKs are either Released or have an Approved exclusion. Management plane checks all 5 languages; data plane checks .NET, Java, Python, and JavaScript only.
+- Added the `package find-work-item` CLI command to find Azure DevOps package work item IDs by package name, package version, and language.
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
+## 0.6.18 (2026-06-08)
+
+### Other Changes
+
+- Updated the release plan response to include the link to release plan dashboard.
+- Added release plan type check in SDK generation and inform the agent that SDK generation is not required for private preview. 
+
 ## 0.6.17 (2026-06-02)
 
 ### Bugs Fixed

@@ -21,7 +21,7 @@ from models.chat import ChatRequest, ChatResponse
 from models.conversation import ConversationMessage, SaveConversationMessageResponse
 from models.feedback import FeedbackRequest, FeedbackResponse
 from models.intention import IntentionRequest, IntentionResponse
-from models.knowledge import KnowledgeResponse
+from models.knowledge_retrieve import KnowledgeRetrieveResponse, KnowledgeRetrieveRequest
 from services.chat_service import ChatService
 from services.conversation_service import ConversationService
 from services.feedback_service import FeedbackService
@@ -222,8 +222,8 @@ async def save_conversation(req: ConversationMessage):
     )
     return SaveConversationMessageResponse()
 
-@app.post("/knowledge/retrieve", response_model=KnowledgeResponse)
-async def retrieve_knowledge(req: ChatRequest):
+@app.post("/knowledge/retrieve", response_model=KnowledgeRetrieveResponse)
+async def retrieve_knowledge(req: KnowledgeRetrieveRequest):
     """Retrieve knowledge for a request using search_knowledge_base tool."""
     logger.info(
         "Retrieve knowledge request: tenant=%s, conversation=%s, message=%s",

@@ -58,15 +58,15 @@
 #####################
 # Attestation
 #####################              
-/eng/pipelines/cpex-attestation.yml     @smw-ms @praveenkuttappan @maririos 
-/eng/scripts/Attest-CPEX-KPIs.ps1       @smw-ms @praveenkuttappan @maririos 
+/eng/pipelines/cpex-attestation.yml     @praveenkuttappan @maririos 
+/eng/scripts/Attest-CPEX-KPIs.ps1       @praveenkuttappan @maririos 
 
 #####################
 # Azure SDK Tools MCP
 #####################
 /eng/common/instructions/azsdk-tools/   @maririos @praveenkuttappan @MrJustinB 
 # PRLabel: %azsdk-cli
-/tools/ai-evals/azsdk-mcp/              @jeo02 @smw-ms @praveenkuttappan @maririos
+/tools/ai-evals/azsdk-mcp/              @jeo02 @praveenkuttappan @maririos
 # PRLabel: %azsdk-cli
 /tools/azsdk-cli/                       @azure/azsdk-cli
 # PRLabel: %azsdk-cli %design-discussion

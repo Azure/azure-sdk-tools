@@ -179,15 +179,6 @@ namespace Azure.ClientSdk.Analyzers
             true,
             "Type names should not conflict with other SDK and .NET platform types.");
 
-        public static readonly DiagnosticDescriptor AZC0035 = new DiagnosticDescriptor(
-            nameof(AZC0035),
-            "Output model type should have a corresponding model factory method",
-            "Output model type '{0}' should have a corresponding method in a model factory class. Add a static method that returns '{0}' to a class ending with 'ModelFactory'.",
-            DiagnosticCategory.Usage,
-            DiagnosticSeverity.Warning,
-            true,
-            "Output model types returned from client methods should have corresponding model factory methods for mocking support.");
-
         public static readonly DiagnosticDescriptor AZC0036 = new DiagnosticDescriptor(
             nameof(AZC0036),
             "Improper model name suffix",

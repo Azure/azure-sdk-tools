@@ -35,8 +35,9 @@ jobs:
         inputs:
           versionSpec: '22.x'
 
-      - script: npm install -g @microsoft/vally-cli@0.4.0
-        displayName: 'Install Vally CLI'
+      - script: npm ci
+        displayName: 'Install Vally CLI (pinned via lockfile)'
+        workingDirectory: eng/skill-eval
 
       - script: npm install -g @github/copilot-sdk
         displayName: 'Install Copilot SDK'
@@ -69,7 +70,7 @@ jobs:
 
       - script: |
           cd .github/skills
-          vally eval --tag "type=ci-gate" $(EVAL_ARGS) --output-dir ".vally/results"
+          npm exec --no --prefix "$(Build.SourcesDirectory)/eng/skill-eval" -- vally eval --tag "type=ci-gate" $(EVAL_ARGS) --output-dir ".vally/results"
         displayName: 'Run evaluations'
         condition: and(succeeded(), ne(variables['EVAL_ARGS'], 'SKIP'))
         continueOnError: true

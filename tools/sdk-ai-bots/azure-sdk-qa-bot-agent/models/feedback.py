@@ -60,22 +60,17 @@ class FeedbackJobStatus(str, Enum):
     skipped = "skipped"
 
 
-class FeedbackClassification(str, Enum):
-    """Root-cause label produced by the feedback agent."""
-
-    missing_content = "missing_content"
-    outdated_content = "outdated_content"
-    retrieval_mismatch = "retrieval_mismatch"
-    reasoning_gap = "reasoning_gap"
-    out_of_scope = "out_of_scope"
-
-
 class FeedbackJob(BaseModel):
     """Durable feedback-analysis job persisted in Cosmos `feedback-jobs`.
 
     Partition key is ``/tenant_id``. The ``id`` follows the
     ``{conversation_id}:{trigger}:{timestamp}`` convention from §6.3
     of the feedback-agent design doc.
+
+    The job row is a **lifecycle marker only** — the hosted agent owns
+    the entire analysis (classification, fix summary, filing the GitHub
+    issue, ...) via its own tools. The service does not parse the agent
+    reply; the raw text is logged for ops triage.
     """
 
     id: str
@@ -92,14 +87,8 @@ class FeedbackJob(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    # Populated by the agent on completion.
-    classification: FeedbackClassification | None = None
-    user_intent_summary: str | None = None
-    suggested_fix_summary: str | None = None
-    corrected_answer: str | None = None
-    issue_url: str | None = None
-
-    # Free-form error context (e.g. trace_unavailable) for ops triage.
+    # Free-form error context (e.g. agent_invocation_failed, timeout)
+    # for ops triage. ``None`` when the agent ran to completion.
     error: str | None = None
 
     def to_cosmos(self) -> dict[str, Any]:
@@ -111,3 +100,44 @@ class FeedbackJob(BaseModel):
         # Strip Cosmos system fields before validation.
         cleaned = {k: v for k, v in doc.items() if not k.startswith("_")}
         return cls.model_validate(cleaned)
+
+
+# ---------------------------------------------------------------------------
+# Hosted feedback-agent I/O contract
+# ---------------------------------------------------------------------------
+
+
+class UserFeedbackInput(BaseModel):
+    """Explicit user feedback payload (only present for `bad_reaction`)."""
+
+    comment: str | None = None
+    reasons: list[str] = Field(default_factory=list)
+
+
+class FeedbackAgentInput(BaseModel):
+    """Structured input sent to the hosted feedback agent.
+
+    Serialized as JSON in a single `user` message — the agent's
+    instruction.md spec calls out this exact schema.
+    """
+
+    trigger: FeedbackJobTrigger
+    tenant_id: str
+    conversation_id: str
+    conversation_type: ConversationType
+    response_id: str
+    user_feedback: UserFeedbackInput | None = None
+
+    def to_json(self) -> str:
+        return self.model_dump_json(exclude_none=False)
+
+
+class FoundryAgentReference(BaseModel):
+    """`agent_reference` extra-body block for the Responses API."""
+
+    name: str
+    version: str
+    type: str = "agent_reference"
+
+    def to_extra_body(self) -> dict[str, Any]:
+        return self.model_dump()

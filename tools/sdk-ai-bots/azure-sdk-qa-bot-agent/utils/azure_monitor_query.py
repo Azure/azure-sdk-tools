@@ -7,26 +7,27 @@ turn, we query App Insights for all spans (``dependencies`` / ``requests``
 / ``traces``) carrying that ``response_id``.
 
 The Application Insights resource is selected via the
-``APPLICATIONINSIGHTS_RESOURCE_ID`` env var (an ARM resource id of the
-form ``/subscriptions/<sub>/resourceGroups/<rg>/providers/microsoft.insights/components/<name>``).
+``APPLICATIONINSIGHTS_RESOURCE_ID`` setting in Azure App Configuration
+(an ARM resource id of the form
+``/subscriptions/<sub>/resourceGroups/<rg>/providers/microsoft.insights/components/<name>``).
 This is the resource id that ``azure-monitor-query`` expects.
 """
 
 from __future__ import annotations
 
 import logging
-import os
 from dataclasses import dataclass
 from datetime import timedelta
 from typing import Any
 
 from azure.monitor.query.aio import LogsQueryClient
 
+from config.app_config import get as cfg
 from utils.azure_credential import get_credential
 
 logger = logging.getLogger(__name__)
 
-_RESOURCE_ID_ENV = "APPLICATIONINSIGHTS_RESOURCE_ID"
+_RESOURCE_ID_KEY = "APPLICATIONINSIGHTS_RESOURCE_ID"
 # How far back to search for spans matching a response_id.
 _DEFAULT_LOOKBACK_HOURS = 24
 
@@ -41,11 +42,11 @@ def _get_client() -> LogsQueryClient:
 
 
 def _get_resource_id() -> str:
-    rid = os.environ.get(_RESOURCE_ID_ENV, "").strip()
+    rid = (cfg(_RESOURCE_ID_KEY, "") or "").strip()
     if not rid:
         raise RuntimeError(
-            f"{_RESOURCE_ID_ENV} is not set; cannot query App Insights for "
-            "chat-agent traces."
+            f"App Configuration key '{_RESOURCE_ID_KEY}' is not set; "
+            "cannot query App Insights for chat-agent traces."
         )
     return rid
 

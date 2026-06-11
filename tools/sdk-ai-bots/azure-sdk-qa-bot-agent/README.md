@@ -19,12 +19,15 @@ azure-sdk-qa-bot-agent/
 └── TROUBLESHOOTING.md
 ```
 
-The project has two independently runnable components:
+The project has three independently runnable components:
 
 | Component | Description | Entrypoint | Port |
 |-----------|-------------|------------|------|
-| **Agent** | AI chat agent (Microsoft Agent Framework, Responses protocol) | `agents/chat_agent/init.py` | 8088 |
+| **Chat Agent** | AI chat agent (Microsoft Agent Framework, Responses protocol) | `agents/chat_agent/init.py` | 8088 |
+| **Feedback Agent** | KB-quality analyst that diagnoses negative-feedback turns and files KB-gap GitHub issues | `agents/feedback_agent/init.py` | 8088 |
 | **Server** | Backend API that the Teams App communicates with (FastAPI) | `server.py` | 8089 |
+
+> Both hosted agents bind port `8088`. Run **one at a time** locally.
 
 ## Getting Started
 
@@ -101,7 +104,7 @@ Ensure your Azure identity has:
 
 ## Running and Debugging Locally
 
-### Debugging the Agent (F5 with AI Toolkit)
+### Debugging the Chat Agent (F5 with AI Toolkit)
 
 Use this to develop and test the AI agent itself (prompt tuning, tool integration, etc.).
 
@@ -113,6 +116,46 @@ Use this to develop and test the AI agent itself (prompt tuning, tool integratio
 This launches the agent via `agentdev run` on `http://localhost:8088/` with `debugpy` attached, and opens the AI Toolkit Agent Inspector for interactive testing.
 
 ![Agent Playground](images/agent_playground.png)
+
+### Debugging the Feedback Agent
+
+The Feedback Agent is a hosted Foundry agent like the chat agent, but invoked asynchronously by the server's worker (`services/feedback_agent_service.py`) instead of by Teams. There are two things you may want to debug — the agent's reasoning, or the end-to-end enqueue→run flow.
+
+**1. Iterate on the agent itself (Agent Inspector).**
+
+Reuse the same AI Toolkit setup as the chat agent, but point it at the feedback agent entrypoint. The simplest way is to swap the `Run Chat Agent HTTP Server` task command in `.vscode/tasks.json`:
+
+```text
+${command:python.interpreterPath} -m debugpy --listen 127.0.0.1:5679 -m agentdev run agents/feedback_agent/init.py --verbose --port 8088
+```
+
+Then press **F5** and use the Agent Inspector to send a JSON payload shaped like a `FeedbackAgentInput`:
+
+```json
+{
+  "trigger": "bad_reaction",
+  "tenant_id": "azure_sdk_onboarding",
+  "conversation_id": "<a real conversation id from Cosmos>",
+  "conversation_type": "teams_channel",
+  "response_id": "<a real response_id from App Insights>",
+  "user_feedback": { "comment": "answer was wrong", "reasons": ["incorrect"] }
+}
+```
+
+The agent will call `fetch_chat_trace` / `fetch_conversation` / `search_knowledge_base` and may file a real GitHub issue — use a throwaway conversation when iterating.
+
+**2. Debug the worker end-to-end (server-side).**
+
+The worker (`FeedbackAgentService`) is what the server uses to enqueue and run jobs against the *deployed* hosted agent in Foundry. All worker settings (`AI_FOUNDRY_FEEDBACK_AGENT_NAME`, `AI_FOUNDRY_FEEDBACK_AGENT_VERSION`, `APPLICATIONINSIGHTS_RESOURCE_ID`) are read from Azure App Configuration and are already provisioned per environment — you do not need to set them locally.
+
+To exercise the worker locally:
+
+1. Start the server with the `Debug Backend Server` launch (see below) so breakpoints in `services/feedback_agent_service.py` are hit.
+2. Trigger a job by POSTing to `/agent/feedback` with `reaction: "bad"` (see [tests/api_test.rest](tests/api_test.rest)). The server enqueues a `FeedbackJob` and the worker picks it up in the background.
+3. Inspect outcomes in:
+   - **Server logs** — the worker logs the agent's raw reply at INFO (4 KB preview) and DEBUG (full).
+   - **Cosmos `feedback-jobs` container** — partitioned by `/tenant_id`; rows transition `queued → running → done | skipped`.
+   - **Foundry tracing** — the hosted agent's tool calls are visible in the Foundry portal under the agent's run history.
 
 ### Debugging the Server
 
@@ -176,9 +219,9 @@ Builds the agent container image, pushes to ACR, and deploys a new hosted agent 
 
 - **Pipeline**: [agent-cd.yml](pipelines/agent-cd.yml) | [Run in ADO](https://dev.azure.com/azure-sdk/internal/_build?definitionId=8159)
 - **Deploy script**: [scripts/deploy_hosted_agent.py](scripts/deploy_hosted_agent.py)
-- **Parameters**: `environment` (dev/prod), `agentName` (chat_agent)
+- **Parameters**: `environment` (dev/prod), `agentName` (`chat_agent` or `feedback_agent`)
 - **What it does**:
-  1. Builds the Docker image from `agents/chat_agent/Dockerfile`
+  1. Builds the Docker image from `agents/<agentName>/Dockerfile`
   2. Pushes to `azuresdkqabotcontainer.azurecr.io`
   3. Runs `deploy_hosted_agent.py` to create a new agent version via Foundry API
 
@@ -186,6 +229,7 @@ Builds the agent container image, pushes to ACR, and deploys a new hosted agent 
 
 ```bash
 python scripts/deploy_hosted_agent.py chat_agent --tag <image-tag>
+python scripts/deploy_hosted_agent.py feedback_agent --tag <image-tag>
 ```
 
 ### Server Deploy

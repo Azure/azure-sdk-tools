@@ -145,3 +145,9 @@ class DocumentContext(BaseModel):
             document_content=ref.content,
             score=ref.score,
         )
+
+class KnowledgeResponse(BaseModel):
+    """Response from knowledge retrieve."""
+
+    has_result: bool
+    knowledgeList: list[Reference] | None = None

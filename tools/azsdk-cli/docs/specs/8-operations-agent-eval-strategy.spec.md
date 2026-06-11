@@ -325,13 +325,22 @@ they cost money, and they flake for reasons that have nothing to do with
 the code under review. We will have hundreds of them, spread across many
 repos. Running them all, every time, on one machine is a non-starter.
 
-**The idea.** Split the work in two. **Each repo owns only its eval
-content** — the eval files, fixtures, prompts, and scenarios. **One shared
-platform owns everything about running them** — finding the evals, working
-out what a change affects, splitting them into parallel batches, setting
-up the environment, running native Vally, and merging the results. Build
-that machinery once and every repo (and every schedule) reuses it. The
-platform does not invent a new eval format — it runs the native Vally
+**The idea.** Split the work in two:
+
+```
+Repos own:        WHAT to test  → eval files, fixtures, prompts, scenarios
+Shared platform:  HOW to run it → discover, shard, run, aggregate, report
+```
+
+- **Repos own the eval content** — the eval files, fixtures, prompts, and
+  scenarios. That's all an author writes.
+- **One shared platform owns everything about running them** — finding the
+  evals, working out what a change affects, splitting them into parallel
+  batches, setting up the environment, running native Vally, and merging
+  the results.
+
+Build that machinery once and every repo (and every schedule) reuses it.
+The platform does not invent a new eval format — it runs the native Vally
 `*.eval.yaml` files as they are.
 
 #### Architecture

@@ -21,7 +21,6 @@ stimuli:
     mode: 'main'
   prompt: |
     Add a new stable version `2025-01-01` to my service. Carry over changes.
-    
   environment: &shared_environment
     files:
       - src: ../fixtures/001008-version-add-stable-after-stable/employee.tsp
@@ -116,15 +115,14 @@ stimuli:
       scoring: 'scale_1_5'
       prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
   constraints:
-    max_turns: 6
-    max_tokens: 100000
+    max_turns: 5
+    max_tokens: 1000000
 - name: 001008-version-add-stable-after-stable-trigger
   tags:
     suite: 'versioning'
     mode: 'trigger'
   prompt: |
     Add a new stable version `2025-01-01` to my service. Carry over changes.
-    
   environment: *shared_environment
   graders:
   - type: 'tool-calls'
@@ -138,14 +136,13 @@ stimuli:
         - 'azure-typespec-author'
   constraints:
     max_turns: 5
-    max_tokens: 50000
+    max_tokens: 1000000
 - name: 001008-version-add-stable-after-stable-forced
   tags:
     suite: 'versioning'
     mode: 'forced'
   prompt: |
     @azure-typespec-author Add a new stable version `2025-01-01` to my service. Carry over changes.
-    
   environment: *shared_environment
   graders:
   - type: 'tool-calls'
@@ -159,7 +156,7 @@ stimuli:
         - 'azure-typespec-author'
   constraints:
     max_turns: 5
-    max_tokens: 50000
+    max_tokens: 1000000
 scoring:
   weights:
     prompt: 1

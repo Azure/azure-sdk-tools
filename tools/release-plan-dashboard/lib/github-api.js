@@ -282,6 +282,7 @@ async function getGitHubPrFiles(prUrl) {
   const pr = parseGitHubPrUrl(prUrl);
   if (!pr) return [];
   const octokit = getOctokit();
+  /* v8 ignore next — defensive guard; batch caller already checks token */
   if (!octokit) return [];
   try {
     const files = await octokit.paginate(
@@ -362,6 +363,7 @@ async function getGitHubPrLabels(prUrl) {
   const pr = parseGitHubPrUrl(prUrl);
   if (!pr) return [];
   const octokit = getOctokit();
+  /* v8 ignore next — defensive guard; batch caller already checks token */
   if (!octokit) return [];
   try {
     const { data } = await octokit.issues.listLabelsOnIssue({

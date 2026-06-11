@@ -22,7 +22,7 @@ environments:
         type: stdio
         command: dotnet
         args: ["run", "--project", "../../../../tools/azsdk-cli/Azure.Sdk.Tools.Cli", "--", "start"]
-        timeout: "5m"
+        timeout: 5m
         env:
           AZSDKTOOLS_AGENT_TESTING: "false"
           AZSDKTOOLS_COLLECT_TELEMETRY: "false"
@@ -33,7 +33,7 @@ environments:
         type: stdio
         command: dotnet
         args: ["run", "--project", "../../../../tools/azsdk-cli/Azure.Sdk.Tools.Cli", "--", "start"]
-        timeout: "5m"
+        timeout: 5m
         env:
           AZSDKTOOLS_AGENT_TESTING: "false"
           AZSDKTOOLS_COLLECT_TELEMETRY: "false"

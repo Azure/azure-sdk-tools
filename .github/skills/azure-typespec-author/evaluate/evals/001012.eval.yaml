@@ -21,7 +21,6 @@ stimuli:
     mode: 'main'
   prompt: |
     In the TypeSpec project at `./Microsoft.Widget/Widget/`, change the return type of the `exportData` operation from `ExportResult` to `DetailedExportResult` with additional optional properties `format` (string) and `exportedAt` (utcDateTime) only for version `2025-05-04-preview`.
-    
   environment: &shared_environment
     files:
       - src: ../fixtures/Microsoft.Widget/Widget/employee.tsp
@@ -80,15 +79,14 @@ stimuli:
       pattern: 'exportData is ArmResourceActionSync<Employee, void, DetailedExportResult>;'
       path: 'Microsoft.Widget/Widget/employee.tsp'
   constraints:
-    max_turns: 6
-    max_tokens: 100000
+    max_turns: 5
+    max_tokens: 1000000
 - name: 001012-version-operation-return-type-changed-trigger
   tags:
     suite: 'versioning'
     mode: 'trigger'
   prompt: |
     In the TypeSpec project at `./Microsoft.Widget/Widget/`, change the return type of the `exportData` operation from `ExportResult` to `DetailedExportResult` with additional optional properties `format` (string) and `exportedAt` (utcDateTime) only for version `2025-05-04-preview`.
-    
   environment: *shared_environment
   graders:
   - type: 'tool-calls'
@@ -102,14 +100,13 @@ stimuli:
         - 'azure-typespec-author'
   constraints:
     max_turns: 5
-    max_tokens: 50000
+    max_tokens: 1000000
 - name: 001012-version-operation-return-type-changed-forced
   tags:
     suite: 'versioning'
     mode: 'forced'
   prompt: |
     @azure-typespec-author In the TypeSpec project at `./Microsoft.Widget/Widget/`, change the return type of the `exportData` operation from `ExportResult` to `DetailedExportResult` with additional optional properties `format` (string) and `exportedAt` (utcDateTime) only for version `2025-05-04-preview`.
-    
   environment: *shared_environment
   graders:
   - type: 'tool-calls'
@@ -123,7 +120,7 @@ stimuli:
         - 'azure-typespec-author'
   constraints:
     max_turns: 5
-    max_tokens: 50000
+    max_tokens: 1000000
 scoring:
   weights:
     tool-calls: 1

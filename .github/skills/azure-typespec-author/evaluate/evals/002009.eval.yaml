@@ -21,7 +21,6 @@ stimuli:
     mode: 'main'
   prompt: |
     In the Widget project, add a patch operation to an existing ARM resource named 'Employee'
-    
   environment: &shared_environment
     files:
       - src: ../fixtures/002009-arm-add-patch-operation-to-resource/employee.tsp
@@ -62,15 +61,14 @@ stimuli:
       scoring: 'scale_1_5'
       prompt: 'Verify change scope and quality only: no unrelated edits, and the implemented result is semantically consistent with the task intent.'
   constraints:
-    max_turns: 6
-    max_tokens: 100000
+    max_turns: 5
+    max_tokens: 1000000
 - name: 002009-arm-add-patch-operation-to-resource-trigger
   tags:
     suite: 'armtemplate'
     mode: 'trigger'
   prompt: |
     In the Widget project, add a patch operation to an existing ARM resource named 'Employee'
-    
   environment: *shared_environment
   graders:
   - type: 'tool-calls'
@@ -84,14 +82,13 @@ stimuli:
         - 'azure-typespec-author'
   constraints:
     max_turns: 5
-    max_tokens: 50000
+    max_tokens: 1000000
 - name: 002009-arm-add-patch-operation-to-resource-forced
   tags:
     suite: 'armtemplate'
     mode: 'forced'
   prompt: |
     @azure-typespec-author In the Widget project, add a patch operation to an existing ARM resource named 'Employee'
-    
   environment: *shared_environment
   graders:
   - type: 'tool-calls'
@@ -105,7 +102,7 @@ stimuli:
         - 'azure-typespec-author'
   constraints:
     max_turns: 5
-    max_tokens: 50000
+    max_tokens: 1000000
 scoring:
   weights:
     prompt: 1

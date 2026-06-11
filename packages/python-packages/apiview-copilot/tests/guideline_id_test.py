@@ -18,7 +18,6 @@ from src._database_manager import BasicContainer, GuidelinesContainer
 from src._models import Example, ExampleType, Guideline, Memory, ReviewResult
 from src._utils import guideline_id_from_db, guideline_id_to_db
 
-
 # ---------------------------------------------------------------------------
 # Utility function tests
 # ---------------------------------------------------------------------------

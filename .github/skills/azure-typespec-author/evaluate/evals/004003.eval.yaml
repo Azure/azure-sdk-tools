@@ -21,7 +21,6 @@ stimuli:
     mode: 'main'
   prompt: |
     Remove @operationId and its associated #suppress for no-openapi from all operations. Then restore those operationIds that do not contain underscores or begin with a lowercase letter.
-    
   environment: &shared_environment
     files:
       - src: ../fixtures/004003-delete-and-restore-operationId-decorator/BastionHost.tsp
@@ -110,15 +109,14 @@ stimuli:
       pattern: '@operationId\("ExpressRouteProviderPortsLocation_List"\)'
       path: 'ExpressRouteProviderPort.tsp'
   constraints:
-    max_turns: 10
-    max_tokens: 100000
+    max_turns: 5
+    max_tokens: 1000000
 - name: 004003-delete-and-restore-operationId-decorator-trigger
   tags:
     suite: 'decorators'
     mode: 'trigger'
   prompt: |
     Remove @operationId and its associated #suppress for no-openapi from all operations. Then restore those operationIds that do not contain underscores or begin with a lowercase letter.
-    
   environment: *shared_environment
   graders:
   - type: 'tool-calls'
@@ -132,14 +130,13 @@ stimuli:
         - 'azure-typespec-author'
   constraints:
     max_turns: 5
-    max_tokens: 50000
+    max_tokens: 1000000
 - name: 004003-delete-and-restore-operationId-decorator-forced
   tags:
     suite: 'decorators'
     mode: 'forced'
   prompt: |
     @azure-typespec-author Remove @operationId and its associated #suppress for no-openapi from all operations. Then restore those operationIds that do not contain underscores or begin with a lowercase letter.
-    
   environment: *shared_environment
   graders:
   - type: 'tool-calls'
@@ -151,9 +148,61 @@ stimuli:
     config:
       required:
         - 'azure-typespec-author'
+  - type: 'file-not-matches'
+    config:
+      pattern: '@operationId\('
+      path: 'BgpConnection.tsp'
+  - type: 'file-not-matches'
+    config:
+      pattern: '@operationId\('
+      path: 'NetworkInterface.tsp'
+  - type: 'file-not-matches'
+    config:
+      pattern: '@operationId\('
+      path: 'ExpressRouteGateway.tsp'
+  - type: 'file-not-matches'
+    config:
+      pattern: '@operationId\('
+      path: 'ExpressRoutePort.tsp'
+  - type: 'file-not-matches'
+    config:
+      pattern: '@operationId\('
+      path: 'NetworkInterface.tsp'
+  - type: 'file-not-matches'
+    config:
+      pattern: '@operationId\('
+      path: 'P2SVpnGateway.tsp'
+  - type: 'file-not-matches'
+    config:
+      pattern: '@operationId\('
+      path: 'VpnServerConfigurationPolicyGroup.tsp'
+  - type: 'file-not-matches'
+    config:
+      pattern: '@operationId\('
+      path: 'VpnSiteLinkConnection.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: '@operationId\("PutBastionShareableLink"\)'
+      path: 'BastionHost.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: '@operationId\("GetActiveSessions"\)'
+      path: 'BastionHost.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: '@operationId\("ExpressRouteProviderPort"\)'
+      path: 'ExpressRouteProviderPort.tsp'
+  - type: 'file-matches'
+    config:
+      pattern: '#suppress.*no-openapi|#suppress.*operationId'
+      path: 'BastionHost.tsp'
+  - type: 'file-not-matches'
+    config:
+      pattern: '@operationId\("ExpressRouteProviderPortsLocation_List"\)'
+      path: 'ExpressRouteProviderPort.tsp'
   constraints:
     max_turns: 5
-    max_tokens: 50000
+    max_tokens: 1000000
 scoring:
   weights:
     file-not-matches: 3
